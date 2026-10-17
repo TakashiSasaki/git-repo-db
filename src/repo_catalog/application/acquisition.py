@@ -1208,6 +1208,17 @@ class ProviderAcquisition:
         core: GitCore | None = None,
     ) -> ProviderAcquisitionReport:
         """Normalize and admit a ProviderIntakeBatch into Context."""
+        from repo_catalog.domain.context_registration import registration_json
+
+        for items, kind in (
+            (batch.providers, "provider"),
+            (batch.repositories, "repository"),
+            (batch.sources, "source"),
+        ):
+            for item in items:
+                registration_json(kind, item.configuration_json)
+        for item in batch.sources:
+            registration_json("membership", item.association_attributes_json)
         with self._open_context(context) as ctx:
             validate_core = self._make_core_validator(ctx, core)
 

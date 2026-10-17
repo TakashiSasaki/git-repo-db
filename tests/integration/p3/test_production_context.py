@@ -50,9 +50,7 @@ def directory(tmp_path):
 def context(directory):
     try:
         with Context.transaction(directory) as store:
-            store.provider(
-                SERVICE, "github", canonical({"endpoint": "https://github.example"})
-            )
+            store.provider(SERVICE, "github", canonical({"name": "GitHub service"}))
             store.repository(REPO)
             store.source(SOURCE, SERVICE)
             store.resource(KEY)
@@ -148,10 +146,12 @@ def test_provider_source_registration_and_configuration(context):
     store.provider(
         SERVICE,
         "github",
-        canonical({"endpoint": "https://moved.example", "evidence": "config-v2"}),
+        canonical({"name": "Renamed service", "evidence": "config-v2"}),
     )
     store.source(
-        SOURCE, SERVICE, canonical({"query": "all-repos", "evidence": "owner-settings"})
+        SOURCE,
+        SERVICE,
+        canonical({"discovery_kind": "github_inventory", "evidence": "owner-settings"}),
     )
     store.provider(OTHER_SERVICE, "gitlab")
     with pytest.raises(ContextError, match="IDENTITY_REBIND"):
@@ -685,7 +685,16 @@ def test_swallowed_sqlite_corruption_stops_immediately(directory, deferred):
         in_transaction = True
 
         def execute(self, sql, parameters=()):
-            if sql == "SELECT store_role FROM store_identity":
+            # The capability now validates registration rows during binding.
+            # Arm the fault only for the subsequent read_text operation, retaining
+            # the original swallowed/deferred-corruption assertions below.
+            if sql in {
+                "SELECT store_role FROM store_identity",
+                "SELECT configuration_json FROM providers",
+                "SELECT configuration_json FROM repository_context",
+                "SELECT configuration_json FROM sources",
+                "SELECT attributes_json FROM source_repositories",
+            }:
                 return db.execute(sql, parameters)
             if deferred:
                 return FaultCursor()

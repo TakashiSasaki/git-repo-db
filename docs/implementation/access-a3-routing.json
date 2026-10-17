@@ -1,0 +1,175 @@
+{
+  "baseline": "16c36f989f39aa9f9d2cf175dffb86e52da5a72d",
+  "field_types": {
+    "membership": {
+      "discovery_reason": "text",
+      "evidence": "evidence",
+      "first_seen_us": "time",
+      "label": "text",
+      "last_seen_us": "time",
+      "name": "text",
+      "parser_module": "text",
+      "parser_version": "text",
+      "source": "text"
+    },
+    "provider": {
+      "created_at_us": "time",
+      "description": "text",
+      "display_name": "text",
+      "evidence": "evidence",
+      "name": "text",
+      "tier": "text"
+    },
+    "repository": {
+      "archived": "bool",
+      "created_at_us": "time",
+      "default_branch": "text",
+      "description": "text",
+      "display_name": "text",
+      "evidence": "evidence",
+      "full_name": "text",
+      "name": "text",
+      "private": "bool",
+      "visibility": "visibility"
+    },
+    "source": {
+      "created_at_us": "time",
+      "description": "text",
+      "discovery_kind": "text",
+      "display_name": "text",
+      "evidence": "evidence",
+      "name": "text",
+      "org": "text",
+      "owner": "text"
+    }
+  },
+  "format": "git-repo-db/access-a3-routing-v1",
+  "p1_route_overrides": {
+    "repositories.metadata": {
+      "disposition": "key-level-classification",
+      "p1_target": "repository_context",
+      "rule": "Classify each key with its semantic owner. Keep allowlisted domain values; report access/execution/secret/unknown content without values in diagnostics. No whole-object move, silent drop, automatic execution, or fake timestamp. Actual extraction is not implemented by A3."
+    },
+    "repositories.name": {
+      "disposition": "retain-domain",
+      "p1_target": "repository_context",
+      "rule": "Preserve the actual classified typed value under the domain-only registration vocabulary; unknown times remain unknown and do not create observations."
+    },
+    "repositories.preferred_repository_endpoint_id": {
+      "disposition": "explicit-access-review",
+      "p1_target": "repository_context",
+      "rule": "Executable route or preference belongs to explicitly configured Access. Require an actual Scope UUID and supported typed locator/profile; never infer, activate, or invent missing coordinates. Provider-observed URLs remain attributed domain fields instead."
+    },
+    "repository_endpoints.created_at_us": {
+      "disposition": "explicit-extraction-review",
+      "p1_target": "repository_context",
+      "rule": "This is an old REPOSITORY endpoint attribute, not a Scope Locator registration. Do not synthesize a Scope history event; preserve the original extraction source/report until a supported explicit mapping exists."
+    },
+    "repository_endpoints.label": {
+      "disposition": "explicit-extraction-review",
+      "p1_target": "repository_context",
+      "rule": "This is an old REPOSITORY endpoint attribute, not a Scope Locator registration. Do not synthesize a Scope history event; preserve the original extraction source/report until a supported explicit mapping exists."
+    },
+    "repository_endpoints.metadata": {
+      "disposition": "key-level-classification",
+      "p1_target": "repository_context",
+      "rule": "Classify each key with its semantic owner. Keep allowlisted domain values; report access/execution/secret/unknown content without values in diagnostics. No whole-object move, silent drop, automatic execution, or fake timestamp. Actual extraction is not implemented by A3."
+    },
+    "repository_endpoints.transport": {
+      "disposition": "explicit-access-review",
+      "p1_target": "repository_context",
+      "rule": "Executable route or preference belongs to explicitly configured Access. Require an actual Scope UUID and supported typed locator/profile; never infer, activate, or invent missing coordinates. Provider-observed URLs remain attributed domain fields instead."
+    },
+    "repository_endpoints.url": {
+      "disposition": "explicit-access-review",
+      "p1_target": "repository_context",
+      "rule": "Executable route or preference belongs to explicitly configured Access. Require an actual Scope UUID and supported typed locator/profile; never infer, activate, or invent missing coordinates. Provider-observed URLs remain attributed domain fields instead."
+    },
+    "service_instances.api_base_url": {
+      "disposition": "explicit-access-review",
+      "p1_target": "providers",
+      "rule": "Executable route or preference belongs to explicitly configured Access. Require an actual Scope UUID and supported typed locator/profile; never infer, activate, or invent missing coordinates. Provider-observed URLs remain attributed domain fields instead."
+    },
+    "service_instances.created_at_us": {
+      "disposition": "retain-domain",
+      "p1_target": "providers",
+      "rule": "Preserve the actual classified typed value under the domain-only registration vocabulary; unknown times remain unknown and do not create observations."
+    },
+    "service_instances.metadata": {
+      "disposition": "key-level-classification",
+      "p1_target": "providers",
+      "rule": "Classify each key with its semantic owner. Keep allowlisted domain values; report access/execution/secret/unknown content without values in diagnostics. No whole-object move, silent drop, automatic execution, or fake timestamp. Actual extraction is not implemented by A3."
+    },
+    "service_instances.name": {
+      "disposition": "retain-domain",
+      "p1_target": "providers",
+      "rule": "Preserve the actual classified typed value under the domain-only registration vocabulary; unknown times remain unknown and do not create observations."
+    },
+    "service_instances.service_kind": {
+      "disposition": "typed-identity",
+      "p1_target": "providers",
+      "rule": "Use providers.provider_kind with its existing immutable identity rule, never copy service_kind into JSON."
+    },
+    "service_instances.web_base_url": {
+      "disposition": "meaning-dependent",
+      "p1_target": "providers",
+      "rule": "A configured service route needs Access review. A genuinely observed descriptive web URL may be a Context field with actual resource identity/provenance. URL syntax alone is not the classification."
+    },
+    "source_repositories.field_evidence_json": {
+      "disposition": "typed-domain-evidence",
+      "p1_target": "source_repositories",
+      "rule": "Route real evidence/scopes to existing Context FieldCandidate or Source inventory contracts with original coordinates/clocks. Do not put the whole JSON into registration attributes or invent missing evidence."
+    },
+    "source_repositories.first_seen_us": {
+      "disposition": "retain-domain",
+      "p1_target": "source_repositories",
+      "rule": "Preserve the actual classified typed value under the domain-only registration vocabulary; unknown times remain unknown and do not create observations."
+    },
+    "source_repositories.last_seen_us": {
+      "disposition": "retain-domain",
+      "p1_target": "source_repositories",
+      "rule": "Preserve the actual classified typed value under the domain-only registration vocabulary; unknown times remain unknown and do not create observations."
+    },
+    "source_repositories.metadata_json": {
+      "disposition": "key-level-classification",
+      "p1_target": "source_repositories",
+      "rule": "Classify each key with its semantic owner. Keep allowlisted domain values; report access/execution/secret/unknown content without values in diagnostics. No whole-object move, silent drop, automatic execution, or fake timestamp. Actual extraction is not implemented by A3."
+    },
+    "source_repositories.name": {
+      "disposition": "retain-domain",
+      "p1_target": "source_repositories",
+      "rule": "Preserve the actual classified typed value under the domain-only registration vocabulary; unknown times remain unknown and do not create observations."
+    },
+    "source_repositories.parser_module": {
+      "disposition": "retain-domain",
+      "p1_target": "source_repositories",
+      "rule": "Preserve the actual classified typed value under the domain-only registration vocabulary; unknown times remain unknown and do not create observations."
+    },
+    "source_repositories.parser_version": {
+      "disposition": "retain-domain",
+      "p1_target": "source_repositories",
+      "rule": "Preserve the actual classified typed value under the domain-only registration vocabulary; unknown times remain unknown and do not create observations."
+    },
+    "source_repositories.scope_json": {
+      "disposition": "typed-domain-evidence",
+      "p1_target": "source_repositories",
+      "rule": "Route real evidence/scopes to existing Context FieldCandidate or Source inventory contracts with original coordinates/clocks. Do not put the whole JSON into registration attributes or invent missing evidence."
+    },
+    "sources.discovery_kind": {
+      "disposition": "retain-domain",
+      "p1_target": "sources",
+      "rule": "Preserve the actual classified typed value under the domain-only registration vocabulary; unknown times remain unknown and do not create observations."
+    },
+    "sources.name": {
+      "disposition": "retain-domain",
+      "p1_target": "sources",
+      "rule": "Preserve the actual classified typed value under the domain-only registration vocabulary; unknown times remain unknown and do not create observations."
+    },
+    "sources.settings": {
+      "disposition": "key-level-classification",
+      "p1_target": "sources",
+      "rule": "Classify each key with its semantic owner. Keep allowlisted domain values; report access/execution/secret/unknown content without values in diagnostics. No whole-object move, silent drop, automatic execution, or fake timestamp. Actual extraction is not implemented by A3."
+    }
+  },
+  "scope": "Current A3 admission and explicit overrides of older P1 registration JSON routes; not historical evidence rewriting or an extractor."
+}

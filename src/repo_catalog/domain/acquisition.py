@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 from typing import Literal
 
 from repo_catalog.application.notes import Discovery, NoteAcquisition
+from repo_catalog.domain.context_registration import registration_json
 from repo_catalog.domain.notes import NotesInventory
 from repo_catalog.domain.p1_context import (
     CoverageClaim as ContextCoverageClaim,
@@ -185,7 +186,7 @@ class ProviderRegistration:
         uuid4_value(self.service_instance_uuidv4)
         if not self.provider_kind:
             raise AcquisitionError("PROVIDER_KIND", self.service_instance_uuidv4)
-        json_value(self.configuration_json)
+        registration_json("provider", self.configuration_json)
 
 
 @dataclass(frozen=True)
@@ -199,7 +200,7 @@ class RepositoryRegistration:
 
     def __post_init__(self) -> None:
         uuid4_value(self.repository_uuidv4)
-        json_value(self.configuration_json)
+        registration_json("repository", self.configuration_json)
         if self.observed_at_us is not None:
             validate_observation_us(self.observed_at_us)
         if self.provenance_json is not None:
@@ -217,8 +218,8 @@ class SourceRegistration:
     def __post_init__(self) -> None:
         uuid4_value(self.source_registration_uuidv4)
         uuid4_value(self.service_instance_uuidv4)
-        json_value(self.configuration_json)
-        json_value(self.association_attributes_json)
+        registration_json("source", self.configuration_json)
+        registration_json("membership", self.association_attributes_json)
         for repo in self.associated_repositories:
             uuid4_value(repo)
 

@@ -1,0 +1,38 @@
+# Domain registration boundaries: validate before writes, preserve positive evidence
+
+Use with the current ADR index and Access A3 contract. These lessons concern
+Context registration metadata and typed Exchange, not general text redaction or
+an authenticated remote execution boundary.
+
+- Shared JSON syntax is not shared semantics. RepositoryClaim stores a direct JSON
+  value, while ScalarClaim stores known/unknown tagged arrays. A round-trip of an
+  ordinary URL reproduced a SECOND-CHARACTER truncation caused by `value[1]` at
+  the RepositoryClaim importer. Always exercise positive preservation, including
+  strings of length zero/one, Unicode, nullable times and repeated/reverse import.
+- Check all present registration envelopes before ANY store admission, including
+  sections not selected by a package flag. Recompute a hostile package's checksum
+  in tests; a valid checksum must not turn executable configuration into domain
+  metadata or make unknown sibling fields disappear silently.
+- Incoming invalid data is rejection, not corruption. Invalid persisted data is
+  not permission to overwrite it with sanitized values. Exercise both writer and
+  snapshot/export/query paths with privileged disposable corruption fixtures, and
+  assert diagnostics do not copy secret canaries into stop records.
+- Adding earlier constructor validation can move a deliberate SQLite fault ahead
+  of the operation a test intended to exercise. Preserve the initial setup failure,
+  then allow only the new fixed bootstrap reads in the test stub before arming the
+  original fault. Do not weaken the real validation or stop behavior to keep a fake
+  connection working.
+- If a mutation changes packaged SQL, its old fingerprint can mask the intended
+  data-constraint test. Record that setup detection separately, build a coherent
+  DISPOSABLE mutant manifest and rerun the exact attack. Restore all real sources
+  and verify their hashes before ordinary tests/publication.
+
+Current checks:
+
+```sh
+python scripts/audit_context_registration.py
+python -m pytest -q tests/unit/test_context_registration_values.py tests/integration/access/test_context_boundary.py
+```
+
+The A3 report records author-run failures, corrections and tested scope. Neither
+this note nor a green checksum/test result establishes human or sender identity.
