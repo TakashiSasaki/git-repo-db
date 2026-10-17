@@ -21,7 +21,10 @@ OWNED = {
 def test_explicit_isolated_ownership_is_not_a_prefix_escape():
     assert OWNED <= ISOLATED_TARGET_MODULES
     assert is_baseline_source(ROOT / "src/repo_catalog/application/access_future.py")
-    for source in ("from repo_catalog.adapters.sqlite import access_registry", "from . import access_registry"):
+    for source in (
+        "from repo_catalog.adapters.sqlite import access_registry",
+        "from . import access_registry",
+    ):
         assert isolated_runtime_imports(source, "repo_catalog.adapters.sqlite") == {
             "repo_catalog.adapters.sqlite.access_registry"
         }

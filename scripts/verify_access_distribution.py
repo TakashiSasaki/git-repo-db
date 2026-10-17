@@ -18,7 +18,7 @@ import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SMOKE = r'''
+SMOKE = r"""
 import importlib.util, json, sqlite3, tempfile
 from pathlib import Path
 from uuid import uuid4
@@ -43,11 +43,13 @@ with tempfile.TemporaryDirectory() as directory:
         assert not store.locator_enabled(again)
     assert not (Path(directory) / "core.sqlite3").exists()
 print(json.dumps({"sqlite": sqlite3.sqlite_version, "ddl_sha256": fingerprint(), "installed_smoke": "passed"}))
-'''
+"""
 
 
 def run(*args: str, cwd: Path, env: dict[str, str]) -> str:
-    result = subprocess.run(args, cwd=cwd, env=env, check=True, text=True, capture_output=True)
+    result = subprocess.run(
+        args, cwd=cwd, env=env, check=True, text=True, capture_output=True
+    )
     if result.stderr:
         print(result.stderr, file=sys.stderr)
     return result.stdout
@@ -61,7 +63,22 @@ def main() -> None:
         base = Path(temporary)
         built = base / "built"
         built.mkdir()
-        print(run(sys.executable, "-m", "hatchling", "build", "-t", "wheel", "-t", "sdist", "-d", str(built), cwd=ROOT, env=env))
+        print(
+            run(
+                sys.executable,
+                "-m",
+                "hatchling",
+                "build",
+                "-t",
+                "wheel",
+                "-t",
+                "sdist",
+                "-d",
+                str(built),
+                cwd=ROOT,
+                env=env,
+            )
+        )
         direct = next(built.glob("*.whl"))
         archive = next(built.glob("*.tar.gz"))
         unpacked = base / "sdist"
@@ -71,19 +88,50 @@ def main() -> None:
         source_root = next(unpacked.iterdir())
         rebuilt = base / "rebuilt"
         rebuilt.mkdir()
-        print(run(sys.executable, "-m", "hatchling", "build", "-t", "wheel", "-d", str(rebuilt), cwd=source_root, env=env))
-        for label, wheel in (("wheel", direct), ("sdist-wheel", next(rebuilt.glob("*.whl")))):
+        print(
+            run(
+                sys.executable,
+                "-m",
+                "hatchling",
+                "build",
+                "-t",
+                "wheel",
+                "-d",
+                str(rebuilt),
+                cwd=source_root,
+                env=env,
+            )
+        )
+        for label, wheel in (
+            ("wheel", direct),
+            ("sdist-wheel", next(rebuilt.glob("*.whl"))),
+        ):
             target = base / label
             venv.EnvBuilder(with_pip=False).create(target)
             python = target / "bin/python"
             # Pure Python wheel only; verify all archive members before extracting.
             with zipfile.ZipFile(wheel) as package:
-                assert any(name.endswith("access_ddl/registry.sql") for name in package.namelist())
+                assert any(
+                    name.endswith("access_ddl/registry.sql")
+                    for name in package.namelist()
+                )
                 for name in package.namelist():
                     parts = Path(name).parts
                     if Path(name).is_absolute() or ".." in parts:
                         raise ValueError("unsafe wheel member")
-            print(run("uv", "pip", "install", "--python", str(python), "--no-deps", str(wheel), cwd=base, env=env))
+            print(
+                run(
+                    "uv",
+                    "pip",
+                    "install",
+                    "--python",
+                    str(python),
+                    "--no-deps",
+                    str(wheel),
+                    cwd=base,
+                    env=env,
+                )
+            )
             output = run(str(python), "-I", "-c", SMOKE, cwd=base, env=env)
             result = json.loads(output)
             result["artifact_kind"] = label

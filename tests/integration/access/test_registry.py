@@ -57,11 +57,19 @@ def test_schema_identity_and_direct_key(path):
         assert db.execute("SELECT * FROM access_identity").fetchall() == [
             ("access", schema.FORMAT, 1, schema.fingerprint())
         ]
-        tables = [r for r in db.execute("PRAGMA table_list") if r[2] == "table" and not r[1].startswith("sqlite_")]
+        tables = [
+            r
+            for r in db.execute("PRAGMA table_list")
+            if r[2] == "table" and not r[1].startswith("sqlite_")
+        ]
         assert sorted(r[1] for r in tables) == sorted(schema.TABLES)
         assert all(r[4:] == (1, 1) for r in tables)
         columns = list(db.execute("PRAGMA table_xinfo(scope_locators)"))
-        assert [(r[1], r[5]) for r in columns] == [("scope_uuidv4", 1), ("registered_at_us", 2), ("scope_locator_uri", 3)]
+        assert [(r[1], r[5]) for r in columns] == [
+            ("scope_uuidv4", 1),
+            ("registered_at_us", 2),
+            ("scope_locator_uri", 3),
+        ]
         assert not db.execute("PRAGMA foreign_key_check").fetchall()
     finally:
         db.close()
@@ -174,16 +182,19 @@ def test_history_pagination_ties_and_scope_binding(path):
             store.history(S1, after=reg(99))
 
 
-@pytest.mark.parametrize("operation", [
-    "UPDATE scope_locators SET registered_at_us=99",
-    "DELETE FROM scope_locators",
-    "INSERT OR REPLACE INTO scope_locators VALUES('%s',1,'file:///srv/a')" % S1,
-    "UPDATE access_scopes SET scope_uuidv4='%s'" % S2,
-    "DELETE FROM access_scopes",
-    "INSERT OR REPLACE INTO access_scopes VALUES('%s','replacement')" % S1,
-    "UPDATE access_identity SET ddl_sha256=printf('%064d',0)",
-    "DELETE FROM access_identity",
-])
+@pytest.mark.parametrize(
+    "operation",
+    [
+        "UPDATE scope_locators SET registered_at_us=99",
+        "DELETE FROM scope_locators",
+        "INSERT OR REPLACE INTO scope_locators VALUES('%s',1,'file:///srv/a')" % S1,
+        "UPDATE access_scopes SET scope_uuidv4='%s'" % S2,
+        "DELETE FROM access_scopes",
+        "INSERT OR REPLACE INTO access_scopes VALUES('%s','replacement')" % S1,
+        "UPDATE access_identity SET ddl_sha256=printf('%064d',0)",
+        "DELETE FROM access_identity",
+    ],
+)
 def test_raw_mutation_guards(path, operation):
     with AccessRegistry(path, writable=True) as store:
         store.register_locator(reg())
@@ -209,7 +220,12 @@ def test_replace_cannot_bypass_history_even_without_recursive_triggers(path):
 def test_full_registration_fk_and_invalid_input_constraints(path):
     db = raw(path)
     try:
-        for values in ((S2, 1, "file:///srv/a"), (S1, 0, "file:///srv/a"), (S1, None, "file:///srv/a"), (S1, 1, "https://u:secret@host/env")):
+        for values in (
+            (S2, 1, "file:///srv/a"),
+            (S1, 0, "file:///srv/a"),
+            (S1, None, "file:///srv/a"),
+            (S1, 1, "https://u:secret@host/env"),
+        ):
             with pytest.raises(sqlite3.IntegrityError):
                 db.execute("INSERT INTO scope_locators VALUES(?,?,?)", values)
         with pytest.raises(sqlite3.IntegrityError):
@@ -226,7 +242,12 @@ def test_default_handle_read_only_and_no_public_sql(path):
         assert store.scope(S1).scope_uuidv4 == S1
         with pytest.raises(AccessRegistryError, match="READ_ONLY"):
             store.register_locator(reg())
-        for sql in ("SELECT * FROM access_scopes", "PRAGMA foreign_keys=OFF", "DELETE FROM scope_locators", "BEGIN"):
+        for sql in (
+            "SELECT * FROM access_scopes",
+            "PRAGMA foreign_keys=OFF",
+            "DELETE FROM scope_locators",
+            "BEGIN",
+        ):
             with pytest.raises(sqlite3.DatabaseError):
                 store._db.execute(sql)
     with pytest.raises(AccessRegistryError, match="CLOSED"):
@@ -296,7 +317,11 @@ def test_persisted_invalid_values_stop_access_on_open(path, damage):
         db.execute("PRAGMA foreign_keys=OFF")
         db.execute("DROP TRIGGER scope_registration_no_update")
         db.execute("UPDATE scope_locators SET registered_at_us=0")
-        sql = next(r[3] for r in schema.expected_schema() if r[1] == "scope_registration_no_update")
+        sql = next(
+            r[3]
+            for r in schema.expected_schema()
+            if r[1] == "scope_registration_no_update"
+        )
         db.execute(sql)
     db.close()
     with pytest.raises(AccessRegistryError, match="CORRUPT"):
@@ -329,6 +354,7 @@ def test_two_handles_exact_replay_and_competing_ties(path):
     def write(item):
         with AccessRegistry(path, writable=True) as store:
             return store.register_locator(item).status
+
     with ThreadPoolExecutor(max_workers=2) as pool:
         statuses = list(pool.map(write, (reg(), reg())))
     assert sorted(statuses) == ["duplicate", "insert"]
@@ -341,10 +367,12 @@ def test_two_handles_exact_replay_and_competing_ties(path):
 def test_control_failure_rolls_back_registration(path):
     with AccessRegistry(path, writable=True) as store:
         original = store._authorize
+
         def deny_control(action, a, b, database, trigger):
             if action == sqlite3.SQLITE_INSERT and a == "scope_locator_controls":
                 return sqlite3.SQLITE_DENY
             return original(action, a, b, database, trigger)
+
         store._db.set_authorizer(deny_control)
         with pytest.raises(AccessRegistryError, match="SQLITE"):
             store.register_locator(reg())
@@ -361,7 +389,9 @@ def test_sqlite_backup_preserves_history_not_runtime_authority(path):
         copy_path = path.parent / "snapshot.sqlite3"
         destination = sqlite3.connect(copy_path)
         source.backup(destination)
-        assert destination.execute("SELECT COUNT(*) FROM scope_locators").fetchone() == (2,)
+        assert destination.execute(
+            "SELECT COUNT(*) FROM scope_locators"
+        ).fetchone() == (2,)
         destination.close()
         source.close()
     # This is a SQLite copy exercise, not an Access backup/restore API or approval.

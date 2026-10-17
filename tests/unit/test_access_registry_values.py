@@ -21,7 +21,18 @@ from repo_catalog.domain.access_registry import (
 SCOPE = "550e8400-e29b-41d4-a716-446655440000"
 
 
-@pytest.mark.parametrize("value", [None, 1, UUID(SCOPE), SCOPE.upper(), SCOPE + " ", "x", SCOPE.replace("41d4", "11d4")])
+@pytest.mark.parametrize(
+    "value",
+    [
+        None,
+        1,
+        UUID(SCOPE),
+        SCOPE.upper(),
+        SCOPE + " ",
+        "x",
+        SCOPE.replace("41d4", "11d4"),
+    ],
+)
 def test_reject_noncanonical_scope(value):
     with pytest.raises(AccessRegistryError, match="IDENTITY"):
         scope_uuid(value)
@@ -44,7 +55,9 @@ def test_valid_registration_times(value):
     assert registration_time(value) == value
 
 
-@pytest.mark.parametrize("value", [None, 1, "a\n", "\ud800", "x" * (MAX_LABEL_BYTES + 1)])
+@pytest.mark.parametrize(
+    "value", [None, 1, "a\n", "\ud800", "x" * (MAX_LABEL_BYTES + 1)]
+)
 def test_bad_labels(value):
     with pytest.raises(AccessRegistryError, match="LABEL"):
         display_label(value)
@@ -56,37 +69,65 @@ def test_invalid_page_bound(value):
         page_size(value)
 
 
-@pytest.mark.parametrize("value", [
-    "https://Runner.example.org/environments/build",
-    "HTTPS://runner.example.org/env",
-    "https://runner.example.org:8443/env.git/",
-    "https://[2001:db8::1]:8443/env",
-    "ssh://git@host.example:2222/srv/environment",
-    "file:///srv/environment",
-    "file://localhost/srv/environment",
-    "https://host.example/env%2Fname",
-    "https://host.example/%E6%97%A5",
-])
+@pytest.mark.parametrize(
+    "value",
+    [
+        "https://Runner.example.org/environments/build",
+        "HTTPS://runner.example.org/env",
+        "https://runner.example.org:8443/env.git/",
+        "https://[2001:db8::1]:8443/env",
+        "ssh://git@host.example:2222/srv/environment",
+        "file:///srv/environment",
+        "file://localhost/srv/environment",
+        "https://host.example/env%2Fname",
+        "https://host.example/%E6%97%A5",
+    ],
+)
 def test_preserve_valid_uri_exactly(value):
     assert scope_locator(value) == value
     assert ScopeLocatorRegistration(SCOPE, 1, value).key == (SCOPE, 1, value)
 
 
-@pytest.mark.parametrize("value", [
-    None, "", "http://host.example/env", "urn:uuid:" + SCOPE,
-    "git@server:repo.git", "/srv/env", "../env", "ext::sh -c cmd",
-    "https://host.example/env?", "https://host.example/env#",
-    "https://host.example/env?token=PRIVATE", "https://u:PRIVATE@host.example/env",
-    "https://u@host.example/env", "ssh://u:PRIVATE@host.example/env",
-    "https://host.example/a\\b", "https://host.example/%", "https://host.example/%GG",
-    "https://host.example/%00", "https://host.example/%0A", "https://host.example/%7f",
-    "https://host.example/日本", "https://host.example/a b", "https://host.example/\n",
-    "https://host.example:0/env", "https://host.example:65536/env",
-    "https://host.example:/env", "https://[2001:db8::1]garbage/env",
-    "https://bad_host.example/env", "https://-bad.example/env", "https:///env",
-    "file://remote.example/srv/env", "file:relative", "file:////remote/env",
-    "ssh://user@host.example", "https://host.example/" + "x" * MAX_URI_BYTES,
-])
+@pytest.mark.parametrize(
+    "value",
+    [
+        None,
+        "",
+        "http://host.example/env",
+        "urn:uuid:" + SCOPE,
+        "git@server:repo.git",
+        "/srv/env",
+        "../env",
+        "ext::sh -c cmd",
+        "https://host.example/env?",
+        "https://host.example/env#",
+        "https://host.example/env?token=PRIVATE",
+        "https://u:PRIVATE@host.example/env",
+        "https://u@host.example/env",
+        "ssh://u:PRIVATE@host.example/env",
+        "https://host.example/a\\b",
+        "https://host.example/%",
+        "https://host.example/%GG",
+        "https://host.example/%00",
+        "https://host.example/%0A",
+        "https://host.example/%7f",
+        "https://host.example/日本",
+        "https://host.example/a b",
+        "https://host.example/\n",
+        "https://host.example:0/env",
+        "https://host.example:65536/env",
+        "https://host.example:/env",
+        "https://[2001:db8::1]garbage/env",
+        "https://bad_host.example/env",
+        "https://-bad.example/env",
+        "https:///env",
+        "file://remote.example/srv/env",
+        "file:relative",
+        "file:////remote/env",
+        "ssh://user@host.example",
+        "https://host.example/" + "x" * MAX_URI_BYTES,
+    ],
+)
 def test_reject_unsupported_or_unsafe_uri_without_echo(value):
     with pytest.raises(AccessRegistryError, match="LOCATOR") as error:
         scope_locator(value)

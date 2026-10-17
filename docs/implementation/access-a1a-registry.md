@@ -133,8 +133,21 @@ unavailable. On that environment, 78 pure/ownership/runtime-rejection tests pass
 **uncommitted test-only harness** bypassed the runtime gate for 36 additional
 semantic/file tests, which passed. Those 36 are non-qualifying development probes,
 not supported-runtime acceptance. The real minimum-runtime rejection test runs
-without that override. Hosted results are bound to the eventual exact PR commit
-and must be reported separately; none are claimed here before execution.
+without that override. Initial hosted run `39033237375`, source HEAD
+`53a69046e4d729a7cc2e4bccaa87767c94882fc3`, verified real Python 3.12.15 / SQLite
+3.51.3 and its official source identity, then passed **114** focused tests plus
+both installed distribution smoke variants and unchanged baseline audits. The job
+as a whole failed only formatting/import order; it is not reported as a green run.
+Its downloaded artifact matched SHA-256
+`617961ed8c5d41fae764ca16a9d7a07196c41f450bebc92eb4e88409bdfb8633`.
+
+The downloaded verified SQLite library also loads locally. After applying the
+hosted Ruff format/import patches, Python 3.13.5 with actual SQLite 3.51.3 passed
+all **114** tests without a runtime bypass. That local tree still lacks the full
+checkout, so full-source isolation and distribution evidence remain the hosted
+run. The corrected commit requires its own CI result; do not inherit PASS from
+an earlier tree. CI archives the exact source tree and locked formatter for
+network-isolated reproduction, not automatic code changes or deployment.
 
 Self-review found invalid stored UTF-8 initially did not persist Access-stop;
 read-only open and already-open read regressions now cover the correction. A

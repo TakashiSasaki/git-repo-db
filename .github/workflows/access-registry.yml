@@ -94,6 +94,24 @@ jobs:
             cat artifacts/access-registry/lint.diff artifacts/access-registry/format.diff
             exit 1
           fi
+      - name: Save exact source and locked formatter for offline reproduction
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/access-registry
+          git archive --format=tar.gz HEAD -o artifacts/access-registry/source.tar.gz
+          if [[ -x .venv/bin/ruff ]]; then
+            cp .venv/bin/ruff artifacts/access-registry/ruff
+          fi
+          python - <<'PYMETA'
+          import json, os, subprocess
+          from pathlib import Path
+          def revision(name):
+              return subprocess.check_output(["git", "rev-parse", name], text=True).strip()
+          result = {"checked_out_commit": revision("HEAD"), "effective_tree": revision("HEAD^{tree}"), "event_commit": os.environ["GITHUB_SHA"]}
+          Path("artifacts/access-registry/source-revision.json").write_text(json.dumps(result, indent=2) + "\n")
+          PYMETA
       - name: Save focused verification evidence
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9

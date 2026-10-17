@@ -10,8 +10,8 @@ from __future__ import annotations
 import ipaddress
 import re
 from dataclasses import dataclass
-from urllib.parse import unquote_to_bytes, urlsplit
 from typing import Literal
+from urllib.parse import unquote_to_bytes, urlsplit
 from uuid import UUID
 
 MAX_URI_BYTES = 8192
@@ -99,7 +99,9 @@ def scope_locator(value: object) -> str:
         if not parts.hostname or "%" in parts.netloc or parts.password is not None:
             raise bad
         if parts.username is not None:
-            if parts.scheme != "ssh" or not re.fullmatch(r"[A-Za-z0-9._~-]+", parts.username):
+            if parts.scheme != "ssh" or not re.fullmatch(
+                r"[A-Za-z0-9._~-]+", parts.username
+            ):
                 raise bad
         authority = parts.netloc.rsplit("@", 1)[-1]
         if authority.startswith("["):

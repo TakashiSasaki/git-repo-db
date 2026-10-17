@@ -51,7 +51,9 @@ def fingerprint() -> str:
 
 def require_runtime() -> None:
     if sqlite3.sqlite_version_info < MIN_SQLITE or sqlite3.threadsafety == 0:
-        raise AccessRegistryError("SQLITE_RUNTIME", "SQLite >=3.51.3 with mutexes required")
+        raise AccessRegistryError(
+            "SQLITE_RUNTIME", "SQLite >=3.51.3 with mutexes required"
+        )
     if os.name != "posix":
         raise AccessRegistryError("PLATFORM", "POSIX local filesystem adapter required")
 
@@ -138,8 +140,14 @@ def _path(value: str | Path) -> Path:
         info = parent.stat()
         if parent.resolve(strict=True) != parent:
             raise AccessRegistryError("PATH", "symlinked store parents are unsupported")
-        if not stat.S_ISDIR(info.st_mode) or info.st_uid != os.getuid() or info.st_mode & 0o022:
-            raise AccessRegistryError("PATH", "owned, private-write store directory required")
+        if (
+            not stat.S_ISDIR(info.st_mode)
+            or info.st_uid != os.getuid()
+            or info.st_mode & 0o022
+        ):
+            raise AccessRegistryError(
+                "PATH", "owned, private-write store directory required"
+            )
     except OSError:
         raise AccessRegistryError("PATH", "store directory is unavailable") from None
     return path
@@ -151,14 +159,18 @@ def file_token(path: Path) -> tuple[int, int]:
     except FileNotFoundError:
         raise AccessRegistryError("MISSING", "Access registry does not exist") from None
     except OSError:
-        raise AccessRegistryError("PATH", "Access registry cannot be inspected") from None
+        raise AccessRegistryError(
+            "PATH", "Access registry cannot be inspected"
+        ) from None
     if (
         not stat.S_ISREG(info.st_mode)
         or info.st_nlink != 1
         or info.st_uid != os.getuid()
         or info.st_mode & 0o077
     ):
-        raise AccessRegistryError("PATH", "owned mode-0600 unaliased regular file required")
+        raise AccessRegistryError(
+            "PATH", "owned mode-0600 unaliased regular file required"
+        )
     return info.st_dev, info.st_ino
 
 
@@ -173,20 +185,27 @@ def check_stop(path: Path) -> None:
 
 def persist_stop(path: Path) -> None:
     """Publish only a separate diagnostic; never write a suspect database."""
-    body = json.dumps(
-        {
-            "format": "repo-catalog/access-registry-stop-1",
-            "reason": "detected-access-corruption",
-            "recorded_at_us": time.time_ns() // 1000,
-        },
-        sort_keys=True,
-    ).encode("ascii") + b"\n"
+    body = (
+        json.dumps(
+            {
+                "format": "repo-catalog/access-registry-stop-1",
+                "reason": "detected-access-corruption",
+                "recorded_at_us": time.time_ns() // 1000,
+            },
+            sort_keys=True,
+        ).encode("ascii")
+        + b"\n"
+    )
     try:
-        fd = os.open(stop_path(path), os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+        fd = os.open(
+            stop_path(path), os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600
+        )
     except FileExistsError:
         return
     except OSError:
-        raise AccessRegistryError("STOP_PERSIST_FAILED", "cannot publish Access stop") from None
+        raise AccessRegistryError(
+            "STOP_PERSIST_FAILED", "cannot publish Access stop"
+        ) from None
     try:
         with os.fdopen(fd, "wb") as stream:
             stream.write(body)
@@ -194,7 +213,9 @@ def persist_stop(path: Path) -> None:
             os.fsync(stream.fileno())
         _fsync_directory(path.parent)
     except OSError:
-        raise AccessRegistryError("STOP_PERSIST_FAILED", "cannot persist Access stop") from None
+        raise AccessRegistryError(
+            "STOP_PERSIST_FAILED", "cannot persist Access stop"
+        ) from None
 
 
 def _fsync_directory(path: Path) -> None:
@@ -223,7 +244,9 @@ def _connect(path: Path, *, writable: bool) -> sqlite3.Connection:
             db.execute("PRAGMA query_only=ON")
         for pragma in ("foreign_keys", "recursive_triggers"):
             if db.execute(f"PRAGMA {pragma}").fetchone() != (1,):
-                raise AccessRegistryError("CAPABILITY", "required SQLite protection missing")
+                raise AccessRegistryError(
+                    "CAPABILITY", "required SQLite protection missing"
+                )
         return db
     except BaseException:
         db.close()
@@ -249,7 +272,9 @@ def initialize(path: str | Path) -> None:
     check_stop(target)
     for suffix in ("-wal", "-shm", "-journal"):
         if os.path.lexists(str(target) + suffix):
-            raise AccessRegistryError("PATH", "existing database sidecar prevents creation")
+            raise AccessRegistryError(
+                "PATH", "existing database sidecar prevents creation"
+            )
     try:
         fd = os.open(target, os.O_RDWR | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
     except FileExistsError:
@@ -277,7 +302,9 @@ def initialize(path: str | Path) -> None:
     _fsync_directory(target.parent)
 
 
-def open_checked(path: str | Path, *, writable: bool = False) -> tuple[sqlite3.Connection, Path]:
+def open_checked(
+    path: str | Path, *, writable: bool = False
+) -> tuple[sqlite3.Connection, Path]:
     """Trusted factory, with read-only format validation before a writable open."""
     require_runtime()
     if type(writable) is not bool:
@@ -293,12 +320,16 @@ def open_checked(path: str | Path, *, writable: bool = False) -> tuple[sqlite3.C
             db.close()
             db = None
             if file_token(target) != original:
-                raise AccessRegistryError("PATH_CHANGED", "Access file replaced during open")
+                raise AccessRegistryError(
+                    "PATH_CHANGED", "Access file replaced during open"
+                )
             db = _connect(target, writable=True)
             _validate_snapshot(db)
             db.execute("PRAGMA synchronous=EXTRA")
         if file_token(target) != original:
-            raise AccessRegistryError("PATH_CHANGED", "Access file replaced during open")
+            raise AccessRegistryError(
+                "PATH_CHANGED", "Access file replaced during open"
+            )
         check_stop(target)
         return db, target
     except BaseException as error:
@@ -309,6 +340,8 @@ def open_checked(path: str | Path, *, writable: bool = False) -> tuple[sqlite3.C
         if isinstance(error, sqlite3.DatabaseError):
             if is_corruption_error(error):
                 persist_stop(target)
-                raise AccessRegistryError("CORRUPT", "damaged Access database") from None
+                raise AccessRegistryError(
+                    "CORRUPT", "damaged Access database"
+                ) from None
             raise AccessRegistryError("SQLITE", "Access database open failed") from None
         raise

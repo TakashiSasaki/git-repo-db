@@ -68,7 +68,9 @@ class AccessRegistry:
         if self._closed:
             raise AccessRegistryError("CLOSED", "Access registry handle is closed")
         if self._failed:
-            raise AccessRegistryError("STOPPED", "Access handle is disabled after failure")
+            raise AccessRegistryError(
+                "STOPPED", "Access handle is disabled after failure"
+            )
         schema.check_stop(self.path)
         if schema.file_token(self.path) != self._token:
             self._failed = True
@@ -77,7 +79,9 @@ class AccessRegistry:
     def _corrupt(self) -> None:
         self._failed = True
         schema.persist_stop(self.path)
-        raise AccessRegistryError("CORRUPT", "invalid stored Access registry data") from None
+        raise AccessRegistryError(
+            "CORRUPT", "invalid stored Access registry data"
+        ) from None
 
     @contextmanager
     def _transaction(self, *, write: bool = False) -> Iterator[sqlite3.Connection]:
@@ -100,8 +104,12 @@ class AccessRegistry:
                 if schema.is_corruption_error(error):
                     self._corrupt()
                 if code in (sqlite3.SQLITE_BUSY, sqlite3.SQLITE_LOCKED):
-                    raise AccessRegistryError("BUSY", "Access transaction is busy") from None
-                raise AccessRegistryError("SQLITE", "Access registry operation failed") from None
+                    raise AccessRegistryError(
+                        "BUSY", "Access transaction is busy"
+                    ) from None
+                raise AccessRegistryError(
+                    "SQLITE", "Access registry operation failed"
+                ) from None
             raise
         finally:
             self._active = self._writing = False
@@ -131,12 +139,17 @@ class AccessRegistry:
         return ScopeLocatorRegistration(*registration.key)
 
     @staticmethod
-    def _has_registration(db: sqlite3.Connection, registration: ScopeLocatorRegistration) -> bool:
-        return db.execute(
-            "SELECT 1 FROM scope_locators WHERE scope_uuidv4=? AND registered_at_us=? "
-            "AND scope_locator_uri=?",
-            registration.key,
-        ).fetchone() is not None
+    def _has_registration(
+        db: sqlite3.Connection, registration: ScopeLocatorRegistration
+    ) -> bool:
+        return (
+            db.execute(
+                "SELECT 1 FROM scope_locators WHERE scope_uuidv4=? AND registered_at_us=? "
+                "AND scope_locator_uri=?",
+                registration.key,
+            ).fetchone()
+            is not None
+        )
 
     def scope(self, scope_uuidv4: str) -> AccessScope:
         identity = scope_uuid(scope_uuidv4)
@@ -154,18 +167,28 @@ class AccessRegistry:
             ).fetchone()
             if row is not None:
                 if row[0] != value.display_name:
-                    raise AccessRegistryError("SCOPE_CONFLICT", "use explicit label update")
+                    raise AccessRegistryError(
+                        "SCOPE_CONFLICT", "use explicit label update"
+                    )
                 return "duplicate"
-            db.execute("INSERT INTO access_scopes VALUES(?,?)", (value.scope_uuidv4, value.display_name))
+            db.execute(
+                "INSERT INTO access_scopes VALUES(?,?)",
+                (value.scope_uuidv4, value.display_name),
+            )
             return "insert"
 
     def rename_scope(self, scope_uuidv4: str, display_name: str) -> None:
         identity, label = scope_uuid(scope_uuidv4), display_label(display_name)
         with self._transaction(write=True) as db:
             self._scope(db, identity)
-            db.execute("UPDATE access_scopes SET display_name=? WHERE scope_uuidv4=?", (label, identity))
+            db.execute(
+                "UPDATE access_scopes SET display_name=? WHERE scope_uuidv4=?",
+                (label, identity),
+            )
 
-    def register_locator(self, registration: ScopeLocatorRegistration) -> RegistrationResult:
+    def register_locator(
+        self, registration: ScopeLocatorRegistration
+    ) -> RegistrationResult:
         value = self._input(registration)
         with self._transaction(write=True) as db:
             self._scope(db, value.scope_uuidv4)
@@ -178,7 +201,9 @@ class AccessRegistry:
                 return RegistrationResult("duplicate", latest, False)
             db.execute("INSERT INTO scope_locators VALUES(?,?,?)", value.key)
             db.execute("INSERT INTO scope_locator_controls VALUES(?,?,?,0)", value.key)
-            return RegistrationResult("insert", latest, latest is not None and value.registered_at_us < latest)
+            return RegistrationResult(
+                "insert", latest, latest is not None and value.registered_at_us < latest
+            )
 
     def first_choices(
         self, scope_uuidv4: str, *, max_candidates: int = 1000
@@ -192,7 +217,9 @@ class AccessRegistry:
                 (identity, bound + 1),
             ).fetchall()
             if len(rows) > bound:
-                raise AccessRegistryError("CANDIDATE_LIMIT", "latest tie set exceeds explicit bound")
+                raise AccessRegistryError(
+                    "CANDIDATE_LIMIT", "latest tie set exceeds explicit bound"
+                )
             # Lexical ordering is display stability, NOT winner selection.
             return tuple(self._registration(row) for row in rows)
 
@@ -206,17 +233,26 @@ class AccessRegistry:
         identity, bound = scope_uuid(scope_uuidv4), page_size(limit)
         cursor = None if after is None else self._input(after)
         if cursor is not None and cursor.scope_uuidv4 != identity:
-            raise AccessRegistryError("CURSOR_SCOPE", "history cursor has a different Scope")
+            raise AccessRegistryError(
+                "CURSOR_SCOPE", "history cursor has a different Scope"
+            )
         with self._transaction() as db:
             self._scope(db, identity)
             if cursor is not None and not self._has_registration(db, cursor):
-                raise AccessRegistryError("CURSOR", "history cursor registration is absent")
+                raise AccessRegistryError(
+                    "CURSOR", "history cursor registration is absent"
+                )
             clause, args = "", (identity,)
             if cursor is not None:
                 clause = " AND (registered_at_us<? OR (registered_at_us=? AND scope_locator_uri>?))"
-                args += (cursor.registered_at_us, cursor.registered_at_us, cursor.scope_locator_uri)
+                args += (
+                    cursor.registered_at_us,
+                    cursor.registered_at_us,
+                    cursor.scope_locator_uri,
+                )
             rows = db.execute(
-                "SELECT * FROM scope_locators WHERE scope_uuidv4=?" + clause
+                "SELECT * FROM scope_locators WHERE scope_uuidv4=?"
+                + clause
                 + " ORDER BY registered_at_us DESC,scope_locator_uri LIMIT ?",
                 (*args, bound + 1),
             ).fetchall()
@@ -230,7 +266,8 @@ class AccessRegistry:
                 raise AccessRegistryError("NOT_FOUND", "locator registration is absent")
             row = db.execute(
                 "SELECT enabled FROM scope_locator_controls WHERE scope_uuidv4=? "
-                "AND registered_at_us=? AND scope_locator_uri=?", value.key
+                "AND registered_at_us=? AND scope_locator_uri=?",
+                value.key,
             ).fetchone()
             if row is None:
                 return False
@@ -238,7 +275,9 @@ class AccessRegistry:
                 self._corrupt()
             return bool(row[0])
 
-    def set_locator_enabled(self, registration: ScopeLocatorRegistration, enabled: bool) -> None:
+    def set_locator_enabled(
+        self, registration: ScopeLocatorRegistration, enabled: bool
+    ) -> None:
         value = self._input(registration)
         if type(enabled) is not bool:
             raise AccessRegistryError("TYPE", "enabled must be boolean")
@@ -247,13 +286,18 @@ class AccessRegistry:
                 raise AccessRegistryError("NOT_FOUND", "locator registration is absent")
             row = db.execute(
                 "SELECT 1 FROM scope_locator_controls WHERE scope_uuidv4=? "
-                "AND registered_at_us=? AND scope_locator_uri=?", value.key
+                "AND registered_at_us=? AND scope_locator_uri=?",
+                value.key,
             ).fetchone()
             if row is None:
                 # Unlike replay, this is an explicit control operation.
-                db.execute("INSERT INTO scope_locator_controls VALUES(?,?,?,?)", (*value.key, int(enabled)))
+                db.execute(
+                    "INSERT INTO scope_locator_controls VALUES(?,?,?,?)",
+                    (*value.key, int(enabled)),
+                )
             else:
                 db.execute(
                     "UPDATE scope_locator_controls SET enabled=? WHERE scope_uuidv4=? "
-                    "AND registered_at_us=? AND scope_locator_uri=?", (int(enabled), *value.key)
+                    "AND registered_at_us=? AND scope_locator_uri=?",
+                    (int(enabled), *value.key),
                 )
