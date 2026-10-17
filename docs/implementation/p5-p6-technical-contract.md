@@ -1,5 +1,13 @@
 # P5/P6 common technical contract
 
+**Current Access A3 refinement:** [domain-only registrations](access-a3-registration-boundary.md)
+now use wire `git-repo-db/p5-exchange-v3`, with role-specific Context registration
+metadata and exact registration envelopes. Earlier v2 correction notes below remain
+source-history context; they are not the current wire acceptance vocabulary. Core
+claim encodings remain distinct: RepositoryClaim has direct JSON, ScalarClaim has
+known/unknown tags. Scope/connection settings are not ordinary domain Exchange.
+
+
 ## Status and dependency boundary
 
 This is the current contract for the opt-in target, incorporating owner-accepted

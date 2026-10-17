@@ -23,6 +23,16 @@ from repo_catalog.domain.p1_coverage import derive_coverage_state
 
 
 def register_functions(db: sqlite3.Connection) -> None:
+    from repo_catalog.domain.context_registration import registration_json
+
+    def registration(kind, encoded):
+        try:
+            registration_json(kind, encoded)
+            return 1
+        except (ValueError, TypeError, RecursionError, OverflowError):
+            return 0
+
+    db.create_function("p1_registration_json", 2, registration, deterministic=True)
     db.create_function(
         "p1_text_sha256",
         1,

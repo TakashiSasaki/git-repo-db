@@ -2,21 +2,21 @@
 CREATE TABLE providers(
  service_instance_uuidv4 TEXT PRIMARY KEY CHECK(p1_uuid4(service_instance_uuidv4)),
  provider_kind TEXT NOT NULL CHECK(length(provider_kind)>0),
- configuration_json TEXT NOT NULL CHECK(p1_json(configuration_json))
+ configuration_json TEXT NOT NULL CHECK(p1_json(configuration_json) AND p1_registration_json('provider',configuration_json))
 ) STRICT, WITHOUT ROWID;
 CREATE TABLE repository_context(
  repository_uuidv4 TEXT PRIMARY KEY CHECK(p1_uuid4(repository_uuidv4)),
- configuration_json TEXT NOT NULL CHECK(p1_json(configuration_json))
+ configuration_json TEXT NOT NULL CHECK(p1_json(configuration_json) AND p1_registration_json('repository',configuration_json))
 ) STRICT, WITHOUT ROWID;
 CREATE TABLE sources(
  source_registration_uuidv4 TEXT PRIMARY KEY CHECK(p1_uuid4(source_registration_uuidv4)),
  service_instance_uuidv4 TEXT NOT NULL REFERENCES providers,
- configuration_json TEXT NOT NULL CHECK(p1_json(configuration_json))
+ configuration_json TEXT NOT NULL CHECK(p1_json(configuration_json) AND p1_registration_json('source',configuration_json))
 ) STRICT, WITHOUT ROWID;
 CREATE TABLE source_repositories(
  source_registration_uuidv4 TEXT NOT NULL REFERENCES sources,
  repository_uuidv4 TEXT NOT NULL REFERENCES repository_context,
- attributes_json TEXT NOT NULL CHECK(p1_json(attributes_json)),
+ attributes_json TEXT NOT NULL CHECK(p1_json(attributes_json) AND p1_registration_json('membership',attributes_json)),
  PRIMARY KEY(source_registration_uuidv4,repository_uuidv4)
 ) STRICT, WITHOUT ROWID;
 -- Known-positive membership cannot be removed by a partial/empty inventory.

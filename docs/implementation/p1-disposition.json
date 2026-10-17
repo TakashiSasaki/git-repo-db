@@ -9329,6 +9329,7 @@
       "purpose": "Per-body corruption incident rows driving quarantine"
     }
   },
+  "registration_routing_override": "docs/implementation/access-a3-routing.json",
   "status": "Executable isolated target representation contract, not an implemented legacy migration or production runtime switch",
   "target_contracts": {
     "context.collection_terminals": {
@@ -9389,18 +9390,18 @@
     },
     "context.providers": {
       "cross_store": "No cross-database SQLite FK. Context portable typed OIDs require explicit Core-first dependency validation under cooperating gate; paired reads pin both snapshots. Core never depends on Context. Disposable stores never establish authoritative validity.",
-      "domain": "Independently durable actual Provider/service identity and configuration",
+      "domain": "Independently durable actual Provider/service identity and descriptive domain metadata",
       "durability": "authoritative",
       "mutation": "Current candidate/configuration mutation under provenance/latest-clock contracts; immutable evidence tables have guards",
-      "retention": "Provider text and allowlisted Context evidence/configuration only; no ordinary Git-file body archive.",
+      "retention": "A3 typed domain registration metadata/attribution only; executable access/execution settings excluded. Current key-level routing overrides are in access-a3-routing.json. No ordinary Git-file body archive.",
       "semantic_key": "Direct full semantic tuple: service_instance_uuidv4. Whole JSON values are canonical lossless actual coordinates/membership, never hashes or generated row aliases. Real occurrence UUIDs identify captures, requests, attempts, or physical copies only."
     },
     "context.repository_context": {
       "cross_store": "No cross-database SQLite FK. Context portable typed OIDs require explicit Core-first dependency validation under cooperating gate; paired reads pin both snapshots. Core never depends on Context. Disposable stores never establish authoritative validity.",
-      "domain": "Independent permanent repository identity and mutable Context presentation/configuration",
+      "domain": "Independent permanent repository identity and mutable Context presentation metadata",
       "durability": "authoritative",
       "mutation": "Current candidate/configuration mutation under provenance/latest-clock contracts; immutable evidence tables have guards",
-      "retention": "Provider text and allowlisted Context evidence/configuration only; no ordinary Git-file body archive.",
+      "retention": "A3 typed domain registration metadata/attribution only; executable access/execution settings excluded. Current key-level routing overrides are in access-a3-routing.json. No ordinary Git-file body archive.",
       "semantic_key": "Direct full semantic tuple: repository_uuidv4. Whole JSON values are canonical lossless actual coordinates/membership, never hashes or generated row aliases. Real occurrence UUIDs identify captures, requests, attempts, or physical copies only."
     },
     "context.resource_relations": {
@@ -9440,15 +9441,15 @@
       "domain": "Durable known-positive actual Source/repository membership; mutable qualified attributes",
       "durability": "authoritative",
       "mutation": "Current candidate/configuration mutation under provenance/latest-clock contracts; immutable evidence tables have guards",
-      "retention": "Provider text and allowlisted Context evidence/configuration only; no ordinary Git-file body archive.",
+      "retention": "A3 typed domain registration metadata/attribution only; executable access/execution settings excluded. Current key-level routing overrides are in access-a3-routing.json. No ordinary Git-file body archive.",
       "semantic_key": "Direct full semantic tuple: source_registration_uuidv4, repository_uuidv4. Whole JSON values are canonical lossless actual coordinates/membership, never hashes or generated row aliases. Real occurrence UUIDs identify captures, requests, attempts, or physical copies only."
     },
     "context.sources": {
       "cross_store": "No cross-database SQLite FK. Context portable typed OIDs require explicit Core-first dependency validation under cooperating gate; paired reads pin both snapshots. Core never depends on Context. Disposable stores never establish authoritative validity.",
-      "domain": "Durable actual Source registration and nonsecret frozen settings",
+      "domain": "Durable actual Source registration and descriptive domain metadata",
       "durability": "authoritative",
       "mutation": "Current candidate/configuration mutation under provenance/latest-clock contracts; immutable evidence tables have guards",
-      "retention": "Provider text and allowlisted Context evidence/configuration only; no ordinary Git-file body archive.",
+      "retention": "A3 typed domain registration metadata/attribution only; executable access/execution settings excluded. Current key-level routing overrides are in access-a3-routing.json. No ordinary Git-file body archive.",
       "semantic_key": "Direct full semantic tuple: source_registration_uuidv4. Whole JSON values are canonical lossless actual coordinates/membership, never hashes or generated row aliases. Real occurrence UUIDs identify captures, requests, attempts, or physical copies only."
     },
     "context.store_identity": {
@@ -9702,7 +9703,7 @@
   },
   "target_schemas": {
     "context": {
-      "ddl_sha256": "3a05d872988cb7b20c31d236ef6cb45184f5c289a1a37c4deff3d2a173f5a3f8",
+      "ddl_sha256": "75f142fa9127ff6790f9348433f79b2f84e8fa2b20ef32b668d8ff21d924cf3b",
       "tables": {
         "collection_terminals": {
           "columns": [
@@ -10758,7 +10759,7 @@
           "primary_key": [
             "service_instance_uuidv4"
           ],
-          "sql": "CREATE TABLE providers(\n service_instance_uuidv4 TEXT PRIMARY KEY CHECK(p1_uuid4(service_instance_uuidv4)),\n provider_kind TEXT NOT NULL CHECK(length(provider_kind)>0),\n configuration_json TEXT NOT NULL CHECK(p1_json(configuration_json))\n) STRICT, WITHOUT ROWID",
+          "sql": "CREATE TABLE providers(\n service_instance_uuidv4 TEXT PRIMARY KEY CHECK(p1_uuid4(service_instance_uuidv4)),\n provider_kind TEXT NOT NULL CHECK(length(provider_kind)>0),\n configuration_json TEXT NOT NULL CHECK(p1_json(configuration_json) AND p1_registration_json('provider',configuration_json))\n) STRICT, WITHOUT ROWID",
           "triggers": {
             "provider_identity": "CREATE TRIGGER provider_identity BEFORE UPDATE ON providers WHEN NEW.service_instance_uuidv4!=OLD.service_instance_uuidv4 OR NEW.provider_kind!=OLD.provider_kind\nBEGIN SELECT RAISE(ABORT,'registered Provider identity'); END"
           },
@@ -10791,7 +10792,7 @@
           "primary_key": [
             "repository_uuidv4"
           ],
-          "sql": "CREATE TABLE repository_context(\n repository_uuidv4 TEXT PRIMARY KEY CHECK(p1_uuid4(repository_uuidv4)),\n configuration_json TEXT NOT NULL CHECK(p1_json(configuration_json))\n) STRICT, WITHOUT ROWID",
+          "sql": "CREATE TABLE repository_context(\n repository_uuidv4 TEXT PRIMARY KEY CHECK(p1_uuid4(repository_uuidv4)),\n configuration_json TEXT NOT NULL CHECK(p1_json(configuration_json) AND p1_registration_json('repository',configuration_json))\n) STRICT, WITHOUT ROWID",
           "triggers": {
             "repository_context_identity": "CREATE TRIGGER repository_context_identity BEFORE UPDATE ON repository_context WHEN NEW.repository_uuidv4!=OLD.repository_uuidv4\nBEGIN SELECT RAISE(ABORT,'permanent repository identity'); END"
           },
@@ -11382,7 +11383,7 @@
             "source_registration_uuidv4",
             "repository_uuidv4"
           ],
-          "sql": "CREATE TABLE source_repositories(\n source_registration_uuidv4 TEXT NOT NULL REFERENCES sources,\n repository_uuidv4 TEXT NOT NULL REFERENCES repository_context,\n attributes_json TEXT NOT NULL CHECK(p1_json(attributes_json)),\n PRIMARY KEY(source_registration_uuidv4,repository_uuidv4)\n) STRICT, WITHOUT ROWID",
+          "sql": "CREATE TABLE source_repositories(\n source_registration_uuidv4 TEXT NOT NULL REFERENCES sources,\n repository_uuidv4 TEXT NOT NULL REFERENCES repository_context,\n attributes_json TEXT NOT NULL CHECK(p1_json(attributes_json) AND p1_registration_json('membership',attributes_json)),\n PRIMARY KEY(source_registration_uuidv4,repository_uuidv4)\n) STRICT, WITHOUT ROWID",
           "triggers": {
             "source_positive_identity": "CREATE TRIGGER source_positive_identity BEFORE UPDATE ON source_repositories\nWHEN NEW.source_registration_uuidv4!=OLD.source_registration_uuidv4 OR NEW.repository_uuidv4!=OLD.repository_uuidv4\nBEGIN SELECT RAISE(ABORT,'known-positive Source identity is immutable'); END",
             "source_positive_no_delete": "CREATE TRIGGER source_positive_no_delete BEFORE DELETE ON source_repositories BEGIN\n SELECT RAISE(ABORT,'known-positive Source membership is durable'); END"
@@ -11434,7 +11435,7 @@
           "primary_key": [
             "source_registration_uuidv4"
           ],
-          "sql": "CREATE TABLE sources(\n source_registration_uuidv4 TEXT PRIMARY KEY CHECK(p1_uuid4(source_registration_uuidv4)),\n service_instance_uuidv4 TEXT NOT NULL REFERENCES providers,\n configuration_json TEXT NOT NULL CHECK(p1_json(configuration_json))\n) STRICT, WITHOUT ROWID",
+          "sql": "CREATE TABLE sources(\n source_registration_uuidv4 TEXT PRIMARY KEY CHECK(p1_uuid4(source_registration_uuidv4)),\n service_instance_uuidv4 TEXT NOT NULL REFERENCES providers,\n configuration_json TEXT NOT NULL CHECK(p1_json(configuration_json) AND p1_registration_json('source',configuration_json))\n) STRICT, WITHOUT ROWID",
           "triggers": {
             "source_identity": "CREATE TRIGGER source_identity BEFORE UPDATE ON sources WHEN NEW.source_registration_uuidv4!=OLD.source_registration_uuidv4 OR NEW.service_instance_uuidv4!=OLD.service_instance_uuidv4\nBEGIN SELECT RAISE(ABORT,'registered Source identity'); END"
           },
