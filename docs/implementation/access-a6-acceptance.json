@@ -141,7 +141,10 @@
         "tests/integration/access/test_review_corrections.py::test_metadata_capture_coverage_resolves_the_actual_capture_owner",
         "tests/integration/access/test_review_corrections.py::test_metadata_nonseed_keeps_physical_operational_pairing",
         "tests/integration/access/test_review_corrections.py::test_metadata_retry_cannot_change_original_intent",
-        "tests/integration/access/test_review_corrections.py::test_new_explicit_metadata_request_can_add_compatible_same_capture_facts"
+        "tests/integration/access/test_review_corrections.py::test_new_explicit_metadata_request_can_add_compatible_same_capture_facts",
+        "tests/integration/access/test_review_corrections.py::test_external_metadata_live_notes_keeps_source_capture_and_budget",
+        "tests/integration/access/test_review_corrections.py::test_external_metadata_cannot_switch_notes_source_with_explicit_progress",
+        "tests/integration/access/test_review_corrections.py::test_metadata_preflights_existing_capture_binding_without_coverage"
       ],
       "gaps": [
         "Exchange remains catalog-seed scoped with no Repository-set selector or explicit receiver-target contract. Same-seed R1 onward export is checked; cross-seed R2 import remains refused without mutation. Do not claim complete multi-repository interchange or remove pairing/selection guards."

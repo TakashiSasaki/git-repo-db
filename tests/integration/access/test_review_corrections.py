@@ -13,6 +13,7 @@ import pytest
 from repo_catalog.adapters.filesystem.access_executor import LocalDirectoryExecutor
 from repo_catalog.adapters.git.access_native import AccessGitSource
 from repo_catalog.adapters.git.native import GitNativeSource
+from repo_catalog.adapters.git.notes import GitNotesSource
 from repo_catalog.adapters.sqlite.acquisition import (
     InMemoryNotesProgress,
     UnlimitedWorkBudget,
@@ -512,4 +513,141 @@ def test_metadata_retry_cannot_change_original_intent(tmp_path, field):
     with pytest.raises((CoreFailure, CoordinationError)) as error:
         service.acquire_metadata_only(changed)
     assert error.value.code in ("INCOMPATIBLE_REPLAY", "REQUEST_SCOPE")
+    assert authoritative_rows(cat) == before
+
+
+@pytest.mark.parametrize("fmt", ["sha1", "sha256"])
+@pytest.mark.parametrize("paired", [False, True])
+@pytest.mark.parametrize("nonseed", [False, True])
+def test_external_metadata_live_notes_keeps_source_capture_and_budget(
+    tmp_path, fmt, paired, nonseed
+):
+    cat = tmp_path / "catalog"
+    seed, instance = init_catalog_stores(cat)
+    target = str(uuid4()) if nonseed else seed
+    repo = tmp_path / "source.git"
+    objects = build_sample_git_repo(repo, fmt)
+    source = GitNotesSource(GitNativeSource(repo))
+    unit = replace(
+        metadata_unit(target, fmt),
+        notes=NotesAcquisitionSpec(
+            discover_notes=True,
+            acquire_inventories=True,
+            target_oids=(objects["commit2"],),
+        ),
+    )
+    service = GitAcquisition(cat, operational=cat)
+
+    def acquire(new_request):
+        if paired:
+            return (
+                PairedAcquisitionCoordinator(cat)
+                .admit_paired(
+                    git_input=unit, notes_source=source, new_request=new_request
+                )
+                .git_report
+            )
+        return service.acquire_metadata_only(
+            unit, notes_source=source, new_request=new_request
+        )
+
+    def expenditure():
+        with closing(connect(cat / "operational.sqlite3", "operational")) as db:
+            return dict(
+                db.execute(
+                    "SELECT work_kind,spent_or_reserved FROM request_budgets WHERE request_origin_uuidv4=? AND request_uuidv4=?",
+                    (unit.capture_origin_uuidv4, unit.capture_uuidv4),
+                )
+            )
+
+    first = acquire(True)
+    spent = expenditure()
+    before = authoritative_rows(cat)
+    repeated = acquire(False)
+    later = expenditure()
+    assert all(later[kind] >= amount for kind, amount in spent.items())
+    assert later["metadata_units"] > spent["metadata_units"]
+    assert repeated.notes_discoveries[0].captures == first.notes_discoveries[0].captures
+    assert first.note_acquisitions[0].body_retained
+    capture = first.notes_discoveries[0].captures[0]
+    assert capture.repository_uuidv4 == target
+    with closing(GitCore(cat / "core.sqlite3")) as core:
+        assert core.catalog_identity() == (seed, instance)
+        assert (
+            core.read_note(capture, objects["commit2"], objects["note_blob"])
+            == b"Reviewed-by: CI\n"
+        )
+    assert authoritative_rows(cat) == before
+
+
+def test_external_metadata_cannot_switch_notes_source_with_explicit_progress(
+    tmp_path, monkeypatch
+):
+    cat = tmp_path / "catalog"
+    seed, _ = init_catalog_stores(cat)
+    sources = []
+    for name in ("a.git", "b.git"):
+        repo = tmp_path / name
+        build_sample_git_repo(repo)
+        sources.append(GitNotesSource(GitNativeSource(repo)))
+    unit = replace(metadata_unit(seed), notes=NotesAcquisitionSpec(discover_notes=True))
+    work, progress = UnlimitedWorkBudget(), InMemoryNotesProgress()
+    service = GitAcquisition(cat)
+    service.acquire_metadata_only(
+        unit, notes_source=sources[0], work=work, progress=progress
+    )
+    before = authoritative_rows(cat)
+    monkeypatch.setattr(
+        sources[1],
+        "discover",
+        lambda *args, **kwargs: pytest.fail("changed source was read"),
+    )
+    with pytest.raises(CoreFailure) as error:
+        service.acquire_metadata_only(
+            unit, notes_source=sources[1], work=work, progress=progress
+        )
+    assert error.value.code == "INCOMPATIBLE_REPLAY"
+    assert authoritative_rows(cat) == before
+
+
+@pytest.mark.parametrize("paired", [False, True])
+@pytest.mark.parametrize("field", ["repository", "source", "ref", "root"])
+def test_metadata_preflights_existing_capture_binding_without_coverage(
+    tmp_path, paired, field
+):
+    cat = tmp_path / "catalog"
+    target, _ = init_catalog_stores(cat)
+    unit = metadata_unit(target)
+    capture = Capture(
+        str(uuid4()),
+        str(uuid4()),
+        str(uuid4()) if field == "repository" else target,
+        "reported-source",
+        "refs/notes/original",
+        unit.nominal_objects[0],
+    )
+    with closing(GitCore(cat / "core.sqlite3")) as core:
+        core.admit_repository(capture.repository_uuidv4)
+        core.admit_capture(capture)
+    changes = {
+        "repository": {"repository_uuidv4": target},
+        "source": {"source": "other-original-source"},
+        "ref": {"ref": "refs/notes/other"},
+        "root": {"root": OID("sha1", "2" * 40)},
+    }
+    candidate = replace(capture, **changes[field])
+    unit = replace(unit, notes=NotesAcquisitionSpec(explicit_captures=(candidate,)))
+    before = authoritative_rows(cat)
+    with pytest.raises(CoreFailure) as error:
+        if paired:
+            PairedAcquisitionCoordinator(cat).admit_paired(
+                git_input=unit, new_request=True
+            )
+        else:
+            GitAcquisition(cat, operational=cat).acquire_metadata_only(
+                unit, new_request=True
+            )
+    assert error.value.code == (
+        "REPOSITORY_SCOPE" if field == "repository" else "INCOMPATIBLE_REPLAY"
+    )
     assert authoritative_rows(cat) == before

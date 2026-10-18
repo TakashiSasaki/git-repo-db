@@ -55,6 +55,17 @@ declared native OID/type/size/digest rather than raw body staging. Repeat delive
 still costs actual work. An explicit new request may add compatible facts under
 the same original Capture pair; changing an old request must fail before admission.
 
+For live Notes inside metadata input, give standalone and paired preparation the
+exact `request_scope(target, actual_instance, attribution, notes_source.scope)`.
+Persist that supplied source scope/format in semantic intent too: explicit caller
+work/progress bypasses durable-ledger scope checks. An independent counterexample
+returned A's cached discovery after changing the supplied source to B. Do not
+require an attributed external Capture.source to equal outer intake attribution.
+Before admission compare every supplied Notes Capture with an existing same-pair
+binding (owner/source/ref/root), including units without Capture Coverage. Core's
+later immutable refusal otherwise leaves earlier standalone rows behind. Charge
+actual indexed lookups and retain paired rollback controls.
+
 Use `python -m pytest -q tests/integration/access/test_review_corrections.py`.
 The independent R0/R1/R2 probe also demonstrates that Exchange still needs an
 explicit repository-set selection/acceptance contract; do not remove its mismatch

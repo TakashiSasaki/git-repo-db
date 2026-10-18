@@ -47,6 +47,8 @@ does not claim that an incorrectly attributed UUID or remote exploit was observe
 | R3-01 | Medium; `application/acquisition.py:818` | Seed R0 plus registered R1: external `GitMetadataInput(R1, ...)` rejects without admission. Allow an explicitly selected nonseed target while keeping actual Core/Operational seed+instance pairing. |
 | R3-02 | High; `application/acquisition.py:849`, `:853` | A unit selecting R0 accepts a nested RepositoryClaim for registered R1 and reports R0. Validate every repository-owned nested claim/observation/Notes capture and repository/Capture Coverage before any Core admission. Global OIDs retain their independent meaning. |
 | Root-M01 | Medium; `application/acquisition.py:826` | Deliver a valid unit, then change source/time/nominal objects under the same request. The baseline accepts it. Freeze complete bounded semantic input in request progress without raw native bodies; preserve actual repeat-work charging and explicit new-request compatible additions under the same Capture. |
+| R3-P01 | High, post-fix counterexample at `f81a399`; metadata/paired scope preparation | Live Notes with durable progress fails `REQUEST_SCOPE`; shared explicit memory progress accepts source A→B and returns A's saved observation. Bind actual Notes source scope/format in saved intent and its exact target/instance/source request scope in both paths. Preserve externally reported Capture source independently. |
+| R3-P02 | High, post-fix counterexample at `f81a399`; metadata Capture preflight | An existing foreign Capture pair supplied with a falsified selected owner, without Capture Coverage, is refused only after standalone claim writes. Preflight every incoming Notes Capture against its complete stored original key (owner/source/ref/root), with metered indexed lookups, before any Core admission. |
 | R4-01/02 | P3; acceptance ledger items 7/16/24 | Scope URI tests do not prove positive Repository grammar, MAX ties do not prove all-history continuity, and ADR approval is not an implementation-check gap. Add existing positive/full-history references and separate the gates. |
 | R3-03 | Medium; `application/exchange.py:306`, `:327`, `:367`, `:1319` | Actual R1 acquisition in seed-R0 catalog exports an R0 envelope containing R1 evidence. Seed-R2 import rejects without mutation; same-seed onward export preserves R1 exactly. Cross-seed Exchange remains an explicit incomplete contract, below. |
 
@@ -58,6 +60,15 @@ Repository parent, wrong expected pairing error and matching an error's detail
 instead of its typed code) were corrected without changing product guards. Raw
 failed outputs are retained outside the checkout. These failures are not relabeled
 as successful executions. The extended 46-case regression checkpoint passed.
+
+Separate post-fix review then reproduced the live Notes and existing-Capture cases
+above. Nine new source-scope regressions failed on the first correction. Its broad
+run was intentionally interrupted **before further edits**, after 1,401 passes,
+exit 2, and is not complete acceptance. Partial JUnit/journal and the interruption
+reason are retained. The subsequent correction binds actual Notes source/format
+for explicit progress too and preflights complete stored Capture identity. Its
+extended **63-case regression checkpoint passed**; final broad execution is bound
+separately to the new source commit.
 
 The original A6-H01 fix was independently checked using an OS/environment
 checkpoint and a second SQLite handle, without importing the existing test
