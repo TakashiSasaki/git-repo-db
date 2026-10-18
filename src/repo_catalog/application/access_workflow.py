@@ -299,6 +299,9 @@ class AccessWorkflow:
                     raise AccessRegistryError(
                         "GRANT_CHANGED", "reviewed grant changed before handoff"
                     )
+                # Cancellation/domain stop may occur during the final SQLite
+                # read too. Recheck after all potentially blocking preparation.
+                guard()
                 self._ready()
                 self._age(value)
                 return operation(descriptor, value.plan, check_binding)

@@ -53,7 +53,10 @@ from repo_catalog.domain.acquisition import (
     ProviderIntakeBatch,
 )
 from repo_catalog.domain.git_native import DECODER, DECODER_VERSION, parse_metadata
-from repo_catalog.domain.native_acquisition import native_request_intent
+from repo_catalog.domain.native_acquisition import (
+    metadata_input_intent,
+    native_request_intent,
+)
 from repo_catalog.domain.notes import NotesInventory
 from repo_catalog.domain.p1_context import FieldClock, ResourceKey
 from repo_catalog.domain.p1_coordination import CoordinationError, RequestIdentity
@@ -116,6 +119,9 @@ class _PreparedCore:
     def catalog_identity(self):
         return self.core.catalog_identity()
 
+    def metadata_capture_repository(self, pair):
+        return _capture_repository(self.core, pair)
+
     def __getattr__(self, name):
         if name not in self._methods:
             raise AttributeError(name)
@@ -145,6 +151,45 @@ def _open_core(target: GitCore | Path | str) -> Iterator[GitCore]:
         yield core
     finally:
         core.close()
+
+
+def _capture_repository(core, pair):
+    """Read only the existing Capture owner, including prepared paired input."""
+    if isinstance(core, _PreparedCore):
+        return core.metadata_capture_repository(pair)
+    rows = core.sql(
+        "SELECT repository_uuidv4 FROM captures WHERE capture_origin_uuidv4=? AND capture_uuidv4=?",
+        tuple(pair),
+    )
+    return rows[0][0] if rows else None
+
+
+def _validate_metadata_capture_coverage(core, unit, work):
+    scopes = (
+        *unit.coverage_scopes,
+        *(claim.scope for claim in unit.coverage_claims),
+        *(proof[0].scope for proof in unit.coverage_proofs),
+    )
+    incoming = {}
+    if unit.notes is not None:
+        for capture in (
+            *unit.notes.explicit_captures,
+            *(claim.capture for claim in unit.notes.external_claims),
+            *(group.capture for group in unit.notes.external_groups),
+        ):
+            incoming[capture.pair] = capture.repository_uuidv4
+    for scope in scopes:
+        if scope.owner_kind == "capture":
+            _charge(work, "metadata_units", 1)
+            pair = tuple(scope.coordinates[:2])
+            existing = _capture_repository(core, pair)
+            owners = [
+                owner for owner in (existing, incoming.get(pair)) if owner is not None
+            ]
+            if not owners or any(owner != unit.repository_uuidv4 for owner in owners):
+                raise CoreFailure(
+                    "REPOSITORY_SCOPE", "metadata", "foreign or absent Capture owner"
+                )
 
 
 @contextmanager
@@ -812,16 +857,10 @@ class GitAcquisition:
         request_identity: RequestIdentity | None = None,
     ) -> GitAcquisitionReport:
         """Admit a GitMetadataInput unit (with optional retained NativeObjects and Notes)."""
+        semantic_intent = metadata_input_intent(unit)
         with ExitStack() as stack:
             core_cap = stack.enter_context(_open_core(self.core))
             core_cap.ensure_available()
-            actual_repo, _ = core_cap.catalog_identity()
-            if unit.repository_uuidv4 != actual_repo:
-                raise CoreFailure(
-                    "REPOSITORY_SCOPE",
-                    unit.repository_uuidv4,
-                    "unit repository_uuidv4 does not match Core store_identity",
-                )
             active_work, active_progress = stack.enter_context(
                 self._resolve_budget_and_progress(
                     core_cap,
@@ -830,12 +869,24 @@ class GitAcquisition:
                     unit.capture_uuidv4,
                     work,
                     progress,
+                    repository_uuidv4=unit.repository_uuidv4,
                     new_request=new_request,
                     request_identity=request_identity,
                 )
             )
 
             _charge(active_work, "metadata_units", 1)
+            _validate_metadata_capture_coverage(core_cap, unit, active_work)
+            intent_scope = encode(
+                ["p5-metadata-intent", unit.capture_origin_uuidv4, unit.capture_uuidv4]
+            )
+            if (
+                active_progress.save_once(intent_scope, semantic_intent)
+                != semantic_intent
+            ):
+                raise CoreFailure(
+                    "INCOMPATIBLE_REPLAY", "metadata", "request intent changed"
+                )
             core_cap.admit_repository(unit.repository_uuidv4)
 
             admitted_order: list[OID] = []

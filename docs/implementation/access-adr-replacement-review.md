@@ -1,5 +1,10 @@
 # ADR 0003 -> 0029 replacement review ledger
 
+**Independent follow-up:** the [A6 independent review](access-a6-independent-review.md)
+includes a 43-row source-clause map and current/historical reference classification.
+Whole-record replacement still needs explicit human acceptance; 0003 remains in
+HEAD and 0029 remains proposed with no fabricated acceptance date.
+
 Status: author-performed source review on 2026-10-17; no retirement, complete ADR
 acceptance, main merge or independent-agent approval is claimed. Owner-confirmed
 Scope/Access choices are binding. This is the concrete A0 lifecycle follow-up and

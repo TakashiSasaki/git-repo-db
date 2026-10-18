@@ -1,0 +1,268 @@
+{
+  "reviewer": "R4",
+  "source_commit": "f4d0d448fca5925bfbe4f8cb8345c3bd0df7de60",
+  "source_tree": "a7b4521fb7fa6562c8e0bf67e2766743e0b82c5b",
+  "source_path": "docs/adr/0003-append-only-git-core-and-context-store.md",
+  "successor_path": "docs/adr/0029-independent-access-store.md",
+  "conclusion": "No material loss of a still-binding ADR0003 clause identified in the proposed successor, after applying already accepted ADR0004/0014/0026/0028 scoped refinements. This is preservation review, not owner acceptance of the whole replacement or permission to retire ADR0003.",
+  "clauses": [
+    {
+      "source_lines": "3",
+      "clause": "Post-corruption override",
+      "successor_lines": "264, 268, 345, 351, 354",
+      "disposition": "Preserved with existing ADR0026: ordinary stop, read-only source, fresh verified baseline, admissible merge; no quarantine/count resurrection."
+    },
+    {
+      "source_lines": "5-12",
+      "clause": "Accepted target/baseline and scoped metadata-only verifier ownership",
+      "successor_lines": "24, 26, 310, 331, 345, 358",
+      "disposition": "Preserve historical decision date/baseline as provenance; successor is proposed until whole replacement approval. ADR0004/0008 remain active; no new acceptance date is invented."
+    },
+    {
+      "source_lines": "16-22",
+      "clause": "Domain-based partition, local Git subject, historical truth distinct from default runtime",
+      "successor_lines": "47, 48, 53, 55, 182, 197, 342",
+      "disposition": "Partition by described domain; immutable Provider observations remain Context. Current Catalog3 Schema21 is still the default."
+    },
+    {
+      "source_lines": "28",
+      "clause": "Core authority and INSERT-only",
+      "successor_lines": "47, 184, 189, 289, 344",
+      "disposition": "No application UPDATE/DELETE/REPLACE, destructive correction, mutable progress/revision or GC."
+    },
+    {
+      "source_lines": "29",
+      "clause": "Durable mutable-authoritative Context, exact text/evidence",
+      "successor_lines": "48, 197, 202, 347, 348",
+      "disposition": "Not disposable; preserve latest-state/conflicts and separately governed text GC."
+    },
+    {
+      "source_lines": "30",
+      "clause": "Operational execution responsibility and retained PF guarantees",
+      "successor_lines": "50, 275, 280, 352, 354",
+      "disposition": "Reconstructible work/attempts/cache; no authoritative truth or zero-cost resumed request after loss."
+    },
+    {
+      "source_lines": "31",
+      "clause": "Derivative Search, explicit rebuild",
+      "successor_lines": "51, 352, 353",
+      "disposition": "Correct-authority scan fallback with diagnostics; explicit Search create/rebuild; Access is not domain Search authority."
+    },
+    {
+      "source_lines": "33",
+      "clause": "Four physical/logical stores; Git-only Context independence",
+      "successor_lines": "43, 47, 53, 55, 67, 349",
+      "disposition": "The explicit four-store count is the substantive change to five responsibility classes. Offline Git-only use still does not require initializing Context or Access. No automatic runtime switch."
+    },
+    {
+      "source_lines": "37",
+      "clause": "Core rule1 metadata-only and precise checked-byte admission",
+      "successor_lines": "343, 345, 358, 360",
+      "disposition": "Qualified metadata without bytes/rehash/Context; checked bytes still require identity/type/size and atomic intrinsic structure; unknown child is not verified closure."
+    },
+    {
+      "source_lines": "38",
+      "clause": "Core rule2 actual observations, original time/provenance and ref change retention",
+      "successor_lines": "84, 184, 189, 279, 343, 350",
+      "disposition": "No URL/configuration rewrite of facts, no fabricated old observations, prior captures and ref history remain."
+    },
+    {
+      "source_lines": "39",
+      "clause": "Core rule3 unreachable retention and no admitted-content GC",
+      "successor_lines": "289, 343, 350",
+      "disposition": "Nonacquisition is distinct from deleting admitted evidence/bytes; apply ADR0014 retained-body scope."
+    },
+    {
+      "source_lines": "40",
+      "clause": "Core rule4 technical rows, exact replay, no replacement loopholes",
+      "successor_lines": "289, 344",
+      "disposition": "Explicit application-visible INSERT-only includes technical rows; full replay comparison; no REPLACE/upsert/drop-recreate loopholes."
+    },
+    {
+      "source_lines": "41",
+      "clause": "Core rule5 remodel prior mutable columns/revision",
+      "successor_lines": "289, 344",
+      "disposition": "No mutable verified/completion/progress/revision pointer in Core; implementation inventory remains engineering work."
+    },
+    {
+      "source_lines": "42",
+      "clause": "Core rule6 decoder provenance, no generic winner, integrity/no in-place repair",
+      "successor_lines": "345, 358",
+      "disposition": "Preserve precise decoder/local checks and atomic structure; ADR0026 replaces obsolete quarantine/count/in-place post-fault mechanisms."
+    },
+    {
+      "source_lines": "43",
+      "clause": "Core rule7 permanent repository UUID and minimal provenance",
+      "successor_lines": "62, 67, 84, 184, 189, 346",
+      "disposition": "Minimal actual Core evidence stays understandable without Provider/Source/Access foreign rows; names/endpoints are not entity identity."
+    },
+    {
+      "source_lines": "47",
+      "clause": "Context rule1 current-state/field-clock/Source/children/head-base semantics",
+      "successor_lines": "48, 202, 206, 347",
+      "disposition": "Q01-Q04, missing/null, alternatives, real clocks, required children, actual role/head/base and no hidden full edit-history archive remain."
+    },
+    {
+      "source_lines": "48",
+      "clause": "Context rule2 association ownership and dependency direction",
+      "successor_lines": "53, 67, 347, 349",
+      "disposition": "PR-Git association is Context; underlying Git capture is independently valid in Core; portable typed references only; no reverse required row."
+    },
+    {
+      "source_lines": "49",
+      "clause": "Context rule3 split mixed tables by meaning",
+      "successor_lines": "199, 202, 348",
+      "disposition": "Classify fields, not whole-table rename/move; a PR trigger does not move a Git fact to Context."
+    },
+    {
+      "source_lines": "50",
+      "clause": "Context rule4 Provider text, exact UTF8/SHA256 and lifetime",
+      "successor_lines": "48, 348, 353",
+      "disposition": "Exact text and digest collision checks belong in Context; future Context GC policy stays distinct."
+    },
+    {
+      "source_lines": "51",
+      "clause": "Context rule5 no Publication/general history/winner",
+      "successor_lines": "255, 294, 348",
+      "disposition": "No universal bundle/seal/eligibility owner, API full edit log, parser winner or domain publication gate."
+    },
+    {
+      "source_lines": "55",
+      "clause": "Git-only init/local input/query/export/backup independence",
+      "successor_lines": "53, 55, 56, 349",
+      "disposition": "Offline Core operations do not require Context/Access/credentials/network; metadata-only remains valid; retained-byte output remains separate."
+    },
+    {
+      "source_lines": "56",
+      "clause": "Cross-file references and typed dependency validation",
+      "successor_lines": "65, 67, 349, 350",
+      "disposition": "No assumed SQLite cross-file FK. Application validation and conservative absent/stale/conflicting dependencies remain required."
+    },
+    {
+      "source_lines": "57",
+      "clause": "Cross-store write truth and idempotent failure recovery",
+      "successor_lines": "284, 349, 353",
+      "disposition": "Core first remains valid if later Context fails; no fabricated closure, no extension of disposable PF-P07 relaxation to two authorities."
+    },
+    {
+      "source_lines": "58",
+      "clause": "Pinned Core or coherent paired read snapshots",
+      "successor_lines": "273, 349, 350",
+      "disposition": "No mixing versions and claiming coverage; freeze Access settings before external work, not new cross-authority validity owner."
+    },
+    {
+      "source_lines": "59",
+      "clause": "Retention/cascade and known-positive boundaries",
+      "successor_lines": "206, 208, 289, 343, 350",
+      "disposition": "Context/Provider/Source/Access changes never cascade to admitted Git facts; no fake absence from inventory loss."
+    },
+    {
+      "source_lines": "60",
+      "clause": "Git-only versus paired full backup; formats/hashes/pairing/no overwrite",
+      "successor_lines": "242, 250, 255, 351, 354",
+      "disposition": "Preserved under current ADR0026; old CAS41 counter is historical, actual checks and atomic no-overwrite remain. No whole-repository restorability claim."
+    },
+    {
+      "source_lines": "61",
+      "clause": "Search correct-source fallback and no implicit hydration",
+      "successor_lines": "51, 352, 353",
+      "disposition": "Explicit correct-authority scan fallback with diagnostics and rebuild/creation. Metadata-only does not require raw-body fetch."
+    },
+    {
+      "source_lines": "62",
+      "clause": "Operational loss cannot invalidate authoritative data",
+      "successor_lines": "50, 275, 280, 352",
+      "disposition": "Disposable execution/cache state is not Context and cannot erase domain authority or silently replenish old budget."
+    },
+    {
+      "source_lines": "70",
+      "clause": "PF-P06 placement replacement",
+      "successor_lines": "43, 47, 353",
+      "disposition": "Five responsibility classes; preserve durable truth versus disposable execution/search separation."
+    },
+    {
+      "source_lines": "71",
+      "clause": "PF-P08 full catalog backup",
+      "successor_lines": "250, 351, 353",
+      "disposition": "Core+Context paired domain backup and truthful Git-only scope stay valid without Access; Access backup is separate."
+    },
+    {
+      "source_lines": "72",
+      "clause": "PF-P05 no current GC; future Context GC01/02; GC03/04 open",
+      "successor_lines": "353, 354",
+      "disposition": "No current domain-text GC; future conservative Context-only GC; no extension to Core."
+    },
+    {
+      "source_lines": "73",
+      "clause": "PF-P14/15 correct-authority Search",
+      "successor_lines": "352, 353",
+      "disposition": "Core/Context-specific direct fallback and truthful completeness."
+    },
+    {
+      "source_lines": "74",
+      "clause": "PF-P07 relaxed disposable atomicity not authoritative pairing",
+      "successor_lines": "284, 349, 353",
+      "disposition": "No excuse for inconsistent Core/Context writes, snapshots or backups."
+    },
+    {
+      "source_lines": "76",
+      "clause": "Not reopened UUID/Q01-Q04/Coverage/trust/time/PF/ADR0001",
+      "successor_lines": "262, 285, 301, 347, 354, 355",
+      "disposition": "Apply current0014/0026/0028 scopes; preserve classified microseconds, original Capture pair, finite cumulative work, five-column Coverage and Source positive evidence."
+    },
+    {
+      "source_lines": "80-82",
+      "clause": "Non-goals, no table-count guess, constrained engineering work",
+      "successor_lines": "26, 301, 312, 355, 376",
+      "disposition": "Prose alone is not implementation, migration, GC, merge or runtime activation. Names/DDL/fences are engineering work within settled decisions."
+    },
+    {
+      "source_lines": "83",
+      "clause": "Deferred DS-R01/R03-R08 and source-unclear CAS IDs",
+      "successor_lines": "354, 355",
+      "disposition": "Deferred scope is preserved. Use explicit original list in retirement writeup; DS-R02 future Context textGC has its own PF-P05 constraints and is not a new architecture question."
+    },
+    {
+      "source_lines": "89",
+      "clause": "Acceptance1 independent Git-only + zero-body roundtrip",
+      "successor_lines": "343, 349, 351, 355",
+      "disposition": "Local actual capture/query plus backup/restore and metadata-only support remain acceptance requirements, not prose PASS."
+    },
+    {
+      "source_lines": "90",
+      "clause": "Acceptance2 append-only attacks and ref rewrite retention",
+      "successor_lines": "343, 344, 350, 355",
+      "disposition": "No UPDATE/DELETE/REPLACE including recovery/hydration/administration; prior actual refs/objects remain."
+    },
+    {
+      "source_lines": "91",
+      "clause": "Acceptance3 Provider/current-state outside Core and no false full restore",
+      "successor_lines": "348, 351, 355",
+      "disposition": "Context current-value behavior/conflicts remain; missing Context cannot become full restoration success."
+    },
+    {
+      "source_lines": "92",
+      "clause": "Acceptance4 PR-triggered independent Core and honest partial writes",
+      "successor_lines": "349, 350, 355",
+      "disposition": "No false closure/coverage after partial writes; unverified metadata is not inherently failed bytes."
+    },
+    {
+      "source_lines": "93",
+      "clause": "Acceptance5 retained bytes/digest/identity/scope/fallback",
+      "successor_lines": "351, 352, 354, 355",
+      "disposition": "Actual domain/retained-byte validation and classified trust apply, not old quarantine counters or archive promise."
+    },
+    {
+      "source_lines": "94",
+      "clause": "Acceptance6 exact effective tree, independent review, dev/release distinction",
+      "successor_lines": "301, 335, 355",
+      "disposition": "Review and execution require exact source; owner approval, merge and release qualification remain distinct."
+    },
+    {
+      "source_lines": "96",
+      "clause": "Boundary freeze is not evidence that implementation passed",
+      "successor_lines": "24, 26, 301, 355",
+      "disposition": "No self-certification by documentation."
+    }
+  ]
+}

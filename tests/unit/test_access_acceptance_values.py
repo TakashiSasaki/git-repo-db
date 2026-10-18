@@ -31,8 +31,8 @@ def receipts(ledger, tmp_path):
 
 def test_ledger_has_scoped_coverage_and_explicit_remaining_gates(ledger):
     result = audit(ROOT, ledger)
-    assert result["requirement_counts"] == {"covered": 23, "partial": 2, "deferred": 1}
-    assert result["incomplete_requirements"] == [11, 15, 16]
+    assert result["requirement_counts"] == {"covered": 24, "partial": 1, "deferred": 1}
+    assert result["incomplete_requirements"] == [11, 15]
     assert result["executed_nodes"] is None and not result["node_set_matched"]
 
 

@@ -1,0 +1,306 @@
+[
+  {
+    "path": ".agents/skills/three-store-invariants/SKILL.md",
+    "sha256": "1f269a77d890c6c7e70b838ebee4479f6c45aa028dbf9c84c74f80220f99757e",
+    "hits": [
+      {
+        "line": 8,
+        "text": "**Applicability:** The concrete tables, methods and recipes below describe the **implemented Core Schema 21 / Operational 1 / Search 1 baseline**. For target work, read the [ADR index](../../../docs/adr/README.md) and [transition plan](../../../docs/architecture/git-core-context-transition-plan.md). [ADR 0003](../../../docs/adr/0003-append-only-git-core-and-context-store.md) separates independently durable Context from INSERT-only Git Core; [ADR 0014](../../../docs/adr/0014-history-and-notes-catalog-without-file-archive.md) excludes ordinary file-body archival. [ADR 0026](../../../docs/adr/0026-stop-salvage-restore-merge-after-corruption.md) replaces quarantine/count/release and same-DB continuation with immediate catalog recovery. [ADR 0027](../../../docs/adr/0027-unauthenticated-external-capture-origin-reports.md) fixes unauthenticated external-origin reports without application PKI/signatures. Preserve unaffected safety principles; do not copy superseded baseline mechanisms into the target or infer new execution permission from this skill."
+      }
+    ],
+    "classification": "current authority/procedure or current banner on historical material",
+    "retirement_action": "After whole replacement approval, update only current authority wording and actual live link to successor; retain historical baseline statements and correct default-runtime scope."
+  },
+  {
+    "path": "README.md",
+    "sha256": "525e21b1a89b2b823c079993ead33bbedbae15a771ad1a144af78de9f003e0ec",
+    "hits": [
+      {
+        "line": 13,
+        "text": "- **New accepted architecture (design-only, not yet implemented)**: [ADR 0003 \u2014 append-only Git Core + durable Context](docs/adr/0003-append-only-git-core-and-context-store.md); see [transition plan](docs/architecture/git-core-context-transition-plan.md)."
+      }
+    ],
+    "classification": "current authority/procedure or current banner on historical material",
+    "retirement_action": "After whole replacement approval, update only current authority wording and actual live link to successor; retain historical baseline statements and correct default-runtime scope."
+  },
+  {
+    "path": "docs/adr/0002-three-store-boundary-architecture.md",
+    "sha256": "426305e4529bdec344f0f44a5d107bfed97bd1ee7fa0bb3c70bb4a478cd4c4b2",
+    "hits": [
+      {
+        "line": 3,
+        "text": "- **Status:** Accepted and implemented historical Three-Store baseline; **partially superseded for the new target** by ADR 0003 (`docs/adr/0003-append-only-git-core-and-context-store.md`)."
+      }
+    ],
+    "classification": "current authority/procedure or current banner on historical material",
+    "retirement_action": "After whole replacement approval, update only current authority wording and actual live link to successor; retain historical baseline statements and correct default-runtime scope."
+  },
+  {
+    "path": "docs/adr/0004-metadata-only-git-core.md",
+    "sha256": "c688123e3e9c2b05955c1d2e2bf37da37ed8e656c9d63cde170c556eca49ecc7",
+    "hits": [
+      {
+        "line": 8,
+        "text": "- **Predecessor:** [ADR 0003](0003-append-only-git-core-and-context-store.md), narrowly superseded as specified below."
+      }
+    ],
+    "classification": "historical accepted-decision predecessor/dependency link with continuing invariants",
+    "retirement_action": "Preserve historical dependency as pinned Git history; add/retarget current authority guidance to successor where required. Do not rewrite original accepted decision as a new approval."
+  },
+  {
+    "path": "docs/adr/0005-common-oid-identity-with-attributed-metadata.md",
+    "sha256": "ee8aa7529abf992a7dee02932e9df4f683035cba064e52a28c4e6358426162e3",
+    "hits": [
+      {
+        "line": 7,
+        "text": "- **Dependency:** [ADR 0004 / GCTX-M01](0004-metadata-only-git-core.md) (mandatory byte-free Git Core), stacked on [ADR 0003](0003-append-only-git-core-and-context-store.md) (append-only Git Core and durable Context)."
+      }
+    ],
+    "classification": "historical accepted-decision predecessor/dependency link with continuing invariants",
+    "retirement_action": "Preserve historical dependency as pinned Git history; add/retarget current authority guidance to successor where required. Do not rewrite original accepted decision as a new approval."
+  },
+  {
+    "path": "docs/adr/0006-field-claims-and-observation-scoped-relations.md",
+    "sha256": "63395979dd42ffbbf0947a13ee6e7c831eef2ebe553ec1c695a989e3d44562e3",
+    "hits": [
+      {
+        "line": 7,
+        "text": "- **Dependencies:** [ADR 0004 / GCTX-M01](0004-metadata-only-git-core.md) and [ADR 0005 / GCTX-M02](0005-common-oid-identity-with-attributed-metadata.md), under [ADR 0003](0003-append-only-git-core-and-context-store.md)."
+      }
+    ],
+    "classification": "historical accepted-decision predecessor/dependency link with continuing invariants",
+    "retirement_action": "Preserve historical dependency as pinned Git history; add/retarget current authority guidance to successor where required. Do not rewrite original accepted decision as a new approval."
+  },
+  {
+    "path": "docs/adr/0007-verification-aware-git-metadata-reads.md",
+    "sha256": "29458a188e759b3b54868733a271c103b94b5833f8def7bc56c2f0cd59d17938",
+    "hits": [
+      {
+        "line": 9,
+        "text": "- **Dependencies:** [ADR 0003](0003-append-only-git-core-and-context-store.md) (append-only Git Core + Context), [ADR 0004 / GCTX-M01](0004-metadata-only-git-core.md) (metadata without bytes), [ADR 0005 / GCTX-M02](0005-common-oid-identity-with-attributed-metadata.md) (common nominal OID identity), and [ADR 0006 / GCTX-M03](0006-field-claims-and-observation-scoped-relations.md) (field claims and typed relation groups)."
+      }
+    ],
+    "classification": "historical accepted-decision predecessor/dependency link with continuing invariants",
+    "retirement_action": "Preserve historical dependency as pinned Git history; add/retarget current authority guidance to successor where required. Do not rewrite original accepted decision as a new approval."
+  },
+  {
+    "path": "docs/adr/0008-domain-split-git-verification-ownership.md",
+    "sha256": "aa4399ba8b74a9f2b2268c4599e9e7705fffd52affbdcfb59fa7b11730e54d49",
+    "hits": [
+      {
+        "line": 9,
+        "text": "- **Dependencies:** [ADR 0003](0003-append-only-git-core-and-context-store.md), [ADR 0004 / GCTX-M01](0004-metadata-only-git-core.md), [ADR 0005 / GCTX-M02](0005-common-oid-identity-with-attributed-metadata.md), [ADR 0006 / GCTX-M03](0006-field-claims-and-observation-scoped-relations.md), and [ADR 0007 / GCTX-M04](0007-verification-aware-git-metadata-reads.md)."
+      }
+    ],
+    "classification": "historical accepted-decision predecessor/dependency link with continuing invariants",
+    "retirement_action": "Preserve historical dependency as pinned Git history; add/retarget current authority guidance to successor where required. Do not rewrite original accepted decision as a new approval."
+  },
+  {
+    "path": "docs/adr/0009-bounded-byte-admission-and-physical-health.md",
+    "sha256": "077640ae0d9ad0af6290f59c4f8229efaf642d28586f4ea1748e8fe73d3a55c8",
+    "hits": [
+      {
+        "line": 9,
+        "text": "- **Depends on:** [ADR 0003](0003-append-only-git-core-and-context-store.md) (four-store append-only boundary), [ADR 0004 / GCTX-M01](0004-metadata-only-git-core.md) (metadata-only requirement), [ADR 0005 / GCTX-M02](0005-common-oid-identity-with-attributed-metadata.md) (nominal OID), [ADR 0006 / GCTX-M03](0006-field-claims-and-observation-scoped-relations.md) (claims/relation groups), [ADR 0007 / GCTX-M04](0007-verification-aware-git-metadata-reads.md) (read policy), and [ADR 0008 / GCTX-M05](0008-domain-split-git-verification-ownership.md) (verifier responsibility)."
+      }
+    ],
+    "classification": "historical accepted-decision predecessor/dependency link with continuing invariants",
+    "retirement_action": "Preserve historical dependency as pinned Git history; add/retarget current authority guidance to successor where required. Do not rewrite original accepted decision as a new approval."
+  },
+  {
+    "path": "docs/adr/0010-operation-scoped-cas-physical-integrity.md",
+    "sha256": "e36ac6a068441713efbe00084c4e9ce8aff1e2caf12a64e1fa7473c45bde751f",
+    "hits": [
+      {
+        "line": 10,
+        "text": "- **Earlier decisions:** [ADR 0003](0003-append-only-git-core-and-context-store.md) and [ADR 0004 / GCTX-M01](0004-metadata-only-git-core.md) through [ADR 0008 / GCTX-M05](0008-domain-split-git-verification-ownership.md). This is a design-only step stacked above still-unmerged PRs #44\u2013#50."
+      }
+    ],
+    "classification": "historical accepted-decision predecessor/dependency link with continuing invariants",
+    "retirement_action": "Preserve historical dependency as pinned Git history; add/retarget current authority guidance to successor where required. Do not rewrite original accepted decision as a new approval."
+  },
+  {
+    "path": "docs/adr/0012-append-only-multiple-cas-physical-instances.md",
+    "sha256": "5f9a1bf44c7a6b16db5dca66cba5360d20836b0cb83700b758c38ebd07b5af10",
+    "hits": [
+      {
+        "line": 11,
+        "text": "- **Earlier decisions:** [ADR 0003](0003-append-only-git-core-and-context-store.md), [ADR 0004 / GCTX-M01](0004-metadata-only-git-core.md), [ADR 0005 / GCTX-M02](0005-common-oid-identity-with-attributed-metadata.md), [ADR 0006 / GCTX-M03](0006-field-claims-and-observation-scoped-relations.md), [ADR 0007 / GCTX-M04](0007-verification-aware-git-metadata-reads.md), [ADR 0008 / GCTX-M05](0008-domain-split-git-verification-ownership.md), [ADR 0009 / GCTX-M06](0009-bounded-byte-admission-and-physical-health.md)."
+      }
+    ],
+    "classification": "historical accepted-decision predecessor/dependency link with continuing invariants",
+    "retirement_action": "Preserve historical dependency as pinned Git history; add/retarget current authority guidance to successor where required. Do not rewrite original accepted decision as a new approval."
+  },
+  {
+    "path": "docs/adr/0013-deterministic-cas-instance-eligibility.md",
+    "sha256": "c930e5998d513eac47b65e593a0c761b2a063952f1bb90caf735512d30c031aa",
+    "hits": [
+      {
+        "line": 10,
+        "text": "- **Earlier decisions:** [ADR 0003](0003-append-only-git-core-and-context-store.md) (strictly append-only Git Core + Context), [ADR 0004 / GCTX-M01](0004-metadata-only-git-core.md), [ADR 0005 / GCTX-M02](0005-common-oid-identity-with-attributed-metadata.md), [ADR 0006 / GCTX-M03](0006-field-claims-and-observation-scoped-relations.md), [ADR 0007 / GCTX-M04](0007-verification-aware-git-metadata-reads.md), [ADR 0008 / GCTX-M05](0008-domain-split-git-verification-ownership.md), [ADR 0009 / GCTX-M06](0009-bounded-byte-admission-and-physical-health.md), [ADR 0010 / GCTX-M07](0010-operation-scoped-cas-physical-integrity.md)."
+      }
+    ],
+    "classification": "historical accepted-decision predecessor/dependency link with continuing invariants",
+    "retirement_action": "Preserve historical dependency as pinned Git history; add/retarget current authority guidance to successor where required. Do not rewrite original accepted decision as a new approval."
+  },
+  {
+    "path": "docs/adr/0014-history-and-notes-catalog-without-file-archive.md",
+    "sha256": "0122b9ce6389d2017c2a17c03895ced78d34ec7ee020884a67278076f776b457",
+    "hits": [
+      {
+        "line": 6,
+        "text": "  - 0003-append-only-git-core-and-context-store.md"
+      }
+    ],
+    "classification": "plain ADR metadata history identifier",
+    "retirement_action": "Keep0003 filename as original refines/replaces history identifier; these are not broken Markdown links. Do not falsify predecessor metadata by global replacement."
+  },
+  {
+    "path": "docs/adr/0026-stop-salvage-restore-merge-after-corruption.md",
+    "sha256": "12241c3410925d4e4c24cb9a5294fcd0b393966b402f6ed2b483d9457d39c869",
+    "hits": [
+      {
+        "line": 6,
+        "text": "  - 0003-append-only-git-core-and-context-store.md"
+      }
+    ],
+    "classification": "plain ADR metadata history identifier",
+    "retirement_action": "Keep0003 filename as original refines/replaces history identifier; these are not broken Markdown links. Do not falsify predecessor metadata by global replacement."
+  },
+  {
+    "path": "docs/adr/0028-classified-times-and-sha256-exchange.md",
+    "sha256": "897988a41532a74ef3e2df8453d399330912e42ba6515a51053ad2ca0d8640dc",
+    "hits": [
+      {
+        "line": 108,
+        "text": "- [Four-store and INSERT-only boundary](0003-append-only-git-core-and-context-store.md)"
+      }
+    ],
+    "classification": "current authority/procedure or current banner on historical material",
+    "retirement_action": "After whole replacement approval, update only current authority wording and actual live link to successor; retain historical baseline statements and correct default-runtime scope."
+  },
+  {
+    "path": "docs/adr/0029-independent-access-store.md",
+    "sha256": "098fd2bf9888657a5a00b4303ebfbaf60428822455650db13fbbe705d1165d92",
+    "hits": [
+      {
+        "line": 5,
+        "text": "  - 0003-append-only-git-core-and-context-store.md"
+      }
+    ],
+    "classification": "plain ADR metadata history identifier",
+    "retirement_action": "Keep0003 filename as original refines/replaces history identifier; these are not broken Markdown links. Do not falsify predecessor metadata by global replacement."
+  },
+  {
+    "path": "docs/adr/README.md",
+    "sha256": "1cb13c27418e574bdf3673ec816602530e4d27c64008776e30d53e14c8576c89",
+    "hits": [
+      {
+        "line": 56,
+        "text": "| [0003](0003-append-only-git-core-and-context-store.md) | Append-only Git Core and durable Context | 2026-10-14 | Four-store target preserved; admission narrowed by 0004 and 0014 |"
+      }
+    ],
+    "classification": "current authority/procedure or current banner on historical material",
+    "retirement_action": "After whole replacement approval, update only current authority wording and actual live link to successor; retain historical baseline statements and correct default-runtime scope."
+  },
+  {
+    "path": "docs/architecture.md",
+    "sha256": "216ce5af64620ad1157108b16f59e64a059e52264c93a4c0e2287baf0bb333ae",
+    "hits": [
+      {
+        "line": 3,
+        "text": "**Current implementation and newer target:** The implemented three-store/Schema 21 status is summarized in [implementation status](implementation-status.md). The later owner-accepted **target**, [ADR 0003](adr/0003-append-only-git-core-and-context-store.md), separates **strictly append-only Git Core** from **durable Context** (PR/Issue/comment/Provider facts), while retaining Operational and Search. Read its [transition plan](architecture/git-core-context-transition-plan.md). The remainder of this page is a preserved older design explanation; its physical placement and mutable-Core assumptions do not define the new target."
+      }
+    ],
+    "classification": "current authority/procedure or current banner on historical material",
+    "retirement_action": "After whole replacement approval, update only current authority wording and actual live link to successor; retain historical baseline statements and correct default-runtime scope."
+  },
+  {
+    "path": "docs/implementation-status.md",
+    "sha256": "1a1ff656648c6bca25433711525cac80f6a7abeb153d72d5863e8b5fc224cd64",
+    "hits": [
+      {
+        "line": 3,
+        "text": "**Accepted newer target (not implemented):** [ADR 0003](adr/0003-append-only-git-core-and-context-store.md) freezes a strictly append-only Git Core, a separate **durable** Context store for PR/Issue/comment/Provider facts, plus Operational and Search. The [transition plan](architecture/git-core-context-transition-plan.md) inventories the necessary schema/runtime changes. The current `main` still contains the previous 3-store/84-table format; the design-only ADR does **not** certify a four-store implementation or any additional validation."
+      }
+    ],
+    "classification": "current authority/procedure or current banner on historical material",
+    "retirement_action": "After whole replacement approval, update only current authority wording and actual live link to successor; retain historical baseline statements and correct default-runtime scope."
+  },
+  {
+    "path": "docs/implementation/evidence/p5-correction/distribution-clean/distribution-manifest.json",
+    "sha256": "a80d8102470e19e9117ba9b6c31271e4d55cdcc35b3d2758e74a3ca3cf029202",
+    "hits": [
+      {
+        "line": 67,
+        "text": "    \"repo_catalog-0.2.0/docs/adr/0003-append-only-git-core-and-context-store.md\","
+      }
+    ],
+    "classification": "immutable historical distribution evidence",
+    "retirement_action": "Preserve exact bytes and recorded hashes/member names."
+  },
+  {
+    "path": "docs/implementation/evidence/schema21-baseline-20261016/independent-d/distribution-source-manifest.json",
+    "sha256": "7d3f19c020a7ef4495e50b7a3025172a7cfcc17e04799d84c66655af7cdfb341",
+    "hits": [
+      {
+        "line": 98,
+        "text": "  \"docs/adr/0003-append-only-git-core-and-context-store.md\": \"683864896aa61be11f86bd07c9ea5a896c84d6cf3cd7d9711be6e423a6ad3d94\","
+      }
+    ],
+    "classification": "immutable historical distribution evidence",
+    "retirement_action": "Preserve exact bytes and recorded hashes/member names."
+  },
+  {
+    "path": "docs/implementation/evidence/seven-pr-combined-20261016/reviews/d/sdist-members.json",
+    "sha256": "0bdb87668b3388e49c483a5be30d8ed2d46bbf09766387bc1c0f082485495c2d",
+    "hits": [
+      {
+        "line": 52,
+        "text": "  \"repo_catalog-0.2.0/docs/adr/0003-append-only-git-core-and-context-store.md\","
+      }
+    ],
+    "classification": "immutable historical distribution evidence",
+    "retirement_action": "Preserve exact bytes and recorded hashes/member names."
+  },
+  {
+    "path": "docs/integration/design-stack-main-review-2026-10-15.md",
+    "sha256": "1fe66c6b3d3d34c5efe4bbba9fb8aabfcf2326b21201d8c1806db7047471060e",
+    "hits": [
+      {
+        "line": 178,
+        "text": "| A | `docs/adr/0003-append-only-git-core-and-context-store.md` | Markdown |"
+      }
+    ],
+    "classification": "historical integration narrative",
+    "retirement_action": "Preserve actual outcomes/path inventory; pin original history reference if a live link is added."
+  },
+  {
+    "path": "docs/phase2/decision-register.md",
+    "sha256": "ce2ff55c6ca6e82fefa5ed8d1ff2c94c2c4102de38388d08f5dbb686c3b777ee",
+    "hits": [
+      {
+        "line": 3,
+        "text": "**Policy status:** Q01-B, Q02-B, Q03-B, **NO_INDEPENDENT_PUBLICATION**, and **PF-P01\u2013PF-P17** were accepted; the later [ADR 0003](../adr/0003-append-only-git-core-and-context-store.md) **now fixes a new target boundary** (append-only Git Core / durable Context / Operational / Search). ADR 0003 explicitly supersedes the incompatible physical-placement and full-backup assumptions of ADR 0002. This register reconciles the earlier Q/PF scope; it does not make an additional owner decision."
+      },
+      {
+        "line": 122,
+        "text": "The [new accepted ADR 0003](../adr/0003-append-only-git-core-and-context-store.md) divides permanent Git facts (strict application-level append-only Git Core) from separately durable, updateable Provider/Source/PR/Issue/review text and metadata (Context). Operational and Search remain separate. **This is a new target architecture, not a claim that 70 Core tables have been moved.** Original Q01/Q02 latest-only and all other preserved contracts continue unless ADR 0003 explicitly narrows prior physical assumptions. GC-01/GC-02 conservative future manual-GC principles now concern Context text; Git Core has no admitted-fact GC. GC-03 mechanism depends on the final Context constraints; GC-04 remains undecided. See the [transition plan](../architecture/git-core-context-transition-plan.md)."
+      }
+    ],
+    "classification": "current authority/procedure or current banner on historical material",
+    "retirement_action": "After whole replacement approval, update only current authority wording and actual live link to successor; retain historical baseline statements and correct default-runtime scope."
+  },
+  {
+    "path": "docs/phase2/documentation-status-audit.md",
+    "sha256": "090f761aca1fd05f8715d5805279dfb1b2b5ccb667cecd6bdc908006e4e379c6",
+    "hits": [
+      {
+        "line": 3,
+        "text": "**Subsequent design decision:** This audit examined the implemented Three-Store format before the owner's 2026-10-14 acceptance of [ADR 0003](../adr/0003-append-only-git-core-and-context-store.md). Its original classification remains evidence of that checkpoint; the **current target** is Git Core (strictly append-only) + durable Context + Operational + Search, while the current production implementation remains Three-Store. ADR 0003 supersedes conflicting placement/full-backup assumptions, not the whole earlier decision set. Future manual Provider-text GC belongs to Context, not Git Core."
+      }
+    ],
+    "classification": "current authority/procedure or current banner on historical material",
+    "retirement_action": "After whole replacement approval, update only current authority wording and actual live link to successor; retain historical baseline statements and correct default-runtime scope."
+  }
+]

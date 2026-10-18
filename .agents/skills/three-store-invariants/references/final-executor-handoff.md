@@ -28,3 +28,20 @@ UI or database check. Also retain the existing in-flight-revocation test: a call
 which was admitted before a later revoke has different semantics. This correction
 narrows one concrete handoff gap; it is not a global lock across Access, filesystem,
 Core and another process, nor an independent security review.
+
+Independent A6 review found two adjacent instances of the same failure: cancellation
+during the final grant transaction started a generic dispatch callback, and a stop
+during the last filesystem check started a Git subprocess. Recheck the guard after
+the final DB read and after filesystem preparation, then recheck deadline/session
+before callback admission. A time-only check after DB access does not check a new
+cancellation. Test both public dispatch APIs and bootstrap/streamed Git commands;
+assert zero callback/subprocess starts, token consumption and descriptor cleanup.
+
+```sh
+python -m pytest -q tests/integration/access/test_review_corrections.py \
+  -k 'callback_rechecks or git_command_rechecks'
+```
+
+The independent probes and corrected-tree checks are linked from
+[the A6 independent review](../../../../docs/implementation/access-a6-independent-review.md).
+These checkpoints still do not provide instantaneous revocation after admission.

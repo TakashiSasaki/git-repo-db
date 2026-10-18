@@ -2,7 +2,7 @@
   "format": "git-repo-db/access-acceptance-v1",
   "reviewed_base": "444dcecf38f5db3cccdb4716c7c8c6b584543475",
   "requirements_file": "docs/architecture/access-store-design.md",
-  "scope": "Linux opt-in local Access stack; this ledger is neither independent review nor release acceptance.",
+  "scope": "Linux opt-in local Access stack; implementation coverage only. See access-a6-independent-review.md for separate independent-review findings, execution evidence, ADR/merge/P8/release gates.",
   "gates": {
     "independent_review": "pending",
     "adr_whole_replacement": "pending",
@@ -84,7 +84,8 @@
         "tests/unit/test_access_registry_values.py::test_preserve_valid_uri_exactly",
         "tests/unit/test_access_registry_values.py::test_reject_unsupported_or_unsafe_uri_without_echo",
         "tests/unit/test_access_connections_values.py::test_unsupported_repository_grammar",
-        "tests/integration/access/test_workflow.py::test_finite_local_adapter_rejects_unsupported_execution"
+        "tests/integration/access/test_workflow.py::test_finite_local_adapter_rejects_unsupported_execution",
+        "tests/unit/test_access_connections_values.py::test_repository_grammar"
       ],
       "gaps": []
     },
@@ -96,7 +97,9 @@
       "tests": [
         "tests/unit/test_access_connections_values.py::test_unsafe_or_unsupported_options",
         "tests/integration/access/test_context_boundary.py::test_no_normalization_no_network_no_settings_import_side_effect",
-        "tests/integration/access/test_backup.py::test_cli_diagnostics_do_not_echo_secret_paths"
+        "tests/integration/access/test_backup.py::test_cli_diagnostics_do_not_echo_secret_paths",
+        "tests/integration/access/test_review_corrections.py::test_indirect_git_config_is_rejected_before_any_command",
+        "tests/integration/access/test_review_corrections.py::test_safe_bom_git_config_remains_supported"
       ],
       "gaps": []
     },
@@ -119,7 +122,9 @@
       "tests": [
         "tests/integration/access/test_connections.py::test_concurrent_cas_only_one_writer_wins",
         "tests/integration/access/test_handoff_boundary.py::test_final_executor_handoff_rechecks_before_callback",
-        "tests/integration/access/test_git_acquisition.py::test_access_plan_change_rejected_on_retry_before_git"
+        "tests/integration/access/test_git_acquisition.py::test_access_plan_change_rejected_on_retry_before_git",
+        "tests/integration/access/test_review_corrections.py::test_callback_rechecks_cancel_after_final_grant_transaction",
+        "tests/integration/access/test_review_corrections.py::test_git_command_rechecks_guard_after_final_filesystem_preparation"
       ],
       "gaps": []
     },
@@ -127,13 +132,19 @@
       "id": 11,
       "requirement": "Additional repositories beyond the Core seed can acquire independently without weakening catalog pairing, UUID selection or cross-repository Exchange fences.",
       "status": "partial",
-      "verified_scope": "Native and Notes non-seed acquisition preserves physical pairing.",
+      "verified_scope": "Native, Notes and external GitMetadataInput non-seed acquisition preserves physical Core/Operational pairing; nested repository ownership and frozen original request intent are checked before admission.",
       "tests": [
         "tests/integration/access/test_git_acquisition.py::test_nonseed_paired_native_notes_preserves_catalog_pairing",
-        "tests/integration/access/test_git_acquisition.py::test_plain_p5_native_scope_cannot_replay_under_another_repository"
+        "tests/integration/access/test_git_acquisition.py::test_plain_p5_native_scope_cannot_replay_under_another_repository",
+        "tests/integration/access/test_review_corrections.py::test_nonseed_external_metadata_preserves_pairing_and_replay",
+        "tests/integration/access/test_review_corrections.py::test_foreign_metadata_repository_is_rejected_before_any_admission",
+        "tests/integration/access/test_review_corrections.py::test_metadata_capture_coverage_resolves_the_actual_capture_owner",
+        "tests/integration/access/test_review_corrections.py::test_metadata_nonseed_keeps_physical_operational_pairing",
+        "tests/integration/access/test_review_corrections.py::test_metadata_retry_cannot_change_original_intent",
+        "tests/integration/access/test_review_corrections.py::test_new_explicit_metadata_request_can_add_compatible_same_capture_facts"
       ],
       "gaps": [
-        "General external GitMetadataInput and Exchange remain seed-scoped; do not claim complete multi-repository import/export."
+        "Exchange remains catalog-seed scoped with no Repository-set selector or explicit receiver-target contract. Same-seed R1 onward export is checked; cross-seed R2 import remains refused without mutation. Do not claim complete multi-repository interchange or remove pairing/selection guards."
       ]
     },
     {
@@ -174,25 +185,23 @@
       "id": 15,
       "requirement": "Real-data extraction is opt-in, leaves sources unchanged and reports excluded or unclassified legacy settings instead of guessing or executing them.",
       "status": "deferred",
-      "verified_scope": "Only key-level classification and rejection are implemented; no real-data extractor was authorized or executed.",
+      "verified_scope": "Key-level classification exists; no legacy extractor is implemented and no real-data operation is authorized in this task. Legacy migration is not a prerequisite for synthetic Access acceptance in this unreleased project.",
       "tests": [],
       "gaps": [
-        "Legacy real-data extraction/migration tool is not implemented; do not count the routing ledger as extraction."
+        "An optional legacy extractor remains unimplemented. The classification ledger is not an extraction tool; real-data reads/extraction/migration are outside this task."
       ]
     },
     {
       "id": 16,
       "requirement": "Wheel/sdist behavior, schema/FK/immutability checks and P7 domain backup scope remain consistent at the exact integrated tree; ordinary file bodies remain excluded and ADR 0028 time/trust rules remain intact.",
-      "status": "partial",
-      "verified_scope": "Supported-source regression and installed distributions are tested per exact tree.",
+      "status": "covered",
+      "verified_scope": "Exact-tree focused runtime, P7 scope, schema/FK/immutability and separate installed wheel/sdist-wheel smoke are verified in the independent review evidence. This finite implementation check does not accept the ADR, authorize merge or establish release eligibility.",
       "tests": [
         "tests/integration/access/test_git_acquisition.py::test_ordinary_blob_body_is_never_retained",
         "tests/integration/access/test_registry.py::test_schema_identity_and_direct_key",
         "tests/integration/access/test_context_boundary.py::test_current_p1_routes_are_explicitly_overridden_and_schema_guarded"
       ],
-      "gaps": [
-        "Independent reviewer execution and whole-record ADR acceptance are still required; focused CI is not release acceptance."
-      ]
+      "gaps": []
     },
     {
       "id": 17,
@@ -279,7 +288,9 @@
       "verified_scope": "Restore preserves complete history, requires reapproval, and does not rewrite existing Git facts.",
       "tests": [
         "tests/integration/access/test_stack_acceptance.py::test_restore_reapproval_resumes_same_request_without_rewriting_core",
-        "tests/integration/access/test_backup.py::test_latest_ties_survive_restore"
+        "tests/integration/access/test_backup.py::test_latest_ties_survive_restore",
+        "tests/integration/access/test_backup.py::test_restore_is_continuation_not_fresh_registrations",
+        "tests/integration/access/test_backup.py::test_backup_retains_all_history_and_settings_but_not_consent"
       ],
       "gaps": []
     },

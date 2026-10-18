@@ -7,6 +7,7 @@ this wheel: the isolated Access registry must not need Provider/HTTP dependencie
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import subprocess
@@ -19,12 +20,15 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SMOKE = r"""
-import importlib.util, json, sqlite3, tempfile
+import importlib.util, json, sqlite3, sys, tempfile
 from pathlib import Path
 from uuid import uuid4
 from repo_catalog.adapters.sqlite.access_schema import initialize, require_runtime, fingerprint
 from repo_catalog.adapters.sqlite.access_registry import AccessRegistry
 from repo_catalog.domain.access_registry import AccessScope, ScopeLocatorRegistration
+import repo_catalog
+module_origin = Path(repo_catalog.__file__).resolve()
+assert module_origin.is_relative_to(Path(sys.prefix).resolve()), module_origin
 require_runtime()
 assert importlib.util.find_spec("httpx") is None
 s = str(uuid4())
@@ -200,7 +204,7 @@ with tempfile.TemporaryDirectory() as directory:
     with Context.snapshot(receiver) as ctx:
         assert ctx.db.execute("SELECT configuration_json FROM providers").fetchone()[0] == '{"name":"Original provider"}'
     assert not (receiver / "access.sqlite3").exists()
-print(json.dumps({"sqlite": sqlite3.sqlite_version, "ddl_sha256": fingerprint(), "context_ddl_sha256": p1_schema.fingerprint("context"), "exchange_format": EXCHANGE_FORMAT, "local_git_acquired": True, "access_backup_restored": True, "scope_forked": True, "installed_smoke": "passed"}))
+print(json.dumps({"sqlite": sqlite3.sqlite_version, "sqlite_source_id": sqlite3.connect(":memory:").execute("SELECT sqlite_source_id()").fetchone()[0], "module_origin": str(module_origin), "interpreter": sys.executable, "ddl_sha256": fingerprint(), "context_ddl_sha256": p1_schema.fingerprint("context"), "exchange_format": EXCHANGE_FORMAT, "local_git_acquired": True, "access_backup_restored": True, "scope_forked": True, "installed_smoke": "passed"}))
 """
 
 
@@ -293,6 +297,10 @@ def main() -> None:
             output = run(str(python), "-I", "-c", SMOKE, cwd=base, env=env)
             result = json.loads(output)
             result["artifact_kind"] = label
+            result["wheel_sha256"] = hashlib.sha256(wheel.read_bytes()).hexdigest()
+            result["source_sdist_sha256"] = hashlib.sha256(
+                archive.read_bytes()
+            ).hexdigest()
             results.append(result)
             print(label, output)
     evidence = ROOT / "artifacts/access-registry"

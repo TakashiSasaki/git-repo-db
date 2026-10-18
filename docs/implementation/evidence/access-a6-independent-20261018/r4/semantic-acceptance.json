@@ -1,0 +1,665 @@
+{
+  "reviewer": "R4 independent read-only reviewer",
+  "commit": "f4d0d448fca5925bfbe4f8cb8345c3bd0df7de60",
+  "tree": "a7b4521fb7fa6562c8e0bf67e2766743e0b82c5b",
+  "method": "All 48 linked function bodies and decorators inspected; semantic review with supplemental existing tests. No product pytest execution by R4. Baseline defects from other reviewers remain separate.",
+  "requirements": [
+    {
+      "id": 1,
+      "requirement": "One repository has HTTPS, SSH and local locators; editing one leaves its UUID and earlier Core evidence byte-for-byte unchanged.",
+      "baseline_ledger_status": "covered",
+      "independent_static_assessment": "supported finite scope",
+      "assertion_semantics": "Real SHA-1/SHA-256 acquisition precedes adding HTTPS/SSH bindings and disabling each new profile. Exact preexisting Core-table snapshots and repository UUID are compared afterward. Saved remote protocols are representable; they are not remote executors.",
+      "limits_and_gates": "No transport execution claim.",
+      "references": [
+        {
+          "reference": "tests/integration/access/test_stack_acceptance.py::test_remote_locator_registration_and_rotation_leave_core_facts_unchanged",
+          "path": "tests/integration/access/test_stack_acceptance.py",
+          "line": 138,
+          "additional_to_baseline_ledger": false
+        }
+      ],
+      "product_test_execution_by_r4": false
+    },
+    {
+      "id": 2,
+      "requirement": "Same locator text in two scopes resolves independently; conflicting UUIDs for the same scoped locator are rejected without merging or overwriting either ID.",
+      "baseline_ledger_status": "covered",
+      "independent_static_assessment": "supported finite scope",
+      "assertion_semantics": "Initial bind replay returns duplicate; conflicting same-Scope bind raises BINDING_CONFLICT; identical text under S2 resolves to R2 while S1 stays R1.",
+      "limits_and_gates": "No URL-based identity merge.",
+      "references": [
+        {
+          "reference": "tests/integration/access/test_connections.py::test_same_scoped_locator_cannot_silently_rebind",
+          "path": "tests/integration/access/test_connections.py",
+          "line": 126,
+          "additional_to_baseline_ledger": false
+        }
+      ],
+      "product_test_execution_by_r4": false
+    },
+    {
+      "id": 3,
+      "requirement": "Multiple profiles are reusable across locators; profile rotation does not change locator keys, captures or Source memberships.",
+      "baseline_ledger_status": "covered",
+      "independent_static_assessment": "supported finite scope",
+      "assertion_semantics": "One profile is assigned to two repository locators, both receive distinct UUID plans, disabling that profile removes all grants. Separate stack test compares preexisting Core facts after profile edits.",
+      "limits_and_gates": "Source membership preservation is architectural isolation evidence here: these fixtures have no Context membership to compare. Do not claim a dedicated membership-mutation assertion.",
+      "references": [
+        {
+          "reference": "tests/integration/access/test_connections.py::test_profile_shared_by_repositories_and_scope_only_conflicts",
+          "path": "tests/integration/access/test_connections.py",
+          "line": 304,
+          "additional_to_baseline_ledger": false
+        },
+        {
+          "reference": "tests/integration/access/test_stack_acceptance.py::test_remote_locator_registration_and_rotation_leave_core_facts_unchanged",
+          "path": "tests/integration/access/test_stack_acceptance.py",
+          "line": 138,
+          "additional_to_baseline_ledger": false
+        }
+      ],
+      "product_test_execution_by_r4": false
+    },
+    {
+      "id": 4,
+      "requirement": "A preference for repository A cannot point to repository B's assignment; composite FK attacks and missing parents fail.",
+      "baseline_ledger_status": "covered",
+      "independent_static_assessment": "supported finite scope",
+      "assertion_semantics": "Preference for R2 against R1 assignment and missing profile assignment are rejected; only valid preference persists. Deliberately orphaned profile cannot vanish through a join: CORRUPT plus Access stop is asserted.",
+      "limits_and_gates": "Direct SQL full-grant/FK attacks also exist elsewhere in this selected test module.",
+      "references": [
+        {
+          "reference": "tests/integration/access/test_connections.py::test_preferences_reference_assignment_and_matching_repository",
+          "path": "tests/integration/access/test_connections.py",
+          "line": 154,
+          "additional_to_baseline_ledger": false
+        },
+        {
+          "reference": "tests/integration/access/test_connections.py::test_damaged_foreign_key_cannot_vanish_from_candidate_join",
+          "path": "tests/integration/access/test_connections.py",
+          "line": 515,
+          "additional_to_baseline_ledger": false
+        }
+      ],
+      "product_test_execution_by_r4": false
+    },
+    {
+      "id": 5,
+      "requirement": "Scope Locators use maximum registration time; equal-time first choices remain ambiguous. No lexical/rowid/arrival tie-break or implicit cross-account fallback. Repository/profile preferences do not inherit this new timestamp rule.",
+      "baseline_ledger_status": "covered",
+      "independent_static_assessment": "supported finite scope",
+      "assertion_semantics": "Tied latest registration blocks default grant although the original remains approved; one-candidate bound yields CANDIDATE_LIMIT. A second repository/profile remains ambiguous even when only the first has a grant; saved explicit preference is honored.",
+      "limits_and_gates": "Timestamp ranking applies to Scope registration only.",
+      "references": [
+        {
+          "reference": "tests/integration/access/test_connections.py::test_latest_ties_before_controls_and_permissions",
+          "path": "tests/integration/access/test_connections.py",
+          "line": 254,
+          "additional_to_baseline_ledger": false
+        },
+        {
+          "reference": "tests/integration/access/test_connections.py::test_assignment_ambiguity_does_not_select_only_approved_profile",
+          "path": "tests/integration/access/test_connections.py",
+          "line": 278,
+          "additional_to_baseline_ledger": false
+        }
+      ],
+      "product_test_execution_by_r4": false
+    },
+    {
+      "id": 6,
+      "requirement": "Git-only saved access works with no Context; Core-only offline use works with no Access. An imported domain catalog cannot start network work.",
+      "baseline_ledger_status": "covered",
+      "independent_static_assessment": "supported finite scope",
+      "assertion_semantics": "Nonseed local acquisition asserts actual retained metadata and Context absence. Removing or stopping Access leaves actual retained Core metadata readable. Context-only import/export preserves provider/membership and creates no Access.",
+      "limits_and_gates": "No implicit saved Access store is opened during domain Exchange.",
+      "references": [
+        {
+          "reference": "tests/integration/access/test_git_acquisition.py::test_nonseed_repository_acquires_actual_metadata",
+          "path": "tests/integration/access/test_git_acquisition.py",
+          "line": 161,
+          "additional_to_baseline_ledger": false
+        },
+        {
+          "reference": "tests/integration/access/test_stack_acceptance.py::test_domain_read_survives_unavailable_access_after_real_acquisition",
+          "path": "tests/integration/access/test_stack_acceptance.py",
+          "line": 164,
+          "additional_to_baseline_ledger": false
+        },
+        {
+          "reference": "tests/integration/access/test_context_boundary.py::test_context_only_round_trip_and_core_only_paths_need_no_access",
+          "path": "tests/integration/access/test_context_boundary.py",
+          "line": 290,
+          "additional_to_baseline_ledger": false
+        }
+      ],
+      "product_test_execution_by_r4": false
+    },
+    {
+      "id": 7,
+      "requirement": "Different SSH aliases, scp-relative/URI-absolute paths, percent escapes, `.git`, trailing slashes, IPv6, symlinks, Windows drive/UNC and relative bases retain the declared semantics; unsupported inputs fail without changing files/credentials.",
+      "baseline_ledger_status": "covered",
+      "independent_static_assessment": "supported finite scope; improve references",
+      "assertion_semantics": "Linked exact URI tests concern Scope Locators. Repository negative grammar and finite executor rejection cover Windows/UNC/relative/helper/symlink exclusions. Existing positive repository grammar test is a useful additional link.",
+      "limits_and_gates": "No exhaustive Repository-alias/escape/IPv6 matrix is claimed. Storage support and local execution support differ.",
+      "references": [
+        {
+          "reference": "tests/unit/test_access_registry_values.py::test_preserve_valid_uri_exactly",
+          "path": "tests/unit/test_access_registry_values.py",
+          "line": 86,
+          "additional_to_baseline_ledger": false
+        },
+        {
+          "reference": "tests/unit/test_access_registry_values.py::test_reject_unsupported_or_unsafe_uri_without_echo",
+          "path": "tests/unit/test_access_registry_values.py",
+          "line": 131,
+          "additional_to_baseline_ledger": false
+        },
+        {
+          "reference": "tests/unit/test_access_connections_values.py::test_unsupported_repository_grammar",
+          "path": "tests/unit/test_access_connections_values.py",
+          "line": 53,
+          "additional_to_baseline_ledger": false
+        },
+        {
+          "reference": "tests/integration/access/test_workflow.py::test_finite_local_adapter_rejects_unsupported_execution",
+          "path": "tests/integration/access/test_workflow.py",
+          "line": 403,
+          "additional_to_baseline_ledger": false
+        },
+        {
+          "reference": "tests/unit/test_access_connections_values.py::test_repository_grammar",
+          "path": "tests/unit/test_access_connections_values.py",
+          "line": 25,
+          "additional_to_baseline_ledger": true
+        },
+        {
+          "reference": "tests/integration/access/test_stack_acceptance.py::test_remote_locator_registration_and_rotation_leave_core_facts_unchanged",
+          "path": "tests/integration/access/test_stack_acceptance.py",
+          "line": 138,
+          "additional_to_baseline_ledger": true
+        }
+      ],
+      "product_test_execution_by_r4": false
+    },
+    {
+      "id": 8,
+      "requirement": "Malicious helper syntax, shell options, proxy URLs, embedded secrets and import activation attempts are rejected before external side effects; no secrets leak to saved plans, logging, manifests or domain Exchange.",
+      "baseline_ledger_status": "covered",
+      "independent_static_assessment": "supported finite scope",
+      "assertion_semantics": "Typed profile options reject secrets, unsafe commands and host/TLS overrides. Synthetic Access sentinel remains exact during Context export; raw diagnostics omit canary path. Correctly rechecksummed malicious imports are covered in item14.",
+      "limits_and_gates": "Names/prose are not a DLP guarantee; sensitive nonsecret references remain Access configuration.",
+      "references": [
+        {
+          "reference": "tests/unit/test_access_connections_values.py::test_unsafe_or_unsupported_options",
+          "path": "tests/unit/test_access_connections_values.py",
+          "line": 115,
+          "additional_to_baseline_ledger": false
+        },
+        {
+          "reference": "tests/integration/access/test_context_boundary.py::test_no_normalization_no_network_no_settings_import_side_effect",
+          "path": "tests/integration/access/test_context_boundary.py",
+          "line": 314,
+          "additional_to_baseline_ledger": false
+        },
+        {
+          "reference": "tests/integration/access/test_backup.py::test_cli_diagnostics_do_not_echo_secret_paths",
+          "path": "tests/integration/access/test_backup.py",
+          "line": 736,
+          "additional_to_baseline_ledger": false
+        }
+      ],
+      "product_test_execution_by_r4": false
+    },
+    {
+      "id": 9,
+      "requirement": "Disabling a Scope route retains all registration facts. Removing mutable repository/profile configuration does not delete Scope history, Source known-positive pairs, Core objects/captures or Context evidence.",
+      "baseline_ledger_status": "covered",
+      "independent_static_assessment": "supported finite scope",
+      "assertion_semantics": "Disable/reenable across Scope context, route, profile, binding and assignment removes old grant; original registration tuple survives. Real acquisition stack test compares Core facts after configuration edits.",
+      "limits_and_gates": "No general configuration-removal API is implemented. Do not infer deletion management or a direct Source-membership comparison from these tests.",
+      "references": [
+        {
+          "reference": "tests/integration/access/test_connections.py::test_disable_enable_aba_never_resurrects_grant",
+          "path": "tests/integration/access/test_connections.py",
+          "line": 168,
+          "additional_to_baseline_ledger": false
+        },
+        {
+          "reference": "tests/integration/access/test_stack_acceptance.py::test_remote_locator_registration_and_rotation_leave_core_facts_unchanged",
+          "path": "tests/integration/access/test_stack_acceptance.py",
+          "line": 138,
+          "additional_to_baseline_ledger": false
+        }
+      ],
+      "product_test_execution_by_r4": false
+    },
+    {
+      "id": 10,
+      "requirement": "Concurrent configuration edits cannot combine one version's locator with another version's credentials; request plans, cancellation and retries are consistent and keep original observation identity and cumulative work.",
+      "baseline_ledger_status": "covered",
+      "independent_static_assessment": "supported finite scope; subject to R2 findings",
+      "assertion_semantics": "Two CAS writers produce exactly update and STALE_SETTINGS. Final handoff tests assert callback not invoked, descriptor closed and token consumed after expiry/revocation/latest/cancel. Retry route change must fail before subprocess launch.",
+      "limits_and_gates": "This verifies bounded application checkpoints, not cross-process linearizability or instantaneous revocation of an already running command.",
+      "references": [
+        {
+          "reference": "tests/integration/access/test_connections.py::test_concurrent_cas_only_one_writer_wins",
+          "path": "tests/integration/access/test_connections.py",
+          "line": 450,
+          "additional_to_baseline_ledger": false
+        },
+        {
+          "reference": "tests/integration/access/test_handoff_boundary.py::test_final_executor_handoff_rechecks_before_callback",
+          "path": "tests/integration/access/test_handoff_boundary.py",
+          "line": 33,
+          "additional_to_baseline_ledger": false
+        },
+        {
+          "reference": "tests/integration/access/test_git_acquisition.py::test_access_plan_change_rejected_on_retry_before_git",
+          "path": "tests/integration/access/test_git_acquisition.py",
+          "line": 339,
+          "additional_to_baseline_ledger": false
+        }
+      ],
+      "product_test_execution_by_r4": false
+    },
+    {
+      "id": 11,
+      "requirement": "Additional repositories beyond the Core seed can acquire independently without weakening catalog pairing, UUID selection or cross-repository Exchange fences.",
+      "baseline_ledger_status": "partial",
+      "independent_static_assessment": "partial: known implementation defect",
+      "assertion_semantics": "Nonseed native/Notes paired admission asserts target UUID, real captures, and unchanged physical seed/instance identity. Replaying native request under another repository is refused.",
+      "limits_and_gates": "General GitMetadataInput and multi-repository Exchange remain seed-scoped at the fixed baseline. R3/root reproductions and correction are required; pairing/selection fences must survive.",
+      "references": [
+        {
+          "reference": "tests/integration/access/test_git_acquisition.py::test_nonseed_paired_native_notes_preserves_catalog_pairing",
+          "path": "tests/integration/access/test_git_acquisition.py",
+          "line": 667,
+          "additional_to_baseline_ledger": false
+        },
+        {
+          "reference": "tests/integration/access/test_git_acquisition.py::test_plain_p5_native_scope_cannot_replay_under_another_repository",
+          "path": "tests/integration/access/test_git_acquisition.py",
+          "line": 460,
+          "additional_to_baseline_ledger": false
+        }
+      ],
+      "product_test_execution_by_r4": false
+    },
+    {
+      "id": 12,
+      "requirement": "An Access backup made with live WAL is coherent; interrupted/invalid restore is not activated. Continuity preserves Scope UUID/history, but another machine's local execution binding and approvals are not inherited.",
+      "baseline_ledger_status": "covered",
+      "independent_static_assessment": "supported finite scope",
+      "assertion_semantics": "A real WAL writer commits before the pinned backup and a second commit at the backup cut; copied rows include the first and exclude the second. Process exit before publication leaves no destination, source unchanged and unpromoted stage. Restored acquisition needs route enablement then approval.",
+      "limits_and_gates": "Local approval and activation are distinct; Scope continuity preserves UUID/history.",
+      "references": [
+        {
+          "reference": "tests/integration/access/test_backup.py::test_committed_wal_snapshot_does_not_mix_concurrent_registration",
+          "path": "tests/integration/access/test_backup.py",
+          "line": 188,
+          "additional_to_baseline_ledger": false
+        },
+        {
+          "reference": "tests/integration/access/test_backup.py::test_process_exit_before_rename_leaves_only_unpublished_stage",
+          "path": "tests/integration/access/test_backup.py",
+          "line": 797,
+          "additional_to_baseline_ledger": false
+        },
+        {
+          "reference": "tests/integration/access/test_stack_acceptance.py::test_restore_reapproval_resumes_same_request_without_rewriting_core",
+          "path": "tests/integration/access/test_stack_acceptance.py",
+          "line": 53,
+          "additional_to_baseline_ledger": false
+        }
+      ],
+      "product_test_execution_by_r4": false
+    },
+    {
+      "id": 13,
+      "requirement": "Missing/isolated corrupt Access yields honest access errors; proven-sound domain reads still work; a real Core/Context stop is never bypassed.",
+      "baseline_ledger_status": "covered",
+      "independent_static_assessment": "supported finite scope",
+      "assertion_semantics": "Absent/stopped Access produces Access error while actual Core metadata remains exact/readable. A persistent Core stop rejects before Git and before measured work. Other registry tests corrupt persisted values to exercise diagnosed Access stop.",
+      "limits_and_gates": "Isolated Access stop is not a Core integrity certificate. Broad storage doubt still invokes P7.",
+      "references": [
+        {
+          "reference": "tests/integration/access/test_stack_acceptance.py::test_domain_read_survives_unavailable_access_after_real_acquisition",
+          "path": "tests/integration/access/test_stack_acceptance.py",
+          "line": 164,
+          "additional_to_baseline_ledger": false
+        },
+        {
+          "reference": "tests/integration/access/test_git_acquisition.py::test_core_stop_before_activation_blocks_git",
+          "path": "tests/integration/access/test_git_acquisition.py",
+          "line": 289,
+          "additional_to_baseline_ledger": false
+        }
+      ],
+      "product_test_execution_by_r4": false
+    },
+    {
+      "id": 14,
+      "requirement": "Context key classification preserves provider facts/observed URLs but rejects transport configuration in ordinary domain Exchange. Historical provenance is not silently redacted or advertised as free of location information.",
+      "baseline_ledger_status": "covered",
+      "independent_static_assessment": "supported finite scope; subject to R3 findings",
+      "assertion_semantics": "Malicious registration/envelope fields are rechecksummed and rejected for all four Context sections, even when Context is unselected, before a sentinel Core object is admitted. Descriptive URL candidates, membership and exact historical RepositoryClaim values survive Exchange.",
+      "limits_and_gates": "SHA-256 is content consistency only; package replacement plus digest does not authenticate an issuer.",
+      "references": [
+        {
+          "reference": "tests/integration/access/test_context_boundary.py::test_resigned_exchange_rejects_registration_leaks_before_core_admission",
+          "path": "tests/integration/access/test_context_boundary.py",
+          "line": 199,
+          "additional_to_baseline_ledger": false
+        },
+        {
+          "reference": "tests/integration/access/test_context_boundary.py::test_reported_urls_and_historical_core_provenance_survive_exchange",
+          "path": "tests/integration/access/test_context_boundary.py",
+          "line": 226,
+          "additional_to_baseline_ledger": false
+        }
+      ],
+      "product_test_execution_by_r4": false
+    },
+    {
+      "id": 15,
+      "requirement": "Real-data extraction is opt-in, leaves sources unchanged and reports excluded or unclassified legacy settings instead of guessing or executing them.",
+      "baseline_ledger_status": "deferred",
+      "independent_static_assessment": "outside current implementation; no real-data operation",
+      "assertion_semantics": "No extractor is implemented or exercised. The routing ledger explicitly classifies keys and refuses to infer Scope/time/execution. There are no linked extraction tests.",
+      "limits_and_gates": "Missing optional legacy extractor is distinct from unavailable real-data authorization. Unreleased/no-compatibility scope makes legacy migration no automatic prerequisite for Access acceptance.",
+      "references": [],
+      "product_test_execution_by_r4": false
+    },
+    {
+      "id": 16,
+      "requirement": "Wheel/sdist behavior, schema/FK/immutability checks and P7 domain backup scope remain consistent at the exact integrated tree; ordinary file bodies remain excluded and ADR 0028 time/trust rules remain intact.",
+      "baseline_ledger_status": "partial",
+      "independent_static_assessment": "implementation verification gate; separate approvals",
+      "assertion_semantics": "Ordinary blob acquisition is rejected with no retained metadata/Notes payload; physical schema includes exact packaged SQL, full triple key and FK checks; routing audit checks 25 override routes. Wheel/sdist smoke and full selected runtime are separate execution artifacts.",
+      "limits_and_gates": "Independent review, ADR replacement approval, merge, P8 and release qualification are separate gates; none is an implementation requirement supplied by passing tests.",
+      "references": [
+        {
+          "reference": "tests/integration/access/test_git_acquisition.py::test_ordinary_blob_body_is_never_retained",
+          "path": "tests/integration/access/test_git_acquisition.py",
+          "line": 396,
+          "additional_to_baseline_ledger": false
+        },
+        {
+          "reference": "tests/integration/access/test_registry.py::test_schema_identity_and_direct_key",
+          "path": "tests/integration/access/test_registry.py",
+          "line": 53,
+          "additional_to_baseline_ledger": false
+        },
+        {
+          "reference": "tests/integration/access/test_context_boundary.py::test_current_p1_routes_are_explicitly_overridden_and_schema_guarded",
+          "path": "tests/integration/access/test_context_boundary.py",
+          "line": 371,
+          "additional_to_baseline_ledger": false
+        }
+      ],
+      "product_test_execution_by_r4": false
+    },
+    {
+      "id": 17,
+      "requirement": "Same display name with different Scope UUIDs remains distinct; rename leaves FK/external references unchanged; a URI/URN is never a substitute identity.",
+      "baseline_ledger_status": "covered",
+      "independent_static_assessment": "supported finite scope",
+      "assertion_semantics": "Two UUIDs may share the same display label with no seed or Context. Renaming S1 preserves original registration and UUID; conflicting non-CAS label registration fails.",
+      "limits_and_gates": "URI/URN rejection is tested by pure Scope locator validation.",
+      "references": [
+        {
+          "reference": "tests/integration/access/test_registry.py::test_no_context_or_repository_seed_dependency",
+          "path": "tests/integration/access/test_registry.py",
+          "line": 78,
+          "additional_to_baseline_ledger": false
+        },
+        {
+          "reference": "tests/integration/access/test_registry.py::test_scope_label_update_does_not_change_history",
+          "path": "tests/integration/access/test_registry.py",
+          "line": 128,
+          "additional_to_baseline_ledger": false
+        }
+      ],
+      "product_test_execution_by_r4": false
+    },
+    {
+      "id": 18,
+      "requirement": "A(T1), B(T2), A(T3) retains three rows; T3 wins; exact replay keeps row count/time.",
+      "baseline_ledger_status": "covered",
+      "independent_static_assessment": "supported finite scope",
+      "assertion_semantics": "A(T1), B(T2), A(T3) all insert, original A replay returns duplicate, complete descending history retains all three original coordinates and first choice is T3.",
+      "limits_and_gates": "Same triple intentionally denotes one registration fact, not separate attempt events.",
+      "references": [
+        {
+          "reference": "tests/integration/access/test_registry.py::test_history_a_b_a_and_original_replay",
+          "path": "tests/integration/access/test_registry.py",
+          "line": 86,
+          "additional_to_baseline_ledger": false
+        }
+      ],
+      "product_test_execution_by_r4": false
+    },
+    {
+      "id": 19,
+      "requirement": "Same-time different URIs coexist; query returns both regardless of insertion order and regardless of only one being approved.",
+      "baseline_ledger_status": "covered",
+      "independent_static_assessment": "supported finite scope",
+      "assertion_semantics": "B then A at the same time both remain in first choices despite enabling only A; bounded limit errors rather than selecting one. Default grant remains ambiguous with the original grant present.",
+      "limits_and_gates": "Competing two-handle ties exist elsewhere. Do not infer authentication from approval or URI order.",
+      "references": [
+        {
+          "reference": "tests/integration/access/test_registry.py::test_ties_remain_even_if_only_one_enabled",
+          "path": "tests/integration/access/test_registry.py",
+          "line": 108,
+          "additional_to_baseline_ledger": false
+        },
+        {
+          "reference": "tests/integration/access/test_connections.py::test_latest_ties_before_controls_and_permissions",
+          "path": "tests/integration/access/test_connections.py",
+          "line": 254,
+          "additional_to_baseline_ledger": false
+        }
+      ],
+      "product_test_execution_by_r4": false
+    },
+    {
+      "id": 20,
+      "requirement": "Clock rollback, late replay and restore never fabricate a fresh timestamp; unknown/invalid/bool/float/string/overflow input receives the reviewed diagnostic.",
+      "baseline_ledger_status": "covered",
+      "independent_static_assessment": "supported finite scope",
+      "assertion_semantics": "None/bool/zero/negative/float/string/overflow times are rejected before SQL. Earlier registration is retained with precedes_latest and original maximum; restore compares exact original three-row history and untouched input artifact.",
+      "limits_and_gates": "No receiver/restore time manufactures registration freshness.",
+      "references": [
+        {
+          "reference": "tests/unit/test_access_registry_values.py::test_invalid_registration_times",
+          "path": "tests/unit/test_access_registry_values.py",
+          "line": 48,
+          "additional_to_baseline_ledger": false
+        },
+        {
+          "reference": "tests/integration/access/test_registry.py::test_earlier_time_retained_without_fake_monotonicity",
+          "path": "tests/integration/access/test_registry.py",
+          "line": 119,
+          "additional_to_baseline_ledger": false
+        },
+        {
+          "reference": "tests/integration/access/test_backup.py::test_restore_is_continuation_not_fresh_registrations",
+          "path": "tests/integration/access/test_backup.py",
+          "line": 144,
+          "additional_to_baseline_ledger": false
+        }
+      ],
+      "product_test_execution_by_r4": false
+    },
+    {
+      "id": 21,
+      "requirement": "Newest unapproved/disabled/unsupported route blocks default execution; it never silently promotes an older approved route. Imported future times grant no trust.",
+      "baseline_ledger_status": "covered",
+      "independent_static_assessment": "supported finite scope",
+      "assertion_semantics": "Newer disabled route blocks, enabling it still needs approval, explicit older route remains deliberate, and A at a fresh time cannot borrow prior grant. Remote/container/symlink paths are explicitly refused by local executor.",
+      "limits_and_gates": "No arbitrary future timestamp becomes an execution grant.",
+      "references": [
+        {
+          "reference": "tests/integration/access/test_connections.py::test_latest_unapproved_disabled_and_a_b_a",
+          "path": "tests/integration/access/test_connections.py",
+          "line": 232,
+          "additional_to_baseline_ledger": false
+        },
+        {
+          "reference": "tests/integration/access/test_workflow.py::test_finite_local_adapter_rejects_unsupported_execution",
+          "path": "tests/integration/access/test_workflow.py",
+          "line": 403,
+          "additional_to_baseline_ledger": false
+        }
+      ],
+      "product_test_execution_by_r4": false
+    },
+    {
+      "id": 22,
+      "requirement": "Changing Scope route/profile/binding invalidates affected reviewed plans; returning to the same URI at T3 cannot reuse approval for T1.",
+      "baseline_ledger_status": "covered",
+      "independent_static_assessment": "supported finite scope; subject to R2 findings",
+      "assertion_semantics": "Profile/context/repository-binding A-to-B-to-A removes all old grants; a new same-URI registration needs a new approval; final executor preparation changes cannot invoke callback using old permission.",
+      "limits_and_gates": "SQL invalidation and runtime authority are separate layers.",
+      "references": [
+        {
+          "reference": "tests/integration/access/test_connections.py::test_content_aba_never_resurrects_grant",
+          "path": "tests/integration/access/test_connections.py",
+          "line": 196,
+          "additional_to_baseline_ledger": false
+        },
+        {
+          "reference": "tests/integration/access/test_workflow.py::test_a_at_new_time_cannot_borrow_old_grant",
+          "path": "tests/integration/access/test_workflow.py",
+          "line": 311,
+          "additional_to_baseline_ledger": false
+        },
+        {
+          "reference": "tests/integration/access/test_handoff_boundary.py::test_final_executor_handoff_rechecks_before_callback",
+          "path": "tests/integration/access/test_handoff_boundary.py",
+          "line": 33,
+          "additional_to_baseline_ledger": false
+        }
+      ],
+      "product_test_execution_by_r4": false
+    },
+    {
+      "id": 23,
+      "requirement": "A continuing Scope migration preserves UUID and old facts; an independent fork allocates new Scope UUID and does not relabel original S1 history as S2 history.",
+      "baseline_ledger_status": "covered",
+      "independent_static_assessment": "supported finite scope",
+      "assertion_semantics": "Fork preserves exact source history and source grants, creates only one new target registration/time, disables copied settings and preserves repository UUID. Trying original request under fork fails INCOMPATIBLE_REPLAY; genuinely new capture/request succeeds.",
+      "limits_and_gates": "Independent clones receive a new Scope; old history is not relabeled.",
+      "references": [
+        {
+          "reference": "tests/integration/access/test_backup.py::test_fork_preserves_origin_history_and_grants_new_scope_inactive",
+          "path": "tests/integration/access/test_backup.py",
+          "line": 548,
+          "additional_to_baseline_ledger": false
+        },
+        {
+          "reference": "tests/integration/access/test_stack_acceptance.py::test_fork_cannot_retarget_original_request_but_new_capture_can_acquire",
+          "path": "tests/integration/access/test_stack_acceptance.py",
+          "line": 86,
+          "additional_to_baseline_ledger": false
+        }
+      ],
+      "product_test_execution_by_r4": false
+    },
+    {
+      "id": 24,
+      "requirement": "Backup/restore round-trips every registration, not just MAX(time), with local reapproval; Core offline operations still work without Access.",
+      "baseline_ledger_status": "covered",
+      "independent_static_assessment": "supported finite scope; improve references",
+      "assertion_semantics": "Stack scenario compares restored Scope/history and actual Core facts, rejects before reapproval, and later increases original request work. Ties survive restore. Existing all-history backup/restore tests provide stronger explicit historical-prefix assertions.",
+      "limits_and_gates": "Add full-history backup and continuation test links; the linked stack fixture alone has only one registration.",
+      "references": [
+        {
+          "reference": "tests/integration/access/test_stack_acceptance.py::test_restore_reapproval_resumes_same_request_without_rewriting_core",
+          "path": "tests/integration/access/test_stack_acceptance.py",
+          "line": 53,
+          "additional_to_baseline_ledger": false
+        },
+        {
+          "reference": "tests/integration/access/test_backup.py::test_latest_ties_survive_restore",
+          "path": "tests/integration/access/test_backup.py",
+          "line": 175,
+          "additional_to_baseline_ledger": false
+        },
+        {
+          "reference": "tests/integration/access/test_backup.py::test_backup_retains_all_history_and_settings_but_not_consent",
+          "path": "tests/integration/access/test_backup.py",
+          "line": 123,
+          "additional_to_baseline_ledger": true
+        },
+        {
+          "reference": "tests/integration/access/test_backup.py::test_restore_is_continuation_not_fresh_registrations",
+          "path": "tests/integration/access/test_backup.py",
+          "line": 144,
+          "additional_to_baseline_ledger": true
+        }
+      ],
+      "product_test_execution_by_r4": false
+    },
+    {
+      "id": 25,
+      "requirement": "Generic UPDATE/DELETE/REPLACE/mutating upserts and Scope-deletion cascades cannot erase or rewrite immutable registration coordinates on supported connections.",
+      "baseline_ledger_status": "covered",
+      "independent_static_assessment": "supported finite scope",
+      "assertion_semantics": "Direct UPDATE/DELETE/REPLACE and parent Scope mutation are rejected with registration rows exact afterward. REPLACE remains rejected with recursive triggers disabled. Full key shape and no surrogate are separately inspected.",
+      "limits_and_gates": "Supported connections deny generic mutation; privileged arbitrary DDL/file-owner tamper is outside this API capability contract.",
+      "references": [
+        {
+          "reference": "tests/integration/access/test_registry.py::test_raw_mutation_guards",
+          "path": "tests/integration/access/test_registry.py",
+          "line": 198,
+          "additional_to_baseline_ledger": false
+        },
+        {
+          "reference": "tests/integration/access/test_registry.py::test_replace_cannot_bypass_history_even_without_recursive_triggers",
+          "path": "tests/integration/access/test_registry.py",
+          "line": 210,
+          "additional_to_baseline_ledger": false
+        }
+      ],
+      "product_test_execution_by_r4": false
+    },
+    {
+      "id": 26,
+      "requirement": "Current request replay cannot silently switch routes after a newer registration; unchanged old intent and cumulative-work accounting remain intact.",
+      "baseline_ledger_status": "covered",
+      "independent_static_assessment": "supported finite scope; subject to R2/R3 findings",
+      "assertion_semantics": "Inactive restore plus reapproval resumes the same request without changing prior Core facts and with increased actual cost; a fork cannot retarget that request. Deleting/reinitializing Operational still yields CONTINUATION_UNAVAILABLE.",
+      "limits_and_gates": "New latest route retry refusal before Git is an additional existing link; no silent new Capture or zero-cost restart.",
+      "references": [
+        {
+          "reference": "tests/integration/access/test_stack_acceptance.py::test_restore_reapproval_resumes_same_request_without_rewriting_core",
+          "path": "tests/integration/access/test_stack_acceptance.py",
+          "line": 53,
+          "additional_to_baseline_ledger": false
+        },
+        {
+          "reference": "tests/integration/access/test_stack_acceptance.py::test_fork_cannot_retarget_original_request_but_new_capture_can_acquire",
+          "path": "tests/integration/access/test_stack_acceptance.py",
+          "line": 86,
+          "additional_to_baseline_ledger": false
+        },
+        {
+          "reference": "tests/integration/access/test_git_acquisition.py::test_operational_loss_cannot_reset_request_budget",
+          "path": "tests/integration/access/test_git_acquisition.py",
+          "line": 387,
+          "additional_to_baseline_ledger": false
+        },
+        {
+          "reference": "tests/integration/access/test_git_acquisition.py::test_access_plan_change_rejected_on_retry_before_git",
+          "path": "tests/integration/access/test_git_acquisition.py",
+          "line": 339,
+          "additional_to_baseline_ledger": true
+        }
+      ],
+      "product_test_execution_by_r4": false
+    }
+  ]
+}

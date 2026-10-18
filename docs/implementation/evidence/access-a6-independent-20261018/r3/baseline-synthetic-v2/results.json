@@ -1,0 +1,177 @@
+{
+  "ended_at_utc": "2026-10-18T03:39:20.303630+00:00",
+  "python": "3.13.5 (main, Jul 15 2026, 20:25:40) [GCC 14.2.0]",
+  "sqlite": "3.51.3",
+  "sqlite_source_id": "2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618",
+  "started_at_utc": "2026-10-18T03:39:18.501481+00:00",
+  "steps": [
+    {
+      "code": "REPOSITORY_SCOPE",
+      "error_type": "CoreFailure",
+      "message": "unit repository_uuidv4 does not match Core store_identity",
+      "outcome": "rejected",
+      "step": "registered_nonseed_external_metadata"
+    },
+    {
+      "claims": [],
+      "objects": [],
+      "repositories": [
+        [
+          "10000000-0000-4000-8000-000000000000"
+        ],
+        [
+          "10000000-0000-4000-8000-000000000001"
+        ]
+      ],
+      "step": "external_metadata_after_rejection"
+    },
+    {
+      "outcome": "accepted",
+      "result": "GitAcquisitionReport(repository_uuidv4='10000000-0000-4000-8000-000000000001', capture_origin_uuidv4='190ed731-e065-4803-823e-7c69f109a9ed', capture_uuidv4='0d53ba99-25c9-438c-8798-ed6db7f3c13c', object_format='sha1', status='complete', admitted_objects=(OID(object_format='sha1', full_oid='0c2880d25560b098d4e6ccfcd6f6147bb8ae833b'), OID(object_format='sha1', full_oid='4b825dc642cb6eb9a060e54bf8d69288fbee4904')), retained_objects=(OID(object_format='sha1', full_oid='0c2880d25560b098d4e6ccfcd6f6147bb8ae833b'),), metadata_only_objects=(OID(object_format='sha1', full_oid='4b825dc642cb6eb9a060e54bf8d69288fbee4904'),), nominal_missing_objects=(), ref_observations=(GitObservation(capture_origin_uuidv4='190ed731-e065-4803-823e-7c69f109a9ed', capture_uuidv4='0d53ba99-25c9-438c-8798-ed6db7f3c13c', repository_uuidv4='10000000-0000-4000-8000-000000000001', kind='snapshot', scope=('local-git-refs', 'original-r1-source', ()), value={'roots': [['sha1', '0c2880d25560b098d4e6ccfcd6f6147bb8ae833b']], 'predecessor': None, 'observed_at_us': 19, 'source': 'original-r1-source', 'refs': [{'ref': 'refs/heads/main', 'target': ['sha1', '0c2880d25560b098d4e6ccfcd6f6147bb8ae833b']}], 'enumeration_state': 'complete', 'terminal_observation': True}, provenance=Provenance(source='original-r1-source', observation='[\"190ed731-e065-4803-823e-7c69f109a9ed\",\"0d53ba99-25c9-438c-8798-ed6db7f3c13c\"]', coordinate='local-ref-snapshot', decoder='git-native', decoder_version='1', qualification='reported')),), notes_discoveries=(), notes_inventories=(), note_acquisitions=(), coverage_claims=(CoverageClaim(scope=CoreCoverageScope(owner_kind='repository', coordinates=('10000000-0000-4000-8000-000000000001', 'git_metadata')), observed_at_us=19, state='partial', details_json='{\"capture_origin_uuidv4\":\"190ed731-e065-4803-823e-7c69f109a9ed\",\"capture_uuidv4\":\"0d53ba99-25c9-438c-8798-ed6db7f3c13c\",\"metadata_only_count\":1,\"nominal_missing_count\":0,\"retained_count\":1}'),), failure_code=None, failure_detail='')",
+      "step": "nonseed_native_actual_git"
+    },
+    {
+      "claims": [
+        [
+          "10000000-0000-4000-8000-000000000001",
+          "endpoint",
+          "\"ssh://source.example/R1\"",
+          "[\"r3-independent\",\"original-event\",\"endpoint\",\"external\",\"1\",\"reported\"]"
+        ]
+      ],
+      "identity": [
+        [
+          "10000000-0000-4000-8000-000000000000",
+          "0f49dfd4-07fd-40d8-8788-6074b7df4823"
+        ]
+      ],
+      "observations": [
+        [
+          "10000000-0000-4000-8000-000000000001",
+          "snapshot",
+          "{\"enumeration_state\":\"complete\",\"observed_at_us\":19,\"predecessor\":null,\"refs\":[{\"ref\":\"refs/heads/main\",\"target\":[\"sha1\",\"0c2880d25560b098d4e6ccfcd6f6147bb8ae833b\"]}],\"roots\":[[\"sha1\",\"0c2880d25560b098d4e6ccfcd6f6147bb8ae833b\"]],\"source\":\"original-r1-source\",\"terminal_observation\":true}"
+        ]
+      ],
+      "repositories": [
+        [
+          "10000000-0000-4000-8000-000000000000"
+        ],
+        [
+          "10000000-0000-4000-8000-000000000001"
+        ]
+      ],
+      "step": "native_sql"
+    },
+    {
+      "envelope_repository": "10000000-0000-4000-8000-000000000000",
+      "payload_claims": [
+        {
+          "field": "endpoint",
+          "provenance_json": "[\"r3-independent\",\"original-event\",\"endpoint\",\"external\",\"1\",\"reported\"]",
+          "repository_uuidv4": "10000000-0000-4000-8000-000000000001",
+          "value_json": "\"ssh://source.example/R1\""
+        }
+      ],
+      "payload_observation_repositories": [
+        "10000000-0000-4000-8000-000000000001"
+      ],
+      "payload_repositories": [
+        {
+          "repository_uuidv4": "10000000-0000-4000-8000-000000000000"
+        },
+        {
+          "repository_uuidv4": "10000000-0000-4000-8000-000000000001"
+        }
+      ],
+      "step": "native_export"
+    },
+    {
+      "code": "REPOSITORY_MISMATCH",
+      "error_type": "ExchangeError",
+      "message": "10000000-0000-4000-8000-000000000000:REPOSITORY_MISMATCH: package repository 10000000-0000-4000-8000-000000000000 != receiver 10000000-0000-4000-8000-000000000002",
+      "outcome": "rejected",
+      "step": "r1_payload_into_receiver_seed_r2"
+    },
+    {
+      "objects": [],
+      "repositories": [
+        [
+          "10000000-0000-4000-8000-000000000002"
+        ]
+      ],
+      "step": "receiver_r2_after_rejection"
+    },
+    {
+      "outcome": "accepted",
+      "result": "ExchangeImportReport(package_id='d812e0a1-e4a2-418d-87a5-0cb8a551eafb', package_digest_sha256='130f5a47cc9b8e70a7da7a604bff8a5d599edc501cb3d2b3e1561752f7e146b5', sender_catalog_instance_uuidv4='0f49dfd4-07fd-40d8-8788-6074b7df4823', repository_uuidv4='10000000-0000-4000-8000-000000000000', core_imported=True, context_imported=False, idempotent_replay=False, admitted_core_objects=2, admitted_retained_metadata=1, admitted_note_roles=0, admitted_retained_notes=0, ignored_unverified_intrinsic_claims=0, ignored_unverified_intrinsic_groups=0, admitted_context_resources=0, linked_core_references=0, pending_core_references=0)",
+      "step": "same_seed_import_control"
+    },
+    {
+      "envelope_repository": "10000000-0000-4000-8000-000000000000",
+      "observations_unchanged": true,
+      "repository_claims_unchanged": true,
+      "step": "same_seed_reexport"
+    },
+    {
+      "outcome": "accepted",
+      "result": "GitAcquisitionReport(repository_uuidv4='10000000-0000-4000-8000-000000000000', capture_origin_uuidv4='033017e1-e6e3-4068-a716-dc1d7df67b27', capture_uuidv4='49383bd9-571b-43f9-81bb-abb38687704b', object_format='sha1', status='known_empty', admitted_objects=(), retained_objects=(), metadata_only_objects=(), nominal_missing_objects=(), ref_observations=(), notes_discoveries=(), notes_inventories=(), note_acquisitions=(), coverage_claims=(), failure_code=None, failure_detail='')",
+      "step": "seed_unit_with_registered_foreign_claim"
+    },
+    {
+      "claims": [
+        [
+          "10000000-0000-4000-8000-000000000001",
+          "endpoint",
+          "\"ssh://source.example/R1\""
+        ],
+        [
+          "10000000-0000-4000-8000-000000000001",
+          "name",
+          "\"foreign-to-unit-r0\""
+        ]
+      ],
+      "step": "mixed_claim_sql"
+    },
+    {
+      "count": 9,
+      "exact_reexport": true,
+      "exact_sql": true,
+      "step": "direct_claim_roundtrip"
+    },
+    {
+      "code": "CONTEXT_REGISTRATION",
+      "error_type": "ExchangeError",
+      "message": "provider:CONTEXT_REGISTRATION: REGISTRATION_ACCESS_SETTINGS",
+      "outcome": "rejected",
+      "step": "unselected_context_registration"
+    },
+    {
+      "access_created": false,
+      "objects": [],
+      "recovery_stop": false,
+      "step": "unselected_context_after_rejection"
+    },
+    {
+      "all_history": true,
+      "backup_grants": 0,
+      "committed_wal_bytes": 4152,
+      "input_bundle_bytes_unchanged": true,
+      "restored_enabled_routes": 0,
+      "restored_grants": 0,
+      "source_grants": 1,
+      "source_rows_unchanged": true,
+      "step": "backup_restore_independent"
+    },
+    {
+      "code": "EXISTS",
+      "error_type": "AccessRegistryError",
+      "message": "EXISTS: destination already exists",
+      "outcome": "rejected",
+      "step": "restore_existing_destination"
+    },
+    {
+      "history_unchanged": true,
+      "step": "existing_destination_preserved"
+    }
+  ]
+}

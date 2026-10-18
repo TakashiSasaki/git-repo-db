@@ -1,0 +1,2 @@
+https://sqlite.org/releaselog/3_51_3.html
+sqlite3.c SHA3-256 32d5424f97e0a7fc5ed2f6335afbb58be4e0298bd7117a34e39d345ff13d859e

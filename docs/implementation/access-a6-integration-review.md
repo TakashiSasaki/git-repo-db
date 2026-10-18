@@ -1,5 +1,10 @@
 # A6a integrated Access review and callback-handoff hardening
 
+**Later independent review:** [A6 independent correction](access-a6-independent-review.md)
+preserves this author-run report as historical evidence, adds separate reviewers
+and closes reproduced implementation defects. Its exact execution receipts and
+remaining Exchange/ADR gates do not change historical results recorded below.
+
 Status: main-agent integration review, NOT independent review or merge acceptance.
 Base: PR #101 `444dcecf38f5db3cccdb4716c7c8c6b584543475`, effective tree
 `2db6023f98a6e5947e470950ecc78ee290280bc2`. Work began 2026-10-18 10:25:24 JST.

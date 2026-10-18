@@ -1,0 +1,200 @@
+{
+  "ended_at_utc": "2026-10-18T03:41:52.404877+00:00",
+  "sqlite": "3.51.3",
+  "sqlite_source_id": "2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618",
+  "started_at_utc": "2026-10-18T03:41:52.345219+00:00",
+  "steps": [
+    {
+      "before_in_snapshot": true,
+      "later_in_snapshot": false,
+      "later_in_source": true,
+      "snapshot_rows": [
+        [
+          "20000000-0000-4000-8000-000000000001",
+          11,
+          "file:///old"
+        ],
+        [
+          "20000000-0000-4000-8000-000000000001",
+          22,
+          "file:///new"
+        ],
+        [
+          "20000000-0000-4000-8000-000000000001",
+          33,
+          "file:///old"
+        ],
+        [
+          "20000000-0000-4000-8000-000000000001",
+          33,
+          "file:///tie"
+        ],
+        [
+          "20000000-0000-4000-8000-000000000001",
+          55,
+          "file:///committed-wal"
+        ],
+        [
+          "20000000-0000-4000-8000-000000000001",
+          66,
+          "file:///before-snapshot"
+        ],
+        [
+          "20000000-0000-4000-8000-000000000001",
+          77,
+          "file:///after-snapshot"
+        ],
+        [
+          "20000000-0000-4000-8000-000000000001",
+          88,
+          "file:///before-snapshot"
+        ]
+      ],
+      "source_rows": [
+        [
+          "20000000-0000-4000-8000-000000000001",
+          11,
+          "file:///old"
+        ],
+        [
+          "20000000-0000-4000-8000-000000000001",
+          22,
+          "file:///new"
+        ],
+        [
+          "20000000-0000-4000-8000-000000000001",
+          33,
+          "file:///old"
+        ],
+        [
+          "20000000-0000-4000-8000-000000000001",
+          33,
+          "file:///tie"
+        ],
+        [
+          "20000000-0000-4000-8000-000000000001",
+          55,
+          "file:///committed-wal"
+        ],
+        [
+          "20000000-0000-4000-8000-000000000001",
+          66,
+          "file:///before-snapshot"
+        ],
+        [
+          "20000000-0000-4000-8000-000000000001",
+          77,
+          "file:///after-snapshot"
+        ],
+        [
+          "20000000-0000-4000-8000-000000000001",
+          88,
+          "file:///before-snapshot"
+        ],
+        [
+          "20000000-0000-4000-8000-000000000001",
+          99,
+          "file:///after-snapshot"
+        ]
+      ],
+      "step": "concurrent_wal_cut"
+    },
+    {
+      "code": "BACKUP_FORMAT",
+      "error_type": "AccessRegistryError",
+      "message": "BACKUP_FORMAT: unexpected or missing backup member",
+      "outcome": "rejected",
+      "step": "extra-member"
+    },
+    {
+      "destination_absent": true,
+      "input_unchanged": true,
+      "step": "extra-member-aftermath"
+    },
+    {
+      "code": "CORRUPT",
+      "error_type": "AccessRegistryError",
+      "message": "CORRUPT: invalid stored Access value",
+      "outcome": "rejected",
+      "step": "invalid-check"
+    },
+    {
+      "destination_absent": true,
+      "input_unchanged": true,
+      "step": "invalid-check-aftermath"
+    },
+    {
+      "code": "CORRUPT",
+      "error_type": "AccessRegistryError",
+      "message": "CORRUPT: Access registry reference failure",
+      "outcome": "rejected",
+      "step": "invalid-fk"
+    },
+    {
+      "destination_absent": true,
+      "input_unchanged": true,
+      "step": "invalid-fk-aftermath"
+    },
+    {
+      "code": "BACKUP_HASH",
+      "error_type": "AccessRegistryError",
+      "message": "BACKUP_HASH: backup content changed or hash mismatch",
+      "outcome": "rejected",
+      "step": "hash-mismatch"
+    },
+    {
+      "destination_absent": true,
+      "input_unchanged": true,
+      "step": "hash-mismatch-aftermath"
+    },
+    {
+      "code": "BACKUP_FORMAT",
+      "error_type": "AccessRegistryError",
+      "message": "BACKUP_FORMAT: invalid Access backup manifest",
+      "outcome": "rejected",
+      "step": "extra-manifest-key"
+    },
+    {
+      "destination_absent": true,
+      "input_unchanged": true,
+      "step": "extra-manifest-key-aftermath"
+    },
+    {
+      "code": "EXISTS",
+      "error_type": "AccessRegistryError",
+      "message": "EXISTS: destination already exists",
+      "outcome": "rejected",
+      "step": "raced_empty_directory"
+    },
+    {
+      "stage_paths": [],
+      "step": "raced_empty_directory-aftermath",
+      "target_still_empty": true
+    },
+    {
+      "code": "PUBLICATION_UNCERTAIN",
+      "error_type": "AccessRegistryError",
+      "message": "PUBLICATION_UNCERTAIN: published target durability is indeterminate",
+      "outcome": "rejected",
+      "step": "postpublication_fsync_failure"
+    },
+    {
+      "exact_members": [
+        "access.sqlite3",
+        "restore.json"
+      ],
+      "step": "postpublication_fsync_failure-aftermath",
+      "target_preserved": true
+    },
+    {
+      "enabled_routes": 0,
+      "grants": 0,
+      "integrity": [
+        [
+          "ok"
+        ]
+      ],
+      "step": "uncertain_target_valid_but_inactive"
+    }
+  ]
+}

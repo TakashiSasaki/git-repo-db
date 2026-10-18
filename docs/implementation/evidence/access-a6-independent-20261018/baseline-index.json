@@ -1,0 +1,157 @@
+{
+  "recorded_at": "2026-10-18T03:50:06.584426+00:00",
+  "reviewed_commit": "f4d0d448fca5925bfbe4f8cb8345c3bd0df7de60",
+  "reviewed_tree": "a7b4521fb7fa6562c8e0bf67e2766743e0b82c5b",
+  "files": [
+    {
+      "path": "r1/independent-matrix.json",
+      "sha256": "ccc102aab8e5999f1e226df775fbbfe8be4ed7919f0e700f9fd667a30bac57c5",
+      "bytes": 15811
+    },
+    {
+      "path": "r1/independent_matrix.py",
+      "sha256": "478f699418666049b2e80ccef57635d421ad3916075c0c1acbd49b72a8591565",
+      "bytes": 19884
+    },
+    {
+      "path": "r1/review.md",
+      "sha256": "9a3dc4999240da1813d8a3d17f25647ec46afed0cdec419d90da5e4232b653b1",
+      "bytes": 8216
+    },
+    {
+      "path": "r2/baseline-environment.json",
+      "sha256": "71da4b6e676d5b2413d6488a8e7244c40eec7b3c2a422f1f2a31d42929710072",
+      "bytes": 397
+    },
+    {
+      "path": "r2/config-bom-extended.json",
+      "sha256": "f4ced6acec30f92545e1ee91cb705cc29a3b213a6a5b917ec4b971b40060e190",
+      "bytes": 2446
+    },
+    {
+      "path": "r2/git-command-guard.json",
+      "sha256": "4ba9fb0a8719d284524e011ef9183e134d71cadbfd037d51146062139766e430",
+      "bytes": 507
+    },
+    {
+      "path": "r2/handoff-db-cancel.json",
+      "sha256": "9d6b99e630da5f65c54a5adb02cc6e2fdada1cd884d55543824dfe2836db3331",
+      "bytes": 348
+    },
+    {
+      "path": "r2/handoff-independent.json",
+      "sha256": "90df9133f911adcca1c11412e620f4a964b3fc2981ba8d1692305cc68dddf459",
+      "bytes": 4651
+    },
+    {
+      "path": "r2/probe_config_bom.py",
+      "sha256": "6f8c7799a7769628e09f623c1fb7f2053726a76139fe9fcde0b73b430e74fe97",
+      "bytes": 3119
+    },
+    {
+      "path": "r2/probe_config_bom_extended.py",
+      "sha256": "ec16b96e3f68feb3e4e563f026f462b155cf6fa0c02171149776d9ac2b279e61",
+      "bytes": 3392
+    },
+    {
+      "path": "r2/probe_git_command_guard.py",
+      "sha256": "ee10e5e9b22201e7ced5b47ccad839d0126f47e932b022bb6e082bcf11bb7bb1",
+      "bytes": 2536
+    },
+    {
+      "path": "r2/probe_handoff_db_cancel.py",
+      "sha256": "8c504fe688edc1c3420f193ff7d705edc7b14d49ffe1fced1fe5c83f4b19fab7",
+      "bytes": 3862
+    },
+    {
+      "path": "r2/probe_handoff_independent.py",
+      "sha256": "0785c53f14f83365bcffec25af9370147660c7ebac021afd8bd647be0e7c2447",
+      "bytes": 7800
+    },
+    {
+      "path": "r2/review-baseline.md",
+      "sha256": "496a6340b3bc6c29c3c9f6eafe05514eed3055ae2eced0467415e8a284b1be4d",
+      "bytes": 11769
+    },
+    {
+      "path": "r3/backup-adversarial-v2/results.json",
+      "sha256": "9dc4cb0a1d0f732ad189fdbb0cb1a40241212938bb2eebcf88692bfa1f39e181",
+      "bytes": 5004
+    },
+    {
+      "path": "r3/baseline-review.md",
+      "sha256": "8f79a80618d027ee858b634fe3b0ea3651bf0a5d7e1f13c8a1d5198f620ed6cf",
+      "bytes": 13353
+    },
+    {
+      "path": "r3/baseline-synthetic-v2/results.json",
+      "sha256": "2da0aa2ec6e67e4b836f9b5a78f33cf3beedb002e6db9930330438ffab5b3d38",
+      "bytes": 8305
+    },
+    {
+      "path": "r3/probe_backup_adversarial.py",
+      "sha256": "18ab65490df5001f9ca32bcf133bae4ad08a9df76b82eed4c1d22c7f4ed2e816",
+      "bytes": 7341
+    },
+    {
+      "path": "r3/probe_baseline.py",
+      "sha256": "1ef8ed7504535edf772ad2b98dbc2d47384a2448ed3121fc4d0864645adbbc52",
+      "bytes": 12959
+    },
+    {
+      "path": "r4/adr-clause-map.json",
+      "sha256": "43296cc2ca951698928035b7ea7f3a3d7b3f8ad6eaba139922f183bb2e3d5560",
+      "bytes": 13775
+    },
+    {
+      "path": "r4/adr-clause-map.md",
+      "sha256": "f387454d4045eb513e8ffb5064334fb9507c40137b56ecba16dc0dfa6880e907",
+      "bytes": 10503
+    },
+    {
+      "path": "r4/adr0003-inbound-classified.json",
+      "sha256": "114e3c837dd5fe12372cd9a28154544d4795b527d294bed37273b4dfb6080fce",
+      "bytes": 21594
+    },
+    {
+      "path": "r4/ci-static-scope.json",
+      "sha256": "49d49432e701f3e6c239f084aa097439fce0b3adc35123be2c41e9b5f12fc74d",
+      "bytes": 5460
+    },
+    {
+      "path": "r4/hosted-log-summary.json",
+      "sha256": "14e9981c7fce689ac0215ba28f26815dc87fe0da868e143d7cb621911ffa5a2a",
+      "bytes": 3013
+    },
+    {
+      "path": "r4/review.md",
+      "sha256": "5508d74b79f6b1788fa7d74947e6340c7ea6bf450a4bdb1f98b18e15ce973d4e",
+      "bytes": 12971
+    },
+    {
+      "path": "r4/semantic-acceptance.json",
+      "sha256": "96b583f06b6ff179b4694ccba95d6e9c7d9da0cc1a8ce8bc4ebf4d1d910e3f41",
+      "bytes": 38810
+    },
+    {
+      "path": "r4/semantic-acceptance.md",
+      "sha256": "2c16ad429c22e282142bda294662662bb556a86156cfe37ec28395038034a49a",
+      "bytes": 10300
+    },
+    {
+      "path": "runtime/runtime-default.json",
+      "sha256": "53dc16f6fef17d741b310fff41c75cbda41fb1cc5da0a5a76de917abdc2b67e4",
+      "bytes": 547
+    },
+    {
+      "path": "runtime/runtime-minimum.json",
+      "sha256": "4e666a9c60194b5fd1a33f69d0fe7701aee92a3c19c4466ff4bbaa09a6049993",
+      "bytes": 646
+    },
+    {
+      "path": "runtime/sqlite-hash.txt",
+      "sha256": "dfaa9bf7b3c07c68cdc56c361ec15759775d1f0f9e9b87052177e1c8518044a9",
+      "bytes": 126
+    }
+  ]
+}

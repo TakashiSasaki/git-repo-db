@@ -59,6 +59,21 @@ qualification. Frozen historical reports and execution input hashes stay intact.
 
 ## Development validation loop (ordinary PRs and stacked iterations)
 
+Before an exact SQLite-minimum run, query the actual loaded version and
+`SELECT sqlite_source_id()` in the intended interpreter. The managed CPython 3.12
+runtime embedded `_sqlite3`: `LD_LIBRARY_PATH` did not replace its SQLite 3.53.1,
+even with a hash-verified 3.51.3 library present. Preserve the failed exact-version
+assertion and distinguish that supported newer-runtime run. Use an available
+dynamic-binding interpreter in its own locked worktree environment, and repeat the
+actual source-ID query before calling the result a minimum-version run. Do not
+alter version strings, lower requirements or disable the network guard.
+
+Review assertion meaning before extending acceptance links. Scope URI grammar
+checks do not prove Repository Locator grammar, and a MAX-only restore check does
+not prove the older history prefix survived. Link the existing positive repository
+grammar and full-history backup/continuity assertions as appropriate; test-name
+existence and passing counts are separate evidence.
+
 1. Run focused tests locally while editing. Validate both lint **and format** for source/test changes:
    ```bash
    uv run --no-sync ruff check src tests scripts

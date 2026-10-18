@@ -1,0 +1,8 @@
+{
+  "recorded_at": "2026-10-18T03:39:20.500977+00:00",
+  "python": "3.12.14",
+  "sqlite": "3.53.1",
+  "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+  "executable": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+  "binding_note": "Default CPython embeds _sqlite3; verified LD_LIBRARY_PATH alone cannot replace it. Initial exact-minimum assertion failed before runtime.json was written. This is a supported >=3.51.3 separate full suite, not a 3.51.3 run."
+}
