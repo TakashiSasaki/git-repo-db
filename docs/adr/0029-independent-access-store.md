@@ -386,6 +386,7 @@ coding. The settled architectural direction is not reopened by those details.
   registration first choice; then "plan and begin work". Earlier URI-as-PK and
   separate-history-table alternatives are not selected.
 - [Storage model, source audit and implementation plan](../architecture/access-store-design.md).
+- [ADR 0029 whole-replacement readiness and post-ADR0030 delta audit](../implementation/adr-0029-replacement-readiness-20261019.md) (pre-approval review, not acceptance).
 - [ADR governance](policy.md), [key policy](0017-domain-keys-without-storage-surrogates.md),
   [recovery](0026-stop-salvage-restore-merge-after-corruption.md),
   [origin trust](0027-unauthenticated-external-capture-origin-reports.md),
