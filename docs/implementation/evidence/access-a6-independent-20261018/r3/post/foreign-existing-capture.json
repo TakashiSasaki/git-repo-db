@@ -1,0 +1,58 @@
+{
+  "root": "/workspace/access-review-evidence/r3/post/existing-capture-0_bh5iev",
+  "results": [
+    {
+      "paired": false,
+      "accepted": false,
+      "type": "CoreFailure",
+      "code": "INCOMPATIBLE_REPLAY",
+      "error": "inconsistent immutable evidence coordinate",
+      "rows_unchanged": false,
+      "changed_tables": {
+        "repositories": {
+          "before": [
+            [
+              "3a9da519-2aeb-43c6-9ec9-1375b0094d7d"
+            ],
+            [
+              "d92a18f1-9360-4500-86ba-d82357545b83"
+            ]
+          ],
+          "after": [
+            [
+              "3a9da519-2aeb-43c6-9ec9-1375b0094d7d"
+            ],
+            [
+              "d92a18f1-9360-4500-86ba-d82357545b83"
+            ],
+            [
+              "eada106d-7608-44ff-8069-6588cf20c395"
+            ]
+          ]
+        },
+        "repository_claims": {
+          "before": [],
+          "after": [
+            [
+              "eada106d-7608-44ff-8069-6588cf20c395",
+              "name",
+              "\"selected\"",
+              "[\"external\",\"event\",\"name\",\"parser\",\"1\",\"reported\"]"
+            ]
+          ]
+        }
+      },
+      "original_capture_preserved": true
+    },
+    {
+      "paired": true,
+      "accepted": false,
+      "type": "AdmissionFailure",
+      "code": "ADMISSION_FAILED",
+      "error": "core+context:ADMISSION_FAILED: inconsistent immutable evidence coordinate",
+      "rows_unchanged": true,
+      "changed_tables": {},
+      "original_capture_preserved": true
+    }
+  ]
+}

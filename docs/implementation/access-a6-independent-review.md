@@ -107,9 +107,11 @@ other corrections or reopen settled Scope policy.
 
 ## Acceptance and ADR replacement gates
 
-The [26-row independent semantic map](evidence/access-a6-independent-20261018/r4/semantic-acceptance.md)
-records the assertion meanings and limitations of all 48 baseline-linked
-functions, rather than checking names alone. The updated
+The [baseline 26-row semantic map](evidence/access-a6-independent-20261018/r4/semantic-acceptance.md)
+records the assertion meanings and limitations of all 48 baseline-linked functions.
+The [final independently verified map](evidence/access-a6-independent-20261018/r4/final/typed-source/semantic-acceptance-verified.md)
+checks all 64 final linked functions and actual execution, rather than names alone.
+The updated
 [implementation ledger](access-a6-acceptance.json) has 24 scoped covered items,
 one partial (11) and one deferred (15). Item 16 covers its stated implementation
 checks; independent review, whole-ADR approval, merge and release remain separate.
@@ -156,10 +158,50 @@ network guard was used.
 
 Baseline direct wheel and sdist-derived wheel smoke both ran installed with `-I`,
 outside checkout, from a clean Git archive. Their passing smoke is not the full
-pytest cohort run against installed distributions. Corrected-source and hosted
-results, post-fix independent review and exact input hashes belong in the final
-execution receipt linked here after validation; baseline PASS is not transferred
-to changed executable inputs.
+pytest cohort run against installed distributions.
+
+Final executable source: **`536ad33941283a439825ad606b8718c88c967ffa`**, tree
+**`169b5d7ad5dea4fa271f71bea96863bc318fb332`**. On actual SQLite 3.51.3,
+the final focused collection/execution was **1,877 passed in 228.72 seconds**,
+zero failures/errors/skips. All original nodes remain; 75 new regression nodes
+were added. Collected IDs, normalized JUnit, journal starts and each of
+setup/call/teardown match exactly once. The interruption-associated P4 node passed.
+The separate P2/P3 and P5/P6 compatibility cohort passed **49 cases** in 23.58
+seconds with its own exact-node reconciliation. These are separate overlapping
+behavioral checks, not counts added to claim a complete release suite.
+
+All six required audits, Ruff lint/format and cumulative whitespace passed on
+that source. Both direct wheel and sdist-wheel installed smoke passed from a
+clean archive, with actual site-packages module origins, interpreter, source ID,
+wheel hashes and sdist hash retained. The two wheels had identical SHA-256.
+Allowlisted MkDocs passed with zero broken links/sensitive outputs. It used
+placeholders: the legacy builder's summary label says "Rendered", but no fresh
+Mermaid rendering is claimed. Public Schema 21 diagrams remain distinct from
+the explicitly started Access implementation.
+
+See [execution receipts](evidence/access-a6-independent-20261018/execution/acceptance.json),
+[exact-node reconciliation](evidence/access-a6-independent-20261018/execution/node-reconciliation.json),
+[distribution proof](evidence/access-a6-independent-20261018/execution/distribution.json),
+[stack pins](evidence/access-a6-independent-20261018/execution/stack-pins.json) and
+[raw-artifact hashes](evidence/access-a6-independent-20261018/execution/raw-artifact-index.json).
+The 450-file input list is a selected validation-input set; the additional
+2,662-file map covers every file tracked at the tested source, including the
+acceptance ledger, design and audit contracts. A later evidence-only commit may
+change this narrative/add frozen receipts; it must prove all other original files
+unchanged and identify its different Git tree. Final hosted checkout/tree and
+actual test execution are recorded in the child PR and exported packet, without
+transferring a baseline PASS to changed executable inputs.
+
+R2 independently closed its three execution findings with 23 corrected-source
+scenarios plus eight A5 negative controls, then checked unchanged-scope binding
+at `8dcb515`. The later Core reader is separately reviewed by R3. R3's
+[final independent review](evidence/access-a6-independent-20261018/r3/typed/review.md)
+at the final executable source passed **91 independent groups**: 58 metadata,
+12 live Notes, 14 stored-corruption/conflict and seven typed-reader controls.
+R4 completed its [final independent review](evidence/access-a6-independent-20261018/r4/final/review.md)
+at 13:15:03 JST. It checked assertion meanings, all 2,662 tracked source hashes,
+current/historical ADR preservation, raw collection/JUnit/journal phases, installed
+package origins and separate gates. It did not claim root/other-agent tests as its own.
 
 The ordinary hosted offline job at the baseline had `development_checks_passed`,
 `full_acceptance=false` and zero runtime tests; R4 independently decoded and

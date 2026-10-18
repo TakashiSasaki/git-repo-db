@@ -1,0 +1,30 @@
+{
+  "finish_jst": "2026-10-18 12:54:08.640903+09:00",
+  "head": "f81a3992ac85542e015cb8f37a5ae9fc31f265b5",
+  "tree": "666dfaaa38dbe1f8163d5d196253b0715d98a78e",
+  "dirty": "",
+  "python": "3.13.5 (main, Jul 15 2026, 20:25:40) [GCC 14.2.0]",
+  "executable": "/workspace/access-review-post/.venv/bin/python",
+  "package": "/workspace/access-review-post/src/repo_catalog/__init__.py",
+  "modules": {
+    "repo_catalog.application.access_workflow": {
+      "path": "/workspace/access-review-post/src/repo_catalog/application/access_workflow.py",
+      "sha256": "902ba4575f2db56fcd430bb0fed81733fd0534f2245bd9d8999abc35a7e4fe95"
+    },
+    "repo_catalog.adapters.git.access_native": {
+      "path": "/workspace/access-review-post/src/repo_catalog/adapters/git/access_native.py",
+      "sha256": "fc38b78a5113b4ede7321995932c8397b4ffa30e589d50892673c0322f106d5f"
+    },
+    "repo_catalog.application.acquisition": {
+      "path": "/workspace/access-review-post/src/repo_catalog/application/acquisition.py",
+      "sha256": "6741a718abc65ed300203cab78aa7fe81e1500af9327cec5276a207c88402984"
+    },
+    "repo_catalog.domain.native_acquisition": {
+      "path": "/workspace/access-review-post/src/repo_catalog/domain/native_acquisition.py",
+      "sha256": "e0d658c2e36b7590f36f0260a43c5cf2bf02a46c4b0dcac22885f1ec850e3d3b"
+    }
+  },
+  "git": "git version 2.52.0",
+  "sqlite": "3.51.3",
+  "source_id": "2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618"
+}

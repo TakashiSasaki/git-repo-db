@@ -1,0 +1,152 @@
+{
+  "checks": [
+    {
+      "accepted": false,
+      "authoritative_file_unchanged": true,
+      "code": "AUTHORITATIVE_CORRUPTION",
+      "error": "authoritative integrity failure; stop catalog and restore fresh",
+      "error_type": "CoreFailure",
+      "kind": "empty-source",
+      "paired": false,
+      "persistent_stop": true
+    },
+    {
+      "accepted": false,
+      "authoritative_file_unchanged": true,
+      "code": "AUTHORITATIVE_CORRUPTION",
+      "error": "authoritative integrity failure; stop catalog and restore fresh",
+      "error_type": "CoreFailure",
+      "kind": "empty-source",
+      "paired": true,
+      "persistent_stop": true
+    },
+    {
+      "accepted": false,
+      "authoritative_file_unchanged": true,
+      "code": "AUTHORITATIVE_CORRUPTION",
+      "error": "authoritative integrity failure; stop catalog and restore fresh",
+      "error_type": "CoreFailure",
+      "kind": "invalid-utf8",
+      "paired": false,
+      "persistent_stop": true
+    },
+    {
+      "accepted": false,
+      "authoritative_file_unchanged": true,
+      "code": "AUTHORITATIVE_CORRUPTION",
+      "error": "authoritative integrity failure; stop catalog and restore fresh",
+      "error_type": "CoreFailure",
+      "kind": "invalid-utf8",
+      "paired": true,
+      "persistent_stop": true
+    },
+    {
+      "accepted": false,
+      "authoritative_file_unchanged": true,
+      "code": "AUTHORITATIVE_CORRUPTION",
+      "error": "authoritative integrity failure; stop catalog and restore fresh",
+      "error_type": "CoreFailure",
+      "kind": "invalid-ref",
+      "paired": false,
+      "persistent_stop": true
+    },
+    {
+      "accepted": false,
+      "authoritative_file_unchanged": true,
+      "code": "AUTHORITATIVE_CORRUPTION",
+      "error": "authoritative integrity failure; stop catalog and restore fresh",
+      "error_type": "CoreFailure",
+      "kind": "invalid-ref",
+      "paired": true,
+      "persistent_stop": true
+    },
+    {
+      "accepted": false,
+      "authoritative_file_unchanged": true,
+      "code": "AUTHORITATIVE_CORRUPTION",
+      "error": "authoritative integrity failure; stop catalog and restore fresh",
+      "error_type": "CoreFailure",
+      "kind": "invalid-root",
+      "paired": false,
+      "persistent_stop": true
+    },
+    {
+      "accepted": false,
+      "authoritative_file_unchanged": true,
+      "code": "AUTHORITATIVE_CORRUPTION",
+      "error": "authoritative integrity failure; stop catalog and restore fresh",
+      "error_type": "CoreFailure",
+      "kind": "invalid-root",
+      "paired": true,
+      "persistent_stop": true
+    },
+    {
+      "accepted": false,
+      "authoritative_file_unchanged": true,
+      "code": "AUTHORITATIVE_CORRUPTION",
+      "error": "authoritative integrity failure; stop catalog and restore fresh",
+      "error_type": "CoreFailure",
+      "kind": "missing-repository",
+      "paired": false,
+      "persistent_stop": true
+    },
+    {
+      "accepted": false,
+      "authoritative_file_unchanged": true,
+      "code": "AUTHORITATIVE_CORRUPTION",
+      "error": "authoritative integrity failure; stop catalog and restore fresh",
+      "error_type": "CoreFailure",
+      "kind": "missing-repository",
+      "paired": true,
+      "persistent_stop": true
+    },
+    {
+      "accepted": false,
+      "authoritative_file_unchanged": true,
+      "code": "AUTHORITATIVE_CORRUPTION",
+      "error": "authoritative integrity failure; stop catalog and restore fresh",
+      "error_type": "CoreFailure",
+      "kind": "missing-root",
+      "paired": false,
+      "persistent_stop": true
+    },
+    {
+      "accepted": false,
+      "authoritative_file_unchanged": true,
+      "code": "AUTHORITATIVE_CORRUPTION",
+      "error": "authoritative integrity failure; stop catalog and restore fresh",
+      "error_type": "CoreFailure",
+      "kind": "missing-root",
+      "paired": true,
+      "persistent_stop": true
+    },
+    {
+      "accepted": false,
+      "authoritative_file_unchanged": true,
+      "code": "INCOMPATIBLE_REPLAY",
+      "error": "stored Capture binding changed",
+      "error_type": "CoreFailure",
+      "kind": "incoming-conflict",
+      "paired": false,
+      "persistent_stop": false
+    },
+    {
+      "accepted": false,
+      "authoritative_file_unchanged": true,
+      "code": "INCOMPATIBLE_REPLAY",
+      "error": "stored Capture binding changed",
+      "error_type": "CoreFailure",
+      "kind": "incoming-conflict",
+      "paired": true,
+      "persistent_stop": false
+    }
+  ],
+  "commit": "536ad33941283a439825ad606b8718c88c967ffa",
+  "ended_at_utc": "2026-10-18T04:04:09.667091+00:00",
+  "expect_fixed": true,
+  "module": "/workspace/access-review-typed/src/repo_catalog/__init__.py",
+  "sqlite": "3.51.3",
+  "sqlite_source_id": "2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618",
+  "started_at_utc": "2026-10-18T04:04:07.890200+00:00",
+  "tree": "169b5d7ad5dea4fa271f71bea96863bc318fb332"
+}

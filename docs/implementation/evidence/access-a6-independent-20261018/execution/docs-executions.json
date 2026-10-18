@@ -1,0 +1,19 @@
+[
+  {
+    "label": "mkdocs-placeholder",
+    "argv": [
+      "/workspace/access-review-fix/.venv/bin/python",
+      "scripts/build_docs_site.py",
+      "--no-mermaid"
+    ],
+    "start": "2026-10-18T04:04:50.991781+00:00",
+    "end": "2026-10-18T04:04:52.486790+00:00",
+    "seconds": 1.4950205150000784,
+    "exit": 0,
+    "commit": "536ad33941283a439825ad606b8718c88c967ffa",
+    "tree": "169b5d7ad5dea4fa271f71bea96863bc318fb332",
+    "dirty": "",
+    "workflow_sha256": "8679801b74fe63cc15b4df13158cd28a908ea8f4b696d5a611e1e78282d603bd",
+    "cwd": "/workspace/access-review-fix"
+  }
+]

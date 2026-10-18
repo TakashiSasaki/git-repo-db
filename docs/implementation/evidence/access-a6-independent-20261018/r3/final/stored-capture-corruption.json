@@ -1,0 +1,41 @@
+{
+  "root": "/workspace/access-review-evidence/r3/final/capture-corrupt-1b8_y_1a",
+  "results": [
+    {
+      "accepted": false,
+      "type": "CoreFailure",
+      "code": "INCOMPATIBLE_REPLAY",
+      "error": "stored Capture binding changed",
+      "kind": "empty-source",
+      "paired": false,
+      "persistent_stop": false
+    },
+    {
+      "accepted": false,
+      "type": "CoreFailure",
+      "code": "INCOMPATIBLE_REPLAY",
+      "error": "stored Capture binding changed",
+      "kind": "empty-source",
+      "paired": true,
+      "persistent_stop": false
+    },
+    {
+      "accepted": false,
+      "type": "OperationalError",
+      "code": null,
+      "error": "Could not decode to UTF-8 column 'source' with text '\ufffd'",
+      "kind": "invalid-utf8",
+      "paired": false,
+      "persistent_stop": false
+    },
+    {
+      "accepted": false,
+      "type": "OperationalError",
+      "code": null,
+      "error": "Could not decode to UTF-8 column 'source' with text '\ufffd'",
+      "kind": "invalid-utf8",
+      "paired": true,
+      "persistent_stop": false
+    }
+  ]
+}

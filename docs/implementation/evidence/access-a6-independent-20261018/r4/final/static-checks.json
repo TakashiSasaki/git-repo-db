@@ -1,0 +1,174 @@
+{
+  "commit": "8dcb5150ac6c987a93b96e56a9f935184affab94",
+  "tree": "9e4886fcecab35e30ac92125d75d552c869d0004",
+  "checks": {
+    "adr_unchanged": {
+      "argv": [
+        "git",
+        "diff",
+        "--exit-code",
+        "f4d0d448fca5925bfbe4f8cb8345c3bd0df7de60...HEAD",
+        "--",
+        "AGENTS.md",
+        "docs/adr"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    "whitespace": {
+      "argv": [
+        "git",
+        "diff",
+        "--check",
+        "f4d0d448fca5925bfbe4f8cb8345c3bd0df7de60...HEAD"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    "ledger": {
+      "argv": [
+        "python",
+        "scripts/audit_access_acceptance.py"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"format\": \"git-repo-db/access-acceptance-v1\",\n  \"requirement_counts\": {\n    \"covered\": 24,\n    \"deferred\": 1,\n    \"partial\": 1\n  },\n  \"unique_test_references\": 63,\n  \"executed_nodes\": null,\n  \"node_set_matched\": false,\n  \"incomplete_requirements\": [\n    11,\n    15\n  ],\n  \"gates\": {\n    \"independent_review\": \"pending\",\n    \"adr_whole_replacement\": \"pending\",\n    \"merge_authorization\": \"not_requested\",\n    \"p8_activation\": \"not_requested\"\n  },\n  \"meaning\": \"reference/evidence consistency only; not independent or release acceptance\"\n}\n",
+      "stderr": ""
+    }
+  },
+  "changed_markdown_links": [
+    {
+      "source": ".agents/skills/ci-final-tree-verification/SKILL.md",
+      "target": "../../../docs/implementation/evidence/seven-pr-combined-20261016/README.md",
+      "exists": true
+    },
+    {
+      "source": ".agents/skills/ci-final-tree-verification/SKILL.md",
+      "target": "../efficient-repository-investigation/SKILL.md",
+      "exists": true
+    },
+    {
+      "source": ".agents/skills/three-store-invariants/references/access-native-acquisition.md",
+      "target": "../../../../docs/implementation/access-a6-independent-review.md",
+      "exists": true
+    },
+    {
+      "source": ".agents/skills/three-store-invariants/references/final-executor-handoff.md",
+      "target": "../../../../docs/implementation/access-a6-independent-review.md",
+      "exists": true
+    },
+    {
+      "source": "docs/implementation/access-a6-independent-review.md",
+      "target": "evidence/access-a6-independent-20261018/baseline-index.json",
+      "exists": true
+    },
+    {
+      "source": "docs/implementation/access-a6-independent-review.md",
+      "target": "evidence/access-a6-independent-20261018/r1/review.md",
+      "exists": true
+    },
+    {
+      "source": "docs/implementation/access-a6-independent-review.md",
+      "target": "evidence/access-a6-independent-20261018/r2/review-baseline.md",
+      "exists": true
+    },
+    {
+      "source": "docs/implementation/access-a6-independent-review.md",
+      "target": "evidence/access-a6-independent-20261018/r3/baseline-review.md",
+      "exists": true
+    },
+    {
+      "source": "docs/implementation/access-a6-independent-review.md",
+      "target": "evidence/access-a6-independent-20261018/r4/review.md",
+      "exists": true
+    },
+    {
+      "source": "docs/implementation/access-a6-independent-review.md",
+      "target": "evidence/access-a6-independent-20261018/r3/baseline-review.md",
+      "exists": true
+    },
+    {
+      "source": "docs/implementation/access-a6-independent-review.md",
+      "target": "evidence/access-a6-independent-20261018/r4/semantic-acceptance.md",
+      "exists": true
+    },
+    {
+      "source": "docs/implementation/access-a6-independent-review.md",
+      "target": "access-a6-acceptance.json",
+      "exists": true
+    },
+    {
+      "source": "docs/implementation/access-a6-independent-review.md",
+      "target": "evidence/access-a6-independent-20261018/r4/adr-clause-map.md",
+      "exists": true
+    },
+    {
+      "source": "docs/implementation/access-a6-independent-review.md",
+      "target": "evidence/access-a6-independent-20261018/r4/adr0003-inbound-classified.json",
+      "exists": true
+    },
+    {
+      "source": "docs/implementation/access-a6-independent-review.md",
+      "target": "evidence/access-a6-independent-20261018/runtime/runtime-minimum.json",
+      "exists": true
+    },
+    {
+      "source": "docs/implementation/access-a6-integration-review.md",
+      "target": "access-a6-independent-review.md",
+      "exists": true
+    },
+    {
+      "source": "docs/implementation/access-a6-integration-review.md",
+      "target": "../adr/0029-independent-access-store.md",
+      "exists": true
+    },
+    {
+      "source": "docs/implementation/access-a6-integration-review.md",
+      "target": "access-a1-contract.md",
+      "exists": true
+    },
+    {
+      "source": "docs/implementation/access-a6-integration-review.md",
+      "target": "access-a5-backup-restore.md",
+      "exists": true
+    },
+    {
+      "source": "docs/implementation/access-a6-integration-review.md",
+      "target": "access-adr-replacement-review.md",
+      "exists": true
+    },
+    {
+      "source": "docs/implementation/access-a6-integration-review.md",
+      "target": "access-a6-acceptance.json",
+      "exists": true
+    },
+    {
+      "source": "docs/implementation/access-a6-integration-review.md",
+      "target": "../adr/policy.md",
+      "exists": true
+    },
+    {
+      "source": "docs/implementation/access-a6-integration-review.md",
+      "target": "../../.agents/skills/three-store-invariants/references/final-executor-handoff.md",
+      "exists": true
+    },
+    {
+      "source": "docs/implementation/access-adr-replacement-review.md",
+      "target": "access-a6-independent-review.md",
+      "exists": true
+    },
+    {
+      "source": "docs/implementation/access-adr-replacement-review.md",
+      "target": "../adr/0029-independent-access-store.md",
+      "exists": true
+    },
+    {
+      "source": "docs/implementation/access-adr-replacement-review.md",
+      "target": "access-a1-contract.md",
+      "exists": true
+    }
+  ],
+  "filename_inventory_files": 28,
+  "filename_inventory_occurrences": 54
+}

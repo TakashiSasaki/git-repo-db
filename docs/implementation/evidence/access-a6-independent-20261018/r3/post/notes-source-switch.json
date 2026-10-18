@@ -1,0 +1,80 @@
+{
+  "root": "/workspace/access-review-evidence/r3/post/notes-switch-n9hv5w_x",
+  "results": [
+    {
+      "source": "A",
+      "scope": "[\"local-git\",\"2f776f726b73706163652f6163636573732d7265766965772d65766964656e63652f72332f706f73742f6e6f7465732d7377697463682d6e39687635775f782f412e676974\",\"sha1\"]",
+      "status": "accepted",
+      "discoveries": 1,
+      "observation": "GitObservation(capture_origin_uuidv4='9f0a6a00-3c45-4ea0-8aa1-a973c37b2b9b', capture_uuidv4='f72be643-f84b-4e0e-84b1-3fb1f03d740a', repository_uuidv4='da9a4ea0-8c58-48ea-b867-e6e3519b1b3b', kind='snapshot', scope=('local-notes-refs', 'same-original-attribution', ()), value={'roots': [], 'predecessor': None, 'observed_at_us': 123, 'source': 'same-original-attribution', 'refs': [], 'enumeration_state': 'known_empty', 'terminal_observation': True}, provenance=Provenance(source='same-original-attribution', observation='[\"9f0a6a00-3c45-4ea0-8aa1-a973c37b2b9b\",\"f72be643-f84b-4e0e-84b1-3fb1f03d740a\"]', coordinate='local-notes-discovery', decoder='p4-notes', decoder_version='1', qualification='reported'))"
+    },
+    {
+      "source": "B",
+      "scope": "[\"local-git\",\"2f776f726b73706163652f6163636573732d7265766965772d65766964656e63652f72332f706f73742f6e6f7465732d7377697463682d6e39687635775f782f422e676974\",\"sha1\"]",
+      "status": "accepted",
+      "discoveries": 1,
+      "observation": "GitObservation(capture_origin_uuidv4='9f0a6a00-3c45-4ea0-8aa1-a973c37b2b9b', capture_uuidv4='f72be643-f84b-4e0e-84b1-3fb1f03d740a', repository_uuidv4='da9a4ea0-8c58-48ea-b867-e6e3519b1b3b', kind='snapshot', scope=('local-notes-refs', 'same-original-attribution', ()), value={'roots': [], 'predecessor': None, 'observed_at_us': 123, 'source': 'same-original-attribution', 'refs': [], 'enumeration_state': 'known_empty', 'terminal_observation': True}, provenance=Provenance(source='same-original-attribution', observation='[\"9f0a6a00-3c45-4ea0-8aa1-a973c37b2b9b\",\"f72be643-f84b-4e0e-84b1-3fb1f03d740a\"]', coordinate='local-notes-discovery', decoder='p4-notes', decoder_version='1', qualification='reported'))"
+    }
+  ],
+  "progress": {
+    "[\"p5-metadata-intent\",\"9f0a6a00-3c45-4ea0-8aa1-a973c37b2b9b\",\"dcfb6a4c-1eac-45bd-88ea-ae44efd88b3b\"]": {
+      "common": {
+        "capture_origin_uuidv4": "9f0a6a00-3c45-4ea0-8aa1-a973c37b2b9b",
+        "capture_uuidv4": "dcfb6a4c-1eac-45bd-88ea-ae44efd88b3b",
+        "extra_relation_groups": [],
+        "extra_scalar_claims": [],
+        "include_refs": true,
+        "nominal_missing": [],
+        "notes": {
+          "captures": [],
+          "claims": [],
+          "discover": true,
+          "discovery_observation": null,
+          "groups": [],
+          "inventories": false,
+          "nominated_refs": [],
+          "retain_bodies": true,
+          "targets": []
+        },
+        "observed_at_us": 123,
+        "physical_copies": [],
+        "ref_prefixes": [],
+        "repository_claims": [],
+        "repository_uuidv4": "da9a4ea0-8c58-48ea-b867-e6e3519b1b3b",
+        "retain_bytes": true,
+        "retain_oids": null,
+        "selected": [],
+        "source_attribution": "same-original-attribution",
+        "traverse_structural_targets": true
+      },
+      "coverage_claims": [],
+      "coverage_proofs": [],
+      "coverage_scopes": [],
+      "native_objects": [],
+      "object_format": "sha1",
+      "observations": []
+    },
+    "[\"p5-discovery-allocation\",\"9f0a6a00-3c45-4ea0-8aa1-a973c37b2b9b\",123]": {
+      "observation_uuidv4": "f72be643-f84b-4e0e-84b1-3fb1f03d740a"
+    },
+    "[\"p4-discovery\",\"9f0a6a00-3c45-4ea0-8aa1-a973c37b2b9b\",\"f72be643-f84b-4e0e-84b1-3fb1f03d740a\"]": {
+      "binding": [
+        "da9a4ea0-8c58-48ea-b867-e6e3519b1b3b",
+        "same-original-attribution",
+        123,
+        []
+      ],
+      "detail": "",
+      "failure_code": null,
+      "refs": [],
+      "status": "known_empty",
+      "terminal": true
+    }
+  },
+  "usage": {
+    "input_bytes": 0,
+    "verification_bytes": 0,
+    "metadata_units": 10,
+    "proof_steps": 0
+  }
+}
