@@ -49,6 +49,7 @@ does not claim that an incorrectly attributed UUID or remote exploit was observe
 | Root-M01 | Medium; `application/acquisition.py:826` | Deliver a valid unit, then change source/time/nominal objects under the same request. The baseline accepts it. Freeze complete bounded semantic input in request progress without raw native bodies; preserve actual repeat-work charging and explicit new-request compatible additions under the same Capture. |
 | R3-P01 | High, post-fix counterexample at `f81a399`; metadata/paired scope preparation | Live Notes with durable progress fails `REQUEST_SCOPE`; shared explicit memory progress accepts source A→B and returns A's saved observation. Bind actual Notes source scope/format in saved intent and its exact target/instance/source request scope in both paths. Preserve externally reported Capture source independently. |
 | R3-P02 | High, post-fix counterexample at `f81a399`; metadata Capture preflight | An existing foreign Capture pair supplied with a falsified selected owner, without Capture Coverage, is refused only after standalone claim writes. Preflight every incoming Notes Capture against its complete stored original key (owner/source/ref/root), with metered indexed lookups, before any Core admission. |
+| R3-C01 | High, post-fix counterexample at `8dcb515`; stored Capture read boundary | Generic SQL treated damaged stored source/ref/OID as incoming mismatch or raw UTF-8 error without stopping. Missing repository/root parents were silently recreated. Move touched Capture reconstruction, canonical ref/domain checks and parent existence into a typed Core snapshot reader with decoded-read and persistent completion/stop fences. Preserve the suspect file; valid incoming conflict remains noncorruption. |
 | R4-01/02 | P3; acceptance ledger items 7/16/24 | Scope URI tests do not prove positive Repository grammar, MAX ties do not prove all-history continuity, and ADR approval is not an implementation-check gap. Add existing positive/full-history references and separate the gates. |
 | R3-03 | Medium; `application/exchange.py:306`, `:327`, `:367`, `:1319` | Actual R1 acquisition in seed-R0 catalog exports an R0 envelope containing R1 evidence. Seed-R2 import rejects without mutation; same-seed onward export preserves R1 exactly. Cross-seed Exchange remains an explicit incomplete contract, below. |
 
@@ -69,6 +70,15 @@ reason are retained. The subsequent correction binds actual Notes source/format
 for explicit progress too and preflights complete stored Capture identity. Its
 extended **63-case regression checkpoint passed**; final broad execution is bound
 separately to the new source commit.
+
+The next independent review found R3-C01. A second broad checkpoint was stopped
+before edits; its SIGINT was absorbed during the P4 actual-Git test and the journal
+recorded that call as failed, before SIGTERM ended the process (exit -15). This is
+retained as an interruption-associated failed call, not a passing full run or a
+hidden skip. The new typed-reader correction has a **75-case regression checkpoint**
+with damaged UTF-8/domain/FK controls that assert persistent stop and exact
+unchanged suspect Core bytes. The final broad run must execute the interrupted
+P4 node again along with the complete collection.
 
 The original A6-H01 fix was independently checked using an OS/environment
 checkpoint and a second SQLite handle, without importing the existing test

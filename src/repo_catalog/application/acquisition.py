@@ -157,11 +157,8 @@ def _capture_binding(core, pair):
     """Read the original Capture binding, including prepared paired input."""
     if isinstance(core, _PreparedCore):
         return core.metadata_capture_binding(pair)
-    rows = core.sql(
-        "SELECT capture_origin_uuidv4,capture_uuidv4,repository_uuidv4,source,ref,object_format,root FROM captures WHERE capture_origin_uuidv4=? AND capture_uuidv4=?",
-        tuple(pair),
-    )
-    return tuple(rows[0]) if rows else None
+    value = core.capture_binding(tuple(pair))
+    return value.key if value is not None else None
 
 
 def _validate_metadata_capture_coverage(core, unit, work):

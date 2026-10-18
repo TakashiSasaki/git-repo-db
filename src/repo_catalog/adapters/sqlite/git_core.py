@@ -7,6 +7,7 @@ scalar admission; it intentionally exposes no public initializer or file archive
 
 from __future__ import annotations
 
+import json
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -21,6 +22,7 @@ from repo_catalog.domain.notes import (
 )
 from repo_catalog.domain.p1_core import (
     OID,
+    Capture,
     CoreFailure,
     NativeObject,
     NotesGroup,
@@ -29,6 +31,7 @@ from repo_catalog.domain.p1_core import (
     ScalarClaim,
     account_verification,
     encode,
+    uuid4_value,
 )
 
 
@@ -105,6 +108,58 @@ class GitCore(Core):
             return tuple(
                 self._stored("Core identity", uuid4_value, value) for value in rows[0]
             )
+
+    @_completed_read
+    @_decoded_read
+    def capture_binding(self, pair: tuple[str, str]) -> Capture | None:
+        """Reconstruct one original binding and verify its required parents.
+
+        Invalid caller coordinates are input errors; invalid stored authority
+        enters the existing persistent stop boundary before acquisition can
+        mistake damage for a conflict or recreate a missing parent.
+        """
+        if type(pair) is not tuple or len(pair) != 2:
+            raise CoreFailure("CAPTURE", "binding", "actual Capture pair required")
+        for value in pair:
+            uuid4_value(value)
+        with self._snapshot():
+            rows = self.sql(
+                "SELECT capture_origin_uuidv4,capture_uuidv4,repository_uuidv4,source,ref,object_format,root "
+                "FROM captures WHERE capture_origin_uuidv4=? AND capture_uuidv4=?",
+                pair,
+            )
+            if not rows:
+                return None
+
+            def decode(row):
+                origin, capture, repository, source, stored_ref, fmt, oid = row
+                ref = json.loads(stored_ref)
+                if type(ref) is not list or len(ref) != 2 or ref[0] != "native-ref":
+                    raise ValueError("invalid stored Capture ref")
+                actual = Capture(
+                    origin,
+                    capture,
+                    repository,
+                    source,
+                    bytes.fromhex(ref[1]).decode("utf-8", "surrogateescape"),
+                    OID(fmt, oid),
+                )
+                if actual.key != tuple(row):
+                    raise ValueError("noncanonical stored Capture binding")
+                return actual
+
+            result = self._stored("Capture binding", decode, rows[0])
+            repository = self.sql(
+                "SELECT 1 FROM repositories WHERE repository_uuidv4=?",
+                (result.repository_uuidv4,),
+            )
+            root = self.sql(
+                "SELECT 1 FROM git_objects WHERE object_format=? AND full_oid=?",
+                result.root.key,
+            )
+            if not repository or not root:
+                self._integrity_stop(("Capture binding", "missing required parent"))
+            return result
 
     def _authorize(self, action, table, column, database, trigger):
         import sqlite3

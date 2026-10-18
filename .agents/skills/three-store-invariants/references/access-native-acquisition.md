@@ -66,6 +66,14 @@ binding (owner/source/ref/root), including units without Capture Coverage. Core'
 later immutable refusal otherwise leaves earlier standalone rows behind. Charge
 actual indexed lookups and retain paired rollback controls.
 
+Use a typed Core reader for that comparison, not application-level generic SQL.
+Independent corruption probes showed raw UTF-8 errors and invalid stored source
+being mislabeled as incoming mismatch; missing Capture parents were even recreated
+by later admission. Reconstruct canonical ref/UUID/OID/source under `_stored` and
+the decoded-read/completion fence, check required repository/root parents in the
+same snapshot, and stop before writes. Valid incoming conflict is not corruption.
+Test exact-schema synthetic damage and unchanged suspect file bytes in both paths.
+
 Use `python -m pytest -q tests/integration/access/test_review_corrections.py`.
 The independent R0/R1/R2 probe also demonstrates that Exchange still needs an
 explicit repository-set selection/acceptance contract; do not remove its mismatch

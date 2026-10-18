@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import os
 import subprocess
 from contextlib import closing
@@ -651,3 +652,71 @@ def test_metadata_preflights_existing_capture_binding_without_coverage(
         "REPOSITORY_SCOPE" if field == "repository" else "INCOMPATIBLE_REPLAY"
     )
     assert authoritative_rows(cat) == before
+
+
+@pytest.mark.parametrize("paired", [False, True])
+@pytest.mark.parametrize(
+    "damage", ["source", "utf8", "ref", "oid", "repository_parent", "root_parent"]
+)
+def test_stored_capture_corruption_stops_before_any_metadata_admission(
+    tmp_path, paired, damage
+):
+    cat = tmp_path / "catalog"
+    seed, _ = init_catalog_stores(cat)
+    unit = metadata_unit(seed)
+    capture = Capture(
+        str(uuid4()),
+        str(uuid4()),
+        seed,
+        "original",
+        "refs/notes/test",
+        unit.nominal_objects[0],
+    )
+    with closing(GitCore(cat / "core.sqlite3")) as core:
+        core.admit_capture(capture)
+    with closing(connect(cat / "core.sqlite3", "core")) as db:
+        db.execute("PRAGMA foreign_keys=OFF")
+        db.execute("PRAGMA ignore_check_constraints=ON")
+        table = {"repository_parent": "repositories", "root_parent": "git_objects"}.get(
+            damage, "captures"
+        )
+        action = "update" if table == "captures" else "delete"
+        trigger = f"p1_immutable_{table}_{action}"
+        sql = db.execute(
+            "SELECT sql FROM sqlite_schema WHERE name=?", (trigger,)
+        ).fetchone()[0]
+        db.execute(f"DROP TRIGGER {trigger}")
+        if damage == "source":
+            db.execute("UPDATE captures SET source=''")
+        elif damage == "utf8":
+            db.execute("UPDATE captures SET source=CAST(X'ff' AS TEXT)")
+        elif damage == "ref":
+            db.execute('UPDATE captures SET ref=\'["wrong","00"]\'')
+        elif damage == "oid":
+            db.execute("UPDATE captures SET root='invalid'")
+        elif damage == "repository_parent":
+            db.execute("DELETE FROM repositories WHERE repository_uuidv4=?", (seed,))
+        else:
+            db.execute(
+                "DELETE FROM git_objects WHERE object_format=? AND full_oid=?",
+                capture.root.key,
+            )
+        db.execute(sql)
+        db.commit()
+    # The synthetic attack restores the exact trusted physical schema. Only
+    # domain data/FKs are damaged; rejection cannot rely on schema drift.
+    path = cat / "core.sqlite3"
+    before = hashlib.sha256(path.read_bytes()).hexdigest()
+    unit = replace(unit, notes=NotesAcquisitionSpec(explicit_captures=(capture,)))
+    with pytest.raises(CoreFailure) as error:
+        if paired:
+            PairedAcquisitionCoordinator(cat).admit_paired(
+                git_input=unit, new_request=True
+            )
+        else:
+            GitAcquisition(cat, operational=cat).acquire_metadata_only(
+                unit, new_request=True
+            )
+    assert error.value.code == "AUTHORITATIVE_CORRUPTION"
+    assert (cat / "p1-recovery-stop.json").exists()
+    assert hashlib.sha256(path.read_bytes()).hexdigest() == before
