@@ -390,7 +390,8 @@ merely for prose or mistake a development smoke pass for release acceptance.
 11. Additional repositories beyond the Core seed can acquire independently without
     weakening catalog pairing, UUID selection or cross-repository Exchange fences.
 12. An Access backup made with live WAL is coherent; interrupted/invalid restore is
-    not activated. Another machine's scopes and approvals are not inherited.
+    not activated. Continuity preserves Scope UUID/history, but another machine's local execution
+    binding and approvals are not inherited.
 13. Missing/isolated corrupt Access yields honest access errors; proven-sound domain
     reads still work; a real Core/Context stop is never bypassed.
 14. Context key classification preserves provider facts/observed URLs but rejects
@@ -423,6 +424,10 @@ merely for prose or mistake a development smoke pass for release acceptance.
     unchanged old intent and cumulative-work accounting remain intact.
 
 ## 10. Execution checkpoint and remaining gates
+
+The checkpoint below is historical. For the integrated A1-A5 candidate and the
+remaining A6 review gates, see [A6 integration review](../implementation/access-a6-integration-review.md).
+
 
 The 2026-10-17 task begins with design documentation, not production DDL or a P8
 switch. The reviewed main is S1 and the starting PR #95 HEAD is

@@ -1,0 +1,310 @@
+{
+  "format": "git-repo-db/access-acceptance-v1",
+  "reviewed_base": "444dcecf38f5db3cccdb4716c7c8c6b584543475",
+  "requirements_file": "docs/architecture/access-store-design.md",
+  "scope": "Linux opt-in local Access stack; this ledger is neither independent review nor release acceptance.",
+  "gates": {
+    "independent_review": "pending",
+    "adr_whole_replacement": "pending",
+    "merge_authorization": "not_requested",
+    "p8_activation": "not_requested"
+  },
+  "requirements": [
+    {
+      "id": 1,
+      "requirement": "One repository has HTTPS, SSH and local locators; editing one leaves its UUID and earlier Core evidence byte-for-byte unchanged.",
+      "status": "covered",
+      "verified_scope": "Stored HTTPS/SSH/local alternatives and rotation preserve real Core captures. Remote transport execution is excluded.",
+      "tests": [
+        "tests/integration/access/test_stack_acceptance.py::test_remote_locator_registration_and_rotation_leave_core_facts_unchanged"
+      ],
+      "gaps": []
+    },
+    {
+      "id": 2,
+      "requirement": "Same locator text in two scopes resolves independently; conflicting UUIDs for the same scoped locator are rejected without merging or overwriting either ID.",
+      "status": "covered",
+      "verified_scope": "Scoped repository bindings remain unique without URI-based UUID merge.",
+      "tests": [
+        "tests/integration/access/test_connections.py::test_same_scoped_locator_cannot_silently_rebind"
+      ],
+      "gaps": []
+    },
+    {
+      "id": 3,
+      "requirement": "Multiple profiles are reusable across locators; profile rotation does not change locator keys, captures or Source memberships.",
+      "status": "covered",
+      "verified_scope": "Shared named profiles, transactional revocation and no Core fact changes.",
+      "tests": [
+        "tests/integration/access/test_connections.py::test_profile_shared_by_repositories_and_scope_only_conflicts",
+        "tests/integration/access/test_stack_acceptance.py::test_remote_locator_registration_and_rotation_leave_core_facts_unchanged"
+      ],
+      "gaps": []
+    },
+    {
+      "id": 4,
+      "requirement": "A preference for repository A cannot point to repository B's assignment; composite FK attacks and missing parents fail.",
+      "status": "covered",
+      "verified_scope": "Both preference relationships and damaged-parent diagnostics are exercised.",
+      "tests": [
+        "tests/integration/access/test_connections.py::test_preferences_reference_assignment_and_matching_repository",
+        "tests/integration/access/test_connections.py::test_damaged_foreign_key_cannot_vanish_from_candidate_join"
+      ],
+      "gaps": []
+    },
+    {
+      "id": 5,
+      "requirement": "Scope Locators use maximum registration time; equal-time first choices remain ambiguous. No lexical/rowid/arrival tie-break or implicit cross-account fallback. Repository/profile preferences do not inherit this new timestamp rule.",
+      "status": "covered",
+      "verified_scope": "Maximum registration time precedes permission filtering; repository/profile selection stays separate.",
+      "tests": [
+        "tests/integration/access/test_connections.py::test_latest_ties_before_controls_and_permissions",
+        "tests/integration/access/test_connections.py::test_assignment_ambiguity_does_not_select_only_approved_profile"
+      ],
+      "gaps": []
+    },
+    {
+      "id": 6,
+      "requirement": "Git-only saved access works with no Context; Core-only offline use works with no Access. An imported domain catalog cannot start network work.",
+      "status": "covered",
+      "verified_scope": "Real local acquisition without Context; offline Core survives missing/stopped Access.",
+      "tests": [
+        "tests/integration/access/test_git_acquisition.py::test_nonseed_repository_acquires_actual_metadata",
+        "tests/integration/access/test_stack_acceptance.py::test_domain_read_survives_unavailable_access_after_real_acquisition",
+        "tests/integration/access/test_context_boundary.py::test_context_only_round_trip_and_core_only_paths_need_no_access"
+      ],
+      "gaps": []
+    },
+    {
+      "id": 7,
+      "requirement": "Different SSH aliases, scp-relative/URI-absolute paths, percent escapes, `.git`, trailing slashes, IPv6, symlinks, Windows drive/UNC and relative bases retain the declared semantics; unsupported inputs fail without changing files/credentials.",
+      "status": "covered",
+      "verified_scope": "Finite exact grammar and explicit rejection are tested; this does not promise all Git syntaxes or executors.",
+      "tests": [
+        "tests/unit/test_access_registry_values.py::test_preserve_valid_uri_exactly",
+        "tests/unit/test_access_registry_values.py::test_reject_unsupported_or_unsafe_uri_without_echo",
+        "tests/unit/test_access_connections_values.py::test_unsupported_repository_grammar",
+        "tests/integration/access/test_workflow.py::test_finite_local_adapter_rejects_unsupported_execution"
+      ],
+      "gaps": []
+    },
+    {
+      "id": 8,
+      "requirement": "Malicious helper syntax, shell options, proxy URLs, embedded secrets and import activation attempts are rejected before external side effects; no secrets leak to saved plans, logging, manifests or domain Exchange.",
+      "status": "covered",
+      "verified_scope": "Reject secret-bearing/command fields before side effects. Not DLP for secrets disguised as prose.",
+      "tests": [
+        "tests/unit/test_access_connections_values.py::test_unsafe_or_unsupported_options",
+        "tests/integration/access/test_context_boundary.py::test_no_normalization_no_network_no_settings_import_side_effect",
+        "tests/integration/access/test_backup.py::test_cli_diagnostics_do_not_echo_secret_paths"
+      ],
+      "gaps": []
+    },
+    {
+      "id": 9,
+      "requirement": "Disabling a Scope route retains all registration facts. Removing mutable repository/profile configuration does not delete Scope history, Source known-positive pairs, Core objects/captures or Context evidence.",
+      "status": "covered",
+      "verified_scope": "Disabling controls revokes grants but retains registration/Core facts. Arbitrary deletion management is not introduced.",
+      "tests": [
+        "tests/integration/access/test_connections.py::test_disable_enable_aba_never_resurrects_grant",
+        "tests/integration/access/test_stack_acceptance.py::test_remote_locator_registration_and_rotation_leave_core_facts_unchanged"
+      ],
+      "gaps": []
+    },
+    {
+      "id": 10,
+      "requirement": "Concurrent configuration edits cannot combine one version's locator with another version's credentials; request plans, cancellation and retries are consistent and keep original observation identity and cumulative work.",
+      "status": "covered",
+      "verified_scope": "Single-snapshot plans, CAS settings, original retry intent and final callback admission are tested. No global cross-store linearizability claim.",
+      "tests": [
+        "tests/integration/access/test_connections.py::test_concurrent_cas_only_one_writer_wins",
+        "tests/integration/access/test_handoff_boundary.py::test_final_executor_handoff_rechecks_before_callback",
+        "tests/integration/access/test_git_acquisition.py::test_access_plan_change_rejected_on_retry_before_git"
+      ],
+      "gaps": []
+    },
+    {
+      "id": 11,
+      "requirement": "Additional repositories beyond the Core seed can acquire independently without weakening catalog pairing, UUID selection or cross-repository Exchange fences.",
+      "status": "partial",
+      "verified_scope": "Native and Notes non-seed acquisition preserves physical pairing.",
+      "tests": [
+        "tests/integration/access/test_git_acquisition.py::test_nonseed_paired_native_notes_preserves_catalog_pairing",
+        "tests/integration/access/test_git_acquisition.py::test_plain_p5_native_scope_cannot_replay_under_another_repository"
+      ],
+      "gaps": [
+        "General external GitMetadataInput and Exchange remain seed-scoped; do not claim complete multi-repository import/export."
+      ]
+    },
+    {
+      "id": 12,
+      "requirement": "An Access backup made with live WAL is coherent; interrupted/invalid restore is not activated. Continuity preserves Scope UUID/history, but another machine's local execution binding and approvals are not inherited.",
+      "status": "covered",
+      "verified_scope": "Pinned WAL snapshot and inactive continuity restore; UUID preservation does not import execution authority.",
+      "tests": [
+        "tests/integration/access/test_backup.py::test_committed_wal_snapshot_does_not_mix_concurrent_registration",
+        "tests/integration/access/test_backup.py::test_process_exit_before_rename_leaves_only_unpublished_stage",
+        "tests/integration/access/test_stack_acceptance.py::test_restore_reapproval_resumes_same_request_without_rewriting_core"
+      ],
+      "gaps": []
+    },
+    {
+      "id": 13,
+      "requirement": "Missing/isolated corrupt Access yields honest access errors; proven-sound domain reads still work; a real Core/Context stop is never bypassed.",
+      "status": "covered",
+      "verified_scope": "Access-local failure isolation and domain-stop refusal use actual acquired Core facts.",
+      "tests": [
+        "tests/integration/access/test_stack_acceptance.py::test_domain_read_survives_unavailable_access_after_real_acquisition",
+        "tests/integration/access/test_git_acquisition.py::test_core_stop_before_activation_blocks_git"
+      ],
+      "gaps": []
+    },
+    {
+      "id": 14,
+      "requirement": "Context key classification preserves provider facts/observed URLs but rejects transport configuration in ordinary domain Exchange. Historical provenance is not silently redacted or advertised as free of location information.",
+      "status": "covered",
+      "verified_scope": "Registration contract and exact Exchange envelopes preserve descriptive URLs/provenance.",
+      "tests": [
+        "tests/integration/access/test_context_boundary.py::test_resigned_exchange_rejects_registration_leaks_before_core_admission",
+        "tests/integration/access/test_context_boundary.py::test_reported_urls_and_historical_core_provenance_survive_exchange"
+      ],
+      "gaps": []
+    },
+    {
+      "id": 15,
+      "requirement": "Real-data extraction is opt-in, leaves sources unchanged and reports excluded or unclassified legacy settings instead of guessing or executing them.",
+      "status": "deferred",
+      "verified_scope": "Only key-level classification and rejection are implemented; no real-data extractor was authorized or executed.",
+      "tests": [],
+      "gaps": [
+        "Legacy real-data extraction/migration tool is not implemented; do not count the routing ledger as extraction."
+      ]
+    },
+    {
+      "id": 16,
+      "requirement": "Wheel/sdist behavior, schema/FK/immutability checks and P7 domain backup scope remain consistent at the exact integrated tree; ordinary file bodies remain excluded and ADR 0028 time/trust rules remain intact.",
+      "status": "partial",
+      "verified_scope": "Supported-source regression and installed distributions are tested per exact tree.",
+      "tests": [
+        "tests/integration/access/test_git_acquisition.py::test_ordinary_blob_body_is_never_retained",
+        "tests/integration/access/test_registry.py::test_schema_identity_and_direct_key",
+        "tests/integration/access/test_context_boundary.py::test_current_p1_routes_are_explicitly_overridden_and_schema_guarded"
+      ],
+      "gaps": [
+        "Independent reviewer execution and whole-record ADR acceptance are still required; focused CI is not release acceptance."
+      ]
+    },
+    {
+      "id": 17,
+      "requirement": "Same display name with different Scope UUIDs remains distinct; rename leaves FK/external references unchanged; a URI/URN is never a substitute identity.",
+      "status": "covered",
+      "verified_scope": "Same labels do not identify Scopes; labels can change without rewriting UUID/history.",
+      "tests": [
+        "tests/integration/access/test_registry.py::test_no_context_or_repository_seed_dependency",
+        "tests/integration/access/test_registry.py::test_scope_label_update_does_not_change_history"
+      ],
+      "gaps": []
+    },
+    {
+      "id": 18,
+      "requirement": "A(T1), B(T2), A(T3) retains three rows; T3 wins; exact replay keeps row count/time.",
+      "status": "covered",
+      "verified_scope": "A(T1), B(T2), A(T3) fact-set replay is immutable.",
+      "tests": [
+        "tests/integration/access/test_registry.py::test_history_a_b_a_and_original_replay"
+      ],
+      "gaps": []
+    },
+    {
+      "id": 19,
+      "requirement": "Same-time different URIs coexist; query returns both regardless of insertion order and regardless of only one being approved.",
+      "status": "covered",
+      "verified_scope": "Tied maximum rows remain even if only one is enabled.",
+      "tests": [
+        "tests/integration/access/test_registry.py::test_ties_remain_even_if_only_one_enabled",
+        "tests/integration/access/test_connections.py::test_latest_ties_before_controls_and_permissions"
+      ],
+      "gaps": []
+    },
+    {
+      "id": 20,
+      "requirement": "Clock rollback, late replay and restore never fabricate a fresh timestamp; unknown/invalid/bool/float/string/overflow input receives the reviewed diagnostic.",
+      "status": "covered",
+      "verified_scope": "Positive original microseconds, rollback warning and immutable replay/restore.",
+      "tests": [
+        "tests/unit/test_access_registry_values.py::test_invalid_registration_times",
+        "tests/integration/access/test_registry.py::test_earlier_time_retained_without_fake_monotonicity",
+        "tests/integration/access/test_backup.py::test_restore_is_continuation_not_fresh_registrations"
+      ],
+      "gaps": []
+    },
+    {
+      "id": 21,
+      "requirement": "Newest unapproved/disabled/unsupported route blocks default execution; it never silently promotes an older approved route. Imported future times grant no trust.",
+      "status": "covered",
+      "verified_scope": "Newest disabled/unapproved does not enable a historical fallback.",
+      "tests": [
+        "tests/integration/access/test_connections.py::test_latest_unapproved_disabled_and_a_b_a",
+        "tests/integration/access/test_workflow.py::test_finite_local_adapter_rejects_unsupported_execution"
+      ],
+      "gaps": []
+    },
+    {
+      "id": 22,
+      "requirement": "Changing Scope route/profile/binding invalidates affected reviewed plans; returning to the same URI at T3 cannot reuse approval for T1.",
+      "status": "covered",
+      "verified_scope": "Full registration and options/context matching; material updates revoke; final handoff rechecks.",
+      "tests": [
+        "tests/integration/access/test_connections.py::test_content_aba_never_resurrects_grant",
+        "tests/integration/access/test_workflow.py::test_a_at_new_time_cannot_borrow_old_grant",
+        "tests/integration/access/test_handoff_boundary.py::test_final_executor_handoff_rechecks_before_callback"
+      ],
+      "gaps": []
+    },
+    {
+      "id": 23,
+      "requirement": "A continuing Scope migration preserves UUID and old facts; an independent fork allocates new Scope UUID and does not relabel original S1 history as S2 history.",
+      "status": "covered",
+      "verified_scope": "Continuity restore preserves all Scope facts; fork creates only new target registration.",
+      "tests": [
+        "tests/integration/access/test_backup.py::test_fork_preserves_origin_history_and_grants_new_scope_inactive",
+        "tests/integration/access/test_stack_acceptance.py::test_fork_cannot_retarget_original_request_but_new_capture_can_acquire"
+      ],
+      "gaps": []
+    },
+    {
+      "id": 24,
+      "requirement": "Backup/restore round-trips every registration, not just MAX(time), with local reapproval; Core offline operations still work without Access.",
+      "status": "covered",
+      "verified_scope": "Restore preserves complete history, requires reapproval, and does not rewrite existing Git facts.",
+      "tests": [
+        "tests/integration/access/test_stack_acceptance.py::test_restore_reapproval_resumes_same_request_without_rewriting_core",
+        "tests/integration/access/test_backup.py::test_latest_ties_survive_restore"
+      ],
+      "gaps": []
+    },
+    {
+      "id": 25,
+      "requirement": "Generic UPDATE/DELETE/REPLACE/mutating upserts and Scope-deletion cascades cannot erase or rewrite immutable registration coordinates on supported connections.",
+      "status": "covered",
+      "verified_scope": "Immutable registration coordinates protected against direct DML and REPLACE.",
+      "tests": [
+        "tests/integration/access/test_registry.py::test_raw_mutation_guards",
+        "tests/integration/access/test_registry.py::test_replace_cannot_bypass_history_even_without_recursive_triggers"
+      ],
+      "gaps": []
+    },
+    {
+      "id": 26,
+      "requirement": "Current request replay cannot silently switch routes after a newer registration; unchanged old intent and cumulative-work accounting remain intact.",
+      "status": "covered",
+      "verified_scope": "Cross-stage restored retry preserves original plan and accumulates work; fork cannot retarget it.",
+      "tests": [
+        "tests/integration/access/test_stack_acceptance.py::test_restore_reapproval_resumes_same_request_without_rewriting_core",
+        "tests/integration/access/test_stack_acceptance.py::test_fork_cannot_retarget_original_request_but_new_capture_can_acquire",
+        "tests/integration/access/test_git_acquisition.py::test_operational_loss_cannot_reset_request_budget"
+      ],
+      "gaps": []
+    }
+  ]
+}
