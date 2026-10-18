@@ -6,7 +6,7 @@
 - **Decision date:** 2026-10-14.
 - **Decision ID:** GCTX-M06.
 - **Owner selection:** Option B — bounded immutable evidence for each accepted byte-verified Git representation, distinct from current physical byte health.
-- **Depends on:** [ADR 0003](0003-append-only-git-core-and-context-store.md) (four-store append-only boundary), [ADR 0004 / GCTX-M01](0004-metadata-only-git-core.md) (metadata-only requirement), [ADR 0005 / GCTX-M02](0005-common-oid-identity-with-attributed-metadata.md) (nominal OID), [ADR 0006 / GCTX-M03](0006-field-claims-and-observation-scoped-relations.md) (claims/relation groups), [ADR 0007 / GCTX-M04](0007-verification-aware-git-metadata-reads.md) (read policy), and [ADR 0008 / GCTX-M05](0008-domain-split-git-verification-ownership.md) (verifier responsibility).
+- **Depends on:** [ADR 0003](https://github.com/TakashiSasaki/git-repo-db/blob/bb878eda47cf17268dd821c74343bac64d769ea7/docs/adr/0003-append-only-git-core-and-context-store.md) (four-store append-only boundary), [ADR 0004 / GCTX-M01](0004-metadata-only-git-core.md) (metadata-only requirement), [ADR 0005 / GCTX-M02](0005-common-oid-identity-with-attributed-metadata.md) (nominal OID), [ADR 0006 / GCTX-M03](0006-field-claims-and-observation-scoped-relations.md) (claims/relation groups), [ADR 0007 / GCTX-M04](0007-verification-aware-git-metadata-reads.md) (read policy), and [ADR 0008 / GCTX-M05](0008-domain-split-git-verification-ownership.md) (verifier responsibility).
 - **Design baseline:** Unmerged PR #49 HEAD `607c91e4a1254c57ca8e22733541c2e4a6ebce2c`, stacked on PRs #48 → #47 → #46 → #45 → #44.
 - **Current implementation:** The old Three-Store Core Schema 21 remains the implemented baseline. This ADR does not alter it.
 

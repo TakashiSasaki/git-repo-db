@@ -1,9 +1,11 @@
 # Access store: locator/configuration separation and implementation contract proposal
 
-**Status: owner-confirmed Scope decisions incorporated on 2026-10-17; complete
-replacement/physical contract remains under review; no runtime changes.** Read
-[ADR 0029](../adr/0029-independent-access-store.md) for confirmed Q-S1-Q-S4/history
-decisions, remaining engineering proposals and acceptance-time ADR lifecycle. This document is the concrete storage/source audit
+**Status: complete ADR 0003 replacement by ADR 0029 approved on 2026-10-19;
+physical/schema/adapter contracts remain engineering proposals; no runtime change.**
+Read [accepted ADR 0029](../adr/0029-independent-access-store.md) for confirmed
+Scope Q-S1-Q-S4/history decisions and the carried-forward Core/Context rules.
+The [acceptance/retirement closure](../implementation/adr-0029-accepted-retirement-20261019.md)
+records the explicitly authorized 2026-10-19 governance change. This document is the concrete storage/source audit
 and handoff. Table names and error codes below are proposed vocabulary, not current
 SQL or public API. Preserve existing decisions; do not implement by analogy to an
 old `repository_endpoints` table alone.
@@ -346,7 +348,7 @@ real extraction and does not authorize one.
 
 | Stage | Depends on | Deliverable / boundaries |
 | --- | --- | --- |
-| A0: design acceptance | PR #95, revised after owner choices | Record Q-S1-Q-S4/history choices; review A1 key and registration semantics; close full ADR replacement/index/current-link lifecycle coherently; no new migration exception |
+| A0: design acceptance | PR #95 and later design/independent reviews; ADR 0029 accepted 2026-10-19 | **Completed governance step**: preserve Scope Q-S choices and the ADR 0003 carry-forward, retire the old active file and update current links. A1 physical-key/registration review remains independent |
 | A1: Access contract and schema | A0 | Scope UUID/registration/profile/assignment types, direct PK/FK and immutable-history guards, independent Access schema/initializer and static validators; no default runtime switch |
 | A2: resolver and local configuration API | A1 | Append registration, list history, maximum-time candidate set, full-registration-aware approval, secret references and frozen request plan |
 | A3: Context/Exchange separation | A1 | Key-level routing ledger, typed domain registration JSON, export/import rejection of executable settings, explicit configuration-transfer boundary |
@@ -446,8 +448,11 @@ not claimed by this documentation checkpoint. The 26 counterexamples are future
 product acceptance requirements even where a small isolated probe demonstrates
 one SQL property. No production test or source file is added or changed here.
 
-A0's complete replacement acceptance/ADR 0003 retirement remains a merge gate;
-confirmed owner choices above are not reopened. A1 must review the direct
+A0's **complete replacement acceptance/ADR 0003 retirement was explicitly
+approved on 2026-10-19** and documented in a separate stacked governance PR.
+Historical checkpoints above remain historical; A1's engineering choices and
+actual implementation/merge/release gates are not thereby approved.
+Confirmed owner choices are not reopened. A1 must review the direct
 registration-fact key, typed option/URI support, immutable controls and precise
 approval references. These engineering contracts do not justify another generic
 owner questionnaire. A request to begin work does not silently accept every old

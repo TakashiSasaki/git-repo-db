@@ -6,7 +6,7 @@
 - **Decision date:** 2026-10-14.
 - **Decision ID:** GCTX-M04.
 - **Owner selection:** Option B — prefer receiver-verified canonical Git bytes and confirmed intrinsic values in ordinary queries; explicitly surface unresolved or conflicting unverified reports.
-- **Dependencies:** [ADR 0003](0003-append-only-git-core-and-context-store.md) (append-only Git Core + Context), [ADR 0004 / GCTX-M01](0004-metadata-only-git-core.md) (metadata without bytes), [ADR 0005 / GCTX-M02](0005-common-oid-identity-with-attributed-metadata.md) (common nominal OID identity), and [ADR 0006 / GCTX-M03](0006-field-claims-and-observation-scoped-relations.md) (field claims and typed relation groups).
+- **Dependencies:** [ADR 0003](https://github.com/TakashiSasaki/git-repo-db/blob/bb878eda47cf17268dd821c74343bac64d769ea7/docs/adr/0003-append-only-git-core-and-context-store.md) (append-only Git Core + Context), [ADR 0004 / GCTX-M01](0004-metadata-only-git-core.md) (metadata without bytes), [ADR 0005 / GCTX-M02](0005-common-oid-identity-with-attributed-metadata.md) (common nominal OID identity), and [ADR 0006 / GCTX-M03](0006-field-claims-and-observation-scoped-relations.md) (field claims and typed relation groups).
 - **Baseline:** Unmerged PR #47 HEAD `65b2344a8c96b9f3c83381572847cbe9f0c6dae1`, stacked on PR #46 → #45 → #44. The implemented Three-Store Core Schema 21 is not changed by this decision.
 
 ## 1. Binding decision and precise scope

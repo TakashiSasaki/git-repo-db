@@ -1,6 +1,11 @@
 # ADR 0029 whole-replacement readiness: ADR 0003 carry-forward and post-0030 delta
 
-**Status: preparation and review only; NOT whole-ADR owner acceptance or retirement.**
+**Historical status: this report was prepared before whole-ADR owner acceptance or retirement.**
+**Subsequent disposition (2026-10-19):** the owner explicitly approved full ADR 0029
+replacement and retirement of ADR 0003. See the
+[approved acceptance/retirement closure](adr-0029-accepted-retirement-20261019.md).
+The earlier approval question and preparation-only statements below remain
+accurate descriptions of this report's *earlier checkpoint*, not current policy.
 Reviewed on 2026-10-19 against PR #104 HEAD
 `bb54d799d1b749a90fa62de89dbd978ef3bc8055`, itself based on
 PR #103 `1134e200eb4ac9ec45bf3fae3be695e2bb786a8d`.
@@ -13,7 +18,7 @@ after the previous R4 work, not a new ADR or a second authority for accepted cla
 ## 1. Existing independent work: do not redo or overstate
 
 The independently reported R4 review has already traced **43 clauses** of
-[ADR 0003](../adr/0003-append-only-git-core-and-context-store.md) to the
+[ADR 0003](https://github.com/TakashiSasaki/git-repo-db/blob/bb878eda47cf17268dd821c74343bac64d769ea7/docs/adr/0003-append-only-git-core-and-context-store.md) to the
 operative successor/related ADRs, including all six original acceptance tests.
 Consult its exact
 [clause map](evidence/access-a6-independent-20261018/r4/adr-clause-map.md)

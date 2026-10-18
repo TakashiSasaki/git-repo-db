@@ -78,7 +78,7 @@ MAC; validate its content independently, including a maliciously recomputed chec
 The former active agent/spec summaries allowed zero and negative values for every
 absolute time and froze all P1–P4 DDL. The owner explicitly changes that convention
 for observation/acquisition/Provider times while retaining signed Git-native times.
-No ADR containing other binding clauses is retired: no existing accepted ADR
+At this ADR's 2026-10-16 decision checkpoint, no ADR containing other binding clauses had been retired: no existing accepted ADR
 asserted the reversed universal range. The affected convention lives in AGENTS.md
 and implementation contracts. This ADR refines ADR 0027's unauthenticated reports
 without reversing any of its origin, provenance or identity guarantees. HMAC and
@@ -105,7 +105,7 @@ acceptance requirements, not claims that those executions have occurred.
 ## References
 
 - [ADR index](README.md), [governance](policy.md), [ADR 0001](0001-validation-lifecycle-architecture.md)
-- [Four-store and INSERT-only boundary](0003-append-only-git-core-and-context-store.md)
+- [Accepted five-store boundary and INSERT-only Git Core](0029-independent-access-store.md) (historical ADR 0003 was retired on 2026-10-19)
 - [Unauthenticated origin reports](0027-unauthenticated-external-capture-origin-reports.md)
 - [P5/P6 technical contract](../implementation/p5-p6-technical-contract.md)
 - Owner's current task, sections 3–10 and 12 (approval source, reproduced above

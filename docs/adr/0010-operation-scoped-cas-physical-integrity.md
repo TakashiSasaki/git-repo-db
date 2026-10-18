@@ -7,7 +7,7 @@
 - **Decision ID:** GCTX-M07.
 - **Owner selection:** Option B — operation-specific assurance tiers: metadata-only/history queries need no rehash, while operations representing or exporting currently verified original Git bytes must check the actual bytes in the operation's coherent scope. Full/scoped audits report as-of results, not eternal health.
 - **Direct predecessor:** [ADR 0009 / GCTX-M06](0009-bounded-byte-admission-and-physical-health.md), design-only PR #50 HEAD `29dd530a4245a62c7b9c0dbf2cd07a2ad62cb84e`.
-- **Earlier decisions:** [ADR 0003](0003-append-only-git-core-and-context-store.md) and [ADR 0004 / GCTX-M01](0004-metadata-only-git-core.md) through [ADR 0008 / GCTX-M05](0008-domain-split-git-verification-ownership.md). This is a design-only step stacked above still-unmerged PRs #44–#50.
+- **Earlier decisions:** [ADR 0003](https://github.com/TakashiSasaki/git-repo-db/blob/bb878eda47cf17268dd821c74343bac64d769ea7/docs/adr/0003-append-only-git-core-and-context-store.md) and [ADR 0004 / GCTX-M01](0004-metadata-only-git-core.md) through [ADR 0008 / GCTX-M05](0008-domain-split-git-verification-ownership.md). This is a design-only step stacked above still-unmerged PRs #44–#50.
 - **Implemented baseline:** The existing Three-Store Core Schema 21 remains unchanged; no GCTX-M07 runtime behavior is implemented by this ADR.
 
 ## 1. Binding distinction: historical admission is not live physical health

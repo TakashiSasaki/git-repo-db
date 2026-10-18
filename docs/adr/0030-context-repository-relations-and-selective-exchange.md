@@ -150,9 +150,15 @@ unsigned report.
 This ADR adds nonconflicting Context semantics and replaces a prior conversation
 choice, not an existing ADR file. `replaces: []` is intentional. ADRs 0003--0028
 remain in place within their operative scopes; no blanket retirement is authorized.
-The owner-confirmed independent Access decisions remain binding. ADR 0029's
-whole-record replacement of ADR 0003 is **still proposed** in the parent branch;
-its acceptance/date/carry-forward and removal gate are not completed by this PR.
+The owner-confirmed independent Access decisions remain binding. **Subsequently
+on 2026-10-19**, the owner explicitly accepted ADR 0029 as the whole-record
+replacement of historical ADR 0003 and approved retirement of ADR 0003 from the
+current tracked tree. This subsequent editorial status note does not re-date or
+expand the 2026-10-18 decision recorded by this ADR; the original `refines`
+metadata remains historical. [ADR 0029](0029-independent-access-store.md) now
+owns the active five-store boundary and its carried-forward Core/Context rules.
+The [retirement record](../implementation/adr-0029-accepted-retirement-20261019.md)
+documents the separate governance action, without runtime or merge approval.
 
 Direct stack parent: PR #103, branch `fix/access-a6-independent-review`, commit
 `1134e200eb4ac9ec45bf3fae3be695e2bb786a8d`, tree
@@ -175,4 +181,4 @@ with an explicit counterexample instead of silently resolved.
 - [ADR governance](policy.md), [ADR 0017](0017-domain-keys-without-storage-surrogates.md),
   [ADR 0027](0027-unauthenticated-external-capture-origin-reports.md),
   [ADR 0028](0028-classified-times-and-sha256-exchange.md)
-- [Access proposal and confirmed Scope decisions](0029-independent-access-store.md)
+- [Accepted Access boundary and confirmed Scope decisions](0029-independent-access-store.md) (physical/adapter details remain separately proposed)

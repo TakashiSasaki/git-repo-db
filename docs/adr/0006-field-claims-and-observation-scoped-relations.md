@@ -4,7 +4,7 @@
 - **Decision date:** 2026-10-14.
 - **Decision ID:** GCTX-M03.
 - **Owner selection:** Option C: per-field attributed claims for logically single-valued Git metadata; typed, observation-scoped groups for multi-valued Git relationships.
-- **Dependencies:** [ADR 0004 / GCTX-M01](0004-metadata-only-git-core.md) and [ADR 0005 / GCTX-M02](0005-common-oid-identity-with-attributed-metadata.md), under [ADR 0003](0003-append-only-git-core-and-context-store.md).
+- **Dependencies:** [ADR 0004 / GCTX-M01](0004-metadata-only-git-core.md) and [ADR 0005 / GCTX-M02](0005-common-oid-identity-with-attributed-metadata.md), under [ADR 0003](https://github.com/TakashiSasaki/git-repo-db/blob/bb878eda47cf17268dd821c74343bac64d769ea7/docs/adr/0003-append-only-git-core-and-context-store.md).
 - **Baseline:** Unmerged PR #46 HEAD `c3002e8894a228c31a892ad54aa7e6815d33889e`, stacked on PR #45 and PR #44.
 
 ## 1. Decision: two different metadata units

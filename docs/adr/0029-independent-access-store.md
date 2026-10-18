@@ -1,6 +1,6 @@
 ---
-status: proposed
-date: null
+status: accepted
+date: 2026-10-19
 replaces:
   - 0003-append-only-git-core-and-context-store.md
 refines:
@@ -11,7 +11,7 @@ refines:
 
 ## Decision
 
-**Owner-confirmed decisions recorded; complete replacement remains under review.**
+**Whole-record replacement accepted on 2026-10-19; physical/adapter implementation contracts remain separately reviewable.**
 On 2026-10-17 the owner selected Q-S1 A (Scope UUIDv4), Q-S2 A (continuing logical
 resolution environment), Q-S3 A (continuity inherits identity; independent fork
 gets a new identity), and Q-S4 A (local reapproval per repository locator,
@@ -21,12 +21,19 @@ Scope Locator registrations retained in one table, and the newest registration
 as first-choice candidate. The instruction to plan and begin work authorizes
 this documentation update. These choices must not be reopened as pending options.
 
-`status: proposed` and `date: null` describe the **complete ADR 0003 replacement**,
-not uncertainty about those owner decisions. Unselected physical-key/adapter
-contracts and lifecycle/index/link closure remain review work. No implementation,
-merge, deployment, real-catalog extraction or P8 switch is performed by this PR.
+On **2026-10-19**, the owner explicitly approved ADR 0029 as the **complete
+successor to ADR 0003**, including deletion of ADR 0003 from the current tracked
+tree, after preservation of all still-binding clauses. The owner's confirmation
+was: 「はい、ADR0003を原稿から削除することも含めて承認します。」 The actual date,
+not the earlier partial Scope-choice date, is recorded in this frontmatter.
+Unselected physical-schema/adapter details remain proposals or constrained
+engineering contracts; the whole-record approval does not select them by
+implication. The historical ADR 0003 is accessible via its [pre-retirement
+Git revision](https://github.com/TakashiSasaki/git-repo-db/blob/bb878eda47cf17268dd821c74343bac64d769ea7/docs/adr/0003-append-only-git-core-and-context-store.md). Its ongoing guarantees are carried forward below.
+No product implementation, merge, deployment, real-catalog extraction or P8
+switch is performed by this documentation change.
 
-| Owner decision | Binding direction in this review branch |
+| Owner decision | Binding direction under the accepted five-store architecture |
 | --- | --- |
 | Existing Access boundary | Independent durable Access; Repository UUIDv4 stays in Core; separate repository locators and connection configurations |
 | Q-S1 A | Canonical UUIDv4 is the Scope identity; names and URI/URN forms do not replace the UUID in PK/FK or external Scope references |
@@ -40,7 +47,7 @@ No unrelated six-table sketch, globally unique scope-name rule or URI-as-Scope-P
 proposal becomes accepted by implication. Original questions about Access-store
 sharing and detailed adapter vocabulary are not silently answered by this ledger.
 
-Propose five stores with different responsibilities:
+The accepted target has five stores with separate responsibilities:
 
 | Store | Responsibility | Lifetime |
 | --- | --- | --- |
@@ -266,7 +273,7 @@ saved-setting acquisitions; do not silently recreate it or clear its diagnostic
 state. Independently sound Core/Context remain readable. If a failure also casts
 doubt on their integrity, ADR 0026's catalog-wide stop applies fully. An existing
 Core/Context stop always blocks ordinary acquisition/admission, whatever Access
-says; this proposal introduces no recovery bypass or same-database repair.
+says; the accepted Access boundary introduces no recovery bypass or same-database repair.
 
 ### ACC-08: Snapshot execution without new domain dependencies
 
@@ -326,16 +333,21 @@ selected first-choice rule. UUID identity plus same-table dated registrations
 keeps location changes out of external joins. Separate Access accepts additional
 schema, backup and administration costs in exchange for explicit boundaries.
 
-### Complete carry-forward and acceptance-time retirement of ADR 0003
+### Complete carry-forward from retired ADR 0003
 
-The `replaces` entry is **prospective** on this proposed review branch. ADR 0003
-remains accepted here; it is not deleted or quietly overridden. Changing its
-explicit four-store count is not an additive refinement. Before integration,
-obtain approval for this replacement, set the actual acceptance date, carry the
-following still-binding clauses into the accepted snapshot, remove ADR 0003 and
-update its current inbound links/index in the same coherent change. Historical
-execution receipts remain historical evidence, not material to rewrite. Do not
-expand the governance policy's pre-adoption migration exception.
+The `replaces` entry records a **substantive whole-record replacement explicitly
+accepted on 2026-10-19**. The superseded ADR 0003 is removed from the current
+tracked tree in the same coherent acceptance/retirement commit; its exact content
+remains reachable through [pre-retirement Git history](https://github.com/TakashiSasaki/git-repo-db/blob/bb878eda47cf17268dd821c74343bac64d769ea7/docs/adr/0003-append-only-git-core-and-context-store.md). Its former
+explicit four-store count is superseded by five independent responsibilities.
+The following table carries forward its still-binding rules and rationale rather
+than relying on a live link to a deleted file. The earlier independent R4 review
+[traced 43 ADR 0003 clauses](../implementation/evidence/access-a6-independent-20261018/r4/adr-clause-map.md)
+without finding material loss under the already accepted scoped refinements.
+See the [acceptance/retirement closure](../implementation/adr-0029-accepted-retirement-20261019.md)
+for the actual current-link changes and historical-reference treatment. Preserve
+the exact original execution receipts and do not expand the governance policy's
+pre-adoption migration exception.
 
 | ADR 0003 clause family | Successor and preserved meaning |
 | --- | --- |
@@ -354,8 +366,8 @@ expand the governance policy's pre-adoption migration exception.
 | Preserved and deferred contracts | Keep UUID, Q01-Q04, five-column Coverage and PF-P01-P04/P09-P13/P16-P17 in unsuperseded scope; apply ADR 0028's classified times and ADR 0026's actual validation, not old CAS-41 counters; GC-03/04 and DS-R01-R08 remain deferred |
 | Non-goals and six acceptance criteria | No implementation/real migration/GC/merge by prose; preserve independent Git-only tests, append-only attacks, Context isolation, partial-write truth, backup/Exchange integrity and exact-tree independent evidence under ADR 0001 |
 
-These preserved rules are requirements of the proposed successor, not merely
-references to a file that would be deleted. ADRs 0004-0010 and 0012-0028 remain
+These preserved rules are **binding requirements of this accepted successor**, not
+merely references to a removed file. ADRs 0004-0010 and 0012-0028 remain
 active in their own scopes: metadata-only and attributed/shared OIDs, exact
 allowed-body checks, notes capture/group/role rules, finite work, recovery,
 unauthenticated reports and classified times are not re-decided here.
@@ -386,7 +398,8 @@ coding. The settled architectural direction is not reopened by those details.
   registration first choice; then "plan and begin work". Earlier URI-as-PK and
   separate-history-table alternatives are not selected.
 - [Storage model, source audit and implementation plan](../architecture/access-store-design.md).
-- [ADR 0029 whole-replacement readiness and post-ADR0030 delta audit](../implementation/adr-0029-replacement-readiness-20261019.md) (pre-approval review, not acceptance).
+- [ADR 0029 whole-replacement readiness audit](../implementation/adr-0029-replacement-readiness-20261019.md) (historical, prepared before final approval).
+- [ADR 0029 acceptance/retirement closure](../implementation/adr-0029-accepted-retirement-20261019.md) (2026-10-19).
 - [ADR governance](policy.md), [key policy](0017-domain-keys-without-storage-surrogates.md),
   [recovery](0026-stop-salvage-restore-merge-after-corruption.md),
   [origin trust](0027-unauthenticated-external-capture-origin-reports.md),

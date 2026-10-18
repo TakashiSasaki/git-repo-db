@@ -1,6 +1,6 @@
 # Implementation status — implemented Three-Store baseline
 
-**Accepted newer target (not implemented):** [ADR 0003](adr/0003-append-only-git-core-and-context-store.md) freezes a strictly append-only Git Core, a separate **durable** Context store for PR/Issue/comment/Provider facts, plus Operational and Search. The [transition plan](architecture/git-core-context-transition-plan.md) inventories the necessary schema/runtime changes. The current `main` still contains the previous 3-store/84-table format; the design-only ADR does **not** certify a four-store implementation or any additional validation.
+**Accepted successor target (not a claim of default activation):** [ADR 0029](adr/0029-independent-access-store.md), approved 2026-10-19 as the replacement for historical ADR 0003, preserves strictly INSERT-only Git Core, independent **durable Context**, disposable Operational and rebuildable Search, and adds independent durable **Access** for Scope/Locator/Connection Configuration/local approvals. The [transition plan](architecture/git-core-context-transition-plan.md) and [Access design](architecture/access-store-design.md) inventory the remaining product changes. The earlier `main` three-store/84-table baseline remains historical implementation evidence; accepting the five-store architecture alone does **not** certify any new runtime implementation, P8 activation or release verification.
 
 **Status audited at:** `fb3b1fb4d5e1436c58677d2e867708502fbbc64b`.
 
