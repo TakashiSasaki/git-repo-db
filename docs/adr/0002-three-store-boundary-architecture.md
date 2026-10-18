@@ -1,6 +1,6 @@
 # Architecture Decision Record: Three-Store Boundary (PF-P01–PF-P17)
 
-- **Status:** Accepted and implemented historical Three-Store baseline; **partially superseded for the current target** by [ADR 0029](0029-independent-access-store.md), which replaced historical ADR 0003 on 2026-10-19.
+- **Status:** Accepted and implemented historical Three-Store baseline; **partially superseded for the current target** by [ADR 0029](https://github.com/TakashiSasaki/git-repo-db/blob/410a88b32a3d5da6b0c7a93f054641f4f8ae8596/docs/adr/0029-independent-access-store.md), which replaced historical ADR 0003 on 2026-10-19.
 - **Supersession scope:** PF-P06 physical domain allocation and PF-P08 full-backup scope, plus derivative Search/source wording where incompatible, are now superseded by ADR 0029's five-store successor. Unaffected PF-P01–PF-P17 constraints remain binding. The 70/10/4 layout below accurately describes the prior implemented schema, **not** the five-store target. This is a documentary annotation, not a retroactive change to the 2026-10-12 decision.
 - **Decision date:** 2026-10-12.
 - **Preceding Decisions:** Q01-B, Q02-B, Q03-B, NO_INDEPENDENT_PUBLICATION, ADR 0001 (Validation Lifecycle).
