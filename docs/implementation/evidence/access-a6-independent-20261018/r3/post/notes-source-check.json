@@ -1,0 +1,19 @@
+{
+  "root": "/workspace/access-review-evidence/r3/post/notes-scope-9ss4qs1n",
+  "results": [
+    {
+      "paired": false,
+      "status": "rejected",
+      "type": "CoordinationError",
+      "code": "REQUEST_SCOPE",
+      "error": "request:REQUEST_SCOPE: "
+    },
+    {
+      "paired": true,
+      "status": "rejected",
+      "type": "CoordinationError",
+      "code": "REQUEST_SCOPE",
+      "error": "request:REQUEST_SCOPE: "
+    }
+  ]
+}

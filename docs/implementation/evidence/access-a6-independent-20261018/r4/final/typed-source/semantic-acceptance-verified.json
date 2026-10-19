@@ -1,0 +1,1355 @@
+{
+  "reviewer": "R4 independent semantic/source/receipt review; correction and product execution by root",
+  "commit": "536ad33941283a439825ad606b8718c88c967ffa",
+  "tree": "169b5d7ad5dea4fa271f71bea96863bc318fb332",
+  "verified_at_jst": "2026-10-18T13:13:56.160036+09:00",
+  "unique_ledger_functions": 64,
+  "selected_runtime_nodes": 1877,
+  "implementation_counts": {
+    "covered": 24,
+    "partial": 1,
+    "deferred": 1
+  },
+  "requirements": [
+    {
+      "id": 1,
+      "requirement": "One repository has HTTPS, SSH and local locators; editing one leaves its UUID and earlier Core evidence byte-for-byte unchanged.",
+      "baseline_ledger_status": "covered",
+      "independent_static_assessment": "supported finite scope",
+      "assertion_semantics": "Real SHA-1/SHA-256 acquisition precedes adding HTTPS/SSH bindings and disabling each new profile. Exact preexisting Core-table snapshots and repository UUID are compared afterward. Saved remote protocols are representable; they are not remote executors.",
+      "limits_and_gates": "No transport execution claim.",
+      "references": [
+        {
+          "reference": "tests/integration/access/test_stack_acceptance.py::test_remote_locator_registration_and_rotation_leave_core_facts_unchanged",
+          "path": "tests/integration/access/test_stack_acceptance.py",
+          "line": 138,
+          "assertions": [
+            "assert core_facts(data) == original",
+            "assert store.binding(data[\"scope\"], locator).repository_uuidv4 == data[\"target\"]"
+          ],
+          "expected_raises": []
+        }
+      ],
+      "product_test_execution_by_r4": false,
+      "corrected_ledger_status": "covered",
+      "corrected_verified_scope": "Stored HTTPS/SSH/local alternatives and rotation preserve real Core captures. Remote transport execution is excluded.",
+      "corrected_gaps": [],
+      "execution_evidence": "Every linked function was present in the independently reconciled1877-node root execution; R4 reviewed actual receipts and did not run product pytest."
+    },
+    {
+      "id": 2,
+      "requirement": "Same locator text in two scopes resolves independently; conflicting UUIDs for the same scoped locator are rejected without merging or overwriting either ID.",
+      "baseline_ledger_status": "covered",
+      "independent_static_assessment": "supported finite scope",
+      "assertion_semantics": "Initial bind replay returns duplicate; conflicting same-Scope bind raises BINDING_CONFLICT; identical text under S2 resolves to R2 while S1 stays R1.",
+      "limits_and_gates": "No URL-based identity merge.",
+      "references": [
+        {
+          "reference": "tests/integration/access/test_connections.py::test_same_scoped_locator_cannot_silently_rebind",
+          "path": "tests/integration/access/test_connections.py",
+          "line": 126,
+          "assertions": [
+            "assert store.bind_repository(old) == \"duplicate\"",
+            "assert store.binding(S1, LOCATOR).repository_uuidv4 == R1",
+            "assert store.binding(S2, LOCATOR).repository_uuidv4 == R2"
+          ],
+          "expected_raises": [
+            "pytest.raises(AccessRegistryError, match=\"BINDING_CONFLICT\")"
+          ]
+        }
+      ],
+      "product_test_execution_by_r4": false,
+      "corrected_ledger_status": "covered",
+      "corrected_verified_scope": "Scoped repository bindings remain unique without URI-based UUID merge.",
+      "corrected_gaps": [],
+      "execution_evidence": "Every linked function was present in the independently reconciled1877-node root execution; R4 reviewed actual receipts and did not run product pytest."
+    },
+    {
+      "id": 3,
+      "requirement": "Multiple profiles are reusable across locators; profile rotation does not change locator keys, captures or Source memberships.",
+      "baseline_ledger_status": "covered",
+      "independent_static_assessment": "supported finite scope",
+      "assertion_semantics": "One profile is assigned to two repository locators, both receive distinct UUID plans, disabling that profile removes all grants. Separate stack test compares preexisting Core facts after profile edits.",
+      "limits_and_gates": "Source membership preservation is architectural isolation evidence here: these fixtures have no Context membership to compare. Do not claim a dedicated membership-mutation assertion.",
+      "references": [
+        {
+          "reference": "tests/integration/access/test_connections.py::test_profile_shared_by_repositories_and_scope_only_conflicts",
+          "path": "tests/integration/access/test_connections.py",
+          "line": 304,
+          "assertions": [
+            "assert first.plan.repository_uuidv4 != other.plan.repository_uuidv4",
+            "assert row_count(path, \"local_access_grants\") == 0"
+          ],
+          "expected_raises": []
+        },
+        {
+          "reference": "tests/integration/access/test_stack_acceptance.py::test_remote_locator_registration_and_rotation_leave_core_facts_unchanged",
+          "path": "tests/integration/access/test_stack_acceptance.py",
+          "line": 138,
+          "assertions": [
+            "assert core_facts(data) == original",
+            "assert store.binding(data[\"scope\"], locator).repository_uuidv4 == data[\"target\"]"
+          ],
+          "expected_raises": []
+        }
+      ],
+      "product_test_execution_by_r4": false,
+      "corrected_ledger_status": "covered",
+      "corrected_verified_scope": "Shared named profiles, transactional revocation and no Core fact changes.",
+      "corrected_gaps": [],
+      "execution_evidence": "Every linked function was present in the independently reconciled1877-node root execution; R4 reviewed actual receipts and did not run product pytest."
+    },
+    {
+      "id": 4,
+      "requirement": "A preference for repository A cannot point to repository B's assignment; composite FK attacks and missing parents fail.",
+      "baseline_ledger_status": "covered",
+      "independent_static_assessment": "supported finite scope",
+      "assertion_semantics": "Preference for R2 against R1 assignment and missing profile assignment are rejected; only valid preference persists. Deliberately orphaned profile cannot vanish through a join: CORRUPT plus Access stop is asserted.",
+      "limits_and_gates": "Direct SQL full-grant/FK attacks also exist elsewhere in this selected test module.",
+      "references": [
+        {
+          "reference": "tests/integration/access/test_connections.py::test_preferences_reference_assignment_and_matching_repository",
+          "path": "tests/integration/access/test_connections.py",
+          "line": 154,
+          "assertions": [
+            "assert row_count(path, \"repository_access_preferences\") == 1",
+            "assert store.set_preference(AccessPreference(R1, KEY)) == \"insert\""
+          ],
+          "expected_raises": [
+            "pytest.raises(AccessRegistryError)",
+            "pytest.raises(AccessRegistryError)"
+          ]
+        },
+        {
+          "reference": "tests/integration/access/test_connections.py::test_damaged_foreign_key_cannot_vanish_from_candidate_join",
+          "path": "tests/integration/access/test_connections.py",
+          "line": 515,
+          "assertions": [
+            "assert schema.stop_path(path).exists()"
+          ],
+          "expected_raises": [
+            "pytest.raises(AccessRegistryError, match=\"CORRUPT\")"
+          ]
+        }
+      ],
+      "product_test_execution_by_r4": false,
+      "corrected_ledger_status": "covered",
+      "corrected_verified_scope": "Both preference relationships and damaged-parent diagnostics are exercised.",
+      "corrected_gaps": [],
+      "execution_evidence": "Every linked function was present in the independently reconciled1877-node root execution; R4 reviewed actual receipts and did not run product pytest."
+    },
+    {
+      "id": 5,
+      "requirement": "Scope Locators use maximum registration time; equal-time first choices remain ambiguous. No lexical/rowid/arrival tie-break or implicit cross-account fallback. Repository/profile preferences do not inherit this new timestamp rule.",
+      "baseline_ledger_status": "covered",
+      "independent_static_assessment": "supported finite scope",
+      "assertion_semantics": "Tied latest registration blocks default grant although the original remains approved; one-candidate bound yields CANDIDATE_LIMIT. A second repository/profile remains ambiguous even when only the first has a grant; saved explicit preference is honored.",
+      "limits_and_gates": "Timestamp ranking applies to Scope registration only.",
+      "references": [
+        {
+          "reference": "tests/integration/access/test_connections.py::test_latest_ties_before_controls_and_permissions",
+          "path": "tests/integration/access/test_connections.py",
+          "line": 254,
+          "assertions": [
+            "assert store.current_grant(R1, S1, registration=ROUTE) == approved"
+          ],
+          "expected_raises": [
+            "pytest.raises(AccessRegistryError, match=\"AMBIGUOUS\")",
+            "pytest.raises(AccessRegistryError, match=\"CANDIDATE_LIMIT\")"
+          ]
+        },
+        {
+          "reference": "tests/integration/access/test_connections.py::test_assignment_ambiguity_does_not_select_only_approved_profile",
+          "path": "tests/integration/access/test_connections.py",
+          "line": 278,
+          "assertions": [
+            "assert store.current_grant(R1, S1) == grant"
+          ],
+          "expected_raises": [
+            "pytest.raises(AccessRegistryError, match=\"AMBIGUOUS\")",
+            "pytest.raises(AccessRegistryError, match=\"DISABLED\")"
+          ]
+        }
+      ],
+      "product_test_execution_by_r4": false,
+      "corrected_ledger_status": "covered",
+      "corrected_verified_scope": "Maximum registration time precedes permission filtering; repository/profile selection stays separate.",
+      "corrected_gaps": [],
+      "execution_evidence": "Every linked function was present in the independently reconciled1877-node root execution; R4 reviewed actual receipts and did not run product pytest."
+    },
+    {
+      "id": 6,
+      "requirement": "Git-only saved access works with no Context; Core-only offline use works with no Access. An imported domain catalog cannot start network work.",
+      "baseline_ledger_status": "covered",
+      "independent_static_assessment": "supported finite scope",
+      "assertion_semantics": "Nonseed local acquisition asserts actual retained metadata and Context absence. Removing or stopping Access leaves actual retained Core metadata readable. Context-only import/export preserves provider/membership and creates no Access.",
+      "limits_and_gates": "No implicit saved Access store is opened during domain Exchange.",
+      "references": [
+        {
+          "reference": "tests/integration/access/test_git_acquisition.py::test_nonseed_repository_acquires_actual_metadata",
+          "path": "tests/integration/access/test_git_acquisition.py",
+          "line": 161,
+          "assertions": [
+            "assert report.repository_uuidv4 == setup[\"target\"] != setup[\"seed\"]",
+            "assert set(report.retained_objects) == set(setup[\"unit\"].select_oids)",
+            "assert {r[0] for r in rows(setup, \"repositories\")} == {\n        setup[\"target\"],\n        setup[\"seed\"],\n    }",
+            "assert all(\n        r[3] in (\"commit\", \"tree\", \"tag\") for r in rows(setup, \"retained_metadata\")\n    )",
+            "assert rows(setup, \"retained_notes\") == []",
+            "assert usage(setup) > 0",
+            "assert not (setup[\"cat\"] / \"context.sqlite3\").exists()",
+            "assert core.catalog_identity() == (setup[\"seed\"], setup[\"instance\"])",
+            "assert core.read_metadata(setup[\"objects\"][\"commit2\"]).endswith(\n            b\"Second commit\\n\"\n        )"
+          ],
+          "expected_raises": []
+        },
+        {
+          "reference": "tests/integration/access/test_stack_acceptance.py::test_domain_read_survives_unavailable_access_after_real_acquisition",
+          "path": "tests/integration/access/test_stack_acceptance.py",
+          "line": 164,
+          "assertions": [
+            "assert core_facts(data) == original",
+            "assert core.read_metadata(data[\"objects\"][\"commit2\"]).endswith(\n            b\"Second commit\\n\"\n        )"
+          ],
+          "expected_raises": [
+            "pytest.raises(AccessRegistryError, match=\"MISSING|STOPPED\")"
+          ]
+        },
+        {
+          "reference": "tests/integration/access/test_context_boundary.py::test_context_only_round_trip_and_core_only_paths_need_no_access",
+          "path": "tests/integration/access/test_context_boundary.py",
+          "line": 290,
+          "assertions": [
+            "assert ProductionQueryService(right).list_providers()[0].configuration == {\n        \"tier\": \"enterprise\"\n    }",
+            "assert ExchangeService(core_only).export_package().context is None",
+            "assert not list(tmp_path.glob(\"*/access.sqlite3\"))",
+            "assert ctx.source_repositories(SOURCE) == (REPO,)"
+          ],
+          "expected_raises": []
+        }
+      ],
+      "product_test_execution_by_r4": false,
+      "corrected_ledger_status": "covered",
+      "corrected_verified_scope": "Real local acquisition without Context; offline Core survives missing/stopped Access.",
+      "corrected_gaps": [],
+      "execution_evidence": "Every linked function was present in the independently reconciled1877-node root execution; R4 reviewed actual receipts and did not run product pytest."
+    },
+    {
+      "id": 7,
+      "requirement": "Different SSH aliases, scp-relative/URI-absolute paths, percent escapes, `.git`, trailing slashes, IPv6, symlinks, Windows drive/UNC and relative bases retain the declared semantics; unsupported inputs fail without changing files/credentials.",
+      "baseline_ledger_status": "covered",
+      "independent_static_assessment": "R4-02 reference advisory resolved, finite supported scope",
+      "assertion_semantics": "Linked exact URI tests concern Scope Locators. Repository negative grammar and finite executor rejection cover Windows/UNC/relative/helper/symlink exclusions. Existing positive repository grammar test is a useful additional link. Corrected ledger now directly links test_repository_grammar for positive local/file/HTTPS/SSH/scp classification.",
+      "limits_and_gates": "No exhaustive Repository-alias/escape/IPv6 matrix is claimed. Storage support and local execution support differ.",
+      "references": [
+        {
+          "reference": "tests/unit/test_access_registry_values.py::test_preserve_valid_uri_exactly",
+          "path": "tests/unit/test_access_registry_values.py",
+          "line": 86,
+          "assertions": [
+            "assert scope_locator(value) == value",
+            "assert ScopeLocatorRegistration(SCOPE, 1, value).key == (SCOPE, 1, value)"
+          ],
+          "expected_raises": []
+        },
+        {
+          "reference": "tests/unit/test_access_registry_values.py::test_reject_unsupported_or_unsafe_uri_without_echo",
+          "path": "tests/unit/test_access_registry_values.py",
+          "line": 131,
+          "assertions": [
+            "assert \"PRIVATE\" not in str(error.value)"
+          ],
+          "expected_raises": [
+            "pytest.raises(AccessRegistryError, match=\"LOCATOR\")"
+          ]
+        },
+        {
+          "reference": "tests/unit/test_access_connections_values.py::test_unsupported_repository_grammar",
+          "path": "tests/unit/test_access_connections_values.py",
+          "line": 53,
+          "assertions": [],
+          "expected_raises": [
+            "pytest.raises(AccessRegistryError)"
+          ]
+        },
+        {
+          "reference": "tests/integration/access/test_workflow.py::test_finite_local_adapter_rejects_unsupported_execution",
+          "path": "tests/integration/access/test_workflow.py",
+          "line": 403,
+          "assertions": [],
+          "expected_raises": [
+            "pytest.raises(AccessRegistryError, match=\"EXECUTOR_\")"
+          ]
+        },
+        {
+          "reference": "tests/unit/test_access_connections_values.py::test_repository_grammar",
+          "path": "tests/unit/test_access_connections_values.py",
+          "line": 25,
+          "assertions": [
+            "assert repository_locator(value) == expected"
+          ],
+          "expected_raises": []
+        }
+      ],
+      "product_test_execution_by_r4": false,
+      "corrected_ledger_status": "covered",
+      "corrected_verified_scope": "Finite exact grammar and explicit rejection are tested; this does not promise all Git syntaxes or executors.",
+      "corrected_gaps": [],
+      "execution_evidence": "Every linked function was present in the independently reconciled1877-node root execution; R4 reviewed actual receipts and did not run product pytest."
+    },
+    {
+      "id": 8,
+      "requirement": "Malicious helper syntax, shell options, proxy URLs, embedded secrets and import activation attempts are rejected before external side effects; no secrets leak to saved plans, logging, manifests or domain Exchange.",
+      "baseline_ledger_status": "covered",
+      "independent_static_assessment": "corrected finite implementation covered; exact linked regressions actually executed",
+      "assertion_semantics": "Typed profile options reject secrets, unsafe commands and host/TLS overrides. Synthetic Access sentinel remains exact during Context export; raw diagnostics omit canary path. Correctly rechecksummed malicious imports are covered in item14. New indirect-config regression checks plain and BOM prefix, include and includeIf, valid and malformed external file, all with zero commands; safe BOM configuration is an explicit positive control.",
+      "limits_and_gates": "Names/prose are not a DLP guarantee; sensitive nonsecret references remain Access configuration. The pending root-runtime status at the earlier source checkpoint is now resolved by actual536ad receipts; separate R2/R3 behavior reviews retain their own authorship.",
+      "references": [
+        {
+          "reference": "tests/unit/test_access_connections_values.py::test_unsafe_or_unsupported_options",
+          "path": "tests/unit/test_access_connections_values.py",
+          "line": 115,
+          "assertions": [],
+          "expected_raises": [
+            "pytest.raises(AccessRegistryError)"
+          ]
+        },
+        {
+          "reference": "tests/integration/access/test_context_boundary.py::test_no_normalization_no_network_no_settings_import_side_effect",
+          "path": "tests/integration/access/test_context_boundary.py",
+          "line": 314,
+          "assertions": [
+            "assert sentinel.read_bytes() == b\"must not open or replace an Access store\""
+          ],
+          "expected_raises": []
+        },
+        {
+          "reference": "tests/integration/access/test_backup.py::test_cli_diagnostics_do_not_echo_secret_paths",
+          "path": "tests/integration/access/test_backup.py",
+          "line": 736,
+          "assertions": [
+            "assert result.returncode == 2",
+            "assert value not in result.stderr"
+          ],
+          "expected_raises": []
+        },
+        {
+          "reference": "tests/integration/access/test_review_corrections.py::test_indirect_git_config_is_rejected_before_any_command",
+          "path": "tests/integration/access/test_review_corrections.py",
+          "line": 54,
+          "assertions": [
+            "assert error.value.code == \"EXECUTOR_UNSUPPORTED\"",
+            "assert commands == []"
+          ],
+          "expected_raises": [
+            "pytest.raises(CoreFailure)"
+          ]
+        },
+        {
+          "reference": "tests/integration/access/test_review_corrections.py::test_safe_bom_git_config_remains_supported",
+          "path": "tests/integration/access/test_review_corrections.py",
+          "line": 90,
+          "assertions": [
+            "assert source.object_format == \"sha1\""
+          ],
+          "expected_raises": []
+        }
+      ],
+      "product_test_execution_by_r4": false,
+      "corrected_ledger_status": "covered",
+      "corrected_verified_scope": "Reject secret-bearing/command fields before side effects. Not DLP for secrets disguised as prose.",
+      "corrected_gaps": [],
+      "execution_evidence": "Every linked function was present in the independently reconciled1877-node root execution; R4 reviewed actual receipts and did not run product pytest."
+    },
+    {
+      "id": 9,
+      "requirement": "Disabling a Scope route retains all registration facts. Removing mutable repository/profile configuration does not delete Scope history, Source known-positive pairs, Core objects/captures or Context evidence.",
+      "baseline_ledger_status": "covered",
+      "independent_static_assessment": "supported finite scope",
+      "assertion_semantics": "Disable/reenable across Scope context, route, profile, binding and assignment removes old grant; original registration tuple survives. Real acquisition stack test compares Core facts after configuration edits.",
+      "limits_and_gates": "No general configuration-removal API is implemented. Do not infer deletion management or a direct Source-membership comparison from these tests.",
+      "references": [
+        {
+          "reference": "tests/integration/access/test_connections.py::test_disable_enable_aba_never_resurrects_grant",
+          "path": "tests/integration/access/test_connections.py",
+          "line": 168,
+          "assertions": [
+            "assert store.history(S1).registrations == (ROUTE,)",
+            "assert approve(store) == store.current_grant(R1, S1)"
+          ],
+          "expected_raises": [
+            "pytest.raises(AccessRegistryError, match=\"APPROVAL_REQUIRED\")"
+          ]
+        },
+        {
+          "reference": "tests/integration/access/test_stack_acceptance.py::test_remote_locator_registration_and_rotation_leave_core_facts_unchanged",
+          "path": "tests/integration/access/test_stack_acceptance.py",
+          "line": 138,
+          "assertions": [
+            "assert core_facts(data) == original",
+            "assert store.binding(data[\"scope\"], locator).repository_uuidv4 == data[\"target\"]"
+          ],
+          "expected_raises": []
+        }
+      ],
+      "product_test_execution_by_r4": false,
+      "corrected_ledger_status": "covered",
+      "corrected_verified_scope": "Disabling controls revokes grants but retains registration/Core facts. Arbitrary deletion management is not introduced.",
+      "corrected_gaps": [],
+      "execution_evidence": "Every linked function was present in the independently reconciled1877-node root execution; R4 reviewed actual receipts and did not run product pytest."
+    },
+    {
+      "id": 10,
+      "requirement": "Concurrent configuration edits cannot combine one version's locator with another version's credentials; request plans, cancellation and retries are consistent and keep original observation identity and cumulative work.",
+      "baseline_ledger_status": "covered",
+      "independent_static_assessment": "corrected finite implementation covered; exact linked regressions actually executed",
+      "assertion_semantics": "Two CAS writers produce exactly update and STALE_SETTINGS. Final handoff tests assert callback not invoked, descriptor closed and token consumed after expiry/revocation/latest/cancel. Retry route change must fail before subprocess launch. New final-grant transaction cancellation test covers both public callbacks with zero invocations, bound cleanup and token consumption. New bootstrap/refs test cancels at the final http-alternates stat and asserts zero subprocess starts and no extra descriptors.",
+      "limits_and_gates": "This verifies bounded application checkpoints, not cross-process linearizability or instantaneous revocation of an already running command. The pending root-runtime status at the earlier source checkpoint is now resolved by actual536ad receipts; separate R2/R3 behavior reviews retain their own authorship.",
+      "references": [
+        {
+          "reference": "tests/integration/access/test_connections.py::test_concurrent_cas_only_one_writer_wins",
+          "path": "tests/integration/access/test_connections.py",
+          "line": 450,
+          "assertions": [
+            "assert sorted(results) == [\"STALE_SETTINGS\", \"update\"]"
+          ],
+          "expected_raises": []
+        },
+        {
+          "reference": "tests/integration/access/test_handoff_boundary.py::test_final_executor_handoff_rechecks_before_callback",
+          "path": "tests/integration/access/test_handoff_boundary.py",
+          "line": 33,
+          "assertions": [
+            "assert invoked == []",
+            "assert bounds[0]._closed"
+          ],
+          "expected_raises": [
+            "pytest.raises(AccessRegistryError, match=code)",
+            "pytest.raises(AccessRegistryError, match=\"TOKEN\")"
+          ]
+        },
+        {
+          "reference": "tests/integration/access/test_git_acquisition.py::test_access_plan_change_rejected_on_retry_before_git",
+          "path": "tests/integration/access/test_git_acquisition.py",
+          "line": 339,
+          "assertions": [],
+          "expected_raises": [
+            "pytest.raises(CoreFailure, match=\"original request cannot change\")"
+          ]
+        },
+        {
+          "reference": "tests/integration/access/test_review_corrections.py::test_callback_rechecks_cancel_after_final_grant_transaction",
+          "path": "tests/integration/access/test_review_corrections.py",
+          "line": 184,
+          "assertions": [
+            "assert calls == [True] * 4",
+            "assert invoked == []",
+            "assert bounds[0]._closed"
+          ],
+          "expected_raises": [
+            "pytest.raises(AccessRegistryError, match=\"CANCELLED\")",
+            "pytest.raises(AccessRegistryError, match=\"TOKEN\")"
+          ]
+        },
+        {
+          "reference": "tests/integration/access/test_review_corrections.py::test_git_command_rechecks_guard_after_final_filesystem_preparation",
+          "path": "tests/integration/access/test_review_corrections.py",
+          "line": 113,
+          "assertions": [
+            "assert error.value.code == \"CANCELLED\"",
+            "assert stopped[0]",
+            "assert commands == []",
+            "assert set(os.listdir(\"/proc/self/fd\")) == before"
+          ],
+          "expected_raises": [
+            "pytest.raises(CoreFailure)"
+          ]
+        }
+      ],
+      "product_test_execution_by_r4": false,
+      "corrected_ledger_status": "covered",
+      "corrected_verified_scope": "Single-snapshot plans, CAS settings, original retry intent and final callback admission are tested. No global cross-store linearizability claim.",
+      "corrected_gaps": [],
+      "execution_evidence": "Every linked function was present in the independently reconciled1877-node root execution; R4 reviewed actual receipts and did not run product pytest."
+    },
+    {
+      "id": 11,
+      "requirement": "Additional repositories beyond the Core seed can acquire independently without weakening catalog pairing, UUID selection or cross-repository Exchange fences.",
+      "baseline_ledger_status": "partial",
+      "independent_static_assessment": "partial only for the explicit remaining Exchange contract",
+      "assertion_semantics": "New SHA-1/SHA-256 standalone/prepared paired external metadata controls accept nonseed R1 and retain actual seed/instance pairing. Exact retry preserves authoritative rows. Wrong nested RepositoryClaims, observations, Notes captures/claims/groups, repository scopes/claims/proofs fail before any authoritative row changes. Capture Coverage accepts actual selected owner and rejects foreign/absent owner. Foreign Operational pairing stays STORE_IDENTITY. Original source/time/object/repository request intent cannot change. A distinct explicit request may add compatible facts under the original Capture pair. Same-seed R1 Exchange onward comparison retains RepositoryClaims/observations; R2-seed import remains REPOSITORY_MISMATCH with all Core rows unchanged. Final regressions additionally acquire actual Notes under seed/nonseed, SHA1/SHA256 and standalone/paired combinations, retain body/Capture original identity and exact Core replay while durable expenditure increases. A changed live Notes source with explicit in-memory progress is refused before discovering B. Every incoming existing Capture binding is preflighted for repository/source/ref/root even without Coverage, and rejection compares all authoritative Core rows unchanged. Typed-source regressions now restore exact production schema after synthetic source/UTF8/ref/OID/missing-parent damage, then require AUTHORITATIVE_CORRUPTION plus persistent catalog stop and unchanged suspect Core file hash, in both standalone and paired paths. The new Core capture_binding reader validates caller coordinates separately and reconstructs stored canonical Capture/domain/ref and parent existence under existing decoded-read/completion snapshot fences.",
+      "limits_and_gates": "Actual selected nonseed metadata/Notes, nested ownership, original request intent and typed persisted-Capture stop regressions executed successfully within the focused cohort. Same-seed onward preservation and cross-seed mutation-free refusal passed. Cross-seed Repository-set/receiver-target semantics remain unspecified and are not approved or implemented.",
+      "references": [
+        {
+          "reference": "tests/integration/access/test_git_acquisition.py::test_nonseed_paired_native_notes_preserves_catalog_pairing",
+          "path": "tests/integration/access/test_git_acquisition.py",
+          "line": 667,
+          "assertions": [
+            "assert result.admission.core_committed and result.admission.context_committed",
+            "assert result.git_report.repository_uuidv4 == setup[\"target\"]",
+            "assert rows(setup, \"captures\")",
+            "assert tuple(\n            db.execute(\n                \"SELECT repository_uuidv4,catalog_instance_uuidv4 FROM store_identity\"\n            ).fetchone()\n        ) == (setup[\"seed\"], setup[\"instance\"])"
+          ],
+          "expected_raises": []
+        },
+        {
+          "reference": "tests/integration/access/test_git_acquisition.py::test_plain_p5_native_scope_cannot_replay_under_another_repository",
+          "path": "tests/integration/access/test_git_acquisition.py",
+          "line": 460,
+          "assertions": [],
+          "expected_raises": [
+            "pytest.raises(CoreFailure, match=\"request intent changed\")"
+          ]
+        },
+        {
+          "reference": "tests/integration/access/test_review_corrections.py::test_nonseed_external_metadata_preserves_pairing_and_replay",
+          "path": "tests/integration/access/test_review_corrections.py",
+          "line": 271,
+          "assertions": [
+            "assert report.repository_uuidv4 == target != seed",
+            "assert report.ref_observations == unit.observations",
+            "assert acquire(False).admitted_objects == unit.nominal_objects",
+            "assert authoritative_rows(cat) == original",
+            "assert forwarded.core[\"repository_claims\"] == package.core[\"repository_claims\"]",
+            "assert forwarded.core[\"git_observations\"] == package.core[\"git_observations\"]",
+            "assert error.value.code == \"REPOSITORY_MISMATCH\"",
+            "assert authoritative_rows(other) == before",
+            "assert core.catalog_identity() == (seed, instance)"
+          ],
+          "expected_raises": [
+            "pytest.raises(ExchangeError)"
+          ]
+        },
+        {
+          "reference": "tests/integration/access/test_review_corrections.py::test_foreign_metadata_repository_is_rejected_before_any_admission",
+          "path": "tests/integration/access/test_review_corrections.py",
+          "line": 326,
+          "assertions": [
+            "assert error.value.code == \"REPOSITORY_SCOPE\"",
+            "assert authoritative_rows(cat) == before"
+          ],
+          "expected_raises": [
+            "pytest.raises(CoreFailure)"
+          ]
+        },
+        {
+          "reference": "tests/integration/access/test_review_corrections.py::test_metadata_capture_coverage_resolves_the_actual_capture_owner",
+          "path": "tests/integration/access/test_review_corrections.py",
+          "line": 397,
+          "assertions": [
+            "assert authoritative_rows(cat)[\"captures\"] == before[\"captures\"]",
+            "assert error.value.code == \"REPOSITORY_SCOPE\"",
+            "assert authoritative_rows(cat) == before"
+          ],
+          "expected_raises": [
+            "pytest.raises(CoreFailure)"
+          ]
+        },
+        {
+          "reference": "tests/integration/access/test_review_corrections.py::test_metadata_nonseed_keeps_physical_operational_pairing",
+          "path": "tests/integration/access/test_review_corrections.py",
+          "line": 440,
+          "assertions": [
+            "assert error.value.code == \"STORE_IDENTITY\"",
+            "assert authoritative_rows(cat) == before"
+          ],
+          "expected_raises": [
+            "pytest.raises(CoordinationError)"
+          ]
+        },
+        {
+          "reference": "tests/integration/access/test_review_corrections.py::test_metadata_retry_cannot_change_original_intent",
+          "path": "tests/integration/access/test_review_corrections.py",
+          "line": 498,
+          "assertions": [
+            "assert error.value.code in (\"INCOMPATIBLE_REPLAY\", \"REQUEST_SCOPE\")",
+            "assert authoritative_rows(cat) == before"
+          ],
+          "expected_raises": [
+            "pytest.raises((CoreFailure, CoordinationError))"
+          ]
+        },
+        {
+          "reference": "tests/integration/access/test_review_corrections.py::test_new_explicit_metadata_request_can_add_compatible_same_capture_facts",
+          "path": "tests/integration/access/test_review_corrections.py",
+          "line": 476,
+          "assertions": [
+            "assert report.capture_origin_uuidv4 == unit.capture_origin_uuidv4",
+            "assert report.capture_uuidv4 == unit.capture_uuidv4",
+            "assert report.admitted_objects == changed.nominal_objects"
+          ],
+          "expected_raises": []
+        },
+        {
+          "reference": "tests/integration/access/test_review_corrections.py::test_external_metadata_live_notes_keeps_source_capture_and_budget",
+          "path": "tests/integration/access/test_review_corrections.py",
+          "line": 523,
+          "assertions": [
+            "assert all(later[kind] >= amount for kind, amount in spent.items())",
+            "assert later[\"metadata_units\"] > spent[\"metadata_units\"]",
+            "assert repeated.notes_discoveries[0].captures == first.notes_discoveries[0].captures",
+            "assert first.note_acquisitions[0].body_retained",
+            "assert capture.repository_uuidv4 == target",
+            "assert authoritative_rows(cat) == before",
+            "assert core.catalog_identity() == (seed, instance)",
+            "assert (\n            core.read_note(capture, objects[\"commit2\"], objects[\"note_blob\"])\n            == b\"Reviewed-by: CI\\n\"\n        )"
+          ],
+          "expected_raises": []
+        },
+        {
+          "reference": "tests/integration/access/test_review_corrections.py::test_external_metadata_cannot_switch_notes_source_with_explicit_progress",
+          "path": "tests/integration/access/test_review_corrections.py",
+          "line": 584,
+          "assertions": [
+            "assert error.value.code == \"INCOMPATIBLE_REPLAY\"",
+            "assert authoritative_rows(cat) == before"
+          ],
+          "expected_raises": [
+            "pytest.raises(CoreFailure)"
+          ]
+        },
+        {
+          "reference": "tests/integration/access/test_review_corrections.py::test_metadata_preflights_existing_capture_binding_without_coverage",
+          "path": "tests/integration/access/test_review_corrections.py",
+          "line": 616,
+          "assertions": [
+            "assert error.value.code == (\n        \"REPOSITORY_SCOPE\" if field == \"repository\" else \"INCOMPATIBLE_REPLAY\"\n    )",
+            "assert authoritative_rows(cat) == before"
+          ],
+          "expected_raises": [
+            "pytest.raises(CoreFailure)"
+          ]
+        },
+        {
+          "reference": "tests/integration/access/test_review_corrections.py::test_stored_capture_corruption_stops_before_any_metadata_admission",
+          "path": "tests/integration/access/test_review_corrections.py",
+          "line": 661,
+          "assertions": [
+            "assert error.value.code == \"AUTHORITATIVE_CORRUPTION\"",
+            "assert (cat / \"p1-recovery-stop.json\").exists()",
+            "assert hashlib.sha256(path.read_bytes()).hexdigest() == before"
+          ],
+          "expected_raises": [
+            "pytest.raises(CoreFailure)"
+          ]
+        }
+      ],
+      "product_test_execution_by_r4": false,
+      "corrected_ledger_status": "partial",
+      "corrected_verified_scope": "Native, Notes and external GitMetadataInput non-seed acquisition preserves physical Core/Operational pairing; nested repository ownership and frozen original request intent are checked before admission.",
+      "corrected_gaps": [
+        "Exchange remains catalog-seed scoped with no Repository-set selector or explicit receiver-target contract. Same-seed R1 onward export is checked; cross-seed R2 import remains refused without mutation. Do not claim complete multi-repository interchange or remove pairing/selection guards."
+      ],
+      "execution_evidence": "Every linked function was present in the independently reconciled1877-node root execution; R4 reviewed actual receipts and did not run product pytest."
+    },
+    {
+      "id": 12,
+      "requirement": "An Access backup made with live WAL is coherent; interrupted/invalid restore is not activated. Continuity preserves Scope UUID/history, but another machine's local execution binding and approvals are not inherited.",
+      "baseline_ledger_status": "covered",
+      "independent_static_assessment": "supported finite scope",
+      "assertion_semantics": "A real WAL writer commits before the pinned backup and a second commit at the backup cut; copied rows include the first and exclude the second. Process exit before publication leaves no destination, source unchanged and unpromoted stage. Restored acquisition needs route enablement then approval.",
+      "limits_and_gates": "Local approval and activation are distinct; Scope continuity preserves UUID/history.",
+      "references": [
+        {
+          "reference": "tests/integration/access/test_backup.py::test_committed_wal_snapshot_does_not_mix_concurrent_registration",
+          "path": "tests/integration/access/test_backup.py",
+          "line": 188,
+          "assertions": [
+            "assert Path(str(source) + \"-wal\").stat().st_size > 0",
+            "assert manifest[\"row_counts\"][\"scope_locators\"] == 4",
+            "assert len(rows(source)[\"scope_locators\"]) == 5",
+            "assert actual == [r.key for r in (*REGS, extra)]"
+          ],
+          "expected_raises": []
+        },
+        {
+          "reference": "tests/integration/access/test_backup.py::test_process_exit_before_rename_leaves_only_unpublished_stage",
+          "path": "tests/integration/access/test_backup.py",
+          "line": 797,
+          "assertions": [
+            "assert result.returncode == 77, result.stderr",
+            "assert not destination.exists()",
+            "assert rows(source) == before",
+            "assert list(tmp_path.glob(\".access-stage-*\"))"
+          ],
+          "expected_raises": []
+        },
+        {
+          "reference": "tests/integration/access/test_stack_acceptance.py::test_restore_reapproval_resumes_same_request_without_rewriting_core",
+          "path": "tests/integration/access/test_stack_acceptance.py",
+          "line": 53,
+          "assertions": [
+            "assert store.scope(data[\"scope\"]) == data[\"store\"].scope(data[\"scope\"])",
+            "assert store.history(data[\"scope\"]) == data[\"store\"].history(data[\"scope\"])",
+            "assert core_facts(data) == original and usage(data) == spent",
+            "assert core_facts(data) == original and usage(data) == spent",
+            "assert replay.repository_uuidv4 == first.repository_uuidv4",
+            "assert core_facts(data) == original",
+            "assert usage(data) > spent",
+            "assert core.read_metadata(data[\"objects\"][\"commit2\"]).endswith(\n            b\"Second commit\\n\"\n        )"
+          ],
+          "expected_raises": [
+            "pytest.raises(AccessRegistryError, match=\"DISABLED\")",
+            "pytest.raises(AccessRegistryError, match=\"APPROVAL_REQUIRED\")"
+          ]
+        }
+      ],
+      "product_test_execution_by_r4": false,
+      "corrected_ledger_status": "covered",
+      "corrected_verified_scope": "Pinned WAL snapshot and inactive continuity restore; UUID preservation does not import execution authority.",
+      "corrected_gaps": [],
+      "execution_evidence": "Every linked function was present in the independently reconciled1877-node root execution; R4 reviewed actual receipts and did not run product pytest."
+    },
+    {
+      "id": 13,
+      "requirement": "Missing/isolated corrupt Access yields honest access errors; proven-sound domain reads still work; a real Core/Context stop is never bypassed.",
+      "baseline_ledger_status": "covered",
+      "independent_static_assessment": "supported finite scope",
+      "assertion_semantics": "Absent/stopped Access produces Access error while actual Core metadata remains exact/readable. A persistent Core stop rejects before Git and before measured work. Other registry tests corrupt persisted values to exercise diagnosed Access stop. The new stored-Capture regression additionally proves touched persisted damage stops ordinary admission without attempting to recreate missing parents, using restored exact schema and both acquisition paths.",
+      "limits_and_gates": "Isolated Access stop is not a Core integrity certificate. Broad storage doubt still invokes P7.",
+      "references": [
+        {
+          "reference": "tests/integration/access/test_stack_acceptance.py::test_domain_read_survives_unavailable_access_after_real_acquisition",
+          "path": "tests/integration/access/test_stack_acceptance.py",
+          "line": 164,
+          "assertions": [
+            "assert core_facts(data) == original",
+            "assert core.read_metadata(data[\"objects\"][\"commit2\"]).endswith(\n            b\"Second commit\\n\"\n        )"
+          ],
+          "expected_raises": [
+            "pytest.raises(AccessRegistryError, match=\"MISSING|STOPPED\")"
+          ]
+        },
+        {
+          "reference": "tests/integration/access/test_git_acquisition.py::test_core_stop_before_activation_blocks_git",
+          "path": "tests/integration/access/test_git_acquisition.py",
+          "line": 289,
+          "assertions": [
+            "assert usage(setup) == 0"
+          ],
+          "expected_raises": [
+            "pytest.raises((CoreFailure, CoordinationError))"
+          ]
+        }
+      ],
+      "product_test_execution_by_r4": false,
+      "corrected_ledger_status": "covered",
+      "corrected_verified_scope": "Access-local failure isolation and domain-stop refusal use actual acquired Core facts.",
+      "corrected_gaps": [],
+      "execution_evidence": "Every linked function was present in the independently reconciled1877-node root execution; R4 reviewed actual receipts and did not run product pytest."
+    },
+    {
+      "id": 14,
+      "requirement": "Context key classification preserves provider facts/observed URLs but rejects transport configuration in ordinary domain Exchange. Historical provenance is not silently redacted or advertised as free of location information.",
+      "baseline_ledger_status": "covered",
+      "independent_static_assessment": "supported finite scope; subject to R3 findings",
+      "assertion_semantics": "Malicious registration/envelope fields are rechecksummed and rejected for all four Context sections, even when Context is unselected, before a sentinel Core object is admitted. Descriptive URL candidates, membership and exact historical RepositoryClaim values survive Exchange.",
+      "limits_and_gates": "SHA-256 is content consistency only; package replacement plus digest does not authenticate an issuer.",
+      "references": [
+        {
+          "reference": "tests/integration/access/test_context_boundary.py::test_resigned_exchange_rejects_registration_leaks_before_core_admission",
+          "path": "tests/integration/access/test_context_boundary.py",
+          "line": 199,
+          "assertions": [
+            "assert \"SECRET-CANARY\" not in str(error.value)",
+            "assert not (directory / \"p1-recovery-stop.json\").exists()",
+            "assert not (directory / \"access.sqlite3\").exists()",
+            "assert not core.sql(\"SELECT 1 FROM git_objects WHERE full_oid=?\", (candidate,))"
+          ],
+          "expected_raises": [
+            "pytest.raises(ExchangeError, match=\"CONTEXT_REGISTRATION\")"
+          ]
+        },
+        {
+          "reference": "tests/integration/access/test_context_boundary.py::test_reported_urls_and_historical_core_provenance_survive_exchange",
+          "path": "tests/integration/access/test_context_boundary.py",
+          "line": 226,
+          "assertions": [
+            "assert package.format == \"git-repo-db/p5-exchange-v3\"",
+            "assert again.context[\"providers\"] == package.context[\"providers\"]",
+            "assert (\n        again.context[\"source_repositories\"] == package.context[\"source_repositories\"]\n    )",
+            "assert not (target / \"access.sqlite3\").exists()",
+            "assert ctx.candidates(key, \"url\") == (observed,)",
+            "assert ctx.source_repositories(SOURCE) == (REPO,)",
+            "assert core.sql(\"SELECT value FROM repository_claims\")[0][0] == canonical(\n            \"ssh://historical.example/repo\"\n        )"
+          ],
+          "expected_raises": []
+        }
+      ],
+      "product_test_execution_by_r4": false,
+      "corrected_ledger_status": "covered",
+      "corrected_verified_scope": "Registration contract and exact Exchange envelopes preserve descriptive URLs/provenance.",
+      "corrected_gaps": [],
+      "execution_evidence": "Every linked function was present in the independently reconciled1877-node root execution; R4 reviewed actual receipts and did not run product pytest."
+    },
+    {
+      "id": 15,
+      "requirement": "Real-data extraction is opt-in, leaves sources unchanged and reports excluded or unclassified legacy settings instead of guessing or executing them.",
+      "baseline_ledger_status": "deferred",
+      "independent_static_assessment": "deferred optional extractor; no real-data operation",
+      "assertion_semantics": "No extractor is implemented or exercised. The routing ledger explicitly classifies keys and refuses to infer Scope/time/execution. There are no linked extraction tests.",
+      "limits_and_gates": "The routing ledger is a classifier, not an extractor. Real data is out of scope, and no pre-release compatibility obligation makes migration an automatic Access prerequisite.",
+      "references": [],
+      "product_test_execution_by_r4": false,
+      "corrected_ledger_status": "deferred",
+      "corrected_verified_scope": "Key-level classification exists; no legacy extractor is implemented and no real-data operation is authorized in this task. Legacy migration is not a prerequisite for synthetic Access acceptance in this unreleased project.",
+      "corrected_gaps": [
+        "An optional legacy extractor remains unimplemented. The classification ledger is not an extraction tool; real-data reads/extraction/migration are outside this task."
+      ],
+      "execution_evidence": "No extraction implementation or product execution claimed."
+    },
+    {
+      "id": 16,
+      "requirement": "Wheel/sdist behavior, schema/FK/immutability checks and P7 domain backup scope remain consistent at the exact integrated tree; ordinary file bodies remain excluded and ADR 0028 time/trust rules remain intact.",
+      "baseline_ledger_status": "partial",
+      "independent_static_assessment": "actual finite implementation verification passed at536ad",
+      "assertion_semantics": "Ordinary blob acquisition is rejected with no retained metadata/Notes payload; physical schema includes exact packaged SQL, full triple key and FK checks; routing audit checks 25 override routes. Wheel/sdist smoke and full selected runtime are separate execution artifacts.",
+      "limits_and_gates": "Independent receipt review confirms1877 exact collection/JUnit/journal identities, all phases passed, six audits, Ruff lint/format/whitespace, isolated direct-wheel/sdist-wheel smoke and existing allowlisted placeholder docs. This does not approve the whole ADR, authorize merge/P8 or qualify release. The earlier temporal verified-scope gap is closed by actual536ad execution, not by transferring an earlier candidate PASS.",
+      "references": [
+        {
+          "reference": "tests/integration/access/test_git_acquisition.py::test_ordinary_blob_body_is_never_retained",
+          "path": "tests/integration/access/test_git_acquisition.py",
+          "line": 396,
+          "assertions": [
+            "assert (\n        rows(setup, \"retained_metadata\") == [] and rows(setup, \"retained_notes\") == []\n    )"
+          ],
+          "expected_raises": [
+            "pytest.raises(CoreFailure)"
+          ]
+        },
+        {
+          "reference": "tests/integration/access/test_registry.py::test_schema_identity_and_direct_key",
+          "path": "tests/integration/access/test_registry.py",
+          "line": 53,
+          "assertions": [
+            "assert schema.schema_rows(db) == schema.expected_schema()",
+            "assert db.execute(\"SELECT * FROM access_identity\").fetchall() == [\n            (\"access\", schema.FORMAT, schema.SCHEMA_VERSION, schema.fingerprint())\n        ]",
+            "assert sorted(r[1] for r in tables) == sorted(schema.TABLES)",
+            "assert all(r[4:] == (1, 1) for r in tables)",
+            "assert [(r[1], r[5]) for r in columns] == [\n            (\"scope_uuidv4\", 1),\n            (\"registered_at_us\", 2),\n            (\"scope_locator_uri\", 3),\n        ]",
+            "assert not db.execute(\"PRAGMA foreign_key_check\").fetchall()"
+          ],
+          "expected_raises": []
+        },
+        {
+          "reference": "tests/integration/access/test_context_boundary.py::test_current_p1_routes_are_explicitly_overridden_and_schema_guarded",
+          "path": "tests/integration/access/test_context_boundary.py",
+          "line": 371,
+          "assertions": [
+            "assert check()[0] == 25"
+          ],
+          "expected_raises": []
+        }
+      ],
+      "product_test_execution_by_r4": false,
+      "corrected_ledger_status": "covered",
+      "corrected_verified_scope": "Exact-tree focused runtime, P7 scope, schema/FK/immutability and separate installed wheel/sdist-wheel smoke are verified in the independent review evidence. This finite implementation check does not accept the ADR, authorize merge or establish release eligibility.",
+      "corrected_gaps": [],
+      "execution_evidence": "Every linked function was present in the independently reconciled1877-node root execution; R4 reviewed actual receipts and did not run product pytest."
+    },
+    {
+      "id": 17,
+      "requirement": "Same display name with different Scope UUIDs remains distinct; rename leaves FK/external references unchanged; a URI/URN is never a substitute identity.",
+      "baseline_ledger_status": "covered",
+      "independent_static_assessment": "supported finite scope",
+      "assertion_semantics": "Two UUIDs may share the same display label with no seed or Context. Renaming S1 preserves original registration and UUID; conflicting non-CAS label registration fails.",
+      "limits_and_gates": "URI/URN rejection is tested by pure Scope locator validation.",
+      "references": [
+        {
+          "reference": "tests/integration/access/test_registry.py::test_no_context_or_repository_seed_dependency",
+          "path": "tests/integration/access/test_registry.py",
+          "line": 78,
+          "assertions": [
+            "assert sorted(p.name for p in path.parent.iterdir()) == [\"access.sqlite3\"]",
+            "assert store.register_scope(AccessScope(S2, \"host\")) == \"insert\"",
+            "assert store.scope(S1).display_name == store.scope(S2).display_name",
+            "assert store.first_choices(S1) == ()"
+          ],
+          "expected_raises": []
+        },
+        {
+          "reference": "tests/integration/access/test_registry.py::test_scope_label_update_does_not_change_history",
+          "path": "tests/integration/access/test_registry.py",
+          "line": 128,
+          "assertions": [
+            "assert store.scope(S1) == AccessScope(S1, \"renamed\")",
+            "assert store.first_choices(S1) == (reg(),)",
+            "assert store.register_scope(AccessScope(S1, \"renamed\")) == \"duplicate\""
+          ],
+          "expected_raises": [
+            "pytest.raises(AccessRegistryError, match=\"SCOPE_CONFLICT\")"
+          ]
+        }
+      ],
+      "product_test_execution_by_r4": false,
+      "corrected_ledger_status": "covered",
+      "corrected_verified_scope": "Same labels do not identify Scopes; labels can change without rewriting UUID/history.",
+      "corrected_gaps": [],
+      "execution_evidence": "Every linked function was present in the independently reconciled1877-node root execution; R4 reviewed actual receipts and did not run product pytest."
+    },
+    {
+      "id": 18,
+      "requirement": "A(T1), B(T2), A(T3) retains three rows; T3 wins; exact replay keeps row count/time.",
+      "baseline_ledger_status": "covered",
+      "independent_static_assessment": "supported finite scope",
+      "assertion_semantics": "A(T1), B(T2), A(T3) all insert, original A replay returns duplicate, complete descending history retains all three original coordinates and first choice is T3.",
+      "limits_and_gates": "Same triple intentionally denotes one registration fact, not separate attempt events.",
+      "references": [
+        {
+          "reference": "tests/integration/access/test_registry.py::test_history_a_b_a_and_original_replay",
+          "path": "tests/integration/access/test_registry.py",
+          "line": 86,
+          "assertions": [
+            "assert store.register_locator(registrations[0]).status == \"duplicate\"",
+            "assert store.first_choices(S1) == (registrations[2],)",
+            "assert store.history(S1).registrations == registrations[::-1]",
+            "assert store.history(S1).next_cursor is None",
+            "assert store.register_locator(item).status == \"insert\""
+          ],
+          "expected_raises": []
+        }
+      ],
+      "product_test_execution_by_r4": false,
+      "corrected_ledger_status": "covered",
+      "corrected_verified_scope": "A(T1), B(T2), A(T3) fact-set replay is immutable.",
+      "corrected_gaps": [],
+      "execution_evidence": "Every linked function was present in the independently reconciled1877-node root execution; R4 reviewed actual receipts and did not run product pytest."
+    },
+    {
+      "id": 19,
+      "requirement": "Same-time different URIs coexist; query returns both regardless of insertion order and regardless of only one being approved.",
+      "baseline_ledger_status": "covered",
+      "independent_static_assessment": "supported finite scope",
+      "assertion_semantics": "B then A at the same time both remain in first choices despite enabling only A; bounded limit errors rather than selecting one. Default grant remains ambiguous with the original grant present.",
+      "limits_and_gates": "Competing two-handle ties exist elsewhere. Do not infer authentication from approval or URI order.",
+      "references": [
+        {
+          "reference": "tests/integration/access/test_registry.py::test_ties_remain_even_if_only_one_enabled",
+          "path": "tests/integration/access/test_registry.py",
+          "line": 108,
+          "assertions": [
+            "assert store.first_choices(S1) == (a, b)"
+          ],
+          "expected_raises": [
+            "pytest.raises(AccessRegistryError, match=\"CANDIDATE_LIMIT\")"
+          ]
+        },
+        {
+          "reference": "tests/integration/access/test_connections.py::test_latest_ties_before_controls_and_permissions",
+          "path": "tests/integration/access/test_connections.py",
+          "line": 254,
+          "assertions": [
+            "assert store.current_grant(R1, S1, registration=ROUTE) == approved"
+          ],
+          "expected_raises": [
+            "pytest.raises(AccessRegistryError, match=\"AMBIGUOUS\")",
+            "pytest.raises(AccessRegistryError, match=\"CANDIDATE_LIMIT\")"
+          ]
+        }
+      ],
+      "product_test_execution_by_r4": false,
+      "corrected_ledger_status": "covered",
+      "corrected_verified_scope": "Tied maximum rows remain even if only one is enabled.",
+      "corrected_gaps": [],
+      "execution_evidence": "Every linked function was present in the independently reconciled1877-node root execution; R4 reviewed actual receipts and did not run product pytest."
+    },
+    {
+      "id": 20,
+      "requirement": "Clock rollback, late replay and restore never fabricate a fresh timestamp; unknown/invalid/bool/float/string/overflow input receives the reviewed diagnostic.",
+      "baseline_ledger_status": "covered",
+      "independent_static_assessment": "supported finite scope",
+      "assertion_semantics": "None/bool/zero/negative/float/string/overflow times are rejected before SQL. Earlier registration is retained with precedes_latest and original maximum; restore compares exact original three-row history and untouched input artifact.",
+      "limits_and_gates": "No receiver/restore time manufactures registration freshness.",
+      "references": [
+        {
+          "reference": "tests/unit/test_access_registry_values.py::test_invalid_registration_times",
+          "path": "tests/unit/test_access_registry_values.py",
+          "line": 48,
+          "assertions": [],
+          "expected_raises": [
+            "pytest.raises(AccessRegistryError, match=\"TIME\")"
+          ]
+        },
+        {
+          "reference": "tests/integration/access/test_registry.py::test_earlier_time_retained_without_fake_monotonicity",
+          "path": "tests/integration/access/test_registry.py",
+          "line": 119,
+          "assertions": [
+            "assert result.precedes_latest and result.previous_latest_us == 20",
+            "assert store.first_choices(S1) == (reg(20),)",
+            "assert len(store.history(S1).registrations) == 2"
+          ],
+          "expected_raises": []
+        },
+        {
+          "reference": "tests/integration/access/test_backup.py::test_restore_is_continuation_not_fresh_registrations",
+          "path": "tests/integration/access/test_backup.py",
+          "line": 144,
+          "assertions": [
+            "assert receipt[\"scope_uuids_preserved\"] and receipt[\"registration_times_preserved\"]",
+            "assert receipt[\"requires_local_reapproval\"]",
+            "assert set(p.name for p in destination.iterdir()) == {\n        \"access.sqlite3\",\n        \"restore.json\",\n    }",
+            "assert rows(source) == old",
+            "assert {p.name: p.read_bytes() for p in bundle.iterdir()} == original_bundle",
+            "assert not (tmp_path / \"core.sqlite3\").exists()",
+            "assert not (tmp_path / \"context.sqlite3\").exists()",
+            "assert store.first_choices(S1) == (REGS[-1],)",
+            "assert store.history(S1).registrations == REGS[::-1]",
+            "assert store.scope(S1).display_name == \"\u540c\u4e00Scope\"",
+            "assert store.scope(S3).scope_uuidv4 == S3",
+            "assert not any(store.locator_enabled(r) for r in REGS)",
+            "assert store.register_locator(REGS[-1]).status == \"duplicate\"",
+            "assert not store.locator_enabled(REGS[-1])"
+          ],
+          "expected_raises": [
+            "pytest.raises(AccessRegistryError, match=\"DISABLED\")",
+            "pytest.raises(AccessRegistryError, match=\"APPROVAL_REQUIRED\")"
+          ]
+        }
+      ],
+      "product_test_execution_by_r4": false,
+      "corrected_ledger_status": "covered",
+      "corrected_verified_scope": "Positive original microseconds, rollback warning and immutable replay/restore.",
+      "corrected_gaps": [],
+      "execution_evidence": "Every linked function was present in the independently reconciled1877-node root execution; R4 reviewed actual receipts and did not run product pytest."
+    },
+    {
+      "id": 21,
+      "requirement": "Newest unapproved/disabled/unsupported route blocks default execution; it never silently promotes an older approved route. Imported future times grant no trust.",
+      "baseline_ledger_status": "covered",
+      "independent_static_assessment": "supported finite scope",
+      "assertion_semantics": "Newer disabled route blocks, enabling it still needs approval, explicit older route remains deliberate, and A at a fresh time cannot borrow prior grant. Remote/container/symlink paths are explicitly refused by local executor.",
+      "limits_and_gates": "No arbitrary future timestamp becomes an execution grant.",
+      "references": [
+        {
+          "reference": "tests/integration/access/test_connections.py::test_latest_unapproved_disabled_and_a_b_a",
+          "path": "tests/integration/access/test_connections.py",
+          "line": 232,
+          "assertions": [
+            "assert store.current_grant(R1, S1, registration=ROUTE) == old",
+            "assert (\n            store.record_local_approval(store.review_plan(R1, S1), 50).plan.registration\n            == again\n        )"
+          ],
+          "expected_raises": [
+            "pytest.raises(AccessRegistryError, match=\"DISABLED\")",
+            "pytest.raises(AccessRegistryError, match=\"APPROVAL_REQUIRED\")",
+            "pytest.raises(AccessRegistryError, match=\"APPROVAL_REQUIRED\")"
+          ]
+        },
+        {
+          "reference": "tests/integration/access/test_workflow.py::test_finite_local_adapter_rejects_unsupported_execution",
+          "path": "tests/integration/access/test_workflow.py",
+          "line": 403,
+          "assertions": [],
+          "expected_raises": [
+            "pytest.raises(AccessRegistryError, match=\"EXECUTOR_\")"
+          ]
+        }
+      ],
+      "product_test_execution_by_r4": false,
+      "corrected_ledger_status": "covered",
+      "corrected_verified_scope": "Newest disabled/unapproved does not enable a historical fallback.",
+      "corrected_gaps": [],
+      "execution_evidence": "Every linked function was present in the independently reconciled1877-node root execution; R4 reviewed actual receipts and did not run product pytest."
+    },
+    {
+      "id": 22,
+      "requirement": "Changing Scope route/profile/binding invalidates affected reviewed plans; returning to the same URI at T3 cannot reuse approval for T1.",
+      "baseline_ledger_status": "covered",
+      "independent_static_assessment": "corrected finite implementation covered; exact linked regressions actually executed",
+      "assertion_semantics": "Profile/context/repository-binding A-to-B-to-A removes all old grants; a new same-URI registration needs a new approval; final executor preparation changes cannot invoke callback using old permission.",
+      "limits_and_gates": "SQL invalidation and runtime authority are separate layers. The pending root-runtime status at the earlier source checkpoint is now resolved by actual536ad receipts; separate R2/R3 behavior reviews retain their own authorship.",
+      "references": [
+        {
+          "reference": "tests/integration/access/test_connections.py::test_content_aba_never_resurrects_grant",
+          "path": "tests/integration/access/test_connections.py",
+          "line": 196,
+          "assertions": [
+            "assert row_count(path, \"local_access_grants\") == 0"
+          ],
+          "expected_raises": [
+            "pytest.raises(AccessRegistryError, match=\"APPROVAL_REQUIRED\")"
+          ]
+        },
+        {
+          "reference": "tests/integration/access/test_workflow.py::test_a_at_new_time_cannot_borrow_old_grant",
+          "path": "tests/integration/access/test_workflow.py",
+          "line": 311,
+          "assertions": [],
+          "expected_raises": [
+            "pytest.raises(AccessRegistryError, match=\"APPROVAL_REQUIRED\")"
+          ]
+        },
+        {
+          "reference": "tests/integration/access/test_handoff_boundary.py::test_final_executor_handoff_rechecks_before_callback",
+          "path": "tests/integration/access/test_handoff_boundary.py",
+          "line": 33,
+          "assertions": [
+            "assert invoked == []",
+            "assert bounds[0]._closed"
+          ],
+          "expected_raises": [
+            "pytest.raises(AccessRegistryError, match=code)",
+            "pytest.raises(AccessRegistryError, match=\"TOKEN\")"
+          ]
+        }
+      ],
+      "product_test_execution_by_r4": false,
+      "corrected_ledger_status": "covered",
+      "corrected_verified_scope": "Full registration and options/context matching; material updates revoke; final handoff rechecks.",
+      "corrected_gaps": [],
+      "execution_evidence": "Every linked function was present in the independently reconciled1877-node root execution; R4 reviewed actual receipts and did not run product pytest."
+    },
+    {
+      "id": 23,
+      "requirement": "A continuing Scope migration preserves UUID and old facts; an independent fork allocates new Scope UUID and does not relabel original S1 history as S2 history.",
+      "baseline_ledger_status": "covered",
+      "independent_static_assessment": "supported finite scope",
+      "assertion_semantics": "Fork preserves exact source history and source grants, creates only one new target registration/time, disables copied settings and preserves repository UUID. Trying original request under fork fails INCOMPATIBLE_REPLAY; genuinely new capture/request succeeds.",
+      "limits_and_gates": "Independent clones receive a new Scope; old history is not relabeled.",
+      "references": [
+        {
+          "reference": "tests/integration/access/test_backup.py::test_fork_preserves_origin_history_and_grants_new_scope_inactive",
+          "path": "tests/integration/access/test_backup.py",
+          "line": 548,
+          "assertions": [
+            "assert receipt[\"original_history_rewritten\"] is False",
+            "assert after[\"local_access_grants\"] == before[\"local_access_grants\"]",
+            "assert receipt[\"rows_added\"][\"scope_locators\"] == 1",
+            "assert receipt[\"rows_added\"][\"local_access_grants\"] == 0",
+            "assert store.history(S1).registrations == REGS[::-1]",
+            "assert store.history(S2).registrations == (fork_request().registration,)",
+            "assert not store.locator_enabled(fork_request().registration)",
+            "assert not store.scope_context(S2).enabled",
+            "assert not store.binding(S2, KEY.locator_text).enabled",
+            "assert store.binding(S2, KEY.locator_text).repository_uuidv4 == R1",
+            "assert store.configuration(S2, KEY.configuration_name).options_json == OPTIONS",
+            "assert not store.configuration(S2, KEY.configuration_name).enabled",
+            "assert not store.assignment(replace(KEY, scope_uuidv4=S2)).enabled",
+            "assert store.current_grant(R1, S1).approved_at_us == 40",
+            "assert set(before[table]) <= set(after[table])"
+          ],
+          "expected_raises": []
+        },
+        {
+          "reference": "tests/integration/access/test_stack_acceptance.py::test_fork_cannot_retarget_original_request_but_new_capture_can_acquire",
+          "path": "tests/integration/access/test_stack_acceptance.py",
+          "line": 86,
+          "assertions": [
+            "assert store.history(data[\"scope\"]).registrations == (data[\"route\"],)",
+            "assert registration.registered_at_us == 42",
+            "assert error.value.code == \"INCOMPATIBLE_REPLAY\"",
+            "assert core_facts(data) == original",
+            "assert report.repository_uuidv4 == data[\"target\"] != data[\"seed\"]",
+            "assert {row[0] for row in rows(data, \"repositories\")} == {\n            data[\"target\"],\n            data[\"seed\"],\n        }",
+            "assert not store.locator_enabled(data[\"route\"])",
+            "assert store.history(data[\"scope\"]).registrations == (data[\"route\"],)",
+            "assert store.history(target).registrations == (registration,)",
+            "assert not value.enabled"
+          ],
+          "expected_raises": [
+            "pytest.raises(CoreFailure)"
+          ]
+        }
+      ],
+      "product_test_execution_by_r4": false,
+      "corrected_ledger_status": "covered",
+      "corrected_verified_scope": "Continuity restore preserves all Scope facts; fork creates only new target registration.",
+      "corrected_gaps": [],
+      "execution_evidence": "Every linked function was present in the independently reconciled1877-node root execution; R4 reviewed actual receipts and did not run product pytest."
+    },
+    {
+      "id": 24,
+      "requirement": "Backup/restore round-trips every registration, not just MAX(time), with local reapproval; Core offline operations still work without Access.",
+      "baseline_ledger_status": "covered",
+      "independent_static_assessment": "R4-02 full-history reference advisory resolved",
+      "assertion_semantics": "Stack scenario compares restored Scope/history and actual Core facts, rejects before reapproval, and later increases original request work. Ties survive restore. Existing all-history backup/restore tests provide stronger explicit historical-prefix assertions. Corrected ledger now directly links both all-table backup equality excluding grants and all-original-registration continuation equality, rather than relying only on single-route/tied-MAX cases.",
+      "limits_and_gates": "Add full-history backup and continuation test links; the linked stack fixture alone has only one registration.",
+      "references": [
+        {
+          "reference": "tests/integration/access/test_stack_acceptance.py::test_restore_reapproval_resumes_same_request_without_rewriting_core",
+          "path": "tests/integration/access/test_stack_acceptance.py",
+          "line": 53,
+          "assertions": [
+            "assert store.scope(data[\"scope\"]) == data[\"store\"].scope(data[\"scope\"])",
+            "assert store.history(data[\"scope\"]) == data[\"store\"].history(data[\"scope\"])",
+            "assert core_facts(data) == original and usage(data) == spent",
+            "assert core_facts(data) == original and usage(data) == spent",
+            "assert replay.repository_uuidv4 == first.repository_uuidv4",
+            "assert core_facts(data) == original",
+            "assert usage(data) > spent",
+            "assert core.read_metadata(data[\"objects\"][\"commit2\"]).endswith(\n            b\"Second commit\\n\"\n        )"
+          ],
+          "expected_raises": [
+            "pytest.raises(AccessRegistryError, match=\"DISABLED\")",
+            "pytest.raises(AccessRegistryError, match=\"APPROVAL_REQUIRED\")"
+          ]
+        },
+        {
+          "reference": "tests/integration/access/test_backup.py::test_latest_ties_survive_restore",
+          "path": "tests/integration/access/test_backup.py",
+          "line": 175,
+          "assertions": [
+            "assert set(store.first_choices(S1)) == {REGS[-1], other}"
+          ],
+          "expected_raises": [
+            "pytest.raises(AccessRegistryError, match=\"AMBIGUOUS\")"
+          ]
+        },
+        {
+          "reference": "tests/integration/access/test_backup.py::test_restore_is_continuation_not_fresh_registrations",
+          "path": "tests/integration/access/test_backup.py",
+          "line": 144,
+          "assertions": [
+            "assert receipt[\"scope_uuids_preserved\"] and receipt[\"registration_times_preserved\"]",
+            "assert receipt[\"requires_local_reapproval\"]",
+            "assert set(p.name for p in destination.iterdir()) == {\n        \"access.sqlite3\",\n        \"restore.json\",\n    }",
+            "assert rows(source) == old",
+            "assert {p.name: p.read_bytes() for p in bundle.iterdir()} == original_bundle",
+            "assert not (tmp_path / \"core.sqlite3\").exists()",
+            "assert not (tmp_path / \"context.sqlite3\").exists()",
+            "assert store.first_choices(S1) == (REGS[-1],)",
+            "assert store.history(S1).registrations == REGS[::-1]",
+            "assert store.scope(S1).display_name == \"\u540c\u4e00Scope\"",
+            "assert store.scope(S3).scope_uuidv4 == S3",
+            "assert not any(store.locator_enabled(r) for r in REGS)",
+            "assert store.register_locator(REGS[-1]).status == \"duplicate\"",
+            "assert not store.locator_enabled(REGS[-1])"
+          ],
+          "expected_raises": [
+            "pytest.raises(AccessRegistryError, match=\"DISABLED\")",
+            "pytest.raises(AccessRegistryError, match=\"APPROVAL_REQUIRED\")"
+          ]
+        },
+        {
+          "reference": "tests/integration/access/test_backup.py::test_backup_retains_all_history_and_settings_but_not_consent",
+          "path": "tests/integration/access/test_backup.py",
+          "line": 123,
+          "assertions": [
+            "assert manifest[\"source_grants_omitted\"] == 1",
+            "assert manifest[\"row_counts\"][\"local_access_grants\"] == 0",
+            "assert rows(source) == before",
+            "assert set(p.name for p in bundle.iterdir()) == backup_module.FILES",
+            "assert bundle.stat().st_mode & 0o777 == 0o700",
+            "assert all(p.stat().st_mode & 0o777 == 0o600 for p in bundle.iterdir())",
+            "assert actual[table] == (\n            [] if table == \"local_access_grants\" else before[table]\n        )",
+            "assert db.execute(\"PRAGMA journal_mode\").fetchone() == (\"delete\",)"
+          ],
+          "expected_raises": [
+            "pytest.raises(AccessRegistryError, match=\"FORMAT\")"
+          ]
+        }
+      ],
+      "product_test_execution_by_r4": false,
+      "corrected_ledger_status": "covered",
+      "corrected_verified_scope": "Restore preserves complete history, requires reapproval, and does not rewrite existing Git facts.",
+      "corrected_gaps": [],
+      "execution_evidence": "Every linked function was present in the independently reconciled1877-node root execution; R4 reviewed actual receipts and did not run product pytest."
+    },
+    {
+      "id": 25,
+      "requirement": "Generic UPDATE/DELETE/REPLACE/mutating upserts and Scope-deletion cascades cannot erase or rewrite immutable registration coordinates on supported connections.",
+      "baseline_ledger_status": "covered",
+      "independent_static_assessment": "supported finite scope",
+      "assertion_semantics": "Direct UPDATE/DELETE/REPLACE and parent Scope mutation are rejected with registration rows exact afterward. REPLACE remains rejected with recursive triggers disabled. Full key shape and no surrogate are separately inspected.",
+      "limits_and_gates": "Supported connections deny generic mutation; privileged arbitrary DDL/file-owner tamper is outside this API capability contract.",
+      "references": [
+        {
+          "reference": "tests/integration/access/test_registry.py::test_raw_mutation_guards",
+          "path": "tests/integration/access/test_registry.py",
+          "line": 198,
+          "assertions": [
+            "assert db.execute(\"SELECT * FROM scope_locators\").fetchall() == [reg().key]"
+          ],
+          "expected_raises": [
+            "pytest.raises(sqlite3.IntegrityError)"
+          ]
+        },
+        {
+          "reference": "tests/integration/access/test_registry.py::test_replace_cannot_bypass_history_even_without_recursive_triggers",
+          "path": "tests/integration/access/test_registry.py",
+          "line": 210,
+          "assertions": [],
+          "expected_raises": [
+            "pytest.raises(sqlite3.IntegrityError)"
+          ]
+        }
+      ],
+      "product_test_execution_by_r4": false,
+      "corrected_ledger_status": "covered",
+      "corrected_verified_scope": "Immutable registration coordinates protected against direct DML and REPLACE.",
+      "corrected_gaps": [],
+      "execution_evidence": "Every linked function was present in the independently reconciled1877-node root execution; R4 reviewed actual receipts and did not run product pytest."
+    },
+    {
+      "id": 26,
+      "requirement": "Current request replay cannot silently switch routes after a newer registration; unchanged old intent and cumulative-work accounting remain intact.",
+      "baseline_ledger_status": "covered",
+      "independent_static_assessment": "corrected finite implementation covered; exact linked regressions actually executed",
+      "assertion_semantics": "Inactive restore plus reapproval resumes the same request without changing prior Core facts and with increased actual cost; a fork cannot retarget that request. Deleting/reinitializing Operational still yields CONTINUATION_UNAVAILABLE. The final live Notes explicit-progress source-switch regression now protects the source identity even when caller work/progress bypasses durable-ledger scope enforcement.",
+      "limits_and_gates": "New latest route retry refusal before Git is an additional existing link; no silent new Capture or zero-cost restart. The pending root-runtime status at the earlier source checkpoint is now resolved by actual536ad receipts; separate R2/R3 behavior reviews retain their own authorship.",
+      "references": [
+        {
+          "reference": "tests/integration/access/test_stack_acceptance.py::test_restore_reapproval_resumes_same_request_without_rewriting_core",
+          "path": "tests/integration/access/test_stack_acceptance.py",
+          "line": 53,
+          "assertions": [
+            "assert store.scope(data[\"scope\"]) == data[\"store\"].scope(data[\"scope\"])",
+            "assert store.history(data[\"scope\"]) == data[\"store\"].history(data[\"scope\"])",
+            "assert core_facts(data) == original and usage(data) == spent",
+            "assert core_facts(data) == original and usage(data) == spent",
+            "assert replay.repository_uuidv4 == first.repository_uuidv4",
+            "assert core_facts(data) == original",
+            "assert usage(data) > spent",
+            "assert core.read_metadata(data[\"objects\"][\"commit2\"]).endswith(\n            b\"Second commit\\n\"\n        )"
+          ],
+          "expected_raises": [
+            "pytest.raises(AccessRegistryError, match=\"DISABLED\")",
+            "pytest.raises(AccessRegistryError, match=\"APPROVAL_REQUIRED\")"
+          ]
+        },
+        {
+          "reference": "tests/integration/access/test_stack_acceptance.py::test_fork_cannot_retarget_original_request_but_new_capture_can_acquire",
+          "path": "tests/integration/access/test_stack_acceptance.py",
+          "line": 86,
+          "assertions": [
+            "assert store.history(data[\"scope\"]).registrations == (data[\"route\"],)",
+            "assert registration.registered_at_us == 42",
+            "assert error.value.code == \"INCOMPATIBLE_REPLAY\"",
+            "assert core_facts(data) == original",
+            "assert report.repository_uuidv4 == data[\"target\"] != data[\"seed\"]",
+            "assert {row[0] for row in rows(data, \"repositories\")} == {\n            data[\"target\"],\n            data[\"seed\"],\n        }",
+            "assert not store.locator_enabled(data[\"route\"])",
+            "assert store.history(data[\"scope\"]).registrations == (data[\"route\"],)",
+            "assert store.history(target).registrations == (registration,)",
+            "assert not value.enabled"
+          ],
+          "expected_raises": [
+            "pytest.raises(CoreFailure)"
+          ]
+        },
+        {
+          "reference": "tests/integration/access/test_git_acquisition.py::test_operational_loss_cannot_reset_request_budget",
+          "path": "tests/integration/access/test_git_acquisition.py",
+          "line": 387,
+          "assertions": [],
+          "expected_raises": [
+            "pytest.raises(CoordinationError, match=\"CONTINUATION_UNAVAILABLE\")"
+          ]
+        }
+      ],
+      "product_test_execution_by_r4": false,
+      "corrected_ledger_status": "covered",
+      "corrected_verified_scope": "Cross-stage restored retry preserves original plan and accumulates work; fork cannot retarget it.",
+      "corrected_gaps": [],
+      "execution_evidence": "Every linked function was present in the independently reconciled1877-node root execution; R4 reviewed actual receipts and did not run product pytest."
+    }
+  ],
+  "separate_gates": {
+    "independent_R4_review": "completed for recorded scope; R2/R3 results separate",
+    "whole_ADR_replacement": "human acceptance pending",
+    "merge": "not authorized",
+    "p8": "not authorized",
+    "release_qualification": "not requested/not performed",
+    "real_data_operation": "not authorized/not performed"
+  },
+  "limits": "Finite focused implementation verification; no full ordinary/release suite or full installed pytest; no real data, remote executors, deployment or hardware power-loss qualification."
+}

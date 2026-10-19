@@ -1,0 +1,12 @@
+{
+  "reviewed_at_jst": "2026-10-18T13:15:03.131270+09:00",
+  "original_snapshot_commit": "536ad33941283a439825ad606b8718c88c967ffa",
+  "all_original_files_checked": 2662,
+  "changed_original_paths": [
+    "docs/implementation/access-a6-independent-review.md"
+  ],
+  "new_staged_paths_count": 37,
+  "all_new_staged_paths_under_frozen_evidence_directory": true,
+  "source_worktree_dirty": "",
+  "scope": "Precommit evidence-only comparison; no claim that future commit or CI already ran."
+}

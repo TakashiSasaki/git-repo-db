@@ -1,0 +1,32 @@
+{
+  "access": {
+    "zip": "/workspace/access-review-evidence/start/pr-102-access-logs.zip",
+    "member": "0_registry-sqlite-3513.txt",
+    "matches": [
+      "2026-10-18T02:07:25.8200772Z ##[group]Installed versions",
+      "2026-10-18T02:07:29.2996295Z Installed 25 packages in 13ms",
+      "2026-10-18T02:07:56.2745531Z \u001b[36;1mprint(\"Python:\", platform.python_version(), \"SQLite:\", sqlite3.sqlite_version, \"source:\", source)\u001b[0m",
+      "2026-10-18T02:07:56.4068985Z Python: 3.12.15 SQLite: 3.51.3 source: 2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618",
+      "2026-10-18T02:11:55.5834855Z 1802 passed in 235.47s (0:03:55)",
+      "2026-10-18T02:11:59.6260460Z Installed 1 package in 2ms",
+      "2026-10-18T02:12:01.1711269Z Installed 1 package in 2ms",
+      "2026-10-18T02:12:02.6942873Z wheel {\"sqlite\": \"3.51.3\", \"ddl_sha256\": \"89bcafeda815150fa4770f5758edf7d2d36d505b76717aa19054f9ad689765da\", \"context_ddl_sha256\": \"75f142fa9127ff6790f9348433f79b2f84e8fa2b20ef32b668d8ff21d924cf3b\", \"exchange_format\": \"git-repo-db/p5-exchange-v3\", \"local_git_acquired\": true, \"access_backup_restored\": true, \"scope_forked\": true, \"installed_smoke\": \"passed\"}",
+      "2026-10-18T02:12:02.6945341Z sdist-wheel {\"sqlite\": \"3.51.3\", \"ddl_sha256\": \"89bcafeda815150fa4770f5758edf7d2d36d505b76717aa19054f9ad689765da\", \"context_ddl_sha256\": \"75f142fa9127ff6790f9348433f79b2f84e8fa2b20ef32b668d8ff21d924cf3b\", \"exchange_format\": \"git-repo-db/p5-exchange-v3\", \"local_git_acquired\": true, \"access_backup_restored\": true, \"scope_forked\": true, \"installed_smoke\": \"passed\"}",
+      "2026-10-18T02:12:06.0043000Z Installed 24 packages in 169ms",
+      "2026-10-18T02:12:08.0673498Z \u2713 Publication safety check passed (0 sensitive files, all allowlisted).",
+      "2026-10-18T02:12:08.0674918Z \u2713 Internal link validation passed (0 broken links).",
+      "2026-10-18T02:12:08.1608771Z All checks passed!"
+    ]
+  },
+  "offline": {
+    "zip": "/workspace/access-review-evidence/start/pr-102-offline-logs.zip",
+    "member": "0_offline.txt",
+    "matches": [
+      "2026-10-18T02:07:26.8249805Z ##[group]Installed versions",
+      "2026-10-18T02:07:33.7316080Z Installed 25 packages in 14ms",
+      "2026-10-18T02:07:33.9173924Z All checks passed!",
+      "2026-10-18T02:07:34.1173718Z ##[group]Run python scripts/ci_profile.py run --name fts -- uv run --no-sync python -c \"import sqlite3; print(sqlite3.sqlite_version); c=sqlite3.connect(':memory:'); c.execute(\\\"CREATE VIRTUAL TABLE f USING fts5(body,tokenize='trigram case_sensitive 1',content='',detail=full)\\\")\"",
+      "2026-10-18T02:07:34.1175714Z \u001b[36;1mpython scripts/ci_profile.py run --name fts -- uv run --no-sync python -c \"import sqlite3; print(sqlite3.sqlite_version); c=sqlite3.connect(':memory:'); c.execute(\\\"CREATE VIRTUAL TABLE f USING fts5(body,tokenize='trigram case_sensitive 1',content='',detail=full)\\\")\"\u001b[0m"
+    ]
+  }
+}

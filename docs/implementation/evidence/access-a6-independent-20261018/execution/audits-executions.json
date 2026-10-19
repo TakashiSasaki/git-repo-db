@@ -1,0 +1,108 @@
+[
+  {
+    "label": "audit_access_acceptance",
+    "argv": [
+      "/workspace/access-review-fix/.venv/bin/python",
+      "scripts/audit_access_acceptance.py",
+      "--junit",
+      "/workspace/access-review-evidence/verified/tests.xml",
+      "--collection",
+      "/workspace/access-review-evidence/verified/collected.stdout",
+      "--output",
+      "/workspace/access-review-evidence/verified/acceptance.json"
+    ],
+    "start": "2026-10-18T04:10:00.970332+00:00",
+    "end": "2026-10-18T04:10:01.219278+00:00",
+    "seconds": 0.2489540679998754,
+    "exit": 0,
+    "commit": "536ad33941283a439825ad606b8718c88c967ffa",
+    "tree": "169b5d7ad5dea4fa271f71bea96863bc318fb332",
+    "dirty": "",
+    "workflow_sha256": "8679801b74fe63cc15b4df13158cd28a908ea8f4b696d5a611e1e78282d603bd",
+    "cwd": "/workspace/access-review-fix"
+  },
+  {
+    "label": "audit_callsite_dependencies",
+    "argv": [
+      "/workspace/access-review-fix/.venv/bin/python",
+      "scripts/audit_callsite_dependencies.py",
+      "--check"
+    ],
+    "start": "2026-10-18T04:10:01.219573+00:00",
+    "end": "2026-10-18T04:10:01.803418+00:00",
+    "seconds": 0.5838636650000808,
+    "exit": 0,
+    "commit": "536ad33941283a439825ad606b8718c88c967ffa",
+    "tree": "169b5d7ad5dea4fa271f71bea96863bc318fb332",
+    "dirty": "",
+    "workflow_sha256": "8679801b74fe63cc15b4df13158cd28a908ea8f4b696d5a611e1e78282d603bd",
+    "cwd": "/workspace/access-review-fix"
+  },
+  {
+    "label": "build_p1_schema",
+    "argv": [
+      "/workspace/access-review-fix/.venv/bin/python",
+      "scripts/build_p1_schema.py",
+      "--check"
+    ],
+    "start": "2026-10-18T04:10:01.803807+00:00",
+    "end": "2026-10-18T04:10:01.894333+00:00",
+    "seconds": 0.09054284000012558,
+    "exit": 0,
+    "commit": "536ad33941283a439825ad606b8718c88c967ffa",
+    "tree": "169b5d7ad5dea4fa271f71bea96863bc318fb332",
+    "dirty": "",
+    "workflow_sha256": "8679801b74fe63cc15b4df13158cd28a908ea8f4b696d5a611e1e78282d603bd",
+    "cwd": "/workspace/access-review-fix"
+  },
+  {
+    "label": "audit_p1_schema",
+    "argv": [
+      "/workspace/access-review-fix/.venv/bin/python",
+      "scripts/audit_p1_schema.py",
+      "--check"
+    ],
+    "start": "2026-10-18T04:10:01.894663+00:00",
+    "end": "2026-10-18T04:10:02.005923+00:00",
+    "seconds": 0.11127479800006768,
+    "exit": 0,
+    "commit": "536ad33941283a439825ad606b8718c88c967ffa",
+    "tree": "169b5d7ad5dea4fa271f71bea96863bc318fb332",
+    "dirty": "",
+    "workflow_sha256": "8679801b74fe63cc15b4df13158cd28a908ea8f4b696d5a611e1e78282d603bd",
+    "cwd": "/workspace/access-review-fix"
+  },
+  {
+    "label": "audit_implementation_boundary",
+    "argv": [
+      "/workspace/access-review-fix/.venv/bin/python",
+      "scripts/audit_implementation_boundary.py",
+      "--check"
+    ],
+    "start": "2026-10-18T04:10:02.006280+00:00",
+    "end": "2026-10-18T04:10:02.629825+00:00",
+    "seconds": 0.6235601989997122,
+    "exit": 0,
+    "commit": "536ad33941283a439825ad606b8718c88c967ffa",
+    "tree": "169b5d7ad5dea4fa271f71bea96863bc318fb332",
+    "dirty": "",
+    "workflow_sha256": "8679801b74fe63cc15b4df13158cd28a908ea8f4b696d5a611e1e78282d603bd",
+    "cwd": "/workspace/access-review-fix"
+  },
+  {
+    "label": "audit_context_registration",
+    "argv": [
+      "/workspace/access-review-fix/.venv/bin/python",
+      "scripts/audit_context_registration.py"
+    ],
+    "start": "2026-10-18T04:10:02.630336+00:00",
+    "end": "2026-10-18T04:10:02.685040+00:00",
+    "seconds": 0.05471511099995041,
+    "exit": 0,
+    "commit": "536ad33941283a439825ad606b8718c88c967ffa",
+    "tree": "169b5d7ad5dea4fa271f71bea96863bc318fb332",
+    "dirty": "",
+    "workflow_sha256": "8679801b74fe63cc15b4df13158cd28a908ea8f4b696d5a611e1e78282d603bd",
+    "cwd": "/workspace/access-review-fix"
+  }
+]

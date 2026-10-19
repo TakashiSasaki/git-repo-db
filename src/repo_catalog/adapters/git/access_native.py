@@ -171,6 +171,10 @@ class AccessGitSource(GitNativeSource):
                     self._fail("EXECUTOR_UNSUPPORTED")
         finally:
             os.close(info_fd)
+        # Filesystem validation can block after the preceding guard. Refuse a
+        # cancellation/revocation/stop observed during that final preparation
+        # before handing these options to the next Git subprocess.
+        self._guard()
 
     def _config_token(self):
         info = os.stat("config", dir_fd=self._gitdir, follow_symlinks=False)
@@ -206,9 +210,12 @@ class AccessGitSource(GitNativeSource):
             os.close(fd)
         if len(data) != token[2] or self._config_token() != token:
             self._fail()
-        if re.search(rb"(?im)^\s*\[\s*include(?:if)?(?:\s|[.\]])", data) or re.search(
-            rb"(?im)^\s*(?:worktree|worktreeconfig)\s*=", data
-        ):
+        # Git recognizes one UTF-8 BOM at byte zero. Match its lexical view for
+        # indirect-config rejection while retaining the exact file token/bytes.
+        inspected = data.removeprefix(b"\xef\xbb\xbf")
+        if re.search(
+            rb"(?im)^\s*\[\s*include(?:if)?(?:\s|[.\]])", inspected
+        ) or re.search(rb"(?im)^\s*(?:worktree|worktreeconfig)\s*=", inspected):
             self._fail("EXECUTOR_UNSUPPORTED")
         return token
 

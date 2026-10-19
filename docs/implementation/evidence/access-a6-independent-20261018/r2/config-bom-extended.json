@@ -1,0 +1,89 @@
+{
+  "sqlite": "3.51.3",
+  "results": [
+    {
+      "bom": false,
+      "kind": "include",
+      "outside_valid": false,
+      "accepted": false,
+      "error_code": "EXECUTOR_UNSUPPORTED",
+      "git_commands_started": 0,
+      "direct_git_read_external_file": true,
+      "source_identity_recorded_before_git": false
+    },
+    {
+      "bom": false,
+      "kind": "include",
+      "outside_valid": true,
+      "accepted": false,
+      "error_code": "EXECUTOR_UNSUPPORTED",
+      "git_commands_started": 0,
+      "direct_git_read_external_file": false,
+      "source_identity_recorded_before_git": false
+    },
+    {
+      "bom": false,
+      "kind": "includeIf",
+      "outside_valid": false,
+      "accepted": false,
+      "error_code": "EXECUTOR_UNSUPPORTED",
+      "git_commands_started": 0,
+      "direct_git_read_external_file": true,
+      "source_identity_recorded_before_git": false
+    },
+    {
+      "bom": false,
+      "kind": "includeIf",
+      "outside_valid": true,
+      "accepted": false,
+      "error_code": "EXECUTOR_UNSUPPORTED",
+      "git_commands_started": 0,
+      "direct_git_read_external_file": false,
+      "source_identity_recorded_before_git": false
+    },
+    {
+      "bom": true,
+      "kind": "include",
+      "outside_valid": false,
+      "accepted": false,
+      "error_code": "GIT_INPUT",
+      "git_commands_started": 1,
+      "direct_git_read_external_file": true,
+      "source_identity_recorded_before_git": true
+    },
+    {
+      "bom": true,
+      "kind": "include",
+      "outside_valid": true,
+      "accepted": true,
+      "error_code": null,
+      "external_change_error": "GIT_INPUT",
+      "bound_config_token_unchanged": true,
+      "git_commands_started": 2,
+      "direct_git_read_external_file": true,
+      "source_identity_recorded_before_git": true
+    },
+    {
+      "bom": true,
+      "kind": "includeIf",
+      "outside_valid": false,
+      "accepted": false,
+      "error_code": "GIT_INPUT",
+      "git_commands_started": 1,
+      "direct_git_read_external_file": true,
+      "source_identity_recorded_before_git": true
+    },
+    {
+      "bom": true,
+      "kind": "includeIf",
+      "outside_valid": true,
+      "accepted": true,
+      "error_code": null,
+      "external_change_error": "GIT_INPUT",
+      "bound_config_token_unchanged": true,
+      "git_commands_started": 2,
+      "direct_git_read_external_file": true,
+      "source_identity_recorded_before_git": true
+    }
+  ]
+}

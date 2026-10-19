@@ -1,0 +1,71 @@
+{
+  "ended_at_jst": "2026-10-18T13:15:03.131270+09:00",
+  "tested_commit": "536ad33941283a439825ad606b8718c88c967ffa",
+  "tested_tree": "169b5d7ad5dea4fa271f71bea96863bc318fb332",
+  "files": {
+    "adr0003-final-source-inbound-classified.json": {
+      "bytes": 36953,
+      "sha256": "9c51540481059fed7a5b3e0233dcc7f69f8cb9e319c27d690756cc13bfcede84"
+    },
+    "evidence-only-precommit-proof.json": {
+      "bytes": 489,
+      "sha256": "68e623aee014ed0ba3ec3ec352cef65d7a1aef43e24b06591e98a6b13ee6de94"
+    },
+    "review-source.md": {
+      "bytes": 5183,
+      "sha256": "83df800d2286df72aa3a55ee1bdaf69fcd5f1bd7302b285cda4f6b32353b6898"
+    },
+    "review.md": {
+      "bytes": 8684,
+      "sha256": "d1e65d24039cd251748082dcf1a0c5443e353f9070c4d7204c9c190f0bf6c73c"
+    },
+    "semantic-acceptance-final.json": {
+      "bytes": 75216,
+      "sha256": "6393374166662ee4e4fd3ae930a85db7341494bb9fa123d05df1222b55bcb750"
+    },
+    "semantic-acceptance-final.md": {
+      "bytes": 12879,
+      "sha256": "a71130077b96ae3870aacbdd038c82025bd74001b382353cabf05eead903839a"
+    },
+    "static-checks.json": {
+      "bytes": 6052,
+      "sha256": "0151559d3fa71b4d7e1ef58b63b04189f704b2cfc84ffd4991651e368aae4b61"
+    },
+    "typed-source/actual-execution-review.json": {
+      "bytes": 18064,
+      "sha256": "80804e67d1b57409106a510bbebbc0b0474e552f8e497a31b4e32b16e41f7906"
+    },
+    "typed-source/adr0003-inbound-classified.json": {
+      "bytes": 36953,
+      "sha256": "a514a18509335a4b92bbf3be18e9a18955bb6b1c99630e50aede76155aa82d34"
+    },
+    "typed-source/review-source.md": {
+      "bytes": 4100,
+      "sha256": "901b9acff0d468585580700bb41db75c2f4beac012c9331a72782f9066841368"
+    },
+    "typed-source/root-raw-receipt-hashes.json": {
+      "bytes": 3528,
+      "sha256": "5e9c0d15adb867a0a8c340ef849fc44c42d576114ccfa51bc7324733933fd6c4"
+    },
+    "typed-source/semantic-acceptance-verified.json": {
+      "bytes": 82246,
+      "sha256": "c780bd6026fc417eabfdd719e9b88fd91b1ec632fe2ae6d8f3fb4d8289009eb7"
+    },
+    "typed-source/semantic-acceptance-verified.md": {
+      "bytes": 6171,
+      "sha256": "420400011dafb36df84d33013bf6e61fcfce6f900596c8cb48f7e3fb6ec07bf6"
+    },
+    "typed-source/semantic-acceptance.json": {
+      "bytes": 76459,
+      "sha256": "dcefc4b71af1807f71e4e8d87078ecd45b096ebf24773767777401ef58813836"
+    },
+    "typed-source/semantic-acceptance.md": {
+      "bytes": 13497,
+      "sha256": "6fb5efab1f5523b9a8e75877d6b536c752306ffca9ea1d2a155b22c80cff350e"
+    },
+    "typed-source/static-checks.json": {
+      "bytes": 6830,
+      "sha256": "f1fc6549c9fdd2726c87c33b04705724dee2327e723bb24038ffd963b50c85d8"
+    }
+  }
+}

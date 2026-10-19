@@ -1,0 +1,66 @@
+{
+  "source_commit": "536ad33941283a439825ad606b8718c88c967ffa",
+  "source_tree": "169b5d7ad5dea4fa271f71bea96863bc318fb332",
+  "recorded_at": "2026-10-18T04:14:40.412813+00:00",
+  "local_focused": {
+    "passed": 1877,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "added_nodes": 75,
+    "removed_nodes": 0,
+    "exact_node_and_phase_match": true
+  },
+  "compatibility": {
+    "passed": 49,
+    "failed": 0,
+    "skipped": 0,
+    "exact_node_and_phase_match": true
+  },
+  "audits": {
+    "audit_access_acceptance": 0,
+    "audit_callsite_dependencies": 0,
+    "build_p1_schema": 0,
+    "audit_p1_schema": 0,
+    "audit_implementation_boundary": 0,
+    "audit_context_registration": 0
+  },
+  "distribution": {
+    "direct_wheel": "installed_smoke_passed",
+    "sdist_wheel": "installed_smoke_passed",
+    "outside_checkout": true,
+    "source_overlay": false
+  },
+  "documentation": {
+    "allowlist_changed": false,
+    "broken_links": 0,
+    "sensitive_files": 0,
+    "placeholder_diagrams": 10,
+    "fresh_mermaid_rendering": false,
+    "legacy_rendered_summary_label_is_not_a_render_claim": true,
+    "deployed": false
+  },
+  "independent_review": {
+    "r1": "baseline9groups passed; unchanged Access registry/DDL scope",
+    "r2": "23 corrected-source scenarios+8 A5 controls; final unchanged execution scope bound at8dcb",
+    "r3": "91 final-source groups passed; implementation findings closed; Exchange contract remains partial",
+    "r4": "completed independent 26-item assertion, full tracked source, raw execution, distribution and ADR review at536ad; no product tests or changes by R4"
+  },
+  "implementation_coverage": {
+    "covered": 24,
+    "partial": [
+      11
+    ],
+    "deferred": [
+      15
+    ]
+  },
+  "separate_gates": {
+    "whole_adr_replacement": "pending_explicit_human_acceptance_and_actual_date",
+    "merge": "not_authorized",
+    "p8": "not_authorized",
+    "release_qualification": "not_requested",
+    "real_user_data": "not_accessed"
+  },
+  "incomplete_exchange_contract": "No Repository-set selection/receiver-target semantics; cross-seed import remains guarded and nonmutating."
+}

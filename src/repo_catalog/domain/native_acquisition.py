@@ -7,13 +7,17 @@ No remote endpoint lookup, credential resolution or arbitrary dataclass codec.
 from __future__ import annotations
 
 from repo_catalog.domain.acquisition import (
+    GitMetadataInput,
     GitNativeAcquisitionRequest,
     NotesAcquisitionSpec,
 )
 from repo_catalog.domain.p1_core import (
     OID,
     Capture,
+    CoreCoverageScope,
     CoreFailure,
+    GitObservation,
+    NativeObject,
     NotesClaim,
     NotesGroup,
     Provenance,
@@ -23,6 +27,7 @@ from repo_catalog.domain.p1_core import (
     encode,
     uuid4_value,
 )
+from repo_catalog.domain.p1_coverage import CoverageClaim
 
 
 def _typed(value, expected):
@@ -208,5 +213,109 @@ def native_request_intent(request: GitNativeAcquisitionRequest) -> dict:
     if len(encode(result)) > 1_000_000:
         raise CoreFailure(
             "BUDGET", "request-intent", "finite request metadata required"
+        )
+    return result
+
+
+def metadata_input_intent(unit: GitMetadataInput) -> dict:
+    """Validate one selected repository and freeze external input without bodies.
+
+    Reuse the native request's shared claims/Notes validation as a value-only
+    projection, preserving every actual UUID/provenance coordinate. This does not
+    execute a native request or infer repository membership for global OIDs.
+    """
+    _typed(unit, GitMetadataInput)
+    common = native_request_intent(
+        GitNativeAcquisitionRequest(
+            unit.repository_uuidv4,
+            unit.capture_origin_uuidv4,
+            unit.capture_uuidv4,
+            unit.source_attribution,
+            unit.observed_at_us,
+            select_oids=unit.nominal_objects,
+            repository_claims=unit.repository_claims,
+            extra_scalar_claims=unit.scalar_claims,
+            extra_relation_groups=unit.relation_groups,
+            physical_copy_uuidv4s=unit.physical_copy_uuidv4s,
+            notes=unit.notes,
+        )
+    )
+    for values in (
+        unit.observations,
+        unit.native_objects,
+        unit.coverage_scopes,
+        unit.coverage_claims,
+        unit.coverage_proofs,
+    ):
+        if type(values) is not tuple or len(values) > 100_000:
+            raise CoreFailure("REQUEST", "metadata", "bounded tuple input required")
+    for observation in unit.observations:
+        _typed(observation, GitObservation)
+        _typed(observation.provenance, Provenance)
+        if observation.repository_uuidv4 != unit.repository_uuidv4:
+            raise CoreFailure("REPOSITORY_SCOPE", "metadata", "foreign observation")
+
+    def scope_value(scope):
+        _typed(scope, CoreCoverageScope)
+        if (
+            scope.owner_kind == "repository"
+            and scope.coordinates[0] != unit.repository_uuidv4
+        ):
+            raise CoreFailure("REPOSITORY_SCOPE", "metadata", "foreign Coverage owner")
+        return [scope.owner_kind, list(scope.coordinates)]
+
+    def coverage_value(claim):
+        _typed(claim, CoverageClaim)
+        return [
+            scope_value(claim.scope),
+            claim.observed_at_us,
+            claim.state,
+            claim.details_json,
+        ]
+
+    native_values = []
+    for native in unit.native_objects:
+        if type(native) is not NativeObject or type(native.body) is not bytes:
+            raise CoreFailure("REQUEST", "metadata", "typed native value required")
+        _oid(native.oid)
+        # Exact bytes are verified and charged by Core after request reservation;
+        # Operational stores only their declared immutable coordinates.
+        native_values.append(
+            [
+                list(native.oid.key),
+                native.native_type,
+                native.declared_size,
+                native.digest_sha256,
+            ]
+        )
+    proofs = []
+    for proof in unit.coverage_proofs:
+        if type(proof) is not tuple or len(proof) != 3:
+            raise CoreFailure("REQUEST", "metadata", "typed Coverage proof required")
+        claim, members, provenance = proof
+        if type(members) is not tuple or len(members) > 100_000:
+            raise CoreFailure("REQUEST", "metadata", "bounded proof members required")
+        for oid in members:
+            _oid(oid)
+        _typed(provenance, Provenance)
+        proofs.append(
+            [
+                coverage_value(claim),
+                [list(oid.key) for oid in members],
+                list(provenance.key),
+            ]
+        )
+    result = {
+        "common": common,
+        "object_format": unit.object_format,
+        "observations": [list(item.key) for item in unit.observations],
+        "native_objects": native_values,
+        "coverage_scopes": [scope_value(item) for item in unit.coverage_scopes],
+        "coverage_claims": [coverage_value(item) for item in unit.coverage_claims],
+        "coverage_proofs": proofs,
+    }
+    if len(encode(result)) > 1_000_000:
+        raise CoreFailure(
+            "BUDGET", "metadata-intent", "finite request metadata required"
         )
     return result

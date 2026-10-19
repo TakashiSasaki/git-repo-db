@@ -53,7 +53,10 @@ from repo_catalog.domain.acquisition import (
     ProviderIntakeBatch,
 )
 from repo_catalog.domain.git_native import DECODER, DECODER_VERSION, parse_metadata
-from repo_catalog.domain.native_acquisition import native_request_intent
+from repo_catalog.domain.native_acquisition import (
+    metadata_input_intent,
+    native_request_intent,
+)
 from repo_catalog.domain.notes import NotesInventory
 from repo_catalog.domain.p1_context import FieldClock, ResourceKey
 from repo_catalog.domain.p1_coordination import CoordinationError, RequestIdentity
@@ -116,6 +119,9 @@ class _PreparedCore:
     def catalog_identity(self):
         return self.core.catalog_identity()
 
+    def metadata_capture_binding(self, pair):
+        return _capture_binding(self.core, pair)
+
     def __getattr__(self, name):
         if name not in self._methods:
             raise AttributeError(name)
@@ -145,6 +151,70 @@ def _open_core(target: GitCore | Path | str) -> Iterator[GitCore]:
         yield core
     finally:
         core.close()
+
+
+def _capture_binding(core, pair):
+    """Read the original Capture binding, including prepared paired input."""
+    if isinstance(core, _PreparedCore):
+        return core.metadata_capture_binding(pair)
+    value = core.capture_binding(tuple(pair))
+    return value.key if value is not None else None
+
+
+def _validate_metadata_capture_coverage(core, unit, work):
+    scopes = (
+        *unit.coverage_scopes,
+        *(claim.scope for claim in unit.coverage_claims),
+        *(proof[0].scope for proof in unit.coverage_proofs),
+    )
+    incoming = {}
+    if unit.notes is not None:
+        for capture in (
+            *unit.notes.explicit_captures,
+            *(claim.capture for claim in unit.notes.external_claims),
+            *(group.capture for group in unit.notes.external_groups),
+        ):
+            prior = incoming.get(capture.pair)
+            if prior is not None and prior != capture.key:
+                raise CoreFailure(
+                    "INCOMPATIBLE_REPLAY",
+                    "metadata",
+                    "conflicting incoming Capture binding",
+                )
+            incoming[capture.pair] = capture.key
+
+    checked = {}
+
+    def existing_binding(pair):
+        if pair not in checked:
+            _charge(work, "metadata_units", 1)
+            checked[pair] = _capture_binding(core, pair)
+        return checked[pair]
+
+    for pair, binding in incoming.items():
+        existing = existing_binding(pair)
+        if existing is not None:
+            if existing[2] != unit.repository_uuidv4:
+                raise CoreFailure(
+                    "REPOSITORY_SCOPE", "metadata", "foreign stored Capture owner"
+                )
+            if existing != binding:
+                raise CoreFailure(
+                    "INCOMPATIBLE_REPLAY", "metadata", "stored Capture binding changed"
+                )
+    for scope in scopes:
+        if scope.owner_kind == "capture":
+            pair = tuple(scope.coordinates[:2])
+            existing = existing_binding(pair)
+            owners = [
+                binding[2]
+                for binding in (existing, incoming.get(pair))
+                if binding is not None
+            ]
+            if not owners or any(owner != unit.repository_uuidv4 for owner in owners):
+                raise CoreFailure(
+                    "REPOSITORY_SCOPE", "metadata", "foreign or absent Capture owner"
+                )
 
 
 @contextmanager
@@ -812,15 +882,22 @@ class GitAcquisition:
         request_identity: RequestIdentity | None = None,
     ) -> GitAcquisitionReport:
         """Admit a GitMetadataInput unit (with optional retained NativeObjects and Notes)."""
+        semantic_intent = metadata_input_intent(unit)
+        semantic_intent["notes_source"] = (
+            None
+            if notes_source is None
+            else [notes_source.scope, notes_source.object_format]
+        )
         with ExitStack() as stack:
             core_cap = stack.enter_context(_open_core(self.core))
             core_cap.ensure_available()
-            actual_repo, _ = core_cap.catalog_identity()
-            if unit.repository_uuidv4 != actual_repo:
-                raise CoreFailure(
-                    "REPOSITORY_SCOPE",
+            notes_scope = None
+            if unit.notes is not None and notes_source is not None:
+                notes_scope = request_scope(
                     unit.repository_uuidv4,
-                    "unit repository_uuidv4 does not match Core store_identity",
+                    core_cap.catalog_identity()[1],
+                    unit.source_attribution,
+                    notes_source.scope,
                 )
             active_work, active_progress = stack.enter_context(
                 self._resolve_budget_and_progress(
@@ -830,12 +907,25 @@ class GitAcquisition:
                     unit.capture_uuidv4,
                     work,
                     progress,
+                    custom_scope=notes_scope,
+                    repository_uuidv4=unit.repository_uuidv4,
                     new_request=new_request,
                     request_identity=request_identity,
                 )
             )
 
             _charge(active_work, "metadata_units", 1)
+            _validate_metadata_capture_coverage(core_cap, unit, active_work)
+            intent_scope = encode(
+                ["p5-metadata-intent", unit.capture_origin_uuidv4, unit.capture_uuidv4]
+            )
+            if (
+                active_progress.save_once(intent_scope, semantic_intent)
+                != semantic_intent
+            ):
+                raise CoreFailure(
+                    "INCOMPATIBLE_REPLAY", "metadata", "request intent changed"
+                )
             core_cap.admit_repository(unit.repository_uuidv4)
 
             admitted_order: list[OID] = []
@@ -1714,6 +1804,17 @@ class PairedAcquisitionCoordinator:
                         actual.catalog_identity()[1],
                         unit.source_attribution,
                         GitNotesSource(git_source).scope,
+                    )
+                elif (
+                    git_input is not None
+                    and unit.notes is not None
+                    and notes_source is not None
+                ):
+                    custom_scope = request_scope(
+                        unit.repository_uuidv4,
+                        actual.catalog_identity()[1],
+                        unit.source_attribution,
+                        notes_source.scope,
                     )
                 budget, progress = preparation.enter_context(
                     acq._resolve_budget_and_progress(

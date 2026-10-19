@@ -1,0 +1,7 @@
+{
+  "outcome": "PASS",
+  "scenario_count": 31,
+  "current_tree_scenarios": 23,
+  "unchanged_a5_control_scenarios": 8,
+  "limitations": "Independent probes only; these are not pytest, hosted-CI or installed-distribution test counts."
+}

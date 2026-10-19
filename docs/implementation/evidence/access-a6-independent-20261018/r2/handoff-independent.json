@@ -1,0 +1,214 @@
+{
+  "sqlite": "3.51.3",
+  "source_id": "2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618",
+  "cases": [
+    {
+      "source": "reviewed_head",
+      "api": "descriptor",
+      "change": "expiry",
+      "rejection": "EXPIRED",
+      "callback_started": false,
+      "token_replay": "TOKEN",
+      "bound_closed": true,
+      "descriptors_closed": [
+        true,
+        true
+      ]
+    },
+    {
+      "source": "reviewed_head",
+      "api": "descriptor",
+      "change": "revoke",
+      "rejection": "APPROVAL_REQUIRED",
+      "callback_started": false,
+      "token_replay": "TOKEN",
+      "bound_closed": true,
+      "descriptors_closed": [
+        true,
+        true
+      ]
+    },
+    {
+      "source": "reviewed_head",
+      "api": "descriptor",
+      "change": "newest",
+      "rejection": "DISABLED",
+      "callback_started": false,
+      "token_replay": "TOKEN",
+      "bound_closed": true,
+      "descriptors_closed": [
+        true,
+        true
+      ]
+    },
+    {
+      "source": "reviewed_head",
+      "api": "descriptor",
+      "change": "cancel",
+      "rejection": "CANCELLED",
+      "callback_started": false,
+      "token_replay": "TOKEN",
+      "bound_closed": true,
+      "descriptors_closed": [
+        true,
+        true
+      ]
+    },
+    {
+      "source": "reviewed_head",
+      "api": "reviewed",
+      "change": "expiry",
+      "rejection": "EXPIRED",
+      "callback_started": false,
+      "token_replay": "TOKEN",
+      "bound_closed": true,
+      "descriptors_closed": [
+        true,
+        true
+      ]
+    },
+    {
+      "source": "reviewed_head",
+      "api": "reviewed",
+      "change": "revoke",
+      "rejection": "APPROVAL_REQUIRED",
+      "callback_started": false,
+      "token_replay": "TOKEN",
+      "bound_closed": true,
+      "descriptors_closed": [
+        true,
+        true
+      ]
+    },
+    {
+      "source": "reviewed_head",
+      "api": "reviewed",
+      "change": "newest",
+      "rejection": "DISABLED",
+      "callback_started": false,
+      "token_replay": "TOKEN",
+      "bound_closed": true,
+      "descriptors_closed": [
+        true,
+        true
+      ]
+    },
+    {
+      "source": "reviewed_head",
+      "api": "reviewed",
+      "change": "cancel",
+      "rejection": "CANCELLED",
+      "callback_started": false,
+      "token_replay": "TOKEN",
+      "bound_closed": true,
+      "descriptors_closed": [
+        true,
+        true
+      ]
+    },
+    {
+      "source": "a5_parent",
+      "api": "descriptor",
+      "change": "expiry",
+      "rejection": null,
+      "callback_started": true,
+      "token_replay": "TOKEN",
+      "bound_closed": true,
+      "descriptors_closed": [
+        true,
+        true
+      ]
+    },
+    {
+      "source": "a5_parent",
+      "api": "descriptor",
+      "change": "revoke",
+      "rejection": null,
+      "callback_started": true,
+      "token_replay": "TOKEN",
+      "bound_closed": true,
+      "descriptors_closed": [
+        true,
+        true
+      ]
+    },
+    {
+      "source": "a5_parent",
+      "api": "descriptor",
+      "change": "newest",
+      "rejection": null,
+      "callback_started": true,
+      "token_replay": "TOKEN",
+      "bound_closed": true,
+      "descriptors_closed": [
+        true,
+        true
+      ]
+    },
+    {
+      "source": "a5_parent",
+      "api": "descriptor",
+      "change": "cancel",
+      "rejection": null,
+      "callback_started": true,
+      "token_replay": "TOKEN",
+      "bound_closed": true,
+      "descriptors_closed": [
+        true,
+        true
+      ]
+    },
+    {
+      "source": "a5_parent",
+      "api": "reviewed",
+      "change": "expiry",
+      "rejection": null,
+      "callback_started": true,
+      "token_replay": "TOKEN",
+      "bound_closed": true,
+      "descriptors_closed": [
+        true,
+        true
+      ]
+    },
+    {
+      "source": "a5_parent",
+      "api": "reviewed",
+      "change": "revoke",
+      "rejection": null,
+      "callback_started": true,
+      "token_replay": "TOKEN",
+      "bound_closed": true,
+      "descriptors_closed": [
+        true,
+        true
+      ]
+    },
+    {
+      "source": "a5_parent",
+      "api": "reviewed",
+      "change": "newest",
+      "rejection": null,
+      "callback_started": true,
+      "token_replay": "TOKEN",
+      "bound_closed": true,
+      "descriptors_closed": [
+        true,
+        true
+      ]
+    },
+    {
+      "source": "a5_parent",
+      "api": "reviewed",
+      "change": "cancel",
+      "rejection": null,
+      "callback_started": true,
+      "token_replay": "TOKEN",
+      "bound_closed": true,
+      "descriptors_closed": [
+        true,
+        true
+      ]
+    }
+  ]
+}

@@ -1,0 +1,111 @@
+{
+  "finish_jst": "2026-10-18 12:58:38.732468+09:00",
+  "previous_head": "f81a3992ac85542e015cb8f37a5ae9fc31f265b5",
+  "previous_tree": "666dfaaa38dbe1f8163d5d196253b0715d98a78e",
+  "final_head": "8dcb5150ac6c987a93b96e56a9f935184affab94",
+  "final_tree": "9e4886fcecab35e30ac92125d75d552c869d0004",
+  "dirty": "",
+  "unchanged_inputs": [
+    {
+      "path": "src/repo_catalog/adapters/git/access_native.py",
+      "git_blob": "dfe5900ea727d96450abafa3405bdcdcc0cac74a",
+      "sha256": "fc38b78a5113b4ede7321995932c8397b4ffa30e589d50892673c0322f106d5f",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/application/access_workflow.py",
+      "git_blob": "4df3c564d65347eb8c77eb0adba49a6f3da40854",
+      "sha256": "902ba4575f2db56fcd430bb0fed81733fd0534f2245bd9d8999abc35a7e4fe95",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/filesystem/access_executor.py",
+      "git_blob": "165665d521c406b027b13170d5b20aff0cb9b16c",
+      "sha256": "ee8bc62d087fad23a1a3539263651102f1edac6dc9434c24e0f4f63b27eabf6a",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/git/native.py",
+      "git_blob": "af5c2eca5264b6a5bc9caf6b6ef276cca570d9d4",
+      "sha256": "d1939fee65cc18565f0afa1424aa8dda27a04f0430da7606eacd5bd8a73f35be",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/git/notes.py",
+      "git_blob": "39f15614868b9d8f7513f24440a55fd4710292cd",
+      "sha256": "8497bfa9ab1e99dc64ed8877e0ee49702f4375b70f388b9724d4705c1ee58bf4",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/acquisition.py",
+      "git_blob": "e141715672a167257b79ff9b32a25fc95ac5d005",
+      "sha256": "df989af7cb18f490b625a385b883a01ca5e3baf8625775d5339740b17b95badd",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/access_connections.py",
+      "git_blob": "e88ad11f804b9de3e486669f6cdb803aaf8cbb2a",
+      "sha256": "9472274b9a5baff8894ef182fc6aaad4a81aecd433026cfb30b3441f3a1f861c",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/access_registry.py",
+      "git_blob": "b56e50b50057b010e57a08a4246fc2abb2b8d3af",
+      "sha256": "d5dc914d1d402e6d07efd128ae489ba86aeb3a365356a44cfab4ce80950f9820",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/access_schema.py",
+      "git_blob": "324bd95d83918d1e159f3c5142bd4df4483551ea",
+      "sha256": "4991ddc288f4823e27fdc101e70a22093f3fb3d0e0d31298810ff11cf176e61a",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/domain/native_acquisition.py",
+      "git_blob": "aff32c0315a412c4998d3b24c086a0cd7fc21f30",
+      "sha256": "e0d658c2e36b7590f36f0260a43c5cf2bf02a46c4b0dcac22885f1ec850e3d3b",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/domain/access_workflow.py",
+      "git_blob": "24dad7b25909819a7c741f81099320b36cf8d905",
+      "sha256": "5cdf947c7c01008736e8de86d33edbd85d8b711c8348ce0cc16bbee9f8c2a317",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/domain/access_connections.py",
+      "git_blob": "d28820f888d287c7ddcfa64a4e5c3c9af27ac635",
+      "sha256": "3ccb3e5351fd21f72ab26475132a6b1ce1643415366ee11ffa9f9e2af3476718",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/domain/access_registry.py",
+      "git_blob": "797b9c260d986159596195d0c09512378190416a",
+      "sha256": "cce3062c59ba80c428afcbbb0d96508768fc97eda5f8ae46b7d5d5aab3288e49",
+      "unchanged": true
+    },
+    {
+      "path": "tests/integration/access/test_handoff_boundary.py",
+      "git_blob": "612f4b63e0812fb88af2de9530441f4284c3fd64",
+      "sha256": "3bf76053854ead03284ddc37aeda0ba68258453a4148f9af31e1968e58900807",
+      "unchanged": true
+    },
+    {
+      "path": "scripts/verify_access_distribution.py",
+      "git_blob": "8fd8aaf312ff6cb25d5f49e03ca497fdf70a358b",
+      "sha256": "700cc919f9ae07cb7c93068ca05b08323a41ec523fb675bb2a402a1b38bd1438",
+      "unchanged": true
+    },
+    {
+      "path": ".agents/skills/three-store-invariants/references/final-executor-handoff.md",
+      "git_blob": "918a0f6d43376ed2edfb39d24a4a8f332b45f014",
+      "sha256": "1e6ddab3490abf3ea6012b4b57be2c7ace7f37e22b5db6ac9bf01a148d4e48f5",
+      "unchanged": true
+    }
+  ],
+  "source_changes": [
+    "src/repo_catalog/application/acquisition.py"
+  ],
+  "prior_review_regression_functions_unchanged_ast": 13,
+  "conclusion": "R2 defect closures retain unchanged executable inputs; no runtime rerun claimed."
+}

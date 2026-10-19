@@ -1,0 +1,87 @@
+{
+  "binding.json": {
+    "path": "/workspace/access-review-evidence/verified/binding.json",
+    "bytes": 258,
+    "sha256": "2e1cac0e4235e0151e680af5d16694b56c13271b8232f5a14bd2670492776728"
+  },
+  "runtime.json": {
+    "path": "/workspace/access-review-evidence/verified/runtime.json",
+    "bytes": 503,
+    "sha256": "44022eb6bd5b1335eda7a33ca816b6a53f50b371bbc070d11e4487249b8a4611"
+  },
+  "suite-executions.json": {
+    "path": "/workspace/access-review-evidence/verified/suite-executions.json",
+    "bytes": 3080,
+    "sha256": "b8a49114989fab2adb75fb23c97fddfef084aef28e5d036bf305c0198e0410a4"
+  },
+  "audits-executions.json": {
+    "path": "/workspace/access-review-evidence/verified/audits-executions.json",
+    "bytes": 3792,
+    "sha256": "84b10c73e0086ec1d335aa1101f7672c97b7d930fa56a519a3132711c478034b"
+  },
+  "lint-executions.json": {
+    "path": "/workspace/access-review-evidence/verified/lint-executions.json",
+    "bytes": 6971,
+    "sha256": "80bf8589f8199bb003e63134e08e15a2f600ebb4f3be8b84885e0a8ccc7266a2"
+  },
+  "docs-executions.json": {
+    "path": "/workspace/access-review-evidence/verified/docs-executions.json",
+    "bytes": 590,
+    "sha256": "e7e9d7fc8c280ac0c21de945da86dabec9cdbb7498c7248fa847a7a5cd184f53"
+  },
+  "distribution-execution.json": {
+    "path": "/workspace/access-review-evidence/verified/distribution-execution.json",
+    "bytes": 491,
+    "sha256": "b32b3f616f930d70b2dd7e88881cae37505edaa973ec6c2ee932acac1100cf26"
+  },
+  "distribution.json": {
+    "path": "/workspace/access-review-evidence/verified/distribution.json",
+    "bytes": 1993,
+    "sha256": "485cf832b79a1764012bdc5b8ccf408fa7f91cdf051b4140512afc4d9bae9d73"
+  },
+  "input-hashes.json": {
+    "path": "/workspace/access-review-evidence/verified/input-hashes.json",
+    "bytes": 51916,
+    "sha256": "61c4f7efab1f8f7f05bfd287933cb6a68105457d8dbf8284d314e4ac1ba4305b"
+  },
+  "all-tracked-source-hashes.json": {
+    "path": "/workspace/access-review-evidence/verified/all-tracked-source-hashes.json",
+    "bytes": 395742,
+    "sha256": "d8ef83585634c7f75f7ad68d73d13123bf1f0bf57d4b6d9094d4f838f8c07850"
+  },
+  "collected.stdout": {
+    "path": "/workspace/access-review-evidence/verified/collected.stdout",
+    "bytes": 332281,
+    "sha256": "1a4504d5903ca45758746550ba3e2630426f134744776d8740a30f31096b8fca"
+  },
+  "tests.xml": {
+    "path": "/workspace/access-review-evidence/verified/tests.xml",
+    "bytes": 407934,
+    "sha256": "67236b8f16887d368a6dd8cdc7df6dcaa6977af8e3bd0ff825d7ed40374821e2"
+  },
+  "journal.jsonl": {
+    "path": "/workspace/access-review-evidence/verified/journal.jsonl",
+    "bytes": 2244377,
+    "sha256": "5a75664628c2f389cad8c89e847dbb6470294ec12dbbdd9e65ece2b520bf0fec"
+  },
+  "tests.stdout": {
+    "path": "/workspace/access-review-evidence/verified/tests.stdout",
+    "bytes": 2193,
+    "sha256": "1aba922129f6c4823787390d0ddcaa0b2e2baea8db090357478be1cc881827b0"
+  },
+  "tests.stderr": {
+    "path": "/workspace/access-review-evidence/verified/tests.stderr",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "acceptance.json": {
+    "path": "/workspace/access-review-evidence/verified/acceptance.json",
+    "bytes": 541,
+    "sha256": "797063ea855ac94f712a0bfd453c2118cd60aae758c5c0f25faac75986989243"
+  },
+  "node-reconciliation.json": {
+    "path": "/workspace/access-review-evidence/verified/node-reconciliation.json",
+    "bytes": 10977,
+    "sha256": "9176d4619461a597c59e4fd939a19d1d01aae33723f5d89138aa6fb06d35add2"
+  }
+}

@@ -1,0 +1,98 @@
+{
+  "fixed_commit": "f4d0d448fca5925bfbe4f8cb8345c3bd0df7de60",
+  "fixed_tree": "a7b4521fb7fa6562c8e0bf67e2766743e0b82c5b",
+  "workflow_sha256": "087742a02f51ad27a2fe8dbf01c888a54b9df36dd08f6b44010e2e087f36ad25",
+  "collection_and_execution_target_args_equal": true,
+  "commands": [
+    {
+      "workflow_line": 103,
+      "raw_command": "uv run --no-sync pytest -q tests/unit/test_access*_values.py tests/unit/test_context_registration_values.py tests/unit/test_native_acquisition_values.py tests/integration/access  tests/integration/p1/test_schema.py tests/integration/p1/test_context.py  tests/integration/p1/test_validation_stop.py tests/integration/p1/test_coordination.py  tests/integration/p1/test_disposition.py tests/integration/p3 tests/integration/p5  tests/integration/p2 tests/integration/p4 tests/integration/p6 tests/integration/p7  --collect-only > artifacts/access-registry/collected.txt",
+      "target_args": [
+        "tests/unit/test_access*_values.py",
+        "tests/unit/test_context_registration_values.py",
+        "tests/unit/test_native_acquisition_values.py",
+        "tests/integration/access",
+        "tests/integration/p1/test_schema.py",
+        "tests/integration/p1/test_context.py",
+        "tests/integration/p1/test_validation_stop.py",
+        "tests/integration/p1/test_coordination.py",
+        "tests/integration/p1/test_disposition.py",
+        "tests/integration/p3",
+        "tests/integration/p5",
+        "tests/integration/p2",
+        "tests/integration/p4",
+        "tests/integration/p6",
+        "tests/integration/p7"
+      ],
+      "shell_expanded_targets": [
+        "tests/unit/test_access_acceptance_values.py",
+        "tests/unit/test_access_backup_values.py",
+        "tests/unit/test_access_connections_values.py",
+        "tests/unit/test_access_registry_values.py",
+        "tests/unit/test_context_registration_values.py",
+        "tests/unit/test_native_acquisition_values.py",
+        "tests/integration/access",
+        "tests/integration/p1/test_schema.py",
+        "tests/integration/p1/test_context.py",
+        "tests/integration/p1/test_validation_stop.py",
+        "tests/integration/p1/test_coordination.py",
+        "tests/integration/p1/test_disposition.py",
+        "tests/integration/p3",
+        "tests/integration/p5",
+        "tests/integration/p2",
+        "tests/integration/p4",
+        "tests/integration/p6",
+        "tests/integration/p7"
+      ]
+    },
+    {
+      "workflow_line": 109,
+      "raw_command": "uv run --no-sync pytest -q tests/unit/test_access*_values.py tests/unit/test_context_registration_values.py tests/unit/test_native_acquisition_values.py tests/integration/access  tests/integration/p1/test_schema.py tests/integration/p1/test_context.py  tests/integration/p1/test_validation_stop.py tests/integration/p1/test_coordination.py  tests/integration/p1/test_disposition.py tests/integration/p3 tests/integration/p5  tests/integration/p2 tests/integration/p4 tests/integration/p6 tests/integration/p7  --junitxml=artifacts/access-registry/tests.xml",
+      "target_args": [
+        "tests/unit/test_access*_values.py",
+        "tests/unit/test_context_registration_values.py",
+        "tests/unit/test_native_acquisition_values.py",
+        "tests/integration/access",
+        "tests/integration/p1/test_schema.py",
+        "tests/integration/p1/test_context.py",
+        "tests/integration/p1/test_validation_stop.py",
+        "tests/integration/p1/test_coordination.py",
+        "tests/integration/p1/test_disposition.py",
+        "tests/integration/p3",
+        "tests/integration/p5",
+        "tests/integration/p2",
+        "tests/integration/p4",
+        "tests/integration/p6",
+        "tests/integration/p7"
+      ],
+      "shell_expanded_targets": [
+        "tests/unit/test_access_acceptance_values.py",
+        "tests/unit/test_access_backup_values.py",
+        "tests/unit/test_access_connections_values.py",
+        "tests/unit/test_access_registry_values.py",
+        "tests/unit/test_context_registration_values.py",
+        "tests/unit/test_native_acquisition_values.py",
+        "tests/integration/access",
+        "tests/integration/p1/test_schema.py",
+        "tests/integration/p1/test_context.py",
+        "tests/integration/p1/test_validation_stop.py",
+        "tests/integration/p1/test_coordination.py",
+        "tests/integration/p1/test_disposition.py",
+        "tests/integration/p3",
+        "tests/integration/p5",
+        "tests/integration/p2",
+        "tests/integration/p4",
+        "tests/integration/p6",
+        "tests/integration/p7"
+      ]
+    }
+  ],
+  "selected_cohort_is_complete_ordinary_suite": false,
+  "directly_unselected_compatibility_dirs": [
+    "tests/integration/p2_p3_compatibility",
+    "tests/integration/p5_p6_compatibility"
+  ],
+  "source_isolation": "verify_access_distribution creates no-system-site-packages venvs outside checkout, installs each wheel with --no-deps, removes PYTHONPATH and executes python -I; this is real installed smoke, not source-overlay execution.",
+  "installed_test_scope": "Finite Access registry/configuration/workflow/local actual Git/backup/fork and Context SQL/Exchange smoke, not the complete selected pytest cohort in installed packages.",
+  "documentation_scope": "Existing explicit staged site sources, only ADR0001/0002 from docs/adr; --no-mermaid emits placeholders, no deployment command. Internal Access/ADR0029 prose is not covered by that site build."
+}

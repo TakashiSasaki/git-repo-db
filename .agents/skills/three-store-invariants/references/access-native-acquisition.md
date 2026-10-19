@@ -35,3 +35,47 @@ python -m pytest -q tests/unit/test_native_acquisition_values.py \
 The A4a implementation report records exact scope, failed fixture diagnostics and
 six removed-defense experiments. This is not a filesystem-owner sandbox, arbitrary
 Git layout support, remote repository authenticity or an independent review.
+
+## Independently verified configuration and metadata-input boundaries
+
+Git ignores one UTF-8 BOM at byte zero of a configuration file. A raw anchored
+`[include]`/`[includeIf]` regex missed that prefix and allowed indirect reads outside
+pinned storage. Inspect the same BOM-free lexical prefix that Git recognizes,
+without normalizing or replacing the original file/token. Test valid and malformed
+external include files and conditional includes: all must be refused before the
+first Git command, while an ordinary BOM-prefixed safe configuration still works.
+
+For external `GitMetadataInput`, inspect every repository-owned nested value:
+RepositoryClaims, observations, Notes captures/claims/groups and repository
+Coverage (including claims/proofs). Resolve Capture Coverage against its actual
+original owner; global OID/field facts do not imply repository membership. Keep
+Core/Operational seed+instance pairing separate from the selected Repository UUID.
+Freeze original source/time and complete semantic input in request progress, using
+declared native OID/type/size/digest rather than raw body staging. Repeat delivery
+still costs actual work. An explicit new request may add compatible facts under
+the same original Capture pair; changing an old request must fail before admission.
+
+For live Notes inside metadata input, give standalone and paired preparation the
+exact `request_scope(target, actual_instance, attribution, notes_source.scope)`.
+Persist that supplied source scope/format in semantic intent too: explicit caller
+work/progress bypasses durable-ledger scope checks. An independent counterexample
+returned A's cached discovery after changing the supplied source to B. Do not
+require an attributed external Capture.source to equal outer intake attribution.
+Before admission compare every supplied Notes Capture with an existing same-pair
+binding (owner/source/ref/root), including units without Capture Coverage. Core's
+later immutable refusal otherwise leaves earlier standalone rows behind. Charge
+actual indexed lookups and retain paired rollback controls.
+
+Use a typed Core reader for that comparison, not application-level generic SQL.
+Independent corruption probes showed raw UTF-8 errors and invalid stored source
+being mislabeled as incoming mismatch; missing Capture parents were even recreated
+by later admission. Reconstruct canonical ref/UUID/OID/source under `_stored` and
+the decoded-read/completion fence, check required repository/root parents in the
+same snapshot, and stop before writes. Valid incoming conflict is not corruption.
+Test exact-schema synthetic damage and unchanged suspect file bytes in both paths.
+
+Use `python -m pytest -q tests/integration/access/test_review_corrections.py`.
+The independent R0/R1/R2 probe also demonstrates that Exchange still needs an
+explicit repository-set selection/acceptance contract; do not remove its mismatch
+guard to make a nonseed test pass. See the
+[review and remaining contract](../../../../docs/implementation/access-a6-independent-review.md).
