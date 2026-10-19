@@ -56,6 +56,7 @@ from repo_catalog.domain.p1_context import (
     FieldCandidate,
     FieldClock,
     ResourceKey,
+    canonical,
 )
 from repo_catalog.domain.p1_coordination import (
     AdmissionFailure,
@@ -1634,6 +1635,9 @@ class ExchangeService:
 
         # Validate every section, including units later withheld by permission.
         with account_verification(active_work):
+            from repo_catalog.domain.exchange_rows import validate_replay_consistency
+
+            validate_replay_consistency(package.core, package.context)
             if package.core is not None:
                 self._prevalidate_core_section(package.core, active_work)
                 self._import_core_units(CorePreflight(), package.core, active_work)
@@ -1659,7 +1663,7 @@ class ExchangeService:
         # required dependency of an otherwise selected unit.
         self._receive_selection = selection
         self._dependency_rows = 0
-        read_bound = 2 * max(10000, selection.max_units)
+        read_bound = 4 * max(10000, selection.max_units)
         active_work.require("metadata_units", read_bound)
         try:
             if core_data is not None and any(core_data.values()) and self._has_core():
@@ -1862,6 +1866,41 @@ class ExchangeService:
             repos = {
                 r[0] for r in core.sql("SELECT repository_uuidv4 FROM repositories")
             }
+            for row in data["captures"]:
+                existing = core.capture_binding(
+                    (row["capture_origin_uuidv4"], row["capture_uuidv4"])
+                )
+                if existing is not None:
+                    self._dependency_rows += 1
+                    incoming = Capture(
+                        row["capture_origin_uuidv4"],
+                        row["capture_uuidv4"],
+                        row["repository_uuidv4"],
+                        row["source"],
+                        _decode_capture_ref(row["ref"]),
+                        OID(row["object_format"], row["root"]),
+                    )
+                    if existing != incoming:
+                        raise ExchangeError(
+                            "IMMUTABLE_REPLAY_CONFLICT", ["core", "captures"]
+                        )
+            for row in data["git_observations"]:
+                existing = core.sql(
+                    "SELECT repository_uuidv4,kind,scope,value,provenance FROM git_observations WHERE capture_origin_uuidv4=? AND capture_uuidv4=?",
+                    (row["capture_origin_uuidv4"], row["capture_uuidv4"]),
+                )
+                if existing:
+                    self._dependency_rows += 1
+                    if tuple(existing[0]) != (
+                        row["repository_uuidv4"],
+                        row["kind"],
+                        row["scope_json"],
+                        row["value_json"],
+                        row["provenance_json"],
+                    ):
+                        raise ExchangeError(
+                            "IMMUTABLE_REPLAY_CONFLICT", ["core", "git_observations"]
+                        )
             oids = {
                 tuple(r)
                 for r in core.sql("SELECT object_format,full_oid FROM git_objects")
@@ -1929,6 +1968,23 @@ class ExchangeService:
             ("source_inventory", r) for r in data["source_inventories"]
         ] + [("collection", r) for r in data["collections"]]
         with Context.snapshot(self.directory, read_limits=self._read_limits()) as ctx:
+            for section, table, key, immutable in (
+                ("providers", "providers", "service_instance_uuidv4", "provider_kind"),
+                (
+                    "sources",
+                    "sources",
+                    "source_registration_uuidv4",
+                    "service_instance_uuidv4",
+                ),
+            ):
+                for row in data[section]:
+                    prior = ctx.db.execute(
+                        f"SELECT {immutable} FROM {table} WHERE {key}=?", (row[key],)
+                    ).fetchone()
+                    if prior is not None:
+                        self._dependency_rows += 1
+                        if prior[0] != row[immutable]:
+                            raise ExchangeError("IDENTITY_REBIND", ["context", section])
             providers = {
                 r[0]
                 for r in ctx.db.execute("SELECT service_instance_uuidv4 FROM providers")
@@ -1951,28 +2007,126 @@ class ExchangeService:
                     "SELECT repository_uuidv4 FROM repository_context"
                 )
             }
-            mapping_keys = {
-                decode_relation(
-                    dict(
-                        zip(
-                            (
-                                "service_instance_uuidv4",
-                                "resource_kind",
-                                "provider_resource_id",
-                                "relation_kind",
-                                "target_json",
-                                "clock_json",
-                                "provenance_json",
-                                "observed_at_us",
-                            ),
-                            r,
-                        )
-                    )
-                ).claim_key
-                for r in ctx.db.execute(
-                    "SELECT service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,target_json,clock_json,provenance_json,observed_at_us FROM resource_repository_relations"
+            columns = (
+                "service_instance_uuidv4",
+                "resource_kind",
+                "provider_resource_id",
+                "relation_kind",
+                "target_json",
+                "clock_json",
+                "provenance_json",
+                "observed_at_us",
+            )
+            stored_relations = [
+                decode_relation(dict(zip(columns, row)))
+                for row in ctx.db.execute(
+                    "SELECT "
+                    + ",".join(columns)
+                    + " FROM resource_repository_relations"
                 )
-            }
+            ]
+            original_times = {r.claim_key: r.observed_at_us for r in stored_relations}
+            mapping_keys = set(original_times)
+            for row in data["repository_mapping_dispositions"]:
+                disposition = decode_disposition(row)
+                found = ctx.db.execute(
+                    "SELECT observed_at_us,replacement_clock_json,replacement_target_json,replacement_provenance_json FROM repository_mapping_dispositions WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=? AND relation_kind=? AND claim_clock_json=? AND claim_target_json=? AND claim_provenance_json=? AND disposition_kind=? AND disposition_clock_json=? AND disposition_provenance_json=?",
+                    disposition.key_coordinates(),
+                ).fetchone()
+                if found is not None:
+                    self._dependency_rows += 1
+                    if tuple(found) != (
+                        disposition.observed_at_us,
+                        disposition.replacement_clock_json,
+                        disposition.replacement_target_json,
+                        disposition.replacement_provenance_json,
+                    ):
+                        raise ExchangeError(
+                            "IMMUTABLE_REPLAY_CONFLICT",
+                            ["context", "repository_mapping_dispositions"],
+                        )
+            for report in transfer_reports(data):
+                existing_endpoints = {
+                    (r.relation_kind, r.target_json, r.observed_at_us)
+                    for r in stored_relations
+                    if r.resource == report.event_resource
+                    and r.clock == report.clock
+                    and r.provenance_json == report.provenance_json
+                    and r.relation_kind.startswith("transfer_")
+                }
+                incoming_endpoints = {
+                    (r.relation_kind, r.target_json, r.observed_at_us)
+                    for r in (*report.from_relations, *report.to_relations)
+                }
+                if existing_endpoints and existing_endpoints != incoming_endpoints:
+                    raise ExchangeError(
+                        "IMMUTABLE_REPLAY_CONFLICT",
+                        ["context", "transfer_event_report"],
+                    )
+                found = ctx.db.execute(
+                    "SELECT members_json,scope_json,observed_at_us FROM resource_relations WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=? AND relation_kind='transfer_event_report' AND provenance_json=?",
+                    (*report.event_resource.coordinates(), report.provenance_json),
+                ).fetchall()
+                self._dependency_rows += len(found)
+                for members, stored_scope, observed_at in found:
+                    if canonical(
+                        json.loads(stored_scope).get("clock")
+                    ) == report.clock.encode() and (
+                        members != report.members_json
+                        or stored_scope != report.scope_json
+                        or observed_at != report.observed_at_us
+                    ):
+                        raise ExchangeError(
+                            "IMMUTABLE_REPLAY_CONFLICT",
+                            ["context", "transfer_event_report"],
+                        )
+            for row in data["resource_repository_relations"]:
+                relation = decode_relation(row)
+                if (
+                    relation.claim_key in original_times
+                    and original_times[relation.claim_key] != relation.observed_at_us
+                ):
+                    raise ExchangeError(
+                        "IMMUTABLE_REPLAY_CONFLICT",
+                        ["context", "resource_repository_relations"],
+                    )
+            # Exact original field/relation timestamps remain immutable even for
+            # historical claims; a changed payload is not a fresh observation.
+            for row in data["field_candidates"]:
+                found = ctx.db.execute(
+                    "SELECT observed_at_us FROM field_candidates WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=? AND field_name=? AND clock_json=? AND value_json=? AND provenance_json=?",
+                    (
+                        *resource(row).coordinates(),
+                        row["field_name"],
+                        FieldClock(row["clock_domain"], row["clock_ts_us"]).encode(),
+                        row["value_json"],
+                        row["provenance_json"],
+                    ),
+                ).fetchone()
+                if found is not None:
+                    self._dependency_rows += 1
+                    if found[0] != row["observed_at_us"]:
+                        raise ExchangeError(
+                            "IMMUTABLE_REPLAY_CONFLICT", ["context", "field_candidates"]
+                        )
+            for row in data["resource_relations"]:
+                found = ctx.db.execute(
+                    "SELECT observed_at_us FROM resource_relations WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=? AND relation_kind=? AND members_json=? AND provenance_json=? AND scope_json=?",
+                    (
+                        *resource(row).coordinates(),
+                        row["relation_kind"],
+                        row["members_json"],
+                        row["provenance_json"],
+                        row["scope_json"],
+                    ),
+                ).fetchone()
+                if found is not None:
+                    self._dependency_rows += 1
+                    if found[0] != row["observed_at_us"]:
+                        raise ExchangeError(
+                            "IMMUTABLE_REPLAY_CONFLICT",
+                            ["context", "resource_relations"],
+                        )
 
         self._dependency_rows += (
             len(providers)

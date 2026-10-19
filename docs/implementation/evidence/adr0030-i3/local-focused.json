@@ -1,7 +1,7 @@
 {
   "fixed_i1_head": "9390c9f3b54a033e5f07e1cb05d7c4b263c38fb7",
   "fixed_i1_tree": "14c694218109de1e3dfebc93e7776d48ad79faf3",
-  "runtime_input_sha256": "ceb402082812f663d68242cac53b8ef411aa7d83f9eb7c0c78964e807bd94b37",
+  "runtime_input_sha256": "bd1ff95dfdd2b8297d7fdc781145a5476041d5615c5f39941df9d1c340a82860",
   "runtime_input_count": 412,
   "runtime": {
     "python": "3.12.14",
@@ -9,9 +9,9 @@
     "sqlite_source": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9"
   },
   "independent_i3_tests": {
-    "passed": 39,
+    "passed": 45,
     "failed": 0,
     "command": ".venv/bin/pytest -q tests/integration/i3 --tb=short"
   },
-  "preliminary_review": "CHANGES REQUIRED on b7f40fa7e1c556a73d63242aaef5abf5a39b1960; exact proof and private input snapshot fixes now covered; final exact pushed review recorded in PR #108"
+  "preliminary_review": "CHANGES REQUIRED on b7f40fa and 1cd58ce; proof, private input snapshot and immutable original-key consistency fixes covered; final exact pushed review recorded in PR #108"
 }

@@ -89,5 +89,10 @@ under the required recursive-trigger setting. A per-request progress slot alone
 is not a globally unique immutable PackageKey unless the shared transaction and
 SQL guards enforce it. Check live facts after an actual subprocess exit between
 domain commit and checkpoint; an exception-only probe cannot prove that window.
+Before claiming bounded prevalidation, duplicate an original direct key with a
+different non-key observation timestamp or payload, then add an independent Core
+OID. Verify rejection occurs before binding or Core admission. Repeat against an
+already populated receiver, including MappingDisposition and whole EventReportKey
+endpoint sets: identical scope JSON alone need not identify the Core targets.
 See the executable [I3 counterexamples](../../../../tests/integration/i3/test_selective_exchange.py)
 and [I3 handoff](../../../../docs/implementation/adr0030-i3-selective-exchange.md).

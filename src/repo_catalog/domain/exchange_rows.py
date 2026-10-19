@@ -361,3 +361,96 @@ def decode_native_ref(value):
         return ref
     except (ValueError, TypeError) as error:
         raise ExchangeError("INVALID_NATIVE_REF", "captures") from error
+
+
+# Direct immutable identities, using the v4 names of the actual PK coordinates.
+# Other row types have their entire asserted value in the key; authority flags
+# are payload, so contradictory sender annotations do not get an arrival winner.
+IDENTITY_KEYS = {
+    "core": {
+        "captures": ("capture_origin_uuidv4", "capture_uuidv4"),
+        "git_observations": ("capture_origin_uuidv4", "capture_uuidv4"),
+        "retained_metadata": ("object_format", "full_oid", "physical_copy_uuidv4"),
+        "retained_notes": ("object_format", "full_oid", "physical_copy_uuidv4"),
+        "coverage_claims": (
+            "owner_kind",
+            "owner_coordinates_json",
+            "observed_at_us",
+            "coverage_state",
+        ),
+    },
+    "context": {
+        "providers": ("service_instance_uuidv4",),
+        "repositories": ("repository_uuidv4",),
+        "sources": ("source_registration_uuidv4",),
+        "source_repositories": ("source_registration_uuidv4", "repository_uuidv4"),
+        "text_bodies": ("sha256",),
+        "field_candidates": (
+            "service_instance_uuidv4",
+            "resource_kind",
+            "provider_resource_id",
+            "field_name",
+            "clock_domain",
+            "clock_ts_us",
+            "value_json",
+            "provenance_json",
+        ),
+        "resource_relations": (
+            "service_instance_uuidv4",
+            "resource_kind",
+            "provider_resource_id",
+            "relation_kind",
+            "members_json",
+            "provenance_json",
+            "scope_json",
+        ),
+        "resource_repository_relations": (
+            "service_instance_uuidv4",
+            "resource_kind",
+            "provider_resource_id",
+            "relation_kind",
+            "clock_json",
+            "target_json",
+            "provenance_json",
+        ),
+        "repository_mapping_dispositions": (
+            "service_instance_uuidv4",
+            "resource_kind",
+            "provider_resource_id",
+            "relation_kind",
+            "claim_clock_json",
+            "claim_target_json",
+            "claim_provenance_json",
+            "disposition_kind",
+            "disposition_clock_json",
+            "disposition_provenance_json",
+        ),
+        "coverage_claims": (
+            "owner_kind",
+            "owner_coordinates_json",
+            "observed_at_us",
+            "coverage_state",
+        ),
+    },
+}
+
+
+def validate_replay_consistency(core, context):
+    from repo_catalog.domain.exchange import ExchangeError
+    from repo_catalog.domain.p1_core import _performed
+
+    for store, data in (("core", core), ("context", context)):
+        if data is None:
+            continue
+        for section, rows in data.items():
+            seen = {}
+            for row in rows:
+                _performed("metadata_units", 1)
+                columns = IDENTITY_KEYS[store].get(
+                    section, tuple(sorted(k for k in row if k != "authority"))
+                )
+                key = encode([row[k] for k in columns])
+                payload = encode(row)
+                if key in seen and seen[key] != payload:
+                    raise ExchangeError("IMMUTABLE_REPLAY_CONFLICT", [store, section])
+                seen[key] = payload

@@ -106,6 +106,15 @@ def transfer_reports(data: dict) -> list[TransferEventReport]:
                 row["observed_at_us"],
             )
         )
+    original_reports = {}
+    for report in result:
+        payload = (report.scope_json, report.members_json, report.observed_at_us)
+        if (
+            report.report_key in original_reports
+            and original_reports[report.report_key] != payload
+        ):
+            raise ExchangeError("IMMUTABLE_REPLAY_CONFLICT", "transfer_event_report")
+        original_reports[report.report_key] = payload
     covered = {
         r.claim_key
         for report in result

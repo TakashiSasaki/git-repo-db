@@ -147,6 +147,10 @@ are covered in `tests/integration/i3/test_selective_exchange.py`, alongside real
 process exits, competing bindings, SQL mutation probes, Source/Transfer whole
 units, Notes checks and Access/Stop invariants. The [first exact-tree review](evidence/adr0030-i3/first-independent-review.md)
 found two further executed blockers, corrected with additional regressions.
+The [second exact-tree review](evidence/adr0030-i3/second-independent-review.md)
+found contradictory original-key payloads that failed only after Core commit;
+preflight now rejects these conflicts before Package Binding, including existing
+MappingDisposition and complete Transfer endpoint-set conflicts.
 Final review targets the exact
 committed/pushed HEAD/tree and is recorded in the PR body.
 

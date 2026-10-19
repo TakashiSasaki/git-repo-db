@@ -220,6 +220,30 @@ def test_transfer_reports_never_shrunk_or_mixed(tmp_path):
     receive(c, package, (r1, r2))
     with Context.snapshot(c) as ctx:
         assert set(ctx.transfer_event_reports(event)) == set(reports)
+    changed_report = TransferEventReport.from_targets(
+        event,
+        clock=reports[0].clock,
+        provenance_json=reports[0].provenance_json,
+        observed_at_us=reports[0].observed_at_us,
+        from_target_json=canonical(r1),
+        to_target_json="null",
+    )
+    for row in package.context["resource_relations"]:
+        if row["scope_json"] == reports[0].scope_json:
+            row["scope_json"] = changed_report.scope_json
+            row["members_json"] = changed_report.members_json
+    for row in package.context["resource_repository_relations"]:
+        if (
+            row["clock_json"] == reports[0].clock.encode()
+            and row["relation_kind"] == "transfer_to_repository"
+        ):
+            row["target_json"] = "null"
+    before = rows(c, "core", "git_objects")
+    package.core["git_objects"].append({"object_format": "sha1", "full_oid": "2" * 40})
+    changed = replace(package, package_id=str(uuid4()), digest_sha256=None)
+    with pytest.raises(ExchangeError, match="IMMUTABLE_REPLAY_CONFLICT"):
+        receive(c, changed, (r1, r2))
+    assert rows(c, "core", "git_objects") == before
 
 
 def test_mapping_claim_support_and_dispositions_are_exact(tmp_path):
@@ -294,6 +318,13 @@ def test_mapping_claim_support_and_dispositions_are_exact(tmp_path):
     assert rows(a, "context", "resource_relations") == rows(
         b, "context", "resource_relations"
     )
+    before = rows(b, "core", "git_objects")
+    package.context["repository_mapping_dispositions"][0]["observed_at_us"] += 1
+    package.core["git_objects"].append({"object_format": "sha1", "full_oid": "2" * 40})
+    changed = replace(package, package_id=str(uuid4()), digest_sha256=None)
+    with pytest.raises(ExchangeError, match="IMMUTABLE_REPLAY_CONFLICT"):
+        receive(b, changed, (r1,))
+    assert rows(b, "core", "git_objects") == before
 
 
 def test_empty_oid_and_context_payload_cannot_override_selection(tmp_path):
@@ -928,3 +959,127 @@ def test_capture_non_utf8_ref_preserves_native_key(tmp_path):
     wire = encode_package(package)
     receive(b, decode_package(wire), (r1,))
     assert rows(a, "core", "captures") == rows(b, "core", "captures")
+
+
+@pytest.mark.parametrize(
+    "section",
+    ["resource_repository_relations", "field_candidates", "resource_relations"],
+)
+def test_internally_contradictory_original_times_rejected_before_binding(
+    tmp_path, section
+):
+    from repo_catalog.domain.p1_context import FieldCandidate
+    from repo_catalog.domain.production_context import ResourceRelation
+
+    a, b = tmp_path / "a", tmp_path / "b"
+    r1, r2, issue, _ = fixture(a)
+    catalog(b)
+    with Context.transaction(a) as ctx:
+        ctx.admit_field(
+            FieldCandidate(
+                issue,
+                "state",
+                '"open"',
+                FieldClock("provider", 1),
+                make_provenance("fixture", "field"),
+                1,
+            )
+        )
+        ctx.relation(
+            ResourceRelation(
+                issue, "related", (), make_provenance("fixture", "relation"), "{}", 1
+            )
+        )
+    package = ExchangeService(a).export_package(selection=scope())
+    row = package.context[section][0]
+    package.context[section].append(
+        {**row, "observed_at_us": row["observed_at_us"] + 1}
+    )
+    package = replace(package, digest_sha256=None)
+    with pytest.raises(ExchangeError, match="IMMUTABLE_REPLAY_CONFLICT"):
+        receive(b, package, (r1, r2))
+    assert not rows(b, "core", "git_objects")
+    assert not any(
+        "adr0030-package-binding" in r[2]
+        for r in rows(b, "operational", "request_continuations")
+    )
+
+
+def test_existing_relation_time_conflict_rejected_before_independent_core_commit(
+    tmp_path,
+):
+    a, b = tmp_path / "a", tmp_path / "b"
+    r1, r2, _, _ = fixture(a)
+    catalog(b)
+    package = ExchangeService(a).export_package(selection=scope())
+    receive(b, package, (r1, r2))
+    before = rows(b, "core", "git_objects")
+    package.context["resource_repository_relations"][0]["observed_at_us"] += 1
+    package.core["git_objects"].append({"object_format": "sha1", "full_oid": "2" * 40})
+    changed = replace(package, package_id=str(uuid4()), digest_sha256=None)
+    with pytest.raises(ExchangeError, match="IMMUTABLE_REPLAY_CONFLICT"):
+        receive(b, changed, (r1, r2))
+    assert rows(b, "core", "git_objects") == before
+    assert not any(
+        changed.package_id in r[2] and "adr0030-package-binding" in r[2]
+        for r in rows(b, "operational", "request_continuations")
+    )
+
+
+def test_capture_pair_conflicting_payload_rejected_before_binding(tmp_path):
+    from contextlib import closing
+
+    from repo_catalog.domain.p1_core import Capture
+
+    a, b = tmp_path / "a", tmp_path / "b"
+    r1, _, _, oid = fixture(a)
+    catalog(b)
+    capture = Capture(str(uuid4()), str(uuid4()), r1, "source", "refs/heads/main", oid)
+    with closing(GitCore(a / "core.sqlite3")) as core:
+        core.admit_capture(capture)
+    package = ExchangeService(a).export_package(selection=scope())
+    package.core["captures"].append(
+        {**package.core["captures"][0], "source": "contradictory-source"}
+    )
+    malformed = replace(package, digest_sha256=None)
+    with pytest.raises(ExchangeError, match="IMMUTABLE_REPLAY_CONFLICT"):
+        receive(b, malformed, (r1,))
+    assert not rows(b, "core", "git_objects")
+
+
+def test_shared_oid_does_not_coalesce_repository_membership_reports(tmp_path):
+    from contextlib import closing
+
+    from repo_catalog.domain.p1_core import GitObservation, Provenance
+
+    a, b = tmp_path / "a", tmp_path / "b"
+    r1, r2, _, oid = fixture(a)
+    catalog(b)
+    original = []
+    with closing(GitCore(a / "core.sqlite3")) as core:
+        for repository in (r1, r2):
+            observation = GitObservation(
+                str(uuid4()),
+                str(uuid4()),
+                repository,
+                "membership",
+                ("fixture", repository, *oid.key),
+                {
+                    "object": list(oid.key),
+                    "source": "original-source",
+                    "observed_at_us": 100,
+                },
+                Provenance("fixture", repository, "membership", "fixture", "1"),
+            )
+            core.admit_observation(observation)
+            original.append(observation)
+    package = ExchangeService(a).export_package(selection=scope())
+    receive(b, package, (r1, r2))
+    assert len(rows(b, "core", "git_objects")) == 1
+    assert {r[2] for r in rows(b, "core", "git_observations")} == {r1, r2}
+    assert rows(a, "core", "git_observations") == rows(b, "core", "git_observations")
+    c = tmp_path / "c"
+    catalog(c)
+    receive(c, package, (r1,))
+    assert {r[2] for r in rows(c, "core", "git_observations")} == {r1}
+    assert r2 not in {r[0] for r in rows(c, "core", "repositories")}
