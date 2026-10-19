@@ -1,0 +1,126 @@
+{
+  "final_script_sha256": "cc16dd01222e38eec61e449418bc1176a319eb5d6e242455da2c7c8641d0fd02",
+  "controls": [
+    {
+      "case": "valid",
+      "accepted": true,
+      "checks": {
+        "selected_unique": true,
+        "selected_equals_junit": true,
+        "selected_equals_journal_starts": true,
+        "setup_and_teardown_once": true,
+        "no_duplicate_phases": true,
+        "phase_nodes_equal_selected": true,
+        "call_once_after_successful_setup": true,
+        "one_finish": true
+      }
+    },
+    {
+      "case": "missing_start",
+      "accepted": false,
+      "checks": {
+        "selected_unique": true,
+        "selected_equals_junit": true,
+        "selected_equals_journal_starts": false,
+        "setup_and_teardown_once": true,
+        "no_duplicate_phases": true,
+        "phase_nodes_equal_selected": true,
+        "call_once_after_successful_setup": true,
+        "one_finish": true
+      }
+    },
+    {
+      "case": "missing_call",
+      "accepted": false,
+      "checks": {
+        "selected_unique": true,
+        "selected_equals_junit": true,
+        "selected_equals_journal_starts": true,
+        "setup_and_teardown_once": true,
+        "no_duplicate_phases": true,
+        "phase_nodes_equal_selected": true,
+        "call_once_after_successful_setup": false,
+        "one_finish": true
+      }
+    },
+    {
+      "case": "duplicate_call",
+      "accepted": false,
+      "checks": {
+        "selected_unique": true,
+        "selected_equals_junit": true,
+        "selected_equals_journal_starts": true,
+        "setup_and_teardown_once": true,
+        "no_duplicate_phases": false,
+        "phase_nodes_equal_selected": true,
+        "call_once_after_successful_setup": false,
+        "one_finish": true
+      }
+    },
+    {
+      "case": "missing_finish",
+      "accepted": false,
+      "checks": {
+        "selected_unique": true,
+        "selected_equals_junit": true,
+        "selected_equals_journal_starts": true,
+        "setup_and_teardown_once": true,
+        "no_duplicate_phases": true,
+        "phase_nodes_equal_selected": true,
+        "call_once_after_successful_setup": true,
+        "one_finish": false
+      }
+    },
+    {
+      "case": "substitute_junit",
+      "accepted": false,
+      "checks": {
+        "selected_unique": true,
+        "selected_equals_junit": false,
+        "selected_equals_journal_starts": true,
+        "setup_and_teardown_once": true,
+        "no_duplicate_phases": true,
+        "phase_nodes_equal_selected": true,
+        "call_once_after_successful_setup": true,
+        "one_finish": true
+      }
+    },
+    {
+      "case": "duplicate_selection",
+      "accepted": false,
+      "checks": {
+        "selected_unique": false,
+        "selected_equals_junit": false,
+        "selected_equals_journal_starts": false,
+        "setup_and_teardown_once": true,
+        "no_duplicate_phases": true,
+        "phase_nodes_equal_selected": true,
+        "call_once_after_successful_setup": true,
+        "one_finish": true
+      }
+    }
+  ],
+  "outcome": "7 controls passed;1 valid accepted,6 tampered/incomplete rejected",
+  "ci_targets": [
+    "tests/unit/test_access_acceptance_values.py",
+    "tests/unit/test_access_backup_values.py",
+    "tests/unit/test_access_connections_values.py",
+    "tests/unit/test_access_registry_values.py",
+    "tests/unit/test_context_registration_values.py",
+    "tests/unit/test_native_acquisition_values.py",
+    "tests/integration/access",
+    "tests/integration/i2",
+    "tests/integration/i23",
+    "tests/integration/i4",
+    "tests/integration/i5",
+    "tests/integration/p1",
+    "tests/integration/p3",
+    "tests/integration/p5",
+    "tests/integration/i3",
+    "tests/integration/p2",
+    "tests/integration/p4",
+    "tests/integration/p6",
+    "tests/integration/p7",
+    "tests/integration/p5_p6_compatibility"
+  ]
+}

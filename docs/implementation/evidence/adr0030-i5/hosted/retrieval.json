@@ -1,0 +1,14 @@
+[
+  {
+    "name": "offline",
+    "job": 118179006510,
+    "exit_code": 1,
+    "bytes": 0
+  },
+  {
+    "name": "registry",
+    "job": 118179005521,
+    "exit_code": 1,
+    "bytes": 0
+  }
+]

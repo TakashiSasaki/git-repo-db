@@ -1,0 +1,23 @@
+{
+  "README.md": "22c76bd29359ff896cc077a24e869cbdf3df32417264a0aa8a482e84fc402dda",
+  "acceptance-01.log": "2e9a02dcb85c8c4e8a962f64574c311d66d69425af6b5916224a38fed63289d2",
+  "acceptance-01.xml": "cdc7395988849b2f823a03f9dbb382053ef566acb09dd8bf9542d6a6bdd98229",
+  "acceptance-02.log": "220d4d5613c1580e96aae85dec36c6f2b9d450f5821a1ae29270f7aaa1fa826f",
+  "acceptance-02.xml": "dce221b3c1fc50ab50f5f41aa663f70e6348e6d447a8336d4538375bc4057459",
+  "acceptance-summary.json": "e73babaddfc4989403c50d41e13227833f24c4c3487475b83f12b03aa7a01d05",
+  "collection-development.log": "b5430531124dc7096f98e155ee9860ad32cbf94f5650054f5eaeaa33c75dddd1",
+  "collection.log": "f1159124aad763d43396c2714ab586ea6678c683a7376e0ce10ca97e165901ab",
+  "development-01.log": "42d650364215cbe653a8caa4c46122f58bda18b5c6f7ab3201584bbb2bdb794f",
+  "development-02.log": "03b40d924023b0c82b4c00a49d8783d9ddb7a5dba342d88daecbca80c815db79",
+  "development-03.log": "a99978c19008cfef45538dadddd81aaea9b9c926864775ef8727ba1060aa329f",
+  "development-04.log": "0b9438aeb2d4cc1a7516cf888c0a71d64b75ac452595d09e16be535cdb580d8c",
+  "development-05-focused.log": "794e8d0bd87a77afb217364ae0b8a51286cb58fe29eae7c1029b8f7f78581d21",
+  "development-06-focused.log": "c9ced58171a478393cbdf6301848c7a9f4abba72acb00da3457826bd487ae041",
+  "development-07-focused.log": "b67f01caa08cb5bc9c45c6854dd192c8a0b4a1aa9a2e6abd496216fc8ca18ad1",
+  "environment.json": "1f1649b8e9492111780c9e74243f53940791d42a9a145f85b7433b04561d4711",
+  "executed.nodes.txt": "727c0ebe63366a2db98d1d5d5defb6e1cc3078adfdf42991b82132d680b5712b",
+  "row-key-focused.log": "154a3674e111fccc969452042866cea5392b4bc35a6fd85aa206d292f7bb03ce",
+  "row-key-focused.xml": "4cdeaf61951ac8b94647f864354e2449b99e9359f76ab09545ceea7792249a4f",
+  "ruff-check.log": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+  "ruff-format.log": "fd2299c9f1c6dc869070883e281051bfe93aacf66c1a3b0069f45b4aa410ca50"
+}

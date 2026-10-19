@@ -1,0 +1,19 @@
+{
+  "run": 39287566981,
+  "artifact": 12204800854,
+  "zip_sha256": "baa31d2e9e8edd34af520c5977c6cc58fb1654e2ccb00c7ff13de6352cb0134e",
+  "zip_bytes": 40541246,
+  "source": {
+    "checked_out_commit": "320fe9aa955a97975affb25713b8cfe32c0a58f6",
+    "effective_tree": "cc2eafaaeb8e3305270c17e74ae69edc42c0a50b",
+    "event_commit": "320fe9aa955a97975affb25713b8cfe32c0a58f6"
+  },
+  "collected": 2329,
+  "executed": 2329,
+  "outcomes": {
+    "pass": 2329
+  },
+  "node_multisets_equal": true,
+  "duplicates": 0,
+  "all_422_executable_inputs_match_head": true
+}

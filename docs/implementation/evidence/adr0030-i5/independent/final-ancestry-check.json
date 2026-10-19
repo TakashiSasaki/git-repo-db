@@ -1,0 +1,20 @@
+{
+  "i3_commits": [
+    "5c5b816998f7051703ca400e8cfeab377254c435",
+    "35929d3a06c56545c5982fc8fb57c8d97fc965a2",
+    "3b73cddd92fce7566114100169cfc09899eafdd1",
+    "8f7036d1f44bb2725a8744d8db0810babf82158c",
+    "1cd58cec6fa511a37dcf11ad01d37c22d903d41e",
+    "b7f40fa7e1c556a73d63242aaef5abf5a39b1960"
+  ],
+  "reachable_in_110": {
+    "5c5b816998f7051703ca400e8cfeab377254c435": true,
+    "35929d3a06c56545c5982fc8fb57c8d97fc965a2": true,
+    "3b73cddd92fce7566114100169cfc09899eafdd1": true,
+    "8f7036d1f44bb2725a8744d8db0810babf82158c": true,
+    "1cd58cec6fa511a37dcf11ad01d37c22d903d41e": true,
+    "b7f40fa7e1c556a73d63242aaef5abf5a39b1960": true
+  },
+  "i5_parent": "a54cb218226e3c91c44e979ee0df0543ea459502",
+  "integration_merge_parents": "9b8a6ad9b761bf23b45eda9f84d639569cee56ef 5c5b816998f7051703ca400e8cfeab377254c435"
+}

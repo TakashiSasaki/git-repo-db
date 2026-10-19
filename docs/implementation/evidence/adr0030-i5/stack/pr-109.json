@@ -1,0 +1,32 @@
+{
+  "number": 109,
+  "url": "https://github.com/TakashiSasaki/git-repo-db/pull/109",
+  "state": "open",
+  "draft": true,
+  "head": "9b8a6ad9b761bf23b45eda9f84d639569cee56ef",
+  "head_branch": "impl/adr-0030-i2-provider-intake-20261019",
+  "base": "9390c9f3b54a033e5f07e1cb05d7c4b263c38fb7",
+  "base_branch": "impl/adr-0030-i1-context-relations-20261019",
+  "mergeable": true,
+  "mergeable_state": "unstable",
+  "test_merge": "b226f172e6ddb59763500cda6472f8dcc05f3658",
+  "tree": "7c461c633c137086537158385feb03a1b79d7dfe",
+  "checks": [
+    {
+      "id": 118133617463,
+      "name": "offline",
+      "status": "completed",
+      "conclusion": "success",
+      "details_url": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/39274056583/job/118133617463",
+      "head_sha": "9b8a6ad9b761bf23b45eda9f84d639569cee56ef"
+    },
+    {
+      "id": 118133617165,
+      "name": "registry-sqlite-3513",
+      "status": "completed",
+      "conclusion": "failure",
+      "details_url": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/39274056667/job/118133617165",
+      "head_sha": "9b8a6ad9b761bf23b45eda9f84d639569cee56ef"
+    }
+  ]
+}

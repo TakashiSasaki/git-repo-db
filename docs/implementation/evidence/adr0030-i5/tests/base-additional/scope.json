@@ -1,0 +1,6 @@
+{
+  "selected": 2583,
+  "base_head": "a54cb218226e3c91c44e979ee0df0543ea459502",
+  "base_tree": "cc2eafaaeb8e3305270c17e74ae69edc42c0a50b",
+  "runner_parent_intentionally_suspended_before_additional": "shared mutable I5 excluded; CI child continues"
+}

@@ -1,0 +1,20 @@
+{
+  "command": [
+    "/workspace/i5-results/independent/final-source/.venv/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "--collect-only",
+    "-o",
+    "addopts=",
+    "tests",
+    "-m",
+    "not live and not benchmark"
+  ],
+  "cwd": "/workspace/i5-results/independent/final-source",
+  "started_epoch": 1792431366.5611436,
+  "elapsed_seconds": 3.285,
+  "exit_code": 0,
+  "collected": 4932,
+  "duplicates": 0
+}

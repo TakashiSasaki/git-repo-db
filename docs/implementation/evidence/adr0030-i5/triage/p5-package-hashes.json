@@ -1,0 +1,38 @@
+{
+  "head": [
+    {
+      "file": "/workspace/i5-results/triage/p5-head-packages/direct-repo_catalog-0.2.0-py3-none-any.whl",
+      "sha256": "2ec7c49a81734088ef6f15564c548448f7e79b1786ef86d12bf828c1dd3969cc"
+    },
+    {
+      "file": "/workspace/i5-results/triage/p5-head-packages/direct-repo_catalog-0.2.0.tar.gz",
+      "sha256": "c0bc97b8dde27e06f793ac321210794256ee644ce4948c5a68106e914c886a43"
+    },
+    {
+      "file": "/workspace/i5-results/triage/p5-head-packages/direct-.gitignore",
+      "sha256": "684888c0ebb17f374298b65ee2807526c066094c701bcc7ebbe1c1095f494fc1"
+    },
+    {
+      "file": "/workspace/i5-results/triage/p5-head-packages/sdist-wheel-repo_catalog-0.2.0-py3-none-any.whl",
+      "sha256": "2ec7c49a81734088ef6f15564c548448f7e79b1786ef86d12bf828c1dd3969cc"
+    }
+  ],
+  "main": [
+    {
+      "file": "/workspace/i5-results/triage/p5-main-packages/direct-repo_catalog-0.2.0-py3-none-any.whl",
+      "sha256": "441dc6f00b71046a98c6d28d454bc40f32ed4e4350b380bb3209376ed7b52542"
+    },
+    {
+      "file": "/workspace/i5-results/triage/p5-main-packages/direct-repo_catalog-0.2.0.tar.gz",
+      "sha256": "0785976a0c4e4583039929505124e63b9b8c27b225e1583a37e22c9a46ceeda4"
+    },
+    {
+      "file": "/workspace/i5-results/triage/p5-main-packages/direct-.gitignore",
+      "sha256": "684888c0ebb17f374298b65ee2807526c066094c701bcc7ebbe1c1095f494fc1"
+    },
+    {
+      "file": "/workspace/i5-results/triage/p5-main-packages/sdist-wheel-repo_catalog-0.2.0-py3-none-any.whl",
+      "sha256": "441dc6f00b71046a98c6d28d454bc40f32ed4e4350b380bb3209376ed7b52542"
+    }
+  ]
+}

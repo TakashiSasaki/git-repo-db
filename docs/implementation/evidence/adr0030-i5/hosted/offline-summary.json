@@ -1,0 +1,18 @@
+{
+  "binding": {
+    "feature_sha": "a54cb218226e3c91c44e979ee0df0543ea459502",
+    "head": "320fe9aa955a97975affb25713b8cfe32c0a58f6",
+    "run_attempt": "1",
+    "run_id": "39287566830",
+    "tree": "cc2eafaaeb8e3305270c17e74ae69edc42c0a50b"
+  },
+  "zip_sha256": "0241213421b82fafe1d338e42e22d61e2bf0cf441f5fc2ab62116102a4b8a632",
+  "zip_bytes": 70766,
+  "index_verified": true,
+  "acceptance": {
+    "acceptance_status": "development_checks_passed",
+    "full_acceptance": false,
+    "acceptance_input_hash": "520215b6d13ef8c49174eab814207ca9217f5c38a089c9c01d7d6c27df99106a",
+    "executed_tests": null
+  }
+}

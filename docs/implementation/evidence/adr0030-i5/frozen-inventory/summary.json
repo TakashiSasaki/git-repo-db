@@ -1,0 +1,104 @@
+{
+  "collection": {
+    "all": {
+      "command": [
+        "/workspace/i5-runtime/venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--collect-only",
+        "-o",
+        "addopts=",
+        "tests"
+      ],
+      "cwd": "/workspace/git-repo-db",
+      "started_epoch": 1792431341.8900566,
+      "elapsed_seconds": 4.703,
+      "exit_code": 0,
+      "collected": 4934,
+      "duplicates": 0
+    },
+    "ordinary": {
+      "command": [
+        "/workspace/i5-runtime/venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--collect-only",
+        "-o",
+        "addopts=",
+        "tests",
+        "-m",
+        "not live and not benchmark"
+      ],
+      "cwd": "/workspace/git-repo-db",
+      "started_epoch": 1792431346.5991328,
+      "elapsed_seconds": 3.26,
+      "exit_code": 0,
+      "collected": 4932,
+      "duplicates": 0
+    },
+    "offline": {
+      "command": [
+        "/workspace/i5-runtime/venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--collect-only",
+        "-o",
+        "addopts=",
+        "tests",
+        "-m",
+        "not live"
+      ],
+      "cwd": "/workspace/git-repo-db",
+      "started_epoch": 1792431349.8622646,
+      "elapsed_seconds": 3.186,
+      "exit_code": 0,
+      "collected": 4933,
+      "duplicates": 0
+    },
+    "ci": {
+      "command": [
+        "/workspace/i5-runtime/venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--collect-only",
+        "-o",
+        "addopts=",
+        "tests/unit/test_access_acceptance_values.py",
+        "tests/unit/test_access_backup_values.py",
+        "tests/unit/test_access_connections_values.py",
+        "tests/unit/test_access_registry_values.py",
+        "tests/unit/test_context_registration_values.py",
+        "tests/unit/test_native_acquisition_values.py",
+        "tests/integration/access",
+        "tests/integration/i2",
+        "tests/integration/i23",
+        "tests/integration/i4",
+        "tests/integration/i5",
+        "tests/integration/p1",
+        "tests/integration/p3",
+        "tests/integration/p5",
+        "tests/integration/i3",
+        "tests/integration/p2",
+        "tests/integration/p4",
+        "tests/integration/p6",
+        "tests/integration/p7",
+        "tests/integration/p5_p6_compatibility",
+        "-m",
+        "not live and not benchmark"
+      ],
+      "cwd": "/workspace/git-repo-db",
+      "started_epoch": 1792431353.053162,
+      "elapsed_seconds": 1.894,
+      "exit_code": 0,
+      "collected": 2349,
+      "duplicates": 0
+    }
+  },
+  "runs": {},
+  "changed_inputs": [],
+  "inputs_unchanged": true
+}

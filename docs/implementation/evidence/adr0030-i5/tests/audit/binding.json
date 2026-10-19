@@ -1,0 +1,19 @@
+{
+  "head": "a54cb218226e3c91c44e979ee0df0543ea459502",
+  "tree": "cc2eafaaeb8e3305270c17e74ae69edc42c0a50b",
+  "dirty": "?? scripts/verify_i5_offline.py\n?? tests/integration/i5/",
+  "python": "3.13.5",
+  "executable": "/workspace/i5-runtime/venv/bin/python",
+  "sqlite_version": "3.51.3",
+  "sqlite_source_id": "2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618",
+  "package_paths": [
+    "/workspace/git-repo-db/src/repo_catalog"
+  ],
+  "LD_LIBRARY_PATH": "/workspace/i5-runtime",
+  "files": {
+    "pyproject.toml": "13146bd784022dc375f1d425236c2c2d0d9ec3a735c7f3eeae1e65dc41d450ce",
+    "uv.lock": "38086f956741ff31865ed75f5a1d48997ab518fbc2a2dac8e0e5277cd6a413c9",
+    "/workspace/git-repo-db/scripts/verify_i5_offline.py": "f0a5ef5246e272c9d083a868c94a48567bb1b31643de4d60a371da0bc3f26d49"
+  },
+  "note": "Concurrent timings are not sequential benchmark measurements."
+}

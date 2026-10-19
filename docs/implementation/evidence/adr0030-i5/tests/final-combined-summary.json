@@ -1,0 +1,114 @@
+{
+  "final_source_commit": "c2c3735439a714bbc9d4128421e7be2c0e88f5b4",
+  "final_source_tree": "fdafb830ba63a7f547c5882fe677f9d25ae36bd3",
+  "collection": {
+    "all": 4934,
+    "ordinary": 4932,
+    "offline": 4933,
+    "current_ci": 2353,
+    "outside_current_ci_ordinary": 2579,
+    "benchmark": 1,
+    "live_not_run": 1
+  },
+  "per_run": {
+    "base_ci": {
+      "artifact": "tests/audit/ci-run.xml",
+      "executed": 2329,
+      "passed": 2329,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0
+    },
+    "base_additional_original": {
+      "artifact": "tests/base-additional-fixed-path/additional.xml",
+      "executed": 2583,
+      "passed": 2579,
+      "failed": 4,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0
+    },
+    "benchmark": {
+      "artifact": "tests/base-benchmark/benchmark.xml",
+      "executed": 1,
+      "passed": 1,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0
+    },
+    "i5_e2e": {
+      "artifact": "e2e/acceptance-02.xml",
+      "executed": 20,
+      "passed": 20,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0
+    },
+    "packaging_fixture_corrected_author": {
+      "artifact": "packaging-correction/corrected.xml",
+      "executed": 4,
+      "passed": 4,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0
+    }
+  },
+  "original_supplemental_is_still_exit_1_with_four_failures": true,
+  "current_successful_unique_nodes": 4933,
+  "successful_records": 4933,
+  "no_duplicate_current_success_nodes": true,
+  "current_successful_multiset_equals_all_nonlive": true,
+  "current_ci_is_subset_of_local_success": true,
+  "old_four_failed_keys_equal_corrected_four_keys": true,
+  "independent_corrected_four_pass_keys_match": true,
+  "four_node_resolution": [
+    {
+      "classname": "tests.packaging.test_p5_distribution",
+      "name": "test_p5_installed_acquisition_and_exchange[sha1-sdist-wheel]",
+      "old": "failed TypeError: unexpected repository_uuidv4",
+      "corrected_author": "passed",
+      "independent_review_artifact": "independent/corrected-p5.xml"
+    },
+    {
+      "classname": "tests.packaging.test_p5_distribution",
+      "name": "test_p5_installed_acquisition_and_exchange[sha1-wheel]",
+      "old": "failed TypeError: unexpected repository_uuidv4",
+      "corrected_author": "passed",
+      "independent_review_artifact": "independent/corrected-p5.xml"
+    },
+    {
+      "classname": "tests.packaging.test_p5_distribution",
+      "name": "test_p5_installed_acquisition_and_exchange[sha256-sdist-wheel]",
+      "old": "failed TypeError: unexpected repository_uuidv4",
+      "corrected_author": "passed",
+      "independent_review_artifact": "independent/corrected-p5.xml"
+    },
+    {
+      "classname": "tests.packaging.test_p5_distribution",
+      "name": "test_p5_installed_acquisition_and_exchange[sha256-wheel]",
+      "old": "failed TypeError: unexpected repository_uuidv4",
+      "corrected_author": "passed",
+      "independent_review_artifact": "independent/corrected-p5.xml"
+    }
+  ],
+  "live_not_run": [
+    "tests/live/test_smoke.py::test_selected_repository"
+  ],
+  "not_run_reason": "Real GitHub acquisition prohibited by the user; not a skip/pass.",
+  "binding_artifact": "tests/base-to-final2-executable-binding.json",
+  "limitations": [
+    "Current success uses explicit unchanged-input binding of earlier runs plus corrected fixture retest; not a claim one monolithic final-HEAD pytest ran.",
+    "Historical exit1/four failures and interrupted setup runs remain preserved.",
+    "Independent four-node XML is reconciled here; root must attach the independent reviewer final process receipt and judgment.",
+    "No release, owner merge approval or P8 activation is established."
+  ]
+}

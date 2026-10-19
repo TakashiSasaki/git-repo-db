@@ -1,0 +1,36 @@
+{
+  "purpose": "Independent representative check of supplemental legacy CLI environment failure",
+  "head": "a54cb218226e3c91c44e979ee0df0543ea459502",
+  "tree": "cc2eafaaeb8e3305270c17e74ae69edc42c0a50b",
+  "dirty": " M .github/workflows/access-registry.yml\n?? scripts/verify_i5_offline.py\n?? tests/integration/i5/\n",
+  "python": "3.13.5 (main, Jul 15 2026, 20:25:40) [GCC 14.2.0]",
+  "executable": "/workspace/i5-runtime/venv/bin/python",
+  "sqlite": "3.51.3",
+  "sqlite_source_id": "2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618",
+  "cli": "/workspace/i5-runtime/venv/bin/repo-catalog",
+  "cli_shebang": "#!/workspace/i5-runtime/venv/bin/python",
+  "PATH": "/workspace/i5-runtime/venv/bin:/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/override:/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin:/opt/codex/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/fallback",
+  "LD_LIBRARY_PATH": "/workspace/i5-runtime",
+  "command": [
+    "/workspace/i5-runtime/python",
+    "-m",
+    "pytest",
+    "-q",
+    "--override-ini",
+    "addopts=",
+    "--tb=short",
+    "tests/e2e/test_cli_contract.py",
+    "tests/e2e/test_backup.py"
+  ],
+  "results": {
+    "collected": 3,
+    "run": 3,
+    "passed": 3,
+    "failure": 0,
+    "error": 0,
+    "skip": 0,
+    "xfail": 0
+  },
+  "log_sha256": "1d739448b1b6ed517a5df29e9f76a6a005241e1cfb390d7a4302e18e0c9de291",
+  "conclusion": "Original missing repo-catalog subprocess environment failure does not reproduce after venv/bin PATH binding. No product correction warranted for this failure."
+}

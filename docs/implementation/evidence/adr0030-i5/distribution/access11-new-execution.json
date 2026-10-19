@@ -1,0 +1,26 @@
+{
+  "reviewed_commit": "a54cb218226e3c91c44e979ee0df0543ea459502",
+  "reviewed_tree": "cc2eafaaeb8e3305270c17e74ae69edc42c0a50b",
+  "collected": 2,
+  "executed": 2,
+  "passed": 2,
+  "failed": 0,
+  "errors": 0,
+  "skipped": 0,
+  "xfail": 0,
+  "fixture_development_attempts": [
+    {
+      "receipt": "access11-fixture-attempt1.xml",
+      "failed": 2,
+      "reason": "probe SQL used incorrect existing column name; product not implicated"
+    },
+    {
+      "receipt": "access11-fixture-attempt2.xml",
+      "failed": 2,
+      "reason": "probe SQL used incorrect existing column name; product not implicated"
+    }
+  ],
+  "probe_file_sha256": "b539a15d1bf51cb8ba96fab40f7258260dc97ba80356c91b66d40f7d318f302b",
+  "python": "3.13.5",
+  "sqlite": "3.51.3"
+}

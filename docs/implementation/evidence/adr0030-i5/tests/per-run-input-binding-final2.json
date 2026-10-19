@@ -1,0 +1,42 @@
+{
+  "base-additional-fixed-path": {
+    "before_after_changed": [
+      "scripts/verify_i5_offline.py",
+      "tests/integration/i5/test_independent_e2e.py"
+    ],
+    "before_to_frozen_final2_changed": [
+      ".github/workflows/access-registry.yml",
+      "scripts/verify_i5_offline.py",
+      "tests/integration/i5/test_independent_e2e.py",
+      "tests/packaging/test_p5_distribution.py"
+    ],
+    "after_to_frozen_final2_changed": [
+      ".github/workflows/access-registry.yml",
+      "tests/packaging/test_p5_distribution.py"
+    ],
+    "production_src_unchanged_before_after": true,
+    "original_test_changes_require_resolution": [
+      "tests/packaging/test_p5_distribution.py"
+    ],
+    "interpretation": "I5 test file excluded from base runs. Runner evolves as evidence harness only; P5 packaging fixture old four failures explicitly resolved with author and independent four-node retests. The other418 original executable files bind unchanged."
+  },
+  "base-benchmark": {
+    "before_after_changed": [
+      "tests/integration/i5/test_independent_e2e.py"
+    ],
+    "before_to_frozen_final2_changed": [
+      ".github/workflows/access-registry.yml",
+      "tests/integration/i5/test_independent_e2e.py",
+      "tests/packaging/test_p5_distribution.py"
+    ],
+    "after_to_frozen_final2_changed": [
+      ".github/workflows/access-registry.yml",
+      "tests/packaging/test_p5_distribution.py"
+    ],
+    "production_src_unchanged_before_after": true,
+    "original_test_changes_require_resolution": [
+      "tests/packaging/test_p5_distribution.py"
+    ],
+    "interpretation": "I5 test file excluded from base runs. Runner evolves as evidence harness only; P5 packaging fixture old four failures explicitly resolved with author and independent four-node retests. The other418 original executable files bind unchanged."
+  }
+}

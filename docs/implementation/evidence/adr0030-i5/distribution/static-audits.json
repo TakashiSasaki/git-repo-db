@@ -1,0 +1,109 @@
+[
+  {
+    "label": "ruff-lint",
+    "argv": [
+      "/workspace/i5-runtime/venv/bin/ruff",
+      "check",
+      "src",
+      "tests",
+      "scripts"
+    ],
+    "cwd": "/workspace/git-repo-db",
+    "exit_code": 0,
+    "elapsed_seconds": 0.10981740700000842,
+    "stdout_bytes": 19,
+    "stderr_bytes": 0
+  },
+  {
+    "label": "ruff-format",
+    "argv": [
+      "/workspace/i5-runtime/venv/bin/ruff",
+      "format",
+      "--check",
+      "src",
+      "tests",
+      "scripts"
+    ],
+    "cwd": "/workspace/git-repo-db",
+    "exit_code": 0,
+    "elapsed_seconds": 0.17268358599997669,
+    "stdout_bytes": 28,
+    "stderr_bytes": 0
+  },
+  {
+    "label": "build_p1_schema",
+    "argv": [
+      "/workspace/i5-runtime/python",
+      "scripts/build_p1_schema.py",
+      "--check"
+    ],
+    "cwd": "/workspace/git-repo-db",
+    "exit_code": 0,
+    "elapsed_seconds": 0.3074893680000059,
+    "stdout_bytes": 71,
+    "stderr_bytes": 0
+  },
+  {
+    "label": "audit_p1_schema",
+    "argv": [
+      "/workspace/i5-runtime/python",
+      "scripts/audit_p1_schema.py",
+      "--check"
+    ],
+    "cwd": "/workspace/git-repo-db",
+    "exit_code": 0,
+    "elapsed_seconds": 0.19529046800002448,
+    "stdout_bytes": 88,
+    "stderr_bytes": 0
+  },
+  {
+    "label": "audit_callsite_dependencies",
+    "argv": [
+      "/workspace/i5-runtime/python",
+      "scripts/audit_callsite_dependencies.py",
+      "--check"
+    ],
+    "cwd": "/workspace/git-repo-db",
+    "exit_code": 0,
+    "elapsed_seconds": 1.218922221000014,
+    "stdout_bytes": 42,
+    "stderr_bytes": 0
+  },
+  {
+    "label": "audit_implementation_boundary",
+    "argv": [
+      "/workspace/i5-runtime/python",
+      "scripts/audit_implementation_boundary.py",
+      "--check"
+    ],
+    "cwd": "/workspace/git-repo-db",
+    "exit_code": 0,
+    "elapsed_seconds": 1.6103266190000056,
+    "stdout_bytes": 1182,
+    "stderr_bytes": 0
+  },
+  {
+    "label": "audit_context_registration",
+    "argv": [
+      "/workspace/i5-runtime/python",
+      "scripts/audit_context_registration.py"
+    ],
+    "cwd": "/workspace/git-repo-db",
+    "exit_code": 0,
+    "elapsed_seconds": 0.25346284099998684,
+    "stdout_bytes": 82,
+    "stderr_bytes": 0
+  },
+  {
+    "label": "audit_access_acceptance",
+    "argv": [
+      "/workspace/i5-runtime/python",
+      "scripts/audit_access_acceptance.py"
+    ],
+    "cwd": "/workspace/git-repo-db",
+    "exit_code": 0,
+    "elapsed_seconds": 0.9325358330000029,
+    "stdout_bytes": 542,
+    "stderr_bytes": 0
+  }
+]

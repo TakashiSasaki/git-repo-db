@@ -1,0 +1,124 @@
+{
+  "reviewed_commit": "a54cb218226e3c91c44e979ee0df0543ea459502",
+  "reviewed_tree": "cc2eafaaeb8e3305270c17e74ae69edc42c0a50b",
+  "executions": [
+    {
+      "sqlite": "3.51.3",
+      "sqlite_source_id": "2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618",
+      "module_origin": "/workspace/git-repo-db/src/repo_catalog/__init__.py",
+      "interpreter": "/workspace/i5-runtime/venv/bin/python",
+      "ddl_sha256": "89bcafeda815150fa4770f5758edf7d2d36d505b76717aa19054f9ad689765da",
+      "context_ddl_sha256": "fa7838f86d9f0ab4b2f26c561ad0721df2d0c7dad45ee97e72ff09cbb89ac434",
+      "table_count": 19,
+      "exchange_format": "git-repo-db/adr0030-exchange-v4",
+      "python_version": "3.13.5 (main, Jul 15 2026, 20:25:40) [GCC 14.2.0]",
+      "ddl_fingerprints": {
+        "core": "3f9f828ad0aff5fae1039f30a3baa29165dbabe6decc5a4f204e78e674b940fe",
+        "context": "fa7838f86d9f0ab4b2f26c561ad0721df2d0c7dad45ee97e72ff09cbb89ac434",
+        "operational": "76598c5a630d4044c5a123587911a62411d55946072ba071109dd7db52f029a5",
+        "search": "a1bce192ebf67bc3846f47a5bc63ba2927a97bddf65eb62706ec2e9f9fc5d303"
+      },
+      "relation_roles": [
+        "represents_repository",
+        "owning_repository",
+        "base_repository",
+        "head_repository",
+        "transfer_from_repository",
+        "transfer_to_repository"
+      ],
+      "local_git_acquired": true,
+      "access_backup_restored": true,
+      "scope_forked": true,
+      "installed_i2_i3_cross_seed": "passed",
+      "installed_i4_query_search_backup": "passed",
+      "installed_smoke": "passed",
+      "artifact_kind": "source"
+    },
+    {
+      "sqlite": "3.51.3",
+      "sqlite_source_id": "2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618",
+      "module_origin": "/workspace/i5-results/distribution/wheel/lib/python3.13/site-packages/repo_catalog/__init__.py",
+      "interpreter": "/workspace/i5-results/distribution/wheel/bin/python",
+      "ddl_sha256": "89bcafeda815150fa4770f5758edf7d2d36d505b76717aa19054f9ad689765da",
+      "context_ddl_sha256": "fa7838f86d9f0ab4b2f26c561ad0721df2d0c7dad45ee97e72ff09cbb89ac434",
+      "table_count": 19,
+      "exchange_format": "git-repo-db/adr0030-exchange-v4",
+      "python_version": "3.13.5 (main, Jul 15 2026, 20:25:40) [GCC 14.2.0]",
+      "ddl_fingerprints": {
+        "core": "3f9f828ad0aff5fae1039f30a3baa29165dbabe6decc5a4f204e78e674b940fe",
+        "context": "fa7838f86d9f0ab4b2f26c561ad0721df2d0c7dad45ee97e72ff09cbb89ac434",
+        "operational": "76598c5a630d4044c5a123587911a62411d55946072ba071109dd7db52f029a5",
+        "search": "a1bce192ebf67bc3846f47a5bc63ba2927a97bddf65eb62706ec2e9f9fc5d303"
+      },
+      "relation_roles": [
+        "represents_repository",
+        "owning_repository",
+        "base_repository",
+        "head_repository",
+        "transfer_from_repository",
+        "transfer_to_repository"
+      ],
+      "local_git_acquired": true,
+      "access_backup_restored": true,
+      "scope_forked": true,
+      "installed_i2_i3_cross_seed": "passed",
+      "installed_i4_query_search_backup": "passed",
+      "installed_smoke": "passed",
+      "artifact_kind": "wheel",
+      "wheel_sha256": "2ec7c49a81734088ef6f15564c548448f7e79b1786ef86d12bf828c1dd3969cc",
+      "source_sdist_sha256": "30b729520dea7e10295f4f8710b662c85e068e6c2d4a8de1e5bfbf79ea921195"
+    },
+    {
+      "sqlite": "3.51.3",
+      "sqlite_source_id": "2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618",
+      "module_origin": "/workspace/i5-results/distribution/sdist-wheel/lib/python3.13/site-packages/repo_catalog/__init__.py",
+      "interpreter": "/workspace/i5-results/distribution/sdist-wheel/bin/python",
+      "ddl_sha256": "89bcafeda815150fa4770f5758edf7d2d36d505b76717aa19054f9ad689765da",
+      "context_ddl_sha256": "fa7838f86d9f0ab4b2f26c561ad0721df2d0c7dad45ee97e72ff09cbb89ac434",
+      "table_count": 19,
+      "exchange_format": "git-repo-db/adr0030-exchange-v4",
+      "python_version": "3.13.5 (main, Jul 15 2026, 20:25:40) [GCC 14.2.0]",
+      "ddl_fingerprints": {
+        "core": "3f9f828ad0aff5fae1039f30a3baa29165dbabe6decc5a4f204e78e674b940fe",
+        "context": "fa7838f86d9f0ab4b2f26c561ad0721df2d0c7dad45ee97e72ff09cbb89ac434",
+        "operational": "76598c5a630d4044c5a123587911a62411d55946072ba071109dd7db52f029a5",
+        "search": "a1bce192ebf67bc3846f47a5bc63ba2927a97bddf65eb62706ec2e9f9fc5d303"
+      },
+      "relation_roles": [
+        "represents_repository",
+        "owning_repository",
+        "base_repository",
+        "head_repository",
+        "transfer_from_repository",
+        "transfer_to_repository"
+      ],
+      "local_git_acquired": true,
+      "access_backup_restored": true,
+      "scope_forked": true,
+      "installed_i2_i3_cross_seed": "passed",
+      "installed_i4_query_search_backup": "passed",
+      "installed_smoke": "passed",
+      "artifact_kind": "sdist-wheel",
+      "wheel_sha256": "2ec7c49a81734088ef6f15564c548448f7e79b1786ef86d12bf828c1dd3969cc",
+      "source_sdist_sha256": "30b729520dea7e10295f4f8710b662c85e068e6c2d4a8de1e5bfbf79ea921195"
+    }
+  ],
+  "wheel_payload_bytes_equal": true,
+  "artifacts": [
+    {
+      "path": "/workspace/i5-results/distribution/built/repo_catalog-0.2.0-py3-none-any.whl",
+      "sha256": "2ec7c49a81734088ef6f15564c548448f7e79b1786ef86d12bf828c1dd3969cc",
+      "bytes": 745869
+    },
+    {
+      "path": "/workspace/i5-results/distribution/built/repo_catalog-0.2.0.tar.gz",
+      "sha256": "30b729520dea7e10295f4f8710b662c85e068e6c2d4a8de1e5bfbf79ea921195",
+      "bytes": 29443179
+    },
+    {
+      "path": "/workspace/i5-results/distribution/rebuilt/repo_catalog-0.2.0-py3-none-any.whl",
+      "sha256": "2ec7c49a81734088ef6f15564c548448f7e79b1786ef86d12bf828c1dd3969cc",
+      "bytes": 745869
+    }
+  ]
+}

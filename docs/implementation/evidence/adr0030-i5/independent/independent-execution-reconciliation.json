@@ -1,0 +1,51 @@
+{
+  "archived_product_419_plus_external_30": {
+    "selected": 449,
+    "junit_executed": 449,
+    "selected_junit_multisets_equal": true,
+    "duplicate_free": true,
+    "passed": 449,
+    "failed": 0,
+    "error": 0,
+    "skip": 0,
+    "xfail": 0,
+    "xpass": 0,
+    "normal_exit": 0
+  },
+  "final_i5_20": {
+    "selected": 20,
+    "junit_executed": 20,
+    "selected_junit_multisets_equal": true,
+    "duplicate_free": true,
+    "passed": 20,
+    "failed": 0,
+    "error": 0,
+    "skip": 0,
+    "xfail": 0,
+    "xpass": 0,
+    "normal_exit": 0
+  },
+  "explicit_backup_scopes_4": {
+    "selected": 4,
+    "junit_executed": 4,
+    "selected_junit_multisets_equal": true,
+    "duplicate_free": true,
+    "passed": 4,
+    "failed": 0,
+    "error": 0,
+    "skip": 0,
+    "xfail": 0,
+    "xpass": 0,
+    "normal_exit": 0
+  },
+  "existing_group_counts": {
+    "i3": 66,
+    "i23": 34,
+    "i4": 26,
+    "p7": 255,
+    "p1": 38
+  },
+  "completed_pytest_unique_total": 473,
+  "extra_helper_controls": 7,
+  "note": "All three commands returned normal process exit0; JUnit has no skips/xfails/xpasses. Overlapping preliminary runs are excluded."
+}

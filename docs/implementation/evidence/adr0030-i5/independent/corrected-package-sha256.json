@@ -1,0 +1,17 @@
+[
+  {
+    "path": "/tmp/i5-independent-corrected-final-p5/p1-packages0/sdist-wheel/repo_catalog-0.2.0-py3-none-any.whl",
+    "bytes": 745869,
+    "sha256": "2ec7c49a81734088ef6f15564c548448f7e79b1786ef86d12bf828c1dd3969cc"
+  },
+  {
+    "path": "/tmp/i5-independent-corrected-final-p5/p1-packages0/dist/repo_catalog-0.2.0-py3-none-any.whl",
+    "bytes": 745869,
+    "sha256": "2ec7c49a81734088ef6f15564c548448f7e79b1786ef86d12bf828c1dd3969cc"
+  },
+  {
+    "path": "/tmp/i5-independent-corrected-final-p5/p1-packages0/dist/repo_catalog-0.2.0.tar.gz",
+    "bytes": 29458319,
+    "sha256": "6d420078e1b8c44a64536a0c66a0f51813e109af459b18fe90735c5dbd358c04"
+  }
+]

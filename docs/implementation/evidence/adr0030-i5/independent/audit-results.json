@@ -1,0 +1,73 @@
+[
+  {
+    "name": "schema-build",
+    "command": [
+      "/workspace/i5-results/independent/source/.venv/bin/python",
+      "scripts/build_p1_schema.py",
+      "--check"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "schema-audit",
+    "command": [
+      "/workspace/i5-results/independent/source/.venv/bin/python",
+      "scripts/audit_p1_schema.py",
+      "--check"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "registration",
+    "command": [
+      "/workspace/i5-results/independent/source/.venv/bin/python",
+      "scripts/audit_context_registration.py"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "callsite",
+    "command": [
+      "/workspace/i5-results/independent/source/.venv/bin/python",
+      "scripts/audit_callsite_dependencies.py",
+      "--check"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "boundary",
+    "command": [
+      "/workspace/i5-results/independent/source/.venv/bin/python",
+      "scripts/audit_implementation_boundary.py",
+      "--check"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "ruff",
+    "command": [
+      "/workspace/i5-results/independent/source/.venv/bin/python",
+      "-m",
+      "ruff",
+      "check",
+      "src",
+      "tests",
+      "scripts"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "format",
+    "command": [
+      "/workspace/i5-results/independent/source/.venv/bin/python",
+      "-m",
+      "ruff",
+      "format",
+      "--check",
+      "src",
+      "tests",
+      "scripts"
+    ],
+    "exit_code": 0
+  }
+]
