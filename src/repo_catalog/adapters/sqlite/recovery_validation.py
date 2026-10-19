@@ -185,11 +185,15 @@ def validate_stored_context_relations(connection: sqlite3.Connection) -> None:
             obs_values = {r.observed_at_us for r in rels}
             from_prov_repo = None
             to_prov_repo = None
-            event_type = "transferred"
+            if key_coord not in scope_meta:
+                raise BackupValidationError(
+                    "Stored Transfer endpoint requires transfer_event_report scope"
+                )
+            event_type = None
             if key_coord in scope_meta:
                 s_dict, s_obs = scope_meta[key_coord]
                 obs_values.add(s_obs)
-                event_type = s_dict.get("event_type", "transferred")
+                event_type = s_dict.get("event_type")
                 if s_dict.get("from_provider_repository_id") is not None:
                     from_prov_repo = ResourceKey(
                         svc, "repository", s_dict["from_provider_repository_id"]

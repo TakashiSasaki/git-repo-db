@@ -13,6 +13,7 @@ from collections.abc import Callable, Iterable
 
 from repo_catalog.domain.p1_context import (
     RELATION_KINDS,
+    TRANSFER_RELATION_KINDS,
     CoverageClaim,
     CoverageProjection,
     CoverageScope,
@@ -116,6 +117,16 @@ class ContextStore:
         """
         if not isinstance(relation, ResourceRepositoryRelation):
             raise ValueError("ResourceRepositoryRelation required")
+        if relation.relation_kind in TRANSFER_RELATION_KINDS:
+            raise ValueError("Transfer endpoints require admit_transfer_event()")
+        return self._admit_repository_relation(
+            relation, require_support=require_support
+        )
+
+    def _admit_repository_relation(
+        self, relation: ResourceRepositoryRelation, *, require_support: bool = False
+    ) -> str:
+        """Insert a validated row; Transfer callers must validate the whole report first."""
         self.db.execute("SAVEPOINT p1_repository_relation")
         try:
             coords = relation.claim_key.coordinates()
@@ -183,6 +194,8 @@ class ContextStore:
         """Typed admission outcome wrapper distinguishing missing support dependency."""
         if not isinstance(relation, ResourceRepositoryRelation):
             raise ValueError("ResourceRepositoryRelation required")
+        if relation.relation_kind in TRANSFER_RELATION_KINDS:
+            raise ValueError("Transfer endpoints require admit_transfer_event()")
         support = relation.embedded_support
         if support is not None:
             for claim in support.supporting_claims:
@@ -366,7 +379,7 @@ class ContextStore:
                 )
 
             outcomes = [
-                self.admit_repository_relation(rel) for rel in incoming_endpoints
+                self._admit_repository_relation(rel) for rel in incoming_endpoints
             ]
             self.db.execute("RELEASE p1_transfer_event")
             if matched_scope and all(o == "duplicate" for o in outcomes):
@@ -805,10 +818,14 @@ class ContextStore:
             )
             from_prov_repo = None
             to_prov_repo = None
-            event_type = "transferred"
+            if key_coord not in scope_meta:
+                raise ValueError(
+                    "Stored Transfer endpoint requires transfer_event_report scope"
+                )
+            event_type = None
             if key_coord in scope_meta:
                 s_dict, _ = scope_meta[key_coord]
-                event_type = s_dict.get("event_type", "transferred")
+                event_type = s_dict.get("event_type")
                 if s_dict.get("from_provider_repository_id") is not None:
                     from_prov_repo = ResourceKey(
                         svc, "repository", s_dict["from_provider_repository_id"]

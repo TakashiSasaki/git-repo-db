@@ -63,7 +63,7 @@ Relationships are strictly partitioned into 6 roles:
 | Relation Role | Resource Kind | Description | Candidate Pruning |
 | :--- | :--- | :--- | :--- |
 | `represents_repository` | `repository` | Maps Provider repository identity to Core repository UUIDv4 | No (immutable claims) |
-| `owning_repository` | `issue` | Issue or pull request ownership | Yes (clock-dominated) |
+| `owning_repository` | `issue` | Issue ownership | Yes (clock-dominated) |
 | `base_repository` | `pull_request` | PR target base branch repository | Yes (clock-dominated) |
 | `head_repository` | `pull_request` | PR source head branch repository | Yes (clock-dominated) |
 | `transfer_from_repository` | `comment` (timeline_event) | Issue transfer origin repository | No (event report) |
@@ -109,14 +109,14 @@ Downstream callers requiring semantics from future ADR 0030 stages fail with exp
 
 | Stage | Files Affected | Status in I1 | Action Required in Target Stage |
 | :--- | :--- | :--- | :--- |
-| **I2** | `domain/acquisition.py`<br>`application/acquisition.py`<br>`adapters/github/production_intake.py` | Raises `ContextError("UNSUPPORTED_UNTIL_I2")` on relation admission paths | Implement GitHub GraphQL intake for timeline transfer events and multi-relation extraction. |
-| **I3** | `domain/exchange.py`<br>`application/exchange.py`<br>`adapters/sqlite/acquisition.py` | Raises `ContextError("UNSUPPORTED_UNTIL_I3")` on transfer exchange paths | Implement selective export/import accounting for transfer relations and mapping dispositions. |
-| **I4** | `domain/production_query.py`<br>`application/production_query.py`<br>`adapters/sqlite/production_search.py`<br>`recovery.py` | Raises `ContextError("UNSUPPORTED_UNTIL_I4")` on repository resolution | Implement multi-relation query resolution and search index projection over `resource_repository_relations`. |
+| **I2** | `domain/acquisition.py`<br>`application/acquisition.py`<br>`adapters/github/production_intake.py` | Raises `AcquisitionError("UNSUPPORTED_UNTIL_I2")` on relation admission paths | Implement GitHub GraphQL intake for timeline transfer events and multi-relation extraction. |
+| **I3** | `domain/exchange.py`<br>`application/exchange.py`<br>`adapters/sqlite/acquisition.py` | Raises `ExchangeError("UNSUPPORTED_UNTIL_I3")` on transfer exchange paths | Implement selective export/import accounting for transfer relations and mapping dispositions. |
+| **I4** | `domain/production_query.py`<br>`application/production_query.py`<br>`adapters/sqlite/production_search.py`<br>`recovery.py` | Raises `QueryError("UNSUPPORTED_UNTIL_I4")` on repository resolution | Implement multi-relation query resolution and search index projection over `resource_repository_relations`. |
 | **I5** | Test & acceptance suites | Deferred | Combined integration testing and final end-to-end acceptance. |
 
 ## 7. Verification Evidence & Counterexamples
 
-The full test suite validates all 17 counterexamples specified in ADR 0030 Section 6 in `tests/integration/p1/test_context_relations.py`:
+The original I1 specification listed 17 counterexamples; the previous reviewed tree added cases 18–20. The contract-freeze gate adds cases 21–24 below. These are focused I1 checks, not full downstream acceptance:
 
 - **Counterexample 1**: Conflicting immutable mappings in reverse arrival order survive; exact resend yields duplicate.
 - **Counterexample 2**: Current candidate clock pruning prunes only strictly dominated comparable values.
@@ -139,6 +139,13 @@ The full test suite validates all 17 counterexamples specified in ADR 0030 Secti
 - **Counterexample 19**: Transfer event type enforcement. Transfer event roles strictly require genuine `event_type='transferred'` timeline events.
 - **Counterexample 20**: Transfer event `selected_repositories` generator normalization. Single-pass generators are normalized at entry to ensure identical filtering across multiple events.
 
+- **Counterexample 21**: Both Transfer roles are rejected by generic admission and result APIs in the reference Store and production Context, including replay; complete reports remain admissible.
+- **Counterexample 22**: Stored endpoints without a report scope or explicit `event_type="transferred"` fail read/recovery validation; event type is never inferred.
+- **Counterexample 23**: Endpoint FK failure rolls back the event Resource, report scope and all endpoint rows together.
+- **Counterexample 24**: Generic `Context.relation()` cannot insert a `transfer_event_report` scope without the complete typed report.
+
+See [the contract-freeze record](adr0030-i1-contract-freeze.md) for current execution and exact review targets.
+
 ### Public Context Facade Hardening
 
 1. **RelationKind Runtime Validation**:
@@ -151,7 +158,7 @@ The full test suite validates all 17 counterexamples specified in ADR 0030 Secti
    - Return type of `ContextStore.admit_transfer_event()` aligned to `str`.
    - `require_support: bool = False` forwarded from facade to store implementation.
 
-Test execution evidence:
+Historical execution evidence at `ebcf865ede7ee661446b6fd7edf1be6ef7e623a8` (tree `e61ffd6d0aac0f27ae109fb5debedc96cdd2e860`), retained separately from the new gate run:
 - `tests/integration/p1`: 337 tests passed (including 20/20 in `test_context_relations.py`).
 - `tests/integration/p3`: 76 tests passed.
 - `tests/integration/access`: 483 tests passed.
@@ -165,66 +172,67 @@ Test execution evidence:
 
 ## 8. Categorization and Root Cause Analysis of 37 Post-I1 Integration Failures
 
-Extended regression tests in P5 and P6 exhibit 37 failures. None of these failures stem from defects in Stage I1; all represent planned boundaries awaiting downstream implementation or fixture modernization.
+GitHub run [39239845865](https://github.com/TakashiSasaki/git-repo-db/actions/runs/39239845865), retrieved again for the freeze gate, reports **1,861 passed / 37 failed** on the previous HEAD. The direct causes below establish blocked downstream execution, not proof that the unexecuted downstream code is correct. No failures are hidden, skipped or marked xfail. The separate Transfer admission defect is fixed and regression-tested by this gate.
 
 ### 8.1 Summary Matrix
 
 | Subsystem | Failure Count | Root Cause Code | Assigned Stage | Resolution Requirement |
 | :--- | :--- | :--- | :--- | :--- |
 | **P5 (Intake / Admission)** | 5 | `UNSUPPORTED_UNTIL_I2` | **Stage I2** | Implement GitHub GraphQL intake for timeline transfer events and multi-relation extraction into `resource_repository_relations`. |
-| **P5 (Exchange)** | 5 | `UNSUPPORTED_UNTIL_I3` | **Stage I3** | Implement selective export/import accounting for `resource_repository_relations` and `repository_mapping_dispositions`. |
+| **P5 (Exchange integration)** | 5 | `UNSUPPORTED_UNTIL_I2` during source fixture intake, before Exchange | **I2 prerequisite → I3** | First restore valid source acquisition in I2; then run Exchange integration under I3. These five failures do not directly observe an I3 error. |
 | **P6 (Query / Search)** | 27 | Retired API Dependency (`Context.admit_repository`) | **Stage I4** | Implement multi-relation query projection over `resource_repository_relations`; modernize P6 fixtures in `conftest.py` to use `admit_repository_relation`. |
 | **Total** | **37** | | | |
+
+The I3 standalone boundary control `tests/integration/p5/test_exchange.py::test_i1_relation_export_guard_without_i2_acquisition` builds a source via I1 typed admission and directly asserts the existing `UNSUPPORTED_UNTIL_I3` export refusal. That passing refusal check proves only the boundary, not I3 selective Exchange behavior. After I2, rerun the original five integration tests; they remain required.
 
 ### 8.2 Detailed Pytest Node Inventory
 
 #### Stage I2 Failures (5 tests)
 1. `tests/integration/p5/test_corrections.py::test_repository_unknown_observation_retained_without_fabricated_coordinates`
-   - *Root Cause*: `ContextError: UNSUPPORTED_UNTIL_I2` raised on provider relation intake path.
+   - *Root Cause*: `AcquisitionError: UNSUPPORTED_UNTIL_I2` raised on provider relation intake path.
    - *Assigned Stage*: Stage I2 (Provider intake).
    - *Expected Resolution*: Stage I2 admission pipeline handles multi-relation extraction.
 2. `tests/integration/p5/test_paired_admission.py::test_core_first_context_second_and_failure_retry_convergence`
-   - *Root Cause*: `ContextError: UNSUPPORTED_UNTIL_I2` on paired relation admission.
+   - *Root Cause*: The assertion expecting the later injected `RuntimeError` instead receives an `AdmissionFailure.cause` of `AcquisitionError: UNSUPPORTED_UNTIL_I2`; the intended failure cut is not reached.
    - *Assigned Stage*: Stage I2 (Provider intake).
    - *Expected Resolution*: Coordinated paired admission writes to `resource_repository_relations`.
 3. `tests/integration/p5/test_paired_admission.py::test_late_core_dependency_reconciliation`
-   - *Root Cause*: `ContextError: UNSUPPORTED_UNTIL_I2` during dependency reconciliation.
+   - *Root Cause*: `AcquisitionError: UNSUPPORTED_UNTIL_I2` during dependency reconciliation.
    - *Assigned Stage*: Stage I2 (Provider intake).
    - *Expected Resolution*: Late reconciliation resolves candidate status via multi-relation queries.
 4. `tests/integration/p5/test_provider_acquisition.py::test_issue_vs_pull_request_intake_isolation`
-   - *Root Cause*: `ContextError: UNSUPPORTED_UNTIL_I2` on issue/PR intake.
+   - *Root Cause*: `AcquisitionError: UNSUPPORTED_UNTIL_I2` on issue/PR intake.
    - *Assigned Stage*: Stage I2 (Provider intake).
    - *Expected Resolution*: Intake processes timeline relations with `owning_repository` and `base_repository`.
 5. `tests/integration/p5/test_provider_acquisition.py::test_explicit_null_vs_missing_fields_and_clock_competition`
-   - *Root Cause*: `ContextError: UNSUPPORTED_UNTIL_I2` on clock competition.
+   - *Root Cause*: `AcquisitionError: UNSUPPORTED_UNTIL_I2` on clock competition.
    - *Assigned Stage*: Stage I2 (Provider intake).
    - *Expected Resolution*: Intake pipeline manages clock domination and pruning.
 
-#### Stage I3 Failures (5 tests)
+#### Exchange integration blocked by I2 (5 tests; later I3 ownership)
 1. `tests/integration/p5/test_exchange.py::test_exchange_export_import_repeat_reverse_and_multi_hop`
-   - *Root Cause*: `ContextError: UNSUPPORTED_UNTIL_I3` on transfer event export.
-   - *Assigned Stage*: Stage I3 (Exchange format).
-   - *Expected Resolution*: Exchange format v3 exports/imports `resource_repository_relations`.
+   - *Root Cause*: `AcquisitionError: UNSUPPORTED_UNTIL_I2`, wrapped in `AdmissionFailure`, while `_setup_source_catalog()` admits the PR relation before export.
+   - *Assigned Stage*: I2 prerequisite, then I3 Exchange integration.
+   - *Expected Resolution*: I2 supplies the source fixture; I3 then exports/imports typed relation units (no new wire version is fixed here).
 2. `tests/integration/p5/test_exchange.py::test_exchange_selective_filters_and_partial_input`
-   - *Root Cause*: `ContextError: UNSUPPORTED_UNTIL_I3` on selective exchange filters.
-   - *Assigned Stage*: Stage I3 (Exchange format).
+   - *Root Cause*: `AcquisitionError: UNSUPPORTED_UNTIL_I2` during source fixture acquisition, before selective export.
+   - *Assigned Stage*: I2 prerequisite, then I3 Exchange integration.
    - *Expected Resolution*: Selective export filters account for relation claim keys and dispositions.
 3. `tests/integration/p5/test_exchange.py::test_exchange_refuses_intrinsic_spoofing_without_validated_bytes`
-   - *Root Cause*: `ContextError: UNSUPPORTED_UNTIL_I3` on exchange payload verification.
-   - *Assigned Stage*: Stage I3 (Exchange format).
+   - *Root Cause*: `AcquisitionError: UNSUPPORTED_UNTIL_I2` during source fixture acquisition, before payload verification.
+   - *Assigned Stage*: I2 prerequisite, then I3 Exchange integration.
    - *Expected Resolution*: Exchange verification checks relation payload provenance.
 4. `tests/integration/p5/test_exchange.py::test_exchange_refuses_tampered_payloads_without_store_corruption`
-   - *Root Cause*: `ContextError: UNSUPPORTED_UNTIL_I3` on tampered relation exchange.
-   - *Assigned Stage*: Stage I3 (Exchange format).
+   - *Root Cause*: `AcquisitionError: UNSUPPORTED_UNTIL_I2` during source fixture acquisition, before tampered input handling.
+   - *Assigned Stage*: I2 prerequisite, then I3 Exchange integration.
    - *Expected Resolution*: Tampered relation payloads trigger rollback without catalog corruption.
 5. `tests/integration/p5/test_exchange.py::test_exchange_evaluates_core_dependencies_against_receiver_core`
-   - *Root Cause*: `ContextError: UNSUPPORTED_UNTIL_I3` during receiver Core evaluation.
-   - *Assigned Stage*: Stage I3 (Exchange format).
+   - *Root Cause*: `AcquisitionError: UNSUPPORTED_UNTIL_I2` during source fixture acquisition, before receiver Core evaluation.
+   - *Assigned Stage*: I2 prerequisite, then I3 Exchange integration.
    - *Expected Resolution*: Receiver Core validates target repositories against imported relations.
 
 #### Stage I4 Failures (27 tests)
-All 27 failures occur in `tests/integration/p6/conftest.py:401` with:
-`AttributeError: 'Context' object has no attribute 'admit_repository'` wrapped in `AdmissionFailure: core+context:ADMISSION_FAILED`.
+All 27 failures directly depend on the retired `Context.admit_repository()` API. Most reach `populate_rich_catalog()` in `tests/integration/p6/conftest.py`; two Context-only tests call the old API directly in `test_queries.py`. The direct exception is `AttributeError`; paired fixtures wrap it in `AdmissionFailure: core+context:ADMISSION_FAILED`. The query engine is not reached by these failing setups.
 In accordance with ADR 0030 Section 2, `Context.admit_repository()` was intentionally retired and must NOT be restored as a compatibility shim.
 
 - `tests/integration/p6/test_cli.py::test_cli_all_subcommands_pagination_and_error_handling`

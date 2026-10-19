@@ -1,6 +1,7 @@
-"""Comprehensive validation covering the 17 ADR 0030 counterexamples for I1 Context relations."""
+"""ADR 0030 I1 counterexamples, including Transfer admission bypasses."""
 
 import sqlite3
+from contextlib import contextmanager
 from uuid import uuid4
 
 import pytest
@@ -29,6 +30,7 @@ from repo_catalog.domain.p1_context import (
 )
 from repo_catalog.domain.p1_coordination import CoordinationError
 from repo_catalog.domain.production_context import ContextError
+from repo_catalog.domain.recovery import BackupValidationError
 
 REPO_1 = "9ebbe38a-f937-40e6-a99c-701835ebcf10"
 REPO_2 = "c58b4f17-f58c-4a33-8bc6-eb52c42337d1"
@@ -41,6 +43,123 @@ KEY_EVENT = ResourceKey.timeline_event(KEY_ISSUE, "event-99")
 
 PROVENANCE_1 = canonical({"source": "provider.example", "evidence": "event-1"})
 PROVENANCE_2 = canonical({"source": "provider.example", "evidence": "event-2"})
+
+
+@pytest.mark.parametrize("production", [False, True])
+@pytest.mark.parametrize("result_api", [False, True])
+@pytest.mark.parametrize("role", ["transfer_from_repository", "transfer_to_repository"])
+def test_transfer_generic_admission_requires_complete_report(
+    context_db, tmp_path, production, result_api, role
+):
+    db, store, _ = context_db
+
+    @contextmanager
+    def selected_store():
+        if not production:
+            yield store
+            return
+        catalog = tmp_path / "production"
+        catalog.mkdir()
+        schema.initialize(catalog / "context.sqlite3", "context", REPO_1, SERVICE)
+        with Context.transaction(catalog) as facade:
+            facade.provider(SERVICE, "github", "{}")
+            facade.repository(REPO_1)
+            facade.resource(KEY_ISSUE)
+            facade.resource(KEY_EVENT)
+            yield facade
+        assert not (catalog / "p1-recovery-stop.json").exists()
+
+    with selected_store() as selected:
+        # Genuine Issue-parented Timeline Event identity alone says nothing
+        # about whether this was a Transfer event.
+        assert not selected.db.execute("SELECT 1 FROM resource_relations").fetchall()
+        endpoint = ResourceRepositoryRelation(
+            KEY_EVENT, role, FieldClock("event", 1), canonical(REPO_1), PROVENANCE_1, 1
+        )
+        admit = (
+            selected.admit_repository_relation_result
+            if result_api
+            else selected.admit_repository_relation
+        )
+        with pytest.raises(ValueError, match="admit_transfer_event"):
+            admit(endpoint)
+        assert not selected.db.execute(
+            "SELECT 1 FROM resource_repository_relations"
+        ).fetchall()
+        report = TransferEventReport(
+            EventReportKey(KEY_EVENT, endpoint.clock, PROVENANCE_1),
+            1,
+            from_relations=(endpoint,) if role == "transfer_from_repository" else (),
+            to_relations=(endpoint,) if role == "transfer_to_repository" else (),
+        )
+        assert selected.admit_transfer_event(report) == "insert"
+        assert selected.admit_transfer_event(report) == "duplicate"
+        # Even exact replay/addition must use the report-level equality check.
+        with pytest.raises(ValueError, match="admit_transfer_event"):
+            admit(endpoint)
+        assert selected.transfer_event_reports() == (report,)
+        validate_stored_context_relations(selected.db)
+
+
+@pytest.mark.parametrize("scope_state", ["absent", "missing_type", "wrong_type"])
+def test_transfer_stored_type_is_never_inferred(context_db, scope_state):
+    db, store, _ = context_db
+    report = TransferEventReport.from_targets(
+        KEY_EVENT,
+        clock=FieldClock("event", 1),
+        provenance_json=PROVENANCE_1,
+        from_target_json=canonical(REPO_1),
+        observed_at_us=1,
+    )
+    endpoint = report.from_relations[0]
+    # SQL can constrain the Event Resource/FK, but cannot prove Provider event
+    # semantics. Model incomplete/untrusted stored data without disabling guards.
+    db.execute(
+        """INSERT INTO resource_repository_relations(
+        service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,
+        clock_json,target_json,provenance_json,observed_at_us) VALUES(?,?,?,?,?,?,?,?)""",
+        (*endpoint.claim_key.coordinates(), endpoint.observed_at_us),
+    )
+    if scope_state != "absent":
+        scope = {
+            "clock": {"domain": "event", "at_us": 1},
+            "provided_roles": ["transfer_from_repository"],
+            "from_provider_repository_id": None,
+            "to_provider_repository_id": None,
+        }
+        if scope_state == "wrong_type":
+            scope["event_type"] = "closed"
+        db.execute(
+            "INSERT INTO resource_relations VALUES(?,?,?,?,?,?,?,?)",
+            (
+                *KEY_EVENT.coordinates(),
+                "transfer_event_report",
+                "[]",
+                PROVENANCE_1,
+                canonical(scope),
+                1,
+            ),
+        )
+    with pytest.raises(ValueError, match="[Tt]ransfer|event_type"):
+        store.transfer_event_reports()
+    with pytest.raises(BackupValidationError, match="[Tt]ransfer|event_type"):
+        validate_stored_context_relations(db)
+
+
+def test_transfer_report_fk_failure_rolls_back_whole_unit(context_db):
+    db, store, _ = context_db
+    event = ResourceKey.timeline_event(KEY_ISSUE, "failed-transfer")
+    report = TransferEventReport.from_targets(
+        event,
+        clock=FieldClock("event", 1),
+        provenance_json=PROVENANCE_1,
+        from_target_json=canonical(REPO_1),
+        to_target_json=canonical(str(uuid4())),
+    )
+    before = list(db.iterdump())
+    with pytest.raises(sqlite3.IntegrityError):
+        store.admit_transfer_event(report)
+    assert list(db.iterdump()) == before
 
 
 @pytest.fixture
@@ -287,7 +406,6 @@ def test_counterexample_5_transfer_cases_no_invented_endpoints(context_db):
         PROVENANCE_1,
         10,
     )
-    store.admit_repository_relation(r_from)
 
     report_from = TransferEventReport(
         report_key=ev_key,
@@ -309,7 +427,6 @@ def test_counterexample_5_transfer_cases_no_invented_endpoints(context_db):
         PROVENANCE_1,
         10,
     )
-    store.admit_repository_relation(r_to)
 
     report_both = TransferEventReport(
         report_key=ev_key,
@@ -319,6 +436,7 @@ def test_counterexample_5_transfer_cases_no_invented_endpoints(context_db):
     )
     assert len(report_both.from_relations) == 1
     assert len(report_both.to_relations) == 1
+    assert store.admit_transfer_event(report_both) == "insert"
 
 
 # Counterexample 6: Exact ClaimKey with changed observation time: rejected.

@@ -39,10 +39,42 @@ from repo_catalog.domain.exchange import (
     decode_package,
     encode_package,
 )
-from repo_catalog.domain.p1_context import ResourceKey
+from repo_catalog.domain.p1_context import (
+    FieldClock,
+    ResourceKey,
+    ResourceRepositoryRelation,
+    canonical,
+)
 from repo_catalog.domain.p1_coordination import RequestIdentity
 from repo_catalog.domain.p1_core import OID, CoreFailure
 from tests.integration.p5.conftest import build_sample_git_repo, init_catalog_stores
+
+
+def test_i1_relation_export_guard_without_i2_acquisition(tmp_path: Path) -> None:
+    """Direct I3 boundary control; the five integration tests still stop in I2."""
+    repo, service = str(uuid4()), str(uuid4())
+    init_catalog_stores(
+        tmp_path, repository_uuidv4=repo, stores=("core", "context", "operational")
+    )
+    resource = ResourceKey(service, "issue", "7")
+    with Context.transaction(tmp_path) as context:
+        context.provider(service, "github", "{}")
+        context.repository(repo)
+        context.resource(resource)
+        context.admit_repository_relation(
+            ResourceRepositoryRelation(
+                resource,
+                "owning_repository",
+                FieldClock("event", 1),
+                canonical(repo),
+                make_provenance("fixture", "direct-I1"),
+                1,
+            )
+        )
+    with pytest.raises(ExchangeError) as refused:
+        ExchangeService(tmp_path).export_package(exported_at_us=2)
+    assert refused.value.code == "UNSUPPORTED_UNTIL_I3"
+    assert not (tmp_path / "p1-recovery-stop.json").exists()
 
 
 def _setup_source_catalog(

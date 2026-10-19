@@ -259,3 +259,15 @@ feature tracking refs stale. Fetch the intended refs explicitly, compare direct
 before an ordinary non-force reconciliation. A rejected push is a synchronization
 boundary, not authorization to force-push. Evidence-only commits must retain the
 frozen executable input hashes; report tested source SHA and final PR SHA apart.
+
+## Classify the first reached failure, separately from future ownership
+
+When a downstream integration test fails during a source fixture, record that
+direct exception and the unexecuted stage separately. PR #107's five P5 Exchange
+tests stopped in acquisition with UNSUPPORTED_UNTIL_I2; their names did not prove
+that an I3 guard or Exchange validation ran. Use a separate I1-seeded source to
+exercise the I3 boundary without I2, and keep the original integration failures
+visible until I2 supplies their real fixtures. A passing unsupported-boundary
+assertion proves refusal, not implementation of the deferred stage. Likewise,
+retired API fixture failures precede query behavior; do not claim query acceptance
+from those runs or restore a retired compatibility shim just to turn them green.

@@ -36,3 +36,21 @@ python -m pytest -q tests/unit/test_context_registration_values.py tests/integra
 
 The A3 report records author-run failures, corrections and tested scope. Neither
 this note nor a green checksum/test result establishes human or sender identity.
+
+## Complete typed reports must close every public admission route
+
+For ADR 0030 Transfer work, do not infer event type from an Issue-parented
+Timeline Event identity. The typed FK proves the Resource shape; it cannot prove
+that the Provider reported a Transfer. A constructor check on TransferEventReport
+does not protect generic endpoint or ResourceRelation admission. Exercise both
+Transfer roles through the reference Store, production Context, result wrappers
+and generic scope API before declaring the typed gate closed. Route writes through
+the complete report's savepoint and replay comparison; retain explicit event type
+in its existing resource_relations scope. Never reconstruct a missing stored type
+as transferred. SQL constraints and typed semantic admission have distinct scope;
+this does not implement live Provider authenticity or authorize I2 acquisition.
+
+Run the Transfer tests in tests/integration/p1/test_context_relations.py and the
+generic scope test in tests/integration/p3/test_production_context.py. Include
+valid one-sided/two-sided reports, repeat delivery, whole-unit rollback and invalid
+stored-scope controls. See the [freeze record](../../../../docs/implementation/adr0030-i1-contract-freeze.md).

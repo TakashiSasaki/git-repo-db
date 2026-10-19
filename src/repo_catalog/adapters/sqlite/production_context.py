@@ -532,6 +532,8 @@ class Context(ContextStore):
 
     def relation(self, relation: ResourceRelation) -> str:
         with self._unit():
+            if relation.relation_kind == "transfer_event_report":
+                raise ValueError("Transfer reports require admit_transfer_event()")
             self._members(relation.resource, relation.relation_kind, relation.members)
             key = (
                 *relation.resource.coordinates(),

@@ -86,6 +86,21 @@ def field(
     )
 
 
+def test_generic_resource_relation_cannot_register_transfer_scope(context):
+    db, store, path = context
+    issue = ResourceKey(SERVICE, "issue", "transfer-parent")
+    event = ResourceKey.timeline_event(issue, "real-event")
+    store.resource(issue)
+    store.resource(event)
+    scope = ResourceRelation(event, "transfer_event_report", (), PROVENANCE, "{}", 1)
+    with pytest.raises(ValueError, match="admit_transfer_event"):
+        store.relation(scope)
+    assert not db.execute(
+        "SELECT 1 FROM resource_relations WHERE relation_kind='transfer_event_report'"
+    ).fetchall()
+    assert not (path.parent / "p1-recovery-stop.json").exists()
+
+
 def collection(
     key=KEY,
     *,
