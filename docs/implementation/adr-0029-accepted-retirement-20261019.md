@@ -44,10 +44,19 @@ No new UUID or surrogate may be introduced for storage convenience.
 The original independent R4 review mapped **43 clauses** of ADR 0003, including
 its **six implementation acceptance criteria**, to proposed ADR 0029 and
 already-accepted refinements ADRs 0004, 0014, 0026, 0028. It found no material
-loss. This remains the original R4's evidence, not a new independently executed
-review. Use the [full clause map](evidence/access-a6-independent-20261018/r4/adr-clause-map.md)
-for every original clause; ADR 0029 carries the binding family-level table
-as operative text.
+loss. Use the [full clause map](evidence/access-a6-independent-20261018/r4/adr-clause-map.md)
+for the pre-approval baseline map. Following post-acceptance review, commit
+`af6b5ecca3c9ece3200db85da4c99d35bdbf5cbb` explicitly restored the six concrete
+implementation acceptance requirements (`### Preserved implementation acceptance requirements`)
+and the `DS-R05` / [ADR 0030](../adr/0030-context-repository-relations-and-selective-exchange.md)
+scope boundary directly into [ADR 0029](../adr/0029-independent-access-store.md)
+alongside its family-level carry-forward table, and reconciled active agent
+guidance (`AGENTS.md`, `docs/phase2/AGENTS.md`, `docs/phase2/documentation-status-audit.md`,
+`.agents/skills/adr-workflow/SKILL.md`, `.agents/skills/sqlite-schema-visualization/SKILL.md`).
+Subsequent independent review (`R1`–`R4`, recorded under
+`docs/implementation/evidence/adr-0029-0030-final-review-20261019/`) re-verified
+all 43 ADR 0003 items and cross-document invariants against the primary
+pre-retirement text at `bb878eda47cf17268dd821c74343bac64d769ea7`.
 
 | Domain | Retained normative rule |
 | --- | --- |
@@ -76,7 +85,11 @@ A Markdown link to the deleted current path cannot remain a current live link.
 Update current authority banners/index and skill directions to ADR 0029.
 Older ADRs that directly cite ADR 0003 **as their historical predecessor**
 should instead link to the fixed pre-retirement Git revision above, keeping
-the original historical decision context.
+the original historical decision context. Public-site-staged
+[ADR 0002](../adr/0002-three-store-boundary-architecture.md) pins its external
+GitHub link to the reconciled [ADR 0029](../adr/0029-independent-access-store.md)
+revision (`af6b5ecca3c9ece3200db85da4c99d35bdbf5cbb`) so strict MkDocs site
+validation succeeds without expanding the public Pages allowlist.
 
 Do **not** rewrite genuine historical hashes, package-member manifests, old
 source receipts or timestamped reports. Do **not** change the preexisting
@@ -101,13 +114,13 @@ original ADR 0003, 0029/0030 and R4 evidence. Future reviewers must inspect
 the actual PR head and base, not assume the current main branch has adopted
 the stacked design.
 
-This change is documentation only. Required checks: exact single-parent diff,
+This change is documentation only. Required checks: exact parent-to-head diff,
 ADR 0029 accepted/status/date/replaces; old ADR removed; ADR index current and
 watermark; full current Markdown/agent incoming references; pinned historical
 predecessor links; accepted legacy clauses; relative links; no frozen
 distribution/CI/manifest rewrites; no code/SQL/product schema change. Record
-what actually ran in the PR body and do not claim product or independent
-acceptance from an offline prose check.
+what actually ran in the PR body and do not claim product runtime acceptance
+from an offline prose check.
 
 The future Access implementation/independent review, runtime/default switches,
 and merges remain separately authorized operations. ADR 0029 acceptance makes
