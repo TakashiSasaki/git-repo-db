@@ -26,7 +26,7 @@ from repo_catalog.domain.production_context import ResourceRelation
 from repo_catalog.domain.production_query import PageRequest, QueryError, SearchQuery
 from repo_catalog.domain.recovery import (
     BackupScope,
-    BackupValidationError,
+    CorruptionDetectedError,
     RestoreValidationError,
 )
 from tests.integration.i23.test_provider_exchange import claim, producer, provenance
@@ -517,7 +517,8 @@ def test_invalid_authoritative_provider_scope_stops_service(tmp_path, operation)
             source, tmp_path / "backup"
         ),
     }
-    with pytest.raises((CoreFailure, BackupValidationError)):
+    expected_error = CorruptionDetectedError if operation == "backup" else CoreFailure
+    with pytest.raises(expected_error):
         operations[operation]()
     assert (source / "p1-recovery-stop.json").exists()
     assert not (tmp_path / "backup").exists()
