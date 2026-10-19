@@ -1593,7 +1593,15 @@ def normalize_timeline_event(
         or parent_key.resource_kind != parent_kind
     ):
         raise AcquisitionError("EVENT_PARENT_MISMATCH", "timeline_event")
+    database_aliases = set()
     if graphql and isinstance(payload.get("issue"), dict):
+        database_aliases = {
+            canonical_database_id(payload["issue"][name], name)
+            for name in ("fullDatabaseId", "databaseId")
+            if payload["issue"].get(name) is not None
+        }
+        if len(database_aliases) > 1:
+            raise AcquisitionError("EVENT_PARENT_MISMATCH", "timeline_event")
         if (
             "__typename" in payload["issue"]
             and payload["issue"]["__typename"] != "Issue"
@@ -1617,12 +1625,7 @@ def normalize_timeline_event(
             if "id" in observed_issue
             else set()
         )
-        database_aliases = {
-            canonical_database_id(observed_issue[name], name)
-            for name in ("fullDatabaseId", "databaseId")
-            if observed_issue.get(name) is not None
-        }
-        if len(database_aliases) > 1 or pid not in observed_aliases | database_aliases:
+        if pid not in observed_aliases | database_aliases:
             raise AcquisitionError("EVENT_PARENT_MISMATCH", "timeline_event")
     eid = github_timeline_input_id(event_id, graphql=graphql)
     if "id" not in payload:

@@ -417,6 +417,7 @@ def test_graphql_transfer_parent_namespace_and_original_type(tmp_path):
         (True, "I_wrong", {"id": "I_actual", "databaseId": 7}),
         (True, "I_actual", None),
         (True, "I_actual", {"id": "I_actual", "databaseId": 8}),
+        (True, 7, {"id": "I_actual", "fullDatabaseId": 7, "databaseId": 8}),
         (True, "I_actual", {"id": "I_actual", "databaseId": 7, "fullDatabaseId": 8}),
     ],
 )
