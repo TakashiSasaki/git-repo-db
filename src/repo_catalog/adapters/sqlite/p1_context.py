@@ -24,6 +24,7 @@ from repo_catalog.domain.p1_context import (
     MappingDisposition,
     MappingOperationEvidence,
     QualifiedMappingEvaluation,
+    QualifiedProviderRepositoryRole,
     RelationAdmissionResult,
     RelationKind,
     ResolvedRepositoryRelation,
@@ -36,6 +37,8 @@ from repo_catalog.domain.p1_context import (
     p1_mapping_clock,
     p1_mapping_provenance,
     p1_mapping_target,
+    qualify_provider_role_scopes,
+    validate_provider_repository_scope,
     validate_relation_resource_kind,
 )
 from repo_catalog.domain.p1_coverage import derive_coverage_state
@@ -687,6 +690,47 @@ class ContextStore:
             ):
                 matched.append(self._qualify_relation(rel, evidence=evidence))
         return tuple(matched)
+
+    def provider_repository_roles(
+        self, resource: ResourceKey, *, evidence: MappingOperationEvidence | None = None
+    ) -> tuple[QualifiedProviderRepositoryRole, ...]:
+        records = []
+        for members, provenance, scope_json, observed in self.db.execute(
+            "SELECT members_json,provenance_json,scope_json,observed_at_us FROM resource_relations WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=? AND relation_kind='provider_repository_roles' ORDER BY scope_json,provenance_json",
+            resource.coordinates(),
+        ):
+            actual_members = tuple(ResourceKey(*m) for m in json.loads(members))
+            scope = validate_provider_repository_scope(
+                resource, actual_members, provenance, scope_json, observed
+            )
+            for role in scope.roles.values():
+                provider = (
+                    None
+                    if role.provider_repository_id is None
+                    else ResourceKey(
+                        resource.service_instance_uuidv4,
+                        "repository",
+                        role.provider_repository_id,
+                    )
+                )
+                if provider is not None:
+                    if not self.db.execute(
+                        "SELECT 1 FROM resources WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=?",
+                        provider.coordinates(),
+                    ).fetchone():
+                        raise ValueError("Provider role member resource missing")
+                evaluation = (
+                    None
+                    if provider is None
+                    else self.evaluate_provider_repository(provider, evidence=evidence)
+                )
+                records.append(
+                    QualifiedProviderRepositoryRole(
+                        resource, role, provenance, evaluation
+                    )
+                )
+        kept = qualify_provider_role_scopes([r.scope for r in records])
+        return tuple(r for r in records if r.scope in kept)
 
     def transfer_event_reports(
         self,

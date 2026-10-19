@@ -2233,6 +2233,140 @@ def qualify_provider_role_scopes(
     )
 
 
+def validate_provider_repository_scope(
+    resource, members, provenance_json, scope_json, observed_at_us
+):
+    """Validate current Provider roles; real Transfer reports use their dedicated path."""
+    scope = ProviderRepositoryScope.from_json(scope_json)
+    MappingProvenance.from_json(provenance_json)
+    expected = set()
+    for role in scope.roles.values():
+        if role.relation_kind not in CURRENT_CANDIDATE_RELATION_KINDS:
+            raise ValueError("Transfer roles require the complete Transfer report API")
+        validate_relation_resource_kind(
+            role.relation_kind, resource.resource_kind, resource.provider_resource_id
+        )
+        if role.observed_at_us != observed_at_us:
+            raise ValueError("Provider role original observation mismatch")
+        if role.provider_repository_id is not None:
+            expected.add(
+                ResourceKey(
+                    resource.service_instance_uuidv4,
+                    "repository",
+                    role.provider_repository_id,
+                )
+            )
+    if len(members) != len(expected) or set(members) != expected:
+        raise ValueError("Provider role members do not match declared scope")
+    return scope
+
+
+@dataclass(frozen=True)
+class QualifiedProviderRepositoryRole:
+    """Original Provider report plus present mapping qualifications; never a stored winner."""
+
+    resource: ResourceKey
+    scope: ProviderRepositoryRoleScope
+    provenance_json: str
+    mapping: QualifiedMappingEvaluation | None = None
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.resource, ResourceKey) or not isinstance(
+            self.scope, ProviderRepositoryRoleScope
+        ):
+            raise ValueError("Typed Resource and Provider role scope required")
+        if self.scope.relation_kind not in CURRENT_CANDIDATE_RELATION_KINDS:
+            raise ValueError(
+                "Transfer qualification requires the complete Transfer report API"
+            )
+        validate_relation_resource_kind(
+            self.scope.relation_kind,
+            self.resource.resource_kind,
+            self.resource.provider_resource_id,
+        )
+        MappingProvenance.from_json(self.provenance_json)
+        if self.scope.state == "explicit_null":
+            if self.mapping is not None:
+                raise ValueError("Explicit NULL cannot carry Mapping support")
+        elif self.mapping is not None:
+            provider = ResourceKey(
+                self.resource.service_instance_uuidv4,
+                "repository",
+                self.scope.provider_repository_id,
+            )
+            if (
+                not isinstance(self.mapping, QualifiedMappingEvaluation)
+                or self.mapping.provider_repository != provider
+            ):
+                raise ValueError(
+                    "Mapping evaluation must name the exact Provider Repository"
+                )
+            if any(
+                not isinstance(claim, MappingClaimKey) or claim.resource != provider
+                for claim in self.mapping.active_claims
+            ):
+                raise ValueError(
+                    "Supporting ClaimKeys must name the exact Provider Repository"
+                )
+
+    @property
+    def state(self) -> str:
+        if self.scope.state == "explicit_null":
+            return "explicit_null"
+        if self.mapping is None or self.mapping.state == "unmapped":
+            return "unresolved_provider_only"
+        return self.mapping.state
+
+    @property
+    def supports(self) -> tuple[MappingSupport, ...]:
+        if self.mapping is None:
+            return ()
+        by_target: dict[str, list[MappingClaimKey]] = {}
+        for claim in self.mapping.active_claims:
+            by_target.setdefault(claim.target_json, []).append(claim)
+        return tuple(
+            MappingSupport(claims[0].resource, tuple(claims))
+            for _, claims in sorted(by_target.items())
+        )
+
+    @property
+    def resolved_candidates(self) -> tuple[ResourceRepositoryRelation, ...]:
+        if self.scope.state == "explicit_null":
+            return (
+                ResourceRepositoryRelation(
+                    self.resource,
+                    self.scope.relation_kind,
+                    self.scope.clock,
+                    "null",
+                    self.provenance_json,
+                    self.scope.observed_at_us,
+                ),
+            )
+        provenance = self.provenance
+        return tuple(
+            ResourceRepositoryRelation(
+                self.resource,
+                self.scope.relation_kind,
+                self.scope.clock,
+                canonical(support.target_repository_uuidv4),
+                encode_supported_provenance(
+                    provenance.source,
+                    provenance.evidence,
+                    support,
+                    claimed_issuer=provenance.claimed_issuer
+                    if provenance.claimed_issuer_state != "omitted"
+                    else OMITTED_ISSUER,
+                ),
+                self.scope.observed_at_us,
+            )
+            for support in self.supports
+        )
+
+    @property
+    def provenance(self) -> MappingProvenance:
+        return MappingProvenance.from_json(self.provenance_json)
+
+
 @dataclass(frozen=True)
 class CoverageScope:
     owner_kind: OwnerKind

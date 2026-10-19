@@ -3,6 +3,7 @@ name: Access registry focused verification
 on:
   pull_request:
     paths:
+      - 'tests/integration/i2/**'
       - '.github/workflows/access-registry.yml'
       - 'src/repo_catalog/**/access*.py'
       - 'src/repo_catalog/adapters/sqlite/access_ddl/**'
@@ -102,6 +103,7 @@ jobs:
           db.close()
           PY
           uv run --no-sync pytest -q tests/unit/test_access*_values.py tests/unit/test_context_registration_values.py tests/unit/test_native_acquisition_values.py tests/integration/access \
+            tests/integration/i2 \
             tests/integration/p1/test_schema.py tests/integration/p1/test_context.py \
             tests/integration/p1/test_validation_stop.py tests/integration/p1/test_coordination.py \
             tests/integration/p1/test_disposition.py tests/integration/p1/test_context_relations.py \
@@ -109,6 +111,7 @@ jobs:
             tests/integration/p2 tests/integration/p4 tests/integration/p6 tests/integration/p7 \
             --collect-only > artifacts/access-registry/collected.txt
           uv run --no-sync pytest -q tests/unit/test_access*_values.py tests/unit/test_context_registration_values.py tests/unit/test_native_acquisition_values.py tests/integration/access \
+            tests/integration/i2 \
             tests/integration/p1/test_schema.py tests/integration/p1/test_context.py \
             tests/integration/p1/test_validation_stop.py tests/integration/p1/test_coordination.py \
             tests/integration/p1/test_disposition.py tests/integration/p1/test_context_relations.py \

@@ -163,10 +163,12 @@ def test_repository_unknown_observation_retained_without_fabricated_coordinates(
     with Context.snapshot(cat) as ctx:
         rows = ctx.db.execute("SELECT observed_at_us FROM field_candidates").fetchall()
         assert rows and all(row[0] is None for row in rows)
+        assert not ctx.db.execute(
+            "SELECT 1 FROM resource_repository_relations"
+        ).fetchall()
     with pytest.raises(ValueError):
         normalize_repository_fields(
             svc,
-            repo,
             {"name": "missing id"},
             None,
             '{"evidence":"synthetic","source":"synthetic"}',

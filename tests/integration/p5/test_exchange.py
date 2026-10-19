@@ -111,19 +111,36 @@ def _setup_source_catalog(
         "title": "Initial Feature PR",
         "state": "open",
         "body": "PR description body text",
-        "head": {"sha": oids["commit2"].full_oid, "ref": "feat/init"},
-        "base": {"sha": oids["commit1"].full_oid, "ref": "main"},
+        "head": {
+            "sha": oids["commit2"].full_oid,
+            "ref": "feat/init",
+            "repo": {"id": 2},
+        },
+        "base": {"sha": oids["commit1"].full_oid, "ref": "main", "repo": {"id": 1}},
     }
     batch = ProviderIntakeBatch(
         service_instance_uuidv4=service_uuid,
         providers=(ProviderRegistration(service_uuid, "github"),),
         repositories=(RepositoryRegistration(repo_uuid),),
+        mapping_claims=tuple(
+            ResourceRepositoryRelation(
+                ResourceKey(service_uuid, "repository", str(provider_id)),
+                "represents_repository",
+                FieldClock("fixture:mapping", 1),
+                canonical(repo_uuid),
+                make_provenance(
+                    "fixture",
+                    {"provider_id": provider_id, "binding": "explicit-test-report"},
+                ),
+                1,
+            )
+            for provider_id in (1, 2)
+        ),
         pull_requests=(
             ProviderPullRequestIntake(
                 pr_payload,
                 1_700_000_150_000_000,
                 prov_json,
-                repository_uuidv4=repo_uuid,
             ),
         ),
     )

@@ -37,6 +37,31 @@ python -m pytest -q tests/unit/test_context_registration_values.py tests/integra
 The A3 report records author-run failures, corrections and tested scope. Neither
 this note nor a green checksum/test result establishes human or sender identity.
 
+## Provider intake must bind native coordinates before qualification
+
+For ADR 0030 I2, preserve opaque GitHub Repository Node IDs in their own
+namespace, even when databaseId is also observed. A numeric ID or successful
+Core/OID/URL operation cannot establish the Core Repository mapping. Exercise
+same-target/different-Provider ClaimKeys and retain raw Provider scopes when
+mapping is unresolved or later disputed. For current ownership, use
+provider_repository_roles(): a newer unresolved Provider owner must not fall
+back to an old materialized Core-target relation. I4 consumers must carry this
+qualified-read distinction through their integration.
+
+Bind Transfer type evidence to the exact Event Resource, parent, clock,
+observation and provenance. A parent_resource override cannot discard a
+contradictory parent_id. For a GraphQL Node/database parent alias, require an
+actual Issue payload containing both exact original coordinates; do not decode
+opaque IDs or accept a different Node ID with the same claimed database ID.
+Replay the same original report after Mapping changes without reissuing its
+EventReportKey or observation provenance. Test caller-owned Context batches with
+a caught mid-batch exception: the complete batch needs its own savepoint.
+
+Reproduce with tests/integration/i2/test_provider_intake.py, including parent
+contradiction, event replay, latest unresolved affiliation and external-capability
+rollback cases. See the [I2 handoff](../../../../docs/implementation/adr0030-i2-provider-intake.md).
+These checks prove typed observation consistency, not remote origin authenticity.
+
 ## Complete typed reports must close every public admission route
 
 For ADR 0030 Transfer work, do not infer event type from an Issue-parented

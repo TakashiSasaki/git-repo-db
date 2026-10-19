@@ -20,7 +20,9 @@ from repo_catalog.domain.p1_context import (
 )
 from repo_catalog.domain.p1_context import (
     FieldClock,
+    MappingDisposition,
     ResourceKey,
+    ResourceRepositoryRelation,
     canonical,
 )
 from repo_catalog.domain.p1_coordination import PairAdmission
@@ -197,6 +199,7 @@ class RepositoryRegistration:
     observed_at_us: int | None = None
     provenance_json: str | None = None
     clock_domain: str = "github:repository:updated_at"
+    graphql: bool = False
 
     def __post_init__(self) -> None:
         uuid4_value(self.repository_uuidv4)
@@ -229,14 +232,11 @@ class ProviderIssueIntake:
     payload: dict[str, object]
     observed_at_us: int | None
     provenance_json: str
-    repository_uuidv4: str | None = None
     graphql: bool = False
 
     def __post_init__(self) -> None:
         validate_observation_us(self.observed_at_us)
         json_value(self.provenance_json, provenance=True)
-        if self.repository_uuidv4 is not None:
-            uuid4_value(self.repository_uuidv4)
 
 
 @dataclass(frozen=True)
@@ -244,14 +244,11 @@ class ProviderPullRequestIntake:
     payload: dict[str, object]
     observed_at_us: int | None
     provenance_json: str
-    repository_uuidv4: str | None = None
     graphql: bool = False
 
     def __post_init__(self) -> None:
         validate_observation_us(self.observed_at_us)
         json_value(self.provenance_json, provenance=True)
-        if self.repository_uuidv4 is not None:
-            uuid4_value(self.repository_uuidv4)
 
 
 @dataclass(frozen=True)
@@ -318,9 +315,31 @@ class ProviderTimelineIntake:
     observed_at_us: int | None
     provenance_json: str
 
+    graphql: bool = False
+    parent_resource: ResourceKey | None = None
+
     def __post_init__(self) -> None:
         if self.parent_kind not in ("issue", "pull_request"):
             raise AcquisitionError("PARENT_KIND", self.parent_kind)
+        validate_observation_us(self.observed_at_us)
+        json_value(self.provenance_json, provenance=True)
+        if self.parent_resource is not None and (
+            not isinstance(self.parent_resource, ResourceKey)
+            or self.parent_resource.resource_kind != self.parent_kind
+        ):
+            raise AcquisitionError("PARENT_KIND", "timeline_event")
+
+
+@dataclass(frozen=True)
+class ProviderRepositoryIntake:
+    """Provider identity/metadata observation without any implied Core binding."""
+
+    payload: dict[str, object]
+    observed_at_us: int | None
+    provenance_json: str
+    graphql: bool = False
+
+    def __post_init__(self):
         validate_observation_us(self.observed_at_us)
         json_value(self.provenance_json, provenance=True)
 
@@ -351,7 +370,7 @@ class ProviderFileContextIntake:
 
 @dataclass(frozen=True)
 class DetachedResourceTransfer:
-    """Transfer or associate an existing ResourceKey with a new repository without erasing prior provenance."""
+    """Rejected legacy affiliation input; actual events require ProviderTimelineIntake."""
 
     resource: ResourceKey
     target_repository_uuidv4: str | None
@@ -373,6 +392,7 @@ class ProviderIntakeBatch:
     service_instance_uuidv4: str
     providers: tuple[ProviderRegistration, ...] = ()
     repositories: tuple[RepositoryRegistration, ...] = ()
+    provider_repositories: tuple[ProviderRepositoryIntake, ...] = ()
     sources: tuple[SourceRegistration, ...] = ()
     source_inventories: tuple[SourceInventory, ...] = ()
     source_inventory_proofs: tuple[
@@ -387,6 +407,8 @@ class ProviderIntakeBatch:
     timeline_events: tuple[ProviderTimelineIntake, ...] = ()
     pr_commits: tuple[ProviderCommitContextIntake, ...] = ()
     pr_files: tuple[ProviderFileContextIntake, ...] = ()
+    mapping_claims: tuple[ResourceRepositoryRelation, ...] = ()
+    mapping_dispositions: tuple[MappingDisposition, ...] = ()
     transfers: tuple[DetachedResourceTransfer, ...] = ()
     observations: tuple[ResourceObservation, ...] = ()
     relations: tuple[ResourceRelation, ...] = ()
@@ -399,6 +421,18 @@ class ProviderIntakeBatch:
 
     def __post_init__(self) -> None:
         uuid4_value(self.service_instance_uuidv4)
+        for claim in self.mapping_claims:
+            if (
+                not isinstance(claim, ResourceRepositoryRelation)
+                or claim.relation_kind != "represents_repository"
+            ):
+                raise ValueError(
+                    "mapping_claims require explicit represents_repository reports"
+                )
+        if any(
+            not isinstance(d, MappingDisposition) for d in self.mapping_dispositions
+        ):
+            raise ValueError("mapping_dispositions require original typed Dispositions")
 
 
 @dataclass(frozen=True)

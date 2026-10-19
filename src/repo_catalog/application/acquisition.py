@@ -59,7 +59,16 @@ from repo_catalog.domain.native_acquisition import (
     native_request_intent,
 )
 from repo_catalog.domain.notes import NotesInventory
-from repo_catalog.domain.p1_context import FieldClock, ResourceKey
+from repo_catalog.domain.p1_context import (
+    OMITTED_ISSUER,
+    FieldClock,
+    MappingProvenance,
+    MappingSupport,
+    ProviderRepositoryScope,
+    ResourceKey,
+    TransferEventReport,
+    encode_transfer_supported_provenance,
+)
 from repo_catalog.domain.p1_coordination import CoordinationError, RequestIdentity
 from repo_catalog.domain.p1_core import (
     OID,
@@ -1157,6 +1166,7 @@ class ProviderAcquisition:
         pending_list: list[CoreReference],
     ) -> None:
         ctx.resource(core_ref.resource)
+        ctx.report_core_reference(core_ref, clock=clock, observed_at_us=observed_at_us)
         if validate_core(core_ref.oid.object_format, core_ref.oid.full_oid):
             ctx.link_core(
                 core_ref.resource,
@@ -1169,11 +1179,6 @@ class ProviderAcquisition:
             if core_ref not in linked_list:
                 linked_list.append(core_ref)
         else:
-            ctx.report_core_reference(
-                core_ref,
-                clock=clock,
-                observed_at_us=observed_at_us,
-            )
             if core_ref not in pending_list:
                 pending_list.append(core_ref)
 
@@ -1185,22 +1190,13 @@ class ProviderAcquisition:
         admitted: list[ResourceKey],
     ) -> None:
         if key.resource_kind in {"review", "comment", "thread", "document"}:
-            try:
-                parent_tuple = tuple(json.loads(key.provider_resource_id))
-                if len(parent_tuple) == 4:
-                    parent_key = ResourceKey(
-                        key.service_instance_uuidv4,
-                        parent_tuple[0],
-                        parent_tuple[1],
-                    )
-                    self._ensure_resource_hierarchy(
-                        ctx, parent_key, repo_uuid, admitted
-                    )
-                    ctx.resource(parent_key, repo_uuid)
-                    if parent_key not in admitted:
-                        admitted.append(parent_key)
-            except Exception:
-                pass
+            parent_tuple = json.loads(key.provider_resource_id)
+            if type(parent_tuple) is not list or len(parent_tuple) != 4:
+                raise AcquisitionError("RESOURCE_PARENT", key)
+            parent_key = ResourceKey(
+                key.service_instance_uuidv4, parent_tuple[0], parent_tuple[1]
+            )
+            self._ensure_resource_hierarchy(ctx, parent_key, repo_uuid, admitted)
         ctx.resource(key, repo_uuid)
         if key not in admitted:
             admitted.append(key)
@@ -1215,35 +1211,39 @@ class ProviderAcquisition:
         linked_refs: list[CoreReference],
         pending_refs: list[CoreReference],
     ) -> None:
-        if unit.repository_uuidv4 is not None:
-            raise AcquisitionError(
-                "UNSUPPORTED_UNTIL_I2",
-                unit.primary_resource,
-                "Context repository relation intake requires ADR 0030 stage I2",
-            )
         self._ensure_resource_hierarchy(
             ctx, unit.primary_resource, None, admitted_resources
         )
         for obs in unit.observations:
-            self._ensure_resource_hierarchy(
-                ctx, obs.resource, unit.repository_uuidv4, admitted_resources
-            )
+            self._ensure_resource_hierarchy(ctx, obs.resource, None, admitted_resources)
             ctx.observe(obs)
         for extra_text in unit.extra_texts:
             digest = ctx.text(extra_text)
             if digest not in admitted_texts:
                 admitted_texts.append(digest)
         for res_key, text_val, clock, prov, obs_us in unit.text_admissions:
-            self._ensure_resource_hierarchy(
-                ctx, res_key, unit.repository_uuidv4, admitted_resources
-            )
+            self._ensure_resource_hierarchy(ctx, res_key, None, admitted_resources)
             if text_val is not None:
                 digest = ctx.text(text_val)
                 if digest not in admitted_texts:
                     admitted_texts.append(digest)
             ctx.admit_text(res_key, text_val, clock, prov, obs_us)
         for rel in unit.relations:
+            for member in rel.members:
+                self._ensure_resource_hierarchy(ctx, member, None, admitted_resources)
+            if rel.relation_kind == "provider_repository_roles" and unit.transfer_event:
+                continue
             ctx.relation(rel)
+            if rel.relation_kind == "provider_repository_roles":
+                for qualified in ctx.provider_repository_roles(rel.resource):
+                    if qualified.provenance_json == rel.provenance_json:
+                        for candidate in qualified.resolved_candidates:
+                            ctx.admit_repository_relation(
+                                candidate,
+                                require_support=not candidate.is_explicit_null_target,
+                            )
+        if unit.transfer_event:
+            self._admit_transfer_unit(ctx, unit)
         for core_ref, clock, obs_us in unit.core_references:
             self._admit_core_ref(
                 ctx,
@@ -1255,6 +1255,147 @@ class ProviderAcquisition:
                 pending_refs,
             )
 
+    def _admit_transfer_unit(self, ctx, unit):
+        """One actual event observation, paired only within its immutable report."""
+        type_fields = [
+            c
+            for obs in unit.observations
+            for c in obs.fields
+            if c.resource == unit.primary_resource
+            and c.field_name in ("event", "provider_event_type")
+        ]
+        if not type_fields or any(
+            json.loads(c.value_json) not in ("transferred", "TransferredEvent")
+            or c.clock != unit.clock
+            or c.provenance_json != unit.provenance_json
+            or c.observed_at_us != unit.observed_at_us
+            for c in type_fields
+        ):
+            raise AcquisitionError("TRANSFER_TYPE_EVIDENCE", unit.primary_resource)
+        role_relations = [
+            r for r in unit.relations if r.relation_kind == "provider_repository_roles"
+        ]
+        scopes = (
+            ProviderRepositoryScope.from_json(role_relations[0].scope_json)
+            if role_relations
+            else ProviderRepositoryScope({})
+        )
+        if len(role_relations) > 1:
+            raise AcquisitionError("TRANSFER_REPORT_UNIT", unit.primary_resource)
+        if any(
+            role not in ("transfer_from_repository", "transfer_to_repository")
+            for role in scopes.roles
+        ):
+            raise AcquisitionError("TRANSFER_REPORT_ROLE", unit.primary_resource)
+        if role_relations:
+            relation = role_relations[0]
+            expected_members = {
+                ResourceKey(
+                    unit.primary_resource.service_instance_uuidv4,
+                    "repository",
+                    entry.provider_repository_id,
+                )
+                for entry in scopes.roles.values()
+                if entry.provider_repository_id is not None
+            }
+            if (
+                relation.resource != unit.primary_resource
+                or relation.provenance_json != unit.provenance_json
+                or relation.observed_at_us != unit.observed_at_us
+                or len(relation.members) != len(expected_members)
+                or set(relation.members) != expected_members
+            ):
+                raise AcquisitionError("TRANSFER_REPORT_UNIT", unit.primary_resource)
+        refs, targets, supports = {}, {}, []
+        for role in ("transfer_from_repository", "transfer_to_repository"):
+            entry = scopes.role(role)
+            refs[role] = None
+            targets[role] = None
+            if entry is None:
+                continue
+            if entry.clock != unit.clock or entry.observed_at_us != unit.observed_at_us:
+                raise AcquisitionError("TRANSFER_REPORT_CLOCK", unit.primary_resource)
+            if entry.state == "explicit_null":
+                targets[role] = "null"
+                continue
+            if entry.state != "unresolved_provider_only":
+                raise AcquisitionError(
+                    "TRANSFER_MAPPING_EVIDENCE", unit.primary_resource
+                )
+            provider = ResourceKey(
+                unit.primary_resource.service_instance_uuidv4,
+                "repository",
+                entry.provider_repository_id,
+            )
+            refs[role] = provider
+            by_target = {}
+            for claim in ctx.evaluate_provider_repository(provider).active_claims:
+                by_target.setdefault(claim.target_json, []).append(claim)
+            targets[role] = tuple(sorted(by_target)) or None
+            supports.extend(
+                (role, MappingSupport(provider, tuple(claims)))
+                for _, claims in sorted(by_target.items())
+            )
+        original = MappingProvenance.from_json(unit.provenance_json)
+        issuer = (
+            original.claimed_issuer
+            if original.claimed_issuer_state != "omitted"
+            else OMITTED_ISSUER
+        )
+        provenance = (
+            unit.provenance_json
+            if not supports
+            else encode_transfer_supported_provenance(
+                original.source, original.evidence, supports, claimed_issuer=issuer
+            )
+        )
+        report = TransferEventReport.from_targets(
+            unit.primary_resource,
+            clock=unit.clock,
+            provenance_json=provenance,
+            observed_at_us=unit.observed_at_us,
+            from_target_json=targets["transfer_from_repository"],
+            to_target_json=targets["transfer_to_repository"],
+            from_provider_repository=refs["transfer_from_repository"],
+            to_provider_repository=refs["transfer_to_repository"],
+        )
+        # Mapping state may change after this real event. Re-delivery must replay
+        # the original event unit, not issue a new provenance/key from a recheck.
+        for prior in ctx.transfer_event_reports(unit.primary_resource):
+            if prior.clock != unit.clock:
+                continue
+            old_supports = [
+                (r.relation_kind, r.embedded_support)
+                for r in (*prior.from_relations, *prior.to_relations)
+                if r.embedded_support is not None
+            ]
+            expected = (
+                unit.provenance_json
+                if not old_supports
+                else encode_transfer_supported_provenance(
+                    original.source,
+                    original.evidence,
+                    old_supports,
+                    claimed_issuer=issuer,
+                )
+            )
+            if prior.provenance_json != expected:
+                continue
+            if (
+                prior.from_provider_repository != report.from_provider_repository
+                or prior.to_provider_repository != report.to_provider_repository
+                or prior.provided_roles != report.provided_roles
+                or (prior.from_state == "explicit_null")
+                != (report.from_state == "explicit_null")
+                or (prior.to_state == "explicit_null")
+                != (report.to_state == "explicit_null")
+                or prior.observed_at_us != unit.observed_at_us
+            ):
+                raise AcquisitionError("TRANSFER_REPORT_REBIND", unit.primary_resource)
+            report = prior
+            break
+        ctx.admit_transfer_event(report)
+
     def admit_unit(
         self,
         unit: NormalizedContextUnit,
@@ -1263,7 +1404,7 @@ class ProviderAcquisition:
         core: GitCore | None = None,
     ) -> None:
         """Admit a single NormalizedContextUnit into Context."""
-        with self._open_context(context) as ctx:
+        with self._open_context(context) as ctx, ctx._unit():
             validate_core = self._make_core_validator(ctx, core)
             self._admit_normalized_unit(
                 ctx,
@@ -1283,7 +1424,7 @@ class ProviderAcquisition:
         core: GitCore | None = None,
     ) -> None:
         """Admit multiple NormalizedContextUnits into Context."""
-        with self._open_context(context) as ctx:
+        with self._open_context(context) as ctx, ctx._unit():
             validate_core = self._make_core_validator(ctx, core)
             for unit in units:
                 self._admit_normalized_unit(
@@ -1315,7 +1456,7 @@ class ProviderAcquisition:
                 registration_json(kind, item.configuration_json)
         for item in batch.sources:
             registration_json("membership", item.association_attributes_json)
-        with self._open_context(context) as ctx:
+        with self._open_context(context) as ctx, ctx._unit():
             validate_core = self._make_core_validator(ctx, core)
 
             for prov in batch.providers:
@@ -1350,11 +1491,11 @@ class ProviderAcquisition:
                     prov_json = repo.provenance_json
                     unit = normalize_repository_fields(
                         batch.service_instance_uuidv4,
-                        repo.repository_uuidv4,
                         repo.raw_metadata,
                         obs_us,
                         prov_json,
                         clock_domain=repo.clock_domain,
+                        graphql=repo.graphql,
                     )
                     self._admit_normalized_unit(
                         ctx,
@@ -1365,6 +1506,31 @@ class ProviderAcquisition:
                         linked_refs,
                         pending_refs,
                     )
+
+            for claim in batch.mapping_claims:
+                self._ensure_resource_hierarchy(
+                    ctx, claim.resource, None, admitted_resources
+                )
+                ctx.admit_repository_relation(claim)
+            for disposition in batch.mapping_dispositions:
+                ctx.admit_mapping_disposition(disposition)
+            for provider_repository in batch.provider_repositories:
+                unit = normalize_repository_fields(
+                    batch.service_instance_uuidv4,
+                    provider_repository.payload,
+                    provider_repository.observed_at_us,
+                    provider_repository.provenance_json,
+                    graphql=provider_repository.graphql,
+                )
+                self._admit_normalized_unit(
+                    ctx,
+                    unit,
+                    validate_core,
+                    admitted_resources,
+                    admitted_texts,
+                    linked_refs,
+                    pending_refs,
+                )
 
             for src in batch.sources:
                 has_src_prov = ctx.db.execute(
@@ -1404,7 +1570,6 @@ class ProviderAcquisition:
                     issue_in.payload,
                     issue_in.observed_at_us,
                     issue_in.provenance_json,
-                    repository_uuidv4=issue_in.repository_uuidv4,
                     graphql=issue_in.graphql,
                 )
                 if unit is None:
@@ -1426,7 +1591,6 @@ class ProviderAcquisition:
                     pr_in.payload,
                     pr_in.observed_at_us,
                     pr_in.provenance_json,
-                    repository_uuidv4=pr_in.repository_uuidv4,
                     graphql=pr_in.graphql,
                 )
                 self._admit_normalized_unit(
@@ -1525,6 +1689,8 @@ class ProviderAcquisition:
                     tl_in.payload,
                     tl_in.observed_at_us,
                     tl_in.provenance_json,
+                    graphql=tl_in.graphql,
+                    parent_resource=tl_in.parent_resource,
                 )
                 self._admit_normalized_unit(
                     ctx,
@@ -1574,9 +1740,9 @@ class ProviderAcquisition:
 
             for transfer in batch.transfers:
                 raise AcquisitionError(
-                    "UNSUPPORTED_UNTIL_I2",
+                    "ACTUAL_TRANSFER_EVENT_REQUIRED",
                     transfer.resource,
-                    "Provider transfer event intake requires ADR 0030 stage I2",
+                    "Affiliation changes are not Transfer observations; use ProviderTimelineIntake",
                 )
 
             for obs in batch.observations:

@@ -18,6 +18,8 @@ from repo_catalog.domain.acquisition import AcquisitionError
 from repo_catalog.domain.p1_context import (
     FieldCandidate,
     FieldClock,
+    ProviderRepositoryRoleScope,
+    ProviderRepositoryScope,
     ResourceKey,
     canonical,
 )
@@ -61,6 +63,77 @@ def canonical_database_id(value: object, field_name: str = "id") -> str:
         "CANONICAL_ID_REQUIRED",
         field_name,
         f"GitHub {field_name} must be a canonical positive decimal database ID",
+    )
+
+
+def github_resource_id(payload: dict[str, Any], *, graphql: bool) -> str:
+    if graphql:
+        for name in ("fullDatabaseId", "databaseId"):
+            if payload.get(name) is not None:
+                return canonical_database_id(payload[name], name)
+        value = payload.get("id")
+        if type(value) is not str or not value:
+            raise AcquisitionError("NODE_ID_REQUIRED", "id")
+        return canonical(["github:node_id", value])
+    return canonical_database_id(payload.get("id"))
+
+
+def github_repository_id(payload, *, graphql):
+    """Repository Node IDs and decimal database IDs are distinct explicit namespaces."""
+    if graphql and "__typename" in payload and payload["__typename"] != "Repository":
+        raise AcquisitionError("RESOURCE_KIND", "repository")
+    if graphql and "id" in payload:
+        value = payload["id"]
+        if type(value) is not str or not value:
+            raise AcquisitionError("NODE_ID_REQUIRED", "repository.id")
+        return canonical(["github:node_id", value])
+    return github_resource_id(payload, graphql=graphql)
+
+
+def github_timeline_input_id(value, *, graphql):
+    """Timeline arguments: integers are database IDs, GraphQL strings are opaque Node IDs."""
+    if graphql and type(value) is str:
+        if not value:
+            raise AcquisitionError("NODE_ID_REQUIRED", "timeline.id")
+        return canonical(["github:node_id", value])
+    return canonical_database_id(value)
+
+
+def repository_role_relation(
+    resource, clock, provenance_json, observed_at_us, values, *, graphql
+):
+    """Preserve the actual Provider role projection; NULL never means unmapped."""
+    roles = {}
+    members = []
+    for role, value in values.items():
+        if value is None:
+            entry = ProviderRepositoryRoleScope.explicit_null(
+                role, clock, observed_at_us
+            )
+        else:
+            if type(value) is not dict:
+                raise AcquisitionError(
+                    "REPOSITORY_REFERENCE", role, "object or null required"
+                )
+            ident = github_repository_id(value, graphql=graphql)
+            entry = ProviderRepositoryRoleScope.unresolved(
+                role, ident, clock, observed_at_us
+            )
+            member = ResourceKey(resource.service_instance_uuidv4, "repository", ident)
+            if member not in members:
+                members.append(member)
+        roles[role] = entry
+    if not roles:
+        return ()
+    return (
+        ResourceRelation(
+            resource,
+            "provider_repository_roles",
+            tuple(members),
+            provenance_json,
+            ProviderRepositoryScope(roles).encoded,
+            observed_at_us,
+        ),
     )
 
 
@@ -155,7 +228,6 @@ class NormalizedContextUnit:
     """Pure normalized Context artifacts produced from a single Provider payload."""
 
     primary_resource: ResourceKey
-    repository_uuidv4: str | None
     clock: FieldClock
     provenance_json: str
     observed_at_us: int | None
@@ -166,6 +238,7 @@ class NormalizedContextUnit:
     extra_texts: tuple[str, ...]
     relations: tuple[ResourceRelation, ...]
     core_references: tuple[tuple[CoreReference, FieldClock, int | None], ...]
+    transfer_event: bool = False
 
 
 def make_document_key(
@@ -191,19 +264,19 @@ def make_document_key(
 
 def normalize_repository_fields(
     service_instance_uuidv4: str,
-    repository_uuidv4: str,
     payload: dict[str, Any],
     observed_at_us: int | None,
     provenance_json: str,
     *,
     clock_domain: str = "github:repository:updated_at",
+    graphql: bool = False,
 ) -> NormalizedContextUnit:
     """Normalize repository-level GitHub metadata into a Context ResourceObservation."""
     if not isinstance(payload, dict):
         raise AcquisitionError("MALFORMED_PAYLOAD", "repository", "dict required")
     validate_observation_us(observed_at_us)
     json_value(provenance_json, provenance=True)
-    repo_id = canonical_database_id(payload.get("id"))
+    repo_id = github_repository_id(payload, graphql=graphql)
     resource = ResourceKey(service_instance_uuidv4, "repository", repo_id)
     has_upd, upd_us = _parse_optional_time_us(
         payload, "updatedAt" if "updatedAt" in payload else "updated_at"
@@ -275,7 +348,6 @@ def normalize_repository_fields(
         )
     return NormalizedContextUnit(
         primary_resource=resource,
-        repository_uuidv4=repository_uuidv4,
         clock=clock,
         provenance_json=provenance_json,
         observed_at_us=observed_at_us,
@@ -293,7 +365,6 @@ def normalize_issue(
     observed_at_us: int | None,
     provenance_json: str,
     *,
-    repository_uuidv4: str | None = None,
     graphql: bool = False,
 ) -> NormalizedContextUnit | None:
     """Normalize a GitHub Issue payload; returns None for Issues API PR entries."""
@@ -301,14 +372,13 @@ def normalize_issue(
         raise AcquisitionError("MALFORMED_PAYLOAD", "issue", "dict required")
     if "pull_request" in payload:
         return None
+    if graphql and payload.get("__typename") == "PullRequest":
+        return None
+    if graphql and "__typename" in payload and payload["__typename"] != "Issue":
+        raise AcquisitionError("RESOURCE_KIND", "issue")
     validate_observation_us(observed_at_us)
     json_value(provenance_json, provenance=True)
-    id_field = (
-        "fullDatabaseId"
-        if graphql and "fullDatabaseId" in payload
-        else ("databaseId" if graphql and "databaseId" in payload else "id")
-    )
-    issue_id = canonical_database_id(payload.get(id_field), id_field)
+    issue_id = github_resource_id(payload, graphql=graphql)
     issue_key = ResourceKey(service_instance_uuidv4, "issue", issue_id)
     _, updated_us = _parse_optional_time_us(
         payload, "updatedAt" if graphql and "updatedAt" in payload else "updated_at"
@@ -446,14 +516,22 @@ def normalize_issue(
         )
     return NormalizedContextUnit(
         primary_resource=issue_key,
-        repository_uuidv4=repository_uuidv4,
         clock=clock,
         provenance_json=provenance_json,
         observed_at_us=observed_at_us,
         observations=(ResourceObservation(issue_key, tuple(fields)),),
         text_admissions=tuple(text_admissions),
         extra_texts=(),
-        relations=(),
+        relations=repository_role_relation(
+            issue_key,
+            clock,
+            provenance_json,
+            observed_at_us,
+            {"owning_repository": payload["repository"]}
+            if "repository" in payload
+            else {},
+            graphql=graphql,
+        ),
         core_references=(),
     )
 
@@ -464,20 +542,16 @@ def normalize_pull_request(
     observed_at_us: int | None,
     provenance_json: str,
     *,
-    repository_uuidv4: str | None = None,
     graphql: bool = False,
 ) -> NormalizedContextUnit:
     """Normalize a GitHub Pull Request payload, including title/body documents and CoreReferences."""
     if not isinstance(payload, dict):
         raise AcquisitionError("MALFORMED_PAYLOAD", "pull_request", "dict required")
+    if graphql and "__typename" in payload and payload["__typename"] != "PullRequest":
+        raise AcquisitionError("RESOURCE_KIND", "pull_request")
     validate_observation_us(observed_at_us)
     json_value(provenance_json, provenance=True)
-    id_field = (
-        "fullDatabaseId"
-        if graphql and "fullDatabaseId" in payload
-        else ("databaseId" if graphql and "databaseId" in payload else "id")
-    )
-    pr_id = canonical_database_id(payload.get(id_field), id_field)
+    pr_id = github_resource_id(payload, graphql=graphql)
     pr_key = ResourceKey(service_instance_uuidv4, "pull_request", pr_id)
     _, updated_us = _parse_optional_time_us(
         payload, "updatedAt" if graphql and "updatedAt" in payload else "updated_at"
@@ -808,9 +882,28 @@ def normalize_pull_request(
             )
         )
 
+    repository_values = {}
+    for role, gql_field in (("base", "baseRepository"), ("head", "headRepository")):
+        if graphql and gql_field in payload:
+            repository_values[role + "_repository"] = payload[gql_field]
+        elif (
+            not graphql
+            and isinstance(payload.get(role), dict)
+            and "repo" in payload[role]
+        ):
+            repository_values[role + "_repository"] = payload[role]["repo"]
+    relations.extend(
+        repository_role_relation(
+            pr_key,
+            clock,
+            provenance_json,
+            observed_at_us,
+            repository_values,
+            graphql=graphql,
+        )
+    )
     return NormalizedContextUnit(
         primary_resource=pr_key,
-        repository_uuidv4=repository_uuidv4,
         clock=clock,
         provenance_json=provenance_json,
         observed_at_us=observed_at_us,
@@ -963,7 +1056,6 @@ def normalize_review(
     )
     return NormalizedContextUnit(
         primary_resource=review_key,
-        repository_uuidv4=None,
         clock=clock,
         provenance_json=provenance_json,
         observed_at_us=observed_at_us,
@@ -1035,7 +1127,6 @@ def normalize_review_thread(
     )
     return NormalizedContextUnit(
         primary_resource=thread_key,
-        repository_uuidv4=None,
         clock=clock,
         provenance_json=provenance_json,
         observed_at_us=observed_at_us,
@@ -1348,7 +1439,6 @@ def normalize_review_comment(
 
     return NormalizedContextUnit(
         primary_resource=comment_key,
-        repository_uuidv4=None,
         clock=clock,
         provenance_json=provenance_json,
         observed_at_us=observed_at_us,
@@ -1463,7 +1553,6 @@ def normalize_issue_comment(
     )
     return NormalizedContextUnit(
         primary_resource=comment_key,
-        repository_uuidv4=None,
         clock=clock,
         provenance_json=provenance_json,
         observed_at_us=observed_at_us,
@@ -1486,27 +1575,87 @@ def normalize_timeline_event(
     payload: dict[str, Any],
     observed_at_us: int | None,
     provenance_json: str,
+    *,
+    graphql: bool = False,
+    parent_resource: ResourceKey | None = None,
 ) -> NormalizedContextUnit:
     """Normalize a GitHub Issue/PR Timeline event."""
     if not isinstance(payload, dict):
         raise AcquisitionError("MALFORMED_PAYLOAD", "timeline_event", "dict required")
     validate_observation_us(observed_at_us)
     json_value(provenance_json, provenance=True)
-    pid = canonical_database_id(parent_id, "parent_id")
-    parent_key = ResourceKey(service_instance_uuidv4, parent_kind, pid)
-    eid = (
-        canonical_database_id(event_id, "event_id")
-        if isinstance(event_id, int)
-        or (isinstance(event_id, str) and event_id.isdecimal())
-        else str(event_id)
+    pid = github_timeline_input_id(parent_id, graphql=graphql)
+    parent_key = parent_resource or ResourceKey(
+        service_instance_uuidv4, parent_kind, pid
     )
+    if (
+        parent_key.service_instance_uuidv4 != service_instance_uuidv4
+        or parent_key.resource_kind != parent_kind
+    ):
+        raise AcquisitionError("EVENT_PARENT_MISMATCH", "timeline_event")
+    if graphql and isinstance(payload.get("issue"), dict):
+        if (
+            "__typename" in payload["issue"]
+            and payload["issue"]["__typename"] != "Issue"
+        ):
+            raise AcquisitionError("EVENT_PARENT_MISMATCH", "timeline_event")
+        if (
+            github_resource_id(payload["issue"], graphql=True)
+            != parent_key.provider_resource_id
+            or parent_key.resource_kind != "issue"
+        ):
+            raise AcquisitionError("EVENT_PARENT_MISMATCH", "timeline_event")
+    if pid != parent_key.provider_resource_id:
+        # An explicit ResourceKey cannot replace contradictory Provider coordinates.
+        # GraphQL may supply the same observed Issue in Node and database namespaces;
+        # bind both coordinates to that actual payload rather than decoding the Node ID.
+        observed_issue = payload.get("issue") if graphql else None
+        if not isinstance(observed_issue, dict):
+            raise AcquisitionError("EVENT_PARENT_MISMATCH", "timeline_event")
+        observed_aliases = (
+            {github_timeline_input_id(observed_issue["id"], graphql=True)}
+            if "id" in observed_issue
+            else set()
+        )
+        database_aliases = {
+            canonical_database_id(observed_issue[name], name)
+            for name in ("fullDatabaseId", "databaseId")
+            if observed_issue.get(name) is not None
+        }
+        if len(database_aliases) > 1 or pid not in observed_aliases | database_aliases:
+            raise AcquisitionError("EVENT_PARENT_MISMATCH", "timeline_event")
+    eid = github_timeline_input_id(event_id, graphql=graphql)
+    if "id" not in payload:
+        raise AcquisitionError(
+            "EVENT_ID_REQUIRED",
+            "timeline_event",
+            "Provider event payload must identify the event",
+        )
+    if (
+        "id" in payload
+        and github_timeline_input_id(payload["id"], graphql=graphql) != eid
+    ):
+        raise AcquisitionError("EVENT_ID_MISMATCH", "timeline_event")
     if not eid:
         raise AcquisitionError("EVENT_ID_REQUIRED", "timeline_event")
     event_key = make_document_key(parent_key, "timeline_event", "timeline_event", eid)
-    _, created_us = _parse_optional_time_us(payload, "created_at")
+    _, created_us = _parse_optional_time_us(
+        payload, "createdAt" if graphql else "created_at"
+    )
     clock = FieldClock("github:timeline:created_at", created_us)
     fields: list[FieldCandidate] = []
     core_refs: list[tuple[CoreReference, FieldClock, int]] = []
+    if graphql and "__typename" in payload:
+        fields.append(
+            _candidate(
+                event_key,
+                "provider_event_type",
+                payload["__typename"],
+                clock,
+                provenance_json,
+                observed_at_us,
+            )
+        )
     for k in ("event", "state", "lock_reason", "author_association"):
         if k in payload:
             fields.append(
@@ -1576,9 +1725,31 @@ def normalize_timeline_event(
         canonical({"event_id": eid}),
         observed_at_us,
     )
+    transferred = (
+        payload.get("__typename") == "TransferredEvent"
+        if graphql
+        else payload.get("event") == "transferred"
+    )
+    values = {}
+    if transferred:
+        if parent_kind != "issue":
+            raise AcquisitionError(
+                "TRANSFER_PARENT", "timeline_event", "Issue parent required"
+            )
+        for role, name in (
+            (
+                "transfer_from_repository",
+                "fromRepository" if graphql else "from_repository",
+            ),
+            ("transfer_to_repository", "toRepository" if graphql else "to_repository"),
+        ):
+            if name in payload:
+                values[role] = payload[name]
+    role_relations = repository_role_relation(
+        event_key, clock, provenance_json, observed_at_us, values, graphql=graphql
+    )
     return NormalizedContextUnit(
         primary_resource=event_key,
-        repository_uuidv4=None,
         clock=clock,
         provenance_json=provenance_json,
         observed_at_us=observed_at_us,
@@ -1588,8 +1759,9 @@ def normalize_timeline_event(
         ),
         text_admissions=(),
         extra_texts=(),
-        relations=(relation,),
+        relations=(relation, *role_relations),
         core_references=tuple(core_refs),
+        transfer_event=transferred,
     )
 
 
@@ -1698,7 +1870,6 @@ def normalize_pr_commit(
     )
     return NormalizedContextUnit(
         primary_resource=commit_doc,
-        repository_uuidv4=None,
         clock=clock,
         provenance_json=provenance_json,
         observed_at_us=observed_at_us,
@@ -1775,7 +1946,6 @@ def normalize_pr_file(
     )
     return NormalizedContextUnit(
         primary_resource=file_doc,
-        repository_uuidv4=None,
         clock=clock,
         provenance_json=provenance_json,
         observed_at_us=observed_at_us,

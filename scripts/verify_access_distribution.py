@@ -213,6 +213,29 @@ with tempfile.TemporaryDirectory() as directory:
         assert ctx.db.execute("SELECT p1_mapping_clock('{\"at_us\":1,\"domain\":\"test\"}')").fetchone()[0] == 1
         assert ctx.db.execute("SELECT p1_mapping_provenance('{\"evidence\":\"e\",\"source\":\"s\"}')").fetchone()[0] == 1
     assert not (receiver / "access.sqlite3").exists()
+from repo_catalog.application.acquisition import ProviderAcquisition
+from repo_catalog.adapters.github.production_intake import github_repository_id
+from repo_catalog.domain.acquisition import ProviderIntakeBatch, ProviderRegistration, RepositoryRegistration, ProviderIssueIntake, ProviderTimelineIntake, make_provenance
+from repo_catalog.domain.p1_context import ResourceKey, ResourceRepositoryRelation, FieldClock, canonical
+with tempfile.TemporaryDirectory() as directory:
+    destination = Path(directory)
+    repository_id, instance, service = str(uuid4()), str(uuid4()), str(uuid4())
+    for role in ("core", "context"):
+        p1_schema.initialize(destination / f"{role}.sqlite3", role, repository_id, instance)
+    node = {"id": "R_installed", "databaseId": 1}
+    claims = tuple(ResourceRepositoryRelation(ResourceKey(service, "repository", identifier), "represents_repository", FieldClock("installed:mapping", 1), canonical(repository_id), make_provenance("installed", {"explicit_mapping": identifier}), 1)
+                   for identifier in ("1", github_repository_id(node, graphql=True)))
+    ProviderAcquisition(destination).admit_batch(ProviderIntakeBatch(service,
+        providers=(ProviderRegistration(service),), repositories=(RepositoryRegistration(repository_id),), mapping_claims=claims,
+        issues=(ProviderIssueIntake({"id": 7, "repository": {"id": 1}}, 10, make_provenance("installed", "issue")),),
+        timeline_events=(ProviderTimelineIntake("issue", 7, "EV_installed", {"id": "EV_installed", "__typename": "TransferredEvent", "issue": {"databaseId": 7}, "fromRepository": node}, 20, make_provenance("installed", "event"), graphql=True),)))
+    with Context.snapshot(destination) as ctx:
+        qualified, = ctx.provider_repository_roles(ResourceKey(service, "issue", "7"))
+        assert qualified.supports[0].supporting_claims == (claims[0].claim_key,)
+        report, = ctx.transfer_event_reports()
+        assert report.from_relation.embedded_support.supporting_claims == (claims[1].claim_key,)
+        assert report.to_state == "absent" and report.observed_at_us == 20
+    assert not (destination / "access.sqlite3").exists()
 print(json.dumps({"sqlite": sqlite3.sqlite_version, "sqlite_source_id": sqlite3.connect(":memory:").execute("SELECT sqlite_source_id()").fetchone()[0], "module_origin": str(module_origin), "interpreter": sys.executable, "ddl_sha256": fingerprint(), "context_ddl_sha256": p1_schema.fingerprint("context"), "table_count": len(tables), "exchange_format": EXCHANGE_FORMAT, "local_git_acquired": True, "access_backup_restored": True, "scope_forked": True, "installed_smoke": "passed"}))
 """
 

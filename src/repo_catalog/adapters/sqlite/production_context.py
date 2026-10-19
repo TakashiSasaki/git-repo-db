@@ -34,6 +34,7 @@ from repo_catalog.domain.p1_context import (
     MappingDisposition,
     MappingOperationEvidence,
     QualifiedMappingEvaluation,
+    QualifiedProviderRepositoryRole,
     RelationAdmissionOutcome,
     RelationAdmissionResult,
     RelationKind,
@@ -42,6 +43,7 @@ from repo_catalog.domain.p1_context import (
     ResourceRepositoryRelation,
     TransferEventReport,
     canonical,
+    validate_provider_repository_scope,
     validate_timeline_event_coordinates,
 )
 from repo_catalog.domain.p1_coordination import CoordinationError
@@ -535,6 +537,14 @@ class Context(ContextStore):
         with self._unit():
             if relation.relation_kind == "transfer_event_report":
                 raise ValueError("Transfer reports require admit_transfer_event()")
+            if relation.relation_kind == "provider_repository_roles":
+                validate_provider_repository_scope(
+                    relation.resource,
+                    relation.members,
+                    relation.provenance_json,
+                    relation.scope_json,
+                    relation.observed_at_us,
+                )
             self._members(relation.resource, relation.relation_kind, relation.members)
             key = (
                 *relation.resource.coordinates(),
@@ -931,6 +941,17 @@ class Context(ContextStore):
                 relation_kind,
                 evidence=evidence,
             )
+
+    def provider_repository_roles(
+        self, resource: ResourceKey, *, evidence: MappingOperationEvidence | None = None
+    ) -> tuple[QualifiedProviderRepositoryRole, ...]:
+        self._check()
+        if not isinstance(resource, ResourceKey):
+            raise ValueError("ResourceKey required")
+        if evidence is not None and not isinstance(evidence, MappingOperationEvidence):
+            raise ValueError("MappingOperationEvidence required")
+        with self._stored("Provider repository role"):
+            return super().provider_repository_roles(resource, evidence=evidence)
 
     def transfer_event_reports(
         self,

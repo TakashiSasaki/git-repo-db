@@ -16,6 +16,7 @@ from repo_catalog.domain.p1_context import (
     MappingDisposition,
     MappingOperationEvidence,
     QualifiedMappingEvaluation,
+    QualifiedProviderRepositoryRole,
     RelationKind,
     ResolvedRepositoryRelation,
     ResourceKey,
@@ -69,6 +70,9 @@ class ContextAdmission(Protocol):
     def mapping_dispositions(
         self, subject: MappingClaimKey | ResourceKey | None = None
     ) -> tuple[MappingDisposition, ...]: ...
+    def provider_repository_roles(
+        self, resource: ResourceKey, *, evidence: MappingOperationEvidence | None = None
+    ) -> tuple[QualifiedProviderRepositoryRole, ...]: ...
     def transfer_event_reports(
         self,
         resource: ResourceKey | None = None,
