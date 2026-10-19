@@ -90,6 +90,13 @@ I5 first reproduced FileNotFoundError from a missing CLI PATH, then independentl
 passed the same CLI/backup cases after fixing only the launcher. Preserve such
 environment failures instead of labeling them product defects or deleting tests.
 
+Exercise the installed pytest scripts as well as a dedicated distribution smoke.
+I5 found four omitted P5 artifact fixtures still calling the retired I2 producer
+argument, then relying on pre-I3 implicit selection/permissions. Preserve the
+failure and baseline comparison; modernize genuine Provider roles/Mapping support
+and explicit Exchange intent while retaining the original assertions. Do not
+restore the retired product API or count the earlier failed run as passed.
+
 Freeze input bytes before collection. If another worker adds tests in a shared
 checkout, separate the immutable base-node inventory from the new tests and
 recollect the final tree. Require normal subprocess completion and exact node

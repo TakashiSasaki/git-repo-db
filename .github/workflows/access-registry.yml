@@ -8,6 +8,7 @@ on:
       - 'tests/integration/i23/**'
       - 'tests/integration/i4/**'
       - 'tests/integration/i5/**'
+      - 'tests/packaging/test_p5_distribution.py'
       - 'scripts/verify_i5_offline.py'
       - '.github/workflows/access-registry.yml'
       - 'src/repo_catalog/**/access*.py'
@@ -69,6 +70,8 @@ jobs:
           version: '0.12.19'
       - name: Install locked development dependencies
         run: uv sync --locked --group dev
+      - name: Prepare locked wheels before offline installed acceptance
+        run: uv run --no-sync python scripts/prepare_wheelhouse.py
       - name: Build and verify the actual minimum SQLite binding
         shell: bash
         run: |
@@ -108,7 +111,7 @@ jobs:
           db.close()
           PY
           uv run --no-sync pytest -q tests/unit/test_access*_values.py tests/unit/test_context_registration_values.py tests/unit/test_native_acquisition_values.py tests/integration/access \
-            tests/integration/i2 tests/integration/i23 tests/integration/i4 tests/integration/i5 \
+            tests/integration/i2 tests/integration/i23 tests/integration/i4 tests/integration/i5 tests/packaging/test_p5_distribution.py \
             tests/integration/p1 \
             tests/integration/p3 tests/integration/p5 tests/integration/i3 \
             tests/integration/p2 tests/integration/p4 tests/integration/p6 tests/integration/p7 tests/integration/p5_p6_compatibility \
@@ -117,7 +120,7 @@ jobs:
           # in the artifact while emitting only the bounded result to the job log.
           set +e
           uv run --no-sync pytest -q -n 2 --dist worksteal tests/unit/test_access*_values.py tests/unit/test_context_registration_values.py tests/unit/test_native_acquisition_values.py tests/integration/access \
-            tests/integration/i2 tests/integration/i23 tests/integration/i4 tests/integration/i5 \
+            tests/integration/i2 tests/integration/i23 tests/integration/i4 tests/integration/i5 tests/packaging/test_p5_distribution.py \
             tests/integration/p1 \
             tests/integration/p3 tests/integration/p5 tests/integration/i3 \
             tests/integration/p2 tests/integration/p4 tests/integration/p6 tests/integration/p7 tests/integration/p5_p6_compatibility \

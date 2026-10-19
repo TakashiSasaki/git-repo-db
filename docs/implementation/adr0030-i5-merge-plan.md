@@ -40,33 +40,39 @@ Prefer promoting the **tested assembled implementation** without placing an
 unfinished intermediate stage on main:
 
 1. Obtain separate owner merge authorization and serialize the merge window.
-   Fetch main and #107–#111 again; stop if any pinned HEAD/base changes.
-   Retarget #111 to main only under that authorization, without rewriting its
-   history. Review the resulting complete I1–I4 diff. Recompute the main/#111
-   merge tree; it must equal the accepted #111 tree (or require fresh validation).
+   Fetch main and #107–#112 again; stop if any pinned HEAD/base changes.
+   Retarget the final I5 **#112** to main only under that authorization, without
+   rewriting its history. Review the complete I1–I5 aggregate diff. Recompute
+   the main/#112 merge tree; it must equal the accepted final I5 tree (or require
+   fresh validation).
    Require current applicable checks and protection rules to pass on that exact
    candidate. Preserve the two-parent merge history; do not squash/rebase it.
-2. After an owner-authorized #111 merge, verify the actual main merge parents,
-   effective tree and reachability of every #107/#108/#109/#110 commit. Retarget
-   the I5 child to main without rewriting it. Its diff must contain only the
-   reviewed verification/helper/CI/evidence changes, with no repeated I1–I4
-   implementation. Recheck its test-merge tree, executable-input binding,
-   independent review and applicable checks before any separate I5 merge.
-3. Treat #107–#110 as already integrated through ancestry. Do not issue another
+2. After an owner-authorized #112 merge, verify the actual main merge parents,
+   effective tree and reachability of every #107/#108/#109/#110/#111 commit.
+   Recheck executable-input binding, the reviewed correction and applicable
+   checks; do not interpret unchanged product files as proof that the old
+   installed test fixture was valid.
+3. Treat #107–#111 as already integrated through ancestry. Do not issue another
    merge or cherry-pick for #108 or the other parents. Any later PR closure or
    metadata update is an owner action, not part of this task.
 
-The intended merge order for this route is **#111 → I5**. Its dependency graph
+The intended merge action for this route is **#112 → main**. Its dependency graph
 still preserves **I1 → I2 → I2/I3 integration → I4 → I5**, including I3's second
 parent. Retargeting is a proposal, not an action taken by I5, and must not be
-used to bypass required checks or broader aggregate review.
+used to bypass required checks or broader aggregate review. The I5 whole-suite
+audit found four stale installed P5 test fixtures outside #111's 2329-node CI.
+Their I2/I3-contract correction belongs to #112. Promoting #111 alone first
+would temporarily put those known failing fixtures on main; the aggregate route
+keeps the independently validated correction with its implementation.
 
 If repository policy instead requires individual stage merges, use
 **#107 → #109 → #110 → #111 → I5**, retargeting each child only after its
 parent is integrated, preserving merge ancestry and verifying the actual target
 and effective tree at every step. Omit a separate #108 merge. At this snapshot
 #107–#110 each have successful `offline` but failed `registry-sqlite-3513`
-checks from stage-owned incomplete integration; #111 has both checks successful.
+checks from stage-owned incomplete integration; #111 has both checks successful
+but its unselected installed P5 fixture still fails four nodes until the I5
+correction. Green focused checks do not negate that newly executed counterexample.
 Thus this individual-stage route is **not ready under a green-check requirement**.
 The later assembled success does not rewrite or waive those failures. Resolve
 the stage-check/protection plan explicitly before choosing that route; do not
