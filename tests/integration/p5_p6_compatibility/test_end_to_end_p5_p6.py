@@ -196,7 +196,6 @@ def test_end_to_end_acquisition_into_query_and_search(tmp_path: Path, fmt: str) 
                 payload=pr_payload,
                 observed_at_us=1_700_000_000_000_000,
                 provenance_json=make_provenance("github.rest", "pr-1"),
-                repository_uuidv4=repo_uuid,
             ),
         ),
     )
@@ -347,7 +346,6 @@ def test_deferred_core_dependency_reconciliation_into_paired_queries(
                 payload=pr_payload,
                 observed_at_us=1_700_000_000_000_000,
                 provenance_json=make_provenance("github.rest", "pr-10"),
-                repository_uuidv4=repo_uuid,
             ),
         ),
     )

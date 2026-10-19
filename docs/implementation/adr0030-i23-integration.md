@@ -72,6 +72,14 @@ Context facts; valid collection Coverage and pre-existing receiver collection
 owners have positive round-trip controls. No missing Repository is auto-registered
 to satisfy Coverage. These corrections retain all five Coverage claim columns.
 
+A supplementary run of the remaining P1 modules and P5/P6 compatibility tests
+found five additional stale I2 fixture calls outside the existing CI cohort.
+The fixtures now omit retired Repository-UUID intake/normalizer arguments; their
+original Core-reference/query/search and invalid-Provider-ID assertions remain.
+These tests do not invent missing Provider ownership. All 29 compatibility nodes
+pass; all 205 complementary P1 nodes pass on SQLite 3.51.3. The existing 2,069-node
+CI cohort remains intact and the supplementary 234-node selection is disjoint.
+
 ## Fixed I4 interfaces and limitations
 
 Use the I2 `Context.provider_repository_roles(resource, evidence=...)` result for

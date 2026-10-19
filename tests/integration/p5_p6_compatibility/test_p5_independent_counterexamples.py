@@ -44,7 +44,6 @@ def test_missing_repository_provider_id_rejected():
     with pytest.raises(ValueError):
         normalize_repository_fields(
             str(uuid4()),
-            str(uuid4()),
             {"name": "partial"},
             1,
             '{"evidence":"minimal","source":"synthetic"}',
