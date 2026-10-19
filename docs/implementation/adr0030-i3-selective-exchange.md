@@ -140,6 +140,12 @@ without skip/xfail/deletion. The final PR records exact tests and review SHA/tre
 
 ## Review and reproducible evidence
 
+The [committed evidence](evidence/adr0030-i3/README.md) records 66 successful
+independent I3 cases and a 1,987-node local registry run: 1,950 passed, 37 known
+downstream failures, zero errors/skips. P1/P3/Access/P7 passed 150/80/483/255
+selected cases. Each remaining failed node has its actual cause, owner stage and
+resolution. Clean wheel and sdist-derived installed smoke both passed.
+
 Independent preliminary read-only reviews executed counterexamples for Mapping
 registration order, malformed primitive UUIDs, empty/disabled receiver selection,
 missing Core dependencies, zero receive limits and malformed scalar tags. These
