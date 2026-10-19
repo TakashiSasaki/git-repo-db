@@ -1,0 +1,78 @@
+{
+  "README.md": {
+    "bytes": 9035,
+    "sha256": "e5570185399a114e1f77c48509a4a41f630e3bb6e29c6d60c342cfb4f21e5b75"
+  },
+  "distribution.json": {
+    "bytes": 1883,
+    "sha256": "95a09ae96b28504ff7adf42c49c2d2aedb3f221812e80a7b89b34fda97fe4ae8"
+  },
+  "distribution.txt.gz": {
+    "bytes": 828,
+    "sha256": "8b207f6493622d83184aa3c255b86c103cdb48c142ad3a6a5bd4ece596156abf"
+  },
+  "hosted-registry.json": {
+    "bytes": 4443,
+    "sha256": "0bd3d16ab577fc4ec686837a5a346976cd1aa41616bb2e52eb3dd3eea45fc06f"
+  },
+  "hosted-registry.txt.gz": {
+    "bytes": 53304,
+    "sha256": "d6c1356d89e565f6b9c6bcb9462b1e459af3acf87a2fa299751d58f35083469d"
+  },
+  "independent-review.md": {
+    "bytes": 2118,
+    "sha256": "46d6802032aa4bba4e4701c90ed5603d1ff43363231a2f804ad445bff2a4999c"
+  },
+  "joint-handoff-test.py.txt": {
+    "bytes": 3790,
+    "sha256": "0f200590c09b2299a692707ddbcc0b66d70d78d869df941a6e1b977ec71dbbec"
+  },
+  "joint-initial.txt.gz": {
+    "bytes": 1077,
+    "sha256": "d09cd38bd191b8527338720a99dceac581f52ac614d10d3b0bb557fa2f25ffdf"
+  },
+  "joint-initial.xml.gz": {
+    "bytes": 3645,
+    "sha256": "a0da366f349079af467235596b9db2eb76667e459af1c00ac05f2cee11cb3ed5"
+  },
+  "joint-probe.txt.gz": {
+    "bytes": 51,
+    "sha256": "eb181b8dd67c980c5129bee98d9ed23c7787578f3cfedfb0f856aabe17d0be24"
+  },
+  "joint-probe.xml.gz": {
+    "bytes": 300,
+    "sha256": "13e91cfa706d4857318d14c4c843312ddce08de282d471e3e21fc119844b4e59"
+  },
+  "joint-results.json": {
+    "bytes": 3546,
+    "sha256": "97c7e7617cd5968224fec984a2611f1503928c1dc57f1cef13b063784bc077ad"
+  },
+  "local-results.json": {
+    "bytes": 14974,
+    "sha256": "f8a9de7b0c5ae0dad1707b873bba178e2cd033de760171c7f29b878bd4ff2d48"
+  },
+  "local-tests.txt.gz": {
+    "bytes": 2402,
+    "sha256": "1d1af7ebb858d99d2bdc4961cd662424e4601fda97dd65c960092cc481958fc4"
+  },
+  "local-tests.xml.gz": {
+    "bytes": 31710,
+    "sha256": "4358340461a3e30c62d6996e7701498af2419eb73b16fe36c6d059c30e89acec"
+  },
+  "offline-receipts.zip": {
+    "bytes": 69292,
+    "sha256": "23ac74d5e2977ffbfcb1cc23d3deeefba1b0c11360c3e0f8e44e0ffc53801765"
+  },
+  "offline.json": {
+    "bytes": 577,
+    "sha256": "5b3fca97305ee60335057fe93a371291bc0ad5d3e2f968e47c08f3a95c7c80b7"
+  },
+  "recovery.json": {
+    "bytes": 1236,
+    "sha256": "f8e3b78375265baa43837821f4d0d402c70704441477611c67a2b14bacd91d71"
+  },
+  "runtime-inputs.json": {
+    "bytes": 333,
+    "sha256": "2129d9dc9b0303d79090f62fc8440cf3f8266186c1e6ac0a4b5632f809e0c1ef"
+  }
+}

@@ -160,7 +160,7 @@ python scripts/audit_implementation_boundary.py --check
 python scripts/verify_access_distribution.py
 ```
 
-Exact committed/pushed review coordinates, runtime/counts, residual failure nodes,
-packaging hashes and hosted CI results are recorded in the evidence directory by
-follow-up validation. A green development `offline` check is not full runtime or
+The [validation evidence](evidence/adr0030-i2/README.md) records exact pushed
+review coordinates, local and minimum-SQLite hosted results (1,938 passed /
+31 stage-owned failures), packaging hashes and the separate I2/I3 interface probe. A green development `offline` check is not full runtime or
 release acceptance. This task authorizes no merge, release or real-data operation.
