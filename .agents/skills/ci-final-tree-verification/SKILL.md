@@ -219,6 +219,16 @@ Do not infer subprocess source identity from the parent's import path or a passe
 `PYTHONPATH` alone. This procedure retains the network guard; do not remove it to
 force another checkout to import.
 
+An external probe path above the frozen checkout can make pytest select the
+parent directory's `pyproject.toml` and prepend the wrong source through its
+`pythonpath`, even with the correct editable venv. Use explicit
+`-c /absolute/frozen/pyproject.toml` when mixing external probes with a frozen
+archive. Assert `config.inipath` and the actual imported validator/module path at
+session start before attributing results to that tree. I4 independent review
+preserved an old-source failure from this harness mistake, then passed the
+correctly bound run. Do not present the misbound run as a regression of the
+corrected source.
+
 For imported contract replay tests, reconcile collected node IDs with JUnit
 `classname` and test `name`, not its `file` attribute alone. P2's imported P1 test
 functions correctly run with the production fixture under a P2 collection module,

@@ -1,0 +1,30 @@
+{
+  "reviewed_head": "f948cc6c764689154734f6386a10f97db6923e7a",
+  "reviewed_tree": "0dd55440469be7bb1a2d341ef9c2bc6419f631b0",
+  "initial_head": "b4caae054326a60f4aeb0e5f71e8b042f2c132f9",
+  "initial_tree": "f010a70f23c25a76893031ce47b41a48a319d660",
+  "initial_focused": {
+    "passed": 75,
+    "failed": 1,
+    "skip": 0
+  },
+  "final_focused": {
+    "tests": 96,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "final_groups": {
+    "I4": 26,
+    "P6": 50,
+    "P7 source diagnosis": 16,
+    "External probes": 4
+  },
+  "runtime": {
+    "python": "3.13.5 (main, Jul 15 2026, 20:25:40) [GCC 14.2.0]",
+    "sqlite": "3.51.3",
+    "source_id": "2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618",
+    "origin": "/workspace/i4-independent/final-source/src/repo_catalog/__init__.py"
+  },
+  "verdict": "No remaining material finding in independently reviewed I4 scope. Source backup Stop defect independently reproduced then closed on corrected pushed head. Full broad/hosted acceptance was not independently rerun."
+}

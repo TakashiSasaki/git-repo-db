@@ -1,0 +1,13 @@
+{
+  "sqlite3_c_sha3_256": "32d5424f97e0a7fc5ed2f6335afbb58be4e0298bd7117a34e39d345ff13d859e",
+  "library_sha256": "253b1586194f25d41cc71f30fb224e18d110d79bd4c89f1d50da88a78a2a4255",
+  "release_url": "https://sqlite.org/releaselog/3_51_3.html",
+  "build_flags": [
+    "-O2",
+    "-fPIC",
+    "-shared",
+    "-DSQLITE_THREADSAFE=1",
+    "-DSQLITE_ENABLE_FTS5"
+  ],
+  "compiler": "cc (Debian 14.2.0-19) 14.2.0"
+}

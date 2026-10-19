@@ -1,0 +1,69 @@
+[
+  {
+    "command": [
+      ".venv/bin/ruff",
+      "check",
+      "src",
+      "tests",
+      "scripts"
+    ],
+    "exit": 0,
+    "log": "audit-0.log"
+  },
+  {
+    "command": [
+      ".venv/bin/ruff",
+      "format",
+      "--check",
+      "src",
+      "tests",
+      "scripts"
+    ],
+    "exit": 0,
+    "log": "audit-1.log"
+  },
+  {
+    "command": [
+      ".venv/bin/python",
+      "scripts/build_p1_schema.py",
+      "--check"
+    ],
+    "exit": 0,
+    "log": "audit-2.log"
+  },
+  {
+    "command": [
+      ".venv/bin/python",
+      "scripts/audit_p1_schema.py",
+      "--check"
+    ],
+    "exit": 0,
+    "log": "audit-3.log"
+  },
+  {
+    "command": [
+      ".venv/bin/python",
+      "scripts/audit_callsite_dependencies.py",
+      "--check"
+    ],
+    "exit": 0,
+    "log": "audit-4.log"
+  },
+  {
+    "command": [
+      ".venv/bin/python",
+      "scripts/audit_implementation_boundary.py",
+      "--check"
+    ],
+    "exit": 0,
+    "log": "audit-5.log"
+  },
+  {
+    "command": [
+      ".venv/bin/python",
+      "scripts/audit_context_registration.py"
+    ],
+    "exit": 0,
+    "log": "audit-6.log"
+  }
+]

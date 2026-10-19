@@ -1,0 +1,63 @@
+{
+  "source": {
+    "head": "f948cc6c764689154734f6386a10f97db6923e7a",
+    "tree": "0dd55440469be7bb1a2d341ef9c2bc6419f631b0",
+    "status": "",
+    "inputs_sha256": "2ba3549c28a41825317bbcb65a20717c6541fb89c7b18d37547f83ba97f0a246"
+  },
+  "counts": {
+    "passed": 2329
+  },
+  "cohorts": {
+    "unit": {
+      "passed": 456
+    },
+    "access": {
+      "passed": 483
+    },
+    "i2": {
+      "passed": 48
+    },
+    "i23": {
+      "passed": 34
+    },
+    "p1": {
+      "passed": 355
+    },
+    "i4": {
+      "passed": 26
+    },
+    "p3": {
+      "passed": 80
+    },
+    "p5": {
+      "passed": 48
+    },
+    "i3": {
+      "passed": 66
+    },
+    "p2": {
+      "passed": 197
+    },
+    "p4": {
+      "passed": 202
+    },
+    "p6": {
+      "passed": 50
+    },
+    "p7": {
+      "passed": 255
+    },
+    "p5_p6_compatibility": {
+      "passed": 29
+    }
+  },
+  "selected": 2329,
+  "executed": 2329,
+  "duplicates_selected": [],
+  "duplicates_executed": [],
+  "missing": [],
+  "unexpected": [],
+  "failures": [],
+  "unchanged_inputs": true
+}

@@ -1,0 +1,5 @@
+9390c9f3b54a033e5f07e1cb05d7c4b263c38fb7	refs/heads/impl/adr-0030-i1-context-relations-20261019
+9b8a6ad9b761bf23b45eda9f84d639569cee56ef	refs/heads/impl/adr-0030-i2-provider-intake-20261019
+8519056d5b9484eb0cc4dcf9f693285b4e65518a	refs/heads/impl/adr-0030-i23-integration-20261019
+5c5b816998f7051703ca400e8cfeab377254c435	refs/heads/impl/adr-0030-i3-selective-exchange-20261019
+6780088befd33e711230d570bb291edb2ee40cbf	refs/heads/main

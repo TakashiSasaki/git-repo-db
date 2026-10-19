@@ -1,0 +1,15 @@
+[
+  ".agents/skills/ci-final-tree-verification/SKILL.md",
+  ".github/workflows/access-registry.yml",
+  "docs/implementation/adr0030-i4-query-search-backup.md",
+  "docs/implementation/evidence/adr0030-i4/README.md",
+  "scripts/verify_access_distribution.py",
+  "src/repo_catalog/adapters/sqlite/production_search.py",
+  "src/repo_catalog/adapters/sqlite/recovery.py",
+  "src/repo_catalog/adapters/sqlite/recovery_validation.py",
+  "src/repo_catalog/application/production_query.py",
+  "src/repo_catalog/domain/production_query.py",
+  "tests/integration/i4/__init__.py",
+  "tests/integration/i4/test_query_search_backup.py",
+  "tests/integration/p6/conftest.py"
+]
