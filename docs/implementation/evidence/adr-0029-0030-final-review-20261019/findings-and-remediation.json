@@ -1,0 +1,205 @@
+{
+  "schema_version": 1,
+  "review_id": "adr-0029-0030-final-review-20261019",
+  "repository": "https://github.com/TakashiSasaki/git-repo-db",
+  "target_pr": 106,
+  "target_branch": "docs/accept-adr-0029-retire-0003-20261019",
+  "pinned_revisions": {
+    "main": {
+      "commit_sha": "b2a87cfc6562413d9ecde7f4329e90c434ae9aad",
+      "tree_sha": "4ac3a7d33bb01515e3448af5f630589406303165"
+    },
+    "pr_95": {
+      "branch": "docs/independent-access-store-design",
+      "commit_sha": "3cde893f7a16fd7d04021e3be3cbc0d22c765c38",
+      "tree_sha": "2fbb875f36393e063140e099b9022fbc29d82774"
+    },
+    "pr_96": {
+      "branch": "feat/access-a1-registry-foundation",
+      "commit_sha": "9d44a58867f32a42d2eee90d81bd9f7f2cc2a456",
+      "tree_sha": "1a6ea243909c305e0a7eb9caad05e3fd7a32b5d2"
+    },
+    "pr_97": {
+      "branch": "feat/access-a1b-connections-grants",
+      "commit_sha": "8852f4c4db3c5466654be38b16f1ef18eada4a1c",
+      "tree_sha": "63138d2ca173171692df3745d37ae678138eb24d"
+    },
+    "pr_98": {
+      "branch": "feat/access-a2a-local-review-preflight",
+      "commit_sha": "16c36f989f39aa9f9d2cf175dffb86e52da5a72d",
+      "tree_sha": "2121af0d127a40e7d63c43126851da025ac6404b"
+    },
+    "pr_99": {
+      "branch": "feat/access-a3-context-boundary",
+      "commit_sha": "c82fe24454926e2213a476f7bdfd7650519b12b6",
+      "tree_sha": "0b64d6a8e9eb2d88795eff6c3ce78f25840fcdd1"
+    },
+    "pr_100": {
+      "branch": "feat/access-a4-local-git-acquisition",
+      "commit_sha": "2ab6a59dd91c46ebbc9a9d14a0078f2b16235b4f",
+      "tree_sha": "6ea8778ff721c64a86a6cb86f085e1ad8c94da81"
+    },
+    "pr_101": {
+      "branch": "feat/access-a5-backup-restore",
+      "commit_sha": "444dcecf38f5db3cccdb4716c7c8c6b584543475",
+      "tree_sha": "2db6023f98a6e5947e470950ecc78ee290280bc2"
+    },
+    "pr_102": {
+      "branch": "validation/access-a6-integration-review",
+      "commit_sha": "f4d0d448fca5925bfbe4f8cb8345c3bd0df7de60",
+      "tree_sha": "a7b4521fb7fa6562c8e0bf67e2766743e0b82c5b"
+    },
+    "pr_103": {
+      "branch": "fix/access-a6-independent-review",
+      "source_commit_sha": "536ad33941283a439825ad606b8718c88c967ffa",
+      "source_tree_sha": "169b5d7ad5dea4fa271f71bea96863bc318fb332",
+      "commit_sha": "1134e200eb4ac9ec45bf3fae3be695e2bb786a8d",
+      "tree_sha": "e53755ac9fa35cd436d67afbb8810f3c6c11fdc2"
+    },
+    "pr_104": {
+      "branch": "docs/context-relations-selective-exchange-20261018",
+      "commit_sha": "bb54d799d1b749a90fa62de89dbd978ef3bc8055",
+      "tree_sha": "42ef84653171fd3494d91f4194b947f7d5aa6162"
+    },
+    "pr_105": {
+      "branch": "docs/adr-0029-replacement-readiness-20261019",
+      "commit_sha": "bb878eda47cf17268dd821c74343bac64d769ea7",
+      "tree_sha": "f23dbf0cdebaae338be91c4579024f730032a9d9"
+    },
+    "pr_106_initial_reviewed": {
+      "commit_sha": "af6b5ecca3c9ece3200db85da4c99d35bdbf5cbb",
+      "tree_sha": "8b63a857cd8948d73b136016674d27ec55263983"
+    },
+    "pr_106_intermediate_remediation": {
+      "commit_sha": "cbf173ab3bd2a6bd551544472ec9eea6cdfc09b8",
+      "tree_sha": "7922d374c6c59d81f2076db3048afeba931d559d"
+    },
+    "pr_106_reviewed_source": {
+      "commit_sha": "7c675b8d455aeb51d3c98c250925bff1b45eaf12",
+      "tree_sha": "e250754017c1db116979b5ed58f048df56561bfb"
+    }
+  },
+  "reviewers": [
+    {
+      "id": "R1",
+      "role": "ADR 0003 Complete Carry-Forward Auditor",
+      "conversation_id": "66052de5-0aec-42e5-890a-2ca5bbe2ece9",
+      "mode": "read-only",
+      "initial_target_sha": "af6b5ecca3c9ece3200db85da4c99d35bdbf5cbb",
+      "reverified_target_sha": "7c675b8d455aeb51d3c98c250925bff1b45eaf12",
+      "verdict": "PASS"
+    },
+    {
+      "id": "R2",
+      "role": "ADR 0029 & ADR 0030 Semantic Consistency Auditor",
+      "conversation_id": "d20a6a6f-34a0-4682-9db7-fb3fd17d073d",
+      "mode": "read-only",
+      "initial_target_sha": "af6b5ecca3c9ece3200db85da4c99d35bdbf5cbb",
+      "reverified_target_sha": "7c675b8d455aeb51d3c98c250925bff1b45eaf12",
+      "verdict": "PASS"
+    },
+    {
+      "id": "R3",
+      "role": "Documentation, Links, Frontmatter & Agent Guidance Auditor",
+      "conversation_id": "245584bb-699e-4be2-b862-287eb10cdf99",
+      "mode": "read-only",
+      "initial_target_sha": "af6b5ecca3c9ece3200db85da4c99d35bdbf5cbb",
+      "reverified_target_sha": "7c675b8d455aeb51d3c98c250925bff1b45eaf12",
+      "verdict": "PASS"
+    },
+    {
+      "id": "R4",
+      "role": "Stacked PRs, CI Receipts, and Merge Readiness Auditor",
+      "conversation_id": "3cffac0d-2c2b-4cd6-9b7a-ce3644b4d6e7",
+      "mode": "read-only",
+      "initial_target_sha": "af6b5ecca3c9ece3200db85da4c99d35bdbf5cbb",
+      "reverified_target_sha": "7c675b8d455aeb51d3c98c250925bff1b45eaf12",
+      "verdict": "PASS"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-01",
+      "reviewer_ids": ["R4-01"],
+      "severity": "Major",
+      "target_sha": "af6b5ecca3c9ece3200db85da4c99d35bdbf5cbb",
+      "location": "GitHub PR #106 body",
+      "problem": "PR #106 description still referenced superseded HEAD 6ace0a3b8b5318bac466a35f86f80383d39242b3, tree 450c69d757936c19bff9acb745251fcd6adb8487, 2 commits, 27 changed files, and older CI runs.",
+      "impact": "None on domain design, but PR metadata was out of sync with actual branch HEAD and CI receipts.",
+      "remediation": "Synchronize PR #106 description with final HEAD, tree, commit chain, CI receipts, and in-repo review evidence.",
+      "fix_reference": "gh pr edit 106",
+      "status": "RESOLVED"
+    },
+    {
+      "id": "F-02",
+      "reviewer_ids": ["R1-MIN-01", "R3-001", "R4-02"],
+      "severity": "Minor",
+      "target_sha": "af6b5ecca3c9ece3200db85da4c99d35bdbf5cbb",
+      "location": "docs/adr/0002-three-store-boundary-architecture.md:3",
+      "problem": "Pinned external GitHub blob URL for ADR 0029 targeted 410a88b32a3d5da6b0c7a93f054641f4f8ae8596 rather than reconciled af6b5ecca3c9ece3200db85da4c99d35bdbf5cbb.",
+      "impact": "External link from public-site ADR 0002 resolved to commit 1 of PR #106 before commit 3 added the 6 explicit acceptance criteria and DS-R05 paragraph.",
+      "remediation": "Advance pinned external GitHub blob URL in docs/adr/0002-three-store-boundary-architecture.md:3 to af6b5ecca3c9ece3200db85da4c99d35bdbf5cbb.",
+      "fix_reference": "cbf173ab3bd2a6bd551544472ec9eea6cdfc09b8",
+      "reverified_by": ["R1", "R3"],
+      "status": "RESOLVED"
+    },
+    {
+      "id": "F-03",
+      "reviewer_ids": ["R3-002"],
+      "severity": "Minor",
+      "target_sha": "af6b5ecca3c9ece3200db85da4c99d35bdbf5cbb",
+      "location": "docs/implementation/adr-0029-accepted-retirement-20261019.md:44-50,104-110",
+      "problem": "Closure record retained commit 1 wording before commit 3 (af6b5ecc) and post-reconciliation R1-R4 independent review.",
+      "impact": "Minor documentary staleness in closure record.",
+      "remediation": "Update Sections 2, 3, and 4 of docs/implementation/adr-0029-accepted-retirement-20261019.md to document commit af6b5ecc, R1-R4 verification, ADR 0002 external link pin, and parent-to-head check scope.",
+      "fix_reference": "cbf173ab3bd2a6bd551544472ec9eea6cdfc09b8",
+      "reverified_by": ["R1", "R3"],
+      "status": "RESOLVED"
+    },
+    {
+      "id": "F-04",
+      "reviewer_ids": ["R3-003", "R1-MIN-02"],
+      "severity": "Major",
+      "target_sha": "cbf173ab3bd2a6bd551544472ec9eea6cdfc09b8",
+      "location": "docs/implementation/adr-0029-accepted-retirement-20261019.md:56-59",
+      "problem": "Intermediate commit cbf173ab cited docs/implementation/evidence/adr-0029-0030-final-review-20261019/ before the evidence commit created that directory.",
+      "impact": "Standalone tree of cbf173ab contained a forward path reference.",
+      "remediation": "Remove the forward path reference in 7c675b8d455aeb51d3c98c250925bff1b45eaf12 so the reviewed source tree is 100% self-contained before the evidence-only commit.",
+      "fix_reference": "7c675b8d455aeb51d3c98c250925bff1b45eaf12",
+      "reverified_by": ["R1", "R3"],
+      "status": "RESOLVED"
+    },
+    {
+      "id": "F-05",
+      "reviewer_ids": ["R3-004"],
+      "severity": "Minor",
+      "target_sha": "cbf173ab3bd2a6bd551544472ec9eea6cdfc09b8",
+      "location": "Commit author metadata of cbf173ab3bd2a6bd551544472ec9eea6cdfc09b8",
+      "problem": "Worktree git config defaulted to experiment <experiment@local> on commit cbf173ab.",
+      "impact": "Cosmetic author metadata difference on intermediate commit; preserved without history rewrite.",
+      "remediation": "Set user.name and user.email to Takashi Sasaki <takashi316@gmail.com> for 7c675b8d455aeb51d3c98c250925bff1b45eaf12 and subsequent commits.",
+      "fix_reference": "7c675b8d455aeb51d3c98c250925bff1b45eaf12",
+      "reverified_by": ["R3"],
+      "status": "RESOLVED"
+    },
+    {
+      "id": "D-01",
+      "reviewer_ids": ["R1-DEF-01", "R4-03"],
+      "severity": "Deferred",
+      "target_sha": "7c675b8d455aeb51d3c98c250925bff1b45eaf12",
+      "location": "docs/adr/0029-independent-access-store.md, docs/adr/0030-context-repository-relations-and-selective-exchange.md, docs/phase2/documentation-status-audit.md",
+      "problem": "GC-03/04, DS-R01/03/04/06/07/08, unselected DS-R05 extensions, proposed Access physical schema/adapter details, ADR 0030 I1-I5 implementation, and explicit release qualification remain deferred/future work.",
+      "impact": "Intentional architectural and operational boundaries.",
+      "remediation": "Maintain explicit deferral and proposal boundaries; do not treat ADR acceptance as runtime activation or release qualification.",
+      "fix_reference": "N/A",
+      "reverified_by": ["R1", "R2", "R3", "R4"],
+      "status": "PRESERVED_BY_DESIGN"
+    }
+  ],
+  "merge_readiness": {
+    "pr_103": "CONDITIONALLY READY",
+    "pr_104": "CONDITIONALLY READY",
+    "pr_105": "CONDITIONALLY READY",
+    "pr_106": "CONDITIONALLY READY"
+  }
+}
