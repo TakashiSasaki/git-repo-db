@@ -6,7 +6,7 @@
 - **Decision date:** 2026-10-14.
 - **Decision ID:** GCTX-M05.
 - **Owner selection:** Option C: Git intrinsic verification and required durable immutable evidence belong to Git Core; Provider-specific assessments belong to Context; verification execution Jobs/progress belong to Operational.
-- **Dependencies:** [ADR 0003](0003-append-only-git-core-and-context-store.md), [ADR 0004 / GCTX-M01](0004-metadata-only-git-core.md), [ADR 0005 / GCTX-M02](0005-common-oid-identity-with-attributed-metadata.md), [ADR 0006 / GCTX-M03](0006-field-claims-and-observation-scoped-relations.md), and [ADR 0007 / GCTX-M04](0007-verification-aware-git-metadata-reads.md).
+- **Dependencies:** [ADR 0003](https://github.com/TakashiSasaki/git-repo-db/blob/bb878eda47cf17268dd821c74343bac64d769ea7/docs/adr/0003-append-only-git-core-and-context-store.md), [ADR 0004 / GCTX-M01](0004-metadata-only-git-core.md), [ADR 0005 / GCTX-M02](0005-common-oid-identity-with-attributed-metadata.md), [ADR 0006 / GCTX-M03](0006-field-claims-and-observation-scoped-relations.md), and [ADR 0007 / GCTX-M04](0007-verification-aware-git-metadata-reads.md).
 - **Baseline:** Unmerged PR #48 HEAD `5963f28229bc7798634d549855a08db06d12b3a6`, stacked on PRs #47 → #46 → #45 → #44.
 - **Implementation status:** Three-Store Core Schema 21 remains the implemented schema. This ADR is design-only.
 

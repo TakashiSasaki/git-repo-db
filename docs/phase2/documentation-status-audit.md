@@ -1,6 +1,6 @@
 # Documentation status audit — scoped decision reconciliation
 
-**Subsequent design decision:** This audit examined the implemented Three-Store format before the owner's 2026-10-14 acceptance of [ADR 0003](../adr/0003-append-only-git-core-and-context-store.md). Its original classification remains evidence of that checkpoint; the **current target** is Git Core (strictly append-only) + durable Context + Operational + Search, while the current production implementation remains Three-Store. ADR 0003 supersedes conflicting placement/full-backup assumptions, not the whole earlier decision set. Future manual Provider-text GC belongs to Context, not Git Core.
+**Historical audit and current successor:** This audit examined the implemented Three-Store format before the owner's 2026-10-14 acceptance of [historical ADR 0003](https://github.com/TakashiSasaki/git-repo-db/blob/bb878eda47cf17268dd821c74343bac64d769ea7/docs/adr/0003-append-only-git-core-and-context-store.md). The original four-store target and its then-valid supersession of prior physical placement remain evidence of that checkpoint. **As of 2026-10-19**, [accepted ADR 0029](../adr/0029-independent-access-store.md) replaces ADR 0003 and defines Git Core (strictly INSERT-only), durable Context, independent Access, Operational and Search as five distinct responsibilities; accepting that design alone does not switch the Three-Store runtime. Future manual Provider-text GC remains Context-only, not Git Core.
 
 - **Audit date:** 2026-10-14.
 - **Inspected baseline:** `fb3b1fb4d5e1436c58677d2e867708502fbbc64b`.
@@ -71,6 +71,17 @@ Search creation/recovery. Their differing lifecycle from Operational DB is
 intentional, not an inconsistency to normalize away.
 
 ## Remaining boundaries
+
+**Subsequent target clarification (2026-10-19):** The table below records the
+2026-10-14 baseline, not a blanket deferral of later accepted decisions.
+[ADR 0030](../adr/0030-context-repository-relations-and-selective-exchange.md)
+now selects immutable competing Repository mapping claims/Dispositions and
+bounded selective cross-seed Exchange within DS-R05's former unresolved area.
+Its accepted scope has no mapping Witness table and does not approve broader
+ownership/trust extensions or establish runtime implementation. Other DS items
+retain only their unsuperseded scope; future Context text GC remains separately
+governed. The baseline guard/test references below are historical implementation
+evidence, not instructions to reject ADR 0030's selected target.
 
 The following IDs are audit cross-references only, **not new owner decisions or
 mandatory implementation tasks**. No option is selected by listing it here.

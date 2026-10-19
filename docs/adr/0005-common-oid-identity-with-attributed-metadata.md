@@ -4,7 +4,7 @@
 - **Decision date:** 2026-10-14.
 - **Decision ID:** GCTX-M02.
 - **Owner selection:** Option A — a common OID identity plus separately attributed metadata.
-- **Dependency:** [ADR 0004 / GCTX-M01](0004-metadata-only-git-core.md) (mandatory byte-free Git Core), stacked on [ADR 0003](0003-append-only-git-core-and-context-store.md) (append-only Git Core and durable Context).
+- **Dependency:** [ADR 0004 / GCTX-M01](0004-metadata-only-git-core.md) (mandatory byte-free Git Core), stacked on [ADR 0003](https://github.com/TakashiSasaki/git-repo-db/blob/bb878eda47cf17268dd821c74343bac64d769ea7/docs/adr/0003-append-only-git-core-and-context-store.md) (append-only Git Core and durable Context).
 - **Baseline:** Unmerged PR #45 HEAD `936ca68c3743749dfc0eb2ad90b8cbd5ba7327ec`. The implemented format remains Three-Store Core Schema 21; this ADR changes no executable schema.
 - **Subsequent read decision:** [ADR 0007 / GCTX-M04](0007-verification-aware-git-metadata-reads.md) resolves ordinary conflict-read behavior with qualified receiver-verified canonical projections.
 - **Subsequent verification responsibility:** [ADR 0008 / GCTX-M05](0008-domain-split-git-verification-ownership.md) assigns Git intrinsic checks/evidence to Core, Provider-specific assessments to Context and Jobs to Operational. Physical identity/evidence layout remains open.

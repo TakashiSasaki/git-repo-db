@@ -34,8 +34,11 @@ The complete final selection ledger is in ADR 0030. In particular:
 - Q-S8=A supersedes earlier seven-role drafts: no `referenced_repository`, and no
   automatic PR owning/base duplicate or inherited Review/Comment Repository row.
 - Context Q-S identifiers do not supersede similarly numbered Access Scope
-  questions. ADR 0029's owner-confirmed Scope/locator decisions are preserved;
-  its whole-ADR replacement approval remains a separate unresolved lifecycle gate.
+  questions. ADR 0029's owner-confirmed Scope/locator decisions are preserved.
+  **Subsequent 2026-10-19 lifecycle update:** whole ADR 0029 replacement of
+  ADR 0003 was explicitly approved and the old active file retired; see the
+  [retirement record](adr-0029-accepted-retirement-20261019.md). This does not
+  approve Access physical-schema proposals or runtime implementation.
 
 ## 2. Baseline code facts versus required changes
 
@@ -202,14 +205,14 @@ replay guard. Neither problem is solved by inventing a UUID.
 
 | Existing authority | Preservation in this design |
 | --- | --- |
-| ADR 0003 (operative clauses) | Domain boundary, independent durable Context, immutable Core, paired backup and no fabricated observations stay binding |
+| ADR 0029 (carry-forward of historical ADR 0003) | Domain boundary, independent durable Context, immutable Core, paired backup and no fabricated observations stay binding under the accepted five-store successor |
 | ADR 0004/0005/0006 | Metadata-only operation, common typed OID identity, attributed scalar/group boundaries retained |
 | ADR 0017 | Direct semantic keys/FKs; no database-only aliases, new operation UUIDs or hash-only claim keys |
 | ADR 0023/0024/0025 | Finite work, actual processing cost and cumulative original-request accounting retained |
 | ADR 0026 | Persistent corruption stop, untrusted salvage and fresh validated recovery retained |
 | ADR 0027 | Unauthenticated attributed origins allowed; issuer text/UUID/digest is not authentication; no new PKI requirement |
 | ADR 0028 | Classified original epoch microseconds and SHA-256 envelope retained |
-| ADR 0029 and Access stack | Confirmed independent Access semantics preserved; whole-record acceptance/retirement and current approval rules not changed |
+| ADR 0029 and Access stack | Whole-record acceptance/retirement completed on 2026-10-19; confirmed independent Access semantics retained, and physical/runtime approval rules not changed |
 | Historical single-seed Exchange implementation | Baseline behavior, explicitly replaced in the next implementation by selected Q-E semantics, not falsely claimed already corrected |
 
 The physical SQL/codec details are reviewable proposals under fixed decisions.

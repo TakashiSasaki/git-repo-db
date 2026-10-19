@@ -28,6 +28,17 @@ without rewriting feature history. Expected trees are not predicted GitHub commi
 SHAs. The verified read-only helper and plan do not grant merge authorization or
 claim atomic base fencing; no production merge was executed to establish them.
 
+If an older `gh pr edit` fails with the GraphQL `projectCards` / Projects
+(classic) deprecation error, preserve the failed command and inspect the live PR
+before retrying. This is a CLI compatibility failure, not evidence of missing
+write permission. Use the supported REST pull-request update endpoint with a
+JSON file containing only the intended `body` or `base` field:
+`gh api --method PATCH repos/OWNER/REPO/pulls/NUMBER --input payload.json`.
+Create the payload with a JSON serializer so Markdown newlines remain intact.
+Reread the returned/live fields; after a base change, recheck the effective diff,
+candidate parents, tree and checks before merging. This fallback grants no merge
+permission and never bypasses repository protection or rewrites branch history.
+
 For supplementary skill edits, also preflight against the pending reviewed
 branches. Independent additions at the same end-of-file can conflict even though
 both are prose. Preserve each lesson and choose a noncompeting section location;

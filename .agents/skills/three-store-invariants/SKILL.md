@@ -5,7 +5,7 @@ description: Diagnose the implemented Schema 21 Three-Store baseline under ADR 0
 
 # Three-Store Boundary Architectural Invariants (ADR 0002)
 
-**Applicability:** The concrete tables, methods and recipes below describe the **implemented Core Schema 21 / Operational 1 / Search 1 baseline**. For target work, read the [ADR index](../../../docs/adr/README.md) and [transition plan](../../../docs/architecture/git-core-context-transition-plan.md). [ADR 0003](../../../docs/adr/0003-append-only-git-core-and-context-store.md) separates independently durable Context from INSERT-only Git Core; [ADR 0014](../../../docs/adr/0014-history-and-notes-catalog-without-file-archive.md) excludes ordinary file-body archival. [ADR 0026](../../../docs/adr/0026-stop-salvage-restore-merge-after-corruption.md) replaces quarantine/count/release and same-DB continuation with immediate catalog recovery. [ADR 0027](../../../docs/adr/0027-unauthenticated-external-capture-origin-reports.md) fixes unauthenticated external-origin reports without application PKI/signatures. Preserve unaffected safety principles; do not copy superseded baseline mechanisms into the target or infer new execution permission from this skill.
+**Applicability:** The concrete tables, methods and recipes below describe the **implemented Core Schema 21 / Operational 1 / Search 1 baseline**. For target work, read the [ADR index](../../../docs/adr/README.md) and [transition plan](../../../docs/architecture/git-core-context-transition-plan.md). [ADR 0029](../../../docs/adr/0029-independent-access-store.md) is the accepted five-store successor to historical ADR 0003; it preserves independently durable Context and INSERT-only Git Core while separating Access; [ADR 0014](../../../docs/adr/0014-history-and-notes-catalog-without-file-archive.md) excludes ordinary file-body archival. [ADR 0026](../../../docs/adr/0026-stop-salvage-restore-merge-after-corruption.md) replaces quarantine/count/release and same-DB continuation with immediate catalog recovery. [ADR 0027](../../../docs/adr/0027-unauthenticated-external-capture-origin-reports.md) fixes unauthenticated external-origin reports without application PKI/signatures. Preserve unaffected safety principles; do not copy superseded baseline mechanisms into the target or infer new execution permission from this skill.
 
 The **implemented baseline** physically separates three SQLite stores; the following inventory does not assign target authority:
 - **Core Store (`catalog.sqlite3`)**: Authoritative domain facts, entities, immutable observations, coverage claims, code listings, Git DAG and intrinsic structures, and Exchange staging.
@@ -46,7 +46,7 @@ time. A genuinely complete Core terminal can still support safe reuse after
 Operational loss. Preserve old-to-new node mapping if renaming obsolete mechanism
 tests. See the [Schema 21 checkpoint](../../../docs/implementation/evidence/schema21-baseline-20261016/ROOT-CHECKPOINT.md)
 for real loss and split-write counterexamples; this procedure does not apply the
-four-store target to the public runtime.
+five-store target to the public runtime.
 
 Run the entire affected lifecycle cohort after correcting a connection: a missing
 table can mask a second stale continuation assertion. Check old partial versus
@@ -281,7 +281,7 @@ $$12 + 18 + 10 + 4 + 87 = 131\text{ passed}.$$
 ## 6. Verify independently durable paired-store coordination
 
 Use this procedure for an authorized disposable Core/Context coordination
-experiment, not as evidence that the production four-store runtime is implemented.
+experiment, not as evidence that the production five-store runtime is implemented.
 The executable reference is
 [`consistency.py`](../../../tests/integration/architecture_spikes/consistency.py)
 and its adversarial assertions are in

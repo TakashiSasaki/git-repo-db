@@ -1,0 +1,69 @@
+# Independent Review R4: Stacked PR Chain (#95–#106), Bounded CI Receipts, and Merge Readiness Audit
+
+- **Reviewer:** R4 (Independent Stacked PRs, CI Receipts, and Merge Readiness Auditor)
+- **Subagent Conversation ID:** `3cffac0d-2c2b-4cd6-9b7a-ce3644b4d6e7`
+- **Target Worktree:** `/home/ubuntu/github/git-repo-db/docs/accept-adr-0029-retire-0003-20261019`
+- **Initial Inspected HEAD Commit:** `af6b5ecca3c9ece3200db85da4c99d35bdbf5cbb` (tree `8b63a857cd8948d73b136016674d27ec55263983`)
+- **Remediated Reviewed Source Commit (`REVIEWED_SOURCE_COMMIT`):** `7c675b8d455aeb51d3c98c250925bff1b45eaf12` (tree `e250754017c1db116979b5ed58f048df56561bfb`)
+- **Mode:** Strictly READ-ONLY verification
+
+---
+
+## 1. Full Stack Topology & Linear Ancestry Verification (`main` and #95–#106)
+
+| PR / Ref | Branch (`headRefName`) | Base (`baseRefName`) | Head Commit SHA (`headRefOid`) | Tree SHA (`HEAD^{tree}`) | Parent Commit SHA(s) | Commits in PR | State / Draft / Mergeable / Review | `is-ancestor` of Next |
+| :--- | :--- | :--- | :--- | :--- | :--- | :---: | :--- | :---: |
+| **`github/main`** | `main` | — | `b2a87cfc6562413d9ecde7f4329e90c434ae9aad` | `4ac3a7d33bb01515e3448af5f630589406303165` | `e59f729c...` `75508553...` | — | Default branch (Unchanged) | YES (`0` merges) |
+| **#95** | `docs/independent-access-store-design` | `main` | `3cde893f7a16fd7d04021e3be3cbc0d22c765c38` | `2fbb875f36393e063140e099b9022fbc29d82774` | `cf90c093089911acbfd3c8c2c7778a9ff8904bc6` | 3 (`2fec656`, `cf90c09`, `3cde893`) | `OPEN` / `Draft` / `MERGEABLE` / `""` | YES (`0` merges) |
+| **#96** | `feat/access-a1-registry-foundation` | `docs/independent-access-store-design` | `9d44a58867f32a42d2eee90d81bd9f7f2cc2a456` | `1a6ea243909c305e0a7eb9caad05e3fd7a32b5d2` | `53a69046e4d729a7cc2e4bccaa87767c94882fc3` | 2 (`53a6904`, `9d44a58`) | `OPEN` / `Draft` / `MERGEABLE` / `""` | YES (`0` merges) |
+| **#97** | `feat/access-a1b-connections-grants` | `feat/access-a1-registry-foundation` | `8852f4c4db3c5466654be38b16f1ef18eada4a1c` | `63138d2ca173171692df3745d37ae678138eb24d` | `9d44a58867f32a42d2eee90d81bd9f7f2cc2a456` | 1 (`8852f4c`) | `OPEN` / `Draft` / `MERGEABLE` / `""` | YES (`0` merges) |
+| **#98** | `feat/access-a2a-local-review-preflight` | `feat/access-a1b-connections-grants` | `16c36f989f39aa9f9d2cf175dffb86e52da5a72d` | `2121af0d127a40e7d63c43126851da025ac6404b` | `8852f4c4db3c5466654be38b16f1ef18eada4a1c` | 1 (`16c36f9`) | `OPEN` / `Draft` / `MERGEABLE` / `""` | YES (`0` merges) |
+| **#99** | `feat/access-a3-context-boundary` | `feat/access-a2a-local-review-preflight` | `c82fe24454926e2213a476f7bdfd7650519b12b6` | `0b64d6a8e9eb2d88795eff6c3ce78f25840fcdd1` | `ab22b0162c7d50914694d7f2594a116b13b79db6` | 2 (`ab22b01`, `c82fe24`) | `OPEN` / `Draft` / `MERGEABLE` / `""` | YES (`0` merges) |
+| **#100** | `feat/access-a4-local-git-acquisition` | `feat/access-a3-context-boundary` | `2ab6a59dd91c46ebbc9a9d14a0078f2b16235b4f` | `6ea8778ff721c64a86a6cb86f085e1ad8c94da81` | `a4870756900273b01da0df258422de82811dcfda` | 2 (`a487075`, `2ab6a59`) | `OPEN` / `Draft` / `MERGEABLE` / `""` | YES (`0` merges) |
+| **#101** | `feat/access-a5-backup-restore` | `feat/access-a4-local-git-acquisition` | `444dcecf38f5db3cccdb4716c7c8c6b584543475` | `2db6023f98a6e5947e470950ecc78ee290280bc2` | `bf287b2f53a26931b27ffe006da886f929e68d78` | 2 (`bf287b2`, `444dcec`) | `OPEN` / `Draft` / `MERGEABLE` / `""` | YES (`0` merges) |
+| **#102** | `validation/access-a6-integration-review` | `feat/access-a5-backup-restore` | `f4d0d448fca5925bfbe4f8cb8345c3bd0df7de60` | `a7b4521fb7fa6562c8e0bf67e2766743e0b82c5b` | `71dc4ae9d3e1d659aeb851aa63d1e07f98654ed8` | 2 (`71dc4ae`, `f4d0d44`) | `OPEN` / `Draft` / `MERGEABLE` / `COMMENTED` | YES (`0` merges) |
+| **#103** | `fix/access-a6-independent-review` | `validation/access-a6-integration-review` | `1134e200eb4ac9ec45bf3fae3be695e2bb786a8d` | `e53755ac9fa35cd436d67afbb8810f3c6c11fdc2` | `536ad33941283a439825ad606b8718c88c967ffa` | 4 (`f81a399`, `8dcb515`, `536ad33`, `1134e20`) | `OPEN` / `Draft` / `MERGEABLE` / `COMMENTED` | YES (`0` merges) |
+| **#104** | `docs/context-relations-selective-exchange-20261018` | `fix/access-a6-independent-review` | `bb54d799d1b749a90fa62de89dbd978ef3bc8055` | `42ef84653171fd3494d91f4194b947f7d5aa6162` | `1134e200eb4ac9ec45bf3fae3be695e2bb786a8d` | 1 (`bb54d79`) | `OPEN` / `Draft` / `MERGEABLE` / `""` | YES (`0` merges) |
+| **#105** | `docs/adr-0029-replacement-readiness-20261019` | `docs/context-relations-selective-exchange-20261018` | `bb878eda47cf17268dd821c74343bac64d769ea7` | `f23dbf0cdebaae338be91c4579024f730032a9d9` | `bb54d799d1b749a90fa62de89dbd978ef3bc8055` | 1 (`bb878ed`) | `OPEN` / `Draft` / `MERGEABLE` / `""` | YES (`0` merges) |
+| **#106 (Reviewed Source)** | `docs/accept-adr-0029-retire-0003-20261019` | `docs/adr-0029-replacement-readiness-20261019` | `7c675b8d455aeb51d3c98c250925bff1b45eaf12` | `e250754017c1db116979b5ed58f048df56561bfb` | `cbf173ab3bd2a6bd551544472ec9eea6cdfc09b8` | 5 (`410a88b`, `6ace0a3`, `af6b5ec`, `cbf173a`, `7c675b8`) + final evidence commit | `OPEN` / `Draft` / `MERGEABLE` / `""` | — |
+
+---
+
+## 2. Distinction of Scope & Verification Across PRs #103, #104, #105, and #106
+
+1. **PR #103 (`1134e200eb4ac9ec45bf3fae3be695e2bb786a8d`, tree `e53755ac9fa35cd436d67afbb8810f3c6c11fdc2`):**
+   - **Scope:** Access A6 implementation fixes (`536ad33941283a439825ad606b8718c88c967ffa`, tree `169b5d7ad5dea4fa271f71bea96863bc318fb332`) and independent review/execution receipts (`1134e200eb4ac9ec45bf3fae3be695e2bb786a8d`).
+   - **Executed Verification:** Locally and in GitHub Actions workflow `Access registry focused verification` (`39096680553` / job `117584501212`, `registry-sqlite-3513`), executed **1,877 focused tests (`0` failed/skipped)** on official SQLite 3.51.3, 49 compatibility tests locally, 6 repository audits (`audit_access_acceptance`, `audit_callsite_dependencies`, `build_p1_schema`, `audit_p1_schema`, `audit_implementation_boundary`, `audit_context_registration`), Ruff lint/format, allowlisted MkDocs (`--no-mermaid`), and isolated direct-wheel & sdist-wheel installed smoke.
+   - **Boundary vs. ADR 0030:** Access acceptance ledger is explicitly **24 covered / item 11 partial / item 15 deferred**. None of #103's test executions are misrepresented as product implementation or acceptance of ADR 0030.
+2. **PR #104 (`bb54d799d1b749a90fa62de89dbd978ef3bc8055`, tree `42ef84653171fd3494d91f4194b947f7d5aa6162`):**
+   - **Scope:** Design-only PR (1 commit, 5 Markdown files, `+1,100 / -3`) freezing owner-accepted `ADR 0030` (`2026-10-18`), `context-repository-relations.md`, `selective-exchange-contract.md`, and `context-exchange-design-handoff.md`.
+   - **Executed Verification:** Exact-tree `offline` prose CI (`39134456547` / job `117696023557`). Zero runtime product tests executed (`full_acceptance: false`). Work packages `I1`–`I5` remain future implementation tasks.
+3. **PR #105 (`bb878eda47cf17268dd821c74343bac64d769ea7`, tree `f23dbf0cdebaae338be91c4579024f730032a9d9`):**
+   - **Scope:** Design/audit-only PR (1 commit, 3 Markdown files, `+186 / -0`) adding `docs/implementation/adr-0029-replacement-readiness-20261019.md`. Serves as the immutable pre-retirement parent commit containing `docs/adr/0003-append-only-git-core-and-context-store.md`.
+   - **Executed Verification:** Exact-tree `offline` prose CI (`39173154350` / job `117810254241`, `full_acceptance: false`).
+4. **PR #106 (`docs/accept-adr-0029-retire-0003-20261019`):**
+   - **Scope:** Documentation/ADR lifecycle PR accepting `ADR 0029` (`2026-10-19`) and retiring `ADR 0003` (`git rm`), preserving all 43 binding clauses/acceptance criteria, reconciling active agent guidance and skills, and recording this R1–R4 independent review closure.
+
+---
+
+## 3. Bounded CI Receipts Audit (#103, #104, #105, #106)
+
+| PR / Commit | Workflow / Job (`run_id` / `job_id`) | Receipt ZIP SHA-256 & Size | `receipt-binding.json` (`feature_sha` / `head` merge / `tree`) | `Tree == HEAD^{tree}`? | `acceptance_status` / `full_acceptance` | Executed Steps / Lanes | Skipped Steps / Runtime Suites |
+| :--- | :--- | :--- | :--- | :---: | :--- | :--- | :--- |
+| **#103** (`1134e200eb4a...`) | `Access registry focused verification` / `registry-sqlite-3513` (`39096680553` / `117584501212`) | Artifact `12125465560` SHA-256: `6747b20d536d1207c9f6238a2ecb3dca3e44c5125323c07b756b215d5bda4eaa` (38,807,709 B) | `feature_sha`: `1134e200...`<br>`head`: `f5839f0089dd56a0055874494bf092d1d081311`<br>`tree`: `e53755ac9fa35cd436d67afbb8810f3c6c11fdc2` | **YES** (`e53755ac...`) | Focused Access verification: **1,877 passed** (`0` failed/skipped) on SQLite 3.51.3 | Official SQLite 3.51.3 build; 1,877 focused tests (219.45s); direct wheel & sdist-wheel isolated smoke; 6 audits; allowlisted MkDocs (`--no-mermaid`); Ruff format check | Full release/ordinary all-suite pytest outside focused cohort & Mermaid CLI rendering |
+| **#103** (`1134e200eb4a...`) | `tests` / `offline` (`39096680366` / `117584500400`) | `0ee8ba44afe4cea0d05de4b332850af03072b0f89151da6d6893780b855ded5c` (71,014 B) | `feature_sha`: `1134e200...`<br>`head`: `f5839f0089dd56a0055874494bf092d1d081311`<br>`tree`: `e53755ac9fa35cd436d67afbb8810f3c6c11fdc2` | **YES** (`e53755ac...`) | `development_checks_passed` / `full_acceptance: false` | `Plan checks`, `Validate prose`, `Prepare dependencies`, `Ruff lint and formatting`, `Inspect SQLite capabilities and doctor`, `Verify composed schema and generated guards`, `Reconcile` (`static` & `smoke` lanes) | `tests` & `packaging` lanes `not_applicable` (`0` runtime pytest nodes executed) |
+| **#104** (`bb54d799d1b7...`) | `tests` / `offline` (`39134456547` / `117696023557`) | `e7e75d2db0860532d74697e2a4f5513abe3c2a458fa8854b73f99feb2d8a76c4` (13,141 B) | `feature_sha`: `bb54d799...`<br>`head`: `9f5b5ad41a76d60aa8e94c40bd22b602a3cca044`<br>`tree`: `42ef84653171fd3494d91f4194b947f7d5aa6162` | **YES** (`42ef8465...`) | `development_checks_passed` / `full_acceptance: false` | `Plan checks`, `Validate prose`, `Reconcile`, `Emit bounded verification receipts` | All `dependencies`, `wheelhouse`, `static`, `tests`, `packaging`, `smoke` lanes `not_applicable` (prose-only) |
+| **#105** (`bb878eda47cf...`) | `tests` / `offline` (`39173154350` / `117810254241`) | `94e00e9fbcea31412ecc03fab53437ce062a200a39ed42395ce4699bdf1ac85f` (13,123 B) | `feature_sha`: `bb878eda...`<br>`head`: `55c6df67e279cb849fec6d3f279d375f17da3995`<br>`tree`: `f23dbf0cdebaae338be91c4579024f730032a9d9` | **YES** (`f23dbf0c...`) | `development_checks_passed` / `full_acceptance: false` | `Plan checks`, `Validate prose`, `Reconcile`, `Emit bounded verification receipts` | All `dependencies`, `wheelhouse`, `static`, `tests`, `packaging`, `smoke` lanes `not_applicable` (prose-only) |
+| **#106** (`af6b5ecca3c9...`) | `tests` / `offline` (`39182506577` / `117838067174`) | `6de8ec1918980bb96a74b0ed778516920fdaddb910d065484978322bd32c61a7` (13,224 B) | `feature_sha`: `af6b5ecc...`<br>`head`: `ea987978d457345a7543927bea8265686655b868`<br>`tree`: `8b63a857cd8948d73b136016674d27ec55263983` | **YES** (`8b63a857...`) | `development_checks_passed` / `full_acceptance: false` | `Plan checks`, `Validate prose` (`0.57s`), `Reconcile`, `Emit bounded verification receipts` | Steps 7–14 (`dependencies`, `wheelhouse`, `static`, `tests`, `packaging`, `smoke`) all **SKIPPED** (`not_applicable`; 115 acceptance test files unexecuted) |
+| **#106** (`af6b5ecca3c9...`) | `pages` / `build-and-validate` (`39182506576` / `117838067689`) & `deploy-to-pages` (`117838328385`) | Preview artifact `12156682966` SHA-256: `18cd36f164444818faa94ee4dbcd2615cab73d0b64905e2d697bed5e584ff988` (4,576,061 B) | Checkout `ea987978d457345a7543927bea8265686655b868`, effective tree `8b63a857cd8948d73b136016674d27ec55263983` | **YES** (`8b63a857...`) | Pages build & validation passed (`deploy-to-pages` skipped on PR) | `Verify schema visualization freshness`, `Build documentation site` (Mermaid CLI + MkDocs strict build, 0 sensitive files, 0 broken links), `Run documentation site unit tests` (`8 passed in 1.63s`) | `Configure GitHub Pages`, `Upload Pages artifact`, and `deploy-to-pages` job **SKIPPED** (PR preview only) |
+
+---
+
+## 4. Merge Readiness Verdicts & Stack Integration Requirements
+
+| PR | Target HEAD SHA | Tree SHA | Readiness Verdict | Conditions & Rationale |
+| :--- | :--- | :--- | :---: | :--- |
+| **#103** | `1134e200eb4ac9ec45bf3fae3be695e2bb786a8d` | `e53755ac9fa35cd436d67afbb8810f3c6c11fdc2` | **CONDITIONALLY READY** | Focused SQLite 3.51.3 CI (`39096680553`, 1,877 passed, wheel/sdist smoke, 6 audits) and R1–R4 review complete. Conditioned on sequential bottom-up landing of #95–#102 and explicit owner merge authorization. |
+| **#104** | `bb54d799d1b749a90fa62de89dbd978ef3bc8055` | `42ef84653171fd3494d91f4194b947f7d5aa6162` | **CONDITIONALLY READY** | Design-only ADR 0030 PR cleanly stacked on #103; exact-tree `offline` CI (`39134456547`) and R2/R3/R4 review complete. Conditioned on #95–#103 landing first and explicit owner merge authorization. |
+| **#105** | `bb878eda47cf17268dd821c74343bac64d769ea7` | `f23dbf0cdebaae338be91c4579024f730032a9d9` | **CONDITIONALLY READY** | Design/readiness audit PR cleanly stacked on #104; exact-tree `offline` CI (`39173154350`) complete. **Must not be squashed or rebased** because #106 pins historical ADR 0003 links to commit SHA `bb878eda47cf17268dd821c74343bac64d769ea7`. |
+| **#106** | `docs/accept-adr-0029-retire-0003-20261019` | `e250754017c1db116979b5ed58f048df56561bfb` *(source)* + evidence dir | **CONDITIONALLY READY** | All R1–R4 findings (`R4-01`, `R4-02`, `R3-001`..`R3-004`, `R1-MIN-01`..`02`) resolved. Conditioned on sequential bottom-up landing of #95–#105 (preserving commit SHAs `bb878eda47cf17268dd821c74343bac64d769ea7` and `af6b5ecca3c9ece3200db85da4c99d35bdbf5cbb`) and explicit owner merge authorization. |

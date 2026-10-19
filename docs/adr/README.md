@@ -2,9 +2,9 @@
 
 Read the current scope before implementation. This index describes accepted target decisions, not implemented or verified behavior.
 
-**Accepted ADR governance: [ADR 0011](0011-adr-governance.md) and [the operating policy](policy.md).** Full/Mini-ADR [templates](template.md) and [Mini template](template-mini.md) are repository files; the optional [adr-workflow skill](../../.agents/skills/adr-workflow/SKILL.md) is procedural. The policy's section 9 documents the bounded pre-adoption exception for existing ADRs 0001–0027: keep still-binding clauses until a separate semantics-preserving review authorizes retirement. ADR numbering allocation watermark: **0030** (0011 is now accepted, not a free gap). Acceptance, merging, implementation and executed verification remain distinct.
+**Accepted ADR governance: [ADR 0011](0011-adr-governance.md) and [the operating policy](policy.md).** Full/Mini-ADR [templates](template.md) and [Mini template](template-mini.md) are repository files; the optional [adr-workflow skill](../../.agents/skills/adr-workflow/SKILL.md) is procedural. The policy's section 9 documents bounded pre-adoption exceptions for existing ADRs 0001–0027. ADR 0003's reviewed migration item was closed by the 2026-10-19 whole-record acceptance of ADR 0029; other items remain scoped follow-up. ADR numbering allocation watermark: **0030** (0011 is now accepted, not a free gap). Acceptance, merging, implementation and executed verification remain distinct.
 
-**Latest scope-specific owner decision: [ADR 0030](0030-context-repository-relations-and-selective-exchange.md), accepted 2026-10-18.** Typed Resource--Repository relations and immutable mapping Dispositions; selective multi-Repository Exchange under Q-E1--Q-E10. The final owner override does **not** introduce a Witness table or hidden local-check history. Context target: 19 composed tables, not yet implemented. [Schema](../architecture/context-repository-relations.md), [Exchange](../architecture/selective-exchange-contract.md), and [source/evidence/implementation handoff](../implementation/context-exchange-design-handoff.md). Earlier Context Q-S14=B is superseded in that conversation scope; the similarly numbered Access Scope decisions are unchanged. ADR 0029's complete replacement approval and ADR 0003 retirement remain separate gates.
+**Latest Context-specific owner decision: [ADR 0030](0030-context-repository-relations-and-selective-exchange.md), accepted 2026-10-18.** Typed Resource--Repository relations and immutable mapping Dispositions; selective multi-Repository Exchange under Q-E1--Q-E10. The final owner override does **not** introduce a Witness table or hidden local-check history. Context target: 19 composed tables, not yet implemented. [Schema](../architecture/context-repository-relations.md), [Exchange](../architecture/selective-exchange-contract.md), and [source/evidence/implementation handoff](../implementation/context-exchange-design-handoff.md). Earlier Context Q-S14=B is superseded in that conversation scope; the similarly numbered Access Scope decisions are unchanged. **Subsequently on 2026-10-19**, ADR 0029 was explicitly accepted as the full replacement of historical ADR 0003; this does not change ADR 0030's 2026-10-18 decision date or approve runtime implementation.
 
 **Latest accepted origin policy: [ADR 0027 / Option A](0027-unauthenticated-external-capture-origin-reports.md).** External Capture issuer/source claims may be retained as unauthenticated attributed reports; no application PKI or electronic signatures at present. Preserve original Capture/semantic keys, actual provenance qualifications and immutable binding; neither UUIDs nor reported identity authenticate the issuer. Local byte/notes-role checks retain their exact scope, including for salvage. **Remaining owner blockers: provisionally 0 for the current migration scope**; engineering work and deferred features are not complete or newly authorized. Future genuine blocker questions include the remaining-count estimate and explain any increase.
 
@@ -26,38 +26,14 @@ Read the current scope before implementation. This index describes accepted targ
 
 **Latest accepted shared contract: [ADR 0028](0028-classified-times-and-sha256-exchange.md).** Owner-selected positive-or-NULL observation/Provider times, required positive Coverage coordinates, signed native Git times, and SHA-256-only Exchange integrity. No HMAC/authentication claim; no public Schema 21 activation. Decision accepted; implementation and verification require separate evidence.
 
-## Proposed Records — not accepted implementation authority
-
-| ADR | Scope and proposal | Review boundary |
-| --- | --- | --- |
-| [0029](0029-independent-access-store.md) | Independent Access; UUIDv4 Scope identity, separate Scope/Repository Locators and same-table dated Scope Locator history | Q-S1-Q-S4 A and latest-registration first choice confirmed by owner on 2026-10-17. Complete replacement and physical contract remain under review; no merge/P8 permission. |
-
-[ADR 0029 acceptance/retirement readiness audit](../implementation/adr-0029-replacement-readiness-20261019.md) tracks the remaining whole-replacement owner gate, earlier R4 43-clause preservation review and the post-ADR0030 link delta; it is not a new ADR or an acceptance.
-
-[Access storage design and source audit](../architecture/access-store-design.md)
-uses the initially reviewed `5e778bf61ef6` codebase and integration parent
-`b2a87cfc6562`. ADR 0029 proposes replacement of ADR 0003's explicit four-store
-boundary, with a complete carry-forward map. Before integration, acceptance must
-retire the replaced file and update current inbound links/index coherently under
-policy section 6. Until then ADR 0003 remains accepted; no migration exception is
-extended. Existing runtime, DDL and verification receipts are unchanged.
-
-**Scope decision checkpoint (2026-10-17):** names/URIs do not replace Scope UUID in
-PK/FK or external references. Preserve past registrations in `scope_locators`;
-maximum original registration time supplies the first-choice set, not an execution
-grant. Ties remain explicit. Continuity may retain UUID; independent fork gets a
-new UUID without relabeling origin history. Local per-assignment reapproval covers
-the chosen registration/route/profile/binding. The [implementation sequence and
-remaining gates](../architecture/access-store-design.md#8-design-first-dependency-plan)
-distinguish confirmed choices, engineering proposals and executed verification.
+**Accepted five-store boundary: [ADR 0029](0029-independent-access-store.md), approved 2026-10-19.** ADR 0029 replaces [historical ADR 0003](https://github.com/TakashiSasaki/git-repo-db/blob/bb878eda47cf17268dd821c74343bac64d769ea7/docs/adr/0003-append-only-git-core-and-context-store.md), preserving strictly INSERT-only Git Core, durable Context, Operational and Search while separating durable Access (Scope UUID, Scope/Repository Locators, Connection Configuration and local approvals). The fixed Scope choices and same-table dated Scope Locator registrations are retained. **Exact Access physical keys/adapters/approval mechanics remain engineering proposals, not silently accepted by this status change.** Read the [Access design](../architecture/access-store-design.md), [ADR 0029 acceptance/retirement closure](../implementation/adr-0029-accepted-retirement-20261019.md) and the [pre-approval readiness audit](../implementation/adr-0029-replacement-readiness-20261019.md). Approval does not implement Access or authorize P8, deployment or merge.
 
 ## Accepted Records
 
 | ADR | Decision | Date | Current applicability |
 | --- | --- | --- | --- |
 | [0001](0001-validation-lifecycle-architecture.md) | Development and release validation lifecycle | 2026-10-12 | Accepted; execution evidence is separate |
-| [0002](0002-three-store-boundary-architecture.md) | Three-store PF-P01–PF-P17 baseline | 2026-10-12 | Placement/full-backup superseded by 0003; other clauses preserved |
-| [0003](0003-append-only-git-core-and-context-store.md) | Append-only Git Core and durable Context | 2026-10-14 | Four-store target preserved; admission narrowed by 0004 and 0014 |
+| [0002](0002-three-store-boundary-architecture.md) | Three-store PF-P01–PF-P17 baseline | 2026-10-12 | Placement/full-backup now superseded by ADR 0029 (historical 0003 predecessor); other clauses preserved |
 | [0004](0004-metadata-only-git-core.md) | GCTX-M01: metadata-only Core | 2026-10-14 | Fully supported; optional body admission now restricted by 0014 |
 | [0005](0005-common-oid-identity-with-attributed-metadata.md) | GCTX-M02: shared nominal OID identity | 2026-10-14 | Preserved; note and file roles do not duplicate identity |
 | [0006](0006-field-claims-and-observation-scoped-relations.md) | GCTX-M03: field claims and typed relation groups | 2026-10-14 | Preserved; notes require appropriately scoped associations |
@@ -82,8 +58,9 @@ distinguish confirmed choices, engineering proposals and executed verification.
 | [0025](0025-cumulative-request-budgets-and-scoped-blockers.md) | B02-R04: cumulative request budget; resource implementation detail is not an owner blocker | 2026-10-15 | Accepted Option A and owner correction; GCTX-M10 subsequently resolved by ADR 0026 recovery workflow; former A/B/C comparison historical |
 | [0026](0026-stop-salvage-restore-merge-after-corruption.md) | GCTX-M10: stop, read-only salvage, fresh verified restore and validated merge after corruption | 2026-10-15 | Accepted immediate recovery mode, with no quarantine lifecycle/count; scoped replacement of old CAS-41 count gate and known-corrupt normal restore; implementation pending |
 | [0027](0027-unauthenticated-external-capture-origin-reports.md) | External Capture-origin Option A: unauthenticated attributed reports without PKI/electronic signatures | 2026-10-15 | Accepted issuer-report policy; identity/content/recovery rules preserved; provisionally 0 current-scope owner blockers, implementation pending |
-| [0028](0028-classified-times-and-sha256-exchange.md) | Classified epoch times and SHA-256-only Exchange integrity | 2026-10-16 | Owner-accepted; changes shared time convention, preserves native Git and ADR 0027 trust boundary; this design PR is unmerged |
-| [0030](0030-context-repository-relations-and-selective-exchange.md) | Typed Repository Context relations and selective Exchange without Witness storage | 2026-10-18 | Owner decisions accepted; two new Context tables, immutable provenance and bounded independent selection; design only, no runtime/merge/ADR 0029 whole-replacement approval |
+| [0028](0028-classified-times-and-sha256-exchange.md) | Classified epoch times and SHA-256-only Exchange integrity | 2026-10-16 | Owner-accepted; changes shared time convention, preserves native Git and ADR 0027 trust boundary; design acceptance is not runtime activation |
+| [0029](0029-independent-access-store.md) | Independent durable Access, Scope UUIDv4, separate Scope/Repository Locators and Connection Configuration; full successor to historical ADR 0003 | 2026-10-19 | **Accepted whole-record replacement**; Core/Context/Operational/Search preserved, Access added. Physical/adapter proposals separately reviewable; no runtime/P8/merge permission |
+| [0030](0030-context-repository-relations-and-selective-exchange.md) | Typed Repository Context relations and selective Exchange without Witness storage | 2026-10-18 | Context decision accepted; two new Context tables, immutable provenance and bounded independent selection; ADR 0029 whole replacement subsequently approved 2026-10-19, without runtime/merge permission |
 | [Transport-independent Core](../transport-independent-core-adr.md) | Domain persistence and provenance independent of transport replay | 2026-10-10 | Preserved in unsuperseded scope |
 | [No Independent Publication](../phase2/no-independent-publication-adr.md) | Publication-free domain authority | 2026-10-10 | Preserved; no new generic notes/retention seal |
 
