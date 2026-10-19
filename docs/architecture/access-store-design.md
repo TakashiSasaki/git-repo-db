@@ -461,7 +461,7 @@ review and explicit runtime adoption remain distinct gates.
 
 ## References
 
-- [ADR 0029 proposal](../adr/0029-independent-access-store.md),
+- [Accepted ADR 0029](../adr/0029-independent-access-store.md),
   [ADR operating policy](../adr/policy.md).
 - [P1 schema contracts](../implementation/p1-schema-contracts.md),
   [P1 routing reconciliation](../implementation/p1-reconciliation.md),
