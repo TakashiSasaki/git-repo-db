@@ -32,6 +32,8 @@ Read the current scope before implementation. This index describes accepted targ
 | --- | --- | --- |
 | [0029](0029-independent-access-store.md) | Independent Access; UUIDv4 Scope identity, separate Scope/Repository Locators and same-table dated Scope Locator history | Q-S1-Q-S4 A and latest-registration first choice confirmed by owner on 2026-10-17. Complete replacement and physical contract remain under review; no merge/P8 permission. |
 
+[ADR 0029 acceptance/retirement readiness audit](../implementation/adr-0029-replacement-readiness-20261019.md) tracks the remaining whole-replacement owner gate, earlier R4 43-clause preservation review and the post-ADR0030 link delta; it is not a new ADR or an acceptance.
+
 [Access storage design and source audit](../architecture/access-store-design.md)
 uses the initially reviewed `5e778bf61ef6` codebase and integration parent
 `b2a87cfc6562`. ADR 0029 proposes replacement of ADR 0003's explicit four-store
