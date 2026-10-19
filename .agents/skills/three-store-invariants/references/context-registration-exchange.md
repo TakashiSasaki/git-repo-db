@@ -63,3 +63,10 @@ reselection cannot restore an omitted fact. Validate retained provided_roles and
 Provider members against the same canonical report parser used by recovery.
 Prevalidate complete caller filter coordinates outside stored-data fault handlers:
 an empty Provider ID or ordinary comment filter must not create a P7 stop.
+
+At a public API freeze, compare Protocol parameter names against both reference
+and production adapters, then execute protocol-shaped keyword calls. Matching
+positional calls alone missed facade names claim/resource/service_or_resource
+that rejected the declared relation/provider_repository/service_instance_uuidv4
+keywords. Retain intentional positional overloads and verify them separately.
+Use test_context_admission_protocol_keyword_calls in the P3 Context suite.

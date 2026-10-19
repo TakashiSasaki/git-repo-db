@@ -23,6 +23,7 @@ from repo_catalog.domain.p1_context import (
 )
 from repo_catalog.domain.p1_coordination import AdmissionFailure, CoordinationError
 from repo_catalog.domain.p1_core import OID
+from repo_catalog.domain.ports.p1_context import ContextAdmission
 from repo_catalog.domain.production_context import (
     CollectionObservation,
     ContextError,
@@ -98,6 +99,40 @@ def test_generic_resource_relation_cannot_register_transfer_scope(context):
     assert not db.execute(
         "SELECT 1 FROM resource_relations WHERE relation_kind='transfer_event_report'"
     ).fetchall()
+    assert not (path.parent / "p1-recovery-stop.json").exists()
+
+
+def test_context_admission_protocol_keyword_calls(context):
+    _, store, path = context
+    port: ContextAdmission = store
+    relation = ResourceRepositoryRelation(
+        KEY, "owning_repository", FieldClock("event", 1), canonical(REPO), PROVENANCE, 1
+    )
+    assert port.admit_repository_relation(relation=relation) == "insert"
+    assert (
+        store.admit_repository_relation_result(relation=relation).outcome == "duplicate"
+    )
+    provider = ResourceKey(SERVICE, "repository", "protocol-keywords")
+    port.resource(key=provider)
+    mapping = ResourceRepositoryRelation(
+        provider,
+        "represents_repository",
+        FieldClock("mapping", 1),
+        canonical(REPO),
+        PROVENANCE,
+        1,
+    )
+    assert port.admit_repository_relation(relation=mapping) == "insert"
+    assert (
+        port.evaluate_provider_repository(provider_repository=provider).state
+        == "single_candidate"
+    )
+    keyword_rows = port.relations_for_provider_repository(
+        service_instance_uuidv4=SERVICE,
+        provider_repository_id=provider.provider_resource_id,
+    )
+    assert keyword_rows == store.relations_for_provider_repository(provider)
+    assert port.repository_relations(resource=KEY)[0].relation == relation
     assert not (path.parent / "p1-recovery-stop.json").exists()
 
 

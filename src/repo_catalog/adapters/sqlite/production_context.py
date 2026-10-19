@@ -787,24 +787,24 @@ class Context(ContextStore):
 
     def admit_repository_relation(
         self,
-        claim: ResourceRepositoryRelation,
+        relation: ResourceRepositoryRelation,
         *,
         require_support: bool = False,
     ) -> RelationAdmissionOutcome:
         with self._unit():
             return super().admit_repository_relation(
-                claim, require_support=require_support
+                relation, require_support=require_support
             )
 
     def admit_repository_relation_result(
         self,
-        claim: ResourceRepositoryRelation,
+        relation: ResourceRepositoryRelation,
         *,
         require_support: bool = False,
     ) -> RelationAdmissionResult:
         with self._unit():
             return super().admit_repository_relation_result(
-                claim, require_support=require_support
+                relation, require_support=require_support
             )
 
     def admit_mapping_disposition(self, disposition: MappingDisposition) -> str:
@@ -828,10 +828,11 @@ class Context(ContextStore):
 
     def evaluate_provider_repository(
         self,
-        resource: ResourceKey,
+        provider_repository: ResourceKey,
         *,
         evidence: MappingOperationEvidence | None = None,
     ) -> QualifiedMappingEvaluation:
+        resource = provider_repository
         self._check()
         if (
             not isinstance(resource, ResourceKey)
@@ -890,24 +891,24 @@ class Context(ContextStore):
 
     def relations_for_provider_repository(
         self,
-        service_or_resource: str | ResourceKey,
+        service_instance_uuidv4: str | ResourceKey,
         provider_repository_id: str | None = None,
         relation_kind: RelationKind | str | None = None,
         *,
         evidence: MappingOperationEvidence | None = None,
     ) -> tuple[ResolvedRepositoryRelation, ...]:
         self._check()
-        if isinstance(service_or_resource, ResourceKey):
-            if service_or_resource.resource_kind != "repository":
+        if isinstance(service_instance_uuidv4, ResourceKey):
+            if service_instance_uuidv4.resource_kind != "repository":
                 raise ValueError(
                     "relations_for_provider_repository requires a repository resource"
                 )
-            service = service_or_resource.service_instance_uuidv4
-            prov_id = service_or_resource.provider_resource_id
+            service = service_instance_uuidv4.service_instance_uuidv4
+            prov_id = service_instance_uuidv4.provider_resource_id
             if isinstance(provider_repository_id, str):
                 relation_kind = provider_repository_id
         else:
-            service = service_or_resource
+            service = service_instance_uuidv4
             uuid4_value(service)
             if provider_repository_id is None or not isinstance(
                 provider_repository_id, str

@@ -81,12 +81,20 @@ Its four findings were corrected without changing ADR meaning, schema or keys:
   coordinates; adapters also require the referenced Provider Resources to exist.
   Missing or inconsistent scope is never silently repaired.
 
-The revised target and renewed independent verdict are recorded in PR #107.
+A [second exact-tree review](evidence/adr0030-i1-freeze/second-independent-review.md)
+of `5be4a8fa7e7ac32085e350cc83bf753591912748`, tree
+`a842ce26c8b7d4fd0aacd08f9b9f28629678f946`, independently passed the 918-test
+focused run and all four corrections, but identified facade keyword names that
+differed from ContextAdmission/ContextStore. The facade now accepts `relation`,
+`provider_repository` and `service_instance_uuidv4` consistently, including the
+result wrapper. Its existing positional ResourceKey overload remains available.
+The 17 protocol methods were compared; no other keyword mismatch was found.
+The final target and renewed independent verdict are recorded in PR #107.
 
 ## Verification and limits
 
 The original 20 counterexample categories are retained and augmented by cases
-21–28 in the [implementation contract](adr0030-i1-context-contract.md). New
+21–29 in the [implementation contract](adr0030-i1-context-contract.md). New
 parameterized cases cover generic admission/replay, missing/invalid stored type,
 whole-unit rollback and generic scope admission. The stored-data test's first
 attempt to UPDATE/DELETE immutable evidence was correctly blocked by the SQL
@@ -98,16 +106,18 @@ Local focused verification uses the worktree's locked environment: CPython
 `2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9`.
 This newer supported SQLite run is distinct from hosted minimum-version 3.51.3.
 
-The P1/P3/Access focused run plus the direct I3 boundary control passed **918**
-tests: P1 355, P3 79, Access 483, I3 refusal control 1. All five audits passed:
+The P1/P3/Access focused run plus the direct I3 boundary control passed **919**
+tests: P1 355, P3 80, Access 483, I3 refusal control 1. All five audits passed:
 `build_p1_schema.py --check`, `audit_p1_schema.py --check`,
 `audit_callsite_dependencies.py --check`,
 `audit_implementation_boundary.py --check`, `audit_context_registration.py`.
 Ruff lint and format checks passed across `src tests scripts`.
 
 The accompanying [local verification record](evidence/adr0030-i1-freeze/local-verification.json)
-records the broader CI-selection reproduction (**1,883 passed / 37 failed**,
-with the exact same 37 failing nodes) and distribution checks. No failure
+records the broader CI-selection reproduction at `5be4a8f` (**1,883 passed /
+37 failed**, with the exact same failing nodes), the final focused run and
+final distribution checks. That broad run precedes the facade-only keyword
+alignment; the final hosted registry result is separately recorded in PR #107. No failure
 is hidden, newly excluded or xfailed to turn the registry job green; the
 repository's existing default live/benchmark exclusions remain in force. This is bounded
 I1 development validation, not complete release acceptance.

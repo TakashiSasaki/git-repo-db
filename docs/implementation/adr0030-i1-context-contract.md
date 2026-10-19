@@ -139,7 +139,7 @@ Downstream callers requiring semantics from future ADR 0030 stages fail with exp
 
 ## 7. Verification Evidence & Counterexamples
 
-The original I1 specification listed 17 counterexamples; the previous reviewed tree added cases 18–20. The contract-freeze gate adds cases 21–28 below. These are focused I1 checks, not full downstream acceptance:
+The original I1 specification listed 17 counterexamples; the previous reviewed tree added cases 18–20. The contract-freeze gate adds cases 21–29 below. These are focused I1 checks, not full downstream acceptance:
 
 - **Counterexample 1**: Conflicting immutable mappings in reverse arrival order survive; exact resend yields duplicate.
 - **Counterexample 2**: Current candidate clock pruning prunes only strictly dominated comparable values.
@@ -173,6 +173,8 @@ See [the contract-freeze record](adr0030-i1-contract-freeze.md) for current exec
 - **Counterexample 26**: Selection that drops only some alternatives remains `selection_truncated`, including after reselection; it cannot be admitted as a complete report.
 - **Counterexample 27**: Empty Provider IDs and non-Timeline comment filters reject before stored-data handlers and do not create P7 stops.
 - **Counterexample 28**: Read and recovery use the same stored-report parser to check exact scope fields, provided roles, Provider member coordinates and their existence.
+
+- **Counterexample 29**: All ContextAdmission Protocol keyword names are accepted by the facade, including the relation result wrapper; existing positional ResourceKey overloads still work.
 
 ### Public Context Facade Hardening
 
