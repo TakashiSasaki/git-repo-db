@@ -95,6 +95,32 @@ with tempfile.TemporaryDirectory() as directory:
     output = subprocess.check_output([sys.executable, "-I", "-m", "repo_catalog.cli.access_workflow", "review", "--access-db", str(path), "--repository", repo, "--scope", s, "--locator", str(repository), "--profile", "local"], text=True)
     assert json.loads(output)["status"] == "review-only"
     assert not (Path(directory) / "core.sqlite3").exists()
+    # Installed A4 acquires actual Git metadata into a non-seed Repository UUID.
+    # This is fixture creation; product acquisition never writes the source repo.
+    from contextlib import closing
+    from repo_catalog.adapters.sqlite import p1_schema
+    from repo_catalog.adapters.sqlite.git_core import GitCore
+    from repo_catalog.application.access_acquisition import AccessGitAcquisition
+    from repo_catalog.domain.acquisition import GitNativeAcquisitionRequest
+    from repo_catalog.domain.p1_core import OID
+    subprocess.run(["git", "init", "--bare", "--object-format=sha1", str(repository)], check=True, capture_output=True)
+    tree = subprocess.check_output(["git", "-C", str(repository), "hash-object", "-w", "-t", "tree", "--stdin"], input=b"").strip()
+    body = b"tree " + tree + b"\nauthor Test <test@example.org> 1 +0000\ncommitter Test <test@example.org> 1 +0000\n\ninstalled fixture\n"
+    commit = subprocess.check_output(["git", "-C", str(repository), "hash-object", "-w", "-t", "commit", "--stdin"], input=body).decode().strip()
+    catalog = Path(directory) / "domain-catalog"
+    catalog.mkdir()
+    seed, instance = str(uuid4()), str(uuid4())
+    for role in ("core", "operational"):
+        p1_schema.initialize(catalog / f"{role}.sqlite3", role, seed, instance)
+    request = GitNativeAcquisitionRequest(repo, str(uuid4()), str(uuid4()), "installed-local-source", 50, select_oids=(OID("sha1", commit),), include_refs=False)
+    with AccessConnections(path) as store:
+        report = AccessGitAcquisition(store, catalog).acquire(selected, request, object_format="sha1", reviewer=lambda shown: True, new_request=True)
+        assert report.repository_uuidv4 == repo != seed
+        assert OID("sha1", commit) in report.retained_objects
+    with closing(GitCore(catalog / "core.sqlite3")) as core:
+        assert core.catalog_identity() == (seed, instance)
+        assert core.read_metadata(OID("sha1", commit)) == body
+    subprocess.run([sys.executable, "-I", "-m", "repo_catalog.cli.access_acquisition", "--help"], check=True, capture_output=True)
 # Installed A3 policy, SQLite constraints and typed Exchange round-trip.
 from contextlib import closing
 from repo_catalog.domain.context_registration import registration_json, RegistrationError
@@ -144,7 +170,7 @@ with tempfile.TemporaryDirectory() as directory:
     with Context.snapshot(receiver) as ctx:
         assert ctx.db.execute("SELECT configuration_json FROM providers").fetchone()[0] == '{"name":"Original provider"}'
     assert not (receiver / "access.sqlite3").exists()
-print(json.dumps({"sqlite": sqlite3.sqlite_version, "ddl_sha256": fingerprint(), "context_ddl_sha256": p1_schema.fingerprint("context"), "exchange_format": EXCHANGE_FORMAT, "installed_smoke": "passed"}))
+print(json.dumps({"sqlite": sqlite3.sqlite_version, "ddl_sha256": fingerprint(), "context_ddl_sha256": p1_schema.fingerprint("context"), "exchange_format": EXCHANGE_FORMAT, "local_git_acquired": True, "installed_smoke": "passed"}))
 """
 
 

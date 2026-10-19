@@ -84,6 +84,7 @@ class GitNotesSource:
                 stdout=subprocess.PIPE,
                 stderr=subprocess.DEVNULL,
                 env=self.source._environment(),
+                **self.source._process_options(),
             )
         except OSError as error:
             raise CoreFailure("GIT_INPUT", self.source.path, str(error)) from error

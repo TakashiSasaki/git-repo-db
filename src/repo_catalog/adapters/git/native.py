@@ -55,6 +55,10 @@ class GitNativeSource:
         )
         return env
 
+    def _process_options(self):
+        """Trusted adapter subprocess parameters; not caller-provided Git config."""
+        return {}
+
     def _command(self, *args):
         return ["git", "--no-replace-objects", "-C", str(self.path), *args]
 
@@ -65,6 +69,7 @@ class GitNativeSource:
                 input=data,
                 capture_output=True,
                 env=self._environment(),
+                **self._process_options(),
                 timeout=30,
             )
         except (OSError, subprocess.TimeoutExpired) as error:
@@ -119,6 +124,7 @@ class GitNativeSource:
                 stdout=subprocess.PIPE,
                 stderr=subprocess.DEVNULL,
                 env=self._environment(),
+                **self._process_options(),
             )
         except OSError as error:
             raise CoreFailure("GIT_INPUT", oid, "local Git could not start") from error

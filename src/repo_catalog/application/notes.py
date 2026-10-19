@@ -53,9 +53,13 @@ class NotesAcquisition:
         progress: NotesProgress,
         *,
         source_attribution: str,
+        repository_uuidv4: str | None = None,
     ):
         self.core, self.source, self.work, self.progress = core, source, work, progress
         self.source_attribution = source_attribution
+        if repository_uuidv4 is not None:
+            uuid4_value(repository_uuidv4)
+        self.repository_uuidv4 = repository_uuidv4
         self._ready()
 
     def _ready(self):
@@ -63,9 +67,15 @@ class NotesAcquisition:
         self.core.ensure_available()
         self.work.require("metadata_units", 1)
         self.work.charge("metadata_units", 1)
-        repository, instance = self.core.catalog_identity()
+        catalog_seed, instance = self.core.catalog_identity()
+        repository = self.repository_uuidv4 or catalog_seed
         self.progress.bind(
-            repository, instance, self.source_attribution, self.source.scope, self.work
+            repository,
+            instance,
+            self.source_attribution,
+            self.source.scope,
+            self.work,
+            catalog_repository_uuidv4=catalog_seed,
         )
         return repository
 
