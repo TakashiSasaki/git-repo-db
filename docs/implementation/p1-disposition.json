@@ -13940,7 +13940,7 @@
       }
     },
     "operational": {
-      "ddl_sha256": "980360b31d11c54b0d556b7fffd6aeeae74919e264b4d19bc34ecca70c7d73cb",
+      "ddl_sha256": "76598c5a630d4044c5a123587911a62411d55946072ba071109dd7db52f029a5",
       "tables": {
         "acquisition_attempts": {
           "columns": [
@@ -14231,8 +14231,18 @@
             "continuation_scope_json"
           ],
           "sql": "CREATE TABLE request_continuations (\n request_origin_uuidv4 TEXT NOT NULL,\n request_uuidv4 TEXT NOT NULL,\n continuation_scope_json TEXT NOT NULL CHECK(p1_json(continuation_scope_json)),\n cursor_json TEXT NOT NULL CHECK(p1_json(cursor_json)),\n PRIMARY KEY(request_origin_uuidv4,request_uuidv4,continuation_scope_json),\n FOREIGN KEY(request_origin_uuidv4,request_uuidv4) REFERENCES acquisition_requests\n) STRICT, WITHOUT ROWID",
-          "triggers": {},
+          "triggers": {
+            "exchange_binding_no_delete": "CREATE TRIGGER exchange_binding_no_delete BEFORE DELETE ON request_continuations\n WHEN json_extract(OLD.continuation_scope_json,'$[0]')='adr0030-package-binding'\n BEGIN SELECT RAISE(ABORT,'immutable Exchange PackageKey digest binding'); END",
+            "exchange_binding_no_rebind": "CREATE TRIGGER exchange_binding_no_rebind BEFORE UPDATE ON request_continuations\n WHEN json_extract(OLD.continuation_scope_json,'$[0]')='adr0030-package-binding'\n  AND (NEW.continuation_scope_json!=OLD.continuation_scope_json\n    OR NEW.cursor_json!=OLD.cursor_json\n    OR NEW.request_origin_uuidv4!=OLD.request_origin_uuidv4\n    OR NEW.request_uuidv4!=OLD.request_uuidv4)\n BEGIN SELECT RAISE(ABORT,'immutable Exchange PackageKey digest binding'); END"
+          },
           "unique": [
+            {
+              "columns": [
+                "continuation_scope_json"
+              ],
+              "origin": "c",
+              "partial": true
+            },
             {
               "columns": [
                 "request_origin_uuidv4",

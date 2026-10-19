@@ -1,4 +1,4 @@
-"""P5 portable typed Exchange domain and wire contract (`git-repo-db/p5-exchange-v3`).
+"""P5 portable typed Exchange domain and wire contract (`git-repo-db/adr0030-exchange-v4`).
 
 Enforces strict separation between:
 - Transport envelope identity (`package_id`, `exported_at_us`, `sender_catalog_instance_uuidv4`)
@@ -8,6 +8,7 @@ Enforces strict separation between:
 
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 import math
@@ -23,11 +24,30 @@ from repo_catalog.domain.p1_context import ResourceKey
 from repo_catalog.domain.p1_core import OID, CoreFailure, uuid4_value
 from repo_catalog.domain.time import validate_observation_us
 
-FORMAT = "git-repo-db/p5-exchange-v3"
+FORMAT = "git-repo-db/adr0030-exchange-v4"
 MAX_PACKAGE_BYTES = 32 * 1024 * 1024
 MAX_DEPTH = 32
 MAX_ELEMENTS = 200_000
 _WIRE_WORK = ContextVar("p5_wire_work", default=None)
+
+
+def _quoted_size(value, remaining):
+    """Bound escaped UTF-8 before building a whole canonical representation."""
+    if len(value) > remaining:
+        raise ExchangeError("INPUT_LIMIT", "package", "JSON string bytes")
+    total = 2
+    for offset in range(0, len(value), 4096):
+        try:
+            total += len(
+                json.dumps(value[offset : offset + 4096], ensure_ascii=False)[
+                    1:-1
+                ].encode("utf-8")
+            )
+        except UnicodeError as error:
+            raise ExchangeError("MALFORMED_JSON", "package", "invalid UTF-8") from error
+        if total > remaining:
+            raise ExchangeError("INPUT_LIMIT", "package", "escaped UTF-8 bytes")
+    return total
 
 
 def _bounded_json(value: Any) -> tuple[int, int]:
@@ -41,35 +61,48 @@ def _bounded_json(value: Any) -> tuple[int, int]:
         if depth > MAX_DEPTH or count > MAX_ELEMENTS:
             raise ExchangeError("INPUT_LIMIT", "package", "JSON depth/elements")
         if isinstance(item, dict):
-            if any(type(key) is not str for key in item):
-                raise ExchangeError("MALFORMED_JSON", "package", "string keys required")
             if len(item) > MAX_ELEMENTS - count:
                 raise ExchangeError("INPUT_LIMIT", "package", "JSON elements")
+            if any(type(key) is not str for key in item):
+                raise ExchangeError("MALFORMED_JSON", "package", "string keys required")
             pending.extend((v, depth + 1) for v in item.values())
             for key, value in item.items():
                 if key.endswith("_json") and isinstance(value, str):
+                    _quoted_size(value, MAX_PACKAGE_BYTES - size)
                     pending.append((_parse_json(value), depth + 1))
                 if key == "body_hex" and (
                     type(value) is not str
+                    or len(value) > MAX_PACKAGE_BYTES
                     or len(value) % 2
                     or any(c not in "0123456789abcdef" for c in value)
                 ):
                     raise ExchangeError(
                         "MALFORMED_BYTES", key, "lowercase contiguous hex required"
                     )
-            size += sum(len(k) for k in item)
+            size += 2 + 2 * len(item)
+            for key in item:
+                size += _quoted_size(key, MAX_PACKAGE_BYTES - size)
         elif isinstance(item, (list, tuple)):
             if len(item) > MAX_ELEMENTS - count:
                 raise ExchangeError("INPUT_LIMIT", "package", "JSON elements")
             pending.extend((v, depth + 1) for v in item)
+            size += 2 + len(item)
         elif isinstance(item, str):
-            size += len(item)
+            size += _quoted_size(item, MAX_PACKAGE_BYTES - size)
+            count += max(0, (len(item) - 1) // 4096)
         elif type(item) is float and not math.isfinite(item):
             raise ExchangeError(
                 "MALFORMED_JSON", "package", "finite JSON real required"
             )
         elif item is not None and type(item) not in (int, bool, float):
             raise ExchangeError("MALFORMED_JSON", "package", "unsupported JSON value")
+        else:
+            try:
+                size += len(json.dumps(item, allow_nan=False))
+            except (ValueError, TypeError) as error:
+                raise ExchangeError(
+                    "MALFORMED_JSON", "package", "bounded JSON number required"
+                ) from error
         if size > MAX_PACKAGE_BYTES:
             raise ExchangeError("INPUT_LIMIT", "package", "JSON string bytes")
     measurement = _WIRE_WORK.get()
@@ -81,6 +114,8 @@ def _bounded_json(value: Any) -> tuple[int, int]:
 def _parse_json(text: str) -> Any:
     depth = 0
     quoted = escaped = False
+    tokens = 0
+    atom = False
     for char in text:
         if quoted:
             if escaped:
@@ -91,12 +126,24 @@ def _parse_json(text: str) -> Any:
                 quoted = False
         elif char == '"':
             quoted = True
+            tokens += 1
+            atom = False
         elif char in "[{":
+            tokens += 1
+            atom = False
             depth += 1
             if depth > MAX_DEPTH:
                 raise ExchangeError("INPUT_LIMIT", "package", "JSON depth")
         elif char in "]}":
             depth -= 1
+            atom = False
+        elif char in ",: \t\r\n":
+            atom = False
+        elif not atom:
+            tokens += 1
+            atom = True
+        if tokens > MAX_ELEMENTS:
+            raise ExchangeError("INPUT_LIMIT", "package", "JSON lexical elements")
 
     def unique_pairs(pairs):
         result = {}
@@ -153,7 +200,8 @@ CORE_SECTION_KEYS = (
 CONTEXT_SECTION_KEYS = (
     "providers",
     "repositories",
-    "repository_candidates",
+    "resource_repository_relations",
+    "repository_mapping_dispositions",
     "sources",
     "source_repositories",
     "source_inventories",
@@ -186,6 +234,12 @@ class ExchangeSelectionScope:
     include_core: bool = True
     include_context: bool = True
     include_retained_bytes: bool = True
+    repository_uuidv4s: tuple[str, ...] | None = None
+    all_selected: bool = False
+    max_depth: int = 8
+    max_units: int = 10000
+    max_bytes: int = 16 * 1024 * 1024
+    max_work: int = 10000000
     object_oids: tuple[OID, ...] | None = None
     notes_refs: tuple[str, ...] | None = None
     resource_keys: tuple[ResourceKey, ...] | None = None
@@ -193,6 +247,7 @@ class ExchangeSelectionScope:
 
     def __post_init__(self) -> None:
         for value in (
+            self.all_selected,
             self.include_core,
             self.include_context,
             self.include_retained_bytes,
@@ -203,7 +258,13 @@ class ExchangeSelectionScope:
                     "selection_scope",
                     "strict boolean flags required",
                 )
+        for value in (self.max_depth, self.max_units, self.max_bytes, self.max_work):
+            if type(value) is not int or not 0 <= value <= 100000000:
+                raise ExchangeError(
+                    "INVALID_SELECTION", "bounds", "finite nonnegative integer required"
+                )
         for values, kind in (
+            (self.repository_uuidv4s, str),
             (self.object_oids, OID),
             (self.resource_keys, ResourceKey),
             (self.notes_refs, str),
@@ -216,11 +277,19 @@ class ExchangeSelectionScope:
                 raise ExchangeError(
                     "INVALID_SELECTION", "selection_scope", "typed tuple required"
                 )
-        for value in self.source_uuidv4s or ():
+        for value in (*(self.source_uuidv4s or ()), *(self.repository_uuidv4s or ())):
             uuid4_value(value)
 
     def to_dict(self) -> dict[str, Any]:
         return {
+            "repository_uuidv4s": None
+            if self.repository_uuidv4s is None
+            else sorted(set(self.repository_uuidv4s)),
+            "all_selected": self.all_selected,
+            "max_depth": self.max_depth,
+            "max_units": self.max_units,
+            "max_bytes": self.max_bytes,
+            "max_work": self.max_work,
             "include_core": self.include_core,
             "include_context": self.include_context,
             "include_retained_bytes": self.include_retained_bytes,
@@ -265,6 +334,12 @@ class ExchangeSelectionScope:
             if type(data.get(key)) is not bool:
                 raise ExchangeError("INVALID_SELECTION", key, "boolean required")
         if set(data) != {
+            "repository_uuidv4s",
+            "all_selected",
+            "max_depth",
+            "max_units",
+            "max_bytes",
+            "max_work",
             "include_core",
             "include_context",
             "include_retained_bytes",
@@ -308,6 +383,14 @@ class ExchangeSelectionScope:
             notes_refs=refs,
             resource_keys=rks,
             source_uuidv4s=srcs,
+            repository_uuidv4s=None
+            if data["repository_uuidv4s"] is None
+            else tuple(data["repository_uuidv4s"]),
+            all_selected=data["all_selected"],
+            max_depth=data["max_depth"],
+            max_units=data["max_units"],
+            max_bytes=data["max_bytes"],
+            max_work=data["max_work"],
         )
 
 
@@ -321,7 +404,7 @@ def empty_context_section() -> dict[str, list[dict[str, Any]]]:
 
 @dataclass(frozen=True)
 class ExchangePackage:
-    """Portable typed Exchange package (`git-repo-db/p5-exchange-v3`)."""
+    """Portable typed Exchange package (`git-repo-db/adr0030-exchange-v4`)."""
 
     package_id: str
     exported_at_us: int | None
@@ -332,6 +415,7 @@ class ExchangePackage:
     )
     core: dict[str, list[dict[str, Any]]] | None = None
     context: dict[str, list[dict[str, Any]]] | None = None
+    selection_report: dict[str, Any] = field(default_factory=dict)
     format: str = FORMAT
     digest_sha256: str | None = None
 
@@ -353,6 +437,7 @@ class ExchangePackage:
             "sender_catalog_instance_uuidv4": self.sender_catalog_instance_uuidv4,
             "repository_uuidv4": self.repository_uuidv4,
             "selection_scope": self.selection_scope.to_dict(),
+            "selection_report": self.selection_report,
             "core": self.core,
             "context": self.context,
         }
@@ -378,6 +463,9 @@ class ExchangeImportReport:
     admitted_context_resources: int
     linked_core_references: int
     pending_core_references: int
+    omissions: tuple[dict[str, Any], ...] = ()
+    core_checkpoint: bool = False
+    context_checkpoint: bool = False
 
 
 def validate_package_envelope(package: ExchangePackage) -> None:
@@ -469,6 +557,10 @@ def validate_package_envelope(package: ExchangePackage) -> None:
                 "CONTEXT_REGISTRATION", error.kind, error.code
             ) from None
 
+    from repo_catalog.domain.exchange_rows import validate_rows
+
+    validate_rows(package.core, package.context)
+
 
 def encode_package(package: ExchangePackage) -> str:
     """Serialize an ExchangePackage into canonical deterministic JSON."""
@@ -490,8 +582,7 @@ def decode_package(
 ) -> ExchangePackage:
     """Parse and validate an ExchangePackage from JSON bytes, str, or dict."""
     if isinstance(raw, ExchangePackage):
-        validate_package_envelope(raw)
-        return raw
+        raw = raw.to_dict()
     if isinstance(raw, (str, bytes)):
         if len(raw) > MAX_PACKAGE_BYTES:
             raise ExchangeError("INPUT_LIMIT", "package", "wire size")
@@ -503,7 +594,8 @@ def decode_package(
         except (UnicodeDecodeError, json.JSONDecodeError, TypeError) as exc:
             raise ExchangeError("MALFORMED_JSON", "package", str(exc)) from exc
     elif isinstance(raw, dict):
-        data = raw
+        _bounded_json(raw)
+        data = copy.deepcopy(raw)
     else:
         raise ExchangeError("MALFORMED_JSON", "package", "unsupported package input")
     if not isinstance(data, dict):
@@ -516,6 +608,7 @@ def decode_package(
         "sender_catalog_instance_uuidv4",
         "repository_uuidv4",
         "selection_scope",
+        "selection_report",
         "core",
         "context",
     }
@@ -537,6 +630,7 @@ def decode_package(
         sender_catalog_instance_uuidv4=data["sender_catalog_instance_uuidv4"],
         repository_uuidv4=data["repository_uuidv4"],
         selection_scope=selection,
+        selection_report=data["selection_report"],
         core=data["core"],
         context=data["context"],
     )

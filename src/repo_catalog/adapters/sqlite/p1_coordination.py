@@ -12,6 +12,7 @@ import base64
 import hashlib
 import json
 import os
+import re
 import sqlite3
 from collections.abc import Callable, Iterator
 from contextlib import ExitStack, closing, contextmanager
@@ -106,6 +107,7 @@ class SnapshotReadLimits:
     max_store_bytes: int = 64 * 1024 * 1024
     max_total_rows: int = 10000
     max_sql_vm_steps: int = 5_000_000
+    on_steps: Callable[[int], bool] | None = None
 
     def __post_init__(self):
         for value in (self.max_store_bytes, self.max_total_rows, self.max_sql_vm_steps):
@@ -122,7 +124,8 @@ def apply_snapshot_read_limits(db, limits: SnapshotReadLimits | None):
     def progress():
         nonlocal remaining
         remaining -= 100
-        return remaining < 0
+        shared_limit = limits.on_steps is not None and limits.on_steps(100)
+        return remaining < 0 or shared_limit
 
     db.set_progress_handler(progress, 100)
     size = (
@@ -1223,6 +1226,37 @@ class WorkLedger:
                 (*request.values(), scope),
             ).fetchone()
             return None if row is None else json.loads(row[0])
+
+    def bind_exchange_package(self, request, sender, package_id, digest):
+        """Bind a PackageKey globally in this Operational generation.
+
+        The existing continuation inventory carries only the digest, never the
+        package payload. BEGIN IMMEDIATE serializes lookup and first insertion
+        across requests and connections. Request issuance remains independent.
+        """
+        from repo_catalog.domain.exchange import ExchangeError
+        from repo_catalog.domain.p1_core import uuid4_value
+
+        uuid4_value(sender)
+        uuid4_value(package_id)
+        if not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest):
+            raise ValueError("SHA-256 required")
+        scope = self._progress_scope(
+            _json(["adr0030-package-binding", sender, package_id])
+        )
+        with self._checked(request, write=True) as checkpoint:
+            rows = self.db.execute(
+                "SELECT cursor_json FROM request_continuations WHERE continuation_scope_json=? AND json_extract(continuation_scope_json,'$[0]')='adr0030-package-binding'",
+                (scope,),
+            ).fetchall()
+            if rows:
+                if any(json.loads(row[0]) != {"digest_sha256": digest} for row in rows):
+                    raise ExchangeError("PACKAGE_KEY_REBOUND", [sender, package_id])
+                return False
+            self._put_continuation(
+                request, checkpoint, scope, _json({"digest_sha256": digest})
+            )
+            return True
 
     def set_progress_once(self, request, scope, value):
         """Atomically preserve the first decoded JSON value for a semantic slot."""

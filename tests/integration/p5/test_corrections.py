@@ -36,6 +36,7 @@ from repo_catalog.domain.acquisition import (
 from repo_catalog.domain.exchange import (
     ExchangeError,
     ExchangePackage,
+    ExchangeSelectionScope,
     decode_package,
     empty_core_section,
     encode_package,
@@ -56,6 +57,7 @@ def package(repo=None):
         None,
         str(uuid4()),
         repo or str(uuid4()),
+        selection_scope=ExchangeSelectionScope(all_selected=True),
         core=empty_core_section(),
     )
 
@@ -122,7 +124,14 @@ def test_json_depth_duplicate_and_float_controls():
     with pytest.raises(ExchangeError, match="duplicate key"):
         decode_package('{"format": 1, "format": 2}')
     data = package().to_dict()
-    data["core"]["repository_claims"] = [{"value_json": "1.5"}]
+    data["core"]["repository_claims"] = [
+        {
+            "repository_uuidv4": str(uuid4()),
+            "field": "name",
+            "value_json": "1.5",
+            "provenance_json": '["source","event","field","decoder","1","reported"]',
+        }
+    ]
     assert (
         decode_package(resign(data)).core["repository_claims"][0]["value_json"] == "1.5"
     )

@@ -164,7 +164,7 @@ from repo_catalog.adapters.sqlite.production_context import Context
 from repo_catalog.adapters.sqlite.git_core import GitCore
 from repo_catalog.adapters.sqlite.acquisition import UnlimitedWorkBudget
 from repo_catalog.application.exchange import ExchangeService
-from repo_catalog.domain.exchange import FORMAT as EXCHANGE_FORMAT
+from repo_catalog.domain.exchange import FORMAT as EXCHANGE_FORMAT, ExchangeSelectionScope
 from repo_catalog.domain.p1_core import RepositoryClaim, Provenance
 for role in ("provider", "repository", "source", "membership"):
     assert registration_json(role, "{}") == {}
@@ -181,7 +181,7 @@ with tempfile.TemporaryDirectory() as directory:
     repository_id, service = str(uuid4()), str(uuid4())
     for destination in (producer, receiver):
         instance = str(uuid4())
-        for role in ("core", "context"):
+        for role in ("core", "context", "operational"):
             p1_schema.initialize(destination / f"{role}.sqlite3", role, repository_id, instance)
     with Context.transaction(producer) as ctx:
         ctx.provider(service, "github", '{"name":"Original provider"}')
@@ -196,9 +196,9 @@ with tempfile.TemporaryDirectory() as directory:
     evidence = Provenance("source", "observation", "coordinate", "decoder", "1")
     with closing(GitCore(producer / "core.sqlite3")) as core:
         core.admit_repository_claim(RepositoryClaim(repository_id, "endpoint", historical_url, evidence))
-    package = ExchangeService(producer).export_package()
-    assert package.format == EXCHANGE_FORMAT == "git-repo-db/p5-exchange-v3"
-    ExchangeService(receiver).import_package(package, work=UnlimitedWorkBudget())
+    package = ExchangeService(producer).export_package(selection=ExchangeSelectionScope(all_selected=True))
+    assert package.format == EXCHANGE_FORMAT == "git-repo-db/adr0030-exchange-v4"
+    ExchangeService(receiver).import_package(package, new_request=True, permitted_repository_uuidv4s=(repository_id,))
     with closing(GitCore(receiver / "core.sqlite3")) as core:
         rows = core.sql("SELECT value FROM repository_claims WHERE field='endpoint'")
         assert json.loads(rows[0][0]) == historical_url

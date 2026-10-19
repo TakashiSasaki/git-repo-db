@@ -4,6 +4,12 @@ Authority: [ADR 0030](../adr/0030-context-repository-relations-and-selective-exc
 Read the [Context schema contract](../architecture/context-repository-relations.md)
 and [Exchange contract](../architecture/selective-exchange-contract.md) together.
 
+Implementation follow-up: the owner subsequently authorized I1, then independent
+I2/I3 sibling work. [I3's v4 implementation handoff](adr0030-i3-selective-exchange.md)
+records the frozen I1 dependency, receiver interface, PackageKey binding and staged
+commit semantics. The design-PR authorization history below remains historical;
+it does not override that later scoped implementation instruction.
+
 ## 1. Fixed source and authorization
 
 Design basis: `TakashiSasaki/git-repo-db`, PR #103,
