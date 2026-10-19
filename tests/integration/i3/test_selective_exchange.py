@@ -747,3 +747,184 @@ def test_core_reference_missing_dependency_retains_original_report_clock(tmp_pat
         assert ctx.candidates(issue, original.field_name) == (original,)
         assert not ctx.db.execute("SELECT 1 FROM core_references").fetchall()
     assert any(r["reason"] == "missing_core_oid" for r in report.omissions)
+
+
+@pytest.mark.parametrize("kind", ["source_inventory", "collection"])
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("members_json", "[]"),
+        ("terminal_state", "partial"),
+        ("provenance_json", canonical({"source": "forged", "evidence": "different"})),
+    ],
+)
+def test_contradictory_coverage_proof_is_rejected_before_binding(
+    tmp_path, kind, field, value
+):
+    from repo_catalog.domain.p1_context import CoverageClaim, CoverageScope
+    from repo_catalog.domain.production_context import (
+        CollectionObservation,
+        SourceInventory,
+    )
+
+    a, b = tmp_path / "a", tmp_path / "b"
+    r1, r2, issue, _ = fixture(a)
+    catalog(b)
+    provenance = make_provenance("provider", "original-complete")
+    with Context.transaction(a) as ctx:
+        if kind == "source_inventory":
+            source = str(uuid4())
+            original_scope = canonical(
+                {
+                    "coverage_kind": "repositories",
+                    "service_instance_uuidv4": issue.service_instance_uuidv4,
+                }
+            )
+            ctx.source(source, issue.service_instance_uuidv4, "{}")
+            inventory = SourceInventory(
+                source, original_scope, 80, "complete", True, (r1, r2), provenance
+            )
+            ctx.inventory(inventory)
+            ctx.prove_inventory(
+                CoverageClaim(
+                    CoverageScope.source_inventory(
+                        source, original_scope, "repositories"
+                    ),
+                    80,
+                    "complete",
+                ),
+                inventory,
+            )
+        else:
+            child = ResourceKey.document(issue, "comment", "comment", "99")
+            ctx.resource(child)
+            observation = CollectionObservation(
+                issue,
+                "comments",
+                provenance,
+                canonical({"coverage_kind": "comments"}),
+                80,
+                "complete",
+                (child,),
+            )
+            ctx.collection(observation)
+            ctx.prove_collection(
+                CoverageClaim(
+                    CoverageScope.collection(issue, "comments", provenance, "comments"),
+                    80,
+                    "complete",
+                ),
+                observation,
+                required_scope_json=observation.scope_json,
+            )
+    package = ExchangeService(a).export_package(selection=scope())
+    package.context["coverage_proofs"][0][field] = value
+    malformed = replace(package, digest_sha256=None)
+    with pytest.raises(ExchangeError, match="INVALID_COVERAGE_PROOF"):
+        receive(b, malformed, (r1, r2))
+    assert not rows(b, "context", "resources")
+    assert not any(
+        "adr0030-package-binding" in r[2]
+        for r in rows(b, "operational", "request_continuations")
+    )
+
+
+@pytest.mark.parametrize("raw_dict", [False, True])
+def test_caller_mutation_after_preflight_cannot_change_bound_content(
+    tmp_path, raw_dict
+):
+    a, b = tmp_path / "a", tmp_path / "b"
+    r1, r2, _, oid = fixture(a)
+    catalog(b)
+    package = ExchangeService(a).export_package(selection=scope())
+    original_digest = package.digest_sha256
+    raw = package.to_dict() if raw_dict else package
+
+    def mutate(point):
+        if point == "after_preflight":
+            data = raw["core"] if raw_dict else raw.core
+            data["git_objects"][0]["full_oid"] = "2" * 40
+
+    report = receive(b, raw, (r1, r2), cut=mutate)
+    assert report.package_digest_sha256 == original_digest
+    assert {tuple(r) for r in rows(b, "core", "git_objects")} == {oid.key}
+
+
+def test_selection_cannot_hide_conflicting_inventory_terminal_for_completeness(
+    tmp_path,
+):
+    from repo_catalog.domain.p1_context import CoverageClaim, CoverageScope
+    from repo_catalog.domain.production_context import SourceInventory
+
+    a, b = tmp_path / "a", tmp_path / "b"
+    r1, r2, issue, _ = fixture(a)
+    catalog(b)
+    source = str(uuid4())
+    original_scope = canonical(
+        {
+            "coverage_kind": "repositories",
+            "service_instance_uuidv4": issue.service_instance_uuidv4,
+        }
+    )
+    complete = SourceInventory(
+        source,
+        original_scope,
+        90,
+        "complete",
+        True,
+        (r1,),
+        make_provenance("provider", "complete-first"),
+    )
+    competing = replace(
+        complete,
+        state="partial",
+        terminal=False,
+        repositories=(r2,),
+        provenance_json=make_provenance("provider", "competing-second"),
+    )
+    with Context.transaction(a) as ctx:
+        ctx.source(source, issue.service_instance_uuidv4, "{}")
+        ctx.inventory(complete)
+        ctx.prove_inventory(
+            CoverageClaim(
+                CoverageScope.source_inventory(source, original_scope, "repositories"),
+                90,
+                "complete",
+            ),
+            complete,
+        )
+        ctx.inventory(competing)
+    selected = scope(repository_uuidv4s=(r1,))
+    package = ExchangeService(a).export_package(selection=selected)
+    assert not package.context["coverage_claims"]
+    assert not package.context["coverage_proofs"]
+    receive(b, package, (r1,))
+    assert not rows(b, "context", "coverage_claims")
+    for limit in (8, 12, 18, 30):
+        bounded = ExchangeService(a).export_package(selection=scope(max_units=limit))
+        if bounded.context["coverage_claims"]:
+            assert len(bounded.context["source_inventories"]) == 2
+
+
+def test_capture_non_utf8_ref_preserves_native_key(tmp_path):
+    from contextlib import closing
+
+    from repo_catalog.domain.p1_core import Capture
+
+    a, b = tmp_path / "a", tmp_path / "b"
+    r1, _, _, oid = fixture(a)
+    catalog(b)
+    capture = Capture(
+        str(uuid4()),
+        str(uuid4()),
+        r1,
+        "original-source",
+        b"refs/notes/non-utf8-\xff".decode("utf-8", "surrogateescape"),
+        oid,
+    )
+    with closing(GitCore(a / "core.sqlite3")) as core:
+        core.admit_capture(capture)
+    package = ExchangeService(a).export_package(selection=scope())
+    wire = encode_package(package)
+    receive(b, decode_package(wire), (r1,))
+    assert rows(a, "core", "captures") == rows(b, "core", "captures")

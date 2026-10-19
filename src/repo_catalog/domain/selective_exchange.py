@@ -260,10 +260,12 @@ def filter_sections(core, context, scope, *, permitted=None):
                 "repository_or_capture_not_selected_or_permitted",
             )
         if scope.notes_refs is not None:
+            from repo_catalog.domain.exchange_rows import decode_native_ref
+
             retain(
                 core,
                 "captures",
-                lambda r: r["ref"] in scope.notes_refs,
+                lambda r: decode_native_ref(r["ref"]) in scope.notes_refs,
                 "notes_ref_not_selected",
             )
         captures = {
@@ -337,6 +339,20 @@ def filter_sections(core, context, scope, *, permitted=None):
         )
         retain(
             core,
+            "coverage_proofs",
+            lambda r: (
+                (
+                    r["owner_kind"],
+                    r["owner_coordinates_json"],
+                    r["observed_at_us"],
+                    r["coverage_state"],
+                )
+                not in denied_claims
+            ),
+            "whole_coverage_proof_set_not_selected",
+        )
+        retain(
+            core,
             "coverage_claims",
             lambda r: (
                 core_scope_selected(r)
@@ -354,6 +370,9 @@ def filter_sections(core, context, scope, *, permitted=None):
             core, "coverage_scopes", core_scope_selected, "coverage_owner_not_selected"
         )
     if context is not None:
+        original_terminals = [
+            ("source_inventory", r) for r in context["source_inventories"]
+        ] + [("collection", r) for r in context["collections"]]
         resources = [resource(r).coordinates() for r in context["resources"]]
         relations = [
             tuple(
@@ -506,80 +525,18 @@ def filter_sections(core, context, scope, *, permitted=None):
             ),
             "whole_inventory_dependency_not_selected",
         )
-        inventories = {
-            (r["source_registration_uuidv4"], r["scope_json"], r["observed_at_us"])
-            for r in context["source_inventories"]
-        }
-        collections = {
-            (
-                resource(r),
-                r["collection_kind"],
-                r["provenance_json"],
-                r["observed_at_us"],
-            )
-            for r in context["collections"]
-        }
-        denied_claims = set()
+        omissions.extend(preserve_context_coverage(context, original_terminals))
 
-        def owner_selected(r):
-            coords = json.loads(r["owner_coordinates_json"])
-            if r["owner_kind"] == "repository":
-                return allowed(coords[0])
-            return (
-                coords[0] in source_ids
-                if r["owner_kind"] in ("source", "source_inventory")
-                else ResourceKey(*coords[:3]) in chosen
-            )
+        def owner_selected(row):
+            coordinates = json.loads(row["owner_coordinates_json"])
+            if row["owner_kind"] == "repository":
+                return allowed(coordinates[0])
+            if row["owner_kind"] in ("source", "source_inventory"):
+                return coordinates[0] in source_ids
+            return ResourceKey(*coordinates[:3]) in chosen
 
-        def proof_selected(r):
-            ok = (
-                (
-                    r["source_registration_uuidv4"],
-                    r["scope_json"],
-                    r["terminal_observed_at_us"],
-                )
-                in inventories
-                if r["proof_kind"] == "source_inventory"
-                else (
-                    resource(r),
-                    r["collection_kind"],
-                    r["provenance_json"],
-                    r["terminal_observed_at_us"],
-                )
-                in collections
-            )
-            if not ok:
-                denied_claims.add(
-                    (
-                        r["owner_kind"],
-                        r["owner_coordinates_json"],
-                        r["observed_at_us"],
-                        r["coverage_state"],
-                    )
-                )
-            return ok and owner_selected(r)
-
-        retain(
-            context, "coverage_proofs", proof_selected, "whole_terminal_not_selected"
-        )
-        retain(
-            context, "coverage_scopes", owner_selected, "coverage_owner_not_selected"
-        )
-        retain(
-            context,
-            "coverage_claims",
-            lambda r: (
-                owner_selected(r)
-                and (
-                    r["owner_kind"],
-                    r["owner_coordinates_json"],
-                    r["observed_at_us"],
-                    r["coverage_state"],
-                )
-                not in denied_claims
-            ),
-            "whole_coverage_unit_not_selected",
-        )
+        for key in ("coverage_scopes", "coverage_claims", "coverage_proofs"):
+            retain(context, key, owner_selected, "coverage_owner_not_selected")
         # Providers are non-executable domain registrations, retained as original
         # supplied facts. Access fields remain rejected by the registration codec.
         if scope.resource_keys is not None or scope.source_uuidv4s is not None:
@@ -748,7 +705,7 @@ def validate_context(data):
             tuple(ResourceKey(*m) for m in json.loads(row["members_json"])),
         )
     for row in data["source_inventories"]:
-        SourceInventory(
+        inventory = SourceInventory(
             row["source_registration_uuidv4"],
             row["scope_json"],
             row["observed_at_us"],
@@ -757,6 +714,10 @@ def validate_context(data):
             tuple(json.loads(row["members_json"])),
             row["provenance_json"],
         )
+        for repository in inventory.repositories:
+            uuid4_value(repository)
+        if inventory.members_json != row["members_json"]:
+            raise ExchangeError("NONCANONICAL_INVENTORY", "source_inventories")
     for row in data["core_references"]:
         CoreReference(
             resource(row),
@@ -776,6 +737,8 @@ def validate_context(data):
                     row["coverage_state"],
                     row.get("details_json"),
                 )
+
+    validate_context_proofs(data)
 
 
 class CorePreflight:
@@ -845,10 +808,9 @@ def bound_sections(core, context, scope):
                 if store == "context" and section == "source_inventories":
                     unit = (
                         store,
-                        "inventory",
+                        "source_inventory",
                         row["source_registration_uuidv4"],
                         row["scope_json"],
-                        row["observed_at_us"],
                     )
                 if (
                     store == "context"
@@ -908,45 +870,35 @@ def bound_sections(core, context, scope):
                         *resource(row).coordinates(),
                         row["collection_kind"],
                         row["provenance_json"],
-                        row["observed_at_us"],
                     )
                 groups.setdefault(unit, []).append((store, section, index, row))
-    # Merge evidence with its actual terminal so dropping either cannot leave a
-    # complete assertion about a newly smaller inventory or collection.
-    for key in list(groups):
+    # Union all proof/claim groups with every terminal in their logical slot.
+    # Retaining one alternative cannot hide a competing current terminal.
+    parent = {key: key for key in groups}
+
+    def root(key):
+        while parent[key] != key:
+            parent[key] = parent[parent[key]]
+            key = parent[key]
+        return key
+
+    for key, values in groups.items():
         if len(key) < 3 or key[1] != "coverage":
             continue
-        values = groups[key]
-        proofs = [r for _, section, _, r in values if section == "coverage_proofs"]
         targets = set()
         if key[0] == "core" and key[2] == "capture":
-            coords = json.loads(key[3])
-            targets.add(("core", "capture", *coords[:2]))
+            targets.add(("core", "capture", *json.loads(key[3])[:2]))
         if key[0] == "context":
-            for row in proofs:
-                if row["proof_kind"] == "source_inventory":
-                    targets.add(
-                        (
-                            "context",
-                            "inventory",
-                            row["source_registration_uuidv4"],
-                            row["scope_json"],
-                            row["terminal_observed_at_us"],
-                        )
-                    )
-                else:
-                    targets.add(
-                        (
-                            "context",
-                            "collection",
-                            *resource(row).coordinates(),
-                            row["collection_kind"],
-                            row["provenance_json"],
-                            row["terminal_observed_at_us"],
-                        )
-                    )
+            for _, section, _, row in values:
+                if section == "coverage_proofs":
+                    targets.add(("context", *terminal_slot(row, row["proof_kind"])))
         for target in targets:
-            values.extend(groups.pop(target, []))
+            if target in parent:
+                parent[root(target)] = root(key)
+    combined = {}
+    for key, values in groups.items():
+        combined.setdefault(root(key), []).extend(values)
+    groups = combined
     kept = set()
     omissions = []
     units = byte_count = 0
@@ -999,3 +951,173 @@ def bound_sections(core, context, scope):
                     if (store, section, index) in kept
                 ]
     return omissions, {"emitted_units": units, "emitted_payload_bytes": byte_count}
+
+
+def terminal_key(row, kind):
+    """Full original terminal FK, not its clock-only lookup prefix."""
+    proof = "proof_kind" in row
+    at = row["terminal_observed_at_us"] if proof else row["observed_at_us"]
+    if kind == "source_inventory":
+        return (
+            kind,
+            row["source_registration_uuidv4"],
+            row["scope_json"],
+            at,
+            row["terminal_state"] if proof else row["coverage_state"],
+            row["terminal"],
+            row["members_json"],
+            row["provenance_json"],
+        )
+    return (
+        kind,
+        *resource(row).coordinates(),
+        row["collection_kind"],
+        row["provenance_json"],
+        at,
+        row["terminal_state"],
+        row["members_json"],
+    )
+
+
+def validate_context_proofs(data):
+    claims = {
+        (
+            r["owner_kind"],
+            r["owner_coordinates_json"],
+            r["observed_at_us"],
+            r["coverage_state"],
+        )
+        for r in data["coverage_claims"]
+    }
+    terminals = {
+        terminal_key(r, "source_inventory") for r in data["source_inventories"]
+    } | {terminal_key(r, "collection") for r in data["collections"]}
+    collection_scopes = {}
+    for row in data["collections"]:
+        key = (
+            *resource(row).coordinates(),
+            row["collection_kind"],
+            row["provenance_json"],
+        )
+        if key in collection_scopes and collection_scopes[key] != row["scope_json"]:
+            raise ExchangeError("IMMUTABLE_COLLECTION_SCOPE", "context")
+        collection_scopes[key] = row["scope_json"]
+    for row in data["coverage_proofs"]:
+        from repo_catalog.domain.time import validate_required_observation_us
+
+        validate_required_observation_us(row["terminal_observed_at_us"])
+        if row["proof_kind"] not in ("source_inventory", "collection"):
+            raise ExchangeError("INVALID_COVERAGE_PROOF", "proof_kind")
+        if terminal_key(row, row["proof_kind"]) not in terminals:
+            raise ExchangeError(
+                "INVALID_COVERAGE_PROOF",
+                "original_terminal",
+                "proof must match every original immutable terminal field",
+            )
+        if (
+            row["owner_kind"],
+            row["owner_coordinates_json"],
+            row["observed_at_us"],
+            row["coverage_state"],
+        ) not in claims:
+            raise ExchangeError("INVALID_COVERAGE_PROOF", "original_claim")
+        if row["terminal_observed_at_us"] > row["observed_at_us"] or (
+            row["coverage_state"] == "complete" and row["terminal_state"] != "complete"
+        ):
+            raise ExchangeError("INVALID_COVERAGE_PROOF", "terminal_state")
+        if row["proof_kind"] == "source_inventory":
+            coords = json.loads(row["owner_coordinates_json"])
+            if (
+                row["terminal"] is not True
+                or row["owner_kind"] != "source_inventory"
+                or coords[:2] != [row["source_registration_uuidv4"], row["scope_json"]]
+            ):
+                raise ExchangeError("INVALID_COVERAGE_PROOF", "source_scope")
+        else:
+            from repo_catalog.domain.p1_context import CoverageScope
+
+            coordinates = json.loads(row["owner_coordinates_json"])
+            owner = CoverageScope(row["owner_kind"], coordinates)
+            slot = (
+                *resource(row).coordinates(),
+                row["collection_kind"],
+                row["provenance_json"],
+            )
+            attributes = json.loads(collection_scopes[slot])
+            kind = attributes.get("coverage_kind", row["collection_kind"])
+            if owner.base_coverage_kind != kind:
+                raise ExchangeError("INVALID_COVERAGE_PROOF", "coverage_kind")
+            if owner.owner_kind == "repository":
+                valid = attributes.get("repository_uuidv4") == coordinates[0]
+            elif owner.owner_kind == "source":
+                valid = (
+                    attributes.get("source_registration_uuidv4") == coordinates[0]
+                    and attributes.get("repository_uuidv4") == coordinates[1]
+                )
+            elif owner.owner_kind in ("resource", "field", "collection"):
+                valid = tuple(coordinates[:3]) == resource(row).coordinates()
+                if owner.owner_kind == "field":
+                    valid = valid and attributes.get("field_name") == coordinates[3]
+                if owner.owner_kind == "collection":
+                    valid = valid and coordinates[3:5] == [
+                        row["collection_kind"],
+                        row["provenance_json"],
+                    ]
+            else:
+                valid = False
+            if not valid:
+                raise ExchangeError("INVALID_COVERAGE_PROOF", "owner_scope")
+
+
+def terminal_slot(row, kind):
+    if kind == "source_inventory":
+        return (kind, row["source_registration_uuidv4"], row["scope_json"])
+    return (
+        kind,
+        *resource(row).coordinates(),
+        row["collection_kind"],
+        row["provenance_json"],
+    )
+
+
+def preserve_context_coverage(data, original):
+    """Withhold completeness if selection removes relevant terminal alternatives."""
+    remaining = {
+        terminal_key(r, "source_inventory") for r in data["source_inventories"]
+    } | {terminal_key(r, "collection") for r in data["collections"]}
+    lost_slots = {
+        terminal_slot(r, kind)
+        for kind, r in original
+        if terminal_key(r, kind) not in remaining
+    }
+
+    def claim_key(row):
+        return (
+            row["owner_kind"],
+            row["owner_coordinates_json"],
+            row["observed_at_us"],
+            row["coverage_state"],
+        )
+
+    denied = {
+        claim_key(r)
+        for r in data["coverage_proofs"]
+        if terminal_key(r, r["proof_kind"]) not in remaining
+        or terminal_slot(r, r["proof_kind"]) in lost_slots
+    }
+    omissions = []
+    for key in ("coverage_proofs", "coverage_claims"):
+        kept = []
+        for index, row in enumerate(data[key]):
+            if claim_key(row) in denied:
+                omissions.append(
+                    {
+                        "section": key,
+                        "unit_index": index,
+                        "reason": "whole_coverage_terminal_set_not_selected",
+                    }
+                )
+            else:
+                kept.append(row)
+        data[key] = kept
+    return omissions

@@ -323,8 +323,41 @@ def validate_rows(core, context):
                             raise ExchangeError(
                                 "NONCANONICAL_ROW", [store, section, key]
                             )
+                if store == "core" and section == "coverage_proofs":
+                    members = json.loads(row["members_json"])
+                    if not isinstance(members, list) or any(
+                        not isinstance(m, list) or len(m) != 2 for m in members
+                    ):
+                        raise ExchangeError(
+                            "MALFORMED_ROW", ["core", section, "typed_members"]
+                        )
+                if store == "core" and section == "captures":
+                    decode_native_ref(row["ref"])
                 if "authority" in row and row["authority"] not in (
                     "reported",
                     "intrinsic",
                 ):
                     raise ExchangeError("MALFORMED_ROW", [store, section, "authority"])
+
+
+def decode_native_ref(value):
+    from repo_catalog.domain.exchange import ExchangeError
+
+    try:
+        pair = json.loads(value)
+        if (
+            not isinstance(pair, list)
+            or len(pair) != 2
+            or pair[0] != "native-ref"
+            or type(pair[1]) is not str
+            or len(pair[1]) % 2
+            or any(c not in "0123456789abcdef" for c in pair[1])
+            or encode(pair) != value
+        ):
+            raise ValueError("canonical native-ref hex required")
+        ref = bytes.fromhex(pair[1]).decode("utf-8", "surrogateescape")
+        if not ref.startswith("refs/") or "\x00" in ref:
+            raise ValueError("full native ref required")
+        return ref
+    except (ValueError, TypeError) as error:
+        raise ExchangeError("INVALID_NATIVE_REF", "captures") from error

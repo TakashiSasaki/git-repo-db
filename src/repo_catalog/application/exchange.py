@@ -97,6 +97,8 @@ from repo_catalog.domain.selective_exchange import (
     expand_resources,
     explicit_scope,
     filter_sections,
+    preserve_context_coverage,
+    terminal_key,
     transfer_reports,
     validate_context,
 )
@@ -431,7 +433,32 @@ class ExchangeService:
             self._selection_details["omissions"].extend(
                 filter_sections(core_section, context_section, scope)
             )
+            self._selection_details["emitted_units"] = sum(
+                len(rows)
+                for data in (core_section, context_section)
+                if data is not None
+                for rows in data.values()
+            )
+            self._selection_details["emitted_payload_bytes"] = sum(
+                len(
+                    json.dumps(
+                        row, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+                    ).encode()
+                )
+                for data in (core_section, context_section)
+                if data is not None
+                for rows in data.values()
+                for row in rows
+            )
             self._selection_details["effective"] = {
+                "sources": [
+                    r["source_registration_uuidv4"]
+                    for r in (context_section or {}).get("sources", [])
+                ],
+                "providers": [
+                    r["service_instance_uuidv4"]
+                    for r in (context_section or {}).get("providers", [])
+                ],
                 "repositories": [
                     r["repository_uuidv4"]
                     for r in (core_section or {}).get("repositories", [])
@@ -738,7 +765,7 @@ class ExchangeService:
                         "capture_uuidv4": row[1],
                         "repository_uuidv4": row[2],
                         "source": row[3],
-                        "ref": decoded_ref,
+                        "ref": row[4],
                         "object_format": row[5],
                         "root": row[6],
                     }
@@ -1675,6 +1702,8 @@ class ExchangeService:
             "new_rows": 0,
         }
 
+        checkpoint_written = {"core": False, "context": False}
+
         def checkpoint(point):
             cut(point)
             if point in ("after_core_commit", "after_context_commit"):
@@ -1695,6 +1724,7 @@ class ExchangeService:
                     ),
                     dict(stats),
                 )
+                checkpoint_written[stage] = True
                 cut("after_" + stage + "_checkpoint")
 
         if self._has_core() and self._has_context() and (want_core or want_context):
@@ -1803,8 +1833,8 @@ class ExchangeService:
             linked_core_references=ctx_stats["linked_core_references"],
             pending_core_references=ctx_stats["pending_core_references"],
             omissions=tuple(omissions),
-            core_checkpoint=want_core,
-            context_checkpoint=want_context,
+            core_checkpoint=checkpoint_written["core"],
+            context_checkpoint=checkpoint_written["context"],
         )
 
         ledger.work_ledger.set_progress_once(
@@ -1895,6 +1925,9 @@ class ExchangeService:
         from repo_catalog.domain.selective_exchange import resource
 
         omissions = []
+        original_terminals = [
+            ("source_inventory", r) for r in data["source_inventories"]
+        ] + [("collection", r) for r in data["collections"]]
         with Context.snapshot(self.directory, read_limits=self._read_limits()) as ctx:
             providers = {
                 r[0]
@@ -2121,50 +2154,7 @@ class ExchangeService:
             keep(key, lambda r: resource(r) in resources)
         # Omit the entire associated Coverage assertion if a collection or
         # inventory unit is missing. A terminal is not reconstructed from rows.
-        inventories = {
-            (r["source_registration_uuidv4"], r["scope_json"], r["observed_at_us"])
-            for r in data["source_inventories"]
-        }
-        collections = {
-            (
-                resource(r),
-                r["collection_kind"],
-                r["provenance_json"],
-                r["observed_at_us"],
-            )
-            for r in data["collections"]
-        }
-        denied_claims = set()
-
-        def proof_available(r):
-            ok = (
-                (
-                    r["source_registration_uuidv4"],
-                    r["scope_json"],
-                    r["terminal_observed_at_us"],
-                )
-                in inventories
-                if r["proof_kind"] == "source_inventory"
-                else (
-                    resource(r),
-                    r["collection_kind"],
-                    r["provenance_json"],
-                    r["terminal_observed_at_us"],
-                )
-                in collections
-            )
-            if not ok:
-                denied_claims.add(
-                    (
-                        r["owner_kind"],
-                        r["owner_coordinates_json"],
-                        r["observed_at_us"],
-                        r["coverage_state"],
-                    )
-                )
-            return ok
-
-        keep("coverage_proofs", proof_available)
+        omissions.extend(preserve_context_coverage(data, original_terminals))
 
         def scope_available(r):
             coords = json.loads(r["owner_coordinates_json"])
@@ -2175,19 +2165,8 @@ class ExchangeService:
             return ResourceKey(*coords[:3]) in resources
 
         keep("coverage_scopes", scope_available)
-        keep(
-            "coverage_claims",
-            lambda r: (
-                scope_available(r)
-                and (
-                    r["owner_kind"],
-                    r["owner_coordinates_json"],
-                    r["observed_at_us"],
-                    r["coverage_state"],
-                )
-                not in denied_claims
-            ),
-        )
+        keep("coverage_claims", scope_available)
+        keep("coverage_proofs", scope_available)
         return omissions
 
     def _core_validator_on_disk(self) -> Callable[[str, str], bool]:
@@ -2229,7 +2208,7 @@ class ExchangeService:
                 c_item["capture_uuidv4"],
                 c_item["repository_uuidv4"],
                 c_item["source"],
-                c_item["ref"],
+                _decode_capture_ref(c_item["ref"]),
                 OID(c_item["object_format"], c_item["root"]),
             )
             captures_by_pair[cap.pair] = cap
@@ -2949,21 +2928,10 @@ class ExchangeService:
         for cp in ctx_data["coverage_proofs"]:
             _performed("metadata_units", 1)
             if cp.get("proof_kind") == "collection":
-                t_key = (
-                    cp["service_instance_uuidv4"],
-                    cp["resource_kind"],
-                    cp["provider_resource_id"],
-                    cp["collection_kind"],
-                    cp["provenance_json"],
-                    cp["terminal_observed_at_us"],
-                )
+                t_key = terminal_key(cp, "collection")
                 collection_proofs_by_terminal.setdefault(t_key, []).append(cp)
             elif cp.get("proof_kind") == "source_inventory":
-                i_key = (
-                    cp["source_registration_uuidv4"],
-                    cp["scope_json"],
-                    cp["terminal_observed_at_us"],
-                )
+                i_key = terminal_key(cp, "source_inventory")
                 inventory_proofs_by_terminal.setdefault(i_key, []).append(cp)
 
         admitted_claim_keys: set[tuple[str, str, int, str]] = set()
@@ -2997,11 +2965,7 @@ class ExchangeService:
                 inv["provenance_json"],
             )
             ctx.inventory(src_inv)
-            i_key = (
-                inv["source_registration_uuidv4"],
-                inv["scope_json"],
-                inv["observed_at_us"],
-            )
+            i_key = terminal_key(inv, "source_inventory")
             for cp in inventory_proofs_by_terminal.get(i_key, ()):
                 _performed("metadata_units", 1)
                 c_key = (
@@ -3044,14 +3008,7 @@ class ExchangeService:
                 members,
             )
             ctx.collection(coll_obs)
-            t_key = (
-                coll["service_instance_uuidv4"],
-                coll["resource_kind"],
-                coll["provider_resource_id"],
-                coll["collection_kind"],
-                coll["provenance_json"],
-                coll["observed_at_us"],
-            )
+            t_key = terminal_key(coll, "collection")
             for cp in collection_proofs_by_terminal.get(t_key, ()):
                 _performed("metadata_units", 1)
                 c_key = (

@@ -13,7 +13,8 @@ switch, I2 fetching, I4 Query/Search/Backup integration, or release is included.
 `repo_catalog.application.exchange.ExchangeService(directory)` exports
 `git-repo-db/adr0030-exchange-v4`. A v3 envelope is rejected; there is no v3
 import fallback. `domain/exchange_rows.py` declares exact row envelopes and
-canonical embedded JSON. `ExchangePort` matches the service's keyword API.
+canonical embedded JSON. Native Git refs use the original reversible
+`["native-ref", hex]` representation, including non-UTF-8 bytes. `ExchangePort` matches the service's keyword API.
 
 `export_package(selection=ExchangeSelectionScope(...), package_id=..., exported_at_us=...)`
 uses independent `repository_uuidv4s` (R), `object_oids` (O), and
@@ -57,7 +58,9 @@ commits. Failed or crashed performed work remains charged.
 
 ## Package binding and commit order
 
-The canonical envelope, excluding only `digest_sha256`, has one SHA-256 digest.
+Caller-owned Package/dictionary data is bounded and privately copied before
+digest or domain validation, and the same owned snapshot is used through
+admission. The canonical envelope, excluding only `digest_sha256`, has one SHA-256 digest.
 The sender's seed Repository is descriptive envelope data; it is not compared
 with the receiver seed. Receiver `store_identity` rows and existing UUIDs stay
 unchanged. New permitted Repository rows use their supplied original UUIDs.
@@ -107,6 +110,11 @@ endpoints retain their distinct I1 encoding. No destination is inferred from
 current Issue ownership. I2 must supply genuine normalized I1 reports; I3 does
 not authenticate a Provider timeline observation.
 
+Wire Coverage proofs must exactly match the original complete terminal FK,
+including membership, state, provenance, time and terminal marker. Contradictory
+proofs are rejected before PackageKey binding. Competing terminals remain in the
+same completeness unit; selecting away a terminal cannot strengthen Coverage.
+
 A Source inventory terminal, original membership, associated Coverage assertion
 and proof travel intact or are withheld intact. Independent positive Source
 memberships may remain useful. Collection/Coverage proof membership is likewise
@@ -137,7 +145,9 @@ registration order, malformed primitive UUIDs, empty/disabled receiver selection
 missing Core dependencies, zero receive limits and malformed scalar tags. These
 are covered in `tests/integration/i3/test_selective_exchange.py`, alongside real
 process exits, competing bindings, SQL mutation probes, Source/Transfer whole
-units, Notes checks and Access/Stop invariants. Final review targets the exact
+units, Notes checks and Access/Stop invariants. The [first exact-tree review](evidence/adr0030-i3/first-independent-review.md)
+found two further executed blockers, corrected with additional regressions.
+Final review targets the exact
 committed/pushed HEAD/tree and is recorded in the PR body.
 
 The former I1 guard node
