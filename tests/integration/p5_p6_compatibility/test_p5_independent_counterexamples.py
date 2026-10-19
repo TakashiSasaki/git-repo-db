@@ -15,13 +15,24 @@ from repo_catalog.application.acquisition import (
 from repo_catalog.domain.acquisition import (
     GitNativeAcquisitionRequest,
 )
-from repo_catalog.domain.exchange import ExchangePackage, decode_package, encode_package
+from repo_catalog.domain.exchange import (
+    ExchangePackage,
+    ExchangeSelectionScope,
+    decode_package,
+    encode_package,
+)
 from repo_catalog.domain.p1_coordination import RequestIdentity
 from tests.integration.p5.conftest import build_sample_git_repo, init_catalog_stores
 
 
 def test_declared_digest_required():
-    p = ExchangePackage(str(uuid4()), 1, str(uuid4()), str(uuid4()))
+    p = ExchangePackage(
+        str(uuid4()),
+        1,
+        str(uuid4()),
+        str(uuid4()),
+        selection_scope=ExchangeSelectionScope(all_selected=True),
+    )
     d = json.loads(encode_package(p))
     assert "digest_sha256" in d
     d["package_id"] = str(uuid4())
@@ -157,7 +168,13 @@ def test_exchange_retains_partial_admission_outcome(tmp_path, monkeypatch):
     core = empty_core_section()
     core["git_objects"].append({"object_format": "sha1", "full_oid": "a" * 40})
     p = ExchangePackage(
-        str(uuid4()), 1, str(uuid4()), repo, core=core, context=empty_context_section()
+        str(uuid4()),
+        1,
+        str(uuid4()),
+        repo,
+        selection_scope=ExchangeSelectionScope(all_selected=True),
+        core=core,
+        context=empty_context_section(),
     )
     service = ExchangeService(cat)
 
@@ -220,7 +237,9 @@ def test_exchange_export_uses_one_paired_snapshot(tmp_path, monkeypatch):
 
     monkeypatch.setattr(service, "_export_core", racing)
     try:
-        p = service.export_package(exported_at_us=1)
+        p = service.export_package(
+            selection=ExchangeSelectionScope(all_selected=True), exported_at_us=1
+        )
         future[0].result(timeout=10)
     finally:
         executor.shutdown(wait=True)
@@ -246,4 +265,6 @@ def test_exchange_export_refuses_stop_before_return(tmp_path, monkeypatch):
 
     monkeypatch.setattr(service, "_export_context", stop_after_read)
     with pytest.raises((CoordinationError, ValueError)):
-        service.export_package(exported_at_us=1)
+        service.export_package(
+            selection=ExchangeSelectionScope(all_selected=True), exported_at_us=1
+        )

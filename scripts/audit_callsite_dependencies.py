@@ -53,6 +53,8 @@ ISOLATED_NEXT_STAGE_MODULES = frozenset(
         "adapters/sqlite/notes.py",
         "domain/acquisition.py",
         "domain/exchange.py",
+        "domain/selective_exchange.py",
+        "domain/exchange_rows.py",
         "domain/ports/acquisition.py",
         "application/acquisition.py",
         "application/exchange.py",

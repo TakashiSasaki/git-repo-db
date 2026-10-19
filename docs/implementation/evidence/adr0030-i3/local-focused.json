@@ -1,0 +1,17 @@
+{
+  "fixed_i1_head": "9390c9f3b54a033e5f07e1cb05d7c4b263c38fb7",
+  "fixed_i1_tree": "14c694218109de1e3dfebc93e7776d48ad79faf3",
+  "runtime_input_sha256": "8b67f092f88ea12e3da1b6a18312f6b0345526f8a60f9300cc207b8527efcaee",
+  "runtime_input_count": 412,
+  "runtime": {
+    "python": "3.12.14",
+    "sqlite": "3.53.1",
+    "sqlite_source": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9"
+  },
+  "independent_i3_tests": {
+    "passed": 29,
+    "failed": 0,
+    "command": ".venv/bin/pytest -q tests/integration/i3 --tb=short"
+  },
+  "preliminary_review": "CHANGES REQUIRED; executed counterexamples corrected and retained as regression tests; final exact pushed review is recorded in PR body"
+}

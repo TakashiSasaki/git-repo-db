@@ -50,8 +50,8 @@ from repo_catalog.domain.p1_core import OID, CoreFailure
 from tests.integration.p5.conftest import build_sample_git_repo, init_catalog_stores
 
 
-def test_i1_relation_export_guard_without_i2_acquisition(tmp_path: Path) -> None:
-    """Direct I3 boundary control; the five integration tests still stop in I2."""
+def test_i3_relation_export_without_i2_acquisition(tmp_path: Path) -> None:
+    """Replaces I1 guard with direct I3 export; five integrated fixtures still need I2."""
     repo, service = str(uuid4()), str(uuid4())
     init_catalog_stores(
         tmp_path, repository_uuidv4=repo, stores=("core", "context", "operational")
@@ -71,9 +71,13 @@ def test_i1_relation_export_guard_without_i2_acquisition(tmp_path: Path) -> None
                 1,
             )
         )
-    with pytest.raises(ExchangeError) as refused:
-        ExchangeService(tmp_path).export_package(exported_at_us=2)
-    assert refused.value.code == "UNSUPPORTED_UNTIL_I3"
+    package = ExchangeService(tmp_path).export_package(
+        selection=ExchangeSelectionScope(all_selected=True), exported_at_us=2
+    )
+    assert (
+        package.context["resource_repository_relations"][0]["relation_kind"]
+        == "owning_repository"
+    )
     assert not (tmp_path / "p1-recovery-stop.json").exists()
 
 

@@ -96,7 +96,11 @@ def _decoded_read(method):
 
 class Core:
     def __init__(
-        self, path: Path, *, on_corruption: Callable[[CoreFailure], None] | None = None
+        self,
+        path: Path,
+        *,
+        on_corruption: Callable[[CoreFailure], None] | None = None,
+        read_limits=None,
     ):
         from repo_catalog.adapters.sqlite.p1_schema import connect
 
@@ -113,6 +117,16 @@ class Core:
                 )
             try:
                 self._db = connect(path, "core")
+                if read_limits is not None:
+                    from repo_catalog.adapters.sqlite.p1_coordination import (
+                        apply_snapshot_read_limits,
+                    )
+
+                    try:
+                        apply_snapshot_read_limits(self._db, read_limits)
+                    except BaseException:
+                        self._db.close()
+                        raise
             except sqlite3.DatabaseError as error:
                 if Path(path).is_file() and _sqlite_authority_failure(error):
                     persist_catalog_stop(

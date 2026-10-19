@@ -281,7 +281,10 @@ def test_multi_hop_exchange_into_query(tmp_path: Path, fmt: str) -> None:
 
     # Export A -> Import B
     svc_a = ExchangeService(cat_a)
-    pkg_a = svc_a.export_package(exported_at_us=1_700_000_010_000_000)
+    pkg_a = svc_a.export_package(
+        selection=ExchangeSelectionScope(all_selected=True),
+        exported_at_us=1_700_000_010_000_000,
+    )
     wire_a = encode_package(pkg_a)
 
     svc_b = ExchangeService(cat_b)
@@ -289,7 +292,10 @@ def test_multi_hop_exchange_into_query(tmp_path: Path, fmt: str) -> None:
     assert rep_b.admitted_core_objects >= 1
 
     # Export B -> Import C
-    pkg_b = svc_b.export_package(exported_at_us=1_700_000_020_000_000)
+    pkg_b = svc_b.export_package(
+        selection=ExchangeSelectionScope(all_selected=True),
+        exported_at_us=1_700_000_020_000_000,
+    )
     wire_b = encode_package(pkg_b)
 
     svc_c = ExchangeService(cat_c)
@@ -528,7 +534,9 @@ def test_partial_reordered_repeat_reverse_onward_preserves_unknown_clocks(
         )
     )
     exporter = ExchangeService(a)
-    subset = ExchangeSelectionScope(include_core=False, resource_keys=(resource,))
+    subset = ExchangeSelectionScope(
+        all_selected=True, include_core=False, resource_keys=(resource,)
+    )
     earlier = exporter.export_package(selection=subset, exported_at_us=1)
     later = FieldCandidate(
         resource,
@@ -559,7 +567,9 @@ def test_partial_reordered_repeat_reverse_onward_preserves_unknown_clocks(
     assert set(
         ProductionQueryService(a).get_context_resource(resource).fields["state"]
     ) == {first, later}
-    onward = receiver.export_package(exported_at_us=4)
+    onward = receiver.export_package(
+        selection=ExchangeSelectionScope(all_selected=True), exported_at_us=4
+    )
     ExchangeService(c).import_package(onward, new_request=True)
     view_c = ProductionQueryService(c).get_context_resource(resource)
     assert view_c.fields == view.fields

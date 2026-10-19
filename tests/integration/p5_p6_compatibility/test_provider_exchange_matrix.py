@@ -13,6 +13,7 @@ from repo_catalog.domain.acquisition import (
     ProviderRegistration,
     make_provenance,
 )
+from repo_catalog.domain.exchange import ExchangeSelectionScope
 from repo_catalog.domain.p1_context import ResourceKey
 from tests.integration.p5.conftest import init_catalog_stores
 
@@ -73,11 +74,15 @@ def test_provider_late_reordered_repeat_reverse_onward_preserves_candidates(
         assert len(body) == 2 and any(c.value_json == "null" for c in body)
     expected = field_rows(cats[0])
     a, b, c = map(ExchangeService, cats)
-    pa = a.export_package(exported_at_us=200)
+    pa = a.export_package(
+        selection=ExchangeSelectionScope(all_selected=True), exported_at_us=200
+    )
     do_import(b, pa)
     do_import(b, pa)
     assert field_rows(cats[1]) == expected
-    pb = b.export_package(exported_at_us=201)
+    pb = b.export_package(
+        selection=ExchangeSelectionScope(all_selected=True), exported_at_us=201
+    )
     do_import(a, pb)
     do_import(c, pb)
     assert field_rows(cats[0]) == expected == field_rows(cats[2])
@@ -116,6 +121,8 @@ def test_exchange_preserves_non_time_json_real(tmp_path):
             ),
         )
     )
-    p = ExchangeService(a).export_package(exported_at_us=1)
+    p = ExchangeService(a).export_package(
+        selection=ExchangeSelectionScope(all_selected=True), exported_at_us=1
+    )
     do_import(ExchangeService(b), p)
     assert field_rows(a) == field_rows(b)

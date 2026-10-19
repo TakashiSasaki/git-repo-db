@@ -70,3 +70,24 @@ positional calls alone missed facade names claim/resource/service_or_resource
 that rejected the declared relation/provider_repository/service_instance_uuidv4
 keywords. Retain intentional positional overloads and verify them separately.
 Use test_context_admission_protocol_keyword_calls in the P3 Context suite.
+
+## Selective wire review: exercise receiver controls and exact decoding
+
+For a new versioned Exchange, test the receiver's own empty R/O/C sets, disabled
+include flags, zero unit/byte/work limits, and unregistered dependencies using
+valid I1-only fixtures. A filtered sender export is not evidence that an untrusted
+receiver enforces the same controls. Require a nonempty package to respect these
+receiver requests; retain independent valid objects when a Repository claim has
+no actual registered referent. Compare decoded scalar/group keys with the exact
+wire encoding: accepting any two-element tagged list can turn `["bogus",1]` into
+a new `["known",1]` fact. Reject unknown row fields and noncanonical embedded JSON.
+
+Exercise PackageKey digest binding through two connections and distinct genuine
+requests, not just same-request replay. Verify the PackageKey includes the sender,
+and inspect its lookup plan/global uniqueness. Probe UPDATE/DELETE/REPLACE/UPSERT
+under the required recursive-trigger setting. A per-request progress slot alone
+is not a globally unique immutable PackageKey unless the shared transaction and
+SQL guards enforce it. Check live facts after an actual subprocess exit between
+domain commit and checkpoint; an exception-only probe cannot prove that window.
+See the executable [I3 counterexamples](../../../../tests/integration/i3/test_selective_exchange.py)
+and [I3 handoff](../../../../docs/implementation/adr0030-i3-selective-exchange.md).

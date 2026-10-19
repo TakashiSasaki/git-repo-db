@@ -51,8 +51,8 @@
       ]
     },
     "operational": {
-      "ddl_sha256": "980360b31d11c54b0d556b7fffd6aeeae74919e264b4d19bc34ecca70c7d73cb",
-      "sqlite_schema_sha256": "b87312a9631d5124fafc6cd6dcd63e7c3913fc25b1e832a1e0c6f249d3279296",
+      "ddl_sha256": "76598c5a630d4044c5a123587911a62411d55946072ba071109dd7db52f029a5",
+      "sqlite_schema_sha256": "143d52275fd4cf57d5c0d4c7d93c715f1736ed64468718288252dffbcf82e189",
       "tables": [
         "acquisition_attempts",
         "acquisition_requests",

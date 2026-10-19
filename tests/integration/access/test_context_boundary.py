@@ -11,7 +11,6 @@ from uuid import uuid4
 import pytest
 
 from repo_catalog.adapters.sqlite import p1_schema
-from repo_catalog.adapters.sqlite.acquisition import UnlimitedWorkBudget
 from repo_catalog.adapters.sqlite.git_core import GitCore
 from repo_catalog.adapters.sqlite.production_context import Context
 from repo_catalog.application.acquisition import ProviderAcquisition
@@ -49,7 +48,11 @@ PROV = canonical({"source": "provider.example", "evidence": "observation-1"})
 def catalog(path, *, core=True, context=True):
     path.mkdir()
     instance = str(uuid4())
-    for role in (("core",) if core else ()) + (("context",) if context else ()):
+    for role in (
+        (("core",) if core else ())
+        + (("context",) if context else ())
+        + ("operational",)
+    ):
         p1_schema.initialize(path / f"{role}.sqlite3", role, REPO, instance)
     if context:
         with Context.transaction(path) as ctx:
@@ -199,7 +202,9 @@ def _resign(data):
 def test_resigned_exchange_rejects_registration_leaks_before_core_admission(
     directory, section, mode, context_selected
 ):
-    pkg = ExchangeService(directory).export_package()
+    pkg = ExchangeService(directory).export_package(
+        selection=ExchangeSelectionScope(all_selected=True)
+    )
     data = pkg.to_dict()
     candidate = "a" * 40
     data["core"]["git_objects"].append({"object_format": "sha1", "full_oid": candidate})
@@ -215,7 +220,9 @@ def test_resigned_exchange_rejects_registration_leaks_before_core_admission(
     data["selection_scope"]["include_context"] = context_selected
     _resign(data)
     with pytest.raises(ExchangeError, match="CONTEXT_REGISTRATION") as error:
-        ExchangeService(directory).import_package(data, work=UnlimitedWorkBudget())
+        ExchangeService(directory).import_package(
+            data, new_request=True, permitted_repository_uuidv4s=(REPO,)
+        )
     assert "SECRET-CANARY" not in str(error.value)
     with closing(GitCore(directory / "core.sqlite3")) as core:
         assert not core.sql("SELECT 1 FROM git_objects WHERE full_oid=?", (candidate,))
@@ -247,10 +254,14 @@ def test_reported_urls_and_historical_core_provenance_survive_exchange(
                 Provenance("original", "event-1", "endpoint", "decoder", "1"),
             )
         )
-    package = ExchangeService(directory).export_package()
-    assert package.format == "git-repo-db/p5-exchange-v3"
+    package = ExchangeService(directory).export_package(
+        selection=ExchangeSelectionScope(all_selected=True)
+    )
+    assert package.format == "git-repo-db/adr0030-exchange-v4"
     target = catalog(tmp_path / "target")
-    ExchangeService(target).import_package(package, work=UnlimitedWorkBudget())
+    ExchangeService(target).import_package(
+        package, new_request=True, permitted_repository_uuidv4s=(REPO,)
+    )
     with Context.snapshot(target) as ctx:
         assert ctx.candidates(key, "url") == (observed,)
         assert ctx.source_repositories(SOURCE) == (REPO,)
@@ -258,7 +269,9 @@ def test_reported_urls_and_historical_core_provenance_survive_exchange(
         assert core.sql("SELECT value FROM repository_claims")[0][0] == canonical(
             "ssh://historical.example/repo"
         )
-    again = ExchangeService(target).export_package()
+    again = ExchangeService(target).export_package(
+        selection=ExchangeSelectionScope(all_selected=True)
+    )
     assert again.context["providers"] == package.context["providers"]
     assert (
         again.context["source_repositories"] == package.context["source_repositories"]
@@ -279,7 +292,9 @@ def test_read_outputs_recheck_instead_of_sanitizing_invalid_registration(
     db.close()
     with pytest.raises((ValueError, sqlite3.DatabaseError)):
         if operation == "export":
-            ExchangeService(directory).export_package()
+            ExchangeService(directory).export_package(
+                selection=ExchangeSelectionScope(all_selected=True)
+            )
         elif operation == "providers":
             ProductionQueryService(directory).list_providers()
         else:
@@ -291,21 +306,32 @@ def test_context_only_round_trip_and_core_only_paths_need_no_access(tmp_path):
     left = catalog(tmp_path / "left", core=False)
     right = catalog(tmp_path / "right", core=False)
     package = ExchangeService(left).export_package(
-        selection=ExchangeSelectionScope(include_core=False)
+        selection=ExchangeSelectionScope(all_selected=True, include_core=False)
     )
-    ExchangeService(right).import_package(package, work=UnlimitedWorkBudget())
+    ExchangeService(right).import_package(
+        package, new_request=True, permitted_repository_uuidv4s=(REPO,)
+    )
     assert ProductionQueryService(right).list_providers()[0].configuration == {
         "tier": "enterprise"
     }
     with Context.snapshot(right) as ctx:
         assert ctx.source_repositories(SOURCE) == (REPO,)
     core_only = catalog(tmp_path / "core-only", context=False)
-    assert ExchangeService(core_only).export_package().context is None
+    assert (
+        ExchangeService(core_only)
+        .export_package(selection=ExchangeSelectionScope(all_selected=True))
+        .context
+        is None
+    )
     assert not list(tmp_path.glob("*/access.sqlite3"))
 
 
 def test_old_wire_version_is_not_reinterpreted(directory):
-    raw_package = ExchangeService(directory).export_package().to_dict()
+    raw_package = (
+        ExchangeService(directory)
+        .export_package(selection=ExchangeSelectionScope(all_selected=True))
+        .to_dict()
+    )
     raw_package["format"] = "git-repo-db/p5-exchange-v2"
     with pytest.raises(ExchangeError, match="UNSUPPORTED_FORMAT"):
         decode_package(_resign(raw_package))
@@ -329,7 +355,9 @@ def test_no_normalization_no_network_no_settings_import_side_effect(
             REPO,
             canonical({"name": "app", "description": "SSH hosts are discussed here"}),
         )
-    ExchangeService(directory).export_package()
+    ExchangeService(directory).export_package(
+        selection=ExchangeSelectionScope(all_selected=True)
+    )
     assert sentinel.read_bytes() == b"must not open or replace an Access store"
 
 
@@ -357,14 +385,22 @@ def test_repository_claim_direct_values_round_trip_without_scalar_tag_decode(
     )
     with closing(GitCore(left / "core.sqlite3")) as core:
         core.admit_repository_claim(claim)
-    package = ExchangeService(left).export_package()
-    ExchangeService(right).import_package(package, work=UnlimitedWorkBudget())
-    ExchangeService(right).import_package(package, work=UnlimitedWorkBudget())
+    package = ExchangeService(left).export_package(
+        selection=ExchangeSelectionScope(all_selected=True)
+    )
+    ExchangeService(right).import_package(
+        package, new_request=True, permitted_repository_uuidv4s=(REPO,)
+    )
+    ExchangeService(right).import_package(
+        package, new_request=True, permitted_repository_uuidv4s=(REPO,)
+    )
     with closing(GitCore(right / "core.sqlite3")) as core:
         assert [tuple(row) for row in core.sql("SELECT * FROM repository_claims")] == [
             claim.key
         ]
-    reverse = ExchangeService(right).export_package()
+    reverse = ExchangeService(right).export_package(
+        selection=ExchangeSelectionScope(all_selected=True)
+    )
     assert reverse.core["repository_claims"] == package.core["repository_claims"]
 
 

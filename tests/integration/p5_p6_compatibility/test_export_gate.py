@@ -6,6 +6,7 @@ from uuid import uuid4
 
 from repo_catalog.adapters.sqlite.p1_schema import initialize
 from repo_catalog.application.exchange import ExchangeService
+from repo_catalog.domain.exchange import ExchangeSelectionScope
 
 PROBE = r"""
 import fcntl,sys
@@ -48,7 +49,9 @@ def test_export_shared_gate_blocks_actual_nonblocking_writer_lock_attempt(
         return section
 
     monkeypatch.setattr(service, "_export_core", after_core_before_context)
-    package = service.export_package(exported_at_us=1)
+    package = service.export_package(
+        selection=ExchangeSelectionScope(all_selected=True), exported_at_us=1
+    )
     assert observed == ["blocked"]
     assert package.core is not None and package.context is not None
     assert probe() == "acquired"  # Export release restores writer eligibility.
