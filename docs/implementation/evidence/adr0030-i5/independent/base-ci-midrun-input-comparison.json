@@ -1,0 +1,11 @@
+{
+  "manifest": "/workspace/i5-results/tests/audit/inputs-during-run.json",
+  "files": 424,
+  "base_files_compared": 422,
+  "different_from_archived_product_source": [],
+  "additional_I5_files_not_in_2329_cohort": [
+    "scripts/verify_i5_offline.py",
+    "tests/integration/i5/test_independent_e2e.py"
+  ],
+  "limit": "Midrun capture supports source comparison; it does not pretend concurrently developed I5 helper/test inputs were frozen throughout this base-only run."
+}

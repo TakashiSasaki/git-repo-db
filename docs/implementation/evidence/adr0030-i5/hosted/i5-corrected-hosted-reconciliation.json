@@ -1,0 +1,22 @@
+{
+  "run": 39296461636,
+  "artifact": 12208397003,
+  "zip_sha256": "d51d9860b7402052681e42704bc37fcb90a96c4cf1b07d8e942e3d95b4c31595",
+  "zip_bytes": 40552846,
+  "source": {
+    "checked_out_commit": "356f7d44a6c55582ba4b4346c9c91312d4f3cfd8",
+    "effective_tree": "fdafb830ba63a7f547c5882fe677f9d25ae36bd3",
+    "event_commit": "356f7d44a6c55582ba4b4346c9c91312d4f3cfd8"
+  },
+  "collected": 2353,
+  "executed": 2353,
+  "outcomes": {
+    "pass": 2353
+  },
+  "duplicates": 0,
+  "selected_junit_multisets_equal": true,
+  "hosted_local_ci_multisets_equal": true,
+  "all_executable_input_count": 424,
+  "all_inputs_match_frozen_corrected_head": true,
+  "runtime": "Python: 3.12.15 SQLite: 3.51.3 source: 2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618"
+}

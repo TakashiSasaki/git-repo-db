@@ -1,0 +1,6 @@
+{
+  "module": "/workspace/i4-independent/final-source/src/repo_catalog/__init__.py",
+  "validator": "/workspace/i4-independent/final-source/src/repo_catalog/adapters/sqlite/recovery_validation.py",
+  "config": "/workspace/i4-independent/final-source/pyproject.toml",
+  "root": "/workspace/i4-independent/final-source"
+}

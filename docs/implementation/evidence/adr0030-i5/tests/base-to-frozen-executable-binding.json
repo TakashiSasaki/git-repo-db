@@ -1,0 +1,14 @@
+{
+  "base_commit": "a54cb218226e3c91c44e979ee0df0543ea459502",
+  "base_tree": "cc2eafaaeb8e3305270c17e74ae69edc42c0a50b",
+  "frozen_commit": "20198151a6af2f8eefa43e85074307e9d77527b7",
+  "frozen_tree": "74b164f111859c96396ca751a5c90df7e0a5f53a",
+  "original_executable_files_checked": 419,
+  "changed_original_src_tests_scripts_pyproject_lock": [],
+  "new_files": [
+    "docs/implementation/adr0030-i5-merge-plan.md",
+    "scripts/verify_i5_offline.py",
+    "tests/integration/i5/test_independent_e2e.py"
+  ],
+  "all_changes": " .agents/skills/ci-final-tree-verification/SKILL.md |  31 +\n .github/workflows/access-registry.yml              |  18 +-\n docs/implementation/adr0030-i5-merge-plan.md       |  90 +++\n scripts/verify_i5_offline.py                       | 340 ++++++++++\n tests/integration/i5/test_independent_e2e.py       | 706 +++++++++++++++++++++\n 5 files changed, 1181 insertions(+), 4 deletions(-)\n"
+}

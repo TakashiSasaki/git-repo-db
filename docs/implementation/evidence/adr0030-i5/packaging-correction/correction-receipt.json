@@ -1,0 +1,106 @@
+{
+  "reviewed_parent_head": "20198151a6af2f8eefa43e85074307e9d77527b7",
+  "reviewed_parent_tree": "74b164f111859c96396ca751a5c90df7e0a5f53a",
+  "pending_correction_file": "tests/packaging/test_p5_distribution.py",
+  "correction_file_sha256": "a094ca2a1804bb87db09c43a51d2ab4386a124c85f316f1dd8dd2a3a33ed514d",
+  "command": [
+    "/workspace/i5-runtime/python",
+    "-m",
+    "pytest",
+    "-q",
+    "-o",
+    "addopts=",
+    "--tb=short",
+    "tests/packaging/test_p5_distribution.py",
+    "--basetemp=/workspace/i5-results/packaging-correction/final-pytest",
+    "--junitxml=/workspace/i5-results/packaging-correction/corrected.xml"
+  ],
+  "cwd": "/workspace/git-repo-db",
+  "network": "uv venv/build/install --offline; no production network",
+  "environment": {
+    "python": "3.13.5 (main, Jul 15 2026, 20:25:40) [GCC 14.2.0]",
+    "sqlite": "3.51.3",
+    "sqlite_source_id": "2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618"
+  },
+  "counts": {
+    "collected": 4,
+    "executed": 4,
+    "passed": 4,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xfail": 0
+  },
+  "junit": {
+    "name": "pytest",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "tests": "4",
+    "time": "13.527",
+    "timestamp": "2026-10-19T17:42:01.378087+00:00",
+    "hostname": "20c7123960a4"
+  },
+  "isolated_environments": [
+    {
+      "path": "/workspace/i5-results/packaging-correction/final-pytest/test_p5_installed_acquisition_0",
+      "runtime": {
+        "python": "3.13.5 (main, Jul 15 2026, 20:25:40) [GCC 14.2.0]",
+        "sqlite": "3.51.3",
+        "sqlite_source_id": "2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618",
+        "package_origin": "/workspace/i5-results/packaging-correction/final-pytest/test_p5_installed_acquisition_0/venv/lib/python3.13/site-packages/repo_catalog/__init__.py"
+      }
+    },
+    {
+      "path": "/workspace/i5-results/packaging-correction/final-pytest/test_p5_installed_acquisition_1",
+      "runtime": {
+        "python": "3.13.5 (main, Jul 15 2026, 20:25:40) [GCC 14.2.0]",
+        "sqlite": "3.51.3",
+        "sqlite_source_id": "2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618",
+        "package_origin": "/workspace/i5-results/packaging-correction/final-pytest/test_p5_installed_acquisition_1/venv/lib/python3.13/site-packages/repo_catalog/__init__.py"
+      }
+    },
+    {
+      "path": "/workspace/i5-results/packaging-correction/final-pytest/test_p5_installed_acquisition_2",
+      "runtime": {
+        "python": "3.13.5 (main, Jul 15 2026, 20:25:40) [GCC 14.2.0]",
+        "sqlite": "3.51.3",
+        "sqlite_source_id": "2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618",
+        "package_origin": "/workspace/i5-results/packaging-correction/final-pytest/test_p5_installed_acquisition_2/venv/lib/python3.13/site-packages/repo_catalog/__init__.py"
+      }
+    },
+    {
+      "path": "/workspace/i5-results/packaging-correction/final-pytest/test_p5_installed_acquisition_3",
+      "runtime": {
+        "python": "3.13.5 (main, Jul 15 2026, 20:25:40) [GCC 14.2.0]",
+        "sqlite": "3.51.3",
+        "sqlite_source_id": "2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618",
+        "package_origin": "/workspace/i5-results/packaging-correction/final-pytest/test_p5_installed_acquisition_3/venv/lib/python3.13/site-packages/repo_catalog/__init__.py"
+      }
+    }
+  ],
+  "packages": [
+    {
+      "path": "/workspace/i5-results/packaging-correction/packages/p1-packages0/dist/repo_catalog-0.2.0-py3-none-any.whl",
+      "sha256": "2ec7c49a81734088ef6f15564c548448f7e79b1786ef86d12bf828c1dd3969cc",
+      "size": 745869
+    },
+    {
+      "path": "/workspace/i5-results/packaging-correction/packages/p1-packages0/dist/repo_catalog-0.2.0.tar.gz",
+      "sha256": "ad96957de766e2e548052933258efc44b833d33af9f6d7298783315b1401e556",
+      "size": 29457755
+    },
+    {
+      "path": "/workspace/i5-results/packaging-correction/packages/p1-packages0/sdist-wheel/repo_catalog-0.2.0-py3-none-any.whl",
+      "sha256": "2ec7c49a81734088ef6f15564c548448f7e79b1786ef86d12bf828c1dd3969cc",
+      "size": 745869
+    }
+  ],
+  "ruff_check": "pass",
+  "ruff_format_check": "pass",
+  "notes": [
+    "This receipt binds the uncommitted fixture correction by SHA-256; root must bind its final source commit separately.",
+    "Original4failure examples retained before correction; first development run failed4new assertions due to wrapper comparison, preserved separately.",
+    "No implementation source, fixture node count, skip/xfail policy or accepted design changes."
+  ]
+}

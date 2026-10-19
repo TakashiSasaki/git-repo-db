@@ -13,10 +13,13 @@ Enforces:
 
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
+import sqlite3
 from collections.abc import Callable
 from contextlib import closing, contextmanager
+from dataclasses import replace
 from pathlib import Path
 from typing import Any, Iterator
 from uuid import uuid4
@@ -26,6 +29,7 @@ from repo_catalog.adapters.sqlite.git_core import GitCore
 from repo_catalog.adapters.sqlite.p1_coordination import (
     AdmissionTransaction,
     PairCoordinator,
+    SnapshotReadLimits,
     catalog_completion,
     catalog_gate,
 )
@@ -52,6 +56,7 @@ from repo_catalog.domain.p1_context import (
     FieldCandidate,
     FieldClock,
     ResourceKey,
+    canonical,
 )
 from repo_catalog.domain.p1_coordination import (
     AdmissionFailure,
@@ -84,9 +89,26 @@ from repo_catalog.domain.p1_coverage import CoverageClaim
 from repo_catalog.domain.ports.p1_core import WorkBudget
 from repo_catalog.domain.production_context import (
     CollectionObservation,
-    CoreReference,
     ResourceRelation,
     SourceInventory,
+)
+from repo_catalog.domain.selective_exchange import (
+    CorePreflight,
+    bound_sections,
+    expand_resources,
+    explicit_scope,
+    filter_sections,
+    preserve_context_coverage,
+    terminal_key,
+    transfer_reports,
+    validate_context,
+    validate_context_bindings,
+)
+from repo_catalog.domain.selective_exchange import (
+    disposition as decode_disposition,
+)
+from repo_catalog.domain.selective_exchange import (
+    relation as decode_relation,
 )
 
 
@@ -216,6 +238,37 @@ def _checked_registration(ctx: Context, kind: str, encoded: str) -> str:
     return encoded
 
 
+class _ReceiveWork:
+    """Receiver-owned cumulative processing ceiling over the durable request."""
+
+    def __init__(self, work, limit):
+        self._work, self._limit = work, limit
+        self._check(0)
+
+    def __getattr__(self, name):
+        return getattr(self._work, name)
+
+    def _check(self, amount):
+        spent = self._work.ledger.usage(self._work.request)
+        if spent["metadata_units"] + spent["proof_steps"] + amount > self._limit:
+            raise CoreFailure(
+                "BUDGET",
+                "exchange_work",
+                "finite cumulative receive processing limit",
+            )
+
+    def require(self, unit, amount=1):
+        if unit in ("metadata_units", "proof_steps"):
+            self._check(amount)
+        self._work.require(unit, amount)
+
+    def charge(self, unit, amount):
+        self._work.charge(unit, amount)
+
+    def abandon(self, unit):
+        self._work.abandon(unit)
+
+
 class ExchangeService:
     """Selective verification-aware export and untrusted package import service."""
 
@@ -238,6 +291,23 @@ class ExchangeService:
         if (self.directory / "p1-recovery-stop.json").exists():
             raise CoordinationError("RECOVERY_REQUIRED", "catalog")
 
+    def _read_limits(self):
+        from repo_catalog.adapters.sqlite.p1_coordination import SnapshotReadLimits
+
+        if hasattr(self, "_export_scope"):
+            return SnapshotReadLimits(
+                max_sql_vm_steps=max(1, self._export_scope.max_work),
+                max_total_rows=max(1, self._export_scope.max_work),
+                on_steps=self._export_steps,
+            )
+        if hasattr(self, "_receive_selection"):
+            scope = self._receive_selection
+            return SnapshotReadLimits(
+                max_sql_vm_steps=max(1, scope.max_work),
+                max_total_rows=max(10000, scope.max_units),
+            )
+        return SnapshotReadLimits()
+
     def _store_identity(self) -> tuple[str, str]:
         self._check_stop()
         if self._has_core():
@@ -247,7 +317,10 @@ class ExchangeService:
             finally:
                 core.close()
             if self._has_context():
-                with Context.snapshot(self.directory) as ctx:
+                with Context.snapshot(
+                    self.directory,
+                    read_limits=SnapshotReadLimits(),
+                ) as ctx:
                     row = ctx.db.execute(
                         "SELECT repository_uuidv4, catalog_instance_uuidv4 FROM store_identity"
                     ).fetchone()
@@ -255,7 +328,10 @@ class ExchangeService:
                         raise CoordinationError("PAIR_IDENTITY", "core+context")
             return repo_id, inst_id
         if self._has_context():
-            with Context.snapshot(self.directory) as ctx:
+            with Context.snapshot(
+                self.directory,
+                read_limits=SnapshotReadLimits(),
+            ) as ctx:
                 row = ctx.db.execute(
                     "SELECT repository_uuidv4, catalog_instance_uuidv4 FROM store_identity"
                 ).fetchone()
@@ -269,6 +345,11 @@ class ExchangeService:
         self, repo_uuid: str, instance_uuid: str
     ) -> Iterator[OperationalAcquisitionLedger | None]:
         if isinstance(self.operational, OperationalAcquisitionLedger):
+            if self.operational.work_ledger.store_identity() != (
+                repo_uuid,
+                instance_uuid,
+            ):
+                raise CoordinationError("STORE_IDENTITY", "operational")
             yield self.operational
             return
         op_path = (
@@ -302,22 +383,105 @@ class ExchangeService:
         with catalog_gate(self.directory, exclusive=False):
             self._check_stop()
             scope = selection or ExchangeSelectionScope()
+            explicit_scope(scope)
+            self._selection_details = {
+                "dependency_reasons": [],
+                "omissions": [],
+                "work": 0,
+            }
+            self._export_scope = scope
             pkg_id = package_id or str(uuid4())
             repo_uuid, sender_instance = self._store_identity()
 
-            if self._has_core() and self._has_context():
-                # Verify pair health before exporting from a paired catalog
-                with PairCoordinator(self.directory).snapshots():
-                    pass
-
             core_section: dict[str, list[dict[str, Any]]] | None = None
             if scope.include_core and self._has_core():
-                core_section = self._export_core(scope, sender_instance)
+                try:
+                    core_scope = self._expand_core_selection(scope)
+                    core_section = self._export_core(core_scope, sender_instance)
+                except (sqlite3.OperationalError, CoordinationError) as error:
+                    if (
+                        getattr(error, "sqlite_errorcode", None)
+                        != sqlite3.SQLITE_INTERRUPT
+                        and getattr(error, "code", None) != "QUERY_BUDGET"
+                    ):
+                        raise
+                    core_section = empty_core_section()
+                    self._selection_details["omissions"].append(
+                        {"section": "core", "reason": "work_limit"}
+                    )
 
             context_section: dict[str, list[dict[str, Any]]] | None = None
             if scope.include_context and self._has_context():
-                context_section = self._export_context(scope)
+                try:
+                    context_section = self._export_context(scope)
+                except (sqlite3.OperationalError, CoordinationError) as error:
+                    if (
+                        getattr(error, "sqlite_errorcode", None)
+                        != sqlite3.SQLITE_INTERRUPT
+                        and getattr(error, "code", None) != "QUERY_BUDGET"
+                    ):
+                        raise
+                    context_section = empty_context_section()
+                    self._selection_details["omissions"].append(
+                        {"section": "context", "reason": "work_limit"}
+                    )
 
+            self._selection_details["omissions"].extend(
+                filter_sections(
+                    core_section,
+                    context_section,
+                    scope,
+                )
+            )
+            limited, counts = bound_sections(core_section, context_section, scope)
+            self._selection_details["omissions"].extend(limited)
+            self._selection_details.update(counts)
+            self._selection_details["omissions"].extend(
+                filter_sections(core_section, context_section, scope)
+            )
+            self._selection_details["emitted_units"] = sum(
+                len(rows)
+                for data in (core_section, context_section)
+                if data is not None
+                for rows in data.values()
+            )
+            self._selection_details["emitted_payload_bytes"] = sum(
+                len(
+                    json.dumps(
+                        row, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+                    ).encode()
+                )
+                for data in (core_section, context_section)
+                if data is not None
+                for rows in data.values()
+                for row in rows
+            )
+            self._selection_details["effective"] = {
+                "sources": [
+                    r["source_registration_uuidv4"]
+                    for r in (context_section or {}).get("sources", [])
+                ],
+                "providers": [
+                    r["service_instance_uuidv4"]
+                    for r in (context_section or {}).get("providers", [])
+                ],
+                "repositories": [
+                    r["repository_uuidv4"]
+                    for r in (core_section or {}).get("repositories", [])
+                ],
+                "objects": [
+                    [r["object_format"], r["full_oid"]]
+                    for r in (core_section or {}).get("git_objects", [])
+                ],
+                "resources": [
+                    [
+                        r["service_instance_uuidv4"],
+                        r["resource_kind"],
+                        r["provider_resource_id"],
+                    ]
+                    for r in (context_section or {}).get("resources", [])
+                ],
+            }
             with catalog_completion(self.directory):
                 self._check_stop()
                 return ExchangePackage(
@@ -326,9 +490,71 @@ class ExchangeService:
                     sender_catalog_instance_uuidv4=sender_instance,
                     repository_uuidv4=repo_uuid,
                     selection_scope=scope,
+                    selection_report=self._selection_details,
                     core=core_section,
                     context=context_section,
                 )
+
+    def _expand_core_selection(self, scope):
+        if scope.object_oids is None:
+            return scope
+        chosen = set(scope.object_oids)
+        frontier = chosen.copy()
+        with closing(GitCore(self.directory / "core.sqlite3")) as core:
+            self._bound_export_connection(core._db)
+            for depth in range(scope.max_depth):
+                added = set()
+                for owner in sorted(frontier, key=lambda oid: oid.key):
+                    for row in core.sql(
+                        "SELECT membership FROM relation_groups WHERE object_format=? AND full_oid=? ORDER BY relation,scope,status,membership,provenance",
+                        owner.key,
+                    ):
+                        for member in json.loads(row[0]):
+                            target = OID(member[1], member[2])
+                            if target in chosen:
+                                continue
+                            if len(chosen) >= scope.max_units:
+                                self._selection_details["omissions"].append(
+                                    {
+                                        "section": "git_objects",
+                                        "unit": list(target.key),
+                                        "reason": "unit_limit",
+                                    }
+                                )
+                            elif not core.sql(
+                                "SELECT 1 FROM git_objects WHERE object_format=? AND full_oid=?",
+                                target.key,
+                            ):
+                                self._selection_details["omissions"].append(
+                                    {
+                                        "section": "git_objects",
+                                        "unit": list(target.key),
+                                        "reason": "missing_sender_object",
+                                    }
+                                )
+                            else:
+                                chosen.add(target)
+                                added.add(target)
+                                self._selection_details["dependency_reasons"].append(
+                                    {
+                                        "from": list(owner.key),
+                                        "to": list(target.key),
+                                        "depth": depth + 1,
+                                    }
+                                )
+                frontier = added
+                if not frontier:
+                    break
+        return replace(
+            scope, object_oids=tuple(sorted(chosen, key=lambda oid: oid.key))
+        )
+
+    def _export_steps(self, amount):
+        self._selection_details["work"] += amount
+        return self._selection_details["work"] > self._export_scope.max_work
+
+    def _bound_export_connection(self, db):
+        db.set_progress_handler(lambda: self._export_steps(100), 100)
 
     def _export_core(
         self,
@@ -336,24 +562,7 @@ class ExchangeService:
         sender_instance: str,
     ) -> dict[str, list[dict[str, Any]]]:
         section = empty_core_section()
-        selected_oids: set[Any] | None = None
-        if scope.object_oids is not None:
-            selected_oids = set()
-            for item in scope.object_oids:
-                if isinstance(item, OID):
-                    selected_oids.add(item)
-                    selected_oids.add(item.full_oid)
-                else:
-                    s = str(item)
-                    selected_oids.add(s)
-                    try:
-                        selected_oids.add(OID("sha1", s))
-                    except Exception:
-                        pass
-                    try:
-                        selected_oids.add(OID("sha256", s))
-                    except Exception:
-                        pass
+        selected_oids = None if scope.object_oids is None else set(scope.object_oids)
 
         selected_notes_refs = (
             None if scope.notes_refs is None else set(scope.notes_refs)
@@ -361,6 +570,7 @@ class ExchangeService:
 
         core = GitCore(self.directory / "core.sqlite3")
         try:
+            self._bound_export_connection(core._db)
             core.ensure_available()
             referenced_oids: set[OID] = set()
 
@@ -388,6 +598,15 @@ class ExchangeService:
                 "FROM retained_metadata ORDER BY object_format, full_oid, physical_copy_uuidv4"
             )
             for row in meta_rows:
+                if row[4] > scope.max_bytes:
+                    self._selection_details["omissions"].append(
+                        {
+                            "section": "retained_metadata",
+                            "unit": list(row[:2]),
+                            "reason": "byte_limit",
+                        }
+                    )
+                    continue
                 oid = OID(row[0], row[1])
                 if selected_oids is not None and oid not in selected_oids:
                     continue
@@ -529,6 +748,11 @@ class ExchangeService:
             exported_captures: list[Capture] = []
             exported_capture_pairs: set[tuple[str, str]] = set()
             for row in capture_rows:
+                if (
+                    selected_oids is not None
+                    and OID(row[5], row[6]) not in selected_oids
+                ):
+                    continue
                 decoded_ref = _decode_capture_ref(row[4])
                 if (
                     selected_notes_refs is not None
@@ -547,7 +771,7 @@ class ExchangeService:
                         "capture_uuidv4": row[1],
                         "repository_uuidv4": row[2],
                         "source": row[3],
-                        "ref": decoded_ref,
+                        "ref": row[4],
                         "object_format": row[5],
                         "root": row[6],
                     }
@@ -771,7 +995,6 @@ class ExchangeService:
                     {
                         "owner_kind": row[0],
                         "owner_coordinates_json": row[1],
-                        "coordinates": list(coords),
                     }
                 )
 
@@ -798,10 +1021,6 @@ class ExchangeService:
                 if (row[0], row[1]) not in exported_cov_scopes:
                     continue
                 members = [OID(m[0], m[1]) for m in json.loads(row[4])]
-                if selected_oids is not None and any(
-                    m not in selected_oids for m in members
-                ):
-                    continue
                 for m in members:
                     referenced_oids.add(m)
                 section["coverage_proofs"].append(
@@ -843,7 +1062,16 @@ class ExchangeService:
             None if scope.source_uuidv4s is None else set(scope.source_uuidv4s)
         )
 
-        with Context.snapshot(self.directory) as ctx:
+        from repo_catalog.adapters.sqlite.p1_coordination import SnapshotReadLimits
+
+        with Context.snapshot(
+            self.directory,
+            read_limits=SnapshotReadLimits(
+                max_sql_vm_steps=max(1, scope.max_work),
+                max_total_rows=max(1, scope.max_work),
+                on_steps=self._export_steps,
+            ),
+        ) as ctx:
             for row in ctx.db.execute(
                 "SELECT service_instance_uuidv4, provider_kind, configuration_json "
                 "FROM providers ORDER BY service_instance_uuidv4"
@@ -927,46 +1155,11 @@ class ExchangeService:
                 "FROM resources ORDER BY service_instance_uuidv4, resource_kind, provider_resource_id"
             ).fetchall()
 
-            included_rks: set[ResourceKey] = set()
-            if selected_rks is None:
-                included_rks = {ResourceKey(*r) for r in all_resource_rows}
-            else:
-                included_rks = set(selected_rks)
-                # Expand with parent resources for document/comment/review/thread keys
-                for rk in list(included_rks):
-                    if rk.resource_kind in ("review", "comment", "thread", "document"):
-                        coords = json.loads(rk.provider_resource_id)
-                        parent_rk = ResourceKey(
-                            rk.service_instance_uuidv4, coords[0], coords[1]
-                        )
-                        included_rks.add(parent_rk)
-
             rel_rows = ctx.db.execute(
                 "SELECT service_instance_uuidv4, resource_kind, provider_resource_id, "
                 "relation_kind, members_json, provenance_json, scope_json, observed_at_us "
                 "FROM resource_relations ORDER BY observed_at_us, service_instance_uuidv4, resource_kind, provider_resource_id, relation_kind"
             ).fetchall()
-            for row in rel_rows:
-                owner_rk = ResourceKey(row[0], row[1], row[2])
-                if selected_rks is not None and owner_rk not in included_rks:
-                    continue
-                # Validate via ctx.relations
-                ctx.relations(owner_rk, row[3])
-                for m in json.loads(row[4]):
-                    included_rks.add(ResourceKey(*m))
-                section["resource_relations"].append(
-                    {
-                        "service_instance_uuidv4": row[0],
-                        "resource_kind": row[1],
-                        "provider_resource_id": row[2],
-                        "relation_kind": row[3],
-                        "members_json": row[4],
-                        "provenance_json": row[5],
-                        "scope_json": row[6],
-                        "observed_at_us": row[7],
-                    }
-                )
-
             coll_rows = ctx.db.execute(
                 "SELECT c.service_instance_uuidv4, c.resource_kind, c.provider_resource_id, "
                 "c.collection_kind, c.provenance_json, c.scope_json, "
@@ -979,74 +1172,133 @@ class ExchangeService:
                 "AND c.provenance_json=t.provenance_json "
                 "ORDER BY t.observed_at_us, c.service_instance_uuidv4, c.resource_kind, c.provider_resource_id, c.collection_kind"
             ).fetchall()
-            for row in coll_rows:
-                owner_rk = ResourceKey(row[0], row[1], row[2])
-                if selected_rks is not None and owner_rk not in included_rks:
-                    continue
-                for m in json.loads(row[8]):
-                    included_rks.add(ResourceKey(*m))
-                section["collections"].append(
-                    {
-                        "service_instance_uuidv4": row[0],
-                        "resource_kind": row[1],
-                        "provider_resource_id": row[2],
-                        "collection_kind": row[3],
-                        "provenance_json": row[4],
-                        "scope_json": row[5],
-                        "observed_at_us": row[6],
-                        "terminal_state": row[7],
-                        "members_json": row[8],
-                    }
+            support_columns = "service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,target_json,clock_json,provenance_json,observed_at_us"
+            support_rows = [
+                dict(zip(support_columns.split(","), r))
+                for r in ctx.db.execute(
+                    "SELECT "
+                    + support_columns
+                    + " FROM resource_repository_relations ORDER BY "
+                    + support_columns
                 )
-
-            # Ensure any parent of newly added member resources is also in included_rks
-            for rk in list(included_rks):
-                if rk.resource_kind in ("review", "comment", "thread", "document"):
-                    coords = json.loads(rk.provider_resource_id)
-                    included_rks.add(
-                        ResourceKey(rk.service_instance_uuidv4, coords[0], coords[1])
-                    )
-
+            ]
+            included_rks, reasons, omissions = expand_resources(
+                all_resource_rows, rel_rows, coll_rows, scope, support_rows
+            )
+            self._selection_details["dependency_reasons"].extend(reasons)
+            self._selection_details["omissions"].extend(omissions)
             for row in all_resource_rows:
-                rk = ResourceKey(*row)
-                if rk not in included_rks:
-                    continue
-                section["resources"].append(
-                    {
-                        "service_instance_uuidv4": row[0],
-                        "resource_kind": row[1],
-                        "provider_resource_id": row[2],
-                    }
-                )
-
-            for row in ctx.db.execute(
-                "SELECT service_instance_uuidv4, resource_kind, provider_resource_id, "
-                "value_json, clock_domain, source_clock_us, provenance_json, observed_at_us "
-                "FROM field_candidates WHERE field_name='repository_uuidv4' "
-                "ORDER BY observed_at_us, service_instance_uuidv4, resource_kind, provider_resource_id"
+                if ResourceKey(*row) in included_rks:
+                    section["resources"].append(
+                        dict(
+                            zip(
+                                (
+                                    "service_instance_uuidv4",
+                                    "resource_kind",
+                                    "provider_resource_id",
+                                ),
+                                row,
+                            )
+                        )
+                    )
+            for rows, key, member_index in (
+                (rel_rows, "resource_relations", 4),
+                (coll_rows, "collections", 8),
             ):
-                rk = ResourceKey(row[0], row[1], row[2])
-                if rk not in included_rks:
-                    continue
-                repo_val = json.loads(row[3])
-                section["repository_candidates"].append(
-                    {
-                        "service_instance_uuidv4": row[0],
-                        "resource_kind": row[1],
-                        "provider_resource_id": row[2],
-                        "repository_uuidv4": repo_val,
-                        "clock_domain": row[4],
-                        "clock_ts_us": row[5],
-                        "provenance_json": row[6],
-                        "observed_at_us": row[7],
-                    }
+                columns = (
+                    (
+                        "service_instance_uuidv4",
+                        "resource_kind",
+                        "provider_resource_id",
+                        "relation_kind",
+                        "members_json",
+                        "provenance_json",
+                        "scope_json",
+                        "observed_at_us",
+                    )
+                    if key == "resource_relations"
+                    else (
+                        "service_instance_uuidv4",
+                        "resource_kind",
+                        "provider_resource_id",
+                        "collection_kind",
+                        "provenance_json",
+                        "scope_json",
+                        "observed_at_us",
+                        "terminal_state",
+                        "members_json",
+                    )
                 )
+                for row in rows:
+                    owner = ResourceKey(*row[:3])
+                    if owner not in included_rks:
+                        continue
+                    if not all(
+                        ResourceKey(*m) in included_rks
+                        for m in json.loads(row[member_index])
+                    ):
+                        self._selection_details["omissions"].append(
+                            {
+                                "section": key,
+                                "unit": list(row[:4]),
+                                "reason": "whole_relation_missing_selected_member",
+                            }
+                        )
+                        continue
+                    if key == "resource_relations":
+                        ctx.relations(owner, row[3])
+                    section[key].append(dict(zip(columns, row)))
+            for table, columns in (
+                (
+                    "resource_repository_relations",
+                    "service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,target_json,clock_json,provenance_json,observed_at_us",
+                ),
+                (
+                    "repository_mapping_dispositions",
+                    "service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,claim_clock_json,claim_target_json,claim_provenance_json,disposition_kind,disposition_clock_json,disposition_provenance_json,observed_at_us,replacement_clock_json,replacement_target_json,replacement_provenance_json",
+                ),
+            ):
+                for row in ctx.db.execute(
+                    "SELECT " + columns + " FROM " + table + " ORDER BY " + columns
+                ):
+                    if ResourceKey(*row[:3]) in included_rks:
+                        section[table].append(dict(zip(columns.split(","), row)))
+            # If graph limits withheld a Transfer scope, its endpoint rows must
+            # also be withheld, never exported as a newly one-sided report.
+            scopes = {
+                (
+                    r["service_instance_uuidv4"],
+                    r["resource_kind"],
+                    r["provider_resource_id"],
+                    r["provenance_json"],
+                    json.dumps(
+                        json.loads(r["scope_json"]).get("clock"),
+                        sort_keys=True,
+                        separators=(",", ":"),
+                    ),
+                )
+                for r in section["resource_relations"]
+                if r["relation_kind"] == "transfer_event_report"
+            }
+            section["resource_repository_relations"] = [
+                r
+                for r in section["resource_repository_relations"]
+                if not r["relation_kind"].startswith("transfer_")
+                or (
+                    r["service_instance_uuidv4"],
+                    r["resource_kind"],
+                    r["provider_resource_id"],
+                    r["provenance_json"],
+                    r["clock_json"],
+                )
+                in scopes
+            ]
 
             referenced_text_digests: set[str] = set()
             fc_rows = ctx.db.execute(
                 "SELECT service_instance_uuidv4, resource_kind, provider_resource_id, "
                 "field_name, value_json, clock_domain, source_clock_us, provenance_json, observed_at_us "
-                "FROM field_candidates WHERE field_name!='repository_uuidv4' "
+                "FROM field_candidates "
                 "ORDER BY observed_at_us, service_instance_uuidv4, resource_kind, provider_resource_id, field_name"
             ).fetchall()
             for row in fc_rows:
@@ -1135,7 +1387,6 @@ class ExchangeService:
                     {
                         "owner_kind": row[0],
                         "owner_coordinates_json": row[1],
-                        "coordinates": coords,
                     }
                 )
 
@@ -1215,9 +1466,18 @@ class ExchangeService:
         work: WorkBudget | None = None,
         request: RequestIdentity | None = None,
         new_request: bool = False,
+        permitted_repository_uuidv4s: tuple[str, ...] = (),
+        selection: ExchangeSelectionScope | None = None,
+        cut: Callable[[str], None] = lambda point: None,
     ) -> ExchangeImportReport:
         """Validate and import an ExchangePackage into Core and/or Context."""
         self._check_stop()
+        from repo_catalog.domain.p1_core import uuid4_value
+
+        if not isinstance(permitted_repository_uuidv4s, tuple):
+            raise ExchangeError("INVALID_PERMISSION", "repositories")
+        for value in permitted_repository_uuidv4s:
+            uuid4_value(value)
         repo_uuid, instance_uuid = self._store_identity()
         if request is None:
             if isinstance(raw_package, ExchangePackage):
@@ -1238,6 +1498,22 @@ class ExchangeService:
                 )
             request = RequestIdentity(origin, identifier)
         with self._open_operational(repo_uuid, instance_uuid) as ledger:
+            if ledger is None:
+                raise CoordinationError(
+                    "CONTINUATION_UNAVAILABLE",
+                    "exchange",
+                    "explicit Operational initialization required",
+                )
+            if work is not None:
+                from repo_catalog.adapters.sqlite.p1_coordination import NotesWorkBudget
+
+                if (
+                    not isinstance(work, NotesWorkBudget)
+                    or work.request != request
+                    or work.ledger._path != ledger.work_ledger._path
+                ):
+                    raise ExchangeError("DURABLE_BUDGET_REQUIRED", "request")
+                work.ledger.validate_continuation(request, work.attempt_uuidv4)
             if work is None:
                 if ledger is None:
                     raise CoordinationError(
@@ -1251,6 +1527,9 @@ class ExchangeService:
                     new_request=new_request,
                     work_limits={"metadata_units": 10_000_000},
                 )
+            if selection is not None:
+                explicit_scope(selection)
+                work = _ReceiveWork(work, selection.max_work)
             # Reserve before JSON parsing, canonicalization, digest comparison or
             # bytes expansion. Successful work settles actual measured input;
             # failure/crash uncertainty retains the reserved upper bounds.
@@ -1303,51 +1582,123 @@ class ExchangeService:
                 raise
             finally:
                 _WIRE_WORK.reset(token)
-            return self._import_package(package, work=work)
+            explicit_scope(package.selection_scope)
+            receive_selection = selection or package.selection_scope
+            explicit_scope(receive_selection)
+            if selection is None:
+                # The effective default is learned only after bounded decode.
+                # Previously performed decode work remains charged and counts
+                # against this same frozen cumulative ceiling, even with no rows.
+                work = _ReceiveWork(work, receive_selection.max_work)
+            request_binding = {
+                "selection": receive_selection.to_dict(),
+                "sender": package.sender_catalog_instance_uuidv4,
+                "package_id": package.package_id,
+                "digest": package.digest_sha256,
+                "permitted_repositories": sorted(set(permitted_repository_uuidv4s)),
+            }
+            saved = ledger.work_ledger.set_progress_once(
+                request, encode(["adr0030-receive-request"]), request_binding
+            )
+            if saved != request_binding:
+                raise ExchangeError("REQUEST_SCOPE", "exchange")
+            return self._import_package(
+                package,
+                work=work,
+                ledger=ledger,
+                request=request,
+                permitted=permitted_repository_uuidv4s,
+                selection=receive_selection,
+                cut=cut,
+            )
 
     def _import_package(
         self,
         raw_package,
         *,
         work: WorkBudget,
+        ledger,
+        request,
+        permitted,
+        selection,
+        cut,
     ) -> ExchangeImportReport:
         self._check_stop()
         package = raw_package
         digest = package.digest_sha256
         repo_uuid, instance_uuid = self._store_identity()
 
-        if package.repository_uuidv4 != repo_uuid:
-            raise ExchangeError(
-                "REPOSITORY_MISMATCH",
-                package.repository_uuidv4,
-                f"package repository {package.repository_uuidv4} != receiver {repo_uuid}",
-            )
-
-        prior_receipt: dict[str, Any] | None = None
-        with self._open_operational(repo_uuid, instance_uuid) as ledger:
-            if ledger is not None:
-                prior_receipt = ledger.get_exchange_receipt(package.package_id, digest)
-
         active_work = work
 
         want_core = (
             package.core is not None
             and package.selection_scope.include_core
+            and selection.include_core
             and self._has_core()
         )
         want_context = (
             package.context is not None
             and package.selection_scope.include_context
+            and selection.include_context
             and self._has_context()
         )
 
-        # Pre-validate all untrusted Core and Context artifacts before opening store transactions
-        if want_core and package.core is not None:
-            with account_verification(active_work):
+        # Validate every section, including units later withheld by permission.
+        with account_verification(active_work):
+            from repo_catalog.domain.exchange_rows import validate_replay_consistency
+
+            validate_replay_consistency(package.core, package.context)
+            if package.core is not None:
                 self._prevalidate_core_section(package.core, active_work)
-        if want_context and package.context is not None:
-            with account_verification(active_work):
+                self._import_core_units(CorePreflight(), package.core, active_work)
+            if package.context is not None:
                 self._prevalidate_context_section(package.context)
+                validate_context(package.context)
+        cut("after_preflight")
+        core_data = copy.deepcopy(package.core)
+        context_data = copy.deepcopy(package.context)
+        omissions = filter_sections(
+            core_data, context_data, package.selection_scope, permitted=permitted
+        )
+        if selection != package.selection_scope:
+            omissions.extend(
+                filter_sections(core_data, context_data, selection, permitted=permitted)
+            )
+        limited, _ = bound_sections(core_data, context_data, selection)
+        omissions.extend(limited)
+        omissions.extend(
+            filter_sections(core_data, context_data, selection, permitted=permitted)
+        )
+        # Nothing outside the receiver permission can enter even when it is a
+        # required dependency of an otherwise selected unit.
+        self._receive_selection = selection
+        self._dependency_rows = 0
+        read_bound = 4 * max(10000, selection.max_units)
+        active_work.require("metadata_units", read_bound)
+        try:
+            if core_data is not None and any(core_data.values()) and self._has_core():
+                omissions.extend(self._core_dependencies(core_data))
+            if (
+                context_data is not None
+                and any(context_data.values())
+                and self._has_context()
+            ):
+                omissions.extend(self._context_dependencies(context_data))
+            active_work.charge("metadata_units", self._dependency_rows)
+        except BaseException:
+            active_work.abandon("metadata_units")
+            raise
+
+        with catalog_completion(self.directory):
+            self._check_stop()
+            ledger.work_ledger.bind_exchange_package(
+                request,
+                package.sender_catalog_instance_uuidv4,
+                package.package_id,
+                digest,
+            )
+        cut("after_package_binding")
+        prior_receipt = None
 
         core_stats: dict[str, Any] = {
             "admitted_core_objects": 0,
@@ -1365,6 +1716,31 @@ class ExchangeService:
             "new_rows": 0,
         }
 
+        checkpoint_written = {"core": False, "context": False}
+
+        def checkpoint(point):
+            cut(point)
+            if point in ("after_core_commit", "after_context_commit"):
+                stage = "core" if point == "after_core_commit" else "context"
+                cut("before_" + stage + "_checkpoint")
+                stats = core_stats if stage == "core" else ctx_stats
+                ledger.work_ledger.set_progress_once(
+                    request,
+                    encode(
+                        [
+                            "adr0030-stage",
+                            package.sender_catalog_instance_uuidv4,
+                            package.package_id,
+                            digest,
+                            work.attempt_uuidv4,
+                            stage,
+                        ]
+                    ),
+                    dict(stats),
+                )
+                checkpoint_written[stage] = True
+                cut("after_" + stage + "_checkpoint")
+
         if self._has_core() and self._has_context() and (want_core or want_context):
             coordinator = PairCoordinator(self.directory)
 
@@ -1372,42 +1748,73 @@ class ExchangeService:
                 if want_core and package.core is not None:
                     with GitCore.for_transaction(core_tx) as core_cap:  # type: ignore[arg-type]
                         core_stats.update(
-                            self._import_core_into(core_cap, package.core, active_work)
+                            self._import_core_into(core_cap, core_data, active_work)
                         )
 
             def _context_unit(context_tx: AdmissionTransaction) -> None:
                 if want_context and package.context is not None:
                     with Context.for_transaction(context_tx, self.directory) as ctx_cap:
                         ctx_stats.update(
-                            self._import_context_into(
+                            self._import_context_accounted(
                                 ctx_cap,
-                                package.context,
+                                context_data,
                                 self._core_validator_on_disk(),
+                                active_work,
                             )
                         )
 
             try:
-                coordinator.admit(_core_unit, _context_unit)
-            except AdmissionFailure:
-                # The outcome includes actual independent commits. Preserve it for retry.
-                raise
-        elif want_core and package.core is not None:
-            core_cap = GitCore(self.directory / "core.sqlite3")
-            try:
-                core_stats.update(
-                    self._import_core_into(core_cap, package.core, active_work)
+                coordinator.admit(_core_unit, _context_unit, cut=checkpoint)
+            except AdmissionFailure as error:
+                ledger.work_ledger.set_progress_once(
+                    request,
+                    encode(
+                        [
+                            "adr0030-partial",
+                            package.sender_catalog_instance_uuidv4,
+                            package.package_id,
+                            digest,
+                            work.attempt_uuidv4,
+                        ]
+                    ),
+                    {
+                        "core_committed": error.outcome.core_committed,
+                        "context_committed": error.outcome.context_committed,
+                    },
                 )
-            finally:
-                core_cap.close()
-        elif want_context and package.context is not None:
+                raise
+        elif want_core and core_data is not None:
+            with (
+                catalog_gate(self.directory, exclusive=True),
+                closing(connect(self.directory / "core.sqlite3", "core")) as db,
+            ):
+                db.execute("BEGIN IMMEDIATE")
+                try:
+                    with GitCore.for_transaction(AdmissionTransaction(db)) as core_cap:
+                        core_stats.update(
+                            self._import_core_into(core_cap, core_data, active_work)
+                        )
+                    db.set_authorizer(None)
+                    checkpoint("before_core_commit")
+                    with catalog_completion(self.directory):
+                        db.commit()
+                    checkpoint("after_core_commit")
+                except BaseException:
+                    db.set_authorizer(None)
+                    db.rollback()
+                    raise
+        elif want_context and context_data is not None:
             with Context.transaction(self.directory) as ctx_cap:
                 ctx_stats.update(
-                    self._import_context_into(
+                    self._import_context_accounted(
                         ctx_cap,
-                        package.context,
+                        context_data,
                         self._core_validator_on_disk(),
+                        active_work,
                     )
                 )
+                checkpoint("during_context")
+            checkpoint("after_context_commit")
 
         has_payload = bool(
             (want_core and package.core and any(package.core.values()))
@@ -1417,6 +1824,7 @@ class ExchangeService:
             has_payload and core_stats["new_rows"] == 0 and ctx_stats["new_rows"] == 0
         )
 
+        omissions.extend(ctx_stats.get("missing_refs", ()))
         report = ExchangeImportReport(
             package_id=package.package_id,
             package_digest_sha256=digest,
@@ -1438,23 +1846,627 @@ class ExchangeService:
             admitted_context_resources=ctx_stats["admitted_context_resources"],
             linked_core_references=ctx_stats["linked_core_references"],
             pending_core_references=ctx_stats["pending_core_references"],
+            omissions=tuple(omissions),
+            core_checkpoint=checkpoint_written["core"],
+            context_checkpoint=checkpoint_written["context"],
         )
 
-        with self._open_operational(repo_uuid, instance_uuid) as ledger:
-            if ledger is not None:
-                ledger.record_exchange_receipt(
+        ledger.work_ledger.set_progress_once(
+            request,
+            encode(
+                [
+                    "adr0030-summary",
+                    package.sender_catalog_instance_uuidv4,
                     package.package_id,
                     digest,
-                    package.sender_catalog_instance_uuidv4,
-                    {
-                        "admitted_core_objects": report.admitted_core_objects,
-                        "admitted_context_resources": report.admitted_context_resources,
-                        "linked_core_references": report.linked_core_references,
-                        "pending_core_references": report.pending_core_references,
-                    },
-                )
+                    work.attempt_uuidv4,
+                ]
+            ),
+            {"core": core_stats, "context": ctx_stats, "omitted_units": len(omissions)},
+        )
+        cut("after_summary")
 
         return report
+
+    def _core_dependencies(self, data):
+        omissions = []
+        with closing(
+            GitCore(self.directory / "core.sqlite3", read_limits=self._read_limits())
+        ) as core:
+            # These I1 UNIQUE keys deliberately exclude the immutable assertion
+            # payload. Check them before either domain commits, not only the PK.
+            for section, keys, payload in (
+                (
+                    "repository_claims",
+                    ("repository_uuidv4", "field", "provenance_json"),
+                    ("value_json",),
+                ),
+                (
+                    "scalar_claims",
+                    ("object_format", "full_oid", "field", "provenance_json"),
+                    ("value_json",),
+                ),
+                (
+                    "relation_groups",
+                    (
+                        "object_format",
+                        "full_oid",
+                        "relation",
+                        "scope",
+                        "provenance_json",
+                    ),
+                    ("status", "membership_json"),
+                ),
+                (
+                    "notes_claims",
+                    (
+                        "capture_origin_uuidv4",
+                        "capture_uuidv4",
+                        "object_format",
+                        "target",
+                        "provenance_json",
+                    ),
+                    ("note",),
+                ),
+                (
+                    "notes_groups",
+                    (
+                        "capture_origin_uuidv4",
+                        "capture_uuidv4",
+                        "object_format",
+                        "scope",
+                        "provenance_json",
+                    ),
+                    ("status", "membership_json"),
+                ),
+            ):
+
+                def column(name):
+                    return name.removesuffix("_json")
+
+                for row in data[section]:
+                    if row.get("authority", "reported") != "reported":
+                        continue
+                    if section == "notes_groups":
+                        prior = core.original_notes_group_payload(
+                            (row["capture_origin_uuidv4"], row["capture_uuidv4"]),
+                            row["object_format"],
+                            row["scope"],
+                            row["provenance_json"],
+                        )
+                        found = [] if prior is None else [prior]
+                    else:
+                        found = core.sql(
+                            "SELECT "
+                            + ",".join(column(k) for k in payload)
+                            + " FROM "
+                            + section
+                            + " WHERE "
+                            + " AND ".join(column(k) + "=?" for k in keys),
+                            tuple(row[k] for k in keys),
+                        )
+                    if found:
+                        self._dependency_rows += 1
+                        if tuple(found[0]) != tuple(row[k] for k in payload):
+                            raise ExchangeError(
+                                "IMMUTABLE_REPLAY_CONFLICT", ["core", section]
+                            )
+            repos = {
+                r[0] for r in core.sql("SELECT repository_uuidv4 FROM repositories")
+            }
+            for row in data["captures"]:
+                existing = core.capture_binding(
+                    (row["capture_origin_uuidv4"], row["capture_uuidv4"])
+                )
+                if existing is not None:
+                    self._dependency_rows += 1
+                    incoming = Capture(
+                        row["capture_origin_uuidv4"],
+                        row["capture_uuidv4"],
+                        row["repository_uuidv4"],
+                        row["source"],
+                        _decode_capture_ref(row["ref"]),
+                        OID(row["object_format"], row["root"]),
+                    )
+                    if existing != incoming:
+                        raise ExchangeError(
+                            "IMMUTABLE_REPLAY_CONFLICT", ["core", "captures"]
+                        )
+            for row in data["git_observations"]:
+                existing = core.sql(
+                    "SELECT value FROM git_observations WHERE capture_origin_uuidv4=? AND capture_uuidv4=? AND repository_uuidv4=? AND kind=? AND scope=? AND provenance=?",
+                    (
+                        row["capture_origin_uuidv4"],
+                        row["capture_uuidv4"],
+                        row["repository_uuidv4"],
+                        row["kind"],
+                        row["scope_json"],
+                        row["provenance_json"],
+                    ),
+                )
+                if existing:
+                    self._dependency_rows += 1
+                    if existing[0][0] != row["value_json"]:
+                        raise ExchangeError(
+                            "IMMUTABLE_REPLAY_CONFLICT", ["core", "git_observations"]
+                        )
+            oids = {
+                tuple(r)
+                for r in core.sql("SELECT object_format,full_oid FROM git_objects")
+            }
+            captures = {
+                tuple(r)
+                for r in core.sql(
+                    "SELECT capture_origin_uuidv4,capture_uuidv4 FROM captures"
+                )
+            }
+        self._dependency_rows += len(repos) + len(captures) + len(oids)
+        repos.update(r["repository_uuidv4"] for r in data["repositories"])
+        oids.update((r["object_format"], r["full_oid"]) for r in data["git_objects"])
+
+        def keep(key, predicate):
+            kept = []
+            for index, row in enumerate(data[key]):
+                if predicate(row):
+                    kept.append(row)
+                else:
+                    omissions.append(
+                        {
+                            "section": key,
+                            "unit_index": index,
+                            "reason": "missing_required_dependency",
+                        }
+                    )
+            data[key] = kept
+
+        for key in ("repository_claims", "git_observations", "captures"):
+            keep(key, lambda r: r["repository_uuidv4"] in repos)
+        captures.update(
+            (r["capture_origin_uuidv4"], r["capture_uuidv4"]) for r in data["captures"]
+        )
+        for key in (
+            "notes_claims",
+            "notes_groups",
+            "notes_inventories",
+            "note_roles",
+            "retained_notes",
+        ):
+            keep(
+                key,
+                lambda r: (r["capture_origin_uuidv4"], r["capture_uuidv4"]) in captures,
+            )
+
+        def scope_available(r):
+            coordinates = json.loads(r["owner_coordinates_json"])
+            if r["owner_kind"] == "repository":
+                return coordinates[0] in repos
+            if r["owner_kind"] == "capture":
+                return tuple(coordinates[:2]) in captures
+            return tuple(coordinates[:2]) in oids
+
+        for key in ("coverage_scopes", "coverage_claims", "coverage_proofs"):
+            keep(key, scope_available)
+        return omissions
+
+    def _context_dependencies(self, data):
+        """Classify missing dependencies without registering synthetic parents."""
+        from repo_catalog.domain.selective_exchange import resource
+
+        omissions = []
+        original_terminals = [
+            ("source_inventory", r) for r in data["source_inventories"]
+        ] + [("collection", r) for r in data["collections"]]
+        with Context.snapshot(self.directory, read_limits=self._read_limits()) as ctx:
+            for row in data["collections"]:
+                prior = ctx.db.execute(
+                    "SELECT scope_json FROM collections WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=? AND collection_kind=? AND provenance_json=?",
+                    (
+                        *resource(row).coordinates(),
+                        row["collection_kind"],
+                        row["provenance_json"],
+                    ),
+                ).fetchone()
+                if prior is not None:
+                    self._dependency_rows += 1
+                    if prior[0] != row["scope_json"]:
+                        raise ExchangeError(
+                            "IMMUTABLE_REPLAY_CONFLICT", ["context", "collections"]
+                        )
+            for section, table, key, immutable in (
+                ("providers", "providers", "service_instance_uuidv4", "provider_kind"),
+                (
+                    "sources",
+                    "sources",
+                    "source_registration_uuidv4",
+                    "service_instance_uuidv4",
+                ),
+            ):
+                for row in data[section]:
+                    prior = ctx.db.execute(
+                        f"SELECT {immutable} FROM {table} WHERE {key}=?", (row[key],)
+                    ).fetchone()
+                    if prior is not None:
+                        self._dependency_rows += 1
+                        if prior[0] != row[immutable]:
+                            raise ExchangeError("IDENTITY_REBIND", ["context", section])
+            providers = {
+                r[0]
+                for r in ctx.db.execute("SELECT service_instance_uuidv4 FROM providers")
+            }
+            source_services = {
+                r[0]: r[1]
+                for r in ctx.db.execute(
+                    "SELECT source_registration_uuidv4,service_instance_uuidv4 FROM sources"
+                )
+            }
+            sources = set(source_services)
+            source_pairs = {
+                tuple(row)
+                for row in ctx.db.execute(
+                    "SELECT source_registration_uuidv4,repository_uuidv4 FROM source_repositories"
+                ).fetchall()
+            }
+            collection_keys = {
+                tuple(row)
+                for row in ctx.db.execute(
+                    "SELECT service_instance_uuidv4,resource_kind,provider_resource_id,collection_kind,provenance_json FROM collections"
+                ).fetchall()
+            }
+            resources = {
+                ResourceKey(*r)
+                for r in ctx.db.execute(
+                    "SELECT service_instance_uuidv4,resource_kind,provider_resource_id FROM resources"
+                )
+            }
+            repos = {
+                r[0]
+                for r in ctx.db.execute(
+                    "SELECT repository_uuidv4 FROM repository_context"
+                )
+            }
+            columns = (
+                "service_instance_uuidv4",
+                "resource_kind",
+                "provider_resource_id",
+                "relation_kind",
+                "target_json",
+                "clock_json",
+                "provenance_json",
+                "observed_at_us",
+            )
+            stored_relations = [
+                decode_relation(dict(zip(columns, row)))
+                for row in ctx.db.execute(
+                    "SELECT "
+                    + ",".join(columns)
+                    + " FROM resource_repository_relations"
+                )
+            ]
+            original_times = {r.claim_key: r.observed_at_us for r in stored_relations}
+            mapping_keys = set(original_times)
+            for row in data["repository_mapping_dispositions"]:
+                disposition = decode_disposition(row)
+                found = ctx.db.execute(
+                    "SELECT observed_at_us,replacement_clock_json,replacement_target_json,replacement_provenance_json FROM repository_mapping_dispositions WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=? AND relation_kind=? AND claim_clock_json=? AND claim_target_json=? AND claim_provenance_json=? AND disposition_kind=? AND disposition_clock_json=? AND disposition_provenance_json=?",
+                    disposition.key_coordinates(),
+                ).fetchone()
+                if found is not None:
+                    self._dependency_rows += 1
+                    if tuple(found) != (
+                        disposition.observed_at_us,
+                        disposition.replacement_clock_json,
+                        disposition.replacement_target_json,
+                        disposition.replacement_provenance_json,
+                    ):
+                        raise ExchangeError(
+                            "IMMUTABLE_REPLAY_CONFLICT",
+                            ["context", "repository_mapping_dispositions"],
+                        )
+            for report in transfer_reports(data):
+                existing_endpoints = {
+                    (r.relation_kind, r.target_json, r.observed_at_us)
+                    for r in stored_relations
+                    if r.resource == report.event_resource
+                    and r.clock == report.clock
+                    and r.provenance_json == report.provenance_json
+                    and r.relation_kind.startswith("transfer_")
+                }
+                incoming_endpoints = {
+                    (r.relation_kind, r.target_json, r.observed_at_us)
+                    for r in (*report.from_relations, *report.to_relations)
+                }
+                if existing_endpoints and existing_endpoints != incoming_endpoints:
+                    raise ExchangeError(
+                        "IMMUTABLE_REPLAY_CONFLICT",
+                        ["context", "transfer_event_report"],
+                    )
+                found = ctx.db.execute(
+                    "SELECT members_json,scope_json,observed_at_us FROM resource_relations WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=? AND relation_kind='transfer_event_report' AND provenance_json=?",
+                    (*report.event_resource.coordinates(), report.provenance_json),
+                ).fetchall()
+                self._dependency_rows += len(found)
+                for members, stored_scope, observed_at in found:
+                    if canonical(
+                        json.loads(stored_scope).get("clock")
+                    ) == report.clock.encode() and (
+                        members != report.members_json
+                        or stored_scope != report.scope_json
+                        or observed_at != report.observed_at_us
+                    ):
+                        raise ExchangeError(
+                            "IMMUTABLE_REPLAY_CONFLICT",
+                            ["context", "transfer_event_report"],
+                        )
+            for row in data["resource_repository_relations"]:
+                relation = decode_relation(row)
+                if (
+                    relation.claim_key in original_times
+                    and original_times[relation.claim_key] != relation.observed_at_us
+                ):
+                    raise ExchangeError(
+                        "IMMUTABLE_REPLAY_CONFLICT",
+                        ["context", "resource_repository_relations"],
+                    )
+            # Exact original field/relation timestamps remain immutable even for
+            # historical claims; a changed payload is not a fresh observation.
+            for row in data["field_candidates"]:
+                found = ctx.db.execute(
+                    "SELECT observed_at_us FROM field_candidates WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=? AND field_name=? AND clock_json=? AND value_json=? AND provenance_json=?",
+                    (
+                        *resource(row).coordinates(),
+                        row["field_name"],
+                        FieldClock(row["clock_domain"], row["clock_ts_us"]).encode(),
+                        row["value_json"],
+                        row["provenance_json"],
+                    ),
+                ).fetchone()
+                if found is not None:
+                    self._dependency_rows += 1
+                    if found[0] != row["observed_at_us"]:
+                        raise ExchangeError(
+                            "IMMUTABLE_REPLAY_CONFLICT", ["context", "field_candidates"]
+                        )
+            for row in data["resource_relations"]:
+                found = ctx.db.execute(
+                    "SELECT observed_at_us FROM resource_relations WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=? AND relation_kind=? AND members_json=? AND provenance_json=? AND scope_json=?",
+                    (
+                        *resource(row).coordinates(),
+                        row["relation_kind"],
+                        row["members_json"],
+                        row["provenance_json"],
+                        row["scope_json"],
+                    ),
+                ).fetchone()
+                if found is not None:
+                    self._dependency_rows += 1
+                    if found[0] != row["observed_at_us"]:
+                        raise ExchangeError(
+                            "IMMUTABLE_REPLAY_CONFLICT",
+                            ["context", "resource_relations"],
+                        )
+
+        self._dependency_rows += (
+            len(providers)
+            + len(sources)
+            + len(resources)
+            + len(repos)
+            + len(mapping_keys)
+            + len(source_pairs)
+            + len(collection_keys)
+        )
+
+        def keep(key, predicate):
+            good = []
+            for row in data[key]:
+                if predicate(row):
+                    good.append(row)
+                else:
+                    omissions.append(
+                        {
+                            "section": key,
+                            "unit": row,
+                            "reason": "missing_required_dependency",
+                        }
+                    )
+            data[key] = good
+
+        providers.update(r["service_instance_uuidv4"] for r in data["providers"])
+        repos.update(r["repository_uuidv4"] for r in data["repositories"])
+        keep("sources", lambda r: r["service_instance_uuidv4"] in providers)
+        sources.update(r["source_registration_uuidv4"] for r in data["sources"])
+        source_services.update(
+            (r["source_registration_uuidv4"], r["service_instance_uuidv4"])
+            for r in data["sources"]
+        )
+        validate_context_bindings(data, source_services)
+        pending = list(data["resources"])
+        data["resources"] = []
+        while pending:
+            added = []
+            for row in pending:
+                rk = resource(row)
+                parent = None
+                if rk.resource_kind in ("review", "thread", "document", "comment"):
+                    coordinates = json.loads(rk.provider_resource_id)
+                    parent = ResourceKey(rk.service_instance_uuidv4, *coordinates[:2])
+                if rk.service_instance_uuidv4 in providers and (
+                    parent is None or parent in resources
+                ):
+                    data["resources"].append(row)
+                    resources.add(rk)
+                    added.append(row)
+            if not added:
+                omissions.extend(
+                    {
+                        "section": "resources",
+                        "unit": r,
+                        "reason": "missing_parent_or_provider",
+                    }
+                    for r in pending
+                )
+                break
+            pending = [r for r in pending if r not in added]
+        keep(
+            "source_repositories",
+            lambda r: (
+                r["source_registration_uuidv4"] in sources
+                and r["repository_uuidv4"] in repos
+            ),
+        )
+        keep(
+            "source_inventories",
+            lambda r: (
+                r["source_registration_uuidv4"] in sources
+                and set(json.loads(r["members_json"])).issubset(repos)
+            ),
+        )
+        reports = transfer_reports(data)
+        denied = {
+            report.report_key
+            for report in reports
+            if report.event_resource not in resources
+            or any(
+                p is not None and p not in resources
+                for p in (
+                    report.from_provider_repository,
+                    report.to_provider_repository,
+                )
+            )
+            or any(
+                r.target_repository_uuidv4 is not None
+                and r.target_repository_uuidv4 not in repos
+                for r in (*report.from_relations, *report.to_relations)
+            )
+        }
+        keep(
+            "resource_repository_relations",
+            lambda r: (
+                resource(r) in resources
+                and (
+                    decode_relation(r).target_repository_uuidv4 is None
+                    or decode_relation(r).target_repository_uuidv4 in repos
+                )
+                and (
+                    not r["relation_kind"].startswith("transfer_")
+                    or all(
+                        not (
+                            key.event_resource == resource(r)
+                            and key.clock == FieldClock.from_json(r["clock_json"])
+                            and key.provenance_json == r["provenance_json"]
+                        )
+                        for key in denied
+                    )
+                )
+            ),
+        )
+        mapping_keys.update(
+            decode_relation(r).claim_key for r in data["resource_repository_relations"]
+        )
+        unsupported = {
+            decode_relation(r).claim_key
+            for r in data["resource_repository_relations"]
+            if decode_relation(r).embedded_support is not None
+            and not all(
+                k in mapping_keys
+                for k in decode_relation(r).embedded_support.supporting_claims
+            )
+        }
+        unsupported_reports = {
+            report.report_key
+            for report in reports
+            if any(
+                r.claim_key in unsupported
+                for r in (*report.from_relations, *report.to_relations)
+            )
+        }
+        denied.update(unsupported_reports)
+        keep(
+            "resource_repository_relations",
+            lambda r: (
+                decode_relation(r).claim_key not in unsupported
+                and (
+                    not r["relation_kind"].startswith("transfer_")
+                    or not any(
+                        k.event_resource == resource(r)
+                        and k.clock == FieldClock.from_json(r["clock_json"])
+                        and k.provenance_json == r["provenance_json"]
+                        for k in unsupported_reports
+                    )
+                )
+            ),
+        )
+        keep(
+            "repository_mapping_dispositions",
+            lambda r: (
+                decode_disposition(r).claim_key in mapping_keys
+                and (
+                    decode_disposition(r).replacement_claim_key is None
+                    or decode_disposition(r).replacement_claim_key in mapping_keys
+                )
+            ),
+        )
+        for key in ("resource_relations", "collections"):
+            keep(
+                key,
+                lambda r: (
+                    resource(r) in resources
+                    and (
+                        key != "collections"
+                        or not isinstance(json.loads(r["scope_json"]), dict)
+                        or "source_registration_uuidv4"
+                        not in json.loads(r["scope_json"])
+                        or json.loads(r["scope_json"])["source_registration_uuidv4"]
+                        in sources
+                    )
+                    and all(
+                        ResourceKey(*m) in resources
+                        for m in json.loads(r["members_json"])
+                    )
+                    and (
+                        r.get("relation_kind") != "transfer_event_report"
+                        or all(
+                            not (
+                                k.event_resource == resource(r)
+                                and k.provenance_json == r["provenance_json"]
+                                and json.loads(k.clock.encode())
+                                == json.loads(r["scope_json"])["clock"]
+                            )
+                            for k in denied
+                        )
+                    )
+                ),
+            )
+        for key in ("field_candidates", "core_references"):
+            keep(key, lambda r: resource(r) in resources)
+        # Omit the entire associated Coverage assertion if a collection or
+        # inventory unit is missing. A terminal is not reconstructed from rows.
+        omissions.extend(preserve_context_coverage(data, original_terminals))
+
+        source_pairs.update(
+            (r["source_registration_uuidv4"], r["repository_uuidv4"])
+            for r in data["source_repositories"]
+        )
+        collection_keys.update(
+            (*resource(r).coordinates(), r["collection_kind"], r["provenance_json"])
+            for r in data["collections"]
+        )
+
+        def scope_available(r):
+            coords = json.loads(r["owner_coordinates_json"])
+            if r["owner_kind"] == "source":
+                return tuple(coords[:2]) in source_pairs
+            if r["owner_kind"] == "source_inventory":
+                return coords[0] in sources
+            if r["owner_kind"] == "collection":
+                return tuple(coords[:5]) in collection_keys
+            if r["owner_kind"] == "repository":
+                return coords[0] in repos
+            return ResourceKey(*coords[:3]) in resources
+
+        keep("coverage_scopes", scope_available)
+        keep("coverage_claims", scope_available)
+        keep("coverage_proofs", scope_available)
+        return omissions
 
     def _core_validator_on_disk(self) -> Callable[[str, str], bool]:
         core_path = self.directory / "core.sqlite3"
@@ -1495,7 +2507,7 @@ class ExchangeService:
                 c_item["capture_uuidv4"],
                 c_item["repository_uuidv4"],
                 c_item["source"],
-                c_item["ref"],
+                _decode_capture_ref(c_item["ref"]),
                 OID(c_item["object_format"], c_item["root"]),
             )
             captures_by_pair[cap.pair] = cap
@@ -1560,6 +2572,8 @@ class ExchangeService:
             cap = captures_by_pair.get(pair)
             if cap is None:
                 raise CoreFailure("NOTES_PROOF", pair, "missing Capture for note_role")
+            if (nr["object_format"], nr["root"]) != cap.root.key:
+                raise ExchangeError("NOTES_CAPTURE_ROOT", "note_roles")
             proof = _notes_proof_from_bundle_json(
                 cap,
                 OID(nr["object_format"], nr["target"]),
@@ -1576,6 +2590,8 @@ class ExchangeService:
                 raise CoreFailure(
                     "NOTES_PROOF", pair, "missing Capture for retained_note"
                 )
+            if (rn["object_format"], rn["root"]) != cap.root.key:
+                raise ExchangeError("NOTES_CAPTURE_ROOT", "retained_notes")
             note_oid = OID(rn["object_format"], rn["full_oid"])
             target_oid = OID(rn["object_format"], rn["target"])
             proof = _notes_proof_from_bundle_json(
@@ -1658,6 +2674,8 @@ class ExchangeService:
         core_data: dict[str, list[dict[str, Any]]],
         work: WorkBudget,
     ) -> dict[str, int]:
+        extra_count_sql = "SELECT (SELECT count(*) FROM repositories)+(SELECT count(*) FROM repository_claims)+(SELECT count(*) FROM git_observations)+(SELECT count(*) FROM captures)+(SELECT count(*) FROM notes_claims)+(SELECT count(*) FROM notes_groups)+(SELECT count(*) FROM coverage_scopes)+(SELECT count(*) FROM coverage_claims)+(SELECT count(*) FROM core_coverage_proofs)"
+        before_extra_count = core_cap.sql(extra_count_sql)[0][0]
         before_obj_count = core_cap.sql("SELECT COUNT(*) FROM git_objects")[0][0]
         before_claim_count = core_cap.sql("SELECT COUNT(*) FROM scalar_claims")[0][0]
         before_group_count = core_cap.sql("SELECT COUNT(*) FROM relation_groups")[0][0]
@@ -1666,9 +2684,11 @@ class ExchangeService:
         before_note_count = core_cap.sql("SELECT COUNT(*) FROM retained_notes")[0][0]
 
         for repo in core_data["repositories"]:
+            _performed("metadata_units", 1)
             core_cap.admit_repository(repo["repository_uuidv4"])
 
         for rc in core_data["repository_claims"]:
+            _performed("metadata_units", 1)
             prov = Provenance(*json.loads(rc["provenance_json"]))
             # RepositoryClaim stores a direct JSON value, unlike ScalarClaim's
             # ["known", value]/["unknown"] tagged encoding. Never index a string.
@@ -1681,6 +2701,7 @@ class ExchangeService:
 
         admitted_objects = 0
         for obj in core_data["git_objects"]:
+            _performed("metadata_units", 1)
             oid = OID(obj["object_format"], obj["full_oid"])
             core_cap.admit_object(oid)
             admitted_objects += 1
@@ -1690,6 +2711,7 @@ class ExchangeService:
         verified_intrinsic_groups: set[tuple[str, str, str, str, str, str]] = set()
         admitted_meta = 0
         for meta in core_data["retained_metadata"]:
+            _performed("metadata_units", 1)
             oid = OID(meta["object_format"], meta["full_oid"])
             body = bytes.fromhex(meta["body_hex"])
             native = NativeObject(
@@ -1707,11 +2729,17 @@ class ExchangeService:
 
         ignored_claims = 0
         for sc in core_data["scalar_claims"]:
+            _performed("metadata_units", 1)
             oid = OID(sc["object_format"], sc["full_oid"])
             prov = Provenance(*json.loads(sc["provenance_json"]))
             val_dec = json.loads(sc["value_json"])
             orig_val = None if val_dec == ["unknown"] else val_dec[1]
             claim = ScalarClaim(oid, sc["field"], orig_val, prov)
+            if (
+                claim.key[3] != sc["value_json"]
+                or claim.key[4] != sc["provenance_json"]
+            ):
+                raise ExchangeError("NONCANONICAL_CLAIM", "scalar_claims")
             authority = sc.get("authority", "reported")
             if authority == "intrinsic" or prov.qualification == "receiver_intrinsic":
                 if claim.key not in verified_intrinsic_claims:
@@ -1721,6 +2749,7 @@ class ExchangeService:
 
         ignored_groups = 0
         for rg in core_data["relation_groups"]:
+            _performed("metadata_units", 1)
             oid = OID(rg["object_format"], rg["full_oid"])
             prov = Provenance(*json.loads(rg["provenance_json"]))
             members = tuple(
@@ -1738,6 +2767,11 @@ class ExchangeService:
                 members,
                 prov,
             )
+            if (
+                group.key[5] != rg["membership_json"]
+                or group.key[6] != rg["provenance_json"]
+            ):
+                raise ExchangeError("NONCANONICAL_GROUP", "relation_groups")
             authority = rg.get("authority", "reported")
             if authority == "intrinsic" or prov.qualification == "receiver_intrinsic":
                 if group.key not in verified_intrinsic_groups:
@@ -1746,6 +2780,7 @@ class ExchangeService:
             core_cap.admit_group(group)
 
         for obs in core_data["git_observations"]:
+            _performed("metadata_units", 1)
             prov = Provenance(*json.loads(obs["provenance_json"]))
             scope_val = json.loads(obs["scope_json"])
             payload_val = json.loads(
@@ -1767,6 +2802,7 @@ class ExchangeService:
 
         captures_by_pair: dict[tuple[str, str], Capture] = {}
         for cap_item in core_data["captures"]:
+            _performed("metadata_units", 1)
             decoded_ref = _decode_capture_ref(cap_item["ref"])
             cap = Capture(
                 cap_item["capture_origin_uuidv4"],
@@ -1780,6 +2816,7 @@ class ExchangeService:
             core_cap.admit_capture(cap)
 
         for nc in core_data["notes_claims"]:
+            _performed("metadata_units", 1)
             cap = captures_by_pair[(nc["capture_origin_uuidv4"], nc["capture_uuidv4"])]
             prov = Provenance(*json.loads(nc["provenance_json"]))
             core_cap.admit_notes_claim(
@@ -1793,6 +2830,7 @@ class ExchangeService:
 
         verified_inventory_captures: set[tuple[str, str]] = set()
         for inv_item in core_data["notes_inventories"]:
+            _performed("metadata_units", 1)
             cap = captures_by_pair[
                 (
                     inv_item["capture_origin_uuidv4"],
@@ -1821,6 +2859,7 @@ class ExchangeService:
             verified_inventory_captures.add(cap.pair)
 
         for ng in core_data["notes_groups"]:
+            _performed("metadata_units", 1)
             cap = captures_by_pair[(ng["capture_origin_uuidv4"], ng["capture_uuidv4"])]
             prov = Provenance(*json.loads(ng["provenance_json"]))
             authority = ng.get("authority", "reported")
@@ -1835,6 +2874,7 @@ class ExchangeService:
 
         admitted_roles = 0
         for nr in core_data["note_roles"]:
+            _performed("metadata_units", 1)
             cap = captures_by_pair[(nr["capture_origin_uuidv4"], nr["capture_uuidv4"])]
             proof = _notes_proof_from_bundle_json(
                 cap,
@@ -1848,6 +2888,7 @@ class ExchangeService:
 
         admitted_notes = 0
         for rn in core_data["retained_notes"]:
+            _performed("metadata_units", 1)
             cap = captures_by_pair[(rn["capture_origin_uuidv4"], rn["capture_uuidv4"])]
             note_oid = OID(rn["object_format"], rn["full_oid"])
             target_oid = OID(rn["object_format"], rn["target"])
@@ -1869,15 +2910,15 @@ class ExchangeService:
             admitted_notes += 1
 
         for cs in core_data["coverage_scopes"]:
-            coords = tuple(
-                cs.get("coordinates") or json.loads(cs["owner_coordinates_json"])
-            )
+            _performed("metadata_units", 1)
+            coords = tuple(json.loads(cs["owner_coordinates_json"]))
             core_cap.admit_coverage_scope(CoreCoverageScope(cs["owner_kind"], coords))
 
         sorted_claims = sorted(
             core_data["coverage_claims"], key=lambda item: item["observed_at_us"]
         )
         for cc in sorted_claims:
+            _performed("metadata_units", 1)
             coords = tuple(json.loads(cc["owner_coordinates_json"]))
             c_scope = CoreCoverageScope(cc["owner_kind"], coords)
             core_cap.admit_coverage_scope(c_scope)
@@ -1891,6 +2932,7 @@ class ExchangeService:
             )
 
         for cp in core_data["coverage_proofs"]:
+            _performed("metadata_units", 1)
             coords = tuple(json.loads(cp["owner_coordinates_json"]))
             c_scope = CoreCoverageScope(cp["owner_kind"], coords)
             c_claim = CoverageClaim(
@@ -1918,6 +2960,7 @@ class ExchangeService:
             + (after_note_count - before_note_count)
         )
 
+        new_rows += core_cap.sql(extra_count_sql)[0][0] - before_extra_count
         return {
             "admitted_core_objects": admitted_objects,
             "admitted_retained_metadata": admitted_meta,
@@ -1928,12 +2971,18 @@ class ExchangeService:
             "new_rows": new_rows,
         }
 
+    def _import_context_accounted(self, ctx, data, validator, work):
+        with account_verification(work):
+            return self._import_context_into(ctx, data, validator)
+
     def _import_context_into(
         self,
         ctx: Context,
         ctx_data: dict[str, list[dict[str, Any]]],
         validate_core: Callable[[str, str], bool],
     ) -> dict[str, int]:
+        count_sql = "SELECT (SELECT count(*) FROM providers)+(SELECT count(*) FROM repository_context)+(SELECT count(*) FROM sources)+(SELECT count(*) FROM source_repositories)+(SELECT count(*) FROM resources)+(SELECT count(*) FROM resource_repository_relations)+(SELECT count(*) FROM repository_mapping_dispositions)+(SELECT count(*) FROM field_candidates)+(SELECT count(*) FROM resource_relations)+(SELECT count(*) FROM text_bodies)+(SELECT count(*) FROM collections)+(SELECT count(*) FROM collection_terminals)+(SELECT count(*) FROM core_references)+(SELECT count(*) FROM coverage_scopes)+(SELECT count(*) FROM coverage_claims)+(SELECT count(*) FROM coverage_proofs)+(SELECT count(*) FROM source_inventory_evidence)+(SELECT count(*) FROM source_coverage_proofs)"
+        before_changes = ctx.db.execute(count_sql).fetchone()[0]
         before_res_count = ctx.db.execute("SELECT COUNT(*) FROM resources").fetchone()[
             0
         ]
@@ -1945,6 +2994,7 @@ class ExchangeService:
         ).fetchone()[0]
 
         for prov in ctx_data["providers"]:
+            _performed("metadata_units", 1)
             ctx.provider(
                 prov["service_instance_uuidv4"],
                 prov["provider_kind"],
@@ -1952,12 +3002,14 @@ class ExchangeService:
             )
 
         for repo in ctx_data["repositories"]:
+            _performed("metadata_units", 1)
             ctx.repository(
                 repo["repository_uuidv4"],
                 repo["configuration_json"],
             )
 
         for src in ctx_data["sources"]:
+            _performed("metadata_units", 1)
             ctx.source(
                 src["source_registration_uuidv4"],
                 src["service_instance_uuidv4"],
@@ -1965,12 +3017,15 @@ class ExchangeService:
             )
 
         for sr in ctx_data["source_repositories"]:
+            _performed("metadata_units", 1)
             has_repo = ctx.db.execute(
                 "SELECT 1 FROM repository_context WHERE repository_uuidv4=?",
                 (sr["repository_uuidv4"],),
             ).fetchone()
             if not has_repo:
-                ctx.repository(sr["repository_uuidv4"], "{}")
+                raise ExchangeError(
+                    "MISSING_REPOSITORY_DEPENDENCY", "source_membership"
+                )
             ctx.associate_source(
                 sr["source_registration_uuidv4"],
                 sr["repository_uuidv4"],
@@ -1995,6 +3050,7 @@ class ExchangeService:
 
         admitted_resources = 0
         for res in sorted(ctx_data["resources"], key=_res_sort_key):
+            _performed("metadata_units", 1)
             rk = ResourceKey(
                 res["service_instance_uuidv4"],
                 res["resource_kind"],
@@ -2003,35 +3059,31 @@ class ExchangeService:
             ctx.resource(rk)
             admitted_resources += 1
 
-        for rc in ctx_data["repository_candidates"]:
-            if rc["repository_uuidv4"] is not None:
-                has_repo = ctx.db.execute(
-                    "SELECT 1 FROM repository_context WHERE repository_uuidv4=?",
-                    (rc["repository_uuidv4"],),
-                ).fetchone()
-                if not has_repo:
-                    ctx.repository(rc["repository_uuidv4"], "{}")
-            rk = ResourceKey(
-                rc["service_instance_uuidv4"],
-                rc["resource_kind"],
-                rc["provider_resource_id"],
-            )
-            ctx.admit_repository(
-                rk,
-                rc["repository_uuidv4"],
-                FieldClock(rc["clock_domain"], rc["clock_ts_us"]),
-                rc["provenance_json"],
-                rc["observed_at_us"],
-            )
+        for row in sorted(
+            ctx_data["resource_repository_relations"],
+            key=lambda r: r["relation_kind"] != "represents_repository",
+        ):
+            _performed("metadata_units", 1)
+            if not row["relation_kind"].startswith("transfer_"):
+                ctx.admit_repository_relation(decode_relation(row))
+        for report in transfer_reports(ctx_data):
+            _performed("metadata_units", 1)
+            ctx.admit_transfer_event(report)
+        for row in ctx_data["repository_mapping_dispositions"]:
+            _performed("metadata_units", 1)
+            ctx.admit_mapping_disposition(decode_disposition(row))
 
         for tb in ctx_data["text_bodies"]:
+            _performed("metadata_units", 1)
             ctx.text(tb["text_value"])
 
         linked_refs = 0
         pending_refs = 0
+        missing_refs = []
         seen_core_refs: set[tuple[ResourceKey, str, str, str, str]] = set()
 
         for fc in ctx_data["field_candidates"]:
+            _performed("metadata_units", 1)
             rk = ResourceKey(
                 fc["service_instance_uuidv4"],
                 fc["resource_kind"],
@@ -2050,6 +3102,16 @@ class ExchangeService:
                     fc["provenance_json"],
                 )
                 seen_core_refs.add(ref_key)
+                ctx.admit_field(
+                    FieldCandidate(
+                        rk,
+                        field_name,
+                        fc["value_json"],
+                        FieldClock(fc["clock_domain"], fc["clock_ts_us"]),
+                        fc["provenance_json"],
+                        fc["observed_at_us"],
+                    )
+                )
                 if validate_core(oid.object_format, oid.full_oid):
                     ctx.link_core(
                         rk,
@@ -2061,15 +3123,17 @@ class ExchangeService:
                     )
                     linked_refs += 1
                 else:
-                    ctx.admit_field(
-                        FieldCandidate(
-                            rk,
-                            field_name,
-                            fc["value_json"],
-                            FieldClock(fc["clock_domain"], fc["clock_ts_us"]),
-                            fc["provenance_json"],
-                            fc["observed_at_us"],
-                        )
+                    missing_refs.append(
+                        {
+                            "section": "core_references",
+                            "unit": [
+                                list(rk.coordinates()),
+                                role,
+                                *oid.key,
+                                fc["provenance_json"],
+                            ],
+                            "reason": "missing_core_oid",
+                        }
                     )
                     pending_refs += 1
             else:
@@ -2085,6 +3149,7 @@ class ExchangeService:
                 )
 
         for cr in ctx_data["core_references"]:
+            _performed("metadata_units", 1)
             rk = ResourceKey(
                 cr["service_instance_uuidv4"],
                 cr["resource_kind"],
@@ -2108,17 +3173,19 @@ class ExchangeService:
                 )
                 linked_refs += 1
             else:
-                clock_domain = cr.get("clock_domain", "exchange:core_reference")
-                clock_ts_us = cr.get("clock_ts_us")
-                obs_us = cr.get("observed_at_us")
-                ctx.report_core_reference(
-                    CoreReference(rk, role, oid, prov_json),
-                    clock=FieldClock(clock_domain, clock_ts_us),
-                    observed_at_us=obs_us,
+                missing_refs.append(
+                    {
+                        "section": "core_references",
+                        "unit": [list(rk.coordinates()), role, *oid.key, prov_json],
+                        "reason": "missing_core_oid",
+                    }
                 )
                 pending_refs += 1
 
         for rel in ctx_data["resource_relations"]:
+            _performed("metadata_units", 1)
+            if rel["relation_kind"] == "transfer_event_report":
+                continue
             owner_rk = ResourceKey(
                 rel["service_instance_uuidv4"],
                 rel["resource_kind"],
@@ -2136,14 +3203,11 @@ class ExchangeService:
                 )
             )
 
-        for cs in ctx_data["coverage_scopes"]:
-            coords = cs.get("coordinates") or json.loads(cs["owner_coordinates_json"])
-            ctx.scope(ContextCoverageScope(cs["owner_kind"], coords))
-
         # Index coverage claims and proofs so collection and inventory proofs are admitted
         # while their terminal observation is the current latest terminal.
         claims_by_key: dict[tuple[str, str, int, str], dict[str, Any]] = {}
         for cc in ctx_data["coverage_claims"]:
+            _performed("metadata_units", 1)
             claims_by_key[
                 (
                     cc["owner_kind"],
@@ -2160,22 +3224,12 @@ class ExchangeService:
             tuple[str, str, int], list[dict[str, Any]]
         ] = {}
         for cp in ctx_data["coverage_proofs"]:
+            _performed("metadata_units", 1)
             if cp.get("proof_kind") == "collection":
-                t_key = (
-                    cp["service_instance_uuidv4"],
-                    cp["resource_kind"],
-                    cp["provider_resource_id"],
-                    cp["collection_kind"],
-                    cp["provenance_json"],
-                    cp["terminal_observed_at_us"],
-                )
+                t_key = terminal_key(cp, "collection")
                 collection_proofs_by_terminal.setdefault(t_key, []).append(cp)
             elif cp.get("proof_kind") == "source_inventory":
-                i_key = (
-                    cp["source_registration_uuidv4"],
-                    cp["scope_json"],
-                    cp["terminal_observed_at_us"],
-                )
+                i_key = terminal_key(cp, "source_inventory")
                 inventory_proofs_by_terminal.setdefault(i_key, []).append(cp)
 
         admitted_claim_keys: set[tuple[str, str, int, str]] = set()
@@ -2183,16 +3237,20 @@ class ExchangeService:
         for inv in sorted(
             ctx_data["source_inventories"], key=lambda item: item["observed_at_us"]
         ):
+            _performed("metadata_units", 1)
             repos = tuple(
                 json.loads(inv.get("members_json", inv.get("repositories_json", "[]")))
             )
             for r_uuid in repos:
+                _performed("metadata_units", 1)
                 has_repo = ctx.db.execute(
                     "SELECT 1 FROM repository_context WHERE repository_uuidv4=?",
                     (r_uuid,),
                 ).fetchone()
                 if not has_repo:
-                    ctx.repository(r_uuid, "{}")
+                    raise ExchangeError(
+                        "MISSING_REPOSITORY_DEPENDENCY", "source_inventory"
+                    )
             state_val = inv.get("coverage_state", inv.get("terminal_state", "complete"))
             term_val = bool(inv.get("terminal", True))
             src_inv = SourceInventory(
@@ -2205,12 +3263,9 @@ class ExchangeService:
                 inv["provenance_json"],
             )
             ctx.inventory(src_inv)
-            i_key = (
-                inv["source_registration_uuidv4"],
-                inv["scope_json"],
-                inv["observed_at_us"],
-            )
+            i_key = terminal_key(inv, "source_inventory")
             for cp in inventory_proofs_by_terminal.get(i_key, ()):
+                _performed("metadata_units", 1)
                 c_key = (
                     cp["owner_kind"],
                     cp["owner_coordinates_json"],
@@ -2234,6 +3289,7 @@ class ExchangeService:
         for coll in sorted(
             ctx_data["collections"], key=lambda item: item["observed_at_us"]
         ):
+            _performed("metadata_units", 1)
             owner_rk = ResourceKey(
                 coll["service_instance_uuidv4"],
                 coll["resource_kind"],
@@ -2250,15 +3306,9 @@ class ExchangeService:
                 members,
             )
             ctx.collection(coll_obs)
-            t_key = (
-                coll["service_instance_uuidv4"],
-                coll["resource_kind"],
-                coll["provider_resource_id"],
-                coll["collection_kind"],
-                coll["provenance_json"],
-                coll["observed_at_us"],
-            )
+            t_key = terminal_key(coll, "collection")
             for cp in collection_proofs_by_terminal.get(t_key, ()):
+                _performed("metadata_units", 1)
                 c_key = (
                     cp["owner_kind"],
                     cp["owner_coordinates_json"],
@@ -2283,9 +3333,16 @@ class ExchangeService:
                 )
                 admitted_claim_keys.add(c_key)
 
+        # Collection-owned scope FKs require their original collections first.
+        for cs in ctx_data["coverage_scopes"]:
+            _performed("metadata_units", 1)
+            coords = json.loads(cs["owner_coordinates_json"])
+            ctx.scope(ContextCoverageScope(cs["owner_kind"], coords))
+
         for cc in sorted(
             ctx_data["coverage_claims"], key=lambda item: item["observed_at_us"]
         ):
+            _performed("metadata_units", 1)
             c_key = (
                 cc["owner_kind"],
                 cc["owner_coordinates_json"],
@@ -2320,7 +3377,9 @@ class ExchangeService:
             + (after_cr_count - before_cr_count)
         )
 
+        new_rows = ctx.db.execute(count_sql).fetchone()[0] - before_changes
         return {
+            "missing_refs": missing_refs,
             "admitted_context_resources": admitted_resources,
             "linked_core_references": linked_refs,
             "pending_core_references": pending_refs,

@@ -1,0 +1,13 @@
+# Independent I5 review (execution in progress)
+
+Reviewer `/root/independent_review` made no changes in the reviewed repository. The immutable product source was extracted using `git archive a54cb218226e3c91c44e979ee0df0543ea459502`, tree `cc2eafaaeb8e3305270c17e74ae69edc42c0a50b`, into an external directory. `runtime-source-binding.json` records imported source module paths, exact source hashes, Python 3.13.5 and actual SQLite 3.51.3/source ID `2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618`. No version substitution was used.
+
+Read AGENTS, ADR index, accepted ADR 0029/0030, Context relation and selective Exchange contracts, design handoff, I1/I2/I3/I23/I4 implementation handoffs and independent-review evidence, and source/test boundaries. Source remains frozen independently of I5 author work.
+
+External independent controls (`test_independent_boundaries.py`) currently pass **30/30**, no errors/skips/xfails: strict pre-affinity observation/envelope time checks for bool, float, string, zero, negative, overflow (12); invalid provenance despite disabled/unselected Context (4); PackageKey digest binding durable across a cut after binding but before any domain commit (1); reconstructed Operational and new Request do not clear persistent P7 Stop (1); unexpected Access/configuration/approval wire sections cannot create execution authority (4); raw supported SQLite MappingClaim/Disposition REPLACE/UPSERT/UPDATE/DELETE fail with unchanged row sets, with FK and recursive-trigger prerequisites verified (8).
+
+A separate independently selected 419-node existing suite is executing: I3, I23, I4, all P7 and P1 Context relations. This includes subprocess crash windows, cumulative budgets/retry/empty packages, input Coverage/FK checks, stored corruption versus I/O/bad input, source-stop fences, exact row-set paired backup/restore, Search fallback/rebuild and real Access no-laundering controls. Collection log is `focused-collection.log`; no PASS is claimed until its execution finishes.
+
+Harness history: initial external run produced 21 passes and 1 error in the reviewer expression `None + 1` because export time is legitimately unknown. The failure occurred after correct crash/binding checks. The probe now uses a definite positive changed envelope time and passes; original log and JUnit remain under `probes-initial-harness-error.*`. The expanded 30-node receipt supersedes the 22-node corrected subset; do not add both counts as distinct product coverage.
+
+Final I5 commit/tree, final collected/executed counts, author's local/hosted receipt reconciliation and independent verdict remain pending. No merge/release/P8/real-data authorization is inferred.

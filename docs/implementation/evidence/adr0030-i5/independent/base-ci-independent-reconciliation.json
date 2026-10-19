@@ -1,0 +1,24 @@
+{
+  "head": "a54cb218226e3c91c44e979ee0df0543ea459502",
+  "tree": "cc2eafaaeb8e3305270c17e74ae69edc42c0a50b",
+  "python": "3.13.5",
+  "sqlite": "3.51.3",
+  "selected": 2329,
+  "junit": 2329,
+  "journal_starts": 2329,
+  "journal_phases": 6987,
+  "selected_equals_junit": true,
+  "selected_equals_starts": true,
+  "exact_three_phases_each": true,
+  "exit_code": 0,
+  "one_finish": true,
+  "finish": [
+    {
+      "event": "finish",
+      "status": "completed",
+      "exitstatus": 0,
+      "timestamp": 1792431174.111417
+    }
+  ],
+  "bad_junit_cases": 0
+}

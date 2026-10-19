@@ -115,6 +115,7 @@ def test_issue_vs_pull_request_intake_isolation(tmp_path: Path) -> None:
     # 1. Ordinary Issue
     issue_payload = {
         "id": 1001,
+        "repository": {"id": 1},
         "number": 42,
         "title": "Bug in query planner",
         "state": "open",
@@ -128,7 +129,6 @@ def test_issue_vs_pull_request_intake_isolation(tmp_path: Path) -> None:
         issue_payload,
         1_700_000_100_000_000,
         prov_json,
-        repository_uuidv4=repo_uuid,
     )
     assert issue_unit is not None
     assert issue_unit.primary_resource.resource_kind == "issue"
@@ -144,7 +144,6 @@ def test_issue_vs_pull_request_intake_isolation(tmp_path: Path) -> None:
             pr_as_issue,
             1_700_000_100_000_000,
             prov_json,
-            repository_uuidv4=repo_uuid,
         )
         is None
     )
@@ -159,8 +158,8 @@ def test_issue_vs_pull_request_intake_isolation(tmp_path: Path) -> None:
         "created_at": "2026-10-10T12:10:00Z",
         "updated_at": "2026-10-10T12:15:00Z",
         "user": {"id": 20, "login": "bob"},
-        "head": {"sha": "a" * 40, "ref": "feat/query-fix"},
-        "base": {"sha": "b" * 40, "ref": "main"},
+        "head": {"sha": "a" * 40, "ref": "feat/query-fix", "repo": {"id": 2}},
+        "base": {"sha": "b" * 40, "ref": "main", "repo": {"id": 1}},
         "merge_commit_sha": "c" * 40,
     }
     pr_unit = normalize_pull_request(
@@ -168,7 +167,6 @@ def test_issue_vs_pull_request_intake_isolation(tmp_path: Path) -> None:
         pr_payload,
         1_700_000_200_000_000,
         prov_json,
-        repository_uuidv4=repo_uuid,
     )
     assert pr_unit.primary_resource.resource_kind == "pull_request"
     assert pr_unit.primary_resource.provider_resource_id == "2001"
@@ -195,6 +193,16 @@ def test_issue_vs_pull_request_intake_isolation(tmp_path: Path) -> None:
         pr_cands = ctx.candidates(pr_key, "state")
         assert len(pr_cands) == 1
         assert json.loads(pr_cands[0].value_json) == "open"
+        assert {
+            r.scope.relation_kind for r in ctx.provider_repository_roles(pr_key)
+        } == {"base_repository", "head_repository"}
+        assert {
+            r.scope.relation_kind for r in ctx.provider_repository_roles(issue_key)
+        } == {"owning_repository"}
+        assert not ctx.repository_relations(pr_key, relation_kind="owning_repository")
+        assert not ctx.db.execute(
+            "SELECT 1 FROM resource_repository_relations"
+        ).fetchall()
 
         # Text bodies exist and match SHA-256
         issue_body_digest = ctx.candidates(issue_key, "text_body_sha256")[0].value_json
@@ -335,7 +343,6 @@ def test_explicit_null_vs_missing_fields_and_clock_competition(tmp_path: Path) -
         initial_payload,
         100,
         prov_json,
-        repository_uuidv4=repo_uuid,
     )
     acq.admit_units((u1,))
 
@@ -354,7 +361,6 @@ def test_explicit_null_vs_missing_fields_and_clock_competition(tmp_path: Path) -
         update_payload,
         200,
         prov_json,
-        repository_uuidv4=repo_uuid,
     )
     acq.admit_units((u2,))
 

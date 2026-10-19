@@ -1,0 +1,23 @@
+{
+  "base_commit": "a54cb218226e3c91c44e979ee0df0543ea459502",
+  "first_freeze_commit": "20198151a6af2f8eefa43e85074307e9d77527b7",
+  "final2_commit": "c2c3735439a714bbc9d4128421e7be2c0e88f5b4",
+  "final2_tree": "fdafb830ba63a7f547c5882fe677f9d25ae36bd3",
+  "original_executable_files_checked": 419,
+  "unchanged_original_executable_files": 418,
+  "changed_original_executables": [
+    "tests/packaging/test_p5_distribution.py"
+  ],
+  "first_to_final2_changed_files": [
+    ".agents/skills/ci-final-tree-verification/SKILL.md",
+    ".github/workflows/access-registry.yml",
+    "docs/implementation/adr0030-i5-merge-plan.md",
+    "tests/packaging/test_p5_distribution.py"
+  ],
+  "fixture_sha256": {
+    "base": "92f6bda18d12ea18087eb6855ab65ec2bd43a339a0f2431cf660f4b1fe81ca24",
+    "first_freeze": "92f6bda18d12ea18087eb6855ab65ec2bd43a339a0f2431cf660f4b1fe81ca24",
+    "final2": "a094ca2a1804bb87db09c43a51d2ab4386a124c85f316f1dd8dd2a3a33ed514d"
+  },
+  "original_runtime_runs_scope": "Original2579 supplemental passes,2329 CI passes,benchmark1 pass byte-identical original modules;4 packaged P5 failures revalidated after explicit fixture correction;new20I5file same between freezes."
+}

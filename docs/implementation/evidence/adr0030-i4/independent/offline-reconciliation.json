@@ -1,0 +1,16 @@
+{
+  "receipt_zip_bytes": 68996,
+  "receipt_zip_sha256": "4d1b9c0353d49367eb0d828b62c49d3fc66957b6263498657752c681ea8bf2af",
+  "members_verified": 21,
+  "binding": {
+    "feature_sha": "f948cc6c764689154734f6386a10f97db6923e7a",
+    "head": "10a85addb66f95d2fdaf6fcee4bfb55a7478c676",
+    "run_attempt": "1",
+    "run_id": "39285853846",
+    "tree": "0dd55440469be7bb1a2d341ef9c2bc6419f631b0"
+  },
+  "acceptance_status": "development_checks_passed",
+  "full_acceptance": false,
+  "executed": 0,
+  "input_inventory_complete_for_declared_paths": 422
+}

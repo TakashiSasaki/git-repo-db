@@ -19,10 +19,15 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from typing import Any, Generic, Literal, TypeVar
 
-from repo_catalog.domain.p1_context import FieldCandidate, ResourceKey
+from repo_catalog.domain.p1_context import (
+    FieldCandidate,
+    QualifiedProviderRepositoryRole,
+    ResolvedRepositoryRelation,
+    ResourceKey,
+)
 from repo_catalog.domain.p1_coordination import SnapshotToken
 from repo_catalog.domain.p1_core import (
     OID,
@@ -769,13 +774,31 @@ class SourceView:
         }
 
 
+def provider_role_summary(role: QualifiedProviderRepositoryRole) -> dict[str, object]:
+    """Keep original scope and complete Mapping keys separate from present qualification."""
+    return {
+        "resource": list(role.resource.coordinates()),
+        "scope": role.scope.to_dict(),
+        "provenance_json": role.provenance_json,
+        "state": role.state,
+        "mapping": asdict(role.mapping) if role.mapping is not None else None,
+    }
+
+
+def repository_relation_summary(
+    relation: ResolvedRepositoryRelation,
+) -> dict[str, object]:
+    return asdict(relation)
+
+
 @dataclass(frozen=True)
 class ContextResourceView:
     """Authoritative Context resource view with field winners, relations, collections, and Core refs."""
 
     resource: ResourceKey
     repository_uuidv4: str | None
-    repository_candidates: tuple[FieldCandidate, ...]
+    repository_roles: tuple[QualifiedProviderRepositoryRole, ...]
+    repository_relations: tuple[ResolvedRepositoryRelation, ...]
     parent: ResourceKey | None
     document_kind: str | None
     provider_document_id: str | None
@@ -784,6 +807,23 @@ class ContextResourceView:
     relations: tuple[ResourceRelation, ...]
     collections: tuple[CollectionObservation, ...]
     core_dependencies: tuple[CoreDependency, ...]
+
+    def matches_repository(self, repository_uuidv4: str) -> bool:
+        """Current candidate membership, including explicit Mapping alternatives.
+
+        No parent inheritance, historical Core-target fallback or Transfer edge.
+        Qualification remains available on each role even when a candidate matches.
+        """
+        return any(
+            role.mapping is not None
+            and repository_uuidv4 in role.mapping.active_repository_uuidv4s
+            for role in self.repository_roles
+        ) or any(
+            rel.relation_kind == "represents_repository"
+            and rel.claim_key in rel.supporting_bindings
+            and rel.relation.target_repository_uuidv4 == repository_uuidv4
+            for rel in self.repository_relations
+        )
 
     @property
     def semantic_key(self) -> tuple[str, str, str]:
@@ -845,17 +885,11 @@ class ContextResourceView:
                 }
                 for rel in self.relations
             ],
-            "repository_candidates": [
-                {
-                    "clock": {
-                        "at_us": cand.clock.at_us,
-                        "domain": cand.clock.domain,
-                    },
-                    "observed_at_us": cand.observed_at_us,
-                    "provenance": json.loads(cand.provenance_json),
-                    "value": json.loads(cand.value_json),
-                }
-                for cand in self.repository_candidates
+            "repository_roles": [
+                provider_role_summary(role) for role in self.repository_roles
+            ],
+            "repository_relations": [
+                repository_relation_summary(rel) for rel in self.repository_relations
             ],
             "repository_uuidv4": self.repository_uuidv4,
             "resolved_texts": dict(sorted(self.resolved_texts.items())),

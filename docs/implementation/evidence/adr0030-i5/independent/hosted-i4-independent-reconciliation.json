@@ -1,0 +1,15 @@
+{
+  "selected": 2329,
+  "executed": 2329,
+  "selected_junit_counter_equal": true,
+  "unique": true,
+  "outcomes": {
+    "pass": 2329
+  },
+  "input_files": 422,
+  "different_from_exact_head": [],
+  "test_merge": "320fe9aa955a97975affb25713b8cfe32c0a58f6",
+  "actual_git_tree": "cc2eafaaeb8e3305270c17e74ae69edc42c0a50b",
+  "declared_tree_matches": true,
+  "artifact_sha256": "baa31d2e9e8edd34af520c5977c6cc58fb1654e2ccb00c7ff13de6352cb0134e"
+}

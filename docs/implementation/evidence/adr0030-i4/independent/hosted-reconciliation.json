@@ -1,0 +1,28 @@
+{
+  "run_id": 39285853860,
+  "job_id": 118171487893,
+  "artifact_id": 12205115448,
+  "artifact_bytes": 40096272,
+  "artifact_sha256": "5b7efc6094cb9cd29e17d519db15aae8fb79909c9d27cecb8b769e6c84202ca8",
+  "source_revision": {
+    "checked_out_commit": "10a85addb66f95d2fdaf6fcee4bfb55a7478c676",
+    "effective_tree": "0dd55440469be7bb1a2d341ef9c2bc6419f631b0",
+    "event_commit": "10a85addb66f95d2fdaf6fcee4bfb55a7478c676"
+  },
+  "source_inputs_verified": 422,
+  "selected": 2329,
+  "executed": 2329,
+  "result": {
+    "passed": 2329,
+    "failed": 0,
+    "errors": 0,
+    "skips": 0
+  },
+  "runtime": "Python: 3.12.15 SQLite: 3.51.3 source: 2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618",
+  "distribution_artifacts": 2,
+  "same_local_hosted_node_counter": true,
+  "evidence_index_entries": 86,
+  "evidence_index_sha256": "d29942f4b502c794076ee0e9b73a93a363872f72f604fdd054d210f9471e915f",
+  "metadata_note": "Queued API metadata remains separate from verified completed job log/artifact.",
+  "receipt_reconciliation_only": true
+}

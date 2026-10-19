@@ -1,0 +1,7 @@
+{
+  "head": "3298dfbdc0428ba7ba13fd26331e97554119a74c",
+  "tree": "28b53a862db969e3231bd1a6f08a0c7f20d22874",
+  "scope": "all tracked src/, tests/, scripts/, .github/, pyproject.toml and uv.lock",
+  "file_count": 415,
+  "sha256_of_compact_json_path_sha256_pairs": "365caeeca6389c87134eae5c704601e1c6e1f5a14dec71a677ef03ef05fbb618"
+}

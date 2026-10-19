@@ -1,0 +1,38 @@
+{
+  "python": "3.13.5 (main, Jul 15 2026, 20:25:40) [GCC 14.2.0]",
+  "sqlite": "3.51.3",
+  "sqlite_source_id": "2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618",
+  "head": "20198151a6af2f8eefa43e85074307e9d77527b7",
+  "tree": "74b164f111859c96396ca751a5c90df7e0a5f53a",
+  "baseline_main": "6780088befd33e711230d570bb291edb2ee40cbf",
+  "baseline_tree": "aa981f3f22dfd42eb2d860618b25548faa62e1a3",
+  "baseline_source_archive": "/workspace/i5-results/triage/main-source",
+  "node": "tests/packaging/test_p5_distribution.py::test_p5_installed_acquisition_and_exchange[sha1-wheel]",
+  "head_result": {
+    "selected": 1,
+    "passed": 0,
+    "failed": 1,
+    "error": 0,
+    "skip": 0,
+    "xfail": 0,
+    "deselected": 3
+  },
+  "baseline_result": {
+    "selected": 1,
+    "passed": 1,
+    "failed": 0,
+    "error": 0,
+    "skip": 0,
+    "xfail": 0,
+    "deselected": 3
+  },
+  "failure": "TypeError: ProviderPullRequestIntake.__init__() got an unexpected keyword argument repository_uuidv4",
+  "authority": "docs/implementation/adr0030-i2-provider-intake.md Public producer API explicitly retires single repository_uuidv4 authority",
+  "classification": "Stale packaging test producer fixture under intentional accepted I2 API change. Test requires modernization preserving original installed acquisition and Exchange behavioral assertions; no production correction or compatibility authority implied.",
+  "files": {
+    "p5-installed-repro.log": "ddf65403179ee3e7127c385b3f102549647118f4b550b73053f901d44ea0a364",
+    "p5-installed-repro.xml": "ee4d8767cb7b4f0d3a814b41aee4493764f48065b3c66268a8a72598953666ec",
+    "p5-main-baseline.log": "ed24373739cc74a69f82aa7bb1703eb0237a5e8a94fe5bae07982c0cbac5b666",
+    "p5-main-baseline.xml": "901ba2debf974c270e538387a6e7f1dc9bb9f942992a644070e2258dcb05319e"
+  }
+}

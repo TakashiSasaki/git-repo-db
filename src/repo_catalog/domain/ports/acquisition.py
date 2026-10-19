@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pathlib import Path
+from collections.abc import Callable
 from typing import Any, Protocol
 
 from repo_catalog.adapters.git.native import GitNativeSource
@@ -118,7 +118,6 @@ class ExchangePort(Protocol):
 
     def export_package(
         self,
-        directory: Path,
         *,
         selection: ExchangeSelectionScope | None = None,
         package_id: str | None = None,
@@ -127,8 +126,12 @@ class ExchangePort(Protocol):
 
     def import_package(
         self,
-        directory: Path,
-        package: ExchangePackage | str | bytes,
+        raw_package: ExchangePackage | str | bytes | dict[str, Any],
         *,
         work: WorkBudget | None = None,
+        request: RequestIdentity | None = None,
+        new_request: bool = False,
+        permitted_repository_uuidv4s: tuple[str, ...] = (),
+        selection: ExchangeSelectionScope | None = None,
+        cut: Callable[[str], None] = lambda point: None,
     ) -> ExchangeImportReport: ...

@@ -1,0 +1,21 @@
+{
+  "base": "a54cb218226e3c91c44e979ee0df0543ea459502",
+  "head": "20198151a6af2f8eefa43e85074307e9d77527b7",
+  "tree": "74b164f111859c96396ca751a5c90df7e0a5f53a",
+  "changed_files": [
+    ".agents/skills/ci-final-tree-verification/SKILL.md",
+    ".github/workflows/access-registry.yml",
+    "docs/implementation/adr0030-i5-merge-plan.md",
+    "scripts/verify_i5_offline.py",
+    "tests/integration/i5/test_independent_e2e.py"
+  ],
+  "product_ddl_lock_ledger_changes": [],
+  "frozen_changed_hashes": {
+    ".agents/skills/ci-final-tree-verification/SKILL.md": "2aa76f3669e11ce914b125e23396eda8226ee642bfd733b1b7267c281926cca3",
+    ".github/workflows/access-registry.yml": "df150e0aef591cb90e38bef004e4038e6389c752612cbbd6ae4e8958dd5aa848",
+    "docs/implementation/adr0030-i5-merge-plan.md": "b0c1a918c9595b5c308f647f4c069c73fbfec8f4dcb930c612497a70fcd9932d",
+    "scripts/verify_i5_offline.py": "cc16dd01222e38eec61e449418bc1176a319eb5d6e242455da2c7c8641d0fd02",
+    "tests/integration/i5/test_independent_e2e.py": "af34964d3c8ea508006dca403b825486d12e2acd74c622faf837c8314a240a26"
+  },
+  "helper_collection_dirty": ""
+}

@@ -20,7 +20,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SMOKE = r"""
-import importlib.util, json, sqlite3, sys, tempfile
+import importlib.util, json, os, sqlite3, sys, tempfile
+os.umask(0o022)
 from pathlib import Path
 from uuid import uuid4
 from repo_catalog.adapters.sqlite.access_schema import initialize, require_runtime, fingerprint
@@ -163,7 +164,7 @@ from repo_catalog.adapters.sqlite.production_context import Context
 from repo_catalog.adapters.sqlite.git_core import GitCore
 from repo_catalog.adapters.sqlite.acquisition import UnlimitedWorkBudget
 from repo_catalog.application.exchange import ExchangeService
-from repo_catalog.domain.exchange import FORMAT as EXCHANGE_FORMAT
+from repo_catalog.domain.exchange import FORMAT as EXCHANGE_FORMAT, ExchangeSelectionScope
 from repo_catalog.domain.p1_core import RepositoryClaim, Provenance
 for role in ("provider", "repository", "source", "membership"):
     assert registration_json(role, "{}") == {}
@@ -180,7 +181,7 @@ with tempfile.TemporaryDirectory() as directory:
     repository_id, service = str(uuid4()), str(uuid4())
     for destination in (producer, receiver):
         instance = str(uuid4())
-        for role in ("core", "context"):
+        for role in ("core", "context", "operational"):
             p1_schema.initialize(destination / f"{role}.sqlite3", role, repository_id, instance)
     with Context.transaction(producer) as ctx:
         ctx.provider(service, "github", '{"name":"Original provider"}')
@@ -195,26 +196,108 @@ with tempfile.TemporaryDirectory() as directory:
     evidence = Provenance("source", "observation", "coordinate", "decoder", "1")
     with closing(GitCore(producer / "core.sqlite3")) as core:
         core.admit_repository_claim(RepositoryClaim(repository_id, "endpoint", historical_url, evidence))
-    package = ExchangeService(producer).export_package()
-    assert package.format == EXCHANGE_FORMAT == "git-repo-db/p5-exchange-v3"
-    ExchangeService(receiver).import_package(package, work=UnlimitedWorkBudget())
+    package = ExchangeService(producer).export_package(selection=ExchangeSelectionScope(all_selected=True))
+    assert package.format == EXCHANGE_FORMAT == "git-repo-db/adr0030-exchange-v4"
+    ExchangeService(receiver).import_package(package, new_request=True, permitted_repository_uuidv4s=(repository_id,))
     with closing(GitCore(receiver / "core.sqlite3")) as core:
         rows = core.sql("SELECT value FROM repository_claims WHERE field='endpoint'")
         assert json.loads(rows[0][0]) == historical_url
     with Context.snapshot(receiver) as ctx:
         assert ctx.db.execute("SELECT configuration_json FROM providers").fetchone()[0] == '{"name":"Original provider"}'
+        tables = [r[0] for r in ctx.db.execute("SELECT name FROM sqlite_schema WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name").fetchall()]
+        assert len(tables) == 19, f"Expected 19 tables in Context, got {len(tables)}: {tables}"
+        assert "resource_repository_relations" in tables
+        assert "repository_mapping_dispositions" in tables
+        # Verify UDF registration
+        assert ctx.db.execute("SELECT p1_mapping_target('\"9ebbe38a-f937-40e6-a99c-701835ebcf10\"')").fetchone()[0] == 1
+        assert ctx.db.execute("SELECT p1_mapping_clock('{\"at_us\":1,\"domain\":\"test\"}')").fetchone()[0] == 1
+        assert ctx.db.execute("SELECT p1_mapping_provenance('{\"evidence\":\"e\",\"source\":\"s\"}')").fetchone()[0] == 1
     assert not (receiver / "access.sqlite3").exists()
-print(json.dumps({"sqlite": sqlite3.sqlite_version, "sqlite_source_id": sqlite3.connect(":memory:").execute("SELECT sqlite_source_id()").fetchone()[0], "module_origin": str(module_origin), "interpreter": sys.executable, "ddl_sha256": fingerprint(), "context_ddl_sha256": p1_schema.fingerprint("context"), "exchange_format": EXCHANGE_FORMAT, "local_git_acquired": True, "access_backup_restored": True, "scope_forked": True, "installed_smoke": "passed"}))
+from repo_catalog.application.acquisition import ProviderAcquisition
+from repo_catalog.adapters.github.production_intake import github_repository_id
+from repo_catalog.domain.acquisition import ProviderIntakeBatch, ProviderRegistration, RepositoryRegistration, ProviderIssueIntake, ProviderTimelineIntake, make_provenance
+from repo_catalog.domain.p1_context import ResourceKey, ResourceRepositoryRelation, FieldClock, canonical
+with tempfile.TemporaryDirectory() as directory:
+    destination = Path(directory)
+    repository_id, instance, service = str(uuid4()), str(uuid4()), str(uuid4())
+    for role in ("core", "context"):
+        p1_schema.initialize(destination / f"{role}.sqlite3", role, repository_id, instance)
+    node = {"id": "R_installed", "databaseId": 1}
+    claims = tuple(ResourceRepositoryRelation(ResourceKey(service, "repository", identifier), "represents_repository", FieldClock("installed:mapping", 1), canonical(repository_id), make_provenance("installed", {"explicit_mapping": identifier}), 1)
+                   for identifier in ("1", github_repository_id(node, graphql=True)))
+    ProviderAcquisition(destination).admit_batch(ProviderIntakeBatch(service,
+        providers=(ProviderRegistration(service),), repositories=(RepositoryRegistration(repository_id),), mapping_claims=claims,
+        issues=(ProviderIssueIntake({"id": 7, "repository": {"id": 1}}, 10, make_provenance("installed", "issue")),),
+        timeline_events=(ProviderTimelineIntake("issue", 7, "EV_installed", {"id": "EV_installed", "__typename": "TransferredEvent", "issue": {"databaseId": 7}, "fromRepository": node}, 20, make_provenance("installed", "event"), graphql=True),)))
+    with Context.snapshot(destination) as ctx:
+        qualified, = ctx.provider_repository_roles(ResourceKey(service, "issue", "7"))
+        assert qualified.supports[0].supporting_claims == (claims[0].claim_key,)
+        report, = ctx.transfer_event_reports()
+        assert report.from_relation.embedded_support.supporting_claims == (claims[1].claim_key,)
+        assert report.to_state == "absent" and report.observed_at_us == 20
+    assert not (destination / "access.sqlite3").exists()
+    # Installed I2 -> I3, including original Node namespace and a different seed.
+    target = destination / "receiver"
+    target.mkdir()
+    target_seed, target_instance = str(uuid4()), str(uuid4())
+    for role in ("core", "context", "operational"):
+        p1_schema.initialize(target / f"{role}.sqlite3", role, target_seed, target_instance)
+    package = ExchangeService(destination).export_package(selection=ExchangeSelectionScope(
+        repository_uuidv4s=(repository_id,), object_oids=(),
+        resource_keys=(qualified.resource, report.event_resource), source_uuidv4s=()))
+    ExchangeService(target).import_package(package, new_request=True, permitted_repository_uuidv4s=(repository_id,))
+    with Context.snapshot(target) as ctx:
+        assert ctx.provider_repository_roles(qualified.resource) == (qualified,)
+        assert ctx.transfer_event_reports() == (report,)
+    with closing(GitCore(target / "core.sqlite3")) as core:
+        assert core.catalog_identity() == (target_seed, target_instance)
+        assert {r[0] for r in core.sql("SELECT repository_uuidv4 FROM repositories")} == {target_seed, repository_id}
+    assert not (target / "access.sqlite3").exists()
+    # Installed I4: Query/Search and fresh paired restore consume the I2/I3 facts.
+    from repo_catalog.application.production_query import ProductionQueryService
+    from repo_catalog.application.recovery import RecoveryService
+    from repo_catalog.domain.production_query import SearchQuery
+    from repo_catalog.domain.p1_context import MappingDisposition, MappingOperationEvidence
+    disposition = MappingDisposition(claims[0].claim_key, "withdraw", FieldClock("installed:operation", 30), make_provenance("installed", "withdraw"), 30)
+    with Context.transaction(target) as ctx:
+        ctx.admit_mapping_disposition(disposition)
+    q = ProductionQueryService(target)
+    assert q.get_context_resource(qualified.resource).repository_roles[0].state == "contested_candidate"
+    checked = ProductionQueryService(target, mapping_evidence=MappingOperationEvidence(frozenset({disposition.disposition_key})))
+    assert checked.get_context_resource(qualified.resource).repository_roles[0].state == "withdrawn"
+    q.rebuild_search(("context_text",))
+    found = q.search(SearchQuery("owning_repository", projection_kinds=("context_text",)))
+    assert found.backend == "verified_projection_scan" and found.hits
+    backup, restored = destination / "paired-backup", destination / "paired-restored"
+    recovery = RecoveryService()
+    recovery.create_consistent_backup(target, backup)
+    recovery.restore_backup(backup, restored, target_seed)
+    with Context.snapshot(restored) as ctx:
+        assert ctx.mapping_dispositions(claims[0].claim_key) == (disposition,)
+        assert ctx.transfer_event_reports() == (report,)
+    rq = ProductionQueryService(restored)
+    assert rq.get_context_resource(qualified.resource) == q.get_context_resource(qualified.resource)
+    assert rq.search(SearchQuery("owning_repository", projection_kinds=("context_text",))).backend == "authority_scan"
+    rq.rebuild_search(("context_text",))
+    assert rq.search(SearchQuery("owning_repository", projection_kinds=("context_text",))).backend == "verified_projection_scan"
+    assert not any((restored / f"{role}.sqlite3").exists() for role in ("operational", "access"))
+print(json.dumps({"sqlite": sqlite3.sqlite_version, "sqlite_source_id": sqlite3.connect(":memory:").execute("SELECT sqlite_source_id()").fetchone()[0], "module_origin": str(module_origin), "interpreter": sys.executable, "ddl_sha256": fingerprint(), "context_ddl_sha256": p1_schema.fingerprint("context"), "table_count": len(tables), "exchange_format": EXCHANGE_FORMAT, "local_git_acquired": True, "access_backup_restored": True, "scope_forked": True, "installed_i2_i3_cross_seed": "passed", "installed_i4_query_search_backup": "passed", "installed_smoke": "passed"}))
 """
 
 
 def run(*args: str, cwd: Path, env: dict[str, str]) -> str:
-    result = subprocess.run(
-        args, cwd=cwd, env=env, check=True, text=True, capture_output=True
-    )
-    if result.stderr:
-        print(result.stderr, file=sys.stderr)
-    return result.stdout
+    try:
+        result = subprocess.run(
+            args, cwd=cwd, env=env, check=True, text=True, capture_output=True
+        )
+        if result.stderr:
+            print(result.stderr, file=sys.stderr)
+        return result.stdout
+    except subprocess.CalledProcessError as error:
+        print("STDERR:", error.stderr, file=sys.stderr)
+        print("STDOUT:", error.stdout, file=sys.stderr)
+        print("COMMAND FAILED:", args[0] if args else "empty", file=sys.stderr)
+        raise
 
 
 def main() -> None:
@@ -303,6 +386,10 @@ def main() -> None:
             ).hexdigest()
             results.append(result)
             print(label, output)
+        assert len(results) == 2
+        assert results[0]["context_ddl_sha256"] == results[1]["context_ddl_sha256"]
+        assert results[0]["table_count"] == 19
+        assert results[1]["table_count"] == 19
     evidence = ROOT / "artifacts/access-registry"
     evidence.mkdir(parents=True, exist_ok=True)
     (evidence / "distribution.json").write_text(json.dumps(results, indent=2) + "\n")

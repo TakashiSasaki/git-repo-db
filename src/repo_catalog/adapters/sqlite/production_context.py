@@ -10,7 +10,7 @@ from __future__ import annotations
 import hashlib
 import json
 import sqlite3
-from collections.abc import Callable, Iterator, Sequence
+from collections.abc import Callable, Iterable, Iterator, Sequence
 from contextlib import ExitStack, closing, contextmanager
 from functools import wraps
 from pathlib import Path
@@ -24,16 +24,30 @@ from repo_catalog.adapters.sqlite.p1_coordination import (
 from repo_catalog.adapters.sqlite.p1_schema import connect
 from repo_catalog.domain.context_registration import registration_json
 from repo_catalog.domain.p1_context import (
+    RELATION_KINDS,
     CoverageClaim,
     CoverageProjection,
     CoverageScope,
     FieldCandidate,
     FieldClock,
+    MappingClaimKey,
+    MappingDisposition,
+    MappingOperationEvidence,
+    QualifiedMappingEvaluation,
+    QualifiedProviderRepositoryRole,
+    RelationAdmissionOutcome,
+    RelationAdmissionResult,
+    RelationKind,
+    ResolvedRepositoryRelation,
     ResourceKey,
+    ResourceRepositoryRelation,
+    TransferEventReport,
     canonical,
+    validate_provider_repository_scope,
+    validate_timeline_event_coordinates,
 )
 from repo_catalog.domain.p1_coordination import CoordinationError
-from repo_catalog.domain.p1_core import OID
+from repo_catalog.domain.p1_core import OID, uuid4_value
 from repo_catalog.domain.production_context import (
     CollectionObservation,
     ContextError,
@@ -43,6 +57,7 @@ from repo_catalog.domain.production_context import (
     ResourceRelation,
     SourceInventory,
     json_value,
+    validate_reported_core_reference,
 )
 
 
@@ -153,6 +168,7 @@ class Context(ContextStore):
         roles = self.db.execute("SELECT store_role FROM store_identity").fetchall()
         if roles != [("context",)]:
             raise ContextError("STORE_ROLE", "context", "Context authority required")
+        self._validate_schema()
         # Validate registration authority in the pinned transaction, including
         # raw trusted-factory writes. No incoming rejected settings cause a stop.
         self._validate_registrations()
@@ -315,6 +331,28 @@ class Context(ContextStore):
         except (ValueError, TypeError, AttributeError) as error:
             persist_catalog_stop(self.directory, f"Invalid retained {scope}: {error}")
             raise ContextError("AUTHORITATIVE_CORRUPTION", scope) from error
+
+    def _validate_schema(self):
+        rows = self.db.execute(
+            "SELECT name, sql FROM sqlite_schema WHERE type='table' AND name IN ('resource_repository_relations', 'repository_mapping_dispositions', 'field_candidates')"
+        ).fetchall()
+        tables = {name: sql for name, sql in rows}
+        if {
+            "resource_repository_relations",
+            "repository_mapping_dispositions",
+            "field_candidates",
+        } - set(tables):
+            raise ContextError(
+                "UNSUPPORTED_SCHEMA",
+                "context",
+                "Context schema predates ADR 0030 relations",
+            )
+        if "repository_uuidv4 TEXT" in (tables.get("field_candidates") or ""):
+            raise ContextError(
+                "UNSUPPORTED_SCHEMA",
+                "context",
+                "Context schema predates ADR 0030 relations",
+            )
 
     def _validate_registrations(self):
         for table, column, kind in (
@@ -498,6 +536,16 @@ class Context(ContextStore):
 
     def relation(self, relation: ResourceRelation) -> str:
         with self._unit():
+            if relation.relation_kind == "transfer_event_report":
+                raise ValueError("Transfer reports require admit_transfer_event()")
+            if relation.relation_kind == "provider_repository_roles":
+                validate_provider_repository_scope(
+                    relation.resource,
+                    relation.members,
+                    relation.provenance_json,
+                    relation.scope_json,
+                    relation.observed_at_us,
+                )
             self._members(relation.resource, relation.relation_kind, relation.members)
             key = (
                 *relation.resource.coordinates(),
@@ -727,39 +775,207 @@ class Context(ContextStore):
 
     def candidates(self, resource: ResourceKey, field_name: str):
         self._check()
+        if field_name == "repository_uuidv4":
+            raise ValueError(
+                "field_candidates is not repository relationship authority; use repository_relations"
+            )
         with self._stored("field"):
             return super().candidates(resource, field_name)
 
     def admit_field(self, candidate: FieldCandidate) -> str:
         self._check(write=True)
-        if candidate.field_name.startswith("reported_core_reference:"):
-            value = json.loads(candidate.value_json)
-            if (
-                not candidate.field_name.removeprefix("reported_core_reference:")
-                or not isinstance(value, list)
-                or len(value) != 2
-                or any(not isinstance(item, str) for item in value)
-            ):
-                raise ContextError("REFERENCE_VALUE", "core_reference")
-            OID(*value)
+        validate_reported_core_reference(candidate)
         return super().admit_field(candidate)
 
-    def admit_repository(
+    def admit_repository_relation(
+        self,
+        relation: ResourceRepositoryRelation,
+        *,
+        require_support: bool = False,
+    ) -> RelationAdmissionOutcome:
+        with self._unit():
+            return super().admit_repository_relation(
+                relation, require_support=require_support
+            )
+
+    def admit_repository_relation_result(
+        self,
+        relation: ResourceRepositoryRelation,
+        *,
+        require_support: bool = False,
+    ) -> RelationAdmissionResult:
+        with self._unit():
+            return super().admit_repository_relation_result(
+                relation, require_support=require_support
+            )
+
+    def admit_mapping_disposition(self, disposition: MappingDisposition) -> str:
+        with self._unit():
+            return super().admit_mapping_disposition(disposition)
+
+    def admit_transfer_event(self, report: TransferEventReport) -> str:
+        with self._unit():
+            return super().admit_transfer_event(report)
+
+    def mapping_dispositions(
+        self, subject: MappingClaimKey | ResourceKey | None = None
+    ) -> tuple[MappingDisposition, ...]:
+        self._check()
+        if subject is not None and not isinstance(
+            subject, (MappingClaimKey, ResourceKey)
+        ):
+            raise ValueError("subject must be MappingClaimKey, ResourceKey, or None")
+        with self._stored("repository_mapping_disposition"):
+            return super().mapping_dispositions(subject)
+
+    def evaluate_provider_repository(
+        self,
+        provider_repository: ResourceKey,
+        *,
+        evidence: MappingOperationEvidence | None = None,
+    ) -> QualifiedMappingEvaluation:
+        resource = provider_repository
+        self._check()
+        if (
+            not isinstance(resource, ResourceKey)
+            or resource.resource_kind != "repository"
+        ):
+            raise ValueError(
+                "evaluate_provider_repository requires a repository resource"
+            )
+        if evidence is not None and not isinstance(evidence, MappingOperationEvidence):
+            raise ValueError(
+                "evidence must be a MappingOperationEvidence instance or None"
+            )
+        with self._stored("repository_relation"):
+            return super().evaluate_provider_repository(resource, evidence=evidence)
+
+    def repository_relations(
         self,
         resource: ResourceKey,
-        repository_uuidv4: str | None,
-        clock: FieldClock,
-        provenance_json: str,
-        observed_at_us: int | None,
-    ) -> str:
-        self._check(write=True)
-        return super().admit_repository(
-            resource, repository_uuidv4, clock, provenance_json, observed_at_us
-        )
-
-    def repository_candidates(self, resource: ResourceKey):
+        relation_kind: RelationKind | str | None = None,
+        *,
+        evidence: MappingOperationEvidence | None = None,
+    ) -> tuple[ResolvedRepositoryRelation, ...]:
         self._check()
-        return super().repository_candidates(resource)
+        if not isinstance(resource, ResourceKey):
+            raise ValueError("ResourceKey required")
+        if relation_kind is not None and relation_kind not in RELATION_KINDS:
+            raise ValueError(f"Unknown relation_kind: {relation_kind!r}")
+        if evidence is not None and not isinstance(evidence, MappingOperationEvidence):
+            raise ValueError(
+                "evidence must be a MappingOperationEvidence instance or None"
+            )
+        with self._stored("repository_relation"):
+            return super().repository_relations(
+                resource, relation_kind, evidence=evidence
+            )
+
+    def relations_for_repository(
+        self,
+        repository_uuidv4: str,
+        relation_kind: RelationKind | str | None = None,
+        *,
+        evidence: MappingOperationEvidence | None = None,
+    ) -> tuple[ResolvedRepositoryRelation, ...]:
+        self._check()
+        uuid4_value(repository_uuidv4)
+        if relation_kind is not None and relation_kind not in RELATION_KINDS:
+            raise ValueError(f"Unknown relation_kind: {relation_kind!r}")
+        if evidence is not None and not isinstance(evidence, MappingOperationEvidence):
+            raise ValueError(
+                "evidence must be a MappingOperationEvidence instance or None"
+            )
+        with self._stored("repository_relation"):
+            return super().relations_for_repository(
+                repository_uuidv4, relation_kind, evidence=evidence
+            )
+
+    def relations_for_provider_repository(
+        self,
+        service_instance_uuidv4: str | ResourceKey,
+        provider_repository_id: str | None = None,
+        relation_kind: RelationKind | str | None = None,
+        *,
+        evidence: MappingOperationEvidence | None = None,
+    ) -> tuple[ResolvedRepositoryRelation, ...]:
+        self._check()
+        if isinstance(service_instance_uuidv4, ResourceKey):
+            if service_instance_uuidv4.resource_kind != "repository":
+                raise ValueError(
+                    "relations_for_provider_repository requires a repository resource"
+                )
+            service = service_instance_uuidv4.service_instance_uuidv4
+            prov_id = service_instance_uuidv4.provider_resource_id
+            if isinstance(provider_repository_id, str):
+                relation_kind = provider_repository_id
+        else:
+            service = service_instance_uuidv4
+            uuid4_value(service)
+            if provider_repository_id is None or not isinstance(
+                provider_repository_id, str
+            ):
+                raise ValueError(
+                    "provider_repository_id required when passing service instance uuid"
+                )
+            prov_id = provider_repository_id
+        ResourceKey(service, "repository", prov_id)
+        if relation_kind is not None and relation_kind not in RELATION_KINDS:
+            raise ValueError(f"Unknown relation_kind: {relation_kind!r}")
+        if evidence is not None and not isinstance(evidence, MappingOperationEvidence):
+            raise ValueError(
+                "evidence must be a MappingOperationEvidence instance or None"
+            )
+        with self._stored("repository_relation"):
+            return super().relations_for_provider_repository(
+                service,
+                prov_id,
+                relation_kind,
+                evidence=evidence,
+            )
+
+    def provider_repository_roles(
+        self, resource: ResourceKey, *, evidence: MappingOperationEvidence | None = None
+    ) -> tuple[QualifiedProviderRepositoryRole, ...]:
+        self._check()
+        if not isinstance(resource, ResourceKey):
+            raise ValueError("ResourceKey required")
+        if evidence is not None and not isinstance(evidence, MappingOperationEvidence):
+            raise ValueError("MappingOperationEvidence required")
+        with self._stored("Provider repository role"):
+            return super().provider_repository_roles(resource, evidence=evidence)
+
+    def transfer_event_reports(
+        self,
+        resource: ResourceKey | None = None,
+        *,
+        repository_uuidv4: str | None = None,
+        selected_repositories: Iterable[str] | None = None,
+    ) -> tuple[TransferEventReport, ...]:
+        self._check()
+        if resource is not None:
+            if not isinstance(resource, ResourceKey) or resource.resource_kind not in (
+                "issue",
+                "comment",
+            ):
+                raise ValueError(
+                    "transfer_event_reports requires an issue or comment resource"
+                )
+            if resource.resource_kind == "comment":
+                validate_timeline_event_coordinates(resource.provider_resource_id)
+        if repository_uuidv4 is not None:
+            uuid4_value(repository_uuidv4)
+        selected_tuple: tuple[str, ...] | None = None
+        if selected_repositories is not None:
+            selected_tuple = tuple(selected_repositories)
+            for repo_id in selected_tuple:
+                uuid4_value(repo_id)
+        with self._stored("transfer_event"):
+            return super().transfer_event_reports(
+                resource,
+                repository_uuidv4=repository_uuidv4,
+                selected_repositories=selected_tuple,
+            )
 
     def scope(self, scope: CoverageScope):
         self._check(write=True)

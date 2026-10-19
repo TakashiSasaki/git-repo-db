@@ -11,7 +11,9 @@ Verifies:
 
 from __future__ import annotations
 
+import hashlib
 import json
+from dataclasses import replace
 from pathlib import Path
 from uuid import uuid4
 
@@ -39,10 +41,46 @@ from repo_catalog.domain.exchange import (
     decode_package,
     encode_package,
 )
-from repo_catalog.domain.p1_context import ResourceKey
+from repo_catalog.domain.p1_context import (
+    FieldClock,
+    ResourceKey,
+    ResourceRepositoryRelation,
+    canonical,
+)
 from repo_catalog.domain.p1_coordination import RequestIdentity
 from repo_catalog.domain.p1_core import OID, CoreFailure
 from tests.integration.p5.conftest import build_sample_git_repo, init_catalog_stores
+
+
+def test_i3_relation_export_without_i2_acquisition(tmp_path: Path) -> None:
+    """Replaces I1 guard with direct I3 export; five integrated fixtures still need I2."""
+    repo, service = str(uuid4()), str(uuid4())
+    init_catalog_stores(
+        tmp_path, repository_uuidv4=repo, stores=("core", "context", "operational")
+    )
+    resource = ResourceKey(service, "issue", "7")
+    with Context.transaction(tmp_path) as context:
+        context.provider(service, "github", "{}")
+        context.repository(repo)
+        context.resource(resource)
+        context.admit_repository_relation(
+            ResourceRepositoryRelation(
+                resource,
+                "owning_repository",
+                FieldClock("event", 1),
+                canonical(repo),
+                make_provenance("fixture", "direct-I1"),
+                1,
+            )
+        )
+    package = ExchangeService(tmp_path).export_package(
+        selection=ExchangeSelectionScope(all_selected=True), exported_at_us=2
+    )
+    assert (
+        package.context["resource_repository_relations"][0]["relation_kind"]
+        == "owning_repository"
+    )
+    assert not (tmp_path / "p1-recovery-stop.json").exists()
 
 
 def _setup_source_catalog(
@@ -79,19 +117,36 @@ def _setup_source_catalog(
         "title": "Initial Feature PR",
         "state": "open",
         "body": "PR description body text",
-        "head": {"sha": oids["commit2"].full_oid, "ref": "feat/init"},
-        "base": {"sha": oids["commit1"].full_oid, "ref": "main"},
+        "head": {
+            "sha": oids["commit2"].full_oid,
+            "ref": "feat/init",
+            "repo": {"id": 2},
+        },
+        "base": {"sha": oids["commit1"].full_oid, "ref": "main", "repo": {"id": 1}},
     }
     batch = ProviderIntakeBatch(
         service_instance_uuidv4=service_uuid,
         providers=(ProviderRegistration(service_uuid, "github"),),
         repositories=(RepositoryRegistration(repo_uuid),),
+        mapping_claims=tuple(
+            ResourceRepositoryRelation(
+                ResourceKey(service_uuid, "repository", str(provider_id)),
+                "represents_repository",
+                FieldClock("fixture:mapping", 1),
+                canonical(repo_uuid),
+                make_provenance(
+                    "fixture",
+                    {"provider_id": provider_id, "binding": "explicit-test-report"},
+                ),
+                1,
+            )
+            for provider_id in (1, 2)
+        ),
         pull_requests=(
             ProviderPullRequestIntake(
                 pr_payload,
                 1_700_000_150_000_000,
                 prov_json,
-                repository_uuidv4=repo_uuid,
             ),
         ),
     )
@@ -115,7 +170,10 @@ def test_exchange_export_import_repeat_reverse_and_multi_hop(tmp_path: Path) -> 
 
     # 1. Export package from A
     svc_a = ExchangeService(cat_a)
-    pkg_a = svc_a.export_package(exported_at_us=1_700_000_200_000_000)
+    pkg_a = svc_a.export_package(
+        selection=ExchangeSelectionScope(all_selected=True),
+        exported_at_us=1_700_000_200_000_000,
+    )
     assert pkg_a.core is not None
     assert pkg_a.context is not None
 
@@ -133,6 +191,7 @@ def test_exchange_export_import_repeat_reverse_and_multi_hop(tmp_path: Path) -> 
         wire_bytes,
         request=RequestIdentity(pkg_a.sender_catalog_instance_uuidv4, pkg_a.package_id),
         new_request=True,
+        permitted_repository_uuidv4s=(repo_uuid,),
     )
     assert rep_b1.admitted_core_objects >= 3
     assert rep_b1.admitted_retained_metadata >= 3
@@ -149,13 +208,32 @@ def test_exchange_export_import_repeat_reverse_and_multi_hop(tmp_path: Path) -> 
     rep_b2 = svc_b.import_package(
         wire_bytes,
         request=RequestIdentity(pkg_a.sender_catalog_instance_uuidv4, pkg_a.package_id),
-        new_request=True,
+        new_request=False,
+        permitted_repository_uuidv4s=(repo_uuid,),
     )
     assert rep_b2.package_id == pkg_a.package_id
+    assert rep_b2.idempotent_replay
+
+    # Another genuine request cannot replace an already-bound PackageKey.
+    changed = replace(
+        pkg_a, exported_at_us=pkg_a.exported_at_us + 1, digest_sha256=None
+    )
+    with pytest.raises(ExchangeError, match="PACKAGE_KEY_REBOUND"):
+        svc_b.import_package(
+            changed,
+            request=RequestIdentity(str(uuid4()), str(uuid4())),
+            new_request=True,
+            permitted_repository_uuidv4s=(repo_uuid,),
+        )
 
     # 4. Reverse import (export from B, import back into A)
-    pkg_b = svc_b.export_package(exported_at_us=1_700_000_300_000_000)
-    rep_a = svc_a.import_package(pkg_b, new_request=True)
+    pkg_b = svc_b.export_package(
+        selection=ExchangeSelectionScope(all_selected=True),
+        exported_at_us=1_700_000_300_000_000,
+    )
+    rep_a = svc_a.import_package(
+        pkg_b, new_request=True, permitted_repository_uuidv4s=(repo_uuid,)
+    )
     assert rep_a.package_id == pkg_b.package_id
 
     # 5. Multi-hop (export from B, import into C)
@@ -163,7 +241,9 @@ def test_exchange_export_import_repeat_reverse_and_multi_hop(tmp_path: Path) -> 
         cat_c, repository_uuidv4=repo_uuid, stores=("core", "context", "operational")
     )
     svc_c = ExchangeService(cat_c)
-    rep_c = svc_c.import_package(pkg_b, new_request=True)
+    rep_c = svc_c.import_package(
+        pkg_b, new_request=True, permitted_repository_uuidv4s=(repo_uuid,)
+    )
     assert rep_c.admitted_core_objects >= 3
 
     with Context.snapshot(cat_c) as ctx_c:
@@ -183,7 +263,10 @@ def test_exchange_selective_filters_and_partial_input(tmp_path: Path) -> None:
         include_core=True,
         include_context=False,
         include_retained_bytes=False,
+        repository_uuidv4s=(repo_uuid,),
         object_oids=(oids["commit1"],),
+        resource_keys=(),
+        source_uuidv4s=(),
     )
     pkg = svc_src.export_package(selection=scope)
     assert pkg.context is None
@@ -199,7 +282,9 @@ def test_exchange_selective_filters_and_partial_input(tmp_path: Path) -> None:
         cat_dst, repository_uuidv4=repo_uuid, stores=("core", "context", "operational")
     )
     svc_dst = ExchangeService(cat_dst)
-    rep = svc_dst.import_package(pkg, new_request=True)
+    rep = svc_dst.import_package(
+        pkg, new_request=True, permitted_repository_uuidv4s=(repo_uuid,)
+    )
     assert rep.admitted_core_objects >= 1
     assert rep.admitted_retained_metadata == 0
 
@@ -213,7 +298,7 @@ def test_exchange_refuses_intrinsic_spoofing_without_validated_bytes(
     _setup_source_catalog(cat_a, repo_uuid, fmt="sha1")
 
     svc_a = ExchangeService(cat_a)
-    pkg = svc_a.export_package()
+    pkg = svc_a.export_package(selection=ExchangeSelectionScope(all_selected=True))
 
     # Modify package: strip retained_metadata bytes, but keep claims claiming authority="intrinsic"
     pkg_dict = json.loads(encode_package(pkg))
@@ -223,8 +308,6 @@ def test_exchange_refuses_intrinsic_spoofing_without_validated_bytes(
         claim["authority"] = "intrinsic"
 
     # A rewritten digest is only a checksum; independently reject intrinsic spoofing.
-    import hashlib
-
     content = {k: v for k, v in pkg_dict.items() if k != "digest_sha256"}
     pkg_dict["digest_sha256"] = hashlib.sha256(
         json.dumps(
@@ -236,8 +319,11 @@ def test_exchange_refuses_intrinsic_spoofing_without_validated_bytes(
         cat_b, repository_uuidv4=repo_uuid, stores=("core", "context", "operational")
     )
     svc_b = ExchangeService(cat_b)
-    rep = svc_b.import_package(pkg_dict, new_request=True)
+    rep = svc_b.import_package(
+        pkg_dict, new_request=True, permitted_repository_uuidv4s=(repo_uuid,)
+    )
     assert rep.package_id == pkg.package_id
+    assert rep.ignored_unverified_intrinsic_claims > 0
 
     # Receiver MUST ignore/refuse unverified intrinsic claims and not admit them as intrinsic!
     core_b = GitCore(cat_b / "core.sqlite3")
@@ -257,27 +343,49 @@ def test_exchange_refuses_tampered_payloads_without_store_corruption(
     _setup_source_catalog(cat_a, repo_uuid, fmt="sha1")
 
     svc_a = ExchangeService(cat_a)
-    wire_bytes = encode_package(svc_a.export_package())
+    wire_bytes = encode_package(
+        svc_a.export_package(selection=ExchangeSelectionScope(all_selected=True))
+    )
 
     init_catalog_stores(
         cat_b, repository_uuidv4=repo_uuid, stores=("core", "context", "operational")
     )
     svc_b = ExchangeService(cat_b)
 
+    def hostile_package(data):
+        data["package_id"] = str(uuid4())
+        content = {k: v for k, v in data.items() if k != "digest_sha256"}
+        data["digest_sha256"] = hashlib.sha256(
+            json.dumps(
+                content, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+            ).encode()
+        ).hexdigest()
+        return data
+
     # 1. Tamper retained_metadata raw bytes (hash mismatch)
     bad_dict = json.loads(wire_bytes)
-    if bad_dict["core"].get("retained_metadata"):
-        # Alter the hex bytes so hash no longer matches declared full_oid
-        bad_dict["core"]["retained_metadata"][0]["body_hex"] = "00" * 30
-        with pytest.raises((ExchangeError, CoreFailure)):
-            svc_b.import_package(bad_dict, new_request=True)
+    assert bad_dict["core"]["retained_metadata"]
+    # Alter the hex bytes so hash no longer matches declared full_oid
+    bad_dict["core"]["retained_metadata"][0]["body_hex"] = "00" * 30
+    with pytest.raises(CoreFailure) as native_failure:
+        svc_b.import_package(
+            hostile_package(bad_dict),
+            new_request=True,
+            permitted_repository_uuidv4s=(repo_uuid,),
+        )
+
+    assert native_failure.value.code == "NATIVE_INTEGRITY"
 
     # 2. Tamper text_bodies UTF-8 text (digest mismatch)
     bad_dict2 = json.loads(wire_bytes)
-    if bad_dict2["context"].get("text_bodies"):
-        bad_dict2["context"]["text_bodies"][0]["text_value"] = "tampered text value"
-        with pytest.raises((ExchangeError, CoreFailure)):
-            svc_b.import_package(bad_dict2, new_request=True)
+    assert bad_dict2["context"]["text_bodies"]
+    bad_dict2["context"]["text_bodies"][0]["text_value"] = "tampered text value"
+    with pytest.raises(ExchangeError, match="TEXT_DIGEST_MISMATCH"):
+        svc_b.import_package(
+            hostile_package(bad_dict2),
+            new_request=True,
+            permitted_repository_uuidv4s=(repo_uuid,),
+        )
 
     # 3. Smuggle ordinary blob into retained_metadata
     bad_dict3 = json.loads(wire_bytes)
@@ -286,13 +394,20 @@ def test_exchange_refuses_tampered_payloads_without_store_corruption(
             "object_format": "sha1",
             "full_oid": "1" * 40,
             "native_type": "blob",  # ORDINARY BLOB FORBIDDEN
-            "declared_size": 5,
+            "size": 5,
+            "physical_copy_uuidv4": str(uuid4()),
             "digest_sha256": "a" * 64,
             "body_hex": "68656c6c6f",
         }
     )
-    with pytest.raises((ExchangeError, CoreFailure)):
-        svc_b.import_package(bad_dict3, new_request=True)
+    with pytest.raises(CoreFailure) as retention_failure:
+        svc_b.import_package(
+            hostile_package(bad_dict3),
+            new_request=True,
+            permitted_repository_uuidv4s=(repo_uuid,),
+        )
+
+    assert retention_failure.value.code == "RETENTION_PURPOSE"
 
     # Verify that target catalog B was NEVER mutated or corrupted
     core_b = GitCore(cat_b / "core.sqlite3")
@@ -313,7 +428,13 @@ def test_exchange_evaluates_core_dependencies_against_receiver_core(
 
     # Export Context only from A (without Core objects)
     svc_a = ExchangeService(cat_a)
-    scope = ExchangeSelectionScope(include_core=False, include_context=True)
+    scope = ExchangeSelectionScope(
+        repository_uuidv4s=(repo_uuid,),
+        object_oids=(),
+        all_selected=True,
+        include_core=False,
+        include_context=True,
+    )
     pkg = svc_a.export_package(selection=scope)
 
     # Import Context into catalog B which lacks the referenced Git Core OIDs
@@ -321,7 +442,9 @@ def test_exchange_evaluates_core_dependencies_against_receiver_core(
         cat_b, repository_uuidv4=repo_uuid, stores=("core", "context", "operational")
     )
     svc_b = ExchangeService(cat_b)
-    rep = svc_b.import_package(pkg, new_request=True)
+    rep = svc_b.import_package(
+        pkg, new_request=True, permitted_repository_uuidv4s=(repo_uuid,)
+    )
     assert rep.admitted_context_resources >= 1
 
     # In catalog B, the imported PR's core_dependencies must have required=False because Core lacks the OID!

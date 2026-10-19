@@ -15,7 +15,10 @@ from repo_catalog.domain.p1_context import (
     CoverageScope,
     FieldCandidate,
     FieldClock,
+    ProviderRepositoryRoleScope,
+    ProviderRepositoryScope,
     ResourceKey,
+    ResourceRepositoryRelation,
     canonical,
 )
 from repo_catalog.domain.p1_core import (
@@ -62,6 +65,42 @@ class UnlimitedTestBudget:
 
     def charge(self, unit: str, amount: int) -> None:
         assert type(amount) is int and amount >= 0
+
+
+def admit_provider_role(context, resource, role, clock, provenance, observed):
+    provider = ResourceKey(SERVICE, "repository", "1001")
+    context.resource(provider)
+    context.admit_repository_relation(
+        ResourceRepositoryRelation(
+            provider,
+            "represents_repository",
+            clock,
+            canonical(REPOSITORY),
+            provenance,
+            observed,
+        )
+    )
+    scope = ProviderRepositoryScope(
+        {
+            role: ProviderRepositoryRoleScope(
+                role,
+                clock,
+                "unresolved_provider_only",
+                provider.provider_resource_id,
+                observed_at_us=observed,
+            )
+        }
+    )
+    context.relation(
+        ResourceRelation(
+            resource,
+            "provider_repository_roles",
+            (provider,),
+            provenance,
+            scope.encoded,
+            observed,
+        )
+    )
 
 
 def init_catalog(
@@ -398,9 +437,10 @@ def populate_rich_catalog(
 
         # Pull Request 42
         context.resource(pr_key, REPOSITORY)
-        context.admit_repository(
+        admit_provider_role(
+            context,
             pr_key,
-            REPOSITORY,
+            "base_repository",
             FieldClock("github:pr:updated_at", 100),
             ctx_prov_1,
             100,
@@ -585,9 +625,10 @@ def populate_rich_catalog(
 
         # Issue 7 and empty collection coverage
         context.resource(issue_key, REPOSITORY)
-        context.admit_repository(
+        admit_provider_role(
+            context,
             issue_key,
-            REPOSITORY,
+            "owning_repository",
             FieldClock("github:issue:updated_at", 90),
             ctx_prov_1,
             90,

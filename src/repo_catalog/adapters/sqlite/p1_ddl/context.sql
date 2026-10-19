@@ -40,6 +40,8 @@ CREATE TABLE resources(
  FOREIGN KEY(service_instance_uuidv4,parent_resource_kind,parent_provider_resource_id) REFERENCES resources(service_instance_uuidv4,resource_kind,provider_resource_id),
  PRIMARY KEY(service_instance_uuidv4,resource_kind,provider_resource_id)
 ) STRICT, WITHOUT ROWID;
+CREATE UNIQUE INDEX resources_typed_event_fk
+ ON resources(service_instance_uuidv4,resource_kind,provider_resource_id,document_kind,parent_resource_kind);
 CREATE TABLE text_bodies(
  sha256 TEXT PRIMARY KEY CHECK(length(sha256)=64 AND sha256 NOT GLOB '*[^0-9a-f]*'),
  text_value TEXT NOT NULL CHECK(p1_text_sha256(text_value)=sha256)
@@ -57,10 +59,9 @@ CREATE TABLE field_candidates(
  observed_at_us INTEGER CHECK(observed_at_us IS NULL OR (typeof(observed_at_us)='integer' AND observed_at_us>0)),
  clock_domain TEXT GENERATED ALWAYS AS(json_extract(clock_json,'$.domain')) VIRTUAL,
  source_clock_us INTEGER GENERATED ALWAYS AS(json_extract(clock_json,'$.at_us')) VIRTUAL,
- repository_uuidv4 TEXT GENERATED ALWAYS AS(CASE WHEN field_name='repository_uuidv4' THEN json_extract(value_json,'$') END) VIRTUAL REFERENCES repository_context,
  text_body_sha256 TEXT GENERATED ALWAYS AS(CASE WHEN field_name='text_body_sha256' THEN json_extract(value_json,'$') END) VIRTUAL REFERENCES text_bodies(sha256),
  CHECK(field_name!='text_body_sha256' OR json_type(value_json)='null' OR (json_type(value_json)='text' AND length(json_extract(value_json,'$'))=64 AND json_extract(value_json,'$') NOT GLOB '*[^0-9a-f]*')),
- CHECK(field_name!='repository_uuidv4' OR json_type(value_json)='null' OR (json_type(value_json)='text' AND p1_uuid4(json_extract(value_json,'$')))),
+ CHECK(field_name!='repository_uuidv4'),
  PRIMARY KEY(service_instance_uuidv4,resource_kind,provider_resource_id,field_name,clock_json,value_json,provenance_json),
  FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id) REFERENCES resources
 ) STRICT, WITHOUT ROWID;
@@ -243,3 +244,170 @@ CREATE TRIGGER source_coverage_current_terminal BEFORE INSERT ON source_coverage
 WHEN NEW.inventory_observed_at_us!=(SELECT MAX(i.observed_at_us) FROM source_inventory_evidence i WHERE i.source_registration_uuidv4=NEW.source_registration_uuidv4 AND i.scope_json=NEW.scope_json)
  OR EXISTS(SELECT 1 FROM source_inventory_evidence i WHERE i.source_registration_uuidv4=NEW.source_registration_uuidv4 AND i.scope_json=NEW.scope_json AND i.observed_at_us=NEW.inventory_observed_at_us AND i.coverage_state!='unknown' AND (i.coverage_state!=NEW.inventory_state OR i.members_json!=NEW.members_json OR i.terminal!=NEW.terminal))
 BEGIN SELECT RAISE(ABORT,'Source Coverage terminal is superseded or conflicting'); END;
+
+CREATE TABLE resource_repository_relations(
+ service_instance_uuidv4 TEXT NOT NULL,
+ resource_kind TEXT NOT NULL,
+ provider_resource_id TEXT NOT NULL,
+ relation_kind TEXT NOT NULL,
+ target_json TEXT NOT NULL CHECK(p1_mapping_target(target_json)=1),
+ clock_json TEXT NOT NULL CHECK(p1_mapping_clock(clock_json)=1),
+ provenance_json TEXT NOT NULL CHECK(p1_mapping_provenance(provenance_json)=1),
+ observed_at_us INTEGER CHECK(observed_at_us IS NULL OR (typeof(observed_at_us)='integer' AND observed_at_us>0)),
+ repository_uuidv4 TEXT GENERATED ALWAYS AS(CASE WHEN json_type(target_json)='text' THEN json_extract(target_json,'$') END) VIRTUAL REFERENCES repository_context(repository_uuidv4),
+ clock_domain TEXT GENERATED ALWAYS AS(json_extract(clock_json,'$.domain')) VIRTUAL,
+ source_clock_us INTEGER GENERATED ALWAYS AS(json_extract(clock_json,'$.at_us')) VIRTUAL,
+ event_document_kind TEXT GENERATED ALWAYS AS(CASE WHEN relation_kind IN('transfer_from_repository','transfer_to_repository') THEN 'timeline_event' END) VIRTUAL,
+ event_parent_resource_kind TEXT GENERATED ALWAYS AS(CASE WHEN relation_kind IN('transfer_from_repository','transfer_to_repository') THEN 'issue' END) VIRTUAL,
+ CHECK(typeof(source_clock_us) IN('integer','null')),
+ CHECK((relation_kind='represents_repository' AND resource_kind='repository') OR (relation_kind='owning_repository' AND resource_kind='issue') OR (relation_kind IN('base_repository','head_repository') AND resource_kind='pull_request') OR (relation_kind IN('transfer_from_repository','transfer_to_repository') AND resource_kind='comment')),
+ CHECK(relation_kind!='represents_repository' OR json_type(target_json)='text'),
+ PRIMARY KEY(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,clock_json,target_json,provenance_json),
+ FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id) REFERENCES resources(service_instance_uuidv4,resource_kind,provider_resource_id),
+ FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id,event_document_kind,event_parent_resource_kind) REFERENCES resources(service_instance_uuidv4,resource_kind,provider_resource_id,document_kind,parent_resource_kind)
+) STRICT, WITHOUT ROWID;
+CREATE INDEX rrr_by_repository ON resource_repository_relations(
+ repository_uuidv4,relation_kind,service_instance_uuidv4,resource_kind,provider_resource_id
+) WHERE repository_uuidv4 IS NOT NULL;
+CREATE INDEX rrr_current_clock ON resource_repository_relations(
+ service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,clock_domain,source_clock_us DESC
+) WHERE relation_kind IN('owning_repository','base_repository','head_repository') AND source_clock_us IS NOT NULL;
+CREATE INDEX rrr_event_report ON resource_repository_relations(
+ service_instance_uuidv4,resource_kind,provider_resource_id,clock_json,provenance_json,relation_kind
+) WHERE relation_kind IN('transfer_from_repository','transfer_to_repository');
+CREATE TRIGGER rrr_no_update BEFORE UPDATE ON resource_repository_relations
+BEGIN SELECT RAISE(ABORT,'immutable repository relation'); END;
+CREATE TRIGGER rrr_event_report_time BEFORE INSERT ON resource_repository_relations
+WHEN NEW.relation_kind IN('transfer_from_repository','transfer_to_repository')
+ AND EXISTS(
+  SELECT 1 FROM resource_repository_relations peer
+  WHERE peer.service_instance_uuidv4=NEW.service_instance_uuidv4
+    AND peer.resource_kind=NEW.resource_kind
+    AND peer.provider_resource_id=NEW.provider_resource_id
+    AND peer.clock_json=NEW.clock_json
+    AND peer.provenance_json=NEW.provenance_json
+    AND peer.relation_kind IN('transfer_from_repository','transfer_to_repository')
+    AND NOT (peer.relation_kind=NEW.relation_kind AND peer.target_json=NEW.target_json)
+    AND peer.observed_at_us IS NOT NEW.observed_at_us
+ )
+BEGIN SELECT RAISE(ABORT,'transfer event report observed_at_us mismatch'); END;
+CREATE TRIGGER rrr_no_rebind BEFORE INSERT ON resource_repository_relations
+WHEN EXISTS(
+ SELECT 1 FROM resource_repository_relations existing
+ WHERE existing.service_instance_uuidv4=NEW.service_instance_uuidv4
+   AND existing.resource_kind=NEW.resource_kind
+   AND existing.provider_resource_id=NEW.provider_resource_id
+   AND existing.relation_kind=NEW.relation_kind
+   AND existing.clock_json=NEW.clock_json
+   AND existing.target_json=NEW.target_json
+   AND existing.provenance_json=NEW.provenance_json
+   AND existing.observed_at_us IS NOT NEW.observed_at_us
+) OR (
+ NEW.relation_kind IN('owning_repository','base_repository','head_repository')
+ AND NEW.source_clock_us IS NOT NULL
+ AND EXISTS(
+  SELECT 1 FROM resource_repository_relations later
+  WHERE later.service_instance_uuidv4=NEW.service_instance_uuidv4
+    AND later.resource_kind=NEW.resource_kind
+    AND later.provider_resource_id=NEW.provider_resource_id
+    AND later.relation_kind=NEW.relation_kind
+    AND later.clock_domain=NEW.clock_domain
+    AND later.source_clock_us>NEW.source_clock_us
+ )
+)
+BEGIN
+ SELECT CASE
+  WHEN EXISTS(
+   SELECT 1 FROM resource_repository_relations existing
+   WHERE existing.service_instance_uuidv4=NEW.service_instance_uuidv4
+     AND existing.resource_kind=NEW.resource_kind
+     AND existing.provider_resource_id=NEW.provider_resource_id
+     AND existing.relation_kind=NEW.relation_kind
+     AND existing.clock_json=NEW.clock_json
+     AND existing.target_json=NEW.target_json
+     AND existing.provenance_json=NEW.provenance_json
+     AND existing.observed_at_us IS NOT NEW.observed_at_us
+  ) THEN RAISE(ABORT,'resource_repository_relations observed_at_us rebind')
+  ELSE RAISE(ABORT,'stale current repository relation candidate')
+ END;
+END;
+CREATE TRIGGER rrr_delete_guard BEFORE DELETE ON resource_repository_relations
+WHEN OLD.relation_kind NOT IN('owning_repository','base_repository','head_repository')
+  OR OLD.source_clock_us IS NULL
+  OR NOT EXISTS(
+   SELECT 1 FROM resource_repository_relations later
+   WHERE later.service_instance_uuidv4=OLD.service_instance_uuidv4
+     AND later.resource_kind=OLD.resource_kind
+     AND later.provider_resource_id=OLD.provider_resource_id
+     AND later.relation_kind=OLD.relation_kind
+     AND later.clock_domain=OLD.clock_domain
+     AND later.source_clock_us>OLD.source_clock_us
+  )
+BEGIN SELECT RAISE(ABORT,'only dominated current candidates may be deleted'); END;
+CREATE TRIGGER rrr_prune_dominated AFTER INSERT ON resource_repository_relations
+WHEN NEW.relation_kind IN('owning_repository','base_repository','head_repository')
+  AND NEW.source_clock_us IS NOT NULL
+BEGIN
+ DELETE FROM resource_repository_relations
+ WHERE service_instance_uuidv4=NEW.service_instance_uuidv4
+   AND resource_kind=NEW.resource_kind
+   AND provider_resource_id=NEW.provider_resource_id
+   AND relation_kind=NEW.relation_kind
+   AND clock_domain=NEW.clock_domain
+   AND source_clock_us IS NOT NULL
+   AND source_clock_us<NEW.source_clock_us;
+END;
+CREATE TABLE repository_mapping_dispositions(
+ service_instance_uuidv4 TEXT NOT NULL,
+ resource_kind TEXT NOT NULL CHECK(resource_kind='repository'),
+ provider_resource_id TEXT NOT NULL,
+ relation_kind TEXT NOT NULL CHECK(relation_kind='represents_repository'),
+ claim_clock_json TEXT NOT NULL CHECK(p1_mapping_clock(claim_clock_json)=1),
+ claim_target_json TEXT NOT NULL CHECK(p1_mapping_target(claim_target_json)=1 AND json_type(claim_target_json)='text'),
+ claim_provenance_json TEXT NOT NULL CHECK(p1_mapping_provenance(claim_provenance_json)=1),
+ disposition_kind TEXT NOT NULL CHECK(disposition_kind IN('withdraw','correct','dispute')),
+ disposition_clock_json TEXT NOT NULL CHECK(p1_mapping_clock(disposition_clock_json)=1),
+ disposition_provenance_json TEXT NOT NULL CHECK(p1_mapping_provenance(disposition_provenance_json)=1),
+ observed_at_us INTEGER CHECK(observed_at_us IS NULL OR (typeof(observed_at_us)='integer' AND observed_at_us>0)),
+ replacement_clock_json TEXT CHECK(replacement_clock_json IS NULL OR p1_mapping_clock(replacement_clock_json)=1),
+ replacement_target_json TEXT CHECK(replacement_target_json IS NULL OR (p1_mapping_target(replacement_target_json)=1 AND json_type(replacement_target_json)='text')),
+ replacement_provenance_json TEXT CHECK(replacement_provenance_json IS NULL OR p1_mapping_provenance(replacement_provenance_json)=1),
+ CHECK((disposition_kind='correct' AND replacement_clock_json IS NOT NULL AND replacement_target_json IS NOT NULL AND replacement_provenance_json IS NOT NULL) OR (disposition_kind!='correct' AND replacement_clock_json IS NULL AND replacement_target_json IS NULL AND replacement_provenance_json IS NULL)),
+ CHECK(disposition_kind!='correct' OR replacement_clock_json!=claim_clock_json OR replacement_target_json!=claim_target_json OR replacement_provenance_json!=claim_provenance_json),
+ PRIMARY KEY(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,claim_clock_json,claim_target_json,claim_provenance_json,disposition_kind,disposition_clock_json,disposition_provenance_json),
+ FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,claim_clock_json,claim_target_json,claim_provenance_json) REFERENCES resource_repository_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,clock_json,target_json,provenance_json) ON DELETE RESTRICT,
+ FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,replacement_clock_json,replacement_target_json,replacement_provenance_json) REFERENCES resource_repository_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,clock_json,target_json,provenance_json) ON DELETE RESTRICT
+) STRICT, WITHOUT ROWID;
+CREATE INDEX rmd_by_provider_target ON repository_mapping_dispositions(
+ service_instance_uuidv4,resource_kind,provider_resource_id,claim_target_json,disposition_kind
+);
+CREATE INDEX rmd_by_replacement ON repository_mapping_dispositions(
+ service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,replacement_clock_json,replacement_target_json,replacement_provenance_json
+) WHERE replacement_target_json IS NOT NULL;
+CREATE TRIGGER rmd_no_rebind BEFORE INSERT ON repository_mapping_dispositions
+WHEN EXISTS(
+ SELECT 1 FROM repository_mapping_dispositions existing
+ WHERE existing.service_instance_uuidv4=NEW.service_instance_uuidv4
+   AND existing.resource_kind=NEW.resource_kind
+   AND existing.provider_resource_id=NEW.provider_resource_id
+   AND existing.relation_kind=NEW.relation_kind
+   AND existing.claim_clock_json=NEW.claim_clock_json
+   AND existing.claim_target_json=NEW.claim_target_json
+   AND existing.claim_provenance_json=NEW.claim_provenance_json
+   AND existing.disposition_kind=NEW.disposition_kind
+   AND existing.disposition_clock_json=NEW.disposition_clock_json
+   AND existing.disposition_provenance_json=NEW.disposition_provenance_json
+   AND (
+    existing.observed_at_us IS NOT NEW.observed_at_us
+    OR existing.replacement_clock_json IS NOT NEW.replacement_clock_json
+    OR existing.replacement_target_json IS NOT NEW.replacement_target_json
+    OR existing.replacement_provenance_json IS NOT NEW.replacement_provenance_json
+   )
+)
+BEGIN SELECT RAISE(ABORT,'repository_mapping_dispositions payload rebind'); END;
+CREATE TRIGGER rmd_no_update BEFORE UPDATE ON repository_mapping_dispositions
+BEGIN SELECT RAISE(ABORT,'immutable mapping disposition'); END;
+CREATE TRIGGER rmd_no_delete BEFORE DELETE ON repository_mapping_dispositions
+BEGIN SELECT RAISE(ABORT,'immutable mapping disposition'); END;
+
+

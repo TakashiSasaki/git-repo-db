@@ -29,7 +29,7 @@ from repo_catalog.application.acquisition import (
 from repo_catalog.application.exchange import ExchangeService
 from repo_catalog.domain.access_registry import AccessRegistryError
 from repo_catalog.domain.acquisition import GitMetadataInput, NotesAcquisitionSpec
-from repo_catalog.domain.exchange import ExchangeError
+from repo_catalog.domain.exchange import ExchangeSelectionScope
 from repo_catalog.domain.p1_coordination import CoordinationError, RequestIdentity
 from repo_catalog.domain.p1_core import (
     OID,
@@ -294,19 +294,27 @@ def test_nonseed_external_metadata_preserves_pairing_and_replay(tmp_path, fmt, p
         assert core.catalog_identity() == (seed, instance)
     same_seed = tmp_path / "same-seed"
     init_catalog_stores(same_seed, repository_uuidv4=seed)
-    package = ExchangeService(cat).export_package()
-    ExchangeService(same_seed).import_package(package, work=UnlimitedWorkBudget())
-    forwarded = ExchangeService(same_seed).export_package()
+    package = ExchangeService(cat).export_package(
+        selection=ExchangeSelectionScope(all_selected=True)
+    )
+    ExchangeService(same_seed).import_package(
+        package, new_request=True, permitted_repository_uuidv4s=(seed, target)
+    )
+    forwarded = ExchangeService(same_seed).export_package(
+        selection=ExchangeSelectionScope(all_selected=True)
+    )
     assert forwarded.core["repository_claims"] == package.core["repository_claims"]
     assert forwarded.core["git_observations"] == package.core["git_observations"]
     other = tmp_path / "different-seed"
     init_catalog_stores(other)
-    before = authoritative_rows(other)
-    # Until an explicit repository-set Exchange contract exists, keep this fence.
-    with pytest.raises(ExchangeError) as error:
-        ExchangeService(other).import_package(package, work=UnlimitedWorkBudget())
-    assert error.value.code == "REPOSITORY_MISMATCH"
-    assert authoritative_rows(other) == before
+    ExchangeService(other).import_package(
+        package, new_request=True, permitted_repository_uuidv4s=(seed, target)
+    )
+    with closing(GitCore(other / "core.sqlite3")) as core:
+        assert target in {
+            r[0] for r in core.sql("SELECT repository_uuidv4 FROM repositories")
+        }
+    assert authoritative_rows(other) != authoritative_rows(cat)
 
 
 @pytest.mark.parametrize(

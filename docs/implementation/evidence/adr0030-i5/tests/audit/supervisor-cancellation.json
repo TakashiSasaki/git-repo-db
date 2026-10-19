@@ -1,0 +1,5 @@
+{
+  "reason": "Avoid duplicate mutable I5/additional execution; separate base-only supervisor owns supplemental set",
+  "ci_receipt_captured_before_cancellation": true,
+  "terminated_child_pids": []
+}

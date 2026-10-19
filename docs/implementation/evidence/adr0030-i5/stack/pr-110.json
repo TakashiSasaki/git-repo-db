@@ -1,0 +1,32 @@
+{
+  "number": 110,
+  "url": "https://github.com/TakashiSasaki/git-repo-db/pull/110",
+  "state": "open",
+  "draft": true,
+  "head": "8519056d5b9484eb0cc4dcf9f693285b4e65518a",
+  "head_branch": "impl/adr-0030-i23-integration-20261019",
+  "base": "9b8a6ad9b761bf23b45eda9f84d639569cee56ef",
+  "base_branch": "impl/adr-0030-i2-provider-intake-20261019",
+  "mergeable": true,
+  "mergeable_state": "unstable",
+  "test_merge": "96aea8417693571c10d93ec0edd076f601e553d9",
+  "tree": "a77503505127367e9378c57c5ab9ee9ae11767f3",
+  "checks": [
+    {
+      "id": 118157570635,
+      "name": "registry-sqlite-3513",
+      "status": "completed",
+      "conclusion": "failure",
+      "details_url": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/39281865746/job/118157570635",
+      "head_sha": "8519056d5b9484eb0cc4dcf9f693285b4e65518a"
+    },
+    {
+      "id": 118157570517,
+      "name": "offline",
+      "status": "completed",
+      "conclusion": "success",
+      "details_url": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/39281865693/job/118157570517",
+      "head_sha": "8519056d5b9484eb0cc4dcf9f693285b4e65518a"
+    }
+  ]
+}

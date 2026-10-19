@@ -1,0 +1,43 @@
+{
+  "source_head": "35929d3a06c56545c5982fc8fb57c8d97fc965a2",
+  "source_tree": "b02e8f98c43047ce775e43f7dc088b227d376594",
+  "runtime_input_sha256": "d59c2b7ca019b031b37c1a31b19fb648bd184bb3a8236deab59473aac6c33f2d",
+  "command": ".venv/bin/python <clean-git-archive>/scripts/verify_access_distribution.py",
+  "clean_source": "git archive HEAD into /tmp/i3-artifact-final66; builds and installed smoke run outside checkout",
+  "results": [
+    {
+      "sqlite": "3.53.1",
+      "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+      "module_origin": "/tmp/access-distribution-hr70shps/wheel/lib/python3.12/site-packages/repo_catalog/__init__.py",
+      "interpreter": "/tmp/access-distribution-hr70shps/wheel/bin/python",
+      "ddl_sha256": "89bcafeda815150fa4770f5758edf7d2d36d505b76717aa19054f9ad689765da",
+      "context_ddl_sha256": "fa7838f86d9f0ab4b2f26c561ad0721df2d0c7dad45ee97e72ff09cbb89ac434",
+      "table_count": 19,
+      "exchange_format": "git-repo-db/adr0030-exchange-v4",
+      "local_git_acquired": true,
+      "access_backup_restored": true,
+      "scope_forked": true,
+      "installed_smoke": "passed",
+      "artifact_kind": "wheel",
+      "wheel_sha256": "fa4601f9d1ada51c20db6ced30033640826c4d11fde0e75dce279cfe02563fc0",
+      "source_sdist_sha256": "ace4d6a4080a03aa6329580cda6633dd2a0e179378ada4a1be724e5f14829c65"
+    },
+    {
+      "sqlite": "3.53.1",
+      "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+      "module_origin": "/tmp/access-distribution-hr70shps/sdist-wheel/lib/python3.12/site-packages/repo_catalog/__init__.py",
+      "interpreter": "/tmp/access-distribution-hr70shps/sdist-wheel/bin/python",
+      "ddl_sha256": "89bcafeda815150fa4770f5758edf7d2d36d505b76717aa19054f9ad689765da",
+      "context_ddl_sha256": "fa7838f86d9f0ab4b2f26c561ad0721df2d0c7dad45ee97e72ff09cbb89ac434",
+      "table_count": 19,
+      "exchange_format": "git-repo-db/adr0030-exchange-v4",
+      "local_git_acquired": true,
+      "access_backup_restored": true,
+      "scope_forked": true,
+      "installed_smoke": "passed",
+      "artifact_kind": "sdist-wheel",
+      "wheel_sha256": "fa4601f9d1ada51c20db6ced30033640826c4d11fde0e75dce279cfe02563fc0",
+      "source_sdist_sha256": "ace4d6a4080a03aa6329580cda6633dd2a0e179378ada4a1be724e5f14829c65"
+    }
+  ]
+}

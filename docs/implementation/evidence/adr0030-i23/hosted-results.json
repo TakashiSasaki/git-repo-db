@@ -1,0 +1,97 @@
+{
+  "run_id": 39280209622,
+  "job_id": 118152806024,
+  "artifact_id": 12201120483,
+  "url": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/39280209622",
+  "feature_sha": "6d50ba22f4b3092516bce004de4611a1a5bd566d",
+  "revision": {
+    "checked_out_commit": "02804e9359ab8e1e0d0f496b76e573e4d97c327d",
+    "effective_tree": "476ee24311a78efa3048b301ea598f22fb13bc45",
+    "event_commit": "02804e9359ab8e1e0d0f496b76e573e4d97c327d"
+  },
+  "runtime": "Python: 3.12.15 SQLite: 3.51.3 source: 2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618",
+  "collected": 2069,
+  "counts": {
+    "passed": 2042,
+    "failure": 27
+  },
+  "groups": {
+    "unit": {
+      "passed": 456
+    },
+    "access": {
+      "passed": 483
+    },
+    "i2": {
+      "passed": 48
+    },
+    "i23": {
+      "passed": 34
+    },
+    "p1": {
+      "passed": 150
+    },
+    "p3": {
+      "passed": 80
+    },
+    "p5": {
+      "passed": 48
+    },
+    "i3": {
+      "passed": 66
+    },
+    "p2": {
+      "passed": 197
+    },
+    "p4": {
+      "passed": 202
+    },
+    "p6": {
+      "failure": 27,
+      "passed": 23
+    },
+    "p7": {
+      "passed": 255
+    }
+  },
+  "failed_nodes": [
+    "tests/integration/p6/test_cli.py::test_cli_all_subcommands_pagination_and_error_handling",
+    "tests/integration/p6/test_corrections.py::test_metadata_queries_do_not_hydrate_or_rehash_all_retained_bodies",
+    "tests/integration/p6/test_corrections.py::test_core_and_context_snapshot_capabilities_expire",
+    "tests/integration/p6/test_corrections.py::test_snapshot_budget_refusal_preserves_ordinary_reads[paired]",
+    "tests/integration/p6/test_corrections.py::test_snapshot_budget_refusal_preserves_ordinary_reads[core_only]",
+    "tests/integration/p6/test_corrections.py::test_snapshot_budget_refusal_preserves_ordinary_reads[context_only]",
+    "tests/integration/p6/test_corrections.py::test_literal_unicode_short_special_search_semantics_and_cost_phases[\\u65e5\\u672c\\u8a9e]",
+    "tests/integration/p6/test_corrections.py::test_literal_unicode_short_special_search_semantics_and_cost_phases[\\U0001f600]",
+    "tests/integration/p6/test_corrections.py::test_literal_unicode_short_special_search_semantics_and_cost_phases[a]",
+    "tests/integration/p6/test_corrections.py::test_literal_unicode_short_special_search_semantics_and_cost_phases[*]",
+    "tests/integration/p6/test_corrections.py::test_literal_unicode_short_special_search_semantics_and_cost_phases[\"]",
+    "tests/integration/p6/test_corrections.py::test_literal_unicode_short_special_search_semantics_and_cost_phases[\\\\]",
+    "tests/integration/p6/test_corrections.py::test_literal_unicode_short_special_search_semantics_and_cost_phases[\\x00]",
+    "tests/integration/p6/test_corrections.py::test_literal_unicode_short_special_search_semantics_and_cost_phases[caf\\xe9]",
+    "tests/integration/p6/test_corrections.py::test_literal_unicode_short_special_search_semantics_and_cost_phases[p6]",
+    "tests/integration/p6/test_corrections.py::test_literal_unicode_short_special_search_semantics_and_cost_phases[P6]",
+    "tests/integration/p6/test_corrections.py::test_oversize_derivative_row_falls_back_before_text_construction",
+    "tests/integration/p6/test_corrections.py::test_derivative_deep_json_falls_back_without_catalog_stop",
+    "tests/integration/p6/test_pagination_snapshots.py::test_deterministic_pagination_across_all_endpoints",
+    "tests/integration/p6/test_pagination_snapshots.py::test_open_snapshot_isolation_and_stale_cursor_fencing_after_write",
+    "tests/integration/p6/test_pagination_snapshots.py::test_malformed_tampered_and_cross_endpoint_cursors_fail_closed",
+    "tests/integration/p6/test_queries.py::test_context_only_queries_resources_fields_relations_inventories_and_coverage",
+    "tests/integration/p6/test_queries.py::test_paired_cross_store_resolution_present_vs_absent_core_oids[sha1]",
+    "tests/integration/p6/test_queries.py::test_paired_cross_store_resolution_present_vs_absent_core_oids[sha256]",
+    "tests/integration/p6/test_queries.py::test_verification_aware_byte_reads_detect_corruption_and_fence_catalog",
+    "tests/integration/p6/test_search_fallback.py::test_search_projection_and_five_fallback_scenarios_never_stop_catalog[sha1]",
+    "tests/integration/p6/test_search_fallback.py::test_search_projection_and_five_fallback_scenarios_never_stop_catalog[sha256]"
+  ],
+  "known_p6_same_nodes": true,
+  "selected_equals_junit": true,
+  "all_input_hashes_match": 420,
+  "artifact_sha256": "7a26ea0bb6487472b1e6e069a5a88dd0a86bfb0f810ae4866a1e10df205ecc38",
+  "artifact_upload_digest_matches": true,
+  "artifact_bytes": 39182912,
+  "full_acceptance": false,
+  "job_log_failure": "pytest exit1 (27 known P6); Access acceptance audit also refuses failed nodes",
+  "packaging": "both isolated installed smokes passed on actual3.51.3",
+  "phase_scope": "Hosted artifact has collection/JUnit, no journal; no hosted per-phase exactly-once claim.",
+  "metadata_discrepancy": "Status metadata snapshot reported queued despite completed log and digest-verified artifact."
+}

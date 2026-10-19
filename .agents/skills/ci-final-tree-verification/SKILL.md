@@ -68,6 +68,44 @@ For bounded local inspection, use the
 Its summary helper validates consistency without claiming source/hosted release
 qualification. Frozen historical reports and execution input hashes stay intact.
 
+## Inventory beyond a focused CI cohort
+
+For assembled acceptance, collect `tests/` with `-o addopts=` before applying
+ordinary/live/benchmark markers. A green focused cohort does not cover omitted
+nodes. Install both locked dev and docs groups: the ordinary docs-build tests
+import PyYAML from the docs group. Prepare the locked wheelhouse before offline
+packaging tests, and verify its manifest/lock and wheel digests. Dependency
+preparation is distinct from executing Provider acquisition.
+
+Use `scripts/verify_i5_offline.py --output NEW_EMPTY_DIR --execute` with the
+actual SQLite 3.51.3 interpreter for disjoint focused/additional/benchmark
+cohorts, quiet raw logs, JUnit/journal reconciliation and input hashes. It is
+an acceptance evidence helper, not a release receipt. It refuses live nodes;
+report those as unexecuted. Its default xdist workers isolate disposable Catalogs;
+benchmark cases run separately without a concurrent timing comparison claim.
+
+Include the intended venv's `bin` directory in PATH as well as selecting its
+Python: subprocess `repo-catalog` must resolve to the same installed runtime.
+I5 first reproduced FileNotFoundError from a missing CLI PATH, then independently
+passed the same CLI/backup cases after fixing only the launcher. Preserve such
+environment failures instead of labeling them product defects or deleting tests.
+
+Exercise the installed pytest scripts as well as a dedicated distribution smoke.
+I5 found four omitted P5 artifact fixtures still calling the retired I2 producer
+argument, then relying on pre-I3 implicit selection/permissions. Preserve the
+failure and baseline comparison; modernize genuine Provider roles/Mapping support
+and explicit Exchange intent while retaining the original assertions. Do not
+restore the retired product API or count the earlier failed run as passed.
+
+Freeze input bytes before collection. If another worker adds tests in a shared
+checkout, separate the immutable base-node inventory from the new tests and
+recollect the final tree. Require normal subprocess completion and exact node
+multisets; interrupted JUnit may contain a case without a completed result.
+Missing process-exit evidence must stay missing. Never infer success from a
+zombie process, progress dots, a partial XML case count or another run's badge.
+See the [I5 merge preparation](../../../docs/implementation/adr0030-i5-merge-plan.md)
+and its independently retained execution receipts.
+
 ## Development validation loop (ordinary PRs and stacked iterations)
 
 Before an exact SQLite-minimum run, query the actual loaded version and
@@ -219,6 +257,16 @@ Do not infer subprocess source identity from the parent's import path or a passe
 `PYTHONPATH` alone. This procedure retains the network guard; do not remove it to
 force another checkout to import.
 
+An external probe path above the frozen checkout can make pytest select the
+parent directory's `pyproject.toml` and prepend the wrong source through its
+`pythonpath`, even with the correct editable venv. Use explicit
+`-c /absolute/frozen/pyproject.toml` when mixing external probes with a frozen
+archive. Assert `config.inipath` and the actual imported validator/module path at
+session start before attributing results to that tree. I4 independent review
+preserved an old-source failure from this harness mistake, then passed the
+correctly bound run. Do not present the misbound run as a regression of the
+corrected source.
+
 For imported contract replay tests, reconcile collected node IDs with JUnit
 `classname` and test `name`, not its `file` attribute alone. P2's imported P1 test
 functions correctly run with the production fixture under a P2 collection module,
@@ -259,3 +307,65 @@ feature tracking refs stale. Fetch the intended refs explicitly, compare direct
 before an ordinary non-force reconciliation. A rejected push is a synchronization
 boundary, not authorization to force-push. Evidence-only commits must retain the
 frozen executable input hashes; report tested source SHA and final PR SHA apart.
+
+## Classify the first reached failure, separately from future ownership
+
+When a downstream integration test fails during a source fixture, record that
+direct exception and the unexecuted stage separately. PR #107's five P5 Exchange
+tests stopped in acquisition with UNSUPPORTED_UNTIL_I2; their names did not prove
+that an I3 guard or Exchange validation ran. Use a separate I1-seeded source to
+exercise the I3 boundary without I2, and keep the original integration failures
+visible until I2 supplies their real fixtures. A passing unsupported-boundary
+assertion proves refusal, not implementation of the deferred stage. Likewise,
+retired API fixture failures precede query behavior; do not claim query acceptance
+from those runs or restore a retired compatibility shim just to turn them green.
+
+
+## Resolve stale status with exact job logs and artifact bindings
+
+If run/job metadata remains queued while cancellation reports completion, verify
+rather than infer either state. ADR 0030 integration observed queued metadata
+alongside a complete job log and uploaded artifact for the same job/feature SHA.
+Use the supported GitHub job-log connector for the exact job ID; preserve the
+metadata snapshot, actual log and their discrepancy. Inspect real runtime, pytest
+summary, process exits, cleanup and artifact ID. A completed failed run remains
+failed even when every newly implemented test passed.
+
+If cloud artifact redirection returns403, the authorized GitHub artifact-download
+connector can supply a reusable file reference. Preserve the failed retrieval
+without temporary signed URLs. Verify downloaded ZIP bytes against the actual
+upload-log length/SHA256, then inspect allowlisted receipt members without blind
+extraction. Bind source-revision, archived input hashes, actual SQLite source ID,
+collection/JUnit multisets and failure inventory to the feature tree. Distinguish
+static development receipts with zero runtime tests from the separate minimum
+SQLite job. This is a supported retrieval route, not permission to bypass network
+policy, fabricate missing receipts or reinterpret failed acceptance as green.
+See the [I2/I3 evidence](../../../docs/implementation/evidence/adr0030-i23/README.md).
+
+## Provider-qualified projections after ADR 0030
+
+When retired Context Repository-field fixtures fail before Query/Search executes,
+replace their setup with genuine typed Provider-role observations and explicit
+Mapping claims. Do not revive `admit_repository()` or its special field. Current
+ownership/base/head must come from `provider_repository_roles(..., evidence=...)`;
+retained Core-target rows can outlive a newer unresolved Provider observation.
+Verify both facts in the same counterexample, and check repository-filtered lists
+as well as the single-resource view. A Mapping Disposition report alone supplies
+no receiver operation evidence.
+
+Derivative keys need the complete original role scope, not only Resource, role,
+clock and provenance: two equal-clock Provider alternatives can share all those
+coordinates while differing in their Provider target. Assert that both survive
+Search rebuild and result projection. Preserve current/historical qualifiers and
+recompute qualification from authority on every search read. I4's counterexamples
+in `tests/integration/i4/test_query_search_backup.py` exercise this boundary;
+run `pytest -q tests/integration/i4 tests/integration/p6` on the supported runtime.
+These are projection rules, not permission to issue Mapping evidence, rewrite
+original keys or infer execution approval from a Mapping.
+
+For backup semantic decoder changes, test the source Stop as well as refusal of
+an invalid restored copy. A generic cause-chain classifier may correctly reject
+unexpected adapter ValueError as indeterminate yet misclassify a trusted decoder's
+proven stored-data violation. Preserve the cause, use an explicit typed invariant
+boundary and check both confirmed corruption and existing IO/lock/budget/error
+negative controls. Do not classify every ValueError as authoritative corruption.

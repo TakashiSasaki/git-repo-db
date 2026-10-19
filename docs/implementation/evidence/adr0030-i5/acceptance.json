@@ -1,0 +1,91 @@
+{
+  "stage": "ADR0030-I5",
+  "status": "accepted_in_executed_synthetic_offline_scope",
+  "base_head": "a54cb218226e3c91c44e979ee0df0543ea459502",
+  "base_tree": "cc2eafaaeb8e3305270c17e74ae69edc42c0a50b",
+  "reviewed_source_head": "c2c3735439a714bbc9d4128421e7be2c0e88f5b4",
+  "reviewed_source_tree": "fdafb830ba63a7f547c5882fe677f9d25ae36bd3",
+  "repository_tests": {
+    "all_collected": 4934,
+    "ordinary_collected": 4932,
+    "nonlive_collected": 4933,
+    "current_hosted_ci_cohort": 2353,
+    "successful_unique_nonlive": 4933,
+    "not_executed_live": 1,
+    "unresolved_failures": 0,
+    "errors": 0,
+    "skips": 0,
+    "xfail": 0,
+    "one_monolithic_final_head_run": false,
+    "original_supplement": {
+      "collected": 2583,
+      "executed": 2583,
+      "passed": 2579,
+      "failed": 4,
+      "exit_code": 1
+    },
+    "same_four_after_fixture_correction": {
+      "collected": 4,
+      "executed": 4,
+      "passed": 4,
+      "failed": 0,
+      "independently_reexecuted": true
+    }
+  },
+  "new_e2e": {
+    "collected": 20,
+    "executed": 20,
+    "passed": 20
+  },
+  "independent": {
+    "first_source_distinct_nodes": 473,
+    "corrected_source_new_distinct_installed_nodes": 4,
+    "total_distinct_review_nodes": 477,
+    "helper_controls": 7,
+    "unresolved_material_findings": 0,
+    "verdict": "PASS_in_reviewed_scope"
+  },
+  "distribution": {
+    "source_and_installed_smokes": 5,
+    "static_audits": 8,
+    "wheel_sha256": "2ec7c49a81734088ef6f15564c548448f7e79b1786ef86d12bf828c1dd3969cc",
+    "sdist_sha256": "6d420078e1b8c44a64536a0c66a0f51813e109af459b18fe90735c5dbd358c04"
+  },
+  "hosted": {
+    "offline_run": 39296461619,
+    "registry_run": 39296461636,
+    "registry_collected": 2353,
+    "registry_executed": 2353,
+    "registry_passed": 2353,
+    "registry_failed": 0,
+    "registry_errors": 0,
+    "registry_skipped": 0,
+    "full_release_acceptance": false
+  },
+  "access": {
+    "requirement_11_historical": "partial",
+    "requirement_11_i5": "original_gap_resolved_propose_separate_ledger_amendment",
+    "requirement_15": "deferred",
+    "historical_ledger_unchanged": true
+  },
+  "authority": {
+    "context_tables": 19,
+    "repository_roles": 6,
+    "mapping_witness": false,
+    "core_insert_only": true,
+    "access_independent": true,
+    "search_authoritative": false,
+    "operational_exchange_binding_only": true
+  },
+  "gates": {
+    "owner_merge_approval": false,
+    "main_merge_performed": false,
+    "pr_draft": true,
+    "release": false,
+    "p8_activation": false,
+    "real_catalog_operations": false,
+    "real_credential_operations": false,
+    "live_product_network": false
+  },
+  "recommended_future_owner_route": "Retarget aggregate #112 to main only after separate owner authorization, complete aggregate review and fresh checks/tree/parent/protection verification; no duplicate #108 merge"
+}

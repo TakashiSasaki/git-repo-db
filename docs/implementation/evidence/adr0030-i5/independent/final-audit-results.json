@@ -1,0 +1,14 @@
+[
+  {
+    "name": "ruff",
+    "exit_code": 0
+  },
+  {
+    "name": "format",
+    "exit_code": 0
+  },
+  {
+    "name": "workflow-yaml-parse",
+    "exit_code": 0
+  }
+]

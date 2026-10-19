@@ -1,0 +1,17 @@
+{
+  "run_id": 39272835525,
+  "conclusion": "success",
+  "job": "offline",
+  "binding": {
+    "feature_sha": "3298dfbdc0428ba7ba13fd26331e97554119a74c",
+    "head": "4235232e3b1384a19caabc4ef91c4b7b2703025f",
+    "run_attempt": "1",
+    "run_id": "39272835525",
+    "tree": "28b53a862db969e3231bd1a6f08a0c7f20d22874"
+  },
+  "acceptance_status": "development_checks_passed",
+  "full_acceptance": false,
+  "executed_pytest_nodes": 0,
+  "all_21_indexed_member_hashes_verified": true,
+  "receipt_archive_sha256": "23ac74d5e2977ffbfcb1cc23d3deeefba1b0c11360c3e0f8e44e0ffc53801765"
+}

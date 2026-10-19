@@ -1,0 +1,14 @@
+{
+  "tested_cohort_head": "c20d41cba4f229a93cd750b2f5fe1b1e986f45e9",
+  "tested_cohort_tree": "9316c83fcde284cf44f8586ad4b36e6a32ce6f97",
+  "latest_source_head": "6d50ba22f4b3092516bce004de4611a1a5bd566d",
+  "latest_source_tree": "476ee24311a78efa3048b301ea598f22fb13bc45",
+  "different_recorded_inputs": [
+    "tests/integration/p5_p6_compatibility/test_end_to_end_p5_p6.py",
+    "tests/integration/p5_p6_compatibility/test_p5_independent_counterexamples.py"
+  ],
+  "source_scripts_workflows_lock_identical": true,
+  "all_2069_selected_test_files_identical": true,
+  "changed_tests_belong_to_separate_supplemental_run": true,
+  "meaning": "Exact unchanged runtime and cohort input binding; not a claim the whole Git tree or sdist is identical."
+}

@@ -1,0 +1,29 @@
+{
+  "head": "c2c3735439a714bbc9d4128421e7be2c0e88f5b4",
+  "tree": "fdafb830ba63a7f547c5882fe677f9d25ae36bd3",
+  "prior_reviewed_source": "20198151a6af2f8eefa43e85074307e9d77527b7",
+  "corrected_test_sha256": "a094ca2a1804bb87db09c43a51d2ab4386a124c85f316f1dd8dd2a3a33ed514d",
+  "collected": 4,
+  "executed": 4,
+  "passed": 4,
+  "failed": 0,
+  "error": 0,
+  "skip": 0,
+  "xfail": 0,
+  "normal_exit": 0,
+  "selected_junit_exact": true,
+  "original_embedded_assertions": 10,
+  "corrected_embedded_assertions": 18,
+  "all_original_assertions_retained": true,
+  "installed_child_count": 4,
+  "wheel_sha256s": [
+    "2ec7c49a81734088ef6f15564c548448f7e79b1786ef86d12bf828c1dd3969cc"
+  ],
+  "product_ddl_dep_ledger_changes": [],
+  "helper_inventory": {
+    "all": 4934,
+    "ordinary": 4932,
+    "nonlive": 4933,
+    "ci": 2353
+  }
+}

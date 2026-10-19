@@ -1,0 +1,41 @@
+{
+  "selected": 2583,
+  "junit": 2583,
+  "starts": 2583,
+  "phases": 7749,
+  "selected_junit_equal": true,
+  "selected_starts_equal": true,
+  "exact3phases": true,
+  "passed": 2579,
+  "failed": 4,
+  "errors": 0,
+  "skips": 0,
+  "failed_nodes": [
+    [
+      "tests.packaging.test_p5_distribution",
+      "test_p5_installed_acquisition_and_exchange[sha1-sdist-wheel]"
+    ],
+    [
+      "tests.packaging.test_p5_distribution",
+      "test_p5_installed_acquisition_and_exchange[sha1-wheel]"
+    ],
+    [
+      "tests.packaging.test_p5_distribution",
+      "test_p5_installed_acquisition_and_exchange[sha256-sdist-wheel]"
+    ],
+    [
+      "tests.packaging.test_p5_distribution",
+      "test_p5_installed_acquisition_and_exchange[sha256-wheel]"
+    ]
+  ],
+  "all_failures_retired_constructor": true,
+  "execution_exit": 1,
+  "finishes": [
+    {
+      "event": "finish",
+      "status": "failed",
+      "exitstatus": 1,
+      "timestamp": 1792431674.116286
+    }
+  ]
+}

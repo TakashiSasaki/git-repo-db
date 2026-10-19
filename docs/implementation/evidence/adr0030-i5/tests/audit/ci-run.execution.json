@@ -1,0 +1,31 @@
+{
+  "command": [
+    "/workspace/i5-runtime/venv/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "-o",
+    "addopts=--strict-markers",
+    "-o",
+    "junit_family=xunit1",
+    "@/workspace/i5-results/tests/audit/ci-run.selected.txt",
+    "--junitxml=/workspace/i5-results/tests/audit/ci-run.xml",
+    "--journal=/workspace/i5-results/tests/audit/ci-run.jsonl",
+    "-n",
+    "4",
+    "--dist",
+    "worksteal"
+  ],
+  "cwd": "/workspace/git-repo-db",
+  "started_epoch": 1792430916.2936096,
+  "elapsed_seconds": 258.309,
+  "exit_code": 0,
+  "collected": 2329,
+  "passed": 2329,
+  "failed": 0,
+  "error": 0,
+  "skipped": 0,
+  "xfail": 0,
+  "xpass": 0,
+  "executed": 2329
+}

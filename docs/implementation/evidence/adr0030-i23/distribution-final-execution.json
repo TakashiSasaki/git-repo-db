@@ -1,0 +1,18 @@
+{
+  "source_head": "6d50ba22f4b3092516bce004de4611a1a5bd566d",
+  "source_tree": "476ee24311a78efa3048b301ea598f22fb13bc45",
+  "source_archive": "git archive HEAD | tar -x -C /workspace/i23-distribution-final",
+  "source_input_files_match": true,
+  "command": [
+    "/workspace/i23-min-venv/bin/python",
+    "/workspace/i23-distribution-final/scripts/verify_access_distribution.py"
+  ],
+  "environment": {
+    "LD_LIBRARY_PATH": "/workspace/i23-sqlite",
+    "PATH_prefix": "/workspace/i23-min-venv/bin"
+  },
+  "exit_code": 0,
+  "log_sha256": "204bf9b9a401ed5e336da501dd77eb6f938af7e4d463a11c8ac27f72c6ee5e92",
+  "receipt": "distribution-final.json",
+  "scope": "Two actual isolated installs outside checkout; -I/nohttpx guards; verifier removes temporary binaries after recording hashes."
+}

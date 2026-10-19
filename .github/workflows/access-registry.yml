@@ -3,6 +3,13 @@ name: Access registry focused verification
 on:
   pull_request:
     paths:
+      - 'tests/integration/i2/**'
+      - 'tests/integration/i3/**'
+      - 'tests/integration/i23/**'
+      - 'tests/integration/i4/**'
+      - 'tests/integration/i5/**'
+      - 'tests/packaging/test_p5_distribution.py'
+      - 'scripts/verify_i5_offline.py'
       - '.github/workflows/access-registry.yml'
       - 'src/repo_catalog/**/access*.py'
       - 'src/repo_catalog/adapters/sqlite/access_ddl/**'
@@ -63,6 +70,8 @@ jobs:
           version: '0.12.19'
       - name: Install locked development dependencies
         run: uv sync --locked --group dev
+      - name: Prepare locked wheels before offline installed acceptance
+        run: uv run --no-sync python scripts/prepare_wheelhouse.py
       - name: Build and verify the actual minimum SQLite binding
         shell: bash
         run: |
@@ -102,20 +111,30 @@ jobs:
           db.close()
           PY
           uv run --no-sync pytest -q tests/unit/test_access*_values.py tests/unit/test_context_registration_values.py tests/unit/test_native_acquisition_values.py tests/integration/access \
-            tests/integration/p1/test_schema.py tests/integration/p1/test_context.py \
-            tests/integration/p1/test_validation_stop.py tests/integration/p1/test_coordination.py \
-            tests/integration/p1/test_disposition.py tests/integration/p3 tests/integration/p5 \
-            tests/integration/p2 tests/integration/p4 tests/integration/p6 tests/integration/p7 \
+            tests/integration/i2 tests/integration/i23 tests/integration/i4 tests/integration/i5 tests/packaging/test_p5_distribution.py \
+            tests/integration/p1 \
+            tests/integration/p3 tests/integration/p5 tests/integration/i3 \
+            tests/integration/p2 tests/integration/p4 tests/integration/p6 tests/integration/p7 tests/integration/p5_p6_compatibility \
             --collect-only > artifacts/access-registry/collected.txt
-          uv run --no-sync pytest -q tests/unit/test_access*_values.py tests/unit/test_context_registration_values.py tests/unit/test_native_acquisition_values.py tests/integration/access \
-            tests/integration/p1/test_schema.py tests/integration/p1/test_context.py \
-            tests/integration/p1/test_validation_stop.py tests/integration/p1/test_coordination.py \
-            tests/integration/p1/test_disposition.py tests/integration/p3 tests/integration/p5 \
-            tests/integration/p2 tests/integration/p4 tests/integration/p6 tests/integration/p7 \
-            --junitxml=artifacts/access-registry/tests.xml
+          # Workers use independently isolated temporary Catalogs. Keep full logs
+          # in the artifact while emitting only the bounded result to the job log.
+          set +e
+          uv run --no-sync pytest -q -n 2 --dist worksteal tests/unit/test_access*_values.py tests/unit/test_context_registration_values.py tests/unit/test_native_acquisition_values.py tests/integration/access \
+            tests/integration/i2 tests/integration/i23 tests/integration/i4 tests/integration/i5 tests/packaging/test_p5_distribution.py \
+            tests/integration/p1 \
+            tests/integration/p3 tests/integration/p5 tests/integration/i3 \
+            tests/integration/p2 tests/integration/p4 tests/integration/p6 tests/integration/p7 tests/integration/p5_p6_compatibility \
+            --junitxml=artifacts/access-registry/tests.xml \
+            > artifacts/access-registry/tests.log 2>&1
+          test_status=$?
+          set -e
+          tail -n 35 artifacts/access-registry/tests.log
+          exit "$test_status"
       - name: Verify wheel and sdist-derived wheel outside checkout
+        if: ${{ !cancelled() }}
         run: uv run --no-sync python scripts/verify_access_distribution.py
       - name: Check isolated module ownership and baseline evidence
+        if: ${{ !cancelled() }}
         run: |
           uv run --no-sync python scripts/audit_callsite_dependencies.py --check
           uv run --no-sync python scripts/build_p1_schema.py --check
@@ -123,6 +142,7 @@ jobs:
           uv run --no-sync python scripts/audit_implementation_boundary.py --check
           uv run --no-sync python scripts/audit_context_registration.py
       - name: Reconcile Access acceptance ledger and exact test nodes
+        if: ${{ !cancelled() }}
         run: |
           uv run --no-sync python scripts/audit_access_acceptance.py \
             --junit artifacts/access-registry/tests.xml \
@@ -140,7 +160,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          targets=(scripts/audit_access_acceptance.py src/repo_catalog/adapters/sqlite/git_core.py src/repo_catalog/domain/access_backup.py src/repo_catalog/domain/ports/access_backup.py src/repo_catalog/adapters/sqlite/access_backup.py src/repo_catalog/application/access_maintenance.py src/repo_catalog/cli/access_maintenance.py src/repo_catalog/domain/native_acquisition.py src/repo_catalog/adapters/git/access_native.py src/repo_catalog/application/access_acquisition.py src/repo_catalog/cli/access_acquisition.py src/repo_catalog/adapters/git/native.py src/repo_catalog/adapters/git/notes.py src/repo_catalog/application/notes.py src/repo_catalog/adapters/sqlite/notes.py src/repo_catalog/adapters/sqlite/acquisition.py src/repo_catalog/domain/ports/notes.py tests/unit/test_native_acquisition_values.py src/repo_catalog/domain/context_registration.py src/repo_catalog/domain/acquisition.py src/repo_catalog/domain/exchange.py src/repo_catalog/adapters/sqlite/p1_context.py src/repo_catalog/adapters/sqlite/production_context.py src/repo_catalog/application/acquisition.py src/repo_catalog/application/exchange.py src/repo_catalog/application/production_query.py tests/unit/test_context_registration_values.py tests/integration/p3/test_production_context.py tests/integration/p5/test_provider_acquisition.py tests/integration/p6/conftest.py scripts/audit_context_registration.py src/repo_catalog/domain/access_workflow.py src/repo_catalog/domain/ports/access_workflow.py src/repo_catalog/application/access_workflow.py src/repo_catalog/adapters/filesystem/access_executor.py src/repo_catalog/cli/access_workflow.py src/repo_catalog/domain/access_connections.py src/repo_catalog/domain/ports/access_connections.py src/repo_catalog/adapters/sqlite/access_connections.py src/repo_catalog/domain/access_registry.py src/repo_catalog/domain/ports/access_registry.py src/repo_catalog/adapters/sqlite/access_registry.py src/repo_catalog/adapters/sqlite/access_schema.py tests/unit/test_access*_values.py tests/integration/access scripts/verify_access_distribution.py)
+          targets=(scripts/audit_access_acceptance.py src/repo_catalog/adapters/sqlite/git_core.py src/repo_catalog/domain/access_backup.py src/repo_catalog/domain/ports/access_backup.py src/repo_catalog/adapters/sqlite/access_backup.py src/repo_catalog/application/access_maintenance.py src/repo_catalog/cli/access_maintenance.py src/repo_catalog/domain/native_acquisition.py src/repo_catalog/adapters/git/access_native.py src/repo_catalog/application/access_acquisition.py src/repo_catalog/cli/access_acquisition.py src/repo_catalog/adapters/git/native.py src/repo_catalog/adapters/git/notes.py src/repo_catalog/application/notes.py src/repo_catalog/adapters/sqlite/notes.py src/repo_catalog/adapters/sqlite/acquisition.py src/repo_catalog/domain/ports/notes.py tests/unit/test_native_acquisition_values.py src/repo_catalog/domain/context_registration.py src/repo_catalog/domain/acquisition.py src/repo_catalog/domain/exchange.py src/repo_catalog/adapters/sqlite/p1_context.py src/repo_catalog/adapters/sqlite/production_context.py src/repo_catalog/application/acquisition.py src/repo_catalog/application/exchange.py src/repo_catalog/application/production_query.py tests/unit/test_context_registration_values.py tests/integration/p1/test_context_relations.py tests/integration/p3/test_production_context.py tests/integration/p5/test_provider_acquisition.py tests/integration/p6/conftest.py scripts/audit_context_registration.py src/repo_catalog/domain/access_workflow.py src/repo_catalog/domain/ports/access_workflow.py src/repo_catalog/application/access_workflow.py src/repo_catalog/adapters/filesystem/access_executor.py src/repo_catalog/cli/access_workflow.py src/repo_catalog/domain/access_connections.py src/repo_catalog/domain/ports/access_connections.py src/repo_catalog/adapters/sqlite/access_connections.py src/repo_catalog/domain/access_registry.py src/repo_catalog/domain/ports/access_registry.py src/repo_catalog/adapters/sqlite/access_registry.py src/repo_catalog/adapters/sqlite/access_schema.py tests/unit/test_access*_values.py tests/integration/access scripts/verify_access_distribution.py)
           lint=0
           formatting=0
           uv run --no-sync ruff check "${targets[@]}" || lint=$?

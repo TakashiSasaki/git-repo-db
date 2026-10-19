@@ -1,0 +1,54 @@
+{
+  "i1": "9390c9f3b54a033e5f07e1cb05d7c4b263c38fb7",
+  "i2": "3298dfbdc0428ba7ba13fd26331e97554119a74c",
+  "i3": "5c5b816998f7051703ca400e8cfeab377254c435",
+  "merge_tree": "ae6287b8cf91d1b8efa772fb46763bcbd9325076",
+  "local_validation_commit": "5306b8596747661959f34c451a0e82d5ded87a0d",
+  "conflicts": [],
+  "probe_sha256": "0f200590c09b2299a692707ddbcc0b66d70d78d869df941a6e1b977ec71dbbec",
+  "initial_probe_sha256": "2dd97ae0f01c52c6605e01ca14aa75883b74013107687fee40e6a1bca0d54c8f",
+  "python": "3.12.14",
+  "sqlite": "3.53.1",
+  "i2_nodes_passed": 48,
+  "i3_nodes_passed": 66,
+  "i3_direct_guard_replacement_passed": 1,
+  "initial_run": {
+    "passed": 115,
+    "failed": 8,
+    "failure_classification": {
+      "legacy_p5_missing_explicit_v4_selection": 5,
+      "probe_harness_incorrect_resource_count_6_instead_of_actual_5": 3
+    }
+  },
+  "corrected_probe_run": {
+    "passed": 3,
+    "failed": 0
+  },
+  "residual_failures": [
+    {
+      "node": "tests/integration/p5/test_exchange.py::test_exchange_export_import_repeat_reverse_and_multi_hop",
+      "direct_cause": "repo_catalog.domain.exchange.ExchangeError: R/O/C:SELECTION_REQUIRED: omitted selection requires explicit all_selected opt-in",
+      "resolution": "Migrate P5 fixture calls to explicit v4 R/O/C selection; then use explicit Repository permission and genuine new-request coordinates. Preserve original behavior assertions and run complete tests in the integration PR."
+    },
+    {
+      "node": "tests/integration/p5/test_exchange.py::test_exchange_selective_filters_and_partial_input",
+      "direct_cause": "repo_catalog.domain.exchange.ExchangeError: R/O/C:SELECTION_REQUIRED: omitted selection requires explicit all_selected opt-in",
+      "resolution": "Migrate P5 fixture calls to explicit v4 R/O/C selection; then use explicit Repository permission and genuine new-request coordinates. Preserve original behavior assertions and run complete tests in the integration PR."
+    },
+    {
+      "node": "tests/integration/p5/test_exchange.py::test_exchange_refuses_intrinsic_spoofing_without_validated_bytes",
+      "direct_cause": "repo_catalog.domain.exchange.ExchangeError: R/O/C:SELECTION_REQUIRED: omitted selection requires explicit all_selected opt-in",
+      "resolution": "Migrate P5 fixture calls to explicit v4 R/O/C selection; then use explicit Repository permission and genuine new-request coordinates. Preserve original behavior assertions and run complete tests in the integration PR."
+    },
+    {
+      "node": "tests/integration/p5/test_exchange.py::test_exchange_refuses_tampered_payloads_without_store_corruption",
+      "direct_cause": "repo_catalog.domain.exchange.ExchangeError: R/O/C:SELECTION_REQUIRED: omitted selection requires explicit all_selected opt-in",
+      "resolution": "Migrate P5 fixture calls to explicit v4 R/O/C selection; then use explicit Repository permission and genuine new-request coordinates. Preserve original behavior assertions and run complete tests in the integration PR."
+    },
+    {
+      "node": "tests/integration/p5/test_exchange.py::test_exchange_evaluates_core_dependencies_against_receiver_core",
+      "direct_cause": "repo_catalog.domain.exchange.ExchangeError: R/O/C:SELECTION_REQUIRED: omitted selection requires explicit all_selected opt-in",
+      "resolution": "Migrate P5 fixture calls to explicit v4 R/O/C selection; then use explicit Repository permission and genuine new-request coordinates. Preserve original behavior assertions and run complete tests in the integration PR."
+    }
+  ]
+}

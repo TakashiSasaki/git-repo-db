@@ -1,0 +1,32 @@
+{
+  "branch": "impl/adr-0030-i2-provider-intake-20261019",
+  "base_head": "9390c9f3b54a033e5f07e1cb05d7c4b263c38fb7",
+  "base_tree": "14c694218109de1e3dfebc93e7776d48ad79faf3",
+  "files": [
+    {
+      "path": "src/repo_catalog/adapters/github/production_intake.py",
+      "sha256": "736149463997be5e7c0c90b695fb9da4e275a9bae6b7ef3a4ad69567b1ff7b94"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+      "sha256": "aafb7561e75e0be23b977f00f8ecfd32bcfd614d4f3d035b068695a5b2e96e8d"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+      "sha256": "bcc8b764ed0a1d4f06b4712bd9631a40445384098351ffc4a6084235b6c4c777"
+    },
+    {
+      "path": "src/repo_catalog/domain/acquisition.py",
+      "sha256": "b468d8eaf5b1d6fbed36cf1657115bb5af3fa781ec155e3b52bb6f8cec131029"
+    },
+    {
+      "path": "src/repo_catalog/domain/p1_context.py",
+      "sha256": "5d9a784247d151f632c2f900cba3093e3716ae116b2a72dadb28c5b3431689ee"
+    },
+    {
+      "path": "src/repo_catalog/domain/ports/p1_context.py",
+      "sha256": "93374de803cba8bb252af2949c8b0e7648f0deb3186055587014f643729c5f2e"
+    }
+  ],
+  "patch_sha256": "3c6607533f64103fdbcf77ca4f1d1cf30f7aaf19de12fa71e3ebae7e1eb226cd"
+}

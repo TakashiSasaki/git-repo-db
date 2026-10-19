@@ -1,0 +1,22 @@
+{
+  "format": "git-repo-db/access-acceptance-v1",
+  "requirement_counts": {
+    "covered": 24,
+    "deferred": 1,
+    "partial": 1
+  },
+  "unique_test_references": 64,
+  "executed_nodes": 2329,
+  "node_set_matched": true,
+  "incomplete_requirements": [
+    11,
+    15
+  ],
+  "gates": {
+    "independent_review": "pending",
+    "adr_whole_replacement": "pending",
+    "merge_authorization": "not_requested",
+    "p8_activation": "not_requested"
+  },
+  "meaning": "reference/evidence consistency only; not independent or release acceptance"
+}

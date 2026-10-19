@@ -1,0 +1,134 @@
+[
+  {
+    "event": "start",
+    "nodeid": "tests/packaging/test_p5_distribution.py::test_p5_installed_acquisition_and_exchange[sha1-sdist-wheel]",
+    "worker_id": "master",
+    "timestamp": 1792431586.677556
+  },
+  {
+    "event": "phase",
+    "nodeid": "tests/packaging/test_p5_distribution.py::test_p5_installed_acquisition_and_exchange[sha1-sdist-wheel]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 5.226857,
+    "worker_id": "gw3",
+    "timestamp": 1792431591.902592
+  },
+  {
+    "event": "phase",
+    "nodeid": "tests/packaging/test_p5_distribution.py::test_p5_installed_acquisition_and_exchange[sha1-sdist-wheel]",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.673852,
+    "worker_id": "gw3",
+    "timestamp": 1792431592.593293
+  },
+  {
+    "event": "phase",
+    "nodeid": "tests/packaging/test_p5_distribution.py::test_p5_installed_acquisition_and_exchange[sha1-sdist-wheel]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.000193,
+    "worker_id": "gw3",
+    "timestamp": 1792431592.596197
+  },
+  {
+    "event": "start",
+    "nodeid": "tests/packaging/test_p5_distribution.py::test_p5_installed_acquisition_and_exchange[sha1-wheel]",
+    "worker_id": "master",
+    "timestamp": 1792431592.596722
+  },
+  {
+    "event": "phase",
+    "nodeid": "tests/packaging/test_p5_distribution.py::test_p5_installed_acquisition_and_exchange[sha1-wheel]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.001357,
+    "worker_id": "gw3",
+    "timestamp": 1792431592.597151
+  },
+  {
+    "event": "phase",
+    "nodeid": "tests/packaging/test_p5_distribution.py::test_p5_installed_acquisition_and_exchange[sha1-wheel]",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.641819,
+    "worker_id": "gw3",
+    "timestamp": 1792431593.24182
+  },
+  {
+    "event": "phase",
+    "nodeid": "tests/packaging/test_p5_distribution.py::test_p5_installed_acquisition_and_exchange[sha1-wheel]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00036,
+    "worker_id": "gw3",
+    "timestamp": 1792431593.242749
+  },
+  {
+    "event": "start",
+    "nodeid": "tests/packaging/test_p5_distribution.py::test_p5_installed_acquisition_and_exchange[sha256-sdist-wheel]",
+    "worker_id": "master",
+    "timestamp": 1792431593.243401
+  },
+  {
+    "event": "phase",
+    "nodeid": "tests/packaging/test_p5_distribution.py::test_p5_installed_acquisition_and_exchange[sha256-sdist-wheel]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.002758,
+    "worker_id": "gw3",
+    "timestamp": 1792431593.24695
+  },
+  {
+    "event": "phase",
+    "nodeid": "tests/packaging/test_p5_distribution.py::test_p5_installed_acquisition_and_exchange[sha256-sdist-wheel]",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.570872,
+    "worker_id": "gw3",
+    "timestamp": 1792431593.82448
+  },
+  {
+    "event": "phase",
+    "nodeid": "tests/packaging/test_p5_distribution.py::test_p5_installed_acquisition_and_exchange[sha256-sdist-wheel]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.000187,
+    "worker_id": "gw3",
+    "timestamp": 1792431593.825766
+  },
+  {
+    "event": "start",
+    "nodeid": "tests/packaging/test_p5_distribution.py::test_p5_installed_acquisition_and_exchange[sha256-wheel]",
+    "worker_id": "master",
+    "timestamp": 1792431593.826268
+  },
+  {
+    "event": "phase",
+    "nodeid": "tests/packaging/test_p5_distribution.py::test_p5_installed_acquisition_and_exchange[sha256-wheel]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.001128,
+    "worker_id": "gw3",
+    "timestamp": 1792431593.826846
+  },
+  {
+    "event": "phase",
+    "nodeid": "tests/packaging/test_p5_distribution.py::test_p5_installed_acquisition_and_exchange[sha256-wheel]",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.52179,
+    "worker_id": "gw3",
+    "timestamp": 1792431594.351396
+  },
+  {
+    "event": "phase",
+    "nodeid": "tests/packaging/test_p5_distribution.py::test_p5_installed_acquisition_and_exchange[sha256-wheel]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.000204,
+    "worker_id": "gw3",
+    "timestamp": 1792431594.352317
+  }
+]

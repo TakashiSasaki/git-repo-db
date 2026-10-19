@@ -1,0 +1,10 @@
+import datetime,hashlib,json,os,pathlib,subprocess
+root=pathlib.Path('/workspace/git-repo-db');out=pathlib.Path('/workspace/i23-evidence/final/supplemental-final');out.mkdir(exist_ok=True)
+targets=['tests/integration/p1/'+p+'.py' for p in ['test_time_policy','test_notes','test_intrinsic_provenance','test_derivatives','test_coverage','test_core']]+['tests/integration/p5_p6_compatibility']
+python='/workspace/i23-min-venv/bin/python';env=dict(os.environ,LD_LIBRARY_PATH='/workspace/i23-sqlite');env['PATH']=str(pathlib.Path(python).parent)+os.pathsep+env['PATH'];records=[]
+for label,opts in [('collect',['--collect-only']),('execute',['-o','junit_family=xunit1','--junitxml='+str(out/'supplemental.xml'),'--journal',str(out/'supplemental.jsonl')])]:
+ command=[python,'-m','pytest','-q',*targets,*opts];log=out/f'supplemental-{label}.log';start=datetime.datetime.now(datetime.timezone.utc).isoformat()
+ with log.open('wb') as f:r=subprocess.run(command,cwd=root,env=env,stdout=f,stderr=subprocess.STDOUT)
+ records.append(dict(phase=label,command=command,started_at=start,exit_code=r.returncode,log=log.name,log_sha256=hashlib.sha256(log.read_bytes()).hexdigest()))
+ (out/'supplemental-execution.json').write_text(json.dumps(dict(binding_head=subprocess.check_output(['git','rev-parse','HEAD'],cwd=root,text=True).strip(),runtime=json.loads((out.parent/'sqlite3513-runtime.json').read_text()),commands=records),indent=2)+'\n')
+ print(label,r.returncode,flush=True)

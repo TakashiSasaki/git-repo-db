@@ -2,8 +2,8 @@
   "format": "repo-catalog/p1-isolated-1",
   "stores": {
     "context": {
-      "ddl_sha256": "75f142fa9127ff6790f9348433f79b2f84e8fa2b20ef32b668d8ff21d924cf3b",
-      "sqlite_schema_sha256": "3995bc837343261059d3c02df41e84069595ac10d32393457024ab9bf06850a8",
+      "ddl_sha256": "fa7838f86d9f0ab4b2f26c561ad0721df2d0c7dad45ee97e72ff09cbb89ac434",
+      "sqlite_schema_sha256": "0a98df73ce1f9f81d8e76a64eb2b36a18b262cb0ff742ed9a088977f105e1134",
       "tables": [
         "collection_terminals",
         "collections",
@@ -14,7 +14,9 @@
         "field_candidates",
         "providers",
         "repository_context",
+        "repository_mapping_dispositions",
         "resource_relations",
+        "resource_repository_relations",
         "resources",
         "source_coverage_proofs",
         "source_inventory_evidence",
@@ -49,8 +51,8 @@
       ]
     },
     "operational": {
-      "ddl_sha256": "980360b31d11c54b0d556b7fffd6aeeae74919e264b4d19bc34ecca70c7d73cb",
-      "sqlite_schema_sha256": "b87312a9631d5124fafc6cd6dcd63e7c3913fc25b1e832a1e0c6f249d3279296",
+      "ddl_sha256": "76598c5a630d4044c5a123587911a62411d55946072ba071109dd7db52f029a5",
+      "sqlite_schema_sha256": "143d52275fd4cf57d5c0d4c7d93c715f1736ed64468718288252dffbcf82e189",
       "tables": [
         "acquisition_attempts",
         "acquisition_requests",

@@ -29,6 +29,7 @@ from repo_catalog.domain.p1_core import (
     NotesProof,
     Provenance,
     ScalarClaim,
+    _notes_group,
     account_verification,
     encode,
     uuid4_value,
@@ -311,6 +312,28 @@ class GitCore(Core):
                 self._insert("notes_groups", group.key)
                 for proof in proofs:
                     self._insert("note_roles", proof.key)
+
+    @_completed_read
+    @_decoded_read
+    def original_notes_group_payload(self, pair, object_format, scope, provenance_json):
+        """Read one reported immutable UNIQUE binding through the checked boundary."""
+        previous = getattr(self, "_checked_byte_read", False)
+        self._checked_byte_read = True
+        try:
+            with self._snapshot():
+                rows = self.sql(
+                    "SELECT status,membership,provenance FROM notes_groups WHERE capture_origin_uuidv4=? AND capture_uuidv4=? AND object_format=? AND scope=? AND provenance=?",
+                    (*pair, object_format, scope, provenance_json),
+                )
+                if not rows:
+                    return None
+                row = rows[0]
+                self._provenance_value(pair, row[2])
+                if not _notes_group(object_format, row[0], row[1]):
+                    self._integrity_stop((pair, "invalid-stored-notes-group"))
+                return tuple(row[:2])
+        finally:
+            self._checked_byte_read = previous
 
     @_completed_read
     @_decoded_read

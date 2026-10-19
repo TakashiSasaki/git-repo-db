@@ -1,0 +1,54 @@
+{
+  "command": [
+    "/workspace/i5-runtime/venv/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "-o",
+    "addopts=--strict-markers",
+    "-o",
+    "junit_family=xunit1",
+    "@/workspace/i5-results/tests/base-additional/additional.selected.txt",
+    "--junitxml=/workspace/i5-results/tests/base-additional/additional.xml",
+    "--journal=/workspace/i5-results/tests/base-additional/additional.jsonl",
+    "-n",
+    "4",
+    "--dist",
+    "worksteal"
+  ],
+  "cwd": "/workspace/git-repo-db",
+  "started_epoch": 1792430994.7582655,
+  "elapsed_seconds": 81.838,
+  "exit_code": 2,
+  "collected": 2583,
+  "passed": 203,
+  "failed": 2,
+  "error": 47,
+  "skipped": 0,
+  "xfail": 0,
+  "xpass": 0,
+  "executed": 252,
+  "reconciliation": {
+    "checks": {
+      "selected_unique": true,
+      "selected_equals_junit": false,
+      "selected_equals_journal_starts": false,
+      "setup_and_teardown_once": false,
+      "no_duplicate_phases": true,
+      "one_finish": true
+    },
+    "consistent_node_execution": false,
+    "journal_phase_outcomes": {
+      "passed": 654,
+      "failed": 49
+    },
+    "finishes": [
+      {
+        "event": "finish",
+        "status": "failed",
+        "exitstatus": 2,
+        "timestamp": 1792431075.978076
+      }
+    ]
+  }
+}

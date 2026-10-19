@@ -1,0 +1,104 @@
+"""Local combined-tree probe only: I2 observations through I3 v4, no live Provider."""
+
+from uuid import uuid4
+
+import pytest
+
+from repo_catalog.adapters.sqlite.production_context import Context
+from repo_catalog.application.acquisition import ProviderAcquisition
+from repo_catalog.application.exchange import ExchangeService
+from repo_catalog.domain.acquisition import (
+    ProviderIntakeBatch,
+    ProviderPullRequestIntake,
+)
+from repo_catalog.domain.exchange import ExchangeSelectionScope
+from repo_catalog.domain.p1_context import FieldClock, MappingDisposition, ResourceKey
+from tests.integration.i2.test_provider_intake import (
+    issue_batch,
+    mapping,
+    provenance,
+    setup,
+    snapshot,
+    timeline,
+)
+from tests.integration.p5.conftest import init_catalog_stores
+
+
+@pytest.mark.parametrize("disposition_kind", [None, "withdraw", "dispute"])
+def test_i2_produced_roles_mapping_and_transfer_roundtrip_i3(
+    tmp_path, disposition_kind
+):
+    source, dest = tmp_path / "source", tmp_path / "dest"
+    service, r1, r2 = setup(source)
+    acq = ProviderAcquisition(source)
+    c1, c2 = mapping(service, "1", r1, "A"), mapping(service, "2", r2, "B")
+    acq.admit_batch(ProviderIntakeBatch(service, mapping_claims=(c1, c2)))
+    acq.admit_batch(issue_batch(service, {"id": 1}))
+    acq.admit_batch(
+        ProviderIntakeBatch(
+            service,
+            pull_requests=(
+                ProviderPullRequestIntake(
+                    {"id": 9, "base": {"repo": {"id": 1}}, "head": {"repo": {"id": 2}}},
+                    55,
+                    provenance("pr"),
+                ),
+            ),
+        )
+    )
+    acq.admit_batch(
+        timeline(service, from_repository={"id": 1}, to_repository={"id": 2})
+    )
+    if disposition_kind:
+        acq.admit_batch(
+            ProviderIntakeBatch(
+                service,
+                mapping_dispositions=(
+                    MappingDisposition(
+                        c1.claim_key,
+                        disposition_kind,
+                        FieldClock("disposition", 70),
+                        provenance(disposition_kind),
+                        70,
+                    ),
+                ),
+            )
+        )
+    receiver_seed = str(uuid4())
+    init_catalog_stores(
+        dest, repository_uuidv4=receiver_seed, stores=("core", "context", "operational")
+    )
+    identity_before = snapshot(dest, "store_identity")
+    package = ExchangeService(source).export_package(
+        selection=ExchangeSelectionScope(all_selected=True), exported_at_us=80
+    )
+    report = ExchangeService(dest).import_package(
+        package, new_request=True, permitted_repository_uuidv4s=(r1, r2)
+    )
+    assert report.admitted_context_resources == 5
+    assert snapshot(dest, "store_identity") == identity_before
+    for table in (
+        "resource_repository_relations",
+        "repository_mapping_dispositions",
+        "resource_relations",
+        "resources",
+        "field_candidates",
+    ):
+        assert snapshot(source, table) == snapshot(dest, table)
+    with Context.snapshot(source) as a, Context.snapshot(dest) as b:
+        assert a.transfer_event_reports() == b.transfer_event_reports()
+        event = b.transfer_event_reports()[0]
+        assert event.from_relations[0].embedded_support.supporting_claims == (
+            c1.claim_key,
+        )
+        assert event.to_relations[0].embedded_support.supporting_claims == (
+            c2.claim_key,
+        )
+        for resource in (
+            ResourceKey(service, "issue", "7"),
+            ResourceKey(service, "pull_request", "9"),
+        ):
+            assert a.provider_repository_roles(resource) == b.provider_repository_roles(
+                resource
+            )
+    assert not (dest / "access.sqlite3").exists()

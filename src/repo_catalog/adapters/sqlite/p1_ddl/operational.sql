@@ -90,3 +90,18 @@ CREATE TABLE cache_locators (
  locator TEXT NOT NULL,
  PRIMARY KEY(repository_uuidv4,cache_purpose,semantic_coordinate_json)
 ) STRICT, WITHOUT ROWID;
+
+-- ADR 0030: direct PackageKey in an existing semantic progress slot. No payload
+-- staging or Mapping witness. Request ownership does not enlarge the key.
+CREATE UNIQUE INDEX exchange_package_key ON request_continuations(continuation_scope_json)
+ WHERE json_extract(continuation_scope_json,'$[0]')='adr0030-package-binding';
+CREATE TRIGGER exchange_binding_no_rebind BEFORE UPDATE ON request_continuations
+ WHEN json_extract(OLD.continuation_scope_json,'$[0]')='adr0030-package-binding'
+  AND (NEW.continuation_scope_json!=OLD.continuation_scope_json
+    OR NEW.cursor_json!=OLD.cursor_json
+    OR NEW.request_origin_uuidv4!=OLD.request_origin_uuidv4
+    OR NEW.request_uuidv4!=OLD.request_uuidv4)
+ BEGIN SELECT RAISE(ABORT,'immutable Exchange PackageKey digest binding'); END;
+CREATE TRIGGER exchange_binding_no_delete BEFORE DELETE ON request_continuations
+ WHEN json_extract(OLD.continuation_scope_json,'$[0]')='adr0030-package-binding'
+ BEGIN SELECT RAISE(ABORT,'immutable Exchange PackageKey digest binding'); END;

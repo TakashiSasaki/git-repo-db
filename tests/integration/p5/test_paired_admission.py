@@ -4,6 +4,7 @@ dependency reconciliation, operational retry resilience, and stop propagation.
 
 from __future__ import annotations
 
+from contextlib import closing
 from pathlib import Path
 from uuid import uuid4
 
@@ -81,7 +82,6 @@ def test_core_first_context_second_and_failure_retry_convergence(
                 pr_payload,
                 1_700_000_150_000_000,
                 prov_json,
-                repository_uuidv4=repo_uuid,
             ),
         ),
     )
@@ -145,12 +145,24 @@ def test_core_first_context_second_and_failure_retry_convergence(
     assert res.provider_report is not None
 
     # Verify both Core and Context now have facts, and CoreReference is linked
-    with Context.snapshot(cat_dir) as ctx:
+    with (
+        Context.snapshot(cat_dir) as ctx,
+        closing(GitCore(cat_dir / "core.sqlite3")) as core,
+    ):
         assert len(ctx.candidates(pr_key, "title")) == 1
-        core_deps = ctx.core_dependencies(pr_key)
-        assert len(core_deps) == 2
+        core_deps = ctx.core_dependencies(
+            pr_key,
+            validate=lambda fmt, oid: bool(
+                core.sql(
+                    "SELECT 1 FROM git_objects WHERE object_format=? AND full_oid=?",
+                    (fmt, oid),
+                )
+            ),
+        )
+        assert len([dep for dep in core_deps if dep.required]) == 2
+        assert len([dep for dep in core_deps if not dep.required]) == 2
         # Both commit1 and commit2 are now present in Core, so required=True
-        assert all(dep.required for dep in core_deps)
+        assert all(dep.available for dep in core_deps)
 
 
 def test_late_core_dependency_reconciliation(tmp_path: Path) -> None:
@@ -184,7 +196,6 @@ def test_late_core_dependency_reconciliation(tmp_path: Path) -> None:
                 pr_payload,
                 1_700_000_100_000_000,
                 prov_json,
-                repository_uuidv4=repo_uuid,
             ),
         ),
     )

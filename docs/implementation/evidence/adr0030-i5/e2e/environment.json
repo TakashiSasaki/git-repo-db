@@ -1,0 +1,33 @@
+{
+  "product_head": "a54cb218226e3c91c44e979ee0df0543ea459502",
+  "product_tree": "cc2eafaaeb8e3305270c17e74ae69edc42c0a50b",
+  "new_test_file": "tests/integration/i5/test_independent_e2e.py",
+  "new_test_sha256": "af34964d3c8ea508006dca403b825486d12e2acd74c622faf837c8314a240a26",
+  "python": "3.13.5",
+  "sqlite_version": "3.51.3",
+  "sqlite_source_id": "2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618",
+  "platform": "Linux-6.18.55-x86_64-with-glibc2.41",
+  "executable": "/workspace/i5-runtime/python",
+  "runtime_environment": {
+    "LD_LIBRARY_PATH": "/workspace/i5-runtime"
+  },
+  "command": [
+    "/workspace/i5-runtime/python",
+    "-m",
+    "pytest",
+    "-q",
+    "-n",
+    "2",
+    "--dist",
+    "worksteal",
+    "tests/integration/i5",
+    "--tb=short",
+    "--junitxml=/workspace/i5-results/e2e/acceptance-02.xml"
+  ],
+  "concurrency_note": "Two isolated xdist worker processes; synthetic template built once per worker then closed stores copied per scenario. Wall time is not a sequential benchmark.",
+  "scope": "No production source changes; no live catalogs, credentials, network acquisition, release, merge or P8 activation.",
+  "collection": {
+    "collected": 20,
+    "duplicates": 0
+  }
+}

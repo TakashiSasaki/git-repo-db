@@ -1,0 +1,62 @@
+{
+  "AGENTS.md": {
+    "bytes": 38055,
+    "sha256": "de01fde4b7648b3b25afe1f0cac9d99be2caf1b563fd1127c8f38f8568c7e08d",
+    "git_blob": "46efd65da7342a703d25955fb96c12a946a00070"
+  },
+  "docs/adr/0029-independent-access-store.md": {
+    "bytes": 31709,
+    "sha256": "d6d6c22cc5a23ab92c785f986150d9a2e8b88ee64bb56614637cdd36b81ec0f1",
+    "git_blob": "6f0ac347d46b803634d1e580c85809619a255c06"
+  },
+  "docs/adr/0030-context-repository-relations-and-selective-exchange.md": {
+    "bytes": 14397,
+    "sha256": "22ea2c17fa16ce4a9cca95330f8fb21c8bf510a786233189832a2d0bce81b054",
+    "git_blob": "4c64785ded3c55f47c484fc1aaa554b274fda9fe"
+  },
+  "docs/architecture/context-repository-relations.md": {
+    "bytes": 26723,
+    "sha256": "c4a7a34a8a538d7e0a8995309ac71fe99ed8820cc79eb8222d3c8acb54482079",
+    "git_blob": "c763d6a4ee408a1108582fa656d68517b7777ef1"
+  },
+  "docs/architecture/selective-exchange-contract.md": {
+    "bytes": 13058,
+    "sha256": "81b167378b26ae156c06977424bab5ad091cb0be3903bfa426a859decf70ea55",
+    "git_blob": "deaeae50410a4ae481887010ea64f13bac6bbce5"
+  },
+  "docs/implementation/context-exchange-design-handoff.md": {
+    "bytes": 18880,
+    "sha256": "c6e0179a3d2f7cb41d7cbabb7ce9b5076a8ccd44cfd2e9063cea8c2a4fe1180d",
+    "git_blob": "8c4cc94dfee28d91d5605de1f7a51011a2544ab3"
+  },
+  "docs/implementation/adr0030-i1-context-contract.md": {
+    "bytes": 25689,
+    "sha256": "6ec04d7595dd3740fa150feaf08f412eccdc928fdb754d81de278a5563e4cb05",
+    "git_blob": "31324f246d5f2a0128a4feb882d3bebc9caf0d6a"
+  },
+  "docs/implementation/adr0030-i2-provider-intake.md": {
+    "bytes": 9987,
+    "sha256": "d75914fee20991287f19d5b453b70d71404c99809a97eb03393d24cc8530cc8f",
+    "git_blob": "a25d1cda9c04615742686da4e117557163f92783"
+  },
+  "docs/implementation/adr0030-i3-selective-exchange.md": {
+    "bytes": 12335,
+    "sha256": "1bfa0b00fd55d7f815b4b84811be7611bb4e0098997cd57446eec8b78009c0c6",
+    "git_blob": "799fc628f32bca5b9285b8f5c27b2ffff3c6cefd"
+  },
+  "docs/implementation/adr0030-i23-integration.md": {
+    "bytes": 7784,
+    "sha256": "86d51ff82b4128639ca211c961e63b8b3639f166b9d5b65b6fef3f4fdf44f711",
+    "git_blob": "506496ffb04fed7bec9072e87d95ed92c2373320"
+  },
+  "docs/implementation/adr0030-i4-query-search-backup.md": {
+    "bytes": 7263,
+    "sha256": "ea442600a2dbb473f69d9ef3ce2e852ee6e517a0a001f1a7b702e39a575bcbc3",
+    "git_blob": "5fc1223a7bef38c4d250c47616edc4577021d5eb"
+  },
+  "docs/implementation/access-a6-acceptance.json": {
+    "bytes": 20459,
+    "sha256": "0e1acd9ba45afbaef5b9052684489a21ca912b7b7bf4a8dab1202f05a1b0860c",
+    "git_blob": "e35c7adb9d5273fd369bd75dfc053e8687abd63a"
+  }
+}

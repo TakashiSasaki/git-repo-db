@@ -1,0 +1,25 @@
+{
+  "checks": {
+    "selected_unique": true,
+    "selected_equals_junit": true,
+    "selected_equals_journal_starts": true,
+    "setup_and_teardown_once": true,
+    "no_duplicate_phases": true,
+    "phase_nodes_equal_selected": true,
+    "call_once_after_successful_setup": true,
+    "one_finish": true
+  },
+  "consistent_node_execution": true,
+  "journal_phase_outcomes": {
+    "passed": 7745,
+    "failed": 4
+  },
+  "finishes": [
+    {
+      "event": "finish",
+      "status": "failed",
+      "exitstatus": 1,
+      "timestamp": 1792431674.116286
+    }
+  ]
+}

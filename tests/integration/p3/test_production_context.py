@@ -14,11 +14,16 @@ from repo_catalog.domain.p1_context import (
     CoverageScope,
     FieldCandidate,
     FieldClock,
+    MappingDisposition,
+    MappingOperationEvidence,
     ResourceKey,
+    ResourceRepositoryRelation,
+    TransferEventReport,
     canonical,
 )
 from repo_catalog.domain.p1_coordination import AdmissionFailure, CoordinationError
 from repo_catalog.domain.p1_core import OID
+from repo_catalog.domain.ports.p1_context import ContextAdmission
 from repo_catalog.domain.production_context import (
     CollectionObservation,
     ContextError,
@@ -80,6 +85,69 @@ def field(
         canonical({"source": "provider.example", "evidence": evidence}),
         observed,
     )
+
+
+def test_generic_resource_relation_cannot_register_transfer_scope(context):
+    db, store, path = context
+    issue = ResourceKey(SERVICE, "issue", "transfer-parent")
+    event = ResourceKey.timeline_event(issue, "real-event")
+    store.resource(issue)
+    store.resource(event)
+    scope = ResourceRelation(event, "transfer_event_report", (), PROVENANCE, "{}", 1)
+    with pytest.raises(ValueError, match="admit_transfer_event"):
+        store.relation(scope)
+    assert not db.execute(
+        "SELECT 1 FROM resource_relations WHERE relation_kind='transfer_event_report'"
+    ).fetchall()
+    assert not (path.parent / "p1-recovery-stop.json").exists()
+
+
+def test_context_admission_protocol_keyword_calls(context):
+    _, store, path = context
+    port: ContextAdmission = store
+    relation = ResourceRepositoryRelation(
+        KEY, "owning_repository", FieldClock("event", 1), canonical(REPO), PROVENANCE, 1
+    )
+    assert port.admit_repository_relation(relation=relation) == "insert"
+    assert (
+        store.admit_repository_relation_result(relation=relation).outcome == "duplicate"
+    )
+    provider = ResourceKey(SERVICE, "repository", "protocol-keywords")
+    port.resource(key=provider)
+    mapping = ResourceRepositoryRelation(
+        provider,
+        "represents_repository",
+        FieldClock("mapping", 1),
+        canonical(REPO),
+        PROVENANCE,
+        1,
+    )
+    assert port.admit_repository_relation(relation=mapping) == "insert"
+    assert (
+        port.evaluate_provider_repository(provider_repository=provider).state
+        == "single_candidate"
+    )
+    keyword_rows = port.relations_for_provider_repository(
+        service_instance_uuidv4=SERVICE,
+        provider_repository_id=provider.provider_resource_id,
+    )
+    assert keyword_rows == store.relations_for_provider_repository(provider)
+    assert port.repository_relations(resource=KEY)[0].relation == relation
+    assert not (path.parent / "p1-recovery-stop.json").exists()
+
+
+@pytest.mark.parametrize("invalid_filter", ["empty_provider_id", "ordinary_comment"])
+def test_invalid_relation_filters_do_not_stop_valid_catalog(directory, invalid_filter):
+    with Context.snapshot(directory) as store:
+        with pytest.raises(ValueError):
+            if invalid_filter == "empty_provider_id":
+                store.relations_for_provider_repository(SERVICE, "")
+            else:
+                store.transfer_event_reports(
+                    ResourceKey(SERVICE, "comment", "ordinary-comment")
+                )
+        assert store.transfer_event_reports() == ()
+    assert not (directory / "p1-recovery-stop.json").exists()
 
 
 def collection(
@@ -191,7 +259,7 @@ def test_observe_failure_rolls_back_new_identity_and_all_fields(context):
     _, store, _ = context
     resource = ResourceKey(SERVICE, "issue", "atomic")
     good = field(resource)
-    bad = field(resource, name="repository_uuidv4", value=OTHER_REPO)
+    bad = field(resource, name="text_body_sha256", value="0" * 64)
     with pytest.raises(sqlite3.IntegrityError):
         store.observe(ResourceObservation(resource, (good, bad)))
     assert resource not in store.resources()
@@ -690,6 +758,7 @@ def test_swallowed_sqlite_corruption_stops_immediately(directory, deferred):
             # the original swallowed/deferred-corruption assertions below.
             if sql in {
                 "SELECT store_role FROM store_identity",
+                "SELECT name, sql FROM sqlite_schema WHERE type='table' AND name IN ('resource_repository_relations', 'repository_mapping_dispositions', 'field_candidates')",
                 "SELECT configuration_json FROM providers",
                 "SELECT configuration_json FROM repository_context",
                 "SELECT configuration_json FROM sources",
@@ -779,26 +848,47 @@ def test_explicit_null_detach_rollback_and_restart(directory):
         store.provider(SERVICE, "github")
         store.repository(REPO)
         store.resource(KEY)
-        store.admit_repository(
-            KEY, REPO, FieldClock("provider.updated_at", 1), original, 10
+        store.admit_repository_relation(
+            ResourceRepositoryRelation(
+                KEY,
+                "owning_repository",
+                FieldClock("provider.updated_at", 1),
+                canonical(REPO),
+                original,
+                10,
+            )
         )
     with pytest.raises(RuntimeError):
         with Context.transaction(directory) as store:
-            store.admit_repository(
-                KEY, None, FieldClock("provider.updated_at", 2), detached, 20
+            store.admit_repository_relation(
+                ResourceRepositoryRelation(
+                    KEY,
+                    "owning_repository",
+                    FieldClock("provider.updated_at", 2),
+                    "null",
+                    detached,
+                    20,
+                )
             )
-            assert store.repository_candidates(KEY)[0].value_json == "null"
+            assert store.repository_relations(KEY)[0].is_explicit_null_target is True
             raise RuntimeError("rollback")
     with Context.snapshot(directory) as store:
-        assert store.repository_candidates(KEY)[0].value_json == canonical(REPO)
+        assert store.repository_relations(KEY)[0].target_repository_uuidv4 == REPO
     with Context.transaction(directory) as store:
-        store.admit_repository(
-            KEY, None, FieldClock("provider.updated_at", 2), detached, 20
+        store.admit_repository_relation(
+            ResourceRepositoryRelation(
+                KEY,
+                "owning_repository",
+                FieldClock("provider.updated_at", 2),
+                "null",
+                detached,
+                20,
+            )
         )
     with Context.snapshot(directory) as store:
-        (candidate,) = store.repository_candidates(KEY)
-        assert candidate.value_json == "null"
-        assert candidate.provenance_json == detached and candidate.observed_at_us == 20
+        (relation,) = store.repository_relations(KEY)
+        assert relation.is_explicit_null_target is True
+        assert relation.provenance_json == detached and relation.observed_at_us == 20
         assert store.resources(kind="issue") == (KEY,)
 
 
@@ -954,3 +1044,154 @@ def test_unknown_text_digest_is_unavailable_without_false_corruption(context):
     assert not (path.parent / "p1-recovery-stop.json").exists()
     digest = store.text("genuinely new Context text")
     assert store.read_text(digest) == "genuinely new Context text"
+
+
+def test_production_context_relation_facade_methods(directory):
+    with Context.transaction(directory) as store:
+        store.provider(SERVICE, "github")
+        store.repository(REPO)
+        prov_repo = ResourceKey(SERVICE, "repository", "octocat/Hello-World")
+        store.resource(prov_repo)
+        issue = ResourceKey(SERVICE, "issue", "42")
+        store.resource(issue)
+
+        # 3.1: RelationKind validation: valid roles succeed without TypeError
+        rels = store.repository_relations(
+            prov_repo, relation_kind="represents_repository"
+        )
+        assert rels == ()
+        rels_all = store.repository_relations(prov_repo, relation_kind=None)
+        assert rels_all == ()
+
+        rels_repo = store.relations_for_repository(
+            REPO, relation_kind="owning_repository"
+        )
+        assert rels_repo == ()
+
+        rels_prov = store.relations_for_provider_repository(
+            prov_repo, relation_kind="represents_repository"
+        )
+        assert rels_prov == ()
+        rels_prov_str = store.relations_for_provider_repository(
+            SERVICE, "octocat/Hello-World", relation_kind="represents_repository"
+        )
+        assert rels_prov_str == ()
+
+        # 3.1: Invalid roles raise ValueError without TypeError and without P7 Recovery Stop
+        for bad_role in ("invalid_role", "unknown", ""):
+            with pytest.raises(ValueError, match="Unknown relation_kind"):
+                store.repository_relations(prov_repo, relation_kind=bad_role)
+            with pytest.raises(ValueError, match="Unknown relation_kind"):
+                store.relations_for_repository(REPO, relation_kind=bad_role)
+            with pytest.raises(ValueError, match="Unknown relation_kind"):
+                store.relations_for_provider_repository(
+                    prov_repo, relation_kind=bad_role
+                )
+            with pytest.raises(ValueError, match="Unknown relation_kind"):
+                store.relations_for_provider_repository(
+                    SERVICE, "octocat/Hello-World", relation_kind=bad_role
+                )
+
+        assert not (directory / "p1-recovery-stop.json").exists()
+
+        # Admit a represents_repository claim and a withdraw disposition
+        clk = FieldClock("github:repo:updated_at", 100)
+        prov = canonical({"source": "github", "evidence": "audit-1"})
+        claim = ResourceRepositoryRelation(
+            prov_repo, "represents_repository", clk, canonical(REPO), prov, 100
+        )
+        outcome = store.admit_repository_relation(claim)
+        assert outcome == "insert"
+
+        disp_clk = FieldClock("github:audit", 200)
+        disp_prov = canonical({"source": "github", "evidence": "revocation-1"})
+        disp = MappingDisposition(
+            claim_key=claim.claim_key,  # type: ignore[arg-type]
+            disposition_kind="withdraw",
+            disposition_clock=disp_clk,
+            disposition_provenance_json=disp_prov,
+            observed_at_us=200,
+        )
+        disp_outcome = store.admit_mapping_disposition(disp)
+        assert disp_outcome == "insert"
+
+        # 3.2: Evidence propagation
+        # Case A: No evidence supplied (evidence=None) -> withdrawal unconfirmed, state contested
+        eval_none = store.evaluate_provider_repository(prov_repo, evidence=None)
+        assert eval_none.state == "contested_candidate"
+        assert len(eval_none.unconfirmed_dispositions) == 1
+        assert len(eval_none.active_claims) == 1
+
+        rel_none = store.repository_relations(prov_repo, evidence=None)
+        assert len(rel_none) == 1
+        assert rel_none[0].support_status == "unconfirmed_disposition"
+
+        # Case B: Confirmed evidence supplied
+        confirmed_ev = MappingOperationEvidence(
+            confirmed_disposition_keys=frozenset({disp.disposition_key})
+        )
+        eval_conf = store.evaluate_provider_repository(prov_repo, evidence=confirmed_ev)
+        assert eval_conf.state == "withdrawn"
+        assert len(eval_conf.withdrawn_claims) == 1
+        assert len(eval_conf.active_claims) == 0
+
+        rel_conf = store.repository_relations(prov_repo, evidence=confirmed_ev)
+        assert len(rel_conf) == 1
+        assert rel_conf[0].support_status == "supporting_binding_disposed"
+
+        rel_repo_conf = store.relations_for_repository(REPO, evidence=confirmed_ev)
+        assert len(rel_repo_conf) == 1
+        assert rel_repo_conf[0].support_status == "supporting_binding_disposed"
+
+        rel_prov_conf = store.relations_for_provider_repository(
+            prov_repo, evidence=confirmed_ev
+        )
+        assert len(rel_prov_conf) == 1
+        assert rel_prov_conf[0].support_status == "supporting_binding_disposed"
+
+        # Case C: Contradicted evidence supplied
+        contra_ev = MappingOperationEvidence(
+            contradicted_disposition_keys=frozenset({disp.disposition_key})
+        )
+        eval_contra = store.evaluate_provider_repository(prov_repo, evidence=contra_ev)
+        assert eval_contra.state == "evidence_contradictory"
+        assert len(eval_contra.contradictory_dispositions) == 1
+
+        rel_contra = store.repository_relations(prov_repo, evidence=contra_ev)
+        assert len(rel_contra) == 1
+        assert rel_contra[0].support_status == "conflicting_support"
+
+        # 3.3: admit_transfer_event return type (must return str "insert" / "duplicate")
+        ev_res = ResourceKey.timeline_event(issue, "ev-1")
+        report = TransferEventReport.from_targets(
+            ev_res,
+            clock=FieldClock("github:event", 10),
+            provenance_json=prov,
+            observed_at_us=10,
+            from_target_json=canonical(REPO),
+            to_target_json=canonical(REPO),
+        )
+        res_ret = store.admit_transfer_event(report)
+        assert isinstance(res_ret, str)
+        assert res_ret == "insert"
+        res_ret2 = store.admit_transfer_event(report)
+        assert res_ret2 == "duplicate"
+
+        # 3.3: require_support parameter forwarded
+        unsupported_issue_rel = ResourceRepositoryRelation(
+            issue, "owning_repository", clk, canonical(REPO), prov, 300
+        )
+        with pytest.raises(ValueError, match="requires explicit MappingSupport"):
+            store.admit_repository_relation(unsupported_issue_rel, require_support=True)
+
+        # 5: Generator in selected_repositories normalized at entrance
+        def _repo_generator():
+            yield REPO
+
+        reports_gen = store.transfer_event_reports(
+            selected_repositories=_repo_generator()
+        )
+        assert len(reports_gen) == 1
+        assert reports_gen[0].report_key.event_resource == ev_res
+
+    assert not (directory / "p1-recovery-stop.json").exists()

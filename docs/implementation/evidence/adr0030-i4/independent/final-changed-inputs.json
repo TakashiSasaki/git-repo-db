@@ -1,0 +1,54 @@
+{
+  ".agents/skills/ci-final-tree-verification/SKILL.md": {
+    "sha256": "0cabb782b35d191537e313574f8918c1e7367578d9b5afb641be33c669d411a8",
+    "bytes": 21671
+  },
+  ".github/workflows/access-registry.yml": {
+    "sha256": "0e80062108aae61f4e9e36f27cd421aae401a2304cf7a8997a98ae07ba1cddfc",
+    "bytes": 11510
+  },
+  "docs/implementation/adr0030-i4-query-search-backup.md": {
+    "sha256": "ea442600a2dbb473f69d9ef3ce2e852ee6e517a0a001f1a7b702e39a575bcbc3",
+    "bytes": 7263
+  },
+  "docs/implementation/evidence/adr0030-i4/README.md": {
+    "sha256": "da0a611559cb71b30b10a5424b2c09eabf6653ba65cb48d73977b848d9ebe22b",
+    "bytes": 1049
+  },
+  "scripts/verify_access_distribution.py": {
+    "sha256": "d13874202d76cdc11e6a6578c3db314f5fb7f1f2eafa41310bd9856f46ba7339",
+    "bytes": 22645
+  },
+  "src/repo_catalog/adapters/sqlite/production_search.py": {
+    "sha256": "f5d24c2a0257390de637bb22e4d0efc690d2377fb1161cfa833a96e47aec189b",
+    "bytes": 26003
+  },
+  "src/repo_catalog/adapters/sqlite/recovery.py": {
+    "sha256": "a35950021b21a069d5deefb2066ced2d5e680f5224076c60f8b381a8bbf4fad9",
+    "bytes": 154279
+  },
+  "src/repo_catalog/adapters/sqlite/recovery_validation.py": {
+    "sha256": "695cf9a890d05fc7e2660343d459c2fd3886d7667ce55548a2994ad4e34b12b2",
+    "bytes": 21503
+  },
+  "src/repo_catalog/application/production_query.py": {
+    "sha256": "9b156edb0569df6708564aaed44318109d43679a8e4c9715949ba9f34c755f9f",
+    "bytes": 58451
+  },
+  "src/repo_catalog/domain/production_query.py": {
+    "sha256": "cbb62cb556fc2cb6473bfb33bf433c14a3a82c448a53ffaf88a60b3f2f451819",
+    "bytes": 37030
+  },
+  "tests/integration/i4/__init__.py": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "tests/integration/i4/test_query_search_backup.py": {
+    "sha256": "af550ed7f5c8c44c9f2d9ac9fc25e01d15c710050af36ef942c4606cc18933af",
+    "bytes": 21247
+  },
+  "tests/integration/p6/conftest.py": {
+    "sha256": "8c22beba699bc2c9ea4cd4ec913e95413172d18328f12af19783ba5ff6dcead2",
+    "bytes": 22172
+  }
+}

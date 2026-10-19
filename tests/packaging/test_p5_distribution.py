@@ -72,7 +72,13 @@ from repo_catalog.domain.exchange import (
     decode_package,
     encode_package,
 )
-from repo_catalog.domain.p1_context import ResourceKey
+from repo_catalog.domain.p1_context import (
+    FieldClock,
+    ResourceKey,
+    ResourceRepositoryRelation,
+    canonical,
+)
+from repo_catalog.domain.p1_coordination import RequestIdentity
 from repo_catalog.domain.p1_core import OID
 
 assert "site-packages" in str(Path(__import__("repo_catalog.application.acquisition", fromlist=["x"]).__file__))
@@ -135,28 +141,53 @@ pr_payload = {
     "body": "Body text",
     "created_at": "2026-10-10T12:10:00Z",
     "updated_at": "2026-10-10T12:15:00Z",
-    "head": {"sha": commit1, "ref": "feature"},
-    "base": {"sha": commit1, "ref": "main"},
+    "head": {"sha": commit1, "ref": "feature", "repo": {"id": 1}},
+    "base": {"sha": commit1, "ref": "main", "repo": {"id": 1}},
 }
+mapping = ResourceRepositoryRelation(
+    ResourceKey(service_uuid, "repository", "1"),
+    "represents_repository",
+    FieldClock("installed:mapping", 1_700_000_000_000_000),
+    canonical(repo_uuid),
+    make_provenance("installed", {"binding": "explicit-test-report"}),
+    1_700_000_000_000_000,
+)
 batch = ProviderIntakeBatch(
     service_instance_uuidv4=service_uuid,
     providers=(ProviderRegistration(service_uuid, "github"),),
     repositories=(RepositoryRegistration(repo_uuid),),
+    mapping_claims=(mapping,),
     pull_requests=(
         ProviderPullRequestIntake(
             payload=pr_payload,
             observed_at_us=1_700_000_000_000_000,
             provenance_json=make_provenance("github.rest", "pr-1"),
-            repository_uuidv4=repo_uuid,
         ),
     ),
 )
 prov_report = prov_acq.admit_batch(batch)
 assert len(prov_report.admitted_resources) >= 1
+pr_key = ResourceKey(service_uuid, "pull_request", "2001")
+with Context.snapshot(cat_a) as context:
+    original_roles = context.provider_repository_roles(pr_key)
+    assert {role.scope.relation_kind for role in original_roles} == {
+        "base_repository", "head_repository",
+    }
+    for role in original_roles:
+        assert role.scope.provider_repository_id == "1"
+        assert role.supports[0].supporting_claims == (mapping.claim_key,)
+        assert role.supports[0].target_repository_uuidv4 == repo_uuid
+    original_relations = context.repository_relations(pr_key)
+    assert {relation.relation_kind for relation in original_relations} == {
+        "base_repository", "head_repository",
+    }
 
 # 3. Exercise Exchange export from A and import into B
 svc_a = ExchangeService(cat_a)
-pkg = svc_a.export_package(exported_at_us=1_700_000_100_000_000)
+pkg = svc_a.export_package(
+    selection=ExchangeSelectionScope(all_selected=True),
+    exported_at_us=1_700_000_100_000_000,
+)
 assert pkg.core is not None
 assert pkg.context is not None
 
@@ -164,9 +195,20 @@ wire = encode_package(pkg)
 decoded = decode_package(wire)
 
 svc_b = ExchangeService(cat_b)
-rep_b = svc_b.import_package(decoded, new_request=True)
+rep_b = svc_b.import_package(
+    decoded,
+    request=RequestIdentity(pkg.sender_catalog_instance_uuidv4, pkg.package_id),
+    new_request=True,
+    permitted_repository_uuidv4s=(repo_uuid,),
+)
 assert rep_b.admitted_core_objects >= 1
 assert rep_b.admitted_context_resources >= 1
+with Context.snapshot(cat_b) as context:
+    assert context.provider_repository_roles(pr_key) == original_roles
+    assert context.repository_relations(pr_key) == original_relations
+    assert tuple(
+        relation.relation for relation in context.repository_relations(mapping.resource)
+    ) == (mapping,)
 
 # Verify catalog B received commit1 in Core
 core_b = GitCore(cat_b / "core.sqlite3")
