@@ -972,6 +972,8 @@ class SQLiteRecoveryAdapter:
                     "repository_uuidv4": manifest.repository_uuidv4,
                     "catalog_instance_uuidv4": manifest.catalog_instance_uuidv4,
                     "scope": manifest.scope.value,
+                    "excluded_stores": ["access", "operational", "search"],
+                    "restoration_scope": "Git history/structure/notes and declared Context; no saved access configuration or repository file checkout",
                     "stores": {
                         k: {
                             "path": v.path,

@@ -293,3 +293,24 @@ static development receipts with zero runtime tests from the separate minimum
 SQLite job. This is a supported retrieval route, not permission to bypass network
 policy, fabricate missing receipts or reinterpret failed acceptance as green.
 See the [I2/I3 evidence](../../../docs/implementation/evidence/adr0030-i23/README.md).
+
+## Provider-qualified projections after ADR 0030
+
+When retired Context Repository-field fixtures fail before Query/Search executes,
+replace their setup with genuine typed Provider-role observations and explicit
+Mapping claims. Do not revive `admit_repository()` or its special field. Current
+ownership/base/head must come from `provider_repository_roles(..., evidence=...)`;
+retained Core-target rows can outlive a newer unresolved Provider observation.
+Verify both facts in the same counterexample, and check repository-filtered lists
+as well as the single-resource view. A Mapping Disposition report alone supplies
+no receiver operation evidence.
+
+Derivative keys need the complete original role scope, not only Resource, role,
+clock and provenance: two equal-clock Provider alternatives can share all those
+coordinates while differing in their Provider target. Assert that both survive
+Search rebuild and result projection. Preserve current/historical qualifiers and
+recompute qualification from authority on every search read. I4's counterexamples
+in `tests/integration/i4/test_query_search_backup.py` exercise this boundary;
+run `pytest -q tests/integration/i4 tests/integration/p6` on the supported runtime.
+These are projection rules, not permission to issue Mapping evidence, rewrite
+original keys or infer execution approval from a Mapping.

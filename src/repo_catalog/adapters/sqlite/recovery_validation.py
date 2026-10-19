@@ -13,11 +13,11 @@ from repo_catalog.domain.p1_context import (
     FieldClock,
     MappingClaimKey,
     MappingDisposition,
-    ProviderRepositoryScope,
     ResourceKey,
     ResourceRepositoryRelation,
     TransferEventReport,
     canonical,
+    validate_provider_repository_scope,
 )
 from repo_catalog.domain.p1_core import CoreFailure
 from repo_catalog.domain.recovery import BackupValidationError
@@ -150,8 +150,19 @@ def validate_stored_context_relations(connection: sqlite3.Connection) -> None:
             FROM resource_relations"""
         ):
             parsed_scope = json.loads(row[6])
-            if isinstance(parsed_scope, dict) and "repository_roles" in parsed_scope:
-                ProviderRepositoryScope.from_json(row[6])
+            if row[3] == "provider_repository_roles":
+                members = tuple(ResourceKey(*m) for m in json.loads(row[4]))
+                validate_provider_repository_scope(
+                    ResourceKey(*row[:3]), members, row[5], row[6], row[7]
+                )
+                for member in members:
+                    if not connection.execute(
+                        "SELECT 1 FROM resources WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=?",
+                        member.coordinates(),
+                    ).fetchone():
+                        raise BackupValidationError(
+                            "Stored Provider role member resource missing"
+                        )
             if row[3] == "transfer_event_report":
                 if not isinstance(parsed_scope, dict) or "clock" not in parsed_scope:
                     raise BackupValidationError(

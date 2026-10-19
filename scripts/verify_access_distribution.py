@@ -253,7 +253,35 @@ with tempfile.TemporaryDirectory() as directory:
         assert core.catalog_identity() == (target_seed, target_instance)
         assert {r[0] for r in core.sql("SELECT repository_uuidv4 FROM repositories")} == {target_seed, repository_id}
     assert not (target / "access.sqlite3").exists()
-print(json.dumps({"sqlite": sqlite3.sqlite_version, "sqlite_source_id": sqlite3.connect(":memory:").execute("SELECT sqlite_source_id()").fetchone()[0], "module_origin": str(module_origin), "interpreter": sys.executable, "ddl_sha256": fingerprint(), "context_ddl_sha256": p1_schema.fingerprint("context"), "table_count": len(tables), "exchange_format": EXCHANGE_FORMAT, "local_git_acquired": True, "access_backup_restored": True, "scope_forked": True, "installed_i2_i3_cross_seed": "passed", "installed_smoke": "passed"}))
+    # Installed I4: Query/Search and fresh paired restore consume the I2/I3 facts.
+    from repo_catalog.application.production_query import ProductionQueryService
+    from repo_catalog.application.recovery import RecoveryService
+    from repo_catalog.domain.production_query import SearchQuery
+    from repo_catalog.domain.p1_context import MappingDisposition, MappingOperationEvidence
+    disposition = MappingDisposition(claims[0].claim_key, "withdraw", FieldClock("installed:operation", 30), make_provenance("installed", "withdraw"), 30)
+    with Context.transaction(target) as ctx:
+        ctx.admit_mapping_disposition(disposition)
+    q = ProductionQueryService(target)
+    assert q.get_context_resource(qualified.resource).repository_roles[0].state == "contested_candidate"
+    checked = ProductionQueryService(target, mapping_evidence=MappingOperationEvidence(frozenset({disposition.disposition_key})))
+    assert checked.get_context_resource(qualified.resource).repository_roles[0].state == "withdrawn"
+    q.rebuild_search(("context_text",))
+    found = q.search(SearchQuery("owning_repository", projection_kinds=("context_text",)))
+    assert found.backend == "verified_projection_scan" and found.hits
+    backup, restored = destination / "paired-backup", destination / "paired-restored"
+    recovery = RecoveryService()
+    recovery.create_consistent_backup(target, backup)
+    recovery.restore_backup(backup, restored, target_seed)
+    with Context.snapshot(restored) as ctx:
+        assert ctx.mapping_dispositions(claims[0].claim_key) == (disposition,)
+        assert ctx.transfer_event_reports() == (report,)
+    rq = ProductionQueryService(restored)
+    assert rq.get_context_resource(qualified.resource) == q.get_context_resource(qualified.resource)
+    assert rq.search(SearchQuery("owning_repository", projection_kinds=("context_text",))).backend == "authority_scan"
+    rq.rebuild_search(("context_text",))
+    assert rq.search(SearchQuery("owning_repository", projection_kinds=("context_text",))).backend == "verified_projection_scan"
+    assert not any((restored / f"{role}.sqlite3").exists() for role in ("operational", "access"))
+print(json.dumps({"sqlite": sqlite3.sqlite_version, "sqlite_source_id": sqlite3.connect(":memory:").execute("SELECT sqlite_source_id()").fetchone()[0], "module_origin": str(module_origin), "interpreter": sys.executable, "ddl_sha256": fingerprint(), "context_ddl_sha256": p1_schema.fingerprint("context"), "table_count": len(tables), "exchange_format": EXCHANGE_FORMAT, "local_git_acquired": True, "access_backup_restored": True, "scope_forked": True, "installed_i2_i3_cross_seed": "passed", "installed_i4_query_search_backup": "passed", "installed_smoke": "passed"}))
 """
 
 

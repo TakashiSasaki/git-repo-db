@@ -40,7 +40,11 @@ from repo_catalog.adapters.sqlite.p1_coordination import (
 )
 from repo_catalog.adapters.sqlite.production_context import Context
 from repo_catalog.adapters.sqlite.production_search import ProductionSearchAdapter
-from repo_catalog.domain.p1_context import CoverageScope, ResourceKey
+from repo_catalog.domain.p1_context import (
+    CoverageScope,
+    MappingOperationEvidence,
+    ResourceKey,
+)
 from repo_catalog.domain.p1_coordination import CoordinationError
 from repo_catalog.domain.p1_core import (
     OID,
@@ -226,7 +230,13 @@ class ProductionQueryService:
         *,
         mode: CatalogReadMode | Literal["auto"] = "auto",
         read_limits: SnapshotReadLimits = SnapshotReadLimits(),
+        mapping_evidence: MappingOperationEvidence | None = None,
     ):
+        if mapping_evidence is not None and not isinstance(
+            mapping_evidence, MappingOperationEvidence
+        ):
+            raise ValueError("MappingOperationEvidence required")
+        self.mapping_evidence = mapping_evidence
         self.directory = Path(directory)
         if not isinstance(read_limits, SnapshotReadLimits):
             raise QueryError(
@@ -238,6 +248,17 @@ class ProductionQueryService:
             raise QueryError("INVALID_MODE", "query", str(mode))
         self._requested_mode = mode
         self.search_adapter = ProductionSearchAdapter(self.directory)
+
+    def _mapping_filter(self) -> dict[str, object]:
+        evidence = self.mapping_evidence or MappingOperationEvidence()
+        return {
+            "confirmed": sorted(
+                k.coordinates() for k in evidence.confirmed_disposition_keys
+            ),
+            "contradicted": sorted(
+                k.coordinates() for k in evidence.contradicted_disposition_keys
+            ),
+        }
 
     def _check_stop(self) -> None:
         if (self.directory / "p1-recovery-stop.json").exists():
@@ -1060,14 +1081,32 @@ class ProductionQueryService:
         for fname in field_names:
             fields[fname] = context.candidates(resource_key, fname)
 
-        if context.repository_relations(resource_key):
-            raise QueryError(
-                "UNSUPPORTED_UNTIL_I4",
-                resource_key,
-                "Context repository relation projection requires ADR 0030 stage I4",
-            )
-        repo_cands = ()
-        repo_uuid = None
+        repo_roles = context.provider_repository_roles(
+            resource_key, evidence=self.mapping_evidence
+        )
+        repo_relations = context.repository_relations(
+            resource_key, evidence=self.mapping_evidence
+        )
+        primary_kind = {
+            "issue": "owning_repository",
+            "pull_request": "base_repository",
+        }.get(resource_key.resource_kind)
+        primary = tuple(r for r in repo_roles if r.scope.relation_kind == primary_kind)
+        # Convenience projection only when every current report agrees on one
+        # undisputed Mapping candidate. Full qualified alternatives remain below.
+        targets = {
+            target
+            for role in primary
+            if role.mapping is not None
+            for target in role.mapping.active_repository_uuidv4s
+        }
+        repo_uuid = (
+            next(iter(targets))
+            if len(targets) == 1
+            and primary
+            and all(r.state == "single_candidate" for r in primary)
+            else None
+        )
 
         resolved_texts: dict[str, str | None] = {}
         if include_text and "text_body_sha256" in fields:
@@ -1123,7 +1162,8 @@ class ProductionQueryService:
         return ContextResourceView(
             resource=resource_key,
             repository_uuidv4=repo_uuid,
-            repository_candidates=repo_cands,
+            repository_roles=repo_roles,
+            repository_relations=repo_relations,
             parent=parent,
             document_kind=document_kind,
             provider_document_id=provider_document_id,
@@ -1143,12 +1183,6 @@ class ProductionQueryService:
         repository_uuidv4: str | None = None,
         parent: ResourceKey | None = None,
     ) -> PageResult[ContextResourceView]:
-        if repository_uuidv4 is not None:
-            raise QueryError(
-                "UNSUPPORTED_UNTIL_I4",
-                "context_resources",
-                "Context repository relation filtering requires ADR 0030 stage I4",
-            )
         with self.open_snapshot(required_store="context") as snap:
             assert snap.context is not None
             token_str = snap.token.encode()
@@ -1180,6 +1214,10 @@ class ProductionQueryService:
                         include_text=False,
                         validate_core=validate_core,
                     )
+                    if repository_uuidv4 is not None and not view.matches_repository(
+                        repository_uuidv4
+                    ):
+                        continue
                     if parent is not None and view.parent != parent:
                         continue
                     yield view
@@ -1191,6 +1229,7 @@ class ProductionQueryService:
                 endpoint_kind="context_resources",
                 filters={
                     "parent": list(parent.coordinates()) if parent else None,
+                    "mapping_evidence": self._mapping_filter(),
                     "repository_uuidv4": repository_uuidv4,
                     "resource_kind": resource_kind,
                     "service_instance_uuidv4": service_instance_uuidv4,
@@ -1326,12 +1365,6 @@ class ProductionQueryService:
         resource_kind: str | None = None,
         repository_uuidv4: str | None = None,
     ) -> PageResult[PairedResourceView]:
-        if repository_uuidv4 is not None:
-            raise QueryError(
-                "UNSUPPORTED_UNTIL_I4",
-                "paired_resources",
-                "Context repository relation filtering requires ADR 0030 stage I4",
-            )
         with self.open_snapshot(required_store="paired") as snap:
             assert snap.core is not None and snap.context is not None
             token_str = snap.token.encode()
@@ -1346,6 +1379,13 @@ class ProductionQueryService:
                         key,
                         include_text=False,
                     )
+                    if (
+                        repository_uuidv4 is not None
+                        and not paired_view.context_resource.matches_repository(
+                            repository_uuidv4
+                        )
+                    ):
+                        continue
                     yield paired_view
 
             selected = _paginate_items(
@@ -1354,6 +1394,7 @@ class ProductionQueryService:
                 page=page,
                 endpoint_kind="paired_resources",
                 filters={
+                    "mapping_evidence": self._mapping_filter(),
                     "repository_uuidv4": repository_uuidv4,
                     "resource_kind": resource_kind,
                 },
@@ -1381,7 +1422,7 @@ class ProductionQueryService:
         if kind == "notes":
             return ProductionSearchAdapter.extract_notes_documents(snapshot.core)
         return ProductionSearchAdapter.extract_context_documents(
-            snapshot.context.db, snapshot.context.read_text
+            snapshot.context, evidence=self.mapping_evidence
         )
 
     def rebuild_search(
@@ -1493,6 +1534,7 @@ class ProductionQueryService:
                 filters={
                     "projection_kinds": list(query.projection_kinds),
                     "query_text": query.query_text,
+                    "mapping_evidence": self._mapping_filter(),
                 },
                 snapshot_token=token_str,
             )
