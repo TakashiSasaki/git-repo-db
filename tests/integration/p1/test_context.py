@@ -10,6 +10,7 @@ from repo_catalog.domain.p1_context import (
     FieldCandidate,
     FieldClock,
     ResourceKey,
+    ResourceRepositoryRelation,
     canonical,
 )
 
@@ -254,19 +255,23 @@ def test_detached_issue_attachment_transfer_preserves_identity_and_original_prov
     store.resource(key, None)
     second = "a1a5dfd6-69a3-4274-bbc7-2e7f6bcd39a4"
     db.execute("INSERT INTO repository_context VALUES(?,?)", (second, "{}"))
-    assert store.repository_candidates(key) == ()
+    assert store.repository_relations(key) == ()
     original = canonical({"source": "provider.example", "evidence": "attachment-1"})
     moved = canonical({"source": "provider.example", "evidence": "transfer-2"})
-    store.admit_repository(
-        key, REPO, FieldClock("provider.updated_at", 1), original, 10
+    claim1 = ResourceRepositoryRelation(
+        key, "owning_repository", FieldClock("provider.updated_at", 1), canonical(REPO), original, 10
     )
-    store.admit_repository(key, second, FieldClock("provider.updated_at", 2), moved, 20)
-    current = store.repository_candidates(key)
+    store.admit_repository_relation(claim1)
+    claim2 = ResourceRepositoryRelation(
+        key, "owning_repository", FieldClock("provider.updated_at", 2), canonical(second), moved, 20
+    )
+    store.admit_repository_relation(claim2)
+    current = store.repository_relations(key)
     assert len(current) == 1
-    assert current[0].value_json == canonical(second)
+    assert current[0].target_repository_uuidv4 == second
     assert current[0].provenance_json == moved and current[0].observed_at_us == 20
     store.resource(key, REPO)
-    assert store.repository_candidates(key) == current
+    assert store.repository_relations(key) == current
     assert (
         db.execute(
             "SELECT count(*) FROM resources WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=?",
@@ -275,14 +280,17 @@ def test_detached_issue_attachment_transfer_preserves_identity_and_original_prov
         == 1
     )
     with pytest.raises(sqlite3.IntegrityError):
-        store.admit_repository(
-            key,
-            "86556e5f-ee55-4f4d-87c1-d30c5e14dff9",
-            FieldClock("provider.updated_at", 3),
-            moved,
-            30,
+        store.admit_repository_relation(
+            ResourceRepositoryRelation(
+                key,
+                "owning_repository",
+                FieldClock("provider.updated_at", 3),
+                canonical("86556e5f-ee55-4f4d-87c1-d30c5e14dff9"),
+                moved,
+                30,
+            )
         )
-    assert store.repository_candidates(key) == current
+    assert store.repository_relations(key) == current
 
 
 def test_missing_provenance_rejected_at_intended_source_evidence_boundary(context):
@@ -339,33 +347,34 @@ def test_attached_issue_explicit_detach_preserves_null_original_source_and_rollb
     context,
 ):
     db, store, _ = context
-    store.admit_repository(
-        KEY, REPO, FieldClock("provider.updated_at", 1), PROVENANCE, 10
+    claim1 = ResourceRepositoryRelation(
+        KEY, "owning_repository", FieldClock("provider.updated_at", 1), canonical(REPO), PROVENANCE, 10
     )
+    store.admit_repository_relation(claim1)
     detached = canonical({"source": "provider.example", "evidence": "detached-20"})
     db.execute("BEGIN")
-    store.admit_repository(
-        KEY, None, FieldClock("provider.updated_at", 2), detached, 20
+    claim2 = ResourceRepositoryRelation(
+        KEY, "owning_repository", FieldClock("provider.updated_at", 2), "null", detached, 20
     )
-    assert store.repository_candidates(KEY)[0].value_json == "null"
+    store.admit_repository_relation(claim2)
+    assert store.repository_relations(KEY)[0].is_explicit_null_target is True
     db.rollback()
-    assert store.repository_candidates(KEY)[0].value_json == canonical(REPO)
-    store.admit_repository(
-        KEY, None, FieldClock("provider.updated_at", 2), detached, 20
-    )
-    current = store.repository_candidates(KEY)
-    assert len(current) == 1 and current[0].value_json == "null"
+    assert store.repository_relations(KEY)[0].target_repository_uuidv4 == REPO
+    store.admit_repository_relation(claim2)
+    current = store.repository_relations(KEY)
+    assert len(current) == 1 and current[0].is_explicit_null_target is True
     assert current[0].provenance_json == detached and current[0].observed_at_us == 20
     assert (
         db.execute(
-            "SELECT repository_uuidv4 FROM field_candidates WHERE field_name=?",
-            ("repository_uuidv4",),
+            "SELECT repository_uuidv4 FROM resource_repository_relations",
         ).fetchone()[0]
         is None
     )
     assert (
-        store.repository_candidates(ResourceKey(SERVICE, "issue", "unobserved")) == ()
+        store.repository_relations(ResourceKey(SERVICE, "issue", "unobserved")) == ()
     )
+    with pytest.raises(ValueError, match="field_name='repository_uuidv4' is retired; use repository_relations"):
+        store.candidates(KEY, "repository_uuidv4")
 
 
 def test_exact_text_reference_fk_differs_from_attributed_digest_metadata(context):

@@ -9404,6 +9404,14 @@
       "retention": "A3 typed domain registration metadata/attribution only; executable access/execution settings excluded. Current key-level routing overrides are in access-a3-routing.json. No ordinary Git-file body archive.",
       "semantic_key": "Direct full semantic tuple: repository_uuidv4. Whole JSON values are canonical lossless actual coordinates/membership, never hashes or generated row aliases. Real occurrence UUIDs identify captures, requests, attempts, or physical copies only."
     },
+    "context.repository_mapping_dispositions": {
+      "cross_store": "No cross-database SQLite FK. Context portable typed OIDs require explicit Core-first dependency validation under cooperating gate; paired reads pin both snapshots. Core never depends on Context. Disposable stores never establish authoritative validity.",
+      "domain": "Attributed administrative or automated disposition ledger recording acceptance, rejection, or replacement of resource repository relations",
+      "durability": "authoritative",
+      "mutation": "Current candidate/configuration mutation under provenance/latest-clock contracts; immutable evidence tables have guards",
+      "retention": "Provider text and allowlisted Context evidence/configuration only; no ordinary Git-file body archive.",
+      "semantic_key": "Direct full semantic tuple: service_instance_uuidv4, resource_kind, provider_resource_id, relation_kind, claim_clock_json, claim_target_json, claim_provenance_json, disposition_kind, disposition_clock_json, disposition_provenance_json. Whole JSON values are canonical lossless actual coordinates/membership, never hashes or generated row aliases. Real occurrence UUIDs identify captures, requests, attempts, or physical copies only."
+    },
     "context.resource_relations": {
       "cross_store": "No cross-database SQLite FK. Context portable typed OIDs require explicit Core-first dependency validation under cooperating gate; paired reads pin both snapshots. Core never depends on Context. Disposable stores never establish authoritative validity.",
       "domain": "Context whole membership/ordered associations with actual scope and original provenance; ADR 0028 observation time is NULL or positive int64; NULL gives no temporal order",
@@ -9411,6 +9419,14 @@
       "mutation": "Current candidate/configuration mutation under provenance/latest-clock contracts; immutable evidence tables have guards",
       "retention": "Provider text and allowlisted Context evidence/configuration only; no ordinary Git-file body archive.",
       "semantic_key": "Direct full semantic tuple: service_instance_uuidv4, resource_kind, provider_resource_id, relation_kind, members_json, provenance_json, scope_json. Whole JSON values are canonical lossless actual coordinates/membership, never hashes or generated row aliases. Real occurrence UUIDs identify captures, requests, attempts, or physical copies only."
+    },
+    "context.resource_repository_relations": {
+      "cross_store": "No cross-database SQLite FK. Context portable typed OIDs require explicit Core-first dependency validation under cooperating gate; paired reads pin both snapshots. Core never depends on Context. Disposable stores never establish authoritative validity.",
+      "domain": "Context resource to repository relations under ADR 0030 closed six-role vocabulary, canonical target/clock/provenance, and monotonic clock admission; ADR 0028 observation time is NULL or positive int64",
+      "durability": "authoritative",
+      "mutation": "Current candidate/configuration mutation under provenance/latest-clock contracts; immutable evidence tables have guards",
+      "retention": "Provider text and allowlisted Context evidence/configuration only; no ordinary Git-file body archive.",
+      "semantic_key": "Direct full semantic tuple: service_instance_uuidv4, resource_kind, provider_resource_id, relation_kind, clock_json, target_json, provenance_json. Whole JSON values are canonical lossless actual coordinates/membership, never hashes or generated row aliases. Real occurrence UUIDs identify captures, requests, attempts, or physical copies only."
     },
     "context.resources": {
       "cross_store": "No cross-database SQLite FK. Context portable typed OIDs require explicit Core-first dependency validation under cooperating gate; paired reads pin both snapshots. Core never depends on Context. Disposable stores never establish authoritative validity.",
@@ -9703,7 +9719,7 @@
   },
   "target_schemas": {
     "context": {
-      "ddl_sha256": "75f142fa9127ff6790f9348433f79b2f84e8fa2b20ef32b668d8ff21d924cf3b",
+      "ddl_sha256": "fa7838f86d9f0ab4b2f26c561ad0721df2d0c7dad45ee97e72ff09cbb89ac434",
       "tables": {
         "collection_terminals": {
           "columns": [
@@ -10644,12 +10660,6 @@
             },
             {
               "generated": 2,
-              "name": "repository_uuidv4",
-              "notnull": false,
-              "type": "TEXT"
-            },
-            {
-              "generated": 2,
               "name": "text_body_sha256",
               "notnull": false,
               "type": "TEXT"
@@ -10695,16 +10705,6 @@
               "NO ACTION",
               "NO ACTION",
               "NONE"
-            ],
-            [
-              2,
-              0,
-              "repository_context",
-              "repository_uuidv4",
-              null,
-              "NO ACTION",
-              "NO ACTION",
-              "NONE"
             ]
           ],
           "primary_key": [
@@ -10716,7 +10716,7 @@
             "value_json",
             "provenance_json"
           ],
-          "sql": "CREATE TABLE field_candidates(\n service_instance_uuidv4 TEXT NOT NULL,\n resource_kind TEXT NOT NULL,\n provider_resource_id TEXT NOT NULL,\n field_name TEXT NOT NULL CHECK(length(field_name)>0),\n value_json TEXT NOT NULL CHECK(p1_json(value_json)),\n clock_json TEXT NOT NULL CHECK(p1_json(clock_json) AND json_type(clock_json)='object'\n   AND COALESCE(json_type(clock_json,'$.domain')='text',0) AND length(json_extract(clock_json,'$.domain'))>0\n   AND COALESCE(json_type(clock_json,'$.at_us') IN('integer','null'),0) AND typeof(json_extract(clock_json,'$.at_us')) IN('integer','null') AND (json_type(clock_json,'$.at_us')='null' OR json_extract(clock_json,'$.at_us')>0) AND json_remove(clock_json,'$.domain','$.at_us')='{}'),\n provenance_json TEXT NOT NULL CHECK(p1_json(provenance_json) AND json_type(provenance_json)='object' AND COALESCE(json_type(provenance_json,'$.source')='text',0) AND length(json_extract(provenance_json,'$.source'))>0 AND json_type(provenance_json,'$.evidence') IS NOT NULL AND json_type(provenance_json,'$.evidence')!='null'),\n observed_at_us INTEGER CHECK(observed_at_us IS NULL OR (typeof(observed_at_us)='integer' AND observed_at_us>0)),\n clock_domain TEXT GENERATED ALWAYS AS(json_extract(clock_json,'$.domain')) VIRTUAL,\n source_clock_us INTEGER GENERATED ALWAYS AS(json_extract(clock_json,'$.at_us')) VIRTUAL,\n repository_uuidv4 TEXT GENERATED ALWAYS AS(CASE WHEN field_name='repository_uuidv4' THEN json_extract(value_json,'$') END) VIRTUAL REFERENCES repository_context,\n text_body_sha256 TEXT GENERATED ALWAYS AS(CASE WHEN field_name='text_body_sha256' THEN json_extract(value_json,'$') END) VIRTUAL REFERENCES text_bodies(sha256),\n CHECK(field_name!='text_body_sha256' OR json_type(value_json)='null' OR (json_type(value_json)='text' AND length(json_extract(value_json,'$'))=64 AND json_extract(value_json,'$') NOT GLOB '*[^0-9a-f]*')),\n CHECK(field_name!='repository_uuidv4' OR json_type(value_json)='null' OR (json_type(value_json)='text' AND p1_uuid4(json_extract(value_json,'$')))),\n PRIMARY KEY(service_instance_uuidv4,resource_kind,provider_resource_id,field_name,clock_json,value_json,provenance_json),\n FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id) REFERENCES resources\n) STRICT, WITHOUT ROWID",
+          "sql": "CREATE TABLE field_candidates(\n service_instance_uuidv4 TEXT NOT NULL,\n resource_kind TEXT NOT NULL,\n provider_resource_id TEXT NOT NULL,\n field_name TEXT NOT NULL CHECK(length(field_name)>0),\n value_json TEXT NOT NULL CHECK(p1_json(value_json)),\n clock_json TEXT NOT NULL CHECK(p1_json(clock_json) AND json_type(clock_json)='object'\n   AND COALESCE(json_type(clock_json,'$.domain')='text',0) AND length(json_extract(clock_json,'$.domain'))>0\n   AND COALESCE(json_type(clock_json,'$.at_us') IN('integer','null'),0) AND typeof(json_extract(clock_json,'$.at_us')) IN('integer','null') AND (json_type(clock_json,'$.at_us')='null' OR json_extract(clock_json,'$.at_us')>0) AND json_remove(clock_json,'$.domain','$.at_us')='{}'),\n provenance_json TEXT NOT NULL CHECK(p1_json(provenance_json) AND json_type(provenance_json)='object' AND COALESCE(json_type(provenance_json,'$.source')='text',0) AND length(json_extract(provenance_json,'$.source'))>0 AND json_type(provenance_json,'$.evidence') IS NOT NULL AND json_type(provenance_json,'$.evidence')!='null'),\n observed_at_us INTEGER CHECK(observed_at_us IS NULL OR (typeof(observed_at_us)='integer' AND observed_at_us>0)),\n clock_domain TEXT GENERATED ALWAYS AS(json_extract(clock_json,'$.domain')) VIRTUAL,\n source_clock_us INTEGER GENERATED ALWAYS AS(json_extract(clock_json,'$.at_us')) VIRTUAL,\n text_body_sha256 TEXT GENERATED ALWAYS AS(CASE WHEN field_name='text_body_sha256' THEN json_extract(value_json,'$') END) VIRTUAL REFERENCES text_bodies(sha256),\n CHECK(field_name!='text_body_sha256' OR json_type(value_json)='null' OR (json_type(value_json)='text' AND length(json_extract(value_json,'$'))=64 AND json_extract(value_json,'$') NOT GLOB '*[^0-9a-f]*')),\n CHECK(field_name!='repository_uuidv4'),\n PRIMARY KEY(service_instance_uuidv4,resource_kind,provider_resource_id,field_name,clock_json,value_json,provenance_json),\n FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id) REFERENCES resources\n) STRICT, WITHOUT ROWID",
           "triggers": {},
           "unique": [
             {
@@ -10800,6 +10800,272 @@
             {
               "columns": [
                 "repository_uuidv4"
+              ],
+              "origin": "pk",
+              "partial": false
+            }
+          ]
+        },
+        "repository_mapping_dispositions": {
+          "columns": [
+            {
+              "generated": 0,
+              "name": "service_instance_uuidv4",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "resource_kind",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "provider_resource_id",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "relation_kind",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "claim_clock_json",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "claim_target_json",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "claim_provenance_json",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "disposition_kind",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "disposition_clock_json",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "disposition_provenance_json",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "observed_at_us",
+              "notnull": false,
+              "type": "INTEGER"
+            },
+            {
+              "generated": 0,
+              "name": "replacement_clock_json",
+              "notnull": false,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "replacement_target_json",
+              "notnull": false,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "replacement_provenance_json",
+              "notnull": false,
+              "type": "TEXT"
+            }
+          ],
+          "foreign_keys": [
+            [
+              0,
+              0,
+              "resource_repository_relations",
+              "service_instance_uuidv4",
+              "service_instance_uuidv4",
+              "NO ACTION",
+              "RESTRICT",
+              "NONE"
+            ],
+            [
+              0,
+              1,
+              "resource_repository_relations",
+              "resource_kind",
+              "resource_kind",
+              "NO ACTION",
+              "RESTRICT",
+              "NONE"
+            ],
+            [
+              0,
+              2,
+              "resource_repository_relations",
+              "provider_resource_id",
+              "provider_resource_id",
+              "NO ACTION",
+              "RESTRICT",
+              "NONE"
+            ],
+            [
+              0,
+              3,
+              "resource_repository_relations",
+              "relation_kind",
+              "relation_kind",
+              "NO ACTION",
+              "RESTRICT",
+              "NONE"
+            ],
+            [
+              0,
+              4,
+              "resource_repository_relations",
+              "replacement_clock_json",
+              "clock_json",
+              "NO ACTION",
+              "RESTRICT",
+              "NONE"
+            ],
+            [
+              0,
+              5,
+              "resource_repository_relations",
+              "replacement_target_json",
+              "target_json",
+              "NO ACTION",
+              "RESTRICT",
+              "NONE"
+            ],
+            [
+              0,
+              6,
+              "resource_repository_relations",
+              "replacement_provenance_json",
+              "provenance_json",
+              "NO ACTION",
+              "RESTRICT",
+              "NONE"
+            ],
+            [
+              1,
+              0,
+              "resource_repository_relations",
+              "service_instance_uuidv4",
+              "service_instance_uuidv4",
+              "NO ACTION",
+              "RESTRICT",
+              "NONE"
+            ],
+            [
+              1,
+              1,
+              "resource_repository_relations",
+              "resource_kind",
+              "resource_kind",
+              "NO ACTION",
+              "RESTRICT",
+              "NONE"
+            ],
+            [
+              1,
+              2,
+              "resource_repository_relations",
+              "provider_resource_id",
+              "provider_resource_id",
+              "NO ACTION",
+              "RESTRICT",
+              "NONE"
+            ],
+            [
+              1,
+              3,
+              "resource_repository_relations",
+              "relation_kind",
+              "relation_kind",
+              "NO ACTION",
+              "RESTRICT",
+              "NONE"
+            ],
+            [
+              1,
+              4,
+              "resource_repository_relations",
+              "claim_clock_json",
+              "clock_json",
+              "NO ACTION",
+              "RESTRICT",
+              "NONE"
+            ],
+            [
+              1,
+              5,
+              "resource_repository_relations",
+              "claim_target_json",
+              "target_json",
+              "NO ACTION",
+              "RESTRICT",
+              "NONE"
+            ],
+            [
+              1,
+              6,
+              "resource_repository_relations",
+              "claim_provenance_json",
+              "provenance_json",
+              "NO ACTION",
+              "RESTRICT",
+              "NONE"
+            ]
+          ],
+          "primary_key": [
+            "service_instance_uuidv4",
+            "resource_kind",
+            "provider_resource_id",
+            "relation_kind",
+            "claim_clock_json",
+            "claim_target_json",
+            "claim_provenance_json",
+            "disposition_kind",
+            "disposition_clock_json",
+            "disposition_provenance_json"
+          ],
+          "sql": "CREATE TABLE repository_mapping_dispositions(\n service_instance_uuidv4 TEXT NOT NULL,\n resource_kind TEXT NOT NULL CHECK(resource_kind='repository'),\n provider_resource_id TEXT NOT NULL,\n relation_kind TEXT NOT NULL CHECK(relation_kind='represents_repository'),\n claim_clock_json TEXT NOT NULL CHECK(p1_mapping_clock(claim_clock_json)=1),\n claim_target_json TEXT NOT NULL CHECK(p1_mapping_target(claim_target_json)=1 AND json_type(claim_target_json)='text'),\n claim_provenance_json TEXT NOT NULL CHECK(p1_mapping_provenance(claim_provenance_json)=1),\n disposition_kind TEXT NOT NULL CHECK(disposition_kind IN('withdraw','correct','dispute')),\n disposition_clock_json TEXT NOT NULL CHECK(p1_mapping_clock(disposition_clock_json)=1),\n disposition_provenance_json TEXT NOT NULL CHECK(p1_mapping_provenance(disposition_provenance_json)=1),\n observed_at_us INTEGER CHECK(observed_at_us IS NULL OR (typeof(observed_at_us)='integer' AND observed_at_us>0)),\n replacement_clock_json TEXT CHECK(replacement_clock_json IS NULL OR p1_mapping_clock(replacement_clock_json)=1),\n replacement_target_json TEXT CHECK(replacement_target_json IS NULL OR (p1_mapping_target(replacement_target_json)=1 AND json_type(replacement_target_json)='text')),\n replacement_provenance_json TEXT CHECK(replacement_provenance_json IS NULL OR p1_mapping_provenance(replacement_provenance_json)=1),\n CHECK((disposition_kind='correct' AND replacement_clock_json IS NOT NULL AND replacement_target_json IS NOT NULL AND replacement_provenance_json IS NOT NULL) OR (disposition_kind!='correct' AND replacement_clock_json IS NULL AND replacement_target_json IS NULL AND replacement_provenance_json IS NULL)),\n CHECK(disposition_kind!='correct' OR replacement_clock_json!=claim_clock_json OR replacement_target_json!=claim_target_json OR replacement_provenance_json!=claim_provenance_json),\n PRIMARY KEY(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,claim_clock_json,claim_target_json,claim_provenance_json,disposition_kind,disposition_clock_json,disposition_provenance_json),\n FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,claim_clock_json,claim_target_json,claim_provenance_json) REFERENCES resource_repository_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,clock_json,target_json,provenance_json) ON DELETE RESTRICT,\n FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,replacement_clock_json,replacement_target_json,replacement_provenance_json) REFERENCES resource_repository_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,clock_json,target_json,provenance_json) ON DELETE RESTRICT\n) STRICT, WITHOUT ROWID",
+          "triggers": {
+            "rmd_no_delete": "CREATE TRIGGER rmd_no_delete BEFORE DELETE ON repository_mapping_dispositions\nBEGIN SELECT RAISE(ABORT,'immutable mapping disposition'); END",
+            "rmd_no_rebind": "CREATE TRIGGER rmd_no_rebind BEFORE INSERT ON repository_mapping_dispositions\nWHEN EXISTS(\n SELECT 1 FROM repository_mapping_dispositions existing\n WHERE existing.service_instance_uuidv4=NEW.service_instance_uuidv4\n   AND existing.resource_kind=NEW.resource_kind\n   AND existing.provider_resource_id=NEW.provider_resource_id\n   AND existing.relation_kind=NEW.relation_kind\n   AND existing.claim_clock_json=NEW.claim_clock_json\n   AND existing.claim_target_json=NEW.claim_target_json\n   AND existing.claim_provenance_json=NEW.claim_provenance_json\n   AND existing.disposition_kind=NEW.disposition_kind\n   AND existing.disposition_clock_json=NEW.disposition_clock_json\n   AND existing.disposition_provenance_json=NEW.disposition_provenance_json\n   AND (\n    existing.observed_at_us IS NOT NEW.observed_at_us\n    OR existing.replacement_clock_json IS NOT NEW.replacement_clock_json\n    OR existing.replacement_target_json IS NOT NEW.replacement_target_json\n    OR existing.replacement_provenance_json IS NOT NEW.replacement_provenance_json\n   )\n)\nBEGIN SELECT RAISE(ABORT,'repository_mapping_dispositions payload rebind'); END",
+            "rmd_no_update": "CREATE TRIGGER rmd_no_update BEFORE UPDATE ON repository_mapping_dispositions\nBEGIN SELECT RAISE(ABORT,'immutable mapping disposition'); END"
+          },
+          "unique": [
+            {
+              "columns": [
+                "service_instance_uuidv4",
+                "resource_kind",
+                "provider_resource_id",
+                "relation_kind",
+                "claim_clock_json",
+                "claim_target_json",
+                "claim_provenance_json",
+                "disposition_kind",
+                "disposition_clock_json",
+                "disposition_provenance_json"
               ],
               "origin": "pk",
               "partial": false
@@ -10919,6 +11185,212 @@
             }
           ]
         },
+        "resource_repository_relations": {
+          "columns": [
+            {
+              "generated": 0,
+              "name": "service_instance_uuidv4",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "resource_kind",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "provider_resource_id",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "relation_kind",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "target_json",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "clock_json",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "provenance_json",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "observed_at_us",
+              "notnull": false,
+              "type": "INTEGER"
+            },
+            {
+              "generated": 2,
+              "name": "repository_uuidv4",
+              "notnull": false,
+              "type": "TEXT"
+            },
+            {
+              "generated": 2,
+              "name": "clock_domain",
+              "notnull": false,
+              "type": "TEXT"
+            },
+            {
+              "generated": 2,
+              "name": "source_clock_us",
+              "notnull": false,
+              "type": "INTEGER"
+            },
+            {
+              "generated": 2,
+              "name": "event_document_kind",
+              "notnull": false,
+              "type": "TEXT"
+            },
+            {
+              "generated": 2,
+              "name": "event_parent_resource_kind",
+              "notnull": false,
+              "type": "TEXT"
+            }
+          ],
+          "foreign_keys": [
+            [
+              0,
+              0,
+              "resources",
+              "service_instance_uuidv4",
+              "service_instance_uuidv4",
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              0,
+              1,
+              "resources",
+              "resource_kind",
+              "resource_kind",
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              0,
+              2,
+              "resources",
+              "provider_resource_id",
+              "provider_resource_id",
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              0,
+              3,
+              "resources",
+              "event_document_kind",
+              "document_kind",
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              0,
+              4,
+              "resources",
+              "event_parent_resource_kind",
+              "parent_resource_kind",
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              1,
+              0,
+              "resources",
+              "service_instance_uuidv4",
+              "service_instance_uuidv4",
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              1,
+              1,
+              "resources",
+              "resource_kind",
+              "resource_kind",
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              1,
+              2,
+              "resources",
+              "provider_resource_id",
+              "provider_resource_id",
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              2,
+              0,
+              "repository_context",
+              "repository_uuidv4",
+              "repository_uuidv4",
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ]
+          ],
+          "primary_key": [
+            "service_instance_uuidv4",
+            "resource_kind",
+            "provider_resource_id",
+            "relation_kind",
+            "clock_json",
+            "target_json",
+            "provenance_json"
+          ],
+          "sql": "CREATE TABLE resource_repository_relations(\n service_instance_uuidv4 TEXT NOT NULL,\n resource_kind TEXT NOT NULL,\n provider_resource_id TEXT NOT NULL,\n relation_kind TEXT NOT NULL,\n target_json TEXT NOT NULL CHECK(p1_mapping_target(target_json)=1),\n clock_json TEXT NOT NULL CHECK(p1_mapping_clock(clock_json)=1),\n provenance_json TEXT NOT NULL CHECK(p1_mapping_provenance(provenance_json)=1),\n observed_at_us INTEGER CHECK(observed_at_us IS NULL OR (typeof(observed_at_us)='integer' AND observed_at_us>0)),\n repository_uuidv4 TEXT GENERATED ALWAYS AS(CASE WHEN json_type(target_json)='text' THEN json_extract(target_json,'$') END) VIRTUAL REFERENCES repository_context(repository_uuidv4),\n clock_domain TEXT GENERATED ALWAYS AS(json_extract(clock_json,'$.domain')) VIRTUAL,\n source_clock_us INTEGER GENERATED ALWAYS AS(json_extract(clock_json,'$.at_us')) VIRTUAL,\n event_document_kind TEXT GENERATED ALWAYS AS(CASE WHEN relation_kind IN('transfer_from_repository','transfer_to_repository') THEN 'timeline_event' END) VIRTUAL,\n event_parent_resource_kind TEXT GENERATED ALWAYS AS(CASE WHEN relation_kind IN('transfer_from_repository','transfer_to_repository') THEN 'issue' END) VIRTUAL,\n CHECK(typeof(source_clock_us) IN('integer','null')),\n CHECK((relation_kind='represents_repository' AND resource_kind='repository') OR (relation_kind='owning_repository' AND resource_kind='issue') OR (relation_kind IN('base_repository','head_repository') AND resource_kind='pull_request') OR (relation_kind IN('transfer_from_repository','transfer_to_repository') AND resource_kind='comment')),\n CHECK(relation_kind!='represents_repository' OR json_type(target_json)='text'),\n PRIMARY KEY(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,clock_json,target_json,provenance_json),\n FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id) REFERENCES resources(service_instance_uuidv4,resource_kind,provider_resource_id),\n FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id,event_document_kind,event_parent_resource_kind) REFERENCES resources(service_instance_uuidv4,resource_kind,provider_resource_id,document_kind,parent_resource_kind)\n) STRICT, WITHOUT ROWID",
+          "triggers": {
+            "rrr_delete_guard": "CREATE TRIGGER rrr_delete_guard BEFORE DELETE ON resource_repository_relations\nWHEN OLD.relation_kind NOT IN('owning_repository','base_repository','head_repository')\n  OR OLD.source_clock_us IS NULL\n  OR NOT EXISTS(\n   SELECT 1 FROM resource_repository_relations later\n   WHERE later.service_instance_uuidv4=OLD.service_instance_uuidv4\n     AND later.resource_kind=OLD.resource_kind\n     AND later.provider_resource_id=OLD.provider_resource_id\n     AND later.relation_kind=OLD.relation_kind\n     AND later.clock_domain=OLD.clock_domain\n     AND later.source_clock_us>OLD.source_clock_us\n  )\nBEGIN SELECT RAISE(ABORT,'only dominated current candidates may be deleted'); END",
+            "rrr_event_report_time": "CREATE TRIGGER rrr_event_report_time BEFORE INSERT ON resource_repository_relations\nWHEN NEW.relation_kind IN('transfer_from_repository','transfer_to_repository')\n AND EXISTS(\n  SELECT 1 FROM resource_repository_relations peer\n  WHERE peer.service_instance_uuidv4=NEW.service_instance_uuidv4\n    AND peer.resource_kind=NEW.resource_kind\n    AND peer.provider_resource_id=NEW.provider_resource_id\n    AND peer.clock_json=NEW.clock_json\n    AND peer.provenance_json=NEW.provenance_json\n    AND peer.relation_kind IN('transfer_from_repository','transfer_to_repository')\n    AND NOT (peer.relation_kind=NEW.relation_kind AND peer.target_json=NEW.target_json)\n    AND peer.observed_at_us IS NOT NEW.observed_at_us\n )\nBEGIN SELECT RAISE(ABORT,'transfer event report observed_at_us mismatch'); END",
+            "rrr_no_rebind": "CREATE TRIGGER rrr_no_rebind BEFORE INSERT ON resource_repository_relations\nWHEN EXISTS(\n SELECT 1 FROM resource_repository_relations existing\n WHERE existing.service_instance_uuidv4=NEW.service_instance_uuidv4\n   AND existing.resource_kind=NEW.resource_kind\n   AND existing.provider_resource_id=NEW.provider_resource_id\n   AND existing.relation_kind=NEW.relation_kind\n   AND existing.clock_json=NEW.clock_json\n   AND existing.target_json=NEW.target_json\n   AND existing.provenance_json=NEW.provenance_json\n   AND existing.observed_at_us IS NOT NEW.observed_at_us\n) OR (\n NEW.relation_kind IN('owning_repository','base_repository','head_repository')\n AND NEW.source_clock_us IS NOT NULL\n AND EXISTS(\n  SELECT 1 FROM resource_repository_relations later\n  WHERE later.service_instance_uuidv4=NEW.service_instance_uuidv4\n    AND later.resource_kind=NEW.resource_kind\n    AND later.provider_resource_id=NEW.provider_resource_id\n    AND later.relation_kind=NEW.relation_kind\n    AND later.clock_domain=NEW.clock_domain\n    AND later.source_clock_us>NEW.source_clock_us\n )\n)\nBEGIN\n SELECT CASE\n  WHEN EXISTS(\n   SELECT 1 FROM resource_repository_relations existing\n   WHERE existing.service_instance_uuidv4=NEW.service_instance_uuidv4\n     AND existing.resource_kind=NEW.resource_kind\n     AND existing.provider_resource_id=NEW.provider_resource_id\n     AND existing.relation_kind=NEW.relation_kind\n     AND existing.clock_json=NEW.clock_json\n     AND existing.target_json=NEW.target_json\n     AND existing.provenance_json=NEW.provenance_json\n     AND existing.observed_at_us IS NOT NEW.observed_at_us\n  ) THEN RAISE(ABORT,'resource_repository_relations observed_at_us rebind')\n  ELSE RAISE(ABORT,'stale current repository relation candidate')\n END;\nEND",
+            "rrr_no_update": "CREATE TRIGGER rrr_no_update BEFORE UPDATE ON resource_repository_relations\nBEGIN SELECT RAISE(ABORT,'immutable repository relation'); END",
+            "rrr_prune_dominated": "CREATE TRIGGER rrr_prune_dominated AFTER INSERT ON resource_repository_relations\nWHEN NEW.relation_kind IN('owning_repository','base_repository','head_repository')\n  AND NEW.source_clock_us IS NOT NULL\nBEGIN\n DELETE FROM resource_repository_relations\n WHERE service_instance_uuidv4=NEW.service_instance_uuidv4\n   AND resource_kind=NEW.resource_kind\n   AND provider_resource_id=NEW.provider_resource_id\n   AND relation_kind=NEW.relation_kind\n   AND clock_domain=NEW.clock_domain\n   AND source_clock_us IS NOT NULL\n   AND source_clock_us<NEW.source_clock_us;\nEND"
+          },
+          "unique": [
+            {
+              "columns": [
+                "service_instance_uuidv4",
+                "resource_kind",
+                "provider_resource_id",
+                "relation_kind",
+                "clock_json",
+                "target_json",
+                "provenance_json"
+              ],
+              "origin": "pk",
+              "partial": false
+            }
+          ]
+        },
         "resources": {
           "columns": [
             {
@@ -11024,6 +11496,17 @@
                 "provider_resource_id"
               ],
               "origin": "pk",
+              "partial": false
+            },
+            {
+              "columns": [
+                "service_instance_uuidv4",
+                "resource_kind",
+                "provider_resource_id",
+                "document_kind",
+                "parent_resource_kind"
+              ],
+              "origin": "c",
               "partial": false
             }
           ]

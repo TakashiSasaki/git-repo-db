@@ -43,6 +43,7 @@ from repo_catalog.adapters.sqlite.p1_schema import connect
 from repo_catalog.adapters.sqlite.production_context import Context
 from repo_catalog.application.notes import Discovery, NoteAcquisition, NotesAcquisition
 from repo_catalog.domain.acquisition import (
+    AcquisitionError,
     DependencyReconciliationReport,
     GitAcquisitionReport,
     GitMetadataInput,
@@ -1215,18 +1216,14 @@ class ProviderAcquisition:
         pending_refs: list[CoreReference],
     ) -> None:
         if unit.repository_uuidv4 is not None:
-            self._ensure_repository_row(ctx, unit.repository_uuidv4)
-        self._ensure_resource_hierarchy(
-            ctx, unit.primary_resource, unit.repository_uuidv4, admitted_resources
-        )
-        if unit.repository_uuidv4 is not None:
-            ctx.admit_repository(
+            raise AcquisitionError(
+                "UNSUPPORTED_UNTIL_I2",
                 unit.primary_resource,
-                unit.repository_uuidv4,
-                unit.clock,
-                unit.provenance_json,
-                unit.observed_at_us,
+                "Context repository relation intake requires ADR 0030 stage I2",
             )
+        self._ensure_resource_hierarchy(
+            ctx, unit.primary_resource, None, admitted_resources
+        )
         for obs in unit.observations:
             self._ensure_resource_hierarchy(
                 ctx, obs.resource, unit.repository_uuidv4, admitted_resources
@@ -1576,17 +1573,10 @@ class ProviderAcquisition:
                 )
 
             for transfer in batch.transfers:
-                if transfer.target_repository_uuidv4 is not None:
-                    self._ensure_repository_row(ctx, transfer.target_repository_uuidv4)
-                ctx.resource(transfer.resource)
-                if transfer.resource not in admitted_resources:
-                    admitted_resources.append(transfer.resource)
-                ctx.admit_repository(
+                raise AcquisitionError(
+                    "UNSUPPORTED_UNTIL_I2",
                     transfer.resource,
-                    transfer.target_repository_uuidv4,
-                    transfer.clock,
-                    transfer.provenance_json,
-                    transfer.observed_at_us,
+                    "Provider transfer event intake requires ADR 0030 stage I2",
                 )
 
             for obs in batch.observations:

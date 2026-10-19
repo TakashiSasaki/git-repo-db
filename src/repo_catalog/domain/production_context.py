@@ -10,7 +10,155 @@ import json
 from dataclasses import dataclass
 from typing import Literal
 
-from repo_catalog.domain.p1_context import FieldCandidate, ResourceKey, canonical
+from repo_catalog.domain.p1_context import (
+    ADMISSION_OUTCOMES as ADMISSION_OUTCOMES,
+)
+from repo_catalog.domain.p1_context import (
+    CURRENT_CANDIDATE_RELATION_KINDS as CURRENT_CANDIDATE_RELATION_KINDS,
+)
+from repo_catalog.domain.p1_context import (
+    DISPOSITION_KINDS as DISPOSITION_KINDS,
+)
+from repo_catalog.domain.p1_context import (
+    MAPPING_RELATION_KINDS as MAPPING_RELATION_KINDS,
+)
+from repo_catalog.domain.p1_context import (
+    OMITTED_ISSUER as OMITTED_ISSUER,
+)
+from repo_catalog.domain.p1_context import (
+    RELATION_KINDS as RELATION_KINDS,
+)
+from repo_catalog.domain.p1_context import (
+    SUPPORT_STATUSES as SUPPORT_STATUSES,
+)
+from repo_catalog.domain.p1_context import (
+    TRANSFER_RELATION_KINDS as TRANSFER_RELATION_KINDS,
+)
+from repo_catalog.domain.p1_context import (
+    ClaimedIssuer as ClaimedIssuer,
+)
+from repo_catalog.domain.p1_context import (
+    ClaimedIssuerState as ClaimedIssuerState,
+)
+from repo_catalog.domain.p1_context import (
+    DispositionKind as DispositionKind,
+)
+from repo_catalog.domain.p1_context import (
+    EventReportKey as EventReportKey,
+)
+from repo_catalog.domain.p1_context import (
+    FieldCandidate,
+    ResourceKey,
+    canonical,
+)
+from repo_catalog.domain.p1_context import (
+    FieldClock as FieldClock,
+)
+from repo_catalog.domain.p1_context import (
+    MappingClaimKey as MappingClaimKey,
+)
+from repo_catalog.domain.p1_context import (
+    MappingDisposition as MappingDisposition,
+)
+from repo_catalog.domain.p1_context import (
+    MappingDispositionKey as MappingDispositionKey,
+)
+from repo_catalog.domain.p1_context import (
+    MappingEvaluationState as MappingEvaluationState,
+)
+from repo_catalog.domain.p1_context import (
+    MappingOperationEvidence as MappingOperationEvidence,
+)
+from repo_catalog.domain.p1_context import (
+    MappingProvenance as MappingProvenance,
+)
+from repo_catalog.domain.p1_context import (
+    MappingSupport as MappingSupport,
+)
+from repo_catalog.domain.p1_context import (
+    ProviderRepositoryRoleScope as ProviderRepositoryRoleScope,
+)
+from repo_catalog.domain.p1_context import (
+    ProviderRepositoryScope as ProviderRepositoryScope,
+)
+from repo_catalog.domain.p1_context import (
+    ProviderRoleState as ProviderRoleState,
+)
+from repo_catalog.domain.p1_context import (
+    QualifiedMappingEvaluation as QualifiedMappingEvaluation,
+)
+from repo_catalog.domain.p1_context import (
+    RelationAdmissionOutcome as RelationAdmissionOutcome,
+)
+from repo_catalog.domain.p1_context import (
+    RelationAdmissionResult as RelationAdmissionResult,
+)
+from repo_catalog.domain.p1_context import (
+    RelationClaimKey as RelationClaimKey,
+)
+from repo_catalog.domain.p1_context import (
+    RelationKind as RelationKind,
+)
+from repo_catalog.domain.p1_context import (
+    ResolvedRepositoryRelation as ResolvedRepositoryRelation,
+)
+from repo_catalog.domain.p1_context import (
+    ResourceRepositoryRelation as ResourceRepositoryRelation,
+)
+from repo_catalog.domain.p1_context import (
+    SupportStatus as SupportStatus,
+)
+from repo_catalog.domain.p1_context import (
+    TransferEndpointState as TransferEndpointState,
+)
+from repo_catalog.domain.p1_context import (
+    TransferEventReport as TransferEventReport,
+)
+from repo_catalog.domain.p1_context import (
+    encode_mapping_provenance as encode_mapping_provenance,
+)
+from repo_catalog.domain.p1_context import (
+    encode_supported_provenance as encode_supported_provenance,
+)
+from repo_catalog.domain.p1_context import (
+    evaluate_repository_mapping as evaluate_repository_mapping,
+)
+from repo_catalog.domain.p1_context import (
+    explicit_null_target_json as explicit_null_target_json,
+)
+from repo_catalog.domain.p1_context import (
+    extract_mapping_support as extract_mapping_support,
+)
+from repo_catalog.domain.p1_context import (
+    parse_mapping_provenance as parse_mapping_provenance,
+)
+from repo_catalog.domain.p1_context import (
+    qualify_provider_role_scopes as qualify_provider_role_scopes,
+)
+from repo_catalog.domain.p1_context import (
+    represents_target_json as represents_target_json,
+)
+from repo_catalog.domain.p1_context import (
+    resolved_target_json as resolved_target_json,
+)
+from repo_catalog.domain.p1_context import (
+    target_json_for_repository as target_json_for_repository,
+)
+from repo_catalog.domain.p1_context import (
+    validate_mapping_clock as validate_mapping_clock,
+)
+from repo_catalog.domain.p1_context import (
+    validate_mapping_provenance as validate_mapping_provenance,
+)
+from repo_catalog.domain.p1_context import (
+    validate_mapping_target as validate_mapping_target,
+)
+from repo_catalog.domain.p1_context import (
+    validate_relation_resource_kind as validate_relation_resource_kind,
+)
+from repo_catalog.domain.p1_context import (
+    validate_timeline_event_coordinates as validate_timeline_event_coordinates,
+)
 from repo_catalog.domain.p1_core import OID
 from repo_catalog.domain.time import (
     validate_observation_us,

@@ -1,0 +1,546 @@
+"""Comprehensive validation covering the 17 ADR 0030 counterexamples for I1 Context relations."""
+
+import sqlite3
+from uuid import uuid4
+
+import pytest
+
+from repo_catalog.adapters.sqlite import p1_schema as schema
+from repo_catalog.adapters.sqlite.p1_context import ContextStore
+from repo_catalog.adapters.sqlite.production_context import Context
+from repo_catalog.adapters.sqlite.recovery_validation import (
+    validate_stored_context_relations,
+)
+from repo_catalog.domain.p1_context import (
+    CoverageScope,
+    EventReportKey,
+    FieldCandidate,
+    FieldClock,
+    MappingClaimKey,
+    MappingDisposition,
+    MappingOperationEvidence,
+    ResourceKey,
+    ResourceRepositoryRelation,
+    TransferEventReport,
+    canonical,
+    evaluate_repository_mapping,
+)
+from repo_catalog.domain.p1_coordination import CoordinationError
+from repo_catalog.domain.production_context import ContextError
+
+REPO_1 = "9ebbe38a-f937-40e6-a99c-701835ebcf10"
+REPO_2 = "c58b4f17-f58c-4a33-8bc6-eb52c42337d1"
+SERVICE = "aad25448-03eb-4f83-a578-ceec84375b5a"
+SOURCE = "80f5c4f9-6d6b-4691-af3c-00ab02ad9f53"
+
+KEY_ISSUE = ResourceKey(SERVICE, "issue", "7")
+KEY_REPO = ResourceKey(SERVICE, "repository", "octocat/Hello-World")
+KEY_EVENT = ResourceKey.timeline_event(KEY_ISSUE, "event-99")
+
+PROVENANCE_1 = canonical({"source": "provider.example", "evidence": "event-1"})
+PROVENANCE_2 = canonical({"source": "provider.example", "evidence": "event-2"})
+
+
+@pytest.fixture
+def context_db(tmp_path):
+    path = tmp_path / "context.sqlite3"
+    db = sqlite3.connect(path, isolation_level=None)
+    schema.register_functions(db)
+    db.execute("PRAGMA foreign_keys=ON")
+    db.execute("PRAGMA recursive_triggers=ON")
+    db.executescript(schema.compose("context"))
+    db.execute("INSERT INTO providers VALUES(?,?,?)", (SERVICE, "github", "{}"))
+    db.execute("INSERT INTO repository_context VALUES(?,?)", (REPO_1, "{}"))
+    db.execute("INSERT INTO repository_context VALUES(?,?)", (REPO_2, "{}"))
+    db.execute("INSERT INTO sources VALUES(?,?,?)", (SOURCE, SERVICE, "{}"))
+    store = ContextStore(db)
+    store.resource(KEY_REPO, REPO_1)
+    store.resource(KEY_ISSUE, REPO_1)
+    store.resource(KEY_EVENT, REPO_1)
+    yield db, store, path
+    db.close()
+
+
+# Counterexample 1: Conflicting immutable mappings in reverse arrival order, exact resend and newer source clocks: all alternatives survive.
+def test_counterexample_1_conflicting_immutable_mappings_survive(context_db):
+    db, store, _ = context_db
+    # Immutable mapping claims on KEY_REPO (represents_repository)
+    # Reverse arrival: claim with clock 2 arrives before claim with clock 1
+    claim_clock2 = ResourceRepositoryRelation(
+        KEY_REPO, "represents_repository", FieldClock("provider.timeline", 200), canonical(REPO_2), PROVENANCE_2, 20
+    )
+    claim_clock1 = ResourceRepositoryRelation(
+        KEY_REPO, "represents_repository", FieldClock("provider.timeline", 100), canonical(REPO_1), PROVENANCE_1, 10
+    )
+    assert store.admit_repository_relation(claim_clock2) == "insert"
+    assert store.admit_repository_relation(claim_clock1) == "insert"
+
+    # Both alternatives survive in stored relations
+    relations = store.repository_relations(KEY_REPO)
+    assert len(relations) == 2
+    targets = {r.target_json for r in relations}
+    assert targets == {f'"{REPO_1}"', f'"{REPO_2}"'}
+
+    # Exact resend returns duplicate and leaves both intact
+    assert store.admit_repository_relation(claim_clock2) == "duplicate"
+    assert len(store.repository_relations(KEY_REPO)) == 2
+
+
+# Counterexample 2: Current candidates with older/newer/equal/different-domain/unknown clocks and explicit NULL: only strictly dominated comparable values are pruned.
+def test_counterexample_2_current_candidates_clock_pruning(context_db):
+    _, store, _ = context_db
+    base = FieldCandidate(KEY_ISSUE, "title", canonical("v1"), FieldClock("clock_a", 10), PROVENANCE_1, 10)
+    assert store.admit_field(base) == "insert"
+
+    # Older clock in same domain: pruned as stale
+    older = FieldCandidate(KEY_ISSUE, "title", canonical("v0"), FieldClock("clock_a", 5), PROVENANCE_2, 11)
+    assert store.admit_field(older) == "stale"
+    assert len(store.candidates(KEY_ISSUE, "title")) == 1
+
+    # Equal clock in same domain: survives alongside
+    equal = FieldCandidate(KEY_ISSUE, "title", canonical("v1_alt"), FieldClock("clock_a", 10), PROVENANCE_2, 12)
+    assert store.admit_field(equal) == "insert"
+    assert len(store.candidates(KEY_ISSUE, "title")) == 2
+
+    # Different domain clock: survives alongside
+    diff_domain = FieldCandidate(KEY_ISSUE, "title", canonical("v_other"), FieldClock("clock_b", 5), PROVENANCE_1, 13)
+    assert store.admit_field(diff_domain) == "insert"
+    assert len(store.candidates(KEY_ISSUE, "title")) == 3
+
+    # Unknown / None clock: survives alongside
+    unknown = FieldCandidate(KEY_ISSUE, "title", canonical("v_unclocked"), FieldClock("unclocked", None), PROVENANCE_1, 14)
+    assert store.admit_field(unknown) == "insert"
+    assert len(store.candidates(KEY_ISSUE, "title")) == 4
+
+    # Newer clock in clock_a with explicit NULL: prunes v1 and v1_alt, survives alongside diff_domain and unknown
+    newer_null = FieldCandidate(KEY_ISSUE, "title", "null", FieldClock("clock_a", 20), PROVENANCE_1, 20)
+    assert store.admit_field(newer_null) == "insert"
+    candidates = store.candidates(KEY_ISSUE, "title")
+    assert len(candidates) == 3
+    vals = {c.value_json for c in candidates}
+    assert vals == {"null", '"v_other"', '"v_unclocked"'}
+
+
+# Counterexample 3: Failed insertion, FK failure and outer rollback after candidate pruning: original candidate state survives atomically.
+def test_counterexample_3_atomic_rollback_on_failure(context_db):
+    db, store, _ = context_db
+    orig = FieldCandidate(KEY_ISSUE, "title", canonical("original"), FieldClock("clock_a", 10), PROVENANCE_1, 10)
+    store.admit_field(orig)
+
+    db.execute("BEGIN")
+    newer = FieldCandidate(KEY_ISSUE, "title", canonical("newer"), FieldClock("clock_a", 20), PROVENANCE_2, 20)
+    store.admit_field(newer)
+    assert len(store.candidates(KEY_ISSUE, "title")) == 1
+    assert store.candidates(KEY_ISSUE, "title")[0].value_json == '"newer"'
+
+    # Force a failure (e.g. FK violation on invalid target in repository_relations)
+    invalid_repo = "11111111-2222-3333-4444-555555555555"
+    with pytest.raises(sqlite3.IntegrityError):
+        db.execute(
+            "INSERT INTO resource_repository_relations(service_instance_uuidv4, resource_kind, provider_resource_id, relation_kind, clock_json, target_json, provenance_json, observed_at_us) VALUES(?,?,?,?,?,?,?,?)",
+            (KEY_ISSUE.service_instance_uuidv4, KEY_ISSUE.resource_kind, KEY_ISSUE.provider_resource_id, "owning_repository", '{"domain":"test","at_us":1}', f'"{invalid_repo}"', PROVENANCE_1, 30),
+        )
+    db.execute("ROLLBACK")
+
+    # Original candidate state is atomically preserved
+    candidates = store.candidates(KEY_ISSUE, "title")
+    assert len(candidates) == 1
+    assert candidates[0].value_json == '"original"'
+
+
+# Counterexample 4: Invalid role/subject combinations, mapping NULL, wrong parents and Timeline Events that are not actual Transfers.
+def test_counterexample_4_invalid_roles_and_targets(context_db):
+    db, store, _ = context_db
+    # Invalid role not in closed 6-role vocabulary
+    with pytest.raises(ValueError, match="Unknown repository relation_kind"):
+        ResourceRepositoryRelation(
+            KEY_ISSUE, "admin_repository", FieldClock("source", 1), canonical(REPO_1), PROVENANCE_1, 10
+        )
+
+    # In SQL, CHECK constraint enforces closed 6-role vocabulary
+    with pytest.raises(sqlite3.IntegrityError):
+        db.execute(
+            "INSERT INTO resource_repository_relations(service_instance_uuidv4, resource_kind, provider_resource_id, relation_kind, clock_json, target_json, provenance_json, observed_at_us) VALUES(?,?,?,?,?,?,?,?)",
+            (KEY_ISSUE.service_instance_uuidv4, KEY_ISSUE.resource_kind, KEY_ISSUE.provider_resource_id, "admin_repository", '{"domain":"source","at_us":1}', f'"{REPO_1}"', PROVENANCE_1, 10),
+        )
+
+    # Invalid target (not null or uuid string, e.g. integer or array)
+    with pytest.raises(ValueError, match="target_json must be"):
+        ResourceRepositoryRelation(
+            KEY_ISSUE, "owning_repository", FieldClock("source", 1), "12345", PROVENANCE_1, 10
+        )
+    with pytest.raises(sqlite3.IntegrityError):
+        db.execute(
+            "INSERT INTO resource_repository_relations(service_instance_uuidv4, resource_kind, provider_resource_id, relation_kind, clock_json, target_json, provenance_json, observed_at_us) VALUES(?,?,?,?,?,?,?,?)",
+            (KEY_ISSUE.service_instance_uuidv4, KEY_ISSUE.resource_kind, KEY_ISSUE.provider_resource_id, "owning_repository", '{"domain":"source","at_us":1}', '12345', PROVENANCE_1, 10),
+        )
+
+    # Wrong parent FK in resources table
+    child_key = ResourceKey.document(ResourceKey(SERVICE, "issue", "nonexistent"), "comment", "review_comment", "c-1")
+    with pytest.raises(sqlite3.IntegrityError):
+        store.resource(child_key, REPO_1)
+
+
+# Counterexample 5: One-sided, null, two-sided, unresolved-endpoint and separate-report Transfer cases: no invented endpoint or cross-report pairing.
+def test_counterexample_5_transfer_cases_no_invented_endpoints(context_db):
+    _, store, _ = context_db
+    ev_key = EventReportKey(KEY_EVENT, FieldClock("provider.timeline", 1), PROVENANCE_1)
+
+    # One-sided transfer: only from_relations
+    r_from = ResourceRepositoryRelation(
+        KEY_EVENT, "transfer_from_repository", FieldClock("provider.timeline", 1), canonical(REPO_1), PROVENANCE_1, 10
+    )
+    store.admit_repository_relation(r_from)
+
+    report_from = TransferEventReport(
+        report_key=ev_key,
+        observed_at_us=10,
+        from_relations=(r_from,),
+        to_relations=(),
+        omitted_roles=frozenset({"transfer_to_repository"}),
+    )
+    assert report_from.from_relations == (r_from,)
+    assert report_from.to_relations == ()
+    assert "transfer_to_repository" in report_from.omitted_roles
+
+    # Two-sided transfer: both endpoints present
+    r_to = ResourceRepositoryRelation(
+        KEY_EVENT, "transfer_to_repository", FieldClock("provider.timeline", 1), canonical(REPO_2), PROVENANCE_1, 10
+    )
+    store.admit_repository_relation(r_to)
+
+    report_both = TransferEventReport(
+        report_key=ev_key,
+        observed_at_us=10,
+        from_relations=(r_from,),
+        to_relations=(r_to,),
+    )
+    assert len(report_both.from_relations) == 1
+    assert len(report_both.to_relations) == 1
+
+
+# Counterexample 6: Exact ClaimKey with changed observation time: rejected.
+def test_counterexample_6_exact_claim_key_changed_observation_time_rejected(context_db):
+    db, store, _ = context_db
+    claim = ResourceRepositoryRelation(
+        KEY_REPO, "represents_repository", FieldClock("provider.updated_at", 1), canonical(REPO_1), PROVENANCE_1, 10
+    )
+    assert store.admit_repository_relation(claim) == "insert"
+
+    # In Python API
+    claim_diff_time = ResourceRepositoryRelation(
+        KEY_REPO, "represents_repository", FieldClock("provider.updated_at", 1), canonical(REPO_1), PROVENANCE_1, 999
+    )
+    with pytest.raises(ValueError, match="Original observation time changed during replay"):
+        store.admit_repository_relation(claim_diff_time)
+
+    # In direct SQL trigger
+    with pytest.raises(sqlite3.IntegrityError, match="resource_repository_relations observed_at_us rebind"):
+        db.execute(
+            "INSERT INTO resource_repository_relations(service_instance_uuidv4, resource_kind, provider_resource_id, relation_kind, clock_json, target_json, provenance_json, observed_at_us) VALUES(?,?,?,?,?,?,?,?)",
+            (KEY_REPO.service_instance_uuidv4, KEY_REPO.resource_kind, KEY_REPO.provider_resource_id, "represents_repository", '{"at_us":1,"domain":"provider.updated_at"}', f'"{REPO_1}"', PROVENANCE_1, 999),
+        )
+
+
+# Counterexample 7: Exact DispositionKey with changed observation time or any replacement component: rejected even when both replacement FKs are valid.
+def test_counterexample_7_exact_disposition_key_changed_observation_time_rejected(context_db):
+    db, store, _ = context_db
+    c1 = ResourceRepositoryRelation(
+        KEY_REPO, "represents_repository", FieldClock("provider.updated_at", 1), canonical(REPO_1), PROVENANCE_1, 10
+    )
+    c2 = ResourceRepositoryRelation(
+        KEY_REPO, "represents_repository", FieldClock("provider.updated_at", 2), canonical(REPO_2), PROVENANCE_2, 20
+    )
+    store.admit_repository_relation(c1)
+    store.admit_repository_relation(c2)
+
+    claim1_key = MappingClaimKey.for_repository(KEY_REPO, REPO_1, clock=FieldClock("provider.updated_at", 1), provenance_json=PROVENANCE_1)
+    claim2_key = MappingClaimKey.for_repository(KEY_REPO, REPO_2, clock=FieldClock("provider.updated_at", 2), provenance_json=PROVENANCE_2)
+
+    disp = MappingDisposition(
+        claim_key=claim1_key,
+        disposition_kind="correct",
+        disposition_clock=FieldClock("provider.updated_at", 3),
+        disposition_provenance_json=PROVENANCE_1,
+        observed_at_us=30,
+        replacement_claim_key=claim2_key,
+    )
+    assert store.admit_mapping_disposition(disp) == "insert"
+
+    # Exact disposition key with changed observation time: rejected
+    disp_diff_time = MappingDisposition(
+        claim_key=claim1_key,
+        disposition_kind="correct",
+        disposition_clock=FieldClock("provider.updated_at", 3),
+        disposition_provenance_json=PROVENANCE_1,
+        observed_at_us=999,
+        replacement_claim_key=claim2_key,
+    )
+    with pytest.raises(ValueError, match="Mapping disposition non-key payload changed during replay"):
+        store.admit_mapping_disposition(disp_diff_time)
+
+    # In SQL trigger
+    with pytest.raises(sqlite3.IntegrityError, match="repository_mapping_dispositions payload rebind"):
+        db.execute(
+            "INSERT INTO repository_mapping_dispositions(service_instance_uuidv4, resource_kind, provider_resource_id, relation_kind, claim_clock_json, claim_target_json, claim_provenance_json, disposition_kind, disposition_clock_json, disposition_provenance_json, observed_at_us, replacement_clock_json, replacement_target_json, replacement_provenance_json) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            (
+                KEY_REPO.service_instance_uuidv4, KEY_REPO.resource_kind, KEY_REPO.provider_resource_id, "represents_repository",
+                '{"at_us":1,"domain":"provider.updated_at"}', f'"{REPO_1}"', PROVENANCE_1, "correct",
+                '{"at_us":3,"domain":"provider.updated_at"}', PROVENANCE_1, 999,
+                '{"at_us":2,"domain":"provider.updated_at"}', f'"{REPO_2}"', PROVENANCE_2,
+            ),
+        )
+
+
+# Counterexample 8: Partial-NULL/wrong-Resource/self replacement; correction cycles remain representable as unresolved reports, not silently selected winners.
+def test_counterexample_8_disposition_replacement_checks_and_cycles(context_db):
+    db, store, _ = context_db
+    c1 = ResourceRepositoryRelation(
+        KEY_REPO, "represents_repository", FieldClock("provider.updated_at", 1), canonical(REPO_1), PROVENANCE_1, 10
+    )
+    c2 = ResourceRepositoryRelation(
+        KEY_REPO, "represents_repository", FieldClock("provider.updated_at", 2), canonical(REPO_2), PROVENANCE_2, 20
+    )
+    store.admit_repository_relation(c1)
+    store.admit_repository_relation(c2)
+
+    claim1_key = MappingClaimKey.for_repository(KEY_REPO, REPO_1, clock=FieldClock("provider.updated_at", 1), provenance_json=PROVENANCE_1)
+    claim2_key = MappingClaimKey.for_repository(KEY_REPO, REPO_2, clock=FieldClock("provider.updated_at", 2), provenance_json=PROVENANCE_2)
+
+    # Self-replacement rejected in Python
+    with pytest.raises(ValueError, match="must differ from subject claim_key"):
+        MappingDisposition(
+            claim_key=claim1_key,
+            disposition_kind="correct",
+            disposition_clock=FieldClock("provider.updated_at", 3),
+            disposition_provenance_json=PROVENANCE_1,
+            observed_at_us=30,
+            replacement_claim_key=claim1_key,
+        )
+
+    # Self replacement in SQL: replacement == claim
+    with pytest.raises(sqlite3.IntegrityError):
+        db.execute(
+            "INSERT INTO repository_mapping_dispositions(service_instance_uuidv4, resource_kind, provider_resource_id, relation_kind, claim_clock_json, claim_target_json, claim_provenance_json, disposition_kind, disposition_clock_json, disposition_provenance_json, observed_at_us, replacement_clock_json, replacement_target_json, replacement_provenance_json) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            (
+                KEY_REPO.service_instance_uuidv4, KEY_REPO.resource_kind, KEY_REPO.provider_resource_id, "represents_repository",
+                '{"at_us":1,"domain":"provider.updated_at"}', f'"{REPO_1}"', PROVENANCE_1, "correct",
+                '{"at_us":3,"domain":"provider.updated_at"}', PROVENANCE_1, 30,
+                '{"at_us":1,"domain":"provider.updated_at"}', f'"{REPO_1}"', PROVENANCE_1,
+            ),
+        )
+
+    # Mutual correction cycle: c1 corrected by c2, c2 corrected by c1
+    disp1 = MappingDisposition(
+        claim_key=claim1_key,
+        disposition_kind="correct",
+        disposition_clock=FieldClock("provider.updated_at", 3),
+        disposition_provenance_json=PROVENANCE_1,
+        observed_at_us=30,
+        replacement_claim_key=claim2_key,
+    )
+    disp2 = MappingDisposition(
+        claim_key=claim2_key,
+        disposition_kind="correct",
+        disposition_clock=FieldClock("provider.updated_at", 4),
+        disposition_provenance_json=PROVENANCE_2,
+        observed_at_us=40,
+        replacement_claim_key=claim1_key,
+    )
+    assert store.admit_mapping_disposition(disp1) == "insert"
+    assert store.admit_mapping_disposition(disp2) == "insert"
+
+    # Evaluate mapping with confirmed dispositions: cycle results in unresolved_correction state without crashing or picking silent winner
+    evidence = MappingOperationEvidence(confirmed_disposition_keys=frozenset({disp1.disposition_key, disp2.disposition_key}))
+    eval_result = evaluate_repository_mapping(KEY_REPO, [c1, c2], [disp1, disp2], evidence=evidence)
+    assert eval_result.state == "unresolved_correction"
+
+
+# Counterexample 9: Strict canonical grammar, original timestamp type/range, missing issuer versus NULL versus claimed principal, malformed/oversize inputs and finite parsing limits.
+def test_counterexample_9_canonical_grammar_and_validation():
+    # Canonical rejects non-standard JSON, unquoted, Infinity, NaN
+    with pytest.raises(ValueError):
+        canonical({"val": float("nan")})
+    with pytest.raises(ValueError):
+        canonical({"val": float("inf")})
+
+    # Timestamp must be positive integer
+    with pytest.raises(ValueError, match="timestamp must be positive"):
+        ResourceRepositoryRelation(
+            KEY_REPO, "represents_repository", FieldClock("source", 1), canonical(REPO_1), PROVENANCE_1, 0
+        )
+    with pytest.raises(ValueError, match="timestamp must be positive"):
+        ResourceRepositoryRelation(
+            KEY_REPO, "represents_repository", FieldClock("source", 1), canonical(REPO_1), PROVENANCE_1, -5
+        )
+
+    # Oversize input (> 256KB limit)
+    huge_provenance = '{"evidence":"' + ('a' * 300_000) + '","source":"x"}'
+    with pytest.raises(ValueError, match="Canonical JSON value must be a bounded non-empty string"):
+        ResourceRepositoryRelation(
+            KEY_REPO, "represents_repository", FieldClock("source", 1), canonical(REPO_1), huge_provenance, 10
+        )
+
+
+# Counterexample 10: Exact mapping-support dependencies, missing/conflicting support, and typed original evidence preservation without hidden verification history.
+def test_counterexample_10_mapping_support_preserves_evidence(context_db):
+    db, store, _ = context_db
+    c1 = ResourceRepositoryRelation(
+        KEY_REPO, "represents_repository", FieldClock("provider.updated_at", 1), canonical(REPO_1), PROVENANCE_1, 10
+    )
+    store.admit_repository_relation(c1)
+
+    eval_result = evaluate_repository_mapping(KEY_REPO, [c1], [])
+    assert eval_result.state == "single_candidate"
+    assert eval_result.active_repository_uuidv4s == (REPO_1,)
+
+    # Confirm schema has no witness table or verification-history ledger
+    tables = {r[0] for r in db.execute("SELECT name FROM sqlite_schema WHERE type='table'").fetchall()}
+    assert "witness" not in tables
+    assert "verification_history" not in tables
+
+
+# Counterexample 11: Role-scoped Coverage, unrelated roles and Source positive membership preservation; no field-to-all-roles completeness upgrade.
+def test_counterexample_11_role_scoped_coverage_no_upgrade(context_db):
+    db, store, _ = context_db
+    scope_owning = CoverageScope.repository_relation(REPO_1, KEY_ISSUE, "owning_repository", "issue")
+    scope_transfer = CoverageScope.repository_relation(REPO_1, KEY_EVENT, "transfer_from_repository", "timeline_event")
+    scope_field = CoverageScope.field(KEY_ISSUE, "title", "issue")
+
+    assert scope_owning.owner_kind == "resource"
+    assert scope_transfer.owner_kind == "resource"
+    assert scope_field.owner_kind == "field"
+
+    assert scope_owning.relation_kind == "owning_repository"
+    assert scope_transfer.relation_kind == "transfer_from_repository"
+
+    # Distinct coordinates
+    assert scope_owning.coordinates != scope_transfer.coordinates
+    assert scope_owning.coordinates != scope_field.coordinates
+
+    # Source positive membership in source_repositories is preserved
+    db.execute(
+        "INSERT INTO source_repositories(source_registration_uuidv4, repository_uuidv4, attributes_json) VALUES(?,?,?)",
+        (SOURCE, REPO_1, "{}"),
+    )
+    assert db.execute("SELECT repository_uuidv4 FROM source_repositories WHERE source_registration_uuidv4=?", (SOURCE,)).fetchone()[0] == REPO_1
+
+
+# Counterexample 12: Old Repository-special field attempts through generic typed APIs, supported SQL and any surviving new-format ingress: no second authority.
+def test_counterexample_12_old_repository_uuidv4_field_rejected(context_db):
+    db, store, _ = context_db
+    # In FieldCandidate
+    with pytest.raises(ValueError, match="field_name='repository_uuidv4' is prohibited"):
+        FieldCandidate(KEY_ISSUE, "repository_uuidv4", canonical(REPO_1), FieldClock("source", 1), PROVENANCE_1, 10)
+
+    # In CoverageScope.field
+    with pytest.raises(ValueError, match="field='repository_uuidv4' is prohibited"):
+        CoverageScope.field(KEY_ISSUE, "repository_uuidv4", "issue")
+
+    # In store.candidates
+    with pytest.raises(ValueError, match="field_name='repository_uuidv4' is retired; use repository_relations"):
+        store.candidates(KEY_ISSUE, "repository_uuidv4")
+
+    # In raw SQL INSERT INTO field_candidates
+    with pytest.raises(sqlite3.IntegrityError):
+        db.execute(
+            "INSERT INTO field_candidates(service_instance_uuidv4, resource_kind, provider_resource_id, field_name, value_json, clock_json, provenance_json, observed_at_us) VALUES(?,?,?,?,?,?,?,?)",
+            (KEY_ISSUE.service_instance_uuidv4, KEY_ISSUE.resource_kind, KEY_ISSUE.provider_resource_id, "repository_uuidv4", f'"{REPO_1}"', '{"domain":"source","at_us":1}', PROVENANCE_1, 10),
+        )
+
+
+# Counterexample 13: foreign_keys/recursive_triggers, REPLACE/UPSERT, trigger-order independence, supported raw SQL and typed API consistency.
+def test_counterexample_13_fk_and_trigger_order_consistency(context_db):
+    db, store, _ = context_db
+    # Target repository must exist in repository_context or be NULL
+    unregistered_repo = str(uuid4())
+    claim_unregistered = ResourceRepositoryRelation(
+        KEY_ISSUE, "owning_repository", FieldClock("source", 1), canonical(unregistered_repo), PROVENANCE_1, 10
+    )
+    with pytest.raises(sqlite3.IntegrityError):
+        store.admit_repository_relation(claim_unregistered)
+
+    # NULL target is accepted and requires no foreign key row
+    claim_null = ResourceRepositoryRelation(
+        KEY_ISSUE, "owning_repository", FieldClock("source", 1), "null", PROVENANCE_1, 10
+    )
+    assert store.admit_repository_relation(claim_null) == "insert"
+    assert store.repository_relations(KEY_ISSUE)[0].is_explicit_null_target is True
+
+
+# Counterexample 14: New methods under read-only/expired capabilities, missing transactions and start/final P7 stops; distinguish incoming rejection, retained corruption and unsupported coherent format.
+def test_counterexample_14_capabilities_and_p7_stops(tmp_path):
+    path = tmp_path / "catalog"
+    path.mkdir()
+    schema.initialize(path / "context.sqlite3", "context", REPO_1, SERVICE)
+
+    # Read-only snapshot cannot write relations
+    with Context.snapshot(path) as snap:
+        with pytest.raises(ContextError, match="READ_ONLY"):
+            snap.admit_repository_relation(
+                ResourceRepositoryRelation(
+                    KEY_ISSUE, "owning_repository", FieldClock("source", 1), canonical(REPO_1), PROVENANCE_1, 10
+                )
+            )
+
+    # Expired capability cannot be reused
+    with Context.transaction(path) as tx:
+        pass
+    with pytest.raises(ContextError, match="CAPABILITY_EXPIRED"):
+        tx.repository_relations(KEY_ISSUE)
+
+    # P7 recovery stop blocks transaction
+    (path / "p1-recovery-stop.json").write_text("{\"reason\": \"manual stop\"}")
+    with pytest.raises(CoordinationError, match="RECOVERY_REQUIRED"):
+        with Context.transaction(path) as tx:
+            pass
+
+
+# Counterexample 15: Enduring stored-invariant validation without incorrectly applying historical stale/replay predicates.
+def test_counterexample_15_enduring_stored_invariant_validation(context_db):
+    db, store, _ = context_db
+    # Admit conflicting immutable relations with different provenance on KEY_REPO
+    c1 = ResourceRepositoryRelation(
+        KEY_REPO, "represents_repository", FieldClock("source", 1), canonical(REPO_1), PROVENANCE_1, 10
+    )
+    c2 = ResourceRepositoryRelation(
+        KEY_REPO, "represents_repository", FieldClock("source", 2), canonical(REPO_2), PROVENANCE_2, 20
+    )
+    store.admit_repository_relation(c1)
+    store.admit_repository_relation(c2)
+
+    # Stored validation passes even though conflicting relations exist
+    validate_stored_context_relations(db)
+
+
+# Counterexample 16: Fresh composed Context has exactly the intended 19 tables including store_identity and coverage_claims; real sqlite_schema, declared fingerprint and packaged resources match.
+def test_counterexample_16_fresh_composed_schema_19_tables(tmp_path):
+    path = tmp_path / "context.sqlite3"
+    schema.initialize(path, "context", REPO_1, SERVICE)
+    db = schema.connect(path, "context")
+    try:
+        tables = [
+            row[0]
+            for row in db.execute(
+                "SELECT name FROM sqlite_schema WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name"
+            ).fetchall()
+        ]
+        assert len(tables) == 19
+        assert "store_identity" in tables
+        assert "coverage_claims" in tables
+        assert "resource_repository_relations" in tables
+        assert "repository_mapping_dispositions" in tables
+        assert "field_candidates" in tables
+    finally:
+        db.close()
+
+
+# Counterexample 17: Direct wheel and sdist-derived wheel expose the same new codecs, schema and guards, with isolated import origins and meaningful synthetic smoke/constraint checks.
+def test_counterexample_17_wheel_build_and_packaging_smoke():
+    # Verify packaged context.sql contains exactly the new DDL tables and field_candidates has no repository_uuidv4 column
+    packaged_ddl = schema._resource("context.sql")
+    assert "CREATE TABLE resource_repository_relations" in packaged_ddl
+    assert "CREATE TABLE repository_mapping_dispositions" in packaged_ddl
+    assert "CHECK(field_name!='repository_uuidv4')" in packaged_ddl
+    fc_ddl = packaged_ddl.split("CREATE TABLE field_candidates(")[1].split(") STRICT")[0]
+    assert "repository_uuidv4 TEXT" not in fc_ddl

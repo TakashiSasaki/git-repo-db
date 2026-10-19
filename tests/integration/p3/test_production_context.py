@@ -15,6 +15,7 @@ from repo_catalog.domain.p1_context import (
     FieldCandidate,
     FieldClock,
     ResourceKey,
+    ResourceRepositoryRelation,
     canonical,
 )
 from repo_catalog.domain.p1_coordination import AdmissionFailure, CoordinationError
@@ -191,7 +192,7 @@ def test_observe_failure_rolls_back_new_identity_and_all_fields(context):
     _, store, _ = context
     resource = ResourceKey(SERVICE, "issue", "atomic")
     good = field(resource)
-    bad = field(resource, name="repository_uuidv4", value=OTHER_REPO)
+    bad = field(resource, name="text_body_sha256", value="0" * 64)
     with pytest.raises(sqlite3.IntegrityError):
         store.observe(ResourceObservation(resource, (good, bad)))
     assert resource not in store.resources()
@@ -690,6 +691,7 @@ def test_swallowed_sqlite_corruption_stops_immediately(directory, deferred):
             # the original swallowed/deferred-corruption assertions below.
             if sql in {
                 "SELECT store_role FROM store_identity",
+                "SELECT name, sql FROM sqlite_schema WHERE type='table' AND name IN ('resource_repository_relations', 'repository_mapping_dispositions', 'field_candidates')",
                 "SELECT configuration_json FROM providers",
                 "SELECT configuration_json FROM repository_context",
                 "SELECT configuration_json FROM sources",
@@ -779,26 +781,32 @@ def test_explicit_null_detach_rollback_and_restart(directory):
         store.provider(SERVICE, "github")
         store.repository(REPO)
         store.resource(KEY)
-        store.admit_repository(
-            KEY, REPO, FieldClock("provider.updated_at", 1), original, 10
+        store.admit_repository_relation(
+            ResourceRepositoryRelation(
+                KEY, "owning_repository", FieldClock("provider.updated_at", 1), canonical(REPO), original, 10
+            )
         )
     with pytest.raises(RuntimeError):
         with Context.transaction(directory) as store:
-            store.admit_repository(
-                KEY, None, FieldClock("provider.updated_at", 2), detached, 20
+            store.admit_repository_relation(
+                ResourceRepositoryRelation(
+                    KEY, "owning_repository", FieldClock("provider.updated_at", 2), "null", detached, 20
+                )
             )
-            assert store.repository_candidates(KEY)[0].value_json == "null"
+            assert store.repository_relations(KEY)[0].is_explicit_null_target is True
             raise RuntimeError("rollback")
     with Context.snapshot(directory) as store:
-        assert store.repository_candidates(KEY)[0].value_json == canonical(REPO)
+        assert store.repository_relations(KEY)[0].target_repository_uuidv4 == REPO
     with Context.transaction(directory) as store:
-        store.admit_repository(
-            KEY, None, FieldClock("provider.updated_at", 2), detached, 20
+        store.admit_repository_relation(
+            ResourceRepositoryRelation(
+                KEY, "owning_repository", FieldClock("provider.updated_at", 2), "null", detached, 20
+            )
         )
     with Context.snapshot(directory) as store:
-        (candidate,) = store.repository_candidates(KEY)
-        assert candidate.value_json == "null"
-        assert candidate.provenance_json == detached and candidate.observed_at_us == 20
+        (relation,) = store.repository_relations(KEY)
+        assert relation.is_explicit_null_target is True
+        assert relation.provenance_json == detached and relation.observed_at_us == 20
         assert store.resources(kind="issue") == (KEY,)
 
 
@@ -954,3 +962,29 @@ def test_unknown_text_digest_is_unavailable_without_false_corruption(context):
     assert not (path.parent / "p1-recovery-stop.json").exists()
     digest = store.text("genuinely new Context text")
     assert store.read_text(digest) == "genuinely new Context text"
+
+
+def test_production_context_relation_facade_methods(directory):
+    with Context.transaction(directory) as store:
+        store.provider(SERVICE, "github")
+        store.repository(REPO)
+        prov_repo = ResourceKey(SERVICE, "repository", "octocat/Hello-World")
+        store.resource(prov_repo)
+        
+        # Test mapping_dispositions does not throw TypeError or false corruption
+        disps = store.mapping_dispositions()
+        assert disps == ()
+        
+        # Test relations_for_provider_repository with ResourceKey
+        rels = store.relations_for_provider_repository(prov_repo)
+        assert rels == ()
+        
+        # Test relations_for_provider_repository with separate strings
+        rels2 = store.relations_for_provider_repository(SERVICE, "octocat/Hello-World")
+        assert rels2 == ()
+        
+        # Test transfer_event_reports
+        reports = store.transfer_event_reports()
+        assert reports == ()
+    
+    assert not (directory / "p1-recovery-stop.json").exists()

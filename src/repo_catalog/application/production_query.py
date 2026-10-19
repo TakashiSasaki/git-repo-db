@@ -1060,13 +1060,14 @@ class ProductionQueryService:
         for fname in field_names:
             fields[fname] = context.candidates(resource_key, fname)
 
-        repo_cands = context.repository_candidates(resource_key)
-        repo_values = {
-            json.loads(c.value_json)
-            for c in repo_cands
-            if json.loads(c.value_json) is not None
-        }
-        repo_uuid = next(iter(repo_values)) if len(repo_values) == 1 else None
+        if context.repository_relations(resource_key):
+            raise QueryError(
+                "UNSUPPORTED_UNTIL_I4",
+                resource_key,
+                "Context repository relation projection requires ADR 0030 stage I4",
+            )
+        repo_cands = ()
+        repo_uuid = None
 
         resolved_texts: dict[str, str | None] = {}
         if include_text and "text_body_sha256" in fields:
@@ -1142,6 +1143,12 @@ class ProductionQueryService:
         repository_uuidv4: str | None = None,
         parent: ResourceKey | None = None,
     ) -> PageResult[ContextResourceView]:
+        if repository_uuidv4 is not None:
+            raise QueryError(
+                "UNSUPPORTED_UNTIL_I4",
+                "context_resources",
+                "Context repository relation filtering requires ADR 0030 stage I4",
+            )
         with self.open_snapshot(required_store="context") as snap:
             assert snap.context is not None
             token_str = snap.token.encode()
@@ -1175,16 +1182,6 @@ class ProductionQueryService:
                     )
                     if parent is not None and view.parent != parent:
                         continue
-                    if repository_uuidv4 is not None:
-                        repo_matches = (
-                            view.repository_uuidv4 == repository_uuidv4
-                            or any(
-                                json.loads(c.value_json) == repository_uuidv4
-                                for c in view.repository_candidates
-                            )
-                        )
-                        if not repo_matches:
-                            continue
                     yield view
 
             selected = _paginate_items(
@@ -1329,6 +1326,12 @@ class ProductionQueryService:
         resource_kind: str | None = None,
         repository_uuidv4: str | None = None,
     ) -> PageResult[PairedResourceView]:
+        if repository_uuidv4 is not None:
+            raise QueryError(
+                "UNSUPPORTED_UNTIL_I4",
+                "paired_resources",
+                "Context repository relation filtering requires ADR 0030 stage I4",
+            )
         with self.open_snapshot(required_store="paired") as snap:
             assert snap.core is not None and snap.context is not None
             token_str = snap.token.encode()
@@ -1343,17 +1346,6 @@ class ProductionQueryService:
                         key,
                         include_text=False,
                     )
-                    if repository_uuidv4 is not None:
-                        ctx_v = paired_view.context_resource
-                        repo_matches = (
-                            ctx_v.repository_uuidv4 == repository_uuidv4
-                            or any(
-                                json.loads(c.value_json) == repository_uuidv4
-                                for c in ctx_v.repository_candidates
-                            )
-                        )
-                        if not repo_matches:
-                            continue
                     yield paired_view
 
             selected = _paginate_items(

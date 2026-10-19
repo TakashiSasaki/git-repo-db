@@ -1020,33 +1020,23 @@ class ExchangeService:
                 )
 
             for row in ctx.db.execute(
-                "SELECT service_instance_uuidv4, resource_kind, provider_resource_id, "
-                "value_json, clock_domain, source_clock_us, provenance_json, observed_at_us "
-                "FROM field_candidates WHERE field_name='repository_uuidv4' "
-                "ORDER BY observed_at_us, service_instance_uuidv4, resource_kind, provider_resource_id"
+                "SELECT service_instance_uuidv4, resource_kind, provider_resource_id "
+                "FROM resource_repository_relations "
+                "ORDER BY service_instance_uuidv4, resource_kind, provider_resource_id"
             ):
                 rk = ResourceKey(row[0], row[1], row[2])
-                if rk not in included_rks:
-                    continue
-                repo_val = json.loads(row[3])
-                section["repository_candidates"].append(
-                    {
-                        "service_instance_uuidv4": row[0],
-                        "resource_kind": row[1],
-                        "provider_resource_id": row[2],
-                        "repository_uuidv4": repo_val,
-                        "clock_domain": row[4],
-                        "clock_ts_us": row[5],
-                        "provenance_json": row[6],
-                        "observed_at_us": row[7],
-                    }
-                )
+                if rk in included_rks:
+                    raise ExchangeError(
+                        "UNSUPPORTED_UNTIL_I3",
+                        "context",
+                        "Context repository relation export requires ADR 0030 stage I3",
+                    )
 
             referenced_text_digests: set[str] = set()
             fc_rows = ctx.db.execute(
                 "SELECT service_instance_uuidv4, resource_kind, provider_resource_id, "
                 "field_name, value_json, clock_domain, source_clock_us, provenance_json, observed_at_us "
-                "FROM field_candidates WHERE field_name!='repository_uuidv4' "
+                "FROM field_candidates "
                 "ORDER BY observed_at_us, service_instance_uuidv4, resource_kind, provider_resource_id, field_name"
             ).fetchall()
             for row in fc_rows:
@@ -1615,6 +1605,12 @@ class ExchangeService:
             "merged_at_us",
             "submitted_at_us",
         }
+        if ctx_data["repository_candidates"]:
+            raise ExchangeError(
+                "UNSUPPORTED_UNTIL_I3",
+                "context",
+                "Context repository relation import requires ADR 0030 stage I3",
+            )
         for candidate in ctx_data["field_candidates"]:
             if candidate["field_name"] in provider_time_fields:
                 validate_observation_us(json.loads(candidate["value_json"]))
@@ -2003,25 +1999,11 @@ class ExchangeService:
             ctx.resource(rk)
             admitted_resources += 1
 
-        for rc in ctx_data["repository_candidates"]:
-            if rc["repository_uuidv4"] is not None:
-                has_repo = ctx.db.execute(
-                    "SELECT 1 FROM repository_context WHERE repository_uuidv4=?",
-                    (rc["repository_uuidv4"],),
-                ).fetchone()
-                if not has_repo:
-                    ctx.repository(rc["repository_uuidv4"], "{}")
-            rk = ResourceKey(
-                rc["service_instance_uuidv4"],
-                rc["resource_kind"],
-                rc["provider_resource_id"],
-            )
-            ctx.admit_repository(
-                rk,
-                rc["repository_uuidv4"],
-                FieldClock(rc["clock_domain"], rc["clock_ts_us"]),
-                rc["provenance_json"],
-                rc["observed_at_us"],
+        if ctx_data["repository_candidates"]:
+            raise ExchangeError(
+                "UNSUPPORTED_UNTIL_I3",
+                "context",
+                "Context repository relation import requires ADR 0030 stage I3",
             )
 
         for tb in ctx_data["text_bodies"]:
