@@ -314,3 +314,10 @@ in `tests/integration/i4/test_query_search_backup.py` exercise this boundary;
 run `pytest -q tests/integration/i4 tests/integration/p6` on the supported runtime.
 These are projection rules, not permission to issue Mapping evidence, rewrite
 original keys or infer execution approval from a Mapping.
+
+For backup semantic decoder changes, test the source Stop as well as refusal of
+an invalid restored copy. A generic cause-chain classifier may correctly reject
+unexpected adapter ValueError as indeterminate yet misclassify a trusted decoder's
+proven stored-data violation. Preserve the cause, use an explicit typed invariant
+boundary and check both confirmed corruption and existing IO/lock/budget/error
+negative controls. Do not classify every ValueError as authoritative corruption.

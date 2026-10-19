@@ -50,6 +50,7 @@ from repo_catalog.adapters.sqlite.p1_schema import (
 )
 from repo_catalog.adapters.sqlite.recovery_budget import recovery_request
 from repo_catalog.adapters.sqlite.recovery_validation import (
+    StoredContextInvariantError,
     bounded_domain_exists,
     validate_stored_admission_guards,
     validate_stored_checks,
@@ -715,6 +716,10 @@ def _confirmed_integrity_failure(error: Exception) -> str | None:
     current: BaseException | None = error
     while current is not None and current not in chain:
         chain.append(current)
+        if isinstance(current, StoredContextInvariantError):
+            # Trusted stored relation decoders have already classified their
+            # ValueError/TypeError cause as a deterministic data invariant.
+            break
         current = current.__cause__
     for cause in chain:
         if isinstance(cause, sqlite3.Error):

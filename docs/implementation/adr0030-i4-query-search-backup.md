@@ -102,3 +102,16 @@ integration tree and recheck effective merge dependencies, adversarial mixed
 selection/qualification/recovery flows, Core/Access isolation and installed
 artifacts. Focused I4/expanded CI is not a complete release receipt. No full
 release qualification, merge, production activation or data migration is claimed.
+
+### Source-diagnosis correction found by the I4 counterexample
+
+On initial pushed source `b4caae054326a60f4aeb0e5f71e8b042f2c132f9`,
+the I4 suite passed 25 nodes and failed the backup Stop assertion. Trusted
+stored Provider decoding raised a wrapped ValueError. P7's generic cause-chain
+classifier deliberately treats unexpected implementation ValueError as
+indeterminate, so it also misclassified this proven stored-data violation.
+`StoredContextInvariantError` now marks only the trusted pure stored-relation
+decoder boundary, retaining the original cause for diagnostics. Source diagnosis
+recognizes that proof while arbitrary adapter errors, I/O, SQLite locks and
+resource exhaustion still cannot declare corruption. The original failed
+execution and the focused correction/revalidation are retained in the evidence.

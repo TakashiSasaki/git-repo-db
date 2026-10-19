@@ -22,6 +22,16 @@ from repo_catalog.domain.p1_context import (
 from repo_catalog.domain.p1_core import CoreFailure
 from repo_catalog.domain.recovery import BackupValidationError
 
+
+class StoredContextInvariantError(BackupValidationError):
+    """A trusted pure Context decoder proved retained domain evidence invalid.
+
+    This explicit boundary retains the decoder cause for diagnostics without
+    confusing a deterministic stored-data violation with an unexpected adapter
+    ValueError, unavailable I/O or exhausted resource budget.
+    """
+
+
 # INSERT-time replay/current-terminal predicates are deliberately excluded:
 # old Coverage evidence remains valid history after a later terminal arrives,
 # and rrr_no_rebind / rmd_no_rebind are INSERT-time replay/stale guards.
@@ -242,7 +252,7 @@ def validate_stored_context_relations(connection: sqlite3.Connection) -> None:
     except BackupValidationError:
         raise
     except (ValueError, TypeError, KeyError, json.JSONDecodeError) as error:
-        raise BackupValidationError(
+        raise StoredContextInvariantError(
             f"Stored context relation invariant failed: {error}"
         ) from error
 
