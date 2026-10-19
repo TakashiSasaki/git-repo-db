@@ -101,5 +101,9 @@ rebinding. Constructor checks alone may omit writer-enforced modeled parent and
 Source/service checks. Assert redundant wire coordinates (for example a Notes
 root) equal their original typed proof coordinates rather than silently rebuilding
 them. Preserve expressly advisory fields such as Coverage details as advisory.
+Repeat zero-work budget probes with an empty package and an omitted receiver
+selection. Incidental database reads in a populated fixture can mask a missing
+processing ceiling. Once an implicit selection is decoded, its ceiling must count
+already performed decode work before binding; learning it cannot refund work.
 See the executable [I3 counterexamples](../../../../tests/integration/i3/test_selective_exchange.py)
 and [I3 handoff](../../../../docs/implementation/adr0030-i3-selective-exchange.md).

@@ -1346,3 +1346,27 @@ def test_context_scope_cannot_rebind_provider_or_source_service(tmp_path, case):
         "adr0030-package-binding" in r[2]
         for r in rows(b, "operational", "request_continuations")
     )
+
+
+@pytest.mark.parametrize("explicit_receiver", [False, True])
+def test_empty_package_cannot_bypass_resolved_zero_work_ceiling(
+    tmp_path, explicit_receiver
+):
+    from repo_catalog.domain.exchange import ExchangePackage, empty_core_section
+    from repo_catalog.domain.p1_core import CoreFailure
+
+    seed = catalog(tmp_path)
+    selection = scope(max_work=0)
+    package = ExchangePackage(
+        str(uuid4()), None, str(uuid4()), seed, selection, core=empty_core_section()
+    )
+    before = rows(tmp_path, "core", "repositories")
+    kwargs = {"selection": selection} if explicit_receiver else {}
+    with pytest.raises(CoreFailure) as error:
+        receive(tmp_path, package, **kwargs)
+    assert error.value.code == "BUDGET"
+    assert rows(tmp_path, "core", "repositories") == before
+    assert not any(
+        "adr0030-package-binding" in r[2]
+        for r in rows(tmp_path, "operational", "request_continuations")
+    )

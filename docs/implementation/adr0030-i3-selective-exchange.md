@@ -156,6 +156,10 @@ reconciled I1 UNIQUE bindings separately from composite PKs and added modeled
 Collection parent/service and exact Notes-root checks. Valid same-Capture reports
 for different Repositories remain separate. Coverage details remain advisory,
 with unchanged I1 semantic duplicate handling.
+The [fourth exact-tree review](evidence/adr0030-i3/fourth-independent-review.md)
+closed an empty-package receive-limit gap: implicit and explicit receive
+selection now apply the same cumulative ceiling, including already charged decode
+work when the default selection becomes known.
 Final review targets the exact
 committed/pushed HEAD/tree and is recorded in the PR body.
 

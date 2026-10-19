@@ -243,19 +243,23 @@ class _ReceiveWork:
 
     def __init__(self, work, limit):
         self._work, self._limit = work, limit
+        self._check(0)
 
     def __getattr__(self, name):
         return getattr(self._work, name)
 
+    def _check(self, amount):
+        spent = self._work.ledger.usage(self._work.request)
+        if spent["metadata_units"] + spent["proof_steps"] + amount > self._limit:
+            raise CoreFailure(
+                "BUDGET",
+                "exchange_work",
+                "finite cumulative receive processing limit",
+            )
+
     def require(self, unit, amount=1):
         if unit in ("metadata_units", "proof_steps"):
-            spent = self._work.ledger.usage(self._work.request)
-            if spent["metadata_units"] + spent["proof_steps"] + amount > self._limit:
-                raise CoreFailure(
-                    "BUDGET",
-                    "exchange_work",
-                    "finite cumulative receive processing limit",
-                )
+            self._check(amount)
         self._work.require(unit, amount)
 
     def charge(self, unit, amount):
@@ -1581,6 +1585,11 @@ class ExchangeService:
             explicit_scope(package.selection_scope)
             receive_selection = selection or package.selection_scope
             explicit_scope(receive_selection)
+            if selection is None:
+                # The effective default is learned only after bounded decode.
+                # Previously performed decode work remains charged and counts
+                # against this same frozen cumulative ceiling, even with no rows.
+                work = _ReceiveWork(work, receive_selection.max_work)
             request_binding = {
                 "selection": receive_selection.to_dict(),
                 "sender": package.sender_catalog_instance_uuidv4,

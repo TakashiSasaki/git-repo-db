@@ -1,7 +1,7 @@
 {
   "fixed_i1_head": "9390c9f3b54a033e5f07e1cb05d7c4b263c38fb7",
   "fixed_i1_tree": "14c694218109de1e3dfebc93e7776d48ad79faf3",
-  "runtime_input_sha256": "58056873a82405e439218f12c3f08569e275ce9a64109553b04d9932da5607cb",
+  "runtime_input_sha256": "d59c2b7ca019b031b37c1a31b19fb648bd184bb3a8236deab59473aac6c33f2d",
   "runtime_input_count": 412,
   "runtime": {
     "python": "3.12.14",
@@ -9,9 +9,9 @@
     "sqlite_source": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9"
   },
   "independent_i3_tests": {
-    "passed": 64,
+    "passed": 66,
     "failed": 0,
     "command": ".venv/bin/pytest -q tests/integration/i3 --tb=short"
   },
-  "preliminary_review": "CHANGES REQUIRED on b7f40fa, 1cd58ce and 8f7036d; all executed proof, input ownership, UNIQUE, modeled parent and Notes root findings now covered; final exact pushed review recorded in PR #108"
+  "preliminary_review": "CHANGES REQUIRED on b7f40fa, 1cd58ce, 8f7036d and 3b73cdd; all executed proof, input ownership, UNIQUE, modeled parent, Notes root and implicit receive budget findings now covered; final exact pushed review recorded in PR #108"
 }
