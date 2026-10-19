@@ -141,9 +141,7 @@ def validate_stored_context_relations(connection: sqlite3.Connection) -> None:
                 replacement_claim_key=replacement_key,
             )
 
-        scope_meta: dict[
-            tuple[str, str, str, str, str], tuple[dict, int | None]
-        ] = {}
+        scope_meta: dict[tuple[str, str, str, str, str], tuple[dict, int | None]] = {}
         for row in connection.execute(
             """SELECT service_instance_uuidv4,resource_kind,provider_resource_id,
                       relation_kind,members_json,provenance_json,scope_json,observed_at_us

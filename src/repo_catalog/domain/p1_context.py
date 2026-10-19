@@ -457,7 +457,9 @@ def resolved_target_json(
 ) -> str:
     if provider_repository_id is not None and not _is_uuid4_str(repository_uuidv4):
         # Also allow positional (provider_repository_id, repository_uuidv4) call
-        if _is_nonempty_str(repository_uuidv4) and _is_uuid4_str(provider_repository_id):
+        if _is_nonempty_str(repository_uuidv4) and _is_uuid4_str(
+            provider_repository_id
+        ):
             return canonical(provider_repository_id)
     if not _is_uuid4_str(repository_uuidv4):
         raise ValueError("repository_uuidv4 must be a lowercase UUIDv4 string")
@@ -592,7 +594,9 @@ def encode_mapping_provenance(
             claimed_issuer=None,
         ).encoded
     if not isinstance(claimed_issuer, ClaimedIssuer):
-        raise ValueError("claimed_issuer must be ClaimedIssuer, None, or OMITTED_ISSUER")
+        raise ValueError(
+            "claimed_issuer must be ClaimedIssuer, None, or OMITTED_ISSUER"
+        )
     return MappingProvenance(
         source=source,
         evidence=evidence,
@@ -613,7 +617,9 @@ class ResourceKey:
 
     def __post_init__(self) -> None:
         if not _is_uuid4_str(self.service_instance_uuidv4):
-            raise ValueError("service_instance_uuidv4 must be a lowercase UUIDv4 string")
+            raise ValueError(
+                "service_instance_uuidv4 must be a lowercase UUIDv4 string"
+            )
         if not _is_nonempty_str(self.resource_kind):
             raise ValueError("resource_kind must be a non-empty string")
         if not _is_nonempty_str(self.provider_resource_id):
@@ -938,9 +944,7 @@ class MappingSupport:
                 "MappingSupport.provider_repository must be a repository ResourceKey"
             )
         if not isinstance(self.supporting_claims, tuple):
-            object.__setattr__(
-                self, "supporting_claims", tuple(self.supporting_claims)
-            )
+            object.__setattr__(self, "supporting_claims", tuple(self.supporting_claims))
         if not self.supporting_claims:
             raise ValueError(
                 "MappingSupport.supporting_claims must contain at least one MappingClaimKey"
@@ -1327,9 +1331,7 @@ def evaluate_repository_mapping(
         if not isinstance(disp, MappingDisposition):
             raise ValueError("dispositions must contain MappingDisposition instances")
         if disp.claim_key.resource != provider_repository:
-            raise ValueError(
-                "All dispositions must belong to provider_repository"
-            )
+            raise ValueError("All dispositions must belong to provider_repository")
         if disp.claim_key not in claim_set:
             continue
         dkey = disp.disposition_key
@@ -1381,9 +1383,7 @@ def evaluate_repository_mapping(
                 corrected_set.add(disp.claim_key)
 
     active = tuple(
-        c
-        for c in claim_keys
-        if c not in withdrawn_set and c not in corrected_set
+        c for c in claim_keys if c not in withdrawn_set and c not in corrected_set
     )
     withdrawn = tuple(c for c in claim_keys if c in withdrawn_set)
     corrected = tuple(c for c in claim_keys if c in corrected_set)
@@ -1442,9 +1442,7 @@ class ResolvedRepositoryRelation:
             raise ValueError(
                 "disposed_supporting_bindings must contain MappingClaimKey items"
             )
-        if any(
-            not isinstance(item, MappingDisposition) for item in self.dispositions
-        ):
+        if any(not isinstance(item, MappingDisposition) for item in self.dispositions):
             raise ValueError("dispositions must contain MappingDisposition items")
 
     @property
@@ -1992,8 +1990,7 @@ class ProviderRepositoryScope:
     def encoded(self) -> str:
         payload: dict[str, Any] = dict(self.attributes)
         payload["repository_roles"] = {
-            role_key: entry.to_dict()
-            for role_key, entry in sorted(self.roles.items())
+            role_key: entry.to_dict() for role_key, entry in sorted(self.roles.items())
         }
         return canonical(payload)
 
@@ -2010,9 +2007,7 @@ class ProviderRepositoryScope:
         roles: dict[RelationKind, ProviderRepositoryRoleScope] = {}
         for role_key, raw_entry in raw_roles.items():
             if role_key not in MAPPING_RELATION_KINDS:
-                raise ValueError(
-                    f"Unknown repository role in scope_json: {role_key!r}"
-                )
+                raise ValueError(f"Unknown repository role in scope_json: {role_key!r}")
             if type(raw_entry) is not dict:
                 raise ValueError("Role scope entry must be an object")
             allowed_keys = {

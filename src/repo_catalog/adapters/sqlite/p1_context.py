@@ -68,9 +68,7 @@ class ContextStore:
     def __init__(self, connection: sqlite3.Connection):
         self.db = connection
 
-    def resource(
-        self, key: ResourceKey, repository_uuidv4: str | None = None
-    ) -> None:
+    def resource(self, key: ResourceKey, repository_uuidv4: str | None = None) -> None:
         """Admit nominal identity, independently of current repository evidence.
 
         The optional repository is a validated caller registration precondition;
@@ -129,9 +127,7 @@ class ContextStore:
             ).fetchone()
             if prior is not None:
                 if prior[0] != relation.observed_at_us:
-                    raise ValueError(
-                        "Original observation time changed during replay"
-                    )
+                    raise ValueError("Original observation time changed during replay")
                 self.db.execute("RELEASE p1_repository_relation")
                 return "duplicate"
             support = relation.embedded_support
@@ -276,7 +272,9 @@ class ContextStore:
                 "SELECT 1 FROM resources WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=?",
                 issue_parent.coordinates(),
             ).fetchone():
-                raise ValueError("Parent issue resource must be admitted before transfer event")
+                raise ValueError(
+                    "Parent issue resource must be admitted before transfer event"
+                )
             self.resource(report.event_resource, None)
             members: list[list[str]] = []
             for prov_repo in (
@@ -515,10 +513,7 @@ class ContextStore:
                 "evidence_contradictory",
             ):
                 status: SupportStatus = "conflicting_support"
-            elif (
-                ck in evaluation.withdrawn_claims
-                or ck in evaluation.corrected_claims
-            ):
+            elif ck in evaluation.withdrawn_claims or ck in evaluation.corrected_claims:
                 status = "supporting_binding_disposed"
             elif evaluation.state == "conflict":
                 status = "conflicting_support"
@@ -573,17 +568,13 @@ class ContextStore:
                     support_status="missing_supporting_binding",
                     supporting_bindings=present,
                 )
-            evaluation = self.evaluate_provider_repository(
-                prov_repo, evidence=evidence
-            )
+            evaluation = self.evaluate_provider_repository(prov_repo, evidence=evidence)
             all_disps = self.mapping_dispositions(prov_repo)
             rel_disps = tuple(
                 d for d in all_disps if d.claim_key in support.supporting_claims
             )
             active_sc = tuple(
-                sc
-                for sc in support.supporting_claims
-                if sc in evaluation.active_claims
+                sc for sc in support.supporting_claims if sc in evaluation.active_claims
             )
             disposed_sc = tuple(
                 sc
@@ -616,67 +607,12 @@ class ContextStore:
                 dispositions=rel_disps,
             )
 
-        # No embedded MappingSupport: inspect represents_repository claims in the same service
-        rep_rows = self.db.execute(
-            """SELECT service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,
-                      clock_json,target_json,provenance_json,observed_at_us
-            FROM resource_repository_relations
-            WHERE service_instance_uuidv4=? AND resource_kind='repository'
-              AND relation_kind='represents_repository' AND target_json=?
-            ORDER BY provider_resource_id,clock_json,provenance_json""",
-            (relation.resource.service_instance_uuidv4, relation.target_json),
-        ).fetchall()
-        rep_rels = self._raw_relations_from_rows(rep_rows)
-        if not rep_rels:
-            return ResolvedRepositoryRelation(
-                relation=relation,
-                support_status="missing_supporting_binding",
-            )
-        prov_repos: list[ResourceKey] = []
-        for r in rep_rels:
-            if r.resource not in prov_repos:
-                prov_repos.append(r.resource)
-        active_bindings: list[MappingClaimKey] = []
-        disposed_bindings: list[MappingClaimKey] = []
-        dispositions_acc: list[MappingDisposition] = []
-        has_conflict = False
-        has_unconfirmed = False
-        for prov_repo in prov_repos:
-            evaluation = self.evaluate_provider_repository(
-                prov_repo, evidence=evidence
-            )
-            if evaluation.state in (
-                "conflict",
-                "unresolved_correction",
-                "evidence_contradictory",
-            ):
-                has_conflict = True
-            for ck in evaluation.active_claims:
-                if ck.target_json == relation.target_json:
-                    active_bindings.append(ck)
-            for ck in (*evaluation.withdrawn_claims, *evaluation.corrected_claims):
-                if ck.target_json == relation.target_json:
-                    disposed_bindings.append(ck)
-            for d in self.mapping_dispositions(prov_repo):
-                if d.claim_key.target_json == relation.target_json:
-                    dispositions_acc.append(d)
-            if evaluation.unconfirmed_dispositions or evaluation.disputed_dispositions:
-                has_unconfirmed = True
-
-        if has_conflict:
-            status = "conflicting_support"
-        elif not active_bindings:
-            status = "supporting_binding_disposed"
-        elif has_unconfirmed:
-            status = "unconfirmed_disposition"
-        else:
-            status = "active"
+        # No embedded MappingSupport: ADR 0030 preserves exact original MappingClaimKey
+        # support. Core-target relations without explicit MappingSupport do not borrow
+        # unlinked represents_repository claims across other Provider repositories in the service.
         return ResolvedRepositoryRelation(
             relation=relation,
-            support_status=status,
-            supporting_bindings=tuple(active_bindings),
-            disposed_supporting_bindings=tuple(disposed_bindings),
-            dispositions=tuple(dispositions_acc),
+            support_status="missing_supporting_binding",
         )
 
     def repository_relations(
@@ -788,6 +724,10 @@ class ContextStore:
                     "transfer_event_reports resource filter must be an issue or timeline_event comment ResourceKey"
                 )
 
+        selected_set: tuple[str, ...] | None = None
+        if selected_repositories is not None:
+            selected_set = tuple(selected_repositories)
+
         rows = self.db.execute(
             """SELECT service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,
                       clock_json,target_json,provenance_json,observed_at_us
@@ -820,9 +760,7 @@ class ContextStore:
             WHERE relation_kind='transfer_event_report'
             ORDER BY service_instance_uuidv4,provider_resource_id,provenance_json,scope_json"""
         ).fetchall()
-        scope_meta: dict[
-            tuple[str, str, str, str, str], tuple[dict, int | None]
-        ] = {}
+        scope_meta: dict[tuple[str, str, str, str, str], tuple[dict, int | None]] = {}
         for s_row in scope_rows:
             parsed_scope = json.loads(s_row[5])
             clock_json = canonical(parsed_scope["clock"])
@@ -896,10 +834,8 @@ class ContextStore:
                 }
                 if repository_uuidv4 not in all_targets:
                     continue
-            if selected_repositories is not None:
-                selected_report = report.select_for_repositories(
-                    selected_repositories
-                )
+            if selected_set is not None:
+                selected_report = report.select_for_repositories(selected_set)
                 if selected_report is None:
                     continue
                 report = selected_report

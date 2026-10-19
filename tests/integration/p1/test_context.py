@@ -259,11 +259,21 @@ def test_detached_issue_attachment_transfer_preserves_identity_and_original_prov
     original = canonical({"source": "provider.example", "evidence": "attachment-1"})
     moved = canonical({"source": "provider.example", "evidence": "transfer-2"})
     claim1 = ResourceRepositoryRelation(
-        key, "owning_repository", FieldClock("provider.updated_at", 1), canonical(REPO), original, 10
+        key,
+        "owning_repository",
+        FieldClock("provider.updated_at", 1),
+        canonical(REPO),
+        original,
+        10,
     )
     store.admit_repository_relation(claim1)
     claim2 = ResourceRepositoryRelation(
-        key, "owning_repository", FieldClock("provider.updated_at", 2), canonical(second), moved, 20
+        key,
+        "owning_repository",
+        FieldClock("provider.updated_at", 2),
+        canonical(second),
+        moved,
+        20,
     )
     store.admit_repository_relation(claim2)
     current = store.repository_relations(key)
@@ -348,13 +358,23 @@ def test_attached_issue_explicit_detach_preserves_null_original_source_and_rollb
 ):
     db, store, _ = context
     claim1 = ResourceRepositoryRelation(
-        KEY, "owning_repository", FieldClock("provider.updated_at", 1), canonical(REPO), PROVENANCE, 10
+        KEY,
+        "owning_repository",
+        FieldClock("provider.updated_at", 1),
+        canonical(REPO),
+        PROVENANCE,
+        10,
     )
     store.admit_repository_relation(claim1)
     detached = canonical({"source": "provider.example", "evidence": "detached-20"})
     db.execute("BEGIN")
     claim2 = ResourceRepositoryRelation(
-        KEY, "owning_repository", FieldClock("provider.updated_at", 2), "null", detached, 20
+        KEY,
+        "owning_repository",
+        FieldClock("provider.updated_at", 2),
+        "null",
+        detached,
+        20,
     )
     store.admit_repository_relation(claim2)
     assert store.repository_relations(KEY)[0].is_explicit_null_target is True
@@ -370,10 +390,11 @@ def test_attached_issue_explicit_detach_preserves_null_original_source_and_rollb
         ).fetchone()[0]
         is None
     )
-    assert (
-        store.repository_relations(ResourceKey(SERVICE, "issue", "unobserved")) == ()
-    )
-    with pytest.raises(ValueError, match="field_name='repository_uuidv4' is retired; use repository_relations"):
+    assert store.repository_relations(ResourceKey(SERVICE, "issue", "unobserved")) == ()
+    with pytest.raises(
+        ValueError,
+        match="field_name='repository_uuidv4' is retired; use repository_relations",
+    ):
         store.candidates(KEY, "repository_uuidv4")
 
 

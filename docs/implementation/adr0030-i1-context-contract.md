@@ -135,14 +135,125 @@ The full test suite validates all 17 counterexamples specified in ADR 0030 Secti
 - **Counterexample 15**: Enduring stored-invariant validation passes on valid conflicting relations.
 - **Counterexample 16**: Composed Context has exactly 19 tables matching schema fingerprint and disposition manifest.
 - **Counterexample 17**: Direct wheel and package artifacts contain valid schema without retired virtual columns.
+- **Counterexample 18**: Mapping ClaimKey support isolation. Unbacked Core relations cannot borrow claims from other Provider Repositories; relations without explicit `MappingSupport` resolve strictly to `missing_supporting_binding`.
+- **Counterexample 19**: Transfer event type enforcement. Transfer event roles strictly require genuine `event_type='transferred'` timeline events.
+- **Counterexample 20**: Transfer event `selected_repositories` generator normalization. Single-pass generators are normalized at entry to ensure identical filtering across multiple events.
+
+### Public Context Facade Hardening
+
+1. **RelationKind Runtime Validation**:
+   - Replaced invalid `RelationKind(x)` instantiation (`typing.Literal` runtime error) with explicit validation against `RELATION_KINDS`.
+2. **False Catalog Stop Elimination**:
+   - All facade argument validation (`ResourceKey` instance checks, `RelationKind`, `MappingOperationEvidence`, UUID format) is strictly evaluated before entering `with self._stored(...)`. Invalid caller arguments raise standard `TypeError` / `ValueError` without writing `AUTHORITATIVE_CORRUPTION` stop files.
+3. **Evidence Propagation**:
+   - Added `evidence: MappingOperationEvidence | None = None` support to `evaluate_provider_repository`, `repository_relations`, `relations_for_repository`, and `relations_for_provider_repository`. When omitted, no authority is fabricated from local origins.
+4. **Port & Facade Signature Alignment**:
+   - Return type of `ContextStore.admit_transfer_event()` aligned to `str`.
+   - `require_support: bool = False` forwarded from facade to store implementation.
 
 Test execution evidence:
-- `tests/integration/p1`: 334 tests passed.
+- `tests/integration/p1`: 337 tests passed (including 20/20 in `test_context_relations.py`).
 - `tests/integration/p3`: 76 tests passed.
-- Total: 410 passed in 83.15s.
+- `tests/integration/access`: 483 tests passed.
+- Total passed: 896 tests.
 - Environment: Python 3.12.3, Linux 6.8.0-1018-gcp aarch64.
+- Isolated Wheel & Sdist Distribution:
+  `scripts/verify_access_distribution.py` built direct wheel and sdist-rebuilt wheel in isolated virtual environments; verified 19 tables in Context DDL, fingerprint `fa7838f86d9f0ab4b2f26c561ad0721df2d0c7dad45ee97e72ff09cbb89ac434`, and UDF registrations on real SQLite 3.51.3.
 - Runtime Dependency Note:
   The minimum required SQLite version is 3.51.3 (`MIN_SQLITE = (3, 51, 3)`).
-  On this host, the default system SQLite package is 3.45.1.
-  Executing tests requires providing the verified SQLite 3.51.3 build at `/home/ubuntu/.local/share/git-repo-db-sqlite-3510300/libsqlite3.so.0` via `LD_LIBRARY_PATH="/home/ubuntu/.local/share/git-repo-db-sqlite-3510300"`.
-  When `LD_LIBRARY_PATH` is omitted, `p1_schema.py` strictly enforces `SchemaError: P1 requires SQLite >= 3.51.3 with safe WAL, STRICT and JSON`, blocking schema initialization tests as designed.
+  On this host, executing tests requires providing the verified SQLite 3.51.3 build at `/home/ubuntu/.local/share/git-repo-db-sqlite-3510300/libsqlite3.so.0` via `LD_LIBRARY_PATH="/home/ubuntu/.local/share/git-repo-db-sqlite-3510300"`.
+
+## 8. Categorization and Root Cause Analysis of 37 Post-I1 Integration Failures
+
+Extended regression tests in P5 and P6 exhibit 37 failures. None of these failures stem from defects in Stage I1; all represent planned boundaries awaiting downstream implementation or fixture modernization.
+
+### 8.1 Summary Matrix
+
+| Subsystem | Failure Count | Root Cause Code | Assigned Stage | Resolution Requirement |
+| :--- | :--- | :--- | :--- | :--- |
+| **P5 (Intake / Admission)** | 5 | `UNSUPPORTED_UNTIL_I2` | **Stage I2** | Implement GitHub GraphQL intake for timeline transfer events and multi-relation extraction into `resource_repository_relations`. |
+| **P5 (Exchange)** | 5 | `UNSUPPORTED_UNTIL_I3` | **Stage I3** | Implement selective export/import accounting for `resource_repository_relations` and `repository_mapping_dispositions`. |
+| **P6 (Query / Search)** | 27 | Retired API Dependency (`Context.admit_repository`) | **Stage I4** | Implement multi-relation query projection over `resource_repository_relations`; modernize P6 fixtures in `conftest.py` to use `admit_repository_relation`. |
+| **Total** | **37** | | | |
+
+### 8.2 Detailed Pytest Node Inventory
+
+#### Stage I2 Failures (5 tests)
+1. `tests/integration/p5/test_corrections.py::test_repository_unknown_observation_retained_without_fabricated_coordinates`
+   - *Root Cause*: `ContextError: UNSUPPORTED_UNTIL_I2` raised on provider relation intake path.
+   - *Assigned Stage*: Stage I2 (Provider intake).
+   - *Expected Resolution*: Stage I2 admission pipeline handles multi-relation extraction.
+2. `tests/integration/p5/test_paired_admission.py::test_core_first_context_second_and_failure_retry_convergence`
+   - *Root Cause*: `ContextError: UNSUPPORTED_UNTIL_I2` on paired relation admission.
+   - *Assigned Stage*: Stage I2 (Provider intake).
+   - *Expected Resolution*: Coordinated paired admission writes to `resource_repository_relations`.
+3. `tests/integration/p5/test_paired_admission.py::test_late_core_dependency_reconciliation`
+   - *Root Cause*: `ContextError: UNSUPPORTED_UNTIL_I2` during dependency reconciliation.
+   - *Assigned Stage*: Stage I2 (Provider intake).
+   - *Expected Resolution*: Late reconciliation resolves candidate status via multi-relation queries.
+4. `tests/integration/p5/test_provider_acquisition.py::test_issue_vs_pull_request_intake_isolation`
+   - *Root Cause*: `ContextError: UNSUPPORTED_UNTIL_I2` on issue/PR intake.
+   - *Assigned Stage*: Stage I2 (Provider intake).
+   - *Expected Resolution*: Intake processes timeline relations with `owning_repository` and `base_repository`.
+5. `tests/integration/p5/test_provider_acquisition.py::test_explicit_null_vs_missing_fields_and_clock_competition`
+   - *Root Cause*: `ContextError: UNSUPPORTED_UNTIL_I2` on clock competition.
+   - *Assigned Stage*: Stage I2 (Provider intake).
+   - *Expected Resolution*: Intake pipeline manages clock domination and pruning.
+
+#### Stage I3 Failures (5 tests)
+1. `tests/integration/p5/test_exchange.py::test_exchange_export_import_repeat_reverse_and_multi_hop`
+   - *Root Cause*: `ContextError: UNSUPPORTED_UNTIL_I3` on transfer event export.
+   - *Assigned Stage*: Stage I3 (Exchange format).
+   - *Expected Resolution*: Exchange format v3 exports/imports `resource_repository_relations`.
+2. `tests/integration/p5/test_exchange.py::test_exchange_selective_filters_and_partial_input`
+   - *Root Cause*: `ContextError: UNSUPPORTED_UNTIL_I3` on selective exchange filters.
+   - *Assigned Stage*: Stage I3 (Exchange format).
+   - *Expected Resolution*: Selective export filters account for relation claim keys and dispositions.
+3. `tests/integration/p5/test_exchange.py::test_exchange_refuses_intrinsic_spoofing_without_validated_bytes`
+   - *Root Cause*: `ContextError: UNSUPPORTED_UNTIL_I3` on exchange payload verification.
+   - *Assigned Stage*: Stage I3 (Exchange format).
+   - *Expected Resolution*: Exchange verification checks relation payload provenance.
+4. `tests/integration/p5/test_exchange.py::test_exchange_refuses_tampered_payloads_without_store_corruption`
+   - *Root Cause*: `ContextError: UNSUPPORTED_UNTIL_I3` on tampered relation exchange.
+   - *Assigned Stage*: Stage I3 (Exchange format).
+   - *Expected Resolution*: Tampered relation payloads trigger rollback without catalog corruption.
+5. `tests/integration/p5/test_exchange.py::test_exchange_evaluates_core_dependencies_against_receiver_core`
+   - *Root Cause*: `ContextError: UNSUPPORTED_UNTIL_I3` during receiver Core evaluation.
+   - *Assigned Stage*: Stage I3 (Exchange format).
+   - *Expected Resolution*: Receiver Core validates target repositories against imported relations.
+
+#### Stage I4 Failures (27 tests)
+All 27 failures occur in `tests/integration/p6/conftest.py:401` with:
+`AttributeError: 'Context' object has no attribute 'admit_repository'` wrapped in `AdmissionFailure: core+context:ADMISSION_FAILED`.
+In accordance with ADR 0030 Section 2, `Context.admit_repository()` was intentionally retired and must NOT be restored as a compatibility shim.
+
+- `tests/integration/p6/test_cli.py::test_cli_all_subcommands_pagination_and_error_handling`
+- `tests/integration/p6/test_corrections.py::test_metadata_queries_do_not_hydrate_or_rehash_all_retained_bodies`
+- `tests/integration/p6/test_corrections.py::test_core_and_context_snapshot_capabilities_expire`
+- `tests/integration/p6/test_corrections.py::test_snapshot_budget_refusal_preserves_ordinary_reads[paired]`
+- `tests/integration/p6/test_corrections.py::test_snapshot_budget_refusal_preserves_ordinary_reads[core_only]`
+- `tests/integration/p6/test_corrections.py::test_snapshot_budget_refusal_preserves_ordinary_reads[context_only]`
+- `tests/integration/p6/test_corrections.py::test_literal_unicode_short_special_search_semantics_and_cost_phases[\u65e5\u672c\u8a9e]`
+- `tests/integration/p6/test_corrections.py::test_literal_unicode_short_special_search_semantics_and_cost_phases[\U0001f600]`
+- `tests/integration/p6/test_corrections.py::test_literal_unicode_short_special_search_semantics_and_cost_phases[a]`
+- `tests/integration/p6/test_corrections.py::test_literal_unicode_short_special_search_semantics_and_cost_phases[*]`
+- `tests/integration/p6/test_corrections.py::test_literal_unicode_short_special_search_semantics_and_cost_phases["]`
+- `tests/integration/p6/test_corrections.py::test_literal_unicode_short_special_search_semantics_and_cost_phases[\\]`
+- `tests/integration/p6/test_corrections.py::test_literal_unicode_short_special_search_semantics_and_cost_phases[\x00]`
+- `tests/integration/p6/test_corrections.py::test_literal_unicode_short_special_search_semantics_and_cost_phases[caf\xe9]`
+- `tests/integration/p6/test_corrections.py::test_literal_unicode_short_special_search_semantics_and_cost_phases[p6]`
+- `tests/integration/p6/test_corrections.py::test_literal_unicode_short_special_search_semantics_and_cost_phases[P6]`
+- `tests/integration/p6/test_corrections.py::test_oversize_derivative_row_falls_back_before_text_construction`
+- `tests/integration/p6/test_corrections.py::test_derivative_deep_json_falls_back_without_catalog_stop`
+- `tests/integration/p6/test_pagination_snapshots.py::test_deterministic_pagination_across_all_endpoints`
+- `tests/integration/p6/test_pagination_snapshots.py::test_open_snapshot_isolation_and_stale_cursor_fencing_after_write`
+- `tests/integration/p6/test_pagination_snapshots.py::test_malformed_tampered_and_cross_endpoint_cursors_fail_closed`
+- `tests/integration/p6/test_queries.py::test_context_only_queries_resources_fields_relations_inventories_and_coverage`
+- `tests/integration/p6/test_queries.py::test_paired_cross_store_resolution_present_vs_absent_core_oids[sha1]`
+- `tests/integration/p6/test_queries.py::test_paired_cross_store_resolution_present_vs_absent_core_oids[sha256]`
+- `tests/integration/p6/test_queries.py::test_verification_aware_byte_reads_detect_corruption_and_fence_catalog`
+- `tests/integration/p6/test_search_fallback.py::test_search_projection_and_five_fallback_scenarios_never_stop_catalog[sha1]`
+- `tests/integration/p6/test_search_fallback.py::test_search_projection_and_five_fallback_scenarios_never_stop_catalog[sha256]`
+
+*Expected Resolution*: In Stage I4, implement query/search resolution over `resource_repository_relations` and refactor `tests/integration/p6/conftest.py` to use `admit_repository_relation()`. No fake shim will be introduced in I1.
+

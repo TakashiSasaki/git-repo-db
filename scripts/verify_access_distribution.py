@@ -20,7 +20,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SMOKE = r"""
-import importlib.util, json, sqlite3, sys, tempfile
+import importlib.util, json, os, sqlite3, sys, tempfile
+os.umask(0o022)
 from pathlib import Path
 from uuid import uuid4
 from repo_catalog.adapters.sqlite.access_schema import initialize, require_runtime, fingerprint
@@ -203,18 +204,32 @@ with tempfile.TemporaryDirectory() as directory:
         assert json.loads(rows[0][0]) == historical_url
     with Context.snapshot(receiver) as ctx:
         assert ctx.db.execute("SELECT configuration_json FROM providers").fetchone()[0] == '{"name":"Original provider"}'
+        tables = [r[0] for r in ctx.db.execute("SELECT name FROM sqlite_schema WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name").fetchall()]
+        assert len(tables) == 19, f"Expected 19 tables in Context, got {len(tables)}: {tables}"
+        assert "resource_repository_relations" in tables
+        assert "repository_mapping_dispositions" in tables
+        # Verify UDF registration
+        assert ctx.db.execute("SELECT p1_mapping_target('\"9ebbe38a-f937-40e6-a99c-701835ebcf10\"')").fetchone()[0] == 1
+        assert ctx.db.execute("SELECT p1_mapping_clock('{\"at_us\":1,\"domain\":\"test\"}')").fetchone()[0] == 1
+        assert ctx.db.execute("SELECT p1_mapping_provenance('{\"evidence\":\"e\",\"source\":\"s\"}')").fetchone()[0] == 1
     assert not (receiver / "access.sqlite3").exists()
-print(json.dumps({"sqlite": sqlite3.sqlite_version, "sqlite_source_id": sqlite3.connect(":memory:").execute("SELECT sqlite_source_id()").fetchone()[0], "module_origin": str(module_origin), "interpreter": sys.executable, "ddl_sha256": fingerprint(), "context_ddl_sha256": p1_schema.fingerprint("context"), "exchange_format": EXCHANGE_FORMAT, "local_git_acquired": True, "access_backup_restored": True, "scope_forked": True, "installed_smoke": "passed"}))
+print(json.dumps({"sqlite": sqlite3.sqlite_version, "sqlite_source_id": sqlite3.connect(":memory:").execute("SELECT sqlite_source_id()").fetchone()[0], "module_origin": str(module_origin), "interpreter": sys.executable, "ddl_sha256": fingerprint(), "context_ddl_sha256": p1_schema.fingerprint("context"), "table_count": len(tables), "exchange_format": EXCHANGE_FORMAT, "local_git_acquired": True, "access_backup_restored": True, "scope_forked": True, "installed_smoke": "passed"}))
 """
 
 
 def run(*args: str, cwd: Path, env: dict[str, str]) -> str:
-    result = subprocess.run(
-        args, cwd=cwd, env=env, check=True, text=True, capture_output=True
-    )
-    if result.stderr:
-        print(result.stderr, file=sys.stderr)
-    return result.stdout
+    try:
+        result = subprocess.run(
+            args, cwd=cwd, env=env, check=True, text=True, capture_output=True
+        )
+        if result.stderr:
+            print(result.stderr, file=sys.stderr)
+        return result.stdout
+    except subprocess.CalledProcessError as error:
+        print("STDERR:", error.stderr, file=sys.stderr)
+        print("STDOUT:", error.stdout, file=sys.stderr)
+        print("COMMAND FAILED:", args[0] if args else "empty", file=sys.stderr)
+        raise
 
 
 def main() -> None:
@@ -303,6 +318,10 @@ def main() -> None:
             ).hexdigest()
             results.append(result)
             print(label, output)
+        assert len(results) == 2
+        assert results[0]["context_ddl_sha256"] == results[1]["context_ddl_sha256"]
+        assert results[0]["table_count"] == 19
+        assert results[1]["table_count"] == 19
     evidence = ROOT / "artifacts/access-registry"
     evidence.mkdir(parents=True, exist_ok=True)
     (evidence / "distribution.json").write_text(json.dumps(results, indent=2) + "\n")

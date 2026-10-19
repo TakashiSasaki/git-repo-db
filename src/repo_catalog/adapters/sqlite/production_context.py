@@ -24,6 +24,7 @@ from repo_catalog.adapters.sqlite.p1_coordination import (
 from repo_catalog.adapters.sqlite.p1_schema import connect
 from repo_catalog.domain.context_registration import registration_json
 from repo_catalog.domain.p1_context import (
+    RELATION_KINDS,
     CoverageClaim,
     CoverageProjection,
     CoverageScope,
@@ -782,24 +783,32 @@ class Context(ContextStore):
         return super().admit_field(candidate)
 
     def admit_repository_relation(
-        self, claim: ResourceRepositoryRelation
+        self,
+        claim: ResourceRepositoryRelation,
+        *,
+        require_support: bool = False,
     ) -> RelationAdmissionOutcome:
         with self._unit():
-            return super().admit_repository_relation(claim)
+            return super().admit_repository_relation(
+                claim, require_support=require_support
+            )
 
     def admit_repository_relation_result(
-        self, claim: ResourceRepositoryRelation
+        self,
+        claim: ResourceRepositoryRelation,
+        *,
+        require_support: bool = False,
     ) -> RelationAdmissionResult:
         with self._unit():
-            return super().admit_repository_relation_result(claim)
+            return super().admit_repository_relation_result(
+                claim, require_support=require_support
+            )
 
     def admit_mapping_disposition(self, disposition: MappingDisposition) -> str:
         with self._unit():
             return super().admit_mapping_disposition(disposition)
 
-    def admit_transfer_event(
-        self, report: TransferEventReport
-    ) -> tuple[RelationAdmissionResult, RelationAdmissionResult]:
+    def admit_transfer_event(self, report: TransferEventReport) -> str:
         with self._unit():
             return super().admit_transfer_event(report)
 
@@ -807,42 +816,74 @@ class Context(ContextStore):
         self, subject: MappingClaimKey | ResourceKey | None = None
     ) -> tuple[MappingDisposition, ...]:
         self._check()
+        if subject is not None and not isinstance(
+            subject, (MappingClaimKey, ResourceKey)
+        ):
+            raise ValueError("subject must be MappingClaimKey, ResourceKey, or None")
         with self._stored("repository_mapping_disposition"):
             return super().mapping_dispositions(subject)
 
     def evaluate_provider_repository(
-        self, resource: ResourceKey
+        self,
+        resource: ResourceKey,
+        *,
+        evidence: MappingOperationEvidence | None = None,
     ) -> QualifiedMappingEvaluation:
         self._check()
-        if resource.resource_kind != "repository":
+        if (
+            not isinstance(resource, ResourceKey)
+            or resource.resource_kind != "repository"
+        ):
             raise ValueError(
                 "evaluate_provider_repository requires a repository resource"
             )
+        if evidence is not None and not isinstance(evidence, MappingOperationEvidence):
+            raise ValueError(
+                "evidence must be a MappingOperationEvidence instance or None"
+            )
         with self._stored("repository_relation"):
-            return super().evaluate_provider_repository(resource)
+            return super().evaluate_provider_repository(resource, evidence=evidence)
 
     def repository_relations(
         self,
         resource: ResourceKey,
         relation_kind: RelationKind | str | None = None,
+        *,
+        evidence: MappingOperationEvidence | None = None,
     ) -> tuple[ResolvedRepositoryRelation, ...]:
         self._check()
-        if relation_kind is not None:
-            relation_kind = RelationKind(relation_kind)
+        if not isinstance(resource, ResourceKey):
+            raise ValueError("ResourceKey required")
+        if relation_kind is not None and relation_kind not in RELATION_KINDS:
+            raise ValueError(f"Unknown relation_kind: {relation_kind!r}")
+        if evidence is not None and not isinstance(evidence, MappingOperationEvidence):
+            raise ValueError(
+                "evidence must be a MappingOperationEvidence instance or None"
+            )
         with self._stored("repository_relation"):
-            return super().repository_relations(resource, relation_kind)
+            return super().repository_relations(
+                resource, relation_kind, evidence=evidence
+            )
 
     def relations_for_repository(
         self,
         repository_uuidv4: str,
         relation_kind: RelationKind | str | None = None,
+        *,
+        evidence: MappingOperationEvidence | None = None,
     ) -> tuple[ResolvedRepositoryRelation, ...]:
         self._check()
         uuid4_value(repository_uuidv4)
-        if relation_kind is not None:
-            relation_kind = RelationKind(relation_kind)
+        if relation_kind is not None and relation_kind not in RELATION_KINDS:
+            raise ValueError(f"Unknown relation_kind: {relation_kind!r}")
+        if evidence is not None and not isinstance(evidence, MappingOperationEvidence):
+            raise ValueError(
+                "evidence must be a MappingOperationEvidence instance or None"
+            )
         with self._stored("repository_relation"):
-            return super().relations_for_repository(repository_uuidv4, relation_kind)
+            return super().relations_for_repository(
+                repository_uuidv4, relation_kind, evidence=evidence
+            )
 
     def relations_for_provider_repository(
         self,
@@ -864,13 +905,20 @@ class Context(ContextStore):
                 relation_kind = provider_repository_id
         else:
             service = service_or_resource
-            if provider_repository_id is None:
+            uuid4_value(service)
+            if provider_repository_id is None or not isinstance(
+                provider_repository_id, str
+            ):
                 raise ValueError(
                     "provider_repository_id required when passing service instance uuid"
                 )
             prov_id = provider_repository_id
-        if relation_kind is not None:
-            relation_kind = RelationKind(relation_kind)
+        if relation_kind is not None and relation_kind not in RELATION_KINDS:
+            raise ValueError(f"Unknown relation_kind: {relation_kind!r}")
+        if evidence is not None and not isinstance(evidence, MappingOperationEvidence):
+            raise ValueError(
+                "evidence must be a MappingOperationEvidence instance or None"
+            )
         with self._stored("repository_relation"):
             return super().relations_for_provider_repository(
                 service,
@@ -887,15 +935,26 @@ class Context(ContextStore):
         selected_repositories: Iterable[str] | None = None,
     ) -> tuple[TransferEventReport, ...]:
         self._check()
-        if resource is not None and resource.resource_kind not in ("issue", "comment"):
-            raise ValueError("transfer_event_reports requires an issue or comment resource")
+        if resource is not None:
+            if not isinstance(resource, ResourceKey) or resource.resource_kind not in (
+                "issue",
+                "comment",
+            ):
+                raise ValueError(
+                    "transfer_event_reports requires an issue or comment resource"
+                )
         if repository_uuidv4 is not None:
             uuid4_value(repository_uuidv4)
+        selected_tuple: tuple[str, ...] | None = None
+        if selected_repositories is not None:
+            selected_tuple = tuple(selected_repositories)
+            for repo_id in selected_tuple:
+                uuid4_value(repo_id)
         with self._stored("transfer_event"):
             return super().transfer_event_reports(
                 resource,
                 repository_uuidv4=repository_uuidv4,
-                selected_repositories=selected_repositories,
+                selected_repositories=selected_tuple,
             )
 
     def scope(self, scope: CoverageScope):

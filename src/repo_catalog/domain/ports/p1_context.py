@@ -31,12 +31,13 @@ class ContextAdmission(Protocol):
         self, key: ResourceKey, repository_uuidv4: str | None = None
     ) -> None: ...
     def admit_repository_relation(
-        self, relation: ResourceRepositoryRelation
+        self,
+        relation: ResourceRepositoryRelation,
+        *,
+        require_support: bool = False,
     ) -> str: ...
     def admit_transfer_event(self, report: TransferEventReport) -> str: ...
-    def admit_mapping_disposition(
-        self, disposition: MappingDisposition
-    ) -> str: ...
+    def admit_mapping_disposition(self, disposition: MappingDisposition) -> str: ...
     def repository_relations(
         self,
         resource: ResourceKey,
