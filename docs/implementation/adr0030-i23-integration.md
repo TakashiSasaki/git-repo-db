@@ -44,6 +44,34 @@ Packaging, audits and node reconciliation run even when pytest reports existing
 P6 failures. The pytest failure still fails the job; no continue-on-error,
 expected-failure allowlist or green-acceptance substitution is used.
 
+## Independent-review preflight corrections
+
+The first exact-pushed-head review found three invalid I2 Provider role scopes
+that passed generic relation construction: a Transfer role in a current-role
+scope, mismatched original observation time, and contradictory Provider members.
+They bound PackageKey and committed Core before failing Context. The review
+also reproduced malformed reported Core references and an empty Provider kind
+failing after Core commit, plus numeric Provider/relation kinds being silently
+coerced to text by SQLite.
+
+Preflight now calls the same `validate_provider_repository_scope()` used by
+Context admission. Reported Core-reference subtype checks are shared by admission
+and preflight through `validate_reported_core_reference()`. Exact v4 Context
+primitive types are checked before SQLite affinity; empty Provider kinds are
+rejected before binding. The additional regressions exercise all nine mutations
+both normally and with Context disabled/empty receiver selection. They assert
+unchanged Core/Context, no Package Binding and no false Recovery Stop. Work
+already performed remains charged. No schema/fingerprint or authority change is
+needed; validation now precedes the existing binding/commit boundary.
+
+Collection-owned Coverage now checks the complete original collection key and
+is admitted after its parent collection. Source-owned Coverage checks the actual
+Source/Repository pair and respects Repository permission before dependency
+resolution. Missing owners withhold scope/claim units while preserving independent
+Context facts; valid collection Coverage and pre-existing receiver collection
+owners have positive round-trip controls. No missing Repository is auto-registered
+to satisfy Coverage. These corrections retain all five Coverage claim columns.
+
 ## Fixed I4 interfaces and limitations
 
 Use the I2 `Context.provider_repository_roles(resource, evidence=...)` result for

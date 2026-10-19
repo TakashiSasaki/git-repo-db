@@ -2100,6 +2100,18 @@ class ExchangeService:
                 )
             }
             sources = set(source_services)
+            source_pairs = {
+                tuple(row)
+                for row in ctx.db.execute(
+                    "SELECT source_registration_uuidv4,repository_uuidv4 FROM source_repositories"
+                ).fetchall()
+            }
+            collection_keys = {
+                tuple(row)
+                for row in ctx.db.execute(
+                    "SELECT service_instance_uuidv4,resource_kind,provider_resource_id,collection_kind,provenance_json FROM collections"
+                ).fetchall()
+            }
             resources = {
                 ResourceKey(*r)
                 for r in ctx.db.execute(
@@ -2239,6 +2251,8 @@ class ExchangeService:
             + len(resources)
             + len(repos)
             + len(mapping_keys)
+            + len(source_pairs)
+            + len(collection_keys)
         )
 
         def keep(key, predicate):
@@ -2428,10 +2442,23 @@ class ExchangeService:
         # inventory unit is missing. A terminal is not reconstructed from rows.
         omissions.extend(preserve_context_coverage(data, original_terminals))
 
+        source_pairs.update(
+            (r["source_registration_uuidv4"], r["repository_uuidv4"])
+            for r in data["source_repositories"]
+        )
+        collection_keys.update(
+            (*resource(r).coordinates(), r["collection_kind"], r["provenance_json"])
+            for r in data["collections"]
+        )
+
         def scope_available(r):
             coords = json.loads(r["owner_coordinates_json"])
-            if r["owner_kind"] in ("source", "source_inventory"):
+            if r["owner_kind"] == "source":
+                return tuple(coords[:2]) in source_pairs
+            if r["owner_kind"] == "source_inventory":
                 return coords[0] in sources
+            if r["owner_kind"] == "collection":
+                return tuple(coords[:5]) in collection_keys
             if r["owner_kind"] == "repository":
                 return coords[0] in repos
             return ResourceKey(*coords[:3]) in resources
@@ -3176,11 +3203,6 @@ class ExchangeService:
                 )
             )
 
-        for cs in ctx_data["coverage_scopes"]:
-            _performed("metadata_units", 1)
-            coords = json.loads(cs["owner_coordinates_json"])
-            ctx.scope(ContextCoverageScope(cs["owner_kind"], coords))
-
         # Index coverage claims and proofs so collection and inventory proofs are admitted
         # while their terminal observation is the current latest terminal.
         claims_by_key: dict[tuple[str, str, int, str], dict[str, Any]] = {}
@@ -3310,6 +3332,12 @@ class ExchangeService:
                     required_scope_json=coll["scope_json"],
                 )
                 admitted_claim_keys.add(c_key)
+
+        # Collection-owned scope FKs require their original collections first.
+        for cs in ctx_data["coverage_scopes"]:
+            _performed("metadata_units", 1)
+            coords = json.loads(cs["owner_coordinates_json"])
+            ctx.scope(ContextCoverageScope(cs["owner_kind"], coords))
 
         for cc in sorted(
             ctx_data["coverage_claims"], key=lambda item: item["observed_at_us"]

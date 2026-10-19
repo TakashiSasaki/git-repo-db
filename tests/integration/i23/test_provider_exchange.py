@@ -1,5 +1,8 @@
 """Actual I2 observations cross the I3 wire; receiver qualifications stay local."""
 
+import hashlib
+import json
+from dataclasses import replace
 from uuid import uuid4
 
 import pytest
@@ -498,3 +501,327 @@ def test_domain_exchange_neither_transports_nor_changes_real_access_grants(tmp_p
         assert (path / "access.sqlite3").read_bytes() == original
         with AccessConnections(path / "access.sqlite3") as store:
             assert store.current_grant(r1, scope_id, assignment=key) == grant
+
+
+@pytest.mark.parametrize("mutation", ["bad_role", "wrong_observation", "wrong_members"])
+@pytest.mark.parametrize("hidden", [False, True])
+def test_invalid_i2_provider_scope_rejected_before_binding_and_core_commit(
+    tmp_path, mutation, hidden
+):
+    """Independent-review counterexamples: generic relation construction is insufficient."""
+    a, b = tmp_path / "a", tmp_path / "b"
+    _, r1, r2, _ = producer(a)
+    receiver(b)
+    package = ExchangeService(a).export_package(
+        selection=ExchangeSelectionScope(all_selected=True)
+    )
+    row = next(
+        r
+        for r in package.context["resource_relations"]
+        if r["relation_kind"] == "provider_repository_roles"
+    )
+    original_scope = json.loads(row["scope_json"])
+    if mutation == "bad_role":
+        original_scope["repository_roles"] = {
+            "transfer_to_repository": next(
+                iter(original_scope["repository_roles"].values())
+            )
+        }
+        message = "Transfer roles require"
+    elif mutation == "wrong_observation":
+        for entry in original_scope["repository_roles"].values():
+            entry["observed_at_us"] = 999
+        message = "original observation mismatch"
+    else:
+        row["members_json"] = "[]"
+        message = "members do not match"
+    row["scope_json"] = canonical(original_scope)
+    # Public v4 encoder recomputes a valid checksum; this exercises typed preflight.
+    package = replace(package, digest_sha256=None)
+    core = GitCore(b / "core.sqlite3")
+    before = core.sql("SELECT repository_uuidv4 FROM repositories")
+    core.close()
+    with pytest.raises(ValueError, match=message):
+        ExchangeService(b).import_package(
+            package,
+            new_request=True,
+            permitted_repository_uuidv4s=(r1, r2),
+            selection=ExchangeSelectionScope(
+                repository_uuidv4s=(),
+                object_oids=(),
+                resource_keys=(),
+                source_uuidv4s=(),
+                include_context=False,
+            )
+            if hidden
+            else None,
+        )
+    core = GitCore(b / "core.sqlite3")
+    assert core.sql("SELECT repository_uuidv4 FROM repositories") == before
+    core.close()
+    assert not rows(b, "resources")
+    db = connect(b / "operational.sqlite3", "operational")
+    try:
+        assert not any(
+            "adr0030-package-binding" in row[0]
+            for row in db.execute(
+                "SELECT continuation_scope_json FROM request_continuations"
+            )
+        )
+    finally:
+        db.close()
+    assert not (b / "p1-recovery-stop.json").exists()
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        "reference_empty",
+        "reference_bad_oid",
+        "reference_empty_role",
+        "provider_kind_empty",
+        "provider_kind_integer",
+        "relation_kind_integer",
+    ],
+)
+@pytest.mark.parametrize("hidden", [False, True])
+def test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight(
+    tmp_path, mutation, hidden
+):
+    """Additional exact-head reviewer counterexamples, with valid v4 checksums."""
+    a, b = tmp_path / "a", tmp_path / "b"
+    _, r1, r2, _ = producer(a)
+    seed, _ = receiver(b)
+    package = ExchangeService(a).export_package(
+        selection=ExchangeSelectionScope(all_selected=True)
+    )
+    if mutation.startswith("reference_"):
+        package.context["field_candidates"].append(
+            {
+                **package.context["resources"][0],
+                "field_name": "reported_core_reference:"
+                if mutation == "reference_empty_role"
+                else "reported_core_reference:head",
+                "value_json": "[]"
+                if mutation == "reference_empty"
+                else canonical(
+                    ["sha1", "not-a-valid-oid"]
+                    if mutation == "reference_bad_oid"
+                    else ["sha1", "1" * 40]
+                ),
+                "clock_domain": "provider",
+                "clock_ts_us": 10,
+                "provenance_json": provenance("reference"),
+                "observed_at_us": 11,
+            }
+        )
+    elif mutation.startswith("provider_kind_"):
+        package.context["providers"][0]["provider_kind"] = (
+            "" if mutation == "provider_kind_empty" else 7
+        )
+    else:
+        package.context["resource_relations"].append(
+            {
+                **package.context["resources"][0],
+                "relation_kind": 7,
+                "members_json": "[]",
+                "provenance_json": provenance("relation"),
+                "scope_json": "{}",
+                "observed_at_us": 11,
+            }
+        )
+    package = package.to_dict()
+    package["digest_sha256"] = hashlib.sha256(
+        canonical(
+            {key: value for key, value in package.items() if key != "digest_sha256"}
+        ).encode()
+    ).hexdigest()
+    with pytest.raises(ValueError):
+        ExchangeService(b).import_package(
+            package,
+            new_request=True,
+            permitted_repository_uuidv4s=(r1, r2),
+            selection=ExchangeSelectionScope(
+                repository_uuidv4s=(),
+                object_oids=(),
+                resource_keys=(),
+                source_uuidv4s=(),
+                include_context=False,
+            )
+            if hidden
+            else None,
+        )
+    core = GitCore(b / "core.sqlite3")
+    assert {r[0] for r in core.sql("SELECT repository_uuidv4 FROM repositories")} == {
+        seed
+    }
+    core.close()
+    assert not rows(b, "providers") and not rows(b, "resources")
+    db = connect(b / "operational.sqlite3", "operational")
+    try:
+        assert not any(
+            "adr0030-package-binding" in row[0]
+            for row in db.execute(
+                "SELECT continuation_scope_json FROM request_continuations"
+            )
+        )
+    finally:
+        db.close()
+    assert not (b / "p1-recovery-stop.json").exists()
+
+
+@pytest.mark.parametrize(
+    "case", ["genuine_collection", "absent_collection", "existing_collection"]
+)
+def test_collection_coverage_uses_exact_owner_and_admission_order(tmp_path, case):
+    from repo_catalog.domain.production_context import CollectionObservation
+
+    a, b = tmp_path / "a", tmp_path / "b"
+    service, r1, r2, _ = producer(a)
+    receiver(b)
+    key = ResourceKey(service, "issue", "10")
+    coverage_scope = CoverageScope.collection(
+        key, "comments", provenance("collection"), "comments"
+    )
+    collection = CollectionObservation(
+        key, "comments", provenance("collection"), "{}", 80, "complete", ()
+    )
+    if case != "absent_collection":
+        with Context.transaction(a) as ctx:
+            ctx.collection(collection)
+            ctx.scope(coverage_scope)
+            ctx.admit_coverage(CoverageClaim(coverage_scope, 80, "partial"))
+    package = ExchangeService(a).export_package(
+        selection=ExchangeSelectionScope(all_selected=True)
+    )
+    if case == "absent_collection":
+        package.context["coverage_scopes"].append(
+            {
+                "owner_kind": coverage_scope.owner_kind,
+                "owner_coordinates_json": coverage_scope.encoded,
+            }
+        )
+        package.context["coverage_claims"].append(
+            {
+                "owner_kind": coverage_scope.owner_kind,
+                "owner_coordinates_json": coverage_scope.encoded,
+                "observed_at_us": 80,
+                "coverage_state": "partial",
+                "details_json": None,
+            }
+        )
+    if case == "existing_collection":
+        ProviderAcquisition(b).admit_batch(
+            ProviderIntakeBatch(
+                service,
+                providers=(ProviderRegistration(service),),
+                issues=(
+                    ProviderIssueIntake({"id": 10}, 40, provenance("receiver-parent")),
+                ),
+            )
+        )
+        with Context.transaction(b) as ctx:
+            ctx.collection(collection)
+        package.context["collections"] = []
+    package = replace(package, digest_sha256=None)
+    report = receive(b, package, (r1, r2))
+    with Context.snapshot(b) as ctx:
+        actual = ctx.db.execute(
+            "SELECT owner_kind,owner_coordinates_json FROM coverage_scopes WHERE owner_kind='collection'"
+        ).fetchall()
+        if case == "absent_collection":
+            assert actual == [] and report.omissions
+            assert ctx.db.execute(
+                "SELECT 1 FROM resources WHERE resource_kind='issue'"
+            ).fetchone()
+        else:
+            assert actual == [(coverage_scope.owner_kind, coverage_scope.encoded)]
+            assert (
+                ctx.db.execute(
+                    "SELECT coverage_state FROM coverage_claims WHERE owner_kind='collection'"
+                ).fetchone()[0]
+                == "partial"
+            )
+    assert not (b / "p1-recovery-stop.json").exists()
+
+
+def test_source_coverage_permission_cut_keeps_independent_i2_facts(tmp_path):
+    a, b = tmp_path / "a", tmp_path / "b"
+    service, r1, r2, _ = producer(a)
+    seed, _ = receiver(b)
+    source = str(uuid4())
+    ProviderAcquisition(a).admit_batch(
+        ProviderIntakeBatch(
+            service,
+            sources=(
+                SourceRegistration(source, service, associated_repositories=(r1, r2)),
+            ),
+        )
+    )
+    coverage_scope = CoverageScope.source(source, r2, "commits")
+    with Context.transaction(a) as ctx:
+        ctx.scope(coverage_scope)
+        ctx.admit_coverage(CoverageClaim(coverage_scope, 80, "partial"))
+    package = ExchangeService(a).export_package(
+        selection=ExchangeSelectionScope(all_selected=True)
+    )
+    report = receive(b, package, (r1,))
+    assert any(item["section"] == "coverage_scopes" for item in report.omissions)
+    with Context.snapshot(b) as ctx:
+        assert ctx.source_repositories(source) == (r1,)
+        assert not ctx.db.execute(
+            "SELECT 1 FROM coverage_scopes WHERE owner_kind='source'"
+        ).fetchone()
+        assert ctx.db.execute(
+            "SELECT 1 FROM resources WHERE resource_kind='issue'"
+        ).fetchone()
+        assert not ctx.db.execute(
+            "SELECT 1 FROM repository_context WHERE repository_uuidv4=?", (r2,)
+        ).fetchone()
+    core = GitCore(b / "core.sqlite3")
+    assert {r[0] for r in core.sql("SELECT repository_uuidv4 FROM repositories")} == {
+        seed,
+        r1,
+    }
+    core.close()
+    assert not (b / "p1-recovery-stop.json").exists()
+
+
+def test_existing_receiver_source_pair_can_support_partial_package_coverage(tmp_path):
+    a, b = tmp_path / "a", tmp_path / "b"
+    service, r1, r2, _ = producer(a)
+    receiver(b)
+    source = str(uuid4())
+    source_registration = SourceRegistration(
+        source, service, associated_repositories=(r1,)
+    )
+    ProviderAcquisition(a).admit_batch(
+        ProviderIntakeBatch(service, sources=(source_registration,))
+    )
+    ProviderAcquisition(b).admit_batch(
+        ProviderIntakeBatch(
+            service,
+            providers=(ProviderRegistration(service),),
+            repositories=(RepositoryRegistration(r1),),
+            sources=(source_registration,),
+        )
+    )
+    coverage_scope = CoverageScope.source(source, r1, "commits")
+    with Context.transaction(a) as ctx:
+        ctx.scope(coverage_scope)
+        ctx.admit_coverage(CoverageClaim(coverage_scope, 80, "partial"))
+    package = ExchangeService(a).export_package(
+        selection=ExchangeSelectionScope(all_selected=True)
+    )
+    package.context["source_repositories"] = []
+    package = replace(package, digest_sha256=None)
+    receive(b, package, (r1, r2))
+    with Context.snapshot(b) as ctx:
+        assert ctx.source_repositories(source) == (r1,)
+        assert (
+            ctx.db.execute(
+                "SELECT coverage_state FROM coverage_claims WHERE owner_kind='source'"
+            ).fetchone()[0]
+            == "partial"
+        )
+    assert not (b / "p1-recovery-stop.json").exists()

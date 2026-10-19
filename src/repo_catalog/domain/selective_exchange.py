@@ -540,7 +540,9 @@ def filter_sections(core, context, scope, *, permitted=None):
             coordinates = json.loads(row["owner_coordinates_json"])
             if row["owner_kind"] == "repository":
                 return allowed(coordinates[0])
-            if row["owner_kind"] in ("source", "source_inventory"):
+            if row["owner_kind"] == "source":
+                return coordinates[0] in source_ids and allowed(coordinates[1])
+            if row["owner_kind"] == "source_inventory":
                 return coordinates[0] in source_ids
             return ResourceKey(*coordinates[:3]) in chosen
 
@@ -658,6 +660,7 @@ def validate_context(data):
         CoverageClaim,
         CoverageScope,
         FieldCandidate,
+        validate_provider_repository_scope,
     )
     from repo_catalog.domain.p1_core import OID, uuid4_value
     from repo_catalog.domain.production_context import (
@@ -665,10 +668,13 @@ def validate_context(data):
         CoreReference,
         ResourceRelation,
         SourceInventory,
+        validate_reported_core_reference,
     )
 
     for row in data["providers"]:
         uuid4_value(row["service_instance_uuidv4"])
+        if not row["provider_kind"]:
+            raise ExchangeError("INVALID_PROVIDER_KIND", "providers")
     for row in data["repositories"]:
         uuid4_value(row["repository_uuidv4"])
     for row in data["sources"]:
@@ -680,7 +686,7 @@ def validate_context(data):
     for row in data["resources"]:
         resource(row)
     for row in data["field_candidates"]:
-        FieldCandidate(
+        candidate = FieldCandidate(
             resource(row),
             row["field_name"],
             row["value_json"],
@@ -688,6 +694,7 @@ def validate_context(data):
             row["provenance_json"],
             row["observed_at_us"],
         )
+        validate_reported_core_reference(candidate)
     for row in data["resource_repository_relations"]:
         relation(row)
     for row in data["repository_mapping_dispositions"]:
@@ -695,7 +702,7 @@ def validate_context(data):
     transfer_reports(data)
     for row in data["resource_relations"]:
         if row["relation_kind"] != "transfer_event_report":
-            ResourceRelation(
+            report = ResourceRelation(
                 resource(row),
                 row["relation_kind"],
                 tuple(ResourceKey(*m) for m in json.loads(row["members_json"])),
@@ -703,6 +710,14 @@ def validate_context(data):
                 row["scope_json"],
                 row["observed_at_us"],
             )
+            if report.relation_kind == "provider_repository_roles":
+                validate_provider_repository_scope(
+                    report.resource,
+                    report.members,
+                    report.provenance_json,
+                    report.scope_json,
+                    report.observed_at_us,
+                )
     for row in data["collections"]:
         CollectionObservation(
             resource(row),

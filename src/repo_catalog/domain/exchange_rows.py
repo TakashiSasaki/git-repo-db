@@ -315,6 +315,24 @@ def validate_rows(core, context):
                         "MALFORMED_ROW", [store, section], "exact v4 keys required"
                     )
                 for key, value in row.items():
+                    # Context wire columns are text except explicit time/boolean
+                    # coordinates. SQLite TEXT affinity must not rewrite input.
+                    if store == "context" and key not in (
+                        "observed_at_us",
+                        "clock_ts_us",
+                        "terminal_observed_at_us",
+                        "terminal",
+                    ):
+                        nullable = key in (
+                            "details_json",
+                            "replacement_clock_json",
+                            "replacement_target_json",
+                            "replacement_provenance_json",
+                        )
+                        if not (type(value) is str or (nullable and value is None)):
+                            raise ExchangeError(
+                                "MALFORMED_ROW", [store, section, key], "text required"
+                            )
                     if key.endswith("_json") and value is not None:
                         if (
                             not isinstance(value, str)

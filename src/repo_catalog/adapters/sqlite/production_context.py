@@ -57,6 +57,7 @@ from repo_catalog.domain.production_context import (
     ResourceRelation,
     SourceInventory,
     json_value,
+    validate_reported_core_reference,
 )
 
 
@@ -783,16 +784,7 @@ class Context(ContextStore):
 
     def admit_field(self, candidate: FieldCandidate) -> str:
         self._check(write=True)
-        if candidate.field_name.startswith("reported_core_reference:"):
-            value = json.loads(candidate.value_json)
-            if (
-                not candidate.field_name.removeprefix("reported_core_reference:")
-                or not isinstance(value, list)
-                or len(value) != 2
-                or any(not isinstance(item, str) for item in value)
-            ):
-                raise ContextError("REFERENCE_VALUE", "core_reference")
-            OID(*value)
+        validate_reported_core_reference(candidate)
         return super().admit_field(candidate)
 
     def admit_repository_relation(

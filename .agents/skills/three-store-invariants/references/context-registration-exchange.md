@@ -126,6 +126,26 @@ rebinding. Constructor checks alone may omit writer-enforced modeled parent and
 Source/service checks. Assert redundant wire coordinates (for example a Notes
 root) equal their original typed proof coordinates rather than silently rebuilding
 them. Preserve expressly advisory fields such as Coverage details as advisory.
+For composed intake/Exchange trees, inventory writer-only semantic subtypes as
+well as constructors. `ResourceRelation` alone does not validate I2
+`provider_repository_roles`; preflight must call the same exact-role/member/time
+validator as admission. Reported Core-reference fields likewise need their exact
+nonempty role and typed OID pair checked before binding. Exercise invalid units
+with Context disabled or empty receive selection: selection cannot conceal bad
+input. Check v4 primitive text types before SQLite affinity so numeric kinds are
+not rewritten into strings. Assert no Package Binding, no Core/Context mutation
+and no false Recovery Stop, alongside valid I2 round-trip controls. Reproduce with
+`pytest -q tests/integration/i23`; see the
+[integration handoff](../../../../docs/implementation/adr0030-i23-integration.md).
+
+Check every Coverage owner against its full typed FK, not only the first
+coordinate. Source coverage needs the Source/Repository membership and Repository
+permission; collection coverage needs ResourceKey, collection kind and original
+provenance. Admit original collections before their scopes. Verify a legitimate
+collection-owned scope without a proof, a missing collection, an already-present
+receiver collection and a permission-cut Source scope. Missing owners withhold
+units rather than aborting independent Context facts after Core commit.
+
 Repeat zero-work budget probes with an empty package and an omitted receiver
 selection. Incidental database reads in a populated fixture can mask a missing
 processing ceiling. Once an implicit selection is decoded, its ceiling must count

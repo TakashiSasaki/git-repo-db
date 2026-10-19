@@ -315,6 +315,20 @@ class CoreReference:
         json_value(self.provenance_json, provenance=True)
 
 
+def validate_reported_core_reference(candidate: FieldCandidate) -> None:
+    """Check the reported OID subtype before admission or Exchange binding."""
+    if candidate.field_name.startswith("reported_core_reference:"):
+        value = json.loads(candidate.value_json)
+        if (
+            not candidate.field_name.removeprefix("reported_core_reference:")
+            or not isinstance(value, list)
+            or len(value) != 2
+            or any(not isinstance(item, str) for item in value)
+        ):
+            raise ContextError("REFERENCE_VALUE", "core_reference")
+        OID(*value)
+
+
 @dataclass(frozen=True)
 class CoreDependency:
     reference: CoreReference
