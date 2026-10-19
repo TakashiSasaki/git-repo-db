@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - 'tests/integration/i2/**'
+      - 'tests/integration/i3/**'
+      - 'tests/integration/i23/**'
       - '.github/workflows/access-registry.yml'
       - 'src/repo_catalog/**/access*.py'
       - 'src/repo_catalog/adapters/sqlite/access_ddl/**'
@@ -103,7 +105,7 @@ jobs:
           db.close()
           PY
           uv run --no-sync pytest -q tests/unit/test_access*_values.py tests/unit/test_context_registration_values.py tests/unit/test_native_acquisition_values.py tests/integration/access \
-            tests/integration/i2 \
+            tests/integration/i2 tests/integration/i23 \
             tests/integration/p1/test_schema.py tests/integration/p1/test_context.py \
             tests/integration/p1/test_validation_stop.py tests/integration/p1/test_coordination.py \
             tests/integration/p1/test_disposition.py tests/integration/p1/test_context_relations.py \
@@ -111,7 +113,7 @@ jobs:
             tests/integration/p2 tests/integration/p4 tests/integration/p6 tests/integration/p7 \
             --collect-only > artifacts/access-registry/collected.txt
           uv run --no-sync pytest -q tests/unit/test_access*_values.py tests/unit/test_context_registration_values.py tests/unit/test_native_acquisition_values.py tests/integration/access \
-            tests/integration/i2 \
+            tests/integration/i2 tests/integration/i23 \
             tests/integration/p1/test_schema.py tests/integration/p1/test_context.py \
             tests/integration/p1/test_validation_stop.py tests/integration/p1/test_coordination.py \
             tests/integration/p1/test_disposition.py tests/integration/p1/test_context_relations.py \
@@ -119,8 +121,10 @@ jobs:
             tests/integration/p2 tests/integration/p4 tests/integration/p6 tests/integration/p7 \
             --junitxml=artifacts/access-registry/tests.xml
       - name: Verify wheel and sdist-derived wheel outside checkout
+        if: ${{ !cancelled() }}
         run: uv run --no-sync python scripts/verify_access_distribution.py
       - name: Check isolated module ownership and baseline evidence
+        if: ${{ !cancelled() }}
         run: |
           uv run --no-sync python scripts/audit_callsite_dependencies.py --check
           uv run --no-sync python scripts/build_p1_schema.py --check
@@ -128,6 +132,7 @@ jobs:
           uv run --no-sync python scripts/audit_implementation_boundary.py --check
           uv run --no-sync python scripts/audit_context_registration.py
       - name: Reconcile Access acceptance ledger and exact test nodes
+        if: ${{ !cancelled() }}
         run: |
           uv run --no-sync python scripts/audit_access_acceptance.py \
             --junit artifacts/access-registry/tests.xml \

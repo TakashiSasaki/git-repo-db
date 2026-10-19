@@ -236,7 +236,24 @@ with tempfile.TemporaryDirectory() as directory:
         assert report.from_relation.embedded_support.supporting_claims == (claims[1].claim_key,)
         assert report.to_state == "absent" and report.observed_at_us == 20
     assert not (destination / "access.sqlite3").exists()
-print(json.dumps({"sqlite": sqlite3.sqlite_version, "sqlite_source_id": sqlite3.connect(":memory:").execute("SELECT sqlite_source_id()").fetchone()[0], "module_origin": str(module_origin), "interpreter": sys.executable, "ddl_sha256": fingerprint(), "context_ddl_sha256": p1_schema.fingerprint("context"), "table_count": len(tables), "exchange_format": EXCHANGE_FORMAT, "local_git_acquired": True, "access_backup_restored": True, "scope_forked": True, "installed_smoke": "passed"}))
+    # Installed I2 -> I3, including original Node namespace and a different seed.
+    target = destination / "receiver"
+    target.mkdir()
+    target_seed, target_instance = str(uuid4()), str(uuid4())
+    for role in ("core", "context", "operational"):
+        p1_schema.initialize(target / f"{role}.sqlite3", role, target_seed, target_instance)
+    package = ExchangeService(destination).export_package(selection=ExchangeSelectionScope(
+        repository_uuidv4s=(repository_id,), object_oids=(),
+        resource_keys=(qualified.resource, report.event_resource), source_uuidv4s=()))
+    ExchangeService(target).import_package(package, new_request=True, permitted_repository_uuidv4s=(repository_id,))
+    with Context.snapshot(target) as ctx:
+        assert ctx.provider_repository_roles(qualified.resource) == (qualified,)
+        assert ctx.transfer_event_reports() == (report,)
+    with closing(GitCore(target / "core.sqlite3")) as core:
+        assert core.catalog_identity() == (target_seed, target_instance)
+        assert {r[0] for r in core.sql("SELECT repository_uuidv4 FROM repositories")} == {target_seed, repository_id}
+    assert not (target / "access.sqlite3").exists()
+print(json.dumps({"sqlite": sqlite3.sqlite_version, "sqlite_source_id": sqlite3.connect(":memory:").execute("SELECT sqlite_source_id()").fetchone()[0], "module_origin": str(module_origin), "interpreter": sys.executable, "ddl_sha256": fingerprint(), "context_ddl_sha256": p1_schema.fingerprint("context"), "table_count": len(tables), "exchange_format": EXCHANGE_FORMAT, "local_git_acquired": True, "access_backup_restored": True, "scope_forked": True, "installed_i2_i3_cross_seed": "passed", "installed_smoke": "passed"}))
 """
 
 
