@@ -287,8 +287,22 @@ class AccessWorkflow:
                         "EXECUTOR_CHANGED", "activated environment changed"
                     )
 
-            return value.executor.invoke(
-                lambda fd: operation(fd, value.plan, check_binding)
-            )
+            def handoff(descriptor):
+                # invoke may perform blocking OS validation after our preceding
+                # checks. Do not start the application callback on permission or
+                # time checked only before that validation. This is the final
+                # admission boundary, not cancellation of an in-flight callback.
+                guard()
+                self._ready()
+                self._age(value)
+                if self._grant(value.selection) != value.grant:
+                    raise AccessRegistryError(
+                        "GRANT_CHANGED", "reviewed grant changed before handoff"
+                    )
+                self._ready()
+                self._age(value)
+                return operation(descriptor, value.plan, check_binding)
+
+            return value.executor.invoke(handoff)
         finally:
             value.executor.close()
