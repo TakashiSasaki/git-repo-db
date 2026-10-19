@@ -368,7 +368,7 @@ def populate_rich_catalog(
     ctx_prov_2 = canonical({"source": "github.graphql", "evidence": "event-102"})
 
     def admit_context(context: Context, core_present: bool) -> None:
-        context.provider(SERVICE, "github", '{"host":"api.github.com"}')
+        context.provider(SERVICE, "github", '{"name":"GitHub"}')
         context.repository(REPOSITORY, '{"default_branch":"main"}')
         context.source(SOURCE, SERVICE, '{"org":"example"}')
         context.associate_source(SOURCE, REPOSITORY, ctx_prov_1)

@@ -22,6 +22,7 @@ from repo_catalog.adapters.sqlite.p1_coordination import (
     persist_catalog_stop,
 )
 from repo_catalog.adapters.sqlite.p1_schema import connect
+from repo_catalog.domain.context_registration import registration_json
 from repo_catalog.domain.p1_context import (
     CoverageClaim,
     CoverageProjection,
@@ -152,6 +153,9 @@ class Context(ContextStore):
         roles = self.db.execute("SELECT store_role FROM store_identity").fetchall()
         if roles != [("context",)]:
             raise ContextError("STORE_ROLE", "context", "Context authority required")
+        # Validate registration authority in the pinned transaction, including
+        # raw trusted-factory writes. No incoming rejected settings cause a stop.
+        self._validate_registrations()
 
     def _check(self, *, write: bool = False):
         if not self._active:
@@ -312,9 +316,26 @@ class Context(ContextStore):
             persist_catalog_stop(self.directory, f"Invalid retained {scope}: {error}")
             raise ContextError("AUTHORITATIVE_CORRUPTION", scope) from error
 
+    def _validate_registrations(self):
+        for table, column, kind in (
+            ("providers", "configuration_json", "provider"),
+            ("repository_context", "configuration_json", "repository"),
+            ("sources", "configuration_json", "source"),
+            ("source_repositories", "attributes_json", "membership"),
+        ):
+            with self._stored("registration"):
+                for row in self.db.execute(f"SELECT {column} FROM {table}"):
+                    registration_json(kind, row[0])
+
+    def registration_metadata(self, kind: str, encoded: str) -> dict:
+        """Read a persisted registration value, never sanitize a stored violation."""
+        self._check()
+        with self._stored("registration"):
+            return registration_json(kind, encoded)
+
     def provider(self, service: str, kind: str, configuration_json: str = "{}"):
         self._check(write=True)
-        json_value(configuration_json)
+        registration_json("provider", configuration_json)
         prior = self.db.execute(
             "SELECT provider_kind FROM providers WHERE service_instance_uuidv4=?",
             (service,),
@@ -328,7 +349,7 @@ class Context(ContextStore):
 
     def repository(self, repository_uuidv4: str, configuration_json: str = "{}"):
         self._check(write=True)
-        json_value(configuration_json)
+        registration_json("repository", configuration_json)
         self.db.execute(
             "INSERT INTO repository_context VALUES(?,?) ON CONFLICT(repository_uuidv4) DO UPDATE SET configuration_json=excluded.configuration_json",
             (repository_uuidv4, configuration_json),
@@ -336,7 +357,7 @@ class Context(ContextStore):
 
     def source(self, source: str, service: str, configuration_json: str = "{}"):
         self._check(write=True)
-        json_value(configuration_json)
+        registration_json("source", configuration_json)
         prior = self.db.execute(
             "SELECT service_instance_uuidv4 FROM sources WHERE source_registration_uuidv4=?",
             (source,),
@@ -362,7 +383,7 @@ class Context(ContextStore):
         self, source: str, repository: str, attributes_json: str = "{}"
     ):
         self._check(write=True)
-        json_value(attributes_json)
+        registration_json("membership", attributes_json)
         self.db.execute(
             "INSERT INTO source_repositories VALUES(?,?,?) ON CONFLICT(source_registration_uuidv4,repository_uuidv4) DO NOTHING",
             (source, repository, attributes_json),

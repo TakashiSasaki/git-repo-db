@@ -10,6 +10,24 @@ on:
       - 'tests/unit/test_access*_values.py'
       - 'scripts/verify_access_distribution.py'
       - 'scripts/audit_callsite_dependencies.py'
+      - 'src/repo_catalog/domain/context_registration.py'
+      - 'src/repo_catalog/domain/acquisition.py'
+      - 'src/repo_catalog/domain/exchange.py'
+      - 'src/repo_catalog/adapters/sqlite/p1_context.py'
+      - 'src/repo_catalog/adapters/sqlite/production_context.py'
+      - 'src/repo_catalog/adapters/sqlite/p1_ddl/**'
+      - 'src/repo_catalog/application/acquisition.py'
+      - 'src/repo_catalog/application/exchange.py'
+      - 'src/repo_catalog/application/production_query.py'
+      - 'tests/unit/test_context_registration_values.py'
+      - 'tests/integration/p1/**'
+      - 'tests/integration/p3/**'
+      - 'tests/integration/p5/**'
+      - 'tests/integration/p6/**'
+      - 'tests/integration/p7/**'
+      - 'scripts/audit_context_registration.py'
+      - 'docs/implementation/access-a3-routing.json'
+      - 'docs/implementation/p1-disposition.json'
       - 'pyproject.toml'
       - 'uv.lock'
 
@@ -70,7 +88,11 @@ jobs:
           print("Python:", platform.python_version(), "SQLite:", sqlite3.sqlite_version, "source:", source)
           db.close()
           PY
-          uv run --no-sync pytest -q tests/unit/test_access*_values.py tests/integration/access \
+          uv run --no-sync pytest -q tests/unit/test_access*_values.py tests/unit/test_context_registration_values.py tests/integration/access \
+            tests/integration/p1/test_schema.py tests/integration/p1/test_context.py \
+            tests/integration/p1/test_validation_stop.py tests/integration/p1/test_coordination.py \
+            tests/integration/p1/test_disposition.py tests/integration/p3 tests/integration/p5 \
+            tests/integration/p6 tests/integration/p7 \
             --junitxml=artifacts/access-registry/tests.xml
       - name: Verify wheel and sdist-derived wheel outside checkout
         run: uv run --no-sync python scripts/verify_access_distribution.py
@@ -78,12 +100,15 @@ jobs:
         run: |
           uv run --no-sync python scripts/audit_callsite_dependencies.py --check
           uv run --no-sync python scripts/build_p1_schema.py --check
+          uv run --no-sync python scripts/audit_p1_schema.py --check
+          uv run --no-sync python scripts/audit_implementation_boundary.py --check
+          uv run --no-sync python scripts/audit_context_registration.py
       - name: Check formatting of the exact committed files
         if: always()
         shell: bash
         run: |
           set -euo pipefail
-          targets=(src/repo_catalog/domain/access_workflow.py src/repo_catalog/domain/ports/access_workflow.py src/repo_catalog/application/access_workflow.py src/repo_catalog/adapters/filesystem/access_executor.py src/repo_catalog/cli/access_workflow.py src/repo_catalog/domain/access_connections.py src/repo_catalog/domain/ports/access_connections.py src/repo_catalog/adapters/sqlite/access_connections.py src/repo_catalog/domain/access_registry.py src/repo_catalog/domain/ports/access_registry.py src/repo_catalog/adapters/sqlite/access_registry.py src/repo_catalog/adapters/sqlite/access_schema.py tests/unit/test_access*_values.py tests/integration/access scripts/verify_access_distribution.py)
+          targets=(src/repo_catalog/domain/context_registration.py src/repo_catalog/domain/acquisition.py src/repo_catalog/domain/exchange.py src/repo_catalog/adapters/sqlite/p1_context.py src/repo_catalog/adapters/sqlite/production_context.py src/repo_catalog/application/acquisition.py src/repo_catalog/application/exchange.py src/repo_catalog/application/production_query.py tests/unit/test_context_registration_values.py tests/integration/p3/test_production_context.py tests/integration/p5/test_provider_acquisition.py tests/integration/p6/conftest.py scripts/audit_context_registration.py src/repo_catalog/domain/access_workflow.py src/repo_catalog/domain/ports/access_workflow.py src/repo_catalog/application/access_workflow.py src/repo_catalog/adapters/filesystem/access_executor.py src/repo_catalog/cli/access_workflow.py src/repo_catalog/domain/access_connections.py src/repo_catalog/domain/ports/access_connections.py src/repo_catalog/adapters/sqlite/access_connections.py src/repo_catalog/domain/access_registry.py src/repo_catalog/domain/ports/access_registry.py src/repo_catalog/adapters/sqlite/access_registry.py src/repo_catalog/adapters/sqlite/access_schema.py tests/unit/test_access*_values.py tests/integration/access scripts/verify_access_distribution.py)
           lint=0
           formatting=0
           uv run --no-sync ruff check "${targets[@]}" || lint=$?

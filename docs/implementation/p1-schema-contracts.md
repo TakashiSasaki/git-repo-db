@@ -5,6 +5,18 @@ on PR #70, parent `eb84be9b2061b026ad82b780cc95e062928f838a`. Its DDL and refere
 adapters are not imported by the normal CLI initializer. Catalog3 Schema 21
 continues to be the public runtime until P8. P1 does not migrate a catalog.
 
+## Access A3 registration-boundary refinement
+
+The opt-in Context registration columns retain domain-only metadata under
+[the A3 boundary](access-a3-registration-boundary.md). Executable access settings
+are not portable domain registrations. The authored
+[A3 routing ledger](access-a3-routing.json) explicitly overrides the legacy mixed
+JSON routes referenced by `p1-disposition.json`; the older column mappings remain
+baseline lineage, not permission to insert/transfer arbitrary configuration JSON.
+Run `python scripts/audit_context_registration.py` together with the existing
+schema/disposition checks. Historical execution receipts keep their original
+source revisions; this refinement does not retroactively change their results.
+
 ## Entry points and physical ownership
 
 `repo_catalog.adapters.sqlite.p1_schema` composes packaged `p1_ddl/*.sql` and

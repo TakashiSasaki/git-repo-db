@@ -211,6 +211,11 @@ def _notes_proof_from_bundle_json(
     return NotesProof(cap, target, note, path, structures)
 
 
+def _checked_registration(ctx: Context, kind: str, encoded: str) -> str:
+    ctx.registration_metadata(kind, encoded)
+    return encoded
+
+
 class ExchangeService:
     """Selective verification-aware export and untrusted package import service."""
 
@@ -847,7 +852,9 @@ class ExchangeService:
                     {
                         "service_instance_uuidv4": row[0],
                         "provider_kind": row[1],
-                        "configuration_json": row[2],
+                        "configuration_json": _checked_registration(
+                            ctx, "provider", row[2]
+                        ),
                     }
                 )
 
@@ -857,7 +864,9 @@ class ExchangeService:
                 section["repositories"].append(
                     {
                         "repository_uuidv4": row[0],
-                        "configuration_json": row[1],
+                        "configuration_json": _checked_registration(
+                            ctx, "repository", row[1]
+                        ),
                     }
                 )
 
@@ -871,7 +880,9 @@ class ExchangeService:
                     {
                         "source_registration_uuidv4": row[0],
                         "service_instance_uuidv4": row[1],
-                        "configuration_json": row[2],
+                        "configuration_json": _checked_registration(
+                            ctx, "source", row[2]
+                        ),
                     }
                 )
 
@@ -885,7 +896,9 @@ class ExchangeService:
                     {
                         "source_registration_uuidv4": row[0],
                         "repository_uuidv4": row[1],
-                        "attributes_json": row[2],
+                        "attributes_json": _checked_registration(
+                            ctx, "membership", row[2]
+                        ),
                     }
                 )
 
@@ -1463,6 +1476,18 @@ class ExchangeService:
         core_data: dict[str, list[dict[str, Any]]],
         work: WorkBudget,
     ) -> None:
+        # Validate all direct repository values before any Core unit is committed.
+        for row in core_data["repository_claims"]:
+            claim = RepositoryClaim(
+                row["repository_uuidv4"],
+                row["field"],
+                json.loads(row["value_json"]),
+                Provenance(*json.loads(row["provenance_json"])),
+            )
+            if claim.key[2] != row["value_json"]:
+                raise ExchangeError(
+                    "REPOSITORY_CLAIM", "core", "canonical value required"
+                )
         captures_by_pair: dict[tuple[str, str], Capture] = {}
         for c_item in core_data["captures"]:
             cap = Capture(
@@ -1645,10 +1670,13 @@ class ExchangeService:
 
         for rc in core_data["repository_claims"]:
             prov = Provenance(*json.loads(rc["provenance_json"]))
-            val_dec = json.loads(rc["value_json"])
-            orig_val = None if val_dec == ["unknown"] else val_dec[1]
+            # RepositoryClaim stores a direct JSON value, unlike ScalarClaim's
+            # ["known", value]/["unknown"] tagged encoding. Never index a string.
+            original_value = json.loads(rc["value_json"])
             core_cap.admit_repository_claim(
-                RepositoryClaim(rc["repository_uuidv4"], rc["field"], orig_val, prov)
+                RepositoryClaim(
+                    rc["repository_uuidv4"], rc["field"], original_value, prov
+                )
             )
 
         admitted_objects = 0

@@ -939,7 +939,7 @@ class ProductionQueryService:
                 ProviderView(
                     service_instance_uuidv4=r[0],
                     provider_kind=r[1],
-                    configuration=json.loads(r[2]),
+                    configuration=snap.context.registration_metadata("provider", r[2]),
                 )
                 for r in rows
             )
@@ -980,7 +980,9 @@ class ProductionQueryService:
                     SourceView(
                         source_registration_uuidv4=s_id,
                         service_instance_uuidv4=svc_id,
-                        configuration=json.loads(cfg_json),
+                        configuration=snap.context.registration_metadata(
+                            "source", cfg_json
+                        ),
                         repositories=repos,
                         inventories=inventories,
                     )

@@ -95,7 +95,56 @@ with tempfile.TemporaryDirectory() as directory:
     output = subprocess.check_output([sys.executable, "-I", "-m", "repo_catalog.cli.access_workflow", "review", "--access-db", str(path), "--repository", repo, "--scope", s, "--locator", str(repository), "--profile", "local"], text=True)
     assert json.loads(output)["status"] == "review-only"
     assert not (Path(directory) / "core.sqlite3").exists()
-print(json.dumps({"sqlite": sqlite3.sqlite_version, "ddl_sha256": fingerprint(), "installed_smoke": "passed"}))
+# Installed A3 policy, SQLite constraints and typed Exchange round-trip.
+from contextlib import closing
+from repo_catalog.domain.context_registration import registration_json, RegistrationError
+from repo_catalog.adapters.sqlite import p1_schema
+from repo_catalog.adapters.sqlite.production_context import Context
+from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.acquisition import UnlimitedWorkBudget
+from repo_catalog.application.exchange import ExchangeService
+from repo_catalog.domain.exchange import FORMAT as EXCHANGE_FORMAT
+from repo_catalog.domain.p1_core import RepositoryClaim, Provenance
+for role in ("provider", "repository", "source", "membership"):
+    assert registration_json(role, "{}") == {}
+    try:
+        registration_json(role, '{"credential_ref":"not-domain-data"}')
+    except RegistrationError:
+        pass
+    else:
+        raise AssertionError("installed registration input leak")
+with tempfile.TemporaryDirectory() as directory:
+    base = Path(directory)
+    producer, receiver = base / "producer", base / "receiver"
+    producer.mkdir(); receiver.mkdir()
+    repository_id, service = str(uuid4()), str(uuid4())
+    for destination in (producer, receiver):
+        instance = str(uuid4())
+        for role in ("core", "context"):
+            p1_schema.initialize(destination / f"{role}.sqlite3", role, repository_id, instance)
+    with Context.transaction(producer) as ctx:
+        ctx.provider(service, "github", '{"name":"Original provider"}')
+        ctx.repository(repository_id, '{"name":"app"}')
+        try:
+            ctx.db.execute("UPDATE providers SET configuration_json=?", ('{"token":"DO-NOT-STORE"}',))
+        except sqlite3.IntegrityError:
+            pass
+        else:
+            raise AssertionError("installed SQL boundary leak")
+    historical_url = "https://historical.example/repository.git"
+    evidence = Provenance("source", "observation", "coordinate", "decoder", "1")
+    with closing(GitCore(producer / "core.sqlite3")) as core:
+        core.admit_repository_claim(RepositoryClaim(repository_id, "endpoint", historical_url, evidence))
+    package = ExchangeService(producer).export_package()
+    assert package.format == EXCHANGE_FORMAT == "git-repo-db/p5-exchange-v3"
+    ExchangeService(receiver).import_package(package, work=UnlimitedWorkBudget())
+    with closing(GitCore(receiver / "core.sqlite3")) as core:
+        rows = core.sql("SELECT value FROM repository_claims WHERE field='endpoint'")
+        assert json.loads(rows[0][0]) == historical_url
+    with Context.snapshot(receiver) as ctx:
+        assert ctx.db.execute("SELECT configuration_json FROM providers").fetchone()[0] == '{"name":"Original provider"}'
+    assert not (receiver / "access.sqlite3").exists()
+print(json.dumps({"sqlite": sqlite3.sqlite_version, "ddl_sha256": fingerprint(), "context_ddl_sha256": p1_schema.fingerprint("context"), "exchange_format": EXCHANGE_FORMAT, "installed_smoke": "passed"}))
 """
 
 

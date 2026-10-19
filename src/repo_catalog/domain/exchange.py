@@ -1,4 +1,4 @@
-"""P5 portable typed Exchange domain and wire contract (`git-repo-db/p5-exchange-v2`).
+"""P5 portable typed Exchange domain and wire contract (`git-repo-db/p5-exchange-v3`).
 
 Enforces strict separation between:
 - Transport envelope identity (`package_id`, `exported_at_us`, `sender_catalog_instance_uuidv4`)
@@ -15,11 +15,15 @@ from contextvars import ContextVar
 from dataclasses import dataclass, field
 from typing import Any
 
+from repo_catalog.domain.context_registration import (
+    RegistrationError,
+    validate_exchange_registrations,
+)
 from repo_catalog.domain.p1_context import ResourceKey
 from repo_catalog.domain.p1_core import OID, CoreFailure, uuid4_value
 from repo_catalog.domain.time import validate_observation_us
 
-FORMAT = "git-repo-db/p5-exchange-v2"
+FORMAT = "git-repo-db/p5-exchange-v3"
 MAX_PACKAGE_BYTES = 32 * 1024 * 1024
 MAX_DEPTH = 32
 MAX_ELEMENTS = 200_000
@@ -317,7 +321,7 @@ def empty_context_section() -> dict[str, list[dict[str, Any]]]:
 
 @dataclass(frozen=True)
 class ExchangePackage:
-    """Portable typed Exchange package (`git-repo-db/p5-exchange-v2`)."""
+    """Portable typed Exchange package (`git-repo-db/p5-exchange-v3`)."""
 
     package_id: str
     exported_at_us: int | None
@@ -456,6 +460,14 @@ def validate_package_envelope(package: ExchangePackage) -> None:
                     key,
                     "context section entry must be a list of dicts",
                 )
+
+        try:
+            validate_exchange_registrations(package.context)
+        except RegistrationError as error:
+            # Do not expose untrusted configuration values through diagnostics.
+            raise ExchangeError(
+                "CONTEXT_REGISTRATION", error.kind, error.code
+            ) from None
 
 
 def encode_package(package: ExchangePackage) -> str:

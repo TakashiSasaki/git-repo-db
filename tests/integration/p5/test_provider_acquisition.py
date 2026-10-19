@@ -55,7 +55,7 @@ def test_provider_registration_and_source_inventory(tmp_path: Path) -> None:
             ProviderRegistration(
                 service_uuid,
                 "github",
-                canonical({"api_url": "https://api.github.com", "tier": "enterprise"}),
+                canonical({"tier": "enterprise"}),
             ),
         ),
         repositories=(
@@ -68,7 +68,7 @@ def test_provider_registration_and_source_inventory(tmp_path: Path) -> None:
             SourceRegistration(
                 source_uuid,
                 service_uuid,
-                canonical({"poll_interval_s": 60}),
+                canonical({"discovery_kind": "github_inventory"}),
                 associated_repositories=(repo_uuid,),
             ),
         ),
