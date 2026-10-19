@@ -363,14 +363,48 @@ pre-adoption migration exception.
 | Backup/restore | ACC-07: truthful Git-only versus paired scope, actual domain/format/hash/pairing checks, atomic no-overwrite installation and fresh recovery; no file checkout/restorability claim |
 | Search and Operational | Correct-authority scan fallback with diagnostics, explicit Search creation/rebuild; loss of execution/cache state never erases domain facts or resets an old cumulative request |
 | PF-P06/P08/P05/P14/P15/P07 mapping | Five-store placement; paired domain backup; no current text GC and future Context GC-01/02 only; correct search sources; relaxed Operational atomicity never licenses inconsistent Core/Context authority |
-| Preserved and deferred contracts | Keep UUID, Q01-Q04, five-column Coverage and PF-P01-P04/P09-P13/P16-P17 in unsuperseded scope; apply ADR 0028's classified times and ADR 0026's actual validation, not old CAS-41 counters; GC-03/04 and DS-R01-R08 remain deferred |
-| Non-goals and six acceptance criteria | No implementation/real migration/GC/merge by prose; preserve independent Git-only tests, append-only attacks, Context isolation, partial-write truth, backup/Exchange integrity and exact-tree independent evidence under ADR 0001 |
+| Preserved and deferred contracts | Keep UUID, Q01-Q04, five-column Coverage and PF-P01-P04/P09-P13/P16-P17 in unsuperseded scope; apply ADR 0028's classified times and ADR 0026's actual validation, not old CAS-41 counters; GC-03/04 and DS-R01/03/04/06/07/08 retain their unsuperseded deferred scope. DS-R05's selected mapping/Exchange scope now follows ADR 0030; broader unselected extensions remain deferred |
+| Non-goals and six acceptance criteria | No implementation/real migration/GC/merge by prose; preserve the six concrete future evidence requirements below under ADR 0001 |
 
 These preserved rules are **binding requirements of this accepted successor**, not
 merely references to a removed file. ADRs 0004-0010 and 0012-0028 remain
 active in their own scopes: metadata-only and attributed/shared OIDs, exact
 allowed-body checks, notes capture/group/role rules, finite work, recovery,
 unauthenticated reports and classified times are not re-decided here.
+
+### Preserved implementation acceptance requirements
+
+Before claiming implementation completion, independent reviewers must verify all
+six inherited evidence families. These are requirements, not tests run by this ADR:
+
+1. A new Git-only catalog works without a Context database: genuine local-Git
+   capture and queries round-trip through backup/restore, and supplied
+   commit/parent/tree/blob metadata works with zero raw payloads under ADR 0004.
+2. SQLite and application tests reject Core UPDATE, DELETE and REPLACE, including
+   recovery, intake, later byte admission, dependency resolution and administration.
+   Force-push and repeated-ref observations retain both observations and older facts.
+3. PR/Issue/comment current-state updates and Context conflicts do not put their
+   bodies or domain authority in Core. Missing Context is never a successful full
+   paired domain-catalog restore.
+4. PR-induced acquisitions leave independent genuine Git evidence. Stale/missing
+   cross-store dependencies fail closed for guarantees requiring them; partial
+   failed writes cannot fabricate complete roots, refs or Context Coverage.
+   Unverified metadata is not itself a failed verified-byte acquisition.
+5. Backup/restore and Exchange preserve retained exact bytes, SHA integrity,
+   permanent Repository identity, original provenance and verified scope, and
+   accurately support metadata-only catalogs. Apply ADR 0026's stop and verified
+   fresh recovery, not obsolete CAS-41 quarantine counters. Search rebuild/fallback
+   and Operational loss preserve domain authority and cumulative-work truth.
+6. Bind evidence to the exact effective code/DDL tree, with focused development
+   checks and relevant independent review under ADR 0001. Full release
+   qualification requires an explicit request; design acceptance is not execution.
+
+[ADR 0030](0030-context-repository-relations-and-selective-exchange.md) selects
+typed conflicting Repository mapping reports and bounded selective cross-seed
+Exchange within DS-R05's former unresolved area. It does not select broader
+ownership/trust extensions or certify their implementation. Preserve its no-Witness
+decision and distinguish this accepted scope from the older single-repository
+implementation boundary in the [status audit](../phase2/documentation-status-audit.md).
 
 ## Consequences
 

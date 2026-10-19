@@ -72,6 +72,17 @@ intentional, not an inconsistency to normalize away.
 
 ## Remaining boundaries
 
+**Subsequent target clarification (2026-10-19):** The table below records the
+2026-10-14 baseline, not a blanket deferral of later accepted decisions.
+[ADR 0030](../adr/0030-context-repository-relations-and-selective-exchange.md)
+now selects immutable competing Repository mapping claims/Dispositions and
+bounded selective cross-seed Exchange within DS-R05's former unresolved area.
+Its accepted scope has no mapping Witness table and does not approve broader
+ownership/trust extensions or establish runtime implementation. Other DS items
+retain only their unsuperseded scope; future Context text GC remains separately
+governed. The baseline guard/test references below are historical implementation
+evidence, not instructions to reject ADR 0030's selected target.
+
 The following IDs are audit cross-references only, **not new owner decisions or
 mandatory implementation tasks**. No option is selected by listing it here.
 

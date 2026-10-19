@@ -3,7 +3,7 @@
 The repository-root AGENTS.md remains applicable. For this directory, read the
 current `decision-register.md` and `documentation-status-audit.md`, then
 `no-independent-publication-adr.md` and `../adr/0002-three-store-boundary-architecture.md`
-for their accepted decisions before consulting older proposals or prototypes. **For the later accepted target**, read the [current ADR index](../adr/README.md) and [Git Core / Context transition plan](../architecture/git-core-context-transition-plan.md), including ADR 0003–0027 and their scoped replacements. ADR 0026 fixes recovery without quarantine/count/release; ADR 0027 fixes unauthenticated external-origin reports without application PKI/signatures. Unaffected Q/PF guarantees remain; target decisions do not certify their implementation.
+for their accepted decisions before consulting older proposals or prototypes. **For the later accepted target**, read the [current ADR index](../adr/README.md) and [Git Core / Context transition plan](../architecture/git-core-context-transition-plan.md). [ADR 0029](../adr/0029-independent-access-store.md) replaces retired ADR 0003 and carries forward its Core/Context guarantees within five store responsibilities; [ADR 0030](../adr/0030-context-repository-relations-and-selective-exchange.md) adds typed Repository relations and selective Exchange without mapping Witness storage. ADRs 0004–0028 remain binding in their scoped meanings: ADR 0026 fixes recovery without quarantine/count/release, and ADR 0027 fixes unauthenticated external-origin reports without application PKI/signatures. Unaffected Q/PF guarantees remain; target decisions do not certify their implementation.
 
 The owner accepted Q01-B, Q02-B, Q03-B, **NO_INDEPENDENT_PUBLICATION**, and binding
 **PF-P01–PF-P17**. Publication removal and Three-Store implementation are already
@@ -15,7 +15,7 @@ The old blanket pause on Q05–Q12 is superseded only within the explicit scope 
 later accepted decisions. Do not replace it with blanket approval of every old
 alternative. The old Core/Operational/Search placement and Core-only full-backup assumption
 were settled in ADR 0002 **for the implemented baseline**, but are **superseded as
-future target architecture by ADR 0003**. Best-effort resume, transport-owned
+future target architecture by ADR 0029's carry-forward of historical ADR 0003**. Best-effort resume, transport-owned
 HTTP caching, Job retention and explicit Search lifecycle remain settled. Stronger Exchange trust, additional Git interpretation policy, future
 manual-GC rules and other residual boundaries are not approved by implication.
 Consult the register before calling a question either "resolved" or "unselected".

@@ -40,6 +40,13 @@ sources directly. Do not copy their policy text or templates here.
 7. Verify the exact-parent diff, metadata, scope, IDs, index, links and retirement
    mapping. Review copied Do NOT rules for accidental scope expansion. Report
    actual checks and limitations; do not report acceptance examples as tests run.
+   Retirement reviews must also inspect active root/nested agent guides and
+   relevant skill descriptions: updating live links alone can leave an obsolete
+   store count or retired authority in plain text. Compare carried-forward
+   deferred-question lists with already accepted refinements; retain only their
+   unsuperseded scope. A historical receipt or `refines` identifier is not a live
+   instruction to rewrite. Check the concrete acceptance examples as well as their
+   summary labels, so a shorter successor cannot silently weaken required proof.
 8. Hand off the branch/commit and PR dependencies, decision versus proposal status,
    preserved decisions, unresolved migration work, and checks performed or blocked.
    Use the existing lessons-to-skills procedure only for verified reusable learning.

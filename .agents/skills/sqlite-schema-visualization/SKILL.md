@@ -1,14 +1,18 @@
 ---
 name: sqlite-schema-visualization
-description: Introspect, validate, and generate non-destructive database visualizations (Mermaid ER diagrams, DBML exports, and standalone HTML workbenches) for the implemented multi-store SQLite schema, while distinguishing accepted four-store target contracts. Use when extracting composite foreign keys, filtering FTS shadow tables, handling generated columns, or validating schema documentation freshness.
+description: Introspect, validate, and generate non-destructive database visualizations (Mermaid ER diagrams, DBML exports, and standalone HTML workbenches) for the implemented multi-store SQLite schema, while distinguishing accepted five-store target contracts. Use when extracting composite foreign keys, filtering FTS shadow tables, handling generated columns, or validating schema documentation freshness.
 ---
 
 # SQLite Schema Introspection and Visualization Invariants
 
 Read the [ADR index](../../../docs/adr/README.md) before interpreting ownership.
 The production visualization commands below introspect the implemented Schema 21
-Core / Operational 1 / Search 1 baseline. ADR 0003's independent Context and the
-later metadata/notes/key/recovery decisions are accepted targets, not already
+Core / Operational 1 / Search 1 baseline. [ADR 0029](../../../docs/adr/0029-independent-access-store.md)
+now owns the five-store target, including independent Context and Access;
+[ADR 0030](../../../docs/adr/0030-context-repository-relations-and-selective-exchange.md)
+selects two additional Context relations (19 composed tables as a target, not an
+implemented count), without mapping Witness storage. These and the
+metadata/notes/key/recovery decisions are accepted targets, not already
 implemented merely because a diagram can be generated. Legacy table names and
 IDs below are introspection examples, not approved target DDL. In particular,
 ADR 0017 requires semantic PKs/FKs; a visualization must expose storage-only
