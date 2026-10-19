@@ -1,0 +1,223 @@
+{
+  "source_commit": "efb55af84ccbf1183d47547d22bb6c57d8fbc8f9",
+  "source_tree": "117d580b31098ecb8287281bd843894fdfad71fc",
+  "runtime": "actual SQLite 3.53.1 / Python 3.12.14",
+  "execution_receipt": "results/probes/receipt.json",
+  "unique_probe_count": 37,
+  "cases": [
+    {
+      "case_id": "C01",
+      "scenario": "Different providers and same-provider instances reuse the same identifier",
+      "input_basis": "synthetic namespace counterexample",
+      "behavior_outcome": "success",
+      "finding_ids": [
+        "N01"
+      ],
+      "actual_result": "Distinct ResourceKeys and reverse mappings remain distinct.",
+      "execution_status": "passed",
+      "test_nodes": [
+        "docs/implementation/evidence/context-provider-agnostic/reproduction/test_mapping.py::test_mapping_forward_reverse_multi_provider_same_id",
+        "docs/implementation/evidence/context-provider-agnostic/reproduction/test_provider_resource.py::test_pr01_service_namespace_separates_equal_ids[github]",
+        "docs/implementation/evidence/context-provider-agnostic/reproduction/test_provider_resource.py::test_pr01_service_namespace_separates_equal_ids[gitlab]"
+      ]
+    },
+    {
+      "case_id": "C02",
+      "scenario": "Provider global IDs differ from project-local IDs",
+      "input_basis": "GitLab specification-derived synthetic counterexample",
+      "behavior_outcome": "design_gap",
+      "finding_ids": [
+        "F02"
+      ],
+      "actual_result": "Bare local key aliases; actual project-qualified coordinate preserves two identities; existing GitHub namespaces remain distinct.",
+      "execution_status": "passed",
+      "test_nodes": [
+        "docs/implementation/evidence/context-provider-agnostic/reproduction/test_provider_resource.py::test_pr02_bare_project_iid_collides_but_qualified_coordinate_survives",
+        "docs/implementation/evidence/context-provider-agnostic/reproduction/test_provider_resource.py::test_pr10_github_repository_api_namespaces_are_preserved"
+      ]
+    },
+    {
+      "case_id": "C03",
+      "scenario": "Several Provider repositories map to one Core UUID",
+      "input_basis": "synthetic mapping claims",
+      "behavior_outcome": "success",
+      "finding_ids": [
+        "N02"
+      ],
+      "actual_result": "Forward/reverse APIs preserve both service-qualified resources.",
+      "execution_status": "passed",
+      "test_nodes": [
+        "docs/implementation/evidence/context-provider-agnostic/reproduction/test_mapping.py::test_mapping_forward_reverse_multi_provider_same_id"
+      ]
+    },
+    {
+      "case_id": "C04",
+      "scenario": "One Provider repository has competing Core mappings and dispositions",
+      "input_basis": "synthetic claims and supplied local-operation evidence; no authentication claim",
+      "behavior_outcome": "success",
+      "finding_ids": [
+        "N02"
+      ],
+      "actual_result": "Both claims remain; no latest winner; reports and qualified effect remain distinct.",
+      "execution_status": "passed",
+      "test_nodes": [
+        "docs/implementation/evidence/context-provider-agnostic/reproduction/test_mapping.py::test_mapping_conflict_not_latest_winner_and_exact_replay",
+        "docs/implementation/evidence/context-provider-agnostic/reproduction/test_mapping.py::test_mapping_disposition_retains_report_and_requires_local_evidence[dispute]",
+        "docs/implementation/evidence/context-provider-agnostic/reproduction/test_mapping.py::test_mapping_disposition_retains_report_and_requires_local_evidence[withdraw]",
+        "docs/implementation/evidence/context-provider-agnostic/reproduction/test_mapping.py::test_mapping_disposition_retains_report_and_requires_local_evidence[correct]"
+      ]
+    },
+    {
+      "case_id": "C05",
+      "scenario": "Repository-attached document versus annotation",
+      "input_basis": "hypothetical broad-use document; synthetic annotation",
+      "behavior_outcome": "mixed",
+      "finding_ids": [
+        "F01"
+      ],
+      "actual_result": "Standalone document refused as specified; truthful annotation text/relations supported.",
+      "execution_status": "passed",
+      "test_nodes": [
+        "docs/implementation/evidence/context-provider-agnostic/reproduction/test_provider_resource.py::test_pr03_document_parent_limits_reject_broader_use[repository-document]",
+        "docs/implementation/evidence/context-provider-agnostic/reproduction/test_provider_resource.py::test_pr03_document_parent_limits_reject_broader_use[issue-document]",
+        "docs/implementation/evidence/context-provider-agnostic/reproduction/test_provider_resource.py::test_pr03_document_parent_limits_reject_broader_use[issue-thread]",
+        "docs/implementation/evidence/context-provider-agnostic/reproduction/test_provider_resource.py::test_pr03_document_parent_limits_reject_broader_use[annotation-review]",
+        "docs/implementation/evidence/context-provider-agnostic/reproduction/test_provider_resource.py::test_pr03_document_parent_limits_reject_broader_use[repository-review]",
+        "docs/implementation/evidence/context-provider-agnostic/reproduction/test_provider_resource.py::test_pr04_supported_pr_document_positive_control",
+        "docs/implementation/evidence/context-provider-agnostic/reproduction/test_provider_resource.py::test_pr06_repository_annotation_has_identity_text_and_typed_relations"
+      ]
+    },
+    {
+      "case_id": "C06",
+      "scenario": "Discussion/review without PR parent and unknown event kinds",
+      "input_basis": "GitLab Issue/commit-discussion spec plus hypothetical broader resource kinds",
+      "behavior_outcome": "specified_rejection_with_requirement_gap",
+      "finding_ids": [
+        "F01"
+      ],
+      "actual_result": "Forbidden parent/kind refused; hypothetical reparenting changes current document identity.",
+      "execution_status": "passed",
+      "test_nodes": [
+        "docs/implementation/evidence/context-provider-agnostic/reproduction/test_provider_resource.py::test_pr03_document_parent_limits_reject_broader_use[repository-document]",
+        "docs/implementation/evidence/context-provider-agnostic/reproduction/test_provider_resource.py::test_pr03_document_parent_limits_reject_broader_use[issue-document]",
+        "docs/implementation/evidence/context-provider-agnostic/reproduction/test_provider_resource.py::test_pr03_document_parent_limits_reject_broader_use[issue-thread]",
+        "docs/implementation/evidence/context-provider-agnostic/reproduction/test_provider_resource.py::test_pr03_document_parent_limits_reject_broader_use[annotation-review]",
+        "docs/implementation/evidence/context-provider-agnostic/reproduction/test_provider_resource.py::test_pr03_document_parent_limits_reject_broader_use[repository-review]",
+        "docs/implementation/evidence/context-provider-agnostic/reproduction/test_provider_resource.py::test_pr05_unknown_resource_kind_is_rejected_at_ddl[discussion]",
+        "docs/implementation/evidence/context-provider-agnostic/reproduction/test_provider_resource.py::test_pr05_unknown_resource_kind_is_rejected_at_ddl[event]",
+        "docs/implementation/evidence/context-provider-agnostic/reproduction/test_provider_resource.py::test_pr05_unknown_resource_kind_is_rejected_at_ddl[commit]",
+        "docs/implementation/evidence/context-provider-agnostic/reproduction/test_provider_resource.py::test_pr05_unknown_resource_kind_is_rejected_at_ddl[analysis_result]",
+        "docs/implementation/evidence/context-provider-agnostic/reproduction/test_provider_resource.py::test_pr09_reparenting_document_changes_identity_by_current_contract"
+      ]
+    },
+    {
+      "case_id": "C07",
+      "scenario": "External analysis targets commit/Git object",
+      "input_basis": "synthetic normalized analysis, not raw scanner API",
+      "behavior_outcome": "success_with_boundary",
+      "finding_ids": [
+        "F03"
+      ],
+      "actual_result": "Unacquired typed OID report admitted/read and required link refused; generic assessment JSON separately Exchange-roundtrips. No typed file-position roundtrip claimed.",
+      "execution_status": "passed",
+      "test_nodes": [
+        "docs/implementation/evidence/context-provider-agnostic/reproduction/test_coverage_exchange.py::test_generic_normalized_collection_typed_exchange_replay[github]",
+        "docs/implementation/evidence/context-provider-agnostic/reproduction/test_coverage_exchange.py::test_generic_normalized_collection_typed_exchange_replay[gitlab]",
+        "docs/implementation/evidence/context-provider-agnostic/reproduction/test_coverage_exchange.py::test_generic_normalized_collection_typed_exchange_replay[gerrit]",
+        "docs/implementation/evidence/context-provider-agnostic/reproduction/test_coverage_exchange.py::test_generic_normalized_collection_typed_exchange_replay[forgejo]",
+        "docs/implementation/evidence/context-provider-agnostic/reproduction/test_provider_resource.py::test_pr07_commit_assessment_unavailable_oid_remains_report"
+      ]
+    },
+    {
+      "case_id": "C08",
+      "scenario": "Core target has not been acquired or Core store is absent",
+      "input_basis": "synthetic absent Core/OID",
+      "behavior_outcome": "success",
+      "finding_ids": [
+        "N01"
+      ],
+      "actual_result": "Reported unavailable OID and Context-only qualified mapping survive; Core presence is separately checked.",
+      "execution_status": "passed",
+      "test_nodes": [
+        "docs/implementation/evidence/context-provider-agnostic/reproduction/test_mapping.py::test_mapping_registration_precondition_not_core_existence",
+        "docs/implementation/evidence/context-provider-agnostic/reproduction/test_provider_resource.py::test_pr07_commit_assessment_unavailable_oid_remains_report"
+      ]
+    },
+    {
+      "case_id": "C09",
+      "scenario": "Provider relation known but Core mapping unresolved",
+      "input_basis": "synthetic Provider role",
+      "behavior_outcome": "success",
+      "finding_ids": [
+        "N02"
+      ],
+      "actual_result": "Unmapped is not observed NULL; Source membership does not assert mapping; later claim does not rewrite original relation.",
+      "execution_status": "passed",
+      "test_nodes": [
+        "docs/implementation/evidence/context-provider-agnostic/reproduction/test_mapping.py::test_mapping_unmapped_provider_relation_is_not_null",
+        "docs/implementation/evidence/context-provider-agnostic/reproduction/test_mapping.py::test_mapping_source_membership_and_registration_do_not_assert_mapping"
+      ]
+    },
+    {
+      "case_id": "C10",
+      "scenario": "Partial collection must not imply complete",
+      "input_basis": "synthetic normalized Provider observations",
+      "behavior_outcome": "success_with_contract_gap",
+      "finding_ids": [
+        "F04"
+      ],
+      "actual_result": "Partial proof refused, empty distinguished from missing, newer unknown wins, distinct evidence scoped; numeric Coverage comparison does not reconcile unrelated clocks.",
+      "execution_status": "passed",
+      "test_nodes": [
+        "docs/implementation/evidence/context-provider-agnostic/reproduction/test_coverage_exchange.py::test_empty_is_evidenced_and_missing_is_unknown",
+        "docs/implementation/evidence/context-provider-agnostic/reproduction/test_coverage_exchange.py::test_partial_members_cannot_prove_complete",
+        "docs/implementation/evidence/context-provider-agnostic/reproduction/test_coverage_exchange.py::test_newer_unknown_terminal_invalidates_old_complete_without_rewrite",
+        "docs/implementation/evidence/context-provider-agnostic/reproduction/test_coverage_exchange.py::test_permission_and_clock_domains_use_distinct_provenance_scopes",
+        "docs/implementation/evidence/context-provider-agnostic/reproduction/test_coverage_exchange.py::test_unpartitioned_resource_coverage_compares_numeric_times_only"
+      ]
+    },
+    {
+      "case_id": "C11",
+      "scenario": "Only some Exchange dependencies arrive",
+      "input_basis": "synthetic malformed/incomplete selection and missing claim",
+      "behavior_outcome": "specified_refusal_and_withholding",
+      "finding_ids": [
+        "N03"
+      ],
+      "actual_result": "Independent resources admitted; terminal/proof or disposition without dependencies withheld/refused; no hidden staging or fabricated referent.",
+      "execution_status": "passed",
+      "test_nodes": [
+        "docs/implementation/evidence/context-provider-agnostic/reproduction/test_coverage_exchange.py::test_missing_collection_member_withholds_completeness",
+        "docs/implementation/evidence/context-provider-agnostic/reproduction/test_mapping.py::test_mapping_disposition_missing_claim_rejected_without_staging"
+      ]
+    },
+    {
+      "case_id": "C12",
+      "scenario": "Replay must not invent identity or observation facts",
+      "input_basis": "synthetic exact repeat and immutable coordinate rebind",
+      "behavior_outcome": "success",
+      "finding_ids": [
+        "N03"
+      ],
+      "actual_result": "Same keys/times remain; contradictory immutable observation time rejected; independent assessment identities retained.",
+      "execution_status": "passed",
+      "test_nodes": [
+        "docs/implementation/evidence/context-provider-agnostic/reproduction/test_coverage_exchange.py::test_generic_normalized_collection_typed_exchange_replay[github]",
+        "docs/implementation/evidence/context-provider-agnostic/reproduction/test_coverage_exchange.py::test_generic_normalized_collection_typed_exchange_replay[gitlab]",
+        "docs/implementation/evidence/context-provider-agnostic/reproduction/test_coverage_exchange.py::test_generic_normalized_collection_typed_exchange_replay[gerrit]",
+        "docs/implementation/evidence/context-provider-agnostic/reproduction/test_coverage_exchange.py::test_generic_normalized_collection_typed_exchange_replay[forgejo]",
+        "docs/implementation/evidence/context-provider-agnostic/reproduction/test_mapping.py::test_mapping_conflict_not_latest_winner_and_exact_replay",
+        "docs/implementation/evidence/context-provider-agnostic/reproduction/test_mapping.py::test_mapping_disposition_missing_claim_rejected_without_staging",
+        "docs/implementation/evidence/context-provider-agnostic/reproduction/test_provider_resource.py::test_pr08_independent_assessment_reports_and_missing_null_preserved"
+      ]
+    }
+  ],
+  "case_membership_overlaps": true,
+  "counting_rule": "Count unique receipt nodes, not summed matrix memberships. A passing refusal test is not feature support.",
+  "stage_limits": [
+    "Only GitHub raw API normalization exercised using existing synthetic fixtures.",
+    "Non-GitHub labels exercise normalized common API units.",
+    "Generic path/line semantics and nested-JSON Search not executed as specialized features.",
+    "No live providers, real catalogs, credentials, release or exact-minimum SQLite run."
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "consistent_success": true,
+  "selected": 126,
+  "starts": 126,
+  "junit": 126,
+  "phases": 378,
+  "junit_results": {
+    "passed": 126
+  },
+  "checks": {
+    "nonempty_unique_selected": true,
+    "selected_equals_starts": true,
+    "selected_equals_junit": true,
+    "each_phase_exactly_once": true,
+    "all_phases_passed": true,
+    "junit_all_passed": true,
+    "successful_finish": true,
+    "process_exit_zero": true
+  },
+  "missing_start_examples": [],
+  "extra_start_examples": [],
+  "execution_source": {
+    "head": "efb55af84ccbf1183d47547d22bb6c57d8fbc8f9",
+    "tree": "117d580b31098ecb8287281bd843894fdfad71fc"
+  },
+  "scope": "Evidence consistency only; not source binding, authenticity or Release Acceptance."
+}

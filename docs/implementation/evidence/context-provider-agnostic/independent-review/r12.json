@@ -1,0 +1,113 @@
+{
+  "reviewer": "independent R1/R2",
+  "product_commit": "efb55af84ccbf1183d47547d22bb6c57d8fbc8f9",
+  "product_tree": "117d580b31098ecb8287281bd843894fdfad71fc",
+  "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+  "sqlite": "3.53.1",
+  "input": "synthetic; direct actual Context transaction and domain types; no Provider API calls",
+  "results": [
+    {
+      "case": "same-id-distinct-service-kind",
+      "actual": 4,
+      "expected": 4,
+      "pass": true
+    },
+    {
+      "case": "repository-document-DDL-rejection",
+      "actual": true,
+      "expected": true,
+      "pass": true
+    },
+    {
+      "case": "issue-thread-DDL-rejection",
+      "actual": true,
+      "expected": true,
+      "pass": true
+    },
+    {
+      "case": "commit-review-DDL-rejection",
+      "actual": true,
+      "expected": true,
+      "pass": true
+    },
+    {
+      "case": "unknown-kind-DDL-rejection",
+      "actual": true,
+      "expected": true,
+      "pass": true
+    },
+    {
+      "case": "annotation-provider-targets",
+      "actual": 2,
+      "expected": 2,
+      "pass": true
+    },
+    {
+      "case": "missing-core-report",
+      "actual": [
+        [
+          false,
+          false
+        ]
+      ],
+      "expected": [
+        [
+          false,
+          false
+        ]
+      ],
+      "pass": true
+    },
+    {
+      "case": "reverse-multi-provider",
+      "actual": 2,
+      "expected": 2,
+      "pass": true
+    },
+    {
+      "case": "forward-provider",
+      "actual": 1,
+      "expected": 1,
+      "pass": true
+    },
+    {
+      "case": "conflicting-mapping",
+      "actual": "conflict",
+      "expected": "conflict",
+      "pass": true
+    },
+    {
+      "case": "mapping-exact-replay",
+      "actual": "duplicate",
+      "expected": "duplicate",
+      "pass": true
+    },
+    {
+      "case": "unconfirmed-withdraw-retains-conflict",
+      "actual": "conflict",
+      "expected": "conflict",
+      "pass": true
+    },
+    {
+      "case": "qualified-withdraw-single",
+      "actual": "single_candidate",
+      "expected": "single_candidate",
+      "pass": true
+    },
+    {
+      "case": "no-core-file-required-for-mapping",
+      "actual": false,
+      "expected": false,
+      "pass": true
+    }
+  ],
+  "existing_product_tests": {
+    "command": ".venv/bin/python -m pytest -q tests/integration/p1/test_context_relations.py tests/integration/p3/test_production_context.py --tb=short",
+    "exit_code": 0,
+    "passed": 118,
+    "failed": 0,
+    "skipped": 0,
+    "reported_duration_seconds": 5.87,
+    "benchmark": false
+  }
+}

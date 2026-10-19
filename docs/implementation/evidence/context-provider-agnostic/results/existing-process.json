@@ -1,0 +1,12 @@
+{
+  "exit_code": 0,
+  "source_commit": "efb55af84ccbf1183d47547d22bb6c57d8fbc8f9",
+  "command": "uv run --no-sync pytest -c pyproject.toml tests/integration/i3/test_selective_exchange.py tests/integration/i23/test_provider_exchange.py tests/integration/i4/test_query_search_backup.py -q -o junit_family=xunit1 --junitxml results/existing-junit.xml --journal results/existing-journal.jsonl",
+  "head": "efb55af84ccbf1183d47547d22bb6c57d8fbc8f9",
+  "tree": "117d580b31098ecb8287281bd843894fdfad71fc",
+  "python": "3.12.14",
+  "sqlite_version": "3.53.1",
+  "interpreter": "/workspace/git-repo-db/.venv/bin/python",
+  "module_path": "/workspace/git-repo-db/src/repo_catalog/__init__.py",
+  "source_binding": "Original unchanged main checkout; post-run git diff and probe input manifest confirm unchanged tracked src/tests/dependencies. Metadata enrichment is not a rerun claim."
+}

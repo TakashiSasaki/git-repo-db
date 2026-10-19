@@ -1,0 +1,20 @@
+{
+  "started_at_utc": "2026-10-19T23:29:03.190215+00:00",
+  "source_commit": "efb55af84ccbf1183d47547d22bb6c57d8fbc8f9",
+  "source_tree": "117d580b31098ecb8287281bd843894fdfad71fc",
+  "audit_head": "efb55af84ccbf1183d47547d22bb6c57d8fbc8f9",
+  "audit_head_tree": "117d580b31098ecb8287281bd843894fdfad71fc",
+  "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+  "executable": "/workspace/git-repo-db/.venv/bin/python",
+  "sqlite_version": "3.53.1",
+  "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+  "module_path": "/workspace/git-repo-db/src/repo_catalog/__init__.py",
+  "schema_fingerprint_check": "pass",
+  "targets": [
+    "docs/implementation/evidence/context-provider-agnostic/reproduction/test_coverage_exchange.py",
+    "docs/implementation/evidence/context-provider-agnostic/reproduction/test_mapping.py",
+    "docs/implementation/evidence/context-provider-agnostic/reproduction/test_provider_resource.py"
+  ],
+  "input_hashes_sha256": "7b139dd4a07709a169ac3bb453867cad749c494a88340d518f03a48e495ce174",
+  "scope": "focused development audit, not full release or live-provider acceptance"
+}
