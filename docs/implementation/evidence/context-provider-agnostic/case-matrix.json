@@ -199,7 +199,7 @@
       "finding_ids": [
         "N03"
       ],
-      "actual_result": "Same keys/times remain; contradictory immutable observation time rejected; independent assessment identities retained.",
+      "actual_result": "Same keys/times remain; contradictory immutable observation time rejected; independent assessment reports/provenance retained.",
       "execution_status": "passed",
       "test_nodes": [
         "docs/implementation/evidence/context-provider-agnostic/reproduction/test_coverage_exchange.py::test_generic_normalized_collection_typed_exchange_replay[github]",

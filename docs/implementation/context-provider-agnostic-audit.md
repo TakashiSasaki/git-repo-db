@@ -124,7 +124,7 @@ Use current tables and typed APIs first where they preserve meaning. Next define
 
 ## 11. Independent review
 
-Two separate agents review R1/R2 and R3/R4 directly against the fixed product source and a frozen audit commit. Their final reviewed hashes, independent probes, limitations and follow-up disposition are retained under [independent review](evidence/context-provider-agnostic/independent-review/). Investigator research is not called independent review. Final review status is recorded in the evidence README after the frozen report review; material findings must be resolved or explicitly left open before submission.
+Two separate agents **approved this documentation audit** after reviewing R1/R2 and R3/R4 directly against the fixed product source and frozen audit commit `19ff4031440e541eeff9a119605b2b564ca5dd6d` (tree `c5f8f3cecf30b6ba11f65ff7cd2aad3bdb248c9e`). [R1/R2](evidence/context-provider-agnostic/independent-review/r12.md) independently repeated the 37 probes, 118 existing cases and 14 direct assertions. [R3/R4](evidence/context-provider-agnostic/independent-review/r34.md) independently ran 11 I4 cases and reconciled execution evidence; it verified the two minor wording corrections recorded in its receipt. No unresolved reviewer finding remains. These overlapping runs are not added to the 163 author cases. Investigator research is not independent review, and review approval does not select the proposed designs.
 
 ## 12. Designer decisions still needed
 

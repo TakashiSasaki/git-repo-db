@@ -54,7 +54,7 @@ Research reports are investigator artifacts. Their preliminary local finding IDs
 
 ## Independent review status
 
-R1/R2 and R3/R4 have independently inspected the fixed product source and executed direct probes/focused reruns. Final review of the frozen audit commit is pending at this evidence checkpoint. Exact reviewed commit/tree and final disposition will be recorded in their reports and the submission follow-up; this checkpoint does not claim final approval.
+**Approved for this documentation-only Draft PR; no unresolved reviewer findings.** Both separate reviewers inspected frozen audit commit `19ff4031440e541eeff9a119605b2b564ca5dd6d`, tree `c5f8f3cecf30b6ba11f65ff7cd2aad3bdb248c9e`, against fixed main. [R1/R2](independent-review/r12.md) independently reran all 37 probes, 118 focused existing cases and [14 direct assertions](independent-review/r12-probe.py). [R3/R4](independent-review/r34.md) independently ran 11 focused I4 cases and reconciled both author receipts and the case matrix. These overlap author coverage. R3/R4 also verified two post-freeze wording corrections: C12 describes independent reports/provenance rather than new identities, and the original command receipt now spells the full output paths. Their hashes are in `r34.json`; no product/probe change or rerun is claimed. Final follow-up edits add these review records, status and submission checks only. The audit retains 0 Blocking / 3 Major / 2 Minor broader-use findings; reviewer approval does not resolve those designer choices.
 
 ## Scope and skills
 

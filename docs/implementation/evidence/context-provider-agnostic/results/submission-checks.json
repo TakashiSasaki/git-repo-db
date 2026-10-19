@@ -1,0 +1,16 @@
+{
+  "checked_at_utc": "2026-10-19T23:37:19.861847+00:00",
+  "product_commit": "efb55af84ccbf1183d47547d22bb6c57d8fbc8f9",
+  "product_tree": "117d580b31098ecb8287281bd843894fdfad71fc",
+  "reviewed_audit_commit": "19ff4031440e541eeff9a119605b2b564ca5dd6d",
+  "relative_links_checked": 47,
+  "fixed_source_links_checked": 103,
+  "link_errors": [],
+  "probe_input_hashes_changed": [],
+  "protected_files_changed": [],
+  "ruff_lint": "passed",
+  "ruff_format": "passed",
+  "repository_prose_validation": "passed",
+  "scope": "Local static/source-binding verification; no new runtime test execution or release claim.",
+  "passed": true
+}
