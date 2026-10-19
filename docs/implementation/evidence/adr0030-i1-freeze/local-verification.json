@@ -2,7 +2,7 @@
   "runtime_inputs": {
     "algorithm": "SHA256(sorted path UTF8 + NUL + raw SHA256(file)); tracked src/tests/scripts/workflows plus pyproject.toml and uv.lock",
     "file_count": 414,
-    "sha256": "7d958f9b3dac2f7566686e33a93bc3bca3b9cd75167634748d57796ee3787ebf"
+    "sha256": "d2fb070b8c5fc37e552d8933774d64e4aee092a1f14b40a81a0a15323415755d"
   },
   "runtime": {
     "python": "3.12.14",
@@ -11,18 +11,18 @@
   },
   "focused": {
     "command": "uv run --no-sync pytest -q tests/integration/p1 tests/integration/p3 tests/integration/access tests/integration/p5/test_exchange.py::test_i1_relation_export_guard_without_i2_acquisition",
-    "passed": 910,
+    "passed": 918,
     "failed": 0,
     "by_group": {
-      "P1": 349,
-      "P3": 77,
+      "P1": 355,
+      "P3": 79,
       "Access": 483,
       "I3_boundary_refusal_control": 1
     }
   },
   "registry_selection": {
     "selection": ".github/workflows/access-registry.yml: Verify runtime and focused tests without overrides; default marker selection preserved",
-    "passed": 1875,
+    "passed": 1883,
     "failed": 37,
     "skipped": 0,
     "failed_nodes_equal_baseline": true,
@@ -65,7 +65,7 @@
       "tests/integration/p6/test_search_fallback.py::test_search_projection_and_five_fallback_scenarios_never_stop_catalog[sha1]",
       "tests/integration/p6/test_search_fallback.py::test_search_projection_and_five_fallback_scenarios_never_stop_catalog[sha256]"
     ],
-    "junit_sha256": "4cc08351bbdc71815617428d208f67366038004318db3c99f7cd96c9040619fb"
+    "junit_sha256": "c09c78457ed5819b13fc96ed5e2848157421d54ac356fbb0db555b864e7fe867"
   },
   "audits": {
     "build_p1_schema --check": "passed",
@@ -77,15 +77,15 @@
     "ruff format --check src tests scripts": "passed"
   },
   "distribution": {
-    "source_archive_tree": "d989ac5f5a4efbdb374b777fe41874e4497ca508",
+    "source_archive_tree": "1346fc1ca26216b5dedf47d16260f2d3913426d8",
     "source_note": "Clean index archive; later evidence/prose edits do not change runtime inputs. Final review and PR record bind final feature HEAD/tree.",
-    "command": "/workspace/git-repo-db/.venv/bin/python /workspace/i1-packaging-source/scripts/verify_access_distribution.py",
+    "command": "/workspace/git-repo-db/.venv/bin/python /workspace/i1-packaging-final/scripts/verify_access_distribution.py",
     "results": [
       {
         "sqlite": "3.53.1",
         "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
-        "module_origin": "/tmp/access-distribution-cu3yzwpa/wheel/lib/python3.12/site-packages/repo_catalog/__init__.py",
-        "interpreter": "/tmp/access-distribution-cu3yzwpa/wheel/bin/python",
+        "module_origin": "/tmp/access-distribution-pn_tam69/wheel/lib/python3.12/site-packages/repo_catalog/__init__.py",
+        "interpreter": "/tmp/access-distribution-pn_tam69/wheel/bin/python",
         "ddl_sha256": "89bcafeda815150fa4770f5758edf7d2d36d505b76717aa19054f9ad689765da",
         "context_ddl_sha256": "fa7838f86d9f0ab4b2f26c561ad0721df2d0c7dad45ee97e72ff09cbb89ac434",
         "table_count": 19,
@@ -95,14 +95,14 @@
         "scope_forked": true,
         "installed_smoke": "passed",
         "artifact_kind": "wheel",
-        "wheel_sha256": "725676aad3eefd314d540194d9ec3cc94a736313efc60ee5c4e6f88cafc37266",
-        "source_sdist_sha256": "a14ea8c31fe53bf1b307e0c95ffc97fbb99224ce47e470dbbbd17fe2b8abf370"
+        "wheel_sha256": "e3548dd066b9ff150406dd06ea61f80745a7ffebe3e2a04179bc22783bed0531",
+        "source_sdist_sha256": "92cc831d09d824e929148b36ec16987b9524e6b3d67601c713d001cf0e277935"
       },
       {
         "sqlite": "3.53.1",
         "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
-        "module_origin": "/tmp/access-distribution-cu3yzwpa/sdist-wheel/lib/python3.12/site-packages/repo_catalog/__init__.py",
-        "interpreter": "/tmp/access-distribution-cu3yzwpa/sdist-wheel/bin/python",
+        "module_origin": "/tmp/access-distribution-pn_tam69/sdist-wheel/lib/python3.12/site-packages/repo_catalog/__init__.py",
+        "interpreter": "/tmp/access-distribution-pn_tam69/sdist-wheel/bin/python",
         "ddl_sha256": "89bcafeda815150fa4770f5758edf7d2d36d505b76717aa19054f9ad689765da",
         "context_ddl_sha256": "fa7838f86d9f0ab4b2f26c561ad0721df2d0c7dad45ee97e72ff09cbb89ac434",
         "table_count": 19,
@@ -112,13 +112,47 @@
         "scope_forked": true,
         "installed_smoke": "passed",
         "artifact_kind": "sdist-wheel",
-        "wheel_sha256": "725676aad3eefd314d540194d9ec3cc94a736313efc60ee5c4e6f88cafc37266",
-        "source_sdist_sha256": "a14ea8c31fe53bf1b307e0c95ffc97fbb99224ce47e470dbbbd17fe2b8abf370"
+        "wheel_sha256": "e3548dd066b9ff150406dd06ea61f80745a7ffebe3e2a04179bc22783bed0531",
+        "source_sdist_sha256": "92cc831d09d824e929148b36ec16987b9524e6b3d67601c713d001cf0e277935"
       }
     ]
   },
+  "independent_initial_review": {
+    "head": "caf525b77207f4c99f1b407b22e8ee9735cde1b1",
+    "tree": "200da4721607e87c900663d18abc0d4e11be65a5",
+    "verdict": "CHANGES REQUIRED",
+    "findings": 4,
+    "record": "initial-independent-review.md",
+    "renewed_review": "Exact new pushed HEAD/tree and verdict recorded in PR #107"
+  },
+  "superseded_gate": {
+    "head": "caf525b77207f4c99f1b407b22e8ee9735cde1b1",
+    "tree": "200da4721607e87c900663d18abc0d4e11be65a5",
+    "runtime_inputs": {
+      "algorithm": "SHA256(sorted path UTF8 + NUL + raw SHA256(file)); tracked src/tests/scripts/workflows plus pyproject.toml and uv.lock",
+      "file_count": 414,
+      "sha256": "7d958f9b3dac2f7566686e33a93bc3bca3b9cd75167634748d57796ee3787ebf"
+    },
+    "focused": {
+      "command": "uv run --no-sync pytest -q tests/integration/p1 tests/integration/p3 tests/integration/access tests/integration/p5/test_exchange.py::test_i1_relation_export_guard_without_i2_acquisition",
+      "passed": 910,
+      "failed": 0,
+      "by_group": {
+        "P1": 349,
+        "P3": 77,
+        "Access": 483,
+        "I3_boundary_refusal_control": 1
+      }
+    },
+    "registry_passed": 1875,
+    "registry_failed": 37,
+    "hosted_registry_run": 39246816041,
+    "hosted_sqlite": "3.51.3",
+    "hosted_counts": "1875 passed / 37 failed"
+  },
   "limits": [
     "Not complete release acceptance",
-    "Hosted minimum SQLite evidence and final immutable review target are recorded separately in PR #107"
+    "Hosted minimum SQLite evidence and final immutable review target are recorded separately in PR #107",
+    "An intermediate revised registry run was interrupted when missing-clock regression coverage was added; its partial execution is not acceptance evidence. The full final runs above replace it."
   ]
 }

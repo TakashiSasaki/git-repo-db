@@ -101,6 +101,20 @@ def test_generic_resource_relation_cannot_register_transfer_scope(context):
     assert not (path.parent / "p1-recovery-stop.json").exists()
 
 
+@pytest.mark.parametrize("invalid_filter", ["empty_provider_id", "ordinary_comment"])
+def test_invalid_relation_filters_do_not_stop_valid_catalog(directory, invalid_filter):
+    with Context.snapshot(directory) as store:
+        with pytest.raises(ValueError):
+            if invalid_filter == "empty_provider_id":
+                store.relations_for_provider_repository(SERVICE, "")
+            else:
+                store.transfer_event_reports(
+                    ResourceKey(SERVICE, "comment", "ordinary-comment")
+                )
+        assert store.transfer_event_reports() == ()
+    assert not (directory / "p1-recovery-stop.json").exists()
+
+
 def collection(
     key=KEY,
     *,

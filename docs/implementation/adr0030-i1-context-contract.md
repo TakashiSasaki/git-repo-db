@@ -96,6 +96,29 @@ Registered deterministic functions validate JSON structure in SQL triggers and C
    - Self-replacement and partial-NULL replacements are rejected by CHECK constraints.
    - Mutually contradictory corrections (correction cycles) remain representable as unresolved reports (`state="unresolved_correction"`) without picking arbitrary winners.
 
+### Transfer report dependency and stored-scope encoding
+
+Transfer rows use only `admit_transfer_event()`, with one exact shared report
+provenance. `encode_transfer_supported_provenance(source, evidence, supports)`
+accepts `(relation_kind, MappingSupport)` entries. It preserves original evidence
+and adds a finite `evidence.transfer_mapping_supports` list of exact
+`{relation_kind, target_json, mapping_support}` entries. Each support contains
+the actual Provider Repository and complete MappingClaimKey coordinates; role
+plus target selects the endpoint's support. Duplicate coordinates, target
+mismatches, non-Transfer roles and mixing singular/plural support are rejected.
+The existing singular `mapping_support` encoding remains for existing callers.
+This is an encoding within the existing provenance/key, not a new table, identity
+or Witness. Missing support remains unqualified; another role/provider cannot
+supply it implicitly.
+
+`selection_truncated` is an ephemeral report qualifier, preserved on reselection
+and rejected at complete admission. It covers omitted alternatives even when
+another endpoint of the same role survives. It adds no persisted column or key.
+Stored reads and recovery share `TransferEventReport.from_stored_scope()`;
+canonical scope fields, clock, event type, supplied roles and exact unique
+Provider members must agree with the report. Referenced Provider Resources must
+exist. These checks preserve declarations, not Provider authenticity.
+
 ## 5. Coverage Scope Scoping & Second-Authority Elimination
 
 - `CoverageScope.repository_relation(repository_uuidv4, resource, relation_kind, coverage_kind)` scopes coverage strictly to the specific relation role.
@@ -116,7 +139,7 @@ Downstream callers requiring semantics from future ADR 0030 stages fail with exp
 
 ## 7. Verification Evidence & Counterexamples
 
-The original I1 specification listed 17 counterexamples; the previous reviewed tree added cases 18–20. The contract-freeze gate adds cases 21–24 below. These are focused I1 checks, not full downstream acceptance:
+The original I1 specification listed 17 counterexamples; the previous reviewed tree added cases 18–20. The contract-freeze gate adds cases 21–28 below. These are focused I1 checks, not full downstream acceptance:
 
 - **Counterexample 1**: Conflicting immutable mappings in reverse arrival order survive; exact resend yields duplicate.
 - **Counterexample 2**: Current candidate clock pruning prunes only strictly dominated comparable values.
@@ -145,6 +168,11 @@ The original I1 specification listed 17 counterexamples; the previous reviewed t
 - **Counterexample 24**: Generic `Context.relation()` cannot insert a `transfer_event_report` scope without the complete typed report.
 
 See [the contract-freeze record](adr0030-i1-contract-freeze.md) for current execution and exact review targets.
+
+- **Counterexample 25**: Shared Transfer report provenance retains per-(role,target) exact MappingSupport for both A→B endpoints; disposing A's claim does not dispose or supply B's support.
+- **Counterexample 26**: Selection that drops only some alternatives remains `selection_truncated`, including after reselection; it cannot be admitted as a complete report.
+- **Counterexample 27**: Empty Provider IDs and non-Timeline comment filters reject before stored-data handlers and do not create P7 stops.
+- **Counterexample 28**: Read and recovery use the same stored-report parser to check exact scope fields, provided roles, Provider member coordinates and their existence.
 
 ### Public Context Facade Hardening
 

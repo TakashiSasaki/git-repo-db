@@ -404,6 +404,32 @@ def validate_mapping_provenance(provenance_json: object) -> dict[str, Any]:
     evidence = parsed["evidence"]
     if type(evidence) is dict and "mapping_support" in evidence:
         _validate_embedded_mapping_support(evidence["mapping_support"])
+    if type(evidence) is dict and "transfer_mapping_supports" in evidence:
+        if "mapping_support" in evidence:
+            raise ValueError("Cannot combine singular and Transfer mapping support")
+        entries = evidence["transfer_mapping_supports"]
+        if type(entries) is not list or not entries:
+            raise ValueError("transfer_mapping_supports must be a non-empty list")
+        seen = set()
+        for entry in entries:
+            if type(entry) is not dict or set(entry) != {
+                "relation_kind",
+                "target_json",
+                "mapping_support",
+            }:
+                raise ValueError("Invalid Transfer mapping support entry")
+            if entry["relation_kind"] not in TRANSFER_RELATION_KINDS:
+                raise ValueError("Transfer mapping support requires a Transfer role")
+            validate_mapping_target(
+                entry["target_json"], relation_kind="represents_repository"
+            )
+            support = MappingSupport.from_dict(entry["mapping_support"])
+            if canonical(support.target_repository_uuidv4) != entry["target_json"]:
+                raise ValueError("Transfer mapping support target mismatch")
+            key = (entry["relation_kind"], entry["target_json"])
+            if key in seen:
+                raise ValueError("Duplicate Transfer mapping support coordinate")
+            seen.add(key)
     if "claimed_issuer" in parsed:
         issuer = parsed["claimed_issuer"]
         if issuer is not None:
@@ -816,7 +842,11 @@ class RelationClaimKey:
 
     @property
     def embedded_support(self) -> MappingSupport | None:
-        return extract_mapping_support(self.provenance_json)
+        return extract_mapping_support(
+            self.provenance_json,
+            relation_kind=self.relation_kind,
+            target_json=self.target_json,
+        )
 
     def coordinates(self) -> tuple[str, str, str, str, str, str, str]:
         return (
@@ -1041,11 +1071,57 @@ def encode_supported_provenance(
     )
 
 
-def extract_mapping_support(provenance_json: str) -> MappingSupport | None:
+def encode_transfer_supported_provenance(
+    source: str,
+    evidence: Any,
+    supports: Iterable[tuple[RelationKind, MappingSupport]],
+    *,
+    claimed_issuer: ClaimedIssuer | None | object = OMITTED_ISSUER,
+) -> str:
+    """One original report provenance with exact support per (role, target)."""
+    if evidence is None:
+        raise ValueError("evidence must not be None")
+    merged = (
+        dict(evidence) if type(evidence) is dict else {"original_evidence": evidence}
+    )
+    if {"mapping_support", "transfer_mapping_supports"} & set(merged):
+        raise ValueError("evidence already contains mapping support")
+    entries = []
+    for role, support in supports:
+        if not isinstance(support, MappingSupport):
+            raise ValueError("support must be a MappingSupport instance")
+        entries.append(
+            {
+                "relation_kind": role,
+                "target_json": canonical(support.target_repository_uuidv4),
+                "mapping_support": support.to_dict(),
+            }
+        )
+    merged["transfer_mapping_supports"] = sorted(
+        entries, key=lambda e: (e["relation_kind"], e["target_json"])
+    )
+    return encode_mapping_provenance(source, merged, claimed_issuer=claimed_issuer)
+
+
+def extract_mapping_support(
+    provenance_json: str,
+    *,
+    relation_kind: RelationKind | None = None,
+    target_json: str | None = None,
+) -> MappingSupport | None:
     parsed = validate_mapping_provenance(provenance_json)
     evidence = parsed["evidence"]
     if type(evidence) is dict and "mapping_support" in evidence:
         return MappingSupport.from_dict(evidence["mapping_support"])
+    if type(evidence) is dict and "transfer_mapping_supports" in evidence:
+        if relation_kind not in TRANSFER_RELATION_KINDS or target_json is None:
+            raise ValueError("Transfer mapping support requires endpoint coordinates")
+        for entry in evidence["transfer_mapping_supports"]:
+            if (entry["relation_kind"], entry["target_json"]) == (
+                relation_kind,
+                target_json,
+            ):
+                return MappingSupport.from_dict(entry["mapping_support"])
     return None
 
 
@@ -1573,11 +1649,14 @@ class TransferEventReport:
     to_provider_repository: ResourceKey | None = None
     omitted_roles: frozenset[RelationKind] = frozenset()
     event_type: str = "transferred"
+    selection_truncated: bool = False
 
     def __post_init__(self) -> None:
         if not isinstance(self.report_key, EventReportKey):
             raise ValueError("TransferEventReport.report_key must be an EventReportKey")
         validate_observation_us(self.observed_at_us)
+        if type(self.selection_truncated) is not bool:
+            raise ValueError("selection_truncated must be bool")
         if self.event_type != "transferred":
             raise ValueError(
                 f"TransferEventReport requires genuine event_type='transferred', got {self.event_type!r}"
@@ -1631,6 +1710,92 @@ class TransferEventReport:
             )
         if not self.omitted_roles.isdisjoint(self.provided_roles):
             raise ValueError("omitted_roles cannot overlap with provided_roles")
+        for relations, provider in (
+            (self.from_relations, self.from_provider_repository),
+            (self.to_relations, self.to_provider_repository),
+        ):
+            if provider is not None and any(
+                r.embedded_support is not None
+                and r.embedded_support.provider_repository != provider
+                for r in relations
+            ):
+                raise ValueError(
+                    "Transfer MappingSupport must match its Provider endpoint"
+                )
+
+    @property
+    def scope_json(self) -> str:
+        return canonical(
+            {
+                "clock": json.loads(self.clock.encode()),
+                "event_type": self.event_type,
+                "from_provider_repository_id": self.from_provider_repository.provider_resource_id
+                if self.from_provider_repository
+                else None,
+                "to_provider_repository_id": self.to_provider_repository.provider_resource_id
+                if self.to_provider_repository
+                else None,
+                "provided_roles": sorted(self.provided_roles),
+            }
+        )
+
+    @property
+    def members_json(self) -> str:
+        members = []
+        for provider in (self.from_provider_repository, self.to_provider_repository):
+            if provider is not None and list(provider.coordinates()) not in members:
+                members.append(list(provider.coordinates()))
+        return canonical(members)
+
+    @classmethod
+    def from_stored_scope(
+        cls,
+        report_key: EventReportKey,
+        relations: Iterable[ResourceRepositoryRelation],
+        scope_json: str,
+        members_json: str,
+        observed_at_us: int | None,
+    ) -> TransferEventReport:
+        """Recheck original scope and membership without filling missing declarations."""
+        scope = _parse_canonical_json(scope_json)
+        if type(scope) is not dict or set(scope) != {
+            "clock",
+            "event_type",
+            "from_provider_repository_id",
+            "to_provider_repository_id",
+            "provided_roles",
+        }:
+            raise ValueError("Invalid stored Transfer report scope")
+        rels = tuple(relations)
+
+        def provider(name: str) -> ResourceKey | None:
+            value = scope[name]
+            return (
+                None
+                if value is None
+                else ResourceKey(
+                    report_key.service_instance_uuidv4, "repository", value
+                )
+            )
+
+        report = cls(
+            report_key,
+            observed_at_us,
+            from_relations=tuple(
+                r for r in rels if r.relation_kind == "transfer_from_repository"
+            ),
+            to_relations=tuple(
+                r for r in rels if r.relation_kind == "transfer_to_repository"
+            ),
+            from_provider_repository=provider("from_provider_repository_id"),
+            to_provider_repository=provider("to_provider_repository_id"),
+            event_type=scope["event_type"],
+        )
+        if scope_json != report.scope_json or members_json != report.members_json:
+            raise ValueError(
+                "Stored Transfer report scope/members do not match endpoints"
+            )
+        return report
 
     def _validate_endpoint_relation(
         self, relation: ResourceRepositoryRelation, expected_role: RelationKind
@@ -1781,7 +1946,7 @@ class TransferEventReport:
 
     @property
     def has_selection_omission(self) -> bool:
-        return bool(self.omitted_roles)
+        return bool(self.omitted_roles) or self.selection_truncated
 
     def select_for_repositories(
         self, selected_repository_uuidv4s: Iterable[str]
@@ -1828,6 +1993,11 @@ class TransferEventReport:
             ),
             omitted_roles=frozenset(omitted),
             event_type=self.event_type,
+            selection_truncated=(
+                self.selection_truncated
+                or len(kept_from) != len(self.from_relations)
+                or len(kept_to) != len(self.to_relations)
+            ),
         )
 
 

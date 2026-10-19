@@ -26,6 +26,7 @@ from repo_catalog.domain.p1_context import (
     TransferEventReport,
     canonical,
     encode_supported_provenance,
+    encode_transfer_supported_provenance,
     evaluate_repository_mapping,
 )
 from repo_catalog.domain.p1_coordination import CoordinationError
@@ -101,7 +102,18 @@ def test_transfer_generic_admission_requires_complete_report(
         validate_stored_context_relations(selected.db)
 
 
-@pytest.mark.parametrize("scope_state", ["absent", "missing_type", "wrong_type"])
+@pytest.mark.parametrize(
+    "scope_state",
+    [
+        "absent",
+        "missing_type",
+        "wrong_type",
+        "provided_roles",
+        "members",
+        "missing_provider",
+        "missing_clock",
+    ],
+)
 def test_transfer_stored_type_is_never_inferred(context_db, scope_state):
     db, store, _ = context_db
     report = TransferEventReport.from_targets(
@@ -127,14 +139,26 @@ def test_transfer_stored_type_is_never_inferred(context_db, scope_state):
             "from_provider_repository_id": None,
             "to_provider_repository_id": None,
         }
+        if scope_state != "missing_type":
+            scope["event_type"] = "transferred"
         if scope_state == "wrong_type":
             scope["event_type"] = "closed"
+        if scope_state == "provided_roles":
+            scope["provided_roles"] = []
+        if scope_state == "missing_clock":
+            scope.pop("clock")
+        members = "[]"
+        if scope_state == "members":
+            members = canonical([[SERVICE, "repository", "not-declared"]])
+        if scope_state == "missing_provider":
+            scope["from_provider_repository_id"] = "missing-provider"
+            members = canonical([[SERVICE, "repository", "missing-provider"]])
         db.execute(
             "INSERT INTO resource_relations VALUES(?,?,?,?,?,?,?,?)",
             (
                 *KEY_EVENT.coordinates(),
                 "transfer_event_report",
-                "[]",
+                members,
                 PROVENANCE_1,
                 canonical(scope),
                 1,
@@ -160,6 +184,84 @@ def test_transfer_report_fk_failure_rolls_back_whole_unit(context_db):
     with pytest.raises(sqlite3.IntegrityError):
         store.admit_transfer_event(report)
     assert list(db.iterdump()) == before
+
+
+def test_transfer_supports_both_endpoints_without_cross_borrowing(context_db):
+    _, store, _ = context_db
+    provider_a = ResourceKey(SERVICE, "repository", "provider-a")
+    provider_b = ResourceKey(SERVICE, "repository", "provider-b")
+    claims = []
+    for provider, target in ((provider_a, REPO_1), (provider_b, REPO_2)):
+        store.resource(provider)
+        claim = ResourceRepositoryRelation(
+            provider,
+            "represents_repository",
+            FieldClock("mapping", 1),
+            canonical(target),
+            PROVENANCE_1,
+            1,
+        )
+        store.admit_repository_relation(claim)
+        claims.append(claim.claim_key)
+    provenance = encode_transfer_supported_provenance(
+        "github",
+        {"event": "observed-transfer"},
+        (
+            ("transfer_from_repository", MappingSupport(provider_a, (claims[0],))),
+            ("transfer_to_repository", MappingSupport(provider_b, (claims[1],))),
+        ),
+    )
+    report = TransferEventReport.from_targets(
+        KEY_EVENT,
+        clock=FieldClock("event", 1),
+        provenance_json=provenance,
+        from_target_json=canonical(REPO_1),
+        to_target_json=canonical(REPO_2),
+        from_provider_repository=provider_a,
+        to_provider_repository=provider_b,
+    )
+    assert store.admit_transfer_event(report) == "insert"
+    assert store.admit_transfer_event(report) == "duplicate"
+    rows = {r.relation_kind: r for r in store.repository_relations(KEY_EVENT)}
+    assert rows["transfer_from_repository"].supporting_bindings == (claims[0],)
+    assert rows["transfer_to_repository"].supporting_bindings == (claims[1],)
+    assert all(r.support_status == "active" for r in rows.values())
+    disposition = MappingDisposition(
+        claims[0], "withdraw", FieldClock("operation", 2), PROVENANCE_2, 2
+    )
+    store.admit_mapping_disposition(disposition)
+    evidence = MappingOperationEvidence(
+        confirmed_disposition_keys=frozenset({disposition.disposition_key})
+    )
+    rows = {
+        r.relation_kind: r
+        for r in store.repository_relations(KEY_EVENT, evidence=evidence)
+    }
+    assert (
+        rows["transfer_from_repository"].support_status == "supporting_binding_disposed"
+    )
+    assert rows["transfer_to_repository"].support_status == "active"
+    assert store.transfer_event_reports() == (report,)
+    validate_stored_context_relations(store.db)
+
+
+def test_partial_transfer_alternatives_remain_selection_truncated(context_db):
+    _, store, _ = context_db
+    report = TransferEventReport.from_targets(
+        KEY_EVENT,
+        clock=FieldClock("event", 1),
+        provenance_json=PROVENANCE_1,
+        from_target_json=(canonical(REPO_1), canonical(REPO_2)),
+    )
+    selected = report.select_for_repositories([REPO_1])
+    assert selected is not None and len(selected.from_relations) == 1
+    assert selected.omitted_roles == frozenset()
+    assert selected.has_selection_omission
+    selected_again = selected.select_for_repositories([REPO_1, REPO_2])
+    assert selected_again is not None and selected_again.has_selection_omission
+    with pytest.raises(ValueError, match="Selection-truncated"):
+        store.admit_transfer_event(selected_again)
+    assert store.admit_transfer_event(report) == "insert"
 
 
 @pytest.fixture

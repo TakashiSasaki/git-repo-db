@@ -42,6 +42,7 @@ from repo_catalog.domain.p1_context import (
     ResourceRepositoryRelation,
     TransferEventReport,
     canonical,
+    validate_timeline_event_coordinates,
 )
 from repo_catalog.domain.p1_coordination import CoordinationError
 from repo_catalog.domain.p1_core import OID, uuid4_value
@@ -915,6 +916,7 @@ class Context(ContextStore):
                     "provider_repository_id required when passing service instance uuid"
                 )
             prov_id = provider_repository_id
+        ResourceKey(service, "repository", prov_id)
         if relation_kind is not None and relation_kind not in RELATION_KINDS:
             raise ValueError(f"Unknown relation_kind: {relation_kind!r}")
         if evidence is not None and not isinstance(evidence, MappingOperationEvidence):
@@ -945,6 +947,8 @@ class Context(ContextStore):
                 raise ValueError(
                     "transfer_event_reports requires an issue or comment resource"
                 )
+            if resource.resource_kind == "comment":
+                validate_timeline_event_coordinates(resource.provider_resource_id)
         if repository_uuidv4 is not None:
             uuid4_value(repository_uuidv4)
         selected_tuple: tuple[str, ...] | None = None

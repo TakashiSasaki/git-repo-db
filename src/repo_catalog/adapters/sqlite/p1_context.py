@@ -325,24 +325,8 @@ class ContextStore:
                         "Transfer event report endpoints changed during replay"
                     )
 
-            scope_payload = canonical(
-                {
-                    "clock": json.loads(report.clock.encode()),
-                    "event_type": report.event_type,
-                    "from_provider_repository_id": (
-                        report.from_provider_repository.provider_resource_id
-                        if report.from_provider_repository is not None
-                        else None
-                    ),
-                    "provided_roles": sorted(report.provided_roles),
-                    "to_provider_repository_id": (
-                        report.to_provider_repository.provider_resource_id
-                        if report.to_provider_repository is not None
-                        else None
-                    ),
-                }
-            )
-            members_json = canonical(members)
+            scope_payload = report.scope_json
+            members_json = report.members_json
             existing_scopes = self.db.execute(
                 """SELECT members_json,scope_json,observed_at_us FROM resource_relations
                 WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=?
@@ -773,19 +757,21 @@ class ContextStore:
             WHERE relation_kind='transfer_event_report'
             ORDER BY service_instance_uuidv4,provider_resource_id,provenance_json,scope_json"""
         ).fetchall()
-        scope_meta: dict[tuple[str, str, str, str, str], tuple[dict, int | None]] = {}
+        scope_meta: dict[
+            tuple[str, str, str, str, str], tuple[str, str, int | None]
+        ] = {}
         for s_row in scope_rows:
             parsed_scope = json.loads(s_row[5])
+            if not isinstance(parsed_scope, dict) or "clock" not in parsed_scope:
+                raise ValueError("Invalid stored Transfer report scope: missing clock")
             clock_json = canonical(parsed_scope["clock"])
             key_coord = (s_row[0], s_row[1], s_row[2], clock_json, s_row[4])
-            if key_coord in scope_meta and scope_meta[key_coord] != (
-                parsed_scope,
-                s_row[6],
-            ):
+            metadata = (s_row[5], s_row[3], s_row[6])
+            if key_coord in scope_meta and scope_meta[key_coord] != metadata:
                 raise ValueError(
                     "Conflicting stored transfer_event_report scope for same EventReportKey"
                 )
-            scope_meta[key_coord] = (parsed_scope, s_row[6])
+            scope_meta[key_coord] = metadata
             grouped.setdefault(key_coord, [])
 
         reports: list[TransferEventReport] = []
@@ -802,47 +788,29 @@ class ContextStore:
             if issue_filter is not None and rep_key.issue_parent != issue_filter:
                 continue
             rels = grouped[key_coord]
-            obs_values = {r.observed_at_us for r in rels}
-            if key_coord in scope_meta:
-                obs_values.add(scope_meta[key_coord][1])
-            if len(obs_values) > 1:
-                raise ValueError(
-                    "Stored transfer event report has mismatched observed_at_us across endpoints"
-                )
-            obs_us = next(iter(obs_values)) if obs_values else None
-            from_rels = tuple(
-                r for r in rels if r.relation_kind == "transfer_from_repository"
-            )
-            to_rels = tuple(
-                r for r in rels if r.relation_kind == "transfer_to_repository"
-            )
-            from_prov_repo = None
-            to_prov_repo = None
             if key_coord not in scope_meta:
                 raise ValueError(
                     "Stored Transfer endpoint requires transfer_event_report scope"
                 )
-            event_type = None
-            if key_coord in scope_meta:
-                s_dict, _ = scope_meta[key_coord]
-                event_type = s_dict.get("event_type")
-                if s_dict.get("from_provider_repository_id") is not None:
-                    from_prov_repo = ResourceKey(
-                        svc, "repository", s_dict["from_provider_repository_id"]
-                    )
-                if s_dict.get("to_provider_repository_id") is not None:
-                    to_prov_repo = ResourceKey(
-                        svc, "repository", s_dict["to_provider_repository_id"]
-                    )
-            report = TransferEventReport(
-                report_key=rep_key,
-                observed_at_us=obs_us,
-                from_relations=from_rels,
-                to_relations=to_rels,
-                from_provider_repository=from_prov_repo,
-                to_provider_repository=to_prov_repo,
-                event_type=event_type,
+            scope_json, members_json, obs_us = scope_meta[key_coord]
+            report = TransferEventReport.from_stored_scope(
+                rep_key, rels, scope_json, members_json, obs_us
             )
+            from_rels, to_rels = report.from_relations, report.to_relations
+            for provider in (
+                report.from_provider_repository,
+                report.to_provider_repository,
+            ):
+                if (
+                    provider is not None
+                    and not self.db.execute(
+                        "SELECT 1 FROM resources WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=?",
+                        provider.coordinates(),
+                    ).fetchone()
+                ):
+                    raise ValueError(
+                        "Stored Transfer Provider endpoint resource is missing"
+                    )
             if repository_uuidv4 is not None:
                 all_targets = {
                     r.target_repository_uuidv4

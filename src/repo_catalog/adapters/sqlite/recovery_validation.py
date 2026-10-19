@@ -141,7 +141,9 @@ def validate_stored_context_relations(connection: sqlite3.Connection) -> None:
                 replacement_claim_key=replacement_key,
             )
 
-        scope_meta: dict[tuple[str, str, str, str, str], tuple[dict, int | None]] = {}
+        scope_meta: dict[
+            tuple[str, str, str, str, str], tuple[str, str, int | None]
+        ] = {}
         for row in connection.execute(
             """SELECT service_instance_uuidv4,resource_kind,provider_resource_id,
                       relation_kind,members_json,provenance_json,scope_json,observed_at_us
@@ -155,25 +157,27 @@ def validate_stored_context_relations(connection: sqlite3.Connection) -> None:
                     raise BackupValidationError(
                         "Stored transfer_event_report scope_json is missing clock"
                     )
-                clk_json = canonical(parsed_scope["clock"])
-                key_coord = (row[0], row[1], row[2], clk_json, row[5])
-                if key_coord in scope_meta and scope_meta[key_coord] != (
-                    parsed_scope,
-                    row[7],
-                ):
+                key_coord = (
+                    row[0],
+                    row[1],
+                    row[2],
+                    canonical(parsed_scope["clock"]),
+                    row[5],
+                )
+                metadata = (row[6], row[4], row[7])
+                if key_coord in scope_meta and scope_meta[key_coord] != metadata:
                     raise BackupValidationError(
                         "Conflicting stored transfer_event_report scopes for same EventReportKey"
                     )
-                scope_meta[key_coord] = (parsed_scope, row[7])
+                scope_meta[key_coord] = metadata
                 transfer_groups.setdefault(key_coord, [])
 
         for key_coord, rels in transfer_groups.items():
             svc, r_kind, p_id, clk_json, prov_json = key_coord
-            ev_res = ResourceKey(svc, r_kind, p_id)
             rep_key = EventReportKey(
-                event_resource=ev_res,
-                clock=FieldClock.from_json(clk_json),
-                provenance_json=prov_json,
+                ResourceKey(svc, r_kind, p_id),
+                FieldClock.from_json(clk_json),
+                prov_json,
             )
             if not connection.execute(
                 "SELECT 1 FROM resources WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=?",
@@ -182,44 +186,28 @@ def validate_stored_context_relations(connection: sqlite3.Connection) -> None:
                 raise BackupValidationError(
                     "Stored transfer event report parent issue resource is missing"
                 )
-            obs_values = {r.observed_at_us for r in rels}
-            from_prov_repo = None
-            to_prov_repo = None
             if key_coord not in scope_meta:
                 raise BackupValidationError(
                     "Stored Transfer endpoint requires transfer_event_report scope"
                 )
-            event_type = None
-            if key_coord in scope_meta:
-                s_dict, s_obs = scope_meta[key_coord]
-                obs_values.add(s_obs)
-                event_type = s_dict.get("event_type")
-                if s_dict.get("from_provider_repository_id") is not None:
-                    from_prov_repo = ResourceKey(
-                        svc, "repository", s_dict["from_provider_repository_id"]
-                    )
-                if s_dict.get("to_provider_repository_id") is not None:
-                    to_prov_repo = ResourceKey(
-                        svc, "repository", s_dict["to_provider_repository_id"]
-                    )
-            if len(obs_values) > 1:
-                raise BackupValidationError(
-                    "Stored transfer event report has mismatched observed_at_us across endpoints"
-                )
-            obs_us = next(iter(obs_values)) if obs_values else None
-            TransferEventReport(
-                report_key=rep_key,
-                observed_at_us=obs_us,
-                from_relations=tuple(
-                    r for r in rels if r.relation_kind == "transfer_from_repository"
-                ),
-                to_relations=tuple(
-                    r for r in rels if r.relation_kind == "transfer_to_repository"
-                ),
-                from_provider_repository=from_prov_repo,
-                to_provider_repository=to_prov_repo,
-                event_type=event_type,
+            scope_json, members_json, obs_us = scope_meta[key_coord]
+            report = TransferEventReport.from_stored_scope(
+                rep_key, rels, scope_json, members_json, obs_us
             )
+            for provider in (
+                report.from_provider_repository,
+                report.to_provider_repository,
+            ):
+                if (
+                    provider is not None
+                    and not connection.execute(
+                        "SELECT 1 FROM resources WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=?",
+                        provider.coordinates(),
+                    ).fetchone()
+                ):
+                    raise BackupValidationError(
+                        "Stored Transfer Provider endpoint resource is missing"
+                    )
 
         for owner_kind, coords_json in connection.execute(
             "SELECT owner_kind,owner_coordinates_json FROM coverage_scopes"

@@ -121,6 +121,9 @@ from repo_catalog.domain.p1_context import (
     encode_supported_provenance as encode_supported_provenance,
 )
 from repo_catalog.domain.p1_context import (
+    encode_transfer_supported_provenance as encode_transfer_supported_provenance,
+)
+from repo_catalog.domain.p1_context import (
     evaluate_repository_mapping as evaluate_repository_mapping,
 )
 from repo_catalog.domain.p1_context import (

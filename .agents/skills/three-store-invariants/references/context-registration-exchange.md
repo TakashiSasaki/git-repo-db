@@ -54,3 +54,12 @@ Run the Transfer tests in tests/integration/p1/test_context_relations.py and the
 generic scope test in tests/integration/p3/test_production_context.py. Include
 valid one-sided/two-sided reports, repeat delivery, whole-unit rollback and invalid
 stored-scope controls. See the [freeze record](../../../../docs/implementation/adr0030-i1-contract-freeze.md).
+
+For a multi-endpoint report, test supported A→B and multiple alternatives: one
+shared provenance must retain separate exact MappingClaimKeys for each role and
+target. A singular support object cannot describe two different targets. Keep
+selection truncation explicit even when some alternatives of a role remain;
+reselection cannot restore an omitted fact. Validate retained provided_roles and
+Provider members against the same canonical report parser used by recovery.
+Prevalidate complete caller filter coordinates outside stored-data fault handlers:
+an empty Provider ID or ordinary comment filter must not create a P7 stop.
