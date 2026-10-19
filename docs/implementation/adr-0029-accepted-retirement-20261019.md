@@ -53,10 +53,9 @@ scope boundary directly into [ADR 0029](../adr/0029-independent-access-store.md)
 alongside its family-level carry-forward table, and reconciled active agent
 guidance (`AGENTS.md`, `docs/phase2/AGENTS.md`, `docs/phase2/documentation-status-audit.md`,
 `.agents/skills/adr-workflow/SKILL.md`, `.agents/skills/sqlite-schema-visualization/SKILL.md`).
-Subsequent independent review (`R1`–`R4`, recorded under
-`docs/implementation/evidence/adr-0029-0030-final-review-20261019/`) re-verified
-all 43 ADR 0003 items and cross-document invariants against the primary
-pre-retirement text at `bb878eda47cf17268dd821c74343bac64d769ea7`.
+Subsequent independent review (`R1`–`R4`) re-verified all 43 ADR 0003 items and
+cross-document invariants against the primary pre-retirement text at
+`bb878eda47cf17268dd821c74343bac64d769ea7`.
 
 | Domain | Retained normative rule |
 | --- | --- |
