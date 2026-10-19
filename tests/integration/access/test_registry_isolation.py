@@ -13,6 +13,11 @@ ROOT = Path(__file__).resolve().parents[3]
 OWNED = {
     "src/repo_catalog/domain/access_registry.py",
     "src/repo_catalog/domain/access_connections.py",
+    "src/repo_catalog/domain/access_workflow.py",
+    "src/repo_catalog/domain/ports/access_workflow.py",
+    "src/repo_catalog/application/access_workflow.py",
+    "src/repo_catalog/adapters/filesystem/access_executor.py",
+    "src/repo_catalog/cli/access_workflow.py",
     "src/repo_catalog/domain/ports/access_connections.py",
     "src/repo_catalog/adapters/sqlite/access_connections.py",
     "src/repo_catalog/domain/ports/access_registry.py",
