@@ -17,6 +17,7 @@ from functools import lru_cache
 from importlib.resources import files
 from pathlib import Path
 
+from repo_catalog.domain import access_connections as connection_values
 from repo_catalog.domain.access_registry import (
     AccessRegistryError,
     AccessScope,
@@ -26,22 +27,29 @@ from repo_catalog.domain.access_registry import (
     scope_uuid,
 )
 
-FORMAT = "repo-catalog/access-registry-1"
-SCHEMA_VERSION = 1
+FORMAT = "repo-catalog/access-2"
+SCHEMA_VERSION = 2
 MIN_SQLITE = (3, 51, 3)
 TABLES = (
     "access_identity",
     "access_scopes",
     "scope_locator_controls",
     "scope_locators",
+    "scope_execution_contexts",
+    "repository_locators",
+    "connection_configurations",
+    "locator_connections",
+    "repository_access_preferences",
+    "local_access_grants",
 )
 
 
 def schema_sql() -> str:
-    return (
+    return "\n".join(
         files("repo_catalog.adapters.sqlite")
-        .joinpath("access_ddl", "registry.sql")
+        .joinpath("access_ddl", filename)
         .read_text(encoding="utf-8")
+        for filename in ("registry.sql", "connections.sql")
     )
 
 
@@ -86,8 +94,20 @@ def register_functions(db: sqlite3.Connection) -> None:
         ("access_uuid4", scope_uuid),
         ("access_label", display_label),
         ("access_scope_uri", scope_locator),
+        ("access_name", connection_values.name),
+        ("access_options", connection_values.profile_options),
+        ("access_execution_context", connection_values.execution_context),
+        ("access_repository_locator", connection_values.repository_locator),
     ):
         db.create_function(name, 1, predicate(validator), deterministic=True)
+
+    def transport(value):
+        try:
+            return connection_values.repository_locator(value)
+        except ValueError:
+            return ""
+
+    db.create_function("access_repository_transport", 1, transport, deterministic=True)
 
 
 def schema_rows(db: sqlite3.Connection) -> tuple[tuple, ...]:
@@ -129,8 +149,67 @@ def validate(db: sqlite3.Connection) -> None:
         for row in db.execute("SELECT enabled FROM scope_locator_controls"):
             if type(row[0]) is not int or row[0] not in (0, 1):
                 raise AccessRegistryError("CORRUPT", "invalid route control")
+        validate_connections(db)
     except (ValueError, UnicodeError):
         raise AccessRegistryError("CORRUPT", "invalid stored Access value") from None
+
+
+def validate_connections(db: sqlite3.Connection) -> None:
+    for table, validate_row in (
+        (
+            "scope_execution_contexts",
+            lambda r: connection_values.ScopeExecutionContext(
+                r[0], r[1], _boolean(r[2])
+            ),
+        ),
+        (
+            "repository_locators",
+            lambda r: connection_values.RepositoryBinding(*r[:3], _boolean(r[3])),
+        ),
+        (
+            "connection_configurations",
+            lambda r: connection_values.ConnectionConfiguration(*r[:3], _boolean(r[3])),
+        ),
+        (
+            "locator_connections",
+            lambda r: connection_values.LocatorConnection(
+                connection_values.AssignmentKey(*r[:4]), _boolean(r[4])
+            ),
+        ),
+        (
+            "repository_access_preferences",
+            lambda r: connection_values.AccessPreference(
+                r[0], connection_values.AssignmentKey(r[1], r[3], r[4], r[2])
+            ),
+        ),
+    ):
+        for row in db.execute(f"SELECT * FROM {table}"):
+            validate_row(row)
+    if db.execute(
+        "SELECT 1 FROM locator_connections a JOIN connection_configurations p USING(scope_uuidv4,configuration_name) WHERE access_repository_transport(a.locator_text)<>json_extract(p.options_json,'$.transport')"
+    ).fetchone():
+        raise AccessRegistryError("CORRUPT", "incompatible stored transport")
+    for row in db.execute("SELECT * FROM local_access_grants"):
+        plan = connection_values.AccessReviewPlan(
+            connection_values.AssignmentKey(*row[:4]),
+            row[4],
+            ScopeLocatorRegistration(row[0], row[5], row[6]),
+            row[7],
+            row[8],
+        )
+        connection_values.LocalAccessGrant(plan, row[9])
+        actual = db.execute(
+            "SELECT p.options_json,s.execution_context_json,s.enabled,r.enabled,p.enabled,a.enabled,c.enabled FROM locator_connections a JOIN repository_locators r USING(scope_uuidv4,locator_text) JOIN connection_configurations p USING(scope_uuidv4,configuration_name) JOIN scope_execution_contexts s USING(scope_uuidv4) JOIN scope_locator_controls c USING(scope_uuidv4) WHERE a.scope_uuidv4=? AND a.locator_text=? AND a.configuration_name=? AND a.purpose=? AND r.repository_uuidv4=? AND c.registered_at_us=? AND c.scope_locator_uri=?",
+            row[:7],
+        ).fetchone()
+        if actual != (row[7], row[8], 1, 1, 1, 1, 1):
+            raise AccessRegistryError("CORRUPT", "invalid stored local grant")
+
+
+def _boolean(value: object) -> bool:
+    if type(value) is not int or value not in (0, 1):
+        raise AccessRegistryError("CORRUPT", "invalid stored enablement")
+    return bool(value)
 
 
 def _path(value: str | Path) -> Path:

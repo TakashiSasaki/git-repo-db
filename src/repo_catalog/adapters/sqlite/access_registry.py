@@ -62,6 +62,13 @@ class AccessRegistry:
             return sqlite3.SQLITE_OK
         if self._writing and action in (sqlite3.SQLITE_INSERT, sqlite3.SQLITE_UPDATE):
             return sqlite3.SQLITE_OK
+        if (
+            self._writing
+            and action == sqlite3.SQLITE_DELETE
+            and _a == "local_access_grants"
+        ):
+            # A1b route-disable triggers revoke current grants, never history.
+            return sqlite3.SQLITE_OK
         return sqlite3.SQLITE_DENY
 
     def _ready(self) -> None:
