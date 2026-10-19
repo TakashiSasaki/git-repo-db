@@ -68,6 +68,37 @@ For bounded local inspection, use the
 Its summary helper validates consistency without claiming source/hosted release
 qualification. Frozen historical reports and execution input hashes stay intact.
 
+## Inventory beyond a focused CI cohort
+
+For assembled acceptance, collect `tests/` with `-o addopts=` before applying
+ordinary/live/benchmark markers. A green focused cohort does not cover omitted
+nodes. Install both locked dev and docs groups: the ordinary docs-build tests
+import PyYAML from the docs group. Prepare the locked wheelhouse before offline
+packaging tests, and verify its manifest/lock and wheel digests. Dependency
+preparation is distinct from executing Provider acquisition.
+
+Use `scripts/verify_i5_offline.py --output NEW_EMPTY_DIR --execute` with the
+actual SQLite 3.51.3 interpreter for disjoint focused/additional/benchmark
+cohorts, quiet raw logs, JUnit/journal reconciliation and input hashes. It is
+an acceptance evidence helper, not a release receipt. It refuses live nodes;
+report those as unexecuted. Its default xdist workers isolate disposable Catalogs;
+benchmark cases run separately without a concurrent timing comparison claim.
+
+Include the intended venv's `bin` directory in PATH as well as selecting its
+Python: subprocess `repo-catalog` must resolve to the same installed runtime.
+I5 first reproduced FileNotFoundError from a missing CLI PATH, then independently
+passed the same CLI/backup cases after fixing only the launcher. Preserve such
+environment failures instead of labeling them product defects or deleting tests.
+
+Freeze input bytes before collection. If another worker adds tests in a shared
+checkout, separate the immutable base-node inventory from the new tests and
+recollect the final tree. Require normal subprocess completion and exact node
+multisets; interrupted JUnit may contain a case without a completed result.
+Missing process-exit evidence must stay missing. Never infer success from a
+zombie process, progress dots, a partial XML case count or another run's badge.
+See the [I5 merge preparation](../../../docs/implementation/adr0030-i5-merge-plan.md)
+and its independently retained execution receipts.
+
 ## Development validation loop (ordinary PRs and stacked iterations)
 
 Before an exact SQLite-minimum run, query the actual loaded version and
