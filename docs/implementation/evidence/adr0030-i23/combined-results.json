@@ -1,0 +1,13 @@
+{
+  "primary": 2069,
+  "supplemental": 234,
+  "unique_selected": 2303,
+  "passed": 2276,
+  "failed": 27,
+  "error": 0,
+  "skipped": 0,
+  "known_p6_only": true,
+  "primary_input_binding": "cohort-input-binding.json",
+  "supplemental_input_head": "6d50ba22f4b3092516bce004de4611a1a5bd566d",
+  "full_acceptance": false
+}

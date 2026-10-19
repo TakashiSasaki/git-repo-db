@@ -1,0 +1,104 @@
+[
+  {
+    "command": [
+      "uv",
+      "run",
+      "--no-sync",
+      "ruff",
+      "check",
+      "src",
+      "tests",
+      "scripts"
+    ],
+    "exit_code": 0,
+    "started_at": "2026-10-19T15:53:28.350735+00:00",
+    "log": "final-audit-0.log",
+    "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18"
+  },
+  {
+    "command": [
+      "uv",
+      "run",
+      "--no-sync",
+      "ruff",
+      "format",
+      "--check",
+      "src",
+      "tests",
+      "scripts"
+    ],
+    "exit_code": 0,
+    "started_at": "2026-10-19T15:53:28.401436+00:00",
+    "log": "final-audit-1.log",
+    "sha256": "59bfabfcbb96102b6043e724434acc6cfc86ca2f11fb074c12b301695b13d211"
+  },
+  {
+    "command": [
+      "uv",
+      "run",
+      "--no-sync",
+      "python",
+      "scripts/build_p1_schema.py",
+      "--check"
+    ],
+    "exit_code": 0,
+    "started_at": "2026-10-19T15:53:28.447179+00:00",
+    "log": "final-audit-2.log",
+    "sha256": "a762dab70d78d277443dea4ad75fd9e27ad66a71745a540eab6ba41e5ab10496"
+  },
+  {
+    "command": [
+      "uv",
+      "run",
+      "--no-sync",
+      "python",
+      "scripts/audit_p1_schema.py",
+      "--check"
+    ],
+    "exit_code": 0,
+    "started_at": "2026-10-19T15:53:28.586029+00:00",
+    "log": "final-audit-3.log",
+    "sha256": "ec01476cdfe7a7ba2d06a0ad93daf32a7d2610d8b8a7b264ecc1a3e9337c4153"
+  },
+  {
+    "command": [
+      "uv",
+      "run",
+      "--no-sync",
+      "python",
+      "scripts/audit_context_registration.py"
+    ],
+    "exit_code": 0,
+    "started_at": "2026-10-19T15:53:28.746951+00:00",
+    "log": "final-audit-4.log",
+    "sha256": "a98a4027fa0b3f77f0766ea85dfdb8c6ae639c510a30c5631fcf8feeae582ba1"
+  },
+  {
+    "command": [
+      "uv",
+      "run",
+      "--no-sync",
+      "python",
+      "scripts/audit_callsite_dependencies.py",
+      "--check"
+    ],
+    "exit_code": 0,
+    "started_at": "2026-10-19T15:53:28.848314+00:00",
+    "log": "final-audit-5.log",
+    "sha256": "d681afc4b96429ed10ab71b553c843159a9059f1ccab704a52d3a458e3878989"
+  },
+  {
+    "command": [
+      "uv",
+      "run",
+      "--no-sync",
+      "python",
+      "scripts/audit_implementation_boundary.py",
+      "--check"
+    ],
+    "exit_code": 0,
+    "started_at": "2026-10-19T15:53:29.602611+00:00",
+    "log": "final-audit-6.log",
+    "sha256": "77ccfc0376d81464fe59198daeb0f23212511f7900a88b69fc79385449196025"
+  }
+]

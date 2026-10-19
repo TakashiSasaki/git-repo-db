@@ -1,0 +1,31 @@
+{
+  "source_log": "job-118152806076.log",
+  "source_log_sha256": "e57949dda3cd51727d0d2d955f3cbc8d3a3fd8a4f474d272de0ac85a48b4f130",
+  "receipt_bytes": 68951,
+  "receipt_sha256": "fd58a5b451ecdbfc875e5515ce8362498ee68ab5e2b581f71be3f1926f1b92b4",
+  "verified_index_members": 21,
+  "binding": {
+    "feature_sha": "6d50ba22f4b3092516bce004de4611a1a5bd566d",
+    "head": "02804e9359ab8e1e0d0f496b76e573e4d97c327d",
+    "run_attempt": "1",
+    "run_id": "39280209580",
+    "tree": "476ee24311a78efa3048b301ea598f22fb13bc45"
+  },
+  "outcome": "passed",
+  "acceptance_status": "development_checks_passed",
+  "full_acceptance": false,
+  "coverage_executed": 0,
+  "runtime": {
+    "python": "3.12.15",
+    "abi": "cpython-312-x86_64-linux-gnu",
+    "sqlite": "3.45.1",
+    "os": "Linux",
+    "arch": "x86_64",
+    "git": "git version 2.55.0",
+    "uv": "uv 0.12.19 (x86_64-unknown-linux-gnu)",
+    "runner_image": [
+      "ubuntu24",
+      "20261012.334.1"
+    ]
+  }
+}

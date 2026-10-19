@@ -1,0 +1,38 @@
+[
+  {
+    "sqlite": "3.51.3",
+    "sqlite_source_id": "2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618",
+    "module_origin": "/tmp/access-distribution-vyt4scv8/wheel/lib/python3.13/site-packages/repo_catalog/__init__.py",
+    "interpreter": "/tmp/access-distribution-vyt4scv8/wheel/bin/python",
+    "ddl_sha256": "89bcafeda815150fa4770f5758edf7d2d36d505b76717aa19054f9ad689765da",
+    "context_ddl_sha256": "fa7838f86d9f0ab4b2f26c561ad0721df2d0c7dad45ee97e72ff09cbb89ac434",
+    "table_count": 19,
+    "exchange_format": "git-repo-db/adr0030-exchange-v4",
+    "local_git_acquired": true,
+    "access_backup_restored": true,
+    "scope_forked": true,
+    "installed_i2_i3_cross_seed": "passed",
+    "installed_smoke": "passed",
+    "artifact_kind": "wheel",
+    "wheel_sha256": "bee593057a73ca669756e68c09a9516c0721295a512fd179bb593144a215f9da",
+    "source_sdist_sha256": "68b9b933d35480a922b3ee8041465dcc6aa2ef221bd9e2b624808005c0e3062c"
+  },
+  {
+    "sqlite": "3.51.3",
+    "sqlite_source_id": "2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618",
+    "module_origin": "/tmp/access-distribution-vyt4scv8/sdist-wheel/lib/python3.13/site-packages/repo_catalog/__init__.py",
+    "interpreter": "/tmp/access-distribution-vyt4scv8/sdist-wheel/bin/python",
+    "ddl_sha256": "89bcafeda815150fa4770f5758edf7d2d36d505b76717aa19054f9ad689765da",
+    "context_ddl_sha256": "fa7838f86d9f0ab4b2f26c561ad0721df2d0c7dad45ee97e72ff09cbb89ac434",
+    "table_count": 19,
+    "exchange_format": "git-repo-db/adr0030-exchange-v4",
+    "local_git_acquired": true,
+    "access_backup_restored": true,
+    "scope_forked": true,
+    "installed_i2_i3_cross_seed": "passed",
+    "installed_smoke": "passed",
+    "artifact_kind": "sdist-wheel",
+    "wheel_sha256": "bee593057a73ca669756e68c09a9516c0721295a512fd179bb593144a215f9da",
+    "source_sdist_sha256": "68b9b933d35480a922b3ee8041465dcc6aa2ef221bd9e2b624808005c0e3062c"
+  }
+]

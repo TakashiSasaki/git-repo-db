@@ -1,0 +1,74 @@
+"""Verify actual hosted artifact receipts against a recorded source manifest."""
+import argparse
+import collections
+import hashlib
+import io
+import json
+import pathlib
+import re
+import tarfile
+import xml.etree.ElementTree as ET
+import zipfile
+
+p = argparse.ArgumentParser()
+p.add_argument('--artifact', type=pathlib.Path, required=True)
+p.add_argument('--log', type=pathlib.Path, required=True)
+p.add_argument('--binding', type=pathlib.Path, required=True)
+p.add_argument('--known', type=pathlib.Path, required=True)
+p.add_argument('--out', type=pathlib.Path, required=True)
+p.add_argument('--run-id', type=int, required=True)
+p.add_argument('--job-id', type=int, required=True)
+p.add_argument('--artifact-id', type=int, required=True)
+a = p.parse_args()
+a.out.mkdir(exist_ok=True)
+binding = json.loads(a.binding.read_text())
+known = {x['node'] for x in json.loads(a.known.read_text())['failures'] if '/p6/' in x['node']}
+sha = hashlib.sha256(a.artifact.read_bytes()).hexdigest()
+assert re.findall(r'SHA256 digest of uploaded artifact is ([0-9a-f]{64})', a.log.read_text()) == [sha]
+with zipfile.ZipFile(a.artifact) as z:
+    for name in ('collected.txt', 'runtime.txt', 'source-revision.json', 'distribution.json', 'tests.xml'):
+        (a.out / name).write_bytes(z.read(name))
+    with tarfile.open(fileobj=io.BytesIO(z.read('source.tar.gz')), mode='r:gz') as t:
+        for name, expected in binding['input_sha256'].items():
+            assert hashlib.sha256(t.extractfile(name).read()).hexdigest() == expected, name
+
+def key(node):
+    prefix, bracket, parameter = node.partition('[')
+    parts = prefix.split('::')
+    return '.'.join([parts[0][:-3].replace('/', '.'), *parts[1:-1]]), parts[-1] + bracket + parameter
+
+nodes = [n.strip() for n in (a.out / 'collected.txt').read_text().splitlines() if n.startswith('tests/') and '::' in n]
+lookup = {key(n): n for n in nodes}
+junit, counts = collections.Counter(), collections.Counter()
+failures = []
+groups = collections.defaultdict(collections.Counter)
+for c in ET.parse(a.out / 'tests.xml').iter('testcase'):
+    coordinate = c.get('classname'), c.get('name')
+    junit[coordinate] += 1
+    node = lookup[coordinate]
+    result = next((v for v in ('failure', 'error', 'skipped') if c.find(v) is not None), 'passed')
+    counts[result] += 1
+    groups[node.split('/')[2] if node.startswith('tests/integration/') else 'unit'][result] += 1
+    if result != 'passed':
+        failures.append(node)
+assert len(nodes) == len(set(nodes)) == 2069
+assert junit == collections.Counter(key(n) for n in nodes)
+assert counts == {'passed': 2042, 'failure': 27} and set(failures) == known
+revision = json.loads((a.out / 'source-revision.json').read_text())
+assert revision['effective_tree'] == binding['tree']
+runtime = (a.out / 'runtime.txt').read_text().strip()
+assert 'SQLite: 3.51.3 source: 2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618' in runtime
+result = dict(run_id=a.run_id, job_id=a.job_id, artifact_id=a.artifact_id,
+    url=f'https://github.com/TakashiSasaki/git-repo-db/actions/runs/{a.run_id}',
+    feature_sha=binding['head'], revision=revision, runtime=runtime,
+    collected=len(nodes), counts=dict(counts), groups={k:dict(v) for k,v in groups.items()},
+    failed_nodes=failures, known_p6_same_nodes=True, selected_equals_junit=True,
+    all_input_hashes_match=len(binding['input_sha256']), artifact_sha256=sha,
+    artifact_upload_digest_matches=True, artifact_bytes=a.artifact.stat().st_size,
+    full_acceptance=False,
+    job_log_failure='pytest exit1 (27 known P6); Access acceptance audit also refuses failed nodes',
+    packaging='both isolated installed smokes passed on actual3.51.3',
+    phase_scope='Hosted artifact has collection/JUnit, no journal; no hosted per-phase exactly-once claim.',
+    metadata_discrepancy='Status metadata snapshot reported queued despite completed log and digest-verified artifact.')
+(a.out / 'results.json').write_text(json.dumps(result, indent=2) + '\n')
+print(json.dumps({k:v for k,v in result.items() if k not in ('failed_nodes','groups')}, indent=2))

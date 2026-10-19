@@ -271,3 +271,25 @@ visible until I2 supplies their real fixtures. A passing unsupported-boundary
 assertion proves refusal, not implementation of the deferred stage. Likewise,
 retired API fixture failures precede query behavior; do not claim query acceptance
 from those runs or restore a retired compatibility shim just to turn them green.
+
+
+## Resolve stale status with exact job logs and artifact bindings
+
+If run/job metadata remains queued while cancellation reports completion, verify
+rather than infer either state. ADR 0030 integration observed queued metadata
+alongside a complete job log and uploaded artifact for the same job/feature SHA.
+Use the supported GitHub job-log connector for the exact job ID; preserve the
+metadata snapshot, actual log and their discrepancy. Inspect real runtime, pytest
+summary, process exits, cleanup and artifact ID. A completed failed run remains
+failed even when every newly implemented test passed.
+
+If cloud artifact redirection returns403, the authorized GitHub artifact-download
+connector can supply a reusable file reference. Preserve the failed retrieval
+without temporary signed URLs. Verify downloaded ZIP bytes against the actual
+upload-log length/SHA256, then inspect allowlisted receipt members without blind
+extraction. Bind source-revision, archived input hashes, actual SQLite source ID,
+collection/JUnit multisets and failure inventory to the feature tree. Distinguish
+static development receipts with zero runtime tests from the separate minimum
+SQLite job. This is a supported retrieval route, not permission to bypass network
+policy, fabricate missing receipts or reinterpret failed acceptance as green.
+See the [I2/I3 evidence](../../../docs/implementation/evidence/adr0030-i23/README.md).

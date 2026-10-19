@@ -1,0 +1,23 @@
+{
+  "head": "6d50ba22f4b3092516bce004de4611a1a5bd566d",
+  "collected": 234,
+  "counts": {
+    "passed": 234
+  },
+  "groups": {
+    "p1": 205,
+    "p5_p6_compatibility": 29
+  },
+  "selected_equals_starts": true,
+  "selected_equals_junit": true,
+  "exactly_once_phases": true,
+  "finish": [
+    {
+      "event": "finish",
+      "status": "completed",
+      "exitstatus": 0,
+      "timestamp": 1792424676.137179
+    }
+  ],
+  "disjoint_primary": true
+}

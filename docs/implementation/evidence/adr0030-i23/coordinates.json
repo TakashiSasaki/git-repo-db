@@ -1,0 +1,45 @@
+{
+  "i1": {
+    "head": "9390c9f3b54a033e5f07e1cb05d7c4b263c38fb7",
+    "tree": "14c694218109de1e3dfebc93e7776d48ad79faf3"
+  },
+  "i2": {
+    "head": "9b8a6ad9b761bf23b45eda9f84d639569cee56ef",
+    "tree": "7c461c633c137086537158385feb03a1b79d7dfe"
+  },
+  "i3": {
+    "head": "5c5b816998f7051703ca400e8cfeab377254c435",
+    "tree": "a4c0ea69a0cf5f31b6ffcdaba918b52de1ed6c91"
+  },
+  "merge_base": "9390c9f3b54a033e5f07e1cb05d7c4b263c38fb7",
+  "merge": {
+    "head": "6dccd3c3bc4919975117a9cea80818936f2b9a5e",
+    "tree": "269c3eec3598e8eb1cf63a70b80a67ce2eb26104",
+    "parents": [
+      "9b8a6ad9b761bf23b45eda9f84d639569cee56ef",
+      "5c5b816998f7051703ca400e8cfeab377254c435"
+    ],
+    "text_conflicts": 0
+  },
+  "rejected_first_source": {
+    "head": "6b595ca69d2bcadb7a4643ec7c14191512b20086",
+    "tree": "25613415f2a96edaa07138492d795003d20ddf58"
+  },
+  "corrected_runtime": {
+    "head": "c20d41cba4f229a93cd750b2f5fe1b1e986f45e9",
+    "tree": "9316c83fcde284cf44f8586ad4b36e6a32ce6f97"
+  },
+  "final_source": {
+    "head": "6d50ba22f4b3092516bce004de4611a1a5bd566d",
+    "tree": "476ee24311a78efa3048b301ea598f22fb13bc45"
+  },
+  "prior_temporary_tree": "ae6287b8cf91d1b8efa772fb46763bcbd9325076",
+  "prior_tree_used_as_acceptance": false,
+  "pr": {
+    "number": 110,
+    "draft": true,
+    "url": "https://github.com/TakashiSasaki/git-repo-db/pull/110",
+    "base": 109
+  },
+  "merge_performed": false
+}

@@ -1,0 +1,31 @@
+import collections, importlib.util, json, pathlib, xml.etree.ElementTree as ET
+ROOT=pathlib.Path('/workspace/git-repo-db'); OUT=pathlib.Path('/workspace/i23-evidence/final')
+spec=importlib.util.spec_from_file_location('helper', ROOT/'.agents/skills/efficient-repository-investigation/scripts/summarize_pytest.py'); helper=importlib.util.module_from_spec(spec);spec.loader.exec_module(helper)
+previous=json.loads((ROOT/'docs/implementation/evidence/adr0030-i2/local-results.json').read_text())
+known={x['node'] for x in previous['failures'] if '/p6/' in x['node']}
+assert len(known)==27
+for label in ('local','sqlite3513'):
+ execution=OUT/f'{label}-execution.json'
+ if not execution.exists() or len(json.loads(execution.read_text())['commands'])<2:continue
+ nodes=[n.strip() for n in (OUT/f'{label}-collect.log').read_text().splitlines() if n.startswith('tests/') and '::' in n]
+ keys={helper.junit_key(n):n for n in nodes}; selected=collections.Counter(nodes)
+ starts=collections.Counter();phases=collections.Counter();finishes=[]
+ for line in (OUT/f'{label}.jsonl').read_text().splitlines():
+  e=json.loads(line)
+  if e['event']=='start': starts[e['nodeid']]+=1
+  elif e['event']=='phase':phases[e['nodeid'],e['phase']]+=1
+  else: finishes.append(e)
+ junit=collections.Counter();groups=collections.defaultdict(collections.Counter);counts=collections.Counter();failures=[]
+ for c in ET.parse(OUT/f'{label}.xml').iter('testcase'):
+  key=c.get('classname'),c.get('name');junit[key]+=1;node=keys.get(key,'UNMATCHED:'+str(key))
+  result=next((v for v in ('failure','error','skipped') if c.find(v) is not None),'passed')
+  counts[result]+=1;group=node.split('/')[2] if node.startswith('tests/integration/') else 'unit';groups[group][result]+=1
+  if result!='passed':failures.append(dict(node=node,outcome=result,detail=''.join(c.find(result).itertext()) if c.find(result) is not None else ''))
+ expected_phases=collections.Counter({(n,p):1 for n in selected for p in ('setup','call','teardown')})
+ failed_nodes={x['node'] for x in failures}
+ r=dict(label=label,head=json.loads(execution.read_text())['binding_head'],runtime=json.loads((OUT/f'{label}-runtime.json').read_text()),collected=len(nodes),counts=dict(counts),groups={k:dict(v) for k,v in groups.items()},failures=failures,
+       reconciliation=dict(selected_equals_starts=selected==starts,selected_equals_junit=collections.Counter(helper.junit_key(n) for n in nodes)==junit,exactly_once_phases=phases==expected_phases,unique_nodes=len(selected)==len(nodes),finish_events=finishes,process_exit=json.loads(execution.read_text())['commands'][-1]['exit_code']),known_p6_same_nodes=failed_nodes==known,new_failure_nodes=sorted(failed_nodes-known),resolved_known_nodes=sorted(known-failed_nodes),full_acceptance=False)
+ assert all(r['reconciliation'][k] for k in ('selected_equals_starts','selected_equals_junit','exactly_once_phases','unique_nodes'))
+ assert len(finishes)==1 and finishes[0]['exitstatus']==r['reconciliation']['process_exit']
+ (OUT/f'{label}-results.json').write_text(json.dumps(r,indent=2)+'\n')
+ print(label,counts,dict(groups),r['known_p6_same_nodes'])

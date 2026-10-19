@@ -1,0 +1,26 @@
+from pathlib import Path
+import re,base64,hashlib,zipfile,io,json
+base=Path('/workspace/i23-evidence/final/offline-final');base.mkdir(exist_ok=True);source=Path('/workspace/i23-evidence/final/job-118152806076.log')
+s=source.read_text()
+beg=re.findall(r'Z CI_RECEIPTS_BEGIN_V1 (\w+) (\d+)\s*$',s,re.M)
+end=re.findall(r'Z CI_RECEIPTS_END_V1 (\w+)\s*$',s,re.M)
+raw=base64.b64decode(''.join(re.findall(r'Z CI_RECEIPTS_DATA_V1 ([A-Za-z0-9+/=]+)\s*$',s,re.M)),validate=True)
+assert len(beg)==len(end)==1 and len(raw)==int(beg[0][1])
+assert hashlib.sha256(raw).hexdigest()==beg[0][0]==end[0]
+(base/'offline-receipt.zip').write_bytes(raw)
+with zipfile.ZipFile(io.BytesIO(raw)) as z:
+ idx=json.loads(z.read('receipt-index.json'))
+ for n,v in idx.items():
+  data=z.read(n)
+  assert len(data)==v['bytes'] and hashlib.sha256(data).hexdigest()==v['sha256'],n
+ for name in ['receipt-index.json','receipt-binding.json','validation-manifest.json']:
+  (base/('offline-'+name)).write_bytes(z.read(name))
+ binding=json.loads(z.read('receipt-binding.json'));manifest=json.loads(z.read('validation-manifest.json'))
+ assert binding['feature_sha']=='6d50ba22f4b3092516bce004de4611a1a5bd566d'
+ assert binding['tree']=='476ee24311a78efa3048b301ea598f22fb13bc45'
+ assert binding['run_id']=='39280209580'
+ assert manifest['acceptance_status']=='development_checks_passed'
+ assert manifest['full_acceptance'] is False and manifest['coverage']['executed']==0
+ result={'source_log':source.name,'source_log_sha256':hashlib.sha256(source.read_bytes()).hexdigest(),'receipt_bytes':len(raw),'receipt_sha256':beg[0][0],'verified_index_members':len(idx),'binding':binding,'outcome':manifest['outcome'],'acceptance_status':manifest['acceptance_status'],'full_acceptance':manifest['full_acceptance'],'coverage_executed':manifest['coverage']['executed'],'runtime':manifest['runtime']}
+ (base/'offline-reconciliation.json').write_text(json.dumps(result,indent=2)+'\n')
+ print(json.dumps(result))

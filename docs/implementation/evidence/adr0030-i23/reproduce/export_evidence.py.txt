@@ -1,0 +1,51 @@
+import gzip,hashlib,json,pathlib,shutil
+ROOT=pathlib.Path('/workspace/git-repo-db'); BASE=pathlib.Path('/workspace/i23-evidence'); FINAL=BASE/'final'; REVIEW=pathlib.Path('/workspace/i23-review'); DEST=ROOT/'docs/implementation/evidence/adr0030-i23';RAW=DEST/'raw';RAW.mkdir(exist_ok=True)
+def copy(src,name=None):
+ src=pathlib.Path(src);target=DEST/(name or src.name);target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(src.read_bytes())
+def gz(src,name=None):
+ src=pathlib.Path(src);target=RAW/((name or src.name)+'.gz');target.write_bytes(gzip.compress(src.read_bytes(),mtime=0))
+for name in ('source-binding.json','final-source-binding.json','cohort-input-binding.json','combined-results.json','end-refs.json','final-audits.json','distribution-final.json','distribution-final-execution.json'):
+ copy(FINAL/name)
+for label in ('local','sqlite3513'):
+ d=json.loads((FINAL/f'{label}-results.json').read_text())
+ for failure in d['failures']:
+  assert 'admit_repository' in failure['detail'];del failure['detail'];failure.update(direct_cause='Retired Context.admit_repository() call in P6 fixture/setup.',owner='I4',resolution='Use role-aware admission and provider-qualified current projection; do not restore old API.')
+ (DEST/f'{label}-results.json').write_text(json.dumps(d,indent=2)+'\n')
+ for suffix in ('-collect.log','-execute.log','.xml','.jsonl','-execution.json','-runtime.json'):gz(FINAL/f'{label}{suffix}')
+copy(FINAL/'supplemental-final/results.json','supplemental-results.json')
+for p in (FINAL/'supplemental-final').iterdir():
+ if p.is_file():gz(p,'supplemental-final-'+p.name)
+for p in FINAL.glob('final-audit-*.log'):gz(p)
+for p in ('job-118152806024.log','job-118152806076.log','distribution-final.log'):gz(FINAL/p)
+for p in (FINAL/'hosted-final').iterdir():
+ if p.name=='results.json':copy(p,'hosted-results.json')
+ elif p.suffix in('.json','.txt'):copy(p,'hosted-'+p.name)
+ else:gz(p,'hosted-'+p.name)
+for p in (FINAL/'offline-final').iterdir():copy(p)
+for p in ('initial-review.md','corrected-review.md'):
+ copy(REVIEW/p,'initial-independent-review.md' if p.startswith('initial') else 'independent-review.md')
+for p in REVIEW.iterdir():
+ if p.is_file() and p.suffix in('.py','.log','.xml','.json'):
+  gz(p,'review-'+p.name+('.txt' if p.suffix=='.py' else ''))
+for p in ('run_regression.py','run_supplemental_final.py','reconcile_offline_final.py'):
+ copy(FINAL/p,'reproduce/'+p+'.txt')
+for p in ('verify_hosted.py','summarize.py','export_evidence.py'):copy(BASE/p,'reproduce/'+p+'.txt')
+# Preserve earlier failed/bootstrap/interrupted attempts without assigning them final acceptance.
+for p in (BASE/'bootstrap-error').iterdir():
+ if p.is_file():gz(p,'bootstrap-'+p.name)
+for p in ('local-execute.log','local.xml','local.jsonl','supplemental-execute.log','supplemental.xml'):
+ source=BASE/p if p.startswith('local') else FINAL/p
+ if source.exists():gz(source,'prior-'+p)
+coordinates=dict(
+ i1={'head':'9390c9f3b54a033e5f07e1cb05d7c4b263c38fb7','tree':'14c694218109de1e3dfebc93e7776d48ad79faf3'},
+ i2={'head':'9b8a6ad9b761bf23b45eda9f84d639569cee56ef','tree':'7c461c633c137086537158385feb03a1b79d7dfe'},
+ i3={'head':'5c5b816998f7051703ca400e8cfeab377254c435','tree':'a4c0ea69a0cf5f31b6ffcdaba918b52de1ed6c91'},
+ merge_base='9390c9f3b54a033e5f07e1cb05d7c4b263c38fb7',
+ merge={'head':'6dccd3c3bc4919975117a9cea80818936f2b9a5e','tree':'269c3eec3598e8eb1cf63a70b80a67ce2eb26104','parents':['9b8a6ad9b761bf23b45eda9f84d639569cee56ef','5c5b816998f7051703ca400e8cfeab377254c435'],'text_conflicts':0},
+ rejected_first_source={'head':'6b595ca69d2bcadb7a4643ec7c14191512b20086','tree':'25613415f2a96edaa07138492d795003d20ddf58'},
+ corrected_runtime={'head':'c20d41cba4f229a93cd750b2f5fe1b1e986f45e9','tree':'9316c83fcde284cf44f8586ad4b36e6a32ce6f97'},
+ final_source={'head':'6d50ba22f4b3092516bce004de4611a1a5bd566d','tree':'476ee24311a78efa3048b301ea598f22fb13bc45'},
+ prior_temporary_tree='ae6287b8cf91d1b8efa772fb46763bcbd9325076',prior_tree_used_as_acceptance=False,
+ pr={'number':110,'draft':True,'url':'https://github.com/TakashiSasaki/git-repo-db/pull/110','base':109},merge_performed=False)
+(DEST/'coordinates.json').write_text(json.dumps(coordinates,indent=2)+'\n')
+print('Exported',len(list(DEST.rglob('*'))),'paths')

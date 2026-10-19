@@ -1,0 +1,27 @@
+import glob
+import datetime, hashlib, json, os, pathlib, shlex, subprocess, sys
+ROOT=pathlib.Path('/workspace/git-repo-db'); OUT=pathlib.Path('/workspace/i23-evidence/final')
+def git(*a):return subprocess.check_output(['git',*a],cwd=ROOT,text=True).strip()
+workflow=(ROOT/'.github/workflows/access-registry.yml').read_text()
+line=workflow.split('uv run --no-sync pytest -q ',1)[1].split('--collect-only',1)[0]
+targets=shlex.split(line.replace('\\\n',' '))
+targets=[expanded for value in targets for expanded in (sorted(glob.glob(value,root_dir=ROOT)) if '*' in value else [value])]
+binding={'head':git('rev-parse','HEAD'),'tree':git('rev-parse','HEAD^{tree}'),'status':git('status','--porcelain'), 'targets':targets}
+assert not binding['status']
+files=subprocess.check_output(['git','ls-files','src','tests','scripts','.github','pyproject.toml','uv.lock'],cwd=ROOT,text=True).splitlines()
+binding['input_sha256']={p:hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in files}
+(OUT/'source-binding.json').write_text(json.dumps(binding,indent=2)+'\n')
+for label,python,lib in [('local','/workspace/git-repo-db/.venv/bin/python',None),('sqlite3513','/workspace/i23-min-venv/bin/python','/workspace/i23-sqlite')]:
+ env=dict(os.environ);env['PATH']=str(pathlib.Path(python).parent)+os.pathsep+env['PATH']
+ if lib:env['LD_LIBRARY_PATH']=lib
+ runtime=subprocess.check_output([python,'-c','import sys,sqlite3,repo_catalog,json; print(json.dumps(dict(python=sys.version,sqlite=sqlite3.sqlite_version,source=sqlite3.connect(":memory:").execute("select sqlite_source_id()").fetchone()[0],module=repo_catalog.__file__)))'],cwd=ROOT,env=env,text=True)
+ if lib:assert json.loads(runtime)['sqlite']=='3.51.3'
+ (OUT/f'{label}-runtime.json').write_text(runtime)
+ common=[python,'-m','pytest','-q',*targets]
+ record={'binding_head':binding['head'],'runtime':json.loads(runtime),'commands':[]}
+ for phase,extra in [('collect',['--collect-only']),('execute',['-o','junit_family=xunit1','--junitxml='+str(OUT/f'{label}.xml'),'--journal',str(OUT/f'{label}.jsonl')])]:
+  cmd=common+extra; log=OUT/f'{label}-{phase}.log';start=datetime.datetime.now(datetime.timezone.utc).isoformat()
+  with log.open('wb') as f:r=subprocess.run(cmd,cwd=ROOT,env=env,stdout=f,stderr=subprocess.STDOUT)
+  record['commands'].append({'phase':phase,'command':cmd,'started_at':start,'finished_at':datetime.datetime.now(datetime.timezone.utc).isoformat(),'exit_code':r.returncode,'log':log.name,'log_sha256':hashlib.sha256(log.read_bytes()).hexdigest()})
+  (OUT/f'{label}-execution.json').write_text(json.dumps(record,indent=2)+'\n')
+  print(label,phase,r.returncode,flush=True)
