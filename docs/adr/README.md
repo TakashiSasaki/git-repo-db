@@ -2,7 +2,7 @@
 
 Read the current scope before implementation. This index describes accepted target decisions, not implemented or verified behavior.
 
-**Accepted ADR governance: [ADR 0011](0011-adr-governance.md) and [the operating policy](policy.md).** Full/Mini-ADR [templates](template.md) and [Mini template](template-mini.md) are repository files; the optional [adr-workflow skill](../../.agents/skills/adr-workflow/SKILL.md) is procedural. The policy's section 9 documents the bounded pre-adoption exception for existing ADRs 0001–0027: keep still-binding clauses until a separate semantics-preserving review authorizes retirement. ADR numbering allocation watermark: **0028** (0011 is now accepted, not a free gap). Acceptance, merging, implementation and executed verification remain distinct.
+**Accepted ADR governance: [ADR 0011](0011-adr-governance.md) and [the operating policy](policy.md).** Full/Mini-ADR [templates](template.md) and [Mini template](template-mini.md) are repository files; the optional [adr-workflow skill](../../.agents/skills/adr-workflow/SKILL.md) is procedural. The policy's section 9 documents the bounded pre-adoption exception for existing ADRs 0001–0027: keep still-binding clauses until a separate semantics-preserving review authorizes retirement. ADR numbering allocation watermark: **0029** (0011 is now accepted, not a free gap). Acceptance, merging, implementation and executed verification remain distinct.
 
 **Latest accepted origin policy: [ADR 0027 / Option A](0027-unauthenticated-external-capture-origin-reports.md).** External Capture issuer/source claims may be retained as unauthenticated attributed reports; no application PKI or electronic signatures at present. Preserve original Capture/semantic keys, actual provenance qualifications and immutable binding; neither UUIDs nor reported identity authenticate the issuer. Local byte/notes-role checks retain their exact scope, including for salvage. **Remaining owner blockers: provisionally 0 for the current migration scope**; engineering work and deferred features are not complete or newly authorized. Future genuine blocker questions include the remaining-count estimate and explain any increase.
 
@@ -23,6 +23,29 @@ Read the current scope before implementation. This index describes accepted targ
 **Latest product scope: [ADR 0014 / GCTX-S01](0014-history-and-notes-catalog-without-file-archive.md).** The product does not archive ordinary repository-file blob bodies. It retains Git metadata, commit/tree/tag representations when acquired, and purpose-bound Git notes content. Notes are blobs at the Git object layer, so a blanket blob ban is incorrect. [ADR 0015 / B01-R01](0015-automatic-git-notes-ref-discovery.md) fixes automatic notes namespace discovery plus explicit additional ref names, **not** note-body admission or complete enumeration. Earlier raw-body admission/repair decisions apply only to retained metadata/notes and legacy obligations. B01-R02 observation identity is fixed by [ADR 0016](0016-immutable-notes-ref-capture-observations.md); B01-R03 UUIDv4 capture identity is fixed by [ADR 0018](0018-notes-capture-uuidv4-composite-identity.md); B01-R04 compatible incremental facts/replay are fixed by [ADR 0019](0019-monotonic-notes-capture-fact-admission.md); B01-R05 competing member reports are now fixed by [ADR 0020](0020-immutable-competing-notes-member-claims.md); B01-R06 semantic claim/group identity is fixed by ADR 0021; B02-R01 role-evidence strength is fixed by ADR 0022; B02-R02 finite configurable budget policy is fixed by ADR 0023; exact proof grammar and B03 completeness remain unfinished; GCTX-M10 recovery is fixed by ADR 0026.
 
 **Latest accepted shared contract: [ADR 0028](0028-classified-times-and-sha256-exchange.md).** Owner-selected positive-or-NULL observation/Provider times, required positive Coverage coordinates, signed native Git times, and SHA-256-only Exchange integrity. No HMAC/authentication claim; no public Schema 21 activation. Decision accepted; implementation and verification require separate evidence.
+
+## Proposed Records — not accepted implementation authority
+
+| ADR | Scope and proposal | Review boundary |
+| --- | --- | --- |
+| [0029](0029-independent-access-store.md) | Independent Access; UUIDv4 Scope identity, separate Scope/Repository Locators and same-table dated Scope Locator history | Q-S1-Q-S4 A and latest-registration first choice confirmed by owner on 2026-10-17. Complete replacement and physical contract remain under review; no merge/P8 permission. |
+
+[Access storage design and source audit](../architecture/access-store-design.md)
+uses the initially reviewed `5e778bf61ef6` codebase and integration parent
+`b2a87cfc6562`. ADR 0029 proposes replacement of ADR 0003's explicit four-store
+boundary, with a complete carry-forward map. Before integration, acceptance must
+retire the replaced file and update current inbound links/index coherently under
+policy section 6. Until then ADR 0003 remains accepted; no migration exception is
+extended. Existing runtime, DDL and verification receipts are unchanged.
+
+**Scope decision checkpoint (2026-10-17):** names/URIs do not replace Scope UUID in
+PK/FK or external references. Preserve past registrations in `scope_locators`;
+maximum original registration time supplies the first-choice set, not an execution
+grant. Ties remain explicit. Continuity may retain UUID; independent fork gets a
+new UUID without relabeling origin history. Local per-assignment reapproval covers
+the chosen registration/route/profile/binding. The [implementation sequence and
+remaining gates](../architecture/access-store-design.md#8-design-first-dependency-plan)
+distinguish confirmed choices, engineering proposals and executed verification.
 
 ## Accepted Records
 
@@ -49,7 +72,7 @@ Read the current scope before implementation. This index describes accepted targ
 | [0019](0019-monotonic-notes-capture-fact-admission.md) | B01-R04: monotonic typed immutable facts/groups under one capture and idempotent exact replay | 2026-10-15 | Accepted Option A; competing reports refined by ADR 0020 |
 | [0020](0020-immutable-competing-notes-member-claims.md) | B01-R05: preserve conflicting notes member reports as immutable attributed alternatives | 2026-10-15 | Accepted Option A; claim/group keys fixed by ADR 0021; body role-evidence strength fixed by ADR 0022; finite configurable budgets fixed by ADR 0023; exact proof grammar and B03 completeness still open |
 | [0021](0021-direct-semantic-notes-claim-group-keys.md) | B01-R06: direct semantic composite notes claim/group PK/FK and replay equality | 2026-10-15 | Accepted Option A; body role-evidence strength fixed by ADR 0022; finite configurable budget policy fixed by ADR 0023; actual-work accounting fixed by ADR 0024; B02-R04 cumulative request scope fixed by ADR 0025; budget details are engineering work; B03 remains unfinished; GCTX-M10 recovery fixed by ADR 0026 |
-| [0022](0022-receiver-verified-notes-role-admission.md) | B02-R01: receiver-verified structural notes-role evidence before body retention | 2026-10-15 | Accepted Option A; finite configurable budget policy fixed by ADR 0023; actual-work accounting fixed by ADR 0024; B02-R04 cumulative request scope fixed by ADR 0025; budget details are engineering work; exact proof grammar/B03 unfinished; GCTX-M10 recovery fixed by ADR 0026 |
+| [0022](0022-receiver-verified-notes-role-admission.md) | B02-R01: receiver-verified structural notes-role evidence before body retention | 2026-10-15 | Accepted Option A; finite configurable budget policy fixed by ADR 0023; actual-work accounting is fixed by ADR 0024; B02-R04 cumulative request scope fixed by ADR 0025; budget details are engineering work; exact proof grammar/B03 unfinished; GCTX-M10 recovery fixed by ADR 0026 |
 | [0023](0023-configurable-finite-notes-resource-budgets.md) | B02-R02: configurable finite notes body/aggregate-work/proof-traversal limits | 2026-10-15 | Accepted Option A; actual-work accounting fixed by ADR 0024; cumulative request scope fixed by ADR 0025; budget details are engineering work; notes grammar/B03 separately scoped; GCTX-M10 recovery fixed by ADR 0026 |
 | [0024](0024-actual-notes-resource-work-accounting.md) | B02-R03: actual-work resource accounting and shared/replay charging | 2026-10-15 | Accepted Option A; cumulative request scope fixed by ADR 0025; budget details are engineering work; proof grammar/B03 separately scoped; GCTX-M10 recovery fixed by ADR 0026 |
 | [0025](0025-cumulative-request-budgets-and-scoped-blockers.md) | B02-R04: cumulative request budget; resource implementation detail is not an owner blocker | 2026-10-15 | Accepted Option A and owner correction; GCTX-M10 subsequently resolved by ADR 0026 recovery workflow; former A/B/C comparison historical |
@@ -59,6 +82,6 @@ Read the current scope before implementation. This index describes accepted targ
 | [Transport-independent Core](../transport-independent-core-adr.md) | Domain persistence and provenance independent of transport replay | 2026-10-10 | Preserved in unsuperseded scope |
 | [No Independent Publication](../phase2/no-independent-publication-adr.md) | Publication-free domain authority | 2026-10-10 | Preserved; no new generic notes/retention seal |
 
-**Allocation/adoption:** ADR 0011 was explicitly adopted through [governance PR #52](https://github.com/TakashiSasaki/git-repo-db/pull/52) on 2026-10-15, after the accepted design stack was merged by PR #69. It does not renumber ADRs 0012–0027, retire still-binding historical decisions or authorize bulk migration. **Highest allocated ADR ID: 0028**. Future allocations must inspect this watermark, Git history and live remote branches before assigning a new four-digit ID.
+**Allocation/adoption:** ADR 0011 was explicitly adopted through [governance PR #52](https://github.com/TakashiSasaki/git-repo-db/pull/52) on 2026-10-15, after the accepted design stack was merged by PR #69. It does not renumber ADRs 0012–0027, retire still-binding historical decisions or authorize bulk migration. **Highest allocated ADR ID: 0029**. Future allocations must inspect this watermark, Git history and live remote branches before assigning a new four-digit ID.
 
 The [transition plan](../architecture/git-core-context-transition-plan.md) describes the redesigned implementation sequence. Old Phase 2 handoffs and accepted records remain evidence of their original decisions, subject to the explicit scoped override in ADR 0014. Neither old wording nor a passing documentation check is authority to implement an excluded file-storage path.
