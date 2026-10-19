@@ -1,0 +1,13 @@
+"""Explicit maintenance ports; no domain Exchange, execution, or in-place restore."""
+
+from pathlib import Path
+from typing import Protocol
+
+from repo_catalog.domain.access_backup import ScopeFork
+
+
+class AccessMaintenancePort(Protocol):
+    def backup(self, source: str | Path, destination: str | Path) -> dict: ...
+    def inspect(self, bundle: str | Path) -> dict: ...
+    def restore(self, bundle: str | Path, destination: str | Path) -> dict: ...
+    def fork_scope(self, source: str | Path, request: ScopeFork) -> dict: ...
