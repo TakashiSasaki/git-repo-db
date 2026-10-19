@@ -94,5 +94,12 @@ different non-key observation timestamp or payload, then add an independent Core
 OID. Verify rejection occurs before binding or Core admission. Repeat against an
 already populated receiver, including MappingDisposition and whole EventReportKey
 endpoint sets: identical scope JSON alone need not identify the Core targets.
+Reconcile both PRIMARY KEY and immutable UNIQUE constraints with the actual I1
+writer. Capture identity is a pair; a GitObservation using that pair also includes
+Repository, kind, scope and provenance. Test valid alternatives as well as invalid
+rebinding. Constructor checks alone may omit writer-enforced modeled parent and
+Source/service checks. Assert redundant wire coordinates (for example a Notes
+root) equal their original typed proof coordinates rather than silently rebuilding
+them. Preserve expressly advisory fields such as Coverage details as advisory.
 See the executable [I3 counterexamples](../../../../tests/integration/i3/test_selective_exchange.py)
 and [I3 handoff](../../../../docs/implementation/adr0030-i3-selective-exchange.md).

@@ -369,15 +369,47 @@ def decode_native_ref(value):
 IDENTITY_KEYS = {
     "core": {
         "captures": ("capture_origin_uuidv4", "capture_uuidv4"),
-        "git_observations": ("capture_origin_uuidv4", "capture_uuidv4"),
+        "git_observations": (
+            "capture_origin_uuidv4",
+            "capture_uuidv4",
+            "repository_uuidv4",
+            "kind",
+            "scope_json",
+            "provenance_json",
+        ),
+        "repository_claims": ("repository_uuidv4", "field", "provenance_json"),
+        "scalar_claims": (
+            "object_format",
+            "full_oid",
+            "field",
+            "provenance_json",
+            "authority",
+        ),
+        "relation_groups": (
+            "object_format",
+            "full_oid",
+            "relation",
+            "scope",
+            "provenance_json",
+            "authority",
+        ),
+        "notes_claims": (
+            "capture_origin_uuidv4",
+            "capture_uuidv4",
+            "object_format",
+            "target",
+            "provenance_json",
+        ),
+        "notes_groups": (
+            "capture_origin_uuidv4",
+            "capture_uuidv4",
+            "object_format",
+            "scope",
+            "provenance_json",
+            "authority",
+        ),
         "retained_metadata": ("object_format", "full_oid", "physical_copy_uuidv4"),
         "retained_notes": ("object_format", "full_oid", "physical_copy_uuidv4"),
-        "coverage_claims": (
-            "owner_kind",
-            "owner_coordinates_json",
-            "observed_at_us",
-            "coverage_state",
-        ),
     },
     "context": {
         "providers": ("service_instance_uuidv4",),
@@ -425,12 +457,6 @@ IDENTITY_KEYS = {
             "disposition_clock_json",
             "disposition_provenance_json",
         ),
-        "coverage_claims": (
-            "owner_kind",
-            "owner_coordinates_json",
-            "observed_at_us",
-            "coverage_state",
-        ),
     },
 }
 
@@ -444,8 +470,30 @@ def validate_replay_consistency(core, context):
             continue
         for section, rows in data.items():
             seen = {}
+            collection_scopes = {}
             for row in rows:
                 _performed("metadata_units", 1)
+                if store == "context" and section == "collections":
+                    collection_key = encode(
+                        [
+                            row[k]
+                            for k in (
+                                "service_instance_uuidv4",
+                                "resource_kind",
+                                "provider_resource_id",
+                                "collection_kind",
+                                "provenance_json",
+                            )
+                        ]
+                    )
+                    if (
+                        collection_key in collection_scopes
+                        and collection_scopes[collection_key] != row["scope_json"]
+                    ):
+                        raise ExchangeError(
+                            "IMMUTABLE_REPLAY_CONFLICT", [store, section]
+                        )
+                    collection_scopes[collection_key] = row["scope_json"]
                 columns = IDENTITY_KEYS[store].get(
                     section, tuple(sorted(k for k in row if k != "authority"))
                 )

@@ -102,6 +102,7 @@ from repo_catalog.domain.selective_exchange import (
     terminal_key,
     transfer_reports,
     validate_context,
+    validate_context_bindings,
 )
 from repo_catalog.domain.selective_exchange import (
     disposition as decode_disposition,
@@ -1863,6 +1864,84 @@ class ExchangeService:
         with closing(
             GitCore(self.directory / "core.sqlite3", read_limits=self._read_limits())
         ) as core:
+            # These I1 UNIQUE keys deliberately exclude the immutable assertion
+            # payload. Check them before either domain commits, not only the PK.
+            for section, keys, payload in (
+                (
+                    "repository_claims",
+                    ("repository_uuidv4", "field", "provenance_json"),
+                    ("value_json",),
+                ),
+                (
+                    "scalar_claims",
+                    ("object_format", "full_oid", "field", "provenance_json"),
+                    ("value_json",),
+                ),
+                (
+                    "relation_groups",
+                    (
+                        "object_format",
+                        "full_oid",
+                        "relation",
+                        "scope",
+                        "provenance_json",
+                    ),
+                    ("status", "membership_json"),
+                ),
+                (
+                    "notes_claims",
+                    (
+                        "capture_origin_uuidv4",
+                        "capture_uuidv4",
+                        "object_format",
+                        "target",
+                        "provenance_json",
+                    ),
+                    ("note",),
+                ),
+                (
+                    "notes_groups",
+                    (
+                        "capture_origin_uuidv4",
+                        "capture_uuidv4",
+                        "object_format",
+                        "scope",
+                        "provenance_json",
+                    ),
+                    ("status", "membership_json"),
+                ),
+            ):
+
+                def column(name):
+                    return name.removesuffix("_json")
+
+                for row in data[section]:
+                    if row.get("authority", "reported") != "reported":
+                        continue
+                    if section == "notes_groups":
+                        prior = core.original_notes_group_payload(
+                            (row["capture_origin_uuidv4"], row["capture_uuidv4"]),
+                            row["object_format"],
+                            row["scope"],
+                            row["provenance_json"],
+                        )
+                        found = [] if prior is None else [prior]
+                    else:
+                        found = core.sql(
+                            "SELECT "
+                            + ",".join(column(k) for k in payload)
+                            + " FROM "
+                            + section
+                            + " WHERE "
+                            + " AND ".join(column(k) + "=?" for k in keys),
+                            tuple(row[k] for k in keys),
+                        )
+                    if found:
+                        self._dependency_rows += 1
+                        if tuple(found[0]) != tuple(row[k] for k in payload):
+                            raise ExchangeError(
+                                "IMMUTABLE_REPLAY_CONFLICT", ["core", section]
+                            )
             repos = {
                 r[0] for r in core.sql("SELECT repository_uuidv4 FROM repositories")
             }
@@ -1886,18 +1965,19 @@ class ExchangeService:
                         )
             for row in data["git_observations"]:
                 existing = core.sql(
-                    "SELECT repository_uuidv4,kind,scope,value,provenance FROM git_observations WHERE capture_origin_uuidv4=? AND capture_uuidv4=?",
-                    (row["capture_origin_uuidv4"], row["capture_uuidv4"]),
-                )
-                if existing:
-                    self._dependency_rows += 1
-                    if tuple(existing[0]) != (
+                    "SELECT value FROM git_observations WHERE capture_origin_uuidv4=? AND capture_uuidv4=? AND repository_uuidv4=? AND kind=? AND scope=? AND provenance=?",
+                    (
+                        row["capture_origin_uuidv4"],
+                        row["capture_uuidv4"],
                         row["repository_uuidv4"],
                         row["kind"],
                         row["scope_json"],
-                        row["value_json"],
                         row["provenance_json"],
-                    ):
+                    ),
+                )
+                if existing:
+                    self._dependency_rows += 1
+                    if existing[0][0] != row["value_json"]:
                         raise ExchangeError(
                             "IMMUTABLE_REPLAY_CONFLICT", ["core", "git_observations"]
                         )
@@ -1968,6 +2048,21 @@ class ExchangeService:
             ("source_inventory", r) for r in data["source_inventories"]
         ] + [("collection", r) for r in data["collections"]]
         with Context.snapshot(self.directory, read_limits=self._read_limits()) as ctx:
+            for row in data["collections"]:
+                prior = ctx.db.execute(
+                    "SELECT scope_json FROM collections WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=? AND collection_kind=? AND provenance_json=?",
+                    (
+                        *resource(row).coordinates(),
+                        row["collection_kind"],
+                        row["provenance_json"],
+                    ),
+                ).fetchone()
+                if prior is not None:
+                    self._dependency_rows += 1
+                    if prior[0] != row["scope_json"]:
+                        raise ExchangeError(
+                            "IMMUTABLE_REPLAY_CONFLICT", ["context", "collections"]
+                        )
             for section, table, key, immutable in (
                 ("providers", "providers", "service_instance_uuidv4", "provider_kind"),
                 (
@@ -1989,12 +2084,13 @@ class ExchangeService:
                 r[0]
                 for r in ctx.db.execute("SELECT service_instance_uuidv4 FROM providers")
             }
-            sources = {
-                r[0]
+            source_services = {
+                r[0]: r[1]
                 for r in ctx.db.execute(
-                    "SELECT source_registration_uuidv4 FROM sources"
+                    "SELECT source_registration_uuidv4,service_instance_uuidv4 FROM sources"
                 )
             }
+            sources = set(source_services)
             resources = {
                 ResourceKey(*r)
                 for r in ctx.db.execute(
@@ -2155,6 +2251,11 @@ class ExchangeService:
         repos.update(r["repository_uuidv4"] for r in data["repositories"])
         keep("sources", lambda r: r["service_instance_uuidv4"] in providers)
         sources.update(r["source_registration_uuidv4"] for r in data["sources"])
+        source_services.update(
+            (r["source_registration_uuidv4"], r["service_instance_uuidv4"])
+            for r in data["sources"]
+        )
+        validate_context_bindings(data, source_services)
         pending = list(data["resources"])
         data["resources"] = []
         while pending:
@@ -2286,6 +2387,14 @@ class ExchangeService:
                 key,
                 lambda r: (
                     resource(r) in resources
+                    and (
+                        key != "collections"
+                        or not isinstance(json.loads(r["scope_json"]), dict)
+                        or "source_registration_uuidv4"
+                        not in json.loads(r["scope_json"])
+                        or json.loads(r["scope_json"])["source_registration_uuidv4"]
+                        in sources
+                    )
                     and all(
                         ResourceKey(*m) in resources
                         for m in json.loads(r["members_json"])
@@ -2427,6 +2536,8 @@ class ExchangeService:
             cap = captures_by_pair.get(pair)
             if cap is None:
                 raise CoreFailure("NOTES_PROOF", pair, "missing Capture for note_role")
+            if (nr["object_format"], nr["root"]) != cap.root.key:
+                raise ExchangeError("NOTES_CAPTURE_ROOT", "note_roles")
             proof = _notes_proof_from_bundle_json(
                 cap,
                 OID(nr["object_format"], nr["target"]),
@@ -2443,6 +2554,8 @@ class ExchangeService:
                 raise CoreFailure(
                     "NOTES_PROOF", pair, "missing Capture for retained_note"
                 )
+            if (rn["object_format"], rn["root"]) != cap.root.key:
+                raise ExchangeError("NOTES_CAPTURE_ROOT", "retained_notes")
             note_oid = OID(rn["object_format"], rn["full_oid"])
             target_oid = OID(rn["object_format"], rn["target"])
             proof = _notes_proof_from_bundle_json(

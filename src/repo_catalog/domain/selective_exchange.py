@@ -748,6 +748,67 @@ def validate_context(data):
                 )
 
     validate_context_proofs(data)
+    validate_context_bindings(
+        data,
+        {
+            row["source_registration_uuidv4"]: row["service_instance_uuidv4"]
+            for row in data["sources"]
+        },
+    )
+
+
+def validate_context_bindings(data, source_services):
+    """Check modeled parent and service assertions without manufacturing facts."""
+    child_kinds = {
+        "reviews": "review",
+        "comments": "comment",
+        "threads": "thread",
+        "documents": "document",
+    }
+    for section, kind_field in (
+        ("resource_relations", "relation_kind"),
+        ("collections", "collection_kind"),
+    ):
+        for row in data[section]:
+            owner = resource(row)
+            child_kind = child_kinds.get(row[kind_field])
+            if child_kind is not None:
+                for coordinates in json.loads(row["members_json"]):
+                    member = ResourceKey(*coordinates)
+                    if (
+                        member.resource_kind != child_kind
+                        or member.service_instance_uuidv4
+                        != owner.service_instance_uuidv4
+                        or tuple(json.loads(member.provider_resource_id)[:2])
+                        != owner.coordinates()[1:]
+                    ):
+                        raise ExchangeError("MEMBER_OWNER", section)
+            if section == "collections":
+                scope = json.loads(row["scope_json"])
+                if isinstance(scope, dict):
+                    if (
+                        scope.get(
+                            "service_instance_uuidv4", owner.service_instance_uuidv4
+                        )
+                        != owner.service_instance_uuidv4
+                    ):
+                        raise ExchangeError("COLLECTION_SERVICE", section)
+                    source = scope.get("source_registration_uuidv4")
+                    if (
+                        source in source_services
+                        and source_services[source] != owner.service_instance_uuidv4
+                    ):
+                        raise ExchangeError("SOURCE_SERVICE", section)
+    for row in data["source_inventories"]:
+        scope = json.loads(row["scope_json"])
+        source = row["source_registration_uuidv4"]
+        if (
+            source in source_services
+            and isinstance(scope, dict)
+            and scope.get("service_instance_uuidv4", source_services[source])
+            != source_services[source]
+        ):
+            raise ExchangeError("SOURCE_SERVICE", "source_inventories")
 
 
 class CorePreflight:
