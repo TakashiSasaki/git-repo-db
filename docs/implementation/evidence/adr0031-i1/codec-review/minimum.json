@@ -1,0 +1,220 @@
+{
+  "reviewed_commit": "ebb48d4c0beeeb6c19d33d672185894886765835",
+  "reviewed_tree": "318ad07874ab436206e6a61f231b308a421cfc54",
+  "module_sha256": "a7b68deb5a40956360a7c8ad69bcff1c216020b4eb451e52e0ea61fb5d0c13a3",
+  "python": "3.13.5 (main, Jul 15 2026, 20:25:40) [GCC 14.2.0]",
+  "sqlite_version": "3.51.3",
+  "sqlite_source_id": "2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618",
+  "observations": [
+    {
+      "case": "canonical-expected-0",
+      "outcome": "passed"
+    },
+    {
+      "case": "canonical-expected-1",
+      "outcome": "passed"
+    },
+    {
+      "case": "canonical-expected-2",
+      "outcome": "passed"
+    },
+    {
+      "case": "reject-noncanonical-0",
+      "outcome": "passed"
+    },
+    {
+      "case": "reject-noncanonical-1",
+      "outcome": "passed"
+    },
+    {
+      "case": "reject-noncanonical-2",
+      "outcome": "passed"
+    },
+    {
+      "case": "reject-noncanonical-3",
+      "outcome": "passed"
+    },
+    {
+      "case": "reject-noncanonical-4",
+      "outcome": "passed"
+    },
+    {
+      "case": "reject-noncanonical-5",
+      "outcome": "passed"
+    },
+    {
+      "case": "reject-noncanonical-6",
+      "outcome": "passed"
+    },
+    {
+      "case": "reject-noncanonical-7",
+      "outcome": "passed"
+    },
+    {
+      "case": "reject-noncanonical-8",
+      "outcome": "passed"
+    },
+    {
+      "case": "reject-noncanonical-9",
+      "outcome": "passed"
+    },
+    {
+      "case": "reject-noncanonical-10",
+      "outcome": "passed"
+    },
+    {
+      "case": "reject-noncanonical-11",
+      "outcome": "passed"
+    },
+    {
+      "case": "reject-noncanonical-12",
+      "outcome": "passed"
+    },
+    {
+      "case": "reject-noncanonical-13",
+      "outcome": "passed"
+    },
+    {
+      "case": "reject-noncanonical-14",
+      "outcome": "passed"
+    },
+    {
+      "case": "reject-noncanonical-15",
+      "outcome": "passed"
+    },
+    {
+      "case": "reject-noncanonical-16",
+      "outcome": "passed"
+    },
+    {
+      "case": "reject-noncanonical-17",
+      "outcome": "passed"
+    },
+    {
+      "case": "reject-noncanonical-18",
+      "outcome": "passed"
+    },
+    {
+      "case": "reject-noncanonical-19",
+      "outcome": "passed"
+    },
+    {
+      "case": "reject-noncanonical-20",
+      "outcome": "passed"
+    },
+    {
+      "case": "reject-noncanonical-21",
+      "outcome": "passed"
+    },
+    {
+      "case": "reject-noncanonical-22",
+      "outcome": "passed"
+    },
+    {
+      "case": "reject-noncanonical-23",
+      "outcome": "passed"
+    },
+    {
+      "case": "depth-31-scalar-pass",
+      "outcome": "passed"
+    },
+    {
+      "case": "depth-32-scalar-pass",
+      "outcome": "passed"
+    },
+    {
+      "case": "depth-33-scalar-reject",
+      "outcome": "passed"
+    },
+    {
+      "case": "node-4096-exact-root-included",
+      "outcome": "passed"
+    },
+    {
+      "case": "node-4097-reject-root-included",
+      "outcome": "passed"
+    },
+    {
+      "case": "byte-262144-exact",
+      "outcome": "passed"
+    },
+    {
+      "case": "byte-262145-reject",
+      "outcome": "passed"
+    },
+    {
+      "case": "escape-expansion-exact",
+      "outcome": "passed"
+    },
+    {
+      "case": "escape-expansion-reject",
+      "outcome": "passed"
+    },
+    {
+      "case": "predecode-budget-or-forbidden-0",
+      "outcome": "passed"
+    },
+    {
+      "case": "predecode-budget-or-forbidden-1",
+      "outcome": "passed"
+    },
+    {
+      "case": "predecode-budget-or-forbidden-2",
+      "outcome": "passed"
+    },
+    {
+      "case": "predecode-budget-or-forbidden-3",
+      "outcome": "passed"
+    },
+    {
+      "case": "predecode-budget-or-forbidden-4",
+      "outcome": "passed"
+    },
+    {
+      "case": "predecode-budget-or-forbidden-5",
+      "outcome": "passed"
+    },
+    {
+      "case": "preserialize-budget-0",
+      "outcome": "passed"
+    },
+    {
+      "case": "preserialize-budget-1",
+      "outcome": "passed"
+    },
+    {
+      "case": "preserialize-budget-2",
+      "outcome": "passed"
+    },
+    {
+      "case": "oversized-native-sibling-array-temporary-peak",
+      "outcome": "passed",
+      "peak_bytes": 1024,
+      "input_nodes": 1000001
+    },
+    {
+      "case": "native-cycle-bounded",
+      "outcome": "passed"
+    },
+    {
+      "case": "seeded-native-canonical-reference-roundtrip",
+      "outcome": "passed",
+      "iterations": 5000
+    },
+    {
+      "case": "seeded-serialized-mutation-reference-agreement",
+      "outcome": "passed",
+      "iterations": 15000,
+      "accepted": 3753,
+      "rejected": 11247
+    },
+    {
+      "case": "exhaustive-short-tokenizer-reference-agreement",
+      "outcome": "passed",
+      "iterations": 9331,
+      "accepted": 110,
+      "rejected": 9221
+    }
+  ],
+  "outcome": "passed"
+}

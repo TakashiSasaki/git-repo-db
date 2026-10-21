@@ -1,0 +1,146 @@
+"""Preserve frozen I1b validation receipts without editing production sources."""
+
+import collections
+import datetime as dt
+import hashlib
+import json
+import os
+import platform
+import subprocess
+import time
+import xml.etree.ElementTree as ET
+from pathlib import Path
+
+REPO = Path('/workspace/git-repo-db')
+OUT = REPO / 'work/i1-final-validation'
+FROZEN = 'e0e5c0ed37ac9d6c860db185415616c60161b30d'
+TREE = 'b6484a7185e9f410a8d05ff5bd4fa574e6dc45e2'
+COHORT = [
+    'tests/unit/test_resource_identity.py',
+    'tests/unit/test_resource_key_identity.py',
+    'tests/unit/test_github_identity_boundaries.py',
+    'tests/integration/p1/test_resource_identity_sql.py',
+    'tests/integration/p1/test_context.py',
+    'tests/integration/p1/test_context_relations.py',
+    'tests/integration/p1/test_coverage.py',
+    'tests/integration/i2/test_provider_intake.py',
+    'tests/integration/i3/test_selective_exchange.py',
+]
+
+
+def git(*args):
+    return subprocess.check_output(['git', *args], cwd=REPO, text=True).strip()
+
+
+def write(path, value):
+    path.write_text(json.dumps(value, indent=2) + '\n')
+
+
+def source_manifest():
+    sources = git('ls-tree', '-r', FROZEN, '--', 'src', 'tests', 'scripts', 'pyproject.toml', 'uv.lock')
+    manifest = {}
+    for line in sources.splitlines():
+        metadata, path = line.split('\t')
+        mode, kind, blob = metadata.split()
+        assert kind == 'blob'
+        data = (REPO / path).read_bytes()
+        actual_blob = hashlib.sha1(b'blob ' + str(len(data)).encode() + b'\0' + data).hexdigest()
+        assert actual_blob == blob, (path, 'working source differs from frozen commit')
+        manifest[path] = {'mode': mode, 'git_blob': blob, 'bytes': len(data), 'sha256': hashlib.sha256(data).hexdigest()}
+    return manifest
+
+
+def execute(command, env, log, receipt):
+    started = dt.datetime.now(dt.UTC).isoformat()
+    begin = time.monotonic()
+    with log.open('wb') as stream:
+        result = subprocess.run(command, cwd=REPO, env=env, stdout=stream, stderr=subprocess.STDOUT)
+    record = {
+        'argv': command,
+        'cwd': str(REPO),
+        'explicit_environment': {k: env[k] for k in ('LD_LIBRARY_PATH', 'RESOURCE_IDENTITY_SQL_REPORT', 'I1_EVENT_JOURNAL', 'PYTHONPATH') if k in env},
+        'started_utc': started,
+        'finished_utc': dt.datetime.now(dt.UTC).isoformat(),
+        'elapsed_seconds': round(time.monotonic() - begin, 6),
+        'exit_code': result.returncode,
+        'log': str(log.relative_to(OUT)),
+    }
+    write(receipt, record)
+    return record
+
+
+def junit_key(node):
+    prefix, bracket, parameter = node.partition('[')
+    parts = prefix.split('::')
+    return ('.'.join([parts[0][:-3].replace('/', '.'), *parts[1:-1]]), parts[-1] + bracket + parameter)
+
+
+assert git('rev-parse', FROZEN + '^{tree}') == TREE
+inputs = source_manifest()
+write(OUT / 'input-manifest.json', {'commit': FROZEN, 'tree': TREE, 'input_count': len(inputs), 'inputs': inputs})
+write(OUT / 'cohort.json', {'cohort': COHORT, 'scope': 'I1b scoped development validation; not release or complete I2 product acceptance'})
+summary = {'frozen_commit': FROZEN, 'frozen_tree': TREE, 'parent': git('rev-parse', FROZEN + '^'), 'input_count': len(inputs), 'runs': {}}
+for name, interpreter, library in (
+    ('sqlite3513', str(REPO / 'work/i1-sqlite/venv/bin/python'), str(REPO / 'work/i1-sqlite/runtime/minimum/lib')),
+    ('sqlite3531', str(REPO / 'work/i1-sqlite/venv-newer/bin/python'), None),
+):
+    directory = OUT / name
+    directory.mkdir()
+    env = os.environ.copy()
+    if library:
+        env['LD_LIBRARY_PATH'] = library + (':' + env['LD_LIBRARY_PATH'] if env.get('LD_LIBRARY_PATH') else '')
+    env['RESOURCE_IDENTITY_SQL_REPORT'] = str(directory / 'sql-runtime-and-cases.json')
+    env['I1_EVENT_JOURNAL'] = str(directory / 'tests.jsonl')
+    env['PYTHONPATH'] = str(OUT) + (os.pathsep + env['PYTHONPATH'] if env.get('PYTHONPATH') else '')
+    execute([interpreter, str(REPO / 'work/i1-sqlite/inspect_runtime.py'), str(directory / 'runtime.json')], env, directory / 'runtime.log', directory / 'runtime.execution.json')
+    collection = execute([interpreter, '-m', 'pytest', '--collect-only', '-q', *COHORT], env, directory / 'collection.log', directory / 'collection.execution.json')
+    nodes = [line for line in (directory / 'collection.log').read_text().splitlines() if line.startswith('tests/') and '::' in line]
+    (directory / 'selected-nodes.txt').write_text('\n'.join(nodes) + '\n')
+    assert collection['exit_code'] == 0, 'collection failed'
+    execution = execute([interpreter, '-m', 'pytest', '-p', 'i1_event_journal', '-q', *COHORT, '--junitxml=' + str(directory / 'tests.xml')], env, directory / 'tests.log', directory / 'tests.execution.json')
+    events = [json.loads(line) for line in (directory / 'tests.jsonl').read_text().splitlines()]
+    starts = [event['nodeid'] for event in events if event['event'] == 'start']
+    (directory / 'executed-nodes.txt').write_text('\n'.join(starts) + '\n')
+    phases = collections.Counter((event['nodeid'], event['phase']) for event in events if event['event'] == 'phase')
+    expected_phases = collections.Counter({(node, phase): 1 for node in nodes for phase in ('setup', 'call', 'teardown')})
+    finish = [event for event in events if event['event'] == 'finish']
+    testcases = ET.parse(directory / 'tests.xml').getroot().findall('.//testcase')
+    counts = collections.Counter()
+    failures = []
+    for case in testcases:
+        failure = next((case.find(tag) for tag in ('failure', 'error', 'skipped') if case.find(tag) is not None), None)
+        outcome = failure.tag if failure is not None else 'passed'
+        counts[outcome] += 1
+        if outcome != 'passed':
+            failures.append({'classname': case.attrib['classname'], 'name': case.attrib['name'], 'outcome': outcome, 'message': failure.attrib.get('message'), 'details': failure.text})
+    write(directory / 'failures.json', failures)
+    runtime = json.loads((directory / 'runtime.json').read_text())
+    sql_runtime = json.loads((directory / 'sql-runtime-and-cases.json').read_text())
+    reconciliation = {
+        'selected_unique': len(nodes) == len(set(nodes)),
+        'selected_equal_executed': collections.Counter(nodes) == collections.Counter(starts),
+        'all_selected_have_one_setup_call_teardown': phases == expected_phases,
+        'junit_cases_match_selected': collections.Counter(junit_key(node) for node in nodes) == collections.Counter((case.attrib['classname'], case.attrib['name']) for case in testcases),
+        'journal_finish_matches_exit': len(finish) == 1 and finish[0]['exitstatus'] == execution['exit_code'],
+        'frozen_input_hashes_unchanged': source_manifest() == inputs,
+        'runtime_matches_sql_connections': runtime['sqlite_version'] == sql_runtime['sqlite_version'] and runtime['sqlite_source_id'] == sql_runtime['sqlite_source_id'],
+    }
+    assert all(reconciliation.values()), reconciliation
+    run_summary = {
+        'sqlite_version': runtime['sqlite_version'],
+        'sqlite_source_id': runtime['sqlite_source_id'],
+        'python': runtime['python'],
+        'selected': len(nodes), 'executed': len(starts), 'outcomes': dict(counts),
+        'sql_cases_executed': len(sql_runtime['cases']),
+        'collection_exit': collection['exit_code'], 'pytest_exit': execution['exit_code'],
+        'reconciliation': reconciliation,
+        'failure_node_names': [entry['name'] for entry in failures],
+    }
+    write(directory / 'summary.json', run_summary)
+    summary['runs'][name] = run_summary
+    write(OUT / 'summary.json', summary)
+    print(json.dumps({name: run_summary}), flush=True)
+assert source_manifest() == inputs
+summary['sequential_runtime_execution'] = True
+summary['final_code_inputs_match_frozen_commit'] = True
+write(OUT / 'summary.json', summary)

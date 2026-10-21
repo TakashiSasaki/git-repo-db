@@ -155,6 +155,37 @@ and [I3 handoff](../../../../docs/implementation/adr0030-i3-selective-exchange.m
 
 ## Trace nested canonical values separately from the package digest
 
+### Preserve native versus serialized identity boundaries and contract intent
+
+For ADR 0031 identity work, inventory constructor calls and Provider helpers
+before replacing plain IDs. A helper may return a native decimal string on one
+path and serialized composite Node ID TEXT on another. Make its output contract
+uniform, then use explicit encode/parse operations at each boundary. Blindly
+encoding every string can quote scalar IDs twice or turn a native composite
+into a string. Row/wire/Coverage/MappingSupport/cursor coordinates already carry
+serialized identity TEXT and require strict reconstruction, even when a public
+checksum has been recomputed. Keep the envelope serializer independent.
+
+Probe a global native Document array that is byte-identical to a known scoped
+layout. Key equality alone cannot select its identification contract. Preserve
+the explicit factory/admission contract; refuse unsupported global persistence
+before duplicate lookup as well as before INSERT. Do not add a key discriminator
+or infer a semantic Parent from shape. I1's in-memory intent guard is not durable
+contract metadata or a generic Exchange guarantee; those remain I2/I6 work.
+
+Reproduce the bounded regressions with:
+
+```sh
+python -m pytest tests/unit/test_resource_key_identity.py tests/unit/test_github_identity_boundaries.py tests/integration/p1/test_resource_identity_sql.py tests/integration/p1/test_context.py -q
+```
+
+The [I1 implementation report](../../../../docs/implementation/adr0031-i1-canonical-resource-identity.md)
+records the independently reproduced shape/replay and cursor counterexamples.
+This procedure does not generalize packaged DDL or establish global Document,
+generic Exchange, semantic Parent, recovery or Search acceptance.
+
+### Keep inner identity and outer digest profiles separate
+
 Use this source-inspection procedure when reviewing identity/JSON wire changes.
 A single word such as canonical can hide distinct profiles: at the
 [fixed ADR 0030 product revision](https://github.com/TakashiSasaki/git-repo-db/tree/efb55af84ccbf1183d47547d22bb6c57d8fbc8f9),

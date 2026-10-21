@@ -1,0 +1,622 @@
+{
+  "frozen_implementation": "e0e5c0ed37ac9d6c860db185415616c60161b30d",
+  "scope": "All production ResourceKey constructors, public native factories, scoped decoders, plus typed database callback; factory cls internals and nested string identifiers audited in report",
+  "callsites": [
+    {
+      "path": "src/repo_catalog/adapters/github/production_intake.py",
+      "line": 266,
+      "operation": "ResourceKey.document",
+      "contract": "native identity/factory coordinates",
+      "source": "ResourceKey.document(\n        parent, mapped_kind, document_kind, provider_document_id\n    )"
+    },
+    {
+      "path": "src/repo_catalog/adapters/github/production_intake.py",
+      "line": 286,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(service_instance_uuidv4, \"repository\", repo_id)"
+    },
+    {
+      "path": "src/repo_catalog/adapters/github/production_intake.py",
+      "line": 388,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(service_instance_uuidv4, \"issue\", issue_id)"
+    },
+    {
+      "path": "src/repo_catalog/adapters/github/production_intake.py",
+      "line": 561,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(service_instance_uuidv4, \"pull_request\", pr_id)"
+    },
+    {
+      "path": "src/repo_catalog/adapters/github/production_intake.py",
+      "line": 941,
+      "operation": "ResourceKey.from_native",
+      "contract": "native identity/factory coordinates",
+      "source": "ResourceKey.from_native(service_instance_uuidv4, \"pull_request\", pr_id)"
+    },
+    {
+      "path": "src/repo_catalog/adapters/github/production_intake.py",
+      "line": 1094,
+      "operation": "ResourceKey.from_native",
+      "contract": "native identity/factory coordinates",
+      "source": "ResourceKey.from_native(service_instance_uuidv4, \"pull_request\", pr_id)"
+    },
+    {
+      "path": "src/repo_catalog/adapters/github/production_intake.py",
+      "line": 1168,
+      "operation": "ResourceKey.from_native",
+      "contract": "native identity/factory coordinates",
+      "source": "ResourceKey.from_native(service_instance_uuidv4, \"pull_request\", pr_id)"
+    },
+    {
+      "path": "src/repo_catalog/adapters/github/production_intake.py",
+      "line": 1486,
+      "operation": "ResourceKey.from_native",
+      "contract": "native identity/factory coordinates",
+      "source": "ResourceKey.from_native(service_instance_uuidv4, parent_kind, pid)"
+    },
+    {
+      "path": "src/repo_catalog/adapters/github/production_intake.py",
+      "line": 1800,
+      "operation": "ResourceKey.from_native",
+      "contract": "native identity/factory coordinates",
+      "source": "ResourceKey.from_native(service_instance_uuidv4, \"pull_request\", pr_id)"
+    },
+    {
+      "path": "src/repo_catalog/adapters/github/production_intake.py",
+      "line": 1919,
+      "operation": "ResourceKey.from_native",
+      "contract": "native identity/factory coordinates",
+      "source": "ResourceKey.from_native(service_instance_uuidv4, \"pull_request\", pr_id)"
+    },
+    {
+      "path": "src/repo_catalog/adapters/github/production_intake.py",
+      "line": 1602,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(\n        service_instance_uuidv4, parent_kind, pid\n    )"
+    },
+    {
+      "path": "src/repo_catalog/adapters/github/production_intake.py",
+      "line": 128,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(resource.service_instance_uuidv4, \"repository\", ident)"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+      "line": 675,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(\n            service_instance_uuidv4, \"repository\", provider_repository_id\n        )"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+      "line": 87,
+      "operation": "scoped_document_coordinates",
+      "contract": "explicit known scoped namespace TEXT decoder",
+      "source": "key.scoped_document_coordinates()"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+      "line": 441,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(row[0], row[1], row[2])"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+      "line": 829,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(svc, r_kind, p_id)"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+      "line": 705,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(*m)"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+      "line": 713,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(\n                        resource.service_instance_uuidv4,\n                        \"repository\",\n                        role.provider_repository_id,\n                    )"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+      "line": 388,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(row[0], row[1], row[2])"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+      "line": 921,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(service, \"repository\", prov_id)"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+      "line": 464,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(*row)"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+      "line": 491,
+      "operation": "scoped_document_coordinates",
+      "contract": "explicit known scoped namespace TEXT decoder",
+      "source": "child.scoped_document_coordinates()"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+      "line": 532,
+      "operation": "scoped_document_coordinates",
+      "contract": "explicit known scoped namespace TEXT decoder",
+      "source": "member.scoped_document_coordinates()"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+      "line": 579,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(*member)"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/production_search.py",
+      "line": 545,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(service_id, r_kind, r_id)"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/production_search.py",
+      "line": 587,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(service_id, r_kind, r_id)"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/recovery_validation.py",
+      "line": 116,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(row[0], row[1], row[2])"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/recovery_validation.py",
+      "line": 199,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(svc, r_kind, p_id)"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/recovery_validation.py",
+      "line": 74,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(row[0], row[1], row[2])"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/recovery_validation.py",
+      "line": 166,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(*row[:3])"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/recovery_validation.py",
+      "line": 164,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(*m)"
+    },
+    {
+      "path": "src/repo_catalog/application/acquisition.py",
+      "line": 1812,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(svc, r_kind, p_id)"
+    },
+    {
+      "path": "src/repo_catalog/application/acquisition.py",
+      "line": 1193,
+      "operation": "scoped_document_coordinates",
+      "contract": "explicit known scoped namespace TEXT decoder",
+      "source": "key.scoped_document_coordinates()"
+    },
+    {
+      "path": "src/repo_catalog/application/acquisition.py",
+      "line": 1194,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(\n                key.service_instance_uuidv4, parent_tuple[0], parent_tuple[1]\n            )"
+    },
+    {
+      "path": "src/repo_catalog/application/acquisition.py",
+      "line": 1323,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(\n                unit.primary_resource.service_instance_uuidv4,\n                \"repository\",\n                entry.provider_repository_id,\n            )"
+    },
+    {
+      "path": "src/repo_catalog/application/acquisition.py",
+      "line": 1291,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(\n                    unit.primary_resource.service_instance_uuidv4,\n                    \"repository\",\n                    entry.provider_repository_id,\n                )"
+    },
+    {
+      "path": "src/repo_catalog/application/exchange.py",
+      "line": 3054,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(\n                res[\"service_instance_uuidv4\"],\n                res[\"resource_kind\"],\n                res[\"provider_resource_id\"],\n            )"
+    },
+    {
+      "path": "src/repo_catalog/application/exchange.py",
+      "line": 3087,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(\n                fc[\"service_instance_uuidv4\"],\n                fc[\"resource_kind\"],\n                fc[\"provider_resource_id\"],\n            )"
+    },
+    {
+      "path": "src/repo_catalog/application/exchange.py",
+      "line": 3153,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(\n                cr[\"service_instance_uuidv4\"],\n                cr[\"resource_kind\"],\n                cr[\"provider_resource_id\"],\n            )"
+    },
+    {
+      "path": "src/repo_catalog/application/exchange.py",
+      "line": 3189,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(\n                rel[\"service_instance_uuidv4\"],\n                rel[\"resource_kind\"],\n                rel[\"provider_resource_id\"],\n            )"
+    },
+    {
+      "path": "src/repo_catalog/application/exchange.py",
+      "line": 3293,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(\n                coll[\"service_instance_uuidv4\"],\n                coll[\"resource_kind\"],\n                coll[\"provider_resource_id\"],\n            )"
+    },
+    {
+      "path": "src/repo_catalog/application/exchange.py",
+      "line": 1305,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(row[0], row[1], row[2])"
+    },
+    {
+      "path": "src/repo_catalog/application/exchange.py",
+      "line": 1354,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(row[0], row[1], row[2])"
+    },
+    {
+      "path": "src/repo_catalog/application/exchange.py",
+      "line": 2116,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(*r)"
+    },
+    {
+      "path": "src/repo_catalog/application/exchange.py",
+      "line": 2464,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(*coords[:3])"
+    },
+    {
+      "path": "src/repo_catalog/application/exchange.py",
+      "line": 1191,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(*row)"
+    },
+    {
+      "path": "src/repo_catalog/application/exchange.py",
+      "line": 1233,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(*row[:3])"
+    },
+    {
+      "path": "src/repo_catalog/application/exchange.py",
+      "line": 1380,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(coords[0], coords[1], coords[2])"
+    },
+    {
+      "path": "src/repo_catalog/application/exchange.py",
+      "line": 2290,
+      "operation": "scoped_document_coordinates",
+      "contract": "explicit known scoped namespace TEXT decoder",
+      "source": "rk.scoped_document_coordinates()"
+    },
+    {
+      "path": "src/repo_catalog/application/exchange.py",
+      "line": 2291,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(rk.service_instance_uuidv4, *coordinates[:2])"
+    },
+    {
+      "path": "src/repo_catalog/application/exchange.py",
+      "line": 3194,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(*m)"
+    },
+    {
+      "path": "src/repo_catalog/application/exchange.py",
+      "line": 3298,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(*m)"
+    },
+    {
+      "path": "src/repo_catalog/application/exchange.py",
+      "line": 1264,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(*row[:3])"
+    },
+    {
+      "path": "src/repo_catalog/application/exchange.py",
+      "line": 1237,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(*m)"
+    },
+    {
+      "path": "src/repo_catalog/application/exchange.py",
+      "line": 2422,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(*m)"
+    },
+    {
+      "path": "src/repo_catalog/application/production_query.py",
+      "line": 1015,
+      "operation": "ResourceKey callback/reference",
+      "contract": "serialized database triple callback",
+      "source": "ResourceKey"
+    },
+    {
+      "path": "src/repo_catalog/application/production_query.py",
+      "line": 1045,
+      "operation": "ResourceKey callback/reference",
+      "contract": "serialized database triple callback",
+      "source": "ResourceKey"
+    },
+    {
+      "path": "src/repo_catalog/application/production_query.py",
+      "line": 1290,
+      "operation": "ResourceKey callback/reference",
+      "contract": "serialized database triple callback",
+      "source": "ResourceKey"
+    },
+    {
+      "path": "src/repo_catalog/application/production_query.py",
+      "line": 1311,
+      "operation": "ResourceKey callback/reference",
+      "contract": "serialized database triple callback",
+      "source": "ResourceKey"
+    },
+    {
+      "path": "src/repo_catalog/application/production_query.py",
+      "line": 1063,
+      "operation": "ResourceKey callback/reference",
+      "contract": "serialized database triple callback",
+      "source": "ResourceKey"
+    },
+    {
+      "path": "src/repo_catalog/application/production_query.py",
+      "line": 1184,
+      "operation": "ResourceKey callback/reference",
+      "contract": "serialized database triple callback",
+      "source": "ResourceKey"
+    },
+    {
+      "path": "src/repo_catalog/application/production_query.py",
+      "line": 1155,
+      "operation": "ResourceKey callback/reference",
+      "contract": "serialized database triple callback",
+      "source": "ResourceKey"
+    },
+    {
+      "path": "src/repo_catalog/cli/production_query.py",
+      "line": 236,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(args.service, args.kind, args.id)"
+    },
+    {
+      "path": "src/repo_catalog/cli/production_query.py",
+      "line": 254,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(args.service, args.kind, args.id)"
+    },
+    {
+      "path": "src/repo_catalog/domain/exchange.py",
+      "line": 371,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(item[0], item[1], item[2])"
+    },
+    {
+      "path": "src/repo_catalog/domain/p1_context.py",
+      "line": 967,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(\n            data[\"service_instance_uuidv4\"],\n            data[\"resource_kind\"],\n            data[\"provider_resource_id\"],\n        )"
+    },
+    {
+      "path": "src/repo_catalog/domain/p1_context.py",
+      "line": 1710,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(self.service_instance_uuidv4, \"issue\", parent_id)"
+    },
+    {
+      "path": "src/repo_catalog/domain/p1_context.py",
+      "line": 683,
+      "operation": "scoped_document_coordinates",
+      "contract": "explicit known scoped namespace TEXT decoder",
+      "source": "self.scoped_document_coordinates()"
+    },
+    {
+      "path": "src/repo_catalog/domain/p1_context.py",
+      "line": 2476,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(*self.coordinates[:3])"
+    },
+    {
+      "path": "src/repo_catalog/domain/p1_context.py",
+      "line": 1858,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(\n                    report_key.service_instance_uuidv4, \"repository\", value\n                )"
+    },
+    {
+      "path": "src/repo_catalog/domain/p1_context.py",
+      "line": 2337,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(\n                    resource.service_instance_uuidv4,\n                    \"repository\",\n                    role.provider_repository_id,\n                )"
+    },
+    {
+      "path": "src/repo_catalog/domain/p1_context.py",
+      "line": 2376,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(\n                self.resource.service_instance_uuidv4,\n                \"repository\",\n                self.scope.provider_repository_id,\n            )"
+    },
+    {
+      "path": "src/repo_catalog/domain/p1_context.py",
+      "line": 1111,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(\n                    item[\"service_instance_uuidv4\"],\n                    item[\"resource_kind\"],\n                    item[\"provider_resource_id\"],\n                )"
+    },
+    {
+      "path": "src/repo_catalog/domain/production_query.py",
+      "line": 398,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(*key)"
+    },
+    {
+      "path": "src/repo_catalog/domain/selective_exchange.py",
+      "line": 24,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(\n        *(\n            row[k]\n            for k in (\n                \"service_instance_uuidv4\",\n                \"resource_kind\",\n                \"provider_resource_id\",\n            )\n        )\n    )"
+    },
+    {
+      "path": "src/repo_catalog/domain/selective_exchange.py",
+      "line": 579,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(*r)"
+    },
+    {
+      "path": "src/repo_catalog/domain/selective_exchange.py",
+      "line": 595,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(*row[:3])"
+    },
+    {
+      "path": "src/repo_catalog/domain/selective_exchange.py",
+      "line": 590,
+      "operation": "scoped_document_coordinates",
+      "contract": "explicit known scoped namespace TEXT decoder",
+      "source": "r.scoped_document_coordinates()"
+    },
+    {
+      "path": "src/repo_catalog/domain/selective_exchange.py",
+      "line": 591,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(r.service_instance_uuidv4, *coords[:2])"
+    },
+    {
+      "path": "src/repo_catalog/domain/selective_exchange.py",
+      "line": 547,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(*coordinates[:3])"
+    },
+    {
+      "path": "src/repo_catalog/domain/selective_exchange.py",
+      "line": 597,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(*m)"
+    },
+    {
+      "path": "src/repo_catalog/domain/selective_exchange.py",
+      "line": 601,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(*m)"
+    },
+    {
+      "path": "src/repo_catalog/domain/selective_exchange.py",
+      "line": 600,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(*row[:3])"
+    },
+    {
+      "path": "src/repo_catalog/domain/selective_exchange.py",
+      "line": 729,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(*m)"
+    },
+    {
+      "path": "src/repo_catalog/domain/selective_exchange.py",
+      "line": 792,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(*coordinates)"
+    },
+    {
+      "path": "src/repo_catalog/domain/selective_exchange.py",
+      "line": 708,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(*m)"
+    },
+    {
+      "path": "src/repo_catalog/domain/selective_exchange.py",
+      "line": 797,
+      "operation": "scoped_document_coordinates",
+      "contract": "explicit known scoped namespace TEXT decoder",
+      "source": "member.scoped_document_coordinates()"
+    },
+    {
+      "path": "src/repo_catalog/domain/selective_exchange.py",
+      "line": 454,
+      "operation": "ResourceKey",
+      "contract": "serialized canonical TEXT",
+      "source": "ResourceKey(*m)"
+    }
+  ]
+}
