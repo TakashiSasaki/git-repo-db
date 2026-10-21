@@ -37,9 +37,9 @@ as **19**, not promoted to an absolute future invariant.
   `(ResourceKey, reference_document_kind, identifier_namespace_kind,
   identifier_namespace_id)`. `cp_resource` necessarily executes as a SQL CHECK
   and establishes that namespace metadata agrees with the canonical Identity.
-- Event reports derive quoted Parent service/Canonical ID solely from their
-  existing `parent_members_json` support payload; the projected kind is fixed to
-  `issue` and the mandatory SQL predicate verifies that payload kind. All required FK projections are
+- Event reports derive quoted Parent service/kind/Canonical ID solely from their
+  existing `parent_members_json` support payload. The mandatory SQL predicate
+  requires that kind to be `issue`. All required FK projections are
   explicitly non-NULL; projected service must equal the Event's service.
 - The new composite FK links the same Event's `timeline_event` subtype and
   `issue` namespace/native ID to that quoted Parent. The existing complete
