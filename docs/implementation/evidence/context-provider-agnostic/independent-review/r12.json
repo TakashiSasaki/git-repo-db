@@ -1,0 +1,158 @@
+{
+  "reviewer": "independent R1/R2",
+  "product_commit": "efb55af84ccbf1183d47547d22bb6c57d8fbc8f9",
+  "product_tree": "117d580b31098ecb8287281bd843894fdfad71fc",
+  "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+  "sqlite": "3.53.1",
+  "input": "synthetic; direct actual Context transaction and domain types; no Provider API calls",
+  "results": [
+    {
+      "case": "same-id-distinct-service-kind",
+      "actual": 4,
+      "expected": 4,
+      "pass": true
+    },
+    {
+      "case": "repository-document-DDL-rejection",
+      "actual": true,
+      "expected": true,
+      "pass": true
+    },
+    {
+      "case": "issue-thread-DDL-rejection",
+      "actual": true,
+      "expected": true,
+      "pass": true
+    },
+    {
+      "case": "commit-review-DDL-rejection",
+      "actual": true,
+      "expected": true,
+      "pass": true
+    },
+    {
+      "case": "unknown-kind-DDL-rejection",
+      "actual": true,
+      "expected": true,
+      "pass": true
+    },
+    {
+      "case": "annotation-provider-targets",
+      "actual": 2,
+      "expected": 2,
+      "pass": true
+    },
+    {
+      "case": "missing-core-report",
+      "actual": [
+        [
+          false,
+          false
+        ]
+      ],
+      "expected": [
+        [
+          false,
+          false
+        ]
+      ],
+      "pass": true
+    },
+    {
+      "case": "reverse-multi-provider",
+      "actual": 2,
+      "expected": 2,
+      "pass": true
+    },
+    {
+      "case": "forward-provider",
+      "actual": 1,
+      "expected": 1,
+      "pass": true
+    },
+    {
+      "case": "conflicting-mapping",
+      "actual": "conflict",
+      "expected": "conflict",
+      "pass": true
+    },
+    {
+      "case": "mapping-exact-replay",
+      "actual": "duplicate",
+      "expected": "duplicate",
+      "pass": true
+    },
+    {
+      "case": "unconfirmed-withdraw-retains-conflict",
+      "actual": "conflict",
+      "expected": "conflict",
+      "pass": true
+    },
+    {
+      "case": "qualified-withdraw-single",
+      "actual": "single_candidate",
+      "expected": "single_candidate",
+      "pass": true
+    },
+    {
+      "case": "no-core-file-required-for-mapping",
+      "actual": false,
+      "expected": false,
+      "pass": true
+    }
+  ],
+  "existing_product_tests": {
+    "command": ".venv/bin/python -m pytest -q tests/integration/p1/test_context_relations.py tests/integration/p3/test_production_context.py --tb=short",
+    "exit_code": 0,
+    "passed": 118,
+    "failed": 0,
+    "skipped": 0,
+    "reported_duration_seconds": 5.87,
+    "benchmark": false
+  },
+  "frozen_audit_review": {
+    "commit": "19ff4031440e541eeff9a119605b2b564ca5dd6d",
+    "tree": "c5f8f3cecf30b6ba11f65ff7cd2aad3bdb248c9e",
+    "verdict": "approved documentation-only Draft PR",
+    "product_and_existing_tests_and_ADRs_unchanged": true,
+    "central_findings": {
+      "Blocking": 0,
+      "Major": 3,
+      "Minor": 2
+    },
+    "qualification": "R1/R2 directly supports F01/F02/F03 and N01/N02; detailed F04/F05 semantics reviewed by R3/R4; no live Provider or release acceptance"
+  },
+  "probe_script": {
+    "path": "r12-probe.py",
+    "sha256": "b83464ab701242b2806be9cd0edb9c3045f94116804818161fa63cdf730c5bb9",
+    "rerun_results_identical": true,
+    "ruff_check": "pass",
+    "ruff_format_check": "pass"
+  },
+  "frozen_audit_probe_rerun": {
+    "command": [
+      "/workspace/git-repo-db/.venv/bin/python",
+      "-m",
+      "pytest",
+      "-c",
+      "/workspace/git-repo-db/pyproject.toml",
+      "docs/implementation/evidence/context-provider-agnostic/reproduction/test_coverage_exchange.py",
+      "docs/implementation/evidence/context-provider-agnostic/reproduction/test_mapping.py",
+      "docs/implementation/evidence/context-provider-agnostic/reproduction/test_provider_resource.py",
+      "-q",
+      "-o",
+      "junit_family=xunit1",
+      "--junitxml",
+      "/tmp/context-r12-frozen-audit/junit.xml"
+    ],
+    "collection_exit_code": 0,
+    "execution_exit_code": 0,
+    "collected_equals_executed": true,
+    "unique_collected": true,
+    "input_hashes_unchanged": true,
+    "counts": {
+      "passed": 37
+    },
+    "pass": true
+  }
+}
