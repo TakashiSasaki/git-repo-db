@@ -63,6 +63,14 @@ def validate_stored_context_relations(connection: sqlite3.Connection) -> None:
     without executing untrusted triggers or replaying INSERT-only stale predicates.
     """
     try:
+        from repo_catalog.domain.resource_identification import ResourceIdentification
+        from repo_catalog.domain.resource_stage import validate_stage_storage
+
+        validate_stage_storage(connection)
+        for row in connection.execute(
+            "SELECT service_instance_uuidv4,resource_kind,provider_resource_id,identifier_namespace_kind,identifier_namespace_id,document_kind,provider_document_id FROM resources"
+        ):
+            ResourceIdentification.from_storage(ResourceKey(*row[:3]), row[3:])
         mapping_claims: set[tuple[str, str, str, str, str, str, str]] = set()
         relations: list[ResourceRepositoryRelation] = []
         for row in connection.execute(

@@ -49,6 +49,7 @@ from repo_catalog.domain.production_context import (
     ResourceRelation,
     SourceInventory,
 )
+from repo_catalog.domain.resource_identification import ResourceIdentification
 
 T = TypeVar("T")
 
@@ -799,7 +800,8 @@ class ContextResourceView:
     repository_uuidv4: str | None
     repository_roles: tuple[QualifiedProviderRepositoryRole, ...]
     repository_relations: tuple[ResolvedRepositoryRelation, ...]
-    parent: ResourceKey | None
+    identification: ResourceIdentification
+    identifier_namespace: ResourceKey | None
     document_kind: str | None
     provider_document_id: str | None
     fields: dict[str, tuple[FieldCandidate, ...]]
@@ -870,9 +872,13 @@ class ContextResourceView:
                 ]
                 for fname, cands in sorted(self.fields.items())
             },
-            "parent": (
-                list(self.parent.coordinates()) if self.parent is not None else None
-            ),
+            "identification": {
+                "identifier_namespace": list(self.identifier_namespace.coordinates())
+                if self.identifier_namespace is not None
+                else None,
+                "document_kind": self.identification.document_kind,
+                "provider_document_id": self.identification.provider_document_id,
+            },
             "provider_document_id": self.provider_document_id,
             "provider_resource_id": self.resource.provider_resource_id,
             "relations": [

@@ -30,6 +30,7 @@ from repo_catalog.domain.production_context import (
     ResourceRelation,
     json_value,
 )
+from repo_catalog.domain.resource_identification import ResourceIdentification
 from repo_catalog.domain.resource_identity import (
     IdentityValue,
     encode_identity,
@@ -858,7 +859,15 @@ def normalize_pull_request(
         title_doc = make_document_key(
             pr_key, "pull_request_document", "pr_title", parse_identity(pr_id)
         )
-        observations.append(ResourceObservation(title_doc, ()))
+        observations.append(
+            ResourceObservation(
+                title_doc,
+                (),
+                ResourceIdentification.scoped(
+                    title_doc, pr_key, "pr_title", parse_identity(pr_id)
+                ),
+            )
+        )
         text_admissions.append(
             (title_doc, title_val, clock, provenance_json, observed_at_us)
         )
@@ -871,7 +880,15 @@ def normalize_pull_request(
         body_doc = make_document_key(
             pr_key, "pull_request_document", "pr_body", parse_identity(pr_id)
         )
-        observations.append(ResourceObservation(body_doc, ()))
+        observations.append(
+            ResourceObservation(
+                body_doc,
+                (),
+                ResourceIdentification.scoped(
+                    body_doc, pr_key, "pr_body", parse_identity(pr_id)
+                ),
+            )
+        )
         text_admissions.append(
             (body_doc, body_val, clock, provenance_json, observed_at_us)
         )
@@ -1069,7 +1086,13 @@ def normalize_review(
         observed_at_us=observed_at_us,
         observations=(
             ResourceObservation(pr_key, ()),
-            ResourceObservation(review_key, tuple(fields)),
+            ResourceObservation(
+                review_key,
+                tuple(fields),
+                ResourceIdentification.scoped(
+                    review_key, pr_key, "review_summary", review_id
+                ),
+            ),
         ),
         text_admissions=tuple(text_admissions),
         extra_texts=(),
@@ -1140,7 +1163,11 @@ def normalize_review_thread(
         observed_at_us=observed_at_us,
         observations=(
             ResourceObservation(pr_key, ()),
-            ResourceObservation(thread_key, tuple(fields)),
+            ResourceObservation(
+                thread_key,
+                tuple(fields),
+                ResourceIdentification.scoped(thread_key, pr_key, "thread", thread_id),
+            ),
         ),
         text_admissions=(),
         extra_texts=(),
@@ -1299,7 +1326,15 @@ def normalize_review_comment(
             review_key = make_document_key(
                 pr_key, "review", "review_summary", review_db_id
             )
-            extra_observations.append(ResourceObservation(review_key, ()))
+            extra_observations.append(
+                ResourceObservation(
+                    review_key,
+                    (),
+                    ResourceIdentification.scoped(
+                        review_key, pr_key, "review_summary", review_db_id
+                    ),
+                )
+            )
             relations.append(
                 ResourceRelation(
                     comment_key,
@@ -1346,7 +1381,15 @@ def normalize_review_comment(
             parent_comment_key = make_document_key(
                 pr_key, "review_comment", "comment", reply_db_id
             )
-            extra_observations.append(ResourceObservation(parent_comment_key, ()))
+            extra_observations.append(
+                ResourceObservation(
+                    parent_comment_key,
+                    (),
+                    ResourceIdentification.scoped(
+                        parent_comment_key, pr_key, "comment", reply_db_id
+                    ),
+                )
+            )
             relations.append(
                 ResourceRelation(
                     comment_key,
@@ -1382,7 +1425,15 @@ def normalize_review_comment(
         thread_key = make_document_key(
             pr_key, "review_thread", "thread", effective_thread
         )
-        extra_observations.append(ResourceObservation(thread_key, ()))
+        extra_observations.append(
+            ResourceObservation(
+                thread_key,
+                (),
+                ResourceIdentification.scoped(
+                    thread_key, pr_key, "thread", effective_thread
+                ),
+            )
+        )
         relations.append(
             ResourceRelation(
                 comment_key,
@@ -1456,7 +1507,13 @@ def normalize_review_comment(
         observed_at_us=observed_at_us,
         observations=(
             *extra_observations,
-            ResourceObservation(comment_key, tuple(fields)),
+            ResourceObservation(
+                comment_key,
+                tuple(fields),
+                ResourceIdentification.scoped(
+                    comment_key, pr_key, "comment", comment_id
+                ),
+            ),
         ),
         text_admissions=tuple(text_admissions),
         extra_texts=tuple(extra_texts),
@@ -1570,7 +1627,13 @@ def normalize_issue_comment(
         observed_at_us=observed_at_us,
         observations=(
             ResourceObservation(parent_key, ()),
-            ResourceObservation(comment_key, tuple(fields)),
+            ResourceObservation(
+                comment_key,
+                tuple(fields),
+                ResourceIdentification.scoped(
+                    comment_key, parent_key, "comment", comment_id
+                ),
+            ),
         ),
         text_admissions=tuple(text_admissions),
         extra_texts=(),
@@ -1774,7 +1837,13 @@ def normalize_timeline_event(
         observed_at_us=observed_at_us,
         observations=(
             ResourceObservation(parent_key, ()),
-            ResourceObservation(event_key, tuple(fields)),
+            ResourceObservation(
+                event_key,
+                tuple(fields),
+                ResourceIdentification.scoped(
+                    event_key, parent_key, "timeline_event", parse_identity(eid)
+                ),
+            ),
         ),
         text_admissions=(),
         extra_texts=(),
@@ -1894,7 +1963,13 @@ def normalize_pr_commit(
         observed_at_us=observed_at_us,
         observations=(
             ResourceObservation(pr_key, ()),
-            ResourceObservation(commit_doc, tuple(fields)),
+            ResourceObservation(
+                commit_doc,
+                tuple(fields),
+                ResourceIdentification.scoped(
+                    commit_doc, pr_key, "pr_commit", oid.full_oid
+                ),
+            ),
         ),
         text_admissions=tuple(text_admissions),
         extra_texts=(),
@@ -1970,7 +2045,11 @@ def normalize_pr_file(
         observed_at_us=observed_at_us,
         observations=(
             ResourceObservation(pr_key, ()),
-            ResourceObservation(file_doc, tuple(fields)),
+            ResourceObservation(
+                file_doc,
+                tuple(fields),
+                ResourceIdentification.scoped(file_doc, pr_key, "pr_file", filename),
+            ),
         ),
         text_admissions=tuple(text_admissions),
         extra_texts=(),

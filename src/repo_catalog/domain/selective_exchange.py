@@ -585,12 +585,9 @@ def expand_resources(rows, relations, collections, scope, repository_relations=(
     reasons = []
     omissions = []
     edges = {r: set() for r in available}
-    for r in available:
-        if r.resource_kind in ("review", "thread", "comment", "document"):
-            coords = r.scoped_document_coordinates()
-            parent = ResourceKey(r.service_instance_uuidv4, *coords[:2])
-            if parent in available:
-                edges[r].add(parent)
+    # Namespace is identification, never an inferred report/dependency edge.
+    # This wire version has no identification declaration; affected selections
+    # must wait for I6 rather than guess from arbitrary array-shaped keys.
     for row in relations:
         owner = ResourceKey(*row[:3])
         edges.setdefault(owner, set()).update(
@@ -653,6 +650,23 @@ def expand_resources(rows, relations, collections, scope, repository_relations=(
                     }
                 )
     return chosen, reasons, omissions
+
+
+def preflight_i2_resources(resources):
+    from repo_catalog.domain.resource_stage import UnsupportedIdentificationStage
+
+    if any(
+        r.resource_kind in {"review", "thread", "comment", "document"}
+        for r in resources
+    ):
+        raise UnsupportedIdentificationStage()
+
+
+def preflight_i2_context(data):
+    from repo_catalog.domain.resource_stage import preflight_transfer
+
+    preflight_transfer(data)
+    preflight_i2_resources(resource(row) for row in data["resources"])
 
 
 def validate_context(data):

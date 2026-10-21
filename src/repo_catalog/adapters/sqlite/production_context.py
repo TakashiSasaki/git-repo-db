@@ -44,7 +44,6 @@ from repo_catalog.domain.p1_context import (
     TransferEventReport,
     canonical,
     validate_provider_repository_scope,
-    validate_timeline_event_coordinates,
 )
 from repo_catalog.domain.p1_coordination import CoordinationError
 from repo_catalog.domain.p1_core import OID, uuid4_value
@@ -58,6 +57,15 @@ from repo_catalog.domain.production_context import (
     SourceInventory,
     json_value,
     validate_reported_core_reference,
+)
+from repo_catalog.domain.resource_identification import (
+    ResourceIdentification,
+    require_identification,
+)
+from repo_catalog.domain.resource_stage import (
+    UnsupportedResourceStage,
+    refuse_transfer,
+    validate_stage_storage,
 )
 
 
@@ -134,6 +142,7 @@ def _complete_operations(cls):
         def completed(operation):
             @wraps(operation)
             def call(self, *args, **kwargs):
+                self._validate_stage()
                 result = operation(self, *args, **kwargs)
                 self._read_complete()
                 return result
@@ -169,6 +178,7 @@ class Context(ContextStore):
         if roles != [("context",)]:
             raise ContextError("STORE_ROLE", "context", "Context authority required")
         self._validate_schema()
+        self._validate_stage()
         # Validate registration authority in the pinned transaction, including
         # raw trusted-factory writes. No incoming rejected settings cause a stop.
         self._validate_registrations()
@@ -328,31 +338,26 @@ class Context(ContextStore):
         try:
             yield
             self._read_complete()
+        except UnsupportedResourceStage:
+            raise
         except (ValueError, TypeError, AttributeError) as error:
             persist_catalog_stop(self.directory, f"Invalid retained {scope}: {error}")
             raise ContextError("AUTHORITATIVE_CORRUPTION", scope) from error
 
     def _validate_schema(self):
-        rows = self.db.execute(
-            "SELECT name, sql FROM sqlite_schema WHERE type='table' AND name IN ('resource_repository_relations', 'repository_mapping_dispositions', 'field_candidates')"
-        ).fetchall()
-        tables = {name: sql for name, sql in rows}
-        if {
-            "resource_repository_relations",
-            "repository_mapping_dispositions",
-            "field_candidates",
-        } - set(tables):
+        from repo_catalog.adapters.sqlite.p1_schema import expected_schema, schema_rows
+
+        if schema_rows(self.db) != expected_schema("context"):
             raise ContextError(
                 "UNSUPPORTED_SCHEMA",
                 "context",
-                "Context schema predates ADR 0030 relations",
+                "Context differs from packaged I2 schema",
             )
-        if "repository_uuidv4 TEXT" in (tables.get("field_candidates") or ""):
-            raise ContextError(
-                "UNSUPPORTED_SCHEMA",
-                "context",
-                "Context schema predates ADR 0030 relations",
-            )
+
+    def _validate_stage(self):
+        self._check()
+        with self._stored("I2 staged Resource"):
+            validate_stage_storage(self.db)
 
     def _validate_registrations(self):
         for table, column, kind in (
@@ -454,24 +459,47 @@ class Context(ContextStore):
                 observation.values,
             )
 
-    def resource(self, key: ResourceKey, repository_uuidv4: str | None = None):
+    def resource(
+        self,
+        key: ResourceKey,
+        repository_uuidv4: str | None = None,
+        *,
+        identification: ResourceIdentification | None = None,
+    ):
         self._check(write=True)
-        return super().resource(key, repository_uuidv4)
+        require_identification(key, identification)
+        if self.db.execute(
+            "SELECT 1 FROM resources WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=?",
+            key.coordinates(),
+        ).fetchone():
+            self.identification(key)
+        return super().resource(key, repository_uuidv4, identification=identification)
+
+    def identification(self, key: ResourceKey) -> ResourceIdentification:
+        self._check()
+        self._require_resource(key)
+        with self._stored("Resource identification"):
+            return super().identification(key)
 
     def resources(self, *, kind: str | None = None) -> tuple[ResourceKey, ...]:
         self._check()
-        return tuple(
-            ResourceKey(*row)
-            for row in self.db.execute(
-                "SELECT service_instance_uuidv4,resource_kind,provider_resource_id FROM resources WHERE (? IS NULL OR resource_kind=?) ORDER BY service_instance_uuidv4,resource_kind,provider_resource_id",
-                (kind, kind),
+        with self._stored("Resource identification"):
+            return tuple(
+                ResourceIdentification.from_storage(
+                    ResourceKey(*row[:3]), row[3:]
+                ).resource
+                for row in self.db.execute(
+                    "SELECT service_instance_uuidv4,resource_kind,provider_resource_id,identifier_namespace_kind,identifier_namespace_id,document_kind,provider_document_id FROM resources WHERE (? IS NULL OR resource_kind=?) ORDER BY service_instance_uuidv4,resource_kind,provider_resource_id",
+                    (kind, kind),
+                )
             )
-        )
 
     def observe(self, observation: ResourceObservation) -> tuple[str, ...]:
         """Admit one modeled resource atomically, with per-field original clocks."""
         with self._unit():
-            self.resource(observation.resource)
+            self.resource(
+                observation.resource, identification=observation.identification
+            )
             return tuple(self.admit_field(field) for field in observation.fields)
 
     def inherit_fields(
@@ -480,7 +508,8 @@ class Context(ContextStore):
         """Explicit field-specific inheritance retains original evidence verbatim.
 
         No inheritance of absent fields, synthetic clock, receipt time or copied
-        raw response is introduced. The real resource relation is checked first.
+        raw response is introduced. Check the stored native identification scope;
+        this operation neither derives nor creates a semantic Parent report.
         """
         with self._unit():
             self._require_resource(parent)
@@ -488,8 +517,11 @@ class Context(ContextStore):
             if child.service_instance_uuidv4 != parent.service_instance_uuidv4:
                 raise ContextError("INHERITANCE_OWNER", "field")
             if child.resource_kind in {"review", "comment", "thread", "document"}:
-                coordinates = child.scoped_document_coordinates()
-                if tuple(coordinates[:2]) != parent.coordinates()[1:]:
+                declaration = self.identification(child)
+                if (
+                    declaration.identifier_namespace_kind,
+                    declaration.identifier_namespace_id,
+                ) != parent.coordinates()[1:]:
                     raise ContextError("INHERITANCE_OWNER", "field")
             else:
                 raise ContextError("INHERITANCE_OWNER", "field")
@@ -529,11 +561,12 @@ class Context(ContextStore):
             if child_kind is not None and (
                 member.resource_kind != child_kind
                 or member.service_instance_uuidv4 != owner.service_instance_uuidv4
-                or member.scoped_document_coordinates()[:2] != owner.coordinates()[1:]
+                or self.identification(member).columns[:2] != owner.coordinates()[1:]
             ):
                 raise ContextError("MEMBER_OWNER", "relation")
 
     def relation(self, relation: ResourceRelation) -> str:
+        refuse_transfer(relation.relation_kind)
         with self._unit():
             if relation.relation_kind == "transfer_event_report":
                 raise ValueError("Transfer reports require admit_transfer_event()")
@@ -571,6 +604,7 @@ class Context(ContextStore):
         self, resource: ResourceKey, relation_kind: str
     ) -> tuple[ResourceRelation, ...]:
         self._check()
+        refuse_transfer(relation_kind)
         with self._stored("relation"):
             values = tuple(
                 ResourceRelation(
@@ -813,8 +847,7 @@ class Context(ContextStore):
             return super().admit_mapping_disposition(disposition)
 
     def admit_transfer_event(self, report: TransferEventReport) -> str:
-        with self._unit():
-            return super().admit_transfer_event(report)
+        raise UnsupportedResourceStage("admit_transfer_event")
 
     def mapping_dispositions(
         self, subject: MappingClaimKey | ResourceKey | None = None
@@ -951,30 +984,7 @@ class Context(ContextStore):
         repository_uuidv4: str | None = None,
         selected_repositories: Iterable[str] | None = None,
     ) -> tuple[TransferEventReport, ...]:
-        self._check()
-        if resource is not None:
-            if not isinstance(resource, ResourceKey) or resource.resource_kind not in (
-                "issue",
-                "comment",
-            ):
-                raise ValueError(
-                    "transfer_event_reports requires an issue or comment resource"
-                )
-            if resource.resource_kind == "comment":
-                validate_timeline_event_coordinates(resource.provider_resource_id)
-        if repository_uuidv4 is not None:
-            uuid4_value(repository_uuidv4)
-        selected_tuple: tuple[str, ...] | None = None
-        if selected_repositories is not None:
-            selected_tuple = tuple(selected_repositories)
-            for repo_id in selected_tuple:
-                uuid4_value(repo_id)
-        with self._stored("transfer_event"):
-            return super().transfer_event_reports(
-                resource,
-                repository_uuidv4=repository_uuidv4,
-                selected_repositories=selected_tuple,
-            )
+        raise UnsupportedResourceStage("transfer_event_reports")
 
     def scope(self, scope: CoverageScope):
         self._check(write=True)

@@ -32,6 +32,8 @@ from repo_catalog.domain.production_context import (
     ResourceRelation,
     SourceInventory,
 )
+from repo_catalog.domain.resource_identification import ResourceIdentification as RI
+from repo_catalog.domain.resource_stage import UnsupportedResourceStage
 from tests.integration.p1 import test_context as p1_contract
 
 REPO = p1_contract.REPO
@@ -92,9 +94,11 @@ def test_generic_resource_relation_cannot_register_transfer_scope(context):
     issue = ResourceKey.from_native(SERVICE, "issue", "transfer-parent")
     event = ResourceKey.timeline_event(issue, "real-event")
     store.resource(issue)
-    store.resource(event)
+    store.resource(
+        event, identification=RI.scoped(event, issue, "timeline_event", "real-event")
+    )
     scope = ResourceRelation(event, "transfer_event_report", (), PROVENANCE, "{}", 1)
-    with pytest.raises(ValueError, match="admit_transfer_event"):
+    with pytest.raises(ValueError, match="I2_TRANSFER_UNSUPPORTED"):
         store.relation(scope)
     assert not db.execute(
         "SELECT 1 FROM resource_relations WHERE relation_kind='transfer_event_report'"
@@ -146,7 +150,8 @@ def test_invalid_relation_filters_do_not_stop_valid_catalog(directory, invalid_f
                 store.transfer_event_reports(
                     ResourceKey.document(PR, "comment", "comment", "ordinary-comment")
                 )
-        assert store.transfer_event_reports() == ()
+        with pytest.raises(UnsupportedResourceStage):
+            store.transfer_event_reports()
     assert not (directory / "p1-recovery-stop.json").exists()
 
 
@@ -299,7 +304,7 @@ def test_field_specific_inheritance_preserves_original_alternatives(context):
     _, store, _ = context
     store.resource(PR)
     review = ResourceKey.document(PR, "review", "approval", "7")
-    store.resource(review)
+    store.resource(review, identification=RI.scoped(review, PR, "approval", "7"))
     original = field(PR, evidence="original", observed=70)
     other = field(PR, value="competing", domain="another-source", observed=30)
     for candidate in (original, other, field(PR, name="secret", value="not inherited")):
@@ -329,8 +334,13 @@ def test_document_child_ownership_and_relationship_roundtrip(context):
     thread = ResourceKey.document(review, "thread", "review-thread", "same-id")
     comment = ResourceKey.document(thread, "comment", "comment", "same-id")
     document = ResourceKey.document(PR, "document", "description", "same-id")
-    for resource in (review, thread, comment, document):
-        store.resource(resource)
+    for resource, declaration in (
+        (review, RI.scoped(review, PR, "review", "same-id")),
+        (thread, RI.scoped(thread, review, "review-thread", "same-id")),
+        (comment, RI.scoped(comment, thread, "comment", "same-id")),
+        (document, RI.scoped(document, PR, "description", "same-id")),
+    ):
+        store.resource(resource, identification=declaration)
     relation = ResourceRelation(PR, "reviews", (review,), PROVENANCE, "{}", 10)
     assert store.relation(relation) == "insert"
     assert store.relation(relation) == "duplicate"
@@ -697,8 +707,9 @@ def test_capability_expired_and_outer_transaction_required(directory):
 
 def test_invalid_input_does_not_catalog_stop(context):
     _, store, path = context
-    with pytest.raises(sqlite3.IntegrityError):
-        store.resource(ResourceKey.from_native(SERVICE, "ordinary_file", "file"))
+    store.resource(ResourceKey.from_native(SERVICE, "ordinary_file", "file"))
+    with pytest.raises(ValueError, match="explicit ResourceIdentification"):
+        store.resource(ResourceKey.global_document(SERVICE, "file"))
     assert not (path.parent / "p1-recovery-stop.json").exists()
     assert not hasattr(store, "retain_blob")
 
@@ -760,6 +771,9 @@ def test_swallowed_sqlite_corruption_stops_immediately(directory, deferred):
             # the original swallowed/deferred-corruption assertions below.
             if sql in {
                 "SELECT store_role FROM store_identity",
+                "SELECT type,name,tbl_name,sql FROM sqlite_schema WHERE name NOT LIKE 'sqlite_%' ORDER BY type,name",
+                "SELECT 1 FROM resource_relations WHERE relation_kind COLLATE BINARY='transfer_event_report' LIMIT 1",
+                "SELECT 1 FROM resource_repository_relations WHERE relation_kind COLLATE BINARY IN('transfer_from_repository','transfer_to_repository') LIMIT 1",
                 "SELECT name, sql FROM sqlite_schema WHERE type='table' AND name IN ('resource_repository_relations', 'repository_mapping_dispositions', 'field_candidates')",
                 "SELECT configuration_json FROM providers",
                 "SELECT configuration_json FROM repository_context",
@@ -791,7 +805,7 @@ def test_foreign_parent_child_cannot_be_collection_members(context, method):
     other = ResourceKey.from_native(SERVICE, "pull_request", "other")
     store.resource(other)
     child = ResourceKey.document(other, "review", "review", "7")
-    store.resource(child)
+    store.resource(child, identification=RI.scoped(child, other, "review", "7"))
     observation = collection(key=PR, members=(child,))
     with pytest.raises(ContextError, match="MEMBER_OWNER"):
         if method == "collection":

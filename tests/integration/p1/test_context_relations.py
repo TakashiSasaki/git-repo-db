@@ -32,6 +32,7 @@ from repo_catalog.domain.p1_context import (
 from repo_catalog.domain.p1_coordination import CoordinationError
 from repo_catalog.domain.production_context import ContextError
 from repo_catalog.domain.recovery import BackupValidationError
+from repo_catalog.domain.resource_identification import ResourceIdentification as RI
 
 REPO_1 = "9ebbe38a-f937-40e6-a99c-701835ebcf10"
 REPO_2 = "c58b4f17-f58c-4a33-8bc6-eb52c42337d1"
@@ -281,7 +282,11 @@ def context_db(tmp_path):
     store = ContextStore(db)
     store.resource(KEY_REPO, REPO_1)
     store.resource(KEY_ISSUE, REPO_1)
-    store.resource(KEY_EVENT, REPO_1)
+    store.resource(
+        KEY_EVENT,
+        REPO_1,
+        identification=RI.scoped(KEY_EVENT, KEY_ISSUE, "timeline_event", "event-99"),
+    )
     yield db, store, path
     db.close()
 
@@ -496,7 +501,16 @@ def test_counterexample_4_invalid_roles_and_targets(context_db):
         "c-1",
     )
     with pytest.raises(sqlite3.IntegrityError):
-        store.resource(child_key, REPO_1)
+        store.resource(
+            child_key,
+            REPO_1,
+            identification=RI.scoped(
+                child_key,
+                ResourceKey.from_native(SERVICE, "issue", "nonexistent"),
+                "review_comment",
+                "c-1",
+            ),
+        )
 
 
 # Counterexample 5: One-sided, null, two-sided, unresolved-endpoint and separate-report Transfer cases: no invented endpoint or cross-report pairing.

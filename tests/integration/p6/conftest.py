@@ -45,6 +45,7 @@ from repo_catalog.domain.production_context import (
     ResourceRelation,
     SourceInventory,
 )
+from repo_catalog.domain.resource_identification import ResourceIdentification as RI
 
 REPOSITORY = "e82dde21-3201-49db-9273-2e58c9c9beaf"
 INSTANCE = "f9976943-6d0c-4b14-879e-30b23591fb53"
@@ -536,6 +537,7 @@ def populate_rich_catalog(
                         110,
                     ),
                 ),
+                identification=RI.scoped(review_key, pr_key, "pr_review", "rev-1"),
             )
         )
         context.observe(
@@ -551,6 +553,7 @@ def populate_rich_catalog(
                         115,
                     ),
                 ),
+                identification=RI.scoped(thread_key, pr_key, "review_thread", "thr-1"),
             )
         )
         context.observe(
@@ -566,6 +569,7 @@ def populate_rich_catalog(
                         120,
                     ),
                 ),
+                identification=RI.scoped(comment_key, pr_key, "review_comment", "rc-1"),
             )
         )
         context.admit_text(
@@ -655,6 +659,9 @@ def populate_rich_catalog(
                         ctx_prov_1,
                         95,
                     ),
+                ),
+                identification=RI.scoped(
+                    issue_comment_key, issue_key, "issue_comment", "ic-1"
                 ),
             )
         )

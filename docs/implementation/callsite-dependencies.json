@@ -3584,6 +3584,62 @@
       ]
     },
     {
+      "path": "src/repo_catalog/domain/resource_identification.py",
+      "sha256": "15fe03ef4518c15f44057361bc64c40e494756cf9180fbda7ae65365deb2ee95",
+      "functions": [
+        {
+          "name": "validate_identification",
+          "line": 30,
+          "end_line": 55
+        },
+        {
+          "name": "__post_init__",
+          "line": 66,
+          "end_line": 75
+        },
+        {
+          "name": "columns",
+          "line": 78,
+          "end_line": 84
+        },
+        {
+          "name": "unscoped",
+          "line": 87,
+          "end_line": 92
+        },
+        {
+          "name": "global_document",
+          "line": 95,
+          "end_line": 98
+        },
+        {
+          "name": "scoped",
+          "line": 101,
+          "end_line": 116
+        },
+        {
+          "name": "from_storage",
+          "line": 119,
+          "end_line": 122
+        },
+        {
+          "name": "require_identification",
+          "line": 125,
+          "end_line": 142
+        },
+        {
+          "name": "identity_sql",
+          "line": 145,
+          "end_line": 150
+        },
+        {
+          "name": "identification_sql",
+          "line": 153,
+          "end_line": 158
+        }
+      ]
+    },
+    {
       "path": "src/repo_catalog/domain/resource_identity.py",
       "sha256": "a7b68deb5a40956360a7c8ad69bcff1c216020b4eb451e52e0ea61fb5d0c13a3",
       "functions": [
@@ -3611,6 +3667,37 @@
           "name": "parse_identity",
           "line": 165,
           "end_line": 184
+        }
+      ]
+    },
+    {
+      "path": "src/repo_catalog/domain/resource_stage.py",
+      "sha256": "a80d5d826cfb106773105a16f5e6a83244acba0f85d42de08229f35ed8f14101",
+      "functions": [
+        {
+          "name": "__init__",
+          "line": 11,
+          "end_line": 13
+        },
+        {
+          "name": "__init__",
+          "line": 19,
+          "end_line": 21
+        },
+        {
+          "name": "refuse_transfer",
+          "line": 24,
+          "end_line": 26
+        },
+        {
+          "name": "preflight_transfer",
+          "line": 29,
+          "end_line": 58
+        },
+        {
+          "name": "validate_stage_storage",
+          "line": 61,
+          "end_line": 71
         }
       ]
     },
@@ -16548,6 +16635,15 @@
       "function": null,
       "subjects": [
         "commits"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "src/repo_catalog/domain/resource_stage.py",
+      "line": 30,
+      "function": "preflight_transfer",
+      "subjects": [
+        "payloads"
       ],
       "sql_operations": []
     },

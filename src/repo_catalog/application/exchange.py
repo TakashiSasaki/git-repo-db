@@ -272,6 +272,11 @@ class _ReceiveWork:
 class ExchangeService:
     """Selective verification-aware export and untrusted package import service."""
 
+    def export_transfer_events(self, *args, **kwargs):
+        from repo_catalog.domain.resource_stage import UnsupportedResourceStage
+
+        raise UnsupportedResourceStage("export_transfer_events")
+
     def __init__(
         self,
         directory: Path | str,
@@ -1185,6 +1190,9 @@ class ExchangeService:
             included_rks, reasons, omissions = expand_resources(
                 all_resource_rows, rel_rows, coll_rows, scope, support_rows
             )
+            from repo_catalog.domain.selective_exchange import preflight_i2_resources
+
+            preflight_i2_resources(included_rks)
             self._selection_details["dependency_reasons"].extend(reasons)
             self._selection_details["omissions"].extend(omissions)
             for row in all_resource_rows:
@@ -1664,6 +1672,12 @@ class ExchangeService:
             omissions.extend(
                 filter_sections(core_data, context_data, selection, permitted=permitted)
             )
+        # Fence the receiver-selected atomic unit before dependency rewriting,
+        # package replay/binding, or either authority's effects.
+        if want_context and context_data is not None:
+            from repo_catalog.domain.selective_exchange import preflight_i2_context
+
+            preflight_i2_context(context_data)
         limited, _ = bound_sections(core_data, context_data, selection)
         omissions.extend(limited)
         omissions.extend(
@@ -2981,6 +2995,9 @@ class ExchangeService:
         ctx_data: dict[str, list[dict[str, Any]]],
         validate_core: Callable[[str, str], bool],
     ) -> dict[str, int]:
+        from repo_catalog.domain.selective_exchange import preflight_i2_context
+
+        preflight_i2_context(ctx_data)
         count_sql = "SELECT (SELECT count(*) FROM providers)+(SELECT count(*) FROM repository_context)+(SELECT count(*) FROM sources)+(SELECT count(*) FROM source_repositories)+(SELECT count(*) FROM resources)+(SELECT count(*) FROM resource_repository_relations)+(SELECT count(*) FROM repository_mapping_dispositions)+(SELECT count(*) FROM field_candidates)+(SELECT count(*) FROM resource_relations)+(SELECT count(*) FROM text_bodies)+(SELECT count(*) FROM collections)+(SELECT count(*) FROM collection_terminals)+(SELECT count(*) FROM core_references)+(SELECT count(*) FROM coverage_scopes)+(SELECT count(*) FROM coverage_claims)+(SELECT count(*) FROM coverage_proofs)+(SELECT count(*) FROM source_inventory_evidence)+(SELECT count(*) FROM source_coverage_proofs)"
         before_changes = ctx.db.execute(count_sql).fetchone()[0]
         before_res_count = ctx.db.execute("SELECT COUNT(*) FROM resources").fetchone()[

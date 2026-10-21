@@ -119,3 +119,8 @@ print(json.dumps(s.expected_ddl_manifest(), sort_keys=True))
     from repo_catalog.adapters.sqlite.p1_schema import expected_ddl_manifest
 
     assert actual == expected_ddl_manifest()
+    driver = outside / "verify_i2_distribution.py"
+    driver.write_bytes((ROOT / "scripts/verify_i2_distribution.py").read_bytes())
+    run([python, driver, "--output", outside / "i2-installed.json"], outside, env)
+    receipt = json.loads((outside / "i2-installed.json").read_text())
+    assert all(str(venv) in item["path"] for item in receipt["origins"].values())
