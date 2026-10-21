@@ -1,0 +1,1471 @@
+{
+  "scope": "Development integration validation; no product/distribution/release acceptance",
+  "lanes": {
+    "baseline-distribution-3531": {
+      "label": "baseline-distribution-3531",
+      "head": "32e5d4de67c0d436f7583d04e1cfd349b64b2bbd",
+      "tree": "708c860cd4badd4d787d4d8140b9626c80813be6",
+      "sqlite": "3.53.1",
+      "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+      "interpreter": "/workspace/git-repo-db/.venv/bin/python",
+      "selected": 0,
+      "executed": 0,
+      "passed": 0,
+      "failed": 0,
+      "errored": 0,
+      "skipped": 0,
+      "xfailed": 0,
+      "deselected": 0,
+      "exit_code": 1,
+      "wall_seconds": 5.201477396000001,
+      "inputs_unchanged": true,
+      "selected_equals_executed": true,
+      "every_executed_has_three_phases": true,
+      "failures": {}
+    },
+    "baseline-intake-3513": {
+      "label": "baseline-intake-3513",
+      "head": "32e5d4de67c0d436f7583d04e1cfd349b64b2bbd",
+      "tree": "708c860cd4badd4d787d4d8140b9626c80813be6",
+      "sqlite": "3.49.1",
+      "sqlite_source_id": "2025-02-18 13:38:58 873d4e274b4988d260ba8354a9718324a1c26187a4ab4c1cc0227c03d0f10e70",
+      "interpreter": "/workspace/adr0031-sqlite3513-venv/bin/python",
+      "selected": 48,
+      "executed": 48,
+      "passed": 0,
+      "failed": 48,
+      "errored": 0,
+      "skipped": 0,
+      "xfailed": 0,
+      "deselected": 0,
+      "exit_code": 1,
+      "wall_seconds": 3.0456640079999886,
+      "inputs_unchanged": true,
+      "selected_equals_executed": true,
+      "every_executed_has_three_phases": true,
+      "failures": {
+        "tests/integration/i2/test_provider_intake.py::test_pr_base_head_have_distinct_core_and_exact_provider_support": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_mapping_conflict_retains_both_exact_claim_keys": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_other_provider_claim_cannot_resolve_reference_or_typed_qualification": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_disposition_qualification_keeps_original_provider_and_claims[withdraw]": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_disposition_qualification_keeps_original_provider_and_claims[dispute]": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_disposition_qualification_keeps_original_provider_and_claims[correct]": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_missing_null_unresolved_and_late_mapping_are_distinct": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_provider_native_namespaces_do_not_borrow_decimal_mapping": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_transfer_preserves_complete_original_endpoint_states[endpoints0-expected0]": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_transfer_preserves_complete_original_endpoint_states[endpoints1-expected1]": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_transfer_preserves_complete_original_endpoint_states[endpoints2-expected2]": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_transfer_preserves_complete_original_endpoint_states[endpoints3-expected3]": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_transfer_preserves_complete_original_endpoint_states[endpoints4-expected4]": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_non_transfer_cannot_promote_repository_fields_or_forged_flag[False]": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_non_transfer_cannot_promote_repository_fields_or_forged_flag[True]": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_graphql_transfer_parent_namespace_and_original_type": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_timeline_parent_override_cannot_forge_observed_issue[False-999-None]": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_timeline_parent_override_cannot_forge_observed_issue[True-999-None]": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_timeline_parent_override_cannot_forge_observed_issue[True-I_wrong-observed_issue2]": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_timeline_parent_override_cannot_forge_observed_issue[True-I_actual-None]": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_timeline_parent_override_cannot_forge_observed_issue[True-I_actual-observed_issue4]": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_timeline_parent_override_cannot_forge_observed_issue[True-7-observed_issue5]": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_timeline_parent_override_cannot_forge_observed_issue[True-I_actual-observed_issue6]": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_reacquired_event_does_not_reissue_provenance_after_mapping_change": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_separate_event_reports_never_pair_endpoints": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_generic_provider_scope_cannot_create_transfer": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_invalid_event_input_rolls_back_without_recovery_stop[payload0]": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_invalid_event_input_rolls_back_without_recovery_stop[payload1]": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_invalid_event_input_rolls_back_without_recovery_stop[payload2]": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_caller_transaction_batch_failure_rolls_back_partial_domain_and_access_untouched": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_p7_stop_rejects_provider_intake": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_issue_ownership_keeps_incomparable_source_clock_domains": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_oid_url_name_and_source_membership_are_not_mapping_evidence": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_declared_resolved_provider_scope_does_not_supply_its_own_mapping": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_graphql_event_does_not_infer_destination_from_current_issue_repository": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_same_original_event_key_cannot_change_observation_time": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_stop_during_claim_admission_rolls_back_real_context_work": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_latest_unresolved_owner_does_not_fall_back_to_old_mapped_owner": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_graphql_type_mismatch_cannot_change_resource_kind[issue]": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_graphql_type_mismatch_cannot_change_resource_kind[pull_request]": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_graphql_type_mismatch_cannot_change_resource_kind[repository]": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_mapping_qualification_does_not_rewrite_source_or_coverage": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_transfer_type_and_endpoint_evidence_must_belong_to_same_report[event_resource]": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_transfer_type_and_endpoint_evidence_must_belong_to_same_report[clock]": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_transfer_type_and_endpoint_evidence_must_belong_to_same_report[provenance]": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_transfer_type_and_endpoint_evidence_must_belong_to_same_report[members]": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_qualified_read_keyword_contract_reference_and_production_match": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_invalid_retained_provider_scope_triggers_p7_stop": "failed"
+      }
+    },
+    "baseline-intake-actual3513": {
+      "label": "baseline-intake-actual3513",
+      "head": "32e5d4de67c0d436f7583d04e1cfd349b64b2bbd",
+      "tree": "708c860cd4badd4d787d4d8140b9626c80813be6",
+      "sqlite": "3.51.3",
+      "sqlite_source_id": "2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618",
+      "interpreter": "/workspace/adr0031-min-venv/bin/python",
+      "selected": 48,
+      "executed": 48,
+      "passed": 45,
+      "failed": 3,
+      "errored": 0,
+      "skipped": 0,
+      "xfailed": 0,
+      "deselected": 0,
+      "exit_code": 1,
+      "wall_seconds": 7.795150885999988,
+      "inputs_unchanged": true,
+      "selected_equals_executed": true,
+      "every_executed_has_three_phases": true,
+      "failures": {
+        "tests/integration/i2/test_provider_intake.py::test_non_transfer_cannot_promote_repository_fields_or_forged_flag[True]": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_graphql_transfer_parent_namespace_and_original_type": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_graphql_event_does_not_infer_destination_from_current_issue_repository": "failed"
+      }
+    },
+    "baseline-intake-actual3531": {
+      "label": "baseline-intake-actual3531",
+      "head": "32e5d4de67c0d436f7583d04e1cfd349b64b2bbd",
+      "tree": "708c860cd4badd4d787d4d8140b9626c80813be6",
+      "sqlite": "3.53.1",
+      "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+      "interpreter": "/workspace/git-repo-db/.venv/bin/python",
+      "selected": 48,
+      "executed": 48,
+      "passed": 45,
+      "failed": 3,
+      "errored": 0,
+      "skipped": 0,
+      "xfailed": 0,
+      "deselected": 0,
+      "exit_code": 1,
+      "wall_seconds": 6.736963236999969,
+      "inputs_unchanged": true,
+      "selected_equals_executed": true,
+      "every_executed_has_three_phases": true,
+      "failures": {
+        "tests/integration/i2/test_provider_intake.py::test_non_transfer_cannot_promote_repository_fields_or_forged_flag[True]": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_graphql_transfer_parent_namespace_and_original_type": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_graphql_event_does_not_infer_destination_from_current_issue_repository": "failed"
+      }
+    },
+    "baseline-ordinary-3531": {
+      "label": "baseline-ordinary-3531",
+      "head": "32e5d4de67c0d436f7583d04e1cfd349b64b2bbd",
+      "tree": "708c860cd4badd4d787d4d8140b9626c80813be6",
+      "sqlite": "3.53.1",
+      "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+      "interpreter": "/workspace/git-repo-db/.venv/bin/python",
+      "selected": 5181,
+      "executed": 0,
+      "passed": 0,
+      "failed": 0,
+      "errored": 0,
+      "skipped": 0,
+      "xfailed": 0,
+      "deselected": 2,
+      "exit_code": 2,
+      "wall_seconds": 1.4565928800000165,
+      "inputs_unchanged": true,
+      "selected_equals_executed": false,
+      "every_executed_has_three_phases": true,
+      "failures": {}
+    },
+    "diagnostic-broad-3531": {
+      "label": "diagnostic-broad-3531",
+      "head": "83462f94c20d582aeda4023886ccc4522fdcb19a",
+      "tree": "b83ca71b78fadca3318579a5cd9505145c008292",
+      "sqlite": "3.53.1",
+      "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+      "interpreter": "/workspace/git-repo-db/.venv/bin/python",
+      "selected": 0,
+      "executed": 0,
+      "passed": 0,
+      "failed": 0,
+      "errored": 0,
+      "skipped": 0,
+      "xfailed": 0,
+      "deselected": 0,
+      "exit_code": 4,
+      "wall_seconds": 0.2898781179999901,
+      "inputs_unchanged": true,
+      "selected_equals_executed": true,
+      "every_executed_has_three_phases": true,
+      "failures": {}
+    },
+    "diagnostic-broad2-3531": {
+      "label": "diagnostic-broad2-3531",
+      "head": "83462f94c20d582aeda4023886ccc4522fdcb19a",
+      "tree": "b83ca71b78fadca3318579a5cd9505145c008292",
+      "sqlite": "3.53.1",
+      "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+      "interpreter": "/workspace/git-repo-db/.venv/bin/python",
+      "selected": 4993,
+      "executed": 2090,
+      "passed": 2046,
+      "failed": 43,
+      "errored": 0,
+      "skipped": 1,
+      "xfailed": 0,
+      "deselected": 0,
+      "exit_code": 2,
+      "wall_seconds": 386.815832131,
+      "inputs_unchanged": true,
+      "selected_equals_executed": false,
+      "every_executed_has_three_phases": false,
+      "failures": {
+        "tests/integration/i2/test_provider_intake.py::test_non_transfer_cannot_promote_repository_fields_or_forged_flag[True]": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_graphql_transfer_parent_namespace_and_original_type": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_graphql_event_does_not_infer_destination_from_current_issue_repository": "failed",
+        "tests/integration/i23/test_provider_exchange.py::test_current_roles_namespaces_clocks_and_conflicts_across_seeds": "failed",
+        "tests/integration/i4/test_query_search_backup.py::test_forged_backup_with_valid_checksums_fails_semantic_restore[member]": "failed",
+        "tests/integration/i4/test_query_search_backup.py::test_forged_backup_with_valid_checksums_fails_semantic_restore[clock]": "failed",
+        "tests/integration/i4/test_query_search_backup.py::test_forged_backup_with_valid_checksums_fails_semantic_restore[role]": "failed",
+        "tests/integration/i4/test_query_search_backup.py::test_forged_backup_with_valid_checksums_fails_semantic_restore[support]": "failed",
+        "tests/integration/i4/test_query_search_backup.py::test_invalid_authoritative_provider_scope_stops_service[query]": "failed",
+        "tests/integration/i4/test_query_search_backup.py::test_invalid_authoritative_provider_scope_stops_service[search]": "failed",
+        "tests/integration/i4/test_query_search_backup.py::test_invalid_authoritative_provider_scope_stops_service[rebuild]": "failed",
+        "tests/integration/i4/test_query_search_backup.py::test_invalid_authoritative_provider_scope_stops_service[backup]": "failed",
+        "tests/integration/i5/test_independent_e2e.py::test_mapping_effect_stays_local_across_exchange_search_and_restore[withdraw]": "failed",
+        "tests/integration/i5/test_independent_e2e.py::test_mapping_effect_stays_local_across_exchange_search_and_restore[correct]": "failed",
+        "tests/integration/i5/test_independent_e2e.py::test_mapping_effect_stays_local_across_exchange_search_and_restore[dispute]": "failed",
+        "tests/integration/i5/test_independent_e2e.py::test_transfer_reports_never_mix_across_observations_or_identifier_namespaces": "failed",
+        "tests/integration/p1/test_coordination.py::test_crash_cuts_preserve_independent_commits_and_exact_retry[before_core_commit-expected0]": "failed",
+        "tests/integration/p1/test_coordination.py::test_crash_cuts_preserve_independent_commits_and_exact_retry[after_core_commit-expected1]": "failed",
+        "tests/integration/p1/test_coordination.py::test_crash_cuts_preserve_independent_commits_and_exact_retry[during_context-expected2]": "failed",
+        "tests/integration/p1/test_coordination.py::test_crash_cuts_preserve_independent_commits_and_exact_retry[after_context_commit-expected3]": "failed",
+        "tests/integration/p1/test_coordination.py::test_context_failure_rolls_back_whole_unit_without_erasing_core": "failed",
+        "tests/integration/p1/test_coordination.py::test_invalid_cross_store_reference_rejected_at_context_commit": "failed",
+        "tests/integration/p1/test_coordination.py::test_pinned_pair_and_naive_mixed_snapshot_counterexample": "failed",
+        "tests/integration/p1/test_coordination.py::test_os_reader_gate_blocks_between_two_commits": "failed",
+        "tests/integration/p1/test_coordination.py::test_authority_availability_after_store_loss[operational]": "failed",
+        "tests/integration/p1/test_coordination.py::test_authority_availability_after_store_loss[search]": "failed",
+        "tests/integration/p1/test_coordination.py::test_authority_availability_after_store_loss[context]": "failed",
+        "tests/integration/p1/test_coordination.py::test_interrupted_backup_never_certifies_candidate[after_core_backup]": "failed",
+        "tests/integration/p1/test_coordination.py::test_interrupted_backup_never_certifies_candidate[after_context_backup]": "failed",
+        "tests/integration/p1/test_coordination.py::test_interrupted_backup_never_certifies_candidate[before_certificate]": "failed",
+        "tests/integration/p1/test_coordination.py::test_backup_gate_and_invalid_pair_pre_certification": "failed",
+        "tests/integration/p1/test_coordination.py::test_backup_revalidates_domains_even_if_file_digest_is_updated": "failed",
+        "tests/integration/p1/test_coordination.py::test_typed_core_unit_uses_coordinator_transaction_without_outer_commit": "failed",
+        "tests/integration/p1/test_coordination.py::test_detected_durable_context_corruption_stops_catalog": "failed",
+        "tests/integration/p1/test_coordination.py::test_stop_outside_writer_gate_fences_inflight_commit[during_context-1]": "failed",
+        "tests/integration/p1/test_derivatives.py::test_operational_loss_disables_old_continuation_without_invalidating_authority": "failed",
+        "tests/integration/p1/test_derivatives.py::test_search_snapshot_fence_loss_corruption_and_reconstruction": "failed",
+        "tests/integration/p1/test_derivatives.py::test_context_search_resolves_actual_text_fk_in_projection_and_fallback": "failed",
+        "tests/integration/p1/test_validation_stop.py::test_paired_validation_udf_failure_persists_stop[False-provider]": "failed",
+        "tests/integration/p1/test_validation_stop.py::test_paired_validation_udf_failure_persists_stop[False-field]": "failed",
+        "tests/integration/p1/test_validation_stop.py::test_paired_validation_udf_failure_persists_stop[True-provider]": "failed",
+        "tests/integration/p1/test_validation_stop.py::test_paired_validation_udf_failure_persists_stop[True-field]": "failed",
+        "tests/integration/p3/test_production_context.py::test_production_context_relation_facade_methods": "failed"
+      }
+    },
+    "final-broad-3531": {
+      "label": "final-broad-3531",
+      "head": "acda79b421e00690926327d49153ca71a95fa66c",
+      "tree": "6dcc790a47aadcedbd0a7ad570dd594149247e64",
+      "sqlite": "3.53.1",
+      "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+      "interpreter": "/workspace/git-repo-db/.venv/bin/python",
+      "collected": 2740,
+      "collection_errors": 0,
+      "selected": 2740,
+      "executed": 2740,
+      "passed": 2713,
+      "failed": 5,
+      "errored": 22,
+      "skipped": 0,
+      "xfailed": 0,
+      "deselected": 0,
+      "exit_code": 1,
+      "wall_seconds": 392.8286819079999,
+      "inputs_unchanged": true,
+      "selected_equals_executed": true,
+      "selected_equals_junit": false,
+      "every_executed_has_three_phases": false,
+      "failures": {
+        "tests/integration/i2/test_provider_intake.py::test_non_transfer_cannot_promote_repository_fields_or_forged_flag[True]": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_graphql_transfer_parent_namespace_and_original_type": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_graphql_event_does_not_infer_destination_from_current_issue_repository": "failed",
+        "tests/integration/i5/test_independent_e2e.py::test_transfer_reports_never_mix_across_observations_or_identifier_namespaces": "failed",
+        "tests/integration/p1/test_derivatives.py::test_context_search_resolves_actual_text_fk_in_projection_and_fallback": "failed",
+        "tests/packaging/test_p1_distribution.py::test_p1_packaged_ddl_outside_checkout[wheel]": "errored",
+        "tests/packaging/test_p1_distribution.py::test_p1_packaged_ddl_outside_checkout[sdist-wheel]": "errored",
+        "tests/packaging/test_p2_distribution.py::test_p2_installed_native_git_round_trip[sha1-wheel]": "errored",
+        "tests/packaging/test_p2_distribution.py::test_p2_installed_native_git_round_trip[sha1-sdist-wheel]": "errored",
+        "tests/packaging/test_p2_distribution.py::test_p2_installed_native_git_round_trip[sha256-wheel]": "errored",
+        "tests/packaging/test_p2_distribution.py::test_p2_installed_native_git_round_trip[sha256-sdist-wheel]": "errored",
+        "tests/packaging/test_p3_distribution.py::test_installed_production_context[wheel]": "errored",
+        "tests/packaging/test_p3_distribution.py::test_installed_production_context[sdist-wheel]": "errored",
+        "tests/packaging/test_p4_distribution.py::test_p4_installed_notes[sha1-wheel]": "errored",
+        "tests/packaging/test_p4_distribution.py::test_p4_installed_notes[sha1-sdist-wheel]": "errored",
+        "tests/packaging/test_p4_distribution.py::test_p4_installed_notes[sha256-wheel]": "errored",
+        "tests/packaging/test_p4_distribution.py::test_p4_installed_notes[sha256-sdist-wheel]": "errored",
+        "tests/packaging/test_p5_distribution.py::test_p5_installed_acquisition_and_exchange[sha1-wheel]": "errored",
+        "tests/packaging/test_p5_distribution.py::test_p5_installed_acquisition_and_exchange[sha1-sdist-wheel]": "errored",
+        "tests/packaging/test_p5_distribution.py::test_p5_installed_acquisition_and_exchange[sha256-wheel]": "errored",
+        "tests/packaging/test_p5_distribution.py::test_p5_installed_acquisition_and_exchange[sha256-sdist-wheel]": "errored",
+        "tests/packaging/test_p6_distribution.py::test_p6_installed_query_search_and_cli[sha1-wheel]": "errored",
+        "tests/packaging/test_p6_distribution.py::test_p6_installed_query_search_and_cli[sha1-sdist-wheel]": "errored",
+        "tests/packaging/test_p6_distribution.py::test_p6_installed_query_search_and_cli[sha256-wheel]": "errored",
+        "tests/packaging/test_p6_distribution.py::test_p6_installed_query_search_and_cli[sha256-sdist-wheel]": "errored",
+        "tests/packaging/test_p7_distribution.py::test_p7_installed_recovery_distribution[wheel]": "errored",
+        "tests/packaging/test_p7_distribution.py::test_p7_installed_recovery_distribution[sdist-wheel]": "errored"
+      }
+    },
+    "final-cohort-collection-3513": {
+      "label": "final-cohort-collection-3513",
+      "head": "acda79b421e00690926327d49153ca71a95fa66c",
+      "tree": "6dcc790a47aadcedbd0a7ad570dd594149247e64",
+      "sqlite": "3.51.3",
+      "sqlite_source_id": "2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618",
+      "interpreter": "/workspace/adr0031-min-venv/bin/python",
+      "collected": 2740,
+      "collection_errors": 0,
+      "selected": 2740,
+      "executed": 0,
+      "passed": 0,
+      "failed": 0,
+      "errored": 0,
+      "skipped": 0,
+      "xfailed": 0,
+      "deselected": 0,
+      "exit_code": 0,
+      "wall_seconds": 0.7626252100000102,
+      "inputs_unchanged": true,
+      "selected_equals_executed": false,
+      "every_executed_has_three_phases": true,
+      "failures": {}
+    },
+    "final-cohort-collection-3531": {
+      "label": "final-cohort-collection-3531",
+      "head": "acda79b421e00690926327d49153ca71a95fa66c",
+      "tree": "6dcc790a47aadcedbd0a7ad570dd594149247e64",
+      "sqlite": "3.53.1",
+      "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+      "interpreter": "/workspace/git-repo-db/.venv/bin/python",
+      "collected": 2740,
+      "collection_errors": 0,
+      "selected": 2740,
+      "executed": 0,
+      "passed": 0,
+      "failed": 0,
+      "errored": 0,
+      "skipped": 0,
+      "xfailed": 0,
+      "deselected": 0,
+      "exit_code": 0,
+      "wall_seconds": 0.9203611509999519,
+      "inputs_unchanged": true,
+      "selected_equals_executed": false,
+      "every_executed_has_three_phases": true,
+      "failures": {}
+    },
+    "final-distribution-3513": {
+      "label": "final-distribution-3513",
+      "head": "d77acad2c2d97538479d7fa5489ecebfd5ad8f67",
+      "tree": "9e6a0d9db602446d4ce7e93d98f12533202e4b5e",
+      "sqlite": "3.51.3",
+      "sqlite_source_id": "2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618",
+      "interpreter": "/workspace/adr0031-min-venv/bin/python",
+      "collected": 0,
+      "collection_errors": 0,
+      "selected": 0,
+      "executed": 0,
+      "passed": 0,
+      "failed": 0,
+      "errored": 0,
+      "skipped": 0,
+      "xfailed": 0,
+      "deselected": 0,
+      "exit_code": 1,
+      "wall_seconds": 6.857981848999998,
+      "inputs_unchanged": true,
+      "selected_equals_executed": true,
+      "every_executed_has_three_phases": true,
+      "failures": {}
+    },
+    "final-distribution-3531": {
+      "label": "final-distribution-3531",
+      "head": "d77acad2c2d97538479d7fa5489ecebfd5ad8f67",
+      "tree": "9e6a0d9db602446d4ce7e93d98f12533202e4b5e",
+      "sqlite": "3.53.1",
+      "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+      "interpreter": "/workspace/git-repo-db/.venv/bin/python",
+      "collected": 0,
+      "collection_errors": 0,
+      "selected": 0,
+      "executed": 0,
+      "passed": 0,
+      "failed": 0,
+      "errored": 0,
+      "skipped": 0,
+      "xfailed": 0,
+      "deselected": 0,
+      "exit_code": 1,
+      "wall_seconds": 6.215934089000029,
+      "inputs_unchanged": true,
+      "selected_equals_executed": true,
+      "every_executed_has_three_phases": true,
+      "failures": {}
+    },
+    "final-ordinary-3513": {
+      "label": "final-ordinary-3513",
+      "head": "acda79b421e00690926327d49153ca71a95fa66c",
+      "tree": "6dcc790a47aadcedbd0a7ad570dd594149247e64",
+      "sqlite": "3.51.3",
+      "sqlite_source_id": "2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618",
+      "interpreter": "/workspace/adr0031-min-venv/bin/python",
+      "collected": 5283,
+      "collection_errors": 0,
+      "selected": 5281,
+      "executed": 0,
+      "passed": 0,
+      "failed": 0,
+      "errored": 0,
+      "skipped": 0,
+      "xfailed": 0,
+      "deselected": 2,
+      "exit_code": 0,
+      "wall_seconds": 4.630129162999992,
+      "inputs_unchanged": true,
+      "selected_equals_executed": false,
+      "every_executed_has_three_phases": true,
+      "failures": {}
+    },
+    "final-ordinary-3531": {
+      "label": "final-ordinary-3531",
+      "head": "acda79b421e00690926327d49153ca71a95fa66c",
+      "tree": "6dcc790a47aadcedbd0a7ad570dd594149247e64",
+      "sqlite": "3.53.1",
+      "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+      "interpreter": "/workspace/git-repo-db/.venv/bin/python",
+      "collected": 5283,
+      "collection_errors": 0,
+      "selected": 5281,
+      "executed": 0,
+      "passed": 0,
+      "failed": 0,
+      "errored": 0,
+      "skipped": 0,
+      "xfailed": 0,
+      "deselected": 2,
+      "exit_code": 0,
+      "wall_seconds": 1.6280137069999228,
+      "inputs_unchanged": true,
+      "selected_equals_executed": false,
+      "every_executed_has_three_phases": true,
+      "failures": {}
+    },
+    "final-r2-broad-3513": {
+      "label": "final-r2-broad-3513",
+      "head": "d77acad2c2d97538479d7fa5489ecebfd5ad8f67",
+      "tree": "9e6a0d9db602446d4ce7e93d98f12533202e4b5e",
+      "sqlite": "3.51.3",
+      "sqlite_source_id": "2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618",
+      "interpreter": "/workspace/adr0031-min-venv/bin/python",
+      "collected": 2740,
+      "collection_errors": 0,
+      "selected": 2740,
+      "executed": 2740,
+      "passed": 2736,
+      "failed": 4,
+      "errored": 0,
+      "skipped": 0,
+      "xfailed": 0,
+      "deselected": 0,
+      "exit_code": 1,
+      "wall_seconds": 439.94529033799995,
+      "inputs_unchanged": true,
+      "selected_equals_executed": true,
+      "selected_equals_junit": false,
+      "every_executed_has_three_phases": true,
+      "failures": {
+        "tests/integration/i2/test_provider_intake.py::test_non_transfer_cannot_promote_repository_fields_or_forged_flag[True]": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_graphql_transfer_parent_namespace_and_original_type": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_graphql_event_does_not_infer_destination_from_current_issue_repository": "failed",
+        "tests/integration/i5/test_independent_e2e.py::test_transfer_reports_never_mix_across_observations_or_identifier_namespaces": "failed"
+      }
+    },
+    "final-r2-broad-3531": {
+      "label": "final-r2-broad-3531",
+      "head": "d77acad2c2d97538479d7fa5489ecebfd5ad8f67",
+      "tree": "9e6a0d9db602446d4ce7e93d98f12533202e4b5e",
+      "sqlite": "3.53.1",
+      "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+      "interpreter": "/workspace/git-repo-db/.venv/bin/python",
+      "collected": 2740,
+      "collection_errors": 0,
+      "selected": 2740,
+      "executed": 2740,
+      "passed": 2736,
+      "failed": 4,
+      "errored": 0,
+      "skipped": 0,
+      "xfailed": 0,
+      "deselected": 0,
+      "exit_code": 1,
+      "wall_seconds": 412.52243846500005,
+      "inputs_unchanged": true,
+      "selected_equals_executed": true,
+      "selected_equals_junit": false,
+      "every_executed_has_three_phases": true,
+      "failures": {
+        "tests/integration/i2/test_provider_intake.py::test_non_transfer_cannot_promote_repository_fields_or_forged_flag[True]": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_graphql_transfer_parent_namespace_and_original_type": "failed",
+        "tests/integration/i2/test_provider_intake.py::test_graphql_event_does_not_infer_destination_from_current_issue_repository": "failed",
+        "tests/integration/i5/test_independent_e2e.py::test_transfer_reports_never_mix_across_observations_or_identifier_namespaces": "failed"
+      }
+    },
+    "final-r2-cohort-collection-3513": {
+      "label": "final-r2-cohort-collection-3513",
+      "head": "d77acad2c2d97538479d7fa5489ecebfd5ad8f67",
+      "tree": "9e6a0d9db602446d4ce7e93d98f12533202e4b5e",
+      "sqlite": "3.51.3",
+      "sqlite_source_id": "2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618",
+      "interpreter": "/workspace/adr0031-min-venv/bin/python",
+      "collected": 2740,
+      "collection_errors": 0,
+      "selected": 2740,
+      "executed": 0,
+      "passed": 0,
+      "failed": 0,
+      "errored": 0,
+      "skipped": 0,
+      "xfailed": 0,
+      "deselected": 0,
+      "exit_code": 0,
+      "wall_seconds": 0.7009461650000048,
+      "inputs_unchanged": true,
+      "selected_equals_executed": false,
+      "every_executed_has_three_phases": true,
+      "failures": {}
+    },
+    "final-r2-cohort-collection-3531": {
+      "label": "final-r2-cohort-collection-3531",
+      "head": "d77acad2c2d97538479d7fa5489ecebfd5ad8f67",
+      "tree": "9e6a0d9db602446d4ce7e93d98f12533202e4b5e",
+      "sqlite": "3.53.1",
+      "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+      "interpreter": "/workspace/git-repo-db/.venv/bin/python",
+      "collected": 2740,
+      "collection_errors": 0,
+      "selected": 2740,
+      "executed": 0,
+      "passed": 0,
+      "failed": 0,
+      "errored": 0,
+      "skipped": 0,
+      "xfailed": 0,
+      "deselected": 0,
+      "exit_code": 0,
+      "wall_seconds": 0.7890260849999322,
+      "inputs_unchanged": true,
+      "selected_equals_executed": false,
+      "every_executed_has_three_phases": true,
+      "failures": {}
+    },
+    "final-r2-ordinary-3513": {
+      "label": "final-r2-ordinary-3513",
+      "head": "d77acad2c2d97538479d7fa5489ecebfd5ad8f67",
+      "tree": "9e6a0d9db602446d4ce7e93d98f12533202e4b5e",
+      "sqlite": "3.51.3",
+      "sqlite_source_id": "2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618",
+      "interpreter": "/workspace/adr0031-min-venv/bin/python",
+      "collected": 5283,
+      "collection_errors": 0,
+      "selected": 5281,
+      "executed": 0,
+      "passed": 0,
+      "failed": 0,
+      "errored": 0,
+      "skipped": 0,
+      "xfailed": 0,
+      "deselected": 2,
+      "exit_code": 0,
+      "wall_seconds": 1.2162335709999752,
+      "inputs_unchanged": true,
+      "selected_equals_executed": false,
+      "every_executed_has_three_phases": true,
+      "failures": {}
+    },
+    "final-r2-ordinary-3531": {
+      "label": "final-r2-ordinary-3531",
+      "head": "d77acad2c2d97538479d7fa5489ecebfd5ad8f67",
+      "tree": "9e6a0d9db602446d4ce7e93d98f12533202e4b5e",
+      "sqlite": "3.53.1",
+      "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+      "interpreter": "/workspace/git-repo-db/.venv/bin/python",
+      "collected": 5283,
+      "collection_errors": 0,
+      "selected": 5281,
+      "executed": 0,
+      "passed": 0,
+      "failed": 0,
+      "errored": 0,
+      "skipped": 0,
+      "xfailed": 0,
+      "deselected": 2,
+      "exit_code": 0,
+      "wall_seconds": 1.3309238019999157,
+      "inputs_unchanged": true,
+      "selected_equals_executed": false,
+      "every_executed_has_three_phases": true,
+      "failures": {}
+    },
+    "preflight-distribution-fixtures-3513": {
+      "label": "preflight-distribution-fixtures-3513",
+      "head": "d77acad2c2d97538479d7fa5489ecebfd5ad8f67",
+      "tree": "9e6a0d9db602446d4ce7e93d98f12533202e4b5e",
+      "sqlite": "3.51.3",
+      "sqlite_source_id": "2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618",
+      "interpreter": "/workspace/adr0031-min-venv/bin/python",
+      "collected": 23,
+      "collection_errors": 0,
+      "selected": 23,
+      "executed": 23,
+      "passed": 23,
+      "failed": 0,
+      "errored": 0,
+      "skipped": 0,
+      "xfailed": 0,
+      "deselected": 0,
+      "exit_code": 0,
+      "wall_seconds": 45.76257942199982,
+      "inputs_unchanged": true,
+      "selected_equals_executed": true,
+      "selected_equals_junit": true,
+      "every_executed_has_three_phases": true,
+      "failures": {}
+    },
+    "preflight-distribution-fixtures-3531": {
+      "label": "preflight-distribution-fixtures-3531",
+      "head": "27090de273cb9a9c05efe8bb6c062a53c8a65cb9",
+      "tree": "e44c8aa8d62e2f2eb982d0f28925271804fc27bc",
+      "sqlite": "3.53.1",
+      "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+      "interpreter": "/workspace/git-repo-db/.venv/bin/python",
+      "collected": 23,
+      "collection_errors": 0,
+      "selected": 23,
+      "executed": 23,
+      "passed": 23,
+      "failed": 0,
+      "errored": 0,
+      "skipped": 0,
+      "xfailed": 0,
+      "deselected": 0,
+      "exit_code": 0,
+      "wall_seconds": 46.80668598199986,
+      "inputs_unchanged": true,
+      "selected_equals_executed": true,
+      "selected_equals_junit": true,
+      "every_executed_has_three_phases": true,
+      "failures": {}
+    },
+    "repaired-ordinary-3531": {
+      "label": "repaired-ordinary-3531",
+      "head": "32e5d4de67c0d436f7583d04e1cfd349b64b2bbd",
+      "tree": "708c860cd4badd4d787d4d8140b9626c80813be6",
+      "sqlite": "3.53.1",
+      "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+      "interpreter": "/workspace/git-repo-db/.venv/bin/python",
+      "selected": 5281,
+      "executed": 0,
+      "passed": 0,
+      "failed": 0,
+      "errored": 0,
+      "skipped": 0,
+      "xfailed": 0,
+      "deselected": 2,
+      "exit_code": 0,
+      "wall_seconds": 1.6573504820000267,
+      "inputs_unchanged": true,
+      "selected_equals_executed": false,
+      "every_executed_has_three_phases": true,
+      "failures": {}
+    }
+  },
+  "final": {
+    "3513": {
+      "receipt": {
+        "label": "final-r2-broad-3513",
+        "head": "d77acad2c2d97538479d7fa5489ecebfd5ad8f67",
+        "tree": "9e6a0d9db602446d4ce7e93d98f12533202e4b5e",
+        "sqlite": "3.51.3",
+        "sqlite_source_id": "2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618",
+        "interpreter": "/workspace/adr0031-min-venv/bin/python",
+        "collected": 2740,
+        "collection_errors": 0,
+        "selected": 2740,
+        "executed": 2740,
+        "passed": 2736,
+        "failed": 4,
+        "errored": 0,
+        "skipped": 0,
+        "xfailed": 0,
+        "deselected": 0,
+        "exit_code": 1,
+        "wall_seconds": 439.94529033799995,
+        "inputs_unchanged": true,
+        "selected_equals_executed": true,
+        "selected_equals_junit": false,
+        "every_executed_has_three_phases": true,
+        "failures": {
+          "tests/integration/i2/test_provider_intake.py::test_non_transfer_cannot_promote_repository_fields_or_forged_flag[True]": "failed",
+          "tests/integration/i2/test_provider_intake.py::test_graphql_transfer_parent_namespace_and_original_type": "failed",
+          "tests/integration/i2/test_provider_intake.py::test_graphql_event_does_not_infer_destination_from_current_issue_repository": "failed",
+          "tests/integration/i5/test_independent_e2e.py::test_transfer_reports_never_mix_across_observations_or_identifier_namespaces": "failed"
+        }
+      },
+      "failures": {
+        "tests/integration/i2/test_provider_intake.py::test_non_transfer_cannot_promote_repository_fields_or_forged_flag[True]": {
+          "category": "I2 generalized composite-local Resource persistence",
+          "first_failure": "tmp_path = PosixPath('/workspace/adr0031-pytest-tmp/finalr23513/test_non_transfer_cannot_promo1')\ngraphql = True\n\n    @pytest.mark.parametrize(\"graphql\", [False, True])\n    def test_non_transfer_cannot_promote_repository_fields_or_forged_flag(\n        tmp_path, graphql\n    ):\n        s, _, _ = setup(tmp_path)\n        event_id = \"EV_opaque\" if graphql else 100\n        payload = (\n            {\"id\": event_id, \"__typename\": \"LabeledEvent\", \"fromRepository\": {\"id\": \"R_A\"}}\n            if graphql\n            else {\"id\": event_id, \"event\": \"labeled\", \"from_repository\": {\"id\": 1}}\n        )\n        unit = normalize_timeline_event(\n            s, \"issue\", 7, event_id, payload, 50, provenance(\"labeled\"), graphql=graphql\n        )\n        acq = ProviderAcquisition(tmp_path)\n>       acq.admit_unit(unit)\n\ntests/integration/i2/test_provider_intake.py:373: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \nsrc/repo_catalog/application/acquisition.py:1407: in admit_unit\n    self._admit_normalized_unit(\nsrc/repo_catalog/application/acquisition.py:1212: in _admit_normalized_unit\n    self._ensure_resource_hierarchy(\nsrc/repo_catalog/application/acquisition.py:1198: in _ensure_resource_hierarchy\n    ctx.resource(key, repo_uuid)\nsrc/repo_catalog/adapters/sqlite/production_context.py:137: in call\n    result = operation(self, *args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nsrc/repo_catalog/adapters/sqlite/production_context.py:459: in resource\n    return super().resource(key, repository_uuidv4)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <repo_catalog.adapters.sqlite.production_context.Context object at 0x7f9cbb13ad60>\nkey = ResourceKey(service_instance_uuidv4='dded19da-1a1a-4391-a598-e88e9d448f25', resource_kind='comment', provider_resource_id='[\"issue\",\"\\\\\"7\\\\\"\",\"timeline_event\",[\"github:node_id\",\"EV_opaque\"]]')\nrepository_uuidv4 = None\n\n    def resource(self, key: ResourceKey, repository_uuidv4: str | None = None) -> None:\n        \"\"\"Admit nominal identity, independently of current repository evidence.\n    \n        The optional repository is a validated caller registration precondition;\n        it does not assert membership. Use admit_repository_relation with original clocks.\n        \"\"\"\n        if not isinstance(key, ResourceKey):\n            raise ValueError(\"ResourceKey required\")\n        parent = (None, None, None, None)\n        if key.resource_kind in {\"review\", \"comment\", \"thread\", \"document\"}:\n            # This adapter implements the existing scoped contract only. Check\n            # intent and coordinates even on replay before returning a duplicate.\n            parent = key.scoped_document_coordinates()\n            if any(type(value) is not str or not value for value in parent):\n>               raise ValueError(\n                    \"Current packaged DDL requires nonempty scalar local document IDs; \"\n                    \"generalized Document persistence is deferred to ADR 0031 I2\"\n                )\nE               ValueError: Current packaged DDL requires nonempty scalar local document IDs; generalized Document persistence is deferred to ADR 0031 I2\n\nsrc/repo_catalog/adapters/sqlite/p1_context.py:89: ValueError"
+        },
+        "tests/integration/i2/test_provider_intake.py::test_graphql_transfer_parent_namespace_and_original_type": {
+          "category": "I2 generalized composite-local Resource persistence",
+          "first_failure": "tmp_path = PosixPath('/workspace/adr0031-pytest-tmp/finalr23513/test_graphql_transfer_parent_n0')\n\n    def test_graphql_transfer_parent_namespace_and_original_type(tmp_path):\n        s, r1, _ = setup(tmp_path)\n        parent = normalize_issue(\n            s, {\"id\": \"I_node\", \"databaseId\": 7}, 40, provenance(\"issue\"), graphql=True\n        ).primary_resource\n        node = {\"id\": \"R_A\", \"databaseId\": 1}\n        claim = mapping(s, parse_identity(github_repository_id(node, graphql=True)), r1)\n        intake = ProviderTimelineIntake(\n            \"issue\",\n            \"I_node\",\n            \"EV_node\",\n            {\n                \"id\": \"EV_node\",\n                \"__typename\": \"TransferredEvent\",\n                \"createdAt\": \"2026-10-19T01:00:00Z\",\n                \"issue\": {\"id\": \"I_node\", \"databaseId\": 7},\n                \"fromRepository\": node,\n            },\n            50,\n            provenance(\"event\"),\n            graphql=True,\n            parent_resource=parent,\n        )\n        acq = ProviderAcquisition(tmp_path)\n>       acq.admit_batch(\n            ProviderIntakeBatch(s, mapping_claims=(claim,), timeline_events=(intake,))\n        )\n\ntests/integration/i2/test_provider_intake.py:407: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \nsrc/repo_catalog/application/acquisition.py:1693: in admit_batch\n    self._admit_normalized_unit(\nsrc/repo_catalog/application/acquisition.py:1212: in _admit_normalized_unit\n    self._ensure_resource_hierarchy(\nsrc/repo_catalog/application/acquisition.py:1198: in _ensure_resource_hierarchy\n    ctx.resource(key, repo_uuid)\nsrc/repo_catalog/adapters/sqlite/production_context.py:137: in call\n    result = operation(self, *args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nsrc/repo_catalog/adapters/sqlite/production_context.py:459: in resource\n    return super().resource(key, repository_uuidv4)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <repo_catalog.adapters.sqlite.production_context.Context object at 0x7f9cbabc9b00>\nkey = ResourceKey(service_instance_uuidv4='107aab53-98d3-489d-9e57-2fe9e85af6f3', resource_kind='comment', provider_resource_id='[\"issue\",\"\\\\\"7\\\\\"\",\"timeline_event\",[\"github:node_id\",\"EV_node\"]]')\nrepository_uuidv4 = None\n\n    def resource(self, key: ResourceKey, repository_uuidv4: str | None = None) -> None:\n        \"\"\"Admit nominal identity, independently of current repository evidence.\n    \n        The optional repository is a validated caller registration precondition;\n        it does not assert membership. Use admit_repository_relation with original clocks.\n        \"\"\"\n        if not isinstance(key, ResourceKey):\n            raise ValueError(\"ResourceKey required\")\n        parent = (None, None, None, None)\n        if key.resource_kind in {\"review\", \"comment\", \"thread\", \"document\"}:\n            # This adapter implements the existing scoped contract only. Check\n            # intent and coordinates even on replay before returning a duplicate.\n            parent = key.scoped_document_coordinates()\n            if any(type(value) is not str or not value for value in parent):\n>               raise ValueError(\n                    \"Current packaged DDL requires nonempty scalar local document IDs; \"\n                    \"generalized Document persistence is deferred to ADR 0031 I2\"\n                )\nE               ValueError: Current packaged DDL requires nonempty scalar local document IDs; generalized Document persistence is deferred to ADR 0031 I2\n\nsrc/repo_catalog/adapters/sqlite/p1_context.py:89: ValueError"
+        },
+        "tests/integration/i2/test_provider_intake.py::test_graphql_event_does_not_infer_destination_from_current_issue_repository": {
+          "category": "I2 generalized composite-local Resource persistence",
+          "first_failure": "tmp_path = PosixPath('/workspace/adr0031-pytest-tmp/finalr23513/test_graphql_event_does_not_in0')\n\n    def test_graphql_event_does_not_infer_destination_from_current_issue_repository(\n        tmp_path,\n    ):\n        s, _, _ = setup(tmp_path)\n        payload = {\n            \"id\": \"EV\",\n            \"__typename\": \"TransferredEvent\",\n            \"fromRepository\": {\"id\": \"R_A\"},\n            \"issue\": {\"databaseId\": 7, \"repository\": {\"id\": \"R_B\"}},\n        }\n>       ProviderAcquisition(tmp_path).admit_batch(\n            ProviderIntakeBatch(\n                s,\n                timeline_events=(\n                    ProviderTimelineIntake(\n                        \"issue\",\n                        7,\n                        \"EV\",\n                        payload,\n                        None,\n                        provenance(\"transfer\"),\n                        graphql=True,\n                    ),\n                ),\n            )\n        )\n\ntests/integration/i2/test_provider_intake.py:739: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \nsrc/repo_catalog/application/acquisition.py:1693: in admit_batch\n    self._admit_normalized_unit(\nsrc/repo_catalog/application/acquisition.py:1212: in _admit_normalized_unit\n    self._ensure_resource_hierarchy(\nsrc/repo_catalog/application/acquisition.py:1198: in _ensure_resource_hierarchy\n    ctx.resource(key, repo_uuid)\nsrc/repo_catalog/adapters/sqlite/production_context.py:137: in call\n    result = operation(self, *args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nsrc/repo_catalog/adapters/sqlite/production_context.py:459: in resource\n    return super().resource(key, repository_uuidv4)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <repo_catalog.adapters.sqlite.production_context.Context object at 0x7f9cbabcaeb0>\nkey = ResourceKey(service_instance_uuidv4='25651c1e-9371-4877-937f-14cb4b02162f', resource_kind='comment', provider_resource_id='[\"issue\",\"\\\\\"7\\\\\"\",\"timeline_event\",[\"github:node_id\",\"EV\"]]')\nrepository_uuidv4 = None\n\n    def resource(self, key: ResourceKey, repository_uuidv4: str | None = None) -> None:\n        \"\"\"Admit nominal identity, independently of current repository evidence.\n    \n        The optional repository is a validated caller registration precondition;\n        it does not assert membership. Use admit_repository_relation with original clocks.\n        \"\"\"\n        if not isinstance(key, ResourceKey):\n            raise ValueError(\"ResourceKey required\")\n        parent = (None, None, None, None)\n        if key.resource_kind in {\"review\", \"comment\", \"thread\", \"document\"}:\n            # This adapter implements the existing scoped contract only. Check\n            # intent and coordinates even on replay before returning a duplicate.\n            parent = key.scoped_document_coordinates()\n            if any(type(value) is not str or not value for value in parent):\n>               raise ValueError(\n                    \"Current packaged DDL requires nonempty scalar local document IDs; \"\n                    \"generalized Document persistence is deferred to ADR 0031 I2\"\n                )\nE               ValueError: Current packaged DDL requires nonempty scalar local document IDs; generalized Document persistence is deferred to ADR 0031 I2\n\nsrc/repo_catalog/adapters/sqlite/p1_context.py:89: ValueError"
+        },
+        "tests/integration/i5/test_independent_e2e.py::test_transfer_reports_never_mix_across_observations_or_identifier_namespaces": {
+          "category": "I2 generalized composite-local Resource persistence",
+          "first_failure": "tmp_path = PosixPath('/workspace/adr0031-pytest-tmp/finalr23513/test_transfer_reports_never_mi0')\nassembled = (PosixPath('/workspace/adr0031-pytest-tmp/finalr23513/test_transfer_reports_never_mi0/sender'), 'f7c6067d-1127-4c9a-a2...8b46-31cf-482b-8022-bce69fff9b5f', 'a6860849-a690-44c4-adb7-3c1fb53f99f4', '467a9323-7430-4eda-bca4-9fddce750823', ...)\n\n    def test_transfer_reports_never_mix_across_observations_or_identifier_namespaces(\n        tmp_path, assembled\n    ):\n        source, service, r1, r2, _, _, _, _, _, _ = assembled\n        base = {\"id\": 702, \"event\": \"transferred\"}\n        observations = (\n            ProviderTimelineIntake(\n                \"issue\",\n                501,\n                702,\n                {**base, \"from_repository\": {\"id\": 101}},\n                180,\n                prov(\"from-only\"),\n            ),\n            ProviderTimelineIntake(\n                \"issue\",\n                501,\n                702,\n                {**base, \"to_repository\": {\"id\": 202}},\n                181,\n                prov(\"to-only\"),\n            ),\n            ProviderTimelineIntake(\n                \"issue\",\n                501,\n                703,\n                {\n                    \"id\": 703,\n                    \"event\": \"labeled\",\n                    \"from_repository\": {\"id\": 101},\n                    \"to_repository\": {\"id\": 202},\n                },\n                182,\n                prov(\"not transfer\"),\n            ),\n            ProviderTimelineIntake(\n                \"issue\",\n                501,\n                \"EV_node\",\n                {\n                    \"id\": \"EV_node\",\n                    \"__typename\": \"TransferredEvent\",\n                    \"fromRepository\": {\"id\": \"R_node\", \"databaseId\": 101},\n                    \"toRepository\": None,\n                },\n                183,\n                prov(\"opaque Node endpoint\"),\n                graphql=True,\n            ),\n        )\n>       ProviderAcquisition(source).admit_batch(\n            ProviderIntakeBatch(service, timeline_events=observations)\n        )\n\ntests/integration/i5/test_independent_e2e.py:628: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \nsrc/repo_catalog/application/acquisition.py:1693: in admit_batch\n    self._admit_normalized_unit(\nsrc/repo_catalog/application/acquisition.py:1212: in _admit_normalized_unit\n    self._ensure_resource_hierarchy(\nsrc/repo_catalog/application/acquisition.py:1198: in _ensure_resource_hierarchy\n    ctx.resource(key, repo_uuid)\nsrc/repo_catalog/adapters/sqlite/production_context.py:137: in call\n    result = operation(self, *args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nsrc/repo_catalog/adapters/sqlite/production_context.py:459: in resource\n    return super().resource(key, repository_uuidv4)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <repo_catalog.adapters.sqlite.production_context.Context object at 0x7f9cbac5ac80>\nkey = ResourceKey(service_instance_uuidv4='f7c6067d-1127-4c9a-a259-f37a868ec51a', resource_kind='comment', provider_resource_id='[\"issue\",\"\\\\\"501\\\\\"\",\"timeline_event\",[\"github:node_id\",\"EV_node\"]]')\nrepository_uuidv4 = None\n\n    def resource(self, key: ResourceKey, repository_uuidv4: str | None = None) -> None:\n        \"\"\"Admit nominal identity, independently of current repository evidence.\n    \n        The optional repository is a validated caller registration precondition;\n        it does not assert membership. Use admit_repository_relation with original clocks.\n        \"\"\"\n        if not isinstance(key, ResourceKey):\n            raise ValueError(\"ResourceKey required\")\n        parent = (None, None, None, None)\n        if key.resource_kind in {\"review\", \"comment\", \"thread\", \"document\"}:\n            # This adapter implements the existing scoped contract only. Check\n            # intent and coordinates even on replay before returning a duplicate.\n            parent = key.scoped_document_coordinates()\n            if any(type(value) is not str or not value for value in parent):\n>               raise ValueError(\n                    \"Current packaged DDL requires nonempty scalar local document IDs; \"\n                    \"generalized Document persistence is deferred to ADR 0031 I2\"\n                )\nE               ValueError: Current packaged DDL requires nonempty scalar local document IDs; generalized Document persistence is deferred to ADR 0031 I2\n\nsrc/repo_catalog/adapters/sqlite/p1_context.py:89: ValueError"
+        }
+      },
+      "three_way_node_reconciliation": true,
+      "junit_reconciliation_note": "The preserved runner field selected_equals_junit=false was a work-only parser bug: four parameter IDs contain literal :: (IPv6/ext URI). This reconciliation splits only the unparametrized prefix, preserves complete parameter text and verifies duplicate-aware classname/name counters against raw JUnit. No test node was missing or substituted."
+    },
+    "3531": {
+      "receipt": {
+        "label": "final-r2-broad-3531",
+        "head": "d77acad2c2d97538479d7fa5489ecebfd5ad8f67",
+        "tree": "9e6a0d9db602446d4ce7e93d98f12533202e4b5e",
+        "sqlite": "3.53.1",
+        "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+        "interpreter": "/workspace/git-repo-db/.venv/bin/python",
+        "collected": 2740,
+        "collection_errors": 0,
+        "selected": 2740,
+        "executed": 2740,
+        "passed": 2736,
+        "failed": 4,
+        "errored": 0,
+        "skipped": 0,
+        "xfailed": 0,
+        "deselected": 0,
+        "exit_code": 1,
+        "wall_seconds": 412.52243846500005,
+        "inputs_unchanged": true,
+        "selected_equals_executed": true,
+        "selected_equals_junit": false,
+        "every_executed_has_three_phases": true,
+        "failures": {
+          "tests/integration/i2/test_provider_intake.py::test_non_transfer_cannot_promote_repository_fields_or_forged_flag[True]": "failed",
+          "tests/integration/i2/test_provider_intake.py::test_graphql_transfer_parent_namespace_and_original_type": "failed",
+          "tests/integration/i2/test_provider_intake.py::test_graphql_event_does_not_infer_destination_from_current_issue_repository": "failed",
+          "tests/integration/i5/test_independent_e2e.py::test_transfer_reports_never_mix_across_observations_or_identifier_namespaces": "failed"
+        }
+      },
+      "failures": {
+        "tests/integration/i2/test_provider_intake.py::test_non_transfer_cannot_promote_repository_fields_or_forged_flag[True]": {
+          "category": "I2 generalized composite-local Resource persistence",
+          "first_failure": "tmp_path = PosixPath('/workspace/adr0031-pytest-tmp/finalr23531/test_non_transfer_cannot_promo1')\ngraphql = True\n\n    @pytest.mark.parametrize(\"graphql\", [False, True])\n    def test_non_transfer_cannot_promote_repository_fields_or_forged_flag(\n        tmp_path, graphql\n    ):\n        s, _, _ = setup(tmp_path)\n        event_id = \"EV_opaque\" if graphql else 100\n        payload = (\n            {\"id\": event_id, \"__typename\": \"LabeledEvent\", \"fromRepository\": {\"id\": \"R_A\"}}\n            if graphql\n            else {\"id\": event_id, \"event\": \"labeled\", \"from_repository\": {\"id\": 1}}\n        )\n        unit = normalize_timeline_event(\n            s, \"issue\", 7, event_id, payload, 50, provenance(\"labeled\"), graphql=graphql\n        )\n        acq = ProviderAcquisition(tmp_path)\n>       acq.admit_unit(unit)\n\ntests/integration/i2/test_provider_intake.py:373: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \nsrc/repo_catalog/application/acquisition.py:1407: in admit_unit\n    self._admit_normalized_unit(\nsrc/repo_catalog/application/acquisition.py:1212: in _admit_normalized_unit\n    self._ensure_resource_hierarchy(\nsrc/repo_catalog/application/acquisition.py:1198: in _ensure_resource_hierarchy\n    ctx.resource(key, repo_uuid)\nsrc/repo_catalog/adapters/sqlite/production_context.py:137: in call\n    result = operation(self, *args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nsrc/repo_catalog/adapters/sqlite/production_context.py:459: in resource\n    return super().resource(key, repository_uuidv4)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <repo_catalog.adapters.sqlite.production_context.Context object at 0x7fd9b5c51160>\nkey = ResourceKey(service_instance_uuidv4='f19ed3f8-53ef-4002-a11f-71e176589e65', resource_kind='comment', provider_resource_id='[\"issue\",\"\\\\\"7\\\\\"\",\"timeline_event\",[\"github:node_id\",\"EV_opaque\"]]')\nrepository_uuidv4 = None\n\n    def resource(self, key: ResourceKey, repository_uuidv4: str | None = None) -> None:\n        \"\"\"Admit nominal identity, independently of current repository evidence.\n    \n        The optional repository is a validated caller registration precondition;\n        it does not assert membership. Use admit_repository_relation with original clocks.\n        \"\"\"\n        if not isinstance(key, ResourceKey):\n            raise ValueError(\"ResourceKey required\")\n        parent = (None, None, None, None)\n        if key.resource_kind in {\"review\", \"comment\", \"thread\", \"document\"}:\n            # This adapter implements the existing scoped contract only. Check\n            # intent and coordinates even on replay before returning a duplicate.\n            parent = key.scoped_document_coordinates()\n            if any(type(value) is not str or not value for value in parent):\n>               raise ValueError(\n                    \"Current packaged DDL requires nonempty scalar local document IDs; \"\n                    \"generalized Document persistence is deferred to ADR 0031 I2\"\n                )\nE               ValueError: Current packaged DDL requires nonempty scalar local document IDs; generalized Document persistence is deferred to ADR 0031 I2\n\nsrc/repo_catalog/adapters/sqlite/p1_context.py:89: ValueError"
+        },
+        "tests/integration/i2/test_provider_intake.py::test_graphql_transfer_parent_namespace_and_original_type": {
+          "category": "I2 generalized composite-local Resource persistence",
+          "first_failure": "tmp_path = PosixPath('/workspace/adr0031-pytest-tmp/finalr23531/test_graphql_transfer_parent_n0')\n\n    def test_graphql_transfer_parent_namespace_and_original_type(tmp_path):\n        s, r1, _ = setup(tmp_path)\n        parent = normalize_issue(\n            s, {\"id\": \"I_node\", \"databaseId\": 7}, 40, provenance(\"issue\"), graphql=True\n        ).primary_resource\n        node = {\"id\": \"R_A\", \"databaseId\": 1}\n        claim = mapping(s, parse_identity(github_repository_id(node, graphql=True)), r1)\n        intake = ProviderTimelineIntake(\n            \"issue\",\n            \"I_node\",\n            \"EV_node\",\n            {\n                \"id\": \"EV_node\",\n                \"__typename\": \"TransferredEvent\",\n                \"createdAt\": \"2026-10-19T01:00:00Z\",\n                \"issue\": {\"id\": \"I_node\", \"databaseId\": 7},\n                \"fromRepository\": node,\n            },\n            50,\n            provenance(\"event\"),\n            graphql=True,\n            parent_resource=parent,\n        )\n        acq = ProviderAcquisition(tmp_path)\n>       acq.admit_batch(\n            ProviderIntakeBatch(s, mapping_claims=(claim,), timeline_events=(intake,))\n        )\n\ntests/integration/i2/test_provider_intake.py:407: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \nsrc/repo_catalog/application/acquisition.py:1693: in admit_batch\n    self._admit_normalized_unit(\nsrc/repo_catalog/application/acquisition.py:1212: in _admit_normalized_unit\n    self._ensure_resource_hierarchy(\nsrc/repo_catalog/application/acquisition.py:1198: in _ensure_resource_hierarchy\n    ctx.resource(key, repo_uuid)\nsrc/repo_catalog/adapters/sqlite/production_context.py:137: in call\n    result = operation(self, *args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nsrc/repo_catalog/adapters/sqlite/production_context.py:459: in resource\n    return super().resource(key, repository_uuidv4)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <repo_catalog.adapters.sqlite.production_context.Context object at 0x7fd9b5d97770>\nkey = ResourceKey(service_instance_uuidv4='20bf17cd-8bca-45d1-bc5c-40b7af3a8d2b', resource_kind='comment', provider_resource_id='[\"issue\",\"\\\\\"7\\\\\"\",\"timeline_event\",[\"github:node_id\",\"EV_node\"]]')\nrepository_uuidv4 = None\n\n    def resource(self, key: ResourceKey, repository_uuidv4: str | None = None) -> None:\n        \"\"\"Admit nominal identity, independently of current repository evidence.\n    \n        The optional repository is a validated caller registration precondition;\n        it does not assert membership. Use admit_repository_relation with original clocks.\n        \"\"\"\n        if not isinstance(key, ResourceKey):\n            raise ValueError(\"ResourceKey required\")\n        parent = (None, None, None, None)\n        if key.resource_kind in {\"review\", \"comment\", \"thread\", \"document\"}:\n            # This adapter implements the existing scoped contract only. Check\n            # intent and coordinates even on replay before returning a duplicate.\n            parent = key.scoped_document_coordinates()\n            if any(type(value) is not str or not value for value in parent):\n>               raise ValueError(\n                    \"Current packaged DDL requires nonempty scalar local document IDs; \"\n                    \"generalized Document persistence is deferred to ADR 0031 I2\"\n                )\nE               ValueError: Current packaged DDL requires nonempty scalar local document IDs; generalized Document persistence is deferred to ADR 0031 I2\n\nsrc/repo_catalog/adapters/sqlite/p1_context.py:89: ValueError"
+        },
+        "tests/integration/i2/test_provider_intake.py::test_graphql_event_does_not_infer_destination_from_current_issue_repository": {
+          "category": "I2 generalized composite-local Resource persistence",
+          "first_failure": "tmp_path = PosixPath('/workspace/adr0031-pytest-tmp/finalr23531/test_graphql_event_does_not_in0')\n\n    def test_graphql_event_does_not_infer_destination_from_current_issue_repository(\n        tmp_path,\n    ):\n        s, _, _ = setup(tmp_path)\n        payload = {\n            \"id\": \"EV\",\n            \"__typename\": \"TransferredEvent\",\n            \"fromRepository\": {\"id\": \"R_A\"},\n            \"issue\": {\"databaseId\": 7, \"repository\": {\"id\": \"R_B\"}},\n        }\n>       ProviderAcquisition(tmp_path).admit_batch(\n            ProviderIntakeBatch(\n                s,\n                timeline_events=(\n                    ProviderTimelineIntake(\n                        \"issue\",\n                        7,\n                        \"EV\",\n                        payload,\n                        None,\n                        provenance(\"transfer\"),\n                        graphql=True,\n                    ),\n                ),\n            )\n        )\n\ntests/integration/i2/test_provider_intake.py:739: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \nsrc/repo_catalog/application/acquisition.py:1693: in admit_batch\n    self._admit_normalized_unit(\nsrc/repo_catalog/application/acquisition.py:1212: in _admit_normalized_unit\n    self._ensure_resource_hierarchy(\nsrc/repo_catalog/application/acquisition.py:1198: in _ensure_resource_hierarchy\n    ctx.resource(key, repo_uuid)\nsrc/repo_catalog/adapters/sqlite/production_context.py:137: in call\n    result = operation(self, *args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nsrc/repo_catalog/adapters/sqlite/production_context.py:459: in resource\n    return super().resource(key, repository_uuidv4)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <repo_catalog.adapters.sqlite.production_context.Context object at 0x7fd9b5c51040>\nkey = ResourceKey(service_instance_uuidv4='7df81052-a03a-4f86-81e8-b88b1fa0bd50', resource_kind='comment', provider_resource_id='[\"issue\",\"\\\\\"7\\\\\"\",\"timeline_event\",[\"github:node_id\",\"EV\"]]')\nrepository_uuidv4 = None\n\n    def resource(self, key: ResourceKey, repository_uuidv4: str | None = None) -> None:\n        \"\"\"Admit nominal identity, independently of current repository evidence.\n    \n        The optional repository is a validated caller registration precondition;\n        it does not assert membership. Use admit_repository_relation with original clocks.\n        \"\"\"\n        if not isinstance(key, ResourceKey):\n            raise ValueError(\"ResourceKey required\")\n        parent = (None, None, None, None)\n        if key.resource_kind in {\"review\", \"comment\", \"thread\", \"document\"}:\n            # This adapter implements the existing scoped contract only. Check\n            # intent and coordinates even on replay before returning a duplicate.\n            parent = key.scoped_document_coordinates()\n            if any(type(value) is not str or not value for value in parent):\n>               raise ValueError(\n                    \"Current packaged DDL requires nonempty scalar local document IDs; \"\n                    \"generalized Document persistence is deferred to ADR 0031 I2\"\n                )\nE               ValueError: Current packaged DDL requires nonempty scalar local document IDs; generalized Document persistence is deferred to ADR 0031 I2\n\nsrc/repo_catalog/adapters/sqlite/p1_context.py:89: ValueError"
+        },
+        "tests/integration/i5/test_independent_e2e.py::test_transfer_reports_never_mix_across_observations_or_identifier_namespaces": {
+          "category": "I2 generalized composite-local Resource persistence",
+          "first_failure": "tmp_path = PosixPath('/workspace/adr0031-pytest-tmp/finalr23531/test_transfer_reports_never_mi0')\nassembled = (PosixPath('/workspace/adr0031-pytest-tmp/finalr23531/test_transfer_reports_never_mi0/sender'), 'be36bd5b-a6be-4632-a2...69e9-8a1a-4d7a-827d-40e5d3a9fdc1', '28b0d9c3-e592-4e16-9120-a6ae4a15b6fc', 'e683a4a2-beda-4852-8ce6-34033070b26a', ...)\n\n    def test_transfer_reports_never_mix_across_observations_or_identifier_namespaces(\n        tmp_path, assembled\n    ):\n        source, service, r1, r2, _, _, _, _, _, _ = assembled\n        base = {\"id\": 702, \"event\": \"transferred\"}\n        observations = (\n            ProviderTimelineIntake(\n                \"issue\",\n                501,\n                702,\n                {**base, \"from_repository\": {\"id\": 101}},\n                180,\n                prov(\"from-only\"),\n            ),\n            ProviderTimelineIntake(\n                \"issue\",\n                501,\n                702,\n                {**base, \"to_repository\": {\"id\": 202}},\n                181,\n                prov(\"to-only\"),\n            ),\n            ProviderTimelineIntake(\n                \"issue\",\n                501,\n                703,\n                {\n                    \"id\": 703,\n                    \"event\": \"labeled\",\n                    \"from_repository\": {\"id\": 101},\n                    \"to_repository\": {\"id\": 202},\n                },\n                182,\n                prov(\"not transfer\"),\n            ),\n            ProviderTimelineIntake(\n                \"issue\",\n                501,\n                \"EV_node\",\n                {\n                    \"id\": \"EV_node\",\n                    \"__typename\": \"TransferredEvent\",\n                    \"fromRepository\": {\"id\": \"R_node\", \"databaseId\": 101},\n                    \"toRepository\": None,\n                },\n                183,\n                prov(\"opaque Node endpoint\"),\n                graphql=True,\n            ),\n        )\n>       ProviderAcquisition(source).admit_batch(\n            ProviderIntakeBatch(service, timeline_events=observations)\n        )\n\ntests/integration/i5/test_independent_e2e.py:628: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \nsrc/repo_catalog/application/acquisition.py:1693: in admit_batch\n    self._admit_normalized_unit(\nsrc/repo_catalog/application/acquisition.py:1212: in _admit_normalized_unit\n    self._ensure_resource_hierarchy(\nsrc/repo_catalog/application/acquisition.py:1198: in _ensure_resource_hierarchy\n    ctx.resource(key, repo_uuid)\nsrc/repo_catalog/adapters/sqlite/production_context.py:137: in call\n    result = operation(self, *args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nsrc/repo_catalog/adapters/sqlite/production_context.py:459: in resource\n    return super().resource(key, repository_uuidv4)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <repo_catalog.adapters.sqlite.production_context.Context object at 0x7fd9b6f783b0>\nkey = ResourceKey(service_instance_uuidv4='be36bd5b-a6be-4632-a274-b70be8e0ea00', resource_kind='comment', provider_resource_id='[\"issue\",\"\\\\\"501\\\\\"\",\"timeline_event\",[\"github:node_id\",\"EV_node\"]]')\nrepository_uuidv4 = None\n\n    def resource(self, key: ResourceKey, repository_uuidv4: str | None = None) -> None:\n        \"\"\"Admit nominal identity, independently of current repository evidence.\n    \n        The optional repository is a validated caller registration precondition;\n        it does not assert membership. Use admit_repository_relation with original clocks.\n        \"\"\"\n        if not isinstance(key, ResourceKey):\n            raise ValueError(\"ResourceKey required\")\n        parent = (None, None, None, None)\n        if key.resource_kind in {\"review\", \"comment\", \"thread\", \"document\"}:\n            # This adapter implements the existing scoped contract only. Check\n            # intent and coordinates even on replay before returning a duplicate.\n            parent = key.scoped_document_coordinates()\n            if any(type(value) is not str or not value for value in parent):\n>               raise ValueError(\n                    \"Current packaged DDL requires nonempty scalar local document IDs; \"\n                    \"generalized Document persistence is deferred to ADR 0031 I2\"\n                )\nE               ValueError: Current packaged DDL requires nonempty scalar local document IDs; generalized Document persistence is deferred to ADR 0031 I2\n\nsrc/repo_catalog/adapters/sqlite/p1_context.py:89: ValueError"
+        }
+      },
+      "three_way_node_reconciliation": true,
+      "junit_reconciliation_note": "The preserved runner field selected_equals_junit=false was a work-only parser bug: four parameter IDs contain literal :: (IPv6/ext URI). This reconciliation splits only the unparametrized prefix, preserves complete parameter text and verifies duplicate-aware classname/name counters against raw JUnit. No test node was missing or substituted."
+    }
+  },
+  "modules": {
+    "3513": {
+      "tests/integration/access/test_backup.py": {
+        "executed": 85,
+        "passed": 85
+      },
+      "tests/integration/access/test_connections.py": {
+        "executed": 56,
+        "passed": 56
+      },
+      "tests/integration/access/test_context_boundary.py": {
+        "executed": 62,
+        "passed": 62
+      },
+      "tests/integration/access/test_git_acquisition.py": {
+        "executed": 84,
+        "passed": 84
+      },
+      "tests/integration/access/test_handoff_boundary.py": {
+        "executed": 8,
+        "passed": 8
+      },
+      "tests/integration/access/test_registry.py": {
+        "executed": 37,
+        "passed": 37
+      },
+      "tests/integration/access/test_registry_isolation.py": {
+        "executed": 3,
+        "passed": 3
+      },
+      "tests/integration/access/test_review_corrections.py": {
+        "executed": 75,
+        "passed": 75
+      },
+      "tests/integration/access/test_stack_acceptance.py": {
+        "executed": 10,
+        "passed": 10
+      },
+      "tests/integration/access/test_workflow.py": {
+        "executed": 63,
+        "passed": 63
+      },
+      "tests/integration/i2/test_provider_intake.py": {
+        "executed": 48,
+        "passed": 45,
+        "failed": 3
+      },
+      "tests/integration/i23/test_provider_exchange.py": {
+        "executed": 34,
+        "passed": 34
+      },
+      "tests/integration/i3/test_selective_exchange.py": {
+        "executed": 66,
+        "passed": 66
+      },
+      "tests/integration/i4/test_query_search_backup.py": {
+        "executed": 26,
+        "passed": 26
+      },
+      "tests/integration/i5/test_independent_e2e.py": {
+        "executed": 20,
+        "passed": 19,
+        "failed": 1
+      },
+      "tests/integration/p1/test_context.py": {
+        "executed": 26,
+        "passed": 26
+      },
+      "tests/integration/p1/test_context_relations.py": {
+        "executed": 38,
+        "passed": 38
+      },
+      "tests/integration/p1/test_coordination.py": {
+        "executed": 46,
+        "passed": 46
+      },
+      "tests/integration/p1/test_core.py": {
+        "executed": 73,
+        "passed": 73
+      },
+      "tests/integration/p1/test_coverage.py": {
+        "executed": 39,
+        "passed": 39
+      },
+      "tests/integration/p1/test_derivatives.py": {
+        "executed": 12,
+        "passed": 12
+      },
+      "tests/integration/p1/test_disposition.py": {
+        "executed": 22,
+        "passed": 22
+      },
+      "tests/integration/p1/test_intrinsic_provenance.py": {
+        "executed": 4,
+        "passed": 4
+      },
+      "tests/integration/p1/test_notes.py": {
+        "executed": 30,
+        "passed": 30
+      },
+      "tests/integration/p1/test_resource_identity_sql.py": {
+        "executed": 37,
+        "passed": 37
+      },
+      "tests/integration/p1/test_schema.py": {
+        "executed": 15,
+        "passed": 15
+      },
+      "tests/integration/p1/test_time_policy.py": {
+        "executed": 47,
+        "passed": 47
+      },
+      "tests/integration/p1/test_validation_stop.py": {
+        "executed": 5,
+        "passed": 5
+      },
+      "tests/integration/p2/test_contract_replays.py": {
+        "executed": 84,
+        "passed": 84
+      },
+      "tests/integration/p2/test_native.py": {
+        "executed": 113,
+        "passed": 113
+      },
+      "tests/integration/p2_p3_compatibility/test_production_pair.py": {
+        "executed": 20,
+        "passed": 20
+      },
+      "tests/integration/p3/test_production_context.py": {
+        "executed": 80,
+        "passed": 80
+      },
+      "tests/integration/p4/test_accounting.py": {
+        "executed": 40,
+        "passed": 40
+      },
+      "tests/integration/p4/test_acquisition.py": {
+        "executed": 84,
+        "passed": 84
+      },
+      "tests/integration/p4/test_inventory.py": {
+        "executed": 56,
+        "passed": 56
+      },
+      "tests/integration/p4/test_inventory_callback.py": {
+        "executed": 22,
+        "passed": 22
+      },
+      "tests/integration/p5/test_corrections.py": {
+        "executed": 27,
+        "passed": 27
+      },
+      "tests/integration/p5/test_exchange.py": {
+        "executed": 6,
+        "passed": 6
+      },
+      "tests/integration/p5/test_git_acquisition.py": {
+        "executed": 6,
+        "passed": 6
+      },
+      "tests/integration/p5/test_paired_admission.py": {
+        "executed": 4,
+        "passed": 4
+      },
+      "tests/integration/p5/test_provider_acquisition.py": {
+        "executed": 5,
+        "passed": 5
+      },
+      "tests/integration/p5_p6_compatibility/test_end_to_end_p5_p6.py": {
+        "executed": 11,
+        "passed": 11
+      },
+      "tests/integration/p5_p6_compatibility/test_export_gate.py": {
+        "executed": 1,
+        "passed": 1
+      },
+      "tests/integration/p5_p6_compatibility/test_p5_independent_counterexamples.py": {
+        "executed": 10,
+        "passed": 10
+      },
+      "tests/integration/p5_p6_compatibility/test_provider_exchange_matrix.py": {
+        "executed": 7,
+        "passed": 7
+      },
+      "tests/integration/p6/test_cli.py": {
+        "executed": 2,
+        "passed": 2
+      },
+      "tests/integration/p6/test_corrections.py": {
+        "executed": 36,
+        "passed": 36
+      },
+      "tests/integration/p6/test_pagination_snapshots.py": {
+        "executed": 3,
+        "passed": 3
+      },
+      "tests/integration/p6/test_queries.py": {
+        "executed": 6,
+        "passed": 6
+      },
+      "tests/integration/p6/test_search_fallback.py": {
+        "executed": 3,
+        "passed": 3
+      },
+      "tests/integration/p7/test_adversarial_contract_cases.py": {
+        "executed": 31,
+        "passed": 31
+      },
+      "tests/integration/p7/test_bounded_input.py": {
+        "executed": 39,
+        "passed": 39
+      },
+      "tests/integration/p7/test_consistent_backup.py": {
+        "executed": 2,
+        "passed": 2
+      },
+      "tests/integration/p7/test_context_corruption_stop.py": {
+        "executed": 6,
+        "passed": 6
+      },
+      "tests/integration/p7/test_corruption_stop.py": {
+        "executed": 2,
+        "passed": 2
+      },
+      "tests/integration/p7/test_durable_budget.py": {
+        "executed": 36,
+        "passed": 36
+      },
+      "tests/integration/p7/test_exact_replay.py": {
+        "executed": 34,
+        "passed": 34
+      },
+      "tests/integration/p7/test_filesystem_hardening.py": {
+        "executed": 31,
+        "passed": 31
+      },
+      "tests/integration/p7/test_fresh_restore_merge.py": {
+        "executed": 2,
+        "passed": 2
+      },
+      "tests/integration/p7/test_missing_required_authority.py": {
+        "executed": 4,
+        "passed": 4
+      },
+      "tests/integration/p7/test_process_isolation.py": {
+        "executed": 5,
+        "passed": 5
+      },
+      "tests/integration/p7/test_read_only_salvage.py": {
+        "executed": 2,
+        "passed": 2
+      },
+      "tests/integration/p7/test_safe_activation.py": {
+        "executed": 7,
+        "passed": 7
+      },
+      "tests/integration/p7/test_source_diagnosis.py": {
+        "executed": 16,
+        "passed": 16
+      },
+      "tests/integration/p7/test_stored_constraints.py": {
+        "executed": 7,
+        "passed": 7
+      },
+      "tests/integration/p7/test_stored_copy_corruption_stop.py": {
+        "executed": 12,
+        "passed": 12
+      },
+      "tests/integration/p7/test_work_dimensions.py": {
+        "executed": 19,
+        "passed": 19
+      },
+      "tests/unit/test_access_acceptance_values.py": {
+        "executed": 17,
+        "passed": 17
+      },
+      "tests/unit/test_access_backup_values.py": {
+        "executed": 27,
+        "passed": 27
+      },
+      "tests/unit/test_access_connections_values.py": {
+        "executed": 49,
+        "passed": 49
+      },
+      "tests/unit/test_access_registry_values.py": {
+        "executed": 74,
+        "passed": 74
+      },
+      "tests/unit/test_context_registration_values.py": {
+        "executed": 266,
+        "passed": 266
+      },
+      "tests/unit/test_native_acquisition_values.py": {
+        "executed": 23,
+        "passed": 23
+      },
+      "tests/unit/test_resource_identity.py": {
+        "executed": 195,
+        "passed": 195
+      },
+      "tests/unit/test_resource_key_identity.py": {
+        "executed": 79,
+        "passed": 79
+      },
+      "tests/unit/test_github_identity_boundaries.py": {
+        "executed": 36,
+        "passed": 36
+      },
+      "tests/packaging/test_p1_distribution.py": {
+        "executed": 2,
+        "passed": 2
+      },
+      "tests/packaging/test_p2_distribution.py": {
+        "executed": 4,
+        "passed": 4
+      },
+      "tests/packaging/test_p3_distribution.py": {
+        "executed": 2,
+        "passed": 2
+      },
+      "tests/packaging/test_p4_distribution.py": {
+        "executed": 4,
+        "passed": 4
+      },
+      "tests/packaging/test_p5_distribution.py": {
+        "executed": 4,
+        "passed": 4
+      },
+      "tests/packaging/test_p6_distribution.py": {
+        "executed": 4,
+        "passed": 4
+      },
+      "tests/packaging/test_p7_distribution.py": {
+        "executed": 2,
+        "passed": 2
+      }
+    },
+    "3531": {
+      "tests/integration/access/test_backup.py": {
+        "executed": 85,
+        "passed": 85
+      },
+      "tests/integration/access/test_connections.py": {
+        "executed": 56,
+        "passed": 56
+      },
+      "tests/integration/access/test_context_boundary.py": {
+        "executed": 62,
+        "passed": 62
+      },
+      "tests/integration/access/test_git_acquisition.py": {
+        "executed": 84,
+        "passed": 84
+      },
+      "tests/integration/access/test_handoff_boundary.py": {
+        "executed": 8,
+        "passed": 8
+      },
+      "tests/integration/access/test_registry.py": {
+        "executed": 37,
+        "passed": 37
+      },
+      "tests/integration/access/test_registry_isolation.py": {
+        "executed": 3,
+        "passed": 3
+      },
+      "tests/integration/access/test_review_corrections.py": {
+        "executed": 75,
+        "passed": 75
+      },
+      "tests/integration/access/test_stack_acceptance.py": {
+        "executed": 10,
+        "passed": 10
+      },
+      "tests/integration/access/test_workflow.py": {
+        "executed": 63,
+        "passed": 63
+      },
+      "tests/integration/i2/test_provider_intake.py": {
+        "executed": 48,
+        "passed": 45,
+        "failed": 3
+      },
+      "tests/integration/i23/test_provider_exchange.py": {
+        "executed": 34,
+        "passed": 34
+      },
+      "tests/integration/i3/test_selective_exchange.py": {
+        "executed": 66,
+        "passed": 66
+      },
+      "tests/integration/i4/test_query_search_backup.py": {
+        "executed": 26,
+        "passed": 26
+      },
+      "tests/integration/i5/test_independent_e2e.py": {
+        "executed": 20,
+        "passed": 19,
+        "failed": 1
+      },
+      "tests/integration/p1/test_context.py": {
+        "executed": 26,
+        "passed": 26
+      },
+      "tests/integration/p1/test_context_relations.py": {
+        "executed": 38,
+        "passed": 38
+      },
+      "tests/integration/p1/test_coordination.py": {
+        "executed": 46,
+        "passed": 46
+      },
+      "tests/integration/p1/test_core.py": {
+        "executed": 73,
+        "passed": 73
+      },
+      "tests/integration/p1/test_coverage.py": {
+        "executed": 39,
+        "passed": 39
+      },
+      "tests/integration/p1/test_derivatives.py": {
+        "executed": 12,
+        "passed": 12
+      },
+      "tests/integration/p1/test_disposition.py": {
+        "executed": 22,
+        "passed": 22
+      },
+      "tests/integration/p1/test_intrinsic_provenance.py": {
+        "executed": 4,
+        "passed": 4
+      },
+      "tests/integration/p1/test_notes.py": {
+        "executed": 30,
+        "passed": 30
+      },
+      "tests/integration/p1/test_resource_identity_sql.py": {
+        "executed": 37,
+        "passed": 37
+      },
+      "tests/integration/p1/test_schema.py": {
+        "executed": 15,
+        "passed": 15
+      },
+      "tests/integration/p1/test_time_policy.py": {
+        "executed": 47,
+        "passed": 47
+      },
+      "tests/integration/p1/test_validation_stop.py": {
+        "executed": 5,
+        "passed": 5
+      },
+      "tests/integration/p2/test_contract_replays.py": {
+        "executed": 84,
+        "passed": 84
+      },
+      "tests/integration/p2/test_native.py": {
+        "executed": 113,
+        "passed": 113
+      },
+      "tests/integration/p2_p3_compatibility/test_production_pair.py": {
+        "executed": 20,
+        "passed": 20
+      },
+      "tests/integration/p3/test_production_context.py": {
+        "executed": 80,
+        "passed": 80
+      },
+      "tests/integration/p4/test_accounting.py": {
+        "executed": 40,
+        "passed": 40
+      },
+      "tests/integration/p4/test_acquisition.py": {
+        "executed": 84,
+        "passed": 84
+      },
+      "tests/integration/p4/test_inventory.py": {
+        "executed": 56,
+        "passed": 56
+      },
+      "tests/integration/p4/test_inventory_callback.py": {
+        "executed": 22,
+        "passed": 22
+      },
+      "tests/integration/p5/test_corrections.py": {
+        "executed": 27,
+        "passed": 27
+      },
+      "tests/integration/p5/test_exchange.py": {
+        "executed": 6,
+        "passed": 6
+      },
+      "tests/integration/p5/test_git_acquisition.py": {
+        "executed": 6,
+        "passed": 6
+      },
+      "tests/integration/p5/test_paired_admission.py": {
+        "executed": 4,
+        "passed": 4
+      },
+      "tests/integration/p5/test_provider_acquisition.py": {
+        "executed": 5,
+        "passed": 5
+      },
+      "tests/integration/p5_p6_compatibility/test_end_to_end_p5_p6.py": {
+        "executed": 11,
+        "passed": 11
+      },
+      "tests/integration/p5_p6_compatibility/test_export_gate.py": {
+        "executed": 1,
+        "passed": 1
+      },
+      "tests/integration/p5_p6_compatibility/test_p5_independent_counterexamples.py": {
+        "executed": 10,
+        "passed": 10
+      },
+      "tests/integration/p5_p6_compatibility/test_provider_exchange_matrix.py": {
+        "executed": 7,
+        "passed": 7
+      },
+      "tests/integration/p6/test_cli.py": {
+        "executed": 2,
+        "passed": 2
+      },
+      "tests/integration/p6/test_corrections.py": {
+        "executed": 36,
+        "passed": 36
+      },
+      "tests/integration/p6/test_pagination_snapshots.py": {
+        "executed": 3,
+        "passed": 3
+      },
+      "tests/integration/p6/test_queries.py": {
+        "executed": 6,
+        "passed": 6
+      },
+      "tests/integration/p6/test_search_fallback.py": {
+        "executed": 3,
+        "passed": 3
+      },
+      "tests/integration/p7/test_adversarial_contract_cases.py": {
+        "executed": 31,
+        "passed": 31
+      },
+      "tests/integration/p7/test_bounded_input.py": {
+        "executed": 39,
+        "passed": 39
+      },
+      "tests/integration/p7/test_consistent_backup.py": {
+        "executed": 2,
+        "passed": 2
+      },
+      "tests/integration/p7/test_context_corruption_stop.py": {
+        "executed": 6,
+        "passed": 6
+      },
+      "tests/integration/p7/test_corruption_stop.py": {
+        "executed": 2,
+        "passed": 2
+      },
+      "tests/integration/p7/test_durable_budget.py": {
+        "executed": 36,
+        "passed": 36
+      },
+      "tests/integration/p7/test_exact_replay.py": {
+        "executed": 34,
+        "passed": 34
+      },
+      "tests/integration/p7/test_filesystem_hardening.py": {
+        "executed": 31,
+        "passed": 31
+      },
+      "tests/integration/p7/test_fresh_restore_merge.py": {
+        "executed": 2,
+        "passed": 2
+      },
+      "tests/integration/p7/test_missing_required_authority.py": {
+        "executed": 4,
+        "passed": 4
+      },
+      "tests/integration/p7/test_process_isolation.py": {
+        "executed": 5,
+        "passed": 5
+      },
+      "tests/integration/p7/test_read_only_salvage.py": {
+        "executed": 2,
+        "passed": 2
+      },
+      "tests/integration/p7/test_safe_activation.py": {
+        "executed": 7,
+        "passed": 7
+      },
+      "tests/integration/p7/test_source_diagnosis.py": {
+        "executed": 16,
+        "passed": 16
+      },
+      "tests/integration/p7/test_stored_constraints.py": {
+        "executed": 7,
+        "passed": 7
+      },
+      "tests/integration/p7/test_stored_copy_corruption_stop.py": {
+        "executed": 12,
+        "passed": 12
+      },
+      "tests/integration/p7/test_work_dimensions.py": {
+        "executed": 19,
+        "passed": 19
+      },
+      "tests/unit/test_access_acceptance_values.py": {
+        "executed": 17,
+        "passed": 17
+      },
+      "tests/unit/test_access_backup_values.py": {
+        "executed": 27,
+        "passed": 27
+      },
+      "tests/unit/test_access_connections_values.py": {
+        "executed": 49,
+        "passed": 49
+      },
+      "tests/unit/test_access_registry_values.py": {
+        "executed": 74,
+        "passed": 74
+      },
+      "tests/unit/test_context_registration_values.py": {
+        "executed": 266,
+        "passed": 266
+      },
+      "tests/unit/test_native_acquisition_values.py": {
+        "executed": 23,
+        "passed": 23
+      },
+      "tests/unit/test_resource_identity.py": {
+        "executed": 195,
+        "passed": 195
+      },
+      "tests/unit/test_resource_key_identity.py": {
+        "executed": 79,
+        "passed": 79
+      },
+      "tests/unit/test_github_identity_boundaries.py": {
+        "executed": 36,
+        "passed": 36
+      },
+      "tests/packaging/test_p1_distribution.py": {
+        "executed": 2,
+        "passed": 2
+      },
+      "tests/packaging/test_p2_distribution.py": {
+        "executed": 4,
+        "passed": 4
+      },
+      "tests/packaging/test_p3_distribution.py": {
+        "executed": 2,
+        "passed": 2
+      },
+      "tests/packaging/test_p4_distribution.py": {
+        "executed": 4,
+        "passed": 4
+      },
+      "tests/packaging/test_p5_distribution.py": {
+        "executed": 4,
+        "passed": 4
+      },
+      "tests/packaging/test_p6_distribution.py": {
+        "executed": 4,
+        "passed": 4
+      },
+      "tests/packaging/test_p7_distribution.py": {
+        "executed": 2,
+        "passed": 2
+      }
+    }
+  },
+  "frozen_inputs": 429,
+  "same_inputs_across_runtimes": true,
+  "ordinary_not_executed_on_final_freeze": 2541,
+  "diagnostic_broad2_interruption": "Intentional SIGINT after Access/P1-P7 integration portion, during unrelated legacy tests. 2090 starts, 2089 completed; 2046 passed, 43 failed, one incomplete. Original runner defaulted missing-call to skipped=1; raw receipt is retained unchanged and is superseded only for that classification here. Not a complete/passing run.",
+  "invalid_minimum_attempt": "baseline-intake-3513 actually loaded SQLite 3.49.1 from uv managed Python. 48 failures, not supported-runtime validation; retained. Corrected by explicit /usr/bin/python3.13 binding and exact SQL version/source-ID checks.",
+  "baseline_collection": "First raw collection lacked declared docs dependency PyYAML and found two obsolete module-level native ResourceKey fixtures. After uv sync --frozen --group docs, baseline-ordinary-3531 retained the two actual fixture errors. Final ordinary collection is complete with no errors."
+}
