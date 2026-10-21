@@ -395,7 +395,7 @@ def _validate_cursor_key(endpoint: str, key: tuple[Any, ...]) -> None:
         if endpoint == "git_objects":
             OID(*key)
         elif endpoint in ("context_resources", "paired_resources"):
-            uuid4_value(key[0])
+            ResourceKey(*key)
         elif endpoint == "notes_captures":
             uuid4_value(key[1])
             uuid4_value(key[2])

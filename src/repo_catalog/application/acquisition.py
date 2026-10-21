@@ -1190,9 +1190,7 @@ class ProviderAcquisition:
         admitted: list[ResourceKey],
     ) -> None:
         if key.resource_kind in {"review", "comment", "thread", "document"}:
-            parent_tuple = json.loads(key.provider_resource_id)
-            if type(parent_tuple) is not list or len(parent_tuple) != 4:
-                raise AcquisitionError("RESOURCE_PARENT", key)
+            parent_tuple = key.scoped_document_coordinates()
             parent_key = ResourceKey(
                 key.service_instance_uuidv4, parent_tuple[0], parent_tuple[1]
             )

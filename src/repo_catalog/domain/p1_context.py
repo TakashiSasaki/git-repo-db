@@ -11,7 +11,7 @@ import json
 import re
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
-from typing import Any, Final, Literal
+from typing import Any, ClassVar, Final, Literal
 
 from repo_catalog.domain.p1_coverage import (
     CoverageClaim as CoverageClaim,
@@ -21,6 +21,11 @@ from repo_catalog.domain.p1_coverage import (
 )
 from repo_catalog.domain.p1_coverage import (
     CoverageState as CoverageState,
+)
+from repo_catalog.domain.resource_identity import (
+    IdentityValue,
+    encode_identity,
+    parse_identity,
 )
 from repo_catalog.domain.time import MAX_EPOCH_US, validate_observation_us
 
@@ -237,18 +242,31 @@ def canonical(value: object) -> str:
     )
 
 
-def validate_timeline_event_coordinates(provider_resource_id: str) -> tuple[str, str]:
-    """Validate that a comment provider_resource_id is an issue-parented timeline_event."""
-    parsed = _parse_canonical_json(provider_resource_id)
+def _scoped_document_coordinates(
+    provider_resource_id: str,
+) -> tuple[str, str, str, IdentityValue]:
+    """Decode the explicit scoped contract, never infer a semantic Parent report."""
+    parsed = parse_identity(provider_resource_id)
     if (
         type(parsed) is not list
         or len(parsed) != 4
-        or any(not _is_nonempty_str(item) for item in parsed)
+        or any(not _is_nonempty_str(item) for item in parsed[:3])
     ):
         raise ValueError(
-            "Timeline event provider_resource_id must be a 4-element canonical string array"
+            "Scoped identity requires namespace kind/TEXT, subtype and native ID"
         )
-    parent_kind, parent_id, document_kind, event_id = parsed
+    namespace_kind, namespace_text, document_kind, native_id = parsed
+    parse_identity(namespace_text)
+    return namespace_kind, namespace_text, document_kind, native_id
+
+
+def validate_timeline_event_coordinates(
+    provider_resource_id: str,
+) -> tuple[str, IdentityValue]:
+    """Validate that a comment provider_resource_id is an issue-parented timeline_event."""
+    parent_kind, parent_id, document_kind, event_id = _scoped_document_coordinates(
+        provider_resource_id
+    )
     if parent_kind != "issue" or document_kind != "timeline_event":
         raise ValueError(
             "Transfer relation requires an issue-parented timeline_event document coordinate"
@@ -335,6 +353,7 @@ def _validate_embedded_mapping_support(support: object) -> None:
         raise ValueError(
             "mapping_support.provider_repository_id must be a non-empty string"
         )
+    parse_identity(support["provider_repository_id"])
     claims = support["supporting_claims"]
     if type(claims) is not list or not claims:
         raise ValueError(
@@ -637,9 +656,20 @@ def parse_mapping_provenance(provenance_json: str) -> MappingProvenance:
 
 @dataclass(frozen=True)
 class ResourceKey:
+    """Three exact coordinates; the constructor receives serialized identity TEXT.
+
+    Use ``from_native`` for native strings/arrays. In particular, a native string
+    that looks like JSON stays a string; no API guesses its representation.
+    Known scoped factories retain identification namespaces, not Parent evidence.
+    """
+
     service_instance_uuidv4: str
     resource_kind: str
     provider_resource_id: str
+    # Factory intent is not an identity coordinate or a durable admission fact.
+    # Existing scoped-only consumers must not reinterpret an explicitly global
+    # native Document whose array happens to resemble their scoped layout.
+    _document_contract: ClassVar[Literal["global", "scoped"] | None] = None
 
     def __post_init__(self) -> None:
         if not _is_uuid4_str(self.service_instance_uuidv4):
@@ -648,8 +678,35 @@ class ResourceKey:
             )
         if not _is_nonempty_str(self.resource_kind):
             raise ValueError("resource_kind must be a non-empty string")
-        if not _is_nonempty_str(self.provider_resource_id):
-            raise ValueError("provider_resource_id must be a non-empty string")
+        parse_identity(self.provider_resource_id)
+        if self.resource_kind in {"review", "comment", "thread"}:
+            self.scoped_document_coordinates()
+
+    @classmethod
+    def from_native(
+        cls, service_instance_uuidv4: str, resource_kind: str, value: IdentityValue
+    ) -> ResourceKey:
+        """Encode an adapter-established native identity without normalization.
+
+        Native ``document`` IDs select the global contract. Use ``document()``
+        to declare a known scoped contract explicitly. Factory intent is only
+        an in-memory guard: wire/durable identification metadata needs I2/I6.
+        """
+        key = cls(service_instance_uuidv4, resource_kind, encode_identity(value))
+        if resource_kind == "document":
+            object.__setattr__(key, "_document_contract", "global")
+        return key
+
+    @classmethod
+    def global_document(
+        cls, service_instance_uuidv4: str, value: IdentityValue
+    ) -> ResourceKey:
+        """Use a genuine Provider-global Document ID, with no invented namespace.
+
+        This explicitly selected contract does not retry malformed scoped input.
+        Production persistence of global Documents requires the later I2 DDL.
+        """
+        return cls.from_native(service_instance_uuidv4, "document", value)
 
     @classmethod
     def document(
@@ -657,14 +714,23 @@ class ResourceKey:
         parent: ResourceKey,
         resource_kind: str,
         document_kind: str,
-        provider_document_id: str,
+        provider_document_id: IdentityValue,
     ) -> ResourceKey:
+        """Encode scoped coordinates, with canonical namespace TEXT in slot two.
+
+        ``provider_document_id`` is native, including recursive arrays. A caller
+        holding serialized local ID TEXT must explicitly parse it first.
+        """
+        if not isinstance(parent, ResourceKey):
+            raise ValueError("A scoped document requires a namespace ResourceKey")
         if resource_kind not in {"review", "comment", "thread", "document"}:
             raise ValueError("A document requires a typed document resource kind")
-        return cls(
+        if not _is_nonempty_str(document_kind):
+            raise ValueError("document_kind must be a non-empty string")
+        key = cls(
             parent.service_instance_uuidv4,
             resource_kind,
-            canonical(
+            encode_identity(
                 [
                     parent.resource_kind,
                     parent.provider_resource_id,
@@ -673,21 +739,37 @@ class ResourceKey:
                 ]
             ),
         )
+        object.__setattr__(key, "_document_contract", "scoped")
+        return key
 
     @classmethod
     def timeline_event(
-        cls, issue_parent: ResourceKey, provider_event_id: str
+        cls, issue_parent: ResourceKey, provider_event_id: IdentityValue
     ) -> ResourceKey:
         if (
             not isinstance(issue_parent, ResourceKey)
             or issue_parent.resource_kind != "issue"
         ):
             raise ValueError("Timeline event requires an issue parent ResourceKey")
-        if not _is_nonempty_str(provider_event_id):
-            raise ValueError("provider_event_id must be a non-empty string")
         return cls.document(
             issue_parent, "comment", "timeline_event", provider_event_id
         )
+
+    def scoped_document_coordinates(self) -> tuple[str, str, str, IdentityValue]:
+        """Read an explicitly known scoped identity; refuse other profiles.
+
+        Calling this on an arbitrary/global Document does not select a scoped
+        contract. Typed consumers must already require that identification form.
+        No relationship or referent existence follows from these coordinates.
+        """
+        if self.resource_kind not in {"review", "comment", "thread", "document"}:
+            raise ValueError("Resource does not have a known scoped document contract")
+        if self._document_contract == "global":
+            raise ValueError(
+                "Explicit global Document identity cannot select a scoped contract; "
+                "global persistence requires ADR 0031 I2"
+            )
+        return _scoped_document_coordinates(self.provider_resource_id)
 
     def coordinates(self) -> tuple[str, str, str]:
         return (
@@ -2048,6 +2130,8 @@ class ProviderRepositoryRoleScope:
             raise ValueError(
                 f"Invalid stored ProviderRepositoryRoleScope state: {self.state!r}"
             )
+        if self.provider_repository_id is not None:
+            parse_identity(self.provider_repository_id)
 
     def to_dict(self) -> dict[str, Any]:
         payload: dict[str, Any] = {
@@ -2388,6 +2472,8 @@ class CoverageScope:
             raise ValueError("Full typed owner coordinates required")
         if any(not _is_nonempty_str(item) for item in self.coordinates):
             raise ValueError("Scope coordinates must be genuine nonempty strings")
+        if self.owner_kind in {"resource", "field", "collection"}:
+            ResourceKey(*self.coordinates[:3])
         if self.owner_kind == "field" and self.coordinates[3] == "repository_uuidv4":
             raise ValueError(
                 "field='repository_uuidv4' is prohibited; use CoverageScope.repository_relation"

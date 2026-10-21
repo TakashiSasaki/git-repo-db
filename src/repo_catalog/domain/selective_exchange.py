@@ -587,7 +587,7 @@ def expand_resources(rows, relations, collections, scope, repository_relations=(
     edges = {r: set() for r in available}
     for r in available:
         if r.resource_kind in ("review", "thread", "comment", "document"):
-            coords = json.loads(r.provider_resource_id)
+            coords = r.scoped_document_coordinates()
             parent = ResourceKey(r.service_instance_uuidv4, *coords[:2])
             if parent in available:
                 edges[r].add(parent)
@@ -794,7 +794,7 @@ def validate_context_bindings(data, source_services):
                         member.resource_kind != child_kind
                         or member.service_instance_uuidv4
                         != owner.service_instance_uuidv4
-                        or tuple(json.loads(member.provider_resource_id)[:2])
+                        or member.scoped_document_coordinates()[:2]
                         != owner.coordinates()[1:]
                     ):
                         raise ExchangeError("MEMBER_OWNER", section)

@@ -2287,7 +2287,7 @@ class ExchangeService:
                 rk = resource(row)
                 parent = None
                 if rk.resource_kind in ("review", "thread", "document", "comment"):
-                    coordinates = json.loads(rk.provider_resource_id)
+                    coordinates = rk.scoped_document_coordinates()
                     parent = ResourceKey(rk.service_instance_uuidv4, *coordinates[:2])
                 if rk.service_instance_uuidv4 in providers and (
                     parent is None or parent in resources

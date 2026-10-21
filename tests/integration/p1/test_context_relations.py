@@ -38,8 +38,8 @@ REPO_2 = "c58b4f17-f58c-4a33-8bc6-eb52c42337d1"
 SERVICE = "aad25448-03eb-4f83-a578-ceec84375b5a"
 SOURCE = "80f5c4f9-6d6b-4691-af3c-00ab02ad9f53"
 
-KEY_ISSUE = ResourceKey(SERVICE, "issue", "7")
-KEY_REPO = ResourceKey(SERVICE, "repository", "octocat/Hello-World")
+KEY_ISSUE = ResourceKey.from_native(SERVICE, "issue", "7")
+KEY_REPO = ResourceKey.from_native(SERVICE, "repository", "octocat/Hello-World")
 KEY_EVENT = ResourceKey.timeline_event(KEY_ISSUE, "event-99")
 
 PROVENANCE_1 = canonical({"source": "provider.example", "evidence": "event-1"})
@@ -149,10 +149,12 @@ def test_transfer_stored_type_is_never_inferred(context_db, scope_state):
             scope.pop("clock")
         members = "[]"
         if scope_state == "members":
-            members = canonical([[SERVICE, "repository", "not-declared"]])
+            members = canonical([[SERVICE, "repository", canonical("not-declared")]])
         if scope_state == "missing_provider":
-            scope["from_provider_repository_id"] = "missing-provider"
-            members = canonical([[SERVICE, "repository", "missing-provider"]])
+            scope["from_provider_repository_id"] = canonical("missing-provider")
+            members = canonical(
+                [[SERVICE, "repository", canonical("missing-provider")]]
+            )
         db.execute(
             "INSERT INTO resource_relations VALUES(?,?,?,?,?,?,?,?)",
             (
@@ -188,8 +190,8 @@ def test_transfer_report_fk_failure_rolls_back_whole_unit(context_db):
 
 def test_transfer_supports_both_endpoints_without_cross_borrowing(context_db):
     _, store, _ = context_db
-    provider_a = ResourceKey(SERVICE, "repository", "provider-a")
-    provider_b = ResourceKey(SERVICE, "repository", "provider-b")
+    provider_a = ResourceKey.from_native(SERVICE, "repository", "provider-a")
+    provider_b = ResourceKey.from_native(SERVICE, "repository", "provider-b")
     claims = []
     for provider, target in ((provider_a, REPO_1), (provider_b, REPO_2)):
         store.resource(provider)
@@ -488,7 +490,10 @@ def test_counterexample_4_invalid_roles_and_targets(context_db):
 
     # Wrong parent FK in resources table
     child_key = ResourceKey.document(
-        ResourceKey(SERVICE, "issue", "nonexistent"), "comment", "review_comment", "c-1"
+        ResourceKey.from_native(SERVICE, "issue", "nonexistent"),
+        "comment",
+        "review_comment",
+        "c-1",
     )
     with pytest.raises(sqlite3.IntegrityError):
         store.resource(child_key, REPO_1)
@@ -1055,8 +1060,8 @@ def test_counterexample_18_mapping_claim_support_isolation_and_no_speculative_bo
 ):
     _, store, _ = context_db
     # 1. Provider Repository A and B both map to Core REPO_1
-    prov_a = ResourceKey(SERVICE, "repository", "org/repo-a")
-    prov_b = ResourceKey(SERVICE, "repository", "org/repo-b")
+    prov_a = ResourceKey.from_native(SERVICE, "repository", "org/repo-a")
+    prov_b = ResourceKey.from_native(SERVICE, "repository", "org/repo-b")
     store.resource(prov_a)
     store.resource(prov_b)
 
@@ -1067,7 +1072,7 @@ def test_counterexample_18_mapping_claim_support_isolation_and_no_speculative_bo
     store.admit_repository_relation(claim_a)
 
     # 2. Issue 1 has an owning_repository relation targeting REPO_1, but NO embedded MappingSupport
-    issue_1 = ResourceKey(SERVICE, "issue", "101")
+    issue_1 = ResourceKey.from_native(SERVICE, "issue", "101")
     store.resource(issue_1)
     issue_1_rel = ResourceRepositoryRelation(
         issue_1,
@@ -1087,7 +1092,7 @@ def test_counterexample_18_mapping_claim_support_isolation_and_no_speculative_bo
     assert not res_1[0].is_core_resolved_active
 
     # Now create Issue 2 with explicit MappingSupport referencing claim_a
-    issue_2 = ResourceKey(SERVICE, "issue", "102")
+    issue_2 = ResourceKey.from_native(SERVICE, "issue", "102")
     store.resource(issue_2)
     ck_a = claim_a.claim_key
     assert isinstance(ck_a, MappingClaimKey)

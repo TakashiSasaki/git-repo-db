@@ -80,6 +80,16 @@ class ContextStore:
         """
         if not isinstance(key, ResourceKey):
             raise ValueError("ResourceKey required")
+        parent = (None, None, None, None)
+        if key.resource_kind in {"review", "comment", "thread", "document"}:
+            # This adapter implements the existing scoped contract only. Check
+            # intent and coordinates even on replay before returning a duplicate.
+            parent = key.scoped_document_coordinates()
+            if any(type(value) is not str or not value for value in parent):
+                raise ValueError(
+                    "Current packaged DDL requires nonempty scalar local document IDs; "
+                    "generalized Document persistence is deferred to ADR 0031 I2"
+                )
         if (
             repository_uuidv4 is not None
             and not self.db.execute(
@@ -94,13 +104,6 @@ class ContextStore:
         ).fetchone()
         if prior:
             return
-        parent = (None, None, None, None)
-        if key.resource_kind in {"review", "comment", "thread", "document"}:
-            parent = tuple(json.loads(key.provider_resource_id))
-            if len(parent) != 4 or any(
-                not isinstance(value, str) or not value for value in parent
-            ):
-                raise ValueError("Full genuine parent/document coordinates required")
         self.db.execute(
             "INSERT INTO resources VALUES(?,?,?,?,?,?,?)", (*key.coordinates(), *parent)
         )
