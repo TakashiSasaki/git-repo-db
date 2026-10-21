@@ -448,12 +448,13 @@ def test_forged_backup_with_valid_checksums_fails_semantic_restore(tmp_path, dam
         for name, _ in triggers:
             db.execute('DROP TRIGGER "' + name + '"')
         row = db.execute(
-            "SELECT scope_json,provenance_json FROM resource_relations WHERE relation_kind='provider_repository_roles' AND provider_resource_id='10'"
+            "SELECT scope_json,provenance_json FROM resource_relations WHERE relation_kind='provider_repository_roles' AND provider_resource_id=?",
+            (encode_identity("10"),),
         ).fetchone()
         scope = json.loads(row[0])
         if damage == "member":
             scope["repository_roles"]["owning_repository"]["provider_repository_id"] = (
-                "2"
+                encode_identity("2")
             )
         elif damage == "clock":
             scope["repository_roles"]["owning_repository"]["observed_at_us"] = 999
@@ -468,8 +469,8 @@ def test_forged_backup_with_valid_checksums_fails_semantic_restore(tmp_path, dam
             )
         else:
             db.execute(
-                "UPDATE resource_relations SET scope_json=? WHERE relation_kind='provider_repository_roles' AND provider_resource_id='10'",
-                (canonical(scope),),
+                "UPDATE resource_relations SET scope_json=? WHERE relation_kind='provider_repository_roles' AND provider_resource_id=?",
+                (canonical(scope), encode_identity("10")),
             )
         for _, sql in triggers:
             db.execute(sql)
@@ -495,7 +496,7 @@ def test_invalid_authoritative_provider_scope_stops_service(tmp_path, operation)
                     "owning_repository",
                     FieldClock("provider", 10),
                     "unresolved_provider_only",
-                    "2",
+                    encode_identity("2"),
                     observed_at_us=10,
                 )
             }

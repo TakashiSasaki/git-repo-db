@@ -36,6 +36,7 @@ from repo_catalog.domain.p1_context import (
 )
 from repo_catalog.domain.p1_coordination import RequestIdentity
 from repo_catalog.domain.production_context import SourceInventory
+from repo_catalog.domain.resource_identity import encode_identity
 from tests.integration.p5.conftest import init_catalog_stores
 from tests.integration.p5.test_exchange import _setup_source_catalog
 
@@ -191,7 +192,7 @@ def test_current_roles_namespaces_clocks_and_conflicts_across_seeds(tmp_path):
             ) == sender.provider_repository_roles(key)
         (current,) = ctx.provider_repository_roles(keys[0])
         assert current.state == "unresolved_provider_only"
-        assert current.scope.provider_repository_id == "99"
+        assert current.scope.provider_repository_id == encode_identity("99")
         assert current.scope.observed_at_us == 60
         assert current.provenance_json == provenance("new-owner")
         assert not current.resolved_candidates

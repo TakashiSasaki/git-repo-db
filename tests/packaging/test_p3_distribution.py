@@ -1,5 +1,7 @@
 """Production Context is usable from both installed distribution variants."""
 
+import sys
+
 import pytest
 
 from tests.packaging.test_p1_distribution import p1_distributions, run
@@ -13,7 +15,7 @@ def test_installed_production_context(p1_distributions, tmp_path, variant):
     outside = tmp_path / "outside"
     outside.mkdir()
     venv = tmp_path / "venv"
-    run(["uv", "venv", venv, "--offline"], outside, env)
+    run(["uv", "venv", venv, "--python", sys.executable, "--offline"], outside, env)
     python = venv / "bin/python"
     run(
         [

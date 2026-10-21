@@ -54,6 +54,7 @@ from repo_catalog.domain.production_context import (
 )
 from repo_catalog.domain.production_query import SearchQuery
 from repo_catalog.domain.recovery import BackupScope
+from repo_catalog.domain.resource_identity import encode_identity
 from tests.integration.p5.conftest import build_sample_git_repo, init_catalog_stores
 
 
@@ -423,7 +424,9 @@ def test_mapping_effect_stays_local_across_exchange_search_and_restore(
     assert migrated.repository_uuidv4 is None
     assert migrated.repository_relations[0].target_repository_uuidv4 == r1
     assert not migrated.matches_repository(r1)
-    assert migrated.repository_roles[0].scope.provider_repository_id == "909"
+    assert migrated.repository_roles[0].scope.provider_repository_id == encode_identity(
+        "909"
+    )
     assert issue not in {
         item.resource
         for item in ordinary.list_context_resources(repository_uuidv4=r1).items
@@ -646,11 +649,13 @@ def test_transfer_reports_never_mix_across_observations_or_identifier_namespaces
         r
         for r in original
         if r.from_provider_repository is not None
-        and r.from_provider_repository.provider_resource_id != "101"
+        and r.from_provider_repository.provider_resource_id != encode_identity("101")
     )
     assert node.from_state == "unresolved_provider_only"
     assert node.to_state == "explicit_null"
-    assert node.from_provider_repository.provider_resource_id != "101"
+    assert node.from_provider_repository.provider_resource_id == encode_identity(
+        ["github:node_id", "R_node"]
+    )
     receiver = tmp_path / "receiver"
     init_catalog_stores(receiver)
     package = ExchangeService(source).export_package(

@@ -1077,7 +1077,9 @@ def test_production_context_relation_facade_methods(directory):
         )
         assert rels_prov == ()
         rels_prov_str = store.relations_for_provider_repository(
-            SERVICE, "octocat/Hello-World", relation_kind="represents_repository"
+            SERVICE,
+            prov_repo.provider_resource_id,
+            relation_kind="represents_repository",
         )
         assert rels_prov_str == ()
 
@@ -1093,7 +1095,7 @@ def test_production_context_relation_facade_methods(directory):
                 )
             with pytest.raises(ValueError, match="Unknown relation_kind"):
                 store.relations_for_provider_repository(
-                    SERVICE, "octocat/Hello-World", relation_kind=bad_role
+                    SERVICE, prov_repo.provider_resource_id, relation_kind=bad_role
                 )
 
         assert not (directory / "p1-recovery-stop.json").exists()

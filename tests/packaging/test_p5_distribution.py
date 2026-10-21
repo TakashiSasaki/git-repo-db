@@ -174,7 +174,7 @@ with Context.snapshot(cat_a) as context:
         "base_repository", "head_repository",
     }
     for role in original_roles:
-        assert role.scope.provider_repository_id == "1"
+        assert role.scope.provider_repository_id == mapping.resource.provider_resource_id
         assert role.supports[0].supporting_claims == (mapping.claim_key,)
         assert role.supports[0].target_repository_uuidv4 == repo_uuid
     original_relations = context.repository_relations(pr_key)
