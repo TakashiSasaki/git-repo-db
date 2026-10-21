@@ -7,7 +7,9 @@ bounds below are not separately approved. Nothing here changes runtime behavior.
 The [evidence-to-contract map](../implementation/evidence/context-resource-design/cprime-integration.md)
 records historical bounded C′ mechanisms and corrected G1/G2 separately from
 the new G3=A SQL evidence. The owner selected G3=A on 2026-10-21; complete ADR
-acceptance remains a separate owner action.
+acceptance remains a separate owner action. The bounded delta and independent
+reviews are complete: **READY FOR OWNER DESIGN ACCEPTANCE**, with product
+integration and distribution validation still future work.
 
 ## Identity, meaning and report boundaries
 

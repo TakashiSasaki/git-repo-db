@@ -119,3 +119,37 @@ ineligible Transfers despite retained rows or sender/local checked flags. I8
 query/Search Transfer consumption, integrated runtime, default-runtime behavior,
 isolated wheel and sdist-derived wheel/fingerprint validation remain future
 implementation acceptance. This Context-only harness/snapshot is not a substitute.
+
+## Frozen execution results
+
+Author input freeze: `4c07cb8ecc4d744ddfb8c3908deb91d8ad72f6f9`, tree
+`e171de9f2459b0ade409bebb40787b850d88ff5e`.
+Composed SQL SHA-256:
+`ee8618874d061b8fc71bf83be94a10b1d009d7d1859ddd145e560c7755c41cd0`.
+The [author summary](author/summary.json) and [receipt guide](author/README.md)
+record **11/11 groups, 292 steps and zero failed groups per runtime** on genuine
+SQLite 3.51.3 / Python 3.13.5 and SQLite 3.53.1 / Python 3.12.14. Counts overlap
+and are not summed. Each recorded 77 actual SQL errors, including the I8 direct
+SQL `SQLITE_CONSTRAINT_FOREIGNKEY` extended code **787**, with unchanged
+pre/post rowsets and explicit rollback. SQL constraints and Admission outcomes
+remain separate in the per-step receipts.
+
+These receipts bind the frozen inputs; later evidence/status-only publication
+is not represented as another executable revision. Independent final review
+and its own major-counterexample executions are recorded separately below.
+
+## Independent review and readiness
+
+**READY FOR OWNER DESIGN ACCEPTANCE.** A separate non-author performed
+[SQL/Admission review and independent execution](independent-review/final-review.md),
+authored 99 observations on both actual runtimes, and separately repeated the
+11 author groups / 292 steps. The same I8 fixture commits through F2's exact
+structural SQL but fails through the new native-I7 FK with extended code 787.
+Composite and genuinely empty native Issue positives retain the scoped rule.
+A second non-author performed [documentation and evidence-pin review](independent-docs/review.md).
+No blocking/substantive finding remains. Counts overlap and are not summed.
+
+The exact executable/design freeze is stated above. Later status, links and
+receipt-only additions are separately reviewed and bound to unchanged input
+hashes. This recommendation asks for the owner's decision on the entire ADR;
+it does not change proposed/date-null status or authorize implementation.

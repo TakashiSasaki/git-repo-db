@@ -1,0 +1,116 @@
+{
+  "purpose": "Evidence-only F2-to-G3 executable source delta; not a rerun or owner acceptance. All new inputs are read from the exact author/independent-review freeze, not mutable working files.",
+  "f2_source_commit": "9eeacb28f7e4a426114a9ce40e2324b4da302817",
+  "g3_input_freeze_commit": "4c07cb8ecc4d744ddfb8c3908deb91d8ad72f6f9",
+  "g3_input_freeze_tree": "e171de9f2459b0ade409bebb40787b850d88ff5e",
+  "candidate_files": [
+    {
+      "f2_source_path": "docs/implementation/evidence/context-resource-u3-cprime/candidates/cprime.py",
+      "new_path": "docs/implementation/evidence/context-resource-design/g3-a/candidates/cprime.py",
+      "old_sha256": "ae495167209711d39776af42719fccd79b2c33aa2167a2dfaa454b9c4b1ba755",
+      "new_sha256": "ebc59346481b46cf6dc1d73a984c75d67eaa36af8c360a7f80b5058a3e9acc70",
+      "old_bytes": 12016,
+      "new_bytes": 12373,
+      "byte_equal": false,
+      "role_or_delta": "Retains bounded deterministic row-local UDFs and candidate SQL composition. Adds explicit trusted_schema=ON,ignore_check_constraints=OFF,defer_foreign_keys=OFF and corresponding connection assertions; no UDF table query or external lookup."
+    },
+    {
+      "f2_source_path": "docs/implementation/evidence/context-resource-u3-cprime/candidates/resources.sql",
+      "new_path": "docs/implementation/evidence/context-resource-design/g3-a/candidates/resources.sql",
+      "old_sha256": "920d295784939bf8a29bdba0136fad373413e7dbf97943e6c3787107eb9cd4cc",
+      "new_sha256": "33053650860d2818c48fa61bbc38b8f2bd1686dd2dd89921f8ade706471ba2cd",
+      "old_bytes": 963,
+      "new_bytes": 1246,
+      "byte_equal": false,
+      "role_or_delta": "Adds resources_native_event_fk UNIQUE(ResourceKey,reference_document_kind,identifier_namespace_kind,identifier_namespace_id). Existing resource identity CHECK and no Parent-existence FK retained."
+    },
+    {
+      "f2_source_path": "docs/implementation/evidence/context-resource-u3-cprime/candidates/relations.sql",
+      "new_path": "docs/implementation/evidence/context-resource-design/g3-a/candidates/relations.sql",
+      "old_sha256": "92dffa58b631d68eb5b86028fb246c093f34d836ebccd04354ef9863649e6aa6",
+      "new_sha256": "9d699853f41900dfde878fdc4fee7f9d0a0ba8d72d4f302d1b4fdecf253c2988",
+      "old_bytes": 3743,
+      "new_bytes": 4636,
+      "byte_equal": false,
+      "role_or_delta": "Adds generated support_parent_service and support_parent_id; changes support_parent_kind from constant issue to projection of the sole quoted Parent payload. Requires all projections non-NULL and quoted service equal Event service. Adds same-Event/subtype/native-issue composite FK. Existing complete ParentReport FK retained."
+    },
+    {
+      "f2_source_path": "docs/implementation/evidence/context-resource-u3-cprime/candidates/guards.sql",
+      "new_path": "docs/implementation/evidence/context-resource-design/g3-a/candidates/guards.sql",
+      "old_sha256": "3af1ffacd5e4ec74145985a9f0c96e601725c0b0772606dec4b48e973ce6e688",
+      "new_sha256": "3af1ffacd5e4ec74145985a9f0c96e601725c0b0772606dec4b48e973ce6e688",
+      "old_bytes": 3670,
+      "new_bytes": 3670,
+      "byte_equal": true,
+      "role_or_delta": "Unchanged immutable/replay guards, including BEFORE INSERT rebind guards ahead of IGNORE/DO NOTHING shortcuts."
+    },
+    {
+      "f2_source_path": "docs/implementation/evidence/context-resource-u3-cprime/candidates/transfer-columns.sql",
+      "new_path": "docs/implementation/evidence/context-resource-design/g3-a/candidates/transfer-columns.sql",
+      "old_sha256": "59e3f71ef582a6cdb84fd2e2efd5fe695d3a990a59f474c5447954d23923960c",
+      "new_sha256": "59e3f71ef582a6cdb84fd2e2efd5fe695d3a990a59f474c5447954d23923960c",
+      "old_bytes": 1228,
+      "new_bytes": 1228,
+      "byte_equal": true,
+      "role_or_delta": "Unchanged endpoint projections from sole complete Event-report scope."
+    },
+    {
+      "f2_source_path": "docs/implementation/evidence/context-resource-u3-cprime/candidates/transfer-constraints.sql",
+      "new_path": "docs/implementation/evidence/context-resource-design/g3-a/candidates/transfer-constraints.sql",
+      "old_sha256": "06f66a87c8152fb32bbd748900fbd287e777c7c3ead6acd19faf1c769c0fe398",
+      "new_sha256": "06f66a87c8152fb32bbd748900fbd287e777c7c3ead6acd19faf1c769c0fe398",
+      "old_bytes": 1332,
+      "new_bytes": 1332,
+      "byte_equal": true,
+      "role_or_delta": "Unchanged endpoint complete Parent-report and Event-report FKs and coherence CHECK."
+    },
+    {
+      "f2_source_path": "docs/implementation/evidence/context-resource-u3-cprime/reproduction/baseline-build-minimum.sh",
+      "new_path": "docs/implementation/evidence/context-resource-design/g3-a/build-minimum.sh",
+      "old_sha256": "92736200c3b492d9b50cf2aac9ef1a5b1953accc5135acdb93ca9eeaa211a037",
+      "new_sha256": "92736200c3b492d9b50cf2aac9ef1a5b1953accc5135acdb93ca9eeaa211a037",
+      "old_bytes": 1008,
+      "new_bytes": 1008,
+      "byte_equal": true,
+      "role_or_delta": "Byte-identical optional external SQLite minimum runtime provisioning script; newly executed build results are distinct from historical receipts."
+    },
+    {
+      "f2_source_path": "docs/implementation/evidence/context-resource-u3-cprime/reproduction/run.py",
+      "new_path": "docs/implementation/evidence/context-resource-design/g3-a/harness.py",
+      "old_sha256": "88dc60201b1aae7279ba57c76a6f4d10841514a24893405b56fa1ad64a8c0fc6",
+      "new_sha256": "7498d7a0fba2671cc40ee11416c22d64611cd6fb5e1622ee33e2b55a15be03cf",
+      "old_bytes": 48721,
+      "new_bytes": 16282,
+      "byte_equal": false,
+      "role_or_delta": "Large focused adaptation of F2 fixture/receipt/Admission helpers. Removes historical scenario groups and QualificationRequired, adds permanent Qs10Violation and retryable DependencyMissing, preserves whole-unit typed checks/savepoint rollback, records per-step before/after rowsets and SQLite extended codes. New focused cases are separately authored in run.py."
+    }
+  ],
+  "new_focused_cases": {
+    "path": "docs/implementation/evidence/context-resource-design/g3-a/run.py",
+    "sha256": "fa949754afcdbaa51aa2b961a214a0f9ad14620042e4efc8e0b7e7e2367310b1",
+    "case_groups": "GA01\u2013GA11",
+    "derivation": "New bounded G3=A cases using adapted F2 helpers; no full historical F2 suite rerun claimed."
+  },
+  "unchanged_product_source": {
+    "bindings": [
+      {
+        "commit": "efb55af84ccbf1183d47547d22bb6c57d8fbc8f9",
+        "src_git_tree": "44744e09753827adc4f389de4eced466f702ea34"
+      },
+      {
+        "commit": "9eeacb28f7e4a426114a9ce40e2324b4da302817",
+        "src_git_tree": "44744e09753827adc4f389de4eced466f702ea34"
+      },
+      {
+        "commit": "4c07cb8ecc4d744ddfb8c3908deb91d8ad72f6f9",
+        "src_git_tree": "44744e09753827adc4f389de4eced466f702ea34"
+      }
+    ],
+    "src_trees_equal": true
+  },
+  "sql": {
+    "f2_composed_sha256": "2892a5fb0bcef8a0e0ea916fc1b71687a0a2afe545849e27dec4f7fd3600171f",
+    "g3_composed_sha256": "ee8618874d061b8fc71bf83be94a10b1d009d7d1859ddd145e560c7755c41cd0"
+  },
+  "frozen_inputs_modified": false
+}

@@ -1,6 +1,8 @@
 # C′ evidence integrated into proposed ADR 0031
 
-**G3=A selected on 2026-10-21; whole-package owner acceptance is separate.**
+**READY FOR OWNER DESIGN ACCEPTANCE.** G3=A was selected on 2026-10-21;
+whole-package owner acceptance is separate. The new bounded delta and non-author
+reviews are complete.
 G1/G2 retain their independently reviewed corrected scope. Historical F2 permits
 structural I8 support and temporarily withholds it in Admission; that is not the
 current contract or a native-I7 SQL proof. The new [G3=A delta](g3-a/README.md)
@@ -121,7 +123,15 @@ SQLite. Its [independent review](cprime-independent-review.md) remains unchanged
 and historical at design freeze `060da07e0412e2d93dd4132332ab3bf908e3d8db`.
 Its then-pending G3 disposition is not the current recommendation.
 
-This revision adds a separately frozen [G3=A bounded experiment and review](g3-a/README.md).
+This revision adds a separately frozen [G3=A bounded experiment and reviews](g3-a/README.md).
+Author freeze `4c07cb8ecc4d744ddfb8c3908deb91d8ad72f6f9` (tree
+`e171de9f2459b0ade409bebb40787b850d88ff5e`) passed GA01–GA11, 292 steps
+per actual SQLite 3.51.3 and 3.53.1. A non-author independently repeated those
+groups and authored 99 additional observations per runtime, including identical
+input F2 success versus new SQL FK-787 refusal. These overlap, not additive test
+counts. [Author receipts](g3-a/author/summary.json),
+[independent SQL review](g3-a/independent-review/final-review.md) and
+[independent documentation review](g3-a/independent-docs/review.md) bind the results.
 Only its new receipts support the new SQL-delta claims; no old green receipt is
 promoted to this HEAD. Current checks and final review are appended to the
 [design review record](README.md#g3a-decision-integration-and-sql-delta).

@@ -1,0 +1,160 @@
+{
+  "scope": "current G3 revision, local static checks; not runtime acceptance",
+  "starting_head": "3e6debe41f8e75f0a75be3a71cb1b12a0b70f0f5",
+  "stack_base": "24f593861327328fa00dab0b83f956cec330a0ac",
+  "head_at_check": "4c07cb8ecc4d744ddfb8c3908deb91d8ad72f6f9",
+  "tree_at_check": "e171de9f2459b0ade409bebb40787b850d88ff5e",
+  "utf8_files": 37,
+  "local_targets": 130,
+  "anchors": 14,
+  "pinned_blob_targets": 28,
+  "errors": [],
+  "changed_files": [
+    "docs/adr/0031-generalized-context-resources.md",
+    "docs/adr/README.md",
+    "docs/architecture/context-resource-schema.md",
+    "docs/implementation/context-resource-design-handoff.md",
+    "docs/implementation/evidence/context-resource-design/README.md",
+    "docs/implementation/evidence/context-resource-design/cprime-integration.md",
+    "docs/implementation/evidence/context-resource-design/g3-a/README.md",
+    "docs/implementation/evidence/context-resource-design/g3-a/author/README.md",
+    "docs/implementation/evidence/context-resource-design/g3-a/author/source-delta.json",
+    "docs/implementation/evidence/context-resource-design/g3-a/author/sqlite-newer-candidate.sql.gz",
+    "docs/implementation/evidence/context-resource-design/g3-a/author/sqlite-newer-inventory.json.gz",
+    "docs/implementation/evidence/context-resource-design/g3-a/author/sqlite-newer-results.json.gz",
+    "docs/implementation/evidence/context-resource-design/g3-a/author/sqlite-newer.log",
+    "docs/implementation/evidence/context-resource-design/g3-a/author/sqlite3513-candidate.sql.gz",
+    "docs/implementation/evidence/context-resource-design/g3-a/author/sqlite3513-inventory.json.gz",
+    "docs/implementation/evidence/context-resource-design/g3-a/author/sqlite3513-results.json.gz",
+    "docs/implementation/evidence/context-resource-design/g3-a/author/sqlite3513.log",
+    "docs/implementation/evidence/context-resource-design/g3-a/author/summary.json",
+    "docs/implementation/evidence/context-resource-design/g3-a/build-minimum.sh",
+    "docs/implementation/evidence/context-resource-design/g3-a/candidates/README.md",
+    "docs/implementation/evidence/context-resource-design/g3-a/candidates/cprime.py",
+    "docs/implementation/evidence/context-resource-design/g3-a/candidates/guards.sql",
+    "docs/implementation/evidence/context-resource-design/g3-a/candidates/relations.sql",
+    "docs/implementation/evidence/context-resource-design/g3-a/candidates/resources.sql",
+    "docs/implementation/evidence/context-resource-design/g3-a/candidates/transfer-columns.sql",
+    "docs/implementation/evidence/context-resource-design/g3-a/candidates/transfer-constraints.sql",
+    "docs/implementation/evidence/context-resource-design/g3-a/development/README.md",
+    "docs/implementation/evidence/context-resource-design/g3-a/development/initial-results.json.gz",
+    "docs/implementation/evidence/context-resource-design/g3-a/development/minimum-runtime-build.log.gz",
+    "docs/implementation/evidence/context-resource-design/g3-a/harness.py",
+    "docs/implementation/evidence/context-resource-design/g3-a/independent-docs/author-receipt-checks.json",
+    "docs/implementation/evidence/context-resource-design/g3-a/independent-docs/check_author_receipts.py",
+    "docs/implementation/evidence/context-resource-design/g3-a/independent-docs/check_docs.py",
+    "docs/implementation/evidence/context-resource-design/g3-a/independent-docs/checks.json",
+    "docs/implementation/evidence/context-resource-design/g3-a/independent-docs/review.md",
+    "docs/implementation/evidence/context-resource-design/g3-a/independent-review/author-rerun/sqlite-newer.log",
+    "docs/implementation/evidence/context-resource-design/g3-a/independent-review/author-rerun/sqlite-newer/candidate.sql.gz",
+    "docs/implementation/evidence/context-resource-design/g3-a/independent-review/author-rerun/sqlite-newer/inventory.json.gz",
+    "docs/implementation/evidence/context-resource-design/g3-a/independent-review/author-rerun/sqlite-newer/results.json.gz",
+    "docs/implementation/evidence/context-resource-design/g3-a/independent-review/author-rerun/sqlite3513.log",
+    "docs/implementation/evidence/context-resource-design/g3-a/independent-review/author-rerun/sqlite3513/candidate.sql.gz",
+    "docs/implementation/evidence/context-resource-design/g3-a/independent-review/author-rerun/sqlite3513/inventory.json.gz",
+    "docs/implementation/evidence/context-resource-design/g3-a/independent-review/author-rerun/sqlite3513/results.json.gz",
+    "docs/implementation/evidence/context-resource-design/g3-a/independent-review/checks.json",
+    "docs/implementation/evidence/context-resource-design/g3-a/independent-review/final-review.md",
+    "docs/implementation/evidence/context-resource-design/g3-a/independent-review/manifest.json",
+    "docs/implementation/evidence/context-resource-design/g3-a/independent-review/minimum.json.gz",
+    "docs/implementation/evidence/context-resource-design/g3-a/independent-review/newer.json.gz",
+    "docs/implementation/evidence/context-resource-design/g3-a/independent-review/probe.py",
+    "docs/implementation/evidence/context-resource-design/g3-a/input-freeze.json",
+    "docs/implementation/evidence/context-resource-design/g3-a/reproduce.sh",
+    "docs/implementation/evidence/context-resource-design/g3-a/run.py",
+    "docs/implementation/evidence/context-resource-design/g3-a/runtime-provisioning.json"
+  ],
+  "protected_paths_unchanged": true,
+  "proposed_null_replaces_empty": true,
+  "fixed_ledger": true,
+  "old_reviews_receipts_unchanged": true,
+  "F2_not_ancestor": true,
+  "changed_markdown_sha256": {
+    "docs/adr/0031-generalized-context-resources.md": "11ee5d0b7596882a443e995d41a6346fcc62a6bc46bc46fb028e8ca8bfc701b1",
+    "docs/adr/README.md": "0696d5eee33423dc35343425f70d15d2fb565a762e3d3e68fb688f3f572c92fe",
+    "docs/architecture/context-resource-schema.md": "853d1dbe5f6f90a2c7cf6a5dc125176fbfdd3808d49146f99b5a2cfed39bc534",
+    "docs/implementation/context-resource-design-handoff.md": "6afcfdcb87bfe93c23698f4eb1527801c7142518739224b959af21372cf37c1a",
+    "docs/implementation/evidence/context-resource-design/README.md": "78c6dbd45ba8f83ffe4431d9da9fc372d270695c1c4180605cb05ccb37cd0644",
+    "docs/implementation/evidence/context-resource-design/cprime-integration.md": "393e3f0be9df761fc5490d7b6c8b61172228b3236441e40ec5331a13b66c3726",
+    "docs/implementation/evidence/context-resource-design/g3-a/README.md": "d596ef9186de6d61786ca619908f166486caa2c488cd260499407248fe7cf544",
+    "docs/implementation/evidence/context-resource-design/g3-a/author/README.md": "1afaea8566a4b807023c6bac63c69d509d2f43bbfd7469ef1c30b5319fb72f64",
+    "docs/implementation/evidence/context-resource-design/g3-a/candidates/README.md": "6921039e16940945936240029f9d126176e6b17f2f0c9e7b7b0c130bcff8c6d0",
+    "docs/implementation/evidence/context-resource-design/g3-a/development/README.md": "2db978b4b9041057b030cd3f57da3f2f029025a2c63052d0865fcf2d81f2ccc4",
+    "docs/implementation/evidence/context-resource-design/g3-a/independent-docs/review.md": "2b1b9b6e59c6a671c8a1c297e7cc23a10272afa8acf9c8306958c73bdd2f390d",
+    "docs/implementation/evidence/context-resource-design/g3-a/independent-review/final-review.md": "969c0280a957a999fc0a75bc6f1c5eda3c90a1a3f1cdca4194b8f627d1a7255b"
+  },
+  "phase": "publication candidate before non-author final-delta review; executable inputs unchanged from4c07cb8",
+  "commands_passed": [
+    "uv sync --locked --group dev --group docs (environment preparation; lock/config unchanged)",
+    "uv run --no-sync ruff check src tests scripts docs/implementation/evidence/context-resource-design/g3-a",
+    "uv run --no-sync ruff format --check src tests scripts docs/implementation/evidence/context-resource-design/g3-a (401 files)",
+    "sh -n docs/implementation/evidence/context-resource-design/g3-a/reproduce.sh",
+    "sh -n docs/implementation/evidence/context-resource-design/g3-a/build-minimum.sh",
+    "uv run --no-sync python scripts/ci_execute.py reports",
+    "temporary stdlib UTF-8/JSON/fence/frontmatter/index/local-anchor/fixed-SHA/scope checker",
+    "git diff --check 24f593861327328fa00dab0b83f956cec330a0ac HEAD",
+    "git diff --check 3e6debe41f8e75f0a75be3a71cb1b12a0b70f0f5 HEAD",
+    "git diff --cached --check (publication commit preflight)"
+  ],
+  "prose_validation": {
+    "outcome": "passed",
+    "files": 410
+  },
+  "decompression_json_check": {
+    "author/sqlite-newer-inventory.json.gz": {
+      "raw_bytes": 103246,
+      "raw_sha256": "9d67ec83ca3332d3b3171992a6622c8e402ff65e011d46739ff7465c751ff536"
+    },
+    "author/sqlite-newer-results.json.gz": {
+      "raw_bytes": 3593236,
+      "raw_sha256": "0850e4c8561a4f5c59d9cca2405efbb850c6dae1483ddeb1b5b1d0805cb62afe"
+    },
+    "author/sqlite3513-inventory.json.gz": {
+      "raw_bytes": 103246,
+      "raw_sha256": "9d67ec83ca3332d3b3171992a6622c8e402ff65e011d46739ff7465c751ff536"
+    },
+    "author/sqlite3513-results.json.gz": {
+      "raw_bytes": 3593004,
+      "raw_sha256": "6868b81bfaab42c1b035d5eef1b6d9131d8e15363476e643ce17af7f094d1a73"
+    },
+    "development/initial-results.json.gz": {
+      "raw_bytes": 2456377,
+      "raw_sha256": "78dfe1e4873495742a54fd74d79a5cf6943a3b870e70382526a32c187248c8e9"
+    },
+    "independent-review/author-rerun/sqlite-newer/inventory.json.gz": {
+      "raw_bytes": 103246,
+      "raw_sha256": "9d67ec83ca3332d3b3171992a6622c8e402ff65e011d46739ff7465c751ff536"
+    },
+    "independent-review/author-rerun/sqlite-newer/results.json.gz": {
+      "raw_bytes": 3593236,
+      "raw_sha256": "0850e4c8561a4f5c59d9cca2405efbb850c6dae1483ddeb1b5b1d0805cb62afe"
+    },
+    "independent-review/author-rerun/sqlite3513/inventory.json.gz": {
+      "raw_bytes": 103246,
+      "raw_sha256": "9d67ec83ca3332d3b3171992a6622c8e402ff65e011d46739ff7465c751ff536"
+    },
+    "independent-review/author-rerun/sqlite3513/results.json.gz": {
+      "raw_bytes": 3593004,
+      "raw_sha256": "6868b81bfaab42c1b035d5eef1b6d9131d8e15363476e643ce17af7f094d1a73"
+    },
+    "independent-review/minimum.json.gz": {
+      "raw_bytes": 1264704,
+      "raw_sha256": "858dcfb231a2f6976f0a1cd85c6ee18cf6478abc08b4ecb88bcc768af414b478"
+    },
+    "independent-review/newer.json.gz": {
+      "raw_bytes": 1264866,
+      "raw_sha256": "78689c04763eeafc4211873f1c5f4131801453ef1588befa16a043b47a8f1d37"
+    }
+  },
+  "executed_frozen_input_manifest_sha256": "4b5f541c1853131622f98cebebd763c3baf2b82d7891bbdbe3267f40cbcf79aa",
+  "independent_execution_probe_sha256": "bd94905307096060cb20bb794e2a4c655e69d3e77e26566a5ac1a301ef0d8a92",
+  "skills_used": [
+    "cloud-environment-runtime",
+    "adr-workflow",
+    "efficient-repository-investigation",
+    "lessons-to-skills",
+    "ci-final-tree-verification"
+  ],
+  "skill_update_assessment": "No new skill: verified source/runtime/final-tree/history/conflict-guard procedures already exist; no new reusable rule is necessary.",
+  "hosted_ci": "Not supplied by this local receipt. Final feature/test-merge/parents/tree/run binding is reported in PR body after push; predecessor green is not reused."
+}

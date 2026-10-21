@@ -12,15 +12,15 @@ The [schema contract](../architecture/context-resource-schema.md) contains the
 grammar, equality, specification vectors, dependency behavior, authority
 boundaries, ADR matrix and experimental acceptance contract.
 
-**Acceptance preparation:** G3=A is decided. The remaining preparation is its
-current-document integration, bounded SQL delta proof and non-author frozen-tree
-review, followed by the owner's decision on the complete ADR 0031 package.
-The prior C′ structural feasibility and G1/G2 corrections retain their reviewed
-scope. Product integration remains unimplemented. The
-[evidence map](evidence/context-resource-design/cprime-integration.md) and
-[new G3=A evidence](evidence/context-resource-design/g3-a/README.md) separate
-those evidence generations and enforcement layers; the new receipt/review
-determines readiness, not the old F2 result.
+**READY FOR OWNER DESIGN ACCEPTANCE.** G3=A is decided; current-document
+integration, the bounded SQL delta on both real runtimes and non-author review
+with independent major-counterexample execution are complete. The owner's
+whole-package acceptance and separate implementation authorization remain pending.
+Prior C′/G1/G2 evidence retains its reviewed scope. Product integration remains
+unimplemented. The [evidence map](evidence/context-resource-design/cprime-integration.md)
+and [new G3=A evidence](evidence/context-resource-design/g3-a/README.md) separate
+all evidence generations and enforcement layers; readiness is based on the new
+receipts/reviews, not the old F2 result.
 
 This task authorizes revision of existing Draft PR #114, disposable bounded
 G3=A SQL experiments, independent review, ordinary commits/push and PR-body
@@ -85,7 +85,7 @@ override the owner's subsequent common schema choices.
 | Demonstrated subset | Typed Parent/Timeline Event SQL references, exact support reports, NULL/replay/mutation protections, child-before-Parent and whole-unit admission at the frozen experiment, including G1/G2 corrections. |
 | Decided G3=A boundary | An attributed I8 Parent report may be retained but is permanently ineligible to support Transfer for this I7-native Event. Missing correct I7 support is a re-suppliable dependency, not that violation. Historical F2 temporary QualificationRequired is not the current rule. |
 | Product limitations | Production encoding/DDL/readers/writers, Exchange/selection, stored validation, backup/recovery, Search and packaging remain unimplemented for this format. |
-| Package state | Proposed, date null; G3 meaning decided and bounded SQL proof/independent-review preparation tracked in new evidence. Owner acceptance of the whole package and separate production-implementation authorization are still required. |
+| Package state | Proposed, date null; G3 meaning decided and bounded SQL proof/independent review completed in new evidence. Owner acceptance of the whole package and separate production-implementation authorization are still required. |
 
 Syntax cannot prove `[]` is a native singleton or `""` a complete ID. Adapters
 establish identification completeness; missing new adapters do not prevent

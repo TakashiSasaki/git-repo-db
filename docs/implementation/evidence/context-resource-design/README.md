@@ -177,8 +177,20 @@ The [new experiment index](g3-a/README.md) records attributed F2 source copies,
 the bounded SQL delta, input hashes/freezes, real SQLite runtime receipts,
 direct-SQL extended errors and rowsets separately from Admission outcomes.
 Initial parallel source investigation is not the independent final review.
-Non-author frozen-tree review and independently authored major counterexamples
-are recorded under the new evidence directory once executed.
+Separate non-author agents reviewed freeze
+`4c07cb8ecc4d744ddfb8c3908deb91d8ad72f6f9`, tree
+`e171de9f2459b0ade409bebb40787b850d88ff5e`, read-only. The
+[SQL review](g3-a/independent-review/final-review.md) independently executed 99 authored
+observations and repeated the 11 author groups / 292 steps on both genuine
+runtimes. The [documentation review](g3-a/independent-docs/review.md) checked
+contracts, source pins, protected paths and raw author receipt hashes without
+claiming SQLite execution. Both found no blocking/substantive issue.
+
+The current result is **READY FOR OWNER DESIGN ACCEPTANCE**. Author and reviewer
+counts overlap and are not summed. Identical-input old-F2 versus new-G3 SQL
+execution distinguishes F2's actual I8 success from the new FK-787 refusal.
+Later factual status/link/receipt additions do not change frozen executable
+inputs; separate final-delta review binds those additions before publication.
 
 Production source/packaged DDL/fingerprint/dependencies/product tests/workflows/
 default runtime/Pages allowlist remain unchanged. No ADR acceptance, merge,

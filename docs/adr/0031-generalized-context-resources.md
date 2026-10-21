@@ -20,7 +20,9 @@ this design; they are not unanswered option questions. The package, its physical
 realization and engineering proposals have not been accepted. No conversation
 URL or approval of the complete package is invented.
 
-**G3 meaning decided; SQL evidence and complete-package acceptance are separate.**
+**READY FOR OWNER DESIGN ACCEPTANCE.** G3 meaning is decided; the bounded SQL
+delta and non-author reviews are complete. Whole-package owner acceptance is
+still separate.
 On **2026-10-21**, the owner explicitly selected **G3=A** in the task
 “git-repo-db: G3=A integration, Q-S10 SQL differential demonstration and ADR 0031
 acceptance preparation”. The native Issue I7 is the semantic Issue of this
@@ -154,7 +156,9 @@ stable while relationship reports remain separately attributed and competing.
 All key occurrences must agree on the canonical text and exact comparison.
 
 **Historical U3=C′ evidence demonstrates its earlier subset, extended by G1/G2;
-G3=A requires separately frozen SQL-delta evidence.** Reviewed executable
+G3=A now has separate frozen SQL-delta evidence and independent execution.**
+The [new receipts and reviews](../implementation/evidence/context-resource-design/g3-a/README.md)
+cover the scoped addition on both real runtimes. Historical reviewed executable
 freeze `9eeacb28f7e4a426114a9ce40e2324b4da302817` preserves 19 Context tables and
 uses real typed FKs, CHECK/projections and replay triggers. Whole Transfer units
 still require application admission, strict original timestamps, declared member
