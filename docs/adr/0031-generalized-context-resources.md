@@ -20,6 +20,14 @@ this design; they are not unanswered option questions. The package, its physical
 realization and engineering proposals have not been accepted. No conversation
 URL or approval of the complete package is invented.
 
+**Acceptance readiness: NOT YET READY.** The independently reviewed C′ candidate
+demonstrates the bounded structural contract on SQLite 3.51.3 and 3.53.1, including
+corrected independent Documents (G1) and explicit Parent-ID encoding (G2). G3's
+Q-S10 identity-namespace versus reported-Parent meaning requires one owner
+decision. [Pinned evidence and obligation mapping](../implementation/evidence/context-resource-design/cprime-integration.md)
+separate demonstrated mechanisms, that semantic blocker and unimplemented product
+integration. This revision does not execute or accept the experiment anew.
+
 Keep the Resource primary key:
 
 ```sql
@@ -38,7 +46,7 @@ representation of currently plain-string IDs; it does not issue new identities.
 | --- | --- |
 | **A3 — open vocabulary, typed known contracts** | A new unknown kind need not be added to a closed DDL enum to satisfy the generic Resource contract. Known kinds, relations and operations retain their explicit constraints. Invalid known input cannot be retried as opaque data to bypass those constraints. |
 | **B3 — coordinates versus Parent** | Include namespace/Parent coordinates in identity only when native identification actually needs them. Semantic containment, affiliation, reply-to and Parent are separately evidenced facts; the graph need not be a tree and Documents need not be leaves. Parsing an arbitrary Provider ID never establishes a Parent report. |
-| **U3=C′ — existing `resource_relations`** | That table is the sole authority for semantic Parent reports. Extend existing tables/constraints/indexes or generated projections; add no Parent domain table. Preserve coherent multi-member reports. `members_json` and supporting columns cannot be independent writable accounts of one fact. Preserving the required typed SQL FKs is **UNPROVEN**, subject to the experimental gate below. |
+| **U3=C′ — existing `resource_relations`** | That table is the sole authority for semantic Parent reports. Extend existing tables/constraints/indexes or generated projections; add no Parent domain table. Preserve coherent multi-member reports. `members_json` and supporting columns cannot be independent writable accounts of one fact. The bounded typed SQL construction is independently demonstrated; broader acceptance remains open for G3 and product integration remains unimplemented. |
 | **U4=B — independent admission** | Admit a complete child identity without a registered Parent. Withhold the Parent report and dependent typed operations while their referents/evidence are missing, and report the dependency. Do not fabricate a Parent or retain an unadmitted relationship payload in a hidden queue. Later Parent arrival alone does not recreate it; resupply the original report with its identity, times and provenance. |
 | **U5=A — generic preservation and exchange** | Store, read and exchange unknown kinds through the supported common format without kind-specific interpretation. Explicit selection/permission, complete atomic units, dependency/provenance checks and finite work limits still apply. Unknown kinds are not unknown wire versions; arbitrary JSON or a relationship name grants no traversal, authority, completeness or business meaning. |
 | **U1=B — Provider-scoped meaning** | Interpret a kind in its service-instance namespace. Two Providers using the same unknown name do not establish equivalence. Reserved common names retain known typed contracts. Kind is a stable key component, never a mutable display label. No new Provider-prefix rule, global registration table or universal per-resource tags. Future typed support cannot silently reinterpret or rekey old opaque Resources. |
@@ -49,6 +57,29 @@ For example, native service-wide string `"731"`, native scoped value
 `["project-a","731"]`, and a native no-additional-coordinate singleton `[]`
 are possible identities under different explicit identification contracts.
 `"731"` and `["731"]` differ. These are illustrations, not new Provider adapters.
+
+### Document identity and the remaining Q-S10 question
+
+A genuine Provider-global Document uses its complete scalar or recursive-array
+identity with kind `document`; no PR namespace is invented. A genuine PR-scoped
+Document retains every accepted PR/subtype/local-ID coordinate. Native-contract
+dispatch must not retry malformed known PR input as a global Document.
+
+For known scoped documents, specify one new-format representation:
+`J([namespace_kind, J(namespace_identity), document_kind, native_document_id])`,
+where `J` is the canonical identity serializer. The second component is a string
+containing canonical namespace ID TEXT, never its decoded array. This explicit
+engineering choice preserves semantic coordinates; dual-profile decoding is
+forbidden. [G1–G3 reconciliation](../architecture/context-resource-schema.md#semantic-gap-dispositions)
+defines the tested forms and their SQL/admission boundaries.
+
+G3 asks whether an Event natively identified under Issue I7 can support Transfer
+through a genuinely qualified semantic Parent report for I8. Retaining that
+attributed report does not qualify the Transfer. The candidate's exact typed FKs
+permit its structure; supported experimental admission withholds it pending
+resolution. The owner must decide whether Q-S10 fixes I7 as the semantic Issue,
+or permits separately qualified I8 support and with what evidence. No universal
+Parent equality, implicit Q-S10 amendment or new qualification authority is chosen.
 
 ## Constraints / Do NOT
 
@@ -104,7 +135,9 @@ dropping genuine PR-document coordinates and weakening Q-S10 to application-only
 validation. Q-S6's finite vocabulary is the six Resource-to-Core roles, which
 remain closed. `replaces: []` means no accepted file is retired. If a concrete
 conflict is discovered, report it and follow policy §6's replacement process;
-do not relabel it refinement. This task performs no accepted-ADR body edits.
+do not relabel it refinement. G3 is now a concrete unresolved interpretation of
+Q-S10; `refines` does not pre-approve either answer. This task performs no
+accepted-ADR body edits.
 
 ## Consequences
 
@@ -113,19 +146,22 @@ unknown kinds without pretending to understand them. Identification scope stays
 stable while relationship reports remain separately attributed and competing.
 All key occurrences must agree on the canonical text and exact comparison.
 
-**U3=C′ experimental gate remains open.** A separate experiment must demonstrate
-singleton typed Parent reports in existing `resource_relations`, FK-compatible
-projections and Transfer references without new domain tables or storage-only
-keys. See the [acceptance contract](../architecture/context-resource-schema.md#u3c-experimental-acceptance-contract).
-No proposed SQL construction here is certified implementable. If the required
-guarantees cannot be preserved, return a concrete counterexample to the owner;
-do not silently substitute another architecture or an application-only check.
+**U3=C′ is demonstrated for its earlier experimental subset, extended by G1/G2;
+the broader ADR acceptance contract is not yet demonstrated.** Reviewed executable
+freeze `9eeacb28f7e4a426114a9ce40e2324b4da302817` preserves 19 Context tables and
+uses real typed FKs, CHECK/projections and replay triggers. Whole Transfer units
+still require application admission, strict original timestamps, declared member
+checks and atomic endpoint handling. Neither SQL nor these checks authenticate
+Provider reports. The [acceptance contract](../architecture/context-resource-schema.md#u3c-experimental-acceptance-contract)
+and evidence map retain each obligation and the unresolved G3 portion.
 
 The [implementation handoff](../implementation/context-resource-design-handoff.md)
 separates fixed choices, proposed engineering bounds, future implementation
 sequence, verification requirements and actual documentation checks. This Draft
-may be published while the experiment is pending. The old 163-case audit is
-evidence about its original product revision, not verification of this schema.
+remains proposed pending G3 resolution and explicit owner acceptance. The old
+163-case audit and original C′ freeze retain their original scopes. Product
+Exchange, stored integrity, paired backup, query/Search and packaging integration
+remain future work, not evidence supplied by this documentation revision.
 
 ## References
 

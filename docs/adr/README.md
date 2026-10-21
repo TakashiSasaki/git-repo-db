@@ -68,7 +68,7 @@ Read the current scope before implementation. This index describes accepted targ
 
 | ADR | Fixed logical choices and remaining boundary | Status |
 | --- | --- | --- |
-| [0031](0031-generalized-context-resources.md) | Generalized Context Resource identity and semantic Parent in existing resource_relations; owner-selected ledger recorded; typed U3=C′ FK realization unproven | Proposed, date null; no acceptance, implementation or retirement |
+| [0031](0031-generalized-context-resources.md) | Generalized Context Resources; bounded C′ SQL candidate and corrected G1/G2 independently demonstrated; G3 Q-S10 semantic interpretation requires owner decision | Proposed, date null; NOT YET READY for complete acceptance; no product implementation or retirement |
 
 **Allocation/adoption:** ADR 0011 was explicitly adopted through [governance PR #52](https://github.com/TakashiSasaki/git-repo-db/pull/52) on 2026-10-15, after the accepted design stack was merged by PR #69. It does not renumber ADRs 0012–0027, retire still-binding historical decisions or authorize bulk migration. **Highest allocated ADR ID: 0031**. Future allocations must inspect this watermark, Git history and live remote branches before assigning a new four-digit ID.
 

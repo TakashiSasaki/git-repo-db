@@ -4,6 +4,9 @@ This document accompanies [proposed ADR 0031](../adr/0031-generalized-context-re
 The owner's A3/B3/U3=C′/U4=B/U5=A/U1=B/U2=A/U2-E2 logical selections are fixed.
 This complete package is proposed; physical design and the numerical engineering
 bounds below are not separately approved. Nothing here changes runtime behavior.
+The [evidence-to-contract map](../implementation/evidence/context-resource-design/cprime-integration.md)
+records demonstrated bounded C′ mechanisms and corrected G1/G2, while G3 keeps
+the complete package **NOT YET READY** for owner design acceptance.
 
 ## Identity, meaning and report boundaries
 
@@ -28,12 +31,15 @@ is evidence of that scope, not permission to require every future Resource to
 have a registered PR. A future encoder must preserve those semantic coordinates
 using the common grammar consistently. The existing document encoder embeds
 `parent.provider_resource_id` as a **string**, not as its decoded identity array.
-Preserve that distinction in a future explicit encoding contract; swapping it
-for a decoded nested value is another representation change, never an incidental
-parser repair. A compatible engineering proposal is to retain the four-component
-layout with the parent's new canonical identity TEXT as that string component.
-Native recursive-array identities elsewhere need not use this document layout.
-Exact adapter spellings/normalization are outside this package.
+The new-format contract uses `J([namespace_kind, J(namespace_identity),
+document_kind, native_document_id])`: the second component is always the Parent's
+canonical identity TEXT as a string, including for a scalar Parent. Reject the
+decoded-nested alternative for this scoped contract; do not guess or accept both
+profiles. G2 independently verified that each profile is reversible/injective
+alone, but their union may alias different native Parents and yields different
+keys for the same Resource. No extra identity coordinate is needed to select one
+encoding. Native recursive-array identities elsewhere need not use this document
+layout. Exact native adapter spellings/normalization remain separate work.
 
 There are three distinct things:
 
@@ -235,9 +241,12 @@ opaque resources; no silent reinterpretation or key rewrite.
 
 ## U3=C′ experimental acceptance contract
 
-**Open, unproven gate.** No executed experiment evidence was available when this
-package was authored. A separate agent is investigating. The documentation may
-ship as Draft with the gate open. No sample DDL here is an executable solution.
+**Partly demonstrated contract, with one semantic owner blocker.** The independent
+experiment and G1/G2 corrections demonstrate the bounded construction on SQLite
+3.51.3 and 3.53.1. G3 prevents declaring the broader contract complete. The
+[eight-obligation map](../implementation/evidence/context-resource-design/cprime-integration.md#acceptance-obligation-map)
+binds each requirement below to actual mechanisms, layers, cases and frozen
+inputs. Product implementation and package acceptance are separate.
 
 The experiment must use disposable data and identify exact script, commit/tree,
 actual SQLite version/source ID, schema/helper definitions, commands and observed
@@ -258,6 +267,9 @@ assertions. A toy projection success alone is insufficient. Required obligations
    support-report coordinates wherever required, including whole membership,
    scope and provenance and the original clock/time binding; event-ID-only
    joins or arbitrary support selection cannot stand in for that identity.
+   **G3 qualification:** exact supplied Issue/report matching is demonstrated;
+   "different Issue" relative to the Event's native namespace is unresolved.
+   The requirement is not silently removed or deemed satisfied by a Python guard.
 5. Preserve ADR 0030 `(EventResourceKey, clock_json, provenance_json)` endpoint
    pairing and equal original observation-time rules. Different reports must
    not be fused by event ID, receipt time or arbitrary winner. Genuine competing
@@ -274,14 +286,98 @@ assertions. A toy projection success alone is insufficient. Required obligations
    identity/time/provenance. Capture failure cases and actual exception/result,
    not merely `foreign_key_check` over successful fixtures.
 
-Exact support-column/key grammar is an engineering proposal to be supplied by
-the experiment and reviewed against these invariants. The gate is **unproven**
-until executed evidence covers the required scope; a limited success must retain
-its limits. If impossible, report the minimal concrete conflict/counterexample
-to the owner and affected implementation stage. Do not silently add a table,
-weaken the FK to an application predicate or declare another architecture chosen.
-Future evidence must be cited at its own fixed commit; citing it is not a new
-execution of the experiment in this design PR.
+The corrected candidate supplies executable support-column/key grammar, preserved
+at its frozen commit in the evidence map. It is a demonstrated engineering basis,
+not production DDL or acceptance of every semantic obligation. Keep the FK,
+CHECK/projection, trigger, typed-admission and selection/qualification layers
+distinct. In particular, arbitrary JSON members have no individual SQL FKs;
+whole Transfer units require member-existence checks, strict original timestamp
+validation, complete endpoints and savepoint rollback in typed admission. Direct
+SQL can store an incomplete declared endpoint set. No reverse-set FK/COMMIT hook
+was demonstrated. Citing receipts is not executing this design revision.
+
+## Semantic-gap dispositions
+
+| Gap | Target and demonstrated scope | Disposition |
+| --- | --- | --- |
+| G1 | Genuine global scalar/composite Documents retain kind `document`, can precede Parent, acquire attributed relationships and have children. Genuine PR Documents keep all identity coordinates; invalid known input has no opaque fallback. | **CLOSED — corrected and independently verified** |
+| G2 | One canonical-TEXT namespace component in the scoped four-coordinate layout; no mixed-profile or double-encoding guess. Both native identity and exact references remain reversible. | **CLOSED — corrected and independently verified** |
+| G3 | Attributed I8 Parent report for an Event with native namespace I7 can be retained without a current-truth claim. Exact typed I8 SQL support passes; successful Transfer semantic admission does not follow. | **OWNER DECISION REQUIRED** |
+
+### G1 tested physical forms
+
+For the demonstrated candidate, the existing identifying metadata columns have
+these consistent forms; they never assert a semantic Parent or require its row:
+
+| Form | Resource ID | Namespace kind / ID | Document subtype / native ID |
+| --- | --- | --- | --- |
+| Independent Document V | `J(V)` | NULL / NULL | NULL / required `J(V)` |
+| PR-scoped Document D | `J(["pull_request",J(PR),subtype,D])` | `pull_request` / `J(PR)` | nonempty actual subtype / `J(D)` |
+
+The independent native-ID repetition uses an existing non-key column. Its
+equality CHECK prevents stripped all-NULL input from passing. `document_input`
+selects the genuine Provider-native contract explicitly and never falls back
+after a PR validation failure. SQLite cannot authenticate a falsely declared
+native contract or infer completeness from a four-element array shape.
+
+Generated `reference_document_kind=coalesce(document_kind,'')` and the matching
+Parent projection retain a real source FK for independent Documents. The empty
+marker is a non-key typed-absence projection, not missing native identity or an
+extra discriminator. Explicit `document_kind:null` in Parent scope selects that
+form; an omitted field fails CHECK. A nonempty PR subtype cannot satisfy the
+independent source reference, or vice versa. Parent targets require their actual
+Resource FK. General multi-member relations keep application dependency checks.
+
+### G2 exact representation example
+
+For Parent native value `["project","7"]`, its ID TEXT is `["project","7"]`.
+The scoped Document ID for subtype `body`, local ID `D` is:
+
+```json
+["pull_request","[\"project\",\"7\"]","body","D"]
+```
+
+Parse the outer array, then parse the second string to recover the native Parent
+identity. The local Document coordinate is its native string/array value. This
+preserves the same four coordinates as the former nested profile. Mixing profiles
+would equate the TEXT encoding of array V with the nested encoding of a different
+Parent whose native scalar ID is the literal text `J(V)`. Use only the specified
+profile in factories, references, Exchange, stored validation and queries. A
+meaningful discriminator is necessary only for a genuine native namespace
+collision, never merely to distinguish these encoders. No legacy compatibility
+or reinterpretation of historical experiment keys is required.
+
+### G3 owner review required before complete acceptance
+
+ADR 0030 Q-S10 fixes an Issue-parented Timeline Event with typed SQL references
+and actual-event admission. Its former model used the same Issue coordinates for
+identity and Parent. B3 separates those concepts but does not settle which Issue
+qualifies a mismatched Transfer. The competing interpretations are:
+
+- **A:** I7 remains the semantic Issue for this reserved Event contract. Retain I8
+  as an attributed report, but it cannot support that Event's Transfer. Specify
+  and prove the Q-S10-specific SQL/admission constraint without enforcing equality
+  on general Parent relationships.
+- **B:** I7 is solely native identification scope; genuinely qualified I8 may
+  supply the semantic Issue. The owner must specify sufficient qualification
+  evidence and whether this changes the accepted Q-S10 meaning. An attributed
+  report or its FK alone cannot establish that qualification.
+
+The supported experimental `admit` withholds the mismatch before writes with
+`QualificationRequired`; its `structural_admit` diagnostic preserves the earlier
+SQL demonstration. That guard is temporary fail-closed handling of an unresolved
+case, not an accepted universal equality policy or SQL closure of item 4.
+Actual event type, exact support/report pairing, complete endpoints, original
+times and declared member existence remain necessary even when namespaces match;
+matching alone neither authenticates reports nor elects a current Parent.
+
+There is **one** owner-decision blocker in this enlarged semantic scope, compared
+with zero in the earlier bounded structural scope. It affects Q-S10 Transfer
+qualification and complete ADR acceptance; it does not reopen A3/B3/U1–U5/U2-E2.
+Request owner review of A versus B. No amendment is needed merely to retain I8 or
+separate the concepts. If an answer reverses an accepted Q-S10 meaning, apply the
+conditional lifecycle plan below with explicit successor/carry-forward approval;
+do not silently call it refinement. Accepted ADRs remain untouched here.
 
 ## ADR compatibility and lifecycle plan
 
@@ -305,7 +401,7 @@ still requires coherent acceptance/lifecycle work before integration.
 | ADR 0030 Q-S5: genuine Event, endpoint ReportKey and no header/surrogate | Preserved invariant | Preserve actual Event identity and pair only same clock/provenance report with coherent original observation time; changing affiliation alone is not Transfer. |
 | ADR 0030 Q-S6 finite relation vocabulary and typed compatibility | Preserved invariant / generalization | Its closed vocabulary is the six Resource-to-Core Repository roles, not a universal Resource-kind enum. Open Resource kinds do not erase known role/type CHECK/FK constraints plus admission validation. |
 | ADR 0030 Q-S8 exact six roles | Preserved invariant | `represents_repository`, `owning_repository`, `base_repository`, `head_repository`, `transfer_from_repository`, `transfer_to_repository`; no extra role or PR owning/base duplication. |
-| ADR 0030 Q-S10 Issue-parented Timeline Event typed FK plus event validation | Preserved invariant / unproven physical realization | Parent authority moves to existing resource_relations, but typed SQL structural references and semantic admission must both survive. U3=C′ is not proven. |
+| ADR 0030 Q-S10 Issue-parented Timeline Event typed FK plus event validation | Preserved obligation; structural realization demonstrated; G3 interpretation unresolved | Exact typed Event/Issue/support FKs are demonstrated at the corrected freeze. I7 namespace versus I8 Parent support still needs owner resolution; temporary application withholding is not proof of the broader SQL/semantic requirement. No weakening or amendment is approved. |
 | ADR 0030 Q-S11 Provider references in resource_relations | Generalization | Keep that authority and extend it to semantic Parent reports; Provider mapping unresolved is not explicit NULL. Preserve coherent multi-member units. |
 | ADR 0030 Q-S12/Q-S13, final Q-S14 override, Q-S15/Q-S16 | Preserved invariant | Immutable Dispositions and complete ClaimKey references; genuine current qualification required; no Witness/history/counterevidence substitute or new operation UUID. |
 | ADR 0030 Q-E1–Q-E4 | Preserved invariant | Independent bounded Repository/OID seeds; permitted unknown permanent UUID registration is not unselected referent fabrication. |

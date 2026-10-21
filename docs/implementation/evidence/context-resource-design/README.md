@@ -1,9 +1,11 @@
 # Generalized Context Resource design review and verification
 
-This record concerns documentation for proposed ADR 0031. It contains no new
-schema runtime test or U3=C′ result. See the [handoff](../../context-resource-design-handoff.md).
+This record concerns documentation for proposed ADR 0031. The original review
+below remains historical. The [evidence integration](#evidence-integration-revision)
+now cites independently executed C′ results; this design revision runs no schema
+experiment. See the [handoff](../../context-resource-design-handoff.md).
 
-## Preparation
+## Original preparation at 5244b98
 
 Frozen PR #113 branch parent: `24f593861327328fa00dab0b83f956cec330a0ac`, tree
 `7318fdb1cb5ef4959d685bf2a3a1d9d91385c89e`. Product main:
@@ -19,7 +21,7 @@ parent-ID string in document coordinates and the scoped six-role meaning of
 Q-S6. These informed author edits, not independent package approval or executed
 canonicalization/schema evidence.
 
-## Frozen independent review
+## Original frozen independent review
 
 The separate `independent_review` agent, which authored none of these documents,
 reviewed six changed Markdown files against the actual frozen audit parent:
@@ -57,7 +59,7 @@ content changed afterward. That receipt edit is outside the independently
 reviewed commits; it is identified here rather than called independently reviewed.
 The author reran documentation and scope checks on the resulting committed tree.
 
-## Actual author checks
+## Original author checks
 
 All checks below passed using Python 3.12.14; no dependency install or product
 runtime execution was required:
@@ -91,3 +93,19 @@ relabelled. No runtime suite, minimum-SQLite check, package build, U3 experiment
 real-catalog/backup operation, credential inspection or live Provider operation
 was performed. Hosted checks for the published head are reported separately in
 the PR with exact commit/tree binding; no predecessor CI result is reused.
+
+## Evidence integration revision
+
+The current owner task authorizes updating #114 with #115's completed original
+and semantic-gap experiments. Fresh inspection found unchanged main/#113/#114
+baselines and #115 at `8ab57eb74068f5ba303b5985a335f0f76be4fdd2`.
+The [integration map](cprime-integration.md) pins the executed/reviewed freezes,
+report commits, mechanisms, enforcement layers, actual receipts and product gaps.
+G1/G2 are closed; G3 remains an owner decision. Recommendation: **NOT YET READY**
+for complete owner design acceptance. ADR 0031 stays proposed with date null.
+
+This revision preserves #113 → #114 and treats #115 as external evidence. It
+does not import that branch, change either sibling, or execute product/schema/
+release tests. The eight fixed owner decisions and accepted ADR bodies remain
+intact. A separate reviewer will inspect the frozen revised documents and the
+original evidence; actual review/check results are recorded after that review.
