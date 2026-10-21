@@ -152,3 +152,34 @@ processing ceiling. Once an implicit selection is decoded, its ceiling must coun
 already performed decode work before binding; learning it cannot refund work.
 See the executable [I3 counterexamples](../../../../tests/integration/i3/test_selective_exchange.py)
 and [I3 handoff](../../../../docs/implementation/adr0030-i3-selective-exchange.md).
+
+## Trace nested canonical values separately from the package digest
+
+Use this source-inspection procedure when reviewing identity/JSON wire changes.
+A single word such as canonical can hide distinct profiles: at the
+[fixed ADR 0030 product revision](https://github.com/TakashiSasaki/git-repo-db/tree/efb55af84ccbf1183d47547d22bb6c57d8fbc8f9),
+Context canonical() uses ensure_ascii=True while Exchange _canonical_content() uses
+ensure_ascii=False over the package minus digest_sha256. Resource IDs are strings
+inside that envelope. Applying the envelope serializer to an embedded key can
+change its spelling; a valid outer checksum cannot establish inner canonicality.
+The design research for [ADR 0031](../../../../docs/implementation/context-resource-design-handoff.md)
+verified this distinction by reading the actual callsites, without claiming new
+schema execution.
+
+Trace the field from constructor through writer, embedded wire value, digest and
+receiver validator. Inspect each encoder's flags, hashed scope and exact comparison.
+Also compare domain parser, SQL helper and writer checks: the current canonical()
+encoder alone can emit lone-surrogate escapes, and SQL p1_json roundtrip does not
+apply every bound/Unicode check of _parse_canonical_json. Do not infer uniform
+validation from shared names. Reproduce the source inventory with:
+
+```sh
+rg -n 'def canonical|def _parse_canonical_json|ensure_ascii|def _json' src/repo_catalog/domain/p1_context.py src/repo_catalog/adapters/sqlite/p1_schema.py
+rg -n '_canonical_content|ensure_ascii|digest_sha256|verify_digest' src/repo_catalog/domain/exchange.py
+```
+
+Reread current implementations after any source change; these historical flags
+are not a mandate for every JSON contract. Do not canonicalize an embedded key
+after package binding and reuse the old digest. Specification vectors and source
+inspection are distinct from executed parser/schema tests; an unresolved future
+identity or FK design must not become skill policy.

@@ -1,0 +1,10 @@
+CHECK(CASE WHEN relation_kind IN('transfer_from_repository','transfer_to_repository') THEN
+ event_report_members_json IS NOT NULL AND event_report_scope_json IS NOT NULL
+ AND support_members_json IS NOT NULL AND support_scope_json IS NOT NULL AND support_provenance_json IS NOT NULL
+ AND cp_endpoint(relation_kind,target_json,event_report_scope_json,clock_json)=1
+ ELSE event_report_members_json IS NULL AND event_report_scope_json IS NULL END),
+ FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id,event_document_kind) REFERENCES resources(service_instance_uuidv4,resource_kind,provider_resource_id,reference_document_kind),
+ FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id,support_relation_kind,support_members_json,support_provenance_json,support_scope_json,event_document_kind,event_parent_resource_kind)
+ REFERENCES resource_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json,source_document_kind,parent_kind),
+ FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id,event_report_kind,event_report_members_json,provenance_json,event_report_scope_json)
+ REFERENCES resource_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json)

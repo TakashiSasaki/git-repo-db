@@ -1,0 +1,29 @@
+{
+  "reviewed_final_commit": "6bc9525ab853344fba309b28aee343250f575738",
+  "reviewed_final_tree": "97efebce12fcf1ff45ddd336e60d59c14d5e8dfb",
+  "initial_reviewed_freeze": "4c07cb8ecc4d744ddfb8c3908deb91d8ad72f6f9",
+  "scope": "post-freeze documentation, status, links and receipt transport; no SQLite rerun",
+  "frozen_executable_inputs_and_manifest_unchanged": true,
+  "product_src_unchanged": true,
+  "author_transport_only_metadata_and_lossless_logs": true,
+  "independent_review_transport_only_metadata_and_lossless_logs": true,
+  "original_doc_receipt_matches_retained_precompression_author_summary": true,
+  "current_author_summary_sha256": "ebf00fd53959fac76112eeb46c27e8a23f18f929b4665e852874c4d105c53056",
+  "final_review_transport_note_is_factual_postfreeze_appendix": true,
+  "four_manifest_final_review_hash_fields_match_current_report": true,
+  "independent_execution_receipts_verified": [
+    {
+      "runtime": "3.51.3",
+      "own_observations": 99,
+      "passed": true
+    },
+    {
+      "runtime": "3.53.1",
+      "own_observations": 99,
+      "passed": true
+    }
+  ],
+  "material_semantic_or_executable_change": false,
+  "verdict": "READY FOR OWNER DESIGN ACCEPTANCE",
+  "findings": []
+}

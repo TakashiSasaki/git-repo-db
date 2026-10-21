@@ -1,0 +1,43 @@
+{
+  "scope": "Final documentation publication checks; no SQLite, product or release test execution",
+  "reviewed_commit": "060da07e0412e2d93dd4132332ab3bf908e3d8db",
+  "reviewed_tree": "26fdd521faffce4ef458b3ad762ef02c98ea1eea",
+  "checks": {
+    "paths": [
+      "docs/adr/0031-generalized-context-resources.md",
+      "docs/adr/README.md",
+      "docs/architecture/context-resource-schema.md",
+      "docs/implementation/context-resource-design-handoff.md",
+      "docs/implementation/evidence/context-resource-design/README.md",
+      "docs/implementation/evidence/context-resource-design/cprime-independent-checks.json",
+      "docs/implementation/evidence/context-resource-design/cprime-independent-review.md",
+      "docs/implementation/evidence/context-resource-design/cprime-integration.md",
+      "docs/implementation/evidence/context-resource-design/cprime-source-verification.json",
+      "docs/implementation/evidence/context-resource-design/publication-checks.json"
+    ],
+    "scope": "documentation only; protected paths unchanged",
+    "local_targets": 106,
+    "local_anchors": 14,
+    "pinned_git_blob_targets": 28,
+    "proposed_state": true,
+    "stack_preserved": true,
+    "experiment_not_in_ancestry": true,
+    "outcome": "passed"
+  },
+  "prose_reports": {
+    "command": "python scripts/ci_execute.py reports --plan /tmp/adr0031-publication-check/plan.json",
+    "outcome": "passed",
+    "checked_count": 404
+  },
+  "design_bytes_unchanged_since_review": [
+    "docs/adr/0031-generalized-context-resources.md",
+    "docs/adr/README.md",
+    "docs/architecture/context-resource-schema.md",
+    "docs/implementation/context-resource-design-handoff.md",
+    "docs/implementation/evidence/context-resource-design/cprime-integration.md",
+    "docs/implementation/evidence/context-resource-design/cprime-source-verification.json"
+  ],
+  "both_diff_bases_whitespace": "passed",
+  "receipt_only_additions": "Evidence README review record, independent review/checks and this publication receipt are later than the reviewed design freeze. Final HEAD/tree are reported in the PR, not self-referentially in this file.",
+  "hosted_checks": "Separate final feature/effective-tree result recorded in PR; no predecessor result reused."
+}

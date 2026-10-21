@@ -1,0 +1,51 @@
+{
+  "baseline_product_commit": "efb55af84ccbf1183d47547d22bb6c57d8fbc8f9",
+  "prior_F2_executable_freeze": "9eeacb28f7e4a426114a9ce40e2324b4da302817",
+  "prior_F2_sql_sha256": "2892a5fb0bcef8a0e0ea916fc1b71687a0a2afe545849e27dec4f7fd3600171f",
+  "input_parent_commit": "3e6debe41f8e75f0a75be3a71cb1b12a0b70f0f5",
+  "product_src_git_tree": "44744e09753827adc4f389de4eced466f702ea34",
+  "candidate_sql_sha256": "ee8618874d061b8fc71bf83be94a10b1d009d7d1859ddd145e560c7755c41cd0",
+  "inputs": {
+    "docs/implementation/evidence/context-resource-design/g3-a/build-minimum.sh": {
+      "bytes": 1008,
+      "sha256": "92736200c3b492d9b50cf2aac9ef1a5b1953accc5135acdb93ca9eeaa211a037"
+    },
+    "docs/implementation/evidence/context-resource-design/g3-a/candidates/cprime.py": {
+      "bytes": 12373,
+      "sha256": "ebc59346481b46cf6dc1d73a984c75d67eaa36af8c360a7f80b5058a3e9acc70"
+    },
+    "docs/implementation/evidence/context-resource-design/g3-a/candidates/guards.sql": {
+      "bytes": 3670,
+      "sha256": "3af1ffacd5e4ec74145985a9f0c96e601725c0b0772606dec4b48e973ce6e688"
+    },
+    "docs/implementation/evidence/context-resource-design/g3-a/candidates/relations.sql": {
+      "bytes": 4636,
+      "sha256": "9d699853f41900dfde878fdc4fee7f9d0a0ba8d72d4f302d1b4fdecf253c2988"
+    },
+    "docs/implementation/evidence/context-resource-design/g3-a/candidates/resources.sql": {
+      "bytes": 1246,
+      "sha256": "33053650860d2818c48fa61bbc38b8f2bd1686dd2dd89921f8ade706471ba2cd"
+    },
+    "docs/implementation/evidence/context-resource-design/g3-a/candidates/transfer-columns.sql": {
+      "bytes": 1228,
+      "sha256": "59e3f71ef582a6cdb84fd2e2efd5fe695d3a990a59f474c5447954d23923960c"
+    },
+    "docs/implementation/evidence/context-resource-design/g3-a/candidates/transfer-constraints.sql": {
+      "bytes": 1332,
+      "sha256": "06f66a87c8152fb32bbd748900fbd287e777c7c3ead6acd19faf1c769c0fe398"
+    },
+    "docs/implementation/evidence/context-resource-design/g3-a/harness.py": {
+      "bytes": 16282,
+      "sha256": "7498d7a0fba2671cc40ee11416c22d64611cd6fb5e1622ee33e2b55a15be03cf"
+    },
+    "docs/implementation/evidence/context-resource-design/g3-a/reproduce.sh": {
+      "bytes": 1050,
+      "sha256": "807671b5370864605348713f29a69d097dccc5d8fedab6297d589c2db2dc0ef8"
+    },
+    "docs/implementation/evidence/context-resource-design/g3-a/run.py": {
+      "bytes": 28836,
+      "sha256": "fa949754afcdbaa51aa2b961a214a0f9ad14620042e4efc8e0b7e7e2367310b1"
+    }
+  },
+  "binding": "The authoritative execution receipts identify the commit/tree containing these exact inputs. This manifest does not contain its own future commit hash."
+}
