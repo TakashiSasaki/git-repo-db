@@ -211,7 +211,7 @@ preserved. A work-only event journal captured its serializer before tests; the
 completed unchanged-source reruns above reconcile execution without that
 instrumentation conflict. The aborted attempt is not counted as a passing run.
 Ruff lint and format checks run on `src tests scripts`; whitespace and relevant
-prose/report checks run separately. No wheel/sdist acceptance was attempted.
+prose/report checks run separately. No local wheel/sdist acceptance was attempted.
 
 ## Independent reviews and dispositions
 
@@ -250,6 +250,32 @@ it reports `development_checks_passed`, `full_acceptance=false`. Hosted runtime
 pytest and installed-distribution stages were skipped, so their execution is not
 claimed. Final I1b Development CI is recorded against its exact published head in
 the PR; a green result does not erase the three local product failures.
+
+Post-publication checks at I1b head
+`116cd208555da9ee6d6fddc80c6e519dbaa5cce1`, tree
+`ec7ddcd0ddb4715a5fc604d2cac2581f5142d409`, exposed an additional wider-cohort
+limitation. [Development CI 39581231211](https://github.com/TakashiSasaki/git-repo-db/actions/runs/39581231211)
+passed with `development_checks_passed`, `full_acceptance=false`, zero executed
+pytest IDs and 203 required/unexecuted files. Its Python 3.12.15 / SQLite 3.45.1
+performed static/smoke checks, not supported-runtime identity tests. The actual
+bounded receipt and its 21 indexed members were hash-verified; test-merge
+`58b17d1e69828c3c3120c435a39abcde16838ad3` has this exact effective tree.
+
+The pre-existing [Access workflow 39581231143](https://github.com/TakashiSasaki/git-repo-db/actions/runs/39581231143)
+**failed** on actual SQLite 3.51.3. Its broader pytest collection exited 2 before
+execution. A local reproduction of that exact collection command found 2,312
+collected nodes and one collection error: the unadapted P3 module-level fixture
+`ResourceKey(SERVICE, "pull_request", "pr-7")` in
+`tests/integration/p3/test_production_context.py`. No broader tests are counted
+as executed/passing. The same hosted workflow then attempted its existing
+installed-wheel smoke; it failed at a plain-ID ResourceKey in
+`scripts/verify_access_distribution.py`. No wheel/sdist acceptance follows.
+These obsolete fixture/script boundaries are distinct from the three executed
+deferred-I2 product failures; neither is hidden or presented as passing.
+The [CI observation receipt](evidence/adr0031-i1/i1b-ci-observations.json) retains
+the exact check states and local collection log. Wider fixture/script adaptation
+and later product/distribution validation remain outstanding. This subsequent
+documentation-only disclosure changes no frozen runtime or test input.
 
 I2 must update production Resource DDL, identifying metadata, bounded SQL
 functions, composer/fingerprint and packaged DDL together. I3 replaces the old
