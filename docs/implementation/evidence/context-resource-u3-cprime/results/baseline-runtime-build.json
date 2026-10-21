@@ -1,0 +1,58 @@
+{
+  "minimum": {
+    "source_url": "https://www.sqlite.org/2026/sqlite-autoconf-3510300.tar.gz",
+    "archive_sha256": "81f5be397049b0cae1b167f2225af7646fc0f82e4a9b3c48c9ea3a533e21d77a",
+    "compiler": "cc (Debian 14.2.0-19) 14.2.0",
+    "make": "GNU Make 4.4.1",
+    "configure": [
+      "--prefix=/tmp/u3-sqlite-runtime/minimum",
+      "--enable-threadsafe",
+      "--enable-shared",
+      "--disable-static"
+    ],
+    "python_command": "LD_LIBRARY_PATH=/tmp/u3-sqlite-runtime/minimum/lib PYTHONPATH=src /usr/bin/python3",
+    "initial_failed_setup": "Configure ran in /tmp instead of extracted source directory, then make in source failed: No targets specified and no makefile found. Repeated configure within extracted source and build succeeded. No candidate run was performed with the failed setup.",
+    "failed_switch_attempt": "Default Python embeds _sqlite3 and remained 3.53.1 under LD_LIBRARY_PATH and LD_PRELOAD. No result was claimed as minimum until /usr/bin/python3 actually reported 3.51.3."
+  },
+  "current": {
+    "python_command": "PYTHONPATH=src python",
+    "source": "Preinstalled environment Python 3.12.14 with embedded SQLite 3.53.1; no external distribution downloaded or replaced."
+  },
+  "official_document_receipts": [
+    {
+      "url": "https://www.sqlite.org/foreignkeys.html",
+      "retrieved_utc": "2026-10-21",
+      "sha256": "f9cc6cefbdf18e07893b036365a2f3ca2a9a81fa41ed0849c7e4df214ccca8c0",
+      "bytes": 47276,
+      "excerpt": ". Parent and child keys must have the same cardinality. In SQLite, if any of the child key columns (in this case songartist and songalbum) are NULL, then there is no requirement for a corresponding row in the parent table. 4.2. Deferred Foreign Key Constraints Each foreign key constraint in SQLite is classified as either immediate or deferred. Foreign key constraints are immediate by default. All the foreign key examples presented so far have been of immediate foreign key constraints. If a statement modifies the contents of the database so that an immediate foreign key constraint is in violation at the conclusion the statement, an exception is thrown and the effects of the statement are reverted. By contrast, i"
+    },
+    {
+      "url": "https://www.sqlite.org/gencol.html",
+      "retrieved_utc": "2026-10-21",
+      "sha256": "bfeda4cc84fe0e9c5aaa836bf0084eefbe71f58af2334ec8edcff6b94288f323",
+      "bytes": 11848,
+      "excerpt": " that datatype using the same affinity rules as for ordinary columns. Generated columns may have NOT NULL, CHECK, and UNIQUE constraints, and foreign key constraints, just like ordinary columns. Generated columns can participate in indexes, just like ordinary columns. An index that uses STORED generated columns is just an ordinary index, but an index that uses one or more VIRTUAL generated columns is an expression index . The expression of a generated column can refer to any of the other declared columns in the table, including other generated columns, as long as the expression does not directly or indirectly refer back to itself. Generated columns can occur anywhere in the table definition. Generated columns c"
+    },
+    {
+      "url": "https://www.sqlite.org/lang_createtable.html",
+      "retrieved_utc": "2026-10-21",
+      "sha256": "76396a8a82203639387f766fbd59ef2a5b131e43cb4ebabe4516c3a39ce5074c",
+      "bytes": 744208,
+      "excerpt": "value 0 or real value 0.0), then a constraint violation has occurred. If the CHECK expression evaluates to NULL, or any other non-zero value, it is not a constraint violation. The expression of a CHECK constraint may not contain a subquery. CHECK constraints are only verified when the table is written, not when it is read. Furthermore, verification of CHECK constraints can be temporarily disabled using the \" PRAGMA ignore_check_constraints=ON; \" statement. Hence, it is possible that a query might produce results that violate the CHECK constraints. 3.8. NOT NULL constraints A NOT NULL constraint may only be attached to a column definition, not specified as a table constraint. Not surprisingly, a NOT NULL constra"
+    },
+    {
+      "url": "https://www.sqlite.org/lang_conflict.html",
+      "retrieved_utc": "2026-10-21",
+      "sha256": "772b9b3f407bed4cdf59a32f1dd5828c3bc8293744bc40a3f25d07e15973b75f",
+      "bytes": 15964,
+      "excerpt": "ct resolution strategy deletes rows in order to satisfy a constraint, delete triggers fire if and only if recursive triggers are enabled. The update hook is not invoked for rows that are deleted by the REPLACE conflict resolution strategy. Nor does REPLACE increment the change counter . The exceptional behaviors defined in this paragraph might change in a future release. The algorithm specified in the OR clause of an INSERT or UPDATE overrides any algorithm specified in a CREATE TABLE. If no algorithm is specified anywhere, the ABORT algorithm is used. This page was last updated on 2025-11-22 13:15:11Z"
+    },
+    {
+      "url": "https://www.sqlite.org/pragma.html",
+      "retrieved_utc": "2026-10-21",
+      "sha256": "af75d7d7ab00c29e6eea98618cb1259a3919c308af60a6173215bf9798706034",
+      "bytes": 139936,
+      "excerpt": "store_directory\u00b9 data_version database_list default_cache_size\u00b9 defer_foreign_keys empty_result_callbacks\u00b9 encoding foreign_key_check foreign_key_list foreign_keys freelist_count full_column_names\u00b9 fullfsync function_list hard_heap_limit ignore_check_constraints incremental_vacuum index_info index_list index_xinfo integrity_check journal_mode journal_size_limit legacy_alter_table legacy_file_format locking_mode max_page_count mmap_size module_list optimize page_count page_size parser_trace\u00b2 pragma_list query_only quick_check read_uncommitted recursive_triggers reverse_unordered_selects schema_version\u00b3 secure_delete short_column_names\u00b9 shrink_memory soft_heap_limit stats\u00b3 synchronous table_info table_list table_"
+    }
+  ]
+}
