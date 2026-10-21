@@ -157,6 +157,7 @@ def event(service, kind, members, scope):
         "provided_roles",
         "parent_members_json",
         "parent_scope_json",
+        "parent_provenance_json",
         "endpoints",
     }
     if type(s) is not dict or set(s) != fields:
@@ -167,12 +168,16 @@ def event(service, kind, members, scope):
     parent(kind, service, s["parent_members_json"], s["parent_scope_json"])
     ps = parse(s["parent_scope_json"])
     pm = parse(s["parent_members_json"])
+    if ps["document_kind"] != "timeline_event" or pm[0][1] != "issue":
+        raise ValueError("typed timeline Parent")
+    pp = parse(s["parent_provenance_json"])
     if (
-        ps["document_kind"] != "timeline_event"
-        or pm[0][1] != "issue"
-        or ps["clock"] != s["clock"]
+        type(pp) is not dict
+        or type(pp.get("source")) is not str
+        or not pp["source"]
+        or pp.get("evidence") is None
     ):
-        raise ValueError("typed timeline Parent/event clock")
+        raise ValueError("full Parent report provenance")
     endpoints = s["endpoints"]
     if type(endpoints) is not list:
         raise ValueError("endpoints")

@@ -1,0 +1,14 @@
+{
+  "replayed_from_commit": "2f40e5262c6ccdb776b9f82fcba33d42c323a4e8",
+  "overlay": "results/development-02/inputs/ to original candidate/reproduction locations in disposable detached worktree",
+  "sqlite_version": "3.53.1",
+  "process_exit": 1,
+  "expected_failures": [
+    "T05_exact_report_coherence_one_sided_and_clocks",
+    "T08_mutation_conflict_paths"
+  ],
+  "candidate_sql_sha256": "00c9d6b04ba2728b51ddff1af861575af8bbaf14ddabf20cf39dbd2cb7265826",
+  "same_sql_as_preserved_failure": true,
+  "stdout": "T01_identity_exact_and_rejected_inputs passed \nT02_T03_child_parent_arrival_original_replay passed \nT04_typed_reference_rejections passed \nT05_exact_report_coherence_one_sided_and_clocks failed immutable whole event report rebind\nT06_competing_attributed_reports passed \nT07_NULL_cardinality_malformed_generated_and_layers passed \nT08_mutation_conflict_paths failed endpoint support nonkey rebind cannot hide in DO NOTHING: expected IntegrityError, no error\nT09_transaction_order_rollback_and_configuration passed \nT09_unsupported_misconfiguration_control passed \nT10_general_coherent_groups_and_collections passed \nT11_experimental_reconstruction_and_snapshot passed \nT12_SQL_versus_typed_admission_boundary passed \n10/12 cases passed; SQLite 3.53.1\n",
+  "result": "retained failure reproduced, not a final candidate failure"
+}

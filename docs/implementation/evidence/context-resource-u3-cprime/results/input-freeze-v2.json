@@ -1,0 +1,30 @@
+{
+  "frozen_at_utc": "2026-10-21T00:43:56.352528+00:00",
+  "supersedes_experimental_freeze": "2f40e5262c6ccdb776b9f82fcba33d42c323a4e8",
+  "baseline_commit": "efb55af84ccbf1183d47547d22bb6c57d8fbc8f9",
+  "baseline_tree": "117d580b31098ecb8287281bd843894fdfad71fc",
+  "candidate_sql_sha256": "c2c325532279f35ba51b36aacbeea30ceda4040e80b5d31512cbb9e19d564dee",
+  "inputs_sha256": {
+    "docs/implementation/evidence/context-resource-u3-cprime/candidates/cprime.py": "c0405569a9b878031e34aa3c41ae2239d09d6d715fdec29de9bc4fa62a9c0061",
+    "docs/implementation/evidence/context-resource-u3-cprime/candidates/guards.sql": "3af1ffacd5e4ec74145985a9f0c96e601725c0b0772606dec4b48e973ce6e688",
+    "docs/implementation/evidence/context-resource-u3-cprime/candidates/relations.sql": "5c3a99e1aeee4e4533659c319e63540405dcb2037d1d4586282d4acf9e6e338c",
+    "docs/implementation/evidence/context-resource-u3-cprime/candidates/resources.sql": "d7d9ca8b1fb1baf90730d188e6f4e3a8100a8995f6df58e0da11242e2715378a",
+    "docs/implementation/evidence/context-resource-u3-cprime/candidates/transfer-columns.sql": "59e3f71ef582a6cdb84fd2e2efd5fe695d3a990a59f474c5447954d23923960c",
+    "docs/implementation/evidence/context-resource-u3-cprime/candidates/transfer-constraints.sql": "26e3825bcbd066cac3a3cc32df3d7fb78804eb904b1e12390ada98a6f83eb3ef",
+    "docs/implementation/evidence/context-resource-u3-cprime/reproduction/baseline-build-minimum.sh": "92736200c3b492d9b50cf2aac9ef1a5b1953accc5135acdb93ca9eeaa211a037",
+    "docs/implementation/evidence/context-resource-u3-cprime/reproduction/baseline-runtime.py": "90f62defb6627a95787b9dd1111dab55d8bc769c029d598a6b0e5b8dc4ef4442",
+    "docs/implementation/evidence/context-resource-u3-cprime/reproduction/reproduce.sh": "53896c806e95f0dde73ece6cca4638dc5533ebc24cde00f4c780867bce9e92fc",
+    "docs/implementation/evidence/context-resource-u3-cprime/reproduction/run.py": "67a808d60f00805bfc576f225394009d2f94b60f6e6d0a81e540853a12814b28",
+    "src/repo_catalog/adapters/sqlite/p1_schema.py": "ecdf23d58879f39271234b4914560235ce92d3b22e0828b464205feb86d83ba8",
+    "src/repo_catalog/adapters/sqlite/p1_context.py": "4dc12fe46678757b045fac3dffa666c162771a50b60fadcf4c6934dbad8ee52c",
+    "src/repo_catalog/domain/p1_context.py": "6800bb8f19bda77afa7fd290f13518f71263f3914c9e3a23082eff0b5eba15ed",
+    "src/repo_catalog/adapters/sqlite/p1_ddl/context.sql": "458278e3016744d1100b2827b7686414f75cfa4de013e13a7433f8effd37fcea",
+    "src/repo_catalog/adapters/sqlite/p1_ddl/coverage.sql": "1c830f402ac20ace36928d03b49db2f7aeab9962f14d6ee7aeb086b63081a9ed"
+  },
+  "inputs_manifest_sha256": "82a4daf7eb8b96abb6292da74d12a8ffec8feff397067216a94b6ee9f55d3e0e",
+  "author_cases_per_runtime": 13,
+  "author_recorded_steps_per_runtime": 140,
+  "driver_command": "sh docs/implementation/evidence/context-resource-u3-cprime/reproduction/reproduce.sh /tmp/u3-cprime-driver-v2",
+  "driver_result": "baseline 9/9 and candidate 13/13 grouped scenarios per runtime; repeats not additive",
+  "execution_binding": "Author ran these exact added/modified experiment inputs while Git HEAD was first freeze 2f40e52; second freeze records identical executable bytes. Final report commits do not imply new execution."
+}

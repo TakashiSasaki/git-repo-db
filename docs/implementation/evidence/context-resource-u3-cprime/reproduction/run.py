@@ -182,7 +182,16 @@ def parent_row(
     )
 
 
-def report_row(parent=None, endpoints=None, *, event_type="transferred", provider=None):
+def report_row(
+    parent=None,
+    endpoints=None,
+    *,
+    event_type="transferred",
+    provider=None,
+    report_prov=None,
+    report_clock=None,
+    report_observed="same-as-parent",
+):
     p = parent or parent_row()
     endpoints = (
         endpoints
@@ -194,16 +203,26 @@ def report_row(parent=None, endpoints=None, *, event_type="transferred", provide
     if provider:
         roles.add("transfer_from_repository")
     scope = {
-        "clock": json.loads(p[6])["clock"],
+        "clock": json.loads(report_clock)
+        if report_clock is not None
+        else json.loads(p[6])["clock"],
         "event_type": event_type,
         "from_provider_repository_id": J(provider) if provider else None,
         "to_provider_repository_id": None,
         "provided_roles": sorted(roles),
         "parent_members_json": p[4],
         "parent_scope_json": p[6],
+        "parent_provenance_json": p[5],
         "endpoints": endpoints,
     }
-    return (*p[:3], "transfer_event_report", J(members), p[5], J(scope), p[7])
+    return (
+        *p[:3],
+        "transfer_event_report",
+        J(members),
+        report_prov if report_prov is not None else p[5],
+        J(scope),
+        p[7] if report_observed == "same-as-parent" else report_observed,
+    )
 
 
 def endpoint_rows(report):
@@ -553,6 +572,65 @@ def t05(db):
     )
 
 
+@case("T05_independent_Parent_report_provenance_and_clock")
+def t05_independent(db):
+    event_resource(db)
+    resource(db, "issue", "I7")
+    independent_parent = parent_row(
+        prov=J({"source": "synthetic://parent-only", "evidence": "P"}),
+        clock=J({"domain": "parent-domain", "at_us": 41}),
+        observed=42,
+    )
+    rr(db, independent_parent)
+    report = report_row(
+        independent_parent, report_prov=PROV, report_clock=CLOCK, report_observed=100
+    )
+    step(
+        db,
+        "explicit original Parent support with independent provenance and clock",
+        lambda: admit(db, report),
+    )
+    stored = db.execute(
+        "SELECT provenance_json,scope_json,observed_at_us FROM resource_relations WHERE relation_kind='parent'"
+    ).fetchone()
+    assert stored == (independent_parent[5], independent_parent[6], 42)
+    endpoint = db.execute(
+        "SELECT provenance_json,clock_json,observed_at_us,support_provenance_json,support_scope_json FROM resource_repository_relations LIMIT 1"
+    ).fetchone()
+    assert endpoint == (PROV, CLOCK, 100, independent_parent[5], independent_parent[6])
+    for name, value in (
+        ("parent_provenance_json", PROV),
+        ("parent_scope_json", parent_row()[6]),
+    ):
+        altered = json.loads(report[6])
+        altered[name] = value
+        forged = list(report)
+        forged[5] = J({"source": "synthetic://independent-negative", "evidence": name})
+        forged[6] = J(altered)
+        step(
+            db,
+            "cannot cross-pair independently sourced support " + name,
+            lambda forged=forged: rr(db, forged),
+            sqlite3.IntegrityError,
+            "FOREIGN KEY",
+        )
+    missing = json.loads(report[6])
+    del missing["parent_provenance_json"]
+    forged = list(report)
+    forged[5] = J({"source": "synthetic://missing-parent-provenance", "evidence": "N"})
+    forged[6] = J(missing)
+    step(
+        db,
+        "missing Parent provenance cannot null-bypass FK",
+        lambda: rr(db, forged),
+        sqlite3.IntegrityError,
+        "CHECK",
+    )
+    ACTIVE["evaluation"] = (
+        "Exact support is explicitly supplied. Independent clocks/attribution remain original; no semantic winner or external authenticity follows."
+    )
+
+
 @case("T06_competing_attributed_reports")
 def t06(db):
     event_resource(db)
@@ -708,6 +786,40 @@ def t07(db):
 def t08(db):
     seed(db, report=True)
     before = rows(db)
+    original_resource = db.execute(
+        "SELECT * FROM resources WHERE resource_kind='comment'"
+    ).fetchone()
+    changed_resource = list(original_resource)
+    changed_resource[4] = J("WRONG")
+    for prefix in ("INSERT", "INSERT OR IGNORE", "INSERT OR REPLACE"):
+        step(
+            db,
+            prefix + " invalid Resource replay rejects",
+            lambda prefix=prefix: db.execute(
+                prefix + " INTO resources VALUES(?,?,?,?,?,?,?)", changed_resource
+            ),
+            sqlite3.IntegrityError,
+            "rebind",
+        )
+    step(
+        db,
+        "Resource DO NOTHING invalid replay rejects",
+        lambda: db.execute(
+            "INSERT INTO resources VALUES(?,?,?,?,?,?,?) ON CONFLICT DO NOTHING",
+            changed_resource,
+        ),
+        sqlite3.IntegrityError,
+        "rebind",
+    )
+    step(
+        db,
+        "Resource exact REPLACE remains immutable",
+        lambda: db.execute(
+            "INSERT OR REPLACE INTO resources VALUES(?,?,?,?,?,?,?)", original_resource
+        ),
+        sqlite3.IntegrityError,
+        "immutable",
+    )
     for table in ("resources", "resource_relations", "resource_repository_relations"):
         step(
             db,
@@ -930,6 +1042,30 @@ def t10(db):
         ),
         sqlite3.IntegrityError,
     )
+    # B3: generic coherent relations need not form a tree; Documents may own groups.
+    doc_id = resource(
+        db,
+        "document",
+        ["pull_request", "PR1", "body", "body"],
+        doc="body",
+        namespace="pull_request",
+        ns="PR1",
+    )
+    doc_key = [S, "document", doc_id]
+    for owner, member_key in ((doc_key, a), (a, b), (b, a)):
+        relation = (
+            *owner,
+            "synthetic.links",
+            J([member_key]),
+            PROV,
+            J({"state": "complete"}),
+            100,
+        )
+        step(
+            db,
+            "nonleaf Document or generic cycle " + owner[2],
+            lambda relation=relation: rr(db, relation),
+        )
     ACTIVE["absence_control"] = db.execute(
         "SELECT count(*) FROM resource_relations WHERE relation_kind='never_observed'"
     ).fetchone()[0]

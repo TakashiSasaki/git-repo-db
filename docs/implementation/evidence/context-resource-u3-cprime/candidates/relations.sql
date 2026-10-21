@@ -14,16 +14,17 @@ CREATE TABLE resource_relations(
  report_clock_json TEXT GENERATED ALWAYS AS(CASE WHEN relation_kind IN('parent','transfer_event_report') THEN cp_get(scope_json,'clock') END) VIRTUAL,
  support_relation_kind TEXT GENERATED ALWAYS AS(CASE WHEN relation_kind='transfer_event_report' THEN 'parent' END) VIRTUAL,
  support_members_json TEXT GENERATED ALWAYS AS(CASE WHEN relation_kind='transfer_event_report' THEN cp_get(scope_json,'parent_members_json') END) VIRTUAL,
+ support_provenance_json TEXT GENERATED ALWAYS AS(CASE WHEN relation_kind='transfer_event_report' THEN cp_get(scope_json,'parent_provenance_json') END) VIRTUAL,
  support_scope_json TEXT GENERATED ALWAYS AS(CASE WHEN relation_kind='transfer_event_report' THEN cp_get(scope_json,'parent_scope_json') END) VIRTUAL,
  support_parent_kind TEXT GENERATED ALWAYS AS(CASE WHEN relation_kind='transfer_event_report' THEN 'issue' END) VIRTUAL,
  CHECK(cp_relation(relation_kind,service_instance_uuidv4,resource_kind,members_json,scope_json)=1),
  CHECK(relation_kind!='parent' OR (parent_service IS NOT NULL AND parent_kind IS NOT NULL AND parent_id IS NOT NULL AND source_document_kind IS NOT NULL)),
- CHECK(relation_kind!='transfer_event_report' OR (support_members_json IS NOT NULL AND support_scope_json IS NOT NULL)),
+ CHECK(relation_kind!='transfer_event_report' OR (support_members_json IS NOT NULL AND support_scope_json IS NOT NULL AND support_provenance_json IS NOT NULL)),
  PRIMARY KEY(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json),
  FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id) REFERENCES resources,
  FOREIGN KEY(parent_service,parent_kind,parent_id) REFERENCES resources,
  FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id,source_document_kind) REFERENCES resources(service_instance_uuidv4,resource_kind,provider_resource_id,document_kind),
- FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id,support_relation_kind,support_members_json,provenance_json,support_scope_json,source_document_kind,support_parent_kind)
+ FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id,support_relation_kind,support_members_json,support_provenance_json,support_scope_json,source_document_kind,support_parent_kind)
  REFERENCES resource_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json,source_document_kind,parent_kind)
 ) STRICT, WITHOUT ROWID;
 CREATE UNIQUE INDEX parent_report_typed_fk ON resource_relations(
