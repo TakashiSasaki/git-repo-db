@@ -339,12 +339,17 @@ def test_context_search_resolves_actual_text_fk_in_projection_and_fallback(tmp_p
         rows = SearchProjection.context_documents(old)
         body_rows = {key: text for key, text in rows.items() if "needle" in text}
         assert list(body_rows.values()) == [body]
-        assert json.loads(next(iter(body_rows)))[2:4] == ["7", "text_body_sha256"]
+        assert json.loads(next(iter(body_rows)))[2:4] == [
+            actual.provider_resource_id,
+            "text_body_sha256",
+        ]
         reported_rows = {
-            key: text for key, text in rows.items() if json.loads(key)[2] == "reported"
+            key: text
+            for key, text in rows.items()
+            if json.loads(key)[2] == reported.provider_resource_id
         }
         assert list(reported_rows.values()) == [digest]
-        assert not any(json.loads(key)[2] == "null" for key in rows)
+        assert not any(json.loads(key)[2] == null.provider_resource_id for key in rows)
 
         def fallback():
             return SearchProjection.context_documents(old)
