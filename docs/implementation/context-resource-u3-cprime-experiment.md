@@ -1,5 +1,10 @@
 # Context Parent relations without new authority tables: SQLite experiment
 
+**Historical bounded result:** this report remains bound to its original freeze.
+The [semantic-coverage follow-up](context-resource-u3-cprime-semantic-gaps.md)
+corrects G1/G2 and identifies an unresolved G3 owner question. The current
+candidate has a new freeze; this original verdict is not a broader ADR 0031 pass.
+
 **Verdict: DEMONSTRATED for the stated bounded experimental obligations on
 SQLite 3.51.3 and 3.53.1**, with the enforcement division below. Independent
 review reproduced the corrected result. This is not a claim that SQL alone

@@ -1,5 +1,11 @@
 # Candidate C′ construction and enforcement
 
+The [semantic-gap follow-up](../semantic-gaps/README.md) now extends independent
+Document admission and specifies canonical namespace ID TEXT within scoped
+identities. A generated typed absence projection preserves source FKs. Notes
+below document the earlier freeze and history; see the follow-up for current
+representation and the unresolved Q-S10 qualification question.
+
 This is an isolated experiment derived from the exact packaged
 `p1_schema.compose("context")` at the frozen product baseline. It replaces only
 three table definitions and adds indexes/triggers inside the experimental SQL.

@@ -1,5 +1,11 @@
 # Context U3=C′ SQLite experiment evidence
 
+**Current follow-up:** [semantic gaps and new reproduction](semantic-gaps/README.md).
+Freeze descriptions below concern the original experiment. Check out
+`e9aba86f4530b2e683c77e23a4fe58bdf02192c5` for those exact executable bytes.
+Running the current branch executes the corrected candidate; original receipts
+and independent review remain unchanged.
+
 This directory contains disposable experimental schema changes, synthetic
 fixtures, execution receipts and independent review. It is not product DDL or a
 migration. Start with the [experiment report](../../context-resource-u3-cprime-experiment.md),
