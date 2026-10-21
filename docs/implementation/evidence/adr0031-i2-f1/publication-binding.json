@@ -1,0 +1,91 @@
+{
+  "scope": "C-F1 design-only complement; independent re-review pending",
+  "base": "03ff484eca32bf6ed76b4b9fd472c99052f7d8b6",
+  "base_tree": "927288ecc20082144887fd668636b35171b647dd",
+  "base_files_verified": 3745,
+  "changed_base_inputs": [],
+  "frozen_new_input_hashes": {
+    "docs/implementation/evidence/adr0031-i2-f1/fence.sql": "ce66652aef8bdb39302597b14d7b26fe6601206161215fca59c570a6e9fcb908",
+    "docs/implementation/evidence/adr0031-i2-f1/compose_f1.py": "a2030e8d3929a3ba832cf62df60919242f648a70e59f3383404f9e26c4d48f80",
+    "docs/implementation/evidence/adr0031-i2-f1/stage_contract.py": "ccfd21ad0a1776d15f11a720f40ba64c45c3594051cc3f771c290d0988037868",
+    "docs/implementation/evidence/adr0031-i2-f1/base-input-manifest.json": "85125fa006e0a9e5b772b74e79eaf034042339f31dc4b287b697eba520f26465",
+    "docs/implementation/evidence/adr0031-i2-f1/run_f1.py": "f5bb79ca2ce09326f8887cb548a14aa26472ff7b48543b1209eddbffa2557831",
+    "docs/implementation/evidence/adr0031-i2-f1/probe_f1.py": "1adda6047d612c6e04c7a3ff0a4e0eb37d7ab4e45ecc5a10db76e5c693560dff",
+    "docs/implementation/evidence/adr0031-i2-f1/I2-F1-ADDENDUM.md": "85a2e26e839df2790876b39239865519689feee8c8c6093b25b5a06da14a345d",
+    "docs/implementation/evidence/adr0031-i2-f1/prepare_runtime.py": "2be8281ddd5189ebc864dd60add124753f833ceab24d3d0f0de2d83461bc86f2"
+  },
+  "changed_frozen_new_inputs": [],
+  "archive": {
+    "path": "c-f1-evidence.zip",
+    "bytes": 379898,
+    "sha256": "f60d3b65569c67e09a2de8eb854b8cb0119fd9d48e2ea038a72d0f3e9da784e9",
+    "indexed_files_verified": 46,
+    "members": 47
+  },
+  "actual_runner_exit": 0,
+  "runtime_provenance": {
+    "3510300": {
+      "url": "https://www.sqlite.org/2026/sqlite-amalgamation-3510300.zip",
+      "download_bytes": 2876305,
+      "download_sha256": "acb1e6f5d832484bf6d32b681e858c38add8b2acdfd42ac5df24b8afb46552b4",
+      "command": [
+        "cc",
+        "-O2",
+        "-fPIC",
+        "-shared",
+        "-DSQLITE_THREADSAFE=1",
+        "-DSQLITE_ENABLE_FTS5",
+        "-DSQLITE_ENABLE_COLUMN_METADATA",
+        "-DSQLITE_ENABLE_RTREE",
+        "/workspace/task-c-f1-evidence/runtime/sqlite-amalgamation-3510300/sqlite3.c",
+        "-o",
+        "/workspace/task-c-f1-evidence/runtime/sqlite-amalgamation-3510300/libsqlite3.so.0",
+        "-lpthread",
+        "-ldl",
+        "-lm"
+      ],
+      "exit_code": 0,
+      "seconds": 27.229910216000007,
+      "stdout": "",
+      "stderr": "",
+      "files": {
+        "sqlite3.c": "9512509b1bccb7461f79bea8aad6280ae4699e925fa4804381b71f59e7efb0c5",
+        "sqlite3.h": "19585c8b5230e9d4f223bf31b709ece7b6a0bb3faf00d8310625d8e58cda1b1d",
+        "libsqlite3.so.0": "525e2857153a83fd38ee160fc59062d723505afd5bddb7f5eeb85c96bb104041"
+      }
+    },
+    "3530100": {
+      "url": "https://www.sqlite.org/2026/sqlite-amalgamation-3530100.zip",
+      "download_bytes": 2938639,
+      "download_sha256": "36ad6e7f38540a3b21a2ac36340833f0a9e426bc1c752751c3ba669466827eae",
+      "command": [
+        "cc",
+        "-O2",
+        "-fPIC",
+        "-shared",
+        "-DSQLITE_THREADSAFE=1",
+        "-DSQLITE_ENABLE_FTS5",
+        "-DSQLITE_ENABLE_COLUMN_METADATA",
+        "-DSQLITE_ENABLE_RTREE",
+        "/workspace/task-c-f1-evidence/runtime/sqlite-amalgamation-3530100/sqlite3.c",
+        "-o",
+        "/workspace/task-c-f1-evidence/runtime/sqlite-amalgamation-3530100/libsqlite3.so.0",
+        "-lpthread",
+        "-ldl",
+        "-lm"
+      ],
+      "exit_code": 0,
+      "seconds": 26.565835792000144,
+      "stdout": "",
+      "stderr": "",
+      "files": {
+        "sqlite3.c": "9ac97192c93a6d9671d2ea667ba14e3c8fe3719a171afc5827c9d86d0278fc14",
+        "sqlite3.h": "16d6e2f265fb13ece42329da39a865d4c540045b444d16b4bf9f7e1a7e39408f",
+        "libsqlite3.so.0": "29a241f79123f38b59356d302dbf7e5a3f42f3ea6be0cf1d81d13fbadfd5ff2d"
+      }
+    }
+  },
+  "publication_only_followups": [
+    "summary/guide/author-verification documents and archive bindings; no later candidate/harness change"
+  ]
+}
