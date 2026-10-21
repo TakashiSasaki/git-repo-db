@@ -123,3 +123,38 @@ supplied with contradictory identifying metadata. V2 adds
 INSERT, IGNORE, REPLACE and DO NOTHING. The stored row had remained valid in v1,
 but silently ignoring inadmissible input was not evidence of validated replay.
 The first freeze and all original receipts remain retained separately.
+
+## Independent-review correction (v3)
+
+Independent review found that v2 typed admission checked the Parent/report FKs
+but omitted the existence check for arbitrary-length declared Provider Repository
+members in `transfer_event_report.members_json`. A structurally valid report
+could consequently be admitted while such a member was absent. V3 checks each
+full member ResourceKey inside the Transfer savepoint, before any group or
+endpoint writes. This is an application dependency check, not an added FK or a
+Python lookup disguised as one; SQL and row-local predicates are unchanged.
+
+The added T11 case proves missing-member refusal leaves the original child and
+Parent report intact, creates neither the missing member nor a durable event
+unit, and admits the exact original report only after the actual selected member
+arrives and the report is supplied again. The unresolved Provider endpoint stays
+unresolved; no Core endpoint or observed NULL is invented. Exact replay preserves
+membership, scope, original observation time and provenance. All v2 receipts and
+the independently reproduced counterexample remain retained.
+
+## Original timestamp input correction (v4 harness)
+
+Independent review additionally reproduced pre-affinity time acceptance through
+the experimental Transfer admission helper: Python booleans, floats and numeric
+strings could become SQL INTEGER values. V4 calls the actual baseline
+`validate_observation_us` for the report and every supplied endpoint before
+replay comparison or insertion. This also prevents Python's `True == 1` or
+`100.0 == 100` equality from making invalid original input look like exact replay.
+The baseline time-validator source hash is included in the input manifest.
+
+The added T12 case rejects those input types, zero/negative/out-of-range values,
+and accepts genuine positive integers and `None` without changing their meaning.
+A direct SQL control deliberately demonstrates SQLite's INTEGER-affinity
+coercion: stored-value CHECKs cannot validate original Python input types. This
+is an admission-layer correction; candidate SQL and row-local predicates are
+unchanged from v2. V3 author receipts remain retained rather than overwritten.

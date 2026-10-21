@@ -21,6 +21,7 @@ sys.path[:0] = [str(REPO / "src"), str(EVIDENCE / "candidates")]
 import cprime as cp  # noqa: E402
 
 from repo_catalog.adapters.sqlite import p1_schema  # noqa: E402
+from repo_catalog.domain.time import validate_observation_us  # noqa: E402
 
 J = cp.canonical
 S = "11111111-1111-4111-8111-111111111111"
@@ -275,15 +276,29 @@ def replay_end(db, row):
 
 def admit(db, report, endpoints=None):
     """Experimental typed unit admission, not product Exchange implementation."""
+    validate_observation_us(report[7])
     cp.event(report[0], report[1], report[4], report[6])
     if json.loads(report[6])["event_type"] != "transferred":
         raise ValueError("actual normalized event_type must be transferred")
     expected = endpoint_rows(report)
     supplied = expected if endpoints is None else endpoints
+    for item in supplied:
+        validate_observation_us(item[7])
     if sorted(supplied) != sorted(expected):
         raise ValueError("whole original endpoint unit required")
     db.execute("SAVEPOINT transfer_unit")
     try:
+        # Whole Provider membership is an arbitrary-length JSON group. Its
+        # referents require typed admission checks; no projected-array FK is claimed.
+        for coordinates in json.loads(report[4]):
+            if not db.execute(
+                "SELECT 1 FROM resources WHERE service_instance_uuidv4=? "
+                "AND resource_kind=? AND provider_resource_id=?",
+                coordinates,
+            ).fetchone():
+                raise ValueError(
+                    "missing declared Provider Repository member; withhold whole Transfer unit"
+                )
         outcome = replay_rr(db, report)
         for item in supplied:
             replay_end(db, item)
@@ -1188,6 +1203,132 @@ def t11(db):
     )
 
 
+@case("T11_missing_Provider_member_withheld_and_original_resupplied")
+def t11_provider_member(db):
+    seed(db)
+    original_report = report_row(provider="absent-provider-repository", endpoints=[])
+    before = rows(db)
+    step(
+        db,
+        "missing declared Provider member withholds whole Transfer",
+        lambda: admit(db, original_report),
+        ValueError,
+        "missing declared Provider Repository member",
+    )
+    assert rows(db) == before
+    assert not db.execute(
+        "SELECT * FROM resource_relations WHERE relation_kind='transfer_event_report'"
+    ).fetchall()
+    assert not db.execute("SELECT * FROM resource_repository_relations").fetchall()
+    assert not db.execute(
+        "SELECT * FROM resources WHERE resource_kind='repository'"
+    ).fetchall()
+    step(
+        db,
+        "actual selected Provider member arrives",
+        lambda: resource(db, "repository", "absent-provider-repository"),
+    )
+    assert not db.execute(
+        "SELECT * FROM resource_relations WHERE relation_kind='transfer_event_report'"
+    ).fetchall()
+    step(
+        db, "original unresolved report resupplied", lambda: admit(db, original_report)
+    )
+    stored = db.execute(
+        "SELECT members_json,provenance_json,scope_json,observed_at_us FROM resource_relations WHERE relation_kind='transfer_event_report'"
+    ).fetchone()
+    assert stored == original_report[4:]
+    assert not db.execute("SELECT * FROM resource_repository_relations").fetchall()
+    after = rows(db)
+    assert (
+        step(db, "exact unresolved report replay", lambda: admit(db, original_report))
+        == "duplicate"
+    )
+    assert rows(db) == after
+    ACTIVE["boundary"] = (
+        "Provider member existence is a typed-admission dependency check inside the savepoint. Unresolved Provider-to-Core mapping does not become an observed NULL or invented Repository endpoint."
+    )
+
+
+@case("T12_strict_original_observation_types_before_affinity_or_replay")
+def t12_time(db):
+    seed(db)
+    before = rows(db)
+    for value in (True, False, 100.0, "100"):
+        report = report_row(report_observed=value)
+        step(
+            db,
+            "typed report rejects " + repr(value),
+            lambda report=report: admit(db, report),
+            TypeError,
+            "integer",
+        )
+        assert rows(db) == before
+    for value in (0, -1, 2**63):
+        report = report_row(report_observed=value)
+        step(
+            db,
+            "typed report rejects out-of-domain " + repr(value),
+            lambda report=report: admit(db, report),
+            ValueError,
+        )
+        assert rows(db) == before
+    for value in (None, 1, 100):
+        prov = J({"source": "synthetic://valid-time", "evidence": repr(value)})
+        report = report_row(report_prov=prov, report_observed=value)
+        step(
+            db,
+            "positive-or-NULL original time " + repr(value),
+            lambda report=report: admit(db, report),
+        )
+        stored = db.execute(
+            "SELECT observed_at_us FROM resource_relations WHERE relation_kind='transfer_event_report' AND provenance_json=?",
+            (prov,),
+        ).fetchone()[0]
+        assert stored == value and type(stored) is type(value)
+        unchanged = rows(db)
+        assert (
+            step(
+                db,
+                "valid time exact replay " + repr(value),
+                lambda report=report: admit(db, report),
+            )
+            == "duplicate"
+        )
+        assert rows(db) == unchanged
+        bad_values = (
+            (True, 1.0, "1") if value == 1 else ((100.0, "100") if value == 100 else ())
+        )
+        for bad in bad_values:
+            endpoints = endpoint_rows(report)
+            altered = list(endpoints[0])
+            altered[7] = bad
+            endpoints[0] = tuple(altered)
+            step(
+                db,
+                "typed endpoint rejects original " + repr(bad),
+                lambda endpoints=endpoints, report=report: admit(db, report, endpoints),
+                TypeError,
+                "integer",
+            )
+            assert rows(db) == unchanged
+    # SQLite only observes post-affinity storage types; raw SQL is a distinct boundary.
+    raw = report_row(
+        report_prov=J({"source": "synthetic://raw-affinity", "evidence": "float"}),
+        report_observed=100.0,
+    )
+    step(
+        db, "direct SQL float time is coerced by INTEGER affinity", lambda: rr(db, raw)
+    )
+    assert db.execute(
+        "SELECT typeof(observed_at_us),observed_at_us FROM resource_relations WHERE provenance_json=? AND relation_kind='transfer_event_report'",
+        (raw[5],),
+    ).fetchone() == ("integer", 100)
+    ACTIVE["boundary"] = (
+        "Baseline validate_observation_us rejects bool/float/string before equality or SQL affinity. SQL CHECK enforces positive-or-NULL stored values only; it does not prove original input types."
+    )
+
+
 @case("T12_SQL_versus_typed_admission_boundary")
 def t12(db):
     seed(db)
@@ -1283,6 +1424,7 @@ def main():
         "src/repo_catalog/adapters/sqlite/p1_schema.py",
         "src/repo_catalog/adapters/sqlite/p1_context.py",
         "src/repo_catalog/domain/p1_context.py",
+        "src/repo_catalog/domain/time.py",
         "src/repo_catalog/adapters/sqlite/p1_ddl/context.sql",
         "src/repo_catalog/adapters/sqlite/p1_ddl/coverage.sql",
     ):
