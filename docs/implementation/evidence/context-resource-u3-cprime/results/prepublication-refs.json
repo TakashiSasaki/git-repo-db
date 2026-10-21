@@ -1,0 +1,14 @@
+{
+  "checked_at_utc": "2026-10-21T00:52:29.570204+00:00",
+  "main_commit": "efb55af84ccbf1183d47547d22bb6c57d8fbc8f9",
+  "main_tree": "117d580b31098ecb8287281bd843894fdfad71fc",
+  "audit_113_commit": "24f593861327328fa00dab0b83f956cec330a0ac",
+  "design_114_commit": "5244b98a9a302f082a07a526480faf438fc91838",
+  "open_prs": [
+    113,
+    114
+  ],
+  "other_open_experiment_prs": [],
+  "protected_path_diff": "",
+  "comparison": "main and related PR refs equal initial inspection; experiment branch derives independently from frozen product"
+}

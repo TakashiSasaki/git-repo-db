@@ -1,0 +1,25 @@
+{
+  "checked_at_utc": "2026-10-21T00:55:40.984815+00:00",
+  "executable_freeze": "e9aba86f4530b2e683c77e23a4fe58bdf02192c5",
+  "all_16_executable_input_hashes_match": true,
+  "changed_and_untracked_paths_checked": 84,
+  "allowed_scope_only": true,
+  "protected_product_paths_changed": [],
+  "all_artifacts_utf8_text": true,
+  "artifact_bytes_before_this_receipt": 6609305,
+  "largest_artifact": {
+    "bytes": 335843,
+    "path": "docs/implementation/evidence/context-resource-u3-cprime/independent-review/final-current.json"
+  },
+  "json_files_parsed": 43,
+  "markdown_files_checked": 9,
+  "relative_markdown_targets_checked": 76,
+  "ruff_0_14_0_current_author_and_final_reviewer_inputs": "passed",
+  "shell_syntax": "passed",
+  "repository_reports_check": {
+    "checked_count": 397,
+    "outcome": "passed"
+  },
+  "git_diff_check": "passed",
+  "runtime_execution": "No new candidate execution claimed for report-only publication; exact frozen input hashes and independent reruns bind results."
+}
