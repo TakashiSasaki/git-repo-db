@@ -223,8 +223,10 @@ with tempfile.TemporaryDirectory() as directory:
     for role in ("core", "context"):
         p1_schema.initialize(destination / f"{role}.sqlite3", role, repository_id, instance)
     node = {"id": "R_installed", "databaseId": 1}
-    claims = tuple(ResourceRepositoryRelation(ResourceKey(service, "repository", identifier), "represents_repository", FieldClock("installed:mapping", 1), canonical(repository_id), make_provenance("installed", {"explicit_mapping": identifier}), 1)
-                   for identifier in (github_repository_id({"id": 1}, graphql=False), github_repository_id(node, graphql=True)))
+    node_identifier = github_repository_id(node, graphql=True)
+    # Change the key representation while retaining the original evidence text.
+    claims = tuple(ResourceRepositoryRelation(ResourceKey(service, "repository", identifier), "represents_repository", FieldClock("installed:mapping", 1), canonical(repository_id), make_provenance("installed", {"explicit_mapping": evidence_identifier}), 1)
+                   for identifier, evidence_identifier in ((github_repository_id({"id": 1}, graphql=False), "1"), (node_identifier, node_identifier)))
     ProviderAcquisition(destination).admit_batch(ProviderIntakeBatch(service,
         providers=(ProviderRegistration(service),), repositories=(RepositoryRegistration(repository_id),), mapping_claims=claims,
         issues=(ProviderIssueIntake({"id": 7, "repository": {"id": 1}}, 10, make_provenance("installed", "issue")),),
