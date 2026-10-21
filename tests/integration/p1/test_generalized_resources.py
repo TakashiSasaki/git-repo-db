@@ -1,5 +1,7 @@
 """I2 tests execute packaged DDL/UDFs and real production capabilities."""
 
+import hashlib
+import json
 import sqlite3
 from dataclasses import replace
 from uuid import uuid4
@@ -17,6 +19,7 @@ from repo_catalog.adapters.sqlite.recovery_validation import (
 from repo_catalog.application.acquisition import ProviderAcquisition
 from repo_catalog.application.exchange import ExchangeService
 from repo_catalog.application.production_query import ProductionQueryService
+from repo_catalog.domain.exchange import ExchangeError
 from repo_catalog.domain.p1_context import (
     FieldCandidate,
     FieldClock,
@@ -53,6 +56,17 @@ def snapshot(db):
             "SELECT name FROM sqlite_schema WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name"
         )
     }
+
+
+def authorities(path):
+    result = {}
+    for role in ("core", "context"):
+        db = p1_schema.connect(path / (role + ".sqlite3"), role)
+        try:
+            result[role] = snapshot(db)
+        finally:
+            db.close()
+    return result
 
 
 @pytest.fixture
@@ -376,8 +390,10 @@ def test_selected_real_wire_without_identification_refuses_before_core_effects(
     row.update(resource_kind="document", provider_resource_id='["global",[]]')
     data = dict(package.context, resources=[*package.context["resources"], row])
     hostile = replace(package, context=data, digest_sha256=None)
+    before = authorities(b)
     with pytest.raises(UnsupportedIdentificationStage):
         receive(b, hostile, (r1,))
+    assert authorities(b) == before
     with Context.snapshot(b) as ctx:
         assert ctx.resources() == ()
     # Same valid envelope can select Core independently, including on replay.
@@ -483,15 +499,39 @@ def test_real_selected_transfer_wire_refuses_before_effects_and_replay(
     hostile = replace(package, context=data, digest_sha256=None)
     if prime_replay:
         receive(b, hostile, (r1,), selection=scope(include_context=False))
-    db = p1_schema.connect(b / "context.sqlite3", "context")
-    before = snapshot(db)
-    db.close()
+    before = authorities(b)
     with pytest.raises(UnsupportedResourceStage):
         receive(b, hostile, (r1,), request=RequestIdentity(str(uuid4()), str(uuid4())))
-    db = p1_schema.connect(b / "context.sqlite3", "context")
-    assert snapshot(db) == before
-    db.close()
+    assert authorities(b) == before
     assert not (b / "p1-recovery-stop.json").exists()
+
+
+def test_real_wire_parser_rejects_unrecognized_nested_operations_before_effects(
+    tmp_path,
+):
+    a, b = tmp_path / "a", tmp_path / "b"
+    r1, _, _, _ = fixture(a)
+    catalog(b)
+    raw = ExchangeService(a).export_package(selection=scope()).to_dict()
+    raw["context"]["units"] = [
+        {"operations": [{"relation_kind": "transfer_event_report"}]}
+    ]
+    digest_scope = {key: value for key, value in raw.items() if key != "digest_sha256"}
+    raw["digest_sha256"] = hashlib.sha256(
+        json.dumps(
+            digest_scope,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+            allow_nan=False,
+        ).encode()
+    ).hexdigest()
+    before = authorities(b)
+    # V4 has no nested operation extension. The real decoder must refuse it;
+    # the normalized preflight is not advertised as a new wire parser.
+    with pytest.raises(ExchangeError):
+        receive(b, raw, (r1,))
+    assert authorities(b) == before
 
 
 def test_unknown_ordered_wire_and_opaque_transfer_text_remain_supported(tmp_path):

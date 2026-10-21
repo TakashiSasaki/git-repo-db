@@ -71,6 +71,8 @@ def main():
                 "tests/unit/test_resource_identity.py",
                 "tests/unit/test_resource_key_identity.py",
                 "tests/unit/test_resource_identification.py",
+                "tests/unit/test_github_identity_boundaries.py",
+                "tests/integration/p2_p3_compatibility/test_production_pair.py",
                 "tests/packaging/test_p1_distribution.py",
                 "tests/packaging/test_p2_distribution.py",
                 "tests/packaging/test_p3_distribution.py",
