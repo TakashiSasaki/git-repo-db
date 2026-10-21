@@ -30,6 +30,11 @@ from repo_catalog.domain.production_context import (
     ResourceRelation,
     json_value,
 )
+from repo_catalog.domain.resource_identity import (
+    IdentityValue,
+    encode_identity,
+    parse_identity,
+)
 from repo_catalog.domain.time import parse_iso8601_us, validate_observation_us
 
 _ACTOR_FIELDS = ("id", "login", "type", "html_url", "url")
@@ -52,7 +57,7 @@ def canonical_database_id(value: object, field_name: str = "id") -> str:
     if type(value) is int and value > 0:
         return str(value)
     if (
-        isinstance(value, str)
+        type(value) is str
         and value.isascii()
         and value.isdecimal()
         and value.strip("0")
@@ -67,36 +72,37 @@ def canonical_database_id(value: object, field_name: str = "id") -> str:
 
 
 def github_resource_id(payload: dict[str, Any], *, graphql: bool) -> str:
+    """Return canonical identity TEXT, keeping decimal and Node namespaces distinct."""
     if graphql:
         for name in ("fullDatabaseId", "databaseId"):
             if payload.get(name) is not None:
-                return canonical_database_id(payload[name], name)
+                return encode_identity(canonical_database_id(payload[name], name))
         value = payload.get("id")
         if type(value) is not str or not value:
             raise AcquisitionError("NODE_ID_REQUIRED", "id")
-        return canonical(["github:node_id", value])
-    return canonical_database_id(payload.get("id"))
+        return encode_identity(["github:node_id", value])
+    return encode_identity(canonical_database_id(payload.get("id")))
 
 
 def github_repository_id(payload, *, graphql):
-    """Repository Node IDs and decimal database IDs are distinct explicit namespaces."""
+    """Return canonical TEXT in the explicit Node or decimal Repository namespace."""
     if graphql and "__typename" in payload and payload["__typename"] != "Repository":
         raise AcquisitionError("RESOURCE_KIND", "repository")
     if graphql and "id" in payload:
         value = payload["id"]
         if type(value) is not str or not value:
             raise AcquisitionError("NODE_ID_REQUIRED", "repository.id")
-        return canonical(["github:node_id", value])
+        return encode_identity(["github:node_id", value])
     return github_resource_id(payload, graphql=graphql)
 
 
 def github_timeline_input_id(value, *, graphql):
-    """Timeline arguments: integers are database IDs, GraphQL strings are opaque Node IDs."""
+    """Return canonical TEXT: integers are database IDs; GraphQL strings are Node IDs."""
     if graphql and type(value) is str:
         if not value:
             raise AcquisitionError("NODE_ID_REQUIRED", "timeline.id")
-        return canonical(["github:node_id", value])
-    return canonical_database_id(value)
+        return encode_identity(["github:node_id", value])
+    return encode_identity(canonical_database_id(value))
 
 
 def repository_role_relation(
@@ -245,9 +251,9 @@ def make_document_key(
     parent: ResourceKey,
     resource_kind: str,
     document_kind: str,
-    provider_document_id: str,
+    provider_document_id: IdentityValue,
 ) -> ResourceKey:
-    """Create a P1/P3 document ResourceKey, mapping descriptive aliases to schema kinds."""
+    """Create a scoped key from a native local ID and a canonical namespace key."""
     mapped_kind = {
         "pull_request_document": "document",
         "review_thread": "thread",
@@ -850,7 +856,7 @@ def normalize_pull_request(
             )
         )
         title_doc = make_document_key(
-            pr_key, "pull_request_document", "pr_title", pr_id
+            pr_key, "pull_request_document", "pr_title", parse_identity(pr_id)
         )
         observations.append(ResourceObservation(title_doc, ()))
         text_admissions.append(
@@ -862,7 +868,9 @@ def normalize_pull_request(
         body_val = payload["body"]
         if body_val is not None and not isinstance(body_val, str):
             raise AcquisitionError("INVALID_FIELD", "body", "string or null required")
-        body_doc = make_document_key(pr_key, "pull_request_document", "pr_body", pr_id)
+        body_doc = make_document_key(
+            pr_key, "pull_request_document", "pr_body", parse_identity(pr_id)
+        )
         observations.append(ResourceObservation(body_doc, ()))
         text_admissions.append(
             (body_doc, body_val, clock, provenance_json, observed_at_us)
@@ -930,7 +938,7 @@ def normalize_review(
     validate_observation_us(observed_at_us)
     json_value(provenance_json, provenance=True)
     pr_id = canonical_database_id(pull_request_id, "pull_request_id")
-    pr_key = ResourceKey(service_instance_uuidv4, "pull_request", pr_id)
+    pr_key = ResourceKey.from_native(service_instance_uuidv4, "pull_request", pr_id)
     id_field = (
         "fullDatabaseId"
         if graphql and "fullDatabaseId" in payload
@@ -1083,9 +1091,9 @@ def normalize_review_thread(
     validate_observation_us(observed_at_us)
     json_value(provenance_json, provenance=True)
     pr_id = canonical_database_id(pull_request_id, "pull_request_id")
-    pr_key = ResourceKey(service_instance_uuidv4, "pull_request", pr_id)
+    pr_key = ResourceKey.from_native(service_instance_uuidv4, "pull_request", pr_id)
     thread_id = payload.get("id")
-    if not isinstance(thread_id, str) or not thread_id.strip():
+    if type(thread_id) is not str or not thread_id.strip():
         raise AcquisitionError(
             "THREAD_ID_REQUIRED", "review_thread", "non-empty string thread id required"
         )
@@ -1157,7 +1165,7 @@ def normalize_review_comment(
     validate_observation_us(observed_at_us)
     json_value(provenance_json, provenance=True)
     pr_id = canonical_database_id(pull_request_id, "pull_request_id")
-    pr_key = ResourceKey(service_instance_uuidv4, "pull_request", pr_id)
+    pr_key = ResourceKey.from_native(service_instance_uuidv4, "pull_request", pr_id)
     id_field = (
         "fullDatabaseId"
         if graphql and "fullDatabaseId" in payload
@@ -1351,12 +1359,16 @@ def normalize_review_comment(
             )
 
     # Thread relation
-    effective_thread = thread_id or (
-        str(payload["review_thread_id"])
-        if payload.get("review_thread_id") is not None
-        else None
+    effective_thread = (
+        thread_id if thread_id is not None else payload.get("review_thread_id")
     )
     if effective_thread is not None:
+        if type(effective_thread) is not str or not effective_thread.strip():
+            raise AcquisitionError(
+                "THREAD_ID_REQUIRED",
+                "review_thread",
+                "non-empty string thread id required",
+            )
         fields.append(
             _candidate(
                 comment_key,
@@ -1471,7 +1483,7 @@ def normalize_issue_comment(
     validate_observation_us(observed_at_us)
     json_value(provenance_json, provenance=True)
     pid = canonical_database_id(parent_id, "parent_id")
-    parent_key = ResourceKey(service_instance_uuidv4, parent_kind, pid)
+    parent_key = ResourceKey.from_native(service_instance_uuidv4, parent_kind, pid)
     id_field = (
         "fullDatabaseId"
         if graphql and "fullDatabaseId" in payload
@@ -1582,6 +1594,8 @@ def normalize_timeline_event(
     """Normalize a GitHub Issue/PR Timeline event."""
     if not isinstance(payload, dict):
         raise AcquisitionError("MALFORMED_PAYLOAD", "timeline_event", "dict required")
+    if parent_kind not in ("issue", "pull_request"):
+        raise AcquisitionError("PARENT_KIND", parent_kind)
     validate_observation_us(observed_at_us)
     json_value(provenance_json, provenance=True)
     pid = github_timeline_input_id(parent_id, graphql=graphql)
@@ -1596,7 +1610,7 @@ def normalize_timeline_event(
     database_aliases = set()
     if graphql and isinstance(payload.get("issue"), dict):
         database_aliases = {
-            canonical_database_id(payload["issue"][name], name)
+            encode_identity(canonical_database_id(payload["issue"][name], name))
             for name in ("fullDatabaseId", "databaseId")
             if payload["issue"].get(name) is not None
         }
@@ -1641,7 +1655,9 @@ def normalize_timeline_event(
         raise AcquisitionError("EVENT_ID_MISMATCH", "timeline_event")
     if not eid:
         raise AcquisitionError("EVENT_ID_REQUIRED", "timeline_event")
-    event_key = make_document_key(parent_key, "timeline_event", "timeline_event", eid)
+    event_key = make_document_key(
+        parent_key, "timeline_event", "timeline_event", parse_identity(eid)
+    )
     _, created_us = _parse_optional_time_us(
         payload, "createdAt" if graphql else "created_at"
     )
@@ -1781,7 +1797,7 @@ def normalize_pr_commit(
     validate_observation_us(observed_at_us)
     json_value(provenance_json, provenance=True)
     pr_id = canonical_database_id(pull_request_id, "pull_request_id")
-    pr_key = ResourceKey(service_instance_uuidv4, "pull_request", pr_id)
+    pr_key = ResourceKey.from_native(service_instance_uuidv4, "pull_request", pr_id)
     oid = parse_git_oid(payload.get("sha"), "pr_commit.sha")
     if oid is None:
         raise AcquisitionError(
@@ -1900,7 +1916,7 @@ def normalize_pr_file(
     validate_observation_us(observed_at_us)
     json_value(provenance_json, provenance=True)
     pr_id = canonical_database_id(pull_request_id, "pull_request_id")
-    pr_key = ResourceKey(service_instance_uuidv4, "pull_request", pr_id)
+    pr_key = ResourceKey.from_native(service_instance_uuidv4, "pull_request", pr_id)
     filename = payload.get("filename")
     if not isinstance(filename, str) or not filename:
         raise AcquisitionError("FILENAME_REQUIRED", "pr_file", "filename required")

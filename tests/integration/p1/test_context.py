@@ -17,7 +17,7 @@ from repo_catalog.domain.p1_context import (
 REPO = "9ebbe38a-f937-40e6-a99c-701835ebcf10"
 SERVICE = "aad25448-03eb-4f83-a578-ceec84375b5a"
 SOURCE = "80f5c4f9-6d6b-4691-af3c-00ab02ad9f53"
-KEY = ResourceKey(SERVICE, "issue", "7")
+KEY = ResourceKey.from_native(SERVICE, "issue", "7")
 PROVENANCE = canonical({"source": "provider.example", "evidence": "event-7"})
 
 
@@ -124,7 +124,7 @@ def test_context_independent_transaction_rollback_and_restart(context):
 
 def test_context_only_resource_needs_no_core_or_source_membership(context):
     db, store, path = context
-    detached = ResourceKey(SERVICE, "issue", "detached")
+    detached = ResourceKey.from_native(SERVICE, "issue", "detached")
     store.resource(detached, None)
     assert db.execute("SELECT count(*) FROM source_repositories").fetchone()[0] == 0
     assert sorted(p.name for p in path.parent.iterdir()) == ["context.sqlite3"]
@@ -179,14 +179,15 @@ def test_source_empty_inventory_is_durable_without_any_membership(context):
 
 def test_children_have_real_parent_and_document_kind_coordinates(context):
     db, store, _ = context
-    first = ResourceKey(SERVICE, "pull_request", "10")
-    second = ResourceKey(SERVICE, "pull_request", "11")
+    first = ResourceKey.from_native(SERVICE, "pull_request", "10")
+    second = ResourceKey.from_native(SERVICE, "pull_request", "11")
     for parent in (first, second):
         store.resource(parent, REPO)
         store.resource(
             ResourceKey.document(parent, "review", "review", "same-provider-doc-id"),
             REPO,
         )
+
     assert (
         db.execute(
             "SELECT count(*) FROM resources WHERE resource_kind='review'"
@@ -199,9 +200,9 @@ def test_children_have_real_parent_and_document_kind_coordinates(context):
             (
                 SERVICE,
                 "review",
-                "same-provider-doc-id",
+                canonical("same-provider-doc-id"),
                 "pull_request",
-                "10",
+                first.provider_resource_id,
                 "review",
                 "same-provider-doc-id",
             ),
@@ -209,13 +210,38 @@ def test_children_have_real_parent_and_document_kind_coordinates(context):
     with pytest.raises(sqlite3.IntegrityError):
         store.resource(
             ResourceKey.document(
-                ResourceKey(SERVICE, "pull_request", "absent"),
+                ResourceKey.from_native(SERVICE, "pull_request", "absent"),
                 "document",
                 "body",
                 "real-id",
             ),
             REPO,
         )
+
+
+@pytest.mark.parametrize("already_stored", [False, True])
+def test_global_document_cannot_be_reinterpreted_as_scoped_on_insert_or_replay(
+    context, already_stored
+):
+    import json
+
+    db, store, _ = context
+    parent = ResourceKey.from_native(SERVICE, "pull_request", "global-shape-test")
+    store.resource(parent)
+    scoped = ResourceKey.document(parent, "document", "body", "D1")
+    if already_stored:
+        store.resource(scoped)
+    before = db.execute("SELECT * FROM resources").fetchall()
+    native = json.loads(scoped.provider_resource_id)
+    for global_key in (
+        ResourceKey.global_document(SERVICE, native),
+        ResourceKey.from_native(SERVICE, "document", native),
+    ):
+        assert global_key == scoped
+        with pytest.raises(ValueError, match="Explicit global Document"):
+            store.resource(global_key)
+        assert db.execute("SELECT * FROM resources").fetchall() == before
+    store.resource(scoped)
 
 
 def test_text_exact_utf8_content_addressing(context):
@@ -251,7 +277,7 @@ def test_detached_issue_attachment_transfer_preserves_identity_and_original_prov
     context,
 ):
     db, store, _ = context
-    key = ResourceKey(SERVICE, "issue", "detached-transfer")
+    key = ResourceKey.from_native(SERVICE, "issue", "detached-transfer")
     store.resource(key, None)
     second = "a1a5dfd6-69a3-4274-bbc7-2e7f6bcd39a4"
     db.execute("INSERT INTO repository_context VALUES(?,?)", (second, "{}"))
@@ -390,7 +416,12 @@ def test_attached_issue_explicit_detach_preserves_null_original_source_and_rollb
         ).fetchone()[0]
         is None
     )
-    assert store.repository_relations(ResourceKey(SERVICE, "issue", "unobserved")) == ()
+    assert (
+        store.repository_relations(
+            ResourceKey.from_native(SERVICE, "issue", "unobserved")
+        )
+        == ()
+    )
     with pytest.raises(
         ValueError,
         match="field_name='repository_uuidv4' is retired; use repository_relations",

@@ -488,7 +488,7 @@ class Context(ContextStore):
             if child.service_instance_uuidv4 != parent.service_instance_uuidv4:
                 raise ContextError("INHERITANCE_OWNER", "field")
             if child.resource_kind in {"review", "comment", "thread", "document"}:
-                coordinates = json.loads(child.provider_resource_id)
+                coordinates = child.scoped_document_coordinates()
                 if tuple(coordinates[:2]) != parent.coordinates()[1:]:
                     raise ContextError("INHERITANCE_OWNER", "field")
             else:
@@ -529,8 +529,7 @@ class Context(ContextStore):
             if child_kind is not None and (
                 member.resource_kind != child_kind
                 or member.service_instance_uuidv4 != owner.service_instance_uuidv4
-                or tuple(json.loads(member.provider_resource_id)[:2])
-                != owner.coordinates()[1:]
+                or member.scoped_document_coordinates()[:2] != owner.coordinates()[1:]
             ):
                 raise ContextError("MEMBER_OWNER", "relation")
 

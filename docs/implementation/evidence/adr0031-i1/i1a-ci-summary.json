@@ -1,0 +1,33 @@
+{
+  "run_id": 39578959808,
+  "job_id": 119151490093,
+  "status": "success",
+  "zip_bytes": 69331,
+  "zip_sha256": "d328a7fce4509b52ca5463be06c02940fbaff6f96b8716b7a97e481124da61c8",
+  "verified_index_members": 21,
+  "binding": {
+    "feature_sha": "d92377599a50f192f534836fc12402a5fe87ca83",
+    "head": "fa5d3baad773af3bada10d023c630713fc8a58c3",
+    "run_attempt": "1",
+    "run_id": "39578959808",
+    "tree": "318ad07874ab436206e6a61f231b308a421cfc54"
+  },
+  "acceptance_status": "development_checks_passed",
+  "full_acceptance": false,
+  "manifest_keys": [
+    "version",
+    "outcome",
+    "context",
+    "runtime",
+    "tree_sha",
+    "validation_mode",
+    "full_acceptance",
+    "acceptance_status",
+    "evidence_status",
+    "acceptance_input_hash",
+    "coverage",
+    "test_ids",
+    "selection_wall_seconds",
+    "command_wall_seconds"
+  ]
+}

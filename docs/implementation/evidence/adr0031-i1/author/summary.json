@@ -1,0 +1,224 @@
+{
+  "frozen_commit": "e0e5c0ed37ac9d6c860db185415616c60161b30d",
+  "frozen_tree": "b6484a7185e9f410a8d05ff5bd4fa574e6dc45e2",
+  "parent": "d92377599a50f192f534836fc12402a5fe87ca83",
+  "input_count": 426,
+  "runs": {
+    "sqlite3513": {
+      "sqlite_version": "3.51.3",
+      "sqlite_source_id": "2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618",
+      "python": "3.13.5 (main, Jul 15 2026, 20:25:40) [GCC 14.2.0]",
+      "selected": 564,
+      "executed": 564,
+      "outcomes": {
+        "passed": 561,
+        "failure": 3
+      },
+      "sql_cases_executed": 37,
+      "collection_exit": 0,
+      "pytest_exit": 1,
+      "reconciliation": {
+        "selected_unique": true,
+        "selected_equal_executed": true,
+        "all_selected_have_one_setup_call_teardown": true,
+        "junit_cases_match_selected": true,
+        "journal_finish_matches_exit": true,
+        "frozen_input_hashes_unchanged": true,
+        "runtime_matches_sql_connections": true
+      },
+      "failure_node_names": [
+        "test_non_transfer_cannot_promote_repository_fields_or_forged_flag[True]",
+        "test_graphql_transfer_parent_namespace_and_original_type",
+        "test_graphql_event_does_not_infer_destination_from_current_issue_repository"
+      ],
+      "passed": 561,
+      "failed": 3,
+      "errors": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "no_skips_or_xfail": true,
+      "modules": {
+        "tests.unit.test_resource_identity": {
+          "executed": 195,
+          "passed": 195,
+          "failed": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "tests.unit.test_resource_key_identity": {
+          "executed": 79,
+          "passed": 79,
+          "failed": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "tests.unit.test_github_identity_boundaries": {
+          "executed": 36,
+          "passed": 36,
+          "failed": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "tests.integration.p1.test_resource_identity_sql": {
+          "executed": 37,
+          "passed": 37,
+          "failed": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "tests.integration.p1.test_context": {
+          "executed": 26,
+          "passed": 26,
+          "failed": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "tests.integration.p1.test_context_relations": {
+          "executed": 38,
+          "passed": 38,
+          "failed": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "tests.integration.p1.test_coverage": {
+          "executed": 39,
+          "passed": 39,
+          "failed": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "tests.integration.i2.test_provider_intake": {
+          "executed": 48,
+          "passed": 45,
+          "failed": 3,
+          "errors": 0,
+          "skipped": 0
+        },
+        "tests.integration.i3.test_selective_exchange": {
+          "executed": 66,
+          "passed": 66,
+          "failed": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      },
+      "failed_case_classification": "Three existing I2 Provider intake tests reach the explicit packaged-DDL scalar-local-ID gate for genuine composite GraphQL Node IDs; no fallback, skip, xfail, schema expansion, or double encoding was used."
+    },
+    "sqlite3531": {
+      "sqlite_version": "3.53.1",
+      "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+      "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+      "selected": 564,
+      "executed": 564,
+      "outcomes": {
+        "passed": 561,
+        "failure": 3
+      },
+      "sql_cases_executed": 37,
+      "collection_exit": 0,
+      "pytest_exit": 1,
+      "reconciliation": {
+        "selected_unique": true,
+        "selected_equal_executed": true,
+        "all_selected_have_one_setup_call_teardown": true,
+        "junit_cases_match_selected": true,
+        "journal_finish_matches_exit": true,
+        "frozen_input_hashes_unchanged": true,
+        "runtime_matches_sql_connections": true
+      },
+      "failure_node_names": [
+        "test_non_transfer_cannot_promote_repository_fields_or_forged_flag[True]",
+        "test_graphql_transfer_parent_namespace_and_original_type",
+        "test_graphql_event_does_not_infer_destination_from_current_issue_repository"
+      ],
+      "passed": 561,
+      "failed": 3,
+      "errors": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "no_skips_or_xfail": true,
+      "modules": {
+        "tests.unit.test_resource_identity": {
+          "executed": 195,
+          "passed": 195,
+          "failed": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "tests.unit.test_resource_key_identity": {
+          "executed": 79,
+          "passed": 79,
+          "failed": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "tests.unit.test_github_identity_boundaries": {
+          "executed": 36,
+          "passed": 36,
+          "failed": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "tests.integration.p1.test_resource_identity_sql": {
+          "executed": 37,
+          "passed": 37,
+          "failed": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "tests.integration.p1.test_context": {
+          "executed": 26,
+          "passed": 26,
+          "failed": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "tests.integration.p1.test_context_relations": {
+          "executed": 38,
+          "passed": 38,
+          "failed": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "tests.integration.p1.test_coverage": {
+          "executed": 39,
+          "passed": 39,
+          "failed": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "tests.integration.i2.test_provider_intake": {
+          "executed": 48,
+          "passed": 45,
+          "failed": 3,
+          "errors": 0,
+          "skipped": 0
+        },
+        "tests.integration.i3.test_selective_exchange": {
+          "executed": 66,
+          "passed": 66,
+          "failed": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      },
+      "failed_case_classification": "Three existing I2 Provider intake tests reach the explicit packaged-DDL scalar-local-ID gate for genuine composite GraphQL Node IDs; no fallback, skip, xfail, schema expansion, or double encoding was used."
+    }
+  },
+  "sequential_runtime_execution": true,
+  "final_code_inputs_match_frozen_commit": true,
+  "preserved_aborted_attempt": {
+    "path": "attempt-1-journal-conflict-sqlite3513",
+    "selected": 564,
+    "started": 192,
+    "pytest_exit": 1,
+    "cause": "Repository --journal serializer resolves shared json.dumps while codec counterexample temporarily monkeypatches it before teardown, causing pytest INTERNALERROR.",
+    "resolution": "Work-only -p i1_event_journal captures the real serializer before tests. Frozen code/tests unchanged; failed attempt retained."
+  },
+  "validation_tooling_hashes": {
+    "run_validation.py": "ec1cbe2942811b0678ebe22e26b9363f794816972db9bd4010f0aee89afc1405",
+    "i1_event_journal.py": "9c3d16383a1f457c59ba0ccfbe454d01108b90b2b3d231ead35d7bdd5a437923"
+  }
+}

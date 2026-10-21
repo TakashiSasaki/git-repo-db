@@ -1,0 +1,159 @@
+"""Independent review observations; imports frozen I1a module from sibling worktree."""
+import hashlib
+import importlib.util
+import itertools
+import json
+import pathlib
+import random
+import sqlite3
+import sys
+import tracemalloc
+
+ROOT = pathlib.Path(__file__).resolve().parents[1] / 'i1a-review-tree'
+MODULE = ROOT / 'src/repo_catalog/domain/resource_identity.py'
+spec = importlib.util.spec_from_file_location('reviewed_codec', MODULE)
+c = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(c)
+observations = []
+
+def ok(name, operation):
+    operation()
+    observations.append({'case': name, 'outcome': 'passed'})
+
+def reject(fn, *args):
+    try:
+        fn(*args)
+    except (TypeError, ValueError):
+        return
+    raise AssertionError('Invalid value accepted')
+
+def eq(left, right):
+    assert left == right, (left, right)
+
+# Independently authored canonical expectations.
+expected = [
+    ('\u0000\b\t\n\f\r\u001f\u007f/"\\', '"\\u0000\\b\\t\\n\\f\\r\\u001f\\u007f/\\"\\\\"'),
+    ('\u007e\u0080\u2028\U00010000\U0010ffff', '"~\\u0080\\u2028\\ud800\\udc00\\udbff\\udfff"'),
+    (['', [], ['e\u0301', '\u00e9']], '["",[],["e\\u0301","\\u00e9"]]'),
+]
+for i, (native, text) in enumerate(expected):
+    ok(f'canonical-expected-{i}', lambda native=native,text=text: (eq(c.encode_identity(native), text), eq(c.parse_identity(text),native)))
+for i, text in enumerate([
+    '"\\udfff\\ud800"', '"\\udbff"', '"\\udc00"', '"\\ud800\\uDFFF"',
+    '"\\u007fX" ', '"\\u002f"', '"\\/"', '"\\u0022"', '"\\u005c"',
+    '"\\u0008"', '"\\u000c"', '"\\u000d"', '"\x7f"',
+    '[[],]', '[,[]]', '["x",["y"]]]', '["x"][]', '["x"[]]',
+    '["x", {"k":"v"}]', '["x", NaN]', '"x"\x00', '\ufeff"x"',
+    '"\ud800"', '"é"',
+]):
+    ok(f'reject-noncanonical-{i}', lambda text=text: reject(c.parse_identity,text))
+
+for depth in (31,32,33):
+    native = ''
+    for _ in range(depth): native = [native]
+    text = '['*depth + '""' + ']'*depth
+    if depth <= 32:
+        ok(f'depth-{depth}-scalar-pass', lambda native=native,text=text: (eq(c.encode_identity(native),text),eq(c.parse_identity(text),native)))
+    else:
+        ok('depth-33-scalar-reject',lambda native=native,text=text: (reject(c.encode_identity,native),reject(c.parse_identity,text)))
+for count in (4095,4096):
+    native=['']*count
+    text='['+','.join(['""']*count)+']'
+    if count == 4095:
+        ok('node-4096-exact-root-included',lambda native=native,text=text:(eq(c.encode_identity(native),text),eq(c.parse_identity(text),native)))
+    else:
+        ok('node-4097-reject-root-included',lambda native=native,text=text:(reject(c.encode_identity,native),reject(c.parse_identity,text)))
+for count in (262142,262143):
+    text='"'+'x'*count+'"'
+    if count==262142:
+        ok('byte-262144-exact',lambda text=text:eq(c.encode_identity(c.parse_identity(text)),text))
+    else: ok('byte-262145-reject',lambda text=text:reject(c.parse_identity,text))
+# Escape expansion exactly meets 262144, then crosses by one supplementary scalar.
+escaped='😀'*21845+'aa'
+ok('escape-expansion-exact',lambda:eq(len(c.encode_identity(escaped)),262144))
+ok('escape-expansion-reject',lambda:reject(c.encode_identity,escaped+'😀'))
+
+# Check actual predecode refusals with a sentinel json.loads.
+saved_loads=c.json.loads
+def no_decode(*a,**k): raise AssertionError('reached JSON decoder')
+c.json.loads=no_decode
+for i,text in enumerate(['['*33+'""'+']'*33,'['+','.join(['[]']*4096)+']','"'+'x'*262143+'"','[null]','[true]','[{}]']):
+    ok(f'predecode-budget-or-forbidden-{i}',lambda text=text:reject(c.parse_identity,text))
+c.json.loads=saved_loads
+# Check pre-serialization rejection and avoid proportional temporary siblings.
+saved_dumps=c.json.dumps
+def no_dump(*a,**k): raise AssertionError('reached JSON serializer')
+c.json.dumps=no_dump
+for i,native in enumerate([['']*1000000,'\x00'*50000,'😀'*30000]):
+    ok(f'preserialize-budget-{i}',lambda native=native:reject(c.encode_identity,native))
+c.json.dumps=saved_dumps
+large=['']*1000000
+tracemalloc.start()
+reject(c.encode_identity,large)
+_,peak=tracemalloc.get_traced_memory()
+tracemalloc.stop()
+assert peak<65536,peak
+observations.append({'case':'oversized-native-sibling-array-temporary-peak','outcome':'passed','peak_bytes':peak,'input_nodes':1000001})
+cycle=[]; cycle.append(cycle)
+ok('native-cycle-bounded',lambda:reject(c.encode_identity,cycle))
+
+# Deterministic property check against an independent stdlib grammar predicate.
+rng=random.Random(0x31)
+chars=['a','b','[',']','"','\\','\n','\0','é','e','\u0301','😀','\x7f','/']
+def value(depth=0):
+    if depth>=6 or rng.randrange(3): return ''.join(rng.choice(chars) for _ in range(rng.randrange(7)))
+    return [value(depth+1) for _ in range(rng.randrange(5))]
+def valid_native(v):
+    if type(v) is str: return all(not 0xD800<=ord(ch)<=0xDFFF for ch in v)
+    return type(v) is list and all(valid_native(x) for x in v)
+corpus=[]
+for _ in range(5000):
+    native=value(); text=json.dumps(native,ensure_ascii=True,separators=(',',':'),allow_nan=False)
+    assert c.encode_identity(native)==text
+    assert c.parse_identity(text)==native
+    corpus.append(text)
+observations.append({'case':'seeded-native-canonical-reference-roundtrip','outcome':'passed','iterations':5000})
+accepted=rejected=0
+for text in corpus:
+    for _ in range(3):
+        i=rng.randrange(len(text)+1)
+        altered=text[:i]+rng.choice([' ',']','[','"','\\','0','null','\n'])+text[i:]
+        try:
+            v=json.loads(altered)
+            expected_accept=valid_native(v) and json.dumps(v,ensure_ascii=True,separators=(',',':'),allow_nan=False)==altered
+        except (ValueError,RecursionError): expected_accept=False
+        try:
+            actual=c.parse_identity(altered)
+        except (ValueError,TypeError):
+            assert not expected_accept, altered
+            rejected+=1
+        else:
+            assert expected_accept,altered
+            accepted+=1
+observations.append({'case':'seeded-serialized-mutation-reference-agreement','outcome':'passed','iterations':15000,'accepted':accepted,'rejected':rejected})
+
+# Exhaust short raw strings: tokenizer must match JSON and canonical grammar.
+accepted=rejected=0
+for length in range(6):
+    for seq in itertools.product('[]",a\\',repeat=length):
+        raw=''.join(seq)
+        try:
+            v=json.loads(raw)
+            reference=valid_native(v) and json.dumps(v,ensure_ascii=True,separators=(',',':'))==raw
+        except ValueError: reference=False
+        try: c.parse_identity(raw)
+        except (ValueError,TypeError):
+            assert not reference,raw
+            rejected+=1
+        else:
+            assert reference,raw
+            accepted+=1
+observations.append({'case':'exhaustive-short-tokenizer-reference-agreement','outcome':'passed','iterations':accepted+rejected,'accepted':accepted,'rejected':rejected})
+result={
+ 'reviewed_commit':'ebb48d4c0beeeb6c19d33d672185894886765835',
+ 'reviewed_tree':'318ad07874ab436206e6a61f231b308a421cfc54',
+ 'module_sha256':hashlib.sha256(MODULE.read_bytes()).hexdigest(),
+ 'python':sys.version,'sqlite_version':sqlite3.sqlite_version,
+ 'sqlite_source_id':sqlite3.connect(':memory:').execute('select sqlite_source_id()').fetchone()[0],
+ 'observations':observations,'outcome':'passed'}
+print(json.dumps(result,indent=2))

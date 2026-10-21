@@ -1,0 +1,20 @@
+{
+  "src/repo_catalog/adapters/github/production_intake.py": "eaf0aee950c454fa564821febf5ae526ee49b94512a03526f37c4c20b68f7a03",
+  "src/repo_catalog/adapters/sqlite/p1_context.py": "bcc4cfaa4cbad681c5a6e3d4c08e718dcd8e078319bef7a38a87a6555f4328bc",
+  "src/repo_catalog/adapters/sqlite/production_context.py": "224436f78336f454a4b773aa5b907367e7a86c58a248cc178f7cfea8342b6e3a",
+  "src/repo_catalog/application/acquisition.py": "b8d249fff85fc9c4000cf9fca847a3ace568ffba4d39d176ba7f0d1a5bd7112b",
+  "src/repo_catalog/application/exchange.py": "ca17f1e7b3ccc1b0964ddae444e38a282f3ccfc92351f9b7815243200810cd2c",
+  "src/repo_catalog/cli/production_query.py": "ec67e07f3c11eaba76aff2e565418a671e701ea1a8155d86f4027dd77a5adf36",
+  "src/repo_catalog/domain/p1_context.py": "7fc5e82fd4c9d3a62f113e85b3e3be8443fb3a12d9fff5ffba1f8df800fca750",
+  "src/repo_catalog/domain/production_query.py": "111b20d71fc93bb10aa9398ad68b518316653187a1c72760608cf3dd3330d42a",
+  "src/repo_catalog/domain/selective_exchange.py": "24d0fa6758f46e758ad0364767288235ce87648075c26ab4d33c6dce6b96b2f0",
+  "tests/integration/i2/test_provider_intake.py": "1402baf9c9a5a2a4a100265bbf4faa3002e7c5067471d7256c15001aba2a89f7",
+  "tests/integration/i3/test_selective_exchange.py": "8463d3550b855093a32b25dec8834a579a5af1848eb0775a8b0ecb71c4e9f785",
+  "tests/integration/p1/test_context.py": "5c3b93cc82291a48af4a42b23275ba6c0c7c06c9db839b6eb1b056a9bcd06ba9",
+  "tests/integration/p1/test_context_relations.py": "c40847eea28c82df7a500d7528b25fb6393177a079c259facc7d40bdea84310c",
+  "tests/integration/p1/test_coverage.py": "4154ab49b5ffd264b2250ae6557fc18c9ce4f6efc456669f6d03d7a71a63b627",
+  "tests/integration/p1/test_resource_identity_sql.py": "b8270a38207d4c481265a95c3f02515ece3deaeb5462097519a2e58196ac815d",
+  "tests/unit/test_github_identity_boundaries.py": "c44e50a483c0535597e44b4cb463c4d8f00806975daa1049eb43cabf216e2645",
+  "tests/unit/test_resource_key_identity.py": "e3656c748e1ddca17cb40833b8191fd01f5a199d29eeed19d72b9b7d37c6c881",
+  "src/repo_catalog/domain/resource_identity.py": "a7b68deb5a40956360a7c8ad69bcff1c216020b4eb451e52e0ea61fb5d0c13a3"
+}

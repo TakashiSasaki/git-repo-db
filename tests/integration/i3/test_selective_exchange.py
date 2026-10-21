@@ -24,6 +24,7 @@ from repo_catalog.domain.p1_context import (
 )
 from repo_catalog.domain.p1_coordination import AdmissionFailure, RequestIdentity
 from repo_catalog.domain.p1_core import OID
+from repo_catalog.domain.resource_identity import encode_identity
 from tests.integration.p5.conftest import init_catalog_stores
 
 
@@ -39,7 +40,7 @@ def fixture(path):
     r1 = catalog(path)
     r2 = str(uuid4())
     service = str(uuid4())
-    issue = ResourceKey(service, "issue", "7")
+    issue = ResourceKey.from_native(service, "issue", "7")
     oid = OID("sha1", "1" * 40)
     core = GitCore(path / "core.sqlite3")
     core.admit_repository(r2)
@@ -257,7 +258,7 @@ def test_mapping_claim_support_and_dispositions_are_exact(tmp_path):
     a, b = tmp_path / "a", tmp_path / "b"
     r1, r2, issue, _ = fixture(a)
     catalog(b)
-    provider_repo = ResourceKey(
+    provider_repo = ResourceKey.from_native(
         issue.service_instance_uuidv4, "repository", "R_provider_node_A"
     )
     mapping = ResourceRepositoryRelation(
@@ -350,7 +351,7 @@ def test_empty_oid_and_context_payload_cannot_override_selection(tmp_path):
         {
             "service_instance_uuidv4": service,
             "resource_kind": "issue",
-            "provider_resource_id": "99",
+            "provider_resource_id": encode_identity("99"),
         }
     ]
     selected = ExchangeSelectionScope(
@@ -1144,12 +1145,8 @@ def test_modeled_collection_member_cannot_borrow_another_parent(tmp_path, sectio
     a, b = tmp_path / "a", tmp_path / "b"
     r1, r2, issue, _ = fixture(a)
     catalog(b)
-    other = ResourceKey(issue.service_instance_uuidv4, "issue", "8")
-    child = ResourceKey(
-        issue.service_instance_uuidv4,
-        "comment",
-        canonical(["issue", "8", "comments", "1"]),
-    )
+    other = ResourceKey.from_native(issue.service_instance_uuidv4, "issue", "8")
+    child = ResourceKey.document(other, "comment", "comments", "1")
     with Context.transaction(a) as ctx:
         ctx.resource(other)
         ctx.resource(child)

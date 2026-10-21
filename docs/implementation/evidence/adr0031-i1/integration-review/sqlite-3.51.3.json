@@ -1,0 +1,554 @@
+{
+  "scope": "Non-author independently authored I1b counterexamples; disposable packaged Context and SQLite BINARY/FK checks, not generalized product acceptance",
+  "commit": "e0e5c0ed37ac9d6c860db185415616c60161b30d",
+  "tree": "b6484a7185e9f410a8d05ff5bd4fa574e6dc45e2",
+  "runtime": {
+    "sqlite_version": "3.51.3",
+    "sqlite_source_id": "2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618",
+    "pragmas": {
+      "foreign_keys": [
+        [
+          1
+        ]
+      ],
+      "recursive_triggers": [
+        [
+          1
+        ]
+      ],
+      "encoding": [
+        [
+          "UTF-8"
+        ]
+      ],
+      "journal_mode": [
+        [
+          "delete"
+        ]
+      ],
+      "synchronous": [
+        [
+          2
+        ]
+      ],
+      "trusted_schema": [
+        [
+          1
+        ]
+      ],
+      "temp_store": [
+        [
+          0
+        ]
+      ]
+    },
+    "compile_options": [
+      [
+        "ATOMIC_INTRINSICS=1"
+      ],
+      [
+        "COMPILER=gcc-14.2.0"
+      ],
+      [
+        "DEFAULT_AUTOVACUUM"
+      ],
+      [
+        "DEFAULT_CACHE_SIZE=-2000"
+      ],
+      [
+        "DEFAULT_FILE_FORMAT=4"
+      ],
+      [
+        "DEFAULT_JOURNAL_SIZE_LIMIT=-1"
+      ],
+      [
+        "DEFAULT_MMAP_SIZE=0"
+      ],
+      [
+        "DEFAULT_PAGE_SIZE=4096"
+      ],
+      [
+        "DEFAULT_PCACHE_INITSZ=20"
+      ],
+      [
+        "DEFAULT_RECURSIVE_TRIGGERS"
+      ],
+      [
+        "DEFAULT_SECTOR_SIZE=4096"
+      ],
+      [
+        "DEFAULT_SYNCHRONOUS=2"
+      ],
+      [
+        "DEFAULT_WAL_AUTOCHECKPOINT=1000"
+      ],
+      [
+        "DEFAULT_WAL_SYNCHRONOUS=2"
+      ],
+      [
+        "DEFAULT_WORKER_THREADS=0"
+      ],
+      [
+        "DIRECT_OVERFLOW_READ"
+      ],
+      [
+        "ENABLE_MATH_FUNCTIONS"
+      ],
+      [
+        "ENABLE_PERCENTILE"
+      ],
+      [
+        "MALLOC_SOFT_LIMIT=1024"
+      ],
+      [
+        "MAX_ATTACHED=10"
+      ],
+      [
+        "MAX_COLUMN=2000"
+      ],
+      [
+        "MAX_COMPOUND_SELECT=500"
+      ],
+      [
+        "MAX_DEFAULT_PAGE_SIZE=8192"
+      ],
+      [
+        "MAX_EXPR_DEPTH=1000"
+      ],
+      [
+        "MAX_FUNCTION_ARG=1000"
+      ],
+      [
+        "MAX_LENGTH=1000000000"
+      ],
+      [
+        "MAX_LIKE_PATTERN_LENGTH=50000"
+      ],
+      [
+        "MAX_MMAP_SIZE=0x7fff0000"
+      ],
+      [
+        "MAX_PAGE_COUNT=0xfffffffe"
+      ],
+      [
+        "MAX_PAGE_SIZE=65536"
+      ],
+      [
+        "MAX_SQL_LENGTH=1000000000"
+      ],
+      [
+        "MAX_TRIGGER_DEPTH=1000"
+      ],
+      [
+        "MAX_VARIABLE_NUMBER=32766"
+      ],
+      [
+        "MAX_VDBE_OP=250000000"
+      ],
+      [
+        "MAX_WORKER_THREADS=8"
+      ],
+      [
+        "MUTEX_PTHREADS"
+      ],
+      [
+        "SYSTEM_MALLOC"
+      ],
+      [
+        "TEMP_STORE=1"
+      ],
+      [
+        "THREADSAFE=1"
+      ]
+    ],
+    "foreign_key_check": [],
+    "integrity_check": [
+      [
+        "ok"
+      ]
+    ]
+  },
+  "cases": [
+    {
+      "case": "native-scalar-composite-and-json-looking-string-distinct",
+      "observed": [
+        "\"731\"",
+        "[\"731\"]",
+        "[\"node\",\"731\"]",
+        "[\"decimal\",\"731\"]",
+        "\"[\\\"node\\\",\\\"731\\\"]\""
+      ],
+      "outcome": "passed"
+    },
+    {
+      "case": "forbidden-native-nested-NoneType",
+      "observed": {
+        "error": "TypeError",
+        "message": "Identity values must be exact strings or lists"
+      },
+      "outcome": "passed"
+    },
+    {
+      "case": "forbidden-native-nested-bool",
+      "observed": {
+        "error": "TypeError",
+        "message": "Identity values must be exact strings or lists"
+      },
+      "outcome": "passed"
+    },
+    {
+      "case": "forbidden-native-nested-int",
+      "observed": {
+        "error": "TypeError",
+        "message": "Identity values must be exact strings or lists"
+      },
+      "outcome": "passed"
+    },
+    {
+      "case": "forbidden-native-nested-float",
+      "observed": {
+        "error": "TypeError",
+        "message": "Identity values must be exact strings or lists"
+      },
+      "outcome": "passed"
+    },
+    {
+      "case": "forbidden-native-nested-dict",
+      "observed": {
+        "error": "TypeError",
+        "message": "Identity values must be exact strings or lists"
+      },
+      "outcome": "passed"
+    },
+    {
+      "case": "forbidden-native-nested-tuple",
+      "observed": {
+        "error": "TypeError",
+        "message": "Identity values must be exact strings or lists"
+      },
+      "outcome": "passed"
+    },
+    {
+      "case": "serialized-reject-'731'",
+      "observed": {
+        "error": "ValueError",
+        "message": "Expected identity string or array"
+      },
+      "outcome": "passed"
+    },
+    {
+      "case": "serialized-reject-' \"731\"'",
+      "observed": {
+        "error": "ValueError",
+        "message": "Expected identity string or array"
+      },
+      "outcome": "passed"
+    },
+    {
+      "case": "serialized-reject-'\"\\\\u0037\\\\u0033\\\\u0031\"'",
+      "observed": {
+        "error": "ValueError",
+        "message": "Identity TEXT is not canonical"
+      },
+      "outcome": "passed"
+    },
+    {
+      "case": "serialized-reject-'[\"731\"]\\n'",
+      "observed": {
+        "error": "ValueError",
+        "message": "Trailing data after JSON identity"
+      },
+      "outcome": "passed"
+    },
+    {
+      "case": "scoped-namespace-is-exact-canonical-text",
+      "observed": [
+        "pull_request",
+        "[\"project\",\"PR1\"]",
+        "review_summary",
+        "R1"
+      ],
+      "outcome": "passed"
+    },
+    {
+      "case": "decoded-nested-namespace-refused",
+      "observed": {
+        "error": "ValueError",
+        "message": "Scoped identity requires namespace kind/TEXT, subtype and native ID"
+      },
+      "outcome": "passed"
+    },
+    {
+      "case": "noncanonical-inner-namespace-text-refused",
+      "observed": {
+        "error": "ValueError",
+        "message": "Expected identity string or array"
+      },
+      "outcome": "passed"
+    },
+    {
+      "case": "timeline-native-node-array-and-exact-issue-reconstruction",
+      "observed": [
+        "11111111-1111-4111-8111-111111111111",
+        "comment",
+        "[\"issue\",\"[\\\"project\\\",\\\"I7\\\"]\",\"timeline_event\",[\"github:node_id\",\"E1\"]]"
+      ],
+      "outcome": "passed"
+    },
+    {
+      "case": "factory-intent-guard-does-not-add-an-identity-coordinate",
+      "observed": [
+        {
+          "error": "ValueError",
+          "message": "Explicit global Document identity cannot select a scoped contract; global persistence requires ADR 0031 I2"
+        },
+        {
+          "error": "ValueError",
+          "message": "Explicit global Document identity cannot select a scoped contract; global persistence requires ADR 0031 I2"
+        }
+      ],
+      "outcome": "passed"
+    },
+    {
+      "case": "nested-mapping-support-exact-text-roundtrip",
+      "observed": {
+        "provider_repository_id": "[\"github:node_id\",\"R1\"]",
+        "supporting_claims": [
+          {
+            "clock_json": "{\"at_us\":1,\"domain\":\"provider:update\"}",
+            "provenance_json": "{\"evidence\":{\"report\":\"one\"},\"source\":\"synthetic://non-author-review\"}",
+            "provider_resource_id": "[\"github:node_id\",\"R1\"]",
+            "relation_kind": "represents_repository",
+            "resource_kind": "repository",
+            "service_instance_uuidv4": "11111111-1111-4111-8111-111111111111",
+            "target_json": "\"22222222-2222-4222-8222-222222222222\""
+          }
+        ]
+      },
+      "outcome": "passed"
+    },
+    {
+      "case": "nested-mapping-support-raw-id-refused",
+      "observed": {
+        "error": "ValueError",
+        "message": "Expected identity string or array"
+      },
+      "outcome": "passed"
+    },
+    {
+      "case": "provider-role-scope-canonical-text",
+      "observed": {
+        "clock": {
+          "at_us": 1,
+          "domain": "provider:update"
+        },
+        "provider_repository_id": "[\"github:node_id\",\"R1\"]",
+        "repository_uuidv4": null,
+        "state": "unresolved_provider_only",
+        "observed_at_us": 1
+      },
+      "outcome": "passed"
+    },
+    {
+      "case": "provider-role-scope-raw-id-refused",
+      "observed": {
+        "error": "ValueError",
+        "message": "Expected identity string or array"
+      },
+      "outcome": "passed"
+    },
+    {
+      "case": "coverage-typed-owner-resource",
+      "observed": {
+        "error": "ValueError",
+        "message": "Expected identity string or array"
+      },
+      "outcome": "passed"
+    },
+    {
+      "case": "coverage-typed-owner-field",
+      "observed": {
+        "error": "ValueError",
+        "message": "Expected identity string or array"
+      },
+      "outcome": "passed"
+    },
+    {
+      "case": "coverage-typed-owner-collection",
+      "observed": {
+        "error": "ValueError",
+        "message": "Expected identity string or array"
+      },
+      "outcome": "passed"
+    },
+    {
+      "case": "exchange-nested-resource-triple-exact-text-and-refusal",
+      "observed": {
+        "error": "ExchangeError",
+        "message": "selection_scope:INVALID_SELECTION: Expected identity string or array"
+      },
+      "outcome": "passed"
+    },
+    {
+      "case": "cursor-positive-context_resources",
+      "observed": [
+        "11111111-1111-4111-8111-111111111111",
+        "repository",
+        "[\"github:node_id\",\"R1\"]"
+      ],
+      "outcome": "passed"
+    },
+    {
+      "case": "forged-valid-checksum-cursor-context_resources-'731'",
+      "observed": {
+        "error": "QueryError",
+        "message": "pagination:INVALID_CURSOR: invalid endpoint key"
+      },
+      "outcome": "passed"
+    },
+    {
+      "case": "forged-valid-checksum-cursor-context_resources-'\"\\\\u0037\\\\u0033\\\\u0031\"'",
+      "observed": {
+        "error": "QueryError",
+        "message": "pagination:INVALID_CURSOR: invalid endpoint key"
+      },
+      "outcome": "passed"
+    },
+    {
+      "case": "cursor-positive-paired_resources",
+      "observed": [
+        "11111111-1111-4111-8111-111111111111",
+        "repository",
+        "[\"github:node_id\",\"R1\"]"
+      ],
+      "outcome": "passed"
+    },
+    {
+      "case": "forged-valid-checksum-cursor-paired_resources-'731'",
+      "observed": {
+        "error": "QueryError",
+        "message": "pagination:INVALID_CURSOR: invalid endpoint key"
+      },
+      "outcome": "passed"
+    },
+    {
+      "case": "forged-valid-checksum-cursor-paired_resources-'\"\\\\u0037\\\\u0033\\\\u0031\"'",
+      "observed": {
+        "error": "QueryError",
+        "message": "pagination:INVALID_CURSOR: invalid endpoint key"
+      },
+      "outcome": "passed"
+    },
+    {
+      "case": "github-database-and-node-namespaces-never-double-encoded",
+      "observed": {
+        "decimal": "\"731\"",
+        "node": "[\"github:node_id\",\"731\"]"
+      },
+      "outcome": "passed"
+    },
+    {
+      "case": "github-scoped-node-local-is-array-and-namespace-is-text",
+      "observed": {
+        "document": [
+          "11111111-1111-4111-8111-111111111111",
+          "document",
+          "[\"pull_request\",\"[\\\"github:node_id\\\",\\\"PR_node\\\"]\",\"pr_body\",[\"github:node_id\",\"PR_node\"]]"
+        ],
+        "event": [
+          "11111111-1111-4111-8111-111111111111",
+          "comment",
+          "[\"issue\",\"[\\\"github:node_id\\\",\\\"I_node\\\"]\",\"timeline_event\",[\"github:node_id\",\"E_node\"]]"
+        ]
+      },
+      "outcome": "passed"
+    },
+    {
+      "case": "packaged-context-shaped-global-before-insert-refused",
+      "observed": {
+        "error": "ValueError",
+        "message": "Explicit global Document identity cannot select a scoped contract; global persistence requires ADR 0031 I2"
+      },
+      "outcome": "passed"
+    },
+    {
+      "case": "packaged-context-scoped-insert-preserves-pr-coordinates-no-parent-report",
+      "observed": {
+        "metadata": [
+          "pull_request",
+          "\"PR1\"",
+          "body",
+          "D1"
+        ],
+        "semantic_parent_reports": 0
+      },
+      "outcome": "passed"
+    },
+    {
+      "case": "packaged-context-shaped-global-existing-key-replay-refused",
+      "observed": {
+        "error": "ValueError",
+        "message": "Explicit global Document identity cannot select a scoped contract; global persistence requires ADR 0031 I2"
+      },
+      "outcome": "passed"
+    },
+    {
+      "case": "packaged-context-native-composite-local-deferred-I2",
+      "observed": {
+        "error": "ValueError",
+        "message": "Current packaged DDL requires nonempty scalar local document IDs; generalized Document persistence is deferred to ADR 0031 I2"
+      },
+      "outcome": "passed"
+    },
+    {
+      "case": "actual-sqlite-binary-key-distinction-and-exact-compound-fks",
+      "observed": [
+        "\"A\"",
+        "\"a\"",
+        "\"\\u00e9\"",
+        "\"e\\u0301\"",
+        "\"731\"",
+        "[\"731\"]",
+        "\"\"",
+        "[]"
+      ],
+      "outcome": "passed"
+    },
+    {
+      "case": "actual-sqlite-compound-fk-refuses-('11111111-1111-4111-8111-111111111111', 'repository', '\"731\"')",
+      "observed": {
+        "error": "IntegrityError",
+        "message": "FOREIGN KEY constraint failed"
+      },
+      "outcome": "passed"
+    },
+    {
+      "case": "actual-sqlite-compound-fk-refuses-('22222222-2222-4222-8222-222222222222', 'issue', '\"731\"')",
+      "observed": {
+        "error": "IntegrityError",
+        "message": "FOREIGN KEY constraint failed"
+      },
+      "outcome": "passed"
+    },
+    {
+      "case": "actual-sqlite-compound-fk-refuses-('11111111-1111-4111-8111-111111111111', 'issue', '\"\\\\u0037\\\\u0033\\\\u0031\"')",
+      "observed": {
+        "error": "IntegrityError",
+        "message": "FOREIGN KEY constraint failed"
+      },
+      "outcome": "passed"
+    },
+    {
+      "case": "genuine-runtime-version-matches-required-selection",
+      "observed": true,
+      "outcome": "passed"
+    }
+  ],
+  "counts": {
+    "executed": 41,
+    "passed": 41,
+    "failed": 0,
+    "skipped": 0
+  },
+  "script_sha256": "3fbb9bfc1e15c47520b0b10d8436bbea604504dabb9de27cd8e65a2b9052c510"
+}
