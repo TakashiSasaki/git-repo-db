@@ -39,6 +39,7 @@ from repo_catalog.domain.p1_context import (
 )
 from repo_catalog.domain.p1_coordination import CoordinationError
 from repo_catalog.domain.production_context import ResourceRelation
+from repo_catalog.domain.resource_identification import ResourceIdentification as RI
 from repo_catalog.domain.resource_identity import encode_identity, parse_identity
 from tests.integration.p5.conftest import init_catalog_stores
 
@@ -526,7 +527,12 @@ def test_generic_provider_scope_cannot_create_transfer(tmp_path):
     provider = ResourceKey.from_native(s, "repository", "1")
     with Context.transaction(tmp_path) as ctx:
         ctx.resource(ResourceKey.from_native(s, "issue", "7"))
-        ctx.resource(event)
+        ctx.resource(
+            event,
+            identification=RI.scoped(
+                event, ResourceKey.from_native(s, "issue", "7"), "timeline_event", "100"
+            ),
+        )
     scope = ProviderRepositoryScope(
         {
             "transfer_from_repository": ProviderRepositoryRoleScope.unresolved(

@@ -276,11 +276,15 @@ for old in (True, False):
     count = db.execute(
         "SELECT count(*) FROM resource_relations WHERE relation_kind='transfer_event_report'"
     ).fetchone()[0]
-    reader = count  # SQL row diagnostic; production reader is tested separately.
+    selected = len(
+        db.execute(
+            "SELECT * FROM resource_relations WHERE relation_kind='transfer_event_report'"
+        ).fetchall()
+    )  # SQL diagnostic, not a product reader.
     ok = (
-        count == reader == 1 and step["outcome"] == "accepted"
+        count == selected == 1 and step["outcome"] == "accepted"
         if old
-        else count == reader == 0
+        else count == selected == 0
         and step.get("error", {}).get("extended_code") == 1811
         and step["before"] == step["after"]
     )
@@ -290,7 +294,7 @@ for old in (True, False):
             family="literal-sql-before-after",
             pass_=ok,
             steps=steps,
-            reader_report_count=reader,
+            sql_selected_report_count=selected,
             report_rows=count,
             literal_sha256=sha(literal.encode()),
             **{"pass": ok},

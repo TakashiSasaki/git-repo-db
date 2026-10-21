@@ -73,6 +73,8 @@ The following accepted mechanism replacements retain their original nodes:
   the old Resource Parent-existence assertion becomes complete child-first
   admission with zero inferred reports. The new generalized tests exercise this
   for global and recursive native IDs too.
+  The old Parent-FK suffix of `test_counterexample_4_invalid_roles_and_targets`
+  receives the same replacement; its closed-role/target refusal assertions stay.
 - Existing genuine scoped fixtures explicitly supply the same namespace/subtype/
   native-local values already used by their ResourceKey factories. No fixture
   introduces a key-shape decoder. Typed ownership/evidence assertions remain.
@@ -83,6 +85,11 @@ The following accepted mechanism replacements retain their original nodes:
   Empty Transfer queries now assert the required unsupported error and no stop.
 - The P3 swallowed-SQLite-fault adapter permits the new trusted schema/stage
   validation SELECTs during binding, retaining the actual read-fault assertions.
+
+The first broad execution found a missed stored-declaration lookup on Provider
+Core-reference registration and missing explicit isolation classifications for
+the two new domain modules. Both are corrected; existing Provider and default
+runtime isolation regressions cover the fixes. Initial failed receipts are kept.
 
 ## Review boundary and reproduction
 

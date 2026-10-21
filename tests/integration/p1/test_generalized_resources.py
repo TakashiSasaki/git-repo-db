@@ -6,6 +6,7 @@ from uuid import uuid4
 
 import pytest
 
+from repo_catalog.adapters.github.production_intake import normalize_timeline_event
 from repo_catalog.adapters.sqlite import p1_schema
 from repo_catalog.adapters.sqlite.p1_context import ContextStore
 from repo_catalog.adapters.sqlite.production_context import Context
@@ -13,6 +14,7 @@ from repo_catalog.adapters.sqlite.recovery_validation import (
     StoredContextInvariantError,
     validate_stored_context_relations,
 )
+from repo_catalog.application.acquisition import ProviderAcquisition
 from repo_catalog.application.exchange import ExchangeService
 from repo_catalog.application.production_query import ProductionQueryService
 from repo_catalog.domain.p1_context import (
@@ -24,8 +26,9 @@ from repo_catalog.domain.p1_context import (
 )
 from repo_catalog.domain.p1_coordination import RequestIdentity
 from repo_catalog.domain.production_context import ResourceObservation, ResourceRelation
+from repo_catalog.domain.production_query import SearchQuery
 from repo_catalog.domain.resource_identification import ResourceIdentification as RI
-from repo_catalog.domain.resource_identity import encode_identity
+from repo_catalog.domain.resource_identity import encode_identity, parse_identity
 from repo_catalog.domain.resource_stage import (
     UnsupportedIdentificationStage,
     UnsupportedResourceStage,
@@ -243,6 +246,40 @@ def test_production_reopen_query_and_opaque_reports(tmp_path):
     assert view.provider_document_id == '["D",[]]'
 
 
+@pytest.mark.parametrize("graphql", [False, True])
+def test_real_nontransfer_provider_native_event_persists_and_reopens(tmp_path, graphql):
+    catalog(tmp_path)
+    with Context.transaction(tmp_path) as ctx:
+        ctx.provider(S, "synthetic")
+    native = "EV_opaque" if graphql else 100
+    payload = (
+        {"id": native, "__typename": "LabeledEvent"}
+        if graphql
+        else {"id": native, "event": "labeled"}
+    )
+    unit = normalize_timeline_event(
+        S, "issue", 7, native, payload, 5, PROV, graphql=graphql
+    )
+    ProviderAcquisition(tmp_path).admit_unit(unit)
+    with Context.snapshot(tmp_path) as ctx:
+        declaration = ctx.identification(
+            ResourceKey(*unit.primary_resource.coordinates())
+        )
+        assert parse_identity(declaration.provider_document_id) == (
+            ["github:node_id", native] if graphql else "100"
+        )
+        assert unit.primary_resource in ctx.resources()
+        assert not ctx.repository_relations(unit.primary_resource)
+        assert not ctx.db.execute(
+            "SELECT 1 FROM resource_relations WHERE relation_kind='transfer_event_report'"
+        ).fetchall()
+        for observation in unit.observations:
+            for candidate in observation.fields:
+                assert candidate in ctx.candidates(
+                    candidate.resource, candidate.field_name
+                )
+
+
 def test_supported_observation_late_sql_failure_rolls_back_whole_unit(tmp_path):
     catalog(tmp_path)
     key = ResourceKey.global_document(S, ["body", []])
@@ -457,8 +494,40 @@ def test_real_selected_transfer_wire_refuses_before_effects_and_replay(
     assert not (b / "p1-recovery-stop.json").exists()
 
 
+def test_unknown_ordered_wire_and_opaque_transfer_text_remain_supported(tmp_path):
+    a, b = tmp_path / "a", tmp_path / "b"
+    r1, _, _, _ = fixture(a)
+    catalog(b)
+    owner = ResourceKey.from_native(S, "vendor.unknown", [])
+    members = tuple(
+        ResourceKey.from_native(S, "vendor.member", native)
+        for native in (["B", []], ["A", []])
+    )
+    relation = ResourceRelation(
+        owner,
+        "transfer_event_report ",
+        members,
+        PROV,
+        canonical({"units": [{"relation_kind": "transfer_event_report"}]}),
+        7,
+    )
+    with Context.transaction(a) as ctx:
+        ctx.provider(S, "synthetic")
+        for key in (owner, *members):
+            ctx.resource(key)
+        ctx.relation(relation)
+    package = ExchangeService(a).export_package(selection=scope())
+    receive(b, package, (r1,))
+    with Context.snapshot(b) as ctx:
+        assert ctx.relations(owner, relation.relation_kind) == (relation,)
+        assert ctx.identification(owner) == RI.unscoped(owner)
+    onward = ExchangeService(b).export_package(selection=scope())
+    assert package.context["resource_relations"] == onward.context["resource_relations"]
+
+
 @pytest.mark.parametrize("poison", ["report", "endpoint"])
-def test_matching_schema_poison_stops_before_ordinary_exposure(tmp_path, poison):
+@pytest.mark.parametrize("route", ["context", "query", "export", "search"])
+def test_matching_schema_poison_stops_before_ordinary_exposure(tmp_path, poison, route):
     catalog(tmp_path)
     namespace = ResourceKey.from_native(S, "issue", "7")
     key = ResourceKey.timeline_event(namespace, "E")
@@ -500,8 +569,17 @@ def test_matching_schema_poison_stops_before_ordinary_exposure(tmp_path, poison)
         validate_stored_context_relations(db)
     db.close()
     with pytest.raises(ValueError, match="AUTHORITATIVE_CORRUPTION"):
-        with Context.snapshot(tmp_path) as ctx:
-            ctx.resources()
+        if route == "context":
+            with Context.snapshot(tmp_path) as ctx:
+                ctx.resources()
+        elif route == "query":
+            ProductionQueryService(tmp_path).get_context_resource(key)
+        elif route == "export":
+            ExchangeService(tmp_path).export_package(selection=scope())
+        else:
+            ProductionQueryService(tmp_path).search(
+                SearchQuery("Transfer", projection_kinds=("context_text",))
+            )
     assert (tmp_path / "p1-recovery-stop.json").exists()
     db = p1_schema.connect(tmp_path / "context.sqlite3", "context")
     assert snapshot(db) == before

@@ -1165,7 +1165,7 @@ class ProviderAcquisition:
         linked_list: list[CoreReference],
         pending_list: list[CoreReference],
     ) -> None:
-        ctx.resource(core_ref.resource)
+        self._register_reference(ctx, core_ref.resource)
         ctx.report_core_reference(core_ref, clock=clock, observed_at_us=observed_at_us)
         if validate_core(core_ref.oid.object_format, core_ref.oid.full_oid):
             ctx.link_core(
