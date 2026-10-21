@@ -1,0 +1,12 @@
+{
+  "confirmed_at_utc": "2026-10-21T12:55:50Z",
+  "refs": [
+    "cb532242c7aa86c6af5b6232b71c0906ea38f5c5\trefs/heads/main",
+    "d92377599a50f192f534836fc12402a5fe87ca83\trefs/pull/116/head",
+    "32e5d4de67c0d436f7583d04e1cfd349b64b2bbd\trefs/pull/117/head",
+    "9ea69ba8804a368802457950601a5a4027174c52\trefs/pull/118/head",
+    "4521ee0165ef5fc7587d87321842b00dc5395cc5\trefs/pull/118/merge"
+  ],
+  "published_merge": "4521ee0165ef5fc7587d87321842b00dc5395cc5 8183f346b3613ea1206b2c0ab3e6428f31614cd8 32e5d4de67c0d436f7583d04e1cfd349b64b2bbd 9ea69ba8804a368802457950601a5a4027174c52",
+  "main_plus_remediation_effective_tree": "8183f346b3613ea1206b2c0ab3e6428f31614cd8"
+}

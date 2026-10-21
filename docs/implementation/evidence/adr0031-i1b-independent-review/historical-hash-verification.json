@@ -1,0 +1,16 @@
+{
+  "baseline_inputs": {
+    "count": 426,
+    "mismatches": []
+  },
+  "i1_receipts": {
+    "indexed": 48,
+    "mismatches": [],
+    "archive_sha256": "77ac439f7aaae6054a2da1928a722fe0baf7275d9fb4f3c7525f306ee64fbf67"
+  },
+  "remediation_receipts": {
+    "indexed": 123,
+    "mismatches": [],
+    "archive_sha256": "f8551728c0ab7bddfc317d552d9af5f4726b6aa1aabcf2f8327e4d2bb59d8398"
+  }
+}

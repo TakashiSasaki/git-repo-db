@@ -1,0 +1,86 @@
+{
+  "task": "B",
+  "scope": "verbatim publication of previously completed work; no product rerun or acceptance claim",
+  "base_commit": "9ea69ba8804a368802457950601a5a4027174c52",
+  "base_tree": "8183f346b3613ea1206b2c0ab3e6428f31614cd8",
+  "original_source_directory": "/workspace/independent-task-b-20261021",
+  "copied_files": {
+    "REPORT.md": {
+      "bytes": 22874,
+      "sha256": "b90d9dcf3da2171b26aab54c30b003731f9d056f2556038cf5b3c915e6a73ed1"
+    },
+    "artifact-index.json": {
+      "bytes": 8207,
+      "sha256": "e547c01ec209358b7ab22a28b51643cadcd054a310a64a5860c147799686a155"
+    },
+    "README.txt": {
+      "bytes": 2337,
+      "sha256": "21d08ea9e419632dc896c4b69cf5f9161315bb4e32c81e957e77b41e6fcde3f1"
+    },
+    "provenance.json": {
+      "bytes": 2037,
+      "sha256": "b6d9f954fc48efbae1dad7704cf9c7c3628755e218a749334449a763b00f373b"
+    },
+    "final-git-binding.json": {
+      "bytes": 677,
+      "sha256": "017984e1442dce9290fa7c0c713cce05d2dac9823a5894c2982a20400d446d43"
+    },
+    "historical-hash-verification.json": {
+      "bytes": 388,
+      "sha256": "eff46ac478fd4bd551ac037c1e1f94c5242a71ccfc05ed1532d1eead5c42085a"
+    },
+    "reconciliation.json": {
+      "bytes": 10537,
+      "sha256": "874bd7fe996097ad87738dd77e875a60f5327769bddc87b0c196f8b5736ce10e"
+    },
+    "independent-distribution-summary.json": {
+      "bytes": 5095,
+      "sha256": "09737878779bde502d5aaee175158f5780b98b844f96ad28754e4f7888de99a2"
+    },
+    "independent-source-boundary-inventory.json": {
+      "bytes": 15179,
+      "sha256": "acebbc9b357dab22e5cddfcbf5bbacfc148aae3bfef79d7ae405ee79a8bfce45"
+    },
+    "counterexamples.py": {
+      "bytes": 13815,
+      "sha256": "956d363de3b817a0c36caf3a4be8f40ce458c3578f23bc03ca67ec471a8875b5"
+    },
+    "counterexamples3513.json": {
+      "bytes": 10772,
+      "sha256": "1d9a32896f0c760d6efbcccc361794026f8910a8d3a0558cea87c823d691b3aa"
+    },
+    "counterexamples3531.json": {
+      "bytes": 10776,
+      "sha256": "2ac2f0b1b607904a31bd35ed259563b94abc24a1a374396a4097e561b701650e"
+    },
+    "exchange_probes.py": {
+      "bytes": 4029,
+      "sha256": "fd0cc63c254bd21f74abb373567b75dbe2293d9063ce5c4083bdd7c57dce9c06"
+    },
+    "exchange3513.json": {
+      "bytes": 1549,
+      "sha256": "1454bab9055fe7046c41d3040239c068a83b21012358b718c5ad6a498c484fda"
+    },
+    "exchange3531.json": {
+      "bytes": 1549,
+      "sha256": "08320df7ef35949714b96c57dce632fdac9ec87e6b85a3232cbcd02585e278e7"
+    },
+    "run_review.py": {
+      "bytes": 3123,
+      "sha256": "72a722075aeaba1c99dc7a3ec4e4d18f6e2e9bd7cfa516c95b3192081cfe3a4d"
+    },
+    "review_journal.py": {
+      "bytes": 961,
+      "sha256": "eb56d7e798da99bbd7d7d2c2a49682c4d64cbd0f011a8122af3daaeadb503ebc"
+    },
+    "reconcile.py": {
+      "bytes": 2970,
+      "sha256": "3e3b3120c183b70ce7af15e48d93453fee4da451b232b05a82ddc2fc30728506"
+    },
+    "independent-review-evidence.tar.gz": {
+      "bytes": 1128971,
+      "sha256": "1f179831e2c52e3443beb1dc72648c5a710ce8724ed3621b7db02998005a05b5"
+    }
+  },
+  "verified_archive_entries": 56
+}
