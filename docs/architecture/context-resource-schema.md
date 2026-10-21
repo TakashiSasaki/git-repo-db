@@ -1,15 +1,16 @@
 # Generalized Context Resource schema contract
 
-This document accompanies [proposed ADR 0031](../adr/0031-generalized-context-resources.md).
-The owner's A3/B3/U3=C′/U4=B/U5=A/U1=B/U2=A/U2-E2 logical selections are fixed.
-This complete package is proposed; physical design and the numerical engineering
-bounds below are not separately approved. Nothing here changes runtime behavior.
+This document accompanies [owner-accepted ADR 0031](../adr/0031-generalized-context-resources.md).
+The owner's A3/B3/U3=C′/U4=B/U5=A/U1=B/U2=A/U2-E2 and G3=A selections
+remain fixed. On 2026-10-21 the owner explicitly accepted ADR 0031 as a
+whole. Its normative Resource identity, typed reference and Admission contracts
+are accepted target design. Physical realization and numerical bounds explicitly
+identified as engineering proposals require integrated implementation validation;
+the ADR acceptance alone changes no runtime behavior.
 The [evidence-to-contract map](../implementation/evidence/context-resource-design/cprime-integration.md)
-records historical bounded C′ mechanisms and corrected G1/G2 separately from
-the new G3=A SQL evidence. The owner selected G3=A on 2026-10-21; complete ADR
-acceptance remains a separate owner action. The bounded delta and independent
-reviews are complete: **READY FOR OWNER DESIGN ACCEPTANCE**, with product
-integration and distribution validation still future work.
+separates historical C′/G1/G2 proofs from the real-SQLite G3=A delta and its
+independent reviews. Product integration, distribution validation and merge
+remain separate and unexecuted by this design acceptance.
 
 ## Identity, meaning and report boundaries
 
@@ -440,8 +441,8 @@ explicit owner acceptance; only then retire whole affected files, set `replaces`
 and update index/inbound current instructions coherently under policy §6.
 If a clause is demonstrably nonconflicting, record only that scoped refinement.
 Do not extend the pre-policy exception to ADRs 0029–0030, erase PR-document
-coordinates, or silently use `refines` to mask a reversal. This PR proposes that
-plan; it performs none of the retirement/acceptance actions.
+coordinates, or silently use `refines` to mask a reversal. This accepted ADR retains that conditional successor/carry-forward plan; it
+retires or replaces no earlier accepted record.
 
 See the [handoff](../implementation/context-resource-design-handoff.md) for fixed
 source coordinates, current-code impacts, future sequencing and actual checks.

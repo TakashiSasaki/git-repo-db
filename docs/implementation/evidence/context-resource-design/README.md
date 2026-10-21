@@ -1,9 +1,10 @@
 # Generalized Context Resource design review and verification
 
-This record concerns proposed ADR 0031. The original preparation and prior
-evidence-integration reviews below are historical, bound to their stated dates
-and freezes. The current [G3=A revision](#g3a-decision-integration-and-sql-delta)
-adds a separately frozen disposable SQL delta and independent review. See the
+This record preserves the design preparation and independent review of ADR 0031,
+**owner-accepted on 2026-10-21**. Earlier evidence below is historical, bound to
+its stated dates and freezes; the [G3=A revision](#g3a-decision-integration-and-sql-delta)
+adds a separately frozen disposable SQL delta and independent review. None of
+those earlier receipts is relabeled as an acceptance execution. See the
 [handoff](../../context-resource-design-handoff.md).
 
 ## Original preparation at 5244b98
@@ -186,12 +187,25 @@ runtimes. The [documentation review](g3-a/independent-docs/review.md) checked
 contracts, source pins, protected paths and raw author receipt hashes without
 claiming SQLite execution. Both found no blocking/substantive issue.
 
-The current result is **READY FOR OWNER DESIGN ACCEPTANCE**. Author and reviewer
+The pre-acceptance review result was **READY FOR OWNER DESIGN ACCEPTANCE**. Author and reviewer
 counts overlap and are not summed. Identical-input old-F2 versus new-G3 SQL
 execution distinguishes F2's actual I8 success from the new FK-787 refusal.
 Later factual status/link/receipt additions do not change frozen executable
 inputs; separate final-delta review binds those additions before publication.
 
 Production source/packaged DDL/fingerprint/dependencies/product tests/workflows/
-default runtime/Pages allowlist remain unchanged. No ADR acceptance, merge,
-release, deployment, P8 or real-account/catalog operation is performed.
+default runtime/Pages allowlist were unchanged in that pre-acceptance step.
+That step itself performed no whole-ADR acceptance, merge, release, deployment,
+P8 or real-account/catalog operation.
+
+## Whole-ADR owner acceptance — 2026-10-21
+
+After the G3=A frozen SQL proof and independent reviews, the owner explicitly
+accepted [ADR 0031](../../adr/0031-generalized-context-resources.md) as a whole,
+stating 「ADR 0031 を受け入れます。」 in this conversation. The acceptance was
+given for [Draft PR #114](https://github.com/TakashiSasaki/git-repo-db/pull/114)
+at reviewed HEAD `d3526c73153c4b243c3dbc7e92c892c9950ca481`.
+This status-only documentation update changes the ADR frontmatter/index and
+living handoff; it does not alter frozen executable inputs, historical review
+receipts, earlier accepted ADR bodies or product sources. Acceptance is separate
+from a later authorized stack merge, product implementation and V1/V2 verification.

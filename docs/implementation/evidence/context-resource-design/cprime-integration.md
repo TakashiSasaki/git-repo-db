@@ -1,8 +1,9 @@
-# C′ evidence integrated into proposed ADR 0031
+# C′ evidence integrated into accepted ADR 0031
 
-**READY FOR OWNER DESIGN ACCEPTANCE.** G3=A was selected on 2026-10-21;
-whole-package owner acceptance is separate. The new bounded delta and non-author
-reviews are complete.
+**Owner-accepted ADR 0031 (2026-10-21).** Its design acceptance followed the
+independently reviewed G3=A SQL delta. This evidence map records what the
+bounded experiment established; it is not product implementation or a new
+execution following owner acceptance.
 G1/G2 retain their independently reviewed corrected scope. Historical F2 permits
 structural I8 support and temporarily withholds it in Admission; that is not the
 current contract or a native-I7 SQL proof. The new [G3=A delta](g3-a/README.md)
@@ -114,7 +115,8 @@ The [ADR compatibility matrix](../../../architecture/context-resource-schema.md#
 preserves ADR 0017 semantic keys, 0028 times/digests, 0029 five-store and Context
 carry-forward, and 0030 roles/report pairing/typed-reference obligations. G3=A
 preserves Q-S10's semantic Issue; no accepted ADR is changed or retired. There
-is no remaining G3 option question or inferred whole-package acceptance.
+is no remaining G3 option question; whole-package acceptance rests on the
+owner's explicit 2026-10-21 statement, not an inference from test success.
 
 ## Verification generations
 

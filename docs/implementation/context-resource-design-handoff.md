@@ -2,34 +2,32 @@
 
 ## Status and authorization
 
-[ADR 0031](../adr/0031-generalized-context-resources.md) is **proposed**, with
-`date: null`. The owner has selected A3, B3, U3=C′, U4=B, U5=A, U1=B, U2=A and
-U2-E2. On **2026-10-21** the owner also selected **G3=A**: the native Issue I7
-is the semantic Issue for the Q-S10 Timeline Event/Transfer contract. These
-selections are fixed; acceptance of the complete package, physical realization
-and engineering proposals is separate.
+[ADR 0031](../adr/0031-generalized-context-resources.md) is **owner-accepted**
+as of **2026-10-21** (`status: accepted`, `date: 2026-10-21`). The owner
+accepted the complete design after independently reviewed G3=A SQL proof, with
+the express statement 「ADR 0031 を受け入れます。」. A3, B3, U3=C′, U4=B,
+U5=A, U1=B, U2=A, U2-E2 and Q-S10-specific G3=A remain fixed. Exact physical
+mechanisms and finite limits called engineering proposals remain subject to
+implementation review. Acceptance does not grant implementation or merge authority.
 The [schema contract](../architecture/context-resource-schema.md) contains the
 grammar, equality, specification vectors, dependency behavior, authority
 boundaries, ADR matrix and experimental acceptance contract.
 
-**READY FOR OWNER DESIGN ACCEPTANCE.** G3=A is decided; current-document
-integration, the bounded SQL delta on both real runtimes and non-author review
-with independent major-counterexample execution are complete. The owner's
-whole-package acceptance and separate implementation authorization remain pending.
-Prior C′/G1/G2 evidence retains its reviewed scope. Product integration remains
-unimplemented. The [evidence map](evidence/context-resource-design/cprime-integration.md)
-and [new G3=A evidence](evidence/context-resource-design/g3-a/README.md) separate
-all evidence generations and enforcement layers; readiness is based on the new
-receipts/reviews, not the old F2 result.
+**OWNER DESIGN ACCEPTED (2026-10-21).** The G3=A SQL delta was independently
+reviewed on real supported SQLite runtimes before approval. The owner's
+whole-package acceptance is now recorded separately from implementation
+authorization. Prior C′/G1/G2 evidence retains its reviewed scope. Product
+integration remains unimplemented. The [evidence map](evidence/context-resource-design/cprime-integration.md)
+and [G3=A receipts](evidence/context-resource-design/g3-a/README.md) distinguish
+historical evidence from the new proof; no old F2 result is promoted.
 
-This task authorizes revision of existing Draft PR #114, disposable bounded
-G3=A SQL experiments, independent review, ordinary commits/push and PR-body
-updates. It does not authorize production implementation, accepted-ADR body
-edits/retirement, production Python, packaged DDL/fingerprints, dependencies,
-existing runtime tests, workflows
-or default-runtime changes. Only existing design PR #114 is updated; do not
-modify/retarget PR #113 or #115. Merge, auto-merge, release, deployment, P8, real catalogs, backups,
-credentials and live Provider accounts remain outside permission.
+The earlier G3=A task authorized documentation, disposable SQL experiments,
+independent review and ordinary publication on Draft PR #114. This subsequent
+owner acceptance authorizes recording the decision status and synchronizing its
+living index/handoff and PR description; it does not authorize production code,
+packaged DDL/fingerprint, dependency/test/workflow/runtime changes, new PRs,
+merging or retargeting #113/#115, auto-merge, release, deployment, P8 or
+real catalog, backup, credential or Provider-account operations.
 
 ## Fixed baselines and evidence
 
@@ -85,7 +83,7 @@ override the owner's subsequent common schema choices.
 | Demonstrated subset | Typed Parent/Timeline Event SQL references, exact support reports, NULL/replay/mutation protections, child-before-Parent and whole-unit admission at the frozen experiment, including G1/G2 corrections. |
 | Decided G3=A boundary | An attributed I8 Parent report may be retained but is permanently ineligible to support Transfer for this I7-native Event. Missing correct I7 support is a re-suppliable dependency, not that violation. Historical F2 temporary QualificationRequired is not the current rule. |
 | Product limitations | Production encoding/DDL/readers/writers, Exchange/selection, stored validation, backup/recovery, Search and packaging remain unimplemented for this format. |
-| Package state | Proposed, date null; G3 meaning decided and bounded SQL proof/independent review completed in new evidence. Owner acceptance of the whole package and separate production-implementation authorization are still required. |
+| Package state | **Owner-accepted ADR 0031, dated 2026-10-21**, with bounded G3=A SQL proof and independent review. Draft #114 remains unmerged; production-implementation authorization, runtime integration and distribution verification remain separate. |
 
 Syntax cannot prove `[]` is a native singleton or `""` a complete ID. Adapters
 establish identification completeness; missing new adapters do not prevent
@@ -178,13 +176,13 @@ its temporary QualificationRequired behavior.
 
 This dependency plan grants **no implementation permission**.
 
-These are future authorized work units, not implementation PRs created by this
-task. A non-author reviewer must inspect each frozen unit; re-review material
+These are planned future work units, not implementation PRs authorized by
+this acceptance record. A non-author reviewer must inspect each frozen unit; re-review material
 corrections and bind the final integrated inputs.
 
 | Unit | Dependency and work | Verification and independent gate |
 | --- | --- | --- |
-| D0 — G3=A acceptance preparation | Reflect the explicit 2026-10-21 decision, demonstrate the bounded SQL delta on frozen disposable inputs, and obtain non-author review with independent major-counterexample execution. No new A/B selection. | Native-I7 SQL refusal of I8 support, retained I8 report and correct-I7 positive/dependency cases; actual minimum/newer runtimes, error/rowset/transaction receipts and frozen review. Whole-ADR acceptance remains the owner's next decision. |
+| D0 — G3=A acceptance preparation | Reflect the explicit 2026-10-21 decision, demonstrate the bounded SQL delta on frozen disposable inputs, and obtain non-author review with independent major-counterexample execution. No new A/B selection. | Native-I7 SQL refusal of I8 support, retained I8 report and correct-I7 positive/dependency cases; actual minimum/newer runtimes, error/rowset/transaction receipts and frozen review. The owner accepted ADR 0031 on 2026-10-21; implementation and merge require separate authorization. |
 | I1 — shared ResourceKey | After design acceptance and implementation authorization, share strict parser/encoder, Unicode/scalar validation, finite bounds and BINARY equality. Use one namespace-TEXT scoped encoder and explicit native-contract dispatch. | Positive/negative vectors, empty/nested/huge IDs, exact limits, malformed canonical input and API/SQL/reference agreement. Review no dropped PR coordinates or unknown-kind reinterpretation. |
 | I2 — generalized Resources | Depends I1. Update packaged DDL/composer/functions/index/fingerprint together; complete global/scoped identifying metadata without semantic Parent FK/authority. Keep ResourceKey triple and Provider registration. | Direct SQL omitted/partial contracts, global scalar/composite Documents, typed absence projection and all conflict verbs. Review no surrogate/table and unchanged five Coverage columns. |
 | I3 — Parent reports | Depends I1/I2. Extend resource_relations, full-key index, deterministic target/source projections, complete non-NULL CHECKs and typed FKs. No independently writable projection. | Child-before-Parent, absent referent FK errors, original re-supply, independent provenance/clocks, Document children and attributed alternatives. Review sole report authority and no inferred winner. |
@@ -210,7 +208,7 @@ code-contract/ADR research is useful input, **not independent package review**.
 A different reviewer must inspect this frozen authored revision read-only,
 including metadata/index, clauses, canonical vectors, fixed G3=A, original
 F1/F2 evidence versus new SQL-delta receipts, all eight obligation mappings,
-stable citations and proposed state. That reviewer independently executes the
+stable citations and the proposed state at the frozen pre-acceptance checkpoint. That reviewer independently executes the
 major SQL counterexamples against the frozen inputs; initial parallel research
 is not a substitute. Material semantic/constraint corrections require re-review.
 The [review and verification record](evidence/context-resource-design/README.md)

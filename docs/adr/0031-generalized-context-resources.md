@@ -1,6 +1,6 @@
 ---
-status: proposed
-date: null
+status: accepted
+date: 2026-10-21
 replaces: []
 refines:
   - 0017-domain-keys-without-storage-surrogates.md
@@ -13,24 +13,26 @@ refines:
 
 ## Decision
 
-This **proposed complete design package** records logical choices already selected
-by the owner in the task “git-repo-db: Record the agreed generalized Context
-Resource design in a Draft PR”, sections 3–7. The choices below are fixed for
-this design; they are not unanswered option questions. The package, its physical
-realization and engineering proposals have not been accepted. No conversation
-URL or approval of the complete package is invented.
+This **owner-accepted design** records the fixed Context Resource choices first
+documented in the task “git-repo-db: Record the agreed generalized Context
+Resource design in a Draft PR”, sections 3–7. Those choices are not reopened.
 
-**READY FOR OWNER DESIGN ACCEPTANCE.** G3 meaning is decided; the bounded SQL
-delta and non-author reviews are complete. Whole-package owner acceptance is
-still separate.
-On **2026-10-21**, the owner explicitly selected **G3=A** in the task
-“git-repo-db: G3=A integration, Q-S10 SQL differential demonstration and ADR 0031
-acceptance preparation”. The native Issue I7 is the semantic Issue of this
-Q-S10 Event. This is one scoped decision, not acceptance of ADR 0031 or its
-experimental implementation. [Pinned evidence and obligation mapping](../implementation/evidence/context-resource-design/cprime-integration.md)
-separate the historical F2 construction, the new [G3=A evidence](../implementation/evidence/context-resource-design/g3-a/README.md),
-independent review and future product integration. The ADR stays proposed until
-explicit whole-package owner acceptance.
+On **2026-10-21 (Asia/Tokyo)**, after reviewing the completed G3=A SQL proof
+and independent reviews in [Draft PR #114](https://github.com/TakashiSasaki/git-repo-db/pull/114)
+at HEAD `d3526c73153c4b243c3dbc7e92c892c9950ca481`, the owner explicitly accepted
+**ADR 0031 as a whole**, stating 「ADR 0031 を受け入れます。」. This is the
+recorded approval source; no unavailable conversation URL or message ID is
+invented. Acceptance fixes the design and its normative schema/admission
+obligations. Companion physical choices and numerical bounds explicitly labeled
+as engineering proposals remain subject to implementation validation.
+
+Before the whole-ADR acceptance, on **2026-10-21**, the owner had separately
+selected **G3=A**. Native Issue I7 is the semantic Issue of the reserved Q-S10
+Timeline Event. The separately frozen [G3=A SQL evidence](../implementation/evidence/context-resource-design/g3-a/README.md),
+[independent reviews](../implementation/evidence/context-resource-design/cprime-integration.md)
+and historical F2 proof retain their actual scopes. Design acceptance is
+**not** branch integration, product implementation, integrated-runtime proof,
+release, deployment or authority to merge.
 
 Keep the Resource primary key:
 
@@ -146,7 +148,7 @@ remain closed. `replaces: []` means no accepted file is retired. If a concrete
 conflict is discovered, report it and follow policy §6's replacement process;
 do not relabel it refinement. G3=A preserves Q-S10's semantic Issue and adds its
 explicit scoped realization; it does not reverse the accepted meaning or permit
-application-only enforcement. This task performs no accepted-ADR body edits.
+application-only enforcement. This acceptance-status revision does not amend or retire any earlier accepted ADR.
 
 ## Consequences
 
@@ -168,11 +170,11 @@ and evidence map retain each obligation and distinguish the new G3=A evidence.
 
 The [implementation handoff](../implementation/context-resource-design-handoff.md)
 separates fixed choices, proposed engineering bounds, future implementation
-sequence, verification requirements and actual documentation checks. This Draft
-remains proposed pending explicit owner acceptance of the whole package. The old
-163-case audit and original C′ freeze retain their original scopes. Product
-Exchange, stored integrity, paired backup, query/Search and packaging integration
-remain future work; disposable SQL evidence does not implement those paths.
+sequence, verification requirements and actual documentation checks. ADR 0031
+was accepted on 2026-10-21 but remains on an unmerged Draft PR; the old 163-case
+audit and original C′ freeze retain their original scopes. Product Exchange,
+stored integrity, paired backup, query/Search and packaging integration remain
+future work; disposable SQL evidence does not implement those paths.
 
 ## References
 
