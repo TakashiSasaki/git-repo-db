@@ -1,0 +1,36 @@
+{
+  "frozen_commit": "9eeacb28f7e4a426114a9ce40e2324b4da302817",
+  "command": "sh docs/implementation/evidence/context-resource-u3-cprime/semantic-gaps/reproduce.sh /tmp/cprime-semantic-review-rerun",
+  "files": {
+    "baseline-current.json": {
+      "sha256": "045922f53783033c88a4cccf73d6185b335607f7d743c22c673c7ec916a0b4cb",
+      "cases": 9,
+      "steps": 0
+    },
+    "baseline-minimum.json": {
+      "sha256": "dcdef425ef8a92b9d7d03b953e6f0284e8647040e9ecbaa2bd28903655ea4eed",
+      "cases": 9,
+      "steps": 0
+    },
+    "current/results.json": {
+      "sha256": "36670cd50932b18964a6a49ed0e049f8fc5a16cba9a5cb462e3240f940e595d6",
+      "cases": 15,
+      "steps": 163
+    },
+    "minimum/results.json": {
+      "sha256": "69f331837db520eab6de0f2e0c179d5be6da56d452168843c9e7a220eaffb914",
+      "cases": 15,
+      "steps": 163
+    },
+    "focused-current/results.json": {
+      "sha256": "f3fb419fb02ca2ad71d37a7ebd5a8b6dd623655f8d7b1452907866be790edab4",
+      "cases": 3,
+      "steps": 46
+    },
+    "focused-minimum/results.json": {
+      "sha256": "f798256935824ac63c6b02a1bc9083581d1efc9c38329e97e3a35e712f5bf31f",
+      "cases": 3,
+      "steps": 46
+    }
+  }
+}

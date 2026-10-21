@@ -1,0 +1,28 @@
+{
+  "prior_executable_freeze": "e9aba86f4530b2e683c77e23a4fe58bdf02192c5",
+  "prior_pr_head": "22b58ce7ff59478f1a4c8c8ef89b17d2f0068590",
+  "main": "efb55af84ccbf1183d47547d22bb6c57d8fbc8f9",
+  "design_head": "5244b98a9a302f082a07a526480faf438fc91838",
+  "candidate_sql_sha256": "2892a5fb0bcef8a0e0ea916fc1b71687a0a2afe545849e27dec4f7fd3600171f",
+  "inputs_sha256": {
+    "docs/implementation/evidence/context-resource-u3-cprime/candidates/cprime.py": "ae495167209711d39776af42719fccd79b2c33aa2167a2dfaa454b9c4b1ba755",
+    "docs/implementation/evidence/context-resource-u3-cprime/candidates/guards.sql": "3af1ffacd5e4ec74145985a9f0c96e601725c0b0772606dec4b48e973ce6e688",
+    "docs/implementation/evidence/context-resource-u3-cprime/candidates/relations.sql": "92dffa58b631d68eb5b86028fb246c093f34d836ebccd04354ef9863649e6aa6",
+    "docs/implementation/evidence/context-resource-u3-cprime/candidates/resources.sql": "920d295784939bf8a29bdba0136fad373413e7dbf97943e6c3787107eb9cd4cc",
+    "docs/implementation/evidence/context-resource-u3-cprime/candidates/transfer-columns.sql": "59e3f71ef582a6cdb84fd2e2efd5fe695d3a990a59f474c5447954d23923960c",
+    "docs/implementation/evidence/context-resource-u3-cprime/candidates/transfer-constraints.sql": "06f66a87c8152fb32bbd748900fbd287e777c7c3ead6acd19faf1c769c0fe398",
+    "docs/implementation/evidence/context-resource-u3-cprime/reproduction/baseline-build-minimum.sh": "92736200c3b492d9b50cf2aac9ef1a5b1953accc5135acdb93ca9eeaa211a037",
+    "docs/implementation/evidence/context-resource-u3-cprime/reproduction/baseline-runtime.py": "90f62defb6627a95787b9dd1111dab55d8bc769c029d598a6b0e5b8dc4ef4442",
+    "docs/implementation/evidence/context-resource-u3-cprime/reproduction/reproduce.sh": "53896c806e95f0dde73ece6cca4638dc5533ebc24cde00f4c780867bce9e92fc",
+    "docs/implementation/evidence/context-resource-u3-cprime/reproduction/run.py": "88dc60201b1aae7279ba57c76a6f4d10841514a24893405b56fa1ad64a8c0fc6",
+    "src/repo_catalog/adapters/sqlite/p1_schema.py": "ecdf23d58879f39271234b4914560235ce92d3b22e0828b464205feb86d83ba8",
+    "src/repo_catalog/adapters/sqlite/p1_context.py": "4dc12fe46678757b045fac3dffa666c162771a50b60fadcf4c6934dbad8ee52c",
+    "src/repo_catalog/domain/p1_context.py": "6800bb8f19bda77afa7fd290f13518f71263f3914c9e3a23082eff0b5eba15ed",
+    "src/repo_catalog/domain/time.py": "f8ee3df9e402a820527d89b5d88c4c85afc4a2d013cd457763cc37746984990a",
+    "src/repo_catalog/adapters/sqlite/p1_ddl/context.sql": "458278e3016744d1100b2827b7686414f75cfa4de013e13a7433f8effd37fcea",
+    "src/repo_catalog/adapters/sqlite/p1_ddl/coverage.sql": "1c830f402ac20ace36928d03b49db2f7aeab9962f14d6ee7aeb086b63081a9ed",
+    "docs/implementation/evidence/context-resource-u3-cprime/semantic-gaps/probe.py": "ea382d5ce8b97fa9a0e0dd1d0463b3a487fbbbf17c8019cc2e82b8584fb70031",
+    "docs/implementation/evidence/context-resource-u3-cprime/semantic-gaps/reproduce.sh": "beeb687d27f2e362b8bcddba82564c36a2e38efff8f6a7c750e846939f38ee97"
+  },
+  "minimum_archive_sha256": "81f5be397049b0cae1b167f2225af7646fc0f82e4a9b3c48c9ea3a533e21d77a"
+}

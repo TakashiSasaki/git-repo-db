@@ -1,0 +1,15 @@
+{
+  "reviewed_executable_freeze": "9eeacb28f7e4a426114a9ce40e2324b4da302817",
+  "prose_sha256": {
+    "docs/implementation/context-resource-u3-cprime-semantic-gaps.md": "4f21178dabf72833633e4ffd1ad6e37fd4a56e42d281f98a254d334c0f4f70ab",
+    "docs/implementation/evidence/context-resource-u3-cprime/semantic-gaps/README.md": "5ebc215ae15871d3d6b5f8d9108b14fea08a709902419cd51fdda0ae304c6816",
+    "docs/implementation/context-resource-u3-cprime-experiment.md": "a0a986ceaf6b424af27084a72ca607a210921ff8c87b8cd6a5d2a90f282847e4",
+    "docs/implementation/evidence/context-resource-u3-cprime/README.md": "211c0269f6adba47c02bcb1368e286cb67cdb409203b63f53ce031edfd61d531",
+    "docs/implementation/evidence/context-resource-u3-cprime/candidates/README.md": "445b1591a096a4ef0f249046af42fe337397bdd911469fc7f9eb49d25968e9ee"
+  },
+  "local_path_links_checked": 64,
+  "missing_links": [],
+  "scope_against": "22b58ce7ff59478f1a4c8c8ef89b17d2f0068590",
+  "changed_and_untracked_paths_within_experiment_only": true,
+  "assessment": "No overclaim found. G1/G2 closure scoped to isolated contracts; G3 owner decision remains explicit; original freeze banners preserve original result; product Exchange/backup not claimed."
+}

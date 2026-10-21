@@ -1,0 +1,49 @@
+{
+  "inspected_at_utc": "2026-10-21T00:31:39.026633+00:00",
+  "repository": "https://github.com/TakashiSasaki/git-repo-db",
+  "product_baseline": {
+    "commit": "efb55af84ccbf1183d47547d22bb6c57d8fbc8f9",
+    "tree": "117d580b31098ecb8287281bd843894fdfad71fc"
+  },
+  "fresh_main": {
+    "commit": "efb55af84ccbf1183d47547d22bb6c57d8fbc8f9",
+    "tree": "117d580b31098ecb8287281bd843894fdfad71fc"
+  },
+  "main_vs_baseline_diff": "",
+  "audit_pr": {
+    "number": 113,
+    "state": "open",
+    "draft": true,
+    "commit": "24f593861327328fa00dab0b83f956cec330a0ac",
+    "tree": "7318fdb1cb5ef4959d685bf2a3a1d9d91385c89e"
+  },
+  "design_pr": {
+    "number": 114,
+    "state": "open",
+    "draft": true,
+    "commit": "5244b98a9a302f082a07a526480faf438fc91838",
+    "tree": "4e44d04c9425942cdd1392a2a748f80f2ad485ed",
+    "relationship": "reference only; not merged or cherry-picked"
+  },
+  "other_open_experiment_prs": [],
+  "branch": "experiment/context-u3-cprime-20261021",
+  "baseline_input_sha256": {
+    "AGENTS.md": "de01fde4b7648b3b25afe1f0cac9d99be2caf1b563fd1127c8f38f8568c7e08d",
+    "docs/adr/README.md": "2a569444ea0d455242f2ca3143842fbf33fdc0aded540b9197c5117a2c3d941e",
+    "docs/adr/policy.md": "e9615090149b26a5ba5f0375d9a7b955cb01ae02e1e4c50a0c9c2f882318507a",
+    "docs/adr/0017-domain-keys-without-storage-surrogates.md": "b33a2f482fbf98b394b10f8d30dde2bf79c4067ee82b65c02f5dbe27996c572f",
+    "docs/adr/0028-classified-times-and-sha256-exchange.md": "497882c1661e3800c0b7138288a08a54e7f7efc29dee8e278a41a24f68384bbf",
+    "docs/adr/0029-independent-access-store.md": "d6d6c22cc5a23ab92c785f986150d9a2e8b88ee64bb56614637cdd36b81ec0f1",
+    "docs/adr/0030-context-repository-relations-and-selective-exchange.md": "22ea2c17fa16ce4a9cca95330f8fb21c8bf510a786233189832a2d0bce81b054",
+    "src/repo_catalog/adapters/sqlite/p1_ddl/context.sql": "458278e3016744d1100b2827b7686414f75cfa4de013e13a7433f8effd37fcea",
+    "src/repo_catalog/adapters/sqlite/p1_schema.py": "ecdf23d58879f39271234b4914560235ce92d3b22e0828b464205feb86d83ba8",
+    "src/repo_catalog/domain/p1_context.py": "6800bb8f19bda77afa7fd290f13518f71263f3914c9e3a23082eff0b5eba15ed",
+    "src/repo_catalog/adapters/sqlite/p1_context.py": "4dc12fe46678757b045fac3dffa666c162771a50b60fadcf4c6934dbad8ee52c",
+    "src/repo_catalog/adapters/sqlite/production_context.py": "fc1ae420076534f444724efabb76405c00255bd254dc3b08841e2505d4c8f17d",
+    "src/repo_catalog/domain/selective_exchange.py": "b4778e5137bd7e4960437f9602ec53a4aa9ae79ed8640dfd0eeb4e820376797f",
+    "src/repo_catalog/adapters/sqlite/recovery.py": "a35950021b21a069d5deefb2066ced2d5e680f5224076c60f8b381a8bbf4fad9",
+    "docs/architecture/selective-exchange-contract.md": "81b167378b26ae156c06977424bab5ad091cb0be3903bfa426a859decf70ea55",
+    "pyproject.toml": "13146bd784022dc375f1d425236c2c2d0d9ec3a735c7f3eeae1e65dc41d450ce",
+    "uv.lock": "38086f956741ff31865ed75f5a1d48997ab518fbc2a2dac8e0e5277cd6a413c9"
+  }
+}

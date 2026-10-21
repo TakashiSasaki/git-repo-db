@@ -1,0 +1,482 @@
+#!/usr/bin/env python3
+"""Independent reviewer probes: direct SQL fixtures, separate from author tests."""
+
+import argparse
+import hashlib
+import importlib.util
+import json
+import platform
+import sqlite3
+import subprocess
+import sys
+from pathlib import Path
+
+args = argparse.ArgumentParser()
+args.add_argument("--repo", type=Path, required=True)
+args.add_argument("--output", type=Path, required=True)
+args = args.parse_args()
+E = args.repo / "docs/implementation/evidence/context-resource-u3-cprime"
+sys.path[:0] = [str(args.repo / "src"), str(E / "candidates")]
+import cprime as cp  # noqa: E402
+
+from repo_catalog.adapters.sqlite import p1_schema  # noqa: E402
+
+
+def J(x):
+    return json.dumps(
+        x, ensure_ascii=True, sort_keys=True, separators=(",", ":"), allow_nan=False
+    )
+
+
+S = "12345678-1234-4234-8234-123456789abc"
+S2 = "22345678-1234-4234-8234-123456789abc"
+R = "32345678-1234-4234-8234-123456789abc"
+P = J({"source": "independent-review-fixture", "evidence": {"source_event": "E9"}})
+C = {"domain": "independent-review-clock", "at_us": 123}
+E9 = J(["issue", "I7", "timeline_event", "E9"])
+RR = "service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json,observed_at_us"
+EC = "service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,target_json,clock_json,provenance_json,observed_at_us,event_report_members_json,event_report_scope_json"
+records = []
+
+
+def new():
+    db = cp.connect()
+    for service in (S, S2):
+        db.execute("INSERT INTO providers VALUES(?,?,?)", (service, "synthetic", "{}"))
+    db.execute("INSERT INTO repository_context VALUES(?,?)", (R, "{}"))
+    return db
+
+
+def resource(db, kind, value, service=S, namespace=None, doc=None):
+    extra = (namespace, J(value[1]), doc, J(value[3])) if namespace else (None,) * 4
+    db.execute(
+        "INSERT INTO resources VALUES(?,?,?,?,?,?,?)", (service, kind, J(value), *extra)
+    )
+
+
+def child(db, name="E9", doc="timeline_event"):
+    resource(db, "comment", ["issue", "I7", doc, name], namespace="issue", doc=doc)
+    return J(["issue", "I7", doc, name])
+
+
+def parent(event=E9, target="I7", prov=P, doc="timeline_event", observed=None):
+    return (
+        S,
+        "comment",
+        event,
+        "parent",
+        J([[S, "issue", J(target)]]),
+        prov,
+        J({"clock": C, "document_kind": doc, "state": "complete"}),
+        observed,
+    )
+
+
+def report(p=None, typ="transferred"):
+    p = p or parent()
+    scope = {
+        "clock": C,
+        "event_type": typ,
+        "from_provider_repository_id": None,
+        "to_provider_repository_id": None,
+        "provided_roles": ["transfer_from_repository"],
+        "parent_members_json": p[4],
+        "parent_scope_json": p[6],
+        "endpoints": [["transfer_from_repository", J(R)]],
+    }
+    return (*p[:3], "transfer_event_report", "[]", p[5], J(scope), p[7])
+
+
+def endpoint(r):
+    return (*r[:3], "transfer_from_repository", J(R), J(C), r[5], r[7], r[4], r[6])
+
+
+def ins(db, table, cols, row, suffix="", verb="INSERT"):
+    return db.execute(
+        f"{verb} INTO {table}({cols}) VALUES({','.join('?' for x in row)}) {suffix}",
+        row,
+    )
+
+
+def rr(db, row, **kw):
+    return ins(db, "resource_relations", RR, row, **kw)
+
+
+def ep(db, row, **kw):
+    return ins(db, "resource_repository_relations", EC, row, **kw)
+
+
+def rowsets(db):
+    return {
+        table: [list(r) for r in db.execute(f"SELECT * FROM {table} ORDER BY 1,2,3")]
+        for table in (
+            "resources",
+            "resource_relations",
+            "resource_repository_relations",
+        )
+    }
+
+
+def attempt(db, ident, fn, error=None):
+    trace = []
+    db.set_trace_callback(lambda sql: trace.append(sql) if sql not in trace else None)
+    record = {
+        "id": ident,
+        "expected": error or "success",
+        "transaction_before": db.in_transaction,
+    }
+    try:
+        fn()
+        record["actual"] = "success"
+    except Exception as exc:
+        record["actual"] = getattr(exc, "sqlite_errorname", type(exc).__name__)
+        record["error"] = str(exc)
+    finally:
+        db.set_trace_callback(None)
+    record["sql"] = trace
+    record["transaction_after"] = db.in_transaction
+    record["rows"] = rowsets(db)
+    record["matches_expectation"] = record["actual"] == (error or "success")
+    records.append(record)
+    assert record["matches_expectation"], record
+
+
+def check(db, label):
+    fk = [list(r) for r in db.execute("PRAGMA foreign_key_check")]
+    integrity = [r[0] for r in db.execute("PRAGMA integrity_check")]
+    assert not fk and integrity == ["ok"], (label, fk, integrity)
+    checkpoints.append(
+        {"label": label, "foreign_key_check": fk, "integrity_check": integrity}
+    )
+
+
+checkpoints = []
+freeze = json.loads((E / "results/input-freeze.json").read_text())
+assert all(
+    hashlib.sha256((args.repo / p).read_bytes()).hexdigest() == v
+    for p, v in freeze["inputs_sha256"].items()
+)
+assert hashlib.sha256(cp.sql().encode()).hexdigest() == freeze["candidate_sql_sha256"]
+db = new()
+tables = {r[0] for r in db.execute("SELECT name FROM sqlite_schema WHERE type='table'")}
+base = sqlite3.connect(":memory:")
+p1_schema.register_functions(base)
+base.executescript(p1_schema.compose("context"))
+assert (
+    tables
+    == {r[0] for r in base.execute("SELECT name FROM sqlite_schema WHERE type='table'")}
+    and len(tables) == 19
+)
+assert len(db.execute("PRAGMA table_info(coverage_claims)").fetchall()) == 5
+assert {r[2] for r in db.execute("PRAGMA foreign_key_list(resources)")} == {"providers"}
+assert not {"parent_resource_kind", "parent_provider_resource_id"} & {
+    r[1] for r in db.execute("PRAGMA table_info(resources)")
+}
+schema_inventory = {
+    "tables": sorted(tables),
+    "resources_foreign_keys": [
+        list(r) for r in db.execute("PRAGMA foreign_key_list(resources)")
+    ],
+    "relations_foreign_keys": [
+        list(r) for r in db.execute("PRAGMA foreign_key_list(resource_relations)")
+    ],
+    "endpoint_foreign_keys": [
+        list(r)
+        for r in db.execute("PRAGMA foreign_key_list(resource_repository_relations)")
+    ],
+}
+attempt(db, "IR01-child-before-parent", lambda: child(db))
+attempt(
+    db,
+    "IR02-parent-missing-real-fk",
+    lambda: rr(db, parent()),
+    "SQLITE_CONSTRAINT_FOREIGNKEY",
+)
+attempt(db, "IR03-parent-arrival-no-synthesis", lambda: resource(db, "issue", "I7"))
+assert not db.execute("SELECT * FROM resource_relations").fetchall()
+attempt(
+    db,
+    "IR04-parent-alone-not-support",
+    lambda: rr(db, report()),
+    "SQLITE_CONSTRAINT_FOREIGNKEY",
+)
+attempt(db, "IR05-original-parent-resupplied", lambda: rr(db, parent()))
+attempt(db, "IR06-genuine-one-sided-report", lambda: rr(db, report()))
+attempt(db, "IR07-genuine-one-sided-endpoint", lambda: ep(db, endpoint(report())))
+attempt(db, "IR08-commit-original-null-time", db.commit)
+assert db.execute("SELECT observed_at_us FROM resource_relations").fetchall() == [
+    (None,),
+    (None,),
+]
+check(db, "one-sided unit after original resupply")
+for col in (8, 9):
+    other = new()
+    child(other)
+    resource(other, "issue", "I7")
+    rr(other, parent())
+    rr(other, report())
+    row = list(endpoint(report()))
+    row[col] = None
+    attempt(
+        other,
+        f"IR09-null-support-{col}",
+        lambda row=row: ep(other, row),
+        "SQLITE_CONSTRAINT_CHECK",
+    )
+    check(other, f"null support {col}")
+other = new()
+child(other)
+resource(other, "issue", "I7")
+for name, members in [
+    ("zero", []),
+    ("multiple", [[S, "issue", J("I7")]] * 2),
+    ("missing", [[S, "issue"]]),
+    ("null", [[S, "issue", None]]),
+]:
+    p = list(parent())
+    p[4] = J(members)
+    attempt(
+        other,
+        f"IR10-parent-shape-{name}",
+        lambda p=p: rr(other, p),
+        "SQLITE_CONSTRAINT_CHECK",
+    )
+other = new()
+ordinary = child(other, doc="ordinary_comment")
+resource(other, "issue", "I7")
+attempt(
+    other,
+    "IR11-ordinary-comment-not-timeline",
+    lambda: rr(other, parent(event=ordinary)),
+    "SQLITE_CONSTRAINT_FOREIGNKEY",
+)
+other = new()
+child(other)
+resource(other, "issue", "I7")
+rr(other, parent())
+r = list(report())
+r[2] = child(other, "E10")
+attempt(
+    other,
+    "IR12-other-event-cannot-borrow-support",
+    lambda: rr(other, r),
+    "SQLITE_CONSTRAINT_FOREIGNKEY",
+)
+r = list(report())
+r[5] = J({"source": "independent-review-fixture-B", "evidence": {"source_event": "E9"}})
+attempt(
+    other,
+    "IR13-different-report-provenance-no-support",
+    lambda: rr(other, r),
+    "SQLITE_CONSTRAINT_FOREIGNKEY",
+)
+# Same Event can preserve two attributed Parent reports; no broad UNIQUE(event,parent).
+resource(db, "issue", "I8")
+p2 = parent(
+    target="I8", prov=J({"source": "independent-B", "evidence": {"source_event": "E9"}})
+)
+attempt(db, "IR14-competing-parent-report", lambda: rr(db, p2))
+attempt(db, "IR15-competing-dependent-report", lambda: rr(db, report(p2)))
+attempt(db, "IR16-competing-dependent-endpoint", lambda: ep(db, endpoint(report(p2))))
+assert (
+    db.execute(
+        "SELECT count(*) FROM resource_relations WHERE relation_kind='parent'"
+    ).fetchone()[0]
+    == 2
+)
+check(db, "competing reports without winner")
+for name, fn in [
+    (
+        "update",
+        lambda: db.execute(
+            "UPDATE resource_relations SET observed_at_us=77 WHERE relation_kind='parent'"
+        ),
+    ),
+    (
+        "delete",
+        lambda: db.execute(
+            "DELETE FROM resource_relations WHERE relation_kind='parent'"
+        ),
+    ),
+    ("replace", lambda: rr(db, parent(), verb="INSERT OR REPLACE")),
+]:
+    attempt(db, "IR17-immutable-" + name, fn, "SQLITE_CONSTRAINT_TRIGGER")
+p = list(parent())
+p[7] = 456
+attempt(
+    db,
+    "IR18-ignore-changed-observation-rejected",
+    lambda: rr(db, p, verb="INSERT OR IGNORE"),
+    "SQLITE_CONSTRAINT_TRIGGER",
+)
+e = list(endpoint(report()))
+e[9] = report(p2)[6]
+attempt(
+    db,
+    "IR19-ignore-changed-support-rejected",
+    lambda: ep(db, e, suffix="ON CONFLICT DO NOTHING"),
+    "SQLITE_CONSTRAINT_TRIGGER",
+)
+attempt(
+    db,
+    "IR20-exact-ignore-rowset-retained",
+    lambda: rr(db, parent(), verb="INSERT OR IGNORE"),
+)
+check(db, "immutable conflict paths")
+other = new()
+for i, value in enumerate(
+    ["", [], [""], [[]], "9" * 150, " A ", "é", "e\u0301", ["a", ["b", []]], ["b", "a"]]
+):
+    attempt(
+        other,
+        f"IR21-identity-{i}",
+        lambda value=value: resource(other, "synthetic.genuine-opaque", value),
+    )
+for i, value in enumerate(
+    [None, "null", "1", "false", "{}", "[1]", '["x",null]', '[ "x" ]', '"\\u0078"']
+):
+    attempt(
+        other,
+        f"IR22-invalid-identity-{i}",
+        lambda value=value: other.execute(
+            "INSERT INTO resources VALUES(?,?,?,NULL,NULL,NULL,NULL)",
+            (S, "synthetic.genuine-opaque", value),
+        ),
+        "SQLITE_CONSTRAINT_NOTNULL" if value is None else "SQLITE_CONSTRAINT_CHECK",
+    )
+attempt(
+    other,
+    "IR23-known-comment-cannot-generic-fallback",
+    lambda: resource(other, "comment", "bogus"),
+    "SQLITE_CONSTRAINT_CHECK",
+)
+check(other, "identity fixtures")
+# General groups are not flattened; their referent existence remains application-only.
+other = new()
+for value in ("owner", "a", "b"):
+    resource(other, "vendor.future", value)
+g = (
+    S,
+    "vendor.future",
+    J("owner"),
+    "ordered.general",
+    J([[S, "vendor.future", J("b")], [S, "vendor.future", J("a")]]),
+    P,
+    J({"state": "complete", "ordered": True}),
+    321,
+)
+attempt(other, "IR24-general-multimember-ordered", lambda: rr(other, g))
+missing = list(g)
+missing[3] = "generic.missing-reference"
+missing[4] = J([[S, "vendor.future", J("not-admitted")]])
+attempt(other, "IR25-generic-member-existence-not-sql-fk", lambda: rr(other, missing))
+check(other, "general syntax vs member referent boundary")
+# SQL does not check actual event semantics or the reverse endpoint-set closure.
+other = new()
+child(other)
+resource(other, "issue", "I7")
+rr(other, parent())
+false_report = report(typ="closed")
+attempt(
+    other,
+    "IR26-structural-false-type-not-authenticated",
+    lambda: rr(other, false_report),
+)
+attempt(
+    other,
+    "IR27-false-type-endpoint-structurally-valid",
+    lambda: ep(other, endpoint(false_report)),
+)
+check(other, "SQL syntax does not certify actual event")
+spec = importlib.util.spec_from_file_location(
+    "author_typed_admission", E / "reproduction/run.py"
+)
+admission = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(admission)
+attempt(
+    other,
+    "IR28-typed-admission-rejects-wrong-event-type",
+    lambda: admission.admit(other, false_report),
+    "ValueError",
+)
+other = new()
+child(other)
+resource(other, "issue", "I7")
+rr(other, parent())
+attempt(other, "IR29-sql-group-no-reverse-endpoint-fk", lambda: rr(other, report()))
+assert not other.execute("SELECT * FROM resource_repository_relations").fetchall()
+attempt(
+    other,
+    "IR30-typed-admission-rejects-endpoint-cut",
+    lambda: admission.admit(other, report(), []),
+    "ValueError",
+)
+check(other, "atomic endpoint set remains typed-unit obligation")
+# Counterexamples to broader support/replay preservation, characterized honestly.
+other = new()
+child(other)
+resource(other, "issue", "I7")
+rr(other, parent())
+independent_prov = list(report())
+independent_prov[5] = J(
+    {"source": "independent-transfer-observer", "evidence": {"source_event": "E9"}}
+)
+attempt(
+    other,
+    "IR31-existing-support-independent-transfer-provenance-rejected",
+    lambda: rr(other, independent_prov),
+    "SQLITE_CONSTRAINT_FOREIGNKEY",
+)
+independent_clock = list(report())
+scope = json.loads(independent_clock[6])
+scope["clock"] = {"domain": "independent-transfer-clock", "at_us": 456}
+independent_clock[6] = J(scope)
+attempt(
+    other,
+    "IR32-existing-support-independent-transfer-clock-rejected",
+    lambda: rr(other, independent_clock),
+    "SQLITE_CONSTRAINT_CHECK",
+)
+before = rowsets(other)
+attempt(
+    other,
+    "IR33-ignore-resource-nonkey-rebind-not-rejected",
+    lambda: other.execute(
+        "INSERT OR IGNORE INTO resources VALUES(?,?,?,?,?,?,?)",
+        (S, "comment", E9, "issue", J("changed-namespace"), "timeline_event", J("E9")),
+    ),
+)
+assert rowsets(other) == before
+check(other, "review findings leave original rows intact")
+metadata = {
+    "python": platform.python_version(),
+    "sqlite_version": sqlite3.sqlite_version,
+    "sqlite_source_id": db.execute("SELECT sqlite_source_id()").fetchone()[0],
+    "compile_options": [r[0] for r in db.execute("PRAGMA compile_options")],
+    "pragmas": {
+        p: db.execute("PRAGMA " + p).fetchone()[0]
+        for p in ("foreign_keys", "recursive_triggers", "synchronous")
+    },
+    "frozen_commit": subprocess.check_output(
+        ["git", "-C", str(args.repo), "rev-parse", "HEAD"], text=True
+    ).strip(),
+    "input_manifest_sha256": freeze["inputs_manifest_sha256"],
+    "candidate_sql_sha256": freeze["candidate_sql_sha256"],
+    "reviewer_script_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+}
+output = {
+    "metadata": metadata,
+    "schema_inventory": schema_inventory,
+    "collected_case_ids": [r["id"] for r in records],
+    "executed_case_ids": [r["id"] for r in records],
+    "records": records,
+    "checkpoints": checkpoints,
+    "summary": {
+        "checks": len(records),
+        "matched_expectations": sum(r["matches_expectation"] for r in records),
+        "unexpected_failures": 0,
+        "scope": "Independent direct-SQL cases plus two calls to frozen typed admission; author full rerun reported separately. Repeated runtimes and author overlaps are not additive.",
+    },
+}
+args.output.write_text(json.dumps(output, indent=2) + "\n")
+print(json.dumps(output["summary"]))

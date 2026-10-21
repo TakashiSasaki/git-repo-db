@@ -1,0 +1,3888 @@
+{
+  "freeze": "9eeacb28f7e4a426114a9ce40e2324b4da302817",
+  "tree": "8f78de68058582327beddbb656207659507d43c6",
+  "script_sha256": "a16d15d3dd9e16b929daf1f268a3dfaef7f33cf9d840c826ca1ac06c35f2ab51",
+  "input_manifest": {
+    "prior_executable_freeze": "e9aba86f4530b2e683c77e23a4fe58bdf02192c5",
+    "prior_pr_head": "22b58ce7ff59478f1a4c8c8ef89b17d2f0068590",
+    "main": "efb55af84ccbf1183d47547d22bb6c57d8fbc8f9",
+    "design_head": "5244b98a9a302f082a07a526480faf438fc91838",
+    "candidate_sql_sha256": "2892a5fb0bcef8a0e0ea916fc1b71687a0a2afe545849e27dec4f7fd3600171f",
+    "inputs_sha256": {
+      "docs/implementation/evidence/context-resource-u3-cprime/candidates/cprime.py": "ae495167209711d39776af42719fccd79b2c33aa2167a2dfaa454b9c4b1ba755",
+      "docs/implementation/evidence/context-resource-u3-cprime/candidates/guards.sql": "3af1ffacd5e4ec74145985a9f0c96e601725c0b0772606dec4b48e973ce6e688",
+      "docs/implementation/evidence/context-resource-u3-cprime/candidates/relations.sql": "92dffa58b631d68eb5b86028fb246c093f34d836ebccd04354ef9863649e6aa6",
+      "docs/implementation/evidence/context-resource-u3-cprime/candidates/resources.sql": "920d295784939bf8a29bdba0136fad373413e7dbf97943e6c3787107eb9cd4cc",
+      "docs/implementation/evidence/context-resource-u3-cprime/candidates/transfer-columns.sql": "59e3f71ef582a6cdb84fd2e2efd5fe695d3a990a59f474c5447954d23923960c",
+      "docs/implementation/evidence/context-resource-u3-cprime/candidates/transfer-constraints.sql": "06f66a87c8152fb32bbd748900fbd287e777c7c3ead6acd19faf1c769c0fe398",
+      "docs/implementation/evidence/context-resource-u3-cprime/reproduction/baseline-build-minimum.sh": "92736200c3b492d9b50cf2aac9ef1a5b1953accc5135acdb93ca9eeaa211a037",
+      "docs/implementation/evidence/context-resource-u3-cprime/reproduction/baseline-runtime.py": "90f62defb6627a95787b9dd1111dab55d8bc769c029d598a6b0e5b8dc4ef4442",
+      "docs/implementation/evidence/context-resource-u3-cprime/reproduction/reproduce.sh": "53896c806e95f0dde73ece6cca4638dc5533ebc24cde00f4c780867bce9e92fc",
+      "docs/implementation/evidence/context-resource-u3-cprime/reproduction/run.py": "88dc60201b1aae7279ba57c76a6f4d10841514a24893405b56fa1ad64a8c0fc6",
+      "src/repo_catalog/adapters/sqlite/p1_schema.py": "ecdf23d58879f39271234b4914560235ce92d3b22e0828b464205feb86d83ba8",
+      "src/repo_catalog/adapters/sqlite/p1_context.py": "4dc12fe46678757b045fac3dffa666c162771a50b60fadcf4c6934dbad8ee52c",
+      "src/repo_catalog/domain/p1_context.py": "6800bb8f19bda77afa7fd290f13518f71263f3914c9e3a23082eff0b5eba15ed",
+      "src/repo_catalog/domain/time.py": "f8ee3df9e402a820527d89b5d88c4c85afc4a2d013cd457763cc37746984990a",
+      "src/repo_catalog/adapters/sqlite/p1_ddl/context.sql": "458278e3016744d1100b2827b7686414f75cfa4de013e13a7433f8effd37fcea",
+      "src/repo_catalog/adapters/sqlite/p1_ddl/coverage.sql": "1c830f402ac20ace36928d03b49db2f7aeab9962f14d6ee7aeb086b63081a9ed",
+      "docs/implementation/evidence/context-resource-u3-cprime/semantic-gaps/probe.py": "ea382d5ce8b97fa9a0e0dd1d0463b3a487fbbbf17c8019cc2e82b8584fb70031",
+      "docs/implementation/evidence/context-resource-u3-cprime/semantic-gaps/reproduce.sh": "beeb687d27f2e362b8bcddba82564c36a2e38efff8f6a7c750e846939f38ee97"
+    },
+    "minimum_archive_sha256": "81f5be397049b0cae1b167f2225af7646fc0f82e4a9b3c48c9ea3a533e21d77a"
+  },
+  "runtime": {
+    "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+    "sqlite": "3.53.1",
+    "source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+    "compile_options": [
+      "ATOMIC_INTRINSICS=1",
+      "COMPILER=clang-22.1.3",
+      "DEFAULT_AUTOVACUUM",
+      "DEFAULT_CACHE_SIZE=-2000",
+      "DEFAULT_FILE_FORMAT=4",
+      "DEFAULT_JOURNAL_SIZE_LIMIT=-1",
+      "DEFAULT_MMAP_SIZE=0",
+      "DEFAULT_PAGE_SIZE=4096",
+      "DEFAULT_PCACHE_INITSZ=20",
+      "DEFAULT_RECURSIVE_TRIGGERS",
+      "DEFAULT_SECTOR_SIZE=4096",
+      "DEFAULT_SYNCHRONOUS=2",
+      "DEFAULT_WAL_AUTOCHECKPOINT=1000",
+      "DEFAULT_WAL_SYNCHRONOUS=2",
+      "DEFAULT_WORKER_THREADS=0",
+      "DIRECT_OVERFLOW_READ",
+      "ENABLE_DBSTAT_VTAB",
+      "ENABLE_FTS3",
+      "ENABLE_FTS3_PARENTHESIS",
+      "ENABLE_FTS4",
+      "ENABLE_FTS5",
+      "ENABLE_GEOPOLY",
+      "ENABLE_MATH_FUNCTIONS",
+      "ENABLE_PERCENTILE",
+      "ENABLE_RTREE",
+      "MALLOC_SOFT_LIMIT=1024",
+      "MAX_ATTACHED=10",
+      "MAX_COLUMN=2000",
+      "MAX_COMPOUND_SELECT=500",
+      "MAX_DEFAULT_PAGE_SIZE=8192",
+      "MAX_EXPR_DEPTH=1000",
+      "MAX_FUNCTION_ARG=1000",
+      "MAX_LENGTH=1000000000",
+      "MAX_LIKE_PATTERN_LENGTH=50000",
+      "MAX_MMAP_SIZE=0x7fff0000",
+      "MAX_PAGE_COUNT=0xfffffffe",
+      "MAX_PAGE_SIZE=65536",
+      "MAX_SQL_LENGTH=1000000000",
+      "MAX_TRIGGER_DEPTH=1000",
+      "MAX_VARIABLE_NUMBER=32766",
+      "MAX_VDBE_OP=250000000",
+      "MAX_WORKER_THREADS=8",
+      "MUTEX_PTHREADS",
+      "SYSTEM_MALLOC",
+      "TEMP_STORE=1",
+      "THREADSAFE=1"
+    ],
+    "pragmas": {
+      "foreign_keys": 1,
+      "recursive_triggers": 1,
+      "synchronous": 3
+    }
+  },
+  "records": [
+    {
+      "label": "G1 genuine global Document \"doc-global\"",
+      "expected": "success",
+      "transaction_before": false,
+      "actual": "success",
+      "sql": [
+        "INSERT INTO resources VALUES('19489678-1234-4234-8234-123456789abc','document','\"doc-global\"',NULL,NULL,NULL,'\"doc-global\"')",
+        "INSERT INTO resources VALUES('19489678-1234-4234-8234-123456789abc','document','\"doc-global\"',NULL,NULL,NULL,'\"doc-global\"')"
+      ],
+      "transaction_after": false,
+      "rowsets": {
+        "resources": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            null,
+            null,
+            null,
+            "\"doc-global\"",
+            ""
+          ]
+        ],
+        "resource_relations": [],
+        "resource_repository_relations": []
+      },
+      "foreign_key_check": [],
+      "integrity_check": [
+        "ok"
+      ]
+    },
+    {
+      "label": "G1 genuine global Document [\"collection\",[\"slot\",\"nine\"]]",
+      "expected": "success",
+      "transaction_before": false,
+      "actual": "success",
+      "sql": [
+        "INSERT INTO resources VALUES('19489678-1234-4234-8234-123456789abc','document','[\"collection\",[\"slot\",\"nine\"]]',NULL,NULL,NULL,'[\"collection\",[\"slot\",\"nine\"]]')",
+        "INSERT INTO resources VALUES('19489678-1234-4234-8234-123456789abc','document','[\"collection\",[\"slot\",\"nine\"]]',NULL,NULL,NULL,'[\"collection\",[\"slot\",\"nine\"]]')"
+      ],
+      "transaction_after": false,
+      "rowsets": {
+        "resources": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            null,
+            null,
+            null,
+            "\"doc-global\"",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            null,
+            null,
+            null,
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            ""
+          ]
+        ],
+        "resource_relations": [],
+        "resource_repository_relations": []
+      },
+      "foreign_key_check": [],
+      "integrity_check": [
+        "ok"
+      ]
+    },
+    {
+      "label": "G1 genuine global Document [\"pull_request\",\"looks\",\"like\",\"scoped\"]",
+      "expected": "success",
+      "transaction_before": false,
+      "actual": "success",
+      "sql": [
+        "INSERT INTO resources VALUES('19489678-1234-4234-8234-123456789abc','document','[\"pull_request\",\"looks\",\"like\",\"scoped\"]',NULL,NULL,NULL,'[\"pull_request\",\"looks\",\"like\",\"scoped\"]')",
+        "INSERT INTO resources VALUES('19489678-1234-4234-8234-123456789abc','document','[\"pull_request\",\"looks\",\"like\",\"scoped\"]',NULL,NULL,NULL,'[\"pull_request\",\"looks\",\"like\",\"scoped\"]')"
+      ],
+      "transaction_after": false,
+      "rowsets": {
+        "resources": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            null,
+            null,
+            null,
+            "\"doc-global\"",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            null,
+            null,
+            null,
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"pull_request\",\"looks\",\"like\",\"scoped\"]",
+            null,
+            null,
+            null,
+            "[\"pull_request\",\"looks\",\"like\",\"scoped\"]",
+            ""
+          ]
+        ],
+        "resource_relations": [],
+        "resource_repository_relations": []
+      },
+      "foreign_key_check": [],
+      "integrity_check": [
+        "ok"
+      ]
+    },
+    {
+      "label": "G1 genuine global Document \"\"",
+      "expected": "success",
+      "transaction_before": false,
+      "actual": "success",
+      "sql": [
+        "INSERT INTO resources VALUES('19489678-1234-4234-8234-123456789abc','document','\"\"',NULL,NULL,NULL,'\"\"')",
+        "INSERT INTO resources VALUES('19489678-1234-4234-8234-123456789abc','document','\"\"',NULL,NULL,NULL,'\"\"')"
+      ],
+      "transaction_after": false,
+      "rowsets": {
+        "resources": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"\"",
+            null,
+            null,
+            null,
+            "\"\"",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            null,
+            null,
+            null,
+            "\"doc-global\"",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            null,
+            null,
+            null,
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"pull_request\",\"looks\",\"like\",\"scoped\"]",
+            null,
+            null,
+            null,
+            "[\"pull_request\",\"looks\",\"like\",\"scoped\"]",
+            ""
+          ]
+        ],
+        "resource_relations": [],
+        "resource_repository_relations": []
+      },
+      "foreign_key_check": [],
+      "integrity_check": [
+        "ok"
+      ]
+    },
+    {
+      "label": "G1 genuine global Document []",
+      "expected": "success",
+      "transaction_before": false,
+      "actual": "success",
+      "sql": [
+        "INSERT INTO resources VALUES('19489678-1234-4234-8234-123456789abc','document','[]',NULL,NULL,NULL,'[]')",
+        "INSERT INTO resources VALUES('19489678-1234-4234-8234-123456789abc','document','[]',NULL,NULL,NULL,'[]')"
+      ],
+      "transaction_after": false,
+      "rowsets": {
+        "resources": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"\"",
+            null,
+            null,
+            null,
+            "\"\"",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            null,
+            null,
+            null,
+            "\"doc-global\"",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            null,
+            null,
+            null,
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"pull_request\",\"looks\",\"like\",\"scoped\"]",
+            null,
+            null,
+            null,
+            "[\"pull_request\",\"looks\",\"like\",\"scoped\"]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[]",
+            null,
+            null,
+            null,
+            "[]",
+            ""
+          ]
+        ],
+        "resource_relations": [],
+        "resource_repository_relations": []
+      },
+      "foreign_key_check": [],
+      "integrity_check": [
+        "ok"
+      ]
+    },
+    {
+      "label": "G1 genuine PR Document before PR",
+      "expected": "success",
+      "transaction_before": false,
+      "actual": "success",
+      "sql": [
+        "INSERT INTO resources VALUES('19489678-1234-4234-8234-123456789abc','document','[\"pull_request\",\"[\\\"project\\\",\\\"7\\\"]\",\"title\",[\"document\",\"part\"]]','pull_request','[\"project\",\"7\"]','title','[\"document\",\"part\"]')",
+        "INSERT INTO resources VALUES('19489678-1234-4234-8234-123456789abc','document','[\"pull_request\",\"[\\\"project\\\",\\\"7\\\"]\",\"title\",[\"document\",\"part\"]]','pull_request','[\"project\",\"7\"]','title','[\"document\",\"part\"]')"
+      ],
+      "transaction_after": false,
+      "rowsets": {
+        "resources": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"\"",
+            null,
+            null,
+            null,
+            "\"\"",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            null,
+            null,
+            null,
+            "\"doc-global\"",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            null,
+            null,
+            null,
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"pull_request\",\"[\\\"project\\\",\\\"7\\\"]\",\"title\",[\"document\",\"part\"]]",
+            "pull_request",
+            "[\"project\",\"7\"]",
+            "title",
+            "[\"document\",\"part\"]",
+            "title"
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"pull_request\",\"looks\",\"like\",\"scoped\"]",
+            null,
+            null,
+            null,
+            "[\"pull_request\",\"looks\",\"like\",\"scoped\"]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[]",
+            null,
+            null,
+            null,
+            "[]",
+            ""
+          ]
+        ],
+        "resource_relations": [],
+        "resource_repository_relations": []
+      },
+      "foreign_key_check": [],
+      "integrity_check": [
+        "ok"
+      ]
+    },
+    {
+      "label": "G1 admission known PR no namespace cannot fallback",
+      "expected": "ValueError",
+      "transaction_before": false,
+      "actual": "ValueError",
+      "error": "known document contract",
+      "sql": [],
+      "transaction_after": false,
+      "rowsets": {
+        "resources": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"\"",
+            null,
+            null,
+            null,
+            "\"\"",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            null,
+            null,
+            null,
+            "\"doc-global\"",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            null,
+            null,
+            null,
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"pull_request\",\"[\\\"project\\\",\\\"7\\\"]\",\"title\",[\"document\",\"part\"]]",
+            "pull_request",
+            "[\"project\",\"7\"]",
+            "title",
+            "[\"document\",\"part\"]",
+            "title"
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"pull_request\",\"looks\",\"like\",\"scoped\"]",
+            null,
+            null,
+            null,
+            "[\"pull_request\",\"looks\",\"like\",\"scoped\"]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[]",
+            null,
+            null,
+            null,
+            "[]",
+            ""
+          ]
+        ],
+        "resource_relations": [],
+        "resource_repository_relations": []
+      },
+      "foreign_key_check": [],
+      "integrity_check": [
+        "ok"
+      ]
+    },
+    {
+      "label": "G1 admission global input cannot discard namespace",
+      "expected": "ValueError",
+      "transaction_before": false,
+      "actual": "ValueError",
+      "error": "global contract cannot discard scoped coordinates",
+      "sql": [],
+      "transaction_after": false,
+      "rowsets": {
+        "resources": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"\"",
+            null,
+            null,
+            null,
+            "\"\"",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            null,
+            null,
+            null,
+            "\"doc-global\"",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            null,
+            null,
+            null,
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"pull_request\",\"[\\\"project\\\",\\\"7\\\"]\",\"title\",[\"document\",\"part\"]]",
+            "pull_request",
+            "[\"project\",\"7\"]",
+            "title",
+            "[\"document\",\"part\"]",
+            "title"
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"pull_request\",\"looks\",\"like\",\"scoped\"]",
+            null,
+            null,
+            null,
+            "[\"pull_request\",\"looks\",\"like\",\"scoped\"]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[]",
+            null,
+            null,
+            null,
+            "[]",
+            ""
+          ]
+        ],
+        "resource_relations": [],
+        "resource_repository_relations": []
+      },
+      "foreign_key_check": [],
+      "integrity_check": [
+        "ok"
+      ]
+    },
+    {
+      "label": "G1 admission global input cannot discard subtype",
+      "expected": "ValueError",
+      "transaction_before": false,
+      "actual": "ValueError",
+      "error": "global contract cannot discard scoped coordinates",
+      "sql": [],
+      "transaction_after": false,
+      "rowsets": {
+        "resources": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"\"",
+            null,
+            null,
+            null,
+            "\"\"",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            null,
+            null,
+            null,
+            "\"doc-global\"",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            null,
+            null,
+            null,
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"pull_request\",\"[\\\"project\\\",\\\"7\\\"]\",\"title\",[\"document\",\"part\"]]",
+            "pull_request",
+            "[\"project\",\"7\"]",
+            "title",
+            "[\"document\",\"part\"]",
+            "title"
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"pull_request\",\"looks\",\"like\",\"scoped\"]",
+            null,
+            null,
+            null,
+            "[\"pull_request\",\"looks\",\"like\",\"scoped\"]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[]",
+            null,
+            null,
+            null,
+            "[]",
+            ""
+          ]
+        ],
+        "resource_relations": [],
+        "resource_repository_relations": []
+      },
+      "foreign_key_check": [],
+      "integrity_check": [
+        "ok"
+      ]
+    },
+    {
+      "label": "G1 admission global input cannot discard local document coordinate",
+      "expected": "ValueError",
+      "transaction_before": false,
+      "actual": "ValueError",
+      "error": "global contract cannot discard scoped coordinates",
+      "sql": [],
+      "transaction_after": false,
+      "rowsets": {
+        "resources": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"\"",
+            null,
+            null,
+            null,
+            "\"\"",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            null,
+            null,
+            null,
+            "\"doc-global\"",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            null,
+            null,
+            null,
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"pull_request\",\"[\\\"project\\\",\\\"7\\\"]\",\"title\",[\"document\",\"part\"]]",
+            "pull_request",
+            "[\"project\",\"7\"]",
+            "title",
+            "[\"document\",\"part\"]",
+            "title"
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"pull_request\",\"looks\",\"like\",\"scoped\"]",
+            null,
+            null,
+            null,
+            "[\"pull_request\",\"looks\",\"like\",\"scoped\"]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[]",
+            null,
+            null,
+            null,
+            "[]",
+            ""
+          ]
+        ],
+        "resource_relations": [],
+        "resource_repository_relations": []
+      },
+      "foreign_key_check": [],
+      "integrity_check": [
+        "ok"
+      ]
+    },
+    {
+      "label": "G1 admission unknown selector cannot fallback",
+      "expected": "ValueError",
+      "transaction_before": false,
+      "actual": "ValueError",
+      "error": "explicit supported native Document contract required",
+      "sql": [],
+      "transaction_after": false,
+      "rowsets": {
+        "resources": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"\"",
+            null,
+            null,
+            null,
+            "\"\"",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            null,
+            null,
+            null,
+            "\"doc-global\"",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            null,
+            null,
+            null,
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"pull_request\",\"[\\\"project\\\",\\\"7\\\"]\",\"title\",[\"document\",\"part\"]]",
+            "pull_request",
+            "[\"project\",\"7\"]",
+            "title",
+            "[\"document\",\"part\"]",
+            "title"
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"pull_request\",\"looks\",\"like\",\"scoped\"]",
+            null,
+            null,
+            null,
+            "[\"pull_request\",\"looks\",\"like\",\"scoped\"]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[]",
+            null,
+            null,
+            null,
+            "[]",
+            ""
+          ]
+        ],
+        "resource_relations": [],
+        "resource_repository_relations": []
+      },
+      "foreign_key_check": [],
+      "integrity_check": [
+        "ok"
+      ]
+    },
+    {
+      "label": "G1 raw SQL malformed all omitted",
+      "expected": "SQLITE_CONSTRAINT_CHECK",
+      "transaction_before": false,
+      "actual": "SQLITE_CONSTRAINT_CHECK",
+      "error": "CHECK constraint failed: cp_resource(resource_kind,provider_resource_id,identifier_namespace_kind,identifier_namespace_id,document_kind,provider_document_id)=1",
+      "sql": [
+        "INSERT INTO resources VALUES('19489678-1234-4234-8234-123456789abc','document','\"bad-1\"',NULL,NULL,NULL,NULL)",
+        "INSERT INTO resources VALUES('19489678-1234-4234-8234-123456789abc','document','\"bad-1\"',NULL,NULL,NULL,NULL)"
+      ],
+      "transaction_after": false,
+      "rowsets": {
+        "resources": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"\"",
+            null,
+            null,
+            null,
+            "\"\"",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            null,
+            null,
+            null,
+            "\"doc-global\"",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            null,
+            null,
+            null,
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"pull_request\",\"[\\\"project\\\",\\\"7\\\"]\",\"title\",[\"document\",\"part\"]]",
+            "pull_request",
+            "[\"project\",\"7\"]",
+            "title",
+            "[\"document\",\"part\"]",
+            "title"
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"pull_request\",\"looks\",\"like\",\"scoped\"]",
+            null,
+            null,
+            null,
+            "[\"pull_request\",\"looks\",\"like\",\"scoped\"]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[]",
+            null,
+            null,
+            null,
+            "[]",
+            ""
+          ]
+        ],
+        "resource_relations": [],
+        "resource_repository_relations": []
+      },
+      "foreign_key_check": [],
+      "integrity_check": [
+        "ok"
+      ]
+    },
+    {
+      "label": "G1 raw SQL malformed wrong independent ID",
+      "expected": "SQLITE_CONSTRAINT_CHECK",
+      "transaction_before": false,
+      "actual": "SQLITE_CONSTRAINT_CHECK",
+      "error": "CHECK constraint failed: cp_resource(resource_kind,provider_resource_id,identifier_namespace_kind,identifier_namespace_id,document_kind,provider_document_id)=1",
+      "sql": [
+        "INSERT INTO resources VALUES('19489678-1234-4234-8234-123456789abc','document','\"bad-2\"',NULL,NULL,NULL,'\"different\"')",
+        "INSERT INTO resources VALUES('19489678-1234-4234-8234-123456789abc','document','\"bad-2\"',NULL,NULL,NULL,'\"different\"')"
+      ],
+      "transaction_after": false,
+      "rowsets": {
+        "resources": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"\"",
+            null,
+            null,
+            null,
+            "\"\"",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            null,
+            null,
+            null,
+            "\"doc-global\"",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            null,
+            null,
+            null,
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"pull_request\",\"[\\\"project\\\",\\\"7\\\"]\",\"title\",[\"document\",\"part\"]]",
+            "pull_request",
+            "[\"project\",\"7\"]",
+            "title",
+            "[\"document\",\"part\"]",
+            "title"
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"pull_request\",\"looks\",\"like\",\"scoped\"]",
+            null,
+            null,
+            null,
+            "[\"pull_request\",\"looks\",\"like\",\"scoped\"]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[]",
+            null,
+            null,
+            null,
+            "[]",
+            ""
+          ]
+        ],
+        "resource_relations": [],
+        "resource_repository_relations": []
+      },
+      "foreign_key_check": [],
+      "integrity_check": [
+        "ok"
+      ]
+    },
+    {
+      "label": "G1 raw SQL malformed partial namespace",
+      "expected": "SQLITE_CONSTRAINT_CHECK",
+      "transaction_before": false,
+      "actual": "SQLITE_CONSTRAINT_CHECK",
+      "error": "CHECK constraint failed: cp_resource(resource_kind,provider_resource_id,identifier_namespace_kind,identifier_namespace_id,document_kind,provider_document_id)=1",
+      "sql": [
+        "INSERT INTO resources VALUES('19489678-1234-4234-8234-123456789abc','document','\"bad-3\"','pull_request',NULL,NULL,'\"bad-3\"')",
+        "INSERT INTO resources VALUES('19489678-1234-4234-8234-123456789abc','document','\"bad-3\"','pull_request',NULL,NULL,'\"bad-3\"')"
+      ],
+      "transaction_after": false,
+      "rowsets": {
+        "resources": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"\"",
+            null,
+            null,
+            null,
+            "\"\"",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            null,
+            null,
+            null,
+            "\"doc-global\"",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            null,
+            null,
+            null,
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"pull_request\",\"[\\\"project\\\",\\\"7\\\"]\",\"title\",[\"document\",\"part\"]]",
+            "pull_request",
+            "[\"project\",\"7\"]",
+            "title",
+            "[\"document\",\"part\"]",
+            "title"
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"pull_request\",\"looks\",\"like\",\"scoped\"]",
+            null,
+            null,
+            null,
+            "[\"pull_request\",\"looks\",\"like\",\"scoped\"]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[]",
+            null,
+            null,
+            null,
+            "[]",
+            ""
+          ]
+        ],
+        "resource_relations": [],
+        "resource_repository_relations": []
+      },
+      "foreign_key_check": [],
+      "integrity_check": [
+        "ok"
+      ]
+    },
+    {
+      "label": "G1 raw SQL malformed partial subtype",
+      "expected": "SQLITE_CONSTRAINT_CHECK",
+      "transaction_before": false,
+      "actual": "SQLITE_CONSTRAINT_CHECK",
+      "error": "CHECK constraint failed: cp_resource(resource_kind,provider_resource_id,identifier_namespace_kind,identifier_namespace_id,document_kind,provider_document_id)=1",
+      "sql": [
+        "INSERT INTO resources VALUES('19489678-1234-4234-8234-123456789abc','document','\"bad-4\"',NULL,NULL,'title','\"bad-4\"')",
+        "INSERT INTO resources VALUES('19489678-1234-4234-8234-123456789abc','document','\"bad-4\"',NULL,NULL,'title','\"bad-4\"')"
+      ],
+      "transaction_after": false,
+      "rowsets": {
+        "resources": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"\"",
+            null,
+            null,
+            null,
+            "\"\"",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            null,
+            null,
+            null,
+            "\"doc-global\"",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            null,
+            null,
+            null,
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"pull_request\",\"[\\\"project\\\",\\\"7\\\"]\",\"title\",[\"document\",\"part\"]]",
+            "pull_request",
+            "[\"project\",\"7\"]",
+            "title",
+            "[\"document\",\"part\"]",
+            "title"
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"pull_request\",\"looks\",\"like\",\"scoped\"]",
+            null,
+            null,
+            null,
+            "[\"pull_request\",\"looks\",\"like\",\"scoped\"]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[]",
+            null,
+            null,
+            null,
+            "[]",
+            ""
+          ]
+        ],
+        "resource_relations": [],
+        "resource_repository_relations": []
+      },
+      "foreign_key_check": [],
+      "integrity_check": [
+        "ok"
+      ]
+    },
+    {
+      "label": "G1 missing Parent reaches FK",
+      "expected": "SQLITE_CONSTRAINT_FOREIGNKEY",
+      "transaction_before": false,
+      "actual": "SQLITE_CONSTRAINT_FOREIGNKEY",
+      "error": "FOREIGN KEY constraint failed",
+      "sql": [
+        "INSERT INTO resource_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json,observed_at_us) VALUES('19489678-1234-4234-8234-123456789abc','document','\"doc-global\"','parent','[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"missing\\\"\"]]','{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}','{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":null,\"state\":\"complete\"}',NULL)",
+        "INSERT INTO resource_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json,observed_at_us) VALUES('19489678-1234-4234-8234-123456789abc','document','\"doc-global\"','parent','[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"missing\\\"\"]]','{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}','{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":null,\"state\":\"complete\"}',NULL)",
+        "INSERT INTO resource_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json,observed_at_us) VALUES('19489678-1234-4234-8234-123456789abc','document','\"doc-global\"','parent','[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"missing\\\"\"]]','{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}','{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":null,\"state\":\"complete\"}',NULL)"
+      ],
+      "transaction_after": false,
+      "rowsets": {
+        "resources": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"\"",
+            null,
+            null,
+            null,
+            "\"\"",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            null,
+            null,
+            null,
+            "\"doc-global\"",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            null,
+            null,
+            null,
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"pull_request\",\"[\\\"project\\\",\\\"7\\\"]\",\"title\",[\"document\",\"part\"]]",
+            "pull_request",
+            "[\"project\",\"7\"]",
+            "title",
+            "[\"document\",\"part\"]",
+            "title"
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"pull_request\",\"looks\",\"like\",\"scoped\"]",
+            null,
+            null,
+            null,
+            "[\"pull_request\",\"looks\",\"like\",\"scoped\"]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[]",
+            null,
+            null,
+            null,
+            "[]",
+            ""
+          ]
+        ],
+        "resource_relations": [],
+        "resource_repository_relations": []
+      },
+      "foreign_key_check": [],
+      "integrity_check": [
+        "ok"
+      ]
+    },
+    {
+      "label": "G1 Parent supplied later",
+      "expected": "success",
+      "transaction_before": false,
+      "actual": "success",
+      "sql": [
+        "INSERT INTO resource_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json,observed_at_us) VALUES('19489678-1234-4234-8234-123456789abc','document','\"doc-global\"','parent','[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"missing\\\"\"]]','{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}','{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":null,\"state\":\"complete\"}',NULL)",
+        "INSERT INTO resource_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json,observed_at_us) VALUES('19489678-1234-4234-8234-123456789abc','document','\"doc-global\"','parent','[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"missing\\\"\"]]','{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}','{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":null,\"state\":\"complete\"}',NULL)",
+        "INSERT INTO resource_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json,observed_at_us) VALUES('19489678-1234-4234-8234-123456789abc','document','\"doc-global\"','parent','[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"missing\\\"\"]]','{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}','{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":null,\"state\":\"complete\"}',NULL)"
+      ],
+      "transaction_after": false,
+      "rowsets": {
+        "resources": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"\"",
+            null,
+            null,
+            null,
+            "\"\"",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            null,
+            null,
+            null,
+            "\"doc-global\"",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            null,
+            null,
+            null,
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"pull_request\",\"[\\\"project\\\",\\\"7\\\"]\",\"title\",[\"document\",\"part\"]]",
+            "pull_request",
+            "[\"project\",\"7\"]",
+            "title",
+            "[\"document\",\"part\"]",
+            "title"
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"pull_request\",\"looks\",\"like\",\"scoped\"]",
+            null,
+            null,
+            null,
+            "[\"pull_request\",\"looks\",\"like\",\"scoped\"]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[]",
+            null,
+            null,
+            null,
+            "[]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"missing\"",
+            null,
+            null,
+            null,
+            null,
+            ""
+          ]
+        ],
+        "resource_relations": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            "parent",
+            "[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"missing\\\"\"]]",
+            "{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":null,\"state\":\"complete\"}",
+            null,
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"missing\"",
+            "",
+            "{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}",
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        ],
+        "resource_repository_relations": []
+      },
+      "foreign_key_check": [],
+      "integrity_check": [
+        "ok"
+      ]
+    },
+    {
+      "label": "G1 same Document independent attribution",
+      "expected": "success",
+      "transaction_before": false,
+      "actual": "success",
+      "sql": [
+        "INSERT INTO resource_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json,observed_at_us) VALUES('19489678-1234-4234-8234-123456789abc','document','\"doc-global\"','parent','[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"missing\\\"\"]]','{\"evidence\":\"independent\",\"source\":\"synthetic://other\"}','{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":null,\"state\":\"complete\"}',NULL)",
+        "INSERT INTO resource_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json,observed_at_us) VALUES('19489678-1234-4234-8234-123456789abc','document','\"doc-global\"','parent','[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"missing\\\"\"]]','{\"evidence\":\"independent\",\"source\":\"synthetic://other\"}','{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":null,\"state\":\"complete\"}',NULL)",
+        "INSERT INTO resource_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json,observed_at_us) VALUES('19489678-1234-4234-8234-123456789abc','document','\"doc-global\"','parent','[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"missing\\\"\"]]','{\"evidence\":\"independent\",\"source\":\"synthetic://other\"}','{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":null,\"state\":\"complete\"}',NULL)"
+      ],
+      "transaction_after": false,
+      "rowsets": {
+        "resources": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"\"",
+            null,
+            null,
+            null,
+            "\"\"",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            null,
+            null,
+            null,
+            "\"doc-global\"",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            null,
+            null,
+            null,
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"pull_request\",\"[\\\"project\\\",\\\"7\\\"]\",\"title\",[\"document\",\"part\"]]",
+            "pull_request",
+            "[\"project\",\"7\"]",
+            "title",
+            "[\"document\",\"part\"]",
+            "title"
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"pull_request\",\"looks\",\"like\",\"scoped\"]",
+            null,
+            null,
+            null,
+            "[\"pull_request\",\"looks\",\"like\",\"scoped\"]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[]",
+            null,
+            null,
+            null,
+            "[]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"missing\"",
+            null,
+            null,
+            null,
+            null,
+            ""
+          ]
+        ],
+        "resource_relations": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            "parent",
+            "[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"missing\\\"\"]]",
+            "{\"evidence\":\"independent\",\"source\":\"synthetic://other\"}",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":null,\"state\":\"complete\"}",
+            null,
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"missing\"",
+            "",
+            "{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}",
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            "parent",
+            "[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"missing\\\"\"]]",
+            "{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":null,\"state\":\"complete\"}",
+            null,
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"missing\"",
+            "",
+            "{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}",
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        ],
+        "resource_repository_relations": []
+      },
+      "foreign_key_check": [],
+      "integrity_check": [
+        "ok"
+      ]
+    },
+    {
+      "label": "G1 Document is Parent of Document",
+      "expected": "success",
+      "transaction_before": false,
+      "actual": "success",
+      "sql": [
+        "INSERT INTO resource_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json,observed_at_us) VALUES('19489678-1234-4234-8234-123456789abc','document','[\"collection\",[\"slot\",\"nine\"]]','parent','[[\"19489678-1234-4234-8234-123456789abc\",\"document\",\"\\\"doc-global\\\"\"]]','{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}','{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":null,\"state\":\"complete\"}',NULL)",
+        "INSERT INTO resource_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json,observed_at_us) VALUES('19489678-1234-4234-8234-123456789abc','document','[\"collection\",[\"slot\",\"nine\"]]','parent','[[\"19489678-1234-4234-8234-123456789abc\",\"document\",\"\\\"doc-global\\\"\"]]','{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}','{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":null,\"state\":\"complete\"}',NULL)",
+        "INSERT INTO resource_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json,observed_at_us) VALUES('19489678-1234-4234-8234-123456789abc','document','[\"collection\",[\"slot\",\"nine\"]]','parent','[[\"19489678-1234-4234-8234-123456789abc\",\"document\",\"\\\"doc-global\\\"\"]]','{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}','{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":null,\"state\":\"complete\"}',NULL)"
+      ],
+      "transaction_after": false,
+      "rowsets": {
+        "resources": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"\"",
+            null,
+            null,
+            null,
+            "\"\"",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            null,
+            null,
+            null,
+            "\"doc-global\"",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            null,
+            null,
+            null,
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"pull_request\",\"[\\\"project\\\",\\\"7\\\"]\",\"title\",[\"document\",\"part\"]]",
+            "pull_request",
+            "[\"project\",\"7\"]",
+            "title",
+            "[\"document\",\"part\"]",
+            "title"
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"pull_request\",\"looks\",\"like\",\"scoped\"]",
+            null,
+            null,
+            null,
+            "[\"pull_request\",\"looks\",\"like\",\"scoped\"]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[]",
+            null,
+            null,
+            null,
+            "[]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"missing\"",
+            null,
+            null,
+            null,
+            null,
+            ""
+          ]
+        ],
+        "resource_relations": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            "parent",
+            "[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"missing\\\"\"]]",
+            "{\"evidence\":\"independent\",\"source\":\"synthetic://other\"}",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":null,\"state\":\"complete\"}",
+            null,
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"missing\"",
+            "",
+            "{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}",
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            "parent",
+            "[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"missing\\\"\"]]",
+            "{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":null,\"state\":\"complete\"}",
+            null,
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"missing\"",
+            "",
+            "{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}",
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            "parent",
+            "[[\"19489678-1234-4234-8234-123456789abc\",\"document\",\"\\\"doc-global\\\"\"]]",
+            "{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":null,\"state\":\"complete\"}",
+            null,
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            "",
+            "{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}",
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        ],
+        "resource_repository_relations": []
+      },
+      "foreign_key_check": [],
+      "integrity_check": [
+        "ok"
+      ]
+    },
+    {
+      "label": "G1 global cannot use PR subtype",
+      "expected": "SQLITE_CONSTRAINT_FOREIGNKEY",
+      "transaction_before": false,
+      "actual": "SQLITE_CONSTRAINT_FOREIGNKEY",
+      "error": "FOREIGN KEY constraint failed",
+      "sql": [
+        "INSERT INTO resource_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json,observed_at_us) VALUES('19489678-1234-4234-8234-123456789abc','document','\"doc-global\"','parent','[[\"19489678-1234-4234-8234-123456789abc\",\"pull_request\",\"[\\\"project\\\",\\\"7\\\"]\"]]','{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}','{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":\"title\",\"state\":\"complete\"}',NULL)",
+        "INSERT INTO resource_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json,observed_at_us) VALUES('19489678-1234-4234-8234-123456789abc','document','\"doc-global\"','parent','[[\"19489678-1234-4234-8234-123456789abc\",\"pull_request\",\"[\\\"project\\\",\\\"7\\\"]\"]]','{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}','{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":\"title\",\"state\":\"complete\"}',NULL)",
+        "INSERT INTO resource_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json,observed_at_us) VALUES('19489678-1234-4234-8234-123456789abc','document','\"doc-global\"','parent','[[\"19489678-1234-4234-8234-123456789abc\",\"pull_request\",\"[\\\"project\\\",\\\"7\\\"]\"]]','{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}','{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":\"title\",\"state\":\"complete\"}',NULL)"
+      ],
+      "transaction_after": false,
+      "rowsets": {
+        "resources": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"\"",
+            null,
+            null,
+            null,
+            "\"\"",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            null,
+            null,
+            null,
+            "\"doc-global\"",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            null,
+            null,
+            null,
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"pull_request\",\"[\\\"project\\\",\\\"7\\\"]\",\"title\",[\"document\",\"part\"]]",
+            "pull_request",
+            "[\"project\",\"7\"]",
+            "title",
+            "[\"document\",\"part\"]",
+            "title"
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"pull_request\",\"looks\",\"like\",\"scoped\"]",
+            null,
+            null,
+            null,
+            "[\"pull_request\",\"looks\",\"like\",\"scoped\"]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[]",
+            null,
+            null,
+            null,
+            "[]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"missing\"",
+            null,
+            null,
+            null,
+            null,
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "pull_request",
+            "[\"project\",\"7\"]",
+            null,
+            null,
+            null,
+            null,
+            ""
+          ]
+        ],
+        "resource_relations": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            "parent",
+            "[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"missing\\\"\"]]",
+            "{\"evidence\":\"independent\",\"source\":\"synthetic://other\"}",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":null,\"state\":\"complete\"}",
+            null,
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"missing\"",
+            "",
+            "{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}",
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            "parent",
+            "[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"missing\\\"\"]]",
+            "{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":null,\"state\":\"complete\"}",
+            null,
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"missing\"",
+            "",
+            "{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}",
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            "parent",
+            "[[\"19489678-1234-4234-8234-123456789abc\",\"document\",\"\\\"doc-global\\\"\"]]",
+            "{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":null,\"state\":\"complete\"}",
+            null,
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            "",
+            "{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}",
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        ],
+        "resource_repository_relations": []
+      },
+      "foreign_key_check": [],
+      "integrity_check": [
+        "ok"
+      ]
+    },
+    {
+      "label": "G1 PR cannot use independent subtype",
+      "expected": "SQLITE_CONSTRAINT_FOREIGNKEY",
+      "transaction_before": false,
+      "actual": "SQLITE_CONSTRAINT_FOREIGNKEY",
+      "error": "FOREIGN KEY constraint failed",
+      "sql": [
+        "INSERT INTO resource_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json,observed_at_us) VALUES('19489678-1234-4234-8234-123456789abc','document','[\"pull_request\",\"[\\\"project\\\",\\\"7\\\"]\",\"title\",[\"document\",\"part\"]]','parent','[[\"19489678-1234-4234-8234-123456789abc\",\"pull_request\",\"[\\\"project\\\",\\\"7\\\"]\"]]','{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}','{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":null,\"state\":\"complete\"}',NULL)",
+        "INSERT INTO resource_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json,observed_at_us) VALUES('19489678-1234-4234-8234-123456789abc','document','[\"pull_request\",\"[\\\"project\\\",\\\"7\\\"]\",\"title\",[\"document\",\"part\"]]','parent','[[\"19489678-1234-4234-8234-123456789abc\",\"pull_request\",\"[\\\"project\\\",\\\"7\\\"]\"]]','{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}','{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":null,\"state\":\"complete\"}',NULL)",
+        "INSERT INTO resource_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json,observed_at_us) VALUES('19489678-1234-4234-8234-123456789abc','document','[\"pull_request\",\"[\\\"project\\\",\\\"7\\\"]\",\"title\",[\"document\",\"part\"]]','parent','[[\"19489678-1234-4234-8234-123456789abc\",\"pull_request\",\"[\\\"project\\\",\\\"7\\\"]\"]]','{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}','{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":null,\"state\":\"complete\"}',NULL)"
+      ],
+      "transaction_after": false,
+      "rowsets": {
+        "resources": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"\"",
+            null,
+            null,
+            null,
+            "\"\"",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            null,
+            null,
+            null,
+            "\"doc-global\"",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            null,
+            null,
+            null,
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"pull_request\",\"[\\\"project\\\",\\\"7\\\"]\",\"title\",[\"document\",\"part\"]]",
+            "pull_request",
+            "[\"project\",\"7\"]",
+            "title",
+            "[\"document\",\"part\"]",
+            "title"
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"pull_request\",\"looks\",\"like\",\"scoped\"]",
+            null,
+            null,
+            null,
+            "[\"pull_request\",\"looks\",\"like\",\"scoped\"]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[]",
+            null,
+            null,
+            null,
+            "[]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"missing\"",
+            null,
+            null,
+            null,
+            null,
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "pull_request",
+            "[\"project\",\"7\"]",
+            null,
+            null,
+            null,
+            null,
+            ""
+          ]
+        ],
+        "resource_relations": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            "parent",
+            "[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"missing\\\"\"]]",
+            "{\"evidence\":\"independent\",\"source\":\"synthetic://other\"}",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":null,\"state\":\"complete\"}",
+            null,
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"missing\"",
+            "",
+            "{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}",
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            "parent",
+            "[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"missing\\\"\"]]",
+            "{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":null,\"state\":\"complete\"}",
+            null,
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"missing\"",
+            "",
+            "{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}",
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            "parent",
+            "[[\"19489678-1234-4234-8234-123456789abc\",\"document\",\"\\\"doc-global\\\"\"]]",
+            "{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":null,\"state\":\"complete\"}",
+            null,
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            "",
+            "{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}",
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        ],
+        "resource_repository_relations": []
+      },
+      "foreign_key_check": [],
+      "integrity_check": [
+        "ok"
+      ]
+    },
+    {
+      "label": "G1 omitted subtype is not explicit independent null",
+      "expected": "SQLITE_CONSTRAINT_CHECK",
+      "transaction_before": false,
+      "actual": "SQLITE_CONSTRAINT_CHECK",
+      "error": "CHECK constraint failed: cp_relation(relation_kind,service_instance_uuidv4,resource_kind,members_json,scope_json)=1",
+      "sql": [
+        "INSERT INTO resource_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json,observed_at_us) VALUES('19489678-1234-4234-8234-123456789abc','document','\"doc-global\"','parent','[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"missing\\\"\"]]','{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}','{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"state\":\"complete\"}',NULL)",
+        "INSERT INTO resource_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json,observed_at_us) VALUES('19489678-1234-4234-8234-123456789abc','document','\"doc-global\"','parent','[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"missing\\\"\"]]','{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}','{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"state\":\"complete\"}',NULL)",
+        "INSERT INTO resource_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json,observed_at_us) VALUES('19489678-1234-4234-8234-123456789abc','document','\"doc-global\"','parent','[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"missing\\\"\"]]','{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}','{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"state\":\"complete\"}',NULL)"
+      ],
+      "transaction_after": false,
+      "rowsets": {
+        "resources": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"\"",
+            null,
+            null,
+            null,
+            "\"\"",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            null,
+            null,
+            null,
+            "\"doc-global\"",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            null,
+            null,
+            null,
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"pull_request\",\"[\\\"project\\\",\\\"7\\\"]\",\"title\",[\"document\",\"part\"]]",
+            "pull_request",
+            "[\"project\",\"7\"]",
+            "title",
+            "[\"document\",\"part\"]",
+            "title"
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"pull_request\",\"looks\",\"like\",\"scoped\"]",
+            null,
+            null,
+            null,
+            "[\"pull_request\",\"looks\",\"like\",\"scoped\"]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[]",
+            null,
+            null,
+            null,
+            "[]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"missing\"",
+            null,
+            null,
+            null,
+            null,
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "pull_request",
+            "[\"project\",\"7\"]",
+            null,
+            null,
+            null,
+            null,
+            ""
+          ]
+        ],
+        "resource_relations": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            "parent",
+            "[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"missing\\\"\"]]",
+            "{\"evidence\":\"independent\",\"source\":\"synthetic://other\"}",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":null,\"state\":\"complete\"}",
+            null,
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"missing\"",
+            "",
+            "{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}",
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            "parent",
+            "[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"missing\\\"\"]]",
+            "{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":null,\"state\":\"complete\"}",
+            null,
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"missing\"",
+            "",
+            "{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}",
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            "parent",
+            "[[\"19489678-1234-4234-8234-123456789abc\",\"document\",\"\\\"doc-global\\\"\"]]",
+            "{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":null,\"state\":\"complete\"}",
+            null,
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            "",
+            "{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}",
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        ],
+        "resource_repository_relations": []
+      },
+      "foreign_key_check": [],
+      "integrity_check": [
+        "ok"
+      ]
+    },
+    {
+      "label": "G1 typed Parent cross Provider rejected",
+      "expected": "SQLITE_CONSTRAINT_CHECK",
+      "transaction_before": false,
+      "actual": "SQLITE_CONSTRAINT_CHECK",
+      "error": "CHECK constraint failed: cp_relation(relation_kind,service_instance_uuidv4,resource_kind,members_json,scope_json)=1",
+      "sql": [
+        "INSERT INTO resource_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json,observed_at_us) VALUES('19489678-1234-4234-8234-123456789abc','document','\"doc-global\"','parent','[[\"29489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"other-provider\\\"\"]]','{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}','{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":null,\"state\":\"complete\"}',NULL)",
+        "INSERT INTO resource_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json,observed_at_us) VALUES('19489678-1234-4234-8234-123456789abc','document','\"doc-global\"','parent','[[\"29489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"other-provider\\\"\"]]','{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}','{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":null,\"state\":\"complete\"}',NULL)",
+        "INSERT INTO resource_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json,observed_at_us) VALUES('19489678-1234-4234-8234-123456789abc','document','\"doc-global\"','parent','[[\"29489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"other-provider\\\"\"]]','{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}','{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":null,\"state\":\"complete\"}',NULL)"
+      ],
+      "transaction_after": false,
+      "rowsets": {
+        "resources": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"\"",
+            null,
+            null,
+            null,
+            "\"\"",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            null,
+            null,
+            null,
+            "\"doc-global\"",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            null,
+            null,
+            null,
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"pull_request\",\"[\\\"project\\\",\\\"7\\\"]\",\"title\",[\"document\",\"part\"]]",
+            "pull_request",
+            "[\"project\",\"7\"]",
+            "title",
+            "[\"document\",\"part\"]",
+            "title"
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"pull_request\",\"looks\",\"like\",\"scoped\"]",
+            null,
+            null,
+            null,
+            "[\"pull_request\",\"looks\",\"like\",\"scoped\"]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[]",
+            null,
+            null,
+            null,
+            "[]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"missing\"",
+            null,
+            null,
+            null,
+            null,
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "pull_request",
+            "[\"project\",\"7\"]",
+            null,
+            null,
+            null,
+            null,
+            ""
+          ],
+          [
+            "29489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"other-provider\"",
+            null,
+            null,
+            null,
+            null,
+            ""
+          ]
+        ],
+        "resource_relations": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            "parent",
+            "[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"missing\\\"\"]]",
+            "{\"evidence\":\"independent\",\"source\":\"synthetic://other\"}",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":null,\"state\":\"complete\"}",
+            null,
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"missing\"",
+            "",
+            "{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}",
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            "parent",
+            "[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"missing\\\"\"]]",
+            "{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":null,\"state\":\"complete\"}",
+            null,
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"missing\"",
+            "",
+            "{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}",
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            "parent",
+            "[[\"19489678-1234-4234-8234-123456789abc\",\"document\",\"\\\"doc-global\\\"\"]]",
+            "{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":null,\"state\":\"complete\"}",
+            null,
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            "",
+            "{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}",
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        ],
+        "resource_repository_relations": []
+      },
+      "foreign_key_check": [],
+      "integrity_check": [
+        "ok"
+      ]
+    },
+    {
+      "label": "G1 cannot rebind independent contract INSERT",
+      "expected": "SQLITE_CONSTRAINT_TRIGGER",
+      "transaction_before": false,
+      "actual": "SQLITE_CONSTRAINT_TRIGGER",
+      "error": "Resource identification payload rebind",
+      "sql": [
+        "INSERT INTO resources VALUES('19489678-1234-4234-8234-123456789abc','document','\"doc-global\"','pull_request','[\"project\",\"7\"]','title','\"doc-global\"')",
+        "INSERT INTO resources VALUES('19489678-1234-4234-8234-123456789abc','document','\"doc-global\"','pull_request','[\"project\",\"7\"]','title','\"doc-global\"')",
+        "INSERT INTO resources VALUES('19489678-1234-4234-8234-123456789abc','document','\"doc-global\"','pull_request','[\"project\",\"7\"]','title','\"doc-global\"')"
+      ],
+      "transaction_after": false,
+      "rowsets": {
+        "resources": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"\"",
+            null,
+            null,
+            null,
+            "\"\"",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            null,
+            null,
+            null,
+            "\"doc-global\"",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            null,
+            null,
+            null,
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"pull_request\",\"[\\\"project\\\",\\\"7\\\"]\",\"title\",[\"document\",\"part\"]]",
+            "pull_request",
+            "[\"project\",\"7\"]",
+            "title",
+            "[\"document\",\"part\"]",
+            "title"
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"pull_request\",\"looks\",\"like\",\"scoped\"]",
+            null,
+            null,
+            null,
+            "[\"pull_request\",\"looks\",\"like\",\"scoped\"]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[]",
+            null,
+            null,
+            null,
+            "[]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"missing\"",
+            null,
+            null,
+            null,
+            null,
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "pull_request",
+            "[\"project\",\"7\"]",
+            null,
+            null,
+            null,
+            null,
+            ""
+          ],
+          [
+            "29489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"other-provider\"",
+            null,
+            null,
+            null,
+            null,
+            ""
+          ]
+        ],
+        "resource_relations": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            "parent",
+            "[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"missing\\\"\"]]",
+            "{\"evidence\":\"independent\",\"source\":\"synthetic://other\"}",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":null,\"state\":\"complete\"}",
+            null,
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"missing\"",
+            "",
+            "{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}",
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            "parent",
+            "[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"missing\\\"\"]]",
+            "{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":null,\"state\":\"complete\"}",
+            null,
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"missing\"",
+            "",
+            "{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}",
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            "parent",
+            "[[\"19489678-1234-4234-8234-123456789abc\",\"document\",\"\\\"doc-global\\\"\"]]",
+            "{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":null,\"state\":\"complete\"}",
+            null,
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            "",
+            "{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}",
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        ],
+        "resource_repository_relations": []
+      },
+      "foreign_key_check": [],
+      "integrity_check": [
+        "ok"
+      ]
+    },
+    {
+      "label": "G1 cannot rebind independent contract INSERT OR IGNORE",
+      "expected": "SQLITE_CONSTRAINT_TRIGGER",
+      "transaction_before": false,
+      "actual": "SQLITE_CONSTRAINT_TRIGGER",
+      "error": "Resource identification payload rebind",
+      "sql": [
+        "INSERT OR IGNORE INTO resources VALUES('19489678-1234-4234-8234-123456789abc','document','\"doc-global\"','pull_request','[\"project\",\"7\"]','title','\"doc-global\"')",
+        "INSERT OR IGNORE INTO resources VALUES('19489678-1234-4234-8234-123456789abc','document','\"doc-global\"','pull_request','[\"project\",\"7\"]','title','\"doc-global\"')",
+        "INSERT OR IGNORE INTO resources VALUES('19489678-1234-4234-8234-123456789abc','document','\"doc-global\"','pull_request','[\"project\",\"7\"]','title','\"doc-global\"')"
+      ],
+      "transaction_after": false,
+      "rowsets": {
+        "resources": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"\"",
+            null,
+            null,
+            null,
+            "\"\"",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            null,
+            null,
+            null,
+            "\"doc-global\"",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            null,
+            null,
+            null,
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"pull_request\",\"[\\\"project\\\",\\\"7\\\"]\",\"title\",[\"document\",\"part\"]]",
+            "pull_request",
+            "[\"project\",\"7\"]",
+            "title",
+            "[\"document\",\"part\"]",
+            "title"
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"pull_request\",\"looks\",\"like\",\"scoped\"]",
+            null,
+            null,
+            null,
+            "[\"pull_request\",\"looks\",\"like\",\"scoped\"]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[]",
+            null,
+            null,
+            null,
+            "[]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"missing\"",
+            null,
+            null,
+            null,
+            null,
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "pull_request",
+            "[\"project\",\"7\"]",
+            null,
+            null,
+            null,
+            null,
+            ""
+          ],
+          [
+            "29489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"other-provider\"",
+            null,
+            null,
+            null,
+            null,
+            ""
+          ]
+        ],
+        "resource_relations": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            "parent",
+            "[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"missing\\\"\"]]",
+            "{\"evidence\":\"independent\",\"source\":\"synthetic://other\"}",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":null,\"state\":\"complete\"}",
+            null,
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"missing\"",
+            "",
+            "{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}",
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            "parent",
+            "[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"missing\\\"\"]]",
+            "{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":null,\"state\":\"complete\"}",
+            null,
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"missing\"",
+            "",
+            "{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}",
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            "parent",
+            "[[\"19489678-1234-4234-8234-123456789abc\",\"document\",\"\\\"doc-global\\\"\"]]",
+            "{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":null,\"state\":\"complete\"}",
+            null,
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            "",
+            "{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}",
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        ],
+        "resource_repository_relations": []
+      },
+      "foreign_key_check": [],
+      "integrity_check": [
+        "ok"
+      ]
+    },
+    {
+      "label": "G1 cannot rebind independent contract INSERT OR REPLACE",
+      "expected": "SQLITE_CONSTRAINT_TRIGGER",
+      "transaction_before": false,
+      "actual": "SQLITE_CONSTRAINT_TRIGGER",
+      "error": "Resource identification payload rebind",
+      "sql": [
+        "INSERT OR REPLACE INTO resources VALUES('19489678-1234-4234-8234-123456789abc','document','\"doc-global\"','pull_request','[\"project\",\"7\"]','title','\"doc-global\"')",
+        "INSERT OR REPLACE INTO resources VALUES('19489678-1234-4234-8234-123456789abc','document','\"doc-global\"','pull_request','[\"project\",\"7\"]','title','\"doc-global\"')",
+        "INSERT OR REPLACE INTO resources VALUES('19489678-1234-4234-8234-123456789abc','document','\"doc-global\"','pull_request','[\"project\",\"7\"]','title','\"doc-global\"')"
+      ],
+      "transaction_after": false,
+      "rowsets": {
+        "resources": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"\"",
+            null,
+            null,
+            null,
+            "\"\"",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            null,
+            null,
+            null,
+            "\"doc-global\"",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            null,
+            null,
+            null,
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"pull_request\",\"[\\\"project\\\",\\\"7\\\"]\",\"title\",[\"document\",\"part\"]]",
+            "pull_request",
+            "[\"project\",\"7\"]",
+            "title",
+            "[\"document\",\"part\"]",
+            "title"
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"pull_request\",\"looks\",\"like\",\"scoped\"]",
+            null,
+            null,
+            null,
+            "[\"pull_request\",\"looks\",\"like\",\"scoped\"]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[]",
+            null,
+            null,
+            null,
+            "[]",
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"missing\"",
+            null,
+            null,
+            null,
+            null,
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "pull_request",
+            "[\"project\",\"7\"]",
+            null,
+            null,
+            null,
+            null,
+            ""
+          ],
+          [
+            "29489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"other-provider\"",
+            null,
+            null,
+            null,
+            null,
+            ""
+          ]
+        ],
+        "resource_relations": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            "parent",
+            "[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"missing\\\"\"]]",
+            "{\"evidence\":\"independent\",\"source\":\"synthetic://other\"}",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":null,\"state\":\"complete\"}",
+            null,
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"missing\"",
+            "",
+            "{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}",
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            "parent",
+            "[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"missing\\\"\"]]",
+            "{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":null,\"state\":\"complete\"}",
+            null,
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"missing\"",
+            "",
+            "{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}",
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"collection\",[\"slot\",\"nine\"]]",
+            "parent",
+            "[[\"19489678-1234-4234-8234-123456789abc\",\"document\",\"\\\"doc-global\\\"\"]]",
+            "{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":null,\"state\":\"complete\"}",
+            null,
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "\"doc-global\"",
+            "",
+            "{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}",
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        ],
+        "resource_repository_relations": []
+      },
+      "foreign_key_check": [],
+      "integrity_check": [
+        "ok"
+      ]
+    },
+    {
+      "label": "G2 array-native Parent representation",
+      "expected": "success",
+      "transaction_before": false,
+      "actual": "success",
+      "sql": [
+        "INSERT INTO resources VALUES('19489678-1234-4234-8234-123456789abc','document','[\"pull_request\",\"[\\\"project\\\",\\\"7\\\"]\",\"body\",\"D\"]','pull_request','[\"project\",\"7\"]','body','\"D\"')",
+        "INSERT INTO resources VALUES('19489678-1234-4234-8234-123456789abc','document','[\"pull_request\",\"[\\\"project\\\",\\\"7\\\"]\",\"body\",\"D\"]','pull_request','[\"project\",\"7\"]','body','\"D\"')"
+      ],
+      "transaction_after": false,
+      "rowsets": {
+        "resources": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"pull_request\",\"[\\\"project\\\",\\\"7\\\"]\",\"body\",\"D\"]",
+            "pull_request",
+            "[\"project\",\"7\"]",
+            "body",
+            "\"D\"",
+            "body"
+          ]
+        ],
+        "resource_relations": [],
+        "resource_repository_relations": []
+      },
+      "foreign_key_check": [],
+      "integrity_check": [
+        "ok"
+      ]
+    },
+    {
+      "label": "G2 canonical-text-native string Parent remains distinct",
+      "expected": "success",
+      "transaction_before": false,
+      "actual": "success",
+      "sql": [
+        "INSERT INTO resources VALUES('19489678-1234-4234-8234-123456789abc','document','[\"pull_request\",\"\\\"[\\\\\\\"project\\\\\\\",\\\\\\\"7\\\\\\\"]\\\"\",\"body\",\"D\"]','pull_request','\"[\\\"project\\\",\\\"7\\\"]\"','body','\"D\"')",
+        "INSERT INTO resources VALUES('19489678-1234-4234-8234-123456789abc','document','[\"pull_request\",\"\\\"[\\\\\\\"project\\\\\\\",\\\\\\\"7\\\\\\\"]\\\"\",\"body\",\"D\"]','pull_request','\"[\\\"project\\\",\\\"7\\\"]\"','body','\"D\"')"
+      ],
+      "transaction_after": false,
+      "rowsets": {
+        "resources": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"pull_request\",\"[\\\"project\\\",\\\"7\\\"]\",\"body\",\"D\"]",
+            "pull_request",
+            "[\"project\",\"7\"]",
+            "body",
+            "\"D\"",
+            "body"
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"pull_request\",\"\\\"[\\\\\\\"project\\\\\\\",\\\\\\\"7\\\\\\\"]\\\"\",\"body\",\"D\"]",
+            "pull_request",
+            "\"[\\\"project\\\",\\\"7\\\"]\"",
+            "body",
+            "\"D\"",
+            "body"
+          ]
+        ],
+        "resource_relations": [],
+        "resource_repository_relations": []
+      },
+      "foreign_key_check": [],
+      "integrity_check": [
+        "ok"
+      ]
+    },
+    {
+      "label": "G2 alternative nested encoding rejected",
+      "expected": "SQLITE_CONSTRAINT_CHECK",
+      "transaction_before": false,
+      "actual": "SQLITE_CONSTRAINT_CHECK",
+      "error": "CHECK constraint failed: cp_resource(resource_kind,provider_resource_id,identifier_namespace_kind,identifier_namespace_id,document_kind,provider_document_id)=1",
+      "sql": [
+        "INSERT INTO resources VALUES('19489678-1234-4234-8234-123456789abc','document','[\"pull_request\",[\"project\",\"7\"],\"body\",\"D\"]','pull_request','[\"project\",\"7\"]','body','\"D\"')",
+        "INSERT INTO resources VALUES('19489678-1234-4234-8234-123456789abc','document','[\"pull_request\",[\"project\",\"7\"],\"body\",\"D\"]','pull_request','[\"project\",\"7\"]','body','\"D\"')"
+      ],
+      "transaction_after": false,
+      "rowsets": {
+        "resources": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"pull_request\",\"[\\\"project\\\",\\\"7\\\"]\",\"body\",\"D\"]",
+            "pull_request",
+            "[\"project\",\"7\"]",
+            "body",
+            "\"D\"",
+            "body"
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"pull_request\",\"\\\"[\\\\\\\"project\\\\\\\",\\\\\\\"7\\\\\\\"]\\\"\",\"body\",\"D\"]",
+            "pull_request",
+            "\"[\\\"project\\\",\\\"7\\\"]\"",
+            "body",
+            "\"D\"",
+            "body"
+          ]
+        ],
+        "resource_relations": [],
+        "resource_repository_relations": []
+      },
+      "foreign_key_check": [],
+      "integrity_check": [
+        "ok"
+      ]
+    },
+    {
+      "label": "G2 mixed-profile alias cannot pass IGNORE",
+      "expected": "SQLITE_CONSTRAINT_TRIGGER",
+      "transaction_before": false,
+      "actual": "SQLITE_CONSTRAINT_TRIGGER",
+      "error": "Resource identification payload rebind",
+      "sql": [
+        "INSERT OR IGNORE INTO resources VALUES('19489678-1234-4234-8234-123456789abc','document','[\"pull_request\",\"[\\\"project\\\",\\\"7\\\"]\",\"body\",\"D\"]','pull_request','\"[\\\"project\\\",\\\"7\\\"]\"','body','\"D\"')",
+        "INSERT OR IGNORE INTO resources VALUES('19489678-1234-4234-8234-123456789abc','document','[\"pull_request\",\"[\\\"project\\\",\\\"7\\\"]\",\"body\",\"D\"]','pull_request','\"[\\\"project\\\",\\\"7\\\"]\"','body','\"D\"')",
+        "INSERT OR IGNORE INTO resources VALUES('19489678-1234-4234-8234-123456789abc','document','[\"pull_request\",\"[\\\"project\\\",\\\"7\\\"]\",\"body\",\"D\"]','pull_request','\"[\\\"project\\\",\\\"7\\\"]\"','body','\"D\"')"
+      ],
+      "transaction_after": false,
+      "rowsets": {
+        "resources": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"pull_request\",\"[\\\"project\\\",\\\"7\\\"]\",\"body\",\"D\"]",
+            "pull_request",
+            "[\"project\",\"7\"]",
+            "body",
+            "\"D\"",
+            "body"
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "document",
+            "[\"pull_request\",\"\\\"[\\\\\\\"project\\\\\\\",\\\\\\\"7\\\\\\\"]\\\"\",\"body\",\"D\"]",
+            "pull_request",
+            "\"[\\\"project\\\",\\\"7\\\"]\"",
+            "body",
+            "\"D\"",
+            "body"
+          ]
+        ],
+        "resource_relations": [],
+        "resource_repository_relations": []
+      },
+      "foreign_key_check": [],
+      "integrity_check": [
+        "ok"
+      ]
+    },
+    {
+      "label": "G3 retain conflicting I8 attributed Parent",
+      "expected": "success",
+      "transaction_before": false,
+      "actual": "success",
+      "sql": [
+        "INSERT INTO resource_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json,observed_at_us) VALUES('19489678-1234-4234-8234-123456789abc','comment','[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]','parent','[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"I8\\\"\"]]','{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}','{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":\"timeline_event\",\"state\":\"complete\"}',NULL)",
+        "INSERT INTO resource_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json,observed_at_us) VALUES('19489678-1234-4234-8234-123456789abc','comment','[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]','parent','[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"I8\\\"\"]]','{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}','{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":\"timeline_event\",\"state\":\"complete\"}',NULL)",
+        "INSERT INTO resource_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json,observed_at_us) VALUES('19489678-1234-4234-8234-123456789abc','comment','[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]','parent','[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"I8\\\"\"]]','{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}','{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":\"timeline_event\",\"state\":\"complete\"}',NULL)"
+      ],
+      "transaction_after": false,
+      "rowsets": {
+        "resources": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "comment",
+            "[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]",
+            "issue",
+            "\"I7\"",
+            "timeline_event",
+            "\"E-independent\"",
+            "timeline_event"
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"I7\"",
+            null,
+            null,
+            null,
+            null,
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"I8\"",
+            null,
+            null,
+            null,
+            null,
+            ""
+          ]
+        ],
+        "resource_relations": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "comment",
+            "[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]",
+            "parent",
+            "[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"I8\\\"\"]]",
+            "{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":\"timeline_event\",\"state\":\"complete\"}",
+            null,
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"I8\"",
+            "timeline_event",
+            "{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}",
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        ],
+        "resource_repository_relations": []
+      },
+      "foreign_key_check": [],
+      "integrity_check": [
+        "ok"
+      ]
+    },
+    {
+      "label": "G3 supported admission withholds unresolved I8",
+      "expected": "QualificationRequired",
+      "transaction_before": false,
+      "actual": "QualificationRequired",
+      "error": "Q-S10 namespace/Parent mismatch requires owner qualification",
+      "sql": [
+        "SELECT identifier_namespace_kind,identifier_namespace_id FROM resources WHERE service_instance_uuidv4='19489678-1234-4234-8234-123456789abc' AND resource_kind='comment' AND provider_resource_id='[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]'"
+      ],
+      "transaction_after": false,
+      "rowsets": {
+        "resources": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "comment",
+            "[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]",
+            "issue",
+            "\"I7\"",
+            "timeline_event",
+            "\"E-independent\"",
+            "timeline_event"
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"I7\"",
+            null,
+            null,
+            null,
+            null,
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"I8\"",
+            null,
+            null,
+            null,
+            null,
+            ""
+          ]
+        ],
+        "resource_relations": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "comment",
+            "[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]",
+            "parent",
+            "[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"I8\\\"\"]]",
+            "{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":\"timeline_event\",\"state\":\"complete\"}",
+            null,
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"I8\"",
+            "timeline_event",
+            "{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}",
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        ],
+        "resource_repository_relations": []
+      },
+      "foreign_key_check": [],
+      "integrity_check": [
+        "ok"
+      ]
+    },
+    {
+      "label": "G3 begin structural diagnostic transaction",
+      "expected": "success",
+      "transaction_before": false,
+      "actual": "success",
+      "sql": [
+        "BEGIN"
+      ],
+      "transaction_after": true,
+      "rowsets": {
+        "resources": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "comment",
+            "[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]",
+            "issue",
+            "\"I7\"",
+            "timeline_event",
+            "\"E-independent\"",
+            "timeline_event"
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"I7\"",
+            null,
+            null,
+            null,
+            null,
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"I8\"",
+            null,
+            null,
+            null,
+            null,
+            ""
+          ]
+        ],
+        "resource_relations": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "comment",
+            "[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]",
+            "parent",
+            "[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"I8\\\"\"]]",
+            "{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":\"timeline_event\",\"state\":\"complete\"}",
+            null,
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"I8\"",
+            "timeline_event",
+            "{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}",
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        ],
+        "resource_repository_relations": []
+      },
+      "foreign_key_check": [],
+      "integrity_check": [
+        "ok"
+      ]
+    },
+    {
+      "label": "G3 direct SQL report has exact I8 support",
+      "expected": "success",
+      "transaction_before": true,
+      "actual": "success",
+      "sql": [
+        "INSERT INTO resource_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json,observed_at_us) VALUES('19489678-1234-4234-8234-123456789abc','comment','[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]','transfer_event_report','[]','{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}','{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"endpoints\":[[\"transfer_from_repository\",\"\\\"39489678-1234-4234-8234-123456789abc\\\"\"]],\"event_type\":\"transferred\",\"from_provider_repository_id\":null,\"parent_members_json\":\"[[\\\"19489678-1234-4234-8234-123456789abc\\\",\\\"issue\\\",\\\"\\\\\\\"I8\\\\\\\"\\\"]]\",\"parent_provenance_json\":\"{\\\"evidence\\\":\\\"original\\\",\\\"source\\\":\\\"synthetic://independent-semantic\\\"}\",\"parent_scope_json\":\"{\\\"clock\\\":{\\\"at_us\\\":501,\\\"domain\\\":\\\"independent-semantic-clock\\\"},\\\"document_kind\\\":\\\"timeline_event\\\",\\\"state\\\":\\\"complete\\\"}\",\"provided_roles\":[\"transfer_from_repository\"],\"to_provider_repository_id\":null}',NULL)",
+        "INSERT INTO resource_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json,observed_at_us) VALUES('19489678-1234-4234-8234-123456789abc','comment','[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]','transfer_event_report','[]','{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}','{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"endpoints\":[[\"transfer_from_repository\",\"\\\"39489678-1234-4234-8234-123456789abc\\\"\"]],\"event_type\":\"transferred\",\"from_provider_repository_id\":null,\"parent_members_json\":\"[[\\\"19489678-1234-4234-8234-123456789abc\\\",\\\"issue\\\",\\\"\\\\\\\"I8\\\\\\\"\\\"]]\",\"parent_provenance_json\":\"{\\\"evidence\\\":\\\"original\\\",\\\"source\\\":\\\"synthetic://independent-semantic\\\"}\",\"parent_scope_json\":\"{\\\"clock\\\":{\\\"at_us\\\":501,\\\"domain\\\":\\\"independent-semantic-clock\\\"},\\\"document_kind\\\":\\\"timeline_event\\\",\\\"state\\\":\\\"complete\\\"}\",\"provided_roles\":[\"transfer_from_repository\"],\"to_provider_repository_id\":null}',NULL)",
+        "INSERT INTO resource_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json,observed_at_us) VALUES('19489678-1234-4234-8234-123456789abc','comment','[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]','transfer_event_report','[]','{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}','{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"endpoints\":[[\"transfer_from_repository\",\"\\\"39489678-1234-4234-8234-123456789abc\\\"\"]],\"event_type\":\"transferred\",\"from_provider_repository_id\":null,\"parent_members_json\":\"[[\\\"19489678-1234-4234-8234-123456789abc\\\",\\\"issue\\\",\\\"\\\\\\\"I8\\\\\\\"\\\"]]\",\"parent_provenance_json\":\"{\\\"evidence\\\":\\\"original\\\",\\\"source\\\":\\\"synthetic://independent-semantic\\\"}\",\"parent_scope_json\":\"{\\\"clock\\\":{\\\"at_us\\\":501,\\\"domain\\\":\\\"independent-semantic-clock\\\"},\\\"document_kind\\\":\\\"timeline_event\\\",\\\"state\\\":\\\"complete\\\"}\",\"provided_roles\":[\"transfer_from_repository\"],\"to_provider_repository_id\":null}',NULL)"
+      ],
+      "transaction_after": true,
+      "rowsets": {
+        "resources": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "comment",
+            "[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]",
+            "issue",
+            "\"I7\"",
+            "timeline_event",
+            "\"E-independent\"",
+            "timeline_event"
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"I7\"",
+            null,
+            null,
+            null,
+            null,
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"I8\"",
+            null,
+            null,
+            null,
+            null,
+            ""
+          ]
+        ],
+        "resource_relations": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "comment",
+            "[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]",
+            "parent",
+            "[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"I8\\\"\"]]",
+            "{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":\"timeline_event\",\"state\":\"complete\"}",
+            null,
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"I8\"",
+            "timeline_event",
+            "{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}",
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "comment",
+            "[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]",
+            "transfer_event_report",
+            "[]",
+            "{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"endpoints\":[[\"transfer_from_repository\",\"\\\"39489678-1234-4234-8234-123456789abc\\\"\"]],\"event_type\":\"transferred\",\"from_provider_repository_id\":null,\"parent_members_json\":\"[[\\\"19489678-1234-4234-8234-123456789abc\\\",\\\"issue\\\",\\\"\\\\\\\"I8\\\\\\\"\\\"]]\",\"parent_provenance_json\":\"{\\\"evidence\\\":\\\"original\\\",\\\"source\\\":\\\"synthetic://independent-semantic\\\"}\",\"parent_scope_json\":\"{\\\"clock\\\":{\\\"at_us\\\":501,\\\"domain\\\":\\\"independent-semantic-clock\\\"},\\\"document_kind\\\":\\\"timeline_event\\\",\\\"state\\\":\\\"complete\\\"}\",\"provided_roles\":[\"transfer_from_repository\"],\"to_provider_repository_id\":null}",
+            null,
+            null,
+            null,
+            null,
+            "timeline_event",
+            "{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}",
+            "parent",
+            "[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"I8\\\"\"]]",
+            "{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":\"timeline_event\",\"state\":\"complete\"}",
+            "issue"
+          ]
+        ],
+        "resource_repository_relations": []
+      },
+      "foreign_key_check": [],
+      "integrity_check": [
+        "ok"
+      ]
+    },
+    {
+      "label": "G3 direct SQL endpoint has typed I8 support",
+      "expected": "success",
+      "transaction_before": true,
+      "actual": "success",
+      "sql": [
+        "INSERT INTO resource_repository_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,target_json,clock_json,provenance_json,observed_at_us,event_report_members_json,event_report_scope_json) VALUES('19489678-1234-4234-8234-123456789abc','comment','[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]','transfer_from_repository','\"39489678-1234-4234-8234-123456789abc\"','{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}','{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}',NULL,'[]','{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"endpoints\":[[\"transfer_from_repository\",\"\\\"39489678-1234-4234-8234-123456789abc\\\"\"]],\"event_type\":\"transferred\",\"from_provider_repository_id\":null,\"parent_members_json\":\"[[\\\"19489678-1234-4234-8234-123456789abc\\\",\\\"issue\\\",\\\"\\\\\\\"I8\\\\\\\"\\\"]]\",\"parent_provenance_json\":\"{\\\"evidence\\\":\\\"original\\\",\\\"source\\\":\\\"synthetic://independent-semantic\\\"}\",\"parent_scope_json\":\"{\\\"clock\\\":{\\\"at_us\\\":501,\\\"domain\\\":\\\"independent-semantic-clock\\\"},\\\"document_kind\\\":\\\"timeline_event\\\",\\\"state\\\":\\\"complete\\\"}\",\"provided_roles\":[\"transfer_from_repository\"],\"to_provider_repository_id\":null}')",
+        "INSERT INTO resource_repository_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,target_json,clock_json,provenance_json,observed_at_us,event_report_members_json,event_report_scope_json) VALUES('19489678-1234-4234-8234-123456789abc','comment','[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]','transfer_from_repository','\"39489678-1234-4234-8234-123456789abc\"','{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}','{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}',NULL,'[]','{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"endpoints\":[[\"transfer_from_repository\",\"\\\"39489678-1234-4234-8234-123456789abc\\\"\"]],\"event_type\":\"transferred\",\"from_provider_repository_id\":null,\"parent_members_json\":\"[[\\\"19489678-1234-4234-8234-123456789abc\\\",\\\"issue\\\",\\\"\\\\\\\"I8\\\\\\\"\\\"]]\",\"parent_provenance_json\":\"{\\\"evidence\\\":\\\"original\\\",\\\"source\\\":\\\"synthetic://independent-semantic\\\"}\",\"parent_scope_json\":\"{\\\"clock\\\":{\\\"at_us\\\":501,\\\"domain\\\":\\\"independent-semantic-clock\\\"},\\\"document_kind\\\":\\\"timeline_event\\\",\\\"state\\\":\\\"complete\\\"}\",\"provided_roles\":[\"transfer_from_repository\"],\"to_provider_repository_id\":null}')",
+        "INSERT INTO resource_repository_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,target_json,clock_json,provenance_json,observed_at_us,event_report_members_json,event_report_scope_json) VALUES('19489678-1234-4234-8234-123456789abc','comment','[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]','transfer_from_repository','\"39489678-1234-4234-8234-123456789abc\"','{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}','{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}',NULL,'[]','{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"endpoints\":[[\"transfer_from_repository\",\"\\\"39489678-1234-4234-8234-123456789abc\\\"\"]],\"event_type\":\"transferred\",\"from_provider_repository_id\":null,\"parent_members_json\":\"[[\\\"19489678-1234-4234-8234-123456789abc\\\",\\\"issue\\\",\\\"\\\\\\\"I8\\\\\\\"\\\"]]\",\"parent_provenance_json\":\"{\\\"evidence\\\":\\\"original\\\",\\\"source\\\":\\\"synthetic://independent-semantic\\\"}\",\"parent_scope_json\":\"{\\\"clock\\\":{\\\"at_us\\\":501,\\\"domain\\\":\\\"independent-semantic-clock\\\"},\\\"document_kind\\\":\\\"timeline_event\\\",\\\"state\\\":\\\"complete\\\"}\",\"provided_roles\":[\"transfer_from_repository\"],\"to_provider_repository_id\":null}')",
+        "INSERT INTO resource_repository_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,target_json,clock_json,provenance_json,observed_at_us,event_report_members_json,event_report_scope_json) VALUES('19489678-1234-4234-8234-123456789abc','comment','[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]','transfer_from_repository','\"39489678-1234-4234-8234-123456789abc\"','{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}','{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}',NULL,'[]','{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"endpoints\":[[\"transfer_from_repository\",\"\\\"39489678-1234-4234-8234-123456789abc\\\"\"]],\"event_type\":\"transferred\",\"from_provider_repository_id\":null,\"parent_members_json\":\"[[\\\"19489678-1234-4234-8234-123456789abc\\\",\\\"issue\\\",\\\"\\\\\\\"I8\\\\\\\"\\\"]]\",\"parent_provenance_json\":\"{\\\"evidence\\\":\\\"original\\\",\\\"source\\\":\\\"synthetic://independent-semantic\\\"}\",\"parent_scope_json\":\"{\\\"clock\\\":{\\\"at_us\\\":501,\\\"domain\\\":\\\"independent-semantic-clock\\\"},\\\"document_kind\\\":\\\"timeline_event\\\",\\\"state\\\":\\\"complete\\\"}\",\"provided_roles\":[\"transfer_from_repository\"],\"to_provider_repository_id\":null}')",
+        "INSERT INTO resource_repository_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,target_json,clock_json,provenance_json,observed_at_us,event_report_members_json,event_report_scope_json) VALUES('19489678-1234-4234-8234-123456789abc','comment','[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]','transfer_from_repository','\"39489678-1234-4234-8234-123456789abc\"','{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}','{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}',NULL,'[]','{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"endpoints\":[[\"transfer_from_repository\",\"\\\"39489678-1234-4234-8234-123456789abc\\\"\"]],\"event_type\":\"transferred\",\"from_provider_repository_id\":null,\"parent_members_json\":\"[[\\\"19489678-1234-4234-8234-123456789abc\\\",\\\"issue\\\",\\\"\\\\\\\"I8\\\\\\\"\\\"]]\",\"parent_provenance_json\":\"{\\\"evidence\\\":\\\"original\\\",\\\"source\\\":\\\"synthetic://independent-semantic\\\"}\",\"parent_scope_json\":\"{\\\"clock\\\":{\\\"at_us\\\":501,\\\"domain\\\":\\\"independent-semantic-clock\\\"},\\\"document_kind\\\":\\\"timeline_event\\\",\\\"state\\\":\\\"complete\\\"}\",\"provided_roles\":[\"transfer_from_repository\"],\"to_provider_repository_id\":null}')",
+        "INSERT INTO resource_repository_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,target_json,clock_json,provenance_json,observed_at_us,event_report_members_json,event_report_scope_json) VALUES('19489678-1234-4234-8234-123456789abc','comment','[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]','transfer_from_repository','\"39489678-1234-4234-8234-123456789abc\"','{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}','{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}',NULL,'[]','{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"endpoints\":[[\"transfer_from_repository\",\"\\\"39489678-1234-4234-8234-123456789abc\\\"\"]],\"event_type\":\"transferred\",\"from_provider_repository_id\":null,\"parent_members_json\":\"[[\\\"19489678-1234-4234-8234-123456789abc\\\",\\\"issue\\\",\\\"\\\\\\\"I8\\\\\\\"\\\"]]\",\"parent_provenance_json\":\"{\\\"evidence\\\":\\\"original\\\",\\\"source\\\":\\\"synthetic://independent-semantic\\\"}\",\"parent_scope_json\":\"{\\\"clock\\\":{\\\"at_us\\\":501,\\\"domain\\\":\\\"independent-semantic-clock\\\"},\\\"document_kind\\\":\\\"timeline_event\\\",\\\"state\\\":\\\"complete\\\"}\",\"provided_roles\":[\"transfer_from_repository\"],\"to_provider_repository_id\":null}')"
+      ],
+      "transaction_after": true,
+      "rowsets": {
+        "resources": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "comment",
+            "[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]",
+            "issue",
+            "\"I7\"",
+            "timeline_event",
+            "\"E-independent\"",
+            "timeline_event"
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"I7\"",
+            null,
+            null,
+            null,
+            null,
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"I8\"",
+            null,
+            null,
+            null,
+            null,
+            ""
+          ]
+        ],
+        "resource_relations": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "comment",
+            "[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]",
+            "parent",
+            "[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"I8\\\"\"]]",
+            "{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":\"timeline_event\",\"state\":\"complete\"}",
+            null,
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"I8\"",
+            "timeline_event",
+            "{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}",
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "comment",
+            "[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]",
+            "transfer_event_report",
+            "[]",
+            "{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"endpoints\":[[\"transfer_from_repository\",\"\\\"39489678-1234-4234-8234-123456789abc\\\"\"]],\"event_type\":\"transferred\",\"from_provider_repository_id\":null,\"parent_members_json\":\"[[\\\"19489678-1234-4234-8234-123456789abc\\\",\\\"issue\\\",\\\"\\\\\\\"I8\\\\\\\"\\\"]]\",\"parent_provenance_json\":\"{\\\"evidence\\\":\\\"original\\\",\\\"source\\\":\\\"synthetic://independent-semantic\\\"}\",\"parent_scope_json\":\"{\\\"clock\\\":{\\\"at_us\\\":501,\\\"domain\\\":\\\"independent-semantic-clock\\\"},\\\"document_kind\\\":\\\"timeline_event\\\",\\\"state\\\":\\\"complete\\\"}\",\"provided_roles\":[\"transfer_from_repository\"],\"to_provider_repository_id\":null}",
+            null,
+            null,
+            null,
+            null,
+            "timeline_event",
+            "{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}",
+            "parent",
+            "[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"I8\\\"\"]]",
+            "{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":\"timeline_event\",\"state\":\"complete\"}",
+            "issue"
+          ]
+        ],
+        "resource_repository_relations": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "comment",
+            "[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]",
+            "transfer_from_repository",
+            "\"39489678-1234-4234-8234-123456789abc\"",
+            "{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}",
+            "{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}",
+            null,
+            "39489678-1234-4234-8234-123456789abc",
+            "independent-semantic-clock",
+            501,
+            "timeline_event",
+            "[]",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"endpoints\":[[\"transfer_from_repository\",\"\\\"39489678-1234-4234-8234-123456789abc\\\"\"]],\"event_type\":\"transferred\",\"from_provider_repository_id\":null,\"parent_members_json\":\"[[\\\"19489678-1234-4234-8234-123456789abc\\\",\\\"issue\\\",\\\"\\\\\\\"I8\\\\\\\"\\\"]]\",\"parent_provenance_json\":\"{\\\"evidence\\\":\\\"original\\\",\\\"source\\\":\\\"synthetic://independent-semantic\\\"}\",\"parent_scope_json\":\"{\\\"clock\\\":{\\\"at_us\\\":501,\\\"domain\\\":\\\"independent-semantic-clock\\\"},\\\"document_kind\\\":\\\"timeline_event\\\",\\\"state\\\":\\\"complete\\\"}\",\"provided_roles\":[\"transfer_from_repository\"],\"to_provider_repository_id\":null}",
+            "transfer_event_report",
+            "issue",
+            "parent",
+            "[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"I8\\\"\"]]",
+            "{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":\"timeline_event\",\"state\":\"complete\"}"
+          ]
+        ]
+      },
+      "foreign_key_check": [],
+      "integrity_check": [
+        "ok"
+      ]
+    },
+    {
+      "label": "G3 existing raw SQL unit still not qualified on replay",
+      "expected": "QualificationRequired",
+      "transaction_before": true,
+      "actual": "QualificationRequired",
+      "error": "Q-S10 namespace/Parent mismatch requires owner qualification",
+      "sql": [
+        "SELECT identifier_namespace_kind,identifier_namespace_id FROM resources WHERE service_instance_uuidv4='19489678-1234-4234-8234-123456789abc' AND resource_kind='comment' AND provider_resource_id='[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]'"
+      ],
+      "transaction_after": true,
+      "rowsets": {
+        "resources": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "comment",
+            "[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]",
+            "issue",
+            "\"I7\"",
+            "timeline_event",
+            "\"E-independent\"",
+            "timeline_event"
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"I7\"",
+            null,
+            null,
+            null,
+            null,
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"I8\"",
+            null,
+            null,
+            null,
+            null,
+            ""
+          ]
+        ],
+        "resource_relations": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "comment",
+            "[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]",
+            "parent",
+            "[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"I8\\\"\"]]",
+            "{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":\"timeline_event\",\"state\":\"complete\"}",
+            null,
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"I8\"",
+            "timeline_event",
+            "{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}",
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "comment",
+            "[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]",
+            "transfer_event_report",
+            "[]",
+            "{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"endpoints\":[[\"transfer_from_repository\",\"\\\"39489678-1234-4234-8234-123456789abc\\\"\"]],\"event_type\":\"transferred\",\"from_provider_repository_id\":null,\"parent_members_json\":\"[[\\\"19489678-1234-4234-8234-123456789abc\\\",\\\"issue\\\",\\\"\\\\\\\"I8\\\\\\\"\\\"]]\",\"parent_provenance_json\":\"{\\\"evidence\\\":\\\"original\\\",\\\"source\\\":\\\"synthetic://independent-semantic\\\"}\",\"parent_scope_json\":\"{\\\"clock\\\":{\\\"at_us\\\":501,\\\"domain\\\":\\\"independent-semantic-clock\\\"},\\\"document_kind\\\":\\\"timeline_event\\\",\\\"state\\\":\\\"complete\\\"}\",\"provided_roles\":[\"transfer_from_repository\"],\"to_provider_repository_id\":null}",
+            null,
+            null,
+            null,
+            null,
+            "timeline_event",
+            "{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}",
+            "parent",
+            "[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"I8\\\"\"]]",
+            "{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":\"timeline_event\",\"state\":\"complete\"}",
+            "issue"
+          ]
+        ],
+        "resource_repository_relations": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "comment",
+            "[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]",
+            "transfer_from_repository",
+            "\"39489678-1234-4234-8234-123456789abc\"",
+            "{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}",
+            "{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}",
+            null,
+            "39489678-1234-4234-8234-123456789abc",
+            "independent-semantic-clock",
+            501,
+            "timeline_event",
+            "[]",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"endpoints\":[[\"transfer_from_repository\",\"\\\"39489678-1234-4234-8234-123456789abc\\\"\"]],\"event_type\":\"transferred\",\"from_provider_repository_id\":null,\"parent_members_json\":\"[[\\\"19489678-1234-4234-8234-123456789abc\\\",\\\"issue\\\",\\\"\\\\\\\"I8\\\\\\\"\\\"]]\",\"parent_provenance_json\":\"{\\\"evidence\\\":\\\"original\\\",\\\"source\\\":\\\"synthetic://independent-semantic\\\"}\",\"parent_scope_json\":\"{\\\"clock\\\":{\\\"at_us\\\":501,\\\"domain\\\":\\\"independent-semantic-clock\\\"},\\\"document_kind\\\":\\\"timeline_event\\\",\\\"state\\\":\\\"complete\\\"}\",\"provided_roles\":[\"transfer_from_repository\"],\"to_provider_repository_id\":null}",
+            "transfer_event_report",
+            "issue",
+            "parent",
+            "[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"I8\\\"\"]]",
+            "{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":\"timeline_event\",\"state\":\"complete\"}"
+          ]
+        ]
+      },
+      "foreign_key_check": [],
+      "integrity_check": [
+        "ok"
+      ]
+    },
+    {
+      "label": "G3 rollback structural diagnostic",
+      "expected": "success",
+      "transaction_before": true,
+      "actual": "success",
+      "sql": [
+        "ROLLBACK"
+      ],
+      "transaction_after": false,
+      "rowsets": {
+        "resources": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "comment",
+            "[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]",
+            "issue",
+            "\"I7\"",
+            "timeline_event",
+            "\"E-independent\"",
+            "timeline_event"
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"I7\"",
+            null,
+            null,
+            null,
+            null,
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"I8\"",
+            null,
+            null,
+            null,
+            null,
+            ""
+          ]
+        ],
+        "resource_relations": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "comment",
+            "[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]",
+            "parent",
+            "[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"I8\\\"\"]]",
+            "{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":\"timeline_event\",\"state\":\"complete\"}",
+            null,
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"I8\"",
+            "timeline_event",
+            "{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}",
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        ],
+        "resource_repository_relations": []
+      },
+      "foreign_key_check": [],
+      "integrity_check": [
+        "ok"
+      ]
+    },
+    {
+      "label": "G3 matching previously supported I7 unit admitted",
+      "expected": "success",
+      "transaction_before": false,
+      "actual": "success",
+      "sql": [
+        "SELECT identifier_namespace_kind,identifier_namespace_id FROM resources WHERE service_instance_uuidv4='19489678-1234-4234-8234-123456789abc' AND resource_kind='comment' AND provider_resource_id='[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]'",
+        "SAVEPOINT transfer_unit",
+        "SELECT service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json,observed_at_us FROM resource_relations WHERE service_instance_uuidv4 IS '19489678-1234-4234-8234-123456789abc' AND resource_kind IS 'comment' AND provider_resource_id IS '[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]' AND relation_kind IS 'transfer_event_report' AND members_json IS '[]' AND provenance_json IS '{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}' AND scope_json IS '{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"endpoints\":[[\"transfer_from_repository\",\"\\\"39489678-1234-4234-8234-123456789abc\\\"\"]],\"event_type\":\"transferred\",\"from_provider_repository_id\":null,\"parent_members_json\":\"[[\\\"19489678-1234-4234-8234-123456789abc\\\",\\\"issue\\\",\\\"\\\\\\\"I7\\\\\\\"\\\"]]\",\"parent_provenance_json\":\"{\\\"evidence\\\":\\\"original\\\",\\\"source\\\":\\\"synthetic://I7\\\"}\",\"parent_scope_json\":\"{\\\"clock\\\":{\\\"at_us\\\":501,\\\"domain\\\":\\\"independent-semantic-clock\\\"},\\\"document_kind\\\":\\\"timeline_event\\\",\\\"state\\\":\\\"complete\\\"}\",\"provided_roles\":[\"transfer_from_repository\"],\"to_provider_repository_id\":null}'",
+        "INSERT INTO resource_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json,observed_at_us) VALUES('19489678-1234-4234-8234-123456789abc','comment','[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]','transfer_event_report','[]','{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}','{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"endpoints\":[[\"transfer_from_repository\",\"\\\"39489678-1234-4234-8234-123456789abc\\\"\"]],\"event_type\":\"transferred\",\"from_provider_repository_id\":null,\"parent_members_json\":\"[[\\\"19489678-1234-4234-8234-123456789abc\\\",\\\"issue\\\",\\\"\\\\\\\"I7\\\\\\\"\\\"]]\",\"parent_provenance_json\":\"{\\\"evidence\\\":\\\"original\\\",\\\"source\\\":\\\"synthetic://I7\\\"}\",\"parent_scope_json\":\"{\\\"clock\\\":{\\\"at_us\\\":501,\\\"domain\\\":\\\"independent-semantic-clock\\\"},\\\"document_kind\\\":\\\"timeline_event\\\",\\\"state\\\":\\\"complete\\\"}\",\"provided_roles\":[\"transfer_from_repository\"],\"to_provider_repository_id\":null}',NULL)",
+        "INSERT INTO resource_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json,observed_at_us) VALUES('19489678-1234-4234-8234-123456789abc','comment','[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]','transfer_event_report','[]','{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}','{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"endpoints\":[[\"transfer_from_repository\",\"\\\"39489678-1234-4234-8234-123456789abc\\\"\"]],\"event_type\":\"transferred\",\"from_provider_repository_id\":null,\"parent_members_json\":\"[[\\\"19489678-1234-4234-8234-123456789abc\\\",\\\"issue\\\",\\\"\\\\\\\"I7\\\\\\\"\\\"]]\",\"parent_provenance_json\":\"{\\\"evidence\\\":\\\"original\\\",\\\"source\\\":\\\"synthetic://I7\\\"}\",\"parent_scope_json\":\"{\\\"clock\\\":{\\\"at_us\\\":501,\\\"domain\\\":\\\"independent-semantic-clock\\\"},\\\"document_kind\\\":\\\"timeline_event\\\",\\\"state\\\":\\\"complete\\\"}\",\"provided_roles\":[\"transfer_from_repository\"],\"to_provider_repository_id\":null}',NULL)",
+        "INSERT INTO resource_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json,observed_at_us) VALUES('19489678-1234-4234-8234-123456789abc','comment','[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]','transfer_event_report','[]','{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}','{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"endpoints\":[[\"transfer_from_repository\",\"\\\"39489678-1234-4234-8234-123456789abc\\\"\"]],\"event_type\":\"transferred\",\"from_provider_repository_id\":null,\"parent_members_json\":\"[[\\\"19489678-1234-4234-8234-123456789abc\\\",\\\"issue\\\",\\\"\\\\\\\"I7\\\\\\\"\\\"]]\",\"parent_provenance_json\":\"{\\\"evidence\\\":\\\"original\\\",\\\"source\\\":\\\"synthetic://I7\\\"}\",\"parent_scope_json\":\"{\\\"clock\\\":{\\\"at_us\\\":501,\\\"domain\\\":\\\"independent-semantic-clock\\\"},\\\"document_kind\\\":\\\"timeline_event\\\",\\\"state\\\":\\\"complete\\\"}\",\"provided_roles\":[\"transfer_from_repository\"],\"to_provider_repository_id\":null}',NULL)",
+        "SELECT service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,target_json,clock_json,provenance_json,observed_at_us,event_report_members_json,event_report_scope_json FROM resource_repository_relations WHERE service_instance_uuidv4 IS '19489678-1234-4234-8234-123456789abc' AND resource_kind IS 'comment' AND provider_resource_id IS '[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]' AND relation_kind IS 'transfer_from_repository' AND target_json IS '\"39489678-1234-4234-8234-123456789abc\"' AND clock_json IS '{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}' AND provenance_json IS '{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}'",
+        "INSERT INTO resource_repository_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,target_json,clock_json,provenance_json,observed_at_us,event_report_members_json,event_report_scope_json) VALUES('19489678-1234-4234-8234-123456789abc','comment','[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]','transfer_from_repository','\"39489678-1234-4234-8234-123456789abc\"','{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}','{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}',NULL,'[]','{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"endpoints\":[[\"transfer_from_repository\",\"\\\"39489678-1234-4234-8234-123456789abc\\\"\"]],\"event_type\":\"transferred\",\"from_provider_repository_id\":null,\"parent_members_json\":\"[[\\\"19489678-1234-4234-8234-123456789abc\\\",\\\"issue\\\",\\\"\\\\\\\"I7\\\\\\\"\\\"]]\",\"parent_provenance_json\":\"{\\\"evidence\\\":\\\"original\\\",\\\"source\\\":\\\"synthetic://I7\\\"}\",\"parent_scope_json\":\"{\\\"clock\\\":{\\\"at_us\\\":501,\\\"domain\\\":\\\"independent-semantic-clock\\\"},\\\"document_kind\\\":\\\"timeline_event\\\",\\\"state\\\":\\\"complete\\\"}\",\"provided_roles\":[\"transfer_from_repository\"],\"to_provider_repository_id\":null}')",
+        "INSERT INTO resource_repository_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,target_json,clock_json,provenance_json,observed_at_us,event_report_members_json,event_report_scope_json) VALUES('19489678-1234-4234-8234-123456789abc','comment','[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]','transfer_from_repository','\"39489678-1234-4234-8234-123456789abc\"','{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}','{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}',NULL,'[]','{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"endpoints\":[[\"transfer_from_repository\",\"\\\"39489678-1234-4234-8234-123456789abc\\\"\"]],\"event_type\":\"transferred\",\"from_provider_repository_id\":null,\"parent_members_json\":\"[[\\\"19489678-1234-4234-8234-123456789abc\\\",\\\"issue\\\",\\\"\\\\\\\"I7\\\\\\\"\\\"]]\",\"parent_provenance_json\":\"{\\\"evidence\\\":\\\"original\\\",\\\"source\\\":\\\"synthetic://I7\\\"}\",\"parent_scope_json\":\"{\\\"clock\\\":{\\\"at_us\\\":501,\\\"domain\\\":\\\"independent-semantic-clock\\\"},\\\"document_kind\\\":\\\"timeline_event\\\",\\\"state\\\":\\\"complete\\\"}\",\"provided_roles\":[\"transfer_from_repository\"],\"to_provider_repository_id\":null}')",
+        "INSERT INTO resource_repository_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,target_json,clock_json,provenance_json,observed_at_us,event_report_members_json,event_report_scope_json) VALUES('19489678-1234-4234-8234-123456789abc','comment','[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]','transfer_from_repository','\"39489678-1234-4234-8234-123456789abc\"','{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}','{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}',NULL,'[]','{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"endpoints\":[[\"transfer_from_repository\",\"\\\"39489678-1234-4234-8234-123456789abc\\\"\"]],\"event_type\":\"transferred\",\"from_provider_repository_id\":null,\"parent_members_json\":\"[[\\\"19489678-1234-4234-8234-123456789abc\\\",\\\"issue\\\",\\\"\\\\\\\"I7\\\\\\\"\\\"]]\",\"parent_provenance_json\":\"{\\\"evidence\\\":\\\"original\\\",\\\"source\\\":\\\"synthetic://I7\\\"}\",\"parent_scope_json\":\"{\\\"clock\\\":{\\\"at_us\\\":501,\\\"domain\\\":\\\"independent-semantic-clock\\\"},\\\"document_kind\\\":\\\"timeline_event\\\",\\\"state\\\":\\\"complete\\\"}\",\"provided_roles\":[\"transfer_from_repository\"],\"to_provider_repository_id\":null}')",
+        "INSERT INTO resource_repository_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,target_json,clock_json,provenance_json,observed_at_us,event_report_members_json,event_report_scope_json) VALUES('19489678-1234-4234-8234-123456789abc','comment','[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]','transfer_from_repository','\"39489678-1234-4234-8234-123456789abc\"','{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}','{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}',NULL,'[]','{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"endpoints\":[[\"transfer_from_repository\",\"\\\"39489678-1234-4234-8234-123456789abc\\\"\"]],\"event_type\":\"transferred\",\"from_provider_repository_id\":null,\"parent_members_json\":\"[[\\\"19489678-1234-4234-8234-123456789abc\\\",\\\"issue\\\",\\\"\\\\\\\"I7\\\\\\\"\\\"]]\",\"parent_provenance_json\":\"{\\\"evidence\\\":\\\"original\\\",\\\"source\\\":\\\"synthetic://I7\\\"}\",\"parent_scope_json\":\"{\\\"clock\\\":{\\\"at_us\\\":501,\\\"domain\\\":\\\"independent-semantic-clock\\\"},\\\"document_kind\\\":\\\"timeline_event\\\",\\\"state\\\":\\\"complete\\\"}\",\"provided_roles\":[\"transfer_from_repository\"],\"to_provider_repository_id\":null}')",
+        "INSERT INTO resource_repository_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,target_json,clock_json,provenance_json,observed_at_us,event_report_members_json,event_report_scope_json) VALUES('19489678-1234-4234-8234-123456789abc','comment','[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]','transfer_from_repository','\"39489678-1234-4234-8234-123456789abc\"','{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}','{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}',NULL,'[]','{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"endpoints\":[[\"transfer_from_repository\",\"\\\"39489678-1234-4234-8234-123456789abc\\\"\"]],\"event_type\":\"transferred\",\"from_provider_repository_id\":null,\"parent_members_json\":\"[[\\\"19489678-1234-4234-8234-123456789abc\\\",\\\"issue\\\",\\\"\\\\\\\"I7\\\\\\\"\\\"]]\",\"parent_provenance_json\":\"{\\\"evidence\\\":\\\"original\\\",\\\"source\\\":\\\"synthetic://I7\\\"}\",\"parent_scope_json\":\"{\\\"clock\\\":{\\\"at_us\\\":501,\\\"domain\\\":\\\"independent-semantic-clock\\\"},\\\"document_kind\\\":\\\"timeline_event\\\",\\\"state\\\":\\\"complete\\\"}\",\"provided_roles\":[\"transfer_from_repository\"],\"to_provider_repository_id\":null}')",
+        "INSERT INTO resource_repository_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,target_json,clock_json,provenance_json,observed_at_us,event_report_members_json,event_report_scope_json) VALUES('19489678-1234-4234-8234-123456789abc','comment','[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]','transfer_from_repository','\"39489678-1234-4234-8234-123456789abc\"','{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}','{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}',NULL,'[]','{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"endpoints\":[[\"transfer_from_repository\",\"\\\"39489678-1234-4234-8234-123456789abc\\\"\"]],\"event_type\":\"transferred\",\"from_provider_repository_id\":null,\"parent_members_json\":\"[[\\\"19489678-1234-4234-8234-123456789abc\\\",\\\"issue\\\",\\\"\\\\\\\"I7\\\\\\\"\\\"]]\",\"parent_provenance_json\":\"{\\\"evidence\\\":\\\"original\\\",\\\"source\\\":\\\"synthetic://I7\\\"}\",\"parent_scope_json\":\"{\\\"clock\\\":{\\\"at_us\\\":501,\\\"domain\\\":\\\"independent-semantic-clock\\\"},\\\"document_kind\\\":\\\"timeline_event\\\",\\\"state\\\":\\\"complete\\\"}\",\"provided_roles\":[\"transfer_from_repository\"],\"to_provider_repository_id\":null}')",
+        "RELEASE transfer_unit"
+      ],
+      "transaction_after": false,
+      "rowsets": {
+        "resources": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "comment",
+            "[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]",
+            "issue",
+            "\"I7\"",
+            "timeline_event",
+            "\"E-independent\"",
+            "timeline_event"
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"I7\"",
+            null,
+            null,
+            null,
+            null,
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"I8\"",
+            null,
+            null,
+            null,
+            null,
+            ""
+          ]
+        ],
+        "resource_relations": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "comment",
+            "[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]",
+            "parent",
+            "[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"I7\\\"\"]]",
+            "{\"evidence\":\"original\",\"source\":\"synthetic://I7\"}",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":\"timeline_event\",\"state\":\"complete\"}",
+            null,
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"I7\"",
+            "timeline_event",
+            "{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}",
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "comment",
+            "[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]",
+            "parent",
+            "[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"I8\\\"\"]]",
+            "{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":\"timeline_event\",\"state\":\"complete\"}",
+            null,
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"I8\"",
+            "timeline_event",
+            "{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}",
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "comment",
+            "[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]",
+            "transfer_event_report",
+            "[]",
+            "{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"endpoints\":[[\"transfer_from_repository\",\"\\\"39489678-1234-4234-8234-123456789abc\\\"\"]],\"event_type\":\"transferred\",\"from_provider_repository_id\":null,\"parent_members_json\":\"[[\\\"19489678-1234-4234-8234-123456789abc\\\",\\\"issue\\\",\\\"\\\\\\\"I7\\\\\\\"\\\"]]\",\"parent_provenance_json\":\"{\\\"evidence\\\":\\\"original\\\",\\\"source\\\":\\\"synthetic://I7\\\"}\",\"parent_scope_json\":\"{\\\"clock\\\":{\\\"at_us\\\":501,\\\"domain\\\":\\\"independent-semantic-clock\\\"},\\\"document_kind\\\":\\\"timeline_event\\\",\\\"state\\\":\\\"complete\\\"}\",\"provided_roles\":[\"transfer_from_repository\"],\"to_provider_repository_id\":null}",
+            null,
+            null,
+            null,
+            null,
+            "timeline_event",
+            "{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}",
+            "parent",
+            "[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"I7\\\"\"]]",
+            "{\"evidence\":\"original\",\"source\":\"synthetic://I7\"}",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":\"timeline_event\",\"state\":\"complete\"}",
+            "issue"
+          ]
+        ],
+        "resource_repository_relations": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "comment",
+            "[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]",
+            "transfer_from_repository",
+            "\"39489678-1234-4234-8234-123456789abc\"",
+            "{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}",
+            "{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}",
+            null,
+            "39489678-1234-4234-8234-123456789abc",
+            "independent-semantic-clock",
+            501,
+            "timeline_event",
+            "[]",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"endpoints\":[[\"transfer_from_repository\",\"\\\"39489678-1234-4234-8234-123456789abc\\\"\"]],\"event_type\":\"transferred\",\"from_provider_repository_id\":null,\"parent_members_json\":\"[[\\\"19489678-1234-4234-8234-123456789abc\\\",\\\"issue\\\",\\\"\\\\\\\"I7\\\\\\\"\\\"]]\",\"parent_provenance_json\":\"{\\\"evidence\\\":\\\"original\\\",\\\"source\\\":\\\"synthetic://I7\\\"}\",\"parent_scope_json\":\"{\\\"clock\\\":{\\\"at_us\\\":501,\\\"domain\\\":\\\"independent-semantic-clock\\\"},\\\"document_kind\\\":\\\"timeline_event\\\",\\\"state\\\":\\\"complete\\\"}\",\"provided_roles\":[\"transfer_from_repository\"],\"to_provider_repository_id\":null}",
+            "transfer_event_report",
+            "issue",
+            "parent",
+            "[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"I7\\\"\"]]",
+            "{\"evidence\":\"original\",\"source\":\"synthetic://I7\"}",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":\"timeline_event\",\"state\":\"complete\"}"
+          ]
+        ]
+      },
+      "foreign_key_check": [],
+      "integrity_check": [
+        "ok"
+      ]
+    },
+    {
+      "label": "G3 original I7 replay idempotent",
+      "expected": "success",
+      "transaction_before": false,
+      "actual": "success",
+      "sql": [
+        "SELECT identifier_namespace_kind,identifier_namespace_id FROM resources WHERE service_instance_uuidv4='19489678-1234-4234-8234-123456789abc' AND resource_kind='comment' AND provider_resource_id='[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]'",
+        "SAVEPOINT transfer_unit",
+        "SELECT service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json,observed_at_us FROM resource_relations WHERE service_instance_uuidv4 IS '19489678-1234-4234-8234-123456789abc' AND resource_kind IS 'comment' AND provider_resource_id IS '[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]' AND relation_kind IS 'transfer_event_report' AND members_json IS '[]' AND provenance_json IS '{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}' AND scope_json IS '{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"endpoints\":[[\"transfer_from_repository\",\"\\\"39489678-1234-4234-8234-123456789abc\\\"\"]],\"event_type\":\"transferred\",\"from_provider_repository_id\":null,\"parent_members_json\":\"[[\\\"19489678-1234-4234-8234-123456789abc\\\",\\\"issue\\\",\\\"\\\\\\\"I7\\\\\\\"\\\"]]\",\"parent_provenance_json\":\"{\\\"evidence\\\":\\\"original\\\",\\\"source\\\":\\\"synthetic://I7\\\"}\",\"parent_scope_json\":\"{\\\"clock\\\":{\\\"at_us\\\":501,\\\"domain\\\":\\\"independent-semantic-clock\\\"},\\\"document_kind\\\":\\\"timeline_event\\\",\\\"state\\\":\\\"complete\\\"}\",\"provided_roles\":[\"transfer_from_repository\"],\"to_provider_repository_id\":null}'",
+        "SELECT service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,target_json,clock_json,provenance_json,observed_at_us,event_report_members_json,event_report_scope_json FROM resource_repository_relations WHERE service_instance_uuidv4 IS '19489678-1234-4234-8234-123456789abc' AND resource_kind IS 'comment' AND provider_resource_id IS '[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]' AND relation_kind IS 'transfer_from_repository' AND target_json IS '\"39489678-1234-4234-8234-123456789abc\"' AND clock_json IS '{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}' AND provenance_json IS '{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}'",
+        "RELEASE transfer_unit"
+      ],
+      "transaction_after": false,
+      "rowsets": {
+        "resources": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "comment",
+            "[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]",
+            "issue",
+            "\"I7\"",
+            "timeline_event",
+            "\"E-independent\"",
+            "timeline_event"
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"I7\"",
+            null,
+            null,
+            null,
+            null,
+            ""
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"I8\"",
+            null,
+            null,
+            null,
+            null,
+            ""
+          ]
+        ],
+        "resource_relations": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "comment",
+            "[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]",
+            "parent",
+            "[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"I7\\\"\"]]",
+            "{\"evidence\":\"original\",\"source\":\"synthetic://I7\"}",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":\"timeline_event\",\"state\":\"complete\"}",
+            null,
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"I7\"",
+            "timeline_event",
+            "{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}",
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "comment",
+            "[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]",
+            "parent",
+            "[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"I8\\\"\"]]",
+            "{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":\"timeline_event\",\"state\":\"complete\"}",
+            null,
+            "19489678-1234-4234-8234-123456789abc",
+            "issue",
+            "\"I8\"",
+            "timeline_event",
+            "{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}",
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "comment",
+            "[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]",
+            "transfer_event_report",
+            "[]",
+            "{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"endpoints\":[[\"transfer_from_repository\",\"\\\"39489678-1234-4234-8234-123456789abc\\\"\"]],\"event_type\":\"transferred\",\"from_provider_repository_id\":null,\"parent_members_json\":\"[[\\\"19489678-1234-4234-8234-123456789abc\\\",\\\"issue\\\",\\\"\\\\\\\"I7\\\\\\\"\\\"]]\",\"parent_provenance_json\":\"{\\\"evidence\\\":\\\"original\\\",\\\"source\\\":\\\"synthetic://I7\\\"}\",\"parent_scope_json\":\"{\\\"clock\\\":{\\\"at_us\\\":501,\\\"domain\\\":\\\"independent-semantic-clock\\\"},\\\"document_kind\\\":\\\"timeline_event\\\",\\\"state\\\":\\\"complete\\\"}\",\"provided_roles\":[\"transfer_from_repository\"],\"to_provider_repository_id\":null}",
+            null,
+            null,
+            null,
+            null,
+            "timeline_event",
+            "{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}",
+            "parent",
+            "[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"I7\\\"\"]]",
+            "{\"evidence\":\"original\",\"source\":\"synthetic://I7\"}",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":\"timeline_event\",\"state\":\"complete\"}",
+            "issue"
+          ]
+        ],
+        "resource_repository_relations": [
+          [
+            "19489678-1234-4234-8234-123456789abc",
+            "comment",
+            "[\"issue\",\"\\\"I7\\\"\",\"timeline_event\",\"E-independent\"]",
+            "transfer_from_repository",
+            "\"39489678-1234-4234-8234-123456789abc\"",
+            "{\"at_us\":501,\"domain\":\"independent-semantic-clock\"}",
+            "{\"evidence\":\"original\",\"source\":\"synthetic://independent-semantic\"}",
+            null,
+            "39489678-1234-4234-8234-123456789abc",
+            "independent-semantic-clock",
+            501,
+            "timeline_event",
+            "[]",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"endpoints\":[[\"transfer_from_repository\",\"\\\"39489678-1234-4234-8234-123456789abc\\\"\"]],\"event_type\":\"transferred\",\"from_provider_repository_id\":null,\"parent_members_json\":\"[[\\\"19489678-1234-4234-8234-123456789abc\\\",\\\"issue\\\",\\\"\\\\\\\"I7\\\\\\\"\\\"]]\",\"parent_provenance_json\":\"{\\\"evidence\\\":\\\"original\\\",\\\"source\\\":\\\"synthetic://I7\\\"}\",\"parent_scope_json\":\"{\\\"clock\\\":{\\\"at_us\\\":501,\\\"domain\\\":\\\"independent-semantic-clock\\\"},\\\"document_kind\\\":\\\"timeline_event\\\",\\\"state\\\":\\\"complete\\\"}\",\"provided_roles\":[\"transfer_from_repository\"],\"to_provider_repository_id\":null}",
+            "transfer_event_report",
+            "issue",
+            "parent",
+            "[[\"19489678-1234-4234-8234-123456789abc\",\"issue\",\"\\\"I7\\\"\"]]",
+            "{\"evidence\":\"original\",\"source\":\"synthetic://I7\"}",
+            "{\"clock\":{\"at_us\":501,\"domain\":\"independent-semantic-clock\"},\"document_kind\":\"timeline_event\",\"state\":\"complete\"}"
+          ]
+        ]
+      },
+      "foreign_key_check": [],
+      "integrity_check": [
+        "ok"
+      ]
+    }
+  ],
+  "G2": {
+    "array_parent_key": "[\"pull_request\",\"[\\\"project\\\",\\\"7\\\"]\",\"body\",\"D\"]",
+    "text_native_parent_key": "[\"pull_request\",\"\\\"[\\\\\\\"project\\\\\\\",\\\\\\\"7\\\\\\\"]\\\"\",\"body\",\"D\"]",
+    "rejected_nested_key": "[\"pull_request\",[\"project\",\"7\"],\"body\",\"D\"]"
+  },
+  "summary": {
+    "observations": 39,
+    "unexpected": 0,
+    "scope": "G1/G2 corrected; G3 withholding only, owner semantics unresolved"
+  }
+}

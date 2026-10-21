@@ -1,0 +1,13 @@
+{
+  "candidate_commit": "e9aba86f4530b2e683c77e23a4fe58bdf02192c5",
+  "runtime": "Python 3.12.14 / SQLite 3.53.1",
+  "case": "IR40-ill-typed-observation-rejected-bool",
+  "reviewer_expected_exception": "ValueError",
+  "actual_exception": "TypeError",
+  "actual_error": "An epoch timestamp must be an integer number of microseconds",
+  "sql_statements": [],
+  "transaction_before": false,
+  "transaction_after": false,
+  "classification": "Reviewer expectation mismatch; actual strict rejection was correct before SQL. Corrected expected exception to existing validator TypeError; no candidate input changed.",
+  "initial_script_sha256": "b514a2e0ddc241ce01777b7632dff076a9c78ece626122cbf5b23f1ebaa7e244"
+}

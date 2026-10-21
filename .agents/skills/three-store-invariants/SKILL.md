@@ -762,3 +762,33 @@ lack a complete lookup index, reserve finite SQLite VM work before the lookup,
 settle only live measured work, and refuse at the cap without inferring absence.
 Use `tests/integration/p7/test_missing_required_authority.py` to distinguish
 missing required authority, genuinely new content and finite-query refusal.
+
+## Verify immutable replay before conflict-ignore handling
+
+Use this procedure when a schema experiment adds non-key reference or identity
+columns to an immutable semantic key. In the isolated Context C′ experiment,
+`ON CONFLICT DO NOTHING` silently skipped an endpoint with changed non-key
+support coordinates before its FK was checked. Independent review also found
+that `INSERT OR IGNORE` skipped changed Resource identification metadata. The
+old valid rows survived, but statement success did not establish valid replay.
+
+1. Insert a valid original row. Reuse its exact semantic key while changing each
+   immutable non-key payload/reference field, including NULL transitions.
+2. Exercise INSERT, IGNORE, REPLACE and both UPSERT actions through the supported
+   configured connection. Record actual errors, transaction outcome and stored
+   rowsets; do not treat a no-op as validated replay.
+3. Where the contract requires rejection, compare all immutable non-key fields
+   in a BEFORE INSERT guard, using NULL-safe comparisons and `RAISE(ABORT,...)`.
+   Keep real FKs for new-row referent existence and CHECKs for row-local syntax.
+   A replay trigger is not an FK or evidence of external authenticity.
+4. Recheck UPDATE/DELETE and REPLACE with required recursive triggers enabled,
+   plus exact replay through the typed payload-comparison path. Preserve the
+   failed candidate and its input hashes before changing the schema.
+
+[Executed evidence and limits](../../../docs/implementation/context-resource-u3-cprime-experiment.md)
+include the failed snapshot and independent findings. Reproduce the isolated
+experiment with `sh docs/implementation/evidence/context-resource-u3-cprime/reproduction/reproduce.sh /tmp/u3-cprime-rerun`.
+This procedure does not authorize product changes, prohibit legitimate mutable
+current-state updates, or claim protection after disabling constraints/replacing
+the schema. Arbitrary general-group membership and whole-unit admission still
+require their separately declared enforcement layer.

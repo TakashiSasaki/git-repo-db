@@ -1,0 +1,8 @@
+{
+  "scope": "Post-freeze prose inspection, not runtime inputs; subsequent editorial changes are outside these exact hashes.",
+  "sha256": {
+    ".agents/skills/three-store-invariants/SKILL.md": "066326c378e3b7406f70adc53d947ea771205ce3354d3860f2e84c33908ec42e",
+    "docs/implementation/context-resource-u3-cprime-experiment.md": "5e1c2fe03bf3f1afa1336c747694ce10b1bde5101d19137f4f60c3c41e4a8347",
+    "docs/implementation/evidence/context-resource-u3-cprime/README.md": "0f5f9c143f0bc1ef81db5fab5899da4bf1190d8e4dd12afd731fdd381834ebe9"
+  }
+}

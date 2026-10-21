@@ -1,0 +1,23 @@
+{
+  "checked_at_utc": "2026-10-21T03:38:59.869983+00:00",
+  "executable_freeze": "9eeacb28f7e4a426114a9ce40e2324b4da302817",
+  "all_executable_hashes_match": true,
+  "executable_inputs": 18,
+  "allowed_scope_only": true,
+  "protected_paths_changed": [],
+  "old_receipts_changed": [],
+  "changed_and_untracked_paths": 76,
+  "utf8": true,
+  "json_files_parsed": 37,
+  "active_markdown_files_checked": 7,
+  "relative_links_checked": 76,
+  "historical_snapshot_readme_links_excluded": true,
+  "ruff_version": "0.17.1",
+  "scoped_ruff_check": "passed",
+  "shell_syntax": "passed",
+  "repository_reports": {
+    "outcome": "passed",
+    "checked_count": 402
+  },
+  "runtime_claim": "No new execution claimed for documentation; receipts bind exact executable freeze."
+}
