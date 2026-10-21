@@ -153,3 +153,12 @@ The exact executable/design freeze is stated above. Later status, links and
 receipt-only additions are separately reviewed and bound to unchanged input
 hashes. This recommendation asks for the owner's decision on the entire ADR;
 it does not change proposed/date-null status or authorize implementation.
+
+Final factual/status/transport delta was independently rechecked at publication
+candidate `6bc9525ab853344fba309b28aee343250f575738`, tree
+`97efebce12fcf1ff45ddd336e60d59c14d5e8dfb`: [SQL reviewer recheck](independent-review/final-delta-review.md)
+and [documentation reviewer recheck](independent-docs/post-freeze-review.md).
+The resolved intermediate review-file manifest hash issue is recorded explicitly;
+all current stored/raw hashes match. Original executable inputs remain unchanged.
+Subsequent additions contain only these review/check receipts and factual links,
+not another executed or materially revised design.
