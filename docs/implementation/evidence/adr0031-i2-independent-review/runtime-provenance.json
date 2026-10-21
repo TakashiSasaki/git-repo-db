@@ -1,0 +1,86 @@
+{
+  "python_executable": "/usr/bin/python3.13",
+  "compiler": "cc (Debian 14.2.0-19) 14.2.0",
+  "independent_source_downloads": {
+    "3510300": {
+      "url": "https://www.sqlite.org/2026/sqlite-amalgamation-3510300.zip",
+      "sha256": "acb1e6f5d832484bf6d32b681e858c38add8b2acdfd42ac5df24b8afb46552b4",
+      "bytes": 2876305
+    },
+    "3530100": {
+      "url": "https://www.sqlite.org/2026/sqlite-amalgamation-3530100.zip",
+      "sha256": "36ad6e7f38540a3b21a2ac36340833f0a9e426bc1c752751c3ba669466827eae",
+      "bytes": 2938639
+    }
+  },
+  "builds": {
+    "3510300": {
+      "command": [
+        "cc",
+        "-O2",
+        "-fPIC",
+        "-shared",
+        "-DSQLITE_THREADSAFE=1",
+        "-DSQLITE_ENABLE_FTS5",
+        "-DSQLITE_ENABLE_COLUMN_METADATA",
+        "-DSQLITE_ENABLE_RTREE",
+        "/workspace/task-d-evidence/runtime/sqlite-amalgamation-3510300/sqlite3.c",
+        "-o",
+        "/workspace/task-d-evidence/runtime/sqlite-amalgamation-3510300/libsqlite3.so.0",
+        "-lpthread",
+        "-ldl",
+        "-lm"
+      ],
+      "observed_build_exit_code": 0,
+      "files": {
+        "sqlite3.c": {
+          "sha256": "9512509b1bccb7461f79bea8aad6280ae4699e925fa4804381b71f59e7efb0c5",
+          "bytes": 9390466
+        },
+        "sqlite3.h": {
+          "sha256": "19585c8b5230e9d4f223bf31b709ece7b6a0bb3faf00d8310625d8e58cda1b1d",
+          "bytes": 671786
+        },
+        "libsqlite3.so.0": {
+          "sha256": "525e2857153a83fd38ee160fc59062d723505afd5bddb7f5eeb85c96bb104041",
+          "bytes": 1418792
+        }
+      },
+      "sqlite3_c_sha3_256": "32d5424f97e0a7fc5ed2f6335afbb58be4e0298bd7117a34e39d345ff13d859e"
+    },
+    "3530100": {
+      "command": [
+        "cc",
+        "-O2",
+        "-fPIC",
+        "-shared",
+        "-DSQLITE_THREADSAFE=1",
+        "-DSQLITE_ENABLE_FTS5",
+        "-DSQLITE_ENABLE_COLUMN_METADATA",
+        "-DSQLITE_ENABLE_RTREE",
+        "/workspace/task-d-evidence/runtime/sqlite-amalgamation-3530100/sqlite3.c",
+        "-o",
+        "/workspace/task-d-evidence/runtime/sqlite-amalgamation-3530100/libsqlite3.so.0",
+        "-lpthread",
+        "-ldl",
+        "-lm"
+      ],
+      "observed_build_exit_code": 0,
+      "files": {
+        "sqlite3.c": {
+          "sha256": "9ac97192c93a6d9671d2ea667ba14e3c8fe3719a171afc5827c9d86d0278fc14",
+          "bytes": 9489774
+        },
+        "sqlite3.h": {
+          "sha256": "16d6e2f265fb13ece42329da39a865d4c540045b444d16b4bf9f7e1a7e39408f",
+          "bytes": 690047
+        },
+        "libsqlite3.so.0": {
+          "sha256": "29a241f79123f38b59356d302dbf7e5a3f42f3ea6be0cf1d81d13fbadfd5ff2d",
+          "bytes": 1441256
+        }
+      },
+      "sqlite3_c_sha3_256": "414432ae5719f6cdc485f3927e12c7ad107e2b8c6b434e5df2eadb5312bfabb5"
+    }
+  }
+}
