@@ -7,8 +7,10 @@ CREATE TABLE resources(
  identifier_namespace_id TEXT,
  document_kind TEXT,
  provider_document_id TEXT,
+ -- Non-key typed absence projection, never a native identity coordinate.
+ reference_document_kind TEXT GENERATED ALWAYS AS(coalesce(document_kind,'')) VIRTUAL,
  CHECK(cp_resource(resource_kind,provider_resource_id,identifier_namespace_kind,identifier_namespace_id,document_kind,provider_document_id)=1),
  PRIMARY KEY(service_instance_uuidv4,resource_kind,provider_resource_id)
 ) STRICT, WITHOUT ROWID;
 CREATE UNIQUE INDEX resources_typed_event_fk
- ON resources(service_instance_uuidv4,resource_kind,provider_resource_id,document_kind);
+ ON resources(service_instance_uuidv4,resource_kind,provider_resource_id,reference_document_kind);

@@ -92,22 +92,52 @@ def resource(kind, raw, namespace_kind, namespace_id, document_kind, document_id
     value = identity(raw)
     if type(kind) is not str or not kind:
         raise ValueError("kind required")
-    if kind in TYPED:
+    if kind == "document" and all(
+        x is None for x in (namespace_kind, namespace_id, document_kind)
+    ):
+        # Explicit complete Provider-global Document form, not an opaque fallback.
+        # Requiring the native ID also rejects an all-omitted typed payload.
+        identity(document_id)
+        if document_id != raw:
+            raise ValueError("independent Document native identity")
+    elif kind in TYPED:
         if (
             namespace_kind not in TYPED[kind]
             or type(document_kind) is not str
             or not document_kind
         ):
             raise ValueError("known document contract")
-        ns = identity(namespace_id)
+        identity(namespace_id)
         doc = identity(document_id)
-        if value != [namespace_kind, ns, document_kind, doc]:
+        # Exactly one unreleased encoding: canonical namespace ID TEXT component.
+        if value != [namespace_kind, namespace_id, document_kind, doc]:
             raise ValueError("document coordinates")
     elif any(
         x is not None
         for x in (namespace_kind, namespace_id, document_kind, document_id)
     ):
         raise ValueError("unknown/non-document cannot claim typed columns")
+
+
+def document_input(
+    native_contract, raw, *, namespace_id=None, document_kind=None, document_id=None
+):
+    """Validate an adapter-selected native contract, never infer/fallback by shape.
+
+    Selection must come from the genuine Provider identification contract, not
+    from an input failure or a sender's unverified claim. SQL cannot establish
+    that external fact. The selector is not stored or added to Resource identity.
+    """
+    if native_contract == "provider_global":
+        if any(x is not None for x in (namespace_id, document_kind, document_id)):
+            raise ValueError("global contract cannot discard scoped coordinates")
+        extra = (None, None, None, raw)
+    elif native_contract == "pr_scoped":
+        extra = ("pull_request", namespace_id, document_kind, document_id)
+    else:
+        raise ValueError("explicit supported native Document contract required")
+    resource("document", raw, *extra)
+    return extra
 
 
 def member(raw):
@@ -125,15 +155,19 @@ def parent(kind, service, members, scope):
     if type(values) is not list or len(values) != 1:
         raise ValueError("singleton Parent")
     member(values[0])
-    if values[0][0] != service or kind not in TYPED or values[0][1] not in TYPED[kind]:
-        raise ValueError("typed Parent kind/namespace")
     if type(s) is not dict or set(s) != {"clock", "document_kind", "state"}:
         raise ValueError("complete Parent scope")
-    validate_mapping_clock(canonical(s["clock"]))
+    independent = kind == "document" and s["document_kind"] is None
     if (
-        s["state"] != "complete"
-        or type(s["document_kind"]) is not str
-        or not s["document_kind"]
+        values[0][0] != service
+        or kind not in TYPED
+        or (not independent and values[0][1] not in TYPED[kind])
+    ):
+        raise ValueError("typed Parent kind/namespace")
+    validate_mapping_clock(canonical(s["clock"]))
+    if s["state"] != "complete" or (
+        not independent
+        and (type(s["document_kind"]) is not str or not s["document_kind"])
     ):
         raise ValueError("Parent scope values")
 

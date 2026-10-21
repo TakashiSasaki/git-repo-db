@@ -30,7 +30,7 @@ R1 = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
 R2 = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"
 CLOCK = J({"domain": "synthetic-clock", "at_us": 99})
 PROV = J({"source": "synthetic://fixture", "evidence": {"report": "A"}})
-E9 = J(["issue", "I7", "timeline_event", "E9"])
+E9 = J(["issue", J("I7"), "timeline_event", "E9"])
 I7 = J("I7")
 RR_COLS = (
     "service_instance_uuidv4",
@@ -139,7 +139,8 @@ def insert(db, table, cols, values, prefix="INSERT"):
 def resource(
     db, kind, value, service=S, doc="timeline_event", namespace="issue", ns="I7"
 ):
-    identity = J(value)
+    # Fixtures supply native coordinates; encode the namespace exactly once.
+    identity = J([value[0], J(value[1]), *value[2:]]) if kind in cp.TYPED else J(value)
     extra = (namespace, J(ns), doc, J(value[3])) if kind in cp.TYPED else (None,) * 4
     db.execute(
         "INSERT INTO resources VALUES(?,?,?,?,?,?,?)", (service, kind, identity, *extra)
@@ -274,8 +275,8 @@ def replay_end(db, row):
     return replay(db, "resource_repository_relations", END_COLS, row, END_COLS[:7])
 
 
-def admit(db, report, endpoints=None):
-    """Experimental typed unit admission, not product Exchange implementation."""
+def structural_admit(db, report, endpoints=None):
+    """Earlier bounded admission diagnostic; does not settle G3 qualification."""
     validate_observation_us(report[7])
     cp.event(report[0], report[1], report[4], report[6])
     if json.loads(report[6])["event_type"] != "transferred":
@@ -308,6 +309,31 @@ def admit(db, report, endpoints=None):
         db.execute("ROLLBACK TO transfer_unit")
         db.execute("RELEASE transfer_unit")
         raise
+
+
+class QualificationRequired(ValueError):
+    """An unresolved Q-S10 interpretation withholds the dependent operation."""
+
+
+def admit(db, report, endpoints=None):
+    """Supported experimental admission; unresolved G3 never becomes success.
+
+    This temporary withholding boundary is not a universal Parent-equality rule
+    or an owner decision that a mismatched report is intrinsically invalid.
+    """
+    cp.event(report[0], report[1], report[4], report[6])
+    source = db.execute(
+        "SELECT identifier_namespace_kind,identifier_namespace_id FROM resources "
+        "WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=?",
+        report[:3],
+    ).fetchone()
+    scope = json.loads(report[6])
+    target = json.loads(scope["parent_members_json"])[0]
+    if source is not None and source != (target[1], target[2]):
+        raise QualificationRequired(
+            "Q-S10 namespace/Parent mismatch requires owner qualification"
+        )
+    return structural_admit(db, report, endpoints)
 
 
 def seed(db, *, report=False):
@@ -676,8 +702,8 @@ def t06(db):
     )
     step(
         db,
-        "Transfer explicitly supported by report B",
-        lambda: admit(db, report_row(p2)),
+        "structural diagnostic only: Transfer explicitly supported by report B",
+        lambda: structural_admit(db, report_row(p2)),
     )
     assert (
         db.execute(
@@ -802,7 +828,9 @@ def t08(db):
     seed(db, report=True)
     before = rows(db)
     original_resource = db.execute(
-        "SELECT * FROM resources WHERE resource_kind='comment'"
+        "SELECT service_instance_uuidv4,resource_kind,provider_resource_id,"
+        "identifier_namespace_kind,identifier_namespace_id,document_kind,provider_document_id "
+        "FROM resources WHERE resource_kind='comment'"
     ).fetchone()
     changed_resource = list(original_resource)
     changed_resource[4] = J("WRONG")
