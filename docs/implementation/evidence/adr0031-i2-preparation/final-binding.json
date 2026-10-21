@@ -1,0 +1,30 @@
+{
+  "refs_unchanged": true,
+  "refs": "cb532242c7aa86c6af5b6232b71c0906ea38f5c5\trefs/heads/main\nd92377599a50f192f534836fc12402a5fe87ca83\trefs/pull/116/head\n32e5d4de67c0d436f7583d04e1cfd349b64b2bbd\trefs/pull/117/head\n9ea69ba8804a368802457950601a5a4027174c52\trefs/pull/118/head\n",
+  "objects": {
+    "main": {
+      "commit": "cb532242c7aa86c6af5b6232b71c0906ea38f5c5",
+      "tree": "318ad07874ab436206e6a61f231b308a421cfc54"
+    },
+    "i1a": {
+      "commit": "d92377599a50f192f534836fc12402a5fe87ca83",
+      "tree": "318ad07874ab436206e6a61f231b308a421cfc54"
+    },
+    "i1b": {
+      "commit": "32e5d4de67c0d436f7583d04e1cfd349b64b2bbd",
+      "tree": "708c860cd4badd4d787d4d8140b9626c80813be6"
+    },
+    "validation": {
+      "commit": "9ea69ba8804a368802457950601a5a4027174c52",
+      "tree": "8183f346b3613ea1206b2c0ab3e6428f31614cd8"
+    }
+  },
+  "/workspace/i2-preparation-20261021/repo": {
+    "status": "",
+    "head": "9ea69ba8804a368802457950601a5a4027174c52"
+  },
+  "/workspace/git-repo-db": {
+    "status": "",
+    "head": "9ea69ba8804a368802457950601a5a4027174c52"
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "scope": "explicit unsupported defer mode and absent-function controls; not normal write-path acceptance",
+  "sqlite": "3.51.3",
+  "source_id": "2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618",
+  "before_commit": [
+    [
+      "5e7853d5-6002-4fb8-84ea-22a308614947",
+      "issue",
+      "\"7\"",
+      null,
+      null,
+      null,
+      null,
+      ""
+    ]
+  ],
+  "commit_failure": {
+    "message": "FOREIGN KEY constraint failed",
+    "code": 787,
+    "name": "SQLITE_CONSTRAINT_FOREIGNKEY",
+    "in_transaction_after_failed_commit": true
+  },
+  "after_rollback": [],
+  "trace": [
+    "BEGIN",
+    "PRAGMA defer_foreign_keys=ON",
+    "INSERT INTO resources(service_instance_uuidv4,resource_kind,provider_resource_id) VALUES('5e7853d5-6002-4fb8-84ea-22a308614947','issue','\"7\"')",
+    "INSERT INTO resources(service_instance_uuidv4,resource_kind,provider_resource_id) VALUES('5e7853d5-6002-4fb8-84ea-22a308614947','issue','\"7\"')",
+    "INSERT INTO resources(service_instance_uuidv4,resource_kind,provider_resource_id) VALUES('5e7853d5-6002-4fb8-84ea-22a308614947','issue','\"7\"')",
+    "INSERT INTO resources(service_instance_uuidv4,resource_kind,provider_resource_id) VALUES('5e7853d5-6002-4fb8-84ea-22a308614947','issue','\"7\"')",
+    "SELECT * FROM resources",
+    "COMMIT",
+    "ROLLBACK",
+    "SELECT * FROM resources",
+    "SELECT sqlite_source_id()"
+  ],
+  "missing_udf": {
+    "message": "no such function: p1_uuid4",
+    "code": 1,
+    "name": "SQLITE_ERROR"
+  }
+}
