@@ -1,9 +1,10 @@
 # Generalized Context Resource design review and verification
 
-This record concerns documentation for proposed ADR 0031. The original review
-below remains historical. The [evidence integration](#evidence-integration-revision)
-now cites independently executed C′ results; this design revision runs no schema
-experiment. See the [handoff](../../context-resource-design-handoff.md).
+This record concerns proposed ADR 0031. The original preparation and prior
+evidence-integration reviews below are historical, bound to their stated dates
+and freezes. The current [G3=A revision](#g3a-decision-integration-and-sql-delta)
+adds a separately frozen disposable SQL delta and independent review. See the
+[handoff](../../context-resource-design-handoff.md).
 
 ## Original preparation at 5244b98
 
@@ -146,3 +147,39 @@ cover the verified source-pin/status reconciliation procedure; no new skill or
 product rule was invented. Hosted checks, if reported, identify the final
 feature/effective tree separately and never substitute for the experimental
 execution evidence.
+
+## G3=A decision integration and SQL delta
+
+On 2026-10-21 the owner explicitly selected G3=A in the current task. For Q-S10
+E natively identified under I7, I7 is E's semantic Issue. Preserve lawful I8
+Parent reports, but permanently reject their use as E's Transfer support.
+Missing correct I7 support is a dependency failure requiring original re-supply;
+eligible I7 support still needs every other Q-S10 condition. This does not impose
+general Resource namespace/Parent equality or approve the whole ADR.
+
+Fresh GitHub inspection matched main `efb55af84ccbf1183d47547d22bb6c57d8fbc8f9`,
+#113 `24f593861327328fa00dab0b83f956cec330a0ac`, #114 starting HEAD
+`3e6debe41f8e75f0a75be3a71cb1b12a0b70f0f5`, and #115
+`8ab57eb74068f5ba303b5985a335f0f76be4fdd2`. All three PRs were open/Draft.
+The clean original workspace was retained and work isolated in a worktree of
+the existing #114 branch. #113 remains its stack parent; #115 remains external
+evidence and is neither modified nor imported as a branch.
+
+Current ADR/schema/handoff/index and the obligation map record the dated decision,
+native-I7 SQL duty, permanent violation versus missing dependency, and precise
+I1–I8/V1/V2 sequencing. The index now distinguishes ADR 0030's #112 implementation
+integration on main from unimplemented ADR 0031. Accepted ADR bodies and historical
+reviews/receipts are unchanged, including the former `QualificationRequired`
+temporary result. Their old G3 questions describe only their frozen historical
+state, not a pending decision in this revision.
+
+The [new experiment index](g3-a/README.md) records attributed F2 source copies,
+the bounded SQL delta, input hashes/freezes, real SQLite runtime receipts,
+direct-SQL extended errors and rowsets separately from Admission outcomes.
+Initial parallel source investigation is not the independent final review.
+Non-author frozen-tree review and independently authored major counterexamples
+are recorded under the new evidence directory once executed.
+
+Production source/packaged DDL/fingerprint/dependencies/product tests/workflows/
+default runtime/Pages allowlist remain unchanged. No ADR acceptance, merge,
+release, deployment, P8 or real-account/catalog operation is performed.

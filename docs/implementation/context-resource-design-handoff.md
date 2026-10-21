@@ -4,21 +4,29 @@
 
 [ADR 0031](../adr/0031-generalized-context-resources.md) is **proposed**, with
 `date: null`. The owner has selected A3, B3, U3=C′, U4=B, U5=A, U1=B, U2=A and
-U2-E2; the package records these without reopening them. Acceptance of the
-complete package, physical realization and engineering proposals is separate.
+U2-E2. On **2026-10-21** the owner also selected **G3=A**: the native Issue I7
+is the semantic Issue for the Q-S10 Timeline Event/Transfer contract. These
+selections are fixed; acceptance of the complete package, physical realization
+and engineering proposals is separate.
 The [schema contract](../architecture/context-resource-schema.md) contains the
 grammar, equality, specification vectors, dependency behavior, authority
 boundaries, ADR matrix and experimental acceptance contract.
 
-**NOT YET READY for owner design acceptance:** bounded C′ structural feasibility
-and G1/G2 corrections are independently demonstrated. G3 remains one semantic
-owner-decision blocker. Product integration is still unimplemented. The
-[evidence map](evidence/context-resource-design/cprime-integration.md) identifies
-each demonstrated obligation and enforcement layer.
+**Acceptance preparation:** G3=A is decided. The remaining preparation is its
+current-document integration, bounded SQL delta proof and non-author frozen-tree
+review, followed by the owner's decision on the complete ADR 0031 package.
+The prior C′ structural feasibility and G1/G2 corrections retain their reviewed
+scope. Product integration remains unimplemented. The
+[evidence map](evidence/context-resource-design/cprime-integration.md) and
+[new G3=A evidence](evidence/context-resource-design/g3-a/README.md) separate
+those evidence generations and enforcement layers; the new receipt/review
+determines readiness, not the old F2 result.
 
-This task authorizes documentation, checks, branch push and a Draft PR. It does
-not authorize implementation, accepted-ADR body edits/retirement, production
-Python, packaged DDL/fingerprints, dependencies, existing runtime tests, workflows
+This task authorizes revision of existing Draft PR #114, disposable bounded
+G3=A SQL experiments, independent review, ordinary commits/push and PR-body
+updates. It does not authorize production implementation, accepted-ADR body
+edits/retirement, production Python, packaged DDL/fingerprints, dependencies,
+existing runtime tests, workflows
 or default-runtime changes. Only existing design PR #114 is updated; do not
 modify/retarget PR #113 or #115. Merge, auto-merge, release, deployment, P8, real catalogs, backups,
 credentials and live Provider accounts remain outside permission.
@@ -41,8 +49,11 @@ remote heads plus PR #113. The repository was not shallow.
 | ADR allocation | 0031; previous watermark 0030, no higher allocation found in current remote heads, reachable ADR history including deletions, index or open PRs |
 
 At original authoring only #113 was public; that historical absence is superseded
-by this revision's inspection of #115. Main and #113 remain at the values above;
-#114 starts from `5244b98a9a302f082a07a526480faf438fc91838`, and inspected #115 HEAD
+by later inspection of #115. Main and #113 remain at the values above. This
+G3=A revision starts from #114 HEAD
+`3e6debe41f8e75f0a75be3a71cb1b12a0b70f0f5`, tree
+`87c4a5963e6fc15e43d919b884907251f038178d`; the original authoring started from
+`5244b98a9a302f082a07a526480faf438fc91838`. Inspected #115 HEAD
 is `8ab57eb74068f5ba303b5985a335f0f76be4fdd2`. The latter publishes review of
 executable freeze `9eeacb28f7e4a426114a9ce40e2324b4da302817`, not an execution of
 that later HEAD. [Complete provenance](evidence/context-resource-design/cprime-integration.md#provenance-and-dependency-ledger)
@@ -68,13 +79,13 @@ override the owner's subsequent common schema choices.
 
 | Category | Contents |
 | --- | --- |
-| Owner-selected logical choices | Open kinds with reserved known contracts; Provider-scoped meaning; existing PK triple; canonical String/recursive Array identity; meaningful empties; semantic Parent in resource_relations; complete-child admission with original-report re-supply; generic unknown-kind preservation/exchange. |
+| Owner-selected logical choices | Open kinds with reserved known contracts; Provider-scoped meaning; existing PK triple; canonical String/recursive Array identity; meaningful empties; semantic Parent in resource_relations; complete-child admission with original-report re-supply; generic unknown-kind preservation/exchange; G3=A native I7 as semantic Issue only for Q-S10. |
 | Preserved accepted contracts | Genuine PR-document coordinates; six Repository roles; immutable claims/qualified Dispositions; typed Issue Timeline Event SQL references plus event-semantic admission; five stores; original clocks/provenance; Source positives; five-column Coverage; exact text; PackageKey/digest behavior. |
 | Engineering specification / demonstrated candidate | Context ASCII-escaped identity profile and BINARY equality; one canonical namespace-TEXT scoped-document encoder; explicit independent/scoped Document contracts; supplied and independently tested SQL support-key/projection/replay mechanisms. Numeric ceilings remain engineering proposals requiring integrated validation. |
 | Demonstrated subset | Typed Parent/Timeline Event SQL references, exact support reports, NULL/replay/mutation protections, child-before-Parent and whole-unit admission at the frozen experiment, including G1/G2 corrections. |
-| Semantic blocker | G3: whether native Issue I7 or separately qualified reported Parent I8 determines Q-S10 eligibility. Temporary mismatch withholding does not decide the rule or close required SQL proof. |
+| Decided G3=A boundary | An attributed I8 Parent report may be retained but is permanently ineligible to support Transfer for this I7-native Event. Missing correct I7 support is a re-suppliable dependency, not that violation. Historical F2 temporary QualificationRequired is not the current rule. |
 | Product limitations | Production encoding/DDL/readers/writers, Exchange/selection, stored validation, backup/recovery, Search and packaging remain unimplemented for this format. |
-| Package state | Proposed documentation, date null; NOT YET READY for complete acceptance. Experimental verification is not package approval or product implementation. |
+| Package state | Proposed, date null; G3 meaning decided and bounded SQL proof/independent-review preparation tracked in new evidence. Owner acceptance of the whole package and separate production-implementation authorization are still required. |
 
 Syntax cannot prove `[]` is a native singleton or `""` a complete ID. Adapters
 establish identification completeness; missing new adapters do not prevent
@@ -127,16 +138,41 @@ and preserve the [acceptance contract](../architecture/context-resource-schema.m
 - NULL/CHECK/FK, REPLACE/UPSERT, no-op replay, savepoint/transaction/COMMIT and
   re-supply cannot bypass required guarantees.
 
-G1/G2 are closed within their independently verified scope. G3 requires owner
-review of the precise alternatives in the schema contract. Retain I8 as an
-attributed report without treating structural support as qualified Transfer
-admission. No default equality policy, silent Q-S10 amendment or inferred report
-authenticity is permitted. The affected work is Transfer qualification and broad
-acceptance, not the demonstrated SQL construction as a whole.
+G1/G2 are closed within their independently verified scope. **G3=A is fixed**:
+retain an admissible I8 Parent report unchanged, but reject its use as Transfer
+support for this I7-native Event permanently as a Q-S10 contract violation. Do
+not classify that mismatch as awaiting further qualification, delete/correct the
+report or choose a winner automatically. Missing I7 Resource/report or other
+required support instead withholds the dependent unit; Parent arrival alone does
+not replay it, and the original report must be resupplied with its original
+identity, provenance and times. Matching I7 is necessary, never sufficient.
 
-The experiment remains outside #114 ancestry. Use stable links; do not copy
-the branch solely for citations. Preserve failed receipts, original F1 results,
-F2 executable bytes, R2 review/publication provenance and their separate scopes.
+The new SQL delta must link the sole generated support payload to the same
+Event's typed `timeline_event`/`issue` native-I7 metadata, while keeping the full
+ParentReportKey FK and endpoint-to-full-EventReportKey FKs. Canonical namespace
+metadata must agree with Identity; it is not another semantic Parent authority.
+Do not apply native equality to general Parent reports or restore a Parent
+existence FK on child Resources. Merely mentioning I7 in Identity establishes
+none of its Resource row, report, qualified event, endpoints, original evidence
+or Provider authenticity. Parent and Event reports may have independent genuine
+provenance, clocks and observation times; preserve their complete keys rather
+than requiring identical evidence values.
+
+All ordinary SQL connections must enable the documented FKs/triggers and
+register every required bounded deterministic UDF. A predicate that SQL always
+evaluates is a SQL constraint; a caller-optional admission function is not. UDFs
+must not hide table searches or external queries. SQL does not authenticate
+Provider reports. Actual event semantics, original timestamp input types,
+declared-member/endpoint completeness and whole-unit transaction admission
+remain separate application duties. Arbitrary direct SQL is not claimed to
+supply whole-unit atomicity.
+
+The external #115 experiment remains outside #114 ancestry. Use stable links;
+do not import/cherry-pick its branch. Preserve failed receipts, original F1
+results, F2 executable bytes, R2 review/publication provenance and their separate
+scopes. New G3=A disposable inputs and receipts belong to the new evidence
+directory; they do not retroactively change F2's structural I8 counterexample or
+its temporary QualificationRequired behavior.
 
 ## Proposed later implementation and validation sequence
 
@@ -148,17 +184,17 @@ corrections and bind the final integrated inputs.
 
 | Unit | Dependency and work | Verification and independent gate |
 | --- | --- | --- |
-| D0 — Q-S10 decision | Owner resolves G3, specifies Issue eligibility/evidence and reviews any substantive ADR carry-forward. Keep unaffected identity design independently reviewable. | Explicit acceptance source; no implied choice from temporary withholding. Specify scoped SQL and semantic criteria before dependent Transfer work. |
+| D0 — G3=A acceptance preparation | Reflect the explicit 2026-10-21 decision, demonstrate the bounded SQL delta on frozen disposable inputs, and obtain non-author review with independent major-counterexample execution. No new A/B selection. | Native-I7 SQL refusal of I8 support, retained I8 report and correct-I7 positive/dependency cases; actual minimum/newer runtimes, error/rowset/transaction receipts and frozen review. Whole-ADR acceptance remains the owner's next decision. |
 | I1 — shared ResourceKey | After design acceptance and implementation authorization, share strict parser/encoder, Unicode/scalar validation, finite bounds and BINARY equality. Use one namespace-TEXT scoped encoder and explicit native-contract dispatch. | Positive/negative vectors, empty/nested/huge IDs, exact limits, malformed canonical input and API/SQL/reference agreement. Review no dropped PR coordinates or unknown-kind reinterpretation. |
 | I2 — generalized Resources | Depends I1. Update packaged DDL/composer/functions/index/fingerprint together; complete global/scoped identifying metadata without semantic Parent FK/authority. Keep ResourceKey triple and Provider registration. | Direct SQL omitted/partial contracts, global scalar/composite Documents, typed absence projection and all conflict verbs. Review no surrogate/table and unchanged five Coverage columns. |
 | I3 — Parent reports | Depends I1/I2. Extend resource_relations, full-key index, deterministic target/source projections, complete non-NULL CHECKs and typed FKs. No independently writable projection. | Child-before-Parent, absent referent FK errors, original re-supply, independent provenance/clocks, Document children and attributed alternatives. Review sole report authority and no inferred winner. |
-| I4 — Transfer SQL | Depends D0/I2/I3. Integrate exact Parent/event support FKs, full scope/member/provenance coordinates, endpoint CHECKs and pre-conflict immutable guards. Keep EventReportKey and six roles. | Wrong Event/kind/subtype, absent/cross-paired support, NULL, IGNORE, REPLACE, both UPSERT actions and same-key changed payload. Review owner-resolved Q-S10 SQL requirement, not merely Python equality. |
-| I5 — typed admission | Depends I1–I4/D0 for Transfer. Check actual normalized event type, native contract, declared Provider members, strict original timestamps and complete supplied endpoints. Savepoint whole units; withhold/report missing dependencies without hidden queues; re-supply originals. | Second-endpoint FK rollback, one-sided versus truncated reports, missing-member re-supply, bool/float/string times before affinity, replay and G3 qualification. Review separate SQL existence, semantics, authentication limits and atomicity. |
-| I6 — relations, Collections, scoped Exchange | Depends I1–I3 and I4/I5 for Transfer. Preserve unknown kinds/common format, ordered groups, absent/empty/partial/complete terminals, explicit selection/permission, finite cycles and whole-group dependency closure. | No blanket Provider selection, fabricated referent, shrunk complete group, generic-array FK claim or unknown-version fallback. Reverse/repeat/late onward Exchange, forged-but-rechecksummed inputs, original clocks and changed-content/new-PackageKey. Independent Q-E5/Q-E6 review. |
-| I7 — stored integrity and backup/recovery | Depends all persisted forms I1–I6. Update fingerprints and stored semantic validators; consistent Core+Context pairing, separate Access scope and ADR 0026 stop/salvage/fresh-restore rules. | Unknown/global/scoped roundtrips, invalid stored typed units despite clean FK checks, actual original evidence and retained bytes. Independent recovery review; SQLite copying/integrity alone is insufficient. |
-| I8 — queries and Search | Depends I1–I3 and I4/I5 for qualifying report consumers; integrate I6/I7 before final acceptance. Consistent typed reads/text projection, Source positives/Coverage and unresolved alternatives. | Query/scan/fallback/rebuild equivalence, generation fences, unknown-kind readability and nonleaf Documents. Do not promise arbitrary structured-field Search or unrelated adapters. |
+| I4 — G3=A Transfer SQL | Depends I1–I3 and completed D0 preparation after whole-design acceptance/separate implementation authorization. Add native-I7 typed Resource UNIQUE/reference guarantees from the sole generated support payload; keep exact complete ParentReportKey and endpoint-to-EventReportKey FKs, full scope/member/provenance coordinates, required non-NULL/CHECK guards and immutable pre-conflict guards. Keep six roles; no general Parent equality or child Parent-existence FK. | Direct SQL without Admission rejects I8 support, wrong Event/service/kind/subtype, absent/mixed support, NULL/noncanonical values, IGNORE/DO NOTHING/REPLACE/UPSERT rebinds and same-key changed payload. Review the actual I7 SQL constraint, matching collation/UNIQUE, generated nonwritable projections and required UDF/FK/trigger connection configuration. |
+| I5 — typed Admission | Depends I1–I4. Distinguish permanent Q-S10 ineligibility of I8 support from missing correct-I7 dependencies that may be retried by original-report resupply. Eligible I7 support still requires actual normalized event type, native contract, declared Provider members, strict original timestamps and complete supplied endpoints. Savepoint the whole unit; no hidden queue or replay merely on Parent arrival. Preserve independent Parent/Event provenance, clocks and times. | Wrong-I8 input is a Q-S10 violation before writes; missing I7 row/report/member is dependency refusal. Test second-endpoint failure rollback, genuine one-sided versus truncated reports, original resupply, bool/float/string times before affinity and exact idempotent replay. Review SQL existence versus semantics/authenticity and Admission transaction atomicity. |
+| I6 — relations, Collections, scoped Exchange | General Relation/Collection/Exchange work depends I1–I3; its Transfer portion also depends I4/I5. Preserve unknown kinds/common format, ordered groups, absent/empty/partial/complete terminals, explicit selection/permission, finite cycles and whole-group dependency closure. | Revalidate Transfer eligibility on replay/import; a stored row or sender verified flag is no approval. No blanket Provider selection, fabricated referent, shrunk complete group, generic-array FK claim or unknown-version fallback. Reverse/repeat/late onward Exchange, forged-but-rechecksummed inputs, original clocks and changed-content/new-PackageKey. These product paths are not executed by the bounded G3 experiment; independent Q-E5/Q-E6 review remains mandatory. |
+| I7 — stored validation and backup/recovery | Depends on the persistent forms of I1–I6. Update fingerprints and stored semantic validators; consistent Core+Context pairing, separate Access scope and ADR 0026 stop/salvage/fresh-restore rules. | Revalidate every recovered/replayed Transfer against current eligibility; stored rows or verified flags cannot approve an ineligible unit. Unknown/global/scoped roundtrips, invalid stored typed units despite clean FK checks, actual original evidence and retained bytes. Product backup/recovery paths remain unexecuted by the bounded experiment; independent recovery review is required and SQLite copying/integrity alone is insufficient. |
+| I8 — queries and Search | Basic reads can proceed in parallel from I1–I3. Transfer consumers and final integration must agree with I4–I7. Consistent typed reads/text projection, Source positives/Coverage and unresolved alternatives. | Query/scan/fallback/rebuild equivalence, generation fences, unknown-kind readability and nonleaf Documents. An unqualified Transfer must not become effective through a stored/search flag. Do not promise arbitrary structured-field Search or unrelated adapters. |
 | V1 — supported runtimes | Apply throughout I1–I8; freeze coherent integrated inputs. Run actual minimum SQLite 3.51.3 and a newer supported runtime with source IDs/options/pragmas and exact collected/executed cases. | Old/new adversarial units, schema/FK/integrity, transactions/reopens and misconfiguration controls. Independent execution separates SQL errors from Python validation; no version spoofing or inherited PASS. |
-| V2 — distributions and final tree | Depends V1 and all reviewed units. Build isolated wheel and sdist-derived wheel; verify packaged DDL/UDF/fingerprints and execution outside checkout. Reconcile actual feature/merge parents and effective tree, including later changes. | Package-installed schema/roundtrip/validation on supported runtimes, input/output hashes and independent integrated-tree review. Full release qualification requires separate authorization; green development checks do not authorize merge/release/P8. |
+| V2 — distributions and final tree | After I1–I8 and stage-wise V1, build isolated wheel and sdist-derived wheel and execute both outside checkout. Independently verify bundled DDL/UDF/fingerprints and final integrated tree; reconcile actual feature/test-merge parents and effective tree, including later changes. | Package-installed schema/roundtrip/validation on supported runtimes, input/output hashes and independent final-tree confirmation. These product distribution checks are future work; full release qualification requires separate authorization and green development checks do not authorize merge/release/P8. |
 
 Provider ID selection, lifecycle/reuse normalization and new adapters are outside
 this task. Broader actor/file-position conventions, structured Search and
@@ -172,8 +208,11 @@ Applied procedures: repository adr-workflow, efficient-repository-investigation,
 lessons-to-skills and exact-tree CI, plus cloud runtime guidance. Parallel
 code-contract/ADR research is useful input, **not independent package review**.
 A different reviewer must inspect this frozen authored revision read-only,
-including metadata/index, clauses, canonical vectors, G1–G3, original experiment
-receipts, all eight obligation mappings, stable citations and proposed state.
+including metadata/index, clauses, canonical vectors, fixed G3=A, original
+F1/F2 evidence versus new SQL-delta receipts, all eight obligation mappings,
+stable citations and proposed state. That reviewer independently executes the
+major SQL counterexamples against the frozen inputs; initial parallel research
+is not a substitute. Material semantic/constraint corrections require re-review.
 The [review and verification record](evidence/context-resource-design/README.md)
 records actual reviewed commit/tree, findings and post-review changes.
 

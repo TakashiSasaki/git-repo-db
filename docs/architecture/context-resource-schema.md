@@ -5,8 +5,9 @@ The owner's A3/B3/U3=C′/U4=B/U5=A/U1=B/U2=A/U2-E2 logical selections are fixed
 This complete package is proposed; physical design and the numerical engineering
 bounds below are not separately approved. Nothing here changes runtime behavior.
 The [evidence-to-contract map](../implementation/evidence/context-resource-design/cprime-integration.md)
-records demonstrated bounded C′ mechanisms and corrected G1/G2, while G3 keeps
-the complete package **NOT YET READY** for owner design acceptance.
+records historical bounded C′ mechanisms and corrected G1/G2 separately from
+the new G3=A SQL evidence. The owner selected G3=A on 2026-10-21; complete ADR
+acceptance remains a separate owner action.
 
 ## Identity, meaning and report boundaries
 
@@ -223,7 +224,9 @@ writable duplicate member/parent columns cannot contradict `members_json`.
 | Parent arrives later | Admit Parent if valid. No automatic replay/relationship creation from old withheld payloads. |
 | Original relationship report supplied again | Revalidate selection, permission, complete unit, references and evidence; preserve original report key, time and provenance. Exact admitted replay is idempotent. |
 | Competing genuine reports | Preserve separate reports; do not choose by arrival, event ID alone or latest arbitrary time. |
-| Known event with missing/wrong Issue/Parent support | Event identity may be independently admissible; Parent/Transfer unit remains withheld or rejected as appropriate. No fabricated referents. |
+| Q-S10 Event E natively under I7, I8 Parent report | Preserve a lawful attributed I8 report. I8 support for E's Transfer is permanently rejected as a Q-S10 violation; it is not awaiting qualification. |
+| Q-S10 Event E, missing correct I7 Resource/report | Event identity may be independently admissible. Withhold the dependent unit for missing dependencies; original-report re-supply must revalidate it after arrival. |
+| Eligible I7 support | Accept Transfer only after all other Q-S10 requirements pass; identity alone creates no report, endpoint, time, provenance or authenticity. |
 | Unknown kind in a supported common wire version | Generic identity/field/report preservation and exact reread/export are allowed, subject to all common constraints. No kind-specific interpretation. |
 | Invalid known kind/relation/operation input | Reject/withhold under its typed contract. Do not dispatch it through an opaque path. |
 | Unknown relation name or arbitrary payload | Preserve only what the common format explicitly permits; do not infer traversal direction, membership, authority, event semantics or completeness. |
@@ -241,9 +244,10 @@ opaque resources; no silent reinterpretation or key rewrite.
 
 ## U3=C′ experimental acceptance contract
 
-**Partly demonstrated contract, with one semantic owner blocker.** The independent
-experiment and G1/G2 corrections demonstrate the bounded construction on SQLite
-3.51.3 and 3.53.1. G3 prevents declaring the broader contract complete. The
+**G3=A decided; evidence has distinct freezes.** Historical independent
+experiments and G1/G2 corrections demonstrate their bounded construction on
+SQLite 3.51.3 and 3.53.1. The [G3=A delta](../implementation/evidence/context-resource-design/g3-a/README.md)
+separately tests native-Issue SQL binding and affected regressions. The
 [eight-obligation map](../implementation/evidence/context-resource-design/cprime-integration.md#acceptance-obligation-map)
 binds each requirement below to actual mechanisms, layers, cases and frozen
 inputs. Product implementation and package acceptance are separate.
@@ -262,14 +266,17 @@ assertions. A toy projection success alone is insufficient. Required obligations
    guarantee by **typed SQL references**, alongside independent admission
    checking of actual Transfer-event semantics. Application-only validation is
    not a preserved typed FK and SQL structure is not external authenticity.
+   Bind E's quoted support to its native Issue I7 in SQL. Direct SQL using a
+   complete real I8 Parent report must fail, even when Admission is bypassed.
 4. Transfer cannot cite a nonexistent Event, wrong Event kind/subtype, wrong
    Parent kind, different Issue or nonexistent Parent report. Preserve exact
    support-report coordinates wherever required, including whole membership,
    scope and provenance and the original clock/time binding; event-ID-only
    joins or arbitrary support selection cannot stand in for that identity.
-   **G3 qualification:** exact supplied Issue/report matching is demonstrated;
-   "different Issue" relative to the Event's native namespace is unresolved.
-   The requirement is not silently removed or deemed satisfied by a Python guard.
+   A different Issue I8 relative to E's native I7 is permanently ineligible
+   Transfer support under G3=A. Keep the complete Parent report FK in addition
+   to the native-I7 binding. The general I8 report remains valid and retained;
+   absent correct I7 support is a resupplyable dependency failure.
 5. Preserve ADR 0030 `(EventResourceKey, clock_json, provenance_json)` endpoint
    pairing and equal original observation-time rules. Different reports must
    not be fused by event ID, receipt time or arbitrary winner. Genuine competing
@@ -294,7 +301,8 @@ distinct. In particular, arbitrary JSON members have no individual SQL FKs;
 whole Transfer units require member-existence checks, strict original timestamp
 validation, complete endpoints and savepoint rollback in typed admission. Direct
 SQL can store an incomplete declared endpoint set. No reverse-set FK/COMMIT hook
-was demonstrated. Citing receipts is not executing this design revision.
+was demonstrated. The new delta remains a disposable candidate, not product
+integration; its receipts must be cited separately from F2's executed inputs.
 
 ## Semantic-gap dispositions
 
@@ -302,7 +310,7 @@ was demonstrated. Citing receipts is not executing this design revision.
 | --- | --- | --- |
 | G1 | Genuine global scalar/composite Documents retain kind `document`, can precede Parent, acquire attributed relationships and have children. Genuine PR Documents keep all identity coordinates; invalid known input has no opaque fallback. | **CLOSED — corrected and independently verified** |
 | G2 | One canonical-TEXT namespace component in the scoped four-coordinate layout; no mixed-profile or double-encoding guess. Both native identity and exact references remain reversible. | **CLOSED — corrected and independently verified** |
-| G3 | Attributed I8 Parent report for an Event with native namespace I7 can be retained without a current-truth claim. Exact typed I8 SQL support passes; successful Transfer semantic admission does not follow. | **OWNER DECISION REQUIRED** |
+| G3 | Under Q-S10, native I7 is E's semantic Issue. Preserve attributed I8 reports but reject their use as E's Transfer support in SQL and Admission. Missing I7 support requires original re-supply; eligible I7 support still needs all other checks. | **A SELECTED — 2026-10-21; separate SQL evidence and whole-package acceptance** |
 
 ### G1 tested physical forms
 
@@ -347,37 +355,45 @@ meaningful discriminator is necessary only for a genuine native namespace
 collision, never merely to distinguish these encoders. No legacy compatibility
 or reinterpretation of historical experiment keys is required.
 
-### G3 owner review required before complete acceptance
+### G3=A native-Issue binding and admission boundary
 
-ADR 0030 Q-S10 fixes an Issue-parented Timeline Event with typed SQL references
-and actual-event admission. Its former model used the same Issue coordinates for
-identity and Parent. B3 separates those concepts but does not settle which Issue
-qualifies a mismatched Transfer. The competing interpretations are:
+The owner explicitly selected A on **2026-10-21**. For Q-S10 E natively under I7,
+I7 is its semantic Issue. Preserve I8 reports without correction, deletion or
+automatic winner selection, but reject I8 support for that E permanently. This
+is confined to Timeline Event/Transfer; ordinary Resource namespace and semantic
+Parent may differ. No new owner choice remains in G3.
 
-- **A:** I7 remains the semantic Issue for this reserved Event contract. Retain I8
-  as an attributed report, but it cannot support that Event's Transfer. Specify
-  and prove the Q-S10-specific SQL/admission constraint without enforcing equality
-  on general Parent relationships.
-- **B:** I7 is solely native identification scope; genuinely qualified I8 may
-  supply the semantic Issue. The owner must specify sufficient qualification
-  evidence and whether this changes the accepted Q-S10 meaning. An attributed
-  report or its FK alone cannot establish that qualification.
+The candidate construction adds a typed UNIQUE over `(ResourceKey,
+reference_document_kind, identifier_namespace_kind, identifier_namespace_id)`.
+The sole Event-report support payload generates the quoted Parent service and
+canonical ID and kind; the mandatory SQL predicate requires that kind to be
+`issue`. A composite FK binds the same E, subtype `timeline_event`, kind
+`issue` and native I7 ID. Required components are explicitly non-NULL, the
+quoted service equals E's service, and bounded deterministic SQL predicates
+bind namespace metadata to the canonical Identity. Generated fields are not
+independently writable. Preserve the existing complete ParentReport FK and
+endpoints' complete EventReport FK: native equality is additional, not replacement
+support. Namespace metadata is identity metadata, never a second Parent authority.
+Child Resource admission still has no Parent-existence FK.
 
-The supported experimental `admit` withholds the mismatch before writes with
-`QualificationRequired`; its `structural_admit` diagnostic preserves the earlier
-SQL demonstration. That guard is temporary fail-closed handling of an unresolved
-case, not an accepted universal equality policy or SQL closure of item 4.
-Actual event type, exact support/report pairing, complete endpoints, original
-times and declared member existence remain necessary even when namespaces match;
-matching alone neither authenticates reports nor elects a current Parent.
+All normal connections must register the candidate's required deterministic UDFs
+and enable foreign keys, CHECKs and recursive triggers; the evidence lists exact
+settings. A SQL-invoked row-local UDF is evaluated by SQL, unlike optional Python
+Admission. No UDF may hide table lookup or external calls. Binary canonical-key
+equality and matching UNIQUE/FK collations must agree. Explicit predicates and
+pre-conflict immutable guards must prevent partial-NULL FK exemption, CHECK NULL
+pass-through, UPDATE/DELETE/IGNORE/DO NOTHING/REPLACE/UPSERT rebinding.
 
-There is **one** owner-decision blocker in this enlarged semantic scope, compared
-with zero in the earlier bounded structural scope. It affects Q-S10 Transfer
-qualification and complete ADR acceptance; it does not reopen A3/B3/U1–U5/U2-E2.
-Request owner review of A versus B. No amendment is needed merely to retain I8 or
-separate the concepts. If an answer reverses an accepted Q-S10 meaning, apply the
-conditional lifecycle plan below with explicit successor/carry-forward approval;
-do not silently call it refinement. Accepted ADRs remain untouched here.
+The old F2 `QualificationRequired` result is historical temporary handling of
+the then-undecided case, not today's I8 disposition or today's SQL proof. Missing
+I7 Resource/report is instead a dependency failure; Parent arrival does not
+recreate a withheld unit. Re-supply the original report for revalidation.
+Correct I7 support still needs actual eligible event type, declared members,
+strict original timestamp types and complete endpoints in transactional Admission.
+Parent and Event reports retain their independent original provenance, clock and
+observation time; endpoint pairing inside one EventReportKey remains coherent.
+SQL guarantees neither Provider authenticity nor arbitrary direct-SQL whole-unit
+atomicity. The delta records statement outcomes separately from Admission rollback.
 
 ## ADR compatibility and lifecycle plan
 
@@ -401,7 +417,7 @@ still requires coherent acceptance/lifecycle work before integration.
 | ADR 0030 Q-S5: genuine Event, endpoint ReportKey and no header/surrogate | Preserved invariant | Preserve actual Event identity and pair only same clock/provenance report with coherent original observation time; changing affiliation alone is not Transfer. |
 | ADR 0030 Q-S6 finite relation vocabulary and typed compatibility | Preserved invariant / generalization | Its closed vocabulary is the six Resource-to-Core Repository roles, not a universal Resource-kind enum. Open Resource kinds do not erase known role/type CHECK/FK constraints plus admission validation. |
 | ADR 0030 Q-S8 exact six roles | Preserved invariant | `represents_repository`, `owning_repository`, `base_repository`, `head_repository`, `transfer_from_repository`, `transfer_to_repository`; no extra role or PR owning/base duplication. |
-| ADR 0030 Q-S10 Issue-parented Timeline Event typed FK plus event validation | Preserved obligation; structural realization demonstrated; G3 interpretation unresolved | Exact typed Event/Issue/support FKs are demonstrated at the corrected freeze. I7 namespace versus I8 Parent support still needs owner resolution; temporary application withholding is not proof of the broader SQL/semantic requirement. No weakening or amendment is approved. |
+| ADR 0030 Q-S10 Issue-parented Timeline Event typed FK plus event validation | Preserved obligation; G3=A selected 2026-10-21 | Bind E's Transfer support to native I7 through additional typed SQL reference, retain complete Parent/Event report keys and independently validate actual event semantics. I8 reports survive but cannot support that E. F2's temporary application withholding is historical, not this SQL guarantee. |
 | ADR 0030 Q-S11 Provider references in resource_relations | Generalization | Keep that authority and extend it to semantic Parent reports; Provider mapping unresolved is not explicit NULL. Preserve coherent multi-member units. |
 | ADR 0030 Q-S12/Q-S13, final Q-S14 override, Q-S15/Q-S16 | Preserved invariant | Immutable Dispositions and complete ClaimKey references; genuine current qualification required; no Witness/history/counterevidence substitute or new operation UUID. |
 | ADR 0030 Q-E1–Q-E4 | Preserved invariant | Independent bounded Repository/OID seeds; permitted unknown permanent UUID registration is not unselected referent fabrication. |

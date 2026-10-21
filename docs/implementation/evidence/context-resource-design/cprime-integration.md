@@ -1,10 +1,11 @@
 # C′ evidence integrated into proposed ADR 0031
 
-**Recommendation: NOT YET READY for owner design acceptance.** G1 and G2 are
-closed by independently reviewed corrections. G3 requires one owner decision.
-The bounded physical candidate is demonstrated; the whole ADR acceptance
-contract and future product implementation are not. This document maps existing
-execution evidence, not a new SQLite run or owner approval.
+**G3=A selected on 2026-10-21; whole-package owner acceptance is separate.**
+G1/G2 retain their independently reviewed corrected scope. Historical F2 permits
+structural I8 support and temporarily withholds it in Admission; that is not the
+current contract or a native-I7 SQL proof. The new [G3=A delta](g3-a/README.md)
+contains separate executable inputs, runtime receipts and non-author review.
+This map distinguishes those generations from unimplemented product integration.
 
 ## Provenance and dependency ledger
 
@@ -12,7 +13,7 @@ execution evidence, not a new SQLite run or owner approval.
 | --- | --- |
 | Main at fresh inspection | `efb55af84ccbf1183d47547d22bb6c57d8fbc8f9`, tree `117d580b31098ecb8287281bd843894fdfad71fc` |
 | #113 unchanged parent of #114 | `24f593861327328fa00dab0b83f956cec330a0ac`, tree `7318fdb1cb5ef4959d685bf2a3a1d9d91385c89e`; branch `audit/context-provider-agnostic-20261020` |
-| #114 before this revision | `5244b98a9a302f082a07a526480faf438fc91838`, tree `4e44d04c9425942cdd1392a2a748f80f2ad485ed`; branch `docs/generalized-context-resources-20261020` |
+| #114 before G3=A revision | `3e6debe41f8e75f0a75be3a71cb1b12a0b70f0f5`, tree `87c4a5963e6fc15e43d919b884907251f038178d`; branch `docs/generalized-context-resources-20261020` |
 | F1: original independently reviewed executable | `e9aba86f4530b2e683c77e23a4fe58bdf02192c5`, tree `7db7773f4cc2860b3818856b048a5832cdb00d6b` |
 | Original report/PR publication | `22b58ce7ff59478f1a4c8c8ef89b17d2f0068590`, tree `fcc55256de88c711379d27e38b7eed0c63db6c4a`; contains [original report][original-report] and [original final review][original-review] |
 | F2: corrected independently reviewed executable | `9eeacb28f7e4a426114a9ce40e2324b4da302817`, tree `8f78de68058582327beddbb656207659507d43c6` |
@@ -48,9 +49,9 @@ not ancestors of this design branch. Every experiment link here is commit-pinned
 no experiment branch was cherry-picked or merged to make relative links work.
 Future integration must deliberately bring in the appropriate authorized code
 and reconcile its effective tree; a citation does not implement that dependency.
-#113 and #115 remain unchanged by this documentation task.
+#113 and #115 remain unchanged. The new local candidate copies explicitly attributed F2 inputs and applies a bounded delta; it does not merge or cherry-pick #115.
 
-## Executed scope and limits
+## Historical F2 executed scope and limits
 
 Both genuine SQLite runtimes passed the bounded author and independent checks:
 
@@ -79,47 +80,52 @@ a database lookup for member existence or external authentication.
 ## Acceptance obligation map
 
 Obligation numbers refer to the [schema acceptance contract](../../../architecture/context-resource-schema.md#u3c-experimental-acceptance-contract).
-Every row below is bound to **F2**, the input hashes above and the linked receipts.
-F1 supplies retained earlier evidence, not an alternate encoding accepted by F2.
+The F2 mechanisms/cases below are historical and bound to the hashes above.
+The separate G3=A column identifies the added current obligation and evidence;
+its exact cases/hashes/results are indexed in [the delta receipt](g3-a/README.md).
+F1 remains earlier evidence, not an alternate encoding accepted by F2.
 Layer numbers: **1 FK; 2 CHECK/generated projection; 3 trigger; 4 typed admission
 and transaction; 5 selection/Exchange dependency/semantic qualification**.
 
-| Obligation / required invariant | Exact experimental mechanism and layer | Executed evidence | Remaining product boundary |
+| Obligation / required invariant | Historical F2 mechanism / evidence | G3=A addition and current evidence | Remaining product boundary |
 | --- | --- | --- | --- |
-| 1. One Parent report authority; no new domain table, surrogate or duplicate writable truth | [resources.sql][resources] removes semantic Parent FK; identification metadata stays row-local. [relations.sql][relations] stores whole `members_json`, scope and provenance; generated `parent_service/kind/id` and `source_document_kind`, `parent_report_typed_fk` index. Layers 1–2; schema inventory shows the same 19 tables and five Coverage columns. | T02–T03, T07, T10; independent IR01–05 and G1 source/target controls; [inventory][inventory]. | Implement exact packaged schema/composer/fingerprint and all consumers; no experiment-only UDF is already a packaged product contract. |
-| 2. Complete child before Parent; missing report/Transfer withheld, genuine re-supply required | `resources.identifier_namespace_*` has consistency CHECK without Parent existence FK. `resource_relations` target/source FKs and exact dependent references reject missing support. No pending payload table. Layers 1–2, 4–5. | T02–T03, T11; IR01–05; G1 missing Parent reaches FK, later re-supply and stable Document identity. | All acquisition/Exchange writers must preserve original payload/time/provenance, report missing dependencies, avoid synthesis and durably staged unadmitted bodies. |
-| 3. Typed Issue-parented Timeline Event plus actual-event admission | `resources_typed_event_fk` over `reference_document_kind`; [Transfer constraints][transfer-fks] reference typed source and full Parent key with `timeline_event`/`issue`; `cp.event` checks structure; `structural_admit` checks normalized event type and supported `admit` adds temporary G3 withholding. Layers 1–2, 4–5. | T04, T12; IR11/12; G3 direct SQL versus supported admission; [review assessment][gap-review]. | Preserve real typed FKs in production; event type checks do not authenticate Provider truth. Q-S10 semantic Issue remains blocked by G3. |
-| 4. Exact Event/Issue/support, no borrowed or missing support | Whole seven-column Parent key plus source subtype/target kind in composite FKs; generated support fields from report scope; complete event-report FK; mandatory non-NULL CHECKs. Layers 1–2. | T04, T05, T07; IR04/09–13; G3 SQL I8 counterexample and withholding. | Exact supplied report linkage is demonstrated. Rejection of a different Issue relative to native I7 is **not** a demonstrated SQL guarantee; owner must resolve G3 before broad acceptance. Python withholding is not an FK substitute. |
-| 5. Same EventReportKey endpoint pairing, coherent whole report, original times and alternatives | Existing `transfer_event_report` group in `resource_relations`; `report_clock_json`, full report reference; [guards][guards] `cp_event_report_no_rebind`, `cp_endpoint_report_time`, `cp_relation_no_rebind`; no broad UNIQUE(Event) winner. Layers 1–4, 5 for qualification. | T05/T05-independent, T06, T08; IR06–08/13–20; exact replays and independent Parent/Transfer clocks. | Whole endpoint set must be admitted atomically; separate reports cannot be fused. I8 alternatives retained in T06 are explicitly structural diagnostics, not qualified Transfer success. |
-| 6. Members/projections agree; NULL cannot bypass typed references | `cp_resource`, `cp_relation`, `cp_endpoint` deterministic predicates; generated `support_*` and typed properties; complete non-NULL checks. Global Document `reference_document_kind=''` is a non-key absence projection, with explicit null subtype scope. Layer 2 plus layer 1 typed FK. | T01, T07; IR09–10/21–22; G1 omitted subtype CHECK and global/scoped mismatch FKs; G2 vectors/alternate-profile refusal. | Keep deterministic functions registered on every supported connection and strict validation before SQLite affinity. No individual FK exists for arbitrary members of a general JSON array. |
-| 7. Mutation, conflict-ignore and replay cannot bypass immutable payload/reference rules | Existing update/delete guards plus `cp_resource_no_rebind`, `cp_endpoint_no_rebind`, `cp_relation_no_rebind`, `cp_event_report_no_rebind`; recursive-trigger REPLACE protection. Exact payload comparison in replay helpers. Layers 2–4. | T08, T09; IR17–20 and later replay probes; G1 INSERT/IGNORE/REPLACE rebinding, G2 mixed-profile IGNORE rejection; G3 replay cannot qualify a raw-SQL mismatch. | Supported writer APIs, configured connections, reopens and stored validators must all carry the constraints. Disabling enforcement or replacing schema is outside the supported boundary. |
-| 8. Rollback preserves complete units and original identity/time/provenance | `SAVEPOINT transfer_unit`; strict `validate_observation_us` on original report/endpoints; whole supplied endpoint-set comparison; actual declared Provider member existence loop; rollback on failure. Layers 4–5; referent failures originate in layer 1. | T05, T09, T11 missing member, T12 strict original types; independent prior-probe mid-unit second-endpoint FK failure; G3 rolled-back diagnostic and no-write withholding. | SQL alone can store a report before all endpoints exist. Every product intake/Exchange/recovery admission path must use whole-unit validation; experimental snapshot/reconstruction is not Product Exchange or paired-backup acceptance. |
+| 1. One Parent authority; no new domain table or surrogate | Existing `resource_relations`, whole members/scope/provenance, generated Parent projections and `parent_report_typed_fk`. T02–03/T07/T10, IR01–05 and G1; [inventory][inventory] measures 19 tables/five Coverage columns. Layers 1–2. | Same authority; namespace metadata remains identity metadata. New typed Resource UNIQUE adds no Parent table or independently writable truth. See delta inputs/inventory. | Packaged composer/DDL/UDF/fingerprint and all consumers need implementation. 19 is a measured count, not a new immutable total. |
+| 2. Complete child before Parent; original re-supply | Row-local namespace consistency without Parent existence FK; report referent FKs. T02–03/T11, IR01–05/G1. Layers 1–2,4–5. | Complete E survives missing I7. I7 arrival creates no report or Transfer; original unit must be re-supplied. I8 report can be saved/reread. | Every intake/Exchange writer must preserve actual keys/times/provenance and report missing dependencies without hidden payload staging. |
+| 3. Typed Q-S10 Event and actual-event Admission | `resources_typed_event_fk`, typed `timeline_event`/`issue` references, `cp.event`; T04/T12/IR11–12. Historical Admission used temporary `QualificationRequired`. Layers 1–2,4–5. | Additional composite FK binds this Event's quoted support to its native Issue I7. Direct SQL I8 support must fail without Admission; Admission reports permanent Q-S10 violation. See delta direct-SQL errors and typed refusal. | Preserve the new SQL guarantee in I4; actual event eligibility remains I5. Neither authenticates Provider truth. |
+| 4. Exact Event/Issue/support, no borrowing | Full seven-column ParentReport FK with source subtype/target kind; generated support; complete EventReport FK and non-NULL checks. T04–05/T07/IR04/09–13. F2's I8 SQL success is a historical counterexample. Layers 1–2. | Keep full ParentReport FK **and** native-I7 binding, same service and required non-NULL canonical projections. Reject another Event/service, mismatched real ReportKey components and wrong kind/subtype. Preserve explicitly quoted complete alternative report as a positive. | I4 cannot substitute Python withholding or `foreign_key_check` for actual SQL rejection; I6/I7 must revalidate full keys. |
+| 5. Coherent EventReportKey endpoints and original alternatives | `cp_event_report_no_rebind`, `cp_endpoint_report_time`, `cp_relation_no_rebind`; full report reference, no Event-only winner. T05/T05-independent/T06/T08; IR06–08/13–20. Layers 1–4. | Parent and Event reports can have independent provenance/clock/observed time; endpoints within the same EventReportKey retain their coherent original values. Eligible I7 Transfer keeps I8 report. | Complete endpoint-set and atomic admission remain I5/I6; arbitrary direct SQL is not whole-unit atomic. |
+| 6. Members/projections agree; no NULL bypass | `cp_resource`, `cp_relation`, `cp_endpoint` deterministic predicates; generated typed projections; explicit non-NULL checks. T01/T07/IR09–10/21–22/G1/G2. Layers 1–2. | Mandatory row-local SQL UDFs and canonical metadata consistency; same-service support CHECK; complete native-binding FK. New NULL/missing/malformed values and generated-column writes are probed. | Register every UDF and enforce FK/CHECK/recursive-trigger settings on every normal connection; no UDF table/network lookups. Arbitrary generic JSON members have no individual FK. |
+| 7. No mutation/conflict-path rebinding; replay idempotent | Immutable/rebind guards on Resource/relation/Event report/endpoint; recursive REPLACE protection, exact-payload replay. T08–09/IR17–20/G1/G2. Layers 2–4. | Exercise UPDATE/DELETE/IGNORE/DO NOTHING/REPLACE/UPSERT and valid replay; I8 cannot become approved via replay or saved flags. Equal direct-SQL REPLACE may be refused. | Product connections/reopens/stored validators and I6/I7 intake must carry the same contract. Disabled enforcement/schema replacement is unsupported. |
+| 8. Admission rollback preserves whole unit | `SAVEPOINT transfer_unit`, strict original timestamp validation, exact supplied endpoint set and declared Provider member existence. T05/T09/T11–12 plus independent second-endpoint failure. Layers 1,4–5. | Matching I7 cannot bypass ineligible actual event, missing member, original timestamp type or truncated endpoints. Mid-unit failure rolls back new unit and preserves E/Parent reports. | Product Exchange/import/recovery atomicity is unexecuted. SQL can store a report before all declared endpoints exist; no reverse-set FK/COMMIT hook or arbitrary-SQL transaction guarantee is claimed. |
 
 ## G1–G3 and compatibility disposition
 
-G1 and G2 are **CLOSED — corrected and independently verified**. The schema now
-specifies the tested independent/scoped forms and one Parent-TEXT encoding.
-G3 is **OWNER DECISION REQUIRED**: retained attributed Parent report, structurally
-valid exact support and semantically qualified Transfer are separate outcomes.
-The [owner question](../../../architecture/context-resource-schema.md#g3-owner-review-required-before-complete-acceptance)
-states the competing Q-S10 interpretations without choosing one.
+G1 and G2 are **CLOSED — corrected and independently verified** in their frozen
+experimental scope. G3 is **A SELECTED — 2026-10-21**: native I7 is E's semantic
+Issue under Q-S10; attributed I8 reports survive, but cannot support its Transfer.
+Missing correct I7 support is a dependency failure requiring original re-supply;
+eligible I7 support requires every other Q-S10 condition. The
+[scoped contract](../../../architecture/context-resource-schema.md#g3a-native-issue-binding-and-admission-boundary)
+introduces no general namespace/Parent equality.
 
-The [updated ADR compatibility matrix](../../../architecture/context-resource-schema.md#adr-compatibility-and-lifecycle-plan)
+The [ADR compatibility matrix](../../../architecture/context-resource-schema.md#adr-compatibility-and-lifecycle-plan)
 preserves ADR 0017 semantic keys, 0028 times/digests, 0029 five-store and Context
-carry-forward, and 0030 roles/report pairing/typed-reference obligations. G3 is
-marked unresolved rather than silently weakening 0030. No accepted ADR is edited
-or retired; a substantive answer requires explicit governance/carry-forward.
-One blocker concerns this newly examined semantic scope, not a reopening of the
-earlier migration scope or the fixed owner ledger.
+carry-forward, and 0030 roles/report pairing/typed-reference obligations. G3=A
+preserves Q-S10's semantic Issue; no accepted ADR is changed or retired. There
+is no remaining G3 option question or inferred whole-package acceptance.
 
-## Documentation-only verification
+## Verification generations
 
-The integration author inspected F2 input hashes and composed SQL receipts, R2
-review/author receipts and the original F1 report. This task does not rerun SQL,
-product tests, packaging or release validation. Local documentation/link/scope
-checks and a separate frozen-document review are recorded in the [design review
-record](README.md#evidence-integration-revision). Future product work and review
-gates are in the [implementation handoff](../../context-resource-design-handoff.md#proposed-later-implementation-and-validation-sequence).
+The previous integration task inspected F1/F2 hashes/receipts without rerunning
+SQLite. Its [independent review](cprime-independent-review.md) remains unchanged
+and historical at design freeze `060da07e0412e2d93dd4132332ab3bf908e3d8db`.
+Its then-pending G3 disposition is not the current recommendation.
+
+This revision adds a separately frozen [G3=A bounded experiment and review](g3-a/README.md).
+Only its new receipts support the new SQL-delta claims; no old green receipt is
+promoted to this HEAD. Current checks and final review are appended to the
+[design review record](README.md#g3a-decision-integration-and-sql-delta).
+Product gates remain in the [implementation handoff](../../context-resource-design-handoff.md#proposed-later-implementation-and-validation-sequence).
 
 [original-report]: https://github.com/TakashiSasaki/git-repo-db/blob/22b58ce7ff59478f1a4c8c8ef89b17d2f0068590/docs/implementation/context-resource-u3-cprime-experiment.md
 [original-review]: https://github.com/TakashiSasaki/git-repo-db/blob/22b58ce7ff59478f1a4c8c8ef89b17d2f0068590/docs/implementation/evidence/context-resource-u3-cprime/independent-review/final-review.md

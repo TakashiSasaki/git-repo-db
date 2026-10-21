@@ -1,0 +1,24 @@
+{
+  "origin_commit": "9eeacb28f7e4a426114a9ce40e2324b4da302817",
+  "origin_path": "docs/implementation/evidence/context-resource-u3-cprime/reproduction/baseline-build-minimum.sh",
+  "command": "sh /tmp/g3-sqlite-runtime/build-minimum.sh /tmp/g3-sqlite-runtime",
+  "build_exit_code": 0,
+  "files": {
+    "build-minimum.sh": {
+      "bytes": 1008,
+      "sha256": "92736200c3b492d9b50cf2aac9ef1a5b1953accc5135acdb93ca9eeaa211a037"
+    },
+    "sqlite-autoconf-3510300.tar.gz": {
+      "bytes": 3208867,
+      "sha256": "81f5be397049b0cae1b167f2225af7646fc0f82e4a9b3c48c9ea3a533e21d77a"
+    },
+    "build.log": {
+      "bytes": 4949,
+      "sha256": "cce76ce334d89656f1fc560403dd00a7164e97f1a427a53d38e89b0cfe75bc92"
+    },
+    "minimum/lib/libsqlite3.so.3.51.3": {
+      "bytes": 4930464,
+      "sha256": "44b6eefbab98c5f2224cddfb621737fdf7b9d5c73ad449b4868dee14d238cc87"
+    }
+  }
+}
