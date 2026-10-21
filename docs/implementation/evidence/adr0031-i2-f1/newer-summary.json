@@ -1,0 +1,248 @@
+{
+  "role": "C-F1 author validation; independent re-review pending",
+  "runtime": {
+    "version": "3.53.1",
+    "source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+    "python": "3.13.5 (main, Jul 15 2026, 20:25:40) [GCC 14.2.0]",
+    "executable": "/usr/bin/python3.13",
+    "compile_options": [
+      [
+        "ATOMIC_INTRINSICS=1"
+      ],
+      [
+        "COMPILER=gcc-14.2.0"
+      ],
+      [
+        "DEFAULT_AUTOVACUUM"
+      ],
+      [
+        "DEFAULT_CACHE_SIZE=-2000"
+      ],
+      [
+        "DEFAULT_FILE_FORMAT=4"
+      ],
+      [
+        "DEFAULT_JOURNAL_SIZE_LIMIT=-1"
+      ],
+      [
+        "DEFAULT_MMAP_SIZE=0"
+      ],
+      [
+        "DEFAULT_PAGE_SIZE=4096"
+      ],
+      [
+        "DEFAULT_PCACHE_INITSZ=20"
+      ],
+      [
+        "DEFAULT_RECURSIVE_TRIGGERS"
+      ],
+      [
+        "DEFAULT_SECTOR_SIZE=4096"
+      ],
+      [
+        "DEFAULT_SYNCHRONOUS=2"
+      ],
+      [
+        "DEFAULT_WAL_AUTOCHECKPOINT=1000"
+      ],
+      [
+        "DEFAULT_WAL_SYNCHRONOUS=2"
+      ],
+      [
+        "DEFAULT_WORKER_THREADS=0"
+      ],
+      [
+        "DIRECT_OVERFLOW_READ"
+      ],
+      [
+        "ENABLE_COLUMN_METADATA"
+      ],
+      [
+        "ENABLE_FTS5"
+      ],
+      [
+        "ENABLE_RTREE"
+      ],
+      [
+        "MALLOC_SOFT_LIMIT=1024"
+      ],
+      [
+        "MAX_ATTACHED=10"
+      ],
+      [
+        "MAX_COLUMN=2000"
+      ],
+      [
+        "MAX_COMPOUND_SELECT=500"
+      ],
+      [
+        "MAX_DEFAULT_PAGE_SIZE=8192"
+      ],
+      [
+        "MAX_EXPR_DEPTH=1000"
+      ],
+      [
+        "MAX_FUNCTION_ARG=1000"
+      ],
+      [
+        "MAX_LENGTH=1000000000"
+      ],
+      [
+        "MAX_LIKE_PATTERN_LENGTH=50000"
+      ],
+      [
+        "MAX_MMAP_SIZE=0x7fff0000"
+      ],
+      [
+        "MAX_PAGE_COUNT=0xfffffffe"
+      ],
+      [
+        "MAX_PAGE_SIZE=65536"
+      ],
+      [
+        "MAX_SQL_LENGTH=1000000000"
+      ],
+      [
+        "MAX_TRIGGER_DEPTH=1000"
+      ],
+      [
+        "MAX_VARIABLE_NUMBER=32766"
+      ],
+      [
+        "MAX_VDBE_OP=250000000"
+      ],
+      [
+        "MAX_WORKER_THREADS=8"
+      ],
+      [
+        "MUTEX_PTHREADS"
+      ],
+      [
+        "SYSTEM_MALLOC"
+      ],
+      [
+        "TEMP_STORE=1"
+      ],
+      [
+        "THREADSAFE=1"
+      ]
+    ],
+    "pragmas": {
+      "foreign_keys": [
+        [
+          1
+        ]
+      ],
+      "recursive_triggers": [
+        [
+          1
+        ]
+      ],
+      "ignore_check_constraints": [
+        [
+          0
+        ]
+      ],
+      "defer_foreign_keys": [
+        [
+          0
+        ]
+      ],
+      "trusted_schema": [
+        [
+          1
+        ]
+      ],
+      "synchronous": [
+        [
+          3
+        ]
+      ],
+      "encoding": [
+        [
+          "UTF-8"
+        ]
+      ],
+      "journal_mode": [
+        [
+          "memory"
+        ]
+      ]
+    }
+  },
+  "before_ddl_sha256": "c8fd84cf5e535d5f4c585d31a2e0ad0e4c791bb9cd7649f243e0bc1c6bfd223e",
+  "after_ddl_sha256": "0d7cb70c6f8acc46df8944120ef70902b9eef80a02d5f7597eafb926bb399669",
+  "input_hashes": {
+    "docs/implementation/evidence/adr0031-i2-f1/probe_f1.py": "1adda6047d612c6e04c7a3ff0a4e0eb37d7ab4e45ecc5a10db76e5c693560dff",
+    "docs/implementation/evidence/adr0031-i2-f1/compose_f1.py": "a2030e8d3929a3ba832cf62df60919242f648a70e59f3383404f9e26c4d48f80",
+    "docs/implementation/evidence/adr0031-i2-f1/fence.sql": "ce66652aef8bdb39302597b14d7b26fe6601206161215fca59c570a6e9fcb908",
+    "docs/implementation/evidence/adr0031-i2-f1/stage_contract.py": "ccfd21ad0a1776d15f11a720f40ba64c45c3594051cc3f771c290d0988037868",
+    "docs/implementation/evidence/adr0031-i2-f1/I2-F1-ADDENDUM.md": "85a2e26e839df2790876b39239865519689feee8c8c6093b25b5a06da14a345d",
+    "docs/implementation/evidence/adr0031-i2-preparation/resources.sql": "f93a9cfe18f7c9a46679bdfe144355e853921cc9520e99fd0ad23d2240f5fbe6",
+    "docs/implementation/evidence/adr0031-i2-preparation/resource_udfs.py": "b4706cd9ed38a3a829b5072dc3d57f1a440c68c8088576d16041c597f3329425",
+    "docs/implementation/evidence/adr0031-i2-preparation/compose_proposal.py": "81650ed59ef7219955338e21c33dc6687f4d3ef12ebade71906829f0ab9dc3c5",
+    "docs/implementation/evidence/adr0031-i2-independent-review/F1-reproduction.sql": "211a82dd998d8535fc937cc3d13d9d97ef2d3fe622bff596e85fbf695fb45022",
+    "src/repo_catalog/domain/resource_identity.py": "a7b68deb5a40956360a7c8ad69bcff1c216020b4eb451e52e0ea61fb5d0c13a3",
+    "src/repo_catalog/adapters/sqlite/p1_ddl/context.sql": "458278e3016744d1100b2827b7686414f75cfa4de013e13a7433f8effd37fcea",
+    "src/repo_catalog/adapters/sqlite/p1_schema.py": "ecdf23d58879f39271234b4914560235ce92d3b22e0828b464205feb86d83ba8"
+  },
+  "schema_delta": [
+    {
+      "key": [
+        "trigger",
+        "i2_transfer_report_stage_fence"
+      ],
+      "before": null,
+      "after": [
+        "resource_relations",
+        "CREATE TRIGGER i2_transfer_report_stage_fence BEFORE INSERT ON resource_relations\nWHEN NEW.relation_kind COLLATE BINARY='transfer_event_report'\nBEGIN SELECT RAISE(ABORT,'Transfer reports require I3-I5 implementation'); END"
+      ]
+    }
+  ],
+  "summary": {
+    "cases": 119,
+    "passed": 119,
+    "failed": 0,
+    "failed_cases": [],
+    "by_family": {
+      "exact-minimal": {
+        "cases": 2,
+        "passed": 2
+      },
+      "routing-model": {
+        "cases": 32,
+        "passed": 32
+      },
+      "routing-model-unsupported-fixture": {
+        "cases": 8,
+        "passed": 8
+      },
+      "sql": {
+        "cases": 61,
+        "passed": 61
+      },
+      "transaction": {
+        "cases": 1,
+        "passed": 1
+      },
+      "transaction-unsupported-defer-control": {
+        "cases": 1,
+        "passed": 1
+      },
+      "unsupported-storage-fixture": {
+        "cases": 14,
+        "passed": 14
+      }
+    },
+    "sql_case_refusals": 41
+  },
+  "validation": {
+    "foreign_key_check": [],
+    "integrity_check": [
+      [
+        "ok"
+      ]
+    ]
+  },
+  "fresh_reopen_both_fences": true
+}
