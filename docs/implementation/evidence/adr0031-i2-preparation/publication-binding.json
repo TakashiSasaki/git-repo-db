@@ -1,0 +1,102 @@
+{
+  "task": "C",
+  "scope": "verbatim publication of previously completed work; no product rerun or acceptance claim",
+  "base_commit": "9ea69ba8804a368802457950601a5a4027174c52",
+  "base_tree": "8183f346b3613ea1206b2c0ab3e6428f31614cd8",
+  "original_source_directory": "/workspace/i2-preparation-20261021",
+  "copied_files": {
+    "I2-IMPLEMENTATION-PLAN.md": {
+      "bytes": 40797,
+      "sha256": "ed40739a0a634623d37a4db44f26a27cc356675e6705ecd6ec7292f7f4e322ed"
+    },
+    "artifact-index.json": {
+      "bytes": 11052,
+      "sha256": "ac98a655f545f16f35014b91a6f4095ff5d20b5eefbb768e8c6edbc29f29f89f"
+    },
+    "bundle-receipt.json": {
+      "bytes": 338,
+      "sha256": "9c991c82b0589db883e4c05b834be0a57b0ad1e8e05dac181be9c06dcd1f3978"
+    },
+    "COMMANDS.md": {
+      "bytes": 3571,
+      "sha256": "eb1168667f489e079af01d29a0d77c19787952839f4f1153ed1f971c99834dab"
+    },
+    "resources.sql": {
+      "bytes": 2954,
+      "sha256": "f93a9cfe18f7c9a46679bdfe144355e853921cc9520e99fd0ad23d2240f5fbe6"
+    },
+    "resource_udfs.py": {
+      "bytes": 2086,
+      "sha256": "b4706cd9ed38a3a829b5072dc3d57f1a440c68c8088576d16041c597f3329425"
+    },
+    "compose_proposal.py": {
+      "bytes": 1945,
+      "sha256": "81650ed59ef7219955338e21c33dc6687f4d3ef12ebade71906829f0ab9dc3c5"
+    },
+    "probe.py": {
+      "bytes": 19497,
+      "sha256": "29f3f44d38060e119d51aea7d51a3726f2f148f04f7ae0e2a5f3623849b49cc5"
+    },
+    "run.py": {
+      "bytes": 2140,
+      "sha256": "5c477ed47c8fb5f7b53df74af4cfc86ffd12a1b94742293ecd070225b48e6698"
+    },
+    "baseline_controls.py": {
+      "bytes": 3302,
+      "sha256": "5f18d5e351107f0174395b2b4f819b3f63a701ff75f5b37fa6415d06b035db73"
+    },
+    "transaction_controls.py": {
+      "bytes": 1898,
+      "sha256": "fb804e3d2ef9b2bfa203d29e724c082a4d408f7393b7edfce351a5516029f66b"
+    },
+    "summary.json": {
+      "bytes": 7881,
+      "sha256": "79b516b40d5b71ac1f11f9f122a54b0f35d37c2c1fa0bb18244ee62526eeeb32"
+    },
+    "provenance.json": {
+      "bytes": 7679,
+      "sha256": "9b836fd2a692b6e7e82c479c63a07891b8e49f6db5e3609d1471d575da99ad38"
+    },
+    "read-input-hashes.json": {
+      "bytes": 2638,
+      "sha256": "d577e296dfb23c85d03eac23f746ad514a027be5c9185d74b6eda67396450115"
+    },
+    "final-binding.json": {
+      "bytes": 1096,
+      "sha256": "fdbfe910e9047451b3aa0167f9d99e177c83599002be66e4b5689884cbc23c47"
+    },
+    "baseline-minimum.json": {
+      "bytes": 9598,
+      "sha256": "e77b64b087e7e049c297201e61f8d955ed96069fe8ad73ddb9f16f5dae147bb0"
+    },
+    "baseline-newer.json": {
+      "bytes": 9598,
+      "sha256": "f632c61f3cdb08844ce71fba7306a6af10d8c0e77e175431ba2872a4407f8bb5"
+    },
+    "transaction-minimum.json": {
+      "bytes": 1525,
+      "sha256": "58c368cee493fcee8fc20a4b931b62d6abac1f584483fef6be2748de2bc190e9"
+    },
+    "transaction-newer.json": {
+      "bytes": 1525,
+      "sha256": "cab75b8cf4ecdcba33b7e0aec1f120eaf0798edcca79612216add4a385fa51ea"
+    },
+    "minimum-command.json": {
+      "bytes": 752,
+      "sha256": "02e1d3b1e58efc8cc26b7664b5e34976d95d45ce3195f2463695842f8223dea5"
+    },
+    "newer-command.json": {
+      "bytes": 677,
+      "sha256": "5c7fcb9c768c7a6d83b2cba28840b276de714b6b3d70a4dd3c7eb03afd5167c0"
+    },
+    "suggested-skill-lesson.md": {
+      "bytes": 1429,
+      "sha256": "53f0841a7cd3ece883967ba023165d141d2ce6a071f01e3bf2c7e1b0ad2c9fcc"
+    },
+    "i2-preparation-evidence.tar.gz": {
+      "bytes": 653411,
+      "sha256": "a90d56232809577812339ac8531896fce807eada9c54c92334500e81afd68e04"
+    }
+  },
+  "verified_archive_entries": 74
+}
