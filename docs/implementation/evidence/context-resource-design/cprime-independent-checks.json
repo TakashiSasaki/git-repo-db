@@ -1,0 +1,34 @@
+{
+  "reviewed_commit": "060da07e0412e2d93dd4132332ab3bf908e3d8db",
+  "reviewed_tree": "26fdd521faffce4ef458b3ad762ef02c98ea1eea",
+  "update_baseline": "5244b98a9a302f082a07a526480faf438fc91838",
+  "stack_base": "24f593861327328fa00dab0b83f956cec330a0ac",
+  "files": [
+    "docs/adr/0031-generalized-context-resources.md",
+    "docs/adr/README.md",
+    "docs/architecture/context-resource-schema.md",
+    "docs/implementation/context-resource-design-handoff.md",
+    "docs/implementation/evidence/context-resource-design/README.md",
+    "docs/implementation/evidence/context-resource-design/cprime-integration.md",
+    "docs/implementation/evidence/context-resource-design/cprime-source-verification.json"
+  ],
+  "scope": "read-only documentation and Git-object inspection; no SQLite execution or product/release tests",
+  "checks": {
+    "diff_check_both_bases": "PASS",
+    "documentation_only": "PASS",
+    "accepted_adr_bodies_unchanged": "PASS",
+    "proposed_null_date": "PASS",
+    "eight_owner_decisions": "PASS",
+    "strict_utf8_json_balanced_fences": "PASS",
+    "local_targets_and_anchors_checked": 100,
+    "commit_pinned_targets_checked": 28,
+    "all_18_input_hashes_match": true,
+    "inputs_unchanged_F2_to_R2": true,
+    "independently_composed_sql_hashes": {
+      "e9aba86f4530b2e683c77e23a4fe58bdf02192c5": "c2c325532279f35ba51b36aacbeea30ceda4040e80b5d31512cbb9e19d564dee",
+      "9eeacb28f7e4a426114a9ce40e2324b4da302817": "2892a5fb0bcef8a0e0ea916fc1b71687a0a2afe545849e27dec4f7fd3600171f"
+    },
+    "manifest_sha256": "30e0e1b75f476f0813bd410b5726fe952511125adbd2e1f0bc2fbf980d3605a3"
+  },
+  "errors": []
+}

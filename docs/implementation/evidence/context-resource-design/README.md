@@ -107,5 +107,42 @@ for complete owner design acceptance. ADR 0031 stays proposed with date null.
 This revision preserves #113 → #114 and treats #115 as external evidence. It
 does not import that branch, change either sibling, or execute product/schema/
 release tests. The eight fixed owner decisions and accepted ADR bodies remain
-intact. A separate reviewer will inspect the frozen revised documents and the
-original evidence; actual review/check results are recorded after that review.
+intact.
+
+The separate `adr0031_independent_review` agent inspected frozen commit
+`060da07e0412e2d93dd4132332ab3bf908e3d8db`, tree
+`26fdd521faffce4ef458b3ad762ef02c98ea1eea`, in a detached checkout. It did not
+author the revision. The [independent receipt](cprime-independent-review.md)
+records its source/evidence review, checks and findings. **No substantive
+findings remain; the documentation update is approved, while complete design
+acceptance remains NOT YET READY because of G3.** This is not owner approval.
+
+The reviewer checked all fixed choices, accepted ADR meanings, the eight-layered
+obligation map, G1/G2 versus G3, actual predicates/FKs/guards/admission, 28 pinned
+Git blob targets, all 18 F2 input hashes unchanged at R2, and both SQL hashes by
+pure text composition. It inspected F1 and F2 original/follow-up receipts without
+running SQLite or a product suite. Its link counts use its own extraction rules
+and are not summed with the author's checks.
+
+Author checks covered 101 local targets, 14 local anchors, the same 28 pinned
+Git blob targets, UTF-8/JSON/fences, all fixed ledger choices, proposed/null
+frontmatter, unchanged protected paths, both diff scopes and retained #113
+ancestry with F2 outside that ancestry. `python scripts/ci_execute.py reports`
+passed for 403 prose files at the reviewed freeze. The [source-verification
+receipt](cprime-source-verification.json) records hash/receipt inspection rather
+than a new experimental run. Final publication checks are separately recorded
+in [publication-checks.json](publication-checks.json).
+
+After the reviewed freeze, only this factual review record and review/check
+receipts were completed. ADR, schema, handoff, index, evidence mapping and source
+verification bytes remain identical to the reviewed commit. Those receipt-only
+additions are not described as another independently reviewed design revision.
+Relevant documentation/scope checks are rerun before publication. No runtime,
+packaging, release or live Provider test is claimed for this task.
+
+Procedures used for this revision: ADR workflow, the existing lessons-to-skills
+design-stack reference and exact-tree CI verification. Existing skills already
+cover the verified source-pin/status reconciliation procedure; no new skill or
+product rule was invented. Hosted checks, if reported, identify the final
+feature/effective tree separately and never substitute for the experimental
+execution evidence.
