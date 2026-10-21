@@ -1,0 +1,328 @@
+{
+  "runs": {
+    "baseline-cohort-3513": {
+      "exit": 1,
+      "selected": 564,
+      "starts": 564,
+      "finishes": 564,
+      "junit_cases": 564,
+      "selected_equals_starts": true,
+      "starts_equals_finishes": true,
+      "selected_equals_junit": true,
+      "exact_three_phases": true,
+      "finish_exit": [
+        1
+      ],
+      "junit": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "3",
+          "skipped": "0",
+          "tests": "564",
+          "time": "59.676",
+          "timestamp": "2026-10-21T12:39:34.673574+00:00",
+          "hostname": "3f2a97b55134"
+        }
+      ],
+      "failures": [
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_non_transfer_cannot_promote_repository_fields_or_forged_flag[True]",
+          "messages": [
+            "ValueError: Current packaged DDL requires nonempty scalar local document IDs; generalized Document persistence is deferred to ADR 0031 I2"
+          ]
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_graphql_transfer_parent_namespace_and_original_type",
+          "messages": [
+            "ValueError: Current packaged DDL requires nonempty scalar local document IDs; generalized Document persistence is deferred to ADR 0031 I2"
+          ]
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_graphql_event_does_not_infer_destination_from_current_issue_repository",
+          "messages": [
+            "ValueError: Current packaged DDL requires nonempty scalar local document IDs; generalized Document persistence is deferred to ADR 0031 I2"
+          ]
+        }
+      ]
+    },
+    "baseline-cohort-3531": {
+      "exit": 1,
+      "selected": 564,
+      "starts": 564,
+      "finishes": 564,
+      "junit_cases": 564,
+      "selected_equals_starts": true,
+      "starts_equals_finishes": true,
+      "selected_equals_junit": true,
+      "exact_three_phases": true,
+      "finish_exit": [
+        1
+      ],
+      "junit": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "3",
+          "skipped": "0",
+          "tests": "564",
+          "time": "52.590",
+          "timestamp": "2026-10-21T12:40:35.038902+00:00",
+          "hostname": "3f2a97b55134"
+        }
+      ],
+      "failures": [
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_non_transfer_cannot_promote_repository_fields_or_forged_flag[True]",
+          "messages": [
+            "ValueError: Current packaged DDL requires nonempty scalar local document IDs; generalized Document persistence is deferred to ADR 0031 I2"
+          ]
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_graphql_transfer_parent_namespace_and_original_type",
+          "messages": [
+            "ValueError: Current packaged DDL requires nonempty scalar local document IDs; generalized Document persistence is deferred to ADR 0031 I2"
+          ]
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_graphql_event_does_not_infer_destination_from_current_issue_repository",
+          "messages": [
+            "ValueError: Current packaged DDL requires nonempty scalar local document IDs; generalized Document persistence is deferred to ADR 0031 I2"
+          ]
+        }
+      ]
+    },
+    "baseline-ordinary-3531": {
+      "exit": 2,
+      "selected": 5181,
+      "starts": 0,
+      "finishes": 0,
+      "junit_cases": 2,
+      "selected_equals_starts": false,
+      "starts_equals_finishes": true,
+      "selected_equals_junit": false,
+      "exact_three_phases": true,
+      "finish_exit": [
+        2
+      ],
+      "junit": [
+        {
+          "name": "pytest",
+          "errors": "2",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "2",
+          "time": "4.256",
+          "timestamp": "2026-10-21T12:41:28.002776+00:00",
+          "hostname": "3f2a97b55134"
+        }
+      ],
+      "failures": [
+        {
+          "classname": "",
+          "name": "tests.integration.p2_p3_compatibility.test_production_pair",
+          "messages": [
+            "collection failure"
+          ]
+        },
+        {
+          "classname": "",
+          "name": "tests.integration.p3.test_production_context",
+          "messages": [
+            "collection failure"
+          ]
+        }
+      ]
+    },
+    "remediation-broad-3513": {
+      "exit": 1,
+      "selected": 2740,
+      "starts": 2740,
+      "finishes": 2740,
+      "junit_cases": 2740,
+      "selected_equals_starts": true,
+      "starts_equals_finishes": true,
+      "selected_equals_junit": true,
+      "exact_three_phases": true,
+      "finish_exit": [
+        1
+      ],
+      "junit": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "4",
+          "skipped": "0",
+          "tests": "2740",
+          "time": "442.709",
+          "timestamp": "2026-10-21T12:41:42.317806+00:00",
+          "hostname": "3f2a97b55134"
+        }
+      ],
+      "failures": [
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_non_transfer_cannot_promote_repository_fields_or_forged_flag[True]",
+          "messages": [
+            "ValueError: Current packaged DDL requires nonempty scalar local document IDs; generalized Document persistence is deferred to ADR 0031 I2"
+          ]
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_graphql_transfer_parent_namespace_and_original_type",
+          "messages": [
+            "ValueError: Current packaged DDL requires nonempty scalar local document IDs; generalized Document persistence is deferred to ADR 0031 I2"
+          ]
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_graphql_event_does_not_infer_destination_from_current_issue_repository",
+          "messages": [
+            "ValueError: Current packaged DDL requires nonempty scalar local document IDs; generalized Document persistence is deferred to ADR 0031 I2"
+          ]
+        },
+        {
+          "classname": "tests.integration.i5.test_independent_e2e",
+          "name": "test_transfer_reports_never_mix_across_observations_or_identifier_namespaces",
+          "messages": [
+            "ValueError: Current packaged DDL requires nonempty scalar local document IDs; generalized Document persistence is deferred to ADR 0031 I2"
+          ]
+        }
+      ]
+    },
+    "remediation-broad-3531": {
+      "exit": 1,
+      "selected": 2740,
+      "starts": 2740,
+      "finishes": 2740,
+      "junit_cases": 2740,
+      "selected_equals_starts": true,
+      "starts_equals_finishes": true,
+      "selected_equals_junit": true,
+      "exact_three_phases": true,
+      "finish_exit": [
+        1
+      ],
+      "junit": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "4",
+          "skipped": "0",
+          "tests": "2740",
+          "time": "408.617",
+          "timestamp": "2026-10-21T12:49:05.648328+00:00",
+          "hostname": "3f2a97b55134"
+        }
+      ],
+      "failures": [
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_non_transfer_cannot_promote_repository_fields_or_forged_flag[True]",
+          "messages": [
+            "ValueError: Current packaged DDL requires nonempty scalar local document IDs; generalized Document persistence is deferred to ADR 0031 I2"
+          ]
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_graphql_transfer_parent_namespace_and_original_type",
+          "messages": [
+            "ValueError: Current packaged DDL requires nonempty scalar local document IDs; generalized Document persistence is deferred to ADR 0031 I2"
+          ]
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_graphql_event_does_not_infer_destination_from_current_issue_repository",
+          "messages": [
+            "ValueError: Current packaged DDL requires nonempty scalar local document IDs; generalized Document persistence is deferred to ADR 0031 I2"
+          ]
+        },
+        {
+          "classname": "tests.integration.i5.test_independent_e2e",
+          "name": "test_transfer_reports_never_mix_across_observations_or_identifier_namespaces",
+          "messages": [
+            "ValueError: Current packaged DDL requires nonempty scalar local document IDs; generalized Document persistence is deferred to ADR 0031 I2"
+          ]
+        }
+      ]
+    },
+    "remediation-distribution-3513": {
+      "exit": 1
+    },
+    "remediation-distribution-3531": {
+      "exit": 1
+    },
+    "remediation-ordinary-3513": {
+      "exit": 0,
+      "selected": 5281,
+      "starts": 0,
+      "finishes": 0,
+      "junit_cases": 0,
+      "selected_equals_starts": false,
+      "starts_equals_finishes": true,
+      "selected_equals_junit": false,
+      "exact_three_phases": true,
+      "finish_exit": [
+        0
+      ],
+      "junit": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "0",
+          "time": "4.095",
+          "timestamp": "2026-10-21T12:41:32.815195+00:00",
+          "hostname": "3f2a97b55134"
+        }
+      ],
+      "failures": []
+    },
+    "remediation-ordinary-3531": {
+      "exit": 0,
+      "selected": 5281,
+      "starts": 0,
+      "finishes": 0,
+      "junit_cases": 0,
+      "selected_equals_starts": false,
+      "starts_equals_finishes": true,
+      "selected_equals_junit": false,
+      "exact_three_phases": true,
+      "finish_exit": [
+        0
+      ],
+      "junit": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "0",
+          "time": "4.343",
+          "timestamp": "2026-10-21T12:41:37.467055+00:00",
+          "hostname": "3f2a97b55134"
+        }
+      ],
+      "failures": []
+    }
+  },
+  "final_hashes": {
+    "baseline": {
+      "count": 426,
+      "mismatches": [],
+      "tracked_diff": []
+    },
+    "remediation": {
+      "count": 429,
+      "mismatches": [],
+      "tracked_diff": []
+    }
+  }
+}

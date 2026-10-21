@@ -1,0 +1,65 @@
+{
+  "runtime": [
+    "3.53.1",
+    "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9"
+  ],
+  "groups": [
+    {
+      "name": "valid nested native array reference roundtrip",
+      "digest_consistent": true,
+      "admitted_resources": [
+        [
+          "11111111-1111-4111-8111-111111111111",
+          "issue",
+          "\"731\""
+        ],
+        [
+          "11111111-1111-4111-8111-111111111111",
+          "repository",
+          "[\"github:node_id\",\"731\"]"
+        ]
+      ]
+    },
+    {
+      "name": "invalid nested Collection member identity",
+      "digest_consistent": true,
+      "exception": "Expected identity string or array",
+      "type": "ValueError",
+      "context_rows_before_after": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "invalid Coverage owner identity",
+      "digest_consistent": true,
+      "exception": "Expected identity string or array",
+      "type": "ValueError",
+      "context_rows_before_after": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "invalid root Resource identity",
+      "digest_consistent": true,
+      "exception": "Expected identity string or array",
+      "type": "ValueError",
+      "context_rows_before_after": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "alternate nested Collection member escape",
+      "digest_consistent": true,
+      "exception": "Identity TEXT is not canonical",
+      "type": "ValueError",
+      "context_rows_before_after": [
+        0,
+        0
+      ]
+    }
+  ],
+  "passed": 5
+}

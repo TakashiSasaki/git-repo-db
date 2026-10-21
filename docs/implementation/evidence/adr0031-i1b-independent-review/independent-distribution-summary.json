@@ -1,0 +1,82 @@
+{
+  "3513": [
+    {
+      "interpreter": "/workspace/independent-task-b-20261021/tmp/access-distribution-ro9rhnp1/wheel/bin/python",
+      "sqlite": "3.51.3",
+      "sqlite_source_id": "2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618",
+      "module_origin": "/workspace/independent-task-b-20261021/tmp/access-distribution-ro9rhnp1/wheel/lib/python3.13/site-packages/repo_catalog/__init__.py",
+      "context_ddl_sha256": "fa7838f86d9f0ab4b2f26c561ad0721df2d0c7dad45ee97e72ff09cbb89ac434",
+      "ddl_sha256": "89bcafeda815150fa4770f5758edf7d2d36d505b76717aa19054f9ad689765da",
+      "installed_smoke": "failed",
+      "exit_code": 1,
+      "artifact_kind": "wheel",
+      "wheel_sha256": "47d1f5cc4af32eca2552ebf91bd5fa8641001eeab58dd050ba5aa86f6fc724ff",
+      "source_sdist_sha256": "3a9ea3db403ec923837cb1aced13d6cc4e16149750cbbc14f30dcf5307aebac6",
+      "last_stderr_lines": [
+        "    raise ValueError(",
+        "    ...<2 lines>...",
+        "    )",
+        "ValueError: Current packaged DDL requires nonempty scalar local document IDs; generalized Document persistence is deferred to ADR 0031 I2"
+      ]
+    },
+    {
+      "interpreter": "/workspace/independent-task-b-20261021/tmp/access-distribution-ro9rhnp1/sdist-wheel/bin/python",
+      "sqlite": "3.51.3",
+      "sqlite_source_id": "2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618",
+      "module_origin": "/workspace/independent-task-b-20261021/tmp/access-distribution-ro9rhnp1/sdist-wheel/lib/python3.13/site-packages/repo_catalog/__init__.py",
+      "context_ddl_sha256": "fa7838f86d9f0ab4b2f26c561ad0721df2d0c7dad45ee97e72ff09cbb89ac434",
+      "ddl_sha256": "89bcafeda815150fa4770f5758edf7d2d36d505b76717aa19054f9ad689765da",
+      "installed_smoke": "failed",
+      "exit_code": 1,
+      "artifact_kind": "sdist-wheel",
+      "wheel_sha256": "47d1f5cc4af32eca2552ebf91bd5fa8641001eeab58dd050ba5aa86f6fc724ff",
+      "source_sdist_sha256": "3a9ea3db403ec923837cb1aced13d6cc4e16149750cbbc14f30dcf5307aebac6",
+      "last_stderr_lines": [
+        "    raise ValueError(",
+        "    ...<2 lines>...",
+        "    )",
+        "ValueError: Current packaged DDL requires nonempty scalar local document IDs; generalized Document persistence is deferred to ADR 0031 I2"
+      ]
+    }
+  ],
+  "3531": [
+    {
+      "interpreter": "/workspace/independent-task-b-20261021/tmp/access-distribution-kt12jnv9/wheel/bin/python",
+      "sqlite": "3.53.1",
+      "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+      "module_origin": "/workspace/independent-task-b-20261021/tmp/access-distribution-kt12jnv9/wheel/lib/python3.12/site-packages/repo_catalog/__init__.py",
+      "context_ddl_sha256": "fa7838f86d9f0ab4b2f26c561ad0721df2d0c7dad45ee97e72ff09cbb89ac434",
+      "ddl_sha256": "89bcafeda815150fa4770f5758edf7d2d36d505b76717aa19054f9ad689765da",
+      "installed_smoke": "failed",
+      "exit_code": 1,
+      "artifact_kind": "wheel",
+      "wheel_sha256": "47d1f5cc4af32eca2552ebf91bd5fa8641001eeab58dd050ba5aa86f6fc724ff",
+      "source_sdist_sha256": "3a9ea3db403ec923837cb1aced13d6cc4e16149750cbbc14f30dcf5307aebac6",
+      "last_stderr_lines": [
+        "           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+        "  File \"/workspace/independent-task-b-20261021/tmp/access-distribution-kt12jnv9/wheel/lib/python3.12/site-packages/repo_catalog/adapters/sqlite/p1_context.py\", line 89, in resource",
+        "    raise ValueError(",
+        "ValueError: Current packaged DDL requires nonempty scalar local document IDs; generalized Document persistence is deferred to ADR 0031 I2"
+      ]
+    },
+    {
+      "interpreter": "/workspace/independent-task-b-20261021/tmp/access-distribution-kt12jnv9/sdist-wheel/bin/python",
+      "sqlite": "3.53.1",
+      "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+      "module_origin": "/workspace/independent-task-b-20261021/tmp/access-distribution-kt12jnv9/sdist-wheel/lib/python3.12/site-packages/repo_catalog/__init__.py",
+      "context_ddl_sha256": "fa7838f86d9f0ab4b2f26c561ad0721df2d0c7dad45ee97e72ff09cbb89ac434",
+      "ddl_sha256": "89bcafeda815150fa4770f5758edf7d2d36d505b76717aa19054f9ad689765da",
+      "installed_smoke": "failed",
+      "exit_code": 1,
+      "artifact_kind": "sdist-wheel",
+      "wheel_sha256": "47d1f5cc4af32eca2552ebf91bd5fa8641001eeab58dd050ba5aa86f6fc724ff",
+      "source_sdist_sha256": "3a9ea3db403ec923837cb1aced13d6cc4e16149750cbbc14f30dcf5307aebac6",
+      "last_stderr_lines": [
+        "           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+        "  File \"/workspace/independent-task-b-20261021/tmp/access-distribution-kt12jnv9/sdist-wheel/lib/python3.12/site-packages/repo_catalog/adapters/sqlite/p1_context.py\", line 89, in resource",
+        "    raise ValueError(",
+        "ValueError: Current packaged DDL requires nonempty scalar local document IDs; generalized Document persistence is deferred to ADR 0031 I2"
+      ]
+    }
+  ]
+}

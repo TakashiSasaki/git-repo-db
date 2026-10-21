@@ -1,0 +1,488 @@
+[
+  {
+    "path": "src/repo_catalog/cli/production_query.py",
+    "line": 236,
+    "operation": "constructor",
+    "expression": "ResourceKey(args.service, args.kind, args.id)"
+  },
+  {
+    "path": "src/repo_catalog/cli/production_query.py",
+    "line": 254,
+    "operation": "constructor",
+    "expression": "ResourceKey(args.service, args.kind, args.id)"
+  },
+  {
+    "path": "src/repo_catalog/domain/selective_exchange.py",
+    "line": 24,
+    "operation": "constructor",
+    "expression": "ResourceKey(*(row[k] for k in ('service_instance_uuidv4', 'resource_kind', 'provider_resource_id')))"
+  },
+  {
+    "path": "src/repo_catalog/domain/selective_exchange.py",
+    "line": 579,
+    "operation": "constructor",
+    "expression": "ResourceKey(*r)"
+  },
+  {
+    "path": "src/repo_catalog/domain/selective_exchange.py",
+    "line": 595,
+    "operation": "constructor",
+    "expression": "ResourceKey(*row[:3])"
+  },
+  {
+    "path": "src/repo_catalog/domain/selective_exchange.py",
+    "line": 590,
+    "operation": "scoped_decoder",
+    "expression": "r.scoped_document_coordinates()"
+  },
+  {
+    "path": "src/repo_catalog/domain/selective_exchange.py",
+    "line": 591,
+    "operation": "constructor",
+    "expression": "ResourceKey(r.service_instance_uuidv4, *coords[:2])"
+  },
+  {
+    "path": "src/repo_catalog/domain/selective_exchange.py",
+    "line": 547,
+    "operation": "constructor",
+    "expression": "ResourceKey(*coordinates[:3])"
+  },
+  {
+    "path": "src/repo_catalog/domain/selective_exchange.py",
+    "line": 597,
+    "operation": "constructor",
+    "expression": "ResourceKey(*m)"
+  },
+  {
+    "path": "src/repo_catalog/domain/selective_exchange.py",
+    "line": 601,
+    "operation": "constructor",
+    "expression": "ResourceKey(*m)"
+  },
+  {
+    "path": "src/repo_catalog/domain/selective_exchange.py",
+    "line": 600,
+    "operation": "constructor",
+    "expression": "ResourceKey(*row[:3])"
+  },
+  {
+    "path": "src/repo_catalog/domain/selective_exchange.py",
+    "line": 729,
+    "operation": "constructor",
+    "expression": "ResourceKey(*m)"
+  },
+  {
+    "path": "src/repo_catalog/domain/selective_exchange.py",
+    "line": 792,
+    "operation": "constructor",
+    "expression": "ResourceKey(*coordinates)"
+  },
+  {
+    "path": "src/repo_catalog/domain/selective_exchange.py",
+    "line": 708,
+    "operation": "constructor",
+    "expression": "ResourceKey(*m)"
+  },
+  {
+    "path": "src/repo_catalog/domain/selective_exchange.py",
+    "line": 797,
+    "operation": "scoped_decoder",
+    "expression": "member.scoped_document_coordinates()"
+  },
+  {
+    "path": "src/repo_catalog/domain/selective_exchange.py",
+    "line": 454,
+    "operation": "constructor",
+    "expression": "ResourceKey(*m)"
+  },
+  {
+    "path": "src/repo_catalog/domain/exchange.py",
+    "line": 371,
+    "operation": "constructor",
+    "expression": "ResourceKey(item[0], item[1], item[2])"
+  },
+  {
+    "path": "src/repo_catalog/domain/p1_context.py",
+    "line": 967,
+    "operation": "constructor",
+    "expression": "ResourceKey(data['service_instance_uuidv4'], data['resource_kind'], data['provider_resource_id'])"
+  },
+  {
+    "path": "src/repo_catalog/domain/p1_context.py",
+    "line": 1710,
+    "operation": "constructor",
+    "expression": "ResourceKey(self.service_instance_uuidv4, 'issue', parent_id)"
+  },
+  {
+    "path": "src/repo_catalog/domain/p1_context.py",
+    "line": 683,
+    "operation": "scoped_decoder",
+    "expression": "self.scoped_document_coordinates()"
+  },
+  {
+    "path": "src/repo_catalog/domain/p1_context.py",
+    "line": 2476,
+    "operation": "constructor",
+    "expression": "ResourceKey(*self.coordinates[:3])"
+  },
+  {
+    "path": "src/repo_catalog/domain/p1_context.py",
+    "line": 1858,
+    "operation": "constructor",
+    "expression": "ResourceKey(report_key.service_instance_uuidv4, 'repository', value)"
+  },
+  {
+    "path": "src/repo_catalog/domain/p1_context.py",
+    "line": 2337,
+    "operation": "constructor",
+    "expression": "ResourceKey(resource.service_instance_uuidv4, 'repository', role.provider_repository_id)"
+  },
+  {
+    "path": "src/repo_catalog/domain/p1_context.py",
+    "line": 2376,
+    "operation": "constructor",
+    "expression": "ResourceKey(self.resource.service_instance_uuidv4, 'repository', self.scope.provider_repository_id)"
+  },
+  {
+    "path": "src/repo_catalog/domain/p1_context.py",
+    "line": 1111,
+    "operation": "constructor",
+    "expression": "ResourceKey(item['service_instance_uuidv4'], item['resource_kind'], item['provider_resource_id'])"
+  },
+  {
+    "path": "src/repo_catalog/domain/production_query.py",
+    "line": 398,
+    "operation": "constructor",
+    "expression": "ResourceKey(*key)"
+  },
+  {
+    "path": "src/repo_catalog/application/acquisition.py",
+    "line": 1812,
+    "operation": "constructor",
+    "expression": "ResourceKey(svc, r_kind, p_id)"
+  },
+  {
+    "path": "src/repo_catalog/application/acquisition.py",
+    "line": 1193,
+    "operation": "scoped_decoder",
+    "expression": "key.scoped_document_coordinates()"
+  },
+  {
+    "path": "src/repo_catalog/application/acquisition.py",
+    "line": 1194,
+    "operation": "constructor",
+    "expression": "ResourceKey(key.service_instance_uuidv4, parent_tuple[0], parent_tuple[1])"
+  },
+  {
+    "path": "src/repo_catalog/application/acquisition.py",
+    "line": 1323,
+    "operation": "constructor",
+    "expression": "ResourceKey(unit.primary_resource.service_instance_uuidv4, 'repository', entry.provider_repository_id)"
+  },
+  {
+    "path": "src/repo_catalog/application/acquisition.py",
+    "line": 1291,
+    "operation": "constructor",
+    "expression": "ResourceKey(unit.primary_resource.service_instance_uuidv4, 'repository', entry.provider_repository_id)"
+  },
+  {
+    "path": "src/repo_catalog/application/exchange.py",
+    "line": 3054,
+    "operation": "constructor",
+    "expression": "ResourceKey(res['service_instance_uuidv4'], res['resource_kind'], res['provider_resource_id'])"
+  },
+  {
+    "path": "src/repo_catalog/application/exchange.py",
+    "line": 3087,
+    "operation": "constructor",
+    "expression": "ResourceKey(fc['service_instance_uuidv4'], fc['resource_kind'], fc['provider_resource_id'])"
+  },
+  {
+    "path": "src/repo_catalog/application/exchange.py",
+    "line": 3153,
+    "operation": "constructor",
+    "expression": "ResourceKey(cr['service_instance_uuidv4'], cr['resource_kind'], cr['provider_resource_id'])"
+  },
+  {
+    "path": "src/repo_catalog/application/exchange.py",
+    "line": 3189,
+    "operation": "constructor",
+    "expression": "ResourceKey(rel['service_instance_uuidv4'], rel['resource_kind'], rel['provider_resource_id'])"
+  },
+  {
+    "path": "src/repo_catalog/application/exchange.py",
+    "line": 3293,
+    "operation": "constructor",
+    "expression": "ResourceKey(coll['service_instance_uuidv4'], coll['resource_kind'], coll['provider_resource_id'])"
+  },
+  {
+    "path": "src/repo_catalog/application/exchange.py",
+    "line": 1305,
+    "operation": "constructor",
+    "expression": "ResourceKey(row[0], row[1], row[2])"
+  },
+  {
+    "path": "src/repo_catalog/application/exchange.py",
+    "line": 1354,
+    "operation": "constructor",
+    "expression": "ResourceKey(row[0], row[1], row[2])"
+  },
+  {
+    "path": "src/repo_catalog/application/exchange.py",
+    "line": 2116,
+    "operation": "constructor",
+    "expression": "ResourceKey(*r)"
+  },
+  {
+    "path": "src/repo_catalog/application/exchange.py",
+    "line": 2464,
+    "operation": "constructor",
+    "expression": "ResourceKey(*coords[:3])"
+  },
+  {
+    "path": "src/repo_catalog/application/exchange.py",
+    "line": 1191,
+    "operation": "constructor",
+    "expression": "ResourceKey(*row)"
+  },
+  {
+    "path": "src/repo_catalog/application/exchange.py",
+    "line": 1233,
+    "operation": "constructor",
+    "expression": "ResourceKey(*row[:3])"
+  },
+  {
+    "path": "src/repo_catalog/application/exchange.py",
+    "line": 1380,
+    "operation": "constructor",
+    "expression": "ResourceKey(coords[0], coords[1], coords[2])"
+  },
+  {
+    "path": "src/repo_catalog/application/exchange.py",
+    "line": 2290,
+    "operation": "scoped_decoder",
+    "expression": "rk.scoped_document_coordinates()"
+  },
+  {
+    "path": "src/repo_catalog/application/exchange.py",
+    "line": 2291,
+    "operation": "constructor",
+    "expression": "ResourceKey(rk.service_instance_uuidv4, *coordinates[:2])"
+  },
+  {
+    "path": "src/repo_catalog/application/exchange.py",
+    "line": 3194,
+    "operation": "constructor",
+    "expression": "ResourceKey(*m)"
+  },
+  {
+    "path": "src/repo_catalog/application/exchange.py",
+    "line": 3298,
+    "operation": "constructor",
+    "expression": "ResourceKey(*m)"
+  },
+  {
+    "path": "src/repo_catalog/application/exchange.py",
+    "line": 1264,
+    "operation": "constructor",
+    "expression": "ResourceKey(*row[:3])"
+  },
+  {
+    "path": "src/repo_catalog/application/exchange.py",
+    "line": 1237,
+    "operation": "constructor",
+    "expression": "ResourceKey(*m)"
+  },
+  {
+    "path": "src/repo_catalog/application/exchange.py",
+    "line": 2422,
+    "operation": "constructor",
+    "expression": "ResourceKey(*m)"
+  },
+  {
+    "path": "src/repo_catalog/adapters/github/production_intake.py",
+    "line": 266,
+    "operation": "document",
+    "expression": "ResourceKey.document(parent, mapped_kind, document_kind, provider_document_id)"
+  },
+  {
+    "path": "src/repo_catalog/adapters/github/production_intake.py",
+    "line": 286,
+    "operation": "constructor",
+    "expression": "ResourceKey(service_instance_uuidv4, 'repository', repo_id)"
+  },
+  {
+    "path": "src/repo_catalog/adapters/github/production_intake.py",
+    "line": 388,
+    "operation": "constructor",
+    "expression": "ResourceKey(service_instance_uuidv4, 'issue', issue_id)"
+  },
+  {
+    "path": "src/repo_catalog/adapters/github/production_intake.py",
+    "line": 561,
+    "operation": "constructor",
+    "expression": "ResourceKey(service_instance_uuidv4, 'pull_request', pr_id)"
+  },
+  {
+    "path": "src/repo_catalog/adapters/github/production_intake.py",
+    "line": 941,
+    "operation": "from_native",
+    "expression": "ResourceKey.from_native(service_instance_uuidv4, 'pull_request', pr_id)"
+  },
+  {
+    "path": "src/repo_catalog/adapters/github/production_intake.py",
+    "line": 1094,
+    "operation": "from_native",
+    "expression": "ResourceKey.from_native(service_instance_uuidv4, 'pull_request', pr_id)"
+  },
+  {
+    "path": "src/repo_catalog/adapters/github/production_intake.py",
+    "line": 1168,
+    "operation": "from_native",
+    "expression": "ResourceKey.from_native(service_instance_uuidv4, 'pull_request', pr_id)"
+  },
+  {
+    "path": "src/repo_catalog/adapters/github/production_intake.py",
+    "line": 1486,
+    "operation": "from_native",
+    "expression": "ResourceKey.from_native(service_instance_uuidv4, parent_kind, pid)"
+  },
+  {
+    "path": "src/repo_catalog/adapters/github/production_intake.py",
+    "line": 1800,
+    "operation": "from_native",
+    "expression": "ResourceKey.from_native(service_instance_uuidv4, 'pull_request', pr_id)"
+  },
+  {
+    "path": "src/repo_catalog/adapters/github/production_intake.py",
+    "line": 1919,
+    "operation": "from_native",
+    "expression": "ResourceKey.from_native(service_instance_uuidv4, 'pull_request', pr_id)"
+  },
+  {
+    "path": "src/repo_catalog/adapters/github/production_intake.py",
+    "line": 1602,
+    "operation": "constructor",
+    "expression": "ResourceKey(service_instance_uuidv4, parent_kind, pid)"
+  },
+  {
+    "path": "src/repo_catalog/adapters/github/production_intake.py",
+    "line": 128,
+    "operation": "constructor",
+    "expression": "ResourceKey(resource.service_instance_uuidv4, 'repository', ident)"
+  },
+  {
+    "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+    "line": 675,
+    "operation": "constructor",
+    "expression": "ResourceKey(service_instance_uuidv4, 'repository', provider_repository_id)"
+  },
+  {
+    "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+    "line": 87,
+    "operation": "scoped_decoder",
+    "expression": "key.scoped_document_coordinates()"
+  },
+  {
+    "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+    "line": 441,
+    "operation": "constructor",
+    "expression": "ResourceKey(row[0], row[1], row[2])"
+  },
+  {
+    "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+    "line": 829,
+    "operation": "constructor",
+    "expression": "ResourceKey(svc, r_kind, p_id)"
+  },
+  {
+    "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+    "line": 705,
+    "operation": "constructor",
+    "expression": "ResourceKey(*m)"
+  },
+  {
+    "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+    "line": 713,
+    "operation": "constructor",
+    "expression": "ResourceKey(resource.service_instance_uuidv4, 'repository', role.provider_repository_id)"
+  },
+  {
+    "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+    "line": 388,
+    "operation": "constructor",
+    "expression": "ResourceKey(row[0], row[1], row[2])"
+  },
+  {
+    "path": "src/repo_catalog/adapters/sqlite/production_search.py",
+    "line": 545,
+    "operation": "constructor",
+    "expression": "ResourceKey(service_id, r_kind, r_id)"
+  },
+  {
+    "path": "src/repo_catalog/adapters/sqlite/production_search.py",
+    "line": 587,
+    "operation": "constructor",
+    "expression": "ResourceKey(service_id, r_kind, r_id)"
+  },
+  {
+    "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+    "line": 921,
+    "operation": "constructor",
+    "expression": "ResourceKey(service, 'repository', prov_id)"
+  },
+  {
+    "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+    "line": 464,
+    "operation": "constructor",
+    "expression": "ResourceKey(*row)"
+  },
+  {
+    "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+    "line": 491,
+    "operation": "scoped_decoder",
+    "expression": "child.scoped_document_coordinates()"
+  },
+  {
+    "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+    "line": 532,
+    "operation": "scoped_decoder",
+    "expression": "member.scoped_document_coordinates()"
+  },
+  {
+    "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+    "line": 579,
+    "operation": "constructor",
+    "expression": "ResourceKey(*member)"
+  },
+  {
+    "path": "src/repo_catalog/adapters/sqlite/recovery_validation.py",
+    "line": 116,
+    "operation": "constructor",
+    "expression": "ResourceKey(row[0], row[1], row[2])"
+  },
+  {
+    "path": "src/repo_catalog/adapters/sqlite/recovery_validation.py",
+    "line": 199,
+    "operation": "constructor",
+    "expression": "ResourceKey(svc, r_kind, p_id)"
+  },
+  {
+    "path": "src/repo_catalog/adapters/sqlite/recovery_validation.py",
+    "line": 74,
+    "operation": "constructor",
+    "expression": "ResourceKey(row[0], row[1], row[2])"
+  },
+  {
+    "path": "src/repo_catalog/adapters/sqlite/recovery_validation.py",
+    "line": 166,
+    "operation": "constructor",
+    "expression": "ResourceKey(*row[:3])"
+  },
+  {
+    "path": "src/repo_catalog/adapters/sqlite/recovery_validation.py",
+    "line": 164,
+    "operation": "constructor",
+    "expression": "ResourceKey(*m)"
+  }
+]
