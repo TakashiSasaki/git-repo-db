@@ -1,0 +1,1517 @@
+{
+  "scope": "All active tests/**/*.py and scripts/**/*.py; direct AST calls and parseable embedded Python strings; no indirect alias/data-flow proof",
+  "calls": [
+    {
+      "path": "tests/integration/access/test_context_boundary.py",
+      "line": 236,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"endpoint\", \"actual-provider-coordinate\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i2/test_provider_intake.py",
+      "line": 130,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(s, \"pull_request\", \"9\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i2/test_provider_intake.py",
+      "line": 525,
+      "embedded_at": null,
+      "call": "ResourceKey.timeline_event(ResourceKey.from_native(s, \"issue\", \"7\"), \"100\")",
+      "boundary": "explicit native factory or contract decoder"
+    },
+    {
+      "path": "tests/integration/i2/test_provider_intake.py",
+      "line": 526,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(s, \"repository\", \"1\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i2/test_provider_intake.py",
+      "line": 976,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(s, \"issue\", \"7\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i2/test_provider_intake.py",
+      "line": 65,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(service, \"repository\", provider)",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i2/test_provider_intake.py",
+      "line": 173,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(s, \"issue\", \"7\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i2/test_provider_intake.py",
+      "line": 217,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(s, \"issue\", \"7\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i2/test_provider_intake.py",
+      "line": 525,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(s, \"issue\", \"7\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i2/test_provider_intake.py",
+      "line": 633,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(s, \"issue\", \"7\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i2/test_provider_intake.py",
+      "line": 682,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(s, \"pull_request\", \"7\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i2/test_provider_intake.py",
+      "line": 694,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(s, \"issue\", \"7\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i2/test_provider_intake.py",
+      "line": 695,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(s, \"repository\", \"1\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i2/test_provider_intake.py",
+      "line": 157,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(s, \"issue\", \"7\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i2/test_provider_intake.py",
+      "line": 254,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(s, \"issue\", \"2\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i2/test_provider_intake.py",
+      "line": 261,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(s, \"issue\", \"3\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i2/test_provider_intake.py",
+      "line": 272,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(s, \"issue\", \"3\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i2/test_provider_intake.py",
+      "line": 301,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(s, \"issue\", \"7\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i2/test_provider_intake.py",
+      "line": 343,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(s, \"issue\", \"7\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i2/test_provider_intake.py",
+      "line": 528,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(s, \"issue\", \"7\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i2/test_provider_intake.py",
+      "line": 833,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(s, \"issue\", \"7\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i2/test_provider_intake.py",
+      "line": 251,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(s, \"issue\", \"1\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i2/test_provider_intake.py",
+      "line": 458,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(service, \"issue\", \"7\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i2/test_provider_intake.py",
+      "line": 943,
+      "embedded_at": null,
+      "call": "ResourceKey.timeline_event(\n                ResourceKey.from_native(s, \"issue\", \"7\"), \"101\"\n            )",
+      "boundary": "explicit native factory or contract decoder"
+    },
+    {
+      "path": "tests/integration/i2/test_provider_intake.py",
+      "line": 1001,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(s, \"issue\", \"7\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i2/test_provider_intake.py",
+      "line": 944,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(s, \"issue\", \"7\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i23/test_provider_exchange.py",
+      "line": 247,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(service, \"issue\", \"10\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i23/test_provider_exchange.py",
+      "line": 684,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(service, \"issue\", \"10\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i23/test_provider_exchange.py",
+      "line": 50,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(service, \"repository\", provider)",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i23/test_provider_exchange.py",
+      "line": 177,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(service, \"pull_request\", \"9\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i23/test_provider_exchange.py",
+      "line": 175,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(service, \"issue\", str(i))",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i23/test_provider_exchange.py",
+      "line": 494,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(service, \"issue\", \"10\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i3/test_selective_exchange.py",
+      "line": 43,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(service, \"issue\", \"7\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i3/test_selective_exchange.py",
+      "line": 190,
+      "embedded_at": null,
+      "call": "ResourceKey.timeline_event(issue, \"event-1\")",
+      "boundary": "explicit native factory or contract decoder"
+    },
+    {
+      "path": "tests/integration/i3/test_selective_exchange.py",
+      "line": 261,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(\n        issue.service_instance_uuidv4, \"repository\", \"R_provider_node_A\"\n    )",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i3/test_selective_exchange.py",
+      "line": 1148,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(issue.service_instance_uuidv4, \"issue\", \"8\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i3/test_selective_exchange.py",
+      "line": 1149,
+      "embedded_at": null,
+      "call": "ResourceKey.document(other, \"comment\", \"comments\", \"1\")",
+      "boundary": "explicit native factory or contract decoder"
+    },
+    {
+      "path": "tests/integration/i3/test_selective_exchange.py",
+      "line": 842,
+      "embedded_at": null,
+      "call": "ResourceKey.document(issue, \"comment\", \"comment\", \"99\")",
+      "boundary": "explicit native factory or contract decoder"
+    },
+    {
+      "path": "tests/integration/i4/test_query_search_backup.py",
+      "line": 43,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(service, \"issue\", \"7\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i4/test_query_search_backup.py",
+      "line": 110,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(service, \"issue\", \"80\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i4/test_query_search_backup.py",
+      "line": 177,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(service, \"issue\", \"10\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i4/test_query_search_backup.py",
+      "line": 488,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(service, \"issue\", \"90\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i4/test_query_search_backup.py",
+      "line": 59,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(service, \"pull_request\", \"9\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i4/test_query_search_backup.py",
+      "line": 88,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(service, \"issue\", \"13\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i4/test_query_search_backup.py",
+      "line": 269,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(service, \"issue\", \"10\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i4/test_query_search_backup.py",
+      "line": 117,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(service, \"repository\", provider_id)",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i4/test_query_search_backup.py",
+      "line": 84,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(service, \"issue\", \"12\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i4/test_query_search_backup.py",
+      "line": 272,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(service, \"issue\", \"1000\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i4/test_query_search_backup.py",
+      "line": 250,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(service, \"issue\", \"7\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i4/test_query_search_backup.py",
+      "line": 77,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(service, \"issue\", \"11\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i4/test_query_search_backup.py",
+      "line": 380,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(service, \"issue\", \"10\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i4/test_query_search_backup.py",
+      "line": 510,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(service, \"repository\", \"1\").coordinates()",
+      "boundary": "explicit native factory or contract decoder"
+    },
+    {
+      "path": "tests/integration/i4/test_query_search_backup.py",
+      "line": 510,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(service, \"repository\", \"1\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i5/test_independent_e2e.py",
+      "line": 167,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(service, \"issue\", \"501\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i5/test_independent_e2e.py",
+      "line": 168,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(service, \"pull_request\", \"601\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i5/test_independent_e2e.py",
+      "line": 383,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(service, \"issue\", \"505\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i5/test_independent_e2e.py",
+      "line": 67,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(service, \"repository\", provider)",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i5/test_independent_e2e.py",
+      "line": 393,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(service, \"issue\", \"502\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i5/test_independent_e2e.py",
+      "line": 409,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(service, \"issue\", \"504\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i5/test_independent_e2e.py",
+      "line": 639,
+      "embedded_at": null,
+      "call": "ResourceKey.timeline_event(\n            ResourceKey.from_native(service, \"issue\", \"501\"), \"702\"\n        )",
+      "boundary": "explicit native factory or contract decoder"
+    },
+    {
+      "path": "tests/integration/i5/test_independent_e2e.py",
+      "line": 640,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(service, \"issue\", \"501\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i5/test_independent_e2e.py",
+      "line": 402,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(service, \"issue\", \"503\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i5/test_independent_e2e.py",
+      "line": 676,
+      "embedded_at": null,
+      "call": "ResourceKey.timeline_event(\n                ResourceKey.from_native(service, \"issue\", \"501\"), \"701\"\n            )",
+      "boundary": "explicit native factory or contract decoder"
+    },
+    {
+      "path": "tests/integration/i5/test_independent_e2e.py",
+      "line": 683,
+      "embedded_at": null,
+      "call": "ResourceKey.timeline_event(\n                ResourceKey.from_native(service, \"issue\", \"501\"), \"703\"\n            )",
+      "boundary": "explicit native factory or contract decoder"
+    },
+    {
+      "path": "tests/integration/i5/test_independent_e2e.py",
+      "line": 677,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(service, \"issue\", \"501\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i5/test_independent_e2e.py",
+      "line": 684,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(service, \"issue\", \"501\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/i5/test_independent_e2e.py",
+      "line": 690,
+      "embedded_at": null,
+      "call": "ResourceKey.timeline_event(\n                ResourceKey.from_native(service, \"issue\", \"501\"), \"702\"\n            )",
+      "boundary": "explicit native factory or contract decoder"
+    },
+    {
+      "path": "tests/integration/i5/test_independent_e2e.py",
+      "line": 691,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(service, \"issue\", \"501\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p1/test_context.py",
+      "line": 20,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"issue\", \"7\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p1/test_context.py",
+      "line": 127,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"issue\", \"detached\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p1/test_context.py",
+      "line": 182,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"pull_request\", \"10\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p1/test_context.py",
+      "line": 183,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"pull_request\", \"11\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p1/test_context.py",
+      "line": 229,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"pull_request\", \"global-shape-test\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p1/test_context.py",
+      "line": 231,
+      "embedded_at": null,
+      "call": "ResourceKey.document(parent, \"document\", \"body\", \"D1\")",
+      "boundary": "explicit native factory or contract decoder"
+    },
+    {
+      "path": "tests/integration/p1/test_context.py",
+      "line": 280,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"issue\", \"detached-transfer\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p1/test_context.py",
+      "line": 237,
+      "embedded_at": null,
+      "call": "ResourceKey.global_document(SERVICE, native)",
+      "boundary": "explicit native factory or contract decoder"
+    },
+    {
+      "path": "tests/integration/p1/test_context.py",
+      "line": 238,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"document\", native)",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p1/test_context.py",
+      "line": 187,
+      "embedded_at": null,
+      "call": "ResourceKey.document(parent, \"review\", \"review\", \"same-provider-doc-id\")",
+      "boundary": "explicit native factory or contract decoder"
+    },
+    {
+      "path": "tests/integration/p1/test_context.py",
+      "line": 212,
+      "embedded_at": null,
+      "call": "ResourceKey.document(\n                ResourceKey.from_native(SERVICE, \"pull_request\", \"absent\"),\n                \"document\",\n                \"body\",\n                \"real-id\",\n            )",
+      "boundary": "explicit native factory or contract decoder"
+    },
+    {
+      "path": "tests/integration/p1/test_context.py",
+      "line": 421,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"issue\", \"unobserved\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p1/test_context.py",
+      "line": 213,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"pull_request\", \"absent\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p1/test_context_relations.py",
+      "line": 41,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"issue\", \"7\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p1/test_context_relations.py",
+      "line": 42,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"repository\", \"octocat/Hello-World\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p1/test_context_relations.py",
+      "line": 43,
+      "embedded_at": null,
+      "call": "ResourceKey.timeline_event(KEY_ISSUE, \"event-99\")",
+      "boundary": "explicit native factory or contract decoder"
+    },
+    {
+      "path": "tests/integration/p1/test_context_relations.py",
+      "line": 177,
+      "embedded_at": null,
+      "call": "ResourceKey.timeline_event(KEY_ISSUE, \"failed-transfer\")",
+      "boundary": "explicit native factory or contract decoder"
+    },
+    {
+      "path": "tests/integration/p1/test_context_relations.py",
+      "line": 193,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"repository\", \"provider-a\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p1/test_context_relations.py",
+      "line": 194,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"repository\", \"provider-b\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p1/test_context_relations.py",
+      "line": 492,
+      "embedded_at": null,
+      "call": "ResourceKey.document(\n        ResourceKey.from_native(SERVICE, \"issue\", \"nonexistent\"),\n        \"comment\",\n        \"review_comment\",\n        \"c-1\",\n    )",
+      "boundary": "explicit native factory or contract decoder"
+    },
+    {
+      "path": "tests/integration/p1/test_context_relations.py",
+      "line": 1063,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"repository\", \"org/repo-a\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p1/test_context_relations.py",
+      "line": 1064,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"repository\", \"org/repo-b\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p1/test_context_relations.py",
+      "line": 1075,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"issue\", \"101\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p1/test_context_relations.py",
+      "line": 1095,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"issue\", \"102\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p1/test_context_relations.py",
+      "line": 1160,
+      "embedded_at": null,
+      "call": "ResourceKey.timeline_event(KEY_ISSUE, \"timeline-77\")",
+      "boundary": "explicit native factory or contract decoder"
+    },
+    {
+      "path": "tests/integration/p1/test_context_relations.py",
+      "line": 1194,
+      "embedded_at": null,
+      "call": "ResourceKey.timeline_event(KEY_ISSUE, \"ev-101\")",
+      "boundary": "explicit native factory or contract decoder"
+    },
+    {
+      "path": "tests/integration/p1/test_context_relations.py",
+      "line": 1195,
+      "embedded_at": null,
+      "call": "ResourceKey.timeline_event(KEY_ISSUE, \"ev-102\")",
+      "boundary": "explicit native factory or contract decoder"
+    },
+    {
+      "path": "tests/integration/p1/test_context_relations.py",
+      "line": 493,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"issue\", \"nonexistent\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p1/test_coordination.py",
+      "line": 49,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(PROVIDER, \"issue\", \"7\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p1/test_coverage.py",
+      "line": 204,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"issue\", \"8\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p1/test_coverage.py",
+      "line": 119,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"issue\", \"absent\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p1/test_derivatives.py",
+      "line": 308,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(PROVIDER, \"issue\", \"7\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p1/test_derivatives.py",
+      "line": 309,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(PROVIDER, \"issue\", \"reported\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p1/test_derivatives.py",
+      "line": 310,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(PROVIDER, \"issue\", \"null\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p1/test_derivatives.py",
+      "line": 220,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(PROVIDER, \"issue\", \"7\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p1/test_resource_identity_sql.py",
+      "line": 155,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"pull_request\", [\"project\", \"73\"])",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p1/test_resource_identity_sql.py",
+      "line": 156,
+      "embedded_at": null,
+      "call": "ResourceKey.document(\n        parent, \"document\", \"body\", [\"thread\", \"\\U0001f600\"]\n    )",
+      "boundary": "explicit native factory or contract decoder"
+    },
+    {
+      "path": "tests/integration/p1/test_resource_identity_sql.py",
+      "line": 183,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"vendor.source\", \"source\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p1/test_resource_identity_sql.py",
+      "line": 184,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"vendor.alpha\", \"ID\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p1/test_resource_identity_sql.py",
+      "line": 185,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(OTHER_SERVICE, \"vendor.beta\", \"id\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p1/test_resource_identity_sql.py",
+      "line": 136,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"vendor.resource\", v)",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p1/test_resource_identity_sql.py",
+      "line": 206,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"vendor.resource\", \"\").coordinates()",
+      "boundary": "explicit native factory or contract decoder"
+    },
+    {
+      "path": "tests/integration/p1/test_resource_identity_sql.py",
+      "line": 148,
+      "embedded_at": null,
+      "call": "ResourceKey(*row)",
+      "boundary": "strict serialized reconstruction or intentional refusal"
+    },
+    {
+      "path": "tests/integration/p1/test_resource_identity_sql.py",
+      "line": 175,
+      "embedded_at": null,
+      "call": "ResourceKey(*row)",
+      "boundary": "strict serialized reconstruction or intentional refusal"
+    },
+    {
+      "path": "tests/integration/p1/test_resource_identity_sql.py",
+      "line": 206,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"vendor.resource\", \"\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p1/test_validation_stop.py",
+      "line": 42,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(PROVIDER, \"issue\", \"7\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p2_p3_compatibility/test_production_pair.py",
+      "line": 43,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"issue\", \"provider-global-71\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p3/test_production_context.py",
+      "line": 45,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"pull_request\", \"pr-7\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p3/test_production_context.py",
+      "line": 92,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"issue\", \"transfer-parent\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p3/test_production_context.py",
+      "line": 93,
+      "embedded_at": null,
+      "call": "ResourceKey.timeline_event(issue, \"real-event\")",
+      "boundary": "explicit native factory or contract decoder"
+    },
+    {
+      "path": "tests/integration/p3/test_production_context.py",
+      "line": 115,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"repository\", \"protocol-keywords\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p3/test_production_context.py",
+      "line": 260,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"issue\", \"atomic\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p3/test_production_context.py",
+      "line": 301,
+      "embedded_at": null,
+      "call": "ResourceKey.document(PR, \"review\", \"approval\", \"7\")",
+      "boundary": "explicit native factory or contract decoder"
+    },
+    {
+      "path": "tests/integration/p3/test_production_context.py",
+      "line": 319,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"pull_request\", \"other\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p3/test_production_context.py",
+      "line": 328,
+      "embedded_at": null,
+      "call": "ResourceKey.document(PR, \"review\", \"review\", \"same-id\")",
+      "boundary": "explicit native factory or contract decoder"
+    },
+    {
+      "path": "tests/integration/p3/test_production_context.py",
+      "line": 329,
+      "embedded_at": null,
+      "call": "ResourceKey.document(review, \"thread\", \"review-thread\", \"same-id\")",
+      "boundary": "explicit native factory or contract decoder"
+    },
+    {
+      "path": "tests/integration/p3/test_production_context.py",
+      "line": 330,
+      "embedded_at": null,
+      "call": "ResourceKey.document(thread, \"comment\", \"comment\", \"same-id\")",
+      "boundary": "explicit native factory or contract decoder"
+    },
+    {
+      "path": "tests/integration/p3/test_production_context.py",
+      "line": 331,
+      "embedded_at": null,
+      "call": "ResourceKey.document(PR, \"document\", \"description\", \"same-id\")",
+      "boundary": "explicit native factory or contract decoder"
+    },
+    {
+      "path": "tests/integration/p3/test_production_context.py",
+      "line": 560,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(OTHER_SERVICE, \"issue\", \"foreign\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p3/test_production_context.py",
+      "line": 791,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"pull_request\", \"other\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p3/test_production_context.py",
+      "line": 793,
+      "embedded_at": null,
+      "call": "ResourceKey.document(other, \"review\", \"review\", \"7\")",
+      "boundary": "explicit native factory or contract decoder"
+    },
+    {
+      "path": "tests/integration/p3/test_production_context.py",
+      "line": 515,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"issue\", \"other\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p3/test_production_context.py",
+      "line": 1055,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(\n            SERVICE, \"repository\", \"octocat/Hello-World\"\n        )",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p3/test_production_context.py",
+      "line": 1059,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"issue\", \"42\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p3/test_production_context.py",
+      "line": 1171,
+      "embedded_at": null,
+      "call": "ResourceKey.timeline_event(issue, \"ev-1\")",
+      "boundary": "explicit native factory or contract decoder"
+    },
+    {
+      "path": "tests/integration/p3/test_production_context.py",
+      "line": 362,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"issue\", \"absent\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p3/test_production_context.py",
+      "line": 510,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"issue\", \"other\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p3/test_production_context.py",
+      "line": 701,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"ordinary_file\", \"file\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p3/test_production_context.py",
+      "line": 147,
+      "embedded_at": null,
+      "call": "ResourceKey.document(PR, \"comment\", \"comment\", \"ordinary-comment\")",
+      "boundary": "explicit native factory or contract decoder"
+    },
+    {
+      "path": "tests/integration/p3/test_production_context.py",
+      "line": 345,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"issue\", \"absent\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p5/test_exchange.py",
+      "line": 61,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(service, \"issue\", \"7\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p5/test_exchange.py",
+      "line": 456,
+      "embedded_at": null,
+      "call": "ResourceKey(\n            pkg.context[\"providers\"][0][\"service_instance_uuidv4\"],\n            \"pull_request\",\n            pr_rows[0][0],\n        )",
+      "boundary": "strict serialized reconstruction or intentional refusal"
+    },
+    {
+      "path": "tests/integration/p5/test_exchange.py",
+      "line": 133,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(service_uuid, \"repository\", str(provider_id))",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p5/test_paired_admission.py",
+      "line": 133,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(service_uuid, \"pull_request\", \"101\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p5/test_paired_admission.py",
+      "line": 211,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(service_uuid, \"pull_request\", \"202\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p5/test_provider_acquisition.py",
+      "line": 233,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(service_uuid, \"pull_request\", pr_id)",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p5/test_provider_acquisition.py",
+      "line": 135,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(\n        service_uuid, \"issue\", \"1001\"\n    )",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p5/test_provider_acquisition.py",
+      "line": 174,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(\n        service_uuid, \"pull_request\", \"2001\"\n    )",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p5/test_provider_acquisition.py",
+      "line": 189,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(service_uuid, \"issue\", \"1001\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p5/test_provider_acquisition.py",
+      "line": 196,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(service_uuid, \"pull_request\", \"2001\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p5/test_provider_acquisition.py",
+      "line": 372,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(service_uuid, \"issue\", \"3001\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p5_p6_compatibility/test_end_to_end_p5_p6.py",
+      "line": 220,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(service_uuid, \"pull_request\", \"501\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p5_p6_compatibility/test_end_to_end_p5_p6.py",
+      "line": 356,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(service_uuid, \"pull_request\", \"901\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p5_p6_compatibility/test_end_to_end_p5_p6.py",
+      "line": 509,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(service, \"issue\", \"unknown-clock\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p5_p6_compatibility/test_p5_independent_counterexamples.py",
+      "line": 203,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(svc, \"issue\", \"1\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p5_p6_compatibility/test_provider_exchange_matrix.py",
+      "line": 97,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(svc, \"issue\", \"2\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p5_p6_compatibility/test_provider_exchange_matrix.py",
+      "line": 70,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(svc, \"issue\", \"1\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p6/conftest.py",
+      "line": 71,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"repository\", \"1001\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p6/conftest.py",
+      "line": 397,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"pull_request\", \"42\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p6/conftest.py",
+      "line": 398,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"issue\", \"7\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p6/conftest.py",
+      "line": 399,
+      "embedded_at": null,
+      "call": "ResourceKey.document(pr_key, \"review\", \"pr_review\", \"rev-1\")",
+      "boundary": "explicit native factory or contract decoder"
+    },
+    {
+      "path": "tests/integration/p6/conftest.py",
+      "line": 400,
+      "embedded_at": null,
+      "call": "ResourceKey.document(pr_key, \"thread\", \"review_thread\", \"thr-1\")",
+      "boundary": "explicit native factory or contract decoder"
+    },
+    {
+      "path": "tests/integration/p6/conftest.py",
+      "line": 401,
+      "embedded_at": null,
+      "call": "ResourceKey.document(pr_key, \"comment\", \"review_comment\", \"rc-1\")",
+      "boundary": "explicit native factory or contract decoder"
+    },
+    {
+      "path": "tests/integration/p6/conftest.py",
+      "line": 402,
+      "embedded_at": null,
+      "call": "ResourceKey.document(\n        issue_key, \"comment\", \"issue_comment\", \"ic-1\"\n    )",
+      "boundary": "explicit native factory or contract decoder"
+    },
+    {
+      "path": "tests/integration/p6/test_corrections.py",
+      "line": 164,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"pull_request\", \"42\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p6/test_pagination_snapshots.py",
+      "line": 140,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"issue\", \"999\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p7/test_missing_required_authority.py",
+      "line": 39,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(service, \"issue\", \"42\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/integration/p7/test_process_isolation.py",
+      "line": 317,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(service_id, \"pull_request\", \"unresolved-1\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/packaging/test_p3_distribution.py",
+      "line": 10,
+      "embedded_at": 34,
+      "call": "ResourceKey.from_native(service, 'issue', 'real-provider-id')",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/packaging/test_p5_distribution.py",
+      "line": 130,
+      "embedded_at": 41,
+      "call": "ResourceKey.from_native(service_uuid, \"pull_request\", \"2001\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/packaging/test_p5_distribution.py",
+      "line": 108,
+      "embedded_at": 41,
+      "call": "ResourceKey.from_native(service_uuid, \"repository\", \"1\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/packaging/test_p6_distribution.py",
+      "line": 48,
+      "embedded_at": 41,
+      "call": "ResourceKey.from_native(service, \"pull_request\", \"1\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/unit/test_github_identity_boundaries.py",
+      "line": 181,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"issue\", \"731\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/unit/test_github_identity_boundaries.py",
+      "line": 63,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, kind, \"731\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/unit/test_resource_key_identity.py",
+      "line": 95,
+      "embedded_at": null,
+      "call": "ResourceKey(SERVICE, \"vendor.resource\", text)",
+      "boundary": "strict serialized reconstruction or intentional refusal"
+    },
+    {
+      "path": "tests/unit/test_resource_key_identity.py",
+      "line": 117,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"issue\", '[\"project\",\"731\"]')",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/unit/test_resource_key_identity.py",
+      "line": 118,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"issue\", [\"project\", \"731\"])",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/unit/test_resource_key_identity.py",
+      "line": 119,
+      "embedded_at": null,
+      "call": "ResourceKey(SERVICE, \"issue\", '[\"project\",\"731\"]')",
+      "boundary": "strict serialized reconstruction or intentional refusal"
+    },
+    {
+      "path": "tests/unit/test_resource_key_identity.py",
+      "line": 129,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"issue\", \"731\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/unit/test_resource_key_identity.py",
+      "line": 139,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"pull_request\", namespace)",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/unit/test_resource_key_identity.py",
+      "line": 140,
+      "embedded_at": null,
+      "call": "ResourceKey.document(parent, \"document\", \"body\", local_id)",
+      "boundary": "explicit native factory or contract decoder"
+    },
+    {
+      "path": "tests/unit/test_resource_key_identity.py",
+      "line": 163,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"vendor.resource\", native)",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/unit/test_resource_key_identity.py",
+      "line": 169,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"pull_request\", \"PR731\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/unit/test_resource_key_identity.py",
+      "line": 170,
+      "embedded_at": null,
+      "call": "ResourceKey.document(parent, \"document\", \"body\", \"D731\")",
+      "boundary": "explicit native factory or contract decoder"
+    },
+    {
+      "path": "tests/unit/test_resource_key_identity.py",
+      "line": 171,
+      "embedded_at": null,
+      "call": "ResourceKey.global_document(SERVICE, [\"project\", \"D731\"])",
+      "boundary": "explicit native factory or contract decoder"
+    },
+    {
+      "path": "tests/unit/test_resource_key_identity.py",
+      "line": 187,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"pull_request\", native_namespace)",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/unit/test_resource_key_identity.py",
+      "line": 188,
+      "embedded_at": null,
+      "call": "ResourceKey.document(parent, \"review\", \"review\", \"R731\")",
+      "boundary": "explicit native factory or contract decoder"
+    },
+    {
+      "path": "tests/unit/test_resource_key_identity.py",
+      "line": 193,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(\n        SERVICE, \"pull_request\", parent.provider_resource_id\n    )",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/unit/test_resource_key_identity.py",
+      "line": 200,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"pull_request\", \"PR731\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/unit/test_resource_key_identity.py",
+      "line": 201,
+      "embedded_at": null,
+      "call": "ResourceKey.document(parent, \"document\", \"body\", \"D731\")",
+      "boundary": "explicit native factory or contract decoder"
+    },
+    {
+      "path": "tests/unit/test_resource_key_identity.py",
+      "line": 223,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"issue\", [\"project\", \"I731\"])",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/unit/test_resource_key_identity.py",
+      "line": 224,
+      "embedded_at": null,
+      "call": "ResourceKey.timeline_event(issue, event_id)",
+      "boundary": "explicit native factory or contract decoder"
+    },
+    {
+      "path": "tests/unit/test_resource_key_identity.py",
+      "line": 239,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"vendor.resource\", native)",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/unit/test_resource_key_identity.py",
+      "line": 264,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"issue\", [\"project\", \"731\"])",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/unit/test_resource_key_identity.py",
+      "line": 284,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"repository\", [\"node\", \"731\"])",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/unit/test_resource_key_identity.py",
+      "line": 304,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"vendor.resource\", \"\u00e9\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/unit/test_resource_key_identity.py",
+      "line": 97,
+      "embedded_at": null,
+      "call": "ResourceKey(*key.coordinates())",
+      "boundary": "strict serialized reconstruction or intentional refusal"
+    },
+    {
+      "path": "tests/unit/test_resource_key_identity.py",
+      "line": 98,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"vendor.resource\", native)",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/unit/test_resource_key_identity.py",
+      "line": 107,
+      "embedded_at": null,
+      "call": "ResourceKey(SERVICE, \"vendor.resource\", text)",
+      "boundary": "strict serialized reconstruction or intentional refusal"
+    },
+    {
+      "path": "tests/unit/test_resource_key_identity.py",
+      "line": 113,
+      "embedded_at": null,
+      "call": "ResourceKey(SERVICE, \"vendor.resource\", value)",
+      "boundary": "strict serialized reconstruction or intentional refusal"
+    },
+    {
+      "path": "tests/unit/test_resource_key_identity.py",
+      "line": 127,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"issue\", value)",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/unit/test_resource_key_identity.py",
+      "line": 130,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(OTHER_SERVICE, \"issue\", \"731\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/unit/test_resource_key_identity.py",
+      "line": 131,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"repository\", \"731\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/unit/test_resource_key_identity.py",
+      "line": 145,
+      "embedded_at": null,
+      "call": "ResourceKey.document(parent, \"document\", \"title\", local_id)",
+      "boundary": "explicit native factory or contract decoder"
+    },
+    {
+      "path": "tests/unit/test_resource_key_identity.py",
+      "line": 146,
+      "embedded_at": null,
+      "call": "ResourceKey.document(parent, \"document\", \"body\", [local_id])",
+      "boundary": "explicit native factory or contract decoder"
+    },
+    {
+      "path": "tests/unit/test_resource_key_identity.py",
+      "line": 147,
+      "embedded_at": null,
+      "call": "ResourceKey(*key.coordinates())",
+      "boundary": "strict serialized reconstruction or intentional refusal"
+    },
+    {
+      "path": "tests/unit/test_resource_key_identity.py",
+      "line": 165,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, resource_kind, native)",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/unit/test_resource_key_identity.py",
+      "line": 178,
+      "embedded_at": null,
+      "call": "ResourceKey.document(None, \"document\", \"body\", \"D731\")",
+      "boundary": "explicit native factory or contract decoder"
+    },
+    {
+      "path": "tests/unit/test_resource_key_identity.py",
+      "line": 180,
+      "embedded_at": null,
+      "call": "ResourceKey.document(parent, \"vendor.resource\", \"body\", \"D731\")",
+      "boundary": "explicit native factory or contract decoder"
+    },
+    {
+      "path": "tests/unit/test_resource_key_identity.py",
+      "line": 182,
+      "embedded_at": null,
+      "call": "ResourceKey.document(parent, \"document\", \"\", \"D731\")",
+      "boundary": "explicit native factory or contract decoder"
+    },
+    {
+      "path": "tests/unit/test_resource_key_identity.py",
+      "line": 192,
+      "embedded_at": null,
+      "call": "ResourceKey(SERVICE, \"review\", wrong_text)",
+      "boundary": "strict serialized reconstruction or intentional refusal"
+    },
+    {
+      "path": "tests/unit/test_resource_key_identity.py",
+      "line": 196,
+      "embedded_at": null,
+      "call": "ResourceKey.document(string_parent, \"review\", \"review\", \"R731\")",
+      "boundary": "explicit native factory or contract decoder"
+    },
+    {
+      "path": "tests/unit/test_resource_key_identity.py",
+      "line": 204,
+      "embedded_at": null,
+      "call": "ResourceKey.global_document(SERVICE, native)",
+      "boundary": "explicit native factory or contract decoder"
+    },
+    {
+      "path": "tests/unit/test_resource_key_identity.py",
+      "line": 205,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"document\", native)",
+      "boundary": "native identity"
+    },
+    {
+      "path": "tests/unit/test_resource_key_identity.py",
+      "line": 232,
+      "embedded_at": null,
+      "call": "ResourceKey.timeline_event(\n            ResourceKey.from_native(SERVICE, \"pull_request\", \"731\"), event_id\n        )",
+      "boundary": "explicit native factory or contract decoder"
+    },
+    {
+      "path": "tests/unit/test_resource_key_identity.py",
+      "line": 233,
+      "embedded_at": null,
+      "call": "ResourceKey.from_native(SERVICE, \"pull_request\", \"731\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "scripts/verify_access_distribution.py",
+      "line": 214,
+      "embedded_at": 22,
+      "call": "ResourceKey.from_native(service, \"issue\", \"7\")",
+      "boundary": "native identity"
+    },
+    {
+      "path": "scripts/verify_access_distribution.py",
+      "line": 207,
+      "embedded_at": 22,
+      "call": "ResourceKey(service, \"repository\", identifier)",
+      "boundary": "strict serialized reconstruction or intentional refusal"
+    }
+  ]
+}

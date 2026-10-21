@@ -41,6 +41,8 @@ def p1_distributions(tmp_path_factory):
         [
             "uv",
             "build",
+            "--python",
+            sys.executable,
             "--offline",
             "--no-build-isolation",
             "--out-dir",
@@ -57,6 +59,8 @@ def p1_distributions(tmp_path_factory):
         [
             "uv",
             "build",
+            "--python",
+            sys.executable,
             "--wheel",
             "--offline",
             "--no-build-isolation",

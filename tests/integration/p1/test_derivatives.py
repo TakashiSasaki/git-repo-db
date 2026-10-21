@@ -217,7 +217,7 @@ def test_search_snapshot_fence_loss_corruption_and_reconstruction(tmp_path):
     ) as authority:
         ContextStore(authority).admit_field(
             FieldCandidate(
-                ResourceKey(PROVIDER, "issue", "7"),
+                ResourceKey.from_native(PROVIDER, "issue", "7"),
                 "body",
                 '"body needle"',
                 FieldClock("provider.edit", 17),
@@ -305,9 +305,9 @@ def test_context_search_resolves_actual_text_fk_in_projection_and_fallback(tmp_p
     build(directory)
     coordinator = PairCoordinator(directory)
     coordinator.admit(core_unit, context_unit)
-    actual = ResourceKey(PROVIDER, "issue", "7")
-    reported = ResourceKey(PROVIDER, "issue", "reported")
-    null = ResourceKey(PROVIDER, "issue", "null")
+    actual = ResourceKey.from_native(PROVIDER, "issue", "7")
+    reported = ResourceKey.from_native(PROVIDER, "issue", "reported")
+    null = ResourceKey.from_native(PROVIDER, "issue", "null")
     provenance = '{"evidence":"provider-body-event","source":"provider.example"}'
 
     def candidate(resource, field, value, clock):
@@ -339,12 +339,17 @@ def test_context_search_resolves_actual_text_fk_in_projection_and_fallback(tmp_p
         rows = SearchProjection.context_documents(old)
         body_rows = {key: text for key, text in rows.items() if "needle" in text}
         assert list(body_rows.values()) == [body]
-        assert json.loads(next(iter(body_rows)))[2:4] == ["7", "text_body_sha256"]
+        assert json.loads(next(iter(body_rows)))[2:4] == [
+            actual.provider_resource_id,
+            "text_body_sha256",
+        ]
         reported_rows = {
-            key: text for key, text in rows.items() if json.loads(key)[2] == "reported"
+            key: text
+            for key, text in rows.items()
+            if json.loads(key)[2] == reported.provider_resource_id
         }
         assert list(reported_rows.values()) == [digest]
-        assert not any(json.loads(key)[2] == "null" for key in rows)
+        assert not any(json.loads(key)[2] == null.provider_resource_id for key in rows)
 
         def fallback():
             return SearchProjection.context_documents(old)

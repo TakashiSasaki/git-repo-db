@@ -42,7 +42,7 @@ PROVENANCE = p1_contract.PROVENANCE
 INSTANCE = "49a14b65-20b1-48b3-a021-c2970247e95c"
 OTHER_SERVICE = "6eb0350d-95e0-479d-ac57-f0f3b68ced2c"
 OTHER_REPO = "22307f0c-6d1e-41da-b2fb-c4c11362e7d2"
-PR = ResourceKey(SERVICE, "pull_request", "pr-7")
+PR = ResourceKey.from_native(SERVICE, "pull_request", "pr-7")
 
 
 @pytest.fixture
@@ -89,7 +89,7 @@ def field(
 
 def test_generic_resource_relation_cannot_register_transfer_scope(context):
     db, store, path = context
-    issue = ResourceKey(SERVICE, "issue", "transfer-parent")
+    issue = ResourceKey.from_native(SERVICE, "issue", "transfer-parent")
     event = ResourceKey.timeline_event(issue, "real-event")
     store.resource(issue)
     store.resource(event)
@@ -112,7 +112,7 @@ def test_context_admission_protocol_keyword_calls(context):
     assert (
         store.admit_repository_relation_result(relation=relation).outcome == "duplicate"
     )
-    provider = ResourceKey(SERVICE, "repository", "protocol-keywords")
+    provider = ResourceKey.from_native(SERVICE, "repository", "protocol-keywords")
     port.resource(key=provider)
     mapping = ResourceRepositoryRelation(
         provider,
@@ -144,7 +144,7 @@ def test_invalid_relation_filters_do_not_stop_valid_catalog(directory, invalid_f
                 store.relations_for_provider_repository(SERVICE, "")
             else:
                 store.transfer_event_reports(
-                    ResourceKey(SERVICE, "comment", "ordinary-comment")
+                    ResourceKey.document(PR, "comment", "comment", "ordinary-comment")
                 )
         assert store.transfer_event_reports() == ()
     assert not (directory / "p1-recovery-stop.json").exists()
@@ -257,7 +257,7 @@ def test_coreless_durable_context_and_derivative_loss(directory):
 
 def test_observe_failure_rolls_back_new_identity_and_all_fields(context):
     _, store, _ = context
-    resource = ResourceKey(SERVICE, "issue", "atomic")
+    resource = ResourceKey.from_native(SERVICE, "issue", "atomic")
     good = field(resource)
     bad = field(resource, name="text_body_sha256", value="0" * 64)
     with pytest.raises(sqlite3.IntegrityError):
@@ -316,7 +316,7 @@ def test_field_specific_inheritance_preserves_original_alternatives(context):
         for c in (original, other)
     }
     assert store.candidates(review, "secret") == ()
-    wrong = ResourceKey(SERVICE, "pull_request", "other")
+    wrong = ResourceKey.from_native(SERVICE, "pull_request", "other")
     store.resource(wrong)
     with pytest.raises(ContextError, match="INHERITANCE_OWNER"):
         store.inherit_fields(wrong, review, ("title",))
@@ -341,7 +341,9 @@ def test_document_child_ownership_and_relationship_roundtrip(context):
     assert len(store.relations(PR, "reviews")) == 2
     with pytest.raises(ContextError, match="RESOURCE_UNAVAILABLE"):
         store.relation(
-            replace(relation, members=(ResourceKey(SERVICE, "issue", "absent"),))
+            replace(
+                relation, members=(ResourceKey.from_native(SERVICE, "issue", "absent"),)
+            )
         )
 
 
@@ -357,7 +359,7 @@ def test_text_exact_null_and_failed_reference_unit(context):
     before = db.execute("SELECT count(*) FROM text_bodies").fetchone()
     with pytest.raises(sqlite3.IntegrityError):
         store.admit_text(
-            ResourceKey(SERVICE, "issue", "absent"),
+            ResourceKey.from_native(SERVICE, "issue", "absent"),
             "rolled back text",
             FieldClock("source", 1),
             PROVENANCE,
@@ -505,12 +507,12 @@ def test_p1_review_scope_mismatch_not_complete_in_production(context, wrong_owne
     scopes = {
         "kind": CoverageScope.resource(KEY, "all-notes"),
         "resource": CoverageScope.resource(
-            ResourceKey(SERVICE, "issue", "other"), "reviews"
+            ResourceKey.from_native(SERVICE, "issue", "other"), "reviews"
         ),
         "field": CoverageScope.field(KEY, "title", "reviews"),
         "source": CoverageScope.source(SOURCE, REPO, "all-notes"),
     }
-    store.resource(ResourceKey(SERVICE, "issue", "other"))
+    store.resource(ResourceKey.from_native(SERVICE, "issue", "other"))
     claim = CoverageClaim(scopes[wrong_owner], 10, "complete")
     with pytest.raises(sqlite3.IntegrityError, match="owner mismatch"):
         store.prove_collection(
@@ -555,7 +557,7 @@ def test_exact_head_base_nested_scope_cannot_move(context, changed):
 def test_source_collection_cross_service_rejected_even_empty(context):
     _, store, _ = context
     store.provider(OTHER_SERVICE, "gitlab")
-    foreign = ResourceKey(OTHER_SERVICE, "issue", "foreign")
+    foreign = ResourceKey.from_native(OTHER_SERVICE, "issue", "foreign")
     store.resource(foreign)
     observation = collection(key=foreign, scope={"source_registration_uuidv4": SOURCE})
     with pytest.raises(ContextError, match="SOURCE_SERVICE"):
@@ -696,7 +698,7 @@ def test_capability_expired_and_outer_transaction_required(directory):
 def test_invalid_input_does_not_catalog_stop(context):
     _, store, path = context
     with pytest.raises(sqlite3.IntegrityError):
-        store.resource(ResourceKey(SERVICE, "ordinary_file", "file"))
+        store.resource(ResourceKey.from_native(SERVICE, "ordinary_file", "file"))
     assert not (path.parent / "p1-recovery-stop.json").exists()
     assert not hasattr(store, "retain_blob")
 
@@ -786,7 +788,7 @@ def test_swallowed_sqlite_corruption_stops_immediately(directory, deferred):
 def test_foreign_parent_child_cannot_be_collection_members(context, method):
     _, store, _ = context
     store.resource(PR)
-    other = ResourceKey(SERVICE, "pull_request", "other")
+    other = ResourceKey.from_native(SERVICE, "pull_request", "other")
     store.resource(other)
     child = ResourceKey.document(other, "review", "review", "7")
     store.resource(child)
@@ -1050,9 +1052,11 @@ def test_production_context_relation_facade_methods(directory):
     with Context.transaction(directory) as store:
         store.provider(SERVICE, "github")
         store.repository(REPO)
-        prov_repo = ResourceKey(SERVICE, "repository", "octocat/Hello-World")
+        prov_repo = ResourceKey.from_native(
+            SERVICE, "repository", "octocat/Hello-World"
+        )
         store.resource(prov_repo)
-        issue = ResourceKey(SERVICE, "issue", "42")
+        issue = ResourceKey.from_native(SERVICE, "issue", "42")
         store.resource(issue)
 
         # 3.1: RelationKind validation: valid roles succeed without TypeError
@@ -1073,7 +1077,9 @@ def test_production_context_relation_facade_methods(directory):
         )
         assert rels_prov == ()
         rels_prov_str = store.relations_for_provider_repository(
-            SERVICE, "octocat/Hello-World", relation_kind="represents_repository"
+            SERVICE,
+            prov_repo.provider_resource_id,
+            relation_kind="represents_repository",
         )
         assert rels_prov_str == ()
 
@@ -1089,7 +1095,7 @@ def test_production_context_relation_facade_methods(directory):
                 )
             with pytest.raises(ValueError, match="Unknown relation_kind"):
                 store.relations_for_provider_repository(
-                    SERVICE, "octocat/Hello-World", relation_kind=bad_role
+                    SERVICE, prov_repo.provider_resource_id, relation_kind=bad_role
                 )
 
         assert not (directory / "p1-recovery-stop.json").exists()

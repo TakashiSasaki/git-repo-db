@@ -130,7 +130,7 @@ def test_core_first_context_second_and_failure_retry_convergence(
 
     # Verify Context did not commit the PR
     with Context.snapshot(cat_dir) as ctx:
-        pr_key = ResourceKey(service_uuid, "pull_request", "101")
+        pr_key = ResourceKey.from_native(service_uuid, "pull_request", "101")
         assert len(ctx.candidates(pr_key, "title")) == 0
 
     # 2. Retry the admission without cut -> converges cleanly!
@@ -208,7 +208,7 @@ def test_late_core_dependency_reconciliation(tmp_path: Path) -> None:
     assert len(report.linked_core_references) == 0
 
     with Context.snapshot(cat_dir) as ctx:
-        pr_key = ResourceKey(service_uuid, "pull_request", "202")
+        pr_key = ResourceKey.from_native(service_uuid, "pull_request", "202")
         core_deps = ctx.core_dependencies(pr_key)
         assert len(core_deps) == 2
         assert all(not dep.required for dep in core_deps)

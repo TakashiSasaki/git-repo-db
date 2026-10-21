@@ -132,7 +132,9 @@ def test_issue_vs_pull_request_intake_isolation(tmp_path: Path) -> None:
     )
     assert issue_unit is not None
     assert issue_unit.primary_resource.resource_kind == "issue"
-    assert issue_unit.primary_resource.provider_resource_id == "1001"
+    assert issue_unit.primary_resource == ResourceKey.from_native(
+        service_uuid, "issue", "1001"
+    )
 
     # 2. Issues API entry with "pull_request" key MUST return None (not alias as issue)
     pr_as_issue = dict(
@@ -169,7 +171,9 @@ def test_issue_vs_pull_request_intake_isolation(tmp_path: Path) -> None:
         prov_json,
     )
     assert pr_unit.primary_resource.resource_kind == "pull_request"
-    assert pr_unit.primary_resource.provider_resource_id == "2001"
+    assert pr_unit.primary_resource == ResourceKey.from_native(
+        service_uuid, "pull_request", "2001"
+    )
     assert len(pr_unit.core_references) == 3
     assert {ref.role for ref, _, _ in pr_unit.core_references} == {
         "head",
@@ -182,14 +186,14 @@ def test_issue_vs_pull_request_intake_isolation(tmp_path: Path) -> None:
 
     with Context.snapshot(cat_dir) as ctx:
         # Issue
-        issue_key = ResourceKey(service_uuid, "issue", "1001")
+        issue_key = ResourceKey.from_native(service_uuid, "issue", "1001")
         title_cands = ctx.candidates(issue_key, "title")
         assert len(title_cands) == 1
         assert json.loads(title_cands[0].value_json) == "Bug in query planner"
         assert title_cands[0].clock.at_us == parse_iso8601_us("2026-10-10T12:05:00Z")
 
         # PR state
-        pr_key = ResourceKey(service_uuid, "pull_request", "2001")
+        pr_key = ResourceKey.from_native(service_uuid, "pull_request", "2001")
         pr_cands = ctx.candidates(pr_key, "state")
         assert len(pr_cands) == 1
         assert json.loads(pr_cands[0].value_json) == "open"
@@ -226,7 +230,7 @@ def test_reviews_threads_comments_and_relations(tmp_path: Path) -> None:
     )
 
     pr_id = "501"
-    pr_key = ResourceKey(service_uuid, "pull_request", pr_id)
+    pr_key = ResourceKey.from_native(service_uuid, "pull_request", pr_id)
     assert pr_key.resource_kind == "pull_request"
 
     # Review summary (no updated_at; submitted_at only)
@@ -365,7 +369,7 @@ def test_explicit_null_vs_missing_fields_and_clock_competition(tmp_path: Path) -
     acq.admit_units((u2,))
 
     with Context.snapshot(cat_dir) as ctx:
-        key = ResourceKey(service_uuid, "issue", "3001")
+        key = ResourceKey.from_native(service_uuid, "issue", "3001")
         # Title updated
         assert json.loads(ctx.candidates(key, "title")[0].value_json) == "Updated title"
         # Body NOT erased by partial payload omission!

@@ -233,7 +233,7 @@ def test_resigned_exchange_rejects_registration_leaks_before_core_admission(
 def test_reported_urls_and_historical_core_provenance_survive_exchange(
     directory, tmp_path
 ):
-    key = ResourceKey(SERVICE, "endpoint", "actual-provider-coordinate")
+    key = ResourceKey.from_native(SERVICE, "endpoint", "actual-provider-coordinate")
     observed = FieldCandidate(
         key,
         "url",

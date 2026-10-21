@@ -68,7 +68,7 @@ class UnlimitedTestBudget:
 
 
 def admit_provider_role(context, resource, role, clock, provenance, observed):
-    provider = ResourceKey(SERVICE, "repository", "1001")
+    provider = ResourceKey.from_native(SERVICE, "repository", "1001")
     context.resource(provider)
     context.admit_repository_relation(
         ResourceRepositoryRelation(
@@ -394,8 +394,8 @@ def populate_rich_catalog(
             cov_claim, (commit_obj.oid, tag_obj.oid), prov_reported
         )
 
-    pr_key = ResourceKey(SERVICE, "pull_request", "42")
-    issue_key = ResourceKey(SERVICE, "issue", "7")
+    pr_key = ResourceKey.from_native(SERVICE, "pull_request", "42")
+    issue_key = ResourceKey.from_native(SERVICE, "issue", "7")
     review_key = ResourceKey.document(pr_key, "review", "pr_review", "rev-1")
     thread_key = ResourceKey.document(pr_key, "thread", "review_thread", "thr-1")
     comment_key = ResourceKey.document(pr_key, "comment", "review_comment", "rc-1")

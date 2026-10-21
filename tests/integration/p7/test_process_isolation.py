@@ -314,7 +314,7 @@ def test_actual_unresolved_context_reference_survives_restore_and_salvage(
     synthetic_catalog, tmp_path, repo_uuid
 ):
     service_id = str(uuid4())
-    key = ResourceKey(service_id, "pull_request", "unresolved-1")
+    key = ResourceKey.from_native(service_id, "pull_request", "unresolved-1")
     missing = OID("sha1", "e" * 40)
     provenance = canonical({"source": "test", "evidence": "original-reference"})
     reference = CoreReference(key, "head", missing, provenance)

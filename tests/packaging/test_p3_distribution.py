@@ -1,5 +1,7 @@
 """Production Context is usable from both installed distribution variants."""
 
+import sys
+
 import pytest
 
 from tests.packaging.test_p1_distribution import p1_distributions, run
@@ -13,7 +15,7 @@ def test_installed_production_context(p1_distributions, tmp_path, variant):
     outside = tmp_path / "outside"
     outside.mkdir()
     venv = tmp_path / "venv"
-    run(["uv", "venv", venv, "--offline"], outside, env)
+    run(["uv", "venv", venv, "--python", sys.executable, "--offline"], outside, env)
     python = venv / "bin/python"
     run(
         [
@@ -38,7 +40,7 @@ from repo_catalog.domain.p1_context import FieldClock, ResourceKey, canonical
 assert 'site-packages' in str(Path(__import__('repo_catalog.adapters.sqlite.production_context', fromlist=['']).__file__))
 repo, instance, service = (str(uuid4()) for _ in range(3))
 initialize(Path('context.sqlite3'), 'context', repo, instance)
-key = ResourceKey(service, 'issue', 'real-provider-id')
+key = ResourceKey.from_native(service, 'issue', 'real-provider-id')
 with Context.transaction(Path('.')) as context:
     context.provider(service, 'github')
     context.resource(key)

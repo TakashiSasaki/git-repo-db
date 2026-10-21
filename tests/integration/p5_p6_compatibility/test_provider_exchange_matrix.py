@@ -67,7 +67,7 @@ def test_provider_late_reordered_repeat_reverse_onward_preserves_candidates(
             )
         )
     with Context.snapshot(cats[0]) as ctx:
-        rk = ResourceKey(svc, "issue", "1")
+        rk = ResourceKey.from_native(svc, "issue", "1")
         title = ctx.candidates(rk, "title")
         body = ctx.candidates(rk, "text_body_sha256")
         assert [json.loads(c.value_json) for c in title] == ["new"]
@@ -94,7 +94,7 @@ def test_exchange_preserves_non_time_json_real(tmp_path):
 
     repo = str(uuid4())
     svc = str(uuid4())
-    rk = ResourceKey(svc, "issue", "2")
+    rk = ResourceKey.from_native(svc, "issue", "2")
     a, b = tmp_path / "a", tmp_path / "b"
     for cat in (a, b):
         init_catalog_stores(

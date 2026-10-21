@@ -184,6 +184,37 @@ records the independently reproduced shape/replay and cursor counterexamples.
 This procedure does not generalize packaged DDL or establish global Document,
 generic Exchange, semantic Parent, recovery or Search acceptance.
 
+### Close active validation fixtures after the canonical-key cutover
+
+Collect the complete ordinary suite before focused execution. Module-level native
+IDs can prevent whole modules from collecting. Adapt genuine native fixtures with
+`ResourceKey.from_native`; retain strict constructors for rows, wire values and
+canonical Provider-helper outputs. Audit SQL reference parameters, nested role
+scopes, Search projection keys, accessor string overloads and CLI `--id` together.
+Use the key's canonical ID at those reference boundaries. A negative semantic test
+needs a structurally valid key so it reaches its intended guard. Do not convert
+unrelated public Schema 21 Provider metadata merely because it also says ID.
+
+Bind both direct and unpacked-sdist `uv build --no-build-isolation` commands to
+`--python sys.executable` in packaging fixtures. An outside-checkout rebuild can
+otherwise choose an interpreter without Hatchling despite a correctly prepared
+parent venv. Verify actual installed origins and SQLite source IDs. Keep genuine
+GraphQL Node arrays when a repaired fixture reaches the packaged scalar-local
+storage refusal; stringifying them would erase the counterexample. Attempt both
+distribution variants, retain each failure, and still return a nonzero exit.
+
+The [I1b validation closure](../../../../docs/implementation/adr0031-i1b-validation-closure.md)
+records full collection, both supported runtimes, passing P1–P7/packaging cases
+and the remaining I2 Event failures. Reproduce the packaging boundary with
+`python -m pytest tests/packaging/test_p[1-7]_distribution.py -q` in the prepared
+runtime. These fixtures do not establish complete product/distribution acceptance.
+
+For node reconciliation, reuse the existing `junit_key` procedure in
+`efficient-repository-investigation/scripts/summarize_pytest.py`: split class/test
+separators only before the parameter suffix. IPv6 and `ext::` parameter values
+contain literal `::`; splitting the whole ID invents missing JUnit cases. Preserve
+raw receipts and issue a separate correction when a work-only parser was wrong.
+
 ### Keep inner identity and outer digest profiles separate
 
 Use this source-inspection procedure when reviewing identity/JSON wire changes.

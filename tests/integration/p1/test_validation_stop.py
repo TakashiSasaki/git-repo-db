@@ -39,7 +39,7 @@ def test_paired_validation_udf_failure_persists_stop(tmp_path, damaged, capabili
         context_unit(tx)
         ContextStore(tx).admit_field(
             FieldCandidate(
-                ResourceKey(PROVIDER, "issue", "7"),
+                ResourceKey.from_native(PROVIDER, "issue", "7"),
                 "title",
                 canonical("actual title"),
                 FieldClock("provider", 1),

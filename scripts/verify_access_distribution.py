@@ -223,14 +223,16 @@ with tempfile.TemporaryDirectory() as directory:
     for role in ("core", "context"):
         p1_schema.initialize(destination / f"{role}.sqlite3", role, repository_id, instance)
     node = {"id": "R_installed", "databaseId": 1}
-    claims = tuple(ResourceRepositoryRelation(ResourceKey(service, "repository", identifier), "represents_repository", FieldClock("installed:mapping", 1), canonical(repository_id), make_provenance("installed", {"explicit_mapping": identifier}), 1)
-                   for identifier in ("1", github_repository_id(node, graphql=True)))
+    node_identifier = github_repository_id(node, graphql=True)
+    # Change the key representation while retaining the original evidence text.
+    claims = tuple(ResourceRepositoryRelation(ResourceKey(service, "repository", identifier), "represents_repository", FieldClock("installed:mapping", 1), canonical(repository_id), make_provenance("installed", {"explicit_mapping": evidence_identifier}), 1)
+                   for identifier, evidence_identifier in ((github_repository_id({"id": 1}, graphql=False), "1"), (node_identifier, node_identifier)))
     ProviderAcquisition(destination).admit_batch(ProviderIntakeBatch(service,
         providers=(ProviderRegistration(service),), repositories=(RepositoryRegistration(repository_id),), mapping_claims=claims,
         issues=(ProviderIssueIntake({"id": 7, "repository": {"id": 1}}, 10, make_provenance("installed", "issue")),),
         timeline_events=(ProviderTimelineIntake("issue", 7, "EV_installed", {"id": "EV_installed", "__typename": "TransferredEvent", "issue": {"databaseId": 7}, "fromRepository": node}, 20, make_provenance("installed", "event"), graphql=True),)))
     with Context.snapshot(destination) as ctx:
-        qualified, = ctx.provider_repository_roles(ResourceKey(service, "issue", "7"))
+        qualified, = ctx.provider_repository_roles(ResourceKey.from_native(service, "issue", "7"))
         assert qualified.supports[0].supporting_claims == (claims[0].claim_key,)
         report, = ctx.transfer_event_reports()
         assert report.from_relation.embedded_support.supporting_claims == (claims[1].claim_key,)
@@ -377,22 +379,57 @@ def main() -> None:
                     env=env,
                 )
             )
-            output = run(str(python), "-I", "-c", SMOKE, cwd=base, env=env)
-            result = json.loads(output)
+            # Retain the actual installed runtime even when the domain smoke
+            # fails, and exercise both artifacts before returning a failure.
+            runtime = json.loads(
+                run(
+                    str(python),
+                    "-I",
+                    "-c",
+                    "import json, sqlite3, sys, repo_catalog; "
+                    "from repo_catalog.adapters.sqlite import p1_schema; "
+                    "from repo_catalog.adapters.sqlite.access_schema import fingerprint; "
+                    "print(json.dumps(dict(interpreter=sys.executable, "
+                    "sqlite=sqlite3.sqlite_version, "
+                    "sqlite_source_id=sqlite3.connect(':memory:').execute("
+                    "'SELECT sqlite_source_id()').fetchone()[0], "
+                    "module_origin=repo_catalog.__file__, "
+                    "context_ddl_sha256=p1_schema.fingerprint('context'), "
+                    "ddl_sha256=fingerprint())))",
+                    cwd=base,
+                    env=env,
+                )
+            )
+            try:
+                output = run(str(python), "-I", "-c", SMOKE, cwd=base, env=env)
+            except subprocess.CalledProcessError as error:
+                result = {
+                    **runtime,
+                    "installed_smoke": "failed",
+                    "exit_code": error.returncode,
+                    "stdout": error.stdout,
+                    "stderr": error.stderr,
+                }
+            else:
+                result = json.loads(output)
+                result["exit_code"] = 0
             result["artifact_kind"] = label
             result["wheel_sha256"] = hashlib.sha256(wheel.read_bytes()).hexdigest()
             result["source_sdist_sha256"] = hashlib.sha256(
                 archive.read_bytes()
             ).hexdigest()
             results.append(result)
-            print(label, output)
+            print(label, json.dumps(result))
         assert len(results) == 2
-        assert results[0]["context_ddl_sha256"] == results[1]["context_ddl_sha256"]
-        assert results[0]["table_count"] == 19
-        assert results[1]["table_count"] == 19
+        if all(result["exit_code"] == 0 for result in results):
+            assert results[0]["context_ddl_sha256"] == results[1]["context_ddl_sha256"]
+            assert results[0]["table_count"] == 19
+            assert results[1]["table_count"] == 19
     evidence = ROOT / "artifacts/access-registry"
     evidence.mkdir(parents=True, exist_ok=True)
     (evidence / "distribution.json").write_text(json.dumps(results, indent=2) + "\n")
+    if any(result["exit_code"] != 0 for result in results):
+        raise SystemExit("Installed Access smoke failed; see distribution.json")
 
 
 if __name__ == "__main__":
