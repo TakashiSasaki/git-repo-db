@@ -85,7 +85,7 @@ commit_raw = (
 commit_oid_hex = native_oid(fmt, "commit", commit_raw)
 commit_native = NativeObject(OID(fmt, commit_oid_hex), "commit", commit_raw, len(commit_raw), hashlib.sha256(commit_raw).hexdigest())
 
-pr_key = ResourceKey(service, "pull_request", "1")
+pr_key = ResourceKey.from_native(service, "pull_request", "1")
 prov = canonical({"source": "github.rest", "evidence": "ev-1"})
 
 def core_unit(db):

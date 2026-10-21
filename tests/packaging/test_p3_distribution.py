@@ -38,7 +38,7 @@ from repo_catalog.domain.p1_context import FieldClock, ResourceKey, canonical
 assert 'site-packages' in str(Path(__import__('repo_catalog.adapters.sqlite.production_context', fromlist=['']).__file__))
 repo, instance, service = (str(uuid4()) for _ in range(3))
 initialize(Path('context.sqlite3'), 'context', repo, instance)
-key = ResourceKey(service, 'issue', 'real-provider-id')
+key = ResourceKey.from_native(service, 'issue', 'real-provider-id')
 with Context.transaction(Path('.')) as context:
     context.provider(service, 'github')
     context.resource(key)

@@ -161,7 +161,7 @@ def test_literal_unicode_short_special_search_semantics_and_cost_phases(
     tmp_path, query
 ):
     populate_rich_catalog(tmp_path)
-    resource = ResourceKey(SERVICE, "pull_request", "42")
+    resource = ResourceKey.from_native(SERVICE, "pull_request", "42")
     with Context.transaction(tmp_path) as context:
         context.admit_field(
             FieldCandidate(

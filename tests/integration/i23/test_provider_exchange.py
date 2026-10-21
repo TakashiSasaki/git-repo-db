@@ -46,7 +46,7 @@ def provenance(label):
 
 def claim(service, provider, repository, label):
     return ResourceRepositoryRelation(
-        ResourceKey(service, "repository", provider),
+        ResourceKey.from_native(service, "repository", provider),
         "represents_repository",
         FieldClock("original-mapping", 10),
         canonical(repository),
@@ -171,8 +171,9 @@ def test_current_roles_namespaces_clocks_and_conflicts_across_seeds(tmp_path):
     service, r1, r2, claims = producer(a)
     seed, instance = receiver(b)
     keys = tuple(
-        ResourceKey(service, "issue", str(i)) for i in (7, 10, 11, 12, 13, 14)
-    ) + (ResourceKey(service, "pull_request", "9"),)
+        ResourceKey.from_native(service, "issue", str(i))
+        for i in (7, 10, 11, 12, 13, 14)
+    ) + (ResourceKey.from_native(service, "pull_request", "9"),)
     package = ExchangeService(a).export_package(selection=scope((r1, r2), keys))
     receive(b, package, (r1, r2))
     core = GitCore(b / "core.sqlite3")
@@ -242,7 +243,7 @@ def test_received_dispositions_need_receiver_evidence_and_preserve_keys(tmp_path
             mapping_dispositions=(disposition,),
         )
     )
-    key = ResourceKey(service, "issue", "10")
+    key = ResourceKey.from_native(service, "issue", "10")
     evidence = MappingOperationEvidence(frozenset({disposition.disposition_key}))
     receiver(b)
     package = ExchangeService(a).export_package(selection=scope((r1, r2), (key,)))
@@ -489,7 +490,7 @@ def test_domain_exchange_neither_transports_nor_changes_real_access_grants(tmp_p
             grant = store.record_local_approval(store.review_plan(r1, scope_id), 20)
         snapshots.append((access.read_bytes(), scope_id, key, grant))
     package = ExchangeService(a).export_package(
-        selection=scope((r1, r2), (ResourceKey(service, "issue", "10"),))
+        selection=scope((r1, r2), (ResourceKey.from_native(service, "issue", "10"),))
     )
     wire = encode_package(package)
     assert all(
@@ -679,7 +680,7 @@ def test_collection_coverage_uses_exact_owner_and_admission_order(tmp_path, case
     a, b = tmp_path / "a", tmp_path / "b"
     service, r1, r2, _ = producer(a)
     receiver(b)
-    key = ResourceKey(service, "issue", "10")
+    key = ResourceKey.from_native(service, "issue", "10")
     coverage_scope = CoverageScope.collection(
         key, "comments", provenance("collection"), "comments"
     )

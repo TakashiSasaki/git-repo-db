@@ -40,7 +40,7 @@ SERVICE = "73b05ca2-eceb-460f-8909-84d015e81fc3"
 SOURCE = "25695d63-2e0c-4a53-b2fd-0faf166fe2d5"
 ORIGIN = "1c02424b-aa1d-4440-aea1-3fdcd37a0810"
 CAPTURE = "3f51c7c0-ff7e-4612-9fd8-f70c1242e151"
-RESOURCE = ResourceKey(SERVICE, "issue", "provider-global-71")
+RESOURCE = ResourceKey.from_native(SERVICE, "issue", "provider-global-71")
 PROVENANCE = canonical({"source": "provider.example", "evidence": "original-event-71"})
 
 

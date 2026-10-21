@@ -145,7 +145,7 @@ pr_payload = {
     "base": {"sha": commit1, "ref": "main", "repo": {"id": 1}},
 }
 mapping = ResourceRepositoryRelation(
-    ResourceKey(service_uuid, "repository", "1"),
+    ResourceKey.from_native(service_uuid, "repository", "1"),
     "represents_repository",
     FieldClock("installed:mapping", 1_700_000_000_000_000),
     canonical(repo_uuid),
@@ -167,7 +167,7 @@ batch = ProviderIntakeBatch(
 )
 prov_report = prov_acq.admit_batch(batch)
 assert len(prov_report.admitted_resources) >= 1
-pr_key = ResourceKey(service_uuid, "pull_request", "2001")
+pr_key = ResourceKey.from_native(service_uuid, "pull_request", "2001")
 with Context.snapshot(cat_a) as context:
     original_roles = context.provider_repository_roles(pr_key)
     assert {role.scope.relation_kind for role in original_roles} == {

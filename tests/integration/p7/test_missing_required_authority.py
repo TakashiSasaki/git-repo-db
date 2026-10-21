@@ -36,7 +36,7 @@ def _context_fields(catalog, fields):
         db.execute("PRAGMA foreign_keys=ON")
         service = "99999999-9999-4999-8999-999999999999"
         db.execute("INSERT INTO providers VALUES(?,?,?)", (service, "github", "{}"))
-        key = ResourceKey(service, "issue", "42")
+        key = ResourceKey.from_native(service, "issue", "42")
         store = ContextStore(db)
         store.resource(key, None)
         for field, value in fields:

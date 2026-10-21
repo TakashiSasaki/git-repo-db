@@ -224,13 +224,13 @@ with tempfile.TemporaryDirectory() as directory:
         p1_schema.initialize(destination / f"{role}.sqlite3", role, repository_id, instance)
     node = {"id": "R_installed", "databaseId": 1}
     claims = tuple(ResourceRepositoryRelation(ResourceKey(service, "repository", identifier), "represents_repository", FieldClock("installed:mapping", 1), canonical(repository_id), make_provenance("installed", {"explicit_mapping": identifier}), 1)
-                   for identifier in ("1", github_repository_id(node, graphql=True)))
+                   for identifier in (github_repository_id({"id": 1}, graphql=False), github_repository_id(node, graphql=True)))
     ProviderAcquisition(destination).admit_batch(ProviderIntakeBatch(service,
         providers=(ProviderRegistration(service),), repositories=(RepositoryRegistration(repository_id),), mapping_claims=claims,
         issues=(ProviderIssueIntake({"id": 7, "repository": {"id": 1}}, 10, make_provenance("installed", "issue")),),
         timeline_events=(ProviderTimelineIntake("issue", 7, "EV_installed", {"id": "EV_installed", "__typename": "TransferredEvent", "issue": {"databaseId": 7}, "fromRepository": node}, 20, make_provenance("installed", "event"), graphql=True),)))
     with Context.snapshot(destination) as ctx:
-        qualified, = ctx.provider_repository_roles(ResourceKey(service, "issue", "7"))
+        qualified, = ctx.provider_repository_roles(ResourceKey.from_native(service, "issue", "7"))
         assert qualified.supports[0].supporting_claims == (claims[0].claim_key,)
         report, = ctx.transfer_event_reports()
         assert report.from_relation.embedded_support.supporting_claims == (claims[1].claim_key,)

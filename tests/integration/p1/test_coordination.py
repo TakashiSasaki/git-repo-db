@@ -46,7 +46,9 @@ def core_unit(db):
 def context_unit(db):
     db.execute("INSERT OR IGNORE INTO providers VALUES(?,'github','{}')", (PROVIDER,))
     db.execute("INSERT OR IGNORE INTO repository_context VALUES(?,'{}')", (REPOSITORY,))
-    ContextStore(db).resource(ResourceKey(PROVIDER, "issue", "7"), REPOSITORY)
+    ContextStore(db).resource(
+        ResourceKey.from_native(PROVIDER, "issue", "7"), REPOSITORY
+    )
     db.execute(
         "INSERT OR IGNORE INTO core_references VALUES(?,'issue','7','head','sha1',?,?)",
         (PROVIDER, OID, '{"evidence":"actual-event-7","source":"provider.example"}'),

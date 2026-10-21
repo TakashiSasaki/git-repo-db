@@ -63,7 +63,7 @@ def prov(label):
 
 def mapping(service, provider, target, label):
     return ResourceRepositoryRelation(
-        ResourceKey(service, "repository", provider),
+        ResourceKey.from_native(service, "repository", provider),
         "represents_repository",
         FieldClock("i5-original-mapping", 7),
         canonical(target),
@@ -163,8 +163,8 @@ def assembled_template(tmp_path_factory):
         mapping(service, "303", r1, "conflict-A"),
         mapping(service, "303", r2, "conflict-B"),
     )
-    issue = ResourceKey(service, "issue", "501")
-    pr = ResourceKey(service, "pull_request", "601")
+    issue = ResourceKey.from_native(service, "issue", "501")
+    pr = ResourceKey.from_native(service, "pull_request", "601")
     inventory_scope = canonical(
         {"coverage_kind": "repositories", "service_instance_uuidv4": service}
     )
@@ -379,7 +379,7 @@ def test_mapping_effect_stays_local_across_exchange_search_and_restore(
         selection=ExchangeSelectionScope(all_selected=True)
     )
     receive(receiver, package, (r1, r2))
-    key = ResourceKey(service, "issue", "505")
+    key = ResourceKey.from_native(service, "issue", "505")
     evidence = MappingOperationEvidence(frozenset({disposition.disposition_key}))
     ordinary = ProductionQueryService(receiver)
     qualified = ProductionQueryService(receiver, mapping_evidence=evidence)
@@ -388,7 +388,9 @@ def test_mapping_effect_stays_local_across_exchange_search_and_restore(
     plain = ordinary.get_context_resource(key)
     checked = qualified.get_context_resource(key)
     assert (plain != checked) == (kind != "dispute")
-    conflict = ordinary.get_context_resource(ResourceKey(service, "issue", "502"))
+    conflict = ordinary.get_context_resource(
+        ResourceKey.from_native(service, "issue", "502")
+    )
     assert conflict.repository_roles[0].state == "conflict"
     assert {
         claim
@@ -396,14 +398,14 @@ def test_mapping_effect_stays_local_across_exchange_search_and_restore(
         for claim in support.supporting_claims
     } == {claims[2].claim_key, claims[3].claim_key}
     assert (
-        ordinary.get_context_resource(ResourceKey(service, "issue", "503"))
+        ordinary.get_context_resource(ResourceKey.from_native(service, "issue", "503"))
         .repository_roles[0]
         .state
         == "explicit_null"
     )
     assert (
         ordinary.get_context_resource(
-            ResourceKey(service, "issue", "504")
+            ResourceKey.from_native(service, "issue", "504")
         ).repository_roles
         == ()
     )
@@ -631,7 +633,9 @@ def test_transfer_reports_never_mix_across_observations_or_identifier_namespaces
         r
         for r in original
         if r.event_resource
-        == ResourceKey.timeline_event(ResourceKey(service, "issue", "501"), "702")
+        == ResourceKey.timeline_event(
+            ResourceKey.from_native(service, "issue", "501"), "702"
+        )
     ]
     assert {(r.from_state, r.to_state) for r in split} == {
         ("resolved", "absent"),
@@ -664,17 +668,23 @@ def test_transfer_reports_never_mix_across_observations_or_identifier_namespaces
         # The two-sided report cannot be rewritten into an apparently original one-sided report.
         assert not any(
             r.event_resource
-            == ResourceKey.timeline_event(ResourceKey(service, "issue", "501"), "701")
+            == ResourceKey.timeline_event(
+                ResourceKey.from_native(service, "issue", "501"), "701"
+            )
             for r in ctx.transfer_event_reports()
         )
         assert not any(
             r.event_resource
-            == ResourceKey.timeline_event(ResourceKey(service, "issue", "501"), "703")
+            == ResourceKey.timeline_event(
+                ResourceKey.from_native(service, "issue", "501"), "703"
+            )
             for r in ctx.transfer_event_reports()
         )
         assert not any(
             r.event_resource
-            == ResourceKey.timeline_event(ResourceKey(service, "issue", "501"), "702")
+            == ResourceKey.timeline_event(
+                ResourceKey.from_native(service, "issue", "501"), "702"
+            )
             and r.from_state == r.to_state == "resolved"
             for r in ctx.transfer_event_reports()
         )

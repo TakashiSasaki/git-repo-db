@@ -58,7 +58,7 @@ def test_i3_relation_export_without_i2_acquisition(tmp_path: Path) -> None:
     init_catalog_stores(
         tmp_path, repository_uuidv4=repo, stores=("core", "context", "operational")
     )
-    resource = ResourceKey(service, "issue", "7")
+    resource = ResourceKey.from_native(service, "issue", "7")
     with Context.transaction(tmp_path) as context:
         context.provider(service, "github", "{}")
         context.repository(repo)
@@ -130,7 +130,7 @@ def _setup_source_catalog(
         repositories=(RepositoryRegistration(repo_uuid),),
         mapping_claims=tuple(
             ResourceRepositoryRelation(
-                ResourceKey(service_uuid, "repository", str(provider_id)),
+                ResourceKey.from_native(service_uuid, "repository", str(provider_id)),
                 "represents_repository",
                 FieldClock("fixture:mapping", 1),
                 canonical(repo_uuid),

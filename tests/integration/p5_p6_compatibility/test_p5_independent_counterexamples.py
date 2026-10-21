@@ -200,7 +200,7 @@ def test_exchange_export_uses_one_paired_snapshot(tmp_path, monkeypatch):
     original = service._export_core
     oid = OID("sha1", "b" * 40)
     svc = str(uuid4())
-    rk = ResourceKey(svc, "issue", "1")
+    rk = ResourceKey.from_native(svc, "issue", "1")
     attempted = threading.Event()
     completed = threading.Event()
     observed = []

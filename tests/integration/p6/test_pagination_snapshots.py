@@ -137,7 +137,7 @@ def test_open_snapshot_isolation_and_stale_cursor_fencing_after_write(
     with service.open_snapshot(required_store="paired") as pinned:
         assert pinned.token.encode() == initial_token
         new_oid = OID("sha1", "e" * 40)
-        new_res = ResourceKey(SERVICE, "issue", "999")
+        new_res = ResourceKey.from_native(SERVICE, "issue", "999")
         prov = canonical({"source": "github.rest", "evidence": "event-999"})
 
         def write_core(db):
