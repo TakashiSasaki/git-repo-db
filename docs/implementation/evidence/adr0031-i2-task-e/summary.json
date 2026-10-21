@@ -1,0 +1,3092 @@
+{
+  "author_verification": true,
+  "independent_product_acceptance": false,
+  "full_acceptance": false,
+  "executed_commit": "cb1df83afc543d74df8b16327bfb2c418786b3b2",
+  "executed_tree": "9d0130aa3324ff36e4bcda0cfc89258e951a747a",
+  "runtime_lanes": {
+    "3.51.3": {
+      "ordinary_collected_total": 5369,
+      "ordinary_selected": 5367,
+      "ordinary_deselected": 2,
+      "unexecuted_ordinary": 2541,
+      "broad": {
+        "collected": 2826,
+        "executed": 2826,
+        "passed": 2747,
+        "failed": 59,
+        "error": 20,
+        "skipped": 0,
+        "xfail": 0,
+        "xpass": 0,
+        "exit_code": 1
+      },
+      "selected": 2826,
+      "inputs_unchanged": true,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 8379,
+          "failed": 79
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "failed",
+            "exitstatus": 1,
+            "timestamp": 1792625943.0064
+          }
+        ]
+      },
+      "runtime": {
+        "python": "3.13.5 (main, Jul 15 2026, 20:25:40) [GCC 14.2.0]",
+        "executable": "/workspace/task-e-tools/locked/bin/python",
+        "sqlite_version": "3.51.3",
+        "sqlite_source_id": "2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618",
+        "compile_options": [
+          [
+            "ATOMIC_INTRINSICS=1"
+          ],
+          [
+            "COMPILER=gcc-14.2.0"
+          ],
+          [
+            "DEFAULT_AUTOVACUUM"
+          ],
+          [
+            "DEFAULT_CACHE_SIZE=-2000"
+          ],
+          [
+            "DEFAULT_FILE_FORMAT=4"
+          ],
+          [
+            "DEFAULT_JOURNAL_SIZE_LIMIT=-1"
+          ],
+          [
+            "DEFAULT_MMAP_SIZE=0"
+          ],
+          [
+            "DEFAULT_PAGE_SIZE=4096"
+          ],
+          [
+            "DEFAULT_PCACHE_INITSZ=20"
+          ],
+          [
+            "DEFAULT_RECURSIVE_TRIGGERS"
+          ],
+          [
+            "DEFAULT_SECTOR_SIZE=4096"
+          ],
+          [
+            "DEFAULT_SYNCHRONOUS=2"
+          ],
+          [
+            "DEFAULT_WAL_AUTOCHECKPOINT=1000"
+          ],
+          [
+            "DEFAULT_WAL_SYNCHRONOUS=2"
+          ],
+          [
+            "DEFAULT_WORKER_THREADS=0"
+          ],
+          [
+            "DIRECT_OVERFLOW_READ"
+          ],
+          [
+            "ENABLE_COLUMN_METADATA"
+          ],
+          [
+            "ENABLE_FTS5"
+          ],
+          [
+            "ENABLE_RTREE"
+          ],
+          [
+            "MALLOC_SOFT_LIMIT=1024"
+          ],
+          [
+            "MAX_ATTACHED=10"
+          ],
+          [
+            "MAX_COLUMN=2000"
+          ],
+          [
+            "MAX_COMPOUND_SELECT=500"
+          ],
+          [
+            "MAX_DEFAULT_PAGE_SIZE=8192"
+          ],
+          [
+            "MAX_EXPR_DEPTH=1000"
+          ],
+          [
+            "MAX_FUNCTION_ARG=1000"
+          ],
+          [
+            "MAX_LENGTH=1000000000"
+          ],
+          [
+            "MAX_LIKE_PATTERN_LENGTH=50000"
+          ],
+          [
+            "MAX_MMAP_SIZE=0x7fff0000"
+          ],
+          [
+            "MAX_PAGE_COUNT=0xfffffffe"
+          ],
+          [
+            "MAX_PAGE_SIZE=65536"
+          ],
+          [
+            "MAX_SQL_LENGTH=1000000000"
+          ],
+          [
+            "MAX_TRIGGER_DEPTH=1000"
+          ],
+          [
+            "MAX_VARIABLE_NUMBER=32766"
+          ],
+          [
+            "MAX_VDBE_OP=250000000"
+          ],
+          [
+            "MAX_WORKER_THREADS=8"
+          ],
+          [
+            "MUTEX_PTHREADS"
+          ],
+          [
+            "SYSTEM_MALLOC"
+          ],
+          [
+            "TEMP_STORE=1"
+          ],
+          [
+            "THREADSAFE=1"
+          ]
+        ],
+        "pragmas": {
+          "foreign_keys": [
+            [
+              1
+            ]
+          ],
+          "recursive_triggers": [
+            [
+              1
+            ]
+          ],
+          "ignore_check_constraints": [
+            [
+              0
+            ]
+          ],
+          "defer_foreign_keys": [
+            [
+              0
+            ]
+          ],
+          "trusted_schema": [
+            [
+              1
+            ]
+          ],
+          "journal_mode": [
+            [
+              "memory"
+            ]
+          ],
+          "synchronous": [
+            [
+              3
+            ]
+          ],
+          "encoding": [
+            [
+              "UTF-8"
+            ]
+          ]
+        }
+      },
+      "sql": {
+        "total": 301,
+        "passed": 301,
+        "failed": 0,
+        "exit_code": 0,
+        "product_groups": 300,
+        "old_composition_controls": 1,
+        "counts": {
+          "direct-sql": {
+            "executed": 226,
+            "passed": 226
+          },
+          "inventory": {
+            "executed": 1,
+            "passed": 1
+          },
+          "literal-sql-before-after": {
+            "executed": 2,
+            "passed": 2
+          },
+          "malformed-sql": {
+            "executed": 48,
+            "passed": 48
+          },
+          "poisoned-sql-control": {
+            "executed": 21,
+            "passed": 21
+          },
+          "positive-sql": {
+            "executed": 1,
+            "passed": 1
+          },
+          "reopen": {
+            "executed": 1,
+            "passed": 1
+          },
+          "transaction": {
+            "executed": 1,
+            "passed": 1
+          }
+        }
+      }
+    },
+    "3.53.1": {
+      "ordinary_collected_total": 5369,
+      "ordinary_selected": 5367,
+      "ordinary_deselected": 2,
+      "unexecuted_ordinary": 2541,
+      "broad": {
+        "collected": 2826,
+        "executed": 2826,
+        "passed": 2747,
+        "failed": 59,
+        "error": 20,
+        "skipped": 0,
+        "xfail": 0,
+        "xpass": 0,
+        "exit_code": 1
+      },
+      "selected": 2826,
+      "inputs_unchanged": true,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 8379,
+          "failed": 79
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "failed",
+            "exitstatus": 1,
+            "timestamp": 1792626086.431648
+          }
+        ]
+      },
+      "runtime": {
+        "python": "3.13.5 (main, Jul 15 2026, 20:25:40) [GCC 14.2.0]",
+        "executable": "/workspace/task-e-tools/locked/bin/python",
+        "sqlite_version": "3.53.1",
+        "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+        "compile_options": [
+          [
+            "ATOMIC_INTRINSICS=1"
+          ],
+          [
+            "COMPILER=gcc-14.2.0"
+          ],
+          [
+            "DEFAULT_AUTOVACUUM"
+          ],
+          [
+            "DEFAULT_CACHE_SIZE=-2000"
+          ],
+          [
+            "DEFAULT_FILE_FORMAT=4"
+          ],
+          [
+            "DEFAULT_JOURNAL_SIZE_LIMIT=-1"
+          ],
+          [
+            "DEFAULT_MMAP_SIZE=0"
+          ],
+          [
+            "DEFAULT_PAGE_SIZE=4096"
+          ],
+          [
+            "DEFAULT_PCACHE_INITSZ=20"
+          ],
+          [
+            "DEFAULT_RECURSIVE_TRIGGERS"
+          ],
+          [
+            "DEFAULT_SECTOR_SIZE=4096"
+          ],
+          [
+            "DEFAULT_SYNCHRONOUS=2"
+          ],
+          [
+            "DEFAULT_WAL_AUTOCHECKPOINT=1000"
+          ],
+          [
+            "DEFAULT_WAL_SYNCHRONOUS=2"
+          ],
+          [
+            "DEFAULT_WORKER_THREADS=0"
+          ],
+          [
+            "DIRECT_OVERFLOW_READ"
+          ],
+          [
+            "ENABLE_COLUMN_METADATA"
+          ],
+          [
+            "ENABLE_FTS5"
+          ],
+          [
+            "ENABLE_RTREE"
+          ],
+          [
+            "MALLOC_SOFT_LIMIT=1024"
+          ],
+          [
+            "MAX_ATTACHED=10"
+          ],
+          [
+            "MAX_COLUMN=2000"
+          ],
+          [
+            "MAX_COMPOUND_SELECT=500"
+          ],
+          [
+            "MAX_DEFAULT_PAGE_SIZE=8192"
+          ],
+          [
+            "MAX_EXPR_DEPTH=1000"
+          ],
+          [
+            "MAX_FUNCTION_ARG=1000"
+          ],
+          [
+            "MAX_LENGTH=1000000000"
+          ],
+          [
+            "MAX_LIKE_PATTERN_LENGTH=50000"
+          ],
+          [
+            "MAX_MMAP_SIZE=0x7fff0000"
+          ],
+          [
+            "MAX_PAGE_COUNT=0xfffffffe"
+          ],
+          [
+            "MAX_PAGE_SIZE=65536"
+          ],
+          [
+            "MAX_SQL_LENGTH=1000000000"
+          ],
+          [
+            "MAX_TRIGGER_DEPTH=1000"
+          ],
+          [
+            "MAX_VARIABLE_NUMBER=32766"
+          ],
+          [
+            "MAX_VDBE_OP=250000000"
+          ],
+          [
+            "MAX_WORKER_THREADS=8"
+          ],
+          [
+            "MUTEX_PTHREADS"
+          ],
+          [
+            "SYSTEM_MALLOC"
+          ],
+          [
+            "TEMP_STORE=1"
+          ],
+          [
+            "THREADSAFE=1"
+          ]
+        ],
+        "pragmas": {
+          "foreign_keys": [
+            [
+              1
+            ]
+          ],
+          "recursive_triggers": [
+            [
+              1
+            ]
+          ],
+          "ignore_check_constraints": [
+            [
+              0
+            ]
+          ],
+          "defer_foreign_keys": [
+            [
+              0
+            ]
+          ],
+          "trusted_schema": [
+            [
+              1
+            ]
+          ],
+          "journal_mode": [
+            [
+              "memory"
+            ]
+          ],
+          "synchronous": [
+            [
+              3
+            ]
+          ],
+          "encoding": [
+            [
+              "UTF-8"
+            ]
+          ]
+        }
+      },
+      "sql": {
+        "total": 301,
+        "passed": 301,
+        "failed": 0,
+        "exit_code": 0,
+        "product_groups": 300,
+        "old_composition_controls": 1,
+        "counts": {
+          "direct-sql": {
+            "executed": 226,
+            "passed": 226
+          },
+          "inventory": {
+            "executed": 1,
+            "passed": 1
+          },
+          "literal-sql-before-after": {
+            "executed": 2,
+            "passed": 2
+          },
+          "malformed-sql": {
+            "executed": 48,
+            "passed": 48
+          },
+          "poisoned-sql-control": {
+            "executed": 21,
+            "passed": 21
+          },
+          "positive-sql": {
+            "executed": 1,
+            "passed": 1
+          },
+          "reopen": {
+            "executed": 1,
+            "passed": 1
+          },
+          "transaction": {
+            "executed": 1,
+            "passed": 1
+          }
+        }
+      }
+    }
+  },
+  "outcome_comparison": {
+    "outcome_sets_equal": true,
+    "positive": {
+      "3.51.3": {
+        "total": 86,
+        "passed": 86
+      },
+      "3.53.1": {
+        "total": 86,
+        "passed": 86
+      }
+    },
+    "groups": {
+      "3.51.3": {
+        "failure/I2_TRANSFER_UNSUPPORTED": 45,
+        "failure/I2_IDENTIFICATION_WIRE_UNSUPPORTED": 14,
+        "error/I2_TRANSFER_UNSUPPORTED": 20
+      },
+      "3.53.1": {
+        "failure/I2_TRANSFER_UNSUPPORTED": 45,
+        "failure/I2_IDENTIFICATION_WIRE_UNSUPPORTED": 14,
+        "error/I2_TRANSFER_UNSUPPORTED": 20
+      }
+    }
+  },
+  "inherited_cohort": {
+    "prior_selected": 2740,
+    "current_selected": 2826,
+    "missing": [],
+    "prior_unique": 2740,
+    "current_unique": 2826,
+    "all_prior_retained": true
+  },
+  "distributions": {
+    "inputs": {
+      "commit": "cb1df83afc543d74df8b16327bfb2c418786b3b2",
+      "tree": "9d0130aa3324ff36e4bcda0cfc89258e951a747a",
+      "source_archive_sha256": "7057a5ad4ebc8c8651cc167b4248e2792e969710aeebdba18a9a6ef1b17f2ee6",
+      "sdist_sha256": "ac77e951272379b6eef0685b8f9ddf4dd581628817af1def063d3eb8f8f37c06",
+      "wheels": {
+        "wheel": {
+          "path": "/workspace/task-e-evidence/distributions/dist/repo_catalog-0.2.0-py3-none-any.whl",
+          "sha256": "991bd31ed13cafdcf5d452a80f87270f914f24f105ab998a9631021b7f688c47"
+        },
+        "sdist-wheel": {
+          "path": "/workspace/task-e-evidence/distributions/sdist-wheel/repo_catalog-0.2.0-py3-none-any.whl",
+          "sha256": "991bd31ed13cafdcf5d452a80f87270f914f24f105ab998a9631021b7f688c47"
+        }
+      },
+      "original_access_smoke_sha256": "eeca419cb9f1a18123d72eda443a17c338ff7e975f465f41b6ccb2835cc93717",
+      "new_smoke_sha256": "bb04c4090aff1ef74da8a583a59777eac20981be740f6ea6f8273af3dc8f9cc6"
+    },
+    "results": [
+      {
+        "runtime": {
+          "python": "/workspace/task-e-evidence/distributions/3.51.3-wheel/venv/bin/python",
+          "origin": "/workspace/task-e-evidence/distributions/3.51.3-wheel/venv/lib/python3.13/site-packages/repo_catalog/__init__.py",
+          "version": "3.51.3",
+          "source": "2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618"
+        },
+        "artifact": "wheel",
+        "wheel_sha256": "991bd31ed13cafdcf5d452a80f87270f914f24f105ab998a9631021b7f688c47",
+        "sdist_sha256": "ac77e951272379b6eef0685b8f9ddf4dd581628817af1def063d3eb8f8f37c06",
+        "i2_smoke_exit": 0,
+        "installed_files_match_source": true,
+        "original_access_smoke_exit": 1,
+        "i2_receipt": {
+          "author_verification": true,
+          "checks": [
+            "initialized-core",
+            "initialized-context",
+            "initialized-operational",
+            "initialized-search",
+            "native-global-scoped-child-first",
+            "production-read-reopen",
+            "query-identification",
+            "explicit-consumer-stage-refusals",
+            "sql-preconflict-rebind",
+            "stored-validation"
+          ],
+          "runtime": {
+            "sqlite_version": "3.51.3",
+            "sqlite_source_id": "2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618",
+            "compile_options": [
+              [
+                "ATOMIC_INTRINSICS=1"
+              ],
+              [
+                "COMPILER=gcc-14.2.0"
+              ],
+              [
+                "DEFAULT_AUTOVACUUM"
+              ],
+              [
+                "DEFAULT_CACHE_SIZE=-2000"
+              ],
+              [
+                "DEFAULT_FILE_FORMAT=4"
+              ],
+              [
+                "DEFAULT_JOURNAL_SIZE_LIMIT=-1"
+              ],
+              [
+                "DEFAULT_MMAP_SIZE=0"
+              ],
+              [
+                "DEFAULT_PAGE_SIZE=4096"
+              ],
+              [
+                "DEFAULT_PCACHE_INITSZ=20"
+              ],
+              [
+                "DEFAULT_RECURSIVE_TRIGGERS"
+              ],
+              [
+                "DEFAULT_SECTOR_SIZE=4096"
+              ],
+              [
+                "DEFAULT_SYNCHRONOUS=2"
+              ],
+              [
+                "DEFAULT_WAL_AUTOCHECKPOINT=1000"
+              ],
+              [
+                "DEFAULT_WAL_SYNCHRONOUS=2"
+              ],
+              [
+                "DEFAULT_WORKER_THREADS=0"
+              ],
+              [
+                "DIRECT_OVERFLOW_READ"
+              ],
+              [
+                "ENABLE_COLUMN_METADATA"
+              ],
+              [
+                "ENABLE_FTS5"
+              ],
+              [
+                "ENABLE_RTREE"
+              ],
+              [
+                "MALLOC_SOFT_LIMIT=1024"
+              ],
+              [
+                "MAX_ATTACHED=10"
+              ],
+              [
+                "MAX_COLUMN=2000"
+              ],
+              [
+                "MAX_COMPOUND_SELECT=500"
+              ],
+              [
+                "MAX_DEFAULT_PAGE_SIZE=8192"
+              ],
+              [
+                "MAX_EXPR_DEPTH=1000"
+              ],
+              [
+                "MAX_FUNCTION_ARG=1000"
+              ],
+              [
+                "MAX_LENGTH=1000000000"
+              ],
+              [
+                "MAX_LIKE_PATTERN_LENGTH=50000"
+              ],
+              [
+                "MAX_MMAP_SIZE=0x7fff0000"
+              ],
+              [
+                "MAX_PAGE_COUNT=0xfffffffe"
+              ],
+              [
+                "MAX_PAGE_SIZE=65536"
+              ],
+              [
+                "MAX_SQL_LENGTH=1000000000"
+              ],
+              [
+                "MAX_TRIGGER_DEPTH=1000"
+              ],
+              [
+                "MAX_VARIABLE_NUMBER=32766"
+              ],
+              [
+                "MAX_VDBE_OP=250000000"
+              ],
+              [
+                "MAX_WORKER_THREADS=8"
+              ],
+              [
+                "MUTEX_PTHREADS"
+              ],
+              [
+                "SYSTEM_MALLOC"
+              ],
+              [
+                "TEMP_STORE=1"
+              ],
+              [
+                "THREADSAFE=1"
+              ]
+            ],
+            "pragmas": {
+              "foreign_keys": [
+                [
+                  1
+                ]
+              ],
+              "recursive_triggers": [
+                [
+                  1
+                ]
+              ],
+              "ignore_check_constraints": [
+                [
+                  0
+                ]
+              ],
+              "defer_foreign_keys": [
+                [
+                  0
+                ]
+              ],
+              "trusted_schema": [
+                [
+                  1
+                ]
+              ],
+              "journal_mode": [
+                [
+                  "wal"
+                ]
+              ],
+              "synchronous": [
+                [
+                  3
+                ]
+              ],
+              "encoding": [
+                [
+                  "UTF-8"
+                ]
+              ]
+            },
+            "resource_functions": [
+              [
+                "p1_resource_identification_v1",
+                0,
+                "s",
+                "utf8",
+                6,
+                2048
+              ],
+              [
+                "p1_resource_identity_v1",
+                0,
+                "s",
+                "utf8",
+                1,
+                2048
+              ]
+            ],
+            "table_xinfo": [
+              [
+                0,
+                "service_instance_uuidv4",
+                "TEXT",
+                1,
+                null,
+                1,
+                0
+              ],
+              [
+                1,
+                "resource_kind",
+                "TEXT",
+                1,
+                null,
+                2,
+                0
+              ],
+              [
+                2,
+                "provider_resource_id",
+                "TEXT",
+                1,
+                null,
+                3,
+                0
+              ],
+              [
+                3,
+                "identifier_namespace_kind",
+                "TEXT",
+                0,
+                null,
+                0,
+                0
+              ],
+              [
+                4,
+                "identifier_namespace_id",
+                "TEXT",
+                0,
+                null,
+                0,
+                0
+              ],
+              [
+                5,
+                "document_kind",
+                "TEXT",
+                0,
+                null,
+                0,
+                0
+              ],
+              [
+                6,
+                "provider_document_id",
+                "TEXT",
+                0,
+                null,
+                0,
+                0
+              ],
+              [
+                7,
+                "reference_document_kind",
+                "TEXT",
+                0,
+                null,
+                0,
+                2
+              ]
+            ],
+            "indexes": {
+              "resources_native_event_fk": [
+                [
+                  0,
+                  0,
+                  "service_instance_uuidv4",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  1,
+                  1,
+                  "resource_kind",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  2,
+                  2,
+                  "provider_resource_id",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  3,
+                  7,
+                  "reference_document_kind",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  4,
+                  3,
+                  "identifier_namespace_kind",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  5,
+                  4,
+                  "identifier_namespace_id",
+                  0,
+                  "BINARY",
+                  1
+                ]
+              ],
+              "resources_document_contract_fk": [
+                [
+                  0,
+                  0,
+                  "service_instance_uuidv4",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  1,
+                  1,
+                  "resource_kind",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  2,
+                  2,
+                  "provider_resource_id",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  3,
+                  7,
+                  "reference_document_kind",
+                  0,
+                  "BINARY",
+                  1
+                ]
+              ],
+              "resources_typed_event_fk": [
+                [
+                  0,
+                  0,
+                  "service_instance_uuidv4",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  1,
+                  1,
+                  "resource_kind",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  2,
+                  2,
+                  "provider_resource_id",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  3,
+                  7,
+                  "reference_document_kind",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  4,
+                  3,
+                  "identifier_namespace_kind",
+                  0,
+                  "BINARY",
+                  1
+                ]
+              ],
+              "sqlite_autoindex_resources_1": [
+                [
+                  0,
+                  0,
+                  "service_instance_uuidv4",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  1,
+                  1,
+                  "resource_kind",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  2,
+                  2,
+                  "provider_resource_id",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  3,
+                  3,
+                  "identifier_namespace_kind",
+                  0,
+                  "BINARY",
+                  0
+                ],
+                [
+                  4,
+                  4,
+                  "identifier_namespace_id",
+                  0,
+                  "BINARY",
+                  0
+                ],
+                [
+                  5,
+                  5,
+                  "document_kind",
+                  0,
+                  "BINARY",
+                  0
+                ],
+                [
+                  6,
+                  6,
+                  "provider_document_id",
+                  0,
+                  "BINARY",
+                  0
+                ]
+              ]
+            }
+          },
+          "manifest": {
+            "format": "repo-catalog/p1-isolated-1",
+            "stores": {
+              "core": {
+                "ddl_sha256": "3f9f828ad0aff5fae1039f30a3baa29165dbabe6decc5a4f204e78e674b940fe",
+                "sqlite_schema_sha256": "26ab7ecac41a715221b69c702f71766d2207285fcef25c225128d8e1d7d9c337",
+                "tables": [
+                  "captures",
+                  "core_coverage_proofs",
+                  "coverage_claims",
+                  "coverage_scopes",
+                  "git_objects",
+                  "git_observations",
+                  "intrinsic_claims",
+                  "intrinsic_groups",
+                  "note_roles",
+                  "notes_claims",
+                  "notes_groups",
+                  "relation_groups",
+                  "repositories",
+                  "repository_claims",
+                  "retained_metadata",
+                  "retained_notes",
+                  "scalar_claims",
+                  "store_identity"
+                ]
+              },
+              "context": {
+                "ddl_sha256": "2149fb9f37187433e12a47e11e32ccbdac095e6a443ebb0c4e96dabebdda657d",
+                "sqlite_schema_sha256": "975865ff6ed92c52df9c2b2234869981bf0d37069e0d9c54fc4be7f4873ef309",
+                "tables": [
+                  "collection_terminals",
+                  "collections",
+                  "core_references",
+                  "coverage_claims",
+                  "coverage_proofs",
+                  "coverage_scopes",
+                  "field_candidates",
+                  "providers",
+                  "repository_context",
+                  "repository_mapping_dispositions",
+                  "resource_relations",
+                  "resource_repository_relations",
+                  "resources",
+                  "source_coverage_proofs",
+                  "source_inventory_evidence",
+                  "source_repositories",
+                  "sources",
+                  "store_identity",
+                  "text_bodies"
+                ]
+              },
+              "operational": {
+                "ddl_sha256": "76598c5a630d4044c5a123587911a62411d55946072ba071109dd7db52f029a5",
+                "sqlite_schema_sha256": "143d52275fd4cf57d5c0d4c7d93c715f1736ed64468718288252dffbcf82e189",
+                "tables": [
+                  "acquisition_attempts",
+                  "acquisition_requests",
+                  "cache_locators",
+                  "request_budgets",
+                  "request_continuations",
+                  "retry_state",
+                  "store_identity",
+                  "work_accounting"
+                ]
+              },
+              "search": {
+                "ddl_sha256": "a1bce192ebf67bc3846f47a5bc63ba2927a97bddf65eb62706ec2e9f9fc5d303",
+                "sqlite_schema_sha256": "d432248c191d1d5a5a1b74be6b0fb2a5923a794cf9c75e38ccb7483a6089ed2e",
+                "tables": [
+                  "search_documents",
+                  "search_projections",
+                  "store_identity"
+                ]
+              }
+            }
+          },
+          "context_sql_sha256": "2149fb9f37187433e12a47e11e32ccbdac095e6a443ebb0c4e96dabebdda657d",
+          "origins": {
+            "repo_catalog.adapters.sqlite.p1_schema": {
+              "path": "/workspace/task-e-evidence/distributions/3.51.3-wheel/venv/lib/python3.13/site-packages/repo_catalog/adapters/sqlite/p1_schema.py",
+              "sha256": "658b9788855fad4f48391f3c1f4fd543b6e719f1fcfbf07c4830e26b758f7c9c"
+            },
+            "repo_catalog.adapters.sqlite.p1_context": {
+              "path": "/workspace/task-e-evidence/distributions/3.51.3-wheel/venv/lib/python3.13/site-packages/repo_catalog/adapters/sqlite/p1_context.py",
+              "sha256": "3596f692405474679ce81574eed897c2d75bd101f0b49905cc700a79ce23ddab"
+            },
+            "repo_catalog.domain.resource_identification": {
+              "path": "/workspace/task-e-evidence/distributions/3.51.3-wheel/venv/lib/python3.13/site-packages/repo_catalog/domain/resource_identification.py",
+              "sha256": "15fe03ef4518c15f44057361bc64c40e494756cf9180fbda7ae65365deb2ee95"
+            },
+            "repo_catalog.domain.resource_identity": {
+              "path": "/workspace/task-e-evidence/distributions/3.51.3-wheel/venv/lib/python3.13/site-packages/repo_catalog/domain/resource_identity.py",
+              "sha256": "a7b68deb5a40956360a7c8ad69bcff1c216020b4eb451e52e0ea61fb5d0c13a3"
+            },
+            "repo_catalog.domain.resource_stage": {
+              "path": "/workspace/task-e-evidence/distributions/3.51.3-wheel/venv/lib/python3.13/site-packages/repo_catalog/domain/resource_stage.py",
+              "sha256": "a80d5d826cfb106773105a16f5e6a83244acba0f85d42de08229f35ed8f14101"
+            }
+          }
+        }
+      },
+      {
+        "runtime": {
+          "python": "/workspace/task-e-evidence/distributions/3.51.3-sdist-wheel/venv/bin/python",
+          "origin": "/workspace/task-e-evidence/distributions/3.51.3-sdist-wheel/venv/lib/python3.13/site-packages/repo_catalog/__init__.py",
+          "version": "3.51.3",
+          "source": "2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618"
+        },
+        "artifact": "sdist-wheel",
+        "wheel_sha256": "991bd31ed13cafdcf5d452a80f87270f914f24f105ab998a9631021b7f688c47",
+        "sdist_sha256": "ac77e951272379b6eef0685b8f9ddf4dd581628817af1def063d3eb8f8f37c06",
+        "i2_smoke_exit": 0,
+        "installed_files_match_source": true,
+        "original_access_smoke_exit": 1,
+        "i2_receipt": {
+          "author_verification": true,
+          "checks": [
+            "initialized-core",
+            "initialized-context",
+            "initialized-operational",
+            "initialized-search",
+            "native-global-scoped-child-first",
+            "production-read-reopen",
+            "query-identification",
+            "explicit-consumer-stage-refusals",
+            "sql-preconflict-rebind",
+            "stored-validation"
+          ],
+          "runtime": {
+            "sqlite_version": "3.51.3",
+            "sqlite_source_id": "2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618",
+            "compile_options": [
+              [
+                "ATOMIC_INTRINSICS=1"
+              ],
+              [
+                "COMPILER=gcc-14.2.0"
+              ],
+              [
+                "DEFAULT_AUTOVACUUM"
+              ],
+              [
+                "DEFAULT_CACHE_SIZE=-2000"
+              ],
+              [
+                "DEFAULT_FILE_FORMAT=4"
+              ],
+              [
+                "DEFAULT_JOURNAL_SIZE_LIMIT=-1"
+              ],
+              [
+                "DEFAULT_MMAP_SIZE=0"
+              ],
+              [
+                "DEFAULT_PAGE_SIZE=4096"
+              ],
+              [
+                "DEFAULT_PCACHE_INITSZ=20"
+              ],
+              [
+                "DEFAULT_RECURSIVE_TRIGGERS"
+              ],
+              [
+                "DEFAULT_SECTOR_SIZE=4096"
+              ],
+              [
+                "DEFAULT_SYNCHRONOUS=2"
+              ],
+              [
+                "DEFAULT_WAL_AUTOCHECKPOINT=1000"
+              ],
+              [
+                "DEFAULT_WAL_SYNCHRONOUS=2"
+              ],
+              [
+                "DEFAULT_WORKER_THREADS=0"
+              ],
+              [
+                "DIRECT_OVERFLOW_READ"
+              ],
+              [
+                "ENABLE_COLUMN_METADATA"
+              ],
+              [
+                "ENABLE_FTS5"
+              ],
+              [
+                "ENABLE_RTREE"
+              ],
+              [
+                "MALLOC_SOFT_LIMIT=1024"
+              ],
+              [
+                "MAX_ATTACHED=10"
+              ],
+              [
+                "MAX_COLUMN=2000"
+              ],
+              [
+                "MAX_COMPOUND_SELECT=500"
+              ],
+              [
+                "MAX_DEFAULT_PAGE_SIZE=8192"
+              ],
+              [
+                "MAX_EXPR_DEPTH=1000"
+              ],
+              [
+                "MAX_FUNCTION_ARG=1000"
+              ],
+              [
+                "MAX_LENGTH=1000000000"
+              ],
+              [
+                "MAX_LIKE_PATTERN_LENGTH=50000"
+              ],
+              [
+                "MAX_MMAP_SIZE=0x7fff0000"
+              ],
+              [
+                "MAX_PAGE_COUNT=0xfffffffe"
+              ],
+              [
+                "MAX_PAGE_SIZE=65536"
+              ],
+              [
+                "MAX_SQL_LENGTH=1000000000"
+              ],
+              [
+                "MAX_TRIGGER_DEPTH=1000"
+              ],
+              [
+                "MAX_VARIABLE_NUMBER=32766"
+              ],
+              [
+                "MAX_VDBE_OP=250000000"
+              ],
+              [
+                "MAX_WORKER_THREADS=8"
+              ],
+              [
+                "MUTEX_PTHREADS"
+              ],
+              [
+                "SYSTEM_MALLOC"
+              ],
+              [
+                "TEMP_STORE=1"
+              ],
+              [
+                "THREADSAFE=1"
+              ]
+            ],
+            "pragmas": {
+              "foreign_keys": [
+                [
+                  1
+                ]
+              ],
+              "recursive_triggers": [
+                [
+                  1
+                ]
+              ],
+              "ignore_check_constraints": [
+                [
+                  0
+                ]
+              ],
+              "defer_foreign_keys": [
+                [
+                  0
+                ]
+              ],
+              "trusted_schema": [
+                [
+                  1
+                ]
+              ],
+              "journal_mode": [
+                [
+                  "wal"
+                ]
+              ],
+              "synchronous": [
+                [
+                  3
+                ]
+              ],
+              "encoding": [
+                [
+                  "UTF-8"
+                ]
+              ]
+            },
+            "resource_functions": [
+              [
+                "p1_resource_identification_v1",
+                0,
+                "s",
+                "utf8",
+                6,
+                2048
+              ],
+              [
+                "p1_resource_identity_v1",
+                0,
+                "s",
+                "utf8",
+                1,
+                2048
+              ]
+            ],
+            "table_xinfo": [
+              [
+                0,
+                "service_instance_uuidv4",
+                "TEXT",
+                1,
+                null,
+                1,
+                0
+              ],
+              [
+                1,
+                "resource_kind",
+                "TEXT",
+                1,
+                null,
+                2,
+                0
+              ],
+              [
+                2,
+                "provider_resource_id",
+                "TEXT",
+                1,
+                null,
+                3,
+                0
+              ],
+              [
+                3,
+                "identifier_namespace_kind",
+                "TEXT",
+                0,
+                null,
+                0,
+                0
+              ],
+              [
+                4,
+                "identifier_namespace_id",
+                "TEXT",
+                0,
+                null,
+                0,
+                0
+              ],
+              [
+                5,
+                "document_kind",
+                "TEXT",
+                0,
+                null,
+                0,
+                0
+              ],
+              [
+                6,
+                "provider_document_id",
+                "TEXT",
+                0,
+                null,
+                0,
+                0
+              ],
+              [
+                7,
+                "reference_document_kind",
+                "TEXT",
+                0,
+                null,
+                0,
+                2
+              ]
+            ],
+            "indexes": {
+              "resources_native_event_fk": [
+                [
+                  0,
+                  0,
+                  "service_instance_uuidv4",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  1,
+                  1,
+                  "resource_kind",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  2,
+                  2,
+                  "provider_resource_id",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  3,
+                  7,
+                  "reference_document_kind",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  4,
+                  3,
+                  "identifier_namespace_kind",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  5,
+                  4,
+                  "identifier_namespace_id",
+                  0,
+                  "BINARY",
+                  1
+                ]
+              ],
+              "resources_document_contract_fk": [
+                [
+                  0,
+                  0,
+                  "service_instance_uuidv4",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  1,
+                  1,
+                  "resource_kind",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  2,
+                  2,
+                  "provider_resource_id",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  3,
+                  7,
+                  "reference_document_kind",
+                  0,
+                  "BINARY",
+                  1
+                ]
+              ],
+              "resources_typed_event_fk": [
+                [
+                  0,
+                  0,
+                  "service_instance_uuidv4",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  1,
+                  1,
+                  "resource_kind",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  2,
+                  2,
+                  "provider_resource_id",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  3,
+                  7,
+                  "reference_document_kind",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  4,
+                  3,
+                  "identifier_namespace_kind",
+                  0,
+                  "BINARY",
+                  1
+                ]
+              ],
+              "sqlite_autoindex_resources_1": [
+                [
+                  0,
+                  0,
+                  "service_instance_uuidv4",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  1,
+                  1,
+                  "resource_kind",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  2,
+                  2,
+                  "provider_resource_id",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  3,
+                  3,
+                  "identifier_namespace_kind",
+                  0,
+                  "BINARY",
+                  0
+                ],
+                [
+                  4,
+                  4,
+                  "identifier_namespace_id",
+                  0,
+                  "BINARY",
+                  0
+                ],
+                [
+                  5,
+                  5,
+                  "document_kind",
+                  0,
+                  "BINARY",
+                  0
+                ],
+                [
+                  6,
+                  6,
+                  "provider_document_id",
+                  0,
+                  "BINARY",
+                  0
+                ]
+              ]
+            }
+          },
+          "manifest": {
+            "format": "repo-catalog/p1-isolated-1",
+            "stores": {
+              "core": {
+                "ddl_sha256": "3f9f828ad0aff5fae1039f30a3baa29165dbabe6decc5a4f204e78e674b940fe",
+                "sqlite_schema_sha256": "26ab7ecac41a715221b69c702f71766d2207285fcef25c225128d8e1d7d9c337",
+                "tables": [
+                  "captures",
+                  "core_coverage_proofs",
+                  "coverage_claims",
+                  "coverage_scopes",
+                  "git_objects",
+                  "git_observations",
+                  "intrinsic_claims",
+                  "intrinsic_groups",
+                  "note_roles",
+                  "notes_claims",
+                  "notes_groups",
+                  "relation_groups",
+                  "repositories",
+                  "repository_claims",
+                  "retained_metadata",
+                  "retained_notes",
+                  "scalar_claims",
+                  "store_identity"
+                ]
+              },
+              "context": {
+                "ddl_sha256": "2149fb9f37187433e12a47e11e32ccbdac095e6a443ebb0c4e96dabebdda657d",
+                "sqlite_schema_sha256": "975865ff6ed92c52df9c2b2234869981bf0d37069e0d9c54fc4be7f4873ef309",
+                "tables": [
+                  "collection_terminals",
+                  "collections",
+                  "core_references",
+                  "coverage_claims",
+                  "coverage_proofs",
+                  "coverage_scopes",
+                  "field_candidates",
+                  "providers",
+                  "repository_context",
+                  "repository_mapping_dispositions",
+                  "resource_relations",
+                  "resource_repository_relations",
+                  "resources",
+                  "source_coverage_proofs",
+                  "source_inventory_evidence",
+                  "source_repositories",
+                  "sources",
+                  "store_identity",
+                  "text_bodies"
+                ]
+              },
+              "operational": {
+                "ddl_sha256": "76598c5a630d4044c5a123587911a62411d55946072ba071109dd7db52f029a5",
+                "sqlite_schema_sha256": "143d52275fd4cf57d5c0d4c7d93c715f1736ed64468718288252dffbcf82e189",
+                "tables": [
+                  "acquisition_attempts",
+                  "acquisition_requests",
+                  "cache_locators",
+                  "request_budgets",
+                  "request_continuations",
+                  "retry_state",
+                  "store_identity",
+                  "work_accounting"
+                ]
+              },
+              "search": {
+                "ddl_sha256": "a1bce192ebf67bc3846f47a5bc63ba2927a97bddf65eb62706ec2e9f9fc5d303",
+                "sqlite_schema_sha256": "d432248c191d1d5a5a1b74be6b0fb2a5923a794cf9c75e38ccb7483a6089ed2e",
+                "tables": [
+                  "search_documents",
+                  "search_projections",
+                  "store_identity"
+                ]
+              }
+            }
+          },
+          "context_sql_sha256": "2149fb9f37187433e12a47e11e32ccbdac095e6a443ebb0c4e96dabebdda657d",
+          "origins": {
+            "repo_catalog.adapters.sqlite.p1_schema": {
+              "path": "/workspace/task-e-evidence/distributions/3.51.3-sdist-wheel/venv/lib/python3.13/site-packages/repo_catalog/adapters/sqlite/p1_schema.py",
+              "sha256": "658b9788855fad4f48391f3c1f4fd543b6e719f1fcfbf07c4830e26b758f7c9c"
+            },
+            "repo_catalog.adapters.sqlite.p1_context": {
+              "path": "/workspace/task-e-evidence/distributions/3.51.3-sdist-wheel/venv/lib/python3.13/site-packages/repo_catalog/adapters/sqlite/p1_context.py",
+              "sha256": "3596f692405474679ce81574eed897c2d75bd101f0b49905cc700a79ce23ddab"
+            },
+            "repo_catalog.domain.resource_identification": {
+              "path": "/workspace/task-e-evidence/distributions/3.51.3-sdist-wheel/venv/lib/python3.13/site-packages/repo_catalog/domain/resource_identification.py",
+              "sha256": "15fe03ef4518c15f44057361bc64c40e494756cf9180fbda7ae65365deb2ee95"
+            },
+            "repo_catalog.domain.resource_identity": {
+              "path": "/workspace/task-e-evidence/distributions/3.51.3-sdist-wheel/venv/lib/python3.13/site-packages/repo_catalog/domain/resource_identity.py",
+              "sha256": "a7b68deb5a40956360a7c8ad69bcff1c216020b4eb451e52e0ea61fb5d0c13a3"
+            },
+            "repo_catalog.domain.resource_stage": {
+              "path": "/workspace/task-e-evidence/distributions/3.51.3-sdist-wheel/venv/lib/python3.13/site-packages/repo_catalog/domain/resource_stage.py",
+              "sha256": "a80d5d826cfb106773105a16f5e6a83244acba0f85d42de08229f35ed8f14101"
+            }
+          }
+        }
+      },
+      {
+        "runtime": {
+          "python": "/workspace/task-e-evidence/distributions/3.53.1-wheel/venv/bin/python",
+          "origin": "/workspace/task-e-evidence/distributions/3.53.1-wheel/venv/lib/python3.13/site-packages/repo_catalog/__init__.py",
+          "version": "3.53.1",
+          "source": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9"
+        },
+        "artifact": "wheel",
+        "wheel_sha256": "991bd31ed13cafdcf5d452a80f87270f914f24f105ab998a9631021b7f688c47",
+        "sdist_sha256": "ac77e951272379b6eef0685b8f9ddf4dd581628817af1def063d3eb8f8f37c06",
+        "i2_smoke_exit": 0,
+        "installed_files_match_source": true,
+        "original_access_smoke_exit": 1,
+        "i2_receipt": {
+          "author_verification": true,
+          "checks": [
+            "initialized-core",
+            "initialized-context",
+            "initialized-operational",
+            "initialized-search",
+            "native-global-scoped-child-first",
+            "production-read-reopen",
+            "query-identification",
+            "explicit-consumer-stage-refusals",
+            "sql-preconflict-rebind",
+            "stored-validation"
+          ],
+          "runtime": {
+            "sqlite_version": "3.53.1",
+            "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+            "compile_options": [
+              [
+                "ATOMIC_INTRINSICS=1"
+              ],
+              [
+                "COMPILER=gcc-14.2.0"
+              ],
+              [
+                "DEFAULT_AUTOVACUUM"
+              ],
+              [
+                "DEFAULT_CACHE_SIZE=-2000"
+              ],
+              [
+                "DEFAULT_FILE_FORMAT=4"
+              ],
+              [
+                "DEFAULT_JOURNAL_SIZE_LIMIT=-1"
+              ],
+              [
+                "DEFAULT_MMAP_SIZE=0"
+              ],
+              [
+                "DEFAULT_PAGE_SIZE=4096"
+              ],
+              [
+                "DEFAULT_PCACHE_INITSZ=20"
+              ],
+              [
+                "DEFAULT_RECURSIVE_TRIGGERS"
+              ],
+              [
+                "DEFAULT_SECTOR_SIZE=4096"
+              ],
+              [
+                "DEFAULT_SYNCHRONOUS=2"
+              ],
+              [
+                "DEFAULT_WAL_AUTOCHECKPOINT=1000"
+              ],
+              [
+                "DEFAULT_WAL_SYNCHRONOUS=2"
+              ],
+              [
+                "DEFAULT_WORKER_THREADS=0"
+              ],
+              [
+                "DIRECT_OVERFLOW_READ"
+              ],
+              [
+                "ENABLE_COLUMN_METADATA"
+              ],
+              [
+                "ENABLE_FTS5"
+              ],
+              [
+                "ENABLE_RTREE"
+              ],
+              [
+                "MALLOC_SOFT_LIMIT=1024"
+              ],
+              [
+                "MAX_ATTACHED=10"
+              ],
+              [
+                "MAX_COLUMN=2000"
+              ],
+              [
+                "MAX_COMPOUND_SELECT=500"
+              ],
+              [
+                "MAX_DEFAULT_PAGE_SIZE=8192"
+              ],
+              [
+                "MAX_EXPR_DEPTH=1000"
+              ],
+              [
+                "MAX_FUNCTION_ARG=1000"
+              ],
+              [
+                "MAX_LENGTH=1000000000"
+              ],
+              [
+                "MAX_LIKE_PATTERN_LENGTH=50000"
+              ],
+              [
+                "MAX_MMAP_SIZE=0x7fff0000"
+              ],
+              [
+                "MAX_PAGE_COUNT=0xfffffffe"
+              ],
+              [
+                "MAX_PAGE_SIZE=65536"
+              ],
+              [
+                "MAX_SQL_LENGTH=1000000000"
+              ],
+              [
+                "MAX_TRIGGER_DEPTH=1000"
+              ],
+              [
+                "MAX_VARIABLE_NUMBER=32766"
+              ],
+              [
+                "MAX_VDBE_OP=250000000"
+              ],
+              [
+                "MAX_WORKER_THREADS=8"
+              ],
+              [
+                "MUTEX_PTHREADS"
+              ],
+              [
+                "SYSTEM_MALLOC"
+              ],
+              [
+                "TEMP_STORE=1"
+              ],
+              [
+                "THREADSAFE=1"
+              ]
+            ],
+            "pragmas": {
+              "foreign_keys": [
+                [
+                  1
+                ]
+              ],
+              "recursive_triggers": [
+                [
+                  1
+                ]
+              ],
+              "ignore_check_constraints": [
+                [
+                  0
+                ]
+              ],
+              "defer_foreign_keys": [
+                [
+                  0
+                ]
+              ],
+              "trusted_schema": [
+                [
+                  1
+                ]
+              ],
+              "journal_mode": [
+                [
+                  "wal"
+                ]
+              ],
+              "synchronous": [
+                [
+                  3
+                ]
+              ],
+              "encoding": [
+                [
+                  "UTF-8"
+                ]
+              ]
+            },
+            "resource_functions": [
+              [
+                "p1_resource_identification_v1",
+                0,
+                "s",
+                "utf8",
+                6,
+                2048
+              ],
+              [
+                "p1_resource_identity_v1",
+                0,
+                "s",
+                "utf8",
+                1,
+                2048
+              ]
+            ],
+            "table_xinfo": [
+              [
+                0,
+                "service_instance_uuidv4",
+                "TEXT",
+                1,
+                null,
+                1,
+                0
+              ],
+              [
+                1,
+                "resource_kind",
+                "TEXT",
+                1,
+                null,
+                2,
+                0
+              ],
+              [
+                2,
+                "provider_resource_id",
+                "TEXT",
+                1,
+                null,
+                3,
+                0
+              ],
+              [
+                3,
+                "identifier_namespace_kind",
+                "TEXT",
+                0,
+                null,
+                0,
+                0
+              ],
+              [
+                4,
+                "identifier_namespace_id",
+                "TEXT",
+                0,
+                null,
+                0,
+                0
+              ],
+              [
+                5,
+                "document_kind",
+                "TEXT",
+                0,
+                null,
+                0,
+                0
+              ],
+              [
+                6,
+                "provider_document_id",
+                "TEXT",
+                0,
+                null,
+                0,
+                0
+              ],
+              [
+                7,
+                "reference_document_kind",
+                "TEXT",
+                0,
+                null,
+                0,
+                2
+              ]
+            ],
+            "indexes": {
+              "resources_native_event_fk": [
+                [
+                  0,
+                  0,
+                  "service_instance_uuidv4",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  1,
+                  1,
+                  "resource_kind",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  2,
+                  2,
+                  "provider_resource_id",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  3,
+                  7,
+                  "reference_document_kind",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  4,
+                  3,
+                  "identifier_namespace_kind",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  5,
+                  4,
+                  "identifier_namespace_id",
+                  0,
+                  "BINARY",
+                  1
+                ]
+              ],
+              "resources_document_contract_fk": [
+                [
+                  0,
+                  0,
+                  "service_instance_uuidv4",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  1,
+                  1,
+                  "resource_kind",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  2,
+                  2,
+                  "provider_resource_id",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  3,
+                  7,
+                  "reference_document_kind",
+                  0,
+                  "BINARY",
+                  1
+                ]
+              ],
+              "resources_typed_event_fk": [
+                [
+                  0,
+                  0,
+                  "service_instance_uuidv4",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  1,
+                  1,
+                  "resource_kind",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  2,
+                  2,
+                  "provider_resource_id",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  3,
+                  7,
+                  "reference_document_kind",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  4,
+                  3,
+                  "identifier_namespace_kind",
+                  0,
+                  "BINARY",
+                  1
+                ]
+              ],
+              "sqlite_autoindex_resources_1": [
+                [
+                  0,
+                  0,
+                  "service_instance_uuidv4",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  1,
+                  1,
+                  "resource_kind",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  2,
+                  2,
+                  "provider_resource_id",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  3,
+                  3,
+                  "identifier_namespace_kind",
+                  0,
+                  "BINARY",
+                  0
+                ],
+                [
+                  4,
+                  4,
+                  "identifier_namespace_id",
+                  0,
+                  "BINARY",
+                  0
+                ],
+                [
+                  5,
+                  5,
+                  "document_kind",
+                  0,
+                  "BINARY",
+                  0
+                ],
+                [
+                  6,
+                  6,
+                  "provider_document_id",
+                  0,
+                  "BINARY",
+                  0
+                ]
+              ]
+            }
+          },
+          "manifest": {
+            "format": "repo-catalog/p1-isolated-1",
+            "stores": {
+              "core": {
+                "ddl_sha256": "3f9f828ad0aff5fae1039f30a3baa29165dbabe6decc5a4f204e78e674b940fe",
+                "sqlite_schema_sha256": "26ab7ecac41a715221b69c702f71766d2207285fcef25c225128d8e1d7d9c337",
+                "tables": [
+                  "captures",
+                  "core_coverage_proofs",
+                  "coverage_claims",
+                  "coverage_scopes",
+                  "git_objects",
+                  "git_observations",
+                  "intrinsic_claims",
+                  "intrinsic_groups",
+                  "note_roles",
+                  "notes_claims",
+                  "notes_groups",
+                  "relation_groups",
+                  "repositories",
+                  "repository_claims",
+                  "retained_metadata",
+                  "retained_notes",
+                  "scalar_claims",
+                  "store_identity"
+                ]
+              },
+              "context": {
+                "ddl_sha256": "2149fb9f37187433e12a47e11e32ccbdac095e6a443ebb0c4e96dabebdda657d",
+                "sqlite_schema_sha256": "975865ff6ed92c52df9c2b2234869981bf0d37069e0d9c54fc4be7f4873ef309",
+                "tables": [
+                  "collection_terminals",
+                  "collections",
+                  "core_references",
+                  "coverage_claims",
+                  "coverage_proofs",
+                  "coverage_scopes",
+                  "field_candidates",
+                  "providers",
+                  "repository_context",
+                  "repository_mapping_dispositions",
+                  "resource_relations",
+                  "resource_repository_relations",
+                  "resources",
+                  "source_coverage_proofs",
+                  "source_inventory_evidence",
+                  "source_repositories",
+                  "sources",
+                  "store_identity",
+                  "text_bodies"
+                ]
+              },
+              "operational": {
+                "ddl_sha256": "76598c5a630d4044c5a123587911a62411d55946072ba071109dd7db52f029a5",
+                "sqlite_schema_sha256": "143d52275fd4cf57d5c0d4c7d93c715f1736ed64468718288252dffbcf82e189",
+                "tables": [
+                  "acquisition_attempts",
+                  "acquisition_requests",
+                  "cache_locators",
+                  "request_budgets",
+                  "request_continuations",
+                  "retry_state",
+                  "store_identity",
+                  "work_accounting"
+                ]
+              },
+              "search": {
+                "ddl_sha256": "a1bce192ebf67bc3846f47a5bc63ba2927a97bddf65eb62706ec2e9f9fc5d303",
+                "sqlite_schema_sha256": "d432248c191d1d5a5a1b74be6b0fb2a5923a794cf9c75e38ccb7483a6089ed2e",
+                "tables": [
+                  "search_documents",
+                  "search_projections",
+                  "store_identity"
+                ]
+              }
+            }
+          },
+          "context_sql_sha256": "2149fb9f37187433e12a47e11e32ccbdac095e6a443ebb0c4e96dabebdda657d",
+          "origins": {
+            "repo_catalog.adapters.sqlite.p1_schema": {
+              "path": "/workspace/task-e-evidence/distributions/3.53.1-wheel/venv/lib/python3.13/site-packages/repo_catalog/adapters/sqlite/p1_schema.py",
+              "sha256": "658b9788855fad4f48391f3c1f4fd543b6e719f1fcfbf07c4830e26b758f7c9c"
+            },
+            "repo_catalog.adapters.sqlite.p1_context": {
+              "path": "/workspace/task-e-evidence/distributions/3.53.1-wheel/venv/lib/python3.13/site-packages/repo_catalog/adapters/sqlite/p1_context.py",
+              "sha256": "3596f692405474679ce81574eed897c2d75bd101f0b49905cc700a79ce23ddab"
+            },
+            "repo_catalog.domain.resource_identification": {
+              "path": "/workspace/task-e-evidence/distributions/3.53.1-wheel/venv/lib/python3.13/site-packages/repo_catalog/domain/resource_identification.py",
+              "sha256": "15fe03ef4518c15f44057361bc64c40e494756cf9180fbda7ae65365deb2ee95"
+            },
+            "repo_catalog.domain.resource_identity": {
+              "path": "/workspace/task-e-evidence/distributions/3.53.1-wheel/venv/lib/python3.13/site-packages/repo_catalog/domain/resource_identity.py",
+              "sha256": "a7b68deb5a40956360a7c8ad69bcff1c216020b4eb451e52e0ea61fb5d0c13a3"
+            },
+            "repo_catalog.domain.resource_stage": {
+              "path": "/workspace/task-e-evidence/distributions/3.53.1-wheel/venv/lib/python3.13/site-packages/repo_catalog/domain/resource_stage.py",
+              "sha256": "a80d5d826cfb106773105a16f5e6a83244acba0f85d42de08229f35ed8f14101"
+            }
+          }
+        }
+      },
+      {
+        "runtime": {
+          "python": "/workspace/task-e-evidence/distributions/3.53.1-sdist-wheel/venv/bin/python",
+          "origin": "/workspace/task-e-evidence/distributions/3.53.1-sdist-wheel/venv/lib/python3.13/site-packages/repo_catalog/__init__.py",
+          "version": "3.53.1",
+          "source": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9"
+        },
+        "artifact": "sdist-wheel",
+        "wheel_sha256": "991bd31ed13cafdcf5d452a80f87270f914f24f105ab998a9631021b7f688c47",
+        "sdist_sha256": "ac77e951272379b6eef0685b8f9ddf4dd581628817af1def063d3eb8f8f37c06",
+        "i2_smoke_exit": 0,
+        "installed_files_match_source": true,
+        "original_access_smoke_exit": 1,
+        "i2_receipt": {
+          "author_verification": true,
+          "checks": [
+            "initialized-core",
+            "initialized-context",
+            "initialized-operational",
+            "initialized-search",
+            "native-global-scoped-child-first",
+            "production-read-reopen",
+            "query-identification",
+            "explicit-consumer-stage-refusals",
+            "sql-preconflict-rebind",
+            "stored-validation"
+          ],
+          "runtime": {
+            "sqlite_version": "3.53.1",
+            "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+            "compile_options": [
+              [
+                "ATOMIC_INTRINSICS=1"
+              ],
+              [
+                "COMPILER=gcc-14.2.0"
+              ],
+              [
+                "DEFAULT_AUTOVACUUM"
+              ],
+              [
+                "DEFAULT_CACHE_SIZE=-2000"
+              ],
+              [
+                "DEFAULT_FILE_FORMAT=4"
+              ],
+              [
+                "DEFAULT_JOURNAL_SIZE_LIMIT=-1"
+              ],
+              [
+                "DEFAULT_MMAP_SIZE=0"
+              ],
+              [
+                "DEFAULT_PAGE_SIZE=4096"
+              ],
+              [
+                "DEFAULT_PCACHE_INITSZ=20"
+              ],
+              [
+                "DEFAULT_RECURSIVE_TRIGGERS"
+              ],
+              [
+                "DEFAULT_SECTOR_SIZE=4096"
+              ],
+              [
+                "DEFAULT_SYNCHRONOUS=2"
+              ],
+              [
+                "DEFAULT_WAL_AUTOCHECKPOINT=1000"
+              ],
+              [
+                "DEFAULT_WAL_SYNCHRONOUS=2"
+              ],
+              [
+                "DEFAULT_WORKER_THREADS=0"
+              ],
+              [
+                "DIRECT_OVERFLOW_READ"
+              ],
+              [
+                "ENABLE_COLUMN_METADATA"
+              ],
+              [
+                "ENABLE_FTS5"
+              ],
+              [
+                "ENABLE_RTREE"
+              ],
+              [
+                "MALLOC_SOFT_LIMIT=1024"
+              ],
+              [
+                "MAX_ATTACHED=10"
+              ],
+              [
+                "MAX_COLUMN=2000"
+              ],
+              [
+                "MAX_COMPOUND_SELECT=500"
+              ],
+              [
+                "MAX_DEFAULT_PAGE_SIZE=8192"
+              ],
+              [
+                "MAX_EXPR_DEPTH=1000"
+              ],
+              [
+                "MAX_FUNCTION_ARG=1000"
+              ],
+              [
+                "MAX_LENGTH=1000000000"
+              ],
+              [
+                "MAX_LIKE_PATTERN_LENGTH=50000"
+              ],
+              [
+                "MAX_MMAP_SIZE=0x7fff0000"
+              ],
+              [
+                "MAX_PAGE_COUNT=0xfffffffe"
+              ],
+              [
+                "MAX_PAGE_SIZE=65536"
+              ],
+              [
+                "MAX_SQL_LENGTH=1000000000"
+              ],
+              [
+                "MAX_TRIGGER_DEPTH=1000"
+              ],
+              [
+                "MAX_VARIABLE_NUMBER=32766"
+              ],
+              [
+                "MAX_VDBE_OP=250000000"
+              ],
+              [
+                "MAX_WORKER_THREADS=8"
+              ],
+              [
+                "MUTEX_PTHREADS"
+              ],
+              [
+                "SYSTEM_MALLOC"
+              ],
+              [
+                "TEMP_STORE=1"
+              ],
+              [
+                "THREADSAFE=1"
+              ]
+            ],
+            "pragmas": {
+              "foreign_keys": [
+                [
+                  1
+                ]
+              ],
+              "recursive_triggers": [
+                [
+                  1
+                ]
+              ],
+              "ignore_check_constraints": [
+                [
+                  0
+                ]
+              ],
+              "defer_foreign_keys": [
+                [
+                  0
+                ]
+              ],
+              "trusted_schema": [
+                [
+                  1
+                ]
+              ],
+              "journal_mode": [
+                [
+                  "wal"
+                ]
+              ],
+              "synchronous": [
+                [
+                  3
+                ]
+              ],
+              "encoding": [
+                [
+                  "UTF-8"
+                ]
+              ]
+            },
+            "resource_functions": [
+              [
+                "p1_resource_identification_v1",
+                0,
+                "s",
+                "utf8",
+                6,
+                2048
+              ],
+              [
+                "p1_resource_identity_v1",
+                0,
+                "s",
+                "utf8",
+                1,
+                2048
+              ]
+            ],
+            "table_xinfo": [
+              [
+                0,
+                "service_instance_uuidv4",
+                "TEXT",
+                1,
+                null,
+                1,
+                0
+              ],
+              [
+                1,
+                "resource_kind",
+                "TEXT",
+                1,
+                null,
+                2,
+                0
+              ],
+              [
+                2,
+                "provider_resource_id",
+                "TEXT",
+                1,
+                null,
+                3,
+                0
+              ],
+              [
+                3,
+                "identifier_namespace_kind",
+                "TEXT",
+                0,
+                null,
+                0,
+                0
+              ],
+              [
+                4,
+                "identifier_namespace_id",
+                "TEXT",
+                0,
+                null,
+                0,
+                0
+              ],
+              [
+                5,
+                "document_kind",
+                "TEXT",
+                0,
+                null,
+                0,
+                0
+              ],
+              [
+                6,
+                "provider_document_id",
+                "TEXT",
+                0,
+                null,
+                0,
+                0
+              ],
+              [
+                7,
+                "reference_document_kind",
+                "TEXT",
+                0,
+                null,
+                0,
+                2
+              ]
+            ],
+            "indexes": {
+              "resources_native_event_fk": [
+                [
+                  0,
+                  0,
+                  "service_instance_uuidv4",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  1,
+                  1,
+                  "resource_kind",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  2,
+                  2,
+                  "provider_resource_id",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  3,
+                  7,
+                  "reference_document_kind",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  4,
+                  3,
+                  "identifier_namespace_kind",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  5,
+                  4,
+                  "identifier_namespace_id",
+                  0,
+                  "BINARY",
+                  1
+                ]
+              ],
+              "resources_document_contract_fk": [
+                [
+                  0,
+                  0,
+                  "service_instance_uuidv4",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  1,
+                  1,
+                  "resource_kind",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  2,
+                  2,
+                  "provider_resource_id",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  3,
+                  7,
+                  "reference_document_kind",
+                  0,
+                  "BINARY",
+                  1
+                ]
+              ],
+              "resources_typed_event_fk": [
+                [
+                  0,
+                  0,
+                  "service_instance_uuidv4",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  1,
+                  1,
+                  "resource_kind",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  2,
+                  2,
+                  "provider_resource_id",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  3,
+                  7,
+                  "reference_document_kind",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  4,
+                  3,
+                  "identifier_namespace_kind",
+                  0,
+                  "BINARY",
+                  1
+                ]
+              ],
+              "sqlite_autoindex_resources_1": [
+                [
+                  0,
+                  0,
+                  "service_instance_uuidv4",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  1,
+                  1,
+                  "resource_kind",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  2,
+                  2,
+                  "provider_resource_id",
+                  0,
+                  "BINARY",
+                  1
+                ],
+                [
+                  3,
+                  3,
+                  "identifier_namespace_kind",
+                  0,
+                  "BINARY",
+                  0
+                ],
+                [
+                  4,
+                  4,
+                  "identifier_namespace_id",
+                  0,
+                  "BINARY",
+                  0
+                ],
+                [
+                  5,
+                  5,
+                  "document_kind",
+                  0,
+                  "BINARY",
+                  0
+                ],
+                [
+                  6,
+                  6,
+                  "provider_document_id",
+                  0,
+                  "BINARY",
+                  0
+                ]
+              ]
+            }
+          },
+          "manifest": {
+            "format": "repo-catalog/p1-isolated-1",
+            "stores": {
+              "core": {
+                "ddl_sha256": "3f9f828ad0aff5fae1039f30a3baa29165dbabe6decc5a4f204e78e674b940fe",
+                "sqlite_schema_sha256": "26ab7ecac41a715221b69c702f71766d2207285fcef25c225128d8e1d7d9c337",
+                "tables": [
+                  "captures",
+                  "core_coverage_proofs",
+                  "coverage_claims",
+                  "coverage_scopes",
+                  "git_objects",
+                  "git_observations",
+                  "intrinsic_claims",
+                  "intrinsic_groups",
+                  "note_roles",
+                  "notes_claims",
+                  "notes_groups",
+                  "relation_groups",
+                  "repositories",
+                  "repository_claims",
+                  "retained_metadata",
+                  "retained_notes",
+                  "scalar_claims",
+                  "store_identity"
+                ]
+              },
+              "context": {
+                "ddl_sha256": "2149fb9f37187433e12a47e11e32ccbdac095e6a443ebb0c4e96dabebdda657d",
+                "sqlite_schema_sha256": "975865ff6ed92c52df9c2b2234869981bf0d37069e0d9c54fc4be7f4873ef309",
+                "tables": [
+                  "collection_terminals",
+                  "collections",
+                  "core_references",
+                  "coverage_claims",
+                  "coverage_proofs",
+                  "coverage_scopes",
+                  "field_candidates",
+                  "providers",
+                  "repository_context",
+                  "repository_mapping_dispositions",
+                  "resource_relations",
+                  "resource_repository_relations",
+                  "resources",
+                  "source_coverage_proofs",
+                  "source_inventory_evidence",
+                  "source_repositories",
+                  "sources",
+                  "store_identity",
+                  "text_bodies"
+                ]
+              },
+              "operational": {
+                "ddl_sha256": "76598c5a630d4044c5a123587911a62411d55946072ba071109dd7db52f029a5",
+                "sqlite_schema_sha256": "143d52275fd4cf57d5c0d4c7d93c715f1736ed64468718288252dffbcf82e189",
+                "tables": [
+                  "acquisition_attempts",
+                  "acquisition_requests",
+                  "cache_locators",
+                  "request_budgets",
+                  "request_continuations",
+                  "retry_state",
+                  "store_identity",
+                  "work_accounting"
+                ]
+              },
+              "search": {
+                "ddl_sha256": "a1bce192ebf67bc3846f47a5bc63ba2927a97bddf65eb62706ec2e9f9fc5d303",
+                "sqlite_schema_sha256": "d432248c191d1d5a5a1b74be6b0fb2a5923a794cf9c75e38ccb7483a6089ed2e",
+                "tables": [
+                  "search_documents",
+                  "search_projections",
+                  "store_identity"
+                ]
+              }
+            }
+          },
+          "context_sql_sha256": "2149fb9f37187433e12a47e11e32ccbdac095e6a443ebb0c4e96dabebdda657d",
+          "origins": {
+            "repo_catalog.adapters.sqlite.p1_schema": {
+              "path": "/workspace/task-e-evidence/distributions/3.53.1-sdist-wheel/venv/lib/python3.13/site-packages/repo_catalog/adapters/sqlite/p1_schema.py",
+              "sha256": "658b9788855fad4f48391f3c1f4fd543b6e719f1fcfbf07c4830e26b758f7c9c"
+            },
+            "repo_catalog.adapters.sqlite.p1_context": {
+              "path": "/workspace/task-e-evidence/distributions/3.53.1-sdist-wheel/venv/lib/python3.13/site-packages/repo_catalog/adapters/sqlite/p1_context.py",
+              "sha256": "3596f692405474679ce81574eed897c2d75bd101f0b49905cc700a79ce23ddab"
+            },
+            "repo_catalog.domain.resource_identification": {
+              "path": "/workspace/task-e-evidence/distributions/3.53.1-sdist-wheel/venv/lib/python3.13/site-packages/repo_catalog/domain/resource_identification.py",
+              "sha256": "15fe03ef4518c15f44057361bc64c40e494756cf9180fbda7ae65365deb2ee95"
+            },
+            "repo_catalog.domain.resource_identity": {
+              "path": "/workspace/task-e-evidence/distributions/3.53.1-sdist-wheel/venv/lib/python3.13/site-packages/repo_catalog/domain/resource_identity.py",
+              "sha256": "a7b68deb5a40956360a7c8ad69bcff1c216020b4eb451e52e0ea61fb5d0c13a3"
+            },
+            "repo_catalog.domain.resource_stage": {
+              "path": "/workspace/task-e-evidence/distributions/3.53.1-sdist-wheel/venv/lib/python3.13/site-packages/repo_catalog/domain/resource_stage.py",
+              "sha256": "a80d5d826cfb106773105a16f5e6a83244acba0f85d42de08229f35ed8f14101"
+            }
+          }
+        }
+      }
+    ],
+    "i2_installed_passed": true,
+    "original_access_passed": false
+  },
+  "source_check": {
+    "execution_commit": "cb1df83afc543d74df8b16327bfb2c418786b3b2",
+    "execution_tree": "9d0130aa3324ff36e4bcda0cfc89258e951a747a",
+    "files": 3783,
+    "mismatches": [],
+    "unmodified_stores": {
+      "core": true,
+      "operational": true,
+      "search": true
+    },
+    "context_old": {
+      "ddl_sha256": "fa7838f86d9f0ab4b2f26c561ad0721df2d0c7dad45ee97e72ff09cbb89ac434",
+      "sqlite_schema_sha256": "0a98df73ce1f9f81d8e76a64eb2b36a18b262cb0ff742ed9a088977f105e1134",
+      "tables": [
+        "collection_terminals",
+        "collections",
+        "core_references",
+        "coverage_claims",
+        "coverage_proofs",
+        "coverage_scopes",
+        "field_candidates",
+        "providers",
+        "repository_context",
+        "repository_mapping_dispositions",
+        "resource_relations",
+        "resource_repository_relations",
+        "resources",
+        "source_coverage_proofs",
+        "source_inventory_evidence",
+        "source_repositories",
+        "sources",
+        "store_identity",
+        "text_bodies"
+      ]
+    },
+    "context_new": {
+      "ddl_sha256": "2149fb9f37187433e12a47e11e32ccbdac095e6a443ebb0c4e96dabebdda657d",
+      "sqlite_schema_sha256": "975865ff6ed92c52df9c2b2234869981bf0d37069e0d9c54fc4be7f4873ef309",
+      "tables": [
+        "collection_terminals",
+        "collections",
+        "core_references",
+        "coverage_claims",
+        "coverage_proofs",
+        "coverage_scopes",
+        "field_candidates",
+        "providers",
+        "repository_context",
+        "repository_mapping_dispositions",
+        "resource_relations",
+        "resource_repository_relations",
+        "resources",
+        "source_coverage_proofs",
+        "source_inventory_evidence",
+        "source_repositories",
+        "sources",
+        "store_identity",
+        "text_bodies"
+      ]
+    },
+    "existing_evidence_changed": []
+  },
+  "static_checks": [
+    {
+      "name": "ruff-check",
+      "argv": [
+        "/workspace/task-e-tools/locked/bin/ruff",
+        "check",
+        "scripts/audit_callsite_dependencies.py",
+        "scripts/audit_p1_schema.py",
+        "scripts/verify_i2.py",
+        "scripts/verify_i2_distribution.py",
+        "scripts/verify_i2_sql_counterexamples.py",
+        "src/repo_catalog/adapters/github/production_intake.py",
+        "src/repo_catalog/adapters/sqlite/p1_context.py",
+        "src/repo_catalog/adapters/sqlite/p1_schema.py",
+        "src/repo_catalog/adapters/sqlite/production_context.py",
+        "src/repo_catalog/adapters/sqlite/production_search.py",
+        "src/repo_catalog/adapters/sqlite/recovery.py",
+        "src/repo_catalog/adapters/sqlite/recovery_validation.py",
+        "src/repo_catalog/application/acquisition.py",
+        "src/repo_catalog/application/exchange.py",
+        "src/repo_catalog/application/production_query.py",
+        "src/repo_catalog/domain/ports/p1_context.py",
+        "src/repo_catalog/domain/production_context.py",
+        "src/repo_catalog/domain/production_query.py",
+        "src/repo_catalog/domain/resource_identification.py",
+        "src/repo_catalog/domain/resource_stage.py",
+        "src/repo_catalog/domain/selective_exchange.py",
+        "tests/integration/i2/test_provider_intake.py",
+        "tests/integration/i3/test_selective_exchange.py",
+        "tests/integration/p1/test_context.py",
+        "tests/integration/p1/test_context_relations.py",
+        "tests/integration/p1/test_disposition.py",
+        "tests/integration/p1/test_generalized_resources.py",
+        "tests/integration/p3/test_production_context.py",
+        "tests/integration/p6/conftest.py",
+        "tests/integration/p6/test_queries.py",
+        "tests/packaging/test_p1_distribution.py",
+        "tests/unit/test_resource_identification.py"
+      ],
+      "started_epoch": 1792626269.3114266,
+      "elapsed_seconds": 0.014723539352416992,
+      "exit_code": 0
+    },
+    {
+      "name": "ruff-format",
+      "argv": [
+        "/workspace/task-e-tools/locked/bin/ruff",
+        "format",
+        "--check",
+        "scripts/audit_callsite_dependencies.py",
+        "scripts/audit_p1_schema.py",
+        "scripts/verify_i2.py",
+        "scripts/verify_i2_distribution.py",
+        "scripts/verify_i2_sql_counterexamples.py",
+        "src/repo_catalog/adapters/github/production_intake.py",
+        "src/repo_catalog/adapters/sqlite/p1_context.py",
+        "src/repo_catalog/adapters/sqlite/p1_schema.py",
+        "src/repo_catalog/adapters/sqlite/production_context.py",
+        "src/repo_catalog/adapters/sqlite/production_search.py",
+        "src/repo_catalog/adapters/sqlite/recovery.py",
+        "src/repo_catalog/adapters/sqlite/recovery_validation.py",
+        "src/repo_catalog/application/acquisition.py",
+        "src/repo_catalog/application/exchange.py",
+        "src/repo_catalog/application/production_query.py",
+        "src/repo_catalog/domain/ports/p1_context.py",
+        "src/repo_catalog/domain/production_context.py",
+        "src/repo_catalog/domain/production_query.py",
+        "src/repo_catalog/domain/resource_identification.py",
+        "src/repo_catalog/domain/resource_stage.py",
+        "src/repo_catalog/domain/selective_exchange.py",
+        "tests/integration/i2/test_provider_intake.py",
+        "tests/integration/i3/test_selective_exchange.py",
+        "tests/integration/p1/test_context.py",
+        "tests/integration/p1/test_context_relations.py",
+        "tests/integration/p1/test_disposition.py",
+        "tests/integration/p1/test_generalized_resources.py",
+        "tests/integration/p3/test_production_context.py",
+        "tests/integration/p6/conftest.py",
+        "tests/integration/p6/test_queries.py",
+        "tests/packaging/test_p1_distribution.py",
+        "tests/unit/test_resource_identification.py"
+      ],
+      "started_epoch": 1792626269.3263695,
+      "elapsed_seconds": 0.010649442672729492,
+      "exit_code": 0
+    },
+    {
+      "name": "ddl",
+      "argv": [
+        "/workspace/task-e-tools/locked/bin/python",
+        "scripts/build_p1_schema.py",
+        "--check"
+      ],
+      "started_epoch": 1792626269.3376713,
+      "elapsed_seconds": 0.09720921516418457,
+      "exit_code": 0
+    },
+    {
+      "name": "schema-audit",
+      "argv": [
+        "/workspace/task-e-tools/locked/bin/python",
+        "scripts/audit_p1_schema.py",
+        "--check"
+      ],
+      "started_epoch": 1792626269.4351723,
+      "elapsed_seconds": 0.1336226463317871,
+      "exit_code": 0
+    },
+    {
+      "name": "callsite",
+      "argv": [
+        "/workspace/task-e-tools/locked/bin/python",
+        "scripts/audit_callsite_dependencies.py",
+        "--check"
+      ],
+      "started_epoch": 1792626269.5691025,
+      "elapsed_seconds": 0.6085386276245117,
+      "exit_code": 0
+    },
+    {
+      "name": "boundary",
+      "argv": [
+        "/workspace/task-e-tools/locked/bin/python",
+        "scripts/audit_implementation_boundary.py",
+        "--check"
+      ],
+      "started_epoch": 1792626270.178029,
+      "elapsed_seconds": 0.8160297870635986,
+      "exit_code": 0
+    },
+    {
+      "name": "registration",
+      "argv": [
+        "/workspace/task-e-tools/locked/bin/python",
+        "scripts/audit_context_registration.py"
+      ],
+      "started_epoch": 1792626270.9943883,
+      "elapsed_seconds": 0.07128310203552246,
+      "exit_code": 0
+    },
+    {
+      "name": "reports",
+      "argv": [
+        "/workspace/task-e-tools/locked/bin/python",
+        "scripts/ci_execute.py",
+        "reports"
+      ],
+      "started_epoch": 1792626271.0660198,
+      "elapsed_seconds": 0.3040013313293457,
+      "exit_code": 0
+    }
+  ]
+}

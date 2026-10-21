@@ -19,6 +19,14 @@ STORES = ("core", "context", "operational", "search")
 MIN_SQLITE = (3, 51, 3)  # Includes the verified WAL-reset fix, STRICT and JSON.
 FORMAT = "repo-catalog/p1-isolated-1"
 
+REQUIRED_PRAGMAS = {
+    "foreign_keys": 1,
+    "recursive_triggers": 1,
+    "ignore_check_constraints": 0,
+    "defer_foreign_keys": 0,
+    "trusted_schema": 1,
+}
+
 
 class SchemaError(ValueError):
     """Wrong format, unsupported runtime or a nonempty initialization target."""
@@ -120,10 +128,34 @@ def schema_rows(db: sqlite3.Connection) -> tuple[tuple, ...]:
     )
 
 
+def configure(db: sqlite3.Connection) -> None:
+    """Configure before BEGIN; Python schema UDFs require this trusted profile."""
+    for name, value in REQUIRED_PRAGMAS.items():
+        db.execute(f"PRAGMA {name}={value}")
+    db.execute("PRAGMA synchronous=EXTRA")
+    verify_connection(db)
+
+
+def verify_connection(db: sqlite3.Connection) -> None:
+    for name, value in REQUIRED_PRAGMAS.items():
+        if db.execute(f"PRAGMA {name}").fetchone()[0] != value:
+            raise SchemaError(f"unsupported SQLite configuration: {name}")
+    functions = {(r[0], r[4]): r[5] for r in db.execute("PRAGMA function_list")}
+    for name, arity in (
+        ("p1_resource_identity_v1", 1),
+        ("p1_resource_identification_v1", 6),
+    ):
+        if not functions.get((name, arity), 0) & 2048:
+            raise SchemaError(
+                f"required deterministic SQLite function unavailable: {name}"
+            )
+
+
 def expected_schema(store: str) -> tuple[tuple, ...]:
     db = sqlite3.connect(":memory:")
     try:
         register_functions(db)
+        configure(db)
         db.executescript(compose(store))
         return schema_rows(db)
     finally:
@@ -163,12 +195,7 @@ def _open(path: Path | str, *, fresh: bool = False) -> sqlite3.Connection:
     try:
         db.row_factory = sqlite3.Row
         register_functions(db)
-        db.execute("PRAGMA foreign_keys=ON")
-        db.execute("PRAGMA recursive_triggers=ON")
-        db.execute("PRAGMA synchronous=EXTRA")
-        for pragma in ("foreign_keys", "recursive_triggers"):
-            if db.execute(f"PRAGMA {pragma}").fetchone()[0] != 1:
-                raise SchemaError(f"required SQLite feature unavailable: {pragma}")
+        configure(db)
         if db.execute("SELECT json_array(1),json_valid('[]')").fetchone()[1] != 1:
             raise SchemaError("SQLite JSON required")
         return db
@@ -215,6 +242,7 @@ def initialize(
 def validate(db: sqlite3.Connection, store: str) -> None:
     if schema_rows(db) != expected_schema(store):
         raise SchemaError(f"{store} physical schema differs from packaged target")
+    verify_connection(db)
     rows = db.execute("SELECT * FROM store_identity").fetchall()
     if len(rows) != 1 or rows[0][0] != store:
         raise SchemaError("store identity missing or wrong role")

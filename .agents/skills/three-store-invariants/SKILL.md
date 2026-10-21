@@ -581,6 +581,33 @@ finite-work refusal, growing candidate sets and tracked live objects. They do no
 prove full release acceptance, power-loss durability or indexed acceleration.
 ## Revalidate transport and request boundaries with independent counterexamples
 
+### Fence every representation of a staged unsupported operation
+
+When a schema stage temporarily removes a prior typed guarantee, enumerate every
+durable representation: report/header rows, both endpoint roles, generic facades,
+typed intake, and replay. An endpoint-only fence previously allowed a Provider-only
+Transfer report. Use unconditional pre-conflict SQL guards for all representations
+and retain immutable UPDATE guards; test true PK collisions and no-op UPSERTs too.
+
+For real Exchange, validate wire/digest rules first, then fence the receiver's
+selected atomic operations before dependency rewriting, package replay or authority
+effects. A guard during the first sender-selection traversal also blocked a lawful
+independent Core-only receive. Test mixed order, report-only units and primed replay
+through the actual importer, not only a normalized model. Do not interpret arbitrary
+metadata text or case variants as reserved operation names.
+
+Explicit unsupported reads must refuse on empty stores. Distinguish that input
+outcome from impossible rows in an exact trusted schema: the latter must enter the
+existing authoritative-corruption stop before normal query/export/Search exposure.
+Do not catch an unsupported input inside a stored-decoder corruption wrapper.
+Preserve diagnostic injected rows and compare complete pre/post rowsets.
+
+Author regression commands: `pytest tests/integration/p1/test_generalized_resources.py`
+and `python scripts/verify_i2_sql_counterexamples.py REPOSITORY SQLITE_VERSION NEW_DIR`.
+The [I2 implementation record](../../../docs/implementation/adr0031-i2-implementation.md)
+states the stage limits. These checks are not independent acceptance or substitutes
+for later typed support, wire integration or release qualification.
+
 P5's [corrected-source review](../../../docs/implementation/evidence/p5-correction/independent/review.md)
 independently reproduced missing declared-digest comparison, free request restart,
 retry UUID changes, broad Coverage promotion, partial-outcome loss and paired

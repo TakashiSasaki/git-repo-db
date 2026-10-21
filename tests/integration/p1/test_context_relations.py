@@ -32,6 +32,7 @@ from repo_catalog.domain.p1_context import (
 from repo_catalog.domain.p1_coordination import CoordinationError
 from repo_catalog.domain.production_context import ContextError
 from repo_catalog.domain.recovery import BackupValidationError
+from repo_catalog.domain.resource_identification import ResourceIdentification as RI
 
 REPO_1 = "9ebbe38a-f937-40e6-a99c-701835ebcf10"
 REPO_2 = "c58b4f17-f58c-4a33-8bc6-eb52c42337d1"
@@ -66,7 +67,12 @@ def test_transfer_generic_admission_requires_complete_report(
             facade.provider(SERVICE, "github", "{}")
             facade.repository(REPO_1)
             facade.resource(KEY_ISSUE)
-            facade.resource(KEY_EVENT)
+            facade.resource(
+                KEY_EVENT,
+                identification=RI.scoped(
+                    KEY_EVENT, KEY_ISSUE, "timeline_event", "event-99"
+                ),
+            )
             yield facade
         assert not (catalog / "p1-recovery-stop.json").exists()
 
@@ -82,7 +88,7 @@ def test_transfer_generic_admission_requires_complete_report(
             if result_api
             else selected.admit_repository_relation
         )
-        with pytest.raises(ValueError, match="admit_transfer_event"):
+        with pytest.raises(ValueError, match="I2_TRANSFER_UNSUPPORTED"):
             admit(endpoint)
         assert not selected.db.execute(
             "SELECT 1 FROM resource_repository_relations"
@@ -96,7 +102,7 @@ def test_transfer_generic_admission_requires_complete_report(
         assert selected.admit_transfer_event(report) == "insert"
         assert selected.admit_transfer_event(report) == "duplicate"
         # Even exact replay/addition must use the report-level equality check.
-        with pytest.raises(ValueError, match="admit_transfer_event"):
+        with pytest.raises(ValueError, match="I2_TRANSFER_UNSUPPORTED"):
             admit(endpoint)
         assert selected.transfer_event_reports() == (report,)
         validate_stored_context_relations(selected.db)
@@ -281,7 +287,11 @@ def context_db(tmp_path):
     store = ContextStore(db)
     store.resource(KEY_REPO, REPO_1)
     store.resource(KEY_ISSUE, REPO_1)
-    store.resource(KEY_EVENT, REPO_1)
+    store.resource(
+        KEY_EVENT,
+        REPO_1,
+        identification=RI.scoped(KEY_EVENT, KEY_ISSUE, "timeline_event", "event-99"),
+    )
     yield db, store, path
     db.close()
 
@@ -488,15 +498,22 @@ def test_counterexample_4_invalid_roles_and_targets(context_db):
             ),
         )
 
-    # Wrong parent FK in resources table
+    # Complete native namespace is independent of semantic Parent/existence
     child_key = ResourceKey.document(
         ResourceKey.from_native(SERVICE, "issue", "nonexistent"),
         "comment",
         "review_comment",
         "c-1",
     )
-    with pytest.raises(sqlite3.IntegrityError):
-        store.resource(child_key, REPO_1)
+    declaration = RI.scoped(
+        child_key,
+        ResourceKey.from_native(SERVICE, "issue", "nonexistent"),
+        "review_comment",
+        "c-1",
+    )
+    store.resource(child_key, REPO_1, identification=declaration)
+    assert store.identification(child_key) == declaration
+    assert not db.execute("SELECT 1 FROM resource_relations").fetchall()
 
 
 # Counterexample 5: One-sided, null, two-sided, unresolved-endpoint and separate-report Transfer cases: no invented endpoint or cross-report pairing.

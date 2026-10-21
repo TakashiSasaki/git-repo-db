@@ -163,6 +163,10 @@ from repo_catalog.domain.p1_context import (
     validate_timeline_event_coordinates as validate_timeline_event_coordinates,
 )
 from repo_catalog.domain.p1_core import OID
+from repo_catalog.domain.resource_identification import (
+    ResourceIdentification,
+    require_identification,
+)
 from repo_catalog.domain.time import (
     validate_observation_us,
     validate_required_observation_us,
@@ -195,8 +199,10 @@ def json_value(encoded: str, *, provenance: bool = False) -> object:
 class ResourceObservation:
     resource: ResourceKey
     fields: tuple[FieldCandidate, ...] = ()
+    identification: ResourceIdentification | None = None
 
     def __post_init__(self):
+        require_identification(self.resource, self.identification)
         if any(field.resource != self.resource for field in self.fields):
             raise ContextError("FIELD_OWNER", "resource")
 

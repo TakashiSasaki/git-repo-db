@@ -13,6 +13,7 @@ from repo_catalog.domain.p1_context import (
     ResourceRepositoryRelation,
     canonical,
 )
+from repo_catalog.domain.resource_identification import ResourceIdentification as RI
 
 REPO = "9ebbe38a-f937-40e6-a99c-701835ebcf10"
 SERVICE = "aad25448-03eb-4f83-a578-ceec84375b5a"
@@ -183,9 +184,11 @@ def test_children_have_real_parent_and_document_kind_coordinates(context):
     second = ResourceKey.from_native(SERVICE, "pull_request", "11")
     for parent in (first, second):
         store.resource(parent, REPO)
+        key = ResourceKey.document(parent, "review", "review", "same-provider-doc-id")
         store.resource(
-            ResourceKey.document(parent, "review", "review", "same-provider-doc-id"),
+            key,
             REPO,
+            identification=RI.scoped(key, parent, "review", "same-provider-doc-id"),
         )
 
     assert (
@@ -207,16 +210,16 @@ def test_children_have_real_parent_and_document_kind_coordinates(context):
                 "same-provider-doc-id",
             ),
         )
-    with pytest.raises(sqlite3.IntegrityError):
-        store.resource(
-            ResourceKey.document(
-                ResourceKey.from_native(SERVICE, "pull_request", "absent"),
-                "document",
-                "body",
-                "real-id",
-            ),
-            REPO,
-        )
+    absent = ResourceKey.from_native(SERVICE, "pull_request", "absent")
+    child = ResourceKey.document(absent, "document", "body", "real-id")
+    declaration = RI.scoped(child, absent, "body", "real-id")
+    store.resource(child, REPO, identification=declaration)
+    assert store.identification(child) == declaration
+    assert not db.execute(
+        "SELECT 1 FROM resources WHERE resource_kind='pull_request' AND provider_resource_id=?",
+        (absent.provider_resource_id,),
+    ).fetchall()
+    assert not db.execute("SELECT 1 FROM resource_relations").fetchall()
 
 
 @pytest.mark.parametrize("already_stored", [False, True])
@@ -230,7 +233,7 @@ def test_global_document_cannot_be_reinterpreted_as_scoped_on_insert_or_replay(
     store.resource(parent)
     scoped = ResourceKey.document(parent, "document", "body", "D1")
     if already_stored:
-        store.resource(scoped)
+        store.resource(scoped, identification=RI.scoped(scoped, parent, "body", "D1"))
     before = db.execute("SELECT * FROM resources").fetchall()
     native = json.loads(scoped.provider_resource_id)
     for global_key in (
@@ -238,10 +241,10 @@ def test_global_document_cannot_be_reinterpreted_as_scoped_on_insert_or_replay(
         ResourceKey.from_native(SERVICE, "document", native),
     ):
         assert global_key == scoped
-        with pytest.raises(ValueError, match="Explicit global Document"):
+        with pytest.raises(ValueError, match="explicit ResourceIdentification"):
             store.resource(global_key)
         assert db.execute("SELECT * FROM resources").fetchall() == before
-    store.resource(scoped)
+    store.resource(scoped, identification=RI.scoped(scoped, parent, "body", "D1"))
 
 
 def test_text_exact_utf8_content_addressing(context):

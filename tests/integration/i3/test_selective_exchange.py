@@ -24,6 +24,7 @@ from repo_catalog.domain.p1_context import (
 )
 from repo_catalog.domain.p1_coordination import AdmissionFailure, RequestIdentity
 from repo_catalog.domain.p1_core import OID
+from repo_catalog.domain.resource_identification import ResourceIdentification as RI
 from repo_catalog.domain.resource_identity import encode_identity
 from tests.integration.p5.conftest import init_catalog_stores
 
@@ -206,7 +207,9 @@ def test_transfer_reports_never_shrunk_or_mixed(tmp_path):
         ),
     ]
     with Context.transaction(a) as ctx:
-        ctx.resource(event)
+        ctx.resource(
+            event, identification=RI.scoped(event, issue, "timeline_event", "event-1")
+        )
         for report in reports:
             ctx.admit_transfer_event(report)
     package = ExchangeService(a).export_package(selection=scope())
@@ -840,7 +843,7 @@ def test_contradictory_coverage_proof_is_rejected_before_binding(
             )
         else:
             child = ResourceKey.document(issue, "comment", "comment", "99")
-            ctx.resource(child)
+            ctx.resource(child, identification=RI.scoped(child, issue, "comment", "99"))
             observation = CollectionObservation(
                 issue,
                 "comments",
@@ -1149,7 +1152,7 @@ def test_modeled_collection_member_cannot_borrow_another_parent(tmp_path, sectio
     child = ResourceKey.document(other, "comment", "comments", "1")
     with Context.transaction(a) as ctx:
         ctx.resource(other)
-        ctx.resource(child)
+        ctx.resource(child, identification=RI.scoped(child, other, "comments", "1"))
         if section == "collections":
             ctx.collection(
                 CollectionObservation(

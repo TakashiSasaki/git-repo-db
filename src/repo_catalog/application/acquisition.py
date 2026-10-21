@@ -1165,7 +1165,7 @@ class ProviderAcquisition:
         linked_list: list[CoreReference],
         pending_list: list[CoreReference],
     ) -> None:
-        ctx.resource(core_ref.resource)
+        self._register_reference(ctx, core_ref.resource)
         ctx.report_core_reference(core_ref, clock=clock, observed_at_us=observed_at_us)
         if validate_core(core_ref.oid.object_format, core_ref.oid.full_oid):
             ctx.link_core(
@@ -1188,14 +1188,16 @@ class ProviderAcquisition:
         key: ResourceKey,
         repo_uuid: str | None,
         admitted: list[ResourceKey],
+        identification=None,
     ) -> None:
-        if key.resource_kind in {"review", "comment", "thread", "document"}:
-            parent_tuple = key.scoped_document_coordinates()
-            parent_key = ResourceKey(
-                key.service_instance_uuidv4, parent_tuple[0], parent_tuple[1]
-            )
-            self._ensure_resource_hierarchy(ctx, parent_key, repo_uuid, admitted)
-        ctx.resource(key, repo_uuid)
+        if identification is None and key.resource_kind in {
+            "review",
+            "comment",
+            "thread",
+            "document",
+        }:
+            identification = ctx.identification(key)
+        ctx.resource(key, repo_uuid, identification=identification)
         if key not in admitted:
             admitted.append(key)
 
@@ -1209,18 +1211,36 @@ class ProviderAcquisition:
         linked_refs: list[CoreReference],
         pending_refs: list[CoreReference],
     ) -> None:
+        from repo_catalog.domain.resource_stage import (
+            UnsupportedResourceStage,
+            refuse_transfer,
+        )
+
+        if unit.transfer_event:
+            raise UnsupportedResourceStage("Provider Transfer intake")
+        for relation in unit.relations:
+            refuse_transfer(relation.relation_kind)
+        declarations = {obs.resource: obs.identification for obs in unit.observations}
         self._ensure_resource_hierarchy(
-            ctx, unit.primary_resource, None, admitted_resources
+            ctx,
+            unit.primary_resource,
+            None,
+            admitted_resources,
+            declarations.get(unit.primary_resource),
         )
         for obs in unit.observations:
-            self._ensure_resource_hierarchy(ctx, obs.resource, None, admitted_resources)
+            self._ensure_resource_hierarchy(
+                ctx, obs.resource, None, admitted_resources, obs.identification
+            )
             ctx.observe(obs)
         for extra_text in unit.extra_texts:
             digest = ctx.text(extra_text)
             if digest not in admitted_texts:
                 admitted_texts.append(digest)
         for res_key, text_val, clock, prov, obs_us in unit.text_admissions:
-            self._ensure_resource_hierarchy(ctx, res_key, None, admitted_resources)
+            self._ensure_resource_hierarchy(
+                ctx, res_key, None, admitted_resources, declarations.get(res_key)
+            )
             if text_val is not None:
                 digest = ctx.text(text_val)
                 if digest not in admitted_texts:
@@ -1228,7 +1248,9 @@ class ProviderAcquisition:
             ctx.admit_text(res_key, text_val, clock, prov, obs_us)
         for rel in unit.relations:
             for member in rel.members:
-                self._ensure_resource_hierarchy(ctx, member, None, admitted_resources)
+                self._ensure_resource_hierarchy(
+                    ctx, member, None, admitted_resources, declarations.get(member)
+                )
             if rel.relation_kind == "provider_repository_roles" and unit.transfer_event:
                 continue
             ctx.relation(rel)
@@ -1402,6 +1424,7 @@ class ProviderAcquisition:
         core: GitCore | None = None,
     ) -> None:
         """Admit a single NormalizedContextUnit into Context."""
+        self._preflight_units((unit,))
         with self._open_context(context) as ctx, ctx._unit():
             validate_core = self._make_core_validator(ctx, core)
             self._admit_normalized_unit(
@@ -1422,6 +1445,7 @@ class ProviderAcquisition:
         core: GitCore | None = None,
     ) -> None:
         """Admit multiple NormalizedContextUnits into Context."""
+        self._preflight_units(units)
         with self._open_context(context) as ctx, ctx._unit():
             validate_core = self._make_core_validator(ctx, core)
             for unit in units:
@@ -1434,6 +1458,28 @@ class ProviderAcquisition:
                     [],
                     [],
                 )
+
+    @staticmethod
+    def _preflight_units(units):
+        from repo_catalog.domain.resource_stage import (
+            UnsupportedResourceStage,
+            refuse_transfer,
+        )
+
+        for unit in units:
+            if unit.transfer_event:
+                raise UnsupportedResourceStage("Provider Transfer intake")
+            for relation in unit.relations:
+                refuse_transfer(relation.relation_kind)
+
+    @staticmethod
+    def _register_reference(ctx, key):
+        identification = (
+            ctx.identification(key)
+            if key.resource_kind in {"review", "comment", "thread", "document"}
+            else None
+        )
+        ctx.resource(key, identification=identification)
 
     def admit_batch(
         self,
@@ -1454,6 +1500,25 @@ class ProviderAcquisition:
                 registration_json(kind, item.configuration_json)
         for item in batch.sources:
             registration_json("membership", item.association_attributes_json)
+        from repo_catalog.domain.resource_stage import refuse_transfer
+
+        timeline_units = tuple(
+            normalize_timeline_event(
+                batch.service_instance_uuidv4,
+                item.parent_kind,
+                item.parent_id,
+                item.event_id,
+                item.payload,
+                item.observed_at_us,
+                item.provenance_json,
+                graphql=item.graphql,
+                parent_resource=item.parent_resource,
+            )
+            for item in batch.timeline_events
+        )
+        self._preflight_units(timeline_units)
+        for relation in (*batch.mapping_claims, *batch.relations):
+            refuse_transfer(relation.relation_kind)
         with self._open_context(context) as ctx, ctx._unit():
             validate_core = self._make_core_validator(ctx, core)
 
@@ -1678,18 +1743,7 @@ class ProviderAcquisition:
                     pending_refs,
                 )
 
-            for tl_in in batch.timeline_events:
-                unit = normalize_timeline_event(
-                    batch.service_instance_uuidv4,
-                    tl_in.parent_kind,
-                    tl_in.parent_id,
-                    tl_in.event_id,
-                    tl_in.payload,
-                    tl_in.observed_at_us,
-                    tl_in.provenance_json,
-                    graphql=tl_in.graphql,
-                    parent_resource=tl_in.parent_resource,
-                )
+            for unit in timeline_units:
                 self._admit_normalized_unit(
                     ctx,
                     unit,
@@ -1749,9 +1803,9 @@ class ProviderAcquisition:
                     admitted_resources.append(obs.resource)
 
             for rel in batch.relations:
-                ctx.resource(rel.resource)
+                self._register_reference(ctx, rel.resource)
                 for member in rel.members:
-                    ctx.resource(member)
+                    self._register_reference(ctx, member)
                 ctx.relation(rel)
 
             for core_ref, clock, obs_us in batch.core_references:
@@ -1766,16 +1820,16 @@ class ProviderAcquisition:
                 )
 
             for coll in batch.collections:
-                ctx.resource(coll.resource)
+                self._register_reference(ctx, coll.resource)
                 for member in coll.members:
-                    ctx.resource(member)
+                    self._register_reference(ctx, member)
                 ctx.collection(coll)
                 admitted_collections += 1
 
             for cov_claim, coll, req_scope in batch.collection_proofs:
-                ctx.resource(coll.resource)
+                self._register_reference(ctx, coll.resource)
                 for member in coll.members:
-                    ctx.resource(member)
+                    self._register_reference(ctx, member)
                 ctx.collection(coll)
                 ctx.prove_collection(cov_claim, coll, required_scope_json=req_scope)
 

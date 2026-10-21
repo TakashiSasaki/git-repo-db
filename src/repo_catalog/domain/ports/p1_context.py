@@ -23,14 +23,20 @@ from repo_catalog.domain.p1_context import (
     ResourceRepositoryRelation,
     TransferEventReport,
 )
+from repo_catalog.domain.resource_identification import ResourceIdentification
 
 
 class ContextAdmission(Protocol):
     def text(self, text_value: str) -> str: ...
     def scope(self, scope: CoverageScope) -> None: ...
     def resource(
-        self, key: ResourceKey, repository_uuidv4: str | None = None
+        self,
+        key: ResourceKey,
+        repository_uuidv4: str | None = None,
+        *,
+        identification: ResourceIdentification | None = None,
     ) -> None: ...
+    def identification(self, key: ResourceKey) -> ResourceIdentification: ...
     def admit_repository_relation(
         self,
         relation: ResourceRepositoryRelation,

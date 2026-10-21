@@ -201,7 +201,7 @@ def test_context_only_queries_resources_fields_relations_inventories_and_coverag
     # Pull Request 42: competing candidates, explicit null vs unobserved, text body, and unresolved Core refs
     pr_view = service.get_context_resource(fixtures["pr_key"], include_text=True)
     assert pr_view.repository_uuidv4 == REPOSITORY
-    assert pr_view.parent is None
+    assert pr_view.identifier_namespace is None
     assert len(pr_view.fields["title"]) == 1
     assert json.loads(pr_view.fields["title"][0].value_json) == (
         "Implement P6 query and search"
@@ -229,10 +229,10 @@ def test_context_only_queries_resources_fields_relations_inventories_and_coverag
     assert all(not dep.required for dep in pr_view.core_dependencies)
 
     # Child resources and relations
-    children = service.list_context_resources(parent=fixtures["pr_key"])
+    children = service.list_context_resources(identifier_namespace=fixtures["pr_key"])
     assert children.total_count == 3
     comment_view = service.get_context_resource(fixtures["comment_key"])
-    assert comment_view.parent == fixtures["pr_key"]
+    assert comment_view.identifier_namespace == fixtures["pr_key"]
     assert comment_view.document_kind == "review_comment"
     assert len(comment_view.relations) == 1
     assert comment_view.relations[0].relation_kind == "in_review_thread"

@@ -30,8 +30,7 @@ def introspect() -> dict[str, Any]:
         connection = sqlite3.connect(":memory:")
         try:
             p1_schema.register_functions(connection)
-            connection.execute("PRAGMA foreign_keys=ON")
-            connection.execute("PRAGMA recursive_triggers=ON")
+            p1_schema.configure(connection)
             connection.executescript(p1_schema.compose(store))
             tables = {}
             for name, sql in connection.execute(
