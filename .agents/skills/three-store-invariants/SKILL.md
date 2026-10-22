@@ -819,3 +819,11 @@ complete product schema before exercising the reader. This is distinct from the
 constraint-verification lane, whose integrity settings must remain enabled.
 The eight retained I2 matching-schema poison nodes demonstrate this distinction;
 a prior 67-failure/20-error run records the additional eight injection failures.
+
+When comparing archived regression failures, select the receipt for the actual
+final reviewed execution, not a filename that merely contains `author`. An
+archive can preserve both superseded failures and a later final run. Retain raw
+messages and frames; compare refusal code/text and source function paths while
+recording line offsets and temporary installation-path differences explicitly.
+The I4 comparison helper targets I3's `final-{version}/regressions.xml`; its
+separate initial 81-fault receipts are not the final 79-fault baseline.

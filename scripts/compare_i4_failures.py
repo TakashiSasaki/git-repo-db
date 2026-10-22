@@ -29,6 +29,10 @@ def index(raw):
             result[(case.get("classname"), case.get("name"))] = {
                 "phase": phase,
                 "message": event.get("message"),
+                "stage_refusal": re.search(
+                    r"I2_(?:TRANSFER|IDENTIFICATION_WIRE)_UNSUPPORTED(?:: [^\n\\]*)?",
+                    event.get("message") or trace,
+                ).group(),
                 "frames": frames,
             }
     return result
@@ -44,7 +48,7 @@ def main():
         ROOT / "docs/implementation/evidence/adr0031-i3/author-evidence.zip"
     ) as z:
         for version in ("3.51.3", "3.53.1"):
-            baseline = index(z.read(f"author-{version}/regressions.xml"))
+            baseline = index(z.read(f"final-{version}/regressions.xml"))
             current = index(
                 (args.evidence / f"author-{version}/regressions.xml").read_bytes()
             )
@@ -59,6 +63,9 @@ def main():
                         "current": new,
                         "same_phase": bool(new and new["phase"] == old["phase"]),
                         "same_message": bool(new and new["message"] == old["message"]),
+                        "same_stage_refusal": bool(
+                            new and new["stage_refusal"] == old["stage_refusal"]
+                        ),
                         "same_trace_paths_functions": bool(
                             new
                             and [(f["path"], f["function"]) for f in new["frames"]]
@@ -79,7 +86,9 @@ def main():
         r["baseline_non_successes"] == 79
         and r["same_nodes"]
         and all(
-            c["same_phase"] and c["same_message"] and c["same_trace_paths_functions"]
+            c["same_phase"]
+            and c["same_stage_refusal"]
+            and c["same_trace_paths_functions"]
             for c in r["comparison"]
         )
         for r in results.values()
