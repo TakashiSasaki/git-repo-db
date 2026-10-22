@@ -2,7 +2,7 @@
 
 Read the current scope before implementation. This index describes accepted target decisions, not implemented or verified behavior.
 
-**Accepted ADR governance: [ADR 0011](0011-adr-governance.md) and [the operating policy](policy.md).** Full/Mini-ADR [templates](template.md) and [Mini template](template-mini.md) are repository files; the optional [adr-workflow skill](../../.agents/skills/adr-workflow/SKILL.md) is procedural. The policy's section 9 documents bounded pre-adoption exceptions for existing ADRs 0001–0027. ADR 0003's reviewed migration item was closed by the 2026-10-19 whole-record acceptance of ADR 0029; other items remain scoped follow-up. ADR numbering allocation watermark: **0031** (0011 is now accepted, not a free gap). Acceptance, merging, implementation and executed verification remain distinct.
+**Accepted ADR governance: [ADR 0011](0011-adr-governance.md) and [the operating policy](policy.md).** Full/Mini-ADR [templates](template.md) and [Mini template](template-mini.md) are repository files; the optional [adr-workflow skill](../../.agents/skills/adr-workflow/SKILL.md) is procedural. The policy's section 9 documents bounded pre-adoption exceptions for existing ADRs 0001–0027. ADR 0003's reviewed migration item was closed by the 2026-10-19 whole-record acceptance of ADR 0029; other items remain scoped follow-up. ADR numbering allocation watermark: **0033** (includes accepted 0032 and proposed 0033; 0011 is not a free gap). Acceptance, merging, implementation and executed verification remain distinct.
 
 **Latest accepted Context design: [ADR 0031](0031-generalized-context-resources.md), accepted 2026-10-21.** The owner accepted the complete generalized Resource/Identity/Parent design after the independently reviewed G3=A native-I7 SQL differential. ADR 0031 remains in unmerged Draft PR #114, stacked on #113; its product implementation, installed distributions and release validation are pending. Acceptance is neither merge permission nor runtime activation.
 
@@ -76,9 +76,10 @@ exceptions require explicit owner approval.
 
 ## Proposed Records (this review branch only)
 
-None. ADR 0031 moved to Accepted Records by the owner's explicit 2026-10-21
-whole-design approval; its earlier pre-acceptance review remains in Git history.
+| ADR | Proposed decision | Constraints and status |
+| --- | --- | --- |
+| [0033](0033-minimal-product-sdist.md) | Minimal product sdist using Hatchling `only-include`, member/size checks and direct/sdist-wheel equivalence | **Proposed Level 2 Mini-ADR**, `date: null`; preserve Git documents/evidence, package data, ADRs 0001/0032 and checkout-based docs. Owner acceptance and implementation remain separate; no merge/release/deployment. [Implementation validation plan](../implementation/minimal-sdist-design.md). |
 
-**Allocation/adoption:** ADR 0011 was explicitly adopted through [governance PR #52](https://github.com/TakashiSasaki/git-repo-db/pull/52) on 2026-10-15, after the accepted design stack was merged by PR #69. It does not renumber ADRs 0012–0027, retire still-binding historical decisions or authorize bulk migration. **Highest allocated ADR ID: 0032**. Future allocations must inspect this watermark, Git history and live remote branches before assigning a new four-digit ID.
+**Allocation/adoption:** ADR 0011 was explicitly adopted through [governance PR #52](https://github.com/TakashiSasaki/git-repo-db/pull/52) on 2026-10-15, after the accepted design stack was merged by PR #69. It does not renumber ADRs 0012–0027, retire still-binding historical decisions or authorize bulk migration. **Highest allocated ADR ID: 0033**. Allocation includes the proposed record, not just accepted files; the previously stale opening 0031 watermark is reconciled here. Future allocations must inspect this watermark, Git history and live remote branches before assigning a new four-digit ID.
 
 The [transition plan](../architecture/git-core-context-transition-plan.md) describes the redesigned implementation sequence. Old Phase 2 handoffs and accepted records remain evidence of their original decisions, subject to the explicit scoped override in ADR 0014. Neither old wording nor a passing documentation check is authority to implement an excluded file-storage path.
