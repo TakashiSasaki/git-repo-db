@@ -88,6 +88,11 @@ class ProductPythonTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             measured = runtime.identity()
+            # Model only source-ID drift; bootstrap setup-python may configure a
+            # loader path. Loader rejection has its own independent test below.
+            measured["loader_environment"] = {
+                name: None for name in measured["loader_environment"]
+            }
             original = dict(measured, sqlite_source_id="different invocation")
             (root / "reference.json").write_text(json.dumps(original))
             with patch.object(runtime, "identity", return_value=measured):
