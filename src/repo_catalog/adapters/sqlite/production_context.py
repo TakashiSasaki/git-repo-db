@@ -44,6 +44,7 @@ from repo_catalog.domain.p1_context import (
     TransferEventReport,
     canonical,
     validate_provider_repository_scope,
+    validate_relation_resource_kind,
 )
 from repo_catalog.domain.p1_coordination import CoordinationError
 from repo_catalog.domain.p1_core import OID, uuid4_value
@@ -65,6 +66,7 @@ from repo_catalog.domain.resource_identification import (
 )
 from repo_catalog.domain.resource_stage import (
     UnsupportedResourceStage,
+    has_transfer_fence,
     refuse_transfer,
     validate_stage_storage,
 )
@@ -348,12 +350,24 @@ class Context(ContextStore):
     def _validate_schema(self):
         from repo_catalog.adapters.sqlite.p1_schema import expected_schema, schema_rows
 
-        if schema_rows(self.db) != expected_schema("context"):
-            raise ContextError(
-                "UNSUPPORTED_SCHEMA",
-                "context",
-                "Context differs from packaged I2 schema",
+        actual_schema = schema_rows(self.db)
+        expected = expected_schema("context")
+        if actual_schema != expected:
+            isolated_expected = tuple(
+                r
+                for r in expected
+                if not (
+                    r[0] == "trigger"
+                    and r[1]
+                    in ("i2_transfer_stage_fence", "i2_transfer_report_stage_fence")
+                )
             )
+            if actual_schema != isolated_expected:
+                raise ContextError(
+                    "UNSUPPORTED_SCHEMA",
+                    "context",
+                    "Context differs from packaged I2 schema",
+                )
 
     def _validate_stage(self):
         self._check()
@@ -882,7 +896,11 @@ class Context(ContextStore):
             return super().admit_mapping_disposition(disposition)
 
     def admit_transfer_event(self, report: TransferEventReport) -> str:
-        raise UnsupportedResourceStage("admit_transfer_event")
+        self._check(write=True)
+        if has_transfer_fence(self.db):
+            raise UnsupportedResourceStage("admit_transfer_event")
+        with self._unit():
+            return super().admit_transfer_event(report)
 
     def mapping_dispositions(
         self, subject: MappingClaimKey | ResourceKey | None = None
@@ -1019,7 +1037,33 @@ class Context(ContextStore):
         repository_uuidv4: str | None = None,
         selected_repositories: Iterable[str] | None = None,
     ) -> tuple[TransferEventReport, ...]:
-        raise UnsupportedResourceStage("transfer_event_reports")
+        self._check()
+        if resource is not None:
+            if not isinstance(resource, ResourceKey):
+                raise TypeError("ResourceKey required")
+            if resource.resource_kind == "comment":
+                validate_relation_resource_kind(
+                    "transfer_from_repository",
+                    resource.resource_kind,
+                    resource.provider_resource_id,
+                )
+            else:
+                raise ValueError("transfer event reports only index comment resources")
+        if repository_uuidv4 is not None:
+            uuid4_value(repository_uuidv4)
+        if selected_repositories is not None:
+            selected_repos = tuple(selected_repositories)
+            for r in selected_repos:
+                uuid4_value(r)
+            selected_repositories = selected_repos
+        if has_transfer_fence(self.db):
+            raise UnsupportedResourceStage("transfer_event_reports")
+        with self._stored("transfer_event_reports"):
+            return super().transfer_event_reports(
+                resource,
+                repository_uuidv4=repository_uuidv4,
+                selected_repositories=selected_repositories,
+            )
 
     def scope(self, scope: CoverageScope):
         self._check(write=True)

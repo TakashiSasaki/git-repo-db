@@ -1215,10 +1215,39 @@ class ResourceRepositoryRelation:
     target_json: str
     provenance_json: str
     observed_at_us: int | None = None
+    event_report_members_json: str | None = None
+    event_report_scope_json: str | None = None
 
     def __post_init__(self) -> None:
         validate_observation_us(self.observed_at_us)
+        if self.relation_kind in TRANSFER_RELATION_KINDS:
+            if self.event_report_members_json is not None:
+                _parse_canonical_json(self.event_report_members_json)
+            if self.event_report_scope_json is not None:
+                _parse_canonical_json(self.event_report_scope_json)
+        else:
+            if (
+                self.event_report_members_json is not None
+                or self.event_report_scope_json is not None
+            ):
+                raise ValueError(
+                    "Non-transfer relation cannot have event_report_members_json or event_report_scope_json"
+                )
         _ = self.claim_key
+
+    def with_report_reference(
+        self, members_json: str, scope_json: str
+    ) -> ResourceRepositoryRelation:
+        return ResourceRepositoryRelation(
+            resource=self.resource,
+            relation_kind=self.relation_kind,
+            clock=self.clock,
+            target_json=self.target_json,
+            provenance_json=self.provenance_json,
+            observed_at_us=self.observed_at_us,
+            event_report_members_json=members_json,
+            event_report_scope_json=scope_json,
+        )
 
     @property
     def claim_key(self) -> RelationClaimKey:
@@ -1732,8 +1761,27 @@ class TransferEventReport:
     omitted_roles: frozenset[RelationKind] = frozenset()
     event_type: str = "transferred"
     selection_truncated: bool = False
+    parent_report: Any | None = None
+    parent_members_json: str | None = None
+    parent_provenance_json: str | None = None
+    parent_scope_json: str | None = None
+    endpoints: tuple[tuple[RelationKind, str], ...] | None = None
 
     def __post_init__(self) -> None:
+        if self.parent_report is not None:
+            if self.parent_members_json is None:
+                object.__setattr__(
+                    self, "parent_members_json", self.parent_report.members_json
+                )
+            if self.parent_provenance_json is None:
+                object.__setattr__(
+                    self, "parent_provenance_json", self.parent_report.provenance_json
+                )
+            if self.parent_scope_json is None:
+                object.__setattr__(
+                    self, "parent_scope_json", self.parent_report.scope_json
+                )
+
         if not isinstance(self.report_key, EventReportKey):
             raise ValueError("TransferEventReport.report_key must be an EventReportKey")
         validate_observation_us(self.observed_at_us)
@@ -1753,6 +1801,85 @@ class TransferEventReport:
             raise ValueError(
                 "omitted_roles must be a subset of transfer relation kinds"
             )
+
+        if self.parent_members_json is None:
+            object.__setattr__(
+                self,
+                "parent_members_json",
+                canonical([list(self.report_key.issue_parent.coordinates())]),
+            )
+        else:
+            object.__setattr__(
+                self,
+                "parent_members_json",
+                canonical(_parse_canonical_json(self.parent_members_json)),
+            )
+
+        if self.parent_provenance_json is None:
+            object.__setattr__(
+                self, "parent_provenance_json", self.report_key.provenance_json
+            )
+        else:
+            object.__setattr__(
+                self,
+                "parent_provenance_json",
+                canonical(_parse_canonical_json(self.parent_provenance_json)),
+            )
+
+        if self.parent_scope_json is None:
+            object.__setattr__(
+                self,
+                "parent_scope_json",
+                canonical(
+                    {
+                        "clock": json.loads(self.report_key.clock.encode()),
+                        "document_kind": "timeline_event",
+                        "state": "complete",
+                    }
+                ),
+            )
+        else:
+            object.__setattr__(
+                self,
+                "parent_scope_json",
+                canonical(_parse_canonical_json(self.parent_scope_json)),
+            )
+
+        if self.endpoints is None:
+            eps: list[tuple[RelationKind, str]] = []
+            for r in self.from_relations:
+                eps.append(("transfer_from_repository", r.target_json))
+            for r in self.to_relations:
+                eps.append(("transfer_to_repository", r.target_json))
+            object.__setattr__(self, "endpoints", tuple(eps))
+        else:
+            if not isinstance(self.endpoints, tuple):
+                object.__setattr__(self, "endpoints", tuple(self.endpoints))
+            for ep in self.endpoints:
+                if (
+                    not isinstance(ep, (tuple, list))
+                    or len(ep) != 2
+                    or ep[0] not in TRANSFER_RELATION_KINDS
+                ):
+                    raise ValueError(f"Invalid endpoint declaration: {ep!r}")
+                validate_mapping_target(ep[1])
+
+        if not self.selection_truncated and not self.omitted_roles:
+            bound_from = tuple(
+                r
+                if r.event_report_members_json is not None
+                else r.with_report_reference(self.members_json, self.scope_json)
+                for r in self.from_relations
+            )
+            bound_to = tuple(
+                r
+                if r.event_report_members_json is not None
+                else r.with_report_reference(self.members_json, self.scope_json)
+                for r in self.to_relations
+            )
+            object.__setattr__(self, "from_relations", bound_from)
+            object.__setattr__(self, "to_relations", bound_to)
+
         for rel in self.from_relations:
             self._validate_endpoint_relation(rel, "transfer_from_repository")
         for rel in self.to_relations:
@@ -1810,14 +1937,18 @@ class TransferEventReport:
         return canonical(
             {
                 "clock": json.loads(self.clock.encode()),
+                "endpoints": [list(ep) for ep in self.endpoints],
                 "event_type": self.event_type,
                 "from_provider_repository_id": self.from_provider_repository.provider_resource_id
                 if self.from_provider_repository
                 else None,
+                "parent_members_json": self.parent_members_json,
+                "parent_provenance_json": self.parent_provenance_json,
+                "parent_scope_json": self.parent_scope_json,
+                "provided_roles": sorted(self.provided_roles),
                 "to_provider_repository_id": self.to_provider_repository.provider_resource_id
                 if self.to_provider_repository
                 else None,
-                "provided_roles": sorted(self.provided_roles),
             }
         )
 
@@ -1846,6 +1977,10 @@ class TransferEventReport:
             "from_provider_repository_id",
             "to_provider_repository_id",
             "provided_roles",
+            "endpoints",
+            "parent_members_json",
+            "parent_provenance_json",
+            "parent_scope_json",
         }:
             raise ValueError("Invalid stored Transfer report scope")
         rels = tuple(relations)
@@ -1860,9 +1995,11 @@ class TransferEventReport:
                 )
             )
 
+        endpoints = tuple(tuple(item) for item in scope["endpoints"])
+
         report = cls(
-            report_key,
-            observed_at_us,
+            report_key=report_key,
+            observed_at_us=observed_at_us,
             from_relations=tuple(
                 r for r in rels if r.relation_kind == "transfer_from_repository"
             ),
@@ -1872,6 +2009,10 @@ class TransferEventReport:
             from_provider_repository=provider("from_provider_repository_id"),
             to_provider_repository=provider("to_provider_repository_id"),
             event_type=scope["event_type"],
+            parent_members_json=scope["parent_members_json"],
+            parent_provenance_json=scope["parent_provenance_json"],
+            parent_scope_json=scope["parent_scope_json"],
+            endpoints=endpoints,
         )
         if scope_json != report.scope_json or members_json != report.members_json:
             raise ValueError(
@@ -1902,6 +2043,21 @@ class TransferEventReport:
             raise ValueError(
                 "Endpoint relation.observed_at_us must match report observed_at_us"
             )
+        if not self.selection_truncated and not self.omitted_roles:
+            if (
+                relation.event_report_members_json is not None
+                and relation.event_report_members_json != self.members_json
+            ):
+                raise ValueError(
+                    "Endpoint relation.event_report_members_json must match report members_json"
+                )
+            if (
+                relation.event_report_scope_json is not None
+                and relation.event_report_scope_json != self.scope_json
+            ):
+                raise ValueError(
+                    "Endpoint relation.event_report_scope_json must match report scope_json"
+                )
 
     @classmethod
     def from_targets(
@@ -1917,6 +2073,10 @@ class TransferEventReport:
         to_provider_repository: ResourceKey | None = None,
         omitted_roles: Iterable[RelationKind] = (),
         event_type: str = "transferred",
+        parent_report: Any | None = None,
+        parent_members_json: str | None = None,
+        parent_provenance_json: str | None = None,
+        parent_scope_json: str | None = None,
     ) -> TransferEventReport:
         report_key = EventReportKey(
             event_resource=event_resource,
@@ -1942,6 +2102,14 @@ class TransferEventReport:
                 for t in items
             )
 
+        if parent_report is not None:
+            if parent_members_json is None:
+                parent_members_json = parent_report.members_json
+            if parent_provenance_json is None:
+                parent_provenance_json = parent_report.provenance_json
+            if parent_scope_json is None:
+                parent_scope_json = parent_report.scope_json
+
         return cls(
             report_key=report_key,
             observed_at_us=observed_at_us,
@@ -1951,7 +2119,15 @@ class TransferEventReport:
             to_provider_repository=to_provider_repository,
             omitted_roles=frozenset(omitted_roles),
             event_type=event_type,
+            parent_members_json=parent_members_json,
+            parent_provenance_json=parent_provenance_json,
+            parent_scope_json=parent_scope_json,
         )
+
+    @property
+    def parent_issue(self) -> ResourceKey:
+        members = _parse_canonical_json(self.parent_members_json)
+        return ResourceKey(*members[0])
 
     @property
     def event_resource(self) -> ResourceKey:
@@ -2080,6 +2256,9 @@ class TransferEventReport:
                 or len(kept_from) != len(self.from_relations)
                 or len(kept_to) != len(self.to_relations)
             ),
+            parent_members_json=self.parent_members_json,
+            parent_provenance_json=self.parent_provenance_json,
+            parent_scope_json=self.parent_scope_json,
         )
 
 

@@ -41,6 +41,8 @@ def relation(row: dict) -> ResourceRepositoryRelation:
         row["target_json"],
         row["provenance_json"],
         row["observed_at_us"],
+        row.get("event_report_members_json"),
+        row.get("event_report_scope_json"),
     )
 
 
