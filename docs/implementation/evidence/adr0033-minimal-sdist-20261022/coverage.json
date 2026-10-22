@@ -1,0 +1,13 @@
+{
+  "ordinary_collected": 5787,
+  "broad_nodes": 3137,
+  "focused_nodes": 272,
+  "packaging_nodes": 61,
+  "unique_executed_ordinary": 3419,
+  "ordinary_unexecuted": 2368,
+  "release_acceptance": false,
+  "independent_non_author_review": false,
+  "docs_tests": 8,
+  "unexecuted_live": 1,
+  "unexecuted_benchmark": 1
+}
