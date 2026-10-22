@@ -1,0 +1,26 @@
+{
+  "README.md": {
+    "bytes": 11334,
+    "sha256": "869b9da9a23ccd9714e19251947fc8ae3d94ffed403b743c8fe90213e73512eb"
+  },
+  "audit-evidence.zip": {
+    "bytes": 11725377,
+    "sha256": "dac876bf5c56902971f6424d1c910dac26ebe29403a80dac4cd15bf6b9fbca12"
+  },
+  "audit.json": {
+    "bytes": 40034,
+    "sha256": "98d5fee317904b39de8982dd22457f19f9cb147242583cb9adf98fe727fc1a71"
+  },
+  "failure-comparison.json": {
+    "bytes": 46170,
+    "sha256": "8e6da6084da443226ae3144efd262613250807d730f7426a9f7d2fd1ea10fe8c"
+  },
+  "findings.json": {
+    "bytes": 1258,
+    "sha256": "f76e1907ae4c4af46f29d5eb4989023a7e53c3e4ff35522ecab56f817e2d2fab"
+  },
+  "handoff.txt": {
+    "bytes": 9102,
+    "sha256": "84236ee9f6e97ea80651327b9e628d93d3ef29191482106a029a5252d9d6be27"
+  }
+}
