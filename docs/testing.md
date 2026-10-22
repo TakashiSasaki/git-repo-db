@@ -65,3 +65,49 @@ python scripts/compare_i5_failures.py --current /absolute/new-i5-evidence/regres
 以前のcheckpoint環境は Python 3.12.14、SQLite 3.53.1、uv 0.12.19 でした。今回の実行環境はコマンドで改めて測定し、下限版の保証と区別します。最終結果・失敗・skip・未実行項目は [Three-Store Boundary ADR 0002](adr/0002-three-store-boundary-architecture.md)、[Schema 20実装記録](phase2/publication-free-implementation.md)、および exact-revision receipts に記録します。CI の選択と結果照合は [変更に応じた CI](change-aware-ci.md)、計測は [CI 性能](ci-performance.md) を参照してください。
 
 Phase 2のexact-tree受入と独立reviewの対象・修正・再検証は[実装記録](phase2/publication-free-implementation.md)、提出PRとそのCI artifactsに記録します。Schema 18の調査snapshotは書き換えません。
+
+## 最小sdistの収録契約（ADR 0033）
+
+受入済み [ADR 0033](adr/0033-minimal-product-sdist.md) に従い、Hatchling の
+sdist `only-include` は `src/repo_catalog`、`pyproject.toml`、`README.md` に限定します。
+wheel の `packages` 設定は維持しています。Hatchling 1.32.4 は `.gitignore` と
+`PKG-INFO` も自動収録するため、前者をソースハッシュ照合する明示的入力、後者を
+検査対象の生成メタデータとして扱います。その他の自動収録を包括的には許可しません。
+Git 内の設計文書・歴史的証拠は保持し、製品sdistには docs/tests/scripts/検証ZIPを含めません。
+
+```bash
+uv run --no-sync python scripts/check_sdist_contract.py --build \
+  --output artifacts/sdist-contract.json
+uv run --no-sync pytest tests/packaging/test_sdist_contract.py -q
+```
+
+チェックは全memberの正規化パス・重複・root・種類を検査し、リンクと特殊ファイルを拒否します。
+全製品入力（Python/SQL/JSON/GraphQL）とroot入力の完全な集合・byte数・SHA-256を照合します。
+Git checkoutではtracked inventory、Git archiveでは同じ製品ディレクトリのファイル集合を使い、
+未分類の製品入力は暗黙に採用せず拒否します。新しい種類のpackage dataを追加する場合は、
+明示的な契約変更と検証が必要です。ライセンス等が追加された場合も収録と照合を更新します。
+
+圧縮2 MiB、展開時の通常ファイル合計8 MiB、512 membersを有限の上限とします。
+初回実測の約678 kB／約5.92 MB／159 filesに余裕を持たせた値です。上限超過は失敗とし、
+自動増加や移動baselineとの比率だけで通過させません。正当な製品増加では実測差分と理由を
+レビューして上限を変更します。JSON receiptには全ソース・memberのハッシュと容量を保存します。
+
+既存のgeneric/P1 packaging fixtureとAccess/I4/I5配布検証は同じcheckerを展開前に呼び出します。
+直接wheelはソースから明示的に構築し、sdistの展開先から別wheelを構築します。両wheelは
+全ファイルと `.dist-info` の内容を比較し、各 `RECORD` の完全性・ハッシュも検証します。
+`PKG-INFO` とwheel `METADATA` も照合します。ZIPの時刻・順序・圧縮方法だけは内容比較に
+影響しません。generic fixtureのsdistと契約receiptもcross-worker cacheのハッシュに含め、
+部分成功や改変されたreceiptを再利用しません。
+
+作成済み配布物を検査する場合は、同じ入力を固定したsource rootを指定します。
+
+```bash
+uv run --no-sync python scripts/check_sdist_contract.py \
+  --source-root /absolute/frozen-source --sdist /absolute/product.tar.gz \
+  --wheel /absolute/direct.whl --sdist-wheel /absolute/rebuilt.whl \
+  --output artifacts/distribution-contract.json
+```
+
+この静的内容検査だけでは実動作を受け入れません。既存の別venvへの導入、checkout外の
+import origin、CLI、SQL/JSON、スキーマ、安全性、取得・照会・交換・backup検証を維持します。
+既知のTransfer/Identification不成功を隠さず、Author検証と非Authorの独立レビューを区別します。

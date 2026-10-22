@@ -23,7 +23,6 @@ def followup(history, path, text="changed\n", event="push", mode="development"):
 @pytest.mark.parametrize(
     "path",
     [
-        "README.md",
         "docs/testing.md",
         "docs/schema-hardening/implementation-plan.md",
         "docs/ci-selection-results.json",
@@ -676,3 +675,22 @@ def test_unknown_changed_input_does_not_trigger_full_hosted_testing_during_devel
     assert plan["unexecuted_files"] == plan["acceptance_files"]
     assert plan["lanes"]["smoke"]["disposition"] == "selected"
     assert plan["lanes"]["static"]["disposition"] == "selected"
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "README.md",
+        "pyproject.toml",
+        "src/repo_catalog/new.json",
+        "tests/packaging/test_distribution.py",
+        "scripts/check_sdist_contract.py",
+    ],
+)
+def test_distribution_inputs_select_lightweight_contract_without_pytest(history, path):
+    plan = followup(history, path)
+    assert plan["preparation"]["sdist_contract"]["disposition"] == "selected"
+    assert plan["preparation"]["dependencies"]["disposition"] == "selected"
+    assert not plan["selected_files"]
+    assert not plan["full"]
+    assert plan["lanes"]["packaging"]["disposition"] == "not_applicable"

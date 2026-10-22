@@ -397,3 +397,20 @@ unexpected adapter ValueError as indeterminate yet misclassify a trusted decoder
 proven stored-data violation. Preserve the cause, use an explicit typed invariant
 boundary and check both confirmed corruption and existing IO/lock/budget/error
 negative controls. Do not classify every ValueError as authoritative corruption.
+
+## Inspect actual sdist members after positive selection
+
+Hatchling 1.32.4 still force-includes `.gitignore` and `PKG-INFO` when sdist
+`only-include` lists only package/source metadata. Inspect the built tar, not
+just TOML. Under ADR 0033, the common `scripts/check_sdist_contract.py` checks
+`.gitignore` against its frozen source hash and enumerates generated metadata;
+an unexpected forced file must fail rather than broaden the allowlist silently.
+The evidence and regression cases are in `tests/packaging/test_sdist_contract.py`
+and `docs/implementation/evidence/adr0033-minimal-sdist-20261022/README.md`.
+
+Request a direct source wheel explicitly. A frontend's default combined build
+may itself derive its first wheel from sdist and therefore cannot establish an
+independent direct/derived comparison. Compare complete wheel contents and
+validated RECORD entries, then retain the separate installed-behavior probes.
+This does not authorize removing package data, changing SQLite or treating a
+content-only gate as release acceptance.

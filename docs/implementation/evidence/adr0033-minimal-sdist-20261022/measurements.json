@@ -1,0 +1,368 @@
+{
+  "execution_commit": "03e1192f5228c9a1ca40dcef88271419c6828874",
+  "execution_tree": "b5bdcb3cf5361a339ecdcea496c9ee32d1ab61ce",
+  "baseline_commit": "18ba867d1c2f33c7d17939b2722d22a67139363a",
+  "before": {
+    "bytes": 83949291,
+    "members": 3875,
+    "unpacked_bytes": 137661254,
+    "sha256": "2fa5d627c506370e792ee5fac7cbdec3ae952fc2468273c61aa2d73bc296b4cf",
+    "top_level_counts": {
+      "AGENTS.md": 1,
+      "README.md": 1,
+      "mkdocs.yml": 1,
+      "uv.lock": 1,
+      ".agents": 16,
+      ".github": 4,
+      "docs": 3396,
+      "overrides": 1,
+      "scripts": 43,
+      "src": 155,
+      "tests": 253,
+      ".gitignore": 1,
+      "pyproject.toml": 1,
+      "PKG-INFO": 1
+    }
+  },
+  "after": {
+    "status": "passed",
+    "archive": "repo_catalog-0.2.0.tar.gz",
+    "sha256": "c72f86709f360b306daa1d39e2854e910f773e6acfce9f4bec7dae3396012e21",
+    "compressed_bytes": 677902,
+    "unpacked_bytes": 5921698,
+    "member_count": 159,
+    "file_count": 159,
+    "product_files": 155,
+    "source_inventory_sha256": "7d93a7c4b2d3d6a7411f0fc98a42901a83b508a63d2e15e44c2f6f2674f21934",
+    "budgets": {
+      "compressed_bytes": 2097152,
+      "unpacked_bytes": 8388608,
+      "members": 512
+    }
+  },
+  "reduction_percent": 99.19248633082559,
+  "wheel_equivalence": {
+    "status": "passed",
+    "direct": {
+      "bytes": 762725,
+      "sha256": "22809cb1f468d5c57f18e8aea66e218ca261134cf3307043cd988f1ff436f842"
+    },
+    "sdist_wheel": {
+      "bytes": 762725,
+      "sha256": "22809cb1f468d5c57f18e8aea66e218ca261134cf3307043cd988f1ff436f842"
+    },
+    "product_files": 155,
+    "metadata_files": 4
+  },
+  "before_after_wheel_contents_equal": true,
+  "installed": {
+    "direct": {
+      "exit_code": 0,
+      "product_file_count": 155,
+      "runtime": {
+        "version": "3.53.1",
+        "source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+        "compile_options": [
+          [
+            "ATOMIC_INTRINSICS=1"
+          ],
+          [
+            "COMPILER=clang-22.1.3"
+          ],
+          [
+            "DEFAULT_AUTOVACUUM"
+          ],
+          [
+            "DEFAULT_CACHE_SIZE=-2000"
+          ],
+          [
+            "DEFAULT_FILE_FORMAT=4"
+          ],
+          [
+            "DEFAULT_JOURNAL_SIZE_LIMIT=-1"
+          ],
+          [
+            "DEFAULT_MMAP_SIZE=0"
+          ],
+          [
+            "DEFAULT_PAGE_SIZE=4096"
+          ],
+          [
+            "DEFAULT_PCACHE_INITSZ=20"
+          ],
+          [
+            "DEFAULT_RECURSIVE_TRIGGERS"
+          ],
+          [
+            "DEFAULT_SECTOR_SIZE=4096"
+          ],
+          [
+            "DEFAULT_SYNCHRONOUS=2"
+          ],
+          [
+            "DEFAULT_WAL_AUTOCHECKPOINT=1000"
+          ],
+          [
+            "DEFAULT_WAL_SYNCHRONOUS=2"
+          ],
+          [
+            "DEFAULT_WORKER_THREADS=0"
+          ],
+          [
+            "DIRECT_OVERFLOW_READ"
+          ],
+          [
+            "ENABLE_DBSTAT_VTAB"
+          ],
+          [
+            "ENABLE_FTS3"
+          ],
+          [
+            "ENABLE_FTS3_PARENTHESIS"
+          ],
+          [
+            "ENABLE_FTS4"
+          ],
+          [
+            "ENABLE_FTS5"
+          ],
+          [
+            "ENABLE_GEOPOLY"
+          ],
+          [
+            "ENABLE_MATH_FUNCTIONS"
+          ],
+          [
+            "ENABLE_PERCENTILE"
+          ],
+          [
+            "ENABLE_RTREE"
+          ],
+          [
+            "MALLOC_SOFT_LIMIT=1024"
+          ],
+          [
+            "MAX_ATTACHED=10"
+          ],
+          [
+            "MAX_COLUMN=2000"
+          ],
+          [
+            "MAX_COMPOUND_SELECT=500"
+          ],
+          [
+            "MAX_DEFAULT_PAGE_SIZE=8192"
+          ],
+          [
+            "MAX_EXPR_DEPTH=1000"
+          ],
+          [
+            "MAX_FUNCTION_ARG=1000"
+          ],
+          [
+            "MAX_LENGTH=1000000000"
+          ],
+          [
+            "MAX_LIKE_PATTERN_LENGTH=50000"
+          ],
+          [
+            "MAX_MMAP_SIZE=0x7fff0000"
+          ],
+          [
+            "MAX_PAGE_COUNT=0xfffffffe"
+          ],
+          [
+            "MAX_PAGE_SIZE=65536"
+          ],
+          [
+            "MAX_SQL_LENGTH=1000000000"
+          ],
+          [
+            "MAX_TRIGGER_DEPTH=1000"
+          ],
+          [
+            "MAX_VARIABLE_NUMBER=32766"
+          ],
+          [
+            "MAX_VDBE_OP=250000000"
+          ],
+          [
+            "MAX_WORKER_THREADS=8"
+          ],
+          [
+            "MUTEX_PTHREADS"
+          ],
+          [
+            "SYSTEM_MALLOC"
+          ],
+          [
+            "TEMP_STORE=1"
+          ],
+          [
+            "THREADSAFE=1"
+          ]
+        ]
+      },
+      "module_origin": "/workspace/sdist-work/cli-direct-venv/lib/python3.12/site-packages/repo_catalog",
+      "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]"
+    },
+    "sdist": {
+      "exit_code": 0,
+      "product_file_count": 155,
+      "runtime": {
+        "version": "3.53.1",
+        "source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+        "compile_options": [
+          [
+            "ATOMIC_INTRINSICS=1"
+          ],
+          [
+            "COMPILER=clang-22.1.3"
+          ],
+          [
+            "DEFAULT_AUTOVACUUM"
+          ],
+          [
+            "DEFAULT_CACHE_SIZE=-2000"
+          ],
+          [
+            "DEFAULT_FILE_FORMAT=4"
+          ],
+          [
+            "DEFAULT_JOURNAL_SIZE_LIMIT=-1"
+          ],
+          [
+            "DEFAULT_MMAP_SIZE=0"
+          ],
+          [
+            "DEFAULT_PAGE_SIZE=4096"
+          ],
+          [
+            "DEFAULT_PCACHE_INITSZ=20"
+          ],
+          [
+            "DEFAULT_RECURSIVE_TRIGGERS"
+          ],
+          [
+            "DEFAULT_SECTOR_SIZE=4096"
+          ],
+          [
+            "DEFAULT_SYNCHRONOUS=2"
+          ],
+          [
+            "DEFAULT_WAL_AUTOCHECKPOINT=1000"
+          ],
+          [
+            "DEFAULT_WAL_SYNCHRONOUS=2"
+          ],
+          [
+            "DEFAULT_WORKER_THREADS=0"
+          ],
+          [
+            "DIRECT_OVERFLOW_READ"
+          ],
+          [
+            "ENABLE_DBSTAT_VTAB"
+          ],
+          [
+            "ENABLE_FTS3"
+          ],
+          [
+            "ENABLE_FTS3_PARENTHESIS"
+          ],
+          [
+            "ENABLE_FTS4"
+          ],
+          [
+            "ENABLE_FTS5"
+          ],
+          [
+            "ENABLE_GEOPOLY"
+          ],
+          [
+            "ENABLE_MATH_FUNCTIONS"
+          ],
+          [
+            "ENABLE_PERCENTILE"
+          ],
+          [
+            "ENABLE_RTREE"
+          ],
+          [
+            "MALLOC_SOFT_LIMIT=1024"
+          ],
+          [
+            "MAX_ATTACHED=10"
+          ],
+          [
+            "MAX_COLUMN=2000"
+          ],
+          [
+            "MAX_COMPOUND_SELECT=500"
+          ],
+          [
+            "MAX_DEFAULT_PAGE_SIZE=8192"
+          ],
+          [
+            "MAX_EXPR_DEPTH=1000"
+          ],
+          [
+            "MAX_FUNCTION_ARG=1000"
+          ],
+          [
+            "MAX_LENGTH=1000000000"
+          ],
+          [
+            "MAX_LIKE_PATTERN_LENGTH=50000"
+          ],
+          [
+            "MAX_MMAP_SIZE=0x7fff0000"
+          ],
+          [
+            "MAX_PAGE_COUNT=0xfffffffe"
+          ],
+          [
+            "MAX_PAGE_SIZE=65536"
+          ],
+          [
+            "MAX_SQL_LENGTH=1000000000"
+          ],
+          [
+            "MAX_TRIGGER_DEPTH=1000"
+          ],
+          [
+            "MAX_VARIABLE_NUMBER=32766"
+          ],
+          [
+            "MAX_VDBE_OP=250000000"
+          ],
+          [
+            "MAX_WORKER_THREADS=8"
+          ],
+          [
+            "MUTEX_PTHREADS"
+          ],
+          [
+            "SYSTEM_MALLOC"
+          ],
+          [
+            "TEMP_STORE=1"
+          ],
+          [
+            "THREADSAFE=1"
+          ]
+        ]
+      },
+      "module_origin": "/workspace/sdist-work/cli-sdist-venv/lib/python3.12/site-packages/repo_catalog",
+      "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]"
+    }
+  },
+  "all_155_product_source_hashes_unchanged": true,
+  "source_suffix_counts": {
+    ".py": 132,
+    ".sql": 19,
+    ".json": 2,
+    ".graphql": 2
+  },
+  "old_members_excluded": 3716
+}

@@ -50,3 +50,21 @@ CI・検証スクリプト・AGENTS / Skills・明示された現行手順の禁
 このチェックは既知の構文・命令パターンに対する軽量な防止策であり、所有者の例外承認や
 独立レビューを代替しません。承認済み例外でも検出を黙って無効化せず、範囲と根拠を
 レビュー可能な変更として記録します。
+
+## sdistの軽量ゲート
+
+[ADR 0033](adr/0033-minimal-product-sdist.md) の収録契約は `sdist_inputs` に分類した
+製品入力・build設定・rootメタデータ・配布検証/CI構成の変更で検査します。READMEだけの変更も
+sdist入力としてこのゲートと必要な依存準備を選びます。一般のdocs proseだけでは選びません。
+不明な比較履歴と明示的Releaseモードでは安全側に選びます。
+
+`tests.yml` は準備済みの同じPython/Hatchlingでsdistだけを構築し、
+`check_sdist_contract.py --build` により全member、必須入力ハッシュ、有限容量を検査します。
+`artifacts/ci-profile/sdist-members.json` に一覧とハッシュを残します。
+`sdist_contract` command profileの成功・実測環境・入力識別は既存gateで照合し、
+未実行・非ゼロ終了・planの選択改変は成功としません。full pytest/packaging laneの
+Development時の自動実行方針は変更しません。sdistゲートの成功は実動作・Release acceptanceではありません。
+
+Accessの既存配布検証も同じcheckerを再利用し、checker・配布verifier・共通fixtureの変更を
+workflow triggerに含めます。Pagesのsourceは従来のGit checkoutと公開allowlistのままです。
+siteをsdistから生成する経路やデプロイ権限は追加していません。

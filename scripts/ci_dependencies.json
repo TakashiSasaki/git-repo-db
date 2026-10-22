@@ -56,5 +56,24 @@
     "tests/integration",
     "tests/e2e",
     "tests/packaging"
+  ],
+  "sdist_inputs": [
+    "src/**",
+    "pyproject.toml",
+    "README.md",
+    ".gitignore",
+    "LICENSE*",
+    "LICENCE*",
+    "COPYING*",
+    "NOTICE*",
+    "uv.lock",
+    "scripts/check_sdist_contract.py",
+    "scripts/ci_*.py",
+    "scripts/ci_dependencies.json",
+    "scripts/verify_*distribution.py",
+    "tests/packaging/**",
+    "tests/support/distributions.py",
+    ".github/workflows/tests.yml",
+    ".github/workflows/access-registry.yml"
   ]
 }
