@@ -36,6 +36,7 @@ def main():
     )
     from repo_catalog.adapters.sqlite import p1_schema
 
+    evidence.require_product_runtime()
     p1_schema.register_functions(db)
     p1_schema.configure(db)
     actual = db.execute("SELECT sqlite_version(),sqlite_source_id()").fetchone()

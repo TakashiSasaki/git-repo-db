@@ -102,7 +102,7 @@ the unconditional temporary I2 rejection. Parent arrival cannot replay a unit.
 
 For new executions, follow [ADR 0032](../adr/0032-environment-sqlite-validation.md)
 and the [current testing guide](../testing.md). Historical results above remain
-unchanged. The dependent policy implementation PR updates these helper interfaces:
+unchanged. Use the current helper interfaces:
 
 ```sh
 python scripts/verify_i2.py --output /absolute/new-evidence-directory

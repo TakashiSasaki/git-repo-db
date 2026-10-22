@@ -214,6 +214,7 @@ def test_generated_installed_probe_records_runtime_and_real_json_before_guard(
     Path(package.__file__).write_text("# installed fixture\n")
     schema = types.ModuleType("repo_catalog.adapters.sqlite.p1_schema")
     schema.verify_declared = lambda: None
+    schema._open = lambda *args, **kwargs: sqlite3.connect(":memory:")
     schema.register_functions = lambda db: None
 
     def configure(db):
@@ -287,3 +288,34 @@ def test_author_exit_keeps_focused_and_regression_failures(
     if stage == 5:
         assert "transfer-admission" in names
     assert json.loads((output / "summary.json").read_text())["run"]["skipped"] == 1
+
+
+def test_raw_diagnostics_preserve_the_product_runtime_safety_floor(monkeypatch):
+    from repo_catalog.adapters.sqlite import p1_schema
+
+    monkeypatch.setattr(sqlite3, "sqlite_version_info", (3, 46, 1))
+    with pytest.raises(p1_schema.SchemaError, match="safe WAL, STRICT and JSON"):
+        evidence.require_product_runtime()
+
+
+def test_raw_diagnostics_keep_product_json_capability_refusal(monkeypatch):
+    from repo_catalog.adapters.sqlite import p1_schema
+
+    class MissingJSON:
+        closed = False
+
+        def execute(self, sql, *args):
+            if sql.startswith("SELECT json_array"):
+                raise sqlite3.OperationalError("no such function: json_array")
+            return sqlite3.connect(":memory:").execute(sql, *args)
+
+        def close(self):
+            self.closed = True
+
+    probe = MissingJSON()
+    monkeypatch.setattr(p1_schema, "register_functions", lambda _: None)
+    monkeypatch.setattr(p1_schema, "configure", lambda _: None)
+    monkeypatch.setattr(p1_schema.sqlite3, "connect", lambda *args, **kw: probe)
+    with pytest.raises(sqlite3.OperationalError, match="no such function"):
+        evidence.require_product_runtime()
+    assert probe.closed

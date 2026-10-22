@@ -50,14 +50,14 @@ API原本・Publication/profile/selection/certificateの本番経路不在、clo
 
 package 試験は lock と SHA で検証した wheelhouse を `--offline --no-index --find-links` で使います。wheel と sdist 由来 wheel を新しい venv に導入し、source 外の CWD から console script と `python -m` を実行します。complete packaged DDL、JSON guardとgeneratorの一致、新規catalog初期化、取得・検索・再構築・交換・Git再解析・整合性・backup/restoreを確認します。廃止された公開操作と依存がdistributionからも利用できないことを検証します。
 
-I2–I5 の現行検証ツールも実測環境を使用します。後続の実装 PR B で、`verify_i2.py`〜`verify_i5.py` の `--sqlite`、I4/I5 distribution の `--minimum-library` / `--newer-library` は廃止します。以後は選んだ Python で次を実行します（PR A 単独の旧スクリプトには新 CLI は未実装）。
+I2–I5 の現行検証ツールも実測環境を使用します。`verify_i2.py`〜`verify_i5.py` に版を指定する必要はなく、I4/I5 distribution もライブラリパスの指定を要求しません。選んだ Python で次を実行します。
 
 ```bash
 python scripts/verify_i5.py --output /absolute/new-i5-evidence
 python scripts/verify_i5_offline.py --output /absolute/new-offline-evidence --execute
 python scripts/verify_i5_distribution.py --output /absolute/new-distribution-evidence
 python scripts/compare_i5_failures.py --current /absolute/new-i5-evidence/regressions.xml \
-  --baseline-entry final-3.53.1/regressions.xml --output /absolute/new-comparison.json
+  --baseline-entry author-3.53.1/regressions.xml --output /absolute/new-comparison.json
 ```
 
 失敗比較の baseline entry は保存済み ZIP の履歴メンバーを明示選択するもので、現在の SQLite をその版に合わせる指定ではありません。wheel と sdist 由来 wheel は同じ Python に基づく別 venv で両方を検証します。独立レビュー、オフライン制約、入力・配布物ハッシュ、終了コードと失敗照合は保持します。旧実装記録・凍結レビュー・ZIP 内の二版コマンドは当時の再現記録であり、新規実行の手順はこの文書と ADR 0032 を優先します。

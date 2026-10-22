@@ -37,6 +37,9 @@ sys.path.insert(0, str(REPO / "src"))
 
 from repo_catalog.adapters.sqlite import p1_schema  # noqa: E402
 
+# Raw diagnostics still honor the product factory's unchanged safety gate.
+p1_schema._open(":memory:", fresh=True).close()
+
 
 # Independent literals/values. J is deliberately independent of the target codec.
 def J(x):

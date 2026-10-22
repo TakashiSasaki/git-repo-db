@@ -52,6 +52,16 @@ def runtime_metadata(db):
     }
 
 
+def require_product_runtime():
+    """Probe the unchanged product factory's WAL, JSON and PRAGMA contract."""
+    from repo_catalog.adapters.sqlite import p1_schema
+
+    # Raw DDL diagnostics do not otherwise enter the factory's safety gate.
+    # Use its real in-memory path rather than duplicating the minimum predicate.
+    probe = p1_schema._open(":memory:", fresh=True)
+    probe.close()
+
+
 def verified_wheelhouse(directory=None):
     """Reject altered/unlocked wheels before network-free distribution installs."""
     directory = Path(
@@ -298,6 +308,7 @@ def main():
     with sqlite3.connect(":memory:") as db:
         runtime = runtime_metadata(db)
     write_json(out / "runtime-before-checks.json", runtime)
+    require_product_runtime()
     import repo_catalog
 
     binding = {

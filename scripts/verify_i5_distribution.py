@@ -156,6 +156,7 @@ assert origin.is_relative_to(Path(sys.prefix).resolve()), origin
 db=sqlite3.connect(':memory:')
 actual=db.execute('SELECT sqlite_version(),sqlite_source_id()').fetchone()
 Path(sys.argv[1]).write_text(json.dumps({'sqlite':actual,'python':sys.version,'executable':sys.executable,'origin':str(origin),'compile_options':db.execute('PRAGMA compile_options').fetchall()},indent=2)+'\\n')
+p1_schema._open(':memory:',fresh=True).close()
 p1_schema.verify_declared()
 p1_schema.register_functions(db); p1_schema.configure(db)
 db.executescript(p1_schema.compose('context'))

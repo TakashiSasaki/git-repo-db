@@ -32,6 +32,7 @@ LIVE_DOCS = frozenset(
         "docs/implementation/context-exchange-design-handoff.md",
         "docs/implementation/p1-schema-contracts.md",
         "docs/implementation/adr0031-i2-implementation-preparation.md",
+        "docs/implementation/adr0031-i2-implementation.md",
         "docs/adr/0032-environment-sqlite-validation.md",
     }
 )
