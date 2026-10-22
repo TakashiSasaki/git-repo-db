@@ -3,8 +3,9 @@
 This is an I5 evidence helper, not a release receipt or an approval. Install the
 locked dev AND docs groups before use. The docs group supplies PyYAML needed by
 ordinary documentation tests. Before --execute, run scripts/prepare_wheelhouse.py
-(online dependency preparation only); execution stays network-guarded. Invoke with the actual SQLite 3.51.3 interpreter;
-LD_LIBRARY_PATH, if needed, must also reach all subprocesses and xdist workers.
+(online dependency preparation only); execution stays network-guarded. Use the
+environment Python and its SQLite library; record the actual runtime without
+installing or replacing SQLite or requiring a particular release.
 """
 
 from __future__ import annotations
@@ -20,15 +21,63 @@ import sqlite3
 import subprocess
 import sys
 import time
+import tomllib
 import xml.etree.ElementTree as ET
 from collections import Counter
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE_ID = (
-    "2026-03-13 10:38:09 "
-    "737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618"
-)
+
+
+def runtime_metadata(db):
+    """Measure the current invocation before any product capability refusal."""
+    version, source = db.execute(
+        "SELECT sqlite_version(),sqlite_source_id()"
+    ).fetchone()
+    return {
+        "python": platform.python_version(),
+        "executable": sys.executable,
+        "sqlite_version": version,
+        "sqlite_source_id": source,
+        "compile_options": db.execute("PRAGMA compile_options").fetchall(),
+        "pragmas": {
+            name: db.execute(f"PRAGMA {name}").fetchall()
+            for name in (
+                "foreign_keys",
+                "recursive_triggers",
+                "journal_mode",
+                "synchronous",
+            )
+        },
+    }
+
+
+def verified_wheelhouse(directory=None):
+    """Reject altered/unlocked wheels before network-free distribution installs."""
+    directory = Path(
+        directory
+        or os.environ.get("REPO_CATALOG_WHEELHOUSE", ROOT / "artifacts/wheelhouse")
+    ).resolve()
+    lock = (ROOT / "uv.lock").read_bytes()
+    manifest = json.loads((directory / "manifest.json").read_text())
+    if manifest["lock_sha256"] != hashlib.sha256(lock).hexdigest():
+        raise ValueError("wheelhouse is not bound to current uv.lock")
+    locked = {
+        (Path(wheel["url"]).name, wheel["hash"].removeprefix("sha256:"))
+        for package in tomllib.loads(lock.decode())["package"]
+        for wheel in package.get("wheels", [])
+    }
+    files = set()
+    for wheel in manifest["wheels"]:
+        name, digest = wheel["file"], wheel["sha256"]
+        if Path(name).name != name or (name, digest) not in locked or name in files:
+            raise ValueError("unlocked or duplicate wheelhouse member: " + name)
+        files.add(name)
+        if hashlib.sha256((directory / name).read_bytes()).hexdigest() != digest:
+            raise ValueError("wheelhouse SHA-256 mismatch: " + name)
+    if {path.name for path in directory.glob("*.whl")} != files:
+        raise ValueError("unindexed wheelhouse files")
+    return directory, manifest
 
 
 def write_json(path, value):
@@ -191,6 +240,18 @@ def outcomes(xml_path):
     return dict(result)
 
 
+def cohort_succeeded(result):
+    """A successful process alone cannot hide skipped or unreconciled tests."""
+    return (
+        result["exit_code"] == 0
+        and result.get("reconciliation", {}).get("consistent_node_execution", False)
+        and all(
+            result.get(name, 0) == 0
+            for name in ("failed", "error", "skipped", "xfail", "xpass")
+        )
+    )
+
+
 def run_cohort(out, name, selected, workers):
     selection = out / f"{name}.selected.txt"
     selection.write_text("".join(n + "\n" for n in selected))
@@ -234,23 +295,17 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
     if any(out.iterdir()):
         parser.error("output must be empty (preserve earlier evidence)")
-    actual_source = (
-        sqlite3.connect(":memory:").execute("SELECT sqlite_source_id()").fetchone()[0]
-    )
-    if sqlite3.sqlite_version_info != (3, 51, 3) or actual_source != SOURCE_ID:
-        raise RuntimeError(f"exact SQLite runtime required: {actual_source}")
+    with sqlite3.connect(":memory:") as db:
+        runtime = runtime_metadata(db)
+    write_json(out / "runtime-before-checks.json", runtime)
     import repo_catalog
 
     binding = {
         "head": git("rev-parse", "HEAD"),
         "tree": git("rev-parse", "HEAD^{tree}"),
         "dirty": git("status", "--porcelain"),
-        "python": platform.python_version(),
-        "executable": sys.executable,
-        "sqlite_version": sqlite3.sqlite_version,
-        "sqlite_source_id": actual_source,
+        **runtime,
         "package_paths": list(repo_catalog.__path__),
-        "LD_LIBRARY_PATH": os.environ.get("LD_LIBRARY_PATH"),
         "files": {
             name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest()
             for name in ("pyproject.toml", "uv.lock", __file__)
@@ -289,21 +344,7 @@ def main():
     )
     runs = {}
     if args.execute:
-        wheelhouse = Path(
-            os.environ.get("REPO_CATALOG_WHEELHOUSE", ROOT / "artifacts/wheelhouse")
-        )
-        manifest = json.loads((wheelhouse / "manifest.json").read_text())
-        if (
-            manifest["lock_sha256"]
-            != hashlib.sha256((ROOT / "uv.lock").read_bytes()).hexdigest()
-        ):
-            raise ValueError("wheelhouse is not bound to current uv.lock")
-        for wheel in manifest["wheels"]:
-            if (
-                hashlib.sha256((wheelhouse / wheel["file"]).read_bytes()).hexdigest()
-                != wheel["sha256"]
-            ):
-                raise ValueError("wheelhouse SHA-256 mismatch: " + wheel["file"])
+        verified_wheelhouse()
         for name, selected, workers in (
             ("ci-run", ci, args.workers),
             ("additional-run", omitted, args.workers),
@@ -325,14 +366,7 @@ def main():
     write_json(out / "summary.json", summary)
     print(json.dumps(summary), flush=True)
     return int(
-        bool(changed)
-        or any(
-            value["exit_code"]
-            or not value.get("reconciliation", {}).get(
-                "consistent_node_execution", False
-            )
-            for value in runs.values()
-        )
+        bool(changed) or any(not cohort_succeeded(value) for value in runs.values())
     )
 
 

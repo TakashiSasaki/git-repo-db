@@ -22,21 +22,24 @@ def main():
     os.umask(0o022)
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--sqlite", choices=("3.51.3", "3.53.1"), required=True)
     parser.add_argument("--workers", type=int, default=4)
     args = parser.parse_args()
+    if args.workers < 0:
+        parser.error("workers must be nonnegative")
     out = args.output.resolve()
     out.mkdir(parents=True, exist_ok=False)
     os.environ["PATH"] = (
         str(Path(sys.executable).parent) + os.pathsep + os.environ.get("PATH", "")
     )
     db = sqlite3.connect(":memory:")
+    evidence.write_json(
+        out / "runtime-before-checks.json", evidence.runtime_metadata(db)
+    )
     from repo_catalog.adapters.sqlite import p1_schema
 
     p1_schema.register_functions(db)
     p1_schema.configure(db)
     actual = db.execute("SELECT sqlite_version(),sqlite_source_id()").fetchone()
-    assert actual[0] == args.sqlite, actual
     runtime = {
         "python": sys.version,
         "executable": sys.executable,
@@ -140,9 +143,9 @@ def main():
     raise SystemExit(
         0
         if same
-        and run["exit_code"] == 0
-        and admission_run["exit_code"] == 0
-        and sql_run["exit_code"] == 0
+        and evidence.cohort_succeeded(run)
+        and evidence.cohort_succeeded(admission_run)
+        and evidence.cohort_succeeded(sql_run)
         else 1
     )
 
