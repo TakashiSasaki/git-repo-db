@@ -114,3 +114,18 @@ paired backup and query/Search acceptance are separate work. No existing PR
 changes, merge, release, deployment, P8 or real-catalog/Provider operations.
 
 See [author evidence and frozen review inputs](evidence/adr0031-i4/README.md).
+
+## Existing I2 corruption-fixture adaptation
+
+The eight existing `test_matching_schema_poison_stops_before_ordinary_exposure`
+nodes retain their exact report/endpoint poison values and all validation,
+Context/query/export/Search refusal, Recovery Stop and unchanged-row assertions.
+Their old injector removed only a stage fence; I4 correctly rejects that malformed
+row sooner. The injector now temporarily drops the corresponding new I4 INSERT
+guard and disables FK/CHECK enforcement solely to seed that same deliberately
+impossible row. It then restores every trigger definition, configures the required
+PRAGMAs and validates the exact product schema before any assertion or ordinary
+route executes. This corruption fixture is separate from the I4 constraint lane,
+which removes only the two fences and keeps every integrity setting enabled.
+No ordinary connection supports that injection profile. The initial eight
+injection failures and successful corrected executions remain in the evidence.

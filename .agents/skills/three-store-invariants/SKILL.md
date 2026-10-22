@@ -810,3 +810,12 @@ nonzero inherited staging failures. A structurally stored original Event type
 does not establish its Provider meaning; I5 owns semantic Admission. Whole-unit
 completeness and pre-affinity original timestamp types cannot be inferred from
 successful SQL references.
+
+An older impossible-storage corruption fixture can fail at injection after a new
+constraint is added. Keep its original corrupt values and downstream stop/rowset
+assertions. Bypass additional guards only inside the explicit corruption
+injector, then restore all original DDL and required settings and verify the
+complete product schema before exercising the reader. This is distinct from the
+constraint-verification lane, whose integrity settings must remain enabled.
+The eight retained I2 matching-schema poison nodes demonstrate this distinction;
+a prior 67-failure/20-error run records the additional eight injection failures.
