@@ -10,6 +10,7 @@ import platform
 import re
 import sqlite3
 import subprocess
+import sys
 import sysconfig
 import time
 from pathlib import Path
@@ -237,12 +238,19 @@ def current_acceptance_files(root=ROOT):
 
 
 def runtime():
+    db = sqlite3.connect(":memory:")
+    try:
+        sqlite_source_id = db.execute("SELECT sqlite_source_id()").fetchone()[0]
+    finally:
+        db.close()
     try:
         uv = subprocess.check_output(["uv", "--version"], text=True).strip()
     except (OSError, subprocess.CalledProcessError):
         uv = None
     return {
         "python": platform.python_version(),
+        "executable": sys.executable,
+        "sqlite_source_id": sqlite_source_id,
         "abi": sysconfig.get_config_var("SOABI"),
         "sqlite": sqlite3.sqlite_version,
         "os": platform.system(),
