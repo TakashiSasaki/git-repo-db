@@ -260,11 +260,13 @@ multirow failure and savepoint/transaction rollback. Keep lawful competing
 reports and ordinary ordered multi-member reports as positive controls.
 
 Use `python -m pytest tests/integration/p3/test_parent_reports.py -q` and the
-outside-checkout `scripts/verify_i3_distribution.py` probe on each actual SQLite
-runtime. A statically built-in `_sqlite3` ignores `LD_LIBRARY_PATH`; measure
-`SELECT sqlite_version(),sqlite_source_id()` in each child process and select a
-real dynamically linked interpreter when switching libraries. Never overwrite a
-reported version. The I3 evidence records both official-source library builds.
+outside-checkout `scripts/verify_i3_distribution.py` probe with the environment's
+single Python-loaded SQLite under [ADR 0032](../../../../docs/adr/0032-environment-sqlite-validation.md).
+Measure `SELECT sqlite_version(),sqlite_source_id()` in each child process and
+retain the selected Python. Do not download/build/install/swap SQLite or require
+multiple versions; preserve capability/WAL safety checks and honest failures.
+Never overwrite a reported version. The I3 evidence's two official-source builds
+are historical facts, not a current setup procedure.
 These checks establish the bounded Parent contract, not I4/I5 Transfer support,
 I6 generalized Exchange, full I7 Recovery or Provider authenticity.
 

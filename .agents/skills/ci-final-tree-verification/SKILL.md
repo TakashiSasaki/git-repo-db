@@ -5,7 +5,7 @@ description: Verify git-repo-db CI status and test execution against the exact f
 
 # Verify the exact accepted tree
 
-Use `docs/change-aware-ci.md`, `docs/testing.md`, and `scripts/ci_dependencies.json` as the live contracts. Distinguish ordinary development validation from explicit release acceptance.
+Use `docs/change-aware-ci.md`, `docs/testing.md`, and `scripts/ci_dependencies.json` as the live contracts. Follow [ADR 0032](../../../docs/adr/0032-environment-sqlite-validation.md) for the environment's Python-loaded SQLite; one version per environment suffices for development and release. Distinguish ordinary development validation from explicit release acceptance.
 
 ## Stacked integration trees and merge authorization fences
 
@@ -78,7 +78,7 @@ packaging tests, and verify its manifest/lock and wheel digests. Dependency
 preparation is distinct from executing Provider acquisition.
 
 Use `scripts/verify_i5_offline.py --output NEW_EMPTY_DIR --execute` with the
-actual SQLite 3.51.3 interpreter for disjoint focused/additional/benchmark
+environment's selected Python and its actual SQLite for disjoint focused/additional/benchmark
 cohorts, quiet raw logs, JUnit/journal reconciliation and input hashes. It is
 an acceptance evidence helper, not a release receipt. It refuses live nodes;
 report those as unexecuted. Its default xdist workers isolate disposable Catalogs;
@@ -108,14 +108,19 @@ and its independently retained execution receipts.
 
 ## Development validation loop (ordinary PRs and stacked iterations)
 
-Before an exact SQLite-minimum run, query the actual loaded version and
-`SELECT sqlite_source_id()` in the intended interpreter. The managed CPython 3.12
-runtime embedded `_sqlite3`: `LD_LIBRARY_PATH` did not replace its SQLite 3.53.1,
-even with a hash-verified 3.51.3 library present. Preserve the failed exact-version
-assertion and distinguish that supported newer-runtime run. Use an available
-dynamic-binding interpreter in its own locked worktree environment, and repeat the
-actual source-ID query before calling the result a minimum-version run. Do not
-alter version strings, lower requirements or disable the network guard.
+Measure the selected Python executable/version and `SELECT sqlite_version(),
+sqlite_source_id()` before execution. Keep that Python through locked dependency
+preparation, subprocesses and installed venvs. Do not obtain/build/install/swap
+SQLite for tests or require multiple releases or an exact version/source ID.
+Local and hosted SQLite may differ. Preserve product capability/WAL safety checks;
+report an insufficient environment as failed/unexecuted work without version
+spoofing, skip/xfail, guard bypass or a hidden substitute library. Obtain explicit
+owner approval of the reason and scope before a policy exception.
+
+Earlier minimum-runtime setup attempts and failed assertions are historical
+receipts. Preserve them as facts; use the current [testing guide](../../../docs/testing.md)
+for new executions. Runtime identity checks within one invocation still bind its
+receipt, without pinning a release or aligning independent environments.
 
 Review assertion meaning before extending acceptance links. Scope URI grammar
 checks do not prove Repository Locator grammar, and a MAX-only restore check does

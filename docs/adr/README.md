@@ -30,11 +30,17 @@ Read the current scope before implementation. This index describes accepted targ
 
 **Accepted five-store boundary: [ADR 0029](0029-independent-access-store.md), approved 2026-10-19.** ADR 0029 replaces [historical ADR 0003](https://github.com/TakashiSasaki/git-repo-db/blob/bb878eda47cf17268dd821c74343bac64d769ea7/docs/adr/0003-append-only-git-core-and-context-store.md), preserving strictly INSERT-only Git Core, durable Context, Operational and Search while separating durable Access (Scope UUID, Scope/Repository Locators, Connection Configuration and local approvals). The fixed Scope choices and same-table dated Scope Locator registrations are retained. **Exact Access physical keys/adapters/approval mechanics remain engineering proposals, not silently accepted by this status change.** Read the [Access design](../architecture/access-store-design.md), [ADR 0029 acceptance/retirement closure](../implementation/adr-0029-accepted-retirement-20261019.md) and the [pre-approval readiness audit](../implementation/adr-0029-replacement-readiness-20261019.md). Approval does not implement Access or authorize P8, deployment or merge.
 
+**SQLite validation workflow:** [ADR 0032](0032-environment-sqlite-validation.md)
+uses each execution environment's Python-loaded SQLite, one version for development
+and release; no test-only SQLite installation/build/swap, matrix or exact-version
+gate. Product safety/capability floors and independent validation remain binding;
+exceptions require explicit owner approval.
+
 ## Accepted Records
 
 | ADR | Decision | Date | Current applicability |
 | --- | --- | --- | --- |
-| [0001](0001-validation-lifecycle-architecture.md) | Development and release validation lifecycle | 2026-10-12 | Accepted; execution evidence is separate |
+| [0001](0001-validation-lifecycle-architecture.md) | Development and release validation lifecycle | 2026-10-12 | Accepted; environment SQLite convention refined by 0032; execution evidence is separate |
 | [0002](0002-three-store-boundary-architecture.md) | Three-store PF-P01–PF-P17 baseline | 2026-10-12 | Placement/full-backup now superseded by ADR 0029 (historical 0003 predecessor); other clauses preserved |
 | [0004](0004-metadata-only-git-core.md) | GCTX-M01: metadata-only Core | 2026-10-14 | Fully supported; optional body admission now restricted by 0014 |
 | [0005](0005-common-oid-identity-with-attributed-metadata.md) | GCTX-M02: shared nominal OID identity | 2026-10-14 | Preserved; note and file roles do not duplicate identity |
@@ -64,6 +70,7 @@ Read the current scope before implementation. This index describes accepted targ
 | [0029](0029-independent-access-store.md) | Independent durable Access, Scope UUIDv4, separate Scope/Repository Locators and Connection Configuration; full successor to historical ADR 0003 | 2026-10-19 | **Accepted whole-record replacement**; Core/Context/Operational/Search preserved, Access added. Physical/adapter proposals separately reviewable; no runtime/P8/merge permission |
 | [0030](0030-context-repository-relations-and-selective-exchange.md) | Typed Repository Context relations and selective Exchange without Witness storage | 2026-10-18 | Accepted 2026-10-18; I1–I5 implementation subsequently integrated by #112 at `efb55af84ccbf1183d47547d22bb6c57d8fbc8f9`; generalized ADR 0031 was accepted on 2026-10-21 but remains unimplemented and unmerged; no P8 activation |
 | [0031](0031-generalized-context-resources.md) | Generalized Context Resource identity, attributed Parent relations, known typed contracts and Q-S10 G3=A native-Issue Transfer support | 2026-10-21 | **Owner-accepted design**, `replaces: []`; independently reviewed bounded SQL delta, unmerged Draft PR #114 on #113. Production implementation I1–I8, V1/V2, merge and runtime activation remain separate |
+| [0032](0032-environment-sqlite-validation.md) | Environment Python-loaded SQLite; one version per environment, no test-only installation/build/swap or matrix | 2026-10-22 | Owner-accepted Mini-ADR; preserves product safety floors and ADR 0001 independent validation; exceptions need explicit approval |
 | [Transport-independent Core](../transport-independent-core-adr.md) | Domain persistence and provenance independent of transport replay | 2026-10-10 | Preserved in unsuperseded scope |
 | [No Independent Publication](../phase2/no-independent-publication-adr.md) | Publication-free domain authority | 2026-10-10 | Preserved; no new generic notes/retention seal |
 
@@ -72,6 +79,6 @@ Read the current scope before implementation. This index describes accepted targ
 None. ADR 0031 moved to Accepted Records by the owner's explicit 2026-10-21
 whole-design approval; its earlier pre-acceptance review remains in Git history.
 
-**Allocation/adoption:** ADR 0011 was explicitly adopted through [governance PR #52](https://github.com/TakashiSasaki/git-repo-db/pull/52) on 2026-10-15, after the accepted design stack was merged by PR #69. It does not renumber ADRs 0012–0027, retire still-binding historical decisions or authorize bulk migration. **Highest allocated ADR ID: 0031**. Future allocations must inspect this watermark, Git history and live remote branches before assigning a new four-digit ID.
+**Allocation/adoption:** ADR 0011 was explicitly adopted through [governance PR #52](https://github.com/TakashiSasaki/git-repo-db/pull/52) on 2026-10-15, after the accepted design stack was merged by PR #69. It does not renumber ADRs 0012–0027, retire still-binding historical decisions or authorize bulk migration. **Highest allocated ADR ID: 0032**. Future allocations must inspect this watermark, Git history and live remote branches before assigning a new four-digit ID.
 
 The [transition plan](../architecture/git-core-context-transition-plan.md) describes the redesigned implementation sequence. Old Phase 2 handoffs and accepted records remain evidence of their original decisions, subject to the explicit scoped override in ADR 0014. Neither old wording nor a passing documentation check is authority to implement an excluded file-storage path.
