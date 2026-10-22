@@ -48,6 +48,9 @@ def test_full_current_acceptance_reports_exact_execution(acceptance):
         "empty-collection",
         "remove-selected-test",
         "changed-report",
+        "missing-sdist-check",
+        "failed-sdist-check",
+        "disabled-sdist-check",
     ],
 )
 def test_reconciliation_rejects_failed_missing_skipped_or_tampered_outputs(
@@ -72,6 +75,16 @@ def test_reconciliation_rejects_failed_missing_skipped_or_tampered_outputs(
         record["runtime"]["sqlite"] = "0.0.0"
     elif mutation == "missing-preparation":
         (output / "wheelhouse.json").unlink()
+    elif mutation == "missing-sdist-check":
+        (output / "sdist_contract.json").unlink()
+    elif mutation == "failed-sdist-check":
+        check = json.loads((output / "sdist_contract.json").read_text())
+        check["exit_code"] = 1
+        (output / "sdist_contract.json").write_text(json.dumps(check))
+    elif mutation == "disabled-sdist-check":
+        plan = json.loads((output / "plan.json").read_text())
+        plan["preparation"]["sdist_contract"]["disposition"] = "not_applicable"
+        (output / "plan.json").write_text(json.dumps(plan))
     elif mutation == "changed-plan":
         plan = json.loads((output / "plan.json").read_bytes())
         plan["lanes"]["tests"]["disposition"] = "not_applicable"
