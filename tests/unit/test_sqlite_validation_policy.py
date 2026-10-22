@@ -120,6 +120,15 @@ assert actual == '3.51.3'
 """)'''
         self.assertIn("sqlite-exact-gate", self.rules(source))
 
+    def test_generated_probe_with_comma_imports_and_cli_selector(self):
+        for imports in ("import hashlib,json,sqlite3,sys", "import json,sqlite3"):
+            source = f'''probe.write_text("""{imports}
+actual = db.execute('SELECT sqlite_version()').fetchone()[0]
+assert actual == sys.argv[2]
+""")'''
+            with self.subTest(imports=imports):
+                self.assertIn("sqlite-exact-gate", self.rules(source))
+
     def test_fenced_command_in_agent_instructions(self):
         source = "```sh\nuv pip install pysqlite3-binary\n```\n"
         self.assertIn("sqlite-install", self.rules(source, "nested/AGENTS.md"))
@@ -141,10 +150,35 @@ assert actual == '3.51.3'
         source = "Do not alter product safety checks. Run both SQLite versions."
         self.assertIn("sqlite-procedure", self.rules(source, "AGENTS.md"))
 
+    def test_unrelated_negative_clause_does_not_hide_positive_requirement(self):
+        for source in (
+            "Run SQLite 3.51.3 and 3.53.1 without disabling product safety checks.",
+            "Run both SQLite versions and never spoof version strings.",
+            "Never spoof version strings and run both SQLite versions.",
+            "Run both SQLite versions and preserve historical evidence.",
+            "Run without bypassing safety checks on SQLite 3.51.3 and 3.53.1.",
+        ):
+            with self.subTest(source=source):
+                self.assertIn("sqlite-procedure", self.rules(source, "AGENTS.md"))
+
+    def test_japanese_source_build_instruction_and_prohibition(self):
+        self.assertIn(
+            "sqlite-procedure", self.rules("SQLiteをソースビルドする。", "AGENTS.md")
+        )
+        self.assertFalse(self.rules("SQLiteをソースビルドしない。", "AGENTS.md"))
+        self.assertFalse(self.rules("SQLiteのソースビルドは禁止する。", "AGENTS.md"))
+        self.assertIn(
+            "sqlite-procedure",
+            self.rules(
+                "SQLiteをソースビルドしない。SQLiteをソースビルドする。", "AGENTS.md"
+            ),
+        )
+
     def test_negative_policy_and_historical_observations(self):
         for source in (
             "Do not build SQLite from source for tests.",
             "Never require both SQLite versions.",
+            "Run without a SQLite version matrix.",
             "Historical runs used both SQLite releases.",
             "The completed experiment supplies SQLite 3.51.3/3.53.1 evidence.",
             "SQLite のソースビルドは廃止する。",

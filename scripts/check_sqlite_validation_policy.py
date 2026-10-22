@@ -70,15 +70,18 @@ RULES = {
 }
 COMPILED = {name: re.compile(pattern, re.I) for name, pattern in RULES.items()}
 NEGATIVE = re.compile(
-    r"\b(?:do not|must not|never|no longer|without|prohibit\w*|removed?|retired?)\b|禁止|不要|廃止|撤廃|要求しません|しない|しません|必要はな",
+    r"\b(?:do not|must not|never|no longer|prohibit\w*|removed?|retired?)\b|\bwithout\s+(?:(?:a|the|any)\s+)?$",
     re.I,
+)
+JAPANESE_NEGATIVE = re.compile(
+    r"禁止|不要|廃止|撤廃|要求しません|しない|しません|必要はな"
 )
 HISTORICAL = re.compile(
     r"\b(?:historical|previous(?:ly)?|completed|observed|used to|was measured)\b|過去|以前|実行済",
     re.I,
 )
 INSTRUCTION = re.compile(
-    r"\b(?:run|test|verify|validate|require|must|build|compile|download|install|use|set)\b|実行|検証|必須|構築|導入",
+    r"\b(?:run|test|verify|validate|require|must|build|compile|download|install|use|set)\b|実行|検証|必須|構築|導入|ビルド",
     re.I,
 )
 PROSE_BAD = re.compile(
@@ -184,7 +187,10 @@ def python_rules(text: str) -> set[tuple[int, str]]:
         if (
             isinstance(node, ast.Constant)
             and isinstance(node.value, str)
-            and "import sqlite3" in node.value
+            and re.search(
+                r"\b(?:import\s+[^\n;]*\bsqlite3\b|from\s+sqlite3\s+import\b)",
+                node.value,
+            )
         ):
             findings.update(
                 (node.lineno + line - 1, rule)
@@ -259,16 +265,23 @@ def inspect(path: str, text: str) -> list[Finding]:
 
         def prose():
             value = " ".join(line.strip() for _, line in paragraph)
-            # Sentence scope prevents a preceding prohibition from suppressing
-            # a subsequent affirmative requirement in the same paragraph.
-            for sentence in re.split(r"(?<=[.!?。])\s+", value):
-                if (
-                    not NEGATIVE.search(sentence)
-                    and not HISTORICAL.search(sentence)
-                    and INSTRUCTION.search(sentence)
-                    and PROSE_BAD.search(sentence)
-                ):
-                    found.add((paragraph[0][0], "sqlite-procedure"))
+            # Keep negation with its instruction. A later "without disabling
+            # safety" / "never spoof" clause cannot excuse a version matrix.
+            clauses = re.split(
+                r"(?<=。)|(?<=[.!?;])\s+|\b(?:and|but)\s+(?=(?:do not|never|run|require|build|download|install)\b)",
+                value,
+                flags=re.I,
+            )
+            for clause in clauses:
+                for violation in PROSE_BAD.finditer(clause):
+                    prefix = clause[: violation.start()]
+                    if (
+                        not NEGATIVE.search(prefix)
+                        and not HISTORICAL.search(prefix)
+                        and not JAPANESE_NEGATIVE.search(clause)
+                        and INSTRUCTION.search(clause)
+                    ):
+                        found.add((paragraph[0][0], "sqlite-procedure"))
             paragraph.clear()
 
         for lineno, line in enumerate(text.splitlines(), 1):
