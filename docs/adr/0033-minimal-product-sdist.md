@@ -1,13 +1,13 @@
 ---
-status: proposed
-date: null
+status: accepted
+date: 2026-10-22
 replaces: []
 refines: [0001-validation-lifecycle-architecture.md, 0032-environment-sqlite-validation.md]
 ---
 
 # ADR 0033: Minimal product sdist with distribution equivalence
 
-- **Decision & Context:** Propose a repository-wide **Level 2 Mini-ADR** for a
+- **Decision & Context:** Adopt a repository-wide **Level 2 Mini-ADR** for a
   reversible build/validation convention. Keep Git-managed design documents and
   historical verification evidence, while making the product sdist contain only
   the project inputs needed to rebuild the product wheel. Prefer
@@ -66,7 +66,9 @@ refines: [0001-validation-lifecycle-architecture.md, 0032-environment-sqlite-val
   filename history including deletions, historical index watermarks and all 19
   open PRs (through #134). Highest prior allocation is 0032; the index's stale
   opening 0031 watermark is corrected to agree with this new 0033 allocation.
-  This proposal is stacked directly on [PR #133](https://github.com/TakashiSasaki/git-repo-db/pull/133)
-  at `f16e5b1713bde9a2f18263a25397c4b450fd5773`. It remains **proposed**, with
-  `date: null`, until explicit owner acceptance. This task delivers design only;
-  implementation, merge, release and deployment are not authorized.
+  This decision is stacked directly on [PR #133](https://github.com/TakashiSasaki/git-repo-db/pull/133)
+  at `f16e5b1713bde9a2f18263a25397c4b450fd5773`. The owner explicitly accepted
+  ADR 0033 in this task on 2026-10-22 UTC (2026-10-23 JST): “はい、ADRゼロゼロ三三は承認します。”
+  The accompanying request authorizes implementation and submission of dependent
+  PR B. Decision acceptance and implementation/verification remain separate;
+  merge, release and deployment are not authorized.

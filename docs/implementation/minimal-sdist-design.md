@@ -1,6 +1,6 @@
 # Minimal product sdist: design and implementation validation plan
 
-This is the implementation-facing companion to proposed
+This is the implementation-facing companion to accepted
 [ADR 0033](../adr/0033-minimal-product-sdist.md). Requirements below describe
 future work, not implemented checks or newly executed distribution acceptance.
 Only this document, the Mini-ADR and the ADR index change in this design PR.
@@ -138,10 +138,11 @@ evidence retention. [ADR 0032](../adr/0032-environment-sqlite-validation.md) kee
 actual environment SQLite, one library per environment, explicit interpreter
 binding and all WAL/STRICT/JSON/FTS/product safety guards; no setup exception is
 requested. [ADR 0011](../adr/0011-adr-governance.md) keeps allocation and explicit
-acceptance; 0033 is proposed and retires no record. ADR 0031 domain contracts and
+acceptance; 0033 is accepted and retires no record. ADR 0031 domain contracts and
 stage/independent-review obligations also remain unchanged.
 
-Owner acceptance of the proposed convention remains pending. Engineering details
+The owner accepted the convention on 2026-10-22 UTC (2026-10-23 JST) and
+authorized dependent implementation PR B. Engineering details
 for the implementation PR are the actual generated-member list, complete source
 inventory policy, finite byte limits/headroom, shared-validator placement and
 receipt/cache integration, and any narrowly required workflow path triggers.
