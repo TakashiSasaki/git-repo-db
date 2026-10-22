@@ -1,0 +1,374 @@
+{
+  "3.51.3": [
+    {
+      "class": "tests.packaging.test_p5_distribution",
+      "name": "test_p5_installed_acquisition_and_exchange[sha1-sdist-wheel]",
+      "only_temp_paths_and_pytest_c_argument_rendering": true,
+      "normalizations": [
+        "/tmp/pytest-of-agent/pytest-\\d+/popen-gw\\d+/test_p5_installed_acquisition_\\d+ -> <TEMP_P5>",
+        "\"'-c...\" -> \"'-c'...\""
+      ],
+      "raw_differences": [
+        {
+          "operation": "delete",
+          "baseline_fragment": "File \"/tmp/pytest-of-agent/pytest-10/popen-gw3/test_p5_installed_acquis",
+          "independent_fragment": "File \"/tmp/pytest-of-agent/pytest-1/popen-gw2/test_p5_installed_acquis"
+        },
+        {
+          "operation": "replace",
+          "baseline_fragment": "/pytest-of-agent/pytest-10/popen-gw3/test_p5_installed_acquisition_1/ve",
+          "independent_fragment": "p/pytest-of-agent/pytest-1/popen-gw2/test_p5_installed_acquisition_1/ve"
+        },
+        {
+          "operation": "delete",
+          "baseline_fragment": "File \"/tmp/pytest-of-agent/pytest-10/popen-gw3/test_p5_installed_acquis",
+          "independent_fragment": "File \"/tmp/pytest-of-agent/pytest-1/popen-gw2/test_p5_installed_acquis"
+        },
+        {
+          "operation": "replace",
+          "baseline_fragment": "/pytest-of-agent/pytest-10/popen-gw3/test_p5_installed_acquisition_1/ve",
+          "independent_fragment": "p/pytest-of-agent/pytest-1/popen-gw2/test_p5_installed_acquisition_1/ve"
+        },
+        {
+          "operation": "delete",
+          "baseline_fragment": "File \"/tmp/pytest-of-agent/pytest-10/popen-gw3/test_p5_installed_acquis",
+          "independent_fragment": "File \"/tmp/pytest-of-agent/pytest-1/popen-gw2/test_p5_installed_acquis"
+        },
+        {
+          "operation": "replace",
+          "baseline_fragment": "/pytest-of-agent/pytest-10/popen-gw3/test_p5_installed_acquisition_1/ve",
+          "independent_fragment": "p/pytest-of-agent/pytest-1/popen-gw2/test_p5_installed_acquisition_1/ve"
+        },
+        {
+          "operation": "delete",
+          "baseline_fragment": "rgs=['/tmp/pytest-of-agent/pytest-10/popen-gw3/test_p5_installed_acquis",
+          "independent_fragment": "rgs=['/tmp/pytest-of-agent/pytest-1/popen-gw2/test_p5_installed_acquis"
+        },
+        {
+          "operation": "replace",
+          "baseline_fragment": "/pytest-of-agent/pytest-10/popen-gw3/test_p5_installed_acquisition_1/ve",
+          "independent_fragment": "p/pytest-of-agent/pytest-1/popen-gw2/test_p5_installed_acquisition_1/ve"
+        },
+        {
+          "operation": "insert",
+          "baseline_fragment": "acquisition_1/venv/bin/python', '-c..._stage.UnsupportedIdentification",
+          "independent_fragment": "acquisition_1/venv/bin/python', '-c'..._stage.UnsupportedIdentification"
+        }
+      ]
+    },
+    {
+      "class": "tests.packaging.test_p5_distribution",
+      "name": "test_p5_installed_acquisition_and_exchange[sha1-wheel]",
+      "only_temp_paths_and_pytest_c_argument_rendering": true,
+      "normalizations": [
+        "/tmp/pytest-of-agent/pytest-\\d+/popen-gw\\d+/test_p5_installed_acquisition_\\d+ -> <TEMP_P5>",
+        "\"'-c...\" -> \"'-c'...\""
+      ],
+      "raw_differences": [
+        {
+          "operation": "delete",
+          "baseline_fragment": "File \"/tmp/pytest-of-agent/pytest-10/popen-gw3/test_p5_installed_acquis",
+          "independent_fragment": "File \"/tmp/pytest-of-agent/pytest-1/popen-gw2/test_p5_installed_acquis"
+        },
+        {
+          "operation": "replace",
+          "baseline_fragment": "/pytest-of-agent/pytest-10/popen-gw3/test_p5_installed_acquisition_0/ve",
+          "independent_fragment": "p/pytest-of-agent/pytest-1/popen-gw2/test_p5_installed_acquisition_0/ve"
+        },
+        {
+          "operation": "delete",
+          "baseline_fragment": "File \"/tmp/pytest-of-agent/pytest-10/popen-gw3/test_p5_installed_acquis",
+          "independent_fragment": "File \"/tmp/pytest-of-agent/pytest-1/popen-gw2/test_p5_installed_acquis"
+        },
+        {
+          "operation": "replace",
+          "baseline_fragment": "/pytest-of-agent/pytest-10/popen-gw3/test_p5_installed_acquisition_0/ve",
+          "independent_fragment": "p/pytest-of-agent/pytest-1/popen-gw2/test_p5_installed_acquisition_0/ve"
+        },
+        {
+          "operation": "delete",
+          "baseline_fragment": "File \"/tmp/pytest-of-agent/pytest-10/popen-gw3/test_p5_installed_acquis",
+          "independent_fragment": "File \"/tmp/pytest-of-agent/pytest-1/popen-gw2/test_p5_installed_acquis"
+        },
+        {
+          "operation": "replace",
+          "baseline_fragment": "/pytest-of-agent/pytest-10/popen-gw3/test_p5_installed_acquisition_0/ve",
+          "independent_fragment": "p/pytest-of-agent/pytest-1/popen-gw2/test_p5_installed_acquisition_0/ve"
+        },
+        {
+          "operation": "delete",
+          "baseline_fragment": "rgs=['/tmp/pytest-of-agent/pytest-10/popen-gw3/test_p5_installed_acquis",
+          "independent_fragment": "rgs=['/tmp/pytest-of-agent/pytest-1/popen-gw2/test_p5_installed_acquis"
+        },
+        {
+          "operation": "replace",
+          "baseline_fragment": "/pytest-of-agent/pytest-10/popen-gw3/test_p5_installed_acquisition_0/ve",
+          "independent_fragment": "p/pytest-of-agent/pytest-1/popen-gw2/test_p5_installed_acquisition_0/ve"
+        },
+        {
+          "operation": "insert",
+          "baseline_fragment": "acquisition_0/venv/bin/python', '-c..._stage.UnsupportedIdentification",
+          "independent_fragment": "acquisition_0/venv/bin/python', '-c'..._stage.UnsupportedIdentification"
+        }
+      ]
+    },
+    {
+      "class": "tests.packaging.test_p5_distribution",
+      "name": "test_p5_installed_acquisition_and_exchange[sha256-sdist-wheel]",
+      "only_temp_paths_and_pytest_c_argument_rendering": true,
+      "normalizations": [
+        "/tmp/pytest-of-agent/pytest-\\d+/popen-gw\\d+/test_p5_installed_acquisition_\\d+ -> <TEMP_P5>",
+        "\"'-c...\" -> \"'-c'...\""
+      ],
+      "raw_differences": [
+        {
+          "operation": "delete",
+          "baseline_fragment": "File \"/tmp/pytest-of-agent/pytest-10/popen-gw3/test_p5_installed_acquis",
+          "independent_fragment": "File \"/tmp/pytest-of-agent/pytest-1/popen-gw2/test_p5_installed_acquis"
+        },
+        {
+          "operation": "replace",
+          "baseline_fragment": "/pytest-of-agent/pytest-10/popen-gw3/test_p5_installed_acquisition_3/ve",
+          "independent_fragment": "p/pytest-of-agent/pytest-1/popen-gw2/test_p5_installed_acquisition_3/ve"
+        },
+        {
+          "operation": "delete",
+          "baseline_fragment": "File \"/tmp/pytest-of-agent/pytest-10/popen-gw3/test_p5_installed_acquis",
+          "independent_fragment": "File \"/tmp/pytest-of-agent/pytest-1/popen-gw2/test_p5_installed_acquis"
+        },
+        {
+          "operation": "replace",
+          "baseline_fragment": "/pytest-of-agent/pytest-10/popen-gw3/test_p5_installed_acquisition_3/ve",
+          "independent_fragment": "p/pytest-of-agent/pytest-1/popen-gw2/test_p5_installed_acquisition_3/ve"
+        },
+        {
+          "operation": "delete",
+          "baseline_fragment": "File \"/tmp/pytest-of-agent/pytest-10/popen-gw3/test_p5_installed_acquis",
+          "independent_fragment": "File \"/tmp/pytest-of-agent/pytest-1/popen-gw2/test_p5_installed_acquis"
+        },
+        {
+          "operation": "replace",
+          "baseline_fragment": "/pytest-of-agent/pytest-10/popen-gw3/test_p5_installed_acquisition_3/ve",
+          "independent_fragment": "p/pytest-of-agent/pytest-1/popen-gw2/test_p5_installed_acquisition_3/ve"
+        },
+        {
+          "operation": "delete",
+          "baseline_fragment": "rgs=['/tmp/pytest-of-agent/pytest-10/popen-gw3/test_p5_installed_acquis",
+          "independent_fragment": "rgs=['/tmp/pytest-of-agent/pytest-1/popen-gw2/test_p5_installed_acquis"
+        },
+        {
+          "operation": "replace",
+          "baseline_fragment": "/pytest-of-agent/pytest-10/popen-gw3/test_p5_installed_acquisition_3/ve",
+          "independent_fragment": "p/pytest-of-agent/pytest-1/popen-gw2/test_p5_installed_acquisition_3/ve"
+        },
+        {
+          "operation": "insert",
+          "baseline_fragment": "acquisition_3/venv/bin/python', '-c..._stage.UnsupportedIdentification",
+          "independent_fragment": "acquisition_3/venv/bin/python', '-c'..._stage.UnsupportedIdentification"
+        }
+      ]
+    },
+    {
+      "class": "tests.packaging.test_p5_distribution",
+      "name": "test_p5_installed_acquisition_and_exchange[sha256-wheel]",
+      "only_temp_paths_and_pytest_c_argument_rendering": true,
+      "normalizations": [
+        "/tmp/pytest-of-agent/pytest-\\d+/popen-gw\\d+/test_p5_installed_acquisition_\\d+ -> <TEMP_P5>",
+        "\"'-c...\" -> \"'-c'...\""
+      ],
+      "raw_differences": [
+        {
+          "operation": "delete",
+          "baseline_fragment": "File \"/tmp/pytest-of-agent/pytest-10/popen-gw3/test_p5_installed_acquis",
+          "independent_fragment": "File \"/tmp/pytest-of-agent/pytest-1/popen-gw2/test_p5_installed_acquis"
+        },
+        {
+          "operation": "replace",
+          "baseline_fragment": "/pytest-of-agent/pytest-10/popen-gw3/test_p5_installed_acquisition_2/ve",
+          "independent_fragment": "p/pytest-of-agent/pytest-1/popen-gw2/test_p5_installed_acquisition_2/ve"
+        },
+        {
+          "operation": "delete",
+          "baseline_fragment": "File \"/tmp/pytest-of-agent/pytest-10/popen-gw3/test_p5_installed_acquis",
+          "independent_fragment": "File \"/tmp/pytest-of-agent/pytest-1/popen-gw2/test_p5_installed_acquis"
+        },
+        {
+          "operation": "replace",
+          "baseline_fragment": "/pytest-of-agent/pytest-10/popen-gw3/test_p5_installed_acquisition_2/ve",
+          "independent_fragment": "p/pytest-of-agent/pytest-1/popen-gw2/test_p5_installed_acquisition_2/ve"
+        },
+        {
+          "operation": "delete",
+          "baseline_fragment": "File \"/tmp/pytest-of-agent/pytest-10/popen-gw3/test_p5_installed_acquis",
+          "independent_fragment": "File \"/tmp/pytest-of-agent/pytest-1/popen-gw2/test_p5_installed_acquis"
+        },
+        {
+          "operation": "replace",
+          "baseline_fragment": "/pytest-of-agent/pytest-10/popen-gw3/test_p5_installed_acquisition_2/ve",
+          "independent_fragment": "p/pytest-of-agent/pytest-1/popen-gw2/test_p5_installed_acquisition_2/ve"
+        },
+        {
+          "operation": "delete",
+          "baseline_fragment": "rgs=['/tmp/pytest-of-agent/pytest-10/popen-gw3/test_p5_installed_acquis",
+          "independent_fragment": "rgs=['/tmp/pytest-of-agent/pytest-1/popen-gw2/test_p5_installed_acquis"
+        },
+        {
+          "operation": "replace",
+          "baseline_fragment": "/pytest-of-agent/pytest-10/popen-gw3/test_p5_installed_acquisition_2/ve",
+          "independent_fragment": "p/pytest-of-agent/pytest-1/popen-gw2/test_p5_installed_acquisition_2/ve"
+        },
+        {
+          "operation": "insert",
+          "baseline_fragment": "acquisition_2/venv/bin/python', '-c..._stage.UnsupportedIdentification",
+          "independent_fragment": "acquisition_2/venv/bin/python', '-c'..._stage.UnsupportedIdentification"
+        }
+      ]
+    }
+  ],
+  "3.53.1": [
+    {
+      "class": "tests.packaging.test_p5_distribution",
+      "name": "test_p5_installed_acquisition_and_exchange[sha1-sdist-wheel]",
+      "only_temp_paths_and_pytest_c_argument_rendering": true,
+      "normalizations": [
+        "/tmp/pytest-of-agent/pytest-\\d+/popen-gw\\d+/test_p5_installed_acquisition_\\d+ -> <TEMP_P5>",
+        "\"'-c...\" -> \"'-c'...\""
+      ],
+      "raw_differences": [
+        {
+          "operation": "replace",
+          "baseline_fragment": " File \"/tmp/pytest-of-agent/pytest-12/popen-gw2/test_p5_installed_acquis",
+          "independent_fragment": " File \"/tmp/pytest-of-agent/pytest-4/popen-gw2/test_p5_installed_acquis"
+        },
+        {
+          "operation": "replace",
+          "baseline_fragment": " File \"/tmp/pytest-of-agent/pytest-12/popen-gw2/test_p5_installed_acquis",
+          "independent_fragment": " File \"/tmp/pytest-of-agent/pytest-4/popen-gw2/test_p5_installed_acquis"
+        },
+        {
+          "operation": "replace",
+          "baseline_fragment": " File \"/tmp/pytest-of-agent/pytest-12/popen-gw2/test_p5_installed_acquis",
+          "independent_fragment": " File \"/tmp/pytest-of-agent/pytest-4/popen-gw2/test_p5_installed_acquis"
+        },
+        {
+          "operation": "replace",
+          "baseline_fragment": "args=['/tmp/pytest-of-agent/pytest-12/popen-gw2/test_p5_installed_acquis",
+          "independent_fragment": "args=['/tmp/pytest-of-agent/pytest-4/popen-gw2/test_p5_installed_acquis"
+        },
+        {
+          "operation": "insert",
+          "baseline_fragment": "acquisition_1/venv/bin/python', '-c..._stage.UnsupportedIdentification",
+          "independent_fragment": "acquisition_1/venv/bin/python', '-c'..._stage.UnsupportedIdentification"
+        }
+      ]
+    },
+    {
+      "class": "tests.packaging.test_p5_distribution",
+      "name": "test_p5_installed_acquisition_and_exchange[sha1-wheel]",
+      "only_temp_paths_and_pytest_c_argument_rendering": true,
+      "normalizations": [
+        "/tmp/pytest-of-agent/pytest-\\d+/popen-gw\\d+/test_p5_installed_acquisition_\\d+ -> <TEMP_P5>",
+        "\"'-c...\" -> \"'-c'...\""
+      ],
+      "raw_differences": [
+        {
+          "operation": "replace",
+          "baseline_fragment": " File \"/tmp/pytest-of-agent/pytest-12/popen-gw2/test_p5_installed_acquis",
+          "independent_fragment": " File \"/tmp/pytest-of-agent/pytest-4/popen-gw2/test_p5_installed_acquis"
+        },
+        {
+          "operation": "replace",
+          "baseline_fragment": " File \"/tmp/pytest-of-agent/pytest-12/popen-gw2/test_p5_installed_acquis",
+          "independent_fragment": " File \"/tmp/pytest-of-agent/pytest-4/popen-gw2/test_p5_installed_acquis"
+        },
+        {
+          "operation": "replace",
+          "baseline_fragment": " File \"/tmp/pytest-of-agent/pytest-12/popen-gw2/test_p5_installed_acquis",
+          "independent_fragment": " File \"/tmp/pytest-of-agent/pytest-4/popen-gw2/test_p5_installed_acquis"
+        },
+        {
+          "operation": "replace",
+          "baseline_fragment": "args=['/tmp/pytest-of-agent/pytest-12/popen-gw2/test_p5_installed_acquis",
+          "independent_fragment": "args=['/tmp/pytest-of-agent/pytest-4/popen-gw2/test_p5_installed_acquis"
+        },
+        {
+          "operation": "insert",
+          "baseline_fragment": "acquisition_0/venv/bin/python', '-c..._stage.UnsupportedIdentification",
+          "independent_fragment": "acquisition_0/venv/bin/python', '-c'..._stage.UnsupportedIdentification"
+        }
+      ]
+    },
+    {
+      "class": "tests.packaging.test_p5_distribution",
+      "name": "test_p5_installed_acquisition_and_exchange[sha256-sdist-wheel]",
+      "only_temp_paths_and_pytest_c_argument_rendering": true,
+      "normalizations": [
+        "/tmp/pytest-of-agent/pytest-\\d+/popen-gw\\d+/test_p5_installed_acquisition_\\d+ -> <TEMP_P5>",
+        "\"'-c...\" -> \"'-c'...\""
+      ],
+      "raw_differences": [
+        {
+          "operation": "replace",
+          "baseline_fragment": " File \"/tmp/pytest-of-agent/pytest-12/popen-gw2/test_p5_installed_acquis",
+          "independent_fragment": " File \"/tmp/pytest-of-agent/pytest-4/popen-gw2/test_p5_installed_acquis"
+        },
+        {
+          "operation": "replace",
+          "baseline_fragment": " File \"/tmp/pytest-of-agent/pytest-12/popen-gw2/test_p5_installed_acquis",
+          "independent_fragment": " File \"/tmp/pytest-of-agent/pytest-4/popen-gw2/test_p5_installed_acquis"
+        },
+        {
+          "operation": "replace",
+          "baseline_fragment": " File \"/tmp/pytest-of-agent/pytest-12/popen-gw2/test_p5_installed_acquis",
+          "independent_fragment": " File \"/tmp/pytest-of-agent/pytest-4/popen-gw2/test_p5_installed_acquis"
+        },
+        {
+          "operation": "replace",
+          "baseline_fragment": "args=['/tmp/pytest-of-agent/pytest-12/popen-gw2/test_p5_installed_acquis",
+          "independent_fragment": "args=['/tmp/pytest-of-agent/pytest-4/popen-gw2/test_p5_installed_acquis"
+        },
+        {
+          "operation": "insert",
+          "baseline_fragment": "acquisition_3/venv/bin/python', '-c..._stage.UnsupportedIdentification",
+          "independent_fragment": "acquisition_3/venv/bin/python', '-c'..._stage.UnsupportedIdentification"
+        }
+      ]
+    },
+    {
+      "class": "tests.packaging.test_p5_distribution",
+      "name": "test_p5_installed_acquisition_and_exchange[sha256-wheel]",
+      "only_temp_paths_and_pytest_c_argument_rendering": true,
+      "normalizations": [
+        "/tmp/pytest-of-agent/pytest-\\d+/popen-gw\\d+/test_p5_installed_acquisition_\\d+ -> <TEMP_P5>",
+        "\"'-c...\" -> \"'-c'...\""
+      ],
+      "raw_differences": [
+        {
+          "operation": "replace",
+          "baseline_fragment": " File \"/tmp/pytest-of-agent/pytest-12/popen-gw2/test_p5_installed_acquis",
+          "independent_fragment": " File \"/tmp/pytest-of-agent/pytest-4/popen-gw2/test_p5_installed_acquis"
+        },
+        {
+          "operation": "replace",
+          "baseline_fragment": " File \"/tmp/pytest-of-agent/pytest-12/popen-gw2/test_p5_installed_acquis",
+          "independent_fragment": " File \"/tmp/pytest-of-agent/pytest-4/popen-gw2/test_p5_installed_acquis"
+        },
+        {
+          "operation": "replace",
+          "baseline_fragment": " File \"/tmp/pytest-of-agent/pytest-12/popen-gw2/test_p5_installed_acquis",
+          "independent_fragment": " File \"/tmp/pytest-of-agent/pytest-4/popen-gw2/test_p5_installed_acquis"
+        },
+        {
+          "operation": "replace",
+          "baseline_fragment": "args=['/tmp/pytest-of-agent/pytest-12/popen-gw2/test_p5_installed_acquis",
+          "independent_fragment": "args=['/tmp/pytest-of-agent/pytest-4/popen-gw2/test_p5_installed_acquis"
+        },
+        {
+          "operation": "insert",
+          "baseline_fragment": "acquisition_2/venv/bin/python', '-c..._stage.UnsupportedIdentification",
+          "independent_fragment": "acquisition_2/venv/bin/python', '-c'..._stage.UnsupportedIdentification"
+        }
+      ]
+    }
+  ]
+}

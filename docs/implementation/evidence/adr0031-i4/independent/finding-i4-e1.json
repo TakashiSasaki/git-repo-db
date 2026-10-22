@@ -1,0 +1,31 @@
+{
+  "severity": "Low",
+  "boundary": "documentation/evidence and complete sdist inputs; no product SQL defect",
+  "commands": [
+    {
+      "argv": [
+        "git",
+        "ls-tree",
+        "f4d8c3d123552e765ef3f0ddaf4e83deaaa0e9c6",
+        "--",
+        "docs/implementation/evidence/adr0031-i4/REPORT.md"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "git",
+        "ls-tree",
+        "a9d4c3585806622b66d3c41132c2a9f8ab5c6f9e",
+        "--",
+        "docs/implementation/evidence/adr0031-i4/REPORT.md"
+      ],
+      "exit_code": 0,
+      "stdout": "100644 blob 0543869133cd56f1b1832099395cd954d249a419\tdocs/implementation/evidence/adr0031-i4/REPORT.md\n",
+      "stderr": ""
+    }
+  ],
+  "actual_public_sdist_member": "repo_catalog-0.2.0/docs/implementation/evidence/adr0031-i4/REPORT.md"
+}
