@@ -53,7 +53,9 @@ def in_scope(path: str) -> bool:
     if path in LIVE_DOCS or Path(path).name == "AGENTS.md":
         return True
     return (
-        path.startswith(("scripts/", ".agents/", ".github/workflows/"))
+        path.startswith(
+            ("scripts/", ".agents/", ".github/workflows/", ".github/actions/")
+        )
         or path.startswith(".github/")
         and path.endswith(".md")
     ) and Path(path).suffix in SOURCE_SUFFIXES

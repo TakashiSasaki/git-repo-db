@@ -11,6 +11,8 @@ on:
       - 'tests/packaging/test_p5_distribution.py'
       - 'scripts/verify_i5_offline.py'
       - '.github/workflows/access-registry.yml'
+      - '.github/actions/product-python/**'
+      - 'scripts/ci_python_runtime.*'
       - 'src/repo_catalog/**/access*.py'
       - 'src/repo_catalog/adapters/sqlite/access_ddl/**'
       - 'tests/integration/access/**'
@@ -64,17 +66,14 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
-        id: python
-        with:
-          python-version: '3.12'
+      - uses: ./.github/actions/product-python
       - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7
         with:
           version: '0.12.19'
       - name: Install locked development dependencies
         run: |
-          uv sync --locked --group dev --python "${{ steps.python.outputs.python-path }}"
-          echo 'UV_PYTHON=${{ steps.python.outputs.python-path }}' >> "$GITHUB_ENV"
+          uv sync --locked --group dev --group docs --python "$CI_PRODUCT_PYTHON"
+          uv run --no-sync python scripts/ci_python_runtime.py probe artifacts/runtime/dependencies.json --reference artifacts/runtime/selected.json
       - name: Prepare locked wheels before offline installed acceptance
         run: uv run --no-sync python scripts/prepare_wheelhouse.py
       - name: Verify runtime and focused tests without overrides
@@ -120,6 +119,22 @@ jobs:
           set -e
           tail -n 35 artifacts/access-registry/tests.log
           exit "$test_status"
+      - name: I4 I5 bounded and broad offline regression evidence
+        if: ${{ !cancelled() }}
+        run: uv run --no-sync python scripts/verify_i5.py --output artifacts/access-registry/i5 --workers 2
+      - name: Compare all 79 inherited non-successes
+        if: ${{ !cancelled() }}
+        run: >-
+          uv run --no-sync python scripts/compare_i5_failures.py
+          --current artifacts/access-registry/i5/regressions.xml
+          --baseline-entry author-3.51.3/regressions.xml
+          --output artifacts/access-registry/failure-comparison.json
+      - name: Installed I2 I3 I4 I5 on both distribution artifacts offline
+        if: ${{ !cancelled() }}
+        run: uv run --no-sync python scripts/verify_i5_distribution.py --output artifacts/access-registry/i5-distribution
+      - name: Inventory offline and unexecuted coverage
+        if: ${{ !cancelled() }}
+        run: uv run --no-sync python scripts/verify_i5_offline.py --output artifacts/access-registry/offline-inventory
       - name: Verify wheel and sdist-derived wheel outside checkout
         if: ${{ !cancelled() }}
         run: uv run --no-sync python scripts/verify_access_distribution.py
@@ -139,10 +154,12 @@ jobs:
             --collection artifacts/access-registry/collected.txt \
             --output artifacts/access-registry/acceptance.json
       - name: Build allowlisted MkDocs sources with placeholder diagrams, no deployment
+        if: ${{ !cancelled() }}
         shell: bash
         run: |
           set -euo pipefail
-          uv sync --locked --group dev --group docs --python "${{ steps.python.outputs.python-path }}"
+          uv sync --locked --group dev --group docs --python "$CI_PRODUCT_PYTHON"
+          uv run --no-sync python scripts/ci_python_runtime.py probe artifacts/runtime/docs.json --reference artifacts/runtime/selected.json
           uv run --no-sync python scripts/build_docs_site.py --no-mermaid \
             2>&1 | tee artifacts/access-registry/mkdocs.txt
       - name: Check formatting of the exact committed files
@@ -179,10 +196,15 @@ jobs:
           result = {"checked_out_commit": revision("HEAD"), "effective_tree": revision("HEAD^{tree}"), "event_commit": os.environ["GITHUB_SHA"]}
           Path("artifacts/access-registry/source-revision.json").write_text(json.dumps(result, indent=2) + "\n")
           PYMETA
+      - name: Audit final dependency runtime identity
+        if: ${{ !cancelled() }}
+        run: uv run --no-sync python scripts/ci_python_runtime.py probe artifacts/runtime/final.json --reference artifacts/runtime/selected.json
       - name: Save focused verification evidence
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: access-registry-verification
-          path: artifacts/access-registry/
+          path: |
+            artifacts/access-registry/
+            artifacts/runtime/
           if-no-files-found: warn

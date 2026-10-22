@@ -32,15 +32,14 @@ jobs:
   offline:
     runs-on: ubuntu-24.04
     env:
+      UV_PYTHON_DOWNLOADS: never
       CI_FEATURE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
       CI_VALIDATION_MODE: ${{ github.event.inputs.mode || '' }}
     steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@v7
-        with:
-          python-version: '3.12'
+      - uses: ./.github/actions/product-python
       - uses: astral-sh/setup-uv@v10.2.0
         with:
           version: '0.12.19'
@@ -51,7 +50,10 @@ jobs:
         run: python scripts/ci_profile.py run --name report-validation -- python scripts/ci_execute.py reports
       - name: Prepare dependencies (online preparation)
         if: steps.plan.outputs.dependencies == 'true'
-        run: python scripts/ci_profile.py run --name dependency-setup -- uv sync --locked --group dev --python "$(command -v python)"
+        run: python scripts/ci_profile.py run --name dependency-setup -- uv sync --locked --group dev --python "$CI_PRODUCT_PYTHON"
+      - name: Confirm dependency environment identity
+        if: steps.plan.outputs.dependencies == 'true'
+        run: uv run --no-sync python scripts/ci_python_runtime.py probe artifacts/runtime/dependencies.json --reference artifacts/runtime/selected.json
       - name: Prepare locked wheels (online preparation)
         if: steps.plan.outputs.wheelhouse == 'true'
         run: python scripts/ci_profile.py run --name wheelhouse -- uv run --no-sync python scripts/prepare_wheelhouse.py
@@ -132,6 +134,7 @@ jobs:
         with:
           name: ci-profile-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
+            artifacts/runtime/
             artifacts/ci-profile/*.json
             artifacts/ci-profile/*.jsonl
             artifacts/ci-profile/*.md
