@@ -1,5 +1,14 @@
 # Generalized Context Resource design handoff
 
+Current I6 design Author entrypoint (Task D6, 2026-10-22):
+[wire/admission/Exchange contract](adr0031-i6-wire-admission-exchange.md),
+[vectors and adversarial test plan](adr0031-i6-vectors-and-tests.md), and
+[source map, PR graph and independent-review handoff](adr0031-i6-change-map-and-handoff.md).
+This documentation-only freeze is stacked on owner-selected #133; it specifies
+I5-A1/B1/C1 closure and preserves D1/F1 obligations. It implements no I6 behavior
+and leaves Transfer fenced. The earlier baselines and evidence below retain
+their original scope; use the D6 source map for the effective #132/#133 tree.
+
 ## Status and authorization
 
 [ADR 0031](../adr/0031-generalized-context-resources.md) is **owner-accepted**
