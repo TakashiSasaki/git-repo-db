@@ -1,0 +1,25 @@
+{
+  "author_executed_head": "3a749541fe4c41eb72e7ded9f36528f0abeb05ff",
+  "author_executed_tree": "6a494efb510713dbfb3cebf6ef5ff85e703e0d18",
+  "public_head": "99e40c9af91f9ea36dd3d4ba97eccad46f6c6e14",
+  "public_tree": "d2d69b3094c8e07e375fc357e979ed8131bf39c5",
+  "author_sdist": {
+    "bytes": 77620267,
+    "sha256": "85ba00e9a4a9f338cb59d418ee736f06dbed8e18b60fa7c7dee3de6a917cce12"
+  },
+  "public_sdist": {
+    "bytes": 80846880,
+    "sha256": "009632d416c385e44f859341c4af0dd98dc7da5312fa36af902338b133ff7a02"
+  },
+  "runtime_and_wheel_inputs_identical": true,
+  "sdist_inputs_identical": false,
+  "added_evidence_members_in_sdist": [
+    "repo_catalog-0.2.0/docs/implementation/evidence/adr0031-i5/README.md",
+    "repo_catalog-0.2.0/docs/implementation/evidence/adr0031-i5/REPORT.md",
+    "repo_catalog-0.2.0/docs/implementation/evidence/adr0031-i5/artifact-index.json",
+    "repo_catalog-0.2.0/docs/implementation/evidence/adr0031-i5/author-evidence.zip",
+    "repo_catalog-0.2.0/docs/implementation/evidence/adr0031-i5/failure-classification.json",
+    "repo_catalog-0.2.0/docs/implementation/evidence/adr0031-i5/summary.json"
+  ],
+  "finding": "I4-E1 carryover: complete sdist inputs differ due to post-execution evidence packet"
+}
