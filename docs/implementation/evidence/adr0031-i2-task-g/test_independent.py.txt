@@ -1,0 +1,167 @@
+"""Task G independently authored counterexamples. No product source mutation."""
+import sqlite3,json,hashlib
+from uuid import uuid4
+from dataclasses import replace
+import pytest
+from repo_catalog.adapters.sqlite import p1_schema as schema
+from repo_catalog.adapters.sqlite.production_context import Context
+from repo_catalog.adapters.sqlite.recovery_validation import validate_stored_context_relations,StoredContextInvariantError
+from repo_catalog.domain.p1_context import ResourceKey,FieldCandidate,FieldClock,canonical
+from repo_catalog.domain.resource_identification import ResourceIdentification as RI
+from repo_catalog.domain.production_context import ResourceObservation,ResourceRelation
+from repo_catalog.domain.production_query import SearchQuery
+from repo_catalog.application.production_query import ProductionQueryService
+from repo_catalog.application.exchange import ExchangeService
+from repo_catalog.domain.exchange import ExchangeSelectionScope
+from repo_catalog.domain.resource_stage import UnsupportedResourceStage,UnsupportedIdentificationStage
+from tests.integration.p5.conftest import init_catalog_stores
+S='99999999-9999-4999-8999-999999999999'
+PROV=canonical({'source':'task-g','evidence':'independent original'})
+
+def catalog(path):
+    init_catalog_stores(path,repository_uuidv4=str(uuid4()),stores=('core','context','operational','search'))
+
+def rows(db):
+    return {r[0]:[tuple(x) for x in db.execute('SELECT * FROM "'+r[0]+'" ORDER BY 1')] for r in db.execute("SELECT name FROM sqlite_schema WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name")}
+
+def seed(path,mode='global'):
+    catalog(path)
+    ns=ResourceKey.from_native(S,'pull_request',['project','PR',[]])
+    key=ResourceKey.document(ns,'document','body',['native',[]])
+    dec=RI.global_document(key) if mode=='global' else RI.scoped(key,ns,'body',['native',[]])
+    with Context.transaction(path) as c:
+        c.provider(S,'synthetic')
+        c.observe(ResourceObservation(key,(FieldCandidate(key,'title',canonical('task-g needle'),FieldClock('provider',4),PROV,5),),dec))
+    return key,dec,ns
+
+def poison_metadata(path,key,mode):
+    db=schema.connect(path/'context.sqlite3','context')
+    definitions={r[0]:r[1] for r in db.execute("SELECT name,sql FROM sqlite_schema WHERE type='trigger' AND tbl_name='resources'")}
+    before_schema=schema.schema_rows(db)
+    for name in definitions:db.execute('DROP TRIGGER '+name)
+    db.execute('PRAGMA ignore_check_constraints=1')
+    db.execute('UPDATE resources SET provider_document_id=? WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=?',('"WRONG"',*key.coordinates()))
+    db.execute('PRAGMA ignore_check_constraints=0')
+    for ddl in definitions.values():db.execute(ddl)
+    assert schema.schema_rows(db)==before_schema==schema.expected_schema('context')
+    schema.validate(db,'context')
+    with pytest.raises(StoredContextInvariantError):validate_stored_context_relations(db)
+    before=rows(db);db.close();return before
+
+@pytest.mark.parametrize('mode',['global','scoped'])
+@pytest.mark.parametrize('route',['get','resources','candidates','search','rebuild'])
+def test_invalid_identification_stops_selected_authority(tmp_path,mode,route):
+    key,dec,ns=seed(tmp_path,mode);before=poison_metadata(tmp_path,key,mode)
+    # Exact packaged schema is restored; corruption is only in non-key metadata.
+    with pytest.raises(ValueError,match='AUTHORITATIVE_CORRUPTION'):
+        if route=='get':ProductionQueryService(tmp_path).get_context_resource(key)
+        elif route=='resources':
+            with Context.snapshot(tmp_path) as c:c.resources()
+        elif route=='candidates':
+            with Context.snapshot(tmp_path) as c:c.candidates(key,'title')
+        elif route=='search':ProductionQueryService(tmp_path).search(SearchQuery('needle',projection_kinds=('context_text',)))
+        else:ProductionQueryService(tmp_path).rebuild_search(projection_kinds=('context_text',))
+    assert (tmp_path/'p1-recovery-stop.json').exists()
+    db=schema.connect(tmp_path/'context.sqlite3','context');assert rows(db)==before;db.close()
+
+@pytest.mark.parametrize('mode',['global','scoped'])
+def test_shape_ambiguous_native_declaration_survives_three_reopens(tmp_path,mode):
+    key,dec,ns=seed(tmp_path,mode)
+    for i in range(3):
+        with Context.transaction(tmp_path) as c:
+            c.resource(ResourceKey(*key.coordinates()),identification=RI.from_storage(ResourceKey(*key.coordinates()),dec.columns))
+            assert c.identification(key)==dec
+            assert ns not in c.resources()
+            assert c.relations(key,'parent')==()
+        view=ProductionQueryService(tmp_path).get_context_resource(key)
+        assert view.identification==dec
+        assert view.identifier_namespace==(None if mode=='global' else ns)
+    with Context.transaction(tmp_path) as c:c.resource(ns)
+    with Context.snapshot(tmp_path) as c:assert c.relations(key,'parent')==()
+
+@pytest.mark.parametrize('suffix',["",' ON CONFLICT DO NOTHING',' ON CONFLICT DO UPDATE SET observed_at_us=observed_at_us WHERE 0'])
+@pytest.mark.parametrize('verb',['INSERT','INSERT OR IGNORE','REPLACE'])
+def test_transfer_insert_select_returning_statement_abort(tmp_path,suffix,verb):
+    catalog(tmp_path)
+    key=ResourceKey.from_native(S,'opaque',[])
+    with Context.transaction(tmp_path) as c:c.provider(S,'synthetic');c.resource(key)
+    db=schema.connect(tmp_path/'context.sqlite3','context');before=rows(db)
+    # First a valid generic row, then a reserved row in a single statement.
+    sql=verb+' INTO resource_relations SELECT ?,?,?,column1,?,?,?,? FROM (VALUES (\'ordinary\'),(\'transfer_event_report\')) WHERE 1'+suffix+' RETURNING relation_kind'
+    with pytest.raises(sqlite3.IntegrityError) as exc:
+        db.execute(sql,(*key.coordinates(),'[]',PROV,'{}',9)).fetchall()
+    assert exc.value.sqlite_errorcode==1811
+    assert rows(db)==before
+    # ABORT must retain preceding caller work and leave the outer transaction usable.
+    db.execute('BEGIN');db.execute('SAVEPOINT caller')
+    db.execute('INSERT INTO resource_relations VALUES(?,?,?,?,?,?,?,?)',(*key.coordinates(),'before','[]',PROV,'{}',8))
+    checkpoint=rows(db)
+    with pytest.raises(sqlite3.IntegrityError):db.execute(sql,(*key.coordinates(),'[]',PROV,'{}',9)).fetchall()
+    assert rows(db)==checkpoint
+    db.execute('RELEASE caller');db.commit();db.close()
+
+@pytest.mark.parametrize('native',['é','e\u0301','A','a','',[],[''],[[]]])
+def test_fk_binary_coordinate_independence(tmp_path,native):
+    catalog(tmp_path)
+    key=ResourceKey.from_native(S,'Kind',native)
+    with Context.transaction(tmp_path) as c:
+        c.provider(S,'synthetic');c.resource(key)
+    db=schema.connect(tmp_path/'context.sqlite3','context')
+    # A case variant may not borrow the parent PK through any reference index.
+    before=rows(db)
+    with pytest.raises(sqlite3.IntegrityError):
+        db.execute('INSERT INTO resource_relations VALUES(?,?,?,?,?,?,?,?)',(S,'kind',key.provider_resource_id,'opaque','[]',PROV,'{}',6))
+    assert rows(db)==before
+    assert not db.execute('PRAGMA foreign_key_check').fetchall()
+    db.close()
+
+@pytest.mark.parametrize('name',['transfer_event_report','transfer_from_repository','transfer_to_repository'])
+def test_empty_explicit_selection_refuses_and_preserves_store(tmp_path,name):
+    catalog(tmp_path)
+    before={}
+    for role in ('core','context'):
+        db=schema.connect(tmp_path/(role+'.sqlite3'),role);before[role]=rows(db);db.close()
+    with pytest.raises(UnsupportedResourceStage):
+        ExchangeService(tmp_path).export_transfer_events() if name=='transfer_event_report' else ProductionQueryService(tmp_path).transfer_event_reports()
+    for role in ('core','context'):
+        db=schema.connect(tmp_path/(role+'.sqlite3'),role);assert rows(db)==before[role];db.close()
+    assert not (tmp_path/'p1-recovery-stop.json').exists()
+
+@pytest.mark.parametrize('reverse',[False,True])
+def test_provider_forged_generic_transfer_flag_false_preflights_whole_sequence(tmp_path,reverse):
+    from repo_catalog.adapters.github.production_intake import NormalizedContextUnit
+    from repo_catalog.application.acquisition import ProviderAcquisition
+    catalog(tmp_path)
+    with Context.transaction(tmp_path) as c:c.provider(S,'synthetic')
+    ordinary=ResourceKey.from_native(S,'unknown-native-kind',['g',[]])
+    malicious=ResourceKey.from_native(S,'unknown-native-kind',['b',[]])
+    first=NormalizedContextUnit(ordinary,FieldClock('provider',4),PROV,5,(ResourceObservation(ordinary),),(),(),(),())
+    bad=NormalizedContextUnit(malicious,FieldClock('provider',4),PROV,5,(ResourceObservation(malicious),),(),('must-not-persist',),(ResourceRelation(malicious,'transfer_event_report',(),PROV,'{}',5),),(),False)
+    units=(bad,first) if reverse else (first,bad)
+    db=schema.connect(tmp_path/'context.sqlite3','context');before=rows(db);db.close()
+    with pytest.raises(UnsupportedResourceStage):ProviderAcquisition(tmp_path).admit_units(units)
+    db=schema.connect(tmp_path/'context.sqlite3','context');assert rows(db)==before;db.close()
+    assert not (tmp_path/'p1-recovery-stop.json').exists()
+
+@pytest.mark.parametrize('role',['transfer_from_repository','transfer_to_repository'])
+@pytest.mark.parametrize('verb',['INSERT','INSERT OR IGNORE','REPLACE'])
+@pytest.mark.parametrize('collision',[False,True])
+def test_endpoint_unconditional_fence_survives_real_pk_collision(tmp_path,role,verb,collision):
+    catalog(tmp_path)
+    ns=ResourceKey.from_native(S,'issue',['g','I7'])
+    event=ResourceKey.timeline_event(ns,['event',[]])
+    with Context.transaction(tmp_path) as c:
+        c.provider(S,'synthetic');c.resource(event,identification=RI.scoped(event,ns,'timeline_event',['event',[]]))
+    db=schema.connect(tmp_path/'context.sqlite3','context')
+    vals=(*event.coordinates(),role,'null',canonical({'at_us':4,'domain':'provider'}),PROV,5)
+    sql=' INTO resource_repository_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,target_json,clock_json,provenance_json,observed_at_us) VALUES(?,?,?,?,?,?,?,?)'
+    if collision:
+        ddl=db.execute("SELECT sql FROM sqlite_schema WHERE name='i2_transfer_stage_fence'").fetchone()[0]
+        db.execute('DROP TRIGGER i2_transfer_stage_fence');db.execute('INSERT'+sql,vals);db.execute(ddl)
+        assert schema.schema_rows(db)==schema.expected_schema('context')
+    before=rows(db)
+    with pytest.raises(sqlite3.IntegrityError) as exc:
+        db.execute(verb+sql+' ON CONFLICT DO UPDATE SET observed_at_us=observed_at_us WHERE 0 RETURNING relation_kind',vals).fetchall()
+    assert exc.value.sqlite_errorcode==1811
+    assert rows(db)==before
+    db.close()

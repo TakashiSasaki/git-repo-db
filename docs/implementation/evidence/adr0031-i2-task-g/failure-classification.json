@@ -1,0 +1,15 @@
+{
+  "same_outcomes": true,
+  "lanes": {
+    "broad-3513-dynamic": {
+      "intended_I3_I5_dependency:call": 45,
+      "intended_I6_wire_dependency:call": 14,
+      "intended_I3_I5_dependency:setup": 20
+    },
+    "broad-3531": {
+      "intended_I3_I5_dependency:call": 45,
+      "intended_I6_wire_dependency:call": 14,
+      "intended_I3_I5_dependency:setup": 20
+    }
+  }
+}
