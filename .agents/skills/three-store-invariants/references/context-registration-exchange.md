@@ -245,3 +245,31 @@ are not a mandate for every JSON contract. Do not canonicalize an embedded key
 after package binding and reuse the old digest. Specification vectors and source
 inspection are distinct from executed parser/schema tests; an unresolved future
 identity or FK design must not become skill policy.
+
+### Verify a typed report projection without duplicating authority
+
+When extending an existing JSON report with typed FKs, retain the complete
+original report key and derive all reference columns with GENERATED ALWAYS.
+Exercise explicit-null subtype absence against a non-NULL target projection;
+an omitted field must fail the row-local predicate rather than disable a
+composite FK through SQL NULL. Run raw SQL as well as typed admission: source
+and target absence must fail, every component of a disposable full-key consumer
+must be necessary, and IGNORE/DO NOTHING/no-op UPSERT must not hide an immutable
+observation-time rebind. Compare complete pre/post rowsets after rejection,
+multirow failure and savepoint/transaction rollback. Keep lawful competing
+reports and ordinary ordered multi-member reports as positive controls.
+
+Use `python -m pytest tests/integration/p3/test_parent_reports.py -q` and the
+outside-checkout `scripts/verify_i3_distribution.py` probe on each actual SQLite
+runtime. A statically built-in `_sqlite3` ignores `LD_LIBRARY_PATH`; measure
+`SELECT sqlite_version(),sqlite_source_id()` in each child process and select a
+real dynamically linked interpreter when switching libraries. Never overwrite a
+reported version. The I3 evidence records both official-source library builds.
+These checks establish the bounded Parent contract, not I4/I5 Transfer support,
+I6 generalized Exchange, full I7 Recovery or Provider authenticity.
+
+Register each new opt-in implementation module by its exact path in the
+callsite audit's isolated-module set, then rerun the existing public-runtime and
+Access isolation tests. Regenerating a lexical inventory alone does not verify
+that classification. Keep the explicit-path tests intact; do not replace the
+registry with a broad prefix exclusion that could hide a public-runtime import.

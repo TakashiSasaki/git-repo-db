@@ -45,6 +45,7 @@ ISOLATED_NEXT_STAGE_MODULES = frozenset(
         "adapters/sqlite/production_context.py",
         "domain/production_context.py",
         "domain/resource_identification.py",
+        "domain/parent_report.py",
         "domain/resource_stage.py",
         "domain/context_registration.py",
         "domain/ports/production_context.py",

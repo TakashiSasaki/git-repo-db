@@ -144,6 +144,7 @@ def verify_connection(db: sqlite3.Connection) -> None:
     for name, arity in (
         ("p1_resource_identity_v1", 1),
         ("p1_resource_identification_v1", 6),
+        ("p1_parent_report_v1", 7),
     ):
         if not functions.get((name, arity), 0) & 2048:
             raise SchemaError(

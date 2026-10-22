@@ -69,8 +69,15 @@ SCOPE = J(
 )
 REPORT = (*EVENT[:3], "transfer_event_report", J([NATIVE_REPO[:3]]), PROV, SCOPE, 53)
 GENERIC = (*EVENT[:3], "f_relation", "[]", PROV, "{}", 53)
-PARENT7 = (*EVENT[:3], "parent", J([ISSUE7[:3]]), PROV, "{}", 53)
-PARENT8 = (*EVENT[:3], "parent", J([ISSUE8[:3]]), PROV, "{}", 53)
+PARENT_SCOPE = J(
+    {
+        "clock": {"domain": "provider-f", "at_us": 53},
+        "document_kind": "timeline_event",
+        "state": "complete",
+    }
+)
+PARENT7 = (*EVENT[:3], "parent", J([ISSUE7[:3]]), PROV, PARENT_SCOPE, 53)
+PARENT8 = (*EVENT[:3], "parent", J([ISSUE8[:3]]), PROV, PARENT_SCOPE, 53)
 ENDPOINTS = {
     role: (*EVENT[:3], role, "null", CLOCK, PROV, 53)
     for role in ("transfer_from_repository", "transfer_to_repository")
@@ -502,7 +509,7 @@ def positive(d):
         (
             *PARENT8[:5],
             J({"source": "task-f-other", "evidence": "independent"}),
-            "{}",
+            PARENT_SCOPE,
             71,
         ),
     )
