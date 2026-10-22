@@ -103,9 +103,38 @@ CREATE TABLE resource_relations(
  provenance_json TEXT NOT NULL CHECK(p1_json(provenance_json) AND json_type(provenance_json)='object' AND COALESCE(json_type(provenance_json,'$.source')='text',0) AND length(json_extract(provenance_json,'$.source'))>0 AND json_type(provenance_json,'$.evidence') IS NOT NULL AND json_type(provenance_json,'$.evidence')!='null'),
  scope_json TEXT NOT NULL CHECK(p1_json(scope_json)),
  observed_at_us INTEGER CHECK(observed_at_us IS NULL OR (typeof(observed_at_us)='integer' AND observed_at_us>0)),
+ -- Read-only projections of the original singleton report; never another authority.
+ parent_service TEXT COLLATE BINARY GENERATED ALWAYS AS(CASE WHEN relation_kind='parent' THEN json_extract(members_json,'$[0][0]') END) VIRTUAL,
+ parent_kind TEXT COLLATE BINARY GENERATED ALWAYS AS(CASE WHEN relation_kind='parent' THEN json_extract(members_json,'$[0][1]') END) VIRTUAL,
+ parent_id TEXT COLLATE BINARY GENERATED ALWAYS AS(CASE WHEN relation_kind='parent' THEN json_extract(members_json,'$[0][2]') END) VIRTUAL,
+ source_document_kind TEXT COLLATE BINARY GENERATED ALWAYS AS(CASE WHEN relation_kind='parent' THEN coalesce(json_extract(scope_json,'$.document_kind'),'') END) VIRTUAL,
+ report_clock_json TEXT COLLATE BINARY GENERATED ALWAYS AS(CASE WHEN relation_kind='parent' THEN json_extract(scope_json,'$.clock') END) VIRTUAL,
+ CHECK(relation_kind!='parent' OR p1_parent_report_v1(service_instance_uuidv4,resource_kind,provider_resource_id,members_json,provenance_json,scope_json,observed_at_us)=1),
+ CHECK(relation_kind!='parent' OR (parent_service IS NOT NULL AND parent_kind IS NOT NULL AND parent_id IS NOT NULL AND source_document_kind IS NOT NULL AND report_clock_json IS NOT NULL)),
  PRIMARY KEY(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json),
- FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id) REFERENCES resources
+ FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id) REFERENCES resources,
+ FOREIGN KEY(parent_service,parent_kind,parent_id) REFERENCES resources,
+ FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id,source_document_kind)
+ REFERENCES resources(service_instance_uuidv4,resource_kind,provider_resource_id,reference_document_kind)
 ) STRICT, WITHOUT ROWID;
+-- Complete report reference plus its generated type; no UNIQUE child/clock winner.
+CREATE UNIQUE INDEX parent_report_typed_fk ON resource_relations(
+ service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,
+ members_json,provenance_json,scope_json,source_document_kind,parent_kind);
+CREATE INDEX parent_report_target ON resource_relations(parent_service,parent_kind,parent_id)
+ WHERE relation_kind='parent';
+-- Run before conflict/no-op handling, including timestamp rebinds on exact replay.
+CREATE TRIGGER parent_report_admit BEFORE INSERT ON resource_relations
+WHEN NEW.relation_kind='parent' BEGIN
+ SELECT CASE WHEN p1_parent_report_v1(NEW.service_instance_uuidv4,NEW.resource_kind,NEW.provider_resource_id,NEW.members_json,NEW.provenance_json,NEW.scope_json,NEW.observed_at_us)!=1
+ THEN RAISE(ABORT,'invalid Parent report') END;
+ SELECT CASE WHEN EXISTS(SELECT 1 FROM resource_relations r
+ WHERE r.service_instance_uuidv4=NEW.service_instance_uuidv4 AND r.resource_kind=NEW.resource_kind
+ AND r.provider_resource_id=NEW.provider_resource_id AND r.relation_kind=NEW.relation_kind
+ AND r.members_json=NEW.members_json AND r.provenance_json=NEW.provenance_json
+ AND r.scope_json=NEW.scope_json AND r.observed_at_us IS NOT NEW.observed_at_us)
+ THEN RAISE(ABORT,'Parent report observation rebind') END;
+END;
 CREATE TABLE collections(
  service_instance_uuidv4 TEXT NOT NULL,
  resource_kind TEXT NOT NULL,

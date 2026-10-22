@@ -163,6 +163,7 @@ from repo_catalog.domain.p1_context import (
     validate_timeline_event_coordinates as validate_timeline_event_coordinates,
 )
 from repo_catalog.domain.p1_core import OID
+from repo_catalog.domain.parent_report import ParentReportKey, validate_parent_report
 from repo_catalog.domain.resource_identification import (
     ResourceIdentification,
     require_identification,
@@ -224,10 +225,26 @@ class ResourceRelation:
         json_value(self.scope_json)
         if len(set(self.members)) != len(self.members):
             raise ContextError("DUPLICATE_MEMBER", "relation")
+        if self.relation_kind == "parent":
+            validate_parent_report(
+                *self.resource.coordinates(),
+                self.members_json,
+                self.provenance_json,
+                self.scope_json,
+                self.observed_at_us,
+            )
 
     @property
     def members_json(self) -> str:
         return canonical([member.coordinates() for member in self.members])
+
+    @property
+    def parent_report_key(self) -> ParentReportKey:
+        if self.relation_kind != "parent":
+            raise ValueError("Not a Parent report")
+        return ParentReportKey(
+            self.resource, self.members_json, self.provenance_json, self.scope_json
+        )
 
 
 @dataclass(frozen=True)

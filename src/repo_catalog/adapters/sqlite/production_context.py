@@ -47,6 +47,7 @@ from repo_catalog.domain.p1_context import (
 )
 from repo_catalog.domain.p1_coordination import CoordinationError
 from repo_catalog.domain.p1_core import OID, uuid4_value
+from repo_catalog.domain.parent_report import validate_parent_report
 from repo_catalog.domain.production_context import (
     CollectionObservation,
     ContextError,
@@ -565,7 +566,31 @@ class Context(ContextStore):
             ):
                 raise ContextError("MEMBER_OWNER", "relation")
 
-    def relation(self, relation: ResourceRelation) -> str:
+    def _parent_dependencies(self, relation: ResourceRelation):
+        parent, subtype = validate_parent_report(
+            *relation.resource.coordinates(),
+            relation.members_json,
+            relation.provenance_json,
+            relation.scope_json,
+            relation.observed_at_us,
+        )
+        # Identification is checked independently of semantic Parent identity.
+        if self.identification(relation.resource).document_kind != subtype:
+            raise ContextError("PARENT_SOURCE_TYPE", "relation")
+        self.identification(parent)
+
+    def relation(
+        self,
+        relation: ResourceRelation,
+        *,
+        selected_resources: frozenset[ResourceKey] | None = None,
+        permitted: Callable[[ResourceKey], bool] | None = None,
+    ) -> str:
+        """Admit a whole report; caller policy is rechecked even on exact replay.
+
+        None denotes a trusted local caller with unrestricted selection/permission.
+        Exchange policy and generalized wire routing remain I6 work.
+        """
         refuse_transfer(relation.relation_kind)
         with self._unit():
             if relation.relation_kind == "transfer_event_report":
@@ -578,6 +603,14 @@ class Context(ContextStore):
                     relation.scope_json,
                     relation.observed_at_us,
                 )
+            for key in (relation.resource, *relation.members):
+                if selected_resources is not None and key not in selected_resources:
+                    raise ContextError("OMITTED_BY_SELECTION", "relation")
+                if permitted is not None and not permitted(key):
+                    raise ContextError("PERMISSION_DENIED", "relation")
+            self._require_resource(relation.resource)
+            if relation.relation_kind == "parent":
+                self._parent_dependencies(relation)
             self._members(relation.resource, relation.relation_kind, relation.members)
             key = (
                 *relation.resource.coordinates(),
@@ -595,7 +628,7 @@ class Context(ContextStore):
                     raise ContextError("EVIDENCE_REBIND", "relation")
                 return "duplicate"
             self.db.execute(
-                "INSERT INTO resource_relations VALUES(?,?,?,?,?,?,?,?)",
+                "INSERT INTO resource_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json,observed_at_us) VALUES(?,?,?,?,?,?,?,?)",
                 (*key, relation.observed_at_us),
             )
             return "insert"
@@ -621,6 +654,8 @@ class Context(ContextStore):
                 )
             )
             for value in values:
+                if relation_kind == "parent":
+                    self._parent_dependencies(value)
                 self._members(resource, relation_kind, value.members)
             return values
 

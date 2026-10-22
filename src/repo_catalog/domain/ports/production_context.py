@@ -43,7 +43,13 @@ class ContextPersistence(ContextAdmission, Protocol):
     def inherit_fields(
         self, parent: ResourceKey, child: ResourceKey, fields: Sequence[str]
     ) -> tuple[str, ...]: ...
-    def relation(self, relation: ResourceRelation) -> str: ...
+    def relation(
+        self,
+        relation: ResourceRelation,
+        *,
+        selected_resources: frozenset[ResourceKey] | None = None,
+        permitted: Callable[[ResourceKey], bool] | None = None,
+    ) -> str: ...
     def relations(
         self, resource: ResourceKey, relation_kind: str
     ) -> tuple[ResourceRelation, ...]: ...

@@ -55,6 +55,9 @@ from repo_catalog.domain.resource_stage import (
 
 def register_functions(db: sqlite3.Connection) -> None:
     from repo_catalog.domain.context_registration import registration_json
+    from repo_catalog.domain.parent_report import parent_report_sql
+
+    db.create_function("p1_parent_report_v1", 7, parent_report_sql, deterministic=True)
 
     db.create_function("p1_resource_identity_v1", 1, identity_sql, deterministic=True)
     db.create_function(

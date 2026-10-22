@@ -20,6 +20,7 @@ from repo_catalog.domain.p1_context import (
     validate_provider_repository_scope,
 )
 from repo_catalog.domain.p1_core import CoreFailure
+from repo_catalog.domain.parent_report import validate_parent_report
 from repo_catalog.domain.recovery import BackupValidationError
 
 
@@ -168,6 +169,23 @@ def validate_stored_context_relations(connection: sqlite3.Connection) -> None:
             FROM resource_relations"""
         ):
             parsed_scope = json.loads(row[6])
+            if row[3] == "parent":
+                parent, subtype = validate_parent_report(
+                    *row[:3], row[4], row[5], row[6], row[7]
+                )
+                if (
+                    not connection.execute(
+                        "SELECT 1 FROM resources WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=? AND reference_document_kind=?",
+                        (*row[:3], subtype or ""),
+                    ).fetchone()
+                    or not connection.execute(
+                        "SELECT 1 FROM resources WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=?",
+                        parent.coordinates(),
+                    ).fetchone()
+                ):
+                    raise BackupValidationError(
+                        "Stored Parent report reference missing"
+                    )
             if row[3] == "provider_repository_roles":
                 members = tuple(ResourceKey(*m) for m in json.loads(row[4]))
                 validate_provider_repository_scope(

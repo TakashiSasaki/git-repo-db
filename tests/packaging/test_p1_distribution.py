@@ -124,3 +124,11 @@ print(json.dumps(s.expected_ddl_manifest(), sort_keys=True))
     run([python, driver, "--output", outside / "i2-installed.json"], outside, env)
     receipt = json.loads((outside / "i2-installed.json").read_text())
     assert all(str(venv) in item["path"] for item in receipt["origins"].values())
+
+    parent_driver = outside / "verify_i3_distribution.py"
+    parent_driver.write_bytes((ROOT / "scripts/verify_i3_distribution.py").read_bytes())
+    run(
+        [python, parent_driver, "--output", outside / "i3-installed.json"], outside, env
+    )
+    parent_receipt = json.loads((outside / "i3-installed.json").read_text())
+    assert all(str(venv) in item["path"] for item in parent_receipt["origins"].values())
