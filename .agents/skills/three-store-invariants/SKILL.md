@@ -811,6 +811,16 @@ does not establish its Provider meaning; I5 owns semantic Admission. Whole-unit
 completeness and pre-affinity original timestamp types cannot be inferred from
 successful SQL references.
 
+The I5 tests in `tests/integration/p3/test_transfer_admission.py` exercise Typed
+Transfer Admission for native-I7 SQL. Run `scripts/verify_i5.py` on each actual SQLite
+runtime and `scripts/verify_i5_distribution.py` outside the source artifact through its fresh
+installed environments. Both SQL transfer stage fences (`i2_transfer_stage_fence`,
+`i2_transfer_report_stage_fence`) remain present in product DDL; normal production paths
+reject Transfer operations with `I2_TRANSFER_UNSUPPORTED`. I5 enforces semantic Admission,
+pre-affinity original timestamp validation, atomicity via SAVEPOINT, and G3=A permanent
+violation vs dependency missing classification, leaving Identification Wire and Exchange to I6.
+
+
 An older impossible-storage corruption fixture can fail at injection after a new
 constraint is added. Keep its original corrupt values and downstream stop/rowset
 assertions. Bypass additional guards only inside the explicit corruption

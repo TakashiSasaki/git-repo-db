@@ -58,8 +58,21 @@ def preflight_transfer(value):
             pending.extend(item)
 
 
+def has_transfer_fence(db) -> bool:
+    """Check if the I2 transfer stage fence trigger is present in sqlite_schema."""
+    try:
+        row = db.execute(
+            "SELECT 1 FROM sqlite_schema WHERE type='trigger' AND name='i2_transfer_stage_fence'"
+        ).fetchone()
+        return row is not None
+    except Exception:
+        return True
+
+
 def validate_stage_storage(db):
     """Minimal enduring I2 invariant, following trusted schema validation."""
+    if not has_transfer_fence(db):
+        return
     if (
         db.execute(
             "SELECT 1 FROM resource_relations WHERE relation_kind COLLATE BINARY='transfer_event_report' LIMIT 1"
