@@ -1,0 +1,58 @@
+{
+  "reviewed_and_executed_head": "a9d4c3585806622b66d3c41132c2a9f8ab5c6f9e",
+  "reviewed_and_executed_tree": "3dd1e39e06d347883a6fb493e7b9b06fb6dbfb62",
+  "publication_base_head": "a9d4c3585806622b66d3c41132c2a9f8ab5c6f9e",
+  "publication_scope": "new independent-review evidence files only; existing files unchanged",
+  "files_copied_byte_for_byte": {
+    "REPORT.md": {
+      "bytes": 24228,
+      "sha256": "5ee7210741baa47843cba118543889530861ab06524485fd9136ff54e07af830",
+      "source_relative_path": "REPORT.md"
+    },
+    "independent-evidence.zip": {
+      "bytes": 12376614,
+      "sha256": "7dacbc506fd0ab6cc681008752b5e95608299a085c09aceb5cbc748822e86c88",
+      "source_relative_path": "i4-independent-evidence.zip"
+    },
+    "artifact-index.json": {
+      "bytes": 131328,
+      "sha256": "c7c1e45eade3754b06d2a759887293652d0122e023923c0e90601ddb529d1c42",
+      "source_relative_path": "artifact-index.json"
+    },
+    "artifacts.json": {
+      "bytes": 352,
+      "sha256": "4e20e5b123b0ffa1f3c567e2feefa66fd9ebf2492f1a945297a038f4b17f0b35",
+      "source_relative_path": "ARTIFACTS.json"
+    },
+    "summary.json": {
+      "bytes": 4267,
+      "sha256": "43d511349c6650e9a8bde321a216195d176985648b254a632e7cb4422a49a4f7",
+      "source_relative_path": "evidence/review-summary.json"
+    },
+    "failure-classification.json": {
+      "bytes": 399925,
+      "sha256": "504fc5b18954ad7d48ea638dd7cb836392bef2392bddf65e4842436b3724c235",
+      "source_relative_path": "evidence/independent-failure-comparison.json"
+    },
+    "raw-message-differences.json": {
+      "bytes": 18455,
+      "sha256": "7079712bf649073e50adcfe377a2a9d67bdfc3095d0b29e11c39a1199f73a2e6",
+      "source_relative_path": "evidence/raw-message-differences.json"
+    },
+    "finding-i4-e1.json": {
+      "bytes": 860,
+      "sha256": "ee6c94a232b604c3afbde7e170766c24e1fe661b12717227702ead4eb26cb92d",
+      "source_relative_path": "evidence/I4-E1-reproduction.json"
+    },
+    "sdist-input-scope.json": {
+      "bytes": 1222,
+      "sha256": "05a75bb141ee1c2a1efbddf529ea17f757a09755baeefe79e26242b76170d7d5",
+      "source_relative_path": "evidence/sdist-input-scope.json"
+    }
+  },
+  "archive_payload_entries": 649,
+  "archive_entries_including_index": 650,
+  "archive_all_entry_hashes_reverified": true,
+  "new_runtime_execution_for_publication": false,
+  "publication_sha_tree_binding": "Recorded in the new PR body after committing; not embedded recursively in its own tree."
+}
