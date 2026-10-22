@@ -59,6 +59,8 @@ class ParentReportKey:
     scope_json: str
 
     def __post_init__(self):
+        if not isinstance(self.resource, ResourceKey):
+            raise ValueError("ParentReportKey requires a ResourceKey")
         validate_parent_report(
             *self.resource.coordinates(),
             self.members_json,

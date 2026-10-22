@@ -3547,32 +3547,6 @@
       ]
     },
     {
-      "path": "src/repo_catalog/domain/parent_report.py",
-      "sha256": "ef233ce7499baf2988f178c745a3e41277b4981c5579035c118d2068efef1205",
-      "functions": [
-        {
-          "name": "validate_parent_report",
-          "line": 21,
-          "end_line": 49
-        },
-        {
-          "name": "__post_init__",
-          "line": 61,
-          "end_line": 68
-        },
-        {
-          "name": "coordinates",
-          "line": 70,
-          "end_line": 77
-        },
-        {
-          "name": "parent_report_sql",
-          "line": 80,
-          "end_line": 86
-        }
-      ]
-    },
-    {
       "path": "src/repo_catalog/domain/payload.py",
       "sha256": "e8b830b9ddcebdd61e2739f646e1565cdea34facb9b3513b9756cb06ae6d6208",
       "functions": [

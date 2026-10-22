@@ -534,3 +534,21 @@ def test_sql_exact_replay_nothing_and_insert_select_returning(pair):
         (J({"domain": "provider-clock", "at_us": 12}),)
     ]
     assert db.execute("PRAGMA foreign_key_check").fetchall() == []
+
+
+def test_parent_typed_construction_bounds_before_general_json_decode():
+    child, parent = key("document", "D"), key("project", "P")
+    with pytest.raises(ValueError, match="nesting depth"):
+        ResourceRelation(
+            child, "parent", (parent,), PROV, "[" * 5000 + "[]" + "]" * 5000, 17
+        )
+
+
+def test_parent_udf_registration_required_and_deterministic(raw):
+    assert any(
+        r[0] == "p1_parent_report_v1" and r[4] == 7 and r[5] & 2048
+        for r in raw.execute("PRAGMA function_list")
+    )
+    raw.create_function("p1_parent_report_v1", 7, None)
+    with pytest.raises(p1_schema.SchemaError, match="p1_parent_report_v1"):
+        p1_schema.verify_connection(raw)

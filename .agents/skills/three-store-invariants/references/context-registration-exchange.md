@@ -267,3 +267,9 @@ real dynamically linked interpreter when switching libraries. Never overwrite a
 reported version. The I3 evidence records both official-source library builds.
 These checks establish the bounded Parent contract, not I4/I5 Transfer support,
 I6 generalized Exchange, full I7 Recovery or Provider authenticity.
+
+Register each new opt-in implementation module by its exact path in the
+callsite audit's isolated-module set, then rerun the existing public-runtime and
+Access isolation tests. Regenerating a lexical inventory alone does not verify
+that classification. Keep the explicit-path tests intact; do not replace the
+registry with a broad prefix exclusion that could hide a public-runtime import.

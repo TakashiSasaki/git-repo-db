@@ -221,11 +221,10 @@ class ResourceRelation:
         if not self.relation_kind:
             raise ContextError("MISSING_KIND", "relation")
         validate_observation_us(self.observed_at_us)
-        json_value(self.provenance_json, provenance=True)
-        json_value(self.scope_json)
-        if len(set(self.members)) != len(self.members):
-            raise ContextError("DUPLICATE_MEMBER", "relation")
         if self.relation_kind == "parent":
+            if len(self.members) != 1:
+                raise ValueError("Parent report requires exactly one member")
+            # Bound untrusted JSON before the general relation decoder allocates.
             validate_parent_report(
                 *self.resource.coordinates(),
                 self.members_json,
@@ -233,6 +232,11 @@ class ResourceRelation:
                 self.scope_json,
                 self.observed_at_us,
             )
+            return
+        json_value(self.provenance_json, provenance=True)
+        json_value(self.scope_json)
+        if len(set(self.members)) != len(self.members):
+            raise ContextError("DUPLICATE_MEMBER", "relation")
 
     @property
     def members_json(self) -> str:
