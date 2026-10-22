@@ -216,6 +216,20 @@ Path(sys.argv[1]).write_text(json.dumps(result,indent=2)+'\\n')
         )
         for credential in ("GH_TOKEN", "GITHUB_TOKEN"):
             env.pop(credential, None)
+        if reference := os.environ.get("CI_RUNTIME_REFERENCE"):
+            run(
+                label + "-runtime-binding",
+                [
+                    py,
+                    ROOT / "scripts/ci_python_runtime.py",
+                    "probe",
+                    out / (label + "-runtime-binding.json"),
+                    "--reference",
+                    Path(reference).resolve(),
+                ],
+                outside,
+                env,
+            )
         measured_exit = run(
             label + "-measure",
             [

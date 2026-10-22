@@ -381,6 +381,18 @@ def main() -> None:
             )
             # Retain the actual installed runtime even when the domain smoke
             # fails, and exercise both artifacts before returning a failure.
+            if reference := os.environ.get("CI_RUNTIME_REFERENCE"):
+                run(
+                    str(python),
+                    "-I",
+                    str(ROOT / "scripts/ci_python_runtime.py"),
+                    "probe",
+                    str(ROOT / "artifacts/runtime" / (label + ".json")),
+                    "--reference",
+                    str(Path(reference).resolve()),
+                    cwd=base,
+                    env=env,
+                )
             runtime = json.loads(
                 run(
                     str(python),

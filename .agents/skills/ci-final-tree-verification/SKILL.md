@@ -108,6 +108,29 @@ and its independently retained execution receipts.
 
 ## Development validation loop (ordinary PRs and stacked iterations)
 
+### Hosted Python selection and built-in SQLite identity
+
+When hosted Access fails `SQLITE_RUNTIME` before collection, compare the selected
+Python's actual SQLite with the unchanged product guards. `setup-python` 3.12.15
+on Ubuntu 24.04 was observed to load 3.45.1; upgrading Python's version selector
+alone does not establish support. Use the complete checksum-bound prebuilt Python
+selection described in [hosted runtime guidance](../../../docs/ci-python-runtime.md).
+Do not repair an interpreter by obtaining or replacing a SQLite component.
+
+Probe before dependencies, after each dependency preparation and inside each
+actual installed-artifact venv. Record `sys.executable`, resolved
+`sys._base_executable`, actual SQLite/source, compile options and loader mappings.
+For built-in `_sqlite3`, `__file__` is absent: bind its `__spec__.origin` and the
+base Python executable hash instead. JSON receipts normalize tuple/list shapes
+before same-invocation comparisons. These comparisons reject child drift without
+requiring an exact SQLite release across environments. Keep independent installed
+origin/file checks, factory safety guards and offline protections intact.
+
+An inherited test failure must not prevent later artifact lanes or evidence
+audits from running. Retain nonzero outcomes, execute independent later checks
+with `!cancelled()` and report unexecuted scopes explicitly. Keep the independent
+stdlib-only policy job separate from product dependency preparation.
+
 Measure the selected Python executable/version and `SELECT sqlite_version(),
 sqlite_source_id()` before execution. Keep that Python through locked dependency
 preparation, subprocesses and installed venvs. Do not obtain/build/install/swap

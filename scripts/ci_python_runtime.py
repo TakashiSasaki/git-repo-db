@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib.util
 import json
 import os
 import platform
@@ -42,6 +43,7 @@ def install(destination):
     with Path(os.environ["GITHUB_ENV"]).open("a") as stream:
         stream.write(f"UV_PYTHON={python}\nUV_PYTHON_DOWNLOADS=never\n")
         stream.write(f"CI_PRODUCT_PYTHON={python}\n")
+        stream.write(f"CI_RUNTIME_REFERENCE={ROOT}/artifacts/runtime/selected.json\n")
     print(json.dumps({"manifest": manifest, "executable": str(python)}, indent=2))
 
 
@@ -101,7 +103,8 @@ def probe(output, reference=None):
         ):
             if result[field] != original[field]:
                 raise RuntimeError(f"Runtime changed within this invocation: {field}")
-    sys.path.insert(0, str(ROOT / "src"))
+    if importlib.util.find_spec("repo_catalog") is None:
+        sys.path.insert(0, str(ROOT / "src"))
     from repo_catalog.adapters.sqlite import access_schema, p1_schema
 
     # Invoke the real factories; their safety predicates remain the authority.
@@ -117,6 +120,7 @@ def probe(output, reference=None):
             )
             assert db.execute("PRAGMA journal_mode=WAL").fetchone() == ("wal",)
     result["product_safety_and_capabilities"] = "passed"
+    result["product_module"] = access_schema.__file__
     output.write_text(json.dumps(result, indent=2) + "\n")
 
 
