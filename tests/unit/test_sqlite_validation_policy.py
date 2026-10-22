@@ -150,6 +150,22 @@ assert actual == sys.argv[2]
         source = "Do not alter product safety checks. Run both SQLite versions."
         self.assertIn("sqlite-procedure", self.rules(source, "AGENTS.md"))
 
+    def test_original_minimum_sqlite_and_newer_v1_requirement_is_detected(self):
+        path = "docs/implementation/context-resource-design-handoff.md"
+        original_row = (
+            "| V1 — supported runtimes | Apply throughout I1–I8; freeze coherent integrated inputs. "
+            "Run actual minimum SQLite 3.51.3 and a newer supported runtime with source IDs/options/pragmas "
+            "and exact collected/executed cases. | Old/new adversarial units, schema/FK/integrity, "
+            "transactions/reopens and misconfiguration controls. Independent execution separates SQL errors "
+            "from Python validation; no version spoofing or inherited PASS. |"
+        )
+        for source in (
+            "Run actual minimum SQLite 3.51.3 and a newer supported runtime.",
+            original_row,
+        ):
+            with self.subTest(source=source):
+                self.assertIn("sqlite-procedure", self.rules(source, path))
+
     def test_unrelated_negative_clause_does_not_hide_positive_requirement(self):
         for source in (
             "Run SQLite 3.51.3 and 3.53.1 without disabling product safety checks.",

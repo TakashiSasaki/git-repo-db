@@ -88,6 +88,7 @@ PROSE_BAD = re.compile(
     r"(?:\b(?:download|build|compile|install|swap|replace)\s+(?:(?:the|a|test|specific|fixed|pinned)\s+)*sqlite\b"
     r"|\bsqlite\s+(?:version\s+)?(?:matrix|source\s+build)\b"
     r"|\b(?:minimum|oldest)\b.{0,100}\b(?:newer|newest|latest)\b.{0,100}\bsqlite\b"
+    r"|\b(?:minimum|oldest)\b.{0,60}\bsqlite\b.{0,100}\b(?:newer|newest|latest)\b"
     r"|\bsqlite\b.{0,100}\b(?:minimum|oldest)\b.{0,100}\b(?:newer|newest|latest)\b"
     r"|\b(?:both|multiple|two)\b.{0,40}\bsqlite\s+(?:versions|releases|runtimes|libraries|bindings)\b"
     r"|\b(?:both|multiple|two)\s+(?:versions|releases|runtimes|libraries|bindings)\s+of\s+sqlite\b"
