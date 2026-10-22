@@ -213,12 +213,22 @@ def inject(db, representation):
     # Unsupported poisoned-state diagnostic. Restore the exact schema before test.
     report = representation == "report"
     trigger = "i2_transfer_report_stage_fence" if report else "i2_transfer_stage_fence"
-    ddl = db.execute(
-        "SELECT sql FROM sqlite_schema WHERE name=?", (trigger,)
-    ).fetchone()[0]
-    db.execute("DROP TRIGGER " + trigger)
+    guard = "i4_event_report_admit" if report else "i4_endpoint_admit"
+    definitions = [
+        db.execute("SELECT sql FROM sqlite_schema WHERE name=?", (name,)).fetchone()[0]
+        for name in (trigger, guard)
+    ]
+    for name in (trigger, guard):
+        db.execute("DROP TRIGGER " + name)
+    # Explicit malformed-storage injection only; these are not supported writes.
+    # Keep all original poison values and all 301 diagnostic assertions intact.
+    db.execute("PRAGMA foreign_keys=OFF")
+    db.execute("PRAGMA ignore_check_constraints=ON")
     db.execute(REL if report else EP, REPORT if report else ENDPOINTS[representation])
-    db.execute(ddl)
+    for ddl in definitions:
+        db.execute(ddl)
+    p1_schema.configure(db)
+    assert p1_schema.schema_rows(db) == p1_schema.expected_schema("context")
 
 
 VERBS = [

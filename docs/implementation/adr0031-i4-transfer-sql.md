@@ -129,3 +129,6 @@ route executes. This corruption fixture is separate from the I4 constraint lane,
 which removes only the two fences and keeps every integrity setting enabled.
 No ordinary connection supports that injection profile. The initial eight
 injection failures and successful corrected executions remain in the evidence.
+The active 301-group I2 SQL diagnostic uses the same corrected poison-injection
+procedure; its original group names, inputs and assertions remain intact.
+Historical diagnostic evidence is unchanged.
