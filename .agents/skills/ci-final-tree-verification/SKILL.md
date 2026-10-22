@@ -100,6 +100,25 @@ existence and passing counts are separate evidence.
 4. Verify that hosted development CI passed its planned checks. A passing development CI run (`acceptance_status=development_checks_passed`) confirms development infrastructure integrity; it does not represent complete release acceptance.
 5. On an evidence follow-up, verify unchanged input hashes, tree binding, and recorded test evidence rather than claiming unexecuted tests were rerun.
 
+### Host umask vs. restrictive POSIX security checks
+
+Developer hosts frequently default to `umask 0002` (leaving group-write `0o020` set), while hosted CI runners default to `umask 0022`.
+- Repositories with hardened POSIX execution boundaries (such as `access_executor` and `access_native.py`) strictly enforce `not (info.st_mode & 0o022)` on files and directories.
+- Under `umask 0002`, `git init` or `mkdir` creates files with mode `0664` and directories with `0775`, causing local test suites and packaging smoke scripts (`scripts/verify_access_distribution.py`) to fail with `EXECUTOR_PERMISSIONS` or `EXECUTOR_UNSUPPORTED` even though CI passes.
+- **Procedure**:
+  - Always enforce `os.umask(0o022)` at the entry point of standalone smoke scripts or test scripts creating Git repositories.
+  - When running local pytest suites manually, run under `umask 0022`:
+    ```bash
+    sh -c "umask 0022; uv run --no-sync pytest tests/integration/access"
+    ```
+
+### Synchronize CI workflow target inclusions for new test files
+
+When adding a new integration test module (e.g. `tests/integration/p1/test_context_relations.py`):
+1. Check `.github/workflows/access-registry.yml` (and any related workflows).
+2. Ensure the new test file is explicitly added to **both** the `--collect-only` step and the actual test execution step (`--junitxml=...`).
+3. Failing to add new test files will result in CI silently omitting them from execution while local runs pass.
+
 ## Explicit release acceptance loop (release qualification only)
 
 1. Release validation is an explicit, user-invoked operation requiring complete independent testing in both environments (local AND hosted).
@@ -114,6 +133,8 @@ existence and passing counts are separate evidence.
 ## Frequent failure modes
 
 - Ruff formatting fails even though lint passed.
+- Host umask (`0002`) causes local permission check failures (`0o022`) in access/executor tests despite passing in CI.
+- New integration tests omitted from CI workflow target collections.
 - Mistaking a passing development check (`development_checks_passed`) for complete release acceptance.
 - Attempting to force full hosted test execution on ordinary development PRs where local verification suffices.
 - Stale test receipts presented against a changed Git tree or differing input hash.

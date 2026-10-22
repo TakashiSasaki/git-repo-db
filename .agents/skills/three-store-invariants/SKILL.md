@@ -762,3 +762,28 @@ lack a complete lookup index, reserve finite SQLite VM work before the lookup,
 settle only live measured work, and refuse at the cap without inferring absence.
 Use `tests/integration/p7/test_missing_required_authority.py` to distinguish
 missing required authority, genuinely new content and finite-query refusal.
+
+## Public facade input validation and fail-stop fencing
+
+In architectures with authoritative catalog corruption or fail-stop fences (such as `_stored()` or P7 Recovery Stop), **all caller input validation must execute strictly before entering the guarded transaction or storage context**.
+
+- **Symptom of improper placement**: If caller argument validation (e.g., checking `isinstance(resource, ResourceKey)`, validating `relation_kind` against `RELATION_KINDS`, verifying UUIDv4 syntax, or validating evidence structures) is placed inside `with self._stored(scope):`, any standard client programming error (`TypeError`, `ValueError`, `AttributeError`) is intercepted by `_stored()` as an authoritative database read/write corruption. This writes a `p1-recovery-stop.json` file (`AUTHORITATIVE_CORRUPTION`), unnecessarily freezing the catalog and requiring P7 recovery.
+- **Correct implementation**:
+  1. Perform all type checks, format validation, and closed-vocabulary member checks outside `_stored()`.
+  2. Let client errors raise ordinary `TypeError` or `ValueError` directly to the caller.
+  3. Enter `with self._stored(scope):` only once arguments are proven well-formed.
+
+## Canonical JSON UDF codecs and generator defenses
+
+### RFC 8785 Lexicographical Key Sorting in SQLite UDFs
+SQLite UDF predicates (`p1_mapping_clock`, `p1_mapping_provenance`) require RFC 8785 canonical JSON form (`canonical(parsed) == encoded`).
+- Keys must be sorted lexicographically: e.g., `"at_us"` strictly precedes `"domain"` (`{"at_us":1,"domain":"test"}`), and `"evidence"` strictly precedes `"source"` (`{"evidence":"e","source":"s"}`).
+- Extraneous spaces after delimiters (`:`, `,`) are rejected.
+- When writing raw SQL queries, tests, or packaging smoke assertions against these UDFs, never compose JSON literals with arbitrary key ordering.
+
+### Single-Pass Generator Exhaustion Defense
+Methods accepting optional collection filters (such as `selected_repositories` in `transfer_event_reports`) that are evaluated across multiple loop items must materialize the iterable at function entry:
+```python
+selected = tuple(selected_repositories) if selected_repositories is not None else None
+```
+Passing an unmaterialized generator leads to silent evaluation skew where the first item consumes the generator and subsequent items see an empty filter.
