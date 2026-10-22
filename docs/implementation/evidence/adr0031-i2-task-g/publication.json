@@ -1,0 +1,93 @@
+{
+  "format": "git-repo-db-task-g-publication-v1",
+  "authorization": "Owner explicitly requested publication of the completed review as a pull request after the review freeze.",
+  "reviewed_commit": "4cb90d35bd9c572239496a24cb0dd62049029235",
+  "reviewed_tree": "991d588051766ef1b6ba7c1db9309d60caf47fee",
+  "task_e_executed_commit": "cb1df83afc543d74df8b16327bfb2c418786b3b2",
+  "task_e_executed_tree": "9d0130aa3324ff36e4bcda0cfc89258e951a747a",
+  "publication_parent": "4cb90d35bd9c572239496a24cb0dd62049029235",
+  "base_branch": "impl/adr0031-i2-resources-task-e-20261021",
+  "new_branch": "review/adr0031-i2-task-g-20261022",
+  "verdict": "READY WITH CONDITIONS",
+  "verdict_scope": "bounded I2 persistence and mandatory staged refusals",
+  "full_product_acceptance": false,
+  "new_runtime_execution_for_publication": false,
+  "original_report_sha256": "928df2624a1d16e490a7160f5eb27dffa58b1019f50d306234c508431e115443",
+  "rendered_report_sha256": "aa1a71b2186dacc3e56ddd02d077ff048ca776bf89196de2e67ae82435b750b0",
+  "unchanged_copies": {
+    "summary.json": {
+      "original_path": "evidence/review-summary.json",
+      "sha256": "fea3b88b491b1c6e6234848cccf022cf3e25e82e980da2896ec5f0a49bf2a14a"
+    },
+    "failure-classification.json": {
+      "original_path": "evidence/failure-classification.json",
+      "sha256": "25459f1b9554cd06f0db8ef8f679b5a82e7af689dd894f9aba3feb529caec9b4"
+    },
+    "artifact-index.json": {
+      "original_path": "artifact-index.json",
+      "sha256": "007ccf2cc73f92b15752ceb740e0492ad97f1fa96707f3ee5ce9f25463ddb65d"
+    },
+    "archive-receipt.json": {
+      "original_path": "archive-receipt.json",
+      "sha256": "a530b988ef6ea934a0b5c5abeb1e6b2372436c7c2fd4022640552b23b6047770"
+    },
+    "task-g-review-evidence.zip": {
+      "original_path": "task-g-review-evidence.zip",
+      "sha256": "5aa95ce552c357f7a13aefe969015ea050b1825a8202e7a9f87a79e76a6161ca"
+    },
+    "test_independent.py.txt": {
+      "original_path": "test_independent.py",
+      "sha256": "eebd04cde3d158a85b5ef7704ce64d16ac98ad43cb1e7ffaa84f91a5947d8b25"
+    },
+    "installed_independent.py.txt": {
+      "original_path": "installed_independent.py",
+      "sha256": "4e707553ecfabc5a151085acd05b6396fada39679b358d3734a41dd8cc1675fe"
+    }
+  },
+  "link_adaptations": [
+    {
+      "original_target": "evidence/input-audit.json",
+      "public_target": "task-g-review-evidence.zip"
+    },
+    {
+      "original_target": "evidence/full-input-manifest.json",
+      "public_target": "task-g-review-evidence.zip"
+    },
+    {
+      "original_target": "runtime/provenance.json",
+      "public_target": "task-g-review-evidence.zip"
+    },
+    {
+      "original_target": "evidence/task-a-retention.json",
+      "public_target": "task-g-review-evidence.zip"
+    },
+    {
+      "original_target": "evidence/broad-3513-dynamic/failures.csv",
+      "public_target": "task-g-review-evidence.zip"
+    },
+    {
+      "original_target": "evidence/broad-3513-dynamic/failures.json",
+      "public_target": "task-g-review-evidence.zip"
+    },
+    {
+      "original_target": "evidence/task-a-four.json",
+      "public_target": "task-g-review-evidence.zip"
+    }
+  ],
+  "archive": {
+    "path": "task-g-review-evidence.zip",
+    "bytes": 3309284,
+    "sha256": "5aa95ce552c357f7a13aefe969015ea050b1825a8202e7a9f87a79e76a6161ca",
+    "indexed_members": 210,
+    "archive_members": 211,
+    "verified": true,
+    "mismatches": [],
+    "index_sha256": "007ccf2cc73f92b15752ceb740e0492ad97f1fa96707f3ee5ce9f25463ddb65d"
+  },
+  "prohibited_operations": [
+    "existing PR or product-code changes",
+    "merge",
+    "release",
+    "deployment"
+  ]
+}
