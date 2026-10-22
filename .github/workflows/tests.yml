@@ -18,6 +18,17 @@ concurrency:
   group: tests-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 jobs:
+  sqlite-policy:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Check current SQLite validation policy
+        run: python scripts/check_sqlite_validation_policy.py
+      - name: Test policy detector against prohibited and permitted configurations
+        run: python -m unittest discover -s tests/unit -p test_sqlite_validation_policy.py
   offline:
     runs-on: ubuntu-24.04
     env:

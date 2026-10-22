@@ -41,3 +41,12 @@ uv run --no-sync pytest tests/unit/test_ci_plan.py tests/unit/test_ci_profile.py
 ```
 
 [過去の選択結果](ci-selection-results.json) は `historical-only` です。過去の件数・承認結果は現行の acceptance gate ではありません。
+
+SQLite 方針の再発防止は通常の `tests` workflow の独立した `sqlite-policy` job で行います。
+標準ライブラリだけで `python scripts/check_sqlite_validation_policy.py` と detector の
+単体テストを実行し、文書だけの変更でも全件 pytest や依存準備を要求しません。
+CI・検証スクリプト・AGENTS / Skills・明示された現行手順の禁止構成を検出します。
+過去の証跡、負例テスト、製品コードの安全性条件は別の範囲として保持します。
+このチェックは既知の構文・命令パターンに対する軽量な防止策であり、所有者の例外承認や
+独立レビューを代替しません。承認済み例外でも検出を黙って無効化せず、範囲と根拠を
+レビュー可能な変更として記録します。

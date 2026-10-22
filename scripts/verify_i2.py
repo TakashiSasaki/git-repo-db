@@ -21,21 +21,25 @@ from scripts import verify_i5_offline as evidence  # noqa: E402
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--sqlite", choices=("3.51.3", "3.53.1"), required=True)
     parser.add_argument("--workers", type=int, default=4)
     args = parser.parse_args()
+    if args.workers < 0:
+        parser.error("workers must be nonnegative")
     out = args.output.resolve()
     out.mkdir(parents=True, exist_ok=False)
     os.environ["PATH"] = (
         str(Path(sys.executable).parent) + os.pathsep + os.environ.get("PATH", "")
     )
     db = sqlite3.connect(":memory:")
+    evidence.write_json(
+        out / "runtime-before-checks.json", evidence.runtime_metadata(db)
+    )
     from repo_catalog.adapters.sqlite import p1_schema
 
+    evidence.require_product_runtime()
     p1_schema.register_functions(db)
     p1_schema.configure(db)
     actual = db.execute("SELECT sqlite_version(),sqlite_source_id()").fetchone()
-    assert actual[0] == args.sqlite, actual
     runtime = {
         "python": sys.version,
         "executable": sys.executable,
@@ -106,7 +110,7 @@ def main():
         "run": run,
     }
     evidence.write_json(out / "summary.json", summary)
-    raise SystemExit(0 if same and run["exit_code"] == 0 else 1)
+    raise SystemExit(0 if same and evidence.cohort_succeeded(run) else 1)
 
 
 if __name__ == "__main__":

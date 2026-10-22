@@ -1,4 +1,4 @@
-"""Build frozen direct/sdist wheels and execute I5 outside checkout on both SQLite libraries.
+"""Build frozen direct/sdist wheels and execute I5 outside checkout with the environment SQLite.
 
 The installed lane explicitly drops only the two I2 fences in disposable DBs.
 Unchanged Access smoke failures remain failures; the orchestrator returns nonzero.
@@ -19,6 +19,9 @@ import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+
+from scripts import verify_i5_offline as evidence  # noqa: E402
 
 
 def sha(path):
@@ -33,12 +36,14 @@ def main():
     os.umask(0o022)
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--minimum-library", type=Path, required=True)
-    parser.add_argument("--newer-library", type=Path, required=True)
     args = parser.parse_args()
     out = args.output.resolve()
     out.mkdir(parents=True, exist_ok=False)
     records = []
+    with evidence.sqlite3.connect(":memory:") as db:
+        write(out / "runtime-before-checks.json", evidence.runtime_metadata(db))
+    wheelhouse, wheel_manifest = evidence.verified_wheelhouse()
+    write(out / "wheelhouse-binding.json", wheel_manifest)
 
     def run(name, argv, cwd=out, env=None):
         with (out / (name + ".log")).open("w") as stream:
@@ -111,6 +116,12 @@ def main():
     )
     outside = out / "outside"
     outside.mkdir()
+    guard = outside / "network_guard"
+    guard.mkdir()
+    shutil.copyfile(
+        source / "tests/support/network_guard/sitecustomize.py",
+        guard / "sitecustomize.py",
+    )
     shutil.copyfile(
         source / "tests/integration/p3/test_transfer_admission.py",
         outside / "test_installed_i5.py",
@@ -142,21 +153,39 @@ from repo_catalog.adapters.sqlite import p1_schema
 import repo_catalog
 origin=Path(repo_catalog.__file__).resolve()
 assert origin.is_relative_to(Path(sys.prefix).resolve()), origin
-p1_schema.verify_declared()
 db=sqlite3.connect(':memory:')
-p1_schema.register_functions(db); p1_schema.configure(db)
 actual=db.execute('SELECT sqlite_version(),sqlite_source_id()').fetchone()
-assert actual[0]==sys.argv[2],actual
+Path(sys.argv[1]).write_text(json.dumps({'sqlite':actual,'python':sys.version,'executable':sys.executable,'origin':str(origin),'compile_options':db.execute('PRAGMA compile_options').fetchall()},indent=2)+'\\n')
+p1_schema._open(':memory:',fresh=True).close()
+p1_schema.verify_declared()
+p1_schema.register_functions(db); p1_schema.configure(db)
 db.executescript(p1_schema.compose('context'))
 root=origin.parent
 files={str(p.relative_to(root)):hashlib.sha256(p.read_bytes()).hexdigest() for p in root.rglob('*') if p.is_file() and p.suffix in ('.py','.sql','.json')}
-result={'sqlite':actual,'python':sys.version,'origin':str(origin),'compile_options':db.execute('PRAGMA compile_options').fetchall(),'pragmas':{n:db.execute('PRAGMA '+n).fetchall() for n in p1_schema.REQUIRED_PRAGMAS},'functions':[r for r in db.execute('PRAGMA function_list') if r[0].startswith('p1_')],'fingerprint':p1_schema.fingerprint('context'),'schema':p1_schema.schema_rows(db),'installed_files':files}
+result={'sqlite':actual,'python':sys.version,'executable':sys.executable,'origin':str(origin),'compile_options':db.execute('PRAGMA compile_options').fetchall(),'pragmas':{n:db.execute('PRAGMA '+n).fetchall() for n in p1_schema.REQUIRED_PRAGMAS},'functions':[r for r in db.execute('PRAGMA function_list') if r[0].startswith('p1_')],'fingerprint':p1_schema.fingerprint('context'),'schema':p1_schema.schema_rows(db),'installed_files':files}
 Path(sys.argv[1]).write_text(json.dumps(result,indent=2)+'\\n')
 """)
     for tag, artifact in [("direct", wheel), ("sdist", swheel)]:
         venv = out / (tag + "-venv")
-        assert run(tag + "-venv", ["uv", "venv", "--python", sys.executable, venv]) == 0
+        assert (
+            run(tag + "-venv", [sys.executable, "-m", "venv", "--without-pip", venv])
+            == 0
+        )
         py = venv / "bin/python"
+        wanted = {"pytest", "pluggy", "packaging", "iniconfig", "pygments"}
+        dependencies = [
+            record for record in wheel_manifest["wheels"] if record["name"] in wanted
+        ]
+        if {record["name"] for record in dependencies} != wanted:
+            raise ValueError("locked wheelhouse lacks installed-test dependencies")
+        requirements = out / (tag + "-requirements.txt")
+        requirements.write_text(
+            f"repo-catalog @ {artifact.as_uri()} --hash=sha256:{sha(artifact)}\n"
+            + "".join(
+                f"{record['name']} @ {(wheelhouse / record['file']).as_uri()} --hash=sha256:{record['sha256']}\n"
+                for record in dependencies
+            )
+        )
         assert (
             run(
                 tag + "-install",
@@ -166,101 +195,105 @@ Path(sys.argv[1]).write_text(json.dumps(result,indent=2)+'\\n')
                     "install",
                     "--python",
                     py,
+                    "--offline",
+                    "--no-index",
+                    "--find-links",
+                    wheelhouse,
                     "--no-deps",
-                    artifact,
-                    "pytest==9.1.1",
-                    "pluggy==1.6.0",
-                    "packaging==26.3",
-                    "iniconfig==2.3.0",
-                    "pygments==2.21.0",
+                    "--require-hashes",
+                    "-r",
+                    requirements,
                 ],
             )
             == 0
         )
-        for version, library in [
-            ("3.51.3", args.minimum_library),
-            ("3.53.1", args.newer_library),
-        ]:
-            label = tag + "-" + version
-            env = dict(
-                os.environ,
-                LD_LIBRARY_PATH=str(library.resolve()),
-                PYTHONPATH="",
-                PATH=str(venv / "bin") + os.pathsep + os.environ["PATH"],
+        label = tag
+        env = dict(
+            os.environ,
+            PYTHONPATH=str(guard),
+            GIT_ALLOW_PROTOCOL="file",
+            PATH=str(venv / "bin") + os.pathsep + os.environ["PATH"],
+        )
+        for credential in ("GH_TOKEN", "GITHUB_TOKEN"):
+            env.pop(credential, None)
+        measured_exit = run(
+            label + "-measure",
+            [
+                py,
+                outside / "measure.py",
+                out / (label + "-runtime.json"),
+            ],
+            outside,
+            env,
+        )
+        if measured_exit:
+            write(
+                out / (label + "-unexecuted.json"),
+                {
+                    "reason": "installed runtime/schema measurement failed; see measured runtime and log",
+                    "checks": ["I2", "I3", "I4", "I5", "Access"]
+                    if "test_installed_i5.py" in {p.name for p in outside.iterdir()}
+                    else ["I2", "I3", "I4", "Access"],
+                },
             )
-            assert (
-                run(
-                    label + "-measure",
-                    [
-                        py,
-                        outside / "measure.py",
-                        out / (label + "-runtime.json"),
-                        version,
-                    ],
-                    outside,
-                    env,
-                )
-                == 0
-            )
-            measured = json.loads((out / (label + "-runtime.json")).read_text())
-            with zipfile.ZipFile(artifact) as z:
-                expected = {
-                    n.removeprefix("repo_catalog/"): hashlib.sha256(
-                        z.read(n)
-                    ).hexdigest()
-                    for n in z.namelist()
-                    if n.startswith("repo_catalog/")
-                    and Path(n).suffix in (".py", ".sql", ".json")
-                }
-            assert expected == measured["installed_files"]
+            continue
+        measured = json.loads((out / (label + "-runtime.json")).read_text())
+        with zipfile.ZipFile(artifact) as z:
+            expected = {
+                n.removeprefix("repo_catalog/"): hashlib.sha256(z.read(n)).hexdigest()
+                for n in z.namelist()
+                if n.startswith("repo_catalog/")
+                and Path(n).suffix in (".py", ".sql", ".json")
+            }
+        assert expected == measured["installed_files"]
+        run(
+            label + "-i5",
+            [
+                py,
+                "-m",
+                "pytest",
+                outside / "test_installed_i5.py",
+                "-q",
+                "--tb=short",
+                "--confcutdir=" + str(outside),
+                "--junitxml=" + str(out / (label + "-i5.xml")),
+            ],
+            outside,
+            env,
+        )
+        run(
+            label + "-i4",
+            [
+                py,
+                "-m",
+                "pytest",
+                outside / "test_installed_i4.py",
+                "-q",
+                "--tb=short",
+                "--confcutdir=" + str(outside),
+                "--junitxml=" + str(out / (label + "-i4.xml")),
+            ],
+            outside,
+            env,
+        )
+        for stage in ("i2", "i3"):
             run(
-                label + "-i5",
+                label + "-" + stage,
                 [
                     py,
-                    "-m",
-                    "pytest",
-                    outside / "test_installed_i5.py",
-                    "-q",
-                    "--tb=short",
-                    "--confcutdir=" + str(outside),
-                    "--junitxml=" + str(out / (label + "-i5.xml")),
+                    outside / ("verify_" + stage + "_distribution.py"),
+                    "--output",
+                    out / (label + "-" + stage + ".json"),
                 ],
                 outside,
                 env,
             )
-            run(
-                label + "-i4",
-                [
-                    py,
-                    "-m",
-                    "pytest",
-                    outside / "test_installed_i4.py",
-                    "-q",
-                    "--tb=short",
-                    "--confcutdir=" + str(outside),
-                    "--junitxml=" + str(out / (label + "-i4.xml")),
-                ],
-                outside,
-                env,
-            )
-            for stage in ("i2", "i3"):
-                run(
-                    label + "-" + stage,
-                    [
-                        py,
-                        outside / ("verify_" + stage + "_distribution.py"),
-                        "--output",
-                        out / (label + "-" + stage + ".json"),
-                    ],
-                    outside,
-                    env,
-                )
-            run(
-                label + "-access",
-                [py, outside / "original_access_smoke.py"],
-                outside,
-                env,
-            )
+        run(
+            label + "-access",
+            [py, outside / "original_access_smoke.py"],
+            outside,
+            env,
+        )
     write(
         out / "summary.json",
         {"author_verification": True, "full_acceptance": False, "processes": records},

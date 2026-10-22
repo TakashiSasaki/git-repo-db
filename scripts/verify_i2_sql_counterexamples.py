@@ -1,6 +1,6 @@
 """Task E author rerun of Task F's SQL counterexamples against product DDL.
 
-Run with REPO EXPECTED_VERSION OUTPUT. Adapted from frozen Task F review_sql.py;
+Run with REPO OUTPUT using the environment Python and its SQLite. Adapted from frozen Task F review_sql.py;
 its normalized routing model is deliberately excluded. This is author evidence,
 not independent product acceptance. The unchanged Task D literal is also run.
 """
@@ -14,12 +14,31 @@ import sys
 import tarfile
 
 REPO = pathlib.Path(sys.argv[1]).resolve()
-EXPECTED = sys.argv[2]
-OUT = pathlib.Path(sys.argv[3])
+OUT = pathlib.Path(sys.argv[2])
 OUT.mkdir(exist_ok=False)
+with sqlite3.connect(":memory:") as runtime_db:
+    (OUT / "runtime-before-checks.json").write_text(
+        json.dumps(
+            {
+                "python": sys.version,
+                "executable": sys.executable,
+                "sqlite": runtime_db.execute(
+                    "SELECT sqlite_version(),sqlite_source_id()"
+                ).fetchone(),
+                "compile_options": runtime_db.execute(
+                    "PRAGMA compile_options"
+                ).fetchall(),
+            },
+            indent=2,
+        )
+        + "\n"
+    )
 sys.path.insert(0, str(REPO / "src"))
 
 from repo_catalog.adapters.sqlite import p1_schema  # noqa: E402
+
+# Raw diagnostics still honor the product factory's unchanged safety gate.
+p1_schema._open(":memory:", fresh=True).close()
 
 
 # Independent literals/values. J is deliberately independent of the target codec.
@@ -124,7 +143,6 @@ def configure(db):
 def rawdb(old=False, filename=":memory:"):
     db = sqlite3.connect(filename, isolation_level=None)
     configure(db)
-    assert db.execute("SELECT sqlite_version()").fetchone()[0] == EXPECTED
     db.executescript(BEFORE if old else AFTER)
     return db
 
@@ -677,6 +695,7 @@ meta = {
     "version": new.execute("SELECT sqlite_version()").fetchone()[0],
     "source_id": new.execute("SELECT sqlite_source_id()").fetchone()[0],
     "python": sys.version,
+    "executable": sys.executable,
     "compile_options": new.execute("PRAGMA compile_options").fetchall(),
     "pragmas": {
         n: new.execute(f"PRAGMA {n}").fetchall()
