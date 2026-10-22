@@ -1,7 +1,7 @@
 # ADR 0031 I4 author evidence and independent-review inputs
 
 See the [implementation and I5 contract](../../adr0031-i4-transfer-sql.md).
-This directory will bind the frozen execution inputs to author-only runtime
+This directory binds the frozen execution inputs to author-only runtime
 receipts. Independent non-Author review is pending; no acceptance is inferred.
 
 Reproduce using the unchanged `uv.lock`, dynamic Python >=3.12 and actual
@@ -32,3 +32,24 @@ SQL fixtures, after exact product-schema comparison. Normal product SQL and
 Admission remain refused. The report distinguishes these environments and
 structural integrity from I5 Provider semantics, original input types and
 whole-unit atomic admission. Task G G-R1 remains unresolved for I7.
+
+## Final author results
+
+Read the [author report](REPORT.md), [machine summary](summary.json),
+[all-79 first-failure comparison](failure-classification.json),
+[indexed raw evidence](author-evidence.zip) and [payload index](artifact-index.json).
+Execution HEAD is `f4d8c3d123552e765ef3f0ddaf4e83deaaa0e9c6`, tree
+`764414d23797179c6988349ca4a236c6b929a44e`.
+
+Both actual SQLite versions execute 3,108 selected nodes: 3,029 pass, 59 call
+failures, 20 setup errors, no skips/xfails. The original 79 failure node/phase
+pairs and refusal positions persist; 14 call failures remain I6 Wire-owned.
+I4's focused 217, I3's 65 and I2's dedicated 86 are successful overlapping
+subsets. All 301 SQL diagnostic groups pass. All four fresh installed wheel
+combinations pass 217/217 I4 tests and the unchanged I2/I3 probes; four original
+Access smokes still fail at Transfer preflight. Both product fences remain.
+
+The final publication includes a separately executed correction to the archive
+comparison helper and skill guidance after the product freeze. It does not
+change product, tests or packaged files. The exact final public HEAD/tree is
+bound in the new Draft PR's author-report body. Independent review is pending.
