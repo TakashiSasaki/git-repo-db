@@ -582,10 +582,18 @@ def test_matching_schema_poison_stops_before_ordinary_exposure(tmp_path, poison,
         if poison == "report"
         else "i2_transfer_stage_fence"
     )
-    ddl = db.execute(
-        "SELECT sql FROM sqlite_schema WHERE name=?", (trigger,)
-    ).fetchone()[0]
-    db.execute("DROP TRIGGER " + trigger)
+    # Corruption injection only: I4 now prevents the old intentionally invalid
+    # rows even after the stage fence is removed. Disable the additional guards
+    # solely while seeding the SAME poison, then restore exact schema/settings.
+    guard = "i4_event_report_admit" if poison == "report" else "i4_endpoint_admit"
+    definitions = [
+        db.execute("SELECT sql FROM sqlite_schema WHERE name=?", (name,)).fetchone()[0]
+        for name in (trigger, guard)
+    ]
+    for name in (trigger, guard):
+        db.execute("DROP TRIGGER " + name)
+    db.execute("PRAGMA foreign_keys=OFF")
+    db.execute("PRAGMA ignore_check_constraints=ON")
     if poison == "report":
         db.execute(
             "INSERT INTO resource_relations VALUES(?,?,?,?,?,?,?,?)",
@@ -603,7 +611,10 @@ def test_matching_schema_poison_stops_before_ordinary_exposure(tmp_path, poison,
                 2,
             ),
         )
-    db.execute(ddl)
+    for ddl in definitions:
+        db.execute(ddl)
+    p1_schema.configure(db)
+    p1_schema.validate(db, "context")
     before = snapshot(db)
     with pytest.raises(StoredContextInvariantError):
         validate_stored_context_relations(db)

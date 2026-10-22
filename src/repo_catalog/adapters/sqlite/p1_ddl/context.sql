@@ -47,7 +47,7 @@ CREATE UNIQUE INDEX resources_typed_event_fk ON resources(
 -- I3 can reference global Documents through the non-NULL typed absence marker.
 CREATE UNIQUE INDEX resources_document_contract_fk ON resources(
  service_instance_uuidv4,resource_kind,provider_resource_id,reference_document_kind);
--- Exact I4 target; this index alone does NOT enforce native-I7 support.
+-- I4 native-Issue reference target; all six components use BINARY equality.
 CREATE UNIQUE INDEX resources_native_event_fk ON resources(
  service_instance_uuidv4,resource_kind,provider_resource_id,
  reference_document_kind,identifier_namespace_kind,identifier_namespace_id);
@@ -108,14 +108,34 @@ CREATE TABLE resource_relations(
  parent_kind TEXT COLLATE BINARY GENERATED ALWAYS AS(CASE WHEN relation_kind='parent' THEN json_extract(members_json,'$[0][1]') END) VIRTUAL,
  parent_id TEXT COLLATE BINARY GENERATED ALWAYS AS(CASE WHEN relation_kind='parent' THEN json_extract(members_json,'$[0][2]') END) VIRTUAL,
  source_document_kind TEXT COLLATE BINARY GENERATED ALWAYS AS(CASE WHEN relation_kind='parent' THEN coalesce(json_extract(scope_json,'$.document_kind'),'') END) VIRTUAL,
- report_clock_json TEXT COLLATE BINARY GENERATED ALWAYS AS(CASE WHEN relation_kind='parent' THEN json_extract(scope_json,'$.clock') END) VIRTUAL,
+ report_clock_json TEXT COLLATE BINARY GENERATED ALWAYS AS(CASE WHEN relation_kind IN('parent','transfer_event_report') THEN json_extract(scope_json,'$.clock') END) VIRTUAL,
+ -- I4: generated only from the original Event support payload.
+ event_support_members_json TEXT COLLATE BINARY GENERATED ALWAYS AS(CASE WHEN relation_kind='transfer_event_report' THEN p1_transfer_value_v1(scope_json,'parent_members_json') END) VIRTUAL,
+ event_support_provenance_json TEXT COLLATE BINARY GENERATED ALWAYS AS(CASE WHEN relation_kind='transfer_event_report' THEN p1_transfer_value_v1(scope_json,'parent_provenance_json') END) VIRTUAL,
+ event_support_scope_json TEXT COLLATE BINARY GENERATED ALWAYS AS(CASE WHEN relation_kind='transfer_event_report' THEN p1_transfer_value_v1(scope_json,'parent_scope_json') END) VIRTUAL,
+ event_support_service TEXT COLLATE BINARY GENERATED ALWAYS AS(CASE WHEN relation_kind='transfer_event_report' THEN p1_transfer_value_v1(scope_json,'parent_service') END) VIRTUAL,
+ event_support_kind TEXT COLLATE BINARY GENERATED ALWAYS AS(CASE WHEN relation_kind='transfer_event_report' THEN p1_transfer_value_v1(scope_json,'parent_kind') END) VIRTUAL,
+ event_support_id TEXT COLLATE BINARY GENERATED ALWAYS AS(CASE WHEN relation_kind='transfer_event_report' THEN p1_transfer_value_v1(scope_json,'parent_id') END) VIRTUAL,
+ event_support_relation_kind TEXT COLLATE BINARY GENERATED ALWAYS AS(CASE WHEN relation_kind='transfer_event_report' THEN 'parent' END) VIRTUAL,
+ event_document_kind TEXT COLLATE BINARY GENERATED ALWAYS AS(CASE WHEN relation_kind='transfer_event_report' THEN 'timeline_event' END) VIRTUAL,
+ CHECK(relation_kind!='transfer_event_report' OR (p1_transfer_event_v1(service_instance_uuidv4,resource_kind,provider_resource_id,members_json,provenance_json,scope_json,observed_at_us)=1
+ AND report_clock_json IS NOT NULL AND event_support_members_json IS NOT NULL
+ AND event_support_provenance_json IS NOT NULL AND event_support_scope_json IS NOT NULL
+ AND event_support_service IS NOT NULL AND event_support_kind IS NOT NULL AND event_support_id IS NOT NULL
+ AND event_support_service=service_instance_uuidv4 COLLATE BINARY AND event_support_kind='issue' COLLATE BINARY)),
  CHECK(relation_kind!='parent' OR p1_parent_report_v1(service_instance_uuidv4,resource_kind,provider_resource_id,members_json,provenance_json,scope_json,observed_at_us)=1),
  CHECK(relation_kind!='parent' OR (parent_service IS NOT NULL AND parent_kind IS NOT NULL AND parent_id IS NOT NULL AND source_document_kind IS NOT NULL AND report_clock_json IS NOT NULL)),
  PRIMARY KEY(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json),
  FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id) REFERENCES resources,
  FOREIGN KEY(parent_service,parent_kind,parent_id) REFERENCES resources,
  FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id,source_document_kind)
- REFERENCES resources(service_instance_uuidv4,resource_kind,provider_resource_id,reference_document_kind)
+ REFERENCES resources(service_instance_uuidv4,resource_kind,provider_resource_id,reference_document_kind),
+ -- Complete ParentReportKey plus its actual generated subtype/kind.
+ FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id,event_support_relation_kind,event_support_members_json,event_support_provenance_json,event_support_scope_json,event_document_kind,event_support_kind)
+ REFERENCES resource_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json,source_document_kind,parent_kind),
+ -- Additional G3=A binding: the reported Issue must be this E's native Issue.
+ FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id,event_document_kind,event_support_kind,event_support_id)
+ REFERENCES resources(service_instance_uuidv4,resource_kind,provider_resource_id,reference_document_kind,identifier_namespace_kind,identifier_namespace_id)
 ) STRICT, WITHOUT ROWID;
 -- Complete report reference plus its generated type; no UNIQUE child/clock winner.
 CREATE UNIQUE INDEX parent_report_typed_fk ON resource_relations(
@@ -134,6 +154,24 @@ WHEN NEW.relation_kind='parent' BEGIN
  AND r.members_json=NEW.members_json AND r.provenance_json=NEW.provenance_json
  AND r.scope_json=NEW.scope_json AND r.observed_at_us IS NOT NEW.observed_at_us)
  THEN RAISE(ABORT,'Parent report observation rebind') END;
+END;
+-- Logical EventReportKey owns one complete original group, without choosing a
+-- Parent globally. Different original clocks/provenance remain lawful reports.
+CREATE UNIQUE INDEX event_report_identity_fk ON resource_relations(
+ service_instance_uuidv4,resource_kind,provider_resource_id,report_clock_json,provenance_json)
+ WHERE relation_kind='transfer_event_report';
+CREATE TRIGGER i4_event_report_admit BEFORE INSERT ON resource_relations
+WHEN NEW.relation_kind='transfer_event_report' BEGIN
+ SELECT CASE WHEN p1_transfer_event_v1(NEW.service_instance_uuidv4,NEW.resource_kind,NEW.provider_resource_id,NEW.members_json,NEW.provenance_json,NEW.scope_json,NEW.observed_at_us)!=1
+ THEN RAISE(ABORT,'invalid typed Event report') END;
+ SELECT CASE WHEN EXISTS(SELECT 1 FROM resource_relations old
+ WHERE old.relation_kind='transfer_event_report'
+ AND old.service_instance_uuidv4=NEW.service_instance_uuidv4 AND old.resource_kind=NEW.resource_kind
+ AND old.provider_resource_id=NEW.provider_resource_id AND old.report_clock_json=NEW.report_clock_json
+ AND old.provenance_json=NEW.provenance_json
+ AND (old.members_json IS NOT NEW.members_json OR old.scope_json IS NOT NEW.scope_json
+ OR old.observed_at_us IS NOT NEW.observed_at_us))
+ THEN RAISE(ABORT,'immutable original Event report rebind') END;
 END;
 CREATE TABLE collections(
  service_instance_uuidv4 TEXT NOT NULL,
@@ -315,15 +353,44 @@ CREATE TABLE resource_repository_relations(
  repository_uuidv4 TEXT GENERATED ALWAYS AS(CASE WHEN json_type(target_json)='text' THEN json_extract(target_json,'$') END) VIRTUAL REFERENCES repository_context(repository_uuidv4),
  clock_domain TEXT GENERATED ALWAYS AS(json_extract(clock_json,'$.domain')) VIRTUAL,
  source_clock_us INTEGER GENERATED ALWAYS AS(json_extract(clock_json,'$.at_us')) VIRTUAL,
+ -- Complete original Event report reference; non-Transfer roles keep SQL NULL.
+ event_report_members_json TEXT COLLATE BINARY,
+ event_report_scope_json TEXT COLLATE BINARY,
+ event_report_kind TEXT COLLATE BINARY GENERATED ALWAYS AS(CASE WHEN relation_kind IN('transfer_from_repository','transfer_to_repository') THEN 'transfer_event_report' END) VIRTUAL,
  event_document_kind TEXT GENERATED ALWAYS AS(CASE WHEN relation_kind IN('transfer_from_repository','transfer_to_repository') THEN 'timeline_event' END) VIRTUAL,
  event_parent_resource_kind TEXT GENERATED ALWAYS AS(CASE WHEN relation_kind IN('transfer_from_repository','transfer_to_repository') THEN 'issue' END) VIRTUAL,
+ CHECK(CASE WHEN relation_kind IN('transfer_from_repository','transfer_to_repository') THEN
+ event_report_members_json IS NOT NULL AND event_report_scope_json IS NOT NULL
+ AND p1_transfer_endpoint_v1(relation_kind,target_json,event_report_scope_json,clock_json)=1
+ ELSE event_report_members_json IS NULL AND event_report_scope_json IS NULL END),
  CHECK(typeof(source_clock_us) IN('integer','null')),
  CHECK((relation_kind='represents_repository' AND resource_kind='repository') OR (relation_kind='owning_repository' AND resource_kind='issue') OR (relation_kind IN('base_repository','head_repository') AND resource_kind='pull_request') OR (relation_kind IN('transfer_from_repository','transfer_to_repository') AND resource_kind='comment')),
  CHECK(relation_kind!='represents_repository' OR json_type(target_json)='text'),
  PRIMARY KEY(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,clock_json,target_json,provenance_json),
  FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id) REFERENCES resources(service_instance_uuidv4,resource_kind,provider_resource_id),
- FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id,event_document_kind,event_parent_resource_kind) REFERENCES resources(service_instance_uuidv4,resource_kind,provider_resource_id,reference_document_kind,identifier_namespace_kind)
+ FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id,event_document_kind,event_parent_resource_kind) REFERENCES resources(service_instance_uuidv4,resource_kind,provider_resource_id,reference_document_kind,identifier_namespace_kind),
+ FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id,event_report_kind,event_report_members_json,provenance_json,event_report_scope_json)
+ REFERENCES resource_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json)
 ) STRICT, WITHOUT ROWID;
+-- BEFORE INSERT guards run before IGNORE/DO NOTHING/UPSERT conflict handling.
+CREATE TRIGGER i4_endpoint_admit BEFORE INSERT ON resource_repository_relations
+WHEN NEW.relation_kind IN('transfer_from_repository','transfer_to_repository') BEGIN
+ SELECT CASE WHEN NEW.event_report_members_json IS NULL OR NEW.event_report_scope_json IS NULL
+ OR p1_transfer_endpoint_v1(NEW.relation_kind,NEW.target_json,NEW.event_report_scope_json,NEW.clock_json)!=1
+ THEN RAISE(ABORT,'invalid Event endpoint reference') END;
+ SELECT CASE WHEN EXISTS(SELECT 1 FROM resource_relations report
+ WHERE report.service_instance_uuidv4=NEW.service_instance_uuidv4 AND report.resource_kind=NEW.resource_kind
+ AND report.provider_resource_id=NEW.provider_resource_id AND report.relation_kind='transfer_event_report'
+ AND report.members_json=NEW.event_report_members_json AND report.scope_json=NEW.event_report_scope_json
+ AND report.provenance_json=NEW.provenance_json AND report.observed_at_us IS NOT NEW.observed_at_us)
+ THEN RAISE(ABORT,'endpoint original Event time mismatch') END;
+ SELECT CASE WHEN EXISTS(SELECT 1 FROM resource_repository_relations old
+ WHERE old.service_instance_uuidv4=NEW.service_instance_uuidv4 AND old.resource_kind=NEW.resource_kind
+ AND old.provider_resource_id=NEW.provider_resource_id AND old.relation_kind=NEW.relation_kind
+ AND old.clock_json=NEW.clock_json AND old.target_json=NEW.target_json AND old.provenance_json=NEW.provenance_json
+ AND (old.event_report_members_json IS NOT NEW.event_report_members_json OR old.event_report_scope_json IS NOT NEW.event_report_scope_json))
+ THEN RAISE(ABORT,'endpoint original Event payload rebind') END;
+END;
 CREATE INDEX rrr_by_repository ON resource_repository_relations(
  repository_uuidv4,relation_kind,service_instance_uuidv4,resource_kind,provider_resource_id
 ) WHERE repository_uuidv4 IS NOT NULL;

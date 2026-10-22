@@ -789,3 +789,41 @@ lack a complete lookup index, reserve finite SQLite VM work before the lookup,
 settle only live measured work, and refuse at the cap without inferring absence.
 Use `tests/integration/p7/test_missing_required_authority.py` to distinguish
 missing required authority, genuinely new content and finite-query refusal.
+
+### Verify constraints behind a retained staged-operation fence
+
+When a stage adds SQL constraints but the product operation must stay refused,
+use the actual packaged product DDL and compare the complete constructed schema
+before touching the disposable test database. Remove only the named fence
+triggers in that disposable database; record their exact definitions and removal
+statements. Keep every other CHECK/FK/index/UDF/pragma identical. Test both raw
+composition and the product factory, plus normal connections with the fences
+present. Never reopen the modified schema through the normal validator or count
+isolated success as product operation availability. Preserve the application
+refusal and impossible-storage recovery controls until their owning later stage.
+
+The I4 tests in `tests/integration/p3/test_transfer_sql.py` exercise this procedure
+for native-I7 SQL. Run `scripts/verify_i4.py` on each actual SQLite runtime and
+`scripts/verify_i4_distribution.py` outside the source artifact through its fresh
+installed environments. Bind the evidence to an executed commit/tree and retain
+nonzero inherited staging failures. A structurally stored original Event type
+does not establish its Provider meaning; I5 owns semantic Admission. Whole-unit
+completeness and pre-affinity original timestamp types cannot be inferred from
+successful SQL references.
+
+An older impossible-storage corruption fixture can fail at injection after a new
+constraint is added. Keep its original corrupt values and downstream stop/rowset
+assertions. Bypass additional guards only inside the explicit corruption
+injector, then restore all original DDL and required settings and verify the
+complete product schema before exercising the reader. This is distinct from the
+constraint-verification lane, whose integrity settings must remain enabled.
+The eight retained I2 matching-schema poison nodes demonstrate this distinction;
+a prior 67-failure/20-error run records the additional eight injection failures.
+
+When comparing archived regression failures, select the receipt for the actual
+final reviewed execution, not a filename that merely contains `author`. An
+archive can preserve both superseded failures and a later final run. Retain raw
+messages and frames; compare refusal code/text and source function paths while
+recording line offsets and temporary installation-path differences explicitly.
+The I4 comparison helper targets I3's `final-{version}/regressions.xml`; its
+separate initial 81-fault receipts are not the final 79-fault baseline.
