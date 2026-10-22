@@ -1,0 +1,1617 @@
+{
+  "kind": "read_only_C0_duplicate_remediation_audit",
+  "baseline": "a022dd3efb9c8116cf9dc0abc13ab1d5bbc88e37",
+  "head": "f16e5b1713bde9a2f18263a25397c4b450fd5773",
+  "tree": "6bfa580baafa9f6a117b7a0b610c4e65cd031b86",
+  "new_commits_or_PRs": false,
+  "outer_payload": {
+    "bytes": 5285592,
+    "sha256": "e38171c16b5e58cfa222f281ea87406645ae85876cc05aa9f34f055749a76176"
+  },
+  "outer_members_verified": 150,
+  "nested_receipts": {
+    "baseline/tests-receipts.zip": {
+      "bytes": 71305,
+      "sha256": "dbaf1fa434f3626687cfa586ef8055bcdd444f74180bdc8f4d27fd148cf9fde0",
+      "members": 22,
+      "binding": {
+        "feature_sha": "a022dd3efb9c8116cf9dc0abc13ab1d5bbc88e37",
+        "head": "dd4e61753922bb789423256e848072cdd524a752",
+        "run_attempt": "1",
+        "run_id": "39795283604",
+        "tree": "1fa9c2624a3913d97439f16fcd6bc8641c56b17f"
+      }
+    },
+    "hosted-f16e5b1/tests-receipts.zip": {
+      "bytes": 70747,
+      "sha256": "36eddda2b07aa7a70e1022849e3b02526ec8ffb5b1ddc8faf0c5d4437ba38add",
+      "members": 22,
+      "binding": {
+        "feature_sha": "f16e5b1713bde9a2f18263a25397c4b450fd5773",
+        "head": "b5f5026b07826b551cbd35ec39ac0ef3ca214a99",
+        "run_attempt": "1",
+        "run_id": "39799299296",
+        "tree": "6bfa580baafa9f6a117b7a0b610c4e65cd031b86"
+      }
+    },
+    "hosted-f16e5b1/access-receipts.zip": {
+      "bytes": 1632586,
+      "sha256": "511732209c4fda5c84a61b470ea4f56f271a6bbcb3c5e1842680dd0c6c1ff4b6",
+      "members": 101,
+      "binding": {
+        "head": "b5f5026b07826b551cbd35ec39ac0ef3ca214a99",
+        "run_attempt": "1",
+        "run_id": "39799299209",
+        "tree": "6bfa580baafa9f6a117b7a0b610c4e65cd031b86"
+      }
+    }
+  },
+  "live_log_receipts_match_published": true,
+  "verified_input_sha256_count": 456,
+  "product_source_unchanged": true,
+  "hosted_original": {
+    "passed": 2696,
+    "failures": 59,
+    "setup_errors": 20,
+    "skipped": 0
+  },
+  "hosted_cohorts": {
+    "transfer-admission": {
+      "nodes": 29,
+      "status_counts": {
+        "passed": 29,
+        "failures": 0,
+        "setup_errors": 0,
+        "skipped": 0
+      },
+      "exit_code": 0,
+      "selected_junit_journal_match": true
+    },
+    "transfer-sql": {
+      "nodes": 217,
+      "status_counts": {
+        "passed": 217,
+        "failures": 0,
+        "setup_errors": 0,
+        "skipped": 0
+      },
+      "exit_code": 0,
+      "selected_junit_journal_match": true
+    },
+    "regressions": {
+      "nodes": 3137,
+      "status_counts": {
+        "passed": 3058,
+        "failures": 59,
+        "setup_errors": 20,
+        "skipped": 0
+      },
+      "exit_code": 1,
+      "selected_junit_journal_match": true
+    }
+  },
+  "inherited_failure_comparison": {
+    "retained": 79,
+    "added": 0,
+    "resolved": 0,
+    "full_frames_including_lines": true,
+    "raw_message_differences_due_to_temporary_paths": 4
+  },
+  "runtime_receipts": {
+    "artifacts/access-registry/i5-distribution/direct-runtime-binding.json": {
+      "python": "3.12.15",
+      "executable": "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/direct-venv/bin/python",
+      "base_executable": "/home/runner/work/_temp/product-python/python/bin/python3.12",
+      "sqlite_version": "3.53.1",
+      "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+      "sqlite_module": "/home/runner/work/_temp/product-python/python/bin/python3.12",
+      "sqlite_module_origin": "built-in",
+      "sqlite_module_sha256": "0a97d28d3635c7dfd143de6d00b09c0cb382249c020b28ee33fb4002db1efb9c",
+      "compile_options": [
+        [
+          "ATOMIC_INTRINSICS=1"
+        ],
+        [
+          "COMPILER=clang-23.1.3"
+        ],
+        [
+          "DEFAULT_AUTOVACUUM"
+        ],
+        [
+          "DEFAULT_CACHE_SIZE=-2000"
+        ],
+        [
+          "DEFAULT_FILE_FORMAT=4"
+        ],
+        [
+          "DEFAULT_JOURNAL_SIZE_LIMIT=-1"
+        ],
+        [
+          "DEFAULT_MMAP_SIZE=0"
+        ],
+        [
+          "DEFAULT_PAGE_SIZE=4096"
+        ],
+        [
+          "DEFAULT_PCACHE_INITSZ=20"
+        ],
+        [
+          "DEFAULT_RECURSIVE_TRIGGERS"
+        ],
+        [
+          "DEFAULT_SECTOR_SIZE=4096"
+        ],
+        [
+          "DEFAULT_SYNCHRONOUS=2"
+        ],
+        [
+          "DEFAULT_WAL_AUTOCHECKPOINT=1000"
+        ],
+        [
+          "DEFAULT_WAL_SYNCHRONOUS=2"
+        ],
+        [
+          "DEFAULT_WORKER_THREADS=0"
+        ],
+        [
+          "DIRECT_OVERFLOW_READ"
+        ],
+        [
+          "ENABLE_DBSTAT_VTAB"
+        ],
+        [
+          "ENABLE_FTS3"
+        ],
+        [
+          "ENABLE_FTS3_PARENTHESIS"
+        ],
+        [
+          "ENABLE_FTS4"
+        ],
+        [
+          "ENABLE_FTS5"
+        ],
+        [
+          "ENABLE_GEOPOLY"
+        ],
+        [
+          "ENABLE_MATH_FUNCTIONS"
+        ],
+        [
+          "ENABLE_PERCENTILE"
+        ],
+        [
+          "ENABLE_RTREE"
+        ],
+        [
+          "MALLOC_SOFT_LIMIT=1024"
+        ],
+        [
+          "MAX_ATTACHED=10"
+        ],
+        [
+          "MAX_COLUMN=2000"
+        ],
+        [
+          "MAX_COMPOUND_SELECT=500"
+        ],
+        [
+          "MAX_DEFAULT_PAGE_SIZE=8192"
+        ],
+        [
+          "MAX_EXPR_DEPTH=1000"
+        ],
+        [
+          "MAX_FUNCTION_ARG=1000"
+        ],
+        [
+          "MAX_LENGTH=1000000000"
+        ],
+        [
+          "MAX_LIKE_PATTERN_LENGTH=50000"
+        ],
+        [
+          "MAX_MMAP_SIZE=0x7fff0000"
+        ],
+        [
+          "MAX_PAGE_COUNT=0xfffffffe"
+        ],
+        [
+          "MAX_PAGE_SIZE=65536"
+        ],
+        [
+          "MAX_SQL_LENGTH=1000000000"
+        ],
+        [
+          "MAX_TRIGGER_DEPTH=1000"
+        ],
+        [
+          "MAX_VARIABLE_NUMBER=32766"
+        ],
+        [
+          "MAX_VDBE_OP=250000000"
+        ],
+        [
+          "MAX_WORKER_THREADS=8"
+        ],
+        [
+          "MUTEX_PTHREADS"
+        ],
+        [
+          "SYSTEM_MALLOC"
+        ],
+        [
+          "TEMP_STORE=1"
+        ],
+        [
+          "THREADSAFE=1"
+        ]
+      ],
+      "loader_environment": {
+        "LD_LIBRARY_PATH": null,
+        "LD_PRELOAD": null,
+        "DYLD_LIBRARY_PATH": null
+      },
+      "sqlite_mappings": [],
+      "product_safety_and_capabilities": "passed",
+      "product_module": "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/direct-venv/lib/python3.12/site-packages/repo_catalog/adapters/sqlite/access_schema.py"
+    },
+    "artifacts/access-registry/i5-distribution/sdist-runtime-binding.json": {
+      "python": "3.12.15",
+      "executable": "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/sdist-venv/bin/python",
+      "base_executable": "/home/runner/work/_temp/product-python/python/bin/python3.12",
+      "sqlite_version": "3.53.1",
+      "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+      "sqlite_module": "/home/runner/work/_temp/product-python/python/bin/python3.12",
+      "sqlite_module_origin": "built-in",
+      "sqlite_module_sha256": "0a97d28d3635c7dfd143de6d00b09c0cb382249c020b28ee33fb4002db1efb9c",
+      "compile_options": [
+        [
+          "ATOMIC_INTRINSICS=1"
+        ],
+        [
+          "COMPILER=clang-23.1.3"
+        ],
+        [
+          "DEFAULT_AUTOVACUUM"
+        ],
+        [
+          "DEFAULT_CACHE_SIZE=-2000"
+        ],
+        [
+          "DEFAULT_FILE_FORMAT=4"
+        ],
+        [
+          "DEFAULT_JOURNAL_SIZE_LIMIT=-1"
+        ],
+        [
+          "DEFAULT_MMAP_SIZE=0"
+        ],
+        [
+          "DEFAULT_PAGE_SIZE=4096"
+        ],
+        [
+          "DEFAULT_PCACHE_INITSZ=20"
+        ],
+        [
+          "DEFAULT_RECURSIVE_TRIGGERS"
+        ],
+        [
+          "DEFAULT_SECTOR_SIZE=4096"
+        ],
+        [
+          "DEFAULT_SYNCHRONOUS=2"
+        ],
+        [
+          "DEFAULT_WAL_AUTOCHECKPOINT=1000"
+        ],
+        [
+          "DEFAULT_WAL_SYNCHRONOUS=2"
+        ],
+        [
+          "DEFAULT_WORKER_THREADS=0"
+        ],
+        [
+          "DIRECT_OVERFLOW_READ"
+        ],
+        [
+          "ENABLE_DBSTAT_VTAB"
+        ],
+        [
+          "ENABLE_FTS3"
+        ],
+        [
+          "ENABLE_FTS3_PARENTHESIS"
+        ],
+        [
+          "ENABLE_FTS4"
+        ],
+        [
+          "ENABLE_FTS5"
+        ],
+        [
+          "ENABLE_GEOPOLY"
+        ],
+        [
+          "ENABLE_MATH_FUNCTIONS"
+        ],
+        [
+          "ENABLE_PERCENTILE"
+        ],
+        [
+          "ENABLE_RTREE"
+        ],
+        [
+          "MALLOC_SOFT_LIMIT=1024"
+        ],
+        [
+          "MAX_ATTACHED=10"
+        ],
+        [
+          "MAX_COLUMN=2000"
+        ],
+        [
+          "MAX_COMPOUND_SELECT=500"
+        ],
+        [
+          "MAX_DEFAULT_PAGE_SIZE=8192"
+        ],
+        [
+          "MAX_EXPR_DEPTH=1000"
+        ],
+        [
+          "MAX_FUNCTION_ARG=1000"
+        ],
+        [
+          "MAX_LENGTH=1000000000"
+        ],
+        [
+          "MAX_LIKE_PATTERN_LENGTH=50000"
+        ],
+        [
+          "MAX_MMAP_SIZE=0x7fff0000"
+        ],
+        [
+          "MAX_PAGE_COUNT=0xfffffffe"
+        ],
+        [
+          "MAX_PAGE_SIZE=65536"
+        ],
+        [
+          "MAX_SQL_LENGTH=1000000000"
+        ],
+        [
+          "MAX_TRIGGER_DEPTH=1000"
+        ],
+        [
+          "MAX_VARIABLE_NUMBER=32766"
+        ],
+        [
+          "MAX_VDBE_OP=250000000"
+        ],
+        [
+          "MAX_WORKER_THREADS=8"
+        ],
+        [
+          "MUTEX_PTHREADS"
+        ],
+        [
+          "SYSTEM_MALLOC"
+        ],
+        [
+          "TEMP_STORE=1"
+        ],
+        [
+          "THREADSAFE=1"
+        ]
+      ],
+      "loader_environment": {
+        "LD_LIBRARY_PATH": null,
+        "LD_PRELOAD": null,
+        "DYLD_LIBRARY_PATH": null
+      },
+      "sqlite_mappings": [],
+      "product_safety_and_capabilities": "passed",
+      "product_module": "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/sdist-venv/lib/python3.12/site-packages/repo_catalog/adapters/sqlite/access_schema.py"
+    },
+    "artifacts/runtime/dependencies.json": {
+      "python": "3.12.15",
+      "executable": "/home/runner/work/git-repo-db/git-repo-db/.venv/bin/python",
+      "base_executable": "/home/runner/work/_temp/product-python/python/bin/python3.12",
+      "sqlite_version": "3.53.1",
+      "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+      "sqlite_module": "/home/runner/work/_temp/product-python/python/bin/python3.12",
+      "sqlite_module_origin": "built-in",
+      "sqlite_module_sha256": "0a97d28d3635c7dfd143de6d00b09c0cb382249c020b28ee33fb4002db1efb9c",
+      "compile_options": [
+        [
+          "ATOMIC_INTRINSICS=1"
+        ],
+        [
+          "COMPILER=clang-23.1.3"
+        ],
+        [
+          "DEFAULT_AUTOVACUUM"
+        ],
+        [
+          "DEFAULT_CACHE_SIZE=-2000"
+        ],
+        [
+          "DEFAULT_FILE_FORMAT=4"
+        ],
+        [
+          "DEFAULT_JOURNAL_SIZE_LIMIT=-1"
+        ],
+        [
+          "DEFAULT_MMAP_SIZE=0"
+        ],
+        [
+          "DEFAULT_PAGE_SIZE=4096"
+        ],
+        [
+          "DEFAULT_PCACHE_INITSZ=20"
+        ],
+        [
+          "DEFAULT_RECURSIVE_TRIGGERS"
+        ],
+        [
+          "DEFAULT_SECTOR_SIZE=4096"
+        ],
+        [
+          "DEFAULT_SYNCHRONOUS=2"
+        ],
+        [
+          "DEFAULT_WAL_AUTOCHECKPOINT=1000"
+        ],
+        [
+          "DEFAULT_WAL_SYNCHRONOUS=2"
+        ],
+        [
+          "DEFAULT_WORKER_THREADS=0"
+        ],
+        [
+          "DIRECT_OVERFLOW_READ"
+        ],
+        [
+          "ENABLE_DBSTAT_VTAB"
+        ],
+        [
+          "ENABLE_FTS3"
+        ],
+        [
+          "ENABLE_FTS3_PARENTHESIS"
+        ],
+        [
+          "ENABLE_FTS4"
+        ],
+        [
+          "ENABLE_FTS5"
+        ],
+        [
+          "ENABLE_GEOPOLY"
+        ],
+        [
+          "ENABLE_MATH_FUNCTIONS"
+        ],
+        [
+          "ENABLE_PERCENTILE"
+        ],
+        [
+          "ENABLE_RTREE"
+        ],
+        [
+          "MALLOC_SOFT_LIMIT=1024"
+        ],
+        [
+          "MAX_ATTACHED=10"
+        ],
+        [
+          "MAX_COLUMN=2000"
+        ],
+        [
+          "MAX_COMPOUND_SELECT=500"
+        ],
+        [
+          "MAX_DEFAULT_PAGE_SIZE=8192"
+        ],
+        [
+          "MAX_EXPR_DEPTH=1000"
+        ],
+        [
+          "MAX_FUNCTION_ARG=1000"
+        ],
+        [
+          "MAX_LENGTH=1000000000"
+        ],
+        [
+          "MAX_LIKE_PATTERN_LENGTH=50000"
+        ],
+        [
+          "MAX_MMAP_SIZE=0x7fff0000"
+        ],
+        [
+          "MAX_PAGE_COUNT=0xfffffffe"
+        ],
+        [
+          "MAX_PAGE_SIZE=65536"
+        ],
+        [
+          "MAX_SQL_LENGTH=1000000000"
+        ],
+        [
+          "MAX_TRIGGER_DEPTH=1000"
+        ],
+        [
+          "MAX_VARIABLE_NUMBER=32766"
+        ],
+        [
+          "MAX_VDBE_OP=250000000"
+        ],
+        [
+          "MAX_WORKER_THREADS=8"
+        ],
+        [
+          "MUTEX_PTHREADS"
+        ],
+        [
+          "SYSTEM_MALLOC"
+        ],
+        [
+          "TEMP_STORE=1"
+        ],
+        [
+          "THREADSAFE=1"
+        ]
+      ],
+      "loader_environment": {
+        "LD_LIBRARY_PATH": null,
+        "LD_PRELOAD": null,
+        "DYLD_LIBRARY_PATH": null
+      },
+      "sqlite_mappings": [],
+      "product_safety_and_capabilities": "passed",
+      "product_module": "/home/runner/work/git-repo-db/git-repo-db/src/repo_catalog/adapters/sqlite/access_schema.py"
+    },
+    "artifacts/runtime/docs.json": {
+      "python": "3.12.15",
+      "executable": "/home/runner/work/git-repo-db/git-repo-db/.venv/bin/python",
+      "base_executable": "/home/runner/work/_temp/product-python/python/bin/python3.12",
+      "sqlite_version": "3.53.1",
+      "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+      "sqlite_module": "/home/runner/work/_temp/product-python/python/bin/python3.12",
+      "sqlite_module_origin": "built-in",
+      "sqlite_module_sha256": "0a97d28d3635c7dfd143de6d00b09c0cb382249c020b28ee33fb4002db1efb9c",
+      "compile_options": [
+        [
+          "ATOMIC_INTRINSICS=1"
+        ],
+        [
+          "COMPILER=clang-23.1.3"
+        ],
+        [
+          "DEFAULT_AUTOVACUUM"
+        ],
+        [
+          "DEFAULT_CACHE_SIZE=-2000"
+        ],
+        [
+          "DEFAULT_FILE_FORMAT=4"
+        ],
+        [
+          "DEFAULT_JOURNAL_SIZE_LIMIT=-1"
+        ],
+        [
+          "DEFAULT_MMAP_SIZE=0"
+        ],
+        [
+          "DEFAULT_PAGE_SIZE=4096"
+        ],
+        [
+          "DEFAULT_PCACHE_INITSZ=20"
+        ],
+        [
+          "DEFAULT_RECURSIVE_TRIGGERS"
+        ],
+        [
+          "DEFAULT_SECTOR_SIZE=4096"
+        ],
+        [
+          "DEFAULT_SYNCHRONOUS=2"
+        ],
+        [
+          "DEFAULT_WAL_AUTOCHECKPOINT=1000"
+        ],
+        [
+          "DEFAULT_WAL_SYNCHRONOUS=2"
+        ],
+        [
+          "DEFAULT_WORKER_THREADS=0"
+        ],
+        [
+          "DIRECT_OVERFLOW_READ"
+        ],
+        [
+          "ENABLE_DBSTAT_VTAB"
+        ],
+        [
+          "ENABLE_FTS3"
+        ],
+        [
+          "ENABLE_FTS3_PARENTHESIS"
+        ],
+        [
+          "ENABLE_FTS4"
+        ],
+        [
+          "ENABLE_FTS5"
+        ],
+        [
+          "ENABLE_GEOPOLY"
+        ],
+        [
+          "ENABLE_MATH_FUNCTIONS"
+        ],
+        [
+          "ENABLE_PERCENTILE"
+        ],
+        [
+          "ENABLE_RTREE"
+        ],
+        [
+          "MALLOC_SOFT_LIMIT=1024"
+        ],
+        [
+          "MAX_ATTACHED=10"
+        ],
+        [
+          "MAX_COLUMN=2000"
+        ],
+        [
+          "MAX_COMPOUND_SELECT=500"
+        ],
+        [
+          "MAX_DEFAULT_PAGE_SIZE=8192"
+        ],
+        [
+          "MAX_EXPR_DEPTH=1000"
+        ],
+        [
+          "MAX_FUNCTION_ARG=1000"
+        ],
+        [
+          "MAX_LENGTH=1000000000"
+        ],
+        [
+          "MAX_LIKE_PATTERN_LENGTH=50000"
+        ],
+        [
+          "MAX_MMAP_SIZE=0x7fff0000"
+        ],
+        [
+          "MAX_PAGE_COUNT=0xfffffffe"
+        ],
+        [
+          "MAX_PAGE_SIZE=65536"
+        ],
+        [
+          "MAX_SQL_LENGTH=1000000000"
+        ],
+        [
+          "MAX_TRIGGER_DEPTH=1000"
+        ],
+        [
+          "MAX_VARIABLE_NUMBER=32766"
+        ],
+        [
+          "MAX_VDBE_OP=250000000"
+        ],
+        [
+          "MAX_WORKER_THREADS=8"
+        ],
+        [
+          "MUTEX_PTHREADS"
+        ],
+        [
+          "SYSTEM_MALLOC"
+        ],
+        [
+          "TEMP_STORE=1"
+        ],
+        [
+          "THREADSAFE=1"
+        ]
+      ],
+      "loader_environment": {
+        "LD_LIBRARY_PATH": null,
+        "LD_PRELOAD": null,
+        "DYLD_LIBRARY_PATH": null
+      },
+      "sqlite_mappings": [],
+      "product_safety_and_capabilities": "passed",
+      "product_module": "/home/runner/work/git-repo-db/git-repo-db/src/repo_catalog/adapters/sqlite/access_schema.py"
+    },
+    "artifacts/runtime/final.json": {
+      "python": "3.12.15",
+      "executable": "/home/runner/work/git-repo-db/git-repo-db/.venv/bin/python",
+      "base_executable": "/home/runner/work/_temp/product-python/python/bin/python3.12",
+      "sqlite_version": "3.53.1",
+      "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+      "sqlite_module": "/home/runner/work/_temp/product-python/python/bin/python3.12",
+      "sqlite_module_origin": "built-in",
+      "sqlite_module_sha256": "0a97d28d3635c7dfd143de6d00b09c0cb382249c020b28ee33fb4002db1efb9c",
+      "compile_options": [
+        [
+          "ATOMIC_INTRINSICS=1"
+        ],
+        [
+          "COMPILER=clang-23.1.3"
+        ],
+        [
+          "DEFAULT_AUTOVACUUM"
+        ],
+        [
+          "DEFAULT_CACHE_SIZE=-2000"
+        ],
+        [
+          "DEFAULT_FILE_FORMAT=4"
+        ],
+        [
+          "DEFAULT_JOURNAL_SIZE_LIMIT=-1"
+        ],
+        [
+          "DEFAULT_MMAP_SIZE=0"
+        ],
+        [
+          "DEFAULT_PAGE_SIZE=4096"
+        ],
+        [
+          "DEFAULT_PCACHE_INITSZ=20"
+        ],
+        [
+          "DEFAULT_RECURSIVE_TRIGGERS"
+        ],
+        [
+          "DEFAULT_SECTOR_SIZE=4096"
+        ],
+        [
+          "DEFAULT_SYNCHRONOUS=2"
+        ],
+        [
+          "DEFAULT_WAL_AUTOCHECKPOINT=1000"
+        ],
+        [
+          "DEFAULT_WAL_SYNCHRONOUS=2"
+        ],
+        [
+          "DEFAULT_WORKER_THREADS=0"
+        ],
+        [
+          "DIRECT_OVERFLOW_READ"
+        ],
+        [
+          "ENABLE_DBSTAT_VTAB"
+        ],
+        [
+          "ENABLE_FTS3"
+        ],
+        [
+          "ENABLE_FTS3_PARENTHESIS"
+        ],
+        [
+          "ENABLE_FTS4"
+        ],
+        [
+          "ENABLE_FTS5"
+        ],
+        [
+          "ENABLE_GEOPOLY"
+        ],
+        [
+          "ENABLE_MATH_FUNCTIONS"
+        ],
+        [
+          "ENABLE_PERCENTILE"
+        ],
+        [
+          "ENABLE_RTREE"
+        ],
+        [
+          "MALLOC_SOFT_LIMIT=1024"
+        ],
+        [
+          "MAX_ATTACHED=10"
+        ],
+        [
+          "MAX_COLUMN=2000"
+        ],
+        [
+          "MAX_COMPOUND_SELECT=500"
+        ],
+        [
+          "MAX_DEFAULT_PAGE_SIZE=8192"
+        ],
+        [
+          "MAX_EXPR_DEPTH=1000"
+        ],
+        [
+          "MAX_FUNCTION_ARG=1000"
+        ],
+        [
+          "MAX_LENGTH=1000000000"
+        ],
+        [
+          "MAX_LIKE_PATTERN_LENGTH=50000"
+        ],
+        [
+          "MAX_MMAP_SIZE=0x7fff0000"
+        ],
+        [
+          "MAX_PAGE_COUNT=0xfffffffe"
+        ],
+        [
+          "MAX_PAGE_SIZE=65536"
+        ],
+        [
+          "MAX_SQL_LENGTH=1000000000"
+        ],
+        [
+          "MAX_TRIGGER_DEPTH=1000"
+        ],
+        [
+          "MAX_VARIABLE_NUMBER=32766"
+        ],
+        [
+          "MAX_VDBE_OP=250000000"
+        ],
+        [
+          "MAX_WORKER_THREADS=8"
+        ],
+        [
+          "MUTEX_PTHREADS"
+        ],
+        [
+          "SYSTEM_MALLOC"
+        ],
+        [
+          "TEMP_STORE=1"
+        ],
+        [
+          "THREADSAFE=1"
+        ]
+      ],
+      "loader_environment": {
+        "LD_LIBRARY_PATH": null,
+        "LD_PRELOAD": null,
+        "DYLD_LIBRARY_PATH": null
+      },
+      "sqlite_mappings": [],
+      "product_safety_and_capabilities": "passed",
+      "product_module": "/home/runner/work/git-repo-db/git-repo-db/src/repo_catalog/adapters/sqlite/access_schema.py"
+    },
+    "artifacts/runtime/sdist-wheel.json": {
+      "python": "3.12.15",
+      "executable": "/tmp/access-distribution-jssm7l63/sdist-wheel/bin/python",
+      "base_executable": "/home/runner/work/_temp/product-python/python/bin/python3.12",
+      "sqlite_version": "3.53.1",
+      "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+      "sqlite_module": "/home/runner/work/_temp/product-python/python/bin/python3.12",
+      "sqlite_module_origin": "built-in",
+      "sqlite_module_sha256": "0a97d28d3635c7dfd143de6d00b09c0cb382249c020b28ee33fb4002db1efb9c",
+      "compile_options": [
+        [
+          "ATOMIC_INTRINSICS=1"
+        ],
+        [
+          "COMPILER=clang-23.1.3"
+        ],
+        [
+          "DEFAULT_AUTOVACUUM"
+        ],
+        [
+          "DEFAULT_CACHE_SIZE=-2000"
+        ],
+        [
+          "DEFAULT_FILE_FORMAT=4"
+        ],
+        [
+          "DEFAULT_JOURNAL_SIZE_LIMIT=-1"
+        ],
+        [
+          "DEFAULT_MMAP_SIZE=0"
+        ],
+        [
+          "DEFAULT_PAGE_SIZE=4096"
+        ],
+        [
+          "DEFAULT_PCACHE_INITSZ=20"
+        ],
+        [
+          "DEFAULT_RECURSIVE_TRIGGERS"
+        ],
+        [
+          "DEFAULT_SECTOR_SIZE=4096"
+        ],
+        [
+          "DEFAULT_SYNCHRONOUS=2"
+        ],
+        [
+          "DEFAULT_WAL_AUTOCHECKPOINT=1000"
+        ],
+        [
+          "DEFAULT_WAL_SYNCHRONOUS=2"
+        ],
+        [
+          "DEFAULT_WORKER_THREADS=0"
+        ],
+        [
+          "DIRECT_OVERFLOW_READ"
+        ],
+        [
+          "ENABLE_DBSTAT_VTAB"
+        ],
+        [
+          "ENABLE_FTS3"
+        ],
+        [
+          "ENABLE_FTS3_PARENTHESIS"
+        ],
+        [
+          "ENABLE_FTS4"
+        ],
+        [
+          "ENABLE_FTS5"
+        ],
+        [
+          "ENABLE_GEOPOLY"
+        ],
+        [
+          "ENABLE_MATH_FUNCTIONS"
+        ],
+        [
+          "ENABLE_PERCENTILE"
+        ],
+        [
+          "ENABLE_RTREE"
+        ],
+        [
+          "MALLOC_SOFT_LIMIT=1024"
+        ],
+        [
+          "MAX_ATTACHED=10"
+        ],
+        [
+          "MAX_COLUMN=2000"
+        ],
+        [
+          "MAX_COMPOUND_SELECT=500"
+        ],
+        [
+          "MAX_DEFAULT_PAGE_SIZE=8192"
+        ],
+        [
+          "MAX_EXPR_DEPTH=1000"
+        ],
+        [
+          "MAX_FUNCTION_ARG=1000"
+        ],
+        [
+          "MAX_LENGTH=1000000000"
+        ],
+        [
+          "MAX_LIKE_PATTERN_LENGTH=50000"
+        ],
+        [
+          "MAX_MMAP_SIZE=0x7fff0000"
+        ],
+        [
+          "MAX_PAGE_COUNT=0xfffffffe"
+        ],
+        [
+          "MAX_PAGE_SIZE=65536"
+        ],
+        [
+          "MAX_SQL_LENGTH=1000000000"
+        ],
+        [
+          "MAX_TRIGGER_DEPTH=1000"
+        ],
+        [
+          "MAX_VARIABLE_NUMBER=32766"
+        ],
+        [
+          "MAX_VDBE_OP=250000000"
+        ],
+        [
+          "MAX_WORKER_THREADS=8"
+        ],
+        [
+          "MUTEX_PTHREADS"
+        ],
+        [
+          "SYSTEM_MALLOC"
+        ],
+        [
+          "TEMP_STORE=1"
+        ],
+        [
+          "THREADSAFE=1"
+        ]
+      ],
+      "loader_environment": {
+        "LD_LIBRARY_PATH": null,
+        "LD_PRELOAD": null,
+        "DYLD_LIBRARY_PATH": null
+      },
+      "sqlite_mappings": [],
+      "product_safety_and_capabilities": "passed",
+      "product_module": "/tmp/access-distribution-jssm7l63/sdist-wheel/lib/python3.12/site-packages/repo_catalog/adapters/sqlite/access_schema.py"
+    },
+    "artifacts/runtime/selected.json": {
+      "python": "3.12.15",
+      "executable": "/home/runner/work/_temp/product-python/python/bin/python",
+      "base_executable": "/home/runner/work/_temp/product-python/python/bin/python3.12",
+      "sqlite_version": "3.53.1",
+      "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+      "sqlite_module": "/home/runner/work/_temp/product-python/python/bin/python3.12",
+      "sqlite_module_origin": "built-in",
+      "sqlite_module_sha256": "0a97d28d3635c7dfd143de6d00b09c0cb382249c020b28ee33fb4002db1efb9c",
+      "compile_options": [
+        [
+          "ATOMIC_INTRINSICS=1"
+        ],
+        [
+          "COMPILER=clang-23.1.3"
+        ],
+        [
+          "DEFAULT_AUTOVACUUM"
+        ],
+        [
+          "DEFAULT_CACHE_SIZE=-2000"
+        ],
+        [
+          "DEFAULT_FILE_FORMAT=4"
+        ],
+        [
+          "DEFAULT_JOURNAL_SIZE_LIMIT=-1"
+        ],
+        [
+          "DEFAULT_MMAP_SIZE=0"
+        ],
+        [
+          "DEFAULT_PAGE_SIZE=4096"
+        ],
+        [
+          "DEFAULT_PCACHE_INITSZ=20"
+        ],
+        [
+          "DEFAULT_RECURSIVE_TRIGGERS"
+        ],
+        [
+          "DEFAULT_SECTOR_SIZE=4096"
+        ],
+        [
+          "DEFAULT_SYNCHRONOUS=2"
+        ],
+        [
+          "DEFAULT_WAL_AUTOCHECKPOINT=1000"
+        ],
+        [
+          "DEFAULT_WAL_SYNCHRONOUS=2"
+        ],
+        [
+          "DEFAULT_WORKER_THREADS=0"
+        ],
+        [
+          "DIRECT_OVERFLOW_READ"
+        ],
+        [
+          "ENABLE_DBSTAT_VTAB"
+        ],
+        [
+          "ENABLE_FTS3"
+        ],
+        [
+          "ENABLE_FTS3_PARENTHESIS"
+        ],
+        [
+          "ENABLE_FTS4"
+        ],
+        [
+          "ENABLE_FTS5"
+        ],
+        [
+          "ENABLE_GEOPOLY"
+        ],
+        [
+          "ENABLE_MATH_FUNCTIONS"
+        ],
+        [
+          "ENABLE_PERCENTILE"
+        ],
+        [
+          "ENABLE_RTREE"
+        ],
+        [
+          "MALLOC_SOFT_LIMIT=1024"
+        ],
+        [
+          "MAX_ATTACHED=10"
+        ],
+        [
+          "MAX_COLUMN=2000"
+        ],
+        [
+          "MAX_COMPOUND_SELECT=500"
+        ],
+        [
+          "MAX_DEFAULT_PAGE_SIZE=8192"
+        ],
+        [
+          "MAX_EXPR_DEPTH=1000"
+        ],
+        [
+          "MAX_FUNCTION_ARG=1000"
+        ],
+        [
+          "MAX_LENGTH=1000000000"
+        ],
+        [
+          "MAX_LIKE_PATTERN_LENGTH=50000"
+        ],
+        [
+          "MAX_MMAP_SIZE=0x7fff0000"
+        ],
+        [
+          "MAX_PAGE_COUNT=0xfffffffe"
+        ],
+        [
+          "MAX_PAGE_SIZE=65536"
+        ],
+        [
+          "MAX_SQL_LENGTH=1000000000"
+        ],
+        [
+          "MAX_TRIGGER_DEPTH=1000"
+        ],
+        [
+          "MAX_VARIABLE_NUMBER=32766"
+        ],
+        [
+          "MAX_VDBE_OP=250000000"
+        ],
+        [
+          "MAX_WORKER_THREADS=8"
+        ],
+        [
+          "MUTEX_PTHREADS"
+        ],
+        [
+          "SYSTEM_MALLOC"
+        ],
+        [
+          "TEMP_STORE=1"
+        ],
+        [
+          "THREADSAFE=1"
+        ]
+      ],
+      "loader_environment": {
+        "LD_LIBRARY_PATH": null,
+        "LD_PRELOAD": null,
+        "DYLD_LIBRARY_PATH": null
+      },
+      "sqlite_mappings": [],
+      "product_safety_and_capabilities": "passed",
+      "product_module": "/home/runner/work/git-repo-db/git-repo-db/src/repo_catalog/adapters/sqlite/access_schema.py"
+    },
+    "artifacts/runtime/wheel.json": {
+      "python": "3.12.15",
+      "executable": "/tmp/access-distribution-jssm7l63/wheel/bin/python",
+      "base_executable": "/home/runner/work/_temp/product-python/python/bin/python3.12",
+      "sqlite_version": "3.53.1",
+      "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+      "sqlite_module": "/home/runner/work/_temp/product-python/python/bin/python3.12",
+      "sqlite_module_origin": "built-in",
+      "sqlite_module_sha256": "0a97d28d3635c7dfd143de6d00b09c0cb382249c020b28ee33fb4002db1efb9c",
+      "compile_options": [
+        [
+          "ATOMIC_INTRINSICS=1"
+        ],
+        [
+          "COMPILER=clang-23.1.3"
+        ],
+        [
+          "DEFAULT_AUTOVACUUM"
+        ],
+        [
+          "DEFAULT_CACHE_SIZE=-2000"
+        ],
+        [
+          "DEFAULT_FILE_FORMAT=4"
+        ],
+        [
+          "DEFAULT_JOURNAL_SIZE_LIMIT=-1"
+        ],
+        [
+          "DEFAULT_MMAP_SIZE=0"
+        ],
+        [
+          "DEFAULT_PAGE_SIZE=4096"
+        ],
+        [
+          "DEFAULT_PCACHE_INITSZ=20"
+        ],
+        [
+          "DEFAULT_RECURSIVE_TRIGGERS"
+        ],
+        [
+          "DEFAULT_SECTOR_SIZE=4096"
+        ],
+        [
+          "DEFAULT_SYNCHRONOUS=2"
+        ],
+        [
+          "DEFAULT_WAL_AUTOCHECKPOINT=1000"
+        ],
+        [
+          "DEFAULT_WAL_SYNCHRONOUS=2"
+        ],
+        [
+          "DEFAULT_WORKER_THREADS=0"
+        ],
+        [
+          "DIRECT_OVERFLOW_READ"
+        ],
+        [
+          "ENABLE_DBSTAT_VTAB"
+        ],
+        [
+          "ENABLE_FTS3"
+        ],
+        [
+          "ENABLE_FTS3_PARENTHESIS"
+        ],
+        [
+          "ENABLE_FTS4"
+        ],
+        [
+          "ENABLE_FTS5"
+        ],
+        [
+          "ENABLE_GEOPOLY"
+        ],
+        [
+          "ENABLE_MATH_FUNCTIONS"
+        ],
+        [
+          "ENABLE_PERCENTILE"
+        ],
+        [
+          "ENABLE_RTREE"
+        ],
+        [
+          "MALLOC_SOFT_LIMIT=1024"
+        ],
+        [
+          "MAX_ATTACHED=10"
+        ],
+        [
+          "MAX_COLUMN=2000"
+        ],
+        [
+          "MAX_COMPOUND_SELECT=500"
+        ],
+        [
+          "MAX_DEFAULT_PAGE_SIZE=8192"
+        ],
+        [
+          "MAX_EXPR_DEPTH=1000"
+        ],
+        [
+          "MAX_FUNCTION_ARG=1000"
+        ],
+        [
+          "MAX_LENGTH=1000000000"
+        ],
+        [
+          "MAX_LIKE_PATTERN_LENGTH=50000"
+        ],
+        [
+          "MAX_MMAP_SIZE=0x7fff0000"
+        ],
+        [
+          "MAX_PAGE_COUNT=0xfffffffe"
+        ],
+        [
+          "MAX_PAGE_SIZE=65536"
+        ],
+        [
+          "MAX_SQL_LENGTH=1000000000"
+        ],
+        [
+          "MAX_TRIGGER_DEPTH=1000"
+        ],
+        [
+          "MAX_VARIABLE_NUMBER=32766"
+        ],
+        [
+          "MAX_VDBE_OP=250000000"
+        ],
+        [
+          "MAX_WORKER_THREADS=8"
+        ],
+        [
+          "MUTEX_PTHREADS"
+        ],
+        [
+          "SYSTEM_MALLOC"
+        ],
+        [
+          "TEMP_STORE=1"
+        ],
+        [
+          "THREADSAFE=1"
+        ]
+      ],
+      "loader_environment": {
+        "LD_LIBRARY_PATH": null,
+        "LD_PRELOAD": null,
+        "DYLD_LIBRARY_PATH": null
+      },
+      "sqlite_mappings": [],
+      "product_safety_and_capabilities": "passed",
+      "product_module": "/tmp/access-distribution-jssm7l63/wheel/lib/python3.12/site-packages/repo_catalog/adapters/sqlite/access_schema.py"
+    }
+  },
+  "artifacts": {
+    "head": "b5f5026b07826b551cbd35ec39ac0ef3ca214a99",
+    "tree": "6bfa580baafa9f6a117b7a0b610c4e65cd031b86",
+    "archive_sha256": "0124848fed810e2329482ad8c95e7399d0d42da15fc3b40c769e4a809a674ee0",
+    "direct_wheel": {
+      "sha256": "22809cb1f468d5c57f18e8aea66e218ca261134cf3307043cd988f1ff436f842",
+      "bytes": 762725
+    },
+    "sdist": {
+      "sha256": "ad39dce879527cab459a6b23789c03f21190fab688a44e888de2c2bb05ab10df",
+      "bytes": 83939983
+    },
+    "sdist_wheel": {
+      "sha256": "22809cb1f468d5c57f18e8aea66e218ca261134cf3307043cd988f1ff436f842",
+      "bytes": 762725
+    }
+  },
+  "installed": {
+    "direct": {
+      "i4": {
+        "passed": 217
+      },
+      "i5": {
+        "passed": 29
+      }
+    },
+    "sdist": {
+      "i4": {
+        "passed": 217
+      },
+      "i5": {
+        "passed": 29
+      }
+    }
+  },
+  "original_smokes": [
+    {
+      "interpreter": "/tmp/access-distribution-jssm7l63/wheel/bin/python",
+      "sqlite": "3.53.1",
+      "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+      "module_origin": "/tmp/access-distribution-jssm7l63/wheel/lib/python3.12/site-packages/repo_catalog/__init__.py",
+      "context_ddl_sha256": "924cc7557fb3da6211ea070185881f5fcaeff9bf52b6e237a361a238a2ea0c6e",
+      "ddl_sha256": "89bcafeda815150fa4770f5758edf7d2d36d505b76717aa19054f9ad689765da",
+      "installed_smoke": "failed",
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 209, in <module>\n  File \"/tmp/access-distribution-jssm7l63/wheel/lib/python3.12/site-packages/repo_catalog/application/acquisition.py\", line 1519, in admit_batch\n    self._preflight_units(timeline_units)\n  File \"/tmp/access-distribution-jssm7l63/wheel/lib/python3.12/site-packages/repo_catalog/application/acquisition.py\", line 1471, in _preflight_units\n    raise UnsupportedResourceStage(\"Provider Transfer intake\")\nrepo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\n",
+      "artifact_kind": "wheel",
+      "wheel_sha256": "22809cb1f468d5c57f18e8aea66e218ca261134cf3307043cd988f1ff436f842",
+      "source_sdist_sha256": "ad39dce879527cab459a6b23789c03f21190fab688a44e888de2c2bb05ab10df"
+    },
+    {
+      "interpreter": "/tmp/access-distribution-jssm7l63/sdist-wheel/bin/python",
+      "sqlite": "3.53.1",
+      "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+      "module_origin": "/tmp/access-distribution-jssm7l63/sdist-wheel/lib/python3.12/site-packages/repo_catalog/__init__.py",
+      "context_ddl_sha256": "924cc7557fb3da6211ea070185881f5fcaeff9bf52b6e237a361a238a2ea0c6e",
+      "ddl_sha256": "89bcafeda815150fa4770f5758edf7d2d36d505b76717aa19054f9ad689765da",
+      "installed_smoke": "failed",
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 209, in <module>\n  File \"/tmp/access-distribution-jssm7l63/sdist-wheel/lib/python3.12/site-packages/repo_catalog/application/acquisition.py\", line 1519, in admit_batch\n    self._preflight_units(timeline_units)\n  File \"/tmp/access-distribution-jssm7l63/sdist-wheel/lib/python3.12/site-packages/repo_catalog/application/acquisition.py\", line 1471, in _preflight_units\n    raise UnsupportedResourceStage(\"Provider Transfer intake\")\nrepo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\n",
+      "artifact_kind": "sdist-wheel",
+      "wheel_sha256": "22809cb1f468d5c57f18e8aea66e218ca261134cf3307043cd988f1ff436f842",
+      "source_sdist_sha256": "ad39dce879527cab459a6b23789c03f21190fab688a44e888de2c2bb05ab10df"
+    }
+  ],
+  "new_followup_finding": {
+    "id": "C0-E1",
+    "severity": "Low",
+    "summary": "Receipt emitter permits 4 MiB; ADR 0001 VAL-07 specifies 2 MiB",
+    "target": "scripts/emit_ci_evidence.py:63",
+    "actual_receipt_within_2MiB": true,
+    "runtime_resolution_affected": false,
+    "recommendation": "Restore the 2 MiB cap; test exact/+1 compressed bytes and preserve uploaded-artifact fallback."
+  },
+  "upstream_published_asset": {
+    "browser_download_url": "https://github.com/astral-sh/python-build-standalone/releases/download/20261021/cpython-3.12.15%2B20261021-x86_64-unknown-linux-gnu-install_only_stripped.tar.gz",
+    "digest": "sha256:6d7521138fd33afddc1ccd08abb007d9a2829e38117c2576f9efdc0ec73ce772",
+    "name": "cpython-3.12.15+20261021-x86_64-unknown-linux-gnu-install_only_stripped.tar.gz",
+    "size": 34479606
+  },
+  "local_checks": {
+    "policy_violations": 0,
+    "policy_tests": 31,
+    "runtime_tool_tests": 4,
+    "runtime_probe": {
+      "python": "3.12.14",
+      "executable": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+      "base_executable": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3.12",
+      "sqlite_version": "3.53.1",
+      "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+      "sqlite_module": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3.12",
+      "sqlite_module_origin": "built-in",
+      "sqlite_module_sha256": "fa67443527ed9647f760d807e2a38f26340757123e643c4639cf273ed15d5ea7",
+      "compile_options": [
+        [
+          "ATOMIC_INTRINSICS=1"
+        ],
+        [
+          "COMPILER=clang-22.1.3"
+        ],
+        [
+          "DEFAULT_AUTOVACUUM"
+        ],
+        [
+          "DEFAULT_CACHE_SIZE=-2000"
+        ],
+        [
+          "DEFAULT_FILE_FORMAT=4"
+        ],
+        [
+          "DEFAULT_JOURNAL_SIZE_LIMIT=-1"
+        ],
+        [
+          "DEFAULT_MMAP_SIZE=0"
+        ],
+        [
+          "DEFAULT_PAGE_SIZE=4096"
+        ],
+        [
+          "DEFAULT_PCACHE_INITSZ=20"
+        ],
+        [
+          "DEFAULT_RECURSIVE_TRIGGERS"
+        ],
+        [
+          "DEFAULT_SECTOR_SIZE=4096"
+        ],
+        [
+          "DEFAULT_SYNCHRONOUS=2"
+        ],
+        [
+          "DEFAULT_WAL_AUTOCHECKPOINT=1000"
+        ],
+        [
+          "DEFAULT_WAL_SYNCHRONOUS=2"
+        ],
+        [
+          "DEFAULT_WORKER_THREADS=0"
+        ],
+        [
+          "DIRECT_OVERFLOW_READ"
+        ],
+        [
+          "ENABLE_DBSTAT_VTAB"
+        ],
+        [
+          "ENABLE_FTS3"
+        ],
+        [
+          "ENABLE_FTS3_PARENTHESIS"
+        ],
+        [
+          "ENABLE_FTS4"
+        ],
+        [
+          "ENABLE_FTS5"
+        ],
+        [
+          "ENABLE_GEOPOLY"
+        ],
+        [
+          "ENABLE_MATH_FUNCTIONS"
+        ],
+        [
+          "ENABLE_PERCENTILE"
+        ],
+        [
+          "ENABLE_RTREE"
+        ],
+        [
+          "MALLOC_SOFT_LIMIT=1024"
+        ],
+        [
+          "MAX_ATTACHED=10"
+        ],
+        [
+          "MAX_COLUMN=2000"
+        ],
+        [
+          "MAX_COMPOUND_SELECT=500"
+        ],
+        [
+          "MAX_DEFAULT_PAGE_SIZE=8192"
+        ],
+        [
+          "MAX_EXPR_DEPTH=1000"
+        ],
+        [
+          "MAX_FUNCTION_ARG=1000"
+        ],
+        [
+          "MAX_LENGTH=1000000000"
+        ],
+        [
+          "MAX_LIKE_PATTERN_LENGTH=50000"
+        ],
+        [
+          "MAX_MMAP_SIZE=0x7fff0000"
+        ],
+        [
+          "MAX_PAGE_COUNT=0xfffffffe"
+        ],
+        [
+          "MAX_PAGE_SIZE=65536"
+        ],
+        [
+          "MAX_SQL_LENGTH=1000000000"
+        ],
+        [
+          "MAX_TRIGGER_DEPTH=1000"
+        ],
+        [
+          "MAX_VARIABLE_NUMBER=32766"
+        ],
+        [
+          "MAX_VDBE_OP=250000000"
+        ],
+        [
+          "MAX_WORKER_THREADS=8"
+        ],
+        [
+          "MUTEX_PTHREADS"
+        ],
+        [
+          "SYSTEM_MALLOC"
+        ],
+        [
+          "TEMP_STORE=1"
+        ],
+        [
+          "THREADSAFE=1"
+        ]
+      ],
+      "loader_environment": {
+        "LD_LIBRARY_PATH": null,
+        "LD_PRELOAD": null,
+        "DYLD_LIBRARY_PATH": null
+      },
+      "sqlite_mappings": [],
+      "product_safety_and_capabilities": "passed",
+      "product_module": "/workspace/c0-source-check/src/repo_catalog/adapters/sqlite/access_schema.py"
+    },
+    "product_pytest_or_artifact_rerun": false
+  },
+  "audit_method_notes": [
+    "Reverified previously executed hosted evidence; no new hosted workflow or product suite was launched.",
+    "Four raw JUnit messages contain different per-run temporary paths; compare identical stage refusals and full source frames, retaining raw differences.",
+    "Initial audit helper trials failed on raw temporary-path equality and parameter IDs containing IPv6/ext::; corrected helper uses literal parameter preservation. Preserved failed-helper logs are not product failures."
+  ]
+}
