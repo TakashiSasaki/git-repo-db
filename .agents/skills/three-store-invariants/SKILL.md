@@ -603,7 +603,7 @@ Do not catch an unsupported input inside a stored-decoder corruption wrapper.
 Preserve diagnostic injected rows and compare complete pre/post rowsets.
 
 Author regression commands: `pytest tests/integration/p1/test_generalized_resources.py`
-and `python scripts/verify_i2_sql_counterexamples.py REPOSITORY SQLITE_VERSION NEW_DIR`.
+and `python scripts/verify_i2_sql_counterexamples.py REPOSITORY NEW_DIR`.
 The [I2 implementation record](../../../docs/implementation/adr0031-i2-implementation.md)
 states the stage limits. These checks are not independent acceptance or substitutes
 for later typed support, wire integration or release qualification.
@@ -803,7 +803,8 @@ isolated success as product operation availability. Preserve the application
 refusal and impossible-storage recovery controls until their owning later stage.
 
 The I4 tests in `tests/integration/p3/test_transfer_sql.py` exercise this procedure
-for native-I7 SQL. Run `scripts/verify_i4.py` on each actual SQLite runtime and
+for native-I7 SQL. Run `scripts/verify_i4.py` with the environment's Python-loaded SQLite under
+[ADR 0032](../../../docs/adr/0032-environment-sqlite-validation.md) and
 `scripts/verify_i4_distribution.py` outside the source artifact through its fresh
 installed environments. Bind the evidence to an executed commit/tree and retain
 nonzero inherited staging failures. A structurally stored original Event type
@@ -812,8 +813,8 @@ completeness and pre-affinity original timestamp types cannot be inferred from
 successful SQL references.
 
 The I5 tests in `tests/integration/p3/test_transfer_admission.py` exercise Typed
-Transfer Admission for native-I7 SQL. Run `scripts/verify_i5.py` on each actual SQLite
-runtime and `scripts/verify_i5_distribution.py` outside the source artifact through its fresh
+Transfer Admission for native-I7 SQL. Run `scripts/verify_i5.py` with the environment's single Python-loaded SQLite
+under [ADR 0032](../../../docs/adr/0032-environment-sqlite-validation.md) and `scripts/verify_i5_distribution.py` outside the source artifact through its fresh
 installed environments. Both SQL transfer stage fences (`i2_transfer_stage_fence`,
 `i2_transfer_report_stage_fence`) remain present in product DDL; normal production paths
 reject Transfer operations with `I2_TRANSFER_UNSUPPORTED`. I5 enforces semantic Admission,

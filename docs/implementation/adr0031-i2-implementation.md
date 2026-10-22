@@ -100,17 +100,22 @@ General I8 Parent storage is lawful common storage, not eligible Transfer suppor
 Missing native I7 support and permanently wrong I8 support are not conflated with
 the unconditional temporary I2 rejection. Parent arrival cannot replay a unit.
 
-Run the Author evidence helpers with a real supported interpreter:
+For new executions, follow [ADR 0032](../adr/0032-environment-sqlite-validation.md)
+and the [current testing guide](../testing.md). Historical results above remain
+unchanged. The dependent policy implementation PR updates these helper interfaces:
 
 ```sh
-python scripts/verify_i2.py --sqlite 3.51.3 --output /absolute/new-evidence-directory
-python scripts/verify_i2_sql_counterexamples.py /absolute/repository 3.51.3 /absolute/new-sql-directory
+python scripts/verify_i2.py --output /absolute/new-evidence-directory
+python scripts/verify_i2_sql_counterexamples.py /absolute/repository /absolute/new-sql-directory
 ```
 
-Repeat with actual SQLite 3.53.1. The broad runner retains ordinary/selected node
+Use only the selected environment Python's SQLite. Do not repeat across versions
+or obtain another library. The broad runner retains ordinary/selected node
 inventories, actual OS exits, JUnit/phase journals, source hashes and runtime facts.
-`verify_i2_distribution.py` is copied outside the checkout and run using each
-isolated installed artifact. Original Access distribution smoke remains intact.
+`verify_i2_distribution.py` is copied outside the checkout and run using both
+isolated installed artifacts with that environment's binding. Original Access
+distribution smoke remains intact. Historical archived commands are not a new
+exception approval or a current requirement to recreate their two engines.
 
 Author execution receipts and final publication binding are supplied separately
 with the Draft PR. A non-author frozen-tree product review is still required.

@@ -2,6 +2,8 @@
 
 CI は [現在の policy](../scripts/ci_dependencies.json) と有効な Git tree からチェックを選びます。通常の lane は `tests`、installed wheel / sdist は独立した2 workersの `packaging`、静的検査は `static`、SQLite 機能と doctor は `smoke` です。一つの Python/SQLite binding を使い、独立した SQLite-minimum lane、過去の phase lane、件数・node ID 下限、GitHub artifact の再利用判定を廃止しました。
 
+SQLite 環境は [ADR 0032](adr/0032-environment-sqlite-validation.md) に従います。開発・リリースとも各環境の Python が実際に使う単一版で十分です。テスト用 SQLite の取得・構築・追加導入・差替えや版マトリクスは行いません。Python の選択を依存準備・子プロセスで保持し、実測 Python / SQLite / source ID を記録します。製品の機能・WAL 安全条件を満たさない環境は失敗と報告し、条件を緩和しません。例外は理由・範囲の報告と事前の所有者明示承認が必要です。
+
 PR の初回・再開などは merge-base から実際に試験する merge tree への差分を使います。`synchronize` は event の直前 head (`before`) から実際の merge tree への差分を使い、今回変わった入力を選びます。`before` が無効・欠落・取得不能、または現在の feature の祖先でなければ全体へ広げます。現在の base 由来の code が直前 head に含まれなければ、その差分も全体を選びます。main push は `before` から試験 tree への差分です。rename の両側と削除も NUL 区切りで読み、path を shell code として実行しません。
 
 - `tests/unit`、`tests/integration`、`tests/e2e`、`tests/packaging` 以下で、pytest の標準命名に合うすべての `test_*.py` / `*_test.py` を現在の acceptance として発見します。新規追加・rename に個別 allowlist 更新は不要です。`tests/live` は明示的な opt-in のままです。
@@ -18,7 +20,7 @@ main push や PR だからという理由で無条件の full acceptance は行�
 
 現在の manifest は catalog3 runtime と救出の動作試験を中心に、通常試験と保護境界を含みます。過去の phase export や古い DDL pin の試験は現行 acceptance の下限にしません。不要になった試験の削除も変更として扱い、残る acceptance 全体を選びます。件数の固定下限は設けません。
 
-実行前に選択した file の node ID を収集し、結果の JUnit と exactly once で照合します。失敗、skip、欠落、重複、余分な ID、別 run / attempt / SHA の古い結果、版の違う binding は成功扱いにしません。確定した CI の証跡は clean tree と一致する必要があります。
+実行前に選択した file の node ID を収集し、結果の JUnit と exactly once で照合します。失敗、skip、欠落、重複、余分な ID、別 run / attempt / SHA の古い結果、各実行自身の実測環境と異なる binding を名乗る結果は成功扱いにしません。これは実行識別の照合であり、ローカルとホスト CI の SQLite 版の一致を要求しません。確定した CI の証跡は clean tree と一致する必要があります。
 
 `plan.json` は現在の対象、対象外の `excluded_files`、未実行の `unexecuted_files`、ローカル検証が必要な `required_files` を保存します。四つの通常 test directory の file はすべて対象なので `excluded_files` は空です。live および benchmark は通常 acceptance の外です。Development モードの成功は `acceptance_status=development_checks_passed` です。Release モードでは、ホスト全件合格時に `hosted_release_passed` となり、検証済みのローカル release receipt と照合できた場合のみ `acceptance_status=complete_release_passed` が成立します。過去の成功を今回実行した試験として数えません。`validation-manifest.json` はすべての選択チェックが照合できた場合だけ作ります。失敗時は raw JUnit/profile を artifact に残します。
 

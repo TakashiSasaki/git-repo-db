@@ -2,12 +2,16 @@
 
 Catalog3 Core Schema 21 / Operational Schema 1 / Search Schema 1 の通常動作とPhase 1のAPI原本依存機能廃止、および Three-Store 境界（Core, Operational, Search）を、一つの Python/SQLite binding で検証します。v2 importerと救出workspaceは廃止済みです。最小 SQLite 版の独立 lane と過去の phase 互換性・試験件数・node ID 下限は廃止しました。実行時の版と機能を記録し、FK、recursive triggers、FTS、WAL の既知の修正条件など、必要な正しさの条件は維持します。
 
-依存取得は試験より先に行います。
+[ADR 0032](adr/0032-environment-sqlite-validation.md) に従い、開発・リリースのどちらも各実行環境の Python が実際に読み込む一つの SQLite を使います。テスト専用の SQLite のダウンロード・ソースビルド・追加インストール・動的ライブラリ差替え、および最低版＋新版や複数版のマトリクスを要求しません。ローカルとホスト CI の版が異なっていても揃える必要はなく、完全一致の版・source ID を開始条件にしません。Python の実行ファイル・版、SQLite の版・source ID、関連する compile options / PRAGMAs を入力ハッシュ・結果とともに記録します。
+
+製品の必須機能・安全条件は別です。`p1_schema.py` / `access_schema.py` の WAL 修正を根拠とする 3.51.3 以上の条件、`store.py` の WAL 安全性判定（既知の修正版を含む）、STRICT / JSON / FTS、FK、トランザクション、DDL の検証は保持します。環境が必須条件を満たさない場合は失敗と未実行範囲を報告し、別版導入、skip / xfail、ガード回避で成功にしません。特定版での不具合再現などの例外は、理由・対象範囲を報告して実行前に所有者の明示承認を得ます。
+
+依存取得は試験より先に行い、選んだ Python を明示して意図しない切替を防ぎます。
 
 ```bash
-uv sync --locked --group dev
+uv sync --locked --group dev --python "$(command -v python)"
 uv run --no-sync python scripts/prepare_wheelhouse.py
-uv run --no-sync python -c 'import platform, sqlite3; print(platform.python_version(), sqlite3.sqlite_version)'
+uv run --no-sync python -c 'import platform, sqlite3, sys; c=sqlite3.connect(":memory:"); print(sys.executable, platform.python_version(), c.execute("SELECT sqlite_version(), sqlite_source_id()").fetchone()); print(c.execute("PRAGMA compile_options").fetchall())'
 uv --version
 ```
 
@@ -45,6 +49,18 @@ API原本・Publication/profile/selection/certificateの本番経路不在、clo
 通常の pytest は外部通信と実 token を遮断します。親と子 Python の guard は合成 HTTP fixture 用の loopback だけを許し、Git transport は file に限定します。依存準備と合成fixture通信を、実Source取得の許可とは扱いません。すべての stateful command は disposable な `--state-dir` を指定します。
 
 package 試験は lock と SHA で検証した wheelhouse を `--offline --no-index --find-links` で使います。wheel と sdist 由来 wheel を新しい venv に導入し、source 外の CWD から console script と `python -m` を実行します。complete packaged DDL、JSON guardとgeneratorの一致、新規catalog初期化、取得・検索・再構築・交換・Git再解析・整合性・backup/restoreを確認します。廃止された公開操作と依存がdistributionからも利用できないことを検証します。
+
+I2–I5 の現行検証ツールも実測環境を使用します。後続の実装 PR B で、`verify_i2.py`〜`verify_i5.py` の `--sqlite`、I4/I5 distribution の `--minimum-library` / `--newer-library` は廃止します。以後は選んだ Python で次を実行します（PR A 単独の旧スクリプトには新 CLI は未実装）。
+
+```bash
+python scripts/verify_i5.py --output /absolute/new-i5-evidence
+python scripts/verify_i5_offline.py --output /absolute/new-offline-evidence --execute
+python scripts/verify_i5_distribution.py --output /absolute/new-distribution-evidence
+python scripts/compare_i5_failures.py --current /absolute/new-i5-evidence/regressions.xml \
+  --baseline-entry final-3.53.1/regressions.xml --output /absolute/new-comparison.json
+```
+
+失敗比較の baseline entry は保存済み ZIP の履歴メンバーを明示選択するもので、現在の SQLite をその版に合わせる指定ではありません。wheel と sdist 由来 wheel は同じ Python に基づく別 venv で両方を検証します。独立レビュー、オフライン制約、入力・配布物ハッシュ、終了コードと失敗照合は保持します。旧実装記録・凍結レビュー・ZIP 内の二版コマンドは当時の再現記録であり、新規実行の手順はこの文書と ADR 0032 を優先します。
 
 以前のcheckpoint環境は Python 3.12.14、SQLite 3.53.1、uv 0.12.19 でした。今回の実行環境はコマンドで改めて測定し、下限版の保証と区別します。最終結果・失敗・skip・未実行項目は [Three-Store Boundary ADR 0002](adr/0002-three-store-boundary-architecture.md)、[Schema 20実装記録](phase2/publication-free-implementation.md)、および exact-revision receipts に記録します。CI の選択と結果照合は [変更に応じた CI](change-aware-ci.md)、計測は [CI 性能](ci-performance.md) を参照してください。
 
