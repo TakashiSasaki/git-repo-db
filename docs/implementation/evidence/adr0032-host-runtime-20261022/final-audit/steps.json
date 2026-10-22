@@ -1,0 +1,532 @@
+[
+  {
+    "run": 39799299209,
+    "job": "registry-runtime",
+    "job_conclusion": "failure",
+    "number": 1,
+    "name": "Set up job",
+    "conclusion": "success",
+    "exit_code": null,
+    "exit_code_basis": "not exposed / no process"
+  },
+  {
+    "run": 39799299209,
+    "job": "registry-runtime",
+    "job_conclusion": "failure",
+    "number": 2,
+    "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+    "conclusion": "success",
+    "exit_code": null,
+    "exit_code_basis": "not exposed / no process"
+  },
+  {
+    "run": 39799299209,
+    "job": "registry-runtime",
+    "job_conclusion": "failure",
+    "number": 3,
+    "name": "Run ./.github/actions/product-python",
+    "conclusion": "success",
+    "exit_code": null,
+    "exit_code_basis": "not exposed / no process"
+  },
+  {
+    "run": 39799299209,
+    "job": "registry-runtime",
+    "job_conclusion": "failure",
+    "number": 4,
+    "name": "Run astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7",
+    "conclusion": "success",
+    "exit_code": null,
+    "exit_code_basis": "not exposed / no process"
+  },
+  {
+    "run": 39799299209,
+    "job": "registry-runtime",
+    "job_conclusion": "failure",
+    "number": 5,
+    "name": "Install locked development dependencies",
+    "conclusion": "success",
+    "exit_code": 0,
+    "exit_code_basis": "Actions success inference"
+  },
+  {
+    "run": 39799299209,
+    "job": "registry-runtime",
+    "job_conclusion": "failure",
+    "number": 6,
+    "name": "Prepare locked wheels before offline installed acceptance",
+    "conclusion": "success",
+    "exit_code": 0,
+    "exit_code_basis": "Actions success inference"
+  },
+  {
+    "run": 39799299209,
+    "job": "registry-runtime",
+    "job_conclusion": "failure",
+    "number": 7,
+    "name": "Verify runtime and focused tests without overrides",
+    "conclusion": "failure",
+    "exit_code": 1,
+    "exit_code_basis": "explicit log"
+  },
+  {
+    "run": 39799299209,
+    "job": "registry-runtime",
+    "job_conclusion": "failure",
+    "number": 8,
+    "name": "I4 I5 bounded and broad offline regression evidence",
+    "conclusion": "failure",
+    "exit_code": 1,
+    "exit_code_basis": "explicit log"
+  },
+  {
+    "run": 39799299209,
+    "job": "registry-runtime",
+    "job_conclusion": "failure",
+    "number": 9,
+    "name": "Compare all 79 inherited non-successes",
+    "conclusion": "success",
+    "exit_code": 0,
+    "exit_code_basis": "Actions success inference"
+  },
+  {
+    "run": 39799299209,
+    "job": "registry-runtime",
+    "job_conclusion": "failure",
+    "number": 10,
+    "name": "Installed I2 I3 I4 I5 on both distribution artifacts offline",
+    "conclusion": "failure",
+    "exit_code": 1,
+    "exit_code_basis": "explicit log"
+  },
+  {
+    "run": 39799299209,
+    "job": "registry-runtime",
+    "job_conclusion": "failure",
+    "number": 11,
+    "name": "Inventory offline and unexecuted coverage",
+    "conclusion": "success",
+    "exit_code": 0,
+    "exit_code_basis": "Actions success inference"
+  },
+  {
+    "run": 39799299209,
+    "job": "registry-runtime",
+    "job_conclusion": "failure",
+    "number": 12,
+    "name": "Verify wheel and sdist-derived wheel outside checkout",
+    "conclusion": "failure",
+    "exit_code": 1,
+    "exit_code_basis": "explicit log"
+  },
+  {
+    "run": 39799299209,
+    "job": "registry-runtime",
+    "job_conclusion": "failure",
+    "number": 13,
+    "name": "Check isolated module ownership and baseline evidence",
+    "conclusion": "success",
+    "exit_code": 0,
+    "exit_code_basis": "Actions success inference"
+  },
+  {
+    "run": 39799299209,
+    "job": "registry-runtime",
+    "job_conclusion": "failure",
+    "number": 14,
+    "name": "Reconcile Access acceptance ledger and exact test nodes",
+    "conclusion": "failure",
+    "exit_code": 1,
+    "exit_code_basis": "explicit log"
+  },
+  {
+    "run": 39799299209,
+    "job": "registry-runtime",
+    "job_conclusion": "failure",
+    "number": 15,
+    "name": "Build allowlisted MkDocs sources with placeholder diagrams, no deployment",
+    "conclusion": "success",
+    "exit_code": 0,
+    "exit_code_basis": "Actions success inference"
+  },
+  {
+    "run": 39799299209,
+    "job": "registry-runtime",
+    "job_conclusion": "failure",
+    "number": 16,
+    "name": "Check formatting of the exact committed files",
+    "conclusion": "success",
+    "exit_code": 0,
+    "exit_code_basis": "Actions success inference"
+  },
+  {
+    "run": 39799299209,
+    "job": "registry-runtime",
+    "job_conclusion": "failure",
+    "number": 17,
+    "name": "Save exact source and locked formatter for offline reproduction",
+    "conclusion": "success",
+    "exit_code": 0,
+    "exit_code_basis": "Actions success inference"
+  },
+  {
+    "run": 39799299209,
+    "job": "registry-runtime",
+    "job_conclusion": "failure",
+    "number": 18,
+    "name": "Audit final dependency runtime identity",
+    "conclusion": "success",
+    "exit_code": 0,
+    "exit_code_basis": "Actions success inference"
+  },
+  {
+    "run": 39799299209,
+    "job": "registry-runtime",
+    "job_conclusion": "failure",
+    "number": 19,
+    "name": "Emit indexed verification receipts to job log",
+    "conclusion": "success",
+    "exit_code": 0,
+    "exit_code_basis": "Actions success inference"
+  },
+  {
+    "run": 39799299209,
+    "job": "registry-runtime",
+    "job_conclusion": "failure",
+    "number": 20,
+    "name": "Save focused verification evidence",
+    "conclusion": "success",
+    "exit_code": null,
+    "exit_code_basis": "not exposed / no process"
+  },
+  {
+    "run": 39799299209,
+    "job": "registry-runtime",
+    "job_conclusion": "failure",
+    "number": 39,
+    "name": "Post Run astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7",
+    "conclusion": "skipped",
+    "exit_code": null,
+    "exit_code_basis": "not exposed / no process"
+  },
+  {
+    "run": 39799299209,
+    "job": "registry-runtime",
+    "job_conclusion": "failure",
+    "number": 40,
+    "name": "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+    "conclusion": "success",
+    "exit_code": null,
+    "exit_code_basis": "not exposed / no process"
+  },
+  {
+    "run": 39799299209,
+    "job": "registry-runtime",
+    "job_conclusion": "failure",
+    "number": 41,
+    "name": "Complete job",
+    "conclusion": "success",
+    "exit_code": null,
+    "exit_code_basis": "not exposed / no process"
+  },
+  {
+    "run": 39799299296,
+    "job": "offline",
+    "job_conclusion": "success",
+    "number": 1,
+    "name": "Set up job",
+    "conclusion": "success",
+    "exit_code": null,
+    "exit_code_basis": "not exposed / no process"
+  },
+  {
+    "run": 39799299296,
+    "job": "offline",
+    "job_conclusion": "success",
+    "number": 2,
+    "name": "Run actions/checkout@v7",
+    "conclusion": "success",
+    "exit_code": null,
+    "exit_code_basis": "not exposed / no process"
+  },
+  {
+    "run": 39799299296,
+    "job": "offline",
+    "job_conclusion": "success",
+    "number": 3,
+    "name": "Run ./.github/actions/product-python",
+    "conclusion": "success",
+    "exit_code": null,
+    "exit_code_basis": "not exposed / no process"
+  },
+  {
+    "run": 39799299296,
+    "job": "offline",
+    "job_conclusion": "success",
+    "number": 4,
+    "name": "Run astral-sh/setup-uv@v10.2.0",
+    "conclusion": "success",
+    "exit_code": null,
+    "exit_code_basis": "not exposed / no process"
+  },
+  {
+    "run": 39799299296,
+    "job": "offline",
+    "job_conclusion": "success",
+    "number": 5,
+    "name": "Plan checks from changed files",
+    "conclusion": "success",
+    "exit_code": 0,
+    "exit_code_basis": "Actions success inference"
+  },
+  {
+    "run": 39799299296,
+    "job": "offline",
+    "job_conclusion": "success",
+    "number": 6,
+    "name": "Validate prose",
+    "conclusion": "success",
+    "exit_code": 0,
+    "exit_code_basis": "Actions success inference"
+  },
+  {
+    "run": 39799299296,
+    "job": "offline",
+    "job_conclusion": "success",
+    "number": 7,
+    "name": "Prepare dependencies (online preparation)",
+    "conclusion": "success",
+    "exit_code": 0,
+    "exit_code_basis": "Actions success inference"
+  },
+  {
+    "run": 39799299296,
+    "job": "offline",
+    "job_conclusion": "success",
+    "number": 8,
+    "name": "Confirm dependency environment identity",
+    "conclusion": "success",
+    "exit_code": 0,
+    "exit_code_basis": "Actions success inference"
+  },
+  {
+    "run": 39799299296,
+    "job": "offline",
+    "job_conclusion": "success",
+    "number": 9,
+    "name": "Prepare locked wheels (online preparation)",
+    "conclusion": "skipped",
+    "exit_code": null,
+    "exit_code_basis": "not exposed / no process"
+  },
+  {
+    "run": 39799299296,
+    "job": "offline",
+    "job_conclusion": "success",
+    "number": 10,
+    "name": "Ruff lint and formatting",
+    "conclusion": "success",
+    "exit_code": 0,
+    "exit_code_basis": "Actions success inference"
+  },
+  {
+    "run": 39799299296,
+    "job": "offline",
+    "job_conclusion": "success",
+    "number": 11,
+    "name": "Inspect SQLite capabilities and doctor",
+    "conclusion": "success",
+    "exit_code": 0,
+    "exit_code_basis": "Actions success inference"
+  },
+  {
+    "run": 39799299296,
+    "job": "offline",
+    "job_conclusion": "success",
+    "number": 12,
+    "name": "Verify composed schema and generated guards",
+    "conclusion": "success",
+    "exit_code": 0,
+    "exit_code_basis": "Actions success inference"
+  },
+  {
+    "run": 39799299296,
+    "job": "offline",
+    "job_conclusion": "success",
+    "number": 13,
+    "name": "Collect selected tests before execution",
+    "conclusion": "skipped",
+    "exit_code": null,
+    "exit_code_basis": "not exposed / no process"
+  },
+  {
+    "run": 39799299296,
+    "job": "offline",
+    "job_conclusion": "success",
+    "number": 14,
+    "name": "Current catalog3 checks (offline)",
+    "conclusion": "skipped",
+    "exit_code": null,
+    "exit_code_basis": "not exposed / no process"
+  },
+  {
+    "run": 39799299296,
+    "job": "offline",
+    "job_conclusion": "success",
+    "number": 15,
+    "name": "Installed wheel and sdist checks (offline, isolated parallel workers)",
+    "conclusion": "skipped",
+    "exit_code": null,
+    "exit_code_basis": "not exposed / no process"
+  },
+  {
+    "run": 39799299296,
+    "job": "offline",
+    "job_conclusion": "success",
+    "number": 16,
+    "name": "Reconcile selected checks and report unexecuted coverage",
+    "conclusion": "success",
+    "exit_code": 0,
+    "exit_code_basis": "Actions success inference"
+  },
+  {
+    "run": 39799299296,
+    "job": "offline",
+    "job_conclusion": "success",
+    "number": 17,
+    "name": "Emit bounded verification receipts to job log",
+    "conclusion": "success",
+    "exit_code": 0,
+    "exit_code_basis": "Actions success inference"
+  },
+  {
+    "run": 39799299296,
+    "job": "offline",
+    "job_conclusion": "success",
+    "number": 18,
+    "name": "Retain timing and selection evidence",
+    "conclusion": "success",
+    "exit_code": null,
+    "exit_code_basis": "not exposed / no process"
+  },
+  {
+    "run": 39799299296,
+    "job": "offline",
+    "job_conclusion": "success",
+    "number": 35,
+    "name": "Post Run astral-sh/setup-uv@v10.2.0",
+    "conclusion": "success",
+    "exit_code": null,
+    "exit_code_basis": "not exposed / no process"
+  },
+  {
+    "run": 39799299296,
+    "job": "offline",
+    "job_conclusion": "success",
+    "number": 36,
+    "name": "Post Run actions/checkout@v7",
+    "conclusion": "success",
+    "exit_code": null,
+    "exit_code_basis": "not exposed / no process"
+  },
+  {
+    "run": 39799299296,
+    "job": "offline",
+    "job_conclusion": "success",
+    "number": 37,
+    "name": "Complete job",
+    "conclusion": "success",
+    "exit_code": null,
+    "exit_code_basis": "not exposed / no process"
+  },
+  {
+    "run": 39799299296,
+    "job": "sqlite-policy",
+    "job_conclusion": "success",
+    "number": 1,
+    "name": "Set up job",
+    "conclusion": "success",
+    "exit_code": null,
+    "exit_code_basis": "not exposed / no process"
+  },
+  {
+    "run": 39799299296,
+    "job": "sqlite-policy",
+    "job_conclusion": "success",
+    "number": 2,
+    "name": "Run actions/checkout@v7",
+    "conclusion": "success",
+    "exit_code": null,
+    "exit_code_basis": "not exposed / no process"
+  },
+  {
+    "run": 39799299296,
+    "job": "sqlite-policy",
+    "job_conclusion": "success",
+    "number": 3,
+    "name": "Run actions/setup-python@v7",
+    "conclusion": "success",
+    "exit_code": null,
+    "exit_code_basis": "not exposed / no process"
+  },
+  {
+    "run": 39799299296,
+    "job": "sqlite-policy",
+    "job_conclusion": "success",
+    "number": 4,
+    "name": "Check current SQLite validation policy",
+    "conclusion": "success",
+    "exit_code": 0,
+    "exit_code_basis": "Actions success inference"
+  },
+  {
+    "run": 39799299296,
+    "job": "sqlite-policy",
+    "job_conclusion": "success",
+    "number": 5,
+    "name": "Test policy detector against prohibited and permitted configurations",
+    "conclusion": "success",
+    "exit_code": 0,
+    "exit_code_basis": "Actions success inference"
+  },
+  {
+    "run": 39799299296,
+    "job": "sqlite-policy",
+    "job_conclusion": "success",
+    "number": 6,
+    "name": "Test product Python integrity and runtime binding with stdlib only",
+    "conclusion": "success",
+    "exit_code": 0,
+    "exit_code_basis": "Actions success inference"
+  },
+  {
+    "run": 39799299296,
+    "job": "sqlite-policy",
+    "job_conclusion": "success",
+    "number": 11,
+    "name": "Post Run actions/setup-python@v7",
+    "conclusion": "success",
+    "exit_code": null,
+    "exit_code_basis": "not exposed / no process"
+  },
+  {
+    "run": 39799299296,
+    "job": "sqlite-policy",
+    "job_conclusion": "success",
+    "number": 12,
+    "name": "Post Run actions/checkout@v7",
+    "conclusion": "success",
+    "exit_code": null,
+    "exit_code_basis": "not exposed / no process"
+  },
+  {
+    "run": 39799299296,
+    "job": "sqlite-policy",
+    "job_conclusion": "success",
+    "number": 13,
+    "name": "Complete job",
+    "conclusion": "success",
+    "exit_code": null,
+    "exit_code_basis": "not exposed / no process"
+  }
+]

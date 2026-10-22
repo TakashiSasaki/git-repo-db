@@ -1,0 +1,169 @@
+{
+  "source_head": "f16e5b1713bde9a2f18263a25397c4b450fd5773",
+  "source_tree": "6bfa580baafa9f6a117b7a0b610c4e65cd031b86",
+  "base": "a022dd3efb9c8116cf9dc0abc13ab1d5bbc88e37",
+  "product_source_unchanged": true,
+  "prior_frozen_evidence_unchanged": true,
+  "runs": {
+    "access": {
+      "id": 39799299209,
+      "status": "completed",
+      "conclusion": "failure",
+      "head_sha": "f16e5b1713bde9a2f18263a25397c4b450fd5773",
+      "run_attempt": 1
+    },
+    "tests": {
+      "id": 39799299296,
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "f16e5b1713bde9a2f18263a25397c4b450fd5773",
+      "run_attempt": 1
+    }
+  },
+  "payload_sha256": "e38171c16b5e58cfa222f281ea87406645ae85876cc05aa9f34f055749a76176",
+  "outer_members": 150,
+  "inner_indices": {
+    "baseline/tests-receipts.zip": 22,
+    "hosted-f16e5b1/access-receipts.zip": 101,
+    "hosted-f16e5b1/tests-receipts.zip": 22
+  },
+  "fresh_log_receipts": {
+    "access": "511732209c4fda5c84a61b470ea4f56f271a6bbcb3c5e1842680dd0c6c1ff4b6",
+    "tests": "36eddda2b07aa7a70e1022849e3b02526ec8ffb5b1ddc8faf0c5d4437ba38add"
+  },
+  "original": {
+    "passed": 2696,
+    "failure": 59,
+    "error": 20
+  },
+  "broad": {
+    "passed": 3058,
+    "failure": 59,
+    "error": 20
+  },
+  "failure_comparison": {
+    "nodes": 79,
+    "added": 0,
+    "resolved": 0,
+    "phases_refusals_full_frames_identical": true,
+    "message_differences": 4,
+    "messages_equal_after_only_pytest_temp_venv_and_repr_truncation_normalization": true,
+    "groups": [
+      {
+        "phase": "call",
+        "refusal": "I2_IDENTIFICATION_WIRE_UNSUPPORTED",
+        "count": 14
+      },
+      {
+        "phase": "call",
+        "refusal": "I2_TRANSFER_UNSUPPORTED",
+        "count": 45
+      },
+      {
+        "phase": "setup",
+        "refusal": "I2_TRANSFER_UNSUPPORTED",
+        "count": 20
+      }
+    ]
+  },
+  "runtime": {
+    "python": "3.12.15",
+    "sqlite_version": "3.53.1",
+    "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+    "base_executable": "/home/runner/work/_temp/product-python/python/bin/python3.12",
+    "sqlite_module_origin": "built-in",
+    "sqlite_module_sha256": "0a97d28d3635c7dfd143de6d00b09c0cb382249c020b28ee33fb4002db1efb9c",
+    "product_safety_and_capabilities": "passed"
+  },
+  "runtime_receipts": 8,
+  "installed_files_match_source": true,
+  "distributions": {
+    "direct": {
+      "wheel": {
+        "sha256": "22809cb1f468d5c57f18e8aea66e218ca261134cf3307043cd988f1ff436f842",
+        "bytes": 762725
+      },
+      "i4": {
+        "passed": 217
+      },
+      "i5": {
+        "passed": 29
+      },
+      "steps": {
+        "direct-venv": 0,
+        "direct-install": 0,
+        "direct-runtime-binding": 0,
+        "direct-measure": 0,
+        "direct-i5": 0,
+        "direct-i4": 0,
+        "direct-i2": 0,
+        "direct-i3": 0,
+        "direct-access": 1
+      },
+      "installed_files": 153
+    },
+    "sdist": {
+      "wheel": {
+        "sha256": "22809cb1f468d5c57f18e8aea66e218ca261134cf3307043cd988f1ff436f842",
+        "bytes": 762725
+      },
+      "i4": {
+        "passed": 217
+      },
+      "i5": {
+        "passed": 29
+      },
+      "steps": {
+        "sdist-venv": 0,
+        "sdist-install": 0,
+        "sdist-runtime-binding": 0,
+        "sdist-measure": 0,
+        "sdist-i5": 0,
+        "sdist-i4": 0,
+        "sdist-i2": 0,
+        "sdist-i3": 0,
+        "sdist-access": 1
+      },
+      "installed_files": 153
+    }
+  },
+  "distribution_build_binding": {
+    "head": "b5f5026b07826b551cbd35ec39ac0ef3ca214a99",
+    "tree": "6bfa580baafa9f6a117b7a0b610c4e65cd031b86",
+    "archive_sha256": "0124848fed810e2329482ad8c95e7399d0d42da15fc3b40c769e4a809a674ee0",
+    "direct_wheel": {
+      "sha256": "22809cb1f468d5c57f18e8aea66e218ca261134cf3307043cd988f1ff436f842",
+      "bytes": 762725
+    },
+    "sdist": {
+      "sha256": "ad39dce879527cab459a6b23789c03f21190fab688a44e888de2c2bb05ab10df",
+      "bytes": 83939983
+    },
+    "sdist_wheel": {
+      "sha256": "22809cb1f468d5c57f18e8aea66e218ca261134cf3307043cd988f1ff436f842",
+      "bytes": 762725
+    }
+  },
+  "coverage": {
+    "ordinary": 5742,
+    "original_hosted_pytest": 2775,
+    "hosted_broad_pytest": 3137,
+    "local_final_tools": 289,
+    "hosted_policy_nodes": 35,
+    "overlap_local_tools_with_broad": 0,
+    "hosted_unique_executed": 3172,
+    "combined_unique_executed": 3426,
+    "hosted_unexecuted_ordinary": 2570,
+    "combined_unexecuted_ordinary": 2316,
+    "benchmark_unexecuted": 1,
+    "live_unexecuted": 1,
+    "full_release_acceptance": false,
+    "local_mutable_input_broad_trial_used_as_final_acceptance": false
+  },
+  "limits": [
+    "Existing hosted execution and installed environments audited from raw receipts; no product tests rerun by this audit.",
+    "New local stdlib 35-test run is tool-only and does not claim local product safety acceptance.",
+    "Four subprocess assertion messages have pytest temporary venv path and repr truncation differences; retained and normalized comparison passes.",
+    "Numeric exit codes for successful run steps inferred from Actions conclusion; action/job exit codes not exposed by REST."
+  ]
+}

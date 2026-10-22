@@ -1,0 +1,1 @@
+{"base":{"ref":"fix/sqlite-runtime-ci-20261022","sha":"a022dd3efb9c8116cf9dc0abc13ab1d5bbc88e37"},"head":{"ref":"fix/adr0032-host-runtime-20261022","sha":"f16e5b1713bde9a2f18263a25397c4b450fd5773"},"merged":false,"number":133,"state":"open"}

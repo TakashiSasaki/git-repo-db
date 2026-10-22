@@ -1,0 +1,42 @@
+{
+  "source_head": "f16e5b1713bde9a2f18263a25397c4b450fd5773",
+  "source_tree": "6bfa580baafa9f6a117b7a0b610c4e65cd031b86",
+  "outer_members": 150,
+  "original": {
+    "passed": 2696,
+    "failure": 59,
+    "error": 20
+  },
+  "broad": {
+    "passed": 3058,
+    "failure": 59,
+    "error": 20
+  },
+  "failure_comparison": {
+    "nodes": 79,
+    "added": 0,
+    "resolved": 0,
+    "phases_refusals_full_frames_identical": true,
+    "message_differences": 4,
+    "messages_equal_after_only_pytest_temp_venv_and_repr_truncation_normalization": true,
+    "groups": [
+      {
+        "phase": "call",
+        "refusal": "I2_IDENTIFICATION_WIRE_UNSUPPORTED",
+        "count": 14
+      },
+      {
+        "phase": "call",
+        "refusal": "I2_TRANSFER_UNSUPPORTED",
+        "count": 45
+      },
+      {
+        "phase": "setup",
+        "refusal": "I2_TRANSFER_UNSUPPORTED",
+        "count": 20
+      }
+    ]
+  },
+  "runtime_receipts": 8,
+  "installed_files_match_source": true
+}
