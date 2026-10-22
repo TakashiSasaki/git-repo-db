@@ -1,0 +1,421 @@
+{
+  "source": {
+    "feature_head": "f16e5b1713bde9a2f18263a25397c4b450fd5773",
+    "feature_tree": "6bfa580baafa9f6a117b7a0b610c4e65cd031b86",
+    "merge_head": "b5f5026b07826b551cbd35ec39ac0ef3ca214a99",
+    "merge_tree": "6bfa580baafa9f6a117b7a0b610c4e65cd031b86",
+    "merge_parents": "a022dd3efb9c8116cf9dc0abc13ab1d5bbc88e37 f16e5b1713bde9a2f18263a25397c4b450fd5773",
+    "base": "a022dd3efb9c8116cf9dc0abc13ab1d5bbc88e37"
+  },
+  "workflow_runs": {
+    "head_sha": "f16e5b1713bde9a2f18263a25397c4b450fd5773",
+    "workflow_runs": [
+      {
+        "id": 39799299296,
+        "name": "tests",
+        "status": "completed",
+        "conclusion": "success",
+        "run_number": 434,
+        "jobs_url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/actions/runs/39799299296/jobs",
+        "logs_url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/actions/runs/39799299296/logs",
+        "workflow_id": 375283099
+      },
+      {
+        "id": 39799299209,
+        "name": "Access registry focused verification",
+        "status": "completed",
+        "conclusion": "failure",
+        "run_number": 47,
+        "jobs_url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/actions/runs/39799299209/jobs",
+        "logs_url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/actions/runs/39799299209/logs",
+        "workflow_id": 387624521
+      }
+    ]
+  },
+  "runtime": {
+    "python": "3.12.15",
+    "executable": "/home/runner/work/_temp/product-python/python/bin/python",
+    "base_executable": "/home/runner/work/_temp/product-python/python/bin/python3.12",
+    "sqlite_version": "3.53.1",
+    "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+    "sqlite_module": "/home/runner/work/_temp/product-python/python/bin/python3.12",
+    "sqlite_module_origin": "built-in",
+    "sqlite_module_sha256": "0a97d28d3635c7dfd143de6d00b09c0cb382249c020b28ee33fb4002db1efb9c",
+    "compile_options": [
+      [
+        "ATOMIC_INTRINSICS=1"
+      ],
+      [
+        "COMPILER=clang-23.1.3"
+      ],
+      [
+        "DEFAULT_AUTOVACUUM"
+      ],
+      [
+        "DEFAULT_CACHE_SIZE=-2000"
+      ],
+      [
+        "DEFAULT_FILE_FORMAT=4"
+      ],
+      [
+        "DEFAULT_JOURNAL_SIZE_LIMIT=-1"
+      ],
+      [
+        "DEFAULT_MMAP_SIZE=0"
+      ],
+      [
+        "DEFAULT_PAGE_SIZE=4096"
+      ],
+      [
+        "DEFAULT_PCACHE_INITSZ=20"
+      ],
+      [
+        "DEFAULT_RECURSIVE_TRIGGERS"
+      ],
+      [
+        "DEFAULT_SECTOR_SIZE=4096"
+      ],
+      [
+        "DEFAULT_SYNCHRONOUS=2"
+      ],
+      [
+        "DEFAULT_WAL_AUTOCHECKPOINT=1000"
+      ],
+      [
+        "DEFAULT_WAL_SYNCHRONOUS=2"
+      ],
+      [
+        "DEFAULT_WORKER_THREADS=0"
+      ],
+      [
+        "DIRECT_OVERFLOW_READ"
+      ],
+      [
+        "ENABLE_DBSTAT_VTAB"
+      ],
+      [
+        "ENABLE_FTS3"
+      ],
+      [
+        "ENABLE_FTS3_PARENTHESIS"
+      ],
+      [
+        "ENABLE_FTS4"
+      ],
+      [
+        "ENABLE_FTS5"
+      ],
+      [
+        "ENABLE_GEOPOLY"
+      ],
+      [
+        "ENABLE_MATH_FUNCTIONS"
+      ],
+      [
+        "ENABLE_PERCENTILE"
+      ],
+      [
+        "ENABLE_RTREE"
+      ],
+      [
+        "MALLOC_SOFT_LIMIT=1024"
+      ],
+      [
+        "MAX_ATTACHED=10"
+      ],
+      [
+        "MAX_COLUMN=2000"
+      ],
+      [
+        "MAX_COMPOUND_SELECT=500"
+      ],
+      [
+        "MAX_DEFAULT_PAGE_SIZE=8192"
+      ],
+      [
+        "MAX_EXPR_DEPTH=1000"
+      ],
+      [
+        "MAX_FUNCTION_ARG=1000"
+      ],
+      [
+        "MAX_LENGTH=1000000000"
+      ],
+      [
+        "MAX_LIKE_PATTERN_LENGTH=50000"
+      ],
+      [
+        "MAX_MMAP_SIZE=0x7fff0000"
+      ],
+      [
+        "MAX_PAGE_COUNT=0xfffffffe"
+      ],
+      [
+        "MAX_PAGE_SIZE=65536"
+      ],
+      [
+        "MAX_SQL_LENGTH=1000000000"
+      ],
+      [
+        "MAX_TRIGGER_DEPTH=1000"
+      ],
+      [
+        "MAX_VARIABLE_NUMBER=32766"
+      ],
+      [
+        "MAX_VDBE_OP=250000000"
+      ],
+      [
+        "MAX_WORKER_THREADS=8"
+      ],
+      [
+        "MUTEX_PTHREADS"
+      ],
+      [
+        "SYSTEM_MALLOC"
+      ],
+      [
+        "TEMP_STORE=1"
+      ],
+      [
+        "THREADSAFE=1"
+      ]
+    ],
+    "loader_environment": {
+      "LD_LIBRARY_PATH": null,
+      "LD_PRELOAD": null,
+      "DYLD_LIBRARY_PATH": null
+    },
+    "sqlite_mappings": [],
+    "product_safety_and_capabilities": "passed",
+    "product_module": "/home/runner/work/git-repo-db/git-repo-db/src/repo_catalog/adapters/sqlite/access_schema.py"
+  },
+  "product_safety_and_capabilities": "passed; original Access and P1 factories, STRICT/JSON/FTS5/WAL",
+  "sqlite_component_download_build_install_swap": false,
+  "product_source_changed": false,
+  "policy": {
+    "violations": 0,
+    "detector_tests": 31,
+    "runtime_tests": 4,
+    "outcome": "passed",
+    "dependencies_required": false
+  },
+  "source_original_pytest": {
+    "total": 2775,
+    "passed": 2696,
+    "failed": 59,
+    "setup_errors": 20,
+    "skipped": 0,
+    "exit_code": 1
+  },
+  "source_broad_pytest": {
+    "total": 3137,
+    "passed": 3058,
+    "failed": 59,
+    "setup_errors": 20,
+    "skipped": 0,
+    "exit_code": 1,
+    "inputs_unchanged": true
+  },
+  "bounded": {
+    "I4": {
+      "passed": 217,
+      "exit_code": 0
+    },
+    "I5": {
+      "passed": 29,
+      "exit_code": 0
+    }
+  },
+  "distributions": {
+    "direct_wheel": {
+      "runtime_binding": "passed",
+      "I2": "passed",
+      "I3": "passed",
+      "I4_passed": 217,
+      "I5_passed": 29,
+      "original_Access_smoke": "inherited I2_TRANSFER_UNSUPPORTED; exit 1"
+    },
+    "sdist_derived_wheel": {
+      "runtime_binding": "passed",
+      "I2": "passed",
+      "I3": "passed",
+      "I4_passed": 217,
+      "I5_passed": 29,
+      "original_Access_smoke": "inherited I2_TRANSFER_UNSUPPORTED; exit 1"
+    }
+  },
+  "inherited_non_success_comparison": {
+    "baseline_non_successes": 79,
+    "current_non_successes": 79,
+    "same_nodes": true,
+    "additional": 0,
+    "resolved": 0
+  },
+  "pr132_full_frame_comparison": {
+    "baseline_non_successes": 79,
+    "current_non_successes": 79,
+    "same_nodes": true,
+    "resolved": 0,
+    "additional": 0,
+    "additional_nodes": [],
+    "baseline_archive": "docs/implementation/evidence/sqlite-validation-policy-20261022/payload.zip",
+    "baseline_sha256": "dfc126e31477e295e594f5c3ba8dd297ecb1c7fb6ca6304e58034cc80b9b1222",
+    "baseline_entry": "run-3594f47/i5/regressions.xml",
+    "current_sha256": "d322424e9b3d50f6ffe24b2eeda651a01fa4c07c6b1243df553098760a2047ed",
+    "all_full_frame_records_unchanged": true,
+    "full_frame_record_differences": 0
+  },
+  "new_failure_fixed": {
+    "commit": "d0b1192b2c51adaa4158551becb8567acb85176c",
+    "run": 39798601683,
+    "failure": "source-ID negative unit fixture inherited bootstrap loader state",
+    "fix": "f16e5b1 isolates mocked loader fields; actual runtime rejection unchanged",
+    "final_hosted_runtime_unit_tests_passed": 4
+  },
+  "local_final_tools": {
+    "passed": 289,
+    "subtests_passed": 57,
+    "exit_code": 0
+  },
+  "local_mutable_input_broad_trial": {
+    "head_at_start": "c83a783c9b03ca7c229f4421096754cbce0ef844",
+    "inputs_unchanged": false,
+    "used_as_final_acceptance": false
+  },
+  "coverage": {
+    "ordinary": 5742,
+    "original_hosted_pytest": 2775,
+    "hosted_broad_pytest": 3137,
+    "local_final_tools": 289,
+    "hosted_policy_nodes": 35,
+    "overlap_local_tools_with_broad": 0,
+    "hosted_unique_executed": 3172,
+    "combined_unique_executed": 3426,
+    "hosted_unexecuted_ordinary": 2570,
+    "combined_unexecuted_ordinary": 2316,
+    "benchmark_unexecuted": 1,
+    "live_unexecuted": 1,
+    "full_release_acceptance": false,
+    "local_mutable_input_broad_trial_used_as_final_acceptance": false
+  },
+  "receipt_verification": {
+    "Access": {
+      "zip_bytes": 1632586,
+      "sha256": "511732209c4fda5c84a61b470ea4f56f271a6bbcb3c5e1842680dd0c6c1ff4b6",
+      "members": 101,
+      "binding": {
+        "head": "b5f5026b07826b551cbd35ec39ac0ef3ca214a99",
+        "run_attempt": "1",
+        "run_id": "39799299209",
+        "tree": "6bfa580baafa9f6a117b7a0b610c4e65cd031b86"
+      }
+    },
+    "tests": {
+      "zip_bytes": 70747,
+      "sha256": "36eddda2b07aa7a70e1022849e3b02526ec8ffb5b1ddc8faf0c5d4437ba38add",
+      "members": 22,
+      "binding": {
+        "feature_sha": "f16e5b1713bde9a2f18263a25397c4b450fd5773",
+        "head": "b5f5026b07826b551cbd35ec39ac0ef3ca214a99",
+        "run_attempt": "1",
+        "run_id": "39799299296",
+        "tree": "6bfa580baafa9f6a117b7a0b610c4e65cd031b86"
+      }
+    }
+  },
+  "independent_review": {
+    "reviewer": "independent non-author agent /root/independent_review",
+    "reviewed_source_head": "f16e5b1713bde9a2f18263a25397c4b450fd5773",
+    "reviewed_source_tree": "6bfa580baafa9f6a117b7a0b610c4e65cd031b86",
+    "stack_base": "a022dd3efb9c8116cf9dc0abc13ab1d5bbc88e37",
+    "outcome": "PASS: no unresolved material code findings; inherited functional failures remain visible; no merge authorization",
+    "code_review": {
+      "policy": "Whole prebuilt CPython distribution is selected by URL/SHA256. No separate SQLite download/build/install/swap, exact SQLite release gate, matrix, guard relaxation, skip/xfail or assertion deletion. Product src is byte-identical to PR132.",
+      "runtime": "Explicit absolute interpreter controls both uv sync operations, no implicit downloads, subprocesses and isolated venvs. Eight hosted runtime receipts agree on actual base executable, built-in module/binary digest, version/source/options/mappings; real factories and capability probes pass.",
+      "validation_scope": "All original targets and audits retained; later lanes execute after inherited failures; lightweight policy job independent of dependency preparation. Added direct/sdist runtime probes preserve installed imports and original outside-checkout assertions.",
+      "docs_and_skill": "Hosted runtime guidance and existing CI skill describe the verified selection, built-in identity and failure/omission distinctions without changing ADR0032."
+    },
+    "independent_executions": [
+      "35 focused tests +57subtests PASS at implementation stages; policy0violations",
+      "Four runtime tests PASS under mocked inherited bootstrap loader configuration after fixture-only correction",
+      "Separate isolated venv and offline installed-wheel -I runtime-reference probe PASS using installed site-packages product factories",
+      "Emitter disposable positive inclusion/exclusion/index/binding verification PASS; >4MiB negative refuses before markers",
+      "Final hosted raw-log receipt size/hash/END and all101 indexed Access members independently verified; frozen input hashes and exact JUnit/journal/source node sets recomputed",
+      "All79 inherited failures independently compared to historical I4 paths/functions and PR132 full frame records including line numbers"
+    ],
+    "hosted_results": {
+      "tests_run": 39799299296,
+      "tests_conclusion": "success",
+      "policy": "0violations;31detector+4runtime stdlib tests PASS",
+      "offline": "development_checks_passed;full_acceptance=false;pytest0 by development selection",
+      "access_run": 39799299209,
+      "access_conclusion": "failure",
+      "original_source": {
+        "passed": 2696,
+        "failed": 59,
+        "errors": 20,
+        "skipped": 0
+      },
+      "broad_source": {
+        "passed": 3058,
+        "failed": 59,
+        "errors": 20,
+        "skipped": 0,
+        "inputs_unchanged": true
+      },
+      "bounded_source": {
+        "I5": 29,
+        "I4": 217,
+        "all_passed": true
+      },
+      "distributions": "Direct and sdist-derived wheels each: runtime binding and installed file hashes PASS; I2/I3 probes PASS; I5 29 and I4 217 PASS. Both unchanged Access smokes retain I2_TRANSFER_UNSUPPORTED and exit1.",
+      "inheritance": "79 identical nodes/phases/refusals;0added0resolved. Historical I4 frame paths/functions agree;27 historical line shifts were already in PR132. Full frames including lines exactly match PR132 payload run-3594f47/i5/regressions.xml."
+    },
+    "coverage": {
+      "ordinary": 5742,
+      "hosted_unique": 3172,
+      "combined_unique": 3426,
+      "hosted_unexecuted": 2570,
+      "combined_unexecuted": 2316,
+      "local289_exact_junit_nodes_starts_and_successful_finish": "passed",
+      "local_tools_overlap_broad": 0,
+      "local_tools_strict_phase_reconciler": {
+        "consistent": false,
+        "reason": "57 extra passed call phase reports in13 unittest subTest detector cases; unchanged journal has no subtest discriminator",
+        "all_other_consistency_checks": true
+      }
+    },
+    "fixed_new_failure": "The d0 bootstrap-policy runtime unittest inherited setup-python loader state and failed before its intended source-drift condition. f16 changes only that synthetic fixture; actual guard and independent loader-refusal test unchanged. Final host4tests PASS.",
+    "limits": [
+      "This is environment/CI development qualification, not full release acceptance or I6+ implementation.",
+      "Local mutable-input broad trial is preserved but excluded from final frozen acceptance.",
+      "Local289 tool JUnit/start/finish evidence passes; strict phase helper rejects57 duplicate passed call reports from13 unittest-subTest cases. No strict per-phase PASS is claimed for this local cohort; hosted3137/29/217 reconciliation passes.",
+      "Evidence publication uses a separate evidence-only descendant branch/commit; it is not a new source execution. Final archive publication will be checked separately."
+    ],
+    "evidence": {
+      "bootstrap-env-unit.log": "caafadb31339745dab10b6a9fc5ea47d56f6c71d63833009c3118a4d8f50b87c",
+      "coverage-review.json": "209b991da950e6b106e9b608118d1a95a6275c09fd4ae2f359cf5722891789c3",
+      "emitter-tests.json": "97180acb5953a111fa731d9604bf2180e5040814efa362243827a40c9c50886b",
+      "final-unit.log": "a593e8ddc4a3e21524280025b9c6157a3e4245380b39870d1c494c10d3407b86",
+      "final-unit.xml": "97f5707eb58914703f0e029479ddfa1cb01dc9b8a5fe59158ab3b088c862d773",
+      "hosted-access-review.json": "3035d4b7abad4f7fd7c25281c40cef7af7b6f02f1199358dad492bef39a6bc9b",
+      "hosted-offline-review.json": "0bc998d84d8b5033f93bfad89387f62555eb0de1e052f445c9532fb76bf1a644",
+      "hosted-policy-review.json": "b0d24b0a578eb6c9b515c323c693992dc8136ace95ab580a37542f13e9bddd31",
+      "implementation-review.json": "7969c041c96dbc02494804a4dddd4646419f94c49d01e9b3a212dc3c98dfd391",
+      "initial-review.json": "e6b11a69c2c9a2029745e23ab04c913ac062c0fbfca071efb4dc57b6e3cd0170",
+      "installed-runtime.json": "c169d2b8ab35a52cec8a52b080b80d7aed2646741e08e3b38d83707d87f057e3",
+      "installed-runtime.log": "b31f53936b8800e81f8a9e4369c05b93be0ebecef8d846152b1a916d5fd3e6dd",
+      "isolated-runtime.json": "5a5f1749440f789719a2d2510578aa2e61dae9d2a3fd139fc13a3d0234ed4ff5",
+      "isolated-runtime.log": "b31f53936b8800e81f8a9e4369c05b93be0ebecef8d846152b1a916d5fd3e6dd",
+      "parent-runtime.json": "d2efc21df2e979c7cdabf7bd52cebfc47d242be89ad05dbb903aa7740ea0384f",
+      "parent-runtime.log": "5695f232ab39a8dc3fbd0ad25b99b143c4d5b514452f6cf9a59d22c0e0d30dd3",
+      "unit.log": "a593e8ddc4a3e21524280025b9c6157a3e4245380b39870d1c494c10d3407b86",
+      "unit.xml": "4d422a5125621090f40ff6bd43ba7c5cb99f0033ee869a38bac13ab6f5a20b9f",
+      "verify_final_hosted.py": "1edeb8e50a230c7d91e30c2c1e17491dbba3154bb4e63cb09d5adf9cd70fa0b1",
+      "wheel-build.log": "47f5d13a26044b2dbd7148e19a7fe8498f40e7bc9aa3ec64083e8c8112a8e8c4",
+      "wheel-install.log": "45a6603e1b99d61f16eb1b4e6fd12618730ccd7115ef9b45bf5ba3496f1b4228"
+    }
+  },
+  "publication": "Separate evidence branch descended from final source HEAD; publication is not another test execution. PR #133 source HEAD remains f16e5b1. No merge."
+}

@@ -1,0 +1,93 @@
+{
+  "reviewer": "independent non-author agent /root/independent_review",
+  "reviewed_source_head": "f16e5b1713bde9a2f18263a25397c4b450fd5773",
+  "reviewed_source_tree": "6bfa580baafa9f6a117b7a0b610c4e65cd031b86",
+  "stack_base": "a022dd3efb9c8116cf9dc0abc13ab1d5bbc88e37",
+  "outcome": "PASS: no unresolved material code findings; inherited functional failures remain visible; no merge authorization",
+  "code_review": {
+    "policy": "Whole prebuilt CPython distribution is selected by URL/SHA256. No separate SQLite download/build/install/swap, exact SQLite release gate, matrix, guard relaxation, skip/xfail or assertion deletion. Product src is byte-identical to PR132.",
+    "runtime": "Explicit absolute interpreter controls both uv sync operations, no implicit downloads, subprocesses and isolated venvs. Eight hosted runtime receipts agree on actual base executable, built-in module/binary digest, version/source/options/mappings; real factories and capability probes pass.",
+    "validation_scope": "All original targets and audits retained; later lanes execute after inherited failures; lightweight policy job independent of dependency preparation. Added direct/sdist runtime probes preserve installed imports and original outside-checkout assertions.",
+    "docs_and_skill": "Hosted runtime guidance and existing CI skill describe the verified selection, built-in identity and failure/omission distinctions without changing ADR0032."
+  },
+  "independent_executions": [
+    "35 focused tests +57subtests PASS at implementation stages; policy0violations",
+    "Four runtime tests PASS under mocked inherited bootstrap loader configuration after fixture-only correction",
+    "Separate isolated venv and offline installed-wheel -I runtime-reference probe PASS using installed site-packages product factories",
+    "Emitter disposable positive inclusion/exclusion/index/binding verification PASS; >4MiB negative refuses before markers",
+    "Final hosted raw-log receipt size/hash/END and all101 indexed Access members independently verified; frozen input hashes and exact JUnit/journal/source node sets recomputed",
+    "All79 inherited failures independently compared to historical I4 paths/functions and PR132 full frame records including line numbers"
+  ],
+  "hosted_results": {
+    "tests_run": 39799299296,
+    "tests_conclusion": "success",
+    "policy": "0violations;31detector+4runtime stdlib tests PASS",
+    "offline": "development_checks_passed;full_acceptance=false;pytest0 by development selection",
+    "access_run": 39799299209,
+    "access_conclusion": "failure",
+    "original_source": {
+      "passed": 2696,
+      "failed": 59,
+      "errors": 20,
+      "skipped": 0
+    },
+    "broad_source": {
+      "passed": 3058,
+      "failed": 59,
+      "errors": 20,
+      "skipped": 0,
+      "inputs_unchanged": true
+    },
+    "bounded_source": {
+      "I5": 29,
+      "I4": 217,
+      "all_passed": true
+    },
+    "distributions": "Direct and sdist-derived wheels each: runtime binding and installed file hashes PASS; I2/I3 probes PASS; I5 29 and I4 217 PASS. Both unchanged Access smokes retain I2_TRANSFER_UNSUPPORTED and exit1.",
+    "inheritance": "79 identical nodes/phases/refusals;0added0resolved. Historical I4 frame paths/functions agree;27 historical line shifts were already in PR132. Full frames including lines exactly match PR132 payload run-3594f47/i5/regressions.xml."
+  },
+  "coverage": {
+    "ordinary": 5742,
+    "hosted_unique": 3172,
+    "combined_unique": 3426,
+    "hosted_unexecuted": 2570,
+    "combined_unexecuted": 2316,
+    "local289_exact_junit_nodes_starts_and_successful_finish": "passed",
+    "local_tools_overlap_broad": 0,
+    "local_tools_strict_phase_reconciler": {
+      "consistent": false,
+      "reason": "57 extra passed call phase reports in13 unittest subTest detector cases; unchanged journal has no subtest discriminator",
+      "all_other_consistency_checks": true
+    }
+  },
+  "fixed_new_failure": "The d0 bootstrap-policy runtime unittest inherited setup-python loader state and failed before its intended source-drift condition. f16 changes only that synthetic fixture; actual guard and independent loader-refusal test unchanged. Final host4tests PASS.",
+  "limits": [
+    "This is environment/CI development qualification, not full release acceptance or I6+ implementation.",
+    "Local mutable-input broad trial is preserved but excluded from final frozen acceptance.",
+    "Local289 tool JUnit/start/finish evidence passes; strict phase helper rejects57 duplicate passed call reports from13 unittest-subTest cases. No strict per-phase PASS is claimed for this local cohort; hosted3137/29/217 reconciliation passes.",
+    "Evidence publication uses a separate evidence-only descendant branch/commit; it is not a new source execution. Final archive publication will be checked separately."
+  ],
+  "evidence": {
+    "bootstrap-env-unit.log": "caafadb31339745dab10b6a9fc5ea47d56f6c71d63833009c3118a4d8f50b87c",
+    "coverage-review.json": "209b991da950e6b106e9b608118d1a95a6275c09fd4ae2f359cf5722891789c3",
+    "emitter-tests.json": "97180acb5953a111fa731d9604bf2180e5040814efa362243827a40c9c50886b",
+    "final-unit.log": "a593e8ddc4a3e21524280025b9c6157a3e4245380b39870d1c494c10d3407b86",
+    "final-unit.xml": "97f5707eb58914703f0e029479ddfa1cb01dc9b8a5fe59158ab3b088c862d773",
+    "hosted-access-review.json": "3035d4b7abad4f7fd7c25281c40cef7af7b6f02f1199358dad492bef39a6bc9b",
+    "hosted-offline-review.json": "0bc998d84d8b5033f93bfad89387f62555eb0de1e052f445c9532fb76bf1a644",
+    "hosted-policy-review.json": "b0d24b0a578eb6c9b515c323c693992dc8136ace95ab580a37542f13e9bddd31",
+    "implementation-review.json": "7969c041c96dbc02494804a4dddd4646419f94c49d01e9b3a212dc3c98dfd391",
+    "initial-review.json": "e6b11a69c2c9a2029745e23ab04c913ac062c0fbfca071efb4dc57b6e3cd0170",
+    "installed-runtime.json": "c169d2b8ab35a52cec8a52b080b80d7aed2646741e08e3b38d83707d87f057e3",
+    "installed-runtime.log": "b31f53936b8800e81f8a9e4369c05b93be0ebecef8d846152b1a916d5fd3e6dd",
+    "isolated-runtime.json": "5a5f1749440f789719a2d2510578aa2e61dae9d2a3fd139fc13a3d0234ed4ff5",
+    "isolated-runtime.log": "b31f53936b8800e81f8a9e4369c05b93be0ebecef8d846152b1a916d5fd3e6dd",
+    "parent-runtime.json": "d2efc21df2e979c7cdabf7bd52cebfc47d242be89ad05dbb903aa7740ea0384f",
+    "parent-runtime.log": "5695f232ab39a8dc3fbd0ad25b99b143c4d5b514452f6cf9a59d22c0e0d30dd3",
+    "unit.log": "a593e8ddc4a3e21524280025b9c6157a3e4245380b39870d1c494c10d3407b86",
+    "unit.xml": "4d422a5125621090f40ff6bd43ba7c5cb99f0033ee869a38bac13ab6f5a20b9f",
+    "verify_final_hosted.py": "1edeb8e50a230c7d91e30c2c1e17491dbba3154bb4e63cb09d5adf9cd70fa0b1",
+    "wheel-build.log": "47f5d13a26044b2dbd7148e19a7fe8498f40e7bc9aa3ec64083e8c8112a8e8c4",
+    "wheel-install.log": "45a6603e1b99d61f16eb1b4e6fd12618730ccd7115ef9b45bf5ba3496f1b4228"
+  }
+}
