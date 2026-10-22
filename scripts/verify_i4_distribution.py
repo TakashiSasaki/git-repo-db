@@ -1,0 +1,248 @@
+"""Build frozen direct/sdist wheels and execute I4 outside checkout on both SQLite libraries.
+
+The installed SQL lane explicitly drops only the two I2 fences in disposable DBs.
+Unchanged Access smoke failures remain failures; the orchestrator returns nonzero.
+"""
+
+from __future__ import annotations
+
+import argparse
+import ast
+import hashlib
+import json
+import os
+import shutil
+import subprocess
+import sys
+import tarfile
+import zipfile
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def write(path, value):
+    path.write_text(json.dumps(value, indent=2) + "\n")
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--minimum-library", type=Path, required=True)
+    parser.add_argument("--newer-library", type=Path, required=True)
+    args = parser.parse_args()
+    out = args.output.resolve()
+    out.mkdir(parents=True, exist_ok=False)
+    records = []
+
+    def run(name, argv, cwd=out, env=None):
+        with (out / (name + ".log")).open("w") as stream:
+            proc = subprocess.run(
+                list(map(str, argv)),
+                cwd=cwd,
+                env=env,
+                stdout=stream,
+                stderr=subprocess.STDOUT,
+            )
+        record = {
+            "name": name,
+            "argv": list(map(str, argv)),
+            "cwd": str(cwd),
+            "exit_code": proc.returncode,
+        }
+        records.append(record)
+        write(out / "processes.json", records)
+        return proc.returncode
+
+    head = subprocess.check_output(
+        ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True
+    ).strip()
+    tree = subprocess.check_output(
+        ["git", "rev-parse", "HEAD^{tree}"], cwd=ROOT, text=True
+    ).strip()
+    assert not subprocess.check_output(
+        ["git", "status", "--porcelain", "--untracked-files=no"], cwd=ROOT
+    )
+    archive = out / "source.tar"
+    assert run("archive", ["git", "archive", head, "-o", archive], ROOT) == 0
+    source = out / "source"
+    source.mkdir()
+    with tarfile.open(archive) as tar:
+        tar.extractall(source, filter="data")
+    assert (
+        run(
+            "build-direct",
+            [sys.executable, "-m", "hatchling", "build", "-t", "wheel", "-t", "sdist"],
+            source,
+        )
+        == 0
+    )
+    wheel = next((source / "dist").glob("*.whl"))
+    sdist = next((source / "dist").glob("*.tar.gz"))
+    unpack = out / "from-sdist"
+    unpack.mkdir()
+    with tarfile.open(sdist) as tar:
+        tar.extractall(unpack, filter="data")
+    derived = next(unpack.iterdir())
+    assert (
+        run(
+            "build-sdist-wheel",
+            [sys.executable, "-m", "hatchling", "build", "-t", "wheel"],
+            derived,
+        )
+        == 0
+    )
+    swheel = next((derived / "dist").glob("*.whl"))
+    write(
+        out / "build-binding.json",
+        {
+            "head": head,
+            "tree": tree,
+            "archive_sha256": sha(archive),
+            "direct_wheel": {"sha256": sha(wheel), "bytes": wheel.stat().st_size},
+            "sdist": {"sha256": sha(sdist), "bytes": sdist.stat().st_size},
+            "sdist_wheel": {"sha256": sha(swheel), "bytes": swheel.stat().st_size},
+        },
+    )
+    outside = out / "outside"
+    outside.mkdir()
+    shutil.copyfile(
+        source / "tests/integration/p3/test_transfer_sql.py",
+        outside / "test_installed_i4.py",
+    )
+    for probe in ("verify_i2_distribution.py", "verify_i3_distribution.py"):
+        shutil.copyfile(source / "scripts" / probe, outside / probe)
+    smoke_ast = ast.parse(
+        (source / "scripts/verify_access_distribution.py").read_text()
+    )
+    smoke = next(
+        ast.literal_eval(n.value)
+        for n in smoke_ast.body
+        if isinstance(n, ast.Assign)
+        and any(isinstance(t, ast.Name) and t.id == "SMOKE" for t in n.targets)
+    )
+    (outside / "original_access_smoke.py").write_text(smoke)
+    (outside / "measure.py").write_text("""import hashlib,json,sqlite3,sys
+from pathlib import Path
+from repo_catalog.adapters.sqlite import p1_schema
+import repo_catalog
+origin=Path(repo_catalog.__file__).resolve()
+assert origin.is_relative_to(Path(sys.prefix).resolve()), origin
+p1_schema.verify_declared()
+db=sqlite3.connect(':memory:')
+p1_schema.register_functions(db); p1_schema.configure(db)
+actual=db.execute('SELECT sqlite_version(),sqlite_source_id()').fetchone()
+assert actual[0]==sys.argv[2],actual
+db.executescript(p1_schema.compose('context'))
+root=origin.parent
+files={str(p.relative_to(root)):hashlib.sha256(p.read_bytes()).hexdigest() for p in root.rglob('*') if p.is_file() and p.suffix in ('.py','.sql','.json')}
+result={'sqlite':actual,'python':sys.version,'origin':str(origin),'compile_options':db.execute('PRAGMA compile_options').fetchall(),'pragmas':{n:db.execute('PRAGMA '+n).fetchall() for n in p1_schema.REQUIRED_PRAGMAS},'functions':[r for r in db.execute('PRAGMA function_list') if r[0].startswith('p1_')],'fingerprint':p1_schema.fingerprint('context'),'schema':p1_schema.schema_rows(db),'installed_files':files}
+Path(sys.argv[1]).write_text(json.dumps(result,indent=2)+'\\n')
+""")
+    for tag, artifact in [("direct", wheel), ("sdist", swheel)]:
+        venv = out / (tag + "-venv")
+        assert run(tag + "-venv", ["uv", "venv", "--python", sys.executable, venv]) == 0
+        py = venv / "bin/python"
+        assert (
+            run(
+                tag + "-install",
+                [
+                    "uv",
+                    "pip",
+                    "install",
+                    "--python",
+                    py,
+                    "--no-deps",
+                    artifact,
+                    "pytest==9.1.1",
+                    "pluggy==1.6.0",
+                    "packaging==26.3",
+                    "iniconfig==2.3.0",
+                    "pygments==2.21.0",
+                ],
+            )
+            == 0
+        )
+        for version, library in [
+            ("3.51.3", args.minimum_library),
+            ("3.53.1", args.newer_library),
+        ]:
+            label = tag + "-" + version
+            env = dict(
+                os.environ,
+                LD_LIBRARY_PATH=str(library.resolve()),
+                PYTHONPATH="",
+                PATH=str(venv / "bin") + os.pathsep + os.environ["PATH"],
+            )
+            assert (
+                run(
+                    label + "-measure",
+                    [
+                        py,
+                        outside / "measure.py",
+                        out / (label + "-runtime.json"),
+                        version,
+                    ],
+                    outside,
+                    env,
+                )
+                == 0
+            )
+            measured = json.loads((out / (label + "-runtime.json")).read_text())
+            with zipfile.ZipFile(artifact) as z:
+                expected = {
+                    n.removeprefix("repo_catalog/"): hashlib.sha256(
+                        z.read(n)
+                    ).hexdigest()
+                    for n in z.namelist()
+                    if n.startswith("repo_catalog/")
+                    and Path(n).suffix in (".py", ".sql", ".json")
+                }
+            assert expected == measured["installed_files"]
+            run(
+                label + "-i4",
+                [
+                    py,
+                    "-m",
+                    "pytest",
+                    outside / "test_installed_i4.py",
+                    "-q",
+                    "--tb=short",
+                    "--confcutdir=" + str(outside),
+                    "--junitxml=" + str(out / (label + "-i4.xml")),
+                ],
+                outside,
+                env,
+            )
+            for stage in ("i2", "i3"):
+                run(
+                    label + "-" + stage,
+                    [
+                        py,
+                        outside / ("verify_" + stage + "_distribution.py"),
+                        "--output",
+                        out / (label + "-" + stage + ".json"),
+                    ],
+                    outside,
+                    env,
+                )
+            run(
+                label + "-access",
+                [py, outside / "original_access_smoke.py"],
+                outside,
+                env,
+            )
+    write(
+        out / "summary.json",
+        {"author_verification": True, "full_acceptance": False, "processes": records},
+    )
+    # Actual failures (including unchanged original Access refusal) are not hidden.
+    raise SystemExit(int(any(r["exit_code"] for r in records)))
+
+
+if __name__ == "__main__":
+    main()
