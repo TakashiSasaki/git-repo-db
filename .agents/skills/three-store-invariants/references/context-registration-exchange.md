@@ -264,6 +264,12 @@ expose it. Do not infer a native identification contract or traversal edge from
 array/dictionary shape. Explicit Source-registration references retain their
 separately defined meaning.
 
+Compare encoder and byte-reader limits with actual cap-sized inputs. Count object
+keys as well as values, include the final digest field in envelope limits even
+though it is excluded from the checksum, and recheck limits after the last
+string's work chunks. I6-B's controlled earlier-source counterexamples exposed
+all three gaps; a writer must not emit a package its own byte reader rejects.
+
 Reproduce the aggregate limits, opaque-evidence preservation and planner work
 boundaries with `python -m pytest tests/unit/test_context_wire_v5.py
 tests/unit/test_context_dependencies.py -q`. The

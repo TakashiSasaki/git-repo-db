@@ -74,12 +74,21 @@ def _bounded_json(value: Any, *, root: str = "generic") -> tuple[int, int]:
             if depth > MAX_DEPTH or count > MAX_ELEMENTS:
                 raise ExchangeError("INPUT_LIMIT", "package", "JSON depth/elements")
             if type(item) is dict:
-                if len(item) > MAX_ELEMENTS - count:
+                # Each object member contributes both its key and its value.
+                # Refuse a necessarily oversize object before queuing children.
+                if 2 * len(item) > MAX_ELEMENTS - count:
                     raise ExchangeError("INPUT_LIMIT", "package", "JSON elements")
                 if any(type(key) is not str for key in item):
                     raise ExchangeError(
                         "MALFORMED_JSON", "package", "string keys required"
                     )
+                count += len(item)
+                size += 2 + max(0, len(item) - 1) + len(item)
+                for key in item:
+                    size += _quoted_size(key, MAX_PACKAGE_BYTES - size)
+                    count += max(0, (len(key) - 1) // 4096)
+                    if count > MAX_ELEMENTS:
+                        raise ExchangeError("INPUT_LIMIT", "package", "JSON elements")
                 for identity, relative_depth in _embedded_identity_values(item, role):
                     pending.append((identity, depth + relative_depth, False, "generic"))
                 for key, entry in item.items():
@@ -103,9 +112,6 @@ def _bounded_json(value: Any, *, root: str = "generic") -> tuple[int, int]:
                         raise ExchangeError(
                             "MALFORMED_BYTES", key, "lowercase contiguous hex required"
                         )
-                size += 2 + max(0, len(item) - 1) + len(item)
-                for key in item:
-                    size += _quoted_size(key, MAX_PACKAGE_BYTES - size)
             elif type(item) is list:
                 if len(item) > MAX_ELEMENTS - count:
                     raise ExchangeError("INPUT_LIMIT", "package", "JSON elements")
@@ -138,6 +144,8 @@ def _bounded_json(value: Any, *, root: str = "generic") -> tuple[int, int]:
                     raise ExchangeError(
                         "MALFORMED_JSON", "package", "bounded JSON number required"
                     ) from error
+            if count > MAX_ELEMENTS:
+                raise ExchangeError("INPUT_LIMIT", "package", "JSON elements")
             if size > MAX_PACKAGE_BYTES:
                 raise ExchangeError("INPUT_LIMIT", "package", "JSON string bytes")
     finally:
@@ -325,8 +333,10 @@ def _parse_json(text: str) -> Any:
 
 def _canonical_content(package: ExchangePackage) -> bytes:
     data = package.to_dict()
-    data.pop("digest_sha256")
+    # The digest is excluded from the checksum, never from wire limits. A
+    # package emitted at the inclusive cap must remain readable by this codec.
     _bounded_json(data, root="package")
+    data.pop("digest_sha256")
     try:
         result = json.dumps(
             data,

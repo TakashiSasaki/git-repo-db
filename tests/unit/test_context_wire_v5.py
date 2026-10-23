@@ -996,3 +996,85 @@ def test_T01_T11_failed_wire_scan_preserves_actual_work_charge(failure):
     finally:
         _WIRE_WORK.reset(token)
     assert measurement["metadata_units"] > 0
+
+
+def test_T01_T11_dictionary_keys_count_at_real_aggregate_element_boundary():
+    from repo_catalog.domain.exchange import MAX_ELEMENTS, _bounded_json, _parse_json
+
+    exact = [{f"k{i}": None for i in range(99999)}]
+    raw = json.dumps(exact, separators=(",", ":"))
+    # Root array + object + 99,999 keys + 99,999 nulls = exactly 200,000.
+    assert _parse_json(raw) == exact
+    assert _bounded_json(exact)[0] == MAX_ELEMENTS
+
+
+def test_T01_T11_dictionary_key_element_limit_refuses_real_plus_one():
+    from repo_catalog.domain.exchange import _bounded_json, _parse_json
+
+    over = [{f"k{i}": None for i in range(99999)}, None]
+    raw = json.dumps(over, separators=(",", ":"))
+    for scan in (lambda: _parse_json(raw), lambda: _bounded_json(over)):
+        with pytest.raises(ExchangeError) as error:
+            scan()
+        assert error.value.code == "INPUT_LIMIT"
+
+
+def test_T01_T11_full_envelope_including_digest_is_bounded_symmetrically():
+    from repo_catalog.domain.exchange import MAX_ELEMENTS, _parse_json
+
+    def lexical_elements(value):
+        # Count the small, fixed envelope's real JSON tokens independently of
+        # the product scanner. Padding consists only of null tokens.
+        if type(value) is dict:
+            return 1 + sum(1 + lexical_elements(item) for item in value.values())
+        if type(value) is list:
+            return 1 + sum(lexical_elements(item) for item in value)
+        return 1
+
+    base = package_dict()
+    base["selection_report"] = {"padding": []}
+    padding_length = MAX_ELEMENTS - lexical_elements(base)
+    package = ExchangePackage(
+        PACKAGE,
+        1,
+        SERVICE,
+        REPOSITORY,
+        ExchangeSelectionScope(all_selected=True),
+        selection_report={"padding": [None] * padding_length},
+    )
+    exact_wire = encode_package(package)
+    assert lexical_elements(json.loads(exact_wire)) == MAX_ELEMENTS
+    assert decode_package(exact_wire).to_dict() == package.to_dict()
+    package.selection_report["padding"].append(None)
+    changed = rechecksum(package.to_dict())
+    object.__setattr__(package, "digest_sha256", changed["digest_sha256"])
+    over_wire = json.dumps(changed, separators=(",", ":"))
+    assert lexical_elements(changed) == MAX_ELEMENTS + 1
+    # The string reader already sees the final digest. The encoder and decoded
+    # input reader must enforce that same final envelope rather than content
+    # alone (content intentionally excludes the digest from its SHA-256).
+    with pytest.raises(ExchangeError) as error:
+        _parse_json(over_wire)
+    assert error.value.code == "INPUT_LIMIT"
+    with pytest.raises(ExchangeError) as error:
+        encode_package(package)
+    assert error.value.code == "INPUT_LIMIT"
+
+
+def test_T01_T11_final_leaf_string_chunk_cannot_overrun_element_limit():
+    from repo_catalog.domain.exchange import _WIRE_WORK, MAX_ELEMENTS, _bounded_json
+
+    exact = ["a" * 4096, *([None] * (MAX_ELEMENTS - 2))]
+    assert _bounded_json(exact)[0] == MAX_ELEMENTS
+    # The first array element is the final leaf visited by the bounded stack.
+    # One additional character incurs one additional actual string-work unit.
+    exact[0] += "a"
+    measurement = {"metadata_units": 0, "verification_bytes": 0}
+    token = _WIRE_WORK.set(measurement)
+    try:
+        with pytest.raises(ExchangeError) as error:
+            _bounded_json(exact)
+    finally:
+        _WIRE_WORK.reset(token)
+    assert error.value.code == "INPUT_LIMIT"
+    assert measurement["metadata_units"] == MAX_ELEMENTS + 1
