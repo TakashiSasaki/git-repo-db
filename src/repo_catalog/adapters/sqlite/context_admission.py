@@ -140,14 +140,32 @@ def admission_checked(operation):
         # R12 orders permanent native semantics after authority/selection but
         # before missing-dependency diagnostics, including Source lookups.
         if name == "admit_transfer_event":
+            from repo_catalog.domain.context_admission import validate_originals
             from repo_catalog.domain.p1_context import TransferEventReport
+            from repo_catalog.domain.resource_stage import (
+                UnsupportedResourceStage,
+                has_transfer_fence,
+            )
 
             report = values["report"]
+            # Keep ordinary Transfer fenced. In the explicit isolated fixture,
+            # revalidate the caller's current complete originals after authority
+            # and selection, before any dependency lookup, SQL serialization or
+            # duplicate success. Construction is not a seal on nested carriers.
+            fenced = has_transfer_fence(self.db)
+            try:
+                validate_originals(report)
+            except (AdmissionRefused, ValueError):
+                if fenced:
+                    raise UnsupportedResourceStage("admit_transfer_event") from None
+                raise
             if (
                 isinstance(report, TransferEventReport)
                 and report.parent_issue != report.issue_resource
             ):
                 raise AdmissionRefused("QS10_PARENT_INELIGIBLE")
+            if fenced:
+                raise UnsupportedResourceStage("admit_transfer_event")
         # Do not obtain existence-sensitive diagnostics before current authority.
         self._current_admission_for_expansion = context
         self._check_source_dependencies(
