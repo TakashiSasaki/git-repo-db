@@ -64,6 +64,9 @@ ISOLATED_NEXT_STAGE_MODULES = frozenset(
         "domain/exchange.py",
         "domain/selective_exchange.py",
         "domain/exchange_rows.py",
+        # I6-B pure codecs/plans remain in the same explicit opt-in boundary.
+        "domain/context_wire.py",
+        "domain/context_dependencies.py",
         "domain/ports/acquisition.py",
         "application/acquisition.py",
         "application/exchange.py",

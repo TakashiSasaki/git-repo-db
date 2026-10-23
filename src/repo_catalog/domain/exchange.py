@@ -1,4 +1,4 @@
-"""P5 portable typed Exchange domain and wire contract (`git-repo-db/adr0030-exchange-v4`).
+"""P5 portable typed Exchange domain and wire contract (`git-repo-db/adr0031-exchange-v5`).
 
 Enforces strict separation between:
 - Transport envelope identity (`package_id`, `exported_at_us`, `sender_catalog_instance_uuidv4`)
@@ -22,9 +22,10 @@ from repo_catalog.domain.context_registration import (
 )
 from repo_catalog.domain.p1_context import ResourceKey
 from repo_catalog.domain.p1_core import OID, CoreFailure, uuid4_value
+from repo_catalog.domain.resource_identity import parse_identity
 from repo_catalog.domain.time import validate_observation_us
 
-FORMAT = "git-repo-db/adr0030-exchange-v4"
+FORMAT = "git-repo-db/adr0031-exchange-v5"
 MAX_PACKAGE_BYTES = 32 * 1024 * 1024
 MAX_DEPTH = 32
 MAX_ELEMENTS = 200_000
@@ -50,65 +51,221 @@ def _quoted_size(value, remaining):
     return total
 
 
-def _bounded_json(value: Any) -> tuple[int, int]:
+def _bounded_json(value: Any, *, root: str = "generic") -> tuple[int, int]:
     """Bound all inputs, including already decoded caller-owned dictionaries."""
-    pending = [(value, 0)]
+    pending = [(value, 0, False, root)]
+    active = set()
     count = 0
     size = 0
-    while pending:
-        item, depth = pending.pop()
-        count += 1
-        if depth > MAX_DEPTH or count > MAX_ELEMENTS:
-            raise ExchangeError("INPUT_LIMIT", "package", "JSON depth/elements")
-        if isinstance(item, dict):
-            if len(item) > MAX_ELEMENTS - count:
-                raise ExchangeError("INPUT_LIMIT", "package", "JSON elements")
-            if any(type(key) is not str for key in item):
-                raise ExchangeError("MALFORMED_JSON", "package", "string keys required")
-            pending.extend((v, depth + 1) for v in item.values())
-            for key, value in item.items():
-                if key.endswith("_json") and isinstance(value, str):
-                    _quoted_size(value, MAX_PACKAGE_BYTES - size)
-                    pending.append((_parse_json(value), depth + 1))
-                if key == "body_hex" and (
-                    type(value) is not str
-                    or len(value) > MAX_PACKAGE_BYTES
-                    or len(value) % 2
-                    or any(c not in "0123456789abcdef" for c in value)
-                ):
+    try:
+        while pending:
+            item, depth, exiting, role = pending.pop()
+            if exiting:
+                active.remove(id(item))
+                continue
+            if type(item) in (dict, list):
+                if id(item) in active:
                     raise ExchangeError(
-                        "MALFORMED_BYTES", key, "lowercase contiguous hex required"
+                        "MALFORMED_JSON", "package", "cyclic JSON input"
                     )
-            size += 2 + 2 * len(item)
-            for key in item:
-                size += _quoted_size(key, MAX_PACKAGE_BYTES - size)
-        elif isinstance(item, (list, tuple)):
-            if len(item) > MAX_ELEMENTS - count:
-                raise ExchangeError("INPUT_LIMIT", "package", "JSON elements")
-            pending.extend((v, depth + 1) for v in item)
-            size += 2 + len(item)
-        elif isinstance(item, str):
-            size += _quoted_size(item, MAX_PACKAGE_BYTES - size)
-            count += max(0, (len(item) - 1) // 4096)
-        elif type(item) is float and not math.isfinite(item):
-            raise ExchangeError(
-                "MALFORMED_JSON", "package", "finite JSON real required"
-            )
-        elif item is not None and type(item) not in (int, bool, float):
-            raise ExchangeError("MALFORMED_JSON", "package", "unsupported JSON value")
-        else:
-            try:
-                size += len(json.dumps(item, allow_nan=False))
-            except (ValueError, TypeError) as error:
+                active.add(id(item))
+                pending.append((item, depth, True, role))
+            count += 1
+            if depth > MAX_DEPTH or count > MAX_ELEMENTS:
+                raise ExchangeError("INPUT_LIMIT", "package", "JSON depth/elements")
+            if type(item) is dict:
+                if len(item) > MAX_ELEMENTS - count:
+                    raise ExchangeError("INPUT_LIMIT", "package", "JSON elements")
+                if any(type(key) is not str for key in item):
+                    raise ExchangeError(
+                        "MALFORMED_JSON", "package", "string keys required"
+                    )
+                for identity, relative_depth in _embedded_identity_values(item, role):
+                    pending.append((identity, depth + relative_depth, False, "generic"))
+                for key, entry in item.items():
+                    child_role = _wire_child_role(role, key, item)
+                    pending.append((entry, depth + 1, False, "generic"))
+                    if key.endswith("_json") and isinstance(entry, str):
+                        _quoted_size(entry, MAX_PACKAGE_BYTES - size)
+                        pending.append(
+                            (_parse_json(entry), depth + 1, False, child_role)
+                        )
+                    elif type(entry) in (list, dict):
+                        # Only one traversal: a decoded container carries its role
+                        # directly; embedded JSON strings have a separate parse.
+                        pending[-1] = (entry, depth + 1, False, child_role)
+                    if key == "body_hex" and (
+                        type(entry) is not str
+                        or len(entry) > MAX_PACKAGE_BYTES
+                        or len(entry) % 2
+                        or any(c not in "0123456789abcdef" for c in entry)
+                    ):
+                        raise ExchangeError(
+                            "MALFORMED_BYTES", key, "lowercase contiguous hex required"
+                        )
+                size += 2 + max(0, len(item) - 1) + len(item)
+                for key in item:
+                    size += _quoted_size(key, MAX_PACKAGE_BYTES - size)
+            elif type(item) is list:
+                if len(item) > MAX_ELEMENTS - count:
+                    raise ExchangeError("INPUT_LIMIT", "package", "JSON elements")
+                for identity, relative_depth in _embedded_identity_values(item, role):
+                    pending.append((identity, depth + relative_depth, False, "generic"))
+                child_role = (
+                    "row:" + role[5:]
+                    if role.startswith("rows:")
+                    else "transfer_support_entry"
+                    if role == "transfer_supports"
+                    else "generic"
+                )
+                pending.extend((v, depth + 1, False, child_role) for v in item)
+                size += 2 + max(0, len(item) - 1)
+            elif type(item) is str:
+                size += _quoted_size(item, MAX_PACKAGE_BYTES - size)
+                count += max(0, (len(item) - 1) // 4096)
+            elif type(item) is float and not math.isfinite(item):
                 raise ExchangeError(
-                    "MALFORMED_JSON", "package", "bounded JSON number required"
-                ) from error
-        if size > MAX_PACKAGE_BYTES:
-            raise ExchangeError("INPUT_LIMIT", "package", "JSON string bytes")
-    measurement = _WIRE_WORK.get()
-    if measurement is not None:
-        measurement["metadata_units"] += count
+                    "MALFORMED_JSON", "package", "finite JSON real required"
+                )
+            elif item is not None and type(item) not in (int, bool, float):
+                raise ExchangeError(
+                    "MALFORMED_JSON", "package", "unsupported JSON value"
+                )
+            else:
+                try:
+                    size += len(json.dumps(item, allow_nan=False))
+                except (ValueError, TypeError) as error:
+                    raise ExchangeError(
+                        "MALFORMED_JSON", "package", "bounded JSON number required"
+                    ) from error
+            if size > MAX_PACKAGE_BYTES:
+                raise ExchangeError("INPUT_LIMIT", "package", "JSON string bytes")
+    finally:
+        # Rejected input still consumed actual parsing/traversal work. Neither
+        # refusal nor a caller's transaction rollback refunds that work.
+        measurement = _WIRE_WORK.get()
+        if measurement is not None:
+            measurement["metadata_units"] += count
     return count, size
+
+
+def _wire_child_role(role, key, row):
+    """Carry only contract-declared positions through the generic JSON scan."""
+    if role == "package":
+        return {"context": "context", "selection_scope": "selection"}.get(
+            key, "generic"
+        )
+    if role == "context" and key in CONTEXT_SECTION_KEYS:
+        return "rows:" + key
+    if role == "selection" and key == "resource_keys":
+        return "resource_members"
+    if role.startswith("row:"):
+        section = role[4:]
+        if key == "members_json" and (
+            section in ("resource_relations", "collections")
+            or section == "coverage_proofs"
+            and row.get("proof_kind") == "collection"
+        ):
+            return "resource_members"
+        if (
+            key == "event_report_members_json"
+            and section == "resource_repository_relations"
+        ):
+            return "resource_members"
+        if key == "owner_coordinates_json" and row.get("owner_kind") in (
+            "resource",
+            "field",
+            "collection",
+        ):
+            return "coverage_coordinates"
+        if key == "scope_json" and section == "resource_relations":
+            return {
+                "transfer_event_report": "transfer_scope",
+                "provider_repository_roles": "provider_roles_scope",
+            }.get(row.get("relation_kind"), "generic")
+        if (
+            key == "event_report_scope_json"
+            and section == "resource_repository_relations"
+        ):
+            return "transfer_scope"
+        if key.endswith("provenance_json") and (
+            section
+            in (
+                "resource_repository_relations",
+                "repository_mapping_dispositions",
+                "mapping_claims",
+            )
+            or section == "resource_relations"
+            and row.get("relation_kind") == "transfer_event_report"
+        ):
+            return "provenance"
+    if role == "transfer_scope" and key == "parent_members_json":
+        return "resource_members"
+    if role == "provider_roles_scope" and key == "repository_roles":
+        return "provider_role_map"
+    if role == "provider_role_map":
+        return "provider_role_entry"
+    if role == "provenance" and key == "evidence":
+        return "mapping_evidence"
+    if role == "mapping_evidence":
+        return {
+            "mapping_support": "mapping_support",
+            "transfer_mapping_supports": "transfer_supports",
+        }.get(key, "generic")
+    if role == "transfer_support_entry" and key == "mapping_support":
+        return "mapping_support"
+    if role == "mapping_support" and key == "supporting_claims":
+        return "rows:mapping_claims"
+    return "generic"
+
+
+def _embedded_identity_values(value, role):
+    """Expose decoded typed keys to aggregate caps without inspecting evidence shape."""
+
+    def identity(text, depth, kind=None):
+        try:
+            native = parse_identity(text)
+            yield native, depth
+            # Reserved scoped kinds explicitly parse their namespace identity;
+            # Documents use their separate declaration and never shape inference.
+            if (
+                kind in ("review", "comment", "thread")
+                and type(native) is list
+                and len(native) == 4
+            ):
+                yield parse_identity(native[1]), depth + 1
+        except (ValueError, TypeError) as error:
+            raise ExchangeError(
+                "INVALID_IDENTIFICATION", "identity", "invalid canonical identity"
+            ) from error
+
+    if role.startswith("row:") and type(value) is dict:
+        if "provider_resource_id" in value:
+            yield from identity(
+                value["provider_resource_id"], 1, value.get("resource_kind")
+            )
+        if role == "row:resources":
+            if value.get("identifier_namespace_id") is not None:
+                yield from identity(
+                    value["identifier_namespace_id"],
+                    1,
+                    value.get("identifier_namespace_kind"),
+                )
+            if value.get("provider_document_id") is not None:
+                yield from identity(value["provider_document_id"], 1)
+    elif role == "resource_members" and type(value) is list:
+        for member in value:
+            if type(member) is list and len(member) == 3:
+                yield from identity(member[2], 2, member[1])
+    elif role == "coverage_coordinates" and type(value) is list and len(value) >= 3:
+        yield from identity(value[2], 1, value[1])
+    elif role == "transfer_scope" and type(value) is dict:
+        for name in ("from_provider_repository_id", "to_provider_repository_id"):
+            if value.get(name) is not None:
+                yield from identity(value[name], 1, "repository")
+    elif role in ("mapping_support", "provider_role_entry") and type(value) is dict:
+        if value.get("provider_repository_id") is not None:
+            yield from identity(value["provider_repository_id"], 1, "repository")
 
 
 def _parse_json(text: str) -> Any:
@@ -153,8 +310,15 @@ def _parse_json(text: str) -> Any:
             result[key] = value
         return result
 
+    def reject_constant(_value):
+        raise ValueError("nonfinite JSON number")
+
     try:
-        return json.loads(text, object_pairs_hook=unique_pairs)
+        return json.loads(
+            text,
+            object_pairs_hook=unique_pairs,
+            parse_constant=reject_constant,
+        )
     except (ValueError, TypeError, RecursionError) as error:
         raise ExchangeError("MALFORMED_JSON", "package", str(error)) from error
 
@@ -162,7 +326,7 @@ def _parse_json(text: str) -> Any:
 def _canonical_content(package: ExchangePackage) -> bytes:
     data = package.to_dict()
     data.pop("digest_sha256")
-    _bounded_json(data)
+    _bounded_json(data, root="package")
     try:
         result = json.dumps(
             data,
@@ -263,6 +427,14 @@ class ExchangeSelectionScope:
                 raise ExchangeError(
                     "INVALID_SELECTION", "bounds", "finite nonnegative integer required"
                 )
+        if (
+            self.max_depth > MAX_DEPTH
+            or self.max_bytes > MAX_PACKAGE_BYTES
+            or self.max_units > MAX_ELEMENTS
+        ):
+            raise ExchangeError(
+                "INVALID_SELECTION", "bounds", "outer hard cap exceeded"
+            )
         for values, kind in (
             (self.repository_uuidv4s, str),
             (self.object_oids, OID),
@@ -272,7 +444,7 @@ class ExchangeSelectionScope:
         ):
             if values is not None and (
                 not isinstance(values, tuple)
-                or any(not isinstance(value, kind) for value in values)
+                or any(type(value) is not kind for value in values)
             ):
                 raise ExchangeError(
                     "INVALID_SELECTION", "selection_scope", "typed tuple required"
@@ -328,7 +500,7 @@ class ExchangeSelectionScope:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> ExchangeSelectionScope:
-        if not isinstance(data, dict):
+        if type(data) is not dict:
             raise ExchangeError("INVALID_SELECTION", "selection_scope", "dict required")
         for key in ("include_core", "include_context", "include_retained_bytes"):
             if type(data.get(key)) is not bool:
@@ -351,9 +523,25 @@ class ExchangeSelectionScope:
             raise ExchangeError(
                 "INVALID_SELECTION", "selection_scope", "exact keys required"
             )
-        for key in ("object_oids", "notes_refs", "resource_keys", "source_uuidv4s"):
-            if data[key] is not None and not isinstance(data[key], list):
+        for key in (
+            "repository_uuidv4s",
+            "object_oids",
+            "notes_refs",
+            "resource_keys",
+            "source_uuidv4s",
+        ):
+            if data[key] is not None and type(data[key]) is not list:
                 raise ExchangeError("INVALID_SELECTION", key, "array or null required")
+        for key, size in (("object_oids", 2), ("resource_keys", 3)):
+            if data[key] is not None and any(
+                type(item) is not list
+                or len(item) != size
+                or any(type(value) is not str for value in item)
+                for item in data[key]
+            ):
+                raise ExchangeError(
+                    "INVALID_SELECTION", key, "exact typed coordinates required"
+                )
         raw_oids = data.get("object_oids")
         raw_refs = data.get("notes_refs")
         raw_rks = data.get("resource_keys")
@@ -376,9 +564,9 @@ class ExchangeSelectionScope:
                 "INVALID_SELECTION", "selection_scope", str(exc)
             ) from exc
         return cls(
-            include_core=bool(data.get("include_core", True)),
-            include_context=bool(data.get("include_context", True)),
-            include_retained_bytes=bool(data.get("include_retained_bytes", True)),
+            include_core=data["include_core"],
+            include_context=data["include_context"],
+            include_retained_bytes=data["include_retained_bytes"],
             object_oids=oids,
             notes_refs=refs,
             resource_keys=rks,
@@ -404,7 +592,7 @@ def empty_context_section() -> dict[str, list[dict[str, Any]]]:
 
 @dataclass(frozen=True)
 class ExchangePackage:
-    """Portable typed Exchange package (`git-repo-db/adr0030-exchange-v4`)."""
+    """Portable typed Exchange package (`git-repo-db/adr0031-exchange-v5`)."""
 
     package_id: str
     exported_at_us: int | None
@@ -420,6 +608,14 @@ class ExchangePackage:
     digest_sha256: str | None = None
 
     def __post_init__(self) -> None:
+        if self.format != FORMAT:
+            raise ExchangeError(
+                "UNSUPPORTED_WIRE_VERSION", "format", f"expected {FORMAT}"
+            )
+        if not isinstance(self.selection_scope, ExchangeSelectionScope):
+            raise ExchangeError(
+                "INVALID_SELECTION", "selection_scope", "typed scope required"
+            )
         if self.digest_sha256 is None:
             object.__setattr__(
                 self,
@@ -470,6 +666,14 @@ class ExchangeImportReport:
 
 def validate_package_envelope(package: ExchangePackage) -> None:
     """Validate Exchange envelope metadata, section keys, and retention purpose."""
+    if package.format != FORMAT:
+        raise ExchangeError("UNSUPPORTED_WIRE_VERSION", "format", f"expected {FORMAT}")
+    if type(package.selection_report) is not dict:
+        raise ExchangeError("MALFORMED_ENVELOPE", "selection_report", "object required")
+    if not isinstance(package.selection_scope, ExchangeSelectionScope):
+        raise ExchangeError(
+            "INVALID_SELECTION", "selection_scope", "typed scope required"
+        )
     content = _canonical_content(package)
     actual = hashlib.sha256(content).hexdigest()
     measurement = _WIRE_WORK.get()
@@ -481,8 +685,6 @@ def validate_package_envelope(package: ExchangePackage) -> None:
             package.package_id,
             "declared SHA-256 differs from canonical content",
         )
-    if package.format != FORMAT:
-        raise ExchangeError("UNSUPPORTED_FORMAT", package.format, f"expected {FORMAT}")
     try:
         uuid4_value(package.package_id)
         uuid4_value(package.sender_catalog_instance_uuidv4)
@@ -505,7 +707,7 @@ def validate_package_envelope(package: ExchangePackage) -> None:
             )
         for key, items in package.core.items():
             if not isinstance(items, list) or any(
-                not isinstance(item, dict) for item in items
+                type(item) is not dict for item in items
             ):
                 raise ExchangeError(
                     "MALFORMED_CORE_SECTION",
@@ -541,7 +743,7 @@ def validate_package_envelope(package: ExchangePackage) -> None:
             )
         for key, items in package.context.items():
             if not isinstance(items, list) or any(
-                not isinstance(item, dict) for item in items
+                type(item) is not dict for item in items
             ):
                 raise ExchangeError(
                     "MALFORMED_CONTEXT_SECTION",
@@ -557,9 +759,13 @@ def validate_package_envelope(package: ExchangePackage) -> None:
                 "CONTEXT_REGISTRATION", error.kind, error.code
             ) from None
 
-    from repo_catalog.domain.exchange_rows import validate_rows
+    from repo_catalog.domain.exchange_rows import (
+        validate_replay_consistency,
+        validate_rows,
+    )
 
     validate_rows(package.core, package.context)
+    validate_replay_consistency(package.core, package.context)
 
 
 def encode_package(package: ExchangePackage) -> str:
@@ -580,7 +786,12 @@ def encode_package(package: ExchangePackage) -> str:
 def decode_package(
     raw: str | bytes | dict[str, Any] | ExchangePackage,
 ) -> ExchangePackage:
-    """Parse and validate an ExchangePackage from JSON bytes, str, or dict."""
+    """Validate a v5 envelope, checksum, exact row grammar and key canonicality.
+
+    Envelope decoding grants no admission authority. ``decode_context_v5`` adds
+    pure typed Context semantic checks; planner/current authorized admission
+    separately resolve exact dependencies and receiver-local eligibility.
+    """
     if isinstance(raw, ExchangePackage):
         raw = raw.to_dict()
     if isinstance(raw, (str, bytes)):
@@ -591,10 +802,10 @@ def decode_package(
             if len(text.encode("utf-8")) > MAX_PACKAGE_BYTES:
                 raise ExchangeError("INPUT_LIMIT", "package", "UTF-8 wire bytes")
             data = _parse_json(text)
-        except (UnicodeDecodeError, json.JSONDecodeError, TypeError) as exc:
+        except (UnicodeError, json.JSONDecodeError, TypeError) as exc:
             raise ExchangeError("MALFORMED_JSON", "package", str(exc)) from exc
     elif isinstance(raw, dict):
-        _bounded_json(raw)
+        _bounded_json(raw, root="package")
         data = copy.deepcopy(raw)
     else:
         raise ExchangeError("MALFORMED_JSON", "package", "unsupported package input")
@@ -612,13 +823,15 @@ def decode_package(
         "core",
         "context",
     }
+    if data.get("format") != FORMAT:
+        raise ExchangeError("UNSUPPORTED_WIRE_VERSION", "format", f"expected {FORMAT}")
     if set(data.keys()) != required:
         raise ExchangeError(
             "MALFORMED_ENVELOPE",
             "package",
             f"unexpected or missing envelope keys: {sorted(data.keys())}",
         )
-    _bounded_json(data)
+    _bounded_json(data, root="package")
     if type(data["digest_sha256"]) is not str or len(data["digest_sha256"]) != 64:
         raise ExchangeError("DIGEST_MISMATCH", "package", "declared SHA-256 required")
     selection = ExchangeSelectionScope.from_dict(data["selection_scope"])
