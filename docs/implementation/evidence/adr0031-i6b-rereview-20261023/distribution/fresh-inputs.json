@@ -1,0 +1,14 @@
+[
+  {
+    "original": "/workspace/rereview-m02/test_fresh_digest_wire.py",
+    "target": "/workspace/rereview-distribution/outside/tests/unit/test_fresh_digest_wire.py",
+    "sha256": "8b61910bc759429baea761a954e63e551ab8f3dee15dd48d7ed3c494577d6ebb",
+    "bytes": 7053
+  },
+  {
+    "original": "/workspace/rereview-admission/probes/test_retained_admission.py",
+    "target": "/workspace/rereview-distribution/outside/tests/unit/test_retained_admission.py",
+    "sha256": "87abba86d707e00556014781aa2720e30068d642a6191529fb001ff4e2b4156d",
+    "bytes": 10871
+  }
+]

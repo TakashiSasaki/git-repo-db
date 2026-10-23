@@ -1,0 +1,47 @@
+[
+  {
+    "pr": 144,
+    "state": "open",
+    "merged": false,
+    "head": "ededcd83eb2d99a602ba18c8fe3c177125c825ac",
+    "head_ref": "review/adr0033-hardening-rereview-20261023",
+    "base": "59307c40ea65554736e131cedd00f04c9906551b",
+    "comparison_to_153": {
+      "status": "diverged",
+      "ahead_by": 24,
+      "behind_by": 8,
+      "merge_base": "f16e5b1713bde9a2f18263a25397c4b450fd5773"
+    },
+    "sibling_head_is_ancestor_of_153": false
+  },
+  {
+    "pr": 147,
+    "state": "open",
+    "merged": false,
+    "head": "e7762952e18061de8c8235beaeddf42f20ad9f5a",
+    "head_ref": "review/c0-e1-independent-20261023",
+    "base": "3e2609baa07a9e92c8f2dc4dd1608f311021a1cb",
+    "comparison_to_153": {
+      "status": "diverged",
+      "ahead_by": 24,
+      "behind_by": 4,
+      "merge_base": "f16e5b1713bde9a2f18263a25397c4b450fd5773"
+    },
+    "sibling_head_is_ancestor_of_153": false
+  },
+  {
+    "pr": 150,
+    "state": "open",
+    "merged": false,
+    "head": "4fc00b1fbc57f10f6c0c6352dee702e1738f65b7",
+    "head_ref": "audit/parallel-pr-stack-task-b-20261023",
+    "base": "f16e5b1713bde9a2f18263a25397c4b450fd5773",
+    "comparison_to_153": {
+      "status": "diverged",
+      "ahead_by": 24,
+      "behind_by": 1,
+      "merge_base": "f16e5b1713bde9a2f18263a25397c4b450fd5773"
+    },
+    "sibling_head_is_ancestor_of_153": false
+  }
+]

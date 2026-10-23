@@ -1,0 +1,17 @@
+{
+  "node_count": 38,
+  "collected_unique": 38,
+  "starts_unique": 38,
+  "junit_count": 38,
+  "exact_multisets_equal": true,
+  "passed_setup_call_teardown_each_once": true,
+  "phase_records": 114,
+  "finish": {
+    "event": "finish",
+    "status": "completed",
+    "exitstatus": 0,
+    "timestamp": 1792769644.5268
+  },
+  "source_exit": 0,
+  "unexpected_junit_outcomes": 0
+}

@@ -1,0 +1,166 @@
+{
+  "development": {
+    "receipt_sha256": "b9380f4201eed5f20f2b5e05c40e6b5de2e3c194b428e441b3d4ca72a441f15d",
+    "receipt_bytes": 91302,
+    "indexed_payloads": 21,
+    "run_id": 39975300074,
+    "run_url": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/39975300074",
+    "conclusion": "success",
+    "binding": {
+      "feature_sha": "61e44291e293f773904a0127606e20c8cb83c95e",
+      "head": "99477234735b9f45cbb4d0634bb8372eaf120710",
+      "run_attempt": "1",
+      "run_id": "39975300074",
+      "tree": "4aa8ddf49fb52d0b903db0b0bfce00ccea2fae0c"
+    },
+    "reconstruction": null,
+    "manifest_acceptance_status": "development_checks_passed",
+    "full_acceptance": false,
+    "hosted_product_cases": 0,
+    "runtime": {
+      "python": "3.12.15",
+      "executable": "/home/runner/work/_temp/product-python/python/bin/python",
+      "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+      "abi": "cpython-312-x86_64-linux-gnu",
+      "sqlite": "3.53.1",
+      "os": "Linux",
+      "arch": "x86_64",
+      "git": "git version 2.55.0",
+      "uv": "uv 0.12.19 (x86_64-unknown-linux-gnu)",
+      "runner_image": [
+        "ubuntu24",
+        "20261012.334.1"
+      ]
+    }
+  },
+  "access": {
+    "receipt_sha256": "436c4c647bdf7943e23ef341700c73f412a8d93600bb71cbd1f1ad30d44ce37a",
+    "receipt_bytes": 1953448,
+    "indexed_payloads": 121,
+    "run_id": 39975300189,
+    "run_url": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/39975300189",
+    "conclusion": "failure",
+    "binding": {
+      "head": "99477234735b9f45cbb4d0634bb8372eaf120710",
+      "run_attempt": "1",
+      "run_id": "39975300189",
+      "tree": "4aa8ddf49fb52d0b903db0b0bfce00ccea2fae0c"
+    },
+    "reconstruction": {
+      "method": "ordered common-subsequence alignment; retain every observed run/step chunk, reject replace; no inferred bytes",
+      "run_view_decoded_bytes": 1953358,
+      "step_view_decoded_bytes": 1953358,
+      "edits": [
+        {
+          "tag": "insert",
+          "run_range": [
+            11750,
+            11750
+          ],
+          "step_range": [
+            11750,
+            11751
+          ],
+          "retained_chunks_sha256": [
+            "dd1152a08175147e07e5cbcc9e17f932fa0c24a27dd674fec658638afe81373f"
+          ]
+        },
+        {
+          "tag": "delete",
+          "run_range": [
+            12403,
+            12404
+          ],
+          "step_range": [
+            12404,
+            12404
+          ],
+          "retained_chunks_sha256": [
+            "e146d87fddf3fba8b816f46042061b50a04eb066f8fe0b92f312f459a6093781"
+          ]
+        }
+      ],
+      "reconstructed_chunks": 21705
+    },
+    "junit_lanes_separate_do_not_sum": {
+      "artifacts/access-registry/i5/regressions.xml": {
+        "total": 3148,
+        "pass": 2849,
+        "fail": 279,
+        "error": 20,
+        "skip": 0,
+        "new_M01_M02_cases": []
+      },
+      "artifacts/access-registry/i5/transfer-admission.xml": {
+        "total": 29,
+        "pass": 29,
+        "fail": 0,
+        "error": 0,
+        "skip": 0,
+        "new_M01_M02_cases": []
+      },
+      "artifacts/access-registry/i5/transfer-sql.xml": {
+        "total": 217,
+        "pass": 217,
+        "fail": 0,
+        "error": 0,
+        "skip": 0,
+        "new_M01_M02_cases": []
+      },
+      "artifacts/access-registry/i5-distribution/direct-i4.xml": {
+        "total": 217,
+        "pass": 217,
+        "fail": 0,
+        "error": 0,
+        "skip": 0,
+        "new_M01_M02_cases": []
+      },
+      "artifacts/access-registry/i5-distribution/direct-i5.xml": {
+        "total": 29,
+        "pass": 29,
+        "fail": 0,
+        "error": 0,
+        "skip": 0,
+        "new_M01_M02_cases": []
+      },
+      "artifacts/access-registry/i5-distribution/sdist-i4.xml": {
+        "total": 217,
+        "pass": 217,
+        "fail": 0,
+        "error": 0,
+        "skip": 0,
+        "new_M01_M02_cases": []
+      },
+      "artifacts/access-registry/i5-distribution/sdist-i5.xml": {
+        "total": 29,
+        "pass": 29,
+        "fail": 0,
+        "error": 0,
+        "skip": 0,
+        "new_M01_M02_cases": []
+      },
+      "artifacts/access-registry/tests.xml": {
+        "total": 2786,
+        "pass": 2487,
+        "fail": 279,
+        "error": 20,
+        "skip": 0,
+        "new_M01_M02_cases": []
+      }
+    }
+  },
+  "identity": {
+    "base": "8521158f2996f125d2fcaac36ea79ac1296a7cf7",
+    "base_ref": "review/adr0031-i6b-independent-20261023",
+    "feature": "61e44291e293f773904a0127606e20c8cb83c95e",
+    "feature_ref": "fix/adr0031-i6b-m01-m02-20261023",
+    "tree": "4aa8ddf49fb52d0b903db0b0bfce00ccea2fae0c",
+    "actual_merge": "99477234735b9f45cbb4d0634bb8372eaf120710",
+    "ordered_merge_parents": [
+      "8521158f2996f125d2fcaac36ea79ac1296a7cf7",
+      "61e44291e293f773904a0127606e20c8cb83c95e"
+    ]
+  },
+  "existing_review_count": 0,
+  "success_scope": "Receipt hashes and identities verified; no release acceptance inferred. Access lanes overlap and retain failure."
+}

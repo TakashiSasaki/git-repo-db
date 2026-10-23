@@ -1,0 +1,190 @@
+"""Independent I6-B guard-retention adversaries: exact finite grants only."""
+from contextlib import contextmanager
+from dataclasses import replace
+import json
+import os
+from pathlib import Path
+import sqlite3
+
+import pytest
+
+from repo_catalog.adapters.sqlite.p1_context import ContextStore
+from repo_catalog.adapters.sqlite.production_context import Context
+from repo_catalog.domain.context_admission import (
+    AdmissionBudget, AdmissionContext, AdmissionRefused, AdmissionSelection,
+    AuthenticatedPrincipal, ContextAdmissionService, DependencySet, dependencies,
+)
+from tests.integration.p3.test_transfer_admission import (
+    KEY_EVENT_7, _setup_base_records, make_transfer_report,
+)
+from tests.support.i6a import isolated_context_db
+
+OBSERVATIONS = {}
+
+class ExactPolicy:
+    def __init__(self, principal, grants):
+        self.principal = principal
+        self.grants = grants
+        self.active = 0
+        self.calls = []
+        self.generation = 0
+
+    @contextmanager
+    def lease(self, principal, operation, needed):
+        self.calls.append((principal, operation, needed))
+        if principal is not self.principal or operation != 'provider_intake' or not needed.issubset(self.grants):
+            raise AdmissionRefused('PERMISSION_DENIED')
+        current = self.generation
+        policy = self
+        class Lease:
+            def check_current(self):
+                if policy.generation != current or not needed.issubset(policy.grants):
+                    raise AdmissionRefused('PERMISSION_DENIED')
+        self.active += 1
+        try:
+            yield Lease()
+        finally:
+            self.active -= 1
+
+
+def issue(service):
+    return service.context('opaque-review-token', 'provider_intake',
+        AdmissionSelection(all_selected=True), AdmissionBudget())
+
+
+def all_rows(db):
+    tables = [r[0] for r in db.execute("SELECT name FROM sqlite_schema WHERE type='table' ORDER BY name")]
+    return {table: sorted([list(r) for r in db.execute(f'SELECT * FROM "{table}"')], key=repr) for table in tables}
+
+
+def event_counts(db):
+    return tuple(db.execute(sql).fetchone()[0] for sql in (
+        "SELECT count(*) FROM resource_relations WHERE relation_kind='transfer_event_report'",
+        "SELECT count(*) FROM resource_repository_relations WHERE relation_kind LIKE 'transfer_%'"))
+
+
+@pytest.fixture
+def environment():
+    with isolated_context_db() as db:
+        _setup_base_records(db)
+        report = make_transfer_report()
+        principal = AuthenticatedPrincipal('same-subject', 'same-session')
+        policy = ExactPolicy(principal, dependencies(report))
+        service = ContextAdmissionService(policy, lambda token: principal)
+        store = ContextStore(db, authorization=service)
+        yield db, report, policy, service, store
+        assert policy.active == 0
+        assert not db.in_transaction
+
+
+@contextmanager
+def transaction(adapter, environment, tmp_path, context):
+    db, _, policy, service, store = environment
+    if adapter == 'store':
+        with store.transaction(admission=context):
+            yield store
+    else:
+        with Context.owned_transaction(db, tmp_path, authorization=service, admission=context) as facade:
+            yield facade
+
+
+def write(adapter, environment, tmp_path, context, report):
+    with transaction(adapter, environment, tmp_path, context) as target:
+        return target.admit_transfer_event(report, admission=context)
+
+
+@pytest.mark.parametrize('adapter', ['store', 'facade'])
+@pytest.mark.parametrize('replay', [False, True])
+@pytest.mark.parametrize('attack', ['foreign-equal-principal', 'constructed-same-fields', 'mutated-operation'])
+def test_equal_values_do_not_supply_service_issued_identity(environment, tmp_path, adapter, replay, attack):
+    db, report, policy, service, store = environment
+    if replay:
+        assert write(adapter, environment, tmp_path, issue(service), report) == 'insert'
+    context = issue(service)
+    if attack == 'foreign-equal-principal':
+        principal = AuthenticatedPrincipal('same-subject', 'same-session')
+        foreign_policy = ExactPolicy(principal, policy.grants)
+        foreign = ContextAdmissionService(foreign_policy, lambda token: principal)
+        context = issue(foreign)
+    elif attack == 'constructed-same-fields':
+        context = AdmissionContext(context.principal, context.operation, context.selection, context.budget)
+    else:
+        object.__setattr__(context, 'operation', 'salvage_merge')
+    before = all_rows(db)
+    callbacks = len(policy.calls)
+    trace = []
+    db.set_trace_callback(trace.append)
+    try:
+        with pytest.raises(AdmissionRefused, match='^PERMISSION_DENIED$'):
+            write(adapter, environment, tmp_path, context, report)
+    finally:
+        db.set_trace_callback(None)
+    assert all_rows(db) == before
+    assert len(policy.calls) == callbacks
+    assert not any(sql.lstrip().upper().startswith(('SELECT', 'INSERT', 'UPDATE', 'DELETE')) for sql in trace)
+    if attack == 'foreign-equal-principal':
+        assert foreign_policy.calls == []
+    OBSERVATIONS[f'{adapter}/{replay}/{attack}'] = {'refusal': 'PERMISSION_DENIED', 'rows_unchanged': True, 'trace': trace}
+
+
+@pytest.mark.parametrize('adapter', ['store', 'facade'])
+@pytest.mark.parametrize('replay', [False, True])
+def test_sqlite_authorizer_denied_real_commit_rolls_back_without_leaking_leases(environment, tmp_path, adapter, replay):
+    db, report, policy, service, _ = environment
+    if replay:
+        assert write(adapter, environment, tmp_path, issue(service), report) == 'insert'
+    before = all_rows(db)
+    trace, commits = [], []
+    def authorizer(action, arg1, arg2, database, origin):
+        if action == sqlite3.SQLITE_TRANSACTION and arg1 == 'COMMIT':
+            commits.append({'counts': event_counts(db), 'active': policy.active, 'in_transaction': db.in_transaction})
+            return sqlite3.SQLITE_DENY
+        return sqlite3.SQLITE_OK
+    db.set_authorizer(authorizer)
+    db.set_trace_callback(trace.append)
+    context = issue(service)
+    try:
+        with pytest.raises(sqlite3.DatabaseError) as failed:
+            write(adapter, environment, tmp_path, context, report)
+    finally:
+        db.set_authorizer(None)
+        db.set_trace_callback(None)
+    assert failed.value.sqlite_errorcode == sqlite3.SQLITE_AUTH
+    assert len(commits) == 1
+    assert commits[0]['counts'] == (1, 2)
+    assert commits[0]['active'] > 0 and commits[0]['in_transaction']
+    assert any(sql.upper() == 'ROLLBACK' for sql in trace)
+    assert all_rows(db) == before
+    assert policy.active == 0 and not db.in_transaction
+    assert context.budget.used_work > 0
+    assert not (tmp_path / 'p1-recovery-stop.json').exists()
+    OBSERVATIONS[f'{adapter}/{replay}/commit-denied'] = {'sqlite_errorcode': failed.value.sqlite_errorcode, 'commit': commits, 'trace': trace, 'rows_unchanged': True, 'charged_work': context.budget.used_work}
+
+
+@pytest.mark.parametrize('adapter', ['store', 'facade'])
+def test_second_semantic_unit_denial_rolls_back_first_successful_unit(environment, tmp_path, adapter):
+    db, report, policy, service, _ = environment
+    before = all_rows(db)
+    context = issue(service)
+    trace, reached = [], []
+    db.set_trace_callback(trace.append)
+    try:
+        with pytest.raises(AdmissionRefused, match='^PERMISSION_DENIED$'):
+            with transaction(adapter, environment, tmp_path, context) as target:
+                assert target.admit_transfer_event(report, admission=context) == 'insert'
+                reached.append({'counts': event_counts(db), 'active': policy.active})
+                policy.grants = replace(policy.grants, resources=policy.grants.resources - {KEY_EVENT_7})
+                policy.generation += 1
+                target.admit_transfer_event(report, admission=context)
+    finally:
+        db.set_trace_callback(None)
+    assert reached and reached[0]['counts'] == (1, 2) and reached[0]['active'] > 0
+    assert all_rows(db) == before
+    assert not any(sql.upper() == 'COMMIT' for sql in trace)
+    assert any(sql.upper() == 'ROLLBACK' for sql in trace)
+    assert context.budget.used_work > 0 and policy.active == 0
+    OBSERVATIONS[f'{adapter}/second-unit-denied'] = {'reached': reached, 'trace': trace, 'rows_unchanged': True, 'charged_work': context.budget.used_work}
+
+
+def test_write_observations():
+    Path(os.environ['I6B_ADMISSION_OBSERVATIONS']).write_text(json.dumps(OBSERVATIONS, indent=2, sort_keys=True)+'\n')

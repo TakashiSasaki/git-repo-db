@@ -1,0 +1,64 @@
+{
+  "commands": [
+    {
+      "name": "collection",
+      "command": [
+        "/workspace/rr-env/bin/python",
+        "-m",
+        "pytest",
+        "-c",
+        "/workspace/git-repo-db/pyproject.toml",
+        "--rootdir",
+        "/workspace/rereview-m02",
+        "--confcutdir",
+        "/workspace/rereview-m02",
+        "-p",
+        "tests.conftest",
+        "-o",
+        "addopts=",
+        "-o",
+        "junit_family=xunit1",
+        "--collect-only",
+        "-q",
+        "/workspace/rereview-m02/test_fresh_digest_wire.py"
+      ],
+      "cwd": "/workspace/git-repo-db",
+      "exit": 0,
+      "elapsed": 0.41027140617370605
+    },
+    {
+      "name": "source",
+      "command": [
+        "/workspace/rr-env/bin/python",
+        "-m",
+        "pytest",
+        "-c",
+        "/workspace/git-repo-db/pyproject.toml",
+        "--rootdir",
+        "/workspace/rereview-m02",
+        "--confcutdir",
+        "/workspace/rereview-m02",
+        "-p",
+        "tests.conftest",
+        "-o",
+        "addopts=",
+        "-o",
+        "junit_family=xunit1",
+        "-q",
+        "/workspace/rereview-m02/test_fresh_digest_wire.py",
+        "--junitxml=/workspace/rereview-m02/source.junit.xml",
+        "--journal=/workspace/rereview-m02/source.journal.jsonl"
+      ],
+      "cwd": "/workspace/git-repo-db",
+      "exit": 0,
+      "elapsed": 0.3726499080657959
+    }
+  ],
+  "python": "/workspace/rr-env/bin/python",
+  "version": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+  "sqlite": "3.53.1",
+  "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+  "import": "/workspace/git-repo-db/src/repo_catalog/domain/exchange.py",
+  "import_sha256": "46c5d9c5f80a39ff967418d2662274fa8b70134f33050ac00c2e464b4dc10012",
+  "probe_sha256": "8b61910bc759429baea761a954e63e551ab8f3dee15dd48d7ed3c494577d6ebb"
+}

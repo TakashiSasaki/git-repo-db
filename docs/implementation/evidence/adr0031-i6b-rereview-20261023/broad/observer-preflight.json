@@ -1,0 +1,8 @@
+{
+  "monkeypatched_json_dumps_emitter": "PASS",
+  "observer_sha256": "d3f39ffa4b8a56c1d7e4561f57921b23c9f00a8e52c7c3cbe00c880e7c44cb5b",
+  "observation": {
+    "preflight": "captured original encoder remains usable"
+  },
+  "initial_setup_attempt": "system Python could not import pytest; corrected preflight uses rr-env before any pytest run"
+}

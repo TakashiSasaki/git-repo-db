@@ -1,0 +1,304 @@
+{
+  "runtime": {
+    "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+    "executable": "/workspace/rr-env/bin/python",
+    "sqlite": "3.53.1",
+    "source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9"
+  },
+  "origins": {
+    "repo_catalog.domain.context_dependencies": {
+      "path": "/workspace/rereview-m01/baseline/src/repo_catalog/domain/context_dependencies.py",
+      "sha256": "93d6d7bdbf14cd5c26d13c36a8e2e3bd65ae6f55a208941ada2353af65476fb0"
+    },
+    "repo_catalog.domain.exchange": {
+      "path": "/workspace/rereview-m01/baseline/src/repo_catalog/domain/exchange.py",
+      "sha256": "6709ad532ef5aef65118505d2270960c49a21521c68460da2044b897dae97957"
+    }
+  },
+  "saved_probe_sha256": "dec5aa650b847b18aee223e3ab79fe41faf644b620d12edfa7cf3b83c375555b",
+  "observations": [
+    {
+      "resources": 0,
+      "rows": 1,
+      "budget": 0,
+      "prior": 0,
+      "work": 41,
+      "parse_calls": 1,
+      "parse_characters": 2,
+      "emitted": 0,
+      "omission_reasons": [
+        "work_limit"
+      ]
+    },
+    {
+      "resources": 0,
+      "rows": 1,
+      "budget": 1,
+      "prior": 0,
+      "work": 41,
+      "parse_calls": 1,
+      "parse_characters": 2,
+      "emitted": 0,
+      "omission_reasons": [
+        "work_limit"
+      ]
+    },
+    {
+      "resources": 0,
+      "rows": 1,
+      "budget": 17,
+      "prior": 0,
+      "work": 41,
+      "parse_calls": 1,
+      "parse_characters": 2,
+      "emitted": 0,
+      "omission_reasons": [
+        "work_limit"
+      ]
+    },
+    {
+      "resources": 0,
+      "rows": 1,
+      "budget": 17,
+      "prior": 17,
+      "work": 58,
+      "parse_calls": 1,
+      "parse_characters": 2,
+      "emitted": 0,
+      "omission_reasons": [
+        "work_limit"
+      ]
+    },
+    {
+      "resources": 0,
+      "rows": 1,
+      "budget": 17,
+      "prior": 27,
+      "work": 68,
+      "parse_calls": 1,
+      "parse_characters": 2,
+      "emitted": 0,
+      "omission_reasons": [
+        "work_limit"
+      ]
+    },
+    {
+      "resources": 1,
+      "rows": 3,
+      "budget": 0,
+      "prior": 0,
+      "work": 93,
+      "parse_calls": 4,
+      "parse_characters": 629,
+      "emitted": 0,
+      "omission_reasons": [
+        "work_limit"
+      ]
+    },
+    {
+      "resources": 1,
+      "rows": 3,
+      "budget": 1,
+      "prior": 0,
+      "work": 93,
+      "parse_calls": 4,
+      "parse_characters": 629,
+      "emitted": 0,
+      "omission_reasons": [
+        "work_limit"
+      ]
+    },
+    {
+      "resources": 1,
+      "rows": 3,
+      "budget": 17,
+      "prior": 0,
+      "work": 93,
+      "parse_calls": 4,
+      "parse_characters": 629,
+      "emitted": 0,
+      "omission_reasons": [
+        "work_limit"
+      ]
+    },
+    {
+      "resources": 1,
+      "rows": 3,
+      "budget": 17,
+      "prior": 17,
+      "work": 110,
+      "parse_calls": 4,
+      "parse_characters": 629,
+      "emitted": 0,
+      "omission_reasons": [
+        "work_limit"
+      ]
+    },
+    {
+      "resources": 1,
+      "rows": 3,
+      "budget": 17,
+      "prior": 27,
+      "work": 120,
+      "parse_calls": 4,
+      "parse_characters": 629,
+      "emitted": 0,
+      "omission_reasons": [
+        "work_limit"
+      ]
+    },
+    {
+      "resources": 13,
+      "rows": 27,
+      "budget": 0,
+      "prior": 0,
+      "work": 717,
+      "parse_calls": 40,
+      "parse_characters": 8156,
+      "emitted": 0,
+      "omission_reasons": [
+        "work_limit"
+      ]
+    },
+    {
+      "resources": 13,
+      "rows": 27,
+      "budget": 1,
+      "prior": 0,
+      "work": 717,
+      "parse_calls": 40,
+      "parse_characters": 8156,
+      "emitted": 0,
+      "omission_reasons": [
+        "work_limit"
+      ]
+    },
+    {
+      "resources": 13,
+      "rows": 27,
+      "budget": 17,
+      "prior": 0,
+      "work": 717,
+      "parse_calls": 40,
+      "parse_characters": 8156,
+      "emitted": 0,
+      "omission_reasons": [
+        "work_limit"
+      ]
+    },
+    {
+      "resources": 13,
+      "rows": 27,
+      "budget": 17,
+      "prior": 17,
+      "work": 734,
+      "parse_calls": 40,
+      "parse_characters": 8156,
+      "emitted": 0,
+      "omission_reasons": [
+        "work_limit"
+      ]
+    },
+    {
+      "resources": 13,
+      "rows": 27,
+      "budget": 17,
+      "prior": 27,
+      "work": 744,
+      "parse_calls": 40,
+      "parse_characters": 8156,
+      "emitted": 0,
+      "omission_reasons": [
+        "work_limit"
+      ]
+    },
+    {
+      "resources": 500,
+      "rows": 1001,
+      "budget": 0,
+      "prior": 0,
+      "work": 26041,
+      "parse_calls": 1501,
+      "parse_characters": 314392,
+      "emitted": 0,
+      "omission_reasons": [
+        "work_limit"
+      ]
+    },
+    {
+      "resources": 500,
+      "rows": 1001,
+      "budget": 1,
+      "prior": 0,
+      "work": 26041,
+      "parse_calls": 1501,
+      "parse_characters": 314392,
+      "emitted": 0,
+      "omission_reasons": [
+        "work_limit"
+      ]
+    },
+    {
+      "resources": 500,
+      "rows": 1001,
+      "budget": 17,
+      "prior": 0,
+      "work": 26041,
+      "parse_calls": 1501,
+      "parse_characters": 314392,
+      "emitted": 0,
+      "omission_reasons": [
+        "work_limit"
+      ]
+    },
+    {
+      "resources": 500,
+      "rows": 1001,
+      "budget": 17,
+      "prior": 17,
+      "work": 26058,
+      "parse_calls": 1501,
+      "parse_characters": 314392,
+      "emitted": 0,
+      "omission_reasons": [
+        "work_limit"
+      ]
+    },
+    {
+      "resources": 500,
+      "rows": 1001,
+      "budget": 17,
+      "prior": 27,
+      "work": 26068,
+      "parse_calls": 1501,
+      "parse_characters": 314392,
+      "emitted": 0,
+      "omission_reasons": [
+        "work_limit"
+      ]
+    }
+  ],
+  "roots": [
+    {
+      "root_keys": 20000,
+      "set_argument_lengths": [
+        20000,
+        16
+      ],
+      "code": "MALFORMED_SECTION",
+      "tracemalloc_current": 1996,
+      "tracemalloc_peak": 1052148
+    },
+    {
+      "root_keys": 40000,
+      "set_argument_lengths": [
+        40000,
+        16
+      ],
+      "code": "MALFORMED_SECTION",
+      "tracemalloc_current": 1548,
+      "tracemalloc_peak": 2100580
+    }
+  ],
+  "limits": "Logical parse counts and individual tracemalloc peaks excluding preconstructed caller inputs and patch setup; no elapsed-time or statistical benchmark claim. Two roots run serially in each process."
+}

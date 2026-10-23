@@ -1,0 +1,35 @@
+from pathlib import Path
+import hashlib,json,os,shutil,subprocess,sys,time
+ROOT=Path('/workspace/git-repo-db');WORK=Path('/workspace/rereview-distribution');OUT=WORK/'evidence';SRC=WORK/'frozen';outside=WORK/'outside';records=[]
+def sha(p):return hashlib.sha256(Path(p).read_bytes()).hexdigest()
+def write(p,v):Path(p).write_text(json.dumps(v,indent=2,ensure_ascii=False,default=str)+'\n')
+def run(name,args,env,cwd=outside):
+ start=time.time()
+ with (OUT/(name+'.log')).open('w') as f:p=subprocess.run(list(map(str,args)),cwd=cwd,env=env,stdout=f,stderr=subprocess.STDOUT)
+ r={'name':name,'argv':list(map(str,args)),'cwd':str(cwd),'exit_code':p.returncode,'started_epoch':start,'elapsed_seconds':time.time()-start};records.append(r);write(OUT/'extra-processes.json',records);print(name,p.returncode,flush=True);return p.returncode
+sys.path.insert(0,str(SRC));from scripts import verify_i5_offline as evidence
+lanes={};inputs=[]
+def stage(lane,path):
+ p=SRC/path;q=outside/'tests/unit'/p.name.removesuffix('.txt');shutil.copy2(p,q);assert sha(p)==sha(q)
+ target=str(q.relative_to(outside));lanes.setdefault(lane,[]).append(target);inputs.append({'lane':lane,'frozen_source':str(p),'staged':target,'sha256':sha(p)})
+old='docs/implementation/evidence/adr0031-i6b-independent-20261023/'
+for path in ['wire/test_independent_wire.py.txt','planner/test_planner_independent.py.txt','admission/test_commit_boundary.py.txt']:stage('independent',old+path)
+stage('resolved-wire',old+'wire/test_resolved_wire.py.txt')
+for path in ['wire/test_digest_contract.py.txt','planner/test_planner_work_budget_contract.py.txt']:stage('counterexamples',old+path)
+stage('author-extra','docs/implementation/evidence/adr0031-i6b-author-20261023/tools/test_i6b_extra.py.txt')
+for path in sys.argv[1:]:
+ assert (SRC/path).is_file() and sha(SRC/path)==sha(outside/path);lanes.setdefault('new-regressions',[]).append(path);inputs.append({'lane':'new-regressions','frozen_source':str(SRC/path),'staged':path,'sha256':sha(SRC/path)})
+write(OUT/'extra-probe-inputs.json',inputs);write(OUT/'extra-targets.json',lanes)
+results={}
+for form in ['direct','derived']:
+ venv=WORK/(form+'-venv');py=venv/'bin/python'
+ for lane,targets in lanes.items():
+  name=form+'-'+lane;env=dict(os.environ,PATH=str(venv/'bin')+os.pathsep+os.environ['PATH'],TMPDIR=str(WORK),PYTHONPATH=str(outside/'tests/support/network_guard'),GIT_ALLOW_PROTOCOL='file',I6B_DIST_IMPORTS=str(OUT/(name+'-imports.json')),WIRE_IMPORT_ROOT=str(venv/'lib/python3.12/site-packages'),WIRE_REFUSALS=str(OUT/(name+'-wire-refusals.jsonl')),I6B_ADMISSION_OBSERVATIONS=str(OUT/(name+'-admission-observations.json')),UV_CACHE_DIR='/workspace/.uv-cache',I6B_EXTRA_SAVED_VECTOR_DIR=str(SRC/'docs/implementation/evidence/adr0031-i6b-author-20261023/vectors'),I6B_EXTRA_VECTOR_DIR=str(OUT/(name+'-vectors')))
+  for k in ['GH_TOKEN','GITHUB_TOKEN','PYTHONHOME']:env.pop(k,None)
+  args=[py,'-m','pytest','-q','-s','--tb=long','-c',outside/'pytest.ini','--rootdir='+str(outside),'--confcutdir='+str(outside),'-o','junit_family=xunit1',*targets]
+  assert run(name+'-collect',args+['--collect-only'],env)==0
+  nodes=evidence.nodes(OUT/(name+'-collect.log'));(OUT/(name+'-selected.txt')).write_text('\n'.join(nodes)+'\n');xml=OUT/(name+'.xml');journal=OUT/(name+'.jsonl');code=run(name,args+['--junitxml='+str(xml),'--journal='+str(journal),'--basetemp='+str(WORK/(name+'-tmp'))],env)
+  result={'exit_code':code,'collected':len(nodes),**evidence.outcomes(xml),'reconciliation':evidence.reconciliation(nodes,xml,journal)};write(OUT/(name+'-execution.json'),result);results[name]=result
+  assert run(name+'-measure-after',[py,outside/'measure.py',OUT/(name+'-runtime-after.json')],env)==0
+write(OUT/'extra-summary.json',{'results':results,'processes':records,'scope':'Fresh independent installed invocations using attributed saved probe bytes; overlapping cohorts are not summed; no Release acceptance'})
+shutil.copyfile(__file__,OUT/'run_extra.py.txt')

@@ -1,0 +1,42 @@
+{
+  "profile_version": 1,
+  "invocation_id": "fts-1792767965-08025e36",
+  "name": "fts",
+  "series": "fts",
+  "mode": "sequential",
+  "workers": 1,
+  "runtime": {
+    "python": "3.12.15",
+    "executable": "/home/runner/work/_temp/product-python/python/bin/python",
+    "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+    "sqlite": "3.53.1",
+    "git": "git version 2.55.0",
+    "cpu_count": 4,
+    "affinity": 4,
+    "cpu_quota": null,
+    "commit_sha": "99477234735b9f45cbb4d0634bb8372eaf120710",
+    "tree_sha": "4aa8ddf49fb52d0b903db0b0bfce00ccea2fae0c",
+    "run_id": "39975300074",
+    "run_attempt": "1",
+    "feature_sha": "61e44291e293f773904a0127606e20c8cb83c95e",
+    "tracked_changes": false,
+    "dirty": false
+  },
+  "started_at": "2026-10-23T15:06:05.154459+00:00",
+  "completed_at": "2026-10-23T15:06:05.173409+00:00",
+  "command": [
+    "uv",
+    "run",
+    "--no-sync",
+    "python",
+    "-c",
+    "import sqlite3; print(sqlite3.sqlite_version); c=sqlite3.connect(':memory:'); c.execute(\"CREATE VIRTUAL TABLE f USING fts5(body,tokenize='trigram case_sensitive 1',content='',detail=full)\")"
+  ],
+  "wall_seconds": 0.01892184999999813,
+  "exit_code": 0,
+  "interrupted": false,
+  "cumulative_test_seconds": 0.01892184999999813,
+  "artifacts": {
+    "profile": "invocations/fts-fts-1792767965-08025e36.json"
+  }
+}

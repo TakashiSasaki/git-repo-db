@@ -1,0 +1,44 @@
+{
+  "profile_version": 1,
+  "invocation_id": "lint-1792767964-3de47be8",
+  "name": "lint",
+  "series": "lint",
+  "mode": "sequential",
+  "workers": 1,
+  "runtime": {
+    "python": "3.12.15",
+    "executable": "/home/runner/work/_temp/product-python/python/bin/python",
+    "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+    "sqlite": "3.53.1",
+    "git": "git version 2.55.0",
+    "cpu_count": 4,
+    "affinity": 4,
+    "cpu_quota": null,
+    "commit_sha": "99477234735b9f45cbb4d0634bb8372eaf120710",
+    "tree_sha": "4aa8ddf49fb52d0b903db0b0bfce00ccea2fae0c",
+    "run_id": "39975300074",
+    "run_attempt": "1",
+    "feature_sha": "61e44291e293f773904a0127606e20c8cb83c95e",
+    "tracked_changes": false,
+    "dirty": false
+  },
+  "started_at": "2026-10-23T15:06:04.867530+00:00",
+  "completed_at": "2026-10-23T15:06:04.935213+00:00",
+  "command": [
+    "uv",
+    "run",
+    "--no-sync",
+    "ruff",
+    "check",
+    "src",
+    "tests",
+    "scripts"
+  ],
+  "wall_seconds": 0.06765054400000281,
+  "exit_code": 0,
+  "interrupted": false,
+  "cumulative_test_seconds": 0.06765054400000281,
+  "artifacts": {
+    "profile": "invocations/lint-lint-1792767964-3de47be8.json"
+  }
+}

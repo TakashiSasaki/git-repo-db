@@ -1,0 +1,2 @@
+[console_scripts]
+repo-catalog = repo_catalog.cli.main:main

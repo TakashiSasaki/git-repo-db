@@ -1,0 +1,20 @@
+{
+  "command": [
+    "/workspace/rr-env/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "--collect-only",
+    "-o",
+    "addopts=",
+    "tests",
+    "-m",
+    "not live and not benchmark"
+  ],
+  "cwd": "/workspace/git-repo-db",
+  "started_epoch": 1792769435.6541252,
+  "elapsed_seconds": 4.614,
+  "exit_code": 0,
+  "collected": 6344,
+  "duplicates": 0
+}

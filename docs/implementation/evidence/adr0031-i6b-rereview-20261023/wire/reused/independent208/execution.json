@@ -1,0 +1,71 @@
+{
+  "python": "/workspace/rr-env/bin/python",
+  "python_version": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+  "sqlite": "3.53.1",
+  "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+  "exchange_origin": "/workspace/git-repo-db/src/repo_catalog/domain/exchange.py",
+  "exchange_sha256": "46c5d9c5f80a39ff967418d2662274fa8b70134f33050ac00c2e464b4dc10012",
+  "commands": [
+    {
+      "stage": "collection",
+      "command": [
+        "/workspace/rr-env/bin/python",
+        "-m",
+        "pytest",
+        "-p",
+        "tests.conftest",
+        "-c",
+        "/workspace/git-repo-db/pyproject.toml",
+        "--rootdir=/workspace/rereview-m02/reused/probes",
+        "--confcutdir=/workspace/rereview-m02/reused/probes",
+        "-o",
+        "addopts=",
+        "-o",
+        "junit_family=xunit1",
+        "-q",
+        "--tb=long",
+        "/workspace/rereview-m02/reused/probes/test_independent_wire.py",
+        "/workspace/rereview-m02/reused/probes/test_planner_independent.py",
+        "/workspace/rereview-m02/reused/probes/test_commit_boundary.py",
+        "/workspace/rereview-m02/reused/probes/test_resolved_wire.py",
+        "--collect-only"
+      ],
+      "cwd": "/workspace/git-repo-db",
+      "exit": 0,
+      "started_epoch": 1792769546.0556695,
+      "elapsed_seconds": 0.8529140949249268
+    },
+    {
+      "stage": "pytest",
+      "command": [
+        "/workspace/rr-env/bin/python",
+        "-m",
+        "pytest",
+        "-p",
+        "tests.conftest",
+        "-c",
+        "/workspace/git-repo-db/pyproject.toml",
+        "--rootdir=/workspace/rereview-m02/reused/probes",
+        "--confcutdir=/workspace/rereview-m02/reused/probes",
+        "-o",
+        "addopts=",
+        "-o",
+        "junit_family=xunit1",
+        "-q",
+        "--tb=long",
+        "/workspace/rereview-m02/reused/probes/test_independent_wire.py",
+        "/workspace/rereview-m02/reused/probes/test_planner_independent.py",
+        "/workspace/rereview-m02/reused/probes/test_commit_boundary.py",
+        "/workspace/rereview-m02/reused/probes/test_resolved_wire.py",
+        "--junitxml=/workspace/rereview-m02/reused/independent208/junit.xml",
+        "--journal=/workspace/rereview-m02/reused/independent208/journal.jsonl",
+        "--basetemp=/workspace/rereview-m02/reused/independent208-temp"
+      ],
+      "cwd": "/workspace/git-repo-db",
+      "exit": 0,
+      "started_epoch": 1792769546.9085882,
+      "elapsed_seconds": 4.696655750274658
+    }
+  ],
+  "completed": true
+}

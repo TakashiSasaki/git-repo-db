@@ -1,0 +1,71 @@
+{
+  "verdict": "scoped PASS",
+  "reviewed_head": "61e44291e293f773904a0127606e20c8cb83c95e",
+  "reviewed_tree": "4aa8ddf49fb52d0b903db0b0bfce00ccea2fae0c",
+  "parent_review_head": "8521158f2996f125d2fcaac36ea79ac1296a7cf7",
+  "severity_counts": {
+    "Critical": 0,
+    "High": 0,
+    "Medium": 0,
+    "Low": 0
+  },
+  "findings": [],
+  "resolved_findings": [
+    {
+      "id": "I6B-IR-M01",
+      "severity": "Medium",
+      "status": "closed_in_reviewed_I6B_scope",
+      "requirements": [
+        "R04",
+        "R13"
+      ],
+      "evidence": [
+        "planner/REPORT.md",
+        "distribution/REPORT.md",
+        "broad/source-full/subsets.json"
+      ]
+    },
+    {
+      "id": "I6B-IR-M02",
+      "severity": "Medium",
+      "status": "closed_in_reviewed_I6B_scope",
+      "requirements": [
+        "R03"
+      ],
+      "evidence": [
+        "wire/REPORT.md",
+        "distribution/REPORT.md"
+      ]
+    }
+  ],
+  "i6c_review_gate_ready": true,
+  "i6c_started": false,
+  "normal_transfer_enabled": false,
+  "release_accepted": false,
+  "remaining_limits": [
+    "299 unchanged source non-successes",
+    "original Access smoke exit1 PERMISSION_DENIED with subsequent assertions unexecuted",
+    "120 historical evidence files omitted by existing sdist rules; all product/test/build inputs retained",
+    "two live/benchmark opt-ins unexecuted",
+    "new56 absent from hosted Author CI",
+    "I6C/I7/I8/integrated runtime/Release gates deferred"
+  ],
+  "source_full_single_invocation": {
+    "selected": 6344,
+    "passed": 6045,
+    "failed": 279,
+    "error": 20,
+    "skipped": 0,
+    "xfail": 0,
+    "xpass": 0,
+    "passing_subtest_reports_separate": 57,
+    "exit_code": 1
+  },
+  "comparison": {
+    "existing_unsuccessful_node_phase_set_equal": true,
+    "exception_refusal_actual_frame_functions_equal": true,
+    "one_frame_coordinate_shift_retained": true,
+    "diagnostic745_assertion_AST_entry_sets_equal": true
+  },
+  "authorization": "New evidence commit/push and direct-base Draft review PR only; no existing Author PR writes, integration, release or deployment."
+}

@@ -1,0 +1,314 @@
+{
+  "derived-author-extra-runtime-after.json": {
+    "archive_members_equal_installed_except_record": 163,
+    "archive_record_validated_separately": true,
+    "installed_record_rows_validated": 169,
+    "installed_metadata_equals_archive": true,
+    "generated_installed_rows": [
+      "../../../bin/repo-catalog",
+      "repo_catalog-0.2.0.dist-info/INSTALLER",
+      "repo_catalog-0.2.0.dist-info/REQUESTED",
+      "repo_catalog-0.2.0.dist-info/direct_url.json",
+      "repo_catalog-0.2.0.dist-info/uv_cache.json"
+    ]
+  },
+  "derived-counterexamples-runtime-after.json": {
+    "archive_members_equal_installed_except_record": 163,
+    "archive_record_validated_separately": true,
+    "installed_record_rows_validated": 169,
+    "installed_metadata_equals_archive": true,
+    "generated_installed_rows": [
+      "../../../bin/repo-catalog",
+      "repo_catalog-0.2.0.dist-info/INSTALLER",
+      "repo_catalog-0.2.0.dist-info/REQUESTED",
+      "repo_catalog-0.2.0.dist-info/direct_url.json",
+      "repo_catalog-0.2.0.dist-info/uv_cache.json"
+    ]
+  },
+  "derived-fresh-test_fresh_digest_wire-runtime-after.json": {
+    "archive_members_equal_installed_except_record": 163,
+    "archive_record_validated_separately": true,
+    "installed_record_rows_validated": 169,
+    "installed_metadata_equals_archive": true,
+    "generated_installed_rows": [
+      "../../../bin/repo-catalog",
+      "repo_catalog-0.2.0.dist-info/INSTALLER",
+      "repo_catalog-0.2.0.dist-info/REQUESTED",
+      "repo_catalog-0.2.0.dist-info/direct_url.json",
+      "repo_catalog-0.2.0.dist-info/uv_cache.json"
+    ]
+  },
+  "derived-fresh-test_m01_new-runtime-after.json": {
+    "archive_members_equal_installed_except_record": 163,
+    "archive_record_validated_separately": true,
+    "installed_record_rows_validated": 169,
+    "installed_metadata_equals_archive": true,
+    "generated_installed_rows": [
+      "../../../bin/repo-catalog",
+      "repo_catalog-0.2.0.dist-info/INSTALLER",
+      "repo_catalog-0.2.0.dist-info/REQUESTED",
+      "repo_catalog-0.2.0.dist-info/direct_url.json",
+      "repo_catalog-0.2.0.dist-info/uv_cache.json"
+    ]
+  },
+  "derived-fresh-test_retained_admission-runtime-after.json": {
+    "archive_members_equal_installed_except_record": 163,
+    "archive_record_validated_separately": true,
+    "installed_record_rows_validated": 169,
+    "installed_metadata_equals_archive": true,
+    "generated_installed_rows": [
+      "../../../bin/repo-catalog",
+      "repo_catalog-0.2.0.dist-info/INSTALLER",
+      "repo_catalog-0.2.0.dist-info/REQUESTED",
+      "repo_catalog-0.2.0.dist-info/direct_url.json",
+      "repo_catalog-0.2.0.dist-info/uv_cache.json"
+    ]
+  },
+  "derived-independent-runtime-after.json": {
+    "archive_members_equal_installed_except_record": 163,
+    "archive_record_validated_separately": true,
+    "installed_record_rows_validated": 169,
+    "installed_metadata_equals_archive": true,
+    "generated_installed_rows": [
+      "../../../bin/repo-catalog",
+      "repo_catalog-0.2.0.dist-info/INSTALLER",
+      "repo_catalog-0.2.0.dist-info/REQUESTED",
+      "repo_catalog-0.2.0.dist-info/direct_url.json",
+      "repo_catalog-0.2.0.dist-info/uv_cache.json"
+    ]
+  },
+  "derived-new-regressions-runtime-after.json": {
+    "archive_members_equal_installed_except_record": 163,
+    "archive_record_validated_separately": true,
+    "installed_record_rows_validated": 169,
+    "installed_metadata_equals_archive": true,
+    "generated_installed_rows": [
+      "../../../bin/repo-catalog",
+      "repo_catalog-0.2.0.dist-info/INSTALLER",
+      "repo_catalog-0.2.0.dist-info/REQUESTED",
+      "repo_catalog-0.2.0.dist-info/direct_url.json",
+      "repo_catalog-0.2.0.dist-info/uv_cache.json"
+    ]
+  },
+  "derived-original-smoke-v2-runtime-after.json": {
+    "archive_members_equal_installed_except_record": 163,
+    "archive_record_validated_separately": true,
+    "installed_record_rows_validated": 169,
+    "installed_metadata_equals_archive": true,
+    "generated_installed_rows": [
+      "../../../bin/repo-catalog",
+      "repo_catalog-0.2.0.dist-info/INSTALLER",
+      "repo_catalog-0.2.0.dist-info/REQUESTED",
+      "repo_catalog-0.2.0.dist-info/direct_url.json",
+      "repo_catalog-0.2.0.dist-info/uv_cache.json"
+    ]
+  },
+  "derived-original-smoke-v2-runtime-before.json": {
+    "archive_members_equal_installed_except_record": 163,
+    "archive_record_validated_separately": true,
+    "installed_record_rows_validated": 169,
+    "installed_metadata_equals_archive": true,
+    "generated_installed_rows": [
+      "../../../bin/repo-catalog",
+      "repo_catalog-0.2.0.dist-info/INSTALLER",
+      "repo_catalog-0.2.0.dist-info/REQUESTED",
+      "repo_catalog-0.2.0.dist-info/direct_url.json",
+      "repo_catalog-0.2.0.dist-info/uv_cache.json"
+    ]
+  },
+  "derived-resolved-wire-runtime-after.json": {
+    "archive_members_equal_installed_except_record": 163,
+    "archive_record_validated_separately": true,
+    "installed_record_rows_validated": 169,
+    "installed_metadata_equals_archive": true,
+    "generated_installed_rows": [
+      "../../../bin/repo-catalog",
+      "repo_catalog-0.2.0.dist-info/INSTALLER",
+      "repo_catalog-0.2.0.dist-info/REQUESTED",
+      "repo_catalog-0.2.0.dist-info/direct_url.json",
+      "repo_catalog-0.2.0.dist-info/uv_cache.json"
+    ]
+  },
+  "derived-runtime-after.json": {
+    "archive_members_equal_installed_except_record": 163,
+    "archive_record_validated_separately": true,
+    "installed_record_rows_validated": 169,
+    "installed_metadata_equals_archive": true,
+    "generated_installed_rows": [
+      "../../../bin/repo-catalog",
+      "repo_catalog-0.2.0.dist-info/INSTALLER",
+      "repo_catalog-0.2.0.dist-info/REQUESTED",
+      "repo_catalog-0.2.0.dist-info/direct_url.json",
+      "repo_catalog-0.2.0.dist-info/uv_cache.json"
+    ]
+  },
+  "derived-runtime-before.json": {
+    "archive_members_equal_installed_except_record": 163,
+    "archive_record_validated_separately": true,
+    "installed_record_rows_validated": 169,
+    "installed_metadata_equals_archive": true,
+    "generated_installed_rows": [
+      "../../../bin/repo-catalog",
+      "repo_catalog-0.2.0.dist-info/INSTALLER",
+      "repo_catalog-0.2.0.dist-info/REQUESTED",
+      "repo_catalog-0.2.0.dist-info/direct_url.json",
+      "repo_catalog-0.2.0.dist-info/uv_cache.json"
+    ]
+  },
+  "direct-author-extra-runtime-after.json": {
+    "archive_members_equal_installed_except_record": 163,
+    "archive_record_validated_separately": true,
+    "installed_record_rows_validated": 169,
+    "installed_metadata_equals_archive": true,
+    "generated_installed_rows": [
+      "../../../bin/repo-catalog",
+      "repo_catalog-0.2.0.dist-info/INSTALLER",
+      "repo_catalog-0.2.0.dist-info/REQUESTED",
+      "repo_catalog-0.2.0.dist-info/direct_url.json",
+      "repo_catalog-0.2.0.dist-info/uv_cache.json"
+    ]
+  },
+  "direct-counterexamples-runtime-after.json": {
+    "archive_members_equal_installed_except_record": 163,
+    "archive_record_validated_separately": true,
+    "installed_record_rows_validated": 169,
+    "installed_metadata_equals_archive": true,
+    "generated_installed_rows": [
+      "../../../bin/repo-catalog",
+      "repo_catalog-0.2.0.dist-info/INSTALLER",
+      "repo_catalog-0.2.0.dist-info/REQUESTED",
+      "repo_catalog-0.2.0.dist-info/direct_url.json",
+      "repo_catalog-0.2.0.dist-info/uv_cache.json"
+    ]
+  },
+  "direct-fresh-test_fresh_digest_wire-runtime-after.json": {
+    "archive_members_equal_installed_except_record": 163,
+    "archive_record_validated_separately": true,
+    "installed_record_rows_validated": 169,
+    "installed_metadata_equals_archive": true,
+    "generated_installed_rows": [
+      "../../../bin/repo-catalog",
+      "repo_catalog-0.2.0.dist-info/INSTALLER",
+      "repo_catalog-0.2.0.dist-info/REQUESTED",
+      "repo_catalog-0.2.0.dist-info/direct_url.json",
+      "repo_catalog-0.2.0.dist-info/uv_cache.json"
+    ]
+  },
+  "direct-fresh-test_m01_new-runtime-after.json": {
+    "archive_members_equal_installed_except_record": 163,
+    "archive_record_validated_separately": true,
+    "installed_record_rows_validated": 169,
+    "installed_metadata_equals_archive": true,
+    "generated_installed_rows": [
+      "../../../bin/repo-catalog",
+      "repo_catalog-0.2.0.dist-info/INSTALLER",
+      "repo_catalog-0.2.0.dist-info/REQUESTED",
+      "repo_catalog-0.2.0.dist-info/direct_url.json",
+      "repo_catalog-0.2.0.dist-info/uv_cache.json"
+    ]
+  },
+  "direct-fresh-test_retained_admission-runtime-after.json": {
+    "archive_members_equal_installed_except_record": 163,
+    "archive_record_validated_separately": true,
+    "installed_record_rows_validated": 169,
+    "installed_metadata_equals_archive": true,
+    "generated_installed_rows": [
+      "../../../bin/repo-catalog",
+      "repo_catalog-0.2.0.dist-info/INSTALLER",
+      "repo_catalog-0.2.0.dist-info/REQUESTED",
+      "repo_catalog-0.2.0.dist-info/direct_url.json",
+      "repo_catalog-0.2.0.dist-info/uv_cache.json"
+    ]
+  },
+  "direct-independent-runtime-after.json": {
+    "archive_members_equal_installed_except_record": 163,
+    "archive_record_validated_separately": true,
+    "installed_record_rows_validated": 169,
+    "installed_metadata_equals_archive": true,
+    "generated_installed_rows": [
+      "../../../bin/repo-catalog",
+      "repo_catalog-0.2.0.dist-info/INSTALLER",
+      "repo_catalog-0.2.0.dist-info/REQUESTED",
+      "repo_catalog-0.2.0.dist-info/direct_url.json",
+      "repo_catalog-0.2.0.dist-info/uv_cache.json"
+    ]
+  },
+  "direct-new-regressions-runtime-after.json": {
+    "archive_members_equal_installed_except_record": 163,
+    "archive_record_validated_separately": true,
+    "installed_record_rows_validated": 169,
+    "installed_metadata_equals_archive": true,
+    "generated_installed_rows": [
+      "../../../bin/repo-catalog",
+      "repo_catalog-0.2.0.dist-info/INSTALLER",
+      "repo_catalog-0.2.0.dist-info/REQUESTED",
+      "repo_catalog-0.2.0.dist-info/direct_url.json",
+      "repo_catalog-0.2.0.dist-info/uv_cache.json"
+    ]
+  },
+  "direct-original-smoke-v2-runtime-after.json": {
+    "archive_members_equal_installed_except_record": 163,
+    "archive_record_validated_separately": true,
+    "installed_record_rows_validated": 169,
+    "installed_metadata_equals_archive": true,
+    "generated_installed_rows": [
+      "../../../bin/repo-catalog",
+      "repo_catalog-0.2.0.dist-info/INSTALLER",
+      "repo_catalog-0.2.0.dist-info/REQUESTED",
+      "repo_catalog-0.2.0.dist-info/direct_url.json",
+      "repo_catalog-0.2.0.dist-info/uv_cache.json"
+    ]
+  },
+  "direct-original-smoke-v2-runtime-before.json": {
+    "archive_members_equal_installed_except_record": 163,
+    "archive_record_validated_separately": true,
+    "installed_record_rows_validated": 169,
+    "installed_metadata_equals_archive": true,
+    "generated_installed_rows": [
+      "../../../bin/repo-catalog",
+      "repo_catalog-0.2.0.dist-info/INSTALLER",
+      "repo_catalog-0.2.0.dist-info/REQUESTED",
+      "repo_catalog-0.2.0.dist-info/direct_url.json",
+      "repo_catalog-0.2.0.dist-info/uv_cache.json"
+    ]
+  },
+  "direct-resolved-wire-runtime-after.json": {
+    "archive_members_equal_installed_except_record": 163,
+    "archive_record_validated_separately": true,
+    "installed_record_rows_validated": 169,
+    "installed_metadata_equals_archive": true,
+    "generated_installed_rows": [
+      "../../../bin/repo-catalog",
+      "repo_catalog-0.2.0.dist-info/INSTALLER",
+      "repo_catalog-0.2.0.dist-info/REQUESTED",
+      "repo_catalog-0.2.0.dist-info/direct_url.json",
+      "repo_catalog-0.2.0.dist-info/uv_cache.json"
+    ]
+  },
+  "direct-runtime-after.json": {
+    "archive_members_equal_installed_except_record": 163,
+    "archive_record_validated_separately": true,
+    "installed_record_rows_validated": 169,
+    "installed_metadata_equals_archive": true,
+    "generated_installed_rows": [
+      "../../../bin/repo-catalog",
+      "repo_catalog-0.2.0.dist-info/INSTALLER",
+      "repo_catalog-0.2.0.dist-info/REQUESTED",
+      "repo_catalog-0.2.0.dist-info/direct_url.json",
+      "repo_catalog-0.2.0.dist-info/uv_cache.json"
+    ]
+  },
+  "direct-runtime-before.json": {
+    "archive_members_equal_installed_except_record": 163,
+    "archive_record_validated_separately": true,
+    "installed_record_rows_validated": 169,
+    "installed_metadata_equals_archive": true,
+    "generated_installed_rows": [
+      "../../../bin/repo-catalog",
+      "repo_catalog-0.2.0.dist-info/INSTALLER",
+      "repo_catalog-0.2.0.dist-info/REQUESTED",
+      "repo_catalog-0.2.0.dist-info/direct_url.json",
+      "repo_catalog-0.2.0.dist-info/uv_cache.json"
+    ]
+  }
+}

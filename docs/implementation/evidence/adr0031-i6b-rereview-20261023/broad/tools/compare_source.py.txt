@@ -1,0 +1,163 @@
+"""Reconcile actual ordinary phases and compare frozen #152 with Author fix runs.
+
+No test outcomes are changed. Subtest reports remain explicit; aggregate values
+are always for one invocation. Assertion comparison uses separate diagnostics.
+"""
+import argparse
+import ast
+from collections import Counter, defaultdict
+from functools import lru_cache
+import gzip
+import json
+from pathlib import Path
+import re
+import subprocess
+import xml.etree.ElementTree as ET
+
+def read(path):
+    if not path.exists(): path=Path(str(path)+'.gz')
+    raw=path.read_bytes()
+    return gzip.decompress(raw) if path.suffix=='.gz' else raw
+
+def events(path):
+    return [json.loads(line) for line in read(path).splitlines() if line]
+
+def write(path,value):
+    data=(json.dumps(value,indent=2,ensure_ascii=False)+'\n').encode()
+    if path.suffix=='.gz': data=gzip.compress(data,mtime=0)
+    path.write_bytes(data)
+
+def nodekey(node):
+    prefix,sep,param=node.partition('[')
+    parts=prefix.split('::')
+    return '.'.join([parts[0][:-3].replace('/','.'),*parts[1:-1]]),parts[-1]+sep+param
+
+def parse(directory,name):
+    nodes=read(directory/(name+'.selected.txt')).decode().splitlines()
+    keys={nodekey(n):n for n in nodes}
+    assert len(nodes)==len(set(nodes))==len(keys)
+    outcomes={};failures={}
+    for case in ET.fromstring(read(directory/(name+'.xml'))).iter('testcase'):
+        node=keys[case.get('classname'),case.get('name')]
+        assert node not in outcomes
+        outcome=('passed',None)
+        for tag,status,phase in [('failure','failed','call'),('error','error','setup'),('skipped','skipped',None)]:
+            element=case.find(tag)
+            if element is None:continue
+            if 'failed on teardown' in element.get('message',''):phase='teardown'
+            outcome=(status,phase)
+            failures[node]={'message':element.get('message',''),'trace':element.text or ''}
+            break
+        outcomes[node]=outcome
+    assert set(outcomes)==set(nodes)
+    journal=events(directory/(name+'.jsonl'))
+    assert Counter(x['nodeid'] for x in journal if x['event']=='start')==Counter(nodes)
+    controller=events(directory/'master.reports.jsonl')
+    typed=[r for r in controller if r['event']=='controller_report']
+    ordinary=[r for r in typed if r.get('subtest_context') is None]
+    additional=[r for r in typed if r.get('subtest_context') is not None]
+    assert all(r['report_type']=='_pytest.subtests.SubtestReport' for r in additional)
+    assert Counter((r['nodeid'],r['phase'],r['outcome'],round(r['duration'],6)) for r in typed)==Counter((r['nodeid'],r['phase'],r['outcome'],round(r['duration'],6)) for r in journal if r['event']=='phase')
+    worker_paths=sorted(directory.glob('gw*.reports.jsonl*'))
+    worker=[r for path in worker_paths for r in events(path)]
+    if worker:
+        assert Counter((r['nodeid'],r['phase'],r['outcome']) for r in worker if r['event']=='report')==Counter((r['nodeid'],r['phase'],r['outcome']) for r in typed)
+        assert len([r for r in worker if r['event']=='finish'])==len(worker_paths)
+    phases={(r['nodeid'],r['phase']):r['outcome'] for r in ordinary}
+    assert len(phases)==len(ordinary)
+    for node in nodes:
+        assert (node,'setup') in phases and (node,'teardown') in phases
+        assert ((node,'call') in phases)==(phases[node,'setup']=='passed')
+        failed=[p for p in ('setup','call','teardown') if phases.get((node,p))=='failed']
+        if failed: inferred=('failed','call') if failed[0]=='call' else ('error',failed[0])
+        elif any(r['nodeid']==node and r['outcome']=='failed' for r in additional):inferred=('failed','call')
+        elif any(phases.get((node,p))=='skipped' for p in ('setup','call','teardown')):inferred=('skipped',None)
+        else:inferred=('passed',None)
+        assert outcomes[node]==inferred,(node,outcomes[node],inferred)
+    execution=json.loads(read(directory/(name+'.execution.json')))
+    finishes=[r for r in journal if r['event']=='finish']
+    assert len(finishes)==1 and finishes[0]['exitstatus']==execution['exit_code']
+    before=json.loads(read(directory/'binding-before.json'))
+    after=json.loads(read(directory/'binding-after.json'))
+    assert all(before[k]==after[k] and before[k] for k in ('head','tree','inputs'))
+    assert before['tracked_status']==after['tracked_status']==''
+    summary={'selected':len(nodes),'counts':dict(Counter(x[0] for x in outcomes.values())),
+        'normal_phase_reports':len(ordinary),'additional_subtest_reports':additional,
+        'exit_code':execution['exit_code'],'head':before['head'],'tree':before['tree'],
+        'input_count':len(before['inputs']),'input_hashes_unchanged':True,
+        'selected_junit_journal_starts_and_ordinary_phases_exact':True}
+    return outcomes,failures,summary
+
+def signature(failure):
+    message=failure.get('message','').splitlines()
+    primary=message[0] if message else ''
+    frames=[]
+    for path,line,function in re.findall(r'^([^\n:]+\.py):(\d+):(?: in (\w+))?',failure.get('trace',''),re.M):
+        match=re.search(r'(tests/.*|src/repo_catalog/.*)',path)
+        if match: frames.append({'path':match.group(),'line':int(line),'function':function})
+    return {'primary_message':primary,
+        'primary_exception_types':sorted(set(re.findall(r'([\w.]+(?:Error|Refused|Stage|Failure)):',primary))),
+        'primary_refusal_codes':sorted(set(re.findall(r'\b(?:I2_[A-Z_]+|MALFORMED_ROW|PERMISSION_DENIED|OMITTED_BY_SELECTION|INCOMPLETE_[A-Z_]+|MISSING_DEPENDENCY|UNQUALIFIED_MAPPING|QS10_PARENT_INELIGIBLE)\b',primary))),
+        'frames':frames}
+
+def traces(directory):
+    assertions=defaultdict(set);exceptions=defaultdict(list)
+    for path in (directory/'trace').glob('*.jsonl*'):
+        for row in events(path):
+            node=row.get('nodeid')
+            if not node:continue
+            if row['event']=='assertion_line':assertions[node].add((row.get('phase'),row['path'],row['line'],row['function']))
+            elif row['event'] in ('admission_exception','typed_exception'):
+                exceptions[node].append({k:row[k] for k in ('phase','exception_type','message','code','stack')})
+    return assertions,exceptions
+
+@lru_cache(None)
+def assertion_map(root,head,path):
+    raw=subprocess.check_output(['git','show',head+':'+path],cwd=root)
+    return {n.lineno:ast.dump(n,include_attributes=False) for n in ast.walk(ast.parse(raw)) if isinstance(n,ast.Assert)}
+
+def canonical_assertions(root,head,entries):
+    result=Counter()
+    for phase,path,line,function in entries:
+        statement=assertion_map(root,head,path).get(line)
+        assert statement is not None,(head,path,line)
+        result[phase,path,function,statement]+=1
+    return result
+
+def main():
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--root',type=Path,required=True)
+    parser.add_argument('--old',type=Path,required=True)
+    parser.add_argument('--new',type=Path,required=True)
+    parser.add_argument('--out',type=Path,required=True)
+    parser.add_argument('--name',choices=['ordinary','diagnostic'],required=True)
+    args=parser.parse_args();args.out.mkdir(parents=True,exist_ok=False)
+    old,oldf,olds=parse(args.old,args.name);new,newf,news=parse(args.new,args.name)
+    olda,oldx=traces(args.old);newa,newx=traces(args.new)
+    rows=[]
+    for node in sorted(set(old)|set(new)):
+        a=signature(oldf.get(node,{}));b=signature(newf.get(node,{}))
+        row={'nodeid':node,'old':old.get(node),'new':new.get(node),'old_failure':a,'new_failure':b,
+            'outcome_phase_changed':old.get(node)!=new.get(node),
+            'exception_types_changed':a['primary_exception_types']!=b['primary_exception_types'],
+            'refusal_codes_changed':a['primary_refusal_codes']!=b['primary_refusal_codes'],
+            'frame_functions_changed':[(f['path'],f['function']) for f in a['frames']]!=[(f['path'],f['function']) for f in b['frames']]}
+        if args.name=='diagnostic':
+            ac=canonical_assertions(args.root,olds['head'],olda[node]);bc=canonical_assertions(args.root,news['head'],newa[node])
+            row.update(assertion_AST_entries_equal=ac==bc,old_assertions=sorted(olda[node]),new_assertions=sorted(newa[node]),
+                old_canonical_assertions=[[*k,c] for k,c in sorted(ac.items())],new_canonical_assertions=[[*k,c] for k,c in sorted(bc.items())],
+                old_typed_exceptions=oldx[node],new_typed_exceptions=newx[node])
+        rows.append(row)
+    summary={'old':olds,'new':news,'old_only':sorted(set(old)-set(new)),'new_only':sorted(set(new)-set(old)),
+        'same_unsuccessful_node_set':set(oldf)==set(newf),
+        'common_outcome_phase_changes':[r['nodeid'] for r in rows if r['nodeid'] in old and r['nodeid'] in new and r['outcome_phase_changed']],
+        'common_failed_signature_changes':[r['nodeid'] for r in rows if r['nodeid'] in oldf and (r['exception_types_changed'] or r['refusal_codes_changed'] or r['frame_functions_changed'])],
+        'new_node_counts':dict(Counter(new[n][0] for n in set(new)-set(old))),
+        'scope':'Separate invocations; assertion statement entry is main worker thread only, not subexpression/thread/child-process coverage.'}
+    if args.name=='diagnostic':
+        summary.update(changed_assertion_AST_entries=[r['nodeid'] for r in rows if not r['assertion_AST_entries_equal']],
+            unsuccessful_changed_assertion_AST_entries=[r['nodeid'] for r in rows if r['nodeid'] in oldf and not r['assertion_AST_entries_equal']])
+    write(args.out/'nodes.json.gz',rows);write(args.out/'summary.json',summary)
+    print(json.dumps(summary,indent=2))
+
+if __name__=='__main__':main()

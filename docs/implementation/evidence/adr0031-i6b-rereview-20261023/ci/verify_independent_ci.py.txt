@@ -1,0 +1,136 @@
+"""Offline independent CI audit; only observed complementary log chunks are joined."""
+import base64
+import difflib
+import hashlib
+import io
+import json
+from pathlib import Path, PurePosixPath
+import re
+import xml.etree.ElementTree as ET
+import zipfile
+
+ROOT = Path(__file__).parent
+MARKER = re.compile(r'^\d{4}-\d\d-\d\dT[^ ]+Z (CI_RECEIPTS_(?:BEGIN|DATA|END)_V1) (.*)$')
+
+
+def sha(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+def obj(data):
+    def pairs(values):
+        out = {}
+        for key, value in values:
+            assert key not in out, key
+            out[key] = value
+        return out
+    return json.loads(data, object_pairs_hook=pairs)
+
+
+def events(text):
+    found = [m.groups() for line in text.splitlines() if (m := MARKER.match(line))]
+    assert found[0][0] == 'CI_RECEIPTS_BEGIN_V1'
+    assert found[-1][0] == 'CI_RECEIPTS_END_V1'
+    assert all(kind == 'CI_RECEIPTS_DATA_V1' for kind, _ in found[1:-1])
+    digest, size = found[0][1].split()
+    assert digest == found[-1][1]
+    return digest, int(size), [data for _, data in found[1:-1]]
+
+
+def checked_receipt(kind, digest, size, chunks):
+    data = base64.b64decode(''.join(chunks), validate=True)
+    assert len(data) == size, (len(data), size)
+    assert sha(data) == digest
+    out = ROOT / (kind + '-verified')
+    out.mkdir(exist_ok=False)
+    (out / 'receipt.zip').write_bytes(data)
+    with zipfile.ZipFile(io.BytesIO(data)) as z:
+        names = z.namelist()
+        assert len(set(names)) == len(names)
+        assert sum(f.file_size for f in z.infolist()) < 128 * 1024 * 1024
+        for name in names:
+            path = PurePosixPath(name)
+            assert not path.is_absolute() and path.as_posix() == name
+            assert '..' not in path.parts and '.' not in path.parts and '\\' not in name
+        files = {name: z.read(name) for name in names}
+    index = obj(files['receipt-index.json'])
+    assert set(index) == set(files) - {'receipt-index.json'}
+    for name, record in index.items():
+        assert record == {'bytes': len(files[name]), 'sha256': sha(files[name])}, name
+        p = out / name
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_bytes(files[name])
+    return files, {'receipt_sha256': digest, 'receipt_bytes': size, 'indexed_payloads': len(index)}
+
+
+def main():
+    results = {}
+    feature = obj((ROOT/'feature-commit.json').read_bytes())
+    checkout = obj((ROOT/'checkout-commit.json').read_bytes())
+    pr = obj((ROOT/'pr153.json').read_bytes())
+    assert pr['head']['sha'] == feature['sha'] == '61e44291e293f773904a0127606e20c8cb83c95e'
+    assert pr['base']['sha'] == '8521158f2996f125d2fcaac36ea79ac1296a7cf7'
+    assert checkout['sha'] == pr['merge_commit_sha'] == '99477234735b9f45cbb4d0634bb8372eaf120710'
+    assert [p['sha'] for p in checkout['parents']] == [pr['base']['sha'], feature['sha']]
+    assert checkout['tree']['sha'] == feature['tree']['sha'] == '4aa8ddf49fb52d0b903db0b0bfce00ccea2fae0c'
+    for kind in ('development','access'):
+        run = obj((ROOT/f'{kind}-run.json').read_bytes())
+        digest, size, chunks = events((ROOT/f'{kind}-connector-job.log').read_text())
+        reconstruction = None
+        if kind == 'access':
+            with zipfile.ZipFile(ROOT/'access-run-logs.zip') as z:
+                rd, rs, run_chunks = events(z.read('0_registry-runtime.txt').decode())
+                sd, ss, step_chunks = events(z.read('registry-runtime/19_Emit indexed verification receipts to job log.txt').decode())
+            assert (rd,rs) == (sd,ss) == (digest,size)
+            assert run_chunks == chunks
+            reconstructed = []
+            edits = []
+            for tag, i,j,k,l in difflib.SequenceMatcher(None, run_chunks, step_chunks, autojunk=False).get_opcodes():
+                if tag == 'equal':
+                    reconstructed.extend(run_chunks[i:j])
+                elif tag == 'insert':
+                    reconstructed.extend(step_chunks[k:l])
+                elif tag == 'delete':
+                    reconstructed.extend(run_chunks[i:j])
+                else:
+                    raise AssertionError('Contradictory overlapping chunks; no reconstruction')
+                if tag != 'equal':
+                    edits.append({'tag': tag,'run_range':[i,j], 'step_range':[k,l], 'retained_chunks_sha256':[sha(c.encode()) for c in (step_chunks[k:l] if tag=='insert' else run_chunks[i:j])]})
+            reconstruction = {'method':'ordered common-subsequence alignment; retain every observed run/step chunk, reject replace; no inferred bytes', 'run_view_decoded_bytes':len(base64.b64decode(''.join(run_chunks))), 'step_view_decoded_bytes':len(base64.b64decode(''.join(step_chunks))), 'edits':edits,'reconstructed_chunks':len(reconstructed)}
+            chunks = reconstructed
+        files, result = checked_receipt(kind,digest,size,chunks)
+        binding = obj(files['receipt-binding.json'])
+        assert run['head_sha'] == feature['sha'] and run['event'] == 'pull_request'
+        assert run['status'] == 'completed'
+        assert str(binding['run_id']) == str(run['id']) and str(binding['run_attempt']) == str(run['run_attempt'])
+        assert binding['head'] == checkout['sha'] and binding['tree'] == checkout['tree']['sha']
+        result.update({'run_id':run['id'],'run_url':run['html_url'],'conclusion':run['conclusion'],'binding':binding,'reconstruction':reconstruction})
+        if kind == 'development':
+            m = obj(files['validation-manifest.json'])
+            assert binding['feature_sha'] == feature['sha']
+            assert m['tree_sha'] == feature['tree']['sha']
+            assert m['context']['feature_sha'] == feature['sha'] and m['context']['base_sha'] == pr['base']['sha'] and m['context']['tested_sha'] == checkout['sha']
+            assert m['acceptance_status']=='development_checks_passed' and m['full_acceptance'] is False
+            assert m['coverage']['executed'] == 0 and m['test_ids'] == []
+            result.update({'manifest_acceptance_status':m['acceptance_status'],'full_acceptance':m['full_acceptance'],'hosted_product_cases':0,'runtime':m['runtime']})
+        else:
+            lanes = {}
+            for name,raw in files.items():
+                if not name.endswith('.xml'): continue
+                cases = list(ET.fromstring(raw).iter('testcase'))
+                failed = sum(c.find('failure') is not None for c in cases)
+                errors = sum(c.find('error') is not None for c in cases)
+                skipped = sum(c.find('skipped') is not None for c in cases)
+                corrections = [c.attrib for c in cases if 'test_context_scan_budget' in c.attrib.get('classname','') or 'test_exchange_received_digest' in c.attrib.get('classname','')]
+                lanes[name] = {'total':len(cases),'pass':len(cases)-failed-errors-skipped,'fail':failed,'error':errors,'skip':skipped,'new_M01_M02_cases':corrections}
+            result['junit_lanes_separate_do_not_sum'] = lanes
+        results[kind] = result
+    results['identity'] = {'base':pr['base']['sha'],'base_ref':pr['base']['ref'],'feature':feature['sha'],'feature_ref':pr['head']['ref'],'tree':feature['tree']['sha'],'actual_merge':checkout['sha'],'ordered_merge_parents':[p['sha'] for p in checkout['parents']]}
+    results['existing_review_count'] = len(obj((ROOT/'reviews153.json').read_bytes()))
+    results['success_scope']='Receipt hashes and identities verified; no release acceptance inferred. Access lanes overlap and retain failure.'
+    (ROOT/'independent-verification.json').write_text(json.dumps(results,indent=2)+'\n')
+    print(json.dumps({'development':{k:v for k,v in results['development'].items() if k not in ('runtime','binding')}, 'access':{k:v for k,v in results['access'].items() if k not in ('binding','junit_lanes_separate_do_not_sum')}, 'access_lanes':results['access']['junit_lanes_separate_do_not_sum']},indent=2))
+
+
+if __name__=='__main__':
+    main()

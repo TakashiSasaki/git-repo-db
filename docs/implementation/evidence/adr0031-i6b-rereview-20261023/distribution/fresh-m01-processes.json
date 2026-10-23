@@ -1,0 +1,118 @@
+[
+  {
+    "name": "direct-fresh-test_m01_new-collect",
+    "argv": [
+      "/workspace/rereview-distribution/direct-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "--tb=long",
+      "-c",
+      "/workspace/rereview-distribution/outside/pytest.ini",
+      "--rootdir=/workspace/rereview-distribution/outside",
+      "--confcutdir=/workspace/rereview-distribution/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_m01_new.py",
+      "--collect-only"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769683.618162,
+    "elapsed_seconds": 0.36812901496887207
+  },
+  {
+    "name": "direct-fresh-test_m01_new",
+    "argv": [
+      "/workspace/rereview-distribution/direct-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "--tb=long",
+      "-c",
+      "/workspace/rereview-distribution/outside/pytest.ini",
+      "--rootdir=/workspace/rereview-distribution/outside",
+      "--confcutdir=/workspace/rereview-distribution/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_m01_new.py",
+      "--junitxml=/workspace/rereview-distribution/evidence/direct-fresh-test_m01_new.xml",
+      "--journal=/workspace/rereview-distribution/evidence/direct-fresh-test_m01_new.jsonl",
+      "--basetemp=/workspace/rereview-distribution/direct-fresh-test_m01_new-tmp"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769683.9867063,
+    "elapsed_seconds": 1.0222012996673584
+  },
+  {
+    "name": "direct-fresh-test_m01_new-measure-after",
+    "argv": [
+      "/workspace/rereview-distribution/direct-venv/bin/python",
+      "/workspace/rereview-distribution/outside/measure.py",
+      "/workspace/rereview-distribution/evidence/direct-fresh-test_m01_new-runtime-after.json"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769685.0117059,
+    "elapsed_seconds": 0.09219121932983398
+  },
+  {
+    "name": "derived-fresh-test_m01_new-collect",
+    "argv": [
+      "/workspace/rereview-distribution/derived-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "--tb=long",
+      "-c",
+      "/workspace/rereview-distribution/outside/pytest.ini",
+      "--rootdir=/workspace/rereview-distribution/outside",
+      "--confcutdir=/workspace/rereview-distribution/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_m01_new.py",
+      "--collect-only"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769685.104227,
+    "elapsed_seconds": 0.3690979480743408
+  },
+  {
+    "name": "derived-fresh-test_m01_new",
+    "argv": [
+      "/workspace/rereview-distribution/derived-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "--tb=long",
+      "-c",
+      "/workspace/rereview-distribution/outside/pytest.ini",
+      "--rootdir=/workspace/rereview-distribution/outside",
+      "--confcutdir=/workspace/rereview-distribution/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_m01_new.py",
+      "--junitxml=/workspace/rereview-distribution/evidence/derived-fresh-test_m01_new.xml",
+      "--journal=/workspace/rereview-distribution/evidence/derived-fresh-test_m01_new.jsonl",
+      "--basetemp=/workspace/rereview-distribution/derived-fresh-test_m01_new-tmp"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769685.473739,
+    "elapsed_seconds": 1.0782387256622314
+  },
+  {
+    "name": "derived-fresh-test_m01_new-measure-after",
+    "argv": [
+      "/workspace/rereview-distribution/derived-venv/bin/python",
+      "/workspace/rereview-distribution/outside/measure.py",
+      "/workspace/rereview-distribution/evidence/derived-fresh-test_m01_new-runtime-after.json"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769686.5530987,
+    "elapsed_seconds": 0.08826851844787598
+  }
+]

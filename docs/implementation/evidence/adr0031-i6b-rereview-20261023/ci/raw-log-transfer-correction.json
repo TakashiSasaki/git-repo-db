@@ -1,0 +1,20 @@
+[
+  {
+    "file": "development-connector-job.log",
+    "connector_character_count": 279289,
+    "initial_save_extra_terminal_newline_bytes": 1,
+    "preserved_initial_sha256": "68cacf95a5fab512ec6b66bbf9c8807cd2c9150c8f01e0decd550381613a0f9c",
+    "lossless_corrected_bytes": 279291,
+    "lossless_corrected_sha256": "45fa2f914c34271dc207f6d74207eaf4e80d6074c294032a3dea710e2ba2e997",
+    "note": "Tool text transfer through apply_patch appended one terminal newline; remove exactly that one byte after verifying actual original character count and terminal newline. Receipt stream unchanged."
+  },
+  {
+    "file": "access-connector-job.log",
+    "connector_character_count": 3813305,
+    "initial_save_extra_terminal_newline_bytes": 1,
+    "preserved_initial_sha256": "83fc37e952ebc569dba76647b6f8ea84a2dd337c97814017313ede6ae67d80df",
+    "lossless_corrected_bytes": 3813319,
+    "lossless_corrected_sha256": "2d6486c578596a423149f3aac3dd2024620bf0c9b943666eb52fbdec6d82428d",
+    "note": "Tool text transfer through apply_patch appended one terminal newline; remove exactly that one byte after verifying actual original character count and terminal newline. Receipt stream unchanged."
+  }
+]

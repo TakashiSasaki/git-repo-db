@@ -1,0 +1,234 @@
+[
+  {
+    "name": "direct-fresh-test_fresh_digest_wire-collect",
+    "argv": [
+      "/workspace/rereview-distribution/direct-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "--tb=long",
+      "-c",
+      "/workspace/rereview-distribution/outside/pytest.ini",
+      "--rootdir=/workspace/rereview-distribution/outside",
+      "--confcutdir=/workspace/rereview-distribution/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_fresh_digest_wire.py",
+      "--collect-only"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769548.7465372,
+    "elapsed_seconds": 0.8157353401184082
+  },
+  {
+    "name": "direct-fresh-test_fresh_digest_wire",
+    "argv": [
+      "/workspace/rereview-distribution/direct-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "--tb=long",
+      "-c",
+      "/workspace/rereview-distribution/outside/pytest.ini",
+      "--rootdir=/workspace/rereview-distribution/outside",
+      "--confcutdir=/workspace/rereview-distribution/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_fresh_digest_wire.py",
+      "--junitxml=/workspace/rereview-distribution/evidence/direct-fresh-test_fresh_digest_wire.xml",
+      "--journal=/workspace/rereview-distribution/evidence/direct-fresh-test_fresh_digest_wire.jsonl",
+      "--basetemp=/workspace/rereview-distribution/direct-fresh-test_fresh_digest_wire-tmp"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769549.562834,
+    "elapsed_seconds": 1.5433225631713867
+  },
+  {
+    "name": "direct-fresh-test_fresh_digest_wire-measure-after",
+    "argv": [
+      "/workspace/rereview-distribution/direct-venv/bin/python",
+      "/workspace/rereview-distribution/outside/measure.py",
+      "/workspace/rereview-distribution/evidence/direct-fresh-test_fresh_digest_wire-runtime-after.json"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769551.1157236,
+    "elapsed_seconds": 0.19034194946289062
+  },
+  {
+    "name": "direct-fresh-test_retained_admission-collect",
+    "argv": [
+      "/workspace/rereview-distribution/direct-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "--tb=long",
+      "-c",
+      "/workspace/rereview-distribution/outside/pytest.ini",
+      "--rootdir=/workspace/rereview-distribution/outside",
+      "--confcutdir=/workspace/rereview-distribution/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_retained_admission.py",
+      "--collect-only"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769551.3105195,
+    "elapsed_seconds": 0.9277827739715576
+  },
+  {
+    "name": "direct-fresh-test_retained_admission",
+    "argv": [
+      "/workspace/rereview-distribution/direct-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "--tb=long",
+      "-c",
+      "/workspace/rereview-distribution/outside/pytest.ini",
+      "--rootdir=/workspace/rereview-distribution/outside",
+      "--confcutdir=/workspace/rereview-distribution/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_retained_admission.py",
+      "--junitxml=/workspace/rereview-distribution/evidence/direct-fresh-test_retained_admission.xml",
+      "--journal=/workspace/rereview-distribution/evidence/direct-fresh-test_retained_admission.jsonl",
+      "--basetemp=/workspace/rereview-distribution/direct-fresh-test_retained_admission-tmp"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769552.2386608,
+    "elapsed_seconds": 2.3696866035461426
+  },
+  {
+    "name": "direct-fresh-test_retained_admission-measure-after",
+    "argv": [
+      "/workspace/rereview-distribution/direct-venv/bin/python",
+      "/workspace/rereview-distribution/outside/measure.py",
+      "/workspace/rereview-distribution/evidence/direct-fresh-test_retained_admission-runtime-after.json"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769554.6091948,
+    "elapsed_seconds": 0.14046168327331543
+  },
+  {
+    "name": "derived-fresh-test_fresh_digest_wire-collect",
+    "argv": [
+      "/workspace/rereview-distribution/derived-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "--tb=long",
+      "-c",
+      "/workspace/rereview-distribution/outside/pytest.ini",
+      "--rootdir=/workspace/rereview-distribution/outside",
+      "--confcutdir=/workspace/rereview-distribution/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_fresh_digest_wire.py",
+      "--collect-only"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769554.7500136,
+    "elapsed_seconds": 0.8063414096832275
+  },
+  {
+    "name": "derived-fresh-test_fresh_digest_wire",
+    "argv": [
+      "/workspace/rereview-distribution/derived-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "--tb=long",
+      "-c",
+      "/workspace/rereview-distribution/outside/pytest.ini",
+      "--rootdir=/workspace/rereview-distribution/outside",
+      "--confcutdir=/workspace/rereview-distribution/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_fresh_digest_wire.py",
+      "--junitxml=/workspace/rereview-distribution/evidence/derived-fresh-test_fresh_digest_wire.xml",
+      "--journal=/workspace/rereview-distribution/evidence/derived-fresh-test_fresh_digest_wire.jsonl",
+      "--basetemp=/workspace/rereview-distribution/derived-fresh-test_fresh_digest_wire-tmp"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769555.5568388,
+    "elapsed_seconds": 1.4627609252929688
+  },
+  {
+    "name": "derived-fresh-test_fresh_digest_wire-measure-after",
+    "argv": [
+      "/workspace/rereview-distribution/derived-venv/bin/python",
+      "/workspace/rereview-distribution/outside/measure.py",
+      "/workspace/rereview-distribution/evidence/derived-fresh-test_fresh_digest_wire-runtime-after.json"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769557.0215418,
+    "elapsed_seconds": 0.14591097831726074
+  },
+  {
+    "name": "derived-fresh-test_retained_admission-collect",
+    "argv": [
+      "/workspace/rereview-distribution/derived-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "--tb=long",
+      "-c",
+      "/workspace/rereview-distribution/outside/pytest.ini",
+      "--rootdir=/workspace/rereview-distribution/outside",
+      "--confcutdir=/workspace/rereview-distribution/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_retained_admission.py",
+      "--collect-only"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769557.1678069,
+    "elapsed_seconds": 0.5466635227203369
+  },
+  {
+    "name": "derived-fresh-test_retained_admission",
+    "argv": [
+      "/workspace/rereview-distribution/derived-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "--tb=long",
+      "-c",
+      "/workspace/rereview-distribution/outside/pytest.ini",
+      "--rootdir=/workspace/rereview-distribution/outside",
+      "--confcutdir=/workspace/rereview-distribution/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_retained_admission.py",
+      "--junitxml=/workspace/rereview-distribution/evidence/derived-fresh-test_retained_admission.xml",
+      "--journal=/workspace/rereview-distribution/evidence/derived-fresh-test_retained_admission.jsonl",
+      "--basetemp=/workspace/rereview-distribution/derived-fresh-test_retained_admission-tmp"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769557.714949,
+    "elapsed_seconds": 3.10707426071167
+  },
+  {
+    "name": "derived-fresh-test_retained_admission-measure-after",
+    "argv": [
+      "/workspace/rereview-distribution/derived-venv/bin/python",
+      "/workspace/rereview-distribution/outside/measure.py",
+      "/workspace/rereview-distribution/evidence/derived-fresh-test_retained_admission-runtime-after.json"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769560.8228757,
+    "elapsed_seconds": 0.2163684368133545
+  }
+]

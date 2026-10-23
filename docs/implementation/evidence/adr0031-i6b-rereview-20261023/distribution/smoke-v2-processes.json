@@ -1,0 +1,210 @@
+[
+  {
+    "name": "direct-original-smoke-v2-venv",
+    "argv": [
+      "/workspace/rr-env/bin/python",
+      "-m",
+      "venv",
+      "--without-pip",
+      "/workspace/rereview-distribution/direct-minimal-venv"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769524.6056545,
+    "elapsed_seconds": 0.039289236068725586
+  },
+  {
+    "name": "direct-original-smoke-v2-install",
+    "argv": [
+      "uv",
+      "pip",
+      "install",
+      "--python",
+      "/workspace/rereview-distribution/direct-minimal-venv/bin/python",
+      "--offline",
+      "--no-index",
+      "--no-deps",
+      "--require-hashes",
+      "-r",
+      "/workspace/rereview-distribution/evidence/direct-original-smoke-v2-requirements.txt"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769524.6481524,
+    "elapsed_seconds": 0.16196584701538086
+  },
+  {
+    "name": "direct-original-smoke-v2-measure-before",
+    "argv": [
+      "/workspace/rereview-distribution/direct-minimal-venv/bin/python",
+      "/workspace/rereview-distribution/outside/measure.py",
+      "/workspace/rereview-distribution/evidence/direct-original-smoke-v2-runtime-before.json"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769524.8104005,
+    "elapsed_seconds": 0.10517740249633789
+  },
+  {
+    "name": "direct-original-smoke-v2-collect",
+    "argv": [
+      "/workspace/rereview-distribution/direct-minimal-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "--tb=short",
+      "-c",
+      "/workspace/rereview-distribution/outside/pytest.ini",
+      "--rootdir=/workspace/rereview-distribution/outside",
+      "--confcutdir=/workspace/rereview-distribution/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_original_access_smoke_independent.py",
+      "--collect-only"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769524.915926,
+    "elapsed_seconds": 0.4861438274383545
+  },
+  {
+    "name": "direct-original-smoke-v2",
+    "argv": [
+      "/workspace/rereview-distribution/direct-minimal-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "--tb=short",
+      "-c",
+      "/workspace/rereview-distribution/outside/pytest.ini",
+      "--rootdir=/workspace/rereview-distribution/outside",
+      "--confcutdir=/workspace/rereview-distribution/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_original_access_smoke_independent.py",
+      "--junitxml=/workspace/rereview-distribution/evidence/direct-original-smoke-v2.xml",
+      "--journal=/workspace/rereview-distribution/evidence/direct-original-smoke-v2.jsonl",
+      "--basetemp=/workspace/rereview-distribution/direct-original-smoke-v2-tmp"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 1,
+    "started_epoch": 1792769525.402406,
+    "elapsed_seconds": 2.359696388244629
+  },
+  {
+    "name": "direct-original-smoke-v2-measure-after",
+    "argv": [
+      "/workspace/rereview-distribution/direct-minimal-venv/bin/python",
+      "/workspace/rereview-distribution/outside/measure.py",
+      "/workspace/rereview-distribution/evidence/direct-original-smoke-v2-runtime-after.json"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769527.762783,
+    "elapsed_seconds": 0.17044472694396973
+  },
+  {
+    "name": "derived-original-smoke-v2-venv",
+    "argv": [
+      "/workspace/rr-env/bin/python",
+      "-m",
+      "venv",
+      "--without-pip",
+      "/workspace/rereview-distribution/derived-minimal-venv"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769527.9375896,
+    "elapsed_seconds": 0.07916545867919922
+  },
+  {
+    "name": "derived-original-smoke-v2-install",
+    "argv": [
+      "uv",
+      "pip",
+      "install",
+      "--python",
+      "/workspace/rereview-distribution/derived-minimal-venv/bin/python",
+      "--offline",
+      "--no-index",
+      "--no-deps",
+      "--require-hashes",
+      "-r",
+      "/workspace/rereview-distribution/evidence/derived-original-smoke-v2-requirements.txt"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769528.022543,
+    "elapsed_seconds": 0.1952190399169922
+  },
+  {
+    "name": "derived-original-smoke-v2-measure-before",
+    "argv": [
+      "/workspace/rereview-distribution/derived-minimal-venv/bin/python",
+      "/workspace/rereview-distribution/outside/measure.py",
+      "/workspace/rereview-distribution/evidence/derived-original-smoke-v2-runtime-before.json"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769528.2180748,
+    "elapsed_seconds": 0.2005159854888916
+  },
+  {
+    "name": "derived-original-smoke-v2-collect",
+    "argv": [
+      "/workspace/rereview-distribution/derived-minimal-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "--tb=short",
+      "-c",
+      "/workspace/rereview-distribution/outside/pytest.ini",
+      "--rootdir=/workspace/rereview-distribution/outside",
+      "--confcutdir=/workspace/rereview-distribution/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_original_access_smoke_independent.py",
+      "--collect-only"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769528.4189308,
+    "elapsed_seconds": 0.6951210498809814
+  },
+  {
+    "name": "derived-original-smoke-v2",
+    "argv": [
+      "/workspace/rereview-distribution/derived-minimal-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "--tb=short",
+      "-c",
+      "/workspace/rereview-distribution/outside/pytest.ini",
+      "--rootdir=/workspace/rereview-distribution/outside",
+      "--confcutdir=/workspace/rereview-distribution/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_original_access_smoke_independent.py",
+      "--junitxml=/workspace/rereview-distribution/evidence/derived-original-smoke-v2.xml",
+      "--journal=/workspace/rereview-distribution/evidence/derived-original-smoke-v2.jsonl",
+      "--basetemp=/workspace/rereview-distribution/derived-original-smoke-v2-tmp"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 1,
+    "started_epoch": 1792769529.114477,
+    "elapsed_seconds": 2.4950520992279053
+  },
+  {
+    "name": "derived-original-smoke-v2-measure-after",
+    "argv": [
+      "/workspace/rereview-distribution/derived-minimal-venv/bin/python",
+      "/workspace/rereview-distribution/outside/measure.py",
+      "/workspace/rereview-distribution/evidence/derived-original-smoke-v2-runtime-after.json"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769531.612854,
+    "elapsed_seconds": 0.08076882362365723
+  }
+]

@@ -1,0 +1,6 @@
+{
+  "initial_exit_code": 2,
+  "reason": "Trailing whitespace in two immutable original failing pytest raw outputs",
+  "correction": "Lossless gzip transport; no raw byte changed",
+  "repeat_check_expected": "recorded by submission command"
+}

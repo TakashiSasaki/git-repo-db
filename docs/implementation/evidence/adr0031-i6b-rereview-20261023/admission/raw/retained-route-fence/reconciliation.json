@@ -1,0 +1,33 @@
+{
+  "count": 13,
+  "errors": 0,
+  "exactly_one_passed_each_phase": true,
+  "failures": 0,
+  "finish": [
+    {
+      "event": "finish",
+      "exitstatus": 0,
+      "status": "completed",
+      "timestamp": 1792769538.481617
+    }
+  ],
+  "junit_matches_journal": true,
+  "nodes": [
+    "tests/unit/test_context_fences_i6a.py::test_t19_exact_both_definitions_match_packaged_schema",
+    "tests/unit/test_context_fences_i6a.py::test_t19_invalid_fences_refuse_helper_store_and_facade[missing-report]",
+    "tests/unit/test_context_fences_i6a.py::test_t19_invalid_fences_refuse_helper_store_and_facade[missing-endpoint]",
+    "tests/unit/test_context_fences_i6a.py::test_t19_invalid_fences_refuse_helper_store_and_facade[both-missing]",
+    "tests/unit/test_context_fences_i6a.py::test_t19_invalid_fences_refuse_helper_store_and_facade[altered-report]",
+    "tests/unit/test_context_fences_i6a.py::test_t19_invalid_fences_refuse_helper_store_and_facade[altered-endpoint]",
+    "tests/unit/test_context_fences_i6a.py::test_t19_uninspectable_schema_refuses_helper_and_facade",
+    "tests/integration/i6a/test_admission.py::test_unconnected_provider_routes_refuse_before_resource_lookup[unit]",
+    "tests/integration/i6a/test_admission.py::test_unconnected_provider_routes_refuse_before_resource_lookup[units]",
+    "tests/integration/i6a/test_admission.py::test_unconnected_provider_routes_refuse_before_resource_lookup[batch]",
+    "tests/integration/i6a/test_admission.py::test_unconnected_exchange_export_refuses_before_identity_or_context_lookup",
+    "tests/integration/i6a/test_admission.py::test_unconnected_exchange_import_refuses_before_progress_and_cached_success[initial]",
+    "tests/integration/i6a/test_admission.py::test_unconnected_exchange_import_refuses_before_progress_and_cached_success[cached-receipt]"
+  ],
+  "process_exit": 0,
+  "skips": 0,
+  "starts_exactly_once": true
+}

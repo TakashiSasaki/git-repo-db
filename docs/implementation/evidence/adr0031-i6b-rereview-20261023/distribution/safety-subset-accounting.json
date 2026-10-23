@@ -1,0 +1,15 @@
+{
+  "scope": "Historical I4 217 / I5 29 names map to actual p3 module nodes inside safety626, not additional executions or sums",
+  "results": {
+    "direct": {
+      "selected": 626,
+      "I4_named_historical_p3_transfer_sql": 217,
+      "I5_named_historical_p3_transfer_admission": 29
+    },
+    "derived": {
+      "selected": 626,
+      "I4_named_historical_p3_transfer_sql": 217,
+      "I5_named_historical_p3_transfer_admission": 29
+    }
+  }
+}
