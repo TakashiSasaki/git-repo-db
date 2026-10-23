@@ -1,0 +1,24 @@
+{
+  "scope": "Independent PR #153 M01 planner/scanner re-review",
+  "target_head": "61e44291e293f773904a0127606e20c8cb83c95e",
+  "target_tree": "4aa8ddf49fb52d0b903db0b0bfce00ccea2fae0c",
+  "reviewer_is_correction_author": false,
+  "new_findings": [],
+  "prior_finding": {
+    "id": "I6B-IR-M01",
+    "severity": "Medium",
+    "closure_recommendation": "CLOSE within independently exercised pure scanner/planner scope",
+    "requirements": ["I6-B R04", "I6-B R13", "T11"],
+    "evidence": ["REPORT.md", "baseline-measurements.json", "corrected-measurements.json", "source.execution.json", "source.reconciliation.json", "supplemental_scanner.json"],
+    "measured_saved_1001_row_parse_calls": {"before": 1501, "after": 0},
+    "measured_20000_key_root_set_calls": {"before": 2, "after": 0},
+    "new_source_pytest": {"passed": 38, "failed": 0, "error": 0, "exit": 0},
+    "independent_installed_pytest": {"direct": {"passed": 38, "exit": 0}, "sdist_derived": {"passed": 38, "exit": 0}, "receipt_owner": "parent distribution reviewer; *fresh-test_m01_new*"}
+  },
+  "remaining_limits": [
+    "No latency/statistical benchmark or exact CPU instruction accounting claim",
+    "Full-suite, saved33/new56/wider safety reconciliation and hosted receipts are separate parent obligations",
+    "No Release acceptance or I6-C/I7/I8 implementation/Transfer activation follows from this scoped closure"
+  ],
+  "blocked_actions": []
+}

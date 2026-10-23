@@ -1,0 +1,15 @@
+{
+  "selected": 33,
+  "unique_selected": 33,
+  "executed": 33,
+  "junit": 33,
+  "phases": 99,
+  "selected_equals_journal": true,
+  "selected_equals_junit": true,
+  "each_selected_exactly_once": true,
+  "ordinary_phases_exactly_once": true,
+  "finish_matches_actual_exit": true,
+  "failure": 0,
+  "error": 0,
+  "skipped": 0
+}

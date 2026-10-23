@@ -1,0 +1,22 @@
+{
+  "count": 2,
+  "errors": 0,
+  "exactly_one_passed_each_phase": true,
+  "failures": 0,
+  "finish": [
+    {
+      "event": "finish",
+      "exitstatus": 0,
+      "status": "completed",
+      "timestamp": 1792769598.124722
+    }
+  ],
+  "junit_matches_journal": true,
+  "nodes": [
+    "tests/integration/i6a/test_admission.py::test_real_second_endpoint_insert_failure_rolls_back_whole_unit",
+    "tests/integration/i6a/test_admission.py::test_deferred_actual_outer_commit_failure_explicitly_rolls_back"
+  ],
+  "process_exit": 0,
+  "skips": 0,
+  "starts_exactly_once": true
+}

@@ -1,0 +1,953 @@
+{
+  "observations": [
+    {
+      "kind": "depth",
+      "levels": 0,
+      "charges": [
+        1,
+        5
+      ],
+      "work": 6,
+      "result": [
+        1,
+        11
+      ]
+    },
+    {
+      "kind": "depth",
+      "levels": 1,
+      "charges": [
+        1,
+        1,
+        1,
+        5,
+        1
+      ],
+      "work": 9,
+      "result": [
+        2,
+        13
+      ]
+    },
+    {
+      "kind": "depth",
+      "levels": 30,
+      "charges": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        5,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "work": 96,
+      "result": [
+        31,
+        71
+      ]
+    },
+    {
+      "kind": "depth",
+      "levels": 31,
+      "charges": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        5,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "work": 99,
+      "result": [
+        32,
+        73
+      ]
+    },
+    {
+      "kind": "depth",
+      "levels": 32,
+      "charges": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        5,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "work": 102,
+      "result": [
+        33,
+        75
+      ]
+    },
+    {
+      "kind": "depth",
+      "levels": 33,
+      "charges": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "work": 67,
+      "code": "INPUT_LIMIT"
+    },
+    {
+      "kind": "bytes",
+      "text": "\u96ea\"\\\n",
+      "canonical_bytes": 85,
+      "bound": 84,
+      "outcome": "INPUT_LIMIT"
+    },
+    {
+      "kind": "bytes",
+      "text": "\u96ea\"\\\n",
+      "canonical_bytes": 85,
+      "bound": 85,
+      "outcome": "accepted"
+    },
+    {
+      "kind": "bytes",
+      "text": "\u96ea\"\\\n",
+      "canonical_bytes": 85,
+      "bound": 86,
+      "outcome": "accepted"
+    },
+    {
+      "kind": "work",
+      "allowance": 0,
+      "charged": 0,
+      "outcome": "work_limit",
+      "full_work": 107
+    },
+    {
+      "kind": "work",
+      "allowance": 1,
+      "charged": 1,
+      "outcome": "work_limit",
+      "full_work": 107
+    },
+    {
+      "kind": "work",
+      "allowance": 6,
+      "charged": 3,
+      "outcome": "work_limit",
+      "full_work": 107
+    },
+    {
+      "kind": "work",
+      "allowance": 12,
+      "charged": 3,
+      "outcome": "work_limit",
+      "full_work": 107
+    },
+    {
+      "kind": "work",
+      "allowance": 18,
+      "charged": 17,
+      "outcome": "work_limit",
+      "full_work": 107
+    },
+    {
+      "kind": "work",
+      "allowance": 24,
+      "charged": 17,
+      "outcome": "work_limit",
+      "full_work": 107
+    },
+    {
+      "kind": "work",
+      "allowance": 30,
+      "charged": 27,
+      "outcome": "work_limit",
+      "full_work": 107
+    },
+    {
+      "kind": "work",
+      "allowance": 36,
+      "charged": 27,
+      "outcome": "work_limit",
+      "full_work": 107
+    },
+    {
+      "kind": "work",
+      "allowance": 42,
+      "charged": 27,
+      "outcome": "work_limit",
+      "full_work": 107
+    },
+    {
+      "kind": "work",
+      "allowance": 48,
+      "charged": 27,
+      "outcome": "work_limit",
+      "full_work": 107
+    },
+    {
+      "kind": "work",
+      "allowance": 54,
+      "charged": 27,
+      "outcome": "work_limit",
+      "full_work": 107
+    },
+    {
+      "kind": "work",
+      "allowance": 60,
+      "charged": 27,
+      "outcome": "work_limit",
+      "full_work": 107
+    },
+    {
+      "kind": "work",
+      "allowance": 66,
+      "charged": 27,
+      "outcome": "work_limit",
+      "full_work": 107
+    },
+    {
+      "kind": "work",
+      "allowance": 72,
+      "charged": 68,
+      "outcome": "work_limit",
+      "full_work": 107
+    },
+    {
+      "kind": "work",
+      "allowance": 78,
+      "charged": 78,
+      "outcome": "work_limit",
+      "full_work": 107
+    },
+    {
+      "kind": "work",
+      "allowance": 84,
+      "charged": 84,
+      "outcome": "work_limit",
+      "full_work": 107
+    },
+    {
+      "kind": "work",
+      "allowance": 90,
+      "charged": 86,
+      "outcome": "work_limit",
+      "full_work": 107
+    },
+    {
+      "kind": "work",
+      "allowance": 96,
+      "charged": 86,
+      "outcome": "work_limit",
+      "full_work": 107
+    },
+    {
+      "kind": "work",
+      "allowance": 102,
+      "charged": 86,
+      "outcome": "work_limit",
+      "full_work": 107
+    },
+    {
+      "kind": "work",
+      "allowance": 106,
+      "charged": 106,
+      "outcome": "work_limit",
+      "full_work": 107
+    },
+    {
+      "kind": "work",
+      "allowance": 107,
+      "charged": 107,
+      "outcome": "accepted",
+      "full_work": 107
+    },
+    {
+      "kind": "work",
+      "allowance": 108,
+      "charged": 107,
+      "outcome": "accepted",
+      "full_work": 107
+    },
+    {
+      "kind": "bytes",
+      "text": "\u0000\u001f\u0000\u001f\u0000\u001f\u0000\u001f\u0000\u001f\u0000\u001f\u0000\u001f\u0000\u001f\u0000\u001f\u0000\u001f\u0000\u001f\u0000\u001f\u0000\u001f",
+      "canonical_bytes": 543,
+      "bound": 542,
+      "outcome": "INPUT_LIMIT"
+    },
+    {
+      "kind": "bytes",
+      "text": "\u0000\u001f\u0000\u001f\u0000\u001f\u0000\u001f\u0000\u001f\u0000\u001f\u0000\u001f\u0000\u001f\u0000\u001f\u0000\u001f\u0000\u001f\u0000\u001f\u0000\u001f",
+      "canonical_bytes": 543,
+      "bound": 543,
+      "outcome": "accepted"
+    },
+    {
+      "kind": "bytes",
+      "text": "\u0000\u001f\u0000\u001f\u0000\u001f\u0000\u001f\u0000\u001f\u0000\u001f\u0000\u001f\u0000\u001f\u0000\u001f\u0000\u001f\u0000\u001f\u0000\u001f\u0000\u001f",
+      "canonical_bytes": 543,
+      "bound": 544,
+      "outcome": "accepted"
+    },
+    {
+      "kind": "work",
+      "allowance": 0,
+      "charged": 0,
+      "outcome": "work_limit",
+      "full_work": 583
+    },
+    {
+      "kind": "work",
+      "allowance": 1,
+      "charged": 1,
+      "outcome": "work_limit",
+      "full_work": 583
+    },
+    {
+      "kind": "work",
+      "allowance": 34,
+      "charged": 27,
+      "outcome": "work_limit",
+      "full_work": 583
+    },
+    {
+      "kind": "work",
+      "allowance": 68,
+      "charged": 27,
+      "outcome": "work_limit",
+      "full_work": 583
+    },
+    {
+      "kind": "work",
+      "allowance": 102,
+      "charged": 27,
+      "outcome": "work_limit",
+      "full_work": 583
+    },
+    {
+      "kind": "work",
+      "allowance": 136,
+      "charged": 27,
+      "outcome": "work_limit",
+      "full_work": 583
+    },
+    {
+      "kind": "work",
+      "allowance": 170,
+      "charged": 27,
+      "outcome": "work_limit",
+      "full_work": 583
+    },
+    {
+      "kind": "work",
+      "allowance": 204,
+      "charged": 27,
+      "outcome": "work_limit",
+      "full_work": 583
+    },
+    {
+      "kind": "work",
+      "allowance": 238,
+      "charged": 27,
+      "outcome": "work_limit",
+      "full_work": 583
+    },
+    {
+      "kind": "work",
+      "allowance": 272,
+      "charged": 27,
+      "outcome": "work_limit",
+      "full_work": 583
+    },
+    {
+      "kind": "work",
+      "allowance": 306,
+      "charged": 27,
+      "outcome": "work_limit",
+      "full_work": 583
+    },
+    {
+      "kind": "work",
+      "allowance": 340,
+      "charged": 27,
+      "outcome": "work_limit",
+      "full_work": 583
+    },
+    {
+      "kind": "work",
+      "allowance": 374,
+      "charged": 356,
+      "outcome": "work_limit",
+      "full_work": 583
+    },
+    {
+      "kind": "work",
+      "allowance": 408,
+      "charged": 389,
+      "outcome": "work_limit",
+      "full_work": 583
+    },
+    {
+      "kind": "work",
+      "allowance": 442,
+      "charged": 418,
+      "outcome": "work_limit",
+      "full_work": 583
+    },
+    {
+      "kind": "work",
+      "allowance": 476,
+      "charged": 418,
+      "outcome": "work_limit",
+      "full_work": 583
+    },
+    {
+      "kind": "work",
+      "allowance": 510,
+      "charged": 418,
+      "outcome": "work_limit",
+      "full_work": 583
+    },
+    {
+      "kind": "work",
+      "allowance": 544,
+      "charged": 418,
+      "outcome": "work_limit",
+      "full_work": 583
+    },
+    {
+      "kind": "work",
+      "allowance": 578,
+      "charged": 418,
+      "outcome": "work_limit",
+      "full_work": 583
+    },
+    {
+      "kind": "work",
+      "allowance": 582,
+      "charged": 582,
+      "outcome": "work_limit",
+      "full_work": 583
+    },
+    {
+      "kind": "work",
+      "allowance": 583,
+      "charged": 583,
+      "outcome": "accepted",
+      "full_work": 583
+    },
+    {
+      "kind": "work",
+      "allowance": 584,
+      "charged": 583,
+      "outcome": "accepted",
+      "full_work": 583
+    },
+    {
+      "kind": "bytes",
+      "text": "\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea",
+      "canonical_bytes": 1169,
+      "bound": 1168,
+      "outcome": "INPUT_LIMIT"
+    },
+    {
+      "kind": "bytes",
+      "text": "\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea",
+      "canonical_bytes": 1169,
+      "bound": 1169,
+      "outcome": "accepted"
+    },
+    {
+      "kind": "bytes",
+      "text": "\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea\ud834\udd1e\u96ea",
+      "canonical_bytes": 1169,
+      "bound": 1170,
+      "outcome": "accepted"
+    },
+    {
+      "kind": "work",
+      "allowance": 0,
+      "charged": 0,
+      "outcome": "work_limit",
+      "full_work": 1919
+    },
+    {
+      "kind": "work",
+      "allowance": 1,
+      "charged": 1,
+      "outcome": "work_limit",
+      "full_work": 1919
+    },
+    {
+      "kind": "work",
+      "allowance": 112,
+      "charged": 27,
+      "outcome": "work_limit",
+      "full_work": 1919
+    },
+    {
+      "kind": "work",
+      "allowance": 224,
+      "charged": 27,
+      "outcome": "work_limit",
+      "full_work": 1919
+    },
+    {
+      "kind": "work",
+      "allowance": 336,
+      "charged": 27,
+      "outcome": "work_limit",
+      "full_work": 1919
+    },
+    {
+      "kind": "work",
+      "allowance": 448,
+      "charged": 27,
+      "outcome": "work_limit",
+      "full_work": 1919
+    },
+    {
+      "kind": "work",
+      "allowance": 560,
+      "charged": 27,
+      "outcome": "work_limit",
+      "full_work": 1919
+    },
+    {
+      "kind": "work",
+      "allowance": 672,
+      "charged": 27,
+      "outcome": "work_limit",
+      "full_work": 1919
+    },
+    {
+      "kind": "work",
+      "allowance": 784,
+      "charged": 27,
+      "outcome": "work_limit",
+      "full_work": 1919
+    },
+    {
+      "kind": "work",
+      "allowance": 896,
+      "charged": 27,
+      "outcome": "work_limit",
+      "full_work": 1919
+    },
+    {
+      "kind": "work",
+      "allowance": 1008,
+      "charged": 27,
+      "outcome": "work_limit",
+      "full_work": 1919
+    },
+    {
+      "kind": "work",
+      "allowance": 1120,
+      "charged": 27,
+      "outcome": "work_limit",
+      "full_work": 1919
+    },
+    {
+      "kind": "work",
+      "allowance": 1232,
+      "charged": 1196,
+      "outcome": "work_limit",
+      "full_work": 1919
+    },
+    {
+      "kind": "work",
+      "allowance": 1344,
+      "charged": 1334,
+      "outcome": "work_limit",
+      "full_work": 1919
+    },
+    {
+      "kind": "work",
+      "allowance": 1456,
+      "charged": 1334,
+      "outcome": "work_limit",
+      "full_work": 1919
+    },
+    {
+      "kind": "work",
+      "allowance": 1568,
+      "charged": 1334,
+      "outcome": "work_limit",
+      "full_work": 1919
+    },
+    {
+      "kind": "work",
+      "allowance": 1680,
+      "charged": 1334,
+      "outcome": "work_limit",
+      "full_work": 1919
+    },
+    {
+      "kind": "work",
+      "allowance": 1792,
+      "charged": 1334,
+      "outcome": "work_limit",
+      "full_work": 1919
+    },
+    {
+      "kind": "work",
+      "allowance": 1904,
+      "charged": 1334,
+      "outcome": "work_limit",
+      "full_work": 1919
+    },
+    {
+      "kind": "work",
+      "allowance": 1918,
+      "charged": 1918,
+      "outcome": "work_limit",
+      "full_work": 1919
+    },
+    {
+      "kind": "work",
+      "allowance": 1919,
+      "charged": 1919,
+      "outcome": "accepted",
+      "full_work": 1919
+    },
+    {
+      "kind": "work",
+      "allowance": 1920,
+      "charged": 1919,
+      "outcome": "accepted",
+      "full_work": 1919
+    }
+  ],
+  "checks": 81,
+  "pass": true
+}

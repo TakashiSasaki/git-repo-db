@@ -1,0 +1,83 @@
+[
+  {
+    "command": [
+      "/workspace/rr-env/bin/python",
+      "scripts/check_sqlite_validation_policy.py"
+    ],
+    "exit_code": 0,
+    "elapsed": 0.9903316497802734,
+    "sha256": "88479b8fcebfcc96a14d673c6cdc6a53f07ec1e57a80c1aacc1cda81b4faa923",
+    "log": "0.log"
+  },
+  {
+    "command": [
+      "/workspace/rr-env/bin/python",
+      "scripts/audit_callsite_dependencies.py",
+      "--check"
+    ],
+    "exit_code": 0,
+    "elapsed": 1.0999736785888672,
+    "sha256": "d681afc4b96429ed10ab71b553c843159a9059f1ccab704a52d3a458e3878989",
+    "log": "1.log"
+  },
+  {
+    "command": [
+      "/workspace/rr-env/bin/python",
+      "scripts/audit_p1_schema.py",
+      "--check"
+    ],
+    "exit_code": 0,
+    "elapsed": 0.21441364288330078,
+    "sha256": "ec01476cdfe7a7ba2d06a0ad93daf32a7d2610d8b8a7b264ecc1a3e9337c4153",
+    "log": "2.log"
+  },
+  {
+    "command": [
+      "/workspace/rr-env/bin/python",
+      "scripts/audit_implementation_boundary.py",
+      "--check"
+    ],
+    "exit_code": 0,
+    "elapsed": 1.209204912185669,
+    "sha256": "77ccfc0376d81464fe59198daeb0f23212511f7900a88b69fc79385449196025",
+    "log": "3.log"
+  },
+  {
+    "command": [
+      "/workspace/rr-env/bin/ruff",
+      "check",
+      "src",
+      "tests",
+      "scripts"
+    ],
+    "exit_code": 0,
+    "elapsed": 0.18201279640197754,
+    "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+    "log": "4.log"
+  },
+  {
+    "command": [
+      "/workspace/rr-env/bin/ruff",
+      "format",
+      "--check",
+      "src",
+      "tests",
+      "scripts"
+    ],
+    "exit_code": 0,
+    "elapsed": 0.19425415992736816,
+    "sha256": "e12937b901dfe2a1009518320954c11b37d6f8c321d8f5f78b11f1f5eb917834",
+    "log": "5.log"
+  },
+  {
+    "command": [
+      "/workspace/rr-env/bin/python",
+      "scripts/ci_execute.py",
+      "reports"
+    ],
+    "exit_code": 0,
+    "elapsed": 0.9669010639190674,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "log": "6.log"
+  }
+]

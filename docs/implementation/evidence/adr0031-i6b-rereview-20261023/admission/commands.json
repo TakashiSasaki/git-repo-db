@@ -1,0 +1,154 @@
+[
+  {
+    "name": "initial11",
+    "cwd": "/workspace/git-repo-db",
+    "argv": [
+      "/workspace/rr-env/bin/python",
+      "-m",
+      "pytest",
+      "-c",
+      "/workspace/git-repo-db/pyproject.toml",
+      "--rootdir=/workspace/rereview-admission/probes",
+      "--confcutdir=/workspace/rereview-admission/probes",
+      "-p",
+      "tests.conftest",
+      "/workspace/rereview-admission/probes",
+      "-o",
+      "addopts=",
+      "-q",
+      "--junitxml=/workspace/rereview-admission/raw/junit.xml",
+      "--journal=/workspace/rereview-admission/raw/journal.jsonl"
+    ],
+    "environment": {
+      "PATH_prefix": "/workspace/rr-env/bin",
+      "RR_ADMISSION_OBSERVATIONS": "/workspace/rereview-admission/raw/observations.json"
+    },
+    "exit": 1,
+    "preserved_outputs_relocated_under": "raw/initial-* after completed initial attempt"
+  },
+  {
+    "name": "corrected11",
+    "cwd": "/workspace/git-repo-db",
+    "argv": [
+      "/workspace/rr-env/bin/python",
+      "-m",
+      "pytest",
+      "-c",
+      "/workspace/git-repo-db/pyproject.toml",
+      "--rootdir=/workspace/rereview-admission/probes",
+      "--confcutdir=/workspace/rereview-admission/probes",
+      "-p",
+      "tests.conftest",
+      "/workspace/rereview-admission/probes",
+      "-o",
+      "addopts=",
+      "-q",
+      "--junitxml=/workspace/rereview-admission/raw/junit.xml",
+      "--journal=/workspace/rereview-admission/raw/journal.jsonl"
+    ],
+    "environment": {
+      "PATH_prefix": "/workspace/rr-env/bin",
+      "RR_ADMISSION_OBSERVATIONS": "/workspace/rereview-admission/raw/observations.json"
+    },
+    "exit": 0
+  },
+  {
+    "name": "final13",
+    "cwd": "/workspace/git-repo-db",
+    "argv": [
+      "/workspace/rr-env/bin/python",
+      "-m",
+      "pytest",
+      "-c",
+      "/workspace/git-repo-db/pyproject.toml",
+      "--rootdir=/workspace/rereview-admission/probes",
+      "--confcutdir=/workspace/rereview-admission/probes",
+      "-p",
+      "tests.conftest",
+      "/workspace/rereview-admission/probes",
+      "-o",
+      "addopts=",
+      "-q",
+      "--junitxml=/workspace/rereview-admission/raw/final13/junit.xml",
+      "--journal=/workspace/rereview-admission/raw/final13/journal.jsonl"
+    ],
+    "environment": {
+      "PATH_prefix": "/workspace/rr-env/bin",
+      "RR_ADMISSION_OBSERVATIONS": "/workspace/rereview-admission/raw/final13/observations.json"
+    },
+    "exit": 0
+  },
+  {
+    "name": "retained-route-fence",
+    "cwd": "/workspace/git-repo-db",
+    "argv": [
+      "/workspace/rr-env/bin/python",
+      "-m",
+      "pytest",
+      "-c",
+      "/workspace/git-repo-db/pyproject.toml",
+      "-o",
+      "addopts=",
+      "-q",
+      "tests/unit/test_context_fences_i6a.py",
+      "tests/integration/i6a/test_admission.py",
+      "-k",
+      "unconnected or exact_both_definitions or invalid_fences or uninspectable",
+      "--junitxml=/workspace/rereview-admission/raw/retained-route-fence/junit.xml",
+      "--journal=/workspace/rereview-admission/raw/retained-route-fence/journal.jsonl"
+    ],
+    "exit": 0
+  },
+  {
+    "name": "retained-sql",
+    "cwd": "/workspace/git-repo-db",
+    "argv": [
+      "/workspace/rr-env/bin/python",
+      "-m",
+      "pytest",
+      "-c",
+      "/workspace/git-repo-db/pyproject.toml",
+      "-o",
+      "addopts=",
+      "-q",
+      "tests/integration/i6a/test_admission.py::test_real_second_endpoint_insert_failure_rolls_back_whole_unit",
+      "tests/integration/i6a/test_admission.py::test_deferred_actual_outer_commit_failure_explicitly_rolls_back",
+      "--junitxml=/workspace/rereview-admission/raw/retained-sql/junit.xml",
+      "--journal=/workspace/rereview-admission/raw/retained-sql/journal.jsonl"
+    ],
+    "environment": {
+      "I6A_SQL_PROBE_OUTPUT": "/workspace/rereview-admission/raw/retained-sql/sql-observations.json"
+    },
+    "exit": 0
+  },
+  {
+    "name": "final13-collection",
+    "cwd": "/workspace/git-repo-db",
+    "argv": [
+      "/workspace/rr-env/bin/python",
+      "-m",
+      "pytest",
+      "-c",
+      "/workspace/git-repo-db/pyproject.toml",
+      "--rootdir=/workspace/rereview-admission/probes",
+      "--confcutdir=/workspace/rereview-admission/probes",
+      "-p",
+      "tests.conftest",
+      "/workspace/rereview-admission/probes",
+      "-o",
+      "addopts=",
+      "--collect-only",
+      "-q"
+    ],
+    "exit": 0
+  },
+  {
+    "name": "binding-and-reconciliation",
+    "cwd": "/workspace/git-repo-db",
+    "argv": [
+      "/workspace/rr-env/bin/python",
+      "/workspace/rereview-admission/bind_and_reconcile.py"
+    ],
+    "exit": 0
+  }
+]

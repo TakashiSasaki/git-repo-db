@@ -1,0 +1,89 @@
+"""Replay unchanged historical external probes with independent receipts."""
+import collections
+import hashlib
+import json
+import os
+from pathlib import Path
+import sqlite3
+import subprocess
+import sys
+import time
+import xml.etree.ElementTree as ET
+
+ROOT = Path('/workspace/git-repo-db')
+OUT = Path('/workspace/rereview-m02/reused')
+PROBES = OUT / 'probes'
+HISTORICAL = ROOT / 'docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/reproduce/probes'
+PROBES.mkdir(parents=True, exist_ok=True)
+copies = []
+for source in sorted(HISTORICAL.glob('*.py.txt')):
+    destination = PROBES / source.name.removesuffix('.txt')
+    destination.write_bytes(source.read_bytes())
+    copies.append({'source':str(source.relative_to(ROOT)), 'destination':destination.name,
+                   'sha256':hashlib.sha256(source.read_bytes()).hexdigest(),
+                   'byte_identical':source.read_bytes()==destination.read_bytes()})
+(OUT/'probe-copy-binding.json').write_text(json.dumps(copies,indent=2)+'\n')
+
+env = dict(os.environ)
+env['PATH'] = str(Path(sys.executable).parent)+':'+env['PATH']
+env['WIRE_IMPORT_ROOT'] = str(ROOT/'src')
+env['I6B_EXTRA_SAVED_VECTOR_DIR'] = str(ROOT/'docs/implementation/evidence/adr0031-i6b-author-20261023/vectors')
+env['TMPDIR'] = '/workspace/rereview-m02/tmp'
+Path(env['TMPDIR']).mkdir(exist_ok=True)
+
+def reconcile(folder, actual_exit):
+    selected = [line.strip() for line in (folder/'collection.log').read_text().splitlines()
+                if line.startswith('test_') and '::' in line]
+    events = [json.loads(line) for line in (folder/'journal.jsonl').read_text().splitlines()]
+    starts = [e['nodeid'] for e in events if e['event']=='start']
+    phases = collections.defaultdict(list)
+    for e in events:
+        if e['event']=='phase': phases[e['nodeid']].append((e['phase'],e['outcome']))
+    cases = ET.parse(folder/'junit.xml').findall('.//testcase')
+    junit = [c.attrib['classname'].replace('.', '/')+'.py::'+c.attrib['name'] for c in cases]
+    finishes = [e for e in events if e['event']=='finish']
+    result = {'selected':len(selected),'unique_selected':len(set(selected)),
+        'executed':len(starts),'junit':len(cases),'phases':sum(map(len,phases.values())),
+        'selected_equals_journal':collections.Counter(selected)==collections.Counter(starts),
+        'selected_equals_junit':collections.Counter(selected)==collections.Counter(junit),
+        'each_selected_exactly_once':len(selected)==len(set(selected))==len(starts)==len(set(starts)),
+        'ordinary_phases_exactly_once':all(collections.Counter(phases[n])==collections.Counter([('setup','passed'),('call','passed'),('teardown','passed')]) for n in selected),
+        'finish_matches_actual_exit':len(finishes)==1 and finishes[0]['status']=='completed' and finishes[0]['exitstatus']==actual_exit,
+        'failure':len(ET.parse(folder/'junit.xml').findall('.//failure')),
+        'error':len(ET.parse(folder/'junit.xml').findall('.//error')),
+        'skipped':len(ET.parse(folder/'junit.xml').findall('.//skipped'))}
+    (folder/'reconciliation.json').write_text(json.dumps(result,indent=2)+'\n')
+    return result
+
+lanes = {
+    'independent208':['test_independent_wire.py','test_planner_independent.py','test_commit_boundary.py','test_resolved_wire.py'],
+    'author34':['test_author_extra.py'],
+    'saved33':['test_digest_contract.py','test_planner_work_budget_contract.py'],
+}
+for name, files in lanes.items():
+    folder=OUT/name
+    folder.mkdir(exist_ok=True)
+    env['WIRE_REFUSALS']=str(folder/'wire-refusals.jsonl')
+    env['I6B_ADMISSION_OBSERVATIONS']=str(folder/'admission-observations.json')
+    env['I6B_EXTRA_VECTOR_DIR']=str(folder/'observed-vectors')
+    base=[sys.executable,'-m','pytest','-p','tests.conftest','-c',str(ROOT/'pyproject.toml'),
+          '--rootdir='+str(PROBES),'--confcutdir='+str(PROBES),'-o','addopts=',
+          '-o','junit_family=xunit1','-q','--tb=long',*[str(PROBES/f) for f in files]]
+    commands=[]
+    for stage,args in [('collection',['--collect-only']),('pytest',['--junitxml='+str(folder/'junit.xml'),
+                  '--journal='+str(folder/'journal.jsonl'),'--basetemp='+str(OUT/(name+'-temp'))])]:
+        cmd=base+args
+        start=time.time()
+        with (folder/(stage+'.log')).open('w') as stream:
+            process=subprocess.run(cmd,cwd=ROOT,env=env,stdout=stream,stderr=subprocess.STDOUT)
+        commands.append({'stage':stage,'command':cmd,'cwd':str(ROOT),'exit':process.returncode,
+                         'started_epoch':start,'elapsed_seconds':time.time()-start})
+    import repo_catalog.domain.exchange as exchange
+    binding={'python':sys.executable,'python_version':sys.version,'sqlite':sqlite3.sqlite_version,
+             'sqlite_source_id':sqlite3.connect(':memory:').execute('select sqlite_source_id()').fetchone()[0],
+             'exchange_origin':exchange.__file__,
+             'exchange_sha256':hashlib.sha256(Path(exchange.__file__).read_bytes()).hexdigest(),
+             'commands':commands,'completed':True}
+    (folder/'execution.json').write_text(json.dumps(binding,indent=2)+'\n')
+    checks=reconcile(folder,commands[-1]['exit'])
+    print(name,commands[-1]['exit'],json.dumps(checks),flush=True)

@@ -1,0 +1,226 @@
+"""Independent #153 M01 adversarial probes; only public planner + shared scanner.
+
+Fixtures are built independently of Author test helpers. Instrumentation delegates
+to the unmodified operations and records pre-operation accepted reservations.
+"""
+import copy
+import json
+from unittest.mock import patch
+
+import pytest
+
+from repo_catalog.domain import context_dependencies as planner, exchange
+from repo_catalog.domain.context_wire import decode_context_v5
+from repo_catalog.domain.exchange import ExchangeError, ExchangeSelectionScope
+from repo_catalog.domain.p1_context import ResourceKey, canonical
+from repo_catalog.domain.resource_identification import ResourceIdentification
+
+SERVICE = "6b4cb829-a87f-4321-bdef-101010101010"
+
+
+def scope(**kwargs):
+    return ExchangeSelectionScope(all_selected=True, **kwargs)
+
+
+def context(count=3, payload="", *, alternatives=True):
+    data = exchange.empty_context_section()
+    data["providers"] = [{"service_instance_uuidv4": SERVICE,
+        "provider_kind": "new-independent", "configuration_json": "{}"}]
+    keys = [ResourceKey.from_native(SERVICE, "x-independent", [str(i), ["", "雪"]]) for i in range(count)]
+    data["resources"] = [ResourceIdentification.unscoped(key).to_wire() for key in keys]
+    if count > 1:
+        data["resource_relations"] = [{
+            **dict(zip(("service_instance_uuidv4", "resource_kind", "provider_resource_id"), key.coordinates(), strict=True)),
+            "relation_kind": "x-cyclic-members", "members_json": canonical([keys[(i + 1) % count].coordinates()]),
+            "scope_json": canonical({"body": payload}) if payload else "{}", "provenance_json": canonical({"source": "independent-new", "evidence": "new boundary"}),
+            "observed_at_us": 771,
+        } for i, key in enumerate(keys)]
+        if alternatives:
+            base = {**data["resource_relations"][0], "collection_kind": "x-multiset", "terminal_state": "complete"}
+            base.pop("relation_kind")
+            data["collections"] = [base, {**base, "members_json": "[]", "terminal_state": "partial", "observed_at_us": 772}]
+    assert decode_context_v5(data) == data
+    return data
+
+
+def observed_plan(data, budget, prior=0):
+    events, admitted, reservations = [], [], []
+    original_scan = exchange._bounded_json
+    original_parse, original_quote, original_identity = exchange._parse_json, exchange._quoted_size, exchange.parse_identity
+    def scan(value, **kwargs):
+        original_spend = kwargs.get("spend")
+        def spend(amount=1):
+            original_spend(amount)
+            reservations.append(amount)
+            admitted.append(amount)
+        return original_scan(value, **{**kwargs, "spend": spend})
+    def operation(name, original):
+        def call(text, *args):
+            events.append({"operation": name, "characters": len(text), "funded": sum(admitted), "last_reservation": reservations[-1] if reservations else 0})
+            return original(text, *args)
+        return call
+    with patch.object(planner, "_bounded_json", side_effect=scan), patch.object(exchange, "_parse_json", side_effect=operation("json", original_parse)), patch.object(exchange, "_quoted_size", side_effect=operation("quote", original_quote)), patch.object(exchange, "parse_identity", side_effect=operation("identity", original_identity)):
+        result = planner.plan_context_dependencies(data, scope(max_work=budget), prior_work=prior)
+    return result, events, admitted
+
+
+@pytest.mark.parametrize("payload", ["雪" * 5_000, "\\\"\n\t" * 4_000, "x" * 60_000], ids=["unicode", "escaped", "ascii"])
+@pytest.mark.parametrize("budget,prior", [(0, 0), (1, 0), (31, 0), (4096, 0), (31, 31), (31, 55)])
+def test_large_prevalidated_unicode_and_escape_inputs_are_reserved(payload, budget, prior):
+    data = context(payload=payload)
+    result, events, admitted = observed_plan(data, budget, prior)
+    assert result.work_units <= max(budget, prior) + 1
+    assert not any(result.context.values())
+    assert sum(admitted) <= max(0, budget - prior)
+    assert all(event["funded"] + prior <= budget for event in events)
+    assert all(event["last_reservation"] >= event["characters"] + 1 for event in events)
+    assert not any(event["characters"] >= 30_000 for event in events)
+    print(json.dumps({"case": "unicode-escape", "budget": budget, "prior": prior, "work": result.work_units, "events": events}))
+
+
+@pytest.mark.parametrize("payload", ["{" + "x" * 180_000, "[" * 100_000, '{"' + "q" * 180_000], ids=["invalid-atom", "deep", "unterminated-key"])
+def test_malformed_giant_embedded_suffix_is_not_parsed_on_small_budget(payload):
+    data = context(count=0)
+    data["providers"][0]["configuration_json"] = payload
+    result, events, _ = observed_plan(data, 64)
+    assert result.work_units <= 65
+    assert not any(result.context.values())
+    assert not any(e["operation"] == "json" for e in events)
+    with pytest.raises(ExchangeError) as caught:
+        planner.plan_context_dependencies(data, scope(max_work=100_000_000))
+    assert caught.value.code in {"MALFORMED_JSON", "INPUT_LIMIT"}
+
+
+def test_caller_owned_oversize_embedded_object_is_funded_before_allocation():
+    data = context(count=2)
+    data["resource_relations"][0]["scope_json"] = canonical({str(i): [] for i in range(20_000)})
+    with pytest.raises(ExchangeError) as caught:
+        decode_context_v5(data)
+    assert caught.value.code == "INPUT_LIMIT"
+    for budget in (0, 17, 8192):
+        result, events, admitted = observed_plan(data, budget)
+        assert result.work_units <= budget + 1
+        assert not any(result.context.values())
+        assert not any(e["operation"] == "json" for e in events)
+        assert sum(admitted) <= budget
+
+
+@pytest.mark.parametrize("rows_delta", [-1, 0, 1])
+def test_hard_lower_bound_row_array_precedence_is_inclusive(rows_delta):
+    data = exchange.empty_context_section()
+    threshold = exchange.MAX_ELEMENTS - 1 - 2 * len(data)
+    data["resources"] = [None] * (threshold + rows_delta)
+    with patch.object(exchange, "_parse_json") as parse:
+        if rows_delta <= 0:
+            result = planner.plan_context_dependencies(data, scope(max_work=0))
+            assert result.work_units == 1
+            assert {x.reason for x in result.omissions} == {"work_limit"}
+        else:
+            with pytest.raises(ExchangeError) as caught:
+                planner.plan_context_dependencies(data, scope(max_work=0))
+            assert caught.value.code == "INPUT_LIMIT"
+    assert parse.call_count == 0
+
+
+@pytest.mark.parametrize("size", [0, 15, 17, 20_000, 40_000])
+def test_invalid_root_cardinality_never_constructs_sets(size):
+    data = {str(i): [] for i in range(size)}
+    with patch.object(planner, "set", wraps=set, create=True) as sets:
+        with pytest.raises(ExchangeError) as caught:
+            planner.plan_context_dependencies(data, scope(max_work=0))
+    assert caught.value.code == "MALFORMED_SECTION"
+    assert sets.call_count == 0
+
+
+def test_fixed_cardinality_bad_root_retains_typed_refusal():
+    data = {str(i): [] for i in range(len(exchange.CONTEXT_SECTION_KEYS))}
+    with patch.object(planner, "set", wraps=set, create=True) as sets:
+        with pytest.raises(ExchangeError) as caught:
+            planner.plan_context_dependencies(data, scope(max_work=0))
+    assert caught.value.code == "MALFORMED_SECTION"
+    assert sets.call_count == 2
+    assert all(len(call.args[0]) == len(exchange.CONTEXT_SECTION_KEYS) for call in sets.call_args_list)
+
+
+def test_arbitrary_work_stops_keep_both_terminal_alternatives_and_independent_units():
+    data = context(count=5)
+    before = copy.deepcopy(data)
+    full = planner.plan_context_dependencies(data, scope())
+    assert full.context == data
+    budgets = sorted({0, 1, 31, full.work_units - 1, full.work_units, full.work_units + 1, *range(0, full.work_units, max(1, full.work_units // 37))})
+    positive_partial = False
+    for budget in budgets:
+        result = planner.plan_context_dependencies(data, scope(max_work=budget))
+        assert result.work_units <= budget + 1
+        assert result.context["collections"] in ([], data["collections"])
+        assert decode_context_v5(result.context) == result.context
+        for section, rows in result.context.items():
+            assert all(row in data[section] for row in rows)
+        if 0 < result.emitted_units < full.emitted_units:
+            positive_partial = True
+        if budget >= full.work_units:
+            assert result.context == data
+        else:
+            assert result.context != data
+        assert data == before
+    assert positive_partial
+    print(json.dumps({"case": "whole-units", "budgets": budgets, "full_work": full.work_units, "sample_count": len(budgets)}))
+
+
+@pytest.mark.parametrize("dimension", ["max_bytes", "max_units"])
+def test_whole_terminal_unit_exact_and_one_short_output_boundary(dimension):
+    data = context(count=4)
+    full = planner.plan_context_dependencies(data, scope())
+    exact = full.emitted_payload_bytes if dimension == "max_bytes" else full.emitted_units
+    for limit in (0, exact - 1, exact, exact + 1):
+        result = planner.plan_context_dependencies(data, scope(**{dimension: limit}))
+        assert result.context["collections"] in ([], data["collections"])
+        assert decode_context_v5(result.context) == result.context
+        measured = result.emitted_payload_bytes if dimension == "max_bytes" else result.emitted_units
+        assert measured <= limit
+        if limit >= exact:
+            assert result.context == data
+        else:
+            assert result.context != data
+
+
+@pytest.mark.parametrize("kind", ["cycle", "depth"])
+def test_lawful_cycles_and_hostile_container_cycles_have_separate_bounds(kind):
+    data = context(count=7)
+    full = planner.plan_context_dependencies(data, scope())
+    assert full.context == data
+    malformed = copy.deepcopy(data)
+    if kind == "cycle":
+        malformed["resources"].append(malformed)
+    else:
+        nested = 0
+        for _ in range(exchange.MAX_DEPTH + 1):
+            nested = [nested]
+        malformed["resources"].append(nested)
+    stopped = planner.plan_context_dependencies(malformed, scope(max_work=0))
+    assert stopped.work_units == 1 and not any(stopped.context.values())
+    with pytest.raises(ExchangeError) as caught:
+        planner.plan_context_dependencies(malformed, scope(max_work=100_000_000))
+    assert caught.value.code == ("MALFORMED_JSON" if kind == "cycle" else "INPUT_LIMIT")
+
+
+def test_cumulative_exact_budget_includes_prior_work_and_no_retry_refund():
+    data = context(count=4)
+    full = planner.plan_context_dependencies(data, scope())
+    prior = 37
+    exact = planner.plan_context_dependencies(data, scope(max_work=prior + full.work_units), prior_work=prior)
+    assert exact.context == data and exact.work_units == prior + full.work_units
+    short = planner.plan_context_dependencies(data, scope(max_work=prior + full.work_units - 1), prior_work=prior)
+    assert short.context != data and short.work_units <= prior + full.work_units
+    exhausted = planner.plan_context_dependencies(data, scope(max_work=exact.work_units), prior_work=exact.work_units)
+    assert exhausted.work_units == exact.work_units + 1
+    assert not any(exhausted.context.values())
+
+
+def test_unselected_context_never_traverses_giant_payload():
+    data = context(payload="雪" * 5_000)
+    with patch.object(planner, "_bounded_json") as scan:
+        result = planner.plan_context_dependencies(data, scope(include_context=False, max_work=0))
+    assert result.work_units == 0 and scan.call_count == 0
+    assert not any(result.context.values())
+    assert {x.reason for x in result.omissions} == {"section_not_selected"}

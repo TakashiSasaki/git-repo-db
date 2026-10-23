@@ -1,0 +1,225 @@
+"""Independent I6-B planner oracle probes; no Author test helper imports."""
+import copy
+import json
+from dataclasses import replace
+
+import pytest
+
+from repo_catalog.domain.context_dependencies import plan_context_dependencies as plan
+from repo_catalog.domain.context_wire import decode_context_v5
+from repo_catalog.domain.exchange import (
+    CONTEXT_SECTION_KEYS, MAX_ELEMENTS, ExchangeError, ExchangeSelectionScope,
+    _bounded_json, empty_context_section,
+)
+from repo_catalog.domain.p1_context import ResourceKey, canonical
+from repo_catalog.domain.resource_identification import ResourceIdentification
+
+SERVICE = "98765432-1111-4222-8333-123456789abc"
+PROV = canonical({"source": "independent-synthetic", "evidence": "P-20261023"})
+
+
+def scope(**kw):
+    return ExchangeSelectionScope(all_selected=True, **kw)
+
+
+def graph(edges, *, terminals=False):
+    # Node zero is a non-leaf genuine global Document. Remaining IDs are arrays
+    # with Unicode/empty coordinates under an explicitly opaque native contract.
+    n = max([v for edge in edges for v in edge] + [0]) + 1
+    keys = [ResourceKey.global_document(SERVICE, ["原本", [], "e\u0301"])]
+    keys += [ResourceKey.from_native(SERVICE, "x-independent", ["節", str(i), []]) for i in range(1, n)]
+    data = empty_context_section()
+    data["providers"] = [{"service_instance_uuidv4": SERVICE, "provider_kind": "independent", "configuration_json": "{}"}]
+    data["resources"] = [
+        (ResourceIdentification.global_document(key) if i == 0 else ResourceIdentification.unscoped(key)).to_wire()
+        for i, key in enumerate(keys)
+    ]
+    for owner in range(n):
+        members = [keys[b] for a, b in edges if a == owner]
+        if not members and not terminals:
+            continue
+        base = dict(zip(("service_instance_uuidv4", "resource_kind", "provider_resource_id"), keys[owner].coordinates(), strict=True))
+        base.update(members_json=canonical([k.coordinates() for k in members]), provenance_json=PROV, scope_json="{}", observed_at_us=211)
+        data["resource_relations"].append({**base, "relation_kind": "x-no-business-meaning"})
+        if terminals:
+            # Same header, independent conflicting terminals; group must be atomic.
+            for at, state, vals in ((212, "complete", members), (213, "partial", []), (213, "unknown", members[::-1])):
+                data["collections"].append({**base, "collection_kind": "x-open-list", "observed_at_us": at, "terminal_state": state, "members_json": canonical([k.coordinates() for k in vals])})
+    assert decode_context_v5(data) == data
+    return data, keys
+
+
+def reachable(edges, count, depth, node_cap=MAX_ELEMENTS):
+    result = {0} if node_cap else set()
+    frontier = result.copy()
+    for _ in range(depth):
+        next_nodes = {b for a, b in edges if a in frontier} - result
+        result |= next_nodes
+        frontier = next_nodes
+    return result
+
+
+def emitted_indices(result, keys):
+    return {i for i, key in enumerate(keys) if key in result.selected_resources}
+
+
+def check_whole_units(result, data):
+    # Every output is an unchanged input row. Relations cannot lose members and
+    # each Collection header's complete original terminal multiset survives or not.
+    assert decode_context_v5(result.context) == result.context
+    for section in CONTEXT_SECTION_KEYS:
+        assert all(row in data[section] for row in result.context[section])
+    for original in data["collections"]:
+        header = tuple(original[k] for k in ("service_instance_uuidv4", "resource_kind", "provider_resource_id", "collection_kind", "provenance_json"))
+        match = lambda row: tuple(row[k] for k in ("service_instance_uuidv4", "resource_kind", "provider_resource_id", "collection_kind", "provenance_json")) == header
+        kept = [r for r in result.context["collections"] if match(r)]
+        assert kept in ([], [r for r in data["collections"] if match(r)])
+    available = {tuple(row[k] for k in ("service_instance_uuidv4", "resource_kind", "provider_resource_id")) for row in result.context["resources"]}
+    for section in ("resource_relations", "collections"):
+        for row in result.context[section]:
+            assert tuple(row[k] for k in ("service_instance_uuidv4", "resource_kind", "provider_resource_id")) in available
+            assert all(tuple(m) in available for m in json.loads(row["members_json"]))
+
+
+@pytest.mark.parametrize("depth", [0, 1, 2, 7, 8, 31, 32])
+def test_chain_depth_oracle_at_zero_exact_and_longest_setting(depth):
+    edges = [(i, i + 1) for i in range(33)]
+    data, keys = graph(edges)
+    result = plan(data, scope(resource_keys=(keys[0],), max_depth=depth))
+    assert emitted_indices(result, keys) == reachable(edges, len(keys), depth)
+    check_whole_units(result, data)
+    assert len(result.context["resource_relations"]) == depth
+    assert any(o.reason == "depth_limit" for o in result.omissions)
+
+
+@pytest.mark.parametrize("limit", [0, 1, 2, 3, 4])
+def test_branch_node_boundary_uses_canonical_order_and_no_partial_report(limit):
+    edges = [(0, 3), (0, 2), (0, 1)]
+    data, keys = graph(edges)
+    result = plan(data, scope(resource_keys=(keys[0],), max_depth=1), max_nodes=limit)
+    assert len(result.selected_resources) == min(limit, 4)
+    check_whole_units(result, data)
+    if limit < 4:
+        assert result.context["resource_relations"] == []
+    else:
+        assert result.context == data
+
+
+@pytest.mark.parametrize("limit", [0, 1, 2, 3, 4])
+def test_three_edge_exact_and_plus_one_hold_entire_fanout(limit):
+    data, keys = graph([(0, 3), (0, 2), (0, 1)])
+    result = plan(data, scope(resource_keys=tuple(keys)), max_edges=limit)
+    check_whole_units(result, data)
+    assert bool(result.context["resource_relations"]) == (limit >= 3)
+    if limit < 3:
+        assert any(o.reason == "edge_limit" for o in result.omissions)
+
+
+@pytest.mark.parametrize("dimension", ["max_units", "max_bytes", "max_work"])
+def test_exact_payload_work_unit_bound_and_one_under_over(dimension):
+    data, _ = graph([(0, 1), (1, 0)], terminals=True)
+    full = plan(data, scope())
+    required = {"max_units": full.emitted_units, "max_bytes": full.emitted_payload_bytes, "max_work": full.work_units}[dimension]
+    for bound in (0, required - 1, required, required + 1):
+        result = plan(data, scope(**{dimension: bound}))
+        check_whole_units(result, data)
+        if bound >= required:
+            assert result.context == data
+        else:
+            assert result.context != data
+        if dimension == "max_units":
+            assert result.emitted_units <= bound
+        elif dimension == "max_bytes":
+            assert result.emitted_payload_bytes <= bound
+        elif bound >= _bounded_json(data, root="context")[0]:
+            assert result.work_units <= bound + 1
+
+
+def test_work_stop_sampling_never_exposes_incomplete_terminal_group():
+    data, _ = graph([(0, 1), (1, 2), (2, 0)], terminals=True)
+    before = copy.deepcopy(data)
+    full = plan(data, scope())
+    scanned = _bounded_json(data, root="context")[0]
+    points = {0, scanned - 1, scanned, scanned + 1, full.work_units - 1, full.work_units, full.work_units + 1}
+    points.update(range(scanned, full.work_units, max(1, (full.work_units - scanned) // 40)))
+    for bound in sorted(points):
+        result = plan(data, scope(max_work=bound))
+        check_whole_units(result, data)
+        assert data == before
+        assert result.work_units <= max(scanned, bound + 1)
+
+
+def test_cumulative_retry_charges_every_attempt_and_never_resets():
+    data, _ = graph([(0, 1), (1, 0)])
+    full = plan(data, scope())
+    repeated = plan(data, scope(), prior_work=full.work_units)
+    assert repeated.context == data
+    assert repeated.work_units == 2 * full.work_units
+    refused = plan(data, scope(max_work=full.work_units), prior_work=full.work_units)
+    assert not any(refused.context.values())
+    assert refused.work_units > full.work_units
+    assert any(o.reason == "work_limit" for o in refused.omissions)
+
+
+def test_large_strongly_connected_graph_terminates_and_is_input_order_independent():
+    edges = [(i, (i + 1) % 24) for i in range(24)] + [(i, (i + 7) % 24) for i in range(24)]
+    data, keys = graph(edges)
+    result = plan(data, scope(resource_keys=(keys[0],), max_depth=24))
+    assert result.context == data
+    assert result.selected_resources == frozenset(keys)
+    reordered = copy.deepcopy(data)
+    reordered["resources"].reverse()
+    reordered["resource_relations"].reverse()
+    other = plan(reordered, scope(resource_keys=(keys[0],), max_depth=24))
+    assert other.selected_resources == result.selected_resources
+    assert other.work_units == result.work_units
+    assert other.context == reordered
+    check_whole_units(other, reordered)
+
+
+def test_self_cycle_opaque_name_has_only_explicit_edge_and_empty_selection_is_empty():
+    data, keys = graph([(0, 0)])
+    zero_depth = plan(data, scope(resource_keys=(keys[0],), max_depth=0))
+    assert zero_depth.context == data
+    none = plan(data, scope(resource_keys=(), source_uuidv4s=(), repository_uuidv4s=()))
+    assert not any(none.context.values())
+    assert not none.selected_resources
+
+
+def test_missing_member_is_withheld_and_never_truncated_or_staged():
+    data, keys = graph([(0, 1), (0, 2)])
+    data["resources"] = data["resources"][:-1]
+    result = plan(data, scope(resource_keys=(keys[0],)))
+    assert result.context["resources"] == data["resources"]
+    assert result.context["resource_relations"] == []
+    assert len(json.loads(data["resource_relations"][0]["members_json"])) == 2
+    assert any(o.reason == "missing_dependency" for o in result.omissions)
+    assert not hasattr(result, "pending")
+    assert all(o.unit_key[0] in ("context_input_rows", "context") for o in result.omissions)
+
+
+def test_cyclic_caller_container_stops_with_typed_refusal():
+    data = empty_context_section()
+    data["providers"].append(data)
+    with pytest.raises(ExchangeError) as exc:
+        plan(data, scope())
+    assert exc.value.code == "MALFORMED_JSON"
+
+
+def test_hard_element_cap_rejects_before_indexing_hostile_rows():
+    data = empty_context_section()
+    data["resources"] = [None] * MAX_ELEMENTS
+    with pytest.raises(ExchangeError) as exc:
+        plan(data, scope(max_work=0))
+    assert exc.value.code == "INPUT_LIMIT"
+
+
+def test_result_owns_output_and_diagnostics_do_not_copy_original_payload():
+    data, _ = graph([(0, 1)], terminals=True)
+    result = plan(data, scope())
+    result.context["resource_relations"][0]["members_json"] = "[]"
+    assert data["resource_relations"][0]["members_json"] != "[]"
+    limited = plan(data, scope(max_bytes=0))
+    encoded = repr(limited.omissions)
+    assert PROV not in encoded
+    assert "members_json" not in encoded

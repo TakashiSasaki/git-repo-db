@@ -1,0 +1,20 @@
+from pathlib import Path
+import json,tarfile,zipfile,hashlib
+root=Path('/workspace/rereview-distribution');out=root/'evidence'
+git=json.loads((out/'git-tree-and-metadata-audit.json').read_text())['files']
+art=json.loads((out/'artifacts.json').read_text()); allm=json.loads((out/'sdist-all-members.json').read_text());prefix=next(iter(allm)).split('/')[0]
+checks={}
+for name,entry in git.items():
+ m=allm.get(prefix+'/'+name)
+ if m is None:continue
+ assert m['sha256']==entry['sha256'] and m['bytes']==entry['bytes']
+ assert int(m['mode'],8)&0o777 == int(entry['mode'],8)&0o777,(name,m['mode'],entry['mode'])
+ checks[name]={'mode':m['mode'],'sha256':m['sha256'],'bytes':m['bytes']}
+with tarfile.open(art['sdist']['path']) as t:
+ pkg=t.extractfile(prefix+'/PKG-INFO').read()
+(out/'sdist-PKG-INFO.txt').write_bytes(pkg)
+with zipfile.ZipFile(art['direct']['path']) as z:
+ metadata=z.read(next(n for n in z.namelist() if n.endswith('.dist-info/METADATA')))
+assert pkg==metadata
+(out/'sdist-metadata-audit.json').write_text(json.dumps({'retained_file_modes_equal_git':True,'retained_files':len(checks),'pkg_info_equals_wheel_metadata':True,'pkg_info_sha256':hashlib.sha256(pkg).hexdigest(),'checks':checks},indent=2)+'\n')
+print('all retained bytes/modes and PKG-INFO=METADATA',len(checks))

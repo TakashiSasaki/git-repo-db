@@ -1,0 +1,17 @@
+{
+  "direct": {
+    "path": "/workspace/rereview-distribution/frozen/dist/repo_catalog-0.2.0-py3-none-any.whl",
+    "sha256": "2452e419e06eea774805fc89358130538c50fdd313fdb0fb9b82b230e99a39d8",
+    "bytes": 791300
+  },
+  "sdist": {
+    "path": "/workspace/rereview-distribution/frozen/dist/repo_catalog-0.2.0.tar.gz",
+    "sha256": "88e2496b9335f475bbcaa6857832ce0d9dabc128b10bbf5aa0b08336039d52dc",
+    "bytes": 165713022
+  },
+  "derived": {
+    "path": "/workspace/rereview-distribution/from-sdist/repo_catalog-0.2.0/dist/repo_catalog-0.2.0-py3-none-any.whl",
+    "sha256": "2452e419e06eea774805fc89358130538c50fdd313fdb0fb9b82b230e99a39d8",
+    "bytes": 791300
+  }
+}

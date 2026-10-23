@@ -1,0 +1,56 @@
+"""Record exact scanner byte/depth/reservation boundaries on new values."""
+import json
+from pathlib import Path
+from unittest.mock import patch
+from repo_catalog.domain import exchange
+
+results = []
+for levels in (0, 1, 30, 31, 32, 33):
+    value = "雪\\\"\n"
+    for _ in range(levels):
+        value = [value]
+    charges = []
+    try:
+        counters = exchange._bounded_json(value, spend=charges.append)
+        outcome = {"result": counters}
+        assert levels <= exchange.MAX_DEPTH
+    except exchange.ExchangeError as error:
+        outcome = {"code": error.code}
+        assert levels > exchange.MAX_DEPTH and error.code == "INPUT_LIMIT"
+    results.append({"kind": "depth", "levels": levels, "charges": charges, "work": sum(charges), **outcome})
+
+for text in ('雪"\\\n', '\x00\x1f' * 13, '𝄞雪' * 32):
+    value = {"embedded_json": json.dumps([text, []], ensure_ascii=True, separators=(",", ":")), "literal": text}
+    charges = []
+    counters = exchange._bounded_json(value, spend=charges.append)
+    for delta in (-1, 0, 1):
+        with patch.object(exchange, "MAX_PACKAGE_BYTES", counters[1] + delta):
+            try:
+                observed = exchange._bounded_json(value, spend=lambda amount: None)
+                assert delta >= 0 and observed == counters
+                outcome = "accepted"
+            except exchange.ExchangeError as error:
+                assert delta == -1 and error.code == "INPUT_LIMIT"
+                outcome = error.code
+        results.append({"kind": "bytes", "text": text, "canonical_bytes": counters[1], "bound": counters[1] + delta, "outcome": outcome})
+
+    for allowance in sorted({0, 1, sum(charges)-1, sum(charges), sum(charges)+1, *range(0, sum(charges), max(1, sum(charges)//17))}):
+        accepted = []
+        class Stop(Exception):
+            pass
+        def spend(amount=1):
+            if sum(accepted) + amount > allowance:
+                raise Stop
+            accepted.append(amount)
+        try:
+            observed = exchange._bounded_json(value, spend=spend)
+            assert allowance >= sum(charges) and observed == counters
+            outcome = "accepted"
+        except Stop:
+            assert allowance < sum(charges)
+            outcome = "work_limit"
+        assert sum(accepted) <= allowance
+        results.append({"kind": "work", "allowance": allowance, "charged": sum(accepted), "outcome": outcome, "full_work": sum(charges)})
+
+Path(__file__).with_suffix(".json").write_text(json.dumps({"observations": results, "checks": len(results), "pass": True}, indent=2)+"\n")
+print(json.dumps({"checks": len(results), "pass": True}))

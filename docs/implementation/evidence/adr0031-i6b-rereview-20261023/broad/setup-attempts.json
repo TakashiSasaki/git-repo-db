@@ -1,0 +1,23 @@
+{
+  "environment_preparation": {
+    "command": "UV_PROJECT_ENVIRONMENT=/workspace/rr-env UV_CACHE_DIR=/workspace/uv-cache uv sync --locked --group dev --group docs",
+    "exit_code": 0,
+    "python": "3.12.14",
+    "sqlite": "3.53.1"
+  },
+  "initial_observer_preflight": {
+    "invocation": "system python imports broad_receipt before environment correction",
+    "exception": "ModuleNotFoundError: No module named 'pytest'",
+    "pytest_executed": false,
+    "inner_exit_not_separately_recorded": true,
+    "outer_shell_continued_to_read_only_GitHub_metadata": true
+  },
+  "corrected_observer_preflight": {
+    "python": "/workspace/rr-env/bin/python",
+    "result": "PASS",
+    "evidence": "observer-preflight.json"
+  },
+  "full_invocation_interrupted": false,
+  "diagnostic_separate_from_full": true,
+  "timing_scope": "Concurrent lanes have no sequential wall-clock benchmark claim; process-local tracemalloc observations are not elapsed-time measurements."
+}

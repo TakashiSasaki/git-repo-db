@@ -1,0 +1,17 @@
+{
+  "repository": "TakashiSasaki/git-repo-db",
+  "pull_request": 153,
+  "head": "61e44291e293f773904a0127606e20c8cb83c95e",
+  "head_ref": "fix/adr0031-i6b-m01-m02-20261023",
+  "tree": "4aa8ddf49fb52d0b903db0b0bfce00ccea2fae0c",
+  "base": "8521158f2996f125d2fcaac36ea79ac1296a7cf7",
+  "base_ref": "review/adr0031-i6b-independent-20261023",
+  "base_tree": "455ef25606ee555e4154dd2d14929b41aa4ef50f",
+  "merge_base": "8521158f2996f125d2fcaac36ea79ac1296a7cf7",
+  "actual_test_merge": "99477234735b9f45cbb4d0634bb8372eaf120710",
+  "review_branch": "review/adr0031-i6b-rereview-20261023",
+  "review_pr_direct_base": "fix/adr0031-i6b-m01-m02-20261023",
+  "review_product_mutations": false,
+  "independent_reviewer_not_implementation_author": true,
+  "publishing_identity_note": "Authorized shared repository-owner GitHub account publishes the separate non-Author agent review."
+}

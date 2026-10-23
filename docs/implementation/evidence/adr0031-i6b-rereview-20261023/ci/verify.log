@@ -1,0 +1,124 @@
+{
+  "development": {
+    "receipt_sha256": "b9380f4201eed5f20f2b5e05c40e6b5de2e3c194b428e441b3d4ca72a441f15d",
+    "receipt_bytes": 91302,
+    "indexed_payloads": 21,
+    "run_id": 39975300074,
+    "run_url": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/39975300074",
+    "conclusion": "success",
+    "reconstruction": null,
+    "manifest_acceptance_status": "development_checks_passed",
+    "full_acceptance": false,
+    "hosted_product_cases": 0
+  },
+  "access": {
+    "receipt_sha256": "436c4c647bdf7943e23ef341700c73f412a8d93600bb71cbd1f1ad30d44ce37a",
+    "receipt_bytes": 1953448,
+    "indexed_payloads": 121,
+    "run_id": 39975300189,
+    "run_url": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/39975300189",
+    "conclusion": "failure",
+    "reconstruction": {
+      "method": "ordered common-subsequence alignment; retain every observed run/step chunk, reject replace; no inferred bytes",
+      "run_view_decoded_bytes": 1953358,
+      "step_view_decoded_bytes": 1953358,
+      "edits": [
+        {
+          "tag": "insert",
+          "run_range": [
+            11750,
+            11750
+          ],
+          "step_range": [
+            11750,
+            11751
+          ],
+          "retained_chunks_sha256": [
+            "dd1152a08175147e07e5cbcc9e17f932fa0c24a27dd674fec658638afe81373f"
+          ]
+        },
+        {
+          "tag": "delete",
+          "run_range": [
+            12403,
+            12404
+          ],
+          "step_range": [
+            12404,
+            12404
+          ],
+          "retained_chunks_sha256": [
+            "e146d87fddf3fba8b816f46042061b50a04eb066f8fe0b92f312f459a6093781"
+          ]
+        }
+      ],
+      "reconstructed_chunks": 21705
+    }
+  },
+  "access_lanes": {
+    "artifacts/access-registry/i5/regressions.xml": {
+      "total": 3148,
+      "pass": 2849,
+      "fail": 279,
+      "error": 20,
+      "skip": 0,
+      "new_M01_M02_cases": []
+    },
+    "artifacts/access-registry/i5/transfer-admission.xml": {
+      "total": 29,
+      "pass": 29,
+      "fail": 0,
+      "error": 0,
+      "skip": 0,
+      "new_M01_M02_cases": []
+    },
+    "artifacts/access-registry/i5/transfer-sql.xml": {
+      "total": 217,
+      "pass": 217,
+      "fail": 0,
+      "error": 0,
+      "skip": 0,
+      "new_M01_M02_cases": []
+    },
+    "artifacts/access-registry/i5-distribution/direct-i4.xml": {
+      "total": 217,
+      "pass": 217,
+      "fail": 0,
+      "error": 0,
+      "skip": 0,
+      "new_M01_M02_cases": []
+    },
+    "artifacts/access-registry/i5-distribution/direct-i5.xml": {
+      "total": 29,
+      "pass": 29,
+      "fail": 0,
+      "error": 0,
+      "skip": 0,
+      "new_M01_M02_cases": []
+    },
+    "artifacts/access-registry/i5-distribution/sdist-i4.xml": {
+      "total": 217,
+      "pass": 217,
+      "fail": 0,
+      "error": 0,
+      "skip": 0,
+      "new_M01_M02_cases": []
+    },
+    "artifacts/access-registry/i5-distribution/sdist-i5.xml": {
+      "total": 29,
+      "pass": 29,
+      "fail": 0,
+      "error": 0,
+      "skip": 0,
+      "new_M01_M02_cases": []
+    },
+    "artifacts/access-registry/tests.xml": {
+      "total": 2786,
+      "pass": 2487,
+      "fail": 279,
+      "error": 20,
+      "skip": 0,
+      "new_M01_M02_cases": []
+    }
+  }
+}

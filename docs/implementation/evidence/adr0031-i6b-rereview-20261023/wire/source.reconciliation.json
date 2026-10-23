@@ -1,0 +1,14 @@
+{
+  "selected": 61,
+  "executed": 61,
+  "junit": 61,
+  "phases": 183,
+  "selected_equals_journal": true,
+  "selected_equals_junit": true,
+  "unique_each_once": true,
+  "exact_normal_phases": true,
+  "completed_exit0": true,
+  "failure": 0,
+  "error": 0,
+  "skip": 0
+}
