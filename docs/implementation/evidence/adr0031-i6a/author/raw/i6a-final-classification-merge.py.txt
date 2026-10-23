@@ -1,0 +1,12 @@
+"""Supplement original traceback classification with measured caught-error probes."""
+import pathlib,json,gzip,collections
+ROOT=pathlib.Path('/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6a/author')
+def read(p):return p.read_bytes() if p.exists() else gzip.decompress(pathlib.Path(str(p)+'.gz').read_bytes())
+p=ROOT/'final-v3/additional-failure-classification.json';r=json.loads(read(p));traces=json.loads(read(ROOT/'final-v3/caught-guard-traces/actual-permission-raise-stacks.json'));proof={x['nodeid'] for x in traces['records'] if x['raise_frame']['file'].endswith('/application/acquisition.py') and x['raise_frame']['line']==1111 and x['raise_frame']['function']=='_open_context'}
+for row in r['rows']:
+ if row['category']=='unresolved_trace_review':
+  node=row['classname'].replace('.','/')+'.py::'+row['name'];assert node in proof,node
+  row.update(category='intended_unconnected_i6c_guard',guard_marker='ProviderAcquisition._open_context@1111 (measured repeat)',basis='Original pytest assertion suppressed underlying raise frames. External trace-only repeat on the same frozen770 source measured actual ProviderAcquisition._open_context raise at1111; both original failing assertions are retained, not relabeled PASS.',supplemental_trace='caught-guard-traces/actual-permission-raise-stacks.json',supplemental_nodeid=node)
+ if row['test_frames']:
+  f,n,fn=row['test_frames'][-1];lines=(pathlib.Path('/workspace/i6a-v3-source')/f).read_text().splitlines();row['closest_test_callsite']={'path':f,'line':int(n),'function':fn,'source_line':lines[int(n)-1] if int(n)<=len(lines) else None}
+r['counts']=dict(collections.Counter(x['category'] for x in r['rows']));r['phase_counts']={c:dict(collections.Counter(x['phase'] for x in r['rows'] if x['category']==c)) for c in r['counts']};p.write_text(json.dumps(r,indent=2)+'\n')

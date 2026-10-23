@@ -1,0 +1,14 @@
+import pathlib,sys,gzip,hashlib,json
+for arg in sys.argv[1:]:
+ base=pathlib.Path(arg);index=base/'compression-index.json';records=json.loads(index.read_text()) if index.exists() else []
+ for p in sorted(base.iterdir()):
+  if not p.is_file() or p.suffix=='.gz':continue
+  if p.suffix in ('.log','.xml','.jsonl') or p.name.endswith(('.nodes.txt','.selected.txt','-selected.txt')) or 'manifest' in p.name or p.name.startswith('input-binding-'):
+   raw=p.read_bytes();target=pathlib.Path(str(p)+'.gz')
+   if target.exists():raise SystemExit('refuse overwrite '+str(target))
+   with target.open('wb') as stream:
+    with gzip.GzipFile(filename='',mode='wb',fileobj=stream,mtime=0) as z:z.write(raw)
+   compressed=target.read_bytes();assert gzip.decompress(compressed)==raw
+   records.append({'original_path':p.name,'original_bytes':len(raw),'original_sha256':hashlib.sha256(raw).hexdigest(),'gzip_path':target.name,'gzip_bytes':len(compressed),'gzip_sha256':hashlib.sha256(compressed).hexdigest()});p.unlink()
+ index.write_text(json.dumps(records,indent=2)+'\n')
+ print(str(base),len(records))

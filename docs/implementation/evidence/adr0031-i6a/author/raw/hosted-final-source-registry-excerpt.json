@@ -1,0 +1,175 @@
+{
+  "scope": "Author-inspected excerpt of connector-decoded complete hosted job log; line numbers refer to the full 23029-line remote log, not a claim of complete local log preservation.",
+  "job_url": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/39893650380/job/120218944775",
+  "job_id": 120218944775,
+  "source_head": "770e42d4828238cc0001c96663d078605ac44841",
+  "ci_merge_commit": "c5ccec63adb3c5b5134458acc113024a1ea9abcb",
+  "decoded_log_characters": 3764925,
+  "decoded_log_lines": 23029,
+  "rows": [
+    {
+      "line": 2,
+      "text": "2026-10-23T03:11:19.4968443Z ##[group]Runner Image Provisioner"
+    },
+    {
+      "line": 16,
+      "text": "2026-10-23T03:11:19.4978961Z ##[group]Runner Image"
+    },
+    {
+      "line": 35,
+      "text": "2026-10-23T03:11:20.8050314Z ##[group]Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1"
+    },
+    {
+      "line": 131,
+      "text": "2026-10-23T03:11:25.6121253Z HEAD is now at c5ccec6 Merge 770e42d4828238cc0001c96663d078605ac44841 into dc6e663ea90e55210ed5674cae6c332f66a4ac18"
+    },
+    {
+      "line": 164,
+      "text": "2026-10-23T03:11:25.7800359Z ##[group]Run ./.github/actions/product-python"
+    },
+    {
+      "line": 168,
+      "text": "2026-10-23T03:11:25.7860113Z ##[start-action display=Install manifest-selected prebuilt Python;id=__self.__run]"
+    },
+    {
+      "line": 169,
+      "text": "2026-10-23T03:11:25.7908116Z ##[group]Run python3 scripts/ci_python_runtime.py install \"$RUNNER_TEMP/product-python\""
+    },
+    {
+      "line": 187,
+      "text": "2026-10-23T03:11:27.7806152Z ##[start-action display=Record selected Python and product safety before dependencies;id=__self.__run_2]"
+    },
+    {
+      "line": 188,
+      "text": "2026-10-23T03:11:27.7834340Z ##[group]Run python scripts/ci_python_runtime.py probe artifacts/runtime/selected.json"
+    },
+    {
+      "line": 354,
+      "text": "2026-10-23T03:11:28.4546036Z ##[group]Run astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7"
+    },
+    {
+      "line": 409,
+      "text": "2026-10-23T03:11:31.9587856Z ##[group]Run uv sync --locked --group dev --group docs --python \"$CI_PRODUCT_PYTHON\""
+    },
+    {
+      "line": 421,
+      "text": "2026-10-23T03:11:31.9807879Z Using CPython 3.12.15 interpreter at: /home/runner/work/_temp/product-python/python/bin/python3"
+    },
+    {
+      "line": 639,
+      "text": "2026-10-23T03:11:33.6138412Z ##[group]Run uv run --no-sync python scripts/prepare_wheelhouse.py"
+    },
+    {
+      "line": 651,
+      "text": "2026-10-23T03:11:35.5767629Z ##[group]Run set -euo pipefail"
+    },
+    {
+      "line": 881,
+      "text": "2026-10-23T03:14:42.6983684Z 302 failed, 2059 passed, 2 warnings, 419 errors in 182.97s (0:03:02)"
+    },
+    {
+      "line": 882,
+      "text": "2026-10-23T03:14:42.6995383Z ##[error]Process completed with exit code 1."
+    },
+    {
+      "line": 883,
+      "text": "2026-10-23T03:14:42.7054079Z ##[group]Run uv run --no-sync python scripts/verify_i5.py --output artifacts/access-registry/i5 --workers 2"
+    },
+    {
+      "line": 894,
+      "text": "2026-10-23T03:14:52.3367231Z {\"transfer-admission\": {\"command\": [\"/home/runner/work/git-repo-db/git-repo-db/.venv/bin/python\", \"-m\", \"pytest\", \"-q\", \"-o\", \"addopts=--strict-markers\", \"-o\", \"junit_family=xunit1\", \"@/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5/transfer-admission.selected.txt\", \"--junitxml=/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5/transfer-admission.xml\", \"--journal=/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5/transfer-admission.jsonl\"], \"cwd\": \"/home/runner/work/git-repo-db/git-repo-db\", \"started_epoch\": 1792725288.86521, \"elapsed_seconds\": 3.469, \"exit_code\": 0, \"collected\": 29, \"passed\": 29, \"failed\": 0, \"error\": 0, \"skipped\": 0, \"xfail\": 0, \"xpass\": 0, \"executed\": 29, \"reconciliation\": {\"checks\": {\"selected_unique\": true, \"selected_equals_junit\": true, \"selected_equals_journal_starts\": true, \"setup_and_teardown_once\": true, \"no_duplicate_phases\": true, \"phase_nodes_equal_selected\": true, \"call_once_after_successful_setup\": true, \"one_finish\": true}, \"consistent_node_execution\": true, \"journal_phase_outcomes\": {\"passed\": 87}, \"finishes\": [{\"event\": \"finish\", \"status\": \"completed\", \"exitstatus\": 0, \"timestamp\": 1792725292.279145}]}}}"
+    },
+    {
+      "line": 895,
+      "text": "2026-10-23T03:15:03.5295514Z {\"transfer-sql\": {\"command\": [\"/home/runner/work/git-repo-db/git-repo-db/.venv/bin/python\", \"-m\", \"pytest\", \"-q\", \"-o\", \"addopts=--strict-markers\", \"-o\", \"junit_family=xunit1\", \"@/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5/transfer-sql.selected.txt\", \"--junitxml=/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5/transfer-sql.xml\", \"--journal=/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5/transfer-sql.jsonl\"], \"cwd\": \"/home/runner/work/git-repo-db/git-repo-db\", \"started_epoch\": 1792725292.3360307, \"elapsed_seconds\": 11.187, \"exit_code\": 0, \"collected\": 217, \"passed\": 217, \"failed\": 0, \"error\": 0, \"skipped\": 0, \"xfail\": 0, \"xpass\": 0, \"executed\": 217, \"reconciliation\": {\"checks\": {\"selected_unique\": true, \"selected_equals_junit\": true, \"selected_equals_journal_starts\": true, \"setup_and_teardown_once\": true, \"no_duplicate_phases\": true, \"phase_nodes_equal_selected\": true, \"call_once_after_successful_setup\": true, \"one_finish\": true}, \"consistent_node_execution\": true, \"journal_phase_outcomes\": {\"passed\": 651}, \"finishes\": [{\"event\": \"finish\", \"status\": \"completed\", \"exitstatus\": 0, \"timestamp\": 1792725303.460439}]}}}"
+    },
+    {
+      "line": 896,
+      "text": "2026-10-23T03:18:38.1457896Z {\"regressions\": {\"command\": [\"/home/runner/work/git-repo-db/git-repo-db/.venv/bin/python\", \"-m\", \"pytest\", \"-q\", \"-o\", \"addopts=--strict-markers\", \"-o\", \"junit_family=xunit1\", \"@/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5/regressions.selected.txt\", \"--junitxml=/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5/regressions.xml\", \"--journal=/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5/regressions.jsonl\", \"-n\", \"2\", \"--dist\", \"worksteal\"], \"cwd\": \"/home/runner/work/git-repo-db/git-repo-db\", \"started_epoch\": 1792725303.5315323, \"elapsed_seconds\": 214.46, \"exit_code\": 1, \"collected\": 3142, \"passed\": 2399, \"failed\": 324, \"error\": 419, \"skipped\": 0, \"xfail\": 0, \"xpass\": 0, \"executed\": 3142, \"reconciliation\": {\"checks\": {\"selected_unique\": true, \"selected_equals_junit\": true, \"selected_equals_journal_starts\": true, \"setup_and_teardown_once\": true, \"no_duplicate_phases\": true, \"phase_nodes_equal_selected\": true, \"call_once_after_successful_setup\": true, \"one_finish\": true}, \"consistent_node_execution\": true, \"journal_phase_outcomes\": {\"passed\": 8264, \"failed\": 743}, \"finishes\": [{\"event\": \"finish\", \"status\": \"failed\", \"exitstatus\": 1, \"timestamp\": 1792725515.21893}]}}}"
+    },
+    {
+      "line": 897,
+      "text": "2026-10-23T03:18:38.2025149Z ##[error]Process completed with exit code 1."
+    },
+    {
+      "line": 898,
+      "text": "2026-10-23T03:18:38.2079238Z ##[group]Run uv run --no-sync python scripts/compare_i5_failures.py --current artifacts/access-registry/i5/regressions.xml --baseline-entry author-3.51.3/regressions.xml --output artifacts/access-registry/failure-comparison.json"
+    },
+    {
+      "line": 910,
+      "text": "2026-10-23T03:18:38.3777475Z ##[error]Process completed with exit code 1."
+    },
+    {
+      "line": 911,
+      "text": "2026-10-23T03:18:38.3811146Z ##[group]Run uv run --no-sync python scripts/verify_i5_distribution.py --output artifacts/access-registry/i5-distribution"
+    },
+    {
+      "line": 922,
+      "text": "2026-10-23T03:18:53.5040132Z ##[error]Process completed with exit code 1."
+    },
+    {
+      "line": 923,
+      "text": "2026-10-23T03:18:53.5089423Z ##[group]Run uv run --no-sync python scripts/verify_i5_offline.py --output artifacts/access-registry/offline-inventory"
+    },
+    {
+      "line": 935,
+      "text": "2026-10-23T03:18:59.9043575Z ##[group]Run uv run --no-sync python scripts/verify_access_distribution.py"
+    },
+    {
+      "line": 954,
+      "text": "2026-10-23T03:19:06.5825052Z Using Python 3.12.15 environment at: wheel"
+    },
+    {
+      "line": 968,
+      "text": "2026-10-23T03:19:08.2899216Z Using Python 3.12.15 environment at: sdist-wheel"
+    },
+    {
+      "line": 985,
+      "text": "2026-10-23T03:19:10.0388806Z wheel {\"interpreter\": \"/tmp/access-distribution-j0y6u0x9/wheel/bin/python\", \"sqlite\": \"3.53.1\", \"sqlite_source_id\": \"2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9\", \"module_origin\": \"/tmp/access-distribution-j0y6u0x9/wheel/lib/python3.12/site-packages/repo_catalog/__init__.py\", \"context_ddl_sha256\": \"924cc7557fb3da6211ea070185881f5fcaeff9bf52b6e237a361a238a2ea0c6e\", \"ddl_sha256\": \"89bcafeda815150fa4770f5758edf7d2d36d505b76717aa19054f9ad689765da\", \"installed_smoke\": \"failed\", \"exit_code\": 1, \"stdout\": \"\", \"stderr\": \"Traceback (most recent call last):\\n  File \\\"<string>\\\", line 166, in <module>\\n  File \\\"/tmp/access-distribution-j0y6u0x9/wheel/lib/python3.12/site-packages/repo_catalog/adapters/sqlite/context_admission.py\\\", line 111, in call\\n    raise AdmissionRefused(\\\"PERMISSION_DENIED\\\")\\nrepo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED\\n\", \"artifact_kind\": \"wheel\", \"wheel_sha256\": \"83e9795875d58da753d7c9f76e9eb2c47e2eaafb70e079f581e59760ad5367c3\", \"source_sdist_sha256\": \"b5c7bac36796b73b9c3717881d5936706b8a01282a315aaf81f86b26db480de2\"}"
+    },
+    {
+      "line": 987,
+      "text": "2026-10-23T03:19:10.0398360Z sdist-wheel {\"interpreter\": \"/tmp/access-distribution-j0y6u0x9/sdist-wheel/bin/python\", \"sqlite\": \"3.53.1\", \"sqlite_source_id\": \"2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9\", \"module_origin\": \"/tmp/access-distribution-j0y6u0x9/sdist-wheel/lib/python3.12/site-packages/repo_catalog/__init__.py\", \"context_ddl_sha256\": \"924cc7557fb3da6211ea070185881f5fcaeff9bf52b6e237a361a238a2ea0c6e\", \"ddl_sha256\": \"89bcafeda815150fa4770f5758edf7d2d36d505b76717aa19054f9ad689765da\", \"installed_smoke\": \"failed\", \"exit_code\": 1, \"stdout\": \"\", \"stderr\": \"Traceback (most recent call last):\\n  File \\\"<string>\\\", line 166, in <module>\\n  File \\\"/tmp/access-distribution-j0y6u0x9/sdist-wheel/lib/python3.12/site-packages/repo_catalog/adapters/sqlite/context_admission.py\\\", line 111, in call\\n    raise AdmissionRefused(\\\"PERMISSION_DENIED\\\")\\nrepo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED\\n\", \"artifact_kind\": \"sdist-wheel\", \"wheel_sha256\": \"83e9795875d58da753d7c9f76e9eb2c47e2eaafb70e079f581e59760ad5367c3\", \"source_sdist_sha256\": \"b5c7bac36796b73b9c3717881d5936706b8a01282a315aaf81f86b26db480de2\"}"
+    },
+    {
+      "line": 989,
+      "text": "2026-10-23T03:19:10.0490055Z ##[error]Process completed with exit code 1."
+    },
+    {
+      "line": 990,
+      "text": "2026-10-23T03:19:10.0521937Z ##[group]Run uv run --no-sync python scripts/audit_callsite_dependencies.py --check"
+    },
+    {
+      "line": 1010,
+      "text": "2026-10-23T03:19:11.9668878Z ##[group]Run uv run --no-sync python scripts/audit_access_acceptance.py \\"
+    },
+    {
+      "line": 1025,
+      "text": "2026-10-23T03:19:12.3117988Z ##[error]Process completed with exit code 1."
+    },
+    {
+      "line": 1026,
+      "text": "2026-10-23T03:19:12.3170939Z ##[group]Run set -euo pipefail"
+    },
+    {
+      "line": 1223,
+      "text": "2026-10-23T03:19:14.5101298Z ##[group]Run set -euo pipefail"
+    },
+    {
+      "line": 1247,
+      "text": "2026-10-23T03:19:14.5979873Z ##[group]Run set -euo pipefail"
+    },
+    {
+      "line": 1271,
+      "text": "2026-10-23T03:19:17.8231047Z ##[group]Run uv run --no-sync python scripts/ci_python_runtime.py probe artifacts/runtime/final.json --reference artifacts/runtime/selected.json"
+    },
+    {
+      "line": 1438,
+      "text": "2026-10-23T03:19:18.1207249Z ##[group]Run python scripts/emit_ci_evidence.py"
+    },
+    {
+      "line": 22918,
+      "text": "2026-10-23T03:19:21.4305055Z ##[group]Run actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9"
+    }
+  ]
+}

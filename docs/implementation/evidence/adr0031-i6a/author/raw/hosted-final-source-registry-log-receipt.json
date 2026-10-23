@@ -1,0 +1,14 @@
+{
+  "command": [
+    "gh",
+    "api",
+    "repos/TakashiSasaki/git-repo-db/actions/jobs/120218944775/logs"
+  ],
+  "exit_code": 1,
+  "captured_utc": "2026-10-23T03:26:52.071006+00:00",
+  "job_url": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/39893650380/job/120218944775",
+  "source_head": "770e42d4828238cc0001c96663d078605ac44841",
+  "ci_merge_commit": "c5ccec63adb3c5b5134458acc113024a1ea9abcb",
+  "stderr": "Redirected hosted-log URL returned Forbidden; temporary signed query redacted.",
+  "outcome": "CLI persistence failed and was not retried. Connected GitHub fetch_workflow_job_logs successfully returned the same complete decoded log; inspected line-numbered excerpt preserved separately. Full raw local hosted log is not claimed."
+}

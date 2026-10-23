@@ -1,0 +1,74 @@
+import sys,os,pathlib,json,hashlib,subprocess,tarfile,zipfile,shutil,stat,time,sqlite3,collections,xml.etree.ElementTree as ET
+ROOT=pathlib.Path('/workspace/git-repo-db');sys.path.insert(0,str(ROOT))
+from scripts import verify_i5_offline as e
+OUT=ROOT/'docs/implementation/evidence/adr0031-i6a/author/distribution-corrected'
+WORK=pathlib.Path('/workspace/i6a-artifact-work-corrected');WORK.mkdir(exist_ok=False)
+OUT.mkdir(parents=True,exist_ok=False)
+SOURCE=pathlib.Path('/workspace/i6a-artifact-source-corrected');SOURCE.mkdir(exist_ok=False)
+records=[]
+def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
+def write(p,v):p.write_text(json.dumps(v,indent=2)+'\n')
+def run(name,cmd,cwd=SOURCE,env=None):
+ start=time.time()
+ with (OUT/(name+'.log')).open('w') as stream:r=subprocess.run(list(map(str,cmd)),cwd=cwd,env=env,stdout=stream,stderr=subprocess.STDOUT)
+ rec={'name':name,'command':list(map(str,cmd)),'cwd':str(cwd),'exit_code':r.returncode,'elapsed_seconds':round(time.time()-start,3)};records.append(rec);write(OUT/'processes.json',records);return rec
+wheelhouse,wm=e.verified_wheelhouse('/workspace/i6a-wheelhouse');write(OUT/'wheelhouse-binding.json',wm)
+source_commit=os.environ['I6A_SOURCE_COMMIT']
+archive=WORK/'frozen-source.tar'
+if run('archive',['git','archive',source_commit,'-o',archive],ROOT)['exit_code']:raise SystemExit('source archive failed')
+with tarfile.open(archive) as tar:tar.extractall(SOURCE,filter='data')
+manifest=[]
+for p in sorted(SOURCE.rglob('*')):
+ if not p.is_file() and not p.is_symlink():continue
+ rel=str(p.relative_to(SOURCE));raw=os.readlink(p).encode() if p.is_symlink() else p.read_bytes()
+ manifest.append({'path':rel,'bytes':len(raw),'sha256':hashlib.sha256(raw).hexdigest(),'mode':oct(stat.S_IMODE(p.lstat().st_mode))})
+write(OUT/'complete-build-source-manifest.json',{'head':source_commit,'tree':e.git('rev-parse',source_commit+'^{tree}'),'archive_sha256':sha(archive),'status':e.git('status','--porcelain'),'runtime_inputs':e.input_hashes(),'files':manifest,'scope':'Frozen committed tracked source tree. Untracked evidence and build outputs are excluded from this exact source snapshot and belong to later publication delta.'})
+if run('build-direct',[sys.executable,'-m','hatchling','build','-t','wheel','-t','sdist'])['exit_code']:raise SystemExit('direct build failed')
+wheel=next((SOURCE/'dist').glob('*.whl'));sdist=next((SOURCE/'dist').glob('*.tar.gz'));unpack=WORK/'from-sdist';unpack.mkdir()
+with tarfile.open(sdist) as tar:
+ members=tar.getmembers();sdist_inventory=[]
+ for m in members:
+  if m.isfile():
+   raw=tar.extractfile(m).read();sdist_inventory.append({'path':m.name,'bytes':len(raw),'sha256':hashlib.sha256(raw).hexdigest()})
+ tar.extractall(unpack,filter='data')
+write(OUT/'complete-sdist-member-manifest.json',sdist_inventory)
+derived=next(unpack.iterdir())
+if run('build-sdist-wheel',[sys.executable,'-m','hatchling','build','-t','wheel'],derived)['exit_code']:raise SystemExit('sdist wheel build failed')
+swheel=next((derived/'dist').glob('*.whl'))
+# Full built artifacts stay in external work storage; hashes and full member manifests are published.
+write(OUT/'build-binding.json',{tag:{'path':str(p),'bytes':p.stat().st_size,'sha256':sha(p)} for tag,p in [('direct-wheel',wheel),('sdist',sdist),('sdist-wheel',swheel)]})
+outside=WORK/'outside';outside.mkdir();shutil.copytree(SOURCE/'tests',outside/'tests',ignore=shutil.ignore_patterns('__pycache__','*.pyc'));(outside/'scripts').mkdir();(outside/'scripts/__init__.py').write_text('');shutil.copy2(SOURCE/'scripts/ci_journal.py',outside/'scripts/ci_journal.py')
+targets=['tests/integration/p3/test_transfer_sql.py','tests/integration/p3/test_transfer_admission.py','tests/integration/p3/test_parent_reports.py','tests/unit/test_context_admission.py','tests/unit/test_transfer_originals.py','tests/unit/test_context_fences_i6a.py','tests/unit/test_context_oid_admission_i6a.py','tests/unit/test_context_admission_bounds_i6a.py','tests/unit/test_context_coordinator_admission.py','tests/integration/p1/test_coordination.py','tests/integration/i6a']
+write(OUT/'targets.json',targets)
+measure=r'''import sys,pathlib,sqlite3,json,hashlib,repo_catalog,_sqlite3
+from repo_catalog.adapters.sqlite import p1_schema
+origin=pathlib.Path(repo_catalog.__file__).resolve();assert origin.is_relative_to(pathlib.Path(sys.prefix).resolve()),origin
+p1_schema._open(':memory:',fresh=True).close();db=sqlite3.connect(':memory:');p1_schema.register_functions(db);p1_schema.configure(db);db.executescript(p1_schema.compose('context'))
+root=origin.parent
+files={str(p.relative_to(root)):hashlib.sha256(p.read_bytes()).hexdigest() for p in root.rglob('*') if p.is_file() and p.suffix in ('.py','.sql','.json')}
+r={'executable':sys.executable,'base_executable':sys._base_executable,'python':sys.version,'sqlite':db.execute('select sqlite_version(),sqlite_source_id()').fetchone(),'sqlite_spec':_sqlite3.__spec__.origin,'compile_options':db.execute('pragma compile_options').fetchall(),'origin':str(origin),'installed_files':files,'fingerprint':p1_schema.fingerprint('context'),'schema_matches_expected':p1_schema.schema_rows(db)==p1_schema.expected_schema('context'),'fences':db.execute("select name,sql from sqlite_schema where name in ('i2_transfer_stage_fence','i2_transfer_report_stage_fence') order by name").fetchall(),'integrity_check':db.execute('pragma integrity_check').fetchall(),'foreign_key_check':db.execute('pragma foreign_key_check').fetchall()}
+pathlib.Path(sys.argv[1]).write_text(json.dumps(r,indent=2)+'\n')
+'''
+(outside/'measure.py').write_text(measure)
+for tag,artifact in [('direct',wheel),('sdist',swheel)]:
+ venv=WORK/(tag+'-venv');run(tag+'-venv',[sys.executable,'-m','venv','--without-pip',venv]);py=venv/'bin/python'
+ # Install all locked groups to support the copied pytest fixtures; network remains guarded.
+ requirements=OUT/(tag+'-requirements.txt');requirements.write_text(f'repo-catalog @ {artifact.as_uri()} --hash=sha256:{sha(artifact)}\n'+''.join(f"{r['name']} @ {(wheelhouse/r['file']).as_uri()} --hash=sha256:{r['sha256']}\n" for r in wm['wheels']))
+ if run(tag+'-install',['uv','pip','install','--python',py,'--offline','--no-index','--no-deps','--require-hashes','-r',requirements],outside)['exit_code']:continue
+ env=dict(os.environ,PATH=str(venv/'bin')+os.pathsep+os.environ['PATH'],PYTHONPATH=str(outside/'tests/support/network_guard'),GIT_ALLOW_PROTOCOL='file')
+ for key in ('GH_TOKEN','GITHUB_TOKEN','PYTHONHOME'):env.pop(key,None)
+ if run(tag+'-measure',[py,outside/'measure.py',OUT/(tag+'-runtime.json')],outside,env)['exit_code']:continue
+ measured=json.loads((OUT/(tag+'-runtime.json')).read_text())
+ with zipfile.ZipFile(artifact) as z:expected={n.removeprefix('repo_catalog/'):hashlib.sha256(z.read(n)).hexdigest() for n in z.namelist() if n.startswith('repo_catalog/') and pathlib.Path(n).suffix in ('.py','.sql','.json')}
+ source_expected={str(p.relative_to(SOURCE/'src/repo_catalog')):sha(p) for p in (SOURCE/'src/repo_catalog').rglob('*') if p.is_file() and p.suffix in ('.py','.sql','.json')}
+ write(OUT/(tag+'-source-wheel-file-check.json'),{'same_files':expected==source_expected,'source':source_expected,'wheel':expected})
+ if expected!=source_expected:raise SystemExit('wheel files differ from frozen product source')
+ write(OUT/(tag+'-installed-file-check.json'),{'same_files':expected==measured['installed_files'],'expected':expected,'measured':measured['installed_files']})
+ if expected!=measured['installed_files']:raise SystemExit('installed files differ from wheel')
+ run(tag+'-collect',[py,'-m','pytest','-q','--collect-only','-o','addopts=','--rootdir='+str(outside),'--confcutdir='+str(outside),*targets],outside,env)
+ selected=e.nodes(OUT/(tag+'-collect.log'));(OUT/(tag+'-selected.txt')).write_text(''.join(n+'\n' for n in selected))
+ rec=run(tag+'-tests',[py,'-m','pytest','-q','-o','addopts=--strict-markers','-o','junit_family=xunit1','--rootdir='+str(outside),'--confcutdir='+str(outside),*targets,'--basetemp=/workspace/i6a-dist-'+tag+'-basetemp','--junitxml='+str(OUT/(tag+'-tests.xml')),'--journal='+str(OUT/(tag+'-tests.jsonl'))],outside,env)
+ if (OUT/(tag+'-tests.xml')).exists():write(OUT/(tag+'-tests.execution.json'),{**rec,**e.outcomes(OUT/(tag+'-tests.xml')),'reconciliation':e.reconciliation(selected,OUT/(tag+'-tests.xml'),OUT/(tag+'-tests.jsonl'))})
+run('source-serial-sql-probes',[sys.executable,'/tmp/i6a_sql_probes.py'],pathlib.Path('/workspace/i6a-corrected-source'))
+write(OUT/'summary.json',{'processes':records,'full_acceptance':False,'author_verification':True})
+raise SystemExit(int(any(r['exit_code'] for r in records)))

@@ -1,0 +1,51 @@
+{
+  "command": [
+    "gh",
+    "pr",
+    "view",
+    "143",
+    "--json",
+    "headRefOid,baseRefName,isDraft,state,statusCheckRollup"
+  ],
+  "exit_code": 0,
+  "captured_utc": "2026-10-23T03:26:05.685120+00:00",
+  "stdout": {
+    "baseRefName": "review/adr0031-i6-design-independent-20261023",
+    "headRefOid": "770e42d4828238cc0001c96663d078605ac44841",
+    "isDraft": true,
+    "state": "OPEN",
+    "statusCheckRollup": [
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-23T03:19:56Z",
+        "conclusion": "FAILURE",
+        "detailsUrl": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/39893650380/job/120218944775",
+        "name": "registry-runtime",
+        "startedAt": "2026-10-23T03:11:18Z",
+        "status": "COMPLETED",
+        "workflowName": "Access registry focused verification"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-23T03:11:31Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/39893650381/job/120218944811",
+        "name": "sqlite-policy",
+        "startedAt": "2026-10-23T03:11:18Z",
+        "status": "COMPLETED",
+        "workflowName": "tests"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-23T03:11:37Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/39893650381/job/120218944987",
+        "name": "offline",
+        "startedAt": "2026-10-23T03:11:17Z",
+        "status": "COMPLETED",
+        "workflowName": "tests"
+      }
+    ]
+  },
+  "stderr": ""
+}

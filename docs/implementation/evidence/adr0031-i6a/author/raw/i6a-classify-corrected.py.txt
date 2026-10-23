@@ -1,0 +1,29 @@
+import pathlib,json,re,collections,xml.etree.ElementTree as ET,hashlib
+ROOT=pathlib.Path('/workspace/git-repo-db');OUT=ROOT/'docs/implementation/evidence/adr0031-i6a/author/final-corrected'
+comparison=json.loads((OUT/'historical-failure-comparison.json').read_text());additional={(x['class'],x['name']):x for x in comparison['additional_nodes']};rows=[]
+for case in ET.parse(OUT/'regressions.xml').findall('.//testcase'):
+ key=(case.get('classname'),case.get('name'))
+ if key not in additional:continue
+ event=case.find('failure');event=event if event is not None else case.find('error');msg=event.get('message','');trace=event.text or '';combined=msg+'\n'+trace
+ testframes=re.findall(r'^(tests/[^\n:]+\.py):(\d+):(?: in (\w+))?',trace,re.M)
+ sourceframes=re.findall(r'^(src/[^\n:]+\.py):(\d+):(?: in (\w+))?',trace,re.M)
+ installedframes=re.findall(r'File "([^\n"]*/repo_catalog/[^\n"]+)", line (\d+), in (\w+)',combined)
+ marker=None
+ if 'No space left on device' in combined:
+  cat='environment_only_enospc';basis='Actual OSError ENOSPC / nested build traceback; rerun original node under workspace storage, preserving this result.'
+ elif 'Isolated target imported by public runtime' in combined or (case.get('name')=='test_normal_runtime_has_no_access_import'):
+  cat='in_scope_static_ownership_audit_regression';basis='Actual assertion names new domain/context_admission.py imports as outside ISOLATED_TARGET_MODULES; inspect audit ownership contract, not an I6-C permission refusal.'
+ else:
+  # Require the exact measured guard location, including nested installed tracebacks.
+  provider=any(p.endswith('/application/acquisition.py') and int(n)==1111 for p,n,_ in sourceframes+installedframes)
+  exchange=any(p.endswith('/application/exchange.py') and int(n) in (397,1610,1658) for p,n,_ in sourceframes+installedframes)
+  if provider or exchange:
+   cat='intended_unconnected_i6c_guard';marker='ProviderAcquisition._open_context@1111' if provider else 'ExchangeService explicit admission guard@'+','.join(n for p,n,_ in sourceframes+installedframes if p.endswith('/application/exchange.py') and int(n) in (397,1610,1658));basis='Actual measured trace reaches the explicit I6-C guard. Existing behavioral test remains failing/unverified beyond that boundary; no full-pass inference.'
+  elif any(p.endswith('/adapters/sqlite/context_admission.py') and int(n)==111 for p,n,_ in sourceframes+installedframes):
+   cat='fixture_migration_paircoordinator_explicit_authority_missing' if any(p.endswith('/adapters/sqlite/p1_coordination.py') for p,n,f in sourceframes+installedframes) else 'fixture_migration_unbound_context';marker='context_admission.authorized_write.call@111';basis='Actual traceback takes service-is-not-ContextAdmissionService branch; synthetic/direct Context or ContextStore/AdmissionTransaction fixture has no bound local authority. Migrate genuine fixture context/grants preserving original assertions, or review concrete production caller if not synthetic. Actual PairCoordinator.admit frames are separately classified as a missing explicit constructor service/admission dependency after the I6-A lease bridge correction; the API exists and authorized coordinator545 artifact probes validate it.'
+  else:
+   cat='unresolved_trace_review';basis='No exact known guard or unbound-service frame established; needs per-node review, not classified by filename or PERMISSION_DENIED text alone.'
+ row={'classname':key[0],'name':key[1],'phase':additional[key]['phase'],'category':cat,'guard_marker':marker,'basis':basis,'message':msg,'first_test_frame':testframes[0] if testframes else None,'test_frames':testframes,'source_frames':sourceframes,'installed_frames':installedframes,'trace_sha256':hashlib.sha256(trace.encode()).hexdigest()};rows.append(row)
+result={'source_commit':'cc6e611d366230438f2c25e4040156c90cf4897f','scope':'All additional corrected historical-cohort nonsuccesses, classified using actual first-failure traceback and exact frozen guard frames. Categories do not turn failures into passes.','counts':dict(collections.Counter(x['category'] for x in rows)),'phase_counts':{cat:dict(collections.Counter(x['phase'] for x in rows if x['category']==cat)) for cat in {x['category'] for x in rows}},'rows':rows}
+(OUT/'additional-failure-classification.json').write_text(json.dumps(result,indent=2)+'\n');print(json.dumps({k:v for k,v in result.items() if k!='rows'},indent=2))
+print(json.dumps([{'class':x['classname'],'name':x['name'],'message':x['message'][:300],'installed_frames':x['installed_frames']} for x in rows if x['category']=='unresolved_trace_review'][:20],indent=2))

@@ -1,0 +1,22 @@
+import pathlib,json,hashlib,gzip,collections,sys,shutil
+ROOT=pathlib.Path('/workspace/git-repo-db');base=ROOT/'docs/implementation/evidence/adr0031-i6a/author/baseline';sys.path.insert(0,'/workspace/i6a-baseline')
+from scripts import verify_i5_offline as e
+runs={n:json.loads((base/(n+'.execution.json')).read_text()) for n in ('regressions','remaining-ordinary')}
+ordinary=e.nodes(base/'ordinary-collection.nodes.txt');actual=collections.Counter()
+for n in runs:actual.update(e.nodes(base/(n+'.selected.txt')))
+a=json.loads((base/'input-binding-before.json').read_text());b=json.loads((base/'input-binding-after-full.json').read_text())
+summary={'head':a['head'],'tree':a['tree'],'ordinary_collected':len(ordinary),'complete_exactly_once_ordinary_coverage':actual==collections.Counter(ordinary) and all(v==1 for v in actual.values()),'cohorts_disjoint':not(set(e.nodes(base/'regressions.selected.txt'))&set(e.nodes(base/'remaining-ordinary.selected.txt'))),'source_inputs_unchanged':a['inputs']==b['inputs'],'clean_before_after':not a['status'] and not b['status'],'aggregate':{k:sum(r.get(k,0) for r in runs.values()) for k in ('passed','failed','error','skipped','xfail','xpass','executed','elapsed_seconds')},'runs':runs,'live_benchmark_unexecuted':json.loads((base/'collection-summary.json').read_text())['live_or_benchmark'],'full_acceptance':False}
+(base/'full-ordinary-summary.json').write_text(json.dumps(summary,indent=2)+'\n')
+p=base/'README.md';s=p.read_text().replace('The disjoint remaining 2,605 ordinary nodes are currently executing in\n`remaining-ordinary.*`. `ordinary-outside-historical-unexecuted.txt` is the frozen\npre-execution selection of this cohort; it is retained by that original name.\nA final aggregate receipt will determine executed/unexecuted status. No result is\nclaimed until process completion, input binding and exact node reconciliation.','The disjoint remaining 2,605 ordinary nodes all passed in 411.612 seconds\n(process wall time; pytest reported 411.10 s and 57 passing subtests). Both ordinary\ncohorts together executed all 5,742 collected ordinary nodes exactly once: 5,663\npassed, 59 failed and 20 setup errors, with no skips/xfail. Their elapsed process\ntimes sum to 553.782 seconds; this is two sequential disjoint invocations, not a\nsingle pytest invocation or a benchmark speed comparison. The separate dedicated\nI4/I5 checks overlap and are excluded from this aggregate.\n`ordinary-outside-historical-unexecuted.txt` retains its original pre-execution\nselection name, and its nodes were subsequently executed by `remaining-ordinary`.\n`full-ordinary-summary.json` binds the disjoint node union, unchanged inputs, clean\nsource and completed per-cohort JUnit/journal/process receipts. The two live/benchmark\nnodes remain unexecuted. Large raw artifacts are gzip-compressed losslessly;\n`compression-index.json` binds both original and compressed byte identities.')
+p.write_text(s)
+transforms=[]
+for p in sorted(base.iterdir()):
+ if not p.is_file() or p.suffix=='.gz':continue
+ if p.suffix in ('.log','.xml','.jsonl') or p.name.endswith(('.nodes.txt','.selected.txt')) or ('manifest' in p.name) or p.name.startswith('input-binding-'):
+  raw=p.read_bytes();target=pathlib.Path(str(p)+'.gz')
+  with target.open('wb') as stream:
+   with gzip.GzipFile(filename='',mode='wb',fileobj=stream,mtime=0) as z:z.write(raw)
+  compressed=target.read_bytes();assert gzip.decompress(compressed)==raw
+  transforms.append({'original_path':p.name,'original_bytes':len(raw),'original_sha256':hashlib.sha256(raw).hexdigest(),'gzip_path':target.name,'gzip_bytes':len(compressed),'gzip_sha256':hashlib.sha256(compressed).hexdigest()});p.unlink()
+(base/'compression-index.json').write_text(json.dumps(transforms,indent=2)+'\n')
+print(json.dumps({k:v for k,v in summary.items() if k not in ('runs',)},indent=2))

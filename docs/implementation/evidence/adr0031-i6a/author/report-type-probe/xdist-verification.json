@@ -1,0 +1,63 @@
+{
+  "checks": {
+    "raw_phase_sidecar_multisets_equal": true,
+    "selected_equals_journal_starts": true,
+    "main_phase_nodes_equal_selected": true,
+    "main_setup_teardown_once": true,
+    "main_call_once_after_successful_setup": true,
+    "no_duplicate_main_phases": true,
+    "subtest_types_explicit": true,
+    "subtests_have_selected_parent": true,
+    "one_finish": true
+  },
+  "consistent_typed_phase_execution": true,
+  "ordinary_phase_outcomes": {
+    "passed": 6
+  },
+  "subtest_count": 3,
+  "subtest_outcomes": {
+    "passed": 2,
+    "failed": 1
+  },
+  "all_subtests_passed": false,
+  "subtest_contexts": [
+    {
+      "nodeid": "test_report_types.py::TestReports::test_positive",
+      "outcome": "passed",
+      "context": {
+        "msg": null,
+        "kwargs": {
+          "value": "'1'"
+        }
+      }
+    },
+    {
+      "nodeid": "test_report_types.py::TestReports::test_positive",
+      "outcome": "passed",
+      "context": {
+        "msg": null,
+        "kwargs": {
+          "value": "'2'"
+        }
+      }
+    },
+    {
+      "nodeid": "test_report_types.py::TestReports::test_negative_control",
+      "outcome": "failed",
+      "context": {
+        "msg": null,
+        "kwargs": {
+          "value": "'0'"
+        }
+      }
+    }
+  ],
+  "finishes": [
+    {
+      "event": "finish",
+      "status": "failed",
+      "exitstatus": 1,
+      "timestamp": 1792724349.70264
+    }
+  ]
+}

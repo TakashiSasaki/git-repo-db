@@ -1,0 +1,21 @@
+import subprocess,json,datetime,pathlib,concurrent.futures
+out=pathlib.Path('/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6a/author/raw')
+repo='repos/TakashiSasaki/git-repo-db'
+requests={'main':f'{repo}/branches/main','open-prs':f'{repo}/pulls?state=open&per_page=100','branches':f'{repo}/branches?per_page=100'}
+for n in (130,133,134,141):
+ requests.update({f'pr{n}':f'{repo}/pulls/{n}',f'pr{n}-reviews':f'{repo}/pulls/{n}/reviews?per_page=100',f'pr{n}-comments':f'{repo}/issues/{n}/comments?per_page=100',f'pr{n}-review-comments':f'{repo}/pulls/{n}/comments?per_page=100'})
+def fetch(item):
+ key,path=item
+ p=subprocess.run(['gh','api','--paginate',path],capture_output=True,text=True)
+ if p.returncode: raise RuntimeError((key,p.stderr))
+ data=json.loads(p.stdout)
+ (out/f'prelaunch-{key}.json').write_text(json.dumps(data,indent=2)+'\n')
+ return key,data
+with concurrent.futures.ThreadPoolExecutor(max_workers=5) as pool: results=dict(pool.map(fetch,requests.items()))
+checks={}
+for n in (130,133,134,141):
+ sha=results[f'pr{n}']['head']['sha']; checks[f'pr{n}-commit']=f'{repo}/git/commits/{sha}'; checks[f'pr{n}-checks']=f'{repo}/commits/{sha}/check-runs?per_page=100'; checks[f'pr{n}-statuses']=f'{repo}/commits/{sha}/status'
+with concurrent.futures.ThreadPoolExecutor(max_workers=5) as pool: results.update(dict(pool.map(fetch,checks.items())))
+summary={'observed_at':datetime.datetime.now(datetime.UTC).isoformat(),'main':results['main']['commit']['sha'],'prs':{str(n):{'head':results[f'pr{n}']['head']['sha'],'tree':results[f'pr{n}-commit']['tree']['sha'],'base':results[f'pr{n}']['base']['ref'],'state':results[f'pr{n}']['state'],'merged':results[f'pr{n}']['merged'],'reviews':len(results[f'pr{n}-reviews']),'comments':len(results[f'pr{n}-comments']),'review_comments':len(results[f'pr{n}-review-comments']),'checks':len(results[f'pr{n}-checks']['check_runs'])} for n in (130,133,134,141)},'open_prs':len(results['open-prs']),'branches':len(results['branches'])}
+(out/'prelaunch-summary.json').write_text(json.dumps(summary,indent=2)+'\n')
+print(json.dumps(summary,indent=2))

@@ -1,0 +1,11 @@
+{
+  "command": [
+    "gh",
+    "api",
+    "repos/TakashiSasaki/git-repo-db/actions/jobs/119895098640/logs"
+  ],
+  "exit_code": 1,
+  "outcome": "unavailable",
+  "reason": "GitHub redirected to Actions blob endpoint which returned HTTP403 Forbidden; full log not obtained. Signed URL omitted.",
+  "job_metadata": "prelaunch-pr133-failed-job.json"
+}

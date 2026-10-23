@@ -1,0 +1,11 @@
+import sys,pathlib,json,os
+ROOT=pathlib.Path('/workspace/git-repo-db');sys.path.insert(0,str(ROOT));from scripts import verify_i5_offline as e
+out=ROOT/'docs/implementation/evidence/adr0031-i6a/author/final';
+if (out/'summary.json').exists():(out/'summary.json').rename(out/'summary-interrupted-before-workspace.json')
+ordinary=e.nodes(out/'ordinary-collection.nodes.txt');hist=e.nodes(out/'regressions.selected.txt');selected=sorted(set(ordinary)-set(hist))
+execute=e.execute
+def workspace_execute(out,name,args):
+ r=execute(out,name,args+['--basetemp=/workspace/i6a-final-remaining-basetemp']);r['environment']={'TMPDIR':os.environ.get('TMPDIR')};e.write_json(out/(name+'.execution.json'),r);return r
+e.execute=workspace_execute
+r=e.run_cohort(out,'remaining-ordinary-workspace',selected,4)
+e.write_json(out/'input-binding-after-workspace.json',{'head':e.git('rev-parse','HEAD'),'tree':e.git('rev-parse','HEAD^{tree}'),'tracked_status':e.git('status','--porcelain','--untracked-files=no'),'inputs':e.input_hashes()})

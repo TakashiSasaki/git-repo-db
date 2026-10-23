@@ -1,0 +1,42 @@
+[
+  {
+    "original_path": "all-collection.log",
+    "original_bytes": 2754173,
+    "original_sha256": "afdf2a22f41b075bb0d438d97a2e54c50abba57c48e14dbd9078bcd9ebf9e0b9",
+    "gzip_path": "all-collection.log.gz",
+    "gzip_bytes": 85904,
+    "gzip_sha256": "be136388c98419cd81a7899d9391446f139de4f5961b6d2b49b71b4202ab0845"
+  },
+  {
+    "original_path": "all-collection.nodes.txt",
+    "original_bytes": 2753225,
+    "original_sha256": "971ceefe7734b5528fb692a4741b3089eca48b9195ab71a9a734b10c25836f55",
+    "gzip_path": "all-collection.nodes.txt.gz",
+    "gzip_bytes": 85494,
+    "gzip_sha256": "943bbceb8e047f90f992a86cde79e396d0d02f69a1ad2f89b78b288bca5ca318"
+  },
+  {
+    "original_path": "input-binding-before.json",
+    "original_bytes": 55511,
+    "original_sha256": "a8ada7c26096ce4f08d3eff88685f82b987a773e491c5a763918206969b47cb6",
+    "gzip_path": "input-binding-before.json.gz",
+    "gzip_bytes": 22504,
+    "gzip_sha256": "f614b4313c7f1c9e292fb551a1374e80d6ffbb869b824ecc258d4f1de28505d1"
+  },
+  {
+    "original_path": "ordinary-collection.log",
+    "original_bytes": 2754072,
+    "original_sha256": "90213e695075d2fb001bb394561a8fe8a5d03f0ce5c8720a64264371c0c59d5e",
+    "gzip_path": "ordinary-collection.log.gz",
+    "gzip_bytes": 85884,
+    "gzip_sha256": "83451985589e0187c9b79f660aee8590a21c58911c9fdc4e6e23c6a0ce582a36"
+  },
+  {
+    "original_path": "ordinary-collection.nodes.txt",
+    "original_bytes": 2753104,
+    "original_sha256": "16ecd1ad3f9589ac7ff9cc1be692910c947866e06c68c572ff5e5fa2735e20ff",
+    "gzip_path": "ordinary-collection.nodes.txt.gz",
+    "gzip_bytes": 85460,
+    "gzip_sha256": "2fba552ababbf72e645e03830c83929fce2551810ff17a7298a63726c1a6994d"
+  }
+]

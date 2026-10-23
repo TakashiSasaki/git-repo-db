@@ -1,0 +1,42 @@
+[
+  {
+    "original_path": "before-invalid-fixture.log",
+    "original_bytes": 6556,
+    "original_sha256": "7c34089df8048b71909429c23f43969365abd9bc963a14e0f9f140249365f315",
+    "gzip_path": "before-invalid-fixture.log.gz",
+    "gzip_bytes": 614,
+    "gzip_sha256": "2e8da870bb6db95a2a36af3a737c5e50c694c8d44ed088e5cef7c1d3fc025a3b"
+  },
+  {
+    "original_path": "before-valid-counterexample.log",
+    "original_bytes": 1322,
+    "original_sha256": "1d388126b4ba567e42d14c9306cab4658df4d590c74a35257de3206bc8337368",
+    "gzip_path": "before-valid-counterexample.log.gz",
+    "gzip_bytes": 342,
+    "gzip_sha256": "b0bdfa7299cf6a122dbb37d4516fd11785820bdb6373e8ec3989bdd6b11a0e7e"
+  },
+  {
+    "original_path": "focused583.jsonl",
+    "original_bytes": 544578,
+    "original_sha256": "825fdd23a8012c6a48f5c166efa9a46ef072a38bfc40df27131e3bf4e6dd7ca7",
+    "gzip_path": "focused583.jsonl.gz",
+    "gzip_bytes": 32879,
+    "gzip_sha256": "21841c7864c2b95396d736de70ef06bb8ea6701eb59622ec3798786daa7dbd31"
+  },
+  {
+    "original_path": "focused583.log",
+    "original_bytes": 741,
+    "original_sha256": "e87f0c28e1c33754e9f86a5f9b688bc81c8ecb5d543143792579ec7e33285a33",
+    "gzip_path": "focused583.log.gz",
+    "gzip_bytes": 96,
+    "gzip_sha256": "6da0f3ada3d1c7e8c0dc8907404e9b25a4e4c9619d6767727edf415712abb59d"
+  },
+  {
+    "original_path": "focused583.xml",
+    "original_bytes": 123655,
+    "original_sha256": "5d625aa330ecefa8cd5af370501b0742b2c584184e0253196317090e83125962",
+    "gzip_path": "focused583.xml.gz",
+    "gzip_bytes": 9277,
+    "gzip_sha256": "fa71a667b1c181a04a428d73d2696eadbb0dba9fb1a730ad76e1cbb658f5acc9"
+  }
+]

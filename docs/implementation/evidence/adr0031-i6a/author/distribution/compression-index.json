@@ -1,0 +1,170 @@
+[
+  {
+    "original_path": "archive.log",
+    "original_bytes": 0,
+    "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "gzip_path": "archive.log.gz",
+    "gzip_bytes": 20,
+    "gzip_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "original_path": "build-direct.log",
+    "original_bytes": 89,
+    "original_sha256": "a67623b8b2345bb893fb0348addaa27b99b58514fc54b029d7c00cb682ccf463",
+    "gzip_path": "build-direct.log.gz",
+    "gzip_bytes": 84,
+    "gzip_sha256": "2c33bed1049733318e4a0b5ea380ad59f071facdd35492f26e761c288b07a385"
+  },
+  {
+    "original_path": "build-sdist-wheel.log",
+    "original_bytes": 41,
+    "original_sha256": "e8734942205a5131d7c5fc1cfd7acded0c67278907badb3522de9a40e37fffa9",
+    "gzip_path": "build-sdist-wheel.log.gz",
+    "gzip_bytes": 61,
+    "gzip_sha256": "4cf2fb7e8cdabc650ebc068d29f78b218c38f7df83823b3d5d7dad214132f4df"
+  },
+  {
+    "original_path": "complete-build-source-manifest.json",
+    "original_bytes": 973691,
+    "original_sha256": "cb917c359c5552586a23894fcb41f05b4b6fb276573daeabd2bdb7ae0754b88a",
+    "gzip_path": "complete-build-source-manifest.json.gz",
+    "gzip_bytes": 211696,
+    "gzip_sha256": "2ebc738ac4f500f316b6f1ee8a664aa42f80e022e8995997c13be7d5ccf563b8"
+  },
+  {
+    "original_path": "complete-sdist-member-manifest.json",
+    "original_bytes": 858223,
+    "original_sha256": "a9d12f07affc961c3f2e24c2c923235ef1500ab09446786c9a4033a4361225a2",
+    "gzip_path": "complete-sdist-member-manifest.json.gz",
+    "gzip_bytes": 188184,
+    "gzip_sha256": "174224720c686895f12acaf3b4594c744ffacbf9a32c95d41ddceb50f4833fda"
+  },
+  {
+    "original_path": "direct-collect.log",
+    "original_bytes": 53976,
+    "original_sha256": "d00b285e57607b31424e22592fbd340c2472bb0e294ce63ddda752eb28c9ffe5",
+    "gzip_path": "direct-collect.log.gz",
+    "gzip_bytes": 4927,
+    "gzip_sha256": "6225afac8325280c0c965b5c6a04c6cba88d52dc72121d7b27f11925aa189854"
+  },
+  {
+    "original_path": "direct-install.log",
+    "original_bytes": 5161,
+    "original_sha256": "a883ba6b0b9364a0f9f1eccccdc47fa833a0646d9eeb27e206d88ef768d63ff8",
+    "gzip_path": "direct-install.log.gz",
+    "gzip_bytes": 1104,
+    "gzip_sha256": "41d0b645e63518538e8b3df5ffed81b698d179d9c86ca34142cfdaa1d844ad68"
+  },
+  {
+    "original_path": "direct-measure.log",
+    "original_bytes": 0,
+    "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "gzip_path": "direct-measure.log.gz",
+    "gzip_bytes": 20,
+    "gzip_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "original_path": "direct-selected.txt",
+    "original_bytes": 53946,
+    "original_sha256": "4b44ac2f6e93893687d288aa1c7e4c6fce097a9588de9923b08497a82359713e",
+    "gzip_path": "direct-selected.txt.gz",
+    "gzip_bytes": 4901,
+    "gzip_sha256": "bff5f23f5086776e649a5f27a7b01294e8210a86ba8f3a7fe4910a128d6eaf7a"
+  },
+  {
+    "original_path": "direct-tests.jsonl",
+    "original_bytes": 453069,
+    "original_sha256": "169e5ce5a293e9c8ad7b023eb2ccfa4c88417a5fc1eedef97e14b0d9af3acc87",
+    "gzip_path": "direct-tests.jsonl.gz",
+    "gzip_bytes": 26223,
+    "gzip_sha256": "cb50ab532d942498e9353447a03b3efaf2a3578c6c92610aa15dab6a19b83431"
+  },
+  {
+    "original_path": "direct-tests.log",
+    "original_bytes": 581,
+    "original_sha256": "0fd08c2d4898587c4f49f15817565b0fe1c0f75af2c2dc6b722a7fda4569143c",
+    "gzip_path": "direct-tests.log.gz",
+    "gzip_bytes": 86,
+    "gzip_sha256": "fc59afe7e84ecf1f89834490dade163546868ce2b69ba5865ef4a864833c15a8"
+  },
+  {
+    "original_path": "direct-tests.xml",
+    "original_bytes": 102751,
+    "original_sha256": "0bb4773fdd5fa66a3522b2b9876a46b85ccb9a89c594622187a53e3d394ec123",
+    "gzip_path": "direct-tests.xml.gz",
+    "gzip_bytes": 6663,
+    "gzip_sha256": "1359cc940de02908c6447262c345b518fe6f70a8f6161276b72bacec6977a2ed"
+  },
+  {
+    "original_path": "direct-venv.log",
+    "original_bytes": 0,
+    "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "gzip_path": "direct-venv.log.gz",
+    "gzip_bytes": 20,
+    "gzip_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "original_path": "sdist-collect.log",
+    "original_bytes": 53976,
+    "original_sha256": "2b58f1f125cfe6e4c41e310b00d9ffa6d8f803ca5cc2958adae6878b4fb06bca",
+    "gzip_path": "sdist-collect.log.gz",
+    "gzip_bytes": 4927,
+    "gzip_sha256": "2ca919dd69a4ae651a7babfb33dfc3a4fbdf49cb5b89b5f50c2e225074ebc8a0"
+  },
+  {
+    "original_path": "sdist-install.log",
+    "original_bytes": 5185,
+    "original_sha256": "8678d255e40430b514f88a540c93560205d32190fe8984793e51992b7c1c1eb2",
+    "gzip_path": "sdist-install.log.gz",
+    "gzip_bytes": 1108,
+    "gzip_sha256": "1113986d396558861a5bc5ad7140d8e7138c4e5498878f065c85e6cd0521206b"
+  },
+  {
+    "original_path": "sdist-measure.log",
+    "original_bytes": 0,
+    "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "gzip_path": "sdist-measure.log.gz",
+    "gzip_bytes": 20,
+    "gzip_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "original_path": "sdist-selected.txt",
+    "original_bytes": 53946,
+    "original_sha256": "4b44ac2f6e93893687d288aa1c7e4c6fce097a9588de9923b08497a82359713e",
+    "gzip_path": "sdist-selected.txt.gz",
+    "gzip_bytes": 4901,
+    "gzip_sha256": "bff5f23f5086776e649a5f27a7b01294e8210a86ba8f3a7fe4910a128d6eaf7a"
+  },
+  {
+    "original_path": "sdist-tests.jsonl",
+    "original_bytes": 453053,
+    "original_sha256": "22918b9f68505ddbd6ed798f8b54cf8d6879131e3262355962415cde59cbddfd",
+    "gzip_path": "sdist-tests.jsonl.gz",
+    "gzip_bytes": 26314,
+    "gzip_sha256": "bca913acb97e8867c5b6d59747b332431be25a31c0aedc85a841a24be1e9d092"
+  },
+  {
+    "original_path": "sdist-tests.log",
+    "original_bytes": 581,
+    "original_sha256": "cf8205f14e16ab44dc5d81db4acd14a172f3c961af752be22d02e3296e82d914",
+    "gzip_path": "sdist-tests.log.gz",
+    "gzip_bytes": 86,
+    "gzip_sha256": "40ab241a9a95837f59e9df5b4c9efb447544403384cf2a30e0faef770d2d301a"
+  },
+  {
+    "original_path": "sdist-tests.xml",
+    "original_bytes": 102751,
+    "original_sha256": "6ca3fad41415f0a6e821c06f40b841781626d3bf26997a82970fce20634e78f7",
+    "gzip_path": "sdist-tests.xml.gz",
+    "gzip_bytes": 6706,
+    "gzip_sha256": "ae9ea2f291b1a956808957e5132cb8d08c2d52495643f1550f181ed1006b915e"
+  },
+  {
+    "original_path": "sdist-venv.log",
+    "original_bytes": 0,
+    "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "gzip_path": "sdist-venv.log.gz",
+    "gzip_bytes": 20,
+    "gzip_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  }
+]
