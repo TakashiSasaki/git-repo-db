@@ -147,6 +147,14 @@ receipt, rather than an Access overflow receipt. Review-PR CI is checked separat
 after publication against its actual feature HEAD and merge tree, and reported in
 the PR description/final handoff without changing these frozen target results.
 
+The first staging check flagged trailing whitespace already present in GitHub's
+raw logs. The logs are now losslessly gzip-compressed; decompressed byte counts
+and SHA-256 in `raw/log-preservation.json` prove their equality to the retrieved
+text and initial evidence commit. No log text was stripped or normalized. The
+follow-up packaging commit changes only this new review directory; its full
+diff against #139 passes whitespace validation. The initial staging failure and
+subsequent checks are retained in `raw/packaging-checks.json`.
+
 ## Limits and handoff
 
 No Critical/High/Medium/Low new defect was found within this C0-E1 scope. The known

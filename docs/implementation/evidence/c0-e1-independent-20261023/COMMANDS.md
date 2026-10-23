@@ -27,13 +27,13 @@ working directory, duration, raw log and exit status. `raw/execution.json` and
 The hosted retrieval used live `gh api` read-only calls for
 `repos/TakashiSasaki/git-repo-db/actions/runs/39887549016`, `/jobs`, `/artifacts`
 and `/logs`; the latter returned the normal run-log ZIP. Its actual `1_offline.txt`
-and `0_sqlite-policy.txt` are retained under `raw/`. The supported GitHub connector
+and `0_sqlite-policy.txt` are retained losslessly as `.log.gz` under `raw/`. The supported GitHub connector
 `download_workflow_artifact` was called once for artifact 12472429473. The returned
 normal file reference was retrieved once (HTTP 200); its URL is deliberately omitted.
 
 ```sh
 .venv/bin/python docs/implementation/evidence/c0-e1-independent-20261023/verify_hosted.py \
-  --log docs/implementation/evidence/c0-e1-independent-20261023/raw/author-hosted-offline.log \
+  --log docs/implementation/evidence/c0-e1-independent-20261023/raw/author-hosted-offline.log.gz \
   --run 39887549016 \
   --head 3e2609baa07a9e92c8f2dc4dd1608f311021a1cb \
   --base 8ede5f8f3f525baf90ad8c9b4f3f0729c19a7b82 \

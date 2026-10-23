@@ -2,6 +2,7 @@
 
 import argparse
 import base64
+import gzip
 import hashlib
 import io
 import json
@@ -17,7 +18,12 @@ def sha(data):
 
 def verify(log, run, head, base, artifact=None):
     pattern = r"^\d{4}-\d\d-\d\dT\S+ (CI_RECEIPTS_(?:BEGIN|DATA|END)_V1 .+)$"
-    records = re.findall(pattern, log.read_text(), re.M)
+    text = (
+        gzip.decompress(log.read_bytes()).decode()
+        if log.suffix == ".gz"
+        else log.read_text()
+    )
+    records = re.findall(pattern, text, re.M)
     assert records and records[0].startswith("CI_RECEIPTS_BEGIN_V1 ")
     assert records[-1].startswith("CI_RECEIPTS_END_V1 ")
     _, digest, length = records[0].split()

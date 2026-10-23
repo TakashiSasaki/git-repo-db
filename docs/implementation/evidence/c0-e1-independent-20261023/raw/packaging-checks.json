@@ -1,0 +1,50 @@
+[
+  {
+    "name": "initial-evidence-whitespace-check",
+    "command": [
+      "git",
+      "diff",
+      "--check",
+      "3e2609baa07a9e92c8f2dc4dd1608f311021a1cb",
+      "3b34c8f0d9b1d7d5d98758e42f034c54e2d0efa7"
+    ],
+    "exit_code": 2,
+    "log": "initial-whitespace-check.log.gz"
+  },
+  {
+    "name": "packaging-lint",
+    "command": [
+      ".venv/bin/ruff",
+      "check",
+      "docs/implementation/evidence/c0-e1-independent-20261023"
+    ],
+    "exit_code": 0,
+    "log": "packaging-lint.log"
+  },
+  {
+    "name": "packaging-format",
+    "command": [
+      ".venv/bin/ruff",
+      "format",
+      "--check",
+      "docs/implementation/evidence/c0-e1-independent-20261023"
+    ],
+    "exit_code": 0,
+    "log": "packaging-format.log"
+  },
+  {
+    "name": "packaging-reports",
+    "command": [
+      ".venv/bin/python",
+      "scripts/ci_execute.py",
+      "reports"
+    ],
+    "exit_code": 0,
+    "log": "packaging-reports.log"
+  },
+  {
+    "name": "gzip-hosted-reverification",
+    "exit_code": 0,
+    "identical_results": true
+  }
+]
