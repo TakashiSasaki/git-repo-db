@@ -1,0 +1,23 @@
+{
+  "command": [
+    "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "tests/unit",
+    "-p",
+    "test_emit_ci_evidence.py",
+    "-v"
+  ],
+  "cwd": "/workspace/git-repo-db",
+  "exit_code": 1,
+  "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+  "executable": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+  "platform": "Linux-6.18.55-x86_64-with-glibc2.41",
+  "sqlite_version": "3.53.1",
+  "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+  "baseline_head": "8ede5f8f3f525baf90ad8c9b4f3f0729c19a7b82",
+  "baseline_tree": "65e9311819ec354cbc3d6ede1cbc10ebd5c2ced9",
+  "dirty_test_overlay": "tests/unit/test_emit_ci_evidence.py"
+}

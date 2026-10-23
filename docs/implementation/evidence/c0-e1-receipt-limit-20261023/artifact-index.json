@@ -1,0 +1,92 @@
+{
+  "files": {
+    "docs/implementation/evidence/c0-e1-receipt-limit-20261023/README.md": {
+      "bytes": 7286,
+      "sha256": "71f88fc7a09338fbd6664c45e4a2e9007cf4a75018f2a6abc6bbf7ecf0980bf3"
+    },
+    "docs/implementation/evidence/c0-e1-receipt-limit-20261023/baseline.json": {
+      "bytes": 3820,
+      "sha256": "5b4d7e82f44e22429dcb8f1adbd9409c4bf81c7a029134e880ade2c8d8cd822b"
+    },
+    "docs/implementation/evidence/c0-e1-receipt-limit-20261023/baseline.log": {
+      "bytes": 2547,
+      "sha256": "a5edd2257d2c1a9fcb14505b85cf78d5efb81c8bd8d03b1c63799813ed4ac087"
+    },
+    "docs/implementation/evidence/c0-e1-receipt-limit-20261023/before-unittest.log": {
+      "bytes": 2627,
+      "sha256": "e9ec2f2c017bb994c01528059e6255adcbd54883f6820e43dc80f8728e873461"
+    },
+    "docs/implementation/evidence/c0-e1-receipt-limit-20261023/before.json": {
+      "bytes": 822,
+      "sha256": "2b91345f28597e2c2d84b7d279617cca4c0ae4c10d5dd4b430767557da77127f"
+    },
+    "docs/implementation/evidence/c0-e1-receipt-limit-20261023/check-0.log": {
+      "bytes": 376,
+      "sha256": "106b75bc7e1bac70d194817c3058bc00786bc62d0e5c7fb332fb0902ea3872df"
+    },
+    "docs/implementation/evidence/c0-e1-receipt-limit-20261023/check-1.log": {
+      "bytes": 19,
+      "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18"
+    },
+    "docs/implementation/evidence/c0-e1-receipt-limit-20261023/check-2.log": {
+      "bytes": 28,
+      "sha256": "00aced5dc00c15592c09dbb30d3bb6c92cc64faea3f8654f8ebddeb08d4e4823"
+    },
+    "docs/implementation/evidence/c0-e1-receipt-limit-20261023/check-3.log": {
+      "bytes": 19,
+      "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18"
+    },
+    "docs/implementation/evidence/c0-e1-receipt-limit-20261023/check-4.log": {
+      "bytes": 25,
+      "sha256": "fd2299c9f1c6dc869070883e281051bfe93aacf66c1a3b0069f45b4aa410ca50"
+    },
+    "docs/implementation/evidence/c0-e1-receipt-limit-20261023/check-5.log": {
+      "bytes": 41,
+      "sha256": "88479b8fcebfcc96a14d673c6cdc6a53f07ec1e57a80c1aacc1cda81b4faa923"
+    },
+    "docs/implementation/evidence/c0-e1-receipt-limit-20261023/checks.json": {
+      "bytes": 1964,
+      "sha256": "fe2da1db17c33e2e1aff60f4e4378e8eb2c647e06a48edcb77cf72d27805fc3f"
+    },
+    "docs/implementation/evidence/c0-e1-receipt-limit-20261023/collection.log": {
+      "bytes": 31650,
+      "sha256": "38a94119f474d75728b448dacdf3f91257b14b5d9dc5f2a734660fb57310cdac"
+    },
+    "docs/implementation/evidence/c0-e1-receipt-limit-20261023/fixed.json": {
+      "bytes": 3861,
+      "sha256": "6a2314731cc3cbd06a5dbbb36648e6ef0470f2b2577735e2f5ad539f00fce965"
+    },
+    "docs/implementation/evidence/c0-e1-receipt-limit-20261023/fixed.log": {
+      "bytes": 852,
+      "sha256": "1f44cd5d06981cdce7d22431ef2f3291db2fda98f216b39d34ef9c64418987d9"
+    },
+    "docs/implementation/evidence/c0-e1-receipt-limit-20261023/input-hashes.json": {
+      "bytes": 628,
+      "sha256": "0f5d00759e149acf30af8391e24527192124035f517b755a214a9da34e1cc28f"
+    },
+    "docs/implementation/evidence/c0-e1-receipt-limit-20261023/reconciliation.json": {
+      "bytes": 944,
+      "sha256": "dd02c0c2e78edd36be738346bca0dbfa7b27de9a5ad8c1ace78fa8ff4ec70d72"
+    },
+    "docs/implementation/evidence/c0-e1-receipt-limit-20261023/regression-journal.jsonl.gz": {
+      "bytes": 18296,
+      "sha256": "3d58bd50c468a9b9399e3eedc216f407f8022bc7b08cce44f1bb9d556edb8b68"
+    },
+    "docs/implementation/evidence/c0-e1-receipt-limit-20261023/regression.xml.gz": {
+      "bytes": 5478,
+      "sha256": "c69d00a319ab73e4a7c4c332211b26b1a8fbbac4f9f35c5a3d528f36884ff9a1"
+    },
+    "docs/implementation/evidence/c0-e1-receipt-limit-20261023/verify.py": {
+      "bytes": 4086,
+      "sha256": "51ae8989c7c5edeca83e7ecd48a95d7167dc38e44d908f4e5fcbb921d84d530d"
+    },
+    "scripts/emit_ci_evidence.py": {
+      "bytes": 2504,
+      "sha256": "e5358d725e4c32ad290ecc0630fe2f31878f3de0ec6d9f1f42e003a89e6d09fa"
+    },
+    "tests/unit/test_emit_ci_evidence.py": {
+      "bytes": 8116,
+      "sha256": "01d99586c996834ab8b71ff0e07a92adcad27a222423e697877728b84ba578cb"
+    }
+  }
+}

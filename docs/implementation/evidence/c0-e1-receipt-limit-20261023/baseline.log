@@ -1,0 +1,40 @@
+test_artifact_upload_runs_even_when_emitter_fails (receipt_tests.ReceiptTests.test_artifact_upload_runs_even_when_emitter_fails) ... ok
+test_audit_counterexample (receipt_tests.ReceiptTests.test_audit_counterexample) ... FAIL
+test_below_limit (receipt_tests.ReceiptTests.test_below_limit) ... ok
+test_cli_rejection_has_no_stdout_and_retains_artifact_files (receipt_tests.ReceiptTests.test_cli_rejection_has_no_stdout_and_retains_artifact_files) ... FAIL
+test_complete_receipt_and_compressed_not_expanded_limit (receipt_tests.ReceiptTests.test_complete_receipt_and_compressed_not_expanded_limit) ... ok
+test_exact_limit (receipt_tests.ReceiptTests.test_exact_limit) ... ok
+test_one_byte_over_limit (receipt_tests.ReceiptTests.test_one_byte_over_limit) ... FAIL
+
+======================================================================
+FAIL: test_audit_counterexample (receipt_tests.ReceiptTests.test_audit_counterexample)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/git-repo-db/tests/unit/test_emit_ci_evidence.py", line 142, in test_audit_counterexample
+    self.boundary(2_323_560, allowed=False)
+  File "/workspace/git-repo-db/tests/unit/test_emit_ci_evidence.py", line 127, in boundary
+    self.assertNotEqual(outcome, 0)
+AssertionError: 0 == 0
+
+======================================================================
+FAIL: test_cli_rejection_has_no_stdout_and_retains_artifact_files (receipt_tests.ReceiptTests.test_cli_rejection_has_no_stdout_and_retains_artifact_files)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/git-repo-db/tests/unit/test_emit_ci_evidence.py", line 181, in test_cli_rejection_has_no_stdout_and_retains_artifact_files
+    self.assertEqual(result.returncode, 1)
+AssertionError: 0 != 1
+
+======================================================================
+FAIL: test_one_byte_over_limit (receipt_tests.ReceiptTests.test_one_byte_over_limit)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/git-repo-db/tests/unit/test_emit_ci_evidence.py", line 139, in test_one_byte_over_limit
+    self.boundary(LIMIT + 1, allowed=False)
+  File "/workspace/git-repo-db/tests/unit/test_emit_ci_evidence.py", line 127, in boundary
+    self.assertNotEqual(outcome, 0)
+AssertionError: 0 == 0
+
+----------------------------------------------------------------------
+Ran 7 tests in 5.724s
+
+FAILED (failures=3)

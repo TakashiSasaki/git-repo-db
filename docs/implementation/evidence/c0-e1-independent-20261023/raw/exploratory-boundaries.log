@@ -1,0 +1,9 @@
+closed ZIP 2097151: before=0 fixed=0; input=2095572
+closed ZIP 2097152: before=0 fixed=0; input=2095573
+Traceback (most recent call last):
+  File "/workspace/c0-e1-independent/docs/implementation/evidence/c0-e1-independent-20261023/verify_boundaries.py", line 291, in <module>
+    main(args.output)
+  File "/workspace/c0-e1-independent/docs/implementation/evidence/c0-e1-independent-20261023/verify_boundaries.py", line 202, in main
+    n = next(x for x in range(n - 50, n + 51) if x not in tried)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+StopIteration

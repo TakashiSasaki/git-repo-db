@@ -1,0 +1,649 @@
+{
+  "reviewed_head": "3e2609baa07a9e92c8f2dc4dd1608f311021a1cb",
+  "before_head": "8ede5f8f3f525baf90ad8c9b4f3f0729c19a7b82",
+  "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+  "executable": "/workspace/c0-e1-independent/.venv/bin/python",
+  "base_executable": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3.12",
+  "platform": "Linux-6.18.55-x86_64-with-glibc2.41",
+  "sqlite": "3.53.1",
+  "sqlite_source": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+  "source_hashes": {
+    "before": "592aa5768c17355a6277ad16f40628130e75a45b2d2cb5f29e7afa7aa4f27855",
+    "fixed": "e5358d725e4c32ad290ecc0630fe2f31878f3de0ec6d9f1f42e003a89e6d09fa"
+  },
+  "binding": {
+    "head": "afbf03146ae7bbd30bd858a5c236f5c5c05f6c09",
+    "tree": "4b825dc642cb6eb9a060e54bf8d69288fbee4904",
+    "run_id": "independent-synthetic-20261023",
+    "run_attempt": "1"
+  },
+  "cases": [
+    {
+      "members": {
+        "artifacts/access-registry/payload.log": {
+          "bytes": 2095570,
+          "sha256": "f7650ab486322871638a9af74f6b18c765bed3257de5111cc84a7f5ef2ef6e25"
+        },
+        "artifacts/runtime/probe.json": {
+          "bytes": 31,
+          "sha256": "8e27a7df3fa13cccd60a13b4846dac17a73d71bea8a09fa61734dd7a7e158e86"
+        },
+        "receipt-binding.json": {
+          "bytes": 169,
+          "sha256": "59d0e94d35157038cf6f9ce56e40b1ce6a58fa90f5497f9a5e4310c5176cf8b3"
+        }
+      },
+      "expanded_bytes": 2096153,
+      "all_deflated": true,
+      "crc_index_binding_and_input_bytes_verified": true,
+      "comment_bytes": 0,
+      "source": "fixed",
+      "command": [
+        "/workspace/c0-e1-independent/.venv/bin/python",
+        "/workspace/c0-e1-independent/docs/implementation/evidence/c0-e1-independent-20261023/verify_boundaries.py",
+        "--child",
+        "/tmp/c0-independent-eevkheaf/fixed.py",
+        "/tmp/c0-independent-eevkheaf/observed.zip"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 3.768991557999925,
+      "compressed_bytes": 2097151,
+      "zip_sha256": "32719b5399d38daa98a72d5cbeccae8d23fb2f50c846ec9d0c8a818bf37c2b3d",
+      "stdout_bytes": 3285724,
+      "stdout_sha256": "7389aca0cdebf1f4d7541826e29cf774134fc5170bc3aa606c8d495bf32520e8",
+      "stderr": "",
+      "artifact_inputs_unchanged": true,
+      "payload_bytes": 2095570,
+      "receipt": {
+        "begin": "CI_RECEIPTS_BEGIN_V1 32719b5399d38daa98a72d5cbeccae8d23fb2f50c846ec9d0c8a818bf37c2b3d 2097151",
+        "end": "CI_RECEIPTS_END_V1 32719b5399d38daa98a72d5cbeccae8d23fb2f50c846ec9d0c8a818bf37c2b3d",
+        "data_records": 23302
+      },
+      "target": 2097151,
+      "calibration": [
+        {
+          "payload_bytes": 2095351,
+          "payload_seed": 20261023,
+          "compressed_bytes": 2096931,
+          "construction_probe_exit": 99
+        },
+        {
+          "payload_bytes": 2095571,
+          "payload_seed": 20261023,
+          "compressed_bytes": 2097150,
+          "construction_probe_exit": 99
+        },
+        {
+          "payload_bytes": 2095572,
+          "payload_seed": 20261023,
+          "compressed_bytes": 2097154,
+          "construction_probe_exit": 99
+        },
+        {
+          "payload_bytes": 2095569,
+          "payload_seed": 20261023,
+          "compressed_bytes": 2097150,
+          "construction_probe_exit": 99
+        },
+        {
+          "payload_bytes": 2095570,
+          "payload_seed": 20261023,
+          "compressed_bytes": 2097150,
+          "construction_probe_exit": 99
+        },
+        {
+          "payload_bytes": 2095351,
+          "payload_seed": 20261024,
+          "compressed_bytes": 2096932,
+          "construction_probe_exit": 99
+        },
+        {
+          "payload_bytes": 2095570,
+          "payload_seed": 20261024,
+          "compressed_bytes": 2097152,
+          "construction_probe_exit": 99
+        },
+        {
+          "payload_bytes": 2095569,
+          "payload_seed": 20261024,
+          "compressed_bytes": 2097150,
+          "construction_probe_exit": 99
+        },
+        {
+          "payload_bytes": 2095351,
+          "payload_seed": 20261025,
+          "compressed_bytes": 2096932,
+          "construction_probe_exit": 99
+        },
+        {
+          "payload_bytes": 2095570,
+          "payload_seed": 20261025,
+          "compressed_bytes": 2097152,
+          "construction_probe_exit": 99
+        },
+        {
+          "payload_bytes": 2095569,
+          "payload_seed": 20261025,
+          "compressed_bytes": 2097150,
+          "construction_probe_exit": 99
+        },
+        {
+          "payload_bytes": 2095351,
+          "payload_seed": 20261026,
+          "compressed_bytes": 2096930,
+          "construction_probe_exit": 99
+        },
+        {
+          "payload_bytes": 2095572,
+          "payload_seed": 20261026,
+          "compressed_bytes": 2097153,
+          "construction_probe_exit": 99
+        },
+        {
+          "payload_bytes": 2095570,
+          "payload_seed": 20261026,
+          "compressed_bytes": 2097152,
+          "construction_probe_exit": 99
+        },
+        {
+          "payload_bytes": 2095569,
+          "payload_seed": 20261026,
+          "compressed_bytes": 2097148,
+          "construction_probe_exit": 99
+        },
+        {
+          "payload_bytes": 2095351,
+          "payload_seed": 20261027,
+          "compressed_bytes": 2096932,
+          "construction_probe_exit": 99
+        },
+        {
+          "payload_bytes": 2095570,
+          "payload_seed": 20261027,
+          "compressed_bytes": 2097150,
+          "construction_probe_exit": 99
+        },
+        {
+          "payload_bytes": 2095571,
+          "payload_seed": 20261027,
+          "compressed_bytes": 2097150,
+          "construction_probe_exit": 99
+        },
+        {
+          "payload_bytes": 2095572,
+          "payload_seed": 20261027,
+          "compressed_bytes": 2097152,
+          "construction_probe_exit": 99
+        },
+        {
+          "payload_bytes": 2095351,
+          "payload_seed": 20261028,
+          "compressed_bytes": 2096932,
+          "construction_probe_exit": 99
+        },
+        {
+          "payload_bytes": 2095570,
+          "payload_seed": 20261028,
+          "compressed_bytes": 2097151,
+          "construction_probe_exit": 99
+        }
+      ]
+    },
+    {
+      "members": {
+        "artifacts/access-registry/payload.log": {
+          "bytes": 2095570,
+          "sha256": "f7650ab486322871638a9af74f6b18c765bed3257de5111cc84a7f5ef2ef6e25"
+        },
+        "artifacts/runtime/probe.json": {
+          "bytes": 31,
+          "sha256": "8e27a7df3fa13cccd60a13b4846dac17a73d71bea8a09fa61734dd7a7e158e86"
+        },
+        "receipt-binding.json": {
+          "bytes": 169,
+          "sha256": "59d0e94d35157038cf6f9ce56e40b1ce6a58fa90f5497f9a5e4310c5176cf8b3"
+        }
+      },
+      "expanded_bytes": 2096153,
+      "all_deflated": true,
+      "crc_index_binding_and_input_bytes_verified": true,
+      "comment_bytes": 0,
+      "source": "before",
+      "command": [
+        "/workspace/c0-e1-independent/.venv/bin/python",
+        "/workspace/c0-e1-independent/docs/implementation/evidence/c0-e1-independent-20261023/verify_boundaries.py",
+        "--child",
+        "/tmp/c0-independent-eevkheaf/before.py",
+        "/tmp/c0-independent-eevkheaf/observed.zip"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 4.152996954999935,
+      "compressed_bytes": 2097151,
+      "zip_sha256": "fec0a9bb2a6f351fef95b98ddbdc774b79d5a2295c04c575aa08b0852597954e",
+      "stdout_bytes": 3285724,
+      "stdout_sha256": "e982b2a6d2ba527fbed69a87c184a129df74b4fcb0fcfbbaf1b8d082f842e3a3",
+      "stderr": "",
+      "artifact_inputs_unchanged": true,
+      "payload_bytes": 2095570,
+      "receipt": {
+        "begin": "CI_RECEIPTS_BEGIN_V1 fec0a9bb2a6f351fef95b98ddbdc774b79d5a2295c04c575aa08b0852597954e 2097151",
+        "end": "CI_RECEIPTS_END_V1 fec0a9bb2a6f351fef95b98ddbdc774b79d5a2295c04c575aa08b0852597954e",
+        "data_records": 23302
+      },
+      "target": 2097151
+    },
+    {
+      "members": {
+        "artifacts/access-registry/payload.log": {
+          "bytes": 2095571,
+          "sha256": "034d8e2096d06d0a398496c964003160fd3e137ced53e212330268243d345483"
+        },
+        "artifacts/runtime/probe.json": {
+          "bytes": 31,
+          "sha256": "8e27a7df3fa13cccd60a13b4846dac17a73d71bea8a09fa61734dd7a7e158e86"
+        },
+        "receipt-binding.json": {
+          "bytes": 169,
+          "sha256": "59d0e94d35157038cf6f9ce56e40b1ce6a58fa90f5497f9a5e4310c5176cf8b3"
+        }
+      },
+      "expanded_bytes": 2096154,
+      "all_deflated": true,
+      "crc_index_binding_and_input_bytes_verified": true,
+      "comment_bytes": 0,
+      "source": "fixed",
+      "command": [
+        "/workspace/c0-e1-independent/.venv/bin/python",
+        "/workspace/c0-e1-independent/docs/implementation/evidence/c0-e1-independent-20261023/verify_boundaries.py",
+        "--child",
+        "/tmp/c0-independent-eevkheaf/fixed.py",
+        "/tmp/c0-independent-eevkheaf/observed.zip"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 4.3383682070000305,
+      "compressed_bytes": 2097152,
+      "zip_sha256": "a28d4a28aaa647a55ae8efb0d88bcc8856048f578b0141f46747269412a1ecde",
+      "stdout_bytes": 3285724,
+      "stdout_sha256": "ce63ba5d420027c52dd0f19b06de556023f85a0d6e0048b57caee5b04c2bf7c2",
+      "stderr": "",
+      "artifact_inputs_unchanged": true,
+      "payload_bytes": 2095571,
+      "receipt": {
+        "begin": "CI_RECEIPTS_BEGIN_V1 a28d4a28aaa647a55ae8efb0d88bcc8856048f578b0141f46747269412a1ecde 2097152",
+        "end": "CI_RECEIPTS_END_V1 a28d4a28aaa647a55ae8efb0d88bcc8856048f578b0141f46747269412a1ecde",
+        "data_records": 23302
+      },
+      "target": 2097152,
+      "calibration": [
+        {
+          "payload_bytes": 2095352,
+          "payload_seed": 20261023,
+          "compressed_bytes": 2096932,
+          "construction_probe_exit": 99
+        },
+        {
+          "payload_bytes": 2095572,
+          "payload_seed": 20261023,
+          "compressed_bytes": 2097154,
+          "construction_probe_exit": 99
+        },
+        {
+          "payload_bytes": 2095570,
+          "payload_seed": 20261023,
+          "compressed_bytes": 2097150,
+          "construction_probe_exit": 99
+        },
+        {
+          "payload_bytes": 2095352,
+          "payload_seed": 20261024,
+          "compressed_bytes": 2096933,
+          "construction_probe_exit": 99
+        },
+        {
+          "payload_bytes": 2095571,
+          "payload_seed": 20261024,
+          "compressed_bytes": 2097152,
+          "construction_probe_exit": 99
+        }
+      ]
+    },
+    {
+      "members": {
+        "artifacts/access-registry/payload.log": {
+          "bytes": 2095571,
+          "sha256": "034d8e2096d06d0a398496c964003160fd3e137ced53e212330268243d345483"
+        },
+        "artifacts/runtime/probe.json": {
+          "bytes": 31,
+          "sha256": "8e27a7df3fa13cccd60a13b4846dac17a73d71bea8a09fa61734dd7a7e158e86"
+        },
+        "receipt-binding.json": {
+          "bytes": 169,
+          "sha256": "59d0e94d35157038cf6f9ce56e40b1ce6a58fa90f5497f9a5e4310c5176cf8b3"
+        }
+      },
+      "expanded_bytes": 2096154,
+      "all_deflated": true,
+      "crc_index_binding_and_input_bytes_verified": true,
+      "comment_bytes": 0,
+      "source": "before",
+      "command": [
+        "/workspace/c0-e1-independent/.venv/bin/python",
+        "/workspace/c0-e1-independent/docs/implementation/evidence/c0-e1-independent-20261023/verify_boundaries.py",
+        "--child",
+        "/tmp/c0-independent-eevkheaf/before.py",
+        "/tmp/c0-independent-eevkheaf/observed.zip"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 4.863917149000031,
+      "compressed_bytes": 2097152,
+      "zip_sha256": "581557ffefc75852f887961c31016a05ef500081627a42427cdbe6a5cea8eef3",
+      "stdout_bytes": 3285724,
+      "stdout_sha256": "6a4e4dca2376f82547b97c6971de71cb2593ea3b425ff0e954d8a39cf5c9fd1c",
+      "stderr": "",
+      "artifact_inputs_unchanged": true,
+      "payload_bytes": 2095571,
+      "receipt": {
+        "begin": "CI_RECEIPTS_BEGIN_V1 581557ffefc75852f887961c31016a05ef500081627a42427cdbe6a5cea8eef3 2097152",
+        "end": "CI_RECEIPTS_END_V1 581557ffefc75852f887961c31016a05ef500081627a42427cdbe6a5cea8eef3",
+        "data_records": 23302
+      },
+      "target": 2097152
+    },
+    {
+      "members": {
+        "artifacts/access-registry/payload.log": {
+          "bytes": 2095573,
+          "sha256": "a11864b9233d972ec6347e8d180789f198c99f09b91a72ef5bdeab22b9ca0f3a"
+        },
+        "artifacts/runtime/probe.json": {
+          "bytes": 31,
+          "sha256": "8e27a7df3fa13cccd60a13b4846dac17a73d71bea8a09fa61734dd7a7e158e86"
+        },
+        "receipt-binding.json": {
+          "bytes": 169,
+          "sha256": "59d0e94d35157038cf6f9ce56e40b1ce6a58fa90f5497f9a5e4310c5176cf8b3"
+        }
+      },
+      "expanded_bytes": 2096156,
+      "all_deflated": true,
+      "crc_index_binding_and_input_bytes_verified": true,
+      "comment_bytes": 0,
+      "source": "fixed",
+      "command": [
+        "/workspace/c0-e1-independent/.venv/bin/python",
+        "/workspace/c0-e1-independent/docs/implementation/evidence/c0-e1-independent-20261023/verify_boundaries.py",
+        "--child",
+        "/tmp/c0-independent-eevkheaf/fixed.py",
+        "/tmp/c0-independent-eevkheaf/observed.zip"
+      ],
+      "exit_code": 1,
+      "wall_seconds": 0.18496528899993336,
+      "compressed_bytes": 2097153,
+      "zip_sha256": "3fdf1343bfe6b921f9a5a7f5c7d1bd8379e2e9f201326eb4558608c9fac2caa4",
+      "stdout_bytes": 0,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr": "CI receipt exceeds 2 MiB compressed; retrieve the uploaded GitHub Actions artifact\n",
+      "artifact_inputs_unchanged": true,
+      "payload_bytes": 2095573,
+      "target": 2097153,
+      "calibration": [
+        {
+          "payload_bytes": 2095353,
+          "payload_seed": 20261023,
+          "compressed_bytes": 2096935,
+          "construction_probe_exit": 99
+        },
+        {
+          "payload_bytes": 2095571,
+          "payload_seed": 20261023,
+          "compressed_bytes": 2097150,
+          "construction_probe_exit": 99
+        },
+        {
+          "payload_bytes": 2095574,
+          "payload_seed": 20261023,
+          "compressed_bytes": 2097154,
+          "construction_probe_exit": 99
+        },
+        {
+          "payload_bytes": 2095573,
+          "payload_seed": 20261023,
+          "compressed_bytes": 2097153,
+          "construction_probe_exit": 99
+        }
+      ]
+    },
+    {
+      "members": {
+        "artifacts/access-registry/payload.log": {
+          "bytes": 2095573,
+          "sha256": "a11864b9233d972ec6347e8d180789f198c99f09b91a72ef5bdeab22b9ca0f3a"
+        },
+        "artifacts/runtime/probe.json": {
+          "bytes": 31,
+          "sha256": "8e27a7df3fa13cccd60a13b4846dac17a73d71bea8a09fa61734dd7a7e158e86"
+        },
+        "receipt-binding.json": {
+          "bytes": 169,
+          "sha256": "59d0e94d35157038cf6f9ce56e40b1ce6a58fa90f5497f9a5e4310c5176cf8b3"
+        }
+      },
+      "expanded_bytes": 2096156,
+      "all_deflated": true,
+      "crc_index_binding_and_input_bytes_verified": true,
+      "comment_bytes": 0,
+      "source": "before",
+      "command": [
+        "/workspace/c0-e1-independent/.venv/bin/python",
+        "/workspace/c0-e1-independent/docs/implementation/evidence/c0-e1-independent-20261023/verify_boundaries.py",
+        "--child",
+        "/tmp/c0-independent-eevkheaf/before.py",
+        "/tmp/c0-independent-eevkheaf/observed.zip"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 4.198064850000037,
+      "compressed_bytes": 2097153,
+      "zip_sha256": "3fdf1343bfe6b921f9a5a7f5c7d1bd8379e2e9f201326eb4558608c9fac2caa4",
+      "stdout_bytes": 3285724,
+      "stdout_sha256": "a7ea4a2be60c10d0612708bc0ce441223928405afbcb10ae57a72eb7b55ade31",
+      "stderr": "",
+      "artifact_inputs_unchanged": true,
+      "payload_bytes": 2095573,
+      "receipt": {
+        "begin": "CI_RECEIPTS_BEGIN_V1 3fdf1343bfe6b921f9a5a7f5c7d1bd8379e2e9f201326eb4558608c9fac2caa4 2097153",
+        "end": "CI_RECEIPTS_END_V1 3fdf1343bfe6b921f9a5a7f5c7d1bd8379e2e9f201326eb4558608c9fac2caa4",
+        "data_records": 23302
+      },
+      "target": 2097153
+    },
+    {
+      "members": {
+        "artifacts/access-registry/payload.log": {
+          "bytes": 2321908,
+          "sha256": "2a82d379e209d86e800d074b6fd97fff41e71a0cbf03f73bef23ed8080487131"
+        },
+        "artifacts/runtime/probe.json": {
+          "bytes": 31,
+          "sha256": "8e27a7df3fa13cccd60a13b4846dac17a73d71bea8a09fa61734dd7a7e158e86"
+        },
+        "receipt-binding.json": {
+          "bytes": 169,
+          "sha256": "59d0e94d35157038cf6f9ce56e40b1ce6a58fa90f5497f9a5e4310c5176cf8b3"
+        }
+      },
+      "expanded_bytes": 2322491,
+      "all_deflated": true,
+      "crc_index_binding_and_input_bytes_verified": true,
+      "comment_bytes": 0,
+      "source": "fixed",
+      "command": [
+        "/workspace/c0-e1-independent/.venv/bin/python",
+        "/workspace/c0-e1-independent/docs/implementation/evidence/c0-e1-independent-20261023/verify_boundaries.py",
+        "--child",
+        "/tmp/c0-independent-eevkheaf/fixed.py",
+        "/tmp/c0-independent-eevkheaf/observed.zip"
+      ],
+      "exit_code": 1,
+      "wall_seconds": 0.17669565500000317,
+      "compressed_bytes": 2323560,
+      "zip_sha256": "9734fa191e3cba870076683b9910ab5e14e413cd398306184a43e1deed4074e1",
+      "stdout_bytes": 0,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr": "CI receipt exceeds 2 MiB compressed; retrieve the uploaded GitHub Actions artifact\n",
+      "artifact_inputs_unchanged": true,
+      "payload_bytes": 2321908,
+      "target": 2323560,
+      "calibration": [
+        {
+          "payload_bytes": 2321760,
+          "payload_seed": 20261023,
+          "compressed_bytes": 2323412,
+          "construction_probe_exit": 99
+        },
+        {
+          "payload_bytes": 2321908,
+          "payload_seed": 20261023,
+          "compressed_bytes": 2323560,
+          "construction_probe_exit": 99
+        }
+      ]
+    },
+    {
+      "members": {
+        "artifacts/access-registry/payload.log": {
+          "bytes": 2321908,
+          "sha256": "2a82d379e209d86e800d074b6fd97fff41e71a0cbf03f73bef23ed8080487131"
+        },
+        "artifacts/runtime/probe.json": {
+          "bytes": 31,
+          "sha256": "8e27a7df3fa13cccd60a13b4846dac17a73d71bea8a09fa61734dd7a7e158e86"
+        },
+        "receipt-binding.json": {
+          "bytes": 169,
+          "sha256": "59d0e94d35157038cf6f9ce56e40b1ce6a58fa90f5497f9a5e4310c5176cf8b3"
+        }
+      },
+      "expanded_bytes": 2322491,
+      "all_deflated": true,
+      "crc_index_binding_and_input_bytes_verified": true,
+      "comment_bytes": 0,
+      "source": "before",
+      "command": [
+        "/workspace/c0-e1-independent/.venv/bin/python",
+        "/workspace/c0-e1-independent/docs/implementation/evidence/c0-e1-independent-20261023/verify_boundaries.py",
+        "--child",
+        "/tmp/c0-independent-eevkheaf/before.py",
+        "/tmp/c0-independent-eevkheaf/observed.zip"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 3.88305991499999,
+      "compressed_bytes": 2323560,
+      "zip_sha256": "9734fa191e3cba870076683b9910ab5e14e413cd398306184a43e1deed4074e1",
+      "stdout_bytes": 3640436,
+      "stdout_sha256": "975414c6dc1fd90417d730349c435938a272eb5e21e6f4ebe1ea627a8dfad2bc",
+      "stderr": "",
+      "artifact_inputs_unchanged": true,
+      "payload_bytes": 2321908,
+      "receipt": {
+        "begin": "CI_RECEIPTS_BEGIN_V1 9734fa191e3cba870076683b9910ab5e14e413cd398306184a43e1deed4074e1 2323560",
+        "end": "CI_RECEIPTS_END_V1 9734fa191e3cba870076683b9910ab5e14e413cd398306184a43e1deed4074e1",
+        "data_records": 25818
+      },
+      "target": 2323560
+    },
+    {
+      "members": {
+        "artifacts/access-registry/payload.log": {
+          "bytes": 6120000,
+          "sha256": "b47fe94ae821c64e1d189925362b25a18897ac6e4f24cafd402c5fb5b0b56590"
+        },
+        "artifacts/runtime/probe.json": {
+          "bytes": 31,
+          "sha256": "8e27a7df3fa13cccd60a13b4846dac17a73d71bea8a09fa61734dd7a7e158e86"
+        },
+        "receipt-binding.json": {
+          "bytes": 169,
+          "sha256": "59d0e94d35157038cf6f9ce56e40b1ce6a58fa90f5497f9a5e4310c5176cf8b3"
+        }
+      },
+      "expanded_bytes": 6120583,
+      "all_deflated": true,
+      "crc_index_binding_and_input_bytes_verified": true,
+      "comment_bytes": 0,
+      "source": "before",
+      "command": [
+        "/workspace/c0-e1-independent/.venv/bin/python",
+        "/workspace/c0-e1-independent/docs/implementation/evidence/c0-e1-independent-20261023/verify_boundaries.py",
+        "--child",
+        "/tmp/c0-independent-eevkheaf/before.py",
+        "/tmp/c0-independent-eevkheaf/observed.zip"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.14123087600000872,
+      "compressed_bytes": 18795,
+      "zip_sha256": "67e4298fa82fb9c00224b80ff61ad4bf2f503fb3cda48c93c113e4d3806c58f0",
+      "stdout_bytes": 29625,
+      "stdout_sha256": "e04d2675f2eb23b779b16b29362399641766867f2da949b95e744f04f6ac4992",
+      "stderr": "",
+      "artifact_inputs_unchanged": true,
+      "payload_bytes": 6120000,
+      "receipt": {
+        "begin": "CI_RECEIPTS_BEGIN_V1 67e4298fa82fb9c00224b80ff61ad4bf2f503fb3cda48c93c113e4d3806c58f0 18795",
+        "end": "CI_RECEIPTS_END_V1 67e4298fa82fb9c00224b80ff61ad4bf2f503fb3cda48c93c113e4d3806c58f0",
+        "data_records": 209
+      },
+      "target": "expanded_over_limit"
+    },
+    {
+      "members": {
+        "artifacts/access-registry/payload.log": {
+          "bytes": 6120000,
+          "sha256": "b47fe94ae821c64e1d189925362b25a18897ac6e4f24cafd402c5fb5b0b56590"
+        },
+        "artifacts/runtime/probe.json": {
+          "bytes": 31,
+          "sha256": "8e27a7df3fa13cccd60a13b4846dac17a73d71bea8a09fa61734dd7a7e158e86"
+        },
+        "receipt-binding.json": {
+          "bytes": 169,
+          "sha256": "59d0e94d35157038cf6f9ce56e40b1ce6a58fa90f5497f9a5e4310c5176cf8b3"
+        }
+      },
+      "expanded_bytes": 6120583,
+      "all_deflated": true,
+      "crc_index_binding_and_input_bytes_verified": true,
+      "comment_bytes": 0,
+      "source": "fixed",
+      "command": [
+        "/workspace/c0-e1-independent/.venv/bin/python",
+        "/workspace/c0-e1-independent/docs/implementation/evidence/c0-e1-independent-20261023/verify_boundaries.py",
+        "--child",
+        "/tmp/c0-independent-eevkheaf/fixed.py",
+        "/tmp/c0-independent-eevkheaf/observed.zip"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.1789095740000448,
+      "compressed_bytes": 18795,
+      "zip_sha256": "67e4298fa82fb9c00224b80ff61ad4bf2f503fb3cda48c93c113e4d3806c58f0",
+      "stdout_bytes": 29625,
+      "stdout_sha256": "e04d2675f2eb23b779b16b29362399641766867f2da949b95e744f04f6ac4992",
+      "stderr": "",
+      "artifact_inputs_unchanged": true,
+      "payload_bytes": 6120000,
+      "receipt": {
+        "begin": "CI_RECEIPTS_BEGIN_V1 67e4298fa82fb9c00224b80ff61ad4bf2f503fb3cda48c93c113e4d3806c58f0 18795",
+        "end": "CI_RECEIPTS_END_V1 67e4298fa82fb9c00224b80ff61ad4bf2f503fb3cda48c93c113e4d3806c58f0",
+        "data_records": 209
+      },
+      "target": "expanded_over_limit"
+    }
+  ],
+  "direct_uninstrumented_control": {
+    "exit_code": 1,
+    "stdout_bytes": 0,
+    "stderr": "CI receipt exceeds 2 MiB compressed; retrieve the uploaded GitHub Actions artifact\n",
+    "input_unchanged": true
+  },
+  "exit_code": 0
+}

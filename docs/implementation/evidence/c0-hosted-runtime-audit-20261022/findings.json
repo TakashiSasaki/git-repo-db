@@ -1,0 +1,28 @@
+{
+  "audited_head": "f16e5b1713bde9a2f18263a25397c4b450fd5773",
+  "audited_tree": "6bfa580baafa9f6a117b7a0b610c4e65cd031b86",
+  "runtime_blocker": "resolved_by_existing_PR_133",
+  "findings": [
+    {
+      "id": "C0-E1",
+      "severity": "Low",
+      "status": "OPEN_NOT_FIXED_BY_EVIDENCE_PUBLICATION",
+      "target": "scripts/emit_ci_evidence.py:64",
+      "summary": "Emitter permits a 4-MiB compressed log receipt; accepted ADR 0001 VAL-07 specifies a maximum of 2 MiB.",
+      "counterexample": {
+        "kind": "clearly_labeled_synthetic_only",
+        "archive_member": "emitter-cap-counterexample.json",
+        "emitted_compressed_bytes": 2323560,
+        "accepted_limit_bytes": 2097152,
+        "emitter_returned_success": true
+      },
+      "actual_hosted_receipt_bytes": 1632586,
+      "actual_receipt_within_accepted_limit": true,
+      "invalidates_observed_runtime_fix": false,
+      "recommendation": "Restore the 2-MiB limit, test exact-limit and limit+1 compressed sizes, and preserve the uploaded-artifact retrieval fallback. No product safety change or owner exception is needed."
+    }
+  ],
+  "new_product_implementation": false,
+  "new_product_test_execution": false,
+  "independent_review_of_this_publication": "not_yet_claimed"
+}

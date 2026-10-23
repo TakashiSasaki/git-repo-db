@@ -1,0 +1,27 @@
+{
+  "review": "Task B independent C0-E1 acceptance",
+  "target_pr": 139,
+  "target_head": "3e2609baa07a9e92c8f2dc4dd1608f311021a1cb",
+  "target_tree": "43f0c017d5f922f7e1caf7e4a1605ec4ae7ace1c",
+  "verdict": "SCOPED_PASS",
+  "full_product_acceptance": false,
+  "new_findings": [],
+  "new_finding_counts": {"Critical": 0, "High": 0, "Medium": 0, "Low": 0},
+  "existing_findings": [
+    {
+      "id": "C0-E1",
+      "severity": "Low",
+      "origin_pr": 136,
+      "status": "INDEPENDENTLY_ACCEPTED_CLOSED_FOR_FIXED_TARGET",
+      "before_reproduced": true,
+      "fixed_boundaries_verified": [2097151, 2097152, 2097153, 2323560],
+      "evidence": "raw/boundaries/measurements.json"
+    }
+  ],
+  "unverified": [
+    "New hosted Access overflow/upload/download experiment",
+    "Full product suite and historical 79 non-success nodes",
+    "Installed wheel/sdist validation, live acquisition and release qualification"
+  ],
+  "remaining_blockers": []
+}

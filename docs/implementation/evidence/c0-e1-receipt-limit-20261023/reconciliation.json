@@ -1,0 +1,26 @@
+{
+  "collection_command": [
+    ".venv/bin/python",
+    "-m",
+    "pytest",
+    "tests/unit/test_emit_ci_evidence.py",
+    "tests/unit/test_ci_plan.py",
+    "tests/unit/test_ci_profile.py",
+    "tests/unit/test_ci_journal.py",
+    "tests/unit/test_ci_python_runtime.py",
+    "tests/unit/test_sqlite_validation_policy.py",
+    "tests/integration/test_ci_execution.py",
+    "--collect-only",
+    "-q"
+  ],
+  "collection_exit_code": 0,
+  "selected_nodes": 280,
+  "unique_starts": 280,
+  "junit_cases": 280,
+  "junit_reported_tests_including_subtests": 337,
+  "call_events_including_subtests": 337,
+  "exact_node_multisets_equal": true,
+  "all_phase_outcomes_passed": true,
+  "session_exit_code": 0,
+  "normalization_note": "Initial ad hoc normalizer only handled ReceiptTests, omitting other unittest class components; generic module/class/name tuple comparison now verifies all cases. This was an evidence-parser correction, not a test rerun."
+}
