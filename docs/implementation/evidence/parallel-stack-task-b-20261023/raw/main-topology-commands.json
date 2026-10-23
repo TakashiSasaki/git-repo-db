@@ -1,0 +1,99 @@
+[
+  {
+    "argv": [
+      "gh",
+      "api",
+      "repos/TakashiSasaki/git-repo-db/git/ref/heads/main"
+    ],
+    "exit_code": 0,
+    "stdout": "{\"ref\":\"refs/heads/main\",\"node_id\":\"REF_kwDOU78qEq9yZWZzL2hlYWRzL21haW4\",\"url\":\"https://api.github.com/repos/TakashiSasaki/git-repo-db/git/refs/heads/main\",\"object\":{\"sha\":\"cb532242c7aa86c6af5b6232b71c0906ea38f5c5\",\"type\":\"commit\",\"url\":\"https://api.github.com/repos/TakashiSasaki/git-repo-db/git/commits/cb532242c7aa86c6af5b6232b71c0906ea38f5c5\"}}",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "gh",
+      "api",
+      "repos/TakashiSasaki/git-repo-db/git/commits/cb532242c7aa86c6af5b6232b71c0906ea38f5c5"
+    ],
+    "exit_code": 0,
+    "stdout": "{\"sha\":\"cb532242c7aa86c6af5b6232b71c0906ea38f5c5\",\"node_id\":\"C_kwDOU78qEtoAKGNiNTMyMjQyYzdhYTg2YzZhZjViNjIzMmI3MWMwOTA2ZWEzOGY1YzU\",\"url\":\"https://api.github.com/repos/TakashiSasaki/git-repo-db/git/commits/cb532242c7aa86c6af5b6232b71c0906ea38f5c5\",\"html_url\":\"https://github.com/TakashiSasaki/git-repo-db/commit/cb532242c7aa86c6af5b6232b71c0906ea38f5c5\",\"author\":{\"name\":\"Takashi SASAKI\",\"email\":\"takashi316@gmail.com\",\"date\":\"2026-10-21T11:26:19Z\"},\"committer\":{\"name\":\"GitHub\",\"email\":\"noreply@github.com\",\"date\":\"2026-10-21T11:26:19Z\"},\"tree\":{\"sha\":\"318ad07874ab436206e6a61f231b308a421cfc54\",\"url\":\"https://api.github.com/repos/TakashiSasaki/git-repo-db/git/trees/318ad07874ab436206e6a61f231b308a421cfc54\"},\"message\":\"Merge pull request #116 from impl/adr0031-i1a-identity-codec\\n\\nIntegrate owner-approved ADR 0031 I1a canonical Resource identity codec.\\n\\nPreserve I1b PR #117 as a separate dependent Draft; staged implementation and validation remain distinct from product acceptance.\",\"parents\":[{\"sha\":\"1ccb7f1902127cde649edcf605bb6d5935427302\",\"url\":\"https://api.github.com/repos/TakashiSasaki/git-repo-db/git/commits/1ccb7f1902127cde649edcf605bb6d5935427302\",\"html_url\":\"https://github.com/TakashiSasaki/git-repo-db/commit/1ccb7f1902127cde649edcf605bb6d5935427302\"},{\"sha\":\"d92377599a50f192f534836fc12402a5fe87ca83\",\"url\":\"https://api.github.com/repos/TakashiSasaki/git-repo-db/git/commits/d92377599a50f192f534836fc12402a5fe87ca83\",\"html_url\":\"https://github.com/TakashiSasaki/git-repo-db/commit/d92377599a50f192f534836fc12402a5fe87ca83\"}],\"verification\":{\"verified\":true,\"reason\":\"valid\",\"signature\":\"-----BEGIN PGP SIGNATURE-----\\n\\nwsFcBAABCAAQBQJq2KFbCRC1aQ7uu5UhlAAASd8QAExoKynZmV1wcluQv+a6uLrc\\n9m1/VSmYgFveaLvHO0NQIOr10k5nokNYjCGdyuDnrvRkwLGGgNb7OYrkSh9uE1Ed\\nYUvNJDyqdBTJS/wV1M+qy7WDqRrHqBeSPixmMCeXxoeO7PnJZM31HErob3Vzxvu7\\npQR2Uij2hLIv1QxIFehBrdCtJKvWWVT9Hw6P92CAQskUsKIyAhLMZHjdxaIzYyL9\\nLU3fkjiM3QrHLZ+cjhkcaiFSlxrCGgdba8POhtUQTpgF86o4LbcD3CcV3NiJN27u\\nm8g6EsgGwtZg0tharm8BkO8bg/cwLkXJfunaiDp0/5WwELNfNn7v80gYxiBj4sDi\\nTY/dwsVht8K/Wrx91GUerR2S320wJDfBRd58jdZ3anUzTQmXT0t0EYhvS/CHOtq6\\nRQEmDY4hIh7VYqq9IgcA5Qfs4NLNeoTaaqp2ZEzmjNUHJ/cz/WNbt3qpgX4H2z8z\\nHpVCWWL8el+UHryoPtzComM+e7W/KGPvMsWeASXfbrTy/DCfU+VDmE/E7C/tSNeA\\ngYauNqvL5pquU9qPWk4A5zM9ukBzf2y3tAK1CRo+aekFbvPFlY8P0DbvRzowKSFH\\nkEMm9RI99jVJ1qamm9ijLFTF6ysS7OJS7ySE40t1MkCg1sq6lFa0VjdvFFiH7E0j\\n5ZxjGZLdlNs3lN+GHQBA\\n=9QMl\\n-----END PGP SIGNATURE-----\\n\",\"payload\":\"tree 318ad07874ab436206e6a61f231b308a421cfc54\\nparent 1ccb7f1902127cde649edcf605bb6d5935427302\\nparent d92377599a50f192f534836fc12402a5fe87ca83\\nauthor Takashi SASAKI <takashi316@gmail.com> 1792581979 +0900\\ncommitter GitHub <noreply@github.com> 1792581979 +0900\\n\\nMerge pull request #116 from impl/adr0031-i1a-identity-codec\\n\\nIntegrate owner-approved ADR 0031 I1a canonical Resource identity codec.\\n\\nPreserve I1b PR #117 as a separate dependent Draft; staged implementation and validation remain distinct from product acceptance.\",\"verified_at\":\"2026-10-21T11:26:20Z\"}}",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "rev-parse",
+      "cb532242c7aa86c6af5b6232b71c0906ea38f5c5^{tree}"
+    ],
+    "exit_code": 0,
+    "stdout": "318ad07874ab436206e6a61f231b308a421cfc54\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "merge-base",
+      "cb532242c7aa86c6af5b6232b71c0906ea38f5c5",
+      "f16e5b1713bde9a2f18263a25397c4b450fd5773"
+    ],
+    "exit_code": 0,
+    "stdout": "d92377599a50f192f534836fc12402a5fe87ca83\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "merge-base",
+      "cb532242c7aa86c6af5b6232b71c0906ea38f5c5",
+      "ea43a21fca1dbf8fa6dd1c254b28a96d5dd28d00"
+    ],
+    "exit_code": 0,
+    "stdout": "d92377599a50f192f534836fc12402a5fe87ca83\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "merge-base",
+      "cb532242c7aa86c6af5b6232b71c0906ea38f5c5",
+      "ededcd83eb2d99a602ba18c8fe3c177125c825ac"
+    ],
+    "exit_code": 0,
+    "stdout": "d92377599a50f192f534836fc12402a5fe87ca83\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "merge-base",
+      "cb532242c7aa86c6af5b6232b71c0906ea38f5c5",
+      "e7762952e18061de8c8235beaeddf42f20ad9f5a"
+    ],
+    "exit_code": 0,
+    "stdout": "d92377599a50f192f534836fc12402a5fe87ca83\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "merge-base",
+      "cb532242c7aa86c6af5b6232b71c0906ea38f5c5",
+      "a7825249e0722053a66919d47ad92662854c856c"
+    ],
+    "exit_code": 0,
+    "stdout": "d92377599a50f192f534836fc12402a5fe87ca83\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "merge-tree",
+      "--write-tree",
+      "cb532242c7aa86c6af5b6232b71c0906ea38f5c5",
+      "a7825249e0722053a66919d47ad92662854c856c"
+    ],
+    "exit_code": 0,
+    "stdout": "2c61c7d79bf9a95c4f04ccdbda8fae1fe15d5491\n",
+    "stderr": ""
+  }
+]

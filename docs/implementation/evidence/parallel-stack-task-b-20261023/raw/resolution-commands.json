@@ -1,0 +1,580 @@
+[
+  {
+    "argv": [
+      "git",
+      "diff",
+      "--binary"
+    ],
+    "cwd": "/workspace/task-b-sim-i6a-sdist-c0",
+    "exit_code": 0,
+    "stdout": "diff --git a/.agents/skills/ci-final-tree-verification/SKILL.md b/.agents/skills/ci-final-tree-verification/SKILL.md\nindex 1d7e4cd..c039c1a 100644\n--- a/.agents/skills/ci-final-tree-verification/SKILL.md\n+++ b/.agents/skills/ci-final-tree-verification/SKILL.md\n@@ -450,7 +450,6 @@ proven stored-data violation. Preserve the cause, use an explicit typed invarian\n boundary and check both confirmed corruption and existing IO/lock/budget/error\n negative controls. Do not classify every ValueError as authoritative corruption.\n \n-<<<<<<< 248d99da0650afac0b45363a322c142139cfb98e\n ## Pytest subtest reports are additional measured phases\n \n Pytest 9 unittest `subTest` execution can emit `SubtestReport` call records in\n@@ -516,7 +515,7 @@ setup stop, an entered assertion and an unentered conditional/downstream line.\n Report statement-line entry only; it does not establish assertion subexpression\n coverage or execution in spawned threads/processes. Diagnostic repetitions stay\n separate from the exactly-once ordinary test aggregate.\n-=======\n+\n ## Inspect actual sdist members after positive selection\n \n Hatchling 1.32.4 still force-includes `.gitignore` and `PKG-INFO` when sdist\n@@ -573,4 +572,3 @@ without forcing full pytest. Matching runtime inputs cannot establish unchanged\n distribution inputs. `tests/unit/test_ci_plan.py` covers that boundary and the\n shared checker/verifier/fixture routes. These checks remain development evidence,\n with independent installed behavior and explicit release qualification separate.\n->>>>>>> ededcd83eb2d99a602ba18c8fe3c177125c825ac\ndiff --git a/tests/packaging/test_p1_distribution.py b/tests/packaging/test_p1_distribution.py\nindex d76e8b6..8eb6ebb 100644\n--- a/tests/packaging/test_p1_distribution.py\n+++ b/tests/packaging/test_p1_distribution.py\n@@ -9,11 +9,8 @@ from pathlib import Path\n \n import pytest\n \n-<<<<<<< 248d99da0650afac0b45363a322c142139cfb98e\n-from scripts.installed_test_harness import stage_support\n-=======\n from scripts.check_sdist_contract import check_sdist, compare_wheels, save\n->>>>>>> ededcd83eb2d99a602ba18c8fe3c177125c825ac\n+from scripts.installed_test_harness import stage_support\n \n ROOT = Path(__file__).resolve().parents[2]\n \n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "add",
+      "--",
+      "tests/packaging/test_p1_distribution.py",
+      ".agents/skills/ci-final-tree-verification/SKILL.md"
+    ],
+    "cwd": "/workspace/task-b-sim-i6a-sdist-c0",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "write-tree"
+    ],
+    "cwd": "/workspace/task-b-sim-i6a-sdist-c0",
+    "exit_code": 0,
+    "stdout": "8517dd47241977fc3c8f47e3346c21b544091de3\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "commit-tree",
+      "8517dd47241977fc3c8f47e3346c21b544091de3",
+      "-p",
+      "248d99da0650afac0b45363a322c142139cfb98e",
+      "-p",
+      "ededcd83eb2d99a602ba18c8fe3c177125c825ac"
+    ],
+    "cwd": "/workspace/git-repo-db",
+    "exit_code": 0,
+    "stdout": "29e0fafd727ef90dd53d26c7e04b2974403d8f50\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "merge-tree",
+      "--write-tree",
+      "29e0fafd727ef90dd53d26c7e04b2974403d8f50",
+      "e7762952e18061de8c8235beaeddf42f20ad9f5a"
+    ],
+    "cwd": "/workspace/git-repo-db",
+    "exit_code": 0,
+    "stdout": "2c61c7d79bf9a95c4f04ccdbda8fae1fe15d5491\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "commit-tree",
+      "2c61c7d79bf9a95c4f04ccdbda8fae1fe15d5491",
+      "-p",
+      "29e0fafd727ef90dd53d26c7e04b2974403d8f50",
+      "-p",
+      "e7762952e18061de8c8235beaeddf42f20ad9f5a"
+    ],
+    "cwd": "/workspace/git-repo-db",
+    "exit_code": 0,
+    "stdout": "a7825249e0722053a66919d47ad92662854c856c\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "checkout",
+      "--detach",
+      "a7825249e0722053a66919d47ad92662854c856c"
+    ],
+    "cwd": "/workspace/task-b-sim-i6a-sdist-c0",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "Warning: you are leaving 1 commit behind, not connected to\nany of your branches:\n\n  a1861c0 Unresolved audit simulation only\n\nIf you want to keep it by creating a new branch, this may be a good time\nto do so with:\n\n git branch <new-branch-name> a1861c0\n\nHEAD is now at a782524 Audit-only clean subsequent merge\n"
+  },
+  {
+    "argv": [
+      "git",
+      "status",
+      "--porcelain"
+    ],
+    "cwd": "/workspace/task-b-sim-i6a-sdist-c0",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "diff",
+      "--name-only",
+      "ea43a21fca1dbf8fa6dd1c254b28a96d5dd28d00",
+      "a7825249e0722053a66919d47ad92662854c856c",
+      "--",
+      "src"
+    ],
+    "cwd": "/workspace/git-repo-db",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "diff",
+      "--binary"
+    ],
+    "cwd": "/workspace/task-b-sim-i6a-c0-sdist",
+    "exit_code": 0,
+    "stdout": "diff --git a/.agents/skills/ci-final-tree-verification/SKILL.md b/.agents/skills/ci-final-tree-verification/SKILL.md\nindex fd373f4..c039c1a 100644\n--- a/.agents/skills/ci-final-tree-verification/SKILL.md\n+++ b/.agents/skills/ci-final-tree-verification/SKILL.md\n@@ -450,7 +450,6 @@ proven stored-data violation. Preserve the cause, use an explicit typed invarian\n boundary and check both confirmed corruption and existing IO/lock/budget/error\n negative controls. Do not classify every ValueError as authoritative corruption.\n \n-<<<<<<< 099095fdbb4ab4d789d27a766b2f0f18c34fe78a\n ## Pytest subtest reports are additional measured phases\n \n Pytest 9 unittest `subTest` execution can emit `SubtestReport` call records in\n@@ -516,7 +515,7 @@ setup stop, an entered assertion and an unentered conditional/downstream line.\n Report statement-line entry only; it does not establish assertion subexpression\n coverage or execution in spawned threads/processes. Diagnostic repetitions stay\n separate from the exactly-once ordinary test aggregate.\n-=======\n+\n ## Inspect actual sdist members after positive selection\n \n Hatchling 1.32.4 still force-includes `.gitignore` and `PKG-INFO` when sdist\n@@ -573,4 +572,3 @@ without forcing full pytest. Matching runtime inputs cannot establish unchanged\n distribution inputs. `tests/unit/test_ci_plan.py` covers that boundary and the\n shared checker/verifier/fixture routes. These checks remain development evidence,\n with independent installed behavior and explicit release qualification separate.\n->>>>>>> ededcd83eb2d99a602ba18c8fe3c177125c825ac\ndiff --git a/tests/packaging/test_p1_distribution.py b/tests/packaging/test_p1_distribution.py\nindex 72c23e0..8eb6ebb 100644\n--- a/tests/packaging/test_p1_distribution.py\n+++ b/tests/packaging/test_p1_distribution.py\n@@ -9,11 +9,8 @@ from pathlib import Path\n \n import pytest\n \n-<<<<<<< 099095fdbb4ab4d789d27a766b2f0f18c34fe78a\n-from scripts.installed_test_harness import stage_support\n-=======\n from scripts.check_sdist_contract import check_sdist, compare_wheels, save\n->>>>>>> ededcd83eb2d99a602ba18c8fe3c177125c825ac\n+from scripts.installed_test_harness import stage_support\n \n ROOT = Path(__file__).resolve().parents[2]\n \n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "add",
+      "--",
+      "tests/packaging/test_p1_distribution.py",
+      ".agents/skills/ci-final-tree-verification/SKILL.md"
+    ],
+    "cwd": "/workspace/task-b-sim-i6a-c0-sdist",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "write-tree"
+    ],
+    "cwd": "/workspace/task-b-sim-i6a-c0-sdist",
+    "exit_code": 0,
+    "stdout": "2c61c7d79bf9a95c4f04ccdbda8fae1fe15d5491\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "commit-tree",
+      "2c61c7d79bf9a95c4f04ccdbda8fae1fe15d5491",
+      "-p",
+      "099095fdbb4ab4d789d27a766b2f0f18c34fe78a",
+      "-p",
+      "ededcd83eb2d99a602ba18c8fe3c177125c825ac"
+    ],
+    "cwd": "/workspace/git-repo-db",
+    "exit_code": 0,
+    "stdout": "99be72760e62bf9fc5095ba4503ab9dd4a777914\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "checkout",
+      "--detach",
+      "99be72760e62bf9fc5095ba4503ab9dd4a777914"
+    ],
+    "cwd": "/workspace/task-b-sim-i6a-c0-sdist",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "Warning: you are leaving 1 commit behind, not connected to\nany of your branches:\n\n  90f13b3 Unresolved audit simulation only\n\nIf you want to keep it by creating a new branch, this may be a good time\nto do so with:\n\n git branch <new-branch-name> 90f13b3\n\nHEAD is now at 99be727 Audit-only union resolution; preserve both parent changes\n"
+  },
+  {
+    "argv": [
+      "git",
+      "status",
+      "--porcelain"
+    ],
+    "cwd": "/workspace/task-b-sim-i6a-c0-sdist",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "diff",
+      "--name-only",
+      "ea43a21fca1dbf8fa6dd1c254b28a96d5dd28d00",
+      "99be72760e62bf9fc5095ba4503ab9dd4a777914",
+      "--",
+      "src"
+    ],
+    "cwd": "/workspace/git-repo-db",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "diff",
+      "--binary"
+    ],
+    "cwd": "/workspace/task-b-sim-sdist-i6a-c0",
+    "exit_code": 0,
+    "stdout": "diff --git a/.agents/skills/ci-final-tree-verification/SKILL.md b/.agents/skills/ci-final-tree-verification/SKILL.md\nindex c7f39ae..c039c1a 100644\n--- a/.agents/skills/ci-final-tree-verification/SKILL.md\n+++ b/.agents/skills/ci-final-tree-verification/SKILL.md\n@@ -450,64 +450,6 @@ proven stored-data violation. Preserve the cause, use an explicit typed invarian\n boundary and check both confirmed corruption and existing IO/lock/budget/error\n negative controls. Do not classify every ValueError as authoritative corruption.\n \n-<<<<<<< 3713af421246396162b107acfac896675e0a6150\n-## Inspect actual sdist members after positive selection\n-\n-Hatchling 1.32.4 still force-includes `.gitignore` and `PKG-INFO` when sdist\n-`only-include` lists only package/source metadata. Inspect the built tar, not\n-just TOML. Under ADR 0033, the common `scripts/check_sdist_contract.py` checks\n-`.gitignore` against its frozen source hash and enumerates generated metadata;\n-an unexpected forced file must fail rather than broaden the allowlist silently.\n-The evidence and regression cases are in `tests/packaging/test_sdist_contract.py`\n-and `docs/implementation/evidence/adr0033-minimal-sdist-20261022/README.md`.\n-\n-Request a direct source wheel explicitly. A frontend's default combined build\n-may itself derive its first wheel from sdist and therefore cannot establish an\n-independent direct/derived comparison. Compare complete wheel contents and\n-validated RECORD entries, then retain the separate installed-behavior probes.\n-This does not authorize removing package data, changing SQLite or treating a\n-content-only gate as release acceptance.\n-\n-When independently challenging archive gates, distinguish logical tar members\n-from the complete compressed input. Python `tarfile` consumes PAX extensions\n-before yielding a member and stops at the first tar end marker; a successful\n-iteration alone does not validate unknown extension payloads, appended archives\n-or gzip trailers. Use bounded synthetic PAX values, a second gzip/tar stream,\n-and corrupted/truncated trailers as separate negative controls. Independently\n-check gzip EOF/integrity, record logical regular-file bytes separately from total\n-decompressed/header bytes, and inspect the backend's actual extension keys before\n-proposing an allowlist. Never call a raw `gzip.decompress` of an untrusted large\n-artifact a production-safe bounded validator. The independent ADR 0033 probes at\n-`docs/implementation/evidence/adr0033-independent-review-20261023/archive/`\n-reproduce these parser blind spots without extracting files or importing product\n-code; their nonzero diagnostic exit reports findings, not an incomplete run.\n-\n-Validate a finite whole-tar byte budget while inflating, before handing bytes to\n-`tarfile`, and inspect fixed-size physical headers before any extension payload\n-can be materialized. The hardening checker uses one gzip stream with verified\n-CRC/ISIZE/EOF, rejects bytes after the trailer, concatenated streams and nonzero\n-tar padding, and records `tar_stream_bytes` and `raw_header_count` separately from regular-file\n-bytes and logical members. Its Hatchling 1.32.4 calibration found 159 plain\n-headers and no PAX keys, so the current extension allowlist is empty. Do not\n-silently permit arbitrary PAX metadata to accommodate future long paths: inspect\n-the actual backend output and review bounded keys/values and budgets first.\n-Reproduce the positive build and bounded negative controls with:\n-\n-```sh\n-uv run --no-sync python scripts/check_sdist_contract.py --build \\\n-  --output artifacts/sdist-contract.json\n-uv run --no-sync pytest tests/packaging/test_sdist_contract.py \\\n-  tests/packaging/test_sdist_hardening.py -q\n-```\n-\n-Keep runtime and distribution input fingerprints distinct. README prose is\n-excluded from CI's `acceptance_input_hash` but included in the sdist's required\n-`source_inventory_sha256`; README changes select a fresh lightweight sdist check\n-without forcing full pytest. Matching runtime inputs cannot establish unchanged\n-distribution inputs. `tests/unit/test_ci_plan.py` covers that boundary and the\n-shared checker/verifier/fixture routes. These checks remain development evidence,\n-with independent installed behavior and explicit release qualification separate.\n-=======\n ## Pytest subtest reports are additional measured phases\n \n Pytest 9 unittest `subTest` execution can emit `SubtestReport` call records in\n@@ -573,4 +515,60 @@ setup stop, an entered assertion and an unentered conditional/downstream line.\n Report statement-line entry only; it does not establish assertion subexpression\n coverage or execution in spawned threads/processes. Diagnostic repetitions stay\n separate from the exactly-once ordinary test aggregate.\n->>>>>>> ea43a21fca1dbf8fa6dd1c254b28a96d5dd28d00\n+\n+## Inspect actual sdist members after positive selection\n+\n+Hatchling 1.32.4 still force-includes `.gitignore` and `PKG-INFO` when sdist\n+`only-include` lists only package/source metadata. Inspect the built tar, not\n+just TOML. Under ADR 0033, the common `scripts/check_sdist_contract.py` checks\n+`.gitignore` against its frozen source hash and enumerates generated metadata;\n+an unexpected forced file must fail rather than broaden the allowlist silently.\n+The evidence and regression cases are in `tests/packaging/test_sdist_contract.py`\n+and `docs/implementation/evidence/adr0033-minimal-sdist-20261022/README.md`.\n+\n+Request a direct source wheel explicitly. A frontend's default combined build\n+may itself derive its first wheel from sdist and therefore cannot establish an\n+independent direct/derived comparison. Compare complete wheel contents and\n+validated RECORD entries, then retain the separate installed-behavior probes.\n+This does not authorize removing package data, changing SQLite or treating a\n+content-only gate as release acceptance.\n+\n+When independently challenging archive gates, distinguish logical tar members\n+from the complete compressed input. Python `tarfile` consumes PAX extensions\n+before yielding a member and stops at the first tar end marker; a successful\n+iteration alone does not validate unknown extension payloads, appended archives\n+or gzip trailers. Use bounded synthetic PAX values, a second gzip/tar stream,\n+and corrupted/truncated trailers as separate negative controls. Independently\n+check gzip EOF/integrity, record logical regular-file bytes separately from total\n+decompressed/header bytes, and inspect the backend's actual extension keys before\n+proposing an allowlist. Never call a raw `gzip.decompress` of an untrusted large\n+artifact a production-safe bounded validator. The independent ADR 0033 probes at\n+`docs/implementation/evidence/adr0033-independent-review-20261023/archive/`\n+reproduce these parser blind spots without extracting files or importing product\n+code; their nonzero diagnostic exit reports findings, not an incomplete run.\n+\n+Validate a finite whole-tar byte budget while inflating, before handing bytes to\n+`tarfile`, and inspect fixed-size physical headers before any extension payload\n+can be materialized. The hardening checker uses one gzip stream with verified\n+CRC/ISIZE/EOF, rejects bytes after the trailer, concatenated streams and nonzero\n+tar padding, and records `tar_stream_bytes` and `raw_header_count` separately from regular-file\n+bytes and logical members. Its Hatchling 1.32.4 calibration found 159 plain\n+headers and no PAX keys, so the current extension allowlist is empty. Do not\n+silently permit arbitrary PAX metadata to accommodate future long paths: inspect\n+the actual backend output and review bounded keys/values and budgets first.\n+Reproduce the positive build and bounded negative controls with:\n+\n+```sh\n+uv run --no-sync python scripts/check_sdist_contract.py --build \\\n+  --output artifacts/sdist-contract.json\n+uv run --no-sync pytest tests/packaging/test_sdist_contract.py \\\n+  tests/packaging/test_sdist_hardening.py -q\n+```\n+\n+Keep runtime and distribution input fingerprints distinct. README prose is\n+excluded from CI's `acceptance_input_hash` but included in the sdist's required\n+`source_inventory_sha256`; README changes select a fresh lightweight sdist check\n+without forcing full pytest. Matching runtime inputs cannot establish unchanged\n+distribution inputs. `tests/unit/test_ci_plan.py` covers that boundary and the\n+shared checker/verifier/fixture routes. These checks remain development evidence,\n+with independent installed behavior and explicit release qualification separate.\ndiff --git a/tests/packaging/test_p1_distribution.py b/tests/packaging/test_p1_distribution.py\nindex a83d6bb..8eb6ebb 100644\n--- a/tests/packaging/test_p1_distribution.py\n+++ b/tests/packaging/test_p1_distribution.py\n@@ -9,11 +9,8 @@ from pathlib import Path\n \n import pytest\n \n-<<<<<<< 3713af421246396162b107acfac896675e0a6150\n from scripts.check_sdist_contract import check_sdist, compare_wheels, save\n-=======\n from scripts.installed_test_harness import stage_support\n->>>>>>> ea43a21fca1dbf8fa6dd1c254b28a96d5dd28d00\n \n ROOT = Path(__file__).resolve().parents[2]\n \n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "add",
+      "--",
+      "tests/packaging/test_p1_distribution.py",
+      ".agents/skills/ci-final-tree-verification/SKILL.md"
+    ],
+    "cwd": "/workspace/task-b-sim-sdist-i6a-c0",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "write-tree"
+    ],
+    "cwd": "/workspace/task-b-sim-sdist-i6a-c0",
+    "exit_code": 0,
+    "stdout": "8517dd47241977fc3c8f47e3346c21b544091de3\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "commit-tree",
+      "8517dd47241977fc3c8f47e3346c21b544091de3",
+      "-p",
+      "3713af421246396162b107acfac896675e0a6150",
+      "-p",
+      "ea43a21fca1dbf8fa6dd1c254b28a96d5dd28d00"
+    ],
+    "cwd": "/workspace/git-repo-db",
+    "exit_code": 0,
+    "stdout": "a8d8800d4697df3eb2852db137af18605cb6eecf\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "merge-tree",
+      "--write-tree",
+      "a8d8800d4697df3eb2852db137af18605cb6eecf",
+      "e7762952e18061de8c8235beaeddf42f20ad9f5a"
+    ],
+    "cwd": "/workspace/git-repo-db",
+    "exit_code": 0,
+    "stdout": "2c61c7d79bf9a95c4f04ccdbda8fae1fe15d5491\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "commit-tree",
+      "2c61c7d79bf9a95c4f04ccdbda8fae1fe15d5491",
+      "-p",
+      "a8d8800d4697df3eb2852db137af18605cb6eecf",
+      "-p",
+      "e7762952e18061de8c8235beaeddf42f20ad9f5a"
+    ],
+    "cwd": "/workspace/git-repo-db",
+    "exit_code": 0,
+    "stdout": "3f3b519e22dba6749985c857a936973d5f66dd6e\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "checkout",
+      "--detach",
+      "3f3b519e22dba6749985c857a936973d5f66dd6e"
+    ],
+    "cwd": "/workspace/task-b-sim-sdist-i6a-c0",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "Warning: you are leaving 1 commit behind, not connected to\nany of your branches:\n\n  6a76115 Unresolved audit simulation only\n\nIf you want to keep it by creating a new branch, this may be a good time\nto do so with:\n\n git branch <new-branch-name> 6a76115\n\nHEAD is now at 3f3b519 Audit-only clean subsequent merge\n"
+  },
+  {
+    "argv": [
+      "git",
+      "status",
+      "--porcelain"
+    ],
+    "cwd": "/workspace/task-b-sim-sdist-i6a-c0",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "diff",
+      "--name-only",
+      "ea43a21fca1dbf8fa6dd1c254b28a96d5dd28d00",
+      "3f3b519e22dba6749985c857a936973d5f66dd6e",
+      "--",
+      "src"
+    ],
+    "cwd": "/workspace/git-repo-db",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "diff",
+      "--binary"
+    ],
+    "cwd": "/workspace/task-b-sim-sdist-c0-i6a",
+    "exit_code": 0,
+    "stdout": "diff --git a/.agents/skills/ci-final-tree-verification/SKILL.md b/.agents/skills/ci-final-tree-verification/SKILL.md\nindex 04db1a5..c039c1a 100644\n--- a/.agents/skills/ci-final-tree-verification/SKILL.md\n+++ b/.agents/skills/ci-final-tree-verification/SKILL.md\n@@ -450,64 +450,6 @@ proven stored-data violation. Preserve the cause, use an explicit typed invarian\n boundary and check both confirmed corruption and existing IO/lock/budget/error\n negative controls. Do not classify every ValueError as authoritative corruption.\n \n-<<<<<<< 7a9b0814617323a18e2c031674df893cc6efa724\n-## Inspect actual sdist members after positive selection\n-\n-Hatchling 1.32.4 still force-includes `.gitignore` and `PKG-INFO` when sdist\n-`only-include` lists only package/source metadata. Inspect the built tar, not\n-just TOML. Under ADR 0033, the common `scripts/check_sdist_contract.py` checks\n-`.gitignore` against its frozen source hash and enumerates generated metadata;\n-an unexpected forced file must fail rather than broaden the allowlist silently.\n-The evidence and regression cases are in `tests/packaging/test_sdist_contract.py`\n-and `docs/implementation/evidence/adr0033-minimal-sdist-20261022/README.md`.\n-\n-Request a direct source wheel explicitly. A frontend's default combined build\n-may itself derive its first wheel from sdist and therefore cannot establish an\n-independent direct/derived comparison. Compare complete wheel contents and\n-validated RECORD entries, then retain the separate installed-behavior probes.\n-This does not authorize removing package data, changing SQLite or treating a\n-content-only gate as release acceptance.\n-\n-When independently challenging archive gates, distinguish logical tar members\n-from the complete compressed input. Python `tarfile` consumes PAX extensions\n-before yielding a member and stops at the first tar end marker; a successful\n-iteration alone does not validate unknown extension payloads, appended archives\n-or gzip trailers. Use bounded synthetic PAX values, a second gzip/tar stream,\n-and corrupted/truncated trailers as separate negative controls. Independently\n-check gzip EOF/integrity, record logical regular-file bytes separately from total\n-decompressed/header bytes, and inspect the backend's actual extension keys before\n-proposing an allowlist. Never call a raw `gzip.decompress` of an untrusted large\n-artifact a production-safe bounded validator. The independent ADR 0033 probes at\n-`docs/implementation/evidence/adr0033-independent-review-20261023/archive/`\n-reproduce these parser blind spots without extracting files or importing product\n-code; their nonzero diagnostic exit reports findings, not an incomplete run.\n-\n-Validate a finite whole-tar byte budget while inflating, before handing bytes to\n-`tarfile`, and inspect fixed-size physical headers before any extension payload\n-can be materialized. The hardening checker uses one gzip stream with verified\n-CRC/ISIZE/EOF, rejects bytes after the trailer, concatenated streams and nonzero\n-tar padding, and records `tar_stream_bytes` and `raw_header_count` separately from regular-file\n-bytes and logical members. Its Hatchling 1.32.4 calibration found 159 plain\n-headers and no PAX keys, so the current extension allowlist is empty. Do not\n-silently permit arbitrary PAX metadata to accommodate future long paths: inspect\n-the actual backend output and review bounded keys/values and budgets first.\n-Reproduce the positive build and bounded negative controls with:\n-\n-```sh\n-uv run --no-sync python scripts/check_sdist_contract.py --build \\\n-  --output artifacts/sdist-contract.json\n-uv run --no-sync pytest tests/packaging/test_sdist_contract.py \\\n-  tests/packaging/test_sdist_hardening.py -q\n-```\n-\n-Keep runtime and distribution input fingerprints distinct. README prose is\n-excluded from CI's `acceptance_input_hash` but included in the sdist's required\n-`source_inventory_sha256`; README changes select a fresh lightweight sdist check\n-without forcing full pytest. Matching runtime inputs cannot establish unchanged\n-distribution inputs. `tests/unit/test_ci_plan.py` covers that boundary and the\n-shared checker/verifier/fixture routes. These checks remain development evidence,\n-with independent installed behavior and explicit release qualification separate.\n-=======\n ## Pytest subtest reports are additional measured phases\n \n Pytest 9 unittest `subTest` execution can emit `SubtestReport` call records in\n@@ -573,4 +515,60 @@ setup stop, an entered assertion and an unentered conditional/downstream line.\n Report statement-line entry only; it does not establish assertion subexpression\n coverage or execution in spawned threads/processes. Diagnostic repetitions stay\n separate from the exactly-once ordinary test aggregate.\n->>>>>>> ea43a21fca1dbf8fa6dd1c254b28a96d5dd28d00\n+\n+## Inspect actual sdist members after positive selection\n+\n+Hatchling 1.32.4 still force-includes `.gitignore` and `PKG-INFO` when sdist\n+`only-include` lists only package/source metadata. Inspect the built tar, not\n+just TOML. Under ADR 0033, the common `scripts/check_sdist_contract.py` checks\n+`.gitignore` against its frozen source hash and enumerates generated metadata;\n+an unexpected forced file must fail rather than broaden the allowlist silently.\n+The evidence and regression cases are in `tests/packaging/test_sdist_contract.py`\n+and `docs/implementation/evidence/adr0033-minimal-sdist-20261022/README.md`.\n+\n+Request a direct source wheel explicitly. A frontend's default combined build\n+may itself derive its first wheel from sdist and therefore cannot establish an\n+independent direct/derived comparison. Compare complete wheel contents and\n+validated RECORD entries, then retain the separate installed-behavior probes.\n+This does not authorize removing package data, changing SQLite or treating a\n+content-only gate as release acceptance.\n+\n+When independently challenging archive gates, distinguish logical tar members\n+from the complete compressed input. Python `tarfile` consumes PAX extensions\n+before yielding a member and stops at the first tar end marker; a successful\n+iteration alone does not validate unknown extension payloads, appended archives\n+or gzip trailers. Use bounded synthetic PAX values, a second gzip/tar stream,\n+and corrupted/truncated trailers as separate negative controls. Independently\n+check gzip EOF/integrity, record logical regular-file bytes separately from total\n+decompressed/header bytes, and inspect the backend's actual extension keys before\n+proposing an allowlist. Never call a raw `gzip.decompress` of an untrusted large\n+artifact a production-safe bounded validator. The independent ADR 0033 probes at\n+`docs/implementation/evidence/adr0033-independent-review-20261023/archive/`\n+reproduce these parser blind spots without extracting files or importing product\n+code; their nonzero diagnostic exit reports findings, not an incomplete run.\n+\n+Validate a finite whole-tar byte budget while inflating, before handing bytes to\n+`tarfile`, and inspect fixed-size physical headers before any extension payload\n+can be materialized. The hardening checker uses one gzip stream with verified\n+CRC/ISIZE/EOF, rejects bytes after the trailer, concatenated streams and nonzero\n+tar padding, and records `tar_stream_bytes` and `raw_header_count` separately from regular-file\n+bytes and logical members. Its Hatchling 1.32.4 calibration found 159 plain\n+headers and no PAX keys, so the current extension allowlist is empty. Do not\n+silently permit arbitrary PAX metadata to accommodate future long paths: inspect\n+the actual backend output and review bounded keys/values and budgets first.\n+Reproduce the positive build and bounded negative controls with:\n+\n+```sh\n+uv run --no-sync python scripts/check_sdist_contract.py --build \\\n+  --output artifacts/sdist-contract.json\n+uv run --no-sync pytest tests/packaging/test_sdist_contract.py \\\n+  tests/packaging/test_sdist_hardening.py -q\n+```\n+\n+Keep runtime and distribution input fingerprints distinct. README prose is\n+excluded from CI's `acceptance_input_hash` but included in the sdist's required\n+`source_inventory_sha256`; README changes select a fresh lightweight sdist check\n+without forcing full pytest. Matching runtime inputs cannot establish unchanged\n+distribution inputs. `tests/unit/test_ci_plan.py` covers that boundary and the\n+shared checker/verifier/fixture routes. These checks remain development evidence,\n+with independent installed behavior and explicit release qualification separate.\ndiff --git a/tests/packaging/test_p1_distribution.py b/tests/packaging/test_p1_distribution.py\nindex 06a4480..8eb6ebb 100644\n--- a/tests/packaging/test_p1_distribution.py\n+++ b/tests/packaging/test_p1_distribution.py\n@@ -9,11 +9,8 @@ from pathlib import Path\n \n import pytest\n \n-<<<<<<< 7a9b0814617323a18e2c031674df893cc6efa724\n from scripts.check_sdist_contract import check_sdist, compare_wheels, save\n-=======\n from scripts.installed_test_harness import stage_support\n->>>>>>> ea43a21fca1dbf8fa6dd1c254b28a96d5dd28d00\n \n ROOT = Path(__file__).resolve().parents[2]\n \n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "add",
+      "--",
+      "tests/packaging/test_p1_distribution.py",
+      ".agents/skills/ci-final-tree-verification/SKILL.md"
+    ],
+    "cwd": "/workspace/task-b-sim-sdist-c0-i6a",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "write-tree"
+    ],
+    "cwd": "/workspace/task-b-sim-sdist-c0-i6a",
+    "exit_code": 0,
+    "stdout": "2c61c7d79bf9a95c4f04ccdbda8fae1fe15d5491\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "commit-tree",
+      "2c61c7d79bf9a95c4f04ccdbda8fae1fe15d5491",
+      "-p",
+      "7a9b0814617323a18e2c031674df893cc6efa724",
+      "-p",
+      "ea43a21fca1dbf8fa6dd1c254b28a96d5dd28d00"
+    ],
+    "cwd": "/workspace/git-repo-db",
+    "exit_code": 0,
+    "stdout": "6802b2477c28006a9f7711918090701db763a29d\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "checkout",
+      "--detach",
+      "6802b2477c28006a9f7711918090701db763a29d"
+    ],
+    "cwd": "/workspace/task-b-sim-sdist-c0-i6a",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "Warning: you are leaving 1 commit behind, not connected to\nany of your branches:\n\n  d14156a Unresolved audit simulation only\n\nIf you want to keep it by creating a new branch, this may be a good time\nto do so with:\n\n git branch <new-branch-name> d14156a\n\nHEAD is now at 6802b24 Audit-only union resolution; preserve both parent changes\n"
+  },
+  {
+    "argv": [
+      "git",
+      "status",
+      "--porcelain"
+    ],
+    "cwd": "/workspace/task-b-sim-sdist-c0-i6a",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "diff",
+      "--name-only",
+      "ea43a21fca1dbf8fa6dd1c254b28a96d5dd28d00",
+      "6802b2477c28006a9f7711918090701db763a29d",
+      "--",
+      "src"
+    ],
+    "cwd": "/workspace/git-repo-db",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "diff",
+      "--binary"
+    ],
+    "cwd": "/workspace/task-b-sim-c0-i6a-sdist",
+    "exit_code": 0,
+    "stdout": "diff --git a/.agents/skills/ci-final-tree-verification/SKILL.md b/.agents/skills/ci-final-tree-verification/SKILL.md\nindex 58ab4a2..c039c1a 100644\n--- a/.agents/skills/ci-final-tree-verification/SKILL.md\n+++ b/.agents/skills/ci-final-tree-verification/SKILL.md\n@@ -450,7 +450,6 @@ proven stored-data violation. Preserve the cause, use an explicit typed invarian\n boundary and check both confirmed corruption and existing IO/lock/budget/error\n negative controls. Do not classify every ValueError as authoritative corruption.\n \n-<<<<<<< 3ec92cd940fd3f2908536293a08d10ce1a4127b5\n ## Pytest subtest reports are additional measured phases\n \n Pytest 9 unittest `subTest` execution can emit `SubtestReport` call records in\n@@ -516,7 +515,7 @@ setup stop, an entered assertion and an unentered conditional/downstream line.\n Report statement-line entry only; it does not establish assertion subexpression\n coverage or execution in spawned threads/processes. Diagnostic repetitions stay\n separate from the exactly-once ordinary test aggregate.\n-=======\n+\n ## Inspect actual sdist members after positive selection\n \n Hatchling 1.32.4 still force-includes `.gitignore` and `PKG-INFO` when sdist\n@@ -573,4 +572,3 @@ without forcing full pytest. Matching runtime inputs cannot establish unchanged\n distribution inputs. `tests/unit/test_ci_plan.py` covers that boundary and the\n shared checker/verifier/fixture routes. These checks remain development evidence,\n with independent installed behavior and explicit release qualification separate.\n->>>>>>> ededcd83eb2d99a602ba18c8fe3c177125c825ac\ndiff --git a/tests/packaging/test_p1_distribution.py b/tests/packaging/test_p1_distribution.py\nindex 5570bab..8eb6ebb 100644\n--- a/tests/packaging/test_p1_distribution.py\n+++ b/tests/packaging/test_p1_distribution.py\n@@ -9,11 +9,8 @@ from pathlib import Path\n \n import pytest\n \n-<<<<<<< 3ec92cd940fd3f2908536293a08d10ce1a4127b5\n-from scripts.installed_test_harness import stage_support\n-=======\n from scripts.check_sdist_contract import check_sdist, compare_wheels, save\n->>>>>>> ededcd83eb2d99a602ba18c8fe3c177125c825ac\n+from scripts.installed_test_harness import stage_support\n \n ROOT = Path(__file__).resolve().parents[2]\n \n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "add",
+      "--",
+      "tests/packaging/test_p1_distribution.py",
+      ".agents/skills/ci-final-tree-verification/SKILL.md"
+    ],
+    "cwd": "/workspace/task-b-sim-c0-i6a-sdist",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "write-tree"
+    ],
+    "cwd": "/workspace/task-b-sim-c0-i6a-sdist",
+    "exit_code": 0,
+    "stdout": "2c61c7d79bf9a95c4f04ccdbda8fae1fe15d5491\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "commit-tree",
+      "2c61c7d79bf9a95c4f04ccdbda8fae1fe15d5491",
+      "-p",
+      "3ec92cd940fd3f2908536293a08d10ce1a4127b5",
+      "-p",
+      "ededcd83eb2d99a602ba18c8fe3c177125c825ac"
+    ],
+    "cwd": "/workspace/git-repo-db",
+    "exit_code": 0,
+    "stdout": "2aa5d128aa0602231fe159e219be05867954dbe2\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "checkout",
+      "--detach",
+      "2aa5d128aa0602231fe159e219be05867954dbe2"
+    ],
+    "cwd": "/workspace/task-b-sim-c0-i6a-sdist",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "Warning: you are leaving 1 commit behind, not connected to\nany of your branches:\n\n  57e9bdb Unresolved audit simulation only\n\nIf you want to keep it by creating a new branch, this may be a good time\nto do so with:\n\n git branch <new-branch-name> 57e9bdb\n\nHEAD is now at 2aa5d12 Audit-only union resolution; preserve both parent changes\n"
+  },
+  {
+    "argv": [
+      "git",
+      "status",
+      "--porcelain"
+    ],
+    "cwd": "/workspace/task-b-sim-c0-i6a-sdist",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "diff",
+      "--name-only",
+      "ea43a21fca1dbf8fa6dd1c254b28a96d5dd28d00",
+      "2aa5d128aa0602231fe159e219be05867954dbe2",
+      "--",
+      "src"
+    ],
+    "cwd": "/workspace/git-repo-db",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "diff",
+      "--binary"
+    ],
+    "cwd": "/workspace/task-b-sim-c0-sdist-i6a",
+    "exit_code": 0,
+    "stdout": "diff --git a/.agents/skills/ci-final-tree-verification/SKILL.md b/.agents/skills/ci-final-tree-verification/SKILL.md\nindex 4130efa..c039c1a 100644\n--- a/.agents/skills/ci-final-tree-verification/SKILL.md\n+++ b/.agents/skills/ci-final-tree-verification/SKILL.md\n@@ -450,64 +450,6 @@ proven stored-data violation. Preserve the cause, use an explicit typed invarian\n boundary and check both confirmed corruption and existing IO/lock/budget/error\n negative controls. Do not classify every ValueError as authoritative corruption.\n \n-<<<<<<< 6dec46783ac7b4404010fc5f546922a35fb66ec7\n-## Inspect actual sdist members after positive selection\n-\n-Hatchling 1.32.4 still force-includes `.gitignore` and `PKG-INFO` when sdist\n-`only-include` lists only package/source metadata. Inspect the built tar, not\n-just TOML. Under ADR 0033, the common `scripts/check_sdist_contract.py` checks\n-`.gitignore` against its frozen source hash and enumerates generated metadata;\n-an unexpected forced file must fail rather than broaden the allowlist silently.\n-The evidence and regression cases are in `tests/packaging/test_sdist_contract.py`\n-and `docs/implementation/evidence/adr0033-minimal-sdist-20261022/README.md`.\n-\n-Request a direct source wheel explicitly. A frontend's default combined build\n-may itself derive its first wheel from sdist and therefore cannot establish an\n-independent direct/derived comparison. Compare complete wheel contents and\n-validated RECORD entries, then retain the separate installed-behavior probes.\n-This does not authorize removing package data, changing SQLite or treating a\n-content-only gate as release acceptance.\n-\n-When independently challenging archive gates, distinguish logical tar members\n-from the complete compressed input. Python `tarfile` consumes PAX extensions\n-before yielding a member and stops at the first tar end marker; a successful\n-iteration alone does not validate unknown extension payloads, appended archives\n-or gzip trailers. Use bounded synthetic PAX values, a second gzip/tar stream,\n-and corrupted/truncated trailers as separate negative controls. Independently\n-check gzip EOF/integrity, record logical regular-file bytes separately from total\n-decompressed/header bytes, and inspect the backend's actual extension keys before\n-proposing an allowlist. Never call a raw `gzip.decompress` of an untrusted large\n-artifact a production-safe bounded validator. The independent ADR 0033 probes at\n-`docs/implementation/evidence/adr0033-independent-review-20261023/archive/`\n-reproduce these parser blind spots without extracting files or importing product\n-code; their nonzero diagnostic exit reports findings, not an incomplete run.\n-\n-Validate a finite whole-tar byte budget while inflating, before handing bytes to\n-`tarfile`, and inspect fixed-size physical headers before any extension payload\n-can be materialized. The hardening checker uses one gzip stream with verified\n-CRC/ISIZE/EOF, rejects bytes after the trailer, concatenated streams and nonzero\n-tar padding, and records `tar_stream_bytes` and `raw_header_count` separately from regular-file\n-bytes and logical members. Its Hatchling 1.32.4 calibration found 159 plain\n-headers and no PAX keys, so the current extension allowlist is empty. Do not\n-silently permit arbitrary PAX metadata to accommodate future long paths: inspect\n-the actual backend output and review bounded keys/values and budgets first.\n-Reproduce the positive build and bounded negative controls with:\n-\n-```sh\n-uv run --no-sync python scripts/check_sdist_contract.py --build \\\n-  --output artifacts/sdist-contract.json\n-uv run --no-sync pytest tests/packaging/test_sdist_contract.py \\\n-  tests/packaging/test_sdist_hardening.py -q\n-```\n-\n-Keep runtime and distribution input fingerprints distinct. README prose is\n-excluded from CI's `acceptance_input_hash` but included in the sdist's required\n-`source_inventory_sha256`; README changes select a fresh lightweight sdist check\n-without forcing full pytest. Matching runtime inputs cannot establish unchanged\n-distribution inputs. `tests/unit/test_ci_plan.py` covers that boundary and the\n-shared checker/verifier/fixture routes. These checks remain development evidence,\n-with independent installed behavior and explicit release qualification separate.\n-=======\n ## Pytest subtest reports are additional measured phases\n \n Pytest 9 unittest `subTest` execution can emit `SubtestReport` call records in\n@@ -573,4 +515,60 @@ setup stop, an entered assertion and an unentered conditional/downstream line.\n Report statement-line entry only; it does not establish assertion subexpression\n coverage or execution in spawned threads/processes. Diagnostic repetitions stay\n separate from the exactly-once ordinary test aggregate.\n->>>>>>> ea43a21fca1dbf8fa6dd1c254b28a96d5dd28d00\n+\n+## Inspect actual sdist members after positive selection\n+\n+Hatchling 1.32.4 still force-includes `.gitignore` and `PKG-INFO` when sdist\n+`only-include` lists only package/source metadata. Inspect the built tar, not\n+just TOML. Under ADR 0033, the common `scripts/check_sdist_contract.py` checks\n+`.gitignore` against its frozen source hash and enumerates generated metadata;\n+an unexpected forced file must fail rather than broaden the allowlist silently.\n+The evidence and regression cases are in `tests/packaging/test_sdist_contract.py`\n+and `docs/implementation/evidence/adr0033-minimal-sdist-20261022/README.md`.\n+\n+Request a direct source wheel explicitly. A frontend's default combined build\n+may itself derive its first wheel from sdist and therefore cannot establish an\n+independent direct/derived comparison. Compare complete wheel contents and\n+validated RECORD entries, then retain the separate installed-behavior probes.\n+This does not authorize removing package data, changing SQLite or treating a\n+content-only gate as release acceptance.\n+\n+When independently challenging archive gates, distinguish logical tar members\n+from the complete compressed input. Python `tarfile` consumes PAX extensions\n+before yielding a member and stops at the first tar end marker; a successful\n+iteration alone does not validate unknown extension payloads, appended archives\n+or gzip trailers. Use bounded synthetic PAX values, a second gzip/tar stream,\n+and corrupted/truncated trailers as separate negative controls. Independently\n+check gzip EOF/integrity, record logical regular-file bytes separately from total\n+decompressed/header bytes, and inspect the backend's actual extension keys before\n+proposing an allowlist. Never call a raw `gzip.decompress` of an untrusted large\n+artifact a production-safe bounded validator. The independent ADR 0033 probes at\n+`docs/implementation/evidence/adr0033-independent-review-20261023/archive/`\n+reproduce these parser blind spots without extracting files or importing product\n+code; their nonzero diagnostic exit reports findings, not an incomplete run.\n+\n+Validate a finite whole-tar byte budget while inflating, before handing bytes to\n+`tarfile`, and inspect fixed-size physical headers before any extension payload\n+can be materialized. The hardening checker uses one gzip stream with verified\n+CRC/ISIZE/EOF, rejects bytes after the trailer, concatenated streams and nonzero\n+tar padding, and records `tar_stream_bytes` and `raw_header_count` separately from regular-file\n+bytes and logical members. Its Hatchling 1.32.4 calibration found 159 plain\n+headers and no PAX keys, so the current extension allowlist is empty. Do not\n+silently permit arbitrary PAX metadata to accommodate future long paths: inspect\n+the actual backend output and review bounded keys/values and budgets first.\n+Reproduce the positive build and bounded negative controls with:\n+\n+```sh\n+uv run --no-sync python scripts/check_sdist_contract.py --build \\\n+  --output artifacts/sdist-contract.json\n+uv run --no-sync pytest tests/packaging/test_sdist_contract.py \\\n+  tests/packaging/test_sdist_hardening.py -q\n+```\n+\n+Keep runtime and distribution input fingerprints distinct. README prose is\n+excluded from CI's `acceptance_input_hash` but included in the sdist's required\n+`source_inventory_sha256`; README changes select a fresh lightweight sdist check\n+without forcing full pytest. Matching runtime inputs cannot establish unchanged\n+distribution inputs. `tests/unit/test_ci_plan.py` covers that boundary and the\n+shared checker/verifier/fixture routes. These checks remain development evidence,\n+with independent installed behavior and explicit release qualification separate.\ndiff --git a/tests/packaging/test_p1_distribution.py b/tests/packaging/test_p1_distribution.py\nindex 0dacff6..8eb6ebb 100644\n--- a/tests/packaging/test_p1_distribution.py\n+++ b/tests/packaging/test_p1_distribution.py\n@@ -9,11 +9,8 @@ from pathlib import Path\n \n import pytest\n \n-<<<<<<< 6dec46783ac7b4404010fc5f546922a35fb66ec7\n from scripts.check_sdist_contract import check_sdist, compare_wheels, save\n-=======\n from scripts.installed_test_harness import stage_support\n->>>>>>> ea43a21fca1dbf8fa6dd1c254b28a96d5dd28d00\n \n ROOT = Path(__file__).resolve().parents[2]\n \n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "add",
+      "--",
+      "tests/packaging/test_p1_distribution.py",
+      ".agents/skills/ci-final-tree-verification/SKILL.md"
+    ],
+    "cwd": "/workspace/task-b-sim-c0-sdist-i6a",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "write-tree"
+    ],
+    "cwd": "/workspace/task-b-sim-c0-sdist-i6a",
+    "exit_code": 0,
+    "stdout": "2c61c7d79bf9a95c4f04ccdbda8fae1fe15d5491\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "commit-tree",
+      "2c61c7d79bf9a95c4f04ccdbda8fae1fe15d5491",
+      "-p",
+      "6dec46783ac7b4404010fc5f546922a35fb66ec7",
+      "-p",
+      "ea43a21fca1dbf8fa6dd1c254b28a96d5dd28d00"
+    ],
+    "cwd": "/workspace/git-repo-db",
+    "exit_code": 0,
+    "stdout": "fbcbb0c16c870aa8c7d1600b916d6e1766a739a4\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "checkout",
+      "--detach",
+      "fbcbb0c16c870aa8c7d1600b916d6e1766a739a4"
+    ],
+    "cwd": "/workspace/task-b-sim-c0-sdist-i6a",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "Warning: you are leaving 1 commit behind, not connected to\nany of your branches:\n\n  3a9afc1 Unresolved audit simulation only\n\nIf you want to keep it by creating a new branch, this may be a good time\nto do so with:\n\n git branch <new-branch-name> 3a9afc1\n\nHEAD is now at fbcbb0c Audit-only union resolution; preserve both parent changes\n"
+  },
+  {
+    "argv": [
+      "git",
+      "status",
+      "--porcelain"
+    ],
+    "cwd": "/workspace/task-b-sim-c0-sdist-i6a",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "diff",
+      "--name-only",
+      "ea43a21fca1dbf8fa6dd1c254b28a96d5dd28d00",
+      "fbcbb0c16c870aa8c7d1600b916d6e1766a739a4",
+      "--",
+      "src"
+    ],
+    "cwd": "/workspace/git-repo-db",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  }
+]

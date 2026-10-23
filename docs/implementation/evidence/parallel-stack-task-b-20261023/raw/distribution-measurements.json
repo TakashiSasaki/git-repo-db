@@ -1,0 +1,107 @@
+{
+  "i6a": {
+    "source_head": "ea43a21fca1dbf8fa6dd1c254b28a96d5dd28d00",
+    "source_tree": "e7ca7e361b8b766f1976a12fc84d5cc50ac32232",
+    "archive_sha256": "6800e08b220b006c3be03ca8da84f5a34d7b3863656512b09da5088d6fe0cb4e",
+    "compressed_bytes": 128286607,
+    "file_count": 5250,
+    "unpacked_file_bytes": 190547666,
+    "top_level_counts": {
+      "AGENTS.md": 1,
+      "README.md": 1,
+      "mkdocs.yml": 1,
+      "uv.lock": 1,
+      ".agents": 16,
+      ".github": 4,
+      "docs": 4747,
+      "overrides": 1,
+      "scripts": 45,
+      "src": 158,
+      "tests": 272,
+      ".gitignore": 1,
+      "pyproject.toml": 1,
+      "PKG-INFO": 1
+    }
+  },
+  "sdist": {
+    "source_head": "ededcd83eb2d99a602ba18c8fe3c177125c825ac",
+    "source_tree": "2c721a0e8a58ebe8d1f795da821ea4e317b73e7e",
+    "archive_sha256": "c72f86709f360b306daa1d39e2854e910f773e6acfce9f4bec7dae3396012e21",
+    "compressed_bytes": 677902,
+    "file_count": 159,
+    "unpacked_file_bytes": 5921698,
+    "top_level_counts": {
+      "README.md": 1,
+      "src": 155,
+      ".gitignore": 1,
+      "pyproject.toml": 1,
+      "PKG-INFO": 1
+    },
+    "contract": {
+      "status": "passed",
+      "archive": "repo_catalog-0.2.0.tar.gz",
+      "sha256": "c72f86709f360b306daa1d39e2854e910f773e6acfce9f4bec7dae3396012e21",
+      "compressed_bytes": 677902,
+      "tar_stream_bytes": 6051840,
+      "raw_header_count": 159,
+      "unpacked_bytes": 5921698,
+      "member_count": 159,
+      "file_count": 159,
+      "product_files": 155,
+      "source_inventory_sha256": "7d93a7c4b2d3d6a7411f0fc98a42901a83b508a63d2e15e44c2f6f2674f21934",
+      "budgets": {
+        "compressed_bytes": 2097152,
+        "unpacked_bytes": 8388608,
+        "members": 512,
+        "tar_stream_bytes": 8922624
+      }
+    }
+  },
+  "combined": {
+    "source_head": "a7825249e0722053a66919d47ad92662854c856c",
+    "source_tree": "2c61c7d79bf9a95c4f04ccdbda8fae1fe15d5491",
+    "archive_sha256": "5ceae4c0bae05242b781c2baaac1ce7ae7b83474b19dc4cf4675c202f9785bac",
+    "compressed_bytes": 690942,
+    "file_count": 162,
+    "unpacked_file_bytes": 5983026,
+    "top_level_counts": {
+      "README.md": 1,
+      "src": 158,
+      ".gitignore": 1,
+      "pyproject.toml": 1,
+      "PKG-INFO": 1
+    },
+    "contract": {
+      "status": "passed",
+      "archive": "repo_catalog-0.2.0.tar.gz",
+      "sha256": "5ceae4c0bae05242b781c2baaac1ce7ae7b83474b19dc4cf4675c202f9785bac",
+      "compressed_bytes": 690942,
+      "tar_stream_bytes": 6113280,
+      "raw_header_count": 162,
+      "unpacked_bytes": 5983026,
+      "member_count": 162,
+      "file_count": 162,
+      "product_files": 158,
+      "source_inventory_sha256": "6f8da0ebc1142fa350fb1563aa2667dd93832a876fe4da64d532d49c4e243b42",
+      "budgets": {
+        "compressed_bytes": 2097152,
+        "unpacked_bytes": 8388608,
+        "members": 512,
+        "tar_stream_bytes": 8922624
+      }
+    },
+    "wheel_equivalence": {
+      "status": "passed",
+      "direct": {
+        "bytes": 778384,
+        "sha256": "b92078f0153c187dd5d06773b75d98e134970694a79a58534b59c4f8503da878"
+      },
+      "sdist_wheel": {
+        "bytes": 778384,
+        "sha256": "b92078f0153c187dd5d06773b75d98e134970694a79a58534b59c4f8503da878"
+      },
+      "product_files": 158,
+      "metadata_files": 4
+    }
+  }
+}

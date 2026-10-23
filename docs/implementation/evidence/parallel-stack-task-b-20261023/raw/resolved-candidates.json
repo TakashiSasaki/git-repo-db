@@ -1,0 +1,74 @@
+[
+  {
+    "order": [
+      "i6a",
+      "sdist",
+      "c0"
+    ],
+    "hypothesis": "union both imports and append both independent skill lessons; preserve all other auto-merged hunks",
+    "candidate_commit": "a7825249e0722053a66919d47ad92662854c856c",
+    "candidate_tree": "2c61c7d79bf9a95c4f04ccdbda8fae1fe15d5491",
+    "scratch": "/workspace/task-b-sim-i6a-sdist-c0",
+    "product_delta_vs_i6a": []
+  },
+  {
+    "order": [
+      "i6a",
+      "c0",
+      "sdist"
+    ],
+    "hypothesis": "union both imports and append both independent skill lessons; preserve all other auto-merged hunks",
+    "candidate_commit": "99be72760e62bf9fc5095ba4503ab9dd4a777914",
+    "candidate_tree": "2c61c7d79bf9a95c4f04ccdbda8fae1fe15d5491",
+    "scratch": "/workspace/task-b-sim-i6a-c0-sdist",
+    "product_delta_vs_i6a": []
+  },
+  {
+    "order": [
+      "sdist",
+      "i6a",
+      "c0"
+    ],
+    "hypothesis": "union both imports and append both independent skill lessons; preserve all other auto-merged hunks",
+    "candidate_commit": "3f3b519e22dba6749985c857a936973d5f66dd6e",
+    "candidate_tree": "2c61c7d79bf9a95c4f04ccdbda8fae1fe15d5491",
+    "scratch": "/workspace/task-b-sim-sdist-i6a-c0",
+    "product_delta_vs_i6a": []
+  },
+  {
+    "order": [
+      "sdist",
+      "c0",
+      "i6a"
+    ],
+    "hypothesis": "union both imports and append both independent skill lessons; preserve all other auto-merged hunks",
+    "candidate_commit": "6802b2477c28006a9f7711918090701db763a29d",
+    "candidate_tree": "2c61c7d79bf9a95c4f04ccdbda8fae1fe15d5491",
+    "scratch": "/workspace/task-b-sim-sdist-c0-i6a",
+    "product_delta_vs_i6a": []
+  },
+  {
+    "order": [
+      "c0",
+      "i6a",
+      "sdist"
+    ],
+    "hypothesis": "union both imports and append both independent skill lessons; preserve all other auto-merged hunks",
+    "candidate_commit": "2aa5d128aa0602231fe159e219be05867954dbe2",
+    "candidate_tree": "2c61c7d79bf9a95c4f04ccdbda8fae1fe15d5491",
+    "scratch": "/workspace/task-b-sim-c0-i6a-sdist",
+    "product_delta_vs_i6a": []
+  },
+  {
+    "order": [
+      "c0",
+      "sdist",
+      "i6a"
+    ],
+    "hypothesis": "union both imports and append both independent skill lessons; preserve all other auto-merged hunks",
+    "candidate_commit": "fbcbb0c16c870aa8c7d1600b916d6e1766a739a4",
+    "candidate_tree": "2c61c7d79bf9a95c4f04ccdbda8fae1fe15d5491",
+    "scratch": "/workspace/task-b-sim-c0-sdist-i6a",
+    "product_delta_vs_i6a": []
+  }
+]

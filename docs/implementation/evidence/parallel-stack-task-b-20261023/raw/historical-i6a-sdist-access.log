@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "/tmp/repo-catalog-installed-tests-p0nmy1b7/original_access_smoke.py", line 187, in <module>
+    package = ExchangeService(producer).export_package(selection=ExchangeSelectionScope(all_selected=True))
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/i6a-runs/installed-final/sdist-venv/lib/python3.12/site-packages/repo_catalog/application/exchange.py", line 397, in export_package
+    raise AdmissionRefused("PERMISSION_DENIED")
+repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED

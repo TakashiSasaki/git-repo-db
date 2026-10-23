@@ -1,0 +1,24 @@
+{
+  "observed_at": "2026-10-23T11:03:04.968806+00:00",
+  "argv": [
+    "git",
+    "ls-remote",
+    "origin",
+    "refs/heads/fix/adr0032-host-runtime-20261022",
+    "refs/heads/review/adr0031-i6a-task-c-20261023",
+    "refs/heads/review/adr0033-hardening-rereview-20261023",
+    "refs/heads/review/c0-e1-independent-20261023",
+    "refs/heads/docs/adr0033-minimal-sdist-20261022",
+    "refs/heads/main"
+  ],
+  "exit_code": 0,
+  "actual_refs": {
+    "refs/heads/docs/adr0033-minimal-sdist-20261022": "18ba867d1c2f33c7d17939b2722d22a67139363a",
+    "refs/heads/fix/adr0032-host-runtime-20261022": "f16e5b1713bde9a2f18263a25397c4b450fd5773",
+    "refs/heads/main": "cb532242c7aa86c6af5b6232b71c0906ea38f5c5",
+    "refs/heads/review/adr0031-i6a-task-c-20261023": "ea43a21fca1dbf8fa6dd1c254b28a96d5dd28d00",
+    "refs/heads/review/adr0033-hardening-rereview-20261023": "ededcd83eb2d99a602ba18c8fe3c177125c825ac",
+    "refs/heads/review/c0-e1-independent-20261023": "e7762952e18061de8c8235beaeddf42f20ad9f5a"
+  },
+  "fixed_pins_unchanged": true
+}
