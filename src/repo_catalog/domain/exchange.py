@@ -51,14 +51,26 @@ def _quoted_size(value, remaining):
     return total
 
 
-def _bounded_json(value: Any, *, root: str = "generic") -> tuple[int, int]:
-    """Bound all inputs, including already decoded caller-owned dictionaries."""
+def _bounded_json(value: Any, *, root: str = "generic", spend=None) -> tuple[int, int]:
+    """Bound caller-owned JSON before allocation, optionally reserving work.
+
+    ``spend`` reserves visited values, queued references and examined characters
+    before their associated operation. It may stop the scan immediately. The
+    returned element count remains the wire hard-cap counter, not this request's
+    character-inclusive work counter.
+    """
+
+    def reserve(amount=1):
+        if spend is not None:
+            spend(amount)
+
     pending = [(value, 0, False, root)]
     active = set()
     count = 0
     size = 0
     try:
         while pending:
+            reserve()
             item, depth, exiting, role = pending.pop()
             if exiting:
                 active.remove(id(item))
@@ -78,6 +90,7 @@ def _bounded_json(value: Any, *, root: str = "generic") -> tuple[int, int]:
                 # Refuse a necessarily oversize object before queuing children.
                 if 2 * len(item) > MAX_ELEMENTS - count:
                     raise ExchangeError("INPUT_LIMIT", "package", "JSON elements")
+                reserve(len(item))
                 if any(type(key) is not str for key in item):
                     raise ExchangeError(
                         "MALFORMED_JSON", "package", "string keys required"
@@ -85,16 +98,24 @@ def _bounded_json(value: Any, *, root: str = "generic") -> tuple[int, int]:
                 count += len(item)
                 size += 2 + max(0, len(item) - 1) + len(item)
                 for key in item:
+                    reserve(1 + len(key))
                     size += _quoted_size(key, MAX_PACKAGE_BYTES - size)
                     count += max(0, (len(key) - 1) // 4096)
                     if count > MAX_ELEMENTS:
                         raise ExchangeError("INPUT_LIMIT", "package", "JSON elements")
-                for identity, relative_depth in _embedded_identity_values(item, role):
+                for identity, relative_depth in _embedded_identity_values(
+                    item, role, spend=spend
+                ):
+                    reserve()
                     pending.append((identity, depth + relative_depth, False, "generic"))
+                reserve(len(item))
                 for key, entry in item.items():
                     child_role = _wire_child_role(role, key, item)
                     pending.append((entry, depth + 1, False, "generic"))
                     if key.endswith("_json") and isinstance(entry, str):
+                        # Reserve both the escaping pass and full lexical/JSON
+                        # parse before either touches the embedded text.
+                        reserve(2 * (1 + len(entry)))
                         _quoted_size(entry, MAX_PACKAGE_BYTES - size)
                         pending.append(
                             (_parse_json(entry), depth + 1, False, child_role)
@@ -103,6 +124,8 @@ def _bounded_json(value: Any, *, root: str = "generic") -> tuple[int, int]:
                         # Only one traversal: a decoded container carries its role
                         # directly; embedded JSON strings have a separate parse.
                         pending[-1] = (entry, depth + 1, False, child_role)
+                    if key == "body_hex" and type(entry) is str:
+                        reserve(1 + len(entry))
                     if key == "body_hex" and (
                         type(entry) is not str
                         or len(entry) > MAX_PACKAGE_BYTES
@@ -115,7 +138,10 @@ def _bounded_json(value: Any, *, root: str = "generic") -> tuple[int, int]:
             elif type(item) is list:
                 if len(item) > MAX_ELEMENTS - count:
                     raise ExchangeError("INPUT_LIMIT", "package", "JSON elements")
-                for identity, relative_depth in _embedded_identity_values(item, role):
+                for identity, relative_depth in _embedded_identity_values(
+                    item, role, spend=spend
+                ):
+                    reserve()
                     pending.append((identity, depth + relative_depth, False, "generic"))
                 child_role = (
                     "row:" + role[5:]
@@ -124,9 +150,11 @@ def _bounded_json(value: Any, *, root: str = "generic") -> tuple[int, int]:
                     if role == "transfer_supports"
                     else "generic"
                 )
+                reserve(len(item))
                 pending.extend((v, depth + 1, False, child_role) for v in item)
                 size += 2 + max(0, len(item) - 1)
             elif type(item) is str:
+                reserve(1 + len(item))
                 size += _quoted_size(item, MAX_PACKAGE_BYTES - size)
                 count += max(0, (len(item) - 1) // 4096)
             elif type(item) is float and not math.isfinite(item):
@@ -227,11 +255,13 @@ def _wire_child_role(role, key, row):
     return "generic"
 
 
-def _embedded_identity_values(value, role):
+def _embedded_identity_values(value, role, *, spend=None):
     """Expose decoded typed keys to aggregate caps without inspecting evidence shape."""
 
     def identity(text, depth, kind=None):
         try:
+            if spend is not None:
+                spend(1 + len(text))
             native = parse_identity(text)
             yield native, depth
             # Reserved scoped kinds explicitly parse their namespace identity;
@@ -241,6 +271,8 @@ def _embedded_identity_values(value, role):
                 and type(native) is list
                 and len(native) == 4
             ):
+                if spend is not None:
+                    spend(1 + len(native[1]))
                 yield parse_identity(native[1]), depth + 1
         except (ValueError, TypeError) as error:
             raise ExchangeError(
@@ -262,6 +294,8 @@ def _embedded_identity_values(value, role):
             if value.get("provider_document_id") is not None:
                 yield from identity(value["provider_document_id"], 1)
     elif role == "resource_members" and type(value) is list:
+        if spend is not None:
+            spend(len(value))
         for member in value:
             if type(member) is list and len(member) == 3:
                 yield from identity(member[2], 2, member[1])
@@ -332,14 +366,17 @@ def _parse_json(text: str) -> Any:
 
 
 def _canonical_content(package: ExchangePackage) -> bytes:
-    data = package.to_dict()
+    return _canonical_dictionary(package.to_dict())
+
+
+def _canonical_dictionary(data: dict[str, Any]) -> bytes:
+    """Encode the received or authored dictionary with one checksum profile."""
     # The digest is excluded from the checksum, never from wire limits. A
     # package emitted at the inclusive cap must remain readable by this codec.
     _bounded_json(data, root="package")
-    data.pop("digest_sha256")
     try:
         result = json.dumps(
-            data,
+            {key: value for key, value in data.items() if key != "digest_sha256"},
             ensure_ascii=False,
             sort_keys=True,
             separators=(",", ":"),
@@ -573,7 +610,7 @@ class ExchangeSelectionScope:
             raise ExchangeError(
                 "INVALID_SELECTION", "selection_scope", str(exc)
             ) from exc
-        return cls(
+        result = cls(
             include_core=data["include_core"],
             include_context=data["include_context"],
             include_retained_bytes=data["include_retained_bytes"],
@@ -590,6 +627,16 @@ class ExchangeSelectionScope:
             max_bytes=data["max_bytes"],
             max_work=data["max_work"],
         )
+        # Local typed selection construction may canonicalize its sets when
+        # authoring a package. Received selections must already use that exact
+        # representation: a matching checksum does not authorize input repair.
+        if result.to_dict() != data:
+            raise ExchangeError(
+                "INVALID_SELECTION",
+                "selection_scope",
+                "canonical unique set arrays required",
+            )
+        return result
 
 
 def empty_core_section() -> dict[str, list[dict[str, Any]]]:
@@ -841,9 +888,18 @@ def decode_package(
             "package",
             f"unexpected or missing envelope keys: {sorted(data.keys())}",
         )
-    _bounded_json(data, root="package")
+    content = _canonical_dictionary(data)
     if type(data["digest_sha256"]) is not str or len(data["digest_sha256"]) != 64:
         raise ExchangeError("DIGEST_MISMATCH", "package", "declared SHA-256 required")
+    measurement = _WIRE_WORK.get()
+    if measurement is not None:
+        measurement["verification_bytes"] += len(content)
+    if data["digest_sha256"] != hashlib.sha256(content).hexdigest():
+        raise ExchangeError(
+            "DIGEST_MISMATCH",
+            data["package_id"],
+            "declared SHA-256 differs from received canonical content",
+        )
     selection = ExchangeSelectionScope.from_dict(data["selection_scope"])
     return ExchangePackage(
         format=data["format"],
