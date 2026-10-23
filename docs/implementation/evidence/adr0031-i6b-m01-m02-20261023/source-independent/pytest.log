@@ -1,0 +1,15 @@
+.......................................................................................................................................................................................F........................
+=================================== FAILURES ===================================
+__________ test_hard_element_cap_rejects_before_indexing_hostile_rows __________
+
+    def test_hard_element_cap_rejects_before_indexing_hostile_rows():
+        data = empty_context_section()
+        data["resources"] = [None] * MAX_ELEMENTS
+>       with pytest.raises(ExchangeError) as exc:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ExchangeError
+
+../probes/test_planner_independent.py:212: Failed
+=========================== short test summary info ============================
+FAILED ../probes/test_planner_independent.py::test_hard_element_cap_rejects_before_indexing_hostile_rows
+1 failed, 207 passed in 4.59s

@@ -1,0 +1,144 @@
+{
+  "new_and_updated_files": [
+    "docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/REPORT.md",
+    "docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/MATRIX.md",
+    "docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/REPRODUCTION.md",
+    ".agents/skills/three-store-invariants/SKILL.md",
+    ".agents/skills/efficient-repository-investigation/SKILL.md"
+  ],
+  "local_links": [
+    {
+      "file": "docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/MATRIX.md",
+      "link": "../adr0031-i6b-independent-20261023/MATRIX.md",
+      "target_exists": true
+    },
+    {
+      "file": ".agents/skills/three-store-invariants/SKILL.md",
+      "link": "../../../docs/adr/README.md",
+      "target_exists": true
+    },
+    {
+      "file": ".agents/skills/three-store-invariants/SKILL.md",
+      "link": "../../../docs/architecture/git-core-context-transition-plan.md",
+      "target_exists": true
+    },
+    {
+      "file": ".agents/skills/three-store-invariants/SKILL.md",
+      "link": "../../../docs/adr/0029-independent-access-store.md",
+      "target_exists": true
+    },
+    {
+      "file": ".agents/skills/three-store-invariants/SKILL.md",
+      "link": "../../../docs/adr/0014-history-and-notes-catalog-without-file-archive.md",
+      "target_exists": true
+    },
+    {
+      "file": ".agents/skills/three-store-invariants/SKILL.md",
+      "link": "../../../docs/adr/0026-stop-salvage-restore-merge-after-corruption.md",
+      "target_exists": true
+    },
+    {
+      "file": ".agents/skills/three-store-invariants/SKILL.md",
+      "link": "../../../docs/adr/0027-unauthenticated-external-capture-origin-reports.md",
+      "target_exists": true
+    },
+    {
+      "file": ".agents/skills/three-store-invariants/SKILL.md",
+      "link": "../../../docs/implementation/evidence/schema21-baseline-20261016/ROOT-CHECKPOINT.md",
+      "target_exists": true
+    },
+    {
+      "file": ".agents/skills/three-store-invariants/SKILL.md",
+      "link": "../../../docs/adr/0028-classified-times-and-sha256-exchange.md",
+      "target_exists": true
+    },
+    {
+      "file": ".agents/skills/three-store-invariants/SKILL.md",
+      "link": "../../../tests/integration/architecture_spikes/consistency.py",
+      "target_exists": true
+    },
+    {
+      "file": ".agents/skills/three-store-invariants/SKILL.md",
+      "link": "../../../tests/integration/architecture_spikes/test_consistency.py",
+      "target_exists": true
+    },
+    {
+      "file": ".agents/skills/three-store-invariants/SKILL.md",
+      "link": "../../../docs/implementation/p2-p3-compatibility.md",
+      "target_exists": true
+    },
+    {
+      "file": ".agents/skills/three-store-invariants/SKILL.md",
+      "link": "../../../docs/implementation/p4-production-notes.md",
+      "target_exists": true
+    },
+    {
+      "file": ".agents/skills/three-store-invariants/SKILL.md",
+      "link": "../../../docs/implementation/p4-independent-review.md",
+      "target_exists": true
+    },
+    {
+      "file": ".agents/skills/three-store-invariants/SKILL.md",
+      "link": "../../../docs/implementation/p5-p6-shared-time-correction.md",
+      "target_exists": true
+    },
+    {
+      "file": ".agents/skills/three-store-invariants/SKILL.md",
+      "link": "../../../docs/implementation/adr0031-i2-implementation.md",
+      "target_exists": true
+    },
+    {
+      "file": ".agents/skills/three-store-invariants/SKILL.md",
+      "link": "../../../docs/implementation/evidence/p5-correction/independent/review.md",
+      "target_exists": true
+    },
+    {
+      "file": ".agents/skills/three-store-invariants/SKILL.md",
+      "link": "../../../docs/implementation/evidence/p7-replay/README.md",
+      "target_exists": true
+    },
+    {
+      "file": ".agents/skills/three-store-invariants/SKILL.md",
+      "link": "../../../docs/adr/0032-environment-sqlite-validation.md",
+      "target_exists": true
+    },
+    {
+      "file": ".agents/skills/three-store-invariants/SKILL.md",
+      "link": "../../../docs/adr/0032-environment-sqlite-validation.md",
+      "target_exists": true
+    },
+    {
+      "file": ".agents/skills/three-store-invariants/SKILL.md",
+      "link": "../../../docs/implementation/evidence/adr0031-i6a/author/REPORT.md",
+      "target_exists": true
+    },
+    {
+      "file": ".agents/skills/three-store-invariants/SKILL.md",
+      "link": "../../../docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/REPORT.md",
+      "target_exists": true
+    },
+    {
+      "file": ".agents/skills/efficient-repository-investigation/SKILL.md",
+      "link": "references/verified-tooling.json",
+      "target_exists": true
+    },
+    {
+      "file": ".agents/skills/efficient-repository-investigation/SKILL.md",
+      "link": "../../../docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/REPORT.md",
+      "target_exists": true
+    }
+  ],
+  "skills": [
+    {
+      "file": ".agents/skills/three-store-invariants/SKILL.md",
+      "name": "three-store-invariants",
+      "valid_frontmatter": true
+    },
+    {
+      "file": ".agents/skills/efficient-repository-investigation/SKILL.md",
+      "name": "efficient-repository-investigation",
+      "valid_frontmatter": true
+    }
+  ],
+  "utf8": true
+}

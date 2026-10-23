@@ -1,0 +1,22 @@
+{
+  "command": [
+    ".venv/bin/python",
+    "-m",
+    "pytest",
+    "tests/unit/test_context_scan_budget.py",
+    "tests/unit/test_context_dependencies.py",
+    "tests/unit/test_exchange_received_digest.py",
+    "tests/unit/test_context_wire_v5.py",
+    "/workspace/i6b-fix-work/probes/test_planner_independent.py",
+    "/workspace/i6b-fix-work/probes/test_planner_work_budget_contract.py",
+    "-c",
+    "pyproject.toml",
+    "-o",
+    "addopts=",
+    "-q",
+    "--junitxml=/workspace/i6b-fix-work/author-focused-v5.xml",
+    "--journal=/workspace/i6b-fix-work/author-focused-v5.jsonl"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 10.925258405000022
+}

@@ -1,0 +1,20 @@
+from pathlib import Path
+import copy,hashlib,json,os,sqlite3,sys
+import repo_catalog
+from repo_catalog.domain.exchange import decode_package,ExchangeError
+root=Path(repo_catalog.__file__).resolve().parent;assert root.is_relative_to(Path(sys.prefix).resolve())
+source=Path(sys.argv[1]);out=Path(sys.argv[2]);records=[]
+for p in sorted(source.glob('*.json')):
+ d=json.loads(p.read_text());received=d['received'];before=d['before'];actual=hashlib.sha256(json.dumps({k:v for k,v in received.items() if k!='digest_sha256'},ensure_ascii=False,sort_keys=True,separators=(',',':'),allow_nan=False).encode()).hexdigest();assert actual==d['actual_received_digest']!=d['declared_digest']
+ control=decode_package(before);assert control.to_dict()==before
+ carrier=p.stem.rsplit('-',1)[1]
+ def carry(data):return data if carrier=='dict' else json.dumps(data) if carrier=='str' else json.dumps(data).encode()
+ row={'vector':p.name,'input_bytes':p.stat().st_size,'input_sha256':hashlib.sha256(p.read_bytes()).hexdigest(),'carrier':carrier,'canonical_control':'accepted unchanged','actual_received_digest':actual,'declared_digest':d['declared_digest']}
+ for label,wire,expected in [('stale',received,'DIGEST_MISMATCH'),('corrected_digest',dict(received,digest_sha256=actual),'INVALID_SELECTION')]:
+  try:decode_package(carry(wire))
+  except ExchangeError as error:row[label]={'code':error.code,'scope':error.scope,'message':str(error)};assert error.code==expected
+  else:raise AssertionError((p,label,'unexpected silent normalization/acceptance'))
+ records.append(row)
+assert len(records)==30
+out.write_text(json.dumps({'python':sys.executable,'origin':str(root),'sqlite':sqlite3.connect(':memory:').execute('select sqlite_version(),sqlite_source_id()').fetchone(),'scope':'Separate measurement replay of30 actual saved raw digest vectors plus30 correctly rehashed changed dictionaries; overlapping probe cases, no test total','records':records},indent=2,ensure_ascii=False)+'\n')
+print(json.dumps({'saved_vectors':len(records),'stale_refusals':30,'corrected_digest_noncanonical_refusals':30,'canonical_controls':30}))

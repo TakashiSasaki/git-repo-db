@@ -1,0 +1,107 @@
+{
+  "attribution": "Author team reuses unchanged independent #152 observers and probes; runners/measurement output routing are new. This is not an independent re-review.",
+  "files": [
+    {
+      "original": "/workspace/i6b-fix-work/tools/broad_receipt.py",
+      "transport": "tools/broad_receipt.py.txt",
+      "bytes": 2588,
+      "sha256": "d3f39ffa4b8a56c1d7e4561f57921b23c9f00a8e52c7c3cbe00c880e7c44cb5b"
+    },
+    {
+      "original": "/workspace/i6b-fix-work/tools/compare_source.py",
+      "transport": "tools/compare_source.py.txt",
+      "bytes": 9641,
+      "sha256": "d93aad2bf6d1983cd52f8ca591abbf2d2afc917f20996a0620361c3b10d3571c"
+    },
+    {
+      "original": "/workspace/i6b-fix-work/tools/measure_digest.py",
+      "transport": "tools/measure_digest.py.txt",
+      "bytes": 2777,
+      "sha256": "48c4b11c88443631a232889cd6d76a30c8331787f63f330b28dff3a4a04bb82d"
+    },
+    {
+      "original": "/workspace/i6b-fix-work/tools/measure_floor.py",
+      "transport": "tools/measure_floor.py.txt",
+      "bytes": 2489,
+      "sha256": "ccf3e83831c032e8aacc11c5386d9a77b115dd90b9d870ecc76ae0c04635c6b7"
+    },
+    {
+      "original": "/workspace/i6b-fix-work/tools/run_baseline.py",
+      "transport": "tools/run_baseline.py.txt",
+      "bytes": 2248,
+      "sha256": "a203c717fc6e247528b1908a5bfd12be1de969b4bfc0457f52f462d3854da047"
+    },
+    {
+      "original": "/workspace/i6b-fix-work/tools/run_probes.py",
+      "transport": "tools/run_probes.py.txt",
+      "bytes": 4464,
+      "sha256": "cfb27108b286bcb5a733a600a41ec34deff10f2b478410a11e6411f8b31f8d9b"
+    },
+    {
+      "original": "/workspace/i6b-fix-work/tools/run_source.py",
+      "transport": "tools/run_source.py.txt",
+      "bytes": 3531,
+      "sha256": "3b88db226c94e293d38ac03e348758cd5253f88917f9dba1277a53443df40780"
+    },
+    {
+      "original": "/workspace/i6b-fix-work/tools/statement_trace.py",
+      "transport": "tools/statement_trace.py.txt",
+      "bytes": 3037,
+      "sha256": "d3cdb3a6f5218e13c92a24b2b8fa0dc209aeb3f374d5b73ed55d82dd958e439e"
+    },
+    {
+      "original": "/workspace/i6b-fix-work/probes/test_author_extra.py",
+      "transport": "probes/test_author_extra.py.txt",
+      "bytes": 15247,
+      "sha256": "bc77c792f8f4a7dc3ad472d6fa9325a274bdd8895822a328556b260b55663ffd"
+    },
+    {
+      "original": "/workspace/i6b-fix-work/probes/test_commit_boundary.py",
+      "transport": "probes/test_commit_boundary.py.txt",
+      "bytes": 8470,
+      "sha256": "139c253eee306888a34c4feba791feeb972088a040a4818a64be546271c8d4fe"
+    },
+    {
+      "original": "/workspace/i6b-fix-work/probes/test_digest_contract.py",
+      "transport": "probes/test_digest_contract.py.txt",
+      "bytes": 2578,
+      "sha256": "855d5fc32bbff94890ce838a6e8cb27694eeaac218353f4407263ad75537ab74"
+    },
+    {
+      "original": "/workspace/i6b-fix-work/probes/test_independent_wire.py",
+      "transport": "probes/test_independent_wire.py.txt",
+      "bytes": 19900,
+      "sha256": "d274adc397b1c8e4b7f52ebcc0fb3cb6dac0515e1c452368bdb78895c8bb2c48"
+    },
+    {
+      "original": "/workspace/i6b-fix-work/probes/test_planner_independent.py",
+      "transport": "probes/test_planner_independent.py.txt",
+      "bytes": 10754,
+      "sha256": "e9ffcd3aa273c647788c1477cb28524ea8ab6a1485fda120db52e754696ff59e"
+    },
+    {
+      "original": "/workspace/i6b-fix-work/probes/test_planner_work_budget_contract.py",
+      "transport": "probes/test_planner_work_budget_contract.py.txt",
+      "bytes": 2564,
+      "sha256": "dec5aa650b847b18aee223e3ab79fe41faf644b620d12edfa7cf3b83c375555b"
+    },
+    {
+      "original": "/workspace/i6b-fix-work/probes/test_resolved_wire.py",
+      "transport": "probes/test_resolved_wire.py.txt",
+      "bytes": 5172,
+      "sha256": "536de7d78526f6d779d8a6e3ec3c0d8b4a02356b1ca122807e963803d94ffa20"
+    },
+    {
+      "original": "/workspace/i6b-fix-work/measure_root_keys.py",
+      "transport": "tools/measure_root_keys.py.txt",
+      "bytes": 2848,
+      "sha256": "d1875410980b79e489d62c4403aaa640b9985baef5c5e9df5aa798d1feeabed7"
+    },
+    {
+      "original": "/workspace/i6b-fix-work/compare_actual_frames.py",
+      "transport": "tools/compare_actual_frames.py.txt",
+      "bytes": 2825,
+      "sha256": "69abf2d066fcd23495e8d35f9255ed634ae311f25b9c909de39fe986c2844db6"
+    }
+  ]
+}

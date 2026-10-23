@@ -1,0 +1,945 @@
+{
+  "head": "fe9e48bfac750a276b2622da2c50d3d4559de338",
+  "saved_vectors": {
+    "count": 30,
+    "all_bytes_equal": true,
+    "sha256": {
+      "repository_uuidv4s-permutation-str.json": "b03f547cf2c008ea6eec1058c4028b820226c932b7a553d4d1aaea5825de8477",
+      "notes_refs-permutation-bytes.json": "6d8c2c34d7f6a23f479999427354cdd9408a9408e5bd6f8e63edaa36aa71b9bd",
+      "resource_keys-duplicate-str.json": "c8c691f6cf615f2e39085cbf5671a5fc759fc81aca70558a1092df758bc68357",
+      "source_uuidv4s-permutation-bytes.json": "0f97fc4fbd96bc6a86bdbf644c1c7cf0743776910cc7594b3310e7081075044c",
+      "notes_refs-duplicate-bytes.json": "830d2346edb00af219ca534b486ce229ce319c487ee4b89fa7f828f420eb6e5b",
+      "repository_uuidv4s-duplicate-bytes.json": "7cd09eeb54491be84cd95569eaf6c0734ea0bbd089a6eb16d4a7482e0fbf40e7",
+      "object_oids-duplicate-str.json": "a038a3c8dc207320ff64cea6361f55a8195c72f5cee7f3defd0032a8810ab444",
+      "object_oids-permutation-bytes.json": "15f992ba8c12a13e500e2f2065a67ac0528d0741973251dc19039850df909bf3",
+      "source_uuidv4s-duplicate-dict.json": "14d4e8c939e1474c7753a06520d1e49e1f17daa6fa2ba6d07001e516b2e9e9e4",
+      "notes_refs-permutation-str.json": "6d8c2c34d7f6a23f479999427354cdd9408a9408e5bd6f8e63edaa36aa71b9bd",
+      "source_uuidv4s-permutation-str.json": "0f97fc4fbd96bc6a86bdbf644c1c7cf0743776910cc7594b3310e7081075044c",
+      "notes_refs-duplicate-str.json": "830d2346edb00af219ca534b486ce229ce319c487ee4b89fa7f828f420eb6e5b",
+      "source_uuidv4s-duplicate-str.json": "14d4e8c939e1474c7753a06520d1e49e1f17daa6fa2ba6d07001e516b2e9e9e4",
+      "object_oids-permutation-dict.json": "15f992ba8c12a13e500e2f2065a67ac0528d0741973251dc19039850df909bf3",
+      "source_uuidv4s-duplicate-bytes.json": "14d4e8c939e1474c7753a06520d1e49e1f17daa6fa2ba6d07001e516b2e9e9e4",
+      "object_oids-duplicate-dict.json": "a038a3c8dc207320ff64cea6361f55a8195c72f5cee7f3defd0032a8810ab444",
+      "repository_uuidv4s-permutation-bytes.json": "b03f547cf2c008ea6eec1058c4028b820226c932b7a553d4d1aaea5825de8477",
+      "object_oids-permutation-str.json": "15f992ba8c12a13e500e2f2065a67ac0528d0741973251dc19039850df909bf3",
+      "source_uuidv4s-permutation-dict.json": "0f97fc4fbd96bc6a86bdbf644c1c7cf0743776910cc7594b3310e7081075044c",
+      "repository_uuidv4s-permutation-dict.json": "b03f547cf2c008ea6eec1058c4028b820226c932b7a553d4d1aaea5825de8477",
+      "repository_uuidv4s-duplicate-dict.json": "7cd09eeb54491be84cd95569eaf6c0734ea0bbd089a6eb16d4a7482e0fbf40e7",
+      "resource_keys-duplicate-dict.json": "c8c691f6cf615f2e39085cbf5671a5fc759fc81aca70558a1092df758bc68357",
+      "resource_keys-permutation-str.json": "4c30d45962e83b1fdecd2fd569cfa8a336be3260c579cade0fa9ee8091092a73",
+      "resource_keys-permutation-dict.json": "4c30d45962e83b1fdecd2fd569cfa8a336be3260c579cade0fa9ee8091092a73",
+      "notes_refs-duplicate-dict.json": "830d2346edb00af219ca534b486ce229ce319c487ee4b89fa7f828f420eb6e5b",
+      "notes_refs-permutation-dict.json": "6d8c2c34d7f6a23f479999427354cdd9408a9408e5bd6f8e63edaa36aa71b9bd",
+      "resource_keys-permutation-bytes.json": "4c30d45962e83b1fdecd2fd569cfa8a336be3260c579cade0fa9ee8091092a73",
+      "object_oids-duplicate-bytes.json": "a038a3c8dc207320ff64cea6361f55a8195c72f5cee7f3defd0032a8810ab444",
+      "resource_keys-duplicate-bytes.json": "c8c691f6cf615f2e39085cbf5671a5fc759fc81aca70558a1092df758bc68357",
+      "repository_uuidv4s-duplicate-str.json": "7cd09eeb54491be84cd95569eaf6c0734ea0bbd089a6eb16d4a7482e0fbf40e7"
+    }
+  },
+  "same24_scaling_inputs": true,
+  "work_scaling": [
+    {
+      "input": {
+        "resources": 0,
+        "input_rows": 1,
+        "input_bytes": 469,
+        "max_work": 0,
+        "prior_work": 0
+      },
+      "before": {
+        "charged_work": 41,
+        "additional_work": 41,
+        "parse_calls": 1,
+        "embedded_chars_parsed": 2,
+        "emitted_units": 0,
+        "reasons": [
+          "work_limit"
+        ]
+      },
+      "after": {
+        "charged_work": 1,
+        "additional_work": 1,
+        "parse_calls": 0,
+        "embedded_chars_parsed": 0,
+        "emitted_units": 0,
+        "reasons": [
+          "work_limit"
+        ]
+      }
+    },
+    {
+      "input": {
+        "resources": 0,
+        "input_rows": 1,
+        "input_bytes": 469,
+        "max_work": 1,
+        "prior_work": 0
+      },
+      "before": {
+        "charged_work": 41,
+        "additional_work": 41,
+        "parse_calls": 1,
+        "embedded_chars_parsed": 2,
+        "emitted_units": 0,
+        "reasons": [
+          "work_limit"
+        ]
+      },
+      "after": {
+        "charged_work": 2,
+        "additional_work": 2,
+        "parse_calls": 0,
+        "embedded_chars_parsed": 0,
+        "emitted_units": 0,
+        "reasons": [
+          "work_limit"
+        ]
+      }
+    },
+    {
+      "input": {
+        "resources": 0,
+        "input_rows": 1,
+        "input_bytes": 469,
+        "max_work": 17,
+        "prior_work": 0
+      },
+      "before": {
+        "charged_work": 41,
+        "additional_work": 41,
+        "parse_calls": 1,
+        "embedded_chars_parsed": 2,
+        "emitted_units": 0,
+        "reasons": [
+          "work_limit"
+        ]
+      },
+      "after": {
+        "charged_work": 18,
+        "additional_work": 18,
+        "parse_calls": 0,
+        "embedded_chars_parsed": 0,
+        "emitted_units": 0,
+        "reasons": [
+          "work_limit"
+        ]
+      }
+    },
+    {
+      "input": {
+        "resources": 0,
+        "input_rows": 1,
+        "input_bytes": 469,
+        "max_work": 17,
+        "prior_work": 17
+      },
+      "before": {
+        "charged_work": 58,
+        "additional_work": 41,
+        "parse_calls": 1,
+        "embedded_chars_parsed": 2,
+        "emitted_units": 0,
+        "reasons": [
+          "work_limit"
+        ]
+      },
+      "after": {
+        "charged_work": 18,
+        "additional_work": 1,
+        "parse_calls": 0,
+        "embedded_chars_parsed": 0,
+        "emitted_units": 0,
+        "reasons": [
+          "work_limit"
+        ]
+      }
+    },
+    {
+      "input": {
+        "resources": 1,
+        "input_rows": 3,
+        "input_bytes": 1613,
+        "max_work": 0,
+        "prior_work": 0
+      },
+      "before": {
+        "charged_work": 93,
+        "additional_work": 93,
+        "parse_calls": 4,
+        "embedded_chars_parsed": 629,
+        "emitted_units": 0,
+        "reasons": [
+          "work_limit"
+        ]
+      },
+      "after": {
+        "charged_work": 1,
+        "additional_work": 1,
+        "parse_calls": 0,
+        "embedded_chars_parsed": 0,
+        "emitted_units": 0,
+        "reasons": [
+          "work_limit"
+        ]
+      }
+    },
+    {
+      "input": {
+        "resources": 1,
+        "input_rows": 3,
+        "input_bytes": 1613,
+        "max_work": 1,
+        "prior_work": 0
+      },
+      "before": {
+        "charged_work": 93,
+        "additional_work": 93,
+        "parse_calls": 4,
+        "embedded_chars_parsed": 629,
+        "emitted_units": 0,
+        "reasons": [
+          "work_limit"
+        ]
+      },
+      "after": {
+        "charged_work": 2,
+        "additional_work": 2,
+        "parse_calls": 0,
+        "embedded_chars_parsed": 0,
+        "emitted_units": 0,
+        "reasons": [
+          "work_limit"
+        ]
+      }
+    },
+    {
+      "input": {
+        "resources": 1,
+        "input_rows": 3,
+        "input_bytes": 1613,
+        "max_work": 17,
+        "prior_work": 0
+      },
+      "before": {
+        "charged_work": 93,
+        "additional_work": 93,
+        "parse_calls": 4,
+        "embedded_chars_parsed": 629,
+        "emitted_units": 0,
+        "reasons": [
+          "work_limit"
+        ]
+      },
+      "after": {
+        "charged_work": 18,
+        "additional_work": 18,
+        "parse_calls": 0,
+        "embedded_chars_parsed": 0,
+        "emitted_units": 0,
+        "reasons": [
+          "work_limit"
+        ]
+      }
+    },
+    {
+      "input": {
+        "resources": 1,
+        "input_rows": 3,
+        "input_bytes": 1613,
+        "max_work": 17,
+        "prior_work": 17
+      },
+      "before": {
+        "charged_work": 110,
+        "additional_work": 93,
+        "parse_calls": 4,
+        "embedded_chars_parsed": 629,
+        "emitted_units": 0,
+        "reasons": [
+          "work_limit"
+        ]
+      },
+      "after": {
+        "charged_work": 18,
+        "additional_work": 1,
+        "parse_calls": 0,
+        "embedded_chars_parsed": 0,
+        "emitted_units": 0,
+        "reasons": [
+          "work_limit"
+        ]
+      }
+    },
+    {
+      "input": {
+        "resources": 5,
+        "input_rows": 11,
+        "input_bytes": 6197,
+        "max_work": 0,
+        "prior_work": 0
+      },
+      "before": {
+        "charged_work": 301,
+        "additional_work": 301,
+        "parse_calls": 16,
+        "embedded_chars_parsed": 3137,
+        "emitted_units": 0,
+        "reasons": [
+          "work_limit"
+        ]
+      },
+      "after": {
+        "charged_work": 1,
+        "additional_work": 1,
+        "parse_calls": 0,
+        "embedded_chars_parsed": 0,
+        "emitted_units": 0,
+        "reasons": [
+          "work_limit"
+        ]
+      }
+    },
+    {
+      "input": {
+        "resources": 5,
+        "input_rows": 11,
+        "input_bytes": 6197,
+        "max_work": 1,
+        "prior_work": 0
+      },
+      "before": {
+        "charged_work": 301,
+        "additional_work": 301,
+        "parse_calls": 16,
+        "embedded_chars_parsed": 3137,
+        "emitted_units": 0,
+        "reasons": [
+          "work_limit"
+        ]
+      },
+      "after": {
+        "charged_work": 2,
+        "additional_work": 2,
+        "parse_calls": 0,
+        "embedded_chars_parsed": 0,
+        "emitted_units": 0,
+        "reasons": [
+          "work_limit"
+        ]
+      }
+    },
+    {
+      "input": {
+        "resources": 5,
+        "input_rows": 11,
+        "input_bytes": 6197,
+        "max_work": 17,
+        "prior_work": 0
+      },
+      "before": {
+        "charged_work": 301,
+        "additional_work": 301,
+        "parse_calls": 16,
+        "embedded_chars_parsed": 3137,
+        "emitted_units": 0,
+        "reasons": [
+          "work_limit"
+        ]
+      },
+      "after": {
+        "charged_work": 18,
+        "additional_work": 18,
+        "parse_calls": 0,
+        "embedded_chars_parsed": 0,
+        "emitted_units": 0,
+        "reasons": [
+          "work_limit"
+        ]
+      }
+    },
+    {
+      "input": {
+        "resources": 5,
+        "input_rows": 11,
+        "input_bytes": 6197,
+        "max_work": 17,
+        "prior_work": 17
+      },
+      "before": {
+        "charged_work": 318,
+        "additional_work": 301,
+        "parse_calls": 16,
+        "embedded_chars_parsed": 3137,
+        "emitted_units": 0,
+        "reasons": [
+          "work_limit"
+        ]
+      },
+      "after": {
+        "charged_work": 18,
+        "additional_work": 1,
+        "parse_calls": 0,
+        "embedded_chars_parsed": 0,
+        "emitted_units": 0,
+        "reasons": [
+          "work_limit"
+        ]
+      }
+    },
+    {
+      "input": {
+        "resources": 50,
+        "input_rows": 101,
+        "input_bytes": 57887,
+        "max_work": 0,
+        "prior_work": 0
+      },
+      "before": {
+        "charged_work": 2641,
+        "additional_work": 2641,
+        "parse_calls": 151,
+        "embedded_chars_parsed": 31392,
+        "emitted_units": 0,
+        "reasons": [
+          "work_limit"
+        ]
+      },
+      "after": {
+        "charged_work": 1,
+        "additional_work": 1,
+        "parse_calls": 0,
+        "embedded_chars_parsed": 0,
+        "emitted_units": 0,
+        "reasons": [
+          "work_limit"
+        ]
+      }
+    },
+    {
+      "input": {
+        "resources": 50,
+        "input_rows": 101,
+        "input_bytes": 57887,
+        "max_work": 1,
+        "prior_work": 0
+      },
+      "before": {
+        "charged_work": 2641,
+        "additional_work": 2641,
+        "parse_calls": 151,
+        "embedded_chars_parsed": 31392,
+        "emitted_units": 0,
+        "reasons": [
+          "work_limit"
+        ]
+      },
+      "after": {
+        "charged_work": 2,
+        "additional_work": 2,
+        "parse_calls": 0,
+        "embedded_chars_parsed": 0,
+        "emitted_units": 0,
+        "reasons": [
+          "work_limit"
+        ]
+      }
+    },
+    {
+      "input": {
+        "resources": 50,
+        "input_rows": 101,
+        "input_bytes": 57887,
+        "max_work": 17,
+        "prior_work": 0
+      },
+      "before": {
+        "charged_work": 2641,
+        "additional_work": 2641,
+        "parse_calls": 151,
+        "embedded_chars_parsed": 31392,
+        "emitted_units": 0,
+        "reasons": [
+          "work_limit"
+        ]
+      },
+      "after": {
+        "charged_work": 18,
+        "additional_work": 18,
+        "parse_calls": 0,
+        "embedded_chars_parsed": 0,
+        "emitted_units": 0,
+        "reasons": [
+          "work_limit"
+        ]
+      }
+    },
+    {
+      "input": {
+        "resources": 50,
+        "input_rows": 101,
+        "input_bytes": 57887,
+        "max_work": 17,
+        "prior_work": 17
+      },
+      "before": {
+        "charged_work": 2658,
+        "additional_work": 2641,
+        "parse_calls": 151,
+        "embedded_chars_parsed": 31392,
+        "emitted_units": 0,
+        "reasons": [
+          "work_limit"
+        ]
+      },
+      "after": {
+        "charged_work": 18,
+        "additional_work": 1,
+        "parse_calls": 0,
+        "embedded_chars_parsed": 0,
+        "emitted_units": 0,
+        "reasons": [
+          "work_limit"
+        ]
+      }
+    },
+    {
+      "input": {
+        "resources": 500,
+        "input_rows": 1001,
+        "input_bytes": 576137,
+        "max_work": 0,
+        "prior_work": 0
+      },
+      "before": {
+        "charged_work": 26041,
+        "additional_work": 26041,
+        "parse_calls": 1501,
+        "embedded_chars_parsed": 314392,
+        "emitted_units": 0,
+        "reasons": [
+          "work_limit"
+        ]
+      },
+      "after": {
+        "charged_work": 1,
+        "additional_work": 1,
+        "parse_calls": 0,
+        "embedded_chars_parsed": 0,
+        "emitted_units": 0,
+        "reasons": [
+          "work_limit"
+        ]
+      }
+    },
+    {
+      "input": {
+        "resources": 500,
+        "input_rows": 1001,
+        "input_bytes": 576137,
+        "max_work": 1,
+        "prior_work": 0
+      },
+      "before": {
+        "charged_work": 26041,
+        "additional_work": 26041,
+        "parse_calls": 1501,
+        "embedded_chars_parsed": 314392,
+        "emitted_units": 0,
+        "reasons": [
+          "work_limit"
+        ]
+      },
+      "after": {
+        "charged_work": 2,
+        "additional_work": 2,
+        "parse_calls": 0,
+        "embedded_chars_parsed": 0,
+        "emitted_units": 0,
+        "reasons": [
+          "work_limit"
+        ]
+      }
+    },
+    {
+      "input": {
+        "resources": 500,
+        "input_rows": 1001,
+        "input_bytes": 576137,
+        "max_work": 17,
+        "prior_work": 0
+      },
+      "before": {
+        "charged_work": 26041,
+        "additional_work": 26041,
+        "parse_calls": 1501,
+        "embedded_chars_parsed": 314392,
+        "emitted_units": 0,
+        "reasons": [
+          "work_limit"
+        ]
+      },
+      "after": {
+        "charged_work": 18,
+        "additional_work": 18,
+        "parse_calls": 0,
+        "embedded_chars_parsed": 0,
+        "emitted_units": 0,
+        "reasons": [
+          "work_limit"
+        ]
+      }
+    },
+    {
+      "input": {
+        "resources": 500,
+        "input_rows": 1001,
+        "input_bytes": 576137,
+        "max_work": 17,
+        "prior_work": 17
+      },
+      "before": {
+        "charged_work": 26058,
+        "additional_work": 26041,
+        "parse_calls": 1501,
+        "embedded_chars_parsed": 314392,
+        "emitted_units": 0,
+        "reasons": [
+          "work_limit"
+        ]
+      },
+      "after": {
+        "charged_work": 18,
+        "additional_work": 1,
+        "parse_calls": 0,
+        "embedded_chars_parsed": 0,
+        "emitted_units": 0,
+        "reasons": [
+          "work_limit"
+        ]
+      }
+    },
+    {
+      "input": {
+        "resources": 1000,
+        "input_rows": 2001,
+        "input_bytes": 1152137,
+        "max_work": 0,
+        "prior_work": 0
+      },
+      "before": {
+        "charged_work": 52041,
+        "additional_work": 52041,
+        "parse_calls": 3001,
+        "embedded_chars_parsed": 628892,
+        "emitted_units": 0,
+        "reasons": [
+          "work_limit"
+        ]
+      },
+      "after": {
+        "charged_work": 1,
+        "additional_work": 1,
+        "parse_calls": 0,
+        "embedded_chars_parsed": 0,
+        "emitted_units": 0,
+        "reasons": [
+          "work_limit"
+        ]
+      }
+    },
+    {
+      "input": {
+        "resources": 1000,
+        "input_rows": 2001,
+        "input_bytes": 1152137,
+        "max_work": 1,
+        "prior_work": 0
+      },
+      "before": {
+        "charged_work": 52041,
+        "additional_work": 52041,
+        "parse_calls": 3001,
+        "embedded_chars_parsed": 628892,
+        "emitted_units": 0,
+        "reasons": [
+          "work_limit"
+        ]
+      },
+      "after": {
+        "charged_work": 2,
+        "additional_work": 2,
+        "parse_calls": 0,
+        "embedded_chars_parsed": 0,
+        "emitted_units": 0,
+        "reasons": [
+          "work_limit"
+        ]
+      }
+    },
+    {
+      "input": {
+        "resources": 1000,
+        "input_rows": 2001,
+        "input_bytes": 1152137,
+        "max_work": 17,
+        "prior_work": 0
+      },
+      "before": {
+        "charged_work": 52041,
+        "additional_work": 52041,
+        "parse_calls": 3001,
+        "embedded_chars_parsed": 628892,
+        "emitted_units": 0,
+        "reasons": [
+          "work_limit"
+        ]
+      },
+      "after": {
+        "charged_work": 18,
+        "additional_work": 18,
+        "parse_calls": 0,
+        "embedded_chars_parsed": 0,
+        "emitted_units": 0,
+        "reasons": [
+          "work_limit"
+        ]
+      }
+    },
+    {
+      "input": {
+        "resources": 1000,
+        "input_rows": 2001,
+        "input_bytes": 1152137,
+        "max_work": 17,
+        "prior_work": 17
+      },
+      "before": {
+        "charged_work": 52058,
+        "additional_work": 52041,
+        "parse_calls": 3001,
+        "embedded_chars_parsed": 628892,
+        "emitted_units": 0,
+        "reasons": [
+          "work_limit"
+        ]
+      },
+      "after": {
+        "charged_work": 18,
+        "additional_work": 1,
+        "parse_calls": 0,
+        "embedded_chars_parsed": 0,
+        "emitted_units": 0,
+        "reasons": [
+          "work_limit"
+        ]
+      }
+    }
+  ],
+  "root_key_observations": {
+    "source-baseline": {
+      "observations": [
+        {
+          "case": "invalid20k",
+          "root_keys": 20000,
+          "max_work": 0,
+          "input_sha256": "258c695a82de988075eedb99ef44c645862743e825ab668cff742dcc0a00d6eb",
+          "outcome": "refused",
+          "exception_type": "ExchangeError",
+          "code": "MALFORMED_SECTION",
+          "message": "context:MALFORMED_SECTION",
+          "set_call_count": 2,
+          "set_argument_lengths": [
+            20000,
+            16
+          ],
+          "tracemalloc_current_bytes": 2066,
+          "tracemalloc_peak_bytes": 1051944
+        },
+        {
+          "case": "valid-empty-control",
+          "root_keys": 16,
+          "max_work": 0,
+          "input_sha256": "af0d2f0d885305dd3792cdc2146738a919e6463a8b00e8215d67a383ac77e394",
+          "outcome": "plan",
+          "work_units": 33,
+          "emitted_units": 0,
+          "context": {
+            "providers": [],
+            "repositories": [],
+            "resource_repository_relations": [],
+            "repository_mapping_dispositions": [],
+            "sources": [],
+            "source_repositories": [],
+            "source_inventories": [],
+            "resources": [],
+            "resource_relations": [],
+            "collections": [],
+            "text_bodies": [],
+            "field_candidates": [],
+            "core_references": [],
+            "coverage_scopes": [],
+            "coverage_claims": [],
+            "coverage_proofs": []
+          },
+          "omission_reasons": [
+            "work_limit"
+          ],
+          "set_call_count": 2,
+          "set_argument_lengths": [
+            16,
+            16
+          ],
+          "tracemalloc_current_bytes": 4048,
+          "tracemalloc_peak_bytes": 5471
+        }
+      ],
+      "runtime": {
+        "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+        "executable": "/workspace/i6b-fix-work/baseline/.venv/bin/python",
+        "sqlite": [
+          "3.53.1",
+          "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9"
+        ]
+      },
+      "origin": "/workspace/i6b-fix-work/baseline/src/repo_catalog/domain/context_dependencies.py",
+      "source_sha256": "93d6d7bdbf14cd5c26d13c36a8e2e3bd65ae6f55a208941ada2353af65476fb0",
+      "limits": "One supplementary invalid-root/control observation, not a statistical benchmark. Input construction and scope/patch setup occur before tracemalloc. set wrappers record actual module calls without changing return values."
+    },
+    "source-contracts-final": {
+      "observations": [
+        {
+          "case": "invalid20k",
+          "root_keys": 20000,
+          "max_work": 0,
+          "input_sha256": "258c695a82de988075eedb99ef44c645862743e825ab668cff742dcc0a00d6eb",
+          "outcome": "refused",
+          "exception_type": "ExchangeError",
+          "code": "MALFORMED_SECTION",
+          "message": "context:MALFORMED_SECTION",
+          "set_call_count": 2,
+          "set_argument_lengths": [
+            20000,
+            16
+          ],
+          "tracemalloc_current_bytes": 2066,
+          "tracemalloc_peak_bytes": 1051944
+        },
+        {
+          "case": "valid-empty-control",
+          "root_keys": 16,
+          "max_work": 0,
+          "input_sha256": "af0d2f0d885305dd3792cdc2146738a919e6463a8b00e8215d67a383ac77e394",
+          "outcome": "plan",
+          "work_units": 1,
+          "emitted_units": 0,
+          "context": {
+            "providers": [],
+            "repositories": [],
+            "resource_repository_relations": [],
+            "repository_mapping_dispositions": [],
+            "sources": [],
+            "source_repositories": [],
+            "source_inventories": [],
+            "resources": [],
+            "resource_relations": [],
+            "collections": [],
+            "text_bodies": [],
+            "field_candidates": [],
+            "core_references": [],
+            "coverage_scopes": [],
+            "coverage_claims": [],
+            "coverage_proofs": []
+          },
+          "omission_reasons": [
+            "work_limit"
+          ],
+          "set_call_count": 2,
+          "set_argument_lengths": [
+            16,
+            16
+          ],
+          "tracemalloc_current_bytes": 4412,
+          "tracemalloc_peak_bytes": 7372
+        }
+      ],
+      "runtime": {
+        "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+        "executable": "/workspace/i6b-fix-work/final-d68dc43/.venv/bin/python",
+        "sqlite": [
+          "3.53.1",
+          "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9"
+        ]
+      },
+      "origin": "/workspace/i6b-fix-work/final-d68dc43/src/repo_catalog/domain/context_dependencies.py",
+      "source_sha256": "cc35bcbf7aeb4359ac01cf34b50eebbb0a522f1bc3d5a3c609290f83304a0028",
+      "limits": "One supplementary invalid-root/control observation, not a statistical benchmark. Input construction and scope/patch setup occur before tracemalloc. set wrappers record actual module calls without changing return values."
+    },
+    "source-contracts-root-guard": {
+      "observations": [
+        {
+          "case": "invalid20k",
+          "root_keys": 20000,
+          "max_work": 0,
+          "input_sha256": "258c695a82de988075eedb99ef44c645862743e825ab668cff742dcc0a00d6eb",
+          "outcome": "refused",
+          "exception_type": "ExchangeError",
+          "code": "MALFORMED_SECTION",
+          "message": "context:MALFORMED_SECTION",
+          "set_call_count": 0,
+          "set_argument_lengths": [],
+          "tracemalloc_current_bytes": 578,
+          "tracemalloc_peak_bytes": 2026
+        },
+        {
+          "case": "valid-empty-control",
+          "root_keys": 16,
+          "max_work": 0,
+          "input_sha256": "af0d2f0d885305dd3792cdc2146738a919e6463a8b00e8215d67a383ac77e394",
+          "outcome": "plan",
+          "work_units": 1,
+          "emitted_units": 0,
+          "context": {
+            "providers": [],
+            "repositories": [],
+            "resource_repository_relations": [],
+            "repository_mapping_dispositions": [],
+            "sources": [],
+            "source_repositories": [],
+            "source_inventories": [],
+            "resources": [],
+            "resource_relations": [],
+            "collections": [],
+            "text_bodies": [],
+            "field_candidates": [],
+            "core_references": [],
+            "coverage_scopes": [],
+            "coverage_claims": [],
+            "coverage_proofs": []
+          },
+          "omission_reasons": [
+            "work_limit"
+          ],
+          "set_call_count": 2,
+          "set_argument_lengths": [
+            16,
+            16
+          ],
+          "tracemalloc_current_bytes": 4356,
+          "tracemalloc_peak_bytes": 7316
+        }
+      ],
+      "runtime": {
+        "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+        "executable": "/workspace/i6b-fix-work/final-fe9e48b/.venv/bin/python",
+        "sqlite": [
+          "3.53.1",
+          "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9"
+        ]
+      },
+      "origin": "/workspace/i6b-fix-work/final-fe9e48b/src/repo_catalog/domain/context_dependencies.py",
+      "source_sha256": "a1026f3a1109c8b8f4d7aaec28f33fe3e0a594372da6afafa8835b9dd559801d",
+      "limits": "One supplementary invalid-root/control observation, not a statistical benchmark. Input construction and scope/patch setup occur before tracemalloc. set wrappers record actual module calls without changing return values."
+    }
+  },
+  "scope": "Actual source observations, separate from full-suite and distribution invocations. No cross-run aggregation."
+}

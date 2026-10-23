@@ -1,0 +1,973 @@
+{
+  "results": {
+    "direct-independent": {
+      "exit_code": 0,
+      "collected": 204,
+      "passed": 204,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 204,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 612
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792766183.856162
+          }
+        ]
+      }
+    },
+    "direct-resolved-wire": {
+      "exit_code": 0,
+      "collected": 4,
+      "passed": 4,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 4,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 12
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792766189.950319
+          }
+        ]
+      }
+    },
+    "direct-counterexamples": {
+      "exit_code": 0,
+      "collected": 33,
+      "passed": 33,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 33,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 99
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792766202.566735
+          }
+        ]
+      }
+    },
+    "direct-author-extra": {
+      "exit_code": 0,
+      "collected": 34,
+      "passed": 34,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 34,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 102
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792766209.457029
+          }
+        ]
+      }
+    },
+    "direct-new-regressions": {
+      "exit_code": 0,
+      "collected": 56,
+      "passed": 56,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 56,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 168
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792766215.947799
+          }
+        ]
+      }
+    },
+    "derived-independent": {
+      "exit_code": 0,
+      "collected": 204,
+      "passed": 204,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 204,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 612
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792766238.768931
+          }
+        ]
+      }
+    },
+    "derived-resolved-wire": {
+      "exit_code": 0,
+      "collected": 4,
+      "passed": 4,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 4,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 12
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792766244.578543
+          }
+        ]
+      }
+    },
+    "derived-counterexamples": {
+      "exit_code": 0,
+      "collected": 33,
+      "passed": 33,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 33,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 99
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792766256.261465
+          }
+        ]
+      }
+    },
+    "derived-author-extra": {
+      "exit_code": 0,
+      "collected": 34,
+      "passed": 34,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 34,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 102
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792766264.299375
+          }
+        ]
+      }
+    },
+    "derived-new-regressions": {
+      "exit_code": 0,
+      "collected": 56,
+      "passed": 56,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 56,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 168
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792766269.825097
+          }
+        ]
+      }
+    }
+  },
+  "processes": [
+    {
+      "name": "direct-independent-collect",
+      "argv": [
+        "/workspace/i6b-fix-distribution-root-guard/direct-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-s",
+        "--tb=long",
+        "-c",
+        "/workspace/i6b-fix-distribution-root-guard/outside/pytest.ini",
+        "--rootdir=/workspace/i6b-fix-distribution-root-guard/outside",
+        "--confcutdir=/workspace/i6b-fix-distribution-root-guard/outside",
+        "-o",
+        "junit_family=xunit1",
+        "tests/unit/test_independent_wire.py",
+        "tests/unit/test_planner_independent.py",
+        "tests/unit/test_commit_boundary.py",
+        "--collect-only"
+      ],
+      "cwd": "/workspace/i6b-fix-distribution-root-guard/outside",
+      "exit_code": 0,
+      "started_epoch": 1792766161.5476704,
+      "elapsed_seconds": 3.157172679901123
+    },
+    {
+      "name": "direct-independent",
+      "argv": [
+        "/workspace/i6b-fix-distribution-root-guard/direct-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-s",
+        "--tb=long",
+        "-c",
+        "/workspace/i6b-fix-distribution-root-guard/outside/pytest.ini",
+        "--rootdir=/workspace/i6b-fix-distribution-root-guard/outside",
+        "--confcutdir=/workspace/i6b-fix-distribution-root-guard/outside",
+        "-o",
+        "junit_family=xunit1",
+        "tests/unit/test_independent_wire.py",
+        "tests/unit/test_planner_independent.py",
+        "tests/unit/test_commit_boundary.py",
+        "--junitxml=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/distribution/final-root-guard/direct-independent.xml",
+        "--journal=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/distribution/final-root-guard/direct-independent.jsonl",
+        "--basetemp=/workspace/i6b-fix-distribution-root-guard/direct-independent-tmp"
+      ],
+      "cwd": "/workspace/i6b-fix-distribution-root-guard/outside",
+      "exit_code": 0,
+      "started_epoch": 1792766164.7060063,
+      "elapsed_seconds": 20.38286542892456
+    },
+    {
+      "name": "direct-independent-measure-after",
+      "argv": [
+        "/workspace/i6b-fix-distribution-root-guard/direct-venv/bin/python",
+        "/workspace/i6b-fix-distribution-root-guard/outside/measure.py",
+        "/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/distribution/final-root-guard/direct-independent-runtime-after.json"
+      ],
+      "cwd": "/workspace/i6b-fix-distribution-root-guard/outside",
+      "exit_code": 0,
+      "started_epoch": 1792766185.1665385,
+      "elapsed_seconds": 0.8414285182952881
+    },
+    {
+      "name": "direct-resolved-wire-collect",
+      "argv": [
+        "/workspace/i6b-fix-distribution-root-guard/direct-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-s",
+        "--tb=long",
+        "-c",
+        "/workspace/i6b-fix-distribution-root-guard/outside/pytest.ini",
+        "--rootdir=/workspace/i6b-fix-distribution-root-guard/outside",
+        "--confcutdir=/workspace/i6b-fix-distribution-root-guard/outside",
+        "-o",
+        "junit_family=xunit1",
+        "tests/unit/test_resolved_wire.py",
+        "--collect-only"
+      ],
+      "cwd": "/workspace/i6b-fix-distribution-root-guard/outside",
+      "exit_code": 0,
+      "started_epoch": 1792766186.008905,
+      "elapsed_seconds": 1.9413316249847412
+    },
+    {
+      "name": "direct-resolved-wire",
+      "argv": [
+        "/workspace/i6b-fix-distribution-root-guard/direct-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-s",
+        "--tb=long",
+        "-c",
+        "/workspace/i6b-fix-distribution-root-guard/outside/pytest.ini",
+        "--rootdir=/workspace/i6b-fix-distribution-root-guard/outside",
+        "--confcutdir=/workspace/i6b-fix-distribution-root-guard/outside",
+        "-o",
+        "junit_family=xunit1",
+        "tests/unit/test_resolved_wire.py",
+        "--junitxml=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/distribution/final-root-guard/direct-resolved-wire.xml",
+        "--journal=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/distribution/final-root-guard/direct-resolved-wire.jsonl",
+        "--basetemp=/workspace/i6b-fix-distribution-root-guard/direct-resolved-wire-tmp"
+      ],
+      "cwd": "/workspace/i6b-fix-distribution-root-guard/outside",
+      "exit_code": 0,
+      "started_epoch": 1792766187.9532022,
+      "elapsed_seconds": 2.5257997512817383
+    },
+    {
+      "name": "direct-resolved-wire-measure-after",
+      "argv": [
+        "/workspace/i6b-fix-distribution-root-guard/direct-venv/bin/python",
+        "/workspace/i6b-fix-distribution-root-guard/outside/measure.py",
+        "/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/distribution/final-root-guard/direct-resolved-wire-runtime-after.json"
+      ],
+      "cwd": "/workspace/i6b-fix-distribution-root-guard/outside",
+      "exit_code": 0,
+      "started_epoch": 1792766190.4806457,
+      "elapsed_seconds": 0.6852579116821289
+    },
+    {
+      "name": "direct-counterexamples-collect",
+      "argv": [
+        "/workspace/i6b-fix-distribution-root-guard/direct-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-s",
+        "--tb=long",
+        "-c",
+        "/workspace/i6b-fix-distribution-root-guard/outside/pytest.ini",
+        "--rootdir=/workspace/i6b-fix-distribution-root-guard/outside",
+        "--confcutdir=/workspace/i6b-fix-distribution-root-guard/outside",
+        "-o",
+        "junit_family=xunit1",
+        "tests/unit/test_digest_contract.py",
+        "tests/unit/test_planner_work_budget_contract.py",
+        "--collect-only"
+      ],
+      "cwd": "/workspace/i6b-fix-distribution-root-guard/outside",
+      "exit_code": 0,
+      "started_epoch": 1792766191.1669397,
+      "elapsed_seconds": 5.000181674957275
+    },
+    {
+      "name": "direct-counterexamples",
+      "argv": [
+        "/workspace/i6b-fix-distribution-root-guard/direct-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-s",
+        "--tb=long",
+        "-c",
+        "/workspace/i6b-fix-distribution-root-guard/outside/pytest.ini",
+        "--rootdir=/workspace/i6b-fix-distribution-root-guard/outside",
+        "--confcutdir=/workspace/i6b-fix-distribution-root-guard/outside",
+        "-o",
+        "junit_family=xunit1",
+        "tests/unit/test_digest_contract.py",
+        "tests/unit/test_planner_work_budget_contract.py",
+        "--junitxml=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/distribution/final-root-guard/direct-counterexamples.xml",
+        "--journal=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/distribution/final-root-guard/direct-counterexamples.jsonl",
+        "--basetemp=/workspace/i6b-fix-distribution-root-guard/direct-counterexamples-tmp"
+      ],
+      "cwd": "/workspace/i6b-fix-distribution-root-guard/outside",
+      "exit_code": 0,
+      "started_epoch": 1792766196.1681998,
+      "elapsed_seconds": 7.053818464279175
+    },
+    {
+      "name": "direct-counterexamples-measure-after",
+      "argv": [
+        "/workspace/i6b-fix-distribution-root-guard/direct-venv/bin/python",
+        "/workspace/i6b-fix-distribution-root-guard/outside/measure.py",
+        "/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/distribution/final-root-guard/direct-counterexamples-runtime-after.json"
+      ],
+      "cwd": "/workspace/i6b-fix-distribution-root-guard/outside",
+      "exit_code": 0,
+      "started_epoch": 1792766203.2427711,
+      "elapsed_seconds": 0.5517749786376953
+    },
+    {
+      "name": "direct-author-extra-collect",
+      "argv": [
+        "/workspace/i6b-fix-distribution-root-guard/direct-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-s",
+        "--tb=long",
+        "-c",
+        "/workspace/i6b-fix-distribution-root-guard/outside/pytest.ini",
+        "--rootdir=/workspace/i6b-fix-distribution-root-guard/outside",
+        "--confcutdir=/workspace/i6b-fix-distribution-root-guard/outside",
+        "-o",
+        "junit_family=xunit1",
+        "tests/unit/test_i6b_extra.py",
+        "--collect-only"
+      ],
+      "cwd": "/workspace/i6b-fix-distribution-root-guard/outside",
+      "exit_code": 0,
+      "started_epoch": 1792766203.7956078,
+      "elapsed_seconds": 2.4772045612335205
+    },
+    {
+      "name": "direct-author-extra",
+      "argv": [
+        "/workspace/i6b-fix-distribution-root-guard/direct-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-s",
+        "--tb=long",
+        "-c",
+        "/workspace/i6b-fix-distribution-root-guard/outside/pytest.ini",
+        "--rootdir=/workspace/i6b-fix-distribution-root-guard/outside",
+        "--confcutdir=/workspace/i6b-fix-distribution-root-guard/outside",
+        "-o",
+        "junit_family=xunit1",
+        "tests/unit/test_i6b_extra.py",
+        "--junitxml=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/distribution/final-root-guard/direct-author-extra.xml",
+        "--journal=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/distribution/final-root-guard/direct-author-extra.jsonl",
+        "--basetemp=/workspace/i6b-fix-distribution-root-guard/direct-author-extra-tmp"
+      ],
+      "cwd": "/workspace/i6b-fix-distribution-root-guard/outside",
+      "exit_code": 0,
+      "started_epoch": 1792766206.2748618,
+      "elapsed_seconds": 3.421459436416626
+    },
+    {
+      "name": "direct-author-extra-measure-after",
+      "argv": [
+        "/workspace/i6b-fix-distribution-root-guard/direct-venv/bin/python",
+        "/workspace/i6b-fix-distribution-root-guard/outside/measure.py",
+        "/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/distribution/final-root-guard/direct-author-extra-runtime-after.json"
+      ],
+      "cwd": "/workspace/i6b-fix-distribution-root-guard/outside",
+      "exit_code": 0,
+      "started_epoch": 1792766209.700607,
+      "elapsed_seconds": 0.3101832866668701
+    },
+    {
+      "name": "direct-new-regressions-collect",
+      "argv": [
+        "/workspace/i6b-fix-distribution-root-guard/direct-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-s",
+        "--tb=long",
+        "-c",
+        "/workspace/i6b-fix-distribution-root-guard/outside/pytest.ini",
+        "--rootdir=/workspace/i6b-fix-distribution-root-guard/outside",
+        "--confcutdir=/workspace/i6b-fix-distribution-root-guard/outside",
+        "-o",
+        "junit_family=xunit1",
+        "tests/unit/test_context_scan_budget.py",
+        "tests/unit/test_exchange_received_digest.py",
+        "--collect-only"
+      ],
+      "cwd": "/workspace/i6b-fix-distribution-root-guard/outside",
+      "exit_code": 0,
+      "started_epoch": 1792766210.011948,
+      "elapsed_seconds": 1.8822686672210693
+    },
+    {
+      "name": "direct-new-regressions",
+      "argv": [
+        "/workspace/i6b-fix-distribution-root-guard/direct-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-s",
+        "--tb=long",
+        "-c",
+        "/workspace/i6b-fix-distribution-root-guard/outside/pytest.ini",
+        "--rootdir=/workspace/i6b-fix-distribution-root-guard/outside",
+        "--confcutdir=/workspace/i6b-fix-distribution-root-guard/outside",
+        "-o",
+        "junit_family=xunit1",
+        "tests/unit/test_context_scan_budget.py",
+        "tests/unit/test_exchange_received_digest.py",
+        "--junitxml=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/distribution/final-root-guard/direct-new-regressions.xml",
+        "--journal=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/distribution/final-root-guard/direct-new-regressions.jsonl",
+        "--basetemp=/workspace/i6b-fix-distribution-root-guard/direct-new-regressions-tmp"
+      ],
+      "cwd": "/workspace/i6b-fix-distribution-root-guard/outside",
+      "exit_code": 0,
+      "started_epoch": 1792766211.8962762,
+      "elapsed_seconds": 4.871387243270874
+    },
+    {
+      "name": "direct-new-regressions-measure-after",
+      "argv": [
+        "/workspace/i6b-fix-distribution-root-guard/direct-venv/bin/python",
+        "/workspace/i6b-fix-distribution-root-guard/outside/measure.py",
+        "/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/distribution/final-root-guard/direct-new-regressions-runtime-after.json"
+      ],
+      "cwd": "/workspace/i6b-fix-distribution-root-guard/outside",
+      "exit_code": 0,
+      "started_epoch": 1792766216.7749977,
+      "elapsed_seconds": 0.6076071262359619
+    },
+    {
+      "name": "derived-independent-collect",
+      "argv": [
+        "/workspace/i6b-fix-distribution-root-guard/derived-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-s",
+        "--tb=long",
+        "-c",
+        "/workspace/i6b-fix-distribution-root-guard/outside/pytest.ini",
+        "--rootdir=/workspace/i6b-fix-distribution-root-guard/outside",
+        "--confcutdir=/workspace/i6b-fix-distribution-root-guard/outside",
+        "-o",
+        "junit_family=xunit1",
+        "tests/unit/test_independent_wire.py",
+        "tests/unit/test_planner_independent.py",
+        "tests/unit/test_commit_boundary.py",
+        "--collect-only"
+      ],
+      "cwd": "/workspace/i6b-fix-distribution-root-guard/outside",
+      "exit_code": 0,
+      "started_epoch": 1792766217.383384,
+      "elapsed_seconds": 4.317569255828857
+    },
+    {
+      "name": "derived-independent",
+      "argv": [
+        "/workspace/i6b-fix-distribution-root-guard/derived-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-s",
+        "--tb=long",
+        "-c",
+        "/workspace/i6b-fix-distribution-root-guard/outside/pytest.ini",
+        "--rootdir=/workspace/i6b-fix-distribution-root-guard/outside",
+        "--confcutdir=/workspace/i6b-fix-distribution-root-guard/outside",
+        "-o",
+        "junit_family=xunit1",
+        "tests/unit/test_independent_wire.py",
+        "tests/unit/test_planner_independent.py",
+        "tests/unit/test_commit_boundary.py",
+        "--junitxml=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/distribution/final-root-guard/derived-independent.xml",
+        "--journal=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/distribution/final-root-guard/derived-independent.jsonl",
+        "--basetemp=/workspace/i6b-fix-distribution-root-guard/derived-independent-tmp"
+      ],
+      "cwd": "/workspace/i6b-fix-distribution-root-guard/outside",
+      "exit_code": 0,
+      "started_epoch": 1792766221.7054927,
+      "elapsed_seconds": 17.311444759368896
+    },
+    {
+      "name": "derived-independent-measure-after",
+      "argv": [
+        "/workspace/i6b-fix-distribution-root-guard/derived-venv/bin/python",
+        "/workspace/i6b-fix-distribution-root-guard/outside/measure.py",
+        "/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/distribution/final-root-guard/derived-independent-runtime-after.json"
+      ],
+      "cwd": "/workspace/i6b-fix-distribution-root-guard/outside",
+      "exit_code": 0,
+      "started_epoch": 1792766239.0553946,
+      "elapsed_seconds": 0.7252421379089355
+    },
+    {
+      "name": "derived-resolved-wire-collect",
+      "argv": [
+        "/workspace/i6b-fix-distribution-root-guard/derived-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-s",
+        "--tb=long",
+        "-c",
+        "/workspace/i6b-fix-distribution-root-guard/outside/pytest.ini",
+        "--rootdir=/workspace/i6b-fix-distribution-root-guard/outside",
+        "--confcutdir=/workspace/i6b-fix-distribution-root-guard/outside",
+        "-o",
+        "junit_family=xunit1",
+        "tests/unit/test_resolved_wire.py",
+        "--collect-only"
+      ],
+      "cwd": "/workspace/i6b-fix-distribution-root-guard/outside",
+      "exit_code": 0,
+      "started_epoch": 1792766239.7818866,
+      "elapsed_seconds": 2.422938823699951
+    },
+    {
+      "name": "derived-resolved-wire",
+      "argv": [
+        "/workspace/i6b-fix-distribution-root-guard/derived-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-s",
+        "--tb=long",
+        "-c",
+        "/workspace/i6b-fix-distribution-root-guard/outside/pytest.ini",
+        "--rootdir=/workspace/i6b-fix-distribution-root-guard/outside",
+        "--confcutdir=/workspace/i6b-fix-distribution-root-guard/outside",
+        "-o",
+        "junit_family=xunit1",
+        "tests/unit/test_resolved_wire.py",
+        "--junitxml=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/distribution/final-root-guard/derived-resolved-wire.xml",
+        "--journal=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/distribution/final-root-guard/derived-resolved-wire.jsonl",
+        "--basetemp=/workspace/i6b-fix-distribution-root-guard/derived-resolved-wire-tmp"
+      ],
+      "cwd": "/workspace/i6b-fix-distribution-root-guard/outside",
+      "exit_code": 0,
+      "started_epoch": 1792766242.207202,
+      "elapsed_seconds": 2.677711009979248
+    },
+    {
+      "name": "derived-resolved-wire-measure-after",
+      "argv": [
+        "/workspace/i6b-fix-distribution-root-guard/derived-venv/bin/python",
+        "/workspace/i6b-fix-distribution-root-guard/outside/measure.py",
+        "/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/distribution/final-root-guard/derived-resolved-wire-runtime-after.json"
+      ],
+      "cwd": "/workspace/i6b-fix-distribution-root-guard/outside",
+      "exit_code": 0,
+      "started_epoch": 1792766244.8868134,
+      "elapsed_seconds": 0.5082228183746338
+    },
+    {
+      "name": "derived-counterexamples-collect",
+      "argv": [
+        "/workspace/i6b-fix-distribution-root-guard/derived-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-s",
+        "--tb=long",
+        "-c",
+        "/workspace/i6b-fix-distribution-root-guard/outside/pytest.ini",
+        "--rootdir=/workspace/i6b-fix-distribution-root-guard/outside",
+        "--confcutdir=/workspace/i6b-fix-distribution-root-guard/outside",
+        "-o",
+        "junit_family=xunit1",
+        "tests/unit/test_digest_contract.py",
+        "tests/unit/test_planner_work_budget_contract.py",
+        "--collect-only"
+      ],
+      "cwd": "/workspace/i6b-fix-distribution-root-guard/outside",
+      "exit_code": 0,
+      "started_epoch": 1792766245.3962727,
+      "elapsed_seconds": 3.822084903717041
+    },
+    {
+      "name": "derived-counterexamples",
+      "argv": [
+        "/workspace/i6b-fix-distribution-root-guard/derived-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-s",
+        "--tb=long",
+        "-c",
+        "/workspace/i6b-fix-distribution-root-guard/outside/pytest.ini",
+        "--rootdir=/workspace/i6b-fix-distribution-root-guard/outside",
+        "--confcutdir=/workspace/i6b-fix-distribution-root-guard/outside",
+        "-o",
+        "junit_family=xunit1",
+        "tests/unit/test_digest_contract.py",
+        "tests/unit/test_planner_work_budget_contract.py",
+        "--junitxml=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/distribution/final-root-guard/derived-counterexamples.xml",
+        "--journal=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/distribution/final-root-guard/derived-counterexamples.jsonl",
+        "--basetemp=/workspace/i6b-fix-distribution-root-guard/derived-counterexamples-tmp"
+      ],
+      "cwd": "/workspace/i6b-fix-distribution-root-guard/outside",
+      "exit_code": 0,
+      "started_epoch": 1792766249.2529569,
+      "elapsed_seconds": 7.5233986377716064
+    },
+    {
+      "name": "derived-counterexamples-measure-after",
+      "argv": [
+        "/workspace/i6b-fix-distribution-root-guard/derived-venv/bin/python",
+        "/workspace/i6b-fix-distribution-root-guard/outside/measure.py",
+        "/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/distribution/final-root-guard/derived-counterexamples-runtime-after.json"
+      ],
+      "cwd": "/workspace/i6b-fix-distribution-root-guard/outside",
+      "exit_code": 0,
+      "started_epoch": 1792766256.778655,
+      "elapsed_seconds": 0.4895162582397461
+    },
+    {
+      "name": "derived-author-extra-collect",
+      "argv": [
+        "/workspace/i6b-fix-distribution-root-guard/derived-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-s",
+        "--tb=long",
+        "-c",
+        "/workspace/i6b-fix-distribution-root-guard/outside/pytest.ini",
+        "--rootdir=/workspace/i6b-fix-distribution-root-guard/outside",
+        "--confcutdir=/workspace/i6b-fix-distribution-root-guard/outside",
+        "-o",
+        "junit_family=xunit1",
+        "tests/unit/test_i6b_extra.py",
+        "--collect-only"
+      ],
+      "cwd": "/workspace/i6b-fix-distribution-root-guard/outside",
+      "exit_code": 0,
+      "started_epoch": 1792766257.2692196,
+      "elapsed_seconds": 3.2552590370178223
+    },
+    {
+      "name": "derived-author-extra",
+      "argv": [
+        "/workspace/i6b-fix-distribution-root-guard/derived-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-s",
+        "--tb=long",
+        "-c",
+        "/workspace/i6b-fix-distribution-root-guard/outside/pytest.ini",
+        "--rootdir=/workspace/i6b-fix-distribution-root-guard/outside",
+        "--confcutdir=/workspace/i6b-fix-distribution-root-guard/outside",
+        "-o",
+        "junit_family=xunit1",
+        "tests/unit/test_i6b_extra.py",
+        "--junitxml=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/distribution/final-root-guard/derived-author-extra.xml",
+        "--journal=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/distribution/final-root-guard/derived-author-extra.jsonl",
+        "--basetemp=/workspace/i6b-fix-distribution-root-guard/derived-author-extra-tmp"
+      ],
+      "cwd": "/workspace/i6b-fix-distribution-root-guard/outside",
+      "exit_code": 0,
+      "started_epoch": 1792766260.5265508,
+      "elapsed_seconds": 4.457277059555054
+    },
+    {
+      "name": "derived-author-extra-measure-after",
+      "argv": [
+        "/workspace/i6b-fix-distribution-root-guard/derived-venv/bin/python",
+        "/workspace/i6b-fix-distribution-root-guard/outside/measure.py",
+        "/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/distribution/final-root-guard/derived-author-extra-runtime-after.json"
+      ],
+      "cwd": "/workspace/i6b-fix-distribution-root-guard/outside",
+      "exit_code": 0,
+      "started_epoch": 1792766264.9902494,
+      "elapsed_seconds": 0.6012208461761475
+    },
+    {
+      "name": "derived-new-regressions-collect",
+      "argv": [
+        "/workspace/i6b-fix-distribution-root-guard/derived-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-s",
+        "--tb=long",
+        "-c",
+        "/workspace/i6b-fix-distribution-root-guard/outside/pytest.ini",
+        "--rootdir=/workspace/i6b-fix-distribution-root-guard/outside",
+        "--confcutdir=/workspace/i6b-fix-distribution-root-guard/outside",
+        "-o",
+        "junit_family=xunit1",
+        "tests/unit/test_context_scan_budget.py",
+        "tests/unit/test_exchange_received_digest.py",
+        "--collect-only"
+      ],
+      "cwd": "/workspace/i6b-fix-distribution-root-guard/outside",
+      "exit_code": 0,
+      "started_epoch": 1792766265.5930722,
+      "elapsed_seconds": 2.502196788787842
+    },
+    {
+      "name": "derived-new-regressions",
+      "argv": [
+        "/workspace/i6b-fix-distribution-root-guard/derived-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-s",
+        "--tb=long",
+        "-c",
+        "/workspace/i6b-fix-distribution-root-guard/outside/pytest.ini",
+        "--rootdir=/workspace/i6b-fix-distribution-root-guard/outside",
+        "--confcutdir=/workspace/i6b-fix-distribution-root-guard/outside",
+        "-o",
+        "junit_family=xunit1",
+        "tests/unit/test_context_scan_budget.py",
+        "tests/unit/test_exchange_received_digest.py",
+        "--junitxml=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/distribution/final-root-guard/derived-new-regressions.xml",
+        "--journal=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/distribution/final-root-guard/derived-new-regressions.jsonl",
+        "--basetemp=/workspace/i6b-fix-distribution-root-guard/derived-new-regressions-tmp"
+      ],
+      "cwd": "/workspace/i6b-fix-distribution-root-guard/outside",
+      "exit_code": 0,
+      "started_epoch": 1792766268.0983913,
+      "elapsed_seconds": 2.1584579944610596
+    },
+    {
+      "name": "derived-new-regressions-measure-after",
+      "argv": [
+        "/workspace/i6b-fix-distribution-root-guard/derived-venv/bin/python",
+        "/workspace/i6b-fix-distribution-root-guard/outside/measure.py",
+        "/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/distribution/final-root-guard/derived-new-regressions-runtime-after.json"
+      ],
+      "cwd": "/workspace/i6b-fix-distribution-root-guard/outside",
+      "exit_code": 0,
+      "started_epoch": 1792766270.2603838,
+      "elapsed_seconds": 0.721498966217041
+    }
+  ],
+  "scope": "Separate overlapping Author verification invocations; preserved independent/Author probe attribution; no independent re-review or Release acceptance"
+}

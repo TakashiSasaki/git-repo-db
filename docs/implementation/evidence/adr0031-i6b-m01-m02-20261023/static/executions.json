@@ -1,0 +1,76 @@
+{
+  "head": "a3185cde585a3dbf4dec7d491ecd20e43c285a19",
+  "tree": "521144462daa04a8a916795b484b6bfdc24d09d9",
+  "executions": [
+    {
+      "command": [
+        ".venv/bin/python",
+        "scripts/check_sqlite_validation_policy.py"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.6900827869999944,
+      "stdout_path": "0.log",
+      "stdout_sha256": "88479b8fcebfcc96a14d673c6cdc6a53f07ec1e57a80c1aacc1cda81b4faa923"
+    },
+    {
+      "command": [
+        ".venv/bin/python",
+        "scripts/audit_callsite_dependencies.py",
+        "--check"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.7626434419999555,
+      "stdout_path": "1.log",
+      "stdout_sha256": "d681afc4b96429ed10ab71b553c843159a9059f1ccab704a52d3a458e3878989"
+    },
+    {
+      "command": [
+        ".venv/bin/python",
+        "scripts/audit_p1_schema.py",
+        "--check"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.17722021500003393,
+      "stdout_path": "2.log",
+      "stdout_sha256": "ec01476cdfe7a7ba2d06a0ad93daf32a7d2610d8b8a7b264ecc1a3e9337c4153"
+    },
+    {
+      "command": [
+        ".venv/bin/python",
+        "scripts/audit_implementation_boundary.py",
+        "--check"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.9029848609999931,
+      "stdout_path": "3.log",
+      "stdout_sha256": "77ccfc0376d81464fe59198daeb0f23212511f7900a88b69fc79385449196025"
+    },
+    {
+      "command": [
+        ".venv/bin/ruff",
+        "check",
+        "src",
+        "tests",
+        "scripts"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.01767488000001549,
+      "stdout_path": "4.log",
+      "stdout_sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18"
+    },
+    {
+      "command": [
+        ".venv/bin/ruff",
+        "format",
+        "--check",
+        "src",
+        "tests",
+        "scripts"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.01142361099999789,
+      "stdout_path": "5.log",
+      "stdout_sha256": "e12937b901dfe2a1009518320954c11b37d6f8c321d8f5f78b11f1f5eb917834"
+    }
+  ]
+}

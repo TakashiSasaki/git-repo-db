@@ -1,0 +1,206 @@
+{
+  "scope": "Only explicitly named completed/interrupted generated pytest basetemps; all evidence and frozen source worktrees remain. No retained/user catalog is touched.",
+  "operations": [
+    {
+      "target": "/workspace/i6b-fix-work/source-diagnostic-final-temp",
+      "reason": "Completed d68 diagnostic / interrupted a318 full synthetic catalogs no longer needed; preserve raw test/SQL/rowset observations and prevent ENOSPC in final fe9 validation.",
+      "preserved_evidence": [
+        {
+          "path": "source-diagnostic-final/diagnostic.execution.json",
+          "bytes": 1816,
+          "sha256": "34ed79ce5a1ed9d6c1d07ce34c394f93a0bae8bcf56b9e10821b676ccdbe2d6f"
+        },
+        {
+          "path": "source-diagnostic-final/diagnostic.xml",
+          "bytes": 1810165,
+          "sha256": "4440f78544246047bcdf3d012cd3226b1aa2ecc619323827afa55962a8c7b4b0"
+        },
+        {
+          "path": "source-diagnostic-final/diagnostic.jsonl",
+          "bytes": 725192,
+          "sha256": "66acf671d7766f022ff0625d7c020791e11dd911d646479bf3596d6889e0386b"
+        },
+        {
+          "path": "diagnostic-comparison/summary.json",
+          "bytes": 1525,
+          "sha256": "29c76f7f0d2a387e25cbb3bc5aa3e202ac71af7c6014c60e10e5222840a66d89"
+        },
+        {
+          "path": "diagnostic-comparison/nodes.json.gz",
+          "bytes": 111135,
+          "sha256": "b03871a9a09d40c9da2346614bb76f46dd907da3004243c697a5a246181efa98"
+        }
+      ],
+      "started_epoch": 1792766182.9791708,
+      "status": "completed",
+      "free_bytes_before": 11266187264,
+      "finished_epoch": 1792766187.5907114,
+      "free_bytes_after": 13240168448,
+      "target_absent": true
+    },
+    {
+      "target": "/workspace/i6b-fix-work/full-final-temp",
+      "reason": "Completed d68 diagnostic / interrupted a318 full synthetic catalogs no longer needed; preserve raw test/SQL/rowset observations and prevent ENOSPC in final fe9 validation.",
+      "preserved_evidence": [
+        {
+          "path": "source-full/ordinary.execution.json",
+          "bytes": 1688,
+          "sha256": "cb0138fc28c8d47e12f14c0ff0320d9f0444adf9f4b9a97baee8a0e9ecbc0679"
+        },
+        {
+          "path": "source-full/ordinary.xml",
+          "bytes": 79941,
+          "sha256": "d3579d5662d82d4d5d5c7eaf26879be648d184f169891b66976937153427b979"
+        },
+        {
+          "path": "source-full/ordinary.jsonl",
+          "bytes": 340504,
+          "sha256": "ba582d8d0abd74afa4b76e021b7cf6ca002c81181721733ff30e8a51fdea6744"
+        },
+        {
+          "path": "source-full/INTERRUPTED-NONFINAL.json",
+          "bytes": 717,
+          "sha256": "aa84f1e8faa04d86b40e94ac5c95fc70979fc479ead12ee0cb5c43a1777540c9"
+        }
+      ],
+      "started_epoch": 1792766187.6078157,
+      "status": "completed",
+      "free_bytes_before": 13240123392,
+      "finished_epoch": 1792766188.70973,
+      "free_bytes_after": 13781823488,
+      "target_absent": true
+    },
+    {
+      "target": "/workspace/i6b-fix-work/source-full-final-temp",
+      "reason": "Completed superseded d68 full invocation; raw logs/JUnit/journal/typed traces/bindings and source-independent rowset/SQL observations retained outside basetemp. Free space for sole final fe9 full run.",
+      "preserved_evidence": [
+        {
+          "path": "source-full-final/SUPERSEDED-NONFINAL.json",
+          "bytes": 612,
+          "sha256": "15c9cd90bcc42280663c3e812662c6a888346445054f00576c576a509c6561df"
+        },
+        {
+          "path": "source-full-final/all-collection.execution.json",
+          "bytes": 355,
+          "sha256": "760a8fdb2beab07cd19b846fed63bce717e2a581af1c812a86f96de271d83832"
+        },
+        {
+          "path": "source-full-final/all-collection.log",
+          "bytes": 2805373,
+          "sha256": "0c0a15e279426ada969231b9546d290216c287508f8dbc8ef7fb182af0491608"
+        },
+        {
+          "path": "source-full-final/all-collection.nodes.txt",
+          "bytes": 2805341,
+          "sha256": "1241ae6fd7b982130fdc4fbb439d220d5f757612008b9fd8a9d4159981ddfe5f"
+        },
+        {
+          "path": "source-full-final/binding-after.json",
+          "bytes": 58222,
+          "sha256": "eb043408cfaf4ffa6ca86764720a472e6dc5cd5434f58f8b061584e0faa53103"
+        },
+        {
+          "path": "source-full-final/binding-before.json",
+          "bytes": 58129,
+          "sha256": "6d07e34692ec88868ccf0967ec08d233f8b044b2a1ff256e9325b317748a3288"
+        },
+        {
+          "path": "source-full-final/gw0.reports.jsonl",
+          "bytes": 1377901,
+          "sha256": "d6b6742210c1c8fa6dfd799f25f479d7778981b84f6b281d274b0f22b9685cf5"
+        },
+        {
+          "path": "source-full-final/gw1.reports.jsonl",
+          "bytes": 738179,
+          "sha256": "bc5e9559a9e13396f488dd2ce3490ff3cd0a81351d8766c7718817f41d6d33c7"
+        },
+        {
+          "path": "source-full-final/gw2.reports.jsonl",
+          "bytes": 1345548,
+          "sha256": "f92daa44b4d48da8593812bf82e4949ce9e183add6ee6e43a8c820dba6ca392f"
+        },
+        {
+          "path": "source-full-final/gw3.reports.jsonl",
+          "bytes": 8870509,
+          "sha256": "c8538394f2e8b58ad78a5926d2a8189b10c793a1859b70d35ee16bc16e8c5dc6"
+        },
+        {
+          "path": "source-full-final/master.reports.jsonl",
+          "bytes": 12259729,
+          "sha256": "367df88bfcef772a1f34fcdbc4f7bc34897c7fc8f756f41df94aac73b9a2c3da"
+        },
+        {
+          "path": "source-full-final/ordinary-collection.execution.json",
+          "bytes": 399,
+          "sha256": "b8ad00aebaafaf7e2c9abd860587d489859123f3d178df230559fcc811c3c323"
+        },
+        {
+          "path": "source-full-final/ordinary-collection.log",
+          "bytes": 2805272,
+          "sha256": "65bb16217e5d0b03ed46e97fee4e3b8bfea79db6909eba91255c3687f8044cba"
+        },
+        {
+          "path": "source-full-final/ordinary-collection.nodes.txt",
+          "bytes": 2805220,
+          "sha256": "f6d039c9cc118c4c2ec4089af02a24fc8016f1bbb08e6fd07ae97e726e66cb57"
+        },
+        {
+          "path": "source-full-final/ordinary.execution.json",
+          "bytes": 1763,
+          "sha256": "94659711409488f8e90c807bb2dcda44574e0b48237d90c02c2bcf4410e79195"
+        },
+        {
+          "path": "source-full-final/ordinary.jsonl",
+          "bytes": 14885219,
+          "sha256": "72ce2da9a352eb8ef673492582df0a2d4b2f00a5ff3e45cf493a02a2035f87e2"
+        },
+        {
+          "path": "source-full-final/ordinary.log",
+          "bytes": 1683464,
+          "sha256": "9b3b2b89164d2cef0b0ae2eda4db70e5b5e0065b7daa2bb44685e52e7f8d6bc6"
+        },
+        {
+          "path": "source-full-final/ordinary.selected.txt",
+          "bytes": 2805220,
+          "sha256": "f6d039c9cc118c4c2ec4089af02a24fc8016f1bbb08e6fd07ae97e726e66cb57"
+        },
+        {
+          "path": "source-full-final/ordinary.xml",
+          "bytes": 5220714,
+          "sha256": "f3d2e141ff19dbd993f0493354dba917c8cf29b40357452b5c99d3773b4209c3"
+        },
+        {
+          "path": "source-full-final/unexecuted.json",
+          "bytes": 134,
+          "sha256": "7b973387be71f1924c3e6a631e9b7f72c71a80dcaa553dd27b5daf91dbe35ccc"
+        },
+        {
+          "path": "nonfinal-d68-full-comparison/nodes.json.gz",
+          "bytes": 129039,
+          "sha256": "d7253c34ea58571781a49a60d6ce04ca812cd22deb3785c4cd882fffbc03337e"
+        },
+        {
+          "path": "nonfinal-d68-full-comparison/summary.json",
+          "bytes": 87012,
+          "sha256": "02db097bc058dd157eaeb77e5e30ee33bbc90165241bdc22fc5fb83d39f8f0ba"
+        },
+        {
+          "path": "nonfinal-d68-actual-frame-comparison/nodes.json.gz",
+          "bytes": 38392,
+          "sha256": "7dcdaf0059c500b680106f9aace72703f90a0792c920748ea7474d6d8d786823"
+        },
+        {
+          "path": "nonfinal-d68-actual-frame-comparison/summary.json",
+          "bytes": 578,
+          "sha256": "4edb2a3a0ac454f902306e769bf8a6c4ffe6528ac3a12a27d4cf91d6686b5a8a"
+        }
+      ],
+      "status": "completed",
+      "started_epoch": 1792766384.0475,
+      "free_bytes_before": 11974320128,
+      "finished_epoch": 1792766396.8005867,
+      "free_bytes_after": 22289752064,
+      "target_absent": true
+    }
+  ]
+}

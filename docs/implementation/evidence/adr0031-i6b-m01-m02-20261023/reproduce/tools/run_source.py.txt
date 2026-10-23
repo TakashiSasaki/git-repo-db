@@ -1,0 +1,78 @@
+"""Run one immutable full source invocation or a separately labelled diagnostic.
+
+Uses the existing unchanged journal and read-only #152 observer. This is Author
+development evidence, not a release receipt or independent review.
+"""
+import argparse
+import gzip
+import hashlib
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--root', type=Path, required=True)
+parser.add_argument('--out', type=Path, required=True)
+parser.add_argument('--mode', choices=['full','diagnostic'], required=True)
+parser.add_argument('--workers', type=int, default=4)
+args = parser.parse_args()
+ROOT = args.root.resolve()
+OUT = args.out.resolve()
+WORK = Path('/workspace/i6b-fix-work')
+OUT.mkdir(parents=True, exist_ok=False)
+sys.path.insert(0, str(ROOT))
+from scripts import verify_i5_offline as e
+
+os.environ.update(PATH=str(Path(sys.executable).parent)+os.pathsep+os.environ['PATH'],
+    PYTHONPATH=str(WORK/'tools'), TMPDIR=str(WORK/'tmp'),
+    I6B_BROAD_OUT=str(OUT), I6B_BROAD_ROOT=str(ROOT),
+    REPO_CATALOG_WHEELHOUSE=str(WORK/'wheelhouse'),
+    UV_CACHE_DIR='/workspace/.uv-cache', PYTHONDONTWRITEBYTECODE='1')
+for name in ('GH_TOKEN','GITHUB_TOKEN','PYTHONHOME'):
+    os.environ.pop(name, None)
+
+def binding():
+    return {'head':e.git('rev-parse','HEAD'),'tree':e.git('rev-parse','HEAD^{tree}'),
+            'inputs':e.input_hashes(),'tracked_status':e.git('status','--porcelain','--untracked-files=no'),
+            'cwd':str(ROOT),'python':sys.executable,
+            'observer_hashes':{p.name:hashlib.sha256(p.read_bytes()).hexdigest()
+                               for p in (WORK/'tools').glob('*.py')}}
+
+before=binding()
+e.write_json(OUT/'binding-before.json', before)
+assert not before['tracked_status'], 'Freeze product/tests before the final invocation'
+assert Path(sys.executable).parent == ROOT/'.venv/bin', 'Use the tested checkout editable venv'
+e.require_product_runtime()
+e.verified_wheelhouse()
+if args.mode == 'full':
+    allnodes,a=e.collect(OUT,'all-collection',['tests'])
+    selected,b=e.collect(OUT,'ordinary-collection',['tests'],'not live and not benchmark')
+    assert a['exit_code']==b['exit_code']==0
+    assert len(selected)==len(set(selected))
+    e.write_json(OUT/'unexecuted.json', sorted(set(allnodes)-set(selected)))
+    name='ordinary'
+else:
+    historical=ROOT/'docs/implementation/evidence/adr0031-i6b-independent-20261023/broad/diagnostic745/diagnostic.selected.txt.gz'
+    selected=gzip.decompress(historical.read_bytes()).decode().splitlines()
+    assert len(selected)==len(set(selected))==745
+    name='diagnostic'
+
+original=e.execute
+def observed(out,name,argv):
+    plugins=['-p','broad_receipt','-p','no:cacheprovider']
+    if args.mode=='diagnostic': plugins += ['-p','statement_trace']
+    return original(out,name,['-c',str(ROOT/'pyproject.toml'),*plugins,
+        '--basetemp='+str(WORK/(OUT.name+'-temp')), '--tb=long',*argv])
+e.execute=observed
+result=e.run_cohort(OUT,name,selected,args.workers)
+after=binding()
+e.write_json(OUT/'binding-after.json', after)
+assert before['head']==after['head'] and before['tree']==after['tree']
+assert before['inputs']==after['inputs']
+assert not after['tracked_status']
+print(json.dumps({'mode':args.mode,'exit':result['exit_code'],
+    'results':{k:result.get(k) for k in ('passed','failed','error','executed','skipped','xfail','xpass')},
+    'scope':'One actual invocation; diagnostic never combined with full totals.'}))
+sys.exit(result['exit_code'])

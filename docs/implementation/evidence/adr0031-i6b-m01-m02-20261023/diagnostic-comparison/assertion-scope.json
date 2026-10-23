@@ -1,0 +1,49 @@
+{
+  "same_call_phase_assertion_AST_entry_sets_all745": true,
+  "same_global_assertion_AST_statement_set": true,
+  "same_all_phase_assertion_AST_entry_sets_unsuccessful299": true,
+  "changed_passing_setup_associations": [
+    {
+      "nodeid": "tests/packaging/test_p6_distribution.py::test_p6_installed_query_search_and_cli[sha256-sdist-wheel]",
+      "old_only": [
+        [
+          "setup",
+          "tests/packaging/test_p1_distribution.py",
+          26,
+          "run"
+        ]
+      ],
+      "new_only": [],
+      "old_outcome": [
+        "passed",
+        null
+      ],
+      "new_outcome": [
+        "passed",
+        null
+      ]
+    },
+    {
+      "nodeid": "tests/packaging/test_p6_distribution.py::test_p6_installed_query_search_and_cli[sha256-wheel]",
+      "old_only": [
+        [
+          "setup",
+          "tests/packaging/test_p1_distribution.py",
+          26,
+          "run"
+        ]
+      ],
+      "new_only": [],
+      "old_outcome": [
+        "passed",
+        null
+      ],
+      "new_outcome": [
+        "passed",
+        null
+      ]
+    }
+  ],
+  "interpretation": "The sole differing statement is setup tests/packaging/test_p1_distribution.py:26 run. Module fixture setup can execute on fewer xdist workers; the same statement remains reached under P6 sha1-wheel and P1/P3/P5. This is a setup scheduling difference, not a literal swap and not new call/assertion acceptance.",
+  "limits": "Statement entry in main worker thread only. No subexpression, spawned thread/process or branch-coverage claim."
+}

@@ -1,0 +1,380 @@
+{
+  "measurements": [
+    {
+      "resources": 0,
+      "input_rows": 1,
+      "input_bytes": 469,
+      "max_work": 0,
+      "prior_work": 0,
+      "charged_work": 1,
+      "additional_work": 1,
+      "parse_calls": 0,
+      "embedded_chars_parsed": 0,
+      "emitted_units": 0,
+      "reasons": [
+        "work_limit"
+      ]
+    },
+    {
+      "resources": 0,
+      "input_rows": 1,
+      "input_bytes": 469,
+      "max_work": 1,
+      "prior_work": 0,
+      "charged_work": 2,
+      "additional_work": 2,
+      "parse_calls": 0,
+      "embedded_chars_parsed": 0,
+      "emitted_units": 0,
+      "reasons": [
+        "work_limit"
+      ]
+    },
+    {
+      "resources": 0,
+      "input_rows": 1,
+      "input_bytes": 469,
+      "max_work": 17,
+      "prior_work": 0,
+      "charged_work": 18,
+      "additional_work": 18,
+      "parse_calls": 0,
+      "embedded_chars_parsed": 0,
+      "emitted_units": 0,
+      "reasons": [
+        "work_limit"
+      ]
+    },
+    {
+      "resources": 0,
+      "input_rows": 1,
+      "input_bytes": 469,
+      "max_work": 17,
+      "prior_work": 17,
+      "charged_work": 18,
+      "additional_work": 1,
+      "parse_calls": 0,
+      "embedded_chars_parsed": 0,
+      "emitted_units": 0,
+      "reasons": [
+        "work_limit"
+      ]
+    },
+    {
+      "resources": 1,
+      "input_rows": 3,
+      "input_bytes": 1613,
+      "max_work": 0,
+      "prior_work": 0,
+      "charged_work": 1,
+      "additional_work": 1,
+      "parse_calls": 0,
+      "embedded_chars_parsed": 0,
+      "emitted_units": 0,
+      "reasons": [
+        "work_limit"
+      ]
+    },
+    {
+      "resources": 1,
+      "input_rows": 3,
+      "input_bytes": 1613,
+      "max_work": 1,
+      "prior_work": 0,
+      "charged_work": 2,
+      "additional_work": 2,
+      "parse_calls": 0,
+      "embedded_chars_parsed": 0,
+      "emitted_units": 0,
+      "reasons": [
+        "work_limit"
+      ]
+    },
+    {
+      "resources": 1,
+      "input_rows": 3,
+      "input_bytes": 1613,
+      "max_work": 17,
+      "prior_work": 0,
+      "charged_work": 18,
+      "additional_work": 18,
+      "parse_calls": 0,
+      "embedded_chars_parsed": 0,
+      "emitted_units": 0,
+      "reasons": [
+        "work_limit"
+      ]
+    },
+    {
+      "resources": 1,
+      "input_rows": 3,
+      "input_bytes": 1613,
+      "max_work": 17,
+      "prior_work": 17,
+      "charged_work": 18,
+      "additional_work": 1,
+      "parse_calls": 0,
+      "embedded_chars_parsed": 0,
+      "emitted_units": 0,
+      "reasons": [
+        "work_limit"
+      ]
+    },
+    {
+      "resources": 5,
+      "input_rows": 11,
+      "input_bytes": 6197,
+      "max_work": 0,
+      "prior_work": 0,
+      "charged_work": 1,
+      "additional_work": 1,
+      "parse_calls": 0,
+      "embedded_chars_parsed": 0,
+      "emitted_units": 0,
+      "reasons": [
+        "work_limit"
+      ]
+    },
+    {
+      "resources": 5,
+      "input_rows": 11,
+      "input_bytes": 6197,
+      "max_work": 1,
+      "prior_work": 0,
+      "charged_work": 2,
+      "additional_work": 2,
+      "parse_calls": 0,
+      "embedded_chars_parsed": 0,
+      "emitted_units": 0,
+      "reasons": [
+        "work_limit"
+      ]
+    },
+    {
+      "resources": 5,
+      "input_rows": 11,
+      "input_bytes": 6197,
+      "max_work": 17,
+      "prior_work": 0,
+      "charged_work": 18,
+      "additional_work": 18,
+      "parse_calls": 0,
+      "embedded_chars_parsed": 0,
+      "emitted_units": 0,
+      "reasons": [
+        "work_limit"
+      ]
+    },
+    {
+      "resources": 5,
+      "input_rows": 11,
+      "input_bytes": 6197,
+      "max_work": 17,
+      "prior_work": 17,
+      "charged_work": 18,
+      "additional_work": 1,
+      "parse_calls": 0,
+      "embedded_chars_parsed": 0,
+      "emitted_units": 0,
+      "reasons": [
+        "work_limit"
+      ]
+    },
+    {
+      "resources": 50,
+      "input_rows": 101,
+      "input_bytes": 57887,
+      "max_work": 0,
+      "prior_work": 0,
+      "charged_work": 1,
+      "additional_work": 1,
+      "parse_calls": 0,
+      "embedded_chars_parsed": 0,
+      "emitted_units": 0,
+      "reasons": [
+        "work_limit"
+      ]
+    },
+    {
+      "resources": 50,
+      "input_rows": 101,
+      "input_bytes": 57887,
+      "max_work": 1,
+      "prior_work": 0,
+      "charged_work": 2,
+      "additional_work": 2,
+      "parse_calls": 0,
+      "embedded_chars_parsed": 0,
+      "emitted_units": 0,
+      "reasons": [
+        "work_limit"
+      ]
+    },
+    {
+      "resources": 50,
+      "input_rows": 101,
+      "input_bytes": 57887,
+      "max_work": 17,
+      "prior_work": 0,
+      "charged_work": 18,
+      "additional_work": 18,
+      "parse_calls": 0,
+      "embedded_chars_parsed": 0,
+      "emitted_units": 0,
+      "reasons": [
+        "work_limit"
+      ]
+    },
+    {
+      "resources": 50,
+      "input_rows": 101,
+      "input_bytes": 57887,
+      "max_work": 17,
+      "prior_work": 17,
+      "charged_work": 18,
+      "additional_work": 1,
+      "parse_calls": 0,
+      "embedded_chars_parsed": 0,
+      "emitted_units": 0,
+      "reasons": [
+        "work_limit"
+      ]
+    },
+    {
+      "resources": 500,
+      "input_rows": 1001,
+      "input_bytes": 576137,
+      "max_work": 0,
+      "prior_work": 0,
+      "charged_work": 1,
+      "additional_work": 1,
+      "parse_calls": 0,
+      "embedded_chars_parsed": 0,
+      "emitted_units": 0,
+      "reasons": [
+        "work_limit"
+      ]
+    },
+    {
+      "resources": 500,
+      "input_rows": 1001,
+      "input_bytes": 576137,
+      "max_work": 1,
+      "prior_work": 0,
+      "charged_work": 2,
+      "additional_work": 2,
+      "parse_calls": 0,
+      "embedded_chars_parsed": 0,
+      "emitted_units": 0,
+      "reasons": [
+        "work_limit"
+      ]
+    },
+    {
+      "resources": 500,
+      "input_rows": 1001,
+      "input_bytes": 576137,
+      "max_work": 17,
+      "prior_work": 0,
+      "charged_work": 18,
+      "additional_work": 18,
+      "parse_calls": 0,
+      "embedded_chars_parsed": 0,
+      "emitted_units": 0,
+      "reasons": [
+        "work_limit"
+      ]
+    },
+    {
+      "resources": 500,
+      "input_rows": 1001,
+      "input_bytes": 576137,
+      "max_work": 17,
+      "prior_work": 17,
+      "charged_work": 18,
+      "additional_work": 1,
+      "parse_calls": 0,
+      "embedded_chars_parsed": 0,
+      "emitted_units": 0,
+      "reasons": [
+        "work_limit"
+      ]
+    },
+    {
+      "resources": 1000,
+      "input_rows": 2001,
+      "input_bytes": 1152137,
+      "max_work": 0,
+      "prior_work": 0,
+      "charged_work": 1,
+      "additional_work": 1,
+      "parse_calls": 0,
+      "embedded_chars_parsed": 0,
+      "emitted_units": 0,
+      "reasons": [
+        "work_limit"
+      ]
+    },
+    {
+      "resources": 1000,
+      "input_rows": 2001,
+      "input_bytes": 1152137,
+      "max_work": 1,
+      "prior_work": 0,
+      "charged_work": 2,
+      "additional_work": 2,
+      "parse_calls": 0,
+      "embedded_chars_parsed": 0,
+      "emitted_units": 0,
+      "reasons": [
+        "work_limit"
+      ]
+    },
+    {
+      "resources": 1000,
+      "input_rows": 2001,
+      "input_bytes": 1152137,
+      "max_work": 17,
+      "prior_work": 0,
+      "charged_work": 18,
+      "additional_work": 18,
+      "parse_calls": 0,
+      "embedded_chars_parsed": 0,
+      "emitted_units": 0,
+      "reasons": [
+        "work_limit"
+      ]
+    },
+    {
+      "resources": 1000,
+      "input_rows": 2001,
+      "input_bytes": 1152137,
+      "max_work": 17,
+      "prior_work": 17,
+      "charged_work": 18,
+      "additional_work": 1,
+      "parse_calls": 0,
+      "embedded_chars_parsed": 0,
+      "emitted_units": 0,
+      "reasons": [
+        "work_limit"
+      ]
+    }
+  ],
+  "runtime": {
+    "executable": "/workspace/i6b-fix-work/final/.venv/bin/python",
+    "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+    "sqlite": [
+      "3.53.1",
+      "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9"
+    ]
+  },
+  "origins": {
+    "exchange": "/workspace/i6b-fix-work/final/src/repo_catalog/domain/exchange.py"
+  },
+  "source_hashes": {
+    "src/repo_catalog/domain/exchange.py": "46c5d9c5f80a39ff967418d2662274fa8b70134f33050ac00c2e464b4dc10012",
+    "src/repo_catalog/domain/context_dependencies.py": "df04bfe4e18cf585625422427995bd2013101a7fb32fb3b75dd0d52a6c31e741"
+  },
+  "probe_sha256": "dec5aa650b847b18aee223e3ab79fe41faf644b620d12edfa7cf3b83c375555b"
+}

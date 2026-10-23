@@ -1,0 +1,29 @@
+{
+  "attempts": [
+    {
+      "action": "Create frozen baseline archive with git archive | tar",
+      "target": "/workspace/i6b-fix-work/baseline",
+      "result": "failed",
+      "exit_code": 2,
+      "reason": "Destination directory did not yet exist; no archive extraction completed.",
+      "resolution": "Created workspace directory, then extracted exact 8521158 Git archive successfully."
+    },
+    {
+      "action": "Execute command in not-yet-created baseline cwd",
+      "target": "/workspace/i6b-fix-work/baseline",
+      "result": "process_not_started",
+      "reason": "exec-server reported No such file or directory; no shell execution or write occurred.",
+      "resolution": "Created the cwd from existing repository directory before proceeding."
+    },
+    {
+      "action": "uv sync baseline locked dev+docs using explicit existing Python",
+      "target": "/home/agent/.cache/uv/CACHEDIR.TAG",
+      "result": "failed",
+      "exit_code": 2,
+      "reason": "Read-only filesystem for default cache.",
+      "resolution": "Used UV_CACHE_DIR=/workspace/.uv-cache. No permission escalation or alternative SQLite/Python installation."
+    }
+  ],
+  "final_runtime": "Each source worktree uses its own editable venv from the explicit existing CPython3.12.14; actual loaded SQLite3.53.1 recorded in every observer.",
+  "remaining_blockers": []
+}

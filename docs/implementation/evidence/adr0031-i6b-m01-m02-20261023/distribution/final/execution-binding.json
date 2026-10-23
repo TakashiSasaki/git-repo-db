@@ -1,0 +1,14 @@
+{
+  "source_head": "d68dc43bff1eb949b071ebf1652e3d70a5a52ed9",
+  "source_tree": "e1c9748b976d5e4266962cffe37ff82c98d1414f",
+  "base": "8521158f2996f125d2fcaac36ea79ac1296a7cf7",
+  "source_archive": {
+    "path": "/workspace/i6b-fix-distribution-final/source.tar",
+    "sha256": "3cebe450994e8e5171bf6151aee5d89d737f5d3b5400298fc673aff5cf9a8425",
+    "bytes": 250808320
+  },
+  "actual_python": "/workspace/i6b-fix-work/baseline/.venv/bin/python",
+  "no_sqlite_replacement": true,
+  "author_validation": true,
+  "independent_review": false
+}

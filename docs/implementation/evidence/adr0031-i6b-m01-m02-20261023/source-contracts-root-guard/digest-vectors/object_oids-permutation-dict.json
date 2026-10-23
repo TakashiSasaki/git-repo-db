@@ -1,0 +1,74 @@
+{
+  "before": {
+    "format": "git-repo-db/adr0031-exchange-v5",
+    "digest_sha256": "f7d2859c4d21187e42ba821671255a8a88b803ce5835542df6931d7535867343",
+    "package_id": "0bec528e-c1be-46ca-87b9-b0527a159639",
+    "exported_at_us": 971,
+    "sender_catalog_instance_uuidv4": "8bc7720a-0659-4c69-9159-28c9ad44f121",
+    "repository_uuidv4": "122617f1-7b75-475d-bc2e-8f30d1cbd8a5",
+    "selection_scope": {
+      "repository_uuidv4s": null,
+      "all_selected": true,
+      "max_depth": 8,
+      "max_units": 10000,
+      "max_bytes": 16777216,
+      "max_work": 10000000,
+      "include_core": true,
+      "include_context": true,
+      "include_retained_bytes": true,
+      "object_oids": [
+        [
+          "sha1",
+          "1111111111111111111111111111111111111111"
+        ],
+        [
+          "sha1",
+          "2222222222222222222222222222222222222222"
+        ]
+      ],
+      "notes_refs": null,
+      "resource_keys": null,
+      "source_uuidv4s": null
+    },
+    "selection_report": {},
+    "core": null,
+    "context": null
+  },
+  "received": {
+    "format": "git-repo-db/adr0031-exchange-v5",
+    "digest_sha256": "f7d2859c4d21187e42ba821671255a8a88b803ce5835542df6931d7535867343",
+    "package_id": "0bec528e-c1be-46ca-87b9-b0527a159639",
+    "exported_at_us": 971,
+    "sender_catalog_instance_uuidv4": "8bc7720a-0659-4c69-9159-28c9ad44f121",
+    "repository_uuidv4": "122617f1-7b75-475d-bc2e-8f30d1cbd8a5",
+    "selection_scope": {
+      "repository_uuidv4s": null,
+      "all_selected": true,
+      "max_depth": 8,
+      "max_units": 10000,
+      "max_bytes": 16777216,
+      "max_work": 10000000,
+      "include_core": true,
+      "include_context": true,
+      "include_retained_bytes": true,
+      "object_oids": [
+        [
+          "sha1",
+          "2222222222222222222222222222222222222222"
+        ],
+        [
+          "sha1",
+          "1111111111111111111111111111111111111111"
+        ]
+      ],
+      "notes_refs": null,
+      "resource_keys": null,
+      "source_uuidv4s": null
+    },
+    "selection_report": {},
+    "core": null,
+    "context": null
+  },
+  "actual_received_digest": "9dd859cdde6d2e9864e4a77862294d6349dbd2fba26b4e0d69c246b26d5cee64",
+  "declared_digest": "f7d2859c4d21187e42ba821671255a8a88b803ce5835542df6931d7535867343"
+}

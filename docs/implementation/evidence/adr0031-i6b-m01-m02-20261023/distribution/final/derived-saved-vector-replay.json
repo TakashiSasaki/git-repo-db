@@ -1,0 +1,581 @@
+{
+  "python": "/workspace/i6b-fix-distribution-final/derived-venv/bin/python",
+  "origin": "/workspace/i6b-fix-distribution-final/derived-venv/lib/python3.12/site-packages/repo_catalog",
+  "sqlite": [
+    "3.53.1",
+    "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9"
+  ],
+  "scope": "Separate measurement replay of30 actual saved raw digest vectors plus30 correctly rehashed changed dictionaries; overlapping probe cases, no test total",
+  "records": [
+    {
+      "vector": "notes_refs-duplicate-bytes.json",
+      "input_bytes": 2034,
+      "input_sha256": "830d2346edb00af219ca534b486ce229ce319c487ee4b89fa7f828f420eb6e5b",
+      "carrier": "bytes",
+      "canonical_control": "accepted unchanged",
+      "actual_received_digest": "6d4a9f9bf3c24088455066072bbbd929b7aa3d279a79047c2c3e3f32bccedee3",
+      "declared_digest": "7cc9eb305beec24a35989047885169eca47b86b1adca5a3ac28aaef0234c695c",
+      "stale": {
+        "code": "DIGEST_MISMATCH",
+        "scope": "0bec528e-c1be-46ca-87b9-b0527a159639",
+        "message": "0bec528e-c1be-46ca-87b9-b0527a159639:DIGEST_MISMATCH: declared SHA-256 differs from received canonical content"
+      },
+      "corrected_digest": {
+        "code": "INVALID_SELECTION",
+        "scope": "selection_scope",
+        "message": "selection_scope:INVALID_SELECTION: canonical unique set arrays required"
+      }
+    },
+    {
+      "vector": "notes_refs-duplicate-dict.json",
+      "input_bytes": 2034,
+      "input_sha256": "830d2346edb00af219ca534b486ce229ce319c487ee4b89fa7f828f420eb6e5b",
+      "carrier": "dict",
+      "canonical_control": "accepted unchanged",
+      "actual_received_digest": "6d4a9f9bf3c24088455066072bbbd929b7aa3d279a79047c2c3e3f32bccedee3",
+      "declared_digest": "7cc9eb305beec24a35989047885169eca47b86b1adca5a3ac28aaef0234c695c",
+      "stale": {
+        "code": "DIGEST_MISMATCH",
+        "scope": "0bec528e-c1be-46ca-87b9-b0527a159639",
+        "message": "0bec528e-c1be-46ca-87b9-b0527a159639:DIGEST_MISMATCH: declared SHA-256 differs from received canonical content"
+      },
+      "corrected_digest": {
+        "code": "INVALID_SELECTION",
+        "scope": "selection_scope",
+        "message": "selection_scope:INVALID_SELECTION: canonical unique set arrays required"
+      }
+    },
+    {
+      "vector": "notes_refs-duplicate-str.json",
+      "input_bytes": 2034,
+      "input_sha256": "830d2346edb00af219ca534b486ce229ce319c487ee4b89fa7f828f420eb6e5b",
+      "carrier": "str",
+      "canonical_control": "accepted unchanged",
+      "actual_received_digest": "6d4a9f9bf3c24088455066072bbbd929b7aa3d279a79047c2c3e3f32bccedee3",
+      "declared_digest": "7cc9eb305beec24a35989047885169eca47b86b1adca5a3ac28aaef0234c695c",
+      "stale": {
+        "code": "DIGEST_MISMATCH",
+        "scope": "0bec528e-c1be-46ca-87b9-b0527a159639",
+        "message": "0bec528e-c1be-46ca-87b9-b0527a159639:DIGEST_MISMATCH: declared SHA-256 differs from received canonical content"
+      },
+      "corrected_digest": {
+        "code": "INVALID_SELECTION",
+        "scope": "selection_scope",
+        "message": "selection_scope:INVALID_SELECTION: canonical unique set arrays required"
+      }
+    },
+    {
+      "vector": "notes_refs-permutation-bytes.json",
+      "input_bytes": 2010,
+      "input_sha256": "6d8c2c34d7f6a23f479999427354cdd9408a9408e5bd6f8e63edaa36aa71b9bd",
+      "carrier": "bytes",
+      "canonical_control": "accepted unchanged",
+      "actual_received_digest": "42953fb7e8000c620b25ec21823883b97cf7f348869ec589093e73b85f543880",
+      "declared_digest": "7cc9eb305beec24a35989047885169eca47b86b1adca5a3ac28aaef0234c695c",
+      "stale": {
+        "code": "DIGEST_MISMATCH",
+        "scope": "0bec528e-c1be-46ca-87b9-b0527a159639",
+        "message": "0bec528e-c1be-46ca-87b9-b0527a159639:DIGEST_MISMATCH: declared SHA-256 differs from received canonical content"
+      },
+      "corrected_digest": {
+        "code": "INVALID_SELECTION",
+        "scope": "selection_scope",
+        "message": "selection_scope:INVALID_SELECTION: canonical unique set arrays required"
+      }
+    },
+    {
+      "vector": "notes_refs-permutation-dict.json",
+      "input_bytes": 2010,
+      "input_sha256": "6d8c2c34d7f6a23f479999427354cdd9408a9408e5bd6f8e63edaa36aa71b9bd",
+      "carrier": "dict",
+      "canonical_control": "accepted unchanged",
+      "actual_received_digest": "42953fb7e8000c620b25ec21823883b97cf7f348869ec589093e73b85f543880",
+      "declared_digest": "7cc9eb305beec24a35989047885169eca47b86b1adca5a3ac28aaef0234c695c",
+      "stale": {
+        "code": "DIGEST_MISMATCH",
+        "scope": "0bec528e-c1be-46ca-87b9-b0527a159639",
+        "message": "0bec528e-c1be-46ca-87b9-b0527a159639:DIGEST_MISMATCH: declared SHA-256 differs from received canonical content"
+      },
+      "corrected_digest": {
+        "code": "INVALID_SELECTION",
+        "scope": "selection_scope",
+        "message": "selection_scope:INVALID_SELECTION: canonical unique set arrays required"
+      }
+    },
+    {
+      "vector": "notes_refs-permutation-str.json",
+      "input_bytes": 2010,
+      "input_sha256": "6d8c2c34d7f6a23f479999427354cdd9408a9408e5bd6f8e63edaa36aa71b9bd",
+      "carrier": "str",
+      "canonical_control": "accepted unchanged",
+      "actual_received_digest": "42953fb7e8000c620b25ec21823883b97cf7f348869ec589093e73b85f543880",
+      "declared_digest": "7cc9eb305beec24a35989047885169eca47b86b1adca5a3ac28aaef0234c695c",
+      "stale": {
+        "code": "DIGEST_MISMATCH",
+        "scope": "0bec528e-c1be-46ca-87b9-b0527a159639",
+        "message": "0bec528e-c1be-46ca-87b9-b0527a159639:DIGEST_MISMATCH: declared SHA-256 differs from received canonical content"
+      },
+      "corrected_digest": {
+        "code": "INVALID_SELECTION",
+        "scope": "selection_scope",
+        "message": "selection_scope:INVALID_SELECTION: canonical unique set arrays required"
+      }
+    },
+    {
+      "vector": "object_oids-duplicate-bytes.json",
+      "input_bytes": 2374,
+      "input_sha256": "a038a3c8dc207320ff64cea6361f55a8195c72f5cee7f3defd0032a8810ab444",
+      "carrier": "bytes",
+      "canonical_control": "accepted unchanged",
+      "actual_received_digest": "fbc897b326199d708c26d8b9b28c54cca1f7d33e49fa93dcc4976502539923fe",
+      "declared_digest": "f7d2859c4d21187e42ba821671255a8a88b803ce5835542df6931d7535867343",
+      "stale": {
+        "code": "DIGEST_MISMATCH",
+        "scope": "0bec528e-c1be-46ca-87b9-b0527a159639",
+        "message": "0bec528e-c1be-46ca-87b9-b0527a159639:DIGEST_MISMATCH: declared SHA-256 differs from received canonical content"
+      },
+      "corrected_digest": {
+        "code": "INVALID_SELECTION",
+        "scope": "selection_scope",
+        "message": "selection_scope:INVALID_SELECTION: canonical unique set arrays required"
+      }
+    },
+    {
+      "vector": "object_oids-duplicate-dict.json",
+      "input_bytes": 2374,
+      "input_sha256": "a038a3c8dc207320ff64cea6361f55a8195c72f5cee7f3defd0032a8810ab444",
+      "carrier": "dict",
+      "canonical_control": "accepted unchanged",
+      "actual_received_digest": "fbc897b326199d708c26d8b9b28c54cca1f7d33e49fa93dcc4976502539923fe",
+      "declared_digest": "f7d2859c4d21187e42ba821671255a8a88b803ce5835542df6931d7535867343",
+      "stale": {
+        "code": "DIGEST_MISMATCH",
+        "scope": "0bec528e-c1be-46ca-87b9-b0527a159639",
+        "message": "0bec528e-c1be-46ca-87b9-b0527a159639:DIGEST_MISMATCH: declared SHA-256 differs from received canonical content"
+      },
+      "corrected_digest": {
+        "code": "INVALID_SELECTION",
+        "scope": "selection_scope",
+        "message": "selection_scope:INVALID_SELECTION: canonical unique set arrays required"
+      }
+    },
+    {
+      "vector": "object_oids-duplicate-str.json",
+      "input_bytes": 2374,
+      "input_sha256": "a038a3c8dc207320ff64cea6361f55a8195c72f5cee7f3defd0032a8810ab444",
+      "carrier": "str",
+      "canonical_control": "accepted unchanged",
+      "actual_received_digest": "fbc897b326199d708c26d8b9b28c54cca1f7d33e49fa93dcc4976502539923fe",
+      "declared_digest": "f7d2859c4d21187e42ba821671255a8a88b803ce5835542df6931d7535867343",
+      "stale": {
+        "code": "DIGEST_MISMATCH",
+        "scope": "0bec528e-c1be-46ca-87b9-b0527a159639",
+        "message": "0bec528e-c1be-46ca-87b9-b0527a159639:DIGEST_MISMATCH: declared SHA-256 differs from received canonical content"
+      },
+      "corrected_digest": {
+        "code": "INVALID_SELECTION",
+        "scope": "selection_scope",
+        "message": "selection_scope:INVALID_SELECTION: canonical unique set arrays required"
+      }
+    },
+    {
+      "vector": "object_oids-permutation-bytes.json",
+      "input_bytes": 2282,
+      "input_sha256": "15f992ba8c12a13e500e2f2065a67ac0528d0741973251dc19039850df909bf3",
+      "carrier": "bytes",
+      "canonical_control": "accepted unchanged",
+      "actual_received_digest": "9dd859cdde6d2e9864e4a77862294d6349dbd2fba26b4e0d69c246b26d5cee64",
+      "declared_digest": "f7d2859c4d21187e42ba821671255a8a88b803ce5835542df6931d7535867343",
+      "stale": {
+        "code": "DIGEST_MISMATCH",
+        "scope": "0bec528e-c1be-46ca-87b9-b0527a159639",
+        "message": "0bec528e-c1be-46ca-87b9-b0527a159639:DIGEST_MISMATCH: declared SHA-256 differs from received canonical content"
+      },
+      "corrected_digest": {
+        "code": "INVALID_SELECTION",
+        "scope": "selection_scope",
+        "message": "selection_scope:INVALID_SELECTION: canonical unique set arrays required"
+      }
+    },
+    {
+      "vector": "object_oids-permutation-dict.json",
+      "input_bytes": 2282,
+      "input_sha256": "15f992ba8c12a13e500e2f2065a67ac0528d0741973251dc19039850df909bf3",
+      "carrier": "dict",
+      "canonical_control": "accepted unchanged",
+      "actual_received_digest": "9dd859cdde6d2e9864e4a77862294d6349dbd2fba26b4e0d69c246b26d5cee64",
+      "declared_digest": "f7d2859c4d21187e42ba821671255a8a88b803ce5835542df6931d7535867343",
+      "stale": {
+        "code": "DIGEST_MISMATCH",
+        "scope": "0bec528e-c1be-46ca-87b9-b0527a159639",
+        "message": "0bec528e-c1be-46ca-87b9-b0527a159639:DIGEST_MISMATCH: declared SHA-256 differs from received canonical content"
+      },
+      "corrected_digest": {
+        "code": "INVALID_SELECTION",
+        "scope": "selection_scope",
+        "message": "selection_scope:INVALID_SELECTION: canonical unique set arrays required"
+      }
+    },
+    {
+      "vector": "object_oids-permutation-str.json",
+      "input_bytes": 2282,
+      "input_sha256": "15f992ba8c12a13e500e2f2065a67ac0528d0741973251dc19039850df909bf3",
+      "carrier": "str",
+      "canonical_control": "accepted unchanged",
+      "actual_received_digest": "9dd859cdde6d2e9864e4a77862294d6349dbd2fba26b4e0d69c246b26d5cee64",
+      "declared_digest": "f7d2859c4d21187e42ba821671255a8a88b803ce5835542df6931d7535867343",
+      "stale": {
+        "code": "DIGEST_MISMATCH",
+        "scope": "0bec528e-c1be-46ca-87b9-b0527a159639",
+        "message": "0bec528e-c1be-46ca-87b9-b0527a159639:DIGEST_MISMATCH: declared SHA-256 differs from received canonical content"
+      },
+      "corrected_digest": {
+        "code": "INVALID_SELECTION",
+        "scope": "selection_scope",
+        "message": "selection_scope:INVALID_SELECTION: canonical unique set arrays required"
+      }
+    },
+    {
+      "vector": "repository_uuidv4s-duplicate-bytes.json",
+      "input_bytes": 2154,
+      "input_sha256": "7cd09eeb54491be84cd95569eaf6c0734ea0bbd089a6eb16d4a7482e0fbf40e7",
+      "carrier": "bytes",
+      "canonical_control": "accepted unchanged",
+      "actual_received_digest": "f8bcd22e6acebb36c2a9bcffa9188f2309c61f9bccdad0481e4fb0f82b21880a",
+      "declared_digest": "941e0b902bb6b420d908b7bc465d2d2ebab43560b58fb7523586ce53bd2b3899",
+      "stale": {
+        "code": "DIGEST_MISMATCH",
+        "scope": "0bec528e-c1be-46ca-87b9-b0527a159639",
+        "message": "0bec528e-c1be-46ca-87b9-b0527a159639:DIGEST_MISMATCH: declared SHA-256 differs from received canonical content"
+      },
+      "corrected_digest": {
+        "code": "INVALID_SELECTION",
+        "scope": "selection_scope",
+        "message": "selection_scope:INVALID_SELECTION: canonical unique set arrays required"
+      }
+    },
+    {
+      "vector": "repository_uuidv4s-duplicate-dict.json",
+      "input_bytes": 2154,
+      "input_sha256": "7cd09eeb54491be84cd95569eaf6c0734ea0bbd089a6eb16d4a7482e0fbf40e7",
+      "carrier": "dict",
+      "canonical_control": "accepted unchanged",
+      "actual_received_digest": "f8bcd22e6acebb36c2a9bcffa9188f2309c61f9bccdad0481e4fb0f82b21880a",
+      "declared_digest": "941e0b902bb6b420d908b7bc465d2d2ebab43560b58fb7523586ce53bd2b3899",
+      "stale": {
+        "code": "DIGEST_MISMATCH",
+        "scope": "0bec528e-c1be-46ca-87b9-b0527a159639",
+        "message": "0bec528e-c1be-46ca-87b9-b0527a159639:DIGEST_MISMATCH: declared SHA-256 differs from received canonical content"
+      },
+      "corrected_digest": {
+        "code": "INVALID_SELECTION",
+        "scope": "selection_scope",
+        "message": "selection_scope:INVALID_SELECTION: canonical unique set arrays required"
+      }
+    },
+    {
+      "vector": "repository_uuidv4s-duplicate-str.json",
+      "input_bytes": 2154,
+      "input_sha256": "7cd09eeb54491be84cd95569eaf6c0734ea0bbd089a6eb16d4a7482e0fbf40e7",
+      "carrier": "str",
+      "canonical_control": "accepted unchanged",
+      "actual_received_digest": "f8bcd22e6acebb36c2a9bcffa9188f2309c61f9bccdad0481e4fb0f82b21880a",
+      "declared_digest": "941e0b902bb6b420d908b7bc465d2d2ebab43560b58fb7523586ce53bd2b3899",
+      "stale": {
+        "code": "DIGEST_MISMATCH",
+        "scope": "0bec528e-c1be-46ca-87b9-b0527a159639",
+        "message": "0bec528e-c1be-46ca-87b9-b0527a159639:DIGEST_MISMATCH: declared SHA-256 differs from received canonical content"
+      },
+      "corrected_digest": {
+        "code": "INVALID_SELECTION",
+        "scope": "selection_scope",
+        "message": "selection_scope:INVALID_SELECTION: canonical unique set arrays required"
+      }
+    },
+    {
+      "vector": "repository_uuidv4s-permutation-bytes.json",
+      "input_bytes": 2106,
+      "input_sha256": "b03f547cf2c008ea6eec1058c4028b820226c932b7a553d4d1aaea5825de8477",
+      "carrier": "bytes",
+      "canonical_control": "accepted unchanged",
+      "actual_received_digest": "39d7b9cb1d285102c562f2aea7f43dbf9b14e324c3b6035ae9780a52a26b1d93",
+      "declared_digest": "941e0b902bb6b420d908b7bc465d2d2ebab43560b58fb7523586ce53bd2b3899",
+      "stale": {
+        "code": "DIGEST_MISMATCH",
+        "scope": "0bec528e-c1be-46ca-87b9-b0527a159639",
+        "message": "0bec528e-c1be-46ca-87b9-b0527a159639:DIGEST_MISMATCH: declared SHA-256 differs from received canonical content"
+      },
+      "corrected_digest": {
+        "code": "INVALID_SELECTION",
+        "scope": "selection_scope",
+        "message": "selection_scope:INVALID_SELECTION: canonical unique set arrays required"
+      }
+    },
+    {
+      "vector": "repository_uuidv4s-permutation-dict.json",
+      "input_bytes": 2106,
+      "input_sha256": "b03f547cf2c008ea6eec1058c4028b820226c932b7a553d4d1aaea5825de8477",
+      "carrier": "dict",
+      "canonical_control": "accepted unchanged",
+      "actual_received_digest": "39d7b9cb1d285102c562f2aea7f43dbf9b14e324c3b6035ae9780a52a26b1d93",
+      "declared_digest": "941e0b902bb6b420d908b7bc465d2d2ebab43560b58fb7523586ce53bd2b3899",
+      "stale": {
+        "code": "DIGEST_MISMATCH",
+        "scope": "0bec528e-c1be-46ca-87b9-b0527a159639",
+        "message": "0bec528e-c1be-46ca-87b9-b0527a159639:DIGEST_MISMATCH: declared SHA-256 differs from received canonical content"
+      },
+      "corrected_digest": {
+        "code": "INVALID_SELECTION",
+        "scope": "selection_scope",
+        "message": "selection_scope:INVALID_SELECTION: canonical unique set arrays required"
+      }
+    },
+    {
+      "vector": "repository_uuidv4s-permutation-str.json",
+      "input_bytes": 2106,
+      "input_sha256": "b03f547cf2c008ea6eec1058c4028b820226c932b7a553d4d1aaea5825de8477",
+      "carrier": "str",
+      "canonical_control": "accepted unchanged",
+      "actual_received_digest": "39d7b9cb1d285102c562f2aea7f43dbf9b14e324c3b6035ae9780a52a26b1d93",
+      "declared_digest": "941e0b902bb6b420d908b7bc465d2d2ebab43560b58fb7523586ce53bd2b3899",
+      "stale": {
+        "code": "DIGEST_MISMATCH",
+        "scope": "0bec528e-c1be-46ca-87b9-b0527a159639",
+        "message": "0bec528e-c1be-46ca-87b9-b0527a159639:DIGEST_MISMATCH: declared SHA-256 differs from received canonical content"
+      },
+      "corrected_digest": {
+        "code": "INVALID_SELECTION",
+        "scope": "selection_scope",
+        "message": "selection_scope:INVALID_SELECTION: canonical unique set arrays required"
+      }
+    },
+    {
+      "vector": "resource_keys-duplicate-bytes.json",
+      "input_bytes": 2459,
+      "input_sha256": "c8c691f6cf615f2e39085cbf5671a5fc759fc81aca70558a1092df758bc68357",
+      "carrier": "bytes",
+      "canonical_control": "accepted unchanged",
+      "actual_received_digest": "836eac239420889ea6e6fc967fe773d78f3bdeac09bfb0645b33a4781b64a58d",
+      "declared_digest": "09bade4edd6a70fb6fc79228a78f4a1ed4e9013de61b6c5cac2faf968ca45726",
+      "stale": {
+        "code": "DIGEST_MISMATCH",
+        "scope": "0bec528e-c1be-46ca-87b9-b0527a159639",
+        "message": "0bec528e-c1be-46ca-87b9-b0527a159639:DIGEST_MISMATCH: declared SHA-256 differs from received canonical content"
+      },
+      "corrected_digest": {
+        "code": "INVALID_SELECTION",
+        "scope": "selection_scope",
+        "message": "selection_scope:INVALID_SELECTION: canonical unique set arrays required"
+      }
+    },
+    {
+      "vector": "resource_keys-duplicate-dict.json",
+      "input_bytes": 2459,
+      "input_sha256": "c8c691f6cf615f2e39085cbf5671a5fc759fc81aca70558a1092df758bc68357",
+      "carrier": "dict",
+      "canonical_control": "accepted unchanged",
+      "actual_received_digest": "836eac239420889ea6e6fc967fe773d78f3bdeac09bfb0645b33a4781b64a58d",
+      "declared_digest": "09bade4edd6a70fb6fc79228a78f4a1ed4e9013de61b6c5cac2faf968ca45726",
+      "stale": {
+        "code": "DIGEST_MISMATCH",
+        "scope": "0bec528e-c1be-46ca-87b9-b0527a159639",
+        "message": "0bec528e-c1be-46ca-87b9-b0527a159639:DIGEST_MISMATCH: declared SHA-256 differs from received canonical content"
+      },
+      "corrected_digest": {
+        "code": "INVALID_SELECTION",
+        "scope": "selection_scope",
+        "message": "selection_scope:INVALID_SELECTION: canonical unique set arrays required"
+      }
+    },
+    {
+      "vector": "resource_keys-duplicate-str.json",
+      "input_bytes": 2459,
+      "input_sha256": "c8c691f6cf615f2e39085cbf5671a5fc759fc81aca70558a1092df758bc68357",
+      "carrier": "str",
+      "canonical_control": "accepted unchanged",
+      "actual_received_digest": "836eac239420889ea6e6fc967fe773d78f3bdeac09bfb0645b33a4781b64a58d",
+      "declared_digest": "09bade4edd6a70fb6fc79228a78f4a1ed4e9013de61b6c5cac2faf968ca45726",
+      "stale": {
+        "code": "DIGEST_MISMATCH",
+        "scope": "0bec528e-c1be-46ca-87b9-b0527a159639",
+        "message": "0bec528e-c1be-46ca-87b9-b0527a159639:DIGEST_MISMATCH: declared SHA-256 differs from received canonical content"
+      },
+      "corrected_digest": {
+        "code": "INVALID_SELECTION",
+        "scope": "selection_scope",
+        "message": "selection_scope:INVALID_SELECTION: canonical unique set arrays required"
+      }
+    },
+    {
+      "vector": "resource_keys-permutation-bytes.json",
+      "input_bytes": 2350,
+      "input_sha256": "4c30d45962e83b1fdecd2fd569cfa8a336be3260c579cade0fa9ee8091092a73",
+      "carrier": "bytes",
+      "canonical_control": "accepted unchanged",
+      "actual_received_digest": "b6ae2fd362f0c2e86dd895014b6794783887dcff7cf49d40e47df07534074e26",
+      "declared_digest": "09bade4edd6a70fb6fc79228a78f4a1ed4e9013de61b6c5cac2faf968ca45726",
+      "stale": {
+        "code": "DIGEST_MISMATCH",
+        "scope": "0bec528e-c1be-46ca-87b9-b0527a159639",
+        "message": "0bec528e-c1be-46ca-87b9-b0527a159639:DIGEST_MISMATCH: declared SHA-256 differs from received canonical content"
+      },
+      "corrected_digest": {
+        "code": "INVALID_SELECTION",
+        "scope": "selection_scope",
+        "message": "selection_scope:INVALID_SELECTION: canonical unique set arrays required"
+      }
+    },
+    {
+      "vector": "resource_keys-permutation-dict.json",
+      "input_bytes": 2350,
+      "input_sha256": "4c30d45962e83b1fdecd2fd569cfa8a336be3260c579cade0fa9ee8091092a73",
+      "carrier": "dict",
+      "canonical_control": "accepted unchanged",
+      "actual_received_digest": "b6ae2fd362f0c2e86dd895014b6794783887dcff7cf49d40e47df07534074e26",
+      "declared_digest": "09bade4edd6a70fb6fc79228a78f4a1ed4e9013de61b6c5cac2faf968ca45726",
+      "stale": {
+        "code": "DIGEST_MISMATCH",
+        "scope": "0bec528e-c1be-46ca-87b9-b0527a159639",
+        "message": "0bec528e-c1be-46ca-87b9-b0527a159639:DIGEST_MISMATCH: declared SHA-256 differs from received canonical content"
+      },
+      "corrected_digest": {
+        "code": "INVALID_SELECTION",
+        "scope": "selection_scope",
+        "message": "selection_scope:INVALID_SELECTION: canonical unique set arrays required"
+      }
+    },
+    {
+      "vector": "resource_keys-permutation-str.json",
+      "input_bytes": 2350,
+      "input_sha256": "4c30d45962e83b1fdecd2fd569cfa8a336be3260c579cade0fa9ee8091092a73",
+      "carrier": "str",
+      "canonical_control": "accepted unchanged",
+      "actual_received_digest": "b6ae2fd362f0c2e86dd895014b6794783887dcff7cf49d40e47df07534074e26",
+      "declared_digest": "09bade4edd6a70fb6fc79228a78f4a1ed4e9013de61b6c5cac2faf968ca45726",
+      "stale": {
+        "code": "DIGEST_MISMATCH",
+        "scope": "0bec528e-c1be-46ca-87b9-b0527a159639",
+        "message": "0bec528e-c1be-46ca-87b9-b0527a159639:DIGEST_MISMATCH: declared SHA-256 differs from received canonical content"
+      },
+      "corrected_digest": {
+        "code": "INVALID_SELECTION",
+        "scope": "selection_scope",
+        "message": "selection_scope:INVALID_SELECTION: canonical unique set arrays required"
+      }
+    },
+    {
+      "vector": "source_uuidv4s-duplicate-bytes.json",
+      "input_bytes": 2154,
+      "input_sha256": "14d4e8c939e1474c7753a06520d1e49e1f17daa6fa2ba6d07001e516b2e9e9e4",
+      "carrier": "bytes",
+      "canonical_control": "accepted unchanged",
+      "actual_received_digest": "62cc44eebe475d530f58df29c25f13193ab810ccd4acd4914cb40a670b3d9136",
+      "declared_digest": "437e9bb615f52b44a5e91aca0bd7647b8ac11cf396aa6fe868685d0770d3fd14",
+      "stale": {
+        "code": "DIGEST_MISMATCH",
+        "scope": "0bec528e-c1be-46ca-87b9-b0527a159639",
+        "message": "0bec528e-c1be-46ca-87b9-b0527a159639:DIGEST_MISMATCH: declared SHA-256 differs from received canonical content"
+      },
+      "corrected_digest": {
+        "code": "INVALID_SELECTION",
+        "scope": "selection_scope",
+        "message": "selection_scope:INVALID_SELECTION: canonical unique set arrays required"
+      }
+    },
+    {
+      "vector": "source_uuidv4s-duplicate-dict.json",
+      "input_bytes": 2154,
+      "input_sha256": "14d4e8c939e1474c7753a06520d1e49e1f17daa6fa2ba6d07001e516b2e9e9e4",
+      "carrier": "dict",
+      "canonical_control": "accepted unchanged",
+      "actual_received_digest": "62cc44eebe475d530f58df29c25f13193ab810ccd4acd4914cb40a670b3d9136",
+      "declared_digest": "437e9bb615f52b44a5e91aca0bd7647b8ac11cf396aa6fe868685d0770d3fd14",
+      "stale": {
+        "code": "DIGEST_MISMATCH",
+        "scope": "0bec528e-c1be-46ca-87b9-b0527a159639",
+        "message": "0bec528e-c1be-46ca-87b9-b0527a159639:DIGEST_MISMATCH: declared SHA-256 differs from received canonical content"
+      },
+      "corrected_digest": {
+        "code": "INVALID_SELECTION",
+        "scope": "selection_scope",
+        "message": "selection_scope:INVALID_SELECTION: canonical unique set arrays required"
+      }
+    },
+    {
+      "vector": "source_uuidv4s-duplicate-str.json",
+      "input_bytes": 2154,
+      "input_sha256": "14d4e8c939e1474c7753a06520d1e49e1f17daa6fa2ba6d07001e516b2e9e9e4",
+      "carrier": "str",
+      "canonical_control": "accepted unchanged",
+      "actual_received_digest": "62cc44eebe475d530f58df29c25f13193ab810ccd4acd4914cb40a670b3d9136",
+      "declared_digest": "437e9bb615f52b44a5e91aca0bd7647b8ac11cf396aa6fe868685d0770d3fd14",
+      "stale": {
+        "code": "DIGEST_MISMATCH",
+        "scope": "0bec528e-c1be-46ca-87b9-b0527a159639",
+        "message": "0bec528e-c1be-46ca-87b9-b0527a159639:DIGEST_MISMATCH: declared SHA-256 differs from received canonical content"
+      },
+      "corrected_digest": {
+        "code": "INVALID_SELECTION",
+        "scope": "selection_scope",
+        "message": "selection_scope:INVALID_SELECTION: canonical unique set arrays required"
+      }
+    },
+    {
+      "vector": "source_uuidv4s-permutation-bytes.json",
+      "input_bytes": 2106,
+      "input_sha256": "0f97fc4fbd96bc6a86bdbf644c1c7cf0743776910cc7594b3310e7081075044c",
+      "carrier": "bytes",
+      "canonical_control": "accepted unchanged",
+      "actual_received_digest": "8c4f45a1e670f9bc98fbc388545e985094ce10ec50b6b2fb1b631ab283f96ac9",
+      "declared_digest": "437e9bb615f52b44a5e91aca0bd7647b8ac11cf396aa6fe868685d0770d3fd14",
+      "stale": {
+        "code": "DIGEST_MISMATCH",
+        "scope": "0bec528e-c1be-46ca-87b9-b0527a159639",
+        "message": "0bec528e-c1be-46ca-87b9-b0527a159639:DIGEST_MISMATCH: declared SHA-256 differs from received canonical content"
+      },
+      "corrected_digest": {
+        "code": "INVALID_SELECTION",
+        "scope": "selection_scope",
+        "message": "selection_scope:INVALID_SELECTION: canonical unique set arrays required"
+      }
+    },
+    {
+      "vector": "source_uuidv4s-permutation-dict.json",
+      "input_bytes": 2106,
+      "input_sha256": "0f97fc4fbd96bc6a86bdbf644c1c7cf0743776910cc7594b3310e7081075044c",
+      "carrier": "dict",
+      "canonical_control": "accepted unchanged",
+      "actual_received_digest": "8c4f45a1e670f9bc98fbc388545e985094ce10ec50b6b2fb1b631ab283f96ac9",
+      "declared_digest": "437e9bb615f52b44a5e91aca0bd7647b8ac11cf396aa6fe868685d0770d3fd14",
+      "stale": {
+        "code": "DIGEST_MISMATCH",
+        "scope": "0bec528e-c1be-46ca-87b9-b0527a159639",
+        "message": "0bec528e-c1be-46ca-87b9-b0527a159639:DIGEST_MISMATCH: declared SHA-256 differs from received canonical content"
+      },
+      "corrected_digest": {
+        "code": "INVALID_SELECTION",
+        "scope": "selection_scope",
+        "message": "selection_scope:INVALID_SELECTION: canonical unique set arrays required"
+      }
+    },
+    {
+      "vector": "source_uuidv4s-permutation-str.json",
+      "input_bytes": 2106,
+      "input_sha256": "0f97fc4fbd96bc6a86bdbf644c1c7cf0743776910cc7594b3310e7081075044c",
+      "carrier": "str",
+      "canonical_control": "accepted unchanged",
+      "actual_received_digest": "8c4f45a1e670f9bc98fbc388545e985094ce10ec50b6b2fb1b631ab283f96ac9",
+      "declared_digest": "437e9bb615f52b44a5e91aca0bd7647b8ac11cf396aa6fe868685d0770d3fd14",
+      "stale": {
+        "code": "DIGEST_MISMATCH",
+        "scope": "0bec528e-c1be-46ca-87b9-b0527a159639",
+        "message": "0bec528e-c1be-46ca-87b9-b0527a159639:DIGEST_MISMATCH: declared SHA-256 differs from received canonical content"
+      },
+      "corrected_digest": {
+        "code": "INVALID_SELECTION",
+        "scope": "selection_scope",
+        "message": "selection_scope:INVALID_SELECTION: canonical unique set arrays required"
+      }
+    }
+  ]
+}

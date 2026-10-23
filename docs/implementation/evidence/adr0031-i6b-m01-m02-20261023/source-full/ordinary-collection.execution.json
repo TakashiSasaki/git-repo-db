@@ -1,0 +1,20 @@
+{
+  "command": [
+    "/workspace/i6b-fix-work/final/.venv/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "--collect-only",
+    "-o",
+    "addopts=",
+    "tests",
+    "-m",
+    "not live and not benchmark"
+  ],
+  "cwd": "/workspace/i6b-fix-work/final",
+  "started_epoch": 1792764240.4363916,
+  "elapsed_seconds": 8.732,
+  "exit_code": 0,
+  "collected": 6342,
+  "duplicates": 0
+}

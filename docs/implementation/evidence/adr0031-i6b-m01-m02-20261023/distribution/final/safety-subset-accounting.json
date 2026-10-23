@@ -1,0 +1,15 @@
+{
+  "scope": "I4 and I5 are subsets of each safety626 invocation, not additional tests",
+  "results": {
+    "direct": {
+      "selected": 626,
+      "I4": 217,
+      "I5": 29
+    },
+    "derived": {
+      "selected": 626,
+      "I4": 217,
+      "I5": 29
+    }
+  }
+}

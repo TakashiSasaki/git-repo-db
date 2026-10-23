@@ -1,0 +1,24 @@
+{
+  "execution_head": "d68dc43bff1eb949b071ebf1652e3d70a5a52ed9",
+  "checked_with": "git rev-list execution HEAD; direct SHA membership, no sibling merge",
+  "siblings": [
+    {
+      "pr": 144,
+      "head": "ededcd83eb2d99a602ba18c8fe3c177125c825ac",
+      "branch": "review/adr0033-hardening-rereview-20261023",
+      "is_ancestor_of_execution": false
+    },
+    {
+      "pr": 147,
+      "head": "e7762952e18061de8c8235beaeddf42f20ad9f5a",
+      "branch": "review/c0-e1-independent-20261023",
+      "is_ancestor_of_execution": false
+    },
+    {
+      "pr": 150,
+      "head": "4fc00b1fbc57f10f6c0c6352dee702e1738f65b7",
+      "branch": "audit/parallel-pr-stack-task-b-20261023",
+      "is_ancestor_of_execution": false
+    }
+  ]
+}
