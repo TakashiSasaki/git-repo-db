@@ -1,0 +1,69 @@
+{
+  "scope": "existing domain codec/types only; no v5 product behavior tested",
+  "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+  "executable": "/tmp/task-b-venv/bin/python",
+  "sqlite": "3.53.1",
+  "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+  "checks": [
+    {
+      "name": "meaningful empties distinct",
+      "status": "pass"
+    },
+    {
+      "name": "unicode canonical ASCII",
+      "status": "pass"
+    },
+    {
+      "name": "reject ID ' \"D\" '",
+      "status": "pass"
+    },
+    {
+      "name": "reject ID '\"\\\\u0044\"'",
+      "status": "pass"
+    },
+    {
+      "name": "reject ID '\"\u00e9\"'",
+      "status": "pass"
+    },
+    {
+      "name": "reject ID '7'",
+      "status": "pass"
+    },
+    {
+      "name": "reject ID 'true'",
+      "status": "pass"
+    },
+    {
+      "name": "reject ID 'null'",
+      "status": "pass"
+    },
+    {
+      "name": "reject ID '[1]'",
+      "status": "pass"
+    },
+    {
+      "name": "reject ID '{}'",
+      "status": "pass"
+    },
+    {
+      "name": "global document four columns",
+      "status": "pass"
+    },
+    {
+      "name": "scoped explicit declaration canonical profile",
+      "status": "pass"
+    },
+    {
+      "name": "generic members retain order",
+      "status": "pass"
+    },
+    {
+      "name": "empty complete and empty partial terminals distinct",
+      "status": "pass"
+    },
+    {
+      "name": "source inventory sorted set order",
+      "status": "pass"
+    }
+  ]
+}

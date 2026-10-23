@@ -1,0 +1,37 @@
+{
+  "reviewed_head": "418ee68046fdfd03a0e84cc840e5d52fce176b81",
+  "reviewed_tree": "476d32923c9be5e3b60e4e17c8828e3646611c43",
+  "verdict": "DESIGN_PASS_I6_A_MAY_START",
+  "product_acceptance": false,
+  "new_design_findings": [
+    {
+      "id": "I6-L1",
+      "severity": "Low",
+      "status": "OPEN_NONBLOCKING_TEST_SPECIFICITY",
+      "requirements": ["R10", "R11"],
+      "vectors": ["V08"],
+      "tests": ["T07", "T08", "T26"],
+      "evidence": [
+        "docs/implementation/adr0031-i6-wire-admission-exchange.md:296-305",
+        "docs/implementation/adr0031-i6-vectors-and-tests.md:218-219",
+        "docs/implementation/adr0031-i6-vectors-and-tests.md:237",
+        "src/repo_catalog/adapters/sqlite/p1_context.py:333 (AdmissionContext not yet implemented)"
+      ],
+      "counterexample": "A future implementation checks a supplied authorizer and passes deny-all/missing-context tests, but accepts a foreign allow-all policy handle or caller-chosen privileged principal. Initial and exact replay may then succeed. This is a test-plan counterexample, not an executed I6 product defect.",
+      "gap": "R10 explicitly prohibits both substitutions, but T07/T26 do not enumerate these direct API attacks. Sender permission forgery and deny-all injection do not necessarily exercise context-origin validation.",
+      "required_contract_change": "No substantive R10/ADR change. Enumerate foreign-policy-handle and forged-principal negative cases in the implementation's T07/T26 mapping.",
+      "rereview_condition": "Frozen I6-A independently refuses both attacks before dependency lookups/writes and before replay duplicate success, records zero row delta/no denied existence disclosure, and demonstrates that the substituted policy service is not invoked as authority.",
+      "blocks_i6_a_start": false,
+      "blocks_i6_a_acceptance_without_r10_evidence": true
+    }
+  ],
+  "existing_product_carryovers": [
+    {"id":"I5-A1","severity":"Medium","design_status":"CLOSED_BY_R10_R11_R12_R14","product_status":"OPEN_REPRODUCED","evidence":"raw/review-probes.json#B-A1"},
+    {"id":"I5-B1","severity":"Medium","design_status":"CLOSED_BY_R08","product_status":"OPEN_REPRODUCED","evidence":"raw/review-probes.json#B-B1"},
+    {"id":"I5-C1","severity":"Medium","design_status":"CLOSED_BY_R09","product_status":"OPEN_REPRODUCED","evidence":"raw/review-probes.json#B-C1"},
+    {"id":"I5-D1","severity":"Low","product_status":"EXISTING_SQL_ROLLBACK_CONFIRMED","evidence":"raw/review-probes.json#B-D1"},
+    {"id":"I5-F1","severity":"Low","design_status":"CORRECTED_CONTRACT_R16","product_status":"ASYMMETRIC_HELPER_REPRODUCED_SCHEMA_MITIGATION","evidence":"raw/sql-probes.json"},
+    {"id":"Task G G-R1","severity":"Medium","product_status":"OPEN_I7_NOT_EXECUTED"},
+    {"id":"I4-E1","severity":"Low","product_status":"OPEN_EVIDENCE_SCOPE_CARRYOVER_R19_T24"}
+  ]
+}
