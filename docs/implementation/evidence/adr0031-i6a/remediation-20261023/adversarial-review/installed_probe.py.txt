@@ -1,0 +1,27 @@
+import pathlib,sys,os,json,subprocess,hashlib,shutil
+ROOT=pathlib.Path('/workspace/i6a-after');sys.path.insert(0,str(ROOT));from scripts import installed_test_harness as h
+OUT=pathlib.Path('/workspace/i6a-runs/adversarial-review');base=OUT/'ancestor';base.mkdir(exist_ok=False)
+(base/'pyproject.toml').write_text('[tool.pytest.ini_options]\npythonpath=["/workspace/i6a-after/src"]\n')
+runtime=json.loads(pathlib.Path('/workspace/i6a-runs/installed-after/direct-runtime.json').read_text());py=pathlib.Path(runtime['executable']);expected=runtime['installed_files'];results=[]
+for name in ['positive-explicit-config','late-source-injection','wrong-wheel-map']:
+ outside=base/name;outside.mkdir();h.stage_support(ROOT,outside);bindings=dict(expected)
+ if name=='wrong-wheel-map':bindings['__init__.py']='0'*64
+ h.bind_artifact(outside,bindings)
+ guard=outside/'guard';guard.mkdir();shutil.copyfile(ROOT/'tests/support/network_guard/sitecustomize.py',guard/'sitecustomize.py')
+ code='import repo_catalog\ndef test_probe():\n    assert True\n'
+ if name=='late-source-injection':
+  shadow=outside/'shadow';shadow.mkdir();(shadow/'foreign_probe.py').write_text('VALUE=23\n')
+  code='import repo_catalog\ndef test_probe():\n    repo_catalog.__path__.insert(0,'+repr(str(shadow))+')\n    import repo_catalog.foreign_probe\n    assert repo_catalog.foreign_probe.VALUE==23\n'
+ (outside/'test_probe.py').write_text(code)
+ env=dict(os.environ,PYTHONPATH=str(guard),PYTEST_DISABLE_PLUGIN_AUTOLOAD='1',REPO_CATALOG_IMPORT_RECEIPT=str(OUT/(name+'-imports.json')))
+ for c in ['GH_TOKEN','GITHUB_TOKEN','PYTHONHOME']:env.pop(c,None)
+ cmd=[str(py),'-m','pytest','-q','-c',str(outside/'pytest.ini'),'--rootdir='+str(outside),'--confcutdir='+str(outside),'test_probe.py']
+ r=subprocess.run(cmd,cwd=outside,env=env,capture_output=True,text=True)
+ (OUT/(name+'.log')).write_text(r.stdout+r.stderr)
+ if name=='positive-explicit-config':
+  assert r.returncode==0,r.stdout+r.stderr
+  receipts=json.loads((OUT/(name+'-imports.json')).read_text());assert [x['phase'] for x in receipts]==['sessionstart','sessionfinish'];assert all(x['origin']==str(pathlib.Path(runtime['origin']).parent) for x in receipts)
+ else:assert r.returncode!=0 and 'AssertionError' in r.stdout+r.stderr,r.stdout+r.stderr
+ results.append({'name':name,'command':cmd,'cwd':str(outside),'exit_code':r.returncode,'expected_exit':'0' if name=='positive-explicit-config' else 'nonzero'})
+(OUT/'installed-probe-result.json').write_text(json.dumps({'source_head':'423e34504b2a9686c94f971f37c164449a28fe31','runtime':runtime['origin'],'cases':results},indent=2)+'\n')
+print(json.dumps(results))

@@ -1,0 +1,319 @@
+{
+  "base": "f5dc409429cdb69955b55e3c27a7ef3c163762fb",
+  "source_head": "93d9927ae801d5402aab0aa0c7c270eeab2809e6",
+  "source_tree": "0c8a50e7cc23b98c6e7e2d1e6066077cbe8d203a",
+  "changed_files": [
+    ".agents/skills/ci-final-tree-verification/SKILL.md",
+    ".github/workflows/access-registry.yml",
+    "scripts/classify_i6a_regressions.py",
+    "scripts/installed_test_harness.py",
+    "scripts/verify_access_distribution.py",
+    "scripts/verify_i2_distribution.py",
+    "scripts/verify_i3_distribution.py",
+    "scripts/verify_i4_distribution.py",
+    "scripts/verify_i5_distribution.py",
+    "src/repo_catalog/adapters/sqlite/context_admission.py",
+    "src/repo_catalog/adapters/sqlite/production_context.py",
+    "tests/integration/access/test_context_boundary.py",
+    "tests/integration/i3/test_selective_exchange.py",
+    "tests/integration/p1/test_context.py",
+    "tests/integration/p1/test_context_relations.py",
+    "tests/integration/p1/test_coordination.py",
+    "tests/integration/p1/test_derivatives.py",
+    "tests/integration/p1/test_fixture_authority.py",
+    "tests/integration/p1/test_generalized_resources.py",
+    "tests/integration/p1/test_validation_stop.py",
+    "tests/integration/p2/test_native.py",
+    "tests/integration/p2_p3_compatibility/test_production_pair.py",
+    "tests/integration/p3/test_production_context.py",
+    "tests/integration/p5/test_exchange.py",
+    "tests/integration/p6/conftest.py",
+    "tests/integration/p6/test_corrections.py",
+    "tests/integration/p6/test_pagination_snapshots.py",
+    "tests/integration/p7/conftest.py",
+    "tests/integration/p7/test_missing_required_authority.py",
+    "tests/integration/p7/test_process_isolation.py",
+    "tests/integration/p7/test_source_diagnosis.py",
+    "tests/integration/p7/test_stored_constraints.py",
+    "tests/packaging/test_p1_distribution.py",
+    "tests/packaging/test_p3_distribution.py",
+    "tests/packaging/test_p6_distribution.py",
+    "tests/support/authorized_context.py",
+    "tests/support/context_admission.py",
+    "tests/unit/test_context_capability_preflight.py",
+    "tests/unit/test_context_coordinator_admission.py",
+    "tests/unit/test_context_fixture_authority.py",
+    "tests/unit/test_installed_test_harness.py"
+  ],
+  "product_changes": [
+    "src/repo_catalog/adapters/sqlite/context_admission.py",
+    "src/repo_catalog/adapters/sqlite/production_context.py"
+  ],
+  "protected_input_changes": [],
+  "added_skip_xfail_lines": [],
+  "assertion_inventory": [
+    {
+      "path": "tests/integration/access/test_context_boundary.py",
+      "old_assertions": 28,
+      "new_assertions": 28,
+      "removed_or_replaced_assertion_asts": [],
+      "added_assertion_asts": []
+    },
+    {
+      "path": "tests/integration/i3/test_selective_exchange.py",
+      "old_assertions": 96,
+      "new_assertions": 96,
+      "removed_or_replaced_assertion_asts": [],
+      "added_assertion_asts": []
+    },
+    {
+      "path": "tests/integration/p1/test_context.py",
+      "old_assertions": 47,
+      "new_assertions": 47,
+      "removed_or_replaced_assertion_asts": [
+        "Assert(test=Compare(left=Call(func=Name(id='sorted', ctx=Load()), args=[GeneratorExp(elt=Attribute(value=Name(id='p', ctx=Load()), attr='name', ctx=Load()), generators=[comprehension(target=Name(id='p', ctx=Store()), iter=Call(func=Attribute(value=Attribute(value=Name(id='path', ctx=Load()), attr='parent', ctx=Load()), attr='iterdir', ctx=Load()), args=[], keywords=[]), ifs=[], is_async=0)])], keywords=[]), ops=[Eq()], comparators=[List(elts=[Constant(value='context.sqlite3')], ctx=Load())]))"
+      ],
+      "added_assertion_asts": [
+        "Assert(test=Compare(left=Call(func=Name(id='sorted', ctx=Load()), args=[GeneratorExp(elt=Attribute(value=Name(id='p', ctx=Load()), attr='name', ctx=Load()), generators=[comprehension(target=Name(id='p', ctx=Store()), iter=Call(func=Attribute(value=Attribute(value=Name(id='path', ctx=Load()), attr='parent', ctx=Load()), attr='iterdir', ctx=Load()), args=[], keywords=[]), ifs=[], is_async=0)])], keywords=[]), ops=[Eq()], comparators=[List(elts=[Constant(value='context.sqlite3'), Constant(value='p1-writer.lock')], ctx=Load())]))"
+      ]
+    },
+    {
+      "path": "tests/integration/p1/test_context_relations.py",
+      "old_assertions": 104,
+      "new_assertions": 104,
+      "removed_or_replaced_assertion_asts": [],
+      "added_assertion_asts": []
+    },
+    {
+      "path": "tests/integration/p1/test_coordination.py",
+      "old_assertions": 63,
+      "new_assertions": 63,
+      "removed_or_replaced_assertion_asts": [],
+      "added_assertion_asts": []
+    },
+    {
+      "path": "tests/integration/p1/test_derivatives.py",
+      "old_assertions": 27,
+      "new_assertions": 27,
+      "removed_or_replaced_assertion_asts": [],
+      "added_assertion_asts": []
+    },
+    {
+      "path": "tests/integration/p1/test_fixture_authority.py",
+      "old_assertions": 0,
+      "new_assertions": 12,
+      "removed_or_replaced_assertion_asts": [],
+      "added_assertion_asts": [
+        "Assert(test=Compare(left=Attribute(value=Attribute(value=Name(id='store', ctx=Load()), attr='policy', ctx=Load()), attr='grants', ctx=Load()), ops=[Is()], comparators=[Name(id='grants', ctx=Load())]))",
+        "Assert(test=UnaryOp(op=Not(), operand=Call(func=Attribute(value=Call(func=Attribute(value=Name(id='db', ctx=Load()), attr='execute', ctx=Load()), args=[Constant(value='SELECT 1 FROM resources')], keywords=[]), attr='fetchall', ctx=Load()), args=[], keywords=[])))",
+        "Assert(test=UnaryOp(op=Not(), operand=Call(func=Attribute(value=Call(func=Attribute(value=Name(id='db', ctx=Load()), attr='execute', ctx=Load()), args=[Constant(value='SELECT 1 FROM resources')], keywords=[]), attr='fetchall', ctx=Load()), args=[], keywords=[])))",
+        "Assert(test=UnaryOp(op=Not(), operand=Call(func=Attribute(value=Call(func=Attribute(value=Name(id='db', ctx=Load()), attr='execute', ctx=Load()), args=[Constant(value='SELECT 1 FROM resources')], keywords=[]), attr='fetchall', ctx=Load()), args=[], keywords=[])))",
+        "Assert(test=UnaryOp(op=Not(), operand=Call(func=Attribute(value=Call(func=Attribute(value=Name(id='db', ctx=Load()), attr='execute', ctx=Load()), args=[Constant(value='SELECT 1 FROM resources')], keywords=[]), attr='fetchall', ctx=Load()), args=[], keywords=[])))",
+        "Assert(test=Compare(left=Attribute(value=Attribute(value=Name(id='store', ctx=Load()), attr='policy', ctx=Load()), attr='active', ctx=Load()), ops=[Eq()], comparators=[Constant(value=0)]))",
+        "Assert(test=Compare(left=Attribute(value=Attribute(value=Name(id='store', ctx=Load()), attr='policy', ctx=Load()), attr='active', ctx=Load()), ops=[Eq()], comparators=[Constant(value=0)]))",
+        "Assert(test=UnaryOp(op=Not(), operand=Attribute(value=Name(id='db', ctx=Load()), attr='in_transaction', ctx=Load())))",
+        "Assert(test=UnaryOp(op=Not(), operand=Attribute(value=Name(id='db', ctx=Load()), attr='in_transaction', ctx=Load())))",
+        "Assert(test=UnaryOp(op=Not(), operand=Attribute(value=Name(id='db', ctx=Load()), attr='in_transaction', ctx=Load())))",
+        "Assert(test=Compare(left=Name(id='inserted', ctx=Load()), ops=[Eq()], comparators=[List(elts=[Constant(value=1)], ctx=Load())]))",
+        "Assert(test=Attribute(value=Name(id='db', ctx=Load()), attr='in_transaction', ctx=Load()))"
+      ]
+    },
+    {
+      "path": "tests/integration/p1/test_generalized_resources.py",
+      "old_assertions": 40,
+      "new_assertions": 40,
+      "removed_or_replaced_assertion_asts": [],
+      "added_assertion_asts": []
+    },
+    {
+      "path": "tests/integration/p1/test_validation_stop.py",
+      "old_assertions": 4,
+      "new_assertions": 4,
+      "removed_or_replaced_assertion_asts": [],
+      "added_assertion_asts": []
+    },
+    {
+      "path": "tests/integration/p2/test_native.py",
+      "old_assertions": 107,
+      "new_assertions": 107,
+      "removed_or_replaced_assertion_asts": [],
+      "added_assertion_asts": []
+    },
+    {
+      "path": "tests/integration/p2_p3_compatibility/test_production_pair.py",
+      "old_assertions": 63,
+      "new_assertions": 63,
+      "removed_or_replaced_assertion_asts": [
+        "Assert(test=Compare(left=Call(func=Attribute(value=Name(id='coordinator', ctx=Load()), attr='admit', ctx=Load()), args=[Call(func=Name(id='core_unit', ctx=Load()), args=[Name(id='oid', ctx=Load()), Name(id='capture', ctx=Load())], keywords=[]), Name(id='original_context', ctx=Load())], keywords=[]), ops=[Eq()], comparators=[Call(func=Name(id='PairAdmission', ctx=Load()), args=[Constant(value=True), Constant(value=True)], keywords=[])]))"
+      ],
+      "added_assertion_asts": [
+        "Assert(test=Compare(left=Call(func=Name(id='admit_pair', ctx=Load()), args=[Name(id='coordinator', ctx=Load()), Call(func=Name(id='core_unit', ctx=Load()), args=[Name(id='oid', ctx=Load()), Name(id='capture', ctx=Load())], keywords=[]), Name(id='original_context', ctx=Load())], keywords=[]), ops=[Eq()], comparators=[Call(func=Name(id='PairAdmission', ctx=Load()), args=[Constant(value=True), Constant(value=True)], keywords=[])]))"
+      ]
+    },
+    {
+      "path": "tests/integration/p3/test_production_context.py",
+      "old_assertions": 132,
+      "new_assertions": 134,
+      "removed_or_replaced_assertion_asts": [],
+      "added_assertion_asts": [
+        "Assert(test=Compare(left=Call(func=Attribute(value=Call(func=Attribute(value=Attribute(value=Name(id='store', ctx=Load()), attr='db', ctx=Load()), attr='execute', ctx=Load()), args=[Constant(value='SELECT count(*) FROM collections')], keywords=[]), attr='fetchone', ctx=Load()), args=[], keywords=[]), ops=[Eq()], comparators=[Tuple(elts=[Constant(value=0)], ctx=Load())]))",
+        "Assert(test=UnaryOp(op=Not(), operand=Call(func=Attribute(value=BinOp(left=Attribute(value=Name(id='store', ctx=Load()), attr='directory', ctx=Load()), op=Div(), right=Constant(value='p1-recovery-stop.json')), attr='exists', ctx=Load()), args=[], keywords=[])))"
+      ]
+    },
+    {
+      "path": "tests/integration/p5/test_exchange.py",
+      "old_assertions": 33,
+      "new_assertions": 33,
+      "removed_or_replaced_assertion_asts": [],
+      "added_assertion_asts": []
+    },
+    {
+      "path": "tests/integration/p6/conftest.py",
+      "old_assertions": 2,
+      "new_assertions": 2,
+      "removed_or_replaced_assertion_asts": [],
+      "added_assertion_asts": []
+    },
+    {
+      "path": "tests/integration/p6/test_corrections.py",
+      "old_assertions": 40,
+      "new_assertions": 40,
+      "removed_or_replaced_assertion_asts": [],
+      "added_assertion_asts": []
+    },
+    {
+      "path": "tests/integration/p6/test_pagination_snapshots.py",
+      "old_assertions": 32,
+      "new_assertions": 32,
+      "removed_or_replaced_assertion_asts": [],
+      "added_assertion_asts": []
+    },
+    {
+      "path": "tests/integration/p7/conftest.py",
+      "old_assertions": 0,
+      "new_assertions": 0,
+      "removed_or_replaced_assertion_asts": [],
+      "added_assertion_asts": []
+    },
+    {
+      "path": "tests/integration/p7/test_missing_required_authority.py",
+      "old_assertions": 11,
+      "new_assertions": 11,
+      "removed_or_replaced_assertion_asts": [],
+      "added_assertion_asts": []
+    },
+    {
+      "path": "tests/integration/p7/test_process_isolation.py",
+      "old_assertions": 41,
+      "new_assertions": 41,
+      "removed_or_replaced_assertion_asts": [],
+      "added_assertion_asts": []
+    },
+    {
+      "path": "tests/integration/p7/test_source_diagnosis.py",
+      "old_assertions": 31,
+      "new_assertions": 31,
+      "removed_or_replaced_assertion_asts": [],
+      "added_assertion_asts": []
+    },
+    {
+      "path": "tests/integration/p7/test_stored_constraints.py",
+      "old_assertions": 9,
+      "new_assertions": 9,
+      "removed_or_replaced_assertion_asts": [],
+      "added_assertion_asts": []
+    },
+    {
+      "path": "tests/packaging/test_p1_distribution.py",
+      "old_assertions": 4,
+      "new_assertions": 4,
+      "removed_or_replaced_assertion_asts": [],
+      "added_assertion_asts": []
+    },
+    {
+      "path": "tests/packaging/test_p3_distribution.py",
+      "old_assertions": 1,
+      "new_assertions": 1,
+      "removed_or_replaced_assertion_asts": [],
+      "added_assertion_asts": []
+    },
+    {
+      "path": "tests/packaging/test_p6_distribution.py",
+      "old_assertions": 0,
+      "new_assertions": 0,
+      "removed_or_replaced_assertion_asts": [],
+      "added_assertion_asts": []
+    },
+    {
+      "path": "tests/support/authorized_context.py",
+      "old_assertions": 0,
+      "new_assertions": 0,
+      "removed_or_replaced_assertion_asts": [],
+      "added_assertion_asts": []
+    },
+    {
+      "path": "tests/support/context_admission.py",
+      "old_assertions": 0,
+      "new_assertions": 0,
+      "removed_or_replaced_assertion_asts": [],
+      "added_assertion_asts": []
+    },
+    {
+      "path": "tests/unit/test_context_capability_preflight.py",
+      "old_assertions": 0,
+      "new_assertions": 8,
+      "removed_or_replaced_assertion_asts": [],
+      "added_assertion_asts": [
+        "Assert(test=Compare(left=Attribute(value=Attribute(value=Name(id='refused', ctx=Load()), attr='value', ctx=Load()), attr='code', ctx=Load()), ops=[Eq()], comparators=[Name(id='code', ctx=Load())]))",
+        "Assert(test=Compare(left=Name(id='validations', ctx=Load()), ops=[Eq()], comparators=[List(elts=[], ctx=Load())]))",
+        "Assert(test=BoolOp(op=And(), values=[Compare(left=Attribute(value=Name(id='policy', ctx=Load()), attr='calls', ctx=Load()), ops=[Eq()], comparators=[List(elts=[], ctx=Load())]), Compare(left=Attribute(value=Name(id='foreign_policy', ctx=Load()), attr='calls', ctx=Load()), ops=[Eq()], comparators=[List(elts=[], ctx=Load())])]))",
+        "Assert(test=Compare(left=Attribute(value=Name(id='storage', ctx=Load()), attr='lookups', ctx=Load()), ops=[Eq()], comparators=[Constant(value=0)]))",
+        "Assert(test=Compare(left=Attribute(value=Name(id='storage', ctx=Load()), attr='lookups', ctx=Load()), ops=[Eq()], comparators=[Constant(value=0)]))",
+        "Assert(test=Compare(left=Attribute(value=Attribute(value=Name(id='issued', ctx=Load()), attr='budget', ctx=Load()), attr='used_work', ctx=Load()), ops=[Eq(), Eq()], comparators=[Attribute(value=Attribute(value=Name(id='foreign_issued', ctx=Load()), attr='budget', ctx=Load()), attr='used_work', ctx=Load()), Constant(value=0)]))",
+        "Assert(test=Compare(left=Call(func=Name(id='len', ctx=Load()), args=[Attribute(value=Name(id='policy', ctx=Load()), attr='calls', ctx=Load())], keywords=[]), ops=[Eq()], comparators=[IfExp(test=Compare(left=Name(id='invocation', ctx=Load()), ops=[Eq()], comparators=[Constant(value='denied')]), body=Constant(value=1), orelse=Constant(value=0))]))",
+        "Assert(test=Compare(left=Attribute(value=Name(id='foreign_policy', ctx=Load()), attr='calls', ctx=Load()), ops=[Eq()], comparators=[List(elts=[], ctx=Load())]))"
+      ]
+    },
+    {
+      "path": "tests/unit/test_context_coordinator_admission.py",
+      "old_assertions": 29,
+      "new_assertions": 30,
+      "removed_or_replaced_assertion_asts": [],
+      "added_assertion_asts": [
+        "Assert(test=Compare(left=Attribute(value=Attribute(value=Name(id='refused', ctx=Load()), attr='value', ctx=Load()), attr='code', ctx=Load()), ops=[Eq()], comparators=[IfExp(test=Name(id='facade', ctx=Load()), body=Constant(value='CAPABILITY_EXPIRED'), orelse=Constant(value='PERMISSION_DENIED'))]))"
+      ]
+    },
+    {
+      "path": "tests/unit/test_context_fixture_authority.py",
+      "old_assertions": 0,
+      "new_assertions": 3,
+      "removed_or_replaced_assertion_asts": [],
+      "added_assertion_asts": [
+        "Assert(test=Compare(left=Attribute(value=Name(id='foreign_policy', ctx=Load()), attr='calls', ctx=Load()), ops=[Eq()], comparators=[List(elts=[], ctx=Load())]))",
+        "Assert(test=Compare(left=Call(func=Attribute(value=Call(func=Attribute(value=Attribute(value=Name(id='context', ctx=Load()), attr='db', ctx=Load()), attr='execute', ctx=Load()), args=[Constant(value='SELECT * FROM providers')], keywords=[]), attr='fetchall', ctx=Load()), args=[], keywords=[]), ops=[Eq()], comparators=[Name(id='before', ctx=Load())]))",
+        "Assert(test=UnaryOp(op=Not(), operand=Call(func=Attribute(value=Call(func=Attribute(value=Attribute(value=Name(id='context', ctx=Load()), attr='db', ctx=Load()), attr='execute', ctx=Load()), args=[Constant(value='SELECT * FROM providers')], keywords=[]), attr='fetchall', ctx=Load()), args=[], keywords=[])))"
+      ]
+    },
+    {
+      "path": "tests/unit/test_installed_test_harness.py",
+      "old_assertions": 0,
+      "new_assertions": 12,
+      "removed_or_replaced_assertion_asts": [],
+      "added_assertion_asts": [
+        "Assert(test=Compare(left=Attribute(value=Name(id='missing', ctx=Load()), attr='returncode', ctx=Load()), ops=[Eq()], comparators=[Constant(value=2)]), msg=BinOp(left=Attribute(value=Name(id='missing', ctx=Load()), attr='stdout', ctx=Load()), op=Add(), right=Attribute(value=Name(id='missing', ctx=Load()), attr='stderr', ctx=Load())))",
+        "Assert(test=Compare(left=Constant(value=\"No module named 'tests'\"), ops=[In()], comparators=[Attribute(value=Name(id='missing', ctx=Load()), attr='stdout', ctx=Load())]))",
+        "Assert(test=Compare(left=Attribute(value=Name(id='collected', ctx=Load()), attr='returncode', ctx=Load()), ops=[Eq()], comparators=[Constant(value=0)]), msg=BinOp(left=Attribute(value=Name(id='collected', ctx=Load()), attr='stdout', ctx=Load()), op=Add(), right=Attribute(value=Name(id='collected', ctx=Load()), attr='stderr', ctx=Load())))",
+        "Assert(test=Compare(left=Call(func=Name(id='len', ctx=Load()), args=[Name(id='nodes', ctx=Load())], keywords=[]), ops=[Eq()], comparators=[Name(id='required_count', ctx=Load())]))",
+        "Assert(test=Compare(left=Call(func=Name(id='set', ctx=Load()), args=[Name(id='staged', ctx=Load())], keywords=[]), ops=[Eq()], comparators=[Set(elts=[Starred(value=Attribute(value=Name(id='harness', ctx=Load()), attr='SUPPORT_FILES', ctx=Load()), ctx=Load()), Constant(value='installed_journal.py')])]))",
+        "Assert(test=UnaryOp(op=Not(), operand=Call(func=Attribute(value=BinOp(left=Name(id='outside', ctx=Load()), op=Div(), right=Constant(value='repo_catalog')), attr='exists', ctx=Load()), args=[], keywords=[])))",
+        "Assert(test=UnaryOp(op=Not(), operand=Call(func=Attribute(value=BinOp(left=Name(id='outside', ctx=Load()), op=Div(), right=Constant(value='src')), attr='exists', ctx=Load()), args=[], keywords=[])))",
+        "Assert(test=UnaryOp(op=Not(), operand=Call(func=Attribute(value=BinOp(left=Name(id='outside', ctx=Load()), op=Div(), right=Constant(value='tests/conftest.py')), attr='exists', ctx=Load()), args=[], keywords=[])))",
+        "Assert(test=Compare(left=Attribute(value=Name(id='result', ctx=Load()), attr='returncode', ctx=Load()), ops=[NotEq()], comparators=[Constant(value=0)]))",
+        "Assert(test=Compare(left=Constant(value='AssertionError'), ops=[In()], comparators=[BinOp(left=Attribute(value=Name(id='result', ctx=Load()), attr='stdout', ctx=Load()), op=Add(), right=Attribute(value=Name(id='result', ctx=Load()), attr='stderr', ctx=Load()))]))",
+        "Assert(test=Compare(left=Call(func=Name(id='str', ctx=Load()), args=[Name(id='shadow', ctx=Load())], keywords=[]), ops=[In()], comparators=[BinOp(left=Attribute(value=Name(id='result', ctx=Load()), attr='stdout', ctx=Load()), op=Add(), right=Attribute(value=Name(id='result', ctx=Load()), attr='stderr', ctx=Load()))]))",
+        "Assert(test=UnaryOp(op=Not(), operand=Call(func=Attribute(value=BinOp(left=Name(id='tmp_path', ctx=Load()), op=Div(), right=Constant(value='imports.json')), attr='exists', ctx=Load()), args=[], keywords=[])))"
+      ]
+    }
+  ],
+  "limits": "AST inventories do not establish execution or semantic equivalence; mapped replacements are reviewed in REPORT."
+}

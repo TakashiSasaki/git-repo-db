@@ -421,3 +421,45 @@ Its synthetic serial and xdist probes recorded two passing and one intentionally
 failing subtest, preserved all raw reports and rejected subtest acceptance. This
 procedure changes no product test, skip policy or historical receipt and does
 not turn a failing ordinary suite into acceptance.
+
+## Stage installed test support separately and bind pytest imports
+
+When copied artifact tests import `tests.support`, copy the explicit test package
+root and required support modules into the external harness. A product wheel
+must not acquire a `tests` package to repair a test collection error. Run outside
+the checkout with an explicit minimal pytest configuration: `--confcutdir` alone
+does not prevent pytest from finding an ancestor `pyproject.toml` whose
+`pythonpath = ["src"]` imports the checkout. Keep the offline network guard, but
+never add product source to `PYTHONPATH`.
+
+Check product origins and wheel file hashes inside pytest at session start and
+finish, as well as in the separate runtime probe. Collect first, then reconcile
+the actual selected IDs, JUnit cases and journal starts/phases; a collection error
+or equal passing counts cannot establish execution of the required cohort. Use
+the installed harness helper and its missing-support/shadow-product regression
+controls. Preserve the failed artifact-lane logs separately from corrected runs.
+
+For admission fixture migrations, declare finite identities and permissions at
+fixture composition. Never infer grants from an attempted mutation, expand them
+after refusal, or add an autouse unrestricted issuer. Keep the real product
+transaction owner and commit-held leases. A previous raw `BEGIN`/rollback test
+needs an explicit admission-owned rollback scope, not adoption of an arbitrary
+caller transaction. Verify out-of-grant refusal, unchanged grants and rows,
+revocation after an actual INSERT, rollback, and fixture expiry. File-backed
+admission legitimately creates the catalog writer lock; an exact directory
+assertion should still exclude extra stores while allowing that required lock.
+
+See the [I6-A remediation evidence](../../../docs/implementation/evidence/adr0031-i6a/remediation-20261023/REPORT.md).
+Fixture repair can expose a deeper Provider, Exchange or Recovery failure. Record
+the newly reached production callsite and its stage; reaching it is not acceptance
+of that stage and does not authorize opening its product route.
+
+Split pytest `::` components only before the first parameter `[` when deriving
+JUnit identities: a parameter can itself contain literal `::`. Keep embedded
+installed-child traceback frames as well as pytest's outer frames, and label a
+legacy source-only projection separately when comparing signatures. For actual
+assertion reachability, a counterexample-checked line tracer can distinguish a
+setup stop, an entered assertion and an unentered conditional/downstream line.
+Report statement-line entry only; it does not establish assertion subexpression
+coverage or execution in spawned threads/processes. Diagnostic repetitions stay
+separate from the exactly-once ordinary test aggregate.

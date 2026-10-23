@@ -1,0 +1,59 @@
+{
+  "command": [
+    "/workspace/i6a-before/.venv/bin/python",
+    "-m",
+    "pytest",
+    "-p",
+    "i6a_report_types",
+    "-q",
+    "-o",
+    "addopts=--strict-markers",
+    "-o",
+    "junit_family=xunit1",
+    "@/workspace/i6a-runs/before/ordinary.selected.txt",
+    "--junitxml=/workspace/i6a-runs/before/ordinary.xml",
+    "--journal=/workspace/i6a-runs/before/ordinary.jsonl",
+    "-n",
+    "4",
+    "--dist",
+    "worksteal",
+    "--basetemp=/workspace/i6a-runs/before/basetemp"
+  ],
+  "cwd": "/workspace/i6a-before",
+  "started_epoch": 1792729068.0070996,
+  "elapsed_seconds": 629.809,
+  "exit_code": 1,
+  "collected": 5941,
+  "passed": 5198,
+  "failed": 324,
+  "error": 419,
+  "skipped": 0,
+  "xfail": 0,
+  "xpass": 0,
+  "executed": 5941,
+  "reconciliation": {
+    "checks": {
+      "selected_unique": true,
+      "selected_equals_junit": true,
+      "selected_equals_journal_starts": true,
+      "setup_and_teardown_once": true,
+      "no_duplicate_phases": false,
+      "phase_nodes_equal_selected": true,
+      "call_once_after_successful_setup": false,
+      "one_finish": true
+    },
+    "consistent_node_execution": false,
+    "journal_phase_outcomes": {
+      "passed": 16718,
+      "failed": 743
+    },
+    "finishes": [
+      {
+        "event": "finish",
+        "status": "failed",
+        "exitstatus": 1,
+        "timestamp": 1792729696.387173
+      }
+    ]
+  }
+}

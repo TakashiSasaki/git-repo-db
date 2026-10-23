@@ -22,7 +22,6 @@ import pytest
 from repo_catalog.adapters.git.native import GitNativeSource
 from repo_catalog.adapters.sqlite.acquisition import UnlimitedWorkBudget
 from repo_catalog.adapters.sqlite.git_core import GitCore
-from repo_catalog.adapters.sqlite.p1_context import ContextStore
 from repo_catalog.adapters.sqlite.p1_schema import connect
 from repo_catalog.adapters.sqlite.production_context import Context
 from repo_catalog.adapters.sqlite.recovery import SQLiteRecoveryAdapter
@@ -30,13 +29,15 @@ from repo_catalog.application.acquisition import GitAcquisition
 from repo_catalog.application.production_query import ProductionQueryService
 from repo_catalog.application.recovery import RecoveryService
 from repo_catalog.domain.acquisition import GitNativeAcquisitionRequest
+from repo_catalog.domain.context_admission import DependencySet
 from repo_catalog.domain.p1_context import FieldClock, ResourceKey, canonical
 from repo_catalog.domain.p1_core import OID, CoreFailure
 from repo_catalog.domain.production_context import CoreReference
 from repo_catalog.domain.production_query import SearchQuery
 from repo_catalog.domain.recovery import BackupScope
 from tests.integration.p5.conftest import build_sample_git_repo
-from tests.integration.p7.conftest import make_commit, make_tree
+from tests.integration.p7.conftest import admit_context_text, make_commit, make_tree
+from tests.support.context_admission import fixture_context, fixture_service
 
 WRITER_PROBE = """
 import fcntl,sys
@@ -85,7 +86,7 @@ def committed_p1_wal(synthetic_catalog):
             core.admit_metadata(tree, str(uuid4()), UnlimitedWorkBudget())
             core.admit_metadata(commit, str(uuid4()), UnlimitedWorkBudget())
         core_db.commit()
-        digest = ContextStore(context_db).text(text)
+        digest = admit_context_text(context_db, text)
         for role, query, args in (
             (
                 "core",
@@ -318,12 +319,24 @@ def test_actual_unresolved_context_reference_survives_restore_and_salvage(
     missing = OID("sha1", "e" * 40)
     provenance = canonical({"source": "test", "evidence": "original-reference"})
     reference = CoreReference(key, "head", missing, provenance)
-    with Context.transaction(synthetic_catalog) as context:
-        context.provider(service_id, "github")
-        context.repository(repo_uuid)
-        context.resource(key, repo_uuid)
+    authorization, _ = fixture_service(
+        DependencySet(
+            resources={key},
+            repositories={repo_uuid},
+            provider_registrations={service_id},
+            object_oids={missing},
+        )
+    )
+    with Context.transaction(synthetic_catalog, authorization=authorization) as context:
+        admission = fixture_context(authorization)
+        context.provider(service_id, "github", admission=admission)
+        context.repository(repo_uuid, admission=admission)
+        context.resource(key, repo_uuid, admission=admission)
         context.report_core_reference(
-            reference, clock=FieldClock("provider.updated_at", 9), observed_at_us=10
+            reference,
+            clock=FieldClock("provider.updated_at", 9),
+            observed_at_us=10,
+            admission=admission,
         )
     service = RecoveryService()
     backup = tmp_path / "unresolved-backup"

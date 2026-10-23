@@ -1,0 +1,38 @@
+{
+  "source": "93d9927ae801d5402aab0aa0c7c270eeab2809e6",
+  "checks": {
+    "direct-i4-execution.json": {
+      "executed": 217,
+      "passed": 217,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "required_tests_executed": true
+    },
+    "direct-i5-execution.json": {
+      "executed": 29,
+      "passed": 29,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "required_tests_executed": true
+    },
+    "sdist-i4-execution.json": {
+      "executed": 217,
+      "passed": 217,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "required_tests_executed": true
+    },
+    "sdist-i5-execution.json": {
+      "executed": 29,
+      "passed": 29,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "required_tests_executed": true
+    }
+  },
+  "receipt_sha256": "2a7b364b120f88bc7ae7258ec7171d33fa02f408be30009a6b7e6e2dc9adab75"
+}

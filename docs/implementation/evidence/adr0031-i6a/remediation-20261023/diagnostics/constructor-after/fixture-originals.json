@@ -1,0 +1,18 @@
+{
+  "scope": "pure new synthetic fixture original construction, not active Transfer acceptance",
+  "reports": 2,
+  "parent_original_time": 13,
+  "event_times": [
+    21,
+    23
+  ],
+  "endpoint_counts": [
+    2,
+    1
+  ],
+  "provider_ids": [
+    "\"fixture-from-provider\"",
+    "\"fixture-to-provider\""
+  ],
+  "changed_report_constructs": true
+}

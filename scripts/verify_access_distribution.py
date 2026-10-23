@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tarfile
@@ -166,6 +167,12 @@ from repo_catalog.adapters.sqlite.acquisition import UnlimitedWorkBudget
 from repo_catalog.application.exchange import ExchangeService
 from repo_catalog.domain.exchange import FORMAT as EXCHANGE_FORMAT, ExchangeSelectionScope
 from repo_catalog.domain.p1_core import RepositoryClaim, Provenance
+from repo_catalog.domain.context_admission import DependencySet
+# This exact external file is test harness code. Product modules still resolve
+# solely from the installed wheel, including under Python's isolated mode.
+authority_spec = importlib.util.spec_from_file_location("installed_fixture_authority", os.environ["REPO_CATALOG_SMOKE_AUTHORITY"])
+authority = importlib.util.module_from_spec(authority_spec)
+authority_spec.loader.exec_module(authority)
 for role in ("provider", "repository", "source", "membership"):
     assert registration_json(role, "{}") == {}
     try:
@@ -183,9 +190,12 @@ with tempfile.TemporaryDirectory() as directory:
         instance = str(uuid4())
         for role in ("core", "context", "operational"):
             p1_schema.initialize(destination / f"{role}.sqlite3", role, repository_id, instance)
-    with Context.transaction(producer) as ctx:
-        ctx.provider(service, "github", '{"name":"Original provider"}')
-        ctx.repository(repository_id, '{"name":"app"}')
+    admission_service, _ = authority.fixture_service(DependencySet(
+        provider_registrations=frozenset({service}), repositories=frozenset({repository_id})))
+    admission = authority.fixture_context(admission_service)
+    with Context.transaction(producer, authorization=admission_service) as ctx:
+        ctx.provider(service, "github", '{"name":"Original provider"}', admission=admission)
+        ctx.repository(repository_id, '{"name":"app"}', admission=admission)
         try:
             ctx.db.execute("UPDATE providers SET configuration_json=?", ('{"token":"DO-NOT-STORE"}',))
         except sqlite3.IntegrityError:
@@ -308,6 +318,9 @@ def main() -> None:
     results = []
     with tempfile.TemporaryDirectory(prefix="access-distribution-") as temporary:
         base = Path(temporary)
+        authority = base / "fixture_authority.py"
+        shutil.copyfile(ROOT / "tests/support/context_admission.py", authority)
+        env["REPO_CATALOG_SMOKE_AUTHORITY"] = str(authority)
         built = base / "built"
         built.mkdir()
         print(

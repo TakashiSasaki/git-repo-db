@@ -1,0 +1,77 @@
+"""Reporting counterexamples; never edit historical evidence in place."""
+
+import copy
+import json
+from pathlib import Path
+import sys
+import tempfile
+import xml.etree.ElementTree as ET
+
+root = Path(sys.argv[1]).resolve()
+output = Path(sys.argv[2]).resolve()
+sys.path.insert(0, str(root))
+from scripts.classify_i6a_regressions import junit_key, read, run_index
+
+frozen = root / "docs/implementation/evidence/adr0031-i6a/author/final-v3"
+result = {"scope": "Parser checks against historical raw bytes, not new product test executions", "historical_reconciliation": {}, "negative_controls": {}}
+for prefix in ("regressions", "remaining-ordinary"):
+    _, receipt = run_index(frozen, prefix)
+    result["historical_reconciliation"][prefix] = receipt
+
+assert junit_key("tests/test_x.py::test_uri[ext::sh -c true]") == ("tests.test_x", "test_uri[ext::sh -c true]")
+result["literal_double_colon_parameter_retained"] = True
+
+suffixes = (".selected.txt", ".xml", ".jsonl", ".report-types.jsonl", ".execution.json")
+
+def reject(name, mutate, prefix="regressions"):
+    with tempfile.TemporaryDirectory(prefix="i6a-parser-", dir="/workspace") as temp:
+        target = Path(temp)
+        for suffix in suffixes:
+            (target / (prefix + suffix)).write_bytes(read(frozen / (prefix + suffix)))
+        mutate(target, prefix)
+        try:
+            run_index(target, prefix)
+        except ValueError as error:
+            result["negative_controls"][name] = {"rejected": True, "reason": str(error)}
+        else:
+            raise AssertionError("unsafe reporting input accepted: " + name)
+
+def duplicate_selected(directory, prefix):
+    path = directory / (prefix + ".selected.txt")
+    path.write_text(path.read_text() + path.read_text().splitlines()[0] + "\n")
+
+def duplicate_junit(directory, prefix):
+    path = directory / (prefix + ".xml")
+    tree = ET.fromstring(path.read_bytes())
+    suite = tree.find(".//testsuite")
+    suite.append(copy.deepcopy(suite.find("testcase")))
+    path.write_bytes(ET.tostring(tree))
+
+def phase_mismatch(directory, prefix):
+    path = directory / (prefix + ".report-types.jsonl")
+    rows = [json.loads(line) for line in path.read_text().splitlines()]
+    rows[0]["duration"] += 1
+    path.write_text("".join(json.dumps(row) + "\n" for row in rows))
+
+def hidden_failed_subtest(directory, prefix):
+    path = directory / (prefix + ".report-types.jsonl")
+    reports = [json.loads(line) for line in path.read_text().splitlines()]
+    subtest = next(row for row in reports if row["subtest_context"] is not None)
+    path = directory / (prefix + ".jsonl")
+    events = [json.loads(line) for line in path.read_text().splitlines()]
+    for event in events:
+        if event.get("event") == "phase" and all(event[key] == subtest[key] for key in ("nodeid", "phase", "duration", "outcome")):
+            event["outcome"] = "failed"
+            break
+    else:
+        raise AssertionError("subtest matching journal event absent")
+    subtest["outcome"] = "failed"
+    path.write_text("".join(json.dumps(row) + "\n" for row in events))
+    (directory / (prefix + ".report-types.jsonl")).write_text("".join(json.dumps(row) + "\n" for row in reports))
+
+reject("duplicate_selected_identity", duplicate_selected)
+reject("duplicate_junit_identity", duplicate_junit)
+reject("journal_sidecar_phase_mismatch", phase_mismatch)
+reject("failing_subtest_hidden_by_parent_pass", hidden_failed_subtest, "remaining-ordinary")
+output.write_text(json.dumps(result, indent=2) + "\n")
+print(json.dumps({"historical_reconciliation": {name: receipt["counts"] for name, receipt in result["historical_reconciliation"].items()}, "negative_controls_rejected": list(result["negative_controls"])}, indent=2))

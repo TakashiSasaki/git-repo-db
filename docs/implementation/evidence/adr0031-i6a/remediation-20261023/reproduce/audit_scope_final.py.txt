@@ -1,0 +1,18 @@
+import ast,collections,hashlib,json,pathlib,subprocess
+root=pathlib.Path('/workspace/git-repo-db');base='f5dc409429cdb69955b55e3c27a7ef3c163762fb';head='93d9927ae801d5402aab0aa0c7c270eeab2809e6'
+def git(*args):return subprocess.check_output(['git',*args],cwd=root).decode()
+changed=git('diff','--name-only',base,head).splitlines();audit=[]
+for f in changed:
+ if not f.startswith('tests/') or not f.endswith('.py'):continue
+ try:old=git('show',base+':'+f)
+ except subprocess.CalledProcessError:old=''
+ new=(root/f).read_text()
+ def assertions(s):return collections.Counter(ast.dump(n,include_attributes=False) for n in ast.walk(ast.parse(s)) if isinstance(n,ast.Assert))
+ a,b=assertions(old),assertions(new)
+ audit.append({'path':f,'old_assertions':sum(a.values()),'new_assertions':sum(b.values()),'removed_or_replaced_assertion_asts':list((a-b).elements()),'added_assertion_asts':list((b-a).elements())})
+patch=git('diff','--unified=0',base,head)
+markers=[l for l in patch.splitlines() if l.startswith('+') and not l.startswith('+++') and any(x in l for x in ['pytest.skip','pytest.xfail','pytest.mark.skip','pytest.mark.xfail'])]
+protected=[f for f in changed if f.startswith('docs/adr/') or '/p1_ddl/' in f or f.startswith('docs/implementation/evidence/adr0031-i6/independent/') or f.startswith('docs/implementation/evidence/adr0031-i6a/author/')]
+out={'base':base,'source_head':head,'source_tree':git('rev-parse',head+'^{tree}').strip(),'changed_files':changed,'product_changes':[f for f in changed if f.startswith('src/')],'protected_input_changes':protected,'added_skip_xfail_lines':markers,'assertion_inventory':audit,'limits':'AST inventories do not establish execution or semantic equivalence; mapped replacements are reviewed in REPORT.'}
+(root/'docs/implementation/evidence/adr0031-i6a/remediation-20261023/scope-audit.json').write_text(json.dumps(out,indent=2)+'\n')
+print(json.dumps({'files':len(changed),'protected_changes':protected,'skip_xfail_added':markers,'replaced_assertions':[{k:r[k] for k in ['path','old_assertions','new_assertions','removed_or_replaced_assertion_asts']} for r in audit if r['removed_or_replaced_assertion_asts']]}))

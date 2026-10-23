@@ -9,6 +9,11 @@ import pytest
 from repo_catalog.adapters.sqlite.p1_coordination import PairCoordinator
 from repo_catalog.adapters.sqlite.p1_schema import connect, initialize
 from repo_catalog.adapters.sqlite.production_context import Context
+from repo_catalog.domain.context_admission import (
+    AdmissionRefused,
+    DependencySet,
+    dependencies,
+)
 from repo_catalog.domain.p1_context import (
     CoverageClaim,
     CoverageScope,
@@ -37,6 +42,11 @@ from repo_catalog.domain.resource_identification import ResourceIdentification a
 from repo_catalog.domain.resource_stage import UnsupportedResourceStage
 from tests.integration.context_originals import synthetic_parent
 from tests.integration.p1 import test_context as p1_contract
+from tests.support.context_admission import (
+    fixture_context,
+    fixture_service,
+    fixture_transaction,
+)
 
 REPO = p1_contract.REPO
 SERVICE = p1_contract.SERVICE
@@ -49,6 +59,70 @@ OTHER_REPO = "22307f0c-6d1e-41da-b2fb-c4c11362e7d2"
 PR = ResourceKey.from_native(SERVICE, "pull_request", "pr-7")
 
 
+def production_grants():
+    """Finite synthetic identities used by this module and imported P1 scenarios."""
+    review = ResourceKey.document(PR, "review", "review", "same-id")
+    thread = ResourceKey.document(review, "thread", "review-thread", "same-id")
+    other = ResourceKey.from_native(SERVICE, "pull_request", "other")
+    parent = ResourceKey.from_native(SERVICE, "issue", "transfer-parent")
+    issue = ResourceKey.from_native(SERVICE, "issue", "42")
+    provider = ResourceKey.from_native(SERVICE, "repository", "octocat/Hello-World")
+    provenance = canonical({"source": "github", "evidence": "audit-1"})
+    mapping = ResourceRepositoryRelation(
+        provider,
+        "represents_repository",
+        FieldClock("github:repo:updated_at", 100),
+        canonical(REPO),
+        provenance,
+        100,
+    )
+    disposition = MappingDisposition(
+        mapping.claim_key,
+        "withdraw",
+        FieldClock("github:audit", 200),
+        canonical({"source": "github", "evidence": "revocation-1"}),
+        200,
+    )
+    resources = {
+        PR,
+        other,
+        parent,
+        issue,
+        provider,
+        review,
+        thread,
+        ResourceKey.document(thread, "comment", "comment", "same-id"),
+        ResourceKey.document(PR, "document", "description", "same-id"),
+        ResourceKey.document(PR, "review", "approval", "7"),
+        ResourceKey.document(other, "review", "review", "7"),
+        ResourceKey.timeline_event(parent, "real-event"),
+        ResourceKey.timeline_event(issue, "ev-1"),
+        ResourceKey.from_native(SERVICE, "repository", "protocol-keywords"),
+        ResourceKey.from_native(OTHER_SERVICE, "issue", "foreign"),
+        ResourceKey.from_native(SERVICE, "ordinary_file", "file"),
+        ResourceKey.global_document(SERVICE, "file"),
+        *(
+            ResourceKey.from_native(SERVICE, "issue", value)
+            for value in ("atomic", "absent", "other")
+        ),
+    }
+    return (
+        p1_contract.p1_grants()
+        | dependencies((tuple(resources), mapping, disposition))
+        | DependencySet(
+            repositories={OTHER_REPO},
+            sources={SOURCE},
+            source_repository_pairs={(SOURCE, REPO), (SOURCE, OTHER_REPO)},
+            provider_registrations={SERVICE, OTHER_SERVICE},
+            object_oids={
+                OID("sha1", "a" * 40),
+                OID("sha1", "b" * 40),
+                OID("sha256", "b" * 64),
+            },
+        )
+    )
+
+
 @pytest.fixture
 def directory(tmp_path):
     initialize(tmp_path / "context.sqlite3", "context", REPO, INSTANCE)
@@ -58,7 +132,7 @@ def directory(tmp_path):
 @pytest.fixture
 def context(directory):
     try:
-        with Context.transaction(directory) as store:
+        with fixture_transaction(directory, production_grants()) as store:
             store.provider(SERVICE, "github", canonical({"name": "GitHub service"}))
             store.repository(REPO)
             store.source(SOURCE, SERVICE)
@@ -248,7 +322,7 @@ def test_provider_source_registration_and_configuration(context):
 
 
 def test_coreless_durable_context_and_derivative_loss(directory):
-    with Context.transaction(directory) as store:
+    with fixture_transaction(directory, production_grants()) as store:
         store.provider(SERVICE, "github")
         store.resource(KEY)
         store.admit_field(field())
@@ -276,7 +350,7 @@ def test_observe_failure_rolls_back_new_identity_and_all_fields(context):
 
 def test_outer_transaction_rolls_back_resource_fields_and_text(directory):
     with pytest.raises(RuntimeError):
-        with Context.transaction(directory) as store:
+        with fixture_transaction(directory, production_grants()) as store:
             store.provider(SERVICE, "github")
             store.observe(ResourceObservation(KEY, (field(),)))
             store.admit_text(KEY, "exact text", FieldClock("source", 1), PROVENANCE, 10)
@@ -572,8 +646,12 @@ def test_source_collection_cross_service_rejected_even_empty(context):
     foreign = ResourceKey.from_native(OTHER_SERVICE, "issue", "foreign")
     store.resource(foreign)
     observation = collection(key=foreign, scope={"source_registration_uuidv4": SOURCE})
-    with pytest.raises(ContextError, match="SOURCE_SERVICE"):
+    # Current Source/service qualification now runs at the shared admission
+    # boundary, before the facade's former SOURCE_SERVICE diagnostic.
+    with pytest.raises(AdmissionRefused, match="^UNQUALIFIED_MAPPING$"):
         store.collection(observation)
+    assert store.db.execute("SELECT count(*) FROM collections").fetchone() == (0,)
+    assert not (store.directory / "p1-recovery-stop.json").exists()
 
 
 @pytest.mark.parametrize(
@@ -596,7 +674,8 @@ def test_unavailable_portable_core_reference_durable_and_honest(
 
 def test_missing_core_dependency_rejects_certified_pair(directory):
     initialize(directory / "core.sqlite3", "core", REPO, INSTANCE)
-    coordinator = PairCoordinator(directory)
+    authorization, _ = fixture_service(production_grants())
+    coordinator = PairCoordinator(directory, authorization=authorization)
 
     def context_unit(db):
         with Context.for_transaction(db, directory) as store:
@@ -605,7 +684,9 @@ def test_missing_core_dependency_rejects_certified_pair(directory):
             store.link_core(KEY, "head", "sha1", "a" * 40, PROVENANCE, lambda *_: True)
 
     with pytest.raises(AdmissionFailure) as error:
-        coordinator.admit(lambda db: None, context_unit)
+        coordinator.admit(
+            lambda db: None, context_unit, admission=fixture_context(authorization)
+        )
     assert error.value.outcome.core_committed
     assert not error.value.outcome.context_committed
     with Context.snapshot(directory) as store:
@@ -614,7 +695,8 @@ def test_missing_core_dependency_rejects_certified_pair(directory):
 
 def test_paired_read_context_projection_no_savepoint_escape(directory):
     initialize(directory / "core.sqlite3", "core", REPO, INSTANCE)
-    coordinator = PairCoordinator(directory)
+    authorization, _ = fixture_service(production_grants())
+    coordinator = PairCoordinator(directory, authorization=authorization)
 
     def context_unit(db):
         with Context.for_transaction(db, directory) as store:
@@ -628,7 +710,9 @@ def test_paired_read_context_projection_no_savepoint_escape(directory):
                 required_scope_json=observation.scope_json,
             )
 
-    coordinator.admit(lambda db: None, context_unit)
+    coordinator.admit(
+        lambda db: None, context_unit, admission=fixture_context(authorization)
+    )
     with coordinator.snapshots() as pair:
         with Context.for_snapshot(pair.context, directory) as store:
             assert store.coverage(claim_for(collection()).scope).known_empty
@@ -652,7 +736,7 @@ def test_corrupt_context_open_persists_stop(directory, entry):
 
 @pytest.mark.parametrize("operation", ["read", "replay"])
 def test_retained_context_text_corruption_stops_before_unwind(directory, operation):
-    with Context.transaction(directory) as store:
+    with fixture_transaction(directory, production_grants()) as store:
         digest = store.text("actual text")
     db = connect(directory / "context.sqlite3", "context")
     trigger = db.execute(
@@ -665,7 +749,7 @@ def test_retained_context_text_corruption_stops_before_unwind(directory, operati
     db.execute(trigger)
     db.close()
     with pytest.raises(ContextError, match="AUTHORITATIVE_CORRUPTION"):
-        with Context.transaction(directory) as store:
+        with fixture_transaction(directory, production_grants()) as store:
             if operation == "read":
                 store.read_text(digest)
             else:
@@ -694,7 +778,7 @@ def test_all_inherited_methods_obey_stop(context, operation):
 
 
 def test_capability_expired_and_outer_transaction_required(directory):
-    with Context.transaction(directory) as store:
+    with fixture_transaction(directory, production_grants()) as store:
         store.provider(SERVICE, "github")
     with pytest.raises(ContextError, match="CAPABILITY_EXPIRED"):
         store.provider(SERVICE, "github")
@@ -737,7 +821,7 @@ def test_forged_unpersisted_head_scope_cannot_create_proof(context):
 def test_missing_attributed_reference_does_not_poison_sound_pair(directory):
     initialize(directory / "core.sqlite3", "core", REPO, INSTANCE)
     reference = CoreReference(KEY, "head", OID("sha1", "a" * 40), PROVENANCE)
-    with Context.transaction(directory) as store:
+    with fixture_transaction(directory, production_grants()) as store:
         store.provider(SERVICE, "github")
         store.resource(KEY)
         store.report_core_reference(
@@ -828,7 +912,7 @@ def test_foreign_parent_child_cannot_be_collection_members(context, method):
 
 
 def test_invalid_stored_field_is_corruption_not_bad_incoming_data(directory):
-    with Context.transaction(directory) as store:
+    with fixture_transaction(directory, production_grants()) as store:
         store.provider(SERVICE, "github")
         store.observe(ResourceObservation(KEY, (field(),)))
     db = connect(directory / "context.sqlite3", "context")
@@ -850,7 +934,7 @@ def test_reserved_reference_field_requires_typed_identity(context):
 
 
 def test_invalid_utf8_retained_text_stops_on_selected_bytes(directory):
-    with Context.transaction(directory) as store:
+    with fixture_transaction(directory, production_grants()) as store:
         digest = store.text("valid original text")
     db = connect(directory / "context.sqlite3", "context")
     trigger = db.execute(
@@ -871,7 +955,7 @@ def test_invalid_utf8_retained_text_stops_on_selected_bytes(directory):
 def test_explicit_null_detach_rollback_and_restart(directory):
     original = canonical({"source": "provider", "evidence": "attachment"})
     detached = canonical({"source": "provider", "evidence": "detachment"})
-    with Context.transaction(directory) as store:
+    with fixture_transaction(directory, production_grants()) as store:
         store.provider(SERVICE, "github")
         store.repository(REPO)
         store.resource(KEY)
@@ -886,7 +970,7 @@ def test_explicit_null_detach_rollback_and_restart(directory):
             )
         )
     with pytest.raises(RuntimeError):
-        with Context.transaction(directory) as store:
+        with fixture_transaction(directory, production_grants()) as store:
             store.admit_repository_relation(
                 ResourceRepositoryRelation(
                     KEY,
@@ -901,7 +985,7 @@ def test_explicit_null_detach_rollback_and_restart(directory):
             raise RuntimeError("rollback")
     with Context.snapshot(directory) as store:
         assert store.repository_relations(KEY)[0].target_repository_uuidv4 == REPO
-    with Context.transaction(directory) as store:
+    with fixture_transaction(directory, production_grants()) as store:
         store.admit_repository_relation(
             ResourceRepositoryRelation(
                 KEY,
@@ -946,7 +1030,7 @@ def test_context_absence_is_unavailable_never_recreated(tmp_path):
 
 @pytest.mark.parametrize("method", ["candidates", "coverage", "text"])
 def test_stop_detected_during_last_sqlite_read_cannot_return_success(directory, method):
-    with Context.transaction(directory) as store:
+    with fixture_transaction(directory, production_grants()) as store:
         store.provider(SERVICE, "github")
         store.observe(ResourceObservation(KEY, (field(),)))
         digest = store.text("retained text")
@@ -985,7 +1069,7 @@ def test_stopped_snapshot_finalizer_cannot_report_normal_completion(directory):
 
 
 def test_invalid_utf8_stored_field_stops_before_caller_can_swallow(directory):
-    with Context.transaction(directory) as store:
+    with fixture_transaction(directory, production_grants()) as store:
         store.provider(SERVICE, "github")
         store.observe(ResourceObservation(KEY, (field(),)))
     db = connect(directory / "context.sqlite3", "context")
@@ -1004,7 +1088,8 @@ def test_invalid_utf8_stored_field_stops_before_caller_can_swallow(directory):
 @pytest.mark.parametrize("mode", ["transaction", "snapshot"])
 def test_context_cannot_bind_core_shared_coverage_tables(directory, mode):
     initialize(directory / "core.sqlite3", "core", REPO, INSTANCE)
-    coordinator = PairCoordinator(directory)
+    authorization, _ = fixture_service(production_grants())
+    coordinator = PairCoordinator(directory, authorization=authorization)
     if mode == "transaction":
 
         def wrong_core_unit(db):
@@ -1014,7 +1099,11 @@ def test_context_cannot_bind_core_shared_coverage_tables(directory, mode):
                 context.admit_coverage(CoverageClaim(scope, 10, "complete"))
 
         with pytest.raises(AdmissionFailure) as failure:
-            coordinator.admit(wrong_core_unit, lambda db: None)
+            coordinator.admit(
+                wrong_core_unit,
+                lambda db: None,
+                admission=fixture_context(authorization),
+            )
         assert isinstance(failure.value.cause, ContextError)
         assert failure.value.cause.code == "STORE_ROLE"
         assert not failure.value.outcome.core_committed
@@ -1033,7 +1122,7 @@ def test_context_cannot_bind_core_shared_coverage_tables(directory, mode):
 @pytest.mark.parametrize("operation", ["read", "replay"])
 def test_known_retained_text_loss_stops_without_silent_repair(directory, operation):
     content = "previously retained exact Context body"
-    with Context.transaction(directory) as store:
+    with fixture_transaction(directory, production_grants()) as store:
         store.provider(SERVICE, "github")
         store.resource(KEY)
         store.admit_text(
@@ -1050,7 +1139,7 @@ def test_known_retained_text_loss_stops_without_silent_repair(directory, operati
     db.execute(trigger)
     db.close()
     with pytest.raises(ContextError, match="AUTHORITATIVE_CORRUPTION"):
-        with Context.transaction(directory) as store:
+        with fixture_transaction(directory, production_grants()) as store:
             if operation == "read":
                 store.read_text(digest)
             else:
@@ -1074,7 +1163,7 @@ def test_unknown_text_digest_is_unavailable_without_false_corruption(context):
 
 
 def test_production_context_relation_facade_methods(directory):
-    with Context.transaction(directory) as store:
+    with fixture_transaction(directory, production_grants()) as store:
         store.provider(SERVICE, "github")
         store.repository(REPO)
         prov_repo = ResourceKey.from_native(

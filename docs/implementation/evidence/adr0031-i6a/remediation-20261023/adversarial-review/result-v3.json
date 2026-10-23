@@ -1,0 +1,359 @@
+{
+  "source_head": "423e34504b2a9686c94f971f37c164449a28fe31",
+  "source_tree": "cd93e1e226042e45b145b9c5eab605f9aa4d2d9d",
+  "capability_checks": [
+    {
+      "state": "expired",
+      "method": "admit_coverage",
+      "code": "CAPABILITY_EXPIRED"
+    },
+    {
+      "state": "expired",
+      "method": "admit_field",
+      "code": "CAPABILITY_EXPIRED"
+    },
+    {
+      "state": "expired",
+      "method": "admit_mapping_disposition",
+      "code": "CAPABILITY_EXPIRED"
+    },
+    {
+      "state": "expired",
+      "method": "admit_repository_relation",
+      "code": "CAPABILITY_EXPIRED"
+    },
+    {
+      "state": "expired",
+      "method": "admit_repository_relation_result",
+      "code": "CAPABILITY_EXPIRED"
+    },
+    {
+      "state": "expired",
+      "method": "admit_text",
+      "code": "CAPABILITY_EXPIRED"
+    },
+    {
+      "state": "expired",
+      "method": "admit_transfer_event",
+      "code": "CAPABILITY_EXPIRED"
+    },
+    {
+      "state": "expired",
+      "method": "associate_source",
+      "code": "CAPABILITY_EXPIRED"
+    },
+    {
+      "state": "expired",
+      "method": "collection",
+      "code": "CAPABILITY_EXPIRED"
+    },
+    {
+      "state": "expired",
+      "method": "inherit_fields",
+      "code": "CAPABILITY_EXPIRED"
+    },
+    {
+      "state": "expired",
+      "method": "inventory",
+      "code": "CAPABILITY_EXPIRED"
+    },
+    {
+      "state": "expired",
+      "method": "link_core",
+      "code": "CAPABILITY_EXPIRED"
+    },
+    {
+      "state": "expired",
+      "method": "observe",
+      "code": "CAPABILITY_EXPIRED"
+    },
+    {
+      "state": "expired",
+      "method": "prove_collection",
+      "code": "CAPABILITY_EXPIRED"
+    },
+    {
+      "state": "expired",
+      "method": "prove_inventory",
+      "code": "CAPABILITY_EXPIRED"
+    },
+    {
+      "state": "expired",
+      "method": "provider",
+      "code": "CAPABILITY_EXPIRED"
+    },
+    {
+      "state": "expired",
+      "method": "relation",
+      "code": "CAPABILITY_EXPIRED"
+    },
+    {
+      "state": "expired",
+      "method": "report_core_reference",
+      "code": "CAPABILITY_EXPIRED"
+    },
+    {
+      "state": "expired",
+      "method": "repository",
+      "code": "CAPABILITY_EXPIRED"
+    },
+    {
+      "state": "expired",
+      "method": "resource",
+      "code": "CAPABILITY_EXPIRED"
+    },
+    {
+      "state": "expired",
+      "method": "scope",
+      "code": "CAPABILITY_EXPIRED"
+    },
+    {
+      "state": "expired",
+      "method": "source",
+      "code": "CAPABILITY_EXPIRED"
+    },
+    {
+      "state": "expired",
+      "method": "text",
+      "code": "CAPABILITY_EXPIRED"
+    },
+    {
+      "state": "readonly",
+      "method": "admit_coverage",
+      "code": "READ_ONLY"
+    },
+    {
+      "state": "readonly",
+      "method": "admit_field",
+      "code": "READ_ONLY"
+    },
+    {
+      "state": "readonly",
+      "method": "admit_mapping_disposition",
+      "code": "READ_ONLY"
+    },
+    {
+      "state": "readonly",
+      "method": "admit_repository_relation",
+      "code": "READ_ONLY"
+    },
+    {
+      "state": "readonly",
+      "method": "admit_repository_relation_result",
+      "code": "READ_ONLY"
+    },
+    {
+      "state": "readonly",
+      "method": "admit_text",
+      "code": "READ_ONLY"
+    },
+    {
+      "state": "readonly",
+      "method": "admit_transfer_event",
+      "code": "READ_ONLY"
+    },
+    {
+      "state": "readonly",
+      "method": "associate_source",
+      "code": "READ_ONLY"
+    },
+    {
+      "state": "readonly",
+      "method": "collection",
+      "code": "READ_ONLY"
+    },
+    {
+      "state": "readonly",
+      "method": "inherit_fields",
+      "code": "READ_ONLY"
+    },
+    {
+      "state": "readonly",
+      "method": "inventory",
+      "code": "READ_ONLY"
+    },
+    {
+      "state": "readonly",
+      "method": "link_core",
+      "code": "READ_ONLY"
+    },
+    {
+      "state": "readonly",
+      "method": "observe",
+      "code": "READ_ONLY"
+    },
+    {
+      "state": "readonly",
+      "method": "prove_collection",
+      "code": "READ_ONLY"
+    },
+    {
+      "state": "readonly",
+      "method": "prove_inventory",
+      "code": "READ_ONLY"
+    },
+    {
+      "state": "readonly",
+      "method": "provider",
+      "code": "READ_ONLY"
+    },
+    {
+      "state": "readonly",
+      "method": "relation",
+      "code": "READ_ONLY"
+    },
+    {
+      "state": "readonly",
+      "method": "report_core_reference",
+      "code": "READ_ONLY"
+    },
+    {
+      "state": "readonly",
+      "method": "repository",
+      "code": "READ_ONLY"
+    },
+    {
+      "state": "readonly",
+      "method": "resource",
+      "code": "READ_ONLY"
+    },
+    {
+      "state": "readonly",
+      "method": "scope",
+      "code": "READ_ONLY"
+    },
+    {
+      "state": "readonly",
+      "method": "source",
+      "code": "READ_ONLY"
+    },
+    {
+      "state": "readonly",
+      "method": "text",
+      "code": "READ_ONLY"
+    },
+    {
+      "state": "active-unbound",
+      "method": "admit_coverage",
+      "code": "PERMISSION_DENIED"
+    },
+    {
+      "state": "active-unbound",
+      "method": "admit_field",
+      "code": "PERMISSION_DENIED"
+    },
+    {
+      "state": "active-unbound",
+      "method": "admit_mapping_disposition",
+      "code": "PERMISSION_DENIED"
+    },
+    {
+      "state": "active-unbound",
+      "method": "admit_repository_relation",
+      "code": "PERMISSION_DENIED"
+    },
+    {
+      "state": "active-unbound",
+      "method": "admit_repository_relation_result",
+      "code": "PERMISSION_DENIED"
+    },
+    {
+      "state": "active-unbound",
+      "method": "admit_text",
+      "code": "PERMISSION_DENIED"
+    },
+    {
+      "state": "active-unbound",
+      "method": "admit_transfer_event",
+      "code": "PERMISSION_DENIED"
+    },
+    {
+      "state": "active-unbound",
+      "method": "associate_source",
+      "code": "PERMISSION_DENIED"
+    },
+    {
+      "state": "active-unbound",
+      "method": "collection",
+      "code": "PERMISSION_DENIED"
+    },
+    {
+      "state": "active-unbound",
+      "method": "inherit_fields",
+      "code": "PERMISSION_DENIED"
+    },
+    {
+      "state": "active-unbound",
+      "method": "inventory",
+      "code": "PERMISSION_DENIED"
+    },
+    {
+      "state": "active-unbound",
+      "method": "link_core",
+      "code": "PERMISSION_DENIED"
+    },
+    {
+      "state": "active-unbound",
+      "method": "observe",
+      "code": "PERMISSION_DENIED"
+    },
+    {
+      "state": "active-unbound",
+      "method": "prove_collection",
+      "code": "PERMISSION_DENIED"
+    },
+    {
+      "state": "active-unbound",
+      "method": "prove_inventory",
+      "code": "PERMISSION_DENIED"
+    },
+    {
+      "state": "active-unbound",
+      "method": "provider",
+      "code": "PERMISSION_DENIED"
+    },
+    {
+      "state": "active-unbound",
+      "method": "relation",
+      "code": "PERMISSION_DENIED"
+    },
+    {
+      "state": "active-unbound",
+      "method": "report_core_reference",
+      "code": "PERMISSION_DENIED"
+    },
+    {
+      "state": "active-unbound",
+      "method": "repository",
+      "code": "PERMISSION_DENIED"
+    },
+    {
+      "state": "active-unbound",
+      "method": "resource",
+      "code": "PERMISSION_DENIED"
+    },
+    {
+      "state": "active-unbound",
+      "method": "scope",
+      "code": "PERMISSION_DENIED"
+    },
+    {
+      "state": "active-unbound",
+      "method": "source",
+      "code": "PERMISSION_DENIED"
+    },
+    {
+      "state": "active-unbound",
+      "method": "text",
+      "code": "PERMISSION_DENIED"
+    }
+  ],
+  "fixture_checks": {
+    "denials": 3,
+    "grants_unchanged": true,
+    "row_set_preserved": true,
+    "leases_released": true,
+    "foreign_policy_not_called": true
+  },
+  "scope": "Supporting adversarial probe only. No full suite, installed lane, release or non-Author branch acceptance claimed."
+}

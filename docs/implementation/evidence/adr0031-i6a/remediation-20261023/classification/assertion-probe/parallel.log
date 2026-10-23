@@ -1,0 +1,29 @@
+bringing up nodes...
+bringing up nodes...
+
+.FE                                                                      [100%]
+==================================== ERRORS ====================================
+__________________ ERROR at setup of test_setup_never_entered __________________
+[gw0] linux -- Python 3.12.14 /workspace/git-repo-db/.venv/bin/python
+
+    @pytest.fixture
+    def failed_setup():
+        value = 1
+>       assert value == 2
+E       assert 1 == 2
+
+../i6a-assertion-selfcheck/tests/test_probe.py:20: AssertionError
+=================================== FAILURES ===================================
+_________________________________ test_stopped _________________________________
+[gw1] linux -- Python 3.12.14 /workspace/git-repo-db/.venv/bin/python
+
+    def test_stopped():
+        value = 1
+>       assert value == 2
+E       assert 1 == 2
+
+../i6a-assertion-selfcheck/tests/test_probe.py:13: AssertionError
+=========================== short test summary info ============================
+FAILED ../../dev::test_stopped - assert 1 == 2
+ERROR ../../dev::test_setup_never_entered - assert 1 == 2
+1 failed, 1 passed, 1 error in 0.34s

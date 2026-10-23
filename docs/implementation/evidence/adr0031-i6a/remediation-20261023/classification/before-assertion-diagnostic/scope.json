@@ -1,0 +1,5 @@
+{
+  "scope": "Intentional repeated diagnostic on the original 743 unsuccessful nodes; assertion-line observations only; excluded from ordinary aggregate",
+  "node_count": 743,
+  "exit_code": 1
+}

@@ -1,0 +1,4 @@
+{
+  "scope": "Intentional repeated diagnostic: selected failed assertions mask actual permission raise; excluded from ordinary aggregate",
+  "exit_code": 1
+}

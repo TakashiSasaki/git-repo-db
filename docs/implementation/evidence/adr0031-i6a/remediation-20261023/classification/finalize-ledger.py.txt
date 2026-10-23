@@ -1,0 +1,68 @@
+"""Add final outcome-specific handoffs and compact reviewed statistics."""
+
+from collections import Counter
+import json
+from pathlib import Path
+import sys
+
+directory = Path(sys.argv[1])
+path = directory / "failure-ledger-reviewed.json"
+ledger = json.loads(path.read_text())
+history = json.loads((directory / "historical79-signature-audit.json").read_text())
+for row in ledger["rows"]:
+    after = row["after"]
+    row["resolved_before_nonsuccess"] = after["outcome"] == "passed"
+    stage = row["after_responsible_stage"]
+    if row["resolved_before_nonsuccess"]:
+        remaining = None
+    elif stage == "I6-C":
+        remaining = "Separately authorized I6-C trusted Provider/Exchange composition and exact-original forwarding; preserve all ordinary Transfer fences and current permission-before-lookup/replay refusals; downstream assertions remain unverified where not observed"
+    elif stage == "I6-B":
+        remaining = "Separately authorized I6-B codec and exact v5 grammar; retain stage refusal until composed integration is accepted"
+    elif stage == "I7":
+        remaining = "I7 recovery composition must issue finite authority from trusted local state, never salvage input; existing valid Context candidates currently reach admission rejection rather than accepted merge"
+    else:
+        remaining = row["handoff_condition"]
+    row["before_handoff_condition"] = row["handoff_condition"]
+    row["handoff_condition"] = remaining
+    row["remaining_handoff_condition"] = remaining
+path.write_text(json.dumps(ledger, indent=2) + "\n")
+
+old = [row for row in ledger["rows"] if row["historical79"]]
+added = [row for row in ledger["rows"] if row["additional664"]]
+changed = [row for row in history if not row["same_full_signature"]]
+summary = {
+    "scope": "Final clean-source ordinary before/after comparison; repeated diagnostics and hosted/focused/installed executions excluded from aggregate",
+    "before_source": ledger["before_receipt"]["source_binding_before"]["head"],
+    "before_tree": ledger["before_receipt"]["source_binding_before"]["tree"],
+    "after_source": ledger["after_receipt"]["source_binding_before"]["head"],
+    "after_tree": ledger["after_receipt"]["source_binding_before"]["tree"],
+    "before_counts": ledger["before_receipt"]["counts"],
+    "after_counts": ledger["after_receipt"]["counts"],
+    "before_selected": ledger["before_receipt"]["selected"],
+    "after_selected": ledger["after_receipt"]["selected"],
+    "additional_before_categories": ledger["additional_before_categories"],
+    "additional_after_outcomes": ledger["additional_after_outcomes"],
+    "additional_after_categories": ledger["additional_after_categories"],
+    "additional_after_stages": ledger["additional_after_stage_counts"],
+    "remaining_additional_i6a": sum(row["after_responsible_stage"] == "I6-A" and not row["resolved_before_nonsuccess"] for row in added),
+    "historical79_before_phase": dict(Counter(row["before"]["phase"] for row in old)),
+    "historical79_after_phase": dict(Counter(row["after"]["phase"] for row in old)),
+    "historical79_after_categories": dict(Counter(row["after_category"] for row in old)),
+    "historical79_after_same_141_phase": sum(row["after"]["phase"] == row["baseline141"]["phase"] for row in history),
+    "historical79_after_same_141_message": sum(row["after"]["message"] == row["baseline141"]["message"] for row in history),
+    "changed59_before_own_literal_assert_statement_line_entry": sum(bool(row["before_reachability"].get("actual_test_function_assertion_lines_entered")) for row in changed),
+    "changed59_after_own_literal_assert_statement_line_entry": sum(bool(row["after_reachability"].get("actual_test_function_assertion_lines_entered")) for row in changed),
+    "all743_before_own_literal_assert_statement_line_entry": sum(bool(row["before_reachability"].get("actual_test_function_assertion_lines_entered")) for row in ledger["rows"]),
+    "all743_after_own_literal_assert_statement_line_entry": sum(bool(row["after_reachability"].get("actual_test_function_assertion_lines_entered")) for row in ledger["rows"]),
+    "all743_test_bodies_completed_after": sum(row["resolved_before_nonsuccess"] for row in ledger["rows"]),
+    "new_failure_identities": ledger["new_after_failures"],
+    "added_nodes": ledger["after_nodes_added"],
+    "removed_nodes": ledger["after_nodes_missing"],
+    "after_typed_phase_checks": ledger["after_receipt"]["checks"],
+    "after_subtests": {"count": ledger["after_receipt"]["subtest_count"], "outcomes": ledger["after_receipt"]["subtest_outcomes"]},
+    "before_assertion_trace_receipt": ledger["before_assertion_trace_receipt"],
+    "after_assertion_trace_receipt": ledger["after_assertion_trace_receipt"],
+}
+(directory / "summary-reviewed.json").write_text(json.dumps(summary, indent=2) + "\n")
+print(json.dumps({key: value for key, value in summary.items() if key not in ("new_failure_identities", "added_nodes", "after_typed_phase_checks", "before_assertion_trace_receipt", "after_assertion_trace_receipt")}, indent=2))

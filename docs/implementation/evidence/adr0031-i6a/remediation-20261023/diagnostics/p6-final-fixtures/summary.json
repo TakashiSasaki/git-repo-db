@@ -1,0 +1,99 @@
+{
+  "before": {
+    "failed": 11,
+    "exit_code": 1
+  },
+  "after": {
+    "passed": 50,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "exit_code": 0
+  },
+  "resolved_original_nodes": [
+    {
+      "classname": "tests.integration.p6.test_corrections",
+      "name": "test_literal_unicode_short_special_search_semantics_and_cost_phases[\"]"
+    },
+    {
+      "classname": "tests.integration.p6.test_corrections",
+      "name": "test_literal_unicode_short_special_search_semantics_and_cost_phases[*]"
+    },
+    {
+      "classname": "tests.integration.p6.test_corrections",
+      "name": "test_literal_unicode_short_special_search_semantics_and_cost_phases[P6]"
+    },
+    {
+      "classname": "tests.integration.p6.test_corrections",
+      "name": "test_literal_unicode_short_special_search_semantics_and_cost_phases[\\U0001f600]"
+    },
+    {
+      "classname": "tests.integration.p6.test_corrections",
+      "name": "test_literal_unicode_short_special_search_semantics_and_cost_phases[\\\\]"
+    },
+    {
+      "classname": "tests.integration.p6.test_corrections",
+      "name": "test_literal_unicode_short_special_search_semantics_and_cost_phases[\\u65e5\\u672c\\u8a9e]"
+    },
+    {
+      "classname": "tests.integration.p6.test_corrections",
+      "name": "test_literal_unicode_short_special_search_semantics_and_cost_phases[\\x00]"
+    },
+    {
+      "classname": "tests.integration.p6.test_corrections",
+      "name": "test_literal_unicode_short_special_search_semantics_and_cost_phases[a]"
+    },
+    {
+      "classname": "tests.integration.p6.test_corrections",
+      "name": "test_literal_unicode_short_special_search_semantics_and_cost_phases[caf\\xe9]"
+    },
+    {
+      "classname": "tests.integration.p6.test_corrections",
+      "name": "test_literal_unicode_short_special_search_semantics_and_cost_phases[p6]"
+    },
+    {
+      "classname": "tests.integration.p6.test_pagination_snapshots",
+      "name": "test_open_snapshot_isolation_and_stale_cursor_fencing_after_write"
+    }
+  ],
+  "assertion_binding": "input-binding.json",
+  "scope": "Supporting full P6 run on423 base + two finite-fixture edits; final full new-freeze pending parent",
+  "artifacts": {
+    "before.jsonl": {
+      "bytes": 10605,
+      "sha256": "95800527f69725faf1c271b856e758eb58d676bb4df1f56e487d1232e22d352c"
+    },
+    "input-binding.json": {
+      "bytes": 899,
+      "sha256": "2564b42e3a67e036f2a757625158d6dd74467e9c19746d286693f354ac8ae224"
+    },
+    "before.xml": {
+      "bytes": 29140,
+      "sha256": "ac7677e3b5ef2448c6f58d5e8bd2dc449ecde01b0646d5fdb15566aeee0ebb55"
+    },
+    "before.log": {
+      "bytes": 28257,
+      "sha256": "f7ac56a876b2e0d80ece1854f3c2a726063f039d2bc1edd85f31056ace7acc66"
+    },
+    "before-execution.json": {
+      "bytes": 507,
+      "sha256": "639a57a8d918c7d51de27a7067d864ad441bfc0b548666d3532dd0b26d39b335"
+    },
+    "after-p6.log": {
+      "bytes": 100,
+      "sha256": "6e036e44911b4fa1cbd2a0219fd371f699df29a2639e060926b41c2419c0dab4"
+    },
+    "after-p6-execution.json": {
+      "bytes": 297,
+      "sha256": "23708efbda006187e9c503babf1b8e0146a34d641806e8f67ee534405a1596b1"
+    },
+    "after-p6.jsonl": {
+      "bytes": 45337,
+      "sha256": "1fb36534d0d93ea54bbfed4b6bf53b8962210b016b330fa0a8a4b8bb9b8f48c3"
+    },
+    "after-p6.xml": {
+      "bytes": 7480,
+      "sha256": "9310d9d31a254417c30a21592f6fd9e3544691c5407da1612fbc88edf39ee6b5"
+    }
+  }
+}

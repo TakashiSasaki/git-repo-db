@@ -12,10 +12,12 @@ from repo_catalog.adapters.sqlite.recovery_validation import (
     validate_stored_context_relations,
 )
 from repo_catalog.domain import parent_report
+from repo_catalog.domain.context_admission import AdmissionRefused, DependencySet
 from repo_catalog.domain.p1_context import ResourceKey
 from repo_catalog.domain.p1_context import canonical as J
 from repo_catalog.domain.production_context import ContextError, ResourceRelation
 from repo_catalog.domain.resource_identification import ResourceIdentification as RI
+from tests.support.context_admission import fixture_context, fixture_service
 
 S = "22222222-2222-4222-8222-222222222222"
 R = "11111111-1111-4111-8111-111111111111"
@@ -39,6 +41,13 @@ def verify():
         parent = ResourceKey.from_native(S, "project", "P7")
         other = ResourceKey.from_native(S, "project", "P8")
         child = ResourceKey.global_document(S, ["D", ["", []]])
+        service, policy = fixture_service(
+            DependencySet(
+                resources=frozenset({parent, other, child}),
+                provider_registrations=frozenset({S}),
+            )
+        )
+        admission = fixture_context(service)
 
         def report(target):
             return ResourceRelation(
@@ -57,29 +66,39 @@ def verify():
             )
 
         original = report(parent)
-        with production_context.Context.transaction(directory) as ctx:
-            ctx.provider(S, "test")
-            ctx.resource(child, identification=RI.global_document(child))
+        with production_context.Context.transaction(
+            directory, authorization=service
+        ) as ctx:
+            ctx.provider(S, "test", admission=admission)
+            ctx.resource(
+                child, identification=RI.global_document(child), admission=admission
+            )
             try:
-                ctx.relation(original)
+                ctx.relation(original, admission=admission)
             except ContextError as e:
                 assert e.code == "RESOURCE_UNAVAILABLE"
             else:
                 raise AssertionError("missing Parent admitted")
             assert not ctx.relations(child, "parent")
-        with production_context.Context.transaction(directory) as ctx:
-            ctx.resource(parent)
-            ctx.resource(other)
+        with production_context.Context.transaction(
+            directory, authorization=service
+        ) as ctx:
+            ctx.resource(parent, admission=admission)
+            ctx.resource(other, admission=admission)
             assert not ctx.relations(child, "parent")
-            assert ctx.relation(original) == "insert"
-            assert ctx.relation(original) == "duplicate"
+            assert ctx.relation(original, admission=admission) == "insert"
+            assert ctx.relation(original, admission=admission) == "duplicate"
+            assert ctx.relation(report(other), admission=admission) == "insert"
+        policy.denied = DependencySet(resources=frozenset({parent}))
+        with production_context.Context.transaction(
+            directory, authorization=service
+        ) as ctx:
             try:
-                ctx.relation(original, permitted=lambda _: False)
-            except ContextError as e:
+                ctx.relation(original, admission=admission)
+            except AdmissionRefused as e:
                 assert e.code == "PERMISSION_DENIED"
             else:
                 raise AssertionError("replay bypassed policy")
-            assert ctx.relation(report(other)) == "insert"
         with production_context.Context.snapshot(directory) as ctx:
             assert set(ctx.relations(child, "parent")) == {original, report(other)}
         db = p1_schema.connect(directory / "context.sqlite3", "context")

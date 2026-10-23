@@ -1,0 +1,17 @@
+{
+  "argv": [
+    ".venv/bin/python",
+    "-m",
+    "pytest",
+    "tests/unit/test_context_capability_preflight.py",
+    "tests/unit/test_context_admission.py",
+    "tests/unit/test_context_coordinator_admission.py",
+    "tests/integration/p3/test_production_context.py::test_paired_read_context_projection_no_savepoint_escape",
+    "tests/integration/p3/test_production_context.py::test_capability_expired_and_outer_transaction_required",
+    "-q",
+    "--junitxml=/workspace/i6a-coordinator-evidence/capability-after.xml",
+    "--journal=/workspace/i6a-coordinator-evidence/capability-after.jsonl"
+  ],
+  "exit_code": 1,
+  "wall_seconds": 2.581843137741089
+}

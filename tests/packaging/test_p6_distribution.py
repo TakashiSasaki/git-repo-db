@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import shutil
 import sys
 from pathlib import Path
 
@@ -21,6 +22,12 @@ def test_p6_installed_query_search_and_cli(
     env, wheels = p1_distributions
     outside = tmp_path / "outside"
     outside.mkdir()
+    # The test-only issuer is copied beside the external harness, never bundled
+    # into the wheel or used to import product code from this checkout.
+    shutil.copy2(
+        Path(__file__).parents[1] / "support/context_admission.py",
+        outside / "fixture_authority.py",
+    )
     venv = tmp_path / "venv"
     run(["uv", "venv", venv, "--python", sys.executable, "--offline"], outside, env)
     python = venv / "bin/python"
@@ -43,6 +50,7 @@ import hashlib
 import json
 import subprocess
 import sys
+import sysconfig
 from pathlib import Path
 from uuid import uuid4
 
@@ -51,12 +59,22 @@ from repo_catalog.adapters.sqlite.p1_coordination import PairCoordinator
 from repo_catalog.adapters.sqlite.p1_schema import initialize, verify_declared
 from repo_catalog.adapters.sqlite.production_context import Context
 from repo_catalog.application.production_query import ProductionQueryService
+from repo_catalog.domain.context_admission import DependencySet
+from fixture_authority import fixture_service, fixture_context
 from repo_catalog.domain.p1_context import FieldCandidate, FieldClock, ResourceKey, canonical
 from repo_catalog.domain.p1_core import OID, NativeObject, native_oid
 from repo_catalog.domain.production_query import PageRequest, SearchQuery
 
 assert "site-packages" in str(Path(__import__("repo_catalog.application.production_query", fromlist=["x"]).__file__))
 verify_declared()
+installed_root = Path(sysconfig.get_path("purelib")).resolve()
+for module_name in (
+    "repo_catalog.adapters.sqlite.p1_coordination",
+    "repo_catalog.adapters.sqlite.production_context",
+    "repo_catalog.domain.context_admission",
+):
+    module = __import__(module_name, fromlist=["x"])
+    assert Path(module.__file__).resolve().is_relative_to(installed_root)
 
 repo, instance, service = (str(uuid4()) for _ in range(3))
 cat = Path("catalog")
@@ -102,7 +120,12 @@ def ctx_unit(db):
         ctx.admit_field(FieldCandidate(pr_key, "title", canonical("installed p6 pr needle"), FieldClock("gh", 10), prov, 10))
         ctx.link_core(pr_key, "head", fmt, commit_oid_hex, prov, lambda f, o: (f, o) == (fmt, commit_oid_hex))
 
-PairCoordinator(cat).admit(core_unit, ctx_unit)
+authorization, _ = fixture_service(DependencySet(
+    resources={pr_key}, repositories={repo}, provider_registrations={service},
+    object_oids={OID(fmt, commit_oid_hex)},
+))
+admission = fixture_context(authorization)
+PairCoordinator(cat, authorization=authorization).admit(core_unit, ctx_unit, admission=admission)
 
 svc = ProductionQueryService(cat)
 assert svc.detect_mode() == "paired"

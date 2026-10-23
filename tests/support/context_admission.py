@@ -105,3 +105,37 @@ def fixture_context(service, *, selection=None, budget=None):
         selection or AdmissionSelection(all_selected=True),
         budget or AdmissionBudget(),
     )
+
+
+class FixtureContext:
+    """Bind one explicitly issued invocation to a synthetic fixture facade.
+
+    The authority comes only from the fixture's finite grant declaration. This
+    wrapper never derives grants from a mutation or retries a refusal. Product
+    methods, transaction ownership, policy leases and commit checks all execute.
+    """
+
+    def __init__(self, context, admission):
+        self._context = context
+        self._admission = admission
+
+    def __getattr__(self, name):
+        from functools import partial
+
+        from repo_catalog.adapters.sqlite.context_admission import MUTATIONS
+
+        value = getattr(self._context, name)
+        if name in MUTATIONS:
+            return partial(value, admission=self._admission)
+        return value
+
+
+@contextmanager
+def fixture_transaction(directory, grants):
+    """Keep the product factory and commit fence with explicit fixture authority."""
+    from repo_catalog.adapters.sqlite.production_context import Context
+
+    service, _ = fixture_service(grants)
+    admission = fixture_context(service)
+    with Context.transaction(directory, authorization=service) as context:
+        yield FixtureContext(context, admission)

@@ -25,9 +25,11 @@ from repo_catalog.domain import (
     resource_identity,
     resource_stage,
 )
+from repo_catalog.domain.context_admission import DependencySet
 from repo_catalog.domain.p1_context import ResourceKey
 from repo_catalog.domain.production_context import ResourceObservation
 from repo_catalog.domain.resource_identification import ResourceIdentification as RI
+from tests.support.context_admission import fixture_context, fixture_service
 
 REPO = "33333333-3333-4333-8333-333333333333"
 INSTANCE = "44444444-4444-4444-8444-444444444444"
@@ -54,15 +56,27 @@ def verify():
             for native in ("", [], ["global", ["", []]])
         ]
         opaque = ResourceKey.from_native(SERVICE, "vendor.new-kind", [[]])
-        with Context.transaction(path) as ctx:
-            ctx.provider(SERVICE, "synthetic")
-            ctx.observe(ResourceObservation(scoped, identification=declaration))
+        service, _ = fixture_service(
+            DependencySet(
+                resources=frozenset({scoped, *globals_, opaque}),
+                provider_registrations=frozenset({SERVICE}),
+            )
+        )
+        admission = fixture_context(service)
+        with Context.transaction(path, authorization=service) as ctx:
+            ctx.provider(SERVICE, "synthetic", admission=admission)
+            ctx.observe(
+                ResourceObservation(scoped, identification=declaration),
+                admission=admission,
+            )
             for key in globals_:
-                ctx.resource(key, identification=RI.global_document(key))
-            ctx.resource(opaque)
+                ctx.resource(
+                    key, identification=RI.global_document(key), admission=admission
+                )
+            ctx.resource(opaque, admission=admission)
             for key in (*globals_, scoped):
                 try:
-                    ctx.resource(ResourceKey(*key.coordinates()))
+                    ctx.resource(ResourceKey(*key.coordinates()), admission=admission)
                 except ValueError:
                     pass
                 else:
@@ -99,14 +113,19 @@ def verify():
                 raise AssertionError("unsupported Transfer consumer accepted")
         checks.append("explicit-consumer-stage-refusals")
         db = p1_schema.connect(path / "context.sqlite3", "context")
-        store = p1_context.ContextStore(db)
+        store = p1_context.ContextStore(db, authorization=service)
         before = db.execute("SELECT * FROM resources ORDER BY 1,2,3").fetchall()
-        try:
-            store.resource(scoped, identification=RI.global_document(scoped))
-        except sqlite3.IntegrityError as error:
-            assert error.sqlite_errorcode == 1811
-        else:
-            raise AssertionError("same-key declaration rebind accepted")
+        with store.admission_transaction(admission=admission):
+            try:
+                store.resource(
+                    scoped,
+                    identification=RI.global_document(scoped),
+                    admission=admission,
+                )
+            except sqlite3.IntegrityError as error:
+                assert error.sqlite_errorcode == 1811
+            else:
+                raise AssertionError("same-key declaration rebind accepted")
         assert before == db.execute("SELECT * FROM resources ORDER BY 1,2,3").fetchall()
         checks.append("sql-preconflict-rebind")
         validate_stored_context_relations(db)

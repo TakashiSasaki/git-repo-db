@@ -1,0 +1,47 @@
+[
+  {
+    "original": "plan.json",
+    "bytes": 43112,
+    "sha256": "d62a8214b439624cd2c5a751acadbe8aa61c36ab62c9627cd3cebaa785548503",
+    "stored": "plan.json.gz",
+    "stored_bytes": 3581,
+    "stored_sha256": "5e35433e1e1a51fef41c64737494bde0d06b7a98a395e48c7e5d090dde0f10fa",
+    "gzip": true
+  },
+  {
+    "original": "receipt-binding.json",
+    "bytes": 209,
+    "sha256": "427b092627e11c7fb1c300508102d56bafbde164a036ac41f11ff7e6ee8a3cf3",
+    "stored": "receipt-binding.json",
+    "stored_bytes": 209,
+    "stored_sha256": "427b092627e11c7fb1c300508102d56bafbde164a036ac41f11ff7e6ee8a3cf3",
+    "gzip": false
+  },
+  {
+    "original": "receipt-index.json",
+    "bytes": 2360,
+    "sha256": "819f7cbe645b5d6ae7e8df03be82ba23cc304de480af525ef6cdc57f43e43b41",
+    "stored": "receipt-index.json",
+    "stored_bytes": 2360,
+    "stored_sha256": "819f7cbe645b5d6ae7e8df03be82ba23cc304de480af525ef6cdc57f43e43b41",
+    "gzip": false
+  },
+  {
+    "original": "validation-manifest.json",
+    "bytes": 38200,
+    "sha256": "6dae6557b4e974b3dae5e619261e0338de25de45268ea0e2bb533b3645c686db",
+    "stored": "validation-manifest.json.gz",
+    "stored_bytes": 3060,
+    "stored_sha256": "b3f70eb155762144e70d67e4e6346b67528edb1783cae116199203c093529b51",
+    "gzip": true
+  },
+  {
+    "original": "verification.json",
+    "bytes": 365,
+    "sha256": "2283176adb4a3b8b6385db54b60d4897f9d212fd633afeab3e244d1d71262da0",
+    "stored": "verification.json",
+    "stored_bytes": 365,
+    "stored_sha256": "2283176adb4a3b8b6385db54b60d4897f9d212fd633afeab3e244d1d71262da0",
+    "gzip": false
+  }
+]

@@ -23,6 +23,7 @@ from repo_catalog.domain.p1_coordination import (
     CoordinationError,
     PairAdmission,
 )
+from repo_catalog.domain.production_context import ContextError
 from tests.support.context_admission import fixture_context, fixture_service
 
 REPOSITORY = "9ebbe38a-f937-40e6-a99c-701835ebcf10"
@@ -85,8 +86,13 @@ def test_local_authority_survives_callback_until_actual_commit(catalog, facade):
     assert checked == ["during_context"] and resource_count(catalog) == 1
     assert policy.active == 0
     calls_before = len(policy.calls)
-    with pytest.raises(AdmissionRefused, match="^PERMISSION_DENIED$"):
+    # Facades preserve their local lifetime diagnostic; the raw Store's expired
+    # coordinator binding retains its existing authorization refusal.
+    with pytest.raises(ContextError if facade else AdmissionRefused) as refused:
         captured[0].resource(KEY)
+    assert refused.value.code == (
+        "CAPABILITY_EXPIRED" if facade else "PERMISSION_DENIED"
+    )
     assert len(policy.calls) == calls_before
 
 

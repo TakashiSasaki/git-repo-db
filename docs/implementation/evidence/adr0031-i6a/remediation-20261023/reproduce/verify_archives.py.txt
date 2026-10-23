@@ -1,0 +1,15 @@
+import pathlib,json,hashlib,gzip
+root=pathlib.Path('/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6a/remediation-20261023');count=0;indices=[]
+for p in sorted(root.rglob('compression-index.json')):
+ data=json.loads(p.read_text());entries=data['files'] if isinstance(data,dict) else data
+ for r in entries:
+  if 'stored' in r:
+   name,sz,sha=r['stored'],r['stored_bytes'],r['stored_sha256'];osz,osha=r['bytes'],r['sha256'];compressed=r['gzip']
+  elif 'gzip_name' in r:
+   name,sz,sha=r['gzip_name'],r['gzip_bytes'],r['gzip_sha256'];osz,osha=r['original_bytes'],r['original_sha256'];compressed=True
+  else:
+   name,sz,sha=r['transport'],r['transport_bytes'],r['transport_sha256'];osz,osha=r['original_bytes'],r['original_sha256'];compressed=name.endswith('.gz')
+  b=(p.parent/name).read_bytes();assert len(b)==sz and hashlib.sha256(b).hexdigest()==sha,(p,name,'stored')
+  raw=gzip.decompress(b) if compressed else b;assert len(raw)==osz and hashlib.sha256(raw).hexdigest()==osha,(p,name,'original');count+=1
+ indices.append({'path':str(p.relative_to(root)),'sha256':hashlib.sha256(p.read_bytes()).hexdigest(),'members':len(entries)})
+r={'verified_members':count,'indices':indices,'scope':'All currently archived original/stored bytes verified, not a new product test execution.'};(root/'evidence-verification.json').write_text(json.dumps(r,indent=2)+'\n');print('Verified',count,'members in',len(indices),'indices')

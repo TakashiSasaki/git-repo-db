@@ -1,0 +1,57 @@
+{
+  "source_head": "423e34504b2a9686c94f971f37c164449a28fe31",
+  "runtime": "/workspace/i6a-runs/installed-after/direct-venv/lib/python3.12/site-packages/repo_catalog/__init__.py",
+  "cases": [
+    {
+      "name": "positive-explicit-config",
+      "command": [
+        "/workspace/i6a-runs/installed-after/direct-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-c",
+        "/workspace/i6a-runs/adversarial-review/installed-v2/ancestor/positive-explicit-config/pytest.ini",
+        "--rootdir=/workspace/i6a-runs/adversarial-review/installed-v2/ancestor/positive-explicit-config",
+        "--confcutdir=/workspace/i6a-runs/adversarial-review/installed-v2/ancestor/positive-explicit-config",
+        "test_probe.py"
+      ],
+      "cwd": "/workspace/i6a-runs/adversarial-review/installed-v2/ancestor/positive-explicit-config",
+      "exit_code": 0,
+      "expected_exit": "0"
+    },
+    {
+      "name": "late-source-injection",
+      "command": [
+        "/workspace/i6a-runs/installed-after/direct-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-c",
+        "/workspace/i6a-runs/adversarial-review/installed-v2/ancestor/late-source-injection/pytest.ini",
+        "--rootdir=/workspace/i6a-runs/adversarial-review/installed-v2/ancestor/late-source-injection",
+        "--confcutdir=/workspace/i6a-runs/adversarial-review/installed-v2/ancestor/late-source-injection",
+        "test_probe.py"
+      ],
+      "cwd": "/workspace/i6a-runs/adversarial-review/installed-v2/ancestor/late-source-injection",
+      "exit_code": 1,
+      "expected_exit": "nonzero"
+    },
+    {
+      "name": "wrong-wheel-map",
+      "command": [
+        "/workspace/i6a-runs/installed-after/direct-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-c",
+        "/workspace/i6a-runs/adversarial-review/installed-v2/ancestor/wrong-wheel-map/pytest.ini",
+        "--rootdir=/workspace/i6a-runs/adversarial-review/installed-v2/ancestor/wrong-wheel-map",
+        "--confcutdir=/workspace/i6a-runs/adversarial-review/installed-v2/ancestor/wrong-wheel-map",
+        "test_probe.py"
+      ],
+      "cwd": "/workspace/i6a-runs/adversarial-review/installed-v2/ancestor/wrong-wheel-map",
+      "exit_code": 3,
+      "expected_exit": "nonzero"
+    }
+  ]
+}

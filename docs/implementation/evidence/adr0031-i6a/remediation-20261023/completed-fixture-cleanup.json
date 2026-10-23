@@ -1,0 +1,16 @@
+{
+  "timestamp_utc": "2026-10-23T04:54:02.671981+00:00",
+  "deleted": [
+    {
+      "path": "/workspace/i6a-runs/before/basetemp",
+      "approximate_file_bytes": 10912724683,
+      "reason": "Completed disposable synthetic test databases only; completed raw receipts independently archived and reverified first. Active after-final untouched."
+    },
+    {
+      "path": "/workspace/i6a-runs/after/basetemp",
+      "approximate_file_bytes": 11094206205,
+      "reason": "Completed disposable synthetic test databases only; completed raw receipts independently archived and reverified first. Active after-final untouched."
+    }
+  ],
+  "free_bytes_after": 21184319488
+}

@@ -1,0 +1,18 @@
+{
+  "argv": [
+    "/workspace/git-repo-db/.venv/bin/python",
+    "-m",
+    "pytest",
+    "tests/integration/i3/test_selective_exchange.py::test_transfer_reports_never_shrunk_or_mixed",
+    "tests/integration/p1/test_context_relations.py::test_transfer_report_fk_failure_rolls_back_whole_unit",
+    "tests/integration/p1/test_context_relations.py::test_transfer_supports_both_endpoints_without_cross_borrowing",
+    "-q",
+    "--tb=short",
+    "--junitxml",
+    "/workspace/i6a-constructor-remediation/tests.xml",
+    "--journal",
+    "/workspace/i6a-constructor-remediation/journal.jsonl"
+  ],
+  "exit_code": 1,
+  "scope": "three-node constructor/finite-grant remediation diagnostic"
+}

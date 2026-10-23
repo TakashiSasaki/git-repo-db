@@ -10,6 +10,7 @@ from repo_catalog.adapters.sqlite.p1_schema import connect, initialize
 from repo_catalog.adapters.sqlite.production_context import Context
 from repo_catalog.application.exchange import ExchangeService
 from repo_catalog.domain.acquisition import make_provenance
+from repo_catalog.domain.context_admission import DependencySet, dependencies
 from repo_catalog.domain.exchange import (
     ExchangeError,
     ExchangeSelectionScope,
@@ -27,6 +28,21 @@ from repo_catalog.domain.p1_core import OID
 from repo_catalog.domain.resource_identification import ResourceIdentification as RI
 from repo_catalog.domain.resource_identity import encode_identity
 from tests.integration.p5.conftest import init_catalog_stores
+from tests.support.context_admission import fixture_transaction
+
+
+def local_grants(
+    issue, r1, r2, *, resources=(), sources=(), providers=(), units=(), oids=()
+):
+    """Declare finite authority for the named synthetic source setup only."""
+    return dependencies((issue, *resources, *units, *oids)) | DependencySet(
+        repositories={r1, r2},
+        sources=sources,
+        source_repository_pairs={
+            (source, repo) for source in sources for repo in (r1, r2)
+        },
+        provider_registrations={issue.service_instance_uuidv4, *providers},
+    )
 
 
 def catalog(path):
@@ -47,7 +63,7 @@ def fixture(path):
     core.admit_repository(r2)
     core.admit_object(oid)
     core.close()
-    with Context.transaction(path) as ctx:
+    with fixture_transaction(path, local_grants(issue, r1, r2)) as ctx:
         ctx.provider(service, "github", "{}")
         ctx.repository(r1)
         ctx.repository(r2)
@@ -183,20 +199,87 @@ def test_operational_loss_requires_new_issuance(tmp_path):
 
 
 def test_transfer_reports_never_shrunk_or_mixed(tmp_path):
-    from repo_catalog.domain.p1_context import TransferEventReport
+    from repo_catalog.domain.p1_context import (
+        MappingSupport,
+        ProviderEndpointDeclaration,
+        TransferEventReport,
+        encode_transfer_supported_provenance,
+    )
+    from repo_catalog.domain.parent_report import ParentObservation, ParentReportKey
+    from repo_catalog.domain.production_context import ResourceRelation
 
     a, b = tmp_path / "a", tmp_path / "b"
     r1, r2, issue, _ = fixture(a)
     catalog(b)
     event = ResourceKey.timeline_event(issue, "event-1")
+    # These are newly authored disposable fixture originals, declared before
+    # any selection. Provider native identities never come from Core UUIDs or
+    # surviving translated endpoint rows.
+    provider_from = ResourceKey.from_native(
+        issue.service_instance_uuidv4, "repository", "fixture-from-provider"
+    )
+    provider_to = ResourceKey.from_native(
+        issue.service_instance_uuidv4, "repository", "fixture-to-provider"
+    )
+    mappings = tuple(
+        ResourceRepositoryRelation(
+            provider,
+            "represents_repository",
+            FieldClock("fixture-mapping", 10),
+            canonical(repository),
+            make_provenance("fixture-mapping", evidence),
+            11,
+        )
+        for provider, repository, evidence in (
+            (provider_from, r1, "from-original"),
+            (provider_to, r2, "to-original"),
+        )
+    )
+    parent = ParentObservation(
+        ParentReportKey(
+            event,
+            canonical([list(issue.coordinates())]),
+            make_provenance("fixture-parent", "independent-parent-original"),
+            canonical(
+                {
+                    "clock": {"domain": "fixture-parent", "at_us": 12},
+                    "document_kind": "timeline_event",
+                    "state": "complete",
+                }
+            ),
+        ),
+        13,
+    )
+    original_provenance = encode_transfer_supported_provenance(
+        "provider",
+        {"event": "original-event"},
+        (
+            (
+                "transfer_from_repository",
+                MappingSupport(provider_from, (mappings[0].claim_key,)),
+            ),
+            (
+                "transfer_to_repository",
+                MappingSupport(provider_to, (mappings[1].claim_key,)),
+            ),
+        ),
+    )
     reports = [
         TransferEventReport.from_targets(
             event,
             clock=FieldClock("provider", 20),
-            provenance_json=make_provenance("provider", "original-event"),
+            provenance_json=original_provenance,
             observed_at_us=21,
             from_target_json=canonical(r1),
             to_target_json=canonical(r2),
+            parent_report=parent,
+            endpoint_declaration=ProviderEndpointDeclaration(
+                provider_from, provider_to
+            ),
+            endpoints=(
+                ("transfer_from_repository", canonical(r1)),
+                ("transfer_to_repository", canonical(r2)),
+            ),
         ),
         TransferEventReport.from_targets(
             event,
@@ -204,11 +287,39 @@ def test_transfer_reports_never_shrunk_or_mixed(tmp_path):
             provenance_json=make_provenance("provider", "one-sided-original"),
             observed_at_us=23,
             from_target_json="null",
+            parent_report=parent,
+            endpoint_declaration=ProviderEndpointDeclaration(
+                "explicit_null", "not_reported"
+            ),
+            endpoints=(("transfer_from_repository", "null"),),
         ),
     ]
-    with Context.transaction(a) as ctx:
+    with fixture_transaction(
+        a,
+        local_grants(
+            issue,
+            r1,
+            r2,
+            resources=(event, provider_from, provider_to),
+            units=(*mappings, parent, *reports),
+        ),
+    ) as ctx:
         ctx.resource(
             event, identification=RI.scoped(event, issue, "timeline_event", "event-1")
+        )
+        for provider in (provider_from, provider_to):
+            ctx.resource(provider)
+        for mapping in mappings:
+            ctx.admit_repository_relation(mapping)
+        ctx.relation(
+            ResourceRelation(
+                event,
+                "parent",
+                (issue,),
+                parent.provenance_json,
+                parent.scope_json,
+                parent.observed_at_us,
+            )
         )
         for report in reports:
             ctx.admit_transfer_event(report)
@@ -231,6 +342,14 @@ def test_transfer_reports_never_shrunk_or_mixed(tmp_path):
         observed_at_us=reports[0].observed_at_us,
         from_target_json=canonical(r1),
         to_target_json="null",
+        parent_report=parent,
+        endpoint_declaration=ProviderEndpointDeclaration(
+            provider_from, "explicit_null"
+        ),
+        endpoints=(
+            ("transfer_from_repository", canonical(r1)),
+            ("transfer_to_repository", "null"),
+        ),
     )
     for row in package.context["resource_relations"]:
         if row["scope_json"] == reports[0].scope_json:
@@ -291,7 +410,16 @@ def test_mapping_claim_support_and_dispositions_are_exact(tmp_path):
         make_provenance("mapping", "withdraw-original"),
         31,
     )
-    with Context.transaction(a) as ctx:
+    with fixture_transaction(
+        a,
+        local_grants(
+            issue,
+            r1,
+            r2,
+            resources=(provider_repo,),
+            units=(mapping, owning, withdrawal),
+        ),
+    ) as ctx:
         ctx.resource(provider_repo)
         ctx.admit_repository_relation(mapping)
         ctx.admit_repository_relation(owning)
@@ -466,7 +594,7 @@ def test_complete_source_inventory_and_coverage_stay_whole(tmp_path):
         40,
         "complete",
     )
-    with Context.transaction(a) as ctx:
+    with fixture_transaction(a, local_grants(issue, r1, r2, sources=(source,))) as ctx:
         ctx.source(source, issue.service_instance_uuidv4, "{}")
         ctx.inventory(inventory)
         ctx.prove_inventory(claim, inventory)
@@ -781,7 +909,7 @@ def test_core_reference_missing_dependency_retains_original_report_clock(tmp_pat
         make_provenance("provider", "original-head"),
         74,
     )
-    with Context.transaction(a) as ctx:
+    with fixture_transaction(a, local_grants(issue, r1, r2, oids=(oid,))) as ctx:
         ctx.admit_field(original)
         ctx.link_core(
             issue, "head", *oid.key, original.provenance_json, lambda *_: True
@@ -817,9 +945,12 @@ def test_contradictory_coverage_proof_is_rejected_before_binding(
     r1, r2, issue, _ = fixture(a)
     catalog(b)
     provenance = make_provenance("provider", "original-complete")
-    with Context.transaction(a) as ctx:
+    source = str(uuid4())
+    child = ResourceKey.document(issue, "comment", "comment", "99")
+    with fixture_transaction(
+        a, local_grants(issue, r1, r2, sources=(source,), resources=(child,))
+    ) as ctx:
         if kind == "source_inventory":
-            source = str(uuid4())
             original_scope = canonical(
                 {
                     "coverage_kind": "repositories",
@@ -842,7 +973,6 @@ def test_contradictory_coverage_proof_is_rejected_before_binding(
                 inventory,
             )
         else:
-            child = ResourceKey.document(issue, "comment", "comment", "99")
             ctx.resource(child, identification=RI.scoped(child, issue, "comment", "99"))
             observation = CollectionObservation(
                 issue,
@@ -928,7 +1058,7 @@ def test_selection_cannot_hide_conflicting_inventory_terminal_for_completeness(
         repositories=(r2,),
         provenance_json=make_provenance("provider", "competing-second"),
     )
-    with Context.transaction(a) as ctx:
+    with fixture_transaction(a, local_grants(issue, r1, r2, sources=(source,))) as ctx:
         ctx.source(source, issue.service_instance_uuidv4, "{}")
         ctx.inventory(complete)
         ctx.prove_inventory(
@@ -989,7 +1119,7 @@ def test_internally_contradictory_original_times_rejected_before_binding(
     a, b = tmp_path / "a", tmp_path / "b"
     r1, r2, issue, _ = fixture(a)
     catalog(b)
-    with Context.transaction(a) as ctx:
+    with fixture_transaction(a, local_grants(issue, r1, r2)) as ctx:
         ctx.admit_field(
             FieldCandidate(
                 issue,
@@ -1024,7 +1154,7 @@ def test_existing_relation_time_conflict_rejected_before_independent_core_commit
     tmp_path,
 ):
     a, b = tmp_path / "a", tmp_path / "b"
-    r1, r2, _, _ = fixture(a)
+    r1, r2, issue, _ = fixture(a)
     catalog(b)
     package = ExchangeService(a).export_package(selection=scope())
     receive(b, package, (r1, r2))
@@ -1108,7 +1238,7 @@ def test_collection_scope_binding_rejected_before_core_commit(tmp_path, existing
     a, b = tmp_path / "a", tmp_path / "b"
     r1, r2, issue, _ = fixture(a)
     catalog(b)
-    with Context.transaction(a) as ctx:
+    with fixture_transaction(a, local_grants(issue, r1, r2)) as ctx:
         ctx.collection(
             CollectionObservation(
                 issue,
@@ -1150,7 +1280,9 @@ def test_modeled_collection_member_cannot_borrow_another_parent(tmp_path, sectio
     catalog(b)
     other = ResourceKey.from_native(issue.service_instance_uuidv4, "issue", "8")
     child = ResourceKey.document(other, "comment", "comments", "1")
-    with Context.transaction(a) as ctx:
+    with fixture_transaction(
+        a, local_grants(issue, r1, r2, resources=(other, child))
+    ) as ctx:
         ctx.resource(other)
         ctx.resource(child, identification=RI.scoped(child, other, "comments", "1"))
         if section == "collections":
@@ -1256,7 +1388,7 @@ def test_advisory_coverage_details_do_not_rebind_semantic_claim(tmp_path, store)
     from repo_catalog.domain.p1_coverage import CoverageClaim
 
     a, b = tmp_path / "a", tmp_path / "b"
-    r1, r2, _, _ = fixture(a)
+    r1, r2, issue, _ = fixture(a)
     catalog(b)
     if store == "core":
         claim_scope = CoreCoverageScope("repository", (r1, "fixture"))
@@ -1269,7 +1401,7 @@ def test_advisory_coverage_details_do_not_rebind_semantic_claim(tmp_path, store)
         from repo_catalog.domain.p1_context import CoverageClaim as ContextClaim
 
         claim_scope = CoverageScope.repository(r1, "fixture")
-        with Context.transaction(a) as ctx:
+        with fixture_transaction(a, local_grants(issue, r1, r2)) as ctx:
             ctx.scope(claim_scope)
             ctx.admit_coverage(
                 ContextClaim(claim_scope, 40, "partial", '{"detail":"original"}')
@@ -1298,7 +1430,12 @@ def test_context_scope_cannot_rebind_provider_or_source_service(tmp_path, case):
     r1, r2, issue, _ = fixture(a)
     catalog(b)
     source, other_source, other_service = str(uuid4()), str(uuid4()), str(uuid4())
-    with Context.transaction(a) as ctx:
+    with fixture_transaction(
+        a,
+        local_grants(
+            issue, r1, r2, sources=(source, other_source), providers=(other_service,)
+        ),
+    ) as ctx:
         ctx.source(source, issue.service_instance_uuidv4)
         ctx.provider(other_service, "github")
         ctx.source(other_source, other_service)

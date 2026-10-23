@@ -1,0 +1,11 @@
+{"event": "configure", "worker": "master", "source": "/workspace/i6a-assertion-selfcheck", "optimization": 0}
+{"event": "node_start", "worker": "master", "nodeid": "::test_reached"}
+{"event": "assertion_line", "worker": "master", "nodeid": "::test_reached", "phase": "call", "path": "tests/test_probe.py", "line": 6}
+{"event": "node_finish", "worker": "master", "nodeid": "::test_reached"}
+{"event": "node_start", "worker": "master", "nodeid": "::test_stopped"}
+{"event": "assertion_line", "worker": "master", "nodeid": "::test_stopped", "phase": "call", "path": "tests/test_probe.py", "line": 13}
+{"event": "node_finish", "worker": "master", "nodeid": "::test_stopped"}
+{"event": "node_start", "worker": "master", "nodeid": "::test_setup_never_entered"}
+{"event": "assertion_line", "worker": "master", "nodeid": "::test_setup_never_entered", "phase": "setup", "path": "tests/test_probe.py", "line": 20}
+{"event": "node_finish", "worker": "master", "nodeid": "::test_setup_never_entered"}
+{"event": "session_finish", "worker": "master", "exitstatus": 1}
