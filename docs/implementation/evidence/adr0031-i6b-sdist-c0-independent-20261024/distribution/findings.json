@@ -1,0 +1,36 @@
+{
+  "deferred": [
+    "scanner acceptance",
+    "hosted overflow experiment",
+    "hosted full artifact-download verification",
+    "Release acceptance"
+  ],
+  "findings": [],
+  "measured_cases": {
+    "C0_closed_zip_cases": 5,
+    "adversarial_reject": 23,
+    "archive_budget_controls": 8,
+    "installed_I4_each": 217,
+    "installed_I5_each": 29,
+    "installed_I6_pure_checks_each": 58,
+    "original_Access_failure_each": {
+      "assertion_entries_reached": 26,
+      "assertion_entries_unreached": 28,
+      "exit": 1,
+      "refusal": "PERMISSION_DENIED"
+    },
+    "uninstrumented_oversize_control": 1
+  },
+  "raw_evidence_zip_sha256": "c819ea7636d676851ce9349a0a99944bca4aed5374880abae083e2793716752a",
+  "raw_indexed_payloads": 126,
+  "reviewed_head": "fee364c6d61a5feebf08dbdd830a5a57ee2d872b",
+  "reviewed_tree": "ace7e44cd89194d189a30a0aa6cf513a45b3b87c",
+  "scope": "distribution-and-C0",
+  "severity_counts": {
+    "Critical": 0,
+    "High": 0,
+    "Low": 0,
+    "Medium": 0
+  },
+  "verdict": "PASS"
+}

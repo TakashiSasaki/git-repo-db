@@ -1,0 +1,463 @@
+{
+  "reviewed_commit": "fee364c6d61a5feebf08dbdd830a5a57ee2d872b",
+  "sqlite_version": "3.53.1",
+  "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+  "executable": "/workspace/pr155-review-runtime/bin/python",
+  "cases": [
+    {
+      "name": "canonical-unknown-and-global-document-0",
+      "result": "PASS",
+      "details": {
+        "rows": 2,
+        "input_unchanged": true
+      }
+    },
+    {
+      "name": "canonical-unknown-and-global-document-1",
+      "result": "PASS",
+      "details": {
+        "rows": 2,
+        "input_unchanged": true
+      }
+    },
+    {
+      "name": "canonical-unknown-and-global-document-2",
+      "result": "PASS",
+      "details": {
+        "rows": 2,
+        "input_unchanged": true
+      }
+    },
+    {
+      "name": "canonical-unknown-and-global-document-3",
+      "result": "PASS",
+      "details": {
+        "rows": 2,
+        "input_unchanged": true
+      }
+    },
+    {
+      "name": "canonical-unknown-and-global-document-4",
+      "result": "PASS",
+      "details": {
+        "rows": 2,
+        "input_unchanged": true
+      }
+    },
+    {
+      "name": "scoped-child-without-namespace-resource-or-parent",
+      "result": "PASS",
+      "details": {
+        "rows": 1,
+        "input_unchanged": true
+      }
+    },
+    {
+      "name": "missing-named-resource-field-service_instance_uuidv4",
+      "result": "PASS",
+      "details": {
+        "refusal": "MALFORMED_ROW"
+      }
+    },
+    {
+      "name": "missing-named-resource-field-resource_kind",
+      "result": "PASS",
+      "details": {
+        "refusal": "MALFORMED_ROW"
+      }
+    },
+    {
+      "name": "missing-named-resource-field-provider_resource_id",
+      "result": "PASS",
+      "details": {
+        "refusal": "MALFORMED_ROW"
+      }
+    },
+    {
+      "name": "missing-named-resource-field-identifier_namespace_kind",
+      "result": "PASS",
+      "details": {
+        "refusal": "MALFORMED_ROW"
+      }
+    },
+    {
+      "name": "missing-named-resource-field-identifier_namespace_id",
+      "result": "PASS",
+      "details": {
+        "refusal": "MALFORMED_ROW"
+      }
+    },
+    {
+      "name": "missing-named-resource-field-document_kind",
+      "result": "PASS",
+      "details": {
+        "refusal": "MALFORMED_ROW"
+      }
+    },
+    {
+      "name": "missing-named-resource-field-provider_document_id",
+      "result": "PASS",
+      "details": {
+        "refusal": "MALFORMED_ROW"
+      }
+    },
+    {
+      "name": "scoped-mismatch-provider_resource_id",
+      "result": "PASS",
+      "details": {
+        "refusal": "INVALID_IDENTIFICATION"
+      }
+    },
+    {
+      "name": "scoped-mismatch-identifier_namespace_id",
+      "result": "PASS",
+      "details": {
+        "refusal": "INVALID_IDENTIFICATION"
+      }
+    },
+    {
+      "name": "scoped-mismatch-provider_document_id",
+      "result": "PASS",
+      "details": {
+        "refusal": "INVALID_IDENTIFICATION"
+      }
+    },
+    {
+      "name": "scoped-mismatch-document_kind",
+      "result": "PASS",
+      "details": {
+        "refusal": "INVALID_IDENTIFICATION"
+      }
+    },
+    {
+      "name": "noncanonical-identity-0",
+      "result": "PASS",
+      "details": {
+        "refusal": "INVALID_IDENTIFICATION"
+      }
+    },
+    {
+      "name": "noncanonical-identity-1",
+      "result": "PASS",
+      "details": {
+        "refusal": "INVALID_IDENTIFICATION"
+      }
+    },
+    {
+      "name": "noncanonical-identity-2",
+      "result": "PASS",
+      "details": {
+        "refusal": "INVALID_IDENTIFICATION"
+      }
+    },
+    {
+      "name": "noncanonical-identity-3",
+      "result": "PASS",
+      "details": {
+        "refusal": "INVALID_IDENTIFICATION"
+      }
+    },
+    {
+      "name": "noncanonical-identity-4",
+      "result": "PASS",
+      "details": {
+        "refusal": "INVALID_IDENTIFICATION"
+      }
+    },
+    {
+      "name": "noncanonical-identity-5",
+      "result": "PASS",
+      "details": {
+        "refusal": "INVALID_IDENTIFICATION"
+      }
+    },
+    {
+      "name": "noncanonical-identity-6",
+      "result": "PASS",
+      "details": {
+        "refusal": "INVALID_IDENTIFICATION"
+      }
+    },
+    {
+      "name": "noncanonical-identity-7",
+      "result": "PASS",
+      "details": {
+        "refusal": "INVALID_IDENTIFICATION"
+      }
+    },
+    {
+      "name": "unsupported-version-None",
+      "result": "PASS",
+      "details": {
+        "refusal": "UNSUPPORTED_WIRE_VERSION"
+      }
+    },
+    {
+      "name": "unsupported-version-git-repo-db/adr0031-exchange-v4",
+      "result": "PASS",
+      "details": {
+        "refusal": "UNSUPPORTED_WIRE_VERSION"
+      }
+    },
+    {
+      "name": "unsupported-version-git-repo-db/adr0031-exchange-v6",
+      "result": "PASS",
+      "details": {
+        "refusal": "UNSUPPORTED_WIRE_VERSION"
+      }
+    },
+    {
+      "name": "notes_refs-duplicate-stale-digest",
+      "result": "PASS",
+      "details": {
+        "refusal": "DIGEST_MISMATCH",
+        "actual_selection_constructor_calls": 0,
+        "input_unchanged": true
+      }
+    },
+    {
+      "name": "notes_refs-duplicate-rehashed",
+      "result": "PASS",
+      "details": {
+        "refusal": "INVALID_SELECTION",
+        "actual_selection_constructor_calls": 1,
+        "input_unchanged": true
+      }
+    },
+    {
+      "name": "notes_refs-permuted-stale-digest",
+      "result": "PASS",
+      "details": {
+        "refusal": "DIGEST_MISMATCH",
+        "actual_selection_constructor_calls": 0,
+        "input_unchanged": true
+      }
+    },
+    {
+      "name": "notes_refs-permuted-rehashed",
+      "result": "PASS",
+      "details": {
+        "refusal": "INVALID_SELECTION",
+        "actual_selection_constructor_calls": 1,
+        "input_unchanged": true
+      }
+    },
+    {
+      "name": "repository_uuidv4s-duplicate-stale-digest",
+      "result": "PASS",
+      "details": {
+        "refusal": "DIGEST_MISMATCH",
+        "actual_selection_constructor_calls": 0,
+        "input_unchanged": true
+      }
+    },
+    {
+      "name": "repository_uuidv4s-duplicate-rehashed",
+      "result": "PASS",
+      "details": {
+        "refusal": "INVALID_SELECTION",
+        "actual_selection_constructor_calls": 1,
+        "input_unchanged": true
+      }
+    },
+    {
+      "name": "repository_uuidv4s-permuted-stale-digest",
+      "result": "PASS",
+      "details": {
+        "refusal": "DIGEST_MISMATCH",
+        "actual_selection_constructor_calls": 0,
+        "input_unchanged": true
+      }
+    },
+    {
+      "name": "repository_uuidv4s-permuted-rehashed",
+      "result": "PASS",
+      "details": {
+        "refusal": "INVALID_SELECTION",
+        "actual_selection_constructor_calls": 1,
+        "input_unchanged": true
+      }
+    },
+    {
+      "name": "source_uuidv4s-duplicate-stale-digest",
+      "result": "PASS",
+      "details": {
+        "refusal": "DIGEST_MISMATCH",
+        "actual_selection_constructor_calls": 0,
+        "input_unchanged": true
+      }
+    },
+    {
+      "name": "source_uuidv4s-duplicate-rehashed",
+      "result": "PASS",
+      "details": {
+        "refusal": "INVALID_SELECTION",
+        "actual_selection_constructor_calls": 1,
+        "input_unchanged": true
+      }
+    },
+    {
+      "name": "source_uuidv4s-permuted-stale-digest",
+      "result": "PASS",
+      "details": {
+        "refusal": "DIGEST_MISMATCH",
+        "actual_selection_constructor_calls": 0,
+        "input_unchanged": true
+      }
+    },
+    {
+      "name": "source_uuidv4s-permuted-rehashed",
+      "result": "PASS",
+      "details": {
+        "refusal": "INVALID_SELECTION",
+        "actual_selection_constructor_calls": 1,
+        "input_unchanged": true
+      }
+    },
+    {
+      "name": "resource_keys-duplicate-stale-digest",
+      "result": "PASS",
+      "details": {
+        "refusal": "DIGEST_MISMATCH",
+        "actual_selection_constructor_calls": 0,
+        "input_unchanged": true
+      }
+    },
+    {
+      "name": "resource_keys-duplicate-rehashed",
+      "result": "PASS",
+      "details": {
+        "refusal": "INVALID_SELECTION",
+        "actual_selection_constructor_calls": 1,
+        "input_unchanged": true
+      }
+    },
+    {
+      "name": "resource_keys-permuted-stale-digest",
+      "result": "PASS",
+      "details": {
+        "refusal": "DIGEST_MISMATCH",
+        "actual_selection_constructor_calls": 0,
+        "input_unchanged": true
+      }
+    },
+    {
+      "name": "resource_keys-permuted-rehashed",
+      "result": "PASS",
+      "details": {
+        "refusal": "INVALID_SELECTION",
+        "actual_selection_constructor_calls": 1,
+        "input_unchanged": true
+      }
+    },
+    {
+      "name": "object_oids-duplicate-stale-digest",
+      "result": "PASS",
+      "details": {
+        "refusal": "DIGEST_MISMATCH",
+        "actual_selection_constructor_calls": 0,
+        "input_unchanged": true
+      }
+    },
+    {
+      "name": "object_oids-duplicate-rehashed",
+      "result": "PASS",
+      "details": {
+        "refusal": "INVALID_SELECTION",
+        "actual_selection_constructor_calls": 1,
+        "input_unchanged": true
+      }
+    },
+    {
+      "name": "object_oids-permuted-stale-digest",
+      "result": "PASS",
+      "details": {
+        "refusal": "DIGEST_MISMATCH",
+        "actual_selection_constructor_calls": 0,
+        "input_unchanged": true
+      }
+    },
+    {
+      "name": "object_oids-permuted-rehashed",
+      "result": "PASS",
+      "details": {
+        "refusal": "INVALID_SELECTION",
+        "actual_selection_constructor_calls": 1,
+        "input_unchanged": true
+      }
+    },
+    {
+      "name": "strict-work-type-True",
+      "result": "PASS",
+      "details": {
+        "refusal": "INVALID_SELECTION"
+      }
+    },
+    {
+      "name": "strict-work-type-1.0",
+      "result": "PASS",
+      "details": {
+        "refusal": "INVALID_SELECTION"
+      }
+    },
+    {
+      "name": "strict-work-type-'1'",
+      "result": "PASS",
+      "details": {
+        "refusal": "INVALID_SELECTION"
+      }
+    },
+    {
+      "name": "strict-work-type--1",
+      "result": "PASS",
+      "details": {
+        "refusal": "INVALID_SELECTION"
+      }
+    },
+    {
+      "name": "foreign-service-identical-principal-policy",
+      "result": "PASS",
+      "details": {
+        "refusal": "PERMISSION_DENIED",
+        "policy_calls": 0
+      }
+    },
+    {
+      "name": "copied-issued-handle",
+      "result": "PASS",
+      "details": {
+        "refusal": "PERMISSION_DENIED",
+        "policy_calls": 0
+      }
+    },
+    {
+      "name": "same-issued-handle-revoked-replay",
+      "result": "PASS",
+      "details": {
+        "refusal": "PERMISSION_DENIED",
+        "charged_again": true
+      }
+    },
+    {
+      "name": "finite-selection-rejects-unselected-resource",
+      "result": "PASS",
+      "details": {
+        "refusal": "OMITTED_BY_SELECTION"
+      }
+    },
+    {
+      "name": "mutated-issued-selection-rejected-before-policy",
+      "result": "PASS",
+      "details": {
+        "refusal": "PERMISSION_DENIED"
+      }
+    },
+    {
+      "name": "admission-independent-finite-vectors",
+      "result": "PASS",
+      "details": null
+    }
+  ],
+  "passed": 58,
+  "failed": 0
+}

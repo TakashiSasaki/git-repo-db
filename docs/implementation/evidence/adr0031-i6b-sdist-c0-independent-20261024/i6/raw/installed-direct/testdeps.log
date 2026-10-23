@@ -1,0 +1,9 @@
+Using Python 3.12.14 environment at: pr155-review-artifacts/distribution/direct-venv
+Resolved 6 packages in 5ms
+Prepared 5 packages in 15ms
+Installed 5 packages in 2ms
+ + attrs==26.1.0
+ + jsonschema==4.26.0
+ + jsonschema-specifications==2025.9.1
+ + referencing==0.37.0
+ + rpds-py==2026.9.1

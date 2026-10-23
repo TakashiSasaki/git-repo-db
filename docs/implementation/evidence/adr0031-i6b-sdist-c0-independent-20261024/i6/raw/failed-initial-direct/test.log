@@ -1,0 +1,6 @@
+ImportError while loading conftest '/workspace/pr155-review-artifacts/i6/installed-harness/tests/conftest.py'.
+tests/conftest.py:6: in <module>
+    from tests.support.cli import add_local, run
+tests/support/cli.py:7: in <module>
+    import jsonschema
+E   ModuleNotFoundError: No module named 'jsonschema'

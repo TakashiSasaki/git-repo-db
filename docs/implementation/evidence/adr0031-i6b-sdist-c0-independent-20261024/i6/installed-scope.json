@@ -1,0 +1,28 @@
+{
+  "forms": {
+    "derived": {
+      "i4_i5_manifest_sha256": "ccbfb7217088597e0278b0c1f2b63e994c55ae2f114e19634cb23e3b9957b221",
+      "i4_i5_nodes": 246,
+      "i6_nodes": 446,
+      "ordinary_source_unexecuted": 5805,
+      "ordinary_source_union": 692,
+      "overlap": 0
+    },
+    "direct": {
+      "i4_i5_manifest_sha256": "ccbfb7217088597e0278b0c1f2b63e994c55ae2f114e19634cb23e3b9957b221",
+      "i4_i5_nodes": 246,
+      "i6_nodes": 446,
+      "ordinary_source_unexecuted": 5805,
+      "ordinary_source_union": 692,
+      "overlap": 0
+    }
+  },
+  "ordinary_manifest_sha256": "5f00861760b9ace3c313ad020f4b90568d0384790fe57d47d15f5972b4120a10",
+  "ordinary_source_count": 6497,
+  "reviewed_source": "fee364c6d61a5feebf08dbdd830a5a57ee2d872b",
+  "separate_unmapped_checks_per_form": {
+    "doctor": "separate CLI execution",
+    "new_bounded_contract_script": 58,
+    "original_Access_smoke": "separate generated installed smoke, failure retained by distribution"
+  }
+}

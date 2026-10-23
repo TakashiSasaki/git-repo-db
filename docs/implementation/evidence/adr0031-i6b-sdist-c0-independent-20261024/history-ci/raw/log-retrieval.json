@@ -1,0 +1,29 @@
+{
+  "method": "GitHub connector fetch_workflow_job_logs; decoded text saved UTF-8 by apply_patch (may normalize/add final newline), not original HTTP bytes",
+  "logs": [
+    {
+      "path": "job-120597093081.log.gz",
+      "raw_bytes": 56090,
+      "raw_sha256": "fbfc14a680d9245cd0ea4f488b9913944e15f0c0b8b3055a238c0d7433180722",
+      "gzip_bytes": 11843
+    },
+    {
+      "path": "job-120597093317.log.gz",
+      "raw_bytes": 37946,
+      "raw_sha256": "eb6b72c738aaa559d2db177cdccf98d3c516ab079fa4e31bcf059514c7ad0b71",
+      "gzip_bytes": 7744
+    },
+    {
+      "path": "job-120597093781.log.gz",
+      "raw_bytes": 272629,
+      "raw_sha256": "5770ccc2164976102f34b7004eb4f515e62d7da4162c6b88b7f4de0bf0942dfa",
+      "gzip_bytes": 112172
+    },
+    {
+      "path": "job-120597093978.log.gz",
+      "raw_bytes": 3892736,
+      "raw_sha256": "d175c6ab3204f10693f89c0d6eee2e5f1b95576426214c732c15cb3899b856bc",
+      "gzip_bytes": 2091767
+    }
+  ]
+}

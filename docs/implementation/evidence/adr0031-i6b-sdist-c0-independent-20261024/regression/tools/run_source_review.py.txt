@@ -1,0 +1,29 @@
+"""Independent source run driver. Product assertions unchanged; observed not repaired."""
+import argparse,gzip,hashlib,json,os,sqlite3,subprocess,sys,time
+from pathlib import Path
+p=argparse.ArgumentParser();p.add_argument('--root',type=Path,required=True);p.add_argument('--work',type=Path,required=True);p.add_argument('--out',type=Path,required=True);p.add_argument('--diagnostic',action='store_true');a=p.parse_args()
+root=a.root.resolve();work=a.work.resolve();out=a.out.resolve();out.mkdir(parents=True,exist_ok=False)
+sys.path.insert(0,str(root))
+from scripts import verify_i5_offline as runner
+assert runner.ROOT==root
+os.environ.update(PATH=str(Path(sys.executable).parent)+os.pathsep+os.environ['PATH'],PYTHONPATH=str(work/'tools'),TMPDIR=str(work/'tmp'),I6B_BROAD_OUT=str(out),I6B_BROAD_ROOT=str(root),REPO_CATALOG_WHEELHOUSE=str(work/'wheelhouse'),UV_CACHE_DIR='/workspace/pr155-review-cache',PYTHONDONTWRITEBYTECODE='1')
+for name in ('GH_TOKEN','GITHUB_TOKEN','PYTHONHOME'):os.environ.pop(name,None)
+def bind():
+ return dict(head=runner.git('rev-parse','HEAD'),tree=runner.git('rev-parse','HEAD^{tree}'),inputs=runner.input_hashes(),tracked_status=runner.git('status','--porcelain','--untracked-files=no'),python=sys.executable,base_python=sys._base_executable,version=sys.version,sqlite=sqlite3.sqlite_version,sqlite_module=__import__('_sqlite3').__spec__.origin,sqlite_source=sqlite3.connect(':memory:').execute('select sqlite_source_id()').fetchone()[0],observers={q.name:hashlib.sha256(q.read_bytes()).hexdigest() for q in (work/'tools').glob('*.py')})
+before=bind();runner.write_json(out/'binding-before.json',before);assert not before['tracked_status'];runner.require_product_runtime();runner.verified_wheelhouse()
+if a.diagnostic:
+ source=root/'docs/implementation/evidence/adr0031-i6b-independent-20261023/broad/diagnostic745/diagnostic.selected.txt.gz'
+ selected=gzip.decompress(source.read_bytes()).decode().splitlines();assert len(selected)==len(set(selected))==745;name='diagnostic'
+else:
+ allnodes,all_receipt=runner.collect(out,'all-collection',['tests']);selected,receipt=runner.collect(out,'ordinary-collection',['tests'],'not live and not benchmark');assert all_receipt['exit_code']==receipt['exit_code']==0;assert len(selected)==len(set(selected));runner.write_json(out/'unexecuted.json',sorted(set(allnodes)-set(selected)));name='ordinary'
+original=runner.execute
+def observed(directory,name,argv):
+ plugins=['-p','broad_receipt','-p','no:cacheprovider']
+ if a.diagnostic:plugins+=['-p','statement_trace']
+ return original(directory,name,['-c',str(root/'pyproject.toml'),*plugins,'--basetemp='+str(work/(out.name+'-temp')),'--tb=long',*argv])
+runner.execute=observed
+result=runner.run_cohort(out,name,selected,4)
+after=bind();runner.write_json(out/'binding-after.json',after)
+assert all(before[k]==after[k] for k in ('head','tree','inputs','tracked_status'));assert not after['tracked_status']
+print(json.dumps({'scope':'single actual invocation, pytest subtests require separate observer reconciliation','mode':name,'exit_code':result['exit_code'],'results':{k:result.get(k) for k in ('passed','failed','error','executed','skipped','xfail','xpass')}}),flush=True)
+sys.exit(result['exit_code'])

@@ -1,0 +1,71 @@
+{
+  "old": {
+    "unique": 745,
+    "outcomes": {
+      "passed": 446,
+      "failure": 279,
+      "error": 20
+    },
+    "exception_phase_counts": {
+      "call": 279,
+      "setup": 20
+    },
+    "exit_code": 1,
+    "normal_phase_reports": 2215,
+    "passing_subtests": 0,
+    "subtest_types": {},
+    "exact_collection_junit_journal_observer_reconciliation": true,
+    "recorded_head": "fb5d7b5a0c4b92c8a282daac154e66fa6d361e64",
+    "recorded_tree": "d2010275a90ae6b6cb728344d5708057a79110cd",
+    "source_bindings": {
+      "fee364c6d61a5feebf08dbdd830a5a57ee2d872b": {
+        "files": 490,
+        "all_sha256_match": true
+      },
+      "fb5d7b5a0c4b92c8a282daac154e66fa6d361e64": {
+        "files": 490,
+        "all_sha256_match": true
+      }
+    }
+  },
+  "new": {
+    "unique": 745,
+    "outcomes": {
+      "failure": 279,
+      "passed": 446,
+      "error": 20
+    },
+    "exception_phase_counts": {
+      "call": 279,
+      "setup": 20
+    },
+    "exit_code": 1,
+    "normal_phase_reports": 2215,
+    "passing_subtests": 0,
+    "subtest_types": {},
+    "exact_collection_junit_journal_observer_reconciliation": true,
+    "recorded_head": "fee364c6d61a5feebf08dbdd830a5a57ee2d872b",
+    "recorded_tree": "ace7e44cd89194d189a30a0aa6cf513a45b3b87c",
+    "source_bindings": {
+      "fee364c6d61a5feebf08dbdd830a5a57ee2d872b": {
+        "files": 490,
+        "all_sha256_match": true
+      }
+    }
+  },
+  "common": 745,
+  "removed": [],
+  "added_outcomes": {},
+  "common_outcome_changes": [],
+  "common_phase_changes": [],
+  "same_non_successful_phase_set": true,
+  "changed_exception": [],
+  "changed_typed_refusal": [],
+  "changed_project_frame_function": [],
+  "changed_project_frame_coordinates": [],
+  "assertion_call_phase_changes": [],
+  "assertion_all_phase_changes": [],
+  "non_successful_assertion_changes": [],
+  "global_assertion_entry_set_equal": true,
+  "assertion_scope": "main worker thread statement entry only; no subexpression, other-thread, or child execution inference"
+}

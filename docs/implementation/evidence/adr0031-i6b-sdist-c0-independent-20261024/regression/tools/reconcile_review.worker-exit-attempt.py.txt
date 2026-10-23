@@ -1,0 +1,114 @@
+"""Independent raw-evidence reconciliation, not an Author outcome classifier.
+
+Maps exact collection node IDs to xunit1 coordinates, checks Counter equality of
+collection/JUnit/journal and raw observer records, separates pytest subtests, then
+compares explicit phase/exception/refusal/frame projections. Raw bytes retained.
+"""
+import argparse,ast,gzip,hashlib,json,re,subprocess,xml.etree.ElementTree as ET
+from collections import Counter,defaultdict
+from pathlib import Path
+
+def read(path):
+ path=Path(path)
+ if not path.exists():path=Path(str(path)+'.gz')
+ b=path.read_bytes();return gzip.decompress(b) if path.suffix=='.gz' else b
+
+def records(path):return [json.loads(x) for x in read(path).splitlines() if x]
+def xml_key(node):
+ prefix,sep,parameter=node.partition('[');parts=prefix.split('::')
+ return '.'.join((parts[0][:-3].replace('/','.'),*parts[1:-1])),parts[-1]+sep+parameter
+
+def blob_hashes(root,head,paths):
+ command=['git','cat-file','--batch'];payload=''.join(head+':'+p+'\n' for p in paths).encode()
+ proc=subprocess.run(command,input=payload,stdout=subprocess.PIPE,check=True,cwd=root)
+ data=proc.stdout;offset=0;result={}
+ for path in paths:
+  end=data.index(b'\n',offset);header=data[offset:end].split();assert len(header)==3 and header[1]==b'blob',(head,path,header)
+  length=int(header[2]);start=end+1;raw=data[start:start+length];assert data[start+length:start+length+1]==b'\n';offset=start+length+1
+  result[path]=hashlib.sha256(raw).hexdigest()
+ assert offset==len(data);return result
+
+def load(root,directory,name,binding_heads):
+ selected=read(directory/(name+'.selected.txt')).decode().splitlines();assert selected and Counter(selected).most_common(1)[0][1]==1
+ xmlmap={xml_key(n):n for n in selected};assert len(xmlmap)==len(selected)
+ cases={}
+ for case in ET.fromstring(read(directory/(name+'.xml'))).iter('testcase'):
+  node=xmlmap[case.get('classname'),case.get('name')];assert node not in cases
+  status='passed';message=trace=''
+  for tag in ('failure','error','skipped'):
+   child=case.find(tag)
+   if child is not None:status=tag;message=child.get('message','');trace=child.text or '';break
+  cases[node]=dict(outcome=status,message=message,trace=trace)
+ assert Counter(cases.keys())==Counter(selected)
+ events=records(directory/(name+'.jsonl'));starts=Counter(e['nodeid'] for e in events if e['event']=='start');assert starts==Counter(selected)
+ execution=json.loads(read(directory/(name+'.execution.json')));finishes=[e for e in events if e['event']=='finish'];assert len(finishes)==1 and finishes[0]['exitstatus']==execution['exit_code']
+ master=records(directory/'master.reports.jsonl');assert len([r for r in master if r['event']=='finish'])==1
+ controller=[e for e in master if e['event']=='controller_report'];normal=[r for r in controller if r.get('subtest_context') is None];subtests=[r for r in controller if r.get('subtest_context') is not None]
+ phases={(e['nodeid'],e['phase']):e['outcome'] for e in normal};assert len(phases)==len(normal)
+ assert {n for n,p in phases}==set(selected)
+ assert all(r['report_type']=='_pytest.subtests.SubtestReport' for r in subtests)
+ for node in selected:
+  assert (node,'setup') in phases and (node,'teardown') in phases
+  assert ((node,'call') in phases)==(phases[node,'setup']=='passed')
+  failed=[p for p in ('setup','call','teardown') if phases.get((node,p))=='failed']
+  assert bool(failed)==(cases[node]['outcome'] in ('failure','error'))
+  assert len(failed)<=1
+ assert Counter((e['nodeid'],e['phase'],e['outcome']) for e in controller)==Counter((e['nodeid'],e['phase'],e['outcome']) for e in events if e['event']=='phase')
+ workers=sorted(directory.glob('gw*.reports.jsonl*'));worker_rows=[r for p in workers for r in records(p)]
+ assert len([r for r in worker_rows if r['event']=='finish'])==len(workers)
+ assert all(r['exit_code']==execution['exit_code'] for r in worker_rows+master if r['event']=='finish')
+ assert Counter((r['nodeid'],r['phase'],r['outcome']) for r in worker_rows if r['event']=='report')==Counter((r['nodeid'],r['phase'],r['outcome']) for r in controller)
+ failures={}
+ for row in worker_rows:
+  if row['event']!='report' or row['outcome']!='failed':continue
+  key=(row['nodeid'],row['phase']);assert key not in failures
+  row=dict(row);frames=[]
+  for frame in row.get('frames',[]):
+   match=re.search(r'(tests/.*|src/repo_catalog/.*)',frame['path'])
+   if match:frames.append(dict(path=match.group(),function=frame['function'],line=frame['line']))
+  row['project_frames']=frames;failures[key]=row
+ before=json.loads(read(directory/'binding-before.json'));after=json.loads(read(directory/'binding-after.json'))
+ assert all(before.get(k)==after.get(k) for k in ('head','tree','inputs','tracked_status'));assert before['tracked_status']==''
+ assert subprocess.check_output(['git','rev-parse',before['head']+'^{tree}'],cwd=root,text=True).strip()==before['tree']
+ heads=set(binding_heads)|{before['head']};source_bindings={}
+ for head in heads:
+  actual=blob_hashes(root,head,list(before['inputs']));mismatch=[path for path in actual if actual[path]!=before['inputs'][path]]
+  assert not mismatch,(head,mismatch);source_bindings[head]=dict(files=len(actual),all_sha256_match=True)
+ for row in master+worker_rows:
+  for module,origin in row.get('origins',{}).items():
+   relative=origin['path'].split('/src/repo_catalog/',1)[1] if '/src/repo_catalog/' in origin['path'] else None
+   assert relative is not None
+   assert before['inputs']['src/repo_catalog/'+relative]==origin['sha256'],(module,origin)
+ summary=dict(unique=len(selected),outcomes=dict(Counter(c['outcome'] for c in cases.values())),exception_phase_counts=dict(Counter(k[1] for k in failures)),exit_code=execution['exit_code'],normal_phase_reports=len(normal),passing_subtests=len(subtests),subtest_types=dict(Counter(r['report_type'] for r in subtests)),exact_collection_junit_journal_observer_reconciliation=True,recorded_head=before['head'],recorded_tree=before['tree'],source_bindings=source_bindings)
+ assert all(r['outcome']=='passed' for r in subtests)
+ return dict(summary=summary,selected=selected,cases=cases,phases=phases,failures=failures,binding=before)
+
+def assertions(root,directory,head):
+ cache={};entries=defaultdict(set)
+ for p in (directory/'trace').glob('*.jsonl*'):
+  for row in records(p):
+   if row['event']!='assertion_line':continue
+   path=row['path']
+   if path not in cache:
+    raw=subprocess.check_output(['git','show',head+':'+path],cwd=root)
+    cache[path]={node.lineno:ast.dump(node,include_attributes=False) for node in ast.walk(ast.parse(raw)) if isinstance(node,ast.Assert)}
+   entries[row['nodeid']].add((row['phase'],path,row['function'],cache[path][row['line']]))
+ return entries
+
+def compare(root,old,new,old_dir,new_dir,name):
+ common=set(old['selected'])&set(new['selected']);oldfails=old['failures'];newfails=new['failures'];rows=[]
+ for key in sorted(set(oldfails)|set(newfails)):
+  x,y=oldfails.get(key,{}),newfails.get(key,{})
+  rows.append(dict(nodeid=key[0],phase=key[1],old=x,new=y,exception_equal=x.get('exception_type')==y.get('exception_type'),code_equal=x.get('code')==y.get('code'),frames_equal=[(f['path'],f['function']) for f in x.get('project_frames',[])]==[(f['path'],f['function']) for f in y.get('project_frames',[])],coordinates_equal=x.get('project_frames')==y.get('project_frames')))
+ summary=dict(old=old['summary'],new=new['summary'],common=len(common),added=sorted(set(new['selected'])-set(old['selected'])),removed=sorted(set(old['selected'])-set(new['selected'])),added_outcomes=dict(Counter(new['cases'][n]['outcome'] for n in set(new['selected'])-set(old['selected']))),common_outcome_changes=[n for n in sorted(common) if old['cases'][n]['outcome']!=new['cases'][n]['outcome']],common_phase_changes=[list(k) for k in old['phases'] if k in new['phases'] and old['phases'][k]!=new['phases'][k]],same_non_successful_phase_set=set(oldfails)==set(newfails),changed_exception=[r['nodeid'] for r in rows if not r['exception_equal']],changed_typed_refusal=[r['nodeid'] for r in rows if not r['code_equal']],changed_project_frame_function=[r['nodeid'] for r in rows if not r['frames_equal']],changed_project_frame_coordinates=[r['nodeid'] for r in rows if not r['coordinates_equal']],raw_junit_message_changes=[n for n in sorted(common) if old['cases'][n]['message']!=new['cases'][n]['message']],raw_junit_trace_changes=[n for n in sorted(common) if old['cases'][n]['trace']!=new['cases'][n]['trace']])
+ if name=='diagnostic':
+  x=assertions(root,old_dir,old['binding']['head']);y=assertions(root,new_dir,new['binding']['head']);bad={k[0] for k in oldfails}
+  summary.update(assertion_call_phase_changes=[n for n in sorted(common) if {e for e in x[n] if e[0]=='call'}!={e for e in y[n] if e[0]=='call'}],assertion_all_phase_changes=[n for n in sorted(common) if x[n]!=y[n]],non_successful_assertion_changes=[n for n in sorted(bad) if x[n]!=y[n]],global_assertion_entry_set_equal=set().union(*x.values())==set().union(*y.values()),assertion_scope='main worker thread statement entry only; no subexpression, other-thread, or child execution inference')
+ return summary,rows
+
+def main():
+ p=argparse.ArgumentParser();p.add_argument('--root',type=Path,required=True);p.add_argument('--old',type=Path,required=True);p.add_argument('--new',type=Path,required=True);p.add_argument('--name',default='ordinary');p.add_argument('--old-binding',action='append',default=[]);p.add_argument('--new-binding',action='append',default=[]);p.add_argument('--out',type=Path,required=True);a=p.parse_args();a.out.mkdir(parents=True,exist_ok=False)
+ old=load(a.root,a.old,a.name,a.old_binding);new=load(a.root,a.new,a.name,a.new_binding)
+ summary,rows=compare(a.root,old,new,a.old,a.new,a.name)
+ (a.out/'summary.json').write_text(json.dumps(summary,indent=2)+'\n');(a.out/'actual-comparisons.json.gz').write_bytes(gzip.compress((json.dumps(rows,indent=2)+'\n').encode(),mtime=0));print(json.dumps({k:v for k,v in summary.items() if k not in ('added','raw_junit_trace_changes','raw_junit_message_changes')},indent=2))
+if __name__=='__main__':main()

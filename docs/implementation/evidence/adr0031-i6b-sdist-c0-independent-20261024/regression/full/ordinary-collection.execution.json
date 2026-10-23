@@ -1,0 +1,20 @@
+{
+  "command": [
+    "/workspace/pr155-review-runtime/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "--collect-only",
+    "-o",
+    "addopts=",
+    "tests",
+    "-m",
+    "not live and not benchmark"
+  ],
+  "cwd": "/workspace/pr155-independent-review",
+  "started_epoch": 1792789444.777076,
+  "elapsed_seconds": 8.128,
+  "exit_code": 0,
+  "collected": 6497,
+  "duplicates": 0
+}

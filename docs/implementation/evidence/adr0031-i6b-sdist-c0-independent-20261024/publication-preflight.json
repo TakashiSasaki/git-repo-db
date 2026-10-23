@@ -1,0 +1,31 @@
+{
+  "timestamp_utc": "2026-10-23T21:17:07.332515+00:00",
+  "results": [
+    {
+      "command": [
+        "git",
+        "ls-remote",
+        "--heads",
+        "origin",
+        "refs/heads/main",
+        "refs/heads/integration/adr0031-i6b-sdist-c0-20261024",
+        "refs/heads/review/adr0031-i6b-sdist-c0-independent-20261024"
+      ],
+      "exit": 0,
+      "stdout": "fee364c6d61a5feebf08dbdd830a5a57ee2d872b\trefs/heads/integration/adr0031-i6b-sdist-c0-20261024\ncb532242c7aa86c6af5b6232b71c0906ea38f5c5\trefs/heads/main\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "gh",
+        "api",
+        "repos/TakashiSasaki/git-repo-db/pulls?state=all&base=integration%2Fadr0031-i6b-sdist-c0-20261024&per_page=100",
+        "--jq",
+        "map({number,title,state,head:.head.ref,sha:.head.sha})"
+      ],
+      "exit": 0,
+      "stdout": "[]\n",
+      "stderr": ""
+    }
+  ]
+}

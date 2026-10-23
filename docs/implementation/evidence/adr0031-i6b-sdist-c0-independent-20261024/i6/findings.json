@@ -1,0 +1,30 @@
+{
+  "reviewed_head": "fee364c6d61a5feebf08dbdd830a5a57ee2d872b",
+  "reviewed_tree": "ace7e44cd89194d189a30a0aa6cf513a45b3b87c",
+  "scope": "Retained I6-A/B non-scanner wire, originals, admission, transaction and fence contracts",
+  "scope_result": "PASS within tested bounds; overall verdict belongs to parent report",
+  "severity_counts_in_this_lane": {"Critical": 0, "High": 0, "Medium": 0, "Low": 0},
+  "findings": [],
+  "confirmed_parent_finding": {
+    "severity": "Medium",
+    "requirements": ["R04", "R13"],
+    "topic": "Admission scanner queues 1000 member references at exhausted cumulative work before its next refusal",
+    "evidence": ["confirm_queue.py", "queue-confirmation.json"],
+    "disposition": "Supports parent scanner finding and overall FAIL; counted once in parent findings"
+  },
+  "separate_required_studies": ["R04/R13 scanner budget/allocation", "distribution and C0", "ancestry/provenance/CI", "full ordinary regression comparison"],
+  "executions": [
+    {"name": "retained-source-cohort", "unique_pytest_nodes": 446, "pass": 446, "fail": 0, "error": 0, "skip": 0, "exit": 0},
+    {"name": "independent-bounded-script", "recorded_checks": 58, "pass": 58, "fail": 0, "exit": 0, "is_pytest_node_count": false},
+    {"name": "unchanged-prior-independent-admission", "unique_pytest_nodes": 13, "pass": 13, "fail": 0, "error": 0, "skip": 0, "exit": 0},
+    {"name": "actual-sql-observations", "unique_pytest_nodes": 2, "pass": 2, "fail": 0, "error": 0, "skip": 0, "exit": 0},
+    {"name": "installed-direct-i6", "unique_pytest_nodes": 446, "pass": 446, "fail": 0, "error": 0, "skip": 0, "exit": 0},
+    {"name": "installed-derived-i6", "unique_pytest_nodes": 446, "pass": 446, "fail": 0, "error": 0, "skip": 0, "exit": 0}
+  ],
+  "counting": "Separate overlapping invocations; never summed into a full-suite count",
+  "installed_source_union_each_form": {"ordinary_source_nodes": 6497, "executed_unique": 692, "unexecuted_unique": 5805},
+  "failed_attempts": [{"name": "initial-direct-conftest-bootstrap", "exit": 4, "product_test_nodes_executed": 0, "reason": "Missing jsonschema test dependency; retained then installed exact lock-hashed wheels offline"}],
+  "remaining": ["I6-C", "I7", "I8", "ordinary Transfer activation", "original Access smoke success", "full hosted runtime/Release acceptance", "separate scanner disposition"],
+  "blockers_in_this_lane": [],
+  "authorization": "No merge/release/deployment, fence retirement, product correction or unpublished Task A work"
+}

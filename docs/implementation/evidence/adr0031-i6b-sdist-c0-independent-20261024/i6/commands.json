@@ -1,0 +1,107 @@
+{
+  "cwd": "/workspace/pr155-independent-review",
+  "reviewed_head": "fee364c6d61a5feebf08dbdd830a5a57ee2d872b",
+  "commands": [
+    {
+      "name": "retained446",
+      "command": "PATH=/workspace/pr155-review-runtime/bin:$PATH /workspace/pr155-review-runtime/bin/python -m pytest tests/unit/test_context_wire_v5.py tests/unit/test_exchange_received_digest.py tests/unit/test_context_admission.py tests/unit/test_context_fences_i6a.py tests/unit/test_context_oid_admission_i6a.py tests/unit/test_context_capability_preflight.py tests/unit/test_context_refusal_order_i6a.py tests/unit/test_context_coordinator_admission.py tests/integration/i6a -q --junitxml=/workspace/pr155-review-artifacts/i6/existing.xml --journal=/workspace/pr155-review-artifacts/i6/existing.jsonl",
+      "exit": 0,
+      "attribution": "Existing published Author/source tests, independently executed and reconciled"
+    },
+    {
+      "name": "collection446",
+      "command": "PATH=/workspace/pr155-review-runtime/bin:$PATH /workspace/pr155-review-runtime/bin/python -m pytest tests/unit/test_context_wire_v5.py tests/unit/test_exchange_received_digest.py tests/unit/test_context_admission.py tests/unit/test_context_fences_i6a.py tests/unit/test_context_oid_admission_i6a.py tests/unit/test_context_capability_preflight.py tests/unit/test_context_refusal_order_i6a.py tests/unit/test_context_coordinator_admission.py tests/integration/i6a --collect-only -q",
+      "exit": 0
+    },
+    {
+      "name": "new58",
+      "command": "PYTHONPATH=src /workspace/pr155-review-runtime/bin/python docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/i6/probe_contract.py /workspace/pr155-review-artifacts/i6/independent.json",
+      "exit": 0,
+      "attribution": "New independent bounded script;58 recorded checks, not pytest nodes"
+    },
+    {
+      "name": "prior-independent13",
+      "command": "PYTHONPATH=src:. PATH=/workspace/pr155-review-runtime/bin:$PATH RR_ADMISSION_OBSERVATIONS=/workspace/pr155-review-artifacts/i6/reused/observations.json /workspace/pr155-review-runtime/bin/python -m pytest -c pyproject.toml -p tests.conftest /workspace/pr155-review-artifacts/i6/reused/test_retained_admission.py -q --junitxml=/workspace/pr155-review-artifacts/i6/reused/junit.xml --journal=/workspace/pr155-review-artifacts/i6/reused/journal.jsonl",
+      "exit": 0,
+      "attribution": "Unchanged published prior independent #154 probe; body builders and isolated factory reused"
+    },
+    {
+      "name": "collection13",
+      "command": "PYTHONPATH=src:. /workspace/pr155-review-runtime/bin/python -m pytest -c pyproject.toml -p tests.conftest /workspace/pr155-review-artifacts/i6/reused/test_retained_admission.py --collect-only -q",
+      "exit": 0
+    },
+    {
+      "name": "actual-sql2",
+      "command": "PATH=/workspace/pr155-review-runtime/bin:$PATH I6A_SQL_PROBE_OUTPUT=/workspace/pr155-review-artifacts/i6/actual-sql/observations.json /workspace/pr155-review-runtime/bin/python -m pytest tests/integration/i6a/test_admission.py::test_real_second_endpoint_insert_failure_rolls_back_whole_unit tests/integration/i6a/test_admission.py::test_deferred_actual_outer_commit_failure_explicitly_rolls_back -q --junitxml=/workspace/pr155-review-artifacts/i6/actual-sql/junit.xml --journal=/workspace/pr155-review-artifacts/i6/actual-sql/journal.jsonl",
+      "exit": 0
+    },
+    {
+      "name": "binding-reconciliation",
+      "command": "PYTHONPATH=src /workspace/pr155-review-runtime/bin/python docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/i6/audit_evidence.py /workspace/pr155-independent-review /workspace/pr155-review-artifacts/i6 docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/i6",
+      "exit": 0
+    },
+    {
+      "name": "independent-scanner-confirmation",
+      "command": "PYTHONPATH=src /workspace/pr155-review-runtime/bin/python docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/i6/confirm_queue.py docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/i6/queue-confirmation.json",
+      "exit": 0,
+      "interpretation": "Reproduction assertion succeeds, demonstrating a product finite-work defect; not a product safety PASS"
+    },
+    {
+      "name": "installed-direct-initial-bootstrap",
+      "exit": 4,
+      "product_test_nodes_executed": 0,
+      "failure": "ModuleNotFoundError: jsonschema in copied tests/support/cli.py during conftest load",
+      "raw": "raw/failed-initial-direct/",
+      "disposition": "Retained failed attempt; installed lock-bound jsonschema and its four dependencies offline, then fresh full invocation. No source/product/test change."
+    },
+    {
+      "name": "installed-direct-testdeps",
+      "command": "UV_CACHE_DIR=/workspace/pr155-review-cache uv pip install --python /workspace/pr155-review-artifacts/distribution/direct-venv/bin/python --no-index --find-links /workspace/pr155-review-artifacts/regression/wheelhouse jsonschema==4.26.0",
+      "exit": 0,
+      "wheel_binding": "installed-testdeps.json"
+    },
+    {
+      "name": "installed-direct-446",
+      "cwd": "/workspace/pr155-review-artifacts/i6/installed-harness",
+      "command": "PYTHONPATH=/workspace/pr155-review-artifacts/i6/installed-harness PATH=/workspace/pr155-review-artifacts/distribution/direct-venv/bin:$PATH INSTALLED_I6_ORIGINS=/workspace/pr155-review-artifacts/i6/installed-direct/origins.json /workspace/pr155-review-artifacts/distribution/direct-venv/bin/python -m pytest -c pyproject.toml -o pythonpath= -p installed_origin tests/unit/test_context_wire_v5.py tests/unit/test_exchange_received_digest.py tests/unit/test_context_admission.py tests/unit/test_context_fences_i6a.py tests/unit/test_context_oid_admission_i6a.py tests/unit/test_context_capability_preflight.py tests/unit/test_context_refusal_order_i6a.py tests/unit/test_context_coordinator_admission.py tests/integration/i6a -q --junitxml=/workspace/pr155-review-artifacts/i6/installed-direct/junit.xml --journal=/workspace/pr155-review-artifacts/i6/installed-direct/journal.jsonl",
+      "exit": 0,
+      "execution_count": 2,
+      "first_completed_execution": "initial-execution/ (source manifest collected beforehand; actual installed collection followed)",
+      "final_completed_execution": "after actual installed collection; exact equality and exit0 audited"
+    },
+    {
+      "name": "installed-derived-testdeps",
+      "command": "UV_CACHE_DIR=/workspace/pr155-review-cache uv pip install --python /workspace/pr155-review-artifacts/distribution/derived-venv/bin/python --no-index --find-links /workspace/pr155-review-artifacts/regression/wheelhouse jsonschema==4.26.0",
+      "exit": 0,
+      "wheel_binding": "installed-testdeps.json"
+    },
+    {
+      "name": "installed-derived-446",
+      "cwd": "/workspace/pr155-review-artifacts/i6/installed-harness",
+      "command": "PYTHONPATH=/workspace/pr155-review-artifacts/i6/installed-harness PATH=/workspace/pr155-review-artifacts/distribution/derived-venv/bin:$PATH INSTALLED_I6_ORIGINS=/workspace/pr155-review-artifacts/i6/installed-derived/origins.json /workspace/pr155-review-artifacts/distribution/derived-venv/bin/python -m pytest -c pyproject.toml -o pythonpath= -p installed_origin tests/unit/test_context_wire_v5.py tests/unit/test_exchange_received_digest.py tests/unit/test_context_admission.py tests/unit/test_context_fences_i6a.py tests/unit/test_context_oid_admission_i6a.py tests/unit/test_context_capability_preflight.py tests/unit/test_context_refusal_order_i6a.py tests/unit/test_context_coordinator_admission.py tests/integration/i6a -q --junitxml=/workspace/pr155-review-artifacts/i6/installed-derived/junit.xml --journal=/workspace/pr155-review-artifacts/i6/installed-derived/journal.jsonl",
+      "exit": 0,
+      "execution_count": 2,
+      "first_completed_execution": "initial-execution/ (source manifest collected beforehand; actual installed collection followed)",
+      "final_completed_execution": "after actual installed collection; exact equality and exit0 audited"
+    },
+    {
+      "name": "installed-direct-collection",
+      "cwd": "/workspace/pr155-review-artifacts/i6/installed-harness",
+      "command": "Same direct interpreter/test-node arguments as installed-direct-446, with --collect-only -q and no -p installed_origin or output/journal flags",
+      "exit": 0,
+      "ordering": "After first completed execution and before final completed execution"
+    },
+    {
+      "name": "installed-derived-collection",
+      "cwd": "/workspace/pr155-review-artifacts/i6/installed-harness",
+      "command": "Same derived interpreter/test-node arguments as installed-derived-446, with --collect-only -q and no -p installed_origin or output/journal flags",
+      "exit": 0,
+      "ordering": "After first completed execution and before final completed execution"
+    },
+    {
+      "name": "installed-scope",
+      "command": "python docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/i6/installed_coverage.py /workspace/pr155-independent-review /workspace/pr155-review-artifacts docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/i6",
+      "exit": 0
+    }
+  ]
+}

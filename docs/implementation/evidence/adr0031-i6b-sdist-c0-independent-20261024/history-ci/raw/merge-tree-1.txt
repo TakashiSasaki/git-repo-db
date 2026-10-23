@@ -1,0 +1,16 @@
+2b4ef0960f6715bacea14e32485e296142c040fb
+100644 82f63b1c154e411e3860699324cea845ded3fa6a 1	.agents/skills/ci-final-tree-verification/SKILL.md
+100644 c255a55071bc6b737c77489134073767dc5ec538 2	.agents/skills/ci-final-tree-verification/SKILL.md
+100644 3c72397d28f1a84af822ddeefe2f2a0d62870d98 3	.agents/skills/ci-final-tree-verification/SKILL.md
+100644 e1314551301ed6496499925143333efb8745ac21 1	tests/packaging/test_p1_distribution.py
+100644 a1641eef1de54c87cf68a72d56de8dd95c71418e 2	tests/packaging/test_p1_distribution.py
+100644 47e87ae18641a95c0b17e8594e40059ae2d749c9 3	tests/packaging/test_p1_distribution.py
+
+Auto-merging .agents/skills/ci-final-tree-verification/SKILL.md
+CONFLICT (content): Merge conflict in .agents/skills/ci-final-tree-verification/SKILL.md
+Auto-merging .github/workflows/access-registry.yml
+Auto-merging scripts/verify_access_distribution.py
+Auto-merging scripts/verify_i4_distribution.py
+Auto-merging scripts/verify_i5_distribution.py
+Auto-merging tests/packaging/test_p1_distribution.py
+CONFLICT (content): Merge conflict in tests/packaging/test_p1_distribution.py

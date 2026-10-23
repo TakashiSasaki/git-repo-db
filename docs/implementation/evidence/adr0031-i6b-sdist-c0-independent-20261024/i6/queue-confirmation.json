@@ -1,0 +1,80 @@
+{
+  "outcome": "INPUT_LIMIT",
+  "work_limit": 10000,
+  "prior_work": 9992,
+  "input_children": 1000,
+  "input_members_json_bytes": 58891,
+  "events": [
+    {
+      "event": "c_call",
+      "source_line": 381,
+      "actual_queue_length": 0,
+      "used_work": 9993,
+      "actual_member_references": 0
+    },
+    {
+      "event": "c_return",
+      "source_line": 381,
+      "actual_queue_length": 1,
+      "used_work": 9993,
+      "actual_member_references": 0
+    },
+    {
+      "event": "c_call",
+      "source_line": 375,
+      "actual_queue_length": 0,
+      "used_work": 9994,
+      "actual_member_references": 0
+    },
+    {
+      "event": "c_return",
+      "source_line": 375,
+      "actual_queue_length": 6,
+      "used_work": 9994,
+      "actual_member_references": 0
+    },
+    {
+      "event": "c_call",
+      "source_line": 381,
+      "actual_queue_length": 2,
+      "used_work": 10000,
+      "actual_member_references": 0
+    },
+    {
+      "event": "c_return",
+      "source_line": 381,
+      "actual_queue_length": 1002,
+      "used_work": 10000,
+      "actual_member_references": 1000
+    }
+  ],
+  "final_used_work": 10001,
+  "policy_calls": 0,
+  "rows_after": 0,
+  "transaction_open": false,
+  "both_exact_fences_preserved": true,
+  "sql": [
+    "BEGIN IMMEDIATE",
+    "SELECT store_role FROM store_identity",
+    "SELECT type,name,tbl_name,sql FROM sqlite_schema WHERE name NOT LIKE 'sqlite_%' ORDER BY type,name",
+    "PRAGMA foreign_keys",
+    "PRAGMA recursive_triggers",
+    "PRAGMA ignore_check_constraints",
+    "PRAGMA defer_foreign_keys",
+    "PRAGMA trusted_schema",
+    "PRAGMA function_list",
+    "SELECT type,name,tbl_name,sql FROM sqlite_schema WHERE name IN('i2_transfer_stage_fence','i2_transfer_report_stage_fence') ORDER BY name",
+    "SELECT 1 FROM resource_relations WHERE relation_kind COLLATE BINARY='transfer_event_report' LIMIT 1",
+    "SELECT 1 FROM resource_repository_relations WHERE relation_kind COLLATE BINARY IN('transfer_from_repository','transfer_to_repository') LIMIT 1",
+    "SELECT configuration_json FROM providers",
+    "SELECT configuration_json FROM repository_context",
+    "SELECT configuration_json FROM sources",
+    "SELECT attributes_json FROM source_repositories",
+    "ROLLBACK"
+  ],
+  "scanner_origin": "/workspace/pr155-independent-review/src/repo_catalog/domain/context_admission.py",
+  "scanner_sha256": "267e2067bac3966f380dbf09dc5fd52e0c36edeb8c04591797f79241394267a7",
+  "script_sha256": "7bfde4b5069c1a662727f73dbd9168273ad4dfc40d618fcb030167186889d44c",
+  "executable": "/workspace/pr155-review-runtime/bin/python",
+  "sqlite_version": "3.53.1"
+}

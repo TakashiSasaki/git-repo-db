@@ -1,0 +1,79 @@
+{
+  "old": {
+    "unique": 6344,
+    "outcomes": {
+      "passed": 6045,
+      "failure": 279,
+      "error": 20
+    },
+    "exception_phase_counts": {
+      "call": 279,
+      "setup": 20
+    },
+    "exit_code": 1,
+    "normal_phase_reports": 19012,
+    "passing_subtests": 57,
+    "subtest_types": {
+      "_pytest.subtests.SubtestReport": 57
+    },
+    "exact_collection_junit_journal_observer_reconciliation": true,
+    "recorded_head": "61e44291e293f773904a0127606e20c8cb83c95e",
+    "recorded_tree": "4aa8ddf49fb52d0b903db0b0bfce00ccea2fae0c",
+    "source_bindings": {
+      "91827360c185cbf813277bf32a6627d894b1b20a": {
+        "files": 486,
+        "all_sha256_match": true
+      },
+      "61e44291e293f773904a0127606e20c8cb83c95e": {
+        "files": 486,
+        "all_sha256_match": true
+      }
+    }
+  },
+  "new": {
+    "unique": 6497,
+    "outcomes": {
+      "passed": 6198,
+      "failure": 279,
+      "error": 20
+    },
+    "exception_phase_counts": {
+      "call": 279,
+      "setup": 20
+    },
+    "exit_code": 1,
+    "normal_phase_reports": 19471,
+    "passing_subtests": 57,
+    "subtest_types": {
+      "_pytest.subtests.SubtestReport": 57
+    },
+    "exact_collection_junit_journal_observer_reconciliation": true,
+    "recorded_head": "fee364c6d61a5feebf08dbdd830a5a57ee2d872b",
+    "recorded_tree": "ace7e44cd89194d189a30a0aa6cf513a45b3b87c",
+    "source_bindings": {
+      "fee364c6d61a5feebf08dbdd830a5a57ee2d872b": {
+        "files": 490,
+        "all_sha256_match": true
+      }
+    }
+  },
+  "common": 6343,
+  "removed": [
+    "tests/unit/test_ci_plan.py::test_main_prose_change_does_not_require_unconditional_acceptance[README.md]"
+  ],
+  "added_outcomes": {
+    "passed": 154
+  },
+  "common_outcome_changes": [],
+  "common_phase_changes": [],
+  "same_non_successful_phase_set": true,
+  "changed_exception": [],
+  "changed_typed_refusal": [],
+  "changed_project_frame_function": [],
+  "changed_project_frame_coordinates": [
+    "tests/packaging/test_p5_distribution.py::test_p5_installed_acquisition_and_exchange[sha1-sdist-wheel]",
+    "tests/packaging/test_p5_distribution.py::test_p5_installed_acquisition_and_exchange[sha1-wheel]",
+    "tests/packaging/test_p5_distribution.py::test_p5_installed_acquisition_and_exchange[sha256-sdist-wheel]",
+    "tests/packaging/test_p5_distribution.py::test_p5_installed_acquisition_and_exchange[sha256-wheel]"
+  ]
+}

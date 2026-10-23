@@ -1,0 +1,26 @@
+{
+  "backend_without_git_on_PATH": true,
+  "equal_full_zip_bytes_metadata_record": true,
+  "product": {
+    "bytes": 6025551,
+    "files": 160,
+    "suffix_counts": {
+      ".graphql": 2,
+      ".json": 2,
+      ".py": 137,
+      ".sql": 19
+    }
+  },
+  "sdist": {
+    "bytes": 702494,
+    "members": 164,
+    "regular_bytes": 6041897,
+    "sha256": "9d228f889f9507cdc5a166b9658e80873fcbd48255c6c958eb90e33954014b54",
+    "tar_bytes": 6174720
+  },
+  "wheel": {
+    "bytes": 791300,
+    "members": 164,
+    "sha256": "2452e419e06eea774805fc89358130538c50fdd313fdb0fb9b82b230e99a39d8"
+  }
+}

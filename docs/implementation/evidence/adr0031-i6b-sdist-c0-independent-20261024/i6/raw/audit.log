@@ -1,0 +1,29 @@
+{
+  "retained446": {
+    "unique_nodes": 446,
+    "junit_cases": 446,
+    "normal_passing_phases": 1338,
+    "duplicate_starts": 0,
+    "missing_or_extra_nodes": 0,
+    "finish_exit": 0,
+    "collection_reconciled": true
+  },
+  "reused13": {
+    "unique_nodes": 13,
+    "junit_cases": 13,
+    "normal_passing_phases": 39,
+    "duplicate_starts": 0,
+    "missing_or_extra_nodes": 0,
+    "finish_exit": 0,
+    "collection_reconciled": true
+  },
+  "actual_sql2": {
+    "unique_nodes": 2,
+    "junit_cases": 2,
+    "normal_passing_phases": 6,
+    "duplicate_starts": 0,
+    "missing_or_extra_nodes": 0,
+    "finish_exit": 0,
+    "collection_reconciled": false
+  }
+}

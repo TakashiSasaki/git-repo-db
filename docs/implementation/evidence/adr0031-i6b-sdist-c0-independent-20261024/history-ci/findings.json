@@ -1,0 +1,33 @@
+{
+  "scope": "history, provenance, CI routing and published hosted evidence",
+  "reviewed_head": "fee364c6d61a5feebf08dbdd830a5a57ee2d872b",
+  "product_findings": [],
+  "observations": [
+    {
+      "id": "HCI-L01",
+      "severity": "Low",
+      "blocking": false,
+      "title": "Author shared-path SHA256 records strip boundary whitespace",
+      "source": "docs/implementation/evidence/adr0031-i6b-sdist-c0-integration-20261024/audit/provenance.py.txt",
+      "measured": "24 of 24 recorded hashes equal git-show bytes after strip(), while Git blob OIDs remain correct",
+      "impact": "Evidence precision only; independent complete-byte hashes and Git-object checks establish actual provenance",
+      "evidence": "provenance-sha256-observation.json"
+    }
+  ],
+  "remaining_conditions": [
+    {
+      "action": "Fully verify final Access40006927148 receipt from currently accessible log views",
+      "target": "job120597093978 / run40006927148",
+      "state": "incomplete evidence; not denied",
+      "reason": "Two supported log views contain1993868 decoded bytes,90 short of declared1993958; strictSHA256/length gate refuses; CLI view empty",
+      "completed": "Run/jobs/API/log inspection, Development21-member receipt verification, actual main/broad console outcomes, artifact metadata",
+      "unexecuted": "Full current Access123-member verification and exact hosted node reconciliation; no binary artifact download retried"
+    },
+    {
+      "action": "Verify full uploaded Access artifact bytes",
+      "target": "artifact12524818073",
+      "state": "not attempted in this review",
+      "reason": "Inherited initial Azure Forbidden/zero-byte limit respected; metadata/log digest observed only"
+    }
+  ]
+}

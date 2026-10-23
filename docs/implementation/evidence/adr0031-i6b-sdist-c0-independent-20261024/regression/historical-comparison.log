@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "/workspace/pr155-review-artifacts/regression/tools/reconcile_review.py", line 111, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/workspace/pr155-review-artifacts/regression/tools/reconcile_review.py", line 108, in main
+    old=load(a.root,a.old,a.name,a.old_binding);new=load(a.root,a.new,a.name,a.new_binding)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/pr155-review-artifacts/regression/tools/reconcile_review.py", line 42, in load
+    assert Counter(cases)==Counter(selected)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

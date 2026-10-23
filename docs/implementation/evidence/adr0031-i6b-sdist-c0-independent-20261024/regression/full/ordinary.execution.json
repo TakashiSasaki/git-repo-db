@@ -1,0 +1,64 @@
+{
+  "command": [
+    "/workspace/pr155-review-runtime/bin/python",
+    "-m",
+    "pytest",
+    "-c",
+    "/workspace/pr155-independent-review/pyproject.toml",
+    "-p",
+    "broad_receipt",
+    "-p",
+    "no:cacheprovider",
+    "--basetemp=/workspace/pr155-review-artifacts/regression/full-temp",
+    "--tb=long",
+    "-q",
+    "-o",
+    "addopts=--strict-markers",
+    "-o",
+    "junit_family=xunit1",
+    "@/workspace/pr155-review-artifacts/regression/full/ordinary.selected.txt",
+    "--junitxml=/workspace/pr155-review-artifacts/regression/full/ordinary.xml",
+    "--journal=/workspace/pr155-review-artifacts/regression/full/ordinary.jsonl",
+    "-n",
+    "4",
+    "--dist",
+    "worksteal"
+  ],
+  "cwd": "/workspace/pr155-independent-review",
+  "started_epoch": 1792789452.91622,
+  "elapsed_seconds": 687.715,
+  "exit_code": 1,
+  "collected": 6497,
+  "passed": 6198,
+  "failed": 279,
+  "error": 20,
+  "skipped": 0,
+  "xfail": 0,
+  "xpass": 0,
+  "executed": 6497,
+  "reconciliation": {
+    "checks": {
+      "selected_unique": true,
+      "selected_equals_junit": true,
+      "selected_equals_journal_starts": true,
+      "setup_and_teardown_once": true,
+      "no_duplicate_phases": false,
+      "phase_nodes_equal_selected": true,
+      "call_once_after_successful_setup": false,
+      "one_finish": true
+    },
+    "consistent_node_execution": false,
+    "journal_phase_outcomes": {
+      "passed": 19229,
+      "failed": 299
+    },
+    "finishes": [
+      {
+        "event": "finish",
+        "status": "failed",
+        "exitstatus": 1,
+        "timestamp": 1792790139.175876
+      }
+    ]
+  }
+}

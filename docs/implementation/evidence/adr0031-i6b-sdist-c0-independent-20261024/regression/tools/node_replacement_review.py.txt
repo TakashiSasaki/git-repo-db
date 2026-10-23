@@ -1,0 +1,24 @@
+"""Independently inspect the single retired passing README parameter.
+
+Read actual Git blobs; compare AST meanings and source of reviewed replacement.
+The remaining differing preparation assertion is explicitly replaced by minimal
+sdist preparation, matching README's new role as a distribution build input.
+"""
+import ast,hashlib,json,subprocess
+from pathlib import Path
+ROOT=Path('/workspace/pr155-independent-review');OUT=Path('/workspace/pr155-review-artifacts/regression/node-replacement-review.json');path='tests/unit/test_ci_plan.py'
+def source(head):return subprocess.check_output(['git','show',head+':'+path],cwd=ROOT).decode()
+def tree(head):return ast.parse(source(head))
+def function(head,name):return next(n for n in ast.walk(tree(head)) if isinstance(n,ast.FunctionDef) and n.name==name)
+def assertions(node):return [{'line':n.lineno,'ast':ast.dump(n,include_attributes=False),'text':ast.unparse(n)} for n in ast.walk(node) if isinstance(n,ast.Assert)]
+old='91827360c185cbf813277bf32a6627d894b1b20a';new='fee364c6d61a5feebf08dbdd830a5a57ee2d872b';reviewed='ededcd83eb2d99a602ba18c8fe3c177125c825ac';oldname='test_main_prose_change_does_not_require_unconditional_acceptance';newname='test_distribution_inputs_select_lightweight_contract_without_pytest'
+a,b=function(old,oldname),function(new,newname)
+# Runtime lane / ordinary acceptance semantics must remain in replacement.
+aassert=assertions(a);bassert=assertions(b);old_meanings={r['ast'] for r in aassert};new_meanings={r['ast'] for r in bassert}
+retained=[r for r in aassert if r['ast'] in new_meanings]
+# The all(lanes) variable name differs item/lane: record both source, inspect manually.
+assert len(retained)==2
+assert ast.dump(function(reviewed,newname),include_attributes=False)==ast.dump(b,include_attributes=False)
+remaining=[r for r in aassert if r['ast'] not in new_meanings]
+result=dict(old_head=old,new_head=new,reviewed144=reviewed,path=path,old_function=a.name,new_function=b.name,old_assertions=aassert,new_assertions=bassert,retained_exact_ast=retained,remaining_old_ast=remaining,reviewed144_function_equal=True,whole_file_from144=source(reviewed)==source(new),explanation='README is sdist build input. Replacement preserves not-full, unexecuted=acceptance and no runtime lanes (item/lane variable rename), replaces obsolete no preparation assertion with selected sdist/dependencies and unselected wheelhouse. No unsuccessful node removed; exact outcomes checked separately.',hashes={h:hashlib.sha256(source(h).encode()).hexdigest() for h in (old,new,reviewed)})
+OUT.write_text(json.dumps(result,indent=2)+'\n')

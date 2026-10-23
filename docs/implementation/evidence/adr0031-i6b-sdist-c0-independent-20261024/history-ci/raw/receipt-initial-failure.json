@@ -1,0 +1,16 @@
+{
+  "method": "GitHub connector fetch_workflow_job_logs",
+  "development": {
+    "decoded_bytes": 86002,
+    "declared_bytes": 86002,
+    "sha256_verified": true
+  },
+  "access": {
+    "decoded_bytes": 1993868,
+    "declared_bytes": 1993958,
+    "missing_decoded_bytes": 90,
+    "observed_sha256": "29a5e29e8a91d4f52ce8b9283e52da40596b1bf4121af5ee2d2eb149c8653411",
+    "declared_sha256": "60b73fee0f3fed6d0c220d94a5fb62b450ad18bbb2ff58c662bb3f9bee3b090a",
+    "strict_verification": "FAIL; no inference/substitution"
+  }
+}

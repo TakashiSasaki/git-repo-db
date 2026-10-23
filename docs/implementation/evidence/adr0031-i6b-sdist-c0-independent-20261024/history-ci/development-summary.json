@@ -1,0 +1,37 @@
+{
+  "context": {
+    "repository": "TakashiSasaki/git-repo-db",
+    "event": "pull_request",
+    "action": "synchronize",
+    "feature_sha": "fee364c6d61a5feebf08dbdd830a5a57ee2d872b",
+    "base_sha": "91827360c185cbf813277bf32a6627d894b1b20a",
+    "tested_sha": "90e222635a01e89f095e9a256ac69ecfc759ec4e",
+    "before_sha": "fb5d7b5a0c4b92c8a282daac154e66fa6d361e64",
+    "run_id": "40006927076",
+    "run_attempt": "1",
+    "mode": "development",
+    "full": false
+  },
+  "runtime": {
+    "python": "3.12.15",
+    "executable": "/home/runner/work/_temp/product-python/python/bin/python",
+    "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+    "abi": "cpython-312-x86_64-linux-gnu",
+    "sqlite": "3.53.1",
+    "os": "Linux",
+    "arch": "x86_64",
+    "git": "git version 2.55.0",
+    "uv": "uv 0.12.19 (x86_64-unknown-linux-gnu)",
+    "runner_image": [
+      "ubuntu24",
+      "20261023.334.3"
+    ]
+  },
+  "tree_sha": "ace7e44cd89194d189a30a0aa6cf513a45b3b87c",
+  "validation_mode": "development",
+  "full_acceptance": false,
+  "acceptance_status": "development_checks_passed",
+  "acceptance_input_hash": "ee1b871e0cd2fde4f24272975ada0c0da4a2ac32d6b8ba2511de6b356831d1e1",
+  "coverage_executed": 0,
+  "required_file_count": 232
+}
