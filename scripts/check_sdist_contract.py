@@ -18,12 +18,29 @@ import sys
 import tarfile
 import tomllib
 import zipfile
+import zlib
 from email.parser import BytesParser
 from pathlib import Path, PurePosixPath
 
 MAX_COMPRESSED = 2 * 1024 * 1024
 MAX_UNPACKED = 8 * 1024 * 1024
 MAX_MEMBERS = 512
+# Hatchling 1.32.4's real product archive has 159 plain headers, no PAX
+# metadata, 5,921,698 file bytes and a 6,051,840-byte tar stream. Allow each
+# logical member one header and at most 511 alignment bytes, plus one tar
+# record of end padding. Extensions need a separately reviewed calibration;
+# none (including PAX keys/values) are currently required or permitted.
+MAX_TAR_STREAM = MAX_UNPACKED + MAX_MEMBERS * (512 + 511) + tarfile.RECORDSIZE
+SUPPORTED_METADATA_VERSIONS = {"1.0", "1.1", "1.2", "2.1", "2.2", "2.3", "2.4", "2.5"}
+# PEP 440 public and local version grammar, without a packaging dependency.
+VERSION_PATTERN = re.compile(
+    r"v?(?:[0-9]+!)?[0-9]+(?:\.[0-9]+)*"
+    r"(?:[-_.]?(?:alpha|a|beta|b|preview|pre|c|rc)[-_.]?[0-9]*)?"
+    r"(?:(?:-[0-9]+)|(?:[-_.]?(?:post|rev|r)[-_.]?[0-9]*))?"
+    r"(?:[-_.]?dev[-_.]?[0-9]*)?"
+    r"(?:\+[a-z0-9]+(?:[-_.][a-z0-9]+)*)?",
+    re.IGNORECASE,
+)
 PRODUCT_SUFFIXES = {".py", ".sql", ".json", ".graphql"}
 ROOT_FILES = ("pyproject.toml", "README.md", ".gitignore")
 LICENSE_FILES = tuple(
@@ -96,17 +113,118 @@ def source_inventory(root):
     return result
 
 
+def read_sdist_stream(archive):
+    """Validate exactly one bounded gzip member, including CRC/ISIZE and EOF.
+
+    Do not use gzip.GzipFile: its concatenation and trailing-zero handling would
+    permit bytes outside the one inspected archive. zlib validates the gzip
+    trailer; its output limit bounds inflation before any tar/PAX parsing.
+    """
+    decoder = zlib.decompressobj(16 + zlib.MAX_WBITS)
+    output = io.BytesIO()
+    digest = hashlib.sha256()
+    compressed = 0
+    with archive.open("rb") as stream:
+        while chunk := stream.read(64 * 1024):
+            compressed += len(chunk)
+            if compressed > MAX_COMPRESSED:
+                raise ValueError("compressed sdist budget exceeded")
+            digest.update(chunk)
+            pending = chunk
+            while pending:
+                try:
+                    raw = decoder.decompress(
+                        pending, min(64 * 1024, MAX_TAR_STREAM - output.tell() + 1)
+                    )
+                except zlib.error as error:
+                    raise ValueError(
+                        "invalid gzip stream/trailer: " + str(error)
+                    ) from error
+                output.write(raw)
+                if output.tell() > MAX_TAR_STREAM:
+                    raise ValueError("decompressed tar stream budget exceeded")
+                if decoder.eof:
+                    if decoder.unused_data or stream.read(1):
+                        raise ValueError(
+                            "trailing bytes/additional gzip member forbidden"
+                        )
+                    return output.getvalue(), compressed, digest.hexdigest()
+                pending = decoder.unconsumed_tail
+    raise ValueError("incomplete gzip stream/trailer")
+
+
+def check_tar_structure(raw):
+    """Inspect physical tar records before tarfile can consume any extensions."""
+    if len(raw) % tarfile.BLOCKSIZE:
+        raise ValueError("unaligned/truncated tar stream")
+    offset, count, unpacked = 0, 0, 0
+    zero = bytes(tarfile.BLOCKSIZE)
+    while offset + tarfile.BLOCKSIZE <= len(raw):
+        header = raw[offset : offset + tarfile.BLOCKSIZE]
+        if header == zero:
+            tail = raw[offset:]
+            if len(tail) < 2 * tarfile.BLOCKSIZE or any(tail):
+                raise ValueError("invalid tar end padding or hidden trailing payload")
+            return count
+        count += 1
+        if count > MAX_MEMBERS:
+            raise ValueError("sdist member budget exceeded")
+        # frombuf parses exactly one fixed-size header, never extension bodies.
+        # In particular, do not call TarFile.next() before rejecting x/g/GNU
+        # records: it reads and materializes their payload before returning.
+        try:
+            member = tarfile.TarInfo.frombuf(header, "utf-8", "strict")
+        except (tarfile.TarError, UnicodeError, ValueError) as error:
+            raise ValueError("invalid raw tar header: " + str(error)) from error
+        if member.type not in (tarfile.REGTYPE, tarfile.AREGTYPE, tarfile.DIRTYPE):
+            raise ValueError(
+                "links/special members or unapproved PAX/tar extensions forbidden"
+            )
+        if member.size < 0 or (member.isdir() and member.size) or member.linkname:
+            raise ValueError("invalid raw tar member size/link target")
+        if member.isfile():
+            unpacked += member.size
+            if unpacked > MAX_UNPACKED:
+                raise ValueError("unpacked sdist budget exceeded")
+        start = offset + tarfile.BLOCKSIZE
+        end = start + member.size
+        offset = start + (member.size + 511) // 512 * 512
+        if offset > len(raw):
+            raise ValueError("truncated tar member")
+        if any(raw[end:offset]):
+            raise ValueError("nonzero tar member padding forbidden")
+    raise ValueError("missing tar end markers")
+
+
+def check_metadata_identity(raw, project):
+    info = BytesParser().parsebytes(raw)
+    fields = ("Metadata-Version", "Name", "Version")
+    if info.defects or any(len(info.get_all(name, [])) != 1 for name in fields):
+        raise ValueError("invalid generated PKG-INFO singleton identity fields")
+    if (
+        info["Metadata-Version"] not in SUPPORTED_METADATA_VERSIONS
+        or re.fullmatch(r"[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?", info["Name"])
+        is None
+        or VERSION_PATTERN.fullmatch(info["Version"]) is None
+        or info["Name"] != project["name"]
+        or info["Version"] != project["version"]
+    ):
+        raise ValueError("invalid generated PKG-INFO identity/version")
+
+
 def check_sdist(archive, root):
     archive, root = Path(archive), Path(root)
     compressed = archive.stat().st_size
     if compressed > MAX_COMPRESSED:
         raise ValueError("compressed sdist budget exceeded")
+    tar_raw, compressed, archive_sha256 = read_sdist_stream(archive)
+    raw_header_count = check_tar_structure(tar_raw)
     expected = source_inventory(root)
     project = tomllib.loads((root / "pyproject.toml").read_text())["project"]
     dist = re.sub(r"[-_.]+", "_", project["name"]) + "-" + project["version"]
     actual, seen, count, unpacked = {}, set(), 0, 0
     metadata = None
-    with tarfile.open(archive, "r:gz") as tar:
+    with tarfile.open(fileobj=io.BytesIO(tar_raw), mode="r:") as tar:
         for member in tar:
             count += 1
             if count > MAX_MEMBERS:
@@ -142,18 +260,14 @@ def check_sdist(archive, root):
             "missing required members: "
             + str(sorted((set(expected) | {"PKG-INFO"}) - set(actual)))
         )
-    info = BytesParser().parsebytes(metadata)
-    if (
-        info.get("Name") != project["name"]
-        or info.get("Version") != project["version"]
-        or not info.get("Metadata-Version")
-    ):
-        raise ValueError("invalid generated PKG-INFO identity")
+    check_metadata_identity(metadata, project)
     return {
         "status": "passed",
         "archive": archive.name,
-        "sha256": sha(archive.read_bytes()),
+        "sha256": archive_sha256,
         "compressed_bytes": compressed,
+        "tar_stream_bytes": len(tar_raw),
+        "raw_header_count": raw_header_count,
         "unpacked_bytes": unpacked,
         "member_count": count,
         "file_count": len(actual),
@@ -165,6 +279,7 @@ def check_sdist(archive, root):
             "compressed_bytes": MAX_COMPRESSED,
             "unpacked_bytes": MAX_UNPACKED,
             "members": MAX_MEMBERS,
+            "tar_stream_bytes": MAX_TAR_STREAM,
         },
     }
 

@@ -58,6 +58,12 @@ CI・検証スクリプト・AGENTS / Skills・明示された現行手順の禁
 sdist入力としてこのゲートと必要な依存準備を選びます。一般のdocs proseだけでは選びません。
 不明な比較履歴と明示的Releaseモードでは安全側に選びます。
 
+`acceptance_input_hash` はruntime/tests/依存/CI入力の識別子で、proseの `README.md` を
+除外したままです。一方、sdist receipt の `source_inventory_sha256` はREADMEを含む
+必須ソース集合のpath・byte数・SHA-256を束ねます。READMEだけの変更では前者は同じでも
+後者は変わるため、sdistを再構築して実際の収録内容を照合します。二つのhashを相互の
+代用にせず、READMEのためにruntime hashやfull pytestの選択を広げません。
+
 `tests.yml` は準備済みの同じPython/Hatchlingでsdistだけを構築し、
 `check_sdist_contract.py --build` により全member、必須入力ハッシュ、有限容量を検査します。
 `artifacts/ci-profile/sdist-members.json` に一覧とハッシュを残します。
