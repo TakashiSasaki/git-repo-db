@@ -1212,6 +1212,8 @@ def validate_context_proofs(data):
                 row["provenance_json"],
             )
             attributes = json.loads(collection_scopes[slot])
+            if type(attributes) is not dict:
+                raise ExchangeError("INVALID_COVERAGE_PROOF", "collection_scope")
             kind = attributes.get("coverage_kind", row["collection_kind"])
             if owner.base_coverage_kind != kind:
                 raise ExchangeError("INVALID_COVERAGE_PROOF", "coverage_kind")

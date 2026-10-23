@@ -146,6 +146,14 @@ collection-owned scope without a proof, a missing collection, an already-present
 receiver collection and a permission-cut Source scope. Missing owners withhold
 units rather than aborting independent Context facts after Core commit.
 
+In a pure plan, require the actual Scope row for each claim/proof and the exact
+Collection header for a collection-owned Scope. Depending only on the owner's
+Resource can leave orphan rows after a cut. Check these references against the
+current DDL and test both missing-owner and unit-limit cases. A Collection's
+generic scope may be arbitrary canonical JSON; validate an object explicitly when
+a typed Coverage proof needs named attributes, without restricting unproved
+generic observations or leaking an incidental attribute-access exception.
+
 Repeat zero-work budget probes with an empty package and an omitted receiver
 selection. Incidental database reads in a populated fixture can mask a missing
 processing ceiling. Once an implicit selection is decoded, its ceiling must count

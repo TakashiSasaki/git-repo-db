@@ -393,6 +393,12 @@ def plan_context_dependencies(
             row["sha256"]: lookup["text_bodies", index]
             for index, row in indexed("text_bodies")
         }
+        scopes = {
+            (row["owner_kind"], row["owner_coordinates_json"]): lookup[
+                "coverage_scopes", index
+            ]
+            for index, row in indexed("coverage_scopes")
+        }
         spend(len(chosen))
         required_services = {key.service_instance_uuidv4 for key in chosen} | {
             row["service_instance_uuidv4"]
@@ -573,6 +579,16 @@ def plan_context_dependencies(
                         need(key, texts.get(digest))
                 if section.startswith("coverage_"):
                     coords = read_json(row["owner_coordinates_json"])
+                    if section in {"coverage_claims", "coverage_proofs"}:
+                        need(
+                            key,
+                            scopes.get(
+                                (row["owner_kind"], row["owner_coordinates_json"])
+                            ),
+                        )
+                    if row["owner_kind"] == "collection":
+                        slot = ("collection", *coords[:5])
+                        need(key, root(slot) if slot in parent else None)
                     if row["owner_kind"] == "repository":
                         need_repo(key, coords[0])
                     elif row["owner_kind"] in {"source", "source_inventory"}:

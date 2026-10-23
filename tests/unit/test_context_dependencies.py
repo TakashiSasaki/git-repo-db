@@ -420,3 +420,117 @@ def test_T11_late_work_stop_preserves_completed_independent_units_only():
         row in data["resource_relations"] for row in plan.context["resource_relations"]
     )
     assert "work_limit" in reasons(plan)
+
+
+def collection_owned_coverage_context():
+    from repo_catalog.domain.p1_context import CoverageScope
+
+    data, owner, child = cyclic_context()
+    data["resource_relations"] = []
+    terminal = collection_row(owner, [child])
+    data["collections"] = [terminal]
+    scope = CoverageScope.collection(
+        owner, "related", terminal["provenance_json"], "related"
+    )
+    scope_row = {
+        "owner_kind": scope.owner_kind,
+        "owner_coordinates_json": scope.encoded,
+    }
+    data["coverage_scopes"] = [scope_row]
+    data["coverage_claims"] = [
+        {
+            **scope_row,
+            "observed_at_us": 204,
+            "coverage_state": "complete",
+            "details_json": None,
+        }
+    ]
+    data["coverage_proofs"] = [
+        {
+            **scope_row,
+            **{
+                key: terminal[key]
+                for key in (
+                    "service_instance_uuidv4",
+                    "resource_kind",
+                    "provider_resource_id",
+                    "collection_kind",
+                    "provenance_json",
+                    "members_json",
+                )
+            },
+            "observed_at_us": 204,
+            "coverage_state": "complete",
+            "proof_kind": "collection",
+            "terminal_observed_at_us": terminal["observed_at_us"],
+            "terminal_state": terminal["terminal_state"],
+        }
+    ]
+    return data, owner, child
+
+
+def test_T12_actual_collection_scope_and_terminal_dependencies_preserve_positive_cycle():
+    from repo_catalog.domain.context_wire import decode_context_v5
+
+    data, _, _ = collection_owned_coverage_context()
+    assert decode_context_v5(data) == data
+    plan = plan_context_dependencies(data, selection())
+    assert plan.context == data
+    assert not plan.omissions
+
+
+def test_T12_withheld_collection_header_withholds_owned_scope_claim_and_proof():
+    data, owner, child = collection_owned_coverage_context()
+    plan = plan_context_dependencies(
+        data, selection(resource_keys=(owner,), max_depth=0)
+    )
+    assert plan.selected_resources == frozenset({owner})
+    assert child not in plan.selected_resources
+    assert plan.context["collections"] == []
+    assert plan.context["coverage_scopes"] == []
+    assert plan.context["coverage_claims"] == []
+    assert plan.context["coverage_proofs"] == []
+
+
+def test_T12_missing_actual_scope_withholds_claim_and_proof_without_synthesizing_scope():
+    data, owner, child = collection_owned_coverage_context()
+    data["coverage_scopes"] = []
+    plan = plan_context_dependencies(data, selection())
+    assert plan.selected_resources == frozenset({owner, child})
+    assert plan.context["coverage_scopes"] == []
+    assert plan.context["coverage_claims"] == []
+    assert plan.context["coverage_proofs"] == []
+    assert "missing_dependency" in reasons(plan)
+
+
+def test_T12_collection_owned_scope_needs_exact_actual_header_not_only_resource():
+    data, owner, child = collection_owned_coverage_context()
+    data["collections"] = []
+    data["coverage_claims"] = []
+    data["coverage_proofs"] = []
+    plan = plan_context_dependencies(data, selection())
+    assert plan.selected_resources == frozenset({owner, child})
+    assert plan.context["coverage_scopes"] == []
+    assert "missing_dependency" in reasons(plan)
+
+
+@pytest.mark.parametrize("scope_json", ["[]", "null", "true", "1", '"opaque"'])
+def test_T12_collection_proof_requires_typed_scope_object(scope_json):
+    from repo_catalog.domain.context_wire import decode_context_v5
+
+    data, _, _ = collection_owned_coverage_context()
+    data["collections"][0]["scope_json"] = scope_json
+    with pytest.raises(ExchangeError) as refusal:
+        decode_context_v5(data)
+    assert refusal.value.code == "INVALID_COVERAGE_PROOF"
+
+
+@pytest.mark.parametrize("scope_json", ["[]", "null", "true", "1", '"opaque"'])
+def test_T12_generic_collection_scope_without_proof_is_preserved(scope_json):
+    from repo_catalog.domain.context_wire import decode_context_v5
+
+    data, _, _ = collection_owned_coverage_context()
+    data["collections"][0]["scope_json"] = scope_json
+    for section in ("coverage_scopes", "coverage_claims", "coverage_proofs"):
+        data[section] = []
+    assert decode_context_v5(data) == data
