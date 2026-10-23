@@ -1,0 +1,43 @@
+[
+  {
+    "run_id": 39902230351,
+    "conclusion": "failure",
+    "receipt_bytes": 1907143,
+    "verified_index_payloads": 121,
+    "executable_inputs": {
+      "files": 478,
+      "mismatches_against_frozen_checkout": []
+    },
+    "ordinary_inventory": {
+      "collected": 5974,
+      "unexecuted": 2826
+    }
+  },
+  {
+    "run_id": 39903868636,
+    "conclusion": "success",
+    "receipt_bytes": 83607,
+    "verified_index_payloads": 21,
+    "development": {
+      "runtime_pytest_nodes": 0,
+      "required_unexecuted_files": 223,
+      "full_acceptance": false,
+      "acceptance_status": "development_checks_passed",
+      "acceptance_input_hash": "4e874344abe82f4432606b9e243ddf76b463b020d02442a42e6e3746eaa85435"
+    }
+  },
+  {
+    "run_id": 39903868666,
+    "conclusion": "failure",
+    "receipt_bytes": 1902200,
+    "verified_index_payloads": 121,
+    "executable_inputs": {
+      "files": 478,
+      "mismatches_against_frozen_checkout": []
+    },
+    "ordinary_inventory": {
+      "collected": 5974,
+      "unexecuted": 2826
+    }
+  }
+]

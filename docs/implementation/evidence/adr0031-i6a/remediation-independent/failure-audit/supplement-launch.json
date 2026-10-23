@@ -1,0 +1,32 @@
+{
+  "cache22": {
+    "scope": "Initially provisional setup-phase differences; final XML independently confirms all22 UV-cache causes.",
+    "cwd": "/workspace/i6a-independent",
+    "environment": {
+      "REVIEW_SOURCE_ROOT": "/workspace/i6a-review-clean",
+      "REVIEW_DIAGNOSTIC_COHORT": "743"
+    },
+    "interpreter": "/workspace/review-clean-runtime/bin/python",
+    "actual_driver_path": "run_diagnostic.py",
+    "exact_driver_snapshot": "run_diagnostic_parallel.py.txt",
+    "driver_sha256": "245ed099530d6bcd30e5d87a46643521b58c97c083528090afa08746c34b0382",
+    "output": "/workspace/review-full-cache-corrected",
+    "selection": "full-cache-provisional-nodeids.json"
+  },
+  "serial1": {
+    "scope": "Repeat sole additional full-source timeout serially, unchanged source/test/30s timeout; no xdist worker flag.",
+    "cwd": "/workspace/i6a-review-clean",
+    "environment": {
+      "REVIEW_SOURCE_ROOT": "/workspace/i6a-review-clean",
+      "REVIEW_DIAGNOSTIC_COHORT": "743",
+      "REVIEW_XDIST_WORKERS": "0"
+    },
+    "interpreter": "/workspace/review-clean-runtime/bin/python",
+    "actual_driver_path": "run_diagnostic.py",
+    "exact_driver_snapshot": "run_diagnostic.py",
+    "driver_sha256": "f1317c9995765dd96149274fdf2ab428f1c3d05cb17bd3e704e579b265c140db",
+    "output": "/workspace/review-serial-timeout",
+    "selection": "timeout-rerun-nodeids.json"
+  },
+  "common": "Correct UV_CACHE_DIR=/workspace/uv-cache, clean-runtime PATH prefix, actual clean editable origin, in-pytest product paths+hashes at start/finish, no bytecode or pytest cache writes. Actual argv/process exits are in each run receipt."
+}

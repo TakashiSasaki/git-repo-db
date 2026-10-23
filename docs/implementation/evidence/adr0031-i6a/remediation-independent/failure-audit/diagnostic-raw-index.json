@@ -1,0 +1,114 @@
+{
+  "archive": "diagnostic-raw.zip",
+  "size": 393471,
+  "sha256": "f766a08f6a2c998036829d7370ef758cf0b21063c867386ad46628fe67d881ea",
+  "members": {
+    "initial299/binding-after.json": {
+      "size": 56594,
+      "sha256": "e66dc0b5413a9f62cc1f10c02a9a9b2f1639a1b15ca3183476d3a45000d66859"
+    },
+    "initial299/binding-before.json": {
+      "size": 56594,
+      "sha256": "e66dc0b5413a9f62cc1f10c02a9a9b2f1639a1b15ca3183476d3a45000d66859"
+    },
+    "initial299/diagnostic.execution.json": {
+      "size": 45071,
+      "sha256": "7fe56a5f58c04ee0e42ff1a456e79f2e06dbafe44283a12de23a744de1054162"
+    },
+    "initial299/diagnostic.jsonl": {
+      "size": 306010,
+      "sha256": "8a4a9a6fd41e56afaa96543570779c41d216ec1833f1fc217049e7bb149badb6"
+    },
+    "initial299/diagnostic.log": {
+      "size": 1662506,
+      "sha256": "8a04867947bebab4531197332e0802b29d8342c6effcf39ef9fb9930ecd8b07f"
+    },
+    "initial299/diagnostic.report-types.jsonl": {
+      "size": 241584,
+      "sha256": "c6b3e6598f5b27c867b347d8f72424fbf614e684cf849d80c47779e17f59e9fa"
+    },
+    "initial299/diagnostic.selected.txt": {
+      "size": 41765,
+      "sha256": "ebe9db26312624b6500a32336cf378b5d10a1870e30d17af258cace7591d8160"
+    },
+    "initial299/diagnostic.xml": {
+      "size": 1697582,
+      "sha256": "26fe8e76fa6476e231135eab60787c3080afec6fce82ed2ae03582c666b4731a"
+    },
+    "initial299/trace/gw0.jsonl": {
+      "size": 159572,
+      "sha256": "50551a57257819d7781c22a1cbfac73e9ea3cb90f2ea0e9696987cb1f11b3d78"
+    },
+    "initial299/trace/gw1.jsonl": {
+      "size": 215457,
+      "sha256": "2a960430da769e6b7955cb835a5d69d0cdf1b358bbfee4511673e075971a5349"
+    },
+    "initial299/trace/gw2.jsonl": {
+      "size": 237349,
+      "sha256": "245a46051c24fe0b55697d77d9e430b3dfbac942d13d53c48af60cbf1d43690a"
+    },
+    "initial299/trace/gw3.jsonl": {
+      "size": 192647,
+      "sha256": "726d9bb958e46b40446398f0e5f3fcc30725ef29c9dc3ecfd4fb46aa8a0b4d75"
+    },
+    "initial299/trace/master.jsonl": {
+      "size": 209,
+      "sha256": "b834204b25b2cf6080370dd7877bd9b2eb6cc5c14f7d66064b5b975e0fee2856"
+    },
+    "corrected4/binding-after.json": {
+      "size": 56594,
+      "sha256": "e66dc0b5413a9f62cc1f10c02a9a9b2f1639a1b15ca3183476d3a45000d66859"
+    },
+    "corrected4/binding-before.json": {
+      "size": 56594,
+      "sha256": "e66dc0b5413a9f62cc1f10c02a9a9b2f1639a1b15ca3183476d3a45000d66859"
+    },
+    "corrected4/diagnostic.execution.json": {
+      "size": 1136,
+      "sha256": "096650387fdc738ee4ab4302c4a921e3745d3651586b2a4a832427311c4f614d"
+    },
+    "corrected4/diagnostic.jsonl": {
+      "size": 3594,
+      "sha256": "54ff124c4b6e91a1e75f23ec5ee0e9d9efc7a34d093d42858a196b84d6e8f9e2"
+    },
+    "corrected4/diagnostic.log": {
+      "size": 45466,
+      "sha256": "489358a1c121f3e92051c64a009092cc030d5ab3766209f4ac6e5500dfc6e7ec"
+    },
+    "corrected4/diagnostic.report-types.jsonl": {
+      "size": 2818,
+      "sha256": "20f718e61261623e7e74139893404994634fff1537a5990c35bc3202cc93706a"
+    },
+    "corrected4/diagnostic.selected.txt": {
+      "size": 400,
+      "sha256": "05086ac170cf4b6bb1acc8d6d70795b335715d3b669fffd78b13501e1eb4cf45"
+    },
+    "corrected4/diagnostic.xml": {
+      "size": 51873,
+      "sha256": "a6018da8ce574b274cc7c18982c54774c25d506d7e084f7ed5421c5cca699de5"
+    },
+    "corrected4/trace/gw0.jsonl": {
+      "size": 966,
+      "sha256": "9874cd860012d592f0ad62b4f3d8964377609e76d94eea5a403eb3bbbf4068b7"
+    },
+    "corrected4/trace/gw1.jsonl": {
+      "size": 990,
+      "sha256": "0db558fb94f597cb2a788f602a26863285484da6f7d318b5f389464508cef419"
+    },
+    "corrected4/trace/gw2.jsonl": {
+      "size": 974,
+      "sha256": "cbb5b476c7226b80cb2ef881260032f32c35eadf55e7c5716a6b1f120ffbd686"
+    },
+    "corrected4/trace/gw3.jsonl": {
+      "size": 998,
+      "sha256": "a48eb374ca9ef2871ede089b082035381b9571f9b3221609c34175397e242193"
+    },
+    "corrected4/trace/master.jsonl": {
+      "size": 209,
+      "sha256": "b834204b25b2cf6080370dd7877bd9b2eb6cc5c14f7d66064b5b975e0fee2856"
+    }
+  },
+  "exclusions": [
+    "basetemp synthetic catalogs and virtualenvs; all selected IDs/JUnit/journals/typed reports/trace/bindings/execution/log records retained"
+  ]
+}

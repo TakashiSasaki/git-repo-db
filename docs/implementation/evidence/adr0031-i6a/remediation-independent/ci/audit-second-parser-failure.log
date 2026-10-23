@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "/workspace/i6a-independent/docs/implementation/evidence/adr0031-i6a/remediation-independent/ci/audit_ci.py", line 139, in <module>
+    main()
+  File "/workspace/i6a-independent/docs/implementation/evidence/adr0031-i6a/remediation-independent/ci/audit_ci.py", line 122, in main
+    assert [i["phase"] for i in imports] == ["sessionstart", "sessionfinish"]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

@@ -1,0 +1,61 @@
+"""Repeat residual or explicitly selected ordinary nodes with reviewer instrumentation."""
+from collections import Counter
+import gzip
+import hashlib
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import time
+import xml.etree.ElementTree as ET
+
+ROOT=Path(os.environ.get('REVIEW_SOURCE_ROOT',Path(__file__).resolve().parents[6])).resolve()
+PLUGIN=Path(__file__).resolve().parent
+OUT=Path(sys.argv[1]).resolve()
+OUT.mkdir(exist_ok=False)
+COHORT=os.environ.get('REVIEW_DIAGNOSTIC_COHORT','299')
+E=ROOT/'docs/implementation/evidence/adr0031-i6a/remediation-20261023'/('before' if COHORT=='743' else 'after-final')
+selected=gzip.decompress((E/'ordinary.selected.txt.gz').read_bytes()).decode().splitlines()
+def key(n):
+    head,sep,param=n.partition('[');b=head.split('::')
+    return b[0][:-3].replace('/','.')+''.join('.'+x for x in b[1:-1]),b[-1]+sep+param
+keys={key(n):n for n in selected}
+xml=ET.fromstring(gzip.decompress((E/'ordinary.xml.gz').read_bytes()))
+nodes=[keys[(c.get('classname'),c.get('name'))] for c in xml.iter('testcase') if c.find('failure') is not None or c.find('error') is not None]
+assert len(nodes)==len(set(nodes))==int(COHORT)
+all_ordinary=gzip.decompress((ROOT/'docs/implementation/evidence/adr0031-i6a/remediation-20261023/after-final/ordinary.selected.txt.gz').read_bytes()).decode().splitlines()
+if len(sys.argv)>2:
+    subset=json.loads(Path(sys.argv[2]).read_text())
+    assert set(subset).issubset(all_ordinary) and len(subset)==len(set(subset))
+    nodes=subset
+(OUT/'diagnostic.selected.txt').write_text('\n'.join(nodes)+'\n')
+env=dict(os.environ)
+env['PYTHONDONTWRITEBYTECODE']='1'
+env['PATH']=str(Path(sys.executable).parent)+os.pathsep+env['PATH']
+env['PYTHONPATH']=str(PLUGIN)
+env['REVIEW_TRACE_SOURCE']=str(ROOT)
+env['REVIEW_TRACE_OUTPUT']=str(OUT/'trace')
+env['I6A_REPORTS_SIDECAR']=str(OUT/'diagnostic.report-types.jsonl')
+env['REPO_CATALOG_WHEELHOUSE']='/workspace/review-wheelhouse'
+env['UV_CACHE_DIR']=os.environ.get('REVIEW_UV_CACHE_DIR','/workspace/uv-cache')
+if os.environ.get('REVIEW_USE_DEFAULT_UV_CACHE')=='1':env.pop('UV_CACHE_DIR',None)
+env['TMPDIR']='/workspace/review-failure-tmp'
+Path(env['TMPDIR']).mkdir(exist_ok=True)
+args=[sys.executable,'-m','pytest',*nodes,'-q','-o','addopts=',*(['-n',os.environ.get('REVIEW_XDIST_WORKERS','4')] if os.environ.get('REVIEW_XDIST_WORKERS','4')!='0' else []),'--tb=long','-p','i6a_report_types','-p','reviewer_trace','-p','no:cacheprovider','--junitxml='+str(OUT/'diagnostic.xml'),'--journal='+str(OUT/'diagnostic.jsonl'),'--basetemp='+str(OUT/'basetemp'),'-o','junit_family=xunit1']
+def binding():
+    git=lambda *a:subprocess.check_output(['git',*a],cwd=ROOT,text=True).strip()
+    tracked=git('ls-files','src','tests','scripts','.github/workflows','pyproject.toml','uv.lock').splitlines()
+    if COHORT=='743':assert len(tracked)==478, len(tracked)
+    return {'head':git('rev-parse','HEAD'),'tree':git('rev-parse','HEAD^{tree}'),'inputs':{n:hashlib.sha256((ROOT/n).read_bytes()).hexdigest() for n in tracked},'status':git('status','--porcelain','--untracked-files=all'),'source_root':str(ROOT)}
+probe='import hashlib,json,sqlite3,sys,repo_catalog; from pathlib import Path; db=sqlite3.connect(":memory:"); print(json.dumps(dict(executable=sys.executable,python=sys.version,sqlite_version=sqlite3.sqlite_version,sqlite_source_id=db.execute("select sqlite_source_id()").fetchone()[0],product_origin=repo_catalog.__file__)))'
+runtime=json.loads(subprocess.check_output([sys.executable,'-c',probe],cwd=OUT,env=env,text=True))
+assert Path(runtime['product_origin']).resolve().is_relative_to(ROOT/'src'),runtime
+(OUT/'runtime.json').write_text(json.dumps(runtime,indent=2)+'\n')
+(OUT/'binding-before.json').write_text(json.dumps(binding(),indent=2)+'\n')
+t=time.time()
+with (OUT/'diagnostic.log').open('w') as log:
+    p=subprocess.run(args,cwd=ROOT,env=env,stdout=log,stderr=subprocess.STDOUT)
+(OUT/'diagnostic.execution.json').write_text(json.dumps({'command':args,'cwd':str(ROOT),'exit_code':p.returncode,'elapsed_seconds':time.time()-t,'scope':'Repeated failed-node diagnostic overlaps full ordinary run; concurrent runtime is not timing benchmark evidence'},indent=2)+'\n')
+(OUT/'binding-after.json').write_text(json.dumps(binding(),indent=2)+'\n')
+print(json.dumps({'exit_code':p.returncode,'output':str(OUT),'selected':len(nodes),'source_root':str(ROOT)}))

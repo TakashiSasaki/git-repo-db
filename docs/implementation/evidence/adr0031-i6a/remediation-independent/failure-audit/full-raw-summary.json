@@ -1,0 +1,97 @@
+{
+  "raw_ordinary_receipt": {
+    "checks": {
+      "junit_results_match_actual_typed_outcomes": true,
+      "node_ids_exact": true,
+      "starts_exact": true,
+      "raw_and_typed_phases_exact": true,
+      "ordinary_setup_teardown_once": true,
+      "ordinary_call_after_setup_once": true,
+      "ordinary_all_phases_unique": true,
+      "subtests_explicitly_typed": true,
+      "failed_subtests_not_hidden": true,
+      "finish_and_exit": true,
+      "bindings_unchanged": true
+    },
+    "selected": 5974,
+    "counts": {
+      "passed": 5656,
+      "failed": 276,
+      "error": 42
+    },
+    "exit_code": 1,
+    "subtests": {
+      "passed": 57
+    },
+    "binding_head": "08fbb956c2e470e245146b0dbae747ed0690ea40",
+    "binding_tree": "7072f952975a8537f74ced1bbc2a4a31d7aa3690"
+  },
+  "uv_cache_error_count": 22,
+  "uv_cache_error_nodes": [
+    "tests/packaging/test_p1_distribution.py::test_p1_packaged_ddl_outside_checkout[sdist-wheel]",
+    "tests/packaging/test_p1_distribution.py::test_p1_packaged_ddl_outside_checkout[wheel]",
+    "tests/packaging/test_p2_distribution.py::test_p2_installed_native_git_round_trip[sha1-sdist-wheel]",
+    "tests/packaging/test_p2_distribution.py::test_p2_installed_native_git_round_trip[sha1-wheel]",
+    "tests/packaging/test_p2_distribution.py::test_p2_installed_native_git_round_trip[sha256-sdist-wheel]",
+    "tests/packaging/test_p2_distribution.py::test_p2_installed_native_git_round_trip[sha256-wheel]",
+    "tests/packaging/test_p3_distribution.py::test_installed_production_context[sdist-wheel]",
+    "tests/packaging/test_p3_distribution.py::test_installed_production_context[wheel]",
+    "tests/packaging/test_p4_distribution.py::test_p4_installed_notes[sha1-sdist-wheel]",
+    "tests/packaging/test_p4_distribution.py::test_p4_installed_notes[sha1-wheel]",
+    "tests/packaging/test_p4_distribution.py::test_p4_installed_notes[sha256-sdist-wheel]",
+    "tests/packaging/test_p4_distribution.py::test_p4_installed_notes[sha256-wheel]",
+    "tests/packaging/test_p5_distribution.py::test_p5_installed_acquisition_and_exchange[sha1-sdist-wheel]",
+    "tests/packaging/test_p5_distribution.py::test_p5_installed_acquisition_and_exchange[sha1-wheel]",
+    "tests/packaging/test_p5_distribution.py::test_p5_installed_acquisition_and_exchange[sha256-sdist-wheel]",
+    "tests/packaging/test_p5_distribution.py::test_p5_installed_acquisition_and_exchange[sha256-wheel]",
+    "tests/packaging/test_p6_distribution.py::test_p6_installed_query_search_and_cli[sha1-sdist-wheel]",
+    "tests/packaging/test_p6_distribution.py::test_p6_installed_query_search_and_cli[sha1-wheel]",
+    "tests/packaging/test_p6_distribution.py::test_p6_installed_query_search_and_cli[sha256-sdist-wheel]",
+    "tests/packaging/test_p6_distribution.py::test_p6_installed_query_search_and_cli[sha256-wheel]",
+    "tests/packaging/test_p7_distribution.py::test_p7_installed_recovery_distribution[sdist-wheel]",
+    "tests/packaging/test_p7_distribution.py::test_p7_installed_recovery_distribution[wheel]"
+  ],
+  "different_outcome_or_phase_count": 23,
+  "non_cache_differences": [
+    {
+      "nodeid": "tests/e2e/test_queries.py::test_pr_root_scopes",
+      "actual": {
+        "outcome": "failed",
+        "phase": "call",
+        "message": "AssertionError: (3, {'catalog': {'db_instance_id': '9f90b618-4b35-40ce-a9ce-fe255990f3a2', 'local_revision': 383}, 'command': 'search path', 'coverage': {'complete_for_requested_scope': False, 'excluded_by_policy': [], 'missing': [{'kind': 'execution', 'reason': 'timeout'}]}, 'data': {'items': [], 'page': {'has_more': None, 'limit': 2, 'next_cursor': None, 'returned': 0, 'total': None}}, 'error': None, 'execution': {'backend': 'scan', 'completed': False, 'timed_out': True}, 'request': {'cursor': 'eyJ2ZXJzaW9uIjoxLCJkYiI6IjlmOTBiNjE4LTRiMzUtNDBjZS1hOWNlLWZlMjU1OTkwZjNhMiIsInNlcSI6MzgzLCJxdWVyeSI6IjA1OWQ1MjQ0YThjOGFhMmIwZTY5M2FiMDA0N2I0YjRhNzUxODc3MjJkOTkzMmZkMmZkMmM3M2FkYTk0NmQ3MTMiLCJsYXN0IjpbImJkMWY1NGU2LTliNTgtNDFlZi04MDNkLWViY2U5MTBkYzg0MiIsImFlYWI5MGJiLTM4MzUtNDk5YS05N2JiLTMxYjI4M2Y3N2FkZToyNyIsIjcwNzIyZDZmNmU2Yzc5MmU3NDc4NzQiXX0', 'limit': 2, 'path': 'pr-only.txt', 'path_mode': 'exact', 'repos': ['bd1f54e6-9b58-41ef-803d-ebce910dc842'], 'scope': 'recorded', 'timeout_seconds': 30}, 'schema_version': 1, 'status': 'partial', 'warnings': []}, '')",
+        "trace_sha256": "426a5fd2e818e444f9335fbdb6e600a223f67b3cf61fa1cd3713d799f33e5b12",
+        "frames": [
+          {
+            "path": "tests/e2e/test_queries.py",
+            "line": 203,
+            "function": ""
+          },
+          {
+            "path": "tests/support/cli.py",
+            "line": 55,
+            "function": "pages"
+          },
+          {
+            "path": "tests/support/cli.py",
+            "line": 47,
+            "function": ""
+          }
+        ],
+        "uv_cache_error": false
+      },
+      "archived": {
+        "outcome": "passed",
+        "phase": null,
+        "message": "",
+        "trace_sha256": null,
+        "frames": []
+      },
+      "uv_cache_error": false
+    }
+  ],
+  "cache_error_previous_outcomes": {
+    "passed": 18,
+    "failed": 4
+  },
+  "scope": "Select solely actual read-only UV cache failures from the completed raw ordinary invocation. No counts are rewritten and no test is treated as product-passing here."
+}

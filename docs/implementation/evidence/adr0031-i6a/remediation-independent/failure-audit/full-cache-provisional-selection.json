@@ -1,0 +1,32 @@
+{
+  "scope": "Provisional actual setup-phase difference candidates only; full invocation still in progress and causal attribution deferred until final JUnit traceback. No node is labeled cache-caused from identity/count alone.",
+  "root_journal_snapshot_bytes": 14501659,
+  "root_journal_snapshot_sha256": "94a6eab4941d674e8cef25c171d1c33ff723d7390d3041175e6498a0f8c79999",
+  "root_failed_setup_count": 42,
+  "clean743_failed_setup_count": 20,
+  "selected_count": 22,
+  "selected_nodeids": [
+    "tests/packaging/test_p1_distribution.py::test_p1_packaged_ddl_outside_checkout[sdist-wheel]",
+    "tests/packaging/test_p1_distribution.py::test_p1_packaged_ddl_outside_checkout[wheel]",
+    "tests/packaging/test_p2_distribution.py::test_p2_installed_native_git_round_trip[sha1-sdist-wheel]",
+    "tests/packaging/test_p2_distribution.py::test_p2_installed_native_git_round_trip[sha1-wheel]",
+    "tests/packaging/test_p2_distribution.py::test_p2_installed_native_git_round_trip[sha256-sdist-wheel]",
+    "tests/packaging/test_p2_distribution.py::test_p2_installed_native_git_round_trip[sha256-wheel]",
+    "tests/packaging/test_p3_distribution.py::test_installed_production_context[sdist-wheel]",
+    "tests/packaging/test_p3_distribution.py::test_installed_production_context[wheel]",
+    "tests/packaging/test_p4_distribution.py::test_p4_installed_notes[sha1-sdist-wheel]",
+    "tests/packaging/test_p4_distribution.py::test_p4_installed_notes[sha1-wheel]",
+    "tests/packaging/test_p4_distribution.py::test_p4_installed_notes[sha256-sdist-wheel]",
+    "tests/packaging/test_p4_distribution.py::test_p4_installed_notes[sha256-wheel]",
+    "tests/packaging/test_p5_distribution.py::test_p5_installed_acquisition_and_exchange[sha1-sdist-wheel]",
+    "tests/packaging/test_p5_distribution.py::test_p5_installed_acquisition_and_exchange[sha1-wheel]",
+    "tests/packaging/test_p5_distribution.py::test_p5_installed_acquisition_and_exchange[sha256-sdist-wheel]",
+    "tests/packaging/test_p5_distribution.py::test_p5_installed_acquisition_and_exchange[sha256-wheel]",
+    "tests/packaging/test_p6_distribution.py::test_p6_installed_query_search_and_cli[sha1-sdist-wheel]",
+    "tests/packaging/test_p6_distribution.py::test_p6_installed_query_search_and_cli[sha1-wheel]",
+    "tests/packaging/test_p6_distribution.py::test_p6_installed_query_search_and_cli[sha256-sdist-wheel]",
+    "tests/packaging/test_p6_distribution.py::test_p6_installed_query_search_and_cli[sha256-wheel]",
+    "tests/packaging/test_p7_distribution.py::test_p7_installed_recovery_distribution[sdist-wheel]",
+    "tests/packaging/test_p7_distribution.py::test_p7_installed_recovery_distribution[wheel]"
+  ]
+}

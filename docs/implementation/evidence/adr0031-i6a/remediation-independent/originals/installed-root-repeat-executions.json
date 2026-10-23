@@ -1,0 +1,26 @@
+[
+  {
+    "artifact": "direct",
+    "command": [
+      "/workspace/review-installed-safety-work/direct-venv/bin/python",
+      "-c",
+      "import pathlib,sys,repo_catalog,runpy; assert pathlib.Path(repo_catalog.__file__).resolve().is_relative_to(pathlib.Path(sys.prefix).resolve()); sys.argv=['probe_invalid_carrier.py',sys.argv[1]]; runpy.run_path('probe_invalid_carrier.py',run_name='__main__')",
+      "/workspace/i6a-independent/docs/implementation/evidence/adr0031-i6a/remediation-independent/originals/direct-invalid-carrier-root-repeat.json"
+    ],
+    "cwd": "/workspace/review-installed-safety-work/outside",
+    "exit_code": 1,
+    "finding_reproduced": true
+  },
+  {
+    "artifact": "sdist",
+    "command": [
+      "/workspace/review-installed-safety-work/sdist-venv/bin/python",
+      "-c",
+      "import pathlib,sys,repo_catalog,runpy; assert pathlib.Path(repo_catalog.__file__).resolve().is_relative_to(pathlib.Path(sys.prefix).resolve()); sys.argv=['probe_invalid_carrier.py',sys.argv[1]]; runpy.run_path('probe_invalid_carrier.py',run_name='__main__')",
+      "/workspace/i6a-independent/docs/implementation/evidence/adr0031-i6a/remediation-independent/originals/sdist-invalid-carrier-root-repeat.json"
+    ],
+    "cwd": "/workspace/review-installed-safety-work/outside",
+    "exit_code": 1,
+    "finding_reproduced": true
+  }
+]
