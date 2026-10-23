@@ -1,0 +1,3646 @@
+[
+  {
+    "run_id": 39902230351,
+    "job_id": 120246158269,
+    "status": "completed",
+    "conclusion": "failure",
+    "feature_sha": "93d9927ae801d5402aab0aa0c7c270eeab2809e6",
+    "binding": {
+      "head": "8988a5c3f5bdbab4a54dc1ec35ed8365540c6fe9",
+      "run_attempt": "1",
+      "run_id": "39902230351",
+      "tree": "0c8a50e7cc23b98c6e7e2d1e6066077cbe8d203a"
+    },
+    "tested_commit_parents": [
+      "f5dc409429cdb69955b55e3c27a7ef3c163762fb",
+      "93d9927ae801d5402aab0aa0c7c270eeab2809e6"
+    ],
+    "receipt_bytes": 1907143,
+    "receipt_sha256": "2a7b364b120f88bc7ae7258ec7171d33fa02f408be30009a6b7e6e2dc9adab75",
+    "verified_index_payloads": 121,
+    "log_sha256": "9ec993526d25a8e2ee6d5f587200346912aa1e2818f6a1700ad5450c039af216",
+    "stored_log_sha256": "8cb7c9ba01c07b8c6f66cddb55ee21fbca305b6f43b4feb21e1346e307dd1dd9",
+    "executable_inputs": {
+      "files": 478,
+      "mismatches_against_frozen_checkout": []
+    },
+    "broad": {
+      "selected": 3148,
+      "outcomes": {
+        "passed": 2849,
+        "failed": 279,
+        "error": 20
+      },
+      "process_exit": 1,
+      "finish": {
+        "event": "finish",
+        "status": "failed",
+        "exitstatus": 1,
+        "timestamp": 1792731343.219752
+      },
+      "exact_id_and_phase_checks": true,
+      "nonpasses": [
+        {
+          "classname": "tests.integration.access.test_context_boundary",
+          "name": "test_resigned_exchange_rejects_registration_leaks_before_core_admission[True-inside-json-providers]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.access.test_context_boundary",
+          "name": "test_resigned_exchange_rejects_registration_leaks_before_core_admission[True-inside-json-repositories]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.access.test_context_boundary",
+          "name": "test_resigned_exchange_rejects_registration_leaks_before_core_admission[True-inside-json-sources]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.access.test_context_boundary",
+          "name": "test_resigned_exchange_rejects_registration_leaks_before_core_admission[True-inside-json-source_repositories]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.access.test_context_boundary",
+          "name": "test_resigned_exchange_rejects_registration_leaks_before_core_admission[True-extra-envelope-providers]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.access.test_context_boundary",
+          "name": "test_resigned_exchange_rejects_registration_leaks_before_core_admission[True-extra-envelope-repositories]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.access.test_context_boundary",
+          "name": "test_resigned_exchange_rejects_registration_leaks_before_core_admission[True-extra-envelope-sources]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.access.test_context_boundary",
+          "name": "test_resigned_exchange_rejects_registration_leaks_before_core_admission[True-extra-envelope-source_repositories]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.access.test_context_boundary",
+          "name": "test_resigned_exchange_rejects_registration_leaks_before_core_admission[False-inside-json-providers]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.access.test_context_boundary",
+          "name": "test_resigned_exchange_rejects_registration_leaks_before_core_admission[False-inside-json-repositories]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.access.test_context_boundary",
+          "name": "test_resigned_exchange_rejects_registration_leaks_before_core_admission[False-inside-json-sources]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.access.test_context_boundary",
+          "name": "test_resigned_exchange_rejects_registration_leaks_before_core_admission[False-inside-json-source_repositories]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.access.test_context_boundary",
+          "name": "test_resigned_exchange_rejects_registration_leaks_before_core_admission[False-extra-envelope-providers]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.access.test_context_boundary",
+          "name": "test_resigned_exchange_rejects_registration_leaks_before_core_admission[False-extra-envelope-repositories]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.access.test_context_boundary",
+          "name": "test_resigned_exchange_rejects_registration_leaks_before_core_admission[False-extra-envelope-sources]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.access.test_context_boundary",
+          "name": "test_resigned_exchange_rejects_registration_leaks_before_core_admission[False-extra-envelope-source_repositories]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.access.test_context_boundary",
+          "name": "test_reported_urls_and_historical_core_provenance_survive_exchange",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.access.test_context_boundary",
+          "name": "test_read_outputs_recheck_instead_of_sanitizing_invalid_registration[export]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.access.test_context_boundary",
+          "name": "test_context_only_round_trip_and_core_only_paths_need_no_access",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.access.test_context_boundary",
+          "name": "test_old_wire_version_is_not_reinterpreted",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.access.test_context_boundary",
+          "name": "test_no_normalization_no_network_no_settings_import_side_effect",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5.test_corrections",
+          "name": "test_repository_unknown_observation_retained_without_fabricated_coordinates",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5.test_corrections",
+          "name": "test_provider_registration_is_explicit",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.access.test_review_corrections",
+          "name": "test_nonseed_external_metadata_preserves_pairing_and_replay[False-sha1]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.access.test_review_corrections",
+          "name": "test_nonseed_external_metadata_preserves_pairing_and_replay[False-sha256]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.access.test_review_corrections",
+          "name": "test_nonseed_external_metadata_preserves_pairing_and_replay[True-sha1]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.access.test_review_corrections",
+          "name": "test_nonseed_external_metadata_preserves_pairing_and_replay[True-sha256]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5.test_corrections",
+          "name": "test_exchange_partial_commit_outcome_survives",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5.test_exchange",
+          "name": "test_i3_relation_export_without_i2_acquisition",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5.test_exchange",
+          "name": "test_exchange_export_import_repeat_reverse_and_multi_hop",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5.test_exchange",
+          "name": "test_exchange_selective_filters_and_partial_input",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5.test_exchange",
+          "name": "test_exchange_refuses_intrinsic_spoofing_without_validated_bytes",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5.test_exchange",
+          "name": "test_exchange_refuses_tampered_payloads_without_store_corruption",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5.test_exchange",
+          "name": "test_exchange_evaluates_core_dependencies_against_receiver_core",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5.test_paired_admission",
+          "name": "test_core_first_context_second_and_failure_retry_convergence",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5.test_paired_admission",
+          "name": "test_late_core_dependency_reconciliation",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5.test_provider_acquisition",
+          "name": "test_provider_registration_and_source_inventory",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5.test_provider_acquisition",
+          "name": "test_issue_vs_pull_request_intake_isolation",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5.test_provider_acquisition",
+          "name": "test_reviews_threads_comments_and_relations",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5.test_provider_acquisition",
+          "name": "test_explicit_null_vs_missing_fields_and_clock_competition",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5.test_provider_acquisition",
+          "name": "test_context_file_metadata_never_retains_blob_in_git_core",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5_p6_compatibility.test_end_to_end_p5_p6",
+          "name": "test_end_to_end_acquisition_into_query_and_search[sha1]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5_p6_compatibility.test_end_to_end_p5_p6",
+          "name": "test_end_to_end_acquisition_into_query_and_search[sha256]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5_p6_compatibility.test_end_to_end_p5_p6",
+          "name": "test_multi_hop_exchange_into_query[sha1]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5_p6_compatibility.test_end_to_end_p5_p6",
+          "name": "test_multi_hop_exchange_into_query[sha256]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5_p6_compatibility.test_end_to_end_p5_p6",
+          "name": "test_deferred_core_dependency_reconciliation_into_paired_queries[sha1]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5_p6_compatibility.test_end_to_end_p5_p6",
+          "name": "test_deferred_core_dependency_reconciliation_into_paired_queries[sha256]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5_p6_compatibility.test_end_to_end_p5_p6",
+          "name": "test_partial_reordered_repeat_reverse_onward_preserves_unknown_clocks",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5_p6_compatibility.test_export_gate",
+          "name": "test_export_shared_gate_blocks_actual_nonblocking_writer_lock_attempt",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5_p6_compatibility.test_p5_independent_counterexamples",
+          "name": "test_exchange_retains_partial_admission_outcome",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5_p6_compatibility.test_p5_independent_counterexamples",
+          "name": "test_exchange_export_uses_one_paired_snapshot",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5_p6_compatibility.test_provider_exchange_matrix",
+          "name": "test_provider_late_reordered_repeat_reverse_onward_preserves_candidates[order0]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5_p6_compatibility.test_provider_exchange_matrix",
+          "name": "test_provider_late_reordered_repeat_reverse_onward_preserves_candidates[order1]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5_p6_compatibility.test_provider_exchange_matrix",
+          "name": "test_provider_late_reordered_repeat_reverse_onward_preserves_candidates[order2]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5_p6_compatibility.test_provider_exchange_matrix",
+          "name": "test_provider_late_reordered_repeat_reverse_onward_preserves_candidates[order3]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5_p6_compatibility.test_provider_exchange_matrix",
+          "name": "test_provider_late_reordered_repeat_reverse_onward_preserves_candidates[order4]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5_p6_compatibility.test_provider_exchange_matrix",
+          "name": "test_provider_late_reordered_repeat_reverse_onward_preserves_candidates[order5]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5_p6_compatibility.test_provider_exchange_matrix",
+          "name": "test_exchange_preserves_non_time_json_real",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_pr_base_head_have_distinct_core_and_exact_provider_support",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_mapping_conflict_retains_both_exact_claim_keys",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_other_provider_claim_cannot_resolve_reference_or_typed_qualification",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_disposition_qualification_keeps_original_provider_and_claims[withdraw]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_disposition_qualification_keeps_original_provider_and_claims[dispute]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_disposition_qualification_keeps_original_provider_and_claims[correct]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_missing_null_unresolved_and_late_mapping_are_distinct",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_provider_native_namespaces_do_not_borrow_decimal_mapping",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_transfer_preserves_complete_original_endpoint_states[endpoints0-expected0]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_transfer_preserves_complete_original_endpoint_states[endpoints1-expected1]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_transfer_preserves_complete_original_endpoint_states[endpoints2-expected2]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_transfer_preserves_complete_original_endpoint_states[endpoints3-expected3]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_transfer_preserves_complete_original_endpoint_states[endpoints4-expected4]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_non_transfer_cannot_promote_repository_fields_or_forged_flag[False]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_non_transfer_cannot_promote_repository_fields_or_forged_flag[True]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_graphql_transfer_parent_namespace_and_original_type",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_timeline_parent_override_cannot_forge_observed_issue[False-999-None]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_timeline_parent_override_cannot_forge_observed_issue[True-999-None]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_timeline_parent_override_cannot_forge_observed_issue[True-I_wrong-observed_issue2]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_timeline_parent_override_cannot_forge_observed_issue[True-I_actual-None]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_timeline_parent_override_cannot_forge_observed_issue[True-I_actual-observed_issue4]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_timeline_parent_override_cannot_forge_observed_issue[True-7-observed_issue5]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_timeline_parent_override_cannot_forge_observed_issue[True-I_actual-observed_issue6]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_reacquired_event_does_not_reissue_provenance_after_mapping_change",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_separate_event_reports_never_pair_endpoints",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_generic_provider_scope_cannot_create_transfer",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_invalid_event_input_rolls_back_without_recovery_stop[payload0]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_invalid_event_input_rolls_back_without_recovery_stop[payload1]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_invalid_event_input_rolls_back_without_recovery_stop[payload2]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_caller_transaction_batch_failure_rolls_back_partial_domain_and_access_untouched",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_p7_stop_rejects_provider_intake",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_issue_ownership_keeps_incomparable_source_clock_domains",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_oid_url_name_and_source_membership_are_not_mapping_evidence",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_declared_resolved_provider_scope_does_not_supply_its_own_mapping",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_graphql_event_does_not_infer_destination_from_current_issue_repository",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_same_original_event_key_cannot_change_observation_time",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_stop_during_claim_admission_rolls_back_real_context_work",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_latest_unresolved_owner_does_not_fall_back_to_old_mapped_owner",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_graphql_type_mismatch_cannot_change_resource_kind[issue]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_graphql_type_mismatch_cannot_change_resource_kind[pull_request]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_graphql_type_mismatch_cannot_change_resource_kind[repository]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_mapping_qualification_does_not_rewrite_source_or_coverage",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_transfer_type_and_endpoint_evidence_must_belong_to_same_report[event_resource]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_transfer_type_and_endpoint_evidence_must_belong_to_same_report[clock]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_transfer_type_and_endpoint_evidence_must_belong_to_same_report[provenance]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_transfer_type_and_endpoint_evidence_must_belong_to_same_report[members]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_qualified_read_keyword_contract_reference_and_production_match",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_invalid_retained_provider_scope_triggers_p7_stop",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_current_roles_namespaces_clocks_and_conflicts_across_seeds",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_received_dispositions_need_receiver_evidence_and_preserve_keys[withdraw]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_received_dispositions_need_receiver_evidence_and_preserve_keys[correct]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_received_dispositions_need_receiver_evidence_and_preserve_keys[dispute]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_genuine_transfer_event_report_is_preserved_whole[endpoints0-states0]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_genuine_transfer_event_report_is_preserved_whole[endpoints1-states1]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_genuine_transfer_event_report_is_preserved_whole[endpoints2-states2]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_genuine_transfer_event_report_is_preserved_whole[endpoints3-states3]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_genuine_transfer_event_report_is_preserved_whole[endpoints4-states4]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_i2_source_coverage_and_native_capture_notes_survive_i3",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_domain_exchange_neither_transports_nor_changes_real_access_grants",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_invalid_i2_provider_scope_rejected_before_binding_and_core_commit[False-bad_role]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_invalid_i2_provider_scope_rejected_before_binding_and_core_commit[False-wrong_observation]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_invalid_i2_provider_scope_rejected_before_binding_and_core_commit[False-wrong_members]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_invalid_i2_provider_scope_rejected_before_binding_and_core_commit[True-bad_role]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_invalid_i2_provider_scope_rejected_before_binding_and_core_commit[True-wrong_observation]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_invalid_i2_provider_scope_rejected_before_binding_and_core_commit[True-wrong_members]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[False-reference_empty]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[False-reference_bad_oid]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[False-reference_empty_role]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[False-provider_kind_empty]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[False-provider_kind_integer]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[False-relation_kind_integer]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[True-reference_empty]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[True-reference_bad_oid]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[True-reference_empty_role]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[True-provider_kind_empty]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[True-provider_kind_integer]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[True-relation_kind_integer]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_collection_coverage_uses_exact_owner_and_admission_order[genuine_collection]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_collection_coverage_uses_exact_owner_and_admission_order[absent_collection]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_collection_coverage_uses_exact_owner_and_admission_order[existing_collection]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_source_coverage_permission_cut_keeps_independent_i2_facts",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_existing_receiver_source_pair_can_support_partial_package_coverage",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_cross_seed_permission_identity_replay",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_empty_and_omitted_independent_sets",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_package_key_binding_before_commits_and_sender_namespace",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_crash_windows_and_fact_based_retry[before_core_commit-False-False]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_crash_windows_and_fact_based_retry[after_core_commit-True-False]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_crash_windows_and_fact_based_retry[before_core_checkpoint-True-False]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_crash_windows_and_fact_based_retry[after_core_checkpoint-True-False]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_crash_windows_and_fact_based_retry[during_context-True-False]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_crash_windows_and_fact_based_retry[after_context_commit-True-True]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_crash_windows_and_fact_based_retry[before_context_checkpoint-True-True]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_crash_windows_and_fact_based_retry[after_context_checkpoint-True-True]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_operational_loss_requires_new_issuance",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_transfer_reports_never_shrunk_or_mixed",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_mapping_claim_support_and_dispositions_are_exact",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_empty_oid_and_context_payload_cannot_override_selection",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_bounded_typed_core_graph_and_shared_oid_identity",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_graph_work_byte_unit_limits_are_reported_without_recovery_stop",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_complete_source_inventory_and_coverage_stay_whole",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_process_exit_before_checkpoint_recovery_uses_facts[after_core_commit]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_process_exit_before_checkpoint_recovery_uses_facts[after_context_commit]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_native_metadata_notes_and_capture_coverage_without_provider_intake",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_receiver_selection_stop_and_access_unchanged",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_receiver_flags_and_zero_admission_limits_are_enforced",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_core_reference_missing_dependency_retains_original_report_clock",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_contradictory_coverage_proof_is_rejected_before_binding[members_json-[]-source_inventory]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_contradictory_coverage_proof_is_rejected_before_binding[members_json-[]-collection]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_contradictory_coverage_proof_is_rejected_before_binding[terminal_state-partial-source_inventory]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_contradictory_coverage_proof_is_rejected_before_binding[terminal_state-partial-collection]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_contradictory_coverage_proof_is_rejected_before_binding[provenance_json-{\"evidence\":\"different\",\"source\":\"forged\"}-source_inventory]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_contradictory_coverage_proof_is_rejected_before_binding[provenance_json-{\"evidence\":\"different\",\"source\":\"forged\"}-collection]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_caller_mutation_after_preflight_cannot_change_bound_content[False]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_caller_mutation_after_preflight_cannot_change_bound_content[True]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_selection_cannot_hide_conflicting_inventory_terminal_for_completeness",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_capture_non_utf8_ref_preserves_native_key",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_internally_contradictory_original_times_rejected_before_binding[resource_repository_relations]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_internally_contradictory_original_times_rejected_before_binding[field_candidates]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_internally_contradictory_original_times_rejected_before_binding[resource_relations]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_existing_relation_time_conflict_rejected_before_independent_core_commit",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_capture_pair_conflicting_payload_rejected_before_binding",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_shared_oid_does_not_coalesce_repository_membership_reports",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_collection_scope_binding_rejected_before_core_commit[False]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_collection_scope_binding_rejected_before_core_commit[True]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_modeled_collection_member_cannot_borrow_another_parent[collections]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_modeled_collection_member_cannot_borrow_another_parent[resource_relations]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_core_immutable_unique_payload_preflight[repository_claims-False]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_core_immutable_unique_payload_preflight[repository_claims-True]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_core_immutable_unique_payload_preflight[scalar_claims-False]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_core_immutable_unique_payload_preflight[scalar_claims-True]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_core_immutable_unique_payload_preflight[relation_groups-False]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_core_immutable_unique_payload_preflight[relation_groups-True]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_core_immutable_unique_payload_preflight[notes_claims-False]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p7.test_adversarial_contract_cases",
+          "name": "test_case_23_legitimately_unresolved_context_references_admitted",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_core_immutable_unique_payload_preflight[notes_claims-True]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_core_immutable_unique_payload_preflight[notes_groups-False]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_core_immutable_unique_payload_preflight[notes_groups-True]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_advisory_coverage_details_do_not_rebind_semantic_claim[core]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_advisory_coverage_details_do_not_rebind_semantic_claim[context]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p7.test_bounded_input",
+          "name": "test_context_invalid_or_large_text_does_not_block_later_unit[xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_context_scope_cannot_rebind_provider_or_source_service[collection_service]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p7.test_bounded_input",
+          "name": "test_context_invalid_or_large_text_does_not_block_later_unit[\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p7.test_bounded_input",
+          "name": "test_context_invalid_or_large_text_does_not_block_later_unit[17]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p7.test_bounded_input",
+          "name": "test_context_invalid_or_large_text_does_not_block_later_unit[text3]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_context_scope_cannot_rebind_provider_or_source_service[collection_source]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p7.test_bounded_input",
+          "name": "test_context_invalid_or_large_text_does_not_block_later_unit[text4]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p7.test_bounded_input",
+          "name": "test_context_invalid_or_large_text_does_not_block_later_unit[\\ud800]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p7.test_bounded_input",
+          "name": "test_malformed_primitive_shape_is_one_rejection_not_merge_abort[bad0]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p7.test_bounded_input",
+          "name": "test_malformed_primitive_shape_is_one_rejection_not_merge_abort[bad1]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_context_scope_cannot_rebind_provider_or_source_service[inventory_service]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p7.test_bounded_input",
+          "name": "test_malformed_primitive_shape_is_one_rejection_not_merge_abort[bad2]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p7.test_bounded_input",
+          "name": "test_malformed_primitive_shape_is_one_rejection_not_merge_abort[bad3]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p7.test_bounded_input",
+          "name": "test_malformed_primitive_shape_is_one_rejection_not_merge_abort[bad4]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i4.test_query_search_backup",
+          "name": "test_current_provider_roles_never_fall_back_to_old_core_target",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i4.test_query_search_backup",
+          "name": "test_equal_incomparable_and_unknown_clocks_keep_all_provider_candidates[provider-100-False]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i4.test_query_search_backup",
+          "name": "test_equal_incomparable_and_unknown_clocks_keep_all_provider_candidates[provider-100-True]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i4.test_query_search_backup",
+          "name": "test_equal_incomparable_and_unknown_clocks_keep_all_provider_candidates[different-100-False]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i4.test_query_search_backup",
+          "name": "test_equal_incomparable_and_unknown_clocks_keep_all_provider_candidates[different-100-True]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i4.test_query_search_backup",
+          "name": "test_equal_incomparable_and_unknown_clocks_keep_all_provider_candidates[provider-None-False]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i4.test_query_search_backup",
+          "name": "test_equal_incomparable_and_unknown_clocks_keep_all_provider_candidates[provider-None-True]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i4.test_query_search_backup",
+          "name": "test_dispositions_are_reports_and_qualification_is_per_operation[withdraw]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i4.test_query_search_backup",
+          "name": "test_dispositions_are_reports_and_qualification_is_per_operation[correct]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i4.test_query_search_backup",
+          "name": "test_dispositions_are_reports_and_qualification_is_per_operation[dispute]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i4.test_query_search_backup",
+          "name": "test_search_rebuild_fallback_and_current_historical_summary[missing]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i4.test_query_search_backup",
+          "name": "test_search_rebuild_fallback_and_current_historical_summary[stale]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i4.test_query_search_backup",
+          "name": "test_search_rebuild_fallback_and_current_historical_summary[text]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i4.test_query_search_backup",
+          "name": "test_search_rebuild_fallback_and_current_historical_summary[delete]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i4.test_query_search_backup",
+          "name": "test_search_rebuild_fallback_and_current_historical_summary[garbage]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i4.test_query_search_backup",
+          "name": "test_query_search_pagination_snapshot_budget_and_stop",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i4.test_query_search_backup",
+          "name": "test_paired_restore_preserves_all_keys_dependencies_and_excludes_other_stores",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i4.test_query_search_backup",
+          "name": "test_forged_backup_with_valid_checksums_fails_semantic_restore[member]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i4.test_query_search_backup",
+          "name": "test_forged_backup_with_valid_checksums_fails_semantic_restore[clock]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i4.test_query_search_backup",
+          "name": "test_forged_backup_with_valid_checksums_fails_semantic_restore[role]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i4.test_query_search_backup",
+          "name": "test_forged_backup_with_valid_checksums_fails_semantic_restore[support]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i4.test_query_search_backup",
+          "name": "test_invalid_authoritative_provider_scope_stops_service[query]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i4.test_query_search_backup",
+          "name": "test_invalid_authoritative_provider_scope_stops_service[search]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i4.test_query_search_backup",
+          "name": "test_invalid_authoritative_provider_scope_stops_service[rebuild]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i4.test_query_search_backup",
+          "name": "test_invalid_authoritative_provider_scope_stops_service[backup]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i5.test_independent_e2e",
+          "name": "test_independent_selection_does_not_turn_dependencies_into_permission[R]",
+          "outcome": "error"
+        },
+        {
+          "classname": "tests.integration.i5.test_independent_e2e",
+          "name": "test_independent_selection_does_not_turn_dependencies_into_permission[O]",
+          "outcome": "error"
+        },
+        {
+          "classname": "tests.integration.i5.test_independent_e2e",
+          "name": "test_independent_selection_does_not_turn_dependencies_into_permission[C]",
+          "outcome": "error"
+        },
+        {
+          "classname": "tests.integration.i5.test_independent_e2e",
+          "name": "test_independent_selection_does_not_turn_dependencies_into_permission[RO]",
+          "outcome": "error"
+        },
+        {
+          "classname": "tests.integration.i5.test_independent_e2e",
+          "name": "test_independent_selection_does_not_turn_dependencies_into_permission[RC]",
+          "outcome": "error"
+        },
+        {
+          "classname": "tests.integration.i5.test_independent_e2e",
+          "name": "test_independent_selection_does_not_turn_dependencies_into_permission[OC]",
+          "outcome": "error"
+        },
+        {
+          "classname": "tests.integration.i5.test_independent_e2e",
+          "name": "test_independent_selection_does_not_turn_dependencies_into_permission[ROC]",
+          "outcome": "error"
+        },
+        {
+          "classname": "tests.integration.i5.test_independent_e2e",
+          "name": "test_independent_selection_does_not_turn_dependencies_into_permission[empty]",
+          "outcome": "error"
+        },
+        {
+          "classname": "tests.integration.i5.test_independent_e2e",
+          "name": "test_omitted_selection_needs_explicit_all_and_empty_overrides_all",
+          "outcome": "error"
+        },
+        {
+          "classname": "tests.integration.i5.test_independent_e2e",
+          "name": "test_mapping_effect_stays_local_across_exchange_search_and_restore[withdraw]",
+          "outcome": "error"
+        },
+        {
+          "classname": "tests.integration.i5.test_independent_e2e",
+          "name": "test_mapping_effect_stays_local_across_exchange_search_and_restore[correct]",
+          "outcome": "error"
+        },
+        {
+          "classname": "tests.integration.i5.test_independent_e2e",
+          "name": "test_mapping_effect_stays_local_across_exchange_search_and_restore[dispute]",
+          "outcome": "error"
+        },
+        {
+          "classname": "tests.integration.i5.test_independent_e2e",
+          "name": "test_received_search_is_disposable_and_rebuild_preserves_authority[missing]",
+          "outcome": "error"
+        },
+        {
+          "classname": "tests.integration.i5.test_independent_e2e",
+          "name": "test_received_search_is_disposable_and_rebuild_preserves_authority[garbage]",
+          "outcome": "error"
+        },
+        {
+          "classname": "tests.integration.i5.test_independent_e2e",
+          "name": "test_received_search_is_disposable_and_rebuild_preserves_authority[stale]",
+          "outcome": "error"
+        },
+        {
+          "classname": "tests.integration.i5.test_independent_e2e",
+          "name": "test_received_search_is_disposable_and_rebuild_preserves_authority[text]",
+          "outcome": "error"
+        },
+        {
+          "classname": "tests.integration.i5.test_independent_e2e",
+          "name": "test_received_search_is_disposable_and_rebuild_preserves_authority[row_key]",
+          "outcome": "error"
+        },
+        {
+          "classname": "tests.integration.i5.test_independent_e2e",
+          "name": "test_received_paired_backup_preserves_complete_rows_keys_provenance_and_oid_refs",
+          "outcome": "error"
+        },
+        {
+          "classname": "tests.integration.i5.test_independent_e2e",
+          "name": "test_transfer_reports_never_mix_across_observations_or_identifier_namespaces",
+          "outcome": "error"
+        },
+        {
+          "classname": "tests.integration.i5.test_independent_e2e",
+          "name": "test_selected_source_inventory_cannot_expand_repository_registration",
+          "outcome": "error"
+        },
+        {
+          "classname": "tests.integration.p1.test_context_relations",
+          "name": "test_transfer_generic_admission_requires_complete_report[transfer_from_repository-False-False]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_context_relations",
+          "name": "test_transfer_generic_admission_requires_complete_report[transfer_from_repository-False-True]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_context_relations",
+          "name": "test_transfer_generic_admission_requires_complete_report[transfer_from_repository-True-False]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_context_relations",
+          "name": "test_transfer_generic_admission_requires_complete_report[transfer_from_repository-True-True]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_context_relations",
+          "name": "test_transfer_generic_admission_requires_complete_report[transfer_to_repository-False-False]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_context_relations",
+          "name": "test_transfer_generic_admission_requires_complete_report[transfer_to_repository-False-True]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_context_relations",
+          "name": "test_transfer_generic_admission_requires_complete_report[transfer_to_repository-True-False]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_context_relations",
+          "name": "test_transfer_generic_admission_requires_complete_report[transfer_to_repository-True-True]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_context_relations",
+          "name": "test_transfer_stored_type_is_never_inferred[absent]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_context_relations",
+          "name": "test_transfer_stored_type_is_never_inferred[missing_type]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_context_relations",
+          "name": "test_transfer_stored_type_is_never_inferred[wrong_type]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_context_relations",
+          "name": "test_transfer_stored_type_is_never_inferred[provided_roles]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_context_relations",
+          "name": "test_transfer_stored_type_is_never_inferred[members]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_context_relations",
+          "name": "test_transfer_stored_type_is_never_inferred[missing_provider]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_context_relations",
+          "name": "test_transfer_stored_type_is_never_inferred[missing_clock]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_context_relations",
+          "name": "test_transfer_report_fk_failure_rolls_back_whole_unit",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_context_relations",
+          "name": "test_transfer_supports_both_endpoints_without_cross_borrowing",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_context_relations",
+          "name": "test_partial_transfer_alternatives_remain_selection_truncated",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_context_relations",
+          "name": "test_counterexample_5_transfer_cases_no_invented_endpoints",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_context_relations",
+          "name": "test_transfer_event_genuine_type_enforcement_across_typed_paths",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_context_relations",
+          "name": "test_transfer_event_reports_generator_selected_repositories_and_invariants",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p7.test_exact_replay",
+          "name": "test_empty_context_text_admission_and_replay",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p7.test_missing_required_authority",
+          "name": "test_new_unreferenced_text_still_admits",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_generalized_resources",
+          "name": "test_real_nontransfer_provider_native_event_persists_and_reopens[False]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_generalized_resources",
+          "name": "test_real_nontransfer_provider_native_event_persists_and_reopens[True]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_generalized_resources",
+          "name": "test_selected_real_wire_without_identification_refuses_before_core_effects",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_generalized_resources",
+          "name": "test_real_selected_transfer_wire_refuses_before_effects_and_replay[False-False-False]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_generalized_resources",
+          "name": "test_real_selected_transfer_wire_refuses_before_effects_and_replay[False-False-True]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_generalized_resources",
+          "name": "test_real_selected_transfer_wire_refuses_before_effects_and_replay[False-True-False]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_generalized_resources",
+          "name": "test_real_selected_transfer_wire_refuses_before_effects_and_replay[False-True-True]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_generalized_resources",
+          "name": "test_real_selected_transfer_wire_refuses_before_effects_and_replay[True-False-False]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_generalized_resources",
+          "name": "test_real_selected_transfer_wire_refuses_before_effects_and_replay[True-False-True]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_generalized_resources",
+          "name": "test_real_selected_transfer_wire_refuses_before_effects_and_replay[True-True-False]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_generalized_resources",
+          "name": "test_real_selected_transfer_wire_refuses_before_effects_and_replay[True-True-True]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_generalized_resources",
+          "name": "test_real_wire_parser_rejects_unrecognized_nested_operations_before_effects",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_generalized_resources",
+          "name": "test_unknown_ordered_wire_and_opaque_transfer_text_remain_supported",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_generalized_resources",
+          "name": "test_matching_schema_poison_stops_before_ordinary_exposure[export-report]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_generalized_resources",
+          "name": "test_matching_schema_poison_stops_before_ordinary_exposure[export-endpoint]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.packaging.test_p5_distribution",
+          "name": "test_p5_installed_acquisition_and_exchange[sha1-wheel]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.packaging.test_p5_distribution",
+          "name": "test_p5_installed_acquisition_and_exchange[sha1-sdist-wheel]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.packaging.test_p5_distribution",
+          "name": "test_p5_installed_acquisition_and_exchange[sha256-wheel]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.packaging.test_p5_distribution",
+          "name": "test_p5_installed_acquisition_and_exchange[sha256-sdist-wheel]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p3.test_production_context",
+          "name": "test_production_context_relation_facade_methods",
+          "outcome": "failed"
+        }
+      ]
+    },
+    "I4_source": {
+      "selected": 217,
+      "outcomes": {
+        "passed": 217
+      },
+      "process_exit": 0,
+      "finish": {
+        "event": "finish",
+        "status": "completed",
+        "exitstatus": 0,
+        "timestamp": 1792731113.529897
+      },
+      "exact_id_and_phase_checks": true,
+      "nonpasses": []
+    },
+    "I5_source": {
+      "selected": 29,
+      "outcomes": {
+        "passed": 29
+      },
+      "process_exit": 0,
+      "finish": {
+        "event": "finish",
+        "status": "completed",
+        "exitstatus": 0,
+        "timestamp": 1792731103.345485
+      },
+      "exact_id_and_phase_checks": true,
+      "nonpasses": []
+    },
+    "ordinary_inventory": {
+      "collected": 5974,
+      "unexecuted": 2826
+    },
+    "installed": {
+      "direct-I4": {
+        "selected": 217,
+        "outcomes": {
+          "passed": 217
+        },
+        "process_exit": 0,
+        "finish": {
+          "event": "finish",
+          "status": "completed",
+          "exitstatus": 0,
+          "timestamp": 1792731369.742828
+        },
+        "exact_id_and_phase_checks": true,
+        "nonpasses": [],
+        "installed_modules_and_file_hashes_verified": 156
+      },
+      "direct-I5": {
+        "selected": 29,
+        "outcomes": {
+          "passed": 29
+        },
+        "process_exit": 0,
+        "finish": {
+          "event": "finish",
+          "status": "completed",
+          "exitstatus": 0,
+          "timestamp": 1792731358.68217
+        },
+        "exact_id_and_phase_checks": true,
+        "nonpasses": [],
+        "installed_modules_and_file_hashes_verified": 156
+      },
+      "direct-access-smoke": {
+        "failed": true,
+        "PERMISSION_DENIED": true,
+        "exchange_guard_line_397": true
+      },
+      "sdist-I4": {
+        "selected": 217,
+        "outcomes": {
+          "passed": 217
+        },
+        "process_exit": 0,
+        "finish": {
+          "event": "finish",
+          "status": "completed",
+          "exitstatus": 0,
+          "timestamp": 1792731394.699853
+        },
+        "exact_id_and_phase_checks": true,
+        "nonpasses": [],
+        "installed_modules_and_file_hashes_verified": 156
+      },
+      "sdist-I5": {
+        "selected": 29,
+        "outcomes": {
+          "passed": 29
+        },
+        "process_exit": 0,
+        "finish": {
+          "event": "finish",
+          "status": "completed",
+          "exitstatus": 0,
+          "timestamp": 1792731376.311369
+        },
+        "exact_id_and_phase_checks": true,
+        "nonpasses": [],
+        "installed_modules_and_file_hashes_verified": 156
+      },
+      "sdist-access-smoke": {
+        "failed": true,
+        "PERMISSION_DENIED": true,
+        "exchange_guard_line_397": true
+      }
+    },
+    "runtime": {
+      "python": "3.12.15",
+      "executable": "/home/runner/work/_temp/product-python/python/bin/python",
+      "base_executable": "/home/runner/work/_temp/product-python/python/bin/python3.12",
+      "sqlite_version": "3.53.1",
+      "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+      "sqlite_module": "/home/runner/work/_temp/product-python/python/bin/python3.12",
+      "sqlite_module_origin": "built-in",
+      "sqlite_module_sha256": "0a97d28d3635c7dfd143de6d00b09c0cb382249c020b28ee33fb4002db1efb9c",
+      "compile_options": [
+        [
+          "ATOMIC_INTRINSICS=1"
+        ],
+        [
+          "COMPILER=clang-23.1.3"
+        ],
+        [
+          "DEFAULT_AUTOVACUUM"
+        ],
+        [
+          "DEFAULT_CACHE_SIZE=-2000"
+        ],
+        [
+          "DEFAULT_FILE_FORMAT=4"
+        ],
+        [
+          "DEFAULT_JOURNAL_SIZE_LIMIT=-1"
+        ],
+        [
+          "DEFAULT_MMAP_SIZE=0"
+        ],
+        [
+          "DEFAULT_PAGE_SIZE=4096"
+        ],
+        [
+          "DEFAULT_PCACHE_INITSZ=20"
+        ],
+        [
+          "DEFAULT_RECURSIVE_TRIGGERS"
+        ],
+        [
+          "DEFAULT_SECTOR_SIZE=4096"
+        ],
+        [
+          "DEFAULT_SYNCHRONOUS=2"
+        ],
+        [
+          "DEFAULT_WAL_AUTOCHECKPOINT=1000"
+        ],
+        [
+          "DEFAULT_WAL_SYNCHRONOUS=2"
+        ],
+        [
+          "DEFAULT_WORKER_THREADS=0"
+        ],
+        [
+          "DIRECT_OVERFLOW_READ"
+        ],
+        [
+          "ENABLE_DBSTAT_VTAB"
+        ],
+        [
+          "ENABLE_FTS3"
+        ],
+        [
+          "ENABLE_FTS3_PARENTHESIS"
+        ],
+        [
+          "ENABLE_FTS4"
+        ],
+        [
+          "ENABLE_FTS5"
+        ],
+        [
+          "ENABLE_GEOPOLY"
+        ],
+        [
+          "ENABLE_MATH_FUNCTIONS"
+        ],
+        [
+          "ENABLE_PERCENTILE"
+        ],
+        [
+          "ENABLE_RTREE"
+        ],
+        [
+          "MALLOC_SOFT_LIMIT=1024"
+        ],
+        [
+          "MAX_ATTACHED=10"
+        ],
+        [
+          "MAX_COLUMN=2000"
+        ],
+        [
+          "MAX_COMPOUND_SELECT=500"
+        ],
+        [
+          "MAX_DEFAULT_PAGE_SIZE=8192"
+        ],
+        [
+          "MAX_EXPR_DEPTH=1000"
+        ],
+        [
+          "MAX_FUNCTION_ARG=1000"
+        ],
+        [
+          "MAX_LENGTH=1000000000"
+        ],
+        [
+          "MAX_LIKE_PATTERN_LENGTH=50000"
+        ],
+        [
+          "MAX_MMAP_SIZE=0x7fff0000"
+        ],
+        [
+          "MAX_PAGE_COUNT=0xfffffffe"
+        ],
+        [
+          "MAX_PAGE_SIZE=65536"
+        ],
+        [
+          "MAX_SQL_LENGTH=1000000000"
+        ],
+        [
+          "MAX_TRIGGER_DEPTH=1000"
+        ],
+        [
+          "MAX_VARIABLE_NUMBER=32766"
+        ],
+        [
+          "MAX_VDBE_OP=250000000"
+        ],
+        [
+          "MAX_WORKER_THREADS=8"
+        ],
+        [
+          "MUTEX_PTHREADS"
+        ],
+        [
+          "SYSTEM_MALLOC"
+        ],
+        [
+          "TEMP_STORE=1"
+        ],
+        [
+          "THREADSAFE=1"
+        ]
+      ],
+      "loader_environment": {
+        "LD_LIBRARY_PATH": null,
+        "LD_PRELOAD": null,
+        "DYLD_LIBRARY_PATH": null
+      },
+      "sqlite_mappings": [],
+      "product_safety_and_capabilities": "passed",
+      "product_module": "/home/runner/work/git-repo-db/git-repo-db/src/repo_catalog/adapters/sqlite/access_schema.py"
+    }
+  },
+  {
+    "run_id": 39903868636,
+    "job_id": 120251251247,
+    "status": "completed",
+    "conclusion": "success",
+    "feature_sha": "08fbb956c2e470e245146b0dbae747ed0690ea40",
+    "binding": {
+      "feature_sha": "08fbb956c2e470e245146b0dbae747ed0690ea40",
+      "head": "f4ed9cb6b22fbd8305379fe534153a035d4ec45f",
+      "run_attempt": "1",
+      "run_id": "39903868636",
+      "tree": "7072f952975a8537f74ced1bbc2a4a31d7aa3690"
+    },
+    "tested_commit_parents": [
+      "f5dc409429cdb69955b55e3c27a7ef3c163762fb",
+      "08fbb956c2e470e245146b0dbae747ed0690ea40"
+    ],
+    "receipt_bytes": 83607,
+    "receipt_sha256": "96f67fc23bf29ebd6de2ff535fd2c9e106bcb9925975b804bbeb061da260a932",
+    "verified_index_payloads": 21,
+    "log_sha256": "852d5affdce220685162faeadf34b69d1321f6038efc09cf51ef5b662e79b43f",
+    "stored_log_sha256": "0c64d199d67ed4d0bd846d586b156a323459744a5e017d5c442a0f8305221848",
+    "development": {
+      "runtime_pytest_nodes": 0,
+      "required_unexecuted_files": 223,
+      "full_acceptance": false,
+      "acceptance_status": "development_checks_passed",
+      "acceptance_input_hash": "4e874344abe82f4432606b9e243ddf76b463b020d02442a42e6e3746eaa85435"
+    }
+  },
+  {
+    "run_id": 39903868666,
+    "job_id": 120251251959,
+    "status": "completed",
+    "conclusion": "failure",
+    "feature_sha": "08fbb956c2e470e245146b0dbae747ed0690ea40",
+    "binding": {
+      "head": "f4ed9cb6b22fbd8305379fe534153a035d4ec45f",
+      "run_attempt": "1",
+      "run_id": "39903868666",
+      "tree": "7072f952975a8537f74ced1bbc2a4a31d7aa3690"
+    },
+    "tested_commit_parents": [
+      "f5dc409429cdb69955b55e3c27a7ef3c163762fb",
+      "08fbb956c2e470e245146b0dbae747ed0690ea40"
+    ],
+    "receipt_bytes": 1902200,
+    "receipt_sha256": "5a2a192c793afb57843228d7a0b441833b32b576c648291260e2d74b92f34c52",
+    "verified_index_payloads": 121,
+    "log_sha256": "d16ee2196aa6f454ebe713855cbd493f285bc971dd16bf003dbea5f95f34ff5c",
+    "stored_log_sha256": "7de3ae388c74aa847239bd4877357a46ea050dad3171d889ac18892c2ae58335",
+    "executable_inputs": {
+      "files": 478,
+      "mismatches_against_frozen_checkout": []
+    },
+    "broad": {
+      "selected": 3148,
+      "outcomes": {
+        "passed": 2849,
+        "failed": 279,
+        "error": 20
+      },
+      "process_exit": 1,
+      "finish": {
+        "event": "finish",
+        "status": "failed",
+        "exitstatus": 1,
+        "timestamp": 1792732325.050601
+      },
+      "exact_id_and_phase_checks": true,
+      "nonpasses": [
+        {
+          "classname": "tests.integration.access.test_context_boundary",
+          "name": "test_resigned_exchange_rejects_registration_leaks_before_core_admission[True-inside-json-providers]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.access.test_context_boundary",
+          "name": "test_resigned_exchange_rejects_registration_leaks_before_core_admission[True-inside-json-repositories]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.access.test_context_boundary",
+          "name": "test_resigned_exchange_rejects_registration_leaks_before_core_admission[True-inside-json-sources]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.access.test_context_boundary",
+          "name": "test_resigned_exchange_rejects_registration_leaks_before_core_admission[True-inside-json-source_repositories]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.access.test_context_boundary",
+          "name": "test_resigned_exchange_rejects_registration_leaks_before_core_admission[True-extra-envelope-providers]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.access.test_context_boundary",
+          "name": "test_resigned_exchange_rejects_registration_leaks_before_core_admission[True-extra-envelope-repositories]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.access.test_context_boundary",
+          "name": "test_resigned_exchange_rejects_registration_leaks_before_core_admission[True-extra-envelope-sources]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.access.test_context_boundary",
+          "name": "test_resigned_exchange_rejects_registration_leaks_before_core_admission[True-extra-envelope-source_repositories]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.access.test_context_boundary",
+          "name": "test_resigned_exchange_rejects_registration_leaks_before_core_admission[False-inside-json-providers]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.access.test_context_boundary",
+          "name": "test_resigned_exchange_rejects_registration_leaks_before_core_admission[False-inside-json-repositories]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.access.test_context_boundary",
+          "name": "test_resigned_exchange_rejects_registration_leaks_before_core_admission[False-inside-json-sources]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.access.test_context_boundary",
+          "name": "test_resigned_exchange_rejects_registration_leaks_before_core_admission[False-inside-json-source_repositories]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.access.test_context_boundary",
+          "name": "test_resigned_exchange_rejects_registration_leaks_before_core_admission[False-extra-envelope-providers]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.access.test_context_boundary",
+          "name": "test_resigned_exchange_rejects_registration_leaks_before_core_admission[False-extra-envelope-repositories]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.access.test_context_boundary",
+          "name": "test_resigned_exchange_rejects_registration_leaks_before_core_admission[False-extra-envelope-sources]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.access.test_context_boundary",
+          "name": "test_resigned_exchange_rejects_registration_leaks_before_core_admission[False-extra-envelope-source_repositories]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.access.test_context_boundary",
+          "name": "test_reported_urls_and_historical_core_provenance_survive_exchange",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.access.test_context_boundary",
+          "name": "test_read_outputs_recheck_instead_of_sanitizing_invalid_registration[export]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.access.test_context_boundary",
+          "name": "test_context_only_round_trip_and_core_only_paths_need_no_access",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.access.test_context_boundary",
+          "name": "test_old_wire_version_is_not_reinterpreted",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.access.test_context_boundary",
+          "name": "test_no_normalization_no_network_no_settings_import_side_effect",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5.test_corrections",
+          "name": "test_repository_unknown_observation_retained_without_fabricated_coordinates",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5.test_corrections",
+          "name": "test_provider_registration_is_explicit",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.access.test_review_corrections",
+          "name": "test_nonseed_external_metadata_preserves_pairing_and_replay[False-sha1]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.access.test_review_corrections",
+          "name": "test_nonseed_external_metadata_preserves_pairing_and_replay[False-sha256]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.access.test_review_corrections",
+          "name": "test_nonseed_external_metadata_preserves_pairing_and_replay[True-sha1]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.access.test_review_corrections",
+          "name": "test_nonseed_external_metadata_preserves_pairing_and_replay[True-sha256]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5.test_corrections",
+          "name": "test_exchange_partial_commit_outcome_survives",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5.test_exchange",
+          "name": "test_i3_relation_export_without_i2_acquisition",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5.test_exchange",
+          "name": "test_exchange_export_import_repeat_reverse_and_multi_hop",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5.test_exchange",
+          "name": "test_exchange_selective_filters_and_partial_input",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5.test_exchange",
+          "name": "test_exchange_refuses_intrinsic_spoofing_without_validated_bytes",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5.test_exchange",
+          "name": "test_exchange_refuses_tampered_payloads_without_store_corruption",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5.test_exchange",
+          "name": "test_exchange_evaluates_core_dependencies_against_receiver_core",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5.test_paired_admission",
+          "name": "test_core_first_context_second_and_failure_retry_convergence",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5.test_paired_admission",
+          "name": "test_late_core_dependency_reconciliation",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5.test_provider_acquisition",
+          "name": "test_provider_registration_and_source_inventory",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5.test_provider_acquisition",
+          "name": "test_issue_vs_pull_request_intake_isolation",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5.test_provider_acquisition",
+          "name": "test_reviews_threads_comments_and_relations",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5.test_provider_acquisition",
+          "name": "test_explicit_null_vs_missing_fields_and_clock_competition",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5.test_provider_acquisition",
+          "name": "test_context_file_metadata_never_retains_blob_in_git_core",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5_p6_compatibility.test_end_to_end_p5_p6",
+          "name": "test_end_to_end_acquisition_into_query_and_search[sha1]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5_p6_compatibility.test_end_to_end_p5_p6",
+          "name": "test_end_to_end_acquisition_into_query_and_search[sha256]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5_p6_compatibility.test_end_to_end_p5_p6",
+          "name": "test_multi_hop_exchange_into_query[sha1]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5_p6_compatibility.test_end_to_end_p5_p6",
+          "name": "test_multi_hop_exchange_into_query[sha256]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5_p6_compatibility.test_end_to_end_p5_p6",
+          "name": "test_deferred_core_dependency_reconciliation_into_paired_queries[sha1]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5_p6_compatibility.test_end_to_end_p5_p6",
+          "name": "test_deferred_core_dependency_reconciliation_into_paired_queries[sha256]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5_p6_compatibility.test_end_to_end_p5_p6",
+          "name": "test_partial_reordered_repeat_reverse_onward_preserves_unknown_clocks",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5_p6_compatibility.test_export_gate",
+          "name": "test_export_shared_gate_blocks_actual_nonblocking_writer_lock_attempt",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5_p6_compatibility.test_p5_independent_counterexamples",
+          "name": "test_exchange_retains_partial_admission_outcome",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5_p6_compatibility.test_p5_independent_counterexamples",
+          "name": "test_exchange_export_uses_one_paired_snapshot",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5_p6_compatibility.test_provider_exchange_matrix",
+          "name": "test_provider_late_reordered_repeat_reverse_onward_preserves_candidates[order0]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5_p6_compatibility.test_provider_exchange_matrix",
+          "name": "test_provider_late_reordered_repeat_reverse_onward_preserves_candidates[order1]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5_p6_compatibility.test_provider_exchange_matrix",
+          "name": "test_provider_late_reordered_repeat_reverse_onward_preserves_candidates[order2]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5_p6_compatibility.test_provider_exchange_matrix",
+          "name": "test_provider_late_reordered_repeat_reverse_onward_preserves_candidates[order3]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5_p6_compatibility.test_provider_exchange_matrix",
+          "name": "test_provider_late_reordered_repeat_reverse_onward_preserves_candidates[order4]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5_p6_compatibility.test_provider_exchange_matrix",
+          "name": "test_provider_late_reordered_repeat_reverse_onward_preserves_candidates[order5]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p5_p6_compatibility.test_provider_exchange_matrix",
+          "name": "test_exchange_preserves_non_time_json_real",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_pr_base_head_have_distinct_core_and_exact_provider_support",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_mapping_conflict_retains_both_exact_claim_keys",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_other_provider_claim_cannot_resolve_reference_or_typed_qualification",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_disposition_qualification_keeps_original_provider_and_claims[withdraw]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_disposition_qualification_keeps_original_provider_and_claims[dispute]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_disposition_qualification_keeps_original_provider_and_claims[correct]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_missing_null_unresolved_and_late_mapping_are_distinct",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_provider_native_namespaces_do_not_borrow_decimal_mapping",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_transfer_preserves_complete_original_endpoint_states[endpoints0-expected0]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_transfer_preserves_complete_original_endpoint_states[endpoints1-expected1]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_transfer_preserves_complete_original_endpoint_states[endpoints2-expected2]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_transfer_preserves_complete_original_endpoint_states[endpoints3-expected3]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_transfer_preserves_complete_original_endpoint_states[endpoints4-expected4]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_non_transfer_cannot_promote_repository_fields_or_forged_flag[False]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_non_transfer_cannot_promote_repository_fields_or_forged_flag[True]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_graphql_transfer_parent_namespace_and_original_type",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_timeline_parent_override_cannot_forge_observed_issue[False-999-None]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_timeline_parent_override_cannot_forge_observed_issue[True-999-None]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_timeline_parent_override_cannot_forge_observed_issue[True-I_wrong-observed_issue2]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_timeline_parent_override_cannot_forge_observed_issue[True-I_actual-None]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_timeline_parent_override_cannot_forge_observed_issue[True-I_actual-observed_issue4]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_timeline_parent_override_cannot_forge_observed_issue[True-7-observed_issue5]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_timeline_parent_override_cannot_forge_observed_issue[True-I_actual-observed_issue6]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_reacquired_event_does_not_reissue_provenance_after_mapping_change",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_separate_event_reports_never_pair_endpoints",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_generic_provider_scope_cannot_create_transfer",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_invalid_event_input_rolls_back_without_recovery_stop[payload0]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_invalid_event_input_rolls_back_without_recovery_stop[payload1]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_invalid_event_input_rolls_back_without_recovery_stop[payload2]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_caller_transaction_batch_failure_rolls_back_partial_domain_and_access_untouched",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_p7_stop_rejects_provider_intake",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_issue_ownership_keeps_incomparable_source_clock_domains",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_oid_url_name_and_source_membership_are_not_mapping_evidence",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_declared_resolved_provider_scope_does_not_supply_its_own_mapping",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_graphql_event_does_not_infer_destination_from_current_issue_repository",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_same_original_event_key_cannot_change_observation_time",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_stop_during_claim_admission_rolls_back_real_context_work",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_latest_unresolved_owner_does_not_fall_back_to_old_mapped_owner",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_graphql_type_mismatch_cannot_change_resource_kind[issue]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_graphql_type_mismatch_cannot_change_resource_kind[pull_request]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_graphql_type_mismatch_cannot_change_resource_kind[repository]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_mapping_qualification_does_not_rewrite_source_or_coverage",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_transfer_type_and_endpoint_evidence_must_belong_to_same_report[event_resource]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_transfer_type_and_endpoint_evidence_must_belong_to_same_report[clock]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_transfer_type_and_endpoint_evidence_must_belong_to_same_report[provenance]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_transfer_type_and_endpoint_evidence_must_belong_to_same_report[members]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_qualified_read_keyword_contract_reference_and_production_match",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i2.test_provider_intake",
+          "name": "test_invalid_retained_provider_scope_triggers_p7_stop",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_current_roles_namespaces_clocks_and_conflicts_across_seeds",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_received_dispositions_need_receiver_evidence_and_preserve_keys[withdraw]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_received_dispositions_need_receiver_evidence_and_preserve_keys[correct]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_received_dispositions_need_receiver_evidence_and_preserve_keys[dispute]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_genuine_transfer_event_report_is_preserved_whole[endpoints0-states0]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_genuine_transfer_event_report_is_preserved_whole[endpoints1-states1]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_genuine_transfer_event_report_is_preserved_whole[endpoints2-states2]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_genuine_transfer_event_report_is_preserved_whole[endpoints3-states3]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_genuine_transfer_event_report_is_preserved_whole[endpoints4-states4]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_i2_source_coverage_and_native_capture_notes_survive_i3",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_domain_exchange_neither_transports_nor_changes_real_access_grants",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_invalid_i2_provider_scope_rejected_before_binding_and_core_commit[False-bad_role]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_invalid_i2_provider_scope_rejected_before_binding_and_core_commit[False-wrong_observation]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_invalid_i2_provider_scope_rejected_before_binding_and_core_commit[False-wrong_members]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_invalid_i2_provider_scope_rejected_before_binding_and_core_commit[True-bad_role]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_invalid_i2_provider_scope_rejected_before_binding_and_core_commit[True-wrong_observation]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_invalid_i2_provider_scope_rejected_before_binding_and_core_commit[True-wrong_members]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[False-reference_empty]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[False-reference_bad_oid]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[False-reference_empty_role]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[False-provider_kind_empty]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[False-provider_kind_integer]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[False-relation_kind_integer]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[True-reference_empty]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[True-reference_bad_oid]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[True-reference_empty_role]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[True-provider_kind_empty]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[True-provider_kind_integer]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[True-relation_kind_integer]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_collection_coverage_uses_exact_owner_and_admission_order[genuine_collection]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_collection_coverage_uses_exact_owner_and_admission_order[absent_collection]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_collection_coverage_uses_exact_owner_and_admission_order[existing_collection]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_source_coverage_permission_cut_keeps_independent_i2_facts",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i23.test_provider_exchange",
+          "name": "test_existing_receiver_source_pair_can_support_partial_package_coverage",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_cross_seed_permission_identity_replay",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_empty_and_omitted_independent_sets",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_package_key_binding_before_commits_and_sender_namespace",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_crash_windows_and_fact_based_retry[before_core_commit-False-False]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_crash_windows_and_fact_based_retry[after_core_commit-True-False]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_crash_windows_and_fact_based_retry[before_core_checkpoint-True-False]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_crash_windows_and_fact_based_retry[after_core_checkpoint-True-False]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_crash_windows_and_fact_based_retry[during_context-True-False]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_crash_windows_and_fact_based_retry[after_context_commit-True-True]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_crash_windows_and_fact_based_retry[before_context_checkpoint-True-True]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_crash_windows_and_fact_based_retry[after_context_checkpoint-True-True]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_operational_loss_requires_new_issuance",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_transfer_reports_never_shrunk_or_mixed",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_mapping_claim_support_and_dispositions_are_exact",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_empty_oid_and_context_payload_cannot_override_selection",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_bounded_typed_core_graph_and_shared_oid_identity",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_graph_work_byte_unit_limits_are_reported_without_recovery_stop",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_complete_source_inventory_and_coverage_stay_whole",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_process_exit_before_checkpoint_recovery_uses_facts[after_core_commit]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_process_exit_before_checkpoint_recovery_uses_facts[after_context_commit]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_native_metadata_notes_and_capture_coverage_without_provider_intake",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_receiver_selection_stop_and_access_unchanged",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_receiver_flags_and_zero_admission_limits_are_enforced",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_core_reference_missing_dependency_retains_original_report_clock",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_contradictory_coverage_proof_is_rejected_before_binding[members_json-[]-source_inventory]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_contradictory_coverage_proof_is_rejected_before_binding[members_json-[]-collection]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_contradictory_coverage_proof_is_rejected_before_binding[terminal_state-partial-source_inventory]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_contradictory_coverage_proof_is_rejected_before_binding[terminal_state-partial-collection]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_contradictory_coverage_proof_is_rejected_before_binding[provenance_json-{\"evidence\":\"different\",\"source\":\"forged\"}-source_inventory]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_contradictory_coverage_proof_is_rejected_before_binding[provenance_json-{\"evidence\":\"different\",\"source\":\"forged\"}-collection]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_caller_mutation_after_preflight_cannot_change_bound_content[False]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_caller_mutation_after_preflight_cannot_change_bound_content[True]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_selection_cannot_hide_conflicting_inventory_terminal_for_completeness",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_capture_non_utf8_ref_preserves_native_key",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_internally_contradictory_original_times_rejected_before_binding[resource_repository_relations]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_internally_contradictory_original_times_rejected_before_binding[field_candidates]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_internally_contradictory_original_times_rejected_before_binding[resource_relations]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_existing_relation_time_conflict_rejected_before_independent_core_commit",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_capture_pair_conflicting_payload_rejected_before_binding",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_shared_oid_does_not_coalesce_repository_membership_reports",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_collection_scope_binding_rejected_before_core_commit[False]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_collection_scope_binding_rejected_before_core_commit[True]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_modeled_collection_member_cannot_borrow_another_parent[collections]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_modeled_collection_member_cannot_borrow_another_parent[resource_relations]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_core_immutable_unique_payload_preflight[repository_claims-False]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_core_immutable_unique_payload_preflight[repository_claims-True]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_core_immutable_unique_payload_preflight[scalar_claims-False]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_core_immutable_unique_payload_preflight[scalar_claims-True]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_core_immutable_unique_payload_preflight[relation_groups-False]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_core_immutable_unique_payload_preflight[relation_groups-True]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p7.test_adversarial_contract_cases",
+          "name": "test_case_23_legitimately_unresolved_context_references_admitted",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_core_immutable_unique_payload_preflight[notes_claims-False]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_core_immutable_unique_payload_preflight[notes_claims-True]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_core_immutable_unique_payload_preflight[notes_groups-False]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_core_immutable_unique_payload_preflight[notes_groups-True]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_advisory_coverage_details_do_not_rebind_semantic_claim[core]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_advisory_coverage_details_do_not_rebind_semantic_claim[context]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p7.test_bounded_input",
+          "name": "test_context_invalid_or_large_text_does_not_block_later_unit[xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p7.test_bounded_input",
+          "name": "test_context_invalid_or_large_text_does_not_block_later_unit[\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_context_scope_cannot_rebind_provider_or_source_service[collection_service]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p7.test_bounded_input",
+          "name": "test_context_invalid_or_large_text_does_not_block_later_unit[17]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p7.test_bounded_input",
+          "name": "test_context_invalid_or_large_text_does_not_block_later_unit[text3]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p7.test_bounded_input",
+          "name": "test_context_invalid_or_large_text_does_not_block_later_unit[text4]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p7.test_bounded_input",
+          "name": "test_context_invalid_or_large_text_does_not_block_later_unit[\\ud800]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_context_scope_cannot_rebind_provider_or_source_service[collection_source]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p7.test_bounded_input",
+          "name": "test_malformed_primitive_shape_is_one_rejection_not_merge_abort[bad0]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p7.test_bounded_input",
+          "name": "test_malformed_primitive_shape_is_one_rejection_not_merge_abort[bad1]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p7.test_bounded_input",
+          "name": "test_malformed_primitive_shape_is_one_rejection_not_merge_abort[bad2]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i3.test_selective_exchange",
+          "name": "test_context_scope_cannot_rebind_provider_or_source_service[inventory_service]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p7.test_bounded_input",
+          "name": "test_malformed_primitive_shape_is_one_rejection_not_merge_abort[bad3]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p7.test_bounded_input",
+          "name": "test_malformed_primitive_shape_is_one_rejection_not_merge_abort[bad4]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i4.test_query_search_backup",
+          "name": "test_current_provider_roles_never_fall_back_to_old_core_target",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i4.test_query_search_backup",
+          "name": "test_equal_incomparable_and_unknown_clocks_keep_all_provider_candidates[provider-100-False]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i4.test_query_search_backup",
+          "name": "test_equal_incomparable_and_unknown_clocks_keep_all_provider_candidates[provider-100-True]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i4.test_query_search_backup",
+          "name": "test_equal_incomparable_and_unknown_clocks_keep_all_provider_candidates[different-100-False]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i4.test_query_search_backup",
+          "name": "test_equal_incomparable_and_unknown_clocks_keep_all_provider_candidates[different-100-True]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i4.test_query_search_backup",
+          "name": "test_equal_incomparable_and_unknown_clocks_keep_all_provider_candidates[provider-None-False]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i4.test_query_search_backup",
+          "name": "test_equal_incomparable_and_unknown_clocks_keep_all_provider_candidates[provider-None-True]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i4.test_query_search_backup",
+          "name": "test_dispositions_are_reports_and_qualification_is_per_operation[withdraw]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i4.test_query_search_backup",
+          "name": "test_dispositions_are_reports_and_qualification_is_per_operation[correct]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i4.test_query_search_backup",
+          "name": "test_dispositions_are_reports_and_qualification_is_per_operation[dispute]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i4.test_query_search_backup",
+          "name": "test_search_rebuild_fallback_and_current_historical_summary[missing]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i4.test_query_search_backup",
+          "name": "test_search_rebuild_fallback_and_current_historical_summary[stale]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i4.test_query_search_backup",
+          "name": "test_search_rebuild_fallback_and_current_historical_summary[text]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i4.test_query_search_backup",
+          "name": "test_search_rebuild_fallback_and_current_historical_summary[delete]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i4.test_query_search_backup",
+          "name": "test_search_rebuild_fallback_and_current_historical_summary[garbage]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i4.test_query_search_backup",
+          "name": "test_query_search_pagination_snapshot_budget_and_stop",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i4.test_query_search_backup",
+          "name": "test_paired_restore_preserves_all_keys_dependencies_and_excludes_other_stores",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i4.test_query_search_backup",
+          "name": "test_forged_backup_with_valid_checksums_fails_semantic_restore[member]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i4.test_query_search_backup",
+          "name": "test_forged_backup_with_valid_checksums_fails_semantic_restore[clock]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i4.test_query_search_backup",
+          "name": "test_forged_backup_with_valid_checksums_fails_semantic_restore[role]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i4.test_query_search_backup",
+          "name": "test_forged_backup_with_valid_checksums_fails_semantic_restore[support]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i4.test_query_search_backup",
+          "name": "test_invalid_authoritative_provider_scope_stops_service[query]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i4.test_query_search_backup",
+          "name": "test_invalid_authoritative_provider_scope_stops_service[search]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i4.test_query_search_backup",
+          "name": "test_invalid_authoritative_provider_scope_stops_service[rebuild]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i4.test_query_search_backup",
+          "name": "test_invalid_authoritative_provider_scope_stops_service[backup]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.i5.test_independent_e2e",
+          "name": "test_independent_selection_does_not_turn_dependencies_into_permission[R]",
+          "outcome": "error"
+        },
+        {
+          "classname": "tests.integration.i5.test_independent_e2e",
+          "name": "test_independent_selection_does_not_turn_dependencies_into_permission[O]",
+          "outcome": "error"
+        },
+        {
+          "classname": "tests.integration.i5.test_independent_e2e",
+          "name": "test_independent_selection_does_not_turn_dependencies_into_permission[C]",
+          "outcome": "error"
+        },
+        {
+          "classname": "tests.integration.i5.test_independent_e2e",
+          "name": "test_independent_selection_does_not_turn_dependencies_into_permission[RO]",
+          "outcome": "error"
+        },
+        {
+          "classname": "tests.integration.i5.test_independent_e2e",
+          "name": "test_independent_selection_does_not_turn_dependencies_into_permission[RC]",
+          "outcome": "error"
+        },
+        {
+          "classname": "tests.integration.i5.test_independent_e2e",
+          "name": "test_independent_selection_does_not_turn_dependencies_into_permission[OC]",
+          "outcome": "error"
+        },
+        {
+          "classname": "tests.integration.i5.test_independent_e2e",
+          "name": "test_independent_selection_does_not_turn_dependencies_into_permission[ROC]",
+          "outcome": "error"
+        },
+        {
+          "classname": "tests.integration.i5.test_independent_e2e",
+          "name": "test_independent_selection_does_not_turn_dependencies_into_permission[empty]",
+          "outcome": "error"
+        },
+        {
+          "classname": "tests.integration.i5.test_independent_e2e",
+          "name": "test_omitted_selection_needs_explicit_all_and_empty_overrides_all",
+          "outcome": "error"
+        },
+        {
+          "classname": "tests.integration.i5.test_independent_e2e",
+          "name": "test_mapping_effect_stays_local_across_exchange_search_and_restore[withdraw]",
+          "outcome": "error"
+        },
+        {
+          "classname": "tests.integration.i5.test_independent_e2e",
+          "name": "test_mapping_effect_stays_local_across_exchange_search_and_restore[correct]",
+          "outcome": "error"
+        },
+        {
+          "classname": "tests.integration.i5.test_independent_e2e",
+          "name": "test_mapping_effect_stays_local_across_exchange_search_and_restore[dispute]",
+          "outcome": "error"
+        },
+        {
+          "classname": "tests.integration.i5.test_independent_e2e",
+          "name": "test_received_search_is_disposable_and_rebuild_preserves_authority[missing]",
+          "outcome": "error"
+        },
+        {
+          "classname": "tests.integration.i5.test_independent_e2e",
+          "name": "test_received_search_is_disposable_and_rebuild_preserves_authority[garbage]",
+          "outcome": "error"
+        },
+        {
+          "classname": "tests.integration.i5.test_independent_e2e",
+          "name": "test_received_search_is_disposable_and_rebuild_preserves_authority[stale]",
+          "outcome": "error"
+        },
+        {
+          "classname": "tests.integration.i5.test_independent_e2e",
+          "name": "test_received_search_is_disposable_and_rebuild_preserves_authority[text]",
+          "outcome": "error"
+        },
+        {
+          "classname": "tests.integration.i5.test_independent_e2e",
+          "name": "test_received_search_is_disposable_and_rebuild_preserves_authority[row_key]",
+          "outcome": "error"
+        },
+        {
+          "classname": "tests.integration.i5.test_independent_e2e",
+          "name": "test_received_paired_backup_preserves_complete_rows_keys_provenance_and_oid_refs",
+          "outcome": "error"
+        },
+        {
+          "classname": "tests.integration.i5.test_independent_e2e",
+          "name": "test_transfer_reports_never_mix_across_observations_or_identifier_namespaces",
+          "outcome": "error"
+        },
+        {
+          "classname": "tests.integration.i5.test_independent_e2e",
+          "name": "test_selected_source_inventory_cannot_expand_repository_registration",
+          "outcome": "error"
+        },
+        {
+          "classname": "tests.integration.p1.test_context_relations",
+          "name": "test_transfer_generic_admission_requires_complete_report[transfer_from_repository-False-False]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_context_relations",
+          "name": "test_transfer_generic_admission_requires_complete_report[transfer_from_repository-False-True]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_context_relations",
+          "name": "test_transfer_generic_admission_requires_complete_report[transfer_from_repository-True-False]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_context_relations",
+          "name": "test_transfer_generic_admission_requires_complete_report[transfer_from_repository-True-True]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_context_relations",
+          "name": "test_transfer_generic_admission_requires_complete_report[transfer_to_repository-False-False]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_context_relations",
+          "name": "test_transfer_generic_admission_requires_complete_report[transfer_to_repository-False-True]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_context_relations",
+          "name": "test_transfer_generic_admission_requires_complete_report[transfer_to_repository-True-False]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_context_relations",
+          "name": "test_transfer_generic_admission_requires_complete_report[transfer_to_repository-True-True]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_context_relations",
+          "name": "test_transfer_stored_type_is_never_inferred[absent]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_context_relations",
+          "name": "test_transfer_stored_type_is_never_inferred[missing_type]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_context_relations",
+          "name": "test_transfer_stored_type_is_never_inferred[wrong_type]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_context_relations",
+          "name": "test_transfer_stored_type_is_never_inferred[provided_roles]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_context_relations",
+          "name": "test_transfer_stored_type_is_never_inferred[members]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_context_relations",
+          "name": "test_transfer_stored_type_is_never_inferred[missing_provider]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_context_relations",
+          "name": "test_transfer_stored_type_is_never_inferred[missing_clock]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_context_relations",
+          "name": "test_transfer_report_fk_failure_rolls_back_whole_unit",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_context_relations",
+          "name": "test_transfer_supports_both_endpoints_without_cross_borrowing",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_context_relations",
+          "name": "test_partial_transfer_alternatives_remain_selection_truncated",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_context_relations",
+          "name": "test_counterexample_5_transfer_cases_no_invented_endpoints",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_context_relations",
+          "name": "test_transfer_event_genuine_type_enforcement_across_typed_paths",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_context_relations",
+          "name": "test_transfer_event_reports_generator_selected_repositories_and_invariants",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p7.test_exact_replay",
+          "name": "test_empty_context_text_admission_and_replay",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p7.test_missing_required_authority",
+          "name": "test_new_unreferenced_text_still_admits",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_generalized_resources",
+          "name": "test_real_nontransfer_provider_native_event_persists_and_reopens[False]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_generalized_resources",
+          "name": "test_real_nontransfer_provider_native_event_persists_and_reopens[True]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_generalized_resources",
+          "name": "test_selected_real_wire_without_identification_refuses_before_core_effects",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_generalized_resources",
+          "name": "test_real_selected_transfer_wire_refuses_before_effects_and_replay[False-False-False]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_generalized_resources",
+          "name": "test_real_selected_transfer_wire_refuses_before_effects_and_replay[False-False-True]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_generalized_resources",
+          "name": "test_real_selected_transfer_wire_refuses_before_effects_and_replay[False-True-False]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_generalized_resources",
+          "name": "test_real_selected_transfer_wire_refuses_before_effects_and_replay[False-True-True]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_generalized_resources",
+          "name": "test_real_selected_transfer_wire_refuses_before_effects_and_replay[True-False-False]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_generalized_resources",
+          "name": "test_real_selected_transfer_wire_refuses_before_effects_and_replay[True-False-True]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_generalized_resources",
+          "name": "test_real_selected_transfer_wire_refuses_before_effects_and_replay[True-True-False]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_generalized_resources",
+          "name": "test_real_selected_transfer_wire_refuses_before_effects_and_replay[True-True-True]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_generalized_resources",
+          "name": "test_real_wire_parser_rejects_unrecognized_nested_operations_before_effects",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_generalized_resources",
+          "name": "test_unknown_ordered_wire_and_opaque_transfer_text_remain_supported",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_generalized_resources",
+          "name": "test_matching_schema_poison_stops_before_ordinary_exposure[export-report]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p1.test_generalized_resources",
+          "name": "test_matching_schema_poison_stops_before_ordinary_exposure[export-endpoint]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.packaging.test_p5_distribution",
+          "name": "test_p5_installed_acquisition_and_exchange[sha1-wheel]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.packaging.test_p5_distribution",
+          "name": "test_p5_installed_acquisition_and_exchange[sha1-sdist-wheel]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.packaging.test_p5_distribution",
+          "name": "test_p5_installed_acquisition_and_exchange[sha256-wheel]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.packaging.test_p5_distribution",
+          "name": "test_p5_installed_acquisition_and_exchange[sha256-sdist-wheel]",
+          "outcome": "failed"
+        },
+        {
+          "classname": "tests.integration.p3.test_production_context",
+          "name": "test_production_context_relation_facade_methods",
+          "outcome": "failed"
+        }
+      ]
+    },
+    "I4_source": {
+      "selected": 217,
+      "outcomes": {
+        "passed": 217
+      },
+      "process_exit": 0,
+      "finish": {
+        "event": "finish",
+        "status": "completed",
+        "exitstatus": 0,
+        "timestamp": 1792732146.126922
+      },
+      "exact_id_and_phase_checks": true,
+      "nonpasses": []
+    },
+    "I5_source": {
+      "selected": 29,
+      "outcomes": {
+        "passed": 29
+      },
+      "process_exit": 0,
+      "finish": {
+        "event": "finish",
+        "status": "completed",
+        "exitstatus": 0,
+        "timestamp": 1792732138.945205
+      },
+      "exact_id_and_phase_checks": true,
+      "nonpasses": []
+    },
+    "ordinary_inventory": {
+      "collected": 5974,
+      "unexecuted": 2826
+    },
+    "installed": {
+      "direct-I4": {
+        "selected": 217,
+        "outcomes": {
+          "passed": 217
+        },
+        "process_exit": 0,
+        "finish": {
+          "event": "finish",
+          "status": "completed",
+          "exitstatus": 0,
+          "timestamp": 1792732347.376753
+        },
+        "exact_id_and_phase_checks": true,
+        "nonpasses": [],
+        "installed_modules_and_file_hashes_verified": 156
+      },
+      "direct-I5": {
+        "selected": 29,
+        "outcomes": {
+          "passed": 29
+        },
+        "process_exit": 0,
+        "finish": {
+          "event": "finish",
+          "status": "completed",
+          "exitstatus": 0,
+          "timestamp": 1792732339.491339
+        },
+        "exact_id_and_phase_checks": true,
+        "nonpasses": [],
+        "installed_modules_and_file_hashes_verified": 156
+      },
+      "direct-access-smoke": {
+        "failed": true,
+        "PERMISSION_DENIED": true,
+        "exchange_guard_line_397": true
+      },
+      "sdist-I4": {
+        "selected": 217,
+        "outcomes": {
+          "passed": 217
+        },
+        "process_exit": 0,
+        "finish": {
+          "event": "finish",
+          "status": "completed",
+          "exitstatus": 0,
+          "timestamp": 1792732369.737703
+        },
+        "exact_id_and_phase_checks": true,
+        "nonpasses": [],
+        "installed_modules_and_file_hashes_verified": 156
+      },
+      "sdist-I5": {
+        "selected": 29,
+        "outcomes": {
+          "passed": 29
+        },
+        "process_exit": 0,
+        "finish": {
+          "event": "finish",
+          "status": "completed",
+          "exitstatus": 0,
+          "timestamp": 1792732352.19762
+        },
+        "exact_id_and_phase_checks": true,
+        "nonpasses": [],
+        "installed_modules_and_file_hashes_verified": 156
+      },
+      "sdist-access-smoke": {
+        "failed": true,
+        "PERMISSION_DENIED": true,
+        "exchange_guard_line_397": true
+      }
+    },
+    "runtime": {
+      "python": "3.12.15",
+      "executable": "/home/runner/work/_temp/product-python/python/bin/python",
+      "base_executable": "/home/runner/work/_temp/product-python/python/bin/python3.12",
+      "sqlite_version": "3.53.1",
+      "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+      "sqlite_module": "/home/runner/work/_temp/product-python/python/bin/python3.12",
+      "sqlite_module_origin": "built-in",
+      "sqlite_module_sha256": "0a97d28d3635c7dfd143de6d00b09c0cb382249c020b28ee33fb4002db1efb9c",
+      "compile_options": [
+        [
+          "ATOMIC_INTRINSICS=1"
+        ],
+        [
+          "COMPILER=clang-23.1.3"
+        ],
+        [
+          "DEFAULT_AUTOVACUUM"
+        ],
+        [
+          "DEFAULT_CACHE_SIZE=-2000"
+        ],
+        [
+          "DEFAULT_FILE_FORMAT=4"
+        ],
+        [
+          "DEFAULT_JOURNAL_SIZE_LIMIT=-1"
+        ],
+        [
+          "DEFAULT_MMAP_SIZE=0"
+        ],
+        [
+          "DEFAULT_PAGE_SIZE=4096"
+        ],
+        [
+          "DEFAULT_PCACHE_INITSZ=20"
+        ],
+        [
+          "DEFAULT_RECURSIVE_TRIGGERS"
+        ],
+        [
+          "DEFAULT_SECTOR_SIZE=4096"
+        ],
+        [
+          "DEFAULT_SYNCHRONOUS=2"
+        ],
+        [
+          "DEFAULT_WAL_AUTOCHECKPOINT=1000"
+        ],
+        [
+          "DEFAULT_WAL_SYNCHRONOUS=2"
+        ],
+        [
+          "DEFAULT_WORKER_THREADS=0"
+        ],
+        [
+          "DIRECT_OVERFLOW_READ"
+        ],
+        [
+          "ENABLE_DBSTAT_VTAB"
+        ],
+        [
+          "ENABLE_FTS3"
+        ],
+        [
+          "ENABLE_FTS3_PARENTHESIS"
+        ],
+        [
+          "ENABLE_FTS4"
+        ],
+        [
+          "ENABLE_FTS5"
+        ],
+        [
+          "ENABLE_GEOPOLY"
+        ],
+        [
+          "ENABLE_MATH_FUNCTIONS"
+        ],
+        [
+          "ENABLE_PERCENTILE"
+        ],
+        [
+          "ENABLE_RTREE"
+        ],
+        [
+          "MALLOC_SOFT_LIMIT=1024"
+        ],
+        [
+          "MAX_ATTACHED=10"
+        ],
+        [
+          "MAX_COLUMN=2000"
+        ],
+        [
+          "MAX_COMPOUND_SELECT=500"
+        ],
+        [
+          "MAX_DEFAULT_PAGE_SIZE=8192"
+        ],
+        [
+          "MAX_EXPR_DEPTH=1000"
+        ],
+        [
+          "MAX_FUNCTION_ARG=1000"
+        ],
+        [
+          "MAX_LENGTH=1000000000"
+        ],
+        [
+          "MAX_LIKE_PATTERN_LENGTH=50000"
+        ],
+        [
+          "MAX_MMAP_SIZE=0x7fff0000"
+        ],
+        [
+          "MAX_PAGE_COUNT=0xfffffffe"
+        ],
+        [
+          "MAX_PAGE_SIZE=65536"
+        ],
+        [
+          "MAX_SQL_LENGTH=1000000000"
+        ],
+        [
+          "MAX_TRIGGER_DEPTH=1000"
+        ],
+        [
+          "MAX_VARIABLE_NUMBER=32766"
+        ],
+        [
+          "MAX_VDBE_OP=250000000"
+        ],
+        [
+          "MAX_WORKER_THREADS=8"
+        ],
+        [
+          "MUTEX_PTHREADS"
+        ],
+        [
+          "SYSTEM_MALLOC"
+        ],
+        [
+          "TEMP_STORE=1"
+        ],
+        [
+          "THREADSAFE=1"
+        ]
+      ],
+      "loader_environment": {
+        "LD_LIBRARY_PATH": null,
+        "LD_PRELOAD": null,
+        "DYLD_LIBRARY_PATH": null
+      },
+      "sqlite_mappings": [],
+      "product_safety_and_capabilities": "passed",
+      "product_module": "/home/runner/work/git-repo-db/git-repo-db/src/repo_catalog/adapters/sqlite/access_schema.py"
+    }
+  }
+]

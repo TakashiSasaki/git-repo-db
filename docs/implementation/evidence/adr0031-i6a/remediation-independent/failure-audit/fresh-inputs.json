@@ -1,0 +1,154 @@
+{
+  "docs/implementation/evidence/adr0031-i6a/remediation-20261023/before/ordinary.selected.txt.gz": {
+    "size": 86008,
+    "sha256": "ce0b11f79a22e7b474ab2f2dc10c5c5f2c034ea935d50020996f1cc9807af1dd"
+  },
+  "docs/implementation/evidence/adr0031-i6a/remediation-20261023/before/ordinary.xml.gz": {
+    "size": 200613,
+    "sha256": "2fd3c956190835e1706012faa339e7e0a56be518bc6d11fcce7cfff23305f1f6"
+  },
+  "docs/implementation/evidence/adr0031-i6a/remediation-20261023/before/ordinary.jsonl.gz": {
+    "size": 394512,
+    "sha256": "c689859a97cc2e6a8bf270618b5a4eff17d6318113da245af146b3f236028265"
+  },
+  "docs/implementation/evidence/adr0031-i6a/remediation-20261023/before/ordinary.report-types.jsonl.gz": {
+    "size": 231599,
+    "sha256": "91f690a5892135e2998319b6c1c0b9c90207d7ba1eb67799c72e7bf013ed514b"
+  },
+  "docs/implementation/evidence/adr0031-i6a/remediation-20261023/before/ordinary.execution.json": {
+    "size": 1386,
+    "sha256": "803fe9f6975fa9eb33347d5e2a30f5969bf957ae6ac6e502a1855c0a7bc47e8f"
+  },
+  "docs/implementation/evidence/adr0031-i6a/remediation-20261023/before/binding-before.json.gz": {
+    "size": 22556,
+    "sha256": "814b15ecdf33d42bc2dcbf43990ddd289f9745152455c06a24ed052158f9a1d6"
+  },
+  "docs/implementation/evidence/adr0031-i6a/remediation-20261023/before/binding-after.json.gz": {
+    "size": 22556,
+    "sha256": "814b15ecdf33d42bc2dcbf43990ddd289f9745152455c06a24ed052158f9a1d6"
+  },
+  "docs/implementation/evidence/adr0031-i6a/remediation-20261023/after-final/ordinary.selected.txt.gz": {
+    "size": 86523,
+    "sha256": "2890f1ce416f2f659b998b39b519058e893fcecdc502890eab71c0ff78cbdffa"
+  },
+  "docs/implementation/evidence/adr0031-i6a/remediation-20261023/after-final/ordinary.xml.gz": {
+    "size": 181993,
+    "sha256": "d96714966987b31d285021df0cca1bb923039575b75baeffcd11c07994809e62"
+  },
+  "docs/implementation/evidence/adr0031-i6a/remediation-20261023/after-final/ordinary.jsonl.gz": {
+    "size": 410933,
+    "sha256": "8a84224ca182d858f844ac518eecda91f468cbeda9998b6545c24383e5e01c62"
+  },
+  "docs/implementation/evidence/adr0031-i6a/remediation-20261023/after-final/ordinary.report-types.jsonl.gz": {
+    "size": 242958,
+    "sha256": "b70b8754065cbd16c6f6f572351d13b8230fe4586850e1f43091aadd1f8e969e"
+  },
+  "docs/implementation/evidence/adr0031-i6a/remediation-20261023/after-final/ordinary.execution.json": {
+    "size": 1440,
+    "sha256": "7d8c8c49bf12804b96aaa240d97b0ded15a4fa42784426a5859f8f1e244d9d40"
+  },
+  "docs/implementation/evidence/adr0031-i6a/remediation-20261023/after-final/binding-before.json.gz": {
+    "size": 22930,
+    "sha256": "a0eca1d21ec7f97a233d22f14204d0a8ec57823541bf5ec1c9a1e6c930e0c912"
+  },
+  "docs/implementation/evidence/adr0031-i6a/remediation-20261023/after-final/binding-after.json.gz": {
+    "size": 22930,
+    "sha256": "a0eca1d21ec7f97a233d22f14204d0a8ec57823541bf5ec1c9a1e6c930e0c912"
+  },
+  "/workspace/review-failure-diagnostic/diagnostic.selected.txt": {
+    "size": 41765,
+    "sha256": "ebe9db26312624b6500a32336cf378b5d10a1870e30d17af258cace7591d8160"
+  },
+  "/workspace/review-failure-diagnostic/diagnostic.xml": {
+    "size": 1697582,
+    "sha256": "26fe8e76fa6476e231135eab60787c3080afec6fce82ed2ae03582c666b4731a"
+  },
+  "/workspace/review-failure-diagnostic/diagnostic.jsonl": {
+    "size": 306010,
+    "sha256": "8a4a9a6fd41e56afaa96543570779c41d216ec1833f1fc217049e7bb149badb6"
+  },
+  "/workspace/review-failure-diagnostic/diagnostic.report-types.jsonl": {
+    "size": 241584,
+    "sha256": "c6b3e6598f5b27c867b347d8f72424fbf614e684cf849d80c47779e17f59e9fa"
+  },
+  "/workspace/review-failure-diagnostic/diagnostic.execution.json": {
+    "size": 45071,
+    "sha256": "7fe56a5f58c04ee0e42ff1a456e79f2e06dbafe44283a12de23a744de1054162"
+  },
+  "/workspace/review-failure-diagnostic/binding-before.json": {
+    "size": 56594,
+    "sha256": "e66dc0b5413a9f62cc1f10c02a9a9b2f1639a1b15ca3183476d3a45000d66859"
+  },
+  "/workspace/review-failure-diagnostic/binding-after.json": {
+    "size": 56594,
+    "sha256": "e66dc0b5413a9f62cc1f10c02a9a9b2f1639a1b15ca3183476d3a45000d66859"
+  },
+  "/workspace/review-failure-packaging-rerun/diagnostic.selected.txt": {
+    "size": 400,
+    "sha256": "05086ac170cf4b6bb1acc8d6d70795b335715d3b669fffd78b13501e1eb4cf45"
+  },
+  "/workspace/review-failure-packaging-rerun/diagnostic.xml": {
+    "size": 51873,
+    "sha256": "a6018da8ce574b274cc7c18982c54774c25d506d7e084f7ed5421c5cca699de5"
+  },
+  "/workspace/review-failure-packaging-rerun/diagnostic.jsonl": {
+    "size": 3594,
+    "sha256": "54ff124c4b6e91a1e75f23ec5ee0e9d9efc7a34d093d42858a196b84d6e8f9e2"
+  },
+  "/workspace/review-failure-packaging-rerun/diagnostic.report-types.jsonl": {
+    "size": 2818,
+    "sha256": "20f718e61261623e7e74139893404994634fff1537a5990c35bc3202cc93706a"
+  },
+  "/workspace/review-failure-packaging-rerun/diagnostic.execution.json": {
+    "size": 1136,
+    "sha256": "096650387fdc738ee4ab4302c4a921e3745d3651586b2a4a832427311c4f614d"
+  },
+  "/workspace/review-failure-packaging-rerun/binding-before.json": {
+    "size": 56594,
+    "sha256": "e66dc0b5413a9f62cc1f10c02a9a9b2f1639a1b15ca3183476d3a45000d66859"
+  },
+  "/workspace/review-failure-packaging-rerun/binding-after.json": {
+    "size": 56594,
+    "sha256": "e66dc0b5413a9f62cc1f10c02a9a9b2f1639a1b15ca3183476d3a45000d66859"
+  },
+  "/workspace/review-failure-diagnostic/trace/gw0.jsonl": {
+    "size": 159572,
+    "sha256": "50551a57257819d7781c22a1cbfac73e9ea3cb90f2ea0e9696987cb1f11b3d78"
+  },
+  "/workspace/review-failure-diagnostic/trace/gw1.jsonl": {
+    "size": 215457,
+    "sha256": "2a960430da769e6b7955cb835a5d69d0cdf1b358bbfee4511673e075971a5349"
+  },
+  "/workspace/review-failure-diagnostic/trace/gw2.jsonl": {
+    "size": 237349,
+    "sha256": "245a46051c24fe0b55697d77d9e430b3dfbac942d13d53c48af60cbf1d43690a"
+  },
+  "/workspace/review-failure-diagnostic/trace/gw3.jsonl": {
+    "size": 192647,
+    "sha256": "726d9bb958e46b40446398f0e5f3fcc30725ef29c9dc3ecfd4fb46aa8a0b4d75"
+  },
+  "/workspace/review-failure-diagnostic/trace/master.jsonl": {
+    "size": 209,
+    "sha256": "b834204b25b2cf6080370dd7877bd9b2eb6cc5c14f7d66064b5b975e0fee2856"
+  },
+  "/workspace/review-failure-packaging-rerun/trace/gw0.jsonl": {
+    "size": 966,
+    "sha256": "9874cd860012d592f0ad62b4f3d8964377609e76d94eea5a403eb3bbbf4068b7"
+  },
+  "/workspace/review-failure-packaging-rerun/trace/gw1.jsonl": {
+    "size": 990,
+    "sha256": "0db558fb94f597cb2a788f602a26863285484da6f7d318b5f389464508cef419"
+  },
+  "/workspace/review-failure-packaging-rerun/trace/gw2.jsonl": {
+    "size": 974,
+    "sha256": "cbb5b476c7226b80cb2ef881260032f32c35eadf55e7c5716a6b1f120ffbd686"
+  },
+  "/workspace/review-failure-packaging-rerun/trace/gw3.jsonl": {
+    "size": 998,
+    "sha256": "a48eb374ca9ef2871ede089b082035381b9571f9b3221609c34175397e242193"
+  },
+  "/workspace/review-failure-packaging-rerun/trace/master.jsonl": {
+    "size": 209,
+    "sha256": "b834204b25b2cf6080370dd7877bd9b2eb6cc5c14f7d66064b5b975e0fee2856"
+  }
+}

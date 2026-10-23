@@ -1,0 +1,6 @@
+[
+  "tests/packaging/test_p5_distribution.py::test_p5_installed_acquisition_and_exchange[sha1-wheel]",
+  "tests/packaging/test_p5_distribution.py::test_p5_installed_acquisition_and_exchange[sha1-sdist-wheel]",
+  "tests/packaging/test_p5_distribution.py::test_p5_installed_acquisition_and_exchange[sha256-wheel]",
+  "tests/packaging/test_p5_distribution.py::test_p5_installed_acquisition_and_exchange[sha256-sdist-wheel]"
+]

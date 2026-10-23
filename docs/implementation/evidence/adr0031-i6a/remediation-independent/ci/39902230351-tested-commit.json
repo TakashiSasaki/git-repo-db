@@ -1,0 +1,38 @@
+{
+  "sha": "8988a5c3f5bdbab4a54dc1ec35ed8365540c6fe9",
+  "node_id": "C_kwDOU78qEtoAKDg5ODhhNWMzZjViZGJhYjRhNTRkYzFlYzM1ZWQ4MzY1NTQwYzZmZTk",
+  "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/git/commits/8988a5c3f5bdbab4a54dc1ec35ed8365540c6fe9",
+  "html_url": "https://github.com/TakashiSasaki/git-repo-db/commit/8988a5c3f5bdbab4a54dc1ec35ed8365540c6fe9",
+  "author": {
+    "name": "[REDACTED_PERSONAL_NAME]",
+    "email": "[REDACTED_PERSONAL_EMAIL]",
+    "date": "2026-10-23T04:47:48Z"
+  },
+  "committer": {
+    "name": "[REDACTED_PERSONAL_NAME]",
+    "email": "[REDACTED_PERSONAL_EMAIL]",
+    "date": "2026-10-23T04:47:48Z"
+  },
+  "tree": {
+    "sha": "0c8a50e7cc23b98c6e7e2d1e6066077cbe8d203a",
+    "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/git/trees/0c8a50e7cc23b98c6e7e2d1e6066077cbe8d203a"
+  },
+  "message": "Merge 93d9927ae801d5402aab0aa0c7c270eeab2809e6 into f5dc409429cdb69955b55e3c27a7ef3c163762fb",
+  "parents": [
+    {
+      "sha": "f5dc409429cdb69955b55e3c27a7ef3c163762fb",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/git/commits/f5dc409429cdb69955b55e3c27a7ef3c163762fb",
+      "html_url": "https://github.com/TakashiSasaki/git-repo-db/commit/f5dc409429cdb69955b55e3c27a7ef3c163762fb"
+    },
+    {
+      "sha": "93d9927ae801d5402aab0aa0c7c270eeab2809e6",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/git/commits/93d9927ae801d5402aab0aa0c7c270eeab2809e6",
+      "html_url": "https://github.com/TakashiSasaki/git-repo-db/commit/93d9927ae801d5402aab0aa0c7c270eeab2809e6"
+    }
+  ],
+  "verification": {
+    "verified": true,
+    "reason": "valid",
+    "verified_at": "2026-10-23T04:47:48Z"
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "command": "python -m pytest docs/implementation/evidence/adr0031-i6a/remediation-independent/authorization/test_independent_authorization.py -q -o addopts= -p scripts.ci_journal --junitxml=authorization/junit-final.xml --journal=authorization/journal-final.jsonl",
+  "exit_code": 0,
+  "passed": 27,
+  "failed": 0,
+  "error": 0,
+  "skipped": 0,
+  "starts": 27,
+  "phases": 81,
+  "junit_cases": 27,
+  "finish": {
+    "event": "finish",
+    "status": "completed",
+    "exitstatus": 0,
+    "timestamp": 1792733123.153805
+  },
+  "source_head": "08fbb956c2e470e245146b0dbae747ed0690ea40",
+  "source_tree": "7072f952975a8537f74ced1bbc2a4a31d7aa3690",
+  "scope": "source independent counterexamples; not installed-distribution evidence",
+  "prior_run": {
+    "passed": 23,
+    "exit_code": 0,
+    "raw": "pytest.log"
+  },
+  "installed_lanes": [
+    {
+      "lane": "direct",
+      "passed": 27,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "junit": "direct-junit.xml",
+      "journal": "direct-journal.jsonl",
+      "imports": "direct-imports.json",
+      "sql_observations": "direct-sql-observations.json",
+      "command": "REPO_CATALOG_IMPORT_RECEIPT=/workspace/i6a-independent/docs/implementation/evidence/adr0031-i6a/remediation-independent/authorization/direct-imports.json PYTHONPATH=/workspace/review-installed-safety-work/outside TMPDIR=/workspace/review-tmp /workspace/review-installed-safety-work/direct-venv/bin/python -m pytest -c pytest.ini --rootdir=. --confcutdir=. -p installed_journal test_independent_authorization.py -q -o addopts= --junitxml=/workspace/i6a-independent/docs/implementation/evidence/adr0031-i6a/remediation-independent/authorization/direct-junit.xml --journal=/workspace/i6a-independent/docs/implementation/evidence/adr0031-i6a/remediation-independent/authorization/direct-journal.jsonl",
+      "cwd": "/workspace/review-installed-safety-work/outside"
+    },
+    {
+      "lane": "sdist",
+      "passed": 27,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "junit": "sdist-junit.xml",
+      "journal": "sdist-journal.jsonl",
+      "imports": "sdist-imports.json",
+      "sql_observations": "sdist-sql-observations.json",
+      "command": "REPO_CATALOG_IMPORT_RECEIPT=/workspace/i6a-independent/docs/implementation/evidence/adr0031-i6a/remediation-independent/authorization/sdist-imports.json PYTHONPATH=/workspace/review-installed-safety-work/outside TMPDIR=/workspace/review-tmp /workspace/review-installed-safety-work/sdist-venv/bin/python -m pytest -c pytest.ini --rootdir=. --confcutdir=. -p installed_journal test_independent_authorization.py -q -o addopts= --junitxml=/workspace/i6a-independent/docs/implementation/evidence/adr0031-i6a/remediation-independent/authorization/sdist-junit.xml --journal=/workspace/i6a-independent/docs/implementation/evidence/adr0031-i6a/remediation-independent/authorization/sdist-journal.jsonl",
+      "cwd": "/workspace/review-installed-safety-work/outside"
+    }
+  ],
+  "counterexample_module_sha256": "e4e81e8163a253ea85a053b6332af0cfbd8dd4b59e4322d9fd8fb19225f7bcc5",
+  "external_copy_byte_identical": true,
+  "setup_failures": [
+    {
+      "action": "copy source independent test into outside harness",
+      "result": "cp exit 1 before tests, wrong relative source path from outside cwd",
+      "correction": "absolute source path; external copy byte equality verified",
+      "tests_executed": 0
+    }
+  ]
+}
