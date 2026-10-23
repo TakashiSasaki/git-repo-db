@@ -15,6 +15,7 @@ from contextlib import ExitStack, closing, contextmanager
 from functools import wraps
 from pathlib import Path
 
+from repo_catalog.adapters.sqlite.context_admission import admission_checked
 from repo_catalog.adapters.sqlite.p1_context import ContextStore
 from repo_catalog.adapters.sqlite.p1_coordination import (
     catalog_completion,
@@ -67,6 +68,7 @@ from repo_catalog.domain.resource_identification import (
 from repo_catalog.domain.resource_stage import (
     UnsupportedResourceStage,
     has_transfer_fence,
+    is_isolated_transfer_fixture,
     refuse_transfer,
     validate_stage_storage,
 )
@@ -152,7 +154,7 @@ def _complete_operations(cls):
 
             return call
 
-        setattr(cls, name, completed(method))
+        setattr(cls, name, admission_checked(completed(method)))
     return cls
 
 
@@ -165,14 +167,17 @@ class Context(ContextStore):
     underlying connections are trusted infrastructure, not a public SQL port.
     """
 
-    def __init__(self, connection, directory: Path, *, writable: bool = False):
+    def __init__(
+        self, connection, directory: Path, *, writable: bool = False, authorization=None
+    ):
         self.directory = Path(directory)
         super().__init__(
             _GuardedConnection(
                 connection,
                 lambda error: self._record_corruption(self.directory, error),
                 self._read_complete,
-            )
+            ),
+            authorization=authorization,
         )
         self._writable = writable
         self._active = True
@@ -255,7 +260,7 @@ class Context(ContextStore):
 
     @classmethod
     @contextmanager
-    def transaction(cls, directory: Path) -> Iterator[Context]:
+    def transaction(cls, directory: Path, *, authorization=None) -> Iterator[Context]:
         """Gated independent Context transaction, valid without any other store."""
         directory = Path(directory)
         with catalog_gate(directory, exclusive=True):
@@ -265,10 +270,18 @@ class Context(ContextStore):
                 with closing(connect(directory / "context.sqlite3", "context")) as db:
                     db.execute("BEGIN IMMEDIATE")
                     try:
-                        with cls.for_transaction(db, directory) as capability:
-                            yield capability
-                        with catalog_completion(directory):
-                            db.commit()
+                        capability = cls(
+                            db, directory, writable=True, authorization=authorization
+                        )
+                        try:
+                            with capability._commit_scope():
+                                yield capability
+                                capability._read_complete()
+                                capability._precommit_admission()
+                                with catalog_completion(directory):
+                                    db.commit()
+                        finally:
+                            capability._active = False
                     except BaseException as error:
                         cls._record_corruption(directory, error)
                         db.rollback()
@@ -276,6 +289,46 @@ class Context(ContextStore):
             except BaseException as error:
                 cls._record_corruption(directory, error)
                 raise
+
+    @classmethod
+    @contextmanager
+    def owned_transaction(cls, db, directory: Path, *, authorization, admission):
+        """Bind a trusted connection while owning its entire commit boundary.
+
+        Normal packaged schema validation still applies. Isolated test connections
+        require the separate expiring in-memory fixture capability.
+        """
+        from repo_catalog.domain.context_admission import (
+            AdmissionRefused,
+            ContextAdmissionService,
+        )
+
+        if not isinstance(authorization, ContextAdmissionService):
+            raise AdmissionRefused("PERMISSION_DENIED")
+        authorization.validate_context(admission)
+        if db.in_transaction:
+            raise AdmissionRefused("ADMISSION_TRANSACTION_REQUIRED")
+        with catalog_gate(Path(directory), exclusive=True):
+            db.execute("BEGIN IMMEDIATE")
+            capability = None
+            try:
+                capability = cls(
+                    db, directory, writable=True, authorization=authorization
+                )
+                with capability._commit_scope(admission):
+                    yield capability
+                    capability._read_complete()
+                    capability._precommit_admission()
+                    with catalog_completion(Path(directory)):
+                        db.execute("COMMIT")
+            except BaseException as error:
+                cls._record_corruption(Path(directory), error)
+                if db.in_transaction:
+                    db.execute("ROLLBACK")
+                raise
+            finally:
+                if capability is not None:
+                    capability._active = False
 
     @classmethod
     @contextmanager
@@ -348,26 +401,40 @@ class Context(ContextStore):
             raise ContextError("AUTHORITATIVE_CORRUPTION", scope) from error
 
     def _validate_schema(self):
-        from repo_catalog.adapters.sqlite.p1_schema import expected_schema, schema_rows
+        from repo_catalog.adapters.sqlite.p1_coordination import (
+            AdmissionTransaction,
+            ReadSnapshot,
+        )
+        from repo_catalog.adapters.sqlite.p1_schema import (
+            SchemaError,
+            expected_schema,
+            schema_rows,
+            verify_connection,
+        )
 
-        actual_schema = schema_rows(self.db)
-        expected = expected_schema("context")
-        if actual_schema != expected:
-            isolated_expected = tuple(
-                r
-                for r in expected
-                if not (
-                    r[0] == "trigger"
-                    and r[1]
-                    in ("i2_transfer_stage_fence", "i2_transfer_report_stage_fence")
+        try:
+            actual_schema = schema_rows(self.db)
+            expected = expected_schema("context")
+            if is_isolated_transfer_fixture(self.db):
+                expected = tuple(
+                    r
+                    for r in expected
+                    if not (
+                        r[0] == "trigger"
+                        and r[1]
+                        in ("i2_transfer_stage_fence", "i2_transfer_report_stage_fence")
+                    )
                 )
-            )
-            if actual_schema != isolated_expected:
-                raise ContextError(
-                    "UNSUPPORTED_SCHEMA",
-                    "context",
-                    "Context differs from packaged I2 schema",
-                )
+            if actual_schema != expected:
+                raise SchemaError("Context differs from packaged I2 schema")
+            # Coordinator capabilities restrict PRAGMA access after their
+            # underlying connection has passed p1_schema.connect validation.
+            if not isinstance(
+                self.db._connection, (AdmissionTransaction, ReadSnapshot)
+            ):
+                verify_connection(self.db)
+        except (SchemaError, sqlite3.Error) as error:
+            raise ContextError("UNSUPPORTED_SCHEMA", "context", str(error)) from error
 
     def _validate_stage(self):
         self._check()
@@ -596,15 +663,8 @@ class Context(ContextStore):
     def relation(
         self,
         relation: ResourceRelation,
-        *,
-        selected_resources: frozenset[ResourceKey] | None = None,
-        permitted: Callable[[ResourceKey], bool] | None = None,
     ) -> str:
-        """Admit a whole report; caller policy is rechecked even on exact replay.
-
-        None denotes a trusted local caller with unrestricted selection/permission.
-        Exchange policy and generalized wire routing remain I6 work.
-        """
+        """Admit one original report through current local admission authority."""
         refuse_transfer(relation.relation_kind)
         with self._unit():
             if relation.relation_kind == "transfer_event_report":
@@ -617,11 +677,6 @@ class Context(ContextStore):
                     relation.scope_json,
                     relation.observed_at_us,
                 )
-            for key in (relation.resource, *relation.members):
-                if selected_resources is not None and key not in selected_resources:
-                    raise ContextError("OMITTED_BY_SELECTION", "relation")
-                if permitted is not None and not permitted(key):
-                    raise ContextError("PERMISSION_DENIED", "relation")
             self._require_resource(relation.resource)
             if relation.relation_kind == "parent":
                 self._parent_dependencies(relation)

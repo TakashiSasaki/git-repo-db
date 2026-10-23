@@ -389,6 +389,12 @@ class ExchangeService:
             self._check_stop()
             scope = selection or ExchangeSelectionScope()
             explicit_scope(scope)
+            if scope.include_context:
+                # Until I6-C supplies local admission authority, even cached or
+                # empty Context exports must not consult local dependency rows.
+                from repo_catalog.domain.context_admission import AdmissionRefused
+
+                raise AdmissionRefused("PERMISSION_DENIED")
             self._selection_details = {
                 "dependency_reasons": [],
                 "omissions": [],
@@ -1593,6 +1599,15 @@ class ExchangeService:
             explicit_scope(package.selection_scope)
             receive_selection = selection or package.selection_scope
             explicit_scope(receive_selection)
+            if (
+                package.context is not None
+                and package.selection_scope.include_context
+                and receive_selection.include_context
+            ):
+                # This check precedes progress/receipt and duplicate shortcuts.
+                from repo_catalog.domain.context_admission import AdmissionRefused
+
+                raise AdmissionRefused("PERMISSION_DENIED")
             if selection is None:
                 # The effective default is learned only after bounded decode.
                 # Previously performed decode work remains charged and counts
@@ -1633,6 +1648,14 @@ class ExchangeService:
     ) -> ExchangeImportReport:
         self._check_stop()
         package = raw_package
+        if (
+            package.context is not None
+            and package.selection_scope.include_context
+            and selection.include_context
+        ):
+            from repo_catalog.domain.context_admission import AdmissionRefused
+
+            raise AdmissionRefused("PERMISSION_DENIED")
         digest = package.digest_sha256
         repo_uuid, instance_uuid = self._store_identity()
 

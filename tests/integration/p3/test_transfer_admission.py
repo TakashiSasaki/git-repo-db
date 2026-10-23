@@ -7,7 +7,7 @@ Verifies:
 3. G3=A native-I7 vs reported-I8 permanent semantic violation vs missing dependency.
 4. Provider Event meaning: genuine event_type='transferred' and original coordinates.
 5. Pre-bind strict type verification before SQLite affinity conversions.
-6. Atomic admission under SAVEPOINT with zero partial writes on failure.
+6. Atomic admission under guarded outer commit with zero partial writes on failure.
 7. Exact replay idempotency vs payload/time mutation rejection.
 8. Selection/truncation qualification and endpoint completeness.
 9. Multi-event query filtering and prevention of endpoint cross-borrowing.
@@ -23,19 +23,23 @@ import pytest
 from repo_catalog.adapters.sqlite import p1_schema
 from repo_catalog.adapters.sqlite.p1_context import ContextStore
 from repo_catalog.adapters.sqlite.production_context import Context
+from repo_catalog.domain.context_admission import DependencySet
 from repo_catalog.domain.p1_context import (
     EventReportKey,
     FieldClock,
     MappingClaimKey,
     MappingSupport,
+    ProviderEndpointDeclaration,
     ResourceKey,
     ResourceRepositoryRelation,
     TransferEventReport,
     canonical,
 )
-from repo_catalog.domain.parent_report import ParentReportKey
+from repo_catalog.domain.parent_report import ParentObservation, ParentReportKey
 from repo_catalog.domain.resource_identification import ResourceIdentification as RI
 from repo_catalog.domain.resource_stage import UnsupportedResourceStage
+from tests.support.context_admission import fixture_context, fixture_service
+from tests.support.i6a import isolated_context_db
 
 SERVICE = "aad25448-03eb-4f83-a75e-cb7055fd33be"
 REPO_1 = "9ebbe38a-f937-40e6-a99c-701835ebcf10"
@@ -50,6 +54,12 @@ KEY_EVENT_8 = ResourceKey.document(KEY_ISSUE_8, "comment", "timeline_event", "88
 
 KEY_PROV_REPO_1 = ResourceKey.from_native(SERVICE, "repository", "org/repo1")
 KEY_PROV_REPO_2 = ResourceKey.from_native(SERVICE, "repository", "org/repo2")
+KEY_PROV_REPO_3 = ResourceKey.from_native(SERVICE, "repository", "org/repo3")
+MAPPING_PAIRS = (
+    (KEY_PROV_REPO_1, REPO_1),
+    (KEY_PROV_REPO_2, REPO_2),
+    (KEY_PROV_REPO_3, REPO_3),
+)
 
 CLOCK_EVENT = FieldClock("event-clock", 100)
 CLOCK_PARENT = FieldClock("parent-clock", 50)
@@ -79,12 +89,15 @@ def make_parent_report(
     issue: ResourceKey = KEY_ISSUE_7,
     clock: FieldClock = CLOCK_PARENT,
     provenance: str = PROV_PARENT,
-) -> ParentReportKey:
-    return ParentReportKey(
-        resource=event,
-        members_json=_parent_members(issue),
-        provenance_json=provenance,
-        scope_json=_parent_scope(clock),
+) -> ParentObservation:
+    return ParentObservation(
+        ParentReportKey(
+            resource=event,
+            members_json=_parent_members(issue),
+            provenance_json=provenance,
+            scope_json=_parent_scope(clock),
+        ),
+        51,
     )
 
 
@@ -106,10 +119,11 @@ def normal_db(request, tmp_path):
 
 @pytest.fixture
 def isolated_db(normal_db):
+    # Preserve both inherited node IDs. The positive fixtures now each use the
+    # explicit fresh-memory harness; product-factory normal refusal stays real.
     assert p1_schema.schema_rows(normal_db) == p1_schema.expected_schema("context")
-    for fence in FENCES:
-        normal_db.execute(f"DROP TRIGGER {fence}")
-    yield normal_db
+    with isolated_context_db() as db:
+        yield db
 
 
 def _setup_base_records(
@@ -120,7 +134,7 @@ def _setup_base_records(
     register_parent_report: bool = True,
     register_repos: bool = True,
     register_prov_repos: bool = True,
-    register_mapping_support: bool = False,
+    register_mapping_support: bool = True,
     issue_key: ResourceKey = KEY_ISSUE_7,
     event_key: ResourceKey = KEY_EVENT_7,
     parent_clock: FieldClock = CLOCK_PARENT,
@@ -135,7 +149,7 @@ def _setup_base_records(
             )
 
     if register_prov_repos:
-        for prov_repo in (KEY_PROV_REPO_1, KEY_PROV_REPO_2):
+        for prov_repo in (KEY_PROV_REPO_1, KEY_PROV_REPO_2, KEY_PROV_REPO_3):
             ri = RI.unscoped(prov_repo)
             db.execute(
                 """INSERT OR IGNORE INTO resources(
@@ -181,15 +195,12 @@ def _setup_base_records(
                 _parent_members(issue_key),
                 parent_prov,
                 _parent_scope(parent_clock),
-                10,
+                51,
             ),
         )
 
-    if register_mapping_support:
-        for prov_repo, target_uuid in (
-            (KEY_PROV_REPO_1, REPO_1),
-            (KEY_PROV_REPO_2, REPO_2),
-        ):
+    if register_mapping_support and register_repos and register_prov_repos:
+        for prov_repo, target_uuid in MAPPING_PAIRS:
             db.execute(
                 """INSERT OR IGNORE INTO resource_repository_relations(
                     service_instance_uuidv4, resource_kind, provider_resource_id,
@@ -219,6 +230,71 @@ def _make_mapping_support(prov_repo: ResourceKey, target_uuid: str) -> MappingSu
     )
 
 
+def _event_provenance(source="event-orig", evidence=None, *, pairs=None):
+    from repo_catalog.domain.p1_context import encode_transfer_supported_provenance
+
+    pairs = pairs or (
+        ("transfer_from_repository", KEY_PROV_REPO_1, REPO_1),
+        ("transfer_to_repository", KEY_PROV_REPO_2, REPO_2),
+    )
+    return encode_transfer_supported_provenance(
+        source,
+        ["e-ev", 2] if evidence is None else evidence,
+        (
+            (role, _make_mapping_support(provider, repository))
+            for role, provider, repository in pairs
+        ),
+    )
+
+
+PROV_EVENT = _event_provenance()
+
+
+def fixture_grants():
+    return DependencySet(
+        resources=frozenset(
+            (
+                KEY_EVENT_7,
+                KEY_EVENT_8,
+                KEY_ISSUE_7,
+                KEY_ISSUE_8,
+                KEY_PROV_REPO_1,
+                KEY_PROV_REPO_2,
+                KEY_PROV_REPO_3,
+            )
+        ),
+        repositories=frozenset(
+            (REPO_1, REPO_2, REPO_3, "11111111-2222-4333-8444-555555555555")
+        ),
+        provider_registrations=frozenset((SERVICE,)),
+        mapping_claims=frozenset(
+            _make_mapping_support(provider, repository).supporting_claims[0]
+            for provider, repository in MAPPING_PAIRS
+        ),
+    )
+
+
+class _FixtureStore:
+    """Exercise the real guard with an explicit finite authority per fixture."""
+
+    def __init__(self, db):
+        self.authorization, self.policy = fixture_service(fixture_grants())
+        self.store = ContextStore(db, authorization=self.authorization)
+
+    def __getattr__(self, name):
+        return getattr(self.store, name)
+
+    def admit_transfer_event(self, report):
+        admission = fixture_context(self.authorization)
+        with self.store.transaction(admission=admission):
+            return self.store.admit_transfer_event(report, admission=admission)
+
+    def admit_repository_relation(self, relation):
+        admission = fixture_context(self.authorization)
+        with self.store.transaction(admission=admission):
+            return self.store.admit_repository_relation(relation, admission=admission)
+
+
 def test_schema_verification_and_isolation_exactness(normal_db):
     expected = p1_schema.expected_schema("context")
     assert p1_schema.schema_rows(normal_db) == expected
@@ -233,18 +309,23 @@ def test_schema_verification_and_isolation_exactness(normal_db):
 
 
 def test_normal_fenced_product_refuses_transfer(normal_db):
-    store = ContextStore(normal_db)
+    store = _FixtureStore(normal_db)
     _setup_base_records(normal_db)
 
     report = TransferEventReport.from_targets(
         KEY_EVENT_7,
+        endpoint_declaration=ProviderEndpointDeclaration(
+            KEY_PROV_REPO_1, KEY_PROV_REPO_2
+        ),
+        endpoints=(
+            ("transfer_from_repository", canonical(REPO_1)),
+            ("transfer_to_repository", canonical(REPO_2)),
+        ),
         clock=CLOCK_EVENT,
         provenance_json=PROV_EVENT,
         observed_at_us=100,
         from_target_json=canonical(REPO_1),
         to_target_json=canonical(REPO_2),
-        from_provider_repository=KEY_PROV_REPO_1,
-        to_provider_repository=KEY_PROV_REPO_2,
         parent_report=make_parent_report(),
     )
 
@@ -271,18 +352,23 @@ def test_normal_fenced_product_refuses_transfer(normal_db):
 
 
 def test_admit_transfer_event_2sided_success(isolated_db):
-    store = ContextStore(isolated_db)
+    store = _FixtureStore(isolated_db)
     _setup_base_records(isolated_db)
 
     report = TransferEventReport.from_targets(
         KEY_EVENT_7,
+        endpoint_declaration=ProviderEndpointDeclaration(
+            KEY_PROV_REPO_1, KEY_PROV_REPO_2
+        ),
+        endpoints=(
+            ("transfer_from_repository", canonical(REPO_1)),
+            ("transfer_to_repository", canonical(REPO_2)),
+        ),
         clock=CLOCK_EVENT,
         provenance_json=PROV_EVENT,
         observed_at_us=100,
         from_target_json=canonical(REPO_1),
         to_target_json=canonical(REPO_2),
-        from_provider_repository=KEY_PROV_REPO_1,
-        to_provider_repository=KEY_PROV_REPO_2,
         parent_report=make_parent_report(),
     )
 
@@ -319,39 +405,42 @@ def test_admit_transfer_event_2sided_success(isolated_db):
 def test_admit_transfer_event_via_production_context(tmp_path):
     catalog = tmp_path / "production"
     catalog.mkdir()
-    p1_schema.initialize(catalog / "context.sqlite3", "context", REPO_1, SERVICE)
+    service, _ = fixture_service(fixture_grants())
+    with isolated_context_db() as db:
+        _setup_base_records(db)
+        admission = fixture_context(service)
+        with Context.owned_transaction(
+            db, catalog, authorization=service, admission=admission
+        ) as facade:
+            report = make_transfer_report()
+            assert facade.admit_transfer_event(report, admission=admission) == "insert"
+            reports = facade.transfer_event_reports(KEY_EVENT_7)
+            assert len(reports) == 1
+            assert reports[0] == report
+        assert not db.in_transaction
 
-    db = p1_schema.connect(catalog / "context.sqlite3", "context")
-    for fence in FENCES:
-        db.execute(f"DROP TRIGGER {fence}")
 
-    db.execute("BEGIN IMMEDIATE")
-    facade = Context(db, catalog, writable=True)
-    try:
-        _setup_base_records(facade.db)
-        report = TransferEventReport.from_targets(
-            KEY_EVENT_7,
-            clock=CLOCK_EVENT,
-            provenance_json=PROV_EVENT,
-            observed_at_us=100,
-            from_target_json=canonical(REPO_1),
-            to_target_json=canonical(REPO_2),
-            from_provider_repository=KEY_PROV_REPO_1,
-            to_provider_repository=KEY_PROV_REPO_2,
-            parent_report=make_parent_report(),
-        )
-
-        assert facade.admit_transfer_event(report) == "insert"
-        reports = facade.transfer_event_reports(KEY_EVENT_7)
-        assert len(reports) == 1
-        assert reports[0] == report
-        db.execute("COMMIT")
-    finally:
-        db.close()
+def make_transfer_report(*, provenance=PROV_EVENT, observed_at_us=101):
+    return TransferEventReport.from_targets(
+        KEY_EVENT_7,
+        endpoint_declaration=ProviderEndpointDeclaration(
+            KEY_PROV_REPO_1, KEY_PROV_REPO_2
+        ),
+        endpoints=(
+            ("transfer_from_repository", canonical(REPO_1)),
+            ("transfer_to_repository", canonical(REPO_2)),
+        ),
+        clock=CLOCK_EVENT,
+        provenance_json=provenance,
+        observed_at_us=observed_at_us,
+        from_target_json=canonical(REPO_1),
+        to_target_json=canonical(REPO_2),
+        parent_report=make_parent_report(),
+    )
 
 
 def test_g3a_permanent_violation_mismatched_parent_issue(isolated_db):
-    store = ContextStore(isolated_db)
+    store = _FixtureStore(isolated_db)
     _setup_base_records(isolated_db)
 
     _setup_base_records(
@@ -368,19 +457,22 @@ def test_g3a_permanent_violation_mismatched_parent_issue(isolated_db):
 
     invalid_report = TransferEventReport.from_targets(
         KEY_EVENT_7,
+        endpoint_declaration=ProviderEndpointDeclaration(
+            KEY_PROV_REPO_1, KEY_PROV_REPO_2
+        ),
+        endpoints=(
+            ("transfer_from_repository", canonical(REPO_1)),
+            ("transfer_to_repository", canonical(REPO_2)),
+        ),
+        parent_report=make_parent_report(issue=KEY_ISSUE_8),
         clock=CLOCK_EVENT,
         provenance_json=PROV_EVENT,
         observed_at_us=100,
         from_target_json=canonical(REPO_1),
         to_target_json=canonical(REPO_2),
-        from_provider_repository=KEY_PROV_REPO_1,
-        to_provider_repository=KEY_PROV_REPO_2,
-        parent_members_json=_parent_members(KEY_ISSUE_8),
-        parent_provenance_json=PROV_PARENT,
-        parent_scope_json=_parent_scope(),
     )
 
-    with pytest.raises(ValueError, match="G3=A permanent violation"):
+    with pytest.raises(ValueError, match="QS10_PARENT_INELIGIBLE"):
         store.admit_transfer_event(invalid_report)
 
     assert (
@@ -406,7 +498,7 @@ def test_g3a_permanent_violation_mismatched_parent_issue(isolated_db):
 
 
 def test_dependency_missing_resupply_succeeds(isolated_db):
-    store = ContextStore(isolated_db)
+    store = _FixtureStore(isolated_db)
 
     _setup_base_records(
         isolated_db,
@@ -419,17 +511,22 @@ def test_dependency_missing_resupply_succeeds(isolated_db):
 
     report = TransferEventReport.from_targets(
         KEY_EVENT_7,
+        endpoint_declaration=ProviderEndpointDeclaration(
+            KEY_PROV_REPO_1, KEY_PROV_REPO_2
+        ),
+        endpoints=(
+            ("transfer_from_repository", canonical(REPO_1)),
+            ("transfer_to_repository", canonical(REPO_2)),
+        ),
         clock=CLOCK_EVENT,
         provenance_json=PROV_EVENT,
         observed_at_us=100,
         from_target_json=canonical(REPO_1),
         to_target_json=canonical(REPO_2),
-        from_provider_repository=KEY_PROV_REPO_1,
-        to_provider_repository=KEY_PROV_REPO_2,
         parent_report=make_parent_report(),
     )
 
-    with pytest.raises(ValueError, match="Missing dependency: Event resource"):
+    with pytest.raises(ValueError, match="MISSING_DEPENDENCY"):
         store.admit_transfer_event(report)
 
     _setup_base_records(
@@ -441,7 +538,7 @@ def test_dependency_missing_resupply_succeeds(isolated_db):
         register_prov_repos=False,
     )
 
-    with pytest.raises(ValueError, match="Missing dependency: Parent Issue resource"):
+    with pytest.raises(ValueError, match="MISSING_DEPENDENCY"):
         store.admit_transfer_event(report)
 
     _setup_base_records(
@@ -453,7 +550,7 @@ def test_dependency_missing_resupply_succeeds(isolated_db):
         register_prov_repos=False,
     )
 
-    with pytest.raises(ValueError, match="Missing dependency: eligible Parent report"):
+    with pytest.raises(ValueError, match="MISSING_DEPENDENCY"):
         store.admit_transfer_event(report)
 
     _setup_base_records(
@@ -465,9 +562,7 @@ def test_dependency_missing_resupply_succeeds(isolated_db):
         register_prov_repos=False,
     )
 
-    with pytest.raises(
-        ValueError, match="Missing dependency: from_provider_repository"
-    ):
+    with pytest.raises(ValueError, match="MISSING_DEPENDENCY"):
         store.admit_transfer_event(report)
 
     _setup_base_records(
@@ -479,7 +574,7 @@ def test_dependency_missing_resupply_succeeds(isolated_db):
         register_prov_repos=True,
     )
 
-    with pytest.raises(ValueError, match="Missing dependency: repository_uuidv4"):
+    with pytest.raises(ValueError, match="MISSING_DEPENDENCY"):
         store.admit_transfer_event(report)
 
     _setup_base_records(
@@ -503,24 +598,10 @@ def test_dependency_missing_resupply_succeeds(isolated_db):
 
 
 def test_mapping_support_dependency(isolated_db):
-    store = ContextStore(isolated_db)
+    store = _FixtureStore(isolated_db)
     _setup_base_records(isolated_db, register_mapping_support=False)
 
-    support_1 = _make_mapping_support(KEY_PROV_REPO_1, REPO_1)
-    prov_with_support = canonical(
-        {
-            "source": "event-orig",
-            "evidence": {
-                "transfer_mapping_supports": [
-                    {
-                        "relation_kind": "transfer_from_repository",
-                        "target_json": canonical(REPO_1),
-                        "mapping_support": support_1.to_dict(),
-                    }
-                ]
-            },
-        }
-    )
+    prov_with_support = PROV_EVENT
 
     rel_from = ResourceRepositoryRelation(
         KEY_EVENT_7,
@@ -541,17 +622,18 @@ def test_mapping_support_dependency(isolated_db):
 
     report = TransferEventReport(
         EventReportKey(KEY_EVENT_7, CLOCK_EVENT, prov_with_support),
-        100,
+        make_parent_report(),
+        ProviderEndpointDeclaration(KEY_PROV_REPO_1, KEY_PROV_REPO_2),
+        (
+            ("transfer_from_repository", canonical(REPO_1)),
+            ("transfer_to_repository", canonical(REPO_2)),
+        ),
+        observed_at_us=100,
         from_relations=(rel_from,),
         to_relations=(rel_to,),
-        from_provider_repository=KEY_PROV_REPO_1,
-        to_provider_repository=KEY_PROV_REPO_2,
-        parent_report=make_parent_report(),
     )
 
-    with pytest.raises(
-        ValueError, match="Missing dependency: supporting MappingClaimKey absent"
-    ):
+    with pytest.raises(ValueError, match="MISSING_DEPENDENCY"):
         store.admit_transfer_event(report)
 
     _setup_base_records(isolated_db, register_mapping_support=True)
@@ -564,6 +646,10 @@ def test_provider_event_meaning_and_type(isolated_db):
     with pytest.raises(ValueError, match="requires genuine event_type='transferred'"):
         TransferEventReport.from_targets(
             KEY_EVENT_7,
+            endpoint_declaration=ProviderEndpointDeclaration(
+                KEY_PROV_REPO_1, "not_reported"
+            ),
+            endpoints=(("transfer_from_repository", canonical(REPO_1)),),
             clock=CLOCK_EVENT,
             provenance_json=PROV_EVENT,
             observed_at_us=100,
@@ -575,6 +661,10 @@ def test_provider_event_meaning_and_type(isolated_db):
     with pytest.raises(ValueError, match="requires genuine event_type='transferred'"):
         TransferEventReport.from_targets(
             KEY_EVENT_7,
+            endpoint_declaration=ProviderEndpointDeclaration(
+                KEY_PROV_REPO_1, "not_reported"
+            ),
+            endpoints=(("transfer_from_repository", canonical(REPO_1)),),
             clock=CLOCK_EVENT,
             provenance_json=PROV_EVENT,
             observed_at_us=100,
@@ -590,6 +680,10 @@ def test_prebind_type_strictness(isolated_db):
     with pytest.raises((TypeError, ValueError)):
         TransferEventReport.from_targets(
             KEY_EVENT_7,
+            endpoint_declaration=ProviderEndpointDeclaration(
+                KEY_PROV_REPO_1, "not_reported"
+            ),
+            endpoints=(("transfer_from_repository", canonical(REPO_1)),),
             clock=CLOCK_EVENT,
             provenance_json=PROV_EVENT,
             observed_at_us=True,
@@ -600,6 +694,10 @@ def test_prebind_type_strictness(isolated_db):
     with pytest.raises((TypeError, ValueError)):
         TransferEventReport.from_targets(
             KEY_EVENT_7,
+            endpoint_declaration=ProviderEndpointDeclaration(
+                KEY_PROV_REPO_1, "not_reported"
+            ),
+            endpoints=(("transfer_from_repository", canonical(REPO_1)),),
             clock=CLOCK_EVENT,
             provenance_json=PROV_EVENT,
             observed_at_us=123.45,
@@ -610,6 +708,10 @@ def test_prebind_type_strictness(isolated_db):
     with pytest.raises((TypeError, ValueError)):
         TransferEventReport.from_targets(
             KEY_EVENT_7,
+            endpoint_declaration=ProviderEndpointDeclaration(
+                KEY_PROV_REPO_1, "not_reported"
+            ),
+            endpoints=(("transfer_from_repository", canonical(REPO_1)),),
             clock=CLOCK_EVENT,
             provenance_json=PROV_EVENT,
             observed_at_us="100",
@@ -628,24 +730,29 @@ def test_prebind_type_strictness(isolated_db):
 
 
 def test_atomicity_second_endpoint_failure_rolls_back(isolated_db):
-    store = ContextStore(isolated_db)
+    store = _FixtureStore(isolated_db)
     _setup_base_records(isolated_db)
 
     unregistered_repo = "11111111-2222-4333-8444-555555555555"
 
     report = TransferEventReport.from_targets(
         KEY_EVENT_7,
+        endpoint_declaration=ProviderEndpointDeclaration(
+            KEY_PROV_REPO_1, KEY_PROV_REPO_2
+        ),
+        endpoints=(
+            ("transfer_from_repository", canonical(REPO_1)),
+            ("transfer_to_repository", canonical(unregistered_repo)),
+        ),
         clock=CLOCK_EVENT,
         provenance_json=PROV_EVENT,
         observed_at_us=100,
         from_target_json=canonical(REPO_1),
         to_target_json=canonical(unregistered_repo),
-        from_provider_repository=KEY_PROV_REPO_1,
-        to_provider_repository=KEY_PROV_REPO_2,
         parent_report=make_parent_report(),
     )
 
-    with pytest.raises(ValueError, match="Missing dependency: repository_uuidv4"):
+    with pytest.raises(ValueError, match="MISSING_DEPENDENCY"):
         store.admit_transfer_event(report)
 
     assert (
@@ -663,18 +770,23 @@ def test_atomicity_second_endpoint_failure_rolls_back(isolated_db):
 
 
 def test_replay_idempotency_and_mutation_rejection(isolated_db):
-    store = ContextStore(isolated_db)
+    store = _FixtureStore(isolated_db)
     _setup_base_records(isolated_db)
 
     report = TransferEventReport.from_targets(
         KEY_EVENT_7,
+        endpoint_declaration=ProviderEndpointDeclaration(
+            KEY_PROV_REPO_1, KEY_PROV_REPO_2
+        ),
+        endpoints=(
+            ("transfer_from_repository", canonical(REPO_1)),
+            ("transfer_to_repository", canonical(REPO_2)),
+        ),
         clock=CLOCK_EVENT,
         provenance_json=PROV_EVENT,
         observed_at_us=100,
         from_target_json=canonical(REPO_1),
         to_target_json=canonical(REPO_2),
-        from_provider_repository=KEY_PROV_REPO_1,
-        to_provider_repository=KEY_PROV_REPO_2,
         parent_report=make_parent_report(),
     )
 
@@ -683,76 +795,89 @@ def test_replay_idempotency_and_mutation_rejection(isolated_db):
 
     mutated_time_report = TransferEventReport.from_targets(
         KEY_EVENT_7,
+        endpoint_declaration=ProviderEndpointDeclaration(
+            KEY_PROV_REPO_1, KEY_PROV_REPO_2
+        ),
+        endpoints=(
+            ("transfer_from_repository", canonical(REPO_1)),
+            ("transfer_to_repository", canonical(REPO_2)),
+        ),
         clock=CLOCK_EVENT,
         provenance_json=PROV_EVENT,
         observed_at_us=200,
         from_target_json=canonical(REPO_1),
         to_target_json=canonical(REPO_2),
-        from_provider_repository=KEY_PROV_REPO_1,
-        to_provider_repository=KEY_PROV_REPO_2,
         parent_report=make_parent_report(),
     )
 
-    with pytest.raises(
-        ValueError, match="Transfer report original payload/time rebind"
-    ):
+    with pytest.raises(ValueError, match="IMMUTABLE_REPLAY_CONFLICT"):
         store.admit_transfer_event(mutated_time_report)
 
     mutated_target_report = TransferEventReport.from_targets(
         KEY_EVENT_7,
+        endpoint_declaration=ProviderEndpointDeclaration(
+            KEY_PROV_REPO_1, "explicit_null"
+        ),
+        endpoints=(
+            ("transfer_from_repository", canonical(REPO_1)),
+            ("transfer_to_repository", "null"),
+        ),
         clock=CLOCK_EVENT,
         provenance_json=PROV_EVENT,
         observed_at_us=100,
         from_target_json=canonical(REPO_1),
-        to_target_json=canonical(REPO_3),
-        from_provider_repository=KEY_PROV_REPO_1,
-        to_provider_repository=KEY_PROV_REPO_2,
+        to_target_json="null",
         parent_report=make_parent_report(),
     )
 
-    with pytest.raises(
-        ValueError, match="Transfer report original payload/time rebind"
-    ):
+    with pytest.raises(ValueError, match="IMMUTABLE_REPLAY_CONFLICT"):
         store.admit_transfer_event(mutated_target_report)
 
 
 def test_selection_and_truncation_rejection(isolated_db):
-    store = ContextStore(isolated_db)
     _setup_base_records(isolated_db)
 
     report = TransferEventReport.from_targets(
         KEY_EVENT_7,
+        endpoint_declaration=ProviderEndpointDeclaration(
+            KEY_PROV_REPO_1, KEY_PROV_REPO_2
+        ),
+        endpoints=(
+            ("transfer_from_repository", canonical(REPO_1)),
+            ("transfer_to_repository", canonical(REPO_2)),
+        ),
         clock=CLOCK_EVENT,
         provenance_json=PROV_EVENT,
         observed_at_us=100,
         from_target_json=canonical(REPO_1),
         to_target_json=canonical(REPO_2),
-        from_provider_repository=KEY_PROV_REPO_1,
-        to_provider_repository=KEY_PROV_REPO_2,
         parent_report=make_parent_report(),
     )
 
     selected = report.select_for_repositories([REPO_1])
-    assert selected is not None
-    assert selected.selection_truncated or selected.omitted_roles
+    assert selected is None
+    # The public constructor also refuses an explicitly marked fragment.
+    from dataclasses import replace
 
-    with pytest.raises(ValueError, match="(Selection truncated|Omitted roles)"):
-        store.admit_transfer_event(selected)
+    with pytest.raises(ValueError, match="OMITTED_BY_SELECTION"):
+        replace(report, selection_truncated=True)
 
 
 def test_genuine_1sided_and_explicit_null_admission(isolated_db):
-    store = ContextStore(isolated_db)
+    store = _FixtureStore(isolated_db)
     _setup_base_records(isolated_db)
 
     one_sided_report = TransferEventReport.from_targets(
         KEY_EVENT_7,
+        endpoint_declaration=ProviderEndpointDeclaration(
+            KEY_PROV_REPO_1, "not_reported"
+        ),
+        endpoints=(("transfer_from_repository", canonical(REPO_1)),),
         clock=CLOCK_EVENT,
         provenance_json=PROV_EVENT,
         observed_at_us=100,
         from_target_json=canonical(REPO_1),
         to_target_json=None,
-        from_provider_repository=KEY_PROV_REPO_1,
-        to_provider_repository=None,
         parent_report=make_parent_report(),
     )
     assert one_sided_report.is_one_sided
@@ -764,18 +889,23 @@ def test_genuine_1sided_and_explicit_null_admission(isolated_db):
 
 
 def test_explicit_null_admission(isolated_db):
-    store = ContextStore(isolated_db)
+    store = _FixtureStore(isolated_db)
     _setup_base_records(isolated_db)
 
     null_report = TransferEventReport.from_targets(
         KEY_EVENT_7,
+        endpoint_declaration=ProviderEndpointDeclaration(
+            "explicit_null", KEY_PROV_REPO_2
+        ),
+        endpoints=(
+            ("transfer_from_repository", "null"),
+            ("transfer_to_repository", canonical(REPO_2)),
+        ),
         clock=CLOCK_EVENT,
         provenance_json=PROV_EVENT,
         observed_at_us=100,
         from_target_json="null",
         to_target_json=canonical(REPO_2),
-        from_provider_repository=None,
-        to_provider_repository=KEY_PROV_REPO_2,
         parent_report=make_parent_report(),
     )
     assert store.admit_transfer_event(null_report) == "insert"
@@ -788,7 +918,7 @@ def test_explicit_null_admission(isolated_db):
 
 
 def test_transfer_event_reports_filtering_and_no_cross_borrowing(isolated_db):
-    store = ContextStore(isolated_db)
+    store = _FixtureStore(isolated_db)
     _setup_base_records(isolated_db)
 
     clock_a = FieldClock("event-clock", 100)
@@ -796,25 +926,42 @@ def test_transfer_event_reports_filtering_and_no_cross_borrowing(isolated_db):
 
     report_a = TransferEventReport.from_targets(
         KEY_EVENT_7,
+        endpoint_declaration=ProviderEndpointDeclaration(
+            KEY_PROV_REPO_1, KEY_PROV_REPO_2
+        ),
+        endpoints=(
+            ("transfer_from_repository", canonical(REPO_1)),
+            ("transfer_to_repository", canonical(REPO_2)),
+        ),
         clock=clock_a,
-        provenance_json=canonical({"source": "event-a", "evidence": [1]}),
+        provenance_json=_event_provenance("event-a", [1]),
         observed_at_us=100,
         from_target_json=canonical(REPO_1),
         to_target_json=canonical(REPO_2),
-        from_provider_repository=KEY_PROV_REPO_1,
-        to_provider_repository=KEY_PROV_REPO_2,
         parent_report=make_parent_report(),
     )
 
     report_b = TransferEventReport.from_targets(
         KEY_EVENT_7,
+        endpoint_declaration=ProviderEndpointDeclaration(
+            KEY_PROV_REPO_2, KEY_PROV_REPO_3
+        ),
+        endpoints=(
+            ("transfer_from_repository", canonical(REPO_2)),
+            ("transfer_to_repository", canonical(REPO_3)),
+        ),
         clock=clock_b,
-        provenance_json=canonical({"source": "event-b", "evidence": [2]}),
+        provenance_json=_event_provenance(
+            "event-b",
+            [2],
+            pairs=(
+                ("transfer_from_repository", KEY_PROV_REPO_2, REPO_2),
+                ("transfer_to_repository", KEY_PROV_REPO_3, REPO_3),
+            ),
+        ),
         observed_at_us=200,
         from_target_json=canonical(REPO_2),
         to_target_json=canonical(REPO_3),
-        from_provider_repository=KEY_PROV_REPO_1,
-        to_provider_repository=KEY_PROV_REPO_2,
         parent_report=make_parent_report(),
     )
 
@@ -835,7 +982,8 @@ def test_transfer_event_reports_filtering_and_no_cross_borrowing(isolated_db):
     assert r3_reports[0] == report_b
 
     selected_reports = store.transfer_event_reports(selected_repositories=[REPO_1])
-    assert len(selected_reports) == 1
-    assert selected_reports[0].report_key == report_a.report_key
-    assert selected_reports[0].has_selection_omission
-    assert selected_reports[0].omitted_roles == frozenset({"transfer_to_repository"})
+    assert selected_reports == ()
+    # Whole-unit selection cannot borrow the omitted side from stored rows.
+    assert store.transfer_event_reports(selected_repositories=[REPO_1, REPO_2]) == (
+        report_a,
+    )

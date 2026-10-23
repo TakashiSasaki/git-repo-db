@@ -14,10 +14,12 @@ import pytest
 
 from repo_catalog.adapters.sqlite import p1_schema
 from repo_catalog.adapters.sqlite.production_context import Context
+from repo_catalog.domain.context_admission import AdmissionRefused, DependencySet
 from repo_catalog.domain.p1_context import ResourceKey
 from repo_catalog.domain.p1_context import canonical as J
 from repo_catalog.domain.resource_identification import ResourceIdentification as RI
 from repo_catalog.domain.resource_stage import UnsupportedResourceStage
+from tests.support.context_admission import fixture_context, fixture_service
 
 S = "22222222-2222-4222-8222-222222222222"
 R = "11111111-1111-4111-8111-111111111111"
@@ -601,9 +603,15 @@ def test_product_fences_remain(normal_db, mode):
 
 def test_product_admission_is_still_fenced(tmp_path):
     p1_schema.initialize(tmp_path / "context.sqlite3", "context", R, C)
+    # Preserve the old stage assertion after the new current-authority boundary;
+    # an unwired caller now fails earlier with a permission refusal.
     with Context.transaction(tmp_path) as ctx:
-        with pytest.raises(UnsupportedResourceStage):
+        with pytest.raises(AdmissionRefused, match="PERMISSION_DENIED"):
             ctx.admit_transfer_event(None)
+    service, _ = fixture_service(DependencySet())
+    with Context.transaction(tmp_path, authorization=service) as ctx:
+        with pytest.raises(UnsupportedResourceStage):
+            ctx.admit_transfer_event(None, admission=fixture_context(service))
 
 
 def test_connection_requires_all_i4_functions(normal_db):

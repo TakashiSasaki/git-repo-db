@@ -16,6 +16,7 @@ from repo_catalog.domain.p1_context import (
     FieldClock,
     MappingDisposition,
     MappingOperationEvidence,
+    ProviderEndpointDeclaration,
     ResourceKey,
     ResourceRepositoryRelation,
     TransferEventReport,
@@ -34,6 +35,7 @@ from repo_catalog.domain.production_context import (
 )
 from repo_catalog.domain.resource_identification import ResourceIdentification as RI
 from repo_catalog.domain.resource_stage import UnsupportedResourceStage
+from tests.integration.context_originals import synthetic_parent
 from tests.integration.p1 import test_context as p1_contract
 
 REPO = p1_contract.REPO
@@ -753,6 +755,8 @@ def test_missing_attributed_reference_does_not_poison_sound_pair(directory):
 @pytest.mark.parametrize("deferred", [False, True])
 def test_swallowed_sqlite_corruption_stops_immediately(directory, deferred):
     """Fault injection models execute and deferred row-step SQLite failures."""
+    from repo_catalog.domain.context_admission import AdmissionRefused
+
     db = connect(directory / "context.sqlite3", "context")
     db.execute("BEGIN")
     error = sqlite3.DatabaseError("injected SQLite corruption")
@@ -769,9 +773,10 @@ def test_swallowed_sqlite_corruption_stops_immediately(directory, deferred):
             # The capability now validates registration rows during binding.
             # Arm the fault only for the subsequent read_text operation, retaining
             # the original swallowed/deferred-corruption assertions below.
-            if sql in {
+            if sql.startswith("PRAGMA ") or sql in {
                 "SELECT store_role FROM store_identity",
                 "SELECT type,name,tbl_name,sql FROM sqlite_schema WHERE name NOT LIKE 'sqlite_%' ORDER BY type,name",
+                "SELECT type,name,tbl_name,sql FROM sqlite_schema WHERE name IN('i2_transfer_stage_fence','i2_transfer_report_stage_fence') ORDER BY name",
                 "SELECT 1 FROM resource_relations WHERE relation_kind COLLATE BINARY='transfer_event_report' LIMIT 1",
                 "SELECT 1 FROM resource_repository_relations WHERE relation_kind COLLATE BINARY IN('transfer_from_repository','transfer_to_repository') LIMIT 1",
                 "SELECT name, sql FROM sqlite_schema WHERE type='table' AND name IN ('resource_repository_relations', 'repository_mapping_dispositions', 'field_candidates')",
@@ -792,7 +797,13 @@ def test_swallowed_sqlite_corruption_stops_immediately(directory, deferred):
                     store.read_text("a" * 64)
                 assert (directory / "p1-recovery-stop.json").exists()
                 with pytest.raises(CoordinationError, match="RECOVERY_REQUIRED"):
+                    store.candidates(KEY, "title")
+                # The unbound mutation's first failure is now policy denial;
+                # authoritative reads still observe the persistent stop above.
+                before = db.execute("SELECT * FROM providers").fetchall()
+                with pytest.raises(AdmissionRefused, match="^PERMISSION_DENIED$"):
                     store.provider(SERVICE, "github")
+                assert db.execute("SELECT * FROM providers").fetchall() == before
     finally:
         db.rollback()
         db.close()
@@ -1188,6 +1199,12 @@ def test_production_context_relation_facade_methods(directory):
             clock=FieldClock("github:event", 10),
             provenance_json=prov,
             observed_at_us=10,
+            parent_report=synthetic_parent(ev_res, issue),
+            endpoint_declaration=ProviderEndpointDeclaration(prov_repo, prov_repo),
+            endpoints=(
+                ("transfer_from_repository", canonical(REPO)),
+                ("transfer_to_repository", canonical(REPO)),
+            ),
             from_target_json=canonical(REPO),
             to_target_json=canonical(REPO),
         )

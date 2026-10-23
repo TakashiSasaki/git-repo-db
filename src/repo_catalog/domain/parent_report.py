@@ -79,6 +79,39 @@ class ParentReportKey:
         )
 
 
+@dataclass(frozen=True)
+class ParentObservation:
+    """An exact original Parent key and its independent immutable observation.
+
+    NULL is a valid original observation, but callers must supply it explicitly.
+    The observation is payload: it never adds a coordinate to the seven-part key.
+    """
+
+    report_key: ParentReportKey
+    observed_at_us: int | None
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.report_key, ParentReportKey):
+            raise ValueError("ParentObservation requires a complete ParentReportKey")
+        validate_observation_us(self.observed_at_us)
+
+    @property
+    def resource(self) -> ResourceKey:
+        return self.report_key.resource
+
+    @property
+    def members_json(self) -> str:
+        return self.report_key.members_json
+
+    @property
+    def provenance_json(self) -> str:
+        return self.report_key.provenance_json
+
+    @property
+    def scope_json(self) -> str:
+        return self.report_key.scope_json
+
+
 def parent_report_sql(*args):
     """Total, bounded, row-local predicate; no connection or database reads."""
     try:

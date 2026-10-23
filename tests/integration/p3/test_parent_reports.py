@@ -10,10 +10,16 @@ import pytest
 
 from repo_catalog.adapters.sqlite import p1_schema
 from repo_catalog.adapters.sqlite.production_context import Context
+from repo_catalog.domain.context_admission import (
+    AdmissionRefused,
+    AdmissionSelection,
+    DependencySet,
+)
 from repo_catalog.domain.p1_context import ResourceKey
 from repo_catalog.domain.p1_context import canonical as J
 from repo_catalog.domain.production_context import ContextError, ResourceRelation
 from repo_catalog.domain.resource_identification import ResourceIdentification as RI
+from tests.support.context_admission import fixture_context, fixture_service
 
 S = "22222222-2222-4222-8222-222222222222"
 R = "11111111-1111-4111-8111-111111111111"
@@ -116,28 +122,65 @@ def test_global_child_first_late_parent_original_resupply(tmp_path, native):
     p1_schema.initialize(tmp_path / "context.sqlite3", "context", R, C)
     child, parent = key("document", native), key("project", ["P", "7"])
     original = report(child, parent, clock=None, observed=None)
-    with Context.transaction(tmp_path) as ctx:
-        ctx.provider(S, "test")
-        ctx.resource(child, identification=RI.global_document(child))
+    service, policy = fixture_service(
+        DependencySet(
+            resources=frozenset({child, parent}), provider_registrations=frozenset({S})
+        )
+    )
+    admission = fixture_context(service)
+    child_only = fixture_context(
+        service,
+        selection=AdmissionSelection(
+            resource_keys=frozenset({child}),
+            repository_uuidv4s=frozenset(),
+            source_uuidv4s=frozenset(),
+            object_oids=frozenset(),
+        ),
+    )
+    none_selected = fixture_context(
+        service,
+        selection=AdmissionSelection(
+            resource_keys=frozenset(),
+            repository_uuidv4s=frozenset(),
+            source_uuidv4s=frozenset(),
+            object_oids=frozenset(),
+        ),
+    )
+    with Context.transaction(tmp_path, authorization=service) as ctx:
+        ctx.provider(S, "test", admission=admission)
+        ctx.resource(
+            child, identification=RI.global_document(child), admission=admission
+        )
         assert ctx.relations(child, "parent") == ()
         before = snapshot(ctx.db)
         with pytest.raises(ContextError, match="RESOURCE_UNAVAILABLE"):
-            ctx.relation(original)
+            ctx.relation(original, admission=admission)
         assert snapshot(ctx.db) == before
-    with Context.transaction(tmp_path) as ctx:
-        ctx.resource(parent)
+    with Context.transaction(tmp_path, authorization=service) as ctx:
+        ctx.resource(parent, admission=admission)
         assert ctx.relations(child, "parent") == ()
-        with pytest.raises(ContextError, match="OMITTED_BY_SELECTION"):
-            ctx.relation(original, selected_resources=frozenset({child}))
-        with pytest.raises(ContextError, match="PERMISSION_DENIED"):
-            ctx.relation(original, permitted=lambda candidate: candidate != parent)
+        with pytest.raises(AdmissionRefused, match="OMITTED_BY_SELECTION"):
+            ctx.relation(original, admission=child_only)
+    # Policy changes invalidate earlier leases. Exercise each denial in its own
+    # transaction so no successful write is committed across a revoked grant.
+    policy.denied = DependencySet(resources=frozenset({parent}))
+    with Context.transaction(tmp_path, authorization=service) as ctx:
+        with pytest.raises(AdmissionRefused, match="PERMISSION_DENIED"):
+            ctx.relation(original, admission=admission)
         assert ctx.relations(child, "parent") == ()
-        assert ctx.relation(original) == "insert"
-        assert ctx.relation(original) == "duplicate"
-        with pytest.raises(ContextError, match="PERMISSION_DENIED"):
-            ctx.relation(original, permitted=lambda _: False)
-        with pytest.raises(ContextError, match="OMITTED_BY_SELECTION"):
-            ctx.relation(original, selected_resources=frozenset())
+    policy.denied = DependencySet()
+    with Context.transaction(tmp_path, authorization=service) as ctx:
+        assert ctx.relations(child, "parent") == ()
+        assert ctx.relation(original, admission=admission) == "insert"
+        assert ctx.relation(original, admission=admission) == "duplicate"
+    policy.denied = DependencySet(resources=frozenset({child, parent}))
+    with Context.transaction(tmp_path, authorization=service) as ctx:
+        with pytest.raises(AdmissionRefused, match="PERMISSION_DENIED"):
+            ctx.relation(original, admission=admission)
+    policy.denied = DependencySet()
+    with Context.transaction(tmp_path, authorization=service) as ctx:
+        with pytest.raises(AdmissionRefused, match="OMITTED_BY_SELECTION"):
+            ctx.relation(original, admission=none_selected)
     with Context.snapshot(tmp_path) as ctx:
         assert ctx.relations(child, "parent") == (original,)
         assert (
@@ -161,24 +204,42 @@ def test_scoped_alternatives_i8_document_children_and_nonleaf(tmp_path):
         report(global_doc, doc),
         report(child, global_doc),
     )
-    with Context.transaction(tmp_path) as ctx:
-        ctx.provider(S, "test")
-        ctx.resource(
-            event, identification=RI.scoped(event, i7, "timeline_event", ["E", "7"])
+    service, _ = fixture_service(
+        DependencySet(
+            resources=frozenset({i7, i8, event, pr, doc, global_doc, child}),
+            provider_registrations=frozenset({S}),
         )
-        ctx.resource(doc, identification=RI.scoped(doc, pr, "body", ["D", "1"]))
+    )
+    admission = fixture_context(service)
+    with Context.transaction(tmp_path, authorization=service) as ctx:
+        ctx.provider(S, "test", admission=admission)
+        ctx.resource(
+            event,
+            identification=RI.scoped(event, i7, "timeline_event", ["E", "7"]),
+            admission=admission,
+        )
+        ctx.resource(
+            doc,
+            identification=RI.scoped(doc, pr, "body", ["D", "1"]),
+            admission=admission,
+        )
         for value in (i7, i8, pr, child):
-            ctx.resource(value)
-        ctx.resource(global_doc, identification=RI.global_document(global_doc))
+            ctx.resource(value, admission=admission)
+        ctx.resource(
+            global_doc,
+            identification=RI.global_document(global_doc),
+            admission=admission,
+        )
         for value in reports:
-            assert ctx.relation(value) == "insert"
+            assert ctx.relation(value, admission=admission) == "insert"
         assert set(ctx.relations(event, "parent")) == set(reports[:2])
         assert ctx.relations(doc, "parent") == (reports[2],)
         assert ctx.relations(global_doc, "parent") == (reports[3],)
         assert ctx.relations(child, "parent") == (reports[4],)
         with pytest.raises(ValueError, match="I2_TRANSFER_UNSUPPORTED"):
             ctx.relation(
-                ResourceRelation(event, "transfer_event_report", (), PROV, "{}", 17)
+                ResourceRelation(event, "transfer_event_report", (), PROV, "{}", 17),
+                admission=admission,
             )
 
 
@@ -485,11 +546,19 @@ def test_source_subtype_replay_and_policy_rejections_preserve_existing_unit(tmp_
     p1_schema.initialize(tmp_path / "context.sqlite3", "context", R, C)
     child, parent = key("document", "D"), key("pull_request", "P")
     original = report(child, parent)
-    with Context.transaction(tmp_path) as ctx:
-        ctx.provider(S, "test")
-        ctx.resource(child, identification=RI.global_document(child))
-        ctx.resource(parent)
-        ctx.relation(original)
+    service, _ = fixture_service(
+        DependencySet(
+            resources=frozenset({child, parent}), provider_registrations=frozenset({S})
+        )
+    )
+    admission = fixture_context(service)
+    with Context.transaction(tmp_path, authorization=service) as ctx:
+        ctx.provider(S, "test", admission=admission)
+        ctx.resource(
+            child, identification=RI.global_document(child), admission=admission
+        )
+        ctx.resource(parent, admission=admission)
+        ctx.relation(original, admission=admission)
         before = snapshot(ctx.db)
         for invalid, expected in (
             (replace(original, observed_at_us=18), "EVIDENCE_REBIND"),
@@ -508,7 +577,7 @@ def test_source_subtype_replay_and_policy_rejections_preserve_existing_unit(tmp_
             ),
         ):
             with pytest.raises(ContextError, match=expected):
-                ctx.relation(invalid)
+                ctx.relation(invalid, admission=admission)
             assert snapshot(ctx.db) == before
         assert ctx.relations(child, "parent") == (original,)
     assert not (tmp_path / "p1-recovery-stop.json").exists()

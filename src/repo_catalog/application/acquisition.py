@@ -1104,14 +1104,11 @@ class ProviderAcquisition:
 
     @contextmanager
     def _open_context(self, override: Context | None = None) -> Iterator[Context]:
-        target = override if override is not None else self.context
-        if isinstance(target, Context):
-            yield target
-            return
-        path = Path(target)
-        directory = path if path.is_dir() else path.parent
-        with Context.transaction(directory) as ctx:
-            yield ctx
+        # I6-C must bind the authenticated local invocation and original units.
+        # Resource lookup itself must not disclose unselected/ungranted state.
+        from repo_catalog.domain.context_admission import AdmissionRefused
+
+        raise AdmissionRefused("PERMISSION_DENIED")
 
     def _make_core_validator(
         self,

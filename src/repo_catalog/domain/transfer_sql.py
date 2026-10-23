@@ -71,18 +71,26 @@ def validate_event(service, kind, identity, members, provenance, scope, observed
         if pair in seen:
             raise ValueError("duplicate endpoint declaration")
         seen.add(pair)
+    if endpoints != [list(pair) for pair in sorted(seen)]:
+        raise ValueError("endpoint declarations must be canonically ordered")
     expected = []
     roles = {entry[0] for entry in endpoints}
     for prefix in ("from", "to"):
         native = details[f"{prefix}_provider_repository_id"]
+        role = f"transfer_{prefix}_repository"
         if native is not None:
             key = ResourceKey(service, "repository", native)
-            role = f"transfer_{prefix}_repository"
             if (role, "null") in seen:
                 raise ValueError("explicit null conflicts with Provider endpoint")
             roles.add(role)
             if list(key.coordinates()) not in expected:
                 expected.append(list(key.coordinates()))
+        elif any(
+            endpoint_role == role and target != "null" for endpoint_role, target in seen
+        ):
+            raise ValueError(
+                "resolved endpoint requires its original Provider Repository"
+            )
     if values != expected or details["provided_roles"] != sorted(roles) or not roles:
         raise ValueError("incoherent original Event members/roles")
 

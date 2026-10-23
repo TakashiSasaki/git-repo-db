@@ -11,7 +11,7 @@ import json
 import re
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
-from typing import Any, ClassVar, Final, Literal
+from typing import TYPE_CHECKING, Any, ClassVar, Final, Literal
 
 from repo_catalog.domain.p1_coverage import (
     CoverageClaim as CoverageClaim,
@@ -28,6 +28,10 @@ from repo_catalog.domain.resource_identity import (
     parse_identity,
 )
 from repo_catalog.domain.time import MAX_EPOCH_US, validate_observation_us
+
+if TYPE_CHECKING:
+    from repo_catalog.domain.parent_report import ParentObservation, ParentReportKey
+
 
 OwnerKind = Literal[
     "repository", "source", "resource", "collection", "field", "source_inventory"
@@ -1749,188 +1753,220 @@ class EventReportKey:
 
 
 @dataclass(frozen=True)
+class ProviderEndpointDeclaration:
+    """Total original Provider declaration, established before any filtering.
+
+    Each endpoint is an actual Provider Repository key, ``explicit_null``, or
+    ``not_reported``. Missing response data cannot stand for not_reported.
+    """
+
+    from_endpoint: ResourceKey | Literal["not_reported", "explicit_null"]
+    to_endpoint: ResourceKey | Literal["not_reported", "explicit_null"]
+
+    def __post_init__(self) -> None:
+        from repo_catalog.domain.context_admission import AdmissionRefused
+
+        for endpoint in (self.from_endpoint, self.to_endpoint):
+            if isinstance(endpoint, ResourceKey):
+                if endpoint.resource_kind != "repository":
+                    raise ValueError(
+                        "Provider endpoint must be a Repository ResourceKey"
+                    )
+            elif type(endpoint) is not str or endpoint not in {
+                "not_reported",
+                "explicit_null",
+            }:
+                raise AdmissionRefused("INCOMPLETE_ORIGINAL_REPORT")
+        if not self.provided_roles:
+            raise AdmissionRefused("INCOMPLETE_ORIGINAL_REPORT")
+
+    def endpoint_for(self, role: RelationKind):
+        if role == "transfer_from_repository":
+            return self.from_endpoint
+        if role == "transfer_to_repository":
+            return self.to_endpoint
+        raise ValueError("Transfer endpoint role required")
+
+    def provider_for(self, role: RelationKind) -> ResourceKey | None:
+        endpoint = self.endpoint_for(role)
+        return endpoint if isinstance(endpoint, ResourceKey) else None
+
+    def state_for(self, role: RelationKind) -> str:
+        endpoint = self.endpoint_for(role)
+        return "provider_repository" if isinstance(endpoint, ResourceKey) else endpoint
+
+    @property
+    def provided_roles(self) -> frozenset[RelationKind]:
+        return frozenset(
+            role
+            for role in TRANSFER_RELATION_KINDS
+            if self.endpoint_for(role) != "not_reported"
+        )
+
+
+@dataclass(frozen=True)
 class TransferEventReport:
-    """Complete or selection-qualified Transfer Event report bound to one EventReportKey."""
+    """Whole admissible report with explicit independent originals.
+
+    Selection omissions are withheld whole. Neither surviving endpoint rows nor
+    the Event's clock/provenance can supply missing original evidence.
+    """
 
     report_key: EventReportKey
+    parent_report: ParentObservation
+    endpoint_declaration: ProviderEndpointDeclaration
+    endpoints: tuple[tuple[RelationKind, str], ...]
     observed_at_us: int | None = None
     from_relations: tuple[ResourceRepositoryRelation, ...] = ()
     to_relations: tuple[ResourceRepositoryRelation, ...] = ()
-    from_provider_repository: ResourceKey | None = None
-    to_provider_repository: ResourceKey | None = None
     omitted_roles: frozenset[RelationKind] = frozenset()
     event_type: str = "transferred"
     selection_truncated: bool = False
-    parent_report: Any | None = None
-    parent_members_json: str | None = None
-    parent_provenance_json: str | None = None
-    parent_scope_json: str | None = None
-    endpoints: tuple[tuple[RelationKind, str], ...] | None = None
 
     def __post_init__(self) -> None:
-        if self.parent_report is not None:
-            if self.parent_members_json is None:
-                object.__setattr__(
-                    self, "parent_members_json", self.parent_report.members_json
-                )
-            if self.parent_provenance_json is None:
-                object.__setattr__(
-                    self, "parent_provenance_json", self.parent_report.provenance_json
-                )
-            if self.parent_scope_json is None:
-                object.__setattr__(
-                    self, "parent_scope_json", self.parent_report.scope_json
-                )
+        from repo_catalog.domain.context_admission import AdmissionRefused
+        from repo_catalog.domain.parent_report import ParentObservation, ParentReportKey
 
         if not isinstance(self.report_key, EventReportKey):
             raise ValueError("TransferEventReport.report_key must be an EventReportKey")
+        if not isinstance(self.parent_report, ParentObservation):
+            raise AdmissionRefused("INCOMPLETE_ORIGINAL_REPORT")
+        # Recheck nested originals at the pure validation boundary as well as
+        # initial construction; shallow replacement must not trust cached flags.
+        ParentObservation(
+            ParentReportKey(
+                self.parent_report.resource,
+                self.parent_report.members_json,
+                self.parent_report.provenance_json,
+                self.parent_report.scope_json,
+            ),
+            self.parent_report.observed_at_us,
+        )
+        if self.parent_report.resource != self.event_resource:
+            raise ValueError("Original Parent key must bind the exact Event Resource")
+        if (
+            self.parent_issue.resource_kind != "issue"
+            or _parse_canonical_json(self.parent_scope_json)["document_kind"]
+            != "timeline_event"
+        ):
+            raise ValueError(
+                "Transfer requires an original timeline Event Issue Parent"
+            )
+        if not isinstance(self.endpoint_declaration, ProviderEndpointDeclaration):
+            raise AdmissionRefused("INCOMPLETE_ORIGINAL_REPORT")
+        ProviderEndpointDeclaration(
+            self.endpoint_declaration.from_endpoint,
+            self.endpoint_declaration.to_endpoint,
+        )
         validate_observation_us(self.observed_at_us)
+        if not _is_positive_int64(self.clock.at_us):
+            raise ValueError("Transfer requires a positive original Event clock")
         if type(self.selection_truncated) is not bool:
             raise ValueError("selection_truncated must be bool")
+        if type(self.omitted_roles) is not frozenset:
+            object.__setattr__(self, "omitted_roles", frozenset(self.omitted_roles))
+        if self.selection_truncated or self.omitted_roles:
+            raise AdmissionRefused("OMITTED_BY_SELECTION")
         if self.event_type != "transferred":
             raise ValueError(
-                f"TransferEventReport requires genuine event_type='transferred', got {self.event_type!r}"
+                "TransferEventReport requires genuine event_type='transferred'"
             )
-        if not isinstance(self.from_relations, tuple):
-            object.__setattr__(self, "from_relations", tuple(self.from_relations))
-        if not isinstance(self.to_relations, tuple):
-            object.__setattr__(self, "to_relations", tuple(self.to_relations))
-        if not isinstance(self.omitted_roles, frozenset):
-            object.__setattr__(self, "omitted_roles", frozenset(self.omitted_roles))
-        if not self.omitted_roles.issubset(TRANSFER_RELATION_KINDS):
+        if self.endpoints is None:
+            raise AdmissionRefused("INCOMPLETE_ORIGINAL_REPORT")
+        if type(self.endpoints) is not tuple:
+            raise ValueError("Original endpoints must be an exact canonical tuple")
+        for endpoint in self.endpoints:
+            if (
+                type(endpoint) is not tuple
+                or len(endpoint) != 2
+                or endpoint[0] not in TRANSFER_RELATION_KINDS
+            ):
+                raise ValueError("Invalid original endpoint declaration")
+            validate_mapping_target(endpoint[1])
+        if self.endpoints != tuple(sorted(set(self.endpoints))):
             raise ValueError(
-                "omitted_roles must be a subset of transfer relation kinds"
+                "Original endpoint pairs must be unique and canonically ordered"
             )
-
-        if self.parent_members_json is None:
+        for role in TRANSFER_RELATION_KINDS:
+            state = self.endpoint_declaration.state_for(role)
+            targets = tuple(
+                target
+                for endpoint_role, target in self.endpoints
+                if endpoint_role == role
+            )
+            if state == "not_reported" and targets:
+                raise ValueError("Not-reported role cannot carry translated endpoints")
+            if state == "explicit_null" and targets != ("null",):
+                raise AdmissionRefused("INCOMPLETE_ENDPOINT_SET")
+            if state == "provider_repository" and "null" in targets:
+                raise ValueError(
+                    "Provider Repository cannot declare an explicit null endpoint"
+                )
+            provider = self.endpoint_declaration.provider_for(role)
+            if (
+                provider is not None
+                and provider.service_instance_uuidv4
+                != self.report_key.service_instance_uuidv4
+            ):
+                raise ValueError(
+                    "Provider endpoint must remain in the Event service namespace"
+                )
+        if (
+            type(self.from_relations) is not tuple
+            or type(self.to_relations) is not tuple
+        ):
+            raise ValueError("Received endpoint relations must be exact tuples")
+        for relation in self.from_relations:
+            self._validate_endpoint_relation(relation, "transfer_from_repository")
+        for relation in self.to_relations:
+            self._validate_endpoint_relation(relation, "transfer_to_repository")
+        received = tuple(
+            sorted(
+                (r.relation_kind, r.target_json)
+                for r in (*self.from_relations, *self.to_relations)
+            )
+        )
+        if received != self.endpoints:
+            raise AdmissionRefused("INCOMPLETE_ENDPOINT_SET")
+        # Binding references to supplied complete originals is safe; no original
+        # coordinate, Provider role or endpoint is inferred from these rows.
+        for field_name in ("from_relations", "to_relations"):
             object.__setattr__(
                 self,
-                "parent_members_json",
-                canonical([list(self.report_key.issue_parent.coordinates())]),
-            )
-        else:
-            object.__setattr__(
-                self,
-                "parent_members_json",
-                canonical(_parse_canonical_json(self.parent_members_json)),
-            )
-
-        if self.parent_provenance_json is None:
-            object.__setattr__(
-                self, "parent_provenance_json", self.report_key.provenance_json
-            )
-        else:
-            object.__setattr__(
-                self,
-                "parent_provenance_json",
-                canonical(_parse_canonical_json(self.parent_provenance_json)),
-            )
-
-        if self.parent_scope_json is None:
-            object.__setattr__(
-                self,
-                "parent_scope_json",
-                canonical(
-                    {
-                        "clock": json.loads(self.report_key.clock.encode()),
-                        "document_kind": "timeline_event",
-                        "state": "complete",
-                    }
+                field_name,
+                tuple(
+                    relation
+                    if relation.event_report_members_json is not None
+                    else relation.with_report_reference(
+                        self.members_json, self.scope_json
+                    )
+                    for relation in getattr(self, field_name)
                 ),
             )
-        else:
-            object.__setattr__(
-                self,
-                "parent_scope_json",
-                canonical(_parse_canonical_json(self.parent_scope_json)),
-            )
 
-        if self.endpoints is None:
-            eps: list[tuple[RelationKind, str]] = []
-            for r in self.from_relations:
-                eps.append(("transfer_from_repository", r.target_json))
-            for r in self.to_relations:
-                eps.append(("transfer_to_repository", r.target_json))
-            object.__setattr__(self, "endpoints", tuple(eps))
-        else:
-            if not isinstance(self.endpoints, tuple):
-                object.__setattr__(self, "endpoints", tuple(self.endpoints))
-            for ep in self.endpoints:
-                if (
-                    not isinstance(ep, (tuple, list))
-                    or len(ep) != 2
-                    or ep[0] not in TRANSFER_RELATION_KINDS
-                ):
-                    raise ValueError(f"Invalid endpoint declaration: {ep!r}")
-                validate_mapping_target(ep[1])
+    @property
+    def parent_report_key(self) -> ParentReportKey:
+        return self.parent_report.report_key
 
-        if not self.selection_truncated and not self.omitted_roles:
-            bound_from = tuple(
-                r
-                if r.event_report_members_json is not None
-                else r.with_report_reference(self.members_json, self.scope_json)
-                for r in self.from_relations
-            )
-            bound_to = tuple(
-                r
-                if r.event_report_members_json is not None
-                else r.with_report_reference(self.members_json, self.scope_json)
-                for r in self.to_relations
-            )
-            object.__setattr__(self, "from_relations", bound_from)
-            object.__setattr__(self, "to_relations", bound_to)
+    @property
+    def parent_members_json(self) -> str:
+        return self.parent_report.members_json
 
-        for rel in self.from_relations:
-            self._validate_endpoint_relation(rel, "transfer_from_repository")
-        for rel in self.to_relations:
-            self._validate_endpoint_relation(rel, "transfer_to_repository")
-        for provider_repo in (
-            self.from_provider_repository,
-            self.to_provider_repository,
-        ):
-            if provider_repo is not None and (
-                not isinstance(provider_repo, ResourceKey)
-                or provider_repo.service_instance_uuidv4
-                != self.report_key.service_instance_uuidv4
-                or provider_repo.resource_kind != "repository"
-            ):
-                raise ValueError(
-                    "Unresolved transfer endpoint provider_repository must be a repository ResourceKey in the same service"
-                )
-        if (
-            self.from_relations
-            and self.from_provider_repository is not None
-            and any(r.is_explicit_null_target for r in self.from_relations)
-        ):
-            raise ValueError(
-                "Explicit null transfer_from_repository cannot also carry from_provider_repository"
-            )
-        if (
-            self.to_relations
-            and self.to_provider_repository is not None
-            and any(r.is_explicit_null_target for r in self.to_relations)
-        ):
-            raise ValueError(
-                "Explicit null transfer_to_repository cannot also carry to_provider_repository"
-            )
-        if not self.all_known_roles:
-            raise ValueError(
-                "TransferEventReport requires at least one provided or omitted transfer endpoint role"
-            )
-        if not self.omitted_roles.isdisjoint(self.provided_roles):
-            raise ValueError("omitted_roles cannot overlap with provided_roles")
-        for relations, provider in (
-            (self.from_relations, self.from_provider_repository),
-            (self.to_relations, self.to_provider_repository),
-        ):
-            if provider is not None and any(
-                r.embedded_support is not None
-                and r.embedded_support.provider_repository != provider
-                for r in relations
-            ):
-                raise ValueError(
-                    "Transfer MappingSupport must match its Provider endpoint"
-                )
+    @property
+    def parent_provenance_json(self) -> str:
+        return self.parent_report.provenance_json
+
+    @property
+    def parent_scope_json(self) -> str:
+        return self.parent_report.scope_json
+
+    @property
+    def from_provider_repository(self) -> ResourceKey | None:
+        return self.endpoint_declaration.provider_for("transfer_from_repository")
+
+    @property
+    def to_provider_repository(self) -> ResourceKey | None:
+        return self.endpoint_declaration.provider_for("transfer_to_repository")
 
     @property
     def scope_json(self) -> str:
@@ -1968,8 +2004,12 @@ class TransferEventReport:
         scope_json: str,
         members_json: str,
         observed_at_us: int | None,
+        *,
+        parent_report: ParentObservation,
     ) -> TransferEventReport:
-        """Recheck original scope and membership without filling missing declarations."""
+        """Recheck stored originals using the authorized exact Parent observation."""
+        from repo_catalog.domain.context_admission import AdmissionRefused
+
         scope = _parse_canonical_json(scope_json)
         if type(scope) is not dict or set(scope) != {
             "clock",
@@ -1982,23 +2022,60 @@ class TransferEventReport:
             "parent_provenance_json",
             "parent_scope_json",
         }:
-            raise ValueError("Invalid stored Transfer report scope")
-        rels = tuple(relations)
-
-        def provider(name: str) -> ResourceKey | None:
-            value = scope[name]
-            return (
-                None
-                if value is None
-                else ResourceKey(
-                    report_key.service_instance_uuidv4, "repository", value
-                )
+            raise AdmissionRefused("INCOMPLETE_ORIGINAL_REPORT")
+        if any(
+            type(scope[name]) is not str or not scope[name]
+            for name in (
+                "parent_members_json",
+                "parent_provenance_json",
+                "parent_scope_json",
             )
+        ):
+            raise AdmissionRefused("INCOMPLETE_ORIGINAL_REPORT")
+        roles = scope["provided_roles"]
+        if (
+            type(roles) is not list
+            or any(
+                type(role) is not str or role not in TRANSFER_RELATION_KINDS
+                for role in roles
+            )
+            or roles != sorted(set(roles))
+        ):
+            raise ValueError("Original provided_roles must be unique and canonical")
 
-        endpoints = tuple(tuple(item) for item in scope["endpoints"])
+        def endpoint(prefix):
+            role = f"transfer_{prefix}_repository"
+            native = scope[f"{prefix}_provider_repository_id"]
+            if role not in roles:
+                if native is not None:
+                    raise ValueError(
+                        "Not-reported role cannot name a Provider Repository"
+                    )
+                return "not_reported"
+            if native is None:
+                return "explicit_null"
+            return ResourceKey(report_key.service_instance_uuidv4, "repository", native)
 
+        if type(scope["endpoints"]) is not list or any(
+            type(item) is not list or len(item) != 2 for item in scope["endpoints"]
+        ):
+            raise ValueError("Original endpoints require exact pairs")
+        rels = tuple(relations)
+        if any(
+            not isinstance(r, ResourceRepositoryRelation)
+            or r.relation_kind not in TRANSFER_RELATION_KINDS
+            for r in rels
+        ):
+            raise ValueError(
+                "Only original Transfer endpoints may accompany this report"
+            )
         report = cls(
             report_key=report_key,
+            parent_report=parent_report,
+            endpoint_declaration=ProviderEndpointDeclaration(
+                endpoint("from"), endpoint("to")
+            ),
+            endpoints=tuple(tuple(item) for item in scope["endpoints"]),
             observed_at_us=observed_at_us,
             from_relations=tuple(
                 r for r in rels if r.relation_kind == "transfer_from_repository"
@@ -2006,17 +2083,11 @@ class TransferEventReport:
             to_relations=tuple(
                 r for r in rels if r.relation_kind == "transfer_to_repository"
             ),
-            from_provider_repository=provider("from_provider_repository_id"),
-            to_provider_repository=provider("to_provider_repository_id"),
             event_type=scope["event_type"],
-            parent_members_json=scope["parent_members_json"],
-            parent_provenance_json=scope["parent_provenance_json"],
-            parent_scope_json=scope["parent_scope_json"],
-            endpoints=endpoints,
         )
         if scope_json != report.scope_json or members_json != report.members_json:
             raise ValueError(
-                "Stored Transfer report scope/members do not match endpoints"
+                "Stored Transfer scope/members must match complete supplied originals"
             )
         return report
 
@@ -2025,39 +2096,37 @@ class TransferEventReport:
     ) -> None:
         if not isinstance(relation, ResourceRepositoryRelation):
             raise ValueError("Endpoint relation must be a ResourceRepositoryRelation")
-        if relation.resource != self.report_key.event_resource:
+        if (
+            relation.resource != self.event_resource
+            or relation.relation_kind != expected_role
+        ):
+            raise ValueError("Endpoint relation must bind the exact Event and role")
+        if (
+            relation.clock != self.clock
+            or relation.provenance_json != self.provenance_json
+            or relation.observed_at_us != self.observed_at_us
+        ):
             raise ValueError(
-                "Endpoint relation.resource must match report_key.event_resource"
+                "Endpoint must preserve its own Event clock/provenance/observation"
             )
-        if relation.relation_kind != expected_role:
+        if (
+            relation.event_report_members_json is not None
+            and relation.event_report_members_json != self.members_json
+        ):
+            raise ValueError("Endpoint original Event members mismatch")
+        if (
+            relation.event_report_scope_json is not None
+            and relation.event_report_scope_json != self.scope_json
+        ):
+            raise ValueError("Endpoint original Event scope mismatch")
+        provider = self.endpoint_declaration.provider_for(expected_role)
+        if (
+            relation.embedded_support is not None
+            and relation.embedded_support.provider_repository != provider
+        ):
             raise ValueError(
-                f"Endpoint relation_kind must be {expected_role!r}, got {relation.relation_kind!r}"
+                "Transfer MappingSupport must match its original Provider endpoint"
             )
-        if relation.clock != self.report_key.clock:
-            raise ValueError("Endpoint relation.clock must match report_key.clock")
-        if relation.provenance_json != self.report_key.provenance_json:
-            raise ValueError(
-                "Endpoint relation.provenance_json must match report_key.provenance_json"
-            )
-        if relation.observed_at_us != self.observed_at_us:
-            raise ValueError(
-                "Endpoint relation.observed_at_us must match report observed_at_us"
-            )
-        if not self.selection_truncated and not self.omitted_roles:
-            if (
-                relation.event_report_members_json is not None
-                and relation.event_report_members_json != self.members_json
-            ):
-                raise ValueError(
-                    "Endpoint relation.event_report_members_json must match report members_json"
-                )
-            if (
-                relation.event_report_scope_json is not None
-                and relation.event_report_scope_json != self.scope_json
-            ):
-                raise ValueError(
-                    "Endpoint relation.event_report_scope_json must match report scope_json"
-                )
 
     @classmethod
     def from_targets(
@@ -2066,68 +2135,41 @@ class TransferEventReport:
         *,
         clock: FieldClock,
         provenance_json: str,
+        parent_report: ParentObservation,
+        endpoint_declaration: ProviderEndpointDeclaration,
+        endpoints: tuple[tuple[RelationKind, str], ...],
         observed_at_us: int | None = None,
         from_target_json: str | Sequence[str] | None = None,
         to_target_json: str | Sequence[str] | None = None,
-        from_provider_repository: ResourceKey | None = None,
-        to_provider_repository: ResourceKey | None = None,
         omitted_roles: Iterable[RelationKind] = (),
         event_type: str = "transferred",
-        parent_report: Any | None = None,
-        parent_members_json: str | None = None,
-        parent_provenance_json: str | None = None,
-        parent_scope_json: str | None = None,
     ) -> TransferEventReport:
-        report_key = EventReportKey(
-            event_resource=event_resource,
-            clock=clock,
-            provenance_json=provenance_json,
-        )
-
-        def _make_rels(
-            targets: str | Sequence[str] | None, role: RelationKind
-        ) -> tuple[ResourceRepositoryRelation, ...]:
+        def relations(targets, role):
             if targets is None:
                 return ()
             items = (targets,) if isinstance(targets, str) else tuple(targets)
             return tuple(
                 ResourceRepositoryRelation(
-                    resource=event_resource,
-                    relation_kind=role,
-                    clock=clock,
-                    target_json=t,
-                    provenance_json=provenance_json,
-                    observed_at_us=observed_at_us,
+                    event_resource, role, clock, target, provenance_json, observed_at_us
                 )
-                for t in items
+                for target in items
             )
 
-        if parent_report is not None:
-            if parent_members_json is None:
-                parent_members_json = parent_report.members_json
-            if parent_provenance_json is None:
-                parent_provenance_json = parent_report.provenance_json
-            if parent_scope_json is None:
-                parent_scope_json = parent_report.scope_json
-
         return cls(
-            report_key=report_key,
+            report_key=EventReportKey(event_resource, clock, provenance_json),
+            parent_report=parent_report,
+            endpoint_declaration=endpoint_declaration,
+            endpoints=endpoints,
             observed_at_us=observed_at_us,
-            from_relations=_make_rels(from_target_json, "transfer_from_repository"),
-            to_relations=_make_rels(to_target_json, "transfer_to_repository"),
-            from_provider_repository=from_provider_repository,
-            to_provider_repository=to_provider_repository,
+            from_relations=relations(from_target_json, "transfer_from_repository"),
+            to_relations=relations(to_target_json, "transfer_to_repository"),
             omitted_roles=frozenset(omitted_roles),
             event_type=event_type,
-            parent_members_json=parent_members_json,
-            parent_provenance_json=parent_provenance_json,
-            parent_scope_json=parent_scope_json,
         )
 
     @property
     def parent_issue(self) -> ResourceKey:
-        members = _parse_canonical_json(self.parent_members_json)
-        return ResourceKey(*members[0])
+        return ResourceKey(*_parse_canonical_json(self.parent_members_json)[0])
 
     @property
     def event_resource(self) -> ResourceKey:
@@ -2155,56 +2197,39 @@ class TransferEventReport:
 
     @property
     def provided_roles(self) -> frozenset[RelationKind]:
-        roles: list[RelationKind] = []
-        if self.from_relations or self.from_provider_repository is not None:
-            roles.append("transfer_from_repository")
-        if self.to_relations or self.to_provider_repository is not None:
-            roles.append("transfer_to_repository")
-        return frozenset(roles)
+        return self.endpoint_declaration.provided_roles
 
     @property
     def all_known_roles(self) -> frozenset[RelationKind]:
-        return self.provided_roles | self.omitted_roles
+        return self.provided_roles
+
+    def _endpoint_state(self, role, relations) -> TransferEndpointState:
+        state = self.endpoint_declaration.state_for(role)
+        if state == "not_reported":
+            return "absent"
+        if state == "explicit_null":
+            return "explicit_null"
+        return "resolved" if relations else "unresolved_provider_only"
 
     @property
     def from_state(self) -> TransferEndpointState:
-        if "transfer_from_repository" in self.omitted_roles:
-            return "omitted_by_selection"
-        if not self.from_relations:
-            return (
-                "unresolved_provider_only"
-                if self.from_provider_repository is not None
-                else "absent"
-            )
-        if all(r.is_explicit_null_target for r in self.from_relations):
-            return "explicit_null"
-        return "resolved"
+        return self._endpoint_state("transfer_from_repository", self.from_relations)
 
     @property
     def to_state(self) -> TransferEndpointState:
-        if "transfer_to_repository" in self.omitted_roles:
-            return "omitted_by_selection"
-        if not self.to_relations:
-            return (
-                "unresolved_provider_only"
-                if self.to_provider_repository is not None
-                else "absent"
-            )
-        if all(r.is_explicit_null_target for r in self.to_relations):
-            return "explicit_null"
-        return "resolved"
+        return self._endpoint_state("transfer_to_repository", self.to_relations)
 
     @property
     def is_one_sided(self) -> bool:
-        return len(self.all_known_roles) == 1
+        return len(self.provided_roles) == 1
 
     @property
     def is_two_sided(self) -> bool:
-        return len(self.all_known_roles) == 2
+        return len(self.provided_roles) == 2
 
     @property
     def has_selection_omission(self) -> bool:
-        return bool(self.omitted_roles) or self.selection_truncated
+        return False
 
     def select_for_repositories(
         self, selected_repository_uuidv4s: Iterable[str]
@@ -2213,53 +2238,15 @@ class TransferEventReport:
         for repo_id in selected:
             if not _is_uuid4_str(repo_id):
                 raise ValueError(f"Invalid selected repository_uuidv4: {repo_id!r}")
-        kept_from = tuple(
-            r
-            for r in self.from_relations
-            if r.is_explicit_null_target or r.target_repository_uuidv4 in selected
-        )
-        kept_to = tuple(
-            r
-            for r in self.to_relations
-            if r.is_explicit_null_target or r.target_repository_uuidv4 in selected
-        )
-        has_selected_from = any(
-            r.target_repository_uuidv4 in selected for r in kept_from
-        )
-        has_selected_to = any(r.target_repository_uuidv4 in selected for r in kept_to)
-        if not has_selected_from and not has_selected_to:
+        relations = (*self.from_relations, *self.to_relations)
+        if not any(r.target_repository_uuidv4 in selected for r in relations):
             return None
-        omitted = set(self.omitted_roles)
-        if self.from_relations and not kept_from:
-            omitted.add("transfer_from_repository")
-        if self.to_relations and not kept_to:
-            omitted.add("transfer_to_repository")
-        return TransferEventReport(
-            report_key=self.report_key,
-            observed_at_us=self.observed_at_us,
-            from_relations=kept_from,
-            to_relations=kept_to,
-            from_provider_repository=(
-                None
-                if "transfer_from_repository" in omitted
-                else self.from_provider_repository
-            ),
-            to_provider_repository=(
-                None
-                if "transfer_to_repository" in omitted
-                else self.to_provider_repository
-            ),
-            omitted_roles=frozenset(omitted),
-            event_type=self.event_type,
-            selection_truncated=(
-                self.selection_truncated
-                or len(kept_from) != len(self.from_relations)
-                or len(kept_to) != len(self.to_relations)
-            ),
-            parent_members_json=self.parent_members_json,
-            parent_provenance_json=self.parent_provenance_json,
-            parent_scope_json=self.parent_scope_json,
-        )
+        if any(
+            not r.is_explicit_null_target and r.target_repository_uuidv4 not in selected
+            for r in relations
+        ):
+            return None
+        return self
 
 
 @dataclass(frozen=True)
