@@ -2,8 +2,8 @@
   "scope": "Author integration verification evidence, not independent or Release acceptance",
   "files": {
     "DAG.md": {
-      "bytes": 905,
-      "sha256": "5133e3526cfe88013ee12950b2611db60ab1b5d69505c7b82681718b92220e45"
+      "bytes": 908,
+      "sha256": "7dbf8aadf03ff3d78c212e663334a6dcc4fd03f21ecf0f41ad22d006fce46385"
     },
     "FINAL_INPUTS.json": {
       "bytes": 110964,
@@ -12,6 +12,10 @@
     "PUBLICATION-CHECKS.json": {
       "bytes": 1200,
       "sha256": "a91c8f086df359e1a7075dff2e54c68e7db34fa2a992607e8ec9bd2e97e892c5"
+    },
+    "PUBLICATION-CORRECTION.json": {
+      "bytes": 842,
+      "sha256": "b3ce02ffec8500bc54476ccab46bc8949024d09a29b7bc0f6127ea0c3b579855"
     },
     "PUBLICATION-INPUT-INVARIANCE.json": {
       "bytes": 28204,
@@ -22,8 +26,8 @@
       "sha256": "46eeebfa650a65376b9575ca64a9d05ab32a14f20e8f24cf0fb40fc924c04eac"
     },
     "REPORT.md": {
-      "bytes": 18837,
-      "sha256": "455fe8150dfebb3928734710a59a7dd42829663f8da5b30cfe45ae2760eabd15"
+      "bytes": 19307,
+      "sha256": "a9cf68b2c4ee372a7172936178f371ad4bc235b772bb8ba258e6746aac15d154"
     },
     "REPRODUCTION.md": {
       "bytes": 3727,
@@ -34,8 +38,8 @@
       "sha256": "b963df564dae7925c73a41a931c9760e0c079ebd53db5146dd3567649eb95a9a"
     },
     "TRANSPORT.json": {
-      "bytes": 191670,
-      "sha256": "b32187fda1daab2ca33001f3cc60cb5090076e770595c5921b21d35f3b5d1eb4"
+      "bytes": 192528,
+      "sha256": "0ed73038daa65c78f6f51aa02ce60384fe216d494cff837644d0717573c570b1"
     },
     "audit/CONTRACTS-AND-HANDOFF.md": {
       "bytes": 9882,
@@ -737,9 +741,9 @@
       "bytes": 4656,
       "sha256": "02c7eecddbe085342a2a3a18c38db25a0e0b6c06043829dd5fb3a9cd3c47d810"
     },
-    "dag.txt": {
-      "bytes": 2238,
-      "sha256": "bcd9ae9599ade5b5c7116c3d48e1c5f5d7ee3a2f12f82306daa9265765ee3243"
+    "dag.txt.gz": {
+      "bytes": 1044,
+      "sha256": "ac2d09b62d399df8a2a453bd351fdd2f5d527f86005d73ba1d4da5d87fd4be7d"
     },
     "diagnostic-assertion-delta.json": {
       "bytes": 1116,
@@ -1873,6 +1877,10 @@
       "bytes": 188972,
       "sha256": "59a5c1205026d675fd2ba7180d2a3f9d59e521c36ba2d579a19769437144c191"
     },
+    "i6/ARTIFACTS.json": {
+      "bytes": 13701,
+      "sha256": "e04b6a3d39df988374dcf5cd8e21068891806f02bd50d7e8336ce45982271fef"
+    },
     "i6/REPORT.md": {
       "bytes": 8212,
       "sha256": "a8c9846e133e9d47d32b3b81ae9b91496262e25cbf21c56fb43da4eb97583a86"
@@ -2345,6 +2353,10 @@
       "bytes": 0,
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
+    "publication-staged-whitespace-attempt.log.gz": {
+      "bytes": 136,
+      "sha256": "931033d18fa84e3cf718719545e31974d70b462c0b3bc76527455b3c7e1117cc"
+    },
     "runtime-probe-row-attempt.log": {
       "bytes": 1415,
       "sha256": "026132094d53238244d873c665fcb2e194529746cbeb1cffb8596419b70b7626"
@@ -2628,13 +2640,9 @@
     "tools-transport-and-adaptations.json": {
       "bytes": 2072,
       "sha256": "e4a785a92c8813d32c08987eac24e98ac5a6a507c036fed2d868d99a81b1a975"
-    },
-    "i6/ARTIFACTS.json": {
-      "bytes": 13701,
-      "sha256": "e04b6a3d39df988374dcf5cd8e21068891806f02bd50d7e8336ce45982271fef"
     }
   },
-  "payload_count": 658,
-  "payload_bytes": 47885109,
+  "payload_count": 660,
+  "payload_bytes": 47886224,
   "self_excluded": "ARTIFACTS.json"
 }

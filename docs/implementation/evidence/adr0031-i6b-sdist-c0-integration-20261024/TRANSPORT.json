@@ -4094,5 +4094,23 @@
     "path": "conflicts/tests__packaging__test_p1_distribution.py.stage3",
     "bytes": 4656,
     "sha256": "02c7eecddbe085342a2a3a18c38db25a0e0b6c06043829dd5fb3a9cd3c47d810"
+  },
+  {
+    "source": "/workspace/task-b-run/dag.txt",
+    "original_bytes": 2238,
+    "original_sha256": "bcd9ae9599ade5b5c7116c3d48e1c5f5d7ee3a2f12f82306daa9265765ee3243",
+    "path": "dag.txt.gz",
+    "bytes": 1044,
+    "sha256": "ac2d09b62d399df8a2a453bd351fdd2f5d527f86005d73ba1d4da5d87fd4be7d",
+    "reason": "Lossless raw Git graph transport: preserve graph alignment whitespace while passing staged whitespace checks."
+  },
+  {
+    "source": "/workspace/task-b-run/staged-whitespace.log",
+    "original_bytes": 333,
+    "original_sha256": "f3b9a53915f59d188de3883494466060441e556b7a9a496bf952833ee5a86319",
+    "path": "publication-staged-whitespace-attempt.log.gz",
+    "bytes": 136,
+    "sha256": "931033d18fa84e3cf718719545e31974d70b462c0b3bc76527455b3c7e1117cc",
+    "reason": "Retain exact failed whitespace diagnostic without normalizing it."
   }
 ]

@@ -1,6 +1,6 @@
 # Actual integration ancestry
 
-Full object identities and trees are in `integration-identities.json`; `dag.txt`
+Full object identities and trees are in `integration-identities.json`; `dag.txt.gz`
 is the recorded Git graph. Arrows run from parent to child. Both reviewed branch
 histories are retained; PR150 is reference only and not an ancestor.
 
