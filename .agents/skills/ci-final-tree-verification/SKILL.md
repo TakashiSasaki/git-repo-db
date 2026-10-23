@@ -308,6 +308,58 @@ accept substituted node sets. Independent review of the integration-readiness
 driver found that gap; explicit three-way identity checks passed on both stored
 installed P7 executions. Keep these checks even when their counts agree.
 
+## Revalidate complete originals on the actual intake route
+
+A constructor or pure validator test does not establish validation at Store
+intake. Trace its actual callsites, then challenge a previously valid nested
+carrier after construction. Run initial admission and exact replay through both
+the raw Store and facade. Compare full persistent rowsets, dependency reads,
+transaction state and leases on refusal; retain ordinary stage-fence controls.
+Use bounded synthetic typed-input mutations, such as replacing a declared
+endpoint with None or an invalid state, rather than making an arbitrary-Python
+sandbox or Provider-authentication claim.
+
+Reuse the canonical complete-original validator after bounded input accounting
+and current authority/selection, before dependency lookup, serialization, writes
+or duplicate success. Dependency enumeration must not dereference malformed
+convenience properties before that boundary. Never fill an absent original from
+stored rows, translated endpoints or Event coordinates. Keep the original
+clock/provenance/time and full endpoint declaration. Verify with:
+
+```sh
+python -m pytest tests/integration/i6a/test_originals_revalidation.py -q
+```
+
+ORIGINALS-M1 demonstrated constructor/replace refusal alongside actual
+insert/duplicate and explicit-NULL laundering. The corrected source and both
+installed wheel forms refuse those saved counterexamples, while preserving
+normal fences and valid original roundtrips. These are implementation checks;
+non-Author acceptance and release qualification remain separate.
+
+## Require binding provenance after resolving transport
+
+Resolve .json or .json.gz before testing whether a source-binding artifact is
+present. A gzip-aware reader cannot help if an earlier plain-path existence
+predicate skips the reader. Require both complete before/after bindings and
+compare head, tree, input SHA-256 inventory and tracked status. Missing either
+or both is an explicit provenance failure, not evidence of equality. Equal
+missing dictionary values do not prove complete evidence.
+
+```sh
+python -m pytest tests/unit/test_i6a_regression_bindings.py -q
+```
+
+I6A-IR-L01 reproduced consistent=true with null source bindings on the actual
+published compressed evidence. Verify the repaired parser on unchanged archives
+and separately copied compressed mismatch/missing controls. Never rewrite old
+ZIP/JSON evidence to make a new parser pass.
+
+Set UV_CACHE_DIR to a writable external directory in the parent execution
+driver before every uv subprocess, including uv pip install into artifact venvs.
+Setting it only on uv sync leaves later offline installs using a read-only
+home cache. Preserve that setup failure and use a new output directory for the
+corrected execution; compare source and artifact hashes across the retry.
+
 ## Size acceptance storage and inspect fetch scope
 
 Before broad concurrent acceptance runs, inspect `df -h`/`df -i` for the actual
