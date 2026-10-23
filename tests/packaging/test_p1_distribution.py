@@ -9,8 +9,8 @@ from pathlib import Path
 
 import pytest
 
-from scripts.installed_test_harness import stage_support
 from scripts.check_sdist_contract import check_sdist, compare_wheels, save
+from scripts.installed_test_harness import stage_support
 
 ROOT = Path(__file__).resolve().parents[2]
 
