@@ -1,0 +1,9 @@
+{
+  "id": "V03-original-parent",
+  "bytes": 2171,
+  "sha256": "1b07744024e857aba974be6e5ca01d42fb8bd6cffbeb1b22700d55ed7faaddce",
+  "digest_sha256": "f8ed2052db8db403b0ede2550b851f9620b8db51920974fa19a934e847f8256b",
+  "outcome": "accept",
+  "refusal_code": null,
+  "scope": "supplementary Author-team codec verification, not independent review"
+}

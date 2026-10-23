@@ -1,0 +1,18 @@
+{
+  "status": "completed_nonfinal",
+  "head": "d68dc43bff1eb949b071ebf1652e3d70a5a52ed9",
+  "tree": "e1c9748b976d5e4266962cffe37ff82c98d1414f",
+  "superseded_by": "fe9e48bfac750a276b2622da2c50d3d4559de338",
+  "reason": "Added M01 root-key length check and new regression after this invocation began. Final frozen source requires its own new single full invocation; this completed result is never combined with it.",
+  "counts": {
+    "collected": 6343,
+    "passed": 6044,
+    "failed": 279,
+    "error": 20,
+    "skipped": 0,
+    "xfail": 0,
+    "xpass": 0,
+    "exit_code": 1
+  },
+  "full_acceptance": false
+}

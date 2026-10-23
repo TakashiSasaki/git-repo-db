@@ -1,0 +1,63 @@
+{
+  "before": {
+    "format": "git-repo-db/adr0031-exchange-v5",
+    "digest_sha256": "437e9bb615f52b44a5e91aca0bd7647b8ac11cf396aa6fe868685d0770d3fd14",
+    "package_id": "0bec528e-c1be-46ca-87b9-b0527a159639",
+    "exported_at_us": 971,
+    "sender_catalog_instance_uuidv4": "8bc7720a-0659-4c69-9159-28c9ad44f121",
+    "repository_uuidv4": "122617f1-7b75-475d-bc2e-8f30d1cbd8a5",
+    "selection_scope": {
+      "repository_uuidv4s": null,
+      "all_selected": true,
+      "max_depth": 8,
+      "max_units": 10000,
+      "max_bytes": 16777216,
+      "max_work": 10000000,
+      "include_core": true,
+      "include_context": true,
+      "include_retained_bytes": true,
+      "object_oids": null,
+      "notes_refs": null,
+      "resource_keys": null,
+      "source_uuidv4s": [
+        "0bec528e-c1be-46ca-87b9-b0527a159639",
+        "60b4edcd-0f95-4ba4-a0aa-a2f860906c02"
+      ]
+    },
+    "selection_report": {},
+    "core": null,
+    "context": null
+  },
+  "received": {
+    "format": "git-repo-db/adr0031-exchange-v5",
+    "digest_sha256": "437e9bb615f52b44a5e91aca0bd7647b8ac11cf396aa6fe868685d0770d3fd14",
+    "package_id": "0bec528e-c1be-46ca-87b9-b0527a159639",
+    "exported_at_us": 971,
+    "sender_catalog_instance_uuidv4": "8bc7720a-0659-4c69-9159-28c9ad44f121",
+    "repository_uuidv4": "122617f1-7b75-475d-bc2e-8f30d1cbd8a5",
+    "selection_scope": {
+      "repository_uuidv4s": null,
+      "all_selected": true,
+      "max_depth": 8,
+      "max_units": 10000,
+      "max_bytes": 16777216,
+      "max_work": 10000000,
+      "include_core": true,
+      "include_context": true,
+      "include_retained_bytes": true,
+      "object_oids": null,
+      "notes_refs": null,
+      "resource_keys": null,
+      "source_uuidv4s": [
+        "0bec528e-c1be-46ca-87b9-b0527a159639",
+        "60b4edcd-0f95-4ba4-a0aa-a2f860906c02",
+        "0bec528e-c1be-46ca-87b9-b0527a159639"
+      ]
+    },
+    "selection_report": {},
+    "core": null,
+    "context": null
+  },
+  "actual_received_digest": "62cc44eebe475d530f58df29c25f13193ab810ccd4acd4914cb40a670b3d9136",
+  "declared_digest": "437e9bb615f52b44a5e91aca0bd7647b8ac11cf396aa6fe868685d0770d3fd14"
+}

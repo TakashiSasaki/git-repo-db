@@ -1,0 +1,175 @@
+"""Offline controls for the read-only CI helper; no GitHub requests or mutations."""
+
+import copy
+import importlib.util
+import io
+import json
+import sys
+import unittest
+import zipfile
+from pathlib import Path
+
+NEW = Path(sys.argv.pop(1)).resolve()
+HISTORICAL = Path(sys.argv.pop(1)).resolve()
+spec = importlib.util.spec_from_file_location("verify_ci", NEW / "verify_development_receipt.py")
+ci = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(ci)
+sys.path.insert(0, str(NEW))
+import verify_access_receipt as access
+
+BASE = "ea43a21fca1dbf8fa6dd1c254b28a96d5dd28d00"
+
+
+def archive(files):
+    output = io.BytesIO()
+    with zipfile.ZipFile(output, "w", compression=zipfile.ZIP_DEFLATED) as z:
+        for name, raw in files.items():
+            z.writestr(name, raw)
+    return output.getvalue()
+
+
+def markers(blob):
+    import base64
+    sha = ci.digest(blob)
+    return "\n".join([
+        f"2026-10-23T12:00:00.0000000Z CI_RECEIPTS_BEGIN_V1 {sha} {len(blob)}",
+        "2026-10-23T12:00:00.0000000Z CI_RECEIPTS_DATA_V1 " + base64.b64encode(blob).decode(),
+        f"2026-10-23T12:00:00.0000000Z CI_RECEIPTS_END_V1 {sha}",
+    ])
+
+
+class Controls(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.receipt, cls.views = ci.recover_receipt(ci.log_views([HISTORICAL / "ci/author-development-logs.zip"]))
+        cls.run_metadata = json.loads((NEW / "historical-run151-development.json").read_text())
+        cls.feature = json.loads((NEW / "historical-feature151.json").read_text())
+        cls.checkout = json.loads((NEW / "historical-checkout151.json").read_text())
+
+    def verify(self, receipt=None, run=None, feature=None, checkout=None, base=BASE):
+        return ci.verify(receipt or self.receipt, run or self.run_metadata, feature or self.feature, checkout or self.checkout, base, 151)
+
+    def test_actual_historical_receipt_full_positive(self):
+        _, result = self.verify()
+        self.assertEqual(result["receipt_sha256"], "7622c0d22dac39585c968ebfd04cc8a7667c64500dcbe3b964d1d005d5255c4e")
+        self.assertEqual(result["indexed_payloads_verified"], 21)
+        self.assertEqual(result["hosted_product_test_cases"], 0)
+        self.assertFalse(result["full_acceptance"])
+
+    def test_timestamped_actual_views_agree(self):
+        blob, names = ci.recover_receipt([("one", markers(self.receipt)), ("two", markers(self.receipt))])
+        self.assertEqual(blob, self.receipt)
+        self.assertEqual(names, ["one", "two"])
+
+    def test_unexecuted_shell_echo_is_not_a_receipt(self):
+        with self.assertRaises(ValueError):
+            ci.recover_receipt([("echo", '2026-10-23T12:00:00Z echo "CI_RECEIPTS_BEGIN_V1 x 10"')])
+
+    def test_missing_begin(self):
+        with self.assertRaises(ValueError):
+            ci.recover_receipt([("x", "\n".join(markers(self.receipt).splitlines()[1:]))])
+
+    def test_missing_end(self):
+        with self.assertRaises(ValueError):
+            ci.recover_receipt([("x", "\n".join(markers(self.receipt).splitlines()[:-1]))])
+
+    def test_duplicate_begin(self):
+        text = markers(self.receipt)
+        with self.assertRaises(ValueError):
+            ci.recover_receipt([("x", text.splitlines()[0] + "\n" + text)])
+
+    def test_conflicting_observed_receipts(self):
+        with self.assertRaises(ValueError):
+            ci.recover_receipt([("one", markers(self.receipt)), ("two", markers(b"different"))])
+
+    def test_wrong_claimed_hash(self):
+        text = markers(self.receipt).replace(ci.digest(self.receipt), "0" * 64)
+        with self.assertRaises(ValueError):
+            ci.recover_receipt([("x", text)])
+
+    def test_indexed_payload_tampering(self):
+        files, _ = ci.indexed_payloads(self.receipt)
+        files["receipt-binding.json"] += b" "
+        with self.assertRaisesRegex(ValueError, "indexed length mismatch"):
+            ci.indexed_payloads(archive(files))
+
+    def test_feature_mismatch(self):
+        run = copy.deepcopy(self.run_metadata)
+        run["head_sha"] = "0" * 40
+        with self.assertRaises(ValueError):
+            self.verify(run=run)
+
+    def test_actual_parents_reversed(self):
+        checkout = copy.deepcopy(self.checkout)
+        checkout["parents"].reverse()
+        with self.assertRaises(ValueError):
+            self.verify(checkout=checkout)
+
+    def test_actual_tree_mismatch(self):
+        checkout = copy.deepcopy(self.checkout)
+        checkout["tree"]["sha"] = "0" * 40
+        with self.assertRaises(ValueError):
+            self.verify(checkout=checkout)
+
+    def test_wrong_run_identity(self):
+        run = copy.deepcopy(self.run_metadata)
+        run["id"] += 1
+        with self.assertRaises(ValueError):
+            self.verify(run=run)
+
+    def test_wrong_attempt(self):
+        run = copy.deepcopy(self.run_metadata)
+        run["run_attempt"] += 1
+        with self.assertRaises(ValueError):
+            self.verify(run=run)
+
+    def test_pending_is_not_success(self):
+        run = copy.deepcopy(self.run_metadata)
+        run["status"], run["conclusion"] = "in_progress", None
+        with self.assertRaises(ValueError):
+            self.verify(run=run)
+
+    def test_failed_is_not_success(self):
+        run = copy.deepcopy(self.run_metadata)
+        run["conclusion"] = "failure"
+        with self.assertRaises(ValueError):
+            self.verify(run=run)
+
+
+class AccessControls(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.receipt = (HISTORICAL / "ci/author-access/recovered-receipt.zip").read_bytes()
+        cls.run_metadata = json.loads((NEW / "historical-run151-access.json").read_text())
+        cls.feature = json.loads((NEW / "historical-feature151.json").read_text())
+        cls.checkout = json.loads((NEW / "historical-checkout151.json").read_text())
+
+    def test_historical_failed_access_is_reported_failed(self):
+        _, result = access.verify_access(self.receipt, self.run_metadata, self.feature, self.checkout, BASE, 151)
+        self.assertEqual(result["conclusion"], "failure")
+        self.assertEqual(result["indexed_payloads_verified"], 121)
+        lanes = result["junit_lanes_separate_overlapping"]
+        self.assertEqual(lanes["artifacts/access-registry/tests.xml"], {"cases": 2786, "pass": 2487, "fail": 279, "error": 20, "skip": 0})
+
+    def test_access_receipt_cannot_bind_different_feature(self):
+        run = copy.deepcopy(self.run_metadata)
+        run["head_sha"] = "0" * 40
+        with self.assertRaises(ValueError):
+            access.verify_access(self.receipt, run, self.feature, self.checkout, BASE, 151)
+
+    def test_nested_receipt_cannot_escape_output_directory(self):
+        files, _ = ci.indexed_payloads(self.receipt, flat=False)
+        files["../escape"] = b"bad"
+        with self.assertRaises(ValueError):
+            ci.indexed_payloads(archive(files), flat=False)
+
+    def test_access_indexed_payload_change_is_detected(self):
+        files, _ = ci.indexed_payloads(self.receipt, flat=False)
+        name = "receipt-binding.json"
+        files[name] = files[name].replace(b"39955068823", b"39955068824")
+        with self.assertRaisesRegex(ValueError, "indexed hash mismatch"):
+            ci.indexed_payloads(archive(files), flat=False)
+
+
+if __name__ == "__main__":
+    unittest.main(verbosity=2)

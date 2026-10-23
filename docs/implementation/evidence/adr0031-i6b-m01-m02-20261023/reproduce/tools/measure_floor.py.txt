@@ -1,0 +1,40 @@
+"""Same scaling observation as #152, with explicit source/output parameters."""
+import argparse
+import hashlib
+import importlib.util
+import json
+import pathlib
+import sqlite3
+import sys
+from unittest.mock import patch
+
+parser=argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--root',type=pathlib.Path,required=True)
+parser.add_argument('--out',type=pathlib.Path,required=True)
+args=parser.parse_args()
+sys.path.insert(0,str(args.root/'src'))
+from repo_catalog.domain import exchange
+from repo_catalog.domain.context_dependencies import plan_context_dependencies
+from repo_catalog.domain.exchange import ExchangeSelectionScope
+p=pathlib.Path(__file__).parents[1]/'probes/test_planner_work_budget_contract.py'
+s=importlib.util.spec_from_file_location('independent_budget_case',p)
+m=importlib.util.module_from_spec(s);s.loader.exec_module(m)
+results=[]
+for n in (0,1,5,50,500,1000):
+    data=m.valid_context(n)
+    input_bytes=len(json.dumps(data,ensure_ascii=False,separators=(',',':')).encode())
+    for budget,prior in ((0,0),(1,0),(17,0),(17,17)):
+        parsed=[];original=exchange._parse_json
+        def observe(text):
+            parsed.append(len(text));return original(text)
+        with patch.object(exchange,'_parse_json',side_effect=observe):
+            result=plan_context_dependencies(data,ExchangeSelectionScope(all_selected=True,resource_keys=(),source_uuidv4s=(),repository_uuidv4s=(),max_work=budget),prior_work=prior)
+        results.append({'resources':n,'input_rows':sum(map(len,data.values())),'input_bytes':input_bytes,
+            'max_work':budget,'prior_work':prior,'charged_work':result.work_units,'additional_work':result.work_units-prior,
+            'parse_calls':len(parsed),'embedded_chars_parsed':sum(parsed),'emitted_units':result.emitted_units,
+            'reasons':[o.reason for o in result.omissions]})
+args.out.write_text(json.dumps({'measurements':results,'runtime':{'executable':sys.executable,'python':sys.version,
+    'sqlite':sqlite3.connect(':memory:').execute('select sqlite_version(),sqlite_source_id()').fetchone()},
+    'origins':{'exchange':exchange.__file__},'source_hashes':{str(p.relative_to(args.root)):hashlib.sha256(p.read_bytes()).hexdigest() for p in [args.root/'src/repo_catalog/domain/exchange.py',args.root/'src/repo_catalog/domain/context_dependencies.py']},
+    'probe_sha256':hashlib.sha256(p.read_bytes()).hexdigest()},indent=2)+'\n')
+print(json.dumps([r for r in results if r['resources']==500],indent=2))

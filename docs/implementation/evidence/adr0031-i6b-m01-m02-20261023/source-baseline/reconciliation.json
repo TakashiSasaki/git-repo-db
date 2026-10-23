@@ -1,0 +1,11 @@
+{
+  "checks": {
+    "collection_unique33": true,
+    "collection_equals_starts": true,
+    "junit_names_match": true,
+    "ordinary_phases_once": true,
+    "finish_exit1": true
+  },
+  "collect_exit": 0,
+  "scope": "Unchanged independent33 required-refusal tests fail against frozen review source. No inversion of failure into PASS."
+}

@@ -1,0 +1,45 @@
+"""Record observed stale/corrected received-dictionary digest outcomes, by carrier."""
+import argparse
+import copy
+import hashlib
+import importlib.util
+import json
+from pathlib import Path
+import sqlite3
+import sys
+
+p=argparse.ArgumentParser(description=__doc__)
+p.add_argument('--root',type=Path,required=True);p.add_argument('--out',type=Path,required=True)
+a=p.parse_args();sys.path.insert(0,str(a.root/'src'))
+from repo_catalog.domain import exchange
+probe=Path(__file__).parents[1]/'probes/test_digest_contract.py'
+spec=importlib.util.spec_from_file_location('saved_digest_case',probe)
+m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
+records=[]
+for field in ('repository_uuidv4s','source_uuidv4s','notes_refs','object_oids','resource_keys'):
+    for mutation in ('duplicate','permutation'):
+        original=m.original(field);data=copy.deepcopy(original)
+        if mutation=='duplicate':data['selection_scope'][field].append(data['selection_scope'][field][0])
+        else:data['selection_scope'][field].reverse()
+        actual=m.raw_digest(data)
+        assert actual!=data['digest_sha256']
+        for declared in ('stale','recomputed'):
+            value=copy.deepcopy(data)
+            if declared=='recomputed':value['digest_sha256']=actual
+            for carrier in ('dict','str','bytes'):
+                wire=value if carrier=='dict' else json.dumps(value) if carrier=='str' else json.dumps(value).encode()
+                row={'field':field,'mutation':mutation,'carrier':carrier,'digest_case':declared,
+                    'declared_digest':value['digest_sha256'],'actual_received_dictionary_digest':actual}
+                try:
+                    result=exchange.decode_package(wire)
+                    row.update(outcome='accepted',returned_digest=result.digest_sha256,
+                        returned_selection_equals_received=result.to_dict()['selection_scope']==value['selection_scope'])
+                except exchange.ExchangeError as error:
+                    row.update(outcome='refused',exception_type=type(error).__name__,code=error.code,scope=error.scope,message=str(error))
+                records.append(row)
+a.out.write_text(json.dumps({'observations':records,'origins':{'exchange':exchange.__file__},
+    'runtime':{'python':sys.version,'executable':sys.executable,'sqlite':sqlite3.connect(':memory:').execute('select sqlite_version(),sqlite_source_id()').fetchone()},
+    'source_sha256':hashlib.sha256((a.root/'src/repo_catalog/domain/exchange.py').read_bytes()).hexdigest(),
+    'probe_sha256':hashlib.sha256(probe.read_bytes()).hexdigest()},indent=2)+'\n')
+from collections import Counter
+print(json.dumps({case:dict(Counter((r['outcome'],r.get('code')) for r in records if r['digest_case']==case)) for case in ()}))

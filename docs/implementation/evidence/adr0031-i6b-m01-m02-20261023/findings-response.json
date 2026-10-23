@@ -1,0 +1,86 @@
+{
+  "review_pr": 152,
+  "review_head": "8521158f2996f125d2fcaac36ea79ac1296a7cf7",
+  "execution_head": "fe9e48bfac750a276b2622da2c50d3d4559de338",
+  "execution_tree": "8ef254ff060f44f02370a695743c7a581e7b9b5c",
+  "author_status": "implemented; separate non-Author re-review pending",
+  "independent_pass_claimed": false,
+  "findings": [
+    {
+      "id": "I6B-IR-M01",
+      "requirements": [
+        "R04",
+        "R13"
+      ],
+      "tests": [
+        "T11"
+      ],
+      "files": [
+        "src/repo_catalog/domain/context_dependencies.py",
+        "src/repo_catalog/domain/exchange.py",
+        "tests/unit/test_context_scan_budget.py"
+      ],
+      "correction": "Reserve cumulative request work before scanner queue/escaping/embedded parse work; fixed-envelope hard-cap lower bound precedes scanner; retain completed whole units. Root cardinality is checked before key-set allocation.",
+      "unchanged_contract_nodes": 3,
+      "new_regression_nodes": 16,
+      "counterexample_evidence": [
+        "source-baseline/work-floor.json",
+        "source-contracts-root-guard/work-floor.json",
+        "source-contracts-root-guard/execution.json"
+      ],
+      "review_source_anchors": [
+        "src/repo_catalog/domain/context_dependencies.py:106",
+        "src/repo_catalog/domain/context_dependencies.py:127",
+        "src/repo_catalog/domain/exchange.py:97",
+        "src/repo_catalog/domain/exchange.py:325"
+      ],
+      "corrected_source_anchors": [
+        "src/repo_catalog/domain/context_dependencies.py:103",
+        "src/repo_catalog/domain/context_dependencies.py:154",
+        "src/repo_catalog/domain/exchange.py:54",
+        "src/repo_catalog/domain/exchange.py:258"
+      ]
+    },
+    {
+      "id": "I6B-IR-M02",
+      "requirements": [
+        "R03"
+      ],
+      "tests": [
+        "T10",
+        "T24",
+        "T27"
+      ],
+      "files": [
+        "src/repo_catalog/domain/exchange.py",
+        "tests/unit/test_exchange_received_digest.py"
+      ],
+      "correction": "Verify received raw dictionary checksum before selection conversion using one canonical encoder, then refuse representations unequal to existing selection canonical authority.",
+      "unchanged_contract_nodes": 30,
+      "new_regression_nodes": 40,
+      "counterexample_evidence": [
+        "source-baseline/digest-observations.json",
+        "source-contracts-root-guard/digest-observations.json",
+        "source-contracts-root-guard/execution.json"
+      ],
+      "review_source_anchors": [
+        "src/repo_catalog/domain/exchange.py:847",
+        "src/repo_catalog/domain/exchange.py:465",
+        "src/repo_catalog/domain/exchange.py:334",
+        "src/repo_catalog/domain/exchange.py:687"
+      ],
+      "corrected_source_anchors": [
+        "src/repo_catalog/domain/exchange.py:372",
+        "src/repo_catalog/domain/exchange.py:630",
+        "src/repo_catalog/domain/exchange.py:890"
+      ]
+    }
+  ],
+  "remaining": [
+    "299 pre-existing ordinary non-successes are not fixed by this task",
+    "Original Access smoke unwired export refusal; later assertions unexecuted",
+    "120 historical evidence file omissions from sdist, product inputs retained",
+    "Independent re-review, I6-C/I7/I8, normal Transfer activation and assembled integration not performed",
+    "Full hosted Release acceptance not performed"
+  ]
+}

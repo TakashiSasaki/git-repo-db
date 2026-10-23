@@ -1,0 +1,62 @@
+{
+  "before": {
+    "format": "git-repo-db/adr0031-exchange-v5",
+    "digest_sha256": "7cc9eb305beec24a35989047885169eca47b86b1adca5a3ac28aaef0234c695c",
+    "package_id": "0bec528e-c1be-46ca-87b9-b0527a159639",
+    "exported_at_us": 971,
+    "sender_catalog_instance_uuidv4": "8bc7720a-0659-4c69-9159-28c9ad44f121",
+    "repository_uuidv4": "122617f1-7b75-475d-bc2e-8f30d1cbd8a5",
+    "selection_scope": {
+      "repository_uuidv4s": null,
+      "all_selected": true,
+      "max_depth": 8,
+      "max_units": 10000,
+      "max_bytes": 16777216,
+      "max_work": 10000000,
+      "include_core": true,
+      "include_context": true,
+      "include_retained_bytes": true,
+      "object_oids": null,
+      "notes_refs": [
+        "refs/notes/a",
+        "refs/notes/z"
+      ],
+      "resource_keys": null,
+      "source_uuidv4s": null
+    },
+    "selection_report": {},
+    "core": null,
+    "context": null
+  },
+  "received": {
+    "format": "git-repo-db/adr0031-exchange-v5",
+    "digest_sha256": "7cc9eb305beec24a35989047885169eca47b86b1adca5a3ac28aaef0234c695c",
+    "package_id": "0bec528e-c1be-46ca-87b9-b0527a159639",
+    "exported_at_us": 971,
+    "sender_catalog_instance_uuidv4": "8bc7720a-0659-4c69-9159-28c9ad44f121",
+    "repository_uuidv4": "122617f1-7b75-475d-bc2e-8f30d1cbd8a5",
+    "selection_scope": {
+      "repository_uuidv4s": null,
+      "all_selected": true,
+      "max_depth": 8,
+      "max_units": 10000,
+      "max_bytes": 16777216,
+      "max_work": 10000000,
+      "include_core": true,
+      "include_context": true,
+      "include_retained_bytes": true,
+      "object_oids": null,
+      "notes_refs": [
+        "refs/notes/z",
+        "refs/notes/a"
+      ],
+      "resource_keys": null,
+      "source_uuidv4s": null
+    },
+    "selection_report": {},
+    "core": null,
+    "context": null
+  },
+  "actual_received_digest": "42953fb7e8000c620b25ec21823883b97cf7f348869ec589093e73b85f543880",
+  "declared_digest": "7cc9eb305beec24a35989047885169eca47b86b1adca5a3ac28aaef0234c695c"
+}

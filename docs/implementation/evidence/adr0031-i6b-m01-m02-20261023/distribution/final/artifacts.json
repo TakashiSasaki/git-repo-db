@@ -1,0 +1,17 @@
+{
+  "direct": {
+    "path": "/workspace/i6b-fix-distribution-final/frozen/dist/repo_catalog-0.2.0-py3-none-any.whl",
+    "sha256": "3296d98d10320b348967b6e09f3f74e5253a986bcea549baa2e3e6359945b373",
+    "bytes": 791288
+  },
+  "sdist": {
+    "path": "/workspace/i6b-fix-distribution-final/frozen/dist/repo_catalog-0.2.0.tar.gz",
+    "sha256": "14747b4d34425119c2c0f969e9927234bb4b7ef0edded456fc0dc6cd3f66026b",
+    "bytes": 151931568
+  },
+  "derived": {
+    "path": "/workspace/i6b-fix-distribution-final/from-sdist/repo_catalog-0.2.0/dist/repo_catalog-0.2.0-py3-none-any.whl",
+    "sha256": "3296d98d10320b348967b6e09f3f74e5253a986bcea549baa2e3e6359945b373",
+    "bytes": 791288
+  }
+}

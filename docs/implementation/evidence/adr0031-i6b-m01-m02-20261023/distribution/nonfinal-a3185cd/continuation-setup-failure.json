@@ -1,0 +1,8 @@
+{
+  "exit_code": 1,
+  "exception": "NameError: env is not defined",
+  "reason": "Continuation harness omitted inherited build env definition",
+  "completed": "explicit120-omission audit and before derived build",
+  "product_tests_executed": 0,
+  "correction": "define sanitized environment before build-derived"
+}

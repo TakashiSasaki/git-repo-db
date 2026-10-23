@@ -1,0 +1,11 @@
+{
+  "frozen_review_head": "8521158f2996f125d2fcaac36ea79ac1296a7cf7",
+  "fixed_source_head": "d68dc43bff1eb949b071ebf1652e3d70a5a52ed9",
+  "all_prior_test_inputs_byte_equal": true,
+  "prior_test_input_count": 274,
+  "new_test_files": [
+    "tests/unit/test_context_scan_budget.py",
+    "tests/unit/test_exchange_received_digest.py"
+  ],
+  "no_existing_assertion_or_fixture_changes": "Byte equality is stronger than AST equality; every original test fixture/assertion remains unchanged relative to the frozen review source. Earlier #149-to-#152 fixture migrations remain historical, not new modifications."
+}

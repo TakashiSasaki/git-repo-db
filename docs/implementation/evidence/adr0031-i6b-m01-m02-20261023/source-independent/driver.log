@@ -1,0 +1,1 @@
+{"exit_code": 1, "collected": 208, "passed": 207, "failed": 1, "error": 0, "skipped": 0, "xfail": 0, "xpass": 0, "checks": {"selected_equals_journal": true, "selected_equals_junit": true, "exact_ordinary_phases": true, "finish_matches_exit": true}}

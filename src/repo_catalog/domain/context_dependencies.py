@@ -75,8 +75,11 @@ def plan_context_dependencies(
     """Select whole units within inclusive limits, retaining original row order.
 
     ``prior_work`` carries actual work already spent by the same request. Work
-    includes parsing embedded values, inspecting rows and member/dependency
-    checks, including refused and repeated work. It is not refunded on omission.
+    reserves visited values, queued references and examined Unicode codepoints
+    before scanning/parsing, then row/member/dependency checks, including refused
+    and repeated work. A failed reservation costs one fixed unit and performs no
+    refused operation; thus a stop adds at most one unit to the remaining budget.
+    Work is not refunded on omission.
     Optional node/edge limits may tighten the outer finite element ceiling.
     Depth counts explicit Resource member edges, never namespace coordinates.
     """
@@ -96,15 +99,35 @@ def plan_context_dependencies(
         MAX_ELEMENTS, scope.max_units, MAX_ELEMENTS if max_nodes is None else max_nodes
     )
     edge_cap = min(MAX_ELEMENTS, MAX_ELEMENTS if max_edges is None else max_edges)
-    if type(data) is not dict or set(data) != set(CONTEXT_SECTION_KEYS):
+    if (
+        type(data) is not dict
+        or len(data) != len(CONTEXT_SECTION_KEYS)
+        or set(data) != set(CONTEXT_SECTION_KEYS)
+    ):
         raise ExchangeError("MALFORMED_SECTION", "context")
     if any(type(rows) is not list for rows in data.values()):
         raise ExchangeError("MALFORMED_SECTION", "context")
-    # The shared scanner bounds caller-owned cycles, nesting, escaped bytes and
-    # embedded JSON before planner indexing/allocations. Codec validation remains
-    # the independent schema/semantic boundary.
-    scanned, _ = _bounded_json(data, root="context")
-    work = prior_work + scanned
+    # Fixed-envelope inspection only: len(list) never visits or queues rows.
+    # Root, section keys/lists and even one value per row already establish this
+    # hard lower bound. Preserve INPUT_LIMIT precedence without an input scan,
+    # including when no configurable work remains.
+    if 1 + 2 * len(data) + sum(map(len, data.values())) > MAX_ELEMENTS:
+        raise ExchangeError("INPUT_LIMIT", "context", "JSON elements")
+    work = prior_work
+
+    class WorkLimit(Exception):
+        pass
+
+    def spend(amount=1):
+        nonlocal work
+        # One fixed unit records the failed reservation; the refused operation
+        # does not run and is not charged as if it had. No retry refunds work.
+        if amount > scope.max_work - work:
+            work += 1
+            raise WorkLimit
+        work += amount
+        return True
+
     empty = {key: [] for key in CONTEXT_SECTION_KEYS}
     omissions: list[DependencyOmission] = []
 
@@ -124,27 +147,19 @@ def plan_context_dependencies(
             DependencyOmission(("context",), "context", "section_not_selected")
         )
         return result()
-    if work > scope.max_work:
+    try:
+        # The same hard-cap/cycle/identity scanner as the codec, with request
+        # reservations before traversal, queue growth, escaping and embedded
+        # parsing. The element count is distinct from character-inclusive work.
+        _bounded_json(data, root="context", spend=spend)
+    except WorkLimit:
         omissions.append(DependencyOmission(("context",), "context", "work_limit"))
         return result()
-
-    class WorkLimit(Exception):
-        pass
 
     completed_rows: dict[tuple[str, int], dict] = {}
     completed_units: dict[tuple, ContextSemanticUnit] = {}
     completed_sizes: dict[tuple[str, int], int] = {}
     completed_resources: set[ResourceKey] = set()
-
-    def spend(amount=1):
-        nonlocal work
-        # A refused budget check is itself one unit of actual work; the refused
-        # operation is not charged as if it had run. Stop immediately.
-        if amount > scope.max_work - work:
-            work += 1
-            raise WorkLimit
-        work += amount
-        return True
 
     def charge_value(value):
         # One unit per visited value plus Unicode codepoints examined in strings.

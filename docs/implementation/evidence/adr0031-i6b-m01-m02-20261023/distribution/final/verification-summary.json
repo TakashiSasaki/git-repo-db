@@ -1,0 +1,1082 @@
+{
+  "author_validation": true,
+  "independent_review": false,
+  "release_acceptance": false,
+  "source_head": "d68dc43bff1eb949b071ebf1652e3d70a5a52ed9",
+  "source_tree": "e1c9748b976d5e4266962cffe37ff82c98d1414f",
+  "results": {
+    "direct-safety": {
+      "exit_code": 0,
+      "collected": 626,
+      "passed": 626,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 626,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 1878
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792764635.49768
+          }
+        ]
+      }
+    },
+    "direct-wire": {
+      "exit_code": 0,
+      "collected": 212,
+      "passed": 212,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 212,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 636
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792764659.922601
+          }
+        ]
+      }
+    },
+    "direct-independent": {
+      "exit_code": 0,
+      "collected": 204,
+      "passed": 204,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 204,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 612
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792764689.269248
+          }
+        ]
+      }
+    },
+    "direct-resolved-wire": {
+      "exit_code": 0,
+      "collected": 4,
+      "passed": 4,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 4,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 12
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792764694.967908
+          }
+        ]
+      }
+    },
+    "direct-author-extra": {
+      "exit_code": 0,
+      "collected": 34,
+      "passed": 34,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 34,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 102
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792764708.020317
+          }
+        ]
+      }
+    },
+    "direct-counterexamples": {
+      "exit_code": 0,
+      "collected": 33,
+      "passed": 33,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 33,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 99
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792764702.455789
+          }
+        ]
+      }
+    },
+    "direct-new-regressions": {
+      "exit_code": 0,
+      "collected": 55,
+      "passed": 55,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 55,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 165
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792764714.94844
+          }
+        ]
+      }
+    },
+    "direct-original-smoke-v2": {
+      "exit_code": 1,
+      "collected": 1,
+      "passed": 0,
+      "failed": 1,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 1,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 2,
+          "failed": 1
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "failed",
+            "exitstatus": 1,
+            "timestamp": 1792764484.357599
+          }
+        ]
+      }
+    },
+    "derived-safety": {
+      "exit_code": 0,
+      "collected": 626,
+      "passed": 626,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 626,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 1878
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792764864.395548
+          }
+        ]
+      }
+    },
+    "derived-wire": {
+      "exit_code": 0,
+      "collected": 212,
+      "passed": 212,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 212,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 636
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792764879.580232
+          }
+        ]
+      }
+    },
+    "derived-independent": {
+      "exit_code": 0,
+      "collected": 204,
+      "passed": 204,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 204,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 612
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792764729.973026
+          }
+        ]
+      }
+    },
+    "derived-resolved-wire": {
+      "exit_code": 0,
+      "collected": 4,
+      "passed": 4,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 4,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 12
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792764735.865489
+          }
+        ]
+      }
+    },
+    "derived-author-extra": {
+      "exit_code": 0,
+      "collected": 34,
+      "passed": 34,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 34,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 102
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792764748.201885
+          }
+        ]
+      }
+    },
+    "derived-counterexamples": {
+      "exit_code": 0,
+      "collected": 33,
+      "passed": 33,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 33,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 99
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792764743.318464
+          }
+        ]
+      }
+    },
+    "derived-new-regressions": {
+      "exit_code": 0,
+      "collected": 55,
+      "passed": 55,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 55,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 165
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792764753.863267
+          }
+        ]
+      }
+    },
+    "derived-original-smoke-v2": {
+      "exit_code": 1,
+      "collected": 1,
+      "passed": 0,
+      "failed": 1,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 1,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 2,
+          "failed": 1
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "failed",
+            "exitstatus": 1,
+            "timestamp": 1792764500.108254
+          }
+        ]
+      }
+    }
+  },
+  "matching_selected_ids": {
+    "safety": {
+      "nodes": 626,
+      "direct_equals_derived_exact_selected_ids": true,
+      "duplicate_free": true
+    },
+    "wire": {
+      "nodes": 212,
+      "direct_equals_derived_exact_selected_ids": true,
+      "duplicate_free": true
+    },
+    "independent": {
+      "nodes": 204,
+      "direct_equals_derived_exact_selected_ids": true,
+      "duplicate_free": true
+    },
+    "resolved-wire": {
+      "nodes": 4,
+      "direct_equals_derived_exact_selected_ids": true,
+      "duplicate_free": true
+    },
+    "author-extra": {
+      "nodes": 34,
+      "direct_equals_derived_exact_selected_ids": true,
+      "duplicate_free": true
+    },
+    "counterexamples": {
+      "nodes": 33,
+      "direct_equals_derived_exact_selected_ids": true,
+      "duplicate_free": true
+    },
+    "new-regressions": {
+      "nodes": 55,
+      "direct_equals_derived_exact_selected_ids": true,
+      "duplicate_free": true
+    },
+    "original-smoke-v2": {
+      "nodes": 1,
+      "direct_equals_derived_exact_selected_ids": true,
+      "duplicate_free": true
+    }
+  },
+  "metadata": {
+    "direct": {
+      "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+      "executable": "/workspace/i6b-fix-distribution-final/direct-venv/bin/python",
+      "origin": "/workspace/i6b-fix-distribution-final/direct-venv/lib/python3.12/site-packages/repo_catalog",
+      "sqlite": {
+        "identity": [
+          "3.53.1",
+          "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9"
+        ],
+        "compile_options": [
+          [
+            "ATOMIC_INTRINSICS=1"
+          ],
+          [
+            "COMPILER=clang-22.1.3"
+          ],
+          [
+            "DEFAULT_AUTOVACUUM"
+          ],
+          [
+            "DEFAULT_CACHE_SIZE=-2000"
+          ],
+          [
+            "DEFAULT_FILE_FORMAT=4"
+          ],
+          [
+            "DEFAULT_JOURNAL_SIZE_LIMIT=-1"
+          ],
+          [
+            "DEFAULT_MMAP_SIZE=0"
+          ],
+          [
+            "DEFAULT_PAGE_SIZE=4096"
+          ],
+          [
+            "DEFAULT_PCACHE_INITSZ=20"
+          ],
+          [
+            "DEFAULT_RECURSIVE_TRIGGERS"
+          ],
+          [
+            "DEFAULT_SECTOR_SIZE=4096"
+          ],
+          [
+            "DEFAULT_SYNCHRONOUS=2"
+          ],
+          [
+            "DEFAULT_WAL_AUTOCHECKPOINT=1000"
+          ],
+          [
+            "DEFAULT_WAL_SYNCHRONOUS=2"
+          ],
+          [
+            "DEFAULT_WORKER_THREADS=0"
+          ],
+          [
+            "DIRECT_OVERFLOW_READ"
+          ],
+          [
+            "ENABLE_DBSTAT_VTAB"
+          ],
+          [
+            "ENABLE_FTS3"
+          ],
+          [
+            "ENABLE_FTS3_PARENTHESIS"
+          ],
+          [
+            "ENABLE_FTS4"
+          ],
+          [
+            "ENABLE_FTS5"
+          ],
+          [
+            "ENABLE_GEOPOLY"
+          ],
+          [
+            "ENABLE_MATH_FUNCTIONS"
+          ],
+          [
+            "ENABLE_PERCENTILE"
+          ],
+          [
+            "ENABLE_RTREE"
+          ],
+          [
+            "MALLOC_SOFT_LIMIT=1024"
+          ],
+          [
+            "MAX_ATTACHED=10"
+          ],
+          [
+            "MAX_COLUMN=2000"
+          ],
+          [
+            "MAX_COMPOUND_SELECT=500"
+          ],
+          [
+            "MAX_DEFAULT_PAGE_SIZE=8192"
+          ],
+          [
+            "MAX_EXPR_DEPTH=1000"
+          ],
+          [
+            "MAX_FUNCTION_ARG=1000"
+          ],
+          [
+            "MAX_LENGTH=1000000000"
+          ],
+          [
+            "MAX_LIKE_PATTERN_LENGTH=50000"
+          ],
+          [
+            "MAX_MMAP_SIZE=0x7fff0000"
+          ],
+          [
+            "MAX_PAGE_COUNT=0xfffffffe"
+          ],
+          [
+            "MAX_PAGE_SIZE=65536"
+          ],
+          [
+            "MAX_SQL_LENGTH=1000000000"
+          ],
+          [
+            "MAX_TRIGGER_DEPTH=1000"
+          ],
+          [
+            "MAX_VARIABLE_NUMBER=32766"
+          ],
+          [
+            "MAX_VDBE_OP=250000000"
+          ],
+          [
+            "MAX_WORKER_THREADS=8"
+          ],
+          [
+            "MUTEX_PTHREADS"
+          ],
+          [
+            "SYSTEM_MALLOC"
+          ],
+          [
+            "TEMP_STORE=1"
+          ],
+          [
+            "THREADSAFE=1"
+          ]
+        ],
+        "foreign_keys": [
+          1
+        ],
+        "recursive_triggers": [
+          1
+        ]
+      },
+      "installed_record_rows": 169,
+      "product_files": 160
+    },
+    "derived": {
+      "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+      "executable": "/workspace/i6b-fix-distribution-final/derived-venv/bin/python",
+      "origin": "/workspace/i6b-fix-distribution-final/derived-venv/lib/python3.12/site-packages/repo_catalog",
+      "sqlite": {
+        "identity": [
+          "3.53.1",
+          "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9"
+        ],
+        "compile_options": [
+          [
+            "ATOMIC_INTRINSICS=1"
+          ],
+          [
+            "COMPILER=clang-22.1.3"
+          ],
+          [
+            "DEFAULT_AUTOVACUUM"
+          ],
+          [
+            "DEFAULT_CACHE_SIZE=-2000"
+          ],
+          [
+            "DEFAULT_FILE_FORMAT=4"
+          ],
+          [
+            "DEFAULT_JOURNAL_SIZE_LIMIT=-1"
+          ],
+          [
+            "DEFAULT_MMAP_SIZE=0"
+          ],
+          [
+            "DEFAULT_PAGE_SIZE=4096"
+          ],
+          [
+            "DEFAULT_PCACHE_INITSZ=20"
+          ],
+          [
+            "DEFAULT_RECURSIVE_TRIGGERS"
+          ],
+          [
+            "DEFAULT_SECTOR_SIZE=4096"
+          ],
+          [
+            "DEFAULT_SYNCHRONOUS=2"
+          ],
+          [
+            "DEFAULT_WAL_AUTOCHECKPOINT=1000"
+          ],
+          [
+            "DEFAULT_WAL_SYNCHRONOUS=2"
+          ],
+          [
+            "DEFAULT_WORKER_THREADS=0"
+          ],
+          [
+            "DIRECT_OVERFLOW_READ"
+          ],
+          [
+            "ENABLE_DBSTAT_VTAB"
+          ],
+          [
+            "ENABLE_FTS3"
+          ],
+          [
+            "ENABLE_FTS3_PARENTHESIS"
+          ],
+          [
+            "ENABLE_FTS4"
+          ],
+          [
+            "ENABLE_FTS5"
+          ],
+          [
+            "ENABLE_GEOPOLY"
+          ],
+          [
+            "ENABLE_MATH_FUNCTIONS"
+          ],
+          [
+            "ENABLE_PERCENTILE"
+          ],
+          [
+            "ENABLE_RTREE"
+          ],
+          [
+            "MALLOC_SOFT_LIMIT=1024"
+          ],
+          [
+            "MAX_ATTACHED=10"
+          ],
+          [
+            "MAX_COLUMN=2000"
+          ],
+          [
+            "MAX_COMPOUND_SELECT=500"
+          ],
+          [
+            "MAX_DEFAULT_PAGE_SIZE=8192"
+          ],
+          [
+            "MAX_EXPR_DEPTH=1000"
+          ],
+          [
+            "MAX_FUNCTION_ARG=1000"
+          ],
+          [
+            "MAX_LENGTH=1000000000"
+          ],
+          [
+            "MAX_LIKE_PATTERN_LENGTH=50000"
+          ],
+          [
+            "MAX_MMAP_SIZE=0x7fff0000"
+          ],
+          [
+            "MAX_PAGE_COUNT=0xfffffffe"
+          ],
+          [
+            "MAX_PAGE_SIZE=65536"
+          ],
+          [
+            "MAX_SQL_LENGTH=1000000000"
+          ],
+          [
+            "MAX_TRIGGER_DEPTH=1000"
+          ],
+          [
+            "MAX_VARIABLE_NUMBER=32766"
+          ],
+          [
+            "MAX_VDBE_OP=250000000"
+          ],
+          [
+            "MAX_WORKER_THREADS=8"
+          ],
+          [
+            "MUTEX_PTHREADS"
+          ],
+          [
+            "SYSTEM_MALLOC"
+          ],
+          [
+            "TEMP_STORE=1"
+          ],
+          [
+            "THREADSAFE=1"
+          ]
+        ],
+        "foreign_keys": [
+          1
+        ],
+        "recursive_triggers": [
+          1
+        ]
+      },
+      "installed_record_rows": 169,
+      "product_files": 160
+    }
+  },
+  "artifacts": {
+    "direct": {
+      "path": "/workspace/i6b-fix-distribution-final/frozen/dist/repo_catalog-0.2.0-py3-none-any.whl",
+      "sha256": "3296d98d10320b348967b6e09f3f74e5253a986bcea549baa2e3e6359945b373",
+      "bytes": 791288
+    },
+    "sdist": {
+      "path": "/workspace/i6b-fix-distribution-final/frozen/dist/repo_catalog-0.2.0.tar.gz",
+      "sha256": "14747b4d34425119c2c0f969e9927234bb4b7ef0edded456fc0dc6cd3f66026b",
+      "bytes": 151931568
+    },
+    "derived": {
+      "path": "/workspace/i6b-fix-distribution-final/from-sdist/repo_catalog-0.2.0/dist/repo_catalog-0.2.0-py3-none-any.whl",
+      "sha256": "3296d98d10320b348967b6e09f3f74e5253a986bcea549baa2e3e6359945b373",
+      "bytes": 791288
+    }
+  },
+  "source_retention": {
+    "source_files": 7127,
+    "sdist_files": 7008,
+    "retained_exact_source_files": 7007,
+    "omitted_source_files": [
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/collected.txt.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/distribution.json",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/failure-comparison.json",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5/input-binding.json",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5/ordinary-collection.execution.json",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5/ordinary-collection.log.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5/ordinary-collection.nodes.txt.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5/ordinary-not-executed.txt.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5/regressions.execution.json",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5/regressions.jsonl.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5/regressions.log.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5/regressions.selected.txt.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5/regressions.xml.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5/runtime-before-checks.json",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5/selected-collection.execution.json",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5/selected-collection.log.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5/selected-collection.nodes.txt.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5/summary.json",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5/targets.json",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5/transfer-admission.execution.json",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5/transfer-admission.jsonl.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5/transfer-admission.log.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5/transfer-admission.selected.txt",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5/transfer-admission.xml.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5/transfer-sql.execution.json",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5/transfer-sql.jsonl.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5/transfer-sql.log.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5/transfer-sql.selected.txt",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5/transfer-sql.xml.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/archive.log.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/build-binding.json",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/build-direct.log.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/build-sdist-wheel.log.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/direct-access.log.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/direct-i2.json",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/direct-i2.log.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/direct-i3.json",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/direct-i3.log.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/direct-i4-collect.log.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/direct-i4-execution.json",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/direct-i4-imports.json",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/direct-i4-selected.txt",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/direct-i4.jsonl.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/direct-i4.log.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/direct-i4.xml.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/direct-i5-collect.log.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/direct-i5-execution.json",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/direct-i5-imports.json",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/direct-i5-selected.txt",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/direct-i5.jsonl.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/direct-i5.log.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/direct-i5.xml.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/direct-install.log.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/direct-measure.log.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/direct-requirements.txt",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/direct-runtime-binding.json",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/direct-runtime-binding.log.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/direct-runtime.json",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/direct-venv.log.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/processes.json",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/runtime-before-checks.json",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/sdist-access.log.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/sdist-i2.json",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/sdist-i2.log.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/sdist-i3.json",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/sdist-i3.log.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/sdist-i4-collect.log.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/sdist-i4-execution.json",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/sdist-i4-imports.json",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/sdist-i4-selected.txt",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/sdist-i4.jsonl.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/sdist-i4.log.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/sdist-i4.xml.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/sdist-i5-collect.log.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/sdist-i5-execution.json",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/sdist-i5-imports.json",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/sdist-i5-selected.txt",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/sdist-i5.jsonl.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/sdist-i5.log.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/sdist-i5.xml.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/sdist-install.log.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/sdist-measure.log.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/sdist-requirements.txt",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/sdist-runtime-binding.json",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/sdist-runtime-binding.log.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/sdist-runtime.json",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/sdist-venv.log.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/summary.json",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/test-support-binding.json",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/i5-distribution/wheelhouse-binding.json",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/mkdocs.txt",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/offline-inventory/all.execution.json",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/offline-inventory/all.log.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/offline-inventory/all.nodes.txt.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/offline-inventory/binding.json",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/offline-inventory/ci.execution.json",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/offline-inventory/ci.log.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/offline-inventory/ci.nodes.txt.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/offline-inventory/inputs-after.json",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/offline-inventory/inputs-before.json",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/offline-inventory/offline.execution.json",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/offline-inventory/offline.log.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/offline-inventory/offline.nodes.txt.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/offline-inventory/ordinary.execution.json",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/offline-inventory/ordinary.log.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/offline-inventory/ordinary.nodes.txt.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/offline-inventory/runtime-before-checks.json",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/offline-inventory/selection.json",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/offline-inventory/summary.json",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/runtime.json",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/runtime.txt",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/source-revision.json",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/tests.log.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/tests.xml.gz",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/runtime/dependencies.json",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/runtime/docs.json",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/runtime/final.json",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/runtime/sdist-wheel.json",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/runtime/selected.json",
+      "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/runtime/wheel.json"
+    ],
+    "additional_members": [
+      "repo_catalog-0.2.0/PKG-INFO"
+    ],
+    "all_product_inputs_retained": true,
+    "limitation": "Existing .gitignore artifacts/ excludes listed historical reviewer evidence files added by #152. These and .gitignore byte-equal #152; no packaging change is made. Initial a318 stronger exhaustive assertion failed; final measurement retains exact omissions."
+  }
+}
