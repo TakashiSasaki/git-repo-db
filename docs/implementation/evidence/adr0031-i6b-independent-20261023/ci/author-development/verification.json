@@ -1,0 +1,31 @@
+{
+  "run_id": 39955068751,
+  "status": "completed",
+  "conclusion": "success",
+  "receipt_sha256": "7622c0d22dac39585c968ebfd04cc8a7667c64500dcbe3b964d1d005d5255c4e",
+  "receipt_bytes": 92059,
+  "logs_sha256": "a9c735da0730b6559cfad99caaeb2fea582c7ee11ec84e1dc809a27573aade64",
+  "logs_bytes": 263062,
+  "marker_members": [
+    "0_offline.txt",
+    "offline/17_Emit bounded verification receipts to job log.txt"
+  ],
+  "payloads": 21,
+  "feature": "ef787a5ff8b13f118d6bf5107c7338f43fde56dc",
+  "base": "ea43a21fca1dbf8fa6dd1c254b28a96d5dd28d00",
+  "checkout": "54464ad882ee644ff37f0af0a3a8d5af52f9f7ec",
+  "parents": [
+    "ea43a21fca1dbf8fa6dd1c254b28a96d5dd28d00",
+    "ef787a5ff8b13f118d6bf5107c7338f43fde56dc"
+  ],
+  "tree": "a3ed2628a98db134bdc65d13da905f5ddf25e972",
+  "full_acceptance": false,
+  "acceptance_status": "development_checks_passed",
+  "binding": {
+    "feature_sha": "ef787a5ff8b13f118d6bf5107c7338f43fde56dc",
+    "head": "54464ad882ee644ff37f0af0a3a8d5af52f9f7ec",
+    "run_attempt": "1",
+    "run_id": "39955068751",
+    "tree": "a3ed2628a98db134bdc65d13da905f5ddf25e972"
+  }
+}

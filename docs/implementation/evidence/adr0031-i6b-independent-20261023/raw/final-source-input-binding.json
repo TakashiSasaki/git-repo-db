@@ -1,0 +1,8 @@
+{
+  "reference": "ef787a5ff8b13f118d6bf5107c7338f43fde56dc",
+  "tree": "a3ed2628a98db134bdc65d13da905f5ddf25e972",
+  "verified_input_files": 485,
+  "mismatches": [],
+  "tracked_diff_before_evidence_commit": "",
+  "scope": "Final current source bytes equal frozen publication; new evidence only is untracked at this checkpoint. Final review HEAD/tree are externally bound after evidence commit."
+}

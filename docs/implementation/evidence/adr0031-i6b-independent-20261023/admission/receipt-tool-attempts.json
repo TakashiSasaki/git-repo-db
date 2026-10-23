@@ -1,0 +1,18 @@
+[
+  {
+    "action": "initial source summarizer",
+    "exit": 1,
+    "reason": "AttributeError: module '_sqlite3' has no attribute '__file__'",
+    "source": "summarize.initial.py.txt",
+    "resolution": "getattr(_sqlite3, '__file__', '<built-in>')",
+    "scope": "receipt tool only; no product test ran in this attempt"
+  },
+  {
+    "action": "individual-file external recollection",
+    "exit": 0,
+    "reason": "collection IDs omit module component relative to directory execution",
+    "evidence": "individual-paths.collection.log",
+    "resolution": "recollect exact executed directory target; new-and-reused.collection.log",
+    "scope": "no test rerun; original raw output preserved"
+  }
+]

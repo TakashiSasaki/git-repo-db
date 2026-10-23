@@ -1,0 +1,22 @@
+"""Fresh final-HEAD full ordinary invocation, independent reviewer."""
+import hashlib,json,os,sys,time,subprocess
+from pathlib import Path
+ROOT=Path('/workspace/git-repo-db');OUT=ROOT/'docs/implementation/evidence/adr0031-i6b-independent-20261023/broad/full-final-v3'
+OUT.mkdir(parents=True,exist_ok=False)
+sys.path.insert(0,str(ROOT));from scripts import verify_i5_offline as e
+os.environ.update(PATH=str(Path(sys.executable).parent)+os.pathsep+os.environ['PATH'],PYTHONPATH='/workspace/i6b-broad-tools',TMPDIR='/workspace/i6b-broad-work/tmp',I6B_BROAD_OUT=str(OUT),I6B_BROAD_ROOT=str(ROOT),REPO_CATALOG_WHEELHOUSE='/workspace/i6b-distribution-work/wheelhouse',UV_CACHE_DIR='/workspace/.uv-cache',PYTHONDONTWRITEBYTECODE='1')
+def binding():return {'head':e.git('rev-parse','HEAD'),'tree':e.git('rev-parse','HEAD^{tree}'),'inputs':e.input_hashes(),'tracked_status':e.git('status','--porcelain','--untracked-files=no')}
+e.write_json(OUT/'binding-before.json',binding());assert not binding()['tracked_status'];e.require_product_runtime()
+allnodes,a=e.collect(OUT,'all-collection',['tests']);ordinary,b=e.collect(OUT,'ordinary-collection',['tests'],'not live and not benchmark')
+assert a['exit_code']==b['exit_code']==0 and len(ordinary)==len(set(ordinary))
+e.write_json(OUT/'unexecuted.json',sorted(set(allnodes)-set(ordinary)))
+# Dependency preparation is separate from execution. Readiness marker emitted only after locked wheelhouse validation.
+while not Path('/workspace/i6b-broad-work/wheelhouse-ready').exists():time.sleep(2)
+e.verified_wheelhouse()
+original=e.execute
+def observed(out,name,args):return original(out,name,['-p','broad_receipt','-p','no:cacheprovider','--basetemp=/workspace/i6b-broad-work/full-final-v3-temp',*args])
+e.execute=observed
+result=e.run_cohort(OUT,'ordinary',ordinary,4)
+e.write_json(OUT/'binding-after.json',binding());assert binding()['inputs']==json.loads((OUT/'binding-before.json').read_text())['inputs']
+print(json.dumps({'result':{k:result.get(k) for k in ['passed','failed','error','executed','exit_code']},'consistent':result.get('reconciliation')}))
+sys.exit(result['exit_code'])

@@ -1,0 +1,1280 @@
+{
+  "checksum_probes": [
+    {
+      "declared_digest": "941e0b902bb6b420d908b7bc465d2d2ebab43560b58fb7523586ce53bd2b3899",
+      "field": "repository_uuidv4s",
+      "mutation": "duplicate",
+      "original": {
+        "context": null,
+        "core": null,
+        "digest_sha256": "941e0b902bb6b420d908b7bc465d2d2ebab43560b58fb7523586ce53bd2b3899",
+        "exported_at_us": 971,
+        "format": "git-repo-db/adr0031-exchange-v5",
+        "package_id": "0bec528e-c1be-46ca-87b9-b0527a159639",
+        "repository_uuidv4": "122617f1-7b75-475d-bc2e-8f30d1cbd8a5",
+        "selection_report": {},
+        "selection_scope": {
+          "all_selected": true,
+          "include_context": true,
+          "include_core": true,
+          "include_retained_bytes": true,
+          "max_bytes": 16777216,
+          "max_depth": 8,
+          "max_units": 10000,
+          "max_work": 10000000,
+          "notes_refs": null,
+          "object_oids": null,
+          "repository_uuidv4s": [
+            "122617f1-7b75-475d-bc2e-8f30d1cbd8a5",
+            "60b4edcd-0f95-4ba4-a0aa-a2f860906c02"
+          ],
+          "resource_keys": null,
+          "source_uuidv4s": null
+        },
+        "sender_catalog_instance_uuidv4": "8bc7720a-0659-4c69-9159-28c9ad44f121"
+      },
+      "original_digest": "941e0b902bb6b420d908b7bc465d2d2ebab43560b58fb7523586ce53bd2b3899",
+      "received": {
+        "context": null,
+        "core": null,
+        "digest_sha256": "941e0b902bb6b420d908b7bc465d2d2ebab43560b58fb7523586ce53bd2b3899",
+        "exported_at_us": 971,
+        "format": "git-repo-db/adr0031-exchange-v5",
+        "package_id": "0bec528e-c1be-46ca-87b9-b0527a159639",
+        "repository_uuidv4": "122617f1-7b75-475d-bc2e-8f30d1cbd8a5",
+        "selection_report": {},
+        "selection_scope": {
+          "all_selected": true,
+          "include_context": true,
+          "include_core": true,
+          "include_retained_bytes": true,
+          "max_bytes": 16777216,
+          "max_depth": 8,
+          "max_units": 10000,
+          "max_work": 10000000,
+          "notes_refs": null,
+          "object_oids": null,
+          "repository_uuidv4s": [
+            "122617f1-7b75-475d-bc2e-8f30d1cbd8a5",
+            "60b4edcd-0f95-4ba4-a0aa-a2f860906c02",
+            "122617f1-7b75-475d-bc2e-8f30d1cbd8a5"
+          ],
+          "resource_keys": null,
+          "source_uuidv4s": null
+        },
+        "sender_catalog_instance_uuidv4": "8bc7720a-0659-4c69-9159-28c9ad44f121"
+      },
+      "received_dictionary_digest": "f8bcd22e6acebb36c2a9bcffa9188f2309c61f9bccdad0481e4fb0f82b21880a",
+      "received_digest_result": {
+        "accepted": false,
+        "code": "DIGEST_MISMATCH",
+        "exception_type": "ExchangeError",
+        "message": "0bec528e-c1be-46ca-87b9-b0527a159639:DIGEST_MISMATCH: declared SHA-256 differs from canonical content"
+      },
+      "stale_digest_result": {
+        "accepted": true,
+        "returned_digest": "941e0b902bb6b420d908b7bc465d2d2ebab43560b58fb7523586ce53bd2b3899",
+        "returned_selection": {
+          "all_selected": true,
+          "include_context": true,
+          "include_core": true,
+          "include_retained_bytes": true,
+          "max_bytes": 16777216,
+          "max_depth": 8,
+          "max_units": 10000,
+          "max_work": 10000000,
+          "notes_refs": null,
+          "object_oids": null,
+          "repository_uuidv4s": [
+            "122617f1-7b75-475d-bc2e-8f30d1cbd8a5",
+            "60b4edcd-0f95-4ba4-a0aa-a2f860906c02"
+          ],
+          "resource_keys": null,
+          "source_uuidv4s": null
+        }
+      }
+    },
+    {
+      "declared_digest": "941e0b902bb6b420d908b7bc465d2d2ebab43560b58fb7523586ce53bd2b3899",
+      "field": "repository_uuidv4s",
+      "mutation": "permutation",
+      "original": {
+        "context": null,
+        "core": null,
+        "digest_sha256": "941e0b902bb6b420d908b7bc465d2d2ebab43560b58fb7523586ce53bd2b3899",
+        "exported_at_us": 971,
+        "format": "git-repo-db/adr0031-exchange-v5",
+        "package_id": "0bec528e-c1be-46ca-87b9-b0527a159639",
+        "repository_uuidv4": "122617f1-7b75-475d-bc2e-8f30d1cbd8a5",
+        "selection_report": {},
+        "selection_scope": {
+          "all_selected": true,
+          "include_context": true,
+          "include_core": true,
+          "include_retained_bytes": true,
+          "max_bytes": 16777216,
+          "max_depth": 8,
+          "max_units": 10000,
+          "max_work": 10000000,
+          "notes_refs": null,
+          "object_oids": null,
+          "repository_uuidv4s": [
+            "122617f1-7b75-475d-bc2e-8f30d1cbd8a5",
+            "60b4edcd-0f95-4ba4-a0aa-a2f860906c02"
+          ],
+          "resource_keys": null,
+          "source_uuidv4s": null
+        },
+        "sender_catalog_instance_uuidv4": "8bc7720a-0659-4c69-9159-28c9ad44f121"
+      },
+      "original_digest": "941e0b902bb6b420d908b7bc465d2d2ebab43560b58fb7523586ce53bd2b3899",
+      "received": {
+        "context": null,
+        "core": null,
+        "digest_sha256": "941e0b902bb6b420d908b7bc465d2d2ebab43560b58fb7523586ce53bd2b3899",
+        "exported_at_us": 971,
+        "format": "git-repo-db/adr0031-exchange-v5",
+        "package_id": "0bec528e-c1be-46ca-87b9-b0527a159639",
+        "repository_uuidv4": "122617f1-7b75-475d-bc2e-8f30d1cbd8a5",
+        "selection_report": {},
+        "selection_scope": {
+          "all_selected": true,
+          "include_context": true,
+          "include_core": true,
+          "include_retained_bytes": true,
+          "max_bytes": 16777216,
+          "max_depth": 8,
+          "max_units": 10000,
+          "max_work": 10000000,
+          "notes_refs": null,
+          "object_oids": null,
+          "repository_uuidv4s": [
+            "60b4edcd-0f95-4ba4-a0aa-a2f860906c02",
+            "122617f1-7b75-475d-bc2e-8f30d1cbd8a5"
+          ],
+          "resource_keys": null,
+          "source_uuidv4s": null
+        },
+        "sender_catalog_instance_uuidv4": "8bc7720a-0659-4c69-9159-28c9ad44f121"
+      },
+      "received_dictionary_digest": "39d7b9cb1d285102c562f2aea7f43dbf9b14e324c3b6035ae9780a52a26b1d93",
+      "received_digest_result": {
+        "accepted": false,
+        "code": "DIGEST_MISMATCH",
+        "exception_type": "ExchangeError",
+        "message": "0bec528e-c1be-46ca-87b9-b0527a159639:DIGEST_MISMATCH: declared SHA-256 differs from canonical content"
+      },
+      "stale_digest_result": {
+        "accepted": true,
+        "returned_digest": "941e0b902bb6b420d908b7bc465d2d2ebab43560b58fb7523586ce53bd2b3899",
+        "returned_selection": {
+          "all_selected": true,
+          "include_context": true,
+          "include_core": true,
+          "include_retained_bytes": true,
+          "max_bytes": 16777216,
+          "max_depth": 8,
+          "max_units": 10000,
+          "max_work": 10000000,
+          "notes_refs": null,
+          "object_oids": null,
+          "repository_uuidv4s": [
+            "122617f1-7b75-475d-bc2e-8f30d1cbd8a5",
+            "60b4edcd-0f95-4ba4-a0aa-a2f860906c02"
+          ],
+          "resource_keys": null,
+          "source_uuidv4s": null
+        }
+      }
+    },
+    {
+      "declared_digest": "437e9bb615f52b44a5e91aca0bd7647b8ac11cf396aa6fe868685d0770d3fd14",
+      "field": "source_uuidv4s",
+      "mutation": "duplicate",
+      "original": {
+        "context": null,
+        "core": null,
+        "digest_sha256": "437e9bb615f52b44a5e91aca0bd7647b8ac11cf396aa6fe868685d0770d3fd14",
+        "exported_at_us": 971,
+        "format": "git-repo-db/adr0031-exchange-v5",
+        "package_id": "0bec528e-c1be-46ca-87b9-b0527a159639",
+        "repository_uuidv4": "122617f1-7b75-475d-bc2e-8f30d1cbd8a5",
+        "selection_report": {},
+        "selection_scope": {
+          "all_selected": true,
+          "include_context": true,
+          "include_core": true,
+          "include_retained_bytes": true,
+          "max_bytes": 16777216,
+          "max_depth": 8,
+          "max_units": 10000,
+          "max_work": 10000000,
+          "notes_refs": null,
+          "object_oids": null,
+          "repository_uuidv4s": null,
+          "resource_keys": null,
+          "source_uuidv4s": [
+            "0bec528e-c1be-46ca-87b9-b0527a159639",
+            "60b4edcd-0f95-4ba4-a0aa-a2f860906c02"
+          ]
+        },
+        "sender_catalog_instance_uuidv4": "8bc7720a-0659-4c69-9159-28c9ad44f121"
+      },
+      "original_digest": "437e9bb615f52b44a5e91aca0bd7647b8ac11cf396aa6fe868685d0770d3fd14",
+      "received": {
+        "context": null,
+        "core": null,
+        "digest_sha256": "437e9bb615f52b44a5e91aca0bd7647b8ac11cf396aa6fe868685d0770d3fd14",
+        "exported_at_us": 971,
+        "format": "git-repo-db/adr0031-exchange-v5",
+        "package_id": "0bec528e-c1be-46ca-87b9-b0527a159639",
+        "repository_uuidv4": "122617f1-7b75-475d-bc2e-8f30d1cbd8a5",
+        "selection_report": {},
+        "selection_scope": {
+          "all_selected": true,
+          "include_context": true,
+          "include_core": true,
+          "include_retained_bytes": true,
+          "max_bytes": 16777216,
+          "max_depth": 8,
+          "max_units": 10000,
+          "max_work": 10000000,
+          "notes_refs": null,
+          "object_oids": null,
+          "repository_uuidv4s": null,
+          "resource_keys": null,
+          "source_uuidv4s": [
+            "0bec528e-c1be-46ca-87b9-b0527a159639",
+            "60b4edcd-0f95-4ba4-a0aa-a2f860906c02",
+            "0bec528e-c1be-46ca-87b9-b0527a159639"
+          ]
+        },
+        "sender_catalog_instance_uuidv4": "8bc7720a-0659-4c69-9159-28c9ad44f121"
+      },
+      "received_dictionary_digest": "62cc44eebe475d530f58df29c25f13193ab810ccd4acd4914cb40a670b3d9136",
+      "received_digest_result": {
+        "accepted": false,
+        "code": "DIGEST_MISMATCH",
+        "exception_type": "ExchangeError",
+        "message": "0bec528e-c1be-46ca-87b9-b0527a159639:DIGEST_MISMATCH: declared SHA-256 differs from canonical content"
+      },
+      "stale_digest_result": {
+        "accepted": true,
+        "returned_digest": "437e9bb615f52b44a5e91aca0bd7647b8ac11cf396aa6fe868685d0770d3fd14",
+        "returned_selection": {
+          "all_selected": true,
+          "include_context": true,
+          "include_core": true,
+          "include_retained_bytes": true,
+          "max_bytes": 16777216,
+          "max_depth": 8,
+          "max_units": 10000,
+          "max_work": 10000000,
+          "notes_refs": null,
+          "object_oids": null,
+          "repository_uuidv4s": null,
+          "resource_keys": null,
+          "source_uuidv4s": [
+            "0bec528e-c1be-46ca-87b9-b0527a159639",
+            "60b4edcd-0f95-4ba4-a0aa-a2f860906c02"
+          ]
+        }
+      }
+    },
+    {
+      "declared_digest": "437e9bb615f52b44a5e91aca0bd7647b8ac11cf396aa6fe868685d0770d3fd14",
+      "field": "source_uuidv4s",
+      "mutation": "permutation",
+      "original": {
+        "context": null,
+        "core": null,
+        "digest_sha256": "437e9bb615f52b44a5e91aca0bd7647b8ac11cf396aa6fe868685d0770d3fd14",
+        "exported_at_us": 971,
+        "format": "git-repo-db/adr0031-exchange-v5",
+        "package_id": "0bec528e-c1be-46ca-87b9-b0527a159639",
+        "repository_uuidv4": "122617f1-7b75-475d-bc2e-8f30d1cbd8a5",
+        "selection_report": {},
+        "selection_scope": {
+          "all_selected": true,
+          "include_context": true,
+          "include_core": true,
+          "include_retained_bytes": true,
+          "max_bytes": 16777216,
+          "max_depth": 8,
+          "max_units": 10000,
+          "max_work": 10000000,
+          "notes_refs": null,
+          "object_oids": null,
+          "repository_uuidv4s": null,
+          "resource_keys": null,
+          "source_uuidv4s": [
+            "0bec528e-c1be-46ca-87b9-b0527a159639",
+            "60b4edcd-0f95-4ba4-a0aa-a2f860906c02"
+          ]
+        },
+        "sender_catalog_instance_uuidv4": "8bc7720a-0659-4c69-9159-28c9ad44f121"
+      },
+      "original_digest": "437e9bb615f52b44a5e91aca0bd7647b8ac11cf396aa6fe868685d0770d3fd14",
+      "received": {
+        "context": null,
+        "core": null,
+        "digest_sha256": "437e9bb615f52b44a5e91aca0bd7647b8ac11cf396aa6fe868685d0770d3fd14",
+        "exported_at_us": 971,
+        "format": "git-repo-db/adr0031-exchange-v5",
+        "package_id": "0bec528e-c1be-46ca-87b9-b0527a159639",
+        "repository_uuidv4": "122617f1-7b75-475d-bc2e-8f30d1cbd8a5",
+        "selection_report": {},
+        "selection_scope": {
+          "all_selected": true,
+          "include_context": true,
+          "include_core": true,
+          "include_retained_bytes": true,
+          "max_bytes": 16777216,
+          "max_depth": 8,
+          "max_units": 10000,
+          "max_work": 10000000,
+          "notes_refs": null,
+          "object_oids": null,
+          "repository_uuidv4s": null,
+          "resource_keys": null,
+          "source_uuidv4s": [
+            "60b4edcd-0f95-4ba4-a0aa-a2f860906c02",
+            "0bec528e-c1be-46ca-87b9-b0527a159639"
+          ]
+        },
+        "sender_catalog_instance_uuidv4": "8bc7720a-0659-4c69-9159-28c9ad44f121"
+      },
+      "received_dictionary_digest": "8c4f45a1e670f9bc98fbc388545e985094ce10ec50b6b2fb1b631ab283f96ac9",
+      "received_digest_result": {
+        "accepted": false,
+        "code": "DIGEST_MISMATCH",
+        "exception_type": "ExchangeError",
+        "message": "0bec528e-c1be-46ca-87b9-b0527a159639:DIGEST_MISMATCH: declared SHA-256 differs from canonical content"
+      },
+      "stale_digest_result": {
+        "accepted": true,
+        "returned_digest": "437e9bb615f52b44a5e91aca0bd7647b8ac11cf396aa6fe868685d0770d3fd14",
+        "returned_selection": {
+          "all_selected": true,
+          "include_context": true,
+          "include_core": true,
+          "include_retained_bytes": true,
+          "max_bytes": 16777216,
+          "max_depth": 8,
+          "max_units": 10000,
+          "max_work": 10000000,
+          "notes_refs": null,
+          "object_oids": null,
+          "repository_uuidv4s": null,
+          "resource_keys": null,
+          "source_uuidv4s": [
+            "0bec528e-c1be-46ca-87b9-b0527a159639",
+            "60b4edcd-0f95-4ba4-a0aa-a2f860906c02"
+          ]
+        }
+      }
+    },
+    {
+      "declared_digest": "7cc9eb305beec24a35989047885169eca47b86b1adca5a3ac28aaef0234c695c",
+      "field": "notes_refs",
+      "mutation": "duplicate",
+      "original": {
+        "context": null,
+        "core": null,
+        "digest_sha256": "7cc9eb305beec24a35989047885169eca47b86b1adca5a3ac28aaef0234c695c",
+        "exported_at_us": 971,
+        "format": "git-repo-db/adr0031-exchange-v5",
+        "package_id": "0bec528e-c1be-46ca-87b9-b0527a159639",
+        "repository_uuidv4": "122617f1-7b75-475d-bc2e-8f30d1cbd8a5",
+        "selection_report": {},
+        "selection_scope": {
+          "all_selected": true,
+          "include_context": true,
+          "include_core": true,
+          "include_retained_bytes": true,
+          "max_bytes": 16777216,
+          "max_depth": 8,
+          "max_units": 10000,
+          "max_work": 10000000,
+          "notes_refs": [
+            "refs/notes/a",
+            "refs/notes/z"
+          ],
+          "object_oids": null,
+          "repository_uuidv4s": null,
+          "resource_keys": null,
+          "source_uuidv4s": null
+        },
+        "sender_catalog_instance_uuidv4": "8bc7720a-0659-4c69-9159-28c9ad44f121"
+      },
+      "original_digest": "7cc9eb305beec24a35989047885169eca47b86b1adca5a3ac28aaef0234c695c",
+      "received": {
+        "context": null,
+        "core": null,
+        "digest_sha256": "7cc9eb305beec24a35989047885169eca47b86b1adca5a3ac28aaef0234c695c",
+        "exported_at_us": 971,
+        "format": "git-repo-db/adr0031-exchange-v5",
+        "package_id": "0bec528e-c1be-46ca-87b9-b0527a159639",
+        "repository_uuidv4": "122617f1-7b75-475d-bc2e-8f30d1cbd8a5",
+        "selection_report": {},
+        "selection_scope": {
+          "all_selected": true,
+          "include_context": true,
+          "include_core": true,
+          "include_retained_bytes": true,
+          "max_bytes": 16777216,
+          "max_depth": 8,
+          "max_units": 10000,
+          "max_work": 10000000,
+          "notes_refs": [
+            "refs/notes/a",
+            "refs/notes/z",
+            "refs/notes/a"
+          ],
+          "object_oids": null,
+          "repository_uuidv4s": null,
+          "resource_keys": null,
+          "source_uuidv4s": null
+        },
+        "sender_catalog_instance_uuidv4": "8bc7720a-0659-4c69-9159-28c9ad44f121"
+      },
+      "received_dictionary_digest": "6d4a9f9bf3c24088455066072bbbd929b7aa3d279a79047c2c3e3f32bccedee3",
+      "received_digest_result": {
+        "accepted": false,
+        "code": "DIGEST_MISMATCH",
+        "exception_type": "ExchangeError",
+        "message": "0bec528e-c1be-46ca-87b9-b0527a159639:DIGEST_MISMATCH: declared SHA-256 differs from canonical content"
+      },
+      "stale_digest_result": {
+        "accepted": true,
+        "returned_digest": "7cc9eb305beec24a35989047885169eca47b86b1adca5a3ac28aaef0234c695c",
+        "returned_selection": {
+          "all_selected": true,
+          "include_context": true,
+          "include_core": true,
+          "include_retained_bytes": true,
+          "max_bytes": 16777216,
+          "max_depth": 8,
+          "max_units": 10000,
+          "max_work": 10000000,
+          "notes_refs": [
+            "refs/notes/a",
+            "refs/notes/z"
+          ],
+          "object_oids": null,
+          "repository_uuidv4s": null,
+          "resource_keys": null,
+          "source_uuidv4s": null
+        }
+      }
+    },
+    {
+      "declared_digest": "7cc9eb305beec24a35989047885169eca47b86b1adca5a3ac28aaef0234c695c",
+      "field": "notes_refs",
+      "mutation": "permutation",
+      "original": {
+        "context": null,
+        "core": null,
+        "digest_sha256": "7cc9eb305beec24a35989047885169eca47b86b1adca5a3ac28aaef0234c695c",
+        "exported_at_us": 971,
+        "format": "git-repo-db/adr0031-exchange-v5",
+        "package_id": "0bec528e-c1be-46ca-87b9-b0527a159639",
+        "repository_uuidv4": "122617f1-7b75-475d-bc2e-8f30d1cbd8a5",
+        "selection_report": {},
+        "selection_scope": {
+          "all_selected": true,
+          "include_context": true,
+          "include_core": true,
+          "include_retained_bytes": true,
+          "max_bytes": 16777216,
+          "max_depth": 8,
+          "max_units": 10000,
+          "max_work": 10000000,
+          "notes_refs": [
+            "refs/notes/a",
+            "refs/notes/z"
+          ],
+          "object_oids": null,
+          "repository_uuidv4s": null,
+          "resource_keys": null,
+          "source_uuidv4s": null
+        },
+        "sender_catalog_instance_uuidv4": "8bc7720a-0659-4c69-9159-28c9ad44f121"
+      },
+      "original_digest": "7cc9eb305beec24a35989047885169eca47b86b1adca5a3ac28aaef0234c695c",
+      "received": {
+        "context": null,
+        "core": null,
+        "digest_sha256": "7cc9eb305beec24a35989047885169eca47b86b1adca5a3ac28aaef0234c695c",
+        "exported_at_us": 971,
+        "format": "git-repo-db/adr0031-exchange-v5",
+        "package_id": "0bec528e-c1be-46ca-87b9-b0527a159639",
+        "repository_uuidv4": "122617f1-7b75-475d-bc2e-8f30d1cbd8a5",
+        "selection_report": {},
+        "selection_scope": {
+          "all_selected": true,
+          "include_context": true,
+          "include_core": true,
+          "include_retained_bytes": true,
+          "max_bytes": 16777216,
+          "max_depth": 8,
+          "max_units": 10000,
+          "max_work": 10000000,
+          "notes_refs": [
+            "refs/notes/z",
+            "refs/notes/a"
+          ],
+          "object_oids": null,
+          "repository_uuidv4s": null,
+          "resource_keys": null,
+          "source_uuidv4s": null
+        },
+        "sender_catalog_instance_uuidv4": "8bc7720a-0659-4c69-9159-28c9ad44f121"
+      },
+      "received_dictionary_digest": "42953fb7e8000c620b25ec21823883b97cf7f348869ec589093e73b85f543880",
+      "received_digest_result": {
+        "accepted": false,
+        "code": "DIGEST_MISMATCH",
+        "exception_type": "ExchangeError",
+        "message": "0bec528e-c1be-46ca-87b9-b0527a159639:DIGEST_MISMATCH: declared SHA-256 differs from canonical content"
+      },
+      "stale_digest_result": {
+        "accepted": true,
+        "returned_digest": "7cc9eb305beec24a35989047885169eca47b86b1adca5a3ac28aaef0234c695c",
+        "returned_selection": {
+          "all_selected": true,
+          "include_context": true,
+          "include_core": true,
+          "include_retained_bytes": true,
+          "max_bytes": 16777216,
+          "max_depth": 8,
+          "max_units": 10000,
+          "max_work": 10000000,
+          "notes_refs": [
+            "refs/notes/a",
+            "refs/notes/z"
+          ],
+          "object_oids": null,
+          "repository_uuidv4s": null,
+          "resource_keys": null,
+          "source_uuidv4s": null
+        }
+      }
+    },
+    {
+      "declared_digest": "f7d2859c4d21187e42ba821671255a8a88b803ce5835542df6931d7535867343",
+      "field": "object_oids",
+      "mutation": "duplicate",
+      "original": {
+        "context": null,
+        "core": null,
+        "digest_sha256": "f7d2859c4d21187e42ba821671255a8a88b803ce5835542df6931d7535867343",
+        "exported_at_us": 971,
+        "format": "git-repo-db/adr0031-exchange-v5",
+        "package_id": "0bec528e-c1be-46ca-87b9-b0527a159639",
+        "repository_uuidv4": "122617f1-7b75-475d-bc2e-8f30d1cbd8a5",
+        "selection_report": {},
+        "selection_scope": {
+          "all_selected": true,
+          "include_context": true,
+          "include_core": true,
+          "include_retained_bytes": true,
+          "max_bytes": 16777216,
+          "max_depth": 8,
+          "max_units": 10000,
+          "max_work": 10000000,
+          "notes_refs": null,
+          "object_oids": [
+            [
+              "sha1",
+              "1111111111111111111111111111111111111111"
+            ],
+            [
+              "sha1",
+              "2222222222222222222222222222222222222222"
+            ]
+          ],
+          "repository_uuidv4s": null,
+          "resource_keys": null,
+          "source_uuidv4s": null
+        },
+        "sender_catalog_instance_uuidv4": "8bc7720a-0659-4c69-9159-28c9ad44f121"
+      },
+      "original_digest": "f7d2859c4d21187e42ba821671255a8a88b803ce5835542df6931d7535867343",
+      "received": {
+        "context": null,
+        "core": null,
+        "digest_sha256": "f7d2859c4d21187e42ba821671255a8a88b803ce5835542df6931d7535867343",
+        "exported_at_us": 971,
+        "format": "git-repo-db/adr0031-exchange-v5",
+        "package_id": "0bec528e-c1be-46ca-87b9-b0527a159639",
+        "repository_uuidv4": "122617f1-7b75-475d-bc2e-8f30d1cbd8a5",
+        "selection_report": {},
+        "selection_scope": {
+          "all_selected": true,
+          "include_context": true,
+          "include_core": true,
+          "include_retained_bytes": true,
+          "max_bytes": 16777216,
+          "max_depth": 8,
+          "max_units": 10000,
+          "max_work": 10000000,
+          "notes_refs": null,
+          "object_oids": [
+            [
+              "sha1",
+              "1111111111111111111111111111111111111111"
+            ],
+            [
+              "sha1",
+              "2222222222222222222222222222222222222222"
+            ],
+            [
+              "sha1",
+              "1111111111111111111111111111111111111111"
+            ]
+          ],
+          "repository_uuidv4s": null,
+          "resource_keys": null,
+          "source_uuidv4s": null
+        },
+        "sender_catalog_instance_uuidv4": "8bc7720a-0659-4c69-9159-28c9ad44f121"
+      },
+      "received_dictionary_digest": "fbc897b326199d708c26d8b9b28c54cca1f7d33e49fa93dcc4976502539923fe",
+      "received_digest_result": {
+        "accepted": false,
+        "code": "DIGEST_MISMATCH",
+        "exception_type": "ExchangeError",
+        "message": "0bec528e-c1be-46ca-87b9-b0527a159639:DIGEST_MISMATCH: declared SHA-256 differs from canonical content"
+      },
+      "stale_digest_result": {
+        "accepted": true,
+        "returned_digest": "f7d2859c4d21187e42ba821671255a8a88b803ce5835542df6931d7535867343",
+        "returned_selection": {
+          "all_selected": true,
+          "include_context": true,
+          "include_core": true,
+          "include_retained_bytes": true,
+          "max_bytes": 16777216,
+          "max_depth": 8,
+          "max_units": 10000,
+          "max_work": 10000000,
+          "notes_refs": null,
+          "object_oids": [
+            [
+              "sha1",
+              "1111111111111111111111111111111111111111"
+            ],
+            [
+              "sha1",
+              "2222222222222222222222222222222222222222"
+            ]
+          ],
+          "repository_uuidv4s": null,
+          "resource_keys": null,
+          "source_uuidv4s": null
+        }
+      }
+    },
+    {
+      "declared_digest": "f7d2859c4d21187e42ba821671255a8a88b803ce5835542df6931d7535867343",
+      "field": "object_oids",
+      "mutation": "permutation",
+      "original": {
+        "context": null,
+        "core": null,
+        "digest_sha256": "f7d2859c4d21187e42ba821671255a8a88b803ce5835542df6931d7535867343",
+        "exported_at_us": 971,
+        "format": "git-repo-db/adr0031-exchange-v5",
+        "package_id": "0bec528e-c1be-46ca-87b9-b0527a159639",
+        "repository_uuidv4": "122617f1-7b75-475d-bc2e-8f30d1cbd8a5",
+        "selection_report": {},
+        "selection_scope": {
+          "all_selected": true,
+          "include_context": true,
+          "include_core": true,
+          "include_retained_bytes": true,
+          "max_bytes": 16777216,
+          "max_depth": 8,
+          "max_units": 10000,
+          "max_work": 10000000,
+          "notes_refs": null,
+          "object_oids": [
+            [
+              "sha1",
+              "1111111111111111111111111111111111111111"
+            ],
+            [
+              "sha1",
+              "2222222222222222222222222222222222222222"
+            ]
+          ],
+          "repository_uuidv4s": null,
+          "resource_keys": null,
+          "source_uuidv4s": null
+        },
+        "sender_catalog_instance_uuidv4": "8bc7720a-0659-4c69-9159-28c9ad44f121"
+      },
+      "original_digest": "f7d2859c4d21187e42ba821671255a8a88b803ce5835542df6931d7535867343",
+      "received": {
+        "context": null,
+        "core": null,
+        "digest_sha256": "f7d2859c4d21187e42ba821671255a8a88b803ce5835542df6931d7535867343",
+        "exported_at_us": 971,
+        "format": "git-repo-db/adr0031-exchange-v5",
+        "package_id": "0bec528e-c1be-46ca-87b9-b0527a159639",
+        "repository_uuidv4": "122617f1-7b75-475d-bc2e-8f30d1cbd8a5",
+        "selection_report": {},
+        "selection_scope": {
+          "all_selected": true,
+          "include_context": true,
+          "include_core": true,
+          "include_retained_bytes": true,
+          "max_bytes": 16777216,
+          "max_depth": 8,
+          "max_units": 10000,
+          "max_work": 10000000,
+          "notes_refs": null,
+          "object_oids": [
+            [
+              "sha1",
+              "2222222222222222222222222222222222222222"
+            ],
+            [
+              "sha1",
+              "1111111111111111111111111111111111111111"
+            ]
+          ],
+          "repository_uuidv4s": null,
+          "resource_keys": null,
+          "source_uuidv4s": null
+        },
+        "sender_catalog_instance_uuidv4": "8bc7720a-0659-4c69-9159-28c9ad44f121"
+      },
+      "received_dictionary_digest": "9dd859cdde6d2e9864e4a77862294d6349dbd2fba26b4e0d69c246b26d5cee64",
+      "received_digest_result": {
+        "accepted": false,
+        "code": "DIGEST_MISMATCH",
+        "exception_type": "ExchangeError",
+        "message": "0bec528e-c1be-46ca-87b9-b0527a159639:DIGEST_MISMATCH: declared SHA-256 differs from canonical content"
+      },
+      "stale_digest_result": {
+        "accepted": true,
+        "returned_digest": "f7d2859c4d21187e42ba821671255a8a88b803ce5835542df6931d7535867343",
+        "returned_selection": {
+          "all_selected": true,
+          "include_context": true,
+          "include_core": true,
+          "include_retained_bytes": true,
+          "max_bytes": 16777216,
+          "max_depth": 8,
+          "max_units": 10000,
+          "max_work": 10000000,
+          "notes_refs": null,
+          "object_oids": [
+            [
+              "sha1",
+              "1111111111111111111111111111111111111111"
+            ],
+            [
+              "sha1",
+              "2222222222222222222222222222222222222222"
+            ]
+          ],
+          "repository_uuidv4s": null,
+          "resource_keys": null,
+          "source_uuidv4s": null
+        }
+      }
+    },
+    {
+      "declared_digest": "09bade4edd6a70fb6fc79228a78f4a1ed4e9013de61b6c5cac2faf968ca45726",
+      "field": "resource_keys",
+      "mutation": "duplicate",
+      "original": {
+        "context": null,
+        "core": null,
+        "digest_sha256": "09bade4edd6a70fb6fc79228a78f4a1ed4e9013de61b6c5cac2faf968ca45726",
+        "exported_at_us": 971,
+        "format": "git-repo-db/adr0031-exchange-v5",
+        "package_id": "0bec528e-c1be-46ca-87b9-b0527a159639",
+        "repository_uuidv4": "122617f1-7b75-475d-bc2e-8f30d1cbd8a5",
+        "selection_report": {},
+        "selection_scope": {
+          "all_selected": true,
+          "include_context": true,
+          "include_core": true,
+          "include_retained_bytes": true,
+          "max_bytes": 16777216,
+          "max_depth": 8,
+          "max_units": 10000,
+          "max_work": 10000000,
+          "notes_refs": null,
+          "object_oids": null,
+          "repository_uuidv4s": null,
+          "resource_keys": [
+            [
+              "8bc7720a-0659-4c69-9159-28c9ad44f121",
+              "opaque",
+              "\"a\""
+            ],
+            [
+              "8bc7720a-0659-4c69-9159-28c9ad44f121",
+              "opaque",
+              "\"b\""
+            ]
+          ],
+          "source_uuidv4s": null
+        },
+        "sender_catalog_instance_uuidv4": "8bc7720a-0659-4c69-9159-28c9ad44f121"
+      },
+      "original_digest": "09bade4edd6a70fb6fc79228a78f4a1ed4e9013de61b6c5cac2faf968ca45726",
+      "received": {
+        "context": null,
+        "core": null,
+        "digest_sha256": "09bade4edd6a70fb6fc79228a78f4a1ed4e9013de61b6c5cac2faf968ca45726",
+        "exported_at_us": 971,
+        "format": "git-repo-db/adr0031-exchange-v5",
+        "package_id": "0bec528e-c1be-46ca-87b9-b0527a159639",
+        "repository_uuidv4": "122617f1-7b75-475d-bc2e-8f30d1cbd8a5",
+        "selection_report": {},
+        "selection_scope": {
+          "all_selected": true,
+          "include_context": true,
+          "include_core": true,
+          "include_retained_bytes": true,
+          "max_bytes": 16777216,
+          "max_depth": 8,
+          "max_units": 10000,
+          "max_work": 10000000,
+          "notes_refs": null,
+          "object_oids": null,
+          "repository_uuidv4s": null,
+          "resource_keys": [
+            [
+              "8bc7720a-0659-4c69-9159-28c9ad44f121",
+              "opaque",
+              "\"a\""
+            ],
+            [
+              "8bc7720a-0659-4c69-9159-28c9ad44f121",
+              "opaque",
+              "\"b\""
+            ],
+            [
+              "8bc7720a-0659-4c69-9159-28c9ad44f121",
+              "opaque",
+              "\"a\""
+            ]
+          ],
+          "source_uuidv4s": null
+        },
+        "sender_catalog_instance_uuidv4": "8bc7720a-0659-4c69-9159-28c9ad44f121"
+      },
+      "received_dictionary_digest": "836eac239420889ea6e6fc967fe773d78f3bdeac09bfb0645b33a4781b64a58d",
+      "received_digest_result": {
+        "accepted": false,
+        "code": "DIGEST_MISMATCH",
+        "exception_type": "ExchangeError",
+        "message": "0bec528e-c1be-46ca-87b9-b0527a159639:DIGEST_MISMATCH: declared SHA-256 differs from canonical content"
+      },
+      "stale_digest_result": {
+        "accepted": true,
+        "returned_digest": "09bade4edd6a70fb6fc79228a78f4a1ed4e9013de61b6c5cac2faf968ca45726",
+        "returned_selection": {
+          "all_selected": true,
+          "include_context": true,
+          "include_core": true,
+          "include_retained_bytes": true,
+          "max_bytes": 16777216,
+          "max_depth": 8,
+          "max_units": 10000,
+          "max_work": 10000000,
+          "notes_refs": null,
+          "object_oids": null,
+          "repository_uuidv4s": null,
+          "resource_keys": [
+            [
+              "8bc7720a-0659-4c69-9159-28c9ad44f121",
+              "opaque",
+              "\"a\""
+            ],
+            [
+              "8bc7720a-0659-4c69-9159-28c9ad44f121",
+              "opaque",
+              "\"b\""
+            ]
+          ],
+          "source_uuidv4s": null
+        }
+      }
+    },
+    {
+      "declared_digest": "09bade4edd6a70fb6fc79228a78f4a1ed4e9013de61b6c5cac2faf968ca45726",
+      "field": "resource_keys",
+      "mutation": "permutation",
+      "original": {
+        "context": null,
+        "core": null,
+        "digest_sha256": "09bade4edd6a70fb6fc79228a78f4a1ed4e9013de61b6c5cac2faf968ca45726",
+        "exported_at_us": 971,
+        "format": "git-repo-db/adr0031-exchange-v5",
+        "package_id": "0bec528e-c1be-46ca-87b9-b0527a159639",
+        "repository_uuidv4": "122617f1-7b75-475d-bc2e-8f30d1cbd8a5",
+        "selection_report": {},
+        "selection_scope": {
+          "all_selected": true,
+          "include_context": true,
+          "include_core": true,
+          "include_retained_bytes": true,
+          "max_bytes": 16777216,
+          "max_depth": 8,
+          "max_units": 10000,
+          "max_work": 10000000,
+          "notes_refs": null,
+          "object_oids": null,
+          "repository_uuidv4s": null,
+          "resource_keys": [
+            [
+              "8bc7720a-0659-4c69-9159-28c9ad44f121",
+              "opaque",
+              "\"a\""
+            ],
+            [
+              "8bc7720a-0659-4c69-9159-28c9ad44f121",
+              "opaque",
+              "\"b\""
+            ]
+          ],
+          "source_uuidv4s": null
+        },
+        "sender_catalog_instance_uuidv4": "8bc7720a-0659-4c69-9159-28c9ad44f121"
+      },
+      "original_digest": "09bade4edd6a70fb6fc79228a78f4a1ed4e9013de61b6c5cac2faf968ca45726",
+      "received": {
+        "context": null,
+        "core": null,
+        "digest_sha256": "09bade4edd6a70fb6fc79228a78f4a1ed4e9013de61b6c5cac2faf968ca45726",
+        "exported_at_us": 971,
+        "format": "git-repo-db/adr0031-exchange-v5",
+        "package_id": "0bec528e-c1be-46ca-87b9-b0527a159639",
+        "repository_uuidv4": "122617f1-7b75-475d-bc2e-8f30d1cbd8a5",
+        "selection_report": {},
+        "selection_scope": {
+          "all_selected": true,
+          "include_context": true,
+          "include_core": true,
+          "include_retained_bytes": true,
+          "max_bytes": 16777216,
+          "max_depth": 8,
+          "max_units": 10000,
+          "max_work": 10000000,
+          "notes_refs": null,
+          "object_oids": null,
+          "repository_uuidv4s": null,
+          "resource_keys": [
+            [
+              "8bc7720a-0659-4c69-9159-28c9ad44f121",
+              "opaque",
+              "\"b\""
+            ],
+            [
+              "8bc7720a-0659-4c69-9159-28c9ad44f121",
+              "opaque",
+              "\"a\""
+            ]
+          ],
+          "source_uuidv4s": null
+        },
+        "sender_catalog_instance_uuidv4": "8bc7720a-0659-4c69-9159-28c9ad44f121"
+      },
+      "received_dictionary_digest": "b6ae2fd362f0c2e86dd895014b6794783887dcff7cf49d40e47df07534074e26",
+      "received_digest_result": {
+        "accepted": false,
+        "code": "DIGEST_MISMATCH",
+        "exception_type": "ExchangeError",
+        "message": "0bec528e-c1be-46ca-87b9-b0527a159639:DIGEST_MISMATCH: declared SHA-256 differs from canonical content"
+      },
+      "stale_digest_result": {
+        "accepted": true,
+        "returned_digest": "09bade4edd6a70fb6fc79228a78f4a1ed4e9013de61b6c5cac2faf968ca45726",
+        "returned_selection": {
+          "all_selected": true,
+          "include_context": true,
+          "include_core": true,
+          "include_retained_bytes": true,
+          "max_bytes": 16777216,
+          "max_depth": 8,
+          "max_units": 10000,
+          "max_work": 10000000,
+          "notes_refs": null,
+          "object_oids": null,
+          "repository_uuidv4s": null,
+          "resource_keys": [
+            [
+              "8bc7720a-0659-4c69-9159-28c9ad44f121",
+              "opaque",
+              "\"a\""
+            ],
+            [
+              "8bc7720a-0659-4c69-9159-28c9ad44f121",
+              "opaque",
+              "\"b\""
+            ]
+          ],
+          "source_uuidv4s": null
+        }
+      }
+    }
+  ],
+  "core_parse_boundary_probes": [
+    {
+      "field": "repository_uuidv4",
+      "invalid": true,
+      "outer_codec": {
+        "accepted": true,
+        "returned_digest": "d7a16581e9d7ef4fb9d791341e47f8393207cd206e045baf4705e0083261823b",
+        "returned_selection": {
+          "all_selected": true,
+          "include_context": true,
+          "include_core": true,
+          "include_retained_bytes": true,
+          "max_bytes": 16777216,
+          "max_depth": 8,
+          "max_units": 10000,
+          "max_work": 10000000,
+          "notes_refs": null,
+          "object_oids": null,
+          "repository_uuidv4s": null,
+          "resource_keys": null,
+          "source_uuidv4s": null
+        }
+      },
+      "section": "repositories",
+      "typed_preflight_boundary": {
+        "accepted": false,
+        "code": "IDENTITY",
+        "exception_type": "CoreFailure",
+        "message": "canonical UUIDv4 required"
+      }
+    },
+    {
+      "field": "repository_uuidv4",
+      "invalid": 1,
+      "outer_codec": {
+        "accepted": true,
+        "returned_digest": "caff90daad4fcfac958bf3bb95f04d25c75d40379491d17bbf947d0089de6a78",
+        "returned_selection": {
+          "all_selected": true,
+          "include_context": true,
+          "include_core": true,
+          "include_retained_bytes": true,
+          "max_bytes": 16777216,
+          "max_depth": 8,
+          "max_units": 10000,
+          "max_work": 10000000,
+          "notes_refs": null,
+          "object_oids": null,
+          "repository_uuidv4s": null,
+          "resource_keys": null,
+          "source_uuidv4s": null
+        }
+      },
+      "section": "repositories",
+      "typed_preflight_boundary": {
+        "accepted": false,
+        "code": "IDENTITY",
+        "exception_type": "CoreFailure",
+        "message": "canonical UUIDv4 required"
+      }
+    },
+    {
+      "field": "repository_uuidv4",
+      "invalid": null,
+      "outer_codec": {
+        "accepted": true,
+        "returned_digest": "c458e6b57750c7257e85c3afc2ca321c19871c0adfcfa91f02759926ee72a8d8",
+        "returned_selection": {
+          "all_selected": true,
+          "include_context": true,
+          "include_core": true,
+          "include_retained_bytes": true,
+          "max_bytes": 16777216,
+          "max_depth": 8,
+          "max_units": 10000,
+          "max_work": 10000000,
+          "notes_refs": null,
+          "object_oids": null,
+          "repository_uuidv4s": null,
+          "resource_keys": null,
+          "source_uuidv4s": null
+        }
+      },
+      "section": "repositories",
+      "typed_preflight_boundary": {
+        "accepted": false,
+        "code": "IDENTITY",
+        "exception_type": "CoreFailure",
+        "message": "canonical UUIDv4 required"
+      }
+    },
+    {
+      "field": "repository_uuidv4",
+      "invalid": [],
+      "outer_codec": {
+        "accepted": true,
+        "returned_digest": "65d58f9ee9d7ad882c149d3cbfdbad67339968b2ba5eb0e7b098e5ac9a6b6d12",
+        "returned_selection": {
+          "all_selected": true,
+          "include_context": true,
+          "include_core": true,
+          "include_retained_bytes": true,
+          "max_bytes": 16777216,
+          "max_depth": 8,
+          "max_units": 10000,
+          "max_work": 10000000,
+          "notes_refs": null,
+          "object_oids": null,
+          "repository_uuidv4s": null,
+          "resource_keys": null,
+          "source_uuidv4s": null
+        }
+      },
+      "section": "repositories",
+      "typed_preflight_boundary": {
+        "accepted": false,
+        "code": "IDENTITY",
+        "exception_type": "CoreFailure",
+        "message": "canonical UUIDv4 required"
+      }
+    },
+    {
+      "field": "full_oid",
+      "invalid": true,
+      "outer_codec": {
+        "accepted": true,
+        "returned_digest": "3bf2c11db41de827c708b16971d63ce22c549f87945b856d3577c71e4c97782d",
+        "returned_selection": {
+          "all_selected": true,
+          "include_context": true,
+          "include_core": true,
+          "include_retained_bytes": true,
+          "max_bytes": 16777216,
+          "max_depth": 8,
+          "max_units": 10000,
+          "max_work": 10000000,
+          "notes_refs": null,
+          "object_oids": null,
+          "repository_uuidv4s": null,
+          "resource_keys": null,
+          "source_uuidv4s": null
+        }
+      },
+      "section": "git_objects",
+      "typed_preflight_boundary": {
+        "accepted": false,
+        "code": "IDENTITY",
+        "exception_type": "CoreFailure",
+        "message": "full lowercase typed Git OID required"
+      }
+    },
+    {
+      "field": "full_oid",
+      "invalid": 1,
+      "outer_codec": {
+        "accepted": true,
+        "returned_digest": "8423130aa24603e38d395e6ca4e39c3e6fdb089e4f7d5d05290c01cea48baac0",
+        "returned_selection": {
+          "all_selected": true,
+          "include_context": true,
+          "include_core": true,
+          "include_retained_bytes": true,
+          "max_bytes": 16777216,
+          "max_depth": 8,
+          "max_units": 10000,
+          "max_work": 10000000,
+          "notes_refs": null,
+          "object_oids": null,
+          "repository_uuidv4s": null,
+          "resource_keys": null,
+          "source_uuidv4s": null
+        }
+      },
+      "section": "git_objects",
+      "typed_preflight_boundary": {
+        "accepted": false,
+        "code": "IDENTITY",
+        "exception_type": "CoreFailure",
+        "message": "full lowercase typed Git OID required"
+      }
+    },
+    {
+      "field": "full_oid",
+      "invalid": null,
+      "outer_codec": {
+        "accepted": true,
+        "returned_digest": "589b7a1d9483fc4b1ca277a02f62e964b7cba253b6b52cadf7325e2c049fcc07",
+        "returned_selection": {
+          "all_selected": true,
+          "include_context": true,
+          "include_core": true,
+          "include_retained_bytes": true,
+          "max_bytes": 16777216,
+          "max_depth": 8,
+          "max_units": 10000,
+          "max_work": 10000000,
+          "notes_refs": null,
+          "object_oids": null,
+          "repository_uuidv4s": null,
+          "resource_keys": null,
+          "source_uuidv4s": null
+        }
+      },
+      "section": "git_objects",
+      "typed_preflight_boundary": {
+        "accepted": false,
+        "code": "IDENTITY",
+        "exception_type": "CoreFailure",
+        "message": "full lowercase typed Git OID required"
+      }
+    },
+    {
+      "field": "full_oid",
+      "invalid": [],
+      "outer_codec": {
+        "accepted": true,
+        "returned_digest": "636ec57019822f572a2454b9cd0802a9904d994cb014e95d0e863602ff1262a5",
+        "returned_selection": {
+          "all_selected": true,
+          "include_context": true,
+          "include_core": true,
+          "include_retained_bytes": true,
+          "max_bytes": 16777216,
+          "max_depth": 8,
+          "max_units": 10000,
+          "max_work": 10000000,
+          "notes_refs": null,
+          "object_oids": null,
+          "repository_uuidv4s": null,
+          "resource_keys": null,
+          "source_uuidv4s": null
+        }
+      },
+      "section": "git_objects",
+      "typed_preflight_boundary": {
+        "accepted": false,
+        "code": "IDENTITY",
+        "exception_type": "CoreFailure",
+        "message": "full lowercase typed Git OID required"
+      }
+    }
+  ],
+  "format": "git-repo-db/adr0031-exchange-v5",
+  "module": "/workspace/git-repo-db/src/repo_catalog/domain/exchange.py",
+  "module_sha256": "6709ad532ef5aef65118505d2270960c49a21521c68460da2044b897dae97957",
+  "no_sql_mutation": true,
+  "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+  "python_executable": "/workspace/git-repo-db/.venv/bin/python",
+  "sqlite": "3.53.1",
+  "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9"
+}

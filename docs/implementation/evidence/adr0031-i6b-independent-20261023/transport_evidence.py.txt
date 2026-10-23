@@ -1,0 +1,72 @@
+"""Lossless evidence transport; preserve original and transported hashes separately."""
+import argparse
+import gzip
+import hashlib
+import json
+from pathlib import Path
+
+
+def sha(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+def safe(base, name):
+    p = Path(name)
+    assert not p.is_absolute() and ".." not in p.parts and "\\" not in name
+    return base / p
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("mode", choices=("package", "verify", "materialize"))
+    ap.add_argument("root", type=Path)
+    ap.add_argument("--output", type=Path)
+    args = ap.parse_args()
+    root = args.root.resolve()
+    index = root / "TRANSPORT.json"
+    if args.mode == "package":
+        assert not index.exists(), "Do not rewrite an indexed snapshot"
+        files = []
+        for path in sorted(root.rglob("*")):
+            if not path.is_file():
+                continue
+            assert not path.is_symlink()
+            name = str(path.relative_to(root))
+            body = path.read_bytes()
+            compress = path.suffix in (".log", ".xml", ".jsonl") or (path.suffix == ".txt" and not name.endswith(".py.txt") and len(body) > 65536)
+            target = path.with_name(path.name + ".gz") if compress else path
+            if compress:
+                assert not target.exists(), str(target)
+                encoded = gzip.compress(body, mtime=0)
+                target.write_bytes(encoded)
+                assert gzip.decompress(encoded) == body
+                path.unlink()
+            else:
+                encoded = body
+            files.append(dict(original_path=name, original_bytes=len(body), original_sha256=sha(body), path=str(target.relative_to(root)), bytes=len(encoded), sha256=sha(encoded), gzip=compress))
+        index.write_text(json.dumps(dict(scope="All evidence files except TRANSPORT.json itself. Gzip is lossless transport; original filenames in subreports/commands refer to original_path and can be materialized externally. Existing compressed files are retained as their original bytes.", files=files), indent=2) + "\n")
+    records = json.loads(index.read_text())["files"]
+    actual = {str(f.relative_to(root)) for f in root.rglob("*") if f.is_file()}
+    expected = {r["path"] for r in records}
+    assert len(expected) == len(records)
+    assert actual == expected | {"TRANSPORT.json"}
+    if args.mode == "materialize":
+        assert args.output is not None
+        output = args.output.resolve()
+        assert output != root and not output.exists(), "Require a fresh external directory"
+        output.mkdir(parents=True)
+    for r in records:
+        b = safe(root, r["path"]).read_bytes()
+        assert len(b) == r["bytes"] and sha(b) == r["sha256"], r["path"]
+        original = gzip.decompress(b) if r["gzip"] else b
+        assert len(original) == r["original_bytes"] and sha(original) == r["original_sha256"], r["original_path"]
+        if args.mode == "materialize":
+            target = safe(output, r["original_path"])
+            assert not target.exists()
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(original)
+    print(json.dumps(dict(verified_files=len(records), original_bytes=sum(r["original_bytes"] for r in records), transport_bytes=sum(r["bytes"] for r in records), index_sha256=sha(index.read_bytes()), materialized=args.mode == "materialize"), indent=2))
+
+
+if __name__ == "__main__":
+    main()

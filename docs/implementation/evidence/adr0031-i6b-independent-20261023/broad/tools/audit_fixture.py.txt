@@ -1,0 +1,19 @@
+"""Independent AST migration audit against actual #149 and pre-migration Author blobs."""
+import ast,copy,hashlib,json,subprocess
+from pathlib import Path
+ROOT=Path('/workspace/git-repo-db');OUT=ROOT/'docs/implementation/evidence/adr0031-i6b-independent-20261023/broad';REL='tests/integration/i6a/test_admission.py';NAME='test_unconnected_exchange_import_refuses_before_progress_and_cached_success'
+def blob(head):return subprocess.check_output(['git','show',head+':'+REL],cwd=ROOT)
+versions={h:blob(h) for h in ['ea43a21fca1dbf8fa6dd1c254b28a96d5dd28d00','2f874ce5c31efc1a266bc40e0472e64f82c82860','ef787a5ff8b13f118d6bf5107c7338f43fde56dc']}
+rows={}
+for h,raw in versions.items():
+    tree=ast.parse(raw);original=copy.deepcopy(tree)
+    fn=next(x for x in tree.body if isinstance(x,ast.FunctionDef) and x.name==NAME)
+    candidates=[n for n in fn.body if isinstance(n,ast.Assign) and len(n.targets)==1 and ast.unparse(n.targets[0])=="section['resources']"]
+    assert len(candidates)==1;fixture=candidates[0];fn.body.remove(fixture)
+    rows[h]={'sha256':hashlib.sha256(raw).hexdigest(),'fixture_AST':ast.dump(fixture,include_attributes=False),'fixture_source':ast.unparse(fixture),'nonfixture_AST':ast.dump(tree,include_attributes=False),'assertion_ASTs':[ast.dump(n,include_attributes=False) for n in ast.walk(original) if isinstance(n,ast.Assert)],'target_assertion_ASTs':[ast.dump(n,include_attributes=False) for n in ast.walk(fn) if isinstance(n,ast.Assert)],'decorators':[ast.unparse(x) for x in fn.decorator_list]}
+assert len({r['nonfixture_AST'] for r in rows.values()})==1
+assert len({tuple(r['assertion_ASTs']) for r in rows.values()})==1
+assert len({tuple(r['target_assertion_ASTs']) for r in rows.values()})==1
+assert len({tuple(r['decorators']) for r in rows.values()})==1
+report={'path':REL,'function':NAME,'all_file_AST_except_one_fixture_assignment_equal':True,'all_file_assertion_AST_equal':True,'target_assertions':len(next(iter(rows.values()))['target_assertion_ASTs']),'parametrization_equal':True,'nodes':['tests/integration/i6a/test_admission.py::'+NAME+'[initial]','tests/integration/i6a/test_admission.py::'+NAME+'[cached-receipt]'],'versions':{h:{k:v for k,v in r.items() if k not in ['nonfixture_AST','assertion_ASTs']} for h,r in rows.items()}}
+(OUT/'fixture-AST-audit.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps({k:v for k,v in report.items() if k!='versions'},indent=2))

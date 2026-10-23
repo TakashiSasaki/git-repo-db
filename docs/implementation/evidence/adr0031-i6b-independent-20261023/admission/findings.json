@@ -1,0 +1,1 @@
+{"scope":"I6-A retention at I6-B ef787a5","verdict":"scoped PASS","findings":[],"severity_counts":{"Critical":0,"High":0,"Medium":0,"Low":0},"unexecuted_in_this_subtask":["installed-distribution probes (separate reviewer owns)","complete ordinary suite (separate reviewer owns)","I6-C operational integration","I7","I8","Release acceptance"]}

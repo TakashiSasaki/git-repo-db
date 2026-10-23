@@ -1,0 +1,30 @@
+"""Independent matched controls for the one inherited early-refusal delta.
+
+Both inputs preserve the old explicit empty selection. The malformed old form
+must fail at v5 construction; valid seven-column input must reach and fail the
+still-unconnected service. Neither case asserts I6-C selection is implemented.
+"""
+from uuid import uuid4
+import pytest
+from repo_catalog.domain.exchange import ExchangePackage,ExchangeError,ExchangeSelectionScope,empty_context_section,empty_core_section
+from repo_catalog.domain.context_admission import AdmissionRefused
+from repo_catalog.domain.p1_context import ResourceKey
+from repo_catalog.domain.resource_identification import ResourceIdentification
+from tests.integration.i3.test_selective_exchange import catalog,receive,rows
+
+@pytest.mark.parametrize('canonical',[False,True],ids=['old-three-column','valid-seven-column'])
+def test_empty_selection_preserves_refusal_boundary(tmp_path,canonical):
+    seed=catalog(tmp_path);service=str(uuid4());key=ResourceKey.from_native(service,'issue','99')
+    data=empty_core_section();data['git_objects']=[{'object_format':'sha1','full_oid':'a'*40}]
+    context=empty_context_section();context['providers']=[{'service_instance_uuidv4':service,'provider_kind':'github','configuration_json':'{}'}]
+    context['resources']=[ResourceIdentification.unscoped(key).to_wire() if canonical else dict(zip(('service_instance_uuidv4','resource_kind','provider_resource_id'),key.coordinates()))]
+    selection=ExchangeSelectionScope(repository_uuidv4s=(),object_oids=(),resource_keys=(),source_uuidv4s=())
+    before=(rows(tmp_path,'core','git_objects'),rows(tmp_path,'context','resources'))
+    if canonical:
+        package=ExchangePackage(str(uuid4()),None,str(uuid4()),seed,selection,core=data,context=context)
+        with pytest.raises(AdmissionRefused) as refusal:receive(tmp_path,package)
+        assert refusal.value.code=='PERMISSION_DENIED'
+    else:
+        with pytest.raises(ExchangeError) as refusal:ExchangePackage(str(uuid4()),None,str(uuid4()),seed,selection,core=data,context=context)
+        assert refusal.value.code=='MALFORMED_ROW'
+    assert (rows(tmp_path,'core','git_objects'),rows(tmp_path,'context','resources'))==before

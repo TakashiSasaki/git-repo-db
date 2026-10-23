@@ -1,0 +1,60 @@
+"""Read-only measured probes for checksum-normalization and Core parse boundaries."""
+import argparse
+import copy
+import hashlib
+import json
+from pathlib import Path
+import sqlite3
+import sys
+
+parser=argparse.ArgumentParser()
+parser.add_argument('--import-root',required=True)
+parser.add_argument('--output',required=True)
+args=parser.parse_args()
+sys.path.insert(0,args.import_root)
+from repo_catalog.domain import exchange as module
+from repo_catalog.domain.exchange import ExchangePackage,ExchangeSelectionScope,decode_package,empty_core_section
+from repo_catalog.domain.p1_context import ResourceKey
+from repo_catalog.domain.p1_core import OID
+from repo_catalog.domain.selective_exchange import CorePreflight
+
+S='8bc7720a-0659-4c69-9159-28c9ad44f121'
+R='122617f1-7b75-475d-bc2e-8f30d1cbd8a5'
+P='0bec528e-c1be-46ca-87b9-b0527a159639'
+Q='60b4edcd-0f95-4ba4-a0aa-a2f860906c02'
+
+def digest(data):
+    return hashlib.sha256(json.dumps({k:v for k,v in data.items() if k!='digest_sha256'},ensure_ascii=False,sort_keys=True,separators=(',',':'),allow_nan=False).encode()).hexdigest()
+
+def result(call):
+    try:
+        value=call()
+        return {'accepted':True,'returned_digest':getattr(value,'digest_sha256',None),'returned_selection':value.selection_scope.to_dict() if hasattr(value,'selection_scope') else None}
+    except Exception as error:
+        return {'accepted':False,'exception_type':type(error).__name__,'code':getattr(error,'code',None),'message':str(error)}
+
+coordinates={
+    'repository_uuidv4s':(R,Q),'source_uuidv4s':(P,Q),'notes_refs':('refs/notes/a','refs/notes/z'),
+    'object_oids':(OID('sha1','1'*40),OID('sha1','2'*40)),
+    'resource_keys':(ResourceKey.from_native(S,'opaque','a'),ResourceKey.from_native(S,'opaque','b'))}
+rows=[]
+for field,values in coordinates.items():
+    for mutation in ['duplicate','permutation']:
+        data=ExchangePackage(P,971,S,R,ExchangeSelectionScope(all_selected=True,**{field:values})).to_dict()
+        pristine=copy.deepcopy(data)
+        if mutation=='duplicate':data['selection_scope'][field].append(data['selection_scope'][field][0])
+        else:data['selection_scope'][field].reverse()
+        rechecksummed=copy.deepcopy(data);rechecksummed['digest_sha256']=digest(data)
+        rows.append({'field':field,'mutation':mutation,'original_digest':digest(pristine),'received_dictionary_digest':digest(data),'declared_digest':data['digest_sha256'],'stale_digest_result':result(lambda:decode_package(data)),'received_digest_result':result(lambda:decode_package(rechecksummed)),'original':pristine,'received':data})
+core=[]
+for section,field in [('repositories','repository_uuidv4'),('git_objects','full_oid')]:
+    for invalid in [True,1,None,[]]:
+        data=ExchangePackage(P,977,S,R,ExchangeSelectionScope(all_selected=True),core=empty_core_section()).to_dict()
+        row={field:invalid} if section=='repositories' else {'object_format':'sha1',field:invalid}
+        data['core'][section]=[row];data['digest_sha256']=digest(data)
+        sink_call=(lambda:CorePreflight().admit_repository(invalid)) if section=='repositories' else (lambda:OID('sha1',invalid))
+        core.append({'section':section,'field':field,'invalid':invalid,'outer_codec':result(lambda:decode_package(data)),'typed_preflight_boundary':result(sink_call)})
+connection=sqlite3.connect(':memory:')
+output={'format':module.FORMAT,'module':module.__file__,'module_sha256':hashlib.sha256(Path(module.__file__).read_bytes()).hexdigest(),'python_executable':sys.executable,'python':sys.version,'sqlite':sqlite3.sqlite_version,'sqlite_source_id':connection.execute('select sqlite_source_id()').fetchone()[0],'checksum_probes':rows,'core_parse_boundary_probes':core,'no_sql_mutation':True}
+Path(args.output).write_text(json.dumps(output,indent=2,sort_keys=True)+'\n')
+print(json.dumps({'output':args.output,'format':module.FORMAT,'checksum_probes':len(rows),'stale_digest_acceptances':sum(r['stale_digest_result']['accepted'] for r in rows),'true_received_digest_acceptances':sum(r['received_digest_result']['accepted'] for r in rows),'core_outer_acceptances':sum(r['outer_codec']['accepted'] for r in core),'core_typed_refusals':sum(not r['typed_preflight_boundary']['accepted'] for r in core)}))

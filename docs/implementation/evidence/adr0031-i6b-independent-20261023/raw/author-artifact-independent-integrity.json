@@ -1,0 +1,16 @@
+[
+  {
+    "index": "ARTIFACTS.json",
+    "index_sha256": "3fcc671ae6b8afa73dd8a6f212cfe5fb957e39e040d833a5e24ca4a92c210700",
+    "verified_entries": 1094,
+    "all_lengths_hashes_match": true,
+    "scope": "Internal transport consistency only; actual executions independently rerun/reconciled elsewhere."
+  },
+  {
+    "index": "raw-index.json",
+    "index_sha256": "4369e168a709bfe1c514c396234e2b08afc9bc1ff8ea5c96c190b8e17c1db52f",
+    "verified_entries": 1057,
+    "all_lengths_hashes_match": true,
+    "scope": "Internal transport consistency only; actual executions independently rerun/reconciled elsewhere."
+  }
+]

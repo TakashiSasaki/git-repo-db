@@ -1,0 +1,18 @@
+{
+  "command": [
+    "/home/runner/work/git-repo-db/git-repo-db/.venv/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "--collect-only",
+    "-o",
+    "addopts=",
+    "tests"
+  ],
+  "cwd": "/home/runner/work/git-repo-db/git-repo-db",
+  "started_epoch": 1792759813.2697709,
+  "elapsed_seconds": 1.274,
+  "exit_code": 0,
+  "collected": 6290,
+  "duplicates": 0
+}

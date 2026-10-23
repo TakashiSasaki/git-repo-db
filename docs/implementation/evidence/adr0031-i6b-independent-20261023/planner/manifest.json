@@ -1,0 +1,78 @@
+{
+  "junit.xml": {
+    "bytes": 5196,
+    "sha256": "4c1272430846045811ab566c34652feb7b28a87e98b36fa3d9cd25ea90fe4f88"
+  },
+  "work-budget-contract.execution.json": {
+    "bytes": 741,
+    "sha256": "e91e921373f95c8add316acb55963906e0e5e65468118a3f80ea6f781db4ff8b"
+  },
+  "findings.json": {
+    "bytes": 1809,
+    "sha256": "e27efa6f264bcf2d68a536c41d975f1a703f3ec1f9d2b69aefcf3d491b186527"
+  },
+  "reconciliation.json": {
+    "bytes": 2390,
+    "sha256": "1f569779eb84d4d21d95dddf758c666c46f3f92c06ba683627d13a3eccfccc02"
+  },
+  "REPORT.md": {
+    "bytes": 10655,
+    "sha256": "24a5bdcd71918905a18155ff73efd22609eec1e8a0799c3cb12a00bdfb9453ba"
+  },
+  "work-floor-measurements.log": {
+    "bytes": 1785,
+    "sha256": "c8f6f4b6e2f4e279b9282ed329de116db89fa6e36014e0c313b925f988cc7a33"
+  },
+  "runtime-inputs.json": {
+    "bytes": 2229,
+    "sha256": "b3c38ff8c56556e72e91ae54d93fc7862ebfa1e8dbb5119f9eb75dbb8be3643e"
+  },
+  "work-budget-contract.pytest.log": {
+    "bytes": 6554,
+    "sha256": "6205cbd37f6ec7dd56ca2ec87597cf3124cd7bc1d59cf216fdff38952167bd82"
+  },
+  "work-floor-measurements.json": {
+    "bytes": 7150,
+    "sha256": "b72bd897bea2553afe1aac223c2867d17336de90ce612d510359d59c549fdda5"
+  },
+  "test_planner_independent.py.txt": {
+    "bytes": 10754,
+    "sha256": "e9ffcd3aa273c647788c1477cb28524ea8ab6a1485fda120db52e754696ff59e"
+  },
+  "collection.log": {
+    "bytes": 1880,
+    "sha256": "eac004d251c53a9789cabcb5f906c77c00d0577a253197d6b2970b1b4947fbc3"
+  },
+  "measure_work_floor.py.txt": {
+    "bytes": 1834,
+    "sha256": "9ef798c50dfd717890c1e38b8af73412b86b88297d8d8376d4f74496061f7c6e"
+  },
+  "work-budget-contract.junit.xml": {
+    "bytes": 6861,
+    "sha256": "66cbe082871056407cdb70ab1f912e0eadea5d6a5e3928bf6ea673948fe92bad"
+  },
+  "pytest.log": {
+    "bytes": 99,
+    "sha256": "3b7d6407c8765f26c4c4c90dacfde6549b2825b0b1977b08bf379be740f639c6"
+  },
+  "test_planner_work_budget_contract.py.txt": {
+    "bytes": 2564,
+    "sha256": "dec5aa650b847b18aee223e3ab79fe41faf644b620d12edfa7cf3b83c375555b"
+  },
+  "journal.jsonl": {
+    "bytes": 21102,
+    "sha256": "2c1400acd5272137602b4bcc3ca9e4803a1d22ddca3aa53ab6a54212144ea23e"
+  },
+  "execution.json": {
+    "bytes": 665,
+    "sha256": "fd0058dabb02395095cbfc635d256712737f51dcd704ee8c0e1a94fdb81e2399"
+  },
+  "work-budget-contract.journal.jsonl": {
+    "bytes": 2647,
+    "sha256": "5e699e18e2c17adc8388ea67da57f10fbd7734409c7e7dd353b5e9095089895f"
+  },
+  "work-budget-contract.reconciliation.json": {
+    "bytes": 867,
+    "sha256": "9a218595c7d4a4b7cc94d7ba47264cf335ff684286b9cc6e9b52a120a07644b5"
+  }
+}

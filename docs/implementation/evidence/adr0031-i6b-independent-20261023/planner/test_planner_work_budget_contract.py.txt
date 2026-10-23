@@ -1,0 +1,50 @@
+"""Independent R04 counterexample: unbudgeted scan precedes work refusal."""
+import json
+from unittest.mock import patch
+
+import pytest
+
+from repo_catalog.domain import exchange
+from repo_catalog.domain.context_dependencies import plan_context_dependencies
+from repo_catalog.domain.context_wire import decode_context_v5
+from repo_catalog.domain.exchange import ExchangeSelectionScope, empty_context_section
+from repo_catalog.domain.p1_context import ResourceKey, canonical
+from repo_catalog.domain.resource_identification import ResourceIdentification
+
+SERVICE = "98765432-1111-4222-8333-123456789abc"
+
+
+def valid_context(n=500):
+    data = empty_context_section()
+    data["providers"] = [{"service_instance_uuidv4": SERVICE, "provider_kind": "independent", "configuration_json": "{}"}]
+    for i in range(n):
+        key = ResourceKey.from_native(SERVICE, "x-budget-probe", ["n", str(i)])
+        data["resources"].append(ResourceIdentification.unscoped(key).to_wire())
+        data["resource_relations"].append({
+            **dict(zip(("service_instance_uuidv4", "resource_kind", "provider_resource_id"), key.coordinates(), strict=True)),
+            "relation_kind": "x-self-link",
+            "members_json": canonical([key.coordinates()]),
+            "scope_json": "{}",
+            "provenance_json": canonical({"source": "independent", "evidence": "B" * 512}),
+            "observed_at_us": 401,
+        })
+    # Establish planner's stated precondition before the measured planner call.
+    assert decode_context_v5(data) == data
+    return data
+
+
+@pytest.mark.parametrize("max_work", [0, 1, 17])
+def test_R04_already_validated_input_does_not_do_full_embedded_scan_after_budget_exhausted(max_work):
+    data = valid_context()
+    parses = []
+    original = exchange._parse_json
+    def observed(raw):
+        parses.append(len(raw))
+        return original(raw)
+    scope = ExchangeSelectionScope(all_selected=True, resource_keys=(), source_uuidv4s=(), repository_uuidv4s=(), max_work=max_work)
+    with patch.object(exchange, "_parse_json", side_effect=observed):
+        result = plan_context_dependencies(data, scope)
+    assert not any(result.context.values())
+    # Diagnostic is an observed fact, not a runtime timing claim.
+    print(json.dumps({"max_work": max_work, "actual_work": result.work_units, "embedded_parse_calls": len(parses), "embedded_text_characters_parsed": sum(parses), "input_rows": sum(map(len, data.values()))}))
+    assert result.work_units <= max_work + 1, "R04 full input scan ignored configured work budget before refusal"

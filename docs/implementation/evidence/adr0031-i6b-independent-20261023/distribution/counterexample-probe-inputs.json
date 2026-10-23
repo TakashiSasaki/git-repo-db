@@ -1,0 +1,12 @@
+[
+  {
+    "source": "/workspace/i6b-wire-probes/test_digest_contract.py",
+    "staged": "tests/unit/test_digest_contract.py",
+    "sha256": "855d5fc32bbff94890ce838a6e8cb27694eeaac218353f4407263ad75537ab74"
+  },
+  {
+    "source": "/workspace/i6b-planner-probes/test_planner_work_budget_contract.py",
+    "staged": "tests/unit/test_planner_work_budget_contract.py",
+    "sha256": "dec5aa650b847b18aee223e3ab79fe41faf644b620d12edfa7cf3b83c375555b"
+  }
+]

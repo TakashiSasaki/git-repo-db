@@ -1,0 +1,79 @@
+"""Independent read-only verifier for timestamped Development CI receipts."""
+import argparse
+import base64
+import hashlib
+import io
+import json
+import re
+import subprocess
+import zipfile
+from pathlib import Path
+
+
+def digest(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+def main():
+    p = argparse.ArgumentParser()
+    p.add_argument("logs", type=Path)
+    p.add_argument("run", type=Path)
+    p.add_argument("output", type=Path)
+    p.add_argument("--feature", required=True)
+    p.add_argument("--base", required=True)
+    args = p.parse_args()
+    run = json.loads(args.run.read_text())
+    assert run["head_sha"] == args.feature
+    pld = args.logs.read_bytes()
+    candidates = []
+    markers = re.compile(r"^\d{4}-\d\d-\d\dT[^ ]+Z (CI_RECEIPTS_(?:BEGIN|DATA|END)_V1) (.*)$")
+    with zipfile.ZipFile(io.BytesIO(pld)) as z:
+        for name in z.namelist():
+            if name.endswith("/"):
+                continue
+            events = [m.groups() for line in z.read(name).decode().splitlines() if (m := markers.match(line))]
+            if not events:
+                continue
+            assert events[0][0] == "CI_RECEIPTS_BEGIN_V1"
+            assert events[-1][0] == "CI_RECEIPTS_END_V1"
+            assert all(k == "CI_RECEIPTS_DATA_V1" for k, _ in events[1:-1])
+            claimed, length = events[0][1].split()
+            blob = base64.b64decode("".join(v for _, v in events[1:-1]), validate=True)
+            assert len(blob) == int(length)
+            assert digest(blob) == claimed == events[-1][1]
+            candidates.append((name, blob))
+    assert candidates and len({digest(v) for _, v in candidates}) == 1
+    receipt = candidates[0][1]
+    with zipfile.ZipFile(io.BytesIO(receipt)) as z:
+        names = z.namelist()
+        assert len(names) == len(set(names))
+        assert all(Path(n).name == n and n not in (".", "..") and "\\" not in n for n in names)
+        files = {n: z.read(n) for n in names}
+    index = json.loads(files["receipt-index.json"])
+    assert set(index) == set(files) - {"receipt-index.json"}
+    for name, value in index.items():
+        assert value["bytes"] == len(files[name]) and value["sha256"] == digest(files[name])
+    binding = json.loads(files["receipt-binding.json"])
+    manifest = json.loads(files["validation-manifest.json"])
+    assert binding["feature_sha"] == args.feature
+    assert str(binding["run_id"]) == str(run["id"])
+    assert str(binding["run_attempt"]) == str(run["run_attempt"])
+    head = binding["head"]
+    git = lambda ref: subprocess.check_output(["git", "show", "-s", "--format=%T %P", ref], text=True).strip().split()
+    tree, *parents = git(head)
+    feature_tree = git(args.feature)[0]
+    assert parents == [args.base, args.feature]
+    assert tree == binding["tree"] == feature_tree
+    assert manifest["full_acceptance"] is False
+    assert manifest["acceptance_status"] == "development_checks_passed"
+    args.output.mkdir(parents=True, exist_ok=True)
+    for name, value in files.items():
+        (args.output / name).write_bytes(value)
+    (args.output / "receipt.zip").write_bytes(receipt)
+    result = dict(run_id=run["id"], status=run["status"], conclusion=run["conclusion"], receipt_sha256=digest(receipt), receipt_bytes=len(receipt), logs_sha256=digest(pld), logs_bytes=len(pld), marker_members=[n for n, _ in candidates], payloads=len(index), feature=args.feature, base=args.base, checkout=head, parents=parents, tree=tree, full_acceptance=manifest["full_acceptance"], acceptance_status=manifest["acceptance_status"], binding=binding)
+    (args.output / "verification.json").write_text(json.dumps(result, indent=2) + "\n")
+    print(json.dumps({k: v for k, v in result.items() if k != "binding"}, indent=2))
+
+
+if __name__ == "__main__":
+    main()

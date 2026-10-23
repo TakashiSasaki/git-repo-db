@@ -1,0 +1,24 @@
+[
+  {
+    "lane": "full",
+    "execution_head": "268025f67841285d105737b5a0d7bd15b1a6f59c",
+    "execution_tree": "e5fa0437f19f31fa414d488ec10f483ef68f03fa",
+    "mapped_reference_head": "ea43a21fca1dbf8fa6dd1c254b28a96d5dd28d00",
+    "mapped_reference_tree": "e7ca7e361b8b766f1976a12fc84d5cc50ac32232",
+    "inputs_checked": 480,
+    "each_input_matches_actual_reference_Git_blob": true,
+    "before_after_binding_equal": true,
+    "mismatches": []
+  },
+  {
+    "lane": "diagnostic743",
+    "execution_head": "268025f67841285d105737b5a0d7bd15b1a6f59c",
+    "execution_tree": "e5fa0437f19f31fa414d488ec10f483ef68f03fa",
+    "mapped_reference_head": "ea43a21fca1dbf8fa6dd1c254b28a96d5dd28d00",
+    "mapped_reference_tree": "e7ca7e361b8b766f1976a12fc84d5cc50ac32232",
+    "inputs_checked": 480,
+    "each_input_matches_actual_reference_Git_blob": true,
+    "before_after_binding_equal": true,
+    "mismatches": []
+  }
+]

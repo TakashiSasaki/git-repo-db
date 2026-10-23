@@ -1,0 +1,11 @@
+{
+  "normal_controller_reports": 678,
+  "worker_preconversion_reports": 735,
+  "subtest_reports": 57,
+  "controller_journal_exact": true,
+  "worker_controller_all_reports_exact": true,
+  "initial_parser_predicate_rejected": {
+    "worker_reports_equal_main_only": false,
+    "extra_57_reports": "Before pytest converts subtest reports, makereport sees plain TestReport for them too. The controller retains actual SubtestReport types and context. Preserve all worker rows and reconcile them to all controller rows; classify main/subtest only from actual controller types/context. No outcome or raw report was changed."
+  }
+}

@@ -1,0 +1,21 @@
+"""Finalize broad evidence only after complete independent receipts reconcile."""
+import gzip,json,hashlib
+from pathlib import Path
+from collections import Counter
+from analyze_runs import ROOT,OUT,parse,emit
+results,failures,summary=parse(OUT/'full-final-v3','ordinary','fresh')
+files=['tests/integration/p3/test_transfer_sql.py','tests/integration/p3/test_transfer_admission.py','tests/integration/p3/test_parent_reports.py','tests/unit/test_context_admission.py','tests/unit/test_transfer_originals.py','tests/unit/test_context_fences_i6a.py','tests/unit/test_context_oid_admission_i6a.py','tests/unit/test_context_admission_bounds_i6a.py','tests/unit/test_context_coordinator_admission.py','tests/unit/test_context_refusal_order_i6a.py','tests/integration/p1/test_coordination.py','tests/integration/i6a/test_admission.py','tests/integration/i6a/test_originals_revalidation.py']
+subsets={}
+for name,paths in [('safety626',files),('new_wire_planner212',['tests/unit/test_context_wire_v5.py','tests/unit/test_context_dependencies.py']),('I4_217',['tests/integration/p3/test_transfer_sql.py']),('I5_29',['tests/integration/p3/test_transfer_admission.py'])]:
+    nodes=[n for n in results if n.split('::')[0] in paths]
+    subsets[name]={'count':len(nodes),'counts':dict(Counter(results[n][0] for n in nodes)),'nodes':sorted(nodes),'scope':'Subset of one complete fresh ordinary execution; not a separate invocation.'}
+    assert all(results[n][0]=='passed' for n in nodes)
+assert subsets['safety626']['count']==626 and subsets['new_wire_planner212']['count']==212 and subsets['I4_217']['count']==217 and subsets['I5_29']['count']==29
+# Bind the complete current subset to the exact historical Author roster; no count substitution.
+claimed=gzip.decompress((ROOT/'docs/implementation/evidence/adr0031-i6b-author-20261023/raw/final-source-safety/focused.selected.txt.gz').read_bytes()).decode().splitlines()
+assert Counter(claimed)==Counter(subsets['safety626']['nodes'])
+diagnostic,df,ds=parse(OUT/'diagnostic745','diagnostic','fresh')
+comparison={n:json.loads((OUT/(n+'.summary.json')).read_text()) for n in ['full-vs-149','full-vs-author-premigration','diagnostic-vs-149','diagnostic-vs-author-final','assertion-reach-vs-149','assertion-reach-vs-author-final']}
+report={'full_ordinary':summary,'subsets':subsets,'separate_diagnostic':ds,'historical_comparisons':comparison,'unexecuted':json.loads((OUT/'full-final-v3/unexecuted.json').read_text()),'scope':'Independent final-HEAD ordinary source execution and separate matched diagnostic. Historical, partial, focused, installed and hosted runs are never combined into one aggregate. Failed observer/bootstrap controls remain preserved separately.'}
+emit(OUT/'SUMMARY.json',report)
+print(json.dumps({'full':summary['counts'],'diagnostic':ds['counts'],'subsets':{k:v['count'] for k,v in subsets.items()}},indent=2))
