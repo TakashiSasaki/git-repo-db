@@ -414,3 +414,17 @@ independent direct/derived comparison. Compare complete wheel contents and
 validated RECORD entries, then retain the separate installed-behavior probes.
 This does not authorize removing package data, changing SQLite or treating a
 content-only gate as release acceptance.
+
+When independently challenging archive gates, distinguish logical tar members
+from the complete compressed input. Python `tarfile` consumes PAX extensions
+before yielding a member and stops at the first tar end marker; a successful
+iteration alone does not validate unknown extension payloads, appended archives
+or gzip trailers. Use bounded synthetic PAX values, a second gzip/tar stream,
+and corrupted/truncated trailers as separate negative controls. Independently
+check gzip EOF/integrity, record logical regular-file bytes separately from total
+decompressed/header bytes, and inspect the backend's actual extension keys before
+proposing an allowlist. Never call a raw `gzip.decompress` of an untrusted large
+artifact a production-safe bounded validator. The independent ADR 0033 probes at
+`docs/implementation/evidence/adr0033-independent-review-20261023/archive/`
+reproduce these parser blind spots without extracting files or importing product
+code; their nonzero diagnostic exit reports findings, not an incomplete run.

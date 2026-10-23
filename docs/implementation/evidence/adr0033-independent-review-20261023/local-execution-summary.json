@@ -1,0 +1,153 @@
+{
+  "packaging": {
+    "passed": 57,
+    "failed": 4,
+    "error": 0,
+    "skipped": 0,
+    "xfail": 0,
+    "xpass": 0,
+    "executed": 61,
+    "reconciliation": {
+      "checks": {
+        "selected_unique": true,
+        "selected_equals_junit": true,
+        "selected_equals_journal_starts": true,
+        "setup_and_teardown_once": true,
+        "no_duplicate_phases": true,
+        "phase_nodes_equal_selected": true,
+        "call_once_after_successful_setup": true,
+        "one_finish": true
+      },
+      "consistent_node_execution": true,
+      "journal_phase_outcomes": {
+        "passed": 179,
+        "failed": 4
+      },
+      "finishes": [
+        {
+          "event": "finish",
+          "status": "failed",
+          "exitstatus": 1,
+          "timestamp": 1792720553.757161
+        }
+      ]
+    },
+    "process": {
+      "command": [
+        "/workspace/adr0033-execution/.venv/bin/python",
+        "-m",
+        "pytest",
+        "tests/packaging",
+        "-q",
+        "--junitxml=/workspace/adr0033-results/packaging.xml",
+        "--journal=/workspace/adr0033-results/packaging.jsonl"
+      ],
+      "cwd": "/workspace/adr0033-execution",
+      "exit_code": 1,
+      "elapsed_seconds": 73.56140923500061
+    }
+  },
+  "focused-corrected": {
+    "passed": 235,
+    "failed": 0,
+    "error": 0,
+    "skipped": 0,
+    "xfail": 0,
+    "xpass": 0,
+    "executed": 235,
+    "reconciliation": {
+      "checks": {
+        "selected_unique": true,
+        "selected_equals_junit": true,
+        "selected_equals_journal_starts": true,
+        "setup_and_teardown_once": true,
+        "no_duplicate_phases": true,
+        "phase_nodes_equal_selected": true,
+        "call_once_after_successful_setup": true,
+        "one_finish": true
+      },
+      "consistent_node_execution": true,
+      "journal_phase_outcomes": {
+        "passed": 705
+      },
+      "finishes": [
+        {
+          "event": "finish",
+          "status": "completed",
+          "exitstatus": 0,
+          "timestamp": 1792720911.71771
+        }
+      ]
+    },
+    "process": {
+      "command": [
+        "/workspace/adr0033-execution/.venv/bin/python",
+        "-m",
+        "pytest",
+        "tests/unit/test_ci_plan.py",
+        "tests/unit/test_test_efficiency.py",
+        "tests/integration/test_ci_execution.py",
+        "-q",
+        "--junitxml=/workspace/adr0033-results/focused-corrected.xml",
+        "--journal=/workspace/adr0033-results/focused-corrected.jsonl"
+      ],
+      "cwd": "/workspace/adr0033-execution",
+      "exit_code": 0,
+      "elapsed_seconds": 21.889638662338257
+    }
+  },
+  "docs-unit-corrected": {
+    "passed": 8,
+    "failed": 0,
+    "error": 0,
+    "skipped": 0,
+    "xfail": 0,
+    "xpass": 0,
+    "executed": 8,
+    "reconciliation": {
+      "checks": {
+        "selected_unique": true,
+        "selected_equals_junit": true,
+        "selected_equals_journal_starts": true,
+        "setup_and_teardown_once": true,
+        "no_duplicate_phases": true,
+        "phase_nodes_equal_selected": true,
+        "call_once_after_successful_setup": true,
+        "one_finish": true
+      },
+      "consistent_node_execution": true,
+      "journal_phase_outcomes": {
+        "passed": 24
+      },
+      "finishes": [
+        {
+          "event": "finish",
+          "status": "completed",
+          "exitstatus": 0,
+          "timestamp": 1792720913.40476
+        }
+      ]
+    },
+    "process": {
+      "command": [
+        "/workspace/adr0033-execution/.venv/bin/python",
+        "-m",
+        "pytest",
+        "tests/unit/test_build_docs_site.py",
+        "-q",
+        "--junitxml=/workspace/adr0033-results/docs-unit-corrected.xml",
+        "--journal=/workspace/adr0033-results/docs-unit-corrected.jsonl"
+      ],
+      "cwd": "/workspace/adr0033-execution",
+      "exit_code": 0,
+      "elapsed_seconds": 1.6359081268310547
+    }
+  },
+  "coverage": {
+    "ordinary": 5787,
+    "unique_executed": 3419,
+    "unexecuted_ordinary": 2368,
+    "live_unexecuted": 1,
+    "benchmark_unexecuted": 1
+  }
+}

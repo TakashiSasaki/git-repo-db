@@ -1,0 +1,1288 @@
+{
+  "archive": "repo_catalog-0.2.0.tar.gz",
+  "budgets": {
+    "compressed_bytes": 2097152,
+    "members": 512,
+    "unpacked_bytes": 8388608
+  },
+  "compressed_bytes": 677902,
+  "file_count": 159,
+  "member_count": 159,
+  "members": {
+    ".gitignore": {
+      "bytes": 117,
+      "sha256": "e8d0ea1a45ced44a473563efabba2bbf431100e64c43938d65656c3260b69150"
+    },
+    "PKG-INFO": {
+      "bytes": 185,
+      "sha256": "deb44e710fced597c58be8bcbb5e7d2001c1aaffa21addfe1ed5819c1e96d0eb"
+    },
+    "README.md": {
+      "bytes": 15011,
+      "sha256": "f4997870b7c4894121f21127b16efe3b995c54270ee675f40e6ccaeba6772dd2"
+    },
+    "pyproject.toml": {
+      "bytes": 1033,
+      "sha256": "f6dd4ac7b273ee80ed7cd588637557cb62bf510d8eced722456206b48eb94c01"
+    },
+    "src/repo_catalog/__init__.py": {
+      "bytes": 64,
+      "sha256": "ed7f78e4604437506c62e6c61f3c269bb51901665e1d1484e13cf04757e05ca0"
+    },
+    "src/repo_catalog/__main__.py": {
+      "bytes": 65,
+      "sha256": "ee690428669109bc4afce171576c4c3417da09edd37690815793b693fbb54aef"
+    },
+    "src/repo_catalog/adapters/filesystem/access_executor.py": {
+      "bytes": 5986,
+      "sha256": "ee8bc62d087fad23a1a3539263651102f1edac6dc9434c24e0f4f63b27eabf6a"
+    },
+    "src/repo_catalog/adapters/filesystem/atomic_publish.py": {
+      "bytes": 1903,
+      "sha256": "b1e4b79e93989d8c4dd5e41f0f5fbbeab41ec72cf6c40ad289f2cb95b656cacd"
+    },
+    "src/repo_catalog/adapters/filesystem/cache.py": {
+      "bytes": 11350,
+      "sha256": "43b0c13b4cb1a6f4b8299822fd55cc5394f652c9c90344f698697577b282cd18"
+    },
+    "src/repo_catalog/adapters/filesystem/capacity.py": {
+      "bytes": 4409,
+      "sha256": "a33441ecf9160ab5fe281c724f789e68921eb21b4c3a8e222bce4cc0ba41caa4"
+    },
+    "src/repo_catalog/adapters/filesystem/locks.py": {
+      "bytes": 989,
+      "sha256": "02b3422aa231df94cb5ca5172dae67d907aeec77804502409235e491e525c6da"
+    },
+    "src/repo_catalog/adapters/git/access_native.py": {
+      "bytes": 11847,
+      "sha256": "fc38b78a5113b4ede7321995932c8397b4ffa30e589d50892673c0322f106d5f"
+    },
+    "src/repo_catalog/adapters/git/importer.py": {
+      "bytes": 40133,
+      "sha256": "6d7466c64e6134dfc445c72baf741956b584fc2236dfb9a33870ad981382e268"
+    },
+    "src/repo_catalog/adapters/git/native.py": {
+      "bytes": 8215,
+      "sha256": "d1939fee65cc18565f0afa1424aa8dda27a04f0430da7606eacd5bd8a73f35be"
+    },
+    "src/repo_catalog/adapters/git/notes.py": {
+      "bytes": 11474,
+      "sha256": "8497bfa9ab1e99dc64ed8877e0ee49702f4375b70f388b9724d4705c1ee58bf4"
+    },
+    "src/repo_catalog/adapters/git/parsing.py": {
+      "bytes": 46443,
+      "sha256": "f27e9a07e2572ab961b7494dad3f0d6d3e8a3bf625a972065b58781cd05288fb"
+    },
+    "src/repo_catalog/adapters/git/runner.py": {
+      "bytes": 3912,
+      "sha256": "e93b756131a65e55162465c82556d72897a7dc5ba5f626fd16dfa3bc7fb40ba6"
+    },
+    "src/repo_catalog/adapters/github/collector.py": {
+      "bytes": 127444,
+      "sha256": "1517f6076abb571ed1b85affb2b849388f73b2ce3d2975b5b66f53fbcf7e3c28"
+    },
+    "src/repo_catalog/adapters/github/current_parser.py": {
+      "bytes": 22799,
+      "sha256": "ac544df570f07499f3088d198a51bc708145c7e54a147a74d058eab17ff614c6"
+    },
+    "src/repo_catalog/adapters/github/identity.py": {
+      "bytes": 506,
+      "sha256": "8e096e14864917e24b4d67d64e3442287331eca7367795b3002e3cff491b6cd6"
+    },
+    "src/repo_catalog/adapters/github/persistence.py": {
+      "bytes": 20159,
+      "sha256": "b45a94cb819992523ea8de1bb41c03d8be0d81a30e8bc02deeecee3a98e8ba4d"
+    },
+    "src/repo_catalog/adapters/github/production_intake.py": {
+      "bytes": 70893,
+      "sha256": "1ce3103535545eb2a0eea1628cd40249ba5c3f25995ebb0a5aeea3dc8989c3ef"
+    },
+    "src/repo_catalog/adapters/github/transport.py": {
+      "bytes": 14329,
+      "sha256": "eb07d6577f458dbc05e9c8d1c47d1581daf9555250aac123327f1191fa78fc4c"
+    },
+    "src/repo_catalog/adapters/recording.py": {
+      "bytes": 14775,
+      "sha256": "0719568ffd72a2954cc617706a9dc7b4cc4bde47d9496a7782dcce9c5d48c48c"
+    },
+    "src/repo_catalog/adapters/sqlite/access_backup.py": {
+      "bytes": 24337,
+      "sha256": "b1df310e6d5a24ec48dd012f370b08c8179e6eee33e66f1304ee0a2ac64d5e08"
+    },
+    "src/repo_catalog/adapters/sqlite/access_connections.py": {
+      "bytes": 17912,
+      "sha256": "9472274b9a5baff8894ef182fc6aaad4a81aecd433026cfb30b3441f3a1f861c"
+    },
+    "src/repo_catalog/adapters/sqlite/access_ddl/connections.sql": {
+      "bytes": 11134,
+      "sha256": "e3bb8958706631a9038f48be99b3ad943b886682338d4d65fdb5a2172ac98fb0"
+    },
+    "src/repo_catalog/adapters/sqlite/access_ddl/registry.sql": {
+      "bytes": 3747,
+      "sha256": "4d949c13488df0e4792a337b6e864ca372e6c738ba0576b2dff3bccb72a5e7bc"
+    },
+    "src/repo_catalog/adapters/sqlite/access_registry.py": {
+      "bytes": 12561,
+      "sha256": "d5dc914d1d402e6d07efd128ae489ba86aeb3a365356a44cfab4ce80950f9820"
+    },
+    "src/repo_catalog/adapters/sqlite/access_schema.py": {
+      "bytes": 15148,
+      "sha256": "4991ddc288f4823e27fdc101e70a22093f3fb3d0e0d31298810ff11cf176e61a"
+    },
+    "src/repo_catalog/adapters/sqlite/acquisition.py": {
+      "bytes": 21591,
+      "sha256": "df989af7cb18f490b625a385b883a01ca5e3baf8625775d5339740b17b95badd"
+    },
+    "src/repo_catalog/adapters/sqlite/cas_integrity.py": {
+      "bytes": 11354,
+      "sha256": "b2c1cfd13c907493380df2d113617ad95e7fcfae2525d51c38e28e0514e4232c"
+    },
+    "src/repo_catalog/adapters/sqlite/code_assessments.py": {
+      "bytes": 4230,
+      "sha256": "208992994bb05944c51fc0dbfa577c4d90c1a4162ed7b2540b5e41eb46305cbc"
+    },
+    "src/repo_catalog/adapters/sqlite/coverage.py": {
+      "bytes": 6924,
+      "sha256": "af0434c7f9934b4284ed2c6880dcf763d5bf7b3e8ebf81297bc0bbd76ae3fbc2"
+    },
+    "src/repo_catalog/adapters/sqlite/current_api.py": {
+      "bytes": 41104,
+      "sha256": "37f47903b1881ba5d9e6942b74ac5dc5ebb5b847f50e33b7498fac7c4984cb7c"
+    },
+    "src/repo_catalog/adapters/sqlite/current_collections.py": {
+      "bytes": 6351,
+      "sha256": "1835c8e68f6ba05c7684498abdb1a79782b5f38e979dc3b5033ac891e8bb39ed"
+    },
+    "src/repo_catalog/adapters/sqlite/current_resources.py": {
+      "bytes": 58916,
+      "sha256": "335af0485fa6eef2fd3d50af48e5b7e42db4c981beda7d9b7aabe7e12b2d602c"
+    },
+    "src/repo_catalog/adapters/sqlite/exchange.py": {
+      "bytes": 104537,
+      "sha256": "336f22bb74502477154be6e147c9843bdb48bc9bd8a50bcb24332572d49c10aa"
+    },
+    "src/repo_catalog/adapters/sqlite/git_core.py": {
+      "bytes": 16485,
+      "sha256": "0b29e6bdffc09a6bd328551709548195e576c5bd062be96dda6fe783ce258207"
+    },
+    "src/repo_catalog/adapters/sqlite/git_intrinsic.py": {
+      "bytes": 5207,
+      "sha256": "89d3e6a80619157062eafeefdc2b79734329a3defda5bde6ede87aba2111585a"
+    },
+    "src/repo_catalog/adapters/sqlite/identity_relations.py": {
+      "bytes": 4574,
+      "sha256": "a23044e5049ffc4b55f91871d756643c7b427f3a108ea11304b44ec57efe7f80"
+    },
+    "src/repo_catalog/adapters/sqlite/index.py": {
+      "bytes": 15415,
+      "sha256": "79352d4937580322b861819fb023b02375f3b2be927d67faa40620e853c91e2a"
+    },
+    "src/repo_catalog/adapters/sqlite/json_contracts.py": {
+      "bytes": 145789,
+      "sha256": "d7bd8653ef251804ed120570e769b430b08c24a41f09153e5bd8a519892983c7"
+    },
+    "src/repo_catalog/adapters/sqlite/notes.py": {
+      "bytes": 1556,
+      "sha256": "7fe27c7c731b0150c8cef85ee09039b3c0896a874a885ad8eb5e80dac3c4ba27"
+    },
+    "src/repo_catalog/adapters/sqlite/p1_context.py": {
+      "bytes": 62755,
+      "sha256": "fac44edb9457c59338fbfc771562e7ae450dde32d1da662eb60746597eee879c"
+    },
+    "src/repo_catalog/adapters/sqlite/p1_coordination.py": {
+      "bytes": 58819,
+      "sha256": "36cc62c99decb13275ae6d7cca4ebd2a5b71438514e1d36892a5b2e59e3c215e"
+    },
+    "src/repo_catalog/adapters/sqlite/p1_core.py": {
+      "bytes": 44056,
+      "sha256": "e9f4a2004f00209ddbc4d869bb280fb6c40b807f6f7c338cd7646d7cad893a49"
+    },
+    "src/repo_catalog/adapters/sqlite/p1_ddl/context.sql": {
+      "bytes": 47098,
+      "sha256": "73532070fc99f9e87dd4977fd6859d47b183207921e7b641a9c51e8234a5cab9"
+    },
+    "src/repo_catalog/adapters/sqlite/p1_ddl/core.sql": {
+      "bytes": 14238,
+      "sha256": "0b96849f36fbbf314e69b675eedd11c8e751173563870c004d912dab6d3d7323"
+    },
+    "src/repo_catalog/adapters/sqlite/p1_ddl/coverage.sql": {
+      "bytes": 1261,
+      "sha256": "1c830f402ac20ace36928d03b49db2f7aeab9962f14d6ee7aeb086b63081a9ed"
+    },
+    "src/repo_catalog/adapters/sqlite/p1_ddl/fingerprints.json": {
+      "bytes": 2329,
+      "sha256": "5b1a354949f7abe491a07797fb182603b7b1f95322f161c812e7a8dd9845a4d0"
+    },
+    "src/repo_catalog/adapters/sqlite/p1_ddl/operational.sql": {
+      "bytes": 6526,
+      "sha256": "25c678b1584630c87ac643c81fc4f0fb83c210d0671d485d0a21794e54c84ef1"
+    },
+    "src/repo_catalog/adapters/sqlite/p1_ddl/search.sql": {
+      "bytes": 795,
+      "sha256": "4224950692cf754d787c69a10cfca9b6e6a0f53b770ea947f0a8ef670f415d8d"
+    },
+    "src/repo_catalog/adapters/sqlite/p1_schema.py": {
+      "bytes": 8957,
+      "sha256": "e1470fe8a81d1f347caa85ef9600860e48941f1154bbe32438f9864a66ed5f22"
+    },
+    "src/repo_catalog/adapters/sqlite/payloads.py": {
+      "bytes": 3338,
+      "sha256": "15e0fff2e2b0c0f10aab6c6bc4c90322c8e06e0afb0a19fe832299b7faf92050"
+    },
+    "src/repo_catalog/adapters/sqlite/production_context.py": {
+      "bytes": 48237,
+      "sha256": "2f7484f355316310eaf1da808501f6d2b8a474f52d8ef3cc05237e9d9e34ff76"
+    },
+    "src/repo_catalog/adapters/sqlite/production_search.py": {
+      "bytes": 26037,
+      "sha256": "d58f19587f48eaa511bd335f47f995e1b79c6bea4605453222e185f5165b4239"
+    },
+    "src/repo_catalog/adapters/sqlite/recovery.py": {
+      "bytes": 154609,
+      "sha256": "9f66473ad9ca481409d405459d5fdb4e6884ea1e0dc9583d530b2861d4578a63"
+    },
+    "src/repo_catalog/adapters/sqlite/recovery_budget.py": {
+      "bytes": 12953,
+      "sha256": "468dbf164994f657ea8c62d64a82cacc6b3f74392d6cfb7b342b0df7d4a6af23"
+    },
+    "src/repo_catalog/adapters/sqlite/recovery_validation.py": {
+      "bytes": 22983,
+      "sha256": "f7b2462bc1075ec07fb39f3460b6ad87f51851a324240774ea200f968cce3801"
+    },
+    "src/repo_catalog/adapters/sqlite/schema.py": {
+      "bytes": 1239,
+      "sha256": "4167f9f7395dac8277f4129db6470bf1ba67a503d950fcfe7f5625fa654bdb39"
+    },
+    "src/repo_catalog/adapters/sqlite/store.py": {
+      "bytes": 27960,
+      "sha256": "5bc8a1d42cf3f785f30ec26fdfd456f07b45850e7520906791b70dd9bc64cd17"
+    },
+    "src/repo_catalog/adapters/sqlite/target.py": {
+      "bytes": 3942,
+      "sha256": "6d7cbb10afe505950ebed1fdea7a037920be23e3fe10770047d086f1cb7c9cbc"
+    },
+    "src/repo_catalog/adapters/sqlite/text_bodies.py": {
+      "bytes": 2119,
+      "sha256": "e4fe64962aca309f9b675b60dd4eac25c729873971a748a69b0305dc579682cb"
+    },
+    "src/repo_catalog/adapters/sqlite/transactions.py": {
+      "bytes": 1180,
+      "sha256": "0fe7bcef262470347c721e64c34ea218a2cfa375725559a11e1ddf6c84959d10"
+    },
+    "src/repo_catalog/application/access_acquisition.py": {
+      "bytes": 11850,
+      "sha256": "38a99e75bcdaaa0ae4a8788aecedd78f06d0be7a988e04bc8d5f458070347751"
+    },
+    "src/repo_catalog/application/access_maintenance.py": {
+      "bytes": 1684,
+      "sha256": "0774ac6bef5109c08635116cfc1c53eb5f761724395d789ea8f93b2436533b73"
+    },
+    "src/repo_catalog/application/access_workflow.py": {
+      "bytes": 12142,
+      "sha256": "902ba4575f2db56fcd430bb0fed81733fd0534f2245bd9d8999abc35a7e4fe95"
+    },
+    "src/repo_catalog/application/acquisition.py": {
+      "bytes": 82756,
+      "sha256": "105504e37977fd0769e61a87fae86347be66cd4cf1b22ca72ca85f19fb76b884"
+    },
+    "src/repo_catalog/application/catalog_validation.py": {
+      "bytes": 2345,
+      "sha256": "32c29508f3e079fa62512bef0d8d369355cb9438de4fd0fab33dd77697de029f"
+    },
+    "src/repo_catalog/application/collection_service.py": {
+      "bytes": 31873,
+      "sha256": "87cbdc8b7708f0fc271ad32526f293ad90b5701fb3c40ddfdc2c8980f4a0b384"
+    },
+    "src/repo_catalog/application/contracts.py": {
+      "bytes": 1033,
+      "sha256": "c977b61d03abd239d9049a0c668eedcbf2bd684047c43df2b0710379c2ea5d4b"
+    },
+    "src/repo_catalog/application/exchange.py": {
+      "bytes": 145661,
+      "sha256": "1f3160fa5535d16d2314f2597b83fbf2a6a8e4acbc6716f9d7f0af9dc6fa53e9"
+    },
+    "src/repo_catalog/application/exchange_service.py": {
+      "bytes": 3792,
+      "sha256": "978ba1d010a371365400f15090707f6570f01e2580ed5545c4ad7e0b39a22231"
+    },
+    "src/repo_catalog/application/git_query_context.py": {
+      "bytes": 7288,
+      "sha256": "3a79e64a83feb0103b9a3d39e4c57a0770b22f2fdf5305bb340ed3cc10fff8e1"
+    },
+    "src/repo_catalog/application/identity_service.py": {
+      "bytes": 2048,
+      "sha256": "07e138bddf9485bc8756b6caa0643a388c2d9e6781113fd8c95b84f71a5efd97"
+    },
+    "src/repo_catalog/application/issue_queries.py": {
+      "bytes": 9375,
+      "sha256": "474e375ee88fad1050433be37e665d6802b6b6817ec951cfb016394917f7d295"
+    },
+    "src/repo_catalog/application/job_plans.py": {
+      "bytes": 3873,
+      "sha256": "0a1ff18900cc505ed41972701bd530729817eb2a928f60108d81f9f258cd6e6a"
+    },
+    "src/repo_catalog/application/job_service.py": {
+      "bytes": 4572,
+      "sha256": "9e4770860c4d93ee99e150ee184766fe7a837d0601b32c1ec8e3434c2b80e054"
+    },
+    "src/repo_catalog/application/maintenance_service.py": {
+      "bytes": 43263,
+      "sha256": "a9ccb5e2b9abd8dc63936289810a0585aafd218408e386eeea258e4e58251884"
+    },
+    "src/repo_catalog/application/notes.py": {
+      "bytes": 8473,
+      "sha256": "2f29ee35a10d3cfebfb44935dd4e83a283b07025842d700d34cf66a965f87244"
+    },
+    "src/repo_catalog/application/parser_service.py": {
+      "bytes": 2003,
+      "sha256": "7b8ae7e23d9b8f1add4a520fcad22c6e0d0745d561af2d46aecc5bd1d623518a"
+    },
+    "src/repo_catalog/application/parsing_service.py": {
+      "bytes": 1260,
+      "sha256": "11cfc45eae63094e6deff0b46a070320fb120376eb5fc5baa76a38105bee8d45"
+    },
+    "src/repo_catalog/application/ports.py": {
+      "bytes": 254,
+      "sha256": "ff7589d9a2b5ef75cea2b305f3854af67a1c995f42688417b3c392f38e90ff14"
+    },
+    "src/repo_catalog/application/pr_queries.py": {
+      "bytes": 44882,
+      "sha256": "f56a437aa7ca30019e5c486f5edacd22c15a1a573d89e560bdefed41932f7c45"
+    },
+    "src/repo_catalog/application/production_query.py": {
+      "bytes": 59432,
+      "sha256": "dc495abb0b2433c5249853c3ffb254043e00244accf306bb3a5b7366be7f63ff"
+    },
+    "src/repo_catalog/application/query_service.py": {
+      "bytes": 73248,
+      "sha256": "80a257854b9146fd5e5f78d3885d71ff2770111e49149f70e21d5c500331a92d"
+    },
+    "src/repo_catalog/application/recovery.py": {
+      "bytes": 3981,
+      "sha256": "468e88bbb26d2be79d79b39d1b0db3580a775d00dc5ed01ecaed96bddc972ca2"
+    },
+    "src/repo_catalog/application/repository_identity.py": {
+      "bytes": 15987,
+      "sha256": "9225b46edba2f0be92929905c64ad9afb4bfef1f8b6d5721a4840cb3ac036e94"
+    },
+    "src/repo_catalog/application/source_service.py": {
+      "bytes": 2081,
+      "sha256": "5a9c21c7e598b41ab1a5dc7704dfcbbaeaf51fdb36acc08c938a463f3766307e"
+    },
+    "src/repo_catalog/application/target_queries.py": {
+      "bytes": 8721,
+      "sha256": "ce5e725ea0e05748337defa4fe7759b47d2baa04988d5f612d1e1d0d4bf0c1e0"
+    },
+    "src/repo_catalog/cli/access_acquisition.py": {
+      "bytes": 6426,
+      "sha256": "fae54a81bbaf5170d2508090919dfcaef94a3ea9aa8e3cd5899f435b8641991c"
+    },
+    "src/repo_catalog/cli/access_maintenance.py": {
+      "bytes": 3075,
+      "sha256": "4dc3e6a2ee5370cf5e6503fa6fe913897f6d3560e6154bf7c0decb87e2762381"
+    },
+    "src/repo_catalog/cli/access_workflow.py": {
+      "bytes": 5157,
+      "sha256": "45a88e89acd3833268eae49eb11c5ecc49c4d3e582546c988f873638d6a1d01c"
+    },
+    "src/repo_catalog/cli/main.py": {
+      "bytes": 24252,
+      "sha256": "acc24904c4b9a4d41800dc888b16eb3ca1a857c118ed75a7301ffdfd8b671d4e"
+    },
+    "src/repo_catalog/cli/presenters.py": {
+      "bytes": 4084,
+      "sha256": "dda3165cfc22e6bb7a6f3ec893645ad100637c05ab0631099c1718518aa8f2be"
+    },
+    "src/repo_catalog/cli/production_query.py": {
+      "bytes": 11183,
+      "sha256": "ec67e07f3c11eaba76aff2e565418a671e701ea1a8155d86f4027dd77a5adf36"
+    },
+    "src/repo_catalog/config.py": {
+      "bytes": 4514,
+      "sha256": "da88a41ab63497f3e018ff790c7247ec4bc53d44240eff387e65bdeaa9b11785"
+    },
+    "src/repo_catalog/domain/access_backup.py": {
+      "bytes": 1774,
+      "sha256": "6fa8654f05b96b25ccd5341433a957d05b6f243b3bf56d4b8dc338dc3e06bf0b"
+    },
+    "src/repo_catalog/domain/access_connections.py": {
+      "bytes": 10272,
+      "sha256": "3ccb3e5351fd21f72ab26475132a6b1ce1643415366ee11ffa9f9e2af3476718"
+    },
+    "src/repo_catalog/domain/access_registry.py": {
+      "bytes": 6014,
+      "sha256": "cce3062c59ba80c428afcbbb0d96508768fc97eda5f8ae46b7d5d5aab3288e49"
+    },
+    "src/repo_catalog/domain/access_workflow.py": {
+      "bytes": 2182,
+      "sha256": "5cdf947c7c01008736e8de86d33edbd85d8b711c8348ce0cc16bbee9f8c2a317"
+    },
+    "src/repo_catalog/domain/acquisition.py": {
+      "bytes": 16175,
+      "sha256": "5b3eba7437505c9ed5053e0d4d427534ef6b9250764953c1ad078c802d9b181d"
+    },
+    "src/repo_catalog/domain/context_registration.py": {
+      "bytes": 10766,
+      "sha256": "e29012935442aa6e9ba05d74956aa5e04c91f03f027758a3b9d399bb7de004cc"
+    },
+    "src/repo_catalog/domain/coverage.py": {
+      "bytes": 4005,
+      "sha256": "96eb3bad172f66af5afe335131087bd5c6a7cf6eb6dbb77617c01e851c8f9c81"
+    },
+    "src/repo_catalog/domain/current_state.py": {
+      "bytes": 2822,
+      "sha256": "52a69c094eabaa206598d2c5e0a669c7740eaca4a9572bd272263774dce30449"
+    },
+    "src/repo_catalog/domain/document.py": {
+      "bytes": 1337,
+      "sha256": "9faa75482007e80ff24da38818cf4089d696944743923ad21881110d25a9d548"
+    },
+    "src/repo_catalog/domain/exchange.py": {
+      "bytes": 23803,
+      "sha256": "2df910bb6ab3510232b7a8dd432065bc726d1de7917861104b0907d3303dc683"
+    },
+    "src/repo_catalog/domain/exchange_rows.py": {
+      "bytes": 17234,
+      "sha256": "64552d6796cbdf92c294325c2f1ec91ca7527f22ff4203a88fe8f64d724eb560"
+    },
+    "src/repo_catalog/domain/git_decoding.py": {
+      "bytes": 4483,
+      "sha256": "f3f6966b47111757f64dbc31281664a71cbf8ee6d0bed3f37183632e28b76623"
+    },
+    "src/repo_catalog/domain/git_intrinsic.py": {
+      "bytes": 4279,
+      "sha256": "6406b5c28dd87ef2382416996d5455bdae34dc8b48dbe113f42a898d03625690"
+    },
+    "src/repo_catalog/domain/git_native.py": {
+      "bytes": 9222,
+      "sha256": "1d3845efb6b116b015fe982986b7c12ed3bbe2df949e5dddac24957e77b68048"
+    },
+    "src/repo_catalog/domain/git_object.py": {
+      "bytes": 969,
+      "sha256": "e1427aa9a02fea745b5967b60c7ec23f419809b084d979a4d5edfc0d15638cd7"
+    },
+    "src/repo_catalog/domain/models.py": {
+      "bytes": 2562,
+      "sha256": "0c89c49ff141119a0cf6d4342b774fe159647d9cc35c95122d9a225c4bd5c50b"
+    },
+    "src/repo_catalog/domain/native_acquisition.py": {
+      "bytes": 12222,
+      "sha256": "e0d658c2e36b7590f36f0260a43c5cf2bf02a46c4b0dcac22885f1ec850e3d3b"
+    },
+    "src/repo_catalog/domain/notes.py": {
+      "bytes": 13709,
+      "sha256": "92ab0f33eda718ffb730c8831104328577d2531ff4e7c6bfe921bc47371cd0aa"
+    },
+    "src/repo_catalog/domain/p1_context.py": {
+      "bytes": 104824,
+      "sha256": "73d0be30f2c445b66efcf80419dd15567f89d2c68b6cd01593706d1b272bf771"
+    },
+    "src/repo_catalog/domain/p1_coordination.py": {
+      "bytes": 2907,
+      "sha256": "c15eba1b6c9e91d38a8adfdf4077007d85bd5318418336b2ff17695fa88e939b"
+    },
+    "src/repo_catalog/domain/p1_core.py": {
+      "bytes": 40144,
+      "sha256": "f8f5945d61a65134b53e9615764e423e6ad99d737ba8f23c2ef3467dcdc46c17"
+    },
+    "src/repo_catalog/domain/p1_coverage.py": {
+      "bytes": 1644,
+      "sha256": "b5e51a6dcf43162f20fb4a081fd12c68f40f4abc6a9aef0ff6bb41b1172f8531"
+    },
+    "src/repo_catalog/domain/parent_report.py": {
+      "bytes": 3302,
+      "sha256": "187d30bc8cb89cba43ef8fbc35c7b74ab5c32a35a13457653d5d50f0444cc818"
+    },
+    "src/repo_catalog/domain/payload.py": {
+      "bytes": 1350,
+      "sha256": "e8b830b9ddcebdd61e2739f646e1565cdea34facb9b3513b9756cb06ae6d6208"
+    },
+    "src/repo_catalog/domain/ports/access_backup.py": {
+      "bytes": 530,
+      "sha256": "d027253db345fe10f07be86bb2dd95a9570a7c93be01bbce34632994f0440002"
+    },
+    "src/repo_catalog/domain/ports/access_connections.py": {
+      "bytes": 2371,
+      "sha256": "2a17c52281e3eb2a1f624b8f35d731f1fd6a865e158baa3a41026c96801c9a6f"
+    },
+    "src/repo_catalog/domain/ports/access_registry.py": {
+      "bytes": 1218,
+      "sha256": "a102ac0d89e427b1979854d2bd8242b9eec65c5e924d2555d810531a6a954430"
+    },
+    "src/repo_catalog/domain/ports/access_workflow.py": {
+      "bytes": 718,
+      "sha256": "f4cf66c6912d194fb960026af6c40f797586a9ed6c9c73435f301831cb38a58d"
+    },
+    "src/repo_catalog/domain/ports/acquisition.py": {
+      "bytes": 3773,
+      "sha256": "3a560838a8e55c25fea86a3a91688a83c2ba1b32e251326274c5e9d27ae6dc65"
+    },
+    "src/repo_catalog/domain/ports/notes.py": {
+      "bytes": 1735,
+      "sha256": "47fa749685acc16a3f0efa95a55b1e2c764d4393ea7040d400cc5452dd8366cb"
+    },
+    "src/repo_catalog/domain/ports/p1_context.py": {
+      "bytes": 3660,
+      "sha256": "4d582fd8ffaf4ade936113389e1169b632c2eb2930a197b4eeabb9b5bf0953ef"
+    },
+    "src/repo_catalog/domain/ports/p1_coordination.py": {
+      "bytes": 2168,
+      "sha256": "48798344f1291ae70cea73a95da3eddf83867fa2d592f4f1e3952081e8d9486e"
+    },
+    "src/repo_catalog/domain/ports/p1_core.py": {
+      "bytes": 2787,
+      "sha256": "b421552e9188b825993523b4a7a6a44c8b497f29f2fb39b69d40acc9c0684fed"
+    },
+    "src/repo_catalog/domain/ports/production_context.py": {
+      "bytes": 3080,
+      "sha256": "8b53857103ba99c772770ec89a9fd88ad82881549f45fa5d62ae1de90c714a39"
+    },
+    "src/repo_catalog/domain/ports/production_query.py": {
+      "bytes": 4352,
+      "sha256": "5757053da80e7193ee8f3fb86d5c44535cec0b2475dfea49c5d37ba042363109"
+    },
+    "src/repo_catalog/domain/ports/recovery.py": {
+      "bytes": 1776,
+      "sha256": "a8b69a000d3197c2342e0c5fa50b4b3702bc650fa92e5cbaf87f6c599a8e277f"
+    },
+    "src/repo_catalog/domain/pr_scope.py": {
+      "bytes": 519,
+      "sha256": "fbd4444e5724ef521286a118046615d1d6b498e22bc04f0587328a6b438ac64a"
+    },
+    "src/repo_catalog/domain/production_context.py": {
+      "bytes": 11972,
+      "sha256": "a43cc9f068b4bb77a5f9c2a1f28d975b58c366dc69763d41336e71b5ce618dfe"
+    },
+    "src/repo_catalog/domain/production_query.py": {
+      "bytes": 37407,
+      "sha256": "dc4461d89798e0fc4d6f2608b0ae634bf4b476fff78b71cbcac7682dd2b92351"
+    },
+    "src/repo_catalog/domain/recovery.py": {
+      "bytes": 5382,
+      "sha256": "4cf1db77eb4fc39d3251636012492e737460df34b846b1da4011f11477440468"
+    },
+    "src/repo_catalog/domain/resource_identification.py": {
+      "bytes": 5442,
+      "sha256": "15fe03ef4518c15f44057361bc64c40e494756cf9180fbda7ae65365deb2ee95"
+    },
+    "src/repo_catalog/domain/resource_identity.py": {
+      "bytes": 7560,
+      "sha256": "a7b68deb5a40956360a7c8ad69bcff1c216020b4eb451e52e0ea61fb5d0c13a3"
+    },
+    "src/repo_catalog/domain/resource_stage.py": {
+      "bytes": 2930,
+      "sha256": "880450c93ecb195c26915578ee404f6c1b8a9642d96fdf4685467a382811347e"
+    },
+    "src/repo_catalog/domain/selective_exchange.py": {
+      "bytes": 44748,
+      "sha256": "e94f252c143661226fffd59ffb12dabd49552ffe2e11afc601a2e4de19e88699"
+    },
+    "src/repo_catalog/domain/time.py": {
+      "bytes": 6806,
+      "sha256": "f8ee3df9e402a820527d89b5d88c4c85afc4a2d013cd457763cc37746984990a"
+    },
+    "src/repo_catalog/domain/transfer_sql.py": {
+      "bytes": 4514,
+      "sha256": "c8fa5dbe06e05dac6d1783b987cbd7b33e949c61746d473f24218b339eae7863"
+    },
+    "src/repo_catalog/resources/cas_integrity.sql": {
+      "bytes": 4205,
+      "sha256": "58fa718c08e7558387602fa7e7266d33e74fbd7bda723b8c88ede4b8a1c97fd1"
+    },
+    "src/repo_catalog/resources/catalog3.sql": {
+      "bytes": 38282,
+      "sha256": "ddc8f3039f512246ca417d33145e3afeb58be9212f741925706c936922b6f681"
+    },
+    "src/repo_catalog/resources/current_api.sql": {
+      "bytes": 27784,
+      "sha256": "da05f6af33dd9154c411d9f4267a9498b89d8622cc6a2df9fbaa203a4ed0bae0"
+    },
+    "src/repo_catalog/resources/current_collections.sql": {
+      "bytes": 7105,
+      "sha256": "ac5ec2df8955bc856e0fcd19f6bc04d9caddbe902d6137bf1064b61e1cdf04bc"
+    },
+    "src/repo_catalog/resources/current_resources.sql": {
+      "bytes": 22630,
+      "sha256": "0a7a5fdfe024578ee008cff8b3f409c48a2c9b1d0da242122fd7bb7d16dcbf5f"
+    },
+    "src/repo_catalog/resources/exchange.sql": {
+      "bytes": 3928,
+      "sha256": "c6f815452f508e31ad8b17349f0937ed14c3de5ce80d1370db1655a3f42c4fcf"
+    },
+    "src/repo_catalog/resources/git_domain.sql": {
+      "bytes": 9393,
+      "sha256": "31611b0dfd641694198dde519f58180f4a0b7a257400c57a77e79325cfd99f9c"
+    },
+    "src/repo_catalog/resources/git_facts.sql": {
+      "bytes": 42239,
+      "sha256": "731be2cf76583d3f6ece84b48bbec58ef5d9480dbd5a7bf9de9d4a07f7a0c132"
+    },
+    "src/repo_catalog/resources/identity_relations.sql": {
+      "bytes": 5663,
+      "sha256": "b596bb6b9a20552501ad411bf33053edee9565e6414e2e4fc9870f100e766461"
+    },
+    "src/repo_catalog/resources/json_contracts.sql": {
+      "bytes": 3129535,
+      "sha256": "fea5fd9f3a6ce6ccb9c9fff4d5a37fe3bf0be19e8cc1e198aef91064dce8149e"
+    },
+    "src/repo_catalog/resources/operational.sql": {
+      "bytes": 9981,
+      "sha256": "dafdc014ebf3e54e1695ffb0bb3fd953f1a1c893d5b0b13d812740ee2f288def"
+    },
+    "src/repo_catalog/resources/pr_threads.graphql": {
+      "bytes": 778,
+      "sha256": "1bdf8a80df5221a44f3f5365d83dad8bfc5f7b203fbb11cba6c196c5816401e9"
+    },
+    "src/repo_catalog/resources/schemas/cli-v1.schema.json": {
+      "bytes": 5285,
+      "sha256": "c6093eae50b54e27eb032238d0284cc6cca3f49a4e7875498a8241ee2775264e"
+    },
+    "src/repo_catalog/resources/search.sql": {
+      "bytes": 4019,
+      "sha256": "1fff79854824aae850184fd4af16a29ee8574769e42a139283b01825520a84b7"
+    },
+    "src/repo_catalog/resources/thread_comments.graphql": {
+      "bytes": 510,
+      "sha256": "41347a5f1370d4973ddadfcca1a42d74d40e1596ca4e72952b87b27459c4a8f4"
+    }
+  },
+  "product_files": 155,
+  "sha256": "c72f86709f360b306daa1d39e2854e910f773e6acfce9f4bec7dae3396012e21",
+  "source_files": {
+    ".gitignore": {
+      "bytes": 117,
+      "sha256": "e8d0ea1a45ced44a473563efabba2bbf431100e64c43938d65656c3260b69150"
+    },
+    "README.md": {
+      "bytes": 15011,
+      "sha256": "f4997870b7c4894121f21127b16efe3b995c54270ee675f40e6ccaeba6772dd2"
+    },
+    "pyproject.toml": {
+      "bytes": 1033,
+      "sha256": "f6dd4ac7b273ee80ed7cd588637557cb62bf510d8eced722456206b48eb94c01"
+    },
+    "src/repo_catalog/__init__.py": {
+      "bytes": 64,
+      "sha256": "ed7f78e4604437506c62e6c61f3c269bb51901665e1d1484e13cf04757e05ca0"
+    },
+    "src/repo_catalog/__main__.py": {
+      "bytes": 65,
+      "sha256": "ee690428669109bc4afce171576c4c3417da09edd37690815793b693fbb54aef"
+    },
+    "src/repo_catalog/adapters/filesystem/access_executor.py": {
+      "bytes": 5986,
+      "sha256": "ee8bc62d087fad23a1a3539263651102f1edac6dc9434c24e0f4f63b27eabf6a"
+    },
+    "src/repo_catalog/adapters/filesystem/atomic_publish.py": {
+      "bytes": 1903,
+      "sha256": "b1e4b79e93989d8c4dd5e41f0f5fbbeab41ec72cf6c40ad289f2cb95b656cacd"
+    },
+    "src/repo_catalog/adapters/filesystem/cache.py": {
+      "bytes": 11350,
+      "sha256": "43b0c13b4cb1a6f4b8299822fd55cc5394f652c9c90344f698697577b282cd18"
+    },
+    "src/repo_catalog/adapters/filesystem/capacity.py": {
+      "bytes": 4409,
+      "sha256": "a33441ecf9160ab5fe281c724f789e68921eb21b4c3a8e222bce4cc0ba41caa4"
+    },
+    "src/repo_catalog/adapters/filesystem/locks.py": {
+      "bytes": 989,
+      "sha256": "02b3422aa231df94cb5ca5172dae67d907aeec77804502409235e491e525c6da"
+    },
+    "src/repo_catalog/adapters/git/access_native.py": {
+      "bytes": 11847,
+      "sha256": "fc38b78a5113b4ede7321995932c8397b4ffa30e589d50892673c0322f106d5f"
+    },
+    "src/repo_catalog/adapters/git/importer.py": {
+      "bytes": 40133,
+      "sha256": "6d7466c64e6134dfc445c72baf741956b584fc2236dfb9a33870ad981382e268"
+    },
+    "src/repo_catalog/adapters/git/native.py": {
+      "bytes": 8215,
+      "sha256": "d1939fee65cc18565f0afa1424aa8dda27a04f0430da7606eacd5bd8a73f35be"
+    },
+    "src/repo_catalog/adapters/git/notes.py": {
+      "bytes": 11474,
+      "sha256": "8497bfa9ab1e99dc64ed8877e0ee49702f4375b70f388b9724d4705c1ee58bf4"
+    },
+    "src/repo_catalog/adapters/git/parsing.py": {
+      "bytes": 46443,
+      "sha256": "f27e9a07e2572ab961b7494dad3f0d6d3e8a3bf625a972065b58781cd05288fb"
+    },
+    "src/repo_catalog/adapters/git/runner.py": {
+      "bytes": 3912,
+      "sha256": "e93b756131a65e55162465c82556d72897a7dc5ba5f626fd16dfa3bc7fb40ba6"
+    },
+    "src/repo_catalog/adapters/github/collector.py": {
+      "bytes": 127444,
+      "sha256": "1517f6076abb571ed1b85affb2b849388f73b2ce3d2975b5b66f53fbcf7e3c28"
+    },
+    "src/repo_catalog/adapters/github/current_parser.py": {
+      "bytes": 22799,
+      "sha256": "ac544df570f07499f3088d198a51bc708145c7e54a147a74d058eab17ff614c6"
+    },
+    "src/repo_catalog/adapters/github/identity.py": {
+      "bytes": 506,
+      "sha256": "8e096e14864917e24b4d67d64e3442287331eca7367795b3002e3cff491b6cd6"
+    },
+    "src/repo_catalog/adapters/github/persistence.py": {
+      "bytes": 20159,
+      "sha256": "b45a94cb819992523ea8de1bb41c03d8be0d81a30e8bc02deeecee3a98e8ba4d"
+    },
+    "src/repo_catalog/adapters/github/production_intake.py": {
+      "bytes": 70893,
+      "sha256": "1ce3103535545eb2a0eea1628cd40249ba5c3f25995ebb0a5aeea3dc8989c3ef"
+    },
+    "src/repo_catalog/adapters/github/transport.py": {
+      "bytes": 14329,
+      "sha256": "eb07d6577f458dbc05e9c8d1c47d1581daf9555250aac123327f1191fa78fc4c"
+    },
+    "src/repo_catalog/adapters/recording.py": {
+      "bytes": 14775,
+      "sha256": "0719568ffd72a2954cc617706a9dc7b4cc4bde47d9496a7782dcce9c5d48c48c"
+    },
+    "src/repo_catalog/adapters/sqlite/access_backup.py": {
+      "bytes": 24337,
+      "sha256": "b1df310e6d5a24ec48dd012f370b08c8179e6eee33e66f1304ee0a2ac64d5e08"
+    },
+    "src/repo_catalog/adapters/sqlite/access_connections.py": {
+      "bytes": 17912,
+      "sha256": "9472274b9a5baff8894ef182fc6aaad4a81aecd433026cfb30b3441f3a1f861c"
+    },
+    "src/repo_catalog/adapters/sqlite/access_ddl/connections.sql": {
+      "bytes": 11134,
+      "sha256": "e3bb8958706631a9038f48be99b3ad943b886682338d4d65fdb5a2172ac98fb0"
+    },
+    "src/repo_catalog/adapters/sqlite/access_ddl/registry.sql": {
+      "bytes": 3747,
+      "sha256": "4d949c13488df0e4792a337b6e864ca372e6c738ba0576b2dff3bccb72a5e7bc"
+    },
+    "src/repo_catalog/adapters/sqlite/access_registry.py": {
+      "bytes": 12561,
+      "sha256": "d5dc914d1d402e6d07efd128ae489ba86aeb3a365356a44cfab4ce80950f9820"
+    },
+    "src/repo_catalog/adapters/sqlite/access_schema.py": {
+      "bytes": 15148,
+      "sha256": "4991ddc288f4823e27fdc101e70a22093f3fb3d0e0d31298810ff11cf176e61a"
+    },
+    "src/repo_catalog/adapters/sqlite/acquisition.py": {
+      "bytes": 21591,
+      "sha256": "df989af7cb18f490b625a385b883a01ca5e3baf8625775d5339740b17b95badd"
+    },
+    "src/repo_catalog/adapters/sqlite/cas_integrity.py": {
+      "bytes": 11354,
+      "sha256": "b2c1cfd13c907493380df2d113617ad95e7fcfae2525d51c38e28e0514e4232c"
+    },
+    "src/repo_catalog/adapters/sqlite/code_assessments.py": {
+      "bytes": 4230,
+      "sha256": "208992994bb05944c51fc0dbfa577c4d90c1a4162ed7b2540b5e41eb46305cbc"
+    },
+    "src/repo_catalog/adapters/sqlite/coverage.py": {
+      "bytes": 6924,
+      "sha256": "af0434c7f9934b4284ed2c6880dcf763d5bf7b3e8ebf81297bc0bbd76ae3fbc2"
+    },
+    "src/repo_catalog/adapters/sqlite/current_api.py": {
+      "bytes": 41104,
+      "sha256": "37f47903b1881ba5d9e6942b74ac5dc5ebb5b847f50e33b7498fac7c4984cb7c"
+    },
+    "src/repo_catalog/adapters/sqlite/current_collections.py": {
+      "bytes": 6351,
+      "sha256": "1835c8e68f6ba05c7684498abdb1a79782b5f38e979dc3b5033ac891e8bb39ed"
+    },
+    "src/repo_catalog/adapters/sqlite/current_resources.py": {
+      "bytes": 58916,
+      "sha256": "335af0485fa6eef2fd3d50af48e5b7e42db4c981beda7d9b7aabe7e12b2d602c"
+    },
+    "src/repo_catalog/adapters/sqlite/exchange.py": {
+      "bytes": 104537,
+      "sha256": "336f22bb74502477154be6e147c9843bdb48bc9bd8a50bcb24332572d49c10aa"
+    },
+    "src/repo_catalog/adapters/sqlite/git_core.py": {
+      "bytes": 16485,
+      "sha256": "0b29e6bdffc09a6bd328551709548195e576c5bd062be96dda6fe783ce258207"
+    },
+    "src/repo_catalog/adapters/sqlite/git_intrinsic.py": {
+      "bytes": 5207,
+      "sha256": "89d3e6a80619157062eafeefdc2b79734329a3defda5bde6ede87aba2111585a"
+    },
+    "src/repo_catalog/adapters/sqlite/identity_relations.py": {
+      "bytes": 4574,
+      "sha256": "a23044e5049ffc4b55f91871d756643c7b427f3a108ea11304b44ec57efe7f80"
+    },
+    "src/repo_catalog/adapters/sqlite/index.py": {
+      "bytes": 15415,
+      "sha256": "79352d4937580322b861819fb023b02375f3b2be927d67faa40620e853c91e2a"
+    },
+    "src/repo_catalog/adapters/sqlite/json_contracts.py": {
+      "bytes": 145789,
+      "sha256": "d7bd8653ef251804ed120570e769b430b08c24a41f09153e5bd8a519892983c7"
+    },
+    "src/repo_catalog/adapters/sqlite/notes.py": {
+      "bytes": 1556,
+      "sha256": "7fe27c7c731b0150c8cef85ee09039b3c0896a874a885ad8eb5e80dac3c4ba27"
+    },
+    "src/repo_catalog/adapters/sqlite/p1_context.py": {
+      "bytes": 62755,
+      "sha256": "fac44edb9457c59338fbfc771562e7ae450dde32d1da662eb60746597eee879c"
+    },
+    "src/repo_catalog/adapters/sqlite/p1_coordination.py": {
+      "bytes": 58819,
+      "sha256": "36cc62c99decb13275ae6d7cca4ebd2a5b71438514e1d36892a5b2e59e3c215e"
+    },
+    "src/repo_catalog/adapters/sqlite/p1_core.py": {
+      "bytes": 44056,
+      "sha256": "e9f4a2004f00209ddbc4d869bb280fb6c40b807f6f7c338cd7646d7cad893a49"
+    },
+    "src/repo_catalog/adapters/sqlite/p1_ddl/context.sql": {
+      "bytes": 47098,
+      "sha256": "73532070fc99f9e87dd4977fd6859d47b183207921e7b641a9c51e8234a5cab9"
+    },
+    "src/repo_catalog/adapters/sqlite/p1_ddl/core.sql": {
+      "bytes": 14238,
+      "sha256": "0b96849f36fbbf314e69b675eedd11c8e751173563870c004d912dab6d3d7323"
+    },
+    "src/repo_catalog/adapters/sqlite/p1_ddl/coverage.sql": {
+      "bytes": 1261,
+      "sha256": "1c830f402ac20ace36928d03b49db2f7aeab9962f14d6ee7aeb086b63081a9ed"
+    },
+    "src/repo_catalog/adapters/sqlite/p1_ddl/fingerprints.json": {
+      "bytes": 2329,
+      "sha256": "5b1a354949f7abe491a07797fb182603b7b1f95322f161c812e7a8dd9845a4d0"
+    },
+    "src/repo_catalog/adapters/sqlite/p1_ddl/operational.sql": {
+      "bytes": 6526,
+      "sha256": "25c678b1584630c87ac643c81fc4f0fb83c210d0671d485d0a21794e54c84ef1"
+    },
+    "src/repo_catalog/adapters/sqlite/p1_ddl/search.sql": {
+      "bytes": 795,
+      "sha256": "4224950692cf754d787c69a10cfca9b6e6a0f53b770ea947f0a8ef670f415d8d"
+    },
+    "src/repo_catalog/adapters/sqlite/p1_schema.py": {
+      "bytes": 8957,
+      "sha256": "e1470fe8a81d1f347caa85ef9600860e48941f1154bbe32438f9864a66ed5f22"
+    },
+    "src/repo_catalog/adapters/sqlite/payloads.py": {
+      "bytes": 3338,
+      "sha256": "15e0fff2e2b0c0f10aab6c6bc4c90322c8e06e0afb0a19fe832299b7faf92050"
+    },
+    "src/repo_catalog/adapters/sqlite/production_context.py": {
+      "bytes": 48237,
+      "sha256": "2f7484f355316310eaf1da808501f6d2b8a474f52d8ef3cc05237e9d9e34ff76"
+    },
+    "src/repo_catalog/adapters/sqlite/production_search.py": {
+      "bytes": 26037,
+      "sha256": "d58f19587f48eaa511bd335f47f995e1b79c6bea4605453222e185f5165b4239"
+    },
+    "src/repo_catalog/adapters/sqlite/recovery.py": {
+      "bytes": 154609,
+      "sha256": "9f66473ad9ca481409d405459d5fdb4e6884ea1e0dc9583d530b2861d4578a63"
+    },
+    "src/repo_catalog/adapters/sqlite/recovery_budget.py": {
+      "bytes": 12953,
+      "sha256": "468dbf164994f657ea8c62d64a82cacc6b3f74392d6cfb7b342b0df7d4a6af23"
+    },
+    "src/repo_catalog/adapters/sqlite/recovery_validation.py": {
+      "bytes": 22983,
+      "sha256": "f7b2462bc1075ec07fb39f3460b6ad87f51851a324240774ea200f968cce3801"
+    },
+    "src/repo_catalog/adapters/sqlite/schema.py": {
+      "bytes": 1239,
+      "sha256": "4167f9f7395dac8277f4129db6470bf1ba67a503d950fcfe7f5625fa654bdb39"
+    },
+    "src/repo_catalog/adapters/sqlite/store.py": {
+      "bytes": 27960,
+      "sha256": "5bc8a1d42cf3f785f30ec26fdfd456f07b45850e7520906791b70dd9bc64cd17"
+    },
+    "src/repo_catalog/adapters/sqlite/target.py": {
+      "bytes": 3942,
+      "sha256": "6d7cbb10afe505950ebed1fdea7a037920be23e3fe10770047d086f1cb7c9cbc"
+    },
+    "src/repo_catalog/adapters/sqlite/text_bodies.py": {
+      "bytes": 2119,
+      "sha256": "e4fe64962aca309f9b675b60dd4eac25c729873971a748a69b0305dc579682cb"
+    },
+    "src/repo_catalog/adapters/sqlite/transactions.py": {
+      "bytes": 1180,
+      "sha256": "0fe7bcef262470347c721e64c34ea218a2cfa375725559a11e1ddf6c84959d10"
+    },
+    "src/repo_catalog/application/access_acquisition.py": {
+      "bytes": 11850,
+      "sha256": "38a99e75bcdaaa0ae4a8788aecedd78f06d0be7a988e04bc8d5f458070347751"
+    },
+    "src/repo_catalog/application/access_maintenance.py": {
+      "bytes": 1684,
+      "sha256": "0774ac6bef5109c08635116cfc1c53eb5f761724395d789ea8f93b2436533b73"
+    },
+    "src/repo_catalog/application/access_workflow.py": {
+      "bytes": 12142,
+      "sha256": "902ba4575f2db56fcd430bb0fed81733fd0534f2245bd9d8999abc35a7e4fe95"
+    },
+    "src/repo_catalog/application/acquisition.py": {
+      "bytes": 82756,
+      "sha256": "105504e37977fd0769e61a87fae86347be66cd4cf1b22ca72ca85f19fb76b884"
+    },
+    "src/repo_catalog/application/catalog_validation.py": {
+      "bytes": 2345,
+      "sha256": "32c29508f3e079fa62512bef0d8d369355cb9438de4fd0fab33dd77697de029f"
+    },
+    "src/repo_catalog/application/collection_service.py": {
+      "bytes": 31873,
+      "sha256": "87cbdc8b7708f0fc271ad32526f293ad90b5701fb3c40ddfdc2c8980f4a0b384"
+    },
+    "src/repo_catalog/application/contracts.py": {
+      "bytes": 1033,
+      "sha256": "c977b61d03abd239d9049a0c668eedcbf2bd684047c43df2b0710379c2ea5d4b"
+    },
+    "src/repo_catalog/application/exchange.py": {
+      "bytes": 145661,
+      "sha256": "1f3160fa5535d16d2314f2597b83fbf2a6a8e4acbc6716f9d7f0af9dc6fa53e9"
+    },
+    "src/repo_catalog/application/exchange_service.py": {
+      "bytes": 3792,
+      "sha256": "978ba1d010a371365400f15090707f6570f01e2580ed5545c4ad7e0b39a22231"
+    },
+    "src/repo_catalog/application/git_query_context.py": {
+      "bytes": 7288,
+      "sha256": "3a79e64a83feb0103b9a3d39e4c57a0770b22f2fdf5305bb340ed3cc10fff8e1"
+    },
+    "src/repo_catalog/application/identity_service.py": {
+      "bytes": 2048,
+      "sha256": "07e138bddf9485bc8756b6caa0643a388c2d9e6781113fd8c95b84f71a5efd97"
+    },
+    "src/repo_catalog/application/issue_queries.py": {
+      "bytes": 9375,
+      "sha256": "474e375ee88fad1050433be37e665d6802b6b6817ec951cfb016394917f7d295"
+    },
+    "src/repo_catalog/application/job_plans.py": {
+      "bytes": 3873,
+      "sha256": "0a1ff18900cc505ed41972701bd530729817eb2a928f60108d81f9f258cd6e6a"
+    },
+    "src/repo_catalog/application/job_service.py": {
+      "bytes": 4572,
+      "sha256": "9e4770860c4d93ee99e150ee184766fe7a837d0601b32c1ec8e3434c2b80e054"
+    },
+    "src/repo_catalog/application/maintenance_service.py": {
+      "bytes": 43263,
+      "sha256": "a9ccb5e2b9abd8dc63936289810a0585aafd218408e386eeea258e4e58251884"
+    },
+    "src/repo_catalog/application/notes.py": {
+      "bytes": 8473,
+      "sha256": "2f29ee35a10d3cfebfb44935dd4e83a283b07025842d700d34cf66a965f87244"
+    },
+    "src/repo_catalog/application/parser_service.py": {
+      "bytes": 2003,
+      "sha256": "7b8ae7e23d9b8f1add4a520fcad22c6e0d0745d561af2d46aecc5bd1d623518a"
+    },
+    "src/repo_catalog/application/parsing_service.py": {
+      "bytes": 1260,
+      "sha256": "11cfc45eae63094e6deff0b46a070320fb120376eb5fc5baa76a38105bee8d45"
+    },
+    "src/repo_catalog/application/ports.py": {
+      "bytes": 254,
+      "sha256": "ff7589d9a2b5ef75cea2b305f3854af67a1c995f42688417b3c392f38e90ff14"
+    },
+    "src/repo_catalog/application/pr_queries.py": {
+      "bytes": 44882,
+      "sha256": "f56a437aa7ca30019e5c486f5edacd22c15a1a573d89e560bdefed41932f7c45"
+    },
+    "src/repo_catalog/application/production_query.py": {
+      "bytes": 59432,
+      "sha256": "dc495abb0b2433c5249853c3ffb254043e00244accf306bb3a5b7366be7f63ff"
+    },
+    "src/repo_catalog/application/query_service.py": {
+      "bytes": 73248,
+      "sha256": "80a257854b9146fd5e5f78d3885d71ff2770111e49149f70e21d5c500331a92d"
+    },
+    "src/repo_catalog/application/recovery.py": {
+      "bytes": 3981,
+      "sha256": "468e88bbb26d2be79d79b39d1b0db3580a775d00dc5ed01ecaed96bddc972ca2"
+    },
+    "src/repo_catalog/application/repository_identity.py": {
+      "bytes": 15987,
+      "sha256": "9225b46edba2f0be92929905c64ad9afb4bfef1f8b6d5721a4840cb3ac036e94"
+    },
+    "src/repo_catalog/application/source_service.py": {
+      "bytes": 2081,
+      "sha256": "5a9c21c7e598b41ab1a5dc7704dfcbbaeaf51fdb36acc08c938a463f3766307e"
+    },
+    "src/repo_catalog/application/target_queries.py": {
+      "bytes": 8721,
+      "sha256": "ce5e725ea0e05748337defa4fe7759b47d2baa04988d5f612d1e1d0d4bf0c1e0"
+    },
+    "src/repo_catalog/cli/access_acquisition.py": {
+      "bytes": 6426,
+      "sha256": "fae54a81bbaf5170d2508090919dfcaef94a3ea9aa8e3cd5899f435b8641991c"
+    },
+    "src/repo_catalog/cli/access_maintenance.py": {
+      "bytes": 3075,
+      "sha256": "4dc3e6a2ee5370cf5e6503fa6fe913897f6d3560e6154bf7c0decb87e2762381"
+    },
+    "src/repo_catalog/cli/access_workflow.py": {
+      "bytes": 5157,
+      "sha256": "45a88e89acd3833268eae49eb11c5ecc49c4d3e582546c988f873638d6a1d01c"
+    },
+    "src/repo_catalog/cli/main.py": {
+      "bytes": 24252,
+      "sha256": "acc24904c4b9a4d41800dc888b16eb3ca1a857c118ed75a7301ffdfd8b671d4e"
+    },
+    "src/repo_catalog/cli/presenters.py": {
+      "bytes": 4084,
+      "sha256": "dda3165cfc22e6bb7a6f3ec893645ad100637c05ab0631099c1718518aa8f2be"
+    },
+    "src/repo_catalog/cli/production_query.py": {
+      "bytes": 11183,
+      "sha256": "ec67e07f3c11eaba76aff2e565418a671e701ea1a8155d86f4027dd77a5adf36"
+    },
+    "src/repo_catalog/config.py": {
+      "bytes": 4514,
+      "sha256": "da88a41ab63497f3e018ff790c7247ec4bc53d44240eff387e65bdeaa9b11785"
+    },
+    "src/repo_catalog/domain/access_backup.py": {
+      "bytes": 1774,
+      "sha256": "6fa8654f05b96b25ccd5341433a957d05b6f243b3bf56d4b8dc338dc3e06bf0b"
+    },
+    "src/repo_catalog/domain/access_connections.py": {
+      "bytes": 10272,
+      "sha256": "3ccb3e5351fd21f72ab26475132a6b1ce1643415366ee11ffa9f9e2af3476718"
+    },
+    "src/repo_catalog/domain/access_registry.py": {
+      "bytes": 6014,
+      "sha256": "cce3062c59ba80c428afcbbb0d96508768fc97eda5f8ae46b7d5d5aab3288e49"
+    },
+    "src/repo_catalog/domain/access_workflow.py": {
+      "bytes": 2182,
+      "sha256": "5cdf947c7c01008736e8de86d33edbd85d8b711c8348ce0cc16bbee9f8c2a317"
+    },
+    "src/repo_catalog/domain/acquisition.py": {
+      "bytes": 16175,
+      "sha256": "5b3eba7437505c9ed5053e0d4d427534ef6b9250764953c1ad078c802d9b181d"
+    },
+    "src/repo_catalog/domain/context_registration.py": {
+      "bytes": 10766,
+      "sha256": "e29012935442aa6e9ba05d74956aa5e04c91f03f027758a3b9d399bb7de004cc"
+    },
+    "src/repo_catalog/domain/coverage.py": {
+      "bytes": 4005,
+      "sha256": "96eb3bad172f66af5afe335131087bd5c6a7cf6eb6dbb77617c01e851c8f9c81"
+    },
+    "src/repo_catalog/domain/current_state.py": {
+      "bytes": 2822,
+      "sha256": "52a69c094eabaa206598d2c5e0a669c7740eaca4a9572bd272263774dce30449"
+    },
+    "src/repo_catalog/domain/document.py": {
+      "bytes": 1337,
+      "sha256": "9faa75482007e80ff24da38818cf4089d696944743923ad21881110d25a9d548"
+    },
+    "src/repo_catalog/domain/exchange.py": {
+      "bytes": 23803,
+      "sha256": "2df910bb6ab3510232b7a8dd432065bc726d1de7917861104b0907d3303dc683"
+    },
+    "src/repo_catalog/domain/exchange_rows.py": {
+      "bytes": 17234,
+      "sha256": "64552d6796cbdf92c294325c2f1ec91ca7527f22ff4203a88fe8f64d724eb560"
+    },
+    "src/repo_catalog/domain/git_decoding.py": {
+      "bytes": 4483,
+      "sha256": "f3f6966b47111757f64dbc31281664a71cbf8ee6d0bed3f37183632e28b76623"
+    },
+    "src/repo_catalog/domain/git_intrinsic.py": {
+      "bytes": 4279,
+      "sha256": "6406b5c28dd87ef2382416996d5455bdae34dc8b48dbe113f42a898d03625690"
+    },
+    "src/repo_catalog/domain/git_native.py": {
+      "bytes": 9222,
+      "sha256": "1d3845efb6b116b015fe982986b7c12ed3bbe2df949e5dddac24957e77b68048"
+    },
+    "src/repo_catalog/domain/git_object.py": {
+      "bytes": 969,
+      "sha256": "e1427aa9a02fea745b5967b60c7ec23f419809b084d979a4d5edfc0d15638cd7"
+    },
+    "src/repo_catalog/domain/models.py": {
+      "bytes": 2562,
+      "sha256": "0c89c49ff141119a0cf6d4342b774fe159647d9cc35c95122d9a225c4bd5c50b"
+    },
+    "src/repo_catalog/domain/native_acquisition.py": {
+      "bytes": 12222,
+      "sha256": "e0d658c2e36b7590f36f0260a43c5cf2bf02a46c4b0dcac22885f1ec850e3d3b"
+    },
+    "src/repo_catalog/domain/notes.py": {
+      "bytes": 13709,
+      "sha256": "92ab0f33eda718ffb730c8831104328577d2531ff4e7c6bfe921bc47371cd0aa"
+    },
+    "src/repo_catalog/domain/p1_context.py": {
+      "bytes": 104824,
+      "sha256": "73d0be30f2c445b66efcf80419dd15567f89d2c68b6cd01593706d1b272bf771"
+    },
+    "src/repo_catalog/domain/p1_coordination.py": {
+      "bytes": 2907,
+      "sha256": "c15eba1b6c9e91d38a8adfdf4077007d85bd5318418336b2ff17695fa88e939b"
+    },
+    "src/repo_catalog/domain/p1_core.py": {
+      "bytes": 40144,
+      "sha256": "f8f5945d61a65134b53e9615764e423e6ad99d737ba8f23c2ef3467dcdc46c17"
+    },
+    "src/repo_catalog/domain/p1_coverage.py": {
+      "bytes": 1644,
+      "sha256": "b5e51a6dcf43162f20fb4a081fd12c68f40f4abc6a9aef0ff6bb41b1172f8531"
+    },
+    "src/repo_catalog/domain/parent_report.py": {
+      "bytes": 3302,
+      "sha256": "187d30bc8cb89cba43ef8fbc35c7b74ab5c32a35a13457653d5d50f0444cc818"
+    },
+    "src/repo_catalog/domain/payload.py": {
+      "bytes": 1350,
+      "sha256": "e8b830b9ddcebdd61e2739f646e1565cdea34facb9b3513b9756cb06ae6d6208"
+    },
+    "src/repo_catalog/domain/ports/access_backup.py": {
+      "bytes": 530,
+      "sha256": "d027253db345fe10f07be86bb2dd95a9570a7c93be01bbce34632994f0440002"
+    },
+    "src/repo_catalog/domain/ports/access_connections.py": {
+      "bytes": 2371,
+      "sha256": "2a17c52281e3eb2a1f624b8f35d731f1fd6a865e158baa3a41026c96801c9a6f"
+    },
+    "src/repo_catalog/domain/ports/access_registry.py": {
+      "bytes": 1218,
+      "sha256": "a102ac0d89e427b1979854d2bd8242b9eec65c5e924d2555d810531a6a954430"
+    },
+    "src/repo_catalog/domain/ports/access_workflow.py": {
+      "bytes": 718,
+      "sha256": "f4cf66c6912d194fb960026af6c40f797586a9ed6c9c73435f301831cb38a58d"
+    },
+    "src/repo_catalog/domain/ports/acquisition.py": {
+      "bytes": 3773,
+      "sha256": "3a560838a8e55c25fea86a3a91688a83c2ba1b32e251326274c5e9d27ae6dc65"
+    },
+    "src/repo_catalog/domain/ports/notes.py": {
+      "bytes": 1735,
+      "sha256": "47fa749685acc16a3f0efa95a55b1e2c764d4393ea7040d400cc5452dd8366cb"
+    },
+    "src/repo_catalog/domain/ports/p1_context.py": {
+      "bytes": 3660,
+      "sha256": "4d582fd8ffaf4ade936113389e1169b632c2eb2930a197b4eeabb9b5bf0953ef"
+    },
+    "src/repo_catalog/domain/ports/p1_coordination.py": {
+      "bytes": 2168,
+      "sha256": "48798344f1291ae70cea73a95da3eddf83867fa2d592f4f1e3952081e8d9486e"
+    },
+    "src/repo_catalog/domain/ports/p1_core.py": {
+      "bytes": 2787,
+      "sha256": "b421552e9188b825993523b4a7a6a44c8b497f29f2fb39b69d40acc9c0684fed"
+    },
+    "src/repo_catalog/domain/ports/production_context.py": {
+      "bytes": 3080,
+      "sha256": "8b53857103ba99c772770ec89a9fd88ad82881549f45fa5d62ae1de90c714a39"
+    },
+    "src/repo_catalog/domain/ports/production_query.py": {
+      "bytes": 4352,
+      "sha256": "5757053da80e7193ee8f3fb86d5c44535cec0b2475dfea49c5d37ba042363109"
+    },
+    "src/repo_catalog/domain/ports/recovery.py": {
+      "bytes": 1776,
+      "sha256": "a8b69a000d3197c2342e0c5fa50b4b3702bc650fa92e5cbaf87f6c599a8e277f"
+    },
+    "src/repo_catalog/domain/pr_scope.py": {
+      "bytes": 519,
+      "sha256": "fbd4444e5724ef521286a118046615d1d6b498e22bc04f0587328a6b438ac64a"
+    },
+    "src/repo_catalog/domain/production_context.py": {
+      "bytes": 11972,
+      "sha256": "a43cc9f068b4bb77a5f9c2a1f28d975b58c366dc69763d41336e71b5ce618dfe"
+    },
+    "src/repo_catalog/domain/production_query.py": {
+      "bytes": 37407,
+      "sha256": "dc4461d89798e0fc4d6f2608b0ae634bf4b476fff78b71cbcac7682dd2b92351"
+    },
+    "src/repo_catalog/domain/recovery.py": {
+      "bytes": 5382,
+      "sha256": "4cf1db77eb4fc39d3251636012492e737460df34b846b1da4011f11477440468"
+    },
+    "src/repo_catalog/domain/resource_identification.py": {
+      "bytes": 5442,
+      "sha256": "15fe03ef4518c15f44057361bc64c40e494756cf9180fbda7ae65365deb2ee95"
+    },
+    "src/repo_catalog/domain/resource_identity.py": {
+      "bytes": 7560,
+      "sha256": "a7b68deb5a40956360a7c8ad69bcff1c216020b4eb451e52e0ea61fb5d0c13a3"
+    },
+    "src/repo_catalog/domain/resource_stage.py": {
+      "bytes": 2930,
+      "sha256": "880450c93ecb195c26915578ee404f6c1b8a9642d96fdf4685467a382811347e"
+    },
+    "src/repo_catalog/domain/selective_exchange.py": {
+      "bytes": 44748,
+      "sha256": "e94f252c143661226fffd59ffb12dabd49552ffe2e11afc601a2e4de19e88699"
+    },
+    "src/repo_catalog/domain/time.py": {
+      "bytes": 6806,
+      "sha256": "f8ee3df9e402a820527d89b5d88c4c85afc4a2d013cd457763cc37746984990a"
+    },
+    "src/repo_catalog/domain/transfer_sql.py": {
+      "bytes": 4514,
+      "sha256": "c8fa5dbe06e05dac6d1783b987cbd7b33e949c61746d473f24218b339eae7863"
+    },
+    "src/repo_catalog/resources/cas_integrity.sql": {
+      "bytes": 4205,
+      "sha256": "58fa718c08e7558387602fa7e7266d33e74fbd7bda723b8c88ede4b8a1c97fd1"
+    },
+    "src/repo_catalog/resources/catalog3.sql": {
+      "bytes": 38282,
+      "sha256": "ddc8f3039f512246ca417d33145e3afeb58be9212f741925706c936922b6f681"
+    },
+    "src/repo_catalog/resources/current_api.sql": {
+      "bytes": 27784,
+      "sha256": "da05f6af33dd9154c411d9f4267a9498b89d8622cc6a2df9fbaa203a4ed0bae0"
+    },
+    "src/repo_catalog/resources/current_collections.sql": {
+      "bytes": 7105,
+      "sha256": "ac5ec2df8955bc856e0fcd19f6bc04d9caddbe902d6137bf1064b61e1cdf04bc"
+    },
+    "src/repo_catalog/resources/current_resources.sql": {
+      "bytes": 22630,
+      "sha256": "0a7a5fdfe024578ee008cff8b3f409c48a2c9b1d0da242122fd7bb7d16dcbf5f"
+    },
+    "src/repo_catalog/resources/exchange.sql": {
+      "bytes": 3928,
+      "sha256": "c6f815452f508e31ad8b17349f0937ed14c3de5ce80d1370db1655a3f42c4fcf"
+    },
+    "src/repo_catalog/resources/git_domain.sql": {
+      "bytes": 9393,
+      "sha256": "31611b0dfd641694198dde519f58180f4a0b7a257400c57a77e79325cfd99f9c"
+    },
+    "src/repo_catalog/resources/git_facts.sql": {
+      "bytes": 42239,
+      "sha256": "731be2cf76583d3f6ece84b48bbec58ef5d9480dbd5a7bf9de9d4a07f7a0c132"
+    },
+    "src/repo_catalog/resources/identity_relations.sql": {
+      "bytes": 5663,
+      "sha256": "b596bb6b9a20552501ad411bf33053edee9565e6414e2e4fc9870f100e766461"
+    },
+    "src/repo_catalog/resources/json_contracts.sql": {
+      "bytes": 3129535,
+      "sha256": "fea5fd9f3a6ce6ccb9c9fff4d5a37fe3bf0be19e8cc1e198aef91064dce8149e"
+    },
+    "src/repo_catalog/resources/operational.sql": {
+      "bytes": 9981,
+      "sha256": "dafdc014ebf3e54e1695ffb0bb3fd953f1a1c893d5b0b13d812740ee2f288def"
+    },
+    "src/repo_catalog/resources/pr_threads.graphql": {
+      "bytes": 778,
+      "sha256": "1bdf8a80df5221a44f3f5365d83dad8bfc5f7b203fbb11cba6c196c5816401e9"
+    },
+    "src/repo_catalog/resources/schemas/cli-v1.schema.json": {
+      "bytes": 5285,
+      "sha256": "c6093eae50b54e27eb032238d0284cc6cca3f49a4e7875498a8241ee2775264e"
+    },
+    "src/repo_catalog/resources/search.sql": {
+      "bytes": 4019,
+      "sha256": "1fff79854824aae850184fd4af16a29ee8574769e42a139283b01825520a84b7"
+    },
+    "src/repo_catalog/resources/thread_comments.graphql": {
+      "bytes": 510,
+      "sha256": "41347a5f1370d4973ddadfcca1a42d74d40e1596ca4e72952b87b27459c4a8f4"
+    }
+  },
+  "source_inventory_sha256": "7d93a7c4b2d3d6a7411f0fc98a42901a83b508a63d2e15e44c2f6f2674f21934",
+  "status": "passed",
+  "unpacked_bytes": 5921698
+}
