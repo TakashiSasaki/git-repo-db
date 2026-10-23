@@ -191,6 +191,14 @@ class Context(ContextStore):
         # raw trusted-factory writes. No incoming rejected settings cause a stop.
         self._validate_registrations()
 
+    def _check_mutation_capability(self):
+        # These are local capability facts, independent of caller authority or
+        # catalog contents. Do not inspect storage or the Recovery Stop here.
+        if not self._active:
+            raise ContextError("CAPABILITY_EXPIRED", "context")
+        if not self._writable:
+            raise ContextError("READ_ONLY", "context")
+
     def _check(self, *, write: bool = False):
         if not self._active:
             raise ContextError("CAPABILITY_EXPIRED", "context")

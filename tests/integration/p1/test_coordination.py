@@ -38,11 +38,11 @@ OID = "a" * 40
 ISSUE = ResourceKey.from_native(PROVIDER, "issue", "7")
 
 
-def fixture_authority():
+def fixture_authority(*, extra_resources=()):
     """Finite declarations for this file's one synthetic Context unit."""
     service, _ = fixture_service(
         DependencySet(
-            resources=frozenset({ISSUE}),
+            resources=frozenset({ISSUE, *extra_resources}),
             repositories=frozenset({REPOSITORY}),
             provider_registrations=frozenset({PROVIDER}),
             object_oids=frozenset({TypedOID("sha1", OID)}),

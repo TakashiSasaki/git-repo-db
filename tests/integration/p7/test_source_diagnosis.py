@@ -155,12 +155,11 @@ def test_separate_process_stop_before_publication(synthetic_catalog, tmp_path):
 
 
 def test_valid_empty_context_text_is_not_corruption(synthetic_catalog, tmp_path):
-    from repo_catalog.adapters.sqlite.p1_context import ContextStore
     from repo_catalog.adapters.sqlite.p1_schema import connect
-    from tests.integration.p7.conftest import DEFAULT_REPO_UUID
+    from tests.integration.p7.conftest import DEFAULT_REPO_UUID, admit_context_text
 
     connection = connect(synthetic_catalog / "context.sqlite3", "context")
-    digest = ContextStore(connection).text("")
+    digest = admit_context_text(connection, "")
     connection.close()
     service = RecoveryService()
     backup = tmp_path / "backup"

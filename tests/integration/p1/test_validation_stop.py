@@ -22,6 +22,7 @@ from repo_catalog.domain.p1_context import (
 from repo_catalog.domain.p1_coordination import CoordinationError
 from tests.integration.p1.test_coordination import (
     PROVIDER,
+    admit_fixture,
     build,
     context_unit,
     core_unit,
@@ -48,7 +49,7 @@ def test_paired_validation_udf_failure_persists_stop(tmp_path, damaged, capabili
             )
         )
 
-    coordinator.admit(core_unit, context)
+    admit_fixture(coordinator, core_unit, context)
     with closing(connect(directory / "context.sqlite3", "context")) as db:
         # Fault injection into a disposable store, outside supported admission.
         # This produces real invalid UTF-8 TEXT, so integrity_check cannot run

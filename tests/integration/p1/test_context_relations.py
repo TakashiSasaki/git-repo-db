@@ -7,11 +7,11 @@ from uuid import uuid4
 import pytest
 
 from repo_catalog.adapters.sqlite import p1_schema as schema
-from repo_catalog.adapters.sqlite.p1_context import ContextStore
 from repo_catalog.adapters.sqlite.production_context import Context
 from repo_catalog.adapters.sqlite.recovery_validation import (
     validate_stored_context_relations,
 )
+from repo_catalog.domain.context_admission import DependencySet
 from repo_catalog.domain.p1_context import (
     CoverageScope,
     EventReportKey,
@@ -35,6 +35,8 @@ from repo_catalog.domain.production_context import ContextError
 from repo_catalog.domain.recovery import BackupValidationError
 from repo_catalog.domain.resource_identification import ResourceIdentification as RI
 from tests.integration.context_originals import synthetic_parent
+from tests.support.authorized_context import FixtureContextStore
+from tests.support.context_admission import fixture_transaction
 
 REPO_1 = "9ebbe38a-f937-40e6-a99c-701835ebcf10"
 REPO_2 = "c58b4f17-f58c-4a33-8bc6-eb52c42337d1"
@@ -47,6 +49,81 @@ KEY_EVENT = ResourceKey.timeline_event(KEY_ISSUE, "event-99")
 
 PROVENANCE_1 = canonical({"source": "provider.example", "evidence": "event-1"})
 PROVENANCE_2 = canonical({"source": "provider.example", "evidence": "event-2"})
+
+
+def relation_grants():
+    namespace = ResourceKey.from_native(SERVICE, "issue", "nonexistent")
+    claim1 = MappingClaimKey.for_repository(
+        KEY_REPO,
+        REPO_1,
+        clock=FieldClock("provider.updated_at", 1),
+        provenance_json=PROVENANCE_1,
+    )
+    claim2 = MappingClaimKey.for_repository(
+        KEY_REPO,
+        REPO_2,
+        clock=FieldClock("provider.updated_at", 2),
+        provenance_json=PROVENANCE_2,
+    )
+    provider_a = ResourceKey.from_native(SERVICE, "repository", "org/repo-a")
+    claim_a = MappingClaimKey.for_repository(
+        provider_a,
+        REPO_1,
+        clock=FieldClock("github:repo", 10),
+        provenance_json=PROVENANCE_1,
+    )
+    dispositions = (
+        MappingDisposition(
+            claim1,
+            "correct",
+            FieldClock("provider.updated_at", 3),
+            PROVENANCE_1,
+            30,
+            replacement_claim_key=claim2,
+        ),
+        MappingDisposition(
+            claim2,
+            "correct",
+            FieldClock("provider.updated_at", 4),
+            PROVENANCE_2,
+            40,
+            replacement_claim_key=claim1,
+        ),
+        MappingDisposition(
+            claim_a,
+            "withdraw",
+            FieldClock("github:audit", 50),
+            canonical({"source": "github", "evidence": "withdraw-a"}),
+            50,
+        ),
+    )
+    return DependencySet(
+        resources={
+            KEY_ISSUE,
+            KEY_REPO,
+            KEY_EVENT,
+            namespace,
+            ResourceKey.document(namespace, "comment", "review_comment", "c-1"),
+            *(
+                ResourceKey.from_native(SERVICE, "repository", value)
+                for value in ("provider-a", "provider-b", "org/repo-a", "org/repo-b")
+            ),
+            *(
+                ResourceKey.from_native(SERVICE, "issue", value)
+                for value in ("101", "102")
+            ),
+            *(
+                ResourceKey.timeline_event(KEY_ISSUE, value)
+                for value in ("failed-transfer", "timeline-77", "ev-101", "ev-102")
+            ),
+        },
+        repositories={REPO_1, REPO_2, "e969c72a-82b4-4aeb-b217-3b7679c1371b"},
+        sources={SOURCE},
+        source_repository_pairs={(SOURCE, REPO_1), (SOURCE, REPO_2)},
+        provider_registrations={SERVICE},
+        mapping_claims={claim1, claim2, claim_a},
+        dispositions={item.disposition_key for item in dispositions},
+    )
 
 
 @pytest.mark.parametrize("production", [False, True])
@@ -65,7 +142,7 @@ def test_transfer_generic_admission_requires_complete_report(
         catalog = tmp_path / "production"
         catalog.mkdir()
         schema.initialize(catalog / "context.sqlite3", "context", REPO_1, SERVICE)
-        with Context.transaction(catalog) as facade:
+        with fixture_transaction(catalog, relation_grants()) as facade:
             facade.provider(SERVICE, "github", "{}")
             facade.repository(REPO_1)
             facade.resource(KEY_ISSUE)
@@ -312,7 +389,7 @@ def context_db(tmp_path):
     db.execute("INSERT INTO repository_context VALUES(?,?)", (REPO_1, "{}"))
     db.execute("INSERT INTO repository_context VALUES(?,?)", (REPO_2, "{}"))
     db.execute("INSERT INTO sources VALUES(?,?,?)", (SOURCE, SERVICE, "{}"))
-    store = ContextStore(db)
+    store = FixtureContextStore(db, relation_grants())
     store.resource(KEY_REPO, REPO_1)
     store.resource(KEY_ISSUE, REPO_1)
     store.resource(
@@ -321,6 +398,7 @@ def context_db(tmp_path):
         identification=RI.scoped(KEY_EVENT, KEY_ISSUE, "timeline_event", "event-99"),
     )
     yield db, store, path
+    store.close()
     db.close()
 
 
@@ -434,36 +512,35 @@ def test_counterexample_3_atomic_rollback_on_failure(context_db):
     )
     store.admit_field(orig)
 
-    db.execute("BEGIN")
-    newer = FieldCandidate(
-        KEY_ISSUE,
-        "title",
-        canonical("newer"),
-        FieldClock("clock_a", 20),
-        PROVENANCE_2,
-        20,
-    )
-    store.admit_field(newer)
-    assert len(store.candidates(KEY_ISSUE, "title")) == 1
-    assert store.candidates(KEY_ISSUE, "title")[0].value_json == '"newer"'
-
-    # Force a failure (e.g. FK violation on invalid target in repository_relations)
-    invalid_repo = "11111111-2222-3333-4444-555555555555"
-    with pytest.raises(sqlite3.IntegrityError):
-        db.execute(
-            "INSERT INTO resource_repository_relations(service_instance_uuidv4, resource_kind, provider_resource_id, relation_kind, clock_json, target_json, provenance_json, observed_at_us) VALUES(?,?,?,?,?,?,?,?)",
-            (
-                KEY_ISSUE.service_instance_uuidv4,
-                KEY_ISSUE.resource_kind,
-                KEY_ISSUE.provider_resource_id,
-                "owning_repository",
-                '{"domain":"test","at_us":1}',
-                f'"{invalid_repo}"',
-                PROVENANCE_1,
-                30,
-            ),
+    with store.transaction(rollback=True):
+        newer = FieldCandidate(
+            KEY_ISSUE,
+            "title",
+            canonical("newer"),
+            FieldClock("clock_a", 20),
+            PROVENANCE_2,
+            20,
         )
-    db.execute("ROLLBACK")
+        store.admit_field(newer)
+        assert len(store.candidates(KEY_ISSUE, "title")) == 1
+        assert store.candidates(KEY_ISSUE, "title")[0].value_json == '"newer"'
+
+        # Force a failure (e.g. FK violation on invalid target in repository_relations)
+        invalid_repo = "11111111-2222-3333-4444-555555555555"
+        with pytest.raises(sqlite3.IntegrityError):
+            db.execute(
+                "INSERT INTO resource_repository_relations(service_instance_uuidv4, resource_kind, provider_resource_id, relation_kind, clock_json, target_json, provenance_json, observed_at_us) VALUES(?,?,?,?,?,?,?,?)",
+                (
+                    KEY_ISSUE.service_instance_uuidv4,
+                    KEY_ISSUE.resource_kind,
+                    KEY_ISSUE.provider_resource_id,
+                    "owning_repository",
+                    '{"domain":"test","at_us":1}',
+                    f'"{invalid_repo}"',
+                    PROVENANCE_1,
+                    30,
+                ),
+            )
 
     # Original candidate state is atomically preserved
     candidates = store.candidates(KEY_ISSUE, "title")
@@ -988,7 +1065,7 @@ def test_counterexample_12_old_repository_uuidv4_field_rejected(context_db):
 def test_counterexample_13_fk_and_trigger_order_consistency(context_db):
     db, store, _ = context_db
     # Target repository must exist in repository_context or be NULL
-    unregistered_repo = str(uuid4())
+    unregistered_repo = "e969c72a-82b4-4aeb-b217-3b7679c1371b"
     claim_unregistered = ResourceRepositoryRelation(
         KEY_ISSUE,
         "owning_repository",
@@ -1031,6 +1108,10 @@ def test_counterexample_14_capabilities_and_p7_stops(tmp_path):
                     PROVENANCE_1,
                     10,
                 )
+            )
+        with pytest.raises(sqlite3.OperationalError, match="readonly"):
+            snap.db.execute(
+                "INSERT INTO repository_context VALUES(?,?)", (REPO_1, "{}")
             )
 
     # Expired capability cannot be reused

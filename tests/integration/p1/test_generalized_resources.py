@@ -10,7 +10,6 @@ import pytest
 
 from repo_catalog.adapters.github.production_intake import normalize_timeline_event
 from repo_catalog.adapters.sqlite import p1_schema
-from repo_catalog.adapters.sqlite.p1_context import ContextStore
 from repo_catalog.adapters.sqlite.production_context import Context
 from repo_catalog.adapters.sqlite.recovery_validation import (
     StoredContextInvariantError,
@@ -19,6 +18,7 @@ from repo_catalog.adapters.sqlite.recovery_validation import (
 from repo_catalog.application.acquisition import ProviderAcquisition
 from repo_catalog.application.exchange import ExchangeService
 from repo_catalog.application.production_query import ProductionQueryService
+from repo_catalog.domain.context_admission import DependencySet
 from repo_catalog.domain.exchange import ExchangeError
 from repo_catalog.domain.p1_context import (
     FieldCandidate,
@@ -45,6 +45,8 @@ from tests.integration.i3.test_selective_exchange import (
     receive,
     scope,
 )
+from tests.support.authorized_context import FixtureContextStore
+from tests.support.context_admission import fixture_transaction
 
 S = "22222222-2222-4222-8222-222222222222"
 PROV = canonical({"source": "i2-product", "evidence": "original"})
@@ -84,14 +86,16 @@ def db():
 
 @pytest.mark.parametrize("native", ["", [], [""], [[]], ["a", ["b", []]], "é\x00😀"])
 def test_global_and_child_first_roundtrip(db, native):
-    store = ContextStore(db)
     key = ResourceKey.global_document(S, native)
+    namespace = ResourceKey.from_native(S, "issue", ["project", "I7"])
+    child = ResourceKey.timeline_event(namespace, native)
+    store = FixtureContextStore(
+        db, DependencySet(resources={key, namespace, child}, provider_registrations={S})
+    )
     declaration = RI.global_document(key)
     store.resource(key, identification=declaration)
     store.resource(ResourceKey(*key.coordinates()), identification=declaration)
     assert store.identification(key) == declaration
-    namespace = ResourceKey.from_native(S, "issue", ["project", "I7"])
-    child = ResourceKey.timeline_event(namespace, native)
     child_declaration = RI.scoped(child, namespace, "timeline_event", native)
     store.resource(child, identification=child_declaration)
     assert store.identification(child) == child_declaration
@@ -161,9 +165,17 @@ def test_direct_sql_canonical_refusal(db, raw):
 
 
 def test_unknown_binary_names_and_full_fk(db):
+    keys = {
+        ResourceKey.from_native(S, kind, native)
+        for kind in ("opaque", "Opaque", " opaque ", "\x00")
+        for native in ("A", "a", "é", "e\u0301", "", [], [""], [[]])
+    }
+    store = FixtureContextStore(
+        db, DependencySet(resources=keys, provider_registrations={S})
+    )
     for kind in ("opaque", "Opaque", " opaque ", "\x00"):
         for native in ("A", "a", "é", "e\u0301", "", [], [""], [[]]):
-            ContextStore(db).resource(ResourceKey.from_native(S, kind, native))
+            store.resource(ResourceKey.from_native(S, kind, native))
     assert db.execute("SELECT count(*) FROM resources").fetchone()[0] == 32
     for index in db.execute("PRAGMA index_list(resources)").fetchall():
         assert all(
@@ -244,7 +256,9 @@ def test_production_reopen_query_and_opaque_reports(tmp_path):
     child = ResourceKey.document(namespace, "document", "body", ["D", []])
     declaration = RI.scoped(child, namespace, "body", ["D", []])
     opaque = ResourceKey.from_native(S, "unknown-kind", [])
-    with Context.transaction(tmp_path) as ctx:
+    with fixture_transaction(
+        tmp_path, DependencySet(resources={child, opaque}, provider_registrations={S})
+    ) as ctx:
         ctx.provider(S, "synthetic")
         ctx.observe(ResourceObservation(child, identification=declaration))
         ctx.resource(opaque)
@@ -265,7 +279,9 @@ def test_production_reopen_query_and_opaque_reports(tmp_path):
 @pytest.mark.parametrize("graphql", [False, True])
 def test_real_nontransfer_provider_native_event_persists_and_reopens(tmp_path, graphql):
     catalog(tmp_path)
-    with Context.transaction(tmp_path) as ctx:
+    with fixture_transaction(
+        tmp_path, DependencySet(provider_registrations={S})
+    ) as ctx:
         ctx.provider(S, "synthetic")
     native = "EV_opaque" if graphql else 100
     payload = (
@@ -299,7 +315,9 @@ def test_real_nontransfer_provider_native_event_persists_and_reopens(tmp_path, g
 def test_supported_observation_late_sql_failure_rolls_back_whole_unit(tmp_path):
     catalog(tmp_path)
     key = ResourceKey.global_document(S, ["body", []])
-    with Context.transaction(tmp_path) as ctx:
+    with fixture_transaction(
+        tmp_path, DependencySet(resources={key}, provider_registrations={S})
+    ) as ctx:
         ctx.provider(S, "synthetic")
         before = snapshot(ctx.db)
         field = FieldCandidate(
@@ -336,7 +354,10 @@ def test_real_commit_refusal_rolls_back_supported_resource(tmp_path, monkeypatch
     with monkeypatch.context() as patch:
         patch.setattr(production_context, "connect", refusing_commit)
         with pytest.raises(sqlite3.DatabaseError, match="not authorized"):
-            with Context.transaction(tmp_path) as ctx:
+            key = ResourceKey.global_document(S, [])
+            with fixture_transaction(
+                tmp_path, DependencySet(resources={key}, provider_registrations={S})
+            ) as ctx:
                 ctx.provider(S, "synthetic")
                 key = ResourceKey.global_document(S, [])
                 ctx.resource(key, identification=RI.global_document(key))
@@ -557,7 +578,9 @@ def test_unknown_ordered_wire_and_opaque_transfer_text_remain_supported(tmp_path
         canonical({"units": [{"relation_kind": "transfer_event_report"}]}),
         7,
     )
-    with Context.transaction(a) as ctx:
+    with fixture_transaction(
+        a, DependencySet(resources={owner, *members}, provider_registrations={S})
+    ) as ctx:
         ctx.provider(S, "synthetic")
         for key in (owner, *members):
             ctx.resource(key)
@@ -577,7 +600,9 @@ def test_matching_schema_poison_stops_before_ordinary_exposure(tmp_path, poison,
     catalog(tmp_path)
     namespace = ResourceKey.from_native(S, "issue", "7")
     key = ResourceKey.timeline_event(namespace, "E")
-    with Context.transaction(tmp_path) as ctx:
+    with fixture_transaction(
+        tmp_path, DependencySet(resources={key}, provider_registrations={S})
+    ) as ctx:
         ctx.provider(S, "synthetic")
         ctx.resource(
             key, identification=RI.scoped(key, namespace, "timeline_event", "E")

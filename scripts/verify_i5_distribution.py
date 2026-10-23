@@ -15,12 +15,14 @@ import shutil
 import subprocess
 import sys
 import tarfile
+import tempfile
 import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
+from scripts import installed_test_harness as harness  # noqa: E402
 from scripts import verify_i5_offline as evidence  # noqa: E402
 
 
@@ -114,8 +116,10 @@ def main():
             "sdist_wheel": {"sha256": sha(swheel), "bytes": swheel.stat().st_size},
         },
     )
-    outside = out / "outside"
-    outside.mkdir()
+    external = tempfile.TemporaryDirectory(prefix="repo-catalog-installed-tests-")
+    outside = Path(external.name)
+    support_binding = harness.stage_support(source, outside)
+    write(out / "test-support-binding.json", support_binding)
     guard = outside / "network_guard"
     guard.mkdir()
     shutil.copyfile(
@@ -212,6 +216,9 @@ Path(sys.argv[1]).write_text(json.dumps(result,indent=2)+'\\n')
             os.environ,
             PYTHONPATH=str(guard),
             GIT_ALLOW_PROTOCOL="file",
+            REPO_CATALOG_SMOKE_AUTHORITY=str(
+                outside / "tests/support/context_admission.py"
+            ),
             PATH=str(venv / "bin") + os.pathsep + os.environ["PATH"],
         )
         for credential in ("GH_TOKEN", "GITHUB_TOKEN"):
@@ -253,6 +260,7 @@ Path(sys.argv[1]).write_text(json.dumps(result,indent=2)+'\\n')
             continue
         measured = json.loads((out / (label + "-runtime.json")).read_text())
         with zipfile.ZipFile(artifact) as z:
+            assert not any(n.startswith(("tests/", "scripts/")) for n in z.namelist())
             expected = {
                 n.removeprefix("repo_catalog/"): hashlib.sha256(z.read(n)).hexdigest()
                 for n in z.namelist()
@@ -260,36 +268,18 @@ Path(sys.argv[1]).write_text(json.dumps(result,indent=2)+'\\n')
                 and Path(n).suffix in (".py", ".sql", ".json")
             }
         assert expected == measured["installed_files"]
-        run(
-            label + "-i5",
-            [
-                py,
-                "-m",
-                "pytest",
-                outside / "test_installed_i5.py",
-                "-q",
-                "--tb=short",
-                "--confcutdir=" + str(outside),
-                "--junitxml=" + str(out / (label + "-i5.xml")),
-            ],
-            outside,
-            env,
-        )
-        run(
-            label + "-i4",
-            [
-                py,
-                "-m",
-                "pytest",
-                outside / "test_installed_i4.py",
-                "-q",
-                "--tb=short",
-                "--confcutdir=" + str(outside),
-                "--junitxml=" + str(out / (label + "-i4.xml")),
-            ],
-            outside,
-            env,
-        )
+        harness.bind_artifact(outside, expected)
+        for test_stage in (5, 4):
+            verified = harness.execute_tests(
+                run, label, test_stage, py, outside, out, env
+            )
+            records.append(
+                {
+                    "name": f"{label}-i{test_stage}-reconciliation",
+                    "exit_code": 0 if verified else 1,
+                }
+            )
+            write(out / "processes.json", records)
         for stage in ("i2", "i3"):
             run(
                 label + "-" + stage,

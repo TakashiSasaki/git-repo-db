@@ -10,6 +10,7 @@ from repo_catalog.adapters.sqlite.p1_schema import connect, initialize
 from repo_catalog.adapters.sqlite.production_context import Context
 from repo_catalog.application.exchange import ExchangeService
 from repo_catalog.domain.acquisition import make_provenance
+from repo_catalog.domain.context_admission import DependencySet, dependencies
 from repo_catalog.domain.exchange import (
     ExchangeError,
     ExchangeSelectionScope,
@@ -27,6 +28,21 @@ from repo_catalog.domain.p1_core import OID
 from repo_catalog.domain.resource_identification import ResourceIdentification as RI
 from repo_catalog.domain.resource_identity import encode_identity
 from tests.integration.p5.conftest import init_catalog_stores
+from tests.support.context_admission import fixture_transaction
+
+
+def local_grants(
+    issue, r1, r2, *, resources=(), sources=(), providers=(), units=(), oids=()
+):
+    """Declare finite authority for the named synthetic source setup only."""
+    return dependencies((issue, *resources, *units, *oids)) | DependencySet(
+        repositories={r1, r2},
+        sources=sources,
+        source_repository_pairs={
+            (source, repo) for source in sources for repo in (r1, r2)
+        },
+        provider_registrations={issue.service_instance_uuidv4, *providers},
+    )
 
 
 def catalog(path):
@@ -47,7 +63,7 @@ def fixture(path):
     core.admit_repository(r2)
     core.admit_object(oid)
     core.close()
-    with Context.transaction(path) as ctx:
+    with fixture_transaction(path, local_grants(issue, r1, r2)) as ctx:
         ctx.provider(service, "github", "{}")
         ctx.repository(r1)
         ctx.repository(r2)
@@ -206,7 +222,9 @@ def test_transfer_reports_never_shrunk_or_mixed(tmp_path):
             from_target_json="null",
         ),
     ]
-    with Context.transaction(a) as ctx:
+    with fixture_transaction(
+        a, local_grants(issue, r1, r2, resources=(event,), units=reports)
+    ) as ctx:
         ctx.resource(
             event, identification=RI.scoped(event, issue, "timeline_event", "event-1")
         )
@@ -291,7 +309,16 @@ def test_mapping_claim_support_and_dispositions_are_exact(tmp_path):
         make_provenance("mapping", "withdraw-original"),
         31,
     )
-    with Context.transaction(a) as ctx:
+    with fixture_transaction(
+        a,
+        local_grants(
+            issue,
+            r1,
+            r2,
+            resources=(provider_repo,),
+            units=(mapping, owning, withdrawal),
+        ),
+    ) as ctx:
         ctx.resource(provider_repo)
         ctx.admit_repository_relation(mapping)
         ctx.admit_repository_relation(owning)
@@ -466,7 +493,7 @@ def test_complete_source_inventory_and_coverage_stay_whole(tmp_path):
         40,
         "complete",
     )
-    with Context.transaction(a) as ctx:
+    with fixture_transaction(a, local_grants(issue, r1, r2, sources=(source,))) as ctx:
         ctx.source(source, issue.service_instance_uuidv4, "{}")
         ctx.inventory(inventory)
         ctx.prove_inventory(claim, inventory)
@@ -781,7 +808,7 @@ def test_core_reference_missing_dependency_retains_original_report_clock(tmp_pat
         make_provenance("provider", "original-head"),
         74,
     )
-    with Context.transaction(a) as ctx:
+    with fixture_transaction(a, local_grants(issue, r1, r2, oids=(oid,))) as ctx:
         ctx.admit_field(original)
         ctx.link_core(
             issue, "head", *oid.key, original.provenance_json, lambda *_: True
@@ -817,9 +844,12 @@ def test_contradictory_coverage_proof_is_rejected_before_binding(
     r1, r2, issue, _ = fixture(a)
     catalog(b)
     provenance = make_provenance("provider", "original-complete")
-    with Context.transaction(a) as ctx:
+    source = str(uuid4())
+    child = ResourceKey.document(issue, "comment", "comment", "99")
+    with fixture_transaction(
+        a, local_grants(issue, r1, r2, sources=(source,), resources=(child,))
+    ) as ctx:
         if kind == "source_inventory":
-            source = str(uuid4())
             original_scope = canonical(
                 {
                     "coverage_kind": "repositories",
@@ -842,7 +872,6 @@ def test_contradictory_coverage_proof_is_rejected_before_binding(
                 inventory,
             )
         else:
-            child = ResourceKey.document(issue, "comment", "comment", "99")
             ctx.resource(child, identification=RI.scoped(child, issue, "comment", "99"))
             observation = CollectionObservation(
                 issue,
@@ -928,7 +957,7 @@ def test_selection_cannot_hide_conflicting_inventory_terminal_for_completeness(
         repositories=(r2,),
         provenance_json=make_provenance("provider", "competing-second"),
     )
-    with Context.transaction(a) as ctx:
+    with fixture_transaction(a, local_grants(issue, r1, r2, sources=(source,))) as ctx:
         ctx.source(source, issue.service_instance_uuidv4, "{}")
         ctx.inventory(complete)
         ctx.prove_inventory(
@@ -989,7 +1018,7 @@ def test_internally_contradictory_original_times_rejected_before_binding(
     a, b = tmp_path / "a", tmp_path / "b"
     r1, r2, issue, _ = fixture(a)
     catalog(b)
-    with Context.transaction(a) as ctx:
+    with fixture_transaction(a, local_grants(issue, r1, r2)) as ctx:
         ctx.admit_field(
             FieldCandidate(
                 issue,
@@ -1024,7 +1053,7 @@ def test_existing_relation_time_conflict_rejected_before_independent_core_commit
     tmp_path,
 ):
     a, b = tmp_path / "a", tmp_path / "b"
-    r1, r2, _, _ = fixture(a)
+    r1, r2, issue, _ = fixture(a)
     catalog(b)
     package = ExchangeService(a).export_package(selection=scope())
     receive(b, package, (r1, r2))
@@ -1108,7 +1137,7 @@ def test_collection_scope_binding_rejected_before_core_commit(tmp_path, existing
     a, b = tmp_path / "a", tmp_path / "b"
     r1, r2, issue, _ = fixture(a)
     catalog(b)
-    with Context.transaction(a) as ctx:
+    with fixture_transaction(a, local_grants(issue, r1, r2)) as ctx:
         ctx.collection(
             CollectionObservation(
                 issue,
@@ -1150,7 +1179,9 @@ def test_modeled_collection_member_cannot_borrow_another_parent(tmp_path, sectio
     catalog(b)
     other = ResourceKey.from_native(issue.service_instance_uuidv4, "issue", "8")
     child = ResourceKey.document(other, "comment", "comments", "1")
-    with Context.transaction(a) as ctx:
+    with fixture_transaction(
+        a, local_grants(issue, r1, r2, resources=(other, child))
+    ) as ctx:
         ctx.resource(other)
         ctx.resource(child, identification=RI.scoped(child, other, "comments", "1"))
         if section == "collections":
@@ -1256,7 +1287,7 @@ def test_advisory_coverage_details_do_not_rebind_semantic_claim(tmp_path, store)
     from repo_catalog.domain.p1_coverage import CoverageClaim
 
     a, b = tmp_path / "a", tmp_path / "b"
-    r1, r2, _, _ = fixture(a)
+    r1, r2, issue, _ = fixture(a)
     catalog(b)
     if store == "core":
         claim_scope = CoreCoverageScope("repository", (r1, "fixture"))
@@ -1269,7 +1300,7 @@ def test_advisory_coverage_details_do_not_rebind_semantic_claim(tmp_path, store)
         from repo_catalog.domain.p1_context import CoverageClaim as ContextClaim
 
         claim_scope = CoverageScope.repository(r1, "fixture")
-        with Context.transaction(a) as ctx:
+        with fixture_transaction(a, local_grants(issue, r1, r2)) as ctx:
             ctx.scope(claim_scope)
             ctx.admit_coverage(
                 ContextClaim(claim_scope, 40, "partial", '{"detail":"original"}')
@@ -1298,7 +1329,12 @@ def test_context_scope_cannot_rebind_provider_or_source_service(tmp_path, case):
     r1, r2, issue, _ = fixture(a)
     catalog(b)
     source, other_source, other_service = str(uuid4()), str(uuid4()), str(uuid4())
-    with Context.transaction(a) as ctx:
+    with fixture_transaction(
+        a,
+        local_grants(
+            issue, r1, r2, sources=(source, other_source), providers=(other_service,)
+        ),
+    ) as ctx:
         ctx.source(source, issue.service_instance_uuidv4)
         ctx.provider(other_service, "github")
         ctx.source(other_source, other_service)

@@ -35,6 +35,7 @@ from repo_catalog.domain.acquisition import (
     RepositoryRegistration,
     make_provenance,
 )
+from repo_catalog.domain.context_admission import DependencySet
 from repo_catalog.domain.exchange import (
     ExchangeError,
     ExchangeSelectionScope,
@@ -50,6 +51,7 @@ from repo_catalog.domain.p1_context import (
 from repo_catalog.domain.p1_coordination import RequestIdentity
 from repo_catalog.domain.p1_core import OID, CoreFailure
 from tests.integration.p5.conftest import build_sample_git_repo, init_catalog_stores
+from tests.support.context_admission import fixture_transaction
 
 
 def test_i3_relation_export_without_i2_acquisition(tmp_path: Path) -> None:
@@ -59,7 +61,12 @@ def test_i3_relation_export_without_i2_acquisition(tmp_path: Path) -> None:
         tmp_path, repository_uuidv4=repo, stores=("core", "context", "operational")
     )
     resource = ResourceKey.from_native(service, "issue", "7")
-    with Context.transaction(tmp_path) as context:
+    with fixture_transaction(
+        tmp_path,
+        DependencySet(
+            resources={resource}, repositories={repo}, provider_registrations={service}
+        ),
+    ) as context:
         context.provider(service, "github", "{}")
         context.repository(repo)
         context.resource(resource)

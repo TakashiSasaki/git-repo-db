@@ -104,6 +104,7 @@ def admission_checked(operation):
 
     @wraps(operation)
     def call(self, *args, admission=None, **kwargs):
+        self._check_mutation_capability()
         if self._admission_owner is not None:
             self._admission_owner._check_admission_active()
         service = self._authorization
@@ -192,6 +193,9 @@ def admission_checked(operation):
 
 
 class AdmissionTransactions:
+    def _check_mutation_capability(self):
+        """Optional pure local capability check, before any authority or lookup."""
+
     def _init_admission(self, authorization):
         if authorization is not None and not isinstance(
             authorization, ContextAdmissionService

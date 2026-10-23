@@ -9,6 +9,8 @@ from pathlib import Path
 
 import pytest
 
+from scripts.installed_test_harness import stage_support
+
 ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -81,6 +83,7 @@ def test_p1_packaged_ddl_outside_checkout(p1_distributions, tmp_path, variant):
     env, wheels = p1_distributions
     outside = tmp_path / "outside"
     outside.mkdir()
+    stage_support(ROOT, outside)
     venv = tmp_path / "venv"
     run(["uv", "venv", venv, "--python", sys.executable, "--offline"], outside, env)
     python = venv / "bin/python"

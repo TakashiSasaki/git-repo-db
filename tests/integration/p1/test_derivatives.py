@@ -22,10 +22,12 @@ from repo_catalog.domain.p1_coordination import (
 from tests.integration.p1.test_coordination import (
     INSTANCE,
     REPOSITORY,
+    admit_fixture,
     build,
     child_code,
     context_unit,
     core_unit,
+    fixture_authority,
 )
 
 
@@ -109,7 +111,7 @@ def test_operational_loss_disables_old_continuation_without_invalidating_authori
 ):
     directory = tmp_path / "live"
     build(directory)
-    PairCoordinator(directory).admit(core_unit, context_unit)
+    admit_fixture(PairCoordinator(directory), core_unit, context_unit)
     old = request()
     with contextlib.closing(
         connect(directory / "operational.sqlite3", "operational")
@@ -211,20 +213,24 @@ def test_search_snapshot_fence_loss_corruption_and_reconstruction(tmp_path):
     directory = tmp_path / "live"
     build(directory)
     coordinator = PairCoordinator(directory)
-    coordinator.admit(core_unit, context_unit)
+    admit_fixture(coordinator, core_unit, context_unit)
     with contextlib.closing(
         connect(directory / "context.sqlite3", "context")
     ) as authority:
-        ContextStore(authority).admit_field(
-            FieldCandidate(
-                ResourceKey.from_native(PROVIDER, "issue", "7"),
-                "body",
-                '"body needle"',
-                FieldClock("provider.edit", 17),
-                '{"evidence":"issue-7-edit-17","source":"provider.example"}',
-                20,
+        authorization, admission = fixture_authority()
+        with ContextStore(authority, authorization=authorization).admission_transaction(
+            admission=admission
+        ) as store:
+            store.admit_field(
+                FieldCandidate(
+                    ResourceKey.from_native(PROVIDER, "issue", "7"),
+                    "body",
+                    '"body needle"',
+                    FieldClock("provider.edit", 17),
+                    '{"evidence":"issue-7-edit-17","source":"provider.example"}',
+                    20,
+                )
             )
-        )
     with (
         contextlib.closing(connect(directory / "search.sqlite3", "search")) as db,
         coordinator.snapshots() as pair,
@@ -304,7 +310,7 @@ def test_context_search_resolves_actual_text_fk_in_projection_and_fallback(tmp_p
     directory = tmp_path / "live"
     build(directory)
     coordinator = PairCoordinator(directory)
-    coordinator.admit(core_unit, context_unit)
+    admit_fixture(coordinator, core_unit, context_unit)
     actual = ResourceKey.from_native(PROVIDER, "issue", "7")
     reported = ResourceKey.from_native(PROVIDER, "issue", "reported")
     null = ResourceKey.from_native(PROVIDER, "issue", "null")
@@ -323,15 +329,17 @@ def test_context_search_resolves_actual_text_fk_in_projection_and_fallback(tmp_p
     with contextlib.closing(
         connect(directory / "context.sqlite3", "context")
     ) as authority:
-        store = ContextStore(authority)
-        body = "provider-only needle 😀"
-        digest = store.text(body)
-        store.admit_field(candidate(actual, "text_body_sha256", digest, 1))
-        store.resource(reported, REPOSITORY)
-        store.admit_field(candidate(reported, "reported_text_sha256", digest, 1))
-        store.resource(null, REPOSITORY)
-        store.admit_field(candidate(null, "text_body_sha256", None, 1))
-
+        authorization, admission = fixture_authority(extra_resources=(reported, null))
+        with ContextStore(authority, authorization=authorization).admission_transaction(
+            admission=admission
+        ) as store:
+            body = "provider-only needle 😀"
+            digest = store.text(body)
+            store.admit_field(candidate(actual, "text_body_sha256", digest, 1))
+            store.resource(reported, REPOSITORY)
+            store.admit_field(candidate(reported, "reported_text_sha256", digest, 1))
+            store.resource(null, REPOSITORY)
+            store.admit_field(candidate(null, "text_body_sha256", None, 1))
     with (
         contextlib.closing(connect(directory / "search.sqlite3", "search")) as db,
         coordinator.snapshots() as old,
@@ -369,7 +377,7 @@ def test_context_search_resolves_actual_text_fk_in_projection_and_fallback(tmp_p
             newer_digest = store.text("replacement new-token")
             store.admit_field(candidate(actual, "text_body_sha256", newer_digest, 2))
 
-        coordinator.admit(lambda core: None, update)
+        admit_fixture(coordinator, lambda core: None, update)
         # Both projection and direct fallback retain the actual pinned body.
         assert search.read("context_text", old.token, "needle", fallback) == (
             "projection",
