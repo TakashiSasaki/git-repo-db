@@ -10,6 +10,7 @@ from pathlib import Path
 import pytest
 
 from scripts.installed_test_harness import stage_support
+from scripts.check_sdist_contract import check_sdist, compare_wheels, save
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -43,6 +44,22 @@ def p1_distributions(tmp_path_factory):
         [
             "uv",
             "build",
+            "--sdist",
+            "--python",
+            sys.executable,
+            "--offline",
+            "--no-build-isolation",
+            "--out-dir",
+            work / "dist",
+        ],
+        ROOT,
+        env,
+    )
+    run(
+        [
+            "uv",
+            "build",
+            "--wheel",
             "--python",
             sys.executable,
             "--offline",
@@ -54,6 +71,7 @@ def p1_distributions(tmp_path_factory):
         env,
     )
     sdist = next((work / "dist").glob("*.tar.gz"))
+    contract = check_sdist(sdist, ROOT)
     with tarfile.open(sdist) as archive:
         archive.extractall(work / "unpacked", filter="data")
     source = next((work / "unpacked").iterdir())
@@ -72,6 +90,12 @@ def p1_distributions(tmp_path_factory):
         source,
         env,
     )
+    contract["wheel_equivalence"] = compare_wheels(
+        next((work / "dist").glob("*.whl")),
+        next((work / "sdist-wheel").glob("*.whl")),
+        sdist_metadata=contract["members"]["PKG-INFO"]["sha256"],
+    )
+    save(work / "sdist-contract.json", contract)
     return env, [
         next((work / "dist").glob("*.whl")),
         next((work / "sdist-wheel").glob("*.whl")),

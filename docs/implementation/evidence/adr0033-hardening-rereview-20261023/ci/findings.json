@@ -1,0 +1,12 @@
+[
+  {
+    "id": "A-CI-01",
+    "severity": "Low",
+    "blocking": false,
+    "status": "reproduced advisory; no demonstrated stale acceptance bypass",
+    "title": "README is shipped sdist input but omitted from runtime acceptance_input_hash",
+    "evidence": "readme-binding-result.json",
+    "recommendation": "Preserve exact commit/tree checks and distinct runtime/sdist source inventory hash meanings.",
+    "complete_sdist_source_hash_counterexample": "readme-sdist-inventory-result.json"
+  }
+]

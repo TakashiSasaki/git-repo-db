@@ -1,0 +1,754 @@
+{
+  "reviewed_head": "59307c40ea65554736e131cedd00f04c9906551b",
+  "reviewed_tree": "5ea93707d62b542c84632515392ac6a35c36cd65",
+  "ordinary_collected": 5888,
+  "executed_unique_ordinary": 3544,
+  "unexecuted_ordinary": 2344,
+  "live_not_run": 1,
+  "benchmark_not_run": 1,
+  "full_release_acceptance": false,
+  "broad": {
+    "ordinary_collected": 5888,
+    "selected": 3137,
+    "unexecuted_ordinary": 2751,
+    "inputs_unchanged": true,
+    "transfer_admission_overlapping_broad": {
+      "command": [
+        "/workspace/adr0033-review/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-o",
+        "addopts=--strict-markers",
+        "-o",
+        "junit_family=xunit1",
+        "@/tmp/adr0033-rereview/broad/transfer-admission.selected.txt",
+        "--junitxml=/tmp/adr0033-rereview/broad/transfer-admission.xml",
+        "--journal=/tmp/adr0033-rereview/broad/transfer-admission.jsonl"
+      ],
+      "cwd": "/workspace/adr0033-review",
+      "started_epoch": 1792729088.4576423,
+      "elapsed_seconds": 1.46,
+      "exit_code": 0,
+      "collected": 29,
+      "passed": 29,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 29,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 87
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792729089.868217
+          }
+        ]
+      }
+    },
+    "transfer_sql_overlapping_broad": {
+      "command": [
+        "/workspace/adr0033-review/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-o",
+        "addopts=--strict-markers",
+        "-o",
+        "junit_family=xunit1",
+        "@/tmp/adr0033-rereview/broad/transfer-sql.selected.txt",
+        "--junitxml=/tmp/adr0033-rereview/broad/transfer-sql.xml",
+        "--journal=/tmp/adr0033-rereview/broad/transfer-sql.jsonl"
+      ],
+      "cwd": "/workspace/adr0033-review",
+      "started_epoch": 1792729089.919428,
+      "elapsed_seconds": 7.89,
+      "exit_code": 0,
+      "collected": 217,
+      "passed": 217,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 217,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 651
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792729097.754899
+          }
+        ]
+      }
+    },
+    "run": {
+      "command": [
+        "/workspace/adr0033-review/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-o",
+        "addopts=--strict-markers",
+        "-o",
+        "junit_family=xunit1",
+        "@/tmp/adr0033-rereview/broad/regressions.selected.txt",
+        "--junitxml=/tmp/adr0033-rereview/broad/regressions.xml",
+        "--journal=/tmp/adr0033-rereview/broad/regressions.jsonl",
+        "-n",
+        "2",
+        "--dist",
+        "worksteal"
+      ],
+      "cwd": "/workspace/adr0033-review",
+      "started_epoch": 1792729097.8167713,
+      "elapsed_seconds": 186.908,
+      "exit_code": 1,
+      "collected": 3137,
+      "passed": 3058,
+      "failed": 59,
+      "error": 20,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 3137,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 9312,
+          "failed": 79
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "failed",
+            "exitstatus": 1,
+            "timestamp": 1792729284.514156
+          }
+        ]
+      }
+    }
+  },
+  "focused": {
+    "packaging": {
+      "command": [
+        "/workspace/adr0033-review/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-o",
+        "addopts=--strict-markers",
+        "-o",
+        "junit_family=xunit1",
+        "@/tmp/adr0033-rereview/focused/packaging.selected.txt",
+        "--junitxml=/tmp/adr0033-rereview/focused/packaging.xml",
+        "--journal=/tmp/adr0033-rereview/focused/packaging.jsonl"
+      ],
+      "cwd": "/workspace/adr0033-review",
+      "started_epoch": 1792729300.8217468,
+      "elapsed_seconds": 63.132,
+      "exit_code": 1,
+      "collected": 155,
+      "passed": 151,
+      "failed": 4,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 155,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 461,
+          "failed": 4
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "failed",
+            "exitstatus": 1,
+            "timestamp": 1792729363.888711
+          }
+        ]
+      }
+    },
+    "ci-focused": {
+      "command": [
+        "/workspace/adr0033-review/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-o",
+        "addopts=--strict-markers",
+        "-o",
+        "junit_family=xunit1",
+        "@/tmp/adr0033-rereview/focused/ci-focused.selected.txt",
+        "--junitxml=/tmp/adr0033-rereview/focused/ci-focused.xml",
+        "--journal=/tmp/adr0033-rereview/focused/ci-focused.jsonl"
+      ],
+      "cwd": "/workspace/adr0033-review",
+      "started_epoch": 1792729364.279667,
+      "elapsed_seconds": 17.241,
+      "exit_code": 0,
+      "collected": 266,
+      "passed": 266,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 266,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 798
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792729381.457238
+          }
+        ]
+      }
+    },
+    "docs-tests": {
+      "command": [
+        "/workspace/adr0033-review/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-o",
+        "addopts=--strict-markers",
+        "-o",
+        "junit_family=xunit1",
+        "@/tmp/adr0033-rereview/focused/docs-tests.selected.txt",
+        "--junitxml=/tmp/adr0033-rereview/focused/docs-tests.xml",
+        "--journal=/tmp/adr0033-rereview/focused/docs-tests.jsonl"
+      ],
+      "cwd": "/workspace/adr0033-review",
+      "started_epoch": 1792729381.812885,
+      "elapsed_seconds": 1.477,
+      "exit_code": 0,
+      "collected": 8,
+      "passed": 8,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 8,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 24
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792729383.241063
+          }
+        ]
+      }
+    }
+  },
+  "installed_journal": {
+    "direct": {
+      "exit_code": 0,
+      "outcomes": {
+        "passed": 246,
+        "failed": 0,
+        "error": 0,
+        "skipped": 0,
+        "xfail": 0,
+        "xpass": 0,
+        "executed": 246
+      },
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 738
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792729447.966994
+          }
+        ]
+      }
+    },
+    "sdist": {
+      "exit_code": 0,
+      "outcomes": {
+        "passed": 246,
+        "failed": 0,
+        "error": 0,
+        "skipped": 0,
+        "xfail": 0,
+        "xpass": 0,
+        "executed": 246
+      },
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 738
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792729457.210527
+          }
+        ]
+      }
+    }
+  },
+  "source_inputs_unchanged": true,
+  "measurements": {
+    "before": {
+      "bytes": 83949291,
+      "sha256": "2fa5d627c506370e792ee5fac7cbdec3ae952fc2468273c61aa2d73bc296b4cf",
+      "members": 3875,
+      "unpacked_regular_bytes": 137661254
+    },
+    "after": {
+      "bytes": 677902,
+      "sha256": "c72f86709f360b306daa1d39e2854e910f773e6acfce9f4bec7dae3396012e21",
+      "members": 159,
+      "unpacked_regular_bytes": 5921698
+    },
+    "after-installed": {
+      "exit_code": 0,
+      "product_files": 155,
+      "origin": "/tmp/adr0033-rereview/measurement/after-venv/lib/python3.12/site-packages/repo_catalog",
+      "runtime": {
+        "sqlite": [
+          "3.53.1",
+          "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9"
+        ],
+        "compile_options": [
+          [
+            "ATOMIC_INTRINSICS=1"
+          ],
+          [
+            "COMPILER=clang-22.1.3"
+          ],
+          [
+            "DEFAULT_AUTOVACUUM"
+          ],
+          [
+            "DEFAULT_CACHE_SIZE=-2000"
+          ],
+          [
+            "DEFAULT_FILE_FORMAT=4"
+          ],
+          [
+            "DEFAULT_JOURNAL_SIZE_LIMIT=-1"
+          ],
+          [
+            "DEFAULT_MMAP_SIZE=0"
+          ],
+          [
+            "DEFAULT_PAGE_SIZE=4096"
+          ],
+          [
+            "DEFAULT_PCACHE_INITSZ=20"
+          ],
+          [
+            "DEFAULT_RECURSIVE_TRIGGERS"
+          ],
+          [
+            "DEFAULT_SECTOR_SIZE=4096"
+          ],
+          [
+            "DEFAULT_SYNCHRONOUS=2"
+          ],
+          [
+            "DEFAULT_WAL_AUTOCHECKPOINT=1000"
+          ],
+          [
+            "DEFAULT_WAL_SYNCHRONOUS=2"
+          ],
+          [
+            "DEFAULT_WORKER_THREADS=0"
+          ],
+          [
+            "DIRECT_OVERFLOW_READ"
+          ],
+          [
+            "ENABLE_DBSTAT_VTAB"
+          ],
+          [
+            "ENABLE_FTS3"
+          ],
+          [
+            "ENABLE_FTS3_PARENTHESIS"
+          ],
+          [
+            "ENABLE_FTS4"
+          ],
+          [
+            "ENABLE_FTS5"
+          ],
+          [
+            "ENABLE_GEOPOLY"
+          ],
+          [
+            "ENABLE_MATH_FUNCTIONS"
+          ],
+          [
+            "ENABLE_PERCENTILE"
+          ],
+          [
+            "ENABLE_RTREE"
+          ],
+          [
+            "MALLOC_SOFT_LIMIT=1024"
+          ],
+          [
+            "MAX_ATTACHED=10"
+          ],
+          [
+            "MAX_COLUMN=2000"
+          ],
+          [
+            "MAX_COMPOUND_SELECT=500"
+          ],
+          [
+            "MAX_DEFAULT_PAGE_SIZE=8192"
+          ],
+          [
+            "MAX_EXPR_DEPTH=1000"
+          ],
+          [
+            "MAX_FUNCTION_ARG=1000"
+          ],
+          [
+            "MAX_LENGTH=1000000000"
+          ],
+          [
+            "MAX_LIKE_PATTERN_LENGTH=50000"
+          ],
+          [
+            "MAX_MMAP_SIZE=0x7fff0000"
+          ],
+          [
+            "MAX_PAGE_COUNT=0xfffffffe"
+          ],
+          [
+            "MAX_PAGE_SIZE=65536"
+          ],
+          [
+            "MAX_SQL_LENGTH=1000000000"
+          ],
+          [
+            "MAX_TRIGGER_DEPTH=1000"
+          ],
+          [
+            "MAX_VARIABLE_NUMBER=32766"
+          ],
+          [
+            "MAX_VDBE_OP=250000000"
+          ],
+          [
+            "MAX_WORKER_THREADS=8"
+          ],
+          [
+            "MUTEX_PTHREADS"
+          ],
+          [
+            "SYSTEM_MALLOC"
+          ],
+          [
+            "TEMP_STORE=1"
+          ],
+          [
+            "THREADSAFE=1"
+          ]
+        ]
+      }
+    },
+    "rebuilt-installed": {
+      "exit_code": 0,
+      "product_files": 155,
+      "origin": "/tmp/adr0033-rereview/measurement/rebuilt-venv/lib/python3.12/site-packages/repo_catalog",
+      "runtime": {
+        "sqlite": [
+          "3.53.1",
+          "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9"
+        ],
+        "compile_options": [
+          [
+            "ATOMIC_INTRINSICS=1"
+          ],
+          [
+            "COMPILER=clang-22.1.3"
+          ],
+          [
+            "DEFAULT_AUTOVACUUM"
+          ],
+          [
+            "DEFAULT_CACHE_SIZE=-2000"
+          ],
+          [
+            "DEFAULT_FILE_FORMAT=4"
+          ],
+          [
+            "DEFAULT_JOURNAL_SIZE_LIMIT=-1"
+          ],
+          [
+            "DEFAULT_MMAP_SIZE=0"
+          ],
+          [
+            "DEFAULT_PAGE_SIZE=4096"
+          ],
+          [
+            "DEFAULT_PCACHE_INITSZ=20"
+          ],
+          [
+            "DEFAULT_RECURSIVE_TRIGGERS"
+          ],
+          [
+            "DEFAULT_SECTOR_SIZE=4096"
+          ],
+          [
+            "DEFAULT_SYNCHRONOUS=2"
+          ],
+          [
+            "DEFAULT_WAL_AUTOCHECKPOINT=1000"
+          ],
+          [
+            "DEFAULT_WAL_SYNCHRONOUS=2"
+          ],
+          [
+            "DEFAULT_WORKER_THREADS=0"
+          ],
+          [
+            "DIRECT_OVERFLOW_READ"
+          ],
+          [
+            "ENABLE_DBSTAT_VTAB"
+          ],
+          [
+            "ENABLE_FTS3"
+          ],
+          [
+            "ENABLE_FTS3_PARENTHESIS"
+          ],
+          [
+            "ENABLE_FTS4"
+          ],
+          [
+            "ENABLE_FTS5"
+          ],
+          [
+            "ENABLE_GEOPOLY"
+          ],
+          [
+            "ENABLE_MATH_FUNCTIONS"
+          ],
+          [
+            "ENABLE_PERCENTILE"
+          ],
+          [
+            "ENABLE_RTREE"
+          ],
+          [
+            "MALLOC_SOFT_LIMIT=1024"
+          ],
+          [
+            "MAX_ATTACHED=10"
+          ],
+          [
+            "MAX_COLUMN=2000"
+          ],
+          [
+            "MAX_COMPOUND_SELECT=500"
+          ],
+          [
+            "MAX_DEFAULT_PAGE_SIZE=8192"
+          ],
+          [
+            "MAX_EXPR_DEPTH=1000"
+          ],
+          [
+            "MAX_FUNCTION_ARG=1000"
+          ],
+          [
+            "MAX_LENGTH=1000000000"
+          ],
+          [
+            "MAX_LIKE_PATTERN_LENGTH=50000"
+          ],
+          [
+            "MAX_MMAP_SIZE=0x7fff0000"
+          ],
+          [
+            "MAX_PAGE_COUNT=0xfffffffe"
+          ],
+          [
+            "MAX_PAGE_SIZE=65536"
+          ],
+          [
+            "MAX_SQL_LENGTH=1000000000"
+          ],
+          [
+            "MAX_TRIGGER_DEPTH=1000"
+          ],
+          [
+            "MAX_VARIABLE_NUMBER=32766"
+          ],
+          [
+            "MAX_VDBE_OP=250000000"
+          ],
+          [
+            "MAX_WORKER_THREADS=8"
+          ],
+          [
+            "MUTEX_PTHREADS"
+          ],
+          [
+            "SYSTEM_MALLOC"
+          ],
+          [
+            "TEMP_STORE=1"
+          ],
+          [
+            "THREADSAFE=1"
+          ]
+        ]
+      }
+    },
+    "reduction_percent": 99.19248633082559,
+    "wheel_all_member_contents_equal": true,
+    "wheel_record_all_rows_verified": true,
+    "wheel_members": 159,
+    "product_inputs_by_suffix": {
+      ".py": 132,
+      ".sql": 19,
+      ".json": 2,
+      ".graphql": 2
+    },
+    "wheels": {
+      "before": {
+        "bytes": 762725,
+        "sha256": "22809cb1f468d5c57f18e8aea66e218ca261134cf3307043cd988f1ff436f842"
+      },
+      "after": {
+        "bytes": 762725,
+        "sha256": "22809cb1f468d5c57f18e8aea66e218ca261134cf3307043cd988f1ff436f842"
+      },
+      "rebuilt": {
+        "bytes": 762725,
+        "sha256": "22809cb1f468d5c57f18e8aea66e218ca261134cf3307043cd988f1ff436f842"
+      }
+    }
+  },
+  "budgets": {
+    "compressed_bytes": 2097152,
+    "unpacked_bytes": 8388608,
+    "members": 512,
+    "tar_stream_bytes": 8922624
+  },
+  "tar_stream_bytes": 6051840,
+  "raw_header_count": 159,
+  "source_inventory_sha256": "7d93a7c4b2d3d6a7411f0fc98a42901a83b508a63d2e15e44c2f6f2674f21934"
+}

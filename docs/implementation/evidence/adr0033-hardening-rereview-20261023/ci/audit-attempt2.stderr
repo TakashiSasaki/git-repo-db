@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "/workspace/adr0033-review/docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/audit_receipts.py", line 211, in <module>
+    main()
+  File "/workspace/adr0033-review/docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/audit_receipts.py", line 150, in main
+    assert sha(json.dumps(sdist['source_files'], sort_keys=True, separators=(',', ':')).encode()) == sdist['source_inventory_sha256']
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

@@ -1,0 +1,7 @@
+{
+  "cases": 66,
+  "cli_cases": 18,
+  "unexpected_results": [],
+  "initial_expectation_correction": "Initial bare-CR case expected rejection. BytesParser treats CR as a line separator, leaving the required Name exact and adding only an unrelated header. No applicable identity requirement forbids this; integrated wheel metadata equality remains additional validation. Initial exit1/results retained separately.",
+  "scope": "Independent bounded archive/identity probes only; no pytest suite, product behavior, wheel builds or release acceptance."
+}

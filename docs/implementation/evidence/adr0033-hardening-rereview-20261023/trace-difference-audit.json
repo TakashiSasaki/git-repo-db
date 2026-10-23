@@ -1,0 +1,16 @@
+{
+  "all_79_full_raw_traces_differ": true,
+  "differing_line_categories": {
+    "resources": 20,
+    "units": 80,
+    "self": 34,
+    "report": 4,
+    "p1_distributions": 8,
+    "env": 8,
+    "test_p1_distribution frame24->26": 8,
+    "tmp_path_factory": 40,
+    "context_db": 42
+  },
+  "other_differing_lines": [],
+  "meaning": "All differing lines are fixture value/environment rendering or four packaging helper frame coordinates; original traceback bodies are preserved."
+}

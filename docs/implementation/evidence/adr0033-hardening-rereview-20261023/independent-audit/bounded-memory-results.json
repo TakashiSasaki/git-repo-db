@@ -1,0 +1,60 @@
+{
+  "execution": "Sequential bounded counterexample child processes; no concurrent benchmark claim.",
+  "measurements": [
+    {
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+        "/workspace/adr0033-review/docs/implementation/evidence/adr0033-hardening-rereview-20261023/independent-audit/probe_bounded_memory.py",
+        "--child",
+        "16"
+      ],
+      "exit_code": 0,
+      "stdout": "{\"input_logical_payload_bytes\": 16777216, \"compressed_bytes\": 16412, \"output_bytes_produced\": 8922625, \"largest_output_chunk\": 65536, \"tar_header_parser_calls\": [], \"max_tar_stream\": 8922624, \"rss_unit\": \"KiB on Linux\", \"max_rss_before_validation\": 14464, \"max_rss_after_validation\": 23468, \"error\": {\"type\": \"ValueError\", \"message\": \"decompressed tar stream budget exceeded\"}, \"passed\": true}\n",
+      "stderr": "",
+      "measurement": {
+        "input_logical_payload_bytes": 16777216,
+        "compressed_bytes": 16412,
+        "output_bytes_produced": 8922625,
+        "largest_output_chunk": 65536,
+        "tar_header_parser_calls": [],
+        "max_tar_stream": 8922624,
+        "rss_unit": "KiB on Linux",
+        "max_rss_before_validation": 14464,
+        "max_rss_after_validation": 23468,
+        "error": {
+          "type": "ValueError",
+          "message": "decompressed tar stream budget exceeded"
+        },
+        "passed": true
+      }
+    },
+    {
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+        "/workspace/adr0033-review/docs/implementation/evidence/adr0033-hardening-rereview-20261023/independent-audit/probe_bounded_memory.py",
+        "--child",
+        "64"
+      ],
+      "exit_code": 0,
+      "stdout": "{\"input_logical_payload_bytes\": 67108864, \"compressed_bytes\": 65334, \"output_bytes_produced\": 8922625, \"largest_output_chunk\": 65536, \"tar_header_parser_calls\": [], \"max_tar_stream\": 8922624, \"rss_unit\": \"KiB on Linux\", \"max_rss_before_validation\": 14464, \"max_rss_after_validation\": 23580, \"error\": {\"type\": \"ValueError\", \"message\": \"decompressed tar stream budget exceeded\"}, \"passed\": true}\n",
+      "stderr": "",
+      "measurement": {
+        "input_logical_payload_bytes": 67108864,
+        "compressed_bytes": 65334,
+        "output_bytes_produced": 8922625,
+        "largest_output_chunk": 65536,
+        "tar_header_parser_calls": [],
+        "max_tar_stream": 8922624,
+        "rss_unit": "KiB on Linux",
+        "max_rss_before_validation": 14464,
+        "max_rss_after_validation": 23580,
+        "error": {
+          "type": "ValueError",
+          "message": "decompressed tar stream budget exceeded"
+        },
+        "passed": true
+      }
+    }
+  ],
+  "passed": true
+}

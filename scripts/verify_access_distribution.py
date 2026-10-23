@@ -20,6 +20,9 @@ import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+from scripts.check_sdist_contract import check_sdist, compare_wheels, save  # noqa: E402
+
 SMOKE = r"""
 import importlib.util, json, os, sqlite3, sys, tempfile
 os.umask(0o022)
@@ -343,6 +346,7 @@ def main() -> None:
         archive = next(built.glob("*.tar.gz"))
         unpacked = base / "sdist"
         unpacked.mkdir()
+        contract = check_sdist(archive, ROOT)
         with tarfile.open(archive) as source:
             source.extractall(unpacked, filter="data")
         source_root = next(unpacked.iterdir())
@@ -362,6 +366,10 @@ def main() -> None:
                 env=env,
             )
         )
+        contract["wheel_equivalence"] = compare_wheels(
+            direct, next(rebuilt.glob("*.whl"))
+        )
+        save(ROOT / "artifacts/access-registry/sdist-contract.json", contract)
         for label, wheel in (
             ("wheel", direct),
             ("sdist-wheel", next(rebuilt.glob("*.whl"))),

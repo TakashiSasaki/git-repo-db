@@ -56,6 +56,12 @@ jobs:
       - name: Confirm dependency environment identity
         if: steps.plan.outputs.dependencies == 'true'
         run: uv run --no-sync python scripts/ci_python_runtime.py probe artifacts/runtime/dependencies.json --reference artifacts/runtime/selected.json
+      - name: Check minimal sdist membership, source hashes and byte budgets
+        if: steps.plan.outputs.sdist_contract == 'true'
+        run: >-
+          python scripts/ci_profile.py run --name sdist_contract --
+          uv run --no-sync python scripts/check_sdist_contract.py
+          --build --output artifacts/ci-profile/sdist-members.json
       - name: Prepare locked wheels (online preparation)
         if: steps.plan.outputs.wheelhouse == 'true'
         run: python scripts/ci_profile.py run --name wheelhouse -- uv run --no-sync python scripts/prepare_wheelhouse.py

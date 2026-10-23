@@ -1,0 +1,19 @@
+{
+  "status": "fulfilled",
+  "value": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Action completed."
+      }
+    ],
+    "structuredContent": {
+      "comments": [],
+      "url": "https://github.com/TakashiSasaki/git-repo-db/pull/142",
+      "title": "TakashiSasaki/git-repo-db PR #142 comments",
+      "display_url": "https://github.com/TakashiSasaki/git-repo-db/pull/142",
+      "display_title": "TakashiSasaki/git-repo-db PR #142 comments"
+    },
+    "isError": false
+  }
+}

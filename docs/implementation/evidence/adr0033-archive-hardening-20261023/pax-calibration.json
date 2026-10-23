@@ -1,0 +1,16 @@
+{
+  "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+  "hatchling": "1.32.4",
+  "archive": "/tmp/sdist-pax-build/repo_catalog-0.2.0.tar.gz",
+  "archive_sha256": "c72f86709f360b306daa1d39e2854e910f773e6acfce9f4bec7dae3396012e21",
+  "compressed_bytes": 677902,
+  "tar_stream_bytes": 6051840,
+  "regular_file_bytes": 5921698,
+  "logical_members": 159,
+  "raw_headers": 159,
+  "pax_headers": [],
+  "pax_logical_values": [],
+  "tar_end_offset": 6046208,
+  "zero_padding_bytes": 5632,
+  "max_name_bytes": 78
+}
