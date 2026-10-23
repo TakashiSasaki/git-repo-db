@@ -1,0 +1,246 @@
+"""Independent I6-B probes, constructed without importing Author helpers."""
+import copy
+import hashlib
+import json
+import os
+import sqlite3
+import sys
+from pathlib import Path
+
+import pytest
+from repo_catalog.domain.context_wire import decode_context_v5, encode_context_v5
+from repo_catalog.domain.exchange import (FORMAT, ExchangeError, ExchangePackage,
+    ExchangeSelectionScope, decode_package, encode_package, empty_context_section)
+from repo_catalog.domain.p1_context import ResourceKey, canonical
+from repo_catalog.domain.resource_identification import ResourceIdentification as RI
+from repo_catalog.domain.resource_identity import encode_identity
+from repo_catalog.domain.selective_exchange import transfer_reports
+
+S='8bc7720a-0659-4c69-9159-28c9ad44f121'
+R='122617f1-7b75-475d-bc2e-8f30d1cbd8a5'
+P='0bec528e-c1be-46ca-87b9-b0527a159639'
+Q='60b4edcd-0f95-4ba4-a0aa-a2f860906c02'
+PV=canonical({'source':'independent-fixture','evidence':{'label':'実測なし synthetic'}})
+COLS=('service_instance_uuidv4','resource_kind','provider_resource_id')
+
+
+def owner(key): return dict(zip(COLS,key.coordinates(),strict=True))
+def key(kind,native): return ResourceKey.from_native(S,kind,native)
+def context(*declarations):
+    data=empty_context_section()
+    data['providers']=[{'service_instance_uuidv4':S,'provider_kind':'independent','configuration_json':'{}'}]
+    data['resources']=[declaration.to_wire() for declaration in declarations]
+    return data
+
+def checksum(data):
+    body={k:v for k,v in data.items() if k!='digest_sha256'}
+    data['digest_sha256']=hashlib.sha256(json.dumps(body,ensure_ascii=False,sort_keys=True,separators=(',',':'),allow_nan=False).encode()).hexdigest()
+    return data
+
+def package(ctx=None):
+    return ExchangePackage(P,771,S,R,ExchangeSelectionScope(all_selected=True),context=ctx).to_dict()
+
+def refused(fn, value, expected=None):
+    with pytest.raises(ExchangeError) as error: fn(value)
+    if expected is not None: assert error.value.code==expected
+    log=os.environ.get('WIRE_REFUSALS')
+    if log:
+        with open(log,'a') as stream: stream.write(json.dumps({'test':os.environ.get('PYTEST_CURRENT_TEST'),'type':type(error.value).__name__,'code':error.value.code,'scope':error.value.scope},ensure_ascii=True)+'\n')
+    return error.value
+
+def generic_relation(k, members, *, kind='x-members', observed=779, prov=PV, scope='{}'):
+    return {**owner(k),'relation_kind':kind,'members_json':canonical([m.coordinates() for m in members]),'observed_at_us':observed,'provenance_json':prov,'scope_json':scope}
+
+def collection(k,members,*,state='complete',observed=787,prov=PV,scope='{}'):
+    row=generic_relation(k,members,observed=observed,prov=prov,scope=scope)
+    row['collection_kind']=row.pop('relation_kind'); row['terminal_state']=state
+    return row
+
+def originals(two=True, parent_time=None, provider_only=False):
+    issue=key('issue',['project-雪','73'])
+    event=ResourceKey.document(issue,'comment','timeline_event',['é','🙃'])
+    data=context(RI.unscoped(issue),RI.scoped(event,issue,'timeline_event',['é','🙃']))
+    parent=generic_relation(event,[issue],kind='parent',observed=parent_time,prov=canonical({'source':'independent-parent','evidence':['P',611]}),scope=canonical({'clock':{'domain':'provider','at_us':607},'document_kind':'timeline_event','state':'complete'}))
+    roles=['transfer_from_repository','transfer_to_repository'] if two else ['transfer_to_repository']
+    scope={'clock':{'domain':'provider','at_us':701},'event_type':'transferred','parent_members_json':parent['members_json'],'parent_provenance_json':parent['provenance_json'],'parent_scope_json':parent['scope_json'],'provided_roles':roles,'from_provider_repository_id':None,'to_provider_repository_id':None,'endpoints':[[r,'null'] for r in roles]}
+    members=[]
+    if provider_only:
+        provider=key('repository',['原','4'])
+        data['resources'].append(RI.unscoped(provider).to_wire())
+        scope['provided_roles']=['transfer_to_repository'];scope['to_provider_repository_id']=provider.provider_resource_id;scope['endpoints']=[];members=[provider]
+    report=generic_relation(event,members,kind='transfer_event_report',observed=709,prov=canonical({'source':'independent-event','evidence':{'event':'E'}}),scope=canonical(scope))
+    data['resource_relations']=[report,parent] # deliberately Event before Parent
+    data['resource_repository_relations']=[{**owner(event),'relation_kind':r,'clock_json':canonical(scope['clock']),'target_json':target,'provenance_json':report['provenance_json'],'observed_at_us':709,'event_report_members_json':report['members_json'],'event_report_scope_json':report['scope_json']} for r,target in reversed(scope['endpoints'])]
+    return data
+
+
+def test_runtime_binding():
+    import repo_catalog.domain.context_wire as module
+    assert Path(module.__file__).resolve()==Path('/workspace/git-repo-db/src/repo_catalog/domain/context_wire.py')
+    assert sys.version_info[:2]==(3,12)
+    assert sqlite3.connect(':memory:').execute('select json_valid(\'{}\')').fetchone()==(1,)
+
+@pytest.mark.parametrize('native',['',[],[''],[[]],['a',[],['雪','🙃']], 'é', 'é','0',' null ','a\x00b'])
+@pytest.mark.parametrize('contract',['global','scoped','unknown'])
+def test_T01_T02_V01_V02_seven_columns_distinct_identity_and_no_synthesized_parent(native,contract):
+    namespace=key('pull_request',['团队','09'])
+    if contract=='global':
+        k=ResourceKey.global_document(S,native); declaration=RI.global_document(k)
+    elif contract=='scoped':
+        k=ResourceKey.document(namespace,'document','body',native);declaration=RI.scoped(k,namespace,'body',native)
+    else:
+        k=key('opaque-document',native);declaration=RI.unscoped(k)
+    data=context(declaration)
+    out=decode_context_v5(encode_context_v5(data))
+    assert out==data
+    assert RI.from_wire(out['resources'][0])==declaration
+    assert not out['resource_relations'] and not out['resource_repository_relations']
+    assert all(row['provider_resource_id']!=namespace.provider_resource_id for row in out['resources'])
+    assert len(out['resources'][0])==7
+
+@pytest.mark.parametrize('version',[None,0,True,[],{},'git-repo-db/adr0030-exchange-v4','git-repo-db/adr0031-exchange-v6'])
+def test_R02_T10_valid_checksum_unknown_version(version):
+    data=package();data['format']=version;checksum(data)
+    refused(decode_package,data,'UNSUPPORTED_WIRE_VERSION')
+
+
+def test_R02_T10_missing_format():
+    data=package();del data['format'];checksum(data)
+    refused(decode_package,data,'UNSUPPORTED_WIRE_VERSION')
+
+@pytest.mark.parametrize('field',['digest_sha256','package_id','exported_at_us','sender_catalog_instance_uuidv4','repository_uuidv4','selection_scope','selection_report','core','context'])
+def test_R03_missing_envelope_fields(field):
+    data=package();del data[field]
+    if field!='digest_sha256':checksum(data)
+    refused(decode_package,data,'MALFORMED_ENVELOPE')
+
+
+def test_R03_extra_envelope_field():
+    data=package();data['future_field']=False;checksum(data)
+    refused(decode_package,data,'MALFORMED_ENVELOPE')
+
+@pytest.mark.parametrize('field',list(RI.global_document(ResourceKey.global_document(S,'d')).to_wire()))
+@pytest.mark.parametrize('mutation',['missing','integer','array'])
+def test_R03_R05_missing_or_wrong_type_resource_fields(field,mutation):
+    data=package(context(RI.global_document(ResourceKey.global_document(S,'d'))))
+    row=data['context']['resources'][0]
+    if mutation=='missing':del row[field]
+    else:row[field]=7 if mutation=='integer' else []
+    checksum(data);refused(decode_package,data)
+
+@pytest.mark.parametrize('field',['identifier_namespace_kind','identifier_namespace_id','document_kind','provider_document_id'])
+def test_R05_scoped_document_incomplete_never_global_fallback(field):
+    ns=key('pull_request','91');doc=ResourceKey.document(ns,'document','body','t')
+    data=context(RI.scoped(doc,ns,'body','t'));data['resources'][0][field]=None
+    refused(decode_context_v5,data)
+
+@pytest.mark.parametrize('bad',['null','false','0','{}','[0]','"\\u0064"',' "d"','"é"','"\\ud800"','["x",]'])
+def test_T10_V08_rechecksummed_noncanonical_identity(bad):
+    data=package(context(RI.global_document(ResourceKey.global_document(S,'d'))))
+    data['context']['resources'][0]['provider_resource_id']=bad
+    data['context']['resources'][0]['provider_document_id']=bad
+    checksum(data);refused(decode_package,data,'INVALID_IDENTIFICATION')
+
+@pytest.mark.parametrize('raw',[b'\xff',b'\xc0\xaf',b'\xed\xa0\x80',b'\xef\xbb\xbf{}','{"a":1,"a":2}','{"format":"x","format":"y"}', '[NaN]','[Infinity]'])
+def test_R03_duplicate_nonfinite_and_invalid_utf8(raw):
+    refused(decode_package,raw)
+    refused(decode_context_v5,raw)
+
+@pytest.mark.parametrize('place',['selection_report','kind','scope','provenance'])
+def test_R03_lone_surrogate_rejected_even_in_escaped_json(place):
+    k=key('opaque','k');data=package(context(RI.unscoped(k)))
+    if place=='selection_report':data['selection_report']={'a':'\ud800'}
+    elif place=='kind':data['context']['resources'][0]['resource_kind']='\udfff'
+    else:
+        row=generic_relation(k,[])
+        row['scope_json' if place=='scope' else 'provenance_json']=canonical({'source':'s','evidence':'\ud800'})
+        data['context']['resource_relations']=[row]
+    # Cannot checksum invalid scalar outer strings; receiver must reject before trusting digest.
+    refused(decode_package,json.dumps(data))
+
+
+def test_R03_outer_utf8_digest_recomputed_independently():
+    data=package(context(RI.unscoped(key('雪-kind',['a','é','é','🙃']))))
+    data['selection_report']={'diagnostic':'雪é🙃'};checksum(data)
+    decoded=decode_package(data)
+    assert decoded.digest_sha256==data['digest_sha256']
+    assert '雪' in encode_package(decoded)
+    data['selection_report']['diagnostic']='雪é🙃!'
+    refused(decode_package,data,'DIGEST_MISMATCH')
+
+@pytest.mark.parametrize('field',['scope_json','provenance_json','members_json'])
+def test_R03_duplicate_embedded_json_keys_or_malformed_members(field):
+    k=key('opaque','x');data=context(RI.unscoped(k));row=generic_relation(k,[])
+    row[field]='{"a":1,"a":1}'
+    data['resource_relations']=[row]
+    refused(decode_context_v5,data,'MALFORMED_JSON')
+
+@pytest.mark.parametrize('parent_time',[None,613])
+@pytest.mark.parametrize('mode',['one','two','provider'])
+def test_T03_T05_T06_V03_V06_originals_independent_and_transport_permutation(parent_time,mode):
+    data=originals(two=mode=='two',parent_time=parent_time,provider_only=mode=='provider')
+    out=decode_context_v5(encode_context_v5(data));assert out==data
+    report=transfer_reports(out)[0]
+    assert report.parent_report.observed_at_us==parent_time
+    assert json.loads(report.parent_scope_json)['clock']['at_us']==607
+    assert json.loads(report.parent_provenance_json)['source']=='independent-parent'
+    assert report.clock.at_us==701 and report.observed_at_us==709
+    assert json.loads(report.provenance_json)['source']=='independent-event'
+    assert report.scope_json==data['resource_relations'][0]['scope_json']
+    assert report.members_json==data['resource_relations'][0]['members_json']
+    if mode=='provider':assert report.to_provider_repository and not report.to_relations
+    else:assert len(report.from_relations)+len(report.to_relations)==(2 if mode=='two' else 1)
+
+@pytest.mark.parametrize('field',['parent_members_json','parent_provenance_json','parent_scope_json'])
+def test_T03_V03_missing_exact_parent_original_never_borrow_other_provenance(field):
+    data=originals();scope=json.loads(data['resource_relations'][0]['scope_json'])
+    del scope[field];data['resource_relations'][0]['scope_json']=canonical(scope)
+    refused(decode_context_v5,data,'INCOMPLETE_ORIGINAL_REPORT')
+
+
+def test_T03_V03_different_parent_key_is_not_winner_or_replacement():
+    data=originals();parent=data['resource_relations'][1]
+    parent['provenance_json']=canonical({'source':'other','evidence':'independent'})
+    refused(decode_context_v5,data,'MISSING_DEPENDENCY')
+
+@pytest.mark.parametrize('mutation',['drop','wrong_scope','wrong_time','extra','null_target','wrong_event_type','duplicate_role'])
+def test_T05_T10_V05_endpoint_declaration_not_inferred_from_remaining_rows(mutation):
+    data=originals();event=data['resource_relations'][0]
+    if mutation=='drop':data['resource_repository_relations'].pop()
+    elif mutation=='wrong_scope':data['resource_repository_relations'][0]['event_report_scope_json']='{}'
+    elif mutation=='wrong_time':data['resource_repository_relations'][0]['observed_at_us']=710
+    elif mutation=='extra':data['resource_repository_relations'].append(copy.deepcopy(data['resource_repository_relations'][0]))
+    elif mutation=='null_target':data['resource_repository_relations'][0]['target_json']=None
+    else:
+        scope=json.loads(event['scope_json'])
+        if mutation=='wrong_event_type':scope['event_type']='renamed'
+        else:scope['provided_roles'].append(scope['provided_roles'][0])
+        event['scope_json']=canonical(scope)
+        for row in data['resource_repository_relations']:row['event_report_scope_json']=event['scope_json']
+    refused(decode_context_v5,data)
+
+@pytest.mark.parametrize('observed',[None,False,0,-1,'1',1.0,2**63])
+def test_R03_T12_required_terminal_times_strict(observed):
+    k=key('opaque','o');data=context(RI.unscoped(k));data['collections']=[collection(k,[],observed=observed)]
+    refused(decode_context_v5,data)
+
+
+def test_R06_T12_V09_order_empty_alternatives_and_missing_terminal_preserved():
+    a,b,c=[key('opaque',v) for v in ['a','b','c']]
+    data=context(*(RI.unscoped(k) for k in [a,b,c]))
+    data['resource_relations']=[generic_relation(a,[c,b]),generic_relation(a,[b,c]),generic_relation(a,[])]
+    data['collections']=[collection(a,[],state='complete'),collection(a,[],state='partial'),collection(a,[],state='unknown'),collection(a,[b,c]),collection(a,[c,b]),collection(a,[b],state='partial',observed=799)]
+    out=decode_context_v5(encode_context_v5(data));assert out==data
+    assert len(out['collections'])==6 and len(out['resource_relations'])==3
+    assert out['resource_relations'][0]['members_json']!=out['resource_relations'][1]['members_json']
+    data['collections']=[];assert decode_context_v5(data)['collections']==[]
+
+@pytest.mark.parametrize('section',['resource_relations','collections'])
+def test_R06_T27_duplicate_members_rejected(section):
+    k=key('opaque','o');data=context(RI.unscoped(k));data[section]=[(generic_relation if section=='resource_relations' else collection)(k,[k,k])]
+    refused(decode_context_v5,data,'DUPLICATE_MEMBER')
+
+
+def test_R06_T27_same_original_relation_key_changed_time_refused():
+    k=key('opaque','o');data=context(RI.unscoped(k));row=generic_relation(k,[]);altered={**row,'observed_at_us':row['observed_at_us']+1};data['resource_relations']=[row,altered]
+    refused(decode_context_v5,data,'IMMUTABLE_REPLAY_CONFLICT')

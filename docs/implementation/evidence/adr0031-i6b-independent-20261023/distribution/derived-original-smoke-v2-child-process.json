@@ -1,0 +1,8 @@
+{
+  "argv": [
+    "/workspace/i6b-distribution-work/derived-minimal-venv/bin/python",
+    "-I",
+    "/workspace/i6b-distribution-work/outside/launch_original_smoke.py"
+  ],
+  "exit_code": 1
+}

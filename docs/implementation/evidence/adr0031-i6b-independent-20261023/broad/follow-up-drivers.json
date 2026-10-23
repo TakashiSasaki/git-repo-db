@@ -1,0 +1,26 @@
+[
+  {
+    "command": [
+      "/workspace/git-repo-db/.venv/bin/python",
+      "/workspace/i6b-broad-tools/analyze_runs.py"
+    ],
+    "cwd": "/workspace/git-repo-db",
+    "exit_code": 0
+  },
+  {
+    "command": [
+      "/workspace/git-repo-db/.venv/bin/python",
+      "/workspace/i6b-broad-tools/run_diagnostic.py"
+    ],
+    "cwd": "/workspace/git-repo-db",
+    "exit_code": 1
+  },
+  {
+    "command": [
+      "/workspace/git-repo-db/.venv/bin/python",
+      "/workspace/i6b-broad-tools/analyze_diagnostics.py"
+    ],
+    "cwd": "/workspace/git-repo-db",
+    "exit_code": 0
+  }
+]

@@ -1,0 +1,37 @@
+"""Compare actual Author hosted failures with preserved reference and fresh full."""
+from pathlib import Path
+from collections import Counter
+import hashlib,json,zipfile,xml.etree.ElementTree as ET
+from analyze_runs import ROOT,OUT,parse,nodekey,signature,emit
+P=ROOT/'docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/recovered-receipt.zip'
+ref,rf,rs=parse(Path('/workspace/i6b-broad-work/reference149/full'),'ordinary','historic')
+keymap={nodekey(n):n for n in (OUT/'full-final-v3/ordinary-collection.nodes.txt').read_text().splitlines()}
+lanes={}
+with zipfile.ZipFile(P) as z:
+    for member in ['artifacts/access-registry/tests.xml','artifacts/access-registry/i5/regressions.xml']:
+        data=z.read(member);seen=set();bad={};counts=Counter()
+        for case in ET.fromstring(data).iter('testcase'):
+            n=keymap[case.get('classname'),case.get('name')];assert n not in seen;seen.add(n);result='passed';phase=None
+            for tag,status,p in [('failure','failed','call'),('error','error','setup'),('skipped','skipped',None)]:
+                e=case.find(tag)
+                if e is None:continue
+                result=status;phase='teardown' if 'failed on teardown' in e.get('message','') else p
+                if status in ['failed','error']:bad[n]={'result':result,'phase':phase,'failure':{'message':e.get('message',''),'trace':e.text or ''}}
+                break
+            counts[result]+=1
+        changes=[]
+        for n,row in bad.items():
+            before=signature(rf.get(n,{}));after=signature(row['failure'])
+            if before['primary_exception_types']!=after['primary_exception_types'] or before['primary_refusal_codes']!=after['primary_refusal_codes']:
+                changes.append({'nodeid':n,'old':before,'hosted':after})
+        lanes[member]={'payload_sha256':hashlib.sha256(data).hexdigest(),'cases':len(seen),'counts':dict(counts),'failed_node_set_equal_reference299':set(bad)==set(rf),'not_in_reference_failures':sorted(set(bad)-set(rf)),'reference_failures_absent':sorted(set(rf)-set(bad)),'primary_exception_or_code_changes_vs_reference':changes,'failed_nodes':bad}
+    results={'receipt_sha256':hashlib.sha256(P.read_bytes()).hexdigest(),'reference':rs,'lanes':lanes,'scope':'Read-only comparison of recovered exact Author hosted receipts; this is not a new hosted run.'}
+    final=OUT/'full-final-v3'
+    if (final/'binding-after.json').exists():
+        actual,af,summary=parse(final,'ordinary','fresh');results['fresh_full']=summary
+        for value in lanes.values():
+            bad=value['failed_nodes'];value['failed_node_set_equal_fresh_full']=set(bad)==set(af)
+            value['primary_exception_or_code_changes_vs_fresh_full']=[n for n,row in bad.items() if any(signature(row['failure'])[k]!=signature(af.get(n,{}))[k] for k in ['primary_exception_types','primary_refusal_codes'])]
+    emit(OUT/'hosted-author-failure-comparison.json.gz',results)
+    emit(OUT/'hosted-author-failure-comparison.summary.json',{'scope':results['scope'],'lanes':{k:{a:b for a,b in v.items() if a!='failed_nodes'} for k,v in lanes.items()},'fresh_full_available':'fresh_full' in results})
+    print(json.dumps({k:{a:b for a,b in v.items() if a not in ['failed_nodes','primary_exception_or_code_changes_vs_reference']} for k,v in lanes.items()},indent=2))

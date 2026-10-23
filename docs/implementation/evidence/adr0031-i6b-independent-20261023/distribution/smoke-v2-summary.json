@@ -1,0 +1,287 @@
+{
+  "results": {
+    "direct-original-smoke-v2": {
+      "exit_code": 1,
+      "collected": 1,
+      "passed": 0,
+      "failed": 1,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 1,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 2,
+          "failed": 1
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "failed",
+            "exitstatus": 1,
+            "timestamp": 1792760502.883068
+          }
+        ]
+      }
+    },
+    "derived-original-smoke-v2": {
+      "exit_code": 1,
+      "collected": 1,
+      "passed": 0,
+      "failed": 1,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 1,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 2,
+          "failed": 1
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "failed",
+            "exitstatus": 1,
+            "timestamp": 1792760507.547054
+          }
+        ]
+      }
+    }
+  },
+  "processes": [
+    {
+      "name": "direct-original-smoke-v2-venv",
+      "argv": [
+        "/workspace/git-repo-db/.venv/bin/python",
+        "-m",
+        "venv",
+        "--without-pip",
+        "/workspace/i6b-distribution-work/direct-minimal-venv"
+      ],
+      "cwd": "/workspace/i6b-distribution-work/outside",
+      "exit_code": 0,
+      "started_epoch": 1792760499.2943952,
+      "elapsed_seconds": 0.0662534236907959
+    },
+    {
+      "name": "direct-original-smoke-v2-install",
+      "argv": [
+        "uv",
+        "pip",
+        "install",
+        "--python",
+        "/workspace/i6b-distribution-work/direct-minimal-venv/bin/python",
+        "--offline",
+        "--no-index",
+        "--no-deps",
+        "--require-hashes",
+        "-r",
+        "/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-independent-20261023/distribution/direct-original-smoke-v2-requirements.txt"
+      ],
+      "cwd": "/workspace/i6b-distribution-work/outside",
+      "exit_code": 0,
+      "started_epoch": 1792760499.363622,
+      "elapsed_seconds": 0.015679359436035156
+    },
+    {
+      "name": "direct-original-smoke-v2-measure-before",
+      "argv": [
+        "/workspace/i6b-distribution-work/direct-minimal-venv/bin/python",
+        "/workspace/i6b-distribution-work/outside/measure.py",
+        "/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-independent-20261023/distribution/direct-original-smoke-v2-runtime-before.json"
+      ],
+      "cwd": "/workspace/i6b-distribution-work/outside",
+      "exit_code": 0,
+      "started_epoch": 1792760499.3796313,
+      "elapsed_seconds": 0.20301270484924316
+    },
+    {
+      "name": "direct-original-smoke-v2-collect",
+      "argv": [
+        "/workspace/i6b-distribution-work/direct-minimal-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "-c",
+        "/workspace/i6b-distribution-work/outside/pytest.ini",
+        "--rootdir=/workspace/i6b-distribution-work/outside",
+        "--confcutdir=/workspace/i6b-distribution-work/outside",
+        "-o",
+        "junit_family=xunit1",
+        "tests/unit/test_original_access_smoke_independent.py",
+        "--collect-only"
+      ],
+      "cwd": "/workspace/i6b-distribution-work/outside",
+      "exit_code": 0,
+      "started_epoch": 1792760499.5839343,
+      "elapsed_seconds": 0.46596455574035645
+    },
+    {
+      "name": "direct-original-smoke-v2",
+      "argv": [
+        "/workspace/i6b-distribution-work/direct-minimal-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "-c",
+        "/workspace/i6b-distribution-work/outside/pytest.ini",
+        "--rootdir=/workspace/i6b-distribution-work/outside",
+        "--confcutdir=/workspace/i6b-distribution-work/outside",
+        "-o",
+        "junit_family=xunit1",
+        "tests/unit/test_original_access_smoke_independent.py",
+        "--junitxml=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-independent-20261023/distribution/direct-original-smoke-v2.xml",
+        "--journal=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-independent-20261023/distribution/direct-original-smoke-v2.jsonl",
+        "--basetemp=/workspace/i6b-distribution-work/direct-original-smoke-v2-tmp"
+      ],
+      "cwd": "/workspace/i6b-distribution-work/outside",
+      "exit_code": 1,
+      "started_epoch": 1792760500.0507808,
+      "elapsed_seconds": 2.9306137561798096
+    },
+    {
+      "name": "direct-original-smoke-v2-measure-after",
+      "argv": [
+        "/workspace/i6b-distribution-work/direct-minimal-venv/bin/python",
+        "/workspace/i6b-distribution-work/outside/measure.py",
+        "/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-independent-20261023/distribution/direct-original-smoke-v2-runtime-after.json"
+      ],
+      "cwd": "/workspace/i6b-distribution-work/outside",
+      "exit_code": 0,
+      "started_epoch": 1792760502.9828792,
+      "elapsed_seconds": 0.12987613677978516
+    },
+    {
+      "name": "derived-original-smoke-v2-venv",
+      "argv": [
+        "/workspace/git-repo-db/.venv/bin/python",
+        "-m",
+        "venv",
+        "--without-pip",
+        "/workspace/i6b-distribution-work/derived-minimal-venv"
+      ],
+      "cwd": "/workspace/i6b-distribution-work/outside",
+      "exit_code": 0,
+      "started_epoch": 1792760503.1226044,
+      "elapsed_seconds": 0.10889959335327148
+    },
+    {
+      "name": "derived-original-smoke-v2-install",
+      "argv": [
+        "uv",
+        "pip",
+        "install",
+        "--python",
+        "/workspace/i6b-distribution-work/derived-minimal-venv/bin/python",
+        "--offline",
+        "--no-index",
+        "--no-deps",
+        "--require-hashes",
+        "-r",
+        "/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-independent-20261023/distribution/derived-original-smoke-v2-requirements.txt"
+      ],
+      "cwd": "/workspace/i6b-distribution-work/outside",
+      "exit_code": 0,
+      "started_epoch": 1792760503.234686,
+      "elapsed_seconds": 0.026700735092163086
+    },
+    {
+      "name": "derived-original-smoke-v2-measure-before",
+      "argv": [
+        "/workspace/i6b-distribution-work/derived-minimal-venv/bin/python",
+        "/workspace/i6b-distribution-work/outside/measure.py",
+        "/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-independent-20261023/distribution/derived-original-smoke-v2-runtime-before.json"
+      ],
+      "cwd": "/workspace/i6b-distribution-work/outside",
+      "exit_code": 0,
+      "started_epoch": 1792760503.2620392,
+      "elapsed_seconds": 0.12574505805969238
+    },
+    {
+      "name": "derived-original-smoke-v2-collect",
+      "argv": [
+        "/workspace/i6b-distribution-work/derived-minimal-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "-c",
+        "/workspace/i6b-distribution-work/outside/pytest.ini",
+        "--rootdir=/workspace/i6b-distribution-work/outside",
+        "--confcutdir=/workspace/i6b-distribution-work/outside",
+        "-o",
+        "junit_family=xunit1",
+        "tests/unit/test_original_access_smoke_independent.py",
+        "--collect-only"
+      ],
+      "cwd": "/workspace/i6b-distribution-work/outside",
+      "exit_code": 0,
+      "started_epoch": 1792760503.3884728,
+      "elapsed_seconds": 0.7499053478240967
+    },
+    {
+      "name": "derived-original-smoke-v2",
+      "argv": [
+        "/workspace/i6b-distribution-work/derived-minimal-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "-c",
+        "/workspace/i6b-distribution-work/outside/pytest.ini",
+        "--rootdir=/workspace/i6b-distribution-work/outside",
+        "--confcutdir=/workspace/i6b-distribution-work/outside",
+        "-o",
+        "junit_family=xunit1",
+        "tests/unit/test_original_access_smoke_independent.py",
+        "--junitxml=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-independent-20261023/distribution/derived-original-smoke-v2.xml",
+        "--journal=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-independent-20261023/distribution/derived-original-smoke-v2.jsonl",
+        "--basetemp=/workspace/i6b-distribution-work/derived-original-smoke-v2-tmp"
+      ],
+      "cwd": "/workspace/i6b-distribution-work/outside",
+      "exit_code": 1,
+      "started_epoch": 1792760504.1402113,
+      "elapsed_seconds": 3.5588974952697754
+    },
+    {
+      "name": "derived-original-smoke-v2-measure-after",
+      "argv": [
+        "/workspace/i6b-distribution-work/derived-minimal-venv/bin/python",
+        "/workspace/i6b-distribution-work/outside/measure.py",
+        "/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-independent-20261023/distribution/derived-original-smoke-v2-runtime-after.json"
+      ],
+      "cwd": "/workspace/i6b-distribution-work/outside",
+      "exit_code": 0,
+      "started_epoch": 1792760507.7022164,
+      "elapsed_seconds": 0.26058197021484375
+    }
+  ],
+  "scope": "Independent review probes plus separate original Access smoke; overlapping nodes are not full-suite totals"
+}

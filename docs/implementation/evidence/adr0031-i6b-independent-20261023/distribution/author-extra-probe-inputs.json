@@ -1,0 +1,6 @@
+{
+  "source": "/workspace/i6b-distribution-work/frozen/docs/implementation/evidence/adr0031-i6b-author-20261023/tools/test_i6b_extra.py.txt",
+  "staged": "tests/unit/test_i6b_author_extra.py",
+  "sha256": "bc77c792f8f4a7dc3ad472d6fa9325a274bdd8895822a328556b260b55663ffd",
+  "scope": "Unchanged Author external34 repeated independently, not independent test authorship"
+}

@@ -1,0 +1,11 @@
+{
+  "scope": "Independent full ordinary source regression, exact failure/phase/assertion comparison and fixture migration audit for PR151 ef787a5",
+  "new_product_findings": [],
+  "severity_counts": {"Critical": 0, "High": 0, "Medium": 0, "Low": 0},
+  "full_suite_outcome": "5989 passed / 279 failed / 20 errors, exit 1; actual single completed invocation",
+  "historical_unsuccessful_node_set_equal": true,
+  "unchanged_unsuccessful_primary_signatures": 298,
+  "changed_early_refusal": "tests/integration/i3/test_selective_exchange.py::test_empty_oid_and_context_payload_cannot_override_selection",
+  "changed_early_refusal_assessment": "Strict malformed caller carrier refusal is justified; valid seven-column control still refuses unconnected receive. Selection assertions were and remain unexecuted, with I6-C staged.",
+  "blockers": []
+}

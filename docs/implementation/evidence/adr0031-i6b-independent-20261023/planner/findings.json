@@ -1,0 +1,38 @@
+[
+  {
+    "id": "I6B-IR-M01",
+    "severity": "Medium",
+    "status": "open",
+    "title": "Configured planner work ceiling checked after full embedded-input reparse",
+    "requirements": [
+      "R04",
+      "R13"
+    ],
+    "vectors": [],
+    "tests": [
+      "T11"
+    ],
+    "source_anchors": [
+      "src/repo_catalog/domain/context_dependencies.py:106",
+      "src/repo_catalog/domain/context_dependencies.py:127",
+      "src/repo_catalog/domain/exchange.py:97",
+      "src/repo_catalog/domain/exchange.py:325"
+    ],
+    "counterexample": "Already validated 1001-row Context with all Resource/Source/Repository selections explicitly empty and max_work 0/1/17 performs1501 full embedded parses314392chars and reports26041work before refusal;3 independent contract nodes fail. Already exhausted prior_work still incurs identical additional work.",
+    "impact": "Finite outer caps still hold and no output is emitted, but explicit/cumulative request work cannot bound preparatory parse/traversal/allocation; blocks I6-C use as R04 work boundary.",
+    "evidence": [
+      "work-budget-contract.pytest.log",
+      "work-budget-contract.junit.xml",
+      "work-budget-contract.journal.jsonl",
+      "work-budget-contract.execution.json",
+      "work-budget-contract.reconciliation.json",
+      "work-floor-measurements.json",
+      "test_planner_work_budget_contract.py.txt"
+    ],
+    "acceptance_conditions": [
+      "Constrain preliminary scanner and embedded parse/queue allocations by already-known remaining request work.",
+      "Preserve truthful charged work, finite hard-cap/cycle refusal and completed whole units.",
+      "Pass retained three independent contract assertions unchanged plus exact scanner-budget/+1 and exhausted-prior-work tests in source and both installed forms."
+    ]
+  }
+]

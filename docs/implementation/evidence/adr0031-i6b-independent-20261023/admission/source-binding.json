@@ -1,0 +1,254 @@
+{
+  "base149": "ea43a21fca1dbf8fa6dd1c254b28a96d5dd28d00",
+  "environment": {
+    "base_executable": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3.12",
+    "compile_options": [
+      "ATOMIC_INTRINSICS=1",
+      "COMPILER=clang-22.1.3",
+      "DEFAULT_AUTOVACUUM",
+      "DEFAULT_CACHE_SIZE=-2000",
+      "DEFAULT_FILE_FORMAT=4",
+      "DEFAULT_JOURNAL_SIZE_LIMIT=-1",
+      "DEFAULT_MMAP_SIZE=0",
+      "DEFAULT_PAGE_SIZE=4096",
+      "DEFAULT_PCACHE_INITSZ=20",
+      "DEFAULT_RECURSIVE_TRIGGERS",
+      "DEFAULT_SECTOR_SIZE=4096",
+      "DEFAULT_SYNCHRONOUS=2",
+      "DEFAULT_WAL_AUTOCHECKPOINT=1000",
+      "DEFAULT_WAL_SYNCHRONOUS=2",
+      "DEFAULT_WORKER_THREADS=0",
+      "DIRECT_OVERFLOW_READ",
+      "ENABLE_DBSTAT_VTAB",
+      "ENABLE_FTS3",
+      "ENABLE_FTS3_PARENTHESIS",
+      "ENABLE_FTS4",
+      "ENABLE_FTS5",
+      "ENABLE_GEOPOLY",
+      "ENABLE_MATH_FUNCTIONS",
+      "ENABLE_PERCENTILE",
+      "ENABLE_RTREE",
+      "MALLOC_SOFT_LIMIT=1024",
+      "MAX_ATTACHED=10",
+      "MAX_COLUMN=2000",
+      "MAX_COMPOUND_SELECT=500",
+      "MAX_DEFAULT_PAGE_SIZE=8192",
+      "MAX_EXPR_DEPTH=1000",
+      "MAX_FUNCTION_ARG=1000",
+      "MAX_LENGTH=1000000000",
+      "MAX_LIKE_PATTERN_LENGTH=50000",
+      "MAX_MMAP_SIZE=0x7fff0000",
+      "MAX_PAGE_COUNT=0xfffffffe",
+      "MAX_PAGE_SIZE=65536",
+      "MAX_SQL_LENGTH=1000000000",
+      "MAX_TRIGGER_DEPTH=1000",
+      "MAX_VARIABLE_NUMBER=32766",
+      "MAX_VDBE_OP=250000000",
+      "MAX_WORKER_THREADS=8",
+      "MUTEX_PTHREADS",
+      "SYSTEM_MALLOC",
+      "TEMP_STORE=1",
+      "THREADSAFE=1"
+    ],
+    "exact_both_fences": true,
+    "executable": "/workspace/git-repo-db/.venv/bin/python",
+    "foreign_key_check": [],
+    "imports": {
+      "repo_catalog": "/workspace/git-repo-db/src/repo_catalog/__init__.py",
+      "repo_catalog.adapters.sqlite.p1_context": "/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/p1_context.py",
+      "repo_catalog.domain.context_admission": "/workspace/git-repo-db/src/repo_catalog/domain/context_admission.py"
+    },
+    "integrity_check": [
+      [
+        "ok"
+      ]
+    ],
+    "pragmas": {
+      "foreign_keys": 1,
+      "journal_mode": "memory",
+      "recursive_triggers": 1,
+      "trusted_schema": 1
+    },
+    "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+    "sqlite": "3.53.1",
+    "sqlite3_extension": "<built-in>",
+    "sqlite3_module": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/sqlite3/__init__.py",
+    "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9"
+  },
+  "inputs": [
+    {
+      "bytes": 26464,
+      "matches_149": true,
+      "matches_frozen_head": true,
+      "path": "src/repo_catalog/domain/context_admission.py",
+      "sha256": "267e2067bac3966f380dbf09dc5fd52e0c36edeb8c04591797f79241394267a7"
+    },
+    {
+      "bytes": 16685,
+      "matches_149": true,
+      "matches_frozen_head": true,
+      "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+      "sha256": "3de61773f0ae253d5e495e685fbb9cefe63af17a57ad96fd23979bd25a1dca7b"
+    },
+    {
+      "bytes": 7009,
+      "matches_149": true,
+      "matches_frozen_head": true,
+      "path": "src/repo_catalog/domain/resource_stage.py",
+      "sha256": "b3b4c7a7869f61a0713393d8332a410307f736961041c2cc9a28e0356f4b6258"
+    },
+    {
+      "bytes": 66330,
+      "matches_149": true,
+      "matches_frozen_head": true,
+      "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+      "sha256": "656ec834ceb33c5ecc1794449989bcccfc94da892316948bd62b6e5e01ea0b48"
+    },
+    {
+      "bytes": 51597,
+      "matches_149": true,
+      "matches_frozen_head": true,
+      "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+      "sha256": "fe588177a2fac704795e4bd59310f3a980de269eae67691fe25cd8ceb365f447"
+    },
+    {
+      "bytes": 62447,
+      "matches_149": true,
+      "matches_frozen_head": true,
+      "path": "src/repo_catalog/adapters/sqlite/p1_coordination.py",
+      "sha256": "9d658cdb92bf58b468d1014ed24d4adc20d5766213c9810150bc8fbd15eaee62"
+    },
+    {
+      "bytes": 82730,
+      "matches_149": true,
+      "matches_frozen_head": true,
+      "path": "src/repo_catalog/application/acquisition.py",
+      "sha256": "422abc67c138d015c4aaf1dfc08b5a2ca9f994b061f68388e9366d5ed6358461"
+    },
+    {
+      "bytes": 146715,
+      "matches_149": true,
+      "matches_frozen_head": true,
+      "path": "src/repo_catalog/application/exchange.py",
+      "sha256": "4442705ded48d0f52669b18c8b9877faa359638eed7b2e8e7a747aad03b48cd7"
+    },
+    {
+      "bytes": 18841,
+      "matches_149": true,
+      "matches_frozen_head": true,
+      "path": "tests/unit/test_context_admission.py",
+      "sha256": "989f943905f017fc53b64ed9255fc1d743de0c8aeda0470ade665f422151fdde"
+    },
+    {
+      "bytes": 12896,
+      "matches_149": true,
+      "matches_frozen_head": true,
+      "path": "tests/unit/test_context_coordinator_admission.py",
+      "sha256": "fb07ee95d37c80f5c78dc70ac007850338f9f71303eb2dfb8b5fcec88ff0ae3f"
+    },
+    {
+      "bytes": 4032,
+      "matches_149": true,
+      "matches_frozen_head": true,
+      "path": "tests/unit/test_context_admission_bounds_i6a.py",
+      "sha256": "427c96c9feccb1dfd74087ba200b565591e1654eafaa6c22d2e3a39fb70f660a"
+    },
+    {
+      "bytes": 3060,
+      "matches_149": true,
+      "matches_frozen_head": true,
+      "path": "tests/unit/test_context_refusal_order_i6a.py",
+      "sha256": "5a270dce68e491c5e49aa73cc3717a5596d341c665e0b0ea7518745a42109389"
+    },
+    {
+      "bytes": 9556,
+      "matches_149": true,
+      "matches_frozen_head": true,
+      "path": "tests/unit/test_context_fences_i6a.py",
+      "sha256": "0029329f7b616f252730aa8d47d749a3b132a0b90aac1b3951a636564734de97"
+    },
+    {
+      "bytes": 4300,
+      "matches_149": true,
+      "matches_frozen_head": true,
+      "path": "tests/unit/test_context_oid_admission_i6a.py",
+      "sha256": "5f560cb625601a4bdfeacd8efd364365807393b107dc04c3e7ae80b04a7271ee"
+    },
+    {
+      "bytes": 23212,
+      "matches_149": false,
+      "matches_frozen_head": true,
+      "path": "tests/integration/i6a/test_admission.py",
+      "sha256": "ace7d61e3b8a7c890d93456410e96d29cb75829d23fa8b50bd182cdf87d83228"
+    },
+    {
+      "bytes": 11101,
+      "matches_149": true,
+      "matches_frozen_head": true,
+      "path": "tests/integration/i6a/test_originals_revalidation.py",
+      "sha256": "f3999018e08f47b3047d9681a9b2c9e6266f78369c9fae7d229cdabd96bbfe2f"
+    },
+    {
+      "bytes": 33736,
+      "matches_149": true,
+      "matches_frozen_head": true,
+      "path": "tests/integration/p3/test_transfer_admission.py",
+      "sha256": "2f69085fa50c9722337bcb52ebc0650a1c9b54e6cff7e0211137e3fb68466688"
+    },
+    {
+      "bytes": 4342,
+      "matches_149": true,
+      "matches_frozen_head": true,
+      "path": "tests/support/context_admission.py",
+      "sha256": "62a826093e92efa061bffc2606174452ed78149888343b0f6d32910b7f22db8a"
+    },
+    {
+      "bytes": 1496,
+      "matches_149": true,
+      "matches_frozen_head": true,
+      "path": "tests/support/i6a.py",
+      "sha256": "4f64485e7a953277c97f45e7885b9cc36b3666802556443e2f337e532f8537e4"
+    },
+    {
+      "bytes": 1745,
+      "matches_149": true,
+      "matches_frozen_head": true,
+      "path": "tests/conftest.py",
+      "sha256": "9176569503be25cc7be1bff5909b2ececacdc838726b98846eeb4f83cb90c751"
+    },
+    {
+      "bytes": 12771,
+      "matches_149": true,
+      "matches_frozen_head": true,
+      "path": "scripts/ci_journal.py",
+      "sha256": "b95aa5beb4b18e1f35c9d6e6c743131056c5de01d7e7896ca6d4dcd0d8d82dbd"
+    },
+    {
+      "bytes": 932,
+      "matches_149": true,
+      "matches_frozen_head": true,
+      "path": "pyproject.toml",
+      "sha256": "13146bd784022dc375f1d425236c2c2d0d9ec3a735c7f3eeae1e65dc41d450ce"
+    },
+    {
+      "bytes": 167412,
+      "matches_149": true,
+      "matches_frozen_head": true,
+      "path": "uv.lock",
+      "sha256": "38086f956741ff31865ed75f5a1d48997ab518fbc2a2dac8e0e5277cd6a413c9"
+    },
+    {
+      "bytes": 8470,
+      "matches_saved_py_txt": true,
+      "path": "/workspace/admission-independent/test_commit_boundary.py",
+      "sha256": "139c253eee306888a34c4feba791feeb972088a040a4818a64be546271c8d4fe"
+    },
+    {
+      "bytes": 13732,
+      "matches_saved_py_txt": true,
+      "path": "/workspace/admission-independent/test_reused_authorization.py",
+      "sha256": "e4e81e8163a253ea85a053b6332af0cfbd8dd4b59e4322d9fd8fb19225f7bcc5"
+    }
+  ],
+  "reviewed_head": "ef787a5ff8b13f118d6bf5107c7338f43fde56dc"
+}

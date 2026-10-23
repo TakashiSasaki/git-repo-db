@@ -1,0 +1,36 @@
+"""Independent collection/JUnit/journal audit; does not import Author receipt code."""
+from collections import Counter
+from pathlib import Path
+import hashlib
+import json
+import platform
+import sqlite3
+import subprocess
+import sys
+import xml.etree.ElementTree as ET
+
+repo=Path('/workspace/git-repo-db')
+root=repo/'docs/implementation/evidence/adr0031-i6b-independent-20261023/wire'
+
+def sha(path):return hashlib.sha256(path.read_bytes()).hexdigest()
+
+def invocation(label, collection, junit, journal, exitcode):
+    nodes=[line.strip() for line in (root/collection).read_text().splitlines() if line.startswith('::test_')]
+    cases=ET.parse(root/junit).getroot().findall('.//testcase')
+    xmlnodes=[f"{c.attrib.get('classname','')}::{c.attrib['name']}" for c in cases]
+    events=[json.loads(line) for line in (root/journal).read_text().splitlines()]
+    starts=[e['nodeid'] for e in events if e['event']=='start']
+    phases=[e for e in events if e['event']=='phase']
+    finish=[e for e in events if e['event']=='finish']
+    outcome=Counter('error' if c.find('error') is not None else 'failed' if c.find('failure') is not None else 'skipped' if c.find('skipped') is not None else 'passed' for c in cases)
+    expected_exit=int((root/exitcode).read_text().strip())
+    checks={'collection_unique':len(nodes)==len(set(nodes)),'junit_unique':len(xmlnodes)==len(set(xmlnodes)),'starts_unique':len(starts)==len(set(starts)),'collection_junit_equal':Counter(nodes)==Counter(xmlnodes),'collection_starts_equal':Counter(nodes)==Counter(starts),'exact_three_phases':Counter((e['nodeid'],e['phase']) for e in phases)==Counter((node,phase) for node in nodes for phase in ['setup','call','teardown']),'finish_matches_process_exit':len(finish)==1 and finish[0]['exitstatus']==expected_exit,'zero_skips':outcome['skipped']==0}
+    return {'label':label,'counts':dict(outcome),'process_exit':expected_exit,'collected':len(nodes),'phases':len(phases),'checks':checks,'consistent':all(checks.values()),'nodes':nodes,'journal_finish':finish}
+
+lanes=[invocation('initial independent wire128','collection.log','junit.xml','journal.jsonl','exit-code.txt'),invocation('final independent wire157','collection-final.log','junit-final.xml','journal-final.jsonl','exit-code-final.txt'),invocation('R03 required refusal counterexamples','digest-collection.log','digest-junit.xml','digest-journal.jsonl','digest-exit-code.txt'),invocation('V07 independent resolved alternative vectors','resolved-collection.log','resolved-junit.xml','resolved-journal.jsonl','resolved-exit-code.txt')]
+connection=sqlite3.connect(':memory:')
+product={path:sha(repo/path) for path in subprocess.check_output(['git','ls-files','src'],cwd=repo,text=True).splitlines()}
+report={'head':subprocess.check_output(['git','rev-parse','HEAD'],cwd=repo,text=True).strip(),'tree':subprocess.check_output(['git','rev-parse','HEAD^{tree}'],cwd=repo,text=True).strip(),'python':platform.python_version(),'executable':sys.executable,'sqlite':sqlite3.sqlite_version,'sqlite_source_id':connection.execute('select sqlite_source_id()').fetchone()[0],'sqlite_compile_options':[r[0] for r in connection.execute('pragma compile_options')],'capabilities':{'json_valid':connection.execute("select json_valid('{}')").fetchone()[0],'foreign_keys_default':connection.execute('pragma foreign_keys').fetchone()[0],'recursive_triggers_default':connection.execute('pragma recursive_triggers').fetchone()[0]},'lanes':lanes,'source_product_sha256':product,'test_hashes':{path.name:sha(path) for path in [root/'test_independent_wire.initial.py.txt',root/'test_independent_wire.py.txt',root/'test_digest_contract.py.txt',root/'diagnose_wire_contract.py.txt',root/'test_resolved_wire.py.txt']},'all_receipts_consistent':all(lane['consistent'] for lane in lanes)}
+(root/'RECEIPTS.json').write_text(json.dumps(report,indent=2,sort_keys=True)+'\n')
+print(json.dumps({'all_receipts_consistent':report['all_receipts_consistent'],'lanes':[{key:lane[key] for key in ['label','counts','process_exit','collected','phases','consistent']} for lane in lanes]},indent=2))
+assert report['all_receipts_consistent']

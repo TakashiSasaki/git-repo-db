@@ -1,0 +1,12 @@
+import json,subprocess,sys,time
+from pathlib import Path
+ROOT=Path('/workspace/git-repo-db');OUT=ROOT/'docs/implementation/evidence/adr0031-i6b-independent-20261023/broad'
+while not (OUT/'full-final-v3/binding-after.json').exists():time.sleep(2)
+commands=[]
+for script in ['analyze_runs.py','run_diagnostic.py','analyze_diagnostics.py']:
+    command=[sys.executable,'/workspace/i6b-broad-tools/'+script]
+    with (OUT/(script+'.driver.log')).open('w') as stream:p=subprocess.run(command,cwd=ROOT,stdout=stream,stderr=subprocess.STDOUT)
+    commands.append({'command':command,'cwd':str(ROOT),'exit_code':p.returncode})
+    (OUT/'follow-up-drivers.json').write_text(json.dumps(commands,indent=2)+'\n')
+    print(json.dumps(commands[-1]),flush=True)
+    if p.returncode not in ([0,1] if script=='run_diagnostic.py' else [0]):break

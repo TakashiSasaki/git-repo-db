@@ -1,0 +1,6 @@
+{
+  "action": "github_download_workflow_artifact",
+  "artifact_id": 12502213922,
+  "result": "InvalidInputException: Artifact exceeds max size of 536870912 bytes: 796218981 bytes.",
+  "status": "capability-size-limit; read-only CLI binary retrieval used"
+}
