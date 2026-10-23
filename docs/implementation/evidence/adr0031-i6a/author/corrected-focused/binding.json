@@ -1,0 +1,47 @@
+{
+  "provenance": "Root-supplied exact argv, cwd, tool-session and source statement; not an independently captured pre-run manifest.",
+  "command": [
+    "/workspace/i6a-venv/bin/python",
+    "-m",
+    "pytest",
+    "tests/integration/p1/test_coordination.py",
+    "tests/integration/p1/test_disposition.py",
+    "tests/integration/access/test_registry_isolation.py",
+    "tests/integration/p3/test_transfer_sql.py",
+    "tests/integration/p3/test_transfer_admission.py",
+    "tests/integration/p3/test_parent_reports.py",
+    "tests/integration/i6a",
+    "tests/unit/test_context_admission.py",
+    "tests/unit/test_transfer_originals.py",
+    "tests/unit/test_context_fences_i6a.py",
+    "tests/unit/test_context_oid_admission_i6a.py",
+    "tests/unit/test_context_admission_bounds_i6a.py",
+    "tests/unit/test_context_coordinator_admission.py",
+    "-q",
+    "--tb=short",
+    "-o",
+    "junit_family=xunit1",
+    "--junitxml=/workspace/i6a-correction-focused/junit.xml",
+    "--journal=/workspace/i6a-correction-focused/journal.jsonl"
+  ],
+  "cwd": "/workspace/git-repo-db",
+  "exit_code": 0,
+  "pytest_elapsed_seconds": 35.09,
+  "tool_session": 72953,
+  "supplied_source_commit": "cc6e611d366230438f2c25e4040156c90cf4897f",
+  "source_statement": "Root reports source/test/script bytes at run start equal later cc6e611 commit; only skills/REPORT text appended after run before commit. No complete pre-run hash manifest was captured. Corrected clean full run provides separate definitive input binding.",
+  "files": {
+    "junit.xml": {
+      "bytes": 122274,
+      "sha256": "4cde7e9838b7e3c82cd8d09fe45007a912f4d37657464e01395f1df96b7e1ea3"
+    },
+    "journal.jsonl": {
+      "bytes": 538577,
+      "sha256": "2bdada41328e9918f0728871f67c240665d4dd2b4324cc1b5995a0801fbb9726"
+    },
+    "pytest.log": {
+      "bytes": 741,
+      "sha256": "203f1f978a5a1a3071498253cbe9541e805a99f11c6b188db6de342bc1fe5ed9"
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "head": "418ee68046fdfd03a0e84cc840e5d52fce176b81",
+  "tree": "476d32923c9be5e3b60e4e17c8828e3646611c43",
+  "parents": [
+    "f16e5b1713bde9a2f18263a25397c4b450fd5773"
+  ],
+  "committed_at": "2026-10-22T22:27:35Z",
+  "subject": "docs: freeze ADR 0031 I6 wire admission and Exchange contract",
+  "tree_snapshot_sha256": "396269f65373443b43201068811b7232b1e430a2720db3d57cd0efc1d49469ba"
+}

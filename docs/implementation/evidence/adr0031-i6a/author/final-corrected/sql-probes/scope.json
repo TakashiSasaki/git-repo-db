@@ -1,0 +1,6 @@
+{
+  "scope": "Three intentional serial repeats for SQL trace JSON only, separate from the exactly-once ordinary cohort union.",
+  "I6A_SQL_PROBE_OUTPUT": "/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6a/author/final-corrected/sql-probes/sql-admission-probes.json",
+  "TMPDIR": "/workspace/i6a-tmp",
+  "workers": 0
+}

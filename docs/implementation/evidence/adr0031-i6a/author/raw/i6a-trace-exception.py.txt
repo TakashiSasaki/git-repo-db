@@ -1,0 +1,23 @@
+import sys,os,json,pathlib,pytest
+records=[]
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_call(item):
+ previous=sys.gettrace();seen=set()
+ def trace(frame,event,arg):
+  if event=='exception' and type(arg[1]).__name__=='AdmissionRefused' and str(arg[1])=='PERMISSION_DENIED':
+   filename=frame.f_code.co_filename
+   if '/src/repo_catalog/' in filename:
+    key=(filename,frame.f_lineno,frame.f_code.co_name)
+    if key not in seen:
+     seen.add(key);stack=[];f=frame
+     while f:
+      p=f.f_code.co_filename
+      if '/src/repo_catalog/' in p or '/tests/' in p:stack.append({'file':p,'line':f.f_lineno,'function':f.f_code.co_name})
+      f=f.f_back
+     records.append({'nodeid':item.nodeid,'raise_frame':{'file':filename,'line':frame.f_lineno,'function':frame.f_code.co_name},'stack':stack})
+  return trace
+ sys.settrace(trace)
+ try:yield
+ finally:sys.settrace(previous)
+def pytest_sessionfinish(session,exitstatus):
+ pathlib.Path(os.environ['I6A_TRACE_OUTPUT']).write_text(json.dumps({'exitstatus':exitstatus,'records':records},indent=2)+'\n')

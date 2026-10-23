@@ -1,0 +1,18 @@
+{
+  "archive": "docs/implementation/evidence/adr0031-i5/author-evidence.zip",
+  "sha256": "c83f97e6276ad9134adee02f7f73fd0af2df49db32414410a502e049aaf67f9b",
+  "members": {
+    "author-3.53.1/regressions.execution.json": {
+      "sha256": "e995eb72257bf0dfda3dc46222c3fc3976b3342f1a0cb10de618a9cc9547c6d0",
+      "size": 1701
+    },
+    "author-3.53.1/regressions.selected.txt": {
+      "sha256": "d278b034670fb1c41d451004c9a7e69723c769c0f620442c0ff7a734c6603155",
+      "size": 2366052
+    },
+    "author-3.53.1/regressions.xml": {
+      "sha256": "a4a147fe508604a3768ea3123f439dc8d1363524b7a1f83f1bc0711b1c7c9fcd",
+      "size": 3166979
+    }
+  }
+}

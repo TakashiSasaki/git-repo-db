@@ -1,0 +1,17 @@
+{
+  "direct-wheel": {
+    "path": "/workspace/i6a-artifact-source-corrected/dist/repo_catalog-0.2.0-py3-none-any.whl",
+    "bytes": 777578,
+    "sha256": "00c36a2c623ea8e8f55837a959cfe718292841d1be891968f0622a1f40a6fcff"
+  },
+  "sdist": {
+    "path": "/workspace/i6a-artifact-source-corrected/dist/repo_catalog-0.2.0.tar.gz",
+    "bytes": 84132614,
+    "sha256": "808dfff85f3525efdb20add207709feef8e646398d759e6dddb5757a222703f6"
+  },
+  "sdist-wheel": {
+    "path": "/workspace/i6a-artifact-work-corrected/from-sdist/repo_catalog-0.2.0/dist/repo_catalog-0.2.0-py3-none-any.whl",
+    "bytes": 777578,
+    "sha256": "00c36a2c623ea8e8f55837a959cfe718292841d1be891968f0622a1f40a6fcff"
+  }
+}

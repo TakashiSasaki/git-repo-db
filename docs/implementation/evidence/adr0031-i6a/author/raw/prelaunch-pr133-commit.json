@@ -1,0 +1,35 @@
+{
+  "sha": "f16e5b1713bde9a2f18263a25397c4b450fd5773",
+  "node_id": "C_kwDOU78qEtoAKGYxNmU1YjE3MTNiZGU5YTJmMTgyNjNhMjUzOTdjNGI0NTBmZDU3NzM",
+  "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/git/commits/f16e5b1713bde9a2f18263a25397c4b450fd5773",
+  "html_url": "https://github.com/TakashiSasaki/git-repo-db/commit/f16e5b1713bde9a2f18263a25397c4b450fd5773",
+  "author": {
+    "name": "Takashi Sasaki",
+    "email": "takashi316@gmail.com",
+    "date": "2026-10-22T14:50:45Z"
+  },
+  "committer": {
+    "name": "Takashi Sasaki",
+    "email": "takashi316@gmail.com",
+    "date": "2026-10-22T14:50:45Z"
+  },
+  "tree": {
+    "sha": "6bfa580baafa9f6a117b7a0b610c4e65cd031b86",
+    "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/git/trees/6bfa580baafa9f6a117b7a0b610c4e65cd031b86"
+  },
+  "message": "test: isolate source identity drift from bootstrap loader state",
+  "parents": [
+    {
+      "sha": "d0b1192b2c51adaa4158551becb8567acb85176c",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/git/commits/d0b1192b2c51adaa4158551becb8567acb85176c",
+      "html_url": "https://github.com/TakashiSasaki/git-repo-db/commit/d0b1192b2c51adaa4158551becb8567acb85176c"
+    }
+  ],
+  "verification": {
+    "verified": false,
+    "reason": "unsigned",
+    "signature": null,
+    "payload": null,
+    "verified_at": null
+  }
+}

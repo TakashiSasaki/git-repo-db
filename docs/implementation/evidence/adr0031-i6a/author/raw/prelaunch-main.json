@@ -1,0 +1,104 @@
+{
+  "name": "main",
+  "commit": {
+    "sha": "cb532242c7aa86c6af5b6232b71c0906ea38f5c5",
+    "node_id": "C_kwDOU78qEtoAKGNiNTMyMjQyYzdhYTg2YzZhZjViNjIzMmI3MWMwOTA2ZWEzOGY1YzU",
+    "commit": {
+      "author": {
+        "name": "Takashi SASAKI",
+        "email": "takashi316@gmail.com",
+        "date": "2026-10-21T11:26:19Z"
+      },
+      "committer": {
+        "name": "GitHub",
+        "email": "noreply@github.com",
+        "date": "2026-10-21T11:26:19Z"
+      },
+      "message": "Merge pull request #116 from impl/adr0031-i1a-identity-codec\n\nIntegrate owner-approved ADR 0031 I1a canonical Resource identity codec.\n\nPreserve I1b PR #117 as a separate dependent Draft; staged implementation and validation remain distinct from product acceptance.",
+      "tree": {
+        "sha": "318ad07874ab436206e6a61f231b308a421cfc54",
+        "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/git/trees/318ad07874ab436206e6a61f231b308a421cfc54"
+      },
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/git/commits/cb532242c7aa86c6af5b6232b71c0906ea38f5c5",
+      "comment_count": 0,
+      "verification": {
+        "verified": true,
+        "reason": "valid",
+        "signature": "-----BEGIN PGP SIGNATURE-----\n\nwsFcBAABCAAQBQJq2KFbCRC1aQ7uu5UhlAAASd8QAExoKynZmV1wcluQv+a6uLrc\n9m1/VSmYgFveaLvHO0NQIOr10k5nokNYjCGdyuDnrvRkwLGGgNb7OYrkSh9uE1Ed\nYUvNJDyqdBTJS/wV1M+qy7WDqRrHqBeSPixmMCeXxoeO7PnJZM31HErob3Vzxvu7\npQR2Uij2hLIv1QxIFehBrdCtJKvWWVT9Hw6P92CAQskUsKIyAhLMZHjdxaIzYyL9\nLU3fkjiM3QrHLZ+cjhkcaiFSlxrCGgdba8POhtUQTpgF86o4LbcD3CcV3NiJN27u\nm8g6EsgGwtZg0tharm8BkO8bg/cwLkXJfunaiDp0/5WwELNfNn7v80gYxiBj4sDi\nTY/dwsVht8K/Wrx91GUerR2S320wJDfBRd58jdZ3anUzTQmXT0t0EYhvS/CHOtq6\nRQEmDY4hIh7VYqq9IgcA5Qfs4NLNeoTaaqp2ZEzmjNUHJ/cz/WNbt3qpgX4H2z8z\nHpVCWWL8el+UHryoPtzComM+e7W/KGPvMsWeASXfbrTy/DCfU+VDmE/E7C/tSNeA\ngYauNqvL5pquU9qPWk4A5zM9ukBzf2y3tAK1CRo+aekFbvPFlY8P0DbvRzowKSFH\nkEMm9RI99jVJ1qamm9ijLFTF6ysS7OJS7ySE40t1MkCg1sq6lFa0VjdvFFiH7E0j\n5ZxjGZLdlNs3lN+GHQBA\n=9QMl\n-----END PGP SIGNATURE-----\n",
+        "payload": "tree 318ad07874ab436206e6a61f231b308a421cfc54\nparent 1ccb7f1902127cde649edcf605bb6d5935427302\nparent d92377599a50f192f534836fc12402a5fe87ca83\nauthor Takashi SASAKI <takashi316@gmail.com> 1792581979 +0900\ncommitter GitHub <noreply@github.com> 1792581979 +0900\n\nMerge pull request #116 from impl/adr0031-i1a-identity-codec\n\nIntegrate owner-approved ADR 0031 I1a canonical Resource identity codec.\n\nPreserve I1b PR #117 as a separate dependent Draft; staged implementation and validation remain distinct from product acceptance.",
+        "verified_at": "2026-10-21T11:26:20Z"
+      }
+    },
+    "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/cb532242c7aa86c6af5b6232b71c0906ea38f5c5",
+    "html_url": "https://github.com/TakashiSasaki/git-repo-db/commit/cb532242c7aa86c6af5b6232b71c0906ea38f5c5",
+    "comments_url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/cb532242c7aa86c6af5b6232b71c0906ea38f5c5/comments",
+    "author": {
+      "login": "TakashiSasaki",
+      "id": 556958,
+      "node_id": "MDQ6VXNlcjU1Njk1OA==",
+      "avatar_url": "https://avatars.githubusercontent.com/u/556958?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/TakashiSasaki",
+      "html_url": "https://github.com/TakashiSasaki",
+      "followers_url": "https://api.github.com/users/TakashiSasaki/followers",
+      "following_url": "https://api.github.com/users/TakashiSasaki/following{/other_user}",
+      "gists_url": "https://api.github.com/users/TakashiSasaki/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/TakashiSasaki/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/TakashiSasaki/subscriptions",
+      "organizations_url": "https://api.github.com/users/TakashiSasaki/orgs",
+      "repos_url": "https://api.github.com/users/TakashiSasaki/repos",
+      "events_url": "https://api.github.com/users/TakashiSasaki/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/TakashiSasaki/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "web-flow",
+      "id": 19864447,
+      "node_id": "MDQ6VXNlcjE5ODY0NDQ3",
+      "avatar_url": "https://avatars.githubusercontent.com/u/19864447?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/web-flow",
+      "html_url": "https://github.com/web-flow",
+      "followers_url": "https://api.github.com/users/web-flow/followers",
+      "following_url": "https://api.github.com/users/web-flow/following{/other_user}",
+      "gists_url": "https://api.github.com/users/web-flow/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/web-flow/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/web-flow/subscriptions",
+      "organizations_url": "https://api.github.com/users/web-flow/orgs",
+      "repos_url": "https://api.github.com/users/web-flow/repos",
+      "events_url": "https://api.github.com/users/web-flow/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/web-flow/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "1ccb7f1902127cde649edcf605bb6d5935427302",
+        "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/1ccb7f1902127cde649edcf605bb6d5935427302",
+        "html_url": "https://github.com/TakashiSasaki/git-repo-db/commit/1ccb7f1902127cde649edcf605bb6d5935427302"
+      },
+      {
+        "sha": "d92377599a50f192f534836fc12402a5fe87ca83",
+        "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/d92377599a50f192f534836fc12402a5fe87ca83",
+        "html_url": "https://github.com/TakashiSasaki/git-repo-db/commit/d92377599a50f192f534836fc12402a5fe87ca83"
+      }
+    ]
+  },
+  "_links": {
+    "self": "https://api.github.com/repos/TakashiSasaki/git-repo-db/branches/main",
+    "html": "https://github.com/TakashiSasaki/git-repo-db/tree/main"
+  },
+  "protected": false,
+  "protection": {
+    "enabled": false,
+    "required_status_checks": {
+      "enforcement_level": "off",
+      "contexts": [],
+      "checks": []
+    }
+  },
+  "protection_url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/branches/main/protection"
+}

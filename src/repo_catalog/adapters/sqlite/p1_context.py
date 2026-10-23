@@ -12,6 +12,11 @@ import sqlite3
 from collections.abc import Callable, Iterable
 from functools import wraps
 
+from repo_catalog.adapters.sqlite.context_admission import (
+    AdmissionTransactions,
+    admission_checked,
+)
+from repo_catalog.domain.context_admission import AdmissionRefused, dependencies
 from repo_catalog.domain.p1_context import (
     RELATION_KINDS,
     TRANSFER_RELATION_KINDS,
@@ -23,6 +28,7 @@ from repo_catalog.domain.p1_context import (
     FieldClock,
     MappingClaimKey,
     MappingDisposition,
+    MappingDispositionKey,
     MappingOperationEvidence,
     QualifiedMappingEvaluation,
     QualifiedProviderRepositoryRole,
@@ -110,14 +116,15 @@ def _stage_checked(cls):
 
             return call
 
-        setattr(cls, name, checked(method))
+        setattr(cls, name, admission_checked(checked(method)))
     return cls
 
 
 @_stage_checked
-class ContextStore:
-    def __init__(self, connection: sqlite3.Connection):
+class ContextStore(AdmissionTransactions):
+    def __init__(self, connection: sqlite3.Connection, *, authorization=None):
         self.db = connection
+        self._init_admission(authorization)
 
     def resource(
         self,
@@ -388,10 +395,7 @@ class ContextStore:
         reported_issue = report.parent_issue
         native_issue = report.issue_resource
         if reported_issue != native_issue:
-            raise ValueError(
-                f"G3=A permanent violation: reported Issue {reported_issue.coordinates()!r} "
-                f"does not match native Event Issue {native_issue.coordinates()!r}"
-            )
+            raise AdmissionRefused("QS10_PARENT_INELIGIBLE")
 
         # Parent report contract validation
         validate_parent_report(
@@ -399,7 +403,7 @@ class ContextStore:
             report.parent_members_json,
             report.parent_provenance_json,
             report.parent_scope_json,
-            None,
+            report.parent_report.observed_at_us,
         )
 
         # Endpoints completeness check
@@ -446,21 +450,17 @@ class ContextStore:
             event_res.coordinates(),
         ).fetchone()
         if ev_exists is None:
-            raise ValueError(
-                f"Missing dependency: Event resource {event_res.coordinates()!r} not found in resources"
-            )
+            raise AdmissionRefused("MISSING_DEPENDENCY")
 
         issue_exists = self.db.execute(
             "SELECT 1 FROM resources WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=?",
             native_issue.coordinates(),
         ).fetchone()
         if issue_exists is None:
-            raise ValueError(
-                f"Missing dependency: Parent Issue resource {native_issue.coordinates()!r} not found in resources"
-            )
+            raise AdmissionRefused("MISSING_DEPENDENCY")
 
         parent_exists = self.db.execute(
-            """SELECT 1 FROM resource_relations
+            """SELECT observed_at_us FROM resource_relations
             WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=?
               AND relation_kind='parent' AND members_json=? AND provenance_json=? AND scope_json=?""",
             (
@@ -471,9 +471,10 @@ class ContextStore:
             ),
         ).fetchone()
         if parent_exists is None:
-            raise ValueError(
-                "Missing dependency: eligible Parent report not found in resource_relations"
-            )
+            raise AdmissionRefused("MISSING_DEPENDENCY")
+
+        if parent_exists[0] != report.parent_report.observed_at_us:
+            raise AdmissionRefused("IMMUTABLE_REPLAY_CONFLICT")
 
         if report.from_provider_repository is not None:
             from_repo_exists = self.db.execute(
@@ -481,9 +482,7 @@ class ContextStore:
                 report.from_provider_repository.coordinates(),
             ).fetchone()
             if from_repo_exists is None:
-                raise ValueError(
-                    f"Missing dependency: from_provider_repository {report.from_provider_repository.coordinates()!r} not found"
-                )
+                raise AdmissionRefused("MISSING_DEPENDENCY")
 
         if report.to_provider_repository is not None:
             to_repo_exists = self.db.execute(
@@ -491,9 +490,7 @@ class ContextStore:
                 report.to_provider_repository.coordinates(),
             ).fetchone()
             if to_repo_exists is None:
-                raise ValueError(
-                    f"Missing dependency: to_provider_repository {report.to_provider_repository.coordinates()!r} not found"
-                )
+                raise AdmissionRefused("MISSING_DEPENDENCY")
 
         for r in (*report.from_relations, *report.to_relations):
             if r.is_resolved_target and r.target_repository_uuidv4 is not None:
@@ -502,9 +499,7 @@ class ContextStore:
                     (r.target_repository_uuidv4,),
                 ).fetchone()
                 if repo_ctx_exists is None:
-                    raise ValueError(
-                        f"Missing dependency: repository_uuidv4 {r.target_repository_uuidv4!r} not found in repository_context"
-                    )
+                    raise AdmissionRefused("MISSING_DEPENDENCY")
             support = r.embedded_support
             if support is not None:
                 for claim in support.supporting_claims:
@@ -515,9 +510,9 @@ class ContextStore:
                         claim.coordinates(),
                     ).fetchone()
                     if claim_exists is None:
-                        raise ValueError(
-                            "Missing dependency: supporting MappingClaimKey absent from resource_repository_relations"
-                        )
+                        raise AdmissionRefused("MISSING_DEPENDENCY")
+
+        self._validate_transfer_qualification(report)
 
         # 5. Atomic admission under SAVEPOINT
         self.db.execute("SAVEPOINT p1_transfer_event")
@@ -540,7 +535,7 @@ class ContextStore:
                     or existing_report[1] != report.scope_json
                     or existing_report[2] != report.observed_at_us
                 ):
-                    raise ValueError("Transfer report original payload/time rebind")
+                    raise AdmissionRefused("IMMUTABLE_REPLAY_CONFLICT")
 
                 existing_ep_count = self.db.execute(
                     """SELECT COUNT(*) FROM resource_repository_relations
@@ -604,6 +599,69 @@ class ContextStore:
             self.db.execute("ROLLBACK TO p1_transfer_event")
             self.db.execute("RELEASE p1_transfer_event")
             raise
+
+    def _validate_transfer_qualification(self, report):
+        for relation in (*report.from_relations, *report.to_relations):
+            if not relation.is_resolved_target:
+                continue
+            support = relation.embedded_support
+            provider = (
+                report.from_provider_repository
+                if relation.relation_kind == "transfer_from_repository"
+                else report.to_provider_repository
+            )
+            if support is None or support.provider_repository != provider:
+                raise AdmissionRefused("UNQUALIFIED_MAPPING")
+            # Discover only keys under an already authorized Resource. New claim
+            # or Disposition keys are checked before their payload is interpreted.
+            rows = self._bounded_admission_rows(
+                "SELECT clock_json,target_json,provenance_json FROM resource_repository_relations "
+                "WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=? "
+                "AND relation_kind='represents_repository'",
+                provider.coordinates(),
+            )
+            claims = tuple(
+                MappingClaimKey(
+                    provider,
+                    clock=FieldClock.from_json(row[0]),
+                    target_json=row[1],
+                    provenance_json=row[2],
+                )
+                for row in rows
+            )
+            required = dependencies(claims)
+            self._authorize_dependencies(required)
+            disposition_rows = self._bounded_admission_rows(
+                "SELECT claim_clock_json,claim_target_json,claim_provenance_json,"
+                "disposition_kind,disposition_clock_json,disposition_provenance_json "
+                "FROM repository_mapping_dispositions WHERE service_instance_uuidv4=? "
+                "AND resource_kind=? AND provider_resource_id=?",
+                provider.coordinates(),
+            )
+            disposition_keys = tuple(
+                MappingDispositionKey(
+                    MappingClaimKey(
+                        provider,
+                        clock=FieldClock.from_json(row[0]),
+                        target_json=row[1],
+                        provenance_json=row[2],
+                    ),
+                    row[3],
+                    FieldClock.from_json(row[4]),
+                    row[5],
+                )
+                for row in disposition_rows
+            )
+            self._authorize_dependencies(dependencies(disposition_keys))
+            dispositions = self.mapping_dispositions(provider)
+            self._authorize_dependencies(dependencies(dispositions))
+            qualified = self._qualify_relation(relation)
+            if (
+                qualified.support_status != "active"
+                or set(qualified.supporting_bindings) != set(support.supporting_claims)
+                or qualified.disposed_supporting_bindings
+            ):
+                raise AdmissionRefused("UNQUALIFIED_MAPPING")
 
     def _raw_relations_from_rows(
         self, rows: Iterable[tuple]
@@ -1046,7 +1104,27 @@ class ContextStore:
             ).fetchall()
 
             relations = self._raw_relations_from_rows(ep_rows)
+            from repo_catalog.domain.parent_report import (
+                ParentObservation,
+                ParentReportKey,
+            )
+
+            parent_key = ParentReportKey(
+                ev_key,
+                parsed_scope["parent_members_json"],
+                parsed_scope["parent_provenance_json"],
+                parsed_scope["parent_scope_json"],
+            )
+            parent_row = self.db.execute(
+                "SELECT observed_at_us FROM resource_relations WHERE "
+                "service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=? "
+                "AND relation_kind=? AND members_json=? AND provenance_json=? AND scope_json=?",
+                parent_key.coordinates(),
+            ).fetchone()
+            if parent_row is None:
+                raise AdmissionRefused("MISSING_DEPENDENCY")
             report = TransferEventReport.from_stored_scope(
+                parent_report=ParentObservation(parent_key, parent_row[0]),
                 report_key=report_key,
                 relations=relations,
                 scope_json=scope_json,

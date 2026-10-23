@@ -397,3 +397,27 @@ unexpected adapter ValueError as indeterminate yet misclassify a trusted decoder
 proven stored-data violation. Preserve the cause, use an explicit typed invariant
 boundary and check both confirmed corruption and existing IO/lock/budget/error
 negative controls. Do not classify every ValueError as authoritative corruption.
+
+## Pytest subtest reports are additional measured phases
+
+Pytest 9 unittest `subTest` execution can emit `SubtestReport` call records in
+addition to the ordinary node's `TestReport` setup/call/teardown. I6-A's initial
+ordinary-suite journals contained 57 passing subtest reports with repeated parent
+node IDs. The old strict helper correctly refused its once-per-phase predicate;
+that refusal must not be relabeled as strict phase reconciliation or repaired by
+silently deduplicating records.
+
+Keep the original journal, JUnit, starts and failure results. For a new execution,
+capture each actual report class and subtest context in a separate sidecar hook.
+First compare the complete raw journal phase multiset against every sidecar
+report; then separately require exactly one ordinary setup/call/teardown for each
+selected node and retain every subtest outcome. A failing subtest remains fatal,
+even if the final ordinary call reports success. Node-set equality, ordinary
+phase completeness and subtest acceptance are separate facts.
+
+The [I6-A Author evidence](../../../docs/implementation/evidence/adr0031-i6a/author/README.md)
+retains the original discrepancy and external sidecar/reconciliation helpers.
+Its synthetic serial and xdist probes recorded two passing and one intentionally
+failing subtest, preserved all raw reports and rejected subtest acceptance. This
+procedure changes no product test, skip policy or historical receipt and does
+not turn a failing ordinary suite into acceptance.

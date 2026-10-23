@@ -1,0 +1,218 @@
+{
+  "role": "Author diagnostic supplement; not independent review",
+  "rows": [
+    {
+      "node": "tests/integration/p5/test_corrections.py::test_provider_registration_is_explicit",
+      "refusals": [
+        {
+          "exception_type": "repo_catalog.domain.context_admission.AdmissionRefused",
+          "code": "PERMISSION_DENIED",
+          "origin_file": "/workspace/git-repo-db/src/repo_catalog/application/acquisition.py",
+          "origin_line": 1111,
+          "origin_function": "_open_context",
+          "stack": [
+            {
+              "file": "/tmp/i6a-classify-probe.py",
+              "line": 23,
+              "function": "<module>",
+              "source": "func(Path(directory),*args);outcome={'kind':'returned'}"
+            },
+            {
+              "file": "/workspace/git-repo-db/tests/integration/p5/test_corrections.py",
+              "line": 198,
+              "function": "test_provider_registration_is_explicit",
+              "source": "ProviderAcquisition(cat).admit_batch(ProviderIntakeBatch(str(uuid4())))"
+            },
+            {
+              "file": "/workspace/git-repo-db/src/repo_catalog/application/acquisition.py",
+              "line": 1519,
+              "function": "admit_batch",
+              "source": "with self._open_context(context) as ctx, ctx._unit():"
+            },
+            {
+              "file": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/contextlib.py",
+              "line": 301,
+              "function": "helper",
+              "source": "return _GeneratorContextManager(func, args, kwds)"
+            },
+            {
+              "file": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/contextlib.py",
+              "line": 105,
+              "function": "__init__",
+              "source": "self.gen = func(*args, **kwds)"
+            },
+            {
+              "file": "/workspace/git-repo-db/src/repo_catalog/application/acquisition.py",
+              "line": 1111,
+              "function": "_open_context",
+              "source": "raise AdmissionRefused(\"PERMISSION_DENIED\")"
+            }
+          ]
+        }
+      ],
+      "outcome": {
+        "kind": "raised",
+        "type": "builtins.AssertionError",
+        "message": "Regex pattern did not match.\n  Expected regex: 'registration'\n  Actual message: 'PERMISSION_DENIED'",
+        "traceback": "Traceback (most recent call last):\n  File \"/tmp/i6a-classify-probe.py\", line 23, in <module>\n    func(Path(directory),*args);outcome={'kind':'returned'}\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/git-repo-db/tests/integration/p5/test_corrections.py\", line 197, in test_provider_registration_is_explicit\n    with pytest.raises(ValueError, match=\"registration\"):\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/git-repo-db/.venv/lib/python3.12/site-packages/_pytest/raises.py\", line 711, in __exit__\n    raise AssertionError(self._fail_reason) from None\nAssertionError: Regex pattern did not match.\n  Expected regex: 'registration'\n  Actual message: 'PERMISSION_DENIED'\n"
+      }
+    },
+    {
+      "node": "tests/integration/p5/test_paired_admission.py::test_core_first_context_second_and_failure_retry_convergence",
+      "refusals": [
+        {
+          "exception_type": "repo_catalog.domain.context_admission.AdmissionRefused",
+          "code": "PERMISSION_DENIED",
+          "origin_file": "/workspace/git-repo-db/src/repo_catalog/application/acquisition.py",
+          "origin_line": 1111,
+          "origin_function": "_open_context",
+          "stack": [
+            {
+              "file": "/tmp/i6a-classify-probe.py",
+              "line": 23,
+              "function": "<module>",
+              "source": "func(Path(directory),*args);outcome={'kind':'returned'}"
+            },
+            {
+              "file": "/workspace/git-repo-db/tests/integration/p5/test_paired_admission.py",
+              "line": 97,
+              "function": "test_core_first_context_second_and_failure_retry_convergence",
+              "source": "coord.admit_paired("
+            },
+            {
+              "file": "/workspace/git-repo-db/src/repo_catalog/application/acquisition.py",
+              "line": 2061,
+              "function": "admit_paired",
+              "source": "admission = self.coordinator.admit("
+            },
+            {
+              "file": "/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/p1_coordination.py",
+              "line": 530,
+              "function": "admit",
+              "source": "return self._admit(core_unit, context_unit, cut=cut)"
+            },
+            {
+              "file": "/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/p1_coordination.py",
+              "line": 566,
+              "function": "_admit",
+              "source": "context_unit(AdmissionTransaction(context))"
+            },
+            {
+              "file": "/workspace/git-repo-db/src/repo_catalog/application/acquisition.py",
+              "line": 1983,
+              "function": "_context_unit",
+              "source": "provider_report_holder[0] = prov_acq.admit_batch("
+            },
+            {
+              "file": "/workspace/git-repo-db/src/repo_catalog/application/acquisition.py",
+              "line": 1519,
+              "function": "admit_batch",
+              "source": "with self._open_context(context) as ctx, ctx._unit():"
+            },
+            {
+              "file": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/contextlib.py",
+              "line": 301,
+              "function": "helper",
+              "source": "return _GeneratorContextManager(func, args, kwds)"
+            },
+            {
+              "file": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/contextlib.py",
+              "line": 105,
+              "function": "__init__",
+              "source": "self.gen = func(*args, **kwds)"
+            },
+            {
+              "file": "/workspace/git-repo-db/src/repo_catalog/application/acquisition.py",
+              "line": 1111,
+              "function": "_open_context",
+              "source": "raise AdmissionRefused(\"PERMISSION_DENIED\")"
+            }
+          ]
+        }
+      ],
+      "outcome": {
+        "kind": "raised",
+        "type": "builtins.AssertionError",
+        "message": "",
+        "traceback": "Traceback (most recent call last):\n  File \"/tmp/i6a-classify-probe.py\", line 23, in <module>\n    func(Path(directory),*args);outcome={'kind':'returned'}\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/git-repo-db/tests/integration/p5/test_paired_admission.py\", line 105, in test_core_first_context_second_and_failure_retry_convergence\n    assert isinstance(exc_info.value.cause, RuntimeError)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n"
+      }
+    },
+    {
+      "node": "tests/integration/p1/test_coordination.py::test_invalid_cross_store_reference_rejected_at_context_commit",
+      "refusals": [
+        {
+          "exception_type": "repo_catalog.domain.context_admission.AdmissionRefused",
+          "code": "PERMISSION_DENIED",
+          "origin_file": "/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/context_admission.py",
+          "origin_line": 109,
+          "origin_function": "call",
+          "stack": [
+            {
+              "file": "/tmp/i6a-classify-probe.py",
+              "line": 23,
+              "function": "<module>",
+              "source": "func(Path(directory),*args);outcome={'kind':'returned'}"
+            },
+            {
+              "file": "/workspace/git-repo-db/tests/integration/p1/test_coordination.py",
+              "line": 138,
+              "function": "test_invalid_cross_store_reference_rejected_at_context_commit",
+              "source": "PairCoordinator(directory).admit(lambda db: None, context_unit)"
+            },
+            {
+              "file": "/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/p1_coordination.py",
+              "line": 530,
+              "function": "admit",
+              "source": "return self._admit(core_unit, context_unit, cut=cut)"
+            },
+            {
+              "file": "/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/p1_coordination.py",
+              "line": 566,
+              "function": "_admit",
+              "source": "context_unit(AdmissionTransaction(context))"
+            },
+            {
+              "file": "/workspace/git-repo-db/tests/integration/p1/test_coordination.py",
+              "line": 50,
+              "function": "context_unit",
+              "source": "ContextStore(db).resource(key, REPOSITORY)"
+            },
+            {
+              "file": "/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/context_admission.py",
+              "line": 109,
+              "function": "call",
+              "source": "raise AdmissionRefused(\"PERMISSION_DENIED\")"
+            }
+          ]
+        }
+      ],
+      "outcome": {
+        "kind": "raised",
+        "type": "builtins.AssertionError",
+        "message": "Regex pattern did not match.\n  Expected regex: 'MISSING_CORE_REFERENCE'\n  Actual message: 'core+context:ADMISSION_FAILED: PERMISSION_DENIED'",
+        "traceback": "Traceback (most recent call last):\n  File \"/tmp/i6a-classify-probe.py\", line 23, in <module>\n    func(Path(directory),*args);outcome={'kind':'returned'}\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/git-repo-db/tests/integration/p1/test_coordination.py\", line 137, in test_invalid_cross_store_reference_rejected_at_context_commit\n    with pytest.raises(CoordinationError, match=\"MISSING_CORE_REFERENCE\"):\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/git-repo-db/.venv/lib/python3.12/site-packages/_pytest/raises.py\", line 711, in __exit__\n    raise AssertionError(self._fail_reason) from None\nAssertionError: Regex pattern did not match.\n  Expected regex: 'MISSING_CORE_REFERENCE'\n  Actual message: 'core+context:ADMISSION_FAILED: PERMISSION_DENIED'\n"
+      }
+    },
+    {
+      "node": "tests/integration/p1/test_coordination.py::test_stop_outside_writer_gate_fences_inflight_commit[during_context-1]",
+      "refusals": [],
+      "outcome": {
+        "kind": "raised",
+        "type": "builtins.AssertionError",
+        "message": "",
+        "traceback": "Traceback (most recent call last):\n  File \"/tmp/i6a-classify-probe.py\", line 23, in <module>\n    func(Path(directory),*args);outcome={'kind':'returned'}\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/git-repo-db/tests/integration/p1/test_coordination.py\", line 612, in test_stop_outside_writer_gate_fences_inflight_commit\n    assert process.stdout.readline().strip() == \"before-commit\"\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n"
+      }
+    },
+    {
+      "probe": "same child callback without pytest assertion hiding cause",
+      "cuts_reached": [
+        "before_core_commit",
+        "after_core_commit"
+      ],
+      "exception": "AdmissionFailure",
+      "message": "core+context:ADMISSION_FAILED: PERMISSION_DENIED",
+      "cause_type": "AdmissionRefused",
+      "traceback": "Traceback (most recent call last):\n  File \"/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/p1_coordination.py\", line 566, in _admit\n    context_unit(AdmissionTransaction(context))\n  File \"/workspace/git-repo-db/tests/integration/p1/test_coordination.py\", line 50, in context_unit\n    ContextStore(db).resource(key, REPOSITORY)\n  File \"/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/context_admission.py\", line 109, in call\n    raise AdmissionRefused(\"PERMISSION_DENIED\")\nrepo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/tmp/i6a-classify-probe.py\", line 33, in <module>\n    try:PairCoordinator(path).admit(core_unit,context_unit,cut=cuts.append)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/p1_coordination.py\", line 530, in admit\n    return self._admit(core_unit, context_unit, cut=cut)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/p1_coordination.py\", line 581, in _admit\n    raise AdmissionFailure(\nrepo_catalog.domain.p1_coordination.AdmissionFailure: core+context:ADMISSION_FAILED: PERMISSION_DENIED\n"
+    }
+  ]
+}

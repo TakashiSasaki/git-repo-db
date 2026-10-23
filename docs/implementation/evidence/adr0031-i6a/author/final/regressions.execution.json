@@ -1,0 +1,56 @@
+{
+  "command": [
+    "/workspace/git-repo-db/.venv/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "-o",
+    "addopts=--strict-markers",
+    "-o",
+    "junit_family=xunit1",
+    "@/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6a/author/final/regressions.selected.txt",
+    "--junitxml=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6a/author/final/regressions.xml",
+    "--journal=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6a/author/final/regressions.jsonl",
+    "-n",
+    "4",
+    "--dist",
+    "worksteal"
+  ],
+  "cwd": "/workspace/git-repo-db",
+  "started_epoch": 1792723522.1507223,
+  "elapsed_seconds": 91.618,
+  "exit_code": 1,
+  "collected": 3137,
+  "passed": 2372,
+  "failed": 341,
+  "error": 424,
+  "skipped": 0,
+  "xfail": 0,
+  "xpass": 0,
+  "executed": 3137,
+  "reconciliation": {
+    "checks": {
+      "selected_unique": true,
+      "selected_equals_junit": true,
+      "selected_equals_journal_starts": true,
+      "setup_and_teardown_once": true,
+      "no_duplicate_phases": true,
+      "phase_nodes_equal_selected": true,
+      "call_once_after_successful_setup": true,
+      "one_finish": true
+    },
+    "consistent_node_execution": true,
+    "journal_phase_outcomes": {
+      "passed": 8222,
+      "failed": 765
+    },
+    "finishes": [
+      {
+        "event": "finish",
+        "status": "failed",
+        "exitstatus": 1,
+        "timestamp": 1792723612.207009
+      }
+    ]
+  }
+}

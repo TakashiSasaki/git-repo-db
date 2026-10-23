@@ -1,0 +1,26 @@
+import json,pathlib,re,sys,hashlib,xml.etree.ElementTree as ET,collections
+root=pathlib.Path('/workspace/git-repo-db'); base=root/'docs/implementation/evidence/adr0031-i6a/author/baseline'
+sys.path.insert(0,'/workspace/i6a-baseline')
+from scripts.compare_i5_failures import index,compare
+old_raw=(base/'historical-regressions.xml').read_bytes();new_raw=(base/'regressions.xml').read_bytes()
+report=compare(index(old_raw),index(new_raw))
+def extract(raw):
+ result={}
+ for case in ET.fromstring(raw).findall('.//testcase'):
+  for tag in ('failure','error'):
+   event=case.find(tag)
+   if event is None: continue
+   msg=event.get('message','');trace=event.text or ''; key=(case.get('classname'),case.get('name'))
+   # Keep complete raw text separately; compare stable exception type, assertion message,
+   # pytest phase and first failure frame without replacing a failing result.
+   terminal=[line.strip()[1:].strip() for line in trace.splitlines() if line.startswith('E ')]
+   exception=msg.split(':',1)[0]
+   result[key]={'exception':exception,'assertion_or_exception_message':msg,'terminal_exception_lines':terminal,'trace_sha256':hashlib.sha256(trace.encode()).hexdigest()}
+ return result
+old=extract(old_raw);new=extract(new_raw)
+for row in report['comparison']:
+ key=(row['class'],row['name']);a=old[key];b=new.get(key)
+ row.update(baseline_failure=a,current_failure=b,same_exception=bool(b and a['exception']==b['exception']),same_assertion_or_exception_message=bool(b and a['assertion_or_exception_message']==b['assertion_or_exception_message']))
+report.update(all_same_exception=all(x['same_exception'] for x in report['comparison']),all_same_assertion_or_exception_message=all(x['same_assertion_or_exception_message'] for x in report['comparison']),all_same_phase=all(x['same_phase'] for x in report['comparison']),all_same_trace_paths_functions=all(x['same_trace_paths_functions'] for x in report['comparison']),baseline_sha256=hashlib.sha256(old_raw).hexdigest(),current_sha256=hashlib.sha256(new_raw).hexdigest())
+(base/'historical-failure-comparison.json').write_text(json.dumps(report,indent=2)+'\n')
+print(json.dumps({k:v for k,v in report.items() if k not in ('comparison','additional_nodes')},indent=2))

@@ -838,3 +838,68 @@ messages and frames; compare refusal code/text and source function paths while
 recording line offsets and temporary installation-path differences explicitly.
 The I4 comparison helper targets I3's `final-{version}/regressions.xml`; its
 separate initial 81-fault receipts are not the final 79-fault baseline.
+
+## Service-bound Context admission and commit ownership (ADR 0031 I6-A)
+
+Apply this procedure to the I6-A branch's guarded Context API; it is not a grant
+for ordinary Transfer activation or I6-B/C/I7 integration. Both packaged Transfer
+fences remain authoritative. Caller-provided principals, policies and stored
+replay rows do not establish current local authority.
+
+A dependency scan that handles only direct relation objects misses semantically
+reserved carriers. The I6-A supporting review reproduced an OID-only permission
+bypass through `link_core` primitive arguments, and found the same semantic OID
+inside `FieldCandidate("reported_core_reference:...")`. Enumerate typed scope
+Source coordinates and those reserved field values as well as direct
+`CoreReference`, report members, mappings and Disposition replacements. Test each
+public carrier separately, including exact replay after OID-only revocation;
+assert no callback/dependency lookup and no durable row difference. Do not infer a
+local Source registration from an arbitrary provenance `source` string.
+
+Retain a serialized policy lease until the actual outer COMMIT. A SAVEPOINT
+release is not a commit boundary. Checking revision after COMMIT cannot undo
+writes, so validate all live leases before COMMIT and require the trusted port to
+serialize revocation through lease release. An unconnected caller-owned
+coordinator transaction must fail closed until its commit boundary can retain the
+lease. Test a successful first endpoint INSERT followed by a second-INSERT
+trigger failure; preflight rejection does not exercise that rollback. Also test
+actual deferred COMMIT failure followed by explicit ROLLBACK and unchanged
+preexisting Parent/Event evidence. Charge work already performed after failure.
+
+When expanding current mapping candidates or Source positives, bound and charge
+rows before accumulating or decoding the full set. Prefer exact relevant-pair
+lookups over loading a whole Source roster. Current schema inspection must
+preserve lifecycle stop and SQLite CORRUPT/NOTADB exceptions. Reverify connection
+profiles on raw connections, while respecting the existing coordinator's exact
+restricted capabilities, whose factory already verified its connection before
+installing the authorizer. Do not relax that authorizer to execute PRAGMA.
+
+Verified reproductions and limits:
+
+```sh
+pytest -q tests/unit/test_context_admission.py \
+  tests/unit/test_context_fences_i6a.py \
+  tests/unit/test_context_oid_admission_i6a.py \
+  tests/integration/i6a tests/integration/p3/test_transfer_admission.py \
+  tests/integration/p3/test_transfer_sql.py
+```
+
+These are Author regressions and supporting review probes, not independent
+acceptance. See the new [I6-A evidence](../../../docs/implementation/evidence/adr0031-i6a/author/REPORT.md)
+for exact executed source bindings, outcomes and unconnected routes. Never apply
+these procedures by weakening the product's schema fingerprint, SQL constraints,
+fences or original pre-affinity input validation.
+
+For an explicitly authorized paired Context write, the coordinator is the outer
+commit owner. Bind its local service at construction, require its issued
+invocation on admission, and let only the exact expiring transaction capability
+share the commit-owned lease stack with Store/Facade. Accepting a replacement
+service per call would recreate the foreign allow-all attack. Keep Provider and
+Exchange wiring separately refused until their assigned integration stage.
+Exercise the original cross-store/crash/recovery assertions with finite fixture
+authority; a missing context is not proof those assertions executed. The I6-A
+coordinator cohort preserves all original assertion ASTs and runs under this
+explicit binding. Include cursor close and canonical CoverageClaim paths: a
+re-exported domain type's actual `__module__` can differ from the import module,
+so an explicit type/module allowlist must cover the genuine definition without
+an opaque fallback.

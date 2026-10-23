@@ -1,0 +1,7 @@
+{
+  "outcome": "probe result serialization failed; no product/test failure inferred",
+  "exit_code": 1,
+  "error": "TypeError: Object of type Row is not JSON serializable",
+  "cause": "Product factory sets sqlite3.Row row factory; JSON capture must normalize rows explicitly.",
+  "correction": "Convert measured rows to tuples before JSON serialization; no product/schema/runtime/guard change."
+}

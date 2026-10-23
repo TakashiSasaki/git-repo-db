@@ -23,6 +23,7 @@ from repo_catalog.domain.exchange import ExchangeError
 from repo_catalog.domain.p1_context import (
     FieldCandidate,
     FieldClock,
+    ProviderEndpointDeclaration,
     ResourceKey,
     TransferEventReport,
     canonical,
@@ -37,6 +38,7 @@ from repo_catalog.domain.resource_stage import (
     UnsupportedResourceStage,
     preflight_transfer,
 )
+from tests.integration.context_originals import synthetic_parent
 from tests.integration.i3.test_selective_exchange import (
     catalog,
     fixture,
@@ -426,9 +428,13 @@ def test_real_selected_transfer_wire_refuses_before_effects_and_replay(
         clock=FieldClock("provider:event", 3),
         provenance_json=PROV,
         observed_at_us=4,
+        parent_report=synthetic_parent(event, issue),
+        endpoint_declaration=ProviderEndpointDeclaration(
+            provider if provider_only else "explicit_null", "not_reported"
+        ),
+        endpoints=() if provider_only else (("transfer_from_repository", "null"),),
         from_target_json=None if provider_only else "null",
         to_target_json=None,
-        from_provider_repository=provider if provider_only else None,
     )
     data = {key: list(rows) for key, rows in package.context.items()}
     for key in (event, provider):

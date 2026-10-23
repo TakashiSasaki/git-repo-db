@@ -1,0 +1,29 @@
+import pathlib,json,gzip,collections,sys,hashlib,xml.etree.ElementTree as ET
+ROOT=pathlib.Path('/workspace/git-repo-db');OUT=ROOT/'docs/implementation/evidence/adr0031-i6a/author/final-v3';sys.path.insert(0,'/tmp');from i6a_phase_reconcile import reconcile
+
+def read(p):return p.read_bytes() if p.exists() else gzip.decompress(pathlib.Path(str(p)+'.gz').read_bytes())
+def data(p):return json.loads(read(p))
+def nodes(p):return read(p).decode().splitlines()
+runs={n:data(OUT/(n+'.execution.json')) for n in ('regressions','remaining-ordinary')};typed={}
+for n in runs:
+ typed[n]=reconcile(OUT/(n+'.jsonl'),OUT/(n+'.report-types.jsonl'),nodes(OUT/(n+'.selected.txt')));(OUT/(n+'.typed-phase-reconciliation.json')).write_text(json.dumps(typed[n],indent=2)+'\n')
+ordinary=nodes(OUT/'ordinary-collection.nodes.txt');actual=collections.Counter()
+for n in runs:actual.update(nodes(OUT/(n+'.selected.txt')))
+a=data(OUT/'input-binding-before.json');b=data(OUT/'input-binding-after.json')
+comparison=data(OUT/'historical-failure-comparison.json')
+summary={'tested_source_commit':a['head'],'tested_source_tree':a['tree'],'ordinary_collected':len(ordinary),'source_inputs':len(a['inputs']),'source_inputs_unchanged':a['inputs']==b['inputs'],'same_head_tree':(a['head'],a['tree'])==(b['head'],b['tree']),'clean_before_after':not a['tracked_status'] and not b['tracked_status'],'exactly_once_selected_ordinary_union':actual==collections.Counter(ordinary) and all(v==1 for v in actual.values()),'selected_equals_junit_and_journal_starts':all(r['reconciliation']['checks']['selected_equals_junit'] and r['reconciliation']['checks']['selected_equals_journal_starts'] for r in runs.values()),'measured_typed_phase_accounting_consistent':all(t['consistent_typed_phase_execution'] for t in typed.values()),'all_subtests_passed':all(t['all_subtests_passed'] for t in typed.values()),'subtests':sum(t['subtest_count'] for t in typed.values()),'aggregate':{k:sum(r.get(k,0) for r in runs.values()) for k in ('passed','failed','error','skipped','xfail','xpass','executed','elapsed_seconds')},'runs':runs,'typed_phase_accounting':typed,'baseline_comparison':{k:v for k,v in comparison.items() if k not in ('comparison','additional_nodes')},'full_acceptance':False,'author_validation_complete':False,'scope':'Two disjoint ordinary source pytest invocations on one frozen clean source. Timings sum their process wall times; artifact/serial trace/diagnostic repeats and two live/benchmark nodes are excluded. Baseline79 remain failing, all new nonsuccesses retained. Raw journal subtest phases remain intact and are cross-checked against measured report-class/context sidecars.'}
+(OUT/'summary.json').write_text(json.dumps(summary,indent=2)+'\n')
+# Keep every inherited nonsuccess with full raw message, phase and exception/assertion differences.
+rows=[]
+for row in comparison['comparison']:
+ def exception(message):
+  if message is None:return None
+  s=message.removeprefix('failed on setup with "').removeprefix('failed on teardown with "');first=s.splitlines()[0]
+  return first.split(':',1)[0] if ':' in first else 'AssertionError'
+ old=row['baseline'];new=row['current'];label='identification_wire' if 'I2_IDENTIFICATION_WIRE_UNSUPPORTED' in (old['stage_refusal'] or '') else 'transfer'
+ rows.append({**row,'baseline_category':label,'baseline_exception':exception(old['message']),'current_exception':exception(new['message']) if new else None,'same_exception':bool(new and exception(old['message'])==exception(new['message'])),'assertion_or_exception_message_equal':row['same_message']})
+inherited={'baseline_count':len(rows),'all_preserved_nonsuccesses':all(r['current'] is not None for r in rows),'same_phase_count':sum(r['same_phase'] for r in rows),'same_exception_count':sum(r['same_exception'] for r in rows),'same_raw_message_count':sum(r['same_message'] for r in rows),'baseline_category_phase_counts':dict(collections.Counter(r['baseline_category']+':'+r['baseline']['phase'] for r in rows)),'current_category_phase_counts':dict(collections.Counter(r['baseline_category']+':'+r['current']['phase'] for r in rows if r['current'])),'rows':rows}
+inherited_path=OUT/'inherited-79-node-phase-exception-assertion-map.json'
+if inherited_path.exists():inherited=json.loads(inherited_path.read_text())
+else:inherited_path.write_text(json.dumps(inherited,indent=2)+'\n')
+print(json.dumps({k:v for k,v in summary.items() if k not in ('runs','typed_phase_accounting')},indent=2));print(json.dumps({k:v for k,v in inherited.items() if k!='rows'},indent=2))

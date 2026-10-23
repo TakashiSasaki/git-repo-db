@@ -342,6 +342,9 @@ class _Cursor:
     def fetchmany(self, size=1):
         return self._run(self._cursor.fetchmany, size)
 
+    def close(self):
+        return self._run(self._cursor.close)
+
     def _run(self, operation, *args):
         if hasattr(self.connection, "_read_call"):
             return self.connection._read_call(operation, *args)
@@ -401,6 +404,19 @@ class ReadSnapshot:
             raise
 
 
+@dataclass(frozen=True)
+class _ContextAdmissionBinding:
+    authorization: object
+    admission: object
+    leases: ExitStack
+    live_leases: list
+
+    def check_current(self):
+        self.authorization.validate_context(self.admission)
+        for lease in self.live_leases:
+            lease.check_current()
+
+
 class AdmissionTransaction:
     """Supported callback connection that cannot end the enclosing transaction.
 
@@ -409,15 +425,38 @@ class AdmissionTransaction:
     the supported boundary.
     """
 
-    def __init__(self, db: sqlite3.Connection):
+    def __init__(self, db: sqlite3.Connection, *, _context_admission=None):
         self._db = db
+        self._active = True
+        self._context_admission = _context_admission
         self.set_authorizer(None)
+
+    def _check_active(self):
+        if not self._active:
+            raise CoordinationError("CAPABILITY_EXPIRED", "admission")
+
+    def _check_admission_active(self):
+        from repo_catalog.domain.context_admission import AdmissionRefused
+
+        if not self._active or not self._db.in_transaction:
+            raise AdmissionRefused("PERMISSION_DENIED")
+
+    @property
+    def context_admission_binding(self):
+        self._check_admission_active()
+        return self._context_admission
+
+    def _expire(self):
+        self._active = False
 
     @property
     def in_transaction(self):
+        self._check_active()
         return self._db.in_transaction
 
     def set_authorizer(self, callback):
+        self._check_active()
+
         def authorize(action, first, second, database, trigger):
             if action not in {
                 sqlite3.SQLITE_SELECT,
@@ -437,10 +476,16 @@ class AdmissionTransaction:
         self._db.set_authorizer(authorize)
 
     def execute(self, sql, parameters=()):
+        self._check_active()
         return _Cursor(self._db.execute(sql, parameters), self)
 
     def executemany(self, sql, parameters):
+        self._check_active()
         return _Cursor(self._db.executemany(sql, parameters), self)
+
+    def _read_call(self, operation, *args):
+        self._check_active()
+        return operation(*args)
 
     def commit(self):
         raise CoordinationError("TRANSACTION_OWNERSHIP", "admission")
@@ -458,7 +503,18 @@ class PairCoordinator:
         *,
         read_limits: SnapshotReadLimits | None = None,
         metadata_only: bool = False,
+        authorization=None,
     ):
+        from repo_catalog.domain.context_admission import (
+            AdmissionRefused,
+            ContextAdmissionService,
+        )
+
+        if authorization is not None and not isinstance(
+            authorization, ContextAdmissionService
+        ):
+            raise AdmissionRefused("PERMISSION_DENIED")
+        self._authorization = authorization
         self.directory = Path(directory)
         self.read_limits = read_limits
         self.metadata_only = metadata_only
@@ -524,10 +580,39 @@ class PairCoordinator:
         context_unit: Callable[[AdmissionTransaction], None],
         *,
         cut: Callable[[str], None] = lambda point: None,
+        authorization=None,
+        admission=None,
     ) -> PairAdmission:
+        from repo_catalog.domain.context_admission import (
+            AdmissionRefused,
+            ContextAdmissionService,
+            DependencySet,
+        )
+
+        # Authenticate the local handle before catalog or dependency lookups.
+        if authorization is not None and authorization is not self._authorization:
+            raise AdmissionRefused("PERMISSION_DENIED")
+        authorization = self._authorization
+        if authorization is not None or admission is not None:
+            if not isinstance(authorization, ContextAdmissionService):
+                raise AdmissionRefused("PERMISSION_DENIED")
+            authorization.validate_context(admission)
+            if admission.operation == "exchange_export":
+                raise AdmissionRefused("PERMISSION_DENIED")
         self._check_running()
         try:
-            return self._admit(core_unit, context_unit, cut=cut)
+            with ExitStack() as leases:
+                binding = None
+                if authorization is not None:
+                    lease = leases.enter_context(
+                        authorization.authorize(admission, DependencySet())
+                    )
+                    binding = _ContextAdmissionBinding(
+                        authorization, admission, leases, [lease]
+                    )
+                return self._admit(
+                    core_unit, context_unit, cut=cut, context_admission=binding
+                )
         except AdmissionFailure as error:
             if getattr(
                 error.cause, "code", None
@@ -541,7 +626,9 @@ class PairCoordinator:
                 self._record_corruption(error)
             raise
 
-    def _admit(self, core_unit, context_unit, *, cut) -> PairAdmission:
+    def _admit(
+        self, core_unit, context_unit, *, cut, context_admission=None
+    ) -> PairAdmission:
         with catalog_gate(self.directory, exclusive=True), ExitStack() as stack:
             self._check_running()
             core = stack.enter_context(closing(self._open("core")))
@@ -553,23 +640,32 @@ class PairCoordinator:
                 self._record_corruption(error)
                 raise
             core_committed, context_committed = False, False
+            core_capability = context_capability = None
             try:
                 core.execute("BEGIN IMMEDIATE")
-                core_unit(AdmissionTransaction(core))
+                core_capability = AdmissionTransaction(core)
+                core_unit(core_capability)
                 core.set_authorizer(None)
                 cut("before_core_commit")
                 with catalog_completion(self.directory):
                     core.commit()
                 core_committed = True
+                core_capability._expire()
                 cut("after_core_commit")
                 context.execute("BEGIN IMMEDIATE")
-                context_unit(AdmissionTransaction(context))
+                context_capability = AdmissionTransaction(
+                    context, _context_admission=context_admission
+                )
+                context_unit(context_capability)
                 context.set_authorizer(None)
                 cut("during_context")
                 validate_dependencies(core, context)
                 with catalog_completion(self.directory):
+                    if context_admission is not None:
+                        context_admission.check_current()
                     context.commit()
                 context_committed = True
+                context_capability._expire()
                 cut("after_context_commit")
                 self._check_running()
             except Exception as error:
@@ -587,6 +683,10 @@ class PairCoordinator:
                 core.rollback()
                 context.rollback()
                 raise
+            finally:
+                for capability in (core_capability, context_capability):
+                    if capability is not None:
+                        capability._expire()
         return PairAdmission(True, True)
 
     @contextmanager

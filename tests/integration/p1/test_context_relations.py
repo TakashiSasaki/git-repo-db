@@ -21,6 +21,7 @@ from repo_catalog.domain.p1_context import (
     MappingDisposition,
     MappingOperationEvidence,
     MappingSupport,
+    ProviderEndpointDeclaration,
     ResourceKey,
     ResourceRepositoryRelation,
     TransferEventReport,
@@ -33,6 +34,7 @@ from repo_catalog.domain.p1_coordination import CoordinationError
 from repo_catalog.domain.production_context import ContextError
 from repo_catalog.domain.recovery import BackupValidationError
 from repo_catalog.domain.resource_identification import ResourceIdentification as RI
+from tests.integration.context_originals import synthetic_parent
 
 REPO_1 = "9ebbe38a-f937-40e6-a99c-701835ebcf10"
 REPO_2 = "c58b4f17-f58c-4a33-8bc6-eb52c42337d1"
@@ -95,9 +97,15 @@ def test_transfer_generic_admission_requires_complete_report(
         ).fetchall()
         report = TransferEventReport(
             EventReportKey(KEY_EVENT, endpoint.clock, PROVENANCE_1),
-            1,
+            observed_at_us=1,
             from_relations=(endpoint,) if role == "transfer_from_repository" else (),
             to_relations=(endpoint,) if role == "transfer_to_repository" else (),
+            parent_report=synthetic_parent(KEY_EVENT, KEY_ISSUE),
+            endpoint_declaration=ProviderEndpointDeclaration(
+                KEY_REPO if role == "transfer_from_repository" else "not_reported",
+                KEY_REPO if role == "transfer_to_repository" else "not_reported",
+            ),
+            endpoints=((role, canonical(REPO_1)),),
         )
         assert selected.admit_transfer_event(report) == "insert"
         assert selected.admit_transfer_event(report) == "duplicate"
@@ -128,6 +136,9 @@ def test_transfer_stored_type_is_never_inferred(context_db, scope_state):
         provenance_json=PROVENANCE_1,
         from_target_json=canonical(REPO_1),
         observed_at_us=1,
+        parent_report=synthetic_parent(KEY_EVENT, KEY_ISSUE),
+        endpoint_declaration=ProviderEndpointDeclaration(KEY_REPO, "not_reported"),
+        endpoints=(("transfer_from_repository", canonical(REPO_1)),),
     )
     endpoint = report.from_relations[0]
     # SQL can constrain the Event Resource/FK, but cannot prove Provider event
@@ -181,12 +192,19 @@ def test_transfer_stored_type_is_never_inferred(context_db, scope_state):
 def test_transfer_report_fk_failure_rolls_back_whole_unit(context_db):
     db, store, _ = context_db
     event = ResourceKey.timeline_event(KEY_ISSUE, "failed-transfer")
+    missing_repository = canonical(str(uuid4()))
     report = TransferEventReport.from_targets(
         event,
         clock=FieldClock("event", 1),
         provenance_json=PROVENANCE_1,
         from_target_json=canonical(REPO_1),
-        to_target_json=canonical(str(uuid4())),
+        to_target_json=missing_repository,
+        parent_report=synthetic_parent(event, KEY_ISSUE),
+        endpoint_declaration=ProviderEndpointDeclaration(KEY_REPO, KEY_REPO),
+        endpoints=(
+            ("transfer_from_repository", canonical(REPO_1)),
+            ("transfer_to_repository", missing_repository),
+        ),
     )
     before = list(db.iterdump())
     with pytest.raises(sqlite3.IntegrityError):
@@ -225,8 +243,12 @@ def test_transfer_supports_both_endpoints_without_cross_borrowing(context_db):
         provenance_json=provenance,
         from_target_json=canonical(REPO_1),
         to_target_json=canonical(REPO_2),
-        from_provider_repository=provider_a,
-        to_provider_repository=provider_b,
+        parent_report=synthetic_parent(KEY_EVENT, KEY_ISSUE),
+        endpoint_declaration=ProviderEndpointDeclaration(provider_a, provider_b),
+        endpoints=(
+            ("transfer_from_repository", canonical(REPO_1)),
+            ("transfer_to_repository", canonical(REPO_2)),
+        ),
     )
     assert store.admit_transfer_event(report) == "insert"
     assert store.admit_transfer_event(report) == "duplicate"
@@ -254,21 +276,27 @@ def test_transfer_supports_both_endpoints_without_cross_borrowing(context_db):
 
 
 def test_partial_transfer_alternatives_remain_selection_truncated(context_db):
+    """Retained node: R09 now withholds a partial original instead of admitting a fragment."""
     _, store, _ = context_db
     report = TransferEventReport.from_targets(
         KEY_EVENT,
         clock=FieldClock("event", 1),
         provenance_json=PROVENANCE_1,
         from_target_json=(canonical(REPO_1), canonical(REPO_2)),
+        parent_report=synthetic_parent(KEY_EVENT, KEY_ISSUE),
+        endpoint_declaration=ProviderEndpointDeclaration(KEY_REPO, "not_reported"),
+        endpoints=(
+            ("transfer_from_repository", canonical(REPO_1)),
+            ("transfer_from_repository", canonical(REPO_2)),
+        ),
     )
     selected = report.select_for_repositories([REPO_1])
-    assert selected is not None and len(selected.from_relations) == 1
-    assert selected.omitted_roles == frozenset()
-    assert selected.has_selection_omission
-    selected_again = selected.select_for_repositories([REPO_1, REPO_2])
-    assert selected_again is not None and selected_again.has_selection_omission
-    with pytest.raises(ValueError, match="Selection-truncated"):
-        store.admit_transfer_event(selected_again)
+    assert selected is None
+    # A later broader selection must explicitly resupply the entire original.
+    selected_again = report.select_for_repositories([REPO_1, REPO_2])
+    assert selected_again is report
+    assert len(selected_again.from_relations) == 2
+    assert not selected_again.has_selection_omission
     assert store.admit_transfer_event(report) == "insert"
 
 
@@ -536,11 +564,14 @@ def test_counterexample_5_transfer_cases_no_invented_endpoints(context_db):
         observed_at_us=10,
         from_relations=(r_from,),
         to_relations=(),
-        omitted_roles=frozenset({"transfer_to_repository"}),
+        parent_report=synthetic_parent(ev_key.event_resource, KEY_ISSUE),
+        endpoint_declaration=ProviderEndpointDeclaration(KEY_REPO, "not_reported"),
+        endpoints=(("transfer_from_repository", canonical(REPO_1)),),
     )
-    assert report_from.from_relations == (r_from,)
+    assert report_from.from_relations[0].claim_key == r_from.claim_key
     assert report_from.to_relations == ()
-    assert "transfer_to_repository" in report_from.omitted_roles
+    assert report_from.to_state == "absent"
+    assert report_from.omitted_roles == frozenset()
 
     # Two-sided transfer: both endpoints present
     r_to = ResourceRepositoryRelation(
@@ -557,6 +588,12 @@ def test_counterexample_5_transfer_cases_no_invented_endpoints(context_db):
         observed_at_us=10,
         from_relations=(r_from,),
         to_relations=(r_to,),
+        parent_report=synthetic_parent(ev_key.event_resource, KEY_ISSUE),
+        endpoint_declaration=ProviderEndpointDeclaration(KEY_REPO, KEY_REPO),
+        endpoints=(
+            ("transfer_from_repository", canonical(REPO_1)),
+            ("transfer_to_repository", canonical(REPO_2)),
+        ),
     )
     assert len(report_both.from_relations) == 1
     assert len(report_both.to_relations) == 1
@@ -1187,6 +1224,11 @@ def test_transfer_event_genuine_type_enforcement_across_typed_paths(context_db):
                 clock=clk,
                 provenance_json=PROVENANCE_1,
                 event_type=bad_event_type,
+                parent_report=synthetic_parent(ev_res, KEY_ISSUE),
+                endpoint_declaration=ProviderEndpointDeclaration(
+                    "explicit_null", "not_reported"
+                ),
+                endpoints=(("transfer_from_repository", "null"),),
             )
 
     # Valid report with event_type='transferred' admits successfully
@@ -1198,6 +1240,12 @@ def test_transfer_event_genuine_type_enforcement_across_typed_paths(context_db):
         from_target_json=canonical(REPO_1),
         to_target_json=canonical(REPO_2),
         event_type="transferred",
+        parent_report=synthetic_parent(ev_res, KEY_ISSUE),
+        endpoint_declaration=ProviderEndpointDeclaration(KEY_REPO, KEY_REPO),
+        endpoints=(
+            ("transfer_from_repository", canonical(REPO_1)),
+            ("transfer_to_repository", canonical(REPO_2)),
+        ),
     )
     outcome = store.admit_transfer_event(valid_report)
     assert outcome == "insert"
@@ -1218,6 +1266,12 @@ def test_transfer_event_reports_generator_selected_repositories_and_invariants(
         observed_at_us=1,
         from_target_json=canonical(REPO_1),
         to_target_json=canonical(REPO_2),
+        parent_report=synthetic_parent(ev1, KEY_ISSUE),
+        endpoint_declaration=ProviderEndpointDeclaration(KEY_REPO, KEY_REPO),
+        endpoints=(
+            ("transfer_from_repository", canonical(REPO_1)),
+            ("transfer_to_repository", canonical(REPO_2)),
+        ),
     )
     rep2 = TransferEventReport.from_targets(
         ev2,
@@ -1226,6 +1280,12 @@ def test_transfer_event_reports_generator_selected_repositories_and_invariants(
         observed_at_us=2,
         from_target_json=canonical(REPO_1),
         to_target_json="null",  # explicit null endpoint preserved
+        parent_report=synthetic_parent(ev2, KEY_ISSUE),
+        endpoint_declaration=ProviderEndpointDeclaration(KEY_REPO, "explicit_null"),
+        endpoints=(
+            ("transfer_from_repository", canonical(REPO_1)),
+            ("transfer_to_repository", "null"),
+        ),
     )
     assert store.admit_transfer_event(rep1) == "insert"
     assert store.admit_transfer_event(rep2) == "insert"
@@ -1235,16 +1295,10 @@ def test_transfer_event_reports_generator_selected_repositories_and_invariants(
         yield REPO_1
 
     selected_reports = store.transfer_event_reports(selected_repositories=_gen())
-    # Both events must be present and filtered with REPO_1
-    assert len(selected_reports) == 2
-    r1 = next(r for r in selected_reports if r.report_key.event_resource == ev1)
+    # A generator is consumed once. An excluded endpoint withholds its whole Event.
+    assert len(selected_reports) == 1
+    assert all(r.report_key.event_resource != ev1 for r in selected_reports)
     r2 = next(r for r in selected_reports if r.report_key.event_resource == ev2)
-
-    # In rep1: REPO_1 is from, REPO_2 is to. REPO_2 is omitted by selection, from is kept.
-    assert len(r1.from_relations) == 1
-    assert len(r1.to_relations) == 0
-    assert "transfer_to_repository" in r1.omitted_roles
-    assert not r1.from_relations[0].is_explicit_null_target
 
     # In rep2: REPO_1 is from, null is to. Explicit null is preserved under selection!
     assert len(r2.from_relations) == 1
