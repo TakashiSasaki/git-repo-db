@@ -428,3 +428,29 @@ artifact a production-safe bounded validator. The independent ADR 0033 probes at
 `docs/implementation/evidence/adr0033-independent-review-20261023/archive/`
 reproduce these parser blind spots without extracting files or importing product
 code; their nonzero diagnostic exit reports findings, not an incomplete run.
+
+Validate a finite whole-tar byte budget while inflating, before handing bytes to
+`tarfile`, and inspect fixed-size physical headers before any extension payload
+can be materialized. The hardening checker uses one gzip stream with verified
+CRC/ISIZE/EOF, rejects bytes after the trailer, concatenated streams and nonzero
+tar padding, and records `tar_stream_bytes` and `raw_header_count` separately from regular-file
+bytes and logical members. Its Hatchling 1.32.4 calibration found 159 plain
+headers and no PAX keys, so the current extension allowlist is empty. Do not
+silently permit arbitrary PAX metadata to accommodate future long paths: inspect
+the actual backend output and review bounded keys/values and budgets first.
+Reproduce the positive build and bounded negative controls with:
+
+```sh
+uv run --no-sync python scripts/check_sdist_contract.py --build \
+  --output artifacts/sdist-contract.json
+uv run --no-sync pytest tests/packaging/test_sdist_contract.py \
+  tests/packaging/test_sdist_hardening.py -q
+```
+
+Keep runtime and distribution input fingerprints distinct. README prose is
+excluded from CI's `acceptance_input_hash` but included in the sdist's required
+`source_inventory_sha256`; README changes select a fresh lightweight sdist check
+without forcing full pytest. Matching runtime inputs cannot establish unchanged
+distribution inputs. `tests/unit/test_ci_plan.py` covers that boundary and the
+shared checker/verifier/fixture routes. These checks remain development evidence,
+with independent installed behavior and explicit release qualification separate.

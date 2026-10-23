@@ -87,10 +87,25 @@ Git checkoutではtracked inventory、Git archiveでは同じ製品ディレク�
 未分類の製品入力は暗黙に採用せず拒否します。新しい種類のpackage dataを追加する場合は、
 明示的な契約変更と検証が必要です。ライセンス等が追加された場合も収録と照合を更新します。
 
+sdist receipt の `source_inventory_sha256` は必須ソースのpath・byte数・SHA-256を束ね、
+`README.md` も含みます。CI plan の `acceptance_input_hash` はruntime/tests/依存/CIの
+入力識別用で、proseのREADMEを除外します。この二つは用途の異なるhashです。READMEだけの
+変更でもsdistを再構築して最新のREADMEの収録・内容を照合しますが、runtime hashの変更や
+full pytestの自動実行は要求しません。runtime hashの一致だけではsdist検査の代わりになりません。
+
 圧縮2 MiB、展開時の通常ファイル合計8 MiB、512 membersを有限の上限とします。
 初回実測の約678 kB／約5.92 MB／159 filesに余裕を持たせた値です。上限超過は失敗とし、
 自動増加や移動baselineとの比率だけで通過させません。正当な製品増加では実測差分と理由を
 レビューして上限を変更します。JSON receiptには全ソース・memberのハッシュと容量を保存します。
+
+通常ファイルの合計とは別に、header・alignment・終端paddingを含むtar stream全体を
+8,922,624 bytesに制限し、展開中に上限を適用してからtarを解析します。gzipは単一streamの
+CRC・ISIZE・EOFまで検証し、追加gzip stream・trailer後のbyte・破損・切断を拒否します。
+生のtar headerも最大512件とし、非ゼロpadding、終端後の隠れたpayload、PAX/GNU拡張を
+論理memberの列挙前に拒否します。Hatchling 1.32.4の実測ではPAXは不要だったため、
+許可する拡張/keyは現在ゼロです。正当な長いpath等で拡張が必要になれば、実際のbackend出力と
+有限容量・許可key/valueをレビューして契約を変更します。receiptの `unpacked_bytes` は
+通常ファイル合計、`tar_stream_bytes` はtar全体、`raw_header_count` は生header数を表します。
 
 既存のgeneric/P1 packaging fixtureとAccess/I4/I5配布検証は同じcheckerを展開前に呼び出します。
 直接wheelはソースから明示的に構築し、sdistの展開先から別wheelを構築します。両wheelは

@@ -678,19 +678,55 @@ def test_unknown_changed_input_does_not_trigger_full_hosted_testing_during_devel
 
 
 @pytest.mark.parametrize(
-    "path",
+    "path,scope",
     [
-        "README.md",
-        "pyproject.toml",
-        "src/repo_catalog/new.json",
-        "tests/packaging/test_distribution.py",
-        "scripts/check_sdist_contract.py",
+        ("README.md", "prose"),
+        ("pyproject.toml", "shared"),
+        ("src/repo_catalog/new.json", "shared"),
+        ("tests/packaging/test_distribution.py", "leaf"),
+        ("tests/packaging/test_sdist_hardening.py", "leaf"),
+        ("scripts/check_sdist_contract.py", "shared"),
+        ("scripts/verify_access_distribution.py", "shared"),
+        ("scripts/verify_i4_distribution.py", "shared"),
+        ("scripts/verify_i5_distribution.py", "shared"),
+        ("tests/support/distributions.py", "shared"),
+        (".github/workflows/tests.yml", "shared"),
+        (".github/workflows/access-registry.yml", "shared"),
     ],
 )
-def test_distribution_inputs_select_lightweight_contract_without_pytest(history, path):
-    plan = followup(history, path)
+def test_distribution_inputs_select_lightweight_contract_without_pytest(
+    history, path, scope
+):
+    root, _, head = history
+    prior = ci_plan.make_plan(context(root, head, head, event="push"), root=root)
+    plan = followup(history, path, "def test_synthetic(): pass\n# changed input\n")
     assert plan["preparation"]["sdist_contract"]["disposition"] == "selected"
     assert plan["preparation"]["dependencies"]["disposition"] == "selected"
+    assert plan["preparation"]["wheelhouse"]["disposition"] == "not_applicable"
     assert not plan["selected_files"]
     assert not plan["full"]
+    assert plan["lanes"]["tests"]["disposition"] == "not_applicable"
     assert plan["lanes"]["packaging"]["disposition"] == "not_applicable"
+    assert plan["unexecuted_files"] == plan["acceptance_files"]
+    if scope == "prose":
+        # README belongs to the sdist source inventory, while the runtime
+        # fingerprint and runtime-check selection still treat it as prose.
+        assert plan["acceptance_input_hash"] == prior["acceptance_input_hash"]
+        assert plan["required_files"] == []
+        assert all(
+            lane["disposition"] == "not_applicable" for lane in plan["lanes"].values()
+        )
+    else:
+        assert plan["acceptance_input_hash"] != prior["acceptance_input_hash"]
+        assert plan["lanes"]["static"]["disposition"] == "selected"
+        if scope == "leaf":
+            assert plan["required_files"] == [path]
+            assert path in ci_plan.current_acceptance_files(root)
+            release = ci_plan.make_plan(
+                dict(plan["context"], mode="release", full=True), root=root
+            )
+            assert release["full"]
+            assert path in release["lanes"]["packaging"]["test_files"]
+        else:
+            assert plan["required_files"] == plan["acceptance_files"]
+            assert plan["lanes"]["smoke"]["disposition"] == "selected"
