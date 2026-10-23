@@ -1,0 +1,81 @@
+{
+  "verified": true,
+  "tests": "development_checks_passed",
+  "access": "failure",
+  "execution": {
+    "focused": {
+      "total": 2775,
+      "failed": 59,
+      "error": 20,
+      "skipped": 0
+    },
+    "broad": {
+      "total": 3137,
+      "failed": 59,
+      "error": 20,
+      "skipped": 0
+    },
+    "broad_exact_selected_junit_journal_nodes_verified": true,
+    "focused_broad_overlap": 2775,
+    "ordinary_inventory": 5888,
+    "executed_unique_ordinary": 3137,
+    "unexecuted_ordinary_after_union": 2751,
+    "inherited_failures": {
+      "baseline_non_successes": 79,
+      "current_non_successes": 79,
+      "same_nodes": true,
+      "resolved": 0,
+      "additional": 0
+    },
+    "xml_cohorts": {
+      "artifacts/access-registry/i5/regressions.xml": {
+        "total": 3137,
+        "failed": 59,
+        "error": 20,
+        "skipped": 0
+      },
+      "artifacts/access-registry/i5/transfer-admission.xml": {
+        "total": 29,
+        "failed": 0,
+        "error": 0,
+        "skipped": 0
+      },
+      "artifacts/access-registry/i5/transfer-sql.xml": {
+        "total": 217,
+        "failed": 0,
+        "error": 0,
+        "skipped": 0
+      },
+      "artifacts/access-registry/i5-distribution/direct-i4.xml": {
+        "total": 217,
+        "failed": 0,
+        "error": 0,
+        "skipped": 0
+      },
+      "artifacts/access-registry/i5-distribution/direct-i5.xml": {
+        "total": 29,
+        "failed": 0,
+        "error": 0,
+        "skipped": 0
+      },
+      "artifacts/access-registry/i5-distribution/sdist-i4.xml": {
+        "total": 217,
+        "failed": 0,
+        "error": 0,
+        "skipped": 0
+      },
+      "artifacts/access-registry/i5-distribution/sdist-i5.xml": {
+        "total": 29,
+        "failed": 0,
+        "error": 0,
+        "skipped": 0
+      },
+      "artifacts/access-registry/tests.xml": {
+        "total": 2775,
+        "failed": 59,
+        "error": 20,
+        "skipped": 0
+      }
+    }
+  }
+}

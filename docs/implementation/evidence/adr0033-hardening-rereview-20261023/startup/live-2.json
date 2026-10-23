@@ -1,0 +1,251 @@
+{
+  "status": "fulfilled",
+  "value": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Action completed."
+      }
+    ],
+    "structuredContent": {
+      "branches": [
+        {
+          "branch": "audit/context-provider-agnostic-20261020"
+        },
+        {
+          "branch": "codex/p4-notes-design"
+        },
+        {
+          "branch": "codex/p4-production-notes"
+        },
+        {
+          "branch": "design/adr0031-i2-transfer-fence-f1-20261021"
+        },
+        {
+          "branch": "docs/accept-adr-0029-retire-0003-20261019"
+        },
+        {
+          "branch": "docs/adr0031-i1b-independent-review-20261021"
+        },
+        {
+          "branch": "docs/adr0031-i2-preparation-20261021"
+        },
+        {
+          "branch": "docs/adr0031-i6-boundary-contract-20261022"
+        },
+        {
+          "branch": "docs/adr0033-minimal-sdist-20261022"
+        },
+        {
+          "branch": "docs/adr-0029-replacement-readiness-20261019"
+        },
+        {
+          "branch": "docs/context-relations-selective-exchange-20261018"
+        },
+        {
+          "branch": "docs/generalized-context-resources-20261020"
+        },
+        {
+          "branch": "docs/independent-access-store-design"
+        },
+        {
+          "branch": "docs/integration-readiness-20261016"
+        },
+        {
+          "branch": "docs/p5-p6-owner-decisions"
+        },
+        {
+          "branch": "docs/p5-p6-technical-contract"
+        },
+        {
+          "branch": "docs/p7-backup-recovery-technical-design"
+        },
+        {
+          "branch": "docs/sdist-review-readiness-20261022"
+        },
+        {
+          "branch": "docs/sqlite-runtime-policy-20261022"
+        },
+        {
+          "branch": "evidence/adr0032-host-runtime-20261022"
+        },
+        {
+          "branch": "experiment/context-u3-cprime-20261021"
+        },
+        {
+          "branch": "feat/access-a1-registry-foundation"
+        },
+        {
+          "branch": "feat/access-a1b-connections-grants"
+        },
+        {
+          "branch": "feat/access-a2a-local-review-preflight"
+        },
+        {
+          "branch": "feat/access-a3-context-boundary"
+        },
+        {
+          "branch": "feat/access-a4-local-git-acquisition"
+        },
+        {
+          "branch": "feat/access-a5-backup-restore"
+        },
+        {
+          "branch": "feat/implementation-boundary-spikes"
+        },
+        {
+          "branch": "feat/optimize-pages-trigger-paths"
+        },
+        {
+          "branch": "feat/p1-four-store-schema-contracts"
+        },
+        {
+          "branch": "feat/p2-production-git-core"
+        },
+        {
+          "branch": "feat/p3-production-context"
+        },
+        {
+          "branch": "feat/p5-production-acquisition-exchange"
+        },
+        {
+          "branch": "feat/p6-production-query-search"
+        },
+        {
+          "branch": "feat/p7-production-recovery"
+        },
+        {
+          "branch": "fix/access-a6-independent-review"
+        },
+        {
+          "branch": "fix/adr0032-host-runtime-20261022"
+        },
+        {
+          "branch": "fix/adr0033-sdist-archive-hardening"
+        },
+        {
+          "branch": "fix/c0-e1-receipt-limit-20261023"
+        },
+        {
+          "branch": "fix/core-only-schema-test"
+        },
+        {
+          "branch": "fix/p1-intrinsic-provenance"
+        },
+        {
+          "branch": "fix/p5-p6-time-contract"
+        },
+        {
+          "branch": "fix/schema21-collection-contract"
+        },
+        {
+          "branch": "fix/schema21-job-search-runtime"
+        },
+        {
+          "branch": "fix/schema21-job-search-test-contract"
+        },
+        {
+          "branch": "fix/schema21-runtime-contract"
+        },
+        {
+          "branch": "fix/sqlite-runtime-ci-20261022"
+        },
+        {
+          "branch": "impl/adr0031-i1a-identity-codec"
+        },
+        {
+          "branch": "impl/adr0031-i1b-resource-key"
+        },
+        {
+          "branch": "impl/adr0031-i2-resources-task-e-20261021"
+        },
+        {
+          "branch": "impl/adr0031-i3-parent-reports-20261022"
+        },
+        {
+          "branch": "impl/adr0031-i4-transfer-sql-20261022"
+        },
+        {
+          "branch": "impl/adr0031-i5-typed-admission-20261022"
+        },
+        {
+          "branch": "impl/adr0031-i6a-secure-admission"
+        },
+        {
+          "branch": "impl/adr0033-minimal-sdist-20261022"
+        },
+        {
+          "branch": "impl/adr-0030-i1-context-relations-20261019"
+        },
+        {
+          "branch": "impl/adr-0030-i2-provider-intake-20261019"
+        },
+        {
+          "branch": "impl/adr-0030-i3-selective-exchange-20261019"
+        },
+        {
+          "branch": "impl/adr-0030-i4-query-search-backup-20261019"
+        },
+        {
+          "branch": "impl/adr-0030-i23-integration-20261019"
+        },
+        {
+          "branch": "main"
+        },
+        {
+          "branch": "review/adr0031-i2-cf1-task-f-20261021"
+        },
+        {
+          "branch": "review/adr0031-i2-sql-task-d-20261021"
+        },
+        {
+          "branch": "review/adr0031-i2-task-g-20261022"
+        },
+        {
+          "branch": "review/adr0031-i4-independent-20261022"
+        },
+        {
+          "branch": "review/adr0031-i5-independent-20261022"
+        },
+        {
+          "branch": "review/adr0031-i6-design-independent-20261023"
+        },
+        {
+          "branch": "review/adr0033-sdist-independent-20261023"
+        },
+        {
+          "branch": "review/c0-hosted-runtime-audit-20261022"
+        },
+        {
+          "branch": "test/p2-p3-compatibility-regressions"
+        },
+        {
+          "branch": "test/p5-p6-corrected-compatibility"
+        },
+        {
+          "branch": "validation/access-a6-integration-review"
+        },
+        {
+          "branch": "validation/adr0031-i1b-fixtures-20261021"
+        },
+        {
+          "branch": "validation/adr-0030-i5-independent-20261019"
+        },
+        {
+          "branch": "validation/p2-p3-contract-compat"
+        },
+        {
+          "branch": "validation/p5-p6-combined-integration"
+        },
+        {
+          "branch": "validation/p5-p6-corrected-assembly"
+        },
+        {
+          "branch": "validation/seven-pr-combined-20261016"
+        }
+      ],
+      "cursor": "Nzg"
+    },
+    "isError": false
+  }
+}

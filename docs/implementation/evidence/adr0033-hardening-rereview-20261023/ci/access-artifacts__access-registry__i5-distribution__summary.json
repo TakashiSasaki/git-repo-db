@@ -1,0 +1,278 @@
+{
+  "author_verification": true,
+  "full_acceptance": false,
+  "processes": [
+    {
+      "name": "archive",
+      "argv": [
+        "git",
+        "archive",
+        "e0c60765bd0d99b8276a8d0528dabfa7f4d6971a",
+        "-o",
+        "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/source.tar"
+      ],
+      "cwd": "/home/runner/work/git-repo-db/git-repo-db",
+      "exit_code": 0
+    },
+    {
+      "name": "build-direct",
+      "argv": [
+        "/home/runner/work/git-repo-db/git-repo-db/.venv/bin/python",
+        "-m",
+        "hatchling",
+        "build",
+        "-t",
+        "wheel",
+        "-t",
+        "sdist"
+      ],
+      "cwd": "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/source",
+      "exit_code": 0
+    },
+    {
+      "name": "build-sdist-wheel",
+      "argv": [
+        "/home/runner/work/git-repo-db/git-repo-db/.venv/bin/python",
+        "-m",
+        "hatchling",
+        "build",
+        "-t",
+        "wheel"
+      ],
+      "cwd": "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/from-sdist/repo_catalog-0.2.0",
+      "exit_code": 0
+    },
+    {
+      "name": "direct-venv",
+      "argv": [
+        "/home/runner/work/git-repo-db/git-repo-db/.venv/bin/python",
+        "-m",
+        "venv",
+        "--without-pip",
+        "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/direct-venv"
+      ],
+      "cwd": "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution",
+      "exit_code": 0
+    },
+    {
+      "name": "direct-install",
+      "argv": [
+        "uv",
+        "pip",
+        "install",
+        "--python",
+        "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/direct-venv/bin/python",
+        "--offline",
+        "--no-index",
+        "--find-links",
+        "/home/runner/work/git-repo-db/git-repo-db/artifacts/wheelhouse",
+        "--no-deps",
+        "--require-hashes",
+        "-r",
+        "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/direct-requirements.txt"
+      ],
+      "cwd": "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution",
+      "exit_code": 0
+    },
+    {
+      "name": "direct-runtime-binding",
+      "argv": [
+        "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/direct-venv/bin/python",
+        "/home/runner/work/git-repo-db/git-repo-db/scripts/ci_python_runtime.py",
+        "probe",
+        "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/direct-runtime-binding.json",
+        "--reference",
+        "/home/runner/work/git-repo-db/git-repo-db/artifacts/runtime/selected.json"
+      ],
+      "cwd": "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/outside",
+      "exit_code": 0
+    },
+    {
+      "name": "direct-measure",
+      "argv": [
+        "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/direct-venv/bin/python",
+        "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/outside/measure.py",
+        "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/direct-runtime.json"
+      ],
+      "cwd": "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/outside",
+      "exit_code": 0
+    },
+    {
+      "name": "direct-i5",
+      "argv": [
+        "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/direct-venv/bin/python",
+        "-m",
+        "pytest",
+        "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/outside/test_installed_i5.py",
+        "-q",
+        "--tb=short",
+        "--confcutdir=/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/outside",
+        "--junitxml=/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/direct-i5.xml"
+      ],
+      "cwd": "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/outside",
+      "exit_code": 0
+    },
+    {
+      "name": "direct-i4",
+      "argv": [
+        "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/direct-venv/bin/python",
+        "-m",
+        "pytest",
+        "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/outside/test_installed_i4.py",
+        "-q",
+        "--tb=short",
+        "--confcutdir=/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/outside",
+        "--junitxml=/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/direct-i4.xml"
+      ],
+      "cwd": "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/outside",
+      "exit_code": 0
+    },
+    {
+      "name": "direct-i2",
+      "argv": [
+        "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/direct-venv/bin/python",
+        "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/outside/verify_i2_distribution.py",
+        "--output",
+        "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/direct-i2.json"
+      ],
+      "cwd": "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/outside",
+      "exit_code": 0
+    },
+    {
+      "name": "direct-i3",
+      "argv": [
+        "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/direct-venv/bin/python",
+        "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/outside/verify_i3_distribution.py",
+        "--output",
+        "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/direct-i3.json"
+      ],
+      "cwd": "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/outside",
+      "exit_code": 0
+    },
+    {
+      "name": "direct-access",
+      "argv": [
+        "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/direct-venv/bin/python",
+        "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/outside/original_access_smoke.py"
+      ],
+      "cwd": "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/outside",
+      "exit_code": 1
+    },
+    {
+      "name": "sdist-venv",
+      "argv": [
+        "/home/runner/work/git-repo-db/git-repo-db/.venv/bin/python",
+        "-m",
+        "venv",
+        "--without-pip",
+        "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/sdist-venv"
+      ],
+      "cwd": "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution",
+      "exit_code": 0
+    },
+    {
+      "name": "sdist-install",
+      "argv": [
+        "uv",
+        "pip",
+        "install",
+        "--python",
+        "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/sdist-venv/bin/python",
+        "--offline",
+        "--no-index",
+        "--find-links",
+        "/home/runner/work/git-repo-db/git-repo-db/artifacts/wheelhouse",
+        "--no-deps",
+        "--require-hashes",
+        "-r",
+        "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/sdist-requirements.txt"
+      ],
+      "cwd": "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution",
+      "exit_code": 0
+    },
+    {
+      "name": "sdist-runtime-binding",
+      "argv": [
+        "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/sdist-venv/bin/python",
+        "/home/runner/work/git-repo-db/git-repo-db/scripts/ci_python_runtime.py",
+        "probe",
+        "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/sdist-runtime-binding.json",
+        "--reference",
+        "/home/runner/work/git-repo-db/git-repo-db/artifacts/runtime/selected.json"
+      ],
+      "cwd": "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/outside",
+      "exit_code": 0
+    },
+    {
+      "name": "sdist-measure",
+      "argv": [
+        "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/sdist-venv/bin/python",
+        "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/outside/measure.py",
+        "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/sdist-runtime.json"
+      ],
+      "cwd": "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/outside",
+      "exit_code": 0
+    },
+    {
+      "name": "sdist-i5",
+      "argv": [
+        "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/sdist-venv/bin/python",
+        "-m",
+        "pytest",
+        "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/outside/test_installed_i5.py",
+        "-q",
+        "--tb=short",
+        "--confcutdir=/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/outside",
+        "--junitxml=/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/sdist-i5.xml"
+      ],
+      "cwd": "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/outside",
+      "exit_code": 0
+    },
+    {
+      "name": "sdist-i4",
+      "argv": [
+        "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/sdist-venv/bin/python",
+        "-m",
+        "pytest",
+        "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/outside/test_installed_i4.py",
+        "-q",
+        "--tb=short",
+        "--confcutdir=/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/outside",
+        "--junitxml=/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/sdist-i4.xml"
+      ],
+      "cwd": "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/outside",
+      "exit_code": 0
+    },
+    {
+      "name": "sdist-i2",
+      "argv": [
+        "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/sdist-venv/bin/python",
+        "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/outside/verify_i2_distribution.py",
+        "--output",
+        "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/sdist-i2.json"
+      ],
+      "cwd": "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/outside",
+      "exit_code": 0
+    },
+    {
+      "name": "sdist-i3",
+      "argv": [
+        "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/sdist-venv/bin/python",
+        "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/outside/verify_i3_distribution.py",
+        "--output",
+        "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/sdist-i3.json"
+      ],
+      "cwd": "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/outside",
+      "exit_code": 0
+    },
+    {
+      "name": "sdist-access",
+      "argv": [
+        "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/sdist-venv/bin/python",
+        "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/outside/original_access_smoke.py"
+      ],
+      "cwd": "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/outside",
+      "exit_code": 1
+    }
+  ]
+}

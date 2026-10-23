@@ -1,0 +1,5 @@
+{
+  "scanned_file_or_zip_members": 401,
+  "supported_credential_or_signed_url_pattern_hits": [],
+  "limitation": "Pattern scan is not a universal secret detector; tests and probes remove GitHub credential environment variables."
+}

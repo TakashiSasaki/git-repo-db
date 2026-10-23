@@ -1,0 +1,8 @@
+{
+  "cases": 63,
+  "cli_cases": 18,
+  "unexpected_results": [
+    "metadata-embedded-cr-name"
+  ],
+  "scope": "Independent bounded archive/identity probes only; no pytest suite, product behavior, wheel builds or release acceptance."
+}
