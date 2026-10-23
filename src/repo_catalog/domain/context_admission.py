@@ -550,6 +550,7 @@ def dependencies(unit):
             continue
         if not is_dataclass(item) or type(item).__module__ not in {
             "repo_catalog.domain.p1_context",
+            "repo_catalog.domain.p1_coverage",
             "repo_catalog.domain.production_context",
             "repo_catalog.domain.parent_report",
             "repo_catalog.domain.resource_identification",

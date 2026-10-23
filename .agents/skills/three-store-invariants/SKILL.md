@@ -889,3 +889,17 @@ acceptance. See the new [I6-A evidence](../../../docs/implementation/evidence/ad
 for exact executed source bindings, outcomes and unconnected routes. Never apply
 these procedures by weakening the product's schema fingerprint, SQL constraints,
 fences or original pre-affinity input validation.
+
+For an explicitly authorized paired Context write, the coordinator is the outer
+commit owner. Bind its local service at construction, require its issued
+invocation on admission, and let only the exact expiring transaction capability
+share the commit-owned lease stack with Store/Facade. Accepting a replacement
+service per call would recreate the foreign allow-all attack. Keep Provider and
+Exchange wiring separately refused until their assigned integration stage.
+Exercise the original cross-store/crash/recovery assertions with finite fixture
+authority; a missing context is not proof those assertions executed. The I6-A
+coordinator cohort preserves all original assertion ASTs and runs under this
+explicit binding. Include cursor close and canonical CoverageClaim paths: a
+re-exported domain type's actual `__module__` can differ from the import module,
+so an explicit type/module allowlist must cover the genuine definition without
+an opaque fallback.

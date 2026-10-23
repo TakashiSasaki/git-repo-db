@@ -104,6 +104,8 @@ def admission_checked(operation):
 
     @wraps(operation)
     def call(self, *args, admission=None, **kwargs):
+        if self._admission_owner is not None:
+            self._admission_owner._check_admission_active()
         service = self._authorization
         if not isinstance(service, ContextAdmissionService):
             raise AdmissionRefused("PERMISSION_DENIED")
@@ -111,6 +113,13 @@ def admission_checked(operation):
         if context is None and self._admission_depth:
             context = self._current_admission
         service.validate_context(context)
+        if (
+            self._admission_owner is not None
+            and context is not self._transaction_admission
+        ):
+            raise AdmissionRefused("PERMISSION_DENIED")
+        if context.operation == "exchange_export":
+            raise AdmissionRefused("PERMISSION_DENIED")
         if self._admission_leases is None:
             raise AdmissionRefused("ADMISSION_TRANSACTION_REQUIRED")
         values = _arguments(operation, self, args, kwargs)
@@ -184,6 +193,29 @@ class AdmissionTransactions:
         self._current_admission_for_expansion = None
         self._admission_depth = 0
         self._admission_live_leases = []
+        self._admission_owner = None
+        # Only the exact coordinator capability and its exact facade wrapper
+        # carry trusted commit ownership. Caller duck types never supply it.
+        from repo_catalog.adapters.sqlite.p1_coordination import AdmissionTransaction
+        from repo_catalog.adapters.sqlite.production_context import _GuardedConnection
+
+        connection = self.db
+        if type(connection) is _GuardedConnection:
+            connection = connection._connection
+        if type(connection) is AdmissionTransaction:
+            self._admission_owner = connection
+            binding = connection.context_admission_binding
+            if binding is not None:
+                if (
+                    authorization is not None
+                    and authorization is not binding.authorization
+                ):
+                    raise AdmissionRefused("PERMISSION_DENIED")
+                binding.authorization.validate_context(binding.admission)
+                self._authorization = binding.authorization
+                self._transaction_admission = binding.admission
+                self._admission_leases = binding.leases
+                self._admission_live_leases = binding.live_leases
 
     def _check_source_dependencies(self, required, *, creating=False):
         if creating:
@@ -326,6 +358,8 @@ class AdmissionTransactions:
         if self._authorization is None:
             raise AdmissionRefused("PERMISSION_DENIED")
         self._authorization.validate_context(admission)
+        if admission.operation == "exchange_export":
+            raise AdmissionRefused("PERMISSION_DENIED")
         if self.db.in_transaction:
             raise AdmissionRefused("ADMISSION_TRANSACTION_REQUIRED")
         with self._commit_scope(admission):

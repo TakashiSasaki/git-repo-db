@@ -49,6 +49,11 @@ ISOLATED_NEXT_STAGE_MODULES = frozenset(
         "domain/transfer_sql.py",
         "domain/resource_stage.py",
         "domain/context_registration.py",
+        # I6-A is part of the same opt-in target; classify exact modules, never
+        # hide future similarly named public-runtime files by a prefix rule.
+        "domain/context_admission.py",
+        "domain/ports/context_authorization.py",
+        "adapters/sqlite/context_admission.py",
         "domain/ports/production_context.py",
         "domain/notes.py",
         "domain/ports/notes.py",

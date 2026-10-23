@@ -121,6 +121,10 @@ def test_isolated_target_exclusion_does_not_hide_production_runtime_imports():
         "from repo_catalog.domain.ports.production_context import ContextPersistence",
         "from repo_catalog.domain.resource_identification import ResourceIdentification",
         "from repo_catalog.domain import resource_stage",
+        "from repo_catalog.domain import context_admission",
+        "from repo_catalog.domain.ports.context_authorization import AuthorizationPolicy",
+        "from repo_catalog.adapters.sqlite import context_admission",
+        "from .sqlite.context_admission import AdmissionTransactions",
         "from repo_catalog.application.notes import NotesAcquisition",
         "from repo_catalog.application.acquisition import GitAcquisition",
         "from repo_catalog.application.exchange import ExchangeService",
@@ -142,3 +146,19 @@ def test_alias_removal_does_not_erase_semantic_table_successor(evidence):
     manifest["legacy_tables"]["coverage_claim_markers"].pop("target_tables")
     with pytest.raises(ValueError, match="concrete table successor"):
         AUDIT.validate_routes(manifest, actual)
+
+
+def test_i6a_admission_modules_are_explicitly_owned_without_prefix_exclusion():
+    spec = importlib.util.spec_from_file_location(
+        "callsite_audit", ROOT / "scripts/audit_callsite_dependencies.py"
+    )
+    baseline = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(baseline)
+    for path in (
+        "domain/context_admission.py",
+        "domain/ports/context_authorization.py",
+        "adapters/sqlite/context_admission.py",
+    ):
+        assert "src/repo_catalog/" + path in baseline.ISOLATED_TARGET_MODULES
+        future = ROOT / ("src/repo_catalog/" + path.replace(".py", "_future.py"))
+        assert baseline.is_baseline_source(future)

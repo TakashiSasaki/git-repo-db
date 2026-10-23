@@ -59,9 +59,11 @@ mutators on `ContextStore` and `Context` accept keyword `admission`; an owned
 transaction may bind that same issued invocation. Raw `ContextStore` uses
 `admission_transaction`/`transaction`; the facade uses catalog-gated
 `Context.transaction(..., authorization=...)` or trusted-connection
-`Context.owned_transaction`. Caller-owned coordinator transactions cannot retain
-leases through their outer COMMIT yet, so writes through those unwired paths
-fail closed. Raw SQL handles remain trusted infrastructure outside input APIs.
+`Context.owned_transaction`. The corrected low-level coordinator now binds its authorization service at
+construction and retains the explicit invocation's shared lease stack through
+its actual outer Context COMMIT. `ContextStore(tx)` and `Context.for_transaction`
+inherit only that exact expiring trusted capability. Unbound coordinator callers
+still fail closed; Provider/Exchange wiring remains I6-C work. Raw SQL handles remain trusted infrastructure outside input APIs.
 
 Provider Context intake and Context-bearing Exchange import/export are explicitly
 unconnected until I6-C. Exchange refusal precedes progress/receipt duplicate
@@ -108,3 +110,37 @@ Independently test both distribution forms outside checkout. Review the actual
 full-suite delta and earlier failing phases; passing focused checks do not accept
 unexecuted I6-B/C/I7/I8 behavior. Material corrections require a new freeze and
 review. Independent acceptance remains NOT RUN.
+
+## Corrective Author freeze after first broad execution
+
+The first source freeze was executed honestly and retained: 5919 ordinary nodes,
+5154 PASS / 341 FAIL / 424 ERROR, zero skips/xfails. This is a failed broad run,
+not full Author acceptance. All 686 additional nonsuccesses were classified by
+actual traceback and diagnostic exception events: 492 fixture migrations, 62
+coordinator authorization-lifetime gaps, 127 actual explicit unconnected I6-C
+guards, 2 exact-module audit regressions, and 3 additional ENOSPC failures. The
+full initial run also encountered 5 environment-affected packaging nodes, some
+already in the historical unsuccessful set. The first run remains unchanged.
+
+Recoverable in-scope corrections were made before the new final freeze:
+constructor-bound coordinator authority and commit-owned lease bridge; real
+capability expiry, foreign-service refusal and export/write separation; guarded
+cursor close; genuine `p1_coverage.CoverageClaim` dependency enumeration; exact
+classification of the three new opt-in modules in the source ownership audit,
+with additional import-detection and future-prefix negative controls. No
+permissive fallback or Provider/Exchange route was enabled.
+
+The existing coordinator fixture now supplies explicit finite Resource, Provider,
+Repository and OID authority, including subprocesses and deliberate invalid-pair
+fixtures. Its 24 test functions/parametrization and all 63 assertion ASTs are
+unchanged; all 46 collected nodes pass, reaching their original cross-store,
+crash/cut, rollback and Recovery Stop assertions. The combined corrected focused
+run passed **577 nodes** (exit 0), including all 217 I4 and 29 I5 nodes, Parent
+and new secure-admission/bridge tests, and source ownership audits.
+
+Final full-suite and distribution executions will bind the corrected commit and
+retain their own outcomes. Initial direct and sdist-wheel distributions each
+passed 488 tests outside checkout, but those earlier artifacts do not alone
+accept the material coordinator correction. Full Author validation remains
+INCOMPLETE pending those final results and disposition of remaining failures;
+non-Author I6-A acceptance is NOT RUN.

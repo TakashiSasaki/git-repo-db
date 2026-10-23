@@ -226,9 +226,24 @@ class Context(ContextStore):
 
     @classmethod
     @contextmanager
-    def for_transaction(cls, db, directory: Path) -> Iterator[Context]:
-        """Bind to P1 AdmissionTransaction; never end its outer transaction."""
-        capability = cls(db, directory, writable=True)
+    def for_transaction(
+        cls, db, directory: Path, *, authorization=None, admission=None
+    ) -> Iterator[Context]:
+        """Inherit an explicit coordinator binding without ending its lease scope."""
+        from repo_catalog.adapters.sqlite.p1_coordination import AdmissionTransaction
+        from repo_catalog.domain.context_admission import AdmissionRefused
+
+        if authorization is not None or admission is not None:
+            if type(db) is not AdmissionTransaction:
+                raise AdmissionRefused("PERMISSION_DENIED")
+            binding = db.context_admission_binding
+            if (
+                binding is None
+                or authorization is not binding.authorization
+                or admission is not binding.admission
+            ):
+                raise AdmissionRefused("PERMISSION_DENIED")
+        capability = cls(db, directory, writable=True, authorization=authorization)
         try:
             yield capability
             capability._read_complete()
