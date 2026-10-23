@@ -144,3 +144,13 @@ def test_scanner_escaped_byte_cap_exact_and_one_short(monkeypatch):
     with pytest.raises(ExchangeError) as error:
         _bounded_json(value, spend=lambda amount: None)
     assert error.value.code == "INPUT_LIMIT"
+
+
+def test_zero_budget_preserves_fixed_envelope_hard_cap_before_row_indexing():
+    data, _, _ = cyclic_context()
+    data["resources"] = [None] * exchange.MAX_ELEMENTS
+    with patch.object(exchange, "_parse_json") as parse:
+        with pytest.raises(ExchangeError) as error:
+            plan_context_dependencies(data, scope(max_work=0))
+    assert error.value.code == "INPUT_LIMIT"
+    assert parse.call_count == 0

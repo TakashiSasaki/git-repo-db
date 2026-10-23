@@ -103,6 +103,12 @@ def plan_context_dependencies(
         raise ExchangeError("MALFORMED_SECTION", "context")
     if any(type(rows) is not list for rows in data.values()):
         raise ExchangeError("MALFORMED_SECTION", "context")
+    # Fixed-envelope inspection only: len(list) never visits or queues rows.
+    # Root, section keys/lists and even one value per row already establish this
+    # hard lower bound. Preserve INPUT_LIMIT precedence without an input scan,
+    # including when no configurable work remains.
+    if 1 + 2 * len(data) + sum(map(len, data.values())) > MAX_ELEMENTS:
+        raise ExchangeError("INPUT_LIMIT", "context", "JSON elements")
     work = prior_work
 
     class WorkLimit(Exception):

@@ -903,3 +903,31 @@ explicit binding. Include cursor close and canonical CoverageClaim paths: a
 re-exported domain type's actual `__module__` can differ from the import module,
 so an explicit type/module allowlist must cover the genuine definition without
 an opaque fallback.
+
+## Reserve preparatory work and verify received checksums before normalization
+
+For a finite planner, give its shared hard-cap scanner the remaining cumulative
+request budget before scanning already decoded input. Reserve character passes,
+embedded JSON/identity parsing and queue growth before their allocation or work;
+a later refusal cannot undo a complete preliminary scan. Keep the wire element
+counter distinct from character-inclusive request work. Document the fixed cost
+of a failed reservation and preserve only completed whole semantic units.
+Exercise zero/small/exhausted-prior budgets on large, already validated but
+unselected input; instrument actual parser calls and lengths. Include exact scan
+and full-plan work, depth/byte boundaries and lawful/caller cycles. Output-only
+counters do not establish a bound on preparatory work.
+
+For transport integrity, hash the bounded received dictionary, excluding only
+the declared digest, before constructing a domain type that normalizes sets.
+Reuse the existing canonical encoder and selection `to_dict()` authority. Reject
+received duplicate or noncanonical set arrays even after their raw checksum has
+been recomputed; never silently repair them. Test stale and freshly recomputed
+digests across dictionary/text/UTF-8 carriers, with canonical positive controls.
+A checksum proves neither Provider authenticity nor current admission authority.
+
+Reproduce the Author correction with
+`pytest tests/unit/test_context_scan_budget.py tests/unit/test_exchange_received_digest.py tests/unit/test_context_dependencies.py`.
+The [M01/M02 evidence](../../../docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/REPORT.md)
+retains the failed frozen review probes and corrected observations. This procedure
+does not activate Provider/Exchange routes, retire Transfer fences or substitute
+for separate non-Author review.
