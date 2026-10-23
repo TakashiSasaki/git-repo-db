@@ -99,7 +99,11 @@ def plan_context_dependencies(
         MAX_ELEMENTS, scope.max_units, MAX_ELEMENTS if max_nodes is None else max_nodes
     )
     edge_cap = min(MAX_ELEMENTS, MAX_ELEMENTS if max_edges is None else max_edges)
-    if type(data) is not dict or set(data) != set(CONTEXT_SECTION_KEYS):
+    if (
+        type(data) is not dict
+        or len(data) != len(CONTEXT_SECTION_KEYS)
+        or set(data) != set(CONTEXT_SECTION_KEYS)
+    ):
         raise ExchangeError("MALFORMED_SECTION", "context")
     if any(type(rows) is not list for rows in data.values()):
         raise ExchangeError("MALFORMED_SECTION", "context")

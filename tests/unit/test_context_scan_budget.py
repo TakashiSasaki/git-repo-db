@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 import pytest
 
-from repo_catalog.domain import exchange
+from repo_catalog.domain import context_dependencies, exchange
 from repo_catalog.domain.context_dependencies import plan_context_dependencies
 from repo_catalog.domain.exchange import (
     ExchangeError,
@@ -154,3 +154,14 @@ def test_zero_budget_preserves_fixed_envelope_hard_cap_before_row_indexing():
             plan_context_dependencies(data, scope(max_work=0))
     assert error.value.code == "INPUT_LIMIT"
     assert parse.call_count == 0
+
+
+def test_oversize_root_refuses_without_building_unbounded_key_sets():
+    # Input is already materialized by the caller. Observe the actual key-set
+    # allocation boundary separately from embedded parsing/output counters.
+    data = {str(index): [] for index in range(20_000)}
+    with patch.object(context_dependencies, "set", wraps=set, create=True) as sets:
+        with pytest.raises(ExchangeError) as error:
+            plan_context_dependencies(data, scope(max_work=0))
+    assert error.value.code == "MALFORMED_SECTION"
+    assert not any(call.args and call.args[0] is data for call in sets.call_args_list)
