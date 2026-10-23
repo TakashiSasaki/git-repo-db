@@ -1,0 +1,168 @@
+{
+  "service_bound_and_principal": {
+    "executed_pass_source_and_each_installed_form": true,
+    "actual_safety_nodeids": [
+      "tests/unit/test_context_admission.py::test_context_is_bound_to_exact_issuing_service_and_principal",
+      "tests/unit/test_context_admission.py::test_mutating_issued_principal_is_refused_before_policy",
+      "tests/integration/i6a/test_admission.py::test_service_handle_and_principal_substitution_never_authorize[foreign-service-initial]",
+      "tests/integration/i6a/test_admission.py::test_service_handle_and_principal_substitution_never_authorize[foreign-service-replay]",
+      "tests/integration/i6a/test_admission.py::test_service_handle_and_principal_substitution_never_authorize[forged-principal-initial]",
+      "tests/integration/i6a/test_admission.py::test_service_handle_and_principal_substitution_never_authorize[forged-principal-replay]",
+      "tests/integration/i6a/test_admission.py::test_service_handle_and_principal_substitution_never_authorize[mutated-principal-initial]",
+      "tests/integration/i6a/test_admission.py::test_service_handle_and_principal_substitution_never_authorize[mutated-principal-replay]"
+    ]
+  },
+  "selection_permission_replay": {
+    "executed_pass_source_and_each_installed_form": true,
+    "actual_safety_nodeids": [
+      "tests/unit/test_context_admission.py::test_replay_rechecks_policy_and_revocation_invalidates_held_lease",
+      "tests/integration/i6a/test_admission.py::test_deny_each_dependency_before_initial_or_replay_lookup[resources-key0-initial]",
+      "tests/integration/i6a/test_admission.py::test_deny_each_dependency_before_initial_or_replay_lookup[resources-key0-replay]",
+      "tests/integration/i6a/test_admission.py::test_deny_each_dependency_before_initial_or_replay_lookup[resources-key1-initial]",
+      "tests/integration/i6a/test_admission.py::test_deny_each_dependency_before_initial_or_replay_lookup[resources-key1-replay]",
+      "tests/integration/i6a/test_admission.py::test_deny_each_dependency_before_initial_or_replay_lookup[resources-key2-initial]",
+      "tests/integration/i6a/test_admission.py::test_deny_each_dependency_before_initial_or_replay_lookup[resources-key2-replay]",
+      "tests/integration/i6a/test_admission.py::test_deny_each_dependency_before_initial_or_replay_lookup[resources-key3-initial]",
+      "tests/integration/i6a/test_admission.py::test_deny_each_dependency_before_initial_or_replay_lookup[resources-key3-replay]",
+      "tests/integration/i6a/test_admission.py::test_deny_each_dependency_before_initial_or_replay_lookup[repositories-9ebbe38a-f937-40e6-a99c-701835ebcf10-initial]",
+      "tests/integration/i6a/test_admission.py::test_deny_each_dependency_before_initial_or_replay_lookup[repositories-9ebbe38a-f937-40e6-a99c-701835ebcf10-replay]",
+      "tests/integration/i6a/test_admission.py::test_deny_each_dependency_before_initial_or_replay_lookup[repositories-c58b4f17-f58c-4a33-8bc6-eb52c42337d1-initial]",
+      "tests/integration/i6a/test_admission.py::test_deny_each_dependency_before_initial_or_replay_lookup[repositories-c58b4f17-f58c-4a33-8bc6-eb52c42337d1-replay]",
+      "tests/integration/i6a/test_admission.py::test_deny_each_dependency_before_initial_or_replay_lookup[sources-35555555-5555-4555-8555-555555555555-initial]",
+      "tests/integration/i6a/test_admission.py::test_deny_each_dependency_before_initial_or_replay_lookup[sources-35555555-5555-4555-8555-555555555555-replay]",
+      "tests/integration/i6a/test_admission.py::test_deny_each_dependency_before_initial_or_replay_lookup[source_repository_pairs-key7-initial]",
+      "tests/integration/i6a/test_admission.py::test_deny_each_dependency_before_initial_or_replay_lookup[source_repository_pairs-key7-replay]",
+      "tests/integration/i6a/test_admission.py::test_deny_each_dependency_before_initial_or_replay_lookup[source_repository_pairs-key8-initial]",
+      "tests/integration/i6a/test_admission.py::test_deny_each_dependency_before_initial_or_replay_lookup[source_repository_pairs-key8-replay]",
+      "tests/integration/i6a/test_admission.py::test_deny_each_dependency_before_initial_or_replay_lookup[mapping_claims-key9-initial]",
+      "tests/integration/i6a/test_admission.py::test_deny_each_dependency_before_initial_or_replay_lookup[mapping_claims-key9-replay]",
+      "tests/integration/i6a/test_admission.py::test_deny_each_dependency_before_initial_or_replay_lookup[mapping_claims-key10-initial]",
+      "tests/integration/i6a/test_admission.py::test_deny_each_dependency_before_initial_or_replay_lookup[mapping_claims-key10-replay]",
+      "tests/integration/i6a/test_admission.py::test_selection_checks_every_resource_repository_and_source[resources-key0-initial]",
+      "tests/integration/i6a/test_admission.py::test_selection_checks_every_resource_repository_and_source[resources-key0-replay]",
+      "tests/integration/i6a/test_admission.py::test_selection_checks_every_resource_repository_and_source[resources-key1-initial]",
+      "tests/integration/i6a/test_admission.py::test_selection_checks_every_resource_repository_and_source[resources-key1-replay]",
+      "tests/integration/i6a/test_admission.py::test_selection_checks_every_resource_repository_and_source[resources-key2-initial]",
+      "tests/integration/i6a/test_admission.py::test_selection_checks_every_resource_repository_and_source[resources-key2-replay]",
+      "tests/integration/i6a/test_admission.py::test_selection_checks_every_resource_repository_and_source[resources-key3-initial]",
+      "tests/integration/i6a/test_admission.py::test_selection_checks_every_resource_repository_and_source[resources-key3-replay]",
+      "tests/integration/i6a/test_admission.py::test_selection_checks_every_resource_repository_and_source[repositories-9ebbe38a-f937-40e6-a99c-701835ebcf10-initial]",
+      "tests/integration/i6a/test_admission.py::test_selection_checks_every_resource_repository_and_source[repositories-9ebbe38a-f937-40e6-a99c-701835ebcf10-replay]",
+      "tests/integration/i6a/test_admission.py::test_selection_checks_every_resource_repository_and_source[repositories-c58b4f17-f58c-4a33-8bc6-eb52c42337d1-initial]",
+      "tests/integration/i6a/test_admission.py::test_selection_checks_every_resource_repository_and_source[repositories-c58b4f17-f58c-4a33-8bc6-eb52c42337d1-replay]",
+      "tests/integration/i6a/test_admission.py::test_selection_checks_every_resource_repository_and_source[sources-35555555-5555-4555-8555-555555555555-initial]",
+      "tests/integration/i6a/test_admission.py::test_selection_checks_every_resource_repository_and_source[sources-35555555-5555-4555-8555-555555555555-replay]"
+    ]
+  },
+  "lease_until_commit": {
+    "executed_pass_source_and_each_installed_form": true,
+    "actual_safety_nodeids": [
+      "tests/unit/test_context_admission.py::test_commit_fence_serializes_other_thread_revocation_and_rechecks_next_request",
+      "tests/unit/test_context_admission.py::test_same_thread_revocation_invalidates_commit_lease",
+      "tests/integration/i6a/test_admission.py::test_policy_lease_remains_held_through_successful_commit"
+    ]
+  },
+  "real_second_insert_rollback": {
+    "executed_pass_source_and_each_installed_form": true,
+    "actual_safety_nodeids": [
+      "tests/integration/p3/test_transfer_admission.py::test_atomicity_second_endpoint_failure_rolls_back[composed-sql]",
+      "tests/integration/p3/test_transfer_admission.py::test_atomicity_second_endpoint_failure_rolls_back[product-factory]",
+      "tests/integration/i6a/test_admission.py::test_real_second_endpoint_insert_failure_rolls_back_whole_unit"
+    ]
+  },
+  "deferred_commit_rollback": {
+    "executed_pass_source_and_each_installed_form": true,
+    "actual_safety_nodeids": [
+      "tests/integration/i6a/test_admission.py::test_deferred_actual_outer_commit_failure_explicitly_rolls_back"
+    ]
+  },
+  "native_i7_and_parent_fk": {
+    "executed_pass_source_and_each_installed_form": true,
+    "actual_safety_nodeids": [
+      "tests/integration/p3/test_transfer_sql.py::test_native_i7_and_originals[composed-sql]",
+      "tests/integration/p3/test_transfer_sql.py::test_native_i7_and_originals[product-factory]",
+      "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[composed-sql-members]",
+      "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[composed-sql-scope-clock]",
+      "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[composed-sql-scope-state]",
+      "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[composed-sql-provenance]",
+      "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[composed-sql-event]",
+      "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[composed-sql-service]",
+      "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[composed-sql-subtype]",
+      "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[composed-sql-resource-kind]",
+      "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[composed-sql-issue-id]",
+      "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[product-factory-members]",
+      "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[product-factory-scope-clock]",
+      "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[product-factory-scope-state]",
+      "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[product-factory-provenance]",
+      "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[product-factory-event]",
+      "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[product-factory-service]",
+      "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[product-factory-subtype]",
+      "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[product-factory-resource-kind]",
+      "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[product-factory-issue-id]"
+    ]
+  },
+  "both_fences_all_states": {
+    "executed_pass_source_and_each_installed_form": true,
+    "actual_safety_nodeids": [
+      "tests/integration/p3/test_transfer_sql.py::test_product_fences_remain[composed-sql-insert]",
+      "tests/integration/p3/test_transfer_sql.py::test_product_fences_remain[composed-sql-ignore]",
+      "tests/integration/p3/test_transfer_sql.py::test_product_fences_remain[composed-sql-replace]",
+      "tests/integration/p3/test_transfer_sql.py::test_product_fences_remain[composed-sql-nothing]",
+      "tests/integration/p3/test_transfer_sql.py::test_product_fences_remain[composed-sql-upsert-noop]",
+      "tests/integration/p3/test_transfer_sql.py::test_product_fences_remain[composed-sql-upsert-update]",
+      "tests/integration/p3/test_transfer_sql.py::test_product_fences_remain[product-factory-insert]",
+      "tests/integration/p3/test_transfer_sql.py::test_product_fences_remain[product-factory-ignore]",
+      "tests/integration/p3/test_transfer_sql.py::test_product_fences_remain[product-factory-replace]",
+      "tests/integration/p3/test_transfer_sql.py::test_product_fences_remain[product-factory-nothing]",
+      "tests/integration/p3/test_transfer_sql.py::test_product_fences_remain[product-factory-upsert-noop]",
+      "tests/integration/p3/test_transfer_sql.py::test_product_fences_remain[product-factory-upsert-update]",
+      "tests/unit/test_context_fences_i6a.py::test_t19_exact_both_definitions_match_packaged_schema",
+      "tests/unit/test_context_fences_i6a.py::test_t19_invalid_fences_refuse_helper_store_and_facade[missing-report]",
+      "tests/unit/test_context_fences_i6a.py::test_t19_invalid_fences_refuse_helper_store_and_facade[missing-endpoint]",
+      "tests/unit/test_context_fences_i6a.py::test_t19_invalid_fences_refuse_helper_store_and_facade[both-missing]",
+      "tests/unit/test_context_fences_i6a.py::test_t19_invalid_fences_refuse_helper_store_and_facade[altered-report]",
+      "tests/unit/test_context_fences_i6a.py::test_t19_invalid_fences_refuse_helper_store_and_facade[altered-endpoint]",
+      "tests/unit/test_context_fences_i6a.py::test_t19_uninspectable_schema_refuses_helper_and_facade",
+      "tests/unit/test_context_fences_i6a.py::test_t19_isolation_is_connection_scoped_and_expires",
+      "tests/unit/test_context_fences_i6a.py::test_t19_normal_reopen_refuses_modified_catalog[missing-report]",
+      "tests/unit/test_context_fences_i6a.py::test_t19_normal_reopen_refuses_modified_catalog[missing-endpoint]",
+      "tests/unit/test_context_fences_i6a.py::test_t19_normal_reopen_refuses_modified_catalog[both-missing]",
+      "tests/unit/test_context_fences_i6a.py::test_t19_normal_reopen_refuses_modified_catalog[altered-report]",
+      "tests/unit/test_context_fences_i6a.py::test_t19_private_isolation_scope_refuses_disk_catalog",
+      "tests/unit/test_context_fences_i6a.py::test_t19_trusted_coordinator_capabilities_keep_their_restricted_profile",
+      "tests/unit/test_context_fences_i6a.py::test_t19_fence_inspection_preserves_recovery_stop",
+      "tests/unit/test_context_fences_i6a.py::test_t19_fence_inspection_preserves_sqlite_corruption[11]",
+      "tests/unit/test_context_fences_i6a.py::test_t19_fence_inspection_preserves_sqlite_corruption[26]"
+    ]
+  },
+  "provider_exchange_fail_closed": {
+    "executed_pass_source_and_each_installed_form": true,
+    "actual_safety_nodeids": [
+      "tests/integration/i6a/test_admission.py::test_unconnected_provider_routes_refuse_before_resource_lookup[unit]",
+      "tests/integration/i6a/test_admission.py::test_unconnected_provider_routes_refuse_before_resource_lookup[units]",
+      "tests/integration/i6a/test_admission.py::test_unconnected_provider_routes_refuse_before_resource_lookup[batch]",
+      "tests/integration/i6a/test_admission.py::test_unconnected_exchange_export_refuses_before_identity_or_context_lookup",
+      "tests/integration/i6a/test_admission.py::test_unconnected_exchange_import_refuses_before_progress_and_cached_success[initial]",
+      "tests/integration/i6a/test_admission.py::test_unconnected_exchange_import_refuses_before_progress_and_cached_success[cached-receipt]"
+    ]
+  },
+  "new_originals_precedence_and_legal_replay": {
+    "per_form_pass": 132,
+    "source_and_each_installed_form": true,
+    "raw": "source-extra-v3/task-c; installed-v3/*-task-c"
+  },
+  "foreign_allow_all": {
+    "per_form_pass": 4,
+    "source_and_each_installed_form": true,
+    "raw": "foreign-controls"
+  },
+  "gzip_bindings": {
+    "actual_saved_archives": 2,
+    "independent_controls": 13,
+    "raw": "binding-controls"
+  },
+  "input_binding": {
+    "count": 480,
+    "all_actual_full_diagnostic_source_run_before_after_maps_equal_frozen_git": true
+  }
+}

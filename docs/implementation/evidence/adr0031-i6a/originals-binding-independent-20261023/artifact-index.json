@@ -1,0 +1,66 @@
+{
+  "reviewed_head": "268025f67841285d105737b5a0d7bd15b1a6f59c",
+  "reviewed_tree": "e5fa0437f19f31fa414d488ec10f483ef68f03fa",
+  "payloads": {
+    "LESSONS.md": {
+      "bytes": 1979,
+      "sha256": "bacc03ba1cdd8a3bec9f66c4d71593175751699c7497a835958637092b1cb917"
+    },
+    "REPORT.md": {
+      "bytes": 15596,
+      "sha256": "e3a2963336c5fd69dc6a55429f56fe66b8d9d273516b56391e5dbb226b7f97d8"
+    },
+    "REPRODUCTION.md": {
+      "bytes": 4937,
+      "sha256": "cc353b71f80d4ee52cbea9a3355539522f4de4e2510b78ae5605ef89e0576839"
+    },
+    "boundary16-proof.json": {
+      "bytes": 34062,
+      "sha256": "80628fcf30727d02284f859e90a4306720976f684bba1bddfc5d1d92f72ea017"
+    },
+    "check_artifacts.py": {
+      "bytes": 1233,
+      "sha256": "f0d1dd94557fd396e89b8c14955c7bbd56ef2d19d27aa4dfee2bdf9edc7b62ab"
+    },
+    "criteria.json": {
+      "bytes": 15034,
+      "sha256": "5d7b63b6dd410c8d10c2846b7d2377861735c5dbebfd2ede38cf5d420209de29"
+    },
+    "diagnostic-summary.json": {
+      "bytes": 124810,
+      "sha256": "a4dde265b5222a486bcd73acea21773baae69b64860805285ff0d7a9ad50548b"
+    },
+    "findings.json": {
+      "bytes": 1390,
+      "sha256": "cc0092b09d3c8360b39d52def0b4a8ad230d9b4b7f332e4d90a6d5f8c9f29b85"
+    },
+    "foreign-summary.json": {
+      "bytes": 602,
+      "sha256": "bbd6d1b8055a255dbe94370841d252900dd5a5826774386a198edc1bd5d136e6"
+    },
+    "full-summary.json": {
+      "bytes": 16247,
+      "sha256": "9b375b752df3a129c3f75e5f2d9ca17d7251ecb70347cff7781b630117c063b6"
+    },
+    "hosted-summary.json": {
+      "bytes": 1008,
+      "sha256": "1050a8529b582f4ac83cf1c42b4e4afc43642d171e463c230b38cc74d4b0b4b9"
+    },
+    "installed-summary.json": {
+      "bytes": 12727,
+      "sha256": "ad7f9494bec9db028fbc530c4251e197d61dc4b6b48a38597d2e3a15661073c5"
+    },
+    "raw-evidence.zip": {
+      "bytes": 6157704,
+      "sha256": "b1fee9f3be9e2769f97d70a3804f093604732d042eeb1c907bb39a77d02c5730"
+    },
+    "raw-index.json": {
+      "bytes": 163679,
+      "sha256": "a4c069bc614bbe57a9694cdddb2eed12c900f956f62f1c32fe1f7bf595708b11"
+    },
+    "source-input-binding.json": {
+      "bytes": 76745,
+      "sha256": "e3c1706ffd10be3d77450c5bc6cb241876ef464d98bd7b51121b7fc6037aacc6"
+    }
+  }
+}
