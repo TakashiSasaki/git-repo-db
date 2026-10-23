@@ -1,0 +1,9 @@
+{
+  "action": "retrieve connector-returned artifact file reference",
+  "artifact_id": 12472429473,
+  "connector_returned_reference": true,
+  "attempts": 1,
+  "http_status": 200,
+  "bytes": 71124,
+  "sha256": "d43c9ea6d19dd3744b6b44778ba015cde281e8a8e5ae766b3591039a4d080cb1"
+}

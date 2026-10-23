@@ -1,0 +1,16 @@
+{
+  "author-hosted-offline.log": {
+    "raw_bytes": 233041,
+    "raw_sha256": "f372de76fd69a596af016fcc45bee121ea408e42e79de57a9d212459c3a993b1",
+    "gzip_bytes": 94305,
+    "gzip_sha256": "ab38e8addcaa519f9ee57db6bd2b1914a4f32e68a116408ceb0d4f993027bc3a",
+    "identical_to_initial_commit_and_retrieval": true
+  },
+  "author-hosted-sqlite-policy.log": {
+    "raw_bytes": 37071,
+    "raw_sha256": "8b2eefa24f0b35e2cb70e026d8b395d854aff748df69afc4eac1bbdf8b975b94",
+    "gzip_bytes": 7615,
+    "gzip_sha256": "9f77e829c40ce00e8b75e000910ac5c9e7963e6bdfbfe071f7aca09b6c547aed",
+    "identical_to_initial_commit_and_retrieval": true
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "consistent": true,
+  "checks": {
+    "unique_collection": true,
+    "collection_equals_starts": true,
+    "collection_equals_junit": true,
+    "only_selected_phase_nodes": true,
+    "one_setup_and_teardown": true,
+    "every_node_called": true,
+    "all_phase_reports_passed": true,
+    "junit_no_non_success": true,
+    "session_completed_zero": true,
+    "process_exit_zero": true,
+    "same_source_inputs": true,
+    "separate_57_extra_subtest_reports": true
+  },
+  "ordinary_nodes": 280,
+  "junit_testcase_elements": 280,
+  "junit_suite_counters": [
+    {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "337",
+      "time": "56.927",
+      "timestamp": "2026-10-23T09:07:07.568257+00:00",
+      "hostname": "df21b84b9ea7"
+    }
+  ],
+  "extra_passing_call_reports": 57,
+  "phase_outcomes": {
+    "passed": 897
+  },
+  "finishes": [
+    {
+      "event": "finish",
+      "status": "completed",
+      "exitstatus": 0,
+      "timestamp": 1792746484.497809
+    }
+  ],
+  "exit_code": 0
+}
