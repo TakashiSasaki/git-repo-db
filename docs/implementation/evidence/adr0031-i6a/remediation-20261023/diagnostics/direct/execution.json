@@ -1,0 +1,23 @@
+{
+  "argv": [
+    "/workspace/git-repo-db/.venv/bin/python",
+    "-m",
+    "pytest",
+    "tests/integration/p1/test_context.py",
+    "tests/integration/p1/test_coverage.py",
+    "tests/integration/p1/test_time_policy.py",
+    "tests/integration/p1/test_context_relations.py",
+    "tests/integration/p1/test_generalized_resources.py",
+    "tests/integration/p1/test_fixture_authority.py",
+    "tests/integration/p2/test_native.py::test_core_transaction_binding_refuses_context_even_for_shared_coverage_tables",
+    "tests/integration/p5/test_exchange.py::test_i3_relation_export_without_i2_acquisition",
+    "-q",
+    "--tb=short",
+    "--junitxml",
+    "/workspace/direct-fixtures-verified/tests.xml",
+    "--journal",
+    "/workspace/direct-fixtures-verified/journal.jsonl"
+  ],
+  "exit_code": 1,
+  "scope": "overlapping diagnostic fixture regression run; no benchmark comparison"
+}

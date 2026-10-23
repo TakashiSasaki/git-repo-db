@@ -1,0 +1,29 @@
+import json
+import os
+from pathlib import Path
+import sys
+
+root = Path('/workspace/i6a-before')
+out = Path('/workspace/i6a-runs/before-assertions')
+out.mkdir(exist_ok=False)
+sys.path.insert(0, str(root))
+from scripts import verify_i5_offline as evidence
+
+ledger = json.loads(Path('/workspace/i6a-runs/before-classification-initial/failure-ledger.json').read_text())
+nodes = [row['nodeid'] for row in ledger['rows']]
+assert len(nodes) == 743
+os.environ['PATH'] = str(Path(sys.executable).parent) + os.pathsep + os.environ['PATH']
+os.environ['TMPDIR'] = '/workspace/i6a-tmp'
+os.environ['PYTHONPATH'] = '/workspace/i6a-tools'
+os.environ['I6A_ASSERTIONS_SOURCE'] = str(root)
+os.environ['I6A_ASSERTIONS_OUTPUT'] = str(out / 'assertions')
+os.environ['I6A_REPORTS_SIDECAR'] = str(out / 'diagnostic.report-types.jsonl')
+evidence.write_json(out/'binding-before.json', {'head': evidence.git('rev-parse','HEAD'), 'tree': evidence.git('rev-parse','HEAD^{tree}'), 'inputs': evidence.input_hashes(), 'status': evidence.git('status','--porcelain','--untracked-files=no')})
+execute = evidence.execute
+def measured(out, name, args):
+    return execute(out, name, ['-p', 'i6a_report_types', '-p', 'i6a_assertion_lines', *args, '--basetemp=' + str(out / 'basetemp')])
+evidence.execute = measured
+result = evidence.run_cohort(out, 'diagnostic', nodes, 4)
+evidence.write_json(out/'binding-after.json', {'head': evidence.git('rev-parse','HEAD'), 'tree': evidence.git('rev-parse','HEAD^{tree}'), 'inputs': evidence.input_hashes(), 'status': evidence.git('status','--porcelain','--untracked-files=no')})
+evidence.write_json(out/'scope.json', {'scope':'Intentional repeated diagnostic on the original 743 unsuccessful nodes; assertion-line observations only; excluded from ordinary aggregate', 'node_count':len(nodes), 'exit_code': result['exit_code']})
+print(json.dumps(result))

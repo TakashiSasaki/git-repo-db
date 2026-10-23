@@ -1,0 +1,20 @@
+{
+  "log_sha256": "2d74a742d0c81ff587d8d6324800a888a1942dab038c7f7e0572c51da88df78b",
+  "receipt_sha256": "2a7b364b120f88bc7ae7258ec7171d33fa02f408be30009a6b7e6e2dc9adab75",
+  "receipt_bytes": 1907143,
+  "verified_index_members": 121,
+  "preserved_members": [
+    "artifacts/access-registry/i5-distribution/build-binding.json",
+    "artifacts/access-registry/i5-distribution/direct-runtime-binding.json",
+    "artifacts/access-registry/i5-distribution/sdist-runtime-binding.json",
+    "artifacts/access-registry/i5-distribution/summary.json",
+    "artifacts/access-registry/i5-distribution/test-support-binding.json",
+    "artifacts/access-registry/i5-distribution/wheelhouse-binding.json",
+    "artifacts/access-registry/i5/input-binding.json",
+    "artifacts/access-registry/i5/summary.json",
+    "artifacts/access-registry/offline-inventory/binding.json",
+    "artifacts/access-registry/offline-inventory/summary.json",
+    "receipt-binding.json",
+    "receipt-index.json"
+  ]
+}

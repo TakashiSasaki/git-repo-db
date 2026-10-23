@@ -1,0 +1,17 @@
+{
+  "test_transfer_reports_never_shrunk_or_mixed": {
+    "original_assertions": 5,
+    "current_assertions": 5,
+    "removed": 0
+  },
+  "test_transfer_report_fk_failure_rolls_back_whole_unit": {
+    "original_assertions": 1,
+    "current_assertions": 1,
+    "removed": 0
+  },
+  "test_transfer_supports_both_endpoints_without_cross_borrowing": {
+    "original_assertions": 8,
+    "current_assertions": 8,
+    "removed": 0
+  }
+}

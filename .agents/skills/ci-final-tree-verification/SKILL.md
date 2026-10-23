@@ -453,3 +453,13 @@ See the [I6-A remediation evidence](../../../docs/implementation/evidence/adr003
 Fixture repair can expose a deeper Provider, Exchange or Recovery failure. Record
 the newly reached production callsite and its stage; reaching it is not acceptance
 of that stage and does not authorize opening its product route.
+
+Split pytest `::` components only before the first parameter `[` when deriving
+JUnit identities: a parameter can itself contain literal `::`. Keep embedded
+installed-child traceback frames as well as pytest's outer frames, and label a
+legacy source-only projection separately when comparing signatures. For actual
+assertion reachability, a counterexample-checked line tracer can distinguish a
+setup stop, an entered assertion and an unentered conditional/downstream line.
+Report statement-line entry only; it does not establish assertion subexpression
+coverage or execution in spawned threads/processes. Diagnostic repetitions stay
+separate from the exactly-once ordinary test aggregate.

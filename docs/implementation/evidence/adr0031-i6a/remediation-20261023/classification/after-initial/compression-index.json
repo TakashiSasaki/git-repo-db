@@ -1,0 +1,34 @@
+[
+  {
+    "original": "failure-ledger-reviewed.json",
+    "transport": "failure-ledger-reviewed.json.gz",
+    "original_bytes": 3904573,
+    "original_sha256": "9eb24914ce624edb94253c104b5113bd63cd6ae385872e3e9a7798840a290925",
+    "transport_bytes": 199568,
+    "transport_sha256": "d545e84cca16673760e7c2a552e37bd721015475d42b27fe06d707388a1ece75"
+  },
+  {
+    "original": "failure-ledger-reviewed.csv",
+    "transport": "failure-ledger-reviewed.csv.gz",
+    "original_bytes": 460160,
+    "original_sha256": "5cfb8296a40262fcbdb0afc43aca54b839b6bd8fa1fbe2bbbf2e6c9640c8400f",
+    "transport_bytes": 21450,
+    "transport_sha256": "e3210672e1af798d0ad83b54609675c2ef3e0f7f41f521186cf9eab1e9ff5a4e"
+  },
+  {
+    "original": "historical79-signature-audit.json",
+    "transport": "historical79-signature-audit.json.gz",
+    "original_bytes": 371907,
+    "original_sha256": "5479d99b22578212b5045679127ec99b0756c4f9982cdce636c848b1aa601b92",
+    "transport_bytes": 14124,
+    "transport_sha256": "11e47804a62c0f4a67d45233173903e8aa8aa6b7c70c8ce0c0025afc1ea93dc2"
+  },
+  {
+    "original": "summary-reviewed.json",
+    "transport": "summary-reviewed.json.gz",
+    "original_bytes": 3321,
+    "original_sha256": "6ae19cf20f648c58d9733a194d7bb12d7958fbea688f1aebc8b14a9c996996f5",
+    "transport_bytes": 1227,
+    "transport_sha256": "5cc85f063d624044b87b7874393f87580c761010bb30a1647f79a24362dcd087"
+  }
+]

@@ -1,0 +1,65 @@
+[
+  {
+    "original": "binding.json",
+    "bytes": 56392,
+    "sha256": "194810d49f87cbb0624686c57b4cf5656f85daceaf5616d166f77f4db5d1e718",
+    "stored": "binding.json.gz",
+    "stored_bytes": 22930,
+    "stored_sha256": "a0eca1d21ec7f97a233d22f14204d0a8ec57823541bf5ec1c9a1e6c930e0c912",
+    "gzip": true
+  },
+  {
+    "original": "historical-focused583.execution.json",
+    "bytes": 1325,
+    "sha256": "663c4e5883d9409f65b11977347501d1c268fcedd6a172e80713764682e84463",
+    "stored": "historical-focused583.execution.json",
+    "stored_bytes": 1325,
+    "stored_sha256": "663c4e5883d9409f65b11977347501d1c268fcedd6a172e80713764682e84463",
+    "gzip": false
+  },
+  {
+    "original": "historical-focused583.jsonl",
+    "bytes": 539370,
+    "sha256": "af78f454784fee29321d068cc548970beb47ddb50cf97f5256db3c4332ed486d",
+    "stored": "historical-focused583.jsonl.gz",
+    "stored_bytes": 35237,
+    "stored_sha256": "82cfd0a0450d7545aecbe5eb3078c15601ea5d0e4d0a4a9ca2ebc5c726e47472",
+    "gzip": true
+  },
+  {
+    "original": "historical-focused583.log",
+    "bytes": 784,
+    "sha256": "ce68bc4feaa75cff61e081cdb5199db88f9270405c3844a3ed06573c4b857a1c",
+    "stored": "historical-focused583.log.gz",
+    "stored_bytes": 117,
+    "stored_sha256": "971aa01f2d83d8884ba34ad5f8a5e60c21c69ffb20c2ddd8ff0307d64963b2f1",
+    "gzip": true
+  },
+  {
+    "original": "historical-focused583.selected.txt",
+    "bytes": 65275,
+    "sha256": "bfa66c1f94f356b3848f156bba5bb0a30a9f5f56e13cf77c5f57e81415360b1e",
+    "stored": "historical-focused583.selected.txt.gz",
+    "stored_bytes": 6726,
+    "stored_sha256": "fee5f11e1d2cefb1bc4981dbf0ed616b156c8476563b3d18c51ca9a3f40a1b95",
+    "gzip": true
+  },
+  {
+    "original": "historical-focused583.xml",
+    "bytes": 123655,
+    "sha256": "f0cf467de0fbfee861e15411f437523f56ac3a9e8c4c050572aac62e7d524bf7",
+    "stored": "historical-focused583.xml.gz",
+    "stored_bytes": 10149,
+    "stored_sha256": "ea17c08d5938af49423cec39e40630b8d23702210579d37a943a31b62e22b273",
+    "gzip": true
+  },
+  {
+    "original": "runtime.json",
+    "bytes": 2442,
+    "sha256": "22ce6773602467fabd8fbce19d02df2e4c5e3eaf5c0348bf5f199c3f3258e440",
+    "stored": "runtime.json",
+    "stored_bytes": 2442,
+    "stored_sha256": "22ce6773602467fabd8fbce19d02df2e4c5e3eaf5c0348bf5f199c3f3258e440",
+    "gzip": false
+  }
+]

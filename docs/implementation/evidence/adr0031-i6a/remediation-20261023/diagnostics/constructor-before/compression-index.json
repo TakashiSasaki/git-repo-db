@@ -1,0 +1,38 @@
+[
+  {
+    "original": "execution.json",
+    "bytes": 429,
+    "sha256": "16e343ea0c275d0af926256ea1d5ef0133cb1388d60bc816673906c957a69450",
+    "stored": "execution.json",
+    "stored_bytes": 429,
+    "stored_sha256": "16e343ea0c275d0af926256ea1d5ef0133cb1388d60bc816673906c957a69450",
+    "gzip": false
+  },
+  {
+    "original": "journal.jsonl",
+    "bytes": 940,
+    "sha256": "ad111da6e2a08c831a6fc1c23b7dc677ec0a1794d79df970cd53f28329b10735",
+    "stored": "journal.jsonl.gz",
+    "stored_bytes": 278,
+    "stored_sha256": "25b687cdb5ca4524782e6ae0acf12d178123739aa5ff24418b004e5c251ac23a",
+    "gzip": true
+  },
+  {
+    "original": "tests.log",
+    "bytes": 729,
+    "sha256": "c185d138c244dcfa9c95a9700a446d0f6f1d2695e0f79a85b91e1835aa239033",
+    "stored": "tests.log.gz",
+    "stored_bytes": 293,
+    "stored_sha256": "2cef5eda8b9e35e8e507f0a7610430a8f2558f972291f7b4a3f557ee3871ca41",
+    "gzip": true
+  },
+  {
+    "original": "tests.xml",
+    "bytes": 852,
+    "sha256": "683136407b047c37e7646a5c449757fc4b5d122cc868499f5f711f2df9174bf4",
+    "stored": "tests.xml.gz",
+    "stored_bytes": 407,
+    "stored_sha256": "f96acbcf6ec329bbd8d02a240d29dde76dc77f45c15219411379c60dfe57ee83",
+    "gzip": true
+  }
+]

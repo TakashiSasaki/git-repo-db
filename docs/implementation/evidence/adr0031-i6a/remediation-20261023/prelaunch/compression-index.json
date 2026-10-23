@@ -1,0 +1,119 @@
+[
+  {
+    "original": "branches-normalized.json",
+    "bytes": 22008,
+    "sha256": "a69db6d290005265b25e7027b74aea1fdb86af8d92b01ec4545dd5087548f387",
+    "stored": "branches-normalized.json",
+    "stored_bytes": 22008,
+    "stored_sha256": "a69db6d290005265b25e7027b74aea1fdb86af8d92b01ec4545dd5087548f387",
+    "gzip": false
+  },
+  {
+    "original": "ci143-artifacts--access-registry--i5--input-binding.json",
+    "bytes": 118742,
+    "sha256": "9d6b290b45e053f269cfce59414cd0a06a885a2924868df20535b26401afd1d4",
+    "stored": "ci143-artifacts--access-registry--i5--input-binding.json.gz",
+    "stored_bytes": 30258,
+    "stored_sha256": "d693637de726bc0da1ecfd9c895d97f130ca6ecc2f94d6948507b8ded0668bbe",
+    "gzip": true
+  },
+  {
+    "original": "ci143-artifacts--access-registry--i5-distribution--direct-i4.log",
+    "bytes": 1014,
+    "sha256": "ec31960b522dda21a4f4d6bd2af9c085922c5674eae592905c378fe9b349e6dd",
+    "stored": "ci143-artifacts--access-registry--i5-distribution--direct-i4.log.gz",
+    "stored_bytes": 462,
+    "stored_sha256": "f3d720a309fdffa37f0a675da063ba3400aab07c29c3c96bce39abefbd69a7f8",
+    "gzip": true
+  },
+  {
+    "original": "ci143-artifacts--access-registry--i5-distribution--direct-i5.log",
+    "bytes": 1014,
+    "sha256": "5c1784f7c83c3dc1e24ced118e2758cc5abed0c6861dc08a8b1aa072ae2d7c2f",
+    "stored": "ci143-artifacts--access-registry--i5-distribution--direct-i5.log.gz",
+    "stored_bytes": 462,
+    "stored_sha256": "cf51dca2259bd1451b2fcfc2380a9beab491b0778359b4f2f3f54f6ac0d9d02e",
+    "gzip": true
+  },
+  {
+    "original": "ci143-artifacts--access-registry--i5-distribution--processes.json",
+    "bytes": 11292,
+    "sha256": "86251a5439acd0c1eb95c7fdbedc3b93d2153a65887c8991b87493c0e35c674a",
+    "stored": "ci143-artifacts--access-registry--i5-distribution--processes.json",
+    "stored_bytes": 11292,
+    "stored_sha256": "86251a5439acd0c1eb95c7fdbedc3b93d2153a65887c8991b87493c0e35c674a",
+    "gzip": false
+  },
+  {
+    "original": "ci143-artifacts--access-registry--i5-distribution--sdist-i4.log",
+    "bytes": 1014,
+    "sha256": "2c299b486b8f3b9f408c3f5996a02d579a96ff3b5b1e7a2eea1ba30b1a954554",
+    "stored": "ci143-artifacts--access-registry--i5-distribution--sdist-i4.log.gz",
+    "stored_bytes": 462,
+    "stored_sha256": "fea327f5ed05072c793d0a7e1df92354ec12d737db3d23b0885ea24b0aca019e",
+    "gzip": true
+  },
+  {
+    "original": "ci143-artifacts--access-registry--i5-distribution--sdist-i5.log",
+    "bytes": 1014,
+    "sha256": "2ab6f9134ca1d599b0c2572bbbe16a8b232a142118b9c2f0994fa1de846326ac",
+    "stored": "ci143-artifacts--access-registry--i5-distribution--sdist-i5.log.gz",
+    "stored_bytes": 461,
+    "stored_sha256": "019f04aea82dcb0149a79679e2e8dbfcb35be97dcc5cc2668ac539cdb0fa53f2",
+    "gzip": true
+  },
+  {
+    "original": "ci143-artifacts--access-registry--i5-distribution--summary.json",
+    "bytes": 11916,
+    "sha256": "0b4539023bc81007f04db52798ad8b47fa6ccf6dc0f31a8831bf44343b176e3f",
+    "stored": "ci143-artifacts--access-registry--i5-distribution--summary.json",
+    "stored_bytes": 11916,
+    "stored_sha256": "0b4539023bc81007f04db52798ad8b47fa6ccf6dc0f31a8831bf44343b176e3f",
+    "gzip": false
+  },
+  {
+    "original": "ci143-jobs.json",
+    "bytes": 5365,
+    "sha256": "0d3052bde298db4fc297527c52190257a18dbffa6e000bd75908c0173cc3418b",
+    "stored": "ci143-jobs.json",
+    "stored_bytes": 5365,
+    "stored_sha256": "0d3052bde298db4fc297527c52190257a18dbffa6e000bd75908c0173cc3418b",
+    "gzip": false
+  },
+  {
+    "original": "ci143-receipt-binding.json",
+    "bytes": 150,
+    "sha256": "f8326089fc3e5df94632a7615e0a3655ba0faba9a1ad992cb372c506d8096208",
+    "stored": "ci143-receipt-binding.json",
+    "stored_bytes": 150,
+    "stored_sha256": "f8326089fc3e5df94632a7615e0a3655ba0faba9a1ad992cb372c506d8096208",
+    "gzip": false
+  },
+  {
+    "original": "ci143.log",
+    "bytes": 5216298,
+    "sha256": "ace8980423c89a4d556309a072b292872f6dde1c521bbd9a45112c5573464629",
+    "stored": "ci143.log.gz",
+    "stored_bytes": 2028443,
+    "stored_sha256": "a9236b098b2563f9cf187190b8a119062dcdc5ed68a1f78f02dc987d9a38229c",
+    "gzip": true
+  },
+  {
+    "original": "pr143.json",
+    "bytes": 26776,
+    "sha256": "5f0f4e0e46564e36bf42742079b9167669a9188e4722ec7d3b3e3e490eaf4166",
+    "stored": "pr143.json",
+    "stored_bytes": 26776,
+    "stored_sha256": "5f0f4e0e46564e36bf42742079b9167669a9188e4722ec7d3b3e3e490eaf4166",
+    "gzip": false
+  },
+  {
+    "original": "prs.json",
+    "bytes": 45248,
+    "sha256": "d073ea33b85ea64b0054445e47a308a8c42c226fe6cf3a256743090f4bc24349",
+    "stored": "prs.json.gz",
+    "stored_bytes": 10980,
+    "stored_sha256": "156ee92d4af2cd9437fb0564bc39f70c921d6a5aef7f958f6d7be125b6be4215",
+    "gzip": true
+  }
+]

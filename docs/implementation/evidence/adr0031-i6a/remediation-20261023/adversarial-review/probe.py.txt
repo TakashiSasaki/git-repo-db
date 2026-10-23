@@ -1,0 +1,39 @@
+import sys,pathlib,json,hashlib,subprocess,os,sqlite3
+ROOT=pathlib.Path('/workspace/i6a-after');sys.path.insert(0,str(ROOT))
+from repo_catalog.adapters.sqlite.production_context import Context
+from repo_catalog.adapters.sqlite.context_admission import MUTATIONS
+from repo_catalog.domain.production_context import ContextError
+from repo_catalog.domain.context_admission import AdmissionRefused,DependencySet
+from repo_catalog.adapters.sqlite import p1_schema
+from tests.support.authorized_context import FixtureContextStore
+from tests.support.context_admission import fixture_service,fixture_context
+OUT=pathlib.Path('/workspace/i6a-runs/adversarial-review')
+class Trap:
+ def __getattr__(self,name):raise AssertionError('storage access '+name)
+ def __truediv__(self,name):raise AssertionError('Stop access '+name)
+results=[]
+for state,active,writable,expected in [('expired',False,True,'CAPABILITY_EXPIRED'),('readonly',True,False,'READ_ONLY'),('active-unbound',True,True,'PERMISSION_DENIED')]:
+ for name in sorted(MUTATIONS):
+  ctx=object.__new__(Context);ctx._active=active;ctx._writable=writable;ctx.db=Trap();ctx.directory=Trap();ctx._admission_owner=None;ctx._authorization=None
+  try:getattr(ctx,name)()
+  except (ContextError,AdmissionRefused) as e:
+   assert e.code==expected,(name,state,e)
+   results.append({'state':state,'method':name,'code':e.code})
+  else:raise AssertionError((name,state,'accepted'))
+service='22222222-2222-4222-8222-222222222222';other='33333333-3333-4333-8333-333333333333';repo='44444444-4444-4444-8444-444444444444';instance='55555555-5555-4555-8555-555555555555'
+path=OUT/'catalog';path.mkdir(exist_ok=False);p1_schema.initialize(path/'context.sqlite3','context',repo,instance)
+db=p1_schema.connect(path/'context.sqlite3','context');store=FixtureContextStore(db,DependencySet(provider_registrations={service}));grants=store.policy.grants
+store.provider(service,'synthetic')
+foreign,foreign_policy=fixture_service(DependencySet(provider_registrations={service,other}));forged=fixture_context(foreign)
+for attempt in ['foreign-explicit','unlisted','unlisted-repeat']:
+ try:
+  if attempt=='foreign-explicit':store.provider(other,'synthetic',admission=forged)
+  else:store.provider(other,'synthetic')
+ except AdmissionRefused as e:assert e.code=='PERMISSION_DENIED'
+ else:raise AssertionError('fixture granted '+attempt)
+ assert store.policy.grants is grants and not db.in_transaction
+ assert db.execute('SELECT service_instance_uuidv4 FROM providers').fetchall()==[(service,)]
+ assert store.policy.active==0 and foreign_policy.calls==[]
+store.close();db.close()
+value={'source_head':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),'source_tree':subprocess.check_output(['git','rev-parse','HEAD^{tree}'],cwd=ROOT,text=True).strip(),'capability_checks':results,'fixture_checks':{'denials':3,'grants_unchanged':True,'row_set_preserved':True,'leases_released':True,'foreign_policy_not_called':True},'scope':'Supporting adversarial probe only. No full suite, installed lane, release or non-Author branch acceptance claimed.'}
+(OUT/'result.json').write_text(json.dumps(value,indent=2)+'\n');print(json.dumps({'capability_checks':len(results),'fixture_denials':3}))

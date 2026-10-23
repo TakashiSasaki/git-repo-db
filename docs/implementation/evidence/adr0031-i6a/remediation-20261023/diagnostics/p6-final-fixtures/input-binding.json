@@ -1,0 +1,26 @@
+{
+  "head": "423e34504b2a9686c94f971f37c164449a28fe31",
+  "base_tree": "cd93e1e226042e45b145b9c5eab605f9aa4d2d9d",
+  "files": {
+    "tests/integration/p6/test_corrections.py": {
+      "before_sha256": "a1d4952a779997e69850bf49df4084d6ed0f4b5b790ec65e9e66de7fa133ac4e",
+      "after_sha256": "8f55e42c9cdbb4e3c131c2910b17c59c16a6ffe9379eb873a2c7bc1c1faecfd6"
+    },
+    "tests/integration/p6/test_pagination_snapshots.py": {
+      "before_sha256": "de96e2ffc3cbfb567be0cdcd854b25bacca3170b6ae166be1c8c9fac1c603496",
+      "after_sha256": "cbf8982820eecf5130892e2aaa8ff1b7fbdca926005b594528f581902333198d"
+    }
+  },
+  "assertions": {
+    "tests/integration/p6/test_corrections.py": {
+      "before": 40,
+      "after": 40,
+      "exact_ast_equal": true
+    },
+    "tests/integration/p6/test_pagination_snapshots.py": {
+      "before": 32,
+      "after": 32,
+      "exact_ast_equal": true
+    }
+  }
+}

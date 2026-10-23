@@ -1,0 +1,2 @@
+{"event": "configure", "worker": "master", "source": "/workspace/i6a-assertion-selfcheck", "optimization": 0}
+{"event": "session_finish", "worker": "master", "exitstatus": 1}
