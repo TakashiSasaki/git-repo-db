@@ -1,0 +1,29 @@
+{
+  "independent_compare.py": {
+    "historical_source": "docs/implementation/evidence/adr0031-i6b-rereview-20261023/broad/tools/independent_compare.py.txt",
+    "original_sha256": "cae3f50a9bab51898431fc0e51bcfd790c5e601fb627e490514139bfe7f5c1c5",
+    "adapted_sha256": "89ae3d3a62edfdf4c38d33ec2558c74ba3fd5065392f4020da52e35acf933694"
+  },
+  "run_source.py": {
+    "historical_source": "docs/implementation/evidence/adr0031-i6b-rereview-20261023/broad/tools/run_source.py.txt",
+    "original_sha256": "6e4603f60aea64548d6a4cd0b67755f3d4394df788bc006351c3d3d1281ddec4",
+    "adapted_sha256": "db56a8c1dfa9a229a336cb10b2029ff3c7c6749de0bf2c4ce5714beeb9ce784e"
+  },
+  "broad_receipt.py": {
+    "historical_source": "docs/implementation/evidence/adr0031-i6b-rereview-20261023/broad/tools/broad_receipt.py.txt",
+    "original_sha256": "d3f39ffa4b8a56c1d7e4561f57921b23c9f00a8e52c7c3cbe00c880e7c44cb5b",
+    "adapted_sha256": "d3f39ffa4b8a56c1d7e4561f57921b23c9f00a8e52c7c3cbe00c880e7c44cb5b"
+  },
+  "statement_trace.py": {
+    "historical_source": "docs/implementation/evidence/adr0031-i6b-rereview-20261023/broad/tools/statement_trace.py.txt",
+    "original_sha256": "d3cdb3a6f5218e13c92a24b2b8fa0dc209aeb3f374d5b73ed55d82dd958e439e",
+    "adapted_sha256": "d3cdb3a6f5218e13c92a24b2b8fa0dc209aeb3f374d5b73ed55d82dd958e439e"
+  },
+  "scope": {
+    "run_source.py": "Only workspace, venv, temporary-dir, wheelhouse and cache bindings adapted before execution.",
+    "broad_receipt.py": "Byte-identical observer; active in full and diagnostic.",
+    "statement_trace.py": "Byte-identical observer; active only in diagnostic.",
+    "independent_compare.py": "Postprocessing only, never loaded by execution. During full run adjusted historical Git blob verification from152 to154 and corresponding summary key. Before/after tool inventory will show this nonexecuted comparator delta; product/tests/actual observers unchanged.",
+    "compare_154_attribution": "Historical execution61e equals154 for every recorded execution input; verification targets actual154 Git blobs."
+  }
+}

@@ -1,0 +1,80 @@
+{
+  "checks": [
+    {
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "pytest",
+        "tests/unit/test_emit_ci_evidence.py",
+        "tests/unit/test_ci_plan.py",
+        "tests/unit/test_ci_profile.py",
+        "tests/unit/test_ci_journal.py",
+        "tests/unit/test_ci_python_runtime.py",
+        "tests/unit/test_sqlite_validation_policy.py",
+        "tests/integration/test_ci_execution.py",
+        "-q",
+        "--junitxml=docs/implementation/evidence/c0-e1-receipt-limit-20261023/regression.xml",
+        "--journal",
+        "docs/implementation/evidence/c0-e1-receipt-limit-20261023/regression-journal.jsonl"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 20.915513073,
+      "log": "check-0.log"
+    },
+    {
+      "command": [
+        ".venv/bin/ruff",
+        "check",
+        "src",
+        "tests",
+        "scripts"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.05836588799996889,
+      "log": "check-1.log"
+    },
+    {
+      "command": [
+        ".venv/bin/ruff",
+        "format",
+        "--check",
+        "src",
+        "tests",
+        "scripts"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.07722852800003466,
+      "log": "check-2.log"
+    },
+    {
+      "command": [
+        ".venv/bin/ruff",
+        "check",
+        "docs/implementation/evidence/c0-e1-receipt-limit-20261023/verify.py"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.00616698300001417,
+      "log": "check-3.log"
+    },
+    {
+      "command": [
+        ".venv/bin/ruff",
+        "format",
+        "--check",
+        "docs/implementation/evidence/c0-e1-receipt-limit-20261023/verify.py"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005653722000033667,
+      "log": "check-4.log"
+    },
+    {
+      "command": [
+        ".venv/bin/python",
+        "scripts/check_sqlite_validation_policy.py"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.45318439700002955,
+      "log": "check-5.log"
+    }
+  ]
+}

@@ -1,0 +1,424 @@
+{
+  "new-m01-38": {
+    "selected": 38,
+    "passed": 38,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "checks": {
+      "selected_unique": true,
+      "junit_identity": true,
+      "journal_starts": true,
+      "ordinary_phases": true,
+      "finish": true
+    },
+    "commands": [
+      {
+        "argv": [
+          "/workspace/task-b-i6-checkout/.venv/bin/python",
+          "-m",
+          "pytest",
+          "-p",
+          "tests.conftest",
+          "-c",
+          "/workspace/task-b-i6-checkout/pyproject.toml",
+          "--rootdir=/workspace/task-b-i6-evidence/probes",
+          "--confcutdir=/workspace/task-b-i6-evidence/probes",
+          "-o",
+          "addopts=",
+          "-o",
+          "junit_family=xunit1",
+          "-q",
+          "--tb=long",
+          "/workspace/task-b-i6-evidence/probes/test_m01_new.py",
+          "--collect-only"
+        ],
+        "cwd": "/workspace/task-b-i6-checkout",
+        "exit": 0,
+        "started_epoch": 1792779658.6842163,
+        "wall_seconds": 2.1253833770751953
+      },
+      {
+        "argv": [
+          "/workspace/task-b-i6-checkout/.venv/bin/python",
+          "-m",
+          "pytest",
+          "-p",
+          "tests.conftest",
+          "-c",
+          "/workspace/task-b-i6-checkout/pyproject.toml",
+          "--rootdir=/workspace/task-b-i6-evidence/probes",
+          "--confcutdir=/workspace/task-b-i6-evidence/probes",
+          "-o",
+          "addopts=",
+          "-o",
+          "junit_family=xunit1",
+          "-q",
+          "--tb=long",
+          "/workspace/task-b-i6-evidence/probes/test_m01_new.py",
+          "--junitxml=/workspace/task-b-i6-evidence/new-m01-38/junit.xml",
+          "--journal=/workspace/task-b-i6-evidence/new-m01-38/journal.jsonl",
+          "--basetemp=/workspace/task-b-i6-evidence/new-m01-38-temp"
+        ],
+        "cwd": "/workspace/task-b-i6-checkout",
+        "exit": 0,
+        "started_epoch": 1792779660.8096063,
+        "wall_seconds": 6.8506019115448
+      }
+    ],
+    "exit": 0
+  },
+  "new-m02-61": {
+    "selected": 61,
+    "passed": 61,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "checks": {
+      "selected_unique": true,
+      "junit_identity": true,
+      "journal_starts": true,
+      "ordinary_phases": true,
+      "finish": true
+    },
+    "commands": [
+      {
+        "argv": [
+          "/workspace/task-b-i6-checkout/.venv/bin/python",
+          "-m",
+          "pytest",
+          "-p",
+          "tests.conftest",
+          "-c",
+          "/workspace/task-b-i6-checkout/pyproject.toml",
+          "--rootdir=/workspace/task-b-i6-evidence/probes",
+          "--confcutdir=/workspace/task-b-i6-evidence/probes",
+          "-o",
+          "addopts=",
+          "-o",
+          "junit_family=xunit1",
+          "-q",
+          "--tb=long",
+          "/workspace/task-b-i6-evidence/probes/test_fresh_digest_wire.py",
+          "--collect-only"
+        ],
+        "cwd": "/workspace/task-b-i6-checkout",
+        "exit": 0,
+        "started_epoch": 1792779667.6626248,
+        "wall_seconds": 1.2552909851074219
+      },
+      {
+        "argv": [
+          "/workspace/task-b-i6-checkout/.venv/bin/python",
+          "-m",
+          "pytest",
+          "-p",
+          "tests.conftest",
+          "-c",
+          "/workspace/task-b-i6-checkout/pyproject.toml",
+          "--rootdir=/workspace/task-b-i6-evidence/probes",
+          "--confcutdir=/workspace/task-b-i6-evidence/probes",
+          "-o",
+          "addopts=",
+          "-o",
+          "junit_family=xunit1",
+          "-q",
+          "--tb=long",
+          "/workspace/task-b-i6-evidence/probes/test_fresh_digest_wire.py",
+          "--junitxml=/workspace/task-b-i6-evidence/new-m02-61/junit.xml",
+          "--journal=/workspace/task-b-i6-evidence/new-m02-61/journal.jsonl",
+          "--basetemp=/workspace/task-b-i6-evidence/new-m02-61-temp"
+        ],
+        "cwd": "/workspace/task-b-i6-checkout",
+        "exit": 0,
+        "started_epoch": 1792779668.9179204,
+        "wall_seconds": 2.26229190826416
+      }
+    ],
+    "exit": 0
+  },
+  "retained-A13": {
+    "selected": 13,
+    "passed": 13,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "checks": {
+      "selected_unique": true,
+      "junit_identity": true,
+      "journal_starts": true,
+      "ordinary_phases": true,
+      "finish": true
+    },
+    "commands": [
+      {
+        "argv": [
+          "/workspace/task-b-i6-checkout/.venv/bin/python",
+          "-m",
+          "pytest",
+          "-p",
+          "tests.conftest",
+          "-c",
+          "/workspace/task-b-i6-checkout/pyproject.toml",
+          "--rootdir=/workspace/task-b-i6-evidence/probes",
+          "--confcutdir=/workspace/task-b-i6-evidence/probes",
+          "-o",
+          "addopts=",
+          "-o",
+          "junit_family=xunit1",
+          "-q",
+          "--tb=long",
+          "/workspace/task-b-i6-evidence/probes/test_retained_admission.py",
+          "--collect-only"
+        ],
+        "cwd": "/workspace/task-b-i6-checkout",
+        "exit": 0,
+        "started_epoch": 1792779671.1835256,
+        "wall_seconds": 2.9797773361206055
+      },
+      {
+        "argv": [
+          "/workspace/task-b-i6-checkout/.venv/bin/python",
+          "-m",
+          "pytest",
+          "-p",
+          "tests.conftest",
+          "-c",
+          "/workspace/task-b-i6-checkout/pyproject.toml",
+          "--rootdir=/workspace/task-b-i6-evidence/probes",
+          "--confcutdir=/workspace/task-b-i6-evidence/probes",
+          "-o",
+          "addopts=",
+          "-o",
+          "junit_family=xunit1",
+          "-q",
+          "--tb=long",
+          "/workspace/task-b-i6-evidence/probes/test_retained_admission.py",
+          "--junitxml=/workspace/task-b-i6-evidence/retained-A13/junit.xml",
+          "--journal=/workspace/task-b-i6-evidence/retained-A13/journal.jsonl",
+          "--basetemp=/workspace/task-b-i6-evidence/retained-A13-temp"
+        ],
+        "cwd": "/workspace/task-b-i6-checkout",
+        "exit": 0,
+        "started_epoch": 1792779674.1633072,
+        "wall_seconds": 3.561012029647827
+      }
+    ],
+    "exit": 0
+  },
+  "normal208": {
+    "selected": 208,
+    "passed": 208,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "checks": {
+      "selected_unique": true,
+      "junit_identity": true,
+      "journal_starts": true,
+      "ordinary_phases": true,
+      "finish": true
+    },
+    "commands": [
+      {
+        "argv": [
+          "/workspace/task-b-i6-checkout/.venv/bin/python",
+          "-m",
+          "pytest",
+          "-p",
+          "tests.conftest",
+          "-c",
+          "/workspace/task-b-i6-checkout/pyproject.toml",
+          "--rootdir=/workspace/task-b-i6-evidence/probes",
+          "--confcutdir=/workspace/task-b-i6-evidence/probes",
+          "-o",
+          "addopts=",
+          "-o",
+          "junit_family=xunit1",
+          "-q",
+          "--tb=long",
+          "/workspace/task-b-i6-evidence/probes/test_independent_wire.py",
+          "/workspace/task-b-i6-evidence/probes/test_planner_independent.py",
+          "/workspace/task-b-i6-evidence/probes/test_commit_boundary.py",
+          "/workspace/task-b-i6-evidence/probes/test_resolved_wire.py",
+          "--collect-only"
+        ],
+        "cwd": "/workspace/task-b-i6-checkout",
+        "exit": 0,
+        "started_epoch": 1792779677.7284656,
+        "wall_seconds": 1.708329677581787
+      },
+      {
+        "argv": [
+          "/workspace/task-b-i6-checkout/.venv/bin/python",
+          "-m",
+          "pytest",
+          "-p",
+          "tests.conftest",
+          "-c",
+          "/workspace/task-b-i6-checkout/pyproject.toml",
+          "--rootdir=/workspace/task-b-i6-evidence/probes",
+          "--confcutdir=/workspace/task-b-i6-evidence/probes",
+          "-o",
+          "addopts=",
+          "-o",
+          "junit_family=xunit1",
+          "-q",
+          "--tb=long",
+          "/workspace/task-b-i6-evidence/probes/test_independent_wire.py",
+          "/workspace/task-b-i6-evidence/probes/test_planner_independent.py",
+          "/workspace/task-b-i6-evidence/probes/test_commit_boundary.py",
+          "/workspace/task-b-i6-evidence/probes/test_resolved_wire.py",
+          "--junitxml=/workspace/task-b-i6-evidence/normal208/junit.xml",
+          "--journal=/workspace/task-b-i6-evidence/normal208/journal.jsonl",
+          "--basetemp=/workspace/task-b-i6-evidence/normal208-temp"
+        ],
+        "cwd": "/workspace/task-b-i6-checkout",
+        "exit": 0,
+        "started_epoch": 1792779679.4367995,
+        "wall_seconds": 12.538927555084229
+      }
+    ],
+    "exit": 0
+  },
+  "author34": {
+    "selected": 34,
+    "passed": 34,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "checks": {
+      "selected_unique": true,
+      "junit_identity": true,
+      "journal_starts": true,
+      "ordinary_phases": true,
+      "finish": true
+    },
+    "commands": [
+      {
+        "argv": [
+          "/workspace/task-b-i6-checkout/.venv/bin/python",
+          "-m",
+          "pytest",
+          "-p",
+          "tests.conftest",
+          "-c",
+          "/workspace/task-b-i6-checkout/pyproject.toml",
+          "--rootdir=/workspace/task-b-i6-evidence/probes",
+          "--confcutdir=/workspace/task-b-i6-evidence/probes",
+          "-o",
+          "addopts=",
+          "-o",
+          "junit_family=xunit1",
+          "-q",
+          "--tb=long",
+          "/workspace/task-b-i6-evidence/probes/test_author_extra.py",
+          "--collect-only"
+        ],
+        "cwd": "/workspace/task-b-i6-checkout",
+        "exit": 0,
+        "started_epoch": 1792779692.0110078,
+        "wall_seconds": 3.6718435287475586
+      },
+      {
+        "argv": [
+          "/workspace/task-b-i6-checkout/.venv/bin/python",
+          "-m",
+          "pytest",
+          "-p",
+          "tests.conftest",
+          "-c",
+          "/workspace/task-b-i6-checkout/pyproject.toml",
+          "--rootdir=/workspace/task-b-i6-evidence/probes",
+          "--confcutdir=/workspace/task-b-i6-evidence/probes",
+          "-o",
+          "addopts=",
+          "-o",
+          "junit_family=xunit1",
+          "-q",
+          "--tb=long",
+          "/workspace/task-b-i6-evidence/probes/test_author_extra.py",
+          "--junitxml=/workspace/task-b-i6-evidence/author34/junit.xml",
+          "--journal=/workspace/task-b-i6-evidence/author34/journal.jsonl",
+          "--basetemp=/workspace/task-b-i6-evidence/author34-temp"
+        ],
+        "cwd": "/workspace/task-b-i6-checkout",
+        "exit": 0,
+        "started_epoch": 1792779695.6828554,
+        "wall_seconds": 3.8493614196777344
+      }
+    ],
+    "exit": 0
+  },
+  "saved33": {
+    "selected": 33,
+    "passed": 33,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "checks": {
+      "selected_unique": true,
+      "junit_identity": true,
+      "journal_starts": true,
+      "ordinary_phases": true,
+      "finish": true
+    },
+    "commands": [
+      {
+        "argv": [
+          "/workspace/task-b-i6-checkout/.venv/bin/python",
+          "-m",
+          "pytest",
+          "-p",
+          "tests.conftest",
+          "-c",
+          "/workspace/task-b-i6-checkout/pyproject.toml",
+          "--rootdir=/workspace/task-b-i6-evidence/probes",
+          "--confcutdir=/workspace/task-b-i6-evidence/probes",
+          "-o",
+          "addopts=",
+          "-o",
+          "junit_family=xunit1",
+          "-q",
+          "--tb=long",
+          "/workspace/task-b-i6-evidence/probes/test_digest_contract.py",
+          "/workspace/task-b-i6-evidence/probes/test_planner_work_budget_contract.py",
+          "--collect-only"
+        ],
+        "cwd": "/workspace/task-b-i6-checkout",
+        "exit": 0,
+        "started_epoch": 1792779699.5405836,
+        "wall_seconds": 4.529936790466309
+      },
+      {
+        "argv": [
+          "/workspace/task-b-i6-checkout/.venv/bin/python",
+          "-m",
+          "pytest",
+          "-p",
+          "tests.conftest",
+          "-c",
+          "/workspace/task-b-i6-checkout/pyproject.toml",
+          "--rootdir=/workspace/task-b-i6-evidence/probes",
+          "--confcutdir=/workspace/task-b-i6-evidence/probes",
+          "-o",
+          "addopts=",
+          "-o",
+          "junit_family=xunit1",
+          "-q",
+          "--tb=long",
+          "/workspace/task-b-i6-evidence/probes/test_digest_contract.py",
+          "/workspace/task-b-i6-evidence/probes/test_planner_work_budget_contract.py",
+          "--junitxml=/workspace/task-b-i6-evidence/saved33/junit.xml",
+          "--journal=/workspace/task-b-i6-evidence/saved33/journal.jsonl",
+          "--basetemp=/workspace/task-b-i6-evidence/saved33-temp"
+        ],
+        "cwd": "/workspace/task-b-i6-checkout",
+        "exit": 0,
+        "started_epoch": 1792779704.0705254,
+        "wall_seconds": 3.9045937061309814
+      }
+    ],
+    "exit": 0
+  }
+}

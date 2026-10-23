@@ -24,6 +24,7 @@ sys.path.insert(0, str(ROOT))
 
 from scripts import installed_test_harness as harness  # noqa: E402
 from scripts import verify_i5_offline as evidence  # noqa: E402
+from scripts.check_sdist_contract import check_sdist, compare_wheels  # noqa: E402
 
 
 def sha(path):
@@ -92,6 +93,7 @@ def main():
     sdist = next((source / "dist").glob("*.tar.gz"))
     unpack = out / "from-sdist"
     unpack.mkdir()
+    contract = check_sdist(sdist, source)
     with tarfile.open(sdist) as tar:
         tar.extractall(unpack, filter="data")
     derived = next(unpack.iterdir())
@@ -104,6 +106,10 @@ def main():
         == 0
     )
     swheel = next((derived / "dist").glob("*.whl"))
+    contract["wheel_equivalence"] = compare_wheels(
+        wheel, swheel, sdist_metadata=contract["members"]["PKG-INFO"]["sha256"]
+    )
+    write(out / "sdist-contract.json", contract)
     write(
         out / "build-binding.json",
         {

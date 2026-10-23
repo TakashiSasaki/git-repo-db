@@ -1,0 +1,286 @@
+{
+  "head": "fb5d7b5a0c4b92c8a282daac154e66fa6d361e64",
+  "tree": "d2010275a90ae6b6cb728344d5708057a79110cd",
+  "base154": "91827360c185cbf813277bf32a6627d894b1b20a",
+  "plans": {
+    "development": {
+      "lanes": {
+        "static": {
+          "disposition": "selected",
+          "file_count": 0
+        },
+        "tests": {
+          "disposition": "not_applicable",
+          "file_count": 0
+        },
+        "packaging": {
+          "disposition": "not_applicable",
+          "file_count": 0
+        },
+        "smoke": {
+          "disposition": "selected",
+          "file_count": 0
+        }
+      },
+      "acceptance_files": 232,
+      "selected_files": 0,
+      "required_files": 232,
+      "unexecuted_files": 232,
+      "excluded_files": [],
+      "sdist_contract": {
+        "disposition": "selected"
+      },
+      "acceptance_input_hash": "106d274117017ca99caafb07b20c36eed6a9995dfa752f6bebfcfbe047618a67",
+      "fallback_reasons": [
+        "Shared/executable input: .github/workflows/access-registry.yml",
+        "Shared/executable input: .github/workflows/tests.yml",
+        "Unknown dependency path: docs/implementation/evidence/adr0033-archive-hardening-20261023/baseline-comparison.json",
+        "Unknown dependency path: docs/implementation/evidence/adr0033-archive-hardening-20261023/measurements.json"
+      ]
+    },
+    "release": {
+      "lanes": {
+        "static": {
+          "disposition": "selected",
+          "file_count": 0
+        },
+        "tests": {
+          "disposition": "selected",
+          "file_count": 222
+        },
+        "packaging": {
+          "disposition": "selected",
+          "file_count": 10
+        },
+        "smoke": {
+          "disposition": "selected",
+          "file_count": 0
+        }
+      },
+      "acceptance_files": 232,
+      "selected_files": 232,
+      "required_files": 232,
+      "unexecuted_files": 0,
+      "excluded_files": [],
+      "sdist_contract": {
+        "disposition": "selected"
+      },
+      "acceptance_input_hash": "106d274117017ca99caafb07b20c36eed6a9995dfa752f6bebfcfbe047618a67",
+      "fallback_reasons": [
+        "Shared/executable input: .github/workflows/access-registry.yml",
+        "Shared/executable input: .github/workflows/tests.yml",
+        "Unknown dependency path: docs/implementation/evidence/adr0033-archive-hardening-20261023/baseline-comparison.json",
+        "Unknown dependency path: docs/implementation/evidence/adr0033-archive-hardening-20261023/measurements.json"
+      ]
+    }
+  },
+  "routing_paths": [
+    {
+      "path": "src/repo_catalog/domain/context_admission.py",
+      "exists": true,
+      "access_matches": [],
+      "sha256": "267e2067bac3966f380dbf09dc5fd52e0c36edeb8c04591797f79241394267a7"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+      "exists": true,
+      "access_matches": [],
+      "sha256": "3de61773f0ae253d5e495e685fbb9cefe63af17a57ad96fd23979bd25a1dca7b"
+    },
+    {
+      "path": "src/repo_catalog/domain/ports/context_authorization.py",
+      "exists": true,
+      "access_matches": [],
+      "sha256": "073fbd676a55ef86820eec5db60241b9e4545b0be54e2022680d3238e16b2e29"
+    },
+    {
+      "path": "src/repo_catalog/domain/context_wire.py",
+      "exists": true,
+      "access_matches": [],
+      "sha256": "9d9bb824a436322ce8632674a28cb894a7afb8b7a715ac19ff6c93c887bb4416"
+    },
+    {
+      "path": "src/repo_catalog/domain/context_dependencies.py",
+      "exists": true,
+      "access_matches": [],
+      "sha256": "a1026f3a1109c8b8f4d7aaec28f33fe3e0a594372da6afafa8835b9dd559801d"
+    },
+    {
+      "path": "src/repo_catalog/domain/exchange_rows.py",
+      "exists": true,
+      "access_matches": [],
+      "sha256": "c3c8f62768426e66374902ccdeea4218f7609516781e5ca9a9bc6a3bf70d231e"
+    },
+    {
+      "path": "src/repo_catalog/application/exchange.py",
+      "exists": true,
+      "access_matches": [
+        "src/repo_catalog/application/exchange.py"
+      ],
+      "sha256": "4442705ded48d0f52669b18c8b9877faa359638eed7b2e8e7a747aad03b48cd7"
+    },
+    {
+      "path": "src/repo_catalog/domain/exchange.py",
+      "exists": true,
+      "access_matches": [
+        "src/repo_catalog/domain/exchange.py"
+      ],
+      "sha256": "46c5d9c5f80a39ff967418d2662274fa8b70134f33050ac00c2e464b4dc10012"
+    },
+    {
+      "path": "tests/integration/i6a/test_admission.py",
+      "exists": true,
+      "access_matches": [],
+      "sha256": "ace7d61e3b8a7c890d93456410e96d29cb75829d23fa8b50bd182cdf87d83228"
+    },
+    {
+      "path": "tests/integration/i6a/test_originals_revalidation.py",
+      "exists": true,
+      "access_matches": [],
+      "sha256": "f3999018e08f47b3047d9681a9b2c9e6266f78369c9fae7d229cdabd96bbfe2f"
+    },
+    {
+      "path": "tests/unit/test_context_admission.py",
+      "exists": true,
+      "access_matches": [],
+      "sha256": "989f943905f017fc53b64ed9255fc1d743de0c8aeda0470ade665f422151fdde"
+    },
+    {
+      "path": "tests/unit/test_context_admission_bounds_i6a.py",
+      "exists": true,
+      "access_matches": [],
+      "sha256": "427c96c9feccb1dfd74087ba200b565591e1654eafaa6c22d2e3a39fb70f660a"
+    },
+    {
+      "path": "tests/unit/test_context_fences_i6a.py",
+      "exists": true,
+      "access_matches": [],
+      "sha256": "0029329f7b616f252730aa8d47d749a3b132a0b90aac1b3951a636564734de97"
+    },
+    {
+      "path": "tests/unit/test_context_refusal_order_i6a.py",
+      "exists": true,
+      "access_matches": [],
+      "sha256": "5a270dce68e491c5e49aa73cc3717a5596d341c665e0b0ea7518745a42109389"
+    },
+    {
+      "path": "tests/unit/test_context_oid_admission_i6a.py",
+      "exists": true,
+      "access_matches": [],
+      "sha256": "5f560cb625601a4bdfeacd8efd364365807393b107dc04c3e7ae80b04a7271ee"
+    },
+    {
+      "path": "tests/unit/test_i6a_regression_bindings.py",
+      "exists": true,
+      "access_matches": [],
+      "sha256": "869d285b23f1ade4bce9f5f55304a9fe1e4d129ec20b7572a3e94b3c7e0f33e4"
+    },
+    {
+      "path": "tests/unit/test_context_wire_v5.py",
+      "exists": true,
+      "access_matches": [],
+      "sha256": "5c80cd34d35eba042e12a06fb5ad0067807dd5d0fe99b9feb07a65ddf08309c3"
+    },
+    {
+      "path": "tests/unit/test_context_scan_budget.py",
+      "exists": true,
+      "access_matches": [],
+      "sha256": "a653e2b420fbb9fdc042283d2d20c297c786edbea0596721dc0cd5bc2c581534"
+    },
+    {
+      "path": "tests/support/context_admission.py",
+      "exists": true,
+      "access_matches": [
+        "tests/support/context_admission.py"
+      ],
+      "sha256": "62a826093e92efa061bffc2606174452ed78149888343b0f6d32910b7f22db8a"
+    },
+    {
+      "path": "tests/support/authorized_context.py",
+      "exists": true,
+      "access_matches": [
+        "tests/support/authorized_context.py"
+      ],
+      "sha256": "143f29dfdcc596adec82ce409c1acb3d7ffaad73d0987d996a5d58cba266d224"
+    },
+    {
+      "path": "tests/support/i6a.py",
+      "exists": true,
+      "access_matches": [
+        "tests/support/i6a.py"
+      ],
+      "sha256": "4f64485e7a953277c97f45e7885b9cc36b3666802556443e2f337e532f8537e4"
+    },
+    {
+      "path": "scripts/check_sdist_contract.py",
+      "exists": true,
+      "access_matches": [
+        "scripts/check_sdist_contract.py"
+      ],
+      "sha256": "973cd41324c7fc45ba02a82bce2d57cc38b1ec58ce6628714c3ac93e545788a3"
+    },
+    {
+      "path": "scripts/emit_ci_evidence.py",
+      "exists": true,
+      "access_matches": [],
+      "sha256": "e5358d725e4c32ad290ecc0630fe2f31878f3de0ec6d9f1f42e003a89e6d09fa"
+    },
+    {
+      "path": "README.md",
+      "exists": true,
+      "access_matches": [],
+      "sha256": "f4997870b7c4894121f21127b16efe3b995c54270ee675f40e6ccaeba6772dd2"
+    }
+  ],
+  "all_tests_prs_unfiltered": true,
+  "access_runtime_commands": [
+    "set -euo pipefail\nmkdir -p artifacts/access-registry\nuv run --no-sync python - <<'PY' | tee artifacts/access-registry/runtime.txt\nimport json, platform, sqlite3, sys\nfrom pathlib import Path\nfrom repo_catalog.adapters.sqlite.access_schema import require_runtime\ndb = sqlite3.connect(\":memory:\")\nsource = db.execute(\"SELECT sqlite_source_id()\").fetchone()[0]\nresult = {\n    \"python\": platform.python_version(), \"executable\": sys.executable,\n    \"sqlite_version\": sqlite3.sqlite_version, \"sqlite_source_id\": source,\n    \"compile_options\": db.execute(\"PRAGMA compile_options\").fetchall(),\n}\nPath(\"artifacts/access-registry/runtime.json\").write_text(json.dumps(result, indent=2) + \"\\n\")\nprint(json.dumps(result, indent=2))\ndb.close()\n# Product capability and WAL safety checks remain binding. Record the\n# actual environment before refusing an unsupported runtime.\nrequire_runtime()\nPY\nuv run --no-sync pytest -q tests/unit/test_access*_values.py tests/unit/test_context_registration_values.py tests/unit/test_native_acquisition_values.py tests/integration/access \\\n  tests/integration/i2 tests/integration/i23 tests/integration/i4 tests/integration/i5 tests/packaging/test_p5_distribution.py \\\n  tests/integration/p1 \\\n  tests/integration/p3 tests/integration/p5 tests/integration/i3 \\\n  tests/integration/p2 tests/integration/p4 tests/integration/p6 tests/integration/p7 tests/integration/p5_p6_compatibility \\\n  --collect-only > artifacts/access-registry/collected.txt\n# Workers use independently isolated temporary Catalogs. Keep full logs\n# in the artifact while emitting only the bounded result to the job log.\nset +e\nuv run --no-sync pytest -q -n 2 --dist worksteal tests/unit/test_access*_values.py tests/unit/test_context_registration_values.py tests/unit/test_native_acquisition_values.py tests/integration/access \\\n  tests/integration/i2 tests/integration/i23 tests/integration/i4 tests/integration/i5 tests/packaging/test_p5_distribution.py \\\n  tests/integration/p1 \\\n  tests/integration/p3 tests/integration/p5 tests/integration/i3 \\\n  tests/integration/p2 tests/integration/p4 tests/integration/p6 tests/integration/p7 tests/integration/p5_p6_compatibility \\\n  --junitxml=artifacts/access-registry/tests.xml \\\n  > artifacts/access-registry/tests.log 2>&1\ntest_status=$?\nset -e\ntail -n 35 artifacts/access-registry/tests.log\nexit \"$test_status\"\n"
+  ],
+  "receipt_upload_steps": {
+    "Access": [
+      {
+        "job": "registry-runtime",
+        "name": "Emit indexed verification receipts to job log",
+        "if": "always()",
+        "run": "python scripts/emit_ci_evidence.py"
+      },
+      {
+        "job": "registry-runtime",
+        "name": "Save focused verification evidence",
+        "if": "always()",
+        "uses": "actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9",
+        "with": {
+          "name": "access-registry-verification",
+          "path": "artifacts/access-registry/\nartifacts/runtime/\n",
+          "if-no-files-found": "warn"
+        }
+      }
+    ],
+    "Development": [
+      {
+        "job": "offline",
+        "name": "Emit bounded verification receipts to job log",
+        "if": "always()",
+        "run": "python - <<'PY'\nimport base64\nimport hashlib\nimport io\nimport json\nimport os\nimport subprocess\nimport textwrap\nimport zipfile\nfrom pathlib import Path\n\nroot = Path(\"artifacts/ci-profile\")\nfiles = {p.name: p.read_bytes() for p in sorted(root.glob(\"*\"))\n         if p.is_file() and (p.suffix in {\".json\", \".md\", \".xml\"}\n                            or p.name == \"selected-tests.txt\")}\nfiles[\"receipt-binding.json\"] = (json.dumps({\n    \"head\": subprocess.check_output([\"git\", \"rev-parse\", \"HEAD\"], text=True).strip(),\n    \"tree\": subprocess.check_output([\"git\", \"rev-parse\", \"HEAD^{tree}\"], text=True).strip(),\n    \"feature_sha\": os.environ.get(\"CI_FEATURE_SHA\"),\n    \"run_id\": os.environ.get(\"GITHUB_RUN_ID\"),\n    \"run_attempt\": os.environ.get(\"GITHUB_RUN_ATTEMPT\"),\n}, sort_keys=True) + \"\\n\").encode()\nfiles[\"receipt-index.json\"] = (json.dumps({\n    name: {\"bytes\": len(data), \"sha256\": hashlib.sha256(data).hexdigest()}\n    for name, data in files.items()\n}, sort_keys=True) + \"\\n\").encode()\noutput = io.BytesIO()\nwith zipfile.ZipFile(output, \"w\", compression=zipfile.ZIP_DEFLATED) as archive:\n    for name, data in files.items():\n        info = zipfile.ZipInfo(name)\n        info.compress_type = zipfile.ZIP_DEFLATED\n        archive.writestr(info, data)\nbody = output.getvalue()\nif len(body) > 2 * 1024 * 1024:\n    raise SystemExit(\"CI receipts exceed the bounded log limit; use the artifact\")\ndigest = hashlib.sha256(body).hexdigest()\nprint(f\"CI_RECEIPTS_BEGIN_V1 {digest} {len(body)}\")\nfor line in textwrap.wrap(base64.b64encode(body).decode(\"ascii\"), 120):\n    print(\"CI_RECEIPTS_DATA_V1 \" + line)\nprint(\"CI_RECEIPTS_END_V1 \" + digest)\nPY\n"
+      },
+      {
+        "job": "offline",
+        "name": "Retain timing and selection evidence",
+        "if": "always()",
+        "uses": "actions/upload-artifact@v7",
+        "with": {
+          "name": "ci-profile-${{ github.run_id }}-${{ github.run_attempt }}",
+          "path": "artifacts/runtime/\nartifacts/ci-profile/*.json\nartifacts/ci-profile/*.jsonl\nartifacts/ci-profile/*.md\nartifacts/ci-profile/*.xml\nartifacts/ci-profile/selected-tests.txt\n",
+          "retention-days": "30"
+        }
+      }
+    ]
+  },
+  "runtime": {
+    "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+    "executable": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+    "sqlite": "3.53.1",
+    "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9"
+  },
+  "limits": "Actual candidate plans and exact workflow pattern audit; no synthetic single-file commit probes, product runtime tests, hosted runs or dispatch. Release mode plan generated only, no Release execution."
+}

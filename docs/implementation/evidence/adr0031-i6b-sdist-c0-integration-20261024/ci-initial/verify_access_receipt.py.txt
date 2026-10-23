@@ -1,0 +1,29 @@
+import base64,hashlib,io,json,pathlib,re,subprocess,zipfile,xml.etree.ElementTree as ET
+O=pathlib.Path('/workspace/task-b-ci-initial');R=pathlib.Path('/workspace/task-b-integration')
+def sha(b):return hashlib.sha256(b).hexdigest()
+def git(*a):return subprocess.check_output(['git','-C',str(R),*a],text=True).strip()
+def verify(logfile,run=40002761153):
+ text=logfile.read_text();records=re.findall(r'^\ufeff?\d{4}-\d\d-\d\dT\S+ (CI_RECEIPTS_(?:BEGIN|DATA|END)_V1 .+)$',text,re.M)
+ if not records:
+  return {'receipt_present':False,'actual_record_count':0,'overflow_diagnostic': 'CI receipt exceeds 2 MiB compressed; retrieve the uploaded GitHub Actions artifact' in text,'limits':'No emitted body means no receipt index, hash or binding can be verified through the log.'}
+ assert records[0].startswith('CI_RECEIPTS_BEGIN_V1 ') and records[-1].startswith('CI_RECEIPTS_END_V1 ')
+ _,digest,length=records[0].split();assert records[-1].split()==['CI_RECEIPTS_END_V1',digest]
+ chunks=[]
+ for row in records[1:-1]:
+  mark,chunk=row.split();assert mark=='CI_RECEIPTS_DATA_V1' and len(chunk)<=120;chunks.append(chunk)
+ body=base64.b64decode(''.join(chunks),validate=True);assert sha(body)==digest and len(body)==int(length)<=2097152
+ z=zipfile.ZipFile(io.BytesIO(body));assert len(z.namelist())==len(set(z.namelist()));assert z.testzip() is None
+ idx=json.loads(z.read('receipt-index.json'));assert set(idx)==set(z.namelist())-{'receipt-index.json'}
+ for n,m in idx.items():assert m=={'bytes':len(z.read(n)),'sha256':sha(z.read(n))}
+ b=json.loads(z.read('receipt-binding.json'));assert b['run_id']==str(run) and b['run_attempt']=='1'
+ assert b['head']=='c915fc731bd60339e681a6af8f86a470058a5e06' and b['tree']=='d2010275a90ae6b6cb728344d5708057a79110cd'
+ assert git('show','-s','--format=%P',b['head']).split()==['91827360c185cbf813277bf32a6627d894b1b20a','fb5d7b5a0c4b92c8a282daac154e66fa6d361e64']
+ summaries={}
+ for n in idx:
+  if n.endswith('.xml'):
+   root=ET.fromstring(z.read(n));cases=list(root.iter('testcase'));fail=sum(c.find('failure') is not None for c in cases);error=sum(c.find('error') is not None for c in cases);skip=sum(c.find('skipped') is not None for c in cases)
+   summaries[n]={'total':len(cases),'pass':len(cases)-fail-error-skip,'fail':fail,'error':error,'skip':skip,'unique_classname_name':len({(c.get('classname'),c.get('name')) for c in cases})}
+ (O/'access-verified.zip').write_bytes(body)
+ return {'receipt_present':True,'receipt_bytes':len(body),'receipt_sha256':digest,'indexed_payloads_verified':len(idx),'binding':b,'xml_invocations_never_summed':summaries,'member_names':z.namelist()}
+if __name__=='__main__':
+ v=verify(O/'access.log');(O/'access-receipt-verification.json').write_text(json.dumps(v,indent=2)+'\n');print(json.dumps(v,indent=2))

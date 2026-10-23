@@ -1,0 +1,164 @@
+"""Read-only reconciliation of completed invocations, without outcome overrides.
+
+Historical records retain their original execution source identity. Comparison
+to #152 first binds those executable bytes to that commit's Git blobs.
+"""
+import argparse
+import ast
+from collections import Counter, defaultdict
+import gzip
+import hashlib
+import json
+from pathlib import Path
+import re
+import subprocess
+import xml.etree.ElementTree as ET
+
+
+def read(path):
+    if not path.exists():
+        path = Path(str(path) + '.gz')
+    raw = path.read_bytes()
+    return gzip.decompress(raw) if path.suffix == '.gz' else raw
+
+
+def records(path):
+    return [json.loads(line) for line in read(path).splitlines() if line]
+
+
+def xmlkey(node):
+    prefix, bracket, parameter = node.partition('[')
+    parts = prefix.split('::')
+    return ('.'.join([parts[0][:-3].replace('/', '.'), *parts[1:-1]]), parts[-1] + bracket + parameter)
+
+
+def invocation(directory, name):
+    selected = read(directory / (name + '.selected.txt')).decode().splitlines()
+    assert len(selected) == len(set(selected))
+    keys = {xmlkey(node): node for node in selected}
+    assert len(keys) == len(selected)
+    cases = {}
+    for case in ET.fromstring(read(directory / (name + '.xml'))).iter('testcase'):
+        node = keys[case.get('classname'), case.get('name')]
+        assert node not in cases
+        status, phase, message, trace = 'passed', None, '', ''
+        for tag, outcome in [('failure', 'failed'), ('error', 'error'), ('skipped', 'skipped')]:
+            child = case.find(tag)
+            if child is not None:
+                status = outcome
+                phase = 'call' if tag == 'failure' else 'setup' if tag == 'error' else None
+                message, trace = child.get('message', ''), child.text or ''
+                if 'failed on teardown' in message:
+                    phase = 'teardown'
+                break
+        cases[node] = dict(outcome=status, phase=phase, message=message, trace=trace)
+    assert set(cases) == set(selected)
+    journal = records(directory / (name + '.jsonl'))
+    assert Counter(r['nodeid'] for r in journal if r['event'] == 'start') == Counter(selected)
+    execution = json.loads(read(directory / (name + '.execution.json')))
+    finish = [r for r in journal if r['event'] == 'finish']
+    assert len(finish) == 1 and finish[0]['exitstatus'] == execution['exit_code']
+    master = records(directory / 'master.reports.jsonl')
+    reports = [r for r in master if r['event'] == 'controller_report']
+    normal = [r for r in reports if r.get('subtest_context') is None]
+    subtests = [r for r in reports if r.get('subtest_context') is not None]
+    assert all(r['report_type'] == '_pytest.subtests.SubtestReport' for r in subtests)
+    phases = {(r['nodeid'], r['phase']): r['outcome'] for r in normal}
+    assert len(phases) == len(normal)
+    for node in selected:
+        assert (node, 'setup') in phases and (node, 'teardown') in phases
+        assert ((node, 'call') in phases) == (phases[node, 'setup'] == 'passed')
+    assert Counter((r['nodeid'], r['phase'], r['outcome']) for r in reports) == Counter((r['nodeid'], r['phase'], r['outcome']) for r in journal if r['event'] == 'phase')
+    failures = {}
+    worker_paths = sorted(directory.glob('gw*.reports.jsonl*'))
+    worker = [r for path in worker_paths for r in records(path)]
+    assert Counter((r['nodeid'], r['phase'], r['outcome']) for r in worker if r['event'] == 'report') == Counter((r['nodeid'], r['phase'], r['outcome']) for r in reports)
+    assert len([r for r in worker if r['event'] == 'finish']) == len(worker_paths)
+    for row in worker:
+        if row.get('event') != 'report' or row['outcome'] != 'failed':
+            continue
+        key = (row['nodeid'], row['phase'])
+        assert key not in failures
+        row = dict(row)
+        row['project_frames'] = []
+        for frame in row.get('frames', []):
+            match = re.search(r'(tests/.*|src/repo_catalog/.*)', frame['path'])
+            if match:
+                row['project_frames'].append({**frame, 'path': match.group()})
+        failures[key] = row
+    before = json.loads(read(directory / 'binding-before.json'))
+    after = json.loads(read(directory / 'binding-after.json'))
+    assert all(before[k] == after[k] for k in ('head', 'tree', 'inputs', 'tracked_status'))
+    assert before['tracked_status'] == ''
+    return dict(selected=selected, cases=cases, phases=phases, failures=failures, binding=before,
+                summary=dict(selected=len(selected), outcomes=dict(Counter(r['outcome'] for r in cases.values())),
+                             normal_phase_reports=len(normal), additional_subtest_reports=len(subtests),
+                             exit_code=execution['exit_code'], exact_node_phase_reconciliation=True))
+
+
+def main():
+    p = argparse.ArgumentParser()
+    for key in ('root', 'old', 'new', 'out'):
+        p.add_argument('--' + key, type=Path, required=True)
+    p.add_argument('--name', choices=['ordinary', 'diagnostic'], required=True)
+    a = p.parse_args()
+    a.out.mkdir(exist_ok=False)
+    old, new = invocation(a.old, a.name), invocation(a.new, a.name)
+    binding = {}
+    for path, digest in old['binding']['inputs'].items():
+        raw = subprocess.check_output(['git', 'show', f'91827360c185cbf813277bf32a6627d894b1b20a:{path}'], cwd=a.root)
+        binding[path] = hashlib.sha256(raw).hexdigest() == digest
+    assert all(binding.values())
+    rows = []
+    for key in sorted(set(old['failures']) | set(new['failures'])):
+        x, y = old['failures'].get(key, {}), new['failures'].get(key, {})
+        xf, yf = x.get('project_frames', []), y.get('project_frames', [])
+        rows.append(dict(nodeid=key[0], phase=key[1], old=x, new=y,
+                         exception_equal=x.get('exception_type') == y.get('exception_type'),
+                         refusal_equal=x.get('code') == y.get('code'),
+                         frame_functions_equal=[(r['path'], r['function']) for r in xf] == [(r['path'], r['function']) for r in yf],
+                         frame_coordinates_equal=xf == yf))
+    common = set(old['selected']) & set(new['selected'])
+    summary = dict(old=old['summary'], new=new['summary'], historical_input_binding_to_pr154=all(binding.values()),
+                   old_execution_head=old['binding']['head'], old_execution_tree=old['binding']['tree'],
+                   new_execution_head=new['binding']['head'], new_execution_tree=new['binding']['tree'],
+                   old_input_count=len(binding), same_unsuccessful_node_phase_set=set(old['failures']) == set(new['failures']),
+                   common_outcome_phase_changes=[n for n in sorted(common) if (old['cases'][n]['outcome'], old['cases'][n]['phase']) != (new['cases'][n]['outcome'], new['cases'][n]['phase'])],
+                   common_phase_changes=[list(k) for k in old['phases'] if k in new['phases'] and old['phases'][k] != new['phases'][k]],
+                   removed_nodes=sorted(set(old['selected']) - set(new['selected'])),
+                   added_node_outcomes=dict(Counter(new['cases'][n]['outcome'] for n in set(new['selected']) - set(old['selected']))),
+                   changed_exception=[r['nodeid'] for r in rows if not r['exception_equal']],
+                   changed_refusal=[r['nodeid'] for r in rows if not r['refusal_equal']],
+                   changed_frame_functions=[r['nodeid'] for r in rows if not r['frame_functions_equal']],
+                   changed_frame_coordinates=[r['nodeid'] for r in rows if not r['frame_coordinates_equal']],
+                   raw_junit_message_changes=[n for n in sorted(common) if old['cases'][n]['message'] != new['cases'][n]['message']],
+                   raw_junit_traceback_changes=[n for n in sorted(common) if old['cases'][n]['trace'] != new['cases'][n]['trace']])
+    if a.name == 'diagnostic':
+        def entries(directory, head):
+            result = defaultdict(set)
+            cache = {}
+            for path in (directory / 'trace').glob('*.jsonl*'):
+                for row in records(path):
+                    if row['event'] != 'assertion_line':
+                        continue
+                    file = row['path']
+                    if file not in cache:
+                        raw = subprocess.check_output(['git', 'show', f'{head}:{file}'], cwd=a.root)
+                        cache[file] = {n.lineno: ast.dump(n, include_attributes=False) for n in ast.walk(ast.parse(raw)) if isinstance(n, ast.Assert)}
+                    statement = cache[file][row['line']]
+                    result[row['nodeid']].add((row['phase'], file, row['function'], statement))
+            return result
+        x, y = entries(a.old, old['binding']['head']), entries(a.new, new['binding']['head'])
+        summary['assertion_entry_all_phase_changes'] = [n for n in sorted(common) if x[n] != y[n]]
+        summary['assertion_entry_call_phase_changes'] = [n for n in sorted(common) if {e for e in x[n] if e[0] == 'call'} != {e for e in y[n] if e[0] == 'call'}]
+        bad = {k[0] for k in old['failures']}
+        summary['unsuccessful_assertion_entry_changes'] = [n for n in sorted(bad) if x[n] != y[n]]
+        summary['assertion_scope'] = 'statement entry on traced main worker thread only; no subexpression, other-thread or child-process coverage claim'
+    (a.out / 'summary.json').write_text(json.dumps(summary, indent=2) + '\n')
+    (a.out / 'actual-tracebacks.json.gz').write_bytes(gzip.compress((json.dumps(rows, indent=2) + '\n').encode(), mtime=0))
+    (a.out / 'historical-input-binding.json').write_text(json.dumps(binding, indent=2) + '\n')
+    print(json.dumps(summary, indent=2))
+
+
+if __name__ == '__main__':
+    main()

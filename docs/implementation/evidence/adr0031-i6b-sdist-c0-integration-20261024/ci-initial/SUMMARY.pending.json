@@ -1,0 +1,35 @@
+{
+  "head": "fb5d7b5a0c4b92c8a282daac154e66fa6d361e64",
+  "tree": "d2010275a90ae6b6cb728344d5708057a79110cd",
+  "checkout": "c915fc731bd60339e681a6af8f86a470058a5e06",
+  "Development": {
+    "status": "success",
+    "run": 40002761103,
+    "product_pytest": 0,
+    "required_unexecuted_files": 232,
+    "receipt": {
+      "bytes": 89520,
+      "sha256": "666e08b3818cd465b3e64cc2c70db6e5be86dfb23b1018fc9f512cc1c4017d29",
+      "indexed_payloads_verified": 24
+    },
+    "artifact_download": "Forbidden at Azure signed endpoint, zero bytes; query redacted"
+  },
+  "Pages": {
+    "status": "success",
+    "run": 40002761106,
+    "documentation_tests_passed": 8,
+    "deployment": "skipped"
+  },
+  "SQLite_policy": {
+    "status": "success",
+    "unittest_counts": [
+      31,
+      4
+    ],
+    "limits": "Infrastructure tests, not product acceptance."
+  },
+  "Access": {
+    "status": "pending terminal outcome",
+    "run": 40002761153
+  }
+}

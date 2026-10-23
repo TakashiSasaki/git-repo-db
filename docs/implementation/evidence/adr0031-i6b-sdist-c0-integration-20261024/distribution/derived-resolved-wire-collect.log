@@ -1,0 +1,6 @@
+tests/unit/test_resolved_wire.py::test_T06_V07_multiple_original_mapping_alternatives_and_endpoint_set_survive
+tests/unit/test_resolved_wire.py::test_T10_V07_resolved_unit_cannot_repair_or_rebind_original_mapping[replace_target_with_null]
+tests/unit/test_resolved_wire.py::test_T10_V07_resolved_unit_cannot_repair_or_rebind_original_mapping[drop_endpoint]
+tests/unit/test_resolved_wire.py::test_T10_V07_resolved_unit_cannot_repair_or_rebind_original_mapping[change_exact_support_key]
+
+4 tests collected in 0.21s

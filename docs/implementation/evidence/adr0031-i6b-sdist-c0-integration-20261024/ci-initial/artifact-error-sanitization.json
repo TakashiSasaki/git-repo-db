@@ -1,0 +1,6 @@
+{
+  "file": "development-artifact.stderr",
+  "raw_bytes": 651,
+  "raw_sha256": "87f26335a3a225a871944bb8465048557e3776ac8cec0ee93105dd0a7c477d12",
+  "redaction": "ephemeral Azure signed URL query removed; denial text retained"
+}

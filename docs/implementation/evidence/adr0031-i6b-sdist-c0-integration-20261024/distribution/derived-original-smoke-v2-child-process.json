@@ -1,0 +1,8 @@
+{
+  "argv": [
+    "/workspace/task-b-dist-work/derived-minimal-venv/bin/python",
+    "-I",
+    "/workspace/task-b-dist-work/outside/launch_original_smoke.py"
+  ],
+  "exit_code": 1
+}

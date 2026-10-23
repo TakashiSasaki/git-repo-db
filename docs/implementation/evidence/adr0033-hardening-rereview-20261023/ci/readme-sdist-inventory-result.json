@@ -1,0 +1,86 @@
+{
+  "kind": "successful reproduction of distinct runtime and complete-sdist input identities; not build/runtime acceptance",
+  "reviewed_head": "59307c40ea65554736e131cedd00f04c9906551b",
+  "reviewed_files": {
+    "scripts/ci_plan.py": "c1efd21d5f2ee01a88d3e47c288aa581b68b56cbdf41e9ad43277c8ae3841bce",
+    "scripts/ci_dependencies.json": "02b0716248a18657f19fc974ba5de2d1780d74b784bfc2d9c0228abcd37cec67",
+    "scripts/check_sdist_contract.py": "973cd41324c7fc45ba02a82bce2d57cc38b1ec58ce6628714c3ac93e545788a3"
+  },
+  "fixture_scope": "Complete four-file minimal source_inventory fixture. No distribution build is claimed; synthetic metadata is read as bytes by source_inventory.",
+  "changed_paths": [
+    {
+      "status": "M",
+      "paths": [
+        "README.md"
+      ]
+    }
+  ],
+  "before": {
+    "readme_blob": "7cde29010df06b2a4ec42c1e28d25557f01aaa1c",
+    "tree_hash": "108a0e4d5deb034dec320b0c999fbdf75071c488fc540fe63efef17f5dded85d",
+    "acceptance_input_hash": "0782cd83ba62f38f72ffcf5503532d4cc89a09254163c5c9ef4a45b2602dca98",
+    "source_inventory_sha256": "7fe8f7b31183870bb553e6b2490ddbdb18e26879aad19e2b7ca26bfea035c9a2",
+    "source_files": {
+      ".gitignore": {
+        "bytes": 28,
+        "sha256": "5658d96c1e965a9ba713357c10c93688f55a305caccae5aac56097ed3a03d83d"
+      },
+      "README.md": {
+        "bytes": 20,
+        "sha256": "8b18b138903d33c477eaba8b7f2c2a2ac82d76707b52e562983a6367b6ec3b0a"
+      },
+      "pyproject.toml": {
+        "bytes": 65,
+        "sha256": "798dd6b5a73b26062441c9dc5afb4024add2609b744bc296477fe9d180540cca"
+      },
+      "src/repo_catalog/example.py": {
+        "bytes": 17,
+        "sha256": "d69fe9668787a917021813aca9676e1f8bae369a597a86516200398d20ee0e51"
+      }
+    }
+  },
+  "after": {
+    "readme_blob": "7ed4e011b0a7398f4a63c524a418647eb831afc8",
+    "tree_hash": "90253af1e7ab2c344a0a5e8bb03b8cc0753d23af9e7bf548dbbfbd466b947f71",
+    "acceptance_input_hash": "0782cd83ba62f38f72ffcf5503532d4cc89a09254163c5c9ef4a45b2602dca98",
+    "source_inventory_sha256": "5a0f461ff4ebdeac6f1d872fe273feaab0d9a8a641aa2bcd3bd6820ca8b3fbea",
+    "source_files": {
+      ".gitignore": {
+        "bytes": 28,
+        "sha256": "5658d96c1e965a9ba713357c10c93688f55a305caccae5aac56097ed3a03d83d"
+      },
+      "README.md": {
+        "bytes": 41,
+        "sha256": "78cbd3ef7c97404fa3b60c81e4ba92efeb4d6a2848432a884eb51ca715f5cec0"
+      },
+      "pyproject.toml": {
+        "bytes": 65,
+        "sha256": "798dd6b5a73b26062441c9dc5afb4024add2609b744bc296477fe9d180540cca"
+      },
+      "src/repo_catalog/example.py": {
+        "bytes": 17,
+        "sha256": "d69fe9668787a917021813aca9676e1f8bae369a597a86516200398d20ee0e51"
+      }
+    },
+    "preparation": {
+      "sdist_contract": {
+        "disposition": "selected"
+      },
+      "dependencies": {
+        "disposition": "selected"
+      },
+      "wheelhouse": {
+        "disposition": "not_applicable"
+      }
+    },
+    "selected_files": []
+  },
+  "assertions": {
+    "only_readme_source_row_changes": true,
+    "readme_blob_and_tree_change": true,
+    "runtime_acceptance_hash_unchanged": true,
+    "actual_complete_source_inventory_hash_changes": true,
+    "sdist_gate_selected": true,
+    "hosted_pytest_not_selected": true
+  }
+}

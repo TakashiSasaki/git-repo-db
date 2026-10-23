@@ -1,0 +1,32 @@
+{
+  "source_sha256": "90126c25c10ada71720d3e5183e833e951f99ad70f2a0f97977ddd23b758acd5",
+  "parse": "PyYAML BaseLoader",
+  "emitter": {
+    "name": "Emit indexed verification receipts to job log",
+    "if": "always()",
+    "run": "python scripts/emit_ci_evidence.py"
+  },
+  "upload": {
+    "name": "Save focused verification evidence",
+    "if": "always()",
+    "uses": "actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9",
+    "with": {
+      "name": "access-registry-verification",
+      "path": "artifacts/access-registry/\nartifacts/runtime/\n",
+      "if-no-files-found": "warn"
+    }
+  },
+  "emitter_failure_propagates": true,
+  "pytest_exit_preserved": true,
+  "always_run_upload_after_emitter": true,
+  "fallback_selection_roots": [
+    "artifacts/access-registry/",
+    "artifacts/runtime/"
+  ],
+  "hosted_this_tree": {
+    "overflow": false,
+    "upload": false,
+    "download": false
+  },
+  "claim_scope": "Static workflow structure and local emitter behavior; no hosted execution claim"
+}

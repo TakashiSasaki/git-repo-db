@@ -1,0 +1,105 @@
+{
+  "collection": {
+    "all": {
+      "command": [
+        "/home/runner/work/git-repo-db/git-repo-db/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--collect-only",
+        "-o",
+        "addopts=",
+        "tests"
+      ],
+      "cwd": "/home/runner/work/git-repo-db/git-repo-db",
+      "started_epoch": 1792780150.7191792,
+      "elapsed_seconds": 1.292,
+      "exit_code": 0,
+      "collected": 6499,
+      "duplicates": 0
+    },
+    "ordinary": {
+      "command": [
+        "/home/runner/work/git-repo-db/git-repo-db/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--collect-only",
+        "-o",
+        "addopts=",
+        "tests",
+        "-m",
+        "not live and not benchmark"
+      ],
+      "cwd": "/home/runner/work/git-repo-db/git-repo-db",
+      "started_epoch": 1792780152.0720756,
+      "elapsed_seconds": 1.425,
+      "exit_code": 0,
+      "collected": 6497,
+      "duplicates": 0
+    },
+    "offline": {
+      "command": [
+        "/home/runner/work/git-repo-db/git-repo-db/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--collect-only",
+        "-o",
+        "addopts=",
+        "tests",
+        "-m",
+        "not live"
+      ],
+      "cwd": "/home/runner/work/git-repo-db/git-repo-db",
+      "started_epoch": 1792780153.5578814,
+      "elapsed_seconds": 1.373,
+      "exit_code": 0,
+      "collected": 6498,
+      "duplicates": 0
+    },
+    "ci": {
+      "command": [
+        "/home/runner/work/git-repo-db/git-repo-db/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--collect-only",
+        "-o",
+        "addopts=",
+        "tests/unit/test_access_acceptance_values.py",
+        "tests/unit/test_access_backup_values.py",
+        "tests/unit/test_access_connections_values.py",
+        "tests/unit/test_access_registry_values.py",
+        "tests/unit/test_context_registration_values.py",
+        "tests/unit/test_native_acquisition_values.py",
+        "tests/integration/access",
+        "tests/integration/i2",
+        "tests/integration/i23",
+        "tests/integration/i4",
+        "tests/integration/i5",
+        "tests/packaging/test_p5_distribution.py",
+        "tests/integration/p1",
+        "tests/integration/p3",
+        "tests/integration/p5",
+        "tests/integration/i3",
+        "tests/integration/p2",
+        "tests/integration/p4",
+        "tests/integration/p6",
+        "tests/integration/p7",
+        "tests/integration/p5_p6_compatibility",
+        "-m",
+        "not live and not benchmark"
+      ],
+      "cwd": "/home/runner/work/git-repo-db/git-repo-db",
+      "started_epoch": 1792780154.9382613,
+      "elapsed_seconds": 0.642,
+      "exit_code": 0,
+      "collected": 2786,
+      "duplicates": 0
+    }
+  },
+  "runs": {},
+  "changed_inputs": [],
+  "inputs_unchanged": true
+}

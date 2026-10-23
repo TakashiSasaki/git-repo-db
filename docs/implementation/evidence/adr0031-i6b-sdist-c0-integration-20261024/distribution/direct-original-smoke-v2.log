@@ -1,0 +1,11 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_____________________ test_original_access_smoke_unchanged _____________________
+tests/unit/test_original_access_smoke_independent.py:8: in test_original_access_smoke_unchanged
+    assert p.returncode==0,'Original Access smoke failed; actual child result and unexecuted tail retained'
+E   AssertionError: Original Access smoke failed; actual child result and unexecuted tail retained
+E   assert 1 == 0
+E    +  where 1 = CompletedProcess(args=['/workspace/task-b-dist-work/direct-minimal-venv/bin/python', '-I', '/workspace/task-b-dist-work/outside/launch_original_smoke.py'], returncode=1).returncode
+=========================== short test summary info ============================
+FAILED tests/unit/test_original_access_smoke_independent.py::test_original_access_smoke_unchanged
+1 failed in 5.00s

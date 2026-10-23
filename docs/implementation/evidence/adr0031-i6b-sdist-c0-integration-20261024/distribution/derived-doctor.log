@@ -1,0 +1,14 @@
+doctor: complete
+{
+  "version": "0.2.0",
+  "initialized": false,
+  "state_dir": "/home/agent/.local/state/repo-catalog",
+  "capabilities": {
+    "python": "3.12.14",
+    "sqlite": "3.53.1",
+    "git": "git version 2.52.0",
+    "strict": true,
+    "fts5_trigram": true
+  },
+  "free_bytes": 28624551936
+}

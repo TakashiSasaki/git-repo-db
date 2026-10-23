@@ -1,0 +1,30 @@
+{
+  "changes": [
+    {
+      "node": "tests/packaging/test_p6_distribution.py::test_p6_installed_query_search_and_cli[sha256-sdist-wheel]",
+      "old_only": [
+        {
+          "phase": "setup",
+          "file": "tests/packaging/test_p1_distribution.py",
+          "function": "run",
+          "assertion": "assert result.returncode == 0, result.stdout + result.stderr"
+        }
+      ],
+      "new_only": []
+    },
+    {
+      "node": "tests/packaging/test_p6_distribution.py::test_p6_installed_query_search_and_cli[sha256-wheel]",
+      "old_only": [
+        {
+          "phase": "setup",
+          "file": "tests/packaging/test_p1_distribution.py",
+          "function": "run",
+          "assertion": "assert result.returncode == 0, result.stdout + result.stderr"
+        }
+      ],
+      "new_only": []
+    }
+  ],
+  "global_entry_set_equal": true,
+  "explanation": "Only fixture setup association differs across these two passing parameter nodes under parallel workers. Call-phase and all299 unsuccessful per-node all-phase sets match. Global exact statement AST entry set is checked independently here."
+}

@@ -1,0 +1,13 @@
+import json,hashlib,pathlib,zipfile,xml.etree.ElementTree as ET,collections
+O=pathlib.Path('/workspace/task-b-ci-initial');z=zipfile.ZipFile(O/'access-verified.zip')
+def identity(node):
+ before,bracket,after=node.partition('[');pieces=before.split('::');return '.'.join([pieces[0].removesuffix('.py').replace('/','.'),*pieces[1:-1]]),pieces[-1]+bracket+after
+local=pathlib.Path('/workspace/task-b-run/source-full/ordinary-collection.nodes.txt');nodes=[n for n in local.read_text().splitlines() if n.startswith('tests/') and '::' in n];lookup={identity(n):n for n in nodes};assert len(lookup)==len(nodes)
+def xmlnodes(name):
+ cases=list(ET.fromstring(z.read(name)).iter('testcase'));ids=[(c.get('classname'),c.get('name')) for c in cases];assert len(ids)==len(set(ids));return set(ids)
+main=xmlnodes('artifacts/access-registry/tests.xml');broad=xmlnodes('artifacts/access-registry/i5/regressions.xml');union=main|broad;unknown=sorted(union-set(lookup));assert not unknown
+main_nodes={lookup[k] for k in main};broad_nodes={lookup[k] for k in broad};union_nodes=main_nodes|broad_nodes
+omitted=sorted(set(nodes)-union_nodes);prior=json.loads((O/'access-omissions.json').read_text());new=prior['new_nodes'];added={identity(n) for n in new}
+collected=z.read('artifacts/access-registry/collected.txt').decode();observed={n for n in collected.splitlines() if n.startswith('tests/') and '::' in n};assert observed==main_nodes
+v={'hosted_main_unique':len(main),'hosted_broad_unique':len(broad),'main_is_subset_of_broad':main<=broad,'main_not_broad':sorted(main_nodes-broad_nodes),'hosted_actual_union_unique':len(union),'ordinary_local_source_inventory':len(nodes),'ordinary_omitted_from_actual_hosted_union':len(omitted),'omitted_files':sorted({n.split('::',1)[0] for n in omitted}),'omitted_nodes':omitted,'new_integration154_nodes':len(new),'new_nodes_hosted_union':sorted(set(new)&union_nodes),'new_nodes_omitted':sorted(set(new)-union_nodes),'main_collection_junit_identity_equality':True,'limits':'Main and broad XML invocations overlap; union measured rather than summed. Dedicated I4/I5 and installed XMLs are repeats/subsets. Actual hosted ExceptionInfo/assertion sidecars were absent from emitted receipt; JUnit rendered text is not actual frame/assertion evidence.'}
+(O/'hosted-node-union.json').write_text(json.dumps(v,indent=2)+'\n');print({k:(len(x) if isinstance(x,list) else x) for k,x in v.items() if k!='limits'})

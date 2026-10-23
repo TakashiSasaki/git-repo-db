@@ -1,0 +1,56 @@
+[
+  {
+    "lane": "independent",
+    "frozen_source": "/workspace/task-b-dist-checkout/docs/implementation/evidence/adr0031-i6b-independent-20261023/wire/test_independent_wire.py.txt",
+    "staged": "tests/unit/test_independent_wire.py",
+    "sha256": "d274adc397b1c8e4b7f52ebcc0fb3cb6dac0515e1c452368bdb78895c8bb2c48"
+  },
+  {
+    "lane": "independent",
+    "frozen_source": "/workspace/task-b-dist-checkout/docs/implementation/evidence/adr0031-i6b-independent-20261023/planner/test_planner_independent.py.txt",
+    "staged": "tests/unit/test_planner_independent.py",
+    "sha256": "e9ffcd3aa273c647788c1477cb28524ea8ab6a1485fda120db52e754696ff59e"
+  },
+  {
+    "lane": "independent",
+    "frozen_source": "/workspace/task-b-dist-checkout/docs/implementation/evidence/adr0031-i6b-independent-20261023/admission/test_commit_boundary.py.txt",
+    "staged": "tests/unit/test_commit_boundary.py",
+    "sha256": "139c253eee306888a34c4feba791feeb972088a040a4818a64be546271c8d4fe"
+  },
+  {
+    "lane": "resolved-wire",
+    "frozen_source": "/workspace/task-b-dist-checkout/docs/implementation/evidence/adr0031-i6b-independent-20261023/wire/test_resolved_wire.py.txt",
+    "staged": "tests/unit/test_resolved_wire.py",
+    "sha256": "536de7d78526f6d779d8a6e3ec3c0d8b4a02356b1ca122807e963803d94ffa20"
+  },
+  {
+    "lane": "counterexamples",
+    "frozen_source": "/workspace/task-b-dist-checkout/docs/implementation/evidence/adr0031-i6b-independent-20261023/wire/test_digest_contract.py.txt",
+    "staged": "tests/unit/test_digest_contract.py",
+    "sha256": "855d5fc32bbff94890ce838a6e8cb27694eeaac218353f4407263ad75537ab74"
+  },
+  {
+    "lane": "counterexamples",
+    "frozen_source": "/workspace/task-b-dist-checkout/docs/implementation/evidence/adr0031-i6b-independent-20261023/planner/test_planner_work_budget_contract.py.txt",
+    "staged": "tests/unit/test_planner_work_budget_contract.py",
+    "sha256": "dec5aa650b847b18aee223e3ab79fe41faf644b620d12edfa7cf3b83c375555b"
+  },
+  {
+    "lane": "author-extra",
+    "frozen_source": "/workspace/task-b-dist-checkout/docs/implementation/evidence/adr0031-i6b-author-20261023/tools/test_i6b_extra.py.txt",
+    "staged": "tests/unit/test_i6b_extra.py",
+    "sha256": "bc77c792f8f4a7dc3ad472d6fa9325a274bdd8895822a328556b260b55663ffd"
+  },
+  {
+    "lane": "new-regressions",
+    "frozen_source": "/workspace/task-b-dist-checkout/tests/unit/test_context_scan_budget.py",
+    "staged": "tests/unit/test_context_scan_budget.py",
+    "sha256": "a653e2b420fbb9fdc042283d2d20c297c786edbea0596721dc0cd5bc2c581534"
+  },
+  {
+    "lane": "new-regressions",
+    "frozen_source": "/workspace/task-b-dist-checkout/tests/unit/test_exchange_received_digest.py",
+    "staged": "tests/unit/test_exchange_received_digest.py",
+    "sha256": "48c098b7ea08b0ec647b7d5c320500525c8f9a801d1b2791eac614446168d15f"
+  }
+]

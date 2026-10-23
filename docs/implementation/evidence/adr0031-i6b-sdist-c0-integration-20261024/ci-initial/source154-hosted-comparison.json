@@ -1,0 +1,104 @@
+{
+  "scope": "Retained source6344/6045pass/279fail/20error from published154 review evidence versus THIS initial hosted candidate. Root fresh source6497 execution is separate and still pending at this comparison.",
+  "source_execution": {
+    "command": [
+      "/workspace/rr-env/bin/python",
+      "-m",
+      "pytest",
+      "-c",
+      "/workspace/git-repo-db/pyproject.toml",
+      "-p",
+      "broad_receipt",
+      "-p",
+      "no:cacheprovider",
+      "--basetemp=/workspace/rereview-core/source-full-temp",
+      "--tb=long",
+      "-q",
+      "-o",
+      "addopts=--strict-markers",
+      "-o",
+      "junit_family=xunit1",
+      "@/workspace/rereview-core/source-full/ordinary.selected.txt",
+      "--junitxml=/workspace/rereview-core/source-full/ordinary.xml",
+      "--journal=/workspace/rereview-core/source-full/ordinary.jsonl",
+      "-n",
+      "4",
+      "--dist",
+      "worksteal"
+    ],
+    "cwd": "/workspace/git-repo-db",
+    "started_epoch": 1792769440.2742727,
+    "elapsed_seconds": 509.925,
+    "exit_code": 1,
+    "collected": 6344,
+    "passed": 6045,
+    "failed": 279,
+    "error": 20,
+    "skipped": 0,
+    "xfail": 0,
+    "xpass": 0,
+    "executed": 6344,
+    "reconciliation": {
+      "checks": {
+        "selected_unique": true,
+        "selected_equals_junit": true,
+        "selected_equals_journal_starts": true,
+        "setup_and_teardown_once": true,
+        "no_duplicate_phases": false,
+        "phase_nodes_equal_selected": true,
+        "call_once_after_successful_setup": false,
+        "one_finish": true
+      },
+      "consistent_node_execution": false,
+      "journal_phase_outcomes": {
+        "passed": 18770,
+        "failed": 299
+      },
+      "finishes": [
+        {
+          "event": "finish",
+          "status": "failed",
+          "exitstatus": 1,
+          "timestamp": 1792769949.498456
+        }
+      ]
+    }
+  },
+  "lanes": {
+    "main": {
+      "source_non_successes": 299,
+      "hosted_non_successes": 299,
+      "missing": [],
+      "new": [],
+      "equal_counts": {
+        "phase": 299,
+        "outcome": 299,
+        "message_first_line": 299,
+        "full_message": 280,
+        "source_typed_code_present_in_hosted_rendered_message": 299,
+        "refusal_token_sets": 299,
+        "rendered_project_frame_projection": 131
+      },
+      "source_junit_uncompressed_sha256": "239b10af1752343b4ef4a73a46bc690b119defb7d56ec3f127857fd280424f83",
+      "hosted_junit_sha256": "6abdc1cb0e7e8b48ab359cbd6747b03425e9e0ec76080298b7a68b3e5d7a557f"
+    },
+    "i5-broad": {
+      "source_non_successes": 299,
+      "hosted_non_successes": 299,
+      "missing": [],
+      "new": [],
+      "equal_counts": {
+        "phase": 299,
+        "outcome": 299,
+        "message_first_line": 299,
+        "full_message": 280,
+        "source_typed_code_present_in_hosted_rendered_message": 299,
+        "refusal_token_sets": 299,
+        "rendered_project_frame_projection": 131
+      },
+      "source_junit_uncompressed_sha256": "239b10af1752343b4ef4a73a46bc690b119defb7d56ec3f127857fd280424f83",
+      "hosted_junit_sha256": "1299da04334b53ff232b94a6d66269ddfd94f56078257b66cb6a15ef53c8b4cc"
+    }
+  },
+  "limits": "Hosted JUnit rendered trace/message comparison cannot establish actual hosted frame-function or reached-assertion equality. Source sidecars are actual, hosted sidecars absent. No independent acceptance inferred."
+}

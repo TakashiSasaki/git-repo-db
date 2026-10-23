@@ -1,0 +1,9 @@
+{
+  "evidence_commit_before_correction": "d9aa846bfcadd8ae98a8dcbf7b4841215f8d476b",
+  "issue": "Raw git log --graph alignment contains trailing spaces; staged whitespace preflight failed. A shell command continued after the failed Python assertion and made this unpushed evidence commit.",
+  "correction": "Preserve exact raw graph as gzip with original/decompressed SHA256; update references and artifact index in a normal additional commit. No amend, rebase, force-push, historical FAIL rewrite or product/test/runtime input change.",
+  "preliminary_check": "publication-staged-whitespace-attempt.log.gz",
+  "source_execution_inputs_still_equal": 493,
+  "graph_original_sha256": "bcd9ae9599ade5b5c7116c3d48e1c5f5d7ee3a2f12f82306daa9265765ee3243",
+  "graph_gzip_sha256": "ac2d09b62d399df8a2a453bd351fdd2f5d527f86005d73ba1d4da5d87fd4be7d"
+}

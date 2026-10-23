@@ -1,0 +1,49 @@
+{
+  "feature": "fb5d7b5a0c4b92c8a282daac154e66fa6d361e64",
+  "tree": "d2010275a90ae6b6cb728344d5708057a79110cd",
+  "checkout": "c915fc731bd60339e681a6af8f86a470058a5e06",
+  "Development": {
+    "run": 40002761103,
+    "status": "success",
+    "product_pytest_executed": 0,
+    "required_unexecuted_files": 232
+  },
+  "Access": {
+    "run": 40002761153,
+    "status": "failure",
+    "main": {
+      "total": 2786,
+      "pass": 2487,
+      "fail": 279,
+      "error": 20
+    },
+    "broad": {
+      "total": 3148,
+      "pass": 2849,
+      "fail": 279,
+      "error": 20
+    },
+    "ordinary_unique_union": 3148,
+    "omitted_source_nodes": 3349,
+    "all154_added_nodes_omitted": true,
+    "old79_comparison": {
+      "baseline": 79,
+      "current": 299,
+      "resolved": 0,
+      "additional": 220,
+      "same_nodes": false
+    }
+  },
+  "Pages": {
+    "run": 40002761106,
+    "status": "success",
+    "documentation_tests": 8,
+    "deployment": "skipped"
+  },
+  "parser_controls": {
+    "passed": 12,
+    "product_tests": false
+  },
+  "artifact_downloads": "all three exact targets Forbidden0bytes; no retries",
+  "hosted_overflow_exercised": false
+}

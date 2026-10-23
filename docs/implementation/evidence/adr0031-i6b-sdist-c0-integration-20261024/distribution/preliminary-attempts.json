@@ -1,0 +1,10 @@
+{
+  "attempts": [
+    {
+      "action": "git fetch local root abbreviated fb5d7b5a",
+      "outcome": "fatal remote ref not found; no checkout or remote mutation",
+      "correction": "fetch exact local integration branch, verify fullHEAD and tree; final all builds/tests use fb5d7b5a0c4b92c8a282daac154e66fa6d361e64"
+    }
+  ],
+  "no_product_test_failures_from_preparation": true
+}

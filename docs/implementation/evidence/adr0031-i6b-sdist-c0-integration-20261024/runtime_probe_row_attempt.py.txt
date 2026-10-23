@@ -1,0 +1,9 @@
+from pathlib import Path
+import sys,sqlite3,_sqlite3,json,hashlib,subprocess
+from repo_catalog.adapters.sqlite import p1_schema,access_schema
+out=Path('/workspace/task-b-run');db=p1_schema._open(':memory:',fresh=True);db.executescript(p1_schema.compose('context'))
+module_path=getattr(_sqlite3,'__file__',None)
+r={'python':sys.version,'executable':sys.executable,'base_executable':sys._base_executable,'sqlite_module_origin':_sqlite3.__spec__.origin,'sqlite_module_sha256':hashlib.sha256(Path(module_path).read_bytes()).hexdigest() if module_path else None,'interpreter_sha256':hashlib.sha256(Path(sys._base_executable).read_bytes()).hexdigest(),'sqlite':db.execute('select sqlite_version(),sqlite_source_id()').fetchone(),'compile_options':db.execute('pragma compile_options').fetchall(),'pragmas':{n:db.execute('pragma '+n).fetchall() for n in ('foreign_keys','recursive_triggers','journal_mode','synchronous','encoding')},'fingerprints':{s:p1_schema.fingerprint(s) for s in ('core','context','operational','search')},'fences':dict(db.execute("select name,sql from sqlite_schema where name in ('i2_transfer_stage_fence','i2_transfer_report_stage_fence') order by name")),'json':db.execute("select json_valid('{}'),json('[\"x\"]')").fetchone(),'integrity':db.execute('pragma integrity_check').fetchall(),'foreign_key_check':db.execute('pragma foreign_key_check').fetchall(),'head':subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),'tree':subprocess.check_output(['git','rev-parse','HEAD^{tree}'],text=True).strip(),'preliminary_harness_attempt':'Failed before artifact write: _sqlite3 is built-in and has no __file__. Corrected to __spec__.origin plus interpreter bytes; no SQLite replaced.'}
+assert len(r['fences'])==2
+access_schema.require_runtime()
+(out/'runtime-schema-fences.json').write_text(json.dumps(r,indent=2)+'\n');print('runtime',r['sqlite'],'fences',list(r['fences']));db.close()

@@ -1,0 +1,166 @@
+{
+  "main": {
+    "source_unsuccessful": 299,
+    "hosted_unsuccessful": 299,
+    "new": [],
+    "missing": [],
+    "equal_counts": {
+      "phase": 299,
+      "outcome": 299,
+      "message_first_line": 299,
+      "message_full": 280,
+      "source_typed_code_present_hosted": 299,
+      "message_refusal_token_set": 299,
+      "rendered_project_frames": 135
+    },
+    "source_junit_sha256": "0391dbfe7d79fcf44dbcd42440a7e06d8b5f648e667a3809e072b00c8bdd90e4",
+    "hosted_junit_sha256": "6abdc1cb0e7e8b48ab359cbd6747b03425e9e0ec76080298b7a68b3e5d7a557f",
+    "source_execution": {
+      "command": [
+        "/workspace/task-b-integration/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-c",
+        "/workspace/task-b-integration/pyproject.toml",
+        "-p",
+        "broad_receipt",
+        "-p",
+        "no:cacheprovider",
+        "--basetemp=/workspace/task-b-run/source-full-temp",
+        "--tb=long",
+        "-q",
+        "-o",
+        "addopts=--strict-markers",
+        "-o",
+        "junit_family=xunit1",
+        "@/workspace/task-b-run/source-full/ordinary.selected.txt",
+        "--junitxml=/workspace/task-b-run/source-full/ordinary.xml",
+        "--journal=/workspace/task-b-run/source-full/ordinary.jsonl",
+        "-n",
+        "4",
+        "--dist",
+        "worksteal"
+      ],
+      "cwd": "/workspace/task-b-integration",
+      "started_epoch": 1792779553.157119,
+      "elapsed_seconds": 1362.421,
+      "exit_code": 1,
+      "collected": 6497,
+      "passed": 6198,
+      "failed": 279,
+      "error": 20,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 6497,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": false,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": false,
+          "one_finish": true
+        },
+        "consistent_node_execution": false,
+        "journal_phase_outcomes": {
+          "passed": 19229,
+          "failed": 299
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "failed",
+            "exitstatus": 1,
+            "timestamp": 1792780914.377219
+          }
+        ]
+      }
+    },
+    "limits": "Hosted actual ExceptionInfo and assertion-entry sidecars were not emitted. Raw traceback text and source actual frames are preserved; no equality of hosted actual frames or assertions is inferred from the presentation projection."
+  },
+  "i5-broad": {
+    "source_unsuccessful": 299,
+    "hosted_unsuccessful": 299,
+    "new": [],
+    "missing": [],
+    "equal_counts": {
+      "phase": 299,
+      "outcome": 299,
+      "message_first_line": 299,
+      "message_full": 280,
+      "source_typed_code_present_hosted": 299,
+      "message_refusal_token_set": 299,
+      "rendered_project_frames": 135
+    },
+    "source_junit_sha256": "0391dbfe7d79fcf44dbcd42440a7e06d8b5f648e667a3809e072b00c8bdd90e4",
+    "hosted_junit_sha256": "1299da04334b53ff232b94a6d66269ddfd94f56078257b66cb6a15ef53c8b4cc",
+    "source_execution": {
+      "command": [
+        "/workspace/task-b-integration/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-c",
+        "/workspace/task-b-integration/pyproject.toml",
+        "-p",
+        "broad_receipt",
+        "-p",
+        "no:cacheprovider",
+        "--basetemp=/workspace/task-b-run/source-full-temp",
+        "--tb=long",
+        "-q",
+        "-o",
+        "addopts=--strict-markers",
+        "-o",
+        "junit_family=xunit1",
+        "@/workspace/task-b-run/source-full/ordinary.selected.txt",
+        "--junitxml=/workspace/task-b-run/source-full/ordinary.xml",
+        "--journal=/workspace/task-b-run/source-full/ordinary.jsonl",
+        "-n",
+        "4",
+        "--dist",
+        "worksteal"
+      ],
+      "cwd": "/workspace/task-b-integration",
+      "started_epoch": 1792779553.157119,
+      "elapsed_seconds": 1362.421,
+      "exit_code": 1,
+      "collected": 6497,
+      "passed": 6198,
+      "failed": 279,
+      "error": 20,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 6497,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": false,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": false,
+          "one_finish": true
+        },
+        "consistent_node_execution": false,
+        "journal_phase_outcomes": {
+          "passed": 19229,
+          "failed": 299
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "failed",
+            "exitstatus": 1,
+            "timestamp": 1792780914.377219
+          }
+        ]
+      }
+    },
+    "limits": "Hosted actual ExceptionInfo and assertion-entry sidecars were not emitted. Raw traceback text and source actual frames are preserved; no equality of hosted actual frames or assertions is inferred from the presentation projection."
+  }
+}

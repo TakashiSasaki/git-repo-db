@@ -1,0 +1,9 @@
+{
+  "path": ".agents/skills/ci-final-tree-verification/SKILL.md",
+  "tested_input_head": "fb5d7b5a0c4b92c8a282daac154e66fa6d361e64",
+  "tested_blob": "f40f5d481d2792993f9960d715c5df53282874a2",
+  "publication_blob": "6300622b9c33b3ad2ca32672822c3e8a4fd26e78",
+  "sha256": "01aa3e6b8755b14874d6bc6c479da88f6ef29f9c834c727c552c17dd2189bb5b",
+  "retained": "Both original reviewed skill series; append-only verified BOM receipt lesson",
+  "regressions": "ci-initial/test_bom_parser_controls.py.txt and ci-initial/bom-parser-controls.json; product/source/test inputs unchanged; final prose/report/CI validation separate."
+}

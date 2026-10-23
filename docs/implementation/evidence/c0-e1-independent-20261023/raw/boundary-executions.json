@@ -1,0 +1,40 @@
+{
+  "exploratory": {
+    "command": [
+      ".venv/bin/python",
+      "docs/implementation/evidence/c0-e1-independent-20261023/verify_boundaries.py",
+      "--output",
+      "docs/implementation/evidence/c0-e1-independent-20261023/raw/boundaries"
+    ],
+    "exit_code": 1,
+    "reason": "Reviewer calibration search exhausted input lengths at limit+1; completed below/exact-limit files preserved under exploratory-boundaries.",
+    "log": "exploratory-boundaries.log",
+    "helper_snapshot": "exploratory-verify-boundaries.py.txt"
+  },
+  "setup": {
+    "command": "UV_CACHE_DIR=/tmp/c0-independent-uv-cache uv sync --locked --group dev --python /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+    "exit_code": 0,
+    "sqlite_replaced": false
+  },
+  "second_attempt": {
+    "exit_code": 1,
+    "reason": "Reviewer optimized trace returned None at target call event, so observer did not receive target line events; fixed trace routing, no product change.",
+    "log": "calibration-attempt2.log",
+    "helper_snapshot": "calibration-attempt2.py.txt"
+  },
+  "final": {
+    "command": [
+      ".venv/bin/python",
+      "docs/implementation/evidence/c0-e1-independent-20261023/verify_boundaries.py",
+      "--output",
+      "docs/implementation/evidence/c0-e1-independent-20261023/raw/boundaries"
+    ],
+    "exit_code": 0,
+    "log": "boundaries.log"
+  },
+  "dependency_inventory_initial": {
+    "command": "uv pip freeze --python .venv/bin/python",
+    "exit_code": 2,
+    "reason": "Default uv cache is read-only; same command with task UV_CACHE_DIR succeeded without environment mutation."
+  }
+}

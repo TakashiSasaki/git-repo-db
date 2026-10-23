@@ -1,0 +1,6 @@
+Metadata-Version: 2.5
+Name: repo-catalog
+Version: 0.2.0
+Summary: Persistent, offline-queryable Git and GitHub pull request catalog
+Requires-Python: >=3.12
+Requires-Dist: httpx<1,>=0.28

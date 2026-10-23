@@ -1,0 +1,37 @@
+# Frozen CI selection audit
+
+Read-only audit of #149 `ea43a21fca1dbf8fa6dd1c254b28a96d5dd28d00`, #144 `ededcd83eb2d99a602ba18c8fe3c177125c825ac` and #147 `e7762952e18061de8c8235beaeddf42f20ad9f5a`. Disposable single-file commits were created only as local detached Git objects, never published. No existing PR, branch, workflow, product file, assertion or safety predicate was changed.
+
+## Conclusion
+
+The Access workflow has a real **routing/coverage limitation** for the new I6-A production modules and tests. Changing only `src/repo_catalog/domain/context_admission.py`, `src/repo_catalog/adapters/sqlite/context_admission.py`, either `tests/integration/i6a/test_*.py`, or the six tested I6-A unit-test paths does not match Access's `pull_request.paths`. Changing `tests/support/context_admission.py`, `tests/support/i6a.py` or the existing `access_schema.py` does match it. The Access runtime command still enumerates its older Access/I2-I5/P1-P7 cohorts rather than the new I6-A cohorts. Its installed verification checks I2-I5/Access behavior, not all new I6-A semantics. The offline inventory helper is inventory-only unless `--execute` is passed; the workflow does not pass it.
+
+This does **not** establish a violated CI contract or justify a corrective PR under the bounded-defect permission. The unfiltered `tests` workflow always starts on pull requests. Its development planner intentionally runs static/smoke checks without pytest/packaging; it records affected runtime test files as required and unexecuted. Release mode explicitly selects all ordinary acceptance files, including the new I6-A files. The accepted development policy says not to duplicate full runtime tests automatically on ordinary source PRs. There is no stated requirement that every new I6 test run in the separate Access cohort. Automatically adding these paths to the existing broad Access workflow would force its expensive cohort on precisely the development-only changes whose hosted duplication the contract avoids. A desired mandatory hosted I6-focused lane needs an explicit coverage decision, not a claim that an unstarted Access job is itself a defect.
+
+`pages` is a documentation workflow and does not provide alternate I6-A runtime coverage. `tests` does provide static analysis and schema/doctor smoke, plus an explicit release route; it must not be described as having executed I6-A runtime tests during development.
+
+## Executed routing probes
+
+`python /workspace/task-b-ci/audit_ci.py` exited **0**. It makes an isolated one-file comment/prose change per applicable path, records original/mutated SHA-256, writes a detached candidate tree/commit with the frozen source as parent, checks that exactly that path changed, then calls each snapshot's **actual** `ci_plan.make_plan` in both development and release modes. It uses actual clean Git trees and actual test-dependency AST inspection rather than mocked path classifications.
+
+18 applicable path cases passed, each with both modes. 27 source/path combinations were not applicable because the path does not exist on that older sibling, including an intentionally listed missing I5 path; they are not skipped tests. The 14 #149 cases include ten new admission source/test paths, two shared-support controls, one existing Access source control and README prose. #144 and #147 each have the existing Access source and README controls.
+
+All ten #149 admission source/test cases selected static and smoke in development, selected zero runtime files, and recorded all **225** ordinary files as required/unexecuted (test-dependency inspection conservatively reaches an existing dynamic test import). Release selected all 225. The older siblings selected all 213 (#144) or 212 (#147) ordinary acceptance files in release; these are measured inventories, not fixed future counts. README development selected no runtime/static/smoke work; release still selected the complete inventory. No unknown file was omitted from the release inventory.
+
+The harness emits actual assertion results in `junit.xml` and its start/finish journal in `journal.jsonl`. This is a custom Python routing/assertion harness using PyYAML for workflow parsing, **not pytest**, and proves selection behavior only. No production test suite, installed wheel test or release acceptance was executed by this audit. Full plans are retained separately with their acceptance input hashes.
+
+## Actual #148 hosted evidence
+
+GitHub API finds one run at the exact feature HEAD `268025f67841285d105737b5a0d7bd15b1a6f59c`: [tests 39931207892](https://github.com/TakashiSasaki/git-repo-db/actions/runs/39931207892), completed success. Access is absent. The offline job metadata confirms collect/tests/packaging steps **skipped**, with static, smoke, gate and receipt emission successful. The separate stdlib policy job ran its configured detector/runtime-binding tests; those are infrastructure tests, not I6-A runtime acceptance.
+
+The actual offline job log was retrieved using the supported GitHub job-log connector for job **120339650289**. Its emitted receipt ZIP length, BEGIN/END digest and every indexed member length/SHA-256 were checked. Binding: feature `268025...`, hosted merge `72c31e3bd992158ce7cd7c84b419d6dc2d31bd3a`, tree `e5fa0437f19f31fa414d488ec10f483ef68f03fa`; the real feature tree is identical. Manifest: `acceptance_status=development_checks_passed`, `full_acceptance=false`, **0** runtime nodes executed, **0** runtime files selected, **225** files required and unexecuted. Runtime is measured Python 3.12.15 / built-in SQLite 3.53.1. No full release result is inferred.
+
+The first wrapper attempt failed after routing because `gh run view --log` returned exit 0 with an empty output file. That harness failure and initial script remain in `execution.initial.log`, `exit-code.initial.txt` and `audit_ci.initial.py`. The final script uses the nonempty connector-returned job log and passes. No failed product test or policy denial was concealed. The initial CLI outcome is a read-retrieval limitation, not proof that the hosted run lacks logs.
+
+## Environment and limits
+
+Local selected Python is `/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python`, **3.12.14**, loading built-in SQLite **3.53.1**, source ID `2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9`. Actual compile options are in `results.json`. No SQLite component was fetched, compiled, added or replaced. Routing uses no product database and does not assert product WAL/capability acceptance.
+
+GitHub pattern evaluation is restricted to the literal/`*`/`**` patterns actually present; the harness fails if it sees negation/classes/`?`/`+` rather than silently approximating them. All inspected workflows use supported patterns. Actual #148 absence corroborates the relevant unmatched-path result. No Actions job was manually dispatched and no hosted release run was requested.
+
+Recommendation: retain the development green result only within its manifest's scope. Before accepting an integrated tree, explicitly execute the new I6-A cohort locally, validate installed direct/sdist wheels, and require the separately authorized full release acceptance when claiming release readiness. After I6-B completes, freeze its reviewed head and repeat the routing/inventory/required-file audit against the new tests and changed production paths; do not infer coverage from this snapshot.

@@ -1,0 +1,4 @@
+cb532242c7aa86c6af5b6232b71c0906ea38f5c5	refs/heads/main
+91827360c185cbf813277bf32a6627d894b1b20a	refs/heads/review/adr0031-i6b-rereview-20261023
+ededcd83eb2d99a602ba18c8fe3c177125c825ac	refs/heads/review/adr0033-hardening-rereview-20261023
+e7762952e18061de8c8235beaeddf42f20ad9f5a	refs/heads/review/c0-e1-independent-20261023

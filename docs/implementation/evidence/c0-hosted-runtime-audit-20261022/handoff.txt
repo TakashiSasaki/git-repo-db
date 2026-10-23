@@ -1,0 +1,150 @@
+Task C0 — read-only duplicate-remediation audit, 2026-10-22 UTC
+
+Outcome
+The hosted SQLite incompatibility is already corrected by existing open Draft
+PR #133, https://github.com/TakashiSasaki/git-repo-db/pull/133 . No duplicate PR,
+new commit, existing-PR mutation, merge, deployment, release or Provider/catalog
+operation was performed in this task. The I6 branch/PR #134 is untouched.
+One separate Low evidence-policy finding C0-E1 is recorded below. It does not
+invalidate the demonstrated runtime fix or the actual under-2-MiB receipt.
+
+Exact coordinates
+Baseline #132: a022dd3efb9c8116cf9dc0abc13ab1d5bbc88e37
+Baseline tree: 1fa9c2624a3913d97439f16fcd6bc8641c56b17f
+Existing remediation #133 HEAD: f16e5b1713bde9a2f18263a25397c4b450fd5773
+Existing remediation tree: 6bfa580baafa9f6a117b7a0b610c4e65cd031b86
+Hosted test merge: b5f5026b07826b551cbd35ec39ac0ef3ca214a99
+Merge parents: exact #132 HEAD + exact #133 HEAD; effective tree matches #133.
+Evidence-only publication: 14b7901c95b01b1ad2fc162f76e0210abc049a96
+Evidence directory:
+https://github.com/TakashiSasaki/git-repo-db/tree/14b7901c95b01b1ad2fc162f76e0210abc049a96/docs/implementation/evidence/adr0032-host-runtime-20261022
+
+Root cause and candidate selection
+The original setup-python CPython 3.12.15 on Ubuntu 24.04 actually loaded
+SQLite 3.45.1. The unchanged Access guard correctly refused it before collection;
+the missing XML/ledger failure was a consequence of unexecuted tests. That was
+not a run of 79 functional failures. Changing an Ubuntu label is not evidence
+of a compatible Python binding.
+
+#133 selects the ordinary upstream complete python-build-standalone CPython
+3.12.15 Linux x86_64 distribution, release 20261021. GitHub release metadata
+independently reports asset size 34,479,606 bytes and published SHA-256
+6d7521138fd33afddc1ccd08abb007d9a2829e38117c2576f9efdc0ec73ce772,
+exactly matching the manifest. No SQLite component is separately fetched,
+compiled, installed, replaced or selected. The manifest has no SQLite release
+equality gate. Local/hosted measurements need not agree across environments.
+
+Actual hosted selected Python:
+/home/runner/work/_temp/product-python/python/bin/python
+Resolved base:
+/home/runner/work/_temp/product-python/python/bin/python3.12
+Actual SQLite: 3.53.1
+sqlite_source_id():
+2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9
+Built-in _sqlite3 / base executable SHA-256:
+0a97d28d3635c7dfd143de6d00b09c0cb382249c020b28ee33fb4002db1efb9c
+
+All eight actual selected/dependency/docs/final and installed-artifact runtime
+receipts agree on resolved binary, hash, SQLite/source, options and mappings.
+Loader overrides are null; no separate SQLite mapping exists. Unchanged Access
+and P1 guards, STRICT, JSON, FTS5/trigram and file-backed WAL probes pass.
+Installed product connections record FK=1, recursive_triggers=1,
+ignore_check_constraints=0, defer_foreign_keys=0 and deterministic UDF flags.
+The raw sqlite3.connect(':memory:') diagnostic separately records defaults FK=0,
+recursive_triggers=0 and journal_mode=memory; it is not a product connection.
+
+Exact diff and scope
+existing-pr133.patch and change-inventory.json contain the complete 12-file
+diff and current file SHA-256 values. Main mechanism: shared complete-Python
+selection action, explicit interpreter binding in both product workflows and
+dependency syncs, child/artifact identity probes, indexed log evidence, docs,
+and four new stdlib runtime tests. The policy checker only broadens its scan
+to composite actions. All previous policy tests are unchanged. No product source,
+DDL, UDF, safety floor, existing domain assertion, lockfile or runtime dependency
+changes. Existing pytest target selection, offline protections, both artifact
+lanes, failure propagation and ledger refusal remain.
+
+Hosted execution independently reverified from GitHub logs
+Original failure:
+https://github.com/TakashiSasaki/git-repo-db/actions/runs/39795283696
+Fixed source:
+https://github.com/TakashiSasaki/git-repo-db/actions/runs/39799299209
+registry-runtime job 119895098640, completed failure retained.
+Original Access selection: 2,775 nodes, 2,696 pass, 59 call failures,
+20 setup errors, exit 1, no skips.
+Broad regression: 3,137 nodes, 3,058 pass, same 59 failures/20 errors, exit 1.
+Bounded source: I4 217/217 and I5 29/29 pass, exit 0. Selected/JUnit/journal
+starts and each expected phase match with no duplicate nodes or phases.
+Both direct and sdist-derived wheels run outside checkout: runtime/installed
+origin/file hashes, I2/I3 probes, I4 217 and I5 29 pass separately. Both original
+Access smokes fail at the inherited Transfer fence and retain exit 1. The ledger
+now refuses actual failed/error nodes, not missing XML due to unsafe runtime.
+
+Development workflow:
+https://github.com/TakashiSasaki/git-repo-db/actions/runs/39799299296
+Both jobs pass: policy 31 tests plus four runtime-tool tests; offline static,
+schema/doctor checks. Its development manifest is not full product acceptance.
+
+Node-by-node comparison and source/artifact integrity
+failure-comparison.tsv lists every one of the 79 inherited non-successes.
+Compared with #132's frozen run-3594f47/i5/regressions.xml: 0 added, 0 resolved;
+same nodes, phases, stage refusals and complete source frames including lines.
+Four raw assertion messages differ in temporary venv/worker directory paths;
+those differences are retained and are not called byte-identical messages.
+Direct and sdist-derived wheels each: 762,725 bytes, SHA-256
+22809cb1f468d5c57f18e8aea66e218ca261134cf3307043cd988f1ff436f842
+Source sdist: 83,939,983 bytes, SHA-256
+ad39dce879527cab459a6b23789c03f21190fab688a44e888de2c2bb05ab10df
+Git source archive SHA-256:
+0124848fed810e2329482ad8c95e7399d0d42da15fc3b40c769e4a809a674ee0
+Context DDL SHA-256:
+924cc7557fb3da6211ea070185881f5fcaeff9bf52b6e237a361a238a2ea0c6e
+
+Fresh audit verified all 150 published payload members and every indexed member
+of three inner receipts; live retrieved final Access/tests log receipts are
+byte-identical to the published copies. Final Access receipt: 1,632,586 bytes,
+SHA-256 511732209c4fda5c84a61b470ea4f56f271a6bbcb3c5e1842680dd0c6c1ff4b6.
+Verified all 456 recorded source-input SHA-256 values against exact #133 Git blobs.
+published-payload.zip: 5,285,592 bytes, SHA-256
+e38171c16b5e58cfa222f281ea87406645ae85876cc05aa9f34f055749a76176
+The initial gh run view --log requests returned successful empty files. Normal
+gh api run-log ZIP retrieval then supplied the actual logs; empty retrievals
+are preserved and are not evidence that a job or its tests did not execute.
+
+Fresh local verification in this task
+Used the already selected managed Python 3.12.14 / actual SQLite 3.53.1;
+no Python or SQLite was installed. Local product runtime probe and child identity
+check pass; policy reports 0 violations; 31 policy tests and four runtime tests
+pass. These local checks do not claim new product-suite, artifact or hosted
+execution. Previously executed hosted tests were independently re-audited.
+The published coverage register still discloses 2,316 ordinary nodes, one live
+and one benchmark node unexecuted across the earlier implementation task.
+No complete release validation or green Access acceptance is claimed.
+
+Separate non-Author review handoff / C0-E1
+Read-only source: exact #133 HEAD/tree above, without changing #132/#133/#134.
+Existing prior independent review is in the evidence directory. This new audit
+adds a Low reporting-policy finding it did not record:
+scripts/emit_ci_evidence.py:63 permits a 4-MiB compressed log receipt, while
+Accepted ADR 0001 VAL-07 specifies 2 MiB. A clearly synthetic counterexample
+successfully emitted 2,323,560 compressed bytes; see emitter-cap-counterexample.json.
+The real final Access receipt is below 2 MiB, so the demonstrated runtime/test
+execution remains usable. Recommendation: restore the 2-MiB limit, test exact
+limit and limit+1, and retain the uploaded-artifact retrieval fallback. No owner
+exception or product safety change is necessary. Do not treat a policy-lint
+result of zero as proof that every ADR obligation was reviewed.
+
+Reviewer: re-run audit_evidence.py against the frozen Git trees and downloaded
+logs, inspect runtime-facts.json, independently compare node IDs/phases/refusals,
+and recheck C0-E1 with synthetic data. Do not execute code extracted from ZIPs.
+Verify both artifact origins and original smoke failures. If later author changes
+occur, freeze new exact inputs and re-review material differences. No sender,
+receipt hash, existing review PASS or green development badge proves a release.
+
+Audit-helper limits
+Initial helper trials deliberately exposed overly strict raw-message comparison
+and parsing of parameter IDs containing IPv6/ext:: text; corrections preserve
+literal parameter values and separately report temporary-path differences.
+The failed-helper logs are retained and are not attributed to product failures.
+The final audit verifies structural/internal consistency plus live GitHub run/log
+provenance; it is not new independent execution of the entire product test suite.

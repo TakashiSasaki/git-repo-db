@@ -1,0 +1,75 @@
+{
+  "selected": 208,
+  "passed": 208,
+  "failed": 0,
+  "errors": 0,
+  "skipped": 0,
+  "checks": {
+    "selected_unique": true,
+    "junit_identity": true,
+    "journal_starts": true,
+    "ordinary_phases": true,
+    "finish": true
+  },
+  "commands": [
+    {
+      "argv": [
+        "/workspace/task-b-i6-checkout/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-p",
+        "tests.conftest",
+        "-c",
+        "/workspace/task-b-i6-checkout/pyproject.toml",
+        "--rootdir=/workspace/task-b-i6-evidence/probes",
+        "--confcutdir=/workspace/task-b-i6-evidence/probes",
+        "-o",
+        "addopts=",
+        "-o",
+        "junit_family=xunit1",
+        "-q",
+        "--tb=long",
+        "/workspace/task-b-i6-evidence/probes/test_independent_wire.py",
+        "/workspace/task-b-i6-evidence/probes/test_planner_independent.py",
+        "/workspace/task-b-i6-evidence/probes/test_commit_boundary.py",
+        "/workspace/task-b-i6-evidence/probes/test_resolved_wire.py",
+        "--collect-only"
+      ],
+      "cwd": "/workspace/task-b-i6-checkout",
+      "exit": 0,
+      "started_epoch": 1792779677.7284656,
+      "wall_seconds": 1.708329677581787
+    },
+    {
+      "argv": [
+        "/workspace/task-b-i6-checkout/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-p",
+        "tests.conftest",
+        "-c",
+        "/workspace/task-b-i6-checkout/pyproject.toml",
+        "--rootdir=/workspace/task-b-i6-evidence/probes",
+        "--confcutdir=/workspace/task-b-i6-evidence/probes",
+        "-o",
+        "addopts=",
+        "-o",
+        "junit_family=xunit1",
+        "-q",
+        "--tb=long",
+        "/workspace/task-b-i6-evidence/probes/test_independent_wire.py",
+        "/workspace/task-b-i6-evidence/probes/test_planner_independent.py",
+        "/workspace/task-b-i6-evidence/probes/test_commit_boundary.py",
+        "/workspace/task-b-i6-evidence/probes/test_resolved_wire.py",
+        "--junitxml=/workspace/task-b-i6-evidence/normal208/junit.xml",
+        "--journal=/workspace/task-b-i6-evidence/normal208/journal.jsonl",
+        "--basetemp=/workspace/task-b-i6-evidence/normal208-temp"
+      ],
+      "cwd": "/workspace/task-b-i6-checkout",
+      "exit": 0,
+      "started_epoch": 1792779679.4367995,
+      "wall_seconds": 12.538927555084229
+    }
+  ],
+  "exit": 0
+}

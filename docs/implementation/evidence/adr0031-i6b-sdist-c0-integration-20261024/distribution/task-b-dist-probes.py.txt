@@ -1,0 +1,11 @@
+from pathlib import Path
+import os,subprocess,json
+ROOT=Path('/workspace/task-b-dist-checkout');WORK=Path('/workspace/task-b-dist-work');OUT=Path('/workspace/task-b-dist-evidence');outside=WORK/'outside';records=[]
+for form in ['direct','derived']:
+ venv=WORK/(form+'-venv');env=dict(os.environ,PATH=str(venv/'bin')+os.pathsep+os.environ['PATH'],PYTHONPATH=str(outside/'tests/support/network_guard'),GIT_ALLOW_PROTOCOL='file')
+ for k in ['GH_TOKEN','GITHUB_TOKEN','PYTHONHOME']:env.pop(k,None)
+ for stage in ['i2','i3']:
+  name=form+'-'+stage;args=[str(venv/'bin/python'),str(outside/('verify_'+stage+'_distribution.py')),'--output',str(OUT/(name+'.json'))]
+  with (OUT/(name+'.log')).open('w') as f:p=subprocess.run(args,cwd=outside,env=env,stdout=f,stderr=subprocess.STDOUT)
+  records.append({'name':name,'argv':args,'exit_code':p.returncode});print(name,p.returncode,flush=True)
+  (OUT/'support-probe-processes.json').write_text(json.dumps(records,indent=2)+'\n')

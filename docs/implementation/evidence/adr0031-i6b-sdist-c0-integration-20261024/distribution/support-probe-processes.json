@@ -1,0 +1,42 @@
+[
+  {
+    "name": "direct-i2",
+    "argv": [
+      "/workspace/task-b-dist-work/direct-venv/bin/python",
+      "/workspace/task-b-dist-work/outside/verify_i2_distribution.py",
+      "--output",
+      "/workspace/task-b-dist-evidence/direct-i2.json"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "direct-i3",
+    "argv": [
+      "/workspace/task-b-dist-work/direct-venv/bin/python",
+      "/workspace/task-b-dist-work/outside/verify_i3_distribution.py",
+      "--output",
+      "/workspace/task-b-dist-evidence/direct-i3.json"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "derived-i2",
+    "argv": [
+      "/workspace/task-b-dist-work/derived-venv/bin/python",
+      "/workspace/task-b-dist-work/outside/verify_i2_distribution.py",
+      "--output",
+      "/workspace/task-b-dist-evidence/derived-i2.json"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "derived-i3",
+    "argv": [
+      "/workspace/task-b-dist-work/derived-venv/bin/python",
+      "/workspace/task-b-dist-work/outside/verify_i3_distribution.py",
+      "--output",
+      "/workspace/task-b-dist-evidence/derived-i3.json"
+    ],
+    "exit_code": 0
+  }
+]

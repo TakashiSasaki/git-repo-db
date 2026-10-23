@@ -515,3 +515,81 @@ setup stop, an entered assertion and an unentered conditional/downstream line.
 Report statement-line entry only; it does not establish assertion subexpression
 coverage or execution in spawned threads/processes. Diagnostic repetitions stay
 separate from the exactly-once ordinary test aggregate.
+## Inspect actual sdist members after positive selection
+
+Hatchling 1.32.4 still force-includes `.gitignore` and `PKG-INFO` when sdist
+`only-include` lists only package/source metadata. Inspect the built tar, not
+just TOML. Under ADR 0033, the common `scripts/check_sdist_contract.py` checks
+`.gitignore` against its frozen source hash and enumerates generated metadata;
+an unexpected forced file must fail rather than broaden the allowlist silently.
+The evidence and regression cases are in `tests/packaging/test_sdist_contract.py`
+and `docs/implementation/evidence/adr0033-minimal-sdist-20261022/README.md`.
+
+Request a direct source wheel explicitly. A frontend's default combined build
+may itself derive its first wheel from sdist and therefore cannot establish an
+independent direct/derived comparison. Compare complete wheel contents and
+validated RECORD entries, then retain the separate installed-behavior probes.
+This does not authorize removing package data, changing SQLite or treating a
+content-only gate as release acceptance.
+
+When independently challenging archive gates, distinguish logical tar members
+from the complete compressed input. Python `tarfile` consumes PAX extensions
+before yielding a member and stops at the first tar end marker; a successful
+iteration alone does not validate unknown extension payloads, appended archives
+or gzip trailers. Use bounded synthetic PAX values, a second gzip/tar stream,
+and corrupted/truncated trailers as separate negative controls. Independently
+check gzip EOF/integrity, record logical regular-file bytes separately from total
+decompressed/header bytes, and inspect the backend's actual extension keys before
+proposing an allowlist. Never call a raw `gzip.decompress` of an untrusted large
+artifact a production-safe bounded validator. The independent ADR 0033 probes at
+`docs/implementation/evidence/adr0033-independent-review-20261023/archive/`
+reproduce these parser blind spots without extracting files or importing product
+code; their nonzero diagnostic exit reports findings, not an incomplete run.
+
+Validate a finite whole-tar byte budget while inflating, before handing bytes to
+`tarfile`, and inspect fixed-size physical headers before any extension payload
+can be materialized. The hardening checker uses one gzip stream with verified
+CRC/ISIZE/EOF, rejects bytes after the trailer, concatenated streams and nonzero
+tar padding, and records `tar_stream_bytes` and `raw_header_count` separately from regular-file
+bytes and logical members. Its Hatchling 1.32.4 calibration found 159 plain
+headers and no PAX keys, so the current extension allowlist is empty. Do not
+silently permit arbitrary PAX metadata to accommodate future long paths: inspect
+the actual backend output and review bounded keys/values and budgets first.
+Reproduce the positive build and bounded negative controls with:
+
+```sh
+uv run --no-sync python scripts/check_sdist_contract.py --build \
+  --output artifacts/sdist-contract.json
+uv run --no-sync pytest tests/packaging/test_sdist_contract.py \
+  tests/packaging/test_sdist_hardening.py -q
+```
+
+Keep runtime and distribution input fingerprints distinct. README prose is
+excluded from CI's `acceptance_input_hash` but included in the sdist's required
+`source_inventory_sha256`; README changes select a fresh lightweight sdist check
+without forcing full pytest. Matching runtime inputs cannot establish unchanged
+distribution inputs. `tests/unit/test_ci_plan.py` covers that boundary and the
+shared checker/verifier/fixture routes. These checks remain development evidence,
+with independent installed behavior and explicit release qualification separate.
+
+## Preserve line-leading BOMs when recovering strict log receipts
+
+A job-log reader can concatenate chunks with a single U+FEFF at the beginning
+of an interior timestamped line. An anchored digit-only timestamp parser then
+omits an actual DATA record. Preserve the original log and failed length/hash
+result. Permit exactly one optional BOM only before the strict timestamp at line
+start; never strip arbitrary characters, whitespace or BOMs from payloads:
+
+```python
+r'^\ufeff?\d{4}-\d\d-\d\dT\S+ (CI_RECEIPTS_(?:BEGIN|DATA|END)_V1 .+)$'
+```
+
+Keep exactly one BEGIN, ordered DATA and matching END, strict base64, exact
+closed-ZIP byte length/SHA256 and compressed bound, unique members, all index
+lengths/hashes and actual run/feature/checkout/tree binding. Do not infer missing
+chunks or repair payload bytes. The
+[integration evidence](../../../docs/implementation/evidence/adr0031-i6b-sdist-c0-integration-20261024/ci-initial/LESSON.md)
+retains the original missing-record failure and twelve parser controls, including
+rejection of double/payload BOM, missing/duplicated/reordered/corrupt DATA,
+malformed base64, duplicate BEGIN and a tampered inner index with a valid outer
+hash. These controls verify receipt parsing, not product or Release acceptance.

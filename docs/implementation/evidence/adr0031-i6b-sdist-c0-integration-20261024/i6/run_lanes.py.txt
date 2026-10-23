@@ -1,0 +1,59 @@
+from pathlib import Path
+import collections,hashlib,json,os,sqlite3,subprocess,sys,time,xml.etree.ElementTree as ET
+ROOT=Path('/workspace/task-b-i6-checkout');OUT=Path('/workspace/task-b-i6-evidence');BASE='91827360c185cbf813277bf32a6627d894b1b20a'
+def git(*args):return subprocess.check_output(['git',*args],cwd=ROOT,text=True).strip()
+def sha(raw):return hashlib.sha256(raw).hexdigest()
+def save(p,x):p.write_text(json.dumps(x,indent=2,ensure_ascii=False)+'\n')
+probes=OUT/'probes';probes.mkdir(exist_ok=True)
+old=ROOT/'docs/implementation/evidence/adr0031-i6b-rereview-20261023'
+copies=[]
+for name,src in [('test_m01_new.py',old/'planner/test_m01_new.py.txt'),('test_fresh_digest_wire.py',old/'wire/test_fresh_digest_wire.py.txt'),('test_retained_admission.py',old/'admission/test_retained_admission.py.txt')]:
+ (probes/name).write_bytes(src.read_bytes());copies.append({'source':str(src.relative_to(ROOT)),'restored':name,'sha256':sha(src.read_bytes()),'blob':git('rev-parse','HEAD:'+str(src.relative_to(ROOT)))})
+historical=ROOT/'docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/reproduce/probes'
+for src in sorted(historical.glob('*.py.txt')):
+ name=src.name.removesuffix('.txt');(probes/name).write_bytes(src.read_bytes());copies.append({'source':str(src.relative_to(ROOT)),'restored':name,'sha256':sha(src.read_bytes()),'blob':git('rev-parse','HEAD:'+str(src.relative_to(ROOT)))})
+save(OUT/'probe-copies.json',copies)
+paths=git('ls-files','src','tests','scripts','.github/workflows','pyproject.toml','uv.lock').splitlines()
+inputs={p:{'sha256':sha((ROOT/p).read_bytes()),'blob':git('rev-parse','HEAD:'+p)} for p in paths}
+save(OUT/'inputs-before.json',inputs)
+from repo_catalog.adapters.sqlite import p1_schema
+from repo_catalog.domain.resource_stage import TRANSFER_FENCE_DEFINITIONS,has_transfer_fence
+import repo_catalog.domain.exchange as exchange
+with sqlite3.connect(':memory:',isolation_level=None) as db:
+ p1_schema.register_functions(db);p1_schema.configure(db);db.executescript(p1_schema.compose('context'))
+ fences=[list(db.execute('SELECT type,name,tbl_name,sql FROM sqlite_schema WHERE name=?',(name,)).fetchone()) for _,name,_,_ in TRANSFER_FENCE_DEFINITIONS]
+ runtime={'python':sys.version,'executable':sys.executable,'base_executable':sys._base_executable,'sqlite':db.execute('select sqlite_version(),sqlite_source_id()').fetchone(),'options':db.execute('pragma compile_options').fetchall(),'pragmas':{p:db.execute('pragma '+p).fetchall() for p in ['foreign_keys','recursive_triggers','journal_mode','synchronous']},'integrity':db.execute('pragma integrity_check').fetchall(),'fk':db.execute('pragma foreign_key_check').fetchall(),'fences':fences,'expected_fences':TRANSFER_FENCE_DEFINITIONS,'has_fences':has_transfer_fence(db),'exact_fences':tuple(tuple(x) for x in fences)==TRANSFER_FENCE_DEFINITIONS,'composed_schema_sha256':sha(p1_schema.compose('context').encode()),'origins':{'exchange':exchange.__file__,'p1_schema':p1_schema.__file__}}
+ assert runtime['exact_fences'] and runtime['has_fences']
+source=git('ls-files','src/repo_catalog').splitlines()
+protected={p:{'base_blob':git('rev-parse',BASE+':'+p),'candidate_blob':git('rev-parse','HEAD:'+p)} for p in source}
+assert all(x['base_blob']==x['candidate_blob'] for x in protected.values())
+save(OUT/'source-protected.json',protected)
+save(OUT/'binding.json',{'head':git('rev-parse','HEAD'),'tree':git('rev-parse','HEAD^{tree}'),'base154':BASE,'status':git('status','--porcelain'),'runtime':runtime})
+env=dict(os.environ);env.update(PATH=str(Path(sys.executable).parent)+':'+env['PATH'],WIRE_IMPORT_ROOT=str(ROOT/'src'),I6B_EXTRA_SAVED_VECTOR_DIR=str(ROOT/'docs/implementation/evidence/adr0031-i6b-author-20261023/vectors'),TMPDIR=str(OUT/'tmp'),UV_CACHE_DIR='/workspace/task-b-run/uv-cache',REPO_CATALOG_WHEELHOUSE='/workspace/task-b-wheelhouse',PYTHONDONTWRITEBYTECODE='1')
+for name in ('GH_TOKEN','GITHUB_TOKEN','PYTHONHOME'):env.pop(name,None)
+Path(env['TMPDIR']).mkdir(exist_ok=True)
+lanes={'new-m01-38':['test_m01_new.py'],'new-m02-61':['test_fresh_digest_wire.py'],'retained-A13':['test_retained_admission.py'],'normal208':['test_independent_wire.py','test_planner_independent.py','test_commit_boundary.py','test_resolved_wire.py'],'author34':['test_author_extra.py'],'saved33':['test_digest_contract.py','test_planner_work_budget_contract.py']}
+summary={}
+def xmlkey(node):
+ prefix,bracket,param=node.partition('[');parts=prefix.split('::');return ('.'.join([parts[0][:-3].replace('/','.'),*parts[1:-1]]),parts[-1]+bracket+param)
+for name,files in lanes.items():
+ folder=OUT/name;folder.mkdir(exist_ok=False)
+ env.update(WIRE_REFUSALS=str(folder/'wire-refusals.jsonl'),I6B_ADMISSION_OBSERVATIONS=str(folder/'admission-observations.json'),I6B_EXTRA_VECTOR_DIR=str(folder/'vectors'),RR_ADMISSION_OBSERVATIONS=str(folder/'observations.json'))
+ base=[sys.executable,'-m','pytest','-p','tests.conftest','-c',str(ROOT/'pyproject.toml'),'--rootdir='+str(probes),'--confcutdir='+str(probes),'-o','addopts=','-o','junit_family=xunit1','-q','--tb=long',*[str(probes/f) for f in files]]
+ commands=[]
+ for stage,args in [('collection',['--collect-only']),('pytest',['--junitxml='+str(folder/'junit.xml'),'--journal='+str(folder/'journal.jsonl'),'--basetemp='+str(OUT/(name+'-temp'))])]:
+  cmd=base+args;start=time.time()
+  with (folder/(stage+'.log')).open('w') as stream:proc=subprocess.run(cmd,cwd=ROOT,env=env,stdout=stream,stderr=subprocess.STDOUT)
+  commands.append({'argv':cmd,'cwd':str(ROOT),'exit':proc.returncode,'started_epoch':start,'wall_seconds':time.time()-start})
+ selected=[line.strip() for line in (folder/'collection.log').read_text().splitlines() if line.startswith('test_') and '::' in line]
+ cases=ET.parse(folder/'junit.xml').findall('.//testcase')
+ events=[json.loads(line) for line in (folder/'journal.jsonl').read_text().splitlines()]
+ starts=collections.Counter(e['nodeid'] for e in events if e['event']=='start');phases=collections.Counter((e['nodeid'],e['phase'],e['outcome']) for e in events if e['event']=='phase');finish=[e for e in events if e['event']=='finish']
+ checks={'selected_unique':len(selected)==len(set(selected)),'junit_identity':collections.Counter(xmlkey(n) for n in selected)==collections.Counter((c.get('classname'),c.get('name')) for c in cases),'journal_starts':collections.Counter(selected)==starts,'ordinary_phases':phases==collections.Counter((n,p,'passed') for n in selected for p in ['setup','call','teardown']),'finish':len(finish)==1 and finish[0]['exitstatus']==commands[-1]['exit'] and finish[0]['status']=='completed'}
+ result={'selected':len(selected),'passed':sum(not any(c.find(t) is not None for t in ['failure','error','skipped']) for c in cases),'failed':sum(c.find('failure') is not None for c in cases),'errors':sum(c.find('error') is not None for c in cases),'skipped':sum(c.find('skipped') is not None for c in cases),'checks':checks,'commands':commands,'exit':commands[-1]['exit']}
+ save(folder/'execution.json',result);summary[name]=result
+ print(name,result['passed'],result['failed'],result['errors'],result['exit'],checks,flush=True)
+ assert all(checks.values()),name
+save(OUT/'summary.json',summary)
+after={p:{'sha256':sha((ROOT/p).read_bytes()),'blob':git('rev-parse','HEAD:'+p)} for p in paths}
+assert inputs==after;save(OUT/'inputs-after.json',after)

@@ -1,0 +1,11 @@
+{
+  "sha256": {
+    "scripts/emit_ci_evidence.py": "e5358d725e4c32ad290ecc0630fe2f31878f3de0ec6d9f1f42e003a89e6d09fa",
+    "tests/unit/test_emit_ci_evidence.py": "01d99586c996834ab8b71ff0e07a92adcad27a222423e697877728b84ba578cb",
+    ".github/workflows/access-registry.yml": "5511b172ef091b6ac0014fa1a41407937a5632aba9f6bc390897c976d3e2723b",
+    "uv.lock": "38086f956741ff31865ed75f5a1d48997ab518fbc2a2dac8e0e5277cd6a413c9",
+    "pyproject.toml": "13146bd784022dc375f1d425236c2c2d0d9ec3a735c7f3eeae1e65dc41d450ce"
+  },
+  "unchanged_workflow_blob": "f000fab6b4d976f815ea15c76a3ca7a49e61337a",
+  "historical_evidence_diff": ""
+}

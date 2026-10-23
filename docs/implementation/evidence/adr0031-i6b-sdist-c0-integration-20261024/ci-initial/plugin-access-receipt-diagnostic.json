@@ -1,0 +1,11 @@
+{
+  "records": 22144,
+  "begin": "CI_RECEIPTS_BEGIN_V1 65ab48ba62dad77faa806632c268fb642064e08ad59edf27d0bfd6c6b94c017d 1992791",
+  "end": "CI_RECEIPTS_END_V1 65ab48ba62dad77faa806632c268fb642064e08ad59edf27d0bfd6c6b94c017d",
+  "decoded_bytes": 1992701,
+  "decoded_sha256": "47729672a5703b3fa73ce27fe391c9b636e57d87d840aaf5e1c38fc2a59d6eee",
+  "record_lengths": [
+    16,
+    120
+  ]
+}

@@ -1,0 +1,16 @@
+Using Python 3.12.14 environment at: /workspace/task-b-dist-work/derived-minimal-venv
+Resolved 12 packages in 24ms
+Prepared 1 package in 32ms
+Installed 12 packages in 39ms
+ + attrs==26.1.0 (from file:///workspace/task-b-wheelhouse/attrs-26.1.0-py3-none-any.whl)
+ + iniconfig==2.3.0 (from file:///workspace/task-b-wheelhouse/iniconfig-2.3.0-py3-none-any.whl)
+ + jsonschema==4.26.0 (from file:///workspace/task-b-wheelhouse/jsonschema-4.26.0-py3-none-any.whl)
+ + jsonschema-specifications==2025.9.1 (from file:///workspace/task-b-wheelhouse/jsonschema_specifications-2025.9.1-py3-none-any.whl)
+ + packaging==26.3 (from file:///workspace/task-b-wheelhouse/packaging-26.3-py3-none-any.whl)
+ + pluggy==1.6.0 (from file:///workspace/task-b-wheelhouse/pluggy-1.6.0-py3-none-any.whl)
+ + pygments==2.21.0 (from file:///workspace/task-b-wheelhouse/pygments-2.21.0-py3-none-any.whl)
+ + pytest==9.1.1 (from file:///workspace/task-b-wheelhouse/pytest-9.1.1-py3-none-any.whl)
+ + referencing==0.37.0 (from file:///workspace/task-b-wheelhouse/referencing-0.37.0-py3-none-any.whl)
+ + repo-catalog==0.2.0 (from file:///workspace/task-b-dist-work/derived/repo_catalog-0.2.0-py3-none-any.whl)
+ + rpds-py==2026.9.1 (from file:///workspace/task-b-wheelhouse/rpds_py-2026.9.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl)
+ + typing-extensions==4.16.0 (from file:///workspace/task-b-wheelhouse/typing_extensions-4.16.0-py3-none-any.whl)

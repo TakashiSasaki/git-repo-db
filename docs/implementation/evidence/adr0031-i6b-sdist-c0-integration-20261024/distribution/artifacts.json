@@ -1,0 +1,17 @@
+{
+  "derived": {
+    "bytes": 791300,
+    "path": "/workspace/task-b-dist-work/derived/repo_catalog-0.2.0-py3-none-any.whl",
+    "sha256": "2452e419e06eea774805fc89358130538c50fdd313fdb0fb9b82b230e99a39d8"
+  },
+  "direct": {
+    "bytes": 791300,
+    "path": "/workspace/task-b-dist-work/direct/repo_catalog-0.2.0-py3-none-any.whl",
+    "sha256": "2452e419e06eea774805fc89358130538c50fdd313fdb0fb9b82b230e99a39d8"
+  },
+  "sdist": {
+    "bytes": 702494,
+    "path": "/workspace/task-b-dist-work/sdist/repo_catalog-0.2.0.tar.gz",
+    "sha256": "9d228f889f9507cdc5a166b9658e80873fcbd48255c6c958eb90e33954014b54"
+  }
+}

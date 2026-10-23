@@ -1,0 +1,14 @@
+from pathlib import Path
+import hashlib,json,os,subprocess,sys
+ROOT=Path('/workspace/task-b-i6-checkout');OUT=Path('/workspace/task-b-i6-evidence/source-controls');OUT.mkdir(exist_ok=False)
+sys.path.insert(0,str(ROOT));from scripts import verify_i5_offline as e
+os.environ.update(PATH=str(Path(sys.executable).parent)+os.pathsep+os.environ['PATH'],TMPDIR='/workspace/task-b-i6-evidence/tmp',UV_CACHE_DIR='/workspace/task-b-run/uv-cache',REPO_CATALOG_WHEELHOUSE='/workspace/task-b-wheelhouse',I6A_SQL_PROBE_OUTPUT=str(OUT/'sql-observations.json'))
+for key in ('GH_TOKEN','GITHUB_TOKEN','PYTHONHOME'):os.environ.pop(key,None)
+targets=['tests/unit/test_transfer_originals.py','tests/integration/i6a','tests/unit/test_context_fences_i6a.py','tests/unit/test_context_oid_admission_i6a.py']
+before=e.input_hashes();e.write_json(OUT/'inputs-before.json',before)
+selected,result=e.collect(OUT,'collection',targets)
+assert result['exit_code']==0
+result=e.run_cohort(OUT,'controls',selected,0)
+after=e.input_hashes();assert before==after;e.write_json(OUT/'inputs-after.json',after)
+e.write_json(OUT/'binding.json',{'head':e.git('rev-parse','HEAD'),'tree':e.git('rev-parse','HEAD^{tree}'),'cwd':str(ROOT),'python':sys.executable,'targets':targets})
+assert e.cohort_succeeded(result)

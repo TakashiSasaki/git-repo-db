@@ -1,0 +1,55 @@
+{
+  "checks": [
+    {
+      "name": "final-review-lint",
+      "command": [
+        ".venv/bin/ruff",
+        "check",
+        "docs/implementation/evidence/c0-e1-independent-20261023"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.02159294700004466,
+      "log": "final-review-lint.log"
+    },
+    {
+      "name": "final-review-format",
+      "command": [
+        ".venv/bin/ruff",
+        "format",
+        "--check",
+        "docs/implementation/evidence/c0-e1-independent-20261023"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.022662091999904987,
+      "log": "final-review-format.log"
+    },
+    {
+      "name": "reports",
+      "command": [
+        ".venv/bin/python",
+        "scripts/ci_execute.py",
+        "reports"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.554643191000082,
+      "log": "reports.log"
+    },
+    {
+      "name": "runtime-final",
+      "command": [
+        ".venv/bin/python",
+        "scripts/ci_python_runtime.py",
+        "probe",
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/local-runtime-final.json",
+        "--reference",
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/local-runtime.json"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.49140167300004123,
+      "log": "runtime-final.log"
+    }
+  ],
+  "execution_input_files_unchanged": 458,
+  "all_predecessor_tracked_files_unchanged": 3901,
+  "measured_at": "2026-10-23T09:11:39.159228+00:00"
+}

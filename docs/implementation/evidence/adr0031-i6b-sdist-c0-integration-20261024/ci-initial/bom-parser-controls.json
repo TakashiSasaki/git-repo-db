@@ -1,0 +1,61 @@
+{
+  "kind": "external parser countercontrols, not product tests",
+  "testsRun": 12,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "records": [
+    {
+      "node": "__main__.Controls.test_actual_midlog_line_leading_bom_passes",
+      "outcome": "pass"
+    },
+    {
+      "node": "__main__.Controls.test_bad_index_rejected_after_valid_outer_hash",
+      "outcome": "pass"
+    },
+    {
+      "node": "__main__.Controls.test_bom_inside_base64_payload_rejected",
+      "outcome": "pass"
+    },
+    {
+      "node": "__main__.Controls.test_corrupt_valid_base64_rejected_by_digest",
+      "outcome": "pass"
+    },
+    {
+      "node": "__main__.Controls.test_double_line_leading_bom_rejected",
+      "outcome": "pass"
+    },
+    {
+      "node": "__main__.Controls.test_duplicate_begin_rejected",
+      "outcome": "pass"
+    },
+    {
+      "node": "__main__.Controls.test_duplicate_data_rejected",
+      "outcome": "pass"
+    },
+    {
+      "node": "__main__.Controls.test_malformed_base64_rejected",
+      "outcome": "pass"
+    },
+    {
+      "node": "__main__.Controls.test_missing_data_rejected",
+      "outcome": "pass"
+    },
+    {
+      "node": "__main__.Controls.test_normalized_no_bom_same_bytes_passes",
+      "outcome": "pass"
+    },
+    {
+      "node": "__main__.Controls.test_reordered_data_rejected",
+      "outcome": "pass"
+    },
+    {
+      "node": "__main__.Controls.test_single_bom_before_timestamp_of_begin_passes",
+      "outcome": "pass"
+    }
+  ],
+  "input_log_sha256": "357dac430ea95062e68235a4fac6a35f08b33622d503d3a18bbacb6cb8122ad7",
+  "parser_sha256": "bce878dabc26dbc67c5654f1aa07ba386ff92e752dfc19b93608e7794a26f21d",
+  "adjustment": "^\\ufeff?\\d{4}-\\d\\d-\\d\\dT\\S+ (CI_RECEIPTS_(?:BEGIN|DATA|END)_V1 .+)$",
+  "limits": "Only optional single line-leading BOM before actual strict timestamp; bytes inside payload are never stripped. Existing exact lengths/SHA256/end digest/unique members/index sizes/hashes/binding remain required."
+}

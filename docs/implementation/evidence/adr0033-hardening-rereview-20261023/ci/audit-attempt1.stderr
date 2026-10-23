@@ -1,0 +1,13 @@
+Traceback (most recent call last):
+  File "/workspace/adr0033-review/docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/audit_receipts.py", line 210, in <module>
+    main()
+  File "/workspace/adr0033-review/docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/audit_receipts.py", line 142, in main
+    actual = sha((ROOT / path).read_bytes())
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py", line 1019, in read_bytes
+    with self.open(mode='rb') as f:
+         ^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py", line 1013, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/runner/work/git-repo-db/git-repo-db/scripts/verify_i5_offline.py'

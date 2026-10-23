@@ -1,0 +1,53 @@
+"""Single-observation logical counts and allocation peaks, never timing claims."""
+import argparse
+import hashlib
+import json
+import runpy
+import sqlite3
+import sys
+import tracemalloc
+from pathlib import Path
+from unittest.mock import patch
+
+from repo_catalog.domain import context_dependencies as planner, exchange
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--output", type=Path, required=True)
+parser.add_argument("--saved-probe", type=Path, required=True)
+args = parser.parse_args()
+saved = runpy.run_path(str(args.saved_probe))
+measurements = []
+for n in (0, 1, 13, 500):
+    data = saved["valid_context"](n)
+    for budget, prior in ((0, 0), (1, 0), (17, 0), (17, 17), (17, 27)):
+        lengths = []
+        original = exchange._parse_json
+        def observed(text):
+            lengths.append(len(text))
+            return original(text)
+        scope = exchange.ExchangeSelectionScope(all_selected=True, resource_keys=(), source_uuidv4s=(), repository_uuidv4s=(), max_work=budget)
+        with patch.object(exchange, "_parse_json", side_effect=observed):
+            result = planner.plan_context_dependencies(data, scope, prior_work=prior)
+        measurements.append({"resources": n, "rows": sum(map(len, data.values())), "budget": budget, "prior": prior, "work": result.work_units, "parse_calls": len(lengths), "parse_characters": sum(lengths), "emitted": result.emitted_units, "omission_reasons": sorted({x.reason for x in result.omissions})})
+roots = []
+for n in (20_000, 40_000):
+    data = {str(i): [] for i in range(n)}
+    scope = exchange.ExchangeSelectionScope(all_selected=True, max_work=0)
+    calls = []
+    def observed_set(value=()):
+        calls.append(len(value))
+        return set(value)
+    with patch.object(planner, "set", side_effect=observed_set, create=True):
+        tracemalloc.start()
+        try:
+            planner.plan_context_dependencies(data, scope)
+        except exchange.ExchangeError as error:
+            code = error.code
+        else:
+            code = "NO_REFUSAL"
+        current, peak = tracemalloc.get_traced_memory()
+        tracemalloc.stop()
+    roots.append({"root_keys": n, "set_argument_lengths": calls, "code": code, "tracemalloc_current": current, "tracemalloc_peak": peak})
+result = {"runtime": {"python": sys.version, "executable": sys.executable, "sqlite": sqlite3.sqlite_version, "source_id": sqlite3.connect(":memory:").execute("select sqlite_source_id()").fetchone()[0]}, "origins": {m.__name__: {"path": m.__file__, "sha256": hashlib.sha256(Path(m.__file__).read_bytes()).hexdigest()} for m in (planner, exchange)}, "saved_probe_sha256": hashlib.sha256(args.saved_probe.read_bytes()).hexdigest(), "observations": measurements, "roots": roots, "limits": "Logical parse counts and individual tracemalloc peaks excluding preconstructed caller inputs and patch setup; no elapsed-time or statistical benchmark claim. Two roots run serially in each process."}
+args.output.write_text(json.dumps(result, indent=2) + "\n")
+print(json.dumps({"output": str(args.output), "root_observations": roots, "large_input": [x for x in measurements if x["resources"] == 500]}))

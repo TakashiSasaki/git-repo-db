@@ -1,0 +1,31 @@
+{
+  "scope": "complete job log text excluding base64 DATA records; Access decoded receipt text members separately scanned",
+  "patterns": {
+    "github_token_shape": "\\b(?:gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,})\\b",
+    "aws_access_key_shape": "\\bAKIA[A-Z0-9]{16}\\b",
+    "signed_url_query": "https?://[^\\s]+\\?[^\\s]*(?:sig=|X-Amz-Signature=|Signature=)",
+    "unmasked_authorization": "(?i)authorization[:=]\\s*(?:bearer|basic)\\s+(?!\\*\\*\\*)[A-Za-z0-9+/=._-]{20,}"
+  },
+  "job_log_matches": {
+    "tests-policy": {
+      "github_token_shape": 0,
+      "aws_access_key_shape": 0,
+      "signed_url_query": 0,
+      "unmasked_authorization": 0
+    },
+    "tests-offline": {
+      "github_token_shape": 0,
+      "aws_access_key_shape": 0,
+      "signed_url_query": 0,
+      "unmasked_authorization": 0
+    },
+    "access-registry": {
+      "github_token_shape": 0,
+      "aws_access_key_shape": 0,
+      "signed_url_query": 0,
+      "unmasked_authorization": 0
+    }
+  },
+  "decoded_receipt_matches": {},
+  "note": "Pattern scan is bounded and not a universal secret detector; no credentials were requested or request headers retained."
+}

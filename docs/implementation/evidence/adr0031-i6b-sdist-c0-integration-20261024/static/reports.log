@@ -1,0 +1,7 @@
+: error
+{
+  "code": "INVALID_ARGUMENT",
+  "message": "argument command: invalid choice: 'validate-reports' (choose from target, init, doctor, sources, discover, sync, instances, endpoints, repos, snapshots, refs, tree, file, commits, jobs, pr, issue, search, content, coverage, status, cache, db, index, identity, exchange, parser)",
+  "details": {},
+  "retryable": false
+}

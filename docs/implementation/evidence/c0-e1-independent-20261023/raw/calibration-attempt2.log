@@ -1,0 +1,16 @@
+Traceback (most recent call last):
+  File "/workspace/c0-e1-independent/docs/implementation/evidence/c0-e1-independent-20261023/verify_boundaries.py", line 307, in <module>
+    main(args.output)
+  File "/workspace/c0-e1-independent/docs/implementation/evidence/c0-e1-independent-20261023/verify_boundaries.py", line 217, in main
+    detail, body = invoke("fixed", calibrate=True)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/c0-e1-independent/docs/implementation/evidence/c0-e1-independent-20261023/verify_boundaries.py", line 174, in invoke
+    body = body_path.read_bytes()
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py", line 1019, in read_bytes
+    with self.open(mode='rb') as f:
+         ^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py", line 1013, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/tmp/c0-independent-k3tjdhwm/observed.zip'

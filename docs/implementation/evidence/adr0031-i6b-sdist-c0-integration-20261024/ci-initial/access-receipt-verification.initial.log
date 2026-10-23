@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/workspace/task-b-ci-initial/verify_access_receipt.py", line 29, in <module>
+    v=verify(O/'access.log');(O/'access-receipt-verification.json').write_text(json.dumps(v,indent=2)+'\n');print(json.dumps(v,indent=2))
+      ^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/task-b-ci-initial/verify_access_receipt.py", line 14, in verify
+    body=base64.b64decode(''.join(chunks),validate=True);assert sha(body)==digest and len(body)==int(length)<=2097152
+                                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

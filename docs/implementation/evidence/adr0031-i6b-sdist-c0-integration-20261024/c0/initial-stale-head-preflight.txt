@@ -1,0 +1,1 @@
+Before any boundary invocation, HEAD assertion for9f005eb2 failed because root had advanced to final import-order-only fb5d7b5a. No ZIP/test executed. Retained command exit2 indicates absent helper, not product failure. Parent supplied final-head evidence; C0 input invariance verified before adapted execution.

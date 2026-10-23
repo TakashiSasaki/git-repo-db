@@ -1,0 +1,114 @@
+[
+  {
+    "name": "collection",
+    "command": [
+      ".venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/unit/test_emit_ci_evidence.py",
+      "tests/unit/test_ci_plan.py",
+      "tests/unit/test_ci_profile.py",
+      "tests/unit/test_ci_journal.py",
+      "tests/unit/test_ci_python_runtime.py",
+      "tests/unit/test_sqlite_validation_policy.py",
+      "tests/integration/test_ci_execution.py",
+      "-q",
+      "--collect-only"
+    ],
+    "cwd": "/workspace/c0-e1-independent",
+    "exit_code": 0,
+    "wall_seconds": 1.8401824439999928,
+    "log": "collection.log"
+  },
+  {
+    "name": "pytest",
+    "command": [
+      ".venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/unit/test_emit_ci_evidence.py",
+      "tests/unit/test_ci_plan.py",
+      "tests/unit/test_ci_profile.py",
+      "tests/unit/test_ci_journal.py",
+      "tests/unit/test_ci_python_runtime.py",
+      "tests/unit/test_sqlite_validation_policy.py",
+      "tests/integration/test_ci_execution.py",
+      "-q",
+      "-o",
+      "junit_family=xunit1",
+      "--junitxml",
+      "/workspace/c0-e1-independent/docs/implementation/evidence/c0-e1-independent-20261023/raw/tests.xml",
+      "--journal",
+      "/workspace/c0-e1-independent/docs/implementation/evidence/c0-e1-independent-20261023/raw/journal.jsonl"
+    ],
+    "cwd": "/workspace/c0-e1-independent",
+    "exit_code": 0,
+    "wall_seconds": 57.53512721300001,
+    "log": "pytest.log"
+  },
+  {
+    "name": "ruff-lint",
+    "command": [
+      ".venv/bin/ruff",
+      "check",
+      "src",
+      "tests",
+      "scripts"
+    ],
+    "cwd": "/workspace/c0-e1-independent",
+    "exit_code": 0,
+    "wall_seconds": 0.17540199100005793,
+    "log": "ruff-lint.log"
+  },
+  {
+    "name": "ruff-format",
+    "command": [
+      ".venv/bin/ruff",
+      "format",
+      "--check",
+      "src",
+      "tests",
+      "scripts"
+    ],
+    "cwd": "/workspace/c0-e1-independent",
+    "exit_code": 0,
+    "wall_seconds": 0.24823578800010182,
+    "log": "ruff-format.log"
+  },
+  {
+    "name": "sqlite-policy",
+    "command": [
+      ".venv/bin/python",
+      "scripts/check_sqlite_validation_policy.py"
+    ],
+    "cwd": "/workspace/c0-e1-independent",
+    "exit_code": 0,
+    "wall_seconds": 0.7695645840000225,
+    "log": "sqlite-policy.log"
+  },
+  {
+    "name": "review-lint",
+    "command": [
+      ".venv/bin/ruff",
+      "check",
+      "/workspace/c0-e1-independent/docs/implementation/evidence/c0-e1-independent-20261023"
+    ],
+    "cwd": "/workspace/c0-e1-independent",
+    "exit_code": 0,
+    "wall_seconds": 0.02845885699991868,
+    "log": "review-lint.log"
+  },
+  {
+    "name": "review-format",
+    "command": [
+      ".venv/bin/ruff",
+      "format",
+      "--check",
+      "/workspace/c0-e1-independent/docs/implementation/evidence/c0-e1-independent-20261023"
+    ],
+    "cwd": "/workspace/c0-e1-independent",
+    "exit_code": 0,
+    "wall_seconds": 0.01534521799999311,
+    "log": "review-format.log"
+  }
+]

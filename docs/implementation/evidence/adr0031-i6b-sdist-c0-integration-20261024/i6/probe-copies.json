@@ -1,0 +1,62 @@
+[
+  {
+    "source": "docs/implementation/evidence/adr0031-i6b-rereview-20261023/planner/test_m01_new.py.txt",
+    "restored": "test_m01_new.py",
+    "sha256": "52865c1c59314a523adbb36099da0109b80034874e54637404d92c615f96a302",
+    "blob": "3a7cf972889420f2d3ea12f102993ae5bbbb280a"
+  },
+  {
+    "source": "docs/implementation/evidence/adr0031-i6b-rereview-20261023/wire/test_fresh_digest_wire.py.txt",
+    "restored": "test_fresh_digest_wire.py",
+    "sha256": "8b61910bc759429baea761a954e63e551ab8f3dee15dd48d7ed3c494577d6ebb",
+    "blob": "9533fce453a4e5be12df032d9ed1400940f52547"
+  },
+  {
+    "source": "docs/implementation/evidence/adr0031-i6b-rereview-20261023/admission/test_retained_admission.py.txt",
+    "restored": "test_retained_admission.py",
+    "sha256": "87abba86d707e00556014781aa2720e30068d642a6191529fb001ff4e2b4156d",
+    "blob": "8f6dd344068531c7012a1444c88f1803e616605d"
+  },
+  {
+    "source": "docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/reproduce/probes/test_author_extra.py.txt",
+    "restored": "test_author_extra.py",
+    "sha256": "bc77c792f8f4a7dc3ad472d6fa9325a274bdd8895822a328556b260b55663ffd",
+    "blob": "b9c06770deefee12f32065554e3ba432465bb500"
+  },
+  {
+    "source": "docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/reproduce/probes/test_commit_boundary.py.txt",
+    "restored": "test_commit_boundary.py",
+    "sha256": "139c253eee306888a34c4feba791feeb972088a040a4818a64be546271c8d4fe",
+    "blob": "5e318889ea984ac96563e720f34d7826bcd17aef"
+  },
+  {
+    "source": "docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/reproduce/probes/test_digest_contract.py.txt",
+    "restored": "test_digest_contract.py",
+    "sha256": "855d5fc32bbff94890ce838a6e8cb27694eeaac218353f4407263ad75537ab74",
+    "blob": "1fa33a2702981dc1fb5ce322495dbd070f94e34c"
+  },
+  {
+    "source": "docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/reproduce/probes/test_independent_wire.py.txt",
+    "restored": "test_independent_wire.py",
+    "sha256": "d274adc397b1c8e4b7f52ebcc0fb3cb6dac0515e1c452368bdb78895c8bb2c48",
+    "blob": "eab631d3d612ba9698cb0d645340e1e27d758159"
+  },
+  {
+    "source": "docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/reproduce/probes/test_planner_independent.py.txt",
+    "restored": "test_planner_independent.py",
+    "sha256": "e9ffcd3aa273c647788c1477cb28524ea8ab6a1485fda120db52e754696ff59e",
+    "blob": "fea48fc6880683f2ab60365cf579f7231d41b9b7"
+  },
+  {
+    "source": "docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/reproduce/probes/test_planner_work_budget_contract.py.txt",
+    "restored": "test_planner_work_budget_contract.py",
+    "sha256": "dec5aa650b847b18aee223e3ab79fe41faf644b620d12edfa7cf3b83c375555b",
+    "blob": "4b50504a969701821fdc05b706fe29b1b10a23d6"
+  },
+  {
+    "source": "docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/reproduce/probes/test_resolved_wire.py.txt",
+    "restored": "test_resolved_wire.py",
+    "sha256": "536de7d78526f6d779d8a6e3ec3c0d8b4a02356b1ca122807e963803d94ffa20",
+    "blob": "1631b54b65e0384315fc50a435c07e22394399de"
+  }
+]

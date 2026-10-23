@@ -1,0 +1,642 @@
+{
+  "src/repo_catalog/__init__.py": {
+    "base_blob": "2a035a7d8fe40ce664563b68af8a9acdbdd9c326",
+    "candidate_blob": "2a035a7d8fe40ce664563b68af8a9acdbdd9c326"
+  },
+  "src/repo_catalog/__main__.py": {
+    "base_blob": "08a166142eeb9d5584f9b89e3c6827b7ba600f37",
+    "candidate_blob": "08a166142eeb9d5584f9b89e3c6827b7ba600f37"
+  },
+  "src/repo_catalog/adapters/filesystem/access_executor.py": {
+    "base_blob": "165665d521c406b027b13170d5b20aff0cb9b16c",
+    "candidate_blob": "165665d521c406b027b13170d5b20aff0cb9b16c"
+  },
+  "src/repo_catalog/adapters/filesystem/atomic_publish.py": {
+    "base_blob": "7530f196e72d7f91ee26ceff11087f31612bcce7",
+    "candidate_blob": "7530f196e72d7f91ee26ceff11087f31612bcce7"
+  },
+  "src/repo_catalog/adapters/filesystem/cache.py": {
+    "base_blob": "49a8fe32682076828f471b0f8b66c1a173bdf6e6",
+    "candidate_blob": "49a8fe32682076828f471b0f8b66c1a173bdf6e6"
+  },
+  "src/repo_catalog/adapters/filesystem/capacity.py": {
+    "base_blob": "e958f864b411429e888692cc2c1d2d83de642912",
+    "candidate_blob": "e958f864b411429e888692cc2c1d2d83de642912"
+  },
+  "src/repo_catalog/adapters/filesystem/locks.py": {
+    "base_blob": "11886c8c4a9755062c11e478e27aadd6cc35ef5f",
+    "candidate_blob": "11886c8c4a9755062c11e478e27aadd6cc35ef5f"
+  },
+  "src/repo_catalog/adapters/git/access_native.py": {
+    "base_blob": "dfe5900ea727d96450abafa3405bdcdcc0cac74a",
+    "candidate_blob": "dfe5900ea727d96450abafa3405bdcdcc0cac74a"
+  },
+  "src/repo_catalog/adapters/git/importer.py": {
+    "base_blob": "d041f2d91e935b4ced4b56801cc0b6ad2165149e",
+    "candidate_blob": "d041f2d91e935b4ced4b56801cc0b6ad2165149e"
+  },
+  "src/repo_catalog/adapters/git/native.py": {
+    "base_blob": "af5c2eca5264b6a5bc9caf6b6ef276cca570d9d4",
+    "candidate_blob": "af5c2eca5264b6a5bc9caf6b6ef276cca570d9d4"
+  },
+  "src/repo_catalog/adapters/git/notes.py": {
+    "base_blob": "39f15614868b9d8f7513f24440a55fd4710292cd",
+    "candidate_blob": "39f15614868b9d8f7513f24440a55fd4710292cd"
+  },
+  "src/repo_catalog/adapters/git/parsing.py": {
+    "base_blob": "a7b99145dd0131cdb369534d22d6aafeb03252c7",
+    "candidate_blob": "a7b99145dd0131cdb369534d22d6aafeb03252c7"
+  },
+  "src/repo_catalog/adapters/git/runner.py": {
+    "base_blob": "b1a1306a9e3712cc35c95f8ea873deb855ec5203",
+    "candidate_blob": "b1a1306a9e3712cc35c95f8ea873deb855ec5203"
+  },
+  "src/repo_catalog/adapters/github/collector.py": {
+    "base_blob": "e49764b5247a080295d5a5efee6683fe917c36be",
+    "candidate_blob": "e49764b5247a080295d5a5efee6683fe917c36be"
+  },
+  "src/repo_catalog/adapters/github/current_parser.py": {
+    "base_blob": "263520593557304fb503a1b28e2a8858d334445b",
+    "candidate_blob": "263520593557304fb503a1b28e2a8858d334445b"
+  },
+  "src/repo_catalog/adapters/github/identity.py": {
+    "base_blob": "1e156f7fa809a08ace3dbff6083321bfaebf2c06",
+    "candidate_blob": "1e156f7fa809a08ace3dbff6083321bfaebf2c06"
+  },
+  "src/repo_catalog/adapters/github/persistence.py": {
+    "base_blob": "9752e3e0c5c2825f7e90987961dc636ec1366380",
+    "candidate_blob": "9752e3e0c5c2825f7e90987961dc636ec1366380"
+  },
+  "src/repo_catalog/adapters/github/production_intake.py": {
+    "base_blob": "a8fe0f21b214114a61d29c3dd5378b7c7f4d65d8",
+    "candidate_blob": "a8fe0f21b214114a61d29c3dd5378b7c7f4d65d8"
+  },
+  "src/repo_catalog/adapters/github/transport.py": {
+    "base_blob": "40d55f8e60d9d3d0175c6146b354b2fefc8c493f",
+    "candidate_blob": "40d55f8e60d9d3d0175c6146b354b2fefc8c493f"
+  },
+  "src/repo_catalog/adapters/recording.py": {
+    "base_blob": "22a16bb4416d13a3128cc07adcb090bdbd2f4ff3",
+    "candidate_blob": "22a16bb4416d13a3128cc07adcb090bdbd2f4ff3"
+  },
+  "src/repo_catalog/adapters/sqlite/access_backup.py": {
+    "base_blob": "e75aec4027b3e28201de18446177407ce1c6c493",
+    "candidate_blob": "e75aec4027b3e28201de18446177407ce1c6c493"
+  },
+  "src/repo_catalog/adapters/sqlite/access_connections.py": {
+    "base_blob": "e88ad11f804b9de3e486669f6cdb803aaf8cbb2a",
+    "candidate_blob": "e88ad11f804b9de3e486669f6cdb803aaf8cbb2a"
+  },
+  "src/repo_catalog/adapters/sqlite/access_ddl/connections.sql": {
+    "base_blob": "3b41c2bff488c3808764888edd30a928813affea",
+    "candidate_blob": "3b41c2bff488c3808764888edd30a928813affea"
+  },
+  "src/repo_catalog/adapters/sqlite/access_ddl/registry.sql": {
+    "base_blob": "1b77e9ff539479f4296ebad12932ca1039f03f70",
+    "candidate_blob": "1b77e9ff539479f4296ebad12932ca1039f03f70"
+  },
+  "src/repo_catalog/adapters/sqlite/access_registry.py": {
+    "base_blob": "b56e50b50057b010e57a08a4246fc2abb2b8d3af",
+    "candidate_blob": "b56e50b50057b010e57a08a4246fc2abb2b8d3af"
+  },
+  "src/repo_catalog/adapters/sqlite/access_schema.py": {
+    "base_blob": "324bd95d83918d1e159f3c5142bd4df4483551ea",
+    "candidate_blob": "324bd95d83918d1e159f3c5142bd4df4483551ea"
+  },
+  "src/repo_catalog/adapters/sqlite/acquisition.py": {
+    "base_blob": "e141715672a167257b79ff9b32a25fc95ac5d005",
+    "candidate_blob": "e141715672a167257b79ff9b32a25fc95ac5d005"
+  },
+  "src/repo_catalog/adapters/sqlite/cas_integrity.py": {
+    "base_blob": "f2aff9c7d328d8bd1dd530321b279d47c429cb5b",
+    "candidate_blob": "f2aff9c7d328d8bd1dd530321b279d47c429cb5b"
+  },
+  "src/repo_catalog/adapters/sqlite/code_assessments.py": {
+    "base_blob": "b71d8fe9fff9901691dddeeb1af4d4cfd575b28d",
+    "candidate_blob": "b71d8fe9fff9901691dddeeb1af4d4cfd575b28d"
+  },
+  "src/repo_catalog/adapters/sqlite/context_admission.py": {
+    "base_blob": "7ebd8a2bdd73843e4f4cd2605eb15d04094de87f",
+    "candidate_blob": "7ebd8a2bdd73843e4f4cd2605eb15d04094de87f"
+  },
+  "src/repo_catalog/adapters/sqlite/coverage.py": {
+    "base_blob": "cf709030c423ca37b1b5397481531be964cc5e59",
+    "candidate_blob": "cf709030c423ca37b1b5397481531be964cc5e59"
+  },
+  "src/repo_catalog/adapters/sqlite/current_api.py": {
+    "base_blob": "5f4f76cfc593270227ed4a5042efa3bda972ae45",
+    "candidate_blob": "5f4f76cfc593270227ed4a5042efa3bda972ae45"
+  },
+  "src/repo_catalog/adapters/sqlite/current_collections.py": {
+    "base_blob": "1d062a0a9f1c05403eb0cdea056cb4ca703dfd9f",
+    "candidate_blob": "1d062a0a9f1c05403eb0cdea056cb4ca703dfd9f"
+  },
+  "src/repo_catalog/adapters/sqlite/current_resources.py": {
+    "base_blob": "b699808957e7b01cf35a9a588b56253a6efc461b",
+    "candidate_blob": "b699808957e7b01cf35a9a588b56253a6efc461b"
+  },
+  "src/repo_catalog/adapters/sqlite/exchange.py": {
+    "base_blob": "21d215919943c0e216828233e8b6238ff6a340cd",
+    "candidate_blob": "21d215919943c0e216828233e8b6238ff6a340cd"
+  },
+  "src/repo_catalog/adapters/sqlite/git_core.py": {
+    "base_blob": "84cc65f38f5b960a100608d0d0babd843f96305a",
+    "candidate_blob": "84cc65f38f5b960a100608d0d0babd843f96305a"
+  },
+  "src/repo_catalog/adapters/sqlite/git_intrinsic.py": {
+    "base_blob": "bbd6373afd70ee16be12727c3b11f9143b02cfc1",
+    "candidate_blob": "bbd6373afd70ee16be12727c3b11f9143b02cfc1"
+  },
+  "src/repo_catalog/adapters/sqlite/identity_relations.py": {
+    "base_blob": "8384d8d395899859aa24c148de29416b50b882a4",
+    "candidate_blob": "8384d8d395899859aa24c148de29416b50b882a4"
+  },
+  "src/repo_catalog/adapters/sqlite/index.py": {
+    "base_blob": "fe8c0d2a98fa734bf3ea6a2b2bee7e26c3d53d14",
+    "candidate_blob": "fe8c0d2a98fa734bf3ea6a2b2bee7e26c3d53d14"
+  },
+  "src/repo_catalog/adapters/sqlite/json_contracts.py": {
+    "base_blob": "9854c33c810631f03631d20b649a2ee5badee827",
+    "candidate_blob": "9854c33c810631f03631d20b649a2ee5badee827"
+  },
+  "src/repo_catalog/adapters/sqlite/notes.py": {
+    "base_blob": "552710b9e8554d6c8e28635b0ec7de67ce320efa",
+    "candidate_blob": "552710b9e8554d6c8e28635b0ec7de67ce320efa"
+  },
+  "src/repo_catalog/adapters/sqlite/p1_context.py": {
+    "base_blob": "bc1d3ec7e08a467fb93c53da4ab24109a5f4037c",
+    "candidate_blob": "bc1d3ec7e08a467fb93c53da4ab24109a5f4037c"
+  },
+  "src/repo_catalog/adapters/sqlite/p1_coordination.py": {
+    "base_blob": "f007974b42b013e1661a8525a4b05ba17cba7db3",
+    "candidate_blob": "f007974b42b013e1661a8525a4b05ba17cba7db3"
+  },
+  "src/repo_catalog/adapters/sqlite/p1_core.py": {
+    "base_blob": "98a16dd756e219fe3640264d58fbbd704a0838b4",
+    "candidate_blob": "98a16dd756e219fe3640264d58fbbd704a0838b4"
+  },
+  "src/repo_catalog/adapters/sqlite/p1_ddl/context.sql": {
+    "base_blob": "e25378562934d96b0b5d45daf50716e0055a655d",
+    "candidate_blob": "e25378562934d96b0b5d45daf50716e0055a655d"
+  },
+  "src/repo_catalog/adapters/sqlite/p1_ddl/core.sql": {
+    "base_blob": "4f2327e48f383c1f29ff61d9286146d66b435684",
+    "candidate_blob": "4f2327e48f383c1f29ff61d9286146d66b435684"
+  },
+  "src/repo_catalog/adapters/sqlite/p1_ddl/coverage.sql": {
+    "base_blob": "17247f2ae453d1594c1309ddc2359b47faee33dd",
+    "candidate_blob": "17247f2ae453d1594c1309ddc2359b47faee33dd"
+  },
+  "src/repo_catalog/adapters/sqlite/p1_ddl/fingerprints.json": {
+    "base_blob": "ff421c5d3c03f9c85a49f0424b42db57f9c059c3",
+    "candidate_blob": "ff421c5d3c03f9c85a49f0424b42db57f9c059c3"
+  },
+  "src/repo_catalog/adapters/sqlite/p1_ddl/operational.sql": {
+    "base_blob": "35c38000c1e29f756c300828b351fe33083ffad7",
+    "candidate_blob": "35c38000c1e29f756c300828b351fe33083ffad7"
+  },
+  "src/repo_catalog/adapters/sqlite/p1_ddl/search.sql": {
+    "base_blob": "4b2f7165e2397fcfbe84f2ad26b28dce5a812db2",
+    "candidate_blob": "4b2f7165e2397fcfbe84f2ad26b28dce5a812db2"
+  },
+  "src/repo_catalog/adapters/sqlite/p1_schema.py": {
+    "base_blob": "923d5f65df84ed40fbb488d68b546e6c37c24b27",
+    "candidate_blob": "923d5f65df84ed40fbb488d68b546e6c37c24b27"
+  },
+  "src/repo_catalog/adapters/sqlite/payloads.py": {
+    "base_blob": "5cb3c2e9397d9f040f451e7e9056a265490a0a2e",
+    "candidate_blob": "5cb3c2e9397d9f040f451e7e9056a265490a0a2e"
+  },
+  "src/repo_catalog/adapters/sqlite/production_context.py": {
+    "base_blob": "c121a87e8584a167ed3abf3a4442522ca7d1f9a9",
+    "candidate_blob": "c121a87e8584a167ed3abf3a4442522ca7d1f9a9"
+  },
+  "src/repo_catalog/adapters/sqlite/production_search.py": {
+    "base_blob": "8db6ef332642d89047f0687dcce803d1e3c8030a",
+    "candidate_blob": "8db6ef332642d89047f0687dcce803d1e3c8030a"
+  },
+  "src/repo_catalog/adapters/sqlite/recovery.py": {
+    "base_blob": "65b04b3496d47605501e677f8e756aac51983da6",
+    "candidate_blob": "65b04b3496d47605501e677f8e756aac51983da6"
+  },
+  "src/repo_catalog/adapters/sqlite/recovery_budget.py": {
+    "base_blob": "b24bbdb7347c022cc0d57a5c099c1994c5ecc0c5",
+    "candidate_blob": "b24bbdb7347c022cc0d57a5c099c1994c5ecc0c5"
+  },
+  "src/repo_catalog/adapters/sqlite/recovery_validation.py": {
+    "base_blob": "77720acbfd20802b912de1c82f0ab797cac5e06b",
+    "candidate_blob": "77720acbfd20802b912de1c82f0ab797cac5e06b"
+  },
+  "src/repo_catalog/adapters/sqlite/schema.py": {
+    "base_blob": "df01d8fe104939a86e16982025d8fbc08ec317c7",
+    "candidate_blob": "df01d8fe104939a86e16982025d8fbc08ec317c7"
+  },
+  "src/repo_catalog/adapters/sqlite/store.py": {
+    "base_blob": "a9961e70ff6240344799d1f0adcf595bd8267932",
+    "candidate_blob": "a9961e70ff6240344799d1f0adcf595bd8267932"
+  },
+  "src/repo_catalog/adapters/sqlite/target.py": {
+    "base_blob": "1e3c101258f3f6b5a1057b1d6f303cd27c8599b2",
+    "candidate_blob": "1e3c101258f3f6b5a1057b1d6f303cd27c8599b2"
+  },
+  "src/repo_catalog/adapters/sqlite/text_bodies.py": {
+    "base_blob": "c1cdc67e4eccb4517bea1805f31aa9836d1ca20d",
+    "candidate_blob": "c1cdc67e4eccb4517bea1805f31aa9836d1ca20d"
+  },
+  "src/repo_catalog/adapters/sqlite/transactions.py": {
+    "base_blob": "65505d0f9b3344e401248bc8dac8a9ebf2340b87",
+    "candidate_blob": "65505d0f9b3344e401248bc8dac8a9ebf2340b87"
+  },
+  "src/repo_catalog/application/access_acquisition.py": {
+    "base_blob": "07ccc7056b0a5f8bf9401f94f8edfd8938bc3d5d",
+    "candidate_blob": "07ccc7056b0a5f8bf9401f94f8edfd8938bc3d5d"
+  },
+  "src/repo_catalog/application/access_maintenance.py": {
+    "base_blob": "081dd5fe6831994b846b6b757a149ea237278650",
+    "candidate_blob": "081dd5fe6831994b846b6b757a149ea237278650"
+  },
+  "src/repo_catalog/application/access_workflow.py": {
+    "base_blob": "4df3c564d65347eb8c77eb0adba49a6f3da40854",
+    "candidate_blob": "4df3c564d65347eb8c77eb0adba49a6f3da40854"
+  },
+  "src/repo_catalog/application/acquisition.py": {
+    "base_blob": "9077bc9b7419d97ac3e662efc3301499e8e71555",
+    "candidate_blob": "9077bc9b7419d97ac3e662efc3301499e8e71555"
+  },
+  "src/repo_catalog/application/catalog_validation.py": {
+    "base_blob": "a4c68ac0b0550e343508a9a18ea9a6c5c736e4b6",
+    "candidate_blob": "a4c68ac0b0550e343508a9a18ea9a6c5c736e4b6"
+  },
+  "src/repo_catalog/application/collection_service.py": {
+    "base_blob": "23cf45f41d090e6e3b4aabd28a17f5842db13a52",
+    "candidate_blob": "23cf45f41d090e6e3b4aabd28a17f5842db13a52"
+  },
+  "src/repo_catalog/application/contracts.py": {
+    "base_blob": "1e0c1b54f62b752200427f22fe76afe528a6c55a",
+    "candidate_blob": "1e0c1b54f62b752200427f22fe76afe528a6c55a"
+  },
+  "src/repo_catalog/application/exchange.py": {
+    "base_blob": "a47a6895962fad5ba789a091c9bad2789164b2b5",
+    "candidate_blob": "a47a6895962fad5ba789a091c9bad2789164b2b5"
+  },
+  "src/repo_catalog/application/exchange_service.py": {
+    "base_blob": "acee4434e3e7b90b53ac339010ceff190ae0f830",
+    "candidate_blob": "acee4434e3e7b90b53ac339010ceff190ae0f830"
+  },
+  "src/repo_catalog/application/git_query_context.py": {
+    "base_blob": "8a55913fa5198efd6a759ff179f1e1fc8f612574",
+    "candidate_blob": "8a55913fa5198efd6a759ff179f1e1fc8f612574"
+  },
+  "src/repo_catalog/application/identity_service.py": {
+    "base_blob": "560757f28e5d5e90d4808536b65a8c58bb60e096",
+    "candidate_blob": "560757f28e5d5e90d4808536b65a8c58bb60e096"
+  },
+  "src/repo_catalog/application/issue_queries.py": {
+    "base_blob": "a76b244b70d3e7419b11ff00fb8d2421ef771617",
+    "candidate_blob": "a76b244b70d3e7419b11ff00fb8d2421ef771617"
+  },
+  "src/repo_catalog/application/job_plans.py": {
+    "base_blob": "cd3a7fcc87ceb5149bbcc648c215c7cc10cdaabf",
+    "candidate_blob": "cd3a7fcc87ceb5149bbcc648c215c7cc10cdaabf"
+  },
+  "src/repo_catalog/application/job_service.py": {
+    "base_blob": "96fe706fe2ae3ea1c372469184cf1e050d20c49b",
+    "candidate_blob": "96fe706fe2ae3ea1c372469184cf1e050d20c49b"
+  },
+  "src/repo_catalog/application/maintenance_service.py": {
+    "base_blob": "921fa28453838c11b61420015b33b6ba85667ad3",
+    "candidate_blob": "921fa28453838c11b61420015b33b6ba85667ad3"
+  },
+  "src/repo_catalog/application/notes.py": {
+    "base_blob": "b5d5575c84781b3e3325dc161878896112e8bebe",
+    "candidate_blob": "b5d5575c84781b3e3325dc161878896112e8bebe"
+  },
+  "src/repo_catalog/application/parser_service.py": {
+    "base_blob": "3fab02089c14437ed5da5ee95f64d44861573e01",
+    "candidate_blob": "3fab02089c14437ed5da5ee95f64d44861573e01"
+  },
+  "src/repo_catalog/application/parsing_service.py": {
+    "base_blob": "0c9b22860a79556156ed47e0ba73e61a9fca252f",
+    "candidate_blob": "0c9b22860a79556156ed47e0ba73e61a9fca252f"
+  },
+  "src/repo_catalog/application/ports.py": {
+    "base_blob": "4358df2b910e3f88527493f4cdcfc708167ed3ee",
+    "candidate_blob": "4358df2b910e3f88527493f4cdcfc708167ed3ee"
+  },
+  "src/repo_catalog/application/pr_queries.py": {
+    "base_blob": "54dfcb8aa1de136906d66408c444b4369c1dd18d",
+    "candidate_blob": "54dfcb8aa1de136906d66408c444b4369c1dd18d"
+  },
+  "src/repo_catalog/application/production_query.py": {
+    "base_blob": "e730c2b64051319a3c50d0b9361671c22a283406",
+    "candidate_blob": "e730c2b64051319a3c50d0b9361671c22a283406"
+  },
+  "src/repo_catalog/application/query_service.py": {
+    "base_blob": "8e4032883c0545b57e02efb3a26cb330d6875b60",
+    "candidate_blob": "8e4032883c0545b57e02efb3a26cb330d6875b60"
+  },
+  "src/repo_catalog/application/recovery.py": {
+    "base_blob": "91e54e5acce1dd85bb8028c41ca15ce4665767d6",
+    "candidate_blob": "91e54e5acce1dd85bb8028c41ca15ce4665767d6"
+  },
+  "src/repo_catalog/application/repository_identity.py": {
+    "base_blob": "172f6a264874a6375c36455319f8d96896dcc663",
+    "candidate_blob": "172f6a264874a6375c36455319f8d96896dcc663"
+  },
+  "src/repo_catalog/application/source_service.py": {
+    "base_blob": "9f4653526e1118ed2d0fd314f3dc911e76170b63",
+    "candidate_blob": "9f4653526e1118ed2d0fd314f3dc911e76170b63"
+  },
+  "src/repo_catalog/application/target_queries.py": {
+    "base_blob": "4d9f47b0abefbdad4cc41dce67f3d89791d625e0",
+    "candidate_blob": "4d9f47b0abefbdad4cc41dce67f3d89791d625e0"
+  },
+  "src/repo_catalog/cli/access_acquisition.py": {
+    "base_blob": "6bb9b84ea9dfae2527f5a94496c6d4bb0e7a93ae",
+    "candidate_blob": "6bb9b84ea9dfae2527f5a94496c6d4bb0e7a93ae"
+  },
+  "src/repo_catalog/cli/access_maintenance.py": {
+    "base_blob": "d26a94e6c733fd7939cfa16c45ea8357ca19fad0",
+    "candidate_blob": "d26a94e6c733fd7939cfa16c45ea8357ca19fad0"
+  },
+  "src/repo_catalog/cli/access_workflow.py": {
+    "base_blob": "7f4d5ab9d3254869c87c5f2a21405483e0a6e4fb",
+    "candidate_blob": "7f4d5ab9d3254869c87c5f2a21405483e0a6e4fb"
+  },
+  "src/repo_catalog/cli/main.py": {
+    "base_blob": "19a74bd815cbdab1fde231926f17f9ba9bd569b6",
+    "candidate_blob": "19a74bd815cbdab1fde231926f17f9ba9bd569b6"
+  },
+  "src/repo_catalog/cli/presenters.py": {
+    "base_blob": "3f0e52bfb53d6fa7c749ba4154b20ef576002d7d",
+    "candidate_blob": "3f0e52bfb53d6fa7c749ba4154b20ef576002d7d"
+  },
+  "src/repo_catalog/cli/production_query.py": {
+    "base_blob": "3ef7c43ba9fd88f39f35a3a41e5a3eef86b892ee",
+    "candidate_blob": "3ef7c43ba9fd88f39f35a3a41e5a3eef86b892ee"
+  },
+  "src/repo_catalog/config.py": {
+    "base_blob": "36fc3713f8dbebbb5e715a439cf37a54d02512a4",
+    "candidate_blob": "36fc3713f8dbebbb5e715a439cf37a54d02512a4"
+  },
+  "src/repo_catalog/domain/access_backup.py": {
+    "base_blob": "ec85f51de1ecdc9bdc316e56170c3f3b625d0b44",
+    "candidate_blob": "ec85f51de1ecdc9bdc316e56170c3f3b625d0b44"
+  },
+  "src/repo_catalog/domain/access_connections.py": {
+    "base_blob": "d28820f888d287c7ddcfa64a4e5c3c9af27ac635",
+    "candidate_blob": "d28820f888d287c7ddcfa64a4e5c3c9af27ac635"
+  },
+  "src/repo_catalog/domain/access_registry.py": {
+    "base_blob": "797b9c260d986159596195d0c09512378190416a",
+    "candidate_blob": "797b9c260d986159596195d0c09512378190416a"
+  },
+  "src/repo_catalog/domain/access_workflow.py": {
+    "base_blob": "24dad7b25909819a7c741f81099320b36cf8d905",
+    "candidate_blob": "24dad7b25909819a7c741f81099320b36cf8d905"
+  },
+  "src/repo_catalog/domain/acquisition.py": {
+    "base_blob": "ddfe62c770640f334c4aeb34ce65b93702462d5a",
+    "candidate_blob": "ddfe62c770640f334c4aeb34ce65b93702462d5a"
+  },
+  "src/repo_catalog/domain/context_admission.py": {
+    "base_blob": "4396b81c36edb1d1f3a6a950e61dcbc028a568ba",
+    "candidate_blob": "4396b81c36edb1d1f3a6a950e61dcbc028a568ba"
+  },
+  "src/repo_catalog/domain/context_dependencies.py": {
+    "base_blob": "7e23e6b6364508297e46a0bc23d4047f704d8d04",
+    "candidate_blob": "7e23e6b6364508297e46a0bc23d4047f704d8d04"
+  },
+  "src/repo_catalog/domain/context_registration.py": {
+    "base_blob": "395857bd775a6122ff5fcee6a3486fce1a320119",
+    "candidate_blob": "395857bd775a6122ff5fcee6a3486fce1a320119"
+  },
+  "src/repo_catalog/domain/context_wire.py": {
+    "base_blob": "2b9830db74362f9e5a7eac47078bd4272e851635",
+    "candidate_blob": "2b9830db74362f9e5a7eac47078bd4272e851635"
+  },
+  "src/repo_catalog/domain/coverage.py": {
+    "base_blob": "1488b76a7ffc220698debd7b171d277b531117cb",
+    "candidate_blob": "1488b76a7ffc220698debd7b171d277b531117cb"
+  },
+  "src/repo_catalog/domain/current_state.py": {
+    "base_blob": "047de8372aeef3b52f052ab032f91f93a19c6d06",
+    "candidate_blob": "047de8372aeef3b52f052ab032f91f93a19c6d06"
+  },
+  "src/repo_catalog/domain/document.py": {
+    "base_blob": "a174e5a5e57a2ab6bf59545991ce44dd96fd03b7",
+    "candidate_blob": "a174e5a5e57a2ab6bf59545991ce44dd96fd03b7"
+  },
+  "src/repo_catalog/domain/exchange.py": {
+    "base_blob": "b187cf7b0a7b80649a47371cfbbabb0021887a6a",
+    "candidate_blob": "b187cf7b0a7b80649a47371cfbbabb0021887a6a"
+  },
+  "src/repo_catalog/domain/exchange_rows.py": {
+    "base_blob": "6671431247b2196b30452114bf9d326a83dd0928",
+    "candidate_blob": "6671431247b2196b30452114bf9d326a83dd0928"
+  },
+  "src/repo_catalog/domain/git_decoding.py": {
+    "base_blob": "cc8a5b1ef00541faf586fa01c2d30a06c49c8a37",
+    "candidate_blob": "cc8a5b1ef00541faf586fa01c2d30a06c49c8a37"
+  },
+  "src/repo_catalog/domain/git_intrinsic.py": {
+    "base_blob": "f76eb1b6d18b5d551fb09c04321ed78474150de8",
+    "candidate_blob": "f76eb1b6d18b5d551fb09c04321ed78474150de8"
+  },
+  "src/repo_catalog/domain/git_native.py": {
+    "base_blob": "1be34b6bc9197efef863859491e5c2344df17116",
+    "candidate_blob": "1be34b6bc9197efef863859491e5c2344df17116"
+  },
+  "src/repo_catalog/domain/git_object.py": {
+    "base_blob": "8da25181b99bafdadbac18f3906bbba13528bd1e",
+    "candidate_blob": "8da25181b99bafdadbac18f3906bbba13528bd1e"
+  },
+  "src/repo_catalog/domain/models.py": {
+    "base_blob": "e19160126abea07cb0d10c74807262f6f17acd3a",
+    "candidate_blob": "e19160126abea07cb0d10c74807262f6f17acd3a"
+  },
+  "src/repo_catalog/domain/native_acquisition.py": {
+    "base_blob": "aff32c0315a412c4998d3b24c086a0cd7fc21f30",
+    "candidate_blob": "aff32c0315a412c4998d3b24c086a0cd7fc21f30"
+  },
+  "src/repo_catalog/domain/notes.py": {
+    "base_blob": "7e8ad0f6e4836cf218b9fccdd0a7b0f1ca9ae6a2",
+    "candidate_blob": "7e8ad0f6e4836cf218b9fccdd0a7b0f1ca9ae6a2"
+  },
+  "src/repo_catalog/domain/p1_context.py": {
+    "base_blob": "f2fce90efca6c503d04f955ce097918a742cd029",
+    "candidate_blob": "f2fce90efca6c503d04f955ce097918a742cd029"
+  },
+  "src/repo_catalog/domain/p1_coordination.py": {
+    "base_blob": "0c40aa416bc1a8d1191c08c21e2152fe593289f1",
+    "candidate_blob": "0c40aa416bc1a8d1191c08c21e2152fe593289f1"
+  },
+  "src/repo_catalog/domain/p1_core.py": {
+    "base_blob": "d5932bc908c4367c2816e990f8739815322a1420",
+    "candidate_blob": "d5932bc908c4367c2816e990f8739815322a1420"
+  },
+  "src/repo_catalog/domain/p1_coverage.py": {
+    "base_blob": "36b4dde834668752fa998acbdd093f842636c683",
+    "candidate_blob": "36b4dde834668752fa998acbdd093f842636c683"
+  },
+  "src/repo_catalog/domain/parent_report.py": {
+    "base_blob": "a10de949699900fe6c1748e09fd510f35eeba77f",
+    "candidate_blob": "a10de949699900fe6c1748e09fd510f35eeba77f"
+  },
+  "src/repo_catalog/domain/payload.py": {
+    "base_blob": "82e8a01f35f5946e3cbcc523cc75c7039fddd701",
+    "candidate_blob": "82e8a01f35f5946e3cbcc523cc75c7039fddd701"
+  },
+  "src/repo_catalog/domain/ports/access_backup.py": {
+    "base_blob": "b9d578fcb399ee6ecb9a31187c68f9abf7267822",
+    "candidate_blob": "b9d578fcb399ee6ecb9a31187c68f9abf7267822"
+  },
+  "src/repo_catalog/domain/ports/access_connections.py": {
+    "base_blob": "951f0565a53c83f4b6c7277b83d69878177ea787",
+    "candidate_blob": "951f0565a53c83f4b6c7277b83d69878177ea787"
+  },
+  "src/repo_catalog/domain/ports/access_registry.py": {
+    "base_blob": "95661f04b3d45c248a484cd78367c1f1066506fd",
+    "candidate_blob": "95661f04b3d45c248a484cd78367c1f1066506fd"
+  },
+  "src/repo_catalog/domain/ports/access_workflow.py": {
+    "base_blob": "a06fac5f3e1c7da6fd0fcaf17c3086809ab1a57c",
+    "candidate_blob": "a06fac5f3e1c7da6fd0fcaf17c3086809ab1a57c"
+  },
+  "src/repo_catalog/domain/ports/acquisition.py": {
+    "base_blob": "d852784a22469869d6a3c24639f8e59ae3417187",
+    "candidate_blob": "d852784a22469869d6a3c24639f8e59ae3417187"
+  },
+  "src/repo_catalog/domain/ports/context_authorization.py": {
+    "base_blob": "78276f8b500e0db95d65ececbf715577160ddaf1",
+    "candidate_blob": "78276f8b500e0db95d65ececbf715577160ddaf1"
+  },
+  "src/repo_catalog/domain/ports/notes.py": {
+    "base_blob": "3cead920cd6e6f31d08b7c20319f497f201cdef2",
+    "candidate_blob": "3cead920cd6e6f31d08b7c20319f497f201cdef2"
+  },
+  "src/repo_catalog/domain/ports/p1_context.py": {
+    "base_blob": "3f99ca110b13342dd914992ada8918570b5450a9",
+    "candidate_blob": "3f99ca110b13342dd914992ada8918570b5450a9"
+  },
+  "src/repo_catalog/domain/ports/p1_coordination.py": {
+    "base_blob": "6600503d3df603308fb6fa03b8c865255afeda3c",
+    "candidate_blob": "6600503d3df603308fb6fa03b8c865255afeda3c"
+  },
+  "src/repo_catalog/domain/ports/p1_core.py": {
+    "base_blob": "777221602be8982674e7d19aeb08790532fca3a3",
+    "candidate_blob": "777221602be8982674e7d19aeb08790532fca3a3"
+  },
+  "src/repo_catalog/domain/ports/production_context.py": {
+    "base_blob": "e26f78a349ddf6948a3903e605ad411264ab38b0",
+    "candidate_blob": "e26f78a349ddf6948a3903e605ad411264ab38b0"
+  },
+  "src/repo_catalog/domain/ports/production_query.py": {
+    "base_blob": "3a3a517f6d0be37552d78b6c89d5ad51811c09b6",
+    "candidate_blob": "3a3a517f6d0be37552d78b6c89d5ad51811c09b6"
+  },
+  "src/repo_catalog/domain/ports/recovery.py": {
+    "base_blob": "f7fbe377368110111a7ea386aafbf4fc657a33a4",
+    "candidate_blob": "f7fbe377368110111a7ea386aafbf4fc657a33a4"
+  },
+  "src/repo_catalog/domain/pr_scope.py": {
+    "base_blob": "0d81d532a1d8786231f9a99addbf296c9a485461",
+    "candidate_blob": "0d81d532a1d8786231f9a99addbf296c9a485461"
+  },
+  "src/repo_catalog/domain/production_context.py": {
+    "base_blob": "d293b5c7c9fe391dca8aec917bd44b63158726ca",
+    "candidate_blob": "d293b5c7c9fe391dca8aec917bd44b63158726ca"
+  },
+  "src/repo_catalog/domain/production_query.py": {
+    "base_blob": "fb8060d70c85208468849c6be67d103183c5e84c",
+    "candidate_blob": "fb8060d70c85208468849c6be67d103183c5e84c"
+  },
+  "src/repo_catalog/domain/recovery.py": {
+    "base_blob": "9cd8d55e23733a7bd00e6807ddb1756b90e7b712",
+    "candidate_blob": "9cd8d55e23733a7bd00e6807ddb1756b90e7b712"
+  },
+  "src/repo_catalog/domain/resource_identification.py": {
+    "base_blob": "c53c3545e4e8021bacc74a7301131e46eeaecba1",
+    "candidate_blob": "c53c3545e4e8021bacc74a7301131e46eeaecba1"
+  },
+  "src/repo_catalog/domain/resource_identity.py": {
+    "base_blob": "acac67eff4b6ba67e064a9f51762e0f3a156fb13",
+    "candidate_blob": "acac67eff4b6ba67e064a9f51762e0f3a156fb13"
+  },
+  "src/repo_catalog/domain/resource_stage.py": {
+    "base_blob": "b9a87921f27c4a3ee6af396b47c012c167888219",
+    "candidate_blob": "b9a87921f27c4a3ee6af396b47c012c167888219"
+  },
+  "src/repo_catalog/domain/selective_exchange.py": {
+    "base_blob": "613debd080625ab3510b6506d41d23c7fe136541",
+    "candidate_blob": "613debd080625ab3510b6506d41d23c7fe136541"
+  },
+  "src/repo_catalog/domain/time.py": {
+    "base_blob": "ff6c29fb4d8db59b11b331a9ae70bc971915bd4d",
+    "candidate_blob": "ff6c29fb4d8db59b11b331a9ae70bc971915bd4d"
+  },
+  "src/repo_catalog/domain/transfer_sql.py": {
+    "base_blob": "4b3b569da57b0da5289bc65d3a8d1181ecdcc050",
+    "candidate_blob": "4b3b569da57b0da5289bc65d3a8d1181ecdcc050"
+  },
+  "src/repo_catalog/resources/cas_integrity.sql": {
+    "base_blob": "dc9fdd7bf0690df5da5091ad781f07bad36a7e77",
+    "candidate_blob": "dc9fdd7bf0690df5da5091ad781f07bad36a7e77"
+  },
+  "src/repo_catalog/resources/catalog3.sql": {
+    "base_blob": "fe0c2e156c2ae1976d19d7d7794797bb90130276",
+    "candidate_blob": "fe0c2e156c2ae1976d19d7d7794797bb90130276"
+  },
+  "src/repo_catalog/resources/current_api.sql": {
+    "base_blob": "d0e158774acb432f52fa2e03ae6598b15b1324b6",
+    "candidate_blob": "d0e158774acb432f52fa2e03ae6598b15b1324b6"
+  },
+  "src/repo_catalog/resources/current_collections.sql": {
+    "base_blob": "d38b7884afc9e147592e1180f7430d5ca21d0567",
+    "candidate_blob": "d38b7884afc9e147592e1180f7430d5ca21d0567"
+  },
+  "src/repo_catalog/resources/current_resources.sql": {
+    "base_blob": "7f39dfc99b30d9245c8f9aa530f68bbe5b9a46aa",
+    "candidate_blob": "7f39dfc99b30d9245c8f9aa530f68bbe5b9a46aa"
+  },
+  "src/repo_catalog/resources/exchange.sql": {
+    "base_blob": "c530409a144e911a67826f0a64f104ea2a6fab4e",
+    "candidate_blob": "c530409a144e911a67826f0a64f104ea2a6fab4e"
+  },
+  "src/repo_catalog/resources/git_domain.sql": {
+    "base_blob": "1fe425a1978352bfa2962300db5dcb7b13d0f3f2",
+    "candidate_blob": "1fe425a1978352bfa2962300db5dcb7b13d0f3f2"
+  },
+  "src/repo_catalog/resources/git_facts.sql": {
+    "base_blob": "d1e55647033fe4d8239bc6d50ebb3117e8f6564f",
+    "candidate_blob": "d1e55647033fe4d8239bc6d50ebb3117e8f6564f"
+  },
+  "src/repo_catalog/resources/identity_relations.sql": {
+    "base_blob": "bbac80581b05c8a177fefa9a8462dee2d9e42d5d",
+    "candidate_blob": "bbac80581b05c8a177fefa9a8462dee2d9e42d5d"
+  },
+  "src/repo_catalog/resources/json_contracts.sql": {
+    "base_blob": "89ce124e9eda81a7079da32f49302f948a6051ad",
+    "candidate_blob": "89ce124e9eda81a7079da32f49302f948a6051ad"
+  },
+  "src/repo_catalog/resources/operational.sql": {
+    "base_blob": "e51a5300dc9856282c54649e7c52a0b8cf7fe31c",
+    "candidate_blob": "e51a5300dc9856282c54649e7c52a0b8cf7fe31c"
+  },
+  "src/repo_catalog/resources/pr_threads.graphql": {
+    "base_blob": "8b727f078e085fec42c5a6ba68a80bb07306ddfa",
+    "candidate_blob": "8b727f078e085fec42c5a6ba68a80bb07306ddfa"
+  },
+  "src/repo_catalog/resources/schemas/cli-v1.schema.json": {
+    "base_blob": "79c92cad513582fbfbc809a5b389242261b751b3",
+    "candidate_blob": "79c92cad513582fbfbc809a5b389242261b751b3"
+  },
+  "src/repo_catalog/resources/search.sql": {
+    "base_blob": "be78330b6addad8f7d69b7c25ffd4453baa327ad",
+    "candidate_blob": "be78330b6addad8f7d69b7c25ffd4453baa327ad"
+  },
+  "src/repo_catalog/resources/thread_comments.graphql": {
+    "base_blob": "abe2b6f5ff4da219ef582fa50625779fa309aec5",
+    "candidate_blob": "abe2b6f5ff4da219ef582fa50625779fa309aec5"
+  }
+}

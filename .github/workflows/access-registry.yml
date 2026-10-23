@@ -57,6 +57,11 @@ on:
       - 'scripts/audit_context_registration.py'
       - 'docs/implementation/access-a3-routing.json'
       - 'docs/implementation/p1-disposition.json'
+      - 'scripts/check_sdist_contract.py'
+      - 'scripts/verify_i4_distribution.py'
+      - 'scripts/verify_i5_distribution.py'
+      - 'tests/support/distributions.py'
+      - 'tests/packaging/**'
       - 'pyproject.toml'
       - 'uv.lock'
 

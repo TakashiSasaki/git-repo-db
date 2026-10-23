@@ -1,0 +1,67 @@
+{
+  "run_id": 39887549016,
+  "head": "3e2609baa07a9e92c8f2dc4dd1608f311021a1cb",
+  "tree": "43f0c017d5f922f7e1caf7e4a1605ec4ae7ace1c",
+  "checkout": "6d649500319f404da210a92151a88f37bbd60fc2",
+  "parents": [
+    "8ede5f8f3f525baf90ad8c9b4f3f0729c19a7b82",
+    "3e2609baa07a9e92c8f2dc4dd1608f311021a1cb"
+  ],
+  "receipt_bytes": 71313,
+  "receipt_sha256": "ecd164beb7edfed98a97c342684590ae926b405630c21e88aaa2bca2945b52bb",
+  "verified_indexed_members": 21,
+  "binding": {
+    "feature_sha": "3e2609baa07a9e92c8f2dc4dd1608f311021a1cb",
+    "head": "6d649500319f404da210a92151a88f37bbd60fc2",
+    "run_attempt": "1",
+    "run_id": "39887549016",
+    "tree": "43f0c017d5f922f7e1caf7e4a1605ec4ae7ace1c"
+  },
+  "acceptance_status": "development_checks_passed",
+  "full_acceptance": false,
+  "hosted_product_pytest_executed": 0,
+  "unexecuted_required_files": 212,
+  "runtime": {
+    "python": "3.12.15",
+    "executable": "/home/runner/work/_temp/product-python/python/bin/python",
+    "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+    "abi": "cpython-312-x86_64-linux-gnu",
+    "sqlite": "3.53.1",
+    "os": "Linux",
+    "arch": "x86_64",
+    "git": "git version 2.55.0",
+    "uv": "uv 0.12.19 (x86_64-unknown-linux-gnu)",
+    "runner_image": [
+      "ubuntu24",
+      "20261012.334.1"
+    ]
+  },
+  "artifact": {
+    "bytes": 71124,
+    "sha256": "d43c9ea6d19dd3744b6b44778ba015cde281e8a8e5ae766b3591039a4d080cb1",
+    "members": 22,
+    "identical_shared_members": [
+      "dependency-setup.json",
+      "dependency-setup.md",
+      "doctor.json",
+      "doctor.md",
+      "format.json",
+      "format.md",
+      "fts.json",
+      "fts.md",
+      "lint.json",
+      "lint.md",
+      "plan.json",
+      "plan.md",
+      "planning.json",
+      "planning.md",
+      "report-validation.json",
+      "report-validation.md",
+      "reports.json",
+      "schema-map.json",
+      "validation-manifest.json",
+      "validation-summary.md"
+    ]
+  },
+  "exit_code": 0
+}

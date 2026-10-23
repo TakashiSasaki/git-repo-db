@@ -1,0 +1,71 @@
+{
+  "selected": 33,
+  "passed": 33,
+  "failed": 0,
+  "errors": 0,
+  "skipped": 0,
+  "checks": {
+    "selected_unique": true,
+    "junit_identity": true,
+    "journal_starts": true,
+    "ordinary_phases": true,
+    "finish": true
+  },
+  "commands": [
+    {
+      "argv": [
+        "/workspace/task-b-i6-checkout/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-p",
+        "tests.conftest",
+        "-c",
+        "/workspace/task-b-i6-checkout/pyproject.toml",
+        "--rootdir=/workspace/task-b-i6-evidence/probes",
+        "--confcutdir=/workspace/task-b-i6-evidence/probes",
+        "-o",
+        "addopts=",
+        "-o",
+        "junit_family=xunit1",
+        "-q",
+        "--tb=long",
+        "/workspace/task-b-i6-evidence/probes/test_digest_contract.py",
+        "/workspace/task-b-i6-evidence/probes/test_planner_work_budget_contract.py",
+        "--collect-only"
+      ],
+      "cwd": "/workspace/task-b-i6-checkout",
+      "exit": 0,
+      "started_epoch": 1792779699.5405836,
+      "wall_seconds": 4.529936790466309
+    },
+    {
+      "argv": [
+        "/workspace/task-b-i6-checkout/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-p",
+        "tests.conftest",
+        "-c",
+        "/workspace/task-b-i6-checkout/pyproject.toml",
+        "--rootdir=/workspace/task-b-i6-evidence/probes",
+        "--confcutdir=/workspace/task-b-i6-evidence/probes",
+        "-o",
+        "addopts=",
+        "-o",
+        "junit_family=xunit1",
+        "-q",
+        "--tb=long",
+        "/workspace/task-b-i6-evidence/probes/test_digest_contract.py",
+        "/workspace/task-b-i6-evidence/probes/test_planner_work_budget_contract.py",
+        "--junitxml=/workspace/task-b-i6-evidence/saved33/junit.xml",
+        "--journal=/workspace/task-b-i6-evidence/saved33/journal.jsonl",
+        "--basetemp=/workspace/task-b-i6-evidence/saved33-temp"
+      ],
+      "cwd": "/workspace/task-b-i6-checkout",
+      "exit": 0,
+      "started_epoch": 1792779704.0705254,
+      "wall_seconds": 3.9045937061309814
+    }
+  ],
+  "exit": 0
+}

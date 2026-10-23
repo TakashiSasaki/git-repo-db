@@ -1,0 +1,291 @@
+"""Independent CLI replay; tune input bytes, never ZIP lengths or ZIP writers."""
+
+import argparse
+import base64
+import hashlib
+import io
+import json
+import os
+import platform
+import random
+import runpy
+import sqlite3
+import subprocess
+import sys
+import tempfile
+import time
+import zipfile
+from pathlib import Path
+
+BASE = "8ede5f8f3f525baf90ad8c9b4f3f0729c19a7b82"
+HEAD = "3e2609baa07a9e92c8f2dc4dd1608f311021a1cb"
+LIMIT = 2_097_152
+
+
+def digest(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+def git(root, *args):
+    return subprocess.check_output(["git", "-C", str(root), *args]).strip()
+
+
+def traced_child(source, output):
+    """Observe the production local after ZIP closure; do not mutate any local."""
+    source = str(Path(source).resolve())
+    seen = False
+
+    def observe(frame, event, arg):
+        nonlocal seen
+        if frame.f_code.co_filename == source and event == "line":
+            if "body" in frame.f_locals and not seen:
+                assert frame.f_locals["archive"].fp is None
+                Path(output).write_bytes(frame.f_locals["body"])
+                seen = True
+        return observe
+
+    sys.settrace(observe)
+    runpy.run_path(source, run_name="__main__")
+
+
+def inspect_zip(body, expected_binding, inputs):
+    with zipfile.ZipFile(io.BytesIO(body)) as z:
+        assert z.testzip() is None
+        assert len(z.namelist()) == len(set(z.namelist()))
+        assert not z.comment  # no comment padding, even legal ZIP padding
+        assert all(i.compress_type == zipfile.ZIP_DEFLATED for i in z.infolist())
+        index = json.loads(z.read("receipt-index.json"))
+        assert set(index) == set(z.namelist()) - {"receipt-index.json"}
+        for name, entry in index.items():
+            data = z.read(name)
+            assert entry == {"bytes": len(data), "sha256": digest(data)}
+        assert json.loads(z.read("receipt-binding.json")) == expected_binding
+        selected = {
+            "artifacts/access-registry/payload.log",
+            "artifacts/runtime/probe.json",
+        }
+        assert set(index) == selected | {"receipt-binding.json"}
+        for name in selected:
+            assert z.read(name) == inputs[name]
+        return {
+            "members": index,
+            "expanded_bytes": sum(i.file_size for i in z.infolist()),
+            "all_deflated": True,
+            "crc_index_binding_and_input_bytes_verified": True,
+            "comment_bytes": len(z.comment),
+        }
+
+
+def inspect_stdout(stdout, body):
+    lines = stdout.decode("ascii").splitlines()
+    sha = digest(body)
+    assert lines[0] == f"CI_RECEIPTS_BEGIN_V1 {sha} {len(body)}"
+    assert lines[-1] == f"CI_RECEIPTS_END_V1 {sha}"
+    chunks = []
+    for line in lines[1:-1]:
+        marker, chunk = line.split(" ")
+        assert marker == "CI_RECEIPTS_DATA_V1" and 0 < len(chunk) <= 120
+        chunks.append(chunk)
+    assert base64.b64decode("".join(chunks), validate=True) == body
+    return {"begin": lines[0], "end": lines[-1], "data_records": len(chunks)}
+
+
+def main(output):
+    root = Path.cwd()
+    assert git(root, "rev-parse", "HEAD").decode() == HEAD
+    output = output.resolve()
+    output.mkdir(parents=True, exist_ok=False)
+    sources = {
+        "before": git(root, "show", f"{BASE}:scripts/emit_ci_evidence.py"),
+        "fixed": (root / "scripts/emit_ci_evidence.py").read_bytes(),
+    }
+    results = []
+    with tempfile.TemporaryDirectory(prefix="c0-independent-") as tmp:
+        tmp = Path(tmp)
+        repo = tmp / "synthetic"
+        repo.mkdir()
+        subprocess.run(["git", "init", "-q", str(repo)], check=True)
+        subprocess.run(
+            [
+                "git",
+                "-C",
+                str(repo),
+                "-c",
+                "user.name=Independent Fixture",
+                "-c",
+                "user.email=fixture@example.invalid",
+                "commit",
+                "-q",
+                "--allow-empty",
+                "-m",
+                "disposable synthetic receipt",
+            ],
+            check=True,
+        )
+        binding = {
+            "head": git(repo, "rev-parse", "HEAD").decode(),
+            "tree": git(repo, "rev-parse", "HEAD^{tree}").decode(),
+            "run_id": "independent-synthetic-20261023",
+            "run_attempt": "1",
+        }
+        env = {
+            k: v
+            for k, v in os.environ.items()
+            if k
+            not in {"GH_TOKEN", "GITHUB_TOKEN", "GITHUB_RUN_ID", "GITHUB_RUN_ATTEMPT"}
+        }
+        env.update(GITHUB_RUN_ID=binding["run_id"], GITHUB_RUN_ATTEMPT="1")
+        for label, source in sources.items():
+            (tmp / f"{label}.py").write_bytes(source)
+        payload = repo / "artifacts/access-registry/payload.log"
+        payload.parent.mkdir(parents=True)
+        runtime = repo / "artifacts/runtime/probe.json"
+        runtime.parent.mkdir(parents=True)
+        runtime.write_bytes(b'{"independent_synthetic":true}\n')
+        for excluded in ("source", "outside", "from-sdist", "probe-venv"):
+            p = payload.parent / excluded / "excluded.log"
+            p.parent.mkdir()
+            p.write_bytes(b"excluded synthetic content\n")
+        (payload.parent / "excluded.bin").write_bytes(b"excluded suffix\n")
+        reservoir = random.Random(20261023).randbytes(2_500_000)
+
+        def invoke(label):
+            inputs = {
+                str(p.relative_to(repo)): p.read_bytes()
+                for p in (repo / "artifacts").rglob("*")
+                if p.is_file()
+            }
+            body_path = tmp / "observed.zip"
+            body_path.unlink(missing_ok=True)
+            command = [
+                sys.executable,
+                str(Path(__file__).resolve()),
+                "--child",
+                str(tmp / f"{label}.py"),
+                str(body_path),
+            ]
+            started = time.monotonic()
+            proc = subprocess.run(command, cwd=repo, env=env, capture_output=True)
+            body = body_path.read_bytes()
+            assert inputs == {
+                str(p.relative_to(repo)): p.read_bytes()
+                for p in (repo / "artifacts").rglob("*")
+                if p.is_file()
+            }
+            detail = inspect_zip(body, binding, inputs)
+            detail.update(
+                source=label,
+                command=command,
+                exit_code=proc.returncode,
+                wall_seconds=time.monotonic() - started,
+                compressed_bytes=len(body),
+                zip_sha256=digest(body),
+                stdout_bytes=len(proc.stdout),
+                stdout_sha256=digest(proc.stdout),
+                stderr=proc.stderr.decode(),
+                artifact_inputs_unchanged=True,
+                payload_bytes=payload.stat().st_size,
+            )
+            if proc.returncode == 0:
+                detail["receipt"] = inspect_stdout(proc.stdout, body)
+            else:
+                assert proc.returncode == 1 and proc.stdout == b""
+                assert b"artifact" in proc.stderr
+            return detail, body
+
+        for target in (LIMIT - 1, LIMIT, LIMIT + 1, 2_323_560):
+            n = target - 1800
+            tried = set()
+            attempts = []
+            for _ in range(160):
+                if n in tried:
+                    n = next(x for x in range(n - 50, n + 51) if x not in tried)
+                tried.add(n)
+                payload.write_bytes(reservoir[:n])
+                detail, body = invoke("fixed")
+                attempts.append(
+                    {
+                        "payload_bytes": n,
+                        "compressed_bytes": len(body),
+                        "exit_code": detail["exit_code"],
+                    }
+                )
+                if len(body) == target:
+                    break
+                n += target - len(body)
+            else:
+                raise AssertionError(f"cannot synthesize exact closed ZIP {target}")
+            assert detail["exit_code"] == (0 if target <= LIMIT else 1)
+            if target > LIMIT:
+                assert "2 MiB compressed" in detail["stderr"]
+                assert "uploaded GitHub Actions artifact" in detail["stderr"]
+            detail.update(target=target, calibration=attempts)
+            (output / f"fixed-{target}.zip").write_bytes(body)
+            results.append(detail)
+            before, _ = invoke("before")
+            assert before["compressed_bytes"] == target and before["exit_code"] == 0
+            before["target"] = target
+            results.append(before)
+            print(
+                f"closed ZIP {target}: before=0 fixed={detail['exit_code']}; input={n}",
+                flush=True,
+            )
+
+        payload.write_bytes(b"independent-compressible-evidence\n" * 180_000)
+        for label in ("before", "fixed"):
+            detail, body = invoke(label)
+            assert detail["expanded_bytes"] > LIMIT > len(body)
+            assert detail["exit_code"] == 0
+            detail["target"] = "expanded_over_limit"
+            results.append(detail)
+            if label == "fixed":
+                (output / "fixed-expanded-over-limit.zip").write_bytes(body)
+
+        # Separate direct CLI control without any trace, interception or monkeypatch.
+        payload.write_bytes(reservoir[:2_323_560])
+        direct = subprocess.run(
+            [sys.executable, str(tmp / "fixed.py")],
+            cwd=repo,
+            env=env,
+            capture_output=True,
+        )
+        assert direct.returncode == 1 and direct.stdout == b""
+        assert b"uploaded GitHub Actions artifact" in direct.stderr
+        assert payload.read_bytes() == reservoir[:2_323_560]
+        result = {
+            "reviewed_head": HEAD,
+            "before_head": BASE,
+            "python": sys.version,
+            "executable": sys.executable,
+            "base_executable": sys._base_executable,
+            "platform": platform.platform(),
+            "sqlite": sqlite3.sqlite_version,
+            "sqlite_source": sqlite3.connect(":memory:")
+            .execute("select sqlite_source_id()")
+            .fetchone()[0],
+            "source_hashes": {k: digest(v) for k, v in sources.items()},
+            "binding": binding,
+            "cases": results,
+            "direct_uninstrumented_control": {
+                "exit_code": direct.returncode,
+                "stdout_bytes": len(direct.stdout),
+                "stderr": direct.stderr.decode(),
+                "input_unchanged": True,
+            },
+            "exit_code": 0,
+        }
+        (output / "measurements.json").write_text(json.dumps(result, indent=2) + "\n")
+    print(
+        "10 source/case observations and uninstrumented CLI control passed", flush=True
+    )
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--output", type=Path)
+    parser.add_argument("--child", nargs=2)
+    args = parser.parse_args()
+    if args.child:
+        traced_child(*args.child)
+    else:
+        main(args.output)

@@ -1,0 +1,6 @@
+{
+  "original_path": "docs/implementation/evidence/adr0031-i6b-rereview-20261023/ci/compare_source_hosted.py.txt",
+  "original_sha256": "652a1eba4c9c776a883f5e5e20bac9b3530fd108593830ea8578518ec3e0e0a6",
+  "new_sha256": "0fd679c1e48856b7e4dcd4ac5b0235fb6c66abd3b0ac8c869791c1d90715e331",
+  "change": "Only SOURCE path; output root is separate; read-only access-verified symlink to initial verified receipt."
+}
