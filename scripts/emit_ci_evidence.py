@@ -10,6 +10,8 @@ import textwrap
 import zipfile
 from pathlib import Path
 
+MAX_COMPRESSED_RECEIPT_BYTES = 2 * 1024 * 1024  # ADR 0001 VAL-07
+
 
 def main():
     files = {}
@@ -61,8 +63,11 @@ def main():
         for name, data in files.items():
             archive.writestr(name, data)
     body = buffer.getvalue()
-    if len(body) > 4 * 1024 * 1024:
-        raise SystemExit("CI receipt exceeds 4 MiB; retrieve the uploaded artifact")
+    if len(body) > MAX_COMPRESSED_RECEIPT_BYTES:
+        raise SystemExit(
+            "CI receipt exceeds 2 MiB compressed; "
+            "retrieve the uploaded GitHub Actions artifact"
+        )
     digest = hashlib.sha256(body).hexdigest()
     print(f"CI_RECEIPTS_BEGIN_V1 {digest} {len(body)}")
     for line in textwrap.wrap(base64.b64encode(body).decode("ascii"), 120):

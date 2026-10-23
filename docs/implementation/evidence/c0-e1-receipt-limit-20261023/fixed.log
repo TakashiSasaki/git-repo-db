@@ -1,0 +1,12 @@
+test_artifact_upload_runs_even_when_emitter_fails (receipt_tests.ReceiptTests.test_artifact_upload_runs_even_when_emitter_fails) ... ok
+test_audit_counterexample (receipt_tests.ReceiptTests.test_audit_counterexample) ... ok
+test_below_limit (receipt_tests.ReceiptTests.test_below_limit) ... ok
+test_cli_rejection_has_no_stdout_and_retains_artifact_files (receipt_tests.ReceiptTests.test_cli_rejection_has_no_stdout_and_retains_artifact_files) ... ok
+test_complete_receipt_and_compressed_not_expanded_limit (receipt_tests.ReceiptTests.test_complete_receipt_and_compressed_not_expanded_limit) ... ok
+test_exact_limit (receipt_tests.ReceiptTests.test_exact_limit) ... ok
+test_one_byte_over_limit (receipt_tests.ReceiptTests.test_one_byte_over_limit) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 2.527s
+
+OK
