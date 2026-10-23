@@ -1,0 +1,19 @@
+{
+  "command": [
+    "/workspace/git-repo-db/.venv/bin/python",
+    "-m",
+    "pytest",
+    "tests/unit/test_context_wire_v5.py",
+    "-q",
+    "-o",
+    "addopts=",
+    "--tb=short",
+    "-k",
+    "dictionary_key or full_envelope_including_digest or final_leaf_string_chunk",
+    "--junitxml",
+    "/workspace/i6b-work/cap-correction/pre-fix/junit.xml",
+    "--journal",
+    "/workspace/i6b-work/cap-correction/pre-fix/journal.jsonl"
+  ],
+  "exit_code": 0
+}

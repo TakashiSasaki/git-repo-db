@@ -1,0 +1,20 @@
+{
+  "selected": 6288,
+  "counts": {
+    "passed": 5987,
+    "failed": 281,
+    "error": 20
+  },
+  "subtest_counts": {
+    "passed": 57
+  },
+  "ordinary_reports": 18844,
+  "all_reports": 18901,
+  "exit_code": 1,
+  "head": "2f874ce5c31efc1a266bc40e0472e64f82c82860",
+  "tree": "e0b50e80bae5aec92c1d9cf68ba8afc17ad6810d",
+  "input_count": 484,
+  "bindings_unchanged": true,
+  "tracked_status": "",
+  "selected_junit_journal_typed_exact": true
+}

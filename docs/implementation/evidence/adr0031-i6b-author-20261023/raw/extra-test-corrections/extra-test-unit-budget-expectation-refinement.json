@@ -1,0 +1,15 @@
+{
+  "scope": "supplementary Author-team external test expectation refinement, not a product fix or independent review",
+  "old_helper_sha256": "975dde31a3a6d7e66b918f2610bfaacc210eabb77ef13baa94dbe9229d7d0b59",
+  "new_helper_sha256": "bc77c792f8f4a7dc3ad472d6fa9325a274bdd8895822a328556b260b55663ffd",
+  "helper_path": "/workspace/i6b-tools/test_i6b_extra.py",
+  "preserved_initial_helper": "/workspace/i6b-work/source-extra-prefx/driver-snapshot/test_i6b_extra.py.txt",
+  "preserved_initial_results": "/workspace/i6b-work/source-extra-prefx/extra.xml and extra.jsonl",
+  "correction": "Unit-budget assertions now require only normative safety: original terminal alternatives are either wholly retained or wholly withheld; any retained claim/proof requires actual scope and all original terminal alternatives; if Collection absent all Collection-owned scopes/claims/proofs are absent. Complete original terminals may lawfully remain without a withheld stronger claim. Depth-zero remains strict whole withholding. This does not authorize shrinking reports, a false completeness claim or orphan scope.",
+  "affected_nodes": [
+    "tests/unit/test_i6b_extra.py::test_extra_T12_whole_collection_alternatives_and_coverage_withheld_together[unit-global]",
+    "tests/unit/test_i6b_extra.py::test_extra_T12_whole_collection_alternatives_and_coverage_withheld_together[unit-scoped]"
+  ],
+  "original_product_gap": "Six original orphan-header/scope failures remain preserved; this expectation refinement does not relabel those failures or alter product source.",
+  "new_execution_status": "pending after planner correction; no pass claim from this metadata"
+}

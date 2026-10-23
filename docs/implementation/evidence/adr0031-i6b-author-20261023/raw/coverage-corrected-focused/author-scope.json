@@ -1,0 +1,5 @@
+{
+  "full_acceptance": false,
+  "independent_review": false,
+  "scope": "Separate focused development run, not complete ordinary invocation."
+}

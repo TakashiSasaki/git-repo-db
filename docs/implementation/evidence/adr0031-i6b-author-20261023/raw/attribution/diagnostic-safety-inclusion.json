@@ -1,0 +1,18 @@
+{
+  "historical743_count": 743,
+  "historical_safety_count": 626,
+  "all626_in_complete2f_selection": true,
+  "all743_in_complete2f_selection": true,
+  "nodes": {
+    "tests/integration/i6a/test_admission.py::test_unconnected_exchange_import_refuses_before_progress_and_cached_success[initial]": {
+      "in_historical743": false,
+      "in_safety626": true,
+      "in_complete2f_selection": true
+    },
+    "tests/integration/i6a/test_admission.py::test_unconnected_exchange_import_refuses_before_progress_and_cached_success[cached-receipt]": {
+      "in_historical743": false,
+      "in_safety626": true,
+      "in_complete2f_selection": true
+    }
+  }
+}

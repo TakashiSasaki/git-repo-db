@@ -1,0 +1,29 @@
+"""I6-B Author ordinary invocation. Adapted from the attributed Task C harness; no inherited outcome is copied."""
+import os,sys,json,pathlib,sqlite3,hashlib
+root=pathlib.Path(sys.argv[1]).resolve();out=pathlib.Path(sys.argv[2]).resolve();out.mkdir(parents=True,exist_ok=False)
+sys.path.insert(0,str(root));from scripts import verify_i5_offline as e
+os.environ['PATH']=str(pathlib.Path(sys.executable).parent)+os.pathsep+os.environ['PATH']
+os.environ['TMPDIR']='/workspace/i6b-work/tmp'
+os.environ['PYTHONPATH']='/workspace/i6b-tools'
+os.environ['I6B_SOURCE_ROOT']=str(root)
+os.environ['I6B_SOURCE_IMPORTS']=str(out/'source-imports')
+e.write_json(out/'runtime.json',dict(e.runtime_metadata(sqlite3.connect(':memory:')),base_executable=sys._base_executable,python_full=sys.version,sqlite_module=__import__('_sqlite3').__spec__.origin))
+used_helpers=('run_full.py','i6a_report_types.py','i6b_source_binding.py')
+helper_root=pathlib.Path(__file__).resolve().parent
+helper_snapshot=out/'driver-snapshot';helper_snapshot.mkdir()
+for name in used_helpers:(helper_snapshot/(name+'.txt')).write_bytes((helper_root/name).read_bytes())
+def binding(): return {'head':e.git('rev-parse','HEAD'),'tree':e.git('rev-parse','HEAD^{tree}'),'inputs':e.input_hashes(),'status':e.git('status','--porcelain','--untracked-files=no'),'harness_inputs':{name:hashlib.sha256((helper_root/name).read_bytes()).hexdigest() for name in used_helpers}}
+e.write_json(out/'binding-before.json',binding()); assert not binding()['status']; e.require_product_runtime()
+allnodes,_=e.collect(out,'all-collection',['tests']);nodes,r=e.collect(out,'ordinary-collection',['tests'],'not live and not benchmark')
+if r['exit_code']:raise SystemExit('collection failed')
+e.write_json(out/'unexecuted.json',sorted(set(allnodes)-set(nodes)))
+execute=e.execute
+def typed(out,name,args):
+ os.environ['I6A_REPORTS_SIDECAR']=str(out/(name+'.report-types.jsonl'))
+ return execute(out,name,['-p','i6a_report_types','-p','i6b_source_binding',*args,'--basetemp='+str(out/'basetemp')])
+e.execute=typed
+r=e.run_cohort(out,'ordinary',nodes,4)
+e.write_json(out/'binding-after.json',binding())
+e.write_json(out/'author-scope.json',{'full_acceptance':False,'independent_review':False,'driver_sha256':__import__('hashlib').sha256(pathlib.Path(__file__).read_bytes()).hexdigest(),'scope':'One complete ordinary Author execution, not hosted or release acceptance.'})
+print(json.dumps({'counts':{k:r.get(k) for k in ['passed','failed','error','executed','exit_code']},'output':str(out)}))
+raise SystemExit(r['exit_code'])

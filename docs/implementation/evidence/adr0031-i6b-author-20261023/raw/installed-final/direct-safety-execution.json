@@ -1,0 +1,72 @@
+{
+  "name": "direct-safety",
+  "command": [
+    "/workspace/i6b-work/installed-final-work/direct-venv/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "-p",
+    "i6a_report_types",
+    "-o",
+    "addopts=--strict-markers",
+    "-o",
+    "junit_family=xunit1",
+    "-c",
+    "/workspace/i6b-work/installed-final-work/outside/pytest.ini",
+    "--rootdir=/workspace/i6b-work/installed-final-work/outside",
+    "--confcutdir=/workspace/i6b-work/installed-final-work/outside",
+    "tests/integration/p3/test_transfer_sql.py",
+    "tests/integration/p3/test_transfer_admission.py",
+    "tests/integration/p3/test_parent_reports.py",
+    "tests/unit/test_context_admission.py",
+    "tests/unit/test_transfer_originals.py",
+    "tests/unit/test_context_fences_i6a.py",
+    "tests/unit/test_context_oid_admission_i6a.py",
+    "tests/unit/test_context_admission_bounds_i6a.py",
+    "tests/unit/test_context_coordinator_admission.py",
+    "tests/unit/test_context_refusal_order_i6a.py",
+    "tests/integration/p1/test_coordination.py",
+    "tests/integration/i6a",
+    "--basetemp=/workspace/i6b-work/installed-final-work/direct-safety-tmp",
+    "--junitxml=/workspace/i6b-work/installed-final/direct-safety.xml",
+    "--journal=/workspace/i6b-work/installed-final/direct-safety.jsonl"
+  ],
+  "cwd": "/workspace/i6b-work/installed-final-work/outside",
+  "exit_code": 0,
+  "started_epoch": 1792758080.7133899,
+  "elapsed_seconds": 159.591,
+  "source_head": "a354348b800177608f6a83e2484cb6a784b7190a",
+  "source_tree": "169f0f95449c7bd728261b3d7799f795162c03fd",
+  "driver_sha256": "3ea99eeab849bfd0ad14ce7940550af647cdfed60f7b4db09a91fe484239b8ea",
+  "passed": 626,
+  "failed": 0,
+  "error": 0,
+  "skipped": 0,
+  "xfail": 0,
+  "xpass": 0,
+  "executed": 626,
+  "reconciliation": {
+    "checks": {
+      "selected_unique": true,
+      "selected_equals_junit": true,
+      "selected_equals_journal_starts": true,
+      "setup_and_teardown_once": true,
+      "no_duplicate_phases": true,
+      "phase_nodes_equal_selected": true,
+      "call_once_after_successful_setup": true,
+      "one_finish": true
+    },
+    "consistent_node_execution": true,
+    "journal_phase_outcomes": {
+      "passed": 1878
+    },
+    "finishes": [
+      {
+        "event": "finish",
+        "status": "completed",
+        "exitstatus": 0,
+        "timestamp": 1792758239.598319
+      }
+    ]
+  }
+}

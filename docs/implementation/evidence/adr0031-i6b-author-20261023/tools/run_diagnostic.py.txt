@@ -1,0 +1,30 @@
+"""I6-B Author repeated boundary diagnostic, adapted from Task C.
+
+This separate invocation preserves phase/exception/assertion-entry observations;
+its results never replace the complete ordinary invocation.
+"""
+from pathlib import Path
+import os,sys,json,hashlib,subprocess,time,sqlite3
+ROOT=Path(sys.argv[1]).resolve();OUT=Path(sys.argv[2]).resolve();FULL=Path(sys.argv[3]).resolve()
+TOOLS=Path(__file__).resolve().parent
+sys.path.insert(0,str(TOOLS));from independent_receipt import audit
+sys.path.insert(0,str(ROOT));from scripts import verify_i5_offline as e
+OUT.mkdir(exist_ok=False,parents=True)
+base=Path('/workspace/i6b-work/baseline-task-c/diagnostic743')
+nodes=(base/'diagnostic.selected.txt').read_text().splitlines()
+result,_,_=audit(FULL)
+nodes+=sorted(n for n,r in result.items() if r[0]!='passed' and n not in nodes)
+assert len(nodes)==len(set(nodes));(OUT/'diagnostic.selected.txt').write_text('\n'.join(nodes)+'\n')
+env=dict(os.environ,PATH=str(Path(sys.executable).parent)+os.pathsep+os.environ['PATH'],PYTHONPATH=str(TOOLS),PYTHONDONTWRITEBYTECODE='1',I6B_SOURCE_ROOT=str(ROOT),I6B_SOURCE_IMPORTS=str(OUT/'source-imports'),REVIEW_TRACE_SOURCE=str(ROOT),REVIEW_TRACE_OUTPUT=str(OUT/'trace'),I6A_REPORTS_SIDECAR=str(OUT/'diagnostic.report-types.jsonl'),REPO_CATALOG_WHEELHOUSE='/workspace/i6b-work/wheelhouse',UV_CACHE_DIR='/workspace/.uv-cache',TMPDIR='/workspace/i6b-work/tmp')
+used_helpers=('run_diagnostic.py','i6a_report_types.py','i6b_source_binding.py','reviewer_trace.py','independent_receipt.py')
+helper_snapshot=OUT/'driver-snapshot';helper_snapshot.mkdir()
+for name in used_helpers:(helper_snapshot/(name+'.txt')).write_bytes((TOOLS/name).read_bytes())
+def binding():return {'head':e.git('rev-parse','HEAD'),'tree':e.git('rev-parse','HEAD^{tree}'),'inputs':e.input_hashes(),'status':e.git('status','--porcelain','--untracked-files=no'),'harness_inputs':{name:hashlib.sha256((TOOLS/name).read_bytes()).hexdigest() for name in used_helpers}}
+before=binding();assert not before['status'];e.write_json(OUT/'binding-before.json',before)
+e.write_json(OUT/'runtime.json',dict(e.runtime_metadata(sqlite3.connect(':memory:')),base_executable=sys._base_executable,python_full=sys.version,sqlite_module=__import__('_sqlite3').__spec__.origin))
+args=[sys.executable,'-m','pytest','-c',str(ROOT/'pyproject.toml'),'@'+str(OUT/'diagnostic.selected.txt'),'-q','-o','addopts=--strict-markers','-n','4','--dist','worksteal','--tb=long','-p','i6a_report_types','-p','i6b_source_binding','-p','reviewer_trace','-p','no:cacheprovider','--junitxml='+str(OUT/'diagnostic.xml'),'--journal='+str(OUT/'diagnostic.jsonl'),'--basetemp='+str(OUT/'basetemp'),'-o','junit_family=xunit1']
+t=time.time()
+with (OUT/'diagnostic.log').open('w') as stream:p=subprocess.run(args,cwd=ROOT,env=env,stdout=stream,stderr=subprocess.STDOUT)
+e.write_json(OUT/'diagnostic.execution.json',{'command':args,'cwd':str(ROOT),'exit_code':p.returncode,'source_head':before['head'],'source_tree':before['tree'],'driver_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),'elapsed_seconds':round(time.time()-t,3),'scope':'Separate repeated diagnostic, no full-suite substitution or benchmark claim.'})
+e.write_json(OUT/'binding-after.json',binding())
+print(json.dumps({'output':str(OUT),'selected':len(nodes),'exit_code':p.returncode}));sys.exit(p.returncode)

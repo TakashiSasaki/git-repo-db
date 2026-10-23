@@ -1,0 +1,650 @@
+[
+  {
+    "stage": "start",
+    "executable": "/workspace/git-repo-db/.venv/bin/python",
+    "origin": "/workspace/git-repo-db/src/repo_catalog/__init__.py",
+    "config": "/workspace/git-repo-db/pyproject.toml",
+    "source_modules": {
+      "repo_catalog": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/__init__.py",
+        "sha256": "ed7f78e4604437506c62e6c61f3c269bb51901665e1d1484e13cf04757e05ca0"
+      },
+      "repo_catalog.domain.p1_core": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/p1_core.py",
+        "sha256": "f8f5945d61a65134b53e9615764e423e6ad99d737ba8f23c2ef3467dcdc46c17"
+      },
+      "repo_catalog.domain.time": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/time.py",
+        "sha256": "f8ee3df9e402a820527d89b5d88c4c85afc4a2d013cd457763cc37746984990a"
+      },
+      "repo_catalog.domain.coverage": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/coverage.py",
+        "sha256": "96eb3bad172f66af5afe335131087bd5c6a7cf6eb6dbb77617c01e851c8f9c81"
+      },
+      "repo_catalog.domain.p1_coverage": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/p1_coverage.py",
+        "sha256": "b5e51a6dcf43162f20fb4a081fd12c68f40f4abc6a9aef0ff6bb41b1172f8531"
+      },
+      "repo_catalog.domain.ports.p1_core": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/ports/p1_core.py",
+        "sha256": "b421552e9188b825993523b4a7a6a44c8b497f29f2fb39b69d40acc9c0684fed"
+      },
+      "repo_catalog.adapters.sqlite.p1_core": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/p1_core.py",
+        "sha256": "e9f4a2004f00209ddbc4d869bb280fb6c40b807f6f7c338cd7646d7cad893a49"
+      },
+      "repo_catalog.domain.git_native": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/git_native.py",
+        "sha256": "1d3845efb6b116b015fe982986b7c12ed3bbe2df949e5dddac24957e77b68048"
+      },
+      "repo_catalog.domain.notes": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/notes.py",
+        "sha256": "92ab0f33eda718ffb730c8831104328577d2531ff4e7c6bfe921bc47371cd0aa"
+      },
+      "repo_catalog.adapters.sqlite.git_core": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/git_core.py",
+        "sha256": "0b29e6bdffc09a6bd328551709548195e576c5bd062be96dda6fe783ce258207"
+      },
+      "repo_catalog.adapters.sqlite.p1_schema": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/p1_schema.py",
+        "sha256": "e1470fe8a81d1f347caa85ef9600860e48941f1154bbe32438f9864a66ed5f22"
+      },
+      "repo_catalog.adapters.git.native": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/git/native.py",
+        "sha256": "d1939fee65cc18565f0afa1424aa8dda27a04f0430da7606eacd5bd8a73f35be"
+      },
+      "repo_catalog.adapters.git.notes": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/git/notes.py",
+        "sha256": "8497bfa9ab1e99dc64ed8877e0ee49702f4375b70f388b9724d4705c1ee58bf4"
+      },
+      "repo_catalog.domain.p1_coordination": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/p1_coordination.py",
+        "sha256": "c15eba1b6c9e91d38a8adfdf4077007d85bd5318418336b2ff17695fa88e939b"
+      },
+      "repo_catalog.domain.ports.notes": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/ports/notes.py",
+        "sha256": "47fa749685acc16a3f0efa95a55b1e2c764d4393ea7040d400cc5452dd8366cb"
+      },
+      "repo_catalog.adapters.sqlite.notes": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/notes.py",
+        "sha256": "7fe27c7c731b0150c8cef85ee09039b3c0896a874a885ad8eb5e80dac3c4ba27"
+      },
+      "repo_catalog.adapters.sqlite.p1_coordination": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/p1_coordination.py",
+        "sha256": "9d658cdb92bf58b468d1014ed24d4adc20d5766213c9810150bc8fbd15eaee62"
+      },
+      "repo_catalog.application.notes": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/application/notes.py",
+        "sha256": "2f29ee35a10d3cfebfb44935dd4e83a283b07025842d700d34cf66a965f87244"
+      },
+      "repo_catalog.domain.context_admission": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/context_admission.py",
+        "sha256": "267e2067bac3966f380dbf09dc5fd52e0c36edeb8c04591797f79241394267a7"
+      },
+      "repo_catalog.adapters.sqlite.context_admission": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/context_admission.py",
+        "sha256": "3de61773f0ae253d5e495e685fbb9cefe63af17a57ad96fd23979bd25a1dca7b"
+      },
+      "repo_catalog.domain.resource_identity": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/resource_identity.py",
+        "sha256": "a7b68deb5a40956360a7c8ad69bcff1c216020b4eb451e52e0ea61fb5d0c13a3"
+      },
+      "repo_catalog.domain.p1_context": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/p1_context.py",
+        "sha256": "e29ff5fa3972f10d5298b472cfba20b706ae8381ef94026e4ab874128c274e1e"
+      },
+      "repo_catalog.domain.resource_identification": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/resource_identification.py",
+        "sha256": "3e7c02193be40b16f48c66ebad5c2f1dab8108241eb1e1794d8ed94ce86107d1"
+      },
+      "repo_catalog.domain.parent_report": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/parent_report.py",
+        "sha256": "26e63919d9edb337ebfbb6e2ffa663a764dc589ec51dd46e0279acecfeff9926"
+      },
+      "repo_catalog.domain.resource_stage": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/resource_stage.py",
+        "sha256": "b3b4c7a7869f61a0713393d8332a410307f736961041c2cc9a28e0356f4b6258"
+      },
+      "repo_catalog.adapters.sqlite.p1_context": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/p1_context.py",
+        "sha256": "656ec834ceb33c5ecc1794449989bcccfc94da892316948bd62b6e5e01ea0b48"
+      },
+      "repo_catalog.domain.context_registration": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/context_registration.py",
+        "sha256": "e29012935442aa6e9ba05d74956aa5e04c91f03f027758a3b9d399bb7de004cc"
+      },
+      "repo_catalog.domain.production_context": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/production_context.py",
+        "sha256": "a43cc9f068b4bb77a5f9c2a1f28d975b58c366dc69763d41336e71b5ce618dfe"
+      },
+      "repo_catalog.adapters.sqlite.production_context": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/production_context.py",
+        "sha256": "fe588177a2fac704795e4bd59310f3a980de269eae67691fe25cd8ceb365f447"
+      },
+      "repo_catalog.adapters.sqlite.acquisition": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/acquisition.py",
+        "sha256": "df989af7cb18f490b625a385b883a01ca5e3baf8625775d5339740b17b95badd"
+      },
+      "repo_catalog.domain.recovery": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/recovery.py",
+        "sha256": "4cf1db77eb4fc39d3251636012492e737460df34b846b1da4011f11477440468"
+      },
+      "repo_catalog.adapters.sqlite.recovery_budget": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/recovery_budget.py",
+        "sha256": "468dbf164994f657ea8c62d64a82cacc6b3f74392d6cfb7b342b0df7d4a6af23"
+      },
+      "repo_catalog.adapters.sqlite.recovery_validation": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/recovery_validation.py",
+        "sha256": "f7b2462bc1075ec07fb39f3460b6ad87f51851a324240774ea200f968cce3801"
+      },
+      "repo_catalog.adapters.sqlite.recovery": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/recovery.py",
+        "sha256": "9f66473ad9ca481409d405459d5fdb4e6884ea1e0dc9583d530b2861d4578a63"
+      },
+      "repo_catalog.application.recovery": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/application/recovery.py",
+        "sha256": "468e88bbb26d2be79d79b39d1b0db3580a775d00dc5ed01ecaed96bddc972ca2"
+      }
+    }
+  },
+  {
+    "stage": "finish",
+    "executable": "/workspace/git-repo-db/.venv/bin/python",
+    "origin": "/workspace/git-repo-db/src/repo_catalog/__init__.py",
+    "config": "/workspace/git-repo-db/pyproject.toml",
+    "source_modules": {
+      "repo_catalog": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/__init__.py",
+        "sha256": "ed7f78e4604437506c62e6c61f3c269bb51901665e1d1484e13cf04757e05ca0"
+      },
+      "repo_catalog.domain.p1_core": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/p1_core.py",
+        "sha256": "f8f5945d61a65134b53e9615764e423e6ad99d737ba8f23c2ef3467dcdc46c17"
+      },
+      "repo_catalog.domain.time": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/time.py",
+        "sha256": "f8ee3df9e402a820527d89b5d88c4c85afc4a2d013cd457763cc37746984990a"
+      },
+      "repo_catalog.domain.coverage": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/coverage.py",
+        "sha256": "96eb3bad172f66af5afe335131087bd5c6a7cf6eb6dbb77617c01e851c8f9c81"
+      },
+      "repo_catalog.domain.p1_coverage": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/p1_coverage.py",
+        "sha256": "b5e51a6dcf43162f20fb4a081fd12c68f40f4abc6a9aef0ff6bb41b1172f8531"
+      },
+      "repo_catalog.domain.ports.p1_core": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/ports/p1_core.py",
+        "sha256": "b421552e9188b825993523b4a7a6a44c8b497f29f2fb39b69d40acc9c0684fed"
+      },
+      "repo_catalog.adapters.sqlite.p1_core": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/p1_core.py",
+        "sha256": "e9f4a2004f00209ddbc4d869bb280fb6c40b807f6f7c338cd7646d7cad893a49"
+      },
+      "repo_catalog.domain.git_native": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/git_native.py",
+        "sha256": "1d3845efb6b116b015fe982986b7c12ed3bbe2df949e5dddac24957e77b68048"
+      },
+      "repo_catalog.domain.notes": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/notes.py",
+        "sha256": "92ab0f33eda718ffb730c8831104328577d2531ff4e7c6bfe921bc47371cd0aa"
+      },
+      "repo_catalog.adapters.sqlite.git_core": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/git_core.py",
+        "sha256": "0b29e6bdffc09a6bd328551709548195e576c5bd062be96dda6fe783ce258207"
+      },
+      "repo_catalog.adapters.sqlite.p1_schema": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/p1_schema.py",
+        "sha256": "e1470fe8a81d1f347caa85ef9600860e48941f1154bbe32438f9864a66ed5f22"
+      },
+      "repo_catalog.adapters.git.native": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/git/native.py",
+        "sha256": "d1939fee65cc18565f0afa1424aa8dda27a04f0430da7606eacd5bd8a73f35be"
+      },
+      "repo_catalog.adapters.git.notes": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/git/notes.py",
+        "sha256": "8497bfa9ab1e99dc64ed8877e0ee49702f4375b70f388b9724d4705c1ee58bf4"
+      },
+      "repo_catalog.domain.p1_coordination": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/p1_coordination.py",
+        "sha256": "c15eba1b6c9e91d38a8adfdf4077007d85bd5318418336b2ff17695fa88e939b"
+      },
+      "repo_catalog.domain.ports.notes": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/ports/notes.py",
+        "sha256": "47fa749685acc16a3f0efa95a55b1e2c764d4393ea7040d400cc5452dd8366cb"
+      },
+      "repo_catalog.adapters.sqlite.notes": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/notes.py",
+        "sha256": "7fe27c7c731b0150c8cef85ee09039b3c0896a874a885ad8eb5e80dac3c4ba27"
+      },
+      "repo_catalog.adapters.sqlite.p1_coordination": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/p1_coordination.py",
+        "sha256": "9d658cdb92bf58b468d1014ed24d4adc20d5766213c9810150bc8fbd15eaee62"
+      },
+      "repo_catalog.application.notes": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/application/notes.py",
+        "sha256": "2f29ee35a10d3cfebfb44935dd4e83a283b07025842d700d34cf66a965f87244"
+      },
+      "repo_catalog.domain.context_admission": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/context_admission.py",
+        "sha256": "267e2067bac3966f380dbf09dc5fd52e0c36edeb8c04591797f79241394267a7"
+      },
+      "repo_catalog.adapters.sqlite.context_admission": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/context_admission.py",
+        "sha256": "3de61773f0ae253d5e495e685fbb9cefe63af17a57ad96fd23979bd25a1dca7b"
+      },
+      "repo_catalog.domain.resource_identity": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/resource_identity.py",
+        "sha256": "a7b68deb5a40956360a7c8ad69bcff1c216020b4eb451e52e0ea61fb5d0c13a3"
+      },
+      "repo_catalog.domain.p1_context": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/p1_context.py",
+        "sha256": "e29ff5fa3972f10d5298b472cfba20b706ae8381ef94026e4ab874128c274e1e"
+      },
+      "repo_catalog.domain.resource_identification": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/resource_identification.py",
+        "sha256": "3e7c02193be40b16f48c66ebad5c2f1dab8108241eb1e1794d8ed94ce86107d1"
+      },
+      "repo_catalog.domain.parent_report": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/parent_report.py",
+        "sha256": "26e63919d9edb337ebfbb6e2ffa663a764dc589ec51dd46e0279acecfeff9926"
+      },
+      "repo_catalog.domain.resource_stage": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/resource_stage.py",
+        "sha256": "b3b4c7a7869f61a0713393d8332a410307f736961041c2cc9a28e0356f4b6258"
+      },
+      "repo_catalog.adapters.sqlite.p1_context": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/p1_context.py",
+        "sha256": "656ec834ceb33c5ecc1794449989bcccfc94da892316948bd62b6e5e01ea0b48"
+      },
+      "repo_catalog.domain.context_registration": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/context_registration.py",
+        "sha256": "e29012935442aa6e9ba05d74956aa5e04c91f03f027758a3b9d399bb7de004cc"
+      },
+      "repo_catalog.domain.production_context": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/production_context.py",
+        "sha256": "a43cc9f068b4bb77a5f9c2a1f28d975b58c366dc69763d41336e71b5ce618dfe"
+      },
+      "repo_catalog.adapters.sqlite.production_context": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/production_context.py",
+        "sha256": "fe588177a2fac704795e4bd59310f3a980de269eae67691fe25cd8ceb365f447"
+      },
+      "repo_catalog.adapters.sqlite.acquisition": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/acquisition.py",
+        "sha256": "df989af7cb18f490b625a385b883a01ca5e3baf8625775d5339740b17b95badd"
+      },
+      "repo_catalog.domain.recovery": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/recovery.py",
+        "sha256": "4cf1db77eb4fc39d3251636012492e737460df34b846b1da4011f11477440468"
+      },
+      "repo_catalog.adapters.sqlite.recovery_budget": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/recovery_budget.py",
+        "sha256": "468dbf164994f657ea8c62d64a82cacc6b3f74392d6cfb7b342b0df7d4a6af23"
+      },
+      "repo_catalog.adapters.sqlite.recovery_validation": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/recovery_validation.py",
+        "sha256": "f7b2462bc1075ec07fb39f3460b6ad87f51851a324240774ea200f968cce3801"
+      },
+      "repo_catalog.adapters.sqlite.recovery": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/recovery.py",
+        "sha256": "9f66473ad9ca481409d405459d5fdb4e6884ea1e0dc9583d530b2861d4578a63"
+      },
+      "repo_catalog.application.recovery": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/application/recovery.py",
+        "sha256": "468e88bbb26d2be79d79b39d1b0db3580a775d00dc5ed01ecaed96bddc972ca2"
+      },
+      "repo_catalog.domain.models": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/models.py",
+        "sha256": "0c89c49ff141119a0cf6d4342b774fe159647d9cc35c95122d9a225c4bd5c50b"
+      },
+      "repo_catalog.config": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/config.py",
+        "sha256": "da88a41ab63497f3e018ff790c7247ec4bc53d44240eff387e65bdeaa9b11785"
+      },
+      "repo_catalog.application.contracts": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/application/contracts.py",
+        "sha256": "c977b61d03abd239d9049a0c668eedcbf2bd684047c43df2b0710379c2ea5d4b"
+      },
+      "repo_catalog.adapters.sqlite.coverage": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/coverage.py",
+        "sha256": "af0434c7f9934b4284ed2c6880dcf763d5bf7b3e8ebf81297bc0bbd76ae3fbc2"
+      },
+      "repo_catalog.adapters.sqlite.transactions": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/transactions.py",
+        "sha256": "0fe7bcef262470347c721e64c34ea218a2cfa375725559a11e1ddf6c84959d10"
+      },
+      "repo_catalog.domain.payload": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/payload.py",
+        "sha256": "e8b830b9ddcebdd61e2739f646e1565cdea34facb9b3513b9756cb06ae6d6208"
+      },
+      "repo_catalog.adapters.sqlite.cas_integrity": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/cas_integrity.py",
+        "sha256": "b2c1cfd13c907493380df2d113617ad95e7fcfae2525d51c38e28e0514e4232c"
+      },
+      "repo_catalog.adapters.sqlite.schema": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/schema.py",
+        "sha256": "4167f9f7395dac8277f4129db6470bf1ba67a503d950fcfe7f5625fa654bdb39"
+      },
+      "repo_catalog.adapters.sqlite.store": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/store.py",
+        "sha256": "5bc8a1d42cf3f785f30ec26fdfd456f07b45850e7520906791b70dd9bc64cd17"
+      },
+      "repo_catalog.application.repository_identity": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/application/repository_identity.py",
+        "sha256": "9225b46edba2f0be92929905c64ad9afb4bfef1f8b6d5721a4840cb3ac036e94"
+      },
+      "repo_catalog.adapters.filesystem.locks": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/filesystem/locks.py",
+        "sha256": "02b3422aa231df94cb5ca5172dae67d907aeec77804502409235e491e525c6da"
+      },
+      "repo_catalog.adapters.filesystem.capacity": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/filesystem/capacity.py",
+        "sha256": "a33441ecf9160ab5fe281c724f789e68921eb21b4c3a8e222bce4cc0ba41caa4"
+      },
+      "repo_catalog.adapters.sqlite.payloads": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/payloads.py",
+        "sha256": "15e0fff2e2b0c0f10aab6c6bc4c90322c8e06e0afb0a19fe832299b7faf92050"
+      },
+      "repo_catalog.domain.git_intrinsic": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/git_intrinsic.py",
+        "sha256": "6406b5c28dd87ef2382416996d5455bdae34dc8b48dbe113f42a898d03625690"
+      },
+      "repo_catalog.domain.git_decoding": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/git_decoding.py",
+        "sha256": "f3f6966b47111757f64dbc31281664a71cbf8ee6d0bed3f37183632e28b76623"
+      },
+      "repo_catalog.domain.git_object": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/git_object.py",
+        "sha256": "e1427aa9a02fea745b5967b60c7ec23f419809b084d979a4d5edfc0d15638cd7"
+      },
+      "repo_catalog.adapters.git.parsing": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/git/parsing.py",
+        "sha256": "f27e9a07e2572ab961b7494dad3f0d6d3e8a3bf625a972065b58781cd05288fb"
+      },
+      "repo_catalog.adapters.git.runner": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/git/runner.py",
+        "sha256": "e93b756131a65e55162465c82556d72897a7dc5ba5f626fd16dfa3bc7fb40ba6"
+      },
+      "repo_catalog.adapters.git.importer": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/git/importer.py",
+        "sha256": "6d7466c64e6134dfc445c72baf741956b584fc2236dfb9a33870ad981382e268"
+      },
+      "repo_catalog.application.job_plans": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/application/job_plans.py",
+        "sha256": "0a1ff18900cc505ed41972701bd530729817eb2a928f60108d81f9f258cd6e6a"
+      },
+      "repo_catalog.application.job_service": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/application/job_service.py",
+        "sha256": "9e4770860c4d93ee99e150ee184766fe7a837d0601b32c1ec8e3434c2b80e054"
+      },
+      "repo_catalog.application.collection_service": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/application/collection_service.py",
+        "sha256": "87cbdc8b7708f0fc271ad32526f293ad90b5701fb3c40ddfdc2c8980f4a0b384"
+      },
+      "repo_catalog.application.query_service": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/application/query_service.py",
+        "sha256": "80a257854b9146fd5e5f78d3885d71ff2770111e49149f70e21d5c500331a92d"
+      },
+      "repo_catalog.domain.access_registry": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/access_registry.py",
+        "sha256": "cce3062c59ba80c428afcbbb0d96508768fc97eda5f8ae46b7d5d5aab3288e49"
+      },
+      "repo_catalog.domain.access_connections": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/access_connections.py",
+        "sha256": "3ccb3e5351fd21f72ab26475132a6b1ce1643415366ee11ffa9f9e2af3476718"
+      },
+      "repo_catalog.adapters.sqlite.access_schema": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/access_schema.py",
+        "sha256": "4991ddc288f4823e27fdc101e70a22093f3fb3d0e0d31298810ff11cf176e61a"
+      },
+      "repo_catalog.domain.access_backup": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/access_backup.py",
+        "sha256": "6fa8654f05b96b25ccd5341433a957d05b6f243b3bf56d4b8dc338dc3e06bf0b"
+      },
+      "repo_catalog.adapters.sqlite.access_backup": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/access_backup.py",
+        "sha256": "b1df310e6d5a24ec48dd012f370b08c8179e6eee33e66f1304ee0a2ac64d5e08"
+      },
+      "repo_catalog.adapters.sqlite.access_registry": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/access_registry.py",
+        "sha256": "d5dc914d1d402e6d07efd128ae489ba86aeb3a365356a44cfab4ce80950f9820"
+      },
+      "repo_catalog.adapters.sqlite.access_connections": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/access_connections.py",
+        "sha256": "9472274b9a5baff8894ef182fc6aaad4a81aecd433026cfb30b3441f3a1f861c"
+      },
+      "repo_catalog.domain.ports.access_backup": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/ports/access_backup.py",
+        "sha256": "d027253db345fe10f07be86bb2dd95a9570a7c93be01bbce34632994f0440002"
+      },
+      "repo_catalog.application.access_maintenance": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/application/access_maintenance.py",
+        "sha256": "0774ac6bef5109c08635116cfc1c53eb5f761724395d789ea8f93b2436533b73"
+      },
+      "repo_catalog.domain.acquisition": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/acquisition.py",
+        "sha256": "5b3eba7437505c9ed5053e0d4d427534ef6b9250764953c1ad078c802d9b181d"
+      },
+      "repo_catalog.adapters.github.production_intake": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/github/production_intake.py",
+        "sha256": "1ce3103535545eb2a0eea1628cd40249ba5c3f25995ebb0a5aeea3dc8989c3ef"
+      },
+      "repo_catalog.domain.native_acquisition": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/native_acquisition.py",
+        "sha256": "e0d658c2e36b7590f36f0260a43c5cf2bf02a46c4b0dcac22885f1ec850e3d3b"
+      },
+      "repo_catalog.application.acquisition": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/application/acquisition.py",
+        "sha256": "422abc67c138d015c4aaf1dfc08b5a2ca9f994b061f68388e9366d5ed6358461"
+      },
+      "repo_catalog.domain.exchange": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/exchange.py",
+        "sha256": "6709ad532ef5aef65118505d2270960c49a21521c68460da2044b897dae97957"
+      },
+      "repo_catalog.domain.selective_exchange": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/selective_exchange.py",
+        "sha256": "f2882bfe18841e34972f926b508a0e814ff0babb664d983f70b8634c0ace8be4"
+      },
+      "repo_catalog.application.exchange": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/application/exchange.py",
+        "sha256": "4442705ded48d0f52669b18c8b9877faa359638eed7b2e8e7a747aad03b48cd7"
+      },
+      "repo_catalog.domain.production_query": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/production_query.py",
+        "sha256": "dc4461d89798e0fc4d6f2608b0ae634bf4b476fff78b71cbcac7682dd2b92351"
+      },
+      "repo_catalog.adapters.sqlite.production_search": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/production_search.py",
+        "sha256": "d58f19587f48eaa511bd335f47f995e1b79c6bea4605453222e185f5165b4239"
+      },
+      "repo_catalog.application.production_query": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/application/production_query.py",
+        "sha256": "dc495abb0b2433c5249853c3ffb254043e00244accf306bb3a5b7366be7f63ff"
+      },
+      "repo_catalog.adapters.filesystem.access_executor": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/filesystem/access_executor.py",
+        "sha256": "ee8bc62d087fad23a1a3539263651102f1edac6dc9434c24e0f4f63b27eabf6a"
+      },
+      "repo_catalog.adapters.git.access_native": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/git/access_native.py",
+        "sha256": "fc38b78a5113b4ede7321995932c8397b4ffa30e589d50892673c0322f106d5f"
+      },
+      "repo_catalog.domain.access_workflow": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/access_workflow.py",
+        "sha256": "5cdf947c7c01008736e8de86d33edbd85d8b711c8348ce0cc16bbee9f8c2a317"
+      },
+      "repo_catalog.domain.ports.access_registry": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/ports/access_registry.py",
+        "sha256": "a102ac0d89e427b1979854d2bd8242b9eec65c5e924d2555d810531a6a954430"
+      },
+      "repo_catalog.domain.ports.access_connections": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/ports/access_connections.py",
+        "sha256": "2a17c52281e3eb2a1f624b8f35d731f1fd6a865e158baa3a41026c96801c9a6f"
+      },
+      "repo_catalog.domain.ports.access_workflow": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/ports/access_workflow.py",
+        "sha256": "f4cf66c6912d194fb960026af6c40f797586a9ed6c9c73435f301831cb38a58d"
+      },
+      "repo_catalog.application.access_workflow": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/application/access_workflow.py",
+        "sha256": "902ba4575f2db56fcd430bb0fed81733fd0534f2245bd9d8999abc35a7e4fe95"
+      },
+      "repo_catalog.application.access_acquisition": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/application/access_acquisition.py",
+        "sha256": "38a99e75bcdaaa0ae4a8788aecedd78f06d0be7a988e04bc8d5f458070347751"
+      },
+      "repo_catalog.cli.access_workflow": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/cli/access_workflow.py",
+        "sha256": "45a88e89acd3833268eae49eb11c5ecc49c4d3e582546c988f873638d6a1d01c"
+      },
+      "repo_catalog.domain.ports.p1_context": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/ports/p1_context.py",
+        "sha256": "aed9fabf97ca15a1b19b72425d4eeb06f005b2f32b90204697e3fd632d7feab8"
+      },
+      "repo_catalog.cli.production_query": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/cli/production_query.py",
+        "sha256": "ec67e07f3c11eaba76aff2e565418a671e701ea1a8155d86f4027dd77a5adf36"
+      },
+      "repo_catalog.adapters.sqlite.json_contracts": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/json_contracts.py",
+        "sha256": "d7bd8653ef251804ed120570e769b430b08c24a41f09153e5bd8a519892983c7"
+      },
+      "repo_catalog.domain.document": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/document.py",
+        "sha256": "9faa75482007e80ff24da38818cf4089d696944743923ad21881110d25a9d548"
+      },
+      "repo_catalog.adapters.sqlite.text_bodies": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/text_bodies.py",
+        "sha256": "e4fe64962aca309f9b675b60dd4eac25c729873971a748a69b0305dc579682cb"
+      },
+      "repo_catalog.domain.current_state": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/current_state.py",
+        "sha256": "52a69c094eabaa206598d2c5e0a669c7740eaca4a9572bd272263774dce30449"
+      },
+      "repo_catalog.adapters.sqlite.current_resources": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/current_resources.py",
+        "sha256": "335af0485fa6eef2fd3d50af48e5b7e42db4c981beda7d9b7aabe7e12b2d602c"
+      },
+      "repo_catalog.adapters.sqlite.current_api": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/current_api.py",
+        "sha256": "37f47903b1881ba5d9e6942b74ac5dc5ebb5b847f50e33b7498fac7c4984cb7c"
+      },
+      "repo_catalog.adapters.filesystem.cache": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/filesystem/cache.py",
+        "sha256": "43b0c13b4cb1a6f4b8299822fd55cc5394f652c9c90344f698697577b282cd18"
+      },
+      "repo_catalog.adapters.filesystem.atomic_publish": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/filesystem/atomic_publish.py",
+        "sha256": "b1e4b79e93989d8c4dd5e41f0f5fbbeab41ec72cf6c40ad289f2cb95b656cacd"
+      },
+      "repo_catalog.application.maintenance_service": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/application/maintenance_service.py",
+        "sha256": "a9ccb5e2b9abd8dc63936289810a0585aafd218408e386eeea258e4e58251884"
+      },
+      "repo_catalog.application.pr_queries": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/application/pr_queries.py",
+        "sha256": "f56a437aa7ca30019e5c486f5edacd22c15a1a573d89e560bdefed41932f7c45"
+      },
+      "repo_catalog.adapters.github.identity": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/github/identity.py",
+        "sha256": "8e096e14864917e24b4d67d64e3442287331eca7367795b3002e3cff491b6cd6"
+      },
+      "repo_catalog.adapters.github.current_parser": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/github/current_parser.py",
+        "sha256": "ac544df570f07499f3088d198a51bc708145c7e54a147a74d058eab17ff614c6"
+      },
+      "repo_catalog.adapters.github.persistence": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/github/persistence.py",
+        "sha256": "b45a94cb819992523ea8de1bb41c03d8be0d81a30e8bc02deeecee3a98e8ba4d"
+      },
+      "repo_catalog.adapters.recording": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/recording.py",
+        "sha256": "0719568ffd72a2954cc617706a9dc7b4cc4bde47d9496a7782dcce9c5d48c48c"
+      },
+      "repo_catalog.adapters.github.transport": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/github/transport.py",
+        "sha256": "eb07d6577f458dbc05e9c8d1c47d1581daf9555250aac123327f1191fa78fc4c"
+      },
+      "repo_catalog.adapters.sqlite.code_assessments": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/code_assessments.py",
+        "sha256": "208992994bb05944c51fc0dbfa577c4d90c1a4162ed7b2540b5e41eb46305cbc"
+      },
+      "repo_catalog.domain.pr_scope": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/pr_scope.py",
+        "sha256": "fbd4444e5724ef521286a118046615d1d6b498e22bc04f0587328a6b438ac64a"
+      },
+      "repo_catalog.adapters.github.collector": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/github/collector.py",
+        "sha256": "1517f6076abb571ed1b85affb2b849388f73b2ce3d2975b5b66f53fbcf7e3c28"
+      },
+      "repo_catalog.adapters.sqlite.current_collections": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/current_collections.py",
+        "sha256": "1835c8e68f6ba05c7684498abdb1a79782b5f38e979dc3b5033ac891e8bb39ed"
+      },
+      "repo_catalog.adapters.sqlite.exchange": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/exchange.py",
+        "sha256": "336f22bb74502477154be6e147c9843bdb48bc9bd8a50bcb24332572d49c10aa"
+      },
+      "repo_catalog.adapters.sqlite.index": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/index.py",
+        "sha256": "79352d4937580322b861819fb023b02375f3b2be927d67faa40620e853c91e2a"
+      },
+      "repo_catalog.application.catalog_validation": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/application/catalog_validation.py",
+        "sha256": "32c29508f3e079fa62512bef0d8d369355cb9438de4fd0fab33dd77697de029f"
+      },
+      "repo_catalog.application.git_query_context": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/application/git_query_context.py",
+        "sha256": "3a79e64a83feb0103b9a3d39e4c57a0770b22f2fdf5305bb340ed3cc10fff8e1"
+      },
+      "repo_catalog.adapters.sqlite.target": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/target.py",
+        "sha256": "6d7cbb10afe505950ebed1fdea7a037920be23e3fe10770047d086f1cb7c9cbc"
+      },
+      "repo_catalog.application.target_queries": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/application/target_queries.py",
+        "sha256": "ce5e725ea0e05748337defa4fe7759b47d2baa04988d5f612d1e1d0d4bf0c1e0"
+      },
+      "repo_catalog.adapters.sqlite.identity_relations": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/adapters/sqlite/identity_relations.py",
+        "sha256": "a23044e5049ffc4b55f91871d756643c7b427f3a108ea11304b44ec57efe7f80"
+      },
+      "repo_catalog.application.parsing_service": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/application/parsing_service.py",
+        "sha256": "11cfc45eae63094e6deff0b46a070320fb120376eb5fc5baa76a38105bee8d45"
+      },
+      "repo_catalog.cli.presenters": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/cli/presenters.py",
+        "sha256": "dda3165cfc22e6bb7a6f3ec893645ad100637c05ab0631099c1718518aa8f2be"
+      },
+      "repo_catalog.cli.main": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/cli/main.py",
+        "sha256": "acc24904c4b9a4d41800dc888b16eb3ca1a857c118ed75a7301ffdfd8b671d4e"
+      },
+      "repo_catalog.application.exchange_service": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/application/exchange_service.py",
+        "sha256": "978ba1d010a371365400f15090707f6570f01e2580ed5545c4ad7e0b39a22231"
+      },
+      "repo_catalog.domain.exchange_rows": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/exchange_rows.py",
+        "sha256": "c3c8f62768426e66374902ccdeea4218f7609516781e5ca9a9bc6a3bf70d231e"
+      },
+      "repo_catalog.domain.context_dependencies": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/context_dependencies.py",
+        "sha256": "766d198e1553ca61b16bab0f1c20cc568796f0a030f88d91e247e3dbb8451546"
+      },
+      "repo_catalog.domain.context_wire": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/context_wire.py",
+        "sha256": "9d9bb824a436322ce8632674a28cb894a7afb8b7a715ac19ff6c93c887bb4416"
+      },
+      "repo_catalog.application.parser_service": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/application/parser_service.py",
+        "sha256": "7b8ae7e23d9b8f1add4a520fcad22c6e0d0745d561af2d46aecc5bd1d623518a"
+      },
+      "repo_catalog.domain.transfer_sql": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/transfer_sql.py",
+        "sha256": "149ff2fa8ae6bfbf8827429ce443215294fd2d35a662390eef6d286806fc006f"
+      }
+    }
+  }
+]

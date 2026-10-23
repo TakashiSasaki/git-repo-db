@@ -1,0 +1,12 @@
+{
+  "source_head": "a354348b800177608f6a83e2484cb6a784b7190a",
+  "source_tree": "169f0f95449c7bd728261b3d7799f795162c03fd",
+  "driver_exit_code": 1,
+  "actual_failed_action": "direct pytest collection",
+  "collection_exit_code": 4,
+  "exception": "ModuleNotFoundError: jsonschema in external tests/support/cli.py",
+  "original_smoke_child_executed": false,
+  "sdist_form_prepared": false,
+  "junit_and_journal": "not produced; pytest conftest import failed before test execution",
+  "status": "failed harness setup, not product outcome; v2 adds locked jsonschema dependency closure while retaining absent httpx and unchanged original SMOKE"
+}

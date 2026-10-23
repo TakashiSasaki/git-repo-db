@@ -1,0 +1,15 @@
+{
+  "scope": "supplementary Author-team external test expectation correction, not a product fix or independent review",
+  "old_helper_sha256": "a0163aa184f4e2122ae77ac04123913e93882acae66d84bbc3d39b2c226abfe0",
+  "new_helper_sha256": "975dde31a3a6d7e66b918f2610bfaacc210eabb77ef13baa94dbe9229d7d0b59",
+  "helper_path": "/workspace/i6b-tools/test_i6b_extra.py",
+  "preserved_original_helper": "/workspace/i6b-work/source-extra-prefx/driver-snapshot/test_i6b_extra.py.txt",
+  "preserved_initial_results": "/workspace/i6b-work/source-extra-prefx/extra.xml and extra.jsonl",
+  "initial_result": "26 passed / 8 failed, exit1, six genuine missing Collection-header planner dependency failures and two overly late expected-code failures",
+  "correction": "Replace broad expected-code set with explicit exact code per mutation. Missing required Collection observation time is refused at strict row grammar with MALFORMED_ROW, before proof semantics. Other five mutations require INVALID_COVERAGE_PROOF. Both global/scoped cases retain same node IDs. No product changes, weakened refusal, test removal, skip or xfail is part of this helper correction.",
+  "affected_nodes": [
+    "tests/unit/test_i6b_extra.py::test_extra_T12_collection_proof_time_scope_mutations_refused[no-time-global]",
+    "tests/unit/test_i6b_extra.py::test_extra_T12_collection_proof_time_scope_mutations_refused[no-time-scoped]"
+  ],
+  "new_execution_status": "pending after planner correction; no pass claim from this metadata"
+}

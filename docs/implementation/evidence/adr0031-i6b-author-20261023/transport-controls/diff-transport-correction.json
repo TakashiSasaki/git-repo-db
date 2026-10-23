@@ -1,0 +1,20 @@
+{
+  "reason": "git diff --cached --check sees a literal space on context-only blank lines inside the raw working.diff as trailing whitespace. Preserve original evidence bytes using gzip transport; do not strip/alter recorded diff.",
+  "observed_reproduction_command": [
+    "git",
+    "diff",
+    "--cached",
+    "--check"
+  ],
+  "observed_reproduction_exit": 2,
+  "old_index_sha256": "8222771417097354434f5e7444adf5721b90b4cd16448126e614d42e4c809e69",
+  "new_index_sha256": "4369e168a709bfe1c514c396234e2b08afc9bc1ff8ea5c96c190b8e17c1db52f",
+  "original_path": "raw/aggregate-before/working.diff",
+  "new_transport_path": "raw/aggregate-before/working.diff.gz",
+  "original_bytes": 36289,
+  "original_sha256": "01f9710d023c5979b911016b31cad47e7bfc233439255ed70fc0689ac3bc9863",
+  "gzip_bytes": 8262,
+  "gzip_sha256": "975d313fbb5b1dc5bd7addb713e627cc68c52a929d3fc38263867793a6389db6",
+  "decompressed_bytes_identical": true,
+  "product_or_test_changes": false
+}

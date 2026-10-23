@@ -1,0 +1,22 @@
+{
+  "command": [
+    "/workspace/git-repo-db/.venv/bin/python",
+    "-c",
+    "import sys;from pathlib import Path;sys.path.insert(0,sys.argv[1]);import repo_catalog.domain.exchange as exchange;assert Path(exchange.__file__).resolve()==Path(sys.argv[1]).resolve()/'repo_catalog/domain/exchange.py';print('ACTUAL_EXCHANGE_ORIGIN='+exchange.__file__);import pytest;raise SystemExit(pytest.main(sys.argv[2:]))",
+    "/workspace/i6b-work/cap-correction/baseline-source-v2/src",
+    "tests/unit/test_context_wire_v5.py",
+    "-q",
+    "-c",
+    "/workspace/i6b-work/cap-correction/baseline-source-v2/pyproject.toml",
+    "-o",
+    "addopts=",
+    "--tb=short",
+    "-k",
+    "dictionary_key or full_envelope_including_digest or final_leaf_string_chunk",
+    "--junitxml",
+    "/workspace/i6b-work/cap-correction/actual-pre-fix-v2/junit.xml",
+    "--journal",
+    "/workspace/i6b-work/cap-correction/actual-pre-fix-v2/journal.jsonl"
+  ],
+  "exit_code": 1
+}

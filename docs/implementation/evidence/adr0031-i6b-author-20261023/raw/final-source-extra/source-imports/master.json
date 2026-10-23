@@ -1,0 +1,170 @@
+[
+  {
+    "stage": "start",
+    "executable": "/workspace/git-repo-db/.venv/bin/python",
+    "origin": "/workspace/git-repo-db/src/repo_catalog/__init__.py",
+    "config": "/workspace/git-repo-db/pyproject.toml",
+    "source_modules": {
+      "repo_catalog": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/__init__.py",
+        "sha256": "ed7f78e4604437506c62e6c61f3c269bb51901665e1d1484e13cf04757e05ca0"
+      }
+    }
+  },
+  {
+    "stage": "finish",
+    "executable": "/workspace/git-repo-db/.venv/bin/python",
+    "origin": "/workspace/git-repo-db/src/repo_catalog/__init__.py",
+    "config": "/workspace/git-repo-db/pyproject.toml",
+    "source_modules": {
+      "repo_catalog": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/__init__.py",
+        "sha256": "ed7f78e4604437506c62e6c61f3c269bb51901665e1d1484e13cf04757e05ca0"
+      },
+      "repo_catalog.domain.context_admission": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/context_admission.py",
+        "sha256": "267e2067bac3966f380dbf09dc5fd52e0c36edeb8c04591797f79241394267a7"
+      },
+      "repo_catalog.domain.time": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/time.py",
+        "sha256": "f8ee3df9e402a820527d89b5d88c4c85afc4a2d013cd457763cc37746984990a"
+      },
+      "repo_catalog.domain.coverage": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/coverage.py",
+        "sha256": "96eb3bad172f66af5afe335131087bd5c6a7cf6eb6dbb77617c01e851c8f9c81"
+      },
+      "repo_catalog.domain.p1_coverage": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/p1_coverage.py",
+        "sha256": "b5e51a6dcf43162f20fb4a081fd12c68f40f4abc6a9aef0ff6bb41b1172f8531"
+      },
+      "repo_catalog.domain.resource_identity": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/resource_identity.py",
+        "sha256": "a7b68deb5a40956360a7c8ad69bcff1c216020b4eb451e52e0ea61fb5d0c13a3"
+      },
+      "repo_catalog.domain.p1_context": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/p1_context.py",
+        "sha256": "e29ff5fa3972f10d5298b472cfba20b706ae8381ef94026e4ab874128c274e1e"
+      },
+      "repo_catalog.domain.context_registration": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/context_registration.py",
+        "sha256": "e29012935442aa6e9ba05d74956aa5e04c91f03f027758a3b9d399bb7de004cc"
+      },
+      "repo_catalog.domain.p1_core": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/p1_core.py",
+        "sha256": "f8f5945d61a65134b53e9615764e423e6ad99d737ba8f23c2ef3467dcdc46c17"
+      },
+      "repo_catalog.domain.exchange": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/exchange.py",
+        "sha256": "6709ad532ef5aef65118505d2270960c49a21521c68460da2044b897dae97957"
+      },
+      "repo_catalog.domain.exchange_rows": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/exchange_rows.py",
+        "sha256": "c3c8f62768426e66374902ccdeea4218f7609516781e5ca9a9bc6a3bf70d231e"
+      },
+      "repo_catalog.domain.selective_exchange": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/selective_exchange.py",
+        "sha256": "db9e00b70843358349c73f7fb23a3e2663f423913abb3c8add04788c5043de0b"
+      },
+      "repo_catalog.domain.context_dependencies": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/context_dependencies.py",
+        "sha256": "93d6d7bdbf14cd5c26d13c36a8e2e3bd65ae6f55a208941ada2353af65476fb0"
+      },
+      "repo_catalog.domain.context_wire": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/context_wire.py",
+        "sha256": "9d9bb824a436322ce8632674a28cb894a7afb8b7a715ac19ff6c93c887bb4416"
+      },
+      "repo_catalog.domain.resource_identification": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/resource_identification.py",
+        "sha256": "3e7c02193be40b16f48c66ebad5c2f1dab8108241eb1e1794d8ed94ce86107d1"
+      }
+    }
+  },
+  {
+    "stage": "start",
+    "executable": "/workspace/git-repo-db/.venv/bin/python",
+    "origin": "/workspace/git-repo-db/src/repo_catalog/__init__.py",
+    "config": "/workspace/git-repo-db/pyproject.toml",
+    "source_modules": {
+      "repo_catalog": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/__init__.py",
+        "sha256": "ed7f78e4604437506c62e6c61f3c269bb51901665e1d1484e13cf04757e05ca0"
+      }
+    }
+  },
+  {
+    "stage": "finish",
+    "executable": "/workspace/git-repo-db/.venv/bin/python",
+    "origin": "/workspace/git-repo-db/src/repo_catalog/__init__.py",
+    "config": "/workspace/git-repo-db/pyproject.toml",
+    "source_modules": {
+      "repo_catalog": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/__init__.py",
+        "sha256": "ed7f78e4604437506c62e6c61f3c269bb51901665e1d1484e13cf04757e05ca0"
+      },
+      "repo_catalog.domain.context_admission": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/context_admission.py",
+        "sha256": "267e2067bac3966f380dbf09dc5fd52e0c36edeb8c04591797f79241394267a7"
+      },
+      "repo_catalog.domain.time": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/time.py",
+        "sha256": "f8ee3df9e402a820527d89b5d88c4c85afc4a2d013cd457763cc37746984990a"
+      },
+      "repo_catalog.domain.coverage": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/coverage.py",
+        "sha256": "96eb3bad172f66af5afe335131087bd5c6a7cf6eb6dbb77617c01e851c8f9c81"
+      },
+      "repo_catalog.domain.p1_coverage": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/p1_coverage.py",
+        "sha256": "b5e51a6dcf43162f20fb4a081fd12c68f40f4abc6a9aef0ff6bb41b1172f8531"
+      },
+      "repo_catalog.domain.resource_identity": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/resource_identity.py",
+        "sha256": "a7b68deb5a40956360a7c8ad69bcff1c216020b4eb451e52e0ea61fb5d0c13a3"
+      },
+      "repo_catalog.domain.p1_context": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/p1_context.py",
+        "sha256": "e29ff5fa3972f10d5298b472cfba20b706ae8381ef94026e4ab874128c274e1e"
+      },
+      "repo_catalog.domain.context_registration": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/context_registration.py",
+        "sha256": "e29012935442aa6e9ba05d74956aa5e04c91f03f027758a3b9d399bb7de004cc"
+      },
+      "repo_catalog.domain.p1_core": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/p1_core.py",
+        "sha256": "f8f5945d61a65134b53e9615764e423e6ad99d737ba8f23c2ef3467dcdc46c17"
+      },
+      "repo_catalog.domain.exchange": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/exchange.py",
+        "sha256": "6709ad532ef5aef65118505d2270960c49a21521c68460da2044b897dae97957"
+      },
+      "repo_catalog.domain.exchange_rows": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/exchange_rows.py",
+        "sha256": "c3c8f62768426e66374902ccdeea4218f7609516781e5ca9a9bc6a3bf70d231e"
+      },
+      "repo_catalog.domain.selective_exchange": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/selective_exchange.py",
+        "sha256": "db9e00b70843358349c73f7fb23a3e2663f423913abb3c8add04788c5043de0b"
+      },
+      "repo_catalog.domain.context_dependencies": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/context_dependencies.py",
+        "sha256": "93d6d7bdbf14cd5c26d13c36a8e2e3bd65ae6f55a208941ada2353af65476fb0"
+      },
+      "repo_catalog.domain.context_wire": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/context_wire.py",
+        "sha256": "9d9bb824a436322ce8632674a28cb894a7afb8b7a715ac19ff6c93c887bb4416"
+      },
+      "repo_catalog.domain.resource_identification": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/resource_identification.py",
+        "sha256": "3e7c02193be40b16f48c66ebad5c2f1dab8108241eb1e1794d8ed94ce86107d1"
+      },
+      "repo_catalog.domain.parent_report": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/parent_report.py",
+        "sha256": "26e63919d9edb337ebfbb6e2ffa663a764dc589ec51dd46e0279acecfeff9926"
+      },
+      "repo_catalog.domain.production_context": {
+        "path": "/workspace/git-repo-db/src/repo_catalog/domain/production_context.py",
+        "sha256": "a43cc9f068b4bb77a5f9c2a1f28d975b58c366dc69763d41336e71b5ce618dfe"
+      }
+    }
+  }
+]

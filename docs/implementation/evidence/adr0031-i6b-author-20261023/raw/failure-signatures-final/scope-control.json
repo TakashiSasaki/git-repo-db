@@ -1,0 +1,14 @@
+{
+  "command": [
+    "/workspace/git-repo-db/.venv/bin/python",
+    "/workspace/i6b-tools/summarize_diagnostic_failure_deltas.py",
+    "/workspace/i6b-work/final-source-diagnostic",
+    "/workspace/i6b-work/failure-signatures-final"
+  ],
+  "exit_code": 0,
+  "helper_sha256": "6bc3d8d0cf13dd5eb11a2193c43498b056d580ea03cec80c92c688ebaeeb17ac",
+  "source_head": "a354348b800177608f6a83e2484cb6a784b7190a",
+  "source_tree": "169f0f95449c7bd728261b3d7799f795162c03fd",
+  "status": "parser-control; mismatched trace verbosity",
+  "scope": "Historical full JUnit used shorter traceback serialization than final repeated diagnostic long traceback. The164 frame-function-list differences from this attempt cannot establish semantic reachability changes. Its exception/code extraction agrees with the matched diagnostic comparison. Authoritative matched-verbosity frame comparison is matched-diagnostic-signatures-final:1 changed inherited node; all299 outcomes/phases and assertion entries retained."
+}

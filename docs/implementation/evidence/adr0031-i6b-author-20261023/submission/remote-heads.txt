@@ -1,0 +1,2 @@
+cb532242c7aa86c6af5b6232b71c0906ea38f5c5	refs/heads/main
+ea43a21fca1dbf8fa6dd1c254b28a96d5dd28d00	refs/heads/review/adr0031-i6a-task-c-20261023

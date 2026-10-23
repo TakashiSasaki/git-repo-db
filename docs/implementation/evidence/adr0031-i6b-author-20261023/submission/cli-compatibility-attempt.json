@@ -1,0 +1,7 @@
+{
+  "command": "gh api --paginate --slurp repos/TakashiSasaki/git-repo-db/pulls?state=all&per_page=100; then parse intended page array",
+  "combined_exit_code": 1,
+  "outcome": "Local installed gh rejects unsupported --slurp before API request; downstream empty-output JSON parse fails. No external mutation or uncertain outcome. Empty output preserved.",
+  "fallback": "Supported gh api --paginate, preserve JSON stream and parse each complete array without changing results.",
+  "fallback_exit_code": 0
+}

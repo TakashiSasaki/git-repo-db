@@ -1,0 +1,18 @@
+{
+  "command": [
+    "/workspace/git-repo-db/.venv/bin/python",
+    "-m",
+    "pytest",
+    "tests/unit/test_context_wire_v5.py",
+    "tests/unit/test_context_dependencies.py",
+    "-q",
+    "-o",
+    "addopts=",
+    "--tb=short",
+    "--junitxml",
+    "/workspace/i6b-work/cap-correction/post-fix-full198/junit.xml",
+    "--journal",
+    "/workspace/i6b-work/cap-correction/post-fix-full198/journal.jsonl"
+  ],
+  "exit_code": 0
+}

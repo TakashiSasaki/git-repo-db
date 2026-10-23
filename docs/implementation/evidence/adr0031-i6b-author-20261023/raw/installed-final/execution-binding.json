@@ -1,0 +1,9 @@
+{
+  "source_head": "a354348b800177608f6a83e2484cb6a784b7190a",
+  "source_tree": "169f0f95449c7bd728261b3d7799f795162c03fd",
+  "driver_sha256": "3ea99eeab849bfd0ad14ce7940550af647cdfed60f7b4db09a91fe484239b8ea",
+  "harness_root": "/workspace/git-repo-db",
+  "selected_python": "/workspace/git-repo-db/.venv/bin/python",
+  "full_acceptance": false,
+  "independent_review": false
+}

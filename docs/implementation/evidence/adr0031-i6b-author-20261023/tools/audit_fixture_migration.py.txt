@@ -1,0 +1,22 @@
+"""Verify v5 fixture migration preserves all other I6-A test statements."""
+from pathlib import Path
+import ast,copy,hashlib,json,subprocess,sys
+ROOT=Path('/workspace/git-repo-db');REL='tests/integration/i6a/test_admission.py'
+OLD='2f874ce5c31efc1a266bc40e0472e64f82c82860';NAME='test_unconnected_exchange_import_refuses_before_progress_and_cached_success'
+old=subprocess.check_output(['git','show',OLD+':'+REL],cwd=ROOT);new=(ROOT/REL).read_bytes()
+a=ast.parse(old);b=ast.parse(new)
+def check(tree):
+ f=next(n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name==NAME)
+ rows=[n for n in f.body if isinstance(n,ast.Assign) and any(isinstance(t,ast.Subscript) and isinstance(t.value,ast.Name) and t.value.id=='section' and isinstance(t.slice,ast.Constant) and t.slice.value=='resources' for t in n.targets)]
+ assert len(rows)==1
+ fixture=ast.unparse(rows[0]);asserts=[ast.dump(n) for n in ast.walk(f) if isinstance(n,ast.Assert)]
+ f.body[f.body.index(rows[0])]=ast.Pass()
+ return fixture,asserts
+oldfixture,oldasserts=check(a);newfixture,newasserts=check(b)
+assert ast.dump(a)==ast.dump(b),'non-fixture code changed'
+assert oldasserts==newasserts,'assertions changed'
+assert newfixture=='section[\'resources\'] = [ResourceIdentification.unscoped(KEY_ISSUE_7).to_wire()]',newfixture
+out=Path(sys.argv[1]);out.mkdir(parents=True,exist_ok=False)
+(out/'old-test-source.py.txt').write_bytes(old);(out/'new-test-source.py.txt').write_bytes(new)
+report={'old_source_head':OLD,'path':REL,'old_sha256':hashlib.sha256(old).hexdigest(),'new_sha256':hashlib.sha256(new).hexdigest(),'function':NAME,'old_fixture':oldfixture,'new_fixture':newfixture,'all_nonfixture_AST_equal':True,'assert_AST_equal':True,'assert_count':len(oldasserts),'node_ids_preserved':True,'scope':'Only replace obsolete three-column untrusted Resource fixture with the existing canonical ResourceIdentification seven-column writer. Product strict refusal, guard setup, cached receipt privacy checks and all assertions unchanged. Actual execution is separately retained.'}
+(out/'migration-audit.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report,indent=2))

@@ -1,0 +1,32 @@
+"""Compare actual diagnostic outcomes and assertion statement entry across freezes."""
+from pathlib import Path
+from collections import defaultdict,Counter
+from functools import lru_cache
+import ast,gzip,json,subprocess,sys
+from independent_receipt import audit
+ROOT=Path('/workspace/git-repo-db');OLD=Path(sys.argv[1]);NEW=Path(sys.argv[2]);OUT=Path(sys.argv[3]);OUT.mkdir(exist_ok=False,parents=True)
+a,am,ash=audit(OLD,'diagnostic');b,bm,bsh=audit(NEW,'diagnostic')
+def traces(root):
+ assertions=defaultdict(set);raises=defaultdict(list)
+ for p in sorted((root/'trace').glob('*.jsonl')):
+  for line in p.read_text().splitlines():
+   r=json.loads(line);n=r.get('nodeid')
+   if not n:continue
+   if r['event']=='assertion_line':assertions[n].add((r.get('phase'),r['path'],r['line'],r['function']))
+   if r['event']=='admission_exception':raises[n].append({k:r[k] for k in ['phase','exception_type','message','code','stack']})
+ return assertions,raises
+@lru_cache(None)
+def assertion_map(head,path):
+ raw=subprocess.check_output(['git','show',head+':'+path],cwd=ROOT,text=True)
+ return {n.lineno:ast.dump(n,include_attributes=False) for n in ast.walk(ast.parse(raw)) if isinstance(n,ast.Assert)}
+def canonical(head,entries):
+ return Counter((phase,path,fun,assertion_map(head,path).get(line,'UNRESOLVED_LINE:'+str(line))) for phase,path,line,fun in entries)
+aa,ar=traces(OLD);ba,br=traces(NEW);rows=[]
+for node in sorted(set(a)|set(b)):
+ old=sorted(aa[node]);new=sorted(ba[node]);oc=canonical(ash['head'],old);nc=canonical(bsh['head'],new)
+ row={'nodeid':node,'old_outcome_phase':a.get(node),'new_outcome_phase':b.get(node),'outcome_phase_changed':a.get(node)!=b.get(node),'old_assertion_entries':old,'new_assertion_entries':new,'raw_assertion_entries_changed':old!=new,'canonical_assertion_entries_changed':oc!=nc,'old_canonical_assertions':[[*k,count] for k,count in sorted(oc.items())],'new_canonical_assertions':[[*k,count] for k,count in sorted(nc.items())],'old_admission_exceptions':ar[node],'new_admission_exceptions':br[node]}
+ if node in am:row['old_junit_failure']=am[node]
+ if node in bm:row['new_junit_failure']=bm[node]
+ rows.append(row)
+summary={'old':ash,'new':bsh,'scope':'Actual statement entry in traced main Python worker thread. Not subexpression, child-process or thread coverage. Canonical mapping uses each frozen Git source, preserving duplicate identical assertions as a Counter.','old_only_nodes':sorted(set(a)-set(b)),'new_only_nodes':sorted(set(b)-set(a)),'outcome_phase_changes':[r['nodeid'] for r in rows if r['outcome_phase_changed']],'raw_assertion_entry_changes':[r['nodeid'] for r in rows if r['raw_assertion_entries_changed']],'canonical_assertion_entry_changes':[r['nodeid'] for r in rows if r['canonical_assertion_entries_changed']]}
+(OUT/'nodes.json.gz').write_bytes(gzip.compress((json.dumps(rows,indent=2)+'\n').encode(),mtime=0));(OUT/'summary.json').write_text(json.dumps(summary,indent=2)+'\n');print(json.dumps({k:v for k,v in summary.items() if k not in ['old','new']},indent=2))

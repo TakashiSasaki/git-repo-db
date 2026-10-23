@@ -1,0 +1,375 @@
+{
+  "route": "store",
+  "replay": false,
+  "mutation": "scope-none",
+  "restriction": "selection",
+  "expected": "OMITTED_BY_SELECTION",
+  "actual": "OMITTED_BY_SELECTION",
+  "trace": [
+    "PRAGMA database_list",
+    "PRAGMA foreign_keys",
+    "PRAGMA recursive_triggers",
+    "PRAGMA ignore_check_constraints",
+    "PRAGMA defer_foreign_keys",
+    "PRAGMA trusted_schema",
+    "PRAGMA function_list",
+    "SELECT type,name,tbl_name,sql FROM sqlite_schema WHERE name NOT LIKE 'sqlite_%' ORDER BY type,name",
+    "BEGIN IMMEDIATE",
+    "ROLLBACK"
+  ],
+  "before": {
+    "collection_terminals": [],
+    "collections": [],
+    "core_references": [],
+    "coverage_claims": [],
+    "coverage_proofs": [],
+    "coverage_scopes": [],
+    "field_candidates": [],
+    "providers": [
+      [
+        "aad25448-03eb-4f83-a75e-cb7055fd33be",
+        "test",
+        "{}"
+      ]
+    ],
+    "repository_context": [
+      [
+        "9ebbe38a-f937-40e6-a99c-701835ebcf10",
+        "{}"
+      ],
+      [
+        "c58b4f17-f58c-4a33-8bc6-eb52c42337d1",
+        "{}"
+      ],
+      [
+        "d3333333-3333-4333-8333-333333333333",
+        "{}"
+      ]
+    ],
+    "repository_mapping_dispositions": [],
+    "resource_relations": [
+      [
+        "aad25448-03eb-4f83-a75e-cb7055fd33be",
+        "comment",
+        "[\"issue\",\"\\\"7\\\"\",\"timeline_event\",\"77\"]",
+        "parent",
+        "[[\"aad25448-03eb-4f83-a75e-cb7055fd33be\",\"issue\",\"\\\"7\\\"\"]]",
+        "{\"evidence\":[\"p-ev\",1],\"source\":\"parent-orig\"}",
+        "{\"clock\":{\"at_us\":50,\"domain\":\"parent-clock\"},\"document_kind\":\"timeline_event\",\"state\":\"complete\"}",
+        51,
+        "aad25448-03eb-4f83-a75e-cb7055fd33be",
+        "issue",
+        "\"7\"",
+        "timeline_event",
+        "{\"at_us\":50,\"domain\":\"parent-clock\"}",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ],
+    "resource_repository_relations": [
+      [
+        "aad25448-03eb-4f83-a75e-cb7055fd33be",
+        "repository",
+        "\"org/repo1\"",
+        "represents_repository",
+        "\"9ebbe38a-f937-40e6-a99c-701835ebcf10\"",
+        "{\"at_us\":50,\"domain\":\"parent-clock\"}",
+        "{\"evidence\":[\"p-ev\",1],\"source\":\"parent-orig\"}",
+        10,
+        "9ebbe38a-f937-40e6-a99c-701835ebcf10",
+        "parent-clock",
+        50,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "aad25448-03eb-4f83-a75e-cb7055fd33be",
+        "repository",
+        "\"org/repo2\"",
+        "represents_repository",
+        "\"c58b4f17-f58c-4a33-8bc6-eb52c42337d1\"",
+        "{\"at_us\":50,\"domain\":\"parent-clock\"}",
+        "{\"evidence\":[\"p-ev\",1],\"source\":\"parent-orig\"}",
+        10,
+        "c58b4f17-f58c-4a33-8bc6-eb52c42337d1",
+        "parent-clock",
+        50,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "aad25448-03eb-4f83-a75e-cb7055fd33be",
+        "repository",
+        "\"org/repo3\"",
+        "represents_repository",
+        "\"d3333333-3333-4333-8333-333333333333\"",
+        "{\"at_us\":50,\"domain\":\"parent-clock\"}",
+        "{\"evidence\":[\"p-ev\",1],\"source\":\"parent-orig\"}",
+        10,
+        "d3333333-3333-4333-8333-333333333333",
+        "parent-clock",
+        50,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ],
+    "resources": [
+      [
+        "aad25448-03eb-4f83-a75e-cb7055fd33be",
+        "comment",
+        "[\"issue\",\"\\\"7\\\"\",\"timeline_event\",\"77\"]",
+        "issue",
+        "\"7\"",
+        "timeline_event",
+        "\"77\"",
+        "timeline_event"
+      ],
+      [
+        "aad25448-03eb-4f83-a75e-cb7055fd33be",
+        "issue",
+        "\"7\"",
+        null,
+        null,
+        null,
+        null,
+        ""
+      ],
+      [
+        "aad25448-03eb-4f83-a75e-cb7055fd33be",
+        "repository",
+        "\"org/repo1\"",
+        null,
+        null,
+        null,
+        null,
+        ""
+      ],
+      [
+        "aad25448-03eb-4f83-a75e-cb7055fd33be",
+        "repository",
+        "\"org/repo2\"",
+        null,
+        null,
+        null,
+        null,
+        ""
+      ],
+      [
+        "aad25448-03eb-4f83-a75e-cb7055fd33be",
+        "repository",
+        "\"org/repo3\"",
+        null,
+        null,
+        null,
+        null,
+        ""
+      ]
+    ],
+    "source_coverage_proofs": [],
+    "source_inventory_evidence": [],
+    "source_repositories": [],
+    "sources": [],
+    "store_identity": [
+      [
+        "context",
+        "9ebbe38a-f937-40e6-a99c-701835ebcf10",
+        "aad25448-03eb-4f83-a75e-cb7055fd33be"
+      ]
+    ],
+    "text_bodies": []
+  },
+  "after": {
+    "collection_terminals": [],
+    "collections": [],
+    "core_references": [],
+    "coverage_claims": [],
+    "coverage_proofs": [],
+    "coverage_scopes": [],
+    "field_candidates": [],
+    "providers": [
+      [
+        "aad25448-03eb-4f83-a75e-cb7055fd33be",
+        "test",
+        "{}"
+      ]
+    ],
+    "repository_context": [
+      [
+        "9ebbe38a-f937-40e6-a99c-701835ebcf10",
+        "{}"
+      ],
+      [
+        "c58b4f17-f58c-4a33-8bc6-eb52c42337d1",
+        "{}"
+      ],
+      [
+        "d3333333-3333-4333-8333-333333333333",
+        "{}"
+      ]
+    ],
+    "repository_mapping_dispositions": [],
+    "resource_relations": [
+      [
+        "aad25448-03eb-4f83-a75e-cb7055fd33be",
+        "comment",
+        "[\"issue\",\"\\\"7\\\"\",\"timeline_event\",\"77\"]",
+        "parent",
+        "[[\"aad25448-03eb-4f83-a75e-cb7055fd33be\",\"issue\",\"\\\"7\\\"\"]]",
+        "{\"evidence\":[\"p-ev\",1],\"source\":\"parent-orig\"}",
+        "{\"clock\":{\"at_us\":50,\"domain\":\"parent-clock\"},\"document_kind\":\"timeline_event\",\"state\":\"complete\"}",
+        51,
+        "aad25448-03eb-4f83-a75e-cb7055fd33be",
+        "issue",
+        "\"7\"",
+        "timeline_event",
+        "{\"at_us\":50,\"domain\":\"parent-clock\"}",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ],
+    "resource_repository_relations": [
+      [
+        "aad25448-03eb-4f83-a75e-cb7055fd33be",
+        "repository",
+        "\"org/repo1\"",
+        "represents_repository",
+        "\"9ebbe38a-f937-40e6-a99c-701835ebcf10\"",
+        "{\"at_us\":50,\"domain\":\"parent-clock\"}",
+        "{\"evidence\":[\"p-ev\",1],\"source\":\"parent-orig\"}",
+        10,
+        "9ebbe38a-f937-40e6-a99c-701835ebcf10",
+        "parent-clock",
+        50,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "aad25448-03eb-4f83-a75e-cb7055fd33be",
+        "repository",
+        "\"org/repo2\"",
+        "represents_repository",
+        "\"c58b4f17-f58c-4a33-8bc6-eb52c42337d1\"",
+        "{\"at_us\":50,\"domain\":\"parent-clock\"}",
+        "{\"evidence\":[\"p-ev\",1],\"source\":\"parent-orig\"}",
+        10,
+        "c58b4f17-f58c-4a33-8bc6-eb52c42337d1",
+        "parent-clock",
+        50,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "aad25448-03eb-4f83-a75e-cb7055fd33be",
+        "repository",
+        "\"org/repo3\"",
+        "represents_repository",
+        "\"d3333333-3333-4333-8333-333333333333\"",
+        "{\"at_us\":50,\"domain\":\"parent-clock\"}",
+        "{\"evidence\":[\"p-ev\",1],\"source\":\"parent-orig\"}",
+        10,
+        "d3333333-3333-4333-8333-333333333333",
+        "parent-clock",
+        50,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ],
+    "resources": [
+      [
+        "aad25448-03eb-4f83-a75e-cb7055fd33be",
+        "comment",
+        "[\"issue\",\"\\\"7\\\"\",\"timeline_event\",\"77\"]",
+        "issue",
+        "\"7\"",
+        "timeline_event",
+        "\"77\"",
+        "timeline_event"
+      ],
+      [
+        "aad25448-03eb-4f83-a75e-cb7055fd33be",
+        "issue",
+        "\"7\"",
+        null,
+        null,
+        null,
+        null,
+        ""
+      ],
+      [
+        "aad25448-03eb-4f83-a75e-cb7055fd33be",
+        "repository",
+        "\"org/repo1\"",
+        null,
+        null,
+        null,
+        null,
+        ""
+      ],
+      [
+        "aad25448-03eb-4f83-a75e-cb7055fd33be",
+        "repository",
+        "\"org/repo2\"",
+        null,
+        null,
+        null,
+        null,
+        ""
+      ],
+      [
+        "aad25448-03eb-4f83-a75e-cb7055fd33be",
+        "repository",
+        "\"org/repo3\"",
+        null,
+        null,
+        null,
+        null,
+        ""
+      ]
+    ],
+    "source_coverage_proofs": [],
+    "source_inventory_evidence": [],
+    "source_repositories": [],
+    "sources": [],
+    "store_identity": [
+      [
+        "context",
+        "9ebbe38a-f937-40e6-a99c-701835ebcf10",
+        "aad25448-03eb-4f83-a75e-cb7055fd33be"
+      ]
+    ],
+    "text_bodies": []
+  },
+  "active_leases": 0,
+  "transaction_open": false,
+  "work_charged": 121
+}
