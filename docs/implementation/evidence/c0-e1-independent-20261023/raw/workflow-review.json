@@ -1,0 +1,11 @@
+{
+  "workflow": ".github/workflows/access-registry.yml",
+  "sha256": "5511b172ef091b6ac0014fa1a41407937a5632aba9f6bc390897c976d3e2723b",
+  "unchanged_from_audit_base": true,
+  "emit_step": "name: Emit indexed verification receipts to job log\n        if: always()\n        run: python scripts/emit_ci_evidence.py\n",
+  "upload_step": "name: Save focused verification evidence\n        if: always()\n        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9\n        with:\n          name: access-registry-verification\n          path: |\n            artifacts/access-registry/\n            artifacts/runtime/\n          if-no-files-found: warn\n",
+  "upload_after_emitter": true,
+  "both_always": true,
+  "exit_code": 0,
+  "scope": "Configuration and actual local input-preservation only; no hosted Access overflow/upload job was started."
+}

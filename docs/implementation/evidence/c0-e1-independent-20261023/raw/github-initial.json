@@ -1,0 +1,252 @@
+{
+  "checked_at": {
+    "current_time": "2026-10-23 08:57:56 UTC"
+  },
+  "target": {
+    "url": "https://github.com/TakashiSasaki/git-repo-db/pull/139",
+    "number": 139,
+    "state": "open",
+    "merged": false,
+    "mergeable": true,
+    "draft": true,
+    "body": "The Access evidence emitter accepted complete compressed ZIP receipts up to 4 MiB, exceeding Accepted ADR 0001 VAL-07's 2 MiB log limit. This closes the implementation gap reported as **C0-E1 Low** in #136: permit `<= 2,097,152` finalized ZIP bytes and explicitly refuse larger bundles before any receipt stdout, with guidance to the uploaded GitHub Actions artifact.\n\nThe production diff is a named limit constant and the existing post-ZIP check/diagnostic. BEGIN/DATA/END, SHA-256, index/binding contracts, member selection and artifact upload remain intact. No workflow change is needed: both emitter and subsequent artifact upload already use `if: always()`. The regression checks their ordering, upload action/name/paths and byte-identical upload inputs after overflow. This is configuration/input preservation evidence, not a claimed new hosted overflow-and-download experiment.\n\n### Boundary and contract evidence\n\nThe tests run the implemented `main()` path on **real complete DEFLATED ZIPs**, adjusting only a legal ZIP comment to produce deterministic exact final byte lengths; they do not equate input length with compressed size or mock `len`.\n\n| Complete compressed ZIP bytes | Before | Corrected |\n| --- | --- | --- |\n| 2,097,151 | success | success |\n| 2,097,152 | success | success |\n| 2,097,153 | incorrect success | exit 1, zero stdout |\n| 2,323,560 (audit counterexample size) | incorrect success | exit 1, zero stdout |\n\nA 53,803-byte receipt whose expanded members exceed 2 MiB succeeds, proving the cap applies to compressed bytes. Successful bundles strictly decode with matching BEGIN/END, length/SHA-256, member index lengths/hashes and binding. An unmocked oversized CLI run exits 1, keeps source artifacts unchanged, emits no stdout and gives the artifact fallback diagnostic.\n\n- Historical source replay: **7 tests / 3 expected failures, exit 1**.\n- Corrected source replay: **7 passed, exit 0**.\n- Related local pytest (emitter + CI plan/profile/journal/runtime/policy units + CI execution integration): **280 passed, 57 subtests passed, zero skips/failures/errors, exit 0**. Exact collection/start/JUnit identities reconcile; all phases and session exit pass.\n- Repository Ruff lint and format, verifier lint/format, SQLite policy detector and report validation: **pass, exit 0**.\n- Python **3.12.14**, actual built-in SQLite **3.53.1**; full executable/platform/source identity, commands, exits, raw logs, compressed JUnit/journal and changed-file hashes are saved in [the evidence report](docs/implementation/evidence/c0-e1-receipt-limit-20261023/README.md). No SQLite component download/build/install/swap or matrix.\n\n### Exact publication\n\n- Base: `review/c0-hosted-runtime-audit-20261022` (#136).\n- Base HEAD: `8ede5f8f3f525baf90ad8c9b4f3f0729c19a7b82`.\n- Base tree: `65e9311819ec354cbc3d6ede1cbc10ebd5c2ced9`.\n- Feature branch: `fix/c0-e1-receipt-limit-20261023`.\n- Feature HEAD: `3e2609baa07a9e92c8f2dc4dd1608f311021a1cb`.\n- Feature tree: `43f0c017d5f922f7e1caf7e4a1605ec4ae7ace1c`.\n- Sole commit parent is the frozen #136 HEAD. Executed local source/test hashes exactly match this publication; raw records disclose the working-tree overlay used during development.\n\n### Limits and review status\n\nC0-E1 has a code correction and executable closure evidence; independent reviewer acceptance remains pending. Historical 79 non-success nodes (59 failures + 20 setup errors) are not claimed resolved or reclassified. Full product pytest, Access/I4/I5 runs, wheel/sdist checks and release qualification were not rerun for this limit-only change. Hosted development checks will be reported separately and do not mean complete release acceptance.\n\nChanges are restricted to `scripts/emit_ci_evidence.py`, related unit tests and new verification evidence. Accepted ADRs, historical logs/ZIPs/audits, product code/DDL/UDF/safety tests and existing workflows are unchanged. No existing PR branch update, rebase/force-push, merge, deployment or release.\n\n### Verified hosted development result\n\n[Run 39887549016, attempt 1](https://github.com/TakashiSasaki/git-repo-db/actions/runs/39887549016) **passed** both `offline` and `sqlite-policy`. Actual hosted steps completed planning/report validation, repository lint/format, SQLite capabilities/doctor and composed-schema/guard checks. Product pytest and packaging steps were unselected; manifest status is `development_checks_passed`, `full_acceptance=false`, **0 product pytest IDs executed**.\n\nThe actual test merge `6d649500319f404da210a92151a88f37bbd60fc2` has parents frozen base + this feature HEAD and the same feature tree `43f0c017d5f922f7e1caf7e4a1605ec4ae7ace1c`. The live REST run-log ZIP was retrieved; its 71,313-byte in-log receipt has SHA-256 `ecd164beb7edfed98a97c342684590ae926b405630c21e88aaa2bca2945b52bb`. BEGIN/DATA/END, strict base64, length/hash, all 21 indexed payload members, manifest and run/attempt/feature/merge/tree binding were verified.\n\nGitHub confirms uploaded artifact `ci-profile-39887549016-1` (ID `12472429473`, 71,124 bytes, not expired). Direct artifact download was attempted once and denied by the cloud blob endpoint with **Forbidden (403)**; no successful artifact download is claimed. The independently verified job-log receipt supplied the hosted evidence. This is the ordinary tests workflow's receipt; the Access overflow/upload path was verified locally/configurationally as described above. Publication is complete; independent reviewer acceptance remains pending.\n",
+    "title": "fix(ci): enforce the C0-E1 2 MiB compressed receipt limit",
+    "base": "review/c0-hosted-runtime-audit-20261022",
+    "base_sha": "8ede5f8f3f525baf90ad8c9b4f3f0729c19a7b82",
+    "head": "fix/c0-e1-receipt-limit-20261023",
+    "head_sha": "3e2609baa07a9e92c8f2dc4dd1608f311021a1cb",
+    "head_repo_id": 1405037074,
+    "head_repo_full_name": "TakashiSasaki/git-repo-db",
+    "merge_commit_sha": "6d649500319f404da210a92151a88f37bbd60fc2",
+    "user": {
+      "login": "TakashiSasaki",
+      "name": "TakashiSasaki",
+      "email": null,
+      "avatar_url": "https://avatars.githubusercontent.com/u/556958?v=4",
+      "id": 556958
+    },
+    "requested_reviewers": null,
+    "requested_team_reviewers": null,
+    "diff": null,
+    "comments": null,
+    "created_at": "2026-10-23T02:04:17Z",
+    "updated_at": "2026-10-23T02:06:20Z",
+    "closed_at": null,
+    "merged_at": null,
+    "commits": 1,
+    "changed_files": 23,
+    "additions": 1188,
+    "deletions": 2,
+    "display_url": "https://github.com/TakashiSasaki/git-repo-db/pull/139",
+    "display_title": "fix(ci): enforce the C0-E1 2 MiB compressed receipt limit"
+  },
+  "latest": [
+    {
+      "number": 146,
+      "title": "review(context): independently audit I6-A remediation (FAIL)",
+      "base": "fix/adr0031-i6a-regressions-20261023",
+      "head": "review/adr0031-i6a-remediation-independent-20261023",
+      "head_sha": "274645e7dd451e24f324feb81b1591a64ba2a7ab",
+      "state": "open"
+    },
+    {
+      "number": 145,
+      "title": "fix(context): remediate I6-A callers and installed test harness",
+      "base": "impl/adr0031-i6a-secure-admission",
+      "head": "fix/adr0031-i6a-regressions-20261023",
+      "head_sha": "08fbb956c2e470e245146b0dbae747ed0690ea40",
+      "state": "open"
+    },
+    {
+      "number": 144,
+      "title": "review: independently reverify ADR 0033 archive hardening",
+      "base": "fix/adr0033-sdist-archive-hardening",
+      "head": "review/adr0033-hardening-rereview-20261023",
+      "head_sha": "ededcd83eb2d99a602ba18c8fe3c177125c825ac",
+      "state": "open"
+    },
+    {
+      "number": 143,
+      "title": "feat(context): implement ADR 0031 I6-A secure admission",
+      "base": "review/adr0031-i6-design-independent-20261023",
+      "head": "impl/adr0031-i6a-secure-admission",
+      "head_sha": "f5dc409429cdb69955b55e3c27a7ef3c163762fb",
+      "state": "open"
+    },
+    {
+      "number": 142,
+      "title": "fix(packaging): close ADR 0033 archive validation findings",
+      "base": "review/adr0033-sdist-independent-20261023",
+      "head": "fix/adr0033-sdist-archive-hardening",
+      "head_sha": "59307c40ea65554736e131cedd00f04c9906551b",
+      "state": "open"
+    },
+    {
+      "number": 141,
+      "title": "docs: independent ADR 0031 I6 design review and evidence",
+      "base": "docs/adr0031-i6-boundary-contract-20261022",
+      "head": "review/adr0031-i6-design-independent-20261023",
+      "head_sha": "dc6e663ea90e55210ed5674cae6c332f66a4ac18",
+      "state": "open"
+    },
+    {
+      "number": 140,
+      "title": "review: independent ADR 0033 sdist audit with two medium findings",
+      "base": "impl/adr0033-minimal-sdist-20261022",
+      "head": "review/adr0033-sdist-independent-20261023",
+      "head_sha": "ef3ca118d4ab5e52dc2d1c7de384c3557509add2",
+      "state": "open"
+    },
+    {
+      "number": 139,
+      "title": "fix(ci): enforce the C0-E1 2 MiB compressed receipt limit",
+      "base": "review/c0-hosted-runtime-audit-20261022",
+      "head": "fix/c0-e1-receipt-limit-20261023",
+      "head_sha": "3e2609baa07a9e92c8f2dc4dd1608f311021a1cb",
+      "state": "open"
+    },
+    {
+      "number": 138,
+      "title": "build: enforce minimal sdist contract and lightweight CI gate (ADR 0033)",
+      "base": "docs/adr0033-minimal-sdist-20261022",
+      "head": "impl/adr0033-minimal-sdist-20261022",
+      "head_sha": "8cd89a3d25c811ee32d117ec32fe76a6022e6d94",
+      "state": "open"
+    },
+    {
+      "number": 137,
+      "title": "docs: record sdist review prerequisites; implementation review not started",
+      "base": "docs/adr0033-minimal-sdist-20261022",
+      "head": "docs/sdist-review-readiness-20261022",
+      "head_sha": "7f9c7ad7c418da3b7a638fe20048e13a7701e3d9",
+      "state": "open"
+    },
+    {
+      "number": 136,
+      "title": "docs: submit C0 hosted runtime audit and open evidence finding",
+      "base": "fix/adr0032-host-runtime-20261022",
+      "head": "review/c0-hosted-runtime-audit-20261022",
+      "head_sha": "8ede5f8f3f525baf90ad8c9b4f3f0729c19a7b82",
+      "state": "open"
+    },
+    {
+      "number": 135,
+      "title": "docs: adopt minimal product sdist policy (ADR 0033)",
+      "base": "fix/adr0032-host-runtime-20261022",
+      "head": "docs/adr0033-minimal-sdist-20261022",
+      "head_sha": "18ba867d1c2f33c7d17939b2722d22a67139363a",
+      "state": "open"
+    },
+    {
+      "number": 134,
+      "title": "docs: freeze ADR 0031 I6 wire, admission and Exchange boundary contract",
+      "base": "fix/adr0032-host-runtime-20261022",
+      "head": "docs/adr0031-i6-boundary-contract-20261022",
+      "head_sha": "418ee68046fdfd03a0e84cc840e5d52fce176b81",
+      "state": "open"
+    },
+    {
+      "number": 133,
+      "title": "ci: establish a product-capable hosted Python under ADR 0032",
+      "base": "fix/sqlite-runtime-ci-20261022",
+      "head": "fix/adr0032-host-runtime-20261022",
+      "head_sha": "f16e5b1713bde9a2f18263a25397c4b450fd5773",
+      "state": "open"
+    },
+    {
+      "number": 132,
+      "title": "ci: validate environment SQLite and prevent fixed-engine regressions",
+      "base": "docs/sqlite-runtime-policy-20261022",
+      "head": "fix/sqlite-runtime-ci-20261022",
+      "head_sha": "a022dd3efb9c8116cf9dc0abc13ab1d5bbc88e37",
+      "state": "open"
+    },
+    {
+      "number": 131,
+      "title": "docs: formalize environment SQLite validation policy (ADR 0032)",
+      "base": "review/adr0031-i5-independent-20261022",
+      "head": "docs/sqlite-runtime-policy-20261022",
+      "head_sha": "01b427e392243e06eb9be0e3a50bb09ecacd0d5f",
+      "state": "open"
+    },
+    {
+      "number": 130,
+      "title": "docs(context): independent ADR 0031 I5 review and evidence",
+      "base": "impl/adr0031-i5-typed-admission-20261022",
+      "head": "review/adr0031-i5-independent-20261022",
+      "head_sha": "b4ede5d8a87f3ce7b1f6df8fda5b3051c3865ba2",
+      "state": "open"
+    },
+    {
+      "number": 129,
+      "title": "feat(context): typed Transfer Admission and semantic validation (ADR 0031 I5)",
+      "base": "review/adr0031-i4-independent-20261022",
+      "head": "impl/adr0031-i5-typed-admission-20261022",
+      "head_sha": "99e40c9af91f9ea36dd3d4ba97eccad46f6c6e14",
+      "state": "open"
+    },
+    {
+      "number": 128,
+      "title": "docs(context): independent ADR 0031 I4 review and evidence",
+      "base": "impl/adr0031-i4-transfer-sql-20261022",
+      "head": "review/adr0031-i4-independent-20261022",
+      "head_sha": "2003a9ee4f25907bcf96a634980b8caffc133c4e",
+      "state": "open"
+    },
+    {
+      "number": 127,
+      "title": "feat(context): native-I7 Transfer SQL constraints (ADR 0031 I4)",
+      "base": "impl/adr0031-i3-parent-reports-20261022",
+      "head": "impl/adr0031-i4-transfer-sql-20261022",
+      "head_sha": "a9d4c3585806622b66d3c41132c2a9f8ab5c6f9e",
+      "state": "open"
+    },
+    {
+      "number": 126,
+      "title": "feat(context): typed semantic Parent reports (ADR 0031 I3)",
+      "base": "review/adr0031-i2-task-g-20261022",
+      "head": "impl/adr0031-i3-parent-reports-20261022",
+      "head_sha": "614ccaac3512a0df4291653fc83901df211f00f6",
+      "state": "open"
+    },
+    {
+      "number": 125,
+      "title": "docs(context): independent ADR 0031 I2 product review (Task G)",
+      "base": "impl/adr0031-i2-resources-task-e-20261021",
+      "head": "review/adr0031-i2-task-g-20261022",
+      "head_sha": "a54e4432b0514ba5a5fe8e73ddcdbc492f99b95e",
+      "state": "open"
+    },
+    {
+      "number": 124,
+      "title": "feat(context): staged generalized Resources (ADR 0031 I2, Task E)",
+      "base": "review/adr0031-i2-cf1-task-f-20261021",
+      "head": "impl/adr0031-i2-resources-task-e-20261021",
+      "head_sha": "4cb90d35bd9c572239496a24cb0dd62049029235",
+      "state": "open"
+    },
+    {
+      "number": 123,
+      "title": "docs(context): independent I2 C-F1 design re-review (Task F)",
+      "base": "design/adr0031-i2-transfer-fence-f1-20261021",
+      "head": "review/adr0031-i2-cf1-task-f-20261021",
+      "head_sha": "c1b62d216db2b728a4c8cb1821250335fcafc534",
+      "state": "open"
+    },
+    {
+      "number": 122,
+      "title": "docs(context): complete I2 staged Transfer fence design (C-F1)",
+      "base": "review/adr0031-i2-sql-task-d-20261021",
+      "head": "design/adr0031-i2-transfer-fence-f1-20261021",
+      "head_sha": "2199a882d79c9c707fffcba3a8327ef96a3fc384",
+      "state": "open"
+    }
+  ],
+  "target_comments": {
+    "comments": [],
+    "url": "https://github.com/TakashiSasaki/git-repo-db/pull/139",
+    "title": "TakashiSasaki/git-repo-db PR #139 comments",
+    "display_url": "https://github.com/TakashiSasaki/git-repo-db/pull/139",
+    "display_title": "TakashiSasaki/git-repo-db PR #139 comments"
+  }
+}

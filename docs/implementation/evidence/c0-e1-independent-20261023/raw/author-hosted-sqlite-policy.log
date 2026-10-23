@@ -1,0 +1,619 @@
+﻿2026-10-23T02:04:23.6674954Z Current runner version: '2.338.0'
+2026-10-23T02:04:23.6700549Z ##[group]Runner Image Provisioner
+2026-10-23T02:04:23.6701738Z Hosted Compute Agent
+2026-10-23T02:04:23.6702375Z Version: 20261012.601
+2026-10-23T02:04:23.6703015Z Commit: f3dc54e1fb89da6852db922499a0233137369e1d
+2026-10-23T02:04:23.6703803Z Build Date: 2026-10-12T17:48:21Z
+2026-10-23T02:04:23.6704503Z Worker ID: {67dad5dd-e7b3-4d4c-a1ee-c8af56ae42aa}
+2026-10-23T02:04:23.6705231Z Region: eastus2
+2026-10-23T02:04:23.6705845Z Cloud: Azure
+2026-10-23T02:04:23.6706425Z ##[endgroup]
+2026-10-23T02:04:23.6708044Z ##[group]Operating System
+2026-10-23T02:04:23.6708722Z Ubuntu
+2026-10-23T02:04:23.6709278Z 24.04.5
+2026-10-23T02:04:23.6709868Z LTS
+2026-10-23T02:04:23.6710803Z ##[endgroup]
+2026-10-23T02:04:23.6711495Z ##[group]Runner Image
+2026-10-23T02:04:23.6712140Z Image: ubuntu-24.04
+2026-10-23T02:04:23.6712763Z Version: 20261012.334.1
+2026-10-23T02:04:23.6714100Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20261012.334/images/ubuntu/Ubuntu2404-Readme.md
+2026-10-23T02:04:23.6715682Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20261012.334
+2026-10-23T02:04:23.6716674Z ##[endgroup]
+2026-10-23T02:04:23.6717914Z ##[group]GITHUB_TOKEN Permissions
+2026-10-23T02:04:23.6720123Z Contents: read
+2026-10-23T02:04:23.6721026Z Metadata: read
+2026-10-23T02:04:23.6721699Z ##[endgroup]
+2026-10-23T02:04:23.6723862Z Secret source: Actions
+2026-10-23T02:04:23.6724916Z Cache mode: write
+2026-10-23T02:04:23.6726009Z Prepare workflow directory
+2026-10-23T02:04:23.7061333Z Prepare all required actions
+2026-10-23T02:04:23.7110442Z Getting action download info
+2026-10-23T02:04:23.9541668Z Download action repository 'actions/checkout@v7' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+2026-10-23T02:04:24.0856606Z Download action repository 'actions/setup-python@v7' (SHA:6d4fd22b20465ccc0f7354476588e8df7c9ca0e0)
+2026-10-23T02:04:24.4333981Z Complete job name: sqlite-policy
+2026-10-23T02:04:24.5239306Z ##[group]Run actions/checkout@v7
+2026-10-23T02:04:24.5240524Z with:
+2026-10-23T02:04:24.5241062Z   repository: TakashiSasaki/git-repo-db
+2026-10-23T02:04:24.5244967Z   token: ***
+2026-10-23T02:04:24.5245414Z   ssh-strict: true
+2026-10-23T02:04:24.5245902Z   ssh-user: git
+2026-10-23T02:04:24.5246358Z   persist-credentials: true
+2026-10-23T02:04:24.5246845Z   clean: true
+2026-10-23T02:04:24.5247309Z   sparse-checkout-cone-mode: true
+2026-10-23T02:04:24.5247825Z   fetch-depth: 1
+2026-10-23T02:04:24.5248275Z   fetch-tags: false
+2026-10-23T02:04:24.5248738Z   show-progress: true
+2026-10-23T02:04:24.5249185Z   lfs: false
+2026-10-23T02:04:24.5249604Z   submodules: false
+2026-10-23T02:04:24.5250059Z   set-safe-directory: true
+2026-10-23T02:04:24.5250837Z   allow-unsafe-pr-checkout: false
+2026-10-23T02:04:24.5251674Z ##[endgroup]
+2026-10-23T02:04:24.6291307Z Syncing repository: TakashiSasaki/git-repo-db
+2026-10-23T02:04:24.6293847Z ##[group]Getting Git version info
+2026-10-23T02:04:24.6295234Z Working directory is '/home/runner/work/git-repo-db/git-repo-db'
+2026-10-23T02:04:24.6296888Z [command]/usr/bin/git version
+2026-10-23T02:04:24.6419085Z git version 2.55.0
+2026-10-23T02:04:24.6444917Z ##[endgroup]
+2026-10-23T02:04:24.6470341Z Temporarily overriding HOME='/home/runner/work/_temp/19f4a945-e3bd-477f-afff-8db4816bb0dd' before making global git config changes
+2026-10-23T02:04:24.6475332Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-23T02:04:24.6478779Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/git-repo-db/git-repo-db
+2026-10-23T02:04:24.6538725Z Deleting the contents of '/home/runner/work/git-repo-db/git-repo-db'
+2026-10-23T02:04:24.6542806Z ##[group]Determining repository object format
+2026-10-23T02:04:24.6544652Z ##[endgroup]
+2026-10-23T02:04:24.6545950Z ##[group]Initializing the repository
+2026-10-23T02:04:24.6550665Z [command]/usr/bin/git init /home/runner/work/git-repo-db/git-repo-db
+2026-10-23T02:04:24.6707125Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-10-23T02:04:24.6709696Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-10-23T02:04:24.6717213Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-10-23T02:04:24.6719052Z hint: call:
+2026-10-23T02:04:24.6720144Z hint:
+2026-10-23T02:04:24.6721763Z hint: 	git config --global init.defaultBranch <name>
+2026-10-23T02:04:24.6723270Z hint:
+2026-10-23T02:04:24.6724622Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-10-23T02:04:24.6726697Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-10-23T02:04:24.6728361Z hint:
+2026-10-23T02:04:24.6729360Z hint: 	git branch -m <name>
+2026-10-23T02:04:24.6730873Z hint:
+2026-10-23T02:04:24.6732411Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-10-23T02:04:24.6734783Z Initialized empty Git repository in /home/runner/work/git-repo-db/git-repo-db/.git/
+2026-10-23T02:04:24.6738530Z [command]/usr/bin/git remote add origin https://github.com/TakashiSasaki/git-repo-db
+2026-10-23T02:04:24.6833926Z ##[endgroup]
+2026-10-23T02:04:24.6835765Z ##[group]Disabling automatic garbage collection
+2026-10-23T02:04:24.6838968Z [command]/usr/bin/git config --local gc.auto 0
+2026-10-23T02:04:24.6903561Z ##[endgroup]
+2026-10-23T02:04:24.6904878Z ##[group]Setting up auth
+2026-10-23T02:04:24.6905881Z Removing SSH command configuration
+2026-10-23T02:04:24.6907279Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-23T02:04:24.6943204Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-23T02:04:24.7428377Z Removing HTTP extra header
+2026-10-23T02:04:24.7435287Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-23T02:04:24.7476290Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-23T02:04:24.7707568Z Removing includeIf entries pointing to credentials config files
+2026-10-23T02:04:24.7715321Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-23T02:04:24.7754631Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-23T02:04:24.8007109Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-0593df9f-dee1-4b61-a4ff-350ce4055375.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-10-23T02:04:24.8049925Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/git-repo-db/git-repo-db/.git.path /home/runner/work/_temp/git-credentials-0593df9f-dee1-4b61-a4ff-350ce4055375.config
+2026-10-23T02:04:24.8084476Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/git-repo-db/git-repo-db/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-0593df9f-dee1-4b61-a4ff-350ce4055375.config
+2026-10-23T02:04:24.8122775Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-0593df9f-dee1-4b61-a4ff-350ce4055375.config
+2026-10-23T02:04:24.8157037Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-0593df9f-dee1-4b61-a4ff-350ce4055375.config
+2026-10-23T02:04:24.8189930Z ##[endgroup]
+2026-10-23T02:04:24.8191409Z ##[group]Fetching the repository
+2026-10-23T02:04:24.8196628Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +6d649500319f404da210a92151a88f37bbd60fc2:refs/remotes/pull/139/merge
+2026-10-23T02:04:28.9867692Z From https://github.com/TakashiSasaki/git-repo-db
+2026-10-23T02:04:28.9869560Z  * [new ref]         6d649500319f404da210a92151a88f37bbd60fc2 -> pull/139/merge
+2026-10-23T02:04:28.9895095Z ##[endgroup]
+2026-10-23T02:04:28.9896531Z ##[group]Determining the checkout info
+2026-10-23T02:04:28.9898090Z ##[endgroup]
+2026-10-23T02:04:28.9899016Z [command]/usr/bin/git sparse-checkout disable
+2026-10-23T02:04:28.9949946Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-10-23T02:04:28.9989357Z ##[group]Checking out the ref
+2026-10-23T02:04:28.9994259Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/139/merge
+2026-10-23T02:04:29.4705953Z Note: switching to 'refs/remotes/pull/139/merge'.
+2026-10-23T02:04:29.4706954Z 
+2026-10-23T02:04:29.4707571Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-10-23T02:04:29.4708957Z changes and commit them, and you can discard any commits you make in this
+2026-10-23T02:04:29.4710725Z state without impacting any branches by switching back to a branch.
+2026-10-23T02:04:29.4711645Z 
+2026-10-23T02:04:29.4712237Z If you want to create a new branch to retain commits you create, you may
+2026-10-23T02:04:29.4713532Z do so (now or later) by using -c with the switch command. Example:
+2026-10-23T02:04:29.4714321Z 
+2026-10-23T02:04:29.4714664Z   git switch -c <new-branch-name>
+2026-10-23T02:04:29.4715232Z 
+2026-10-23T02:04:29.4715575Z Or undo this operation with:
+2026-10-23T02:04:29.4716102Z 
+2026-10-23T02:04:29.4716400Z   git switch -
+2026-10-23T02:04:29.4716819Z 
+2026-10-23T02:04:29.4717567Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-10-23T02:04:29.4718611Z 
+2026-10-23T02:04:29.4719810Z HEAD is now at 6d64950 Merge 3e2609baa07a9e92c8f2dc4dd1608f311021a1cb into 8ede5f8f3f525baf90ad8c9b4f3f0729c19a7b82
+2026-10-23T02:04:29.4753581Z ##[endgroup]
+2026-10-23T02:04:29.4805769Z [command]/usr/bin/git log -1 --format=%H
+2026-10-23T02:04:29.4837971Z 6d649500319f404da210a92151a88f37bbd60fc2
+2026-10-23T02:04:29.5328673Z ##[group]Run actions/setup-python@v7
+2026-10-23T02:04:29.5329866Z with:
+2026-10-23T02:04:29.5330917Z   python-version: 3.12
+2026-10-23T02:04:29.5331856Z   check-latest: false
+2026-10-23T02:04:29.5342248Z   token: ***
+2026-10-23T02:04:29.5343573Z   mirror: https://raw.githubusercontent.com/actions/python-versions/main
+2026-10-23T02:04:29.5345249Z   update-environment: true
+2026-10-23T02:04:29.5346293Z   allow-prereleases: false
+2026-10-23T02:04:29.5347281Z   freethreaded: false
+2026-10-23T02:04:29.5348177Z ##[endgroup]
+2026-10-23T02:04:29.6502940Z ##[group]Installed versions
+2026-10-23T02:04:29.6593685Z Successfully set up CPython (3.12.15)
+2026-10-23T02:04:29.6596466Z ##[endgroup]
+2026-10-23T02:04:29.6907220Z ##[group]Run python scripts/check_sqlite_validation_policy.py
+2026-10-23T02:04:29.6910400Z [36;1mpython scripts/check_sqlite_validation_policy.py[0m
+2026-10-23T02:04:29.7235537Z shell: /usr/bin/bash -e {0}
+2026-10-23T02:04:29.7236651Z env:
+2026-10-23T02:04:29.7237750Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-10-23T02:04:29.7239584Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.15/x64/lib/pkgconfig
+2026-10-23T02:04:29.7241678Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-10-23T02:04:29.7243324Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-10-23T02:04:29.7244966Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-10-23T02:04:29.7246622Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.15/x64/lib
+2026-10-23T02:04:29.7248026Z ##[endgroup]
+2026-10-23T02:04:30.5293498Z SQLite validation policy: 0 violation(s)
+2026-10-23T02:04:30.5427627Z ##[group]Run python -m unittest discover -s tests/unit -p test_sqlite_validation_policy.py
+2026-10-23T02:04:30.5428372Z [36;1mpython -m unittest discover -s tests/unit -p test_sqlite_validation_policy.py[0m
+2026-10-23T02:04:30.5496137Z shell: /usr/bin/bash -e {0}
+2026-10-23T02:04:30.5496464Z env:
+2026-10-23T02:04:30.5496795Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-10-23T02:04:30.5497294Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.15/x64/lib/pkgconfig
+2026-10-23T02:04:30.5498023Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-10-23T02:04:30.5498471Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-10-23T02:04:30.5498923Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-10-23T02:04:30.5499375Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.15/x64/lib
+2026-10-23T02:04:30.5499759Z ##[endgroup]
+2026-10-23T02:04:30.8920089Z ...............................
+2026-10-23T02:04:30.8921496Z ----------------------------------------------------------------------
+2026-10-23T02:04:30.8922333Z Ran 31 tests in 0.213s
+2026-10-23T02:04:30.8922769Z 
+2026-10-23T02:04:30.8923167Z OK
+2026-10-23T02:04:30.9052116Z ##[group]Run python -m unittest discover -s tests/unit -p test_ci_python_runtime.py
+2026-10-23T02:04:30.9052727Z [36;1mpython -m unittest discover -s tests/unit -p test_ci_python_runtime.py[0m
+2026-10-23T02:04:30.9117641Z shell: /usr/bin/bash -e {0}
+2026-10-23T02:04:30.9117908Z env:
+2026-10-23T02:04:30.9118201Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-10-23T02:04:30.9118652Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.15/x64/lib/pkgconfig
+2026-10-23T02:04:30.9119146Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-10-23T02:04:30.9119554Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-10-23T02:04:30.9119945Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-10-23T02:04:30.9120554Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.15/x64/lib
+2026-10-23T02:04:30.9120892Z ##[endgroup]
+2026-10-23T02:04:31.5101710Z {
+2026-10-23T02:04:31.5103073Z   "python": "3.12.15",
+2026-10-23T02:04:31.5103839Z   "executable": "/opt/hostedtoolcache/Python/3.12.15/x64/bin/python",
+2026-10-23T02:04:31.5104787Z   "base_executable": "/opt/hostedtoolcache/Python/3.12.15/x64/bin/python3.12",
+2026-10-23T02:04:31.5105542Z   "sqlite_version": "3.45.1",
+2026-10-23T02:04:31.5106410Z   "sqlite_source_id": "2024-01-30 16:01:20 e876e51a0ed5c5b3126f52e532044363a014bc594cfefa87ffb5b82257ccalt1",
+2026-10-23T02:04:31.5107936Z   "sqlite_module": "/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/lib-dynload/_sqlite3.cpython-312-x86_64-linux-gnu.so",
+2026-10-23T02:04:31.5109573Z   "sqlite_module_origin": "/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/lib-dynload/_sqlite3.cpython-312-x86_64-linux-gnu.so",
+2026-10-23T02:04:31.5111331Z   "sqlite_module_sha256": "cb2f28a75d8d0fdb200602c1bad39ba8822505d21aedc662733aad35e7752457",
+2026-10-23T02:04:31.5112209Z   "compile_options": [
+2026-10-23T02:04:31.5112636Z     [
+2026-10-23T02:04:31.5113022Z       "ATOMIC_INTRINSICS=1"
+2026-10-23T02:04:31.5113452Z     ],
+2026-10-23T02:04:31.5113805Z     [
+2026-10-23T02:04:31.5114177Z       "COMPILER=gcc-13.3.0"
+2026-10-23T02:04:31.5114617Z     ],
+2026-10-23T02:04:31.5114959Z     [
+2026-10-23T02:04:31.5115334Z       "DEFAULT_AUTOVACUUM"
+2026-10-23T02:04:31.5115771Z     ],
+2026-10-23T02:04:31.5116117Z     [
+2026-10-23T02:04:31.5125954Z       "DEFAULT_CACHE_SIZE=-2000"
+2026-10-23T02:04:31.5126269Z     ],
+2026-10-23T02:04:31.5126463Z     [
+2026-10-23T02:04:31.5126712Z       "DEFAULT_FILE_FORMAT=4"
+2026-10-23T02:04:31.5127113Z     ],
+2026-10-23T02:04:31.5127436Z     [
+2026-10-23T02:04:31.5127761Z       "DEFAULT_JOURNAL_SIZE_LIMIT=-1"
+2026-10-23T02:04:31.5128225Z     ],
+2026-10-23T02:04:31.5128505Z     [
+2026-10-23T02:04:31.5128820Z       "DEFAULT_MMAP_SIZE=0"
+2026-10-23T02:04:31.5129197Z     ],
+2026-10-23T02:04:31.5129485Z     [
+2026-10-23T02:04:31.5129807Z       "DEFAULT_PAGE_SIZE=4096"
+2026-10-23T02:04:31.5130448Z     ],
+2026-10-23T02:04:31.5130774Z     [
+2026-10-23T02:04:31.5131112Z       "DEFAULT_PCACHE_INITSZ=20"
+2026-10-23T02:04:31.5131538Z     ],
+2026-10-23T02:04:31.5131859Z     [
+2026-10-23T02:04:31.5132201Z       "DEFAULT_RECURSIVE_TRIGGERS"
+2026-10-23T02:04:31.5132683Z     ],
+2026-10-23T02:04:31.5133020Z     [
+2026-10-23T02:04:31.5133379Z       "DEFAULT_SECTOR_SIZE=4096"
+2026-10-23T02:04:31.5133807Z     ],
+2026-10-23T02:04:31.5134105Z     [
+2026-10-23T02:04:31.5134454Z       "DEFAULT_SYNCHRONOUS=2"
+2026-10-23T02:04:31.5135181Z     ],
+2026-10-23T02:04:31.5135492Z     [
+2026-10-23T02:04:31.5135856Z       "DEFAULT_WAL_AUTOCHECKPOINT=1000"
+2026-10-23T02:04:31.5136350Z     ],
+2026-10-23T02:04:31.5136647Z     [
+2026-10-23T02:04:31.5137015Z       "DEFAULT_WAL_SYNCHRONOUS=2"
+2026-10-23T02:04:31.5137489Z     ],
+2026-10-23T02:04:31.5137836Z     [
+2026-10-23T02:04:31.5138215Z       "DEFAULT_WORKER_THREADS=0"
+2026-10-23T02:04:31.5138690Z     ],
+2026-10-23T02:04:31.5139016Z     [
+2026-10-23T02:04:31.5139349Z       "DIRECT_OVERFLOW_READ"
+2026-10-23T02:04:31.5139772Z     ],
+2026-10-23T02:04:31.5140080Z     [
+2026-10-23T02:04:31.5141023Z       "ENABLE_COLUMN_METADATA"
+2026-10-23T02:04:31.5141487Z     ],
+2026-10-23T02:04:31.5141799Z     [
+2026-10-23T02:04:31.5142140Z       "ENABLE_DBSTAT_VTAB"
+2026-10-23T02:04:31.5142535Z     ],
+2026-10-23T02:04:31.5142843Z     [
+2026-10-23T02:04:31.5143199Z       "ENABLE_FTS3"
+2026-10-23T02:04:31.5143617Z     ],
+2026-10-23T02:04:31.5143925Z     [
+2026-10-23T02:04:31.5144262Z       "ENABLE_FTS3_PARENTHESIS"
+2026-10-23T02:04:31.5144678Z     ],
+2026-10-23T02:04:31.5144971Z     [
+2026-10-23T02:04:31.5145293Z       "ENABLE_FTS3_TOKENIZER"
+2026-10-23T02:04:31.5145701Z     ],
+2026-10-23T02:04:31.5146011Z     [
+2026-10-23T02:04:31.5146345Z       "ENABLE_FTS4"
+2026-10-23T02:04:31.5146735Z     ],
+2026-10-23T02:04:31.5147146Z     [
+2026-10-23T02:04:31.5147477Z       "ENABLE_FTS5"
+2026-10-23T02:04:31.5147852Z     ],
+2026-10-23T02:04:31.5148186Z     [
+2026-10-23T02:04:31.5148569Z       "ENABLE_LOAD_EXTENSION"
+2026-10-23T02:04:31.5149011Z     ],
+2026-10-23T02:04:31.5149351Z     [
+2026-10-23T02:04:31.5149735Z       "ENABLE_MATH_FUNCTIONS"
+2026-10-23T02:04:31.5150487Z     ],
+2026-10-23T02:04:31.5150862Z     [
+2026-10-23T02:04:31.5151234Z       "ENABLE_PREUPDATE_HOOK"
+2026-10-23T02:04:31.5151672Z     ],
+2026-10-23T02:04:31.5151989Z     [
+2026-10-23T02:04:31.5152301Z       "ENABLE_RTREE"
+2026-10-23T02:04:31.5152659Z     ],
+2026-10-23T02:04:31.5152964Z     [
+2026-10-23T02:04:31.5153288Z       "ENABLE_SESSION"
+2026-10-23T02:04:31.5153698Z     ],
+2026-10-23T02:04:31.5154015Z     [
+2026-10-23T02:04:31.5154409Z       "ENABLE_STMTVTAB"
+2026-10-23T02:04:31.5154803Z     ],
+2026-10-23T02:04:31.5155119Z     [
+2026-10-23T02:04:31.5155484Z       "ENABLE_UNLOCK_NOTIFY"
+2026-10-23T02:04:31.5155981Z     ],
+2026-10-23T02:04:31.5156316Z     [
+2026-10-23T02:04:31.5156690Z       "ENABLE_UPDATE_DELETE_LIMIT"
+2026-10-23T02:04:31.5157154Z     ],
+2026-10-23T02:04:31.5157476Z     [
+2026-10-23T02:04:31.5157915Z       "HAVE_ISNAN"
+2026-10-23T02:04:31.5158304Z     ],
+2026-10-23T02:04:31.5158642Z     [
+2026-10-23T02:04:31.5159003Z       "LIKE_DOESNT_MATCH_BLOBS"
+2026-10-23T02:04:31.5159475Z     ],
+2026-10-23T02:04:31.5159813Z     [
+2026-10-23T02:04:31.5160438Z       "MALLOC_SOFT_LIMIT=1024"
+2026-10-23T02:04:31.5160924Z     ],
+2026-10-23T02:04:31.5161268Z     [
+2026-10-23T02:04:31.5161629Z       "MAX_ATTACHED=10"
+2026-10-23T02:04:31.5162029Z     ],
+2026-10-23T02:04:31.5162352Z     [
+2026-10-23T02:04:31.5162689Z       "MAX_COLUMN=2000"
+2026-10-23T02:04:31.5163090Z     ],
+2026-10-23T02:04:31.5163401Z     [
+2026-10-23T02:04:31.5163747Z       "MAX_COMPOUND_SELECT=500"
+2026-10-23T02:04:31.5164174Z     ],
+2026-10-23T02:04:31.5164484Z     [
+2026-10-23T02:04:31.5164841Z       "MAX_DEFAULT_PAGE_SIZE=32768"
+2026-10-23T02:04:31.5165319Z     ],
+2026-10-23T02:04:31.5165630Z     [
+2026-10-23T02:04:31.5165970Z       "MAX_EXPR_DEPTH=1000"
+2026-10-23T02:04:31.5166373Z     ],
+2026-10-23T02:04:31.5166693Z     [
+2026-10-23T02:04:31.5167029Z       "MAX_FUNCTION_ARG=127"
+2026-10-23T02:04:31.5167472Z     ],
+2026-10-23T02:04:31.5167782Z     [
+2026-10-23T02:04:31.5168120Z       "MAX_LENGTH=1000000000"
+2026-10-23T02:04:31.5168542Z     ],
+2026-10-23T02:04:31.5168839Z     [
+2026-10-23T02:04:31.5169177Z       "MAX_LIKE_PATTERN_LENGTH=50000"
+2026-10-23T02:04:31.5169632Z     ],
+2026-10-23T02:04:31.5169926Z     [
+2026-10-23T02:04:31.5170530Z       "MAX_MMAP_SIZE=0x7fff0000"
+2026-10-23T02:04:31.5171007Z     ],
+2026-10-23T02:04:31.5171342Z     [
+2026-10-23T02:04:31.5171978Z       "MAX_PAGE_COUNT=0xfffffffe"
+2026-10-23T02:04:31.5172456Z     ],
+2026-10-23T02:04:31.5172794Z     [
+2026-10-23T02:04:31.5173158Z       "MAX_PAGE_SIZE=65536"
+2026-10-23T02:04:31.5173603Z     ],
+2026-10-23T02:04:31.5173934Z     [
+2026-10-23T02:04:31.5174302Z       "MAX_SCHEMA_RETRY=25"
+2026-10-23T02:04:31.5174720Z     ],
+2026-10-23T02:04:31.5175048Z     [
+2026-10-23T02:04:31.5175404Z       "MAX_SQL_LENGTH=1000000000"
+2026-10-23T02:04:31.5175859Z     ],
+2026-10-23T02:04:31.5176241Z     [
+2026-10-23T02:04:31.5176606Z       "MAX_TRIGGER_DEPTH=1000"
+2026-10-23T02:04:31.5177034Z     ],
+2026-10-23T02:04:31.5177350Z     [
+2026-10-23T02:04:31.5177972Z       "MAX_VARIABLE_NUMBER=250000"
+2026-10-23T02:04:31.5178505Z     ],
+2026-10-23T02:04:31.5178851Z     [
+2026-10-23T02:04:31.5179194Z       "MAX_VDBE_OP=250000000"
+2026-10-23T02:04:31.5179567Z     ],
+2026-10-23T02:04:31.5179863Z     [
+2026-10-23T02:04:31.5180165Z       "MAX_WORKER_THREADS=8"
+2026-10-23T02:04:31.5180852Z     ],
+2026-10-23T02:04:31.5181176Z     [
+2026-10-23T02:04:31.5181509Z       "MUTEX_PTHREADS"
+2026-10-23T02:04:31.5181902Z     ],
+2026-10-23T02:04:31.5182219Z     [
+2026-10-23T02:04:31.5182554Z       "SECURE_DELETE"
+2026-10-23T02:04:31.5182954Z     ],
+2026-10-23T02:04:31.5183268Z     [
+2026-10-23T02:04:31.5183589Z       "SOUNDEX"
+2026-10-23T02:04:31.5183953Z     ],
+2026-10-23T02:04:31.5184337Z     [
+2026-10-23T02:04:31.5184658Z       "SYSTEM_MALLOC"
+2026-10-23T02:04:31.5185018Z     ],
+2026-10-23T02:04:31.5185316Z     [
+2026-10-23T02:04:31.5185634Z       "TEMP_STORE=1"
+2026-10-23T02:04:31.5185990Z     ],
+2026-10-23T02:04:31.5186282Z     [
+2026-10-23T02:04:31.5186601Z       "THREADSAFE=1"
+2026-10-23T02:04:31.5186930Z     ],
+2026-10-23T02:04:31.5187197Z     [
+2026-10-23T02:04:31.5187459Z       "USE_URI"
+2026-10-23T02:04:31.5187744Z     ]
+2026-10-23T02:04:31.5188002Z   ],
+2026-10-23T02:04:31.5188289Z   "loader_environment": {
+2026-10-23T02:04:31.5188657Z     "LD_LIBRARY_PATH": null,
+2026-10-23T02:04:31.5189029Z     "LD_PRELOAD": null,
+2026-10-23T02:04:31.5189393Z     "DYLD_LIBRARY_PATH": null
+2026-10-23T02:04:31.5189746Z   },
+2026-10-23T02:04:31.5190026Z   "sqlite_mappings": [
+2026-10-23T02:04:31.5191054Z     "/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/lib-dynload/_sqlite3.cpython-312-x86_64-linux-gnu.so",
+2026-10-23T02:04:31.5192089Z     "/usr/lib/x86_64-linux-gnu/libsqlite3.so.0.8.6"
+2026-10-23T02:04:31.5192616Z   ]
+2026-10-23T02:04:31.5192917Z }
+2026-10-23T02:04:31.5203967Z {
+2026-10-23T02:04:31.5204396Z   "manifest": {
+2026-10-23T02:04:31.5204967Z     "url": "https://example.invalid/python",
+2026-10-23T02:04:31.5205791Z     "sha256": "308c1f97102defaa9e2e9169b241b04f96336b98899cd86eedf84fcd8aa13756"
+2026-10-23T02:04:31.5206527Z   },
+2026-10-23T02:04:31.5207036Z   "executable": "/tmp/tmp8odsz6jj/selected/python/bin/python3"
+2026-10-23T02:04:31.5207600Z }
+2026-10-23T02:04:31.5207920Z {
+2026-10-23T02:04:31.5208231Z   "python": "3.12.15",
+2026-10-23T02:04:31.5208759Z   "executable": "/opt/hostedtoolcache/Python/3.12.15/x64/bin/python",
+2026-10-23T02:04:31.5209543Z   "base_executable": "/opt/hostedtoolcache/Python/3.12.15/x64/bin/python3.12",
+2026-10-23T02:04:31.5210161Z   "sqlite_version": "3.45.1",
+2026-10-23T02:04:31.5211185Z   "sqlite_source_id": "2024-01-30 16:01:20 e876e51a0ed5c5b3126f52e532044363a014bc594cfefa87ffb5b82257ccalt1",
+2026-10-23T02:04:31.5212432Z   "sqlite_module": "/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/lib-dynload/_sqlite3.cpython-312-x86_64-linux-gnu.so",
+2026-10-23T02:04:31.5213828Z   "sqlite_module_origin": "/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/lib-dynload/_sqlite3.cpython-312-x86_64-linux-gnu.so",
+2026-10-23T02:04:31.5215035Z   "sqlite_module_sha256": "cb2f28a75d8d0fdb200602c1bad39ba8822505d21aedc662733aad35e7752457",
+2026-10-23T02:04:31.5215755Z   "compile_options": [
+2026-10-23T02:04:31.5216089Z     [
+2026-10-23T02:04:31.5216384Z       "ATOMIC_INTRINSICS=1"
+2026-10-23T02:04:31.5216724Z     ],
+2026-10-23T02:04:31.5216995Z     [
+2026-10-23T02:04:31.5217295Z       "COMPILER=gcc-13.3.0"
+2026-10-23T02:04:31.5217886Z     ],
+2026-10-23T02:04:31.5218162Z     [
+2026-10-23T02:04:31.5218459Z       "DEFAULT_AUTOVACUUM"
+2026-10-23T02:04:31.5218802Z     ],
+2026-10-23T02:04:31.5219069Z     [
+2026-10-23T02:04:31.5219375Z       "DEFAULT_CACHE_SIZE=-2000"
+2026-10-23T02:04:31.5219731Z     ],
+2026-10-23T02:04:31.5220001Z     [
+2026-10-23T02:04:31.5220525Z       "DEFAULT_FILE_FORMAT=4"
+2026-10-23T02:04:31.5220894Z     ],
+2026-10-23T02:04:31.5221155Z     [
+2026-10-23T02:04:31.5221459Z       "DEFAULT_JOURNAL_SIZE_LIMIT=-1"
+2026-10-23T02:04:31.5221857Z     ],
+2026-10-23T02:04:31.5222123Z     [
+2026-10-23T02:04:31.5222412Z       "DEFAULT_MMAP_SIZE=0"
+2026-10-23T02:04:31.5222938Z     ],
+2026-10-23T02:04:31.5223212Z     [
+2026-10-23T02:04:31.5223502Z       "DEFAULT_PAGE_SIZE=4096"
+2026-10-23T02:04:31.5223867Z     ],
+2026-10-23T02:04:31.5224149Z     [
+2026-10-23T02:04:31.5224553Z ....
+2026-10-23T02:04:31.5224940Z ----------------------------------------------------------------------
+2026-10-23T02:04:31.5225476Z Ran 4 tests in 0.046s
+2026-10-23T02:04:31.5225688Z 
+2026-10-23T02:04:31.5225811Z OK
+2026-10-23T02:04:31.5226099Z       "DEFAULT_PCACHE_INITSZ=20"
+2026-10-23T02:04:31.5226465Z     ],
+2026-10-23T02:04:31.5226730Z     [
+2026-10-23T02:04:31.5227037Z       "DEFAULT_RECURSIVE_TRIGGERS"
+2026-10-23T02:04:31.5227414Z     ],
+2026-10-23T02:04:31.5227675Z     [
+2026-10-23T02:04:31.5227963Z       "DEFAULT_SECTOR_SIZE=4096"
+2026-10-23T02:04:31.5228321Z     ],
+2026-10-23T02:04:31.5228581Z     [
+2026-10-23T02:04:31.5228885Z       "DEFAULT_SYNCHRONOUS=2"
+2026-10-23T02:04:31.5229246Z     ],
+2026-10-23T02:04:31.5229505Z     [
+2026-10-23T02:04:31.5229815Z       "DEFAULT_WAL_AUTOCHECKPOINT=1000"
+2026-10-23T02:04:31.5230426Z     ],
+2026-10-23T02:04:31.5230704Z     [
+2026-10-23T02:04:31.5230993Z       "DEFAULT_WAL_SYNCHRONOUS=2"
+2026-10-23T02:04:31.5231365Z     ],
+2026-10-23T02:04:31.5231632Z     [
+2026-10-23T02:04:31.5231932Z       "DEFAULT_WORKER_THREADS=0"
+2026-10-23T02:04:31.5232297Z     ],
+2026-10-23T02:04:31.5232568Z     [
+2026-10-23T02:04:31.5232876Z       "DIRECT_OVERFLOW_READ"
+2026-10-23T02:04:31.5233220Z     ],
+2026-10-23T02:04:31.5233474Z     [
+2026-10-23T02:04:31.5233755Z       "ENABLE_COLUMN_METADATA"
+2026-10-23T02:04:31.5234094Z     ],
+2026-10-23T02:04:31.5234350Z     [
+2026-10-23T02:04:31.5234630Z       "ENABLE_DBSTAT_VTAB"
+2026-10-23T02:04:31.5234974Z     ],
+2026-10-23T02:04:31.5235238Z     [
+2026-10-23T02:04:31.5235510Z       "ENABLE_FTS3"
+2026-10-23T02:04:31.5235804Z     ],
+2026-10-23T02:04:31.5236061Z     [
+2026-10-23T02:04:31.5236347Z       "ENABLE_FTS3_PARENTHESIS"
+2026-10-23T02:04:31.5236708Z     ],
+2026-10-23T02:04:31.5236962Z     [
+2026-10-23T02:04:31.5237262Z       "ENABLE_FTS3_TOKENIZER"
+2026-10-23T02:04:31.5237608Z     ],
+2026-10-23T02:04:31.5237871Z     [
+2026-10-23T02:04:31.5238138Z       "ENABLE_FTS4"
+2026-10-23T02:04:31.5238439Z     ],
+2026-10-23T02:04:31.5238722Z     [
+2026-10-23T02:04:31.5238997Z       "ENABLE_FTS5"
+2026-10-23T02:04:31.5239284Z     ],
+2026-10-23T02:04:31.5266509Z     [
+2026-10-23T02:04:31.5266947Z       "ENABLE_LOAD_EXTENSION"
+2026-10-23T02:04:31.5267370Z     ],
+2026-10-23T02:04:31.5267671Z     [
+2026-10-23T02:04:31.5267973Z       "ENABLE_MATH_FUNCTIONS"
+2026-10-23T02:04:31.5268352Z     ],
+2026-10-23T02:04:31.5268646Z     [
+2026-10-23T02:04:31.5268976Z       "ENABLE_PREUPDATE_HOOK"
+2026-10-23T02:04:31.5269372Z     ],
+2026-10-23T02:04:31.5269668Z     [
+2026-10-23T02:04:31.5269969Z       "ENABLE_RTREE"
+2026-10-23T02:04:31.5270572Z     ],
+2026-10-23T02:04:31.5270879Z     [
+2026-10-23T02:04:31.5271186Z       "ENABLE_SESSION"
+2026-10-23T02:04:31.5271534Z     ],
+2026-10-23T02:04:31.5271831Z     [
+2026-10-23T02:04:31.5272149Z       "ENABLE_STMTVTAB"
+2026-10-23T02:04:31.5272522Z     ],
+2026-10-23T02:04:31.5272812Z     [
+2026-10-23T02:04:31.5273136Z       "ENABLE_UNLOCK_NOTIFY"
+2026-10-23T02:04:31.5273526Z     ],
+2026-10-23T02:04:31.5273812Z     [
+2026-10-23T02:04:31.5274141Z       "ENABLE_UPDATE_DELETE_LIMIT"
+2026-10-23T02:04:31.5274551Z     ],
+2026-10-23T02:04:31.5274845Z     [
+2026-10-23T02:04:31.5275441Z       "HAVE_ISNAN"
+2026-10-23T02:04:31.5275767Z     ],
+2026-10-23T02:04:31.5276056Z     [
+2026-10-23T02:04:31.5276375Z       "LIKE_DOESNT_MATCH_BLOBS"
+2026-10-23T02:04:31.5276765Z     ],
+2026-10-23T02:04:31.5277056Z     [
+2026-10-23T02:04:31.5277381Z       "MALLOC_SOFT_LIMIT=1024"
+2026-10-23T02:04:31.5277782Z     ],
+2026-10-23T02:04:31.5278073Z     [
+2026-10-23T02:04:31.5278383Z       "MAX_ATTACHED=10"
+2026-10-23T02:04:31.5278743Z     ],
+2026-10-23T02:04:31.5279037Z     [
+2026-10-23T02:04:31.5279343Z       "MAX_COLUMN=2000"
+2026-10-23T02:04:31.5279688Z     ],
+2026-10-23T02:04:31.5279973Z     [
+2026-10-23T02:04:31.5280532Z       "MAX_COMPOUND_SELECT=500"
+2026-10-23T02:04:31.5281114Z     ],
+2026-10-23T02:04:31.5281410Z     [
+2026-10-23T02:04:31.5281720Z       "MAX_DEFAULT_PAGE_SIZE=32768"
+2026-10-23T02:04:31.5282165Z     ],
+2026-10-23T02:04:31.5282470Z     [
+2026-10-23T02:04:31.5282798Z       "MAX_EXPR_DEPTH=1000"
+2026-10-23T02:04:31.5283188Z     ],
+2026-10-23T02:04:31.5283485Z     [
+2026-10-23T02:04:31.5283817Z       "MAX_FUNCTION_ARG=127"
+2026-10-23T02:04:31.5284215Z     ],
+2026-10-23T02:04:31.5284506Z     [
+2026-10-23T02:04:31.5284822Z       "MAX_LENGTH=1000000000"
+2026-10-23T02:04:31.5285215Z     ],
+2026-10-23T02:04:31.5285509Z     [
+2026-10-23T02:04:31.5285841Z       "MAX_LIKE_PATTERN_LENGTH=50000"
+2026-10-23T02:04:31.5286287Z     ],
+2026-10-23T02:04:31.5286581Z     [
+2026-10-23T02:04:31.5286915Z       "MAX_MMAP_SIZE=0x7fff0000"
+2026-10-23T02:04:31.5287316Z     ],
+2026-10-23T02:04:31.5287615Z     [
+2026-10-23T02:04:31.5287952Z       "MAX_PAGE_COUNT=0xfffffffe"
+2026-10-23T02:04:31.5288357Z     ],
+2026-10-23T02:04:31.5288636Z     [
+2026-10-23T02:04:31.5288947Z       "MAX_PAGE_SIZE=65536"
+2026-10-23T02:04:31.5289317Z     ],
+2026-10-23T02:04:31.5289609Z     [
+2026-10-23T02:04:31.5289930Z       "MAX_SCHEMA_RETRY=25"
+2026-10-23T02:04:31.5290530Z     ],
+2026-10-23T02:04:31.5290828Z     [
+2026-10-23T02:04:31.5291136Z       "MAX_SQL_LENGTH=1000000000"
+2026-10-23T02:04:31.5291520Z     ],
+2026-10-23T02:04:31.5291815Z     [
+2026-10-23T02:04:31.5292090Z       "MAX_TRIGGER_DEPTH=1000"
+2026-10-23T02:04:31.5292425Z     ],
+2026-10-23T02:04:31.5292673Z     [
+2026-10-23T02:04:31.5292944Z       "MAX_VARIABLE_NUMBER=250000"
+2026-10-23T02:04:31.5293300Z     ],
+2026-10-23T02:04:31.5293561Z     [
+2026-10-23T02:04:31.5293839Z       "MAX_VDBE_OP=250000000"
+2026-10-23T02:04:31.5294234Z     ],
+2026-10-23T02:04:31.5294529Z     [
+2026-10-23T02:04:31.5294855Z       "MAX_WORKER_THREADS=8"
+2026-10-23T02:04:31.5295262Z     ],
+2026-10-23T02:04:31.5295538Z     [
+2026-10-23T02:04:31.5295818Z       "MUTEX_PTHREADS"
+2026-10-23T02:04:31.5296139Z     ],
+2026-10-23T02:04:31.5296406Z     [
+2026-10-23T02:04:31.5296717Z       "SECURE_DELETE"
+2026-10-23T02:04:31.5297065Z     ],
+2026-10-23T02:04:31.5297366Z     [
+2026-10-23T02:04:31.5297661Z       "SOUNDEX"
+2026-10-23T02:04:31.5297995Z     ],
+2026-10-23T02:04:31.5298286Z     [
+2026-10-23T02:04:31.5298594Z       "SYSTEM_MALLOC"
+2026-10-23T02:04:31.5298947Z     ],
+2026-10-23T02:04:31.5299239Z     [
+2026-10-23T02:04:31.5299551Z       "TEMP_STORE=1"
+2026-10-23T02:04:31.5299867Z     ],
+2026-10-23T02:04:31.5300125Z     [
+2026-10-23T02:04:31.5300612Z       "THREADSAFE=1"
+2026-10-23T02:04:31.5300912Z     ],
+2026-10-23T02:04:31.5301164Z     [
+2026-10-23T02:04:31.5301414Z       "USE_URI"
+2026-10-23T02:04:31.5301722Z     ]
+2026-10-23T02:04:31.5302003Z   ],
+2026-10-23T02:04:31.5302301Z   "loader_environment": {
+2026-10-23T02:04:31.5302830Z     "LD_LIBRARY_PATH": "/opt/hostedtoolcache/Python/3.12.15/x64/lib",
+2026-10-23T02:04:31.5303445Z     "LD_PRELOAD": "/unexpected/library",
+2026-10-23T02:04:31.5303912Z     "DYLD_LIBRARY_PATH": null
+2026-10-23T02:04:31.5304288Z   },
+2026-10-23T02:04:31.5304600Z   "sqlite_mappings": [
+2026-10-23T02:04:31.5305379Z     "/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/lib-dynload/_sqlite3.cpython-312-x86_64-linux-gnu.so",
+2026-10-23T02:04:31.5306309Z     "/usr/lib/x86_64-linux-gnu/libsqlite3.so.0.8.6"
+2026-10-23T02:04:31.5306800Z   ]
+2026-10-23T02:04:31.5307085Z }
+2026-10-23T02:04:31.5520078Z Post job cleanup.
+2026-10-23T02:04:31.6887206Z Post job cleanup.
+2026-10-23T02:04:31.7816291Z [command]/usr/bin/git version
+2026-10-23T02:04:31.7864906Z git version 2.55.0
+2026-10-23T02:04:31.7909258Z Temporarily overriding HOME='/home/runner/work/_temp/57553fb6-a451-4814-a4b0-30da0fa3747e' before making global git config changes
+2026-10-23T02:04:31.7912488Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-23T02:04:31.7915638Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/git-repo-db/git-repo-db
+2026-10-23T02:04:31.7952434Z Removing SSH command configuration
+2026-10-23T02:04:31.7959681Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-23T02:04:31.7999261Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-23T02:04:31.8286786Z Removing HTTP extra header
+2026-10-23T02:04:31.8302262Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-23T02:04:31.8358218Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-23T02:04:31.8650744Z Removing includeIf entries pointing to credentials config files
+2026-10-23T02:04:31.8657999Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-23T02:04:31.8695415Z includeif.gitdir:/home/runner/work/git-repo-db/git-repo-db/.git.path
+2026-10-23T02:04:31.8702126Z includeif.gitdir:/home/runner/work/git-repo-db/git-repo-db/.git/worktrees/*.path
+2026-10-23T02:04:31.8703335Z includeif.gitdir:/github/workspace/.git.path
+2026-10-23T02:04:31.8704256Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-10-23T02:04:31.8707036Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/git-repo-db/git-repo-db/.git.path
+2026-10-23T02:04:31.8735206Z /home/runner/work/_temp/git-credentials-0593df9f-dee1-4b61-a4ff-350ce4055375.config
+2026-10-23T02:04:31.8747232Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/git-repo-db/git-repo-db/.git.path \/home\/runner\/work\/_temp\/git\-credentials\-0593df9f\-dee1\-4b61\-a4ff\-350ce4055375\.config
+2026-10-23T02:04:31.8798584Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/git-repo-db/git-repo-db/.git/worktrees/*.path
+2026-10-23T02:04:31.8841509Z /home/runner/work/_temp/git-credentials-0593df9f-dee1-4b61-a4ff-350ce4055375.config
+2026-10-23T02:04:31.8856889Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/git-repo-db/git-repo-db/.git/worktrees/*.path \/home\/runner\/work\/_temp\/git\-credentials\-0593df9f\-dee1\-4b61\-a4ff\-350ce4055375\.config
+2026-10-23T02:04:31.8899840Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+2026-10-23T02:04:31.8931756Z /github/runner_temp/git-credentials-0593df9f-dee1-4b61-a4ff-350ce4055375.config
+2026-10-23T02:04:31.8951464Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path \/github\/runner_temp\/git\-credentials\-0593df9f\-dee1\-4b61\-a4ff\-350ce4055375\.config
+2026-10-23T02:04:31.8986384Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-10-23T02:04:31.9030103Z /github/runner_temp/git-credentials-0593df9f-dee1-4b61-a4ff-350ce4055375.config
+2026-10-23T02:04:31.9044165Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-0593df9f\-dee1\-4b61\-a4ff\-350ce4055375\.config
+2026-10-23T02:04:31.9084077Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-23T02:04:31.9334456Z Removing credentials config '/home/runner/work/_temp/git-credentials-0593df9f-dee1-4b61-a4ff-350ce4055375.config'
+2026-10-23T02:04:31.9481177Z Cleaning up orphan processes
