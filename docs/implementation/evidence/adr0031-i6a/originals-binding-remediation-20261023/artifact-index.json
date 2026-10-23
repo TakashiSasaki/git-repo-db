@@ -1,0 +1,63 @@
+{
+  "tested_head": "f777d195bd219398a51d2a90553377f61fb39370",
+  "tested_tree": "7ccc8685e06253e2102d46369110c7150d34a587",
+  "scope": "Index excludes itself; publication Git tree binds index. No independent acceptance or final full-sdist qualification.",
+  "payloads": {
+    "REPORT.md": {
+      "bytes": 14233,
+      "sha256": "fb342bc4d52cd5b44b402d08ad427d6bf0edd1e657b00ab9ca4e139fb00c934d"
+    },
+    "REPRODUCTION.md": {
+      "bytes": 8052,
+      "sha256": "4d2d1c1e94a8be86d7194024fce822e615a4fc7194909208101c761c300210f0"
+    },
+    "binding-controls.json": {
+      "bytes": 3009,
+      "sha256": "05af49f9207030c7b342f113746376a168c5637353c0ad1ed554f6ae90743eeb"
+    },
+    "check_artifacts.py": {
+      "bytes": 1374,
+      "sha256": "3478074e450734f8c9444addd7bd7f2d98b11c2b99bb34d779b024678f482d09"
+    },
+    "diagnostic-summary.json": {
+      "bytes": 123544,
+      "sha256": "aec404f1f86091d8bd2940067d9806c60452a14f4d518955b0b9ab092cfac296"
+    },
+    "executions.json": {
+      "bytes": 10209,
+      "sha256": "0c0ee34cf60391f1094e04ec5ba69766544ec431880946814108bb3a01401c84"
+    },
+    "findings.json": {
+      "bytes": 1162,
+      "sha256": "787b65ad2f075179b241bc866e48d673c007d90a37f3e8e515dfa8a6ec7ac4a4"
+    },
+    "first-boundary-changes.json": {
+      "bytes": 18505,
+      "sha256": "f1b5363a690c60f306381cbd91b09f1066ab968bf94ec8363bc1fd3369cc272e"
+    },
+    "full-summary.json": {
+      "bytes": 21348,
+      "sha256": "4c98e14bb0ea4ecbffd7a26f34ce49a4991e338556a22e484494fcc54739416c"
+    },
+    "installed-summary.json": {
+      "bytes": 2805,
+      "sha256": "08a4fe92283f046b9c92ea071671a7d95fb79fcf49c1c01661fc293676fc976f"
+    },
+    "pre-submission-recheck.json": {
+      "bytes": 2297,
+      "sha256": "66b957e9fc888108a508f85f492150b4dfc27b418ad68722954815d8143bd033"
+    },
+    "raw-evidence.zip": {
+      "bytes": 4577944,
+      "sha256": "2617f1874c2af7283f143b0000b9ad733a5773874e1012872daf686c923d1acc"
+    },
+    "raw-index.json": {
+      "bytes": 35216,
+      "sha256": "afa057fcf0d627102fbbb6781d3446eb2f7c65478be35e63c96a5405b6c29072"
+    },
+    "source-input-binding.json": {
+      "bytes": 56957,
+      "sha256": "da2c5ee4a7afbdec71294652c0053cba0fdcfeda5ed2e79b45dd99a2b31135e0"
+    }
+  }
+}

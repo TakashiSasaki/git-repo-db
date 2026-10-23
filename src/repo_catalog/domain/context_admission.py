@@ -518,9 +518,9 @@ def dependencies(unit):
         MappingDispositionKey,
         MappingSupport,
         ResourceKey,
-        TransferEventReport,
     )
     from repo_catalog.domain.p1_core import OID
+    from repo_catalog.domain.parent_report import ParentReportKey
 
     values = {name: set() for name in _DIMENSIONS}
     pending = [(unit, 0)]
@@ -590,10 +590,10 @@ def dependencies(unit):
         if isinstance(item, EventReportKey):
             # The native I7 is a real dependency, independent of reported Parent.
             pending.append((item.issue_parent, depth + 1))
-        if isinstance(item, TransferEventReport):
-            # Parent membership is an original semantic key, not an ID namespace.
-            for coords in _provenance_value(item.parent_members_json):
-                pending.append((ResourceKey(*coords), depth + 1))
+        # ParentReportKey is traversed through the dataclass fields below, with
+        # its complete members_json. Do not dereference a Transfer's convenience
+        # properties here: malformed nested originals still need current
+        # authority checked before the complete-original refusal, without SQL.
         target = getattr(item, "target_repository_uuidv4", None)
         if target is not None:
             values["repositories"].add(_uuid(target))
@@ -605,6 +605,15 @@ def dependencies(unit):
                 values["source_repository_pairs"].add((source, repository))
         for member in fields(item):
             child = getattr(item, member.name)
+            if (
+                isinstance(item, ParentReportKey)
+                and member.name in {"members_json", "provenance_json", "scope_json"}
+                and type(child) is not str
+            ):
+                # No dependency can be derived from a missing/non-text original.
+                # Complete-original validation refuses it after current authority;
+                # never stringify or synthesize a replacement coordinate.
+                continue
             if member.name.endswith("provenance_json") and child is not None:
                 values["sources"].update(extract_provenance_sources(child))
                 provenance = _provenance_value(child)

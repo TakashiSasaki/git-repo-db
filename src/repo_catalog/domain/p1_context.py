@@ -1831,6 +1831,18 @@ class TransferEventReport:
             raise ValueError("TransferEventReport.report_key must be an EventReportKey")
         if not isinstance(self.parent_report, ParentObservation):
             raise AdmissionRefused("INCOMPLETE_ORIGINAL_REPORT")
+        if not isinstance(self.parent_report.report_key, ParentReportKey):
+            raise AdmissionRefused("INCOMPLETE_ORIGINAL_REPORT")
+        parent_key = self.parent_report.report_key
+        if not isinstance(parent_key.resource, ResourceKey) or any(
+            type(value) is not str
+            for value in (
+                parent_key.members_json,
+                parent_key.provenance_json,
+                parent_key.scope_json,
+            )
+        ):
+            raise AdmissionRefused("INCOMPLETE_ORIGINAL_REPORT")
         # Recheck nested originals at the pure validation boundary as well as
         # initial construction; shallow replacement must not trust cached flags.
         ParentObservation(

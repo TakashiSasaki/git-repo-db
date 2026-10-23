@@ -17,10 +17,20 @@ from functools import lru_cache
 from pathlib import Path
 
 
-def read(path):
+def resolve_path(path):
+    """Resolve the supported plain/gzip transport before checking existence."""
     path = Path(path)
-    if not path.exists():
-        path = Path(str(path) + ".gz")
+    if path.exists():
+        return path
+    compressed = Path(str(path) + ".gz")
+    return compressed if compressed.exists() else None
+
+
+def read(path):
+    resolved = resolve_path(path)
+    if resolved is None:
+        raise FileNotFoundError(path)
+    path = resolved
     raw = path.read_bytes()
     return gzip.decompress(raw) if path.suffix == ".gz" else raw
 
@@ -101,18 +111,40 @@ def stage_refusal(message):
     return match.group() if match else None
 
 
+def complete_binding(binding):
+    """Require actual revision, input-digest inventory and tracked status."""
+    return (
+        isinstance(binding, dict)
+        and all(
+            isinstance(binding.get(key), str)
+            and re.fullmatch(r"[0-9a-f]{40}", binding[key]) is not None
+            for key in ("head", "tree")
+        )
+        and isinstance(binding.get("status"), str)
+        and isinstance(binding.get("inputs"), dict)
+        and bool(binding["inputs"])
+        and all(
+            isinstance(path, str)
+            and bool(path)
+            and isinstance(digest, str)
+            and re.fullmatch(r"[0-9a-f]{64}", digest) is not None
+            for path, digest in binding["inputs"].items()
+        )
+    )
+
+
 def run_index(directory, prefix="ordinary"):
     selected = read(directory / (prefix + ".selected.txt")).decode().splitlines()
     events = rows(directory / (prefix + ".jsonl"))
     reports = rows(directory / (prefix + ".report-types.jsonl"))
     execution = json_read(directory / (prefix + ".execution.json"))
-    binding_before_path = directory / "binding-before.json"
-    binding_after_path = directory / "binding-after.json"
+    binding_before_path = resolve_path(directory / "binding-before.json")
+    binding_after_path = resolve_path(directory / "binding-after.json")
     binding_before = (
-        json_read(binding_before_path) if binding_before_path.exists() else None
+        json_read(binding_before_path) if binding_before_path is not None else None
     )
     binding_after = (
-        json_read(binding_after_path) if binding_after_path.exists() else None
+        json_read(binding_after_path) if binding_after_path is not None else None
     )
     keys = {junit_key(node): node for node in selected}
     if len(keys) != len(selected):
@@ -197,15 +229,16 @@ def run_index(directory, prefix="ordinary"):
         and execution["exit_code"] in (0, 1)
         and finishes[0]["exitstatus"] == execution["exit_code"],
     }
-    if binding_before is not None or binding_after is not None:
-        checks["source_bindings_complete_and_unchanged"] = (
-            binding_before is not None
-            and binding_after is not None
-            and all(
-                binding_before.get(key) == binding_after.get(key)
-                for key in ("head", "tree", "inputs", "status")
-            )
+    # Source identity is part of this audit contract, including when neither
+    # transport exists. Two absent/incomplete bindings cannot prove equality.
+    checks["source_bindings_complete_and_unchanged"] = (
+        complete_binding(binding_before)
+        and complete_binding(binding_after)
+        and all(
+            binding_before[key] == binding_after[key]
+            for key in ("head", "tree", "inputs", "status")
         )
+    )
     receipt = {
         "checks": checks,
         "consistent": all(checks.values()),

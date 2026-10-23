@@ -1,0 +1,39 @@
+{
+  "implementation_author_verification": true,
+  "independent_review": "pending separate Task C; not initiated here",
+  "findings": [
+    {
+      "id": "ORIGINALS-M1",
+      "prior_severity": "Medium",
+      "status": "implemented_requires_non_author_re_review",
+      "saved_counterexample_before": {
+        "required_refusals": 0,
+        "exit_code": 1
+      },
+      "after_each_source_direct_sdist": {
+        "required_refusals": 4,
+        "ordinary_fence_controls": 2,
+        "exit_code": 0
+      },
+      "new_automated_nodes": 75,
+      "authority_before_complete_originals": true,
+      "zero_writes_before_refusal": true
+    },
+    {
+      "id": "I6A-IR-L01",
+      "prior_severity": "Low",
+      "status": "implemented_requires_non_author_re_review",
+      "plain_and_gzip_bindings_required": true,
+      "missing_either_or_both": "explicit inconsistent-run error",
+      "head_tree_inputs_status_compared": true,
+      "automated_nodes": 27
+    }
+  ],
+  "remaining_downstream_unsuccessful_nodes": {
+    "I6-C": 242,
+    "I7_composition": 14,
+    "Transfer_stage": 43
+  },
+  "independent_acceptance": "not declared",
+  "full_acceptance": false
+}
