@@ -199,20 +199,87 @@ def test_operational_loss_requires_new_issuance(tmp_path):
 
 
 def test_transfer_reports_never_shrunk_or_mixed(tmp_path):
-    from repo_catalog.domain.p1_context import TransferEventReport
+    from repo_catalog.domain.p1_context import (
+        MappingSupport,
+        ProviderEndpointDeclaration,
+        TransferEventReport,
+        encode_transfer_supported_provenance,
+    )
+    from repo_catalog.domain.parent_report import ParentObservation, ParentReportKey
+    from repo_catalog.domain.production_context import ResourceRelation
 
     a, b = tmp_path / "a", tmp_path / "b"
     r1, r2, issue, _ = fixture(a)
     catalog(b)
     event = ResourceKey.timeline_event(issue, "event-1")
+    # These are newly authored disposable fixture originals, declared before
+    # any selection. Provider native identities never come from Core UUIDs or
+    # surviving translated endpoint rows.
+    provider_from = ResourceKey.from_native(
+        issue.service_instance_uuidv4, "repository", "fixture-from-provider"
+    )
+    provider_to = ResourceKey.from_native(
+        issue.service_instance_uuidv4, "repository", "fixture-to-provider"
+    )
+    mappings = tuple(
+        ResourceRepositoryRelation(
+            provider,
+            "represents_repository",
+            FieldClock("fixture-mapping", 10),
+            canonical(repository),
+            make_provenance("fixture-mapping", evidence),
+            11,
+        )
+        for provider, repository, evidence in (
+            (provider_from, r1, "from-original"),
+            (provider_to, r2, "to-original"),
+        )
+    )
+    parent = ParentObservation(
+        ParentReportKey(
+            event,
+            canonical([list(issue.coordinates())]),
+            make_provenance("fixture-parent", "independent-parent-original"),
+            canonical(
+                {
+                    "clock": {"domain": "fixture-parent", "at_us": 12},
+                    "document_kind": "timeline_event",
+                    "state": "complete",
+                }
+            ),
+        ),
+        13,
+    )
+    original_provenance = encode_transfer_supported_provenance(
+        "provider",
+        {"event": "original-event"},
+        (
+            (
+                "transfer_from_repository",
+                MappingSupport(provider_from, (mappings[0].claim_key,)),
+            ),
+            (
+                "transfer_to_repository",
+                MappingSupport(provider_to, (mappings[1].claim_key,)),
+            ),
+        ),
+    )
     reports = [
         TransferEventReport.from_targets(
             event,
             clock=FieldClock("provider", 20),
-            provenance_json=make_provenance("provider", "original-event"),
+            provenance_json=original_provenance,
             observed_at_us=21,
             from_target_json=canonical(r1),
             to_target_json=canonical(r2),
+            parent_report=parent,
+            endpoint_declaration=ProviderEndpointDeclaration(
+                provider_from, provider_to
+            ),
+            endpoints=(
+                ("transfer_from_repository", canonical(r1)),
+                ("transfer_to_repository", canonical(r2)),
+            ),
         ),
         TransferEventReport.from_targets(
             event,
@@ -220,13 +287,39 @@ def test_transfer_reports_never_shrunk_or_mixed(tmp_path):
             provenance_json=make_provenance("provider", "one-sided-original"),
             observed_at_us=23,
             from_target_json="null",
+            parent_report=parent,
+            endpoint_declaration=ProviderEndpointDeclaration(
+                "explicit_null", "not_reported"
+            ),
+            endpoints=(("transfer_from_repository", "null"),),
         ),
     ]
     with fixture_transaction(
-        a, local_grants(issue, r1, r2, resources=(event,), units=reports)
+        a,
+        local_grants(
+            issue,
+            r1,
+            r2,
+            resources=(event, provider_from, provider_to),
+            units=(*mappings, parent, *reports),
+        ),
     ) as ctx:
         ctx.resource(
             event, identification=RI.scoped(event, issue, "timeline_event", "event-1")
+        )
+        for provider in (provider_from, provider_to):
+            ctx.resource(provider)
+        for mapping in mappings:
+            ctx.admit_repository_relation(mapping)
+        ctx.relation(
+            ResourceRelation(
+                event,
+                "parent",
+                (issue,),
+                parent.provenance_json,
+                parent.scope_json,
+                parent.observed_at_us,
+            )
         )
         for report in reports:
             ctx.admit_transfer_event(report)
@@ -249,6 +342,14 @@ def test_transfer_reports_never_shrunk_or_mixed(tmp_path):
         observed_at_us=reports[0].observed_at_us,
         from_target_json=canonical(r1),
         to_target_json="null",
+        parent_report=parent,
+        endpoint_declaration=ProviderEndpointDeclaration(
+            provider_from, "explicit_null"
+        ),
+        endpoints=(
+            ("transfer_from_repository", canonical(r1)),
+            ("transfer_to_repository", "null"),
+        ),
     )
     for row in package.context["resource_relations"]:
         if row["scope_json"] == reports[0].scope_json:

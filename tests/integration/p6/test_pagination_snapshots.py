@@ -12,6 +12,7 @@ from repo_catalog.adapters.sqlite.git_core import GitCore
 from repo_catalog.adapters.sqlite.p1_coordination import PairCoordinator
 from repo_catalog.adapters.sqlite.production_context import Context
 from repo_catalog.application.production_query import ProductionQueryService
+from repo_catalog.domain.context_admission import DependencySet
 from repo_catalog.domain.p1_context import (
     FieldCandidate,
     FieldClock,
@@ -25,6 +26,7 @@ from tests.integration.p6.conftest import (
     SERVICE,
     populate_rich_catalog,
 )
+from tests.support.context_admission import fixture_context, fixture_service
 
 
 def _collect_all_pages(fetch_page, limit: int = 2) -> tuple[list, str]:
@@ -158,7 +160,17 @@ def test_open_snapshot_isolation_and_stale_cursor_fencing_after_write(
                     )
                 )
 
-        PairCoordinator(catalog_dir).admit(write_core, write_ctx)
+        authorization, _ = fixture_service(
+            DependencySet(
+                resources={new_res},
+                repositories={REPOSITORY},
+                provider_registrations={SERVICE},
+                object_oids={new_oid},
+            )
+        )
+        PairCoordinator(catalog_dir, authorization=authorization).admit(
+            write_core, write_ctx, admission=fixture_context(authorization)
+        )
 
         # Pinned snapshot continues to see only the pre-write state
         assert pinned.core is not None and pinned.context is not None

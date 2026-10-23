@@ -2,7 +2,6 @@
 
 import sqlite3
 from contextlib import contextmanager
-from uuid import uuid4
 
 import pytest
 
@@ -72,6 +71,15 @@ def relation_grants():
         clock=FieldClock("github:repo", 10),
         provenance_json=PROVENANCE_1,
     )
+    transfer_claims = tuple(
+        MappingClaimKey.for_repository(
+            ResourceKey.from_native(SERVICE, "repository", native),
+            repository,
+            clock=FieldClock("mapping", 1),
+            provenance_json=PROVENANCE_1,
+        )
+        for native, repository in (("provider-a", REPO_1), ("provider-b", REPO_2))
+    )
     dispositions = (
         MappingDisposition(
             claim1,
@@ -95,6 +103,9 @@ def relation_grants():
             FieldClock("github:audit", 50),
             canonical({"source": "github", "evidence": "withdraw-a"}),
             50,
+        ),
+        MappingDisposition(
+            transfer_claims[0], "withdraw", FieldClock("operation", 2), PROVENANCE_2, 2
         ),
     )
     return DependencySet(
@@ -121,7 +132,7 @@ def relation_grants():
         sources={SOURCE},
         source_repository_pairs={(SOURCE, REPO_1), (SOURCE, REPO_2)},
         provider_registrations={SERVICE},
-        mapping_claims={claim1, claim2, claim_a},
+        mapping_claims={claim1, claim2, claim_a, *transfer_claims},
         dispositions={item.disposition_key for item in dispositions},
     )
 
@@ -269,7 +280,9 @@ def test_transfer_stored_type_is_never_inferred(context_db, scope_state):
 def test_transfer_report_fk_failure_rolls_back_whole_unit(context_db):
     db, store, _ = context_db
     event = ResourceKey.timeline_event(KEY_ISSUE, "failed-transfer")
-    missing_repository = canonical(str(uuid4()))
+    # Authorize this fixture-owned missing coordinate before admission so the
+    # ordinary stage/FK boundary is reached without minting grants after denial.
+    missing_repository = canonical("e969c72a-82b4-4aeb-b217-3b7679c1371b")
     report = TransferEventReport.from_targets(
         event,
         clock=FieldClock("event", 1),
