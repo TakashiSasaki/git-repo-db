@@ -1,0 +1,6 @@
+{
+  "Path('/workspace/rereview-core')": "Path('/workspace/task-b-run')",
+  "'/workspace/rereview-wheelhouse'": "'/workspace/task-b-wheelhouse'",
+  "'/workspace/uv-cache'": "'/workspace/task-b-run/uv-cache'",
+  "Path('/workspace/rr-env/bin')": "Path('/workspace/task-b-integration/.venv/bin')"
+}

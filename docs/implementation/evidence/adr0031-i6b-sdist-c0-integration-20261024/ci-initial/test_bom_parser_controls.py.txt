@@ -1,0 +1,51 @@
+"""External receipt parser countercontrols; no product/CI test execution."""
+import base64,hashlib,importlib.util,io,json,pathlib,tempfile,unittest,zipfile
+O=pathlib.Path('/workspace/task-b-ci-initial');spec=importlib.util.spec_from_file_location('receipt_parser',O/'verify_access_receipt.py');parser=importlib.util.module_from_spec(spec);spec.loader.exec_module(parser)
+RAW=(O/'access.log').read_text();NORMAL='\n'.join(l.removeprefix('\ufeff') for l in RAW.splitlines())+'\n';LINES=NORMAL.splitlines();DATA=[i for i,l in enumerate(LINES) if ' CI_RECEIPTS_DATA_V1 ' in l];BEGIN=next(i for i,l in enumerate(LINES) if ' CI_RECEIPTS_BEGIN_V1 ' in l);END=next(i for i,l in enumerate(LINES) if ' CI_RECEIPTS_END_V1 ' in l)
+class Controls(unittest.TestCase):
+ def verify(self,s):
+  with tempfile.TemporaryDirectory(prefix='receipt-bom-control-',dir='/tmp') as td:
+   p=pathlib.Path(td)/'control.log';p.write_text(s);return parser.verify(p)
+ def reject(self,s):
+  with self.assertRaises((AssertionError,ValueError,UnicodeError,zipfile.BadZipFile)):
+   self.verify(s)
+ def mutated(self,fn):
+  lines=list(LINES);fn(lines);return '\n'.join(lines)+'\n'
+ def test_actual_midlog_line_leading_bom_passes(self):
+  v=self.verify(RAW);self.assertEqual(v['receipt_bytes'],1992791);self.assertEqual(v['receipt_sha256'],'65ab48ba62dad77faa806632c268fb642064e08ad59edf27d0bfd6c6b94c017d');self.assertEqual(v['indexed_payloads_verified'],123)
+ def test_normalized_no_bom_same_bytes_passes(self):
+  self.assertEqual(self.verify(NORMAL)['receipt_sha256'],self.verify(RAW)['receipt_sha256'])
+ def test_single_bom_before_timestamp_of_begin_passes(self):
+  self.assertTrue(self.verify(self.mutated(lambda l:l.__setitem__(BEGIN,'\ufeff'+l[BEGIN])) )['receipt_present'])
+ def test_bom_inside_base64_payload_rejected(self):
+  i=DATA[0];self.reject(self.mutated(lambda l:l.__setitem__(i,l[i]+'\ufeff')))
+ def test_double_line_leading_bom_rejected(self):
+  i=DATA[0];self.reject(self.mutated(lambda l:l.__setitem__(i,'\ufeff\ufeff'+l[i])))
+ def test_missing_data_rejected(self):self.reject(self.mutated(lambda l:l.pop(DATA[0])))
+ def test_duplicate_data_rejected(self):self.reject(self.mutated(lambda l:l.insert(DATA[0],l[DATA[0]])))
+ def test_reordered_data_rejected(self):
+  def change(l):l[DATA[0]],l[DATA[1]]=l[DATA[1]],l[DATA[0]]
+  self.reject(self.mutated(change))
+ def test_corrupt_valid_base64_rejected_by_digest(self):
+  i=DATA[0];self.reject(self.mutated(lambda l:l.__setitem__(i,l[i][:-1]+('A' if l[i][-1]!='A' else 'B'))))
+ def test_malformed_base64_rejected(self):
+  i=DATA[0];self.reject(self.mutated(lambda l:l.__setitem__(i,l[i][:-1]+'!')))
+ def test_duplicate_begin_rejected(self):self.reject(self.mutated(lambda l:l.insert(BEGIN,l[BEGIN])))
+ def test_bad_index_rejected_after_valid_outer_hash(self):
+  body=(O/'access-verified.zip').read_bytes();z=zipfile.ZipFile(io.BytesIO(body));idx=json.loads(z.read('receipt-index.json'));idx[next(iter(idx))]['bytes']+=1
+  out=io.BytesIO()
+  with zipfile.ZipFile(out,'w') as nz:
+   for info in z.infolist():nz.writestr(info,json.dumps(idx,sort_keys=True).encode() if info.filename=='receipt-index.json' else z.read(info.filename))
+  new=out.getvalue();dig=hashlib.sha256(new).hexdigest();b64=base64.b64encode(new).decode();stamp='2026-10-23T18:29:29.0000000Z '
+  lines=[f'{stamp}CI_RECEIPTS_BEGIN_V1 {dig} {len(new)}']+[stamp+'CI_RECEIPTS_DATA_V1 '+b64[i:i+120] for i in range(0,len(b64),120)]+[stamp+'CI_RECEIPTS_END_V1 '+dig]
+  self.reject('\n'.join(lines)+'\n')
+class Result(unittest.TextTestResult):
+ def startTest(self,t):super().startTest(t);self.current=t.id()
+ def addSuccess(self,t):super().addSuccess(t);records.append({'node':t.id(),'outcome':'pass'})
+ def addFailure(self,t,e):super().addFailure(t,e);records.append({'node':t.id(),'outcome':'fail'})
+ def addError(self,t,e):super().addError(t,e);records.append({'node':t.id(),'outcome':'error'})
+records=[]
+if __name__=='__main__':
+ suite=unittest.defaultTestLoader.loadTestsFromTestCase(Controls);result=unittest.TextTestRunner(verbosity=2,resultclass=Result).run(suite)
+ summary={'kind':'external parser countercontrols, not product tests','testsRun':result.testsRun,'failures':len(result.failures),'errors':len(result.errors),'skipped':len(result.skipped),'records':records,'input_log_sha256':hashlib.sha256((O/'access.log').read_bytes()).hexdigest(),'parser_sha256':hashlib.sha256((O/'verify_access_receipt.py').read_bytes()).hexdigest(),'adjustment':r'^\ufeff?\d{4}-\d\d-\d\dT\S+ (CI_RECEIPTS_(?:BEGIN|DATA|END)_V1 .+)$','limits':'Only optional single line-leading BOM before actual strict timestamp; bytes inside payload are never stripped. Existing exact lengths/SHA256/end digest/unique members/index sizes/hashes/binding remain required.'}
+ (O/'bom-parser-controls.json').write_text(json.dumps(summary,indent=2)+'\n');raise SystemExit(not result.wasSuccessful())

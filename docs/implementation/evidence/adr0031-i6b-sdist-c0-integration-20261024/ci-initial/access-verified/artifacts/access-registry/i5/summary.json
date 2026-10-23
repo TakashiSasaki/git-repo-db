@@ -1,0 +1,164 @@
+{
+  "ordinary_collected": 6497,
+  "selected": 3148,
+  "unexecuted_ordinary": 3349,
+  "inputs_unchanged": true,
+  "transfer_admission_overlapping_broad": {
+    "command": [
+      "/home/runner/work/git-repo-db/git-repo-db/.venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-o",
+      "addopts=--strict-markers",
+      "-o",
+      "junit_family=xunit1",
+      "@/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5/transfer-admission.selected.txt",
+      "--junitxml=/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5/transfer-admission.xml",
+      "--journal=/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5/transfer-admission.jsonl"
+    ],
+    "cwd": "/home/runner/work/git-repo-db/git-repo-db",
+    "started_epoch": 1792779943.3568285,
+    "elapsed_seconds": 2.302,
+    "exit_code": 0,
+    "collected": 29,
+    "passed": 29,
+    "failed": 0,
+    "error": 0,
+    "skipped": 0,
+    "xfail": 0,
+    "xpass": 0,
+    "executed": 29,
+    "reconciliation": {
+      "checks": {
+        "selected_unique": true,
+        "selected_equals_junit": true,
+        "selected_equals_journal_starts": true,
+        "setup_and_teardown_once": true,
+        "no_duplicate_phases": true,
+        "phase_nodes_equal_selected": true,
+        "call_once_after_successful_setup": true,
+        "one_finish": true
+      },
+      "consistent_node_execution": true,
+      "journal_phase_outcomes": {
+        "passed": 87
+      },
+      "finishes": [
+        {
+          "event": "finish",
+          "status": "completed",
+          "exitstatus": 0,
+          "timestamp": 1792779945.570452
+        }
+      ]
+    }
+  },
+  "transfer_sql_overlapping_broad": {
+    "command": [
+      "/home/runner/work/git-repo-db/git-repo-db/.venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-o",
+      "addopts=--strict-markers",
+      "-o",
+      "junit_family=xunit1",
+      "@/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5/transfer-sql.selected.txt",
+      "--junitxml=/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5/transfer-sql.xml",
+      "--journal=/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5/transfer-sql.jsonl"
+    ],
+    "cwd": "/home/runner/work/git-repo-db/git-repo-db",
+    "started_epoch": 1792779945.659647,
+    "elapsed_seconds": 8.003,
+    "exit_code": 0,
+    "collected": 217,
+    "passed": 217,
+    "failed": 0,
+    "error": 0,
+    "skipped": 0,
+    "xfail": 0,
+    "xpass": 0,
+    "executed": 217,
+    "reconciliation": {
+      "checks": {
+        "selected_unique": true,
+        "selected_equals_junit": true,
+        "selected_equals_journal_starts": true,
+        "setup_and_teardown_once": true,
+        "no_duplicate_phases": true,
+        "phase_nodes_equal_selected": true,
+        "call_once_after_successful_setup": true,
+        "one_finish": true
+      },
+      "consistent_node_execution": true,
+      "journal_phase_outcomes": {
+        "passed": 651
+      },
+      "finishes": [
+        {
+          "event": "finish",
+          "status": "completed",
+          "exitstatus": 0,
+          "timestamp": 1792779953.588899
+        }
+      ]
+    }
+  },
+  "run": {
+    "command": [
+      "/home/runner/work/git-repo-db/git-repo-db/.venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-o",
+      "addopts=--strict-markers",
+      "-o",
+      "junit_family=xunit1",
+      "@/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5/regressions.selected.txt",
+      "--junitxml=/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5/regressions.xml",
+      "--journal=/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5/regressions.jsonl",
+      "-n",
+      "2",
+      "--dist",
+      "worksteal"
+    ],
+    "cwd": "/home/runner/work/git-repo-db/git-repo-db",
+    "started_epoch": 1792779953.6682754,
+    "elapsed_seconds": 165.677,
+    "exit_code": 1,
+    "collected": 3148,
+    "passed": 2849,
+    "failed": 279,
+    "error": 20,
+    "skipped": 0,
+    "xfail": 0,
+    "xpass": 0,
+    "executed": 3148,
+    "reconciliation": {
+      "checks": {
+        "selected_unique": true,
+        "selected_equals_junit": true,
+        "selected_equals_journal_starts": true,
+        "setup_and_teardown_once": true,
+        "no_duplicate_phases": true,
+        "phase_nodes_equal_selected": true,
+        "call_once_after_successful_setup": true,
+        "one_finish": true
+      },
+      "consistent_node_execution": true,
+      "journal_phase_outcomes": {
+        "passed": 9125,
+        "failed": 299
+      },
+      "finishes": [
+        {
+          "event": "finish",
+          "status": "failed",
+          "exitstatus": 1,
+          "timestamp": 1792780116.182488
+        }
+      ]
+    }
+  }
+}

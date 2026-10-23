@@ -1,0 +1,202 @@
+{
+  "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+  "executable": "/workspace/task-b-integration/.venv/bin/python",
+  "base_executable": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3.12",
+  "sqlite_module_origin": "built-in",
+  "sqlite_module_sha256": null,
+  "interpreter_sha256": "fa67443527ed9647f760d807e2a38f26340757123e643c4639cf273ed15d5ea7",
+  "sqlite": [
+    "3.53.1",
+    "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9"
+  ],
+  "compile_options": [
+    [
+      "ATOMIC_INTRINSICS=1"
+    ],
+    [
+      "COMPILER=clang-22.1.3"
+    ],
+    [
+      "DEFAULT_AUTOVACUUM"
+    ],
+    [
+      "DEFAULT_CACHE_SIZE=-2000"
+    ],
+    [
+      "DEFAULT_FILE_FORMAT=4"
+    ],
+    [
+      "DEFAULT_JOURNAL_SIZE_LIMIT=-1"
+    ],
+    [
+      "DEFAULT_MMAP_SIZE=0"
+    ],
+    [
+      "DEFAULT_PAGE_SIZE=4096"
+    ],
+    [
+      "DEFAULT_PCACHE_INITSZ=20"
+    ],
+    [
+      "DEFAULT_RECURSIVE_TRIGGERS"
+    ],
+    [
+      "DEFAULT_SECTOR_SIZE=4096"
+    ],
+    [
+      "DEFAULT_SYNCHRONOUS=2"
+    ],
+    [
+      "DEFAULT_WAL_AUTOCHECKPOINT=1000"
+    ],
+    [
+      "DEFAULT_WAL_SYNCHRONOUS=2"
+    ],
+    [
+      "DEFAULT_WORKER_THREADS=0"
+    ],
+    [
+      "DIRECT_OVERFLOW_READ"
+    ],
+    [
+      "ENABLE_DBSTAT_VTAB"
+    ],
+    [
+      "ENABLE_FTS3"
+    ],
+    [
+      "ENABLE_FTS3_PARENTHESIS"
+    ],
+    [
+      "ENABLE_FTS4"
+    ],
+    [
+      "ENABLE_FTS5"
+    ],
+    [
+      "ENABLE_GEOPOLY"
+    ],
+    [
+      "ENABLE_MATH_FUNCTIONS"
+    ],
+    [
+      "ENABLE_PERCENTILE"
+    ],
+    [
+      "ENABLE_RTREE"
+    ],
+    [
+      "MALLOC_SOFT_LIMIT=1024"
+    ],
+    [
+      "MAX_ATTACHED=10"
+    ],
+    [
+      "MAX_COLUMN=2000"
+    ],
+    [
+      "MAX_COMPOUND_SELECT=500"
+    ],
+    [
+      "MAX_DEFAULT_PAGE_SIZE=8192"
+    ],
+    [
+      "MAX_EXPR_DEPTH=1000"
+    ],
+    [
+      "MAX_FUNCTION_ARG=1000"
+    ],
+    [
+      "MAX_LENGTH=1000000000"
+    ],
+    [
+      "MAX_LIKE_PATTERN_LENGTH=50000"
+    ],
+    [
+      "MAX_MMAP_SIZE=0x7fff0000"
+    ],
+    [
+      "MAX_PAGE_COUNT=0xfffffffe"
+    ],
+    [
+      "MAX_PAGE_SIZE=65536"
+    ],
+    [
+      "MAX_SQL_LENGTH=1000000000"
+    ],
+    [
+      "MAX_TRIGGER_DEPTH=1000"
+    ],
+    [
+      "MAX_VARIABLE_NUMBER=32766"
+    ],
+    [
+      "MAX_VDBE_OP=250000000"
+    ],
+    [
+      "MAX_WORKER_THREADS=8"
+    ],
+    [
+      "MUTEX_PTHREADS"
+    ],
+    [
+      "SYSTEM_MALLOC"
+    ],
+    [
+      "TEMP_STORE=1"
+    ],
+    [
+      "THREADSAFE=1"
+    ]
+  ],
+  "pragmas": {
+    "foreign_keys": [
+      [
+        1
+      ]
+    ],
+    "recursive_triggers": [
+      [
+        1
+      ]
+    ],
+    "journal_mode": [
+      [
+        "memory"
+      ]
+    ],
+    "synchronous": [
+      [
+        3
+      ]
+    ],
+    "encoding": [
+      [
+        "UTF-8"
+      ]
+    ]
+  },
+  "fingerprints": {
+    "core": "3f9f828ad0aff5fae1039f30a3baa29165dbabe6decc5a4f204e78e674b940fe",
+    "context": "924cc7557fb3da6211ea070185881f5fcaeff9bf52b6e237a361a238a2ea0c6e",
+    "operational": "76598c5a630d4044c5a123587911a62411d55946072ba071109dd7db52f029a5",
+    "search": "a1bce192ebf67bc3846f47a5bc63ba2927a97bddf65eb62706ec2e9f9fc5d303"
+  },
+  "fences": {
+    "i2_transfer_report_stage_fence": "CREATE TRIGGER i2_transfer_report_stage_fence BEFORE INSERT ON resource_relations\nWHEN NEW.relation_kind COLLATE BINARY='transfer_event_report'\nBEGIN SELECT RAISE(ABORT,'I2_TRANSFER_UNSUPPORTED'); END",
+    "i2_transfer_stage_fence": "CREATE TRIGGER i2_transfer_stage_fence BEFORE INSERT ON resource_repository_relations\nWHEN NEW.relation_kind COLLATE BINARY IN('transfer_from_repository','transfer_to_repository')\nBEGIN SELECT RAISE(ABORT,'I2_TRANSFER_UNSUPPORTED'); END"
+  },
+  "json": [
+    1,
+    "[\"x\"]"
+  ],
+  "integrity": [
+    [
+      "ok"
+    ]
+  ],
+  "foreign_key_check": [],
+  "head": "fb5d7b5a0c4b92c8a282daac154e66fa6d361e64",
+  "tree": "d2010275a90ae6b6cb728344d5708057a79110cd",
+  "preliminary_harness_attempt": "Failed before artifact write: _sqlite3 is built-in and has no __file__. Corrected to __spec__.origin plus interpreter bytes; no SQLite replaced."
+}

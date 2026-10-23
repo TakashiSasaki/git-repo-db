@@ -1,0 +1,29 @@
+{
+  "src": {
+    "input_files": 160,
+    "missing": [],
+    "changed": []
+  },
+  "accepted_adrs": {
+    "154": 20,
+    "144": 21,
+    "147": 20
+  },
+  "historical_evidence": {
+    "154": {
+      "input_files": 7625,
+      "missing": [],
+      "changed": []
+    },
+    "144": {
+      "input_files": 2797,
+      "missing": [],
+      "changed": []
+    },
+    "147": {
+      "input_files": 2711,
+      "missing": [],
+      "changed": []
+    }
+  }
+}

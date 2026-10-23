@@ -1,0 +1,210 @@
+{
+  "head": "fb5d7b5a0c4b92c8a282daac154e66fa6d361e64",
+  "tree": "d2010275a90ae6b6cb728344d5708057a79110cd",
+  "plans": {
+    "development": {
+      "lanes": {
+        "static": {
+          "disposition": "selected",
+          "file_count": 0
+        },
+        "tests": {
+          "disposition": "not_applicable",
+          "file_count": 0
+        },
+        "packaging": {
+          "disposition": "not_applicable",
+          "file_count": 0
+        },
+        "smoke": {
+          "disposition": "selected",
+          "file_count": 0
+        }
+      },
+      "acceptance_files": 232,
+      "selected_files": 0,
+      "required_files": 232,
+      "unexecuted_files": 232,
+      "excluded_files": [],
+      "sdist_contract": {
+        "disposition": "selected"
+      },
+      "acceptance_input_hash": "106d274117017ca99caafb07b20c36eed6a9995dfa752f6bebfcfbe047618a67",
+      "fallback_reasons": [
+        "Shared/executable input: .github/workflows/access-registry.yml",
+        "Shared/executable input: .github/workflows/tests.yml",
+        "Unknown dependency path: docs/implementation/evidence/adr0033-archive-hardening-20261023/baseline-comparison.json",
+        "Unknown dependency path: docs/implementation/evidence/adr0033-archive-hardening-20261023/measurements.json"
+      ]
+    },
+    "release": {
+      "lanes": {
+        "static": {
+          "disposition": "selected",
+          "file_count": 0
+        },
+        "tests": {
+          "disposition": "selected",
+          "file_count": 222
+        },
+        "packaging": {
+          "disposition": "selected",
+          "file_count": 10
+        },
+        "smoke": {
+          "disposition": "selected",
+          "file_count": 0
+        }
+      },
+      "acceptance_files": 232,
+      "selected_files": 232,
+      "required_files": 232,
+      "unexecuted_files": 0,
+      "excluded_files": [],
+      "sdist_contract": {
+        "disposition": "selected"
+      },
+      "acceptance_input_hash": "106d274117017ca99caafb07b20c36eed6a9995dfa752f6bebfcfbe047618a67",
+      "fallback_reasons": [
+        "Shared/executable input: .github/workflows/access-registry.yml",
+        "Shared/executable input: .github/workflows/tests.yml",
+        "Unknown dependency path: docs/implementation/evidence/adr0033-archive-hardening-20261023/baseline-comparison.json",
+        "Unknown dependency path: docs/implementation/evidence/adr0033-archive-hardening-20261023/measurements.json"
+      ]
+    }
+  },
+  "paths": [
+    {
+      "path": "src/repo_catalog/domain/context_admission.py",
+      "exists": true,
+      "access_matches": []
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+      "exists": true,
+      "access_matches": []
+    },
+    {
+      "path": "src/repo_catalog/domain/ports/context_authorization.py",
+      "exists": true,
+      "access_matches": []
+    },
+    {
+      "path": "src/repo_catalog/domain/context_wire.py",
+      "exists": true,
+      "access_matches": []
+    },
+    {
+      "path": "src/repo_catalog/domain/context_dependencies.py",
+      "exists": true,
+      "access_matches": []
+    },
+    {
+      "path": "src/repo_catalog/domain/exchange_rows.py",
+      "exists": true,
+      "access_matches": []
+    },
+    {
+      "path": "src/repo_catalog/application/exchange.py",
+      "exists": true,
+      "access_matches": [
+        "src/repo_catalog/application/exchange.py"
+      ]
+    },
+    {
+      "path": "src/repo_catalog/domain/exchange.py",
+      "exists": true,
+      "access_matches": [
+        "src/repo_catalog/domain/exchange.py"
+      ]
+    },
+    {
+      "path": "tests/integration/i6a/test_admission.py",
+      "exists": true,
+      "access_matches": []
+    },
+    {
+      "path": "tests/integration/i6a/test_originals_revalidation.py",
+      "exists": true,
+      "access_matches": []
+    },
+    {
+      "path": "tests/unit/test_context_admission.py",
+      "exists": true,
+      "access_matches": []
+    },
+    {
+      "path": "tests/unit/test_context_admission_bounds_i6a.py",
+      "exists": true,
+      "access_matches": []
+    },
+    {
+      "path": "tests/unit/test_context_fences_i6a.py",
+      "exists": true,
+      "access_matches": []
+    },
+    {
+      "path": "tests/unit/test_context_refusal_order_i6a.py",
+      "exists": true,
+      "access_matches": []
+    },
+    {
+      "path": "tests/unit/test_context_oid_admission_i6a.py",
+      "exists": true,
+      "access_matches": []
+    },
+    {
+      "path": "tests/unit/test_i6a_regression_bindings.py",
+      "exists": true,
+      "access_matches": []
+    },
+    {
+      "path": "tests/unit/test_context_wire_v5.py",
+      "exists": true,
+      "access_matches": []
+    },
+    {
+      "path": "tests/unit/test_context_scan_budget.py",
+      "exists": true,
+      "access_matches": []
+    },
+    {
+      "path": "tests/support/context_admission.py",
+      "exists": true,
+      "access_matches": [
+        "tests/support/context_admission.py"
+      ]
+    },
+    {
+      "path": "tests/support/authorized_context.py",
+      "exists": true,
+      "access_matches": [
+        "tests/support/authorized_context.py"
+      ]
+    },
+    {
+      "path": "tests/support/i6a.py",
+      "exists": true,
+      "access_matches": [
+        "tests/support/i6a.py"
+      ]
+    },
+    {
+      "path": "scripts/check_sdist_contract.py",
+      "exists": true,
+      "access_matches": [
+        "scripts/check_sdist_contract.py"
+      ]
+    },
+    {
+      "path": "scripts/emit_ci_evidence.py",
+      "exists": true,
+      "access_matches": []
+    },
+    {
+      "path": "README.md",
+      "exists": true,
+      "access_matches": []
+    }
+  ]
+}

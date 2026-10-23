@@ -1,0 +1,133 @@
+{
+  "source": "Full reviewed144 series, not new integration assertion weakening",
+  "old_node": "tests/unit/test_ci_plan.py::test_main_prose_change_does_not_require_unconditional_acceptance[README.md]",
+  "new_node": "tests/unit/test_ci_plan.py::test_distribution_inputs_select_lightweight_contract_without_pytest[README.md-prose]",
+  "old_head": "91827360c185cbf813277bf32a6627d894b1b20a",
+  "new_head": "fb5d7b5a0c4b92c8a282daac154e66fa6d361e64",
+  "old_assertions": [
+    {
+      "line": 40,
+      "assertion": "assert not plan['full']",
+      "ast": "Assert(test=UnaryOp(op=Not(), operand=Subscript(value=Name(id='plan', ctx=Load()), slice=Constant(value='full'), ctx=Load())))"
+    },
+    {
+      "line": 41,
+      "assertion": "assert all((item['disposition'] == 'not_applicable' for item in plan['lanes'].values()))",
+      "ast": "Assert(test=Call(func=Name(id='all', ctx=Load()), args=[GeneratorExp(elt=Compare(left=Subscript(value=Name(id='item', ctx=Load()), slice=Constant(value='disposition'), ctx=Load()), ops=[Eq()], comparators=[Constant(value='not_applicable')]), generators=[comprehension(target=Name(id='item', ctx=Store()), iter=Call(func=Attribute(value=Subscript(value=Name(id='plan', ctx=Load()), slice=Constant(value='lanes'), ctx=Load()), attr='values', ctx=Load()), args=[], keywords=[]), ifs=[], is_async=0)])], keywords=[]))"
+    },
+    {
+      "line": 44,
+      "assertion": "assert plan['unexecuted_files'] == plan['acceptance_files']",
+      "ast": "Assert(test=Compare(left=Subscript(value=Name(id='plan', ctx=Load()), slice=Constant(value='unexecuted_files'), ctx=Load()), ops=[Eq()], comparators=[Subscript(value=Name(id='plan', ctx=Load()), slice=Constant(value='acceptance_files'), ctx=Load())]))"
+    },
+    {
+      "line": 45,
+      "assertion": "assert all((item['disposition'] == 'not_applicable' for item in plan['preparation'].values()))",
+      "ast": "Assert(test=Call(func=Name(id='all', ctx=Load()), args=[GeneratorExp(elt=Compare(left=Subscript(value=Name(id='item', ctx=Load()), slice=Constant(value='disposition'), ctx=Load()), ops=[Eq()], comparators=[Constant(value='not_applicable')]), generators=[comprehension(target=Name(id='item', ctx=Store()), iter=Call(func=Attribute(value=Subscript(value=Name(id='plan', ctx=Load()), slice=Constant(value='preparation'), ctx=Load()), attr='values', ctx=Load()), args=[], keywords=[]), ifs=[], is_async=0)])], keywords=[]))"
+    }
+  ],
+  "new_assertions": [
+    {
+      "line": 703,
+      "assertion": "assert plan['preparation']['sdist_contract']['disposition'] == 'selected'",
+      "ast": "Assert(test=Compare(left=Subscript(value=Subscript(value=Subscript(value=Name(id='plan', ctx=Load()), slice=Constant(value='preparation'), ctx=Load()), slice=Constant(value='sdist_contract'), ctx=Load()), slice=Constant(value='disposition'), ctx=Load()), ops=[Eq()], comparators=[Constant(value='selected')]))"
+    },
+    {
+      "line": 704,
+      "assertion": "assert plan['preparation']['dependencies']['disposition'] == 'selected'",
+      "ast": "Assert(test=Compare(left=Subscript(value=Subscript(value=Subscript(value=Name(id='plan', ctx=Load()), slice=Constant(value='preparation'), ctx=Load()), slice=Constant(value='dependencies'), ctx=Load()), slice=Constant(value='disposition'), ctx=Load()), ops=[Eq()], comparators=[Constant(value='selected')]))"
+    },
+    {
+      "line": 705,
+      "assertion": "assert plan['preparation']['wheelhouse']['disposition'] == 'not_applicable'",
+      "ast": "Assert(test=Compare(left=Subscript(value=Subscript(value=Subscript(value=Name(id='plan', ctx=Load()), slice=Constant(value='preparation'), ctx=Load()), slice=Constant(value='wheelhouse'), ctx=Load()), slice=Constant(value='disposition'), ctx=Load()), ops=[Eq()], comparators=[Constant(value='not_applicable')]))"
+    },
+    {
+      "line": 706,
+      "assertion": "assert not plan['selected_files']",
+      "ast": "Assert(test=UnaryOp(op=Not(), operand=Subscript(value=Name(id='plan', ctx=Load()), slice=Constant(value='selected_files'), ctx=Load())))"
+    },
+    {
+      "line": 707,
+      "assertion": "assert not plan['full']",
+      "ast": "Assert(test=UnaryOp(op=Not(), operand=Subscript(value=Name(id='plan', ctx=Load()), slice=Constant(value='full'), ctx=Load())))"
+    },
+    {
+      "line": 708,
+      "assertion": "assert plan['lanes']['tests']['disposition'] == 'not_applicable'",
+      "ast": "Assert(test=Compare(left=Subscript(value=Subscript(value=Subscript(value=Name(id='plan', ctx=Load()), slice=Constant(value='lanes'), ctx=Load()), slice=Constant(value='tests'), ctx=Load()), slice=Constant(value='disposition'), ctx=Load()), ops=[Eq()], comparators=[Constant(value='not_applicable')]))"
+    },
+    {
+      "line": 709,
+      "assertion": "assert plan['lanes']['packaging']['disposition'] == 'not_applicable'",
+      "ast": "Assert(test=Compare(left=Subscript(value=Subscript(value=Subscript(value=Name(id='plan', ctx=Load()), slice=Constant(value='lanes'), ctx=Load()), slice=Constant(value='packaging'), ctx=Load()), slice=Constant(value='disposition'), ctx=Load()), ops=[Eq()], comparators=[Constant(value='not_applicable')]))"
+    },
+    {
+      "line": 710,
+      "assertion": "assert plan['unexecuted_files'] == plan['acceptance_files']",
+      "ast": "Assert(test=Compare(left=Subscript(value=Name(id='plan', ctx=Load()), slice=Constant(value='unexecuted_files'), ctx=Load()), ops=[Eq()], comparators=[Subscript(value=Name(id='plan', ctx=Load()), slice=Constant(value='acceptance_files'), ctx=Load())]))"
+    },
+    {
+      "line": 714,
+      "assertion": "assert plan['acceptance_input_hash'] == prior['acceptance_input_hash']",
+      "ast": "Assert(test=Compare(left=Subscript(value=Name(id='plan', ctx=Load()), slice=Constant(value='acceptance_input_hash'), ctx=Load()), ops=[Eq()], comparators=[Subscript(value=Name(id='prior', ctx=Load()), slice=Constant(value='acceptance_input_hash'), ctx=Load())]))"
+    },
+    {
+      "line": 715,
+      "assertion": "assert plan['required_files'] == []",
+      "ast": "Assert(test=Compare(left=Subscript(value=Name(id='plan', ctx=Load()), slice=Constant(value='required_files'), ctx=Load()), ops=[Eq()], comparators=[List(elts=[], ctx=Load())]))"
+    },
+    {
+      "line": 716,
+      "assertion": "assert all((lane['disposition'] == 'not_applicable' for lane in plan['lanes'].values()))",
+      "ast": "Assert(test=Call(func=Name(id='all', ctx=Load()), args=[GeneratorExp(elt=Compare(left=Subscript(value=Name(id='lane', ctx=Load()), slice=Constant(value='disposition'), ctx=Load()), ops=[Eq()], comparators=[Constant(value='not_applicable')]), generators=[comprehension(target=Name(id='lane', ctx=Store()), iter=Call(func=Attribute(value=Subscript(value=Name(id='plan', ctx=Load()), slice=Constant(value='lanes'), ctx=Load()), attr='values', ctx=Load()), args=[], keywords=[]), ifs=[], is_async=0)])], keywords=[]))"
+    },
+    {
+      "line": 720,
+      "assertion": "assert plan['acceptance_input_hash'] != prior['acceptance_input_hash']",
+      "ast": "Assert(test=Compare(left=Subscript(value=Name(id='plan', ctx=Load()), slice=Constant(value='acceptance_input_hash'), ctx=Load()), ops=[NotEq()], comparators=[Subscript(value=Name(id='prior', ctx=Load()), slice=Constant(value='acceptance_input_hash'), ctx=Load())]))"
+    },
+    {
+      "line": 721,
+      "assertion": "assert plan['lanes']['static']['disposition'] == 'selected'",
+      "ast": "Assert(test=Compare(left=Subscript(value=Subscript(value=Subscript(value=Name(id='plan', ctx=Load()), slice=Constant(value='lanes'), ctx=Load()), slice=Constant(value='static'), ctx=Load()), slice=Constant(value='disposition'), ctx=Load()), ops=[Eq()], comparators=[Constant(value='selected')]))"
+    },
+    {
+      "line": 723,
+      "assertion": "assert plan['required_files'] == [path]",
+      "ast": "Assert(test=Compare(left=Subscript(value=Name(id='plan', ctx=Load()), slice=Constant(value='required_files'), ctx=Load()), ops=[Eq()], comparators=[List(elts=[Name(id='path', ctx=Load())], ctx=Load())]))"
+    },
+    {
+      "line": 724,
+      "assertion": "assert path in ci_plan.current_acceptance_files(root)",
+      "ast": "Assert(test=Compare(left=Name(id='path', ctx=Load()), ops=[In()], comparators=[Call(func=Attribute(value=Name(id='ci_plan', ctx=Load()), attr='current_acceptance_files', ctx=Load()), args=[Name(id='root', ctx=Load())], keywords=[])]))"
+    },
+    {
+      "line": 728,
+      "assertion": "assert release['full']",
+      "ast": "Assert(test=Subscript(value=Name(id='release', ctx=Load()), slice=Constant(value='full'), ctx=Load()))"
+    },
+    {
+      "line": 729,
+      "assertion": "assert path in release['lanes']['packaging']['test_files']",
+      "ast": "Assert(test=Compare(left=Name(id='path', ctx=Load()), ops=[In()], comparators=[Subscript(value=Subscript(value=Subscript(value=Name(id='release', ctx=Load()), slice=Constant(value='lanes'), ctx=Load()), slice=Constant(value='packaging'), ctx=Load()), slice=Constant(value='test_files'), ctx=Load())]))"
+    },
+    {
+      "line": 731,
+      "assertion": "assert plan['required_files'] == plan['acceptance_files']",
+      "ast": "Assert(test=Compare(left=Subscript(value=Name(id='plan', ctx=Load()), slice=Constant(value='required_files'), ctx=Load()), ops=[Eq()], comparators=[Subscript(value=Name(id='plan', ctx=Load()), slice=Constant(value='acceptance_files'), ctx=Load())]))"
+    },
+    {
+      "line": 732,
+      "assertion": "assert plan['lanes']['smoke']['disposition'] == 'selected'",
+      "ast": "Assert(test=Compare(left=Subscript(value=Subscript(value=Subscript(value=Name(id='plan', ctx=Load()), slice=Constant(value='lanes'), ctx=Load()), slice=Constant(value='smoke'), ctx=Load()), slice=Constant(value='disposition'), ctx=Load()), ops=[Eq()], comparators=[Constant(value='selected')]))"
+    }
+  ],
+  "retained_meanings": [
+    "not full",
+    "all runtime lanes not_applicable",
+    "unexecuted_files == acceptance_files"
+  ],
+  "replaced_mechanism": "README is required sdist input. Obsolete all preparation not_applicable becomes selected sdist_contract and dependencies with wheelhouse not_applicable. New test preserves runtime acceptance_input_hash, required_files empty and no pytest selection. Other9 prose parameters remain unchanged.",
+  "scope": "One passing historical parameter replacement from reviewed144; no failing assertion removed, no skip/xfail. Actual old/new outcomes are separately reconciled."
+}

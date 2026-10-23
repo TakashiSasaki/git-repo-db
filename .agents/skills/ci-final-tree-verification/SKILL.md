@@ -571,3 +571,25 @@ without forcing full pytest. Matching runtime inputs cannot establish unchanged
 distribution inputs. `tests/unit/test_ci_plan.py` covers that boundary and the
 shared checker/verifier/fixture routes. These checks remain development evidence,
 with independent installed behavior and explicit release qualification separate.
+
+## Preserve line-leading BOMs when recovering strict log receipts
+
+A job-log reader can concatenate chunks with a single U+FEFF at the beginning
+of an interior timestamped line. An anchored digit-only timestamp parser then
+omits an actual DATA record. Preserve the original log and failed length/hash
+result. Permit exactly one optional BOM only before the strict timestamp at line
+start; never strip arbitrary characters, whitespace or BOMs from payloads:
+
+```python
+r'^\ufeff?\d{4}-\d\d-\d\dT\S+ (CI_RECEIPTS_(?:BEGIN|DATA|END)_V1 .+)$'
+```
+
+Keep exactly one BEGIN, ordered DATA and matching END, strict base64, exact
+closed-ZIP byte length/SHA256 and compressed bound, unique members, all index
+lengths/hashes and actual run/feature/checkout/tree binding. Do not infer missing
+chunks or repair payload bytes. The
+[integration evidence](../../../docs/implementation/evidence/adr0031-i6b-sdist-c0-integration-20261024/ci-initial/LESSON.md)
+retains the original missing-record failure and twelve parser controls, including
+rejection of double/payload BOM, missing/duplicated/reordered/corrupt DATA,
+malformed base64, duplicate BEGIN and a tampered inner index with a valid outer
+hash. These controls verify receipt parsing, not product or Release acceptance.

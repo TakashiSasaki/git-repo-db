@@ -1,0 +1,23 @@
+from pathlib import Path
+import sys, subprocess, json, os, tarfile, hashlib, collections
+ROOT=Path('/workspace/task-b-dist-checkout');WORK=Path('/workspace/task-b-dist-work');OUT=Path('/workspace/task-b-dist-evidence'); HEAD='fb5d7b5a0c4b92c8a282daac154e66fa6d361e64';TREE='d2010275a90ae6b6cb728344d5708057a79110cd'
+sys.path.insert(0,str(ROOT))
+from scripts.check_sdist_contract import check_sdist, compare_wheels, save
+records=[]
+def sha(p):return hashlib.sha256(Path(p).read_bytes()).hexdigest()
+def run(name,args,cwd):
+ with (OUT/(name+'.log')).open('w') as f:r=subprocess.run(list(map(str,args)),cwd=cwd,stdout=f,stderr=subprocess.STDOUT,env=dict(os.environ,PYTHONPATH=''))
+ records.append({'name':name,'argv':list(map(str,args)),'cwd':str(cwd),'exit_code':r.returncode});save(OUT/'processes.json',records);print(name,r.returncode,flush=True);assert r.returncode==0
+run('build-direct',[sys.executable,'-m','hatchling','build','-t','wheel','-d',WORK/'direct'],ROOT)
+run('build-sdist',[sys.executable,'-m','hatchling','build','-t','sdist','-d',WORK/'sdist'],ROOT)
+a=next((WORK/'direct').glob('*.whl'));s=next((WORK/'sdist').glob('*.tar.gz'));contract=check_sdist(s,ROOT);save(OUT/'sdist-contract-before-build.json',contract)
+unpack=WORK/'from-sdist';unpack.mkdir()
+with tarfile.open(s) as t:t.extractall(unpack,filter='data')
+derived=next(unpack.iterdir());assert not (derived/'.git').exists()
+run('build-derived',[sys.executable,'-m','hatchling','build','-t','wheel','-d',WORK/'derived'],derived)
+b=next((WORK/'derived').glob('*.whl'));contract['wheel_equivalence']=compare_wheels(a,b,sdist_metadata=contract['members']['PKG-INFO']['sha256']);save(OUT/'sdist-contract.json',contract)
+product={str(p.relative_to(ROOT/'src/repo_catalog')):{'bytes':p.stat().st_size,'sha256':sha(p),'git_blob':subprocess.check_output(['git','rev-parse',HEAD+':'+str(p.relative_to(ROOT))],cwd=ROOT,text=True).strip()} for p in sorted((ROOT/'src/repo_catalog').rglob('*')) if p.is_file() and '__pycache__' not in p.parts and p.suffix!='.pyc'}
+save(OUT/'product-inventory.json',{'head':HEAD,'tree':TREE,'files':len(product),'bytes':sum(x['bytes'] for x in product.values()),'extensions':dict(collections.Counter(Path(p).suffix for p in product)),'members':product})
+inputs={p:{'bytes':(ROOT/p).stat().st_size,'sha256':sha(ROOT/p),'git_blob':subprocess.check_output(['git','rev-parse',HEAD+':'+p],cwd=ROOT,text=True).strip()} for p in subprocess.check_output(['git','ls-files'],cwd=ROOT,text=True).splitlines() if (p.startswith(('src/','tests/','scripts/','.github/','.agents/')) or p in ('README.md','pyproject.toml','uv.lock','.python-version','.gitignore'))}
+save(OUT/'execution-binding.json',{'head':HEAD,'tree':TREE,'inputs':inputs,'author_validation':True,'independent_review':False,'full_acceptance':False,'python':sys.executable})
+save(OUT/'artifacts.json',{k:{'path':str(p),'sha256':sha(p),'bytes':p.stat().st_size} for k,p in [('direct',a),('sdist',s),('derived',b)]})

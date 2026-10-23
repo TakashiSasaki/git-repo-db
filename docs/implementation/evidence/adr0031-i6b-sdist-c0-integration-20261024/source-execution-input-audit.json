@@ -1,0 +1,10 @@
+{
+  "source_execution_inputs": 490,
+  "source_execution_inputs_unchanged": true,
+  "head_tree_unchanged": true,
+  "actual_driver_observers_unchanged": true,
+  "postprocessing_comparator_changed_during_full": true,
+  "comparator_not_loaded_by_execution": true,
+  "command_evidence": "source-full/ordinary.execution.json",
+  "adaptation": "Historical Git blob verification target and summary label152->154; actual postprocessor only. See tools-transport-and-adaptations.json."
+}

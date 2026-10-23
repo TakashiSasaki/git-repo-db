@@ -1,0 +1,17 @@
+test_actual_midlog_line_leading_bom_passes (__main__.Controls.test_actual_midlog_line_leading_bom_passes) ... ok
+test_bad_index_rejected_after_valid_outer_hash (__main__.Controls.test_bad_index_rejected_after_valid_outer_hash) ... ok
+test_bom_inside_base64_payload_rejected (__main__.Controls.test_bom_inside_base64_payload_rejected) ... ok
+test_corrupt_valid_base64_rejected_by_digest (__main__.Controls.test_corrupt_valid_base64_rejected_by_digest) ... ok
+test_double_line_leading_bom_rejected (__main__.Controls.test_double_line_leading_bom_rejected) ... ok
+test_duplicate_begin_rejected (__main__.Controls.test_duplicate_begin_rejected) ... ok
+test_duplicate_data_rejected (__main__.Controls.test_duplicate_data_rejected) ... ok
+test_malformed_base64_rejected (__main__.Controls.test_malformed_base64_rejected) ... ok
+test_missing_data_rejected (__main__.Controls.test_missing_data_rejected) ... ok
+test_normalized_no_bom_same_bytes_passes (__main__.Controls.test_normalized_no_bom_same_bytes_passes) ... ok
+test_reordered_data_rejected (__main__.Controls.test_reordered_data_rejected) ... ok
+test_single_bom_before_timestamp_of_begin_passes (__main__.Controls.test_single_bom_before_timestamp_of_begin_passes) ... ok
+
+----------------------------------------------------------------------
+Ran 12 tests in 4.752s
+
+OK

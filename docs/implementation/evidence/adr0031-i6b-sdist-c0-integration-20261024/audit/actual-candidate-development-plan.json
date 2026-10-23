@@ -1,0 +1,2827 @@
+{
+  "version": 3,
+  "mode": "development",
+  "context": {
+    "event": "pull_request",
+    "action": "opened",
+    "base_sha": "91827360c185cbf813277bf32a6627d894b1b20a",
+    "feature_sha": "fb5d7b5a0c4b92c8a282daac154e66fa6d361e64",
+    "tested_sha": "fb5d7b5a0c4b92c8a282daac154e66fa6d361e64",
+    "mode": "development",
+    "full": false
+  },
+  "runtime": {
+    "python": "3.12.14",
+    "executable": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+    "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+    "abi": "cpython-312-x86_64-linux-gnu",
+    "sqlite": "3.53.1",
+    "os": "Linux",
+    "arch": "x86_64",
+    "git": "git version 2.52.0",
+    "uv": "uv 0.12.19 (x86_64-unknown-linux-gnu)",
+    "runner_image": [
+      null,
+      null
+    ]
+  },
+  "policy_hash": "aa0824102fea5d177781ffa27615cbc56d02bc7a9f79bb389d85b4ff45a58ed2",
+  "tree_hash": "3fb19ab642e0b4c9eb9b2147742fe2e8ca6ea65c197321588eabf709ca3fc025",
+  "acceptance_input_hash": "106d274117017ca99caafb07b20c36eed6a9995dfa752f6bebfcfbe047618a67",
+  "comparison_sha": "91827360c185cbf813277bf32a6627d894b1b20a",
+  "changed": [
+    {
+      "status": "M",
+      "paths": [
+        ".agents/skills/ci-final-tree-verification/SKILL.md"
+      ]
+    },
+    {
+      "status": "M",
+      "paths": [
+        ".github/workflows/access-registry.yml"
+      ]
+    },
+    {
+      "status": "M",
+      "paths": [
+        ".github/workflows/tests.yml"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/adr/0033-minimal-product-sdist.md"
+      ]
+    },
+    {
+      "status": "M",
+      "paths": [
+        "docs/adr/README.md"
+      ]
+    },
+    {
+      "status": "M",
+      "paths": [
+        "docs/change-aware-ci.md"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-archive-hardening-20261023/REPORT.md"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-archive-hardening-20261023/baseline-comparison.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-archive-hardening-20261023/measurements.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-archive-hardening-20261023/pax-calibration.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-archive-hardening-20261023/raw-evidence-index.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-archive-hardening-20261023/raw-evidence.zip"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-archive-hardening-20261023/verification-summary.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/REPORT.md"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/after-members.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/baseline-comparison-summary.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/before-members.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/REPORT.md"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/access-artifacts__access-registry__distribution.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/access-artifacts__access-registry__failure-comparison.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/access-artifacts__access-registry__i5-distribution__build-binding.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/access-artifacts__access-registry__i5-distribution__sdist-contract.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/access-artifacts__access-registry__i5-distribution__summary.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/access-artifacts__access-registry__i5__input-binding.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/access-artifacts__access-registry__i5__summary.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/access-artifacts__access-registry__offline-inventory__selection.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/access-artifacts__access-registry__offline-inventory__summary.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/access-artifacts__access-registry__sdist-contract.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/access-artifacts__access-registry__source-revision.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/access-jobs.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/access-receipt-binding.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/access-receipts.zip"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/access-registry.log.gz"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/access-run-live.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/access-unexecuted-ordinary-nodeids.txt"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/audit-attempt1.stderr"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/audit-attempt1.stdout"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/audit-attempt2.stderr"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/audit-attempt2.stdout"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/audit-attempt3.stderr"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/audit-attempt3.stdout"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/audit-attempt4.stderr"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/audit-attempt4.stdout"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/audit-compressed.stderr"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/audit-compressed.stdout"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/audit.stderr"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/audit.stdout"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/audit_receipts.py"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/command-records.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/commit-workflow-runs.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/evidence-index.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/failure-comparison-per-node.md"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/feature-commit-live.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/findings.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/independent-audit.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/independent-inherited-failure-comparison.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/operations.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/probe_readme_binding.py"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/probe_readme_sdist_inventory.py"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/raw-log-index.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/readme-binding-result.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/readme-sdist-inventory-result.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/receipt-verification.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/runtime-identity-verification.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/sanitization-check.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/test-merge-commit-live.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/tests-jobs.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/tests-offline.log.gz"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/tests-plan.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/tests-policy.log.gz"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/tests-receipt-binding.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/tests-receipts.zip"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/tests-run-live.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/tests-validation-manifest.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/evidence-index.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/findings.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/historical-evidence-verification.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/independent-audit/REPORT.md"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/independent-audit/bounded-memory-results.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/independent-audit/bounded-memory.exit"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/independent-audit/bounded-memory.stderr"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/independent-audit/bounded-memory.stdout"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/independent-audit/evidence-index.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/independent-audit/findings.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/independent-audit/initial-probe.exit"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/independent-audit/initial-probe.stderr"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/independent-audit/initial-probe.stdout"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/independent-audit/initial-results.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/independent-audit/probe.exit"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/independent-audit/probe.stderr"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/independent-audit/probe.stdout"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/independent-audit/probe_bounded_memory.py"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/independent-audit/probe_independent.py"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/independent-audit/results.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/measurements.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/raw-evidence-index.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/raw-evidence.zip"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/reproduce/compare.py"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/reproduce/package_evidence.py"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/reproduce/prepare_evidence.py"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/reproduce/run.py"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/reproduce/stage2.py"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/reproduce/stage3.py"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/reproduce/summarize.py"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/sanitization-check.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/sdist-contract.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/setup-failures.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/startup/live-0.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/startup/live-1.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/startup/live-2.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/startup/live-3.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/startup/live-4.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/trace-difference-audit.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/verification-summary.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-hardening-rereview-20261023/verified-input-binding.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/REPORT.md"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/archive/README.md"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/concatenated.tar.gz"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/corrupt-gzip-crc.tar.gz"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/malformed-second-gzip-member.tar.gz"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/metadata1.tar.gz"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/metadata2.tar.gz"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/missing-gzip-trailer.tar.gz"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/pax-hidden-log.tar.gz"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/source/.gitignore"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/source/README.md"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/source/pyproject.toml"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/source/src/repo_catalog/__init__.py"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/source/src/repo_catalog/contract.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/source/src/repo_catalog/query.graphql"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/source/src/repo_catalog/schema.sql"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/archive/final-results.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/archive/findings.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/archive/probe_archive.py"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/archive/results.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/archive/specimen-verification.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/baseline-comparison-confirmed.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/ci/REPORT.md"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/ci/access-jobs.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/ci/access-receipt-binding.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/ci/access-receipts.zip"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/ci/author-evidence-index-verification.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/ci/check-runs.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/ci/execution-environment.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/ci/findings.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/ci/hosted-log-verification.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/ci/hosted-log-views-index.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/ci/hosted-log-views.zip"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/ci/initial-tests-log-verification.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/ci/initial-tests-plan.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/ci/initial-tests-receipt-binding.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/ci/initial-tests-receipts.zip"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/ci/initial-tests-sdist-members.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/ci/initial-tests-validation-manifest.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/ci/inspect_hosted_logs.py"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/ci/pages-unchanged-inputs.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/ci/pr138.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/ci/probe_readme_binding.py"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/ci/readme-binding-result.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/ci/reviews.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/ci/sanitization-check.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/ci/tests-jobs.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/ci/tests-plan.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/ci/tests-receipt-binding.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/ci/tests-receipts.zip"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/ci/tests-validation-manifest.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/evidence-index.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/findings.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/installed-journal-reconciliation.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/local-execution-summary.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/measurements.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/message-frame-differences.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/raw-evidence-index.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/raw-evidence.zip"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/reproduce/check_backend_isolation.py"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/reproduce/installed_probe.py"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/reproduce/measure_distributions.py"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-independent-review-20261023/reviewed-input-hashes.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-minimal-sdist-20261022/README.md"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-minimal-sdist-20261022/artifact-index.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-minimal-sdist-20261022/coverage.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-minimal-sdist-20261022/executions.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-minimal-sdist-20261022/measurements.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/adr0033-minimal-sdist-20261022/raw-evidence.zip"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/COMMANDS.md"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/LESSONS.md"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/REPORT.md"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/artifact-index.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/findings.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/artifact-download-result.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/audit-pr136.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/author-hosted-artifact.zip"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/author-hosted-artifacts.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/author-hosted-jobs.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/author-hosted-offline.log.gz"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/author-hosted-run.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/author-hosted-sqlite-policy.log.gz"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/author-hosted-verified.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/author-hosted-verified.zip"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/boundaries.log"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/boundaries/fixed-2097151.zip"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/boundaries/fixed-2097152.zip"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/boundaries/fixed-2097153.zip"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/boundaries/fixed-2323560.zip"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/boundaries/fixed-expanded-over-limit.zip"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/boundaries/measurements.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/boundary-executions.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/calibration-attempt2.log"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/calibration-attempt2.py.txt"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/check-runner.log"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/checks.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/collection.log"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/dependencies.txt"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/execution.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/exploratory-boundaries.log"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/exploratory-boundaries/fixed-2097151.zip"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/exploratory-boundaries/fixed-2097152.zip"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/exploratory-verify-boundaries.py.txt"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/final-checks.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/final-review-format.log"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/final-review-lint.log"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/github-initial.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/github-prepublication.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/initial-whitespace-check.log.gz"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/input-hashes.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/journal.jsonl"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/local-runtime-final.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/local-runtime.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/log-preservation.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/packaging-checks.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/packaging-format.log"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/packaging-lint.log"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/packaging-reports.log"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/pytest.log"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/reconciliation.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/reports.log"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/review-format.log"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/review-lint.log"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/ruff-format.log"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/ruff-lint.log"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/runtime-final.log"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/sqlite-policy.log"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/tests.xml"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/raw/workflow-review.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/reconcile.py"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/run_checks.py"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/verify_boundaries.py"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-independent-20261023/verify_hosted.py"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-receipt-limit-20261023/README.md"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-receipt-limit-20261023/artifact-index.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-receipt-limit-20261023/baseline.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-receipt-limit-20261023/baseline.log"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-receipt-limit-20261023/before-unittest.log"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-receipt-limit-20261023/before.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-receipt-limit-20261023/check-0.log"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-receipt-limit-20261023/check-1.log"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-receipt-limit-20261023/check-2.log"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-receipt-limit-20261023/check-3.log"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-receipt-limit-20261023/check-4.log"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-receipt-limit-20261023/check-5.log"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-receipt-limit-20261023/checks.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-receipt-limit-20261023/collection.log"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-receipt-limit-20261023/fixed.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-receipt-limit-20261023/fixed.log"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-receipt-limit-20261023/input-hashes.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-receipt-limit-20261023/reconciliation.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-receipt-limit-20261023/regression-journal.jsonl.gz"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-receipt-limit-20261023/regression.xml.gz"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-e1-receipt-limit-20261023/verify.py"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-hosted-runtime-audit-20261022/README.md"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-hosted-runtime-audit-20261022/artifact-index.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-hosted-runtime-audit-20261022/audit-evidence.zip"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-hosted-runtime-audit-20261022/audit.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-hosted-runtime-audit-20261022/failure-comparison.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-hosted-runtime-audit-20261022/findings.json"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/evidence/c0-hosted-runtime-audit-20261022/handoff.txt"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "docs/implementation/minimal-sdist-design.md"
+      ]
+    },
+    {
+      "status": "M",
+      "paths": [
+        "docs/testing.md"
+      ]
+    },
+    {
+      "status": "M",
+      "paths": [
+        "pyproject.toml"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "scripts/check_sdist_contract.py"
+      ]
+    },
+    {
+      "status": "M",
+      "paths": [
+        "scripts/ci_dependencies.json"
+      ]
+    },
+    {
+      "status": "M",
+      "paths": [
+        "scripts/ci_execute.py"
+      ]
+    },
+    {
+      "status": "M",
+      "paths": [
+        "scripts/ci_plan.py"
+      ]
+    },
+    {
+      "status": "M",
+      "paths": [
+        "scripts/emit_ci_evidence.py"
+      ]
+    },
+    {
+      "status": "M",
+      "paths": [
+        "scripts/verify_access_distribution.py"
+      ]
+    },
+    {
+      "status": "M",
+      "paths": [
+        "scripts/verify_i4_distribution.py"
+      ]
+    },
+    {
+      "status": "M",
+      "paths": [
+        "scripts/verify_i5_distribution.py"
+      ]
+    },
+    {
+      "status": "M",
+      "paths": [
+        "tests/integration/test_ci_execution.py"
+      ]
+    },
+    {
+      "status": "M",
+      "paths": [
+        "tests/packaging/test_distribution.py"
+      ]
+    },
+    {
+      "status": "M",
+      "paths": [
+        "tests/packaging/test_p1_distribution.py"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "tests/packaging/test_sdist_contract.py"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "tests/packaging/test_sdist_hardening.py"
+      ]
+    },
+    {
+      "status": "M",
+      "paths": [
+        "tests/support/distributions.py"
+      ]
+    },
+    {
+      "status": "M",
+      "paths": [
+        "tests/unit/test_ci_plan.py"
+      ]
+    },
+    {
+      "status": "A",
+      "paths": [
+        "tests/unit/test_emit_ci_evidence.py"
+      ]
+    },
+    {
+      "status": "M",
+      "paths": [
+        "tests/unit/test_test_efficiency.py"
+      ]
+    }
+  ],
+  "fallback_reasons": [
+    "Shared/executable input: .github/workflows/access-registry.yml",
+    "Shared/executable input: .github/workflows/tests.yml",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-archive-hardening-20261023/baseline-comparison.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-archive-hardening-20261023/measurements.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-archive-hardening-20261023/pax-calibration.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-archive-hardening-20261023/raw-evidence-index.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-archive-hardening-20261023/raw-evidence.zip",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-archive-hardening-20261023/verification-summary.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/after-members.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/baseline-comparison-summary.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/before-members.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/access-artifacts__access-registry__distribution.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/access-artifacts__access-registry__failure-comparison.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/access-artifacts__access-registry__i5-distribution__build-binding.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/access-artifacts__access-registry__i5-distribution__sdist-contract.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/access-artifacts__access-registry__i5-distribution__summary.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/access-artifacts__access-registry__i5__input-binding.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/access-artifacts__access-registry__i5__summary.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/access-artifacts__access-registry__offline-inventory__selection.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/access-artifacts__access-registry__offline-inventory__summary.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/access-artifacts__access-registry__sdist-contract.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/access-artifacts__access-registry__source-revision.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/access-jobs.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/access-receipt-binding.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/access-receipts.zip",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/access-registry.log.gz",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/access-run-live.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/access-unexecuted-ordinary-nodeids.txt",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/audit-attempt1.stderr",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/audit-attempt1.stdout",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/audit-attempt2.stderr",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/audit-attempt2.stdout",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/audit-attempt3.stderr",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/audit-attempt3.stdout",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/audit-attempt4.stderr",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/audit-attempt4.stdout",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/audit-compressed.stderr",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/audit-compressed.stdout",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/audit.stderr",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/audit.stdout",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/audit_receipts.py",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/command-records.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/commit-workflow-runs.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/evidence-index.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/feature-commit-live.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/findings.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/independent-audit.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/independent-inherited-failure-comparison.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/operations.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/probe_readme_binding.py",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/probe_readme_sdist_inventory.py",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/raw-log-index.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/readme-binding-result.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/readme-sdist-inventory-result.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/receipt-verification.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/runtime-identity-verification.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/sanitization-check.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/test-merge-commit-live.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/tests-jobs.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/tests-offline.log.gz",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/tests-plan.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/tests-policy.log.gz",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/tests-receipt-binding.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/tests-receipts.zip",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/tests-run-live.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/tests-validation-manifest.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/evidence-index.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/findings.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/historical-evidence-verification.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/independent-audit/bounded-memory-results.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/independent-audit/bounded-memory.exit",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/independent-audit/bounded-memory.stderr",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/independent-audit/bounded-memory.stdout",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/independent-audit/evidence-index.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/independent-audit/findings.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/independent-audit/initial-probe.exit",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/independent-audit/initial-probe.stderr",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/independent-audit/initial-probe.stdout",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/independent-audit/initial-results.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/independent-audit/probe.exit",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/independent-audit/probe.stderr",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/independent-audit/probe.stdout",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/independent-audit/probe_bounded_memory.py",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/independent-audit/probe_independent.py",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/independent-audit/results.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/measurements.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/raw-evidence-index.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/raw-evidence.zip",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/reproduce/compare.py",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/reproduce/package_evidence.py",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/reproduce/prepare_evidence.py",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/reproduce/run.py",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/reproduce/stage2.py",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/reproduce/stage3.py",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/reproduce/summarize.py",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/sanitization-check.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/sdist-contract.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/setup-failures.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/startup/live-0.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/startup/live-1.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/startup/live-2.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/startup/live-3.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/startup/live-4.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/trace-difference-audit.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/verification-summary.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-hardening-rereview-20261023/verified-input-binding.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/concatenated.tar.gz",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/corrupt-gzip-crc.tar.gz",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/malformed-second-gzip-member.tar.gz",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/metadata1.tar.gz",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/metadata2.tar.gz",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/missing-gzip-trailer.tar.gz",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/pax-hidden-log.tar.gz",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/source/.gitignore",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/source/pyproject.toml",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/source/src/repo_catalog/__init__.py",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/source/src/repo_catalog/contract.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/source/src/repo_catalog/query.graphql",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/source/src/repo_catalog/schema.sql",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/archive/final-results.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/archive/findings.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/archive/probe_archive.py",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/archive/results.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/archive/specimen-verification.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/baseline-comparison-confirmed.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/ci/access-jobs.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/ci/access-receipt-binding.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/ci/access-receipts.zip",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/ci/author-evidence-index-verification.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/ci/check-runs.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/ci/execution-environment.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/ci/findings.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/ci/hosted-log-verification.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/ci/hosted-log-views-index.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/ci/hosted-log-views.zip",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/ci/initial-tests-log-verification.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/ci/initial-tests-plan.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/ci/initial-tests-receipt-binding.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/ci/initial-tests-receipts.zip",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/ci/initial-tests-sdist-members.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/ci/initial-tests-validation-manifest.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/ci/inspect_hosted_logs.py",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/ci/pages-unchanged-inputs.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/ci/pr138.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/ci/probe_readme_binding.py",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/ci/readme-binding-result.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/ci/reviews.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/ci/sanitization-check.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/ci/tests-jobs.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/ci/tests-plan.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/ci/tests-receipt-binding.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/ci/tests-receipts.zip",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/ci/tests-validation-manifest.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/evidence-index.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/findings.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/installed-journal-reconciliation.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/local-execution-summary.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/measurements.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/message-frame-differences.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/raw-evidence-index.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/raw-evidence.zip",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/reproduce/check_backend_isolation.py",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/reproduce/installed_probe.py",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/reproduce/measure_distributions.py",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-independent-review-20261023/reviewed-input-hashes.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-minimal-sdist-20261022/artifact-index.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-minimal-sdist-20261022/coverage.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-minimal-sdist-20261022/executions.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-minimal-sdist-20261022/measurements.json",
+    "Unknown dependency path: docs/implementation/evidence/adr0033-minimal-sdist-20261022/raw-evidence.zip",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/artifact-index.json",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/findings.json",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/artifact-download-result.json",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/audit-pr136.json",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/author-hosted-artifact.zip",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/author-hosted-artifacts.json",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/author-hosted-jobs.json",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/author-hosted-offline.log.gz",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/author-hosted-run.json",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/author-hosted-sqlite-policy.log.gz",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/author-hosted-verified.json",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/author-hosted-verified.zip",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/boundaries.log",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/boundaries/fixed-2097151.zip",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/boundaries/fixed-2097152.zip",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/boundaries/fixed-2097153.zip",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/boundaries/fixed-2323560.zip",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/boundaries/fixed-expanded-over-limit.zip",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/boundaries/measurements.json",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/boundary-executions.json",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/calibration-attempt2.log",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/calibration-attempt2.py.txt",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/check-runner.log",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/checks.json",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/collection.log",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/dependencies.txt",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/execution.json",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/exploratory-boundaries.log",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/exploratory-boundaries/fixed-2097151.zip",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/exploratory-boundaries/fixed-2097152.zip",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/exploratory-verify-boundaries.py.txt",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/final-checks.json",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/final-review-format.log",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/final-review-lint.log",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/github-initial.json",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/github-prepublication.json",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/initial-whitespace-check.log.gz",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/input-hashes.json",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/journal.jsonl",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/local-runtime-final.json",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/local-runtime.json",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/log-preservation.json",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/packaging-checks.json",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/packaging-format.log",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/packaging-lint.log",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/packaging-reports.log",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/pytest.log",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/reconciliation.json",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/reports.log",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/review-format.log",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/review-lint.log",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/ruff-format.log",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/ruff-lint.log",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/runtime-final.log",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/sqlite-policy.log",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/tests.xml",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/raw/workflow-review.json",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/reconcile.py",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/run_checks.py",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/verify_boundaries.py",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-independent-20261023/verify_hosted.py",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-receipt-limit-20261023/artifact-index.json",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-receipt-limit-20261023/baseline.json",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-receipt-limit-20261023/baseline.log",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-receipt-limit-20261023/before-unittest.log",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-receipt-limit-20261023/before.json",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-receipt-limit-20261023/check-0.log",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-receipt-limit-20261023/check-1.log",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-receipt-limit-20261023/check-2.log",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-receipt-limit-20261023/check-3.log",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-receipt-limit-20261023/check-4.log",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-receipt-limit-20261023/check-5.log",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-receipt-limit-20261023/checks.json",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-receipt-limit-20261023/collection.log",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-receipt-limit-20261023/fixed.json",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-receipt-limit-20261023/fixed.log",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-receipt-limit-20261023/input-hashes.json",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-receipt-limit-20261023/reconciliation.json",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-receipt-limit-20261023/regression-journal.jsonl.gz",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-receipt-limit-20261023/regression.xml.gz",
+    "Unknown dependency path: docs/implementation/evidence/c0-e1-receipt-limit-20261023/verify.py",
+    "Unknown dependency path: docs/implementation/evidence/c0-hosted-runtime-audit-20261022/artifact-index.json",
+    "Unknown dependency path: docs/implementation/evidence/c0-hosted-runtime-audit-20261022/audit-evidence.zip",
+    "Unknown dependency path: docs/implementation/evidence/c0-hosted-runtime-audit-20261022/audit.json",
+    "Unknown dependency path: docs/implementation/evidence/c0-hosted-runtime-audit-20261022/failure-comparison.json",
+    "Unknown dependency path: docs/implementation/evidence/c0-hosted-runtime-audit-20261022/findings.json",
+    "Unknown dependency path: docs/implementation/evidence/c0-hosted-runtime-audit-20261022/handoff.txt",
+    "Shared/executable input: pyproject.toml",
+    "Shared/executable input: scripts/check_sdist_contract.py",
+    "Shared/executable input: scripts/ci_dependencies.json",
+    "Shared/executable input: scripts/ci_execute.py",
+    "Shared/executable input: scripts/ci_plan.py",
+    "Shared/executable input: scripts/emit_ci_evidence.py",
+    "Shared/executable input: scripts/verify_access_distribution.py",
+    "Shared/executable input: scripts/verify_i4_distribution.py",
+    "Shared/executable input: scripts/verify_i5_distribution.py",
+    "Shared/executable input: tests/support/distributions.py",
+    "Dynamic test dependency requires full selection: tests/integration/i3/test_selective_exchange.py"
+  ],
+  "full": false,
+  "acceptance_files": [
+    "tests/e2e/test_backup.py",
+    "tests/e2e/test_cache.py",
+    "tests/e2e/test_cli_contract.py",
+    "tests/e2e/test_cli_more.py",
+    "tests/e2e/test_content.py",
+    "tests/e2e/test_digests.py",
+    "tests/e2e/test_git_sync.py",
+    "tests/e2e/test_github_sync.py",
+    "tests/e2e/test_http_compression.py",
+    "tests/e2e/test_jobs.py",
+    "tests/e2e/test_offline.py",
+    "tests/e2e/test_queries.py",
+    "tests/e2e/test_recovery.py",
+    "tests/e2e/test_repository_identity.py",
+    "tests/e2e/test_search.py",
+    "tests/e2e/test_text_policy.py",
+    "tests/integration/access/test_backup.py",
+    "tests/integration/access/test_connections.py",
+    "tests/integration/access/test_context_boundary.py",
+    "tests/integration/access/test_git_acquisition.py",
+    "tests/integration/access/test_handoff_boundary.py",
+    "tests/integration/access/test_registry.py",
+    "tests/integration/access/test_registry_isolation.py",
+    "tests/integration/access/test_review_corrections.py",
+    "tests/integration/access/test_stack_acceptance.py",
+    "tests/integration/access/test_workflow.py",
+    "tests/integration/architecture_spikes/test_audit.py",
+    "tests/integration/architecture_spikes/test_consistency.py",
+    "tests/integration/architecture_spikes/test_core.py",
+    "tests/integration/architecture_spikes/test_notes.py",
+    "tests/integration/i2/test_provider_intake.py",
+    "tests/integration/i23/test_provider_exchange.py",
+    "tests/integration/i3/test_selective_exchange.py",
+    "tests/integration/i4/test_query_search_backup.py",
+    "tests/integration/i5/test_independent_e2e.py",
+    "tests/integration/i6a/test_admission.py",
+    "tests/integration/i6a/test_originals_revalidation.py",
+    "tests/integration/p1/test_context.py",
+    "tests/integration/p1/test_context_relations.py",
+    "tests/integration/p1/test_coordination.py",
+    "tests/integration/p1/test_core.py",
+    "tests/integration/p1/test_coverage.py",
+    "tests/integration/p1/test_derivatives.py",
+    "tests/integration/p1/test_disposition.py",
+    "tests/integration/p1/test_fixture_authority.py",
+    "tests/integration/p1/test_generalized_resources.py",
+    "tests/integration/p1/test_intrinsic_provenance.py",
+    "tests/integration/p1/test_notes.py",
+    "tests/integration/p1/test_resource_identity_sql.py",
+    "tests/integration/p1/test_schema.py",
+    "tests/integration/p1/test_time_policy.py",
+    "tests/integration/p1/test_validation_stop.py",
+    "tests/integration/p2/test_contract_replays.py",
+    "tests/integration/p2/test_native.py",
+    "tests/integration/p2_p3_compatibility/test_production_pair.py",
+    "tests/integration/p3/test_parent_reports.py",
+    "tests/integration/p3/test_production_context.py",
+    "tests/integration/p3/test_transfer_admission.py",
+    "tests/integration/p3/test_transfer_sql.py",
+    "tests/integration/p4/test_accounting.py",
+    "tests/integration/p4/test_acquisition.py",
+    "tests/integration/p4/test_inventory.py",
+    "tests/integration/p4/test_inventory_callback.py",
+    "tests/integration/p5/test_corrections.py",
+    "tests/integration/p5/test_exchange.py",
+    "tests/integration/p5/test_git_acquisition.py",
+    "tests/integration/p5/test_paired_admission.py",
+    "tests/integration/p5/test_provider_acquisition.py",
+    "tests/integration/p5_p6_compatibility/test_end_to_end_p5_p6.py",
+    "tests/integration/p5_p6_compatibility/test_export_gate.py",
+    "tests/integration/p5_p6_compatibility/test_p5_independent_counterexamples.py",
+    "tests/integration/p5_p6_compatibility/test_provider_exchange_matrix.py",
+    "tests/integration/p6/test_cli.py",
+    "tests/integration/p6/test_corrections.py",
+    "tests/integration/p6/test_pagination_snapshots.py",
+    "tests/integration/p6/test_queries.py",
+    "tests/integration/p6/test_search_fallback.py",
+    "tests/integration/p7/test_adversarial_contract_cases.py",
+    "tests/integration/p7/test_bounded_input.py",
+    "tests/integration/p7/test_consistent_backup.py",
+    "tests/integration/p7/test_context_corruption_stop.py",
+    "tests/integration/p7/test_corruption_stop.py",
+    "tests/integration/p7/test_durable_budget.py",
+    "tests/integration/p7/test_exact_replay.py",
+    "tests/integration/p7/test_filesystem_hardening.py",
+    "tests/integration/p7/test_fresh_restore_merge.py",
+    "tests/integration/p7/test_missing_required_authority.py",
+    "tests/integration/p7/test_process_isolation.py",
+    "tests/integration/p7/test_read_only_salvage.py",
+    "tests/integration/p7/test_safe_activation.py",
+    "tests/integration/p7/test_source_diagnosis.py",
+    "tests/integration/p7/test_stored_constraints.py",
+    "tests/integration/p7/test_stored_copy_corruption_stop.py",
+    "tests/integration/p7/test_work_dimensions.py",
+    "tests/integration/test_application_contract.py",
+    "tests/integration/test_cache.py",
+    "tests/integration/test_capture_validation_dedup.py",
+    "tests/integration/test_catalog3_cache.py",
+    "tests/integration/test_catalog3_cas_integrity.py",
+    "tests/integration/test_catalog3_coverage.py",
+    "tests/integration/test_catalog3_coverage_ownership.py",
+    "tests/integration/test_catalog3_coverage_queries.py",
+    "tests/integration/test_catalog3_current_collection.py",
+    "tests/integration/test_catalog3_current_exchange.py",
+    "tests/integration/test_catalog3_current_queries.py",
+    "tests/integration/test_catalog3_document_identity.py",
+    "tests/integration/test_catalog3_exchange.py",
+    "tests/integration/test_catalog3_exchange_integrity_audit.py",
+    "tests/integration/test_catalog3_git_fact_contracts.py",
+    "tests/integration/test_catalog3_git_readers.py",
+    "tests/integration/test_catalog3_git_runtime.py",
+    "tests/integration/test_catalog3_github_runtime.py",
+    "tests/integration/test_catalog3_github_scaling.py",
+    "tests/integration/test_catalog3_identity_relations.py",
+    "tests/integration/test_catalog3_job_plans.py",
+    "tests/integration/test_catalog3_json_contracts.py",
+    "tests/integration/test_catalog3_maintenance_contracts.py",
+    "tests/integration/test_catalog3_model_cli.py",
+    "tests/integration/test_catalog3_parsing_runtime.py",
+    "tests/integration/test_catalog3_payload_cas.py",
+    "tests/integration/test_catalog3_portable_identity.py",
+    "tests/integration/test_catalog3_pr_git_readers.py",
+    "tests/integration/test_catalog3_pr_scope_coverage.py",
+    "tests/integration/test_catalog3_provider_identity.py",
+    "tests/integration/test_catalog3_queries.py",
+    "tests/integration/test_catalog3_remaining_adversarial.py",
+    "tests/integration/test_catalog3_rest_boundaries.py",
+    "tests/integration/test_catalog3_review_coverage.py",
+    "tests/integration/test_catalog3_review_identity.py",
+    "tests/integration/test_catalog3_schema.py",
+    "tests/integration/test_catalog3_selective_exchange.py",
+    "tests/integration/test_catalog3_store.py",
+    "tests/integration/test_catalog3_timestamps.py",
+    "tests/integration/test_ci_execution.py",
+    "tests/integration/test_code_assessment_candidates.py",
+    "tests/integration/test_current_author_presence.py",
+    "tests/integration/test_current_boundaries_independent.py",
+    "tests/integration/test_current_collection_rejection_clocks.py",
+    "tests/integration/test_current_collector_projection_followup.py",
+    "tests/integration/test_current_conflict_boundaries.py",
+    "tests/integration/test_current_exchange_followup.py",
+    "tests/integration/test_current_followup_adversarial.py",
+    "tests/integration/test_current_nested_presence.py",
+    "tests/integration/test_current_projection_followup.py",
+    "tests/integration/test_current_resources.py",
+    "tests/integration/test_current_review_query_coverage.py",
+    "tests/integration/test_current_state_independent_review.py",
+    "tests/integration/test_database.py",
+    "tests/integration/test_exchange_followup_boundaries.py",
+    "tests/integration/test_git_canonical_availability.py",
+    "tests/integration/test_git_decoder_byte_validation.py",
+    "tests/integration/test_git_direct_objects.py",
+    "tests/integration/test_git_objects.py",
+    "tests/integration/test_git_tag_capture_validation.py",
+    "tests/integration/test_independent_stack_review.py",
+    "tests/integration/test_issue_transfer_followup.py",
+    "tests/integration/test_network_guard.py",
+    "tests/integration/test_parser_provenance.py",
+    "tests/integration/test_pending_known_relationships.py",
+    "tests/integration/test_phase1_exchange_retirement.py",
+    "tests/integration/test_phase1_exchange_scaling.py",
+    "tests/integration/test_phase1_retirement.py",
+    "tests/integration/test_phase2_collection_integrity.py",
+    "tests/integration/test_phase2_exchange_scaling.py",
+    "tests/integration/test_publication_free_acquisition.py",
+    "tests/integration/test_publication_free_architecture_corrections.py",
+    "tests/integration/test_publication_free_current_api.py",
+    "tests/integration/test_publication_free_pending_contract.py",
+    "tests/integration/test_publication_free_transactions.py",
+    "tests/integration/test_recording_followup.py",
+    "tests/integration/test_reviewer_b_c_fixes.py",
+    "tests/integration/test_reviewer_d_probes.py",
+    "tests/integration/test_reviewer_findings_closure.py",
+    "tests/integration/test_schema21_runtime_contract.py",
+    "tests/integration/test_search_index.py",
+    "tests/integration/test_snapshot_read_limits.py",
+    "tests/integration/test_target_schema.py",
+    "tests/integration/test_transport_independent_core.py",
+    "tests/integration/test_transport_independent_guards.py",
+    "tests/packaging/test_distribution.py",
+    "tests/packaging/test_p1_distribution.py",
+    "tests/packaging/test_p2_distribution.py",
+    "tests/packaging/test_p3_distribution.py",
+    "tests/packaging/test_p4_distribution.py",
+    "tests/packaging/test_p5_distribution.py",
+    "tests/packaging/test_p6_distribution.py",
+    "tests/packaging/test_p7_distribution.py",
+    "tests/packaging/test_sdist_contract.py",
+    "tests/packaging/test_sdist_hardening.py",
+    "tests/unit/test_access_acceptance_values.py",
+    "tests/unit/test_access_backup_values.py",
+    "tests/unit/test_access_connections_values.py",
+    "tests/unit/test_access_registry_values.py",
+    "tests/unit/test_build_docs_site.py",
+    "tests/unit/test_ci_journal.py",
+    "tests/unit/test_ci_plan.py",
+    "tests/unit/test_ci_profile.py",
+    "tests/unit/test_ci_python_runtime.py",
+    "tests/unit/test_context_admission.py",
+    "tests/unit/test_context_admission_bounds_i6a.py",
+    "tests/unit/test_context_capability_preflight.py",
+    "tests/unit/test_context_coordinator_admission.py",
+    "tests/unit/test_context_dependencies.py",
+    "tests/unit/test_context_fences_i6a.py",
+    "tests/unit/test_context_fixture_authority.py",
+    "tests/unit/test_context_oid_admission_i6a.py",
+    "tests/unit/test_context_refusal_order_i6a.py",
+    "tests/unit/test_context_registration_values.py",
+    "tests/unit/test_context_scan_budget.py",
+    "tests/unit/test_context_wire_v5.py",
+    "tests/unit/test_contracts.py",
+    "tests/unit/test_emit_ci_evidence.py",
+    "tests/unit/test_exchange_received_digest.py",
+    "tests/unit/test_export_sqlite_databases.py",
+    "tests/unit/test_github_identity_boundaries.py",
+    "tests/unit/test_i6a_regression_bindings.py",
+    "tests/unit/test_installed_test_harness.py",
+    "tests/unit/test_live_smoke_contract.py",
+    "tests/unit/test_message_inspection.py",
+    "tests/unit/test_native_acquisition_values.py",
+    "tests/unit/test_phase2_dependency_audit.py",
+    "tests/unit/test_phase2_field_audit.py",
+    "tests/unit/test_recording_followup.py",
+    "tests/unit/test_resource_identification.py",
+    "tests/unit/test_resource_identity.py",
+    "tests/unit/test_resource_key_identity.py",
+    "tests/unit/test_schema_viz.py",
+    "tests/unit/test_sqlite_validation_policy.py",
+    "tests/unit/test_sqlite_verification_tools.py",
+    "tests/unit/test_test_efficiency.py",
+    "tests/unit/test_transfer_originals.py",
+    "tests/unit/test_transport_recording.py"
+  ],
+  "required_files": [
+    "tests/e2e/test_backup.py",
+    "tests/e2e/test_cache.py",
+    "tests/e2e/test_cli_contract.py",
+    "tests/e2e/test_cli_more.py",
+    "tests/e2e/test_content.py",
+    "tests/e2e/test_digests.py",
+    "tests/e2e/test_git_sync.py",
+    "tests/e2e/test_github_sync.py",
+    "tests/e2e/test_http_compression.py",
+    "tests/e2e/test_jobs.py",
+    "tests/e2e/test_offline.py",
+    "tests/e2e/test_queries.py",
+    "tests/e2e/test_recovery.py",
+    "tests/e2e/test_repository_identity.py",
+    "tests/e2e/test_search.py",
+    "tests/e2e/test_text_policy.py",
+    "tests/integration/access/test_backup.py",
+    "tests/integration/access/test_connections.py",
+    "tests/integration/access/test_context_boundary.py",
+    "tests/integration/access/test_git_acquisition.py",
+    "tests/integration/access/test_handoff_boundary.py",
+    "tests/integration/access/test_registry.py",
+    "tests/integration/access/test_registry_isolation.py",
+    "tests/integration/access/test_review_corrections.py",
+    "tests/integration/access/test_stack_acceptance.py",
+    "tests/integration/access/test_workflow.py",
+    "tests/integration/architecture_spikes/test_audit.py",
+    "tests/integration/architecture_spikes/test_consistency.py",
+    "tests/integration/architecture_spikes/test_core.py",
+    "tests/integration/architecture_spikes/test_notes.py",
+    "tests/integration/i2/test_provider_intake.py",
+    "tests/integration/i23/test_provider_exchange.py",
+    "tests/integration/i3/test_selective_exchange.py",
+    "tests/integration/i4/test_query_search_backup.py",
+    "tests/integration/i5/test_independent_e2e.py",
+    "tests/integration/i6a/test_admission.py",
+    "tests/integration/i6a/test_originals_revalidation.py",
+    "tests/integration/p1/test_context.py",
+    "tests/integration/p1/test_context_relations.py",
+    "tests/integration/p1/test_coordination.py",
+    "tests/integration/p1/test_core.py",
+    "tests/integration/p1/test_coverage.py",
+    "tests/integration/p1/test_derivatives.py",
+    "tests/integration/p1/test_disposition.py",
+    "tests/integration/p1/test_fixture_authority.py",
+    "tests/integration/p1/test_generalized_resources.py",
+    "tests/integration/p1/test_intrinsic_provenance.py",
+    "tests/integration/p1/test_notes.py",
+    "tests/integration/p1/test_resource_identity_sql.py",
+    "tests/integration/p1/test_schema.py",
+    "tests/integration/p1/test_time_policy.py",
+    "tests/integration/p1/test_validation_stop.py",
+    "tests/integration/p2/test_contract_replays.py",
+    "tests/integration/p2/test_native.py",
+    "tests/integration/p2_p3_compatibility/test_production_pair.py",
+    "tests/integration/p3/test_parent_reports.py",
+    "tests/integration/p3/test_production_context.py",
+    "tests/integration/p3/test_transfer_admission.py",
+    "tests/integration/p3/test_transfer_sql.py",
+    "tests/integration/p4/test_accounting.py",
+    "tests/integration/p4/test_acquisition.py",
+    "tests/integration/p4/test_inventory.py",
+    "tests/integration/p4/test_inventory_callback.py",
+    "tests/integration/p5/test_corrections.py",
+    "tests/integration/p5/test_exchange.py",
+    "tests/integration/p5/test_git_acquisition.py",
+    "tests/integration/p5/test_paired_admission.py",
+    "tests/integration/p5/test_provider_acquisition.py",
+    "tests/integration/p5_p6_compatibility/test_end_to_end_p5_p6.py",
+    "tests/integration/p5_p6_compatibility/test_export_gate.py",
+    "tests/integration/p5_p6_compatibility/test_p5_independent_counterexamples.py",
+    "tests/integration/p5_p6_compatibility/test_provider_exchange_matrix.py",
+    "tests/integration/p6/test_cli.py",
+    "tests/integration/p6/test_corrections.py",
+    "tests/integration/p6/test_pagination_snapshots.py",
+    "tests/integration/p6/test_queries.py",
+    "tests/integration/p6/test_search_fallback.py",
+    "tests/integration/p7/test_adversarial_contract_cases.py",
+    "tests/integration/p7/test_bounded_input.py",
+    "tests/integration/p7/test_consistent_backup.py",
+    "tests/integration/p7/test_context_corruption_stop.py",
+    "tests/integration/p7/test_corruption_stop.py",
+    "tests/integration/p7/test_durable_budget.py",
+    "tests/integration/p7/test_exact_replay.py",
+    "tests/integration/p7/test_filesystem_hardening.py",
+    "tests/integration/p7/test_fresh_restore_merge.py",
+    "tests/integration/p7/test_missing_required_authority.py",
+    "tests/integration/p7/test_process_isolation.py",
+    "tests/integration/p7/test_read_only_salvage.py",
+    "tests/integration/p7/test_safe_activation.py",
+    "tests/integration/p7/test_source_diagnosis.py",
+    "tests/integration/p7/test_stored_constraints.py",
+    "tests/integration/p7/test_stored_copy_corruption_stop.py",
+    "tests/integration/p7/test_work_dimensions.py",
+    "tests/integration/test_application_contract.py",
+    "tests/integration/test_cache.py",
+    "tests/integration/test_capture_validation_dedup.py",
+    "tests/integration/test_catalog3_cache.py",
+    "tests/integration/test_catalog3_cas_integrity.py",
+    "tests/integration/test_catalog3_coverage.py",
+    "tests/integration/test_catalog3_coverage_ownership.py",
+    "tests/integration/test_catalog3_coverage_queries.py",
+    "tests/integration/test_catalog3_current_collection.py",
+    "tests/integration/test_catalog3_current_exchange.py",
+    "tests/integration/test_catalog3_current_queries.py",
+    "tests/integration/test_catalog3_document_identity.py",
+    "tests/integration/test_catalog3_exchange.py",
+    "tests/integration/test_catalog3_exchange_integrity_audit.py",
+    "tests/integration/test_catalog3_git_fact_contracts.py",
+    "tests/integration/test_catalog3_git_readers.py",
+    "tests/integration/test_catalog3_git_runtime.py",
+    "tests/integration/test_catalog3_github_runtime.py",
+    "tests/integration/test_catalog3_github_scaling.py",
+    "tests/integration/test_catalog3_identity_relations.py",
+    "tests/integration/test_catalog3_job_plans.py",
+    "tests/integration/test_catalog3_json_contracts.py",
+    "tests/integration/test_catalog3_maintenance_contracts.py",
+    "tests/integration/test_catalog3_model_cli.py",
+    "tests/integration/test_catalog3_parsing_runtime.py",
+    "tests/integration/test_catalog3_payload_cas.py",
+    "tests/integration/test_catalog3_portable_identity.py",
+    "tests/integration/test_catalog3_pr_git_readers.py",
+    "tests/integration/test_catalog3_pr_scope_coverage.py",
+    "tests/integration/test_catalog3_provider_identity.py",
+    "tests/integration/test_catalog3_queries.py",
+    "tests/integration/test_catalog3_remaining_adversarial.py",
+    "tests/integration/test_catalog3_rest_boundaries.py",
+    "tests/integration/test_catalog3_review_coverage.py",
+    "tests/integration/test_catalog3_review_identity.py",
+    "tests/integration/test_catalog3_schema.py",
+    "tests/integration/test_catalog3_selective_exchange.py",
+    "tests/integration/test_catalog3_store.py",
+    "tests/integration/test_catalog3_timestamps.py",
+    "tests/integration/test_ci_execution.py",
+    "tests/integration/test_code_assessment_candidates.py",
+    "tests/integration/test_current_author_presence.py",
+    "tests/integration/test_current_boundaries_independent.py",
+    "tests/integration/test_current_collection_rejection_clocks.py",
+    "tests/integration/test_current_collector_projection_followup.py",
+    "tests/integration/test_current_conflict_boundaries.py",
+    "tests/integration/test_current_exchange_followup.py",
+    "tests/integration/test_current_followup_adversarial.py",
+    "tests/integration/test_current_nested_presence.py",
+    "tests/integration/test_current_projection_followup.py",
+    "tests/integration/test_current_resources.py",
+    "tests/integration/test_current_review_query_coverage.py",
+    "tests/integration/test_current_state_independent_review.py",
+    "tests/integration/test_database.py",
+    "tests/integration/test_exchange_followup_boundaries.py",
+    "tests/integration/test_git_canonical_availability.py",
+    "tests/integration/test_git_decoder_byte_validation.py",
+    "tests/integration/test_git_direct_objects.py",
+    "tests/integration/test_git_objects.py",
+    "tests/integration/test_git_tag_capture_validation.py",
+    "tests/integration/test_independent_stack_review.py",
+    "tests/integration/test_issue_transfer_followup.py",
+    "tests/integration/test_network_guard.py",
+    "tests/integration/test_parser_provenance.py",
+    "tests/integration/test_pending_known_relationships.py",
+    "tests/integration/test_phase1_exchange_retirement.py",
+    "tests/integration/test_phase1_exchange_scaling.py",
+    "tests/integration/test_phase1_retirement.py",
+    "tests/integration/test_phase2_collection_integrity.py",
+    "tests/integration/test_phase2_exchange_scaling.py",
+    "tests/integration/test_publication_free_acquisition.py",
+    "tests/integration/test_publication_free_architecture_corrections.py",
+    "tests/integration/test_publication_free_current_api.py",
+    "tests/integration/test_publication_free_pending_contract.py",
+    "tests/integration/test_publication_free_transactions.py",
+    "tests/integration/test_recording_followup.py",
+    "tests/integration/test_reviewer_b_c_fixes.py",
+    "tests/integration/test_reviewer_d_probes.py",
+    "tests/integration/test_reviewer_findings_closure.py",
+    "tests/integration/test_schema21_runtime_contract.py",
+    "tests/integration/test_search_index.py",
+    "tests/integration/test_snapshot_read_limits.py",
+    "tests/integration/test_target_schema.py",
+    "tests/integration/test_transport_independent_core.py",
+    "tests/integration/test_transport_independent_guards.py",
+    "tests/packaging/test_distribution.py",
+    "tests/packaging/test_p1_distribution.py",
+    "tests/packaging/test_p2_distribution.py",
+    "tests/packaging/test_p3_distribution.py",
+    "tests/packaging/test_p4_distribution.py",
+    "tests/packaging/test_p5_distribution.py",
+    "tests/packaging/test_p6_distribution.py",
+    "tests/packaging/test_p7_distribution.py",
+    "tests/packaging/test_sdist_contract.py",
+    "tests/packaging/test_sdist_hardening.py",
+    "tests/unit/test_access_acceptance_values.py",
+    "tests/unit/test_access_backup_values.py",
+    "tests/unit/test_access_connections_values.py",
+    "tests/unit/test_access_registry_values.py",
+    "tests/unit/test_build_docs_site.py",
+    "tests/unit/test_ci_journal.py",
+    "tests/unit/test_ci_plan.py",
+    "tests/unit/test_ci_profile.py",
+    "tests/unit/test_ci_python_runtime.py",
+    "tests/unit/test_context_admission.py",
+    "tests/unit/test_context_admission_bounds_i6a.py",
+    "tests/unit/test_context_capability_preflight.py",
+    "tests/unit/test_context_coordinator_admission.py",
+    "tests/unit/test_context_dependencies.py",
+    "tests/unit/test_context_fences_i6a.py",
+    "tests/unit/test_context_fixture_authority.py",
+    "tests/unit/test_context_oid_admission_i6a.py",
+    "tests/unit/test_context_refusal_order_i6a.py",
+    "tests/unit/test_context_registration_values.py",
+    "tests/unit/test_context_scan_budget.py",
+    "tests/unit/test_context_wire_v5.py",
+    "tests/unit/test_contracts.py",
+    "tests/unit/test_emit_ci_evidence.py",
+    "tests/unit/test_exchange_received_digest.py",
+    "tests/unit/test_export_sqlite_databases.py",
+    "tests/unit/test_github_identity_boundaries.py",
+    "tests/unit/test_i6a_regression_bindings.py",
+    "tests/unit/test_installed_test_harness.py",
+    "tests/unit/test_live_smoke_contract.py",
+    "tests/unit/test_message_inspection.py",
+    "tests/unit/test_native_acquisition_values.py",
+    "tests/unit/test_phase2_dependency_audit.py",
+    "tests/unit/test_phase2_field_audit.py",
+    "tests/unit/test_recording_followup.py",
+    "tests/unit/test_resource_identification.py",
+    "tests/unit/test_resource_identity.py",
+    "tests/unit/test_resource_key_identity.py",
+    "tests/unit/test_schema_viz.py",
+    "tests/unit/test_sqlite_validation_policy.py",
+    "tests/unit/test_sqlite_verification_tools.py",
+    "tests/unit/test_test_efficiency.py",
+    "tests/unit/test_transfer_originals.py",
+    "tests/unit/test_transport_recording.py"
+  ],
+  "selected_files": [],
+  "excluded_files": [],
+  "unexecuted_files": [
+    "tests/e2e/test_backup.py",
+    "tests/e2e/test_cache.py",
+    "tests/e2e/test_cli_contract.py",
+    "tests/e2e/test_cli_more.py",
+    "tests/e2e/test_content.py",
+    "tests/e2e/test_digests.py",
+    "tests/e2e/test_git_sync.py",
+    "tests/e2e/test_github_sync.py",
+    "tests/e2e/test_http_compression.py",
+    "tests/e2e/test_jobs.py",
+    "tests/e2e/test_offline.py",
+    "tests/e2e/test_queries.py",
+    "tests/e2e/test_recovery.py",
+    "tests/e2e/test_repository_identity.py",
+    "tests/e2e/test_search.py",
+    "tests/e2e/test_text_policy.py",
+    "tests/integration/access/test_backup.py",
+    "tests/integration/access/test_connections.py",
+    "tests/integration/access/test_context_boundary.py",
+    "tests/integration/access/test_git_acquisition.py",
+    "tests/integration/access/test_handoff_boundary.py",
+    "tests/integration/access/test_registry.py",
+    "tests/integration/access/test_registry_isolation.py",
+    "tests/integration/access/test_review_corrections.py",
+    "tests/integration/access/test_stack_acceptance.py",
+    "tests/integration/access/test_workflow.py",
+    "tests/integration/architecture_spikes/test_audit.py",
+    "tests/integration/architecture_spikes/test_consistency.py",
+    "tests/integration/architecture_spikes/test_core.py",
+    "tests/integration/architecture_spikes/test_notes.py",
+    "tests/integration/i2/test_provider_intake.py",
+    "tests/integration/i23/test_provider_exchange.py",
+    "tests/integration/i3/test_selective_exchange.py",
+    "tests/integration/i4/test_query_search_backup.py",
+    "tests/integration/i5/test_independent_e2e.py",
+    "tests/integration/i6a/test_admission.py",
+    "tests/integration/i6a/test_originals_revalidation.py",
+    "tests/integration/p1/test_context.py",
+    "tests/integration/p1/test_context_relations.py",
+    "tests/integration/p1/test_coordination.py",
+    "tests/integration/p1/test_core.py",
+    "tests/integration/p1/test_coverage.py",
+    "tests/integration/p1/test_derivatives.py",
+    "tests/integration/p1/test_disposition.py",
+    "tests/integration/p1/test_fixture_authority.py",
+    "tests/integration/p1/test_generalized_resources.py",
+    "tests/integration/p1/test_intrinsic_provenance.py",
+    "tests/integration/p1/test_notes.py",
+    "tests/integration/p1/test_resource_identity_sql.py",
+    "tests/integration/p1/test_schema.py",
+    "tests/integration/p1/test_time_policy.py",
+    "tests/integration/p1/test_validation_stop.py",
+    "tests/integration/p2/test_contract_replays.py",
+    "tests/integration/p2/test_native.py",
+    "tests/integration/p2_p3_compatibility/test_production_pair.py",
+    "tests/integration/p3/test_parent_reports.py",
+    "tests/integration/p3/test_production_context.py",
+    "tests/integration/p3/test_transfer_admission.py",
+    "tests/integration/p3/test_transfer_sql.py",
+    "tests/integration/p4/test_accounting.py",
+    "tests/integration/p4/test_acquisition.py",
+    "tests/integration/p4/test_inventory.py",
+    "tests/integration/p4/test_inventory_callback.py",
+    "tests/integration/p5/test_corrections.py",
+    "tests/integration/p5/test_exchange.py",
+    "tests/integration/p5/test_git_acquisition.py",
+    "tests/integration/p5/test_paired_admission.py",
+    "tests/integration/p5/test_provider_acquisition.py",
+    "tests/integration/p5_p6_compatibility/test_end_to_end_p5_p6.py",
+    "tests/integration/p5_p6_compatibility/test_export_gate.py",
+    "tests/integration/p5_p6_compatibility/test_p5_independent_counterexamples.py",
+    "tests/integration/p5_p6_compatibility/test_provider_exchange_matrix.py",
+    "tests/integration/p6/test_cli.py",
+    "tests/integration/p6/test_corrections.py",
+    "tests/integration/p6/test_pagination_snapshots.py",
+    "tests/integration/p6/test_queries.py",
+    "tests/integration/p6/test_search_fallback.py",
+    "tests/integration/p7/test_adversarial_contract_cases.py",
+    "tests/integration/p7/test_bounded_input.py",
+    "tests/integration/p7/test_consistent_backup.py",
+    "tests/integration/p7/test_context_corruption_stop.py",
+    "tests/integration/p7/test_corruption_stop.py",
+    "tests/integration/p7/test_durable_budget.py",
+    "tests/integration/p7/test_exact_replay.py",
+    "tests/integration/p7/test_filesystem_hardening.py",
+    "tests/integration/p7/test_fresh_restore_merge.py",
+    "tests/integration/p7/test_missing_required_authority.py",
+    "tests/integration/p7/test_process_isolation.py",
+    "tests/integration/p7/test_read_only_salvage.py",
+    "tests/integration/p7/test_safe_activation.py",
+    "tests/integration/p7/test_source_diagnosis.py",
+    "tests/integration/p7/test_stored_constraints.py",
+    "tests/integration/p7/test_stored_copy_corruption_stop.py",
+    "tests/integration/p7/test_work_dimensions.py",
+    "tests/integration/test_application_contract.py",
+    "tests/integration/test_cache.py",
+    "tests/integration/test_capture_validation_dedup.py",
+    "tests/integration/test_catalog3_cache.py",
+    "tests/integration/test_catalog3_cas_integrity.py",
+    "tests/integration/test_catalog3_coverage.py",
+    "tests/integration/test_catalog3_coverage_ownership.py",
+    "tests/integration/test_catalog3_coverage_queries.py",
+    "tests/integration/test_catalog3_current_collection.py",
+    "tests/integration/test_catalog3_current_exchange.py",
+    "tests/integration/test_catalog3_current_queries.py",
+    "tests/integration/test_catalog3_document_identity.py",
+    "tests/integration/test_catalog3_exchange.py",
+    "tests/integration/test_catalog3_exchange_integrity_audit.py",
+    "tests/integration/test_catalog3_git_fact_contracts.py",
+    "tests/integration/test_catalog3_git_readers.py",
+    "tests/integration/test_catalog3_git_runtime.py",
+    "tests/integration/test_catalog3_github_runtime.py",
+    "tests/integration/test_catalog3_github_scaling.py",
+    "tests/integration/test_catalog3_identity_relations.py",
+    "tests/integration/test_catalog3_job_plans.py",
+    "tests/integration/test_catalog3_json_contracts.py",
+    "tests/integration/test_catalog3_maintenance_contracts.py",
+    "tests/integration/test_catalog3_model_cli.py",
+    "tests/integration/test_catalog3_parsing_runtime.py",
+    "tests/integration/test_catalog3_payload_cas.py",
+    "tests/integration/test_catalog3_portable_identity.py",
+    "tests/integration/test_catalog3_pr_git_readers.py",
+    "tests/integration/test_catalog3_pr_scope_coverage.py",
+    "tests/integration/test_catalog3_provider_identity.py",
+    "tests/integration/test_catalog3_queries.py",
+    "tests/integration/test_catalog3_remaining_adversarial.py",
+    "tests/integration/test_catalog3_rest_boundaries.py",
+    "tests/integration/test_catalog3_review_coverage.py",
+    "tests/integration/test_catalog3_review_identity.py",
+    "tests/integration/test_catalog3_schema.py",
+    "tests/integration/test_catalog3_selective_exchange.py",
+    "tests/integration/test_catalog3_store.py",
+    "tests/integration/test_catalog3_timestamps.py",
+    "tests/integration/test_ci_execution.py",
+    "tests/integration/test_code_assessment_candidates.py",
+    "tests/integration/test_current_author_presence.py",
+    "tests/integration/test_current_boundaries_independent.py",
+    "tests/integration/test_current_collection_rejection_clocks.py",
+    "tests/integration/test_current_collector_projection_followup.py",
+    "tests/integration/test_current_conflict_boundaries.py",
+    "tests/integration/test_current_exchange_followup.py",
+    "tests/integration/test_current_followup_adversarial.py",
+    "tests/integration/test_current_nested_presence.py",
+    "tests/integration/test_current_projection_followup.py",
+    "tests/integration/test_current_resources.py",
+    "tests/integration/test_current_review_query_coverage.py",
+    "tests/integration/test_current_state_independent_review.py",
+    "tests/integration/test_database.py",
+    "tests/integration/test_exchange_followup_boundaries.py",
+    "tests/integration/test_git_canonical_availability.py",
+    "tests/integration/test_git_decoder_byte_validation.py",
+    "tests/integration/test_git_direct_objects.py",
+    "tests/integration/test_git_objects.py",
+    "tests/integration/test_git_tag_capture_validation.py",
+    "tests/integration/test_independent_stack_review.py",
+    "tests/integration/test_issue_transfer_followup.py",
+    "tests/integration/test_network_guard.py",
+    "tests/integration/test_parser_provenance.py",
+    "tests/integration/test_pending_known_relationships.py",
+    "tests/integration/test_phase1_exchange_retirement.py",
+    "tests/integration/test_phase1_exchange_scaling.py",
+    "tests/integration/test_phase1_retirement.py",
+    "tests/integration/test_phase2_collection_integrity.py",
+    "tests/integration/test_phase2_exchange_scaling.py",
+    "tests/integration/test_publication_free_acquisition.py",
+    "tests/integration/test_publication_free_architecture_corrections.py",
+    "tests/integration/test_publication_free_current_api.py",
+    "tests/integration/test_publication_free_pending_contract.py",
+    "tests/integration/test_publication_free_transactions.py",
+    "tests/integration/test_recording_followup.py",
+    "tests/integration/test_reviewer_b_c_fixes.py",
+    "tests/integration/test_reviewer_d_probes.py",
+    "tests/integration/test_reviewer_findings_closure.py",
+    "tests/integration/test_schema21_runtime_contract.py",
+    "tests/integration/test_search_index.py",
+    "tests/integration/test_snapshot_read_limits.py",
+    "tests/integration/test_target_schema.py",
+    "tests/integration/test_transport_independent_core.py",
+    "tests/integration/test_transport_independent_guards.py",
+    "tests/packaging/test_distribution.py",
+    "tests/packaging/test_p1_distribution.py",
+    "tests/packaging/test_p2_distribution.py",
+    "tests/packaging/test_p3_distribution.py",
+    "tests/packaging/test_p4_distribution.py",
+    "tests/packaging/test_p5_distribution.py",
+    "tests/packaging/test_p6_distribution.py",
+    "tests/packaging/test_p7_distribution.py",
+    "tests/packaging/test_sdist_contract.py",
+    "tests/packaging/test_sdist_hardening.py",
+    "tests/unit/test_access_acceptance_values.py",
+    "tests/unit/test_access_backup_values.py",
+    "tests/unit/test_access_connections_values.py",
+    "tests/unit/test_access_registry_values.py",
+    "tests/unit/test_build_docs_site.py",
+    "tests/unit/test_ci_journal.py",
+    "tests/unit/test_ci_plan.py",
+    "tests/unit/test_ci_profile.py",
+    "tests/unit/test_ci_python_runtime.py",
+    "tests/unit/test_context_admission.py",
+    "tests/unit/test_context_admission_bounds_i6a.py",
+    "tests/unit/test_context_capability_preflight.py",
+    "tests/unit/test_context_coordinator_admission.py",
+    "tests/unit/test_context_dependencies.py",
+    "tests/unit/test_context_fences_i6a.py",
+    "tests/unit/test_context_fixture_authority.py",
+    "tests/unit/test_context_oid_admission_i6a.py",
+    "tests/unit/test_context_refusal_order_i6a.py",
+    "tests/unit/test_context_registration_values.py",
+    "tests/unit/test_context_scan_budget.py",
+    "tests/unit/test_context_wire_v5.py",
+    "tests/unit/test_contracts.py",
+    "tests/unit/test_emit_ci_evidence.py",
+    "tests/unit/test_exchange_received_digest.py",
+    "tests/unit/test_export_sqlite_databases.py",
+    "tests/unit/test_github_identity_boundaries.py",
+    "tests/unit/test_i6a_regression_bindings.py",
+    "tests/unit/test_installed_test_harness.py",
+    "tests/unit/test_live_smoke_contract.py",
+    "tests/unit/test_message_inspection.py",
+    "tests/unit/test_native_acquisition_values.py",
+    "tests/unit/test_phase2_dependency_audit.py",
+    "tests/unit/test_phase2_field_audit.py",
+    "tests/unit/test_recording_followup.py",
+    "tests/unit/test_resource_identification.py",
+    "tests/unit/test_resource_identity.py",
+    "tests/unit/test_resource_key_identity.py",
+    "tests/unit/test_schema_viz.py",
+    "tests/unit/test_sqlite_validation_policy.py",
+    "tests/unit/test_sqlite_verification_tools.py",
+    "tests/unit/test_test_efficiency.py",
+    "tests/unit/test_transfer_originals.py",
+    "tests/unit/test_transport_recording.py"
+  ],
+  "lanes": {
+    "static": {
+      "disposition": "selected",
+      "test_files": [],
+      "test_ids": [],
+      "selection_kind": "nodeids",
+      "selection_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "tests": {
+      "disposition": "not_applicable",
+      "test_files": [],
+      "test_ids": [],
+      "selection_kind": "nodeids",
+      "selection_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "packaging": {
+      "disposition": "not_applicable",
+      "test_files": [],
+      "test_ids": [],
+      "selection_kind": "nodeids",
+      "selection_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "smoke": {
+      "disposition": "selected",
+      "test_files": [],
+      "test_ids": [],
+      "selection_kind": "nodeids",
+      "selection_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    }
+  },
+  "preparation": {
+    "sdist_contract": {
+      "disposition": "selected"
+    },
+    "dependencies": {
+      "disposition": "selected"
+    },
+    "wheelhouse": {
+      "disposition": "not_applicable"
+    }
+  },
+  "selection_wall_seconds": 0.5460954879999917
+}

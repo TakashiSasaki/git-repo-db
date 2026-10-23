@@ -1,0 +1,12 @@
+{
+  "head": "fb5d7b5a0c4b92c8a282daac154e66fa6d361e64",
+  "tree": "d2010275a90ae6b6cb728344d5708057a79110cd",
+  "cwd": "/workspace/task-b-i6-checkout",
+  "python": "/workspace/task-b-i6-checkout/.venv/bin/python",
+  "targets": [
+    "tests/unit/test_transfer_originals.py",
+    "tests/integration/i6a",
+    "tests/unit/test_context_fences_i6a.py",
+    "tests/unit/test_context_oid_admission_i6a.py"
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "author_integration_candidate": true,
+  "independent_acceptance": false,
+  "release_acceptance": false,
+  "source_full": {
+    "unique": 6497,
+    "pass": 6198,
+    "fail": 279,
+    "error": 20,
+    "skip": 0,
+    "xfail": 0,
+    "exit": 1
+  },
+  "common_node_regressions_against154": 0,
+  "resolved154_non_successes": 0,
+  "new_passed_nodes": 154,
+  "replaced_passing_parameter": 1,
+  "separate_diagnostic": {
+    "unique": 745,
+    "pass": 446,
+    "fail": 279,
+    "error": 20
+  },
+  "open_scanner_finding": {
+    "status": "provisional cross-task finding; fixed-tree applicability not reproduced",
+    "imported_task_a_changes": false
+  },
+  "open_scope": [
+    "299 inherited ordinary non-successes",
+    "Original Access smoke failure in both distributions",
+    "Possible inherited scanner queue-allocation limitation: applicability unverified",
+    "5603 ordinary nodes not executed in local installed lanes",
+    "3349 ordinary source nodes not executed in initial hosted union",
+    "live and benchmark opt-ins unrun",
+    "actual hosted receipt overflow unrun",
+    "artifact downloads Forbidden0bytes",
+    "non-Author integration review and later reviewed-I6C integration pending",
+    "explicit Release qualification not performed"
+  ]
+}

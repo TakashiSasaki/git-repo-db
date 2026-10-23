@@ -1,0 +1,287 @@
+{
+  "results": {
+    "direct-original-smoke-v2": {
+      "exit_code": 1,
+      "collected": 1,
+      "passed": 0,
+      "failed": 1,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 1,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 2,
+          "failed": 1
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "failed",
+            "exitstatus": 1,
+            "timestamp": 1792779690.757799
+          }
+        ]
+      }
+    },
+    "derived-original-smoke-v2": {
+      "exit_code": 1,
+      "collected": 1,
+      "passed": 0,
+      "failed": 1,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 1,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 2,
+          "failed": 1
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "failed",
+            "exitstatus": 1,
+            "timestamp": 1792779702.341787
+          }
+        ]
+      }
+    }
+  },
+  "processes": [
+    {
+      "name": "direct-original-smoke-v2-venv",
+      "argv": [
+        "/workspace/task-b-dist-checkout/.venv/bin/python",
+        "-m",
+        "venv",
+        "--without-pip",
+        "/workspace/task-b-dist-work/direct-minimal-venv"
+      ],
+      "cwd": "/workspace/task-b-dist-work/outside",
+      "exit_code": 0,
+      "started_epoch": 1792779681.7646735,
+      "elapsed_seconds": 0.24596905708312988
+    },
+    {
+      "name": "direct-original-smoke-v2-install",
+      "argv": [
+        "uv",
+        "pip",
+        "install",
+        "--python",
+        "/workspace/task-b-dist-work/direct-minimal-venv/bin/python",
+        "--offline",
+        "--no-index",
+        "--no-deps",
+        "--require-hashes",
+        "-r",
+        "/workspace/task-b-dist-evidence/direct-original-smoke-v2-requirements.txt"
+      ],
+      "cwd": "/workspace/task-b-dist-work/outside",
+      "exit_code": 0,
+      "started_epoch": 1792779682.0201616,
+      "elapsed_seconds": 0.490584135055542
+    },
+    {
+      "name": "direct-original-smoke-v2-measure-before",
+      "argv": [
+        "/workspace/task-b-dist-work/direct-minimal-venv/bin/python",
+        "/workspace/task-b-dist-work/outside/measure.py",
+        "/workspace/task-b-dist-evidence/direct-original-smoke-v2-runtime-before.json"
+      ],
+      "cwd": "/workspace/task-b-dist-work/outside",
+      "exit_code": 0,
+      "started_epoch": 1792779682.512105,
+      "elapsed_seconds": 0.49745869636535645
+    },
+    {
+      "name": "direct-original-smoke-v2-collect",
+      "argv": [
+        "/workspace/task-b-dist-work/direct-minimal-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "-c",
+        "/workspace/task-b-dist-work/outside/pytest.ini",
+        "--rootdir=/workspace/task-b-dist-work/outside",
+        "--confcutdir=/workspace/task-b-dist-work/outside",
+        "-o",
+        "junit_family=xunit1",
+        "tests/unit/test_original_access_smoke_independent.py",
+        "--collect-only"
+      ],
+      "cwd": "/workspace/task-b-dist-work/outside",
+      "exit_code": 0,
+      "started_epoch": 1792779683.0121408,
+      "elapsed_seconds": 2.360046625137329
+    },
+    {
+      "name": "direct-original-smoke-v2",
+      "argv": [
+        "/workspace/task-b-dist-work/direct-minimal-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "-c",
+        "/workspace/task-b-dist-work/outside/pytest.ini",
+        "--rootdir=/workspace/task-b-dist-work/outside",
+        "--confcutdir=/workspace/task-b-dist-work/outside",
+        "-o",
+        "junit_family=xunit1",
+        "tests/unit/test_original_access_smoke_independent.py",
+        "--junitxml=/workspace/task-b-dist-evidence/direct-original-smoke-v2.xml",
+        "--journal=/workspace/task-b-dist-evidence/direct-original-smoke-v2.jsonl",
+        "--basetemp=/workspace/task-b-dist-work/direct-original-smoke-v2-tmp"
+      ],
+      "cwd": "/workspace/task-b-dist-work/outside",
+      "exit_code": 1,
+      "started_epoch": 1792779685.372891,
+      "elapsed_seconds": 5.5878074169158936
+    },
+    {
+      "name": "direct-original-smoke-v2-measure-after",
+      "argv": [
+        "/workspace/task-b-dist-work/direct-minimal-venv/bin/python",
+        "/workspace/task-b-dist-work/outside/measure.py",
+        "/workspace/task-b-dist-evidence/direct-original-smoke-v2-runtime-after.json"
+      ],
+      "cwd": "/workspace/task-b-dist-work/outside",
+      "exit_code": 0,
+      "started_epoch": 1792779690.9621255,
+      "elapsed_seconds": 0.3475484848022461
+    },
+    {
+      "name": "derived-original-smoke-v2-venv",
+      "argv": [
+        "/workspace/task-b-dist-checkout/.venv/bin/python",
+        "-m",
+        "venv",
+        "--without-pip",
+        "/workspace/task-b-dist-work/derived-minimal-venv"
+      ],
+      "cwd": "/workspace/task-b-dist-work/outside",
+      "exit_code": 0,
+      "started_epoch": 1792779691.3481581,
+      "elapsed_seconds": 0.1638495922088623
+    },
+    {
+      "name": "derived-original-smoke-v2-install",
+      "argv": [
+        "uv",
+        "pip",
+        "install",
+        "--python",
+        "/workspace/task-b-dist-work/derived-minimal-venv/bin/python",
+        "--offline",
+        "--no-index",
+        "--no-deps",
+        "--require-hashes",
+        "-r",
+        "/workspace/task-b-dist-evidence/derived-original-smoke-v2-requirements.txt"
+      ],
+      "cwd": "/workspace/task-b-dist-work/outside",
+      "exit_code": 0,
+      "started_epoch": 1792779691.5138025,
+      "elapsed_seconds": 0.35625290870666504
+    },
+    {
+      "name": "derived-original-smoke-v2-measure-before",
+      "argv": [
+        "/workspace/task-b-dist-work/derived-minimal-venv/bin/python",
+        "/workspace/task-b-dist-work/outside/measure.py",
+        "/workspace/task-b-dist-evidence/derived-original-smoke-v2-runtime-before.json"
+      ],
+      "cwd": "/workspace/task-b-dist-work/outside",
+      "exit_code": 0,
+      "started_epoch": 1792779691.8720317,
+      "elapsed_seconds": 0.19663691520690918
+    },
+    {
+      "name": "derived-original-smoke-v2-collect",
+      "argv": [
+        "/workspace/task-b-dist-work/derived-minimal-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "-c",
+        "/workspace/task-b-dist-work/outside/pytest.ini",
+        "--rootdir=/workspace/task-b-dist-work/outside",
+        "--confcutdir=/workspace/task-b-dist-work/outside",
+        "-o",
+        "junit_family=xunit1",
+        "tests/unit/test_original_access_smoke_independent.py",
+        "--collect-only"
+      ],
+      "cwd": "/workspace/task-b-dist-work/outside",
+      "exit_code": 0,
+      "started_epoch": 1792779692.0695252,
+      "elapsed_seconds": 1.2485415935516357
+    },
+    {
+      "name": "derived-original-smoke-v2",
+      "argv": [
+        "/workspace/task-b-dist-work/derived-minimal-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "-c",
+        "/workspace/task-b-dist-work/outside/pytest.ini",
+        "--rootdir=/workspace/task-b-dist-work/outside",
+        "--confcutdir=/workspace/task-b-dist-work/outside",
+        "-o",
+        "junit_family=xunit1",
+        "tests/unit/test_original_access_smoke_independent.py",
+        "--junitxml=/workspace/task-b-dist-evidence/derived-original-smoke-v2.xml",
+        "--journal=/workspace/task-b-dist-evidence/derived-original-smoke-v2.jsonl",
+        "--basetemp=/workspace/task-b-dist-work/derived-original-smoke-v2-tmp"
+      ],
+      "cwd": "/workspace/task-b-dist-work/outside",
+      "exit_code": 1,
+      "started_epoch": 1792779693.320597,
+      "elapsed_seconds": 9.353310585021973
+    },
+    {
+      "name": "derived-original-smoke-v2-measure-after",
+      "argv": [
+        "/workspace/task-b-dist-work/derived-minimal-venv/bin/python",
+        "/workspace/task-b-dist-work/outside/measure.py",
+        "/workspace/task-b-dist-evidence/derived-original-smoke-v2-runtime-after.json"
+      ],
+      "cwd": "/workspace/task-b-dist-work/outside",
+      "exit_code": 0,
+      "started_epoch": 1792779702.6751971,
+      "elapsed_seconds": 0.3531758785247803
+    }
+  ],
+  "scope": "Author integration fresh replay of unchanged original Access smoke via attributed corrected inherited trace harness; separate failures remain failures"
+}

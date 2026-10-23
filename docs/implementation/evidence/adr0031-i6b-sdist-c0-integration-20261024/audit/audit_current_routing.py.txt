@@ -1,0 +1,42 @@
+import hashlib,importlib.util,json,pathlib,re,subprocess,sys,yaml,sqlite3
+R=pathlib.Path('/workspace/task-b-integration'); O=pathlib.Path('/workspace/task-b-audit')
+def git(*a): return subprocess.check_output(['git','-C',str(R),*a],text=True).strip()
+head=git('rev-parse','HEAD'); tree=git('rev-parse','HEAD^{tree}')
+spec=importlib.util.spec_from_file_location('current_ci_plan',R/'scripts/ci_plan.py'); mod=importlib.util.module_from_spec(spec);spec.loader.exec_module(mod)
+ctx={'event':'pull_request','action':'opened','base_sha':git('rev-parse','91827360'),'feature_sha':head,'tested_sha':head}
+plans={}
+for mode in ('development','release'):
+ p=mod.make_plan(dict(ctx,mode=mode),root=R)
+ (O/f'actual-candidate-{mode}-plan.json').write_text(json.dumps(p,indent=2)+'\n')
+ plans[mode]={'lanes':{k:{'disposition':v['disposition'],'file_count':len(v['test_files'])} for k,v in p['lanes'].items()},'acceptance_files':len(p['acceptance_files']),'selected_files':len(p['selected_files']),'required_files':len(p['required_files']),'unexecuted_files':len(p['unexecuted_files']),'excluded_files':p['excluded_files'],'sdist_contract':p['preparation']['sdist_contract'],'acceptance_input_hash':p['acceptance_input_hash'],'fallback_reasons':p['fallback_reasons'][:4]}
+a=yaml.load((R/'.github/workflows/access-registry.yml').read_text(),Loader=yaml.BaseLoader)
+t=yaml.load((R/'.github/workflows/tests.yml').read_text(),Loader=yaml.BaseLoader)
+patterns=a['on']['pull_request']['paths']
+def regex(pattern):
+ assert not any(c in pattern for c in '![]?+'),pattern
+ text='';i=0
+ while i<len(pattern):
+  if pattern[i:i+3]=='**/': text+='(?:.*/)?';i+=3
+  elif pattern[i:i+2]=='**': text+='.*';i+=2
+  elif pattern[i]=='*':text+='[^/]*';i+=1
+  else:text+=re.escape(pattern[i]);i+=1
+ return re.compile('^'+text+'$')
+checks=[regex(p) for p in patterns]
+paths=['src/repo_catalog/domain/context_admission.py','src/repo_catalog/adapters/sqlite/context_admission.py','src/repo_catalog/domain/ports/context_authorization.py','src/repo_catalog/domain/context_wire.py','src/repo_catalog/domain/context_dependencies.py','src/repo_catalog/domain/exchange_rows.py','src/repo_catalog/application/exchange.py','src/repo_catalog/domain/exchange.py','tests/integration/i6a/test_admission.py','tests/integration/i6a/test_originals_revalidation.py','tests/unit/test_context_admission.py','tests/unit/test_context_admission_bounds_i6a.py','tests/unit/test_context_fences_i6a.py','tests/unit/test_context_refusal_order_i6a.py','tests/unit/test_context_oid_admission_i6a.py','tests/unit/test_i6a_regression_bindings.py','tests/unit/test_context_wire_v5.py','tests/unit/test_context_scan_budget.py','tests/support/context_admission.py','tests/support/authorized_context.py','tests/support/i6a.py','scripts/check_sdist_contract.py','scripts/emit_ci_evidence.py','README.md']
+rows=[]
+for p in paths:
+ rows.append({'path':p,'exists':(R/p).exists(),'access_matches':[pat for pat,rx in zip(patterns,checks) if rx.fullmatch(p)],'sha256':hashlib.sha256((R/p).read_bytes()).hexdigest() if (R/p).is_file() else None})
+def workflow_checks(w):
+ out=[]
+ for jobname,job in w['jobs'].items():
+  for s in job.get('steps',[]):
+   if 'upload-artifact@' in s.get('uses','') or 'receipt' in s.get('name','').lower():out.append({'job':jobname,**s})
+ return out
+out={'head':head,'tree':tree,'base154':ctx['base_sha'],'plans':plans,'routing_paths':rows,'all_tests_prs_unfiltered':t['on']['pull_request'] is None or t['on']['pull_request']=='','access_runtime_commands':[s['run'] for s in a['jobs']['registry-runtime']['steps'] if 'run' in s and 'pytest' in s['run']],'receipt_upload_steps':{'Access':workflow_checks(a),'Development':workflow_checks(t)},'runtime':{'python':sys.version,'executable':sys.executable,'sqlite':sqlite3.sqlite_version,'sqlite_source_id':sqlite3.connect(':memory:').execute('select sqlite_source_id()').fetchone()[0]},'limits':'Actual candidate plans and exact workflow pattern audit; no synthetic single-file commit probes, product runtime tests, hosted runs or dispatch. Release mode plan generated only, no Release execution.'}
+(O/'routing-results.json').write_text(json.dumps(out,indent=2)+'\n')
+print(json.dumps({'head':head,'tree':tree,'plans':plans,'paths':[{k:v for k,v in row.items() if k!='sha256'} for row in rows]},indent=2))
+assert plans['development']['selected_files']==0
+assert plans['release']['selected_files']==plans['release']['acceptance_files']
+assert not plans['release']['excluded_files']
+assert all(s['if']=='always()' for s in out['receipt_upload_steps']['Development'] if 'upload-artifact@' in s.get('uses',''))
+assert all(s['if']=='always()' for s in out['receipt_upload_steps']['Access'] if 'upload-artifact@' in s.get('uses',''))

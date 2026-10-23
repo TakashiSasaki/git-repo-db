@@ -1,0 +1,13 @@
+{
+  "ordinary_source_nodes": 6497,
+  "installed_source_nodes_unique": 894,
+  "omitted_source_nodes": 5603,
+  "omitted_source_files": 215,
+  "source_backed_lanes": [
+    "safety626",
+    "wire212",
+    "new-regressions56"
+  ],
+  "other_lanes": "Supplementary attributed review probes retained separately; overlapping lanes never summed. Original Access smoke is separately failed1 per artifact.",
+  "full_acceptance": false
+}

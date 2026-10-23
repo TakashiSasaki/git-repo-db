@@ -1,0 +1,18 @@
+import subprocess,json,pathlib,hashlib,ast
+R='/workspace/task-b-integration';O=pathlib.Path('/workspace/task-b-audit')
+def g(*a):return subprocess.check_output(['git','-C',R,*a]).strip()
+head=g('rev-parse','HEAD').decode(); ids={'154':g('rev-parse','91827360').decode(),'144':g('rev-parse','ededcd83').decode(),'147':g('rev-parse','e7762952').decode(),'effective':head}
+shared=json.loads((O/'topology-overlap.json').read_text())['shared_union']
+rows={p:{n:{'blob':g('rev-parse',h+':'+p).decode(),'sha256':hashlib.sha256(g('show',h+':'+p)).hexdigest()} for n,h in ids.items()} for p in shared}
+def diff(a,b,*paths):return g('diff','--name-only',a,b,'--',*paths).decode().splitlines()
+assert not diff(ids['154'],head,'src')
+assert not diff(ids['144'],head,'scripts/check_sdist_contract.py','scripts/ci_plan.py','scripts/ci_execute.py','scripts/ci_dependencies.json')
+assert not diff(ids['147'],head,'scripts/emit_ci_evidence.py','tests/unit/test_emit_ci_evidence.py')
+p='tests/packaging/test_p1_distribution.py';source=g('show',head+':'+p).decode();tree=ast.parse(source)
+imports={a.name for n in ast.walk(tree) if isinstance(n,ast.ImportFrom) for a in n.names}
+assert {'stage_support','check_sdist','compare_wheels','save'}<=imports
+p='.agents/skills/ci-final-tree-verification/SKILL.md';source=g('show',head+':'+p).decode()
+checks={title:title in source for title in ['## Stage installed test support separately and bind pytest imports','## Inspect actual sdist members after positive selection','## Pytest subtest reports are additional measured phases']};assert all(checks.values())
+out={'head':head,'tree':g('rev-parse',head+'^{tree}').decode(),'shared_blobs':rows,'product_src_subtree_equals154':True,'archive_gate_and_planner_equal144':True,'receipt_emitter_and_regressions_equal147':True,'p1_import_union':sorted(imports),'skill_retained_sections':checks,'limits':'Static provenance/contract-presence audit only; execution evidence must be supplied by actual tests on final inputs.'}
+(O/'provenance-results.json').write_text(json.dumps(out,indent=2)+'\n')
+print(json.dumps({k:v for k,v in out.items() if k!='shared_blobs'},indent=2))

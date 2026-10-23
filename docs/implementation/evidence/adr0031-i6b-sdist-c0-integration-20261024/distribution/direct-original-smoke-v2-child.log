@@ -1,0 +1,13 @@
+Traceback (most recent call last):
+  File "/workspace/task-b-dist-work/outside/launch_original_smoke.py", line 12, in <module>
+    sys.settrace(observer);runpy.run_path(str(smoke),run_name='__main__')
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen runpy>", line 287, in run_path
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "/workspace/task-b-dist-work/outside/original_access_smoke.py", line 187, in <module>
+    package = ExchangeService(producer).export_package(selection=ExchangeSelectionScope(all_selected=True))
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/task-b-dist-work/direct-minimal-venv/lib/python3.12/site-packages/repo_catalog/application/exchange.py", line 397, in export_package
+    raise AdmissionRefused("PERMISSION_DENIED")
+repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED

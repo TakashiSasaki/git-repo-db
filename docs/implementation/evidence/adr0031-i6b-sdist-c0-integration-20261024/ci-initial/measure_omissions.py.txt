@@ -1,0 +1,16 @@
+from pathlib import Path
+import json,yaml,shlex,fnmatch,hashlib
+R=Path('/workspace/task-b-integration');O=Path('/workspace/task-b-ci-initial')
+local=Path('/workspace/task-b-run/source-full/ordinary-collection.nodes.txt');old=R/'docs/implementation/evidence/adr0031-i6b-rereview-20261023/broad/source-full/ordinary-collection.nodes.txt'
+def nodes(p):return [x for x in p.read_text().splitlines() if x.startswith('tests/') and '::' in x]
+a=nodes(local);b=nodes(old);assert len(a)==len(set(a)) and len(b)==len(set(b))
+y=yaml.load((R/'.github/workflows/access-registry.yml').read_text(),Loader=yaml.BaseLoader)
+run=next(s['run'] for s in y['jobs']['registry-runtime']['steps'] if 'pytest -q -n 2' in s.get('run',''))
+cmd=run[run.index('uv run --no-sync pytest -q -n 2'):];cmd=cmd[:cmd.index('--junitxml=')].replace('\\\n',' ')
+paths=[t for t in shlex.split(cmd) if t.startswith('tests/')]
+def selected(n):
+ p=n.split('::',1)[0]
+ return any(fnmatch.fnmatchcase(p,t) if '*' in t else p==t or p.startswith(t+'/') for t in paths)
+omitted=[n for n in a if not selected(n)];added=sorted(set(a)-set(b));removed=sorted(set(b)-set(a))
+v={'source_collection_file':str(local),'source_collection_sha256':hashlib.sha256(local.read_bytes()).hexdigest(),'source_node_count':len(a),'baseline154_node_count':len(b),'new_nodes':added,'removed_nodes':removed,'Access_actual_command_targets':paths,'source_nodes_covered_by_targets':sum(map(selected,a)),'source_nodes_omitted_by_targets':omitted,'source_files_omitted_by_targets':sorted({n.split('::',1)[0] for n in omitted}),'new_nodes_omitted_by_targets':[n for n in added if not selected(n)],'new_nodes_covered_by_targets':[n for n in added if selected(n)],'limits':'Computed from same-tree locally collected nodes and actual hosted workflow command targets; not a substitute for actual hosted collection/JUnit or executed counts. The local inventory is copied/reference bound, not recollected or executed by this agent.'}
+(O/'access-omissions.json').write_text(json.dumps(v,indent=2)+'\n');print({k:(len(x) if isinstance(x,list) else x) for k,x in v.items() if k not in ('limits','source_collection_file','source_collection_sha256')})

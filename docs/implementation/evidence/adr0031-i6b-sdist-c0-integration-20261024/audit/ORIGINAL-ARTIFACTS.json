@@ -1,0 +1,82 @@
+{
+  "INDEX.json": {
+    "bytes": 2467,
+    "sha256": "e83ea67189d0172455dac6ade2ec8aec86d0d36521fbfc8b25cde5b30f40dfb3"
+  },
+  "protected-inputs.log": {
+    "bytes": 445,
+    "sha256": "9d03def8747b15c47e1acb3af6f821c9344e021151efbc1099e993cf4b2ae84c"
+  },
+  "CONTRACTS-AND-HANDOFF.md": {
+    "bytes": 9882,
+    "sha256": "56101ad96f87a2b669e654b2a3b04c21553e9362a1f8fbb41c813a63430249c5"
+  },
+  "historical-impact-report.md": {
+    "bytes": 14779,
+    "sha256": "7634db8c4025a73c6ba46935924f32762b05ce635d62a1cecbafc19bb113cf96"
+  },
+  "actual-candidate-development-plan.json": {
+    "bytes": 116384,
+    "sha256": "ea7ce7b633d289c37e3fac8ff8c7e9f30b4b1f46cb58e344411328df08bda45d"
+  },
+  "routing.initial.log": {
+    "bytes": 5488,
+    "sha256": "4fa1d40ef33d958092055ecd0c9f55d172c4d24a7d89b28d0b303774856ec888"
+  },
+  "check_protected.initial.py": {
+    "bytes": 1937,
+    "sha256": "e77d6082b8291a0ff16c6b5052c45863db75716f8983d6ca93377433fd93b13f"
+  },
+  "topology-overlap.json": {
+    "bytes": 620762,
+    "sha256": "ecf1304de3a0fc9fd428905f0277b4a28527eb853cfc183cdf624336133c487c"
+  },
+  "check_protected.py": {
+    "bytes": 2259,
+    "sha256": "461dc98ba665cd2f1376a96fc960515acc74b86866df676caa3ea33be0b7a6ea"
+  },
+  "protected-inputs.json": {
+    "bytes": 21377,
+    "sha256": "4d2c493e6eed687b2c2ab38dab72af6150c80b45566a084b9e3bc862374a2d19"
+  },
+  "provenance-results.json": {
+    "bytes": 5219,
+    "sha256": "f1034d8e3198ac6f04f5ce2330d96a742697db3679309a5d92cadc91a86bebe7"
+  },
+  "REPORT.md": {
+    "bytes": 5297,
+    "sha256": "a34bed21a7bdb67dccc3ee0cd8d2e30967fc462875cf2154a290e08c5c1bad17"
+  },
+  "actual-candidate-release-plan.json": {
+    "bytes": 129436,
+    "sha256": "2a4195ce4980a5c67f79c57e248062e95a36a33a98b98764a62ec0d7907157d1"
+  },
+  "routing-results.json": {
+    "bytes": 13831,
+    "sha256": "1d4d084493963fbb47fe6b49e5552783db47de8b573679208b6185fc9210c4a1"
+  },
+  "provenance.py": {
+    "bytes": 2140,
+    "sha256": "56887fea4c5202139ad21048a16112cf3ef06d6bace8008d133fb68c0006a12d"
+  },
+  "audit_current_routing.py": {
+    "bytes": 4723,
+    "sha256": "7fa28dbfe619b4831cdf9fa0f6035952874c7ca6473b8b5e0450befd3657b796"
+  },
+  "historical-ci-audit.md": {
+    "bytes": 7429,
+    "sha256": "45811860e4837d6e1f631b91a9468853ced7bbb92747a3477e886e20898a9b1f"
+  },
+  "routing-results.initial.json": {
+    "bytes": 13491,
+    "sha256": "8840965dd3596a76e09d7fbbd9da000c82c1df4c72a10d8f215089feb84340c5"
+  },
+  "audit_current_routing.initial.py": {
+    "bytes": 4666,
+    "sha256": "c5e97cd91bd8ec29b5699314f5ec9ce537e3b6e2ec62f3672519f6e4bd5b1548"
+  },
+  "routing.log": {
+    "bytes": 5620,
+    "sha256": "409e8b3fd98eb698e7059be653eaa71a2d68e54239882ee239e9f34a11649794"
+  }
+}

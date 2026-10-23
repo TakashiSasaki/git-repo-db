@@ -1,0 +1,50 @@
+{
+  "actual_subprocess_exits": [
+    {
+      "name": "reports",
+      "argv": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3.12",
+        "scripts/ci_execute.py",
+        "reports"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "policy",
+      "argv": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3.12",
+        "scripts/check_sqlite_validation_policy.py"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "lint",
+      "argv": [
+        "/workspace/task-b-integration/.venv/bin/ruff",
+        "check",
+        "src",
+        "tests",
+        "scripts"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "format",
+      "argv": [
+        "/workspace/task-b-integration/.venv/bin/ruff",
+        "format",
+        "--check",
+        "src",
+        "tests",
+        "scripts"
+      ],
+      "exit": 0
+    }
+  ],
+  "secret_scan_hits": [],
+  "signed_url_query_hits": [],
+  "skill_frontmatter_valid": true,
+  "new_skill_link_exists": true,
+  "product_tests_rerun": false,
+  "reason": "Only new evidence plus verified skill prose after completed final full/diagnostic;493 execution/distribution inputs remain identical."
+}

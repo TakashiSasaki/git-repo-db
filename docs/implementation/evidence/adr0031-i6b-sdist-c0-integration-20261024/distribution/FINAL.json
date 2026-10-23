@@ -1,0 +1,249 @@
+{
+  "author_integration_verification": true,
+  "independent_acceptance": false,
+  "full_acceptance": false,
+  "head": "fb5d7b5a0c4b92c8a282daac154e66fa6d361e64",
+  "tree": "d2010275a90ae6b6cb728344d5708057a79110cd",
+  "product_inventory": {
+    "files": 160,
+    "bytes": 6025551,
+    "extensions": {
+      ".graphql": 2,
+      ".json": 2,
+      ".py": 137,
+      ".sql": 19
+    }
+  },
+  "sdist": {
+    "archive": "repo_catalog-0.2.0.tar.gz",
+    "budgets": {
+      "compressed_bytes": 2097152,
+      "members": 512,
+      "tar_stream_bytes": 8922624,
+      "unpacked_bytes": 8388608
+    },
+    "compressed_bytes": 702494,
+    "file_count": 164,
+    "member_count": 164,
+    "product_files": 160,
+    "raw_header_count": 164,
+    "sha256": "9d228f889f9507cdc5a166b9658e80873fcbd48255c6c958eb90e33954014b54",
+    "source_inventory_sha256": "38592a0e30468a80e442ee35d514673beace31eb98daf5cfda1109ac1675d4ed",
+    "status": "passed",
+    "tar_stream_bytes": 6174720,
+    "unpacked_bytes": 6041897
+  },
+  "wheel_equivalence": {
+    "all_member_names_and_bytes_equal": true,
+    "all_164_ZIP_metadata_entries_equal": true,
+    "complete_RECORD_checked": true,
+    "all_160_product_files_equal_source": true
+  },
+  "artifacts": {
+    "derived": {
+      "bytes": 791300,
+      "path": "/workspace/task-b-dist-work/derived/repo_catalog-0.2.0-py3-none-any.whl",
+      "sha256": "2452e419e06eea774805fc89358130538c50fdd313fdb0fb9b82b230e99a39d8"
+    },
+    "direct": {
+      "bytes": 791300,
+      "path": "/workspace/task-b-dist-work/direct/repo_catalog-0.2.0-py3-none-any.whl",
+      "sha256": "2452e419e06eea774805fc89358130538c50fdd313fdb0fb9b82b230e99a39d8"
+    },
+    "sdist": {
+      "bytes": 702494,
+      "path": "/workspace/task-b-dist-work/sdist/repo_catalog-0.2.0.tar.gz",
+      "sha256": "9d228f889f9507cdc5a166b9658e80873fcbd48255c6c958eb90e33954014b54"
+    }
+  },
+  "packaging_source": {
+    "passed": 133,
+    "failed": 0,
+    "error": 0,
+    "skipped": 0,
+    "xfail": 0,
+    "exit_code": 0
+  },
+  "installed_results": {
+    "direct": {
+      "safety": {
+        "collected": 626,
+        "passed": 626,
+        "failed": 0,
+        "error": 0,
+        "skipped": 0,
+        "xfail": 0,
+        "xpass": 0,
+        "exit_code": 0
+      },
+      "wire": {
+        "collected": 212,
+        "passed": 212,
+        "failed": 0,
+        "error": 0,
+        "skipped": 0,
+        "xfail": 0,
+        "xpass": 0,
+        "exit_code": 0
+      },
+      "independent": {
+        "collected": 204,
+        "passed": 204,
+        "failed": 0,
+        "error": 0,
+        "skipped": 0,
+        "xfail": 0,
+        "xpass": 0,
+        "exit_code": 0
+      },
+      "resolved-wire": {
+        "collected": 4,
+        "passed": 4,
+        "failed": 0,
+        "error": 0,
+        "skipped": 0,
+        "xfail": 0,
+        "xpass": 0,
+        "exit_code": 0
+      },
+      "counterexamples": {
+        "collected": 33,
+        "passed": 33,
+        "failed": 0,
+        "error": 0,
+        "skipped": 0,
+        "xfail": 0,
+        "xpass": 0,
+        "exit_code": 0
+      },
+      "author-extra": {
+        "collected": 34,
+        "passed": 34,
+        "failed": 0,
+        "error": 0,
+        "skipped": 0,
+        "xfail": 0,
+        "xpass": 0,
+        "exit_code": 0
+      },
+      "new-regressions": {
+        "collected": 56,
+        "passed": 56,
+        "failed": 0,
+        "error": 0,
+        "skipped": 0,
+        "xfail": 0,
+        "xpass": 0,
+        "exit_code": 0
+      },
+      "original_Access_smoke": {
+        "wrapper_failed": 1,
+        "child_exit": 1,
+        "exception": "repo_catalog.domain.context_admission.AdmissionRefused",
+        "code": "PERMISSION_DENIED",
+        "reached_assertions": 26,
+        "unreached_assertions": 28
+      }
+    },
+    "derived": {
+      "safety": {
+        "collected": 626,
+        "passed": 626,
+        "failed": 0,
+        "error": 0,
+        "skipped": 0,
+        "xfail": 0,
+        "xpass": 0,
+        "exit_code": 0
+      },
+      "wire": {
+        "collected": 212,
+        "passed": 212,
+        "failed": 0,
+        "error": 0,
+        "skipped": 0,
+        "xfail": 0,
+        "xpass": 0,
+        "exit_code": 0
+      },
+      "independent": {
+        "collected": 204,
+        "passed": 204,
+        "failed": 0,
+        "error": 0,
+        "skipped": 0,
+        "xfail": 0,
+        "xpass": 0,
+        "exit_code": 0
+      },
+      "resolved-wire": {
+        "collected": 4,
+        "passed": 4,
+        "failed": 0,
+        "error": 0,
+        "skipped": 0,
+        "xfail": 0,
+        "xpass": 0,
+        "exit_code": 0
+      },
+      "counterexamples": {
+        "collected": 33,
+        "passed": 33,
+        "failed": 0,
+        "error": 0,
+        "skipped": 0,
+        "xfail": 0,
+        "xpass": 0,
+        "exit_code": 0
+      },
+      "author-extra": {
+        "collected": 34,
+        "passed": 34,
+        "failed": 0,
+        "error": 0,
+        "skipped": 0,
+        "xfail": 0,
+        "xpass": 0,
+        "exit_code": 0
+      },
+      "new-regressions": {
+        "collected": 56,
+        "passed": 56,
+        "failed": 0,
+        "error": 0,
+        "skipped": 0,
+        "xfail": 0,
+        "xpass": 0,
+        "exit_code": 0
+      },
+      "original_Access_smoke": {
+        "wrapper_failed": 1,
+        "child_exit": 1,
+        "exception": "repo_catalog.domain.context_admission.AdmissionRefused",
+        "code": "PERMISSION_DENIED",
+        "reached_assertions": 26,
+        "unreached_assertions": 28
+      }
+    }
+  },
+  "installed_scope": {
+    "ordinary_source_nodes": 6497,
+    "installed_source_nodes_unique": 894,
+    "omitted_source_nodes": 5603,
+    "omitted_source_files": 215,
+    "source_backed_lanes": [
+      "safety626",
+      "wire212",
+      "new-regressions56"
+    ],
+    "other_lanes": "Supplementary attributed review probes retained separately; overlapping lanes never summed. Original Access smoke is separately failed1 per artifact.",
+    "full_acceptance": false
+  },
+  "additional_probes": {
+    "both_i2_exit": 0,
+    "both_i3_exit": 0,
+    "i2_checks_each": 10,
+    "doctor_each_exit": 0
+  },
+  "limits": "No complete installed full-suite or hosted distribution run was performed by this agent. Parent owns broad source run, final CI binding and hosted outcome. All timings are observation only under concurrent workloads, not comparative benchmarks. No alternate Python/SQLite, real user data, Release, deployment or remote mutation."
+}

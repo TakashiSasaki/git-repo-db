@@ -1,0 +1,157 @@
+{
+  "docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/corrupt-gzip-crc.tar.gz": {
+    "sha256": "c360407273f38dbced59cb925688b3666ca1625797cde0aba2b3b8f31b20f7e6",
+    "bytes": 442,
+    "git_blob": "f91cd9640afc4abc1bc4f2620f4b4d7752fafd72"
+  },
+  "docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/metadata2.tar.gz": {
+    "sha256": "f8a0de13c32ea23edc868ed3764bf5037038dfb9c72686c1aac8a7c537469ca7",
+    "bytes": 454,
+    "git_blob": "edaa5a5bc1a5d79583d1404b2fafeec40b087156"
+  },
+  "docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/concatenated.tar.gz": {
+    "sha256": "412272381b22f492f7347e171bf4b6cdcb57d5cff300f5839967de26b9b67871",
+    "bytes": 10770,
+    "git_blob": "d2d42f926380995a99561b56ae1616eb31cf9971"
+  },
+  "docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/malformed-second-gzip-member.tar.gz": {
+    "sha256": "2f8b363f7636fe21441e9b73daa2fd9796cdbb8444e035eca01c95806626067d",
+    "bytes": 459,
+    "git_blob": "4b6ce8a525f2f4b7b654c1968fbb6fe0757044bd"
+  },
+  "docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/metadata1.tar.gz": {
+    "sha256": "d75adf412f6a3858f6e4ba94515df68da184feb52d69371333ea6a140351d058",
+    "bytes": 450,
+    "git_blob": "a6c954873b7f49140ad680e8db837f0aec9014a7"
+  },
+  "docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/missing-gzip-trailer.tar.gz": {
+    "sha256": "b8e28e3f1e31e7a1b46109c035c1ee11f16ee648ec8814491a5d3976774704e9",
+    "bytes": 434,
+    "git_blob": "0abf71b04228312dafaa5fed16c7a54b793c11ea"
+  },
+  "docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/pax-hidden-log.tar.gz": {
+    "sha256": "6cdf91c03095ce5f27137d49fd66a3284a8a21b6d3a25c1e40818c161e078deb",
+    "bytes": 10758,
+    "git_blob": "136aac64a92ca3aab647257a2bcf85533431fdb5"
+  },
+  "docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/source/README.md": {
+    "sha256": "58c281d546551dc7c62b6e8594ba750eff4687e688b0f891a4392a60d90d421c",
+    "bytes": 12,
+    "git_blob": "be41075764eebd22f1fe37736878f3f10ad6eab1"
+  },
+  "docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/source/.gitignore": {
+    "sha256": "32dae3052f331ee34d628ef535709b301259a45df7c7522c4d35dcf49873f00b",
+    "bytes": 13,
+    "git_blob": "c18dd8d83ceed1806b50b0aaa46beb7e335fff13"
+  },
+  "docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/source/pyproject.toml": {
+    "sha256": "80851b06276650eb451c99ee3c8f80d20dbf827e185c700a93a08eeda5b07207",
+    "bytes": 46,
+    "git_blob": "834558d4e593f4d59e9d81f70b6b64690c204eb1"
+  },
+  "docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/source/src/repo_catalog/query.graphql": {
+    "sha256": "25f78b49dec3a3e04b3eb47a639394eed05c6217a3c2ce1d4ca24be392e27c83",
+    "bytes": 26,
+    "git_blob": "6d193dc19f75b1fc4d1f1e05c25bc3e4b7c57baf"
+  },
+  "docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/source/src/repo_catalog/contract.json": {
+    "sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+    "bytes": 2,
+    "git_blob": "9e26dfeeb6e641a33dae4961196235bdb965b21b"
+  },
+  "docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/source/src/repo_catalog/schema.sql": {
+    "sha256": "b4e0497804e46e0a0b0b8c31975b062152d551bac49c3c2e80932567b4085dcd",
+    "bytes": 10,
+    "git_blob": "e0ac49d1ecfb8f96f2418b1a87e1d20e587d9d0f"
+  },
+  "docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/source/src/repo_catalog/__init__.py": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0,
+    "git_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+  },
+  "docs/implementation/evidence/adr0031-i6b-author-20261023/vectors/V01-global-document.wire.json": {
+    "sha256": "b6f939b28a4875d4e52a6eeaad76f7030d02a628a2e6b6e6291ab74ce63b139a",
+    "bytes": 1371,
+    "git_blob": "01839e846dbcdcd557e606bb6190aaadf58f9aa4"
+  },
+  "docs/implementation/evidence/adr0031-i6b-author-20261023/vectors/V07-resolved-mapping.wire.json": {
+    "sha256": "ab5f4176b25267a2ae6702e4a6cad7fc699c8f692b4f8dbcf53519e43113bdeb",
+    "bytes": 6616,
+    "git_blob": "e40cde07242b4fa7d01fab07f52ff2177f2d295f"
+  },
+  "docs/implementation/evidence/adr0031-i6b-author-20261023/vectors/V02-scoped-event-child-first.wire.json": {
+    "sha256": "7d057ff25c0488456534ef955d1f877c88a3721b16d889d5cdbc2795f2909458",
+    "bytes": 1435,
+    "git_blob": "b732b3eb4c2ef6269b5f1a588b0f9d125afe5456"
+  },
+  "docs/implementation/evidence/adr0031-i6b-author-20261023/vectors/V03-original-parent.wire.json": {
+    "sha256": "1b07744024e857aba974be6e5ca01d42fb8bd6cffbeb1b22700d55ed7faaddce",
+    "bytes": 2171,
+    "git_blob": "e65b672bc7589c6b1c88716843f8c2dfebca7b98"
+  },
+  "docs/implementation/evidence/adr0031-i6b-author-20261023/vectors/V08-rechecksummed-noncanonical-id.wire.json": {
+    "sha256": "a0c2be95557262cb33c3723e3a5e94c4552e46cba08f72e7ee97269aa47a8854",
+    "bytes": 1373,
+    "git_blob": "c6c9eee362d83080b710046257894a95bd0dd9f4"
+  },
+  "docs/implementation/evidence/adr0031-i6b-author-20261023/vectors/manifest.json": {
+    "sha256": "a3f8b13fa71bd7befb1bd77416500b3756e6343473994ca880e8b797391db2e2",
+    "bytes": 3115,
+    "git_blob": "1267bd5b5e018c48890ea07ebbdef3b98453a12d"
+  },
+  "docs/implementation/evidence/adr0031-i6b-author-20261023/vectors/V05-two-sided-explicit-null.wire.json": {
+    "sha256": "dd5e516197adc98944407e847b39c38d3df6ace0e534be28947474254de43036",
+    "bytes": 5534,
+    "git_blob": "4f3a243458c2a85e520b8b23b47b99560aa6a321"
+  },
+  "docs/implementation/evidence/adr0031-i6b-author-20261023/vectors/V06-provider-only.wire.json": {
+    "sha256": "888b02f865c0be483cb34fdf856ff167634b9b650eb9d08b6933b7cf9a0a780b",
+    "bytes": 3437,
+    "git_blob": "5a7f3794da02ff0f368bd5959e01ed7019c5ae3a"
+  },
+  "docs/implementation/evidence/adr0031-i6b-author-20261023/vectors/V04-one-sided-explicit-null.wire.json": {
+    "sha256": "0fb2fe2dd672aa131f54c02b0b26cac9523af5759c9fd03f4a424f21e9842d12",
+    "bytes": 4239,
+    "git_blob": "6be7a1c52a1f4d9017fcb7a3ae9f26fbc68485da"
+  },
+  "docs/implementation/evidence/adr0031-i6b-author-20261023/vectors/V09-ordered-terminals.wire.json": {
+    "sha256": "f4fe72c5a7ffd9d5f2db57c301745235e9fc265960cc57bca8852d5e46601001",
+    "bytes": 5369,
+    "git_blob": "6f0fcaeeb8363442e38276ee6e7467a577f1837e"
+  },
+  "docs/implementation/evidence/adr0031-i6b-independent-20261023/planner/test_planner_independent.py.txt": {
+    "sha256": "e9ffcd3aa273c647788c1477cb28524ea8ab6a1485fda120db52e754696ff59e",
+    "bytes": 10754,
+    "git_blob": "fea48fc6880683f2ab60365cf579f7231d41b9b7"
+  },
+  "docs/implementation/evidence/adr0031-i6b-independent-20261023/planner/test_planner_work_budget_contract.py.txt": {
+    "sha256": "dec5aa650b847b18aee223e3ab79fe41faf644b620d12edfa7cf3b83c375555b",
+    "bytes": 2564,
+    "git_blob": "4b50504a969701821fdc05b706fe29b1b10a23d6"
+  },
+  "docs/implementation/evidence/adr0031-i6b-independent-20261023/admission/test_commit_boundary.py.txt": {
+    "sha256": "139c253eee306888a34c4feba791feeb972088a040a4818a64be546271c8d4fe",
+    "bytes": 8470,
+    "git_blob": "5e318889ea984ac96563e720f34d7826bcd17aef"
+  },
+  "docs/implementation/evidence/adr0031-i6b-independent-20261023/wire/test_independent_wire.py.txt": {
+    "sha256": "d274adc397b1c8e4b7f52ebcc0fb3cb6dac0515e1c452368bdb78895c8bb2c48",
+    "bytes": 19900,
+    "git_blob": "eab631d3d612ba9698cb0d645340e1e27d758159"
+  },
+  "docs/implementation/evidence/adr0031-i6b-independent-20261023/wire/test_digest_contract.py.txt": {
+    "sha256": "855d5fc32bbff94890ce838a6e8cb27694eeaac218353f4407263ad75537ab74",
+    "bytes": 2578,
+    "git_blob": "1fa33a2702981dc1fb5ce322495dbd070f94e34c"
+  },
+  "docs/implementation/evidence/adr0031-i6b-independent-20261023/wire/test_resolved_wire.py.txt": {
+    "sha256": "536de7d78526f6d779d8a6e3ec3c0d8b4a02356b1ca122807e963803d94ffa20",
+    "bytes": 5172,
+    "git_blob": "1631b54b65e0384315fc50a435c07e22394399de"
+  },
+  "docs/implementation/evidence/adr0031-i6b-author-20261023/tools/test_i6b_extra.py.txt": {
+    "sha256": "bc77c792f8f4a7dc3ad472d6fa9325a274bdd8895822a328556b260b55663ffd",
+    "bytes": 15247,
+    "git_blob": "b9c06770deefee12f32065554e3ba432465bb500"
+  }
+}

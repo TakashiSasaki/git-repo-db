@@ -1,0 +1,623 @@
+{
+  "source_head": "fb5d7b5a0c4b92c8a282daac154e66fa6d361e64",
+  "source_tree": "d2010275a90ae6b6cb728344d5708057a79110cd",
+  "results": {
+    "direct": {
+      "safety": {
+        "exit_code": 0,
+        "collected": 626,
+        "passed": 626,
+        "failed": 0,
+        "error": 0,
+        "skipped": 0,
+        "xfail": 0,
+        "xpass": 0,
+        "executed": 626,
+        "reconciliation": {
+          "checks": {
+            "selected_unique": true,
+            "selected_equals_junit": true,
+            "selected_equals_journal_starts": true,
+            "setup_and_teardown_once": true,
+            "no_duplicate_phases": true,
+            "phase_nodes_equal_selected": true,
+            "call_once_after_successful_setup": true,
+            "one_finish": true
+          },
+          "consistent_node_execution": true,
+          "journal_phase_outcomes": {
+            "passed": 1878
+          },
+          "finishes": [
+            {
+              "event": "finish",
+              "status": "completed",
+              "exitstatus": 0,
+              "timestamp": 1792779698.733442
+            }
+          ]
+        }
+      },
+      "wire": {
+        "exit_code": 0,
+        "collected": 212,
+        "passed": 212,
+        "failed": 0,
+        "error": 0,
+        "skipped": 0,
+        "xfail": 0,
+        "xpass": 0,
+        "executed": 212,
+        "reconciliation": {
+          "checks": {
+            "selected_unique": true,
+            "selected_equals_junit": true,
+            "selected_equals_journal_starts": true,
+            "setup_and_teardown_once": true,
+            "no_duplicate_phases": true,
+            "phase_nodes_equal_selected": true,
+            "call_once_after_successful_setup": true,
+            "one_finish": true
+          },
+          "consistent_node_execution": true,
+          "journal_phase_outcomes": {
+            "passed": 636
+          },
+          "finishes": [
+            {
+              "event": "finish",
+              "status": "completed",
+              "exitstatus": 0,
+              "timestamp": 1792779727.461639
+            }
+          ]
+        }
+      }
+    },
+    "derived": {
+      "safety": {
+        "exit_code": 0,
+        "collected": 626,
+        "passed": 626,
+        "failed": 0,
+        "error": 0,
+        "skipped": 0,
+        "xfail": 0,
+        "xpass": 0,
+        "executed": 626,
+        "reconciliation": {
+          "checks": {
+            "selected_unique": true,
+            "selected_equals_junit": true,
+            "selected_equals_journal_starts": true,
+            "setup_and_teardown_once": true,
+            "no_duplicate_phases": true,
+            "phase_nodes_equal_selected": true,
+            "call_once_after_successful_setup": true,
+            "one_finish": true
+          },
+          "consistent_node_execution": true,
+          "journal_phase_outcomes": {
+            "passed": 1878
+          },
+          "finishes": [
+            {
+              "event": "finish",
+              "status": "completed",
+              "exitstatus": 0,
+              "timestamp": 1792779875.23237
+            }
+          ]
+        }
+      },
+      "wire": {
+        "exit_code": 0,
+        "collected": 212,
+        "passed": 212,
+        "failed": 0,
+        "error": 0,
+        "skipped": 0,
+        "xfail": 0,
+        "xpass": 0,
+        "executed": 212,
+        "reconciliation": {
+          "checks": {
+            "selected_unique": true,
+            "selected_equals_junit": true,
+            "selected_equals_journal_starts": true,
+            "setup_and_teardown_once": true,
+            "no_duplicate_phases": true,
+            "phase_nodes_equal_selected": true,
+            "call_once_after_successful_setup": true,
+            "one_finish": true
+          },
+          "consistent_node_execution": true,
+          "journal_phase_outcomes": {
+            "passed": 636
+          },
+          "finishes": [
+            {
+              "event": "finish",
+              "status": "completed",
+              "exitstatus": 0,
+              "timestamp": 1792779893.468843
+            }
+          ]
+        }
+      }
+    }
+  },
+  "artifacts": {
+    "derived": {
+      "bytes": 791300,
+      "path": "/workspace/task-b-dist-work/derived/repo_catalog-0.2.0-py3-none-any.whl",
+      "sha256": "2452e419e06eea774805fc89358130538c50fdd313fdb0fb9b82b230e99a39d8"
+    },
+    "direct": {
+      "bytes": 791300,
+      "path": "/workspace/task-b-dist-work/direct/repo_catalog-0.2.0-py3-none-any.whl",
+      "sha256": "2452e419e06eea774805fc89358130538c50fdd313fdb0fb9b82b230e99a39d8"
+    },
+    "sdist": {
+      "bytes": 702494,
+      "path": "/workspace/task-b-dist-work/sdist/repo_catalog-0.2.0.tar.gz",
+      "sha256": "9d228f889f9507cdc5a166b9658e80873fcbd48255c6c958eb90e33954014b54"
+    }
+  },
+  "full_acceptance": false,
+  "independent_review": false,
+  "author_validation": true,
+  "processes": [
+    {
+      "argv": [
+        "/workspace/task-b-dist-checkout/.venv/bin/python",
+        "-m",
+        "hatchling",
+        "build",
+        "-t",
+        "wheel",
+        "-d",
+        "/workspace/task-b-dist-work/direct"
+      ],
+      "cwd": "/workspace/task-b-dist-checkout",
+      "exit_code": 0,
+      "name": "build-direct"
+    },
+    {
+      "argv": [
+        "/workspace/task-b-dist-checkout/.venv/bin/python",
+        "-m",
+        "hatchling",
+        "build",
+        "-t",
+        "sdist",
+        "-d",
+        "/workspace/task-b-dist-work/sdist"
+      ],
+      "cwd": "/workspace/task-b-dist-checkout",
+      "exit_code": 0,
+      "name": "build-sdist"
+    },
+    {
+      "argv": [
+        "/workspace/task-b-dist-checkout/.venv/bin/python",
+        "-m",
+        "hatchling",
+        "build",
+        "-t",
+        "wheel",
+        "-d",
+        "/workspace/task-b-dist-work/derived"
+      ],
+      "cwd": "/workspace/task-b-dist-work/from-sdist/repo_catalog-0.2.0",
+      "exit_code": 0,
+      "name": "build-derived"
+    },
+    {
+      "name": "direct-venv",
+      "argv": [
+        "/workspace/task-b-dist-checkout/.venv/bin/python",
+        "-m",
+        "venv",
+        "--without-pip",
+        "/workspace/task-b-dist-work/direct-venv"
+      ],
+      "cwd": "/workspace/task-b-dist-work",
+      "exit_code": 0,
+      "started_epoch": 1792779562.1876533,
+      "elapsed_seconds": 0.2622036933898926,
+      "source_head": "fb5d7b5a0c4b92c8a282daac154e66fa6d361e64",
+      "source_tree": "d2010275a90ae6b6cb728344d5708057a79110cd"
+    },
+    {
+      "name": "direct-install",
+      "argv": [
+        "uv",
+        "pip",
+        "install",
+        "--python",
+        "/workspace/task-b-dist-work/direct-venv/bin/python",
+        "--offline",
+        "--no-index",
+        "--no-deps",
+        "--require-hashes",
+        "-r",
+        "/workspace/task-b-dist-evidence/direct-requirements.txt"
+      ],
+      "cwd": "/workspace/task-b-dist-work/outside",
+      "exit_code": 0,
+      "started_epoch": 1792779562.452626,
+      "elapsed_seconds": 2.30340576171875,
+      "source_head": "fb5d7b5a0c4b92c8a282daac154e66fa6d361e64",
+      "source_tree": "d2010275a90ae6b6cb728344d5708057a79110cd"
+    },
+    {
+      "name": "direct-measure-before",
+      "argv": [
+        "/workspace/task-b-dist-work/direct-venv/bin/python",
+        "/workspace/task-b-dist-work/outside/measure.py",
+        "/workspace/task-b-dist-evidence/direct-runtime-before.json"
+      ],
+      "cwd": "/workspace/task-b-dist-work/outside",
+      "exit_code": 0,
+      "started_epoch": 1792779564.7564232,
+      "elapsed_seconds": 0.2669992446899414,
+      "source_head": "fb5d7b5a0c4b92c8a282daac154e66fa6d361e64",
+      "source_tree": "d2010275a90ae6b6cb728344d5708057a79110cd"
+    },
+    {
+      "name": "direct-safety-collect",
+      "argv": [
+        "/workspace/task-b-dist-work/direct-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "-c",
+        "/workspace/task-b-dist-work/outside/pytest.ini",
+        "--rootdir=/workspace/task-b-dist-work/outside",
+        "--confcutdir=/workspace/task-b-dist-work/outside",
+        "-o",
+        "junit_family=xunit1",
+        "tests/integration/p3/test_transfer_sql.py",
+        "tests/integration/p3/test_transfer_admission.py",
+        "tests/integration/p3/test_parent_reports.py",
+        "tests/unit/test_context_admission.py",
+        "tests/unit/test_transfer_originals.py",
+        "tests/unit/test_context_fences_i6a.py",
+        "tests/unit/test_context_oid_admission_i6a.py",
+        "tests/unit/test_context_admission_bounds_i6a.py",
+        "tests/unit/test_context_coordinator_admission.py",
+        "tests/unit/test_context_refusal_order_i6a.py",
+        "tests/integration/p1/test_coordination.py",
+        "tests/integration/i6a",
+        "--collect-only"
+      ],
+      "cwd": "/workspace/task-b-dist-work/outside",
+      "exit_code": 0,
+      "started_epoch": 1792779565.025859,
+      "elapsed_seconds": 2.980701208114624,
+      "source_head": "fb5d7b5a0c4b92c8a282daac154e66fa6d361e64",
+      "source_tree": "d2010275a90ae6b6cb728344d5708057a79110cd"
+    },
+    {
+      "name": "direct-safety",
+      "argv": [
+        "/workspace/task-b-dist-work/direct-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "-c",
+        "/workspace/task-b-dist-work/outside/pytest.ini",
+        "--rootdir=/workspace/task-b-dist-work/outside",
+        "--confcutdir=/workspace/task-b-dist-work/outside",
+        "-o",
+        "junit_family=xunit1",
+        "tests/integration/p3/test_transfer_sql.py",
+        "tests/integration/p3/test_transfer_admission.py",
+        "tests/integration/p3/test_parent_reports.py",
+        "tests/unit/test_context_admission.py",
+        "tests/unit/test_transfer_originals.py",
+        "tests/unit/test_context_fences_i6a.py",
+        "tests/unit/test_context_oid_admission_i6a.py",
+        "tests/unit/test_context_admission_bounds_i6a.py",
+        "tests/unit/test_context_coordinator_admission.py",
+        "tests/unit/test_context_refusal_order_i6a.py",
+        "tests/integration/p1/test_coordination.py",
+        "tests/integration/i6a",
+        "--junitxml=/workspace/task-b-dist-evidence/direct-safety.xml",
+        "--journal=/workspace/task-b-dist-evidence/direct-safety.jsonl",
+        "--basetemp=/workspace/task-b-dist-work/direct-safety-tmp"
+      ],
+      "cwd": "/workspace/task-b-dist-work/outside",
+      "exit_code": 0,
+      "started_epoch": 1792779568.007891,
+      "elapsed_seconds": 131.01839208602905,
+      "source_head": "fb5d7b5a0c4b92c8a282daac154e66fa6d361e64",
+      "source_tree": "d2010275a90ae6b6cb728344d5708057a79110cd"
+    },
+    {
+      "name": "direct-wire-collect",
+      "argv": [
+        "/workspace/task-b-dist-work/direct-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "-c",
+        "/workspace/task-b-dist-work/outside/pytest.ini",
+        "--rootdir=/workspace/task-b-dist-work/outside",
+        "--confcutdir=/workspace/task-b-dist-work/outside",
+        "-o",
+        "junit_family=xunit1",
+        "tests/unit/test_context_wire_v5.py",
+        "tests/unit/test_context_dependencies.py",
+        "--collect-only"
+      ],
+      "cwd": "/workspace/task-b-dist-work/outside",
+      "exit_code": 0,
+      "started_epoch": 1792779699.0681548,
+      "elapsed_seconds": 2.219881057739258,
+      "source_head": "fb5d7b5a0c4b92c8a282daac154e66fa6d361e64",
+      "source_tree": "d2010275a90ae6b6cb728344d5708057a79110cd"
+    },
+    {
+      "name": "direct-wire",
+      "argv": [
+        "/workspace/task-b-dist-work/direct-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "-c",
+        "/workspace/task-b-dist-work/outside/pytest.ini",
+        "--rootdir=/workspace/task-b-dist-work/outside",
+        "--confcutdir=/workspace/task-b-dist-work/outside",
+        "-o",
+        "junit_family=xunit1",
+        "tests/unit/test_context_wire_v5.py",
+        "tests/unit/test_context_dependencies.py",
+        "--junitxml=/workspace/task-b-dist-evidence/direct-wire.xml",
+        "--journal=/workspace/task-b-dist-evidence/direct-wire.jsonl",
+        "--basetemp=/workspace/task-b-dist-work/direct-wire-tmp"
+      ],
+      "cwd": "/workspace/task-b-dist-work/outside",
+      "exit_code": 0,
+      "started_epoch": 1792779701.2886324,
+      "elapsed_seconds": 26.396819829940796,
+      "source_head": "fb5d7b5a0c4b92c8a282daac154e66fa6d361e64",
+      "source_tree": "d2010275a90ae6b6cb728344d5708057a79110cd"
+    },
+    {
+      "name": "direct-doctor",
+      "argv": [
+        "/workspace/task-b-dist-work/direct-venv/bin/repo-catalog",
+        "doctor"
+      ],
+      "cwd": "/workspace/task-b-dist-work/outside",
+      "exit_code": 0,
+      "started_epoch": 1792779727.713189,
+      "elapsed_seconds": 0.46054935455322266,
+      "source_head": "fb5d7b5a0c4b92c8a282daac154e66fa6d361e64",
+      "source_tree": "d2010275a90ae6b6cb728344d5708057a79110cd"
+    },
+    {
+      "name": "direct-measure-after",
+      "argv": [
+        "/workspace/task-b-dist-work/direct-venv/bin/python",
+        "/workspace/task-b-dist-work/outside/measure.py",
+        "/workspace/task-b-dist-evidence/direct-runtime-after.json"
+      ],
+      "cwd": "/workspace/task-b-dist-work/outside",
+      "exit_code": 0,
+      "started_epoch": 1792779728.1742842,
+      "elapsed_seconds": 0.3413214683532715,
+      "source_head": "fb5d7b5a0c4b92c8a282daac154e66fa6d361e64",
+      "source_tree": "d2010275a90ae6b6cb728344d5708057a79110cd"
+    },
+    {
+      "name": "derived-venv",
+      "argv": [
+        "/workspace/task-b-dist-checkout/.venv/bin/python",
+        "-m",
+        "venv",
+        "--without-pip",
+        "/workspace/task-b-dist-work/derived-venv"
+      ],
+      "cwd": "/workspace/task-b-dist-work",
+      "exit_code": 0,
+      "started_epoch": 1792779728.517433,
+      "elapsed_seconds": 0.11852073669433594,
+      "source_head": "fb5d7b5a0c4b92c8a282daac154e66fa6d361e64",
+      "source_tree": "d2010275a90ae6b6cb728344d5708057a79110cd"
+    },
+    {
+      "name": "derived-install",
+      "argv": [
+        "uv",
+        "pip",
+        "install",
+        "--python",
+        "/workspace/task-b-dist-work/derived-venv/bin/python",
+        "--offline",
+        "--no-index",
+        "--no-deps",
+        "--require-hashes",
+        "-r",
+        "/workspace/task-b-dist-evidence/derived-requirements.txt"
+      ],
+      "cwd": "/workspace/task-b-dist-work/outside",
+      "exit_code": 0,
+      "started_epoch": 1792779728.6406744,
+      "elapsed_seconds": 0.7095015048980713,
+      "source_head": "fb5d7b5a0c4b92c8a282daac154e66fa6d361e64",
+      "source_tree": "d2010275a90ae6b6cb728344d5708057a79110cd"
+    },
+    {
+      "name": "derived-measure-before",
+      "argv": [
+        "/workspace/task-b-dist-work/derived-venv/bin/python",
+        "/workspace/task-b-dist-work/outside/measure.py",
+        "/workspace/task-b-dist-evidence/derived-runtime-before.json"
+      ],
+      "cwd": "/workspace/task-b-dist-work/outside",
+      "exit_code": 0,
+      "started_epoch": 1792779729.350538,
+      "elapsed_seconds": 0.41259169578552246,
+      "source_head": "fb5d7b5a0c4b92c8a282daac154e66fa6d361e64",
+      "source_tree": "d2010275a90ae6b6cb728344d5708057a79110cd"
+    },
+    {
+      "name": "derived-safety-collect",
+      "argv": [
+        "/workspace/task-b-dist-work/derived-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "-c",
+        "/workspace/task-b-dist-work/outside/pytest.ini",
+        "--rootdir=/workspace/task-b-dist-work/outside",
+        "--confcutdir=/workspace/task-b-dist-work/outside",
+        "-o",
+        "junit_family=xunit1",
+        "tests/integration/p3/test_transfer_sql.py",
+        "tests/integration/p3/test_transfer_admission.py",
+        "tests/integration/p3/test_parent_reports.py",
+        "tests/unit/test_context_admission.py",
+        "tests/unit/test_transfer_originals.py",
+        "tests/unit/test_context_fences_i6a.py",
+        "tests/unit/test_context_oid_admission_i6a.py",
+        "tests/unit/test_context_admission_bounds_i6a.py",
+        "tests/unit/test_context_coordinator_admission.py",
+        "tests/unit/test_context_refusal_order_i6a.py",
+        "tests/integration/p1/test_coordination.py",
+        "tests/integration/i6a",
+        "--collect-only"
+      ],
+      "cwd": "/workspace/task-b-dist-work/outside",
+      "exit_code": 0,
+      "started_epoch": 1792779729.764577,
+      "elapsed_seconds": 4.091760635375977,
+      "source_head": "fb5d7b5a0c4b92c8a282daac154e66fa6d361e64",
+      "source_tree": "d2010275a90ae6b6cb728344d5708057a79110cd"
+    },
+    {
+      "name": "derived-safety",
+      "argv": [
+        "/workspace/task-b-dist-work/derived-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "-c",
+        "/workspace/task-b-dist-work/outside/pytest.ini",
+        "--rootdir=/workspace/task-b-dist-work/outside",
+        "--confcutdir=/workspace/task-b-dist-work/outside",
+        "-o",
+        "junit_family=xunit1",
+        "tests/integration/p3/test_transfer_sql.py",
+        "tests/integration/p3/test_transfer_admission.py",
+        "tests/integration/p3/test_parent_reports.py",
+        "tests/unit/test_context_admission.py",
+        "tests/unit/test_transfer_originals.py",
+        "tests/unit/test_context_fences_i6a.py",
+        "tests/unit/test_context_oid_admission_i6a.py",
+        "tests/unit/test_context_admission_bounds_i6a.py",
+        "tests/unit/test_context_coordinator_admission.py",
+        "tests/unit/test_context_refusal_order_i6a.py",
+        "tests/integration/p1/test_coordination.py",
+        "tests/integration/i6a",
+        "--junitxml=/workspace/task-b-dist-evidence/derived-safety.xml",
+        "--journal=/workspace/task-b-dist-evidence/derived-safety.jsonl",
+        "--basetemp=/workspace/task-b-dist-work/derived-safety-tmp"
+      ],
+      "cwd": "/workspace/task-b-dist-work/outside",
+      "exit_code": 0,
+      "started_epoch": 1792779733.8578057,
+      "elapsed_seconds": 141.58223676681519,
+      "source_head": "fb5d7b5a0c4b92c8a282daac154e66fa6d361e64",
+      "source_tree": "d2010275a90ae6b6cb728344d5708057a79110cd"
+    },
+    {
+      "name": "derived-wire-collect",
+      "argv": [
+        "/workspace/task-b-dist-work/derived-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "-c",
+        "/workspace/task-b-dist-work/outside/pytest.ini",
+        "--rootdir=/workspace/task-b-dist-work/outside",
+        "--confcutdir=/workspace/task-b-dist-work/outside",
+        "-o",
+        "junit_family=xunit1",
+        "tests/unit/test_context_wire_v5.py",
+        "tests/unit/test_context_dependencies.py",
+        "--collect-only"
+      ],
+      "cwd": "/workspace/task-b-dist-work/outside",
+      "exit_code": 0,
+      "started_epoch": 1792779875.4579537,
+      "elapsed_seconds": 0.7837331295013428,
+      "source_head": "fb5d7b5a0c4b92c8a282daac154e66fa6d361e64",
+      "source_tree": "d2010275a90ae6b6cb728344d5708057a79110cd"
+    },
+    {
+      "name": "derived-wire",
+      "argv": [
+        "/workspace/task-b-dist-work/derived-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "-c",
+        "/workspace/task-b-dist-work/outside/pytest.ini",
+        "--rootdir=/workspace/task-b-dist-work/outside",
+        "--confcutdir=/workspace/task-b-dist-work/outside",
+        "-o",
+        "junit_family=xunit1",
+        "tests/unit/test_context_wire_v5.py",
+        "tests/unit/test_context_dependencies.py",
+        "--junitxml=/workspace/task-b-dist-evidence/derived-wire.xml",
+        "--journal=/workspace/task-b-dist-evidence/derived-wire.jsonl",
+        "--basetemp=/workspace/task-b-dist-work/derived-wire-tmp"
+      ],
+      "cwd": "/workspace/task-b-dist-work/outside",
+      "exit_code": 0,
+      "started_epoch": 1792779876.2429647,
+      "elapsed_seconds": 17.41317129135132,
+      "source_head": "fb5d7b5a0c4b92c8a282daac154e66fa6d361e64",
+      "source_tree": "d2010275a90ae6b6cb728344d5708057a79110cd"
+    },
+    {
+      "name": "derived-doctor",
+      "argv": [
+        "/workspace/task-b-dist-work/derived-venv/bin/repo-catalog",
+        "doctor"
+      ],
+      "cwd": "/workspace/task-b-dist-work/outside",
+      "exit_code": 0,
+      "started_epoch": 1792779893.6641748,
+      "elapsed_seconds": 0.29561448097229004,
+      "source_head": "fb5d7b5a0c4b92c8a282daac154e66fa6d361e64",
+      "source_tree": "d2010275a90ae6b6cb728344d5708057a79110cd"
+    },
+    {
+      "name": "derived-measure-after",
+      "argv": [
+        "/workspace/task-b-dist-work/derived-venv/bin/python",
+        "/workspace/task-b-dist-work/outside/measure.py",
+        "/workspace/task-b-dist-evidence/derived-runtime-after.json"
+      ],
+      "cwd": "/workspace/task-b-dist-work/outside",
+      "exit_code": 0,
+      "started_epoch": 1792779893.9603732,
+      "elapsed_seconds": 0.2878725528717041,
+      "source_head": "fb5d7b5a0c4b92c8a282daac154e66fa6d361e64",
+      "source_tree": "d2010275a90ae6b6cb728344d5708057a79110cd"
+    }
+  ]
+}

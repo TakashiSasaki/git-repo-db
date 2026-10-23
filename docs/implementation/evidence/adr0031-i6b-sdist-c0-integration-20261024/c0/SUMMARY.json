@@ -1,0 +1,92 @@
+{
+  "validation": "Author integration C0 boundary verification, not independent acceptance",
+  "frozen_head": "fb5d7b5a0c4b92c8a282daac154e66fa6d361e64",
+  "frozen_tree": "d2010275a90ae6b6cb728344d5708057a79110cd",
+  "current_head_at_completion": "fb5d7b5a0c4b92c8a282daac154e66fa6d361e64",
+  "execution_inputs_unchanged_at_completion": true,
+  "emitter_source_sha256": "e5358d725e4c32ad290ecc0630fe2f31878f3de0ec6d9f1f42e003a89e6d09fa",
+  "source_case_observations": 10,
+  "fixed_case_observations": 5,
+  "exit_code": 0,
+  "fixed_cases": [
+    {
+      "target": 2097151,
+      "payload_bytes": 2095570,
+      "compressed_bytes": 2097151,
+      "expanded_bytes": 2096153,
+      "exit_code": 0,
+      "stdout_bytes": 3285724,
+      "stderr": "",
+      "zip_sha256": "5e313114e8c7f98f023e6cb949df052f8336e1fc0b0c73dd518b6b40b892f1af",
+      "artifact_inputs_unchanged": true
+    },
+    {
+      "target": 2097152,
+      "payload_bytes": 2095572,
+      "compressed_bytes": 2097152,
+      "expanded_bytes": 2096155,
+      "exit_code": 0,
+      "stdout_bytes": 3285724,
+      "stderr": "",
+      "zip_sha256": "331ac627302494fc3e04f51e8a10c9c1d7c5c6082c250321a861e8ab8c8b6f51",
+      "artifact_inputs_unchanged": true
+    },
+    {
+      "target": 2097153,
+      "payload_bytes": 2095572,
+      "compressed_bytes": 2097153,
+      "expanded_bytes": 2096155,
+      "exit_code": 1,
+      "stdout_bytes": 0,
+      "stderr": "CI receipt exceeds 2 MiB compressed; retrieve the uploaded GitHub Actions artifact\n",
+      "zip_sha256": "acf033b57e1731265adea03470815e825cf633524d5d8f6cdfedcc73c251232d",
+      "artifact_inputs_unchanged": true
+    },
+    {
+      "target": 2323560,
+      "payload_bytes": 2321910,
+      "compressed_bytes": 2323560,
+      "expanded_bytes": 2322493,
+      "exit_code": 1,
+      "stdout_bytes": 0,
+      "stderr": "CI receipt exceeds 2 MiB compressed; retrieve the uploaded GitHub Actions artifact\n",
+      "zip_sha256": "2324c8d88ed6350c2f221259e693373c0606d7158823b220942e040475ac372c",
+      "artifact_inputs_unchanged": true
+    },
+    {
+      "target": "expanded_over_limit",
+      "payload_bytes": 6120000,
+      "compressed_bytes": 18794,
+      "expanded_bytes": 6120583,
+      "exit_code": 0,
+      "stdout_bytes": 29625,
+      "stderr": "",
+      "zip_sha256": "7da382e2d7b91f5727b96ad05dbab6945a394d6dc6cd1491eac0529e3db2fa48",
+      "artifact_inputs_unchanged": true
+    }
+  ],
+  "direct_uninstrumented_control": {
+    "exit_code": 1,
+    "stdout_bytes": 0,
+    "stderr": "CI receipt exceeds 2 MiB compressed; retrieve the uploaded GitHub Actions artifact\n",
+    "input_unchanged": true
+  },
+  "local_receipt_checks": [
+    "archive.fp is None before observing body",
+    "real closed ZIP exact compressed byte lengths",
+    "CRC and unique all-deflated members; no ZIP comment padding",
+    "receipt-index exact names, lengths and SHA256",
+    "receipt-binding actual synthetic repository HEAD/tree and run identity",
+    "BEGIN and END SHA256 plus exact byte count; strict DATA/base64 reassembly",
+    "allowed artifact payloads exact bytes and excluded paths omitted",
+    "all artifact inputs unchanged before/after every invocation",
+    "overflow exit1, zero stdout records/bytes, uploaded Actions artifact fallback stderr"
+  ],
+  "scope_limits": [
+    "Only local synthetic receipt construction and emitter CLI executed",
+    "No actual hosted overflow/upload/download on this tree executed by this subagent",
+    "No timing benchmark or independent acceptance claim",
+    "No tests skipped/xfail, no product/source/workflow edits"
+  ],
+  "preflight_event": "Original9f005eb2 HEAD assertion failed before test invocation after parent final import-order commit; no boundary execution occurred. Retained initial-stale-head-preflight.txt; inputs reverified againstfb5d7b5a."
+}

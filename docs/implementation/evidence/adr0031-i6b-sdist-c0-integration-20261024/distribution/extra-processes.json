@@ -1,0 +1,618 @@
+[
+  {
+    "name": "direct-independent-collect",
+    "argv": [
+      "/workspace/task-b-dist-work/direct-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-s",
+      "--tb=long",
+      "-c",
+      "/workspace/task-b-dist-work/outside/pytest.ini",
+      "--rootdir=/workspace/task-b-dist-work/outside",
+      "--confcutdir=/workspace/task-b-dist-work/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_independent_wire.py",
+      "tests/unit/test_planner_independent.py",
+      "tests/unit/test_commit_boundary.py",
+      "--collect-only"
+    ],
+    "cwd": "/workspace/task-b-dist-work/outside",
+    "exit_code": 0,
+    "started_epoch": 1792779755.449735,
+    "elapsed_seconds": 1.0863089561462402
+  },
+  {
+    "name": "direct-independent",
+    "argv": [
+      "/workspace/task-b-dist-work/direct-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-s",
+      "--tb=long",
+      "-c",
+      "/workspace/task-b-dist-work/outside/pytest.ini",
+      "--rootdir=/workspace/task-b-dist-work/outside",
+      "--confcutdir=/workspace/task-b-dist-work/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_independent_wire.py",
+      "tests/unit/test_planner_independent.py",
+      "tests/unit/test_commit_boundary.py",
+      "--junitxml=/workspace/task-b-dist-evidence/direct-independent.xml",
+      "--journal=/workspace/task-b-dist-evidence/direct-independent.jsonl",
+      "--basetemp=/workspace/task-b-dist-work/direct-independent-tmp"
+    ],
+    "cwd": "/workspace/task-b-dist-work/outside",
+    "exit_code": 0,
+    "started_epoch": 1792779756.5364785,
+    "elapsed_seconds": 20.083054065704346
+  },
+  {
+    "name": "direct-independent-measure-after",
+    "argv": [
+      "/workspace/task-b-dist-work/direct-venv/bin/python",
+      "/workspace/task-b-dist-work/outside/measure.py",
+      "/workspace/task-b-dist-evidence/direct-independent-runtime-after.json"
+    ],
+    "cwd": "/workspace/task-b-dist-work/outside",
+    "exit_code": 0,
+    "started_epoch": 1792779776.6368062,
+    "elapsed_seconds": 0.441817045211792
+  },
+  {
+    "name": "direct-resolved-wire-collect",
+    "argv": [
+      "/workspace/task-b-dist-work/direct-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-s",
+      "--tb=long",
+      "-c",
+      "/workspace/task-b-dist-work/outside/pytest.ini",
+      "--rootdir=/workspace/task-b-dist-work/outside",
+      "--confcutdir=/workspace/task-b-dist-work/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_resolved_wire.py",
+      "--collect-only"
+    ],
+    "cwd": "/workspace/task-b-dist-work/outside",
+    "exit_code": 0,
+    "started_epoch": 1792779777.0791821,
+    "elapsed_seconds": 2.0448520183563232
+  },
+  {
+    "name": "direct-resolved-wire",
+    "argv": [
+      "/workspace/task-b-dist-work/direct-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-s",
+      "--tb=long",
+      "-c",
+      "/workspace/task-b-dist-work/outside/pytest.ini",
+      "--rootdir=/workspace/task-b-dist-work/outside",
+      "--confcutdir=/workspace/task-b-dist-work/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_resolved_wire.py",
+      "--junitxml=/workspace/task-b-dist-evidence/direct-resolved-wire.xml",
+      "--journal=/workspace/task-b-dist-evidence/direct-resolved-wire.jsonl",
+      "--basetemp=/workspace/task-b-dist-work/direct-resolved-wire-tmp"
+    ],
+    "cwd": "/workspace/task-b-dist-work/outside",
+    "exit_code": 0,
+    "started_epoch": 1792779779.124817,
+    "elapsed_seconds": 2.215532064437866
+  },
+  {
+    "name": "direct-resolved-wire-measure-after",
+    "argv": [
+      "/workspace/task-b-dist-work/direct-venv/bin/python",
+      "/workspace/task-b-dist-work/outside/measure.py",
+      "/workspace/task-b-dist-evidence/direct-resolved-wire-runtime-after.json"
+    ],
+    "cwd": "/workspace/task-b-dist-work/outside",
+    "exit_code": 0,
+    "started_epoch": 1792779781.3414986,
+    "elapsed_seconds": 0.721372127532959
+  },
+  {
+    "name": "direct-counterexamples-collect",
+    "argv": [
+      "/workspace/task-b-dist-work/direct-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-s",
+      "--tb=long",
+      "-c",
+      "/workspace/task-b-dist-work/outside/pytest.ini",
+      "--rootdir=/workspace/task-b-dist-work/outside",
+      "--confcutdir=/workspace/task-b-dist-work/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_digest_contract.py",
+      "tests/unit/test_planner_work_budget_contract.py",
+      "--collect-only"
+    ],
+    "cwd": "/workspace/task-b-dist-work/outside",
+    "exit_code": 0,
+    "started_epoch": 1792779782.0712786,
+    "elapsed_seconds": 2.454035758972168
+  },
+  {
+    "name": "direct-counterexamples",
+    "argv": [
+      "/workspace/task-b-dist-work/direct-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-s",
+      "--tb=long",
+      "-c",
+      "/workspace/task-b-dist-work/outside/pytest.ini",
+      "--rootdir=/workspace/task-b-dist-work/outside",
+      "--confcutdir=/workspace/task-b-dist-work/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_digest_contract.py",
+      "tests/unit/test_planner_work_budget_contract.py",
+      "--junitxml=/workspace/task-b-dist-evidence/direct-counterexamples.xml",
+      "--journal=/workspace/task-b-dist-evidence/direct-counterexamples.jsonl",
+      "--basetemp=/workspace/task-b-dist-work/direct-counterexamples-tmp"
+    ],
+    "cwd": "/workspace/task-b-dist-work/outside",
+    "exit_code": 0,
+    "started_epoch": 1792779784.5257986,
+    "elapsed_seconds": 4.083786487579346
+  },
+  {
+    "name": "direct-counterexamples-measure-after",
+    "argv": [
+      "/workspace/task-b-dist-work/direct-venv/bin/python",
+      "/workspace/task-b-dist-work/outside/measure.py",
+      "/workspace/task-b-dist-evidence/direct-counterexamples-runtime-after.json"
+    ],
+    "cwd": "/workspace/task-b-dist-work/outside",
+    "exit_code": 0,
+    "started_epoch": 1792779788.611659,
+    "elapsed_seconds": 0.34073901176452637
+  },
+  {
+    "name": "direct-author-extra-collect",
+    "argv": [
+      "/workspace/task-b-dist-work/direct-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-s",
+      "--tb=long",
+      "-c",
+      "/workspace/task-b-dist-work/outside/pytest.ini",
+      "--rootdir=/workspace/task-b-dist-work/outside",
+      "--confcutdir=/workspace/task-b-dist-work/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_i6b_extra.py",
+      "--collect-only"
+    ],
+    "cwd": "/workspace/task-b-dist-work/outside",
+    "exit_code": 0,
+    "started_epoch": 1792779788.9547126,
+    "elapsed_seconds": 1.085329532623291
+  },
+  {
+    "name": "direct-author-extra",
+    "argv": [
+      "/workspace/task-b-dist-work/direct-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-s",
+      "--tb=long",
+      "-c",
+      "/workspace/task-b-dist-work/outside/pytest.ini",
+      "--rootdir=/workspace/task-b-dist-work/outside",
+      "--confcutdir=/workspace/task-b-dist-work/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_i6b_extra.py",
+      "--junitxml=/workspace/task-b-dist-evidence/direct-author-extra.xml",
+      "--journal=/workspace/task-b-dist-evidence/direct-author-extra.jsonl",
+      "--basetemp=/workspace/task-b-dist-work/direct-author-extra-tmp"
+    ],
+    "cwd": "/workspace/task-b-dist-work/outside",
+    "exit_code": 0,
+    "started_epoch": 1792779790.0424736,
+    "elapsed_seconds": 2.4034385681152344
+  },
+  {
+    "name": "direct-author-extra-measure-after",
+    "argv": [
+      "/workspace/task-b-dist-work/direct-venv/bin/python",
+      "/workspace/task-b-dist-work/outside/measure.py",
+      "/workspace/task-b-dist-evidence/direct-author-extra-runtime-after.json"
+    ],
+    "cwd": "/workspace/task-b-dist-work/outside",
+    "exit_code": 0,
+    "started_epoch": 1792779792.4504168,
+    "elapsed_seconds": 0.22376370429992676
+  },
+  {
+    "name": "direct-new-regressions-collect",
+    "argv": [
+      "/workspace/task-b-dist-work/direct-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-s",
+      "--tb=long",
+      "-c",
+      "/workspace/task-b-dist-work/outside/pytest.ini",
+      "--rootdir=/workspace/task-b-dist-work/outside",
+      "--confcutdir=/workspace/task-b-dist-work/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_context_scan_budget.py",
+      "tests/unit/test_exchange_received_digest.py",
+      "--collect-only"
+    ],
+    "cwd": "/workspace/task-b-dist-work/outside",
+    "exit_code": 0,
+    "started_epoch": 1792779792.675068,
+    "elapsed_seconds": 0.9576961994171143
+  },
+  {
+    "name": "direct-new-regressions",
+    "argv": [
+      "/workspace/task-b-dist-work/direct-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-s",
+      "--tb=long",
+      "-c",
+      "/workspace/task-b-dist-work/outside/pytest.ini",
+      "--rootdir=/workspace/task-b-dist-work/outside",
+      "--confcutdir=/workspace/task-b-dist-work/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_context_scan_budget.py",
+      "tests/unit/test_exchange_received_digest.py",
+      "--junitxml=/workspace/task-b-dist-evidence/direct-new-regressions.xml",
+      "--journal=/workspace/task-b-dist-evidence/direct-new-regressions.jsonl",
+      "--basetemp=/workspace/task-b-dist-work/direct-new-regressions-tmp"
+    ],
+    "cwd": "/workspace/task-b-dist-work/outside",
+    "exit_code": 0,
+    "started_epoch": 1792779793.6336837,
+    "elapsed_seconds": 1.5629613399505615
+  },
+  {
+    "name": "direct-new-regressions-measure-after",
+    "argv": [
+      "/workspace/task-b-dist-work/direct-venv/bin/python",
+      "/workspace/task-b-dist-work/outside/measure.py",
+      "/workspace/task-b-dist-evidence/direct-new-regressions-runtime-after.json"
+    ],
+    "cwd": "/workspace/task-b-dist-work/outside",
+    "exit_code": 0,
+    "started_epoch": 1792779795.2020097,
+    "elapsed_seconds": 0.24998879432678223
+  },
+  {
+    "name": "derived-independent-collect",
+    "argv": [
+      "/workspace/task-b-dist-work/derived-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-s",
+      "--tb=long",
+      "-c",
+      "/workspace/task-b-dist-work/outside/pytest.ini",
+      "--rootdir=/workspace/task-b-dist-work/outside",
+      "--confcutdir=/workspace/task-b-dist-work/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_independent_wire.py",
+      "tests/unit/test_planner_independent.py",
+      "tests/unit/test_commit_boundary.py",
+      "--collect-only"
+    ],
+    "cwd": "/workspace/task-b-dist-work/outside",
+    "exit_code": 0,
+    "started_epoch": 1792779795.452884,
+    "elapsed_seconds": 1.4130048751831055
+  },
+  {
+    "name": "derived-independent",
+    "argv": [
+      "/workspace/task-b-dist-work/derived-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-s",
+      "--tb=long",
+      "-c",
+      "/workspace/task-b-dist-work/outside/pytest.ini",
+      "--rootdir=/workspace/task-b-dist-work/outside",
+      "--confcutdir=/workspace/task-b-dist-work/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_independent_wire.py",
+      "tests/unit/test_planner_independent.py",
+      "tests/unit/test_commit_boundary.py",
+      "--junitxml=/workspace/task-b-dist-evidence/derived-independent.xml",
+      "--journal=/workspace/task-b-dist-evidence/derived-independent.jsonl",
+      "--basetemp=/workspace/task-b-dist-work/derived-independent-tmp"
+    ],
+    "cwd": "/workspace/task-b-dist-work/outside",
+    "exit_code": 0,
+    "started_epoch": 1792779796.8665085,
+    "elapsed_seconds": 11.326316118240356
+  },
+  {
+    "name": "derived-independent-measure-after",
+    "argv": [
+      "/workspace/task-b-dist-work/derived-venv/bin/python",
+      "/workspace/task-b-dist-work/outside/measure.py",
+      "/workspace/task-b-dist-evidence/derived-independent-runtime-after.json"
+    ],
+    "cwd": "/workspace/task-b-dist-work/outside",
+    "exit_code": 0,
+    "started_epoch": 1792779808.2237172,
+    "elapsed_seconds": 0.4461972713470459
+  },
+  {
+    "name": "derived-resolved-wire-collect",
+    "argv": [
+      "/workspace/task-b-dist-work/derived-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-s",
+      "--tb=long",
+      "-c",
+      "/workspace/task-b-dist-work/outside/pytest.ini",
+      "--rootdir=/workspace/task-b-dist-work/outside",
+      "--confcutdir=/workspace/task-b-dist-work/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_resolved_wire.py",
+      "--collect-only"
+    ],
+    "cwd": "/workspace/task-b-dist-work/outside",
+    "exit_code": 0,
+    "started_epoch": 1792779808.6720378,
+    "elapsed_seconds": 1.6375906467437744
+  },
+  {
+    "name": "derived-resolved-wire",
+    "argv": [
+      "/workspace/task-b-dist-work/derived-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-s",
+      "--tb=long",
+      "-c",
+      "/workspace/task-b-dist-work/outside/pytest.ini",
+      "--rootdir=/workspace/task-b-dist-work/outside",
+      "--confcutdir=/workspace/task-b-dist-work/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_resolved_wire.py",
+      "--junitxml=/workspace/task-b-dist-evidence/derived-resolved-wire.xml",
+      "--journal=/workspace/task-b-dist-evidence/derived-resolved-wire.jsonl",
+      "--basetemp=/workspace/task-b-dist-work/derived-resolved-wire-tmp"
+    ],
+    "cwd": "/workspace/task-b-dist-work/outside",
+    "exit_code": 0,
+    "started_epoch": 1792779810.3105426,
+    "elapsed_seconds": 1.5277304649353027
+  },
+  {
+    "name": "derived-resolved-wire-measure-after",
+    "argv": [
+      "/workspace/task-b-dist-work/derived-venv/bin/python",
+      "/workspace/task-b-dist-work/outside/measure.py",
+      "/workspace/task-b-dist-evidence/derived-resolved-wire-runtime-after.json"
+    ],
+    "cwd": "/workspace/task-b-dist-work/outside",
+    "exit_code": 0,
+    "started_epoch": 1792779811.8396926,
+    "elapsed_seconds": 0.3093903064727783
+  },
+  {
+    "name": "derived-counterexamples-collect",
+    "argv": [
+      "/workspace/task-b-dist-work/derived-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-s",
+      "--tb=long",
+      "-c",
+      "/workspace/task-b-dist-work/outside/pytest.ini",
+      "--rootdir=/workspace/task-b-dist-work/outside",
+      "--confcutdir=/workspace/task-b-dist-work/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_digest_contract.py",
+      "tests/unit/test_planner_work_budget_contract.py",
+      "--collect-only"
+    ],
+    "cwd": "/workspace/task-b-dist-work/outside",
+    "exit_code": 0,
+    "started_epoch": 1792779812.1509678,
+    "elapsed_seconds": 1.2682318687438965
+  },
+  {
+    "name": "derived-counterexamples",
+    "argv": [
+      "/workspace/task-b-dist-work/derived-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-s",
+      "--tb=long",
+      "-c",
+      "/workspace/task-b-dist-work/outside/pytest.ini",
+      "--rootdir=/workspace/task-b-dist-work/outside",
+      "--confcutdir=/workspace/task-b-dist-work/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_digest_contract.py",
+      "tests/unit/test_planner_work_budget_contract.py",
+      "--junitxml=/workspace/task-b-dist-evidence/derived-counterexamples.xml",
+      "--journal=/workspace/task-b-dist-evidence/derived-counterexamples.jsonl",
+      "--basetemp=/workspace/task-b-dist-work/derived-counterexamples-tmp"
+    ],
+    "cwd": "/workspace/task-b-dist-work/outside",
+    "exit_code": 0,
+    "started_epoch": 1792779813.420687,
+    "elapsed_seconds": 3.411832571029663
+  },
+  {
+    "name": "derived-counterexamples-measure-after",
+    "argv": [
+      "/workspace/task-b-dist-work/derived-venv/bin/python",
+      "/workspace/task-b-dist-work/outside/measure.py",
+      "/workspace/task-b-dist-evidence/derived-counterexamples-runtime-after.json"
+    ],
+    "cwd": "/workspace/task-b-dist-work/outside",
+    "exit_code": 0,
+    "started_epoch": 1792779816.8355055,
+    "elapsed_seconds": 0.20734715461730957
+  },
+  {
+    "name": "derived-author-extra-collect",
+    "argv": [
+      "/workspace/task-b-dist-work/derived-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-s",
+      "--tb=long",
+      "-c",
+      "/workspace/task-b-dist-work/outside/pytest.ini",
+      "--rootdir=/workspace/task-b-dist-work/outside",
+      "--confcutdir=/workspace/task-b-dist-work/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_i6b_extra.py",
+      "--collect-only"
+    ],
+    "cwd": "/workspace/task-b-dist-work/outside",
+    "exit_code": 0,
+    "started_epoch": 1792779817.0483003,
+    "elapsed_seconds": 1.1384711265563965
+  },
+  {
+    "name": "derived-author-extra",
+    "argv": [
+      "/workspace/task-b-dist-work/derived-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-s",
+      "--tb=long",
+      "-c",
+      "/workspace/task-b-dist-work/outside/pytest.ini",
+      "--rootdir=/workspace/task-b-dist-work/outside",
+      "--confcutdir=/workspace/task-b-dist-work/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_i6b_extra.py",
+      "--junitxml=/workspace/task-b-dist-evidence/derived-author-extra.xml",
+      "--journal=/workspace/task-b-dist-evidence/derived-author-extra.jsonl",
+      "--basetemp=/workspace/task-b-dist-work/derived-author-extra-tmp"
+    ],
+    "cwd": "/workspace/task-b-dist-work/outside",
+    "exit_code": 0,
+    "started_epoch": 1792779818.1877527,
+    "elapsed_seconds": 1.8930814266204834
+  },
+  {
+    "name": "derived-author-extra-measure-after",
+    "argv": [
+      "/workspace/task-b-dist-work/derived-venv/bin/python",
+      "/workspace/task-b-dist-work/outside/measure.py",
+      "/workspace/task-b-dist-evidence/derived-author-extra-runtime-after.json"
+    ],
+    "cwd": "/workspace/task-b-dist-work/outside",
+    "exit_code": 0,
+    "started_epoch": 1792779820.0861232,
+    "elapsed_seconds": 0.24099302291870117
+  },
+  {
+    "name": "derived-new-regressions-collect",
+    "argv": [
+      "/workspace/task-b-dist-work/derived-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-s",
+      "--tb=long",
+      "-c",
+      "/workspace/task-b-dist-work/outside/pytest.ini",
+      "--rootdir=/workspace/task-b-dist-work/outside",
+      "--confcutdir=/workspace/task-b-dist-work/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_context_scan_budget.py",
+      "tests/unit/test_exchange_received_digest.py",
+      "--collect-only"
+    ],
+    "cwd": "/workspace/task-b-dist-work/outside",
+    "exit_code": 0,
+    "started_epoch": 1792779820.3283417,
+    "elapsed_seconds": 1.2406160831451416
+  },
+  {
+    "name": "derived-new-regressions",
+    "argv": [
+      "/workspace/task-b-dist-work/derived-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-s",
+      "--tb=long",
+      "-c",
+      "/workspace/task-b-dist-work/outside/pytest.ini",
+      "--rootdir=/workspace/task-b-dist-work/outside",
+      "--confcutdir=/workspace/task-b-dist-work/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_context_scan_budget.py",
+      "tests/unit/test_exchange_received_digest.py",
+      "--junitxml=/workspace/task-b-dist-evidence/derived-new-regressions.xml",
+      "--journal=/workspace/task-b-dist-evidence/derived-new-regressions.jsonl",
+      "--basetemp=/workspace/task-b-dist-work/derived-new-regressions-tmp"
+    ],
+    "cwd": "/workspace/task-b-dist-work/outside",
+    "exit_code": 0,
+    "started_epoch": 1792779821.5699112,
+    "elapsed_seconds": 2.469404935836792
+  },
+  {
+    "name": "derived-new-regressions-measure-after",
+    "argv": [
+      "/workspace/task-b-dist-work/derived-venv/bin/python",
+      "/workspace/task-b-dist-work/outside/measure.py",
+      "/workspace/task-b-dist-evidence/derived-new-regressions-runtime-after.json"
+    ],
+    "cwd": "/workspace/task-b-dist-work/outside",
+    "exit_code": 0,
+    "started_epoch": 1792779824.0512834,
+    "elapsed_seconds": 0.2982149124145508
+  }
+]

@@ -1,0 +1,5 @@
+..............................{"max_work": 0, "actual_work": 1, "embedded_parse_calls": 0, "embedded_text_characters_parsed": 0, "input_rows": 1001}
+.{"max_work": 1, "actual_work": 2, "embedded_parse_calls": 0, "embedded_text_characters_parsed": 0, "input_rows": 1001}
+.{"max_work": 17, "actual_work": 18, "embedded_parse_calls": 0, "embedded_text_characters_parsed": 0, "input_rows": 1001}
+.
+33 passed in 2.51s

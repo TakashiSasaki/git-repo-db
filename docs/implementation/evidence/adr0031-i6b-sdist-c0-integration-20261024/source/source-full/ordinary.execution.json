@@ -1,0 +1,64 @@
+{
+  "command": [
+    "/workspace/task-b-integration/.venv/bin/python",
+    "-m",
+    "pytest",
+    "-c",
+    "/workspace/task-b-integration/pyproject.toml",
+    "-p",
+    "broad_receipt",
+    "-p",
+    "no:cacheprovider",
+    "--basetemp=/workspace/task-b-run/source-full-temp",
+    "--tb=long",
+    "-q",
+    "-o",
+    "addopts=--strict-markers",
+    "-o",
+    "junit_family=xunit1",
+    "@/workspace/task-b-run/source-full/ordinary.selected.txt",
+    "--junitxml=/workspace/task-b-run/source-full/ordinary.xml",
+    "--journal=/workspace/task-b-run/source-full/ordinary.jsonl",
+    "-n",
+    "4",
+    "--dist",
+    "worksteal"
+  ],
+  "cwd": "/workspace/task-b-integration",
+  "started_epoch": 1792779553.157119,
+  "elapsed_seconds": 1362.421,
+  "exit_code": 1,
+  "collected": 6497,
+  "passed": 6198,
+  "failed": 279,
+  "error": 20,
+  "skipped": 0,
+  "xfail": 0,
+  "xpass": 0,
+  "executed": 6497,
+  "reconciliation": {
+    "checks": {
+      "selected_unique": true,
+      "selected_equals_junit": true,
+      "selected_equals_journal_starts": true,
+      "setup_and_teardown_once": true,
+      "no_duplicate_phases": false,
+      "phase_nodes_equal_selected": true,
+      "call_once_after_successful_setup": false,
+      "one_finish": true
+    },
+    "consistent_node_execution": false,
+    "journal_phase_outcomes": {
+      "passed": 19229,
+      "failed": 299
+    },
+    "finishes": [
+      {
+        "event": "finish",
+        "status": "failed",
+        "exitstatus": 1,
+        "timestamp": 1792780914.377219
+      }
+    ]
+  }
+}

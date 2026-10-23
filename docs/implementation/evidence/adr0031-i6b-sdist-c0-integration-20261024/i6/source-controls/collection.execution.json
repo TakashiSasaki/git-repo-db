@@ -1,0 +1,21 @@
+{
+  "command": [
+    "/workspace/task-b-i6-checkout/.venv/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "--collect-only",
+    "-o",
+    "addopts=",
+    "tests/unit/test_transfer_originals.py",
+    "tests/integration/i6a",
+    "tests/unit/test_context_fences_i6a.py",
+    "tests/unit/test_context_oid_admission_i6a.py"
+  ],
+  "cwd": "/workspace/task-b-i6-checkout",
+  "started_epoch": 1792779701.5136573,
+  "elapsed_seconds": 2.218,
+  "exit_code": 0,
+  "collected": 202,
+  "duplicates": 0
+}

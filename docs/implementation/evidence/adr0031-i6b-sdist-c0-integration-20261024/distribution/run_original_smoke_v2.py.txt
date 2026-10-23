@@ -1,0 +1,59 @@
+from pathlib import Path
+import ast,hashlib,json,os,shutil,subprocess,sys,time
+ROOT=Path('/workspace/task-b-dist-checkout');WORK=Path('/workspace/task-b-dist-work');OUT=Path('/workspace/task-b-dist-evidence');SRC=ROOT;WH=Path('/workspace/task-b-wheelhouse');outside=WORK/'outside';records=[]
+def sha(p):return hashlib.sha256(Path(p).read_bytes()).hexdigest()
+def write(p,v):Path(p).write_text(json.dumps(v,indent=2,ensure_ascii=False,default=str)+'\n')
+def run(name,args,env,cwd=outside):
+ start=time.time()
+ with (OUT/(name+'.log')).open('w') as f:p=subprocess.run(list(map(str,args)),cwd=cwd,env=env,stdout=f,stderr=subprocess.STDOUT)
+ r={'name':name,'argv':list(map(str,args)),'cwd':str(cwd),'exit_code':p.returncode,'started_epoch':start,'elapsed_seconds':time.time()-start};records.append(r);write(OUT/'smoke-v2-processes.json',records);print(name,p.returncode,flush=True);return p.returncode
+sys.path.insert(0,str(ROOT));from scripts import verify_i5_offline as evidence
+manifest=json.loads((WH/'manifest.json').read_text());artifacts=json.loads((OUT/'artifacts.json').read_text());results={}
+def env_for(venv,name):
+ env=dict(os.environ,PATH=str(venv/'bin')+os.pathsep+os.environ['PATH'],TMPDIR=str(WORK),PYTHONPATH=str(outside/'tests/support/network_guard'),GIT_ALLOW_PROTOCOL='file',I6B_DIST_IMPORTS=str(OUT/(name+'-imports.json')),WIRE_REFUSALS=str(OUT/(name+'-wire-refusals.jsonl')),I6B_ADMISSION_OBSERVATIONS=str(OUT/(name+'-admission-observations.json')),UV_CACHE_DIR='/workspace/task-b-run/uv-cache')
+ for k in ['GH_TOKEN','GITHUB_TOKEN','PYTHONHOME']:env.pop(k,None)
+ return env
+def lane(form,name,py,targets,env):
+ args=[py,'-m','pytest','-q','--tb=short','-c',outside/'pytest.ini','--rootdir='+str(outside),'--confcutdir='+str(outside),'-o','junit_family=xunit1',*targets]
+ c=run(name+'-collect',args+['--collect-only'],env);assert c==0
+ nodes=evidence.nodes(OUT/(name+'-collect.log'));(OUT/(name+'-selected.txt')).write_text('\n'.join(nodes)+'\n');xml=OUT/(name+'.xml');journal=OUT/(name+'.jsonl');code=run(name,args+['--junitxml='+str(xml),'--journal='+str(journal),'--basetemp='+str(WORK/(name+'-tmp'))],env)
+ result={'exit_code':code,'collected':len(nodes),**evidence.outcomes(xml),'reconciliation':evidence.reconciliation(nodes,xml,journal)};write(OUT/(name+'-execution.json'),result);return result
+smoke=next(ast.literal_eval(n.value) for n in ast.parse((SRC/'scripts/verify_access_distribution.py').read_text()).body if isinstance(n,ast.Assign) and any(isinstance(t,ast.Name) and t.id=='SMOKE' for t in n.targets));smokefile=outside/'original_access_smoke.py';smokefile.write_text(smoke);(OUT/'original-access-smoke.py.txt').write_text(smoke)
+launcher=outside/'launch_original_smoke.py';launcher.write_text('''from pathlib import Path
+import hashlib,json,os,runpy,sqlite3,sys,traceback,repo_catalog
+smoke=Path(os.environ['I6B_SMOKE']).resolve();trace=[]
+root=Path(repo_catalog.__file__).resolve().parent;assert root.is_relative_to(Path(sys.prefix).resolve())
+runpy.run_path(os.environ['I6B_GUARD'])
+def observer(frame,event,arg):
+ if frame.f_code.co_filename != str(smoke):return None
+ if event=='line':trace.append(frame.f_lineno)
+ return observer
+result={'python':sys.executable,'origin':str(root),'sqlite':sqlite3.connect(':memory:').execute('select sqlite_version(),sqlite_source_id()').fetchone()}
+try:
+ sys.settrace(observer);runpy.run_path(str(smoke),run_name='__main__')
+except BaseException as error:
+ result.update(exception=type(error).__module__+'.'+type(error).__name__,message=str(error),code=getattr(error,'code',None),traceback=traceback.format_exc());raise
+finally:
+ sys.settrace(None);result['executed_smoke_lines']=trace;Path(os.environ['I6B_SMOKE_RESULT']).write_text(json.dumps(result,indent=2,default=str)+'\\n')
+''');shutil.copy2(launcher,OUT/'launch_original_smoke_v2.py.txt')
+wrapper=outside/'tests/unit/test_original_access_smoke_independent.py';wrapper.write_text('''import json,os,subprocess,sys
+from pathlib import Path
+
+def test_original_access_smoke_unchanged():
+ command=[sys.executable,'-I',os.environ['I6B_SMOKE_LAUNCHER']]
+ with Path(os.environ['I6B_SMOKE_LOG']).open('w') as f:p=subprocess.run(command,stdout=f,stderr=subprocess.STDOUT)
+ Path(os.environ['I6B_SMOKE_PROCESS']).write_text(json.dumps({'argv':command,'exit_code':p.returncode},indent=2)+'\\n')
+ assert p.returncode==0,'Original Access smoke failed; actual child result and unexecuted tail retained'
+''');shutil.copy2(wrapper,OUT/'test_original_access_smoke_independent.py.txt')
+write(OUT/'original-smoke-v2-inputs.json',{'original_script_sha256':sha(SRC/'scripts/verify_access_distribution.py'),'original_smoke_sha256':sha(smokefile),'same_literal':smokefile.read_text()==smoke,'launcher_sha256':sha(launcher),'wrapper_sha256':sha(wrapper),'fixture_authority_sha256':sha(outside/'tests/support/context_admission.py'),'network_guard_sha256':sha(outside/'tests/support/network_guard/sitecustomize.py')})
+needed={'pytest','pluggy','packaging','iniconfig','pygments','jsonschema','attrs','jsonschema-specifications','referencing','rpds-py','typing-extensions'}
+for form in ['direct','derived']:
+ name=form+'-original-smoke-v2';venv=WORK/(form+'-minimal-venv');env=env_for(venv,name);assert run(name+'-venv',[sys.executable,'-m','venv','--without-pip',venv],env)==0;py=venv/'bin/python';artifact=Path(artifacts[form]['path']);selected=[w for w in manifest['wheels'] if w['name'] in needed];assert {w['name'] for w in selected}==needed
+ req=OUT/(name+'-requirements.txt');req.write_text(f'repo-catalog @ {artifact.as_uri()} --hash=sha256:{sha(artifact)}\n'+''.join(f"{w['name']} @ {(WH/w['file']).as_uri()} --hash=sha256:{w['sha256']}\n" for w in selected));assert run(name+'-install',['uv','pip','install','--python',py,'--offline','--no-index','--no-deps','--require-hashes','-r',req],env)==0
+ env.update(I6B_SMOKE=str(smokefile),I6B_SMOKE_LAUNCHER=str(launcher),I6B_SMOKE_LOG=str(OUT/(name+'-child.log')),I6B_SMOKE_PROCESS=str(OUT/(name+'-child-process.json')),I6B_SMOKE_RESULT=str(OUT/(name+'-child-result.json')),I6B_GUARD=str(outside/'tests/support/network_guard/sitecustomize.py'),REPO_CATALOG_SMOKE_AUTHORITY=str(outside/'tests/support/context_admission.py'))
+ assert run(name+'-measure-before',[py,outside/'measure.py',OUT/(name+'-runtime-before.json')],env)==0
+ results[name]=lane(form,name,py,[str(wrapper.relative_to(outside))],env)
+ assert run(name+'-measure-after',[py,outside/'measure.py',OUT/(name+'-runtime-after.json')],env)==0
+ child=json.loads((OUT/(name+'-child-result.json')).read_text());executed=set(child['executed_smoke_lines']); assertions=[{'line':n.lineno,'expression':ast.unparse(n.test),'reached':n.lineno in executed} for n in ast.walk(ast.parse(smoke)) if isinstance(n,ast.Assert)];write(OUT/(name+'-assertion-reach.json'),{'assertions':sorted(assertions,key=lambda x:x['line']),'exception':child.get('exception'),'code':child.get('code'),'actual_child_exit':json.loads((OUT/(name+'-child-process.json')).read_text())['exit_code'],'scope':'line-traced original smoke only; no claim of later assertion reach'})
+write(OUT/'smoke-v2-summary.json',{'results':results,'processes':records,'scope':'Author integration fresh replay of unchanged original Access smoke via attributed corrected inherited trace harness; separate failures remain failures'})
+shutil.copyfile(__file__,OUT/'run_original_smoke_v2.py.txt')

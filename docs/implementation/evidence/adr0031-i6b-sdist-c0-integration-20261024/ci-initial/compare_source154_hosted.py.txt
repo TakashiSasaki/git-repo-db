@@ -1,0 +1,42 @@
+"""Compare actual hosted JUnit with retained source154 evidence, without inferred sidecars."""
+import collections,gzip,hashlib,json,pathlib,re,xml.etree.ElementTree as ET,zipfile
+R=pathlib.Path('/workspace/task-b-integration');O=pathlib.Path('/workspace/task-b-ci-initial');S=R/'docs/implementation/evidence/adr0031-i6b-rereview-20261023/broad/source-full';Z=zipfile.ZipFile(O/'access-verified.zip')
+def sha(b):return hashlib.sha256(b).hexdigest()
+def identity(node):
+ before,bracket,after=node.partition('[');p=before.split('::');return '.'.join([p[0].removesuffix('.py').replace('/','.'),*p[1:-1]]),p[-1]+bracket+after
+
+def failures(raw):
+ out={}
+ for c in ET.fromstring(raw).iter('testcase'):
+  f=c.find('failure');f=f if f is not None else c.find('error')
+  if f is None:continue
+  key=(c.get('classname'),c.get('name'));assert key not in out
+  msg=f.get('message','');phase='call' if f.tag=='failure' else 'setup' if msg.startswith('failed on setup') else 'unresolved-error-phase'
+  out[key]={'phase':phase,'outcome':f.tag,'message':msg,'traceback':f.text or ''}
+ return out
+
+def frames(text):
+ out=[]
+ for line in text.splitlines():
+  m=re.match(r'(?P<path>(?:tests|src|scripts)/[^:]+\.py):(?P<line>\d+):(?: in (?P<function>.*))?',line)
+  if m:out.append((m['path'],int(m['line']),m['function']))
+ return out
+srcraw=gzip.decompress((S/'ordinary.xml.gz').read_bytes());src=failures(srcraw);actual={}
+for p in S.glob('gw*.reports.jsonl.gz'):
+ for line in gzip.decompress(p.read_bytes()).decode().splitlines():
+  d=json.loads(line)
+  if d.get('event')=='report' and d.get('outcome')=='failed':
+   key=identity(d['nodeid']);assert key not in actual;actual[key]=d
+assert set(actual)==set(src) and len(src)==299
+codes={d.get('code') for d in actual.values()}-{None};entries=[];results={}
+for label,path in [('main','artifacts/access-registry/tests.xml'),('i5-broad','artifacts/access-registry/i5/regressions.xml')]:
+ raw=Z.read(path);host=failures(raw);stats=collections.Counter()
+ for key in sorted(set(src)&set(host)):
+  a,b=src[key],host[key];sourcecodes=sorted(c for c in codes if re.search(r'\b'+re.escape(c)+r'\b',actual[key].get('message','')));hostcodes=sorted(c for c in codes if re.search(r'\b'+re.escape(c)+r'\b',b['message']));code=actual[key].get('code')
+  same={'phase':a['phase']==b['phase'],'outcome':a['outcome']==b['outcome'],'message_first_line':a['message'].splitlines()[0]==b['message'].splitlines()[0],'full_message':a['message']==b['message'],'source_typed_code_present_in_hosted_rendered_message':code is None or code in hostcodes,'refusal_token_sets':sourcecodes==hostcodes,'raw_traceback_text':a['traceback']==b['traceback'],'rendered_project_frame_projection':frames(a['traceback'])==frames(b['traceback'])}
+  stats.update(k for k,v in same.items() if v);entries.append({'lane':label,'identity':key,'source':a,'hosted':b,'source_actual_exception':actual[key],'equality':same,'limits':'No hosted actual ExceptionInfo frames or reached-assertion sidecars were emitted.'})
+ results[label]={'source_non_successes':len(src),'hosted_non_successes':len(host),'missing':sorted(set(src)-set(host)),'new':sorted(set(host)-set(src)),'equal_counts':dict(stats),'source_junit_uncompressed_sha256':sha(srcraw),'hosted_junit_sha256':sha(raw)}
+summary={'scope':'Retained source6344/6045pass/279fail/20error from published154 review evidence versus THIS initial hosted candidate. Root fresh source6497 execution is separate and still pending at this comparison.','source_execution':json.loads((S/'ordinary.execution.json').read_text()),'lanes':results,'limits':'Hosted JUnit rendered trace/message comparison cannot establish actual hosted frame-function or reached-assertion equality. Source sidecars are actual, hosted sidecars absent. No independent acceptance inferred.'}
+(O/'source154-hosted-comparison.json').write_text(json.dumps(summary,indent=2)+'\n')
+with gzip.GzipFile(filename=str(O/'source154-hosted-entries.json.gz'),mode='wb',mtime=0) as f:f.write(json.dumps(entries,indent=2).encode())
+print(json.dumps(results,indent=2))

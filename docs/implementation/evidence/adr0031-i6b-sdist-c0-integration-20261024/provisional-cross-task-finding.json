@@ -1,0 +1,10 @@
+{
+  "source": "Parent cross-task handoff during task B",
+  "observation": "Task A reports a new budget test found queue allocation could occur after remaining work budget exhausted",
+  "applicability_to_frozen_tree": "provisional; not established or reproduced in Task B",
+  "task_a_changes_imported": false,
+  "task_a_new_test_imported": false,
+  "classification": "possible inherited scanner limitation, distinct from measured integration-induced regressions",
+  "next_gate": "independent review and next integration checkpoint: exact counterexample baseline/candidate/reviewed-I6C comparison",
+  "verified_defect_in_fixed_tree_claimed": false
+}

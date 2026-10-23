@@ -1,0 +1,496 @@
+{
+  "head": "fb5d7b5a0c4b92c8a282daac154e66fa6d361e64",
+  "tree": "d2010275a90ae6b6cb728344d5708057a79110cd",
+  "src": {
+    "input_files": 160,
+    "missing": [],
+    "changed": []
+  },
+  "accepted_adrs": {
+    "154": {
+      "docs/adr/0011-adr-governance.md": {
+        "input_blob": "63389c2e10e39beac5dfc90846edba30fdc4ca6a",
+        "final_blob": "63389c2e10e39beac5dfc90846edba30fdc4ca6a",
+        "equal": true
+      },
+      "docs/adr/0014-history-and-notes-catalog-without-file-archive.md": {
+        "input_blob": "f81983d632ed6ad53ea36646ae76def46d0162f4",
+        "final_blob": "f81983d632ed6ad53ea36646ae76def46d0162f4",
+        "equal": true
+      },
+      "docs/adr/0015-automatic-git-notes-ref-discovery.md": {
+        "input_blob": "a0fc165b7656c119d2c3e4e06adddc82cd42a8c0",
+        "final_blob": "a0fc165b7656c119d2c3e4e06adddc82cd42a8c0",
+        "equal": true
+      },
+      "docs/adr/0016-immutable-notes-ref-capture-observations.md": {
+        "input_blob": "e5e7ebf8c6809c1926c9f94aaec54faa2957b5cf",
+        "final_blob": "e5e7ebf8c6809c1926c9f94aaec54faa2957b5cf",
+        "equal": true
+      },
+      "docs/adr/0017-domain-keys-without-storage-surrogates.md": {
+        "input_blob": "b8220256c7a814c2c89809b5c90ada538e2f9ae3",
+        "final_blob": "b8220256c7a814c2c89809b5c90ada538e2f9ae3",
+        "equal": true
+      },
+      "docs/adr/0018-notes-capture-uuidv4-composite-identity.md": {
+        "input_blob": "a041599edb1c3341d8373126cd18172b408624e8",
+        "final_blob": "a041599edb1c3341d8373126cd18172b408624e8",
+        "equal": true
+      },
+      "docs/adr/0019-monotonic-notes-capture-fact-admission.md": {
+        "input_blob": "9c53e7c6089606cfa31d718508e84f3a97f50810",
+        "final_blob": "9c53e7c6089606cfa31d718508e84f3a97f50810",
+        "equal": true
+      },
+      "docs/adr/0020-immutable-competing-notes-member-claims.md": {
+        "input_blob": "ca8fa59c097161947727fd86550831914bb6f7cf",
+        "final_blob": "ca8fa59c097161947727fd86550831914bb6f7cf",
+        "equal": true
+      },
+      "docs/adr/0021-direct-semantic-notes-claim-group-keys.md": {
+        "input_blob": "488bdf06ff52a4536696493ad898add0d9003b58",
+        "final_blob": "488bdf06ff52a4536696493ad898add0d9003b58",
+        "equal": true
+      },
+      "docs/adr/0022-receiver-verified-notes-role-admission.md": {
+        "input_blob": "6ec07807909bcdc209b6b8b36207918af89434a1",
+        "final_blob": "6ec07807909bcdc209b6b8b36207918af89434a1",
+        "equal": true
+      },
+      "docs/adr/0023-configurable-finite-notes-resource-budgets.md": {
+        "input_blob": "25bffe6187c704268b6780e6a9701e9cbdbd3999",
+        "final_blob": "25bffe6187c704268b6780e6a9701e9cbdbd3999",
+        "equal": true
+      },
+      "docs/adr/0024-actual-notes-resource-work-accounting.md": {
+        "input_blob": "82b89f84bd9f801b3257f0be7dcd95dfc37ecb28",
+        "final_blob": "82b89f84bd9f801b3257f0be7dcd95dfc37ecb28",
+        "equal": true
+      },
+      "docs/adr/0025-cumulative-request-budgets-and-scoped-blockers.md": {
+        "input_blob": "a87b518b4f36c30c217470044056b22e2493d711",
+        "final_blob": "a87b518b4f36c30c217470044056b22e2493d711",
+        "equal": true
+      },
+      "docs/adr/0026-stop-salvage-restore-merge-after-corruption.md": {
+        "input_blob": "4e9dfa324e45e764d7d1fd7de8dc79f9ea0b846f",
+        "final_blob": "4e9dfa324e45e764d7d1fd7de8dc79f9ea0b846f",
+        "equal": true
+      },
+      "docs/adr/0027-unauthenticated-external-capture-origin-reports.md": {
+        "input_blob": "54392224568502ea64c7266f5fab86e8a4a4e9d0",
+        "final_blob": "54392224568502ea64c7266f5fab86e8a4a4e9d0",
+        "equal": true
+      },
+      "docs/adr/0028-classified-times-and-sha256-exchange.md": {
+        "input_blob": "5a46b1fdf7cb6f3e9eb945448155b04e70c059c4",
+        "final_blob": "5a46b1fdf7cb6f3e9eb945448155b04e70c059c4",
+        "equal": true
+      },
+      "docs/adr/0029-independent-access-store.md": {
+        "input_blob": "6f0ac347d46b803634d1e580c85809619a255c06",
+        "final_blob": "6f0ac347d46b803634d1e580c85809619a255c06",
+        "equal": true
+      },
+      "docs/adr/0030-context-repository-relations-and-selective-exchange.md": {
+        "input_blob": "4c64785ded3c55f47c484fc1aaa554b274fda9fe",
+        "final_blob": "4c64785ded3c55f47c484fc1aaa554b274fda9fe",
+        "equal": true
+      },
+      "docs/adr/0031-generalized-context-resources.md": {
+        "input_blob": "17ad5b883de78d6bdb7b726bf0339da0c878bc5f",
+        "final_blob": "17ad5b883de78d6bdb7b726bf0339da0c878bc5f",
+        "equal": true
+      },
+      "docs/adr/0032-environment-sqlite-validation.md": {
+        "input_blob": "37c8436da5119bd303d62bc5306eabb8803d4890",
+        "final_blob": "37c8436da5119bd303d62bc5306eabb8803d4890",
+        "equal": true
+      }
+    },
+    "144": {
+      "docs/adr/0011-adr-governance.md": {
+        "input_blob": "63389c2e10e39beac5dfc90846edba30fdc4ca6a",
+        "final_blob": "63389c2e10e39beac5dfc90846edba30fdc4ca6a",
+        "equal": true
+      },
+      "docs/adr/0014-history-and-notes-catalog-without-file-archive.md": {
+        "input_blob": "f81983d632ed6ad53ea36646ae76def46d0162f4",
+        "final_blob": "f81983d632ed6ad53ea36646ae76def46d0162f4",
+        "equal": true
+      },
+      "docs/adr/0015-automatic-git-notes-ref-discovery.md": {
+        "input_blob": "a0fc165b7656c119d2c3e4e06adddc82cd42a8c0",
+        "final_blob": "a0fc165b7656c119d2c3e4e06adddc82cd42a8c0",
+        "equal": true
+      },
+      "docs/adr/0016-immutable-notes-ref-capture-observations.md": {
+        "input_blob": "e5e7ebf8c6809c1926c9f94aaec54faa2957b5cf",
+        "final_blob": "e5e7ebf8c6809c1926c9f94aaec54faa2957b5cf",
+        "equal": true
+      },
+      "docs/adr/0017-domain-keys-without-storage-surrogates.md": {
+        "input_blob": "b8220256c7a814c2c89809b5c90ada538e2f9ae3",
+        "final_blob": "b8220256c7a814c2c89809b5c90ada538e2f9ae3",
+        "equal": true
+      },
+      "docs/adr/0018-notes-capture-uuidv4-composite-identity.md": {
+        "input_blob": "a041599edb1c3341d8373126cd18172b408624e8",
+        "final_blob": "a041599edb1c3341d8373126cd18172b408624e8",
+        "equal": true
+      },
+      "docs/adr/0019-monotonic-notes-capture-fact-admission.md": {
+        "input_blob": "9c53e7c6089606cfa31d718508e84f3a97f50810",
+        "final_blob": "9c53e7c6089606cfa31d718508e84f3a97f50810",
+        "equal": true
+      },
+      "docs/adr/0020-immutable-competing-notes-member-claims.md": {
+        "input_blob": "ca8fa59c097161947727fd86550831914bb6f7cf",
+        "final_blob": "ca8fa59c097161947727fd86550831914bb6f7cf",
+        "equal": true
+      },
+      "docs/adr/0021-direct-semantic-notes-claim-group-keys.md": {
+        "input_blob": "488bdf06ff52a4536696493ad898add0d9003b58",
+        "final_blob": "488bdf06ff52a4536696493ad898add0d9003b58",
+        "equal": true
+      },
+      "docs/adr/0022-receiver-verified-notes-role-admission.md": {
+        "input_blob": "6ec07807909bcdc209b6b8b36207918af89434a1",
+        "final_blob": "6ec07807909bcdc209b6b8b36207918af89434a1",
+        "equal": true
+      },
+      "docs/adr/0023-configurable-finite-notes-resource-budgets.md": {
+        "input_blob": "25bffe6187c704268b6780e6a9701e9cbdbd3999",
+        "final_blob": "25bffe6187c704268b6780e6a9701e9cbdbd3999",
+        "equal": true
+      },
+      "docs/adr/0024-actual-notes-resource-work-accounting.md": {
+        "input_blob": "82b89f84bd9f801b3257f0be7dcd95dfc37ecb28",
+        "final_blob": "82b89f84bd9f801b3257f0be7dcd95dfc37ecb28",
+        "equal": true
+      },
+      "docs/adr/0025-cumulative-request-budgets-and-scoped-blockers.md": {
+        "input_blob": "a87b518b4f36c30c217470044056b22e2493d711",
+        "final_blob": "a87b518b4f36c30c217470044056b22e2493d711",
+        "equal": true
+      },
+      "docs/adr/0026-stop-salvage-restore-merge-after-corruption.md": {
+        "input_blob": "4e9dfa324e45e764d7d1fd7de8dc79f9ea0b846f",
+        "final_blob": "4e9dfa324e45e764d7d1fd7de8dc79f9ea0b846f",
+        "equal": true
+      },
+      "docs/adr/0027-unauthenticated-external-capture-origin-reports.md": {
+        "input_blob": "54392224568502ea64c7266f5fab86e8a4a4e9d0",
+        "final_blob": "54392224568502ea64c7266f5fab86e8a4a4e9d0",
+        "equal": true
+      },
+      "docs/adr/0028-classified-times-and-sha256-exchange.md": {
+        "input_blob": "5a46b1fdf7cb6f3e9eb945448155b04e70c059c4",
+        "final_blob": "5a46b1fdf7cb6f3e9eb945448155b04e70c059c4",
+        "equal": true
+      },
+      "docs/adr/0029-independent-access-store.md": {
+        "input_blob": "6f0ac347d46b803634d1e580c85809619a255c06",
+        "final_blob": "6f0ac347d46b803634d1e580c85809619a255c06",
+        "equal": true
+      },
+      "docs/adr/0030-context-repository-relations-and-selective-exchange.md": {
+        "input_blob": "4c64785ded3c55f47c484fc1aaa554b274fda9fe",
+        "final_blob": "4c64785ded3c55f47c484fc1aaa554b274fda9fe",
+        "equal": true
+      },
+      "docs/adr/0031-generalized-context-resources.md": {
+        "input_blob": "17ad5b883de78d6bdb7b726bf0339da0c878bc5f",
+        "final_blob": "17ad5b883de78d6bdb7b726bf0339da0c878bc5f",
+        "equal": true
+      },
+      "docs/adr/0032-environment-sqlite-validation.md": {
+        "input_blob": "37c8436da5119bd303d62bc5306eabb8803d4890",
+        "final_blob": "37c8436da5119bd303d62bc5306eabb8803d4890",
+        "equal": true
+      },
+      "docs/adr/0033-minimal-product-sdist.md": {
+        "input_blob": "070c61e17f113fe5e6e96dbf17e35c26ddd8e8cb",
+        "final_blob": "070c61e17f113fe5e6e96dbf17e35c26ddd8e8cb",
+        "equal": true
+      }
+    },
+    "147": {
+      "docs/adr/0011-adr-governance.md": {
+        "input_blob": "63389c2e10e39beac5dfc90846edba30fdc4ca6a",
+        "final_blob": "63389c2e10e39beac5dfc90846edba30fdc4ca6a",
+        "equal": true
+      },
+      "docs/adr/0014-history-and-notes-catalog-without-file-archive.md": {
+        "input_blob": "f81983d632ed6ad53ea36646ae76def46d0162f4",
+        "final_blob": "f81983d632ed6ad53ea36646ae76def46d0162f4",
+        "equal": true
+      },
+      "docs/adr/0015-automatic-git-notes-ref-discovery.md": {
+        "input_blob": "a0fc165b7656c119d2c3e4e06adddc82cd42a8c0",
+        "final_blob": "a0fc165b7656c119d2c3e4e06adddc82cd42a8c0",
+        "equal": true
+      },
+      "docs/adr/0016-immutable-notes-ref-capture-observations.md": {
+        "input_blob": "e5e7ebf8c6809c1926c9f94aaec54faa2957b5cf",
+        "final_blob": "e5e7ebf8c6809c1926c9f94aaec54faa2957b5cf",
+        "equal": true
+      },
+      "docs/adr/0017-domain-keys-without-storage-surrogates.md": {
+        "input_blob": "b8220256c7a814c2c89809b5c90ada538e2f9ae3",
+        "final_blob": "b8220256c7a814c2c89809b5c90ada538e2f9ae3",
+        "equal": true
+      },
+      "docs/adr/0018-notes-capture-uuidv4-composite-identity.md": {
+        "input_blob": "a041599edb1c3341d8373126cd18172b408624e8",
+        "final_blob": "a041599edb1c3341d8373126cd18172b408624e8",
+        "equal": true
+      },
+      "docs/adr/0019-monotonic-notes-capture-fact-admission.md": {
+        "input_blob": "9c53e7c6089606cfa31d718508e84f3a97f50810",
+        "final_blob": "9c53e7c6089606cfa31d718508e84f3a97f50810",
+        "equal": true
+      },
+      "docs/adr/0020-immutable-competing-notes-member-claims.md": {
+        "input_blob": "ca8fa59c097161947727fd86550831914bb6f7cf",
+        "final_blob": "ca8fa59c097161947727fd86550831914bb6f7cf",
+        "equal": true
+      },
+      "docs/adr/0021-direct-semantic-notes-claim-group-keys.md": {
+        "input_blob": "488bdf06ff52a4536696493ad898add0d9003b58",
+        "final_blob": "488bdf06ff52a4536696493ad898add0d9003b58",
+        "equal": true
+      },
+      "docs/adr/0022-receiver-verified-notes-role-admission.md": {
+        "input_blob": "6ec07807909bcdc209b6b8b36207918af89434a1",
+        "final_blob": "6ec07807909bcdc209b6b8b36207918af89434a1",
+        "equal": true
+      },
+      "docs/adr/0023-configurable-finite-notes-resource-budgets.md": {
+        "input_blob": "25bffe6187c704268b6780e6a9701e9cbdbd3999",
+        "final_blob": "25bffe6187c704268b6780e6a9701e9cbdbd3999",
+        "equal": true
+      },
+      "docs/adr/0024-actual-notes-resource-work-accounting.md": {
+        "input_blob": "82b89f84bd9f801b3257f0be7dcd95dfc37ecb28",
+        "final_blob": "82b89f84bd9f801b3257f0be7dcd95dfc37ecb28",
+        "equal": true
+      },
+      "docs/adr/0025-cumulative-request-budgets-and-scoped-blockers.md": {
+        "input_blob": "a87b518b4f36c30c217470044056b22e2493d711",
+        "final_blob": "a87b518b4f36c30c217470044056b22e2493d711",
+        "equal": true
+      },
+      "docs/adr/0026-stop-salvage-restore-merge-after-corruption.md": {
+        "input_blob": "4e9dfa324e45e764d7d1fd7de8dc79f9ea0b846f",
+        "final_blob": "4e9dfa324e45e764d7d1fd7de8dc79f9ea0b846f",
+        "equal": true
+      },
+      "docs/adr/0027-unauthenticated-external-capture-origin-reports.md": {
+        "input_blob": "54392224568502ea64c7266f5fab86e8a4a4e9d0",
+        "final_blob": "54392224568502ea64c7266f5fab86e8a4a4e9d0",
+        "equal": true
+      },
+      "docs/adr/0028-classified-times-and-sha256-exchange.md": {
+        "input_blob": "5a46b1fdf7cb6f3e9eb945448155b04e70c059c4",
+        "final_blob": "5a46b1fdf7cb6f3e9eb945448155b04e70c059c4",
+        "equal": true
+      },
+      "docs/adr/0029-independent-access-store.md": {
+        "input_blob": "6f0ac347d46b803634d1e580c85809619a255c06",
+        "final_blob": "6f0ac347d46b803634d1e580c85809619a255c06",
+        "equal": true
+      },
+      "docs/adr/0030-context-repository-relations-and-selective-exchange.md": {
+        "input_blob": "4c64785ded3c55f47c484fc1aaa554b274fda9fe",
+        "final_blob": "4c64785ded3c55f47c484fc1aaa554b274fda9fe",
+        "equal": true
+      },
+      "docs/adr/0031-generalized-context-resources.md": {
+        "input_blob": "17ad5b883de78d6bdb7b726bf0339da0c878bc5f",
+        "final_blob": "17ad5b883de78d6bdb7b726bf0339da0c878bc5f",
+        "equal": true
+      },
+      "docs/adr/0032-environment-sqlite-validation.md": {
+        "input_blob": "37c8436da5119bd303d62bc5306eabb8803d4890",
+        "final_blob": "37c8436da5119bd303d62bc5306eabb8803d4890",
+        "equal": true
+      }
+    }
+  },
+  "historical_evidence": {
+    "154": {
+      "input_files": 7625,
+      "missing": [],
+      "changed": []
+    },
+    "144": {
+      "input_files": 2797,
+      "missing": [],
+      "changed": []
+    },
+    "147": {
+      "input_files": 2711,
+      "missing": [],
+      "changed": []
+    }
+  },
+  "all_numbered_adr_blobs": {
+    "docs/adr/0001-validation-lifecycle-architecture.md": {
+      "input_blob": "0cd4207329684923ef2fecd962b3e03489c77cbf",
+      "final_blob": "0cd4207329684923ef2fecd962b3e03489c77cbf",
+      "equal": true
+    },
+    "docs/adr/0002-three-store-boundary-architecture.md": {
+      "input_blob": "94cf7a1991e663cd7fe4b594378fb1f676e7bcfe",
+      "final_blob": "94cf7a1991e663cd7fe4b594378fb1f676e7bcfe",
+      "equal": true
+    },
+    "docs/adr/0004-metadata-only-git-core.md": {
+      "input_blob": "82d9a660b72b7c2dbc3fa00b642d17373f135b98",
+      "final_blob": "82d9a660b72b7c2dbc3fa00b642d17373f135b98",
+      "equal": true
+    },
+    "docs/adr/0005-common-oid-identity-with-attributed-metadata.md": {
+      "input_blob": "d067004adc71355ca73a034160745d6420726ccf",
+      "final_blob": "d067004adc71355ca73a034160745d6420726ccf",
+      "equal": true
+    },
+    "docs/adr/0006-field-claims-and-observation-scoped-relations.md": {
+      "input_blob": "c0a48455976f1a07e335ab39d22a685ef3a025b9",
+      "final_blob": "c0a48455976f1a07e335ab39d22a685ef3a025b9",
+      "equal": true
+    },
+    "docs/adr/0007-verification-aware-git-metadata-reads.md": {
+      "input_blob": "229e8fa9878640991c69057c2d5dc5095283d46c",
+      "final_blob": "229e8fa9878640991c69057c2d5dc5095283d46c",
+      "equal": true
+    },
+    "docs/adr/0008-domain-split-git-verification-ownership.md": {
+      "input_blob": "048ad57b01fcd8211122fffda4ce0935aac56910",
+      "final_blob": "048ad57b01fcd8211122fffda4ce0935aac56910",
+      "equal": true
+    },
+    "docs/adr/0009-bounded-byte-admission-and-physical-health.md": {
+      "input_blob": "6e380cf3f049a79037015f91c31448263fcf27ed",
+      "final_blob": "6e380cf3f049a79037015f91c31448263fcf27ed",
+      "equal": true
+    },
+    "docs/adr/0010-operation-scoped-cas-physical-integrity.md": {
+      "input_blob": "e250016d592ba703a2a18fcc02406d7c1d1e2c16",
+      "final_blob": "e250016d592ba703a2a18fcc02406d7c1d1e2c16",
+      "equal": true
+    },
+    "docs/adr/0011-adr-governance.md": {
+      "input_blob": "63389c2e10e39beac5dfc90846edba30fdc4ca6a",
+      "final_blob": "63389c2e10e39beac5dfc90846edba30fdc4ca6a",
+      "equal": true
+    },
+    "docs/adr/0012-append-only-multiple-cas-physical-instances.md": {
+      "input_blob": "4547964a8a20ea6d9238d4380e81b079b42adf0a",
+      "final_blob": "4547964a8a20ea6d9238d4380e81b079b42adf0a",
+      "equal": true
+    },
+    "docs/adr/0013-deterministic-cas-instance-eligibility.md": {
+      "input_blob": "7ef6ed482322e3618744acc1e1478f44caddcdd2",
+      "final_blob": "7ef6ed482322e3618744acc1e1478f44caddcdd2",
+      "equal": true
+    },
+    "docs/adr/0014-history-and-notes-catalog-without-file-archive.md": {
+      "input_blob": "f81983d632ed6ad53ea36646ae76def46d0162f4",
+      "final_blob": "f81983d632ed6ad53ea36646ae76def46d0162f4",
+      "equal": true
+    },
+    "docs/adr/0015-automatic-git-notes-ref-discovery.md": {
+      "input_blob": "a0fc165b7656c119d2c3e4e06adddc82cd42a8c0",
+      "final_blob": "a0fc165b7656c119d2c3e4e06adddc82cd42a8c0",
+      "equal": true
+    },
+    "docs/adr/0016-immutable-notes-ref-capture-observations.md": {
+      "input_blob": "e5e7ebf8c6809c1926c9f94aaec54faa2957b5cf",
+      "final_blob": "e5e7ebf8c6809c1926c9f94aaec54faa2957b5cf",
+      "equal": true
+    },
+    "docs/adr/0017-domain-keys-without-storage-surrogates.md": {
+      "input_blob": "b8220256c7a814c2c89809b5c90ada538e2f9ae3",
+      "final_blob": "b8220256c7a814c2c89809b5c90ada538e2f9ae3",
+      "equal": true
+    },
+    "docs/adr/0018-notes-capture-uuidv4-composite-identity.md": {
+      "input_blob": "a041599edb1c3341d8373126cd18172b408624e8",
+      "final_blob": "a041599edb1c3341d8373126cd18172b408624e8",
+      "equal": true
+    },
+    "docs/adr/0019-monotonic-notes-capture-fact-admission.md": {
+      "input_blob": "9c53e7c6089606cfa31d718508e84f3a97f50810",
+      "final_blob": "9c53e7c6089606cfa31d718508e84f3a97f50810",
+      "equal": true
+    },
+    "docs/adr/0020-immutable-competing-notes-member-claims.md": {
+      "input_blob": "ca8fa59c097161947727fd86550831914bb6f7cf",
+      "final_blob": "ca8fa59c097161947727fd86550831914bb6f7cf",
+      "equal": true
+    },
+    "docs/adr/0021-direct-semantic-notes-claim-group-keys.md": {
+      "input_blob": "488bdf06ff52a4536696493ad898add0d9003b58",
+      "final_blob": "488bdf06ff52a4536696493ad898add0d9003b58",
+      "equal": true
+    },
+    "docs/adr/0022-receiver-verified-notes-role-admission.md": {
+      "input_blob": "6ec07807909bcdc209b6b8b36207918af89434a1",
+      "final_blob": "6ec07807909bcdc209b6b8b36207918af89434a1",
+      "equal": true
+    },
+    "docs/adr/0023-configurable-finite-notes-resource-budgets.md": {
+      "input_blob": "25bffe6187c704268b6780e6a9701e9cbdbd3999",
+      "final_blob": "25bffe6187c704268b6780e6a9701e9cbdbd3999",
+      "equal": true
+    },
+    "docs/adr/0024-actual-notes-resource-work-accounting.md": {
+      "input_blob": "82b89f84bd9f801b3257f0be7dcd95dfc37ecb28",
+      "final_blob": "82b89f84bd9f801b3257f0be7dcd95dfc37ecb28",
+      "equal": true
+    },
+    "docs/adr/0025-cumulative-request-budgets-and-scoped-blockers.md": {
+      "input_blob": "a87b518b4f36c30c217470044056b22e2493d711",
+      "final_blob": "a87b518b4f36c30c217470044056b22e2493d711",
+      "equal": true
+    },
+    "docs/adr/0026-stop-salvage-restore-merge-after-corruption.md": {
+      "input_blob": "4e9dfa324e45e764d7d1fd7de8dc79f9ea0b846f",
+      "final_blob": "4e9dfa324e45e764d7d1fd7de8dc79f9ea0b846f",
+      "equal": true
+    },
+    "docs/adr/0027-unauthenticated-external-capture-origin-reports.md": {
+      "input_blob": "54392224568502ea64c7266f5fab86e8a4a4e9d0",
+      "final_blob": "54392224568502ea64c7266f5fab86e8a4a4e9d0",
+      "equal": true
+    },
+    "docs/adr/0028-classified-times-and-sha256-exchange.md": {
+      "input_blob": "5a46b1fdf7cb6f3e9eb945448155b04e70c059c4",
+      "final_blob": "5a46b1fdf7cb6f3e9eb945448155b04e70c059c4",
+      "equal": true
+    },
+    "docs/adr/0029-independent-access-store.md": {
+      "input_blob": "6f0ac347d46b803634d1e580c85809619a255c06",
+      "final_blob": "6f0ac347d46b803634d1e580c85809619a255c06",
+      "equal": true
+    },
+    "docs/adr/0030-context-repository-relations-and-selective-exchange.md": {
+      "input_blob": "4c64785ded3c55f47c484fc1aaa554b274fda9fe",
+      "final_blob": "4c64785ded3c55f47c484fc1aaa554b274fda9fe",
+      "equal": true
+    },
+    "docs/adr/0031-generalized-context-resources.md": {
+      "input_blob": "17ad5b883de78d6bdb7b726bf0339da0c878bc5f",
+      "final_blob": "17ad5b883de78d6bdb7b726bf0339da0c878bc5f",
+      "equal": true
+    },
+    "docs/adr/0032-environment-sqlite-validation.md": {
+      "input_blob": "37c8436da5119bd303d62bc5306eabb8803d4890",
+      "final_blob": "37c8436da5119bd303d62bc5306eabb8803d4890",
+      "equal": true
+    }
+  }
+}

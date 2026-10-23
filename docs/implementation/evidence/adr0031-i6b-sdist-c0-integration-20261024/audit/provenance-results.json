@@ -1,0 +1,131 @@
+{
+  "head": "fb5d7b5a0c4b92c8a282daac154e66fa6d361e64",
+  "tree": "d2010275a90ae6b6cb728344d5708057a79110cd",
+  "shared_blobs": {
+    ".agents/skills/ci-final-tree-verification/SKILL.md": {
+      "154": {
+        "blob": "c255a55071bc6b737c77489134073767dc5ec538",
+        "sha256": "42a9b263c7a4a5a45f6ee5245a9f4b4b6bd26d848302c11d223ccbb0781a1e5d"
+      },
+      "144": {
+        "blob": "3c72397d28f1a84af822ddeefe2f2a0d62870d98",
+        "sha256": "e1c06f169652c307ce81bb6f1dc987cac483f90403fc0fb01479eaf5d2cea8a7"
+      },
+      "147": {
+        "blob": "82f63b1c154e411e3860699324cea845ded3fa6a",
+        "sha256": "06573bb9c8f34f44d0f439f6043d0bd52544b454d081e8b4d1cb977b28e651d0"
+      },
+      "effective": {
+        "blob": "f40f5d481d2792993f9960d715c5df53282874a2",
+        "sha256": "204858899dc098f1719c3dad546acc0e718b1ec8f27101b4398670cedc8377de"
+      }
+    },
+    ".github/workflows/access-registry.yml": {
+      "154": {
+        "blob": "03f33df60a5f74430c3dac59c752c6e46cae23d4",
+        "sha256": "38182082b2d2678c6bf70e838eb4d970be2db76be1d891d31f1c24d6bc5005e0"
+      },
+      "144": {
+        "blob": "cc1b5e260541a160aa5fd4ced5c20f7e34b92c0f",
+        "sha256": "8ed2c8f7e1bf6746db1d621dbe15418db6739106fe3722dc22f187e21b0575a7"
+      },
+      "147": {
+        "blob": "f000fab6b4d976f815ea15c76a3ca7a49e61337a",
+        "sha256": "bbdeea25ef803ae9c28644e231241185e69de1bd1eb7efa6b05f4e8838521213"
+      },
+      "effective": {
+        "blob": "e3dea46eca394211418458f8fc9ea82c8256e183",
+        "sha256": "d9c78c888534fbacd1b9cd7a9c4b5fe1dc6685bb513d579ce89ea16f5930f91d"
+      }
+    },
+    "scripts/verify_access_distribution.py": {
+      "154": {
+        "blob": "ca5fe75b7c58c5d4a9eae133c7609937c0771b4a",
+        "sha256": "6ac72ba83bd7647dad49159a65998d78c353ded7b2a3ed81b17d48c80ea9da7b"
+      },
+      "144": {
+        "blob": "cd53feefae5ea4a2fc2225982361f6090444be8d",
+        "sha256": "750d6a4f2165b4ff3bffbe9dc5bde7e6f5bf9fe006565f41b0ad2b7d448ffe58"
+      },
+      "147": {
+        "blob": "b64cb9aef8e5e4ecdc8c85b9e336e45a8f7630e6",
+        "sha256": "a2b344633e7dc3adde4d1d4f78783bba26d970a52e8b8504662343d4c966cf9c"
+      },
+      "effective": {
+        "blob": "f40dd64e475dd69f0042f23efb986316491f3d3b",
+        "sha256": "b3c7441ec6ea1b8378373ae15d12bf5eb2a2d5b2ef6211c3d274442643da648d"
+      }
+    },
+    "scripts/verify_i4_distribution.py": {
+      "154": {
+        "blob": "25c5bffce86ca21011d79c9d5a5c7538ebe1abe4",
+        "sha256": "1f9934c82f6d9a42c58f3e477dd0e6ad06e5f0d903c3b2ec72a2067f33f212b7"
+      },
+      "144": {
+        "blob": "97791d881b704b9c2175d3ccacff2431cf6fb277",
+        "sha256": "0b67d0b108cfca56fed738a32657a601e85ef26f406d2f7576e2c1638eea47d0"
+      },
+      "147": {
+        "blob": "5d7ead5bc6d5ba67dad5f2c1d82dbf98cf32adb0",
+        "sha256": "caa04478768c62dfaa382b582e085721972cb9c738e8df8710310940e16cd8af"
+      },
+      "effective": {
+        "blob": "c57585929278e02005bdce4f4a6fca54d15dd33e",
+        "sha256": "ee6c6c2aeb8ca89171dcdef88a22d4cbc3d646b13c30279cf87fd607c2375df4"
+      }
+    },
+    "scripts/verify_i5_distribution.py": {
+      "154": {
+        "blob": "355842e520eb336c63b407072f081a445610ae3f",
+        "sha256": "a169af2d23d8539fa18de9471b2396c7bb615d4987b683e2da87bf9dd7e82024"
+      },
+      "144": {
+        "blob": "b5f32a25ed7f7055a1237c98a725b72a90f3a645",
+        "sha256": "ae5f02ed208092cd676de08596ce83f70f02de10b6c92dc9616d9966f64990b4"
+      },
+      "147": {
+        "blob": "11547d997cae751a7901ee5eaae7646b6985996a",
+        "sha256": "a945166ed8b0804166e044540e5fd9526bb65786cd9bb2d85563cb01ad313293"
+      },
+      "effective": {
+        "blob": "4d1260da4507522f30ce2a191f0bc6d040b78a3f",
+        "sha256": "36ab98dc3ef9b1ac4edb124b6ad3ce0e7d9e93034da8703e879b15198fa1ea04"
+      }
+    },
+    "tests/packaging/test_p1_distribution.py": {
+      "154": {
+        "blob": "a1641eef1de54c87cf68a72d56de8dd95c71418e",
+        "sha256": "1c394fbf2cfaacd3d57034446de42dcfe16ab55b68b2862f7d1c27ecf4869a86"
+      },
+      "144": {
+        "blob": "47e87ae18641a95c0b17e8594e40059ae2d749c9",
+        "sha256": "10d10784e67c1e94b0a95362df559baf07a38d8e354a686f5999abc48a11bba6"
+      },
+      "147": {
+        "blob": "e1314551301ed6496499925143333efb8745ac21",
+        "sha256": "e1a4bd001452d97f2d5fd46ac1679ad66bbd00175f742465c6832eda073c83dc"
+      },
+      "effective": {
+        "blob": "8eb6ebbccd3f4ae46f01bdd21c06b0195ddd58d5",
+        "sha256": "a1dee8327a07c89e57f4db8141ca220b04751e5dce0055260341ef126c60bfcd"
+      }
+    }
+  },
+  "product_src_subtree_equals154": true,
+  "archive_gate_and_planner_equal144": true,
+  "receipt_emitter_and_regressions_equal147": true,
+  "p1_import_union": [
+    "Path",
+    "check_sdist",
+    "compare_wheels",
+    "expected_ddl_manifest",
+    "save",
+    "stage_support"
+  ],
+  "skill_retained_sections": {
+    "## Stage installed test support separately and bind pytest imports": true,
+    "## Inspect actual sdist members after positive selection": true,
+    "## Pytest subtest reports are additional measured phases": true
+  },
+  "limits": "Static provenance/contract-presence audit only; execution evidence must be supplied by actual tests on final inputs."
+}

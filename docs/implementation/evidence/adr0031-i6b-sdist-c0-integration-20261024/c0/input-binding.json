@@ -1,0 +1,26 @@
+{
+  "head": "fb5d7b5a0c4b92c8a282daac154e66fa6d361e64",
+  "tree": "d2010275a90ae6b6cb728344d5708057a79110cd",
+  "historical_helper": {
+    "path": "docs/implementation/evidence/c0-e1-independent-20261023/verify_boundaries.py",
+    "sha256": "9b1e64b140fdfeb02863299472b8c10629020ea5f082e3407a6dc4a1c546f777"
+  },
+  "helper_adaptation": "HEAD assertion only: actual integration candidate; historical before implementation source retained as separate negative control",
+  "inputs": {
+    "scripts/emit_ci_evidence.py": {
+      "sha256": "e5358d725e4c32ad290ecc0630fe2f31878f3de0ec6d9f1f42e003a89e6d09fa",
+      "git_blob": "1c7aef3b3cfece8f30f3264c2d78cc81113e6a20",
+      "unchanged_since_merge_9f005eb2": true
+    },
+    ".github/workflows/access-registry.yml": {
+      "sha256": "90126c25c10ada71720d3e5183e833e951f99ad70f2a0f97977ddd23b758acd5",
+      "git_blob": "e3dea46eca394211418458f8fc9ea82c8256e183",
+      "unchanged_since_merge_9f005eb2": true
+    },
+    "tests/unit/test_emit_ci_evidence.py": {
+      "sha256": "01d99586c996834ab8b71ff0e07a92adcad27a222423e697877728b84ba578cb",
+      "git_blob": "03df879f233dd34f83dc03c30fcdcfaa7e95be19",
+      "unchanged_since_merge_9f005eb2": true
+    }
+  }
+}

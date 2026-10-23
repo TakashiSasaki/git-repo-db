@@ -1,0 +1,97 @@
+[
+  {
+    "name": "sqlite-policy",
+    "command": [
+      "/workspace/task-b-integration/.venv/bin/python",
+      "scripts/check_sqlite_validation_policy.py"
+    ],
+    "start": "2026-10-23T18:19:57.231126+00:00",
+    "exit": 0
+  },
+  {
+    "name": "callsite",
+    "command": [
+      "/workspace/task-b-integration/.venv/bin/python",
+      "scripts/audit_callsite_dependencies.py",
+      "--check"
+    ],
+    "start": "2026-10-23T18:19:59.373761+00:00",
+    "exit": 0
+  },
+  {
+    "name": "schema",
+    "command": [
+      "/workspace/task-b-integration/.venv/bin/python",
+      "scripts/audit_p1_schema.py",
+      "--check"
+    ],
+    "start": "2026-10-23T18:20:01.344275+00:00",
+    "exit": 0
+  },
+  {
+    "name": "fingerprint",
+    "command": [
+      "/workspace/task-b-integration/.venv/bin/python",
+      "scripts/build_p1_schema.py",
+      "--check"
+    ],
+    "start": "2026-10-23T18:20:01.873013+00:00",
+    "exit": 0
+  },
+  {
+    "name": "boundary",
+    "command": [
+      "/workspace/task-b-integration/.venv/bin/python",
+      "scripts/audit_implementation_boundary.py",
+      "--check"
+    ],
+    "start": "2026-10-23T18:20:02.486863+00:00",
+    "exit": 0
+  },
+  {
+    "name": "lint",
+    "command": [
+      "/workspace/task-b-integration/.venv/bin/ruff",
+      "check",
+      "src",
+      "tests",
+      "scripts"
+    ],
+    "start": "2026-10-23T18:20:05.210748+00:00",
+    "exit": 0
+  },
+  {
+    "name": "format",
+    "command": [
+      "/workspace/task-b-integration/.venv/bin/ruff",
+      "format",
+      "--check",
+      "src",
+      "tests",
+      "scripts"
+    ],
+    "start": "2026-10-23T18:20:05.230376+00:00",
+    "exit": 0
+  },
+  {
+    "name": "reports",
+    "command": [
+      "/workspace/task-b-integration/.venv/bin/python",
+      "-m",
+      "repo_catalog",
+      "validate-reports"
+    ],
+    "start": "2026-10-23T18:20:05.256495+00:00",
+    "exit": 2
+  },
+  {
+    "name": "reports-corrected",
+    "command": [
+      ".venv/bin/python",
+      "scripts/ci_execute.py",
+      "reports"
+    ],
+    "exit": 0,
+    "previous_attempt": "Wrong CLI subcommand preserved reports.log/exit2; no product test executed there."
+  }
+]

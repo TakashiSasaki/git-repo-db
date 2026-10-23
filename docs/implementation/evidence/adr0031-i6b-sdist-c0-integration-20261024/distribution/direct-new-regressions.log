@@ -1,0 +1,8 @@
+{'budget': 0, 'prior': 0, 'charged': 1, 'embedded_parses': 0, 'identity_parses': 0, 'quoted_strings': 0}
+.{'budget': 1, 'prior': 0, 'charged': 2, 'embedded_parses': 0, 'identity_parses': 0, 'quoted_strings': 0}
+.{'budget': 17, 'prior': 0, 'charged': 18, 'embedded_parses': 0, 'identity_parses': 0, 'quoted_strings': 0}
+.{'budget': 17, 'prior': 17, 'charged': 18, 'embedded_parses': 0, 'identity_parses': 0, 'quoted_strings': 0}
+.{'budget': 17, 'prior': 23, 'charged': 24, 'embedded_parses': 0, 'identity_parses': 0, 'quoted_strings': 0}
+.{'elements': 140, 'scanner_work': 2244, 'full_work': 8414}
+...................................................
+56 passed in 0.78s

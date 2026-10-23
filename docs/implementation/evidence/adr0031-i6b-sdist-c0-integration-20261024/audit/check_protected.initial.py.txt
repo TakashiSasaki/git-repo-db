@@ -1,0 +1,23 @@
+import json,pathlib,subprocess,hashlib
+R='/workspace/task-b-integration';O=pathlib.Path('/workspace/task-b-audit');final='fb5d7b5a0c4b92c8a282daac154e66fa6d361e64';inputs={'154':'91827360c185cbf813277bf32a6627d894b1b20a','144':'ededcd83eb2d99a602ba18c8fe3c177125c825ac','147':'e7762952e18061de8c8235beaeddf42f20ad9f5a'}
+def git(*a):return subprocess.check_output(['git','-C',R,*a])
+def entries(ref,prefix):
+ out={}
+ for line in git('ls-tree','-r',ref,'--',prefix).decode().splitlines():
+  meta,p=line.split('\t',1);out[p]=meta.split()[-1]
+ return out
+f=entries(final,'');res={'head':final,'tree':git('rev-parse',final+'^{tree}').decode().strip(),'src':{},'accepted_adrs':{},'historical_evidence':{}}
+for n,h in inputs.items():
+ old=entries(h,'docs/implementation/evidence');missing=[p for p in old if p not in f];changed=[p for p,blob in old.items() if p in f and f[p]!=blob];res['historical_evidence'][n]={'input_files':len(old),'missing':missing,'changed':changed};assert not missing and not changed
+old=entries(inputs['154'],'src');res['src']={'input_files':len(old),'missing':[p for p in old if p not in f],'changed':[p for p,b in old.items() if f.get(p)!=b]};assert not res['src']['missing'] and not res['src']['changed']
+for n,h in inputs.items():
+ adrs=entries(h,'docs/adr');accepted={}
+ for p,b in adrs.items():
+  if not p.endswith('.md') or not pathlib.PurePosixPath(p).name[:4].isdigit():continue
+  text=git('show',h+':'+p).decode()
+  if 'status: accepted' in text.split('---',2)[1] if text.startswith('---') else False:
+   accepted[p]={'input_blob':b,'final_blob':f.get(p),'equal':f.get(p)==b}
+ assert all(x['equal'] for x in accepted.values())
+ res['accepted_adrs'][n]=accepted
+out=json.dumps(res,indent=2)+'\n';(O/'protected-inputs.json').write_text(out)
+print(json.dumps({'src':res['src'],'accepted_adrs':{n:len(rows) for n,rows in res['accepted_adrs'].items()},'historical_evidence':res['historical_evidence']},indent=2))

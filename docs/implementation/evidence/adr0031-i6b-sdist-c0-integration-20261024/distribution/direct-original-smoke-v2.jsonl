@@ -1,0 +1,5 @@
+{"event":"start","nodeid":"tests/unit/test_original_access_smoke_independent.py::test_original_access_smoke_unchanged","worker_id":"master","timestamp":1792779685.852369}
+{"event":"phase","nodeid":"tests/unit/test_original_access_smoke_independent.py::test_original_access_smoke_unchanged","phase":"setup","outcome":"passed","duration":0.001622,"worker_id":"master","timestamp":1792779685.85503}
+{"event":"phase","nodeid":"tests/unit/test_original_access_smoke_independent.py::test_original_access_smoke_unchanged","phase":"call","outcome":"failed","duration":4.863203,"worker_id":"master","timestamp":1792779690.751358}
+{"event":"phase","nodeid":"tests/unit/test_original_access_smoke_independent.py::test_original_access_smoke_unchanged","phase":"teardown","outcome":"passed","duration":0.000295,"worker_id":"master","timestamp":1792779690.756802}
+{"event":"finish","status":"failed","exitstatus":1,"timestamp":1792779690.757799}
