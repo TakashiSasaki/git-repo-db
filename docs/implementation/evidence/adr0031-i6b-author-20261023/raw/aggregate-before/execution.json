@@ -1,0 +1,16 @@
+{
+  "command": [
+    ".venv/bin/python",
+    "-m",
+    "pytest",
+    "tests/unit/test_context_wire_v5.py::test_T01_T11_identity_decoding_counts_toward_aggregate_element_limit",
+    "tests/unit/test_context_wire_v5.py::test_T01_T11_identity_depth_counts_toward_enclosing_json_depth_limit",
+    "-q",
+    "--junitxml=/workspace/i6b-work/aggregate-before/junit.xml",
+    "--journal=/workspace/i6b-work/aggregate-before/journal.jsonl"
+  ],
+  "exit_code": 0,
+  "elapsed_s": 2.8620898723602295,
+  "status": "Two-case corrected aggregate scanner development check, actual2PASS, input hashes match before/after. Directory was named before checking whether the concurrent correction had landed; this is NOT the pre-fix reproduction or final frozen-source acceptance.",
+  "input_hashes_unchanged_after": true
+}

@@ -1,0 +1,8 @@
+{
+  "source_path": "/workspace/i6b-tools/test_i6b_extra.py",
+  "sha256": "bc77c792f8f4a7dc3ad472d6fa9325a274bdd8895822a328556b260b55663ffd",
+  "staged_path": "tests/unit/test_i6b_extra.py",
+  "source_head": "a354348b800177608f6a83e2484cb6a784b7190a",
+  "source_tree": "169f0f95449c7bd728261b3d7799f795162c03fd",
+  "scope": "Separate Author external cohort, not an ordinary freeze node or independent review."
+}

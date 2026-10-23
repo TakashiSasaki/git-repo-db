@@ -1,0 +1,24 @@
+"""Author matched baseline versus final repeated-diagnostic signature comparison.
+
+Raw traces and phase/assertion diagnostics remain authoritative; this is a
+separate parser invocation, never a reconstructed complete ordinary execution.
+"""
+from pathlib import Path
+from collections import Counter
+import json,re,sys,gzip
+from independent_receipt import audit
+before,bm,_=audit('/workspace/i6b-work/baseline-task-c/diagnostic743','diagnostic');after,am,_=audit(sys.argv[1],'diagnostic');out=Path(sys.argv[2]);out.mkdir(exist_ok=False,parents=True)
+def signature(message):
+ text=message.get('message','')+'\n'+message.get('trace','')
+ exceptions=sorted(set(re.findall(r'(?:^|[\n ])([\w.]+(?:Error|Refused|Stage|Failure)):',text)))
+ codes=sorted(set(re.findall(r'\b(?:I2_[A-Z_]+|MALFORMED_ROW|PERMISSION_DENIED|OMITTED_BY_SELECTION|INCOMPLETE_[A-Z_]+|MISSING_DEPENDENCY|UNQUALIFIED_MAPPING|QS10_PARENT_INELIGIBLE)\b',text)))
+ frames=[]
+ for path,line,fun in re.findall(r'^([^\n:]+\.py):(\d+):(?: in (\w+))?',message.get('trace',''),re.M):
+  m=re.search(r'(tests/.*|src/repo_catalog/.*)',path)
+  if m:frames.append({'path':m.group(),'line':int(line),'function':fun})
+ return {'exceptions':exceptions,'codes':codes,'frames':frames}
+rows=[]
+for node in sorted(set(bm)|set(am)):
+ b=signature(bm.get(node,{}));a=signature(am.get(node,{}));rows.append({'nodeid':node,'old_outcome_phase':before.get(node),'new_outcome_phase':after.get(node),'old':b,'new':a,'exception_changed':b['exceptions']!=a['exceptions'],'codes_changed':b['codes']!=a['codes'],'frame_functions_changed':[(x['path'],x['function']) for x in b['frames']]!=[(x['path'],x['function']) for x in a['frames']]})
+summary={k:[r['nodeid'] for r in rows if r[k]] for k in ['exception_changed','codes_changed','frame_functions_changed']};summary['signature_transition_counts']=dict(Counter(str((tuple(r['old']['exceptions']),tuple(r['old']['codes']),tuple(r['new']['exceptions']),tuple(r['new']['codes']))) for r in rows if r['exception_changed'] or r['codes_changed']))
+(out/'node-signatures.json.gz').write_bytes(gzip.compress((json.dumps(rows,indent=2)+'\n').encode(),mtime=0));(out/'summary.json').write_text(json.dumps(summary,indent=2)+'\n');print(json.dumps({'counts':{k:len(summary[k]) for k in ['exception_changed','codes_changed','frame_functions_changed']},'transitions':summary['signature_transition_counts']},indent=2))

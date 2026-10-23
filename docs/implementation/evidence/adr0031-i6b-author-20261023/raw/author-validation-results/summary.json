@@ -1,0 +1,1232 @@
+{
+  "command": [
+    "/workspace/git-repo-db/.venv/bin/python",
+    "/workspace/i6b-tools/summarize_author_results.py"
+  ],
+  "helper_sha256": "a855549da93974b4f5f894ebcc8f2d2123d65541bf2a21af38cf3c80ab1b94fc",
+  "exit_code": 0,
+  "independent_review": false,
+  "complete_release_acceptance": false,
+  "final_source_head": "a354348b800177608f6a83e2484cb6a784b7190a",
+  "final_source_tree": "169f0f95449c7bd728261b3d7799f795162c03fd",
+  "complete_ordinary_invocation": {
+    "selected": 6288,
+    "counts": {
+      "passed": 5987,
+      "failed": 281,
+      "error": 20
+    },
+    "subtest_counts": {
+      "passed": 57
+    },
+    "ordinary_reports": 18844,
+    "all_reports": 18901,
+    "exit_code": 1,
+    "head": "2f874ce5c31efc1a266bc40e0472e64f82c82860",
+    "tree": "e0b50e80bae5aec92c1d9cf68ba8afc17ad6810d",
+    "input_count": 484,
+    "bindings_unchanged": true,
+    "tracked_status": "",
+    "selected_junit_journal_typed_exact": true
+  },
+  "entire_ordinary_runtime_on_final_source_executed": false,
+  "final_source_collection_scope": "collection-only6288 exact prior ordinary node multiset; collection is not runtime execution",
+  "final_source_lanes": {
+    "final-source-safety": {
+      "selected": 626,
+      "counts": {
+        "passed": 626
+      },
+      "subtest_counts": {},
+      "ordinary_reports": 1878,
+      "all_reports": 1878,
+      "exit_code": 0,
+      "head": "a354348b800177608f6a83e2484cb6a784b7190a",
+      "tree": "169f0f95449c7bd728261b3d7799f795162c03fd",
+      "input_count": 484,
+      "bindings_unchanged": true,
+      "tracked_status": "",
+      "selected_junit_journal_typed_exact": true
+    },
+    "final-source-wire": {
+      "selected": 212,
+      "counts": {
+        "passed": 212
+      },
+      "subtest_counts": {},
+      "ordinary_reports": 636,
+      "all_reports": 636,
+      "exit_code": 0,
+      "head": "a354348b800177608f6a83e2484cb6a784b7190a",
+      "tree": "169f0f95449c7bd728261b3d7799f795162c03fd",
+      "input_count": 484,
+      "bindings_unchanged": true,
+      "tracked_status": "",
+      "selected_junit_journal_typed_exact": true
+    },
+    "final-source-extra": {
+      "selected": 34,
+      "counts": {
+        "passed": 34
+      },
+      "subtest_counts": {},
+      "ordinary_reports": 102,
+      "all_reports": 102,
+      "exit_code": 0,
+      "head": "a354348b800177608f6a83e2484cb6a784b7190a",
+      "tree": "169f0f95449c7bd728261b3d7799f795162c03fd",
+      "input_count": 484,
+      "bindings_unchanged": true,
+      "tracked_status": "",
+      "selected_junit_journal_typed_exact": true
+    },
+    "final-source-diagnostic": {
+      "selected": 745,
+      "counts": {
+        "passed": 446,
+        "failed": 279,
+        "error": 20
+      },
+      "subtest_counts": {},
+      "ordinary_reports": 2215,
+      "all_reports": 2215,
+      "exit_code": 1,
+      "head": "a354348b800177608f6a83e2484cb6a784b7190a",
+      "tree": "169f0f95449c7bd728261b3d7799f795162c03fd",
+      "input_count": 484,
+      "bindings_unchanged": true,
+      "tracked_status": "",
+      "selected_junit_journal_typed_exact": true
+    }
+  },
+  "remaining_nonpassed_same_historical_nodes": true,
+  "remaining_nonpassed_owners": {
+    "I6-C": 242,
+    "Transfer-stage": 43,
+    "I7-composition": 14
+  },
+  "installed_artifact_audit": {
+    "source_head": "a354348b800177608f6a83e2484cb6a784b7190a",
+    "source_tree": "169f0f95449c7bd728261b3d7799f795162c03fd",
+    "independent_review": false,
+    "full_acceptance": false,
+    "artifacts": {
+      "direct-wheel": {
+        "path": "/workspace/i6b-work/installed-final-work/source/dist/repo_catalog-0.2.0-py3-none-any.whl",
+        "bytes": 790488,
+        "sha256": "6b3a865b90673b9626ad120ecf106064d2211657d2d78a68fb6568a52a8aba71"
+      },
+      "sdist": {
+        "path": "/workspace/i6b-work/installed-final-work/source/dist/repo_catalog-0.2.0.tar.gz",
+        "bytes": 128336141,
+        "sha256": "28376ce29ae8023cca1701dc78e10c727e01b27e678527ddf6365222328190cd"
+      },
+      "sdist-wheel": {
+        "path": "/workspace/i6b-work/installed-final-work/from-sdist/repo_catalog-0.2.0/dist/repo_catalog-0.2.0-py3-none-any.whl",
+        "bytes": 790488,
+        "sha256": "6b3a865b90673b9626ad120ecf106064d2211657d2d78a68fb6568a52a8aba71"
+      }
+    },
+    "all_wheel_members_equal": true,
+    "all_RECORD_entries_verified": true,
+    "product_file_count": 160,
+    "product_bytes": 6022477,
+    "forms": {
+      "direct": {
+        "sqlite": [
+          "3.53.1",
+          "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9"
+        ],
+        "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+        "prefix": "/workspace/i6b-work/installed-final-work/direct-venv",
+        "origin": "/workspace/i6b-work/installed-final-work/direct-venv/lib/python3.12/site-packages/repo_catalog",
+        "fingerprint": "924cc7557fb3da6211ea070185881f5fcaeff9bf52b6e237a361a238a2ea0c6e",
+        "fences": [
+          [
+            "trigger",
+            "i2_transfer_report_stage_fence",
+            "resource_relations",
+            "CREATE TRIGGER i2_transfer_report_stage_fence BEFORE INSERT ON resource_relations\nWHEN NEW.relation_kind COLLATE BINARY='transfer_event_report'\nBEGIN SELECT RAISE(ABORT,'I2_TRANSFER_UNSUPPORTED'); END"
+          ],
+          [
+            "trigger",
+            "i2_transfer_stage_fence",
+            "resource_repository_relations",
+            "CREATE TRIGGER i2_transfer_stage_fence BEFORE INSERT ON resource_repository_relations\nWHEN NEW.relation_kind COLLATE BINARY IN('transfer_from_repository','transfer_to_repository')\nBEGIN SELECT RAISE(ABORT,'I2_TRANSFER_UNSUPPORTED'); END"
+          ]
+        ],
+        "runtime_before_after_equal": true,
+        "lanes": {
+          "safety": {
+            "selected": 626,
+            "passed": 626,
+            "exit_code": 0,
+            "selected_junit_journal_typed_exact": true,
+            "in_pytest_import_checks": 4,
+            "i4_i5_actual_nodes": {
+              "i4": [
+                "tests/integration/p3/test_transfer_sql.py::test_native_i7_and_originals[composed-sql]",
+                "tests/integration/p3/test_transfer_sql.py::test_native_i7_and_originals[product-factory]",
+                "tests/integration/p3/test_transfer_sql.py::test_i8_is_permanently_ineligible_and_retained[composed-sql]",
+                "tests/integration/p3/test_transfer_sql.py::test_i8_is_permanently_ineligible_and_retained[product-factory]",
+                "tests/integration/p3/test_transfer_sql.py::test_dependency_arrival_requires_original_resupply[composed-sql-resource]",
+                "tests/integration/p3/test_transfer_sql.py::test_dependency_arrival_requires_original_resupply[composed-sql-report]",
+                "tests/integration/p3/test_transfer_sql.py::test_dependency_arrival_requires_original_resupply[product-factory-resource]",
+                "tests/integration/p3/test_transfer_sql.py::test_dependency_arrival_requires_original_resupply[product-factory-report]",
+                "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[composed-sql-members]",
+                "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[composed-sql-scope-clock]",
+                "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[composed-sql-scope-state]",
+                "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[composed-sql-provenance]",
+                "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[composed-sql-event]",
+                "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[composed-sql-service]",
+                "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[composed-sql-subtype]",
+                "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[composed-sql-resource-kind]",
+                "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[composed-sql-issue-id]",
+                "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[product-factory-members]",
+                "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[product-factory-scope-clock]",
+                "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[product-factory-scope-state]",
+                "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[product-factory-provenance]",
+                "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[product-factory-event]",
+                "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[product-factory-service]",
+                "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[product-factory-subtype]",
+                "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[product-factory-resource-kind]",
+                "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[product-factory-issue-id]",
+                "tests/integration/p3/test_transfer_sql.py::test_endpoint_full_event_reference[composed-sql-event]",
+                "tests/integration/p3/test_transfer_sql.py::test_endpoint_full_event_reference[composed-sql-members]",
+                "tests/integration/p3/test_transfer_sql.py::test_endpoint_full_event_reference[composed-sql-scope]",
+                "tests/integration/p3/test_transfer_sql.py::test_endpoint_full_event_reference[composed-sql-clock]",
+                "tests/integration/p3/test_transfer_sql.py::test_endpoint_full_event_reference[composed-sql-provenance]",
+                "tests/integration/p3/test_transfer_sql.py::test_endpoint_full_event_reference[composed-sql-time]",
+                "tests/integration/p3/test_transfer_sql.py::test_endpoint_full_event_reference[composed-sql-null-members]",
+                "tests/integration/p3/test_transfer_sql.py::test_endpoint_full_event_reference[composed-sql-null-scope]",
+                "tests/integration/p3/test_transfer_sql.py::test_endpoint_full_event_reference[composed-sql-undeclared-target]",
+                "tests/integration/p3/test_transfer_sql.py::test_endpoint_full_event_reference[composed-sql-role]",
+                "tests/integration/p3/test_transfer_sql.py::test_endpoint_full_event_reference[product-factory-event]",
+                "tests/integration/p3/test_transfer_sql.py::test_endpoint_full_event_reference[product-factory-members]",
+                "tests/integration/p3/test_transfer_sql.py::test_endpoint_full_event_reference[product-factory-scope]",
+                "tests/integration/p3/test_transfer_sql.py::test_endpoint_full_event_reference[product-factory-clock]",
+                "tests/integration/p3/test_transfer_sql.py::test_endpoint_full_event_reference[product-factory-provenance]",
+                "tests/integration/p3/test_transfer_sql.py::test_endpoint_full_event_reference[product-factory-time]",
+                "tests/integration/p3/test_transfer_sql.py::test_endpoint_full_event_reference[product-factory-null-members]",
+                "tests/integration/p3/test_transfer_sql.py::test_endpoint_full_event_reference[product-factory-null-scope]",
+                "tests/integration/p3/test_transfer_sql.py::test_endpoint_full_event_reference[product-factory-undeclared-target]",
+                "tests/integration/p3/test_transfer_sql.py::test_endpoint_full_event_reference[product-factory-role]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[composed-sql-null-members]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[composed-sql-null-scope]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[composed-sql-null-provenance]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[composed-sql-null-child]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[composed-sql-wrong-kind]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[composed-sql-wrong-original-type]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[composed-sql-missing-field]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[composed-sql-null-support]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[composed-sql-wrong-support-type]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[composed-sql-noncanonical-id]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[composed-sql-noncanonical-scope]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[composed-sql-bool-clock]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[composed-sql-float-clock]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[composed-sql-string-clock]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[composed-sql-zero-clock]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[composed-sql-int64-clock]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[composed-sql-zero-observed]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[composed-sql-negative-observed]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[composed-sql-oversize]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[composed-sql-deep]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[composed-sql-null-issue]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[composed-sql-case-service]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[composed-sql-case-kind]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[product-factory-null-members]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[product-factory-null-scope]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[product-factory-null-provenance]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[product-factory-null-child]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[product-factory-wrong-kind]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[product-factory-wrong-original-type]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[product-factory-missing-field]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[product-factory-null-support]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[product-factory-wrong-support-type]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[product-factory-noncanonical-id]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[product-factory-noncanonical-scope]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[product-factory-bool-clock]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[product-factory-float-clock]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[product-factory-string-clock]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[product-factory-zero-clock]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[product-factory-int64-clock]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[product-factory-zero-observed]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[product-factory-negative-observed]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[product-factory-oversize]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[product-factory-deep]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[product-factory-null-issue]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[product-factory-case-service]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[product-factory-case-kind]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-report-time-insert]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-report-time-ignore]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-report-time-replace]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-report-time-nothing]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-report-time-upsert-noop]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-report-time-upsert-update]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-report-scope-insert]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-report-scope-ignore]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-report-scope-replace]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-report-scope-nothing]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-report-scope-upsert-noop]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-report-scope-upsert-update]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-report-members-insert]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-report-members-ignore]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-report-members-replace]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-report-members-nothing]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-report-members-upsert-noop]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-report-members-upsert-update]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-endpoint-time-insert]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-endpoint-time-ignore]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-endpoint-time-replace]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-endpoint-time-nothing]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-endpoint-time-upsert-noop]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-endpoint-time-upsert-update]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-endpoint-scope-insert]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-endpoint-scope-ignore]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-endpoint-scope-replace]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-endpoint-scope-nothing]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-endpoint-scope-upsert-noop]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-endpoint-scope-upsert-update]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-endpoint-members-insert]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-endpoint-members-ignore]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-endpoint-members-replace]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-endpoint-members-nothing]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-endpoint-members-upsert-noop]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-endpoint-members-upsert-update]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-report-time-insert]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-report-time-ignore]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-report-time-replace]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-report-time-nothing]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-report-time-upsert-noop]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-report-time-upsert-update]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-report-scope-insert]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-report-scope-ignore]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-report-scope-replace]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-report-scope-nothing]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-report-scope-upsert-noop]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-report-scope-upsert-update]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-report-members-insert]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-report-members-ignore]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-report-members-replace]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-report-members-nothing]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-report-members-upsert-noop]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-report-members-upsert-update]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-endpoint-time-insert]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-endpoint-time-ignore]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-endpoint-time-replace]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-endpoint-time-nothing]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-endpoint-time-upsert-noop]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-endpoint-time-upsert-update]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-endpoint-scope-insert]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-endpoint-scope-ignore]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-endpoint-scope-replace]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-endpoint-scope-nothing]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-endpoint-scope-upsert-noop]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-endpoint-scope-upsert-update]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-endpoint-members-insert]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-endpoint-members-ignore]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-endpoint-members-replace]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-endpoint-members-nothing]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-endpoint-members-upsert-noop]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-endpoint-members-upsert-update]",
+                "tests/integration/p3/test_transfer_sql.py::test_originals_immutable[composed-sql-resources-update]",
+                "tests/integration/p3/test_transfer_sql.py::test_originals_immutable[composed-sql-resources-delete]",
+                "tests/integration/p3/test_transfer_sql.py::test_originals_immutable[composed-sql-resources-replace]",
+                "tests/integration/p3/test_transfer_sql.py::test_originals_immutable[composed-sql-resources-upsert]",
+                "tests/integration/p3/test_transfer_sql.py::test_originals_immutable[composed-sql-resource_relations-update]",
+                "tests/integration/p3/test_transfer_sql.py::test_originals_immutable[composed-sql-resource_relations-delete]",
+                "tests/integration/p3/test_transfer_sql.py::test_originals_immutable[composed-sql-resource_relations-replace]",
+                "tests/integration/p3/test_transfer_sql.py::test_originals_immutable[composed-sql-resource_relations-upsert]",
+                "tests/integration/p3/test_transfer_sql.py::test_originals_immutable[composed-sql-resource_repository_relations-update]",
+                "tests/integration/p3/test_transfer_sql.py::test_originals_immutable[composed-sql-resource_repository_relations-delete]",
+                "tests/integration/p3/test_transfer_sql.py::test_originals_immutable[composed-sql-resource_repository_relations-replace]",
+                "tests/integration/p3/test_transfer_sql.py::test_originals_immutable[composed-sql-resource_repository_relations-upsert]",
+                "tests/integration/p3/test_transfer_sql.py::test_originals_immutable[product-factory-resources-update]",
+                "tests/integration/p3/test_transfer_sql.py::test_originals_immutable[product-factory-resources-delete]",
+                "tests/integration/p3/test_transfer_sql.py::test_originals_immutable[product-factory-resources-replace]",
+                "tests/integration/p3/test_transfer_sql.py::test_originals_immutable[product-factory-resources-upsert]",
+                "tests/integration/p3/test_transfer_sql.py::test_originals_immutable[product-factory-resource_relations-update]",
+                "tests/integration/p3/test_transfer_sql.py::test_originals_immutable[product-factory-resource_relations-delete]",
+                "tests/integration/p3/test_transfer_sql.py::test_originals_immutable[product-factory-resource_relations-replace]",
+                "tests/integration/p3/test_transfer_sql.py::test_originals_immutable[product-factory-resource_relations-upsert]",
+                "tests/integration/p3/test_transfer_sql.py::test_originals_immutable[product-factory-resource_repository_relations-update]",
+                "tests/integration/p3/test_transfer_sql.py::test_originals_immutable[product-factory-resource_repository_relations-delete]",
+                "tests/integration/p3/test_transfer_sql.py::test_originals_immutable[product-factory-resource_repository_relations-replace]",
+                "tests/integration/p3/test_transfer_sql.py::test_originals_immutable[product-factory-resource_repository_relations-upsert]",
+                "tests/integration/p3/test_transfer_sql.py::test_exact_replay_and_null_original_times[composed-sql]",
+                "tests/integration/p3/test_transfer_sql.py::test_exact_replay_and_null_original_times[product-factory]",
+                "tests/integration/p3/test_transfer_sql.py::test_atomic_sql_boundaries[composed-sql-multirow]",
+                "tests/integration/p3/test_transfer_sql.py::test_atomic_sql_boundaries[composed-sql-savepoint]",
+                "tests/integration/p3/test_transfer_sql.py::test_atomic_sql_boundaries[composed-sql-transaction]",
+                "tests/integration/p3/test_transfer_sql.py::test_atomic_sql_boundaries[product-factory-multirow]",
+                "tests/integration/p3/test_transfer_sql.py::test_atomic_sql_boundaries[product-factory-savepoint]",
+                "tests/integration/p3/test_transfer_sql.py::test_atomic_sql_boundaries[product-factory-transaction]",
+                "tests/integration/p3/test_transfer_sql.py::test_product_fences_remain[composed-sql-insert]",
+                "tests/integration/p3/test_transfer_sql.py::test_product_fences_remain[composed-sql-ignore]",
+                "tests/integration/p3/test_transfer_sql.py::test_product_fences_remain[composed-sql-replace]",
+                "tests/integration/p3/test_transfer_sql.py::test_product_fences_remain[composed-sql-nothing]",
+                "tests/integration/p3/test_transfer_sql.py::test_product_fences_remain[composed-sql-upsert-noop]",
+                "tests/integration/p3/test_transfer_sql.py::test_product_fences_remain[composed-sql-upsert-update]",
+                "tests/integration/p3/test_transfer_sql.py::test_product_fences_remain[product-factory-insert]",
+                "tests/integration/p3/test_transfer_sql.py::test_product_fences_remain[product-factory-ignore]",
+                "tests/integration/p3/test_transfer_sql.py::test_product_fences_remain[product-factory-replace]",
+                "tests/integration/p3/test_transfer_sql.py::test_product_fences_remain[product-factory-nothing]",
+                "tests/integration/p3/test_transfer_sql.py::test_product_fences_remain[product-factory-upsert-noop]",
+                "tests/integration/p3/test_transfer_sql.py::test_product_fences_remain[product-factory-upsert-update]",
+                "tests/integration/p3/test_transfer_sql.py::test_product_admission_is_still_fenced",
+                "tests/integration/p3/test_transfer_sql.py::test_connection_requires_all_i4_functions[composed-sql]",
+                "tests/integration/p3/test_transfer_sql.py::test_connection_requires_all_i4_functions[product-factory]",
+                "tests/integration/p3/test_transfer_sql.py::test_binary_collation_and_nonwritable_projections[composed-sql]",
+                "tests/integration/p3/test_transfer_sql.py::test_binary_collation_and_nonwritable_projections[product-factory]",
+                "tests/integration/p3/test_transfer_sql.py::test_endpoint_cannot_exist_without_original_report[composed-sql]",
+                "tests/integration/p3/test_transfer_sql.py::test_endpoint_cannot_exist_without_original_report[product-factory]",
+                "tests/integration/p3/test_transfer_sql.py::test_sql_event_syntax_is_not_i5_semantic_authentication[composed-sql]",
+                "tests/integration/p3/test_transfer_sql.py::test_sql_event_syntax_is_not_i5_semantic_authentication[product-factory]"
+              ],
+              "i5": [
+                "tests/integration/p3/test_transfer_admission.py::test_schema_verification_and_isolation_exactness[composed-sql]",
+                "tests/integration/p3/test_transfer_admission.py::test_schema_verification_and_isolation_exactness[product-factory]",
+                "tests/integration/p3/test_transfer_admission.py::test_normal_fenced_product_refuses_transfer[composed-sql]",
+                "tests/integration/p3/test_transfer_admission.py::test_normal_fenced_product_refuses_transfer[product-factory]",
+                "tests/integration/p3/test_transfer_admission.py::test_admit_transfer_event_2sided_success[composed-sql]",
+                "tests/integration/p3/test_transfer_admission.py::test_admit_transfer_event_2sided_success[product-factory]",
+                "tests/integration/p3/test_transfer_admission.py::test_admit_transfer_event_via_production_context",
+                "tests/integration/p3/test_transfer_admission.py::test_g3a_permanent_violation_mismatched_parent_issue[composed-sql]",
+                "tests/integration/p3/test_transfer_admission.py::test_g3a_permanent_violation_mismatched_parent_issue[product-factory]",
+                "tests/integration/p3/test_transfer_admission.py::test_dependency_missing_resupply_succeeds[composed-sql]",
+                "tests/integration/p3/test_transfer_admission.py::test_dependency_missing_resupply_succeeds[product-factory]",
+                "tests/integration/p3/test_transfer_admission.py::test_mapping_support_dependency[composed-sql]",
+                "tests/integration/p3/test_transfer_admission.py::test_mapping_support_dependency[product-factory]",
+                "tests/integration/p3/test_transfer_admission.py::test_provider_event_meaning_and_type[composed-sql]",
+                "tests/integration/p3/test_transfer_admission.py::test_provider_event_meaning_and_type[product-factory]",
+                "tests/integration/p3/test_transfer_admission.py::test_prebind_type_strictness[composed-sql]",
+                "tests/integration/p3/test_transfer_admission.py::test_prebind_type_strictness[product-factory]",
+                "tests/integration/p3/test_transfer_admission.py::test_atomicity_second_endpoint_failure_rolls_back[composed-sql]",
+                "tests/integration/p3/test_transfer_admission.py::test_atomicity_second_endpoint_failure_rolls_back[product-factory]",
+                "tests/integration/p3/test_transfer_admission.py::test_replay_idempotency_and_mutation_rejection[composed-sql]",
+                "tests/integration/p3/test_transfer_admission.py::test_replay_idempotency_and_mutation_rejection[product-factory]",
+                "tests/integration/p3/test_transfer_admission.py::test_selection_and_truncation_rejection[composed-sql]",
+                "tests/integration/p3/test_transfer_admission.py::test_selection_and_truncation_rejection[product-factory]",
+                "tests/integration/p3/test_transfer_admission.py::test_genuine_1sided_and_explicit_null_admission[composed-sql]",
+                "tests/integration/p3/test_transfer_admission.py::test_genuine_1sided_and_explicit_null_admission[product-factory]",
+                "tests/integration/p3/test_transfer_admission.py::test_explicit_null_admission[composed-sql]",
+                "tests/integration/p3/test_transfer_admission.py::test_explicit_null_admission[product-factory]",
+                "tests/integration/p3/test_transfer_admission.py::test_transfer_event_reports_filtering_and_no_cross_borrowing[composed-sql]",
+                "tests/integration/p3/test_transfer_admission.py::test_transfer_event_reports_filtering_and_no_cross_borrowing[product-factory]"
+              ]
+            }
+          },
+          "wire": {
+            "selected": 212,
+            "passed": 212,
+            "exit_code": 0,
+            "selected_junit_journal_typed_exact": true,
+            "in_pytest_import_checks": 4
+          },
+          "extra": {
+            "selected": 34,
+            "passed": 34,
+            "exit_code": 0,
+            "selected_junit_journal_typed_exact": true,
+            "in_pytest_import_checks": 4
+          },
+          "authorization": {
+            "selected": 27,
+            "passed": 27,
+            "exit_code": 0,
+            "selected_junit_journal_typed_exact": true,
+            "in_pytest_import_checks": 4
+          },
+          "task-c": {
+            "selected": 132,
+            "passed": 132,
+            "exit_code": 0,
+            "selected_junit_journal_typed_exact": true,
+            "in_pytest_import_checks": 4
+          }
+        },
+        "actual_installed_RECORD": {
+          "record_entries": 169,
+          "hashed_entries": 168,
+          "raw_RECORD_bytes": 16413,
+          "raw_RECORD_sha256": "743aa5c3dae640fa1fa87fb3d02ab4930b7be1fa86b9067b5a7fe52be3eed22e",
+          "product_file_count": 160,
+          "all_hashed_entries_digest_and_size_verified": true,
+          "unhashed_entries": [
+            {
+              "record_path": "repo_catalog-0.2.0.dist-info/RECORD",
+              "resolved_path": "/workspace/i6b-work/installed-final-work/direct-venv/lib/python3.12/site-packages/repo_catalog-0.2.0.dist-info/RECORD",
+              "bytes": 16413,
+              "observed_sha256": "743aa5c3dae640fa1fa87fb3d02ab4930b7be1fa86b9067b5a7fe52be3eed22e",
+              "record_digest": "",
+              "record_size": "",
+              "archive_member_present": true,
+              "record_hash_and_size_verified": false,
+              "archive_member_sha256": "453f393e799b220aed9a8c94a8830afbfb1387598a201a168d0bb3a37666d8d0",
+              "same_as_archive_member": false
+            }
+          ],
+          "installer_added_entries": [
+            {
+              "record_path": "../../../bin/repo-catalog",
+              "resolved_path": "/workspace/i6b-work/installed-final-work/direct-venv/bin/repo-catalog",
+              "bytes": 350,
+              "observed_sha256": "3aa2e8882e9af5cccbb4c36c75943662e1e93bea47a10cdc8d2979eaecb5cf6b",
+              "record_digest": "sha256=OqLoiC6a9czLtMNsdZQ2YuHpO-pHoQzcjSl56uy1z2s",
+              "record_size": "350",
+              "archive_member_present": false,
+              "record_hash_and_size_verified": true
+            },
+            {
+              "record_path": "repo_catalog-0.2.0.dist-info/INSTALLER",
+              "resolved_path": "/workspace/i6b-work/installed-final-work/direct-venv/lib/python3.12/site-packages/repo_catalog-0.2.0.dist-info/INSTALLER",
+              "bytes": 2,
+              "observed_sha256": "e6184ce10e266134fdcfa401e8f1a95005bcd4f18d16b62b757323e2833fe9a9",
+              "record_digest": "sha256=5hhM4Q4mYTT9z6QB6PGpUAW81PGNFrYrdXMj4oM_6ak",
+              "record_size": "2",
+              "archive_member_present": false,
+              "record_hash_and_size_verified": true
+            },
+            {
+              "record_path": "repo_catalog-0.2.0.dist-info/REQUESTED",
+              "resolved_path": "/workspace/i6b-work/installed-final-work/direct-venv/lib/python3.12/site-packages/repo_catalog-0.2.0.dist-info/REQUESTED",
+              "bytes": 0,
+              "observed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "record_digest": "sha256=47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU",
+              "record_size": "0",
+              "archive_member_present": false,
+              "record_hash_and_size_verified": true
+            },
+            {
+              "record_path": "repo_catalog-0.2.0.dist-info/direct_url.json",
+              "resolved_path": "/workspace/i6b-work/installed-final-work/direct-venv/lib/python3.12/site-packages/repo_catalog-0.2.0.dist-info/direct_url.json",
+              "bytes": 123,
+              "observed_sha256": "297067fc72a32a25668a1172d3a655b029e3a37105519157a57fd07208a221b4",
+              "record_digest": "sha256=KXBn_HKjKiVmihFy06ZVsCnjo3EFUZFXpX_QcgiiIbQ",
+              "record_size": "123",
+              "archive_member_present": false,
+              "record_hash_and_size_verified": true
+            },
+            {
+              "record_path": "repo_catalog-0.2.0.dist-info/uv_cache.json",
+              "resolved_path": "/workspace/i6b-work/installed-final-work/direct-venv/lib/python3.12/site-packages/repo_catalog-0.2.0.dist-info/uv_cache.json",
+              "bytes": 127,
+              "observed_sha256": "bf853260e9d1f9cb307f9cac7b72539de80b2b4f726102a6fcb3a3bec5a86254",
+              "record_digest": "sha256=v4UyYOnR-cswf5yse3JTnegLK09yYQKm_LOjvsWoYlQ",
+              "record_size": "127",
+              "archive_member_present": false,
+              "record_hash_and_size_verified": true
+            }
+          ],
+          "archive_member_bytes_changed_by_installer": [
+            {
+              "record_path": "repo_catalog-0.2.0.dist-info/RECORD",
+              "resolved_path": "/workspace/i6b-work/installed-final-work/direct-venv/lib/python3.12/site-packages/repo_catalog-0.2.0.dist-info/RECORD",
+              "bytes": 16413,
+              "observed_sha256": "743aa5c3dae640fa1fa87fb3d02ab4930b7be1fa86b9067b5a7fe52be3eed22e",
+              "record_digest": "",
+              "record_size": "",
+              "archive_member_present": true,
+              "record_hash_and_size_verified": false,
+              "archive_member_sha256": "453f393e799b220aed9a8c94a8830afbfb1387598a201a168d0bb3a37666d8d0",
+              "same_as_archive_member": false
+            }
+          ]
+        },
+        "probe_originals": {
+          "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+          "sqlite": "3.53.1",
+          "cases": [
+            {
+              "id": "case_both_unreported_is_no_report",
+              "result": "PASS"
+            },
+            {
+              "id": "case_changed_parent_payload_refuses_even_replay",
+              "result": "PASS"
+            },
+            {
+              "id": "case_child_global_scoped_first_no_semantic_parent",
+              "result": "PASS"
+            },
+            {
+              "id": "case_constructor_missing_declaration",
+              "result": "PASS"
+            },
+            {
+              "id": "case_constructor_missing_endpoints",
+              "result": "PASS"
+            },
+            {
+              "id": "case_constructor_missing_parent",
+              "result": "PASS"
+            },
+            {
+              "id": "case_constructor_truncated_two_sided",
+              "result": "PASS"
+            },
+            {
+              "id": "case_decoder_requires_all_original_parent_coordinates",
+              "result": "PASS"
+            },
+            {
+              "id": "case_event_coordinates_cannot_substitute_parent",
+              "result": "PASS"
+            },
+            {
+              "id": "case_missing_exact_parent_is_not_recovered_from_native_id",
+              "result": "PASS"
+            },
+            {
+              "id": "case_missing_parent_time_is_not_null",
+              "result": "PASS"
+            },
+            {
+              "id": "case_multiple_parents_retained_without_winner",
+              "result": "PASS"
+            },
+            {
+              "id": "case_one_sided_and_explicit_null_distinct",
+              "result": "PASS"
+            },
+            {
+              "id": "case_parent_explicit_null_stays_null",
+              "result": "PASS"
+            },
+            {
+              "id": "case_provider_only_unresolved_is_not_null",
+              "result": "PASS"
+            },
+            {
+              "id": "case_replay_cannot_rewrite_two_sided_as_one_sided",
+              "result": "PASS"
+            },
+            {
+              "id": "case_selection_truncated_is_not_one_sided",
+              "result": "PASS"
+            },
+            {
+              "id": "case_stored_rows_cannot_rescue_truncated_delivery",
+              "result": "PASS"
+            },
+            {
+              "id": "case_two_sided_null_and_replay_preserve_originals",
+              "result": "PASS"
+            }
+          ],
+          "passed": 19,
+          "failed": 0
+        },
+        "probe_invalid_carrier": {
+          "invalid_original_cases": 4,
+          "invalid_original_refusals": 4,
+          "normal_fence_controls": 2
+        }
+      },
+      "sdist": {
+        "sqlite": [
+          "3.53.1",
+          "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9"
+        ],
+        "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+        "prefix": "/workspace/i6b-work/installed-final-work/sdist-venv",
+        "origin": "/workspace/i6b-work/installed-final-work/sdist-venv/lib/python3.12/site-packages/repo_catalog",
+        "fingerprint": "924cc7557fb3da6211ea070185881f5fcaeff9bf52b6e237a361a238a2ea0c6e",
+        "fences": [
+          [
+            "trigger",
+            "i2_transfer_report_stage_fence",
+            "resource_relations",
+            "CREATE TRIGGER i2_transfer_report_stage_fence BEFORE INSERT ON resource_relations\nWHEN NEW.relation_kind COLLATE BINARY='transfer_event_report'\nBEGIN SELECT RAISE(ABORT,'I2_TRANSFER_UNSUPPORTED'); END"
+          ],
+          [
+            "trigger",
+            "i2_transfer_stage_fence",
+            "resource_repository_relations",
+            "CREATE TRIGGER i2_transfer_stage_fence BEFORE INSERT ON resource_repository_relations\nWHEN NEW.relation_kind COLLATE BINARY IN('transfer_from_repository','transfer_to_repository')\nBEGIN SELECT RAISE(ABORT,'I2_TRANSFER_UNSUPPORTED'); END"
+          ]
+        ],
+        "runtime_before_after_equal": true,
+        "lanes": {
+          "safety": {
+            "selected": 626,
+            "passed": 626,
+            "exit_code": 0,
+            "selected_junit_journal_typed_exact": true,
+            "in_pytest_import_checks": 4,
+            "i4_i5_actual_nodes": {
+              "i4": [
+                "tests/integration/p3/test_transfer_sql.py::test_native_i7_and_originals[composed-sql]",
+                "tests/integration/p3/test_transfer_sql.py::test_native_i7_and_originals[product-factory]",
+                "tests/integration/p3/test_transfer_sql.py::test_i8_is_permanently_ineligible_and_retained[composed-sql]",
+                "tests/integration/p3/test_transfer_sql.py::test_i8_is_permanently_ineligible_and_retained[product-factory]",
+                "tests/integration/p3/test_transfer_sql.py::test_dependency_arrival_requires_original_resupply[composed-sql-resource]",
+                "tests/integration/p3/test_transfer_sql.py::test_dependency_arrival_requires_original_resupply[composed-sql-report]",
+                "tests/integration/p3/test_transfer_sql.py::test_dependency_arrival_requires_original_resupply[product-factory-resource]",
+                "tests/integration/p3/test_transfer_sql.py::test_dependency_arrival_requires_original_resupply[product-factory-report]",
+                "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[composed-sql-members]",
+                "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[composed-sql-scope-clock]",
+                "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[composed-sql-scope-state]",
+                "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[composed-sql-provenance]",
+                "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[composed-sql-event]",
+                "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[composed-sql-service]",
+                "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[composed-sql-subtype]",
+                "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[composed-sql-resource-kind]",
+                "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[composed-sql-issue-id]",
+                "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[product-factory-members]",
+                "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[product-factory-scope-clock]",
+                "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[product-factory-scope-state]",
+                "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[product-factory-provenance]",
+                "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[product-factory-event]",
+                "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[product-factory-service]",
+                "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[product-factory-subtype]",
+                "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[product-factory-resource-kind]",
+                "tests/integration/p3/test_transfer_sql.py::test_complete_parent_and_native_reference[product-factory-issue-id]",
+                "tests/integration/p3/test_transfer_sql.py::test_endpoint_full_event_reference[composed-sql-event]",
+                "tests/integration/p3/test_transfer_sql.py::test_endpoint_full_event_reference[composed-sql-members]",
+                "tests/integration/p3/test_transfer_sql.py::test_endpoint_full_event_reference[composed-sql-scope]",
+                "tests/integration/p3/test_transfer_sql.py::test_endpoint_full_event_reference[composed-sql-clock]",
+                "tests/integration/p3/test_transfer_sql.py::test_endpoint_full_event_reference[composed-sql-provenance]",
+                "tests/integration/p3/test_transfer_sql.py::test_endpoint_full_event_reference[composed-sql-time]",
+                "tests/integration/p3/test_transfer_sql.py::test_endpoint_full_event_reference[composed-sql-null-members]",
+                "tests/integration/p3/test_transfer_sql.py::test_endpoint_full_event_reference[composed-sql-null-scope]",
+                "tests/integration/p3/test_transfer_sql.py::test_endpoint_full_event_reference[composed-sql-undeclared-target]",
+                "tests/integration/p3/test_transfer_sql.py::test_endpoint_full_event_reference[composed-sql-role]",
+                "tests/integration/p3/test_transfer_sql.py::test_endpoint_full_event_reference[product-factory-event]",
+                "tests/integration/p3/test_transfer_sql.py::test_endpoint_full_event_reference[product-factory-members]",
+                "tests/integration/p3/test_transfer_sql.py::test_endpoint_full_event_reference[product-factory-scope]",
+                "tests/integration/p3/test_transfer_sql.py::test_endpoint_full_event_reference[product-factory-clock]",
+                "tests/integration/p3/test_transfer_sql.py::test_endpoint_full_event_reference[product-factory-provenance]",
+                "tests/integration/p3/test_transfer_sql.py::test_endpoint_full_event_reference[product-factory-time]",
+                "tests/integration/p3/test_transfer_sql.py::test_endpoint_full_event_reference[product-factory-null-members]",
+                "tests/integration/p3/test_transfer_sql.py::test_endpoint_full_event_reference[product-factory-null-scope]",
+                "tests/integration/p3/test_transfer_sql.py::test_endpoint_full_event_reference[product-factory-undeclared-target]",
+                "tests/integration/p3/test_transfer_sql.py::test_endpoint_full_event_reference[product-factory-role]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[composed-sql-null-members]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[composed-sql-null-scope]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[composed-sql-null-provenance]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[composed-sql-null-child]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[composed-sql-wrong-kind]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[composed-sql-wrong-original-type]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[composed-sql-missing-field]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[composed-sql-null-support]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[composed-sql-wrong-support-type]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[composed-sql-noncanonical-id]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[composed-sql-noncanonical-scope]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[composed-sql-bool-clock]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[composed-sql-float-clock]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[composed-sql-string-clock]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[composed-sql-zero-clock]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[composed-sql-int64-clock]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[composed-sql-zero-observed]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[composed-sql-negative-observed]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[composed-sql-oversize]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[composed-sql-deep]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[composed-sql-null-issue]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[composed-sql-case-service]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[composed-sql-case-kind]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[product-factory-null-members]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[product-factory-null-scope]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[product-factory-null-provenance]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[product-factory-null-child]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[product-factory-wrong-kind]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[product-factory-wrong-original-type]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[product-factory-missing-field]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[product-factory-null-support]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[product-factory-wrong-support-type]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[product-factory-noncanonical-id]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[product-factory-noncanonical-scope]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[product-factory-bool-clock]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[product-factory-float-clock]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[product-factory-string-clock]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[product-factory-zero-clock]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[product-factory-int64-clock]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[product-factory-zero-observed]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[product-factory-negative-observed]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[product-factory-oversize]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[product-factory-deep]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[product-factory-null-issue]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[product-factory-case-service]",
+                "tests/integration/p3/test_transfer_sql.py::test_null_types_canonical_bounds[product-factory-case-kind]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-report-time-insert]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-report-time-ignore]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-report-time-replace]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-report-time-nothing]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-report-time-upsert-noop]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-report-time-upsert-update]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-report-scope-insert]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-report-scope-ignore]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-report-scope-replace]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-report-scope-nothing]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-report-scope-upsert-noop]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-report-scope-upsert-update]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-report-members-insert]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-report-members-ignore]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-report-members-replace]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-report-members-nothing]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-report-members-upsert-noop]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-report-members-upsert-update]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-endpoint-time-insert]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-endpoint-time-ignore]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-endpoint-time-replace]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-endpoint-time-nothing]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-endpoint-time-upsert-noop]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-endpoint-time-upsert-update]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-endpoint-scope-insert]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-endpoint-scope-ignore]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-endpoint-scope-replace]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-endpoint-scope-nothing]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-endpoint-scope-upsert-noop]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-endpoint-scope-upsert-update]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-endpoint-members-insert]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-endpoint-members-ignore]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-endpoint-members-replace]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-endpoint-members-nothing]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-endpoint-members-upsert-noop]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[composed-sql-endpoint-members-upsert-update]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-report-time-insert]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-report-time-ignore]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-report-time-replace]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-report-time-nothing]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-report-time-upsert-noop]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-report-time-upsert-update]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-report-scope-insert]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-report-scope-ignore]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-report-scope-replace]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-report-scope-nothing]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-report-scope-upsert-noop]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-report-scope-upsert-update]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-report-members-insert]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-report-members-ignore]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-report-members-replace]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-report-members-nothing]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-report-members-upsert-noop]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-report-members-upsert-update]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-endpoint-time-insert]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-endpoint-time-ignore]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-endpoint-time-replace]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-endpoint-time-nothing]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-endpoint-time-upsert-noop]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-endpoint-time-upsert-update]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-endpoint-scope-insert]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-endpoint-scope-ignore]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-endpoint-scope-replace]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-endpoint-scope-nothing]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-endpoint-scope-upsert-noop]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-endpoint-scope-upsert-update]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-endpoint-members-insert]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-endpoint-members-ignore]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-endpoint-members-replace]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-endpoint-members-nothing]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-endpoint-members-upsert-noop]",
+                "tests/integration/p3/test_transfer_sql.py::test_preconflict_rebind_refused[product-factory-endpoint-members-upsert-update]",
+                "tests/integration/p3/test_transfer_sql.py::test_originals_immutable[composed-sql-resources-update]",
+                "tests/integration/p3/test_transfer_sql.py::test_originals_immutable[composed-sql-resources-delete]",
+                "tests/integration/p3/test_transfer_sql.py::test_originals_immutable[composed-sql-resources-replace]",
+                "tests/integration/p3/test_transfer_sql.py::test_originals_immutable[composed-sql-resources-upsert]",
+                "tests/integration/p3/test_transfer_sql.py::test_originals_immutable[composed-sql-resource_relations-update]",
+                "tests/integration/p3/test_transfer_sql.py::test_originals_immutable[composed-sql-resource_relations-delete]",
+                "tests/integration/p3/test_transfer_sql.py::test_originals_immutable[composed-sql-resource_relations-replace]",
+                "tests/integration/p3/test_transfer_sql.py::test_originals_immutable[composed-sql-resource_relations-upsert]",
+                "tests/integration/p3/test_transfer_sql.py::test_originals_immutable[composed-sql-resource_repository_relations-update]",
+                "tests/integration/p3/test_transfer_sql.py::test_originals_immutable[composed-sql-resource_repository_relations-delete]",
+                "tests/integration/p3/test_transfer_sql.py::test_originals_immutable[composed-sql-resource_repository_relations-replace]",
+                "tests/integration/p3/test_transfer_sql.py::test_originals_immutable[composed-sql-resource_repository_relations-upsert]",
+                "tests/integration/p3/test_transfer_sql.py::test_originals_immutable[product-factory-resources-update]",
+                "tests/integration/p3/test_transfer_sql.py::test_originals_immutable[product-factory-resources-delete]",
+                "tests/integration/p3/test_transfer_sql.py::test_originals_immutable[product-factory-resources-replace]",
+                "tests/integration/p3/test_transfer_sql.py::test_originals_immutable[product-factory-resources-upsert]",
+                "tests/integration/p3/test_transfer_sql.py::test_originals_immutable[product-factory-resource_relations-update]",
+                "tests/integration/p3/test_transfer_sql.py::test_originals_immutable[product-factory-resource_relations-delete]",
+                "tests/integration/p3/test_transfer_sql.py::test_originals_immutable[product-factory-resource_relations-replace]",
+                "tests/integration/p3/test_transfer_sql.py::test_originals_immutable[product-factory-resource_relations-upsert]",
+                "tests/integration/p3/test_transfer_sql.py::test_originals_immutable[product-factory-resource_repository_relations-update]",
+                "tests/integration/p3/test_transfer_sql.py::test_originals_immutable[product-factory-resource_repository_relations-delete]",
+                "tests/integration/p3/test_transfer_sql.py::test_originals_immutable[product-factory-resource_repository_relations-replace]",
+                "tests/integration/p3/test_transfer_sql.py::test_originals_immutable[product-factory-resource_repository_relations-upsert]",
+                "tests/integration/p3/test_transfer_sql.py::test_exact_replay_and_null_original_times[composed-sql]",
+                "tests/integration/p3/test_transfer_sql.py::test_exact_replay_and_null_original_times[product-factory]",
+                "tests/integration/p3/test_transfer_sql.py::test_atomic_sql_boundaries[composed-sql-multirow]",
+                "tests/integration/p3/test_transfer_sql.py::test_atomic_sql_boundaries[composed-sql-savepoint]",
+                "tests/integration/p3/test_transfer_sql.py::test_atomic_sql_boundaries[composed-sql-transaction]",
+                "tests/integration/p3/test_transfer_sql.py::test_atomic_sql_boundaries[product-factory-multirow]",
+                "tests/integration/p3/test_transfer_sql.py::test_atomic_sql_boundaries[product-factory-savepoint]",
+                "tests/integration/p3/test_transfer_sql.py::test_atomic_sql_boundaries[product-factory-transaction]",
+                "tests/integration/p3/test_transfer_sql.py::test_product_fences_remain[composed-sql-insert]",
+                "tests/integration/p3/test_transfer_sql.py::test_product_fences_remain[composed-sql-ignore]",
+                "tests/integration/p3/test_transfer_sql.py::test_product_fences_remain[composed-sql-replace]",
+                "tests/integration/p3/test_transfer_sql.py::test_product_fences_remain[composed-sql-nothing]",
+                "tests/integration/p3/test_transfer_sql.py::test_product_fences_remain[composed-sql-upsert-noop]",
+                "tests/integration/p3/test_transfer_sql.py::test_product_fences_remain[composed-sql-upsert-update]",
+                "tests/integration/p3/test_transfer_sql.py::test_product_fences_remain[product-factory-insert]",
+                "tests/integration/p3/test_transfer_sql.py::test_product_fences_remain[product-factory-ignore]",
+                "tests/integration/p3/test_transfer_sql.py::test_product_fences_remain[product-factory-replace]",
+                "tests/integration/p3/test_transfer_sql.py::test_product_fences_remain[product-factory-nothing]",
+                "tests/integration/p3/test_transfer_sql.py::test_product_fences_remain[product-factory-upsert-noop]",
+                "tests/integration/p3/test_transfer_sql.py::test_product_fences_remain[product-factory-upsert-update]",
+                "tests/integration/p3/test_transfer_sql.py::test_product_admission_is_still_fenced",
+                "tests/integration/p3/test_transfer_sql.py::test_connection_requires_all_i4_functions[composed-sql]",
+                "tests/integration/p3/test_transfer_sql.py::test_connection_requires_all_i4_functions[product-factory]",
+                "tests/integration/p3/test_transfer_sql.py::test_binary_collation_and_nonwritable_projections[composed-sql]",
+                "tests/integration/p3/test_transfer_sql.py::test_binary_collation_and_nonwritable_projections[product-factory]",
+                "tests/integration/p3/test_transfer_sql.py::test_endpoint_cannot_exist_without_original_report[composed-sql]",
+                "tests/integration/p3/test_transfer_sql.py::test_endpoint_cannot_exist_without_original_report[product-factory]",
+                "tests/integration/p3/test_transfer_sql.py::test_sql_event_syntax_is_not_i5_semantic_authentication[composed-sql]",
+                "tests/integration/p3/test_transfer_sql.py::test_sql_event_syntax_is_not_i5_semantic_authentication[product-factory]"
+              ],
+              "i5": [
+                "tests/integration/p3/test_transfer_admission.py::test_schema_verification_and_isolation_exactness[composed-sql]",
+                "tests/integration/p3/test_transfer_admission.py::test_schema_verification_and_isolation_exactness[product-factory]",
+                "tests/integration/p3/test_transfer_admission.py::test_normal_fenced_product_refuses_transfer[composed-sql]",
+                "tests/integration/p3/test_transfer_admission.py::test_normal_fenced_product_refuses_transfer[product-factory]",
+                "tests/integration/p3/test_transfer_admission.py::test_admit_transfer_event_2sided_success[composed-sql]",
+                "tests/integration/p3/test_transfer_admission.py::test_admit_transfer_event_2sided_success[product-factory]",
+                "tests/integration/p3/test_transfer_admission.py::test_admit_transfer_event_via_production_context",
+                "tests/integration/p3/test_transfer_admission.py::test_g3a_permanent_violation_mismatched_parent_issue[composed-sql]",
+                "tests/integration/p3/test_transfer_admission.py::test_g3a_permanent_violation_mismatched_parent_issue[product-factory]",
+                "tests/integration/p3/test_transfer_admission.py::test_dependency_missing_resupply_succeeds[composed-sql]",
+                "tests/integration/p3/test_transfer_admission.py::test_dependency_missing_resupply_succeeds[product-factory]",
+                "tests/integration/p3/test_transfer_admission.py::test_mapping_support_dependency[composed-sql]",
+                "tests/integration/p3/test_transfer_admission.py::test_mapping_support_dependency[product-factory]",
+                "tests/integration/p3/test_transfer_admission.py::test_provider_event_meaning_and_type[composed-sql]",
+                "tests/integration/p3/test_transfer_admission.py::test_provider_event_meaning_and_type[product-factory]",
+                "tests/integration/p3/test_transfer_admission.py::test_prebind_type_strictness[composed-sql]",
+                "tests/integration/p3/test_transfer_admission.py::test_prebind_type_strictness[product-factory]",
+                "tests/integration/p3/test_transfer_admission.py::test_atomicity_second_endpoint_failure_rolls_back[composed-sql]",
+                "tests/integration/p3/test_transfer_admission.py::test_atomicity_second_endpoint_failure_rolls_back[product-factory]",
+                "tests/integration/p3/test_transfer_admission.py::test_replay_idempotency_and_mutation_rejection[composed-sql]",
+                "tests/integration/p3/test_transfer_admission.py::test_replay_idempotency_and_mutation_rejection[product-factory]",
+                "tests/integration/p3/test_transfer_admission.py::test_selection_and_truncation_rejection[composed-sql]",
+                "tests/integration/p3/test_transfer_admission.py::test_selection_and_truncation_rejection[product-factory]",
+                "tests/integration/p3/test_transfer_admission.py::test_genuine_1sided_and_explicit_null_admission[composed-sql]",
+                "tests/integration/p3/test_transfer_admission.py::test_genuine_1sided_and_explicit_null_admission[product-factory]",
+                "tests/integration/p3/test_transfer_admission.py::test_explicit_null_admission[composed-sql]",
+                "tests/integration/p3/test_transfer_admission.py::test_explicit_null_admission[product-factory]",
+                "tests/integration/p3/test_transfer_admission.py::test_transfer_event_reports_filtering_and_no_cross_borrowing[composed-sql]",
+                "tests/integration/p3/test_transfer_admission.py::test_transfer_event_reports_filtering_and_no_cross_borrowing[product-factory]"
+              ]
+            }
+          },
+          "wire": {
+            "selected": 212,
+            "passed": 212,
+            "exit_code": 0,
+            "selected_junit_journal_typed_exact": true,
+            "in_pytest_import_checks": 4
+          },
+          "extra": {
+            "selected": 34,
+            "passed": 34,
+            "exit_code": 0,
+            "selected_junit_journal_typed_exact": true,
+            "in_pytest_import_checks": 4
+          },
+          "authorization": {
+            "selected": 27,
+            "passed": 27,
+            "exit_code": 0,
+            "selected_junit_journal_typed_exact": true,
+            "in_pytest_import_checks": 4
+          },
+          "task-c": {
+            "selected": 132,
+            "passed": 132,
+            "exit_code": 0,
+            "selected_junit_journal_typed_exact": true,
+            "in_pytest_import_checks": 4
+          }
+        },
+        "actual_installed_RECORD": {
+          "record_entries": 169,
+          "hashed_entries": 168,
+          "raw_RECORD_bytes": 16413,
+          "raw_RECORD_sha256": "416e049c8e59a4c0455f81712cd30503580eee32256bc52126ac53cb376f151f",
+          "product_file_count": 160,
+          "all_hashed_entries_digest_and_size_verified": true,
+          "unhashed_entries": [
+            {
+              "record_path": "repo_catalog-0.2.0.dist-info/RECORD",
+              "resolved_path": "/workspace/i6b-work/installed-final-work/sdist-venv/lib/python3.12/site-packages/repo_catalog-0.2.0.dist-info/RECORD",
+              "bytes": 16413,
+              "observed_sha256": "416e049c8e59a4c0455f81712cd30503580eee32256bc52126ac53cb376f151f",
+              "record_digest": "",
+              "record_size": "",
+              "archive_member_present": true,
+              "record_hash_and_size_verified": false,
+              "archive_member_sha256": "453f393e799b220aed9a8c94a8830afbfb1387598a201a168d0bb3a37666d8d0",
+              "same_as_archive_member": false
+            }
+          ],
+          "installer_added_entries": [
+            {
+              "record_path": "../../../bin/repo-catalog",
+              "resolved_path": "/workspace/i6b-work/installed-final-work/sdist-venv/bin/repo-catalog",
+              "bytes": 349,
+              "observed_sha256": "c94a69959572e728afd1148d629d393abdcdc1032fa26c85dd0bd31420fee331",
+              "record_digest": "sha256=yUpplZVy5yiv0RSNYp05Or3NwQMvomyF3QvTFCD-4zE",
+              "record_size": "349",
+              "archive_member_present": false,
+              "record_hash_and_size_verified": true
+            },
+            {
+              "record_path": "repo_catalog-0.2.0.dist-info/INSTALLER",
+              "resolved_path": "/workspace/i6b-work/installed-final-work/sdist-venv/lib/python3.12/site-packages/repo_catalog-0.2.0.dist-info/INSTALLER",
+              "bytes": 2,
+              "observed_sha256": "e6184ce10e266134fdcfa401e8f1a95005bcd4f18d16b62b757323e2833fe9a9",
+              "record_digest": "sha256=5hhM4Q4mYTT9z6QB6PGpUAW81PGNFrYrdXMj4oM_6ak",
+              "record_size": "2",
+              "archive_member_present": false,
+              "record_hash_and_size_verified": true
+            },
+            {
+              "record_path": "repo_catalog-0.2.0.dist-info/REQUESTED",
+              "resolved_path": "/workspace/i6b-work/installed-final-work/sdist-venv/lib/python3.12/site-packages/repo_catalog-0.2.0.dist-info/REQUESTED",
+              "bytes": 0,
+              "observed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "record_digest": "sha256=47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU",
+              "record_size": "0",
+              "archive_member_present": false,
+              "record_hash_and_size_verified": true
+            },
+            {
+              "record_path": "repo_catalog-0.2.0.dist-info/direct_url.json",
+              "resolved_path": "/workspace/i6b-work/installed-final-work/sdist-venv/lib/python3.12/site-packages/repo_catalog-0.2.0.dist-info/direct_url.json",
+              "bytes": 146,
+              "observed_sha256": "aae33a78944b30330c807d14733258f46b7350dedb51e45f0ae33080ef2d7e26",
+              "record_digest": "sha256=quM6eJRLMDMMgH0UczJY9GtzUN7bUeRfCuMwgO8tfiY",
+              "record_size": "146",
+              "archive_member_present": false,
+              "record_hash_and_size_verified": true
+            },
+            {
+              "record_path": "repo_catalog-0.2.0.dist-info/uv_cache.json",
+              "resolved_path": "/workspace/i6b-work/installed-final-work/sdist-venv/lib/python3.12/site-packages/repo_catalog-0.2.0.dist-info/uv_cache.json",
+              "bytes": 125,
+              "observed_sha256": "5529c2697fad630b471d065a7723a3ebf6504f90f5fb0bad218b0f303e550a7b",
+              "record_digest": "sha256=VSnCaX-tYwtHHQZadyOj6_ZQT5D1-wutIYsPMD5VCns",
+              "record_size": "125",
+              "archive_member_present": false,
+              "record_hash_and_size_verified": true
+            }
+          ],
+          "archive_member_bytes_changed_by_installer": [
+            {
+              "record_path": "repo_catalog-0.2.0.dist-info/RECORD",
+              "resolved_path": "/workspace/i6b-work/installed-final-work/sdist-venv/lib/python3.12/site-packages/repo_catalog-0.2.0.dist-info/RECORD",
+              "bytes": 16413,
+              "observed_sha256": "416e049c8e59a4c0455f81712cd30503580eee32256bc52126ac53cb376f151f",
+              "record_digest": "",
+              "record_size": "",
+              "archive_member_present": true,
+              "record_hash_and_size_verified": false,
+              "archive_member_sha256": "453f393e799b220aed9a8c94a8830afbfb1387598a201a168d0bb3a37666d8d0",
+              "same_as_archive_member": false
+            }
+          ]
+        },
+        "probe_originals": {
+          "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+          "sqlite": "3.53.1",
+          "cases": [
+            {
+              "id": "case_both_unreported_is_no_report",
+              "result": "PASS"
+            },
+            {
+              "id": "case_changed_parent_payload_refuses_even_replay",
+              "result": "PASS"
+            },
+            {
+              "id": "case_child_global_scoped_first_no_semantic_parent",
+              "result": "PASS"
+            },
+            {
+              "id": "case_constructor_missing_declaration",
+              "result": "PASS"
+            },
+            {
+              "id": "case_constructor_missing_endpoints",
+              "result": "PASS"
+            },
+            {
+              "id": "case_constructor_missing_parent",
+              "result": "PASS"
+            },
+            {
+              "id": "case_constructor_truncated_two_sided",
+              "result": "PASS"
+            },
+            {
+              "id": "case_decoder_requires_all_original_parent_coordinates",
+              "result": "PASS"
+            },
+            {
+              "id": "case_event_coordinates_cannot_substitute_parent",
+              "result": "PASS"
+            },
+            {
+              "id": "case_missing_exact_parent_is_not_recovered_from_native_id",
+              "result": "PASS"
+            },
+            {
+              "id": "case_missing_parent_time_is_not_null",
+              "result": "PASS"
+            },
+            {
+              "id": "case_multiple_parents_retained_without_winner",
+              "result": "PASS"
+            },
+            {
+              "id": "case_one_sided_and_explicit_null_distinct",
+              "result": "PASS"
+            },
+            {
+              "id": "case_parent_explicit_null_stays_null",
+              "result": "PASS"
+            },
+            {
+              "id": "case_provider_only_unresolved_is_not_null",
+              "result": "PASS"
+            },
+            {
+              "id": "case_replay_cannot_rewrite_two_sided_as_one_sided",
+              "result": "PASS"
+            },
+            {
+              "id": "case_selection_truncated_is_not_one_sided",
+              "result": "PASS"
+            },
+            {
+              "id": "case_stored_rows_cannot_rescue_truncated_delivery",
+              "result": "PASS"
+            },
+            {
+              "id": "case_two_sided_null_and_replay_preserve_originals",
+              "result": "PASS"
+            }
+          ],
+          "passed": 19,
+          "failed": 0
+        },
+        "probe_invalid_carrier": {
+          "invalid_original_cases": 4,
+          "invalid_original_refusals": 4,
+          "normal_fence_controls": 2
+        }
+      }
+    },
+    "build_inventory": {
+      "source_files": 5273,
+      "sdist_files": 5274,
+      "source_equals_frozen_git": true,
+      "all_source_files_retained_in_sdist": true,
+      "additional_sdist_files": [
+        "PKG-INFO"
+      ],
+      "wire_product_inputs": {
+        "src/repo_catalog/domain/context_dependencies.py": "93d6d7bdbf14cd5c26d13c36a8e2e3bd65ae6f55a208941ada2353af65476fb0",
+        "src/repo_catalog/domain/context_wire.py": "9d9bb824a436322ce8632674a28cb894a7afb8b7a715ac19ff6c93c887bb4416",
+        "src/repo_catalog/domain/exchange.py": "6709ad532ef5aef65118505d2270960c49a21521c68460da2044b897dae97957",
+        "src/repo_catalog/domain/exchange_rows.py": "c3c8f62768426e66374902ccdeea4218f7609516781e5ca9a9bc6a3bf70d231e",
+        "src/repo_catalog/domain/resource_identification.py": "3e7c02193be40b16f48c66ebad5c2f1dab8108241eb1e1794d8ed94ce86107d1",
+        "src/repo_catalog/domain/selective_exchange.py": "db9e00b70843358349c73f7fb23a3e2663f423913abb3c8add04788c5043de0b"
+      }
+    },
+    "command": [
+      "/workspace/git-repo-db/.venv/bin/python",
+      "/workspace/i6b-tools/audit_installed.py",
+      "/workspace/i6b-work/installed-final"
+    ],
+    "helper_sha256": "952ed4d51aae845d6b3c40beac15c77d99895d0110d054ed6c6f1efa5b05d9cf",
+    "exit_code": 0
+  },
+  "unchanged_original_access_smokes": {
+    "direct": {
+      "pytest_receipt": {
+        "selected": 1,
+        "counts": {
+          "failed": 1
+        },
+        "subtest_counts": {},
+        "ordinary_reports": 3,
+        "all_reports": 3,
+        "exit_code": 1,
+        "head": "a354348b800177608f6a83e2484cb6a784b7190a",
+        "tree": "169f0f95449c7bd728261b3d7799f795162c03fd",
+        "input_count": 166,
+        "bindings_unchanged": true,
+        "tracked_status": "",
+        "selected_junit_journal_typed_exact": true
+      },
+      "original_child_exit_code": 1,
+      "exception_type": "repo_catalog.domain.context_admission.AdmissionRefused",
+      "code": "PERMISSION_DENIED",
+      "message": "PERMISSION_DENIED",
+      "product_bytes_unchanged": true,
+      "original_smoke_unchanged": true,
+      "actual_installed_RECORD_verified": true,
+      "later_smoke_steps_executed": false
+    },
+    "sdist": {
+      "pytest_receipt": {
+        "selected": 1,
+        "counts": {
+          "failed": 1
+        },
+        "subtest_counts": {},
+        "ordinary_reports": 3,
+        "all_reports": 3,
+        "exit_code": 1,
+        "head": "a354348b800177608f6a83e2484cb6a784b7190a",
+        "tree": "169f0f95449c7bd728261b3d7799f795162c03fd",
+        "input_count": 166,
+        "bindings_unchanged": true,
+        "tracked_status": "",
+        "selected_junit_journal_typed_exact": true
+      },
+      "original_child_exit_code": 1,
+      "exception_type": "repo_catalog.domain.context_admission.AdmissionRefused",
+      "code": "PERMISSION_DENIED",
+      "message": "PERMISSION_DENIED",
+      "product_bytes_unchanged": true,
+      "original_smoke_unchanged": true,
+      "actual_installed_RECORD_verified": true,
+      "later_smoke_steps_executed": false
+    }
+  },
+  "prior_access_setup_attempt": {
+    "source_head": "a354348b800177608f6a83e2484cb6a784b7190a",
+    "source_tree": "169f0f95449c7bd728261b3d7799f795162c03fd",
+    "driver_exit_code": 1,
+    "actual_failed_action": "direct pytest collection",
+    "collection_exit_code": 4,
+    "exception": "ModuleNotFoundError: jsonschema in external tests/support/cli.py",
+    "original_smoke_child_executed": false,
+    "sdist_form_prepared": false,
+    "junit_and_journal": "not produced; pytest conftest import failed before test execution",
+    "status": "failed harness setup, not product outcome; v2 adds locked jsonschema dependency closure while retaining absent httpx and unchanged original SMOKE"
+  },
+  "unexecuted_opt_in_nodes": [
+    "tests/e2e/test_github_sync.py::test_nested_pagination_stress_workload",
+    "tests/live/test_smoke.py::test_selected_repository"
+  ],
+  "scope": "Author observations only. Source, repeated diagnostics, safety, wire, external probes and installed lanes overlap; no sum denotes unique tests or a reconstructed full ordinary outcome. Complete ordinary2f remains5987PASS/281FAIL/20ERROR. Fixture-onlya354 has identical product bytes and one changed test assignment; exact AST/input audit and matched745 diagnostic establish two restored guards. Both original Access smoke failures remain failures; v1 collection failure did not execute its child.",
+  "input_files": {
+    "/workspace/i6b-work/source-complete/author-receipt.json": "5292818c39cb50d044c6cc4075435d8778f9f9b186feebd358b5f53d6c2cc295",
+    "/workspace/i6b-work/final-source-safety/author-receipt.json": "dc94a59aa2781e2a1df1c6ffe0d1194f47a4f6c14d85d914f9fff5995bcf380a",
+    "/workspace/i6b-work/final-source-wire/author-receipt.json": "02edc7937802d63698d1aadd5e98e5b499a0bcd5e0b68e38d5b81891ecdc4040",
+    "/workspace/i6b-work/final-source-extra/author-receipt.json": "ad18bb98bb57069796d45e551f29cbc18c696802f375c8936064604847ef4af4",
+    "/workspace/i6b-work/final-source-diagnostic/author-receipt.json": "cab027163b88d4ee50124f98f6eccafd572a5185e2174a54ba4ba95b3b6856f5",
+    "/workspace/i6b-work/baseline-task-c/inherited-ownership.json": "7279c7c7befe1fef41119cd72eef9268097b6dc465a8687f3bed9d93603c9f90",
+    "/workspace/i6b-work/installed-final/author-audit-summary.json": "fc8b19c49c237f719bb17a89789ff1672dfb07bf8725d87b3d0bbe9292a5f45f",
+    "/workspace/i6b-work/access-smokes-final-v2/direct/smoke-result.json": "f9004ece3b3528d50c138e1e0501d892dbc39b57c81ab33e5d38f829a68eae2f",
+    "/workspace/i6b-work/access-smokes-final-v2/direct/child-process.json": "5b8dc88f7bf46f4c2b5cf3dbcd15020da2b391be72e5ee49b53dd429d2cdc1db",
+    "/workspace/i6b-work/access-smokes-final-v2/direct/author-receipt.json": "66d5f484810c3337fec36a989b27b380433976345c646cbe511d8336d3e65b6f",
+    "/workspace/i6b-work/access-smokes-final-v2/direct/installed-RECORD.json": "a73c6668cf970664d2dd210ef6ea6063c3b93eed837667e7115402ef572a3a4a",
+    "/workspace/i6b-work/access-smokes-final-v2/sdist/smoke-result.json": "ac75d99719a60743cdfbd8edd87aaa5a4a5abe2e0271d9c27f29adf0c882f7fb",
+    "/workspace/i6b-work/access-smokes-final-v2/sdist/child-process.json": "000a6da83e4c41a62859db7fe11234308ae5217472e0423a57c58d618d783c43",
+    "/workspace/i6b-work/access-smokes-final-v2/sdist/author-receipt.json": "66d5f484810c3337fec36a989b27b380433976345c646cbe511d8336d3e65b6f",
+    "/workspace/i6b-work/access-smokes-final-v2/sdist/installed-RECORD.json": "1f41bd1f0e4ce76016536f043457d466c10578cf9b3466e9cf582f7253a27317",
+    "/workspace/i6b-work/access-smokes-final/setup-failure-scope.json": "e7d9967a5a798918507c6644f17af6d53abfdd19bfc8dbe055ed2297c395b4d3"
+  }
+}

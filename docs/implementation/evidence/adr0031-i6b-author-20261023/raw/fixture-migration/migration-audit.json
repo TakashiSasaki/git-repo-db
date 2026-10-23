@@ -1,0 +1,14 @@
+{
+  "old_source_head": "2f874ce5c31efc1a266bc40e0472e64f82c82860",
+  "path": "tests/integration/i6a/test_admission.py",
+  "old_sha256": "64e279a78130aef725edb34dbe0cadb5be9d8d1f93ef79bc616a327db7ee5081",
+  "new_sha256": "ace7d61e3b8a7c890d93456410e96d29cb75829d23fa8b50bd182cdf87d83228",
+  "function": "test_unconnected_exchange_import_refuses_before_progress_and_cached_success",
+  "old_fixture": "section['resources'] = [dict(zip(('service_instance_uuidv4', 'resource_kind', 'provider_resource_id'), KEY_ISSUE_7.coordinates()))]",
+  "new_fixture": "section['resources'] = [ResourceIdentification.unscoped(KEY_ISSUE_7).to_wire()]",
+  "all_nonfixture_AST_equal": true,
+  "assert_AST_equal": true,
+  "assert_count": 4,
+  "node_ids_preserved": true,
+  "scope": "Only replace obsolete three-column untrusted Resource fixture with the existing canonical ResourceIdentification seven-column writer. Product strict refusal, guard setup, cached receipt privacy checks and all assertions unchanged. Actual execution is separately retained."
+}

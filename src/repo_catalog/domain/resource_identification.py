@@ -19,6 +19,16 @@ from repo_catalog.domain.resource_identity import (
 if TYPE_CHECKING:
     from repo_catalog.domain.p1_context import ResourceKey
 
+RESOURCE_IDENTIFICATION_FIELDS = (
+    "service_instance_uuidv4",
+    "resource_kind",
+    "provider_resource_id",
+    "identifier_namespace_kind",
+    "identifier_namespace_id",
+    "document_kind",
+    "provider_document_id",
+)
+
 SCOPED_NAMESPACES = {
     "review": frozenset({"pull_request"}),
     "comment": frozenset({"pull_request", "issue", "review", "thread"}),
@@ -73,6 +83,36 @@ class ResourceIdentification:
             self.resource.provider_resource_id,
             *self.columns,
         )
+
+    def to_wire(self) -> dict:
+        """Emit the exact seven-column declaration without inferring a Parent."""
+        require_identification(self.resource, self)
+        return dict(
+            zip(
+                RESOURCE_IDENTIFICATION_FIELDS,
+                (*self.resource.coordinates(), *self.columns),
+                strict=True,
+            )
+        )
+
+    @classmethod
+    def from_wire(cls, row: dict) -> ResourceIdentification:
+        """Decode named v5 fields through the existing identity authority."""
+        from repo_catalog.domain.p1_context import ResourceKey
+
+        if type(row) is not dict or set(row) != set(RESOURCE_IDENTIFICATION_FIELDS):
+            raise ValueError("exact seven Resource identification fields required")
+        if any(
+            type(row[name]) is not str for name in RESOURCE_IDENTIFICATION_FIELDS[:3]
+        ):
+            raise TypeError("exact Resource coordinate strings required")
+        if any(
+            row[name] is not None and type(row[name]) is not str
+            for name in RESOURCE_IDENTIFICATION_FIELDS[3:]
+        ):
+            raise TypeError("identification columns require string or null")
+        key = ResourceKey(*(row[name] for name in RESOURCE_IDENTIFICATION_FIELDS[:3]))
+        return cls(key, *(row[name] for name in RESOURCE_IDENTIFICATION_FIELDS[3:]))
 
     @property
     def columns(self) -> tuple[str | None, str | None, str | None, str | None]:

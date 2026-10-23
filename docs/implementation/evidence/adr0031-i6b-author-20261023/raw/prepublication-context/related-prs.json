@@ -1,0 +1,47 @@
+[
+  {
+    "pr": 139,
+    "url": "https://github.com/TakashiSasaki/git-repo-db/pull/139",
+    "head": "3e2609baa07a9e92c8f2dc4dd1608f311021a1cb",
+    "base": "review/c0-hosted-runtime-audit-20261022",
+    "draft": true,
+    "state": "open",
+    "head_in_current_ancestry": false
+  },
+  {
+    "pr": 142,
+    "url": "https://github.com/TakashiSasaki/git-repo-db/pull/142",
+    "head": "59307c40ea65554736e131cedd00f04c9906551b",
+    "base": "review/adr0033-sdist-independent-20261023",
+    "draft": true,
+    "state": "open",
+    "head_in_current_ancestry": false
+  },
+  {
+    "pr": 144,
+    "url": "https://github.com/TakashiSasaki/git-repo-db/pull/144",
+    "head": "ededcd83eb2d99a602ba18c8fe3c177125c825ac",
+    "base": "fix/adr0033-sdist-archive-hardening",
+    "draft": true,
+    "state": "open",
+    "head_in_current_ancestry": false
+  },
+  {
+    "pr": 147,
+    "url": "https://github.com/TakashiSasaki/git-repo-db/pull/147",
+    "head": "e7762952e18061de8c8235beaeddf42f20ad9f5a",
+    "base": "fix/c0-e1-receipt-limit-20261023",
+    "draft": true,
+    "state": "open",
+    "head_in_current_ancestry": false
+  },
+  {
+    "pr": 149,
+    "url": "https://github.com/TakashiSasaki/git-repo-db/pull/149",
+    "head": "ea43a21fca1dbf8fa6dd1c254b28a96d5dd28d00",
+    "base": "fix/adr0031-i6a-originals-binding-20261023",
+    "draft": true,
+    "state": "open",
+    "head_in_current_ancestry": true
+  }
+]

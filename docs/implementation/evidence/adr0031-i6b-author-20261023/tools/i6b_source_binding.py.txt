@@ -1,0 +1,20 @@
+"""Author source import binding at actual pytest session boundaries."""
+from pathlib import Path
+import hashlib,json,os,sys
+ROOT=Path(os.environ['I6B_SOURCE_ROOT']).resolve()
+OUT=Path(os.environ['I6B_SOURCE_IMPORTS'])
+def record(stage,session):
+ import repo_catalog
+ origin=Path(repo_catalog.__file__).resolve();assert origin.is_relative_to(ROOT/'src'),origin
+ assert session.config.inipath==ROOT/'pyproject.toml'
+ modules={}
+ for name,module in list(sys.modules.items()):
+  if (name=='repo_catalog' or name.startswith('repo_catalog.')) and getattr(module,'__file__',None):
+   path=Path(module.__file__).resolve();assert path.is_relative_to(ROOT/'src'),(name,path)
+   modules[name]={'path':str(path),'sha256':hashlib.sha256(path.read_bytes()).hexdigest()}
+ worker=getattr(session.config,'workerinput',{}).get('workerid','master')
+ p=OUT/(worker+'.json');p.parent.mkdir(exist_ok=True,parents=True)
+ records=json.loads(p.read_text()) if p.exists() else []
+ records.append({'stage':stage,'executable':sys.executable,'origin':str(origin),'config':str(session.config.inipath),'source_modules':modules});p.write_text(json.dumps(records,indent=2)+'\n')
+def pytest_sessionstart(session):record('start',session)
+def pytest_sessionfinish(session,exitstatus):record('finish',session)

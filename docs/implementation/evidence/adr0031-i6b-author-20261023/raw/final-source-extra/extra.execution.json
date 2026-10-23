@@ -1,0 +1,67 @@
+{
+  "command": [
+    "/workspace/git-repo-db/.venv/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "-c",
+    "/workspace/git-repo-db/pyproject.toml",
+    "--rootdir=/workspace/i6b-work/final-source-extra/outside",
+    "--confcutdir=/workspace/i6b-work/final-source-extra/outside",
+    "-o",
+    "addopts=--strict-markers",
+    "-o",
+    "junit_family=xunit1",
+    "-p",
+    "i6a_report_types",
+    "-p",
+    "i6b_source_binding",
+    "tests/unit/test_i6b_extra.py",
+    "--junitxml=/workspace/i6b-work/final-source-extra/extra.xml",
+    "--journal=/workspace/i6b-work/final-source-extra/extra.jsonl",
+    "--basetemp=/workspace/i6b-work/final-source-extra/basetemp"
+  ],
+  "cwd": "/workspace/i6b-work/final-source-extra/outside",
+  "exit_code": 0,
+  "elapsed_seconds": 1.746,
+  "source_head": "a354348b800177608f6a83e2484cb6a784b7190a",
+  "source_tree": "169f0f95449c7bd728261b3d7799f795162c03fd",
+  "harness_inputs": {
+    "run_extra.py": "133ee81399f4617e6d3281a828479f044a2c2c76354591a145953f170b8959a0",
+    "i6a_report_types.py": "9002be57a9993cdf9a55e6ac608b654ccc403dae63dbb73c24ad6e5cb1ea7dc5",
+    "i6b_source_binding.py": "27a360448f75a3d977f4770797c5bd23a7bb8417de9154881fca9e4b0daa8d80",
+    "independent_receipt.py": "611d36ece52da2e76a729b1bec5613f1bae0c458c2268f60116b5395e426cc65",
+    "test_i6b_extra.py": "bc77c792f8f4a7dc3ad472d6fa9325a274bdd8895822a328556b260b55663ffd"
+  },
+  "passed": 34,
+  "failed": 0,
+  "error": 0,
+  "skipped": 0,
+  "xfail": 0,
+  "xpass": 0,
+  "executed": 34,
+  "reconciliation": {
+    "checks": {
+      "selected_unique": true,
+      "selected_equals_junit": true,
+      "selected_equals_journal_starts": true,
+      "setup_and_teardown_once": true,
+      "no_duplicate_phases": true,
+      "phase_nodes_equal_selected": true,
+      "call_once_after_successful_setup": true,
+      "one_finish": true
+    },
+    "consistent_node_execution": true,
+    "journal_phase_outcomes": {
+      "passed": 102
+    },
+    "finishes": [
+      {
+        "event": "finish",
+        "status": "completed",
+        "exitstatus": 0,
+        "timestamp": 1792757604.927146
+      }
+    ]
+  }
+}

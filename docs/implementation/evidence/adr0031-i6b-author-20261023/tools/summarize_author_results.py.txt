@@ -1,0 +1,21 @@
+"""Summarize actual separate Author invocations without reconstructing a suite."""
+from pathlib import Path
+from collections import Counter
+import hashlib,json,sys
+from independent_receipt import audit
+W=Path('/workspace/i6b-work');O=W/'author-validation-results';O.mkdir(exist_ok=False)
+used={}
+def read(p):
+ p=Path(p);raw=p.read_bytes();used[str(p)]=hashlib.sha256(raw).hexdigest();return json.loads(raw)
+full=read(W/'source-complete/author-receipt.json')
+lanes={n:read(W/n/'author-receipt.json') for n in ['final-source-safety','final-source-wire','final-source-extra','final-source-diagnostic']}
+final,_,diag=audit(W/'final-source-diagnostic','diagnostic')
+ownership=read(W/'baseline-task-c/inherited-ownership.json');nonpassed={n for n,r in final.items() if r[0]!='passed'}
+assert nonpassed==set(ownership)
+installed=read(W/'installed-final/author-audit-summary.json')
+smokes={}
+for form in ['direct','sdist']:
+ r=W/'access-smokes-final-v2'/form;c=read(r/'smoke-result.json');e=read(r/'child-process.json');receipt=read(r/'author-receipt.json');record=read(r/'installed-RECORD.json')
+ smokes[form]={'pytest_receipt':receipt,'original_child_exit_code':e['exit_code'],'exception_type':c.get('exception_type'),'code':c.get('code'),'message':c.get('message'),'product_bytes_unchanged':c['files_before']==c['files_after'],'original_smoke_unchanged':True,'actual_installed_RECORD_verified':record['all_hashed_entries_digest_and_size_verified'],'later_smoke_steps_executed':False}
+result={'command':[sys.executable,str(Path(__file__).resolve())],'helper_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),'exit_code':0,'independent_review':False,'complete_release_acceptance':False,'final_source_head':diag['head'],'final_source_tree':diag['tree'],'complete_ordinary_invocation':full,'entire_ordinary_runtime_on_final_source_executed':False,'final_source_collection_scope':'collection-only6288 exact prior ordinary node multiset; collection is not runtime execution','final_source_lanes':lanes,'remaining_nonpassed_same_historical_nodes':True,'remaining_nonpassed_owners':dict(Counter(ownership[n] for n in nonpassed)),'installed_artifact_audit':installed,'unchanged_original_access_smokes':smokes,'prior_access_setup_attempt':read(W/'access-smokes-final/setup-failure-scope.json'),'unexecuted_opt_in_nodes':['tests/e2e/test_github_sync.py::test_nested_pagination_stress_workload','tests/live/test_smoke.py::test_selected_repository'],'scope':'Author observations only. Source, repeated diagnostics, safety, wire, external probes and installed lanes overlap; no sum denotes unique tests or a reconstructed full ordinary outcome. Complete ordinary2f remains5987PASS/281FAIL/20ERROR. Fixture-onlya354 has identical product bytes and one changed test assignment; exact AST/input audit and matched745 diagnostic establish two restored guards. Both original Access smoke failures remain failures; v1 collection failure did not execute its child.','input_files':used}
+(O/'summary.json').write_text(json.dumps(result,indent=2)+'\n');print(json.dumps({'final_source_head':diag['head'],'remaining':dict(Counter(ownership[n] for n in nonpassed)),'actual_original_smoke_failures':{f:r['code'] for f,r in smokes.items()}}))

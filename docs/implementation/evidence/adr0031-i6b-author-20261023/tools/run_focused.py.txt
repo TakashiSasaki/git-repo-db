@@ -1,0 +1,21 @@
+"""Bound I6-B Author focused development execution, optionally on dirty inputs."""
+from pathlib import Path
+import hashlib,json,os,sys,subprocess,sqlite3
+ROOT=Path(sys.argv[1]).resolve();OUT=Path(sys.argv[2]).resolve();TARGETS=sys.argv[3:];TOOLS=Path(__file__).resolve().parent
+sys.path.insert(0,str(ROOT));from scripts import verify_i5_offline as e
+OUT.mkdir(parents=True,exist_ok=False);used=('run_focused.py','i6a_report_types.py','i6b_source_binding.py');snapshot=OUT/'driver-snapshot';snapshot.mkdir()
+for name in used:(snapshot/(name+'.txt')).write_bytes((TOOLS/name).read_bytes())
+def binding():return {'head':e.git('rev-parse','HEAD'),'tree':e.git('rev-parse','HEAD^{tree}'),'inputs':e.input_hashes(),'status':e.git('status','--porcelain','--untracked-files=no'),'tracked_diff_sha256':hashlib.sha256(subprocess.check_output(['git','diff','--binary','HEAD'],cwd=ROOT)).hexdigest(),'allow_dirty_development':os.environ.get('I6B_ALLOW_DIRTY')=='1','harness_inputs':{n:hashlib.sha256((TOOLS/n).read_bytes()).hexdigest() for n in used}}
+before=binding();e.write_json(OUT/'binding-before.json',before);assert not before['status'] or os.environ.get('I6B_ALLOW_DIRTY')=='1'
+e.write_json(OUT/'runtime.json',dict(e.runtime_metadata(sqlite3.connect(':memory:')),base_executable=sys._base_executable,python_full=sys.version,sqlite_module=__import__('_sqlite3').__spec__.origin))
+os.environ['PATH']=str(Path(sys.executable).parent)+os.pathsep+os.environ['PATH'];os.environ['PYTHONPATH']=str(TOOLS);os.environ['I6B_SOURCE_ROOT']=str(ROOT);os.environ['I6B_SOURCE_IMPORTS']=str(OUT/'source-imports')
+selected,collection=e.collect(OUT,'focused-collection',TARGETS)
+assert collection['exit_code']==0 and selected and len(selected)==len(set(selected))
+execute=e.execute
+def typed(out,name,args):
+ os.environ['I6A_REPORTS_SIDECAR']=str(out/(name+'.report-types.jsonl'))
+ return execute(out,name,['-p','i6a_report_types','-p','i6b_source_binding',*args,'--basetemp='+str(out/'basetemp')])
+e.execute=typed
+result=e.run_cohort(OUT,'focused',selected,0)
+e.write_json(OUT/'binding-after.json',binding());e.write_json(OUT/'author-scope.json',{'full_acceptance':False,'independent_review':False,'scope':'Separate focused development run, not complete ordinary invocation.'})
+sys.exit(result['exit_code'])

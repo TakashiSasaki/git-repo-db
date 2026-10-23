@@ -1,0 +1,110 @@
+"""New Task C vectors with reused #146 finite policy and synthetic SQL setup.
+
+No product or input grant is changed. Snapshot every persistent row and trace
+input-dependent SQL only after the supported facade creation gate.
+"""
+import json, os
+from dataclasses import replace
+from pathlib import Path
+import pytest
+from reviewer_policy import boundary, issue, write
+from repo_catalog.adapters.sqlite.production_context import Context
+from repo_catalog.adapters.sqlite import p1_schema
+from repo_catalog.domain.context_admission import AdmissionRefused, AdmissionSelection, DependencySet, dependencies
+from repo_catalog.domain.p1_context import ProviderEndpointDeclaration, TransferEventReport, ResourceRepositoryRelation
+from repo_catalog.domain.resource_stage import TRANSFER_FENCE_DEFINITIONS, UnsupportedResourceStage
+
+MUTATIONS=['endpoint-none','endpoint-text','parent-none','key-none','resource-none','members-none','provenance-number','scope-none','declaration-none','declaration-text']
+
+def rows(db):
+ return {name:sorted(db.execute('SELECT * FROM "'+name+'"').fetchall(),key=repr) for name, in db.execute("SELECT name FROM sqlite_schema WHERE type='table' ORDER BY name").fetchall()}
+
+def mutate(r,name):
+ target,field,value={
+ 'declaration-none':(r,'endpoint_declaration',None),
+ 'declaration-text':(r,'endpoint_declaration','not-a-declaration'),
+ 'endpoint-none':(r.endpoint_declaration,'to_endpoint',None),
+ 'endpoint-text':(r.endpoint_declaration,'from_endpoint','missing'),
+ 'parent-none':(r,'parent_report',None),
+ 'key-none':(r.parent_report,'report_key',None),
+ 'resource-none':(r.parent_report.report_key,'resource',None),
+ 'members-none':(r.parent_report.report_key,'members_json',None),
+ 'provenance-number':(r.parent_report.report_key,'provenance_json',17),
+ 'scope-none':(r.parent_report.report_key,'scope_json',None),
+ }[name]
+ object.__setattr__(target,field,value)
+
+@pytest.mark.parametrize('route',['store','facade'])
+@pytest.mark.parametrize('replay',[False,True])
+@pytest.mark.parametrize('mutation',MUTATIONS)
+@pytest.mark.parametrize('restriction',['none','permission','selection'])
+def test_current_authority_selection_originals_order(boundary,tmp_path,route,replay,mutation,restriction):
+ db,store,service,policy,r=boundary
+ original_grants=policy.grants
+ if replay:assert write(store,issue(service),r)=='insert'
+ deps=dependencies(r)
+ # Event Resource remains explicit even when a nested original is absent.
+ event=r.event_resource
+ if restriction=='permission':policy.grants=replace(policy.grants,resources=policy.grants.resources-{event})
+ selection=AdmissionSelection(all_selected=True) if restriction!='selection' else AdmissionSelection(resource_keys=deps.resources-{event},repository_uuidv4s=deps.repositories,source_uuidv4s=deps.sources,object_oids=deps.object_oids)
+ ctx=issue(service,selection=selection)
+ mutate(r,mutation);before=rows(db);trace=[]
+ expected={'none':'INCOMPLETE_ORIGINAL_REPORT','permission':'PERMISSION_DENIED','selection':'OMITTED_BY_SELECTION'}[restriction]
+ try:
+  with pytest.raises(AdmissionRefused) as caught:
+   if route=='store':
+    db.set_trace_callback(trace.append);write(store,ctx,r)
+   else:
+    with Context.owned_transaction(db,tmp_path,authorization=service,admission=ctx) as facade:
+     db.set_trace_callback(trace.append);facade.admit_transfer_event(r,admission=ctx)
+ finally:db.set_trace_callback(None)
+ assert caught.value.code==expected
+ assert rows(db)==before and not db.in_transaction and policy.active==0
+ assert policy.grants==(replace(original_grants,resources=original_grants.resources-{event}) if restriction=='permission' else original_grants)
+ for sql in trace:
+  s=' '.join(sql.lower().split())
+  assert not s.startswith(('insert','update','delete','replace'))
+  if s.startswith('select'):
+   assert all('from '+table not in s for table in before if table!='sqlite_schema'),sql
+ result={'route':route,'replay':replay,'mutation':mutation,'restriction':restriction,'expected':expected,'actual':caught.value.code,'trace':trace,'before':before,'after':rows(db),'active_leases':policy.active,'transaction_open':db.in_transaction,'work_charged':ctx.budget.used_work}
+ p=Path(os.environ['TASK_C_OBSERVATIONS']);p.mkdir(exist_ok=True)
+ (p/f'{route}-{replay}-{mutation}-{restriction}.json').write_text(json.dumps(result,indent=2)+'\n')
+
+@pytest.mark.parametrize('route',['store','facade'])
+@pytest.mark.parametrize('mutation',['endpoint-none','parent-none','resource-none'])
+def test_both_normal_fences_still_refuse(boundary,tmp_path,route,mutation):
+ db,store,service,policy,r=boundary
+ for _,_,_,sql in TRANSFER_FENCE_DEFINITIONS:db.execute(sql)
+ mutate(r,mutation);before=rows(db);ctx=issue(service)
+ with pytest.raises(UnsupportedResourceStage) as caught:
+  if route=='store':write(store,ctx,r)
+  else:
+   # The isolated fixture wrapper expects the unfenced schema. Once both exact
+   # fences are restored, use its raw connection as a normal Context factory input.
+   normal_db=db._connection
+   p1_schema.validate(normal_db,'context')
+   with Context.owned_transaction(normal_db,tmp_path,authorization=service,admission=ctx) as facade:facade.admit_transfer_event(r,admission=ctx)
+ assert caught.value.code=='I2_TRANSFER_UNSUPPORTED'
+ assert rows(db)==before and not db.in_transaction and policy.active==0
+
+@pytest.mark.parametrize('route',['store','facade'])
+@pytest.mark.parametrize('variant',['one-sided','two-sided','explicit-null'])
+def test_legal_originals_insert_and_exact_replay(boundary,tmp_path,route,variant):
+ db,store,service,policy,r=boundary
+ if variant=='one-sided':
+  r=replace(r,endpoint_declaration=ProviderEndpointDeclaration('not_reported',r.endpoint_declaration.to_endpoint),endpoints=tuple(p for p in r.endpoints if p[0]=='transfer_to_repository'),from_relations=(),to_relations=tuple(replace(x,event_report_members_json=None,event_report_scope_json=None) for x in r.to_relations))
+ elif variant=='explicit-null':
+  roles=('transfer_from_repository','transfer_to_repository')
+  rels=[ResourceRepositoryRelation(r.event_resource,role,r.clock,'null',r.provenance_json,r.observed_at_us) for role in roles]
+  r=TransferEventReport(r.report_key,r.parent_report,ProviderEndpointDeclaration('explicit_null','explicit_null'),tuple((role,'null') for role in roles),r.observed_at_us,(rels[0],),(rels[1],))
+ original_grants=policy.grants
+ def intake():
+  ctx=issue(service)
+  if route=='store':return write(store,ctx,r)
+  with Context.owned_transaction(db,tmp_path,authorization=service,admission=ctx) as facade:return facade.admit_transfer_event(r,admission=ctx)
+ assert intake()=='insert'
+ before=rows(db)
+ assert store.transfer_event_reports(r.event_resource)==(r,)
+ assert intake()=='duplicate'
+ assert rows(db)==before and store.transfer_event_reports(r.event_resource)==(r,)
+ assert policy.grants==original_grants and policy.active==0 and not db.in_transaction

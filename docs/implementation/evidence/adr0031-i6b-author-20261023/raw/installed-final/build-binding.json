@@ -1,0 +1,17 @@
+{
+  "direct-wheel": {
+    "path": "/workspace/i6b-work/installed-final-work/source/dist/repo_catalog-0.2.0-py3-none-any.whl",
+    "bytes": 790488,
+    "sha256": "6b3a865b90673b9626ad120ecf106064d2211657d2d78a68fb6568a52a8aba71"
+  },
+  "sdist": {
+    "path": "/workspace/i6b-work/installed-final-work/source/dist/repo_catalog-0.2.0.tar.gz",
+    "bytes": 128336141,
+    "sha256": "28376ce29ae8023cca1701dc78e10c727e01b27e678527ddf6365222328190cd"
+  },
+  "sdist-wheel": {
+    "path": "/workspace/i6b-work/installed-final-work/from-sdist/repo_catalog-0.2.0/dist/repo_catalog-0.2.0-py3-none-any.whl",
+    "bytes": 790488,
+    "sha256": "6b3a865b90673b9626ad120ecf106064d2211657d2d78a68fb6568a52a8aba71"
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "old": {
+    "selected": 745,
+    "counts": {
+      "passed": 444,
+      "failed": 281,
+      "error": 20
+    },
+    "subtest_counts": {},
+    "ordinary_reports": 2215,
+    "all_reports": 2215,
+    "exit_code": 1,
+    "head": "2f874ce5c31efc1a266bc40e0472e64f82c82860",
+    "tree": "e0b50e80bae5aec92c1d9cf68ba8afc17ad6810d",
+    "input_count": 484,
+    "bindings_unchanged": true,
+    "tracked_status": "",
+    "selected_junit_journal_typed_exact": true
+  },
+  "new": {
+    "selected": 745,
+    "counts": {
+      "passed": 446,
+      "failed": 279,
+      "error": 20
+    },
+    "subtest_counts": {},
+    "ordinary_reports": 2215,
+    "all_reports": 2215,
+    "exit_code": 1,
+    "head": "a354348b800177608f6a83e2484cb6a784b7190a",
+    "tree": "169f0f95449c7bd728261b3d7799f795162c03fd",
+    "input_count": 484,
+    "bindings_unchanged": true,
+    "tracked_status": "",
+    "selected_junit_journal_typed_exact": true
+  },
+  "scope": "Actual statement entry in traced main Python worker thread. Not subexpression, child-process or thread coverage. Canonical mapping uses each frozen Git source, preserving duplicate identical assertions as a Counter.",
+  "old_only_nodes": [],
+  "new_only_nodes": [],
+  "outcome_phase_changes": [
+    "tests/integration/i6a/test_admission.py::test_unconnected_exchange_import_refuses_before_progress_and_cached_success[cached-receipt]",
+    "tests/integration/i6a/test_admission.py::test_unconnected_exchange_import_refuses_before_progress_and_cached_success[initial]"
+  ],
+  "raw_assertion_entry_changes": [
+    "tests/integration/i6a/test_admission.py::test_unconnected_exchange_import_refuses_before_progress_and_cached_success[cached-receipt]",
+    "tests/integration/i6a/test_admission.py::test_unconnected_exchange_import_refuses_before_progress_and_cached_success[initial]",
+    "tests/packaging/test_p6_distribution.py::test_p6_installed_query_search_and_cli[sha1-sdist-wheel]",
+    "tests/packaging/test_p6_distribution.py::test_p6_installed_query_search_and_cli[sha256-wheel]"
+  ],
+  "canonical_assertion_entry_changes": [
+    "tests/integration/i6a/test_admission.py::test_unconnected_exchange_import_refuses_before_progress_and_cached_success[cached-receipt]",
+    "tests/integration/i6a/test_admission.py::test_unconnected_exchange_import_refuses_before_progress_and_cached_success[initial]",
+    "tests/packaging/test_p6_distribution.py::test_p6_installed_query_search_and_cli[sha1-sdist-wheel]",
+    "tests/packaging/test_p6_distribution.py::test_p6_installed_query_search_and_cli[sha256-wheel]"
+  ]
+}

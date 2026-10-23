@@ -1,0 +1,9 @@
+{
+  "id": "V07-resolved-mapping",
+  "bytes": 6616,
+  "sha256": "ab5f4176b25267a2ae6702e4a6cad7fc699c8f692b4f8dbcf53519e43113bdeb",
+  "digest_sha256": "5b500e38909678101452fac5ec3e17fd489b4aaf58adda19c23dfea8a53eefb7",
+  "outcome": "accept",
+  "refusal_code": null,
+  "scope": "supplementary Author-team codec verification, not independent review"
+}

@@ -1,0 +1,61 @@
+{
+  "name": "sdist-authorization",
+  "command": [
+    "/workspace/i6b-work/installed-final-work/sdist-venv/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "-p",
+    "i6a_report_types",
+    "-o",
+    "addopts=--strict-markers",
+    "-o",
+    "junit_family=xunit1",
+    "-c",
+    "/workspace/i6b-work/installed-final-work/outside/pytest.ini",
+    "--rootdir=/workspace/i6b-work/installed-final-work/outside",
+    "--confcutdir=/workspace/i6b-work/installed-final-work/outside",
+    "tests/review_authorization/test_independent_authorization.py",
+    "--basetemp=/workspace/i6b-work/installed-final-work/sdist-authorization-tmp",
+    "--junitxml=/workspace/i6b-work/installed-final/sdist-authorization.xml",
+    "--journal=/workspace/i6b-work/installed-final/sdist-authorization.jsonl"
+  ],
+  "cwd": "/workspace/i6b-work/installed-final-work/outside",
+  "exit_code": 0,
+  "started_epoch": 1792758501.6854763,
+  "elapsed_seconds": 5.016,
+  "source_head": "a354348b800177608f6a83e2484cb6a784b7190a",
+  "source_tree": "169f0f95449c7bd728261b3d7799f795162c03fd",
+  "driver_sha256": "3ea99eeab849bfd0ad14ce7940550af647cdfed60f7b4db09a91fe484239b8ea",
+  "passed": 27,
+  "failed": 0,
+  "error": 0,
+  "skipped": 0,
+  "xfail": 0,
+  "xpass": 0,
+  "executed": 27,
+  "reconciliation": {
+    "checks": {
+      "selected_unique": true,
+      "selected_equals_junit": true,
+      "selected_equals_journal_starts": true,
+      "setup_and_teardown_once": true,
+      "no_duplicate_phases": true,
+      "phase_nodes_equal_selected": true,
+      "call_once_after_successful_setup": true,
+      "one_finish": true
+    },
+    "consistent_node_execution": true,
+    "journal_phase_outcomes": {
+      "passed": 81
+    },
+    "finishes": [
+      {
+        "event": "finish",
+        "status": "completed",
+        "exitstatus": 0,
+        "timestamp": 1792758506.08763
+      }
+    ]
+  }
+}

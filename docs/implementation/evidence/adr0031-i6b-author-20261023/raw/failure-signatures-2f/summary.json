@@ -1,0 +1,21 @@
+{
+  "exception_changed": [
+    "tests/integration/i3/test_selective_exchange.py::test_empty_oid_and_context_payload_cannot_override_selection",
+    "tests/integration/i6a/test_admission.py::test_unconnected_exchange_import_refuses_before_progress_and_cached_success[cached-receipt]",
+    "tests/integration/i6a/test_admission.py::test_unconnected_exchange_import_refuses_before_progress_and_cached_success[initial]"
+  ],
+  "codes_changed": [
+    "tests/integration/i3/test_selective_exchange.py::test_empty_oid_and_context_payload_cannot_override_selection",
+    "tests/integration/i6a/test_admission.py::test_unconnected_exchange_import_refuses_before_progress_and_cached_success[cached-receipt]",
+    "tests/integration/i6a/test_admission.py::test_unconnected_exchange_import_refuses_before_progress_and_cached_success[initial]"
+  ],
+  "frame_functions_changed": [
+    "tests/integration/i3/test_selective_exchange.py::test_empty_oid_and_context_payload_cannot_override_selection",
+    "tests/integration/i6a/test_admission.py::test_unconnected_exchange_import_refuses_before_progress_and_cached_success[cached-receipt]",
+    "tests/integration/i6a/test_admission.py::test_unconnected_exchange_import_refuses_before_progress_and_cached_success[initial]"
+  ],
+  "signature_transition_counts": {
+    "(('repo_catalog.domain.context_admission.AdmissionRefused',), ('PERMISSION_DENIED',), ('repo_catalog.domain.exchange.ExchangeError',), ('MALFORMED_ROW',))": 1,
+    "((), (), ('repo_catalog.domain.exchange.ExchangeError',), ('MALFORMED_ROW',))": 2
+  }
+}

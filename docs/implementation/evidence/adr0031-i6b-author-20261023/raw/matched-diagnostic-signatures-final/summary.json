@@ -1,0 +1,14 @@
+{
+  "exception_changed": [
+    "tests/integration/i3/test_selective_exchange.py::test_empty_oid_and_context_payload_cannot_override_selection"
+  ],
+  "codes_changed": [
+    "tests/integration/i3/test_selective_exchange.py::test_empty_oid_and_context_payload_cannot_override_selection"
+  ],
+  "frame_functions_changed": [
+    "tests/integration/i3/test_selective_exchange.py::test_empty_oid_and_context_payload_cannot_override_selection"
+  ],
+  "signature_transition_counts": {
+    "(('repo_catalog.domain.context_admission.AdmissionRefused',), ('PERMISSION_DENIED',), ('repo_catalog.domain.exchange.ExchangeError',), ('MALFORMED_ROW',))": 1
+  }
+}

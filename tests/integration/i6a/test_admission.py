@@ -550,14 +550,7 @@ def test_unconnected_exchange_import_refuses_before_progress_and_cached_success(
         tmp_path, stores=("context", "operational")
     )
     section = empty_context_section()
-    section["resources"] = [
-        dict(
-            zip(
-                ("service_instance_uuidv4", "resource_kind", "provider_resource_id"),
-                KEY_ISSUE_7.coordinates(),
-            )
-        )
-    ]
+    section["resources"] = [ResourceIdentification.unscoped(KEY_ISSUE_7).to_wire()]
     package = ExchangePackage(
         "43333333-3333-4333-8333-333333333333",
         101,

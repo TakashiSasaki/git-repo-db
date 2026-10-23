@@ -1,0 +1,110 @@
+{
+  "source": "docs/implementation/evidence/adr0031-i6a/originals-binding-independent-20261023/raw-evidence.zip",
+  "files": [
+    {
+      "member": "tools/run_full.py",
+      "sha256": "18319a211fa89d022e5d442c135e26ea49a10aeb47326f58beb3ae64f3a6ed0f",
+      "bytes": 1569
+    },
+    {
+      "member": "tools/run_diagnostic.py",
+      "sha256": "374fa0d08cf91f2392321e15274d1827f4163f19560ba771ccf080024901f8cb",
+      "bytes": 4614
+    },
+    {
+      "member": "tools/reviewer_trace.py",
+      "sha256": "96c9fffb4aeee2e5fb0b315c65306673226e8b14c9c366d94597980e92852563",
+      "bytes": 3944
+    },
+    {
+      "member": "tools/i6a_report_types.py",
+      "sha256": "9002be57a9993cdf9a55e6ac608b654ccc403dae63dbb73c24ad6e5cb1ea7dc5",
+      "bytes": 830
+    },
+    {
+      "member": "tools/independent_receipt.py",
+      "sha256": "73d0e4505abb500dde80061c0ba9daf218fd31c608ad689bc99a07019cc28740",
+      "bytes": 3461
+    },
+    {
+      "member": "tools/compare_full.py",
+      "sha256": "a382b7bc8491286f1d5f19d2e8feda444f8811f85ca37176bcb14be316478d9a",
+      "bytes": 2312
+    },
+    {
+      "member": "tools/run_source_extra.py",
+      "sha256": "27e47ecbe3088bf2aaf2c990b3a0cf3b64a8256872d0c5be8239edb637b0a081",
+      "bytes": 3431
+    },
+    {
+      "member": "tools/reviewer_policy.py",
+      "sha256": "e4e81e8163a253ea85a053b6332af0cfbd8dd4b59e4322d9fd8fb19225f7bcc5",
+      "bytes": 13732
+    },
+    {
+      "member": "tools/test_task_c_originals.py",
+      "sha256": "850ebfd49e7ac8a9cee1072413caf21ba279e002fbc16b50132711ee6eeccbdc",
+      "bytes": 6869
+    },
+    {
+      "member": "tools/run_installed.py",
+      "sha256": "822fff7599d41becdd1686cf11e01021d78e8ab9752d06c1f584e6f952aacc67",
+      "bytes": 24173
+    },
+    {
+      "member": "tools/audit_installed.py",
+      "sha256": "d218cd4a64e273f3065ec3e7dd1dcb56d75cdb068795a4df09e8a9740a22db13",
+      "bytes": 7426
+    },
+    {
+      "member": "tools/check_bindings.py",
+      "sha256": "8c5a62bab14ea49beb4cf9c2a444de944c6ec88c67cbf626564b4815ad9f0895",
+      "bytes": 3113
+    },
+    {
+      "member": "tools/test_task_c_foreign.py",
+      "sha256": "1b6d0562e25c6465bf4ea6e35910ddfd1f2f31aa90b987e34ee7997630b8febf",
+      "bytes": 2344
+    },
+    {
+      "member": "tools/run_foreign.py",
+      "sha256": "6670d7e3a36c19c6ad9a6a469f8851e22703fc31d722658516b8a6f649e4c0e5",
+      "bytes": 2522
+    },
+    {
+      "member": "tools/audit_foreign.py",
+      "sha256": "ffacb1188e4e242820fb93870e5bcf84f756d160b2eb8f30aca16ddd1c30675e",
+      "bytes": 1883
+    },
+    {
+      "member": "tools/analyze_task_a_diagnostic.py",
+      "sha256": "16b1113522b3aa1ff4ec81fa560545c92ab098d0fafaef15e8d41283880cf488",
+      "bytes": 9541
+    },
+    {
+      "member": "tools/analyze_task_a_boundaries.py",
+      "sha256": "81a44ccc50d4bb581eda09f3a8aae465b670a2a732166c08e48ca5c00ec71320",
+      "bytes": 2453
+    },
+    {
+      "member": "tools/check_boundary16.py",
+      "sha256": "a53b1fac097bf071ca4492ced52ff2f93eb61fd2b37644d48ccdeca37316ae9d",
+      "bytes": 1960
+    },
+    {
+      "member": "tools/run_baseline_bound.py",
+      "sha256": "0bcc2fde684f397e27ff1c629b10488bc12126ea2f147789d345dc25f6d89573",
+      "bytes": 1147
+    },
+    {
+      "member": "tools/run_baseline_bound_final.py",
+      "sha256": "6421e24d32f1d69f68e6a5da1d31d64e77e29da0b61b4491fe9d045c96a5760e",
+      "bytes": 1177
+    },
+    {
+      "member": "tools/package_review.py",
+      "sha256": "23c322dadfc9715587dcca3f4a3dfb2d116823d870efc30eff616e264c5bd305",
+      "bytes": 2139
+    }
+  ]
+}

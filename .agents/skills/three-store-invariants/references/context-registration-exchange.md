@@ -146,6 +146,14 @@ collection-owned scope without a proof, a missing collection, an already-present
 receiver collection and a permission-cut Source scope. Missing owners withhold
 units rather than aborting independent Context facts after Core commit.
 
+In a pure plan, require the actual Scope row for each claim/proof and the exact
+Collection header for a collection-owned Scope. Depending only on the owner's
+Resource can leave orphan rows after a cut. Check these references against the
+current DDL and test both missing-owner and unit-limit cases. A Collection's
+generic scope may be arbitrary canonical JSON; validate an object explicitly when
+a typed Coverage proof needs named attributes, without restricting unproved
+generic observations or leaking an incidental attribute-access exception.
+
 Repeat zero-work budget probes with an empty package and an omitted receiver
 selection. Incidental database reads in a populated fixture can mask a missing
 processing ceiling. Once an implicit selection is decoded, its ceiling must count
@@ -245,6 +253,38 @@ are not a mandate for every JSON contract. Do not canonicalize an embedded key
 after package binding and reuse the old digest. Specification vectors and source
 inspection are distinct from executed parser/schema tests; an unresolved future
 identity or FK design must not become skill policy.
+
+### Charge embedded identities at their actual typed position
+
+For ADR 0031 wire bounds, test individually valid Identity TEXT inside a complete
+package. Forty-nine distinct 4,096-node identities can exceed the enclosing
+200,000-value cap, and a 32-array identity can exceed the enclosing depth once
+its Resource row and section are counted. Per-ID validation alone misses both.
+Reuse `parse_identity` and charge decoded values, escaped bytes and enclosing
+depth at each modeled Resource, member, Coverage, selection and support-key
+position. Retain work already spent when a later scan or unit fails.
+
+Keep the typed position explicit while scanning. A generic attributed evidence
+dictionary may contain keys resembling a Resource triple or `resource_keys`
+without declaring a typed reference. Parsing those by key shape introduced an
+overrestriction in I6-B; top-level and nested evidence preservation controls
+expose it. Do not infer a native identification contract or traversal edge from
+array/dictionary shape. Explicit Source-registration references retain their
+separately defined meaning.
+
+Compare encoder and byte-reader limits with actual cap-sized inputs. Count object
+keys as well as values, include the final digest field in envelope limits even
+though it is excluded from the checksum, and recheck limits after the last
+string's work chunks. I6-B's controlled earlier-source counterexamples exposed
+all three gaps; a writer must not emit a package its own byte reader rejects.
+
+Reproduce the aggregate limits, opaque-evidence preservation and planner work
+boundaries with `python -m pytest tests/unit/test_context_wire_v5.py
+tests/unit/test_context_dependencies.py -q`. The
+[I6-B Author matrix](../../../../docs/implementation/evidence/adr0031-i6b-author-20261023/MATRIX.md)
+links these controls to the frozen execution receipts. They establish the pure
+codec/planner boundary, not Provider authenticity, receiver authorization,
+I6-C route integration or full Release acceptance.
 
 ### Verify a typed report projection without duplicating authority
 

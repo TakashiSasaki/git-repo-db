@@ -1,0 +1,9 @@
+{
+  "command": [
+    "/workspace/i6b-work/access-smokes-final-v2-work/sdist-venv/bin/python",
+    "-I",
+    "/workspace/i6b-work/installed-final-work/outside/launch_access_smoke.py",
+    "/workspace/i6b-work/installed-final-work/outside/unchanged_original_access_smoke.py"
+  ],
+  "exit_code": 1
+}

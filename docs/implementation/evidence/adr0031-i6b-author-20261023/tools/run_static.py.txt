@@ -1,0 +1,19 @@
+"""Preserve per-command Author static checks on the selected frozen source."""
+from pathlib import Path
+import hashlib,json,subprocess,sys,time
+ROOT=Path('/workspace/git-repo-db');OUT=Path(sys.argv[1]);OUT.mkdir(parents=True,exist_ok=False)
+sys.path.insert(0,str(ROOT))
+from scripts.verify_i5_offline import input_hashes
+def git(*args):return subprocess.check_output(['git',*args],cwd=ROOT,text=True).strip()
+def binding():return {'head':git('rev-parse','HEAD'),'tree':git('rev-parse','HEAD^{tree}'),'inputs':input_hashes(),'status':git('status','--porcelain')}
+before=binding();assert not before['status'];python=sys.executable
+commands=[['.venv/bin/ruff','check','src','tests','scripts'],['.venv/bin/ruff','format','--check','src','tests','scripts'],[python,'scripts/check_sqlite_validation_policy.py'],[python,'scripts/audit_callsite_dependencies.py','--check'],[python,'scripts/ci_execute.py','reports'],['git','diff','--check']]
+records=[]
+for i,cmd in enumerate(commands):
+ start=time.time();result=subprocess.run(cmd,cwd=ROOT,stdout=subprocess.PIPE,stderr=subprocess.STDOUT);p=OUT/f'{i+1}.log';p.write_bytes(result.stdout)
+ records.append({'command':cmd,'cwd':str(ROOT),'exit_code':result.returncode,'elapsed_seconds':time.time()-start,'log':p.name,'sha256':hashlib.sha256(result.stdout).hexdigest()})
+after=binding();assert before==after
+payload={'before':before,'after':after,'commands':records,'helper_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),'all_passed':all(r['exit_code']==0 for r in records),'full_acceptance':False,'scope':'Author static checks, not pytest or release acceptance.'}
+(OUT/'checks.json').write_text(json.dumps(payload,indent=2)+'\n')
+print(json.dumps({'source_head':before['head'],'tree':before['tree'],'commands':len(records),'exit_codes':[r['exit_code'] for r in records],'bindings_equal':True}))
+sys.exit(not payload['all_passed'])

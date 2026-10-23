@@ -1,0 +1,18 @@
+{
+  "command": [
+    "/workspace/git-repo-db/.venv/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "--collect-only",
+    "-o",
+    "addopts=",
+    "tests"
+  ],
+  "cwd": "/workspace/git-repo-db",
+  "started_epoch": 1792752741.923503,
+  "elapsed_seconds": 20.674,
+  "exit_code": 0,
+  "collected": 6272,
+  "duplicates": 0
+}

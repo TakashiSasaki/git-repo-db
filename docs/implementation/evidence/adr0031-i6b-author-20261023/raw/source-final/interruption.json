@@ -1,0 +1,67 @@
+{
+  "action": "SIGINT",
+  "pid": 10401,
+  "command": [
+    "/workspace/git-repo-db/.venv/bin/python",
+    "-m",
+    "pytest",
+    "-p",
+    "i6a_report_types",
+    "-p",
+    "i6b_source_binding",
+    "-q",
+    "-o",
+    "addopts=--strict-markers",
+    "-o",
+    "junit_family=xunit1",
+    "@/workspace/i6b-work/source-final/ordinary.selected.txt",
+    "--junitxml=/workspace/i6b-work/source-final/ordinary.xml",
+    "--journal=/workspace/i6b-work/source-final/ordinary.jsonl",
+    "-n",
+    "4",
+    "--dist",
+    "worksteal",
+    "--basetemp=/workspace/i6b-work/source-final/basetemp"
+  ],
+  "reason": "Parent requested graceful stop of second known-nonfinal Author candidate after read-only R07/R13 CoverageScope and exact Collectionheader dependency defects. No diagnostic/installed workloads started.",
+  "requested_epoch": 1792753635.536962,
+  "state": "confirmed_stopped",
+  "source_head": "6c12c0558fe1b1288deeb1b284cd31373b62f964",
+  "source_tree": "dd5261d90396e59f3296467e09a539b3b701de03",
+  "confirmed_epoch": 1792753648.4088182,
+  "pytest_exit_code": 2,
+  "driver_exit_code": 2,
+  "selected_nodes": 6274,
+  "journal_started_nodes": 859,
+  "junit_cases": 857,
+  "junit_outcomes": {
+    "passed": 856,
+    "failed": 1,
+    "error": 0,
+    "skipped": 0,
+    "xfail": 0,
+    "xpass": 0
+  },
+  "phase_reports": 2567,
+  "finish_events": [
+    {
+      "event": "finish",
+      "status": "failed",
+      "exitstatus": 2,
+      "timestamp": 1792753646.406022
+    }
+  ],
+  "source_bindings_before_after_equal": true,
+  "input_count": 484,
+  "harness_bindings_unchanged": true,
+  "post_stop_python_processes": [
+    {
+      "pid": 18698,
+      "args": [
+        "python",
+        "-"
+      ]
+    }
+  ],
+  "verdict": "INTERRUPTED; incomplete Author run, no full-suite acceptance. Diagnostic and installed runs unexecuted."
+}

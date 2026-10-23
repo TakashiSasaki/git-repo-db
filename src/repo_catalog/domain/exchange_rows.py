@@ -1,4 +1,4 @@
-"""Exact v4 row envelopes. No legacy row aliases or opaque extra fields."""
+"""Exact v5 row envelopes. No legacy row aliases or opaque extra fields."""
 
 import json
 
@@ -121,6 +121,8 @@ ROW_KEYS = {
         "resource_repository_relations": (
             (
                 "clock_json",
+                "event_report_members_json",
+                "event_report_scope_json",
                 "observed_at_us",
                 "provenance_json",
                 "provider_resource_id",
@@ -131,7 +133,15 @@ ROW_KEYS = {
             ),
         ),
         "resources": (
-            ("provider_resource_id", "resource_kind", "service_instance_uuidv4"),
+            (
+                "document_kind",
+                "identifier_namespace_id",
+                "identifier_namespace_kind",
+                "provider_document_id",
+                "provider_resource_id",
+                "resource_kind",
+                "service_instance_uuidv4",
+            ),
         ),
         "source_inventories": (
             (
@@ -303,7 +313,13 @@ ROW_KEYS = {
 
 def validate_rows(core, context):
     # Local import keeps envelope validation independent of application services.
-    from repo_catalog.domain.exchange import ExchangeError
+    from repo_catalog.domain.exchange import ExchangeError, _parse_json
+    from repo_catalog.domain.p1_context import CoverageScope, ResourceKey
+    from repo_catalog.domain.resource_identification import ResourceIdentification
+    from repo_catalog.domain.time import (
+        validate_observation_us,
+        validate_required_observation_us,
+    )
 
     for store, data in (("core", core), ("context", context)):
         if data is None:
@@ -312,9 +328,54 @@ def validate_rows(core, context):
             for row in rows:
                 if tuple(sorted(row)) not in ROW_KEYS[store][section]:
                     raise ExchangeError(
-                        "MALFORMED_ROW", [store, section], "exact v4 keys required"
+                        "MALFORMED_ROW", [store, section], "exact v5 keys required"
                     )
+                if store == "context" and section == "resources":
+                    try:
+                        ResourceIdentification.from_wire(row)
+                    except (TypeError, ValueError) as error:
+                        raise ExchangeError(
+                            "INVALID_IDENTIFICATION", section
+                        ) from error
                 for key, value in row.items():
+                    if store == "context" and key in (
+                        "observed_at_us",
+                        "clock_ts_us",
+                        "terminal_observed_at_us",
+                    ):
+                        validator = (
+                            validate_required_observation_us
+                            if key == "terminal_observed_at_us"
+                            or (
+                                key == "observed_at_us"
+                                and section
+                                in (
+                                    "collections",
+                                    "source_inventories",
+                                    "coverage_claims",
+                                    "coverage_proofs",
+                                )
+                            )
+                            else validate_observation_us
+                        )
+                        try:
+                            validator(value)
+                        except (ValueError, TypeError) as error:
+                            raise ExchangeError(
+                                "MALFORMED_ROW",
+                                [store, section, key],
+                                "observation time required",
+                            ) from error
+                    if (
+                        store == "context"
+                        and key == "terminal"
+                        and type(value) is not bool
+                    ):
+                        raise ExchangeError(
+                            "MALFORMED_ROW",
+                            [store, section, key],
+                            "strict boolean required",
+                        )
                     # Context wire columns are text except explicit time/boolean
                     # coordinates. SQLite TEXT affinity must not rewrite input.
                     if store == "context" and key not in (
@@ -324,6 +385,12 @@ def validate_rows(core, context):
                         "terminal",
                     ):
                         nullable = key in (
+                            "identifier_namespace_kind",
+                            "identifier_namespace_id",
+                            "document_kind",
+                            "provider_document_id",
+                            "event_report_members_json",
+                            "event_report_scope_json",
                             "details_json",
                             "replacement_clock_json",
                             "replacement_target_json",
@@ -336,11 +403,64 @@ def validate_rows(core, context):
                     if key.endswith("_json") and value is not None:
                         if (
                             not isinstance(value, str)
-                            or encode(json.loads(value)) != value
+                            or encode(_parse_json(value)) != value
                         ):
                             raise ExchangeError(
                                 "NONCANONICAL_ROW", [store, section, key]
                             )
+                if store == "context":
+                    try:
+                        resource_columns = (
+                            "service_instance_uuidv4",
+                            "resource_kind",
+                            "provider_resource_id",
+                        )
+                        if all(name in row for name in resource_columns):
+                            ResourceKey(*(row[name] for name in resource_columns))
+                        if "owner_coordinates_json" in row:
+                            coordinates = _parse_json(row["owner_coordinates_json"])
+                            if type(coordinates) is not list:
+                                raise ValueError(
+                                    "typed Coverage coordinate array required"
+                                )
+                            CoverageScope(row["owner_kind"], coordinates)
+                        if section in ("resource_relations", "collections") or (
+                            section == "coverage_proofs"
+                            and row["proof_kind"] == "collection"
+                        ):
+                            _resource_members(row["members_json"])
+                        if section == "resource_repository_relations":
+                            refs = (
+                                row["event_report_members_json"],
+                                row["event_report_scope_json"],
+                            )
+                            if row["relation_kind"] in (
+                                "transfer_from_repository",
+                                "transfer_to_repository",
+                            ):
+                                if any(type(value) is not str for value in refs):
+                                    raise ExchangeError(
+                                        "INCOMPLETE_ORIGINAL_REPORT", section
+                                    )
+                                _resource_members(refs[0])
+                                _transfer_scope_references(row, _parse_json(refs[1]))
+                            elif any(value is not None for value in refs):
+                                raise ValueError(
+                                    "non-Transfer report references must be null"
+                                )
+                        if (
+                            section == "resource_relations"
+                            and row["relation_kind"] == "transfer_event_report"
+                        ):
+                            _transfer_scope_references(
+                                row, _parse_json(row["scope_json"])
+                            )
+                    except ExchangeError:
+                        raise
+                    except (ValueError, TypeError, IndexError, KeyError) as error:
+                        raise ExchangeError(
+                            "MALFORMED_ROW", [store, section], "invalid typed reference"
+                        ) from error
                 if store == "core" and section == "coverage_proofs":
                     members = json.loads(row["members_json"])
                     if not isinstance(members, list) or any(
@@ -356,6 +476,34 @@ def validate_rows(core, context):
                     "intrinsic",
                 ):
                     raise ExchangeError("MALFORMED_ROW", [store, section, "authority"])
+
+
+def _resource_members(text):
+    from repo_catalog.domain.exchange import _parse_json
+    from repo_catalog.domain.p1_context import ResourceKey
+
+    members = _parse_json(text)
+    if type(members) is not list or any(
+        type(member) is not list
+        or len(member) != 3
+        or any(type(value) is not str for value in member)
+        for member in members
+    ):
+        raise ValueError("exact ResourceKey member arrays required")
+    for member in members:
+        ResourceKey(*member)
+
+
+def _transfer_scope_references(row, scope):
+    from repo_catalog.domain.p1_context import ResourceKey
+
+    if type(scope) is not dict:
+        raise ValueError("Transfer scope object required")
+    if "parent_members_json" in scope:
+        _resource_members(scope["parent_members_json"])
+    for name in ("from_provider_repository_id", "to_provider_repository_id"):
+        if scope.get(name) is not None:
+            ResourceKey(row["service_instance_uuidv4"], "repository", scope[name])
 
 
 def decode_native_ref(value):
@@ -435,6 +583,11 @@ IDENTITY_KEYS = {
         "sources": ("source_registration_uuidv4",),
         "source_repositories": ("source_registration_uuidv4", "repository_uuidv4"),
         "text_bodies": ("sha256",),
+        "resources": (
+            "service_instance_uuidv4",
+            "resource_kind",
+            "provider_resource_id",
+        ),
         "field_candidates": (
             "service_instance_uuidv4",
             "resource_kind",

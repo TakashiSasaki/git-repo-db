@@ -1,0 +1,37 @@
+"""Publish existing I6-B Author observations losslessly, without database/venv outputs."""
+from pathlib import Path
+import gzip,hashlib,json,sys
+WORK=Path('/workspace/i6b-work');TOOLS=Path('/workspace/i6b-tools');OUT=Path(sys.argv[1]);OUT.mkdir(parents=True,exist_ok=True)
+index=[]
+def digest(raw):return hashlib.sha256(raw).hexdigest()
+def copy(path,relative,force_plain=False):
+ raw=path.read_bytes();rel=relative
+ compressed=not force_plain and (path.suffix in ('.log','.xml','.jsonl','.txt') or len(raw)>1_000_000)
+ data=gzip.compress(raw,mtime=0) if compressed else raw
+ if compressed:rel=Path(str(rel)+'.gz')
+ target=OUT/rel;target.parent.mkdir(exist_ok=True,parents=True)
+ if target.exists():assert target.read_bytes()==data,str(target)
+ else:target.write_bytes(data)
+ index.append({'path':str(rel),'bytes':len(data),'sha256':digest(data),'original_path':str(relative),'original_bytes':len(raw),'original_sha256':digest(raw),'gzip':compressed})
+for label in sys.argv[2:]:
+ source=WORK/label
+ assert source.is_dir(),source
+ for p in sorted(source.rglob('*')):
+  if not p.is_file() or p.is_symlink():continue
+  rel=p.relative_to(source)
+  if any(x in rel.parts for x in ('basetemp','outside','__pycache__','.pytest_cache')) or any(x.startswith('baseline-source') for x in rel.parts):continue
+  if rel.suffix in ('.pyc','.db','.sqlite','.sqlite3'):continue
+  copy(p,Path('raw')/label/rel)
+for p in sorted(WORK.glob('*-driver.log')):copy(p,Path('raw/driver-processes')/p.name)
+for p in sorted(WORK.glob('extra-test-*.json')):copy(p,Path('raw/extra-test-corrections')/p.name,True)
+for name in ('protected-scope-audit.json','diagnostic-safety-inclusion.json'):
+ copy(WORK/name,Path('raw/attribution')/name,True)
+for p in sorted(TOOLS.glob('*.py')):copy(p,Path('tools')/(p.name+'.txt'),True)
+copy(TOOLS/'inherited-task-c/attribution.json',Path('tools/inherited-task-c-attribution.json'),True)
+for name in ('reviewer_policy.py','test_task_c_originals.py'):
+ copy(TOOLS/'inherited-task-c'/name,Path('tools/inherited-task-c')/(name+'.txt'),True)
+copy(WORK/'baseline-task-c/attribution.json',Path('historical-baseline-attribution.json'),True)
+copy(WORK/'baseline-task-c/base149-input-binding.json',Path('historical-base149-input-binding.json'),True)
+copy(WORK/'baseline-task-c/inherited-ownership.json',Path('historical-inherited-ownership.json'),True)
+(OUT/'raw-index.json').write_text(json.dumps({'scope':'Author execution evidence. Temporary catalogs, full product artifacts, source archives, wheelhouses and venvs excluded; their exact manifests/digests retained. Historical baseline source unchanged and explicitly attributed.','files':index},indent=2)+'\n')
+print(json.dumps({'files':len(index),'published_bytes':sum(x['bytes'] for x in index),'output':str(OUT)}))

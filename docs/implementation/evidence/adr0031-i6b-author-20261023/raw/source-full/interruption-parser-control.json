@@ -1,0 +1,15 @@
+{
+  "command": [
+    "/workspace/git-repo-db/.venv/bin/python",
+    "/workspace/i6b-tools/independent_receipt.py",
+    "/workspace/i6b-work/source-full"
+  ],
+  "cwd": "/workspace/git-repo-db",
+  "exit_code": 1,
+  "expected": "Refuse incomplete selected/JUnit/journal execution after explicit SIGINT.",
+  "rejected_as_expected": true,
+  "driver_sha256": "611d36ece52da2e76a729b1bec5613f1bae0c458c2268f60116b5395e426cc65",
+  "product_execution": false,
+  "source_head": "14571e21389679e64877642a894a1dcde72bed98",
+  "source_tree": "eb1525fbbdc457f97fb26d51ffd37002cc7fe614"
+}

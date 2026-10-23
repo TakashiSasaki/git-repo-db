@@ -1,0 +1,16 @@
+{
+  "selected": 212,
+  "counts": {
+    "passed": 212
+  },
+  "subtest_counts": {},
+  "ordinary_reports": 636,
+  "all_reports": 636,
+  "exit_code": 0,
+  "head": "a354348b800177608f6a83e2484cb6a784b7190a",
+  "tree": "169f0f95449c7bd728261b3d7799f795162c03fd",
+  "input_count": 484,
+  "bindings_unchanged": true,
+  "tracked_status": "",
+  "selected_junit_journal_typed_exact": true
+}
