@@ -1,0 +1,82 @@
+[
+  {
+    "accepted": true,
+    "compressed_bytes": 2097152,
+    "error": null,
+    "expected_accept": true,
+    "name": "compressed-2097152",
+    "receipt": {
+      "member_count": 164,
+      "tar_stream_bytes": 6174720,
+      "unpacked_bytes": 6041897
+    }
+  },
+  {
+    "accepted": false,
+    "compressed_bytes": 2097153,
+    "error": "compressed sdist budget exceeded",
+    "expected_accept": false,
+    "name": "compressed-2097153",
+    "receipt": null
+  },
+  {
+    "accepted": true,
+    "compressed_bytes": 706452,
+    "error": null,
+    "expected_accept": true,
+    "name": "tar-stream-8922624",
+    "receipt": {
+      "member_count": 164,
+      "tar_stream_bytes": 8922624,
+      "unpacked_bytes": 6041897
+    }
+  },
+  {
+    "accepted": false,
+    "compressed_bytes": 706453,
+    "error": "decompressed tar stream budget exceeded",
+    "expected_accept": false,
+    "name": "tar-stream-8923136",
+    "receipt": null
+  },
+  {
+    "accepted": true,
+    "compressed_bytes": 706052,
+    "error": null,
+    "expected_accept": true,
+    "name": "regular-8388608",
+    "receipt": {
+      "member_count": 164,
+      "tar_stream_bytes": 8519680,
+      "unpacked_bytes": 8388608
+    }
+  },
+  {
+    "accepted": false,
+    "compressed_bytes": 706054,
+    "error": "unpacked sdist budget exceeded",
+    "expected_accept": false,
+    "name": "regular-8388609",
+    "receipt": null
+  },
+  {
+    "accepted": true,
+    "compressed_bytes": 704825,
+    "error": null,
+    "expected_accept": true,
+    "name": "members-512",
+    "receipt": {
+      "member_count": 512,
+      "tar_stream_bytes": 6359040,
+      "unpacked_bytes": 6041897
+    }
+  },
+  {
+    "accepted": false,
+    "compressed_bytes": 704828,
+    "error": "sdist member budget exceeded",
+    "expected_accept": false,
+    "name": "members-513",
+    "receipt": null
+  }
+]

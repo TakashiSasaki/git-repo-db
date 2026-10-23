@@ -1,0 +1,163 @@
+[
+  {
+    "compressed_bytes": 702494,
+    "error": "invalid gzip stream/trailer: Error -3 while decompressing data: incorrect data check",
+    "name": "crc",
+    "rejected": true,
+    "sha256": "09061a802af182d481f7a7deaf9b416dd6fb3d173cf6c694d05c37cc1d9c3dd4"
+  },
+  {
+    "compressed_bytes": 702494,
+    "error": "invalid gzip stream/trailer: Error -3 while decompressing data: incorrect length check",
+    "name": "isize",
+    "rejected": true,
+    "sha256": "9d37e9411cdf10224c38dcc0612c863a2d82030c1359f564c35aaaa26358564c"
+  },
+  {
+    "compressed_bytes": 702486,
+    "error": "incomplete gzip stream/trailer",
+    "name": "missing-trailer",
+    "rejected": true,
+    "sha256": "13a80854b65fb8d1ccb6aee3197bd3dcf8a190703c6831374ae44aa60b8764c6"
+  },
+  {
+    "compressed_bytes": 702444,
+    "error": "incomplete gzip stream/trailer",
+    "name": "truncated-deflate",
+    "rejected": true,
+    "sha256": "17d828d0a4657c10de442102c6c32a5c232425e0df6afac6f59d7510db02a470"
+  },
+  {
+    "compressed_bytes": 702495,
+    "error": "trailing bytes/additional gzip member forbidden",
+    "name": "trailing-zero",
+    "rejected": true,
+    "sha256": "dc3a0718d94c178f11bace1c17e9464f1887e3441fcaaeffd4b1ed3aea0e14e1"
+  },
+  {
+    "compressed_bytes": 702536,
+    "error": "trailing bytes/additional gzip member forbidden",
+    "name": "concatenation",
+    "rejected": true,
+    "sha256": "0eb9ac89d73031d2c3df8a345f07dd0a7f60778cb91ee7b7c16efccd5276c420"
+  },
+  {
+    "compressed_bytes": 702497,
+    "error": "trailing bytes/additional gzip member forbidden",
+    "name": "malformed-second-gzip",
+    "rejected": true,
+    "sha256": "a4e962b72ba45ef7a54351fcc2fbec68608e7b76f5671dbf0eb8a34f55abf3ad"
+  },
+  {
+    "compressed_bytes": 702499,
+    "error": "invalid tar end padding or hidden trailing payload",
+    "name": "tar-tail-hidden",
+    "rejected": true,
+    "sha256": "a3db90b4de9b949807d5909a1a2daf43ef0edccb79beb852c9e7b6ccac8f2b94"
+  },
+  {
+    "compressed_bytes": 8706,
+    "error": "decompressed tar stream budget exceeded",
+    "name": "tar-stream-overflow",
+    "rejected": true,
+    "sha256": "681fa11cedbee3fb6614c7696ff83ba81ff782e63720484fa844b611f08820f1"
+  },
+  {
+    "compressed_bytes": 2097153,
+    "error": "compressed sdist budget exceeded",
+    "name": "compressed-overflow",
+    "rejected": true,
+    "sha256": "6bbedb87014cdcdd9738529bb53e9724345674d3c861d12f3bc3aaa123f13005"
+  },
+  {
+    "compressed_bytes": 702538,
+    "error": "links/special members or unapproved PAX/tar extensions forbidden",
+    "name": "raw-header-78",
+    "rejected": true,
+    "sha256": "3995ba11259d5a016d0c75dfb13356d91761126107eebbbd21cc16c139877141"
+  },
+  {
+    "compressed_bytes": 702536,
+    "error": "links/special members or unapproved PAX/tar extensions forbidden",
+    "name": "raw-header-67",
+    "rejected": true,
+    "sha256": "fe25a5562042106b82e701f64bc90c24aba708e1a919484a9bc0f77e59e5a0ec"
+  },
+  {
+    "compressed_bytes": 702538,
+    "error": "links/special members or unapproved PAX/tar extensions forbidden",
+    "name": "raw-header-4c",
+    "rejected": true,
+    "sha256": "6a2042c73357e3e0b0ddcd18fe48913eb582b1881ca780ac7fb8c9b597921d0b"
+  },
+  {
+    "compressed_bytes": 702538,
+    "error": "links/special members or unapproved PAX/tar extensions forbidden",
+    "name": "raw-header-32",
+    "rejected": true,
+    "sha256": "f5a1700ab168675c07b245e5102a46dc00094ed30cc9412dff4cc06460161704"
+  },
+  {
+    "compressed_bytes": 702537,
+    "error": "links/special members or unapproved PAX/tar extensions forbidden",
+    "name": "raw-header-31",
+    "rejected": true,
+    "sha256": "312e7f64ed062ba69543e08064f2f3ae8beed179591665d5b6b72553b55d8841"
+  },
+  {
+    "compressed_bytes": 702542,
+    "error": "links/special members or unapproved PAX/tar extensions forbidden",
+    "name": "raw-header-33",
+    "rejected": true,
+    "sha256": "53dfb7354609807302a41cba85e59d468b7fd9dc02fee978dd23313b22e202a4"
+  },
+  {
+    "compressed_bytes": 702519,
+    "error": "unsafe member: ../escape",
+    "name": "traversal",
+    "rejected": true,
+    "sha256": "3418485abc252a59009bed91a62112daf086eeb83ef52c22f8fec1295960152c"
+  },
+  {
+    "compressed_bytes": 702521,
+    "error": "unsafe member: /absolute",
+    "name": "absolute",
+    "rejected": true,
+    "sha256": "b0c920771f53c4b6996d7cdc900dba5f46ffd84a17dbfe81ad8bb2ee4b711397"
+  },
+  {
+    "compressed_bytes": 702517,
+    "error": "unsafe member: x\\y",
+    "name": "backslash",
+    "rejected": true,
+    "sha256": "8eec54337dd36e21c7888170ba0e6acbd920f6891721ae38cf2ae4c6c5c444f5"
+  },
+  {
+    "compressed_bytes": 702513,
+    "error": "duplicate member: repo_catalog-0.2.0/README.md",
+    "name": "duplicate",
+    "rejected": true,
+    "sha256": "4bc1d20c262d2bd868f292af99ffa63c8458aed35621c1266fe243eb7b565076"
+  },
+  {
+    "compressed_bytes": 702459,
+    "error": "invalid generated PKG-INFO singleton identity fields",
+    "name": "metadata-duplicate-name",
+    "rejected": true,
+    "sha256": "0e2b62e6568418bdbeed0c349781dd5225b040e239e213200aa64c526bb0f965"
+  },
+  {
+    "compressed_bytes": 702462,
+    "error": "invalid generated PKG-INFO identity/version",
+    "name": "metadata-bad-version",
+    "rejected": true,
+    "sha256": "9455bdc029eab5c827c43ce1f87df1530a05a5afa537918f25a8cb7da26670ad"
+  },
+  {
+    "compressed_bytes": 702460,
+    "error": "invalid generated PKG-INFO identity/version",
+    "name": "metadata-wrong-identity",
+    "rejected": true,
+    "sha256": "0def094ae0aac5f286dedfec4b7c8028d5d348000d9e7cfe6046e2585ca0e19c"
+  }
+]

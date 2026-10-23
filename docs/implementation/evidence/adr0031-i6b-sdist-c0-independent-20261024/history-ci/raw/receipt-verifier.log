@@ -1,0 +1,23 @@
+{
+  "40006927076": {
+    "job": "120597093781",
+    "status": "VERIFIED",
+    "bytes": 86002,
+    "sha256": "9449cf850e69b9922fc8604f308d63f370e9b8df599e60ded74f823ae90a895c",
+    "binding": {
+      "feature_sha": "fee364c6d61a5feebf08dbdd830a5a57ee2d872b",
+      "head": "90e222635a01e89f095e9a256ac69ecfc759ec4e",
+      "run_attempt": "1",
+      "run_id": "40006927076",
+      "tree": "ace7e44cd89194d189a30a0aa6cf513a45b3b87c"
+    }
+  },
+  "40006927148": {
+    "job": "120597093978",
+    "status": "FAIL_CLOSED",
+    "reason": "current job-log receipt fails declared byte length / SHA256; no missing byte inference",
+    "exception_class": "AssertionError",
+    "declared_bytes": 1993958,
+    "declared_sha256": "60b73fee0f3fed6d0c220d94a5fb62b450ad18bbb2ff58c662bb3f9bee3b090a"
+  }
+}

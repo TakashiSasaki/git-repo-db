@@ -1,0 +1,246 @@
+{
+  "mismatches": [
+    {
+      "path": ".agents/skills/ci-final-tree-verification/SKILL.md",
+      "label": "154",
+      "recorded": "42a9b263c7a4a5a45f6ee5245a9f4b4b6bd26d848302c11d223ccbb0781a1e5d",
+      "actual_complete_bytes_sha256": "bd9aadbd50d9c7c1be12341553685ab039b9019b5ea3050a756ffa470a0c5add",
+      "raw_bytes": 33835,
+      "strip_bytes": 33834,
+      "recorded_matches_strip": true,
+      "git_blob_matches": true
+    },
+    {
+      "path": ".agents/skills/ci-final-tree-verification/SKILL.md",
+      "label": "144",
+      "recorded": "e1c06f169652c307ce81bb6f1dc987cac483f90403fc0fb01479eaf5d2cea8a7",
+      "actual_complete_bytes_sha256": "6191cc636917ec6be980db191e93dc777fa9e89914af8dec565c2a0a1eee3fa0",
+      "raw_bytes": 30380,
+      "strip_bytes": 30379,
+      "recorded_matches_strip": true,
+      "git_blob_matches": true
+    },
+    {
+      "path": ".agents/skills/ci-final-tree-verification/SKILL.md",
+      "label": "147",
+      "recorded": "06573bb9c8f34f44d0f439f6043d0bd52544b454d081e8b4d1cb977b28e651d0",
+      "actual_complete_bytes_sha256": "ff833d51ba5d8ebb247de9621484fb5ec54e4ff82ddff2fff13eed86614e9f56",
+      "raw_bytes": 26732,
+      "strip_bytes": 26731,
+      "recorded_matches_strip": true,
+      "git_blob_matches": true
+    },
+    {
+      "path": ".agents/skills/ci-final-tree-verification/SKILL.md",
+      "label": "effective",
+      "recorded": "204858899dc098f1719c3dad546acc0e718b1ec8f27101b4398670cedc8377de",
+      "actual_complete_bytes_sha256": "e5f52248866a5ae51a9164eba917f68213517321b92b8b5b92b2596b5dbd68d0",
+      "raw_bytes": 37482,
+      "strip_bytes": 37481,
+      "recorded_matches_strip": true,
+      "git_blob_matches": true
+    },
+    {
+      "path": ".github/workflows/access-registry.yml",
+      "label": "154",
+      "recorded": "38182082b2d2678c6bf70e838eb4d970be2db76be1d891d31f1c24d6bc5005e0",
+      "actual_complete_bytes_sha256": "cdbeb963f70a30f7f44bc64cf0508ef44ded36c61efa53bf8dc4bcd4cb17afca",
+      "raw_bytes": 13362,
+      "strip_bytes": 13361,
+      "recorded_matches_strip": true,
+      "git_blob_matches": true
+    },
+    {
+      "path": ".github/workflows/access-registry.yml",
+      "label": "144",
+      "recorded": "8ed2c8f7e1bf6746db1d621dbe15418db6739106fe3722dc22f187e21b0575a7",
+      "actual_complete_bytes_sha256": "d72f17cd0c6cbe9de2a5147a04d23690dd2047d2a1f1be29e6ca3c5bef5c793a",
+      "raw_bytes": 13256,
+      "strip_bytes": 13255,
+      "recorded_matches_strip": true,
+      "git_blob_matches": true
+    },
+    {
+      "path": ".github/workflows/access-registry.yml",
+      "label": "147",
+      "recorded": "bbdeea25ef803ae9c28644e231241185e69de1bd1eb7efa6b05f4e8838521213",
+      "actual_complete_bytes_sha256": "5511b172ef091b6ac0014fa1a41407937a5632aba9f6bc390897c976d3e2723b",
+      "raw_bytes": 13056,
+      "strip_bytes": 13055,
+      "recorded_matches_strip": true,
+      "git_blob_matches": true
+    },
+    {
+      "path": ".github/workflows/access-registry.yml",
+      "label": "effective",
+      "recorded": "d9c78c888534fbacd1b9cd7a9c4b5fe1dc6685bb513d579ce89ea16f5930f91d",
+      "actual_complete_bytes_sha256": "90126c25c10ada71720d3e5183e833e951f99ad70f2a0f97977ddd23b758acd5",
+      "raw_bytes": 13562,
+      "strip_bytes": 13561,
+      "recorded_matches_strip": true,
+      "git_blob_matches": true
+    },
+    {
+      "path": "scripts/verify_access_distribution.py",
+      "label": "154",
+      "recorded": "6ac72ba83bd7647dad49159a65998d78c353ded7b2a3ed81b17d48c80ea9da7b",
+      "actual_complete_bytes_sha256": "8306242f786108f6b037030cb3f205309709d27f2352e22a638932d54b415635",
+      "raw_bytes": 26017,
+      "strip_bytes": 26016,
+      "recorded_matches_strip": true,
+      "git_blob_matches": true
+    },
+    {
+      "path": "scripts/verify_access_distribution.py",
+      "label": "144",
+      "recorded": "750d6a4f2165b4ff3bffbe9dc5bde7e6f5bf9fe006565f41b0ad2b7d448ffe58",
+      "actual_complete_bytes_sha256": "3345f4ec2dadeafaf2b41859e250b59ffee940740646f51009552200ae61745b",
+      "raw_bytes": 25418,
+      "strip_bytes": 25417,
+      "recorded_matches_strip": true,
+      "git_blob_matches": true
+    },
+    {
+      "path": "scripts/verify_access_distribution.py",
+      "label": "147",
+      "recorded": "a2b344633e7dc3adde4d1d4f78783bba26d970a52e8b8504662343d4c966cf9c",
+      "actual_complete_bytes_sha256": "c3e5be30f3578913a4d23ead34e209a5e061f0e003307c45c1f67d13cabd90b2",
+      "raw_bytes": 25059,
+      "strip_bytes": 25058,
+      "recorded_matches_strip": true,
+      "git_blob_matches": true
+    },
+    {
+      "path": "scripts/verify_access_distribution.py",
+      "label": "effective",
+      "recorded": "b3c7441ec6ea1b8378373ae15d12bf5eb2a2d5b2ef6211c3d274442643da648d",
+      "actual_complete_bytes_sha256": "ecba548c6d2326dde73866065541d0580a6fead1a6a2435f0ae210aba24155c6",
+      "raw_bytes": 26376,
+      "strip_bytes": 26375,
+      "recorded_matches_strip": true,
+      "git_blob_matches": true
+    },
+    {
+      "path": "scripts/verify_i4_distribution.py",
+      "label": "154",
+      "recorded": "1f9934c82f6d9a42c58f3e477dd0e6ad06e5f0d903c3b2ec72a2067f33f212b7",
+      "actual_complete_bytes_sha256": "31bae6d2992c8e2d0b5748113722e13f46c4761c41a41047d676b04269a8c33d",
+      "raw_bytes": 10727,
+      "strip_bytes": 10726,
+      "recorded_matches_strip": true,
+      "git_blob_matches": true
+    },
+    {
+      "path": "scripts/verify_i4_distribution.py",
+      "label": "144",
+      "recorded": "0b67d0b108cfca56fed738a32657a601e85ef26f406d2f7576e2c1638eea47d0",
+      "actual_complete_bytes_sha256": "8ce95f09767b623a8e67e53bed0b18640d406f9fe33bf02e50e5e8152d309541",
+      "raw_bytes": 10497,
+      "strip_bytes": 10496,
+      "recorded_matches_strip": true,
+      "git_blob_matches": true
+    },
+    {
+      "path": "scripts/verify_i4_distribution.py",
+      "label": "147",
+      "recorded": "caa04478768c62dfaa382b582e085721972cb9c738e8df8710310940e16cd8af",
+      "actual_complete_bytes_sha256": "d07529c7a0ef052026e5f2f7dd104468a35ed82d56fae296be42b3a505d49920",
+      "raw_bytes": 10185,
+      "strip_bytes": 10184,
+      "recorded_matches_strip": true,
+      "git_blob_matches": true
+    },
+    {
+      "path": "scripts/verify_i4_distribution.py",
+      "label": "effective",
+      "recorded": "ee6c6c2aeb8ca89171dcdef88a22d4cbc3d646b13c30279cf87fd607c2375df4",
+      "actual_complete_bytes_sha256": "d87800e3ff09fcae4e94f7df261da069c97a6778918337709c209760a3d8b2de",
+      "raw_bytes": 11039,
+      "strip_bytes": 11038,
+      "recorded_matches_strip": true,
+      "git_blob_matches": true
+    },
+    {
+      "path": "scripts/verify_i5_distribution.py",
+      "label": "154",
+      "recorded": "a169af2d23d8539fa18de9471b2396c7bb615d4987b683e2da87bf9dd7e82024",
+      "actual_complete_bytes_sha256": "17c663f345fbb3dd77719e62c120b3cf98c63e8ae405531745cd08c2b6b10fc5",
+      "raw_bytes": 11389,
+      "strip_bytes": 11388,
+      "recorded_matches_strip": true,
+      "git_blob_matches": true
+    },
+    {
+      "path": "scripts/verify_i5_distribution.py",
+      "label": "144",
+      "recorded": "ae5f02ed208092cd676de08596ce83f70f02de10b6c92dc9616d9966f64990b4",
+      "actual_complete_bytes_sha256": "5f98c1ea5f8c10ca857f6cc9b7dd9a7e1139a983ac0b6b9687361428703343ed",
+      "raw_bytes": 11556,
+      "strip_bytes": 11555,
+      "recorded_matches_strip": true,
+      "git_blob_matches": true
+    },
+    {
+      "path": "scripts/verify_i5_distribution.py",
+      "label": "147",
+      "recorded": "a945166ed8b0804166e044540e5fd9526bb65786cd9bb2d85563cb01ad313293",
+      "actual_complete_bytes_sha256": "e308996805033b07b16405904fec94bb49f7949cc235ca4ff0e6328c205c0f54",
+      "raw_bytes": 11244,
+      "strip_bytes": 11243,
+      "recorded_matches_strip": true,
+      "git_blob_matches": true
+    },
+    {
+      "path": "scripts/verify_i5_distribution.py",
+      "label": "effective",
+      "recorded": "36ab98dc3ef9b1ac4edb124b6ad3ce0e7d9e93034da8703e879b15198fa1ea04",
+      "actual_complete_bytes_sha256": "cc7cbb4c1a5fd53dc558bf6ea243999fb539c4ec2b9ea835f9c4b58fe093f626",
+      "raw_bytes": 11701,
+      "strip_bytes": 11700,
+      "recorded_matches_strip": true,
+      "git_blob_matches": true
+    },
+    {
+      "path": "tests/packaging/test_p1_distribution.py",
+      "label": "154",
+      "recorded": "1c394fbf2cfaacd3d57034446de42dcfe16ab55b68b2862f7d1c27ecf4869a86",
+      "actual_complete_bytes_sha256": "7e7c4246a141936715cc2ca879d9d9bca838e25ac1b87988856756e405a38d4b",
+      "raw_bytes": 4048,
+      "strip_bytes": 4047,
+      "recorded_matches_strip": true,
+      "git_blob_matches": true
+    },
+    {
+      "path": "tests/packaging/test_p1_distribution.py",
+      "label": "144",
+      "recorded": "10d10784e67c1e94b0a95362df559baf07a38d8e354a686f5999abc48a11bba6",
+      "actual_complete_bytes_sha256": "02c7eecddbe085342a2a3a18c38db25a0e0b6c06043829dd5fb3a9cd3c47d810",
+      "raw_bytes": 4656,
+      "strip_bytes": 4655,
+      "recorded_matches_strip": true,
+      "git_blob_matches": true
+    },
+    {
+      "path": "tests/packaging/test_p1_distribution.py",
+      "label": "147",
+      "recorded": "e1a4bd001452d97f2d5fd46ac1679ad66bbd00175f742465c6832eda073c83dc",
+      "actual_complete_bytes_sha256": "e76285273b10a3b65149580b0727228048b5023a658e75991f3d3965ef9fced0",
+      "raw_bytes": 3957,
+      "strip_bytes": 3956,
+      "recorded_matches_strip": true,
+      "git_blob_matches": true
+    },
+    {
+      "path": "tests/packaging/test_p1_distribution.py",
+      "label": "effective",
+      "recorded": "a1dee8327a07c89e57f4db8141ca220b04751e5dce0055260341ef126c60bfcd",
+      "actual_complete_bytes_sha256": "502b17406807e658bbb50711f172ef8928a1670f144fa047c284dd143d6e1618",
+      "raw_bytes": 4746,
+      "strip_bytes": 4745,
+      "recorded_matches_strip": true,
+      "git_blob_matches": true
+    }
+  ],
+  "count": 24,
+  "impact": "Author provenance script hashes git show output after .strip(); Git blob OIDs remain correct. Independent audit binds complete bytes including final newline. No product content discrepancy."
+}

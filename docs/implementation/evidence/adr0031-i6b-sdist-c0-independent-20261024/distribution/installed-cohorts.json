@@ -1,0 +1,30 @@
+[
+  {
+    "artifact": "direct",
+    "wheel_sha256": "2452e419e06eea774805fc89358130538c50fdd313fdb0fb9b82b230e99a39d8",
+    "outcomes": {
+      "I4": true,
+      "I5": true,
+      "original_Access": {
+        "exit": 1,
+        "refusal": "PERMISSION_DENIED",
+        "assertions_reached": 26,
+        "assertions_unreached": 28
+      }
+    }
+  },
+  {
+    "artifact": "derived",
+    "wheel_sha256": "2452e419e06eea774805fc89358130538c50fdd313fdb0fb9b82b230e99a39d8",
+    "outcomes": {
+      "I4": true,
+      "I5": true,
+      "original_Access": {
+        "exit": 1,
+        "refusal": "PERMISSION_DENIED",
+        "assertions_reached": 26,
+        "assertions_unreached": 28
+      }
+    }
+  }
+]

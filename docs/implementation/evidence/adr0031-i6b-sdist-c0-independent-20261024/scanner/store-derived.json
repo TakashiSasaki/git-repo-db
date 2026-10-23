@@ -1,0 +1,538 @@
+{
+  "cases": [
+    {
+      "adapter_path": "/workspace/pr155-review-artifacts/distribution/derived-venv/lib/python3.12/site-packages/repo_catalog/adapters/sqlite/production_context.py",
+      "calls": {
+        "<genexpr>": 136,
+        "__init__": 1,
+        "_budget_limits": 4,
+        "_finite": 27,
+        "_principal_state": 4,
+        "_selection_state": 4,
+        "actual_list.extend:c_call": 3,
+        "actual_list.extend:c_return": 3,
+        "charge": 9,
+        "charge_input": 1,
+        "used_bytes": 6,
+        "used_work": 6,
+        "validate_context": 4
+      },
+      "events": [
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 1,
+          "next_line": 362,
+          "old": 0,
+          "used_work": 9992
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 0,
+          "event": "c_call:list.extend",
+          "function": "charge_input",
+          "length": 0,
+          "line": 381,
+          "queue_shallow_bytes": 56,
+          "used_work": 9993
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 56,
+          "event": "c_return:list.extend",
+          "function": "charge_input",
+          "length": 1,
+          "line": 381,
+          "queue_shallow_bytes": 88,
+          "used_work": 9993
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 1,
+          "next_line": 388,
+          "old": 0,
+          "used_work": 9993
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 0,
+          "event": "c_call:list.extend",
+          "function": "charge_input",
+          "length": 0,
+          "line": 375,
+          "queue_shallow_bytes": 56,
+          "used_work": 9994
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 336,
+          "event": "c_return:list.extend",
+          "function": "charge_input",
+          "length": 6,
+          "line": 375,
+          "queue_shallow_bytes": 120,
+          "used_work": 9994
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 6,
+          "next_line": 388,
+          "old": 0,
+          "used_work": 9994
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 112,
+          "event": "c_call:list.extend",
+          "function": "charge_input",
+          "length": 2,
+          "line": 381,
+          "queue_shallow_bytes": 120,
+          "used_work": 10000
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 1008,
+          "event": "c_return:list.extend",
+          "function": "charge_input",
+          "length": 18,
+          "line": 381,
+          "queue_shallow_bytes": 216,
+          "used_work": 10000
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 18,
+          "next_line": 388,
+          "old": 2,
+          "used_work": 10000
+        }
+      ],
+      "exact_transfer_fences_preserved": true,
+      "in_transaction": false,
+      "input_children": 16,
+      "input_json_bytes": 919,
+      "maxima": {
+        "charge_input:queue_length": 18,
+        "charge_input:queue_shallow_bytes": 216
+      },
+      "outcome": "AdmissionRefused",
+      "policy_calls": 0,
+      "prior_work": 9992,
+      "remaining_work": 8,
+      "result": {
+        "code": "INPUT_LIMIT",
+        "message": "INPUT_LIMIT"
+      },
+      "rows_after": 0,
+      "rows_before": 0,
+      "selection_work_limit": 10000,
+      "sql": [
+        "BEGIN IMMEDIATE",
+        "SELECT store_role FROM store_identity",
+        "SELECT type,name,tbl_name,sql FROM sqlite_schema WHERE name NOT LIKE 'sqlite_%' ORDER BY type,name",
+        "PRAGMA foreign_keys",
+        "PRAGMA recursive_triggers",
+        "PRAGMA ignore_check_constraints",
+        "PRAGMA defer_foreign_keys",
+        "PRAGMA trusted_schema",
+        "PRAGMA function_list",
+        "SELECT type,name,tbl_name,sql FROM sqlite_schema WHERE name IN('i2_transfer_stage_fence','i2_transfer_report_stage_fence') ORDER BY name",
+        "SELECT 1 FROM resource_relations WHERE relation_kind COLLATE BINARY='transfer_event_report' LIMIT 1",
+        "SELECT 1 FROM resource_repository_relations WHERE relation_kind COLLATE BINARY IN('transfer_from_repository','transfer_to_repository') LIMIT 1",
+        "SELECT configuration_json FROM providers",
+        "SELECT configuration_json FROM repository_context",
+        "SELECT configuration_json FROM sources",
+        "SELECT attributes_json FROM source_repositories",
+        "ROLLBACK"
+      ],
+      "used_work": 10001,
+      "work_limit": 10000
+    },
+    {
+      "adapter_path": "/workspace/pr155-review-artifacts/distribution/derived-venv/lib/python3.12/site-packages/repo_catalog/adapters/sqlite/production_context.py",
+      "calls": {
+        "<genexpr>": 5056,
+        "__init__": 1,
+        "_budget_limits": 4,
+        "_finite": 27,
+        "_principal_state": 4,
+        "_selection_state": 4,
+        "actual_list.extend:c_call": 3,
+        "actual_list.extend:c_return": 3,
+        "charge": 9,
+        "charge_input": 1,
+        "used_bytes": 6,
+        "used_work": 6,
+        "validate_context": 4
+      },
+      "events": [
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 1,
+          "next_line": 362,
+          "old": 0,
+          "used_work": 9992
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 0,
+          "event": "c_call:list.extend",
+          "function": "charge_input",
+          "length": 0,
+          "line": 381,
+          "queue_shallow_bytes": 56,
+          "used_work": 9993
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 56,
+          "event": "c_return:list.extend",
+          "function": "charge_input",
+          "length": 1,
+          "line": 381,
+          "queue_shallow_bytes": 88,
+          "used_work": 9993
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 1,
+          "next_line": 388,
+          "old": 0,
+          "used_work": 9993
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 0,
+          "event": "c_call:list.extend",
+          "function": "charge_input",
+          "length": 0,
+          "line": 375,
+          "queue_shallow_bytes": 56,
+          "used_work": 9994
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 336,
+          "event": "c_return:list.extend",
+          "function": "charge_input",
+          "length": 6,
+          "line": 375,
+          "queue_shallow_bytes": 120,
+          "used_work": 9994
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 6,
+          "next_line": 388,
+          "old": 0,
+          "used_work": 9994
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 112,
+          "event": "c_call:list.extend",
+          "function": "charge_input",
+          "length": 2,
+          "line": 381,
+          "queue_shallow_bytes": 120,
+          "used_work": 10000
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 56112,
+          "event": "c_return:list.extend",
+          "function": "charge_input",
+          "length": 1002,
+          "line": 381,
+          "queue_shallow_bytes": 8888,
+          "used_work": 10000
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 1002,
+          "next_line": 388,
+          "old": 2,
+          "used_work": 10000
+        }
+      ],
+      "exact_transfer_fences_preserved": true,
+      "in_transaction": false,
+      "input_children": 1000,
+      "input_json_bytes": 58891,
+      "maxima": {
+        "charge_input:queue_length": 1002,
+        "charge_input:queue_shallow_bytes": 8888
+      },
+      "outcome": "AdmissionRefused",
+      "policy_calls": 0,
+      "prior_work": 9992,
+      "remaining_work": 8,
+      "result": {
+        "code": "INPUT_LIMIT",
+        "message": "INPUT_LIMIT"
+      },
+      "rows_after": 0,
+      "rows_before": 0,
+      "selection_work_limit": 10000,
+      "sql": [
+        "BEGIN IMMEDIATE",
+        "SELECT store_role FROM store_identity",
+        "SELECT type,name,tbl_name,sql FROM sqlite_schema WHERE name NOT LIKE 'sqlite_%' ORDER BY type,name",
+        "PRAGMA foreign_keys",
+        "PRAGMA recursive_triggers",
+        "PRAGMA ignore_check_constraints",
+        "PRAGMA defer_foreign_keys",
+        "PRAGMA trusted_schema",
+        "PRAGMA function_list",
+        "SELECT type,name,tbl_name,sql FROM sqlite_schema WHERE name IN('i2_transfer_stage_fence','i2_transfer_report_stage_fence') ORDER BY name",
+        "SELECT 1 FROM resource_relations WHERE relation_kind COLLATE BINARY='transfer_event_report' LIMIT 1",
+        "SELECT 1 FROM resource_repository_relations WHERE relation_kind COLLATE BINARY IN('transfer_from_repository','transfer_to_repository') LIMIT 1",
+        "SELECT configuration_json FROM providers",
+        "SELECT configuration_json FROM repository_context",
+        "SELECT configuration_json FROM sources",
+        "SELECT attributes_json FROM source_repositories",
+        "ROLLBACK"
+      ],
+      "used_work": 10001,
+      "work_limit": 10000
+    },
+    {
+      "adapter_path": "/workspace/pr155-review-artifacts/distribution/derived-venv/lib/python3.12/site-packages/repo_catalog/adapters/sqlite/production_context.py",
+      "calls": {
+        "<genexpr>": 4014,
+        "__init__": 1,
+        "_budget_limits": 4,
+        "_finite": 3,
+        "_principal_state": 4,
+        "_selection_state": 4,
+        "charge": 1,
+        "charge_input": 1,
+        "validate_context": 4
+      },
+      "events": [
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 1,
+          "next_line": 362,
+          "old": 0,
+          "used_work": 10000
+        }
+      ],
+      "exact_transfer_fences_preserved": true,
+      "in_transaction": false,
+      "input_children": 1000,
+      "input_json_bytes": 58891,
+      "maxima": {
+        "charge_input:queue_length": 1,
+        "charge_input:queue_shallow_bytes": 64
+      },
+      "outcome": "AdmissionRefused",
+      "policy_calls": 0,
+      "prior_work": 10000,
+      "remaining_work": 0,
+      "result": {
+        "code": "INPUT_LIMIT",
+        "message": "INPUT_LIMIT"
+      },
+      "rows_after": 0,
+      "rows_before": 0,
+      "selection_work_limit": 10000,
+      "sql": [
+        "BEGIN IMMEDIATE",
+        "SELECT store_role FROM store_identity",
+        "SELECT type,name,tbl_name,sql FROM sqlite_schema WHERE name NOT LIKE 'sqlite_%' ORDER BY type,name",
+        "PRAGMA foreign_keys",
+        "PRAGMA recursive_triggers",
+        "PRAGMA ignore_check_constraints",
+        "PRAGMA defer_foreign_keys",
+        "PRAGMA trusted_schema",
+        "PRAGMA function_list",
+        "SELECT type,name,tbl_name,sql FROM sqlite_schema WHERE name IN('i2_transfer_stage_fence','i2_transfer_report_stage_fence') ORDER BY name",
+        "SELECT 1 FROM resource_relations WHERE relation_kind COLLATE BINARY='transfer_event_report' LIMIT 1",
+        "SELECT 1 FROM resource_repository_relations WHERE relation_kind COLLATE BINARY IN('transfer_from_repository','transfer_to_repository') LIMIT 1",
+        "SELECT configuration_json FROM providers",
+        "SELECT configuration_json FROM repository_context",
+        "SELECT configuration_json FROM sources",
+        "SELECT attributes_json FROM source_repositories",
+        "ROLLBACK"
+      ],
+      "used_work": 10001,
+      "work_limit": 10000
+    },
+    {
+      "adapter_path": "/workspace/pr155-review-artifacts/distribution/derived-venv/lib/python3.12/site-packages/repo_catalog/adapters/sqlite/production_context.py",
+      "calls": {
+        "<genexpr>": 5054,
+        "__init__": 1,
+        "_budget_limits": 4,
+        "_finite": 24,
+        "_principal_state": 4,
+        "_selection_state": 4,
+        "actual_list.extend:c_call": 3,
+        "actual_list.extend:c_return": 3,
+        "charge": 8,
+        "charge_input": 1,
+        "used_bytes": 5,
+        "used_work": 6,
+        "validate_context": 4
+      },
+      "events": [
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 1,
+          "next_line": 362,
+          "old": 0,
+          "used_work": 0
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 0,
+          "event": "c_call:list.extend",
+          "function": "charge_input",
+          "length": 0,
+          "line": 381,
+          "queue_shallow_bytes": 56,
+          "used_work": 1
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 56,
+          "event": "c_return:list.extend",
+          "function": "charge_input",
+          "length": 1,
+          "line": 381,
+          "queue_shallow_bytes": 88,
+          "used_work": 1
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 1,
+          "next_line": 388,
+          "old": 0,
+          "used_work": 1
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 0,
+          "event": "c_call:list.extend",
+          "function": "charge_input",
+          "length": 0,
+          "line": 375,
+          "queue_shallow_bytes": 56,
+          "used_work": 2
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 336,
+          "event": "c_return:list.extend",
+          "function": "charge_input",
+          "length": 6,
+          "line": 375,
+          "queue_shallow_bytes": 120,
+          "used_work": 2
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 6,
+          "next_line": 388,
+          "old": 0,
+          "used_work": 2
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 112,
+          "event": "c_call:list.extend",
+          "function": "charge_input",
+          "length": 2,
+          "line": 381,
+          "queue_shallow_bytes": 120,
+          "used_work": 8
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 56112,
+          "event": "c_return:list.extend",
+          "function": "charge_input",
+          "length": 1002,
+          "line": 381,
+          "queue_shallow_bytes": 8888,
+          "used_work": 8
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 1002,
+          "next_line": 388,
+          "old": 2,
+          "used_work": 8
+        }
+      ],
+      "exact_transfer_fences_preserved": true,
+      "in_transaction": false,
+      "input_children": 1000,
+      "input_json_bytes": 58891,
+      "maxima": {
+        "charge_input:queue_length": 1002,
+        "charge_input:queue_shallow_bytes": 8888
+      },
+      "outcome": "AdmissionRefused",
+      "policy_calls": 0,
+      "prior_work": 0,
+      "remaining_work": 10000,
+      "result": {
+        "code": "INPUT_LIMIT",
+        "message": "INPUT_LIMIT"
+      },
+      "rows_after": 0,
+      "rows_before": 0,
+      "selection_work_limit": 7,
+      "sql": [
+        "BEGIN IMMEDIATE",
+        "SELECT store_role FROM store_identity",
+        "SELECT type,name,tbl_name,sql FROM sqlite_schema WHERE name NOT LIKE 'sqlite_%' ORDER BY type,name",
+        "PRAGMA foreign_keys",
+        "PRAGMA recursive_triggers",
+        "PRAGMA ignore_check_constraints",
+        "PRAGMA defer_foreign_keys",
+        "PRAGMA trusted_schema",
+        "PRAGMA function_list",
+        "SELECT type,name,tbl_name,sql FROM sqlite_schema WHERE name IN('i2_transfer_stage_fence','i2_transfer_report_stage_fence') ORDER BY name",
+        "SELECT 1 FROM resource_relations WHERE relation_kind COLLATE BINARY='transfer_event_report' LIMIT 1",
+        "SELECT 1 FROM resource_repository_relations WHERE relation_kind COLLATE BINARY IN('transfer_from_repository','transfer_to_repository') LIMIT 1",
+        "SELECT configuration_json FROM providers",
+        "SELECT configuration_json FROM repository_context",
+        "SELECT configuration_json FROM sources",
+        "SELECT attributes_json FROM source_repositories",
+        "ROLLBACK"
+      ],
+      "used_work": 8,
+      "work_limit": 10000
+    }
+  ],
+  "script_sha256": "4398014611521ff4df964a8701c2d8ef3dd7f7e3d6cd6b083052ddddb4a809b8"
+}

@@ -1,0 +1,7048 @@
+{
+  "admission": [
+    {
+      "calls": {
+        "<genexpr>": 25,
+        "__init__": 1,
+        "_budget_limits": 1,
+        "_finite": 6,
+        "_principal_state": 1,
+        "_selection_state": 1,
+        "actual_list.extend:c_call": 1,
+        "actual_list.extend:c_return": 1,
+        "charge": 2,
+        "charge_input": 1,
+        "used_bytes": 1,
+        "used_work": 1,
+        "validate_context": 1
+      },
+      "events": [
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 1,
+          "next_line": 362,
+          "old": 0,
+          "used_work": 16
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 0,
+          "event": "c_call:list.extend",
+          "function": "charge_input",
+          "length": 0,
+          "line": 381,
+          "queue_shallow_bytes": 56,
+          "used_work": 17
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 896,
+          "event": "c_return:list.extend",
+          "function": "charge_input",
+          "length": 16,
+          "line": 381,
+          "queue_shallow_bytes": 184,
+          "used_work": 17
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 16,
+          "next_line": 388,
+          "old": 0,
+          "used_work": 17
+        }
+      ],
+      "input_children": 16,
+      "input_json_bytes": 96,
+      "maxima": {
+        "charge_input:queue_length": 16,
+        "charge_input:queue_shallow_bytes": 184
+      },
+      "outcome": "AdmissionRefused",
+      "persistence": "not reached; scanner has no persistence",
+      "policy_calls": 0,
+      "prior_work": 16,
+      "result": {
+        "code": "INPUT_LIMIT",
+        "message": "INPUT_LIMIT"
+      },
+      "selection_work_limit": 17,
+      "shape": "list",
+      "used_work": 18,
+      "work_limit": 17
+    },
+    {
+      "calls": {
+        "<genexpr>": 1009,
+        "__init__": 1,
+        "_budget_limits": 1,
+        "_finite": 6,
+        "_principal_state": 1,
+        "_selection_state": 1,
+        "actual_list.extend:c_call": 1,
+        "actual_list.extend:c_return": 1,
+        "charge": 2,
+        "charge_input": 1,
+        "used_bytes": 1,
+        "used_work": 1,
+        "validate_context": 1
+      },
+      "events": [
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 1,
+          "next_line": 362,
+          "old": 0,
+          "used_work": 9999
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 0,
+          "event": "c_call:list.extend",
+          "function": "charge_input",
+          "length": 0,
+          "line": 381,
+          "queue_shallow_bytes": 56,
+          "used_work": 10000
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 56000,
+          "event": "c_return:list.extend",
+          "function": "charge_input",
+          "length": 1000,
+          "line": 381,
+          "queue_shallow_bytes": 8856,
+          "used_work": 10000
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 1000,
+          "next_line": 388,
+          "old": 0,
+          "used_work": 10000
+        }
+      ],
+      "input_children": 1000,
+      "input_json_bytes": 6000,
+      "maxima": {
+        "charge_input:queue_length": 1000,
+        "charge_input:queue_shallow_bytes": 8856
+      },
+      "outcome": "AdmissionRefused",
+      "persistence": "not reached; scanner has no persistence",
+      "policy_calls": 0,
+      "prior_work": 9999,
+      "result": {
+        "code": "INPUT_LIMIT",
+        "message": "INPUT_LIMIT"
+      },
+      "selection_work_limit": 10000,
+      "shape": "list",
+      "used_work": 10001,
+      "work_limit": 10000
+    },
+    {
+      "calls": {
+        "<genexpr>": 4,
+        "__init__": 1,
+        "_budget_limits": 1,
+        "_finite": 3,
+        "_principal_state": 1,
+        "_selection_state": 1,
+        "charge": 1,
+        "charge_input": 1,
+        "validate_context": 1
+      },
+      "events": [
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 1,
+          "next_line": 362,
+          "old": 0,
+          "used_work": 10000
+        }
+      ],
+      "input_children": 1000,
+      "input_json_bytes": 6000,
+      "maxima": {
+        "charge_input:queue_length": 1,
+        "charge_input:queue_shallow_bytes": 64
+      },
+      "outcome": "AdmissionRefused",
+      "persistence": "not reached; scanner has no persistence",
+      "policy_calls": 0,
+      "prior_work": 10000,
+      "result": {
+        "code": "INPUT_LIMIT",
+        "message": "INPUT_LIMIT"
+      },
+      "selection_work_limit": 10000,
+      "shape": "list",
+      "used_work": 10001,
+      "work_limit": 10000
+    },
+    {
+      "calls": {
+        "<genexpr>": 1007,
+        "__init__": 1,
+        "_budget_limits": 1,
+        "_finite": 3,
+        "_principal_state": 1,
+        "_selection_state": 1,
+        "actual_list.extend:c_call": 1,
+        "actual_list.extend:c_return": 1,
+        "charge": 1,
+        "charge_input": 1,
+        "used_work": 1,
+        "validate_context": 1
+      },
+      "events": [
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 1,
+          "next_line": 362,
+          "old": 0,
+          "used_work": 0
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 0,
+          "event": "c_call:list.extend",
+          "function": "charge_input",
+          "length": 0,
+          "line": 381,
+          "queue_shallow_bytes": 56,
+          "used_work": 1
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 56000,
+          "event": "c_return:list.extend",
+          "function": "charge_input",
+          "length": 1000,
+          "line": 381,
+          "queue_shallow_bytes": 8856,
+          "used_work": 1
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 1000,
+          "next_line": 388,
+          "old": 0,
+          "used_work": 1
+        }
+      ],
+      "input_children": 1000,
+      "input_json_bytes": 6000,
+      "maxima": {
+        "charge_input:queue_length": 1000,
+        "charge_input:queue_shallow_bytes": 8856
+      },
+      "outcome": "AdmissionRefused",
+      "persistence": "not reached; scanner has no persistence",
+      "policy_calls": 0,
+      "prior_work": 0,
+      "result": {
+        "code": "INPUT_LIMIT",
+        "message": "INPUT_LIMIT"
+      },
+      "selection_work_limit": 0,
+      "shape": "list",
+      "used_work": 1,
+      "work_limit": 10000
+    },
+    {
+      "calls": {
+        "<genexpr>": 4,
+        "__init__": 1,
+        "_budget_limits": 1,
+        "_finite": 3,
+        "_principal_state": 1,
+        "_selection_state": 1,
+        "charge": 1,
+        "charge_input": 1,
+        "validate_context": 1
+      },
+      "events": [
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 1,
+          "next_line": 362,
+          "old": 0,
+          "used_work": 0
+        }
+      ],
+      "input_children": 1000,
+      "input_json_bytes": 6000,
+      "maxima": {
+        "charge_input:queue_length": 1,
+        "charge_input:queue_shallow_bytes": 64
+      },
+      "outcome": "AdmissionRefused",
+      "persistence": "not reached; scanner has no persistence",
+      "policy_calls": 0,
+      "prior_work": 0,
+      "result": {
+        "code": "INPUT_LIMIT",
+        "message": "INPUT_LIMIT"
+      },
+      "selection_work_limit": 0,
+      "shape": "list",
+      "used_work": 1,
+      "work_limit": 0
+    },
+    {
+      "calls": {
+        "<genexpr>": 42,
+        "__init__": 1,
+        "_budget_limits": 1,
+        "_finite": 6,
+        "_principal_state": 1,
+        "_selection_state": 1,
+        "actual_list.extend:c_call": 2,
+        "actual_list.extend:c_return": 2,
+        "charge": 2,
+        "charge_input": 1,
+        "used_bytes": 1,
+        "used_work": 1,
+        "validate_context": 1
+      },
+      "events": [
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 1,
+          "next_line": 362,
+          "old": 0,
+          "used_work": 16
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 0,
+          "event": "c_call:list.extend",
+          "function": "charge_input",
+          "length": 0,
+          "line": 385,
+          "queue_shallow_bytes": 56,
+          "used_work": 17
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 896,
+          "event": "c_return:list.extend",
+          "function": "charge_input",
+          "length": 16,
+          "line": 385,
+          "queue_shallow_bytes": 184,
+          "used_work": 17
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 16,
+          "next_line": 386,
+          "old": 0,
+          "used_work": 17
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 896,
+          "event": "c_call:list.extend",
+          "function": "charge_input",
+          "length": 16,
+          "line": 386,
+          "queue_shallow_bytes": 184,
+          "used_work": 17
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 1792,
+          "event": "c_return:list.extend",
+          "function": "charge_input",
+          "length": 32,
+          "line": 386,
+          "queue_shallow_bytes": 312,
+          "used_work": 17
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 32,
+          "next_line": 388,
+          "old": 16,
+          "used_work": 17
+        }
+      ],
+      "input_children": 16,
+      "input_json_bytes": 198,
+      "maxima": {
+        "charge_input:queue_length": 32,
+        "charge_input:queue_shallow_bytes": 312
+      },
+      "outcome": "AdmissionRefused",
+      "persistence": "not reached; scanner has no persistence",
+      "policy_calls": 0,
+      "prior_work": 16,
+      "result": {
+        "code": "INPUT_LIMIT",
+        "message": "INPUT_LIMIT"
+      },
+      "selection_work_limit": 17,
+      "shape": "dict",
+      "used_work": 18,
+      "work_limit": 17
+    },
+    {
+      "calls": {
+        "<genexpr>": 2010,
+        "__init__": 1,
+        "_budget_limits": 1,
+        "_finite": 6,
+        "_principal_state": 1,
+        "_selection_state": 1,
+        "actual_list.extend:c_call": 2,
+        "actual_list.extend:c_return": 2,
+        "charge": 2,
+        "charge_input": 1,
+        "used_bytes": 1,
+        "used_work": 1,
+        "validate_context": 1
+      },
+      "events": [
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 1,
+          "next_line": 362,
+          "old": 0,
+          "used_work": 9999
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 0,
+          "event": "c_call:list.extend",
+          "function": "charge_input",
+          "length": 0,
+          "line": 385,
+          "queue_shallow_bytes": 56,
+          "used_work": 10000
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 56000,
+          "event": "c_return:list.extend",
+          "function": "charge_input",
+          "length": 1000,
+          "line": 385,
+          "queue_shallow_bytes": 8856,
+          "used_work": 10000
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 1000,
+          "next_line": 386,
+          "old": 0,
+          "used_work": 10000
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 56000,
+          "event": "c_call:list.extend",
+          "function": "charge_input",
+          "length": 1000,
+          "line": 386,
+          "queue_shallow_bytes": 8856,
+          "used_work": 10000
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 112000,
+          "event": "c_return:list.extend",
+          "function": "charge_input",
+          "length": 2000,
+          "line": 386,
+          "queue_shallow_bytes": 16184,
+          "used_work": 10000
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 2000,
+          "next_line": 388,
+          "old": 1000,
+          "used_work": 10000
+        }
+      ],
+      "input_children": 1000,
+      "input_json_bytes": 13890,
+      "maxima": {
+        "charge_input:queue_length": 2000,
+        "charge_input:queue_shallow_bytes": 16184
+      },
+      "outcome": "AdmissionRefused",
+      "persistence": "not reached; scanner has no persistence",
+      "policy_calls": 0,
+      "prior_work": 9999,
+      "result": {
+        "code": "INPUT_LIMIT",
+        "message": "INPUT_LIMIT"
+      },
+      "selection_work_limit": 10000,
+      "shape": "dict",
+      "used_work": 10001,
+      "work_limit": 10000
+    },
+    {
+      "calls": {
+        "<genexpr>": 4,
+        "__init__": 1,
+        "_budget_limits": 1,
+        "_finite": 3,
+        "_principal_state": 1,
+        "_selection_state": 1,
+        "charge": 1,
+        "charge_input": 1,
+        "validate_context": 1
+      },
+      "events": [
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 1,
+          "next_line": 362,
+          "old": 0,
+          "used_work": 10000
+        }
+      ],
+      "input_children": 1000,
+      "input_json_bytes": 13890,
+      "maxima": {
+        "charge_input:queue_length": 1,
+        "charge_input:queue_shallow_bytes": 64
+      },
+      "outcome": "AdmissionRefused",
+      "persistence": "not reached; scanner has no persistence",
+      "policy_calls": 0,
+      "prior_work": 10000,
+      "result": {
+        "code": "INPUT_LIMIT",
+        "message": "INPUT_LIMIT"
+      },
+      "selection_work_limit": 10000,
+      "shape": "dict",
+      "used_work": 10001,
+      "work_limit": 10000
+    },
+    {
+      "calls": {
+        "<genexpr>": 2008,
+        "__init__": 1,
+        "_budget_limits": 1,
+        "_finite": 3,
+        "_principal_state": 1,
+        "_selection_state": 1,
+        "actual_list.extend:c_call": 2,
+        "actual_list.extend:c_return": 2,
+        "charge": 1,
+        "charge_input": 1,
+        "used_work": 1,
+        "validate_context": 1
+      },
+      "events": [
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 1,
+          "next_line": 362,
+          "old": 0,
+          "used_work": 0
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 0,
+          "event": "c_call:list.extend",
+          "function": "charge_input",
+          "length": 0,
+          "line": 385,
+          "queue_shallow_bytes": 56,
+          "used_work": 1
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 56000,
+          "event": "c_return:list.extend",
+          "function": "charge_input",
+          "length": 1000,
+          "line": 385,
+          "queue_shallow_bytes": 8856,
+          "used_work": 1
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 1000,
+          "next_line": 386,
+          "old": 0,
+          "used_work": 1
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 56000,
+          "event": "c_call:list.extend",
+          "function": "charge_input",
+          "length": 1000,
+          "line": 386,
+          "queue_shallow_bytes": 8856,
+          "used_work": 1
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 112000,
+          "event": "c_return:list.extend",
+          "function": "charge_input",
+          "length": 2000,
+          "line": 386,
+          "queue_shallow_bytes": 16184,
+          "used_work": 1
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 2000,
+          "next_line": 388,
+          "old": 1000,
+          "used_work": 1
+        }
+      ],
+      "input_children": 1000,
+      "input_json_bytes": 13890,
+      "maxima": {
+        "charge_input:queue_length": 2000,
+        "charge_input:queue_shallow_bytes": 16184
+      },
+      "outcome": "AdmissionRefused",
+      "persistence": "not reached; scanner has no persistence",
+      "policy_calls": 0,
+      "prior_work": 0,
+      "result": {
+        "code": "INPUT_LIMIT",
+        "message": "INPUT_LIMIT"
+      },
+      "selection_work_limit": 0,
+      "shape": "dict",
+      "used_work": 1,
+      "work_limit": 10000
+    },
+    {
+      "calls": {
+        "<genexpr>": 4,
+        "__init__": 1,
+        "_budget_limits": 1,
+        "_finite": 3,
+        "_principal_state": 1,
+        "_selection_state": 1,
+        "charge": 1,
+        "charge_input": 1,
+        "validate_context": 1
+      },
+      "events": [
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 1,
+          "next_line": 362,
+          "old": 0,
+          "used_work": 0
+        }
+      ],
+      "input_children": 1000,
+      "input_json_bytes": 13890,
+      "maxima": {
+        "charge_input:queue_length": 1,
+        "charge_input:queue_shallow_bytes": 64
+      },
+      "outcome": "AdmissionRefused",
+      "persistence": "not reached; scanner has no persistence",
+      "policy_calls": 0,
+      "prior_work": 0,
+      "result": {
+        "code": "INPUT_LIMIT",
+        "message": "INPUT_LIMIT"
+      },
+      "selection_work_limit": 0,
+      "shape": "dict",
+      "used_work": 1,
+      "work_limit": 0
+    },
+    {
+      "calls": {
+        "<genexpr>": 25,
+        "__init__": 1,
+        "_budget_limits": 1,
+        "_finite": 6,
+        "_principal_state": 1,
+        "_selection_state": 1,
+        "actual_list.extend:c_call": 1,
+        "actual_list.extend:c_return": 1,
+        "charge": 2,
+        "charge_input": 1,
+        "used_bytes": 1,
+        "used_work": 1,
+        "validate_context": 1
+      },
+      "events": [
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 1,
+          "next_line": 362,
+          "old": 0,
+          "used_work": 16
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 0,
+          "event": "c_call:list.extend",
+          "function": "charge_input",
+          "length": 0,
+          "line": 381,
+          "queue_shallow_bytes": 56,
+          "used_work": 17
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 896,
+          "event": "c_return:list.extend",
+          "function": "charge_input",
+          "length": 16,
+          "line": 381,
+          "queue_shallow_bytes": 184,
+          "used_work": 17
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 16,
+          "next_line": 388,
+          "old": 0,
+          "used_work": 17
+        }
+      ],
+      "input_children": 16,
+      "input_json_bytes": 966,
+      "maxima": {
+        "charge_input:queue_length": 16,
+        "charge_input:queue_shallow_bytes": 184
+      },
+      "outcome": "AdmissionRefused",
+      "persistence": "not reached; scanner has no persistence",
+      "policy_calls": 0,
+      "prior_work": 16,
+      "result": {
+        "code": "INPUT_LIMIT",
+        "message": "INPUT_LIMIT"
+      },
+      "selection_work_limit": 17,
+      "shape": "typed_resources",
+      "used_work": 18,
+      "work_limit": 17
+    },
+    {
+      "calls": {
+        "<genexpr>": 1009,
+        "__init__": 1,
+        "_budget_limits": 1,
+        "_finite": 6,
+        "_principal_state": 1,
+        "_selection_state": 1,
+        "actual_list.extend:c_call": 1,
+        "actual_list.extend:c_return": 1,
+        "charge": 2,
+        "charge_input": 1,
+        "used_bytes": 1,
+        "used_work": 1,
+        "validate_context": 1
+      },
+      "events": [
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 1,
+          "next_line": 362,
+          "old": 0,
+          "used_work": 9999
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 0,
+          "event": "c_call:list.extend",
+          "function": "charge_input",
+          "length": 0,
+          "line": 381,
+          "queue_shallow_bytes": 56,
+          "used_work": 10000
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 56000,
+          "event": "c_return:list.extend",
+          "function": "charge_input",
+          "length": 1000,
+          "line": 381,
+          "queue_shallow_bytes": 8856,
+          "used_work": 10000
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 1000,
+          "next_line": 388,
+          "old": 0,
+          "used_work": 10000
+        }
+      ],
+      "input_children": 1000,
+      "input_json_bytes": 61890,
+      "maxima": {
+        "charge_input:queue_length": 1000,
+        "charge_input:queue_shallow_bytes": 8856
+      },
+      "outcome": "AdmissionRefused",
+      "persistence": "not reached; scanner has no persistence",
+      "policy_calls": 0,
+      "prior_work": 9999,
+      "result": {
+        "code": "INPUT_LIMIT",
+        "message": "INPUT_LIMIT"
+      },
+      "selection_work_limit": 10000,
+      "shape": "typed_resources",
+      "used_work": 10001,
+      "work_limit": 10000
+    },
+    {
+      "calls": {
+        "<genexpr>": 4,
+        "__init__": 1,
+        "_budget_limits": 1,
+        "_finite": 3,
+        "_principal_state": 1,
+        "_selection_state": 1,
+        "charge": 1,
+        "charge_input": 1,
+        "validate_context": 1
+      },
+      "events": [
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 1,
+          "next_line": 362,
+          "old": 0,
+          "used_work": 10000
+        }
+      ],
+      "input_children": 1000,
+      "input_json_bytes": 61890,
+      "maxima": {
+        "charge_input:queue_length": 1,
+        "charge_input:queue_shallow_bytes": 64
+      },
+      "outcome": "AdmissionRefused",
+      "persistence": "not reached; scanner has no persistence",
+      "policy_calls": 0,
+      "prior_work": 10000,
+      "result": {
+        "code": "INPUT_LIMIT",
+        "message": "INPUT_LIMIT"
+      },
+      "selection_work_limit": 10000,
+      "shape": "typed_resources",
+      "used_work": 10001,
+      "work_limit": 10000
+    },
+    {
+      "calls": {
+        "<genexpr>": 1007,
+        "__init__": 1,
+        "_budget_limits": 1,
+        "_finite": 3,
+        "_principal_state": 1,
+        "_selection_state": 1,
+        "actual_list.extend:c_call": 1,
+        "actual_list.extend:c_return": 1,
+        "charge": 1,
+        "charge_input": 1,
+        "used_work": 1,
+        "validate_context": 1
+      },
+      "events": [
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 1,
+          "next_line": 362,
+          "old": 0,
+          "used_work": 0
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 0,
+          "event": "c_call:list.extend",
+          "function": "charge_input",
+          "length": 0,
+          "line": 381,
+          "queue_shallow_bytes": 56,
+          "used_work": 1
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 56000,
+          "event": "c_return:list.extend",
+          "function": "charge_input",
+          "length": 1000,
+          "line": 381,
+          "queue_shallow_bytes": 8856,
+          "used_work": 1
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 1000,
+          "next_line": 388,
+          "old": 0,
+          "used_work": 1
+        }
+      ],
+      "input_children": 1000,
+      "input_json_bytes": 61890,
+      "maxima": {
+        "charge_input:queue_length": 1000,
+        "charge_input:queue_shallow_bytes": 8856
+      },
+      "outcome": "AdmissionRefused",
+      "persistence": "not reached; scanner has no persistence",
+      "policy_calls": 0,
+      "prior_work": 0,
+      "result": {
+        "code": "INPUT_LIMIT",
+        "message": "INPUT_LIMIT"
+      },
+      "selection_work_limit": 0,
+      "shape": "typed_resources",
+      "used_work": 1,
+      "work_limit": 10000
+    },
+    {
+      "calls": {
+        "<genexpr>": 4,
+        "__init__": 1,
+        "_budget_limits": 1,
+        "_finite": 3,
+        "_principal_state": 1,
+        "_selection_state": 1,
+        "charge": 1,
+        "charge_input": 1,
+        "validate_context": 1
+      },
+      "events": [
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 1,
+          "next_line": 362,
+          "old": 0,
+          "used_work": 0
+        }
+      ],
+      "input_children": 1000,
+      "input_json_bytes": 61890,
+      "maxima": {
+        "charge_input:queue_length": 1,
+        "charge_input:queue_shallow_bytes": 64
+      },
+      "outcome": "AdmissionRefused",
+      "persistence": "not reached; scanner has no persistence",
+      "policy_calls": 0,
+      "prior_work": 0,
+      "result": {
+        "code": "INPUT_LIMIT",
+        "message": "INPUT_LIMIT"
+      },
+      "selection_work_limit": 0,
+      "shape": "typed_resources",
+      "used_work": 1,
+      "work_limit": 0
+    },
+    {
+      "calls": {
+        "<genexpr>": 84,
+        "__init__": 1,
+        "_budget_limits": 1,
+        "_finite": 42,
+        "_principal_state": 1,
+        "_selection_state": 1,
+        "actual_list.extend:c_call": 13,
+        "actual_list.extend:c_return": 13,
+        "charge": 14,
+        "charge_input": 1,
+        "used_bytes": 13,
+        "used_work": 13,
+        "validate_context": 1
+      },
+      "events": [
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 1,
+          "next_line": 362,
+          "old": 0,
+          "used_work": 0
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 0,
+          "event": "c_call:list.extend",
+          "function": "charge_input",
+          "length": 0,
+          "line": 381,
+          "queue_shallow_bytes": 56,
+          "used_work": 1
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 56,
+          "event": "c_return:list.extend",
+          "function": "charge_input",
+          "length": 1,
+          "line": 381,
+          "queue_shallow_bytes": 88,
+          "used_work": 1
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 1,
+          "next_line": 388,
+          "old": 0,
+          "used_work": 1
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 0,
+          "event": "c_call:list.extend",
+          "function": "charge_input",
+          "length": 0,
+          "line": 381,
+          "queue_shallow_bytes": 56,
+          "used_work": 2
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 56,
+          "event": "c_return:list.extend",
+          "function": "charge_input",
+          "length": 1,
+          "line": 381,
+          "queue_shallow_bytes": 88,
+          "used_work": 2
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 1,
+          "next_line": 388,
+          "old": 0,
+          "used_work": 2
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 0,
+          "event": "c_call:list.extend",
+          "function": "charge_input",
+          "length": 0,
+          "line": 381,
+          "queue_shallow_bytes": 56,
+          "used_work": 3
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 56,
+          "event": "c_return:list.extend",
+          "function": "charge_input",
+          "length": 1,
+          "line": 381,
+          "queue_shallow_bytes": 88,
+          "used_work": 3
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 1,
+          "next_line": 388,
+          "old": 0,
+          "used_work": 3
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 0,
+          "event": "c_call:list.extend",
+          "function": "charge_input",
+          "length": 0,
+          "line": 381,
+          "queue_shallow_bytes": 56,
+          "used_work": 4
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 56,
+          "event": "c_return:list.extend",
+          "function": "charge_input",
+          "length": 1,
+          "line": 381,
+          "queue_shallow_bytes": 88,
+          "used_work": 4
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 1,
+          "next_line": 388,
+          "old": 0,
+          "used_work": 4
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 0,
+          "event": "c_call:list.extend",
+          "function": "charge_input",
+          "length": 0,
+          "line": 381,
+          "queue_shallow_bytes": 56,
+          "used_work": 5
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 56,
+          "event": "c_return:list.extend",
+          "function": "charge_input",
+          "length": 1,
+          "line": 381,
+          "queue_shallow_bytes": 88,
+          "used_work": 5
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 1,
+          "next_line": 388,
+          "old": 0,
+          "used_work": 5
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 0,
+          "event": "c_call:list.extend",
+          "function": "charge_input",
+          "length": 0,
+          "line": 381,
+          "queue_shallow_bytes": 56,
+          "used_work": 6
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 56,
+          "event": "c_return:list.extend",
+          "function": "charge_input",
+          "length": 1,
+          "line": 381,
+          "queue_shallow_bytes": 88,
+          "used_work": 6
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 1,
+          "next_line": 388,
+          "old": 0,
+          "used_work": 6
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 0,
+          "event": "c_call:list.extend",
+          "function": "charge_input",
+          "length": 0,
+          "line": 381,
+          "queue_shallow_bytes": 56,
+          "used_work": 7
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 56,
+          "event": "c_return:list.extend",
+          "function": "charge_input",
+          "length": 1,
+          "line": 381,
+          "queue_shallow_bytes": 88,
+          "used_work": 7
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 1,
+          "next_line": 388,
+          "old": 0,
+          "used_work": 7
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 0,
+          "event": "c_call:list.extend",
+          "function": "charge_input",
+          "length": 0,
+          "line": 381,
+          "queue_shallow_bytes": 56,
+          "used_work": 8
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 56,
+          "event": "c_return:list.extend",
+          "function": "charge_input",
+          "length": 1,
+          "line": 381,
+          "queue_shallow_bytes": 88,
+          "used_work": 8
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 1,
+          "next_line": 388,
+          "old": 0,
+          "used_work": 8
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 0,
+          "event": "c_call:list.extend",
+          "function": "charge_input",
+          "length": 0,
+          "line": 381,
+          "queue_shallow_bytes": 56,
+          "used_work": 9
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 56,
+          "event": "c_return:list.extend",
+          "function": "charge_input",
+          "length": 1,
+          "line": 381,
+          "queue_shallow_bytes": 88,
+          "used_work": 9
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 1,
+          "next_line": 388,
+          "old": 0,
+          "used_work": 9
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 0,
+          "event": "c_call:list.extend",
+          "function": "charge_input",
+          "length": 0,
+          "line": 381,
+          "queue_shallow_bytes": 56,
+          "used_work": 10
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 56,
+          "event": "c_return:list.extend",
+          "function": "charge_input",
+          "length": 1,
+          "line": 381,
+          "queue_shallow_bytes": 88,
+          "used_work": 10
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 1,
+          "next_line": 388,
+          "old": 0,
+          "used_work": 10
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 0,
+          "event": "c_call:list.extend",
+          "function": "charge_input",
+          "length": 0,
+          "line": 381,
+          "queue_shallow_bytes": 56,
+          "used_work": 11
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 56,
+          "event": "c_return:list.extend",
+          "function": "charge_input",
+          "length": 1,
+          "line": 381,
+          "queue_shallow_bytes": 88,
+          "used_work": 11
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 1,
+          "next_line": 388,
+          "old": 0,
+          "used_work": 11
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 0,
+          "event": "c_call:list.extend",
+          "function": "charge_input",
+          "length": 0,
+          "line": 381,
+          "queue_shallow_bytes": 56,
+          "used_work": 12
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 56,
+          "event": "c_return:list.extend",
+          "function": "charge_input",
+          "length": 1,
+          "line": 381,
+          "queue_shallow_bytes": 88,
+          "used_work": 12
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 1,
+          "next_line": 388,
+          "old": 0,
+          "used_work": 12
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 0,
+          "event": "c_call:list.extend",
+          "function": "charge_input",
+          "length": 0,
+          "line": 381,
+          "queue_shallow_bytes": 56,
+          "used_work": 13
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 56,
+          "event": "c_return:list.extend",
+          "function": "charge_input",
+          "length": 1,
+          "line": 381,
+          "queue_shallow_bytes": 88,
+          "used_work": 13
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 1,
+          "next_line": 388,
+          "old": 0,
+          "used_work": 13
+        }
+      ],
+      "input_children": 1,
+      "input_json_bytes": null,
+      "maxima": {
+        "charge_input:queue_length": 1,
+        "charge_input:queue_shallow_bytes": 88
+      },
+      "outcome": "AdmissionRefused",
+      "persistence": "not reached; scanner has no persistence",
+      "policy_calls": 0,
+      "prior_work": 0,
+      "result": {
+        "code": "INPUT_LIMIT",
+        "message": "INPUT_LIMIT"
+      },
+      "selection_work_limit": 100,
+      "shape": "cycle",
+      "used_work": 14,
+      "work_limit": 100
+    },
+    {
+      "calls": {
+        "<genexpr>": 8,
+        "__init__": 1,
+        "_budget_limits": 1,
+        "_finite": 6,
+        "_principal_state": 1,
+        "_selection_state": 1,
+        "charge": 2,
+        "charge_input": 1,
+        "validate_context": 1
+      },
+      "events": [
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "charge_input",
+          "new": 1,
+          "next_line": 362,
+          "old": 0,
+          "used_work": 0
+        }
+      ],
+      "input_children": 8192,
+      "input_json_bytes": 8194,
+      "maxima": {
+        "charge_input:queue_length": 1,
+        "charge_input:queue_shallow_bytes": 64
+      },
+      "outcome": "AdmissionRefused",
+      "persistence": "not reached; scanner has no persistence",
+      "policy_calls": 0,
+      "prior_work": 0,
+      "result": {
+        "code": "INPUT_LIMIT",
+        "message": "INPUT_LIMIT"
+      },
+      "selection_work_limit": 1,
+      "shape": "string",
+      "used_work": 2,
+      "work_limit": 1
+    }
+  ],
+  "binding": {
+    "executable": "/workspace/pr155-review-artifacts/distribution/derived-venv/bin/python",
+    "modules": {
+      "repo_catalog.domain.context_admission": {
+        "path": "/workspace/pr155-review-artifacts/distribution/derived-venv/lib/python3.12/site-packages/repo_catalog/domain/context_admission.py",
+        "sha256": "267e2067bac3966f380dbf09dc5fd52e0c36edeb8c04591797f79241394267a7"
+      },
+      "repo_catalog.domain.context_dependencies": {
+        "path": "/workspace/pr155-review-artifacts/distribution/derived-venv/lib/python3.12/site-packages/repo_catalog/domain/context_dependencies.py",
+        "sha256": "a1026f3a1109c8b8f4d7aaec28f33fe3e0a594372da6afafa8835b9dd559801d"
+      },
+      "repo_catalog.domain.exchange": {
+        "path": "/workspace/pr155-review-artifacts/distribution/derived-venv/lib/python3.12/site-packages/repo_catalog/domain/exchange.py",
+        "sha256": "46c5d9c5f80a39ff967418d2662274fa8b70134f33050ac00c2e464b4dc10012"
+      }
+    },
+    "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+    "sqlite": "3.53.1",
+    "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9"
+  },
+  "bounded_json": [
+    {
+      "calls": {
+        "_bounded_json": 1,
+        "reserve": 1
+      },
+      "events": [
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 1,
+          "next_line": 68,
+          "old": 0,
+          "used_work": 0
+        }
+      ],
+      "label": "list1000",
+      "maxima": {
+        "_bounded_json:queue_length": 1,
+        "_bounded_json:queue_shallow_bytes": 64
+      },
+      "outcome": "Refused",
+      "prior_work": 0,
+      "reservations": [
+        {
+          "accepted": false,
+          "amount": 1,
+          "before": 0
+        }
+      ],
+      "result": {
+        "code": null,
+        "message": ""
+      },
+      "used_work": 1,
+      "work_limit": 0
+    },
+    {
+      "calls": {
+        "_bounded_json": 1,
+        "_embedded_identity_values": 1,
+        "reserve": 2
+      },
+      "events": [
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 1,
+          "next_line": 68,
+          "old": 0,
+          "used_work": 0
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 1,
+          "next_line": 85,
+          "old": 0,
+          "used_work": 1
+        }
+      ],
+      "label": "list1000",
+      "maxima": {
+        "_bounded_json:queue_length": 1,
+        "_bounded_json:queue_shallow_bytes": 88
+      },
+      "outcome": "Refused",
+      "prior_work": 0,
+      "reservations": [
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 0
+        },
+        {
+          "accepted": false,
+          "amount": 1000,
+          "before": 1
+        }
+      ],
+      "result": {
+        "code": null,
+        "message": ""
+      },
+      "used_work": 2,
+      "work_limit": 1
+    },
+    {
+      "calls": {
+        "_bounded_json": 1,
+        "_embedded_identity_values": 1,
+        "reserve": 2
+      },
+      "events": [
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 1,
+          "next_line": 68,
+          "old": 0,
+          "used_work": 0
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 1,
+          "next_line": 85,
+          "old": 0,
+          "used_work": 1
+        }
+      ],
+      "label": "list1000",
+      "maxima": {
+        "_bounded_json:queue_length": 1,
+        "_bounded_json:queue_shallow_bytes": 88
+      },
+      "outcome": "Refused",
+      "prior_work": 0,
+      "reservations": [
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 0
+        },
+        {
+          "accepted": false,
+          "amount": 1000,
+          "before": 1
+        }
+      ],
+      "result": {
+        "code": null,
+        "message": ""
+      },
+      "used_work": 2,
+      "work_limit": 17
+    },
+    {
+      "calls": {
+        "_bounded_json": 1,
+        "reserve": 1
+      },
+      "events": [
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 1,
+          "next_line": 68,
+          "old": 0,
+          "used_work": 1000
+        }
+      ],
+      "label": "list1000",
+      "maxima": {
+        "_bounded_json:queue_length": 1,
+        "_bounded_json:queue_shallow_bytes": 64
+      },
+      "outcome": "Refused",
+      "prior_work": 1000,
+      "reservations": [
+        {
+          "accepted": false,
+          "amount": 1,
+          "before": 1000
+        }
+      ],
+      "result": {
+        "code": null,
+        "message": ""
+      },
+      "used_work": 1001,
+      "work_limit": 1000
+    },
+    {
+      "calls": {
+        "<genexpr>": 1001,
+        "_bounded_json": 1,
+        "_embedded_identity_values": 1,
+        "actual_list.extend:c_call": 1,
+        "actual_list.extend:c_return": 1,
+        "reserve": 1003
+      },
+      "events": [
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 1,
+          "next_line": 68,
+          "old": 0,
+          "used_work": 0
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 1,
+          "next_line": 85,
+          "old": 0,
+          "used_work": 1
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 72,
+          "event": "c_call:list.extend",
+          "function": "_bounded_json",
+          "length": 1,
+          "line": 154,
+          "queue_shallow_bytes": 88,
+          "used_work": 1001
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 72072,
+          "event": "c_return:list.extend",
+          "function": "_bounded_json",
+          "length": 1001,
+          "line": 154,
+          "queue_shallow_bytes": 8888,
+          "used_work": 1001
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 1001,
+          "next_line": 155,
+          "old": 1,
+          "used_work": 1001
+        }
+      ],
+      "label": "list1000",
+      "maxima": {
+        "_bounded_json:queue_length": 1001,
+        "_bounded_json:queue_shallow_bytes": 8888
+      },
+      "outcome": "returned",
+      "prior_work": 0,
+      "reservations": [
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 0
+        },
+        {
+          "accepted": true,
+          "amount": 1000,
+          "before": 1
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 1001
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 1002
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 1003
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 1004
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 1005
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 1006
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 1007
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 1008
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 1009
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 1010
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 1011
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 1012
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 1013
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 1014
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 1015
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 1016
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 1017
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 1018
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 1019
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 1020
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 1021
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 1022
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 1023
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 1024
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 1025
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 1026
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 1027
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 1028
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 1029
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 1030
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 1031
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 1032
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 1033
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 1034
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 1035
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 1036
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 1037
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 1038
+        }
+      ],
+      "result": [
+        1001,
+        5001
+      ],
+      "used_work": 2002,
+      "work_limit": 100000
+    },
+    {
+      "calls": {
+        "_bounded_json": 1,
+        "reserve": 1
+      },
+      "events": [
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 1,
+          "next_line": 68,
+          "old": 0,
+          "used_work": 0
+        }
+      ],
+      "label": "dict1000",
+      "maxima": {
+        "_bounded_json:queue_length": 1,
+        "_bounded_json:queue_shallow_bytes": 64
+      },
+      "outcome": "Refused",
+      "prior_work": 0,
+      "reservations": [
+        {
+          "accepted": false,
+          "amount": 1,
+          "before": 0
+        }
+      ],
+      "result": {
+        "code": null,
+        "message": ""
+      },
+      "used_work": 1,
+      "work_limit": 0
+    },
+    {
+      "calls": {
+        "_bounded_json": 1,
+        "reserve": 2
+      },
+      "events": [
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 1,
+          "next_line": 68,
+          "old": 0,
+          "used_work": 0
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 1,
+          "next_line": 85,
+          "old": 0,
+          "used_work": 1
+        }
+      ],
+      "label": "dict1000",
+      "maxima": {
+        "_bounded_json:queue_length": 1,
+        "_bounded_json:queue_shallow_bytes": 88
+      },
+      "outcome": "Refused",
+      "prior_work": 0,
+      "reservations": [
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 0
+        },
+        {
+          "accepted": false,
+          "amount": 1000,
+          "before": 1
+        }
+      ],
+      "result": {
+        "code": null,
+        "message": ""
+      },
+      "used_work": 2,
+      "work_limit": 1
+    },
+    {
+      "calls": {
+        "_bounded_json": 1,
+        "reserve": 2
+      },
+      "events": [
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 1,
+          "next_line": 68,
+          "old": 0,
+          "used_work": 0
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 1,
+          "next_line": 85,
+          "old": 0,
+          "used_work": 1
+        }
+      ],
+      "label": "dict1000",
+      "maxima": {
+        "_bounded_json:queue_length": 1,
+        "_bounded_json:queue_shallow_bytes": 88
+      },
+      "outcome": "Refused",
+      "prior_work": 0,
+      "reservations": [
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 0
+        },
+        {
+          "accepted": false,
+          "amount": 1000,
+          "before": 1
+        }
+      ],
+      "result": {
+        "code": null,
+        "message": ""
+      },
+      "used_work": 2,
+      "work_limit": 17
+    },
+    {
+      "calls": {
+        "_bounded_json": 1,
+        "reserve": 1
+      },
+      "events": [
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 1,
+          "next_line": 68,
+          "old": 0,
+          "used_work": 1000
+        }
+      ],
+      "label": "dict1000",
+      "maxima": {
+        "_bounded_json:queue_length": 1,
+        "_bounded_json:queue_shallow_bytes": 64
+      },
+      "outcome": "Refused",
+      "prior_work": 1000,
+      "reservations": [
+        {
+          "accepted": false,
+          "amount": 1,
+          "before": 1000
+        }
+      ],
+      "result": {
+        "code": null,
+        "message": ""
+      },
+      "used_work": 1001,
+      "work_limit": 1000
+    },
+    {
+      "calls": {
+        "<genexpr>": 1001,
+        "_bounded_json": 1,
+        "_embedded_identity_values": 1,
+        "_quoted_size": 1000,
+        "_wire_child_role": 1000,
+        "reserve": 2004
+      },
+      "events": [
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 1,
+          "next_line": 68,
+          "old": 0,
+          "used_work": 0
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 1,
+          "next_line": 85,
+          "old": 0,
+          "used_work": 1
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 2,
+          "next_line": 115,
+          "old": 1,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 3,
+          "next_line": 115,
+          "old": 2,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 4,
+          "next_line": 115,
+          "old": 3,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 5,
+          "next_line": 115,
+          "old": 4,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 6,
+          "next_line": 115,
+          "old": 5,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 7,
+          "next_line": 115,
+          "old": 6,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 8,
+          "next_line": 115,
+          "old": 7,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 9,
+          "next_line": 115,
+          "old": 8,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 10,
+          "next_line": 115,
+          "old": 9,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 11,
+          "next_line": 115,
+          "old": 10,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 12,
+          "next_line": 115,
+          "old": 11,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 13,
+          "next_line": 115,
+          "old": 12,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 14,
+          "next_line": 115,
+          "old": 13,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 15,
+          "next_line": 115,
+          "old": 14,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 16,
+          "next_line": 115,
+          "old": 15,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 17,
+          "next_line": 115,
+          "old": 16,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 18,
+          "next_line": 115,
+          "old": 17,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 19,
+          "next_line": 115,
+          "old": 18,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 20,
+          "next_line": 115,
+          "old": 19,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 21,
+          "next_line": 115,
+          "old": 20,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 22,
+          "next_line": 115,
+          "old": 21,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 23,
+          "next_line": 115,
+          "old": 22,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 24,
+          "next_line": 115,
+          "old": 23,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 25,
+          "next_line": 115,
+          "old": 24,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 26,
+          "next_line": 115,
+          "old": 25,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 27,
+          "next_line": 115,
+          "old": 26,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 28,
+          "next_line": 115,
+          "old": 27,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 29,
+          "next_line": 115,
+          "old": 28,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 30,
+          "next_line": 115,
+          "old": 29,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 31,
+          "next_line": 115,
+          "old": 30,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 32,
+          "next_line": 115,
+          "old": 31,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 33,
+          "next_line": 115,
+          "old": 32,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 34,
+          "next_line": 115,
+          "old": 33,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 35,
+          "next_line": 115,
+          "old": 34,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 36,
+          "next_line": 115,
+          "old": 35,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 37,
+          "next_line": 115,
+          "old": 36,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 38,
+          "next_line": 115,
+          "old": 37,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 39,
+          "next_line": 115,
+          "old": 38,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 40,
+          "next_line": 115,
+          "old": 39,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 41,
+          "next_line": 115,
+          "old": 40,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 42,
+          "next_line": 115,
+          "old": 41,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 43,
+          "next_line": 115,
+          "old": 42,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 44,
+          "next_line": 115,
+          "old": 43,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 45,
+          "next_line": 115,
+          "old": 44,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 46,
+          "next_line": 115,
+          "old": 45,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 47,
+          "next_line": 115,
+          "old": 46,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 48,
+          "next_line": 115,
+          "old": 47,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 49,
+          "next_line": 115,
+          "old": 48,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 50,
+          "next_line": 115,
+          "old": 49,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 51,
+          "next_line": 115,
+          "old": 50,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 52,
+          "next_line": 115,
+          "old": 51,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 53,
+          "next_line": 115,
+          "old": 52,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 54,
+          "next_line": 115,
+          "old": 53,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 55,
+          "next_line": 115,
+          "old": 54,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 56,
+          "next_line": 115,
+          "old": 55,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 57,
+          "next_line": 115,
+          "old": 56,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 58,
+          "next_line": 115,
+          "old": 57,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 59,
+          "next_line": 115,
+          "old": 58,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 60,
+          "next_line": 115,
+          "old": 59,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 61,
+          "next_line": 115,
+          "old": 60,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 62,
+          "next_line": 115,
+          "old": 61,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 63,
+          "next_line": 115,
+          "old": 62,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 64,
+          "next_line": 115,
+          "old": 63,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 65,
+          "next_line": 115,
+          "old": 64,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 66,
+          "next_line": 115,
+          "old": 65,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 67,
+          "next_line": 115,
+          "old": 66,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 68,
+          "next_line": 115,
+          "old": 67,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 69,
+          "next_line": 115,
+          "old": 68,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 70,
+          "next_line": 115,
+          "old": 69,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 71,
+          "next_line": 115,
+          "old": 70,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 72,
+          "next_line": 115,
+          "old": 71,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 73,
+          "next_line": 115,
+          "old": 72,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 74,
+          "next_line": 115,
+          "old": 73,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 75,
+          "next_line": 115,
+          "old": 74,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 76,
+          "next_line": 115,
+          "old": 75,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 77,
+          "next_line": 115,
+          "old": 76,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 78,
+          "next_line": 115,
+          "old": 77,
+          "used_work": 5891
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 79,
+          "next_line": 115,
+          "old": 78,
+          "used_work": 5891
+        }
+      ],
+      "label": "dict1000",
+      "maxima": {
+        "_bounded_json:queue_length": 1001,
+        "_bounded_json:queue_shallow_bytes": 8856
+      },
+      "outcome": "returned",
+      "prior_work": 0,
+      "reservations": [
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 0
+        },
+        {
+          "accepted": true,
+          "amount": 1000,
+          "before": 1
+        },
+        {
+          "accepted": true,
+          "amount": 2,
+          "before": 1001
+        },
+        {
+          "accepted": true,
+          "amount": 2,
+          "before": 1003
+        },
+        {
+          "accepted": true,
+          "amount": 2,
+          "before": 1005
+        },
+        {
+          "accepted": true,
+          "amount": 2,
+          "before": 1007
+        },
+        {
+          "accepted": true,
+          "amount": 2,
+          "before": 1009
+        },
+        {
+          "accepted": true,
+          "amount": 2,
+          "before": 1011
+        },
+        {
+          "accepted": true,
+          "amount": 2,
+          "before": 1013
+        },
+        {
+          "accepted": true,
+          "amount": 2,
+          "before": 1015
+        },
+        {
+          "accepted": true,
+          "amount": 2,
+          "before": 1017
+        },
+        {
+          "accepted": true,
+          "amount": 2,
+          "before": 1019
+        },
+        {
+          "accepted": true,
+          "amount": 3,
+          "before": 1021
+        },
+        {
+          "accepted": true,
+          "amount": 3,
+          "before": 1024
+        },
+        {
+          "accepted": true,
+          "amount": 3,
+          "before": 1027
+        },
+        {
+          "accepted": true,
+          "amount": 3,
+          "before": 1030
+        },
+        {
+          "accepted": true,
+          "amount": 3,
+          "before": 1033
+        },
+        {
+          "accepted": true,
+          "amount": 3,
+          "before": 1036
+        },
+        {
+          "accepted": true,
+          "amount": 3,
+          "before": 1039
+        },
+        {
+          "accepted": true,
+          "amount": 3,
+          "before": 1042
+        },
+        {
+          "accepted": true,
+          "amount": 3,
+          "before": 1045
+        },
+        {
+          "accepted": true,
+          "amount": 3,
+          "before": 1048
+        },
+        {
+          "accepted": true,
+          "amount": 3,
+          "before": 1051
+        },
+        {
+          "accepted": true,
+          "amount": 3,
+          "before": 1054
+        },
+        {
+          "accepted": true,
+          "amount": 3,
+          "before": 1057
+        },
+        {
+          "accepted": true,
+          "amount": 3,
+          "before": 1060
+        },
+        {
+          "accepted": true,
+          "amount": 3,
+          "before": 1063
+        },
+        {
+          "accepted": true,
+          "amount": 3,
+          "before": 1066
+        },
+        {
+          "accepted": true,
+          "amount": 3,
+          "before": 1069
+        },
+        {
+          "accepted": true,
+          "amount": 3,
+          "before": 1072
+        },
+        {
+          "accepted": true,
+          "amount": 3,
+          "before": 1075
+        },
+        {
+          "accepted": true,
+          "amount": 3,
+          "before": 1078
+        },
+        {
+          "accepted": true,
+          "amount": 3,
+          "before": 1081
+        },
+        {
+          "accepted": true,
+          "amount": 3,
+          "before": 1084
+        },
+        {
+          "accepted": true,
+          "amount": 3,
+          "before": 1087
+        },
+        {
+          "accepted": true,
+          "amount": 3,
+          "before": 1090
+        },
+        {
+          "accepted": true,
+          "amount": 3,
+          "before": 1093
+        },
+        {
+          "accepted": true,
+          "amount": 3,
+          "before": 1096
+        },
+        {
+          "accepted": true,
+          "amount": 3,
+          "before": 1099
+        },
+        {
+          "accepted": true,
+          "amount": 3,
+          "before": 1102
+        }
+      ],
+      "result": [
+        2001,
+        10891
+      ],
+      "used_work": 6892,
+      "work_limit": 100000
+    },
+    {
+      "calls": {
+        "_bounded_json": 1,
+        "reserve": 1
+      },
+      "events": [
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 1,
+          "next_line": 68,
+          "old": 0,
+          "used_work": 0
+        }
+      ],
+      "label": "embedded_json",
+      "maxima": {
+        "_bounded_json:queue_length": 1,
+        "_bounded_json:queue_shallow_bytes": 64
+      },
+      "outcome": "Refused",
+      "prior_work": 0,
+      "reservations": [
+        {
+          "accepted": false,
+          "amount": 1,
+          "before": 0
+        }
+      ],
+      "result": {
+        "code": null,
+        "message": ""
+      },
+      "used_work": 1,
+      "work_limit": 0
+    },
+    {
+      "calls": {
+        "_bounded_json": 1,
+        "reserve": 2
+      },
+      "events": [
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 1,
+          "next_line": 68,
+          "old": 0,
+          "used_work": 0
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 1,
+          "next_line": 85,
+          "old": 0,
+          "used_work": 1
+        }
+      ],
+      "label": "embedded_json",
+      "maxima": {
+        "_bounded_json:queue_length": 1,
+        "_bounded_json:queue_shallow_bytes": 88
+      },
+      "outcome": "Refused",
+      "prior_work": 0,
+      "reservations": [
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 0
+        },
+        {
+          "accepted": false,
+          "amount": 1,
+          "before": 1
+        }
+      ],
+      "result": {
+        "code": null,
+        "message": ""
+      },
+      "used_work": 2,
+      "work_limit": 1
+    },
+    {
+      "calls": {
+        "<genexpr>": 2,
+        "_bounded_json": 1,
+        "_embedded_identity_values": 1,
+        "_quoted_size": 1,
+        "_wire_child_role": 1,
+        "reserve": 5
+      },
+      "events": [
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 1,
+          "next_line": 68,
+          "old": 0,
+          "used_work": 0
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 1,
+          "next_line": 85,
+          "old": 0,
+          "used_work": 1
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 2,
+          "next_line": 115,
+          "old": 1,
+          "used_work": 14
+        }
+      ],
+      "label": "embedded_json",
+      "maxima": {
+        "_bounded_json:queue_length": 2,
+        "_bounded_json:queue_shallow_bytes": 88
+      },
+      "outcome": "Refused",
+      "prior_work": 0,
+      "reservations": [
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 0
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 1
+        },
+        {
+          "accepted": true,
+          "amount": 11,
+          "before": 2
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 13
+        },
+        {
+          "accepted": false,
+          "amount": 10004,
+          "before": 14
+        }
+      ],
+      "result": {
+        "code": null,
+        "message": ""
+      },
+      "used_work": 15,
+      "work_limit": 17
+    },
+    {
+      "calls": {
+        "_bounded_json": 1,
+        "reserve": 1
+      },
+      "events": [
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 1,
+          "next_line": 68,
+          "old": 0,
+          "used_work": 1000
+        }
+      ],
+      "label": "embedded_json",
+      "maxima": {
+        "_bounded_json:queue_length": 1,
+        "_bounded_json:queue_shallow_bytes": 64
+      },
+      "outcome": "Refused",
+      "prior_work": 1000,
+      "reservations": [
+        {
+          "accepted": false,
+          "amount": 1,
+          "before": 1000
+        }
+      ],
+      "result": {
+        "code": null,
+        "message": ""
+      },
+      "used_work": 1001,
+      "work_limit": 1000
+    },
+    {
+      "calls": {
+        "<genexpr>": 1003,
+        "_bounded_json": 1,
+        "_embedded_identity_values": 2,
+        "_parse_json": 1,
+        "_quoted_size": 3,
+        "_wire_child_role": 1,
+        "actual_list.extend:c_call": 1,
+        "actual_list.extend:c_return": 1,
+        "parser:_parse_json": 1,
+        "parser:loads": 1,
+        "reserve": 1011
+      },
+      "events": [
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 1,
+          "next_line": 68,
+          "old": 0,
+          "used_work": 0
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 1,
+          "next_line": 85,
+          "old": 0,
+          "used_work": 1
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 2,
+          "next_line": 115,
+          "old": 1,
+          "used_work": 14
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 3,
+          "next_line": 127,
+          "old": 2,
+          "used_work": 10018
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 3,
+          "next_line": 85,
+          "old": 2,
+          "used_work": 10019
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 216,
+          "event": "c_call:list.extend",
+          "function": "_bounded_json",
+          "length": 3,
+          "line": 154,
+          "queue_shallow_bytes": 88,
+          "used_work": 11019
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 72216,
+          "event": "c_return:list.extend",
+          "function": "_bounded_json",
+          "length": 1003,
+          "line": 154,
+          "queue_shallow_bytes": 8888,
+          "used_work": 11019
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 1003,
+          "next_line": 155,
+          "old": 3,
+          "used_work": 11019
+        }
+      ],
+      "label": "embedded_json",
+      "maxima": {
+        "_bounded_json:queue_length": 1003,
+        "_bounded_json:queue_shallow_bytes": 8888
+      },
+      "outcome": "returned",
+      "prior_work": 0,
+      "reservations": [
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 0
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 1
+        },
+        {
+          "accepted": true,
+          "amount": 11,
+          "before": 2
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 13
+        },
+        {
+          "accepted": true,
+          "amount": 10004,
+          "before": 14
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 10018
+        },
+        {
+          "accepted": true,
+          "amount": 1000,
+          "before": 10019
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 11019
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 11020
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 11021
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 11022
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 11023
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 11024
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 11025
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 11026
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 11027
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 11028
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 11029
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 11030
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 11031
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 11032
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 11033
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 11034
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 11035
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 11036
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 11037
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 11038
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 11039
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 11040
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 11041
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 11042
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 11043
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 11044
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 11045
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 11046
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 11047
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 11048
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 11049
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 11050
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 11051
+        }
+      ],
+      "result": [
+        1005,
+        10019
+      ],
+      "used_work": 17024,
+      "work_limit": 100000
+    },
+    {
+      "calls": {
+        "_bounded_json": 1,
+        "reserve": 1
+      },
+      "events": [
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 1,
+          "next_line": 68,
+          "old": 0,
+          "used_work": 0
+        }
+      ],
+      "label": "typed_identity",
+      "maxima": {
+        "_bounded_json:queue_length": 1,
+        "_bounded_json:queue_shallow_bytes": 64
+      },
+      "outcome": "Refused",
+      "prior_work": 0,
+      "reservations": [
+        {
+          "accepted": false,
+          "amount": 1,
+          "before": 0
+        }
+      ],
+      "result": {
+        "code": null,
+        "message": ""
+      },
+      "used_work": 1,
+      "work_limit": 0
+    },
+    {
+      "calls": {
+        "_bounded_json": 1,
+        "reserve": 2
+      },
+      "events": [
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 1,
+          "next_line": 68,
+          "old": 0,
+          "used_work": 0
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 1,
+          "next_line": 85,
+          "old": 0,
+          "used_work": 1
+        }
+      ],
+      "label": "typed_identity",
+      "maxima": {
+        "_bounded_json:queue_length": 1,
+        "_bounded_json:queue_shallow_bytes": 88
+      },
+      "outcome": "Refused",
+      "prior_work": 0,
+      "reservations": [
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 0
+        },
+        {
+          "accepted": false,
+          "amount": 2,
+          "before": 1
+        }
+      ],
+      "result": {
+        "code": null,
+        "message": ""
+      },
+      "used_work": 2,
+      "work_limit": 1
+    },
+    {
+      "calls": {
+        "<genexpr>": 3,
+        "_bounded_json": 1,
+        "reserve": 3
+      },
+      "events": [
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 1,
+          "next_line": 68,
+          "old": 0,
+          "used_work": 0
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 1,
+          "next_line": 85,
+          "old": 0,
+          "used_work": 1
+        }
+      ],
+      "label": "typed_identity",
+      "maxima": {
+        "_bounded_json:queue_length": 1,
+        "_bounded_json:queue_shallow_bytes": 88
+      },
+      "outcome": "Refused",
+      "prior_work": 0,
+      "reservations": [
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 0
+        },
+        {
+          "accepted": true,
+          "amount": 2,
+          "before": 1
+        },
+        {
+          "accepted": false,
+          "amount": 21,
+          "before": 3
+        }
+      ],
+      "result": {
+        "code": null,
+        "message": ""
+      },
+      "used_work": 4,
+      "work_limit": 17
+    },
+    {
+      "calls": {
+        "_bounded_json": 1,
+        "reserve": 1
+      },
+      "events": [
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 1,
+          "next_line": 68,
+          "old": 0,
+          "used_work": 1000
+        }
+      ],
+      "label": "typed_identity",
+      "maxima": {
+        "_bounded_json:queue_length": 1,
+        "_bounded_json:queue_shallow_bytes": 64
+      },
+      "outcome": "Refused",
+      "prior_work": 1000,
+      "reservations": [
+        {
+          "accepted": false,
+          "amount": 1,
+          "before": 1000
+        }
+      ],
+      "result": {
+        "code": null,
+        "message": ""
+      },
+      "used_work": 1001,
+      "work_limit": 1000
+    },
+    {
+      "calls": {
+        "<genexpr>": 1004,
+        "_bounded_json": 1,
+        "_embedded_identity_values": 3,
+        "_quoted_size": 1004,
+        "_wire_child_role": 2,
+        "actual_list.extend:c_call": 1,
+        "actual_list.extend:c_return": 1,
+        "identity": 2,
+        "parser:loads": 1,
+        "parser:parse_identity": 1,
+        "reserve": 2014
+      },
+      "events": [
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 1,
+          "next_line": 68,
+          "old": 0,
+          "used_work": 0
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 1,
+          "next_line": 85,
+          "old": 0,
+          "used_work": 1
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 2,
+          "next_line": 106,
+          "old": 1,
+          "used_work": 4041
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 3,
+          "next_line": 115,
+          "old": 2,
+          "used_work": 4043
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 4,
+          "next_line": 115,
+          "old": 3,
+          "used_work": 4043
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 2,
+          "next_line": 85,
+          "old": 1,
+          "used_work": 8054
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 144,
+          "event": "c_call:list.extend",
+          "function": "_bounded_json",
+          "length": 2,
+          "line": 154,
+          "queue_shallow_bytes": 88,
+          "used_work": 9054
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 72144,
+          "event": "c_return:list.extend",
+          "function": "_bounded_json",
+          "length": 1002,
+          "line": 154,
+          "queue_shallow_bytes": 8888,
+          "used_work": 9054
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 1002,
+          "next_line": 155,
+          "old": 2,
+          "used_work": 9054
+        }
+      ],
+      "label": "typed_identity",
+      "maxima": {
+        "_bounded_json:queue_length": 1002,
+        "_bounded_json:queue_shallow_bytes": 8888
+      },
+      "outcome": "returned",
+      "prior_work": 0,
+      "reservations": [
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 0
+        },
+        {
+          "accepted": true,
+          "amount": 2,
+          "before": 1
+        },
+        {
+          "accepted": true,
+          "amount": 21,
+          "before": 3
+        },
+        {
+          "accepted": true,
+          "amount": 14,
+          "before": 24
+        },
+        {
+          "accepted": true,
+          "amount": 4002,
+          "before": 38
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 4040
+        },
+        {
+          "accepted": true,
+          "amount": 2,
+          "before": 4041
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 4043
+        },
+        {
+          "accepted": true,
+          "amount": 6,
+          "before": 4044
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 4050
+        },
+        {
+          "accepted": true,
+          "amount": 4002,
+          "before": 4051
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 8053
+        },
+        {
+          "accepted": true,
+          "amount": 1000,
+          "before": 8054
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 9054
+        },
+        {
+          "accepted": true,
+          "amount": 2,
+          "before": 9055
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 9057
+        },
+        {
+          "accepted": true,
+          "amount": 2,
+          "before": 9058
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 9060
+        },
+        {
+          "accepted": true,
+          "amount": 2,
+          "before": 9061
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 9063
+        },
+        {
+          "accepted": true,
+          "amount": 2,
+          "before": 9064
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 9066
+        },
+        {
+          "accepted": true,
+          "amount": 2,
+          "before": 9067
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 9069
+        },
+        {
+          "accepted": true,
+          "amount": 2,
+          "before": 9070
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 9072
+        },
+        {
+          "accepted": true,
+          "amount": 2,
+          "before": 9073
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 9075
+        },
+        {
+          "accepted": true,
+          "amount": 2,
+          "before": 9076
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 9078
+        },
+        {
+          "accepted": true,
+          "amount": 2,
+          "before": 9079
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 9081
+        },
+        {
+          "accepted": true,
+          "amount": 2,
+          "before": 9082
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 9084
+        },
+        {
+          "accepted": true,
+          "amount": 2,
+          "before": 9085
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 9087
+        },
+        {
+          "accepted": true,
+          "amount": 2,
+          "before": 9088
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 9090
+        },
+        {
+          "accepted": true,
+          "amount": 2,
+          "before": 9091
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 9093
+        }
+      ],
+      "result": [
+        1006,
+        10053
+      ],
+      "used_work": 12056,
+      "work_limit": 100000
+    },
+    {
+      "calls": {
+        "<genexpr>": 2,
+        "__init__": 1,
+        "_bounded_json": 1,
+        "_embedded_identity_values": 1,
+        "actual_list.extend:c_call": 1,
+        "actual_list.extend:c_return": 1,
+        "reserve": 3
+      },
+      "events": [
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 1,
+          "next_line": 68,
+          "old": 0,
+          "used_work": 0
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 1,
+          "next_line": 85,
+          "old": 0,
+          "used_work": 1
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 72,
+          "event": "c_call:list.extend",
+          "function": "_bounded_json",
+          "length": 1,
+          "line": 154,
+          "queue_shallow_bytes": 88,
+          "used_work": 2
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 144,
+          "event": "c_return:list.extend",
+          "function": "_bounded_json",
+          "length": 2,
+          "line": 154,
+          "queue_shallow_bytes": 120,
+          "used_work": 2
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 2,
+          "next_line": 155,
+          "old": 1,
+          "used_work": 2
+        }
+      ],
+      "label": "cycle",
+      "maxima": {
+        "_bounded_json:queue_length": 2,
+        "_bounded_json:queue_shallow_bytes": 120
+      },
+      "outcome": "ExchangeError",
+      "prior_work": 0,
+      "reservations": [
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 0
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 1
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 2
+        }
+      ],
+      "result": {
+        "code": "MALFORMED_JSON",
+        "message": "package:MALFORMED_JSON: cyclic JSON input"
+      },
+      "used_work": 3,
+      "work_limit": 1000
+    },
+    {
+      "calls": {
+        "<genexpr>": 66,
+        "__init__": 1,
+        "_bounded_json": 1,
+        "_embedded_identity_values": 33,
+        "actual_list.extend:c_call": 33,
+        "actual_list.extend:c_return": 33,
+        "reserve": 67
+      },
+      "events": [
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 1,
+          "next_line": 68,
+          "old": 0,
+          "used_work": 0
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 1,
+          "next_line": 85,
+          "old": 0,
+          "used_work": 1
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 72,
+          "event": "c_call:list.extend",
+          "function": "_bounded_json",
+          "length": 1,
+          "line": 154,
+          "queue_shallow_bytes": 88,
+          "used_work": 2
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 144,
+          "event": "c_return:list.extend",
+          "function": "_bounded_json",
+          "length": 2,
+          "line": 154,
+          "queue_shallow_bytes": 120,
+          "used_work": 2
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 2,
+          "next_line": 155,
+          "old": 1,
+          "used_work": 2
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 2,
+          "next_line": 85,
+          "old": 1,
+          "used_work": 3
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 144,
+          "event": "c_call:list.extend",
+          "function": "_bounded_json",
+          "length": 2,
+          "line": 154,
+          "queue_shallow_bytes": 88,
+          "used_work": 4
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 216,
+          "event": "c_return:list.extend",
+          "function": "_bounded_json",
+          "length": 3,
+          "line": 154,
+          "queue_shallow_bytes": 120,
+          "used_work": 4
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 3,
+          "next_line": 155,
+          "old": 2,
+          "used_work": 4
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 3,
+          "next_line": 85,
+          "old": 2,
+          "used_work": 5
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 216,
+          "event": "c_call:list.extend",
+          "function": "_bounded_json",
+          "length": 3,
+          "line": 154,
+          "queue_shallow_bytes": 120,
+          "used_work": 6
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 288,
+          "event": "c_return:list.extend",
+          "function": "_bounded_json",
+          "length": 4,
+          "line": 154,
+          "queue_shallow_bytes": 120,
+          "used_work": 6
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 4,
+          "next_line": 155,
+          "old": 3,
+          "used_work": 6
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 4,
+          "next_line": 85,
+          "old": 3,
+          "used_work": 7
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 288,
+          "event": "c_call:list.extend",
+          "function": "_bounded_json",
+          "length": 4,
+          "line": 154,
+          "queue_shallow_bytes": 120,
+          "used_work": 8
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 360,
+          "event": "c_return:list.extend",
+          "function": "_bounded_json",
+          "length": 5,
+          "line": 154,
+          "queue_shallow_bytes": 120,
+          "used_work": 8
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 5,
+          "next_line": 155,
+          "old": 4,
+          "used_work": 8
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 5,
+          "next_line": 85,
+          "old": 4,
+          "used_work": 9
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 360,
+          "event": "c_call:list.extend",
+          "function": "_bounded_json",
+          "length": 5,
+          "line": 154,
+          "queue_shallow_bytes": 120,
+          "used_work": 10
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 432,
+          "event": "c_return:list.extend",
+          "function": "_bounded_json",
+          "length": 6,
+          "line": 154,
+          "queue_shallow_bytes": 152,
+          "used_work": 10
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 6,
+          "next_line": 155,
+          "old": 5,
+          "used_work": 10
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 6,
+          "next_line": 85,
+          "old": 5,
+          "used_work": 11
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 432,
+          "event": "c_call:list.extend",
+          "function": "_bounded_json",
+          "length": 6,
+          "line": 154,
+          "queue_shallow_bytes": 120,
+          "used_work": 12
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 504,
+          "event": "c_return:list.extend",
+          "function": "_bounded_json",
+          "length": 7,
+          "line": 154,
+          "queue_shallow_bytes": 152,
+          "used_work": 12
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 7,
+          "next_line": 155,
+          "old": 6,
+          "used_work": 12
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 7,
+          "next_line": 85,
+          "old": 6,
+          "used_work": 13
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 504,
+          "event": "c_call:list.extend",
+          "function": "_bounded_json",
+          "length": 7,
+          "line": 154,
+          "queue_shallow_bytes": 152,
+          "used_work": 14
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 576,
+          "event": "c_return:list.extend",
+          "function": "_bounded_json",
+          "length": 8,
+          "line": 154,
+          "queue_shallow_bytes": 184,
+          "used_work": 14
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 8,
+          "next_line": 155,
+          "old": 7,
+          "used_work": 14
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 8,
+          "next_line": 85,
+          "old": 7,
+          "used_work": 15
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 576,
+          "event": "c_call:list.extend",
+          "function": "_bounded_json",
+          "length": 8,
+          "line": 154,
+          "queue_shallow_bytes": 152,
+          "used_work": 16
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 648,
+          "event": "c_return:list.extend",
+          "function": "_bounded_json",
+          "length": 9,
+          "line": 154,
+          "queue_shallow_bytes": 184,
+          "used_work": 16
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 9,
+          "next_line": 155,
+          "old": 8,
+          "used_work": 16
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 9,
+          "next_line": 85,
+          "old": 8,
+          "used_work": 17
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 648,
+          "event": "c_call:list.extend",
+          "function": "_bounded_json",
+          "length": 9,
+          "line": 154,
+          "queue_shallow_bytes": 184,
+          "used_work": 18
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 720,
+          "event": "c_return:list.extend",
+          "function": "_bounded_json",
+          "length": 10,
+          "line": 154,
+          "queue_shallow_bytes": 216,
+          "used_work": 18
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 10,
+          "next_line": 155,
+          "old": 9,
+          "used_work": 18
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 10,
+          "next_line": 85,
+          "old": 9,
+          "used_work": 19
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 720,
+          "event": "c_call:list.extend",
+          "function": "_bounded_json",
+          "length": 10,
+          "line": 154,
+          "queue_shallow_bytes": 184,
+          "used_work": 20
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 792,
+          "event": "c_return:list.extend",
+          "function": "_bounded_json",
+          "length": 11,
+          "line": 154,
+          "queue_shallow_bytes": 216,
+          "used_work": 20
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 11,
+          "next_line": 155,
+          "old": 10,
+          "used_work": 20
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 11,
+          "next_line": 85,
+          "old": 10,
+          "used_work": 21
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 792,
+          "event": "c_call:list.extend",
+          "function": "_bounded_json",
+          "length": 11,
+          "line": 154,
+          "queue_shallow_bytes": 216,
+          "used_work": 22
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 864,
+          "event": "c_return:list.extend",
+          "function": "_bounded_json",
+          "length": 12,
+          "line": 154,
+          "queue_shallow_bytes": 216,
+          "used_work": 22
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 12,
+          "next_line": 155,
+          "old": 11,
+          "used_work": 22
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 12,
+          "next_line": 85,
+          "old": 11,
+          "used_work": 23
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 864,
+          "event": "c_call:list.extend",
+          "function": "_bounded_json",
+          "length": 12,
+          "line": 154,
+          "queue_shallow_bytes": 216,
+          "used_work": 24
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 936,
+          "event": "c_return:list.extend",
+          "function": "_bounded_json",
+          "length": 13,
+          "line": 154,
+          "queue_shallow_bytes": 216,
+          "used_work": 24
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 13,
+          "next_line": 155,
+          "old": 12,
+          "used_work": 24
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 13,
+          "next_line": 85,
+          "old": 12,
+          "used_work": 25
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 936,
+          "event": "c_call:list.extend",
+          "function": "_bounded_json",
+          "length": 13,
+          "line": 154,
+          "queue_shallow_bytes": 216,
+          "used_work": 26
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 1008,
+          "event": "c_return:list.extend",
+          "function": "_bounded_json",
+          "length": 14,
+          "line": 154,
+          "queue_shallow_bytes": 248,
+          "used_work": 26
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 14,
+          "next_line": 155,
+          "old": 13,
+          "used_work": 26
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 14,
+          "next_line": 85,
+          "old": 13,
+          "used_work": 27
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 1008,
+          "event": "c_call:list.extend",
+          "function": "_bounded_json",
+          "length": 14,
+          "line": 154,
+          "queue_shallow_bytes": 248,
+          "used_work": 28
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 1080,
+          "event": "c_return:list.extend",
+          "function": "_bounded_json",
+          "length": 15,
+          "line": 154,
+          "queue_shallow_bytes": 248,
+          "used_work": 28
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 15,
+          "next_line": 155,
+          "old": 14,
+          "used_work": 28
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 15,
+          "next_line": 85,
+          "old": 14,
+          "used_work": 29
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 1080,
+          "event": "c_call:list.extend",
+          "function": "_bounded_json",
+          "length": 15,
+          "line": 154,
+          "queue_shallow_bytes": 248,
+          "used_work": 30
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 1152,
+          "event": "c_return:list.extend",
+          "function": "_bounded_json",
+          "length": 16,
+          "line": 154,
+          "queue_shallow_bytes": 248,
+          "used_work": 30
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 16,
+          "next_line": 155,
+          "old": 15,
+          "used_work": 30
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 16,
+          "next_line": 85,
+          "old": 15,
+          "used_work": 31
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 1152,
+          "event": "c_call:list.extend",
+          "function": "_bounded_json",
+          "length": 16,
+          "line": 154,
+          "queue_shallow_bytes": 248,
+          "used_work": 32
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 1224,
+          "event": "c_return:list.extend",
+          "function": "_bounded_json",
+          "length": 17,
+          "line": 154,
+          "queue_shallow_bytes": 248,
+          "used_work": 32
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 17,
+          "next_line": 155,
+          "old": 16,
+          "used_work": 32
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 17,
+          "next_line": 85,
+          "old": 16,
+          "used_work": 33
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 1224,
+          "event": "c_call:list.extend",
+          "function": "_bounded_json",
+          "length": 17,
+          "line": 154,
+          "queue_shallow_bytes": 248,
+          "used_work": 34
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 1296,
+          "event": "c_return:list.extend",
+          "function": "_bounded_json",
+          "length": 18,
+          "line": 154,
+          "queue_shallow_bytes": 280,
+          "used_work": 34
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 18,
+          "next_line": 155,
+          "old": 17,
+          "used_work": 34
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 18,
+          "next_line": 85,
+          "old": 17,
+          "used_work": 35
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 1296,
+          "event": "c_call:list.extend",
+          "function": "_bounded_json",
+          "length": 18,
+          "line": 154,
+          "queue_shallow_bytes": 280,
+          "used_work": 36
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 1368,
+          "event": "c_return:list.extend",
+          "function": "_bounded_json",
+          "length": 19,
+          "line": 154,
+          "queue_shallow_bytes": 280,
+          "used_work": 36
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 19,
+          "next_line": 155,
+          "old": 18,
+          "used_work": 36
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 19,
+          "next_line": 85,
+          "old": 18,
+          "used_work": 37
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 1368,
+          "event": "c_call:list.extend",
+          "function": "_bounded_json",
+          "length": 19,
+          "line": 154,
+          "queue_shallow_bytes": 280,
+          "used_work": 38
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 1440,
+          "event": "c_return:list.extend",
+          "function": "_bounded_json",
+          "length": 20,
+          "line": 154,
+          "queue_shallow_bytes": 280,
+          "used_work": 38
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 20,
+          "next_line": 155,
+          "old": 19,
+          "used_work": 38
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 20,
+          "next_line": 85,
+          "old": 19,
+          "used_work": 39
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 1440,
+          "event": "c_call:list.extend",
+          "function": "_bounded_json",
+          "length": 20,
+          "line": 154,
+          "queue_shallow_bytes": 280,
+          "used_work": 40
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 1512,
+          "event": "c_return:list.extend",
+          "function": "_bounded_json",
+          "length": 21,
+          "line": 154,
+          "queue_shallow_bytes": 280,
+          "used_work": 40
+        }
+      ],
+      "label": "depth34",
+      "maxima": {
+        "_bounded_json:queue_length": 34,
+        "_bounded_json:queue_shallow_bytes": 472
+      },
+      "outcome": "ExchangeError",
+      "prior_work": 0,
+      "reservations": [
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 0
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 1
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 2
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 3
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 4
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 5
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 6
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 7
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 8
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 9
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 10
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 11
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 12
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 13
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 14
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 15
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 16
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 17
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 18
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 19
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 20
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 21
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 22
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 23
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 24
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 25
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 26
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 27
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 28
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 29
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 30
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 31
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 32
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 33
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 34
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 35
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 36
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 37
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 38
+        },
+        {
+          "accepted": true,
+          "amount": 1,
+          "before": 39
+        }
+      ],
+      "result": {
+        "code": "INPUT_LIMIT",
+        "message": "package:INPUT_LIMIT: JSON depth/elements"
+      },
+      "used_work": 67,
+      "work_limit": 1000
+    }
+  ],
+  "planner": [
+    {
+      "calls": {
+        "<genexpr>": 20,
+        "WorkLimit": 1,
+        "__post_init__": 1,
+        "_bounded_json": 1,
+        "plan_context_dependencies": 1,
+        "reserve": 1,
+        "result": 1,
+        "spend": 1
+      },
+      "events": [
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 1,
+          "next_line": 68,
+          "old": 0,
+          "used_work": null
+        }
+      ],
+      "input_json_bytes": 1006,
+      "maxima": {
+        "_bounded_json:queue_length": 1,
+        "_bounded_json:queue_shallow_bytes": 64
+      },
+      "outcome": "returned",
+      "prior_work": 0,
+      "result": {
+        "emitted_units": 0,
+        "omission_reasons": [
+          "work_limit"
+        ],
+        "section_counts": {
+          "collections": 0,
+          "core_references": 0,
+          "coverage_claims": 0,
+          "coverage_proofs": 0,
+          "coverage_scopes": 0,
+          "field_candidates": 0,
+          "providers": 0,
+          "repositories": 0,
+          "repository_mapping_dispositions": 0,
+          "resource_relations": 0,
+          "resource_repository_relations": 0,
+          "resources": 0,
+          "source_inventories": 0,
+          "source_repositories": 0,
+          "sources": 0,
+          "text_bodies": 0
+        },
+        "work_units": 1
+      },
+      "used_work": null,
+      "work_limit": 0
+    },
+    {
+      "calls": {
+        "<genexpr>": 20,
+        "WorkLimit": 1,
+        "__post_init__": 1,
+        "_bounded_json": 1,
+        "plan_context_dependencies": 1,
+        "reserve": 2,
+        "result": 1,
+        "spend": 2
+      },
+      "events": [
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 1,
+          "next_line": 68,
+          "old": 0,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 1,
+          "next_line": 85,
+          "old": 0,
+          "used_work": null
+        }
+      ],
+      "input_json_bytes": 1006,
+      "maxima": {
+        "_bounded_json:queue_length": 1,
+        "_bounded_json:queue_shallow_bytes": 88
+      },
+      "outcome": "returned",
+      "prior_work": 0,
+      "result": {
+        "emitted_units": 0,
+        "omission_reasons": [
+          "work_limit"
+        ],
+        "section_counts": {
+          "collections": 0,
+          "core_references": 0,
+          "coverage_claims": 0,
+          "coverage_proofs": 0,
+          "coverage_scopes": 0,
+          "field_candidates": 0,
+          "providers": 0,
+          "repositories": 0,
+          "repository_mapping_dispositions": 0,
+          "resource_relations": 0,
+          "resource_repository_relations": 0,
+          "resources": 0,
+          "source_inventories": 0,
+          "source_repositories": 0,
+          "sources": 0,
+          "text_bodies": 0
+        },
+        "work_units": 2
+      },
+      "used_work": null,
+      "work_limit": 1
+    },
+    {
+      "calls": {
+        "<genexpr>": 37,
+        "WorkLimit": 1,
+        "__post_init__": 1,
+        "_bounded_json": 1,
+        "plan_context_dependencies": 1,
+        "reserve": 3,
+        "result": 1,
+        "spend": 3
+      },
+      "events": [
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 1,
+          "next_line": 68,
+          "old": 0,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 1,
+          "next_line": 85,
+          "old": 0,
+          "used_work": null
+        }
+      ],
+      "input_json_bytes": 1006,
+      "maxima": {
+        "_bounded_json:queue_length": 1,
+        "_bounded_json:queue_shallow_bytes": 88
+      },
+      "outcome": "returned",
+      "prior_work": 0,
+      "result": {
+        "emitted_units": 0,
+        "omission_reasons": [
+          "work_limit"
+        ],
+        "section_counts": {
+          "collections": 0,
+          "core_references": 0,
+          "coverage_claims": 0,
+          "coverage_proofs": 0,
+          "coverage_scopes": 0,
+          "field_candidates": 0,
+          "providers": 0,
+          "repositories": 0,
+          "repository_mapping_dispositions": 0,
+          "resource_relations": 0,
+          "resource_repository_relations": 0,
+          "resources": 0,
+          "source_inventories": 0,
+          "source_repositories": 0,
+          "sources": 0,
+          "text_bodies": 0
+        },
+        "work_units": 18
+      },
+      "used_work": null,
+      "work_limit": 17
+    },
+    {
+      "calls": {
+        "<genexpr>": 20,
+        "WorkLimit": 1,
+        "__post_init__": 1,
+        "_bounded_json": 1,
+        "plan_context_dependencies": 1,
+        "reserve": 1,
+        "result": 1,
+        "spend": 1
+      },
+      "events": [
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 1,
+          "next_line": 68,
+          "old": 0,
+          "used_work": null
+        }
+      ],
+      "input_json_bytes": 1006,
+      "maxima": {
+        "_bounded_json:queue_length": 1,
+        "_bounded_json:queue_shallow_bytes": 64
+      },
+      "outcome": "returned",
+      "prior_work": 17,
+      "result": {
+        "emitted_units": 0,
+        "omission_reasons": [
+          "work_limit"
+        ],
+        "section_counts": {
+          "collections": 0,
+          "core_references": 0,
+          "coverage_claims": 0,
+          "coverage_proofs": 0,
+          "coverage_scopes": 0,
+          "field_candidates": 0,
+          "providers": 0,
+          "repositories": 0,
+          "repository_mapping_dispositions": 0,
+          "resource_relations": 0,
+          "resource_repository_relations": 0,
+          "resources": 0,
+          "source_inventories": 0,
+          "source_repositories": 0,
+          "sources": 0,
+          "text_bodies": 0
+        },
+        "work_units": 18
+      },
+      "used_work": null,
+      "work_limit": 17
+    },
+    {
+      "calls": {
+        "<genexpr>": 109,
+        "<lambda>": 9,
+        "WorkLimit": 1,
+        "__post_init__": 1,
+        "_bounded_json": 1,
+        "_embedded_identity_values": 23,
+        "_parse_json": 1,
+        "_quoted_size": 45,
+        "_wire_child_role": 33,
+        "actual_list.extend:c_call": 46,
+        "actual_list.extend:c_return": 46,
+        "charge_value": 15,
+        "checked_resource": 8,
+        "completed_result": 1,
+        "encoded_key": 3,
+        "identity": 4,
+        "indexed": 13,
+        "need": 2,
+        "parser:_parse_json": 1,
+        "parser:loads": 11,
+        "parser:parse_identity": 10,
+        "plan_context_dependencies": 1,
+        "reserve": 134,
+        "result": 1,
+        "root": 3,
+        "run": 1,
+        "spend": 492,
+        "unique_pairs": 1
+      },
+      "events": [
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 1,
+          "next_line": 68,
+          "old": 0,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 1,
+          "next_line": 85,
+          "old": 0,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 2,
+          "next_line": 115,
+          "old": 1,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 3,
+          "next_line": 115,
+          "old": 2,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 4,
+          "next_line": 115,
+          "old": 3,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 5,
+          "next_line": 115,
+          "old": 4,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 6,
+          "next_line": 115,
+          "old": 5,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 7,
+          "next_line": 115,
+          "old": 6,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 8,
+          "next_line": 115,
+          "old": 7,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 9,
+          "next_line": 115,
+          "old": 8,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 10,
+          "next_line": 115,
+          "old": 9,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 11,
+          "next_line": 115,
+          "old": 10,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 12,
+          "next_line": 115,
+          "old": 11,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 13,
+          "next_line": 115,
+          "old": 12,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 14,
+          "next_line": 115,
+          "old": 13,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 15,
+          "next_line": 115,
+          "old": 14,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 16,
+          "next_line": 115,
+          "old": 15,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 17,
+          "next_line": 115,
+          "old": 16,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 17,
+          "next_line": 85,
+          "old": 16,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 1224,
+          "event": "c_call:list.extend",
+          "function": "_bounded_json",
+          "length": 17,
+          "line": 154,
+          "queue_shallow_bytes": 248,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 1224,
+          "event": "c_return:list.extend",
+          "function": "_bounded_json",
+          "length": 17,
+          "line": 154,
+          "queue_shallow_bytes": 280,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 16,
+          "next_line": 85,
+          "old": 15,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 1152,
+          "event": "c_call:list.extend",
+          "function": "_bounded_json",
+          "length": 16,
+          "line": 154,
+          "queue_shallow_bytes": 280,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 1152,
+          "event": "c_return:list.extend",
+          "function": "_bounded_json",
+          "length": 16,
+          "line": 154,
+          "queue_shallow_bytes": 280,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 15,
+          "next_line": 85,
+          "old": 14,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 1080,
+          "event": "c_call:list.extend",
+          "function": "_bounded_json",
+          "length": 15,
+          "line": 154,
+          "queue_shallow_bytes": 280,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 1080,
+          "event": "c_return:list.extend",
+          "function": "_bounded_json",
+          "length": 15,
+          "line": 154,
+          "queue_shallow_bytes": 280,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 14,
+          "next_line": 85,
+          "old": 13,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 1008,
+          "event": "c_call:list.extend",
+          "function": "_bounded_json",
+          "length": 14,
+          "line": 154,
+          "queue_shallow_bytes": 216,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 1008,
+          "event": "c_return:list.extend",
+          "function": "_bounded_json",
+          "length": 14,
+          "line": 154,
+          "queue_shallow_bytes": 248,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 13,
+          "next_line": 85,
+          "old": 12,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 936,
+          "event": "c_call:list.extend",
+          "function": "_bounded_json",
+          "length": 13,
+          "line": 154,
+          "queue_shallow_bytes": 248,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 936,
+          "event": "c_return:list.extend",
+          "function": "_bounded_json",
+          "length": 13,
+          "line": 154,
+          "queue_shallow_bytes": 248,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 12,
+          "next_line": 85,
+          "old": 11,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 864,
+          "event": "c_call:list.extend",
+          "function": "_bounded_json",
+          "length": 12,
+          "line": 154,
+          "queue_shallow_bytes": 184,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 864,
+          "event": "c_return:list.extend",
+          "function": "_bounded_json",
+          "length": 12,
+          "line": 154,
+          "queue_shallow_bytes": 184,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 11,
+          "next_line": 85,
+          "old": 10,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 792,
+          "event": "c_call:list.extend",
+          "function": "_bounded_json",
+          "length": 11,
+          "line": 154,
+          "queue_shallow_bytes": 184,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 792,
+          "event": "c_return:list.extend",
+          "function": "_bounded_json",
+          "length": 11,
+          "line": 154,
+          "queue_shallow_bytes": 216,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 10,
+          "next_line": 85,
+          "old": 9,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 720,
+          "event": "c_call:list.extend",
+          "function": "_bounded_json",
+          "length": 10,
+          "line": 154,
+          "queue_shallow_bytes": 184,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 720,
+          "event": "c_return:list.extend",
+          "function": "_bounded_json",
+          "length": 10,
+          "line": 154,
+          "queue_shallow_bytes": 216,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 9,
+          "next_line": 85,
+          "old": 8,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 648,
+          "event": "c_call:list.extend",
+          "function": "_bounded_json",
+          "length": 9,
+          "line": 154,
+          "queue_shallow_bytes": 184,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 792,
+          "event": "c_return:list.extend",
+          "function": "_bounded_json",
+          "length": 11,
+          "line": 154,
+          "queue_shallow_bytes": 216,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 11,
+          "next_line": 155,
+          "old": 9,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 11,
+          "next_line": 85,
+          "old": 10,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 12,
+          "next_line": 106,
+          "old": 11,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 13,
+          "next_line": 115,
+          "old": 12,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 14,
+          "next_line": 115,
+          "old": 13,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 15,
+          "next_line": 115,
+          "old": 14,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 16,
+          "next_line": 115,
+          "old": 15,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 17,
+          "next_line": 115,
+          "old": 16,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 18,
+          "next_line": 115,
+          "old": 17,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 19,
+          "next_line": 115,
+          "old": 18,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 10,
+          "next_line": 85,
+          "old": 9,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 11,
+          "next_line": 106,
+          "old": 10,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 12,
+          "next_line": 115,
+          "old": 11,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 13,
+          "next_line": 115,
+          "old": 12,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 14,
+          "next_line": 115,
+          "old": 13,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 15,
+          "next_line": 115,
+          "old": 14,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 16,
+          "next_line": 115,
+          "old": 15,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 17,
+          "next_line": 115,
+          "old": 16,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 18,
+          "next_line": 115,
+          "old": 17,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 8,
+          "next_line": 85,
+          "old": 7,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 576,
+          "event": "c_call:list.extend",
+          "function": "_bounded_json",
+          "length": 8,
+          "line": 154,
+          "queue_shallow_bytes": 152,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 576,
+          "event": "c_return:list.extend",
+          "function": "_bounded_json",
+          "length": 8,
+          "line": 154,
+          "queue_shallow_bytes": 152,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 7,
+          "next_line": 85,
+          "old": 6,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 504,
+          "event": "c_call:list.extend",
+          "function": "_bounded_json",
+          "length": 7,
+          "line": 154,
+          "queue_shallow_bytes": 152,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 504,
+          "event": "c_return:list.extend",
+          "function": "_bounded_json",
+          "length": 7,
+          "line": 154,
+          "queue_shallow_bytes": 152,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 6,
+          "next_line": 85,
+          "old": 5,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 432,
+          "event": "c_call:list.extend",
+          "function": "_bounded_json",
+          "length": 6,
+          "line": 154,
+          "queue_shallow_bytes": 120,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 432,
+          "event": "c_return:list.extend",
+          "function": "_bounded_json",
+          "length": 6,
+          "line": 154,
+          "queue_shallow_bytes": 152,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 5,
+          "next_line": 85,
+          "old": 4,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 360,
+          "event": "c_call:list.extend",
+          "function": "_bounded_json",
+          "length": 5,
+          "line": 154,
+          "queue_shallow_bytes": 120,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 360,
+          "event": "c_return:list.extend",
+          "function": "_bounded_json",
+          "length": 5,
+          "line": 154,
+          "queue_shallow_bytes": 120,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 4,
+          "next_line": 85,
+          "old": 3,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 288,
+          "event": "c_call:list.extend",
+          "function": "_bounded_json",
+          "length": 4,
+          "line": 154,
+          "queue_shallow_bytes": 120,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 288,
+          "event": "c_return:list.extend",
+          "function": "_bounded_json",
+          "length": 4,
+          "line": 154,
+          "queue_shallow_bytes": 120,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 3,
+          "next_line": 85,
+          "old": 2,
+          "used_work": null
+        }
+      ],
+      "input_json_bytes": 1006,
+      "maxima": {
+        "_bounded_json:queue_length": 19,
+        "_bounded_json:queue_shallow_bytes": 280,
+        "charge_value:queue_length": 14,
+        "charge_value:queue_shallow_bytes": 184,
+        "run:queue_length": 1,
+        "run:queue_shallow_bytes": 88
+      },
+      "outcome": "returned",
+      "prior_work": 0,
+      "result": {
+        "emitted_units": 2,
+        "omission_reasons": [
+          "work_limit"
+        ],
+        "section_counts": {
+          "collections": 0,
+          "core_references": 0,
+          "coverage_claims": 0,
+          "coverage_proofs": 0,
+          "coverage_scopes": 0,
+          "field_candidates": 0,
+          "providers": 1,
+          "repositories": 0,
+          "repository_mapping_dispositions": 0,
+          "resource_relations": 0,
+          "resource_repository_relations": 0,
+          "resources": 1,
+          "source_inventories": 0,
+          "source_repositories": 0,
+          "sources": 0,
+          "text_bodies": 0
+        },
+        "work_units": 3589
+      },
+      "used_work": null,
+      "work_limit": 3610
+    },
+    {
+      "calls": {
+        "<genexpr>": 109,
+        "<lambda>": 10,
+        "WorkLimit": 1,
+        "__post_init__": 1,
+        "_bounded_json": 1,
+        "_embedded_identity_values": 23,
+        "_parse_json": 1,
+        "_quoted_size": 45,
+        "_wire_child_role": 33,
+        "actual_list.extend:c_call": 46,
+        "actual_list.extend:c_return": 46,
+        "charge_value": 15,
+        "checked_resource": 8,
+        "completed_result": 1,
+        "encoded_key": 3,
+        "identity": 4,
+        "indexed": 13,
+        "need": 2,
+        "parser:_parse_json": 1,
+        "parser:loads": 11,
+        "parser:parse_identity": 10,
+        "plan_context_dependencies": 1,
+        "reserve": 134,
+        "result": 1,
+        "root": 3,
+        "run": 1,
+        "spend": 492,
+        "unique_pairs": 1
+      },
+      "events": [
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 1,
+          "next_line": 68,
+          "old": 0,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 1,
+          "next_line": 85,
+          "old": 0,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 2,
+          "next_line": 115,
+          "old": 1,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 3,
+          "next_line": 115,
+          "old": 2,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 4,
+          "next_line": 115,
+          "old": 3,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 5,
+          "next_line": 115,
+          "old": 4,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 6,
+          "next_line": 115,
+          "old": 5,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 7,
+          "next_line": 115,
+          "old": 6,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 8,
+          "next_line": 115,
+          "old": 7,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 9,
+          "next_line": 115,
+          "old": 8,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 10,
+          "next_line": 115,
+          "old": 9,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 11,
+          "next_line": 115,
+          "old": 10,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 12,
+          "next_line": 115,
+          "old": 11,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 13,
+          "next_line": 115,
+          "old": 12,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 14,
+          "next_line": 115,
+          "old": 13,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 15,
+          "next_line": 115,
+          "old": 14,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 16,
+          "next_line": 115,
+          "old": 15,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 17,
+          "next_line": 115,
+          "old": 16,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 17,
+          "next_line": 85,
+          "old": 16,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 1224,
+          "event": "c_call:list.extend",
+          "function": "_bounded_json",
+          "length": 17,
+          "line": 154,
+          "queue_shallow_bytes": 248,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 1224,
+          "event": "c_return:list.extend",
+          "function": "_bounded_json",
+          "length": 17,
+          "line": 154,
+          "queue_shallow_bytes": 280,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 16,
+          "next_line": 85,
+          "old": 15,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 1152,
+          "event": "c_call:list.extend",
+          "function": "_bounded_json",
+          "length": 16,
+          "line": 154,
+          "queue_shallow_bytes": 280,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 1152,
+          "event": "c_return:list.extend",
+          "function": "_bounded_json",
+          "length": 16,
+          "line": 154,
+          "queue_shallow_bytes": 280,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 15,
+          "next_line": 85,
+          "old": 14,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 1080,
+          "event": "c_call:list.extend",
+          "function": "_bounded_json",
+          "length": 15,
+          "line": 154,
+          "queue_shallow_bytes": 280,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 1080,
+          "event": "c_return:list.extend",
+          "function": "_bounded_json",
+          "length": 15,
+          "line": 154,
+          "queue_shallow_bytes": 280,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 14,
+          "next_line": 85,
+          "old": 13,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 1008,
+          "event": "c_call:list.extend",
+          "function": "_bounded_json",
+          "length": 14,
+          "line": 154,
+          "queue_shallow_bytes": 216,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 1008,
+          "event": "c_return:list.extend",
+          "function": "_bounded_json",
+          "length": 14,
+          "line": 154,
+          "queue_shallow_bytes": 248,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 13,
+          "next_line": 85,
+          "old": 12,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 936,
+          "event": "c_call:list.extend",
+          "function": "_bounded_json",
+          "length": 13,
+          "line": 154,
+          "queue_shallow_bytes": 248,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 936,
+          "event": "c_return:list.extend",
+          "function": "_bounded_json",
+          "length": 13,
+          "line": 154,
+          "queue_shallow_bytes": 248,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 12,
+          "next_line": 85,
+          "old": 11,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 864,
+          "event": "c_call:list.extend",
+          "function": "_bounded_json",
+          "length": 12,
+          "line": 154,
+          "queue_shallow_bytes": 184,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 864,
+          "event": "c_return:list.extend",
+          "function": "_bounded_json",
+          "length": 12,
+          "line": 154,
+          "queue_shallow_bytes": 184,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 11,
+          "next_line": 85,
+          "old": 10,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 792,
+          "event": "c_call:list.extend",
+          "function": "_bounded_json",
+          "length": 11,
+          "line": 154,
+          "queue_shallow_bytes": 184,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 792,
+          "event": "c_return:list.extend",
+          "function": "_bounded_json",
+          "length": 11,
+          "line": 154,
+          "queue_shallow_bytes": 216,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 10,
+          "next_line": 85,
+          "old": 9,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 720,
+          "event": "c_call:list.extend",
+          "function": "_bounded_json",
+          "length": 10,
+          "line": 154,
+          "queue_shallow_bytes": 184,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 720,
+          "event": "c_return:list.extend",
+          "function": "_bounded_json",
+          "length": 10,
+          "line": 154,
+          "queue_shallow_bytes": 216,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 9,
+          "next_line": 85,
+          "old": 8,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 648,
+          "event": "c_call:list.extend",
+          "function": "_bounded_json",
+          "length": 9,
+          "line": 154,
+          "queue_shallow_bytes": 184,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 792,
+          "event": "c_return:list.extend",
+          "function": "_bounded_json",
+          "length": 11,
+          "line": 154,
+          "queue_shallow_bytes": 216,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 11,
+          "next_line": 155,
+          "old": 9,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 11,
+          "next_line": 85,
+          "old": 10,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 12,
+          "next_line": 106,
+          "old": 11,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 13,
+          "next_line": 115,
+          "old": 12,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 14,
+          "next_line": 115,
+          "old": 13,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 15,
+          "next_line": 115,
+          "old": 14,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 16,
+          "next_line": 115,
+          "old": 15,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 17,
+          "next_line": 115,
+          "old": 16,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 18,
+          "next_line": 115,
+          "old": 17,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 19,
+          "next_line": 115,
+          "old": 18,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 10,
+          "next_line": 85,
+          "old": 9,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 11,
+          "next_line": 106,
+          "old": 10,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 12,
+          "next_line": 115,
+          "old": 11,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 13,
+          "next_line": 115,
+          "old": 12,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 14,
+          "next_line": 115,
+          "old": 13,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 15,
+          "next_line": 115,
+          "old": 14,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 16,
+          "next_line": 115,
+          "old": 15,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 17,
+          "next_line": 115,
+          "old": 16,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 18,
+          "next_line": 115,
+          "old": 17,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 8,
+          "next_line": 85,
+          "old": 7,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 576,
+          "event": "c_call:list.extend",
+          "function": "_bounded_json",
+          "length": 8,
+          "line": 154,
+          "queue_shallow_bytes": 152,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 576,
+          "event": "c_return:list.extend",
+          "function": "_bounded_json",
+          "length": 8,
+          "line": 154,
+          "queue_shallow_bytes": 152,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 7,
+          "next_line": 85,
+          "old": 6,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 504,
+          "event": "c_call:list.extend",
+          "function": "_bounded_json",
+          "length": 7,
+          "line": 154,
+          "queue_shallow_bytes": 152,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 504,
+          "event": "c_return:list.extend",
+          "function": "_bounded_json",
+          "length": 7,
+          "line": 154,
+          "queue_shallow_bytes": 152,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 6,
+          "next_line": 85,
+          "old": 5,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 432,
+          "event": "c_call:list.extend",
+          "function": "_bounded_json",
+          "length": 6,
+          "line": 154,
+          "queue_shallow_bytes": 120,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 432,
+          "event": "c_return:list.extend",
+          "function": "_bounded_json",
+          "length": 6,
+          "line": 154,
+          "queue_shallow_bytes": 152,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 5,
+          "next_line": 85,
+          "old": 4,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 360,
+          "event": "c_call:list.extend",
+          "function": "_bounded_json",
+          "length": 5,
+          "line": 154,
+          "queue_shallow_bytes": 120,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 360,
+          "event": "c_return:list.extend",
+          "function": "_bounded_json",
+          "length": 5,
+          "line": 154,
+          "queue_shallow_bytes": 120,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 4,
+          "next_line": 85,
+          "old": 3,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 288,
+          "event": "c_call:list.extend",
+          "function": "_bounded_json",
+          "length": 4,
+          "line": 154,
+          "queue_shallow_bytes": 120,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "entry_tuple_shallow_bytes": 288,
+          "event": "c_return:list.extend",
+          "function": "_bounded_json",
+          "length": 4,
+          "line": 154,
+          "queue_shallow_bytes": 120,
+          "used_work": null
+        },
+        {
+          "after_refusal": false,
+          "event": "queue_growth",
+          "function": "_bounded_json",
+          "new": 3,
+          "next_line": 85,
+          "old": 2,
+          "used_work": null
+        }
+      ],
+      "input_json_bytes": 1006,
+      "maxima": {
+        "_bounded_json:queue_length": 19,
+        "_bounded_json:queue_shallow_bytes": 280,
+        "charge_value:queue_length": 14,
+        "charge_value:queue_shallow_bytes": 184,
+        "run:queue_length": 1,
+        "run:queue_shallow_bytes": 88
+      },
+      "outcome": "returned",
+      "prior_work": 0,
+      "result": {
+        "emitted_units": 3,
+        "omission_reasons": [],
+        "section_counts": {
+          "collections": 0,
+          "core_references": 0,
+          "coverage_claims": 0,
+          "coverage_proofs": 0,
+          "coverage_scopes": 0,
+          "field_candidates": 0,
+          "providers": 1,
+          "repositories": 0,
+          "repository_mapping_dispositions": 0,
+          "resource_relations": 0,
+          "resource_repository_relations": 0,
+          "resources": 2,
+          "source_inventories": 0,
+          "source_repositories": 0,
+          "sources": 0,
+          "text_bodies": 0
+        },
+        "work_units": 3611
+      },
+      "used_work": null,
+      "work_limit": 3611
+    }
+  ]
+}

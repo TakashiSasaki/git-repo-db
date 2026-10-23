@@ -1,0 +1,21 @@
+"""Lossless regression evidence transport; excludes wheelhouse, caches and catalogs."""
+import gzip,hashlib,json,shutil
+from pathlib import Path
+source=Path('/workspace/pr155-review-artifacts/regression');dest=Path('/workspace/pr155-independent-review/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/regression');dest.mkdir(parents=True,exist_ok=True)
+roots=['full','diagnostic','historical-final-v2-comparison','historical-final-v2-diagnostic-comparison','fresh-vs154','fresh-vs155','fresh-diagnostic-vs154','fresh-diagnostic-vs155','tools']
+files=[]
+for r in roots:
+ p=source/r
+ if p.exists():files.extend(q for q in p.rglob('*') if q.is_file() and '__pycache__' not in q.parts and q.suffix!='.pyc')
+files+=list(source.glob('*.log'))+list(source.glob('*.json'))+list(source.glob('*.md'))
+records=[]
+for p in sorted(set(files)):
+ relative=p.relative_to(source);out=dest/relative;raw=p.read_bytes()
+ if p.suffix=='.py':out=Path(str(out)+'.txt')
+ if len(raw)>120000 and p.suffix in ('.json','.jsonl','.xml','.log','.txt'):
+  out=Path(str(out)+'.gz');data=gzip.compress(raw,mtime=0);assert gzip.decompress(data)==raw
+ else:data=raw
+ out.parent.mkdir(parents=True,exist_ok=True);out.write_bytes(data)
+ records.append(dict(source=str(relative),transport=str(out.relative_to(dest)),original_bytes=len(raw),original_sha256=hashlib.sha256(raw).hexdigest(),transport_bytes=len(data),transport_sha256=hashlib.sha256(data).hexdigest(),gzip=out.suffix=='.gz' and p.suffix!='.gz'))
+(dest/'TRANSPORT.json').write_text(json.dumps(dict(scope='read-only published155 source regression evidence; no temporary catalogs or dependency wheels',files=records),indent=2)+'\n')
+print(json.dumps(dict(files=len(records),original_bytes=sum(r['original_bytes'] for r in records),transport_bytes=sum(r['transport_bytes'] for r in records))))

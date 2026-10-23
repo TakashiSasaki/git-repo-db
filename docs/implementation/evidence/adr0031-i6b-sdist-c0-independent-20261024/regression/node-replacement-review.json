@@ -1,0 +1,159 @@
+{
+  "old_head": "91827360c185cbf813277bf32a6627d894b1b20a",
+  "new_head": "fee364c6d61a5feebf08dbdd830a5a57ee2d872b",
+  "reviewed144": "ededcd83eb2d99a602ba18c8fe3c177125c825ac",
+  "path": "tests/unit/test_ci_plan.py",
+  "old_function": "test_main_prose_change_does_not_require_unconditional_acceptance",
+  "new_function": "test_distribution_inputs_select_lightweight_contract_without_pytest",
+  "old_assertions": [
+    {
+      "line": 40,
+      "ast": "Assert(test=UnaryOp(op=Not(), operand=Subscript(value=Name(id='plan', ctx=Load()), slice=Constant(value='full'), ctx=Load())))",
+      "text": "assert not plan['full']"
+    },
+    {
+      "line": 41,
+      "ast": "Assert(test=Call(func=Name(id='all', ctx=Load()), args=[GeneratorExp(elt=Compare(left=Subscript(value=Name(id='item', ctx=Load()), slice=Constant(value='disposition'), ctx=Load()), ops=[Eq()], comparators=[Constant(value='not_applicable')]), generators=[comprehension(target=Name(id='item', ctx=Store()), iter=Call(func=Attribute(value=Subscript(value=Name(id='plan', ctx=Load()), slice=Constant(value='lanes'), ctx=Load()), attr='values', ctx=Load()), args=[], keywords=[]), ifs=[], is_async=0)])], keywords=[]))",
+      "text": "assert all((item['disposition'] == 'not_applicable' for item in plan['lanes'].values()))"
+    },
+    {
+      "line": 44,
+      "ast": "Assert(test=Compare(left=Subscript(value=Name(id='plan', ctx=Load()), slice=Constant(value='unexecuted_files'), ctx=Load()), ops=[Eq()], comparators=[Subscript(value=Name(id='plan', ctx=Load()), slice=Constant(value='acceptance_files'), ctx=Load())]))",
+      "text": "assert plan['unexecuted_files'] == plan['acceptance_files']"
+    },
+    {
+      "line": 45,
+      "ast": "Assert(test=Call(func=Name(id='all', ctx=Load()), args=[GeneratorExp(elt=Compare(left=Subscript(value=Name(id='item', ctx=Load()), slice=Constant(value='disposition'), ctx=Load()), ops=[Eq()], comparators=[Constant(value='not_applicable')]), generators=[comprehension(target=Name(id='item', ctx=Store()), iter=Call(func=Attribute(value=Subscript(value=Name(id='plan', ctx=Load()), slice=Constant(value='preparation'), ctx=Load()), attr='values', ctx=Load()), args=[], keywords=[]), ifs=[], is_async=0)])], keywords=[]))",
+      "text": "assert all((item['disposition'] == 'not_applicable' for item in plan['preparation'].values()))"
+    }
+  ],
+  "new_assertions": [
+    {
+      "line": 703,
+      "ast": "Assert(test=Compare(left=Subscript(value=Subscript(value=Subscript(value=Name(id='plan', ctx=Load()), slice=Constant(value='preparation'), ctx=Load()), slice=Constant(value='sdist_contract'), ctx=Load()), slice=Constant(value='disposition'), ctx=Load()), ops=[Eq()], comparators=[Constant(value='selected')]))",
+      "text": "assert plan['preparation']['sdist_contract']['disposition'] == 'selected'"
+    },
+    {
+      "line": 704,
+      "ast": "Assert(test=Compare(left=Subscript(value=Subscript(value=Subscript(value=Name(id='plan', ctx=Load()), slice=Constant(value='preparation'), ctx=Load()), slice=Constant(value='dependencies'), ctx=Load()), slice=Constant(value='disposition'), ctx=Load()), ops=[Eq()], comparators=[Constant(value='selected')]))",
+      "text": "assert plan['preparation']['dependencies']['disposition'] == 'selected'"
+    },
+    {
+      "line": 705,
+      "ast": "Assert(test=Compare(left=Subscript(value=Subscript(value=Subscript(value=Name(id='plan', ctx=Load()), slice=Constant(value='preparation'), ctx=Load()), slice=Constant(value='wheelhouse'), ctx=Load()), slice=Constant(value='disposition'), ctx=Load()), ops=[Eq()], comparators=[Constant(value='not_applicable')]))",
+      "text": "assert plan['preparation']['wheelhouse']['disposition'] == 'not_applicable'"
+    },
+    {
+      "line": 706,
+      "ast": "Assert(test=UnaryOp(op=Not(), operand=Subscript(value=Name(id='plan', ctx=Load()), slice=Constant(value='selected_files'), ctx=Load())))",
+      "text": "assert not plan['selected_files']"
+    },
+    {
+      "line": 707,
+      "ast": "Assert(test=UnaryOp(op=Not(), operand=Subscript(value=Name(id='plan', ctx=Load()), slice=Constant(value='full'), ctx=Load())))",
+      "text": "assert not plan['full']"
+    },
+    {
+      "line": 708,
+      "ast": "Assert(test=Compare(left=Subscript(value=Subscript(value=Subscript(value=Name(id='plan', ctx=Load()), slice=Constant(value='lanes'), ctx=Load()), slice=Constant(value='tests'), ctx=Load()), slice=Constant(value='disposition'), ctx=Load()), ops=[Eq()], comparators=[Constant(value='not_applicable')]))",
+      "text": "assert plan['lanes']['tests']['disposition'] == 'not_applicable'"
+    },
+    {
+      "line": 709,
+      "ast": "Assert(test=Compare(left=Subscript(value=Subscript(value=Subscript(value=Name(id='plan', ctx=Load()), slice=Constant(value='lanes'), ctx=Load()), slice=Constant(value='packaging'), ctx=Load()), slice=Constant(value='disposition'), ctx=Load()), ops=[Eq()], comparators=[Constant(value='not_applicable')]))",
+      "text": "assert plan['lanes']['packaging']['disposition'] == 'not_applicable'"
+    },
+    {
+      "line": 710,
+      "ast": "Assert(test=Compare(left=Subscript(value=Name(id='plan', ctx=Load()), slice=Constant(value='unexecuted_files'), ctx=Load()), ops=[Eq()], comparators=[Subscript(value=Name(id='plan', ctx=Load()), slice=Constant(value='acceptance_files'), ctx=Load())]))",
+      "text": "assert plan['unexecuted_files'] == plan['acceptance_files']"
+    },
+    {
+      "line": 714,
+      "ast": "Assert(test=Compare(left=Subscript(value=Name(id='plan', ctx=Load()), slice=Constant(value='acceptance_input_hash'), ctx=Load()), ops=[Eq()], comparators=[Subscript(value=Name(id='prior', ctx=Load()), slice=Constant(value='acceptance_input_hash'), ctx=Load())]))",
+      "text": "assert plan['acceptance_input_hash'] == prior['acceptance_input_hash']"
+    },
+    {
+      "line": 715,
+      "ast": "Assert(test=Compare(left=Subscript(value=Name(id='plan', ctx=Load()), slice=Constant(value='required_files'), ctx=Load()), ops=[Eq()], comparators=[List(elts=[], ctx=Load())]))",
+      "text": "assert plan['required_files'] == []"
+    },
+    {
+      "line": 716,
+      "ast": "Assert(test=Call(func=Name(id='all', ctx=Load()), args=[GeneratorExp(elt=Compare(left=Subscript(value=Name(id='lane', ctx=Load()), slice=Constant(value='disposition'), ctx=Load()), ops=[Eq()], comparators=[Constant(value='not_applicable')]), generators=[comprehension(target=Name(id='lane', ctx=Store()), iter=Call(func=Attribute(value=Subscript(value=Name(id='plan', ctx=Load()), slice=Constant(value='lanes'), ctx=Load()), attr='values', ctx=Load()), args=[], keywords=[]), ifs=[], is_async=0)])], keywords=[]))",
+      "text": "assert all((lane['disposition'] == 'not_applicable' for lane in plan['lanes'].values()))"
+    },
+    {
+      "line": 720,
+      "ast": "Assert(test=Compare(left=Subscript(value=Name(id='plan', ctx=Load()), slice=Constant(value='acceptance_input_hash'), ctx=Load()), ops=[NotEq()], comparators=[Subscript(value=Name(id='prior', ctx=Load()), slice=Constant(value='acceptance_input_hash'), ctx=Load())]))",
+      "text": "assert plan['acceptance_input_hash'] != prior['acceptance_input_hash']"
+    },
+    {
+      "line": 721,
+      "ast": "Assert(test=Compare(left=Subscript(value=Subscript(value=Subscript(value=Name(id='plan', ctx=Load()), slice=Constant(value='lanes'), ctx=Load()), slice=Constant(value='static'), ctx=Load()), slice=Constant(value='disposition'), ctx=Load()), ops=[Eq()], comparators=[Constant(value='selected')]))",
+      "text": "assert plan['lanes']['static']['disposition'] == 'selected'"
+    },
+    {
+      "line": 723,
+      "ast": "Assert(test=Compare(left=Subscript(value=Name(id='plan', ctx=Load()), slice=Constant(value='required_files'), ctx=Load()), ops=[Eq()], comparators=[List(elts=[Name(id='path', ctx=Load())], ctx=Load())]))",
+      "text": "assert plan['required_files'] == [path]"
+    },
+    {
+      "line": 724,
+      "ast": "Assert(test=Compare(left=Name(id='path', ctx=Load()), ops=[In()], comparators=[Call(func=Attribute(value=Name(id='ci_plan', ctx=Load()), attr='current_acceptance_files', ctx=Load()), args=[Name(id='root', ctx=Load())], keywords=[])]))",
+      "text": "assert path in ci_plan.current_acceptance_files(root)"
+    },
+    {
+      "line": 728,
+      "ast": "Assert(test=Subscript(value=Name(id='release', ctx=Load()), slice=Constant(value='full'), ctx=Load()))",
+      "text": "assert release['full']"
+    },
+    {
+      "line": 729,
+      "ast": "Assert(test=Compare(left=Name(id='path', ctx=Load()), ops=[In()], comparators=[Subscript(value=Subscript(value=Subscript(value=Name(id='release', ctx=Load()), slice=Constant(value='lanes'), ctx=Load()), slice=Constant(value='packaging'), ctx=Load()), slice=Constant(value='test_files'), ctx=Load())]))",
+      "text": "assert path in release['lanes']['packaging']['test_files']"
+    },
+    {
+      "line": 731,
+      "ast": "Assert(test=Compare(left=Subscript(value=Name(id='plan', ctx=Load()), slice=Constant(value='required_files'), ctx=Load()), ops=[Eq()], comparators=[Subscript(value=Name(id='plan', ctx=Load()), slice=Constant(value='acceptance_files'), ctx=Load())]))",
+      "text": "assert plan['required_files'] == plan['acceptance_files']"
+    },
+    {
+      "line": 732,
+      "ast": "Assert(test=Compare(left=Subscript(value=Subscript(value=Subscript(value=Name(id='plan', ctx=Load()), slice=Constant(value='lanes'), ctx=Load()), slice=Constant(value='smoke'), ctx=Load()), slice=Constant(value='disposition'), ctx=Load()), ops=[Eq()], comparators=[Constant(value='selected')]))",
+      "text": "assert plan['lanes']['smoke']['disposition'] == 'selected'"
+    }
+  ],
+  "retained_exact_ast": [
+    {
+      "line": 40,
+      "ast": "Assert(test=UnaryOp(op=Not(), operand=Subscript(value=Name(id='plan', ctx=Load()), slice=Constant(value='full'), ctx=Load())))",
+      "text": "assert not plan['full']"
+    },
+    {
+      "line": 44,
+      "ast": "Assert(test=Compare(left=Subscript(value=Name(id='plan', ctx=Load()), slice=Constant(value='unexecuted_files'), ctx=Load()), ops=[Eq()], comparators=[Subscript(value=Name(id='plan', ctx=Load()), slice=Constant(value='acceptance_files'), ctx=Load())]))",
+      "text": "assert plan['unexecuted_files'] == plan['acceptance_files']"
+    }
+  ],
+  "remaining_old_ast": [
+    {
+      "line": 41,
+      "ast": "Assert(test=Call(func=Name(id='all', ctx=Load()), args=[GeneratorExp(elt=Compare(left=Subscript(value=Name(id='item', ctx=Load()), slice=Constant(value='disposition'), ctx=Load()), ops=[Eq()], comparators=[Constant(value='not_applicable')]), generators=[comprehension(target=Name(id='item', ctx=Store()), iter=Call(func=Attribute(value=Subscript(value=Name(id='plan', ctx=Load()), slice=Constant(value='lanes'), ctx=Load()), attr='values', ctx=Load()), args=[], keywords=[]), ifs=[], is_async=0)])], keywords=[]))",
+      "text": "assert all((item['disposition'] == 'not_applicable' for item in plan['lanes'].values()))"
+    },
+    {
+      "line": 45,
+      "ast": "Assert(test=Call(func=Name(id='all', ctx=Load()), args=[GeneratorExp(elt=Compare(left=Subscript(value=Name(id='item', ctx=Load()), slice=Constant(value='disposition'), ctx=Load()), ops=[Eq()], comparators=[Constant(value='not_applicable')]), generators=[comprehension(target=Name(id='item', ctx=Store()), iter=Call(func=Attribute(value=Subscript(value=Name(id='plan', ctx=Load()), slice=Constant(value='preparation'), ctx=Load()), attr='values', ctx=Load()), args=[], keywords=[]), ifs=[], is_async=0)])], keywords=[]))",
+      "text": "assert all((item['disposition'] == 'not_applicable' for item in plan['preparation'].values()))"
+    }
+  ],
+  "reviewed144_function_equal": true,
+  "whole_file_from144": true,
+  "explanation": "README is sdist build input. Replacement preserves not-full, unexecuted=acceptance and no runtime lanes (item/lane variable rename), replaces obsolete no preparation assertion with selected sdist/dependencies and unselected wheelhouse. No unsuccessful node removed; exact outcomes checked separately.",
+  "hashes": {
+    "91827360c185cbf813277bf32a6627d894b1b20a": "018374e6df865642e87cb8ec02c15006052e1f5420ec7555d817fb7dc93ecace",
+    "fee364c6d61a5feebf08dbdd830a5a57ee2d872b": "ee511d449cd06547003b1817751a361bf1d85b63fb4f55664c1ff7b95585460e",
+    "ededcd83eb2d99a602ba18c8fe3c177125c825ac": "ee511d449cd06547003b1817751a361bf1d85b63fb4f55664c1ff7b95585460e"
+  }
+}

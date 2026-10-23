@@ -1,0 +1,22 @@
+{
+  "scope": "I4/I5 pytest only; combine I6 subreview selection before overall installed coverage claims",
+  "source_collection_sha256": "5f00861760b9ace3c313ad020f4b90568d0384790fe57d47d15f5972b4120a10",
+  "records": [
+    {
+      "artifact": "direct",
+      "ordinary_source_nodes": 6497,
+      "distribution_pytest_source_nodes": 246,
+      "ordinary_unrun_in_distribution_subscope": 6251,
+      "unrun_path": "direct-distribution-only-unrun.txt.gz",
+      "unrun_gzip_sha256": "8efc6dd6811590956b834be7ee67e8d4ba912d2e234db50e109e6ee4f2e4433b"
+    },
+    {
+      "artifact": "derived",
+      "ordinary_source_nodes": 6497,
+      "distribution_pytest_source_nodes": 246,
+      "ordinary_unrun_in_distribution_subscope": 6251,
+      "unrun_path": "derived-distribution-only-unrun.txt.gz",
+      "unrun_gzip_sha256": "8efc6dd6811590956b834be7ee67e8d4ba912d2e234db50e109e6ee4f2e4433b"
+    }
+  ]
+}

@@ -1,0 +1,79 @@
+{
+  "boundaries": [
+    {
+      "actual_closed_zip_bytes": 2097151,
+      "exit": 0,
+      "expanded_bytes": 2096216,
+      "input_bytes": 2095810,
+      "input_sha256": "2ea382c5be6eaacb81d0acb4b3a56d059caa3934a3e973f5f0edc13862ed7fb0",
+      "members": 3,
+      "sha256": "1a83360a886ebee09995bb3deccd20ebea3e97080355c1a346c14887f7ce02b2",
+      "stderr": "",
+      "stdout_bytes": 3285724,
+      "stdout_sha256": "c307a9809fa7edbd42e23a15bb866020dee0e1e4fa5809dd01ce95de6fcb75e5",
+      "target_bytes": 2097151
+    },
+    {
+      "actual_closed_zip_bytes": 2097152,
+      "exit": 0,
+      "expanded_bytes": 2096217,
+      "input_bytes": 2095811,
+      "input_sha256": "ce7713670b1d32ba8046649c3ab0d387081d51c98aee51f8ac110ad86c031067",
+      "members": 3,
+      "sha256": "6da0089237547474d36643fa2e7ea65b80b73c42bc72ac4dc85f339903abca39",
+      "stderr": "",
+      "stdout_bytes": 3285724,
+      "stdout_sha256": "58a4a26f19def544582d358f41cbb6384c5abb9ff70be16fc9cb6d628223605d",
+      "target_bytes": 2097152
+    },
+    {
+      "actual_closed_zip_bytes": 2097153,
+      "exit": 1,
+      "expanded_bytes": 2096218,
+      "input_bytes": 2095812,
+      "input_sha256": "c2abac729f3bcf35328535e28de3a0248acafd539a79150b5d2bea75ab47c9f9",
+      "members": 3,
+      "sha256": "c34901702632632b2b652d4cf8d9afd1459e6235476adb518e593dd5220ee7ab",
+      "stderr": "CI receipt exceeds 2 MiB compressed; retrieve the uploaded GitHub Actions artifact\n",
+      "stdout_bytes": 0,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "target_bytes": 2097153
+    },
+    {
+      "actual_closed_zip_bytes": 2323560,
+      "exit": 1,
+      "expanded_bytes": 2322555,
+      "input_bytes": 2322149,
+      "input_sha256": "6612d6f501db0ca9200e7973f45c87fd7714865bdebf2223546e0eed6728675c",
+      "members": 3,
+      "sha256": "6a02606c82c1e19a205e5897b54a628e2d4eb1460742ce6145b3f354b3993713",
+      "stderr": "CI receipt exceeds 2 MiB compressed; retrieve the uploaded GitHub Actions artifact\n",
+      "stdout_bytes": 0,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "target_bytes": 2323560
+    },
+    {
+      "actual_closed_zip_bytes": 6660,
+      "case": "expanded-over-limit-compressed-under-limit",
+      "exit": 0,
+      "expanded_bytes": 6120406,
+      "input_bytes": 6120000,
+      "members": 3,
+      "sha256": "59588564620b08c8d8e06ae3a7d4f79a097e9391ae5b7b28ad8942b0129be8db",
+      "stderr": "",
+      "stdout_bytes": 10609,
+      "stdout_sha256": "92cafeb09ca4f17cd235cb982e1a72071e566c04e608172ec2b14850a5ea09a7"
+    }
+  ],
+  "emitter_sha256": "e5358d725e4c32ad290ecc0630fe2f31878f3de0ec6d9f1f42e003a89e6d09fa",
+  "fixture_binding": {
+    "head": "7e204320d894b035380f16431395d0f925f34b0a",
+    "run_attempt": "1",
+    "run_id": "155000001",
+    "tree": "ac999f500e3227f8d7b2b37a6bfdbf85d0158a0b"
+  },
+  "hosted_overflow_executed": false,
+  "source_head": "fee364c6d61a5feebf08dbdd830a5a57ee2d872b",
+  "workflow_sha256": "90126c25c10ada71720d3e5183e833e951f99ad70f2a0f97977ddd23b758acd5",
+  "wrapper_sha256": "c44cf298e871f1c50127fa5e45573ff3b77ed74971ef376af4d705a4f8b6aefa"
+}

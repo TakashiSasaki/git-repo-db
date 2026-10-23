@@ -1,0 +1,36 @@
+{
+  "reviewed_head": "fee364c6d61a5feebf08dbdd830a5a57ee2d872b",
+  "reviewed_tree": "ace7e44cd89194d189a30a0aa6cf513a45b3b87c",
+  "verdict": "FAIL",
+  "severity_counts": {"Critical": 0, "High": 0, "Medium": 1, "Low": 1},
+  "findings": [
+    {
+      "id": "I155-M01",
+      "severity": "Medium",
+      "blocking": true,
+      "title": "Admission scanner queues children after exhausting remaining work without reservation",
+      "source": "src/repo_catalog/domain/context_admission.py:358-391",
+      "requirements": ["R04", "R13", "ADR0023", "ADR0024", "ADR0025"],
+      "inherited_from_published_154": true,
+      "reproduced_forms": ["source154", "source155", "direct installed wheel", "sdist-derived installed wheel"],
+      "minimal_real_case": {"members": 1000, "members_json_utf8_bytes": 58891, "work_limit": 10000, "prior_work": 9992, "queue_before": 2, "queue_after": 1002, "used_work_at_extension": 10000, "refusal_used_work": 10001, "policy_calls": 0, "rows_before": 0, "rows_after": 0},
+      "evidence": ["scanner/REPORT.md", "scanner/summary.json", "scanner/executions.json", "scanner/store-source155.json", "i6/queue-confirmation.json"],
+      "impact": "Violates actual cumulative/selection work bounds before variable allocation. No authorization bypass, partial persistence, or unlimited-allocation claim.",
+      "resolution": "Separate later Author correction and independent re-review; no product repair in this review PR."
+    },
+    {
+      "id": "HCI-L01",
+      "severity": "Low",
+      "blocking": false,
+      "title": "Author shared-path SHA256 provenance hashes whitespace-stripped bytes",
+      "evidence": ["history-ci/provenance-sha256-observation.json", "history-ci/history-results.json"],
+      "impact": "24 SHA256 fields do not hash complete blob bytes. Git blob OIDs are correct and independent complete-byte provenance verifies; no product mismatch.",
+      "resolution": "Preserve historical evidence; use complete bytes in future provenance emitters."
+    }
+  ],
+  "not_findings": [
+    "Inherited 279 failures and 20 errors are not the basis of scoped FAIL.",
+    "Current Access receipt retrieval lacks 90 bytes; strict verification fails closed. This is a present evidence-access limit, not a product defect.",
+    "Unconnected normal I6-C/Provider/Exchange/Transfer routes and unrun hosted overflow/Release remain visible obligations."
+  ]
+}

@@ -1,0 +1,146 @@
+[
+  {
+    "label": "source155",
+    "command": [
+      "/workspace/pr155-review-runtime/bin/python",
+      "/workspace/pr155-independent-review/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/scanner/study.py",
+      "--output",
+      "/workspace/pr155-independent-review/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/scanner/source155.json"
+    ],
+    "pythonpath": "/workspace/pr155-independent-review/src",
+    "script_sha256": "c552c978dc8fd084f0122497f92c72d44dfee963e3e2b2bfe1e8c41a74eb0130",
+    "observer_sha256": "c552c978dc8fd084f0122497f92c72d44dfee963e3e2b2bfe1e8c41a74eb0130",
+    "started_unix": 1792789720.794428,
+    "ended_unix": 1792789730.045918,
+    "exit": 0,
+    "stdout": "{\"output\": \"/workspace/pr155-independent-review/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/scanner/source155.json\", \"admission_cases\": 17, \"bounded_json_cases\": 22, \"planner_cases\": 6}\n",
+    "stderr": "",
+    "output_sha256": "69c9b1287b548ce75b1456e978d681217017632d1320b3346016e7414ed7ba43"
+  },
+  {
+    "label": "source155",
+    "command": [
+      "/workspace/pr155-review-runtime/bin/python",
+      "/workspace/pr155-independent-review/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/scanner/store_case.py",
+      "--output",
+      "/workspace/pr155-independent-review/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/scanner/store-source155.json"
+    ],
+    "pythonpath": "/workspace/pr155-independent-review/src",
+    "script_sha256": "4398014611521ff4df964a8701c2d8ef3dd7f7e3d6cd6b083052ddddb4a809b8",
+    "observer_sha256": "c552c978dc8fd084f0122497f92c72d44dfee963e3e2b2bfe1e8c41a74eb0130",
+    "started_unix": 1792789730.0465739,
+    "ended_unix": 1792789734.1678677,
+    "exit": 0,
+    "stdout": "[{\"children\": 16, \"remaining\": 8, \"selection\": 10000, \"outcome\": \"AdmissionRefused\", \"queue_max\": 18, \"used_work\": 10001, \"policy_calls\": 0, \"rows_after\": 0}, {\"children\": 1000, \"remaining\": 8, \"selection\": 10000, \"outcome\": \"AdmissionRefused\", \"queue_max\": 1002, \"used_work\": 10001, \"policy_calls\": 0, \"rows_after\": 0}, {\"children\": 1000, \"remaining\": 0, \"selection\": 10000, \"outcome\": \"AdmissionRefused\", \"queue_max\": 1, \"used_work\": 10001, \"policy_calls\": 0, \"rows_after\": 0}, {\"children\": 1000, \"remaining\": 10000, \"selection\": 7, \"outcome\": \"AdmissionRefused\", \"queue_max\": 1002, \"used_work\": 8, \"policy_calls\": 0, \"rows_after\": 0}]\n",
+    "stderr": "",
+    "output_sha256": "d58231bd51b0d7cc77032383a3c5fc09c87b63dbe3878d7c83a011acd9ec6c72"
+  },
+  {
+    "label": "source154",
+    "command": [
+      "/workspace/pr155-review-runtime/bin/python",
+      "/workspace/pr155-independent-review/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/scanner/study.py",
+      "--output",
+      "/workspace/pr155-independent-review/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/scanner/source154.json"
+    ],
+    "pythonpath": "/workspace/pr155-review-artifacts/source154/src",
+    "script_sha256": "c552c978dc8fd084f0122497f92c72d44dfee963e3e2b2bfe1e8c41a74eb0130",
+    "observer_sha256": "c552c978dc8fd084f0122497f92c72d44dfee963e3e2b2bfe1e8c41a74eb0130",
+    "started_unix": 1792789734.172232,
+    "ended_unix": 1792789745.318209,
+    "exit": 0,
+    "stdout": "{\"output\": \"/workspace/pr155-independent-review/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/scanner/source154.json\", \"admission_cases\": 17, \"bounded_json_cases\": 22, \"planner_cases\": 6}\n",
+    "stderr": "",
+    "output_sha256": "9b42913531e9be1b93df24c17f05ba5fe7480aff50c06202796995bec39e2aeb"
+  },
+  {
+    "label": "source154",
+    "command": [
+      "/workspace/pr155-review-runtime/bin/python",
+      "/workspace/pr155-independent-review/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/scanner/store_case.py",
+      "--output",
+      "/workspace/pr155-independent-review/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/scanner/store-source154.json"
+    ],
+    "pythonpath": "/workspace/pr155-review-artifacts/source154/src",
+    "script_sha256": "4398014611521ff4df964a8701c2d8ef3dd7f7e3d6cd6b083052ddddb4a809b8",
+    "observer_sha256": "c552c978dc8fd084f0122497f92c72d44dfee963e3e2b2bfe1e8c41a74eb0130",
+    "started_unix": 1792789745.3188486,
+    "ended_unix": 1792789749.7166836,
+    "exit": 0,
+    "stdout": "[{\"children\": 16, \"remaining\": 8, \"selection\": 10000, \"outcome\": \"AdmissionRefused\", \"queue_max\": 18, \"used_work\": 10001, \"policy_calls\": 0, \"rows_after\": 0}, {\"children\": 1000, \"remaining\": 8, \"selection\": 10000, \"outcome\": \"AdmissionRefused\", \"queue_max\": 1002, \"used_work\": 10001, \"policy_calls\": 0, \"rows_after\": 0}, {\"children\": 1000, \"remaining\": 0, \"selection\": 10000, \"outcome\": \"AdmissionRefused\", \"queue_max\": 1, \"used_work\": 10001, \"policy_calls\": 0, \"rows_after\": 0}, {\"children\": 1000, \"remaining\": 10000, \"selection\": 7, \"outcome\": \"AdmissionRefused\", \"queue_max\": 1002, \"used_work\": 8, \"policy_calls\": 0, \"rows_after\": 0}]\n",
+    "stderr": "",
+    "output_sha256": "f236028e69527bf1edefa659d283edb2c3659d60770d29e01cf291da698d9165"
+  },
+  {
+    "label": "direct",
+    "command": [
+      "/workspace/pr155-review-artifacts/distribution/direct-venv/bin/python",
+      "/workspace/pr155-independent-review/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/scanner/study.py",
+      "--output",
+      "/workspace/pr155-independent-review/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/scanner/direct.json"
+    ],
+    "pythonpath": null,
+    "script_sha256": "c552c978dc8fd084f0122497f92c72d44dfee963e3e2b2bfe1e8c41a74eb0130",
+    "observer_sha256": "c552c978dc8fd084f0122497f92c72d44dfee963e3e2b2bfe1e8c41a74eb0130",
+    "started_unix": 1792789749.7170424,
+    "ended_unix": 1792789764.9155087,
+    "exit": 0,
+    "stdout": "{\"output\": \"/workspace/pr155-independent-review/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/scanner/direct.json\", \"admission_cases\": 17, \"bounded_json_cases\": 22, \"planner_cases\": 6}\n",
+    "stderr": "",
+    "output_sha256": "714963c3cc296b5fb8c9857f8632f2411c2e7e72fb7009b8db0cb5d5e805aead"
+  },
+  {
+    "label": "direct",
+    "command": [
+      "/workspace/pr155-review-artifacts/distribution/direct-venv/bin/python",
+      "/workspace/pr155-independent-review/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/scanner/store_case.py",
+      "--output",
+      "/workspace/pr155-independent-review/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/scanner/store-direct.json"
+    ],
+    "pythonpath": null,
+    "script_sha256": "4398014611521ff4df964a8701c2d8ef3dd7f7e3d6cd6b083052ddddb4a809b8",
+    "observer_sha256": "c552c978dc8fd084f0122497f92c72d44dfee963e3e2b2bfe1e8c41a74eb0130",
+    "started_unix": 1792789764.9159858,
+    "ended_unix": 1792789770.1738691,
+    "exit": 0,
+    "stdout": "[{\"children\": 16, \"remaining\": 8, \"selection\": 10000, \"outcome\": \"AdmissionRefused\", \"queue_max\": 18, \"used_work\": 10001, \"policy_calls\": 0, \"rows_after\": 0}, {\"children\": 1000, \"remaining\": 8, \"selection\": 10000, \"outcome\": \"AdmissionRefused\", \"queue_max\": 1002, \"used_work\": 10001, \"policy_calls\": 0, \"rows_after\": 0}, {\"children\": 1000, \"remaining\": 0, \"selection\": 10000, \"outcome\": \"AdmissionRefused\", \"queue_max\": 1, \"used_work\": 10001, \"policy_calls\": 0, \"rows_after\": 0}, {\"children\": 1000, \"remaining\": 10000, \"selection\": 7, \"outcome\": \"AdmissionRefused\", \"queue_max\": 1002, \"used_work\": 8, \"policy_calls\": 0, \"rows_after\": 0}]\n",
+    "stderr": "",
+    "output_sha256": "9d944614300d429bb56180c3b00956ca5d77e061e582bcccc70608de3fe39c15"
+  },
+  {
+    "label": "derived",
+    "command": [
+      "/workspace/pr155-review-artifacts/distribution/derived-venv/bin/python",
+      "/workspace/pr155-independent-review/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/scanner/study.py",
+      "--output",
+      "/workspace/pr155-independent-review/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/scanner/derived.json"
+    ],
+    "pythonpath": null,
+    "script_sha256": "c552c978dc8fd084f0122497f92c72d44dfee963e3e2b2bfe1e8c41a74eb0130",
+    "observer_sha256": "c552c978dc8fd084f0122497f92c72d44dfee963e3e2b2bfe1e8c41a74eb0130",
+    "started_unix": 1792789770.1742022,
+    "ended_unix": 1792789783.1357677,
+    "exit": 0,
+    "stdout": "{\"output\": \"/workspace/pr155-independent-review/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/scanner/derived.json\", \"admission_cases\": 17, \"bounded_json_cases\": 22, \"planner_cases\": 6}\n",
+    "stderr": "",
+    "output_sha256": "029cdb2ba77cc0d0b5060555f5d146f9f6dd4d4e5386ca60100442d6f7f2162b"
+  },
+  {
+    "label": "derived",
+    "command": [
+      "/workspace/pr155-review-artifacts/distribution/derived-venv/bin/python",
+      "/workspace/pr155-independent-review/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/scanner/store_case.py",
+      "--output",
+      "/workspace/pr155-independent-review/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/scanner/store-derived.json"
+    ],
+    "pythonpath": null,
+    "script_sha256": "4398014611521ff4df964a8701c2d8ef3dd7f7e3d6cd6b083052ddddb4a809b8",
+    "observer_sha256": "c552c978dc8fd084f0122497f92c72d44dfee963e3e2b2bfe1e8c41a74eb0130",
+    "started_unix": 1792789783.136228,
+    "ended_unix": 1792789787.7270186,
+    "exit": 0,
+    "stdout": "[{\"children\": 16, \"remaining\": 8, \"selection\": 10000, \"outcome\": \"AdmissionRefused\", \"queue_max\": 18, \"used_work\": 10001, \"policy_calls\": 0, \"rows_after\": 0}, {\"children\": 1000, \"remaining\": 8, \"selection\": 10000, \"outcome\": \"AdmissionRefused\", \"queue_max\": 1002, \"used_work\": 10001, \"policy_calls\": 0, \"rows_after\": 0}, {\"children\": 1000, \"remaining\": 0, \"selection\": 10000, \"outcome\": \"AdmissionRefused\", \"queue_max\": 1, \"used_work\": 10001, \"policy_calls\": 0, \"rows_after\": 0}, {\"children\": 1000, \"remaining\": 10000, \"selection\": 7, \"outcome\": \"AdmissionRefused\", \"queue_max\": 1002, \"used_work\": 8, \"policy_calls\": 0, \"rows_after\": 0}]\n",
+    "stderr": "",
+    "output_sha256": "a85aedcccaa9fab26ff73249abe81e84342b07b9567885b1ebac0f31e18171d8"
+  }
+]

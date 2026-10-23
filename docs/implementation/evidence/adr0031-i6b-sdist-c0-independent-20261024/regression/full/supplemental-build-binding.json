@@ -1,0 +1,16 @@
+{
+  "source": "fee364c6d61a5feebf08dbdd830a5a57ee2d872b",
+  "tracked_before_after_clean": true,
+  "extra_build_inputs_sha256": {
+    ".github/actions/product-python/action.yml": "5424a8e28df0fc6100b23815e0f45cff2e7b510d78fc5f9c86352561cd5bd079",
+    ".gitignore": "e8d0ea1a45ced44a473563efabba2bbf431100e64c43938d65656c3260b69150",
+    "README.md": "f4997870b7c4894121f21127b16efe3b995c54270ee675f40e6ccaeba6772dd2"
+  },
+  "comparison": "Each tracked extra file matches source Git blob; clean tracked status before/after binds each to this same HEAD. No untracked-clean Release claim.",
+  "combined_input_count": 493,
+  "executed_observer_hashes_unchanged": {
+    "run_source_review.py": true,
+    "broad_receipt.py": true,
+    "statement_trace.py": true
+  }
+}

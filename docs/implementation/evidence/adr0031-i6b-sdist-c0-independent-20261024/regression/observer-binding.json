@@ -1,0 +1,13 @@
+{
+  "full_executed_runner_and_observers_unchanged": {
+    "run_source_review.py": true,
+    "broad_receipt.py": true,
+    "statement_trace.py": true
+  },
+  "additional_analysis_tools_created_during_full": [
+    "node_replacement_review.py",
+    "reconcile_review.py",
+    "transport_review.py"
+  ],
+  "limit": "These added analyzers are outside tested source; no execution-tree or active observer changed."
+}
