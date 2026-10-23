@@ -1,0 +1,50 @@
+{
+  "source_head": "a7825249e0722053a66919d47ad92662854c856c",
+  "source_tree": "2c61c7d79bf9a95c4f04ccdbda8fae1fe15d5491",
+  "all_nodes": 6231,
+  "ordinary_nodes": 6229,
+  "source_executed_passed": 562,
+  "source_unexecuted_ordinary": 5667,
+  "special_unexecuted": [
+    "tests/e2e/test_github_sync.py::test_nested_pagination_stress_workload",
+    "tests/live/test_smoke.py::test_selected_repository"
+  ],
+  "source_tests_by_file": {
+    "tests/unit/test_transfer_originals.py": 32,
+    "tests/unit/test_context_admission.py": 48,
+    "tests/integration/i6a/test_originals_revalidation.py": 75,
+    "tests/unit/test_ci_plan.py": 101,
+    "tests/packaging/test_sdist_hardening.py": 94,
+    "tests/unit/test_context_capability_preflight.py": 21,
+    "tests/integration/i6a/test_admission.py": 62,
+    "tests/unit/test_installed_test_harness.py": 4,
+    "tests/packaging/test_sdist_contract.py": 37,
+    "tests/unit/test_context_admission_bounds_i6a.py": 2,
+    "tests/unit/test_context_fences_i6a.py": 21,
+    "tests/unit/test_context_refusal_order_i6a.py": 6,
+    "tests/unit/test_i6a_regression_bindings.py": 27,
+    "tests/unit/test_context_oid_admission_i6a.py": 12,
+    "tests/unit/test_context_coordinator_admission.py": 11,
+    "tests/unit/test_emit_ci_evidence.py": 7,
+    "tests/packaging/test_p1_distribution.py": 2
+  },
+  "installed_each": {
+    "I6_focused": 290,
+    "I4": 217,
+    "I5": 29,
+    "original_Access_smoke_exit": 1,
+    "original_Access_smoke_first_refusal": "PERMISSION_DENIED"
+  },
+  "installed_I6_subset_of_source_focus": {
+    "direct": {
+      "nodes": 290,
+      "matches_source_selected_subset": true
+    },
+    "sdist": {
+      "nodes": 290,
+      "matches_source_selected_subset": true
+    }
+  },
+  "no_full_release_acceptance": true,
+  "note": "Installed repeats overlap source focus. I4/I5 copied-module names remain separate and are not aggregated as unique source coverage."
+}

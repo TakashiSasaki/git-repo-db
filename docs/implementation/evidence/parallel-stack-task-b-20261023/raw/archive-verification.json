@@ -1,0 +1,81 @@
+{
+  "recorded_utc": "2026-10-23T11:07:27.995127+00:00",
+  "verdict": "PASS",
+  "outer_archive": {
+    "archive": "raw-evidence.zip",
+    "bytes": 2190227,
+    "sha256": "100838da2f7a10e6dc646d172eec7aa276ad03ea2a9c4d9fb6096150a40ebcf6",
+    "members": 295,
+    "unpacked_bytes": 17817720,
+    "unique_safe_member_names_and_crc": true
+  },
+  "external_index_sha256": "69a2bc2a794e97fd9779b4d376f8b66d810e02080bb5f1b3acca42593976228a",
+  "archives": [
+    {
+      "archive": "raw-evidence.zip",
+      "bytes": 2190227,
+      "sha256": "100838da2f7a10e6dc646d172eec7aa276ad03ea2a9c4d9fb6096150a40ebcf6",
+      "members": 295,
+      "unpacked_bytes": 17817720,
+      "unique_safe_member_names_and_crc": true
+    },
+    {
+      "archive": "raw-evidence.zip::ci-subaudit/raw-evidence.zip",
+      "bytes": 358169,
+      "sha256": "2d19e6db079eafe1a7a30c773aea3399515942119278609d71964253460d5be8",
+      "members": 58,
+      "unpacked_bytes": 2321673,
+      "unique_safe_member_names_and_crc": true
+    },
+    {
+      "archive": "raw-evidence.zip::ci-subaudit/raw-evidence.zip::pr148-receipts.zip",
+      "bytes": 71952,
+      "sha256": "e5e15b395bd76f86e2d130ccd055d9d0cd127a03058cd57fab787f43d489651e",
+      "members": 22,
+      "unpacked_bytes": 445436,
+      "unique_safe_member_names_and_crc": true
+    }
+  ],
+  "indices": [
+    {
+      "index": "raw-evidence.zip::external-index",
+      "entries_verified": 295,
+      "prefix": ""
+    },
+    {
+      "index": "raw-evidence.zip::ci-subaudit/artifact-index.json",
+      "entries_verified": 57,
+      "prefix": "ci-subaudit/"
+    },
+    {
+      "index": "raw-evidence.zip::ci-subaudit/raw-evidence.zip::artifact-index.json",
+      "entries_verified": 57,
+      "prefix": ""
+    },
+    {
+      "index": "raw-evidence.zip::ci-subaudit/raw-evidence.zip::pr148-receipts.zip::receipt-index.json",
+      "entries_verified": 21,
+      "prefix": ""
+    },
+    {
+      "index": "raw-evidence.zip::design-subaudit/deliverable-index.json",
+      "entries_verified": 9,
+      "prefix": "design-subaudit/"
+    },
+    {
+      "index": "raw-evidence.zip::independent/artifact-index.json",
+      "entries_verified": 32,
+      "prefix": "independent/"
+    }
+  ],
+  "frozen_independent_payload_files_verified": 33,
+  "exact_resolution_patches_verified": [
+    "merge-patches/resolution-c0-i6a-sdist.patch",
+    "merge-patches/resolution-c0-sdist-i6a.patch",
+    "merge-patches/resolution-i6a-c0-sdist.patch",
+    "merge-patches/resolution-i6a-sdist-c0.patch",
+    "merge-patches/resolution-sdist-c0-i6a.patch",
+    "merge-patches/resolution-sdist-i6a-c0.patch"
+  ],
+  "scope": "Read-only indexed evidence integrity and transport audit; no product tests, GitHub writes or Release acceptance."
+}

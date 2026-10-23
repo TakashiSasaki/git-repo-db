@@ -1,0 +1,27 @@
+{
+  "consistent_success": true,
+  "selected": 560,
+  "starts": 560,
+  "junit": 560,
+  "phases": 1680,
+  "junit_results": {
+    "passed": 560
+  },
+  "checks": {
+    "nonempty_unique_selected": true,
+    "selected_equals_starts": true,
+    "selected_equals_junit": true,
+    "each_phase_exactly_once": true,
+    "all_phases_passed": true,
+    "junit_all_passed": true,
+    "successful_finish": true,
+    "process_exit_zero": true
+  },
+  "missing_start_examples": [],
+  "extra_start_examples": [],
+  "execution_source": {
+    "head": null,
+    "tree": null
+  },
+  "scope": "Evidence consistency only; not source binding, authenticity or Release Acceptance."
+}

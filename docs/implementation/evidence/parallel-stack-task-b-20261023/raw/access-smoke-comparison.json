@@ -1,0 +1,20 @@
+{
+  "direct": {
+    "historical_git_path": "ea43a21:docs/implementation/evidence/adr0031-i6a/remediation-20261023/installed-harness/final/direct-access.log.gz",
+    "historical_uncompressed_sha256": "2eea93c4a5fc5aaa9f021a8f243c7f3a867dd3f91007a0b2c81b7d9505fdaeec",
+    "current_sha256": "91c62854d9e4584c7c9308578d9d525a7cf33acf725d99f7a557b1c69e43e2d3",
+    "identical_except_recorded_harness_and_venv_roots": true,
+    "first_reached": "ExchangeService.export_package line397 AdmissionRefused(PERMISSION_DENIED)",
+    "exit_code": 1,
+    "unexecuted": "Downstream original Access assertions including normal Transfer are not reached."
+  },
+  "sdist": {
+    "historical_git_path": "ea43a21:docs/implementation/evidence/adr0031-i6a/remediation-20261023/installed-harness/final/sdist-access.log.gz",
+    "historical_uncompressed_sha256": "5a596b558627e600661c9ede6cd57b544a34de53e70ae6246d3a235ae5ba1464",
+    "current_sha256": "a914e6f17d50b8aa7d5fb1b294a80a329727d637d3252a06a40faad750c11df8",
+    "identical_except_recorded_harness_and_venv_roots": true,
+    "first_reached": "ExchangeService.export_package line397 AdmissionRefused(PERMISSION_DENIED)",
+    "exit_code": 1,
+    "unexecuted": "Downstream original Access assertions including normal Transfer are not reached."
+  }
+}

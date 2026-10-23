@@ -7,6 +7,35 @@ description: Verify git-repo-db CI status and test execution against the exact f
 
 Use `docs/change-aware-ci.md`, `docs/testing.md`, and `scripts/ci_dependencies.json` as the live contracts. Follow [ADR 0032](../../../docs/adr/0032-environment-sqlite-validation.md) for the environment's Python-loaded SQLite; one version per environment suffices for development and release. Distinguish ordinary development validation from explicit release acceptance.
 
+## Audit parallel stacks without publishing product integration
+
+When an evidence task names several reviewed sibling heads, pin each API head
+and actual commit/tree first. Compute pairwise merge bases and changed paths
+against their real common ancestor. A shared-file count is not a conflict count:
+`merge-tree --write-tree` can merge independent hunks cleanly while omitting no
+text and still leave semantic interactions to test. Preserve unresolved results,
+then materialize a documented union hypothesis only in detached disposable
+worktrees. Compare effective trees across intended orders and verify each
+parent's required changes rather than selecting one whole conflicted file.
+
+Recompute product inputs from the combined source. A minimal-sdist sibling's
+older file count is not a target for a newer product roster. Check complete
+wheel/RECORD and SQL/JSON/GraphQL bytes separately from installed-test harness
+support. Record the first reached smoke refusal and its unexecuted downstream
+assertions; a current permission refusal cannot be relabeled as an older Transfer
+refusal merely because both drivers return 1. Keep normal exact-fence checks,
+isolated fixture positives and future normal Transfer acceptance distinct.
+
+For CI selection, inspect workflow triggers, the internal planner, alternative
+workflows and development/release obligations independently. Reproduce one-file
+changes with clean local Git objects and retain required/unexecuted files.
+An absent broad runtime workflow is a coverage limit, not by itself a defect in
+a policy that deliberately avoids duplicate hosted development execution.
+Use this procedure for bounded audit evidence, not as merge/retarget/fence-removal
+permission or as a substitute for later integrated release acceptance. The
+[parallel-stack audit](../../../docs/implementation/evidence/parallel-stack-task-b-20261023/README.md)
+records six independent order simulations and their scoped execution evidence.
+
 ## Stacked integration trees and merge authorization fences
 
 Separate feature-tree acceptance does not prove their combined executable tree.

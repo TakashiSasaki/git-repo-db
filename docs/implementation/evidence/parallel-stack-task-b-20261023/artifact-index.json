@@ -1,0 +1,148 @@
+{
+  "format": "parallel-stack-task-b-artifact-index-v1",
+  "generated_utc": "2026-10-23T11:08:52.397795+00:00",
+  "note": "Artifact index excludes itself. The skill entry resolves from the repository root path below, not by following an archive extraction path.",
+  "repo_skill_path": ".agents/skills/ci-final-tree-verification/SKILL.md",
+  "files": {
+    "archive-review.zip": {
+      "bytes": 8307,
+      "sha256": "a27fcfb9b1035d4c57dedac052ec0233553b1ed4666346a656b2b7751e9e0237"
+    },
+    "DESIGN-REVIEW.md": {
+      "bytes": 12459,
+      "sha256": "b86f7499d636f34880f95cc14164e9a29620c2c485e2c09c7ea0b8e1fc1c997e"
+    },
+    "CI-AUDIT.md": {
+      "bytes": 7429,
+      "sha256": "45811860e4837d6e1f631b91a9468853ced7bbb92747a3477e886e20898a9b1f"
+    },
+    "PLAN.md": {
+      "bytes": 7525,
+      "sha256": "70beab02f2b5007741a432792b68cd84560dc79957a98a0fb22a8588533b13c4"
+    },
+    "DAG.md": {
+      "bytes": 13299,
+      "sha256": "a040631f203bf6d46e580a86a7fa28532805842a07edd653ccd1366d9eb2d82b"
+    },
+    "raw-evidence.zip": {
+      "bytes": 2190227,
+      "sha256": "100838da2f7a10e6dc646d172eec7aa276ad03ea2a9c4d9fb6096150a40ebcf6"
+    },
+    "INDEPENDENT-REVIEW.md": {
+      "bytes": 8258,
+      "sha256": "878417ae5406ba382aa0aab2238675c7cca917892feb39e6b64fcdd6050b5d0a"
+    },
+    "README.md": {
+      "bytes": 14779,
+      "sha256": "7634db8c4025a73c6ba46935924f32762b05ce635d62a1cecbafc19bb113cf96"
+    },
+    "raw-evidence-index.json": {
+      "bytes": 46523,
+      "sha256": "69a2bc2a794e97fd9779b4d376f8b66d810e02080bb5f1b3acca42593976228a"
+    },
+    "raw/graph-commands.json": {
+      "bytes": 877178,
+      "sha256": "557d994633881b872bdde5fe90a6e4d4ef37b34f894061016a3387972325107d"
+    },
+    "raw/runtime.json": {
+      "bytes": 2831,
+      "sha256": "5d63ebb5f9b28607df0f046896d657154524e4aa77f5638becb50594eaaa402a"
+    },
+    "raw/shared-p1-reconciliation.json": {
+      "bytes": 646,
+      "sha256": "fbb85bdd2ac78afb561051ff27d9c646caa597f32a7e6b27fe990c919ea77056"
+    },
+    "raw/resolved-candidates.json": {
+      "bytes": 2451,
+      "sha256": "59cb27a1b94c8f7767f448b600eef3a6d9f06959925620b62eac62b9ce67a8e1"
+    },
+    "raw/installed-i6-sdist-reconciliation.json": {
+      "bytes": 732,
+      "sha256": "a44bb3ab4955a1e225c9b4814c8fb4e9cbd50805fc123c8f1fe973dbb0485fb3"
+    },
+    "raw/fixed-overlap.json": {
+      "bytes": 180432,
+      "sha256": "7251cf6c9ce9420cebd0ca0243427c7007a5da3f34c42e0fd1f9f4d6414d0512"
+    },
+    "raw/installed-i6-direct-reconciliation.json": {
+      "bytes": 732,
+      "sha256": "a44bb3ab4955a1e225c9b4814c8fb4e9cbd50805fc123c8f1fe973dbb0485fb3"
+    },
+    "raw/historical-i6a-direct-access.log": {
+      "bytes": 625,
+      "sha256": "2eea93c4a5fc5aaa9f021a8f243c7f3a867dd3f91007a0b2c81b7d9505fdaeec"
+    },
+    "raw/remote-refs-prepublication.json": {
+      "bytes": 1041,
+      "sha256": "e25f6c2402af237be936f34a83bcb6978f683fb7243f29d1a228f088208e895c"
+    },
+    "raw/final-input-binding.json": {
+      "bytes": 757,
+      "sha256": "52596db3899f5eff92e4ee402c1dff7344b4c1e73afcec42a56dc3dd90c2ce36"
+    },
+    "raw/historical-i6a-sdist-access.log": {
+      "bytes": 624,
+      "sha256": "5a596b558627e600661c9ede6cd57b544a34de53e70ae6246d3a235ae5ba1464"
+    },
+    "raw/fixed-api-start.json": {
+      "bytes": 54413,
+      "sha256": "8890c76515c98f7f4b53786c6cbff52b2bdcb872afb87da86cd8c2a2442f05bd"
+    },
+    "raw/main-topology-commands.json": {
+      "bytes": 5692,
+      "sha256": "993acc544f97bd41057630660503855e78600809f5fe6f846891cfaf2a7fab69"
+    },
+    "raw/access-smoke-comparison.json": {
+      "bytes": 1285,
+      "sha256": "ef46c65eb5bb35b9d3ecfe419bec4038658a407c747b371ea63dd42216d60e9f"
+    },
+    "raw/merge-commands.json": {
+      "bytes": 36695,
+      "sha256": "28a2f1c7c130a29670c4e27e23c665a506b0d36d92369466a268628fb8aad5fb"
+    },
+    "raw/github-start.json": {
+      "bytes": 46762,
+      "sha256": "213243d701a762393f2b5eed9829e78a4474a2bd72e7596120a11a2d101ee580"
+    },
+    "raw/resolution-commands.json": {
+      "bytes": 48298,
+      "sha256": "2ebcc0dbcc22b0c48097143b1c0697aff3344f24201f9dbd94cbe8b55f062a8f"
+    },
+    "raw/focused-reconciliation.json": {
+      "bytes": 657,
+      "sha256": "cb18480df7b900c676e7ba538e58e811dd7d563f7df777371f1974b1b60769ea"
+    },
+    "raw/distribution-measurements.json": {
+      "bytes": 3301,
+      "sha256": "5088f4c28682cdd0c8eddbb025298f0d2f167777f6b0c60d9c8cb03cca7ea87c"
+    },
+    "raw/github-prepublication.json": {
+      "bytes": 23123,
+      "sha256": "6298bf92ca2b180979abc8dd9b259c3cdea0fc690e29d56049756c95afff32d4"
+    },
+    "raw/merge-simulations.json": {
+      "bytes": 16609,
+      "sha256": "c7fa45e527f06c5ca410302899d15f873ec3ef0aecd0e5c6b58af3efa383a09b"
+    },
+    "raw/main-topology.json": {
+      "bytes": 744,
+      "sha256": "bf3eda0ae695ef2a81c7c78bf596b8baa0c22a2a68ca6b56e0d4b4ab81cbac66"
+    },
+    "raw/final-document-validation.json": {
+      "bytes": 460,
+      "sha256": "2b1f0b36fe3b495b09e47b04b3b06cf672f261ae3312763a6ec74e8526413787"
+    },
+    "raw/archive-verification.json": {
+      "bytes": 2723,
+      "sha256": "209eb07e8f502219cc59b6d344d493060a662e5362391ea4893a6a1cc6803bc8"
+    },
+    "raw/coverage.json": {
+      "bytes": 1915,
+      "sha256": "d004d79806944826e19df7ef780092622ad95a28cb5659c1ce9f5e77b0e2f8a3"
+    },
+    "../../../../.agents/skills/ci-final-tree-verification/SKILL.md": {
+      "bytes": 28694,
+      "sha256": "1c0807f8fb73d8880796fd0cc473ccd2b9f88c7976e88c9eea6fc83e1967e20f"
+    }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "observed_at": "2026-10-23T10:56:55.406488+00:00",
+  "main_head": "cb532242c7aa86c6af5b6232b71c0906ea38f5c5",
+  "main_api_tree": "318ad07874ab436206e6a61f231b308a421cfc54",
+  "main_git_tree": "318ad07874ab436206e6a61f231b308a421cfc54",
+  "main_parents": [
+    "1ccb7f1902127cde649edcf605bb6d5935427302",
+    "d92377599a50f192f534836fc12402a5fe87ca83"
+  ],
+  "merge_bases": {
+    "133": "d92377599a50f192f534836fc12402a5fe87ca83",
+    "149": "d92377599a50f192f534836fc12402a5fe87ca83",
+    "144": "d92377599a50f192f534836fc12402a5fe87ca83",
+    "147": "d92377599a50f192f534836fc12402a5fe87ca83",
+    "candidate": "d92377599a50f192f534836fc12402a5fe87ca83"
+  },
+  "current_main_merge_simulation": "2c61c7d79bf9a95c4f04ccdbda8fae1fe15d5491"
+}

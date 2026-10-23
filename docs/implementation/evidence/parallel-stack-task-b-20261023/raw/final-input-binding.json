@@ -1,0 +1,15 @@
+{
+  "observed_at": "2026-10-23T11:03:54.126826+00:00",
+  "document_base_head": "f16e5b1713bde9a2f18263a25397c4b450fd5773",
+  "document_base_tree": "6bfa580baafa9f6a117b7a0b610c4e65cd031b86",
+  "protected_changes": [],
+  "candidate_head": "a7825249e0722053a66919d47ad92662854c856c",
+  "candidate_tree": "2c61c7d79bf9a95c4f04ccdbda8fae1fe15d5491",
+  "candidate_input_files": 485,
+  "candidate_inputs_unchanged": true,
+  "candidate_input_sha256": "45597d8e58e72dc392527314118a5d561839dd5891ff9ddccffb4bac7327ac16",
+  "procedural_skill_sha256": "1c0807f8fb73d8880796fd0cc473ccd2b9f88c7976e88c9eea6fc83e1967e20f",
+  "skill_frontmatter_valid": true,
+  "test_scope": "read-only input/whitelist verification; no product tests run in this check",
+  "exit_code": 0
+}

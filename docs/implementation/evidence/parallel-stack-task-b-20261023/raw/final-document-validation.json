@@ -1,0 +1,9 @@
+{
+  "exit_code": 0,
+  "local_doc_links_valid": true,
+  "staged_whitespace_exit_code": 0,
+  "scope_whitelist_valid": true,
+  "skill_sha256": "1c0807f8fb73d8880796fd0cc473ccd2b9f88c7976e88c9eea6fc83e1967e20f",
+  "raw_patch_transport": "Literal blank context lines triggered the first staged whitespace check; all six patches are preserved byte-for-byte in the indexed ZIP. No raw patch content was rewritten.",
+  "checked_staged_files_before_this_receipt": 32
+}
