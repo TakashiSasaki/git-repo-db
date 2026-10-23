@@ -1,0 +1,965 @@
+{
+  "count": 16,
+  "proof": [
+    {
+      "nodeid": "tests/integration/i3/test_selective_exchange.py::test_transfer_reports_never_shrunk_or_mixed",
+      "reason": "I2_TRANSFER_UNSUPPORTED",
+      "exception_type": "repo_catalog.domain.resource_stage.UnsupportedResourceStage",
+      "phase": "call",
+      "same_outcome_phase": true,
+      "before_assertion_lines": [],
+      "after_assertion_lines": [],
+      "old_boundary": {
+        "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+        "line": 979,
+        "function": "",
+        "enclosing": "admit_transfer_event",
+        "source": "            raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "new_boundary": {
+        "enclosing": "call",
+        "function": "call",
+        "line": 168,
+        "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+        "source": "                raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "caught_raise_stack": [
+        {
+          "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+          "line": 168,
+          "function": "call"
+        },
+        {
+          "path": "tests/integration/i3/test_selective_exchange.py",
+          "line": 325,
+          "function": "test_transfer_reports_never_shrunk_or_mixed"
+        }
+      ],
+      "safety_controls": "normal schema/fence controls, full-rowset malformed/denied intake and commit/rollback observations execute separately in source and both installed forms; later statements in this failed test stay unproved"
+    },
+    {
+      "nodeid": "tests/integration/p1/test_context_relations.py::test_counterexample_5_transfer_cases_no_invented_endpoints",
+      "reason": "I2_TRANSFER_UNSUPPORTED",
+      "exception_type": "repo_catalog.domain.resource_stage.UnsupportedResourceStage",
+      "phase": "call",
+      "same_outcome_phase": true,
+      "before_assertion_lines": [
+        661,
+        662,
+        663,
+        664,
+        688,
+        689,
+        690
+      ],
+      "after_assertion_lines": [
+        661,
+        662,
+        663,
+        664,
+        688,
+        689,
+        690
+      ],
+      "old_boundary": {
+        "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+        "line": 346,
+        "function": "",
+        "enclosing": "admit_transfer_event",
+        "source": "            raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "new_boundary": {
+        "enclosing": "call",
+        "function": "call",
+        "line": 168,
+        "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+        "source": "                raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "caught_raise_stack": [
+        {
+          "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+          "line": 168,
+          "function": "call"
+        },
+        {
+          "path": "tests/support/authorized_context.py",
+          "line": 65,
+          "function": "write"
+        },
+        {
+          "path": "tests/integration/p1/test_context_relations.py",
+          "line": 690,
+          "function": "test_counterexample_5_transfer_cases_no_invented_endpoints"
+        }
+      ],
+      "safety_controls": "normal schema/fence controls, full-rowset malformed/denied intake and commit/rollback observations execute separately in source and both installed forms; later statements in this failed test stay unproved"
+    },
+    {
+      "nodeid": "tests/integration/p1/test_context_relations.py::test_partial_transfer_alternatives_remain_selection_truncated",
+      "reason": "I2_TRANSFER_UNSUPPORTED",
+      "exception_type": "repo_catalog.domain.resource_stage.UnsupportedResourceStage",
+      "phase": "call",
+      "same_outcome_phase": true,
+      "before_assertion_lines": [
+        384,
+        387,
+        388,
+        389,
+        390
+      ],
+      "after_assertion_lines": [
+        384,
+        387,
+        388,
+        389,
+        390
+      ],
+      "old_boundary": {
+        "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+        "line": 346,
+        "function": "",
+        "enclosing": "admit_transfer_event",
+        "source": "            raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "new_boundary": {
+        "enclosing": "call",
+        "function": "call",
+        "line": 168,
+        "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+        "source": "                raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "caught_raise_stack": [
+        {
+          "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+          "line": 168,
+          "function": "call"
+        },
+        {
+          "path": "tests/support/authorized_context.py",
+          "line": 65,
+          "function": "write"
+        },
+        {
+          "path": "tests/integration/p1/test_context_relations.py",
+          "line": 390,
+          "function": "test_partial_transfer_alternatives_remain_selection_truncated"
+        }
+      ],
+      "safety_controls": "normal schema/fence controls, full-rowset malformed/denied intake and commit/rollback observations execute separately in source and both installed forms; later statements in this failed test stay unproved"
+    },
+    {
+      "nodeid": "tests/integration/p1/test_context_relations.py::test_transfer_event_genuine_type_enforcement_across_typed_paths",
+      "reason": "I2_TRANSFER_UNSUPPORTED",
+      "exception_type": "repo_catalog.domain.resource_stage.UnsupportedResourceStage",
+      "phase": "call",
+      "same_outcome_phase": true,
+      "before_assertion_lines": [],
+      "after_assertion_lines": [],
+      "old_boundary": {
+        "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+        "line": 346,
+        "function": "",
+        "enclosing": "admit_transfer_event",
+        "source": "            raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "new_boundary": {
+        "enclosing": "call",
+        "function": "call",
+        "line": 168,
+        "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+        "source": "                raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "caught_raise_stack": [
+        {
+          "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+          "line": 168,
+          "function": "call"
+        },
+        {
+          "path": "tests/support/authorized_context.py",
+          "line": 65,
+          "function": "write"
+        },
+        {
+          "path": "tests/integration/p1/test_context_relations.py",
+          "line": 1344,
+          "function": "test_transfer_event_genuine_type_enforcement_across_typed_paths"
+        }
+      ],
+      "safety_controls": "normal schema/fence controls, full-rowset malformed/denied intake and commit/rollback observations execute separately in source and both installed forms; later statements in this failed test stay unproved"
+    },
+    {
+      "nodeid": "tests/integration/p1/test_context_relations.py::test_transfer_event_reports_generator_selected_repositories_and_invariants",
+      "reason": "I2_TRANSFER_UNSUPPORTED",
+      "exception_type": "repo_catalog.domain.resource_stage.UnsupportedResourceStage",
+      "phase": "call",
+      "same_outcome_phase": true,
+      "before_assertion_lines": [
+        1384
+      ],
+      "after_assertion_lines": [
+        1384
+      ],
+      "old_boundary": {
+        "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+        "line": 346,
+        "function": "",
+        "enclosing": "admit_transfer_event",
+        "source": "            raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "new_boundary": {
+        "enclosing": "call",
+        "function": "call",
+        "line": 168,
+        "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+        "source": "                raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "caught_raise_stack": [
+        {
+          "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+          "line": 168,
+          "function": "call"
+        },
+        {
+          "path": "tests/support/authorized_context.py",
+          "line": 65,
+          "function": "write"
+        },
+        {
+          "path": "tests/integration/p1/test_context_relations.py",
+          "line": 1384,
+          "function": "test_transfer_event_reports_generator_selected_repositories_and_invariants"
+        }
+      ],
+      "safety_controls": "normal schema/fence controls, full-rowset malformed/denied intake and commit/rollback observations execute separately in source and both installed forms; later statements in this failed test stay unproved"
+    },
+    {
+      "nodeid": "tests/integration/p1/test_context_relations.py::test_transfer_generic_admission_requires_complete_report[transfer_from_repository-False-False]",
+      "reason": "I2_TRANSFER_UNSUPPORTED",
+      "exception_type": "repo_catalog.domain.resource_stage.UnsupportedResourceStage",
+      "phase": "call",
+      "same_outcome_phase": true,
+      "before_assertion_lines": [
+        172,
+        183,
+        198
+      ],
+      "after_assertion_lines": [
+        172,
+        183,
+        198
+      ],
+      "old_boundary": {
+        "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+        "line": 346,
+        "function": "",
+        "enclosing": "admit_transfer_event",
+        "source": "            raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "new_boundary": {
+        "enclosing": "call",
+        "function": "call",
+        "line": 168,
+        "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+        "source": "                raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "caught_raise_stack": [
+        {
+          "path": "src/repo_catalog/domain/resource_stage.py",
+          "line": 114,
+          "function": "refuse_transfer"
+        },
+        {
+          "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+          "line": 184,
+          "function": "admit_repository_relation"
+        },
+        {
+          "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+          "line": 115,
+          "function": "call"
+        },
+        {
+          "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+          "line": 194,
+          "function": "call"
+        },
+        {
+          "path": "tests/support/authorized_context.py",
+          "line": 65,
+          "function": "write"
+        },
+        {
+          "path": "tests/integration/p1/test_context_relations.py",
+          "line": 182,
+          "function": "test_transfer_generic_admission_requires_complete_report"
+        }
+      ],
+      "safety_controls": "normal schema/fence controls, full-rowset malformed/denied intake and commit/rollback observations execute separately in source and both installed forms; later statements in this failed test stay unproved"
+    },
+    {
+      "nodeid": "tests/integration/p1/test_context_relations.py::test_transfer_generic_admission_requires_complete_report[transfer_from_repository-False-True]",
+      "reason": "I2_TRANSFER_UNSUPPORTED",
+      "exception_type": "repo_catalog.domain.resource_stage.UnsupportedResourceStage",
+      "phase": "call",
+      "same_outcome_phase": true,
+      "before_assertion_lines": [
+        172,
+        183,
+        198
+      ],
+      "after_assertion_lines": [
+        172,
+        183,
+        198
+      ],
+      "old_boundary": {
+        "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+        "line": 979,
+        "function": "",
+        "enclosing": "admit_transfer_event",
+        "source": "            raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "new_boundary": {
+        "enclosing": "call",
+        "function": "call",
+        "line": 168,
+        "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+        "source": "                raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "caught_raise_stack": [
+        {
+          "path": "src/repo_catalog/domain/resource_stage.py",
+          "line": 114,
+          "function": "refuse_transfer"
+        },
+        {
+          "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+          "line": 184,
+          "function": "admit_repository_relation"
+        },
+        {
+          "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+          "line": 115,
+          "function": "call"
+        },
+        {
+          "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+          "line": 194,
+          "function": "call"
+        },
+        {
+          "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+          "line": 957,
+          "function": "admit_repository_relation"
+        },
+        {
+          "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+          "line": 151,
+          "function": "call"
+        },
+        {
+          "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+          "line": 194,
+          "function": "call"
+        },
+        {
+          "path": "tests/integration/p1/test_context_relations.py",
+          "line": 182,
+          "function": "test_transfer_generic_admission_requires_complete_report"
+        }
+      ],
+      "safety_controls": "normal schema/fence controls, full-rowset malformed/denied intake and commit/rollback observations execute separately in source and both installed forms; later statements in this failed test stay unproved"
+    },
+    {
+      "nodeid": "tests/integration/p1/test_context_relations.py::test_transfer_generic_admission_requires_complete_report[transfer_from_repository-True-False]",
+      "reason": "I2_TRANSFER_UNSUPPORTED",
+      "exception_type": "repo_catalog.domain.resource_stage.UnsupportedResourceStage",
+      "phase": "call",
+      "same_outcome_phase": true,
+      "before_assertion_lines": [
+        172,
+        183,
+        198
+      ],
+      "after_assertion_lines": [
+        172,
+        183,
+        198
+      ],
+      "old_boundary": {
+        "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+        "line": 346,
+        "function": "",
+        "enclosing": "admit_transfer_event",
+        "source": "            raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "new_boundary": {
+        "enclosing": "call",
+        "function": "call",
+        "line": 168,
+        "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+        "source": "                raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "caught_raise_stack": [
+        {
+          "path": "src/repo_catalog/domain/resource_stage.py",
+          "line": 114,
+          "function": "refuse_transfer"
+        },
+        {
+          "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+          "line": 263,
+          "function": "admit_repository_relation_result"
+        },
+        {
+          "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+          "line": 115,
+          "function": "call"
+        },
+        {
+          "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+          "line": 194,
+          "function": "call"
+        },
+        {
+          "path": "tests/support/authorized_context.py",
+          "line": 65,
+          "function": "write"
+        },
+        {
+          "path": "tests/integration/p1/test_context_relations.py",
+          "line": 182,
+          "function": "test_transfer_generic_admission_requires_complete_report"
+        }
+      ],
+      "safety_controls": "normal schema/fence controls, full-rowset malformed/denied intake and commit/rollback observations execute separately in source and both installed forms; later statements in this failed test stay unproved"
+    },
+    {
+      "nodeid": "tests/integration/p1/test_context_relations.py::test_transfer_generic_admission_requires_complete_report[transfer_from_repository-True-True]",
+      "reason": "I2_TRANSFER_UNSUPPORTED",
+      "exception_type": "repo_catalog.domain.resource_stage.UnsupportedResourceStage",
+      "phase": "call",
+      "same_outcome_phase": true,
+      "before_assertion_lines": [
+        172,
+        183,
+        198
+      ],
+      "after_assertion_lines": [
+        172,
+        183,
+        198
+      ],
+      "old_boundary": {
+        "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+        "line": 979,
+        "function": "",
+        "enclosing": "admit_transfer_event",
+        "source": "            raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "new_boundary": {
+        "enclosing": "call",
+        "function": "call",
+        "line": 168,
+        "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+        "source": "                raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "caught_raise_stack": [
+        {
+          "path": "src/repo_catalog/domain/resource_stage.py",
+          "line": 114,
+          "function": "refuse_transfer"
+        },
+        {
+          "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+          "line": 263,
+          "function": "admit_repository_relation_result"
+        },
+        {
+          "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+          "line": 115,
+          "function": "call"
+        },
+        {
+          "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+          "line": 194,
+          "function": "call"
+        },
+        {
+          "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+          "line": 968,
+          "function": "admit_repository_relation_result"
+        },
+        {
+          "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+          "line": 151,
+          "function": "call"
+        },
+        {
+          "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+          "line": 194,
+          "function": "call"
+        },
+        {
+          "path": "tests/integration/p1/test_context_relations.py",
+          "line": 182,
+          "function": "test_transfer_generic_admission_requires_complete_report"
+        }
+      ],
+      "safety_controls": "normal schema/fence controls, full-rowset malformed/denied intake and commit/rollback observations execute separately in source and both installed forms; later statements in this failed test stay unproved"
+    },
+    {
+      "nodeid": "tests/integration/p1/test_context_relations.py::test_transfer_generic_admission_requires_complete_report[transfer_to_repository-False-False]",
+      "reason": "I2_TRANSFER_UNSUPPORTED",
+      "exception_type": "repo_catalog.domain.resource_stage.UnsupportedResourceStage",
+      "phase": "call",
+      "same_outcome_phase": true,
+      "before_assertion_lines": [
+        172,
+        183,
+        198
+      ],
+      "after_assertion_lines": [
+        172,
+        183,
+        198
+      ],
+      "old_boundary": {
+        "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+        "line": 346,
+        "function": "",
+        "enclosing": "admit_transfer_event",
+        "source": "            raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "new_boundary": {
+        "enclosing": "call",
+        "function": "call",
+        "line": 168,
+        "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+        "source": "                raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "caught_raise_stack": [
+        {
+          "path": "src/repo_catalog/domain/resource_stage.py",
+          "line": 114,
+          "function": "refuse_transfer"
+        },
+        {
+          "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+          "line": 184,
+          "function": "admit_repository_relation"
+        },
+        {
+          "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+          "line": 115,
+          "function": "call"
+        },
+        {
+          "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+          "line": 194,
+          "function": "call"
+        },
+        {
+          "path": "tests/support/authorized_context.py",
+          "line": 65,
+          "function": "write"
+        },
+        {
+          "path": "tests/integration/p1/test_context_relations.py",
+          "line": 182,
+          "function": "test_transfer_generic_admission_requires_complete_report"
+        }
+      ],
+      "safety_controls": "normal schema/fence controls, full-rowset malformed/denied intake and commit/rollback observations execute separately in source and both installed forms; later statements in this failed test stay unproved"
+    },
+    {
+      "nodeid": "tests/integration/p1/test_context_relations.py::test_transfer_generic_admission_requires_complete_report[transfer_to_repository-False-True]",
+      "reason": "I2_TRANSFER_UNSUPPORTED",
+      "exception_type": "repo_catalog.domain.resource_stage.UnsupportedResourceStage",
+      "phase": "call",
+      "same_outcome_phase": true,
+      "before_assertion_lines": [
+        172,
+        183,
+        198
+      ],
+      "after_assertion_lines": [
+        172,
+        183,
+        198
+      ],
+      "old_boundary": {
+        "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+        "line": 979,
+        "function": "",
+        "enclosing": "admit_transfer_event",
+        "source": "            raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "new_boundary": {
+        "enclosing": "call",
+        "function": "call",
+        "line": 168,
+        "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+        "source": "                raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "caught_raise_stack": [
+        {
+          "path": "src/repo_catalog/domain/resource_stage.py",
+          "line": 114,
+          "function": "refuse_transfer"
+        },
+        {
+          "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+          "line": 184,
+          "function": "admit_repository_relation"
+        },
+        {
+          "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+          "line": 115,
+          "function": "call"
+        },
+        {
+          "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+          "line": 194,
+          "function": "call"
+        },
+        {
+          "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+          "line": 957,
+          "function": "admit_repository_relation"
+        },
+        {
+          "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+          "line": 151,
+          "function": "call"
+        },
+        {
+          "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+          "line": 194,
+          "function": "call"
+        },
+        {
+          "path": "tests/integration/p1/test_context_relations.py",
+          "line": 182,
+          "function": "test_transfer_generic_admission_requires_complete_report"
+        }
+      ],
+      "safety_controls": "normal schema/fence controls, full-rowset malformed/denied intake and commit/rollback observations execute separately in source and both installed forms; later statements in this failed test stay unproved"
+    },
+    {
+      "nodeid": "tests/integration/p1/test_context_relations.py::test_transfer_generic_admission_requires_complete_report[transfer_to_repository-True-False]",
+      "reason": "I2_TRANSFER_UNSUPPORTED",
+      "exception_type": "repo_catalog.domain.resource_stage.UnsupportedResourceStage",
+      "phase": "call",
+      "same_outcome_phase": true,
+      "before_assertion_lines": [
+        172,
+        183,
+        198
+      ],
+      "after_assertion_lines": [
+        172,
+        183,
+        198
+      ],
+      "old_boundary": {
+        "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+        "line": 346,
+        "function": "",
+        "enclosing": "admit_transfer_event",
+        "source": "            raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "new_boundary": {
+        "enclosing": "call",
+        "function": "call",
+        "line": 168,
+        "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+        "source": "                raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "caught_raise_stack": [
+        {
+          "path": "src/repo_catalog/domain/resource_stage.py",
+          "line": 114,
+          "function": "refuse_transfer"
+        },
+        {
+          "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+          "line": 263,
+          "function": "admit_repository_relation_result"
+        },
+        {
+          "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+          "line": 115,
+          "function": "call"
+        },
+        {
+          "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+          "line": 194,
+          "function": "call"
+        },
+        {
+          "path": "tests/support/authorized_context.py",
+          "line": 65,
+          "function": "write"
+        },
+        {
+          "path": "tests/integration/p1/test_context_relations.py",
+          "line": 182,
+          "function": "test_transfer_generic_admission_requires_complete_report"
+        }
+      ],
+      "safety_controls": "normal schema/fence controls, full-rowset malformed/denied intake and commit/rollback observations execute separately in source and both installed forms; later statements in this failed test stay unproved"
+    },
+    {
+      "nodeid": "tests/integration/p1/test_context_relations.py::test_transfer_generic_admission_requires_complete_report[transfer_to_repository-True-True]",
+      "reason": "I2_TRANSFER_UNSUPPORTED",
+      "exception_type": "repo_catalog.domain.resource_stage.UnsupportedResourceStage",
+      "phase": "call",
+      "same_outcome_phase": true,
+      "before_assertion_lines": [
+        172,
+        183,
+        198
+      ],
+      "after_assertion_lines": [
+        172,
+        183,
+        198
+      ],
+      "old_boundary": {
+        "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+        "line": 979,
+        "function": "",
+        "enclosing": "admit_transfer_event",
+        "source": "            raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "new_boundary": {
+        "enclosing": "call",
+        "function": "call",
+        "line": 168,
+        "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+        "source": "                raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "caught_raise_stack": [
+        {
+          "path": "src/repo_catalog/domain/resource_stage.py",
+          "line": 114,
+          "function": "refuse_transfer"
+        },
+        {
+          "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+          "line": 263,
+          "function": "admit_repository_relation_result"
+        },
+        {
+          "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+          "line": 115,
+          "function": "call"
+        },
+        {
+          "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+          "line": 194,
+          "function": "call"
+        },
+        {
+          "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+          "line": 968,
+          "function": "admit_repository_relation_result"
+        },
+        {
+          "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+          "line": 151,
+          "function": "call"
+        },
+        {
+          "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+          "line": 194,
+          "function": "call"
+        },
+        {
+          "path": "tests/integration/p1/test_context_relations.py",
+          "line": 182,
+          "function": "test_transfer_generic_admission_requires_complete_report"
+        }
+      ],
+      "safety_controls": "normal schema/fence controls, full-rowset malformed/denied intake and commit/rollback observations execute separately in source and both installed forms; later statements in this failed test stay unproved"
+    },
+    {
+      "nodeid": "tests/integration/p1/test_context_relations.py::test_transfer_report_fk_failure_rolls_back_whole_unit",
+      "reason": "I2_TRANSFER_UNSUPPORTED",
+      "exception_type": "repo_catalog.domain.resource_stage.UnsupportedResourceStage",
+      "phase": "call",
+      "same_outcome_phase": true,
+      "before_assertion_lines": [],
+      "after_assertion_lines": [],
+      "old_boundary": {
+        "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+        "line": 346,
+        "function": "",
+        "enclosing": "admit_transfer_event",
+        "source": "            raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "new_boundary": {
+        "enclosing": "call",
+        "function": "call",
+        "line": 168,
+        "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+        "source": "                raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "caught_raise_stack": [
+        {
+          "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+          "line": 168,
+          "function": "call"
+        },
+        {
+          "path": "tests/support/authorized_context.py",
+          "line": 65,
+          "function": "write"
+        },
+        {
+          "path": "tests/integration/p1/test_context_relations.py",
+          "line": 301,
+          "function": "test_transfer_report_fk_failure_rolls_back_whole_unit"
+        }
+      ],
+      "safety_controls": "normal schema/fence controls, full-rowset malformed/denied intake and commit/rollback observations execute separately in source and both installed forms; later statements in this failed test stay unproved"
+    },
+    {
+      "nodeid": "tests/integration/p1/test_context_relations.py::test_transfer_supports_both_endpoints_without_cross_borrowing",
+      "reason": "I2_TRANSFER_UNSUPPORTED",
+      "exception_type": "repo_catalog.domain.resource_stage.UnsupportedResourceStage",
+      "phase": "call",
+      "same_outcome_phase": true,
+      "before_assertion_lines": [
+        343
+      ],
+      "after_assertion_lines": [
+        343
+      ],
+      "old_boundary": {
+        "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+        "line": 346,
+        "function": "",
+        "enclosing": "admit_transfer_event",
+        "source": "            raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "new_boundary": {
+        "enclosing": "call",
+        "function": "call",
+        "line": 168,
+        "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+        "source": "                raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "caught_raise_stack": [
+        {
+          "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+          "line": 168,
+          "function": "call"
+        },
+        {
+          "path": "tests/support/authorized_context.py",
+          "line": 65,
+          "function": "write"
+        },
+        {
+          "path": "tests/integration/p1/test_context_relations.py",
+          "line": 343,
+          "function": "test_transfer_supports_both_endpoints_without_cross_borrowing"
+        }
+      ],
+      "safety_controls": "normal schema/fence controls, full-rowset malformed/denied intake and commit/rollback observations execute separately in source and both installed forms; later statements in this failed test stay unproved"
+    },
+    {
+      "nodeid": "tests/integration/p3/test_production_context.py::test_production_context_relation_facade_methods",
+      "reason": "I2_TRANSFER_UNSUPPORTED",
+      "exception_type": "repo_catalog.domain.resource_stage.UnsupportedResourceStage",
+      "phase": "call",
+      "same_outcome_phase": true,
+      "before_assertion_lines": [
+        1180,
+        1182,
+        1187,
+        1192,
+        1198,
+        1215,
+        1224,
+        1236,
+        1241,
+        1242,
+        1243,
+        1246,
+        1247,
+        1254,
+        1255,
+        1256,
+        1259,
+        1260,
+        1263,
+        1264,
+        1269,
+        1270,
+        1277,
+        1278,
+        1281,
+        1282
+      ],
+      "after_assertion_lines": [
+        1180,
+        1182,
+        1187,
+        1192,
+        1198,
+        1215,
+        1224,
+        1236,
+        1241,
+        1242,
+        1243,
+        1246,
+        1247,
+        1254,
+        1255,
+        1256,
+        1259,
+        1260,
+        1263,
+        1264,
+        1269,
+        1270,
+        1277,
+        1278,
+        1281,
+        1282
+      ],
+      "old_boundary": {
+        "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+        "line": 979,
+        "function": "",
+        "enclosing": "admit_transfer_event",
+        "source": "            raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "new_boundary": {
+        "enclosing": "call",
+        "function": "call",
+        "line": 168,
+        "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+        "source": "                raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "caught_raise_stack": [
+        {
+          "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+          "line": 168,
+          "function": "call"
+        },
+        {
+          "path": "tests/integration/p3/test_production_context.py",
+          "line": 1300,
+          "function": "test_production_context_relation_facade_methods"
+        }
+      ],
+      "safety_controls": "normal schema/fence controls, full-rowset malformed/denied intake and commit/rollback observations execute separately in source and both installed forms; later statements in this failed test stay unproved"
+    }
+  ]
+}
