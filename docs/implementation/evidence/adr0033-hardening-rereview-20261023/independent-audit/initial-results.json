@@ -1,0 +1,1196 @@
+{
+  "reviewed_head": "59307c40ea65554736e131cedd00f04c9906551b",
+  "reviewed_tree": "5ea93707d62b542c84632515392ac6a35c36cd65",
+  "checker_sha256": "973cd41324c7fc45ba02a82bce2d57cc38b1ec58ce6628714c3ac93e545788a3",
+  "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+  "executable": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+  "zlib_runtime": "1.3.2",
+  "cases": [
+    {
+      "id": "plain-ustar-control",
+      "expected": "accepted",
+      "actual": "accepted",
+      "matches_expectation": true,
+      "archive_bytes": 426,
+      "archive_sha256": "c8a1db04d26333cc7811a428ac8897655934b557b31b5cce266cca3dcb8204d9",
+      "detail": {
+        "compressed_bytes": 426,
+        "tar_stream_bytes": 10240,
+        "unpacked_bytes": 178,
+        "raw_header_count": 8,
+        "member_count": 8,
+        "file_count": 8
+      }
+    },
+    {
+      "id": "minimal-two-zero-blocks",
+      "expected": "accepted",
+      "actual": "accepted",
+      "matches_expectation": true,
+      "archive_bytes": 421,
+      "archive_sha256": "35e899d368172dd413b4586ebc8e426b29dbe55d1063deffac950452cc05bb6c",
+      "detail": {
+        "compressed_bytes": 421,
+        "tar_stream_bytes": 8704,
+        "unpacked_bytes": 178,
+        "raw_header_count": 8,
+        "member_count": 8,
+        "file_count": 8
+      }
+    },
+    {
+      "id": "gzip-all-optional-fields-valid",
+      "expected": "accepted",
+      "actual": "accepted",
+      "matches_expectation": true,
+      "archive_bytes": 476,
+      "archive_sha256": "f3e768ebb6b5e4fd515a4f3857871ec8c40bfa8c3b79e2efaa13c53076938b18",
+      "detail": {
+        "compressed_bytes": 476,
+        "tar_stream_bytes": 10240,
+        "unpacked_bytes": 178,
+        "raw_header_count": 8,
+        "member_count": 8,
+        "file_count": 8
+      }
+    },
+    {
+      "id": "gzip-optional-header-crc-corrupt",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 476,
+      "archive_sha256": "b7aa51305e001ed5865542d0826b73d4c0a2c9c5ff6edc4bae568efe440b709d",
+      "detail": {
+        "exception": "ValueError",
+        "message": "invalid gzip stream/trailer: Error -3 while decompressing data: header crc mismatch"
+      }
+    },
+    {
+      "id": "gzip-reserved-flag-32",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 441,
+      "archive_sha256": "c8d33d79edfc1111be34feb912e971cb7f8981a419917c375c968c254441c7fa",
+      "detail": {
+        "exception": "ValueError",
+        "message": "invalid gzip stream/trailer: Error -3 while decompressing data: unknown header flags set"
+      }
+    },
+    {
+      "id": "gzip-reserved-flag-64",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 441,
+      "archive_sha256": "97086cd792dc2576744fa13072ef5483d7a91420f7ccd966d3de7321f29cbf54",
+      "detail": {
+        "exception": "ValueError",
+        "message": "invalid gzip stream/trailer: Error -3 while decompressing data: unknown header flags set"
+      }
+    },
+    {
+      "id": "gzip-reserved-flag-128",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 441,
+      "archive_sha256": "7ea57895749dcdf0fb9b9f6cdf88dab5cacd24cf14548adb3d67d08391f54bcb",
+      "detail": {
+        "exception": "ValueError",
+        "message": "invalid gzip stream/trailer: Error -3 while decompressing data: unknown header flags set"
+      }
+    },
+    {
+      "id": "gzip-junk",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 430,
+      "archive_sha256": "1d32e586d72dcb691f499281c2589e7c274ceba50acfa2b322390203590a2a3c",
+      "detail": {
+        "exception": "ValueError",
+        "message": "trailing bytes/additional gzip member forbidden"
+      }
+    },
+    {
+      "id": "gzip-trailing-zero",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 427,
+      "archive_sha256": "3c4c7bd59485f9d24dc2562538702d52a14c72afa83af8586709f2ddeb09ccf3",
+      "detail": {
+        "exception": "ValueError",
+        "message": "trailing bytes/additional gzip member forbidden"
+      }
+    },
+    {
+      "id": "gzip-empty-second-member",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 446,
+      "archive_sha256": "812d9ce32b3e0c178833f8c2e26d8ee0793572baf28fcacb0c60e2351ed0205e",
+      "detail": {
+        "exception": "ValueError",
+        "message": "trailing bytes/additional gzip member forbidden"
+      }
+    },
+    {
+      "id": "gzip-second-tar-member",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 852,
+      "archive_sha256": "4ddc2055eea41f1e665e5c1de7c625bea7b8042119e916a7b6a1a7b388fe4169",
+      "detail": {
+        "exception": "ValueError",
+        "message": "trailing bytes/additional gzip member forbidden"
+      }
+    },
+    {
+      "id": "gzip-missing-trailer",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 418,
+      "archive_sha256": "f4c19cc487bc4fee90ca4b3452882bda68e85b0d9bab8649a8d4ec9cee5a564b",
+      "detail": {
+        "exception": "ValueError",
+        "message": "incomplete gzip stream/trailer"
+      }
+    },
+    {
+      "id": "gzip-truncated-deflate",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 414,
+      "archive_sha256": "7a37a2da20eddf746dcf7615a8678c9f5ca5e6e88250dca9d1fe8531eabed694",
+      "detail": {
+        "exception": "ValueError",
+        "message": "incomplete gzip stream/trailer"
+      }
+    },
+    {
+      "id": "gzip-corrupt-trailer--8",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 426,
+      "archive_sha256": "2574469b82791dea580ebcd0593067ea17a565c1923dc319e019b7a642dd1bcf",
+      "detail": {
+        "exception": "ValueError",
+        "message": "invalid gzip stream/trailer: Error -3 while decompressing data: incorrect data check"
+      }
+    },
+    {
+      "id": "gzip-corrupt-trailer--4",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 426,
+      "archive_sha256": "eff8f60ac361614b688f18f684e7c10052063f54ae28bfa872e0f0c23195c646",
+      "detail": {
+        "exception": "ValueError",
+        "message": "invalid gzip stream/trailer: Error -3 while decompressing data: incorrect length check"
+      }
+    },
+    {
+      "id": "tar-end-blocks-0",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 418,
+      "archive_sha256": "68d6dcb0f890818c93ebbb082dcaf95c2195dc33d839bbe0d5ac585930d3a06b",
+      "detail": {
+        "exception": "ValueError",
+        "message": "missing tar end markers"
+      }
+    },
+    {
+      "id": "tar-end-blocks-1",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 420,
+      "archive_sha256": "e1e8d122c43553c213267d8c51109c0205603f6a46895591cd2167fc87b461dd",
+      "detail": {
+        "exception": "ValueError",
+        "message": "invalid tar end padding or hidden trailing payload"
+      }
+    },
+    {
+      "id": "tar-hidden-second-after-end",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 496,
+      "archive_sha256": "151a157c0056c8fda288b4a28b63714b38f45ffd84e50d94a5c4e55b9726e55a",
+      "detail": {
+        "exception": "ValueError",
+        "message": "invalid tar end padding or hidden trailing payload"
+      }
+    },
+    {
+      "id": "tar-hidden-second-after-one-zero",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 487,
+      "archive_sha256": "23ca8c856b3c5c1d14f3c61b009171de518ba0e8a596ac8649ea37a6d60a0135",
+      "detail": {
+        "exception": "ValueError",
+        "message": "invalid tar end padding or hidden trailing payload"
+      }
+    },
+    {
+      "id": "tar-unframed-tail",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 427,
+      "archive_sha256": "81d3e8b149dacc693e1893445e67c6801a6a55dd080c9de643d51cb97cadb460",
+      "detail": {
+        "exception": "ValueError",
+        "message": "unaligned/truncated tar stream"
+      }
+    },
+    {
+      "id": "tar-aligned-nonzero-tail",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 431,
+      "archive_sha256": "016e9ab9e871818b3c72c9e9077d1b2f2279b7591b2b33eae3b6b828ec682d5f",
+      "detail": {
+        "exception": "ValueError",
+        "message": "invalid tar end padding or hidden trailing payload"
+      }
+    },
+    {
+      "id": "tar-nonzero-body-alignment",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 428,
+      "archive_sha256": "cc39e2af0f824ff35062b02e3433cc475c6ce487cf8b9f361cf624b1e3c95471",
+      "detail": {
+        "exception": "ValueError",
+        "message": "nonzero tar member padding forbidden"
+      }
+    },
+    {
+      "id": "tar-negative-size",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 430,
+      "archive_sha256": "2c5c9dad28acb92dd6a6d85bb8e67fadcaae3cf1fe33edda725e76d29963df8d",
+      "detail": {
+        "exception": "ValueError",
+        "message": "invalid raw tar member size/link target"
+      }
+    },
+    {
+      "id": "tar-giant-size",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 429,
+      "archive_sha256": "930e824e9e9bfba8ff364de4e1f6f3c149d6a815befd0e5c9252097ae65b114d",
+      "detail": {
+        "exception": "ValueError",
+        "message": "unpacked sdist budget exceeded"
+      }
+    },
+    {
+      "id": "tar-base256-giant-size",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 434,
+      "archive_sha256": "b77185043d9f2c7f185906aa4c0767e1086e728c24285936d14f167e18a4bcfa",
+      "detail": {
+        "exception": "ValueError",
+        "message": "unpacked sdist budget exceeded"
+      }
+    },
+    {
+      "id": "tar-directory-with-body",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 429,
+      "archive_sha256": "c4b9b8d055261cce6f4afe8a75f320b8e8690f0c693d4058cdc18e99fe71c0dd",
+      "detail": {
+        "exception": "ValueError",
+        "message": "invalid raw tar member size/link target"
+      }
+    },
+    {
+      "id": "tar-regular-with-linkname",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 439,
+      "archive_sha256": "c57dda53ef2308b4c8ec0cfa5b5f99bdd436ee397d1698b264399fd1b1239e9d",
+      "detail": {
+        "exception": "ValueError",
+        "message": "invalid raw tar member size/link target"
+      }
+    },
+    {
+      "id": "tar-unsafe-ustar-prefix",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 437,
+      "archive_sha256": "a384061cf2d19dc40f68266cd451dbb64453ab4be4e084d459456f82703c7beb",
+      "detail": {
+        "exception": "ValueError",
+        "message": "unsafe member: ../escape/repo_catalog-0.2.0/pyproject.toml"
+      }
+    },
+    {
+      "id": "tar-invalid-utf8-name",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 412,
+      "archive_sha256": "931f81e214fc8b604723304b2b295d5cdc4c3429426c727a1902fe2d086d8760",
+      "detail": {
+        "exception": "ValueError",
+        "message": "invalid raw tar header: 'utf-8' codec can't decode byte 0xff in position 0: invalid start byte"
+      }
+    },
+    {
+      "id": "tar-unapproved-kind-x",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 456,
+      "archive_sha256": "eec1e89a98910607b7f03fc8f21753f747a73dcc45bc1ad47009668b497a29a6",
+      "detail": {
+        "exception": "ValueError",
+        "message": "links/special members or unapproved PAX/tar extensions forbidden"
+      }
+    },
+    {
+      "id": "tar-unapproved-kind-g",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 456,
+      "archive_sha256": "87375d709e74c7eaa1c1be9ca5f67c36140e580c9705d80a91accb12f11109ea",
+      "detail": {
+        "exception": "ValueError",
+        "message": "links/special members or unapproved PAX/tar extensions forbidden"
+      }
+    },
+    {
+      "id": "tar-unapproved-kind-L",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 458,
+      "archive_sha256": "5819571f4d4c32025b2b158a9445ffe05c82b788dbe7eedaf92653dd75e9f99a",
+      "detail": {
+        "exception": "ValueError",
+        "message": "links/special members or unapproved PAX/tar extensions forbidden"
+      }
+    },
+    {
+      "id": "tar-unapproved-kind-K",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 456,
+      "archive_sha256": "631b5c332891d32614f93ce10f1140f8a03009419e297aaf53658b611ab4d229",
+      "detail": {
+        "exception": "ValueError",
+        "message": "links/special members or unapproved PAX/tar extensions forbidden"
+      }
+    },
+    {
+      "id": "tar-unapproved-kind-S",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 456,
+      "archive_sha256": "d500341849d50833bc81ab4fcd5330c790507483762592582b66ce580cf4cd68",
+      "detail": {
+        "exception": "ValueError",
+        "message": "links/special members or unapproved PAX/tar extensions forbidden"
+      }
+    },
+    {
+      "id": "tar-unapproved-kind-V",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 456,
+      "archive_sha256": "af647994f70023d03f4d18f9e2b16542708ca38aa1465c7929a42a90cdabeb5e",
+      "detail": {
+        "exception": "ValueError",
+        "message": "links/special members or unapproved PAX/tar extensions forbidden"
+      }
+    },
+    {
+      "id": "tar-unapproved-kind-1",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 455,
+      "archive_sha256": "9fe336756faf97eb781c8c20b4ad74ec2db9d577a3a37989dcdcdd1ef793eef3",
+      "detail": {
+        "exception": "ValueError",
+        "message": "links/special members or unapproved PAX/tar extensions forbidden"
+      }
+    },
+    {
+      "id": "tar-unapproved-kind-2",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 455,
+      "archive_sha256": "92fd10e66170b51c1747df9de8cb4d43d078c70ab2b1344d3cf261264f339a95",
+      "detail": {
+        "exception": "ValueError",
+        "message": "links/special members or unapproved PAX/tar extensions forbidden"
+      }
+    },
+    {
+      "id": "tar-unapproved-kind-3",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 461,
+      "archive_sha256": "735a9cdf2855c13a5e05fbb77491c3a62c9ce21fda403e546b0f5bf205c2dbd6",
+      "detail": {
+        "exception": "ValueError",
+        "message": "links/special members or unapproved PAX/tar extensions forbidden"
+      }
+    },
+    {
+      "id": "tar-unapproved-kind-4",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 461,
+      "archive_sha256": "ef4ce77d14b0f275afd0b7ab1ba24b4381836e4f5d28c9f46f1ca3e96036e850",
+      "detail": {
+        "exception": "ValueError",
+        "message": "links/special members or unapproved PAX/tar extensions forbidden"
+      }
+    },
+    {
+      "id": "tar-unapproved-kind-6",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 455,
+      "archive_sha256": "101e0c1bb38fc8d220410199a312686d1bc7ae1c9ae1958992cfab147dc4af53",
+      "detail": {
+        "exception": "ValueError",
+        "message": "links/special members or unapproved PAX/tar extensions forbidden"
+      }
+    },
+    {
+      "id": "tar-unapproved-kind-7",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 455,
+      "archive_sha256": "f2bd3028f672413ada7800ed1307987ff6b7499e46cc7765ae298351f86cbdcd",
+      "detail": {
+        "exception": "ValueError",
+        "message": "links/special members or unapproved PAX/tar extensions forbidden"
+      }
+    },
+    {
+      "id": "tar-unapproved-kind-Z",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 455,
+      "archive_sha256": "b7ff83d116d52d980a64aee2a2bbf7ca3d27ec894f227d5a0fce04182ec7b00b",
+      "detail": {
+        "exception": "ValueError",
+        "message": "links/special members or unapproved PAX/tar extensions forbidden"
+      }
+    },
+    {
+      "id": "metadata-duplicate-mixed-case",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 438,
+      "archive_sha256": "ae327df9f0d6f6c826f10b62b70b4b1d32bfc73cf8cf303066c8a46003d30602",
+      "detail": {
+        "exception": "ValueError",
+        "message": "invalid generated PKG-INFO singleton identity fields"
+      }
+    },
+    {
+      "id": "metadata-duplicate-metadata-version",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 434,
+      "archive_sha256": "374bc432327edd37d866d1b0bfd73062a508cbe1e9e06b37852e65985d6f0d12",
+      "detail": {
+        "exception": "ValueError",
+        "message": "invalid generated PKG-INFO singleton identity fields"
+      }
+    },
+    {
+      "id": "metadata-duplicate-version",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 436,
+      "archive_sha256": "a2041931c229e7a39b9dd74ce46c6fe82601b4cad241484426182ce2f257bad1",
+      "detail": {
+        "exception": "ValueError",
+        "message": "invalid generated PKG-INFO singleton identity fields"
+      }
+    },
+    {
+      "id": "metadata-folded-name",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 429,
+      "archive_sha256": "6002902165ce26c1704412d2d6074f49074c4eeb09faa69ef7270ec4e8c6b189",
+      "detail": {
+        "exception": "ValueError",
+        "message": "invalid generated PKG-INFO identity/version"
+      }
+    },
+    {
+      "id": "metadata-embedded-nul-name",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 428,
+      "archive_sha256": "090b5405f830b9cad528a647ce93eaccc18c66e051d7bf20a033ee44bba9fb37",
+      "detail": {
+        "exception": "ValueError",
+        "message": "invalid generated PKG-INFO identity/version"
+      }
+    },
+    {
+      "id": "metadata-embedded-cr-name",
+      "expected": "rejected",
+      "actual": "accepted",
+      "matches_expectation": false,
+      "archive_bytes": 438,
+      "archive_sha256": "ae150ad8eb286a6768cac0f7f7f42960028e582a0b7655a84de9cad44da14fef",
+      "detail": {
+        "compressed_bytes": 438,
+        "tar_stream_bytes": 10240,
+        "unpacked_bytes": 192,
+        "raw_header_count": 8,
+        "member_count": 8,
+        "file_count": 8
+      }
+    },
+    {
+      "id": "metadata-invalid-header-separator",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 427,
+      "archive_sha256": "152f0a675859418fa306fb00e550f20d75461e084cbef7a1a8e7a441fef91a8c",
+      "detail": {
+        "exception": "ValueError",
+        "message": "invalid generated PKG-INFO singleton identity fields"
+      }
+    },
+    {
+      "id": "metadata-unsupported-metadata-version",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 426,
+      "archive_sha256": "863d1f5204a8401e0f330fc02697984b1c006bfb5826c6b71ba46d3ae4a1ba01",
+      "detail": {
+        "exception": "ValueError",
+        "message": "invalid generated PKG-INFO identity/version"
+      }
+    },
+    {
+      "id": "metadata-trailing-version-data",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 430,
+      "archive_sha256": "c1226ae824d438b9148e382b43ed0299eb774d1147202ea8afeb28263b99d63b",
+      "detail": {
+        "exception": "ValueError",
+        "message": "invalid generated PKG-INFO identity/version"
+      }
+    },
+    {
+      "id": "metadata-header-continuation-after-version",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 433,
+      "archive_sha256": "7e95984bba901849e7d853a5153bd5b9d5c794b503a8475e7397dd6aed365e69",
+      "detail": {
+        "exception": "ValueError",
+        "message": "invalid generated PKG-INFO identity/version"
+      }
+    },
+    {
+      "id": "metadata-missing-body-separator",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 435,
+      "archive_sha256": "e2acc8bcc6629320c577df7fea7a6b775a87108b8d599be8db8b0623118e2545",
+      "detail": {
+        "exception": "ValueError",
+        "message": "invalid generated PKG-INFO singleton identity fields"
+      }
+    },
+    {
+      "id": "metadata-valid-crlf",
+      "expected": "accepted",
+      "actual": "accepted",
+      "matches_expectation": true,
+      "archive_bytes": 432,
+      "archive_sha256": "8319be9da804509f34cd0b7a4507bc29a5da09d77f69cb79c6ed043de6adb2d1",
+      "detail": {
+        "compressed_bytes": 432,
+        "tar_stream_bytes": 10240,
+        "unpacked_bytes": 182,
+        "raw_header_count": 8,
+        "member_count": 8,
+        "file_count": 8
+      }
+    },
+    {
+      "id": "metadata-valid-no-description",
+      "expected": "accepted",
+      "actual": "accepted",
+      "matches_expectation": true,
+      "archive_bytes": 426,
+      "archive_sha256": "c8a01ca882c661736a58881fb871c78186602248c69c8a3ea4306354c3df4d45",
+      "detail": {
+        "compressed_bytes": 426,
+        "tar_stream_bytes": 10240,
+        "unpacked_bytes": 177,
+        "raw_header_count": 8,
+        "member_count": 8,
+        "file_count": 8
+      }
+    },
+    {
+      "id": "retained-pax-hidden-log",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 10758,
+      "archive_sha256": "6cdf91c03095ce5f27137d49fd66a3284a8a21b6d3a25c1e40818c161e078deb",
+      "detail": {
+        "exception": "ValueError",
+        "message": "decompressed tar stream budget exceeded"
+      }
+    },
+    {
+      "id": "retained-concatenated",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 10770,
+      "archive_sha256": "412272381b22f492f7347e171bf4b6cdcb57d5cff300f5839967de26b9b67871",
+      "detail": {
+        "exception": "ValueError",
+        "message": "trailing bytes/additional gzip member forbidden"
+      }
+    },
+    {
+      "id": "retained-metadata1",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 450,
+      "archive_sha256": "d75adf412f6a3858f6e4ba94515df68da184feb52d69371333ea6a140351d058",
+      "detail": {
+        "exception": "ValueError",
+        "message": "invalid generated PKG-INFO identity/version"
+      }
+    },
+    {
+      "id": "retained-metadata2",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 454,
+      "archive_sha256": "f8a0de13c32ea23edc868ed3764bf5037038dfb9c72686c1aac8a7c537469ca7",
+      "detail": {
+        "exception": "ValueError",
+        "message": "invalid generated PKG-INFO singleton identity fields"
+      }
+    },
+    {
+      "id": "retained-corrupt-gzip-crc",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 442,
+      "archive_sha256": "c360407273f38dbced59cb925688b3666ca1625797cde0aba2b3b8f31b20f7e6",
+      "detail": {
+        "exception": "ValueError",
+        "message": "invalid gzip stream/trailer: Error -3 while decompressing data: incorrect data check"
+      }
+    },
+    {
+      "id": "retained-missing-gzip-trailer",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 434,
+      "archive_sha256": "b8e28e3f1e31e7a1b46109c035c1ee11f16ee648ec8814491a5d3976774704e9",
+      "detail": {
+        "exception": "ValueError",
+        "message": "incomplete gzip stream/trailer"
+      }
+    },
+    {
+      "id": "retained-malformed-second-gzip-member",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 459,
+      "archive_sha256": "2f8b363f7636fe21441e9b73daa2fd9796cdbb8444e035eca01c95806626067d",
+      "detail": {
+        "exception": "ValueError",
+        "message": "trailing bytes/additional gzip member forbidden"
+      }
+    },
+    {
+      "id": "inflation-before-any-tar-parse",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "archive_bytes": 9195,
+      "archive_sha256": "b35ac0529e273fa39130a875ef11d96fcdae31ef21593c0458c9ff7160c0b279",
+      "detail": {
+        "exception": "ValueError",
+        "message": "decompressed tar stream budget exceeded"
+      },
+      "tar_parse_calls": []
+    }
+  ],
+  "cli": [
+    {
+      "id": "plain-ustar-control",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+        "/workspace/adr0033-review/scripts/check_sdist_contract.py",
+        "--source-root",
+        "/tmp/adr0033-independent-rereview-0e9tnzhl/source",
+        "--sdist",
+        "/tmp/adr0033-independent-rereview-0e9tnzhl/plain-ustar-control.tar.gz",
+        "--output",
+        "/tmp/adr0033-independent-rereview-0e9tnzhl/plain-ustar-control.receipt.json"
+      ],
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "receipt": {
+        "status": "passed"
+      },
+      "stdout": "{\"status\": \"passed\", \"archive\": \"plain-ustar-control.tar.gz\", \"sha256\": \"c8a1db04d26333cc7811a428ac8897655934b557b31b5cce266cca3dcb8204d9\", \"compressed_bytes\": 426, \"tar_stream_bytes\": 10240, \"raw_header_count\": 8, \"unpacked_bytes\": 178, \"member_count\": 8, \"file_count\": 8, \"product_files\": 4, \"source_inventory_sha256\": \"1b1104d807f86cb1d434152feb6fd7f6b18f0af059ed53282189d9e3f2f8eb2d\", \"budgets\": {\"compressed_bytes\": 2097152, \"unpacked_bytes\": 8388608, \"members\": 512, \"tar_stream_bytes\": 8922624}}\n",
+      "stderr": "",
+      "matches_expectation": true
+    },
+    {
+      "id": "gzip-optional-header-crc-corrupt",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+        "/workspace/adr0033-review/scripts/check_sdist_contract.py",
+        "--source-root",
+        "/tmp/adr0033-independent-rereview-0e9tnzhl/source",
+        "--sdist",
+        "/tmp/adr0033-independent-rereview-0e9tnzhl/gzip-optional-header-crc-corrupt.tar.gz",
+        "--output",
+        "/tmp/adr0033-independent-rereview-0e9tnzhl/gzip-optional-header-crc-corrupt.receipt.json"
+      ],
+      "exit_code": 1,
+      "expected_exit_code": 1,
+      "receipt": {
+        "error": "invalid gzip stream/trailer: Error -3 while decompressing data: header crc mismatch",
+        "status": "failed"
+      },
+      "stdout": "",
+      "stderr": "invalid gzip stream/trailer: Error -3 while decompressing data: header crc mismatch\n",
+      "matches_expectation": true
+    },
+    {
+      "id": "gzip-junk",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+        "/workspace/adr0033-review/scripts/check_sdist_contract.py",
+        "--source-root",
+        "/tmp/adr0033-independent-rereview-0e9tnzhl/source",
+        "--sdist",
+        "/tmp/adr0033-independent-rereview-0e9tnzhl/gzip-junk.tar.gz",
+        "--output",
+        "/tmp/adr0033-independent-rereview-0e9tnzhl/gzip-junk.receipt.json"
+      ],
+      "exit_code": 1,
+      "expected_exit_code": 1,
+      "receipt": {
+        "error": "trailing bytes/additional gzip member forbidden",
+        "status": "failed"
+      },
+      "stdout": "",
+      "stderr": "trailing bytes/additional gzip member forbidden\n",
+      "matches_expectation": true
+    },
+    {
+      "id": "gzip-trailing-zero",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+        "/workspace/adr0033-review/scripts/check_sdist_contract.py",
+        "--source-root",
+        "/tmp/adr0033-independent-rereview-0e9tnzhl/source",
+        "--sdist",
+        "/tmp/adr0033-independent-rereview-0e9tnzhl/gzip-trailing-zero.tar.gz",
+        "--output",
+        "/tmp/adr0033-independent-rereview-0e9tnzhl/gzip-trailing-zero.receipt.json"
+      ],
+      "exit_code": 1,
+      "expected_exit_code": 1,
+      "receipt": {
+        "error": "trailing bytes/additional gzip member forbidden",
+        "status": "failed"
+      },
+      "stdout": "",
+      "stderr": "trailing bytes/additional gzip member forbidden\n",
+      "matches_expectation": true
+    },
+    {
+      "id": "gzip-empty-second-member",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+        "/workspace/adr0033-review/scripts/check_sdist_contract.py",
+        "--source-root",
+        "/tmp/adr0033-independent-rereview-0e9tnzhl/source",
+        "--sdist",
+        "/tmp/adr0033-independent-rereview-0e9tnzhl/gzip-empty-second-member.tar.gz",
+        "--output",
+        "/tmp/adr0033-independent-rereview-0e9tnzhl/gzip-empty-second-member.receipt.json"
+      ],
+      "exit_code": 1,
+      "expected_exit_code": 1,
+      "receipt": {
+        "error": "trailing bytes/additional gzip member forbidden",
+        "status": "failed"
+      },
+      "stdout": "",
+      "stderr": "trailing bytes/additional gzip member forbidden\n",
+      "matches_expectation": true
+    },
+    {
+      "id": "gzip-second-tar-member",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+        "/workspace/adr0033-review/scripts/check_sdist_contract.py",
+        "--source-root",
+        "/tmp/adr0033-independent-rereview-0e9tnzhl/source",
+        "--sdist",
+        "/tmp/adr0033-independent-rereview-0e9tnzhl/gzip-second-tar-member.tar.gz",
+        "--output",
+        "/tmp/adr0033-independent-rereview-0e9tnzhl/gzip-second-tar-member.receipt.json"
+      ],
+      "exit_code": 1,
+      "expected_exit_code": 1,
+      "receipt": {
+        "error": "trailing bytes/additional gzip member forbidden",
+        "status": "failed"
+      },
+      "stdout": "",
+      "stderr": "trailing bytes/additional gzip member forbidden\n",
+      "matches_expectation": true
+    },
+    {
+      "id": "gzip-missing-trailer",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+        "/workspace/adr0033-review/scripts/check_sdist_contract.py",
+        "--source-root",
+        "/tmp/adr0033-independent-rereview-0e9tnzhl/source",
+        "--sdist",
+        "/tmp/adr0033-independent-rereview-0e9tnzhl/gzip-missing-trailer.tar.gz",
+        "--output",
+        "/tmp/adr0033-independent-rereview-0e9tnzhl/gzip-missing-trailer.receipt.json"
+      ],
+      "exit_code": 1,
+      "expected_exit_code": 1,
+      "receipt": {
+        "error": "incomplete gzip stream/trailer",
+        "status": "failed"
+      },
+      "stdout": "",
+      "stderr": "incomplete gzip stream/trailer\n",
+      "matches_expectation": true
+    },
+    {
+      "id": "gzip-truncated-deflate",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+        "/workspace/adr0033-review/scripts/check_sdist_contract.py",
+        "--source-root",
+        "/tmp/adr0033-independent-rereview-0e9tnzhl/source",
+        "--sdist",
+        "/tmp/adr0033-independent-rereview-0e9tnzhl/gzip-truncated-deflate.tar.gz",
+        "--output",
+        "/tmp/adr0033-independent-rereview-0e9tnzhl/gzip-truncated-deflate.receipt.json"
+      ],
+      "exit_code": 1,
+      "expected_exit_code": 1,
+      "receipt": {
+        "error": "incomplete gzip stream/trailer",
+        "status": "failed"
+      },
+      "stdout": "",
+      "stderr": "incomplete gzip stream/trailer\n",
+      "matches_expectation": true
+    },
+    {
+      "id": "tar-hidden-second-after-end",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+        "/workspace/adr0033-review/scripts/check_sdist_contract.py",
+        "--source-root",
+        "/tmp/adr0033-independent-rereview-0e9tnzhl/source",
+        "--sdist",
+        "/tmp/adr0033-independent-rereview-0e9tnzhl/tar-hidden-second-after-end.tar.gz",
+        "--output",
+        "/tmp/adr0033-independent-rereview-0e9tnzhl/tar-hidden-second-after-end.receipt.json"
+      ],
+      "exit_code": 1,
+      "expected_exit_code": 1,
+      "receipt": {
+        "error": "invalid tar end padding or hidden trailing payload",
+        "status": "failed"
+      },
+      "stdout": "",
+      "stderr": "invalid tar end padding or hidden trailing payload\n",
+      "matches_expectation": true
+    },
+    {
+      "id": "metadata-duplicate-mixed-case",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+        "/workspace/adr0033-review/scripts/check_sdist_contract.py",
+        "--source-root",
+        "/tmp/adr0033-independent-rereview-0e9tnzhl/source",
+        "--sdist",
+        "/tmp/adr0033-independent-rereview-0e9tnzhl/metadata-duplicate-mixed-case.tar.gz",
+        "--output",
+        "/tmp/adr0033-independent-rereview-0e9tnzhl/metadata-duplicate-mixed-case.receipt.json"
+      ],
+      "exit_code": 1,
+      "expected_exit_code": 1,
+      "receipt": {
+        "error": "invalid generated PKG-INFO singleton identity fields",
+        "status": "failed"
+      },
+      "stdout": "",
+      "stderr": "invalid generated PKG-INFO singleton identity fields\n",
+      "matches_expectation": true
+    },
+    {
+      "id": "metadata-unsupported-metadata-version",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+        "/workspace/adr0033-review/scripts/check_sdist_contract.py",
+        "--source-root",
+        "/tmp/adr0033-independent-rereview-0e9tnzhl/source",
+        "--sdist",
+        "/tmp/adr0033-independent-rereview-0e9tnzhl/metadata-unsupported-metadata-version.tar.gz",
+        "--output",
+        "/tmp/adr0033-independent-rereview-0e9tnzhl/metadata-unsupported-metadata-version.receipt.json"
+      ],
+      "exit_code": 1,
+      "expected_exit_code": 1,
+      "receipt": {
+        "error": "invalid generated PKG-INFO identity/version",
+        "status": "failed"
+      },
+      "stdout": "",
+      "stderr": "invalid generated PKG-INFO identity/version\n",
+      "matches_expectation": true
+    },
+    {
+      "id": "retained-pax-hidden-log",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+        "/workspace/adr0033-review/scripts/check_sdist_contract.py",
+        "--source-root",
+        "/workspace/adr0033-review/docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/source",
+        "--sdist",
+        "/tmp/adr0033-independent-rereview-0e9tnzhl/retained-pax-hidden-log.tar.gz",
+        "--output",
+        "/tmp/adr0033-independent-rereview-0e9tnzhl/retained-pax-hidden-log.receipt.json"
+      ],
+      "exit_code": 1,
+      "expected_exit_code": 1,
+      "receipt": {
+        "error": "decompressed tar stream budget exceeded",
+        "status": "failed"
+      },
+      "stdout": "",
+      "stderr": "decompressed tar stream budget exceeded\n",
+      "matches_expectation": true
+    },
+    {
+      "id": "retained-concatenated",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+        "/workspace/adr0033-review/scripts/check_sdist_contract.py",
+        "--source-root",
+        "/workspace/adr0033-review/docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/source",
+        "--sdist",
+        "/tmp/adr0033-independent-rereview-0e9tnzhl/retained-concatenated.tar.gz",
+        "--output",
+        "/tmp/adr0033-independent-rereview-0e9tnzhl/retained-concatenated.receipt.json"
+      ],
+      "exit_code": 1,
+      "expected_exit_code": 1,
+      "receipt": {
+        "error": "trailing bytes/additional gzip member forbidden",
+        "status": "failed"
+      },
+      "stdout": "",
+      "stderr": "trailing bytes/additional gzip member forbidden\n",
+      "matches_expectation": true
+    },
+    {
+      "id": "retained-metadata1",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+        "/workspace/adr0033-review/scripts/check_sdist_contract.py",
+        "--source-root",
+        "/workspace/adr0033-review/docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/source",
+        "--sdist",
+        "/tmp/adr0033-independent-rereview-0e9tnzhl/retained-metadata1.tar.gz",
+        "--output",
+        "/tmp/adr0033-independent-rereview-0e9tnzhl/retained-metadata1.receipt.json"
+      ],
+      "exit_code": 1,
+      "expected_exit_code": 1,
+      "receipt": {
+        "error": "invalid generated PKG-INFO identity/version",
+        "status": "failed"
+      },
+      "stdout": "",
+      "stderr": "invalid generated PKG-INFO identity/version\n",
+      "matches_expectation": true
+    },
+    {
+      "id": "retained-metadata2",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+        "/workspace/adr0033-review/scripts/check_sdist_contract.py",
+        "--source-root",
+        "/workspace/adr0033-review/docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/source",
+        "--sdist",
+        "/tmp/adr0033-independent-rereview-0e9tnzhl/retained-metadata2.tar.gz",
+        "--output",
+        "/tmp/adr0033-independent-rereview-0e9tnzhl/retained-metadata2.receipt.json"
+      ],
+      "exit_code": 1,
+      "expected_exit_code": 1,
+      "receipt": {
+        "error": "invalid generated PKG-INFO singleton identity fields",
+        "status": "failed"
+      },
+      "stdout": "",
+      "stderr": "invalid generated PKG-INFO singleton identity fields\n",
+      "matches_expectation": true
+    },
+    {
+      "id": "retained-corrupt-gzip-crc",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+        "/workspace/adr0033-review/scripts/check_sdist_contract.py",
+        "--source-root",
+        "/workspace/adr0033-review/docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/source",
+        "--sdist",
+        "/tmp/adr0033-independent-rereview-0e9tnzhl/retained-corrupt-gzip-crc.tar.gz",
+        "--output",
+        "/tmp/adr0033-independent-rereview-0e9tnzhl/retained-corrupt-gzip-crc.receipt.json"
+      ],
+      "exit_code": 1,
+      "expected_exit_code": 1,
+      "receipt": {
+        "error": "invalid gzip stream/trailer: Error -3 while decompressing data: incorrect data check",
+        "status": "failed"
+      },
+      "stdout": "",
+      "stderr": "invalid gzip stream/trailer: Error -3 while decompressing data: incorrect data check\n",
+      "matches_expectation": true
+    },
+    {
+      "id": "retained-missing-gzip-trailer",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+        "/workspace/adr0033-review/scripts/check_sdist_contract.py",
+        "--source-root",
+        "/workspace/adr0033-review/docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/source",
+        "--sdist",
+        "/tmp/adr0033-independent-rereview-0e9tnzhl/retained-missing-gzip-trailer.tar.gz",
+        "--output",
+        "/tmp/adr0033-independent-rereview-0e9tnzhl/retained-missing-gzip-trailer.receipt.json"
+      ],
+      "exit_code": 1,
+      "expected_exit_code": 1,
+      "receipt": {
+        "error": "incomplete gzip stream/trailer",
+        "status": "failed"
+      },
+      "stdout": "",
+      "stderr": "incomplete gzip stream/trailer\n",
+      "matches_expectation": true
+    },
+    {
+      "id": "retained-malformed-second-gzip-member",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+        "/workspace/adr0033-review/scripts/check_sdist_contract.py",
+        "--source-root",
+        "/workspace/adr0033-review/docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/source",
+        "--sdist",
+        "/tmp/adr0033-independent-rereview-0e9tnzhl/retained-malformed-second-gzip-member.tar.gz",
+        "--output",
+        "/tmp/adr0033-independent-rereview-0e9tnzhl/retained-malformed-second-gzip-member.receipt.json"
+      ],
+      "exit_code": 1,
+      "expected_exit_code": 1,
+      "receipt": {
+        "error": "trailing bytes/additional gzip member forbidden",
+        "status": "failed"
+      },
+      "stdout": "",
+      "stderr": "trailing bytes/additional gzip member forbidden\n",
+      "matches_expectation": true
+    }
+  ],
+  "summary": {
+    "cases": 63,
+    "cli_cases": 18,
+    "unexpected_results": [
+      "metadata-embedded-cr-name"
+    ],
+    "scope": "Independent bounded archive/identity probes only; no pytest suite, product behavior, wheel builds or release acceptance."
+  }
+}

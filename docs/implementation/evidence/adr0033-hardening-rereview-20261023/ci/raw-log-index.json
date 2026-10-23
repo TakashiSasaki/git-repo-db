@@ -1,0 +1,35 @@
+{
+  "tests-policy": {
+    "connector": "github_fetch_workflow_job_logs",
+    "job_id": 120213851456,
+    "run_id": 39892052621,
+    "retained_path": "tests-policy.log.gz",
+    "raw_bytes": 37073,
+    "raw_sha256": "7790fad51a4d777da0bc1e400661338b6dfc8d419fb575d4ff1e9946385c6f46",
+    "gzip_bytes": 7514,
+    "gzip_sha256": "8f1e63ca40b91604cac525233f155a0ea534d50f1b66471ff6dc607dc0c63b8c",
+    "sanitization": "GitHub masks preserved; signed URL query redaction configured; no matching signed URL query found"
+  },
+  "tests-offline": {
+    "connector": "github_fetch_workflow_job_logs",
+    "job_id": 120213851773,
+    "run_id": 39892052621,
+    "retained_path": "tests-offline.log.gz",
+    "raw_bytes": 233507,
+    "raw_sha256": "d8060a2caca45ebf679fe1c535f00a2dad37c0fff3f4d54ed956513cb6821d15",
+    "gzip_bytes": 94621,
+    "gzip_sha256": "7b9cdcf939f6c5115b7bc76fc012109c3fd8c73a0b0652f0d162a67fd6a39828",
+    "sanitization": "GitHub masks preserved; signed URL query redaction configured; no matching signed URL query found"
+  },
+  "access-registry": {
+    "connector": "github_fetch_workflow_job_logs",
+    "job_id": 120213851409,
+    "run_id": 39892052634,
+    "retained_path": "access-registry.log.gz",
+    "raw_bytes": 3283555,
+    "raw_sha256": "6cf967f273f62444dfbdc68a23ae31ce13b3ca72553d315b82f3a095e5d20cda",
+    "gzip_bytes": 1746586,
+    "gzip_sha256": "9f28ef7b718a72aac9d1c0df1e693a8ef9cb588d56bbc458361e083cf6a8cfa2",
+    "sanitization": "GitHub masks preserved; signed URL query redaction configured; no matching signed URL query found"
+  }
+}

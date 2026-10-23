@@ -1,0 +1,40 @@
+{
+  "sha": "e0c60765bd0d99b8276a8d0528dabfa7f4d6971a",
+  "node_id": "C_kwDOU78qEtoAKGUwYzYwNzY1YmQwZDk5YjgyNzZhOGQwNTI4ZGFiZmE3ZjRkNjk3MWE",
+  "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/git/commits/e0c60765bd0d99b8276a8d0528dabfa7f4d6971a",
+  "html_url": "https://github.com/TakashiSasaki/git-repo-db/commit/e0c60765bd0d99b8276a8d0528dabfa7f4d6971a",
+  "author": {
+    "name": "Takashi SASAKI",
+    "email": "takashi316@gmail.com",
+    "date": "2026-10-23T02:53:40Z"
+  },
+  "committer": {
+    "name": "GitHub",
+    "email": "noreply@github.com",
+    "date": "2026-10-23T02:53:40Z"
+  },
+  "tree": {
+    "sha": "5ea93707d62b542c84632515392ac6a35c36cd65",
+    "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/git/trees/5ea93707d62b542c84632515392ac6a35c36cd65"
+  },
+  "message": "Merge 59307c40ea65554736e131cedd00f04c9906551b into ef3ca118d4ab5e52dc2d1c7de384c3557509add2",
+  "parents": [
+    {
+      "sha": "ef3ca118d4ab5e52dc2d1c7de384c3557509add2",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/git/commits/ef3ca118d4ab5e52dc2d1c7de384c3557509add2",
+      "html_url": "https://github.com/TakashiSasaki/git-repo-db/commit/ef3ca118d4ab5e52dc2d1c7de384c3557509add2"
+    },
+    {
+      "sha": "59307c40ea65554736e131cedd00f04c9906551b",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/git/commits/59307c40ea65554736e131cedd00f04c9906551b",
+      "html_url": "https://github.com/TakashiSasaki/git-repo-db/commit/59307c40ea65554736e131cedd00f04c9906551b"
+    }
+  ],
+  "verification": {
+    "verified": true,
+    "reason": "valid",
+    "signature": "-----BEGIN PGP SIGNATURE-----\n\nwsFcBAABCAAQBQJq2sw0CRC1aQ7uu5UhlAAAfMoQAAyZB7QdmsqJbjeSwQks5941\nxefBSC1rBTL9ljmVvxAI3d6OJ25g9TKKqWZpm0lR95Sh20sIEbdUW0X8ogH3KSIR\nQFztio2j1TKEbCHCQzzRMFrrJITEblrZw1faeyuA7IdUoJ475hgT/eYAGFcjvqId\nwsINPn9GPRnI79Rynqew7v0MRm8QCJho2IIHMNeeal9m8h8AkXuGXs6VnPqxi0+E\n+rHUu8L8GIX2IC5GPPd/4oFcoTO2Lwanx8QAN76QbfiOMKQLaI3qNQ2SeDRQyiIn\nYFwGJtJgFH7SvopGs3mDa5poL7Z4SM+Lx/vFRzCZERl717WkNLGZ++UO+LUWAJ3n\ngZuQHAnrIQ6ulNzxf+67j+fHz3fJBL/YYlPiTSN4zHx37VmjjeQYJtN6O4fvXfdX\nI/Jf9mzgoFLTvDLrB5vXEPCRkWHCvsBlsP4VfeVgV9Ew/LoXbzG+jHjHx4xnNa4u\nwTMYuXyMJN4YbyKkkx7glFj+vexr+1HJnuESYahCK1JfJUsM2VHCeAqMGS+XfeGM\nxRsu7XtizxpnU6QlaFCYFdMjzXca2pL/jFthZIT32aA+Os+DVCOJ3Tm6bH3dpkQR\nzt24JyHHWHmrstEyHuPDReRVMu9faDh1s/BhNtouy3iM9c8JRZENw7e7UNXkbKwu\n7SlZwlNCJMVtYjdqFZkc\n=NtXG\n-----END PGP SIGNATURE-----\n",
+    "payload": "tree 5ea93707d62b542c84632515392ac6a35c36cd65\nparent ef3ca118d4ab5e52dc2d1c7de384c3557509add2\nparent 59307c40ea65554736e131cedd00f04c9906551b\nauthor Takashi SASAKI <takashi316@gmail.com> 1792724020 +0000\ncommitter GitHub <noreply@github.com> 1792724020 +0000\n\nMerge 59307c40ea65554736e131cedd00f04c9906551b into ef3ca118d4ab5e52dc2d1c7de384c3557509add2\n",
+    "verified_at": "2026-10-23T02:53:40Z"
+  }
+}
