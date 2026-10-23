@@ -136,6 +136,17 @@ def admission_checked(operation):
             service.authorize(context, required)
         )
         self._admission_live_leases.append(lease)
+        # R12 orders permanent native semantics after authority/selection but
+        # before missing-dependency diagnostics, including Source lookups.
+        if name == "admit_transfer_event":
+            from repo_catalog.domain.p1_context import TransferEventReport
+
+            report = values["report"]
+            if (
+                isinstance(report, TransferEventReport)
+                and report.parent_issue != report.issue_resource
+            ):
+                raise AdmissionRefused("QS10_PARENT_INELIGIBLE")
         # Do not obtain existence-sensitive diagnostics before current authority.
         self._current_admission_for_expansion = context
         self._check_source_dependencies(

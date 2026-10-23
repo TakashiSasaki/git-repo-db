@@ -144,3 +144,15 @@ passed 488 tests outside checkout, but those earlier artifacts do not alone
 accept the material coordinator correction. Full Author validation remains
 INCOMPLETE pending those final results and disposition of remaining failures;
 non-Author I6-A acceptance is NOT RUN.
+
+A final R12 counterexample found that an authorized/selected permanently
+ineligible I8 Transfer with an unavailable Source returned `MISSING_DEPENDENCY`
+before `QS10_PARENT_INELIGIBLE`. Two initial/replay cases failed, while the four
+permission/selection precedence controls passed. The shared guard now checks pure
+native eligibility after current authority/selection and before Source lookup;
+all six cases pass without dependency lookup or mutation. A preliminary test
+fixture with stale endpoint report references was corrected before this valid
+counterexample; its failed output is preserved separately. The complete focused
+source cohort is now **583 PASS** (exit 0), with no skips or xfails. This material
+final freeze receives its own clean full-suite, SQL and distribution executions;
+intermediate #143/cc6 evidence is not silently rebound to it.
