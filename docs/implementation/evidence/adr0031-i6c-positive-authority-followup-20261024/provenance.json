@@ -1,60 +1,55 @@
 {
   "schema_version": 1,
-  "task": "Codex Task B \u2014 Resolve PR #159 P1/P2 Review Findings and Prove I6-C Positive Paths",
-  "base_branch": "fix/adr0031-i6c-authority-ci-20261024",
-  "base_head": "c00bdbb9246e12504506eaf372a49a1a631fc5f9",
-  "base_tree": "cc165ee7fd54bdf9bff452f78dd67f3c6aaa68f6",
-  "fix_branch": "fix/adr0031-i6c-positive-authority-followup-20261024",
-  "target_pull_request_base": "fix/adr0031-i6c-authority-ci-20261024",
-  "hashing_standard": "HCI-L01 raw complete-byte SHA-256 without strip() or newline trimming",
-  "evidence_files": {
+  "provenance_standard": "HCI-L01",
+  "description": "Cryptographic raw-byte SHA-256 digests and Git blob OIDs for all evidence artifacts in adr0031-i6c-positive-authority-followup-20261024",
+  "artifacts": {
     "MATRIX.md": {
-      "bytes": 6275,
-      "sha256": "551a1a8d807d91d7b36b4d9e0111888fb100afbd23b613ae9cf3f18f5572b662",
-      "git_blob_oid": "b19057f494e10c698256251101278b3eaba39fbc"
+      "byte_count": 8060,
+      "sha256": "494d9c174c0ce88d1b89cb7c27af6f637016b3cbb97bb3c2d85755aff9a32cfe",
+      "git_blob_oid": "7a9223d07f30af4464b628c2536a50bf425b68d7"
     },
     "REPORT.md": {
-      "bytes": 10323,
-      "sha256": "bae46538445e9da4b817fa0af7f807e6910a7c4a2e74e56dc8b9bd12c77cbc53",
-      "git_blob_oid": "aa452ef4db5d7a10090facd379cca01d5a244da7"
+      "byte_count": 11845,
+      "sha256": "7388a9ffa2c20e9126d297d117501fc64c570a00f1333f002810dcd89c463644",
+      "git_blob_oid": "5930f14209c3fa81e0f5db2541ef42b5c5275c2a"
     },
     "findings.json": {
-      "bytes": 6071,
-      "sha256": "32d8d73a3a4dc9be5b15429c7c57863844c663eb0907fd2e09c7a18e5e2e917b",
-      "git_blob_oid": "3e72ab0a70908b77a7c252e29b1174d7fc007c15"
+      "byte_count": 8428,
+      "sha256": "fc5c9bcdc253a32a16fbdf8abd9e190974bf8503b80bad88eaf69423195484a2",
+      "git_blob_oid": "1dce389d411e01641e88e754dfc5009161145ce2"
     },
     "raw/packaging_verification.log": {
-      "bytes": 596,
-      "sha256": "599b2246229443616da4cbb8708f1f1d50d140b188b57ebd51f24d010212de3a",
-      "git_blob_oid": "30c4f6a3632c065f757e80097bbea0f6caa9f5cd"
+      "byte_count": 545,
+      "sha256": "48e1d565d0e132b812a303dbab7d0289450a8158ab7338a0781ff8b827dd9bc8",
+      "git_blob_oid": "33e4369adc5b647802bd346df7fc6cda10e6d701"
     },
     "raw/ruff_check.log": {
-      "bytes": 19,
+      "byte_count": 19,
       "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
       "git_blob_oid": "1f5f344d054fae10f39140fb7199c99321d9190a"
     },
     "raw/ruff_format.log": {
-      "bytes": 28,
+      "byte_count": 28,
       "sha256": "b9e37449f6aaa00be770187a1887f067ef465da7e180b55d93bf43a0174ac0b6",
       "git_blob_oid": "366a5a308febfccd1ecd8462a4c384112a2cddc6"
     },
     "raw/sqlite_validation_policy.log": {
-      "bytes": 41,
+      "byte_count": 41,
       "sha256": "88479b8fcebfcc96a14d673c6cdc6a53f07ec1e57a80c1aacc1cda81b4faa923",
       "git_blob_oid": "288fd2822ff50506cde1fb133b807a2a1ddea0d3"
     },
     "raw/test_i6c_authority_and_exchange.log": {
-      "bytes": 545,
-      "sha256": "66ecca2c56133c528d050e9580bced053907e72e9f015c9a81f99aa6ce92fa6a",
-      "git_blob_oid": "d8c6c010f8c653130ae5b6ceced0887d843920d6"
+      "byte_count": 545,
+      "sha256": "fcfc2f07c14861bc84d8e241b38ee67a27eb463762ad8e36a1014c1f008d0949",
+      "git_blob_oid": "f1e05989168adc495391e1b74e9ca08f18603eec"
     },
     "raw/unit_ci_python_runtime.log": {
-      "bytes": 6863,
+      "byte_count": 6863,
       "sha256": "82a636524991cdea5f38fe02b2ccf0e19d4699a52f31f5b77ae36881e78adc87",
       "git_blob_oid": "7a6106ca229825e2855d5f274d79e27ca3be57f1"
     },
     "raw/unit_sqlite_validation_policy.log": {
-      "bytes": 130,
+      "byte_count": 130,
       "sha256": "1b7a1d5cb8032f25eb69762c2c79b92904b58ded25fa7bcc3d3a25cfaa8d0f77",
       "git_blob_oid": "50f764425f1d150183a413d73b67a911556bb4e6"
     }

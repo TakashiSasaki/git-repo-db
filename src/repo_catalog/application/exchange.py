@@ -1647,6 +1647,127 @@ class ExchangeService:
             )
 
     @staticmethod
+    def _extract_context_dependencies(
+        context_data: dict[str, Any] | None,
+    ) -> Any:
+        from repo_catalog.domain.context_admission import DependencySet
+
+        if not context_data:
+            return DependencySet()
+
+        import json
+
+        from repo_catalog.domain.p1_context import ResourceKey
+        from repo_catalog.domain.p1_core import OID
+        from repo_catalog.domain.selective_exchange import (
+            disposition as decode_disposition,
+        )
+        from repo_catalog.domain.selective_exchange import (
+            relation as decode_relation,
+        )
+
+        resources = set()
+        repositories = set()
+        sources = set()
+        source_repository_pairs = set()
+        provider_registrations = set()
+        dispositions = set()
+        mapping_claims = set()
+        object_oids = set()
+
+        for p in context_data.get("providers", ()):
+            if "service_instance_uuidv4" in p:
+                provider_registrations.add(p["service_instance_uuidv4"])
+
+        for r in context_data.get("repositories", ()):
+            if "repository_uuidv4" in r:
+                repositories.add(r["repository_uuidv4"])
+
+        for s in context_data.get("sources", ()):
+            if "source_registration_uuidv4" in s:
+                sources.add(s["source_registration_uuidv4"])
+            if "service_instance_uuidv4" in s:
+                provider_registrations.add(s["service_instance_uuidv4"])
+
+        for sr in context_data.get("source_repositories", ()):
+            src = sr.get("source_registration_uuidv4")
+            repo = sr.get("repository_uuidv4")
+            if src:
+                sources.add(src)
+            if repo:
+                repositories.add(repo)
+            if src and repo:
+                source_repository_pairs.add((src, repo))
+
+        for res in context_data.get("resources", ()):
+            rk = ResourceKey(
+                res["service_instance_uuidv4"],
+                res["resource_kind"],
+                res["provider_resource_id"],
+            )
+            resources.add(rk)
+            if "service_instance_uuidv4" in res:
+                provider_registrations.add(res["service_instance_uuidv4"])
+
+        for rrr in context_data.get("resource_repository_relations", ()):
+            if "repository_uuidv4" in rrr:
+                repositories.add(rrr["repository_uuidv4"])
+            try:
+                rel = decode_relation(rrr)
+                if hasattr(rel, "resource_key"):
+                    resources.add(rel.resource_key)
+            except Exception:
+                pass
+
+        for rmd in context_data.get("repository_mapping_dispositions", ()):
+            if "repository_uuidv4" in rmd:
+                repositories.add(rmd["repository_uuidv4"])
+            try:
+                disp = decode_disposition(rmd)
+                if hasattr(disp, "key"):
+                    dispositions.add(disp.key)
+            except Exception:
+                pass
+
+        for rel in context_data.get("resource_relations", ()):
+            if (
+                "service_instance_uuidv4" in rel
+                and "resource_kind" in rel
+                and "provider_resource_id" in rel
+            ):
+                resources.add(
+                    ResourceKey(
+                        rel["service_instance_uuidv4"],
+                        rel["resource_kind"],
+                        rel["provider_resource_id"],
+                    )
+                )
+            members_json = rel.get("members_json")
+            if members_json:
+                try:
+                    for m in json.loads(members_json):
+                        resources.add(ResourceKey(*m))
+                except Exception:
+                    pass
+
+        for ref in context_data.get("core_references", ()):
+            fmt = ref.get("object_format")
+            oid = ref.get("full_oid")
+            if fmt and oid:
+                object_oids.add(OID(fmt, oid))
+
+        return DependencySet(
+            resources=resources,
+            repositories=repositories,
+            sources=sources,
+            source_repository_pairs=source_repository_pairs,
+            mapping_claims=mapping_claims,
+            dispositions=dispositions,
+            provider_registrations=provider_registrations,
+            object_oids=object_oids,
+        )
+
+    @staticmethod
     def _validate_receiver_authority(
         auth, adm, context_data: dict[str, Any] | None
     ) -> None:
@@ -1654,7 +1775,6 @@ class ExchangeService:
             AdmissionRefused,
             ContextAdmissionService,
         )
-        from repo_catalog.domain.p1_context import ResourceKey
 
         if auth is None or adm is None:
             raise AdmissionRefused("PERMISSION_DENIED")
@@ -1662,61 +1782,24 @@ class ExchangeService:
             raise AdmissionRefused("PERMISSION_DENIED")
         auth.validate_context(adm)
         policy = getattr(auth, "_policy", None)
-        if (
-            policy is not None
-            and policy._principal is not None
-            and adm.principal != policy._principal
-        ):
+        if policy is None or not callable(getattr(policy, "lease", None)):
             raise AdmissionRefused("PERMISSION_DENIED")
-        if context_data is not None:
-            context_resources = {
-                ResourceKey(
-                    r["service_instance_uuidv4"],
-                    r["resource_kind"],
-                    r["provider_resource_id"],
-                )
-                for r in context_data.get("resources", ())
-            }
-            context_sources = {
-                s["source_registration_uuidv4"] for s in context_data.get("sources", ())
-            }
-            has_deps = bool(
-                context_resources
-                or context_sources
-                or context_data.get("repository_mapping_dispositions")
-                or context_data.get("resource_relations")
-            )
-            if has_deps:
-                if policy is not None:
-                    if policy.grants is None:
-                        raise AdmissionRefused("PERMISSION_DENIED")
-                    if (
-                        context_resources
-                        and not context_resources <= policy.grants.resources
-                    ):
-                        raise AdmissionRefused("PERMISSION_DENIED")
-                    if context_sources and not context_sources <= policy.grants.sources:
-                        raise AdmissionRefused("PERMISSION_DENIED")
-            if policy is not None and policy._permitted_repositories is not None:
-                context_repos = {
-                    r["repository_uuidv4"] for r in context_data.get("repositories", ())
-                } | {
-                    r["repository_uuidv4"]
-                    for r in context_data.get("resource_repository_relations", ())
-                    if "repository_uuidv4" in r
-                }
-                if (
-                    context_repos
-                    and not context_repos <= policy._permitted_repositories
-                ):
-                    raise AdmissionRefused("PERMISSION_DENIED")
-            if policy is not None and hasattr(policy, "denied"):
-                if context_resources and bool(
-                    context_resources & policy.denied.resources
-                ):
-                    raise AdmissionRefused("PERMISSION_DENIED")
-                if context_sources and bool(context_sources & policy.denied.sources):
-                    raise AdmissionRefused("PERMISSION_DENIED")
+
+        package_deps = ExchangeService._extract_context_dependencies(context_data)
+        if hasattr(policy, "grants") and policy.grants is None:
+            if (
+                package_deps.resources
+                or package_deps.sources
+                or package_deps.provider_registrations
+                or package_deps.mapping_claims
+                or package_deps.dispositions
+            ):
+                raise AdmissionRefused("PERMISSION_DENIED")
+
+        with policy.lease(adm.principal, adm.operation, package_deps) as lease:
+            if not callable(getattr(lease, "check_current", None)):
+                raise AdmissionRefused("PERMISSION_DENIED")
+            lease.check_current()
 
     def _import_package(
         self,

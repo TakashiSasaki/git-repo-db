@@ -3,9 +3,9 @@ platform linux -- Python 3.12.3, pytest-8.4.2, pluggy-1.6.0
 rootdir: /home/ubuntu/github/git-repo-db/fix/adr0031-i6c-positive-authority-followup-20261024
 configfile: pyproject.toml
 plugins: xdist-3.8.0
-collected 37 items
+collected 40 items
 
-tests/integration/i6/test_i6c_authority_and_exchange.py ................ [ 43%]
-.....................                                                    [100%]
+tests/integration/i6/test_i6c_authority_and_exchange.py ................ [ 40%]
+........................                                                 [100%]
 
-============================= 37 passed in 13.80s ==============================
+============================= 40 passed in 17.64s ==============================

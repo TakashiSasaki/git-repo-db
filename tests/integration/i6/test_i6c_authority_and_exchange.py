@@ -1313,3 +1313,276 @@ def test_child_first_registration():
     assert ident.document_kind == "discussion"
     wire = ident.to_wire()
     assert ResourceIdentification.from_wire(wire) == ident
+
+
+def test_exchange_import_missing_provider_registration_fails_closed_zero_writes(
+    tmp_path,
+):
+    """P1 regression: Core+Context package with provider registration and resource.
+
+    Grants cover resource and repository but omit provider_registrations.
+    Must fail closed immediately with PERMISSION_DENIED before Core commit (0 Core & Context writes).
+    """
+    sender_path = tmp_path / "sender"
+    receiver_path = tmp_path / "receiver"
+    repo_uuid = str(uuid4())
+    receiver_repo = str(uuid4())
+    sender_instance = str(uuid4())
+    receiver_instance = str(uuid4())
+
+    init_catalog_stores(
+        sender_path,
+        repository_uuidv4=repo_uuid,
+        catalog_instance_uuidv4=sender_instance,
+    )
+    init_catalog_stores(
+        receiver_path,
+        repository_uuidv4=receiver_repo,
+        catalog_instance_uuidv4=receiver_instance,
+    )
+
+    # Populate sender with Provider, Repository, and Resource
+    res_key = ResourceKey(sender_instance, "issue", encode_identity(["bug-99"]))
+    auth_s, adm_s, _ = create_local_admission_service(
+        "provider_intake",
+        grants=DependencySet(
+            resources={res_key},
+            repositories={repo_uuid},
+            provider_registrations={sender_instance},
+        ),
+        selection=AdmissionSelection(all_selected=True, max_work=10000),
+    )
+    with Context.transaction(sender_path, authorization=auth_s, admission=adm_s) as ctx:
+        ctx.provider(sender_instance, "github", "{}")
+        ctx.repository(repo_uuid)
+        ctx.resource(res_key)
+
+    sender_service = ExchangeService(sender_path)
+    pkg = sender_service.export_package(
+        selection=ExchangeSelectionScope(all_selected=True)
+    )
+
+    receiver_service = ExchangeService(receiver_path)
+
+    # Receiver grant covers resource and repo, but OMITS provider_registrations!
+    grants_missing_provider = DependencySet(
+        resources={res_key},
+        repositories={repo_uuid},
+        # provider_registrations is EMPTY!
+    )
+
+    with pytest.raises(AdmissionRefused) as exc_info:
+        receiver_service.import_package(
+            pkg,
+            permitted_repository_uuidv4s=(repo_uuid,),
+            grants=grants_missing_provider,
+            new_request=True,
+        )
+    assert exc_info.value.code == "PERMISSION_DENIED"
+
+    # CRITICAL: Verify ZERO writes of sender's repo/provider/resource to both Core and Context
+    with sqlite3.connect(receiver_path / "core.sqlite3") as core_db:
+        core_count = core_db.execute(
+            "SELECT count(*) FROM repositories WHERE repository_uuidv4=?", (repo_uuid,)
+        ).fetchone()[0]
+        assert core_count == 0
+
+    with sqlite3.connect(receiver_path / "context.sqlite3") as ctx_db:
+        prov_count = ctx_db.execute("SELECT count(*) FROM providers").fetchone()[0]
+        res_count = ctx_db.execute("SELECT count(*) FROM resources").fetchone()[0]
+        assert prov_count == 0
+        assert res_count == 0
+
+
+def test_exchange_import_missing_repository_grant_fails_closed_zero_writes(tmp_path):
+    """P1 regression: permitted_repository_uuidv4s has repo, but grants.repositories omits it.
+
+    Must fail closed immediately with PERMISSION_DENIED and 0 writes.
+    """
+    sender_path = tmp_path / "sender"
+    receiver_path = tmp_path / "receiver"
+    repo_uuid = str(uuid4())
+    receiver_repo = str(uuid4())
+    sender_instance = str(uuid4())
+    receiver_instance = str(uuid4())
+
+    init_catalog_stores(
+        sender_path,
+        repository_uuidv4=repo_uuid,
+        catalog_instance_uuidv4=sender_instance,
+    )
+    init_catalog_stores(
+        receiver_path,
+        repository_uuidv4=receiver_repo,
+        catalog_instance_uuidv4=receiver_instance,
+    )
+
+    res_key = ResourceKey(sender_instance, "issue", encode_identity(["bug-100"]))
+    auth_s, adm_s, _ = create_local_admission_service(
+        "provider_intake",
+        grants=DependencySet(
+            resources={res_key},
+            repositories={repo_uuid},
+            provider_registrations={sender_instance},
+        ),
+        selection=AdmissionSelection(all_selected=True, max_work=10000),
+    )
+    with Context.transaction(sender_path, authorization=auth_s, admission=adm_s) as ctx:
+        ctx.provider(sender_instance, "github", "{}")
+        ctx.repository(repo_uuid)
+        ctx.resource(res_key)
+
+    sender_service = ExchangeService(sender_path)
+    pkg = sender_service.export_package(
+        selection=ExchangeSelectionScope(all_selected=True)
+    )
+
+    receiver_service = ExchangeService(receiver_path)
+
+    # Receiver grant covers resource and provider, but OMITS repositories!
+    grants_missing_repo = DependencySet(
+        resources={res_key},
+        provider_registrations={sender_instance},
+        # repositories is EMPTY!
+    )
+
+    with pytest.raises(AdmissionRefused) as exc_info:
+        receiver_service.import_package(
+            pkg,
+            permitted_repository_uuidv4s=(repo_uuid,),
+            grants=grants_missing_repo,
+            new_request=True,
+        )
+    assert exc_info.value.code == "PERMISSION_DENIED"
+
+    with sqlite3.connect(receiver_path / "core.sqlite3") as core_db:
+        core_count = core_db.execute(
+            "SELECT count(*) FROM repositories WHERE repository_uuidv4=?", (repo_uuid,)
+        ).fetchone()[0]
+        assert core_count == 0
+
+    with sqlite3.connect(receiver_path / "context.sqlite3") as ctx_db:
+        assert ctx_db.execute("SELECT count(*) FROM resources").fetchone()[0] == 0
+
+
+def test_exchange_import_custom_policy_supported_interface(tmp_path):
+    """P2 regression: Custom AuthorizationPolicy without _principal or _permitted_repositories.
+
+    Must validate through policy protocol lease() without raising AttributeError.
+    """
+    from contextlib import contextmanager
+
+    class CustomMinimalPolicy:
+        """Implements only the public AuthorizationPolicy protocol."""
+
+        def __init__(self, allowed_resources, allowed_repositories, allowed_providers):
+            self.allowed_resources = allowed_resources
+            self.allowed_repositories = allowed_repositories
+            self.allowed_providers = allowed_providers
+            self.lease_calls = []
+
+        @contextmanager
+        def lease(self, principal, operation, dependencies):
+            self.lease_calls.append((principal, operation, dependencies))
+            if (
+                not dependencies.resources <= self.allowed_resources
+                or not dependencies.repositories <= self.allowed_repositories
+                or not dependencies.provider_registrations <= self.allowed_providers
+            ):
+                raise AdmissionRefused("PERMISSION_DENIED")
+
+            class MinimalLease:
+                def check_current(self):
+                    pass
+
+            yield MinimalLease()
+
+    sender_path = tmp_path / "sender"
+    receiver_path = tmp_path / "receiver"
+    repo_uuid = str(uuid4())
+    sender_instance = str(uuid4())
+    receiver_instance = str(uuid4())
+
+    init_catalog_stores(
+        sender_path,
+        repository_uuidv4=repo_uuid,
+        catalog_instance_uuidv4=sender_instance,
+    )
+    init_catalog_stores(
+        receiver_path,
+        repository_uuidv4=repo_uuid,
+        catalog_instance_uuidv4=receiver_instance,
+    )
+
+    res_key = ResourceKey(sender_instance, "issue", encode_identity(["custom-1"]))
+    auth_s, adm_s, _ = create_local_admission_service(
+        "provider_intake",
+        grants=DependencySet(
+            resources={res_key},
+            repositories={repo_uuid},
+            provider_registrations={sender_instance},
+        ),
+        selection=AdmissionSelection(all_selected=True, max_work=10000),
+    )
+    with Context.transaction(sender_path, authorization=auth_s, admission=adm_s) as ctx:
+        ctx.provider(sender_instance, "synthetic", "{}")
+        ctx.repository(repo_uuid)
+        ctx.resource(res_key)
+
+    pkg = ExchangeService(sender_path).export_package(
+        selection=ExchangeSelectionScope(all_selected=True)
+    )
+
+    # Negative case: custom policy does not allow res_key
+    custom_policy_denying = CustomMinimalPolicy(
+        allowed_resources=set(),
+        allowed_repositories={repo_uuid},
+        allowed_providers={sender_instance},
+    )
+    auth_denying = ContextAdmissionService(
+        custom_policy_denying, lambda cred: "custom-user"
+    )
+    adm_denying = auth_denying.context(
+        "cred",
+        "exchange_import",
+        ExchangeSelectionScope(all_selected=True),
+        AdmissionBudget(),
+    )
+
+    receiver_service = ExchangeService(receiver_path)
+    with pytest.raises(AdmissionRefused) as exc_info:
+        receiver_service.import_package(
+            pkg,
+            permitted_repository_uuidv4s=(repo_uuid,),
+            authorization=auth_denying,
+            admission=adm_denying,
+            new_request=True,
+        )
+    assert exc_info.value.code == "PERMISSION_DENIED"
+
+    # Positive case: custom policy allows res_key
+    custom_policy_allowing = CustomMinimalPolicy(
+        allowed_resources={res_key},
+        allowed_repositories={repo_uuid},
+        allowed_providers={sender_instance},
+    )
+    auth_allowing = ContextAdmissionService(
+        custom_policy_allowing, lambda cred: "custom-user"
+    )
+    adm_allowing = auth_allowing.context(
+        "cred",
+        "exchange_import",
+        ExchangeSelectionScope(all_selected=True),
+        AdmissionBudget(),
+    )
+
+    report = receiver_service.import_package(
+        pkg,
+        permitted_repository_uuidv4s=(repo_uuid,),
+        authorization=auth_allowing,
+        admission=adm_allowing,
+        new_request=True,
+    )
+    assert report.admitted_context_resources == 1
+    with sqlite3.connect(receiver_path / "context.sqlite3") as ctx_db:
+        assert ctx_db.execute("SELECT count(*) FROM resources").fetchone()[0] == 1

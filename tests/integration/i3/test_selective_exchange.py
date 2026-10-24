@@ -95,29 +95,10 @@ def receive(path, package, permitted=(), **kwargs):
     grants = kwargs.pop("grants", None)
     if grants is None and permitted and "authorization" not in kwargs:
         from repo_catalog.domain.context_admission import DependencySet
-        from repo_catalog.domain.p1_context import ResourceKey
 
-        res_set = set()
-        prov_set = set()
-        if (
-            hasattr(package, "context")
-            and package.context
-            and "resources" in package.context
-        ):
-            for r in package.context["resources"]:
-                res_set.add(
-                    ResourceKey(
-                        r["service_instance_uuidv4"],
-                        r["resource_kind"],
-                        r["provider_resource_id"],
-                    )
-                )
-                prov_set.add(r["service_instance_uuidv4"])
-        grants = DependencySet(
-            repositories=set(permitted),
-            resources=res_set,
-            provider_registrations=prov_set,
-        )
+        context_data = package.context if hasattr(package, "context") else None
+        extracted = ExchangeService._extract_context_dependencies(context_data)
+        grants = extracted | DependencySet(repositories=set(permitted))
     return ExchangeService(path).import_package(
         package,
         permitted_repository_uuidv4s=permitted,
@@ -687,14 +668,19 @@ def test_process_exit_before_checkpoint_recovery_uses_facts(tmp_path, point):
     wire.write_text(encode_package(package))
     request = RequestIdentity(str(uuid4()), str(uuid4()))
     code = """
-import os,sys
+import json, os, sys
 from pathlib import Path
 from repo_catalog.application.exchange import ExchangeService
+from repo_catalog.domain.context_admission import DependencySet
 from repo_catalog.domain.p1_coordination import RequestIdentity
 p,wire,repo,origin,request,point=sys.argv[1:]
 def cut(where):
     if where==point: os._exit(77)
-ExchangeService(Path(p)).import_package(Path(wire).read_text(),request=RequestIdentity(origin,request),new_request=True,permitted_repository_uuidv4s=(repo,),cut=cut)
+raw = Path(wire).read_text()
+pkg = json.loads(raw)
+deps = ExchangeService._extract_context_dependencies(pkg.get("context"))
+grants = deps | DependencySet(repositories={repo})
+ExchangeService(Path(p)).import_package(raw,request=RequestIdentity(origin,request),new_request=True,permitted_repository_uuidv4s=(repo,),grants=grants,cut=cut)
 """
     result = subprocess.run(
         [sys.executable, "-c", code, str(b), str(wire), r1, *request.values(), point],

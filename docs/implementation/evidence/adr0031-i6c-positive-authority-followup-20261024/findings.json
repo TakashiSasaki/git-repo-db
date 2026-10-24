@@ -53,6 +53,29 @@
       "tests/integration/i6/test_i6c_authority_and_exchange.py::test_receiver_selective_subset_omits_unselected_sender_resources"
     ]
   },
+  "p1_complete_dependency_set_prevalidation": {
+    "status": "REMEDIATED",
+    "codex_review_finding": "discussion_4366462438",
+    "severity": "P1",
+    "observed_condition": "For a Core+Context package containing a resource and its Provider registration, grants covering the resource and repository but omitting provider_registrations passed preflight. The same happened when the repository was permitted but absent from grants.repositories. PairCoordinator committed Core before Context unit rejected the missing grant, resulting in partial Core writes.",
+    "root_cause": "Prevalidation only checked resource/source subsets against policy grants rather than extracting and validating the complete dependency set across all dimensions before entering the coordinator.",
+    "remediation": "Implemented ExchangeService._extract_context_dependencies to extract resources, repositories, sources, source_repository_pairs, provider_registrations, dispositions, mapping_claims, and object_oids, and validated the complete dependency set before entering coordinator.admit or Context.transaction.",
+    "tests": [
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_exchange_import_missing_provider_registration_fails_closed_zero_writes",
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_exchange_import_missing_repository_grant_fails_closed_zero_writes"
+    ]
+  },
+  "p2_supported_authorization_policy_interface": {
+    "status": "REMEDIATED",
+    "codex_review_finding": "discussion_4366462441",
+    "severity": "P2",
+    "observed_condition": "When a receiver supplied ContextAdmissionService backed by a custom AuthorizationPolicy (such as FixturePolicy), preflight raised AttributeError on _principal or _permitted_repositories.",
+    "root_cause": "Prevalidation inspected internal LocalAuthorizationPolicy attributes (_principal, _permitted_repositories) instead of adhering to the public AuthorizationPolicy protocol.",
+    "remediation": "Replaced internal attribute accesses with the public AuthorizationPolicy.lease() protocol method and validated through the policy lease context manager, allowing any valid AuthorizationPolicy implementation to execute cleanly.",
+    "tests": [
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_exchange_import_custom_policy_supported_interface"
+    ]
+  },
   "boundaries": {
     "v5_exchange_routes_active": true,
     "seven_resource_columns_enforced": true,

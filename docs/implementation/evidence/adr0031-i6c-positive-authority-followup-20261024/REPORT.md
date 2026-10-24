@@ -22,6 +22,14 @@ This Author follow-up directly resolves all three GitHub Codex review findings o
    Tests `test_receiver_empty_selection_admits_zero_resources` and `test_receiver_selective_subset_omits_unselected_sender_resources` previously only compared in-memory `ExchangeSelectionScope` objects without calling `import_package`, inspecting database tables, or observing policy leases.
    *Resolution*: Replaced both tests with full end-to-end integration tests using genuine SQLite sender and receiver stores, `export_package`, `import_package`, SQLite database row inspections, and policy call observations confirming exact subset admission and zero unselected admission.
 
+4. **P1 (`discussion_4366462438`) — Prevalidate the Complete Dependency Set Before Committing Core**:
+   For a Core+Context package containing a resource and its Provider registration, grants covering the resource and repository but omitting `provider_registrations` passed preflight. The same happened when the repository was permitted but absent from `grants.repositories`. `PairCoordinator` committed Core before Context unit rejected the missing grant, resulting in partial Core writes.
+   *Resolution*: Implemented `ExchangeService._extract_context_dependencies` to extract all dependency dimensions (`resources`, `repositories`, `sources`, `source_repository_pairs`, `provider_registrations`, `dispositions`, `mapping_claims`, `object_oids`) and pre-validated the complete dependency set before entering `coordinator.admit` or `Context.transaction`. Missing provider or repository grants now fail closed immediately with typed `PERMISSION_DENIED` and exactly zero writes to Core and Context.
+
+5. **P2 (`discussion_4366462441`) — Validate Authority Through the Authorization Policy Interface**:
+   When a receiver supplied a `ContextAdmissionService` backed by a custom `AuthorizationPolicy` (such as `FixturePolicy`), preflight raised `AttributeError` on internal attributes `_principal` or `_permitted_repositories`.
+   *Resolution*: Replaced internal attribute accesses with the public `AuthorizationPolicy.lease()` protocol method, allowing any valid `AuthorizationPolicy` implementation to execute cleanly.
+
 ---
 
 ## 2. Technical Remediation Details
@@ -130,7 +138,7 @@ Replaced both tests with full end-to-end integration tests:
 ## 3. Verification Evidence
 
 ### 3.1 Test Suite Results
-- `tests/integration/i6/test_i6c_authority_and_exchange.py`: **37 passed** in 13.80s (see `raw/test_i6c_authority_and_exchange.log`).
+- `tests/integration/i6/test_i6c_authority_and_exchange.py`: **40 passed** in 17.64s (see `raw/test_i6c_authority_and_exchange.log`).
 - `tests/unit/test_sqlite_validation_policy.py`: **31 passed** in 0.195s (see `raw/unit_sqlite_validation_policy.log`).
 - `tests/unit/test_ci_python_runtime.py`: **4 passed** in 0.010s (see `raw/unit_ci_python_runtime.log`).
 - `scripts/check_sqlite_validation_policy.py`: **PASS** (see `raw/sqlite_validation_policy.log`).
@@ -144,8 +152,8 @@ Replaced both tests with full end-to-end integration tests:
 - Built direct wheel and source distribution via `uv build`.
 - Extracted source distribution to an isolated temporary directory and rebuilt sdist-derived wheel via `uv build --wheel`.
 - Computed complete raw-byte SHA-256 hashes without stripping:
-  - Direct wheel: `repo_catalog-0.2.0-py3-none-any.whl`, 792,951 bytes, SHA-256: `b073147f4387e74ca0cc22f4b1dd922933cc231cfe568792953fc8817fe9b608`
-  - Sdist-derived wheel: `repo_catalog-0.2.0-py3-none-any.whl`, 792,951 bytes, SHA-256: `b073147f4387e74ca0cc22f4b1dd922933cc231cfe568792953fc8817fe9b608`
+  - Direct wheel: `repo_catalog-0.2.0-py3-none-any.whl`, 793,473 bytes, SHA-256: `1368b7943966ef63dc6ccb50fca41c2525e65e5c5f85842abc5dd8a00ae29d6d`
+  - Sdist-derived wheel: `repo_catalog-0.2.0-py3-none-any.whl`, 793,473 bytes, SHA-256: `1368b7943966ef63dc6ccb50fca41c2525e65e5c5f85842abc5dd8a00ae29d6d`
   - Equality: **Byte-for-byte identical (True)**.
 
 ---
