@@ -284,11 +284,13 @@ class ExchangeService:
         operational: OperationalAcquisitionLedger | Path | str | None = None,
         authorization: Any = None,
         admission: Any = None,
+        grants: Any = None,
     ) -> None:
         self.directory = Path(directory)
         self.operational = operational
         self.authorization = authorization
         self.admission = admission
+        self.grants = grants
 
     def _has_core(self) -> bool:
         return (self.directory / "core.sqlite3").is_file()
@@ -1497,6 +1499,7 @@ class ExchangeService:
         cut: Callable[[str], None] = lambda point: None,
         authorization: Any = None,
         admission: Any = None,
+        grants: Any = None,
     ) -> ExchangeImportReport:
         """Validate and import an ExchangePackage into Core and/or Context."""
         self._check_stop()
@@ -1640,7 +1643,80 @@ class ExchangeService:
                 cut=cut,
                 authorization=authorization,
                 admission=admission,
+                grants=grants,
             )
+
+    @staticmethod
+    def _validate_receiver_authority(
+        auth, adm, context_data: dict[str, Any] | None
+    ) -> None:
+        from repo_catalog.domain.context_admission import (
+            AdmissionRefused,
+            ContextAdmissionService,
+        )
+        from repo_catalog.domain.p1_context import ResourceKey
+
+        if auth is None or adm is None:
+            raise AdmissionRefused("PERMISSION_DENIED")
+        if not isinstance(auth, ContextAdmissionService):
+            raise AdmissionRefused("PERMISSION_DENIED")
+        auth.validate_context(adm)
+        policy = getattr(auth, "_policy", None)
+        if (
+            policy is not None
+            and policy._principal is not None
+            and adm.principal != policy._principal
+        ):
+            raise AdmissionRefused("PERMISSION_DENIED")
+        if context_data is not None:
+            context_resources = {
+                ResourceKey(
+                    r["service_instance_uuidv4"],
+                    r["resource_kind"],
+                    r["provider_resource_id"],
+                )
+                for r in context_data.get("resources", ())
+            }
+            context_sources = {
+                s["source_registration_uuidv4"] for s in context_data.get("sources", ())
+            }
+            has_deps = bool(
+                context_resources
+                or context_sources
+                or context_data.get("repository_mapping_dispositions")
+                or context_data.get("resource_relations")
+            )
+            if has_deps:
+                if policy is not None:
+                    if policy.grants is None:
+                        raise AdmissionRefused("PERMISSION_DENIED")
+                    if (
+                        context_resources
+                        and not context_resources <= policy.grants.resources
+                    ):
+                        raise AdmissionRefused("PERMISSION_DENIED")
+                    if context_sources and not context_sources <= policy.grants.sources:
+                        raise AdmissionRefused("PERMISSION_DENIED")
+            if policy is not None and policy._permitted_repositories is not None:
+                context_repos = {
+                    r["repository_uuidv4"] for r in context_data.get("repositories", ())
+                } | {
+                    r["repository_uuidv4"]
+                    for r in context_data.get("resource_repository_relations", ())
+                    if "repository_uuidv4" in r
+                }
+                if (
+                    context_repos
+                    and not context_repos <= policy._permitted_repositories
+                ):
+                    raise AdmissionRefused("PERMISSION_DENIED")
+            if policy is not None and hasattr(policy, "denied"):
+                if context_resources and bool(
+                    context_resources & policy.denied.resources
+                ):
+                    raise AdmissionRefused("PERMISSION_DENIED")
+                if context_sources and bool(context_sources & policy.denied.sources):
+                    raise AdmissionRefused("PERMISSION_DENIED")
 
     def _import_package(
         self,
@@ -1654,6 +1730,7 @@ class ExchangeService:
         cut,
         authorization=None,
         admission=None,
+        grants=None,
     ) -> ExchangeImportReport:
         self._check_stop()
         package = raw_package
@@ -1782,6 +1859,7 @@ class ExchangeService:
         if self._has_core() and self._has_context() and (want_core or want_context):
             auth = authorization if authorization is not None else self.authorization
             adm = admission if admission is not None else self.admission
+            active_grants = grants if grants is not None else self.grants
             if want_context:
                 admit_selection = replace(selection, include_core=True)
                 if auth is None or adm is None:
@@ -1797,9 +1875,11 @@ class ExchangeService:
 
                     auth, adm, _ = create_local_admission_service(
                         "exchange_import",
+                        grants=active_grants,
                         permitted_repositories=frozenset(permitted),
                         selection=admit_selection,
                     )
+                self._validate_receiver_authority(auth, adm, context_data)
             coordinator = PairCoordinator(self.directory, authorization=auth)
 
             def _core_unit(core_tx: AdmissionTransaction) -> None:
@@ -1811,7 +1891,12 @@ class ExchangeService:
 
             def _context_unit(context_tx: AdmissionTransaction) -> None:
                 if want_context and package.context is not None:
-                    with Context.for_transaction(context_tx, self.directory) as ctx_cap:
+                    with Context.for_transaction(
+                        context_tx,
+                        self.directory,
+                        authorization=auth,
+                        admission=adm,
+                    ) as ctx_cap:
                         ctx_stats.update(
                             self._import_context_accounted(
                                 ctx_cap,
@@ -1870,6 +1955,7 @@ class ExchangeService:
         elif want_context and context_data is not None:
             auth = authorization if authorization is not None else self.authorization
             adm = admission if admission is not None else self.admission
+            active_grants = grants if grants is not None else self.grants
             admit_selection = replace(selection, include_core=True)
             if auth is None or adm is None:
                 if not permitted:
@@ -1884,9 +1970,11 @@ class ExchangeService:
 
                 auth, adm, _ = create_local_admission_service(
                     "exchange_import",
+                    grants=active_grants,
                     permitted_repositories=frozenset(permitted),
                     selection=admit_selection,
                 )
+            self._validate_receiver_authority(auth, adm, context_data)
             with Context.transaction(
                 self.directory, authorization=auth, admission=adm
             ) as ctx_cap:

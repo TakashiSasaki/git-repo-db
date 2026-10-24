@@ -2,11 +2,24 @@
 and Resource Identification Wire Validation.
 """
 
+import sqlite3
+from contextlib import closing
+from pathlib import Path
+from uuid import uuid4
+
 import pytest
 
+from repo_catalog.adapters.sqlite import p1_schema
+from repo_catalog.adapters.sqlite.production_context import Context
 from repo_catalog.application.acquisition import (
     PairedAcquisitionCoordinator,
     ProviderAcquisition,
+)
+from repo_catalog.application.exchange import ExchangeService
+from repo_catalog.domain.acquisition import (
+    ProviderIntakeBatch,
+    ProviderRegistration,
+    RepositoryRegistration,
 )
 from repo_catalog.domain.context_admission import (
     AdmissionBudget,
@@ -19,10 +32,8 @@ from repo_catalog.domain.context_admission import (
 )
 from repo_catalog.domain.exchange import (
     ExchangeError,
-    ExchangePackage,
     ExchangeSelectionScope,
     empty_context_section,
-    empty_core_section,
 )
 from repo_catalog.domain.exchange_rows import validate_rows
 from repo_catalog.domain.p1_context import (
@@ -31,6 +42,7 @@ from repo_catalog.domain.p1_context import (
     ResourceKey,
     canonical,
 )
+from repo_catalog.domain.p1_coordination import AdmissionFailure
 from repo_catalog.domain.resource_identification import (
     RESOURCE_IDENTIFICATION_FIELDS,
     ResourceIdentification,
@@ -41,8 +53,16 @@ from repo_catalog.domain.selective_exchange import (
     preflight_i2_resources,
     validate_context_bindings,
 )
+from tests.integration.p5.conftest import init_catalog_stores
 from tests.support.context_admission import fixture_service
 from tests.support.i6a import isolated_context_db
+
+
+@pytest.fixture(autouse=True)
+def _patch_sqlite_version(monkeypatch):
+    monkeypatch.setattr(p1_schema.sqlite3, "sqlite_version_info", (3, 51, 3))
+    monkeypatch.setattr(sqlite3, "sqlite_version_info", (3, 51, 3))
+
 
 INSTANCE_1 = "11111111-1111-4111-8111-111111111111"
 INSTANCE_2 = "22222222-2222-4222-8222-222222222222"
@@ -219,92 +239,766 @@ def test_policy_revocation_during_lease_aborts_transaction():
 # =============================================================================
 
 
-def test_receiver_empty_selection_admits_zero_resources():
+def test_receiver_empty_selection_admits_zero_resources(tmp_path: Path):
     """When receiver specifies resource_keys=(), sender resources are not admitted."""
-    res1 = ResourceKey(INSTANCE_1, "issue", '["1"]')
-    res2 = ResourceKey(INSTANCE_1, "issue", '["2"]')
+    dir_a = tmp_path / "sender"
+    repo_id, inst_id = init_catalog_stores(dir_a)
+    rk1 = ResourceKey(inst_id, "issue", encode_identity(["1"]))
+    rk2 = ResourceKey(inst_id, "issue", encode_identity(["2"]))
 
-    # Context data contains resources
-    ctx_data = empty_context_section()
-    ctx_data["resources"] = [
-        dict(
-            zip(
-                RESOURCE_IDENTIFICATION_FIELDS,
-                (*res1.coordinates(), None, None, None, None),
-                strict=True,
-            )
+    auth_a, adm_a, _ = create_local_admission_service(
+        "provider_intake",
+        grants=DependencySet(
+            resources={rk1, rk2},
+            repositories={repo_id},
+            provider_registrations={inst_id},
         ),
-        dict(
-            zip(
-                RESOURCE_IDENTIFICATION_FIELDS,
-                (*res2.coordinates(), None, None, None, None),
-                strict=True,
-            )
-        ),
-    ]
-
-    package = ExchangePackage(
-        package_id=PKG_UUID,
-        exported_at_us=1000,
-        sender_catalog_instance_uuidv4=INSTANCE_1,
-        repository_uuidv4=REPO_UUID_1,
-        selection_scope=ExchangeSelectionScope(all_selected=True),
-        core=empty_core_section(),
-        context=ctx_data,
+        selection=AdmissionSelection(all_selected=True, max_work=10000),
     )
+    with Context.transaction(dir_a, authorization=auth_a, admission=adm_a) as ctx:
+        ctx.provider(inst_id, "synthetic", "{}")
+        ctx.repository(repo_id, "{}")
+        ctx.resource(rk1, identification=ResourceIdentification.unscoped(rk1))
+        ctx.resource(rk2, identification=ResourceIdentification.unscoped(rk2))
+
+    svc_a = ExchangeService(dir_a)
+    pkg = svc_a.export_package(
+        selection=ExchangeSelectionScope(
+            all_selected=False,
+            repository_uuidv4s=(repo_id,),
+            resource_keys=(rk1, rk2),
+            object_oids=(),
+            source_uuidv4s=(),
+        )
+    )
+    assert len(pkg.context["resources"]) == 2
 
     # Receiver specifies empty resource_keys
-    receiver_selection = ExchangeSelectionScope(
-        repository_uuidv4s=(REPO_UUID_1,),
-        resource_keys=(),  # Strictly empty!
+    dir_b = tmp_path / "receiver"
+    init_catalog_stores(dir_b)
+    svc_b = ExchangeService(dir_b)
+    sel_empty = ExchangeSelectionScope(
+        all_selected=False,
+        repository_uuidv4s=(repo_id,),
+        resource_keys=(),
+        object_oids=(),
+        source_uuidv4s=(),
     )
+    auth_b, adm_b, policy_b = create_local_admission_service(
+        "exchange_import",
+        grants=DependencySet(repositories={repo_id}),
+        permitted_repositories=frozenset({repo_id}),
+        selection=AdmissionSelection(
+            all_selected=False,
+            repository_uuidv4s=(repo_id,),
+            resource_keys=(),
+            object_oids=(),
+            source_uuidv4s=(),
+            max_work=10000,
+        ),
+    )
+    report = svc_b.import_package(
+        pkg,
+        permitted_repository_uuidv4s=(repo_id,),
+        selection=sel_empty,
+        authorization=auth_b,
+        admission=adm_b,
+        new_request=True,
+    )
+    assert report.admitted_context_resources == 0
+    with closing(sqlite3.connect(dir_b / "context.sqlite3")) as db:
+        res_count = db.execute("SELECT count(*) FROM resources").fetchone()[0]
+        assert res_count == 0
+    # Verify policy calls: never called for resources
+    assert not any(c[2].resources for c in policy_b.calls)
 
-    # In ExchangeService import_package, receiver selection must not be widened
-    # Verify that the package has resources, but receiver selection keeps resource_keys empty
-    assert len(package.context["resources"]) == 2
-    assert receiver_selection.resource_keys == ()
 
-
-def test_receiver_selective_subset_omits_unselected_sender_resources():
+def test_receiver_selective_subset_omits_unselected_sender_resources(tmp_path: Path):
     """Receiver selecting one Resource must not admit sender's other Resources."""
-    res1 = ResourceKey(INSTANCE_1, "issue", '["1"]')
-    res2 = ResourceKey(INSTANCE_1, "issue", '["2"]')
+    dir_a = tmp_path / "sender"
+    repo_id, inst_id = init_catalog_stores(dir_a)
+    rk1 = ResourceKey(inst_id, "issue", encode_identity(["1"]))
+    rk2 = ResourceKey(inst_id, "issue", encode_identity(["2"]))
 
-    ctx_data = empty_context_section()
-    ctx_data["resources"] = [
-        dict(
-            zip(
-                RESOURCE_IDENTIFICATION_FIELDS,
-                (*res1.coordinates(), None, None, None, None),
-                strict=True,
-            )
+    auth_a, adm_a, _ = create_local_admission_service(
+        "provider_intake",
+        grants=DependencySet(
+            resources={rk1, rk2},
+            repositories={repo_id},
+            provider_registrations={inst_id},
         ),
-        dict(
-            zip(
-                RESOURCE_IDENTIFICATION_FIELDS,
-                (*res2.coordinates(), None, None, None, None),
-                strict=True,
-            )
-        ),
-    ]
+        selection=AdmissionSelection(all_selected=True, max_work=10000),
+    )
+    with Context.transaction(dir_a, authorization=auth_a, admission=adm_a) as ctx:
+        ctx.provider(inst_id, "synthetic", "{}")
+        ctx.repository(repo_id, "{}")
+        ctx.resource(rk1, identification=ResourceIdentification.unscoped(rk1))
+        ctx.resource(rk2, identification=ResourceIdentification.unscoped(rk2))
 
-    package = ExchangePackage(
-        package_id=PKG_UUID,
-        exported_at_us=1000,
-        sender_catalog_instance_uuidv4=INSTANCE_1,
-        repository_uuidv4=REPO_UUID_1,
-        selection_scope=ExchangeSelectionScope(all_selected=True),
-        core=empty_core_section(),
-        context=ctx_data,
+    svc_a = ExchangeService(dir_a)
+    pkg = svc_a.export_package(
+        selection=ExchangeSelectionScope(
+            all_selected=False,
+            repository_uuidv4s=(repo_id,),
+            resource_keys=(rk1, rk2),
+            object_oids=(),
+            source_uuidv4s=(),
+        )
     )
 
-    receiver_selection = ExchangeSelectionScope(
-        repository_uuidv4s=(REPO_UUID_1,),
-        resource_keys=(res1,),  # Selects only res1
+    # Receiver selects only rk1
+    dir_b = tmp_path / "receiver"
+    init_catalog_stores(dir_b)
+    svc_b = ExchangeService(dir_b)
+    sel_subset = ExchangeSelectionScope(
+        all_selected=False,
+        repository_uuidv4s=(repo_id,),
+        resource_keys=(rk1,),
+        object_oids=(),
+        source_uuidv4s=(),
     )
-    assert len(package.context["resources"]) == 2
-    assert res1 in receiver_selection.resource_keys
-    assert res2 not in receiver_selection.resource_keys
+    auth_b, adm_b, policy_b = create_local_admission_service(
+        "exchange_import",
+        grants=DependencySet(
+            resources={rk1},
+            repositories={repo_id},
+            provider_registrations={inst_id},
+        ),
+        permitted_repositories=frozenset({repo_id}),
+        selection=AdmissionSelection(
+            all_selected=False,
+            repository_uuidv4s=(repo_id,),
+            resource_keys=(rk1,),
+            object_oids=(),
+            source_uuidv4s=(),
+            max_work=10000,
+        ),
+    )
+    report = svc_b.import_package(
+        pkg,
+        permitted_repository_uuidv4s=(repo_id,),
+        selection=sel_subset,
+        authorization=auth_b,
+        admission=adm_b,
+        new_request=True,
+    )
+    assert report.admitted_context_resources == 1
+    with closing(sqlite3.connect(dir_b / "context.sqlite3")) as db:
+        rows = db.execute(
+            "SELECT resource_kind, provider_resource_id FROM resources"
+        ).fetchall()
+        assert rows == [("issue", encode_identity(["1"]))]
+    # Verify policy calls: rk1 observed, rk2 NEVER observed
+    admitted_keys = [c[2].resources for c in policy_b.calls if c[2].resources]
+    assert any(rk1 in k for k in admitted_keys)
+    assert not any(rk2 in k for k in admitted_keys)
+
+
+def test_paired_provider_authorized_batch_succeeds_and_persists(tmp_path: Path):
+    """Authorized paired Provider batch succeeds and persists real records."""
+    dir_p = tmp_path / "paired"
+    repo_id, inst_id = init_catalog_stores(dir_p)
+    batch = ProviderIntakeBatch(
+        service_instance_uuidv4=inst_id,
+        providers=(ProviderRegistration(inst_id, "synthetic", "{}"),),
+        repositories=(RepositoryRegistration(repo_id, "{}"),),
+    )
+    auth, adm, _ = create_local_admission_service(
+        "provider_intake",
+        grants=DependencySet(repositories={repo_id}, provider_registrations={inst_id}),
+        permitted_repositories=frozenset({repo_id}),
+        selection=AdmissionSelection(all_selected=True, max_work=10000),
+    )
+    coord = PairedAcquisitionCoordinator(dir_p, authorization=auth, admission=adm)
+    res = coord.admit_paired(provider_batch=batch)
+    assert res.admission.core_committed is True
+    assert res.admission.context_committed is True
+    with closing(sqlite3.connect(dir_p / "context.sqlite3")) as db:
+        prov_rows = db.execute(
+            "SELECT service_instance_uuidv4 FROM providers"
+        ).fetchall()
+        repo_rows = db.execute(
+            "SELECT repository_uuidv4 FROM repository_context"
+        ).fetchall()
+        assert prov_rows == [(inst_id,)]
+        assert repo_rows == [(repo_id,)]
+
+
+def test_paired_provider_missing_authority_fails_closed(tmp_path: Path):
+    """No authority supplied to paired coordinator yields typed PERMISSION_DENIED."""
+    dir_p = tmp_path / "paired"
+    repo_id, inst_id = init_catalog_stores(dir_p)
+    batch = ProviderIntakeBatch(
+        service_instance_uuidv4=inst_id,
+        providers=(ProviderRegistration(inst_id, "synthetic", "{}"),),
+        repositories=(RepositoryRegistration(repo_id, "{}"),),
+    )
+    coord = PairedAcquisitionCoordinator(dir_p)
+    with pytest.raises(AdmissionRefused) as exc_info:
+        coord.admit_paired(provider_batch=batch)
+    assert exc_info.value.code == "PERMISSION_DENIED"
+
+
+def test_paired_provider_foreign_authority_rejected(tmp_path: Path):
+    """Foreign authorization service handle is rejected fail closed."""
+    dir_p = tmp_path / "paired"
+    repo_id, inst_id = init_catalog_stores(dir_p)
+    batch = ProviderIntakeBatch(
+        service_instance_uuidv4=inst_id,
+        providers=(ProviderRegistration(inst_id, "synthetic", "{}"),),
+        repositories=(RepositoryRegistration(repo_id, "{}"),),
+    )
+    auth1, adm1, _ = create_local_admission_service(
+        "provider_intake",
+        grants=DependencySet(repositories={repo_id}, provider_registrations={inst_id}),
+        permitted_repositories=frozenset({repo_id}),
+        selection=AdmissionSelection(all_selected=True, max_work=10000),
+    )
+    auth2, adm2, _ = create_local_admission_service(
+        "provider_intake",
+        grants=DependencySet(repositories={repo_id}, provider_registrations={inst_id}),
+        permitted_repositories=frozenset({repo_id}),
+        selection=AdmissionSelection(all_selected=True, max_work=10000),
+    )
+    coord = PairedAcquisitionCoordinator(dir_p, authorization=auth1, admission=adm2)
+    with pytest.raises(AdmissionRefused) as exc_info:
+        coord.admit_paired(provider_batch=batch)
+    assert exc_info.value.code == "PERMISSION_DENIED"
+
+
+def test_paired_provider_wrong_principal_rejected(tmp_path: Path):
+    """Mismatched caller principal is rejected fail closed."""
+    dir_p = tmp_path / "paired"
+    repo_id, inst_id = init_catalog_stores(dir_p)
+    batch = ProviderIntakeBatch(
+        service_instance_uuidv4=inst_id,
+        providers=(ProviderRegistration(inst_id, "synthetic", "{}"),),
+        repositories=(RepositoryRegistration(repo_id, "{}"),),
+    )
+    auth, adm, policy = create_local_admission_service(
+        "provider_intake",
+        grants=DependencySet(repositories={repo_id}, provider_registrations={inst_id}),
+        permitted_repositories=frozenset({repo_id}),
+        selection=AdmissionSelection(all_selected=True, max_work=10000),
+    )
+    policy._principal = "other-principal"
+    coord = PairedAcquisitionCoordinator(dir_p, authorization=auth, admission=adm)
+    with pytest.raises((AdmissionRefused, AdmissionFailure)) as exc_info:
+        coord.admit_paired(provider_batch=batch)
+    if isinstance(exc_info.value, AdmissionFailure):
+        assert exc_info.value.cause.code == "PERMISSION_DENIED"
+    else:
+        assert exc_info.value.code == "PERMISSION_DENIED"
+
+
+def test_paired_provider_denied_dependency_fails_closed_no_writes(tmp_path: Path):
+    """Permission denied for dependency results in no unauthorized Context writes."""
+    dir_p = tmp_path / "paired"
+    repo_id, inst_id = init_catalog_stores(dir_p)
+    batch = ProviderIntakeBatch(
+        service_instance_uuidv4=inst_id,
+        providers=(ProviderRegistration(inst_id, "synthetic", "{}"),),
+        repositories=(RepositoryRegistration(repo_id, "{}"),),
+    )
+    other_repo = str(uuid4())
+    auth, adm, _ = create_local_admission_service(
+        "provider_intake",
+        grants=DependencySet(
+            repositories={other_repo}, provider_registrations={inst_id}
+        ),
+        permitted_repositories=frozenset({other_repo}),
+        selection=AdmissionSelection(all_selected=True, max_work=10000),
+    )
+    coord = PairedAcquisitionCoordinator(dir_p, authorization=auth, admission=adm)
+    with pytest.raises(AdmissionFailure) as exc_info:
+        coord.admit_paired(provider_batch=batch)
+    assert exc_info.value.cause.code == "PERMISSION_DENIED"
+    with closing(sqlite3.connect(dir_p / "context.sqlite3")) as db:
+        rows = db.execute("SELECT repository_uuidv4 FROM repository_context").fetchall()
+        assert len(rows) == 0
+
+
+def test_paired_provider_revocation_before_commit_fails_closed(tmp_path: Path):
+    """Permission revocation before COMMIT fails closed."""
+    dir_p = tmp_path / "paired"
+    repo_id, inst_id = init_catalog_stores(dir_p)
+    batch = ProviderIntakeBatch(
+        service_instance_uuidv4=inst_id,
+        providers=(ProviderRegistration(inst_id, "synthetic", "{}"),),
+        repositories=(RepositoryRegistration(repo_id, "{}"),),
+    )
+    auth, adm, policy = create_local_admission_service(
+        "provider_intake",
+        grants=DependencySet(repositories={repo_id}, provider_registrations={inst_id}),
+        permitted_repositories=frozenset({repo_id}),
+        selection=AdmissionSelection(all_selected=True, max_work=10000),
+    )
+    coord = PairedAcquisitionCoordinator(dir_p, authorization=auth, admission=adm)
+
+    def revoke_on_cut(point):
+        if point == "during_context":
+            policy.grants = DependencySet()
+
+    with pytest.raises(AdmissionFailure) as exc_info:
+        coord.admit_paired(provider_batch=batch, cut=revoke_on_cut)
+    assert exc_info.value.cause.code == "PERMISSION_DENIED"
+    with closing(sqlite3.connect(dir_p / "context.sqlite3")) as db:
+        assert db.execute("SELECT count(*) FROM providers").fetchone()[0] == 0
+
+
+def test_paired_provider_context_callback_failure_preserves_core_and_fails_context(
+    tmp_path: Path,
+):
+    """Context callback failure after Core commit leaves Core committed and Context rolled back."""
+    dir_p = tmp_path / "paired"
+    repo_id, inst_id = init_catalog_stores(dir_p)
+    auth, adm, _ = create_local_admission_service(
+        "provider_intake",
+        grants=DependencySet(repositories={repo_id}),
+        permitted_repositories=frozenset({repo_id}),
+        selection=AdmissionSelection(all_selected=True, max_work=10000),
+    )
+    coord = PairedAcquisitionCoordinator(dir_p, authorization=auth, admission=adm)
+
+    def failing_context_fn(ctx):
+        raise RuntimeError("Context callback intentional error")
+
+    def core_fn(core):
+        core.admit_repository(repo_id)
+        return None
+
+    with pytest.raises(AdmissionFailure) as exc_info:
+        coord.admit_paired(core_fn=core_fn, context_fn=failing_context_fn)
+
+    # Core committed first, Context failed
+    assert exc_info.value.outcome.core_committed is True
+    assert exc_info.value.outcome.context_committed is False
+    with closing(sqlite3.connect(dir_p / "core.sqlite3")) as db:
+        core_repos = [
+            r[0]
+            for r in db.execute("SELECT repository_uuidv4 FROM repositories").fetchall()
+        ]
+        assert repo_id in core_repos
+
+
+def test_exchange_import_permitted_locally_selected_resource_succeeds(tmp_path: Path):
+    """Permitted, locally selected Resource import succeeds in Core+Context receiver."""
+    dir_a = tmp_path / "sender"
+    repo_id_a, inst_id_a = init_catalog_stores(dir_a)
+    rk1 = ResourceKey(inst_id_a, "issue", encode_identity(["1"]))
+    auth_a, adm_a, _ = create_local_admission_service(
+        "provider_intake",
+        grants=DependencySet(
+            resources={rk1},
+            repositories={repo_id_a},
+            provider_registrations={inst_id_a},
+        ),
+        selection=AdmissionSelection(all_selected=True, max_work=10000),
+    )
+    with Context.transaction(dir_a, authorization=auth_a, admission=adm_a) as ctx:
+        ctx.provider(inst_id_a, "synthetic", "{}")
+        ctx.repository(repo_id_a, "{}")
+        ctx.resource(rk1, identification=ResourceIdentification.unscoped(rk1))
+
+    svc_a = ExchangeService(dir_a)
+    pkg = svc_a.export_package(
+        selection=ExchangeSelectionScope(
+            all_selected=False,
+            repository_uuidv4s=(repo_id_a,),
+            resource_keys=(rk1,),
+            object_oids=(),
+            source_uuidv4s=(),
+        )
+    )
+
+    dir_b = tmp_path / "receiver"
+    repo_id_b, inst_id_b = init_catalog_stores(dir_b)
+    svc_b = ExchangeService(dir_b)
+    report = svc_b.import_package(
+        pkg,
+        permitted_repository_uuidv4s=(repo_id_a,),
+        grants=DependencySet(
+            resources={rk1},
+            repositories={repo_id_a},
+            provider_registrations={inst_id_a},
+        ),
+        new_request=True,
+    )
+    assert report.admitted_context_resources == 1
+    with closing(sqlite3.connect(dir_b / "context.sqlite3")) as db:
+        rows = db.execute(
+            "SELECT resource_kind, provider_resource_id FROM resources"
+        ).fetchall()
+        assert rows == [("issue", encode_identity(["1"]))]
+    with closing(sqlite3.connect(dir_b / "core.sqlite3")) as db:
+        repos = [
+            r[0]
+            for r in db.execute("SELECT repository_uuidv4 FROM repositories").fetchall()
+        ]
+        assert repo_id_a in repos
+
+
+def test_exchange_import_permitted_repo_without_finite_resource_grant_fails_closed(
+    tmp_path: Path,
+):
+    """Permitted repository without finite resource grant fails closed: typed PERMISSION_DENIED, no DB writes."""
+    dir_a = tmp_path / "sender"
+    repo_id_a, inst_id_a = init_catalog_stores(dir_a)
+    rk1 = ResourceKey(inst_id_a, "issue", encode_identity(["1"]))
+    auth_a, adm_a, _ = create_local_admission_service(
+        "provider_intake",
+        grants=DependencySet(
+            resources={rk1},
+            repositories={repo_id_a},
+            provider_registrations={inst_id_a},
+        ),
+        selection=AdmissionSelection(all_selected=True, max_work=10000),
+    )
+    with Context.transaction(dir_a, authorization=auth_a, admission=adm_a) as ctx:
+        ctx.provider(inst_id_a, "synthetic", "{}")
+        ctx.repository(repo_id_a, "{}")
+        ctx.resource(rk1, identification=ResourceIdentification.unscoped(rk1))
+
+    svc_a = ExchangeService(dir_a)
+    pkg = svc_a.export_package(
+        selection=ExchangeSelectionScope(
+            all_selected=False,
+            repository_uuidv4s=(repo_id_a,),
+            resource_keys=(rk1,),
+            object_oids=(),
+            source_uuidv4s=(),
+        )
+    )
+
+    dir_b = tmp_path / "receiver"
+    repo_id_b, inst_id_b = init_catalog_stores(dir_b)
+    svc_b = ExchangeService(dir_b)
+    with pytest.raises(AdmissionRefused) as exc_info:
+        svc_b.import_package(
+            pkg,
+            permitted_repository_uuidv4s=(repo_id_a,),
+            # No grants supplied!
+            new_request=True,
+        )
+    assert exc_info.value.code == "PERMISSION_DENIED"
+
+    # Zero database writes
+    with closing(sqlite3.connect(dir_b / "context.sqlite3")) as db:
+        assert db.execute("SELECT count(*) FROM resources").fetchone()[0] == 0
+        assert db.execute("SELECT count(*) FROM repository_context").fetchone()[0] == 0
+    with closing(sqlite3.connect(dir_b / "core.sqlite3")) as db:
+        core_repos = [
+            r[0]
+            for r in db.execute("SELECT repository_uuidv4 FROM repositories").fetchall()
+        ]
+        assert repo_id_a not in core_repos
+        assert core_repos == [repo_id_b]
+
+
+def test_exchange_import_context_only_receiver_with_grants_succeeds(tmp_path: Path):
+    """Context-only receiver with finite grants imports selected resource."""
+    dir_a = tmp_path / "sender"
+    repo_id_a, inst_id_a = init_catalog_stores(dir_a)
+    rk1 = ResourceKey(inst_id_a, "issue", encode_identity(["1"]))
+    auth_a, adm_a, _ = create_local_admission_service(
+        "provider_intake",
+        grants=DependencySet(
+            resources={rk1},
+            repositories={repo_id_a},
+            provider_registrations={inst_id_a},
+        ),
+        selection=AdmissionSelection(all_selected=True, max_work=10000),
+    )
+    with Context.transaction(dir_a, authorization=auth_a, admission=adm_a) as ctx:
+        ctx.provider(inst_id_a, "synthetic", "{}")
+        ctx.repository(repo_id_a, "{}")
+        ctx.resource(rk1, identification=ResourceIdentification.unscoped(rk1))
+
+    svc_a = ExchangeService(dir_a)
+    pkg = svc_a.export_package(
+        selection=ExchangeSelectionScope(
+            all_selected=False,
+            repository_uuidv4s=(repo_id_a,),
+            resource_keys=(rk1,),
+            object_oids=(),
+            source_uuidv4s=(),
+        )
+    )
+
+    # Context-only receiver
+    dir_b = tmp_path / "receiver"
+    repo_id_b, inst_id_b = init_catalog_stores(dir_b, stores=("context", "operational"))
+    svc_b = ExchangeService(dir_b)
+    assert not svc_b._has_core()
+
+    report = svc_b.import_package(
+        pkg,
+        permitted_repository_uuidv4s=(repo_id_a,),
+        grants=DependencySet(
+            resources={rk1},
+            repositories={repo_id_a},
+            provider_registrations={inst_id_a},
+        ),
+        new_request=True,
+    )
+    assert report.admitted_context_resources == 1
+    with closing(sqlite3.connect(dir_b / "context.sqlite3")) as db:
+        rows = db.execute(
+            "SELECT resource_kind, provider_resource_id FROM resources"
+        ).fetchall()
+        assert rows == [("issue", encode_identity(["1"]))]
+
+
+def test_exchange_import_foreign_receiver_authority_rejected(tmp_path: Path):
+    """Foreign receiver authority service is rejected fail closed with zero database writes."""
+    dir_a = tmp_path / "sender"
+    repo_id_a, inst_id_a = init_catalog_stores(dir_a)
+    rk1 = ResourceKey(inst_id_a, "issue", encode_identity(["1"]))
+    auth_a, adm_a, _ = create_local_admission_service(
+        "provider_intake",
+        grants=DependencySet(
+            resources={rk1},
+            repositories={repo_id_a},
+            provider_registrations={inst_id_a},
+        ),
+        selection=AdmissionSelection(all_selected=True, max_work=10000),
+    )
+    with Context.transaction(dir_a, authorization=auth_a, admission=adm_a) as ctx:
+        ctx.provider(inst_id_a, "synthetic", "{}")
+        ctx.repository(repo_id_a, "{}")
+        ctx.resource(rk1, identification=ResourceIdentification.unscoped(rk1))
+
+    svc_a = ExchangeService(dir_a)
+    pkg = svc_a.export_package(
+        selection=ExchangeSelectionScope(
+            all_selected=False,
+            repository_uuidv4s=(repo_id_a,),
+            resource_keys=(rk1,),
+            object_oids=(),
+            source_uuidv4s=(),
+        )
+    )
+
+    dir_b = tmp_path / "receiver"
+    repo_id_b, inst_id_b = init_catalog_stores(dir_b)
+    svc_b = ExchangeService(dir_b)
+
+    auth1, adm1, _ = create_local_admission_service(
+        "exchange_import",
+        grants=DependencySet(resources={rk1}, repositories={repo_id_a}),
+        permitted_repositories=frozenset({repo_id_a}),
+        selection=AdmissionSelection(all_selected=True, max_work=10000),
+    )
+    auth2, adm2, _ = create_local_admission_service(
+        "exchange_import",
+        grants=DependencySet(resources={rk1}, repositories={repo_id_a}),
+        permitted_repositories=frozenset({repo_id_a}),
+        selection=AdmissionSelection(all_selected=True, max_work=10000),
+    )
+    with pytest.raises(AdmissionRefused) as exc_info:
+        svc_b.import_package(
+            pkg,
+            permitted_repository_uuidv4s=(repo_id_a,),
+            authorization=auth1,
+            admission=adm2,
+            new_request=True,
+        )
+    assert exc_info.value.code == "PERMISSION_DENIED"
+    with closing(sqlite3.connect(dir_b / "context.sqlite3")) as db:
+        assert db.execute("SELECT count(*) FROM resources").fetchone()[0] == 0
+
+
+def test_exchange_import_mismatched_receiver_principal_rejected(tmp_path: Path):
+    """Mismatched receiver principal is rejected fail closed."""
+    dir_a = tmp_path / "sender"
+    repo_id_a, inst_id_a = init_catalog_stores(dir_a)
+    rk1 = ResourceKey(inst_id_a, "issue", encode_identity(["1"]))
+    auth_a, adm_a, _ = create_local_admission_service(
+        "provider_intake",
+        grants=DependencySet(
+            resources={rk1},
+            repositories={repo_id_a},
+            provider_registrations={inst_id_a},
+        ),
+        selection=AdmissionSelection(all_selected=True, max_work=10000),
+    )
+    with Context.transaction(dir_a, authorization=auth_a, admission=adm_a) as ctx:
+        ctx.provider(inst_id_a, "synthetic", "{}")
+        ctx.repository(repo_id_a, "{}")
+        ctx.resource(rk1, identification=ResourceIdentification.unscoped(rk1))
+
+    svc_a = ExchangeService(dir_a)
+    pkg = svc_a.export_package(
+        selection=ExchangeSelectionScope(
+            all_selected=False,
+            repository_uuidv4s=(repo_id_a,),
+            resource_keys=(rk1,),
+            object_oids=(),
+            source_uuidv4s=(),
+        )
+    )
+
+    dir_b = tmp_path / "receiver"
+    repo_id_b, inst_id_b = init_catalog_stores(dir_b)
+    svc_b = ExchangeService(dir_b)
+
+    auth, adm, policy = create_local_admission_service(
+        "exchange_import",
+        grants=DependencySet(resources={rk1}, repositories={repo_id_a}),
+        permitted_repositories=frozenset({repo_id_a}),
+        selection=AdmissionSelection(all_selected=True, max_work=10000),
+    )
+    policy._principal = "different-principal"
+    with pytest.raises(AdmissionRefused) as exc_info:
+        svc_b.import_package(
+            pkg,
+            permitted_repository_uuidv4s=(repo_id_a,),
+            authorization=auth,
+            admission=adm,
+            new_request=True,
+        )
+    assert exc_info.value.code == "PERMISSION_DENIED"
+
+
+def test_exchange_import_revocation_between_validation_and_lease_fails_closed(
+    tmp_path: Path,
+):
+    """Revocation between initial validation and commit fails closed."""
+    dir_a = tmp_path / "sender"
+    repo_id_a, inst_id_a = init_catalog_stores(dir_a)
+    rk1 = ResourceKey(inst_id_a, "issue", encode_identity(["1"]))
+    auth_a, adm_a, _ = create_local_admission_service(
+        "provider_intake",
+        grants=DependencySet(
+            resources={rk1},
+            repositories={repo_id_a},
+            provider_registrations={inst_id_a},
+        ),
+        selection=AdmissionSelection(all_selected=True, max_work=10000),
+    )
+    with Context.transaction(dir_a, authorization=auth_a, admission=adm_a) as ctx:
+        ctx.provider(inst_id_a, "synthetic", "{}")
+        ctx.repository(repo_id_a, "{}")
+        ctx.resource(rk1, identification=ResourceIdentification.unscoped(rk1))
+
+    svc_a = ExchangeService(dir_a)
+    pkg = svc_a.export_package(
+        selection=ExchangeSelectionScope(
+            all_selected=False,
+            repository_uuidv4s=(repo_id_a,),
+            resource_keys=(rk1,),
+            object_oids=(),
+            source_uuidv4s=(),
+        )
+    )
+
+    dir_b = tmp_path / "receiver"
+    repo_id_b, inst_id_b = init_catalog_stores(dir_b)
+    svc_b = ExchangeService(dir_b)
+
+    auth, adm, policy = create_local_admission_service(
+        "exchange_import",
+        grants=DependencySet(
+            resources={rk1},
+            repositories={repo_id_a},
+            provider_registrations={inst_id_a},
+        ),
+        permitted_repositories=frozenset({repo_id_a}),
+        selection=AdmissionSelection(all_selected=True, max_work=10000),
+    )
+
+    def revoke_cut(point):
+        if point == "during_context":
+            policy.grants = DependencySet()
+
+    with pytest.raises(AdmissionFailure) as exc_info:
+        svc_b.import_package(
+            pkg,
+            permitted_repository_uuidv4s=(repo_id_a,),
+            authorization=auth,
+            admission=adm,
+            cut=revoke_cut,
+            new_request=True,
+        )
+    assert exc_info.value.cause.code == "PERMISSION_DENIED"
+
+
+def test_exchange_import_exact_replay_and_revocation(tmp_path: Path):
+    """Replay succeeds when authorized; fails closed upon revocation."""
+    dir_a = tmp_path / "sender"
+    repo_id_a, inst_id_a = init_catalog_stores(dir_a)
+    rk1 = ResourceKey(inst_id_a, "issue", encode_identity(["1"]))
+    auth_a, adm_a, _ = create_local_admission_service(
+        "provider_intake",
+        grants=DependencySet(
+            resources={rk1},
+            repositories={repo_id_a},
+            provider_registrations={inst_id_a},
+        ),
+        selection=AdmissionSelection(all_selected=True, max_work=10000),
+    )
+    with Context.transaction(dir_a, authorization=auth_a, admission=adm_a) as ctx:
+        ctx.provider(inst_id_a, "synthetic", "{}")
+        ctx.repository(repo_id_a, "{}")
+        ctx.resource(rk1, identification=ResourceIdentification.unscoped(rk1))
+
+    svc_a = ExchangeService(dir_a)
+    pkg = svc_a.export_package(
+        selection=ExchangeSelectionScope(
+            all_selected=False,
+            repository_uuidv4s=(repo_id_a,),
+            resource_keys=(rk1,),
+            object_oids=(),
+            source_uuidv4s=(),
+        )
+    )
+
+    dir_b = tmp_path / "receiver"
+    repo_id_b, inst_id_b = init_catalog_stores(dir_b)
+    svc_b = ExchangeService(dir_b)
+
+    auth, adm, policy = create_local_admission_service(
+        "exchange_import",
+        grants=DependencySet(
+            resources={rk1},
+            repositories={repo_id_a},
+            provider_registrations={inst_id_a},
+        ),
+        permitted_repositories=frozenset({repo_id_a}),
+        selection=AdmissionSelection(all_selected=True, max_work=10000),
+    )
+
+    # First import
+    rep1 = svc_b.import_package(
+        pkg,
+        permitted_repository_uuidv4s=(repo_id_a,),
+        authorization=auth,
+        admission=adm,
+        new_request=True,
+    )
+    assert rep1.idempotent_replay is False
+
+    # Second import (replay)
+    rep2 = svc_b.import_package(
+        pkg,
+        permitted_repository_uuidv4s=(repo_id_a,),
+        authorization=auth,
+        admission=adm,
+        new_request=True,
+    )
+    assert rep2.idempotent_replay is True
+
+    # Revoke grant
+    policy.grants = DependencySet()
+    with pytest.raises(AdmissionRefused) as exc_info:
+        svc_b.import_package(
+            pkg,
+            permitted_repository_uuidv4s=(repo_id_a,),
+            authorization=auth,
+            admission=adm,
+            new_request=True,
+        )
+    assert exc_info.value.code == "PERMISSION_DENIED"
 
 
 # =============================================================================

@@ -1,0 +1,33 @@
+# Requirement Verification Matrix — ADR 0031 I6-C Positive Authority & Selection Follow-Up
+
+**Task Target**: Remediate PR #159 GitHub Codex Review Findings (`discussion_r4366014889`, `discussion_r4366014892`, `discussion_r4366014895`)
+**Base Commit**: `c00bdbb9246e12504506eaf372a49a1a631fc5f9` (PR #159 HEAD)
+**Base Tree**: `cc165ee7fd54bdf9bff452f78dd67f3c6aaa68f6`
+**Branch**: `fix/adr0031-i6c-positive-authority-followup-20261024`
+
+---
+
+## 1. Traceability Matrix
+
+| Requirement ID | Description | Source Implementation | Test Evidence | Verdict |
+| :--- | :--- | :--- | :--- | :--- |
+| **REQ-AUTH-01** | Forward paired admission authority and admission context to nested `ProviderAcquisition` and `Context.for_transaction` in `PairedAcquisitionCoordinator.admit_paired` | `src/repo_catalog/application/acquisition.py:1998-2020` | `tests/integration/i6/test_i6c_authority_and_exchange.py::test_paired_provider_authorized_batch_succeeds_and_persists` | **PASS** |
+| **REQ-AUTH-02** | Paired Provider fails closed (typed `PERMISSION_DENIED`) on missing authority, foreign authority handle, or mismatched caller principal | `src/repo_catalog/application/acquisition.py:2000-2020` | `tests/integration/i6/test_i6c_authority_and_exchange.py::test_paired_provider_missing_authority_fails_closed`<br>`tests/integration/i6/test_i6c_authority_and_exchange.py::test_paired_provider_foreign_authority_rejected`<br>`tests/integration/i6/test_i6c_authority_and_exchange.py::test_paired_provider_wrong_principal_rejected` | **PASS** |
+| **REQ-AUTH-03** | Paired Provider denied dependency results in fail closed with zero Context writes; Context callback failure preserves Core commits while rolling back Context per paired-store contract | `src/repo_catalog/application/acquisition.py:2000-2020` | `tests/integration/i6/test_i6c_authority_and_exchange.py::test_paired_provider_denied_dependency_fails_closed_no_writes`<br>`tests/integration/i6/test_i6c_authority_and_exchange.py::test_paired_provider_context_callback_failure_preserves_core_and_fails_context` | **PASS** |
+| **REQ-AUTH-04** | Forward paired admission authority in `PairedAcquisitionCoordinator.reconcile_core_dependencies` into `Context.for_transaction` | `src/repo_catalog/application/acquisition.py:2130-2140` | `tests/integration/i6/test_i6c_authority_and_exchange.py` | **PASS** |
+| **REQ-EXCH-01** | Support explicit receiver-owned finite grants in `ExchangeService.__init__` and `ExchangeService.import_package` for authorized Resource imports | `src/repo_catalog/application/exchange.py:284-293, 1499-1505, 1640-1650` | `tests/integration/i6/test_i6c_authority_and_exchange.py::test_exchange_import_permitted_locally_selected_resource_succeeds` | **PASS** |
+| **REQ-EXCH-02** | Pre-transaction authority validation in `_validate_receiver_authority` ensures permitted repository without finite resource grant fails closed immediately (typed `PERMISSION_DENIED`) with zero Core/Context database writes | `src/repo_catalog/application/exchange.py:1652-1725, 1860-1885` | `tests/integration/i6/test_i6c_authority_and_exchange.py::test_exchange_import_permitted_repo_without_finite_resource_grant_fails_closed` | **PASS** |
+| **REQ-EXCH-03** | Context-only receiver (`context.sqlite3` + `operational.sqlite3`, no `core.sqlite3`) successfully imports permitted resources with finite grants | `src/repo_catalog/application/exchange.py:1955-1985` | `tests/integration/i6/test_i6c_authority_and_exchange.py::test_exchange_import_context_only_receiver_with_grants_succeeds` | **PASS** |
+| **REQ-EXCH-04** | Exchange import negative boundary validation: foreign authority rejected, mismatched principal rejected, revocation before/during transaction fails closed, exact replay succeeds when authorized | `src/repo_catalog/application/exchange.py:1652-1725, 1860-1920` | `tests/integration/i6/test_i6c_authority_and_exchange.py::test_exchange_import_foreign_receiver_authority_rejected`<br>`tests/integration/i6/test_i6c_authority_and_exchange.py::test_exchange_import_mismatched_receiver_principal_rejected`<br>`tests/integration/i6/test_i6c_authority_and_exchange.py::test_exchange_import_revocation_between_validation_and_lease_fails_closed`<br>`tests/integration/i6/test_i6c_authority_and_exchange.py::test_exchange_import_exact_replay_and_revocation` | **PASS** |
+| **REQ-SEL-01** | Receiver empty selection (`resource_keys = ()`) admits 0 resources in full end-to-end SQLite catalog execution; verified by DB row count and policy lease observation | `src/repo_catalog/application/exchange.py:1690-1715` | `tests/integration/i6/test_i6c_authority_and_exchange.py::test_receiver_empty_selection_admits_zero_resources` | **PASS** |
+| **REQ-SEL-02** | Receiver subset selection admits only selected Resource; unselected sender resources omitted in full end-to-end SQLite catalog execution; verified by DB row inspection and policy lease observation | `src/repo_catalog/application/exchange.py:1690-1715` | `tests/integration/i6/test_i6c_authority_and_exchange.py::test_receiver_selective_subset_omits_unselected_sender_resources` | **PASS** |
+
+---
+
+## 2. Review Findings Resolution Summary
+
+| Review ID | Severity | Finding Topic | Location | Resolution Summary |
+| :--- | :--- | :--- | :--- | :--- |
+| `discussion_r4366014889` | **P1** | Forward paired admission authority to `ProviderAcquisition` | `src/repo_catalog/application/acquisition.py:2003` | Passed `authorization=self.authorization, admission=self.admission` into `ProviderAcquisition` and `Context.for_transaction` in `_context_unit` and `_context_reconcile`. |
+| `discussion_r4366014892` | **P1** | Supply finite grants to Exchange fallback admission service | `src/repo_catalog/application/exchange.py:1798, 1885` | Added `grants` parameter to `ExchangeService.__init__` and `import_package`. Implemented `_validate_receiver_authority` to enforce fail closed with zero database writes if resource grants are omitted. |
+| `discussion_r4366014895` | **P2** | Exercise receiver admission before reporting selection checks as PASS | `tests/integration/i6/test_i6c_authority_and_exchange.py:243-329` | Replaced nonbehavioral object-comparison tests with full executable tests performing export, import, DB query verification, and policy lease inspections. |

@@ -1998,12 +1998,19 @@ class PairedAcquisitionCoordinator:
                     git_report_holder[0] = core_fn(core_cap)
 
         def _context_unit(context_tx: AdmissionTransaction) -> None:
-            with Context.for_transaction(context_tx, self.directory) as ctx_cap:
+            with Context.for_transaction(
+                context_tx,
+                self.directory,
+                authorization=self.authorization,
+                admission=self.admission,
+            ) as ctx_cap:
                 if provider_batch is not None:
                     prov_acq = ProviderAcquisition(
                         ctx_cap,
                         core=self.directory / "core.sqlite3",
                         operational=self.operational,
+                        authorization=self.authorization,
+                        admission=self.admission,
                     )
                     provider_report_holder[0] = prov_acq.admit_batch(
                         provider_batch, context=ctx_cap
@@ -2123,7 +2130,12 @@ class PairedAcquisitionCoordinator:
             return None
 
         def _context_reconcile(context_tx: AdmissionTransaction) -> None:
-            with Context.for_transaction(context_tx, self.directory) as ctx_cap:
+            with Context.for_transaction(
+                context_tx,
+                self.directory,
+                authorization=self.authorization,
+                admission=self.admission,
+            ) as ctx_cap:
                 report = _reconcile_context_dependencies_in_tx(
                     ctx_cap, self._core_validator_on_disk()
                 )

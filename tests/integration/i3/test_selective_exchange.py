@@ -92,8 +92,38 @@ def rows(path, store, table):
 
 
 def receive(path, package, permitted=(), **kwargs):
+    grants = kwargs.pop("grants", None)
+    if grants is None and permitted and "authorization" not in kwargs:
+        from repo_catalog.domain.context_admission import DependencySet
+        from repo_catalog.domain.p1_context import ResourceKey
+
+        res_set = set()
+        prov_set = set()
+        if (
+            hasattr(package, "context")
+            and package.context
+            and "resources" in package.context
+        ):
+            for r in package.context["resources"]:
+                res_set.add(
+                    ResourceKey(
+                        r["service_instance_uuidv4"],
+                        r["resource_kind"],
+                        r["provider_resource_id"],
+                    )
+                )
+                prov_set.add(r["service_instance_uuidv4"])
+        grants = DependencySet(
+            repositories=set(permitted),
+            resources=res_set,
+            provider_registrations=prov_set,
+        )
     return ExchangeService(path).import_package(
-        package, permitted_repository_uuidv4s=permitted, new_request=True, **kwargs
+        package,
+        permitted_repository_uuidv4s=permitted,
+        new_request=True,
+        grants=grants,
+        **kwargs,
     )
 
 

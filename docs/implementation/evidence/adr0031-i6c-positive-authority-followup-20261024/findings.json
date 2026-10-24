@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "verdict": "PASS",
+  "review_status": "AUTHOR_CORRECTION_RESOLVED",
+  "base_branch": "fix/adr0031-i6c-authority-ci-20261024",
+  "base_commit": "c00bdbb9246e12504506eaf372a49a1a631fc5f9",
+  "base_tree": "cc165ee7fd54bdf9bff452f78dd67f3c6aaa68f6",
+  "branch": "fix/adr0031-i6c-positive-authority-followup-20261024",
+  "p1_a_paired_provider_authority_forwarding": {
+    "status": "REMEDIATED",
+    "codex_review_finding": "discussion_r4366014889",
+    "severity": "P1",
+    "observed_condition": "When PairedAcquisitionCoordinator.admit_paired(provider_batch=...) received valid authorization and admission, its _context_unit constructed ProviderAcquisition(ctx_cap, core=..., operational=...) without forwarding authorization or admission. This caused _open_context to fail with AdmissionRefused('PERMISSION_DENIED'), leaving Core committed and Context rejected.",
+    "root_cause": "src/repo_catalog/application/acquisition.py:2003 constructed ProviderAcquisition without authorization=self.authorization, admission=self.admission, and Context.for_transaction did not receive authorization/admission binding parameters.",
+    "remediation": "Forwarded self.authorization and self.admission into Context.for_transaction and into ProviderAcquisition in both admit_paired and reconcile_core_dependencies. The same trusted, validated service-issued authority now reaches every nested Context operation.",
+    "tests": [
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_paired_provider_authorized_batch_succeeds_and_persists",
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_paired_provider_missing_authority_fails_closed",
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_paired_provider_foreign_authority_rejected",
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_paired_provider_wrong_principal_rejected",
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_paired_provider_denied_dependency_fails_closed_no_writes",
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_paired_provider_revocation_before_commit_fails_closed",
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_paired_provider_context_callback_failure_preserves_core_and_fails_context"
+    ]
+  },
+  "p1_b_exchange_finite_grants_and_fallback": {
+    "status": "REMEDIATED",
+    "codex_review_finding": "discussion_r4366014892",
+    "severity": "P1",
+    "observed_condition": "When a receiver supplied permitted_repository_uuidv4s but omitted authorization/admission, the fallback constructed LocalAuthorizationPolicy with grants=None, which unconditionally denied resource dependencies. Furthermore, if Core committed before Context evaluated resource admission, Core could commit while Context failed.",
+    "root_cause": "src/repo_catalog/application/exchange.py:1798 and 1885 invoked create_local_admission_service without grants; _import_package lacked grants propagation and pre-transaction receiver authority validation.",
+    "remediation": "Added explicit grants parameter to ExchangeService.__init__ and import_package. Added _validate_receiver_authority preflight check before coordinator.admit and before Context.transaction. Permitted repository without finite resource grant fails closed immediately with typed PERMISSION_DENIED and zero database writes. When receiver supplies finite grants, Resource imports succeed in both Core+Context and Context-only receivers.",
+    "tests": [
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_exchange_import_permitted_locally_selected_resource_succeeds",
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_exchange_import_permitted_repo_without_finite_resource_grant_fails_closed",
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_exchange_import_context_only_receiver_with_grants_succeeds",
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_exchange_import_foreign_receiver_authority_rejected",
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_exchange_import_mismatched_receiver_principal_rejected",
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_exchange_import_revocation_between_validation_and_lease_fails_closed",
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_exchange_import_exact_replay_and_revocation",
+      "tests/integration/i3/test_selective_exchange.py::test_cross_seed_permission_identity_replay"
+    ]
+  },
+  "p2_selection_admission_behavioral_execution": {
+    "status": "REMEDIATED",
+    "codex_review_finding": "discussion_r4366014895",
+    "severity": "P2",
+    "observed_condition": "test_receiver_empty_selection_admits_zero_resources and test_receiver_selective_subset_omits_unselected_sender_resources only constructed ExchangePackage and ExchangeSelectionScope without calling import_package, inspecting database state, or observing policy leases.",
+    "root_cause": "Non-behavioral assertions that did not execute real admission paths.",
+    "remediation": "Replaced both tests with full end-to-end integration tests using genuine SQLite sender and receiver stores, export_package, import_package, SQLite database row inspections, and policy call observations confirming exact subset admission and zero unselected admission.",
+    "tests": [
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_receiver_empty_selection_admits_zero_resources",
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_receiver_selective_subset_omits_unselected_sender_resources"
+    ]
+  },
+  "boundaries": {
+    "v5_exchange_routes_active": true,
+    "seven_resource_columns_enforced": true,
+    "local_admission_service_bound": true,
+    "receiver_selection_widening_eliminated": true,
+    "identification_bypass_eliminated": true,
+    "paired_provider_authority_forwarded": true,
+    "exchange_finite_grants_required": true,
+    "transfer_stage_fences_active": true,
+    "ordinary_transfer_enabled": false
+  }
+}
