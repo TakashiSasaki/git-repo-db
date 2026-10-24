@@ -28,15 +28,32 @@ def offline_test_environment(monkeypatch, request):
         monkeypatch.setenv("XDG_CONFIG_HOME", str(home / ".config"))
     monkeypatch.setenv("PYTHONPATH", str(guard))
     monkeypatch.setenv("GIT_ALLOW_PROTOCOL", "file")
+    monkeypatch.setenv("GIT_AUTHOR_NAME", "git-repo-db")
+    monkeypatch.setenv("GIT_AUTHOR_EMAIL", "test@git-repo-db.local")
+    monkeypatch.setenv("GIT_COMMITTER_NAME", "git-repo-db")
+    monkeypatch.setenv("GIT_COMMITTER_EMAIL", "test@git-repo-db.local")
+    monkeypatch.setenv("GIT_EDITOR", "true")
     monkeypatch.delenv("GH_TOKEN", raising=False)
     monkeypatch.delenv("GITHUB_TOKEN", raising=False)
+    import os
     import runpy
     import socket
+    import sys
+
+    venv_bin = str(Path(sys.executable).parent)
+    current_path = os.environ.get("PATH", "")
+    if venv_bin not in current_path.split(os.pathsep):
+        monkeypatch.setenv("PATH", venv_bin + os.pathsep + current_path)
+
+    old_umask = os.umask(0o022)
 
     original = (socket.socket.connect, socket.socket.connect_ex, socket.getaddrinfo)
     runpy.run_path(str(guard / "sitecustomize.py"))
-    yield
-    socket.socket.connect, socket.socket.connect_ex, socket.getaddrinfo = original
+    try:
+        yield
+    finally:
+        socket.socket.connect, socket.socket.connect_ex, socket.getaddrinfo = original
+        os.umask(old_umask)
 
 
 @pytest.fixture

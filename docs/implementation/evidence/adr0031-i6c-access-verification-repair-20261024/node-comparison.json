@@ -1,0 +1,2426 @@
+{
+  "baseline_nodes": 6343,
+  "current_nodes": 1847,
+  "added_nodes_count": 0,
+  "removed_nodes_count": 4496,
+  "baseline_non_successes": 299,
+  "current_non_successes": 202,
+  "resolved_count": 72,
+  "inherited_non_successes_count": 202,
+  "new_regressions_count": 0,
+  "added_passes_count": 0,
+  "categorized_counts": {
+    "RESOLVED": 72,
+    "INHERITED_STAGE_TRANSFER": 43,
+    "INHERITED_ADMISSION_PERMISSION_DENIED": 145,
+    "INHERITED_P7_RECOVERY": 14,
+    "ENVIRONMENT": 0,
+    "NEW_REGRESSION": 0,
+    "ADDED_PASS": 0,
+    "ADDED_FAIL": 0,
+    "PASS": 1573
+  },
+  "resolved_nodes": [
+    "tests.integration.i3.test_selective_exchange::test_advisory_coverage_details_do_not_rebind_semantic_claim[context]",
+    "tests.integration.i3.test_selective_exchange::test_advisory_coverage_details_do_not_rebind_semantic_claim[core]",
+    "tests.integration.i3.test_selective_exchange::test_bounded_typed_core_graph_and_shared_oid_identity",
+    "tests.integration.i3.test_selective_exchange::test_caller_mutation_after_preflight_cannot_change_bound_content[False]",
+    "tests.integration.i3.test_selective_exchange::test_caller_mutation_after_preflight_cannot_change_bound_content[True]",
+    "tests.integration.i3.test_selective_exchange::test_capture_non_utf8_ref_preserves_native_key",
+    "tests.integration.i3.test_selective_exchange::test_capture_pair_conflicting_payload_rejected_before_binding",
+    "tests.integration.i3.test_selective_exchange::test_collection_scope_binding_rejected_before_core_commit[False]",
+    "tests.integration.i3.test_selective_exchange::test_collection_scope_binding_rejected_before_core_commit[True]",
+    "tests.integration.i3.test_selective_exchange::test_complete_source_inventory_and_coverage_stay_whole",
+    "tests.integration.i3.test_selective_exchange::test_context_scope_cannot_rebind_provider_or_source_service[collection_service]",
+    "tests.integration.i3.test_selective_exchange::test_context_scope_cannot_rebind_provider_or_source_service[collection_source]",
+    "tests.integration.i3.test_selective_exchange::test_context_scope_cannot_rebind_provider_or_source_service[inventory_service]",
+    "tests.integration.i3.test_selective_exchange::test_contradictory_coverage_proof_is_rejected_before_binding[members_json-[]-collection]",
+    "tests.integration.i3.test_selective_exchange::test_contradictory_coverage_proof_is_rejected_before_binding[members_json-[]-source_inventory]",
+    "tests.integration.i3.test_selective_exchange::test_contradictory_coverage_proof_is_rejected_before_binding[provenance_json-{\"evidence\":\"different\",\"source\":\"forged\"}-collection]",
+    "tests.integration.i3.test_selective_exchange::test_contradictory_coverage_proof_is_rejected_before_binding[provenance_json-{\"evidence\":\"different\",\"source\":\"forged\"}-source_inventory]",
+    "tests.integration.i3.test_selective_exchange::test_contradictory_coverage_proof_is_rejected_before_binding[terminal_state-partial-collection]",
+    "tests.integration.i3.test_selective_exchange::test_contradictory_coverage_proof_is_rejected_before_binding[terminal_state-partial-source_inventory]",
+    "tests.integration.i3.test_selective_exchange::test_core_immutable_unique_payload_preflight[notes_claims-False]",
+    "tests.integration.i3.test_selective_exchange::test_core_immutable_unique_payload_preflight[notes_claims-True]",
+    "tests.integration.i3.test_selective_exchange::test_core_immutable_unique_payload_preflight[notes_groups-False]",
+    "tests.integration.i3.test_selective_exchange::test_core_immutable_unique_payload_preflight[notes_groups-True]",
+    "tests.integration.i3.test_selective_exchange::test_core_immutable_unique_payload_preflight[relation_groups-False]",
+    "tests.integration.i3.test_selective_exchange::test_core_immutable_unique_payload_preflight[relation_groups-True]",
+    "tests.integration.i3.test_selective_exchange::test_core_immutable_unique_payload_preflight[repository_claims-False]",
+    "tests.integration.i3.test_selective_exchange::test_core_immutable_unique_payload_preflight[repository_claims-True]",
+    "tests.integration.i3.test_selective_exchange::test_core_immutable_unique_payload_preflight[scalar_claims-False]",
+    "tests.integration.i3.test_selective_exchange::test_core_immutable_unique_payload_preflight[scalar_claims-True]",
+    "tests.integration.i3.test_selective_exchange::test_core_reference_missing_dependency_retains_original_report_clock",
+    "tests.integration.i3.test_selective_exchange::test_crash_windows_and_fact_based_retry[after_context_checkpoint-True-True]",
+    "tests.integration.i3.test_selective_exchange::test_crash_windows_and_fact_based_retry[after_context_commit-True-True]",
+    "tests.integration.i3.test_selective_exchange::test_crash_windows_and_fact_based_retry[after_core_checkpoint-True-False]",
+    "tests.integration.i3.test_selective_exchange::test_crash_windows_and_fact_based_retry[after_core_commit-True-False]",
+    "tests.integration.i3.test_selective_exchange::test_crash_windows_and_fact_based_retry[before_context_checkpoint-True-True]",
+    "tests.integration.i3.test_selective_exchange::test_crash_windows_and_fact_based_retry[before_core_checkpoint-True-False]",
+    "tests.integration.i3.test_selective_exchange::test_crash_windows_and_fact_based_retry[before_core_commit-False-False]",
+    "tests.integration.i3.test_selective_exchange::test_crash_windows_and_fact_based_retry[during_context-True-False]",
+    "tests.integration.i3.test_selective_exchange::test_cross_seed_permission_identity_replay",
+    "tests.integration.i3.test_selective_exchange::test_empty_and_omitted_independent_sets",
+    "tests.integration.i3.test_selective_exchange::test_empty_oid_and_context_payload_cannot_override_selection",
+    "tests.integration.i3.test_selective_exchange::test_existing_relation_time_conflict_rejected_before_independent_core_commit",
+    "tests.integration.i3.test_selective_exchange::test_graph_work_byte_unit_limits_are_reported_without_recovery_stop",
+    "tests.integration.i3.test_selective_exchange::test_internally_contradictory_original_times_rejected_before_binding[field_candidates]",
+    "tests.integration.i3.test_selective_exchange::test_internally_contradictory_original_times_rejected_before_binding[resource_relations]",
+    "tests.integration.i3.test_selective_exchange::test_internally_contradictory_original_times_rejected_before_binding[resource_repository_relations]",
+    "tests.integration.i3.test_selective_exchange::test_mapping_claim_support_and_dispositions_are_exact",
+    "tests.integration.i3.test_selective_exchange::test_modeled_collection_member_cannot_borrow_another_parent[collections]",
+    "tests.integration.i3.test_selective_exchange::test_modeled_collection_member_cannot_borrow_another_parent[resource_relations]",
+    "tests.integration.i3.test_selective_exchange::test_native_metadata_notes_and_capture_coverage_without_provider_intake",
+    "tests.integration.i3.test_selective_exchange::test_operational_loss_requires_new_issuance",
+    "tests.integration.i3.test_selective_exchange::test_package_key_binding_before_commits_and_sender_namespace",
+    "tests.integration.i3.test_selective_exchange::test_process_exit_before_checkpoint_recovery_uses_facts[after_context_commit]",
+    "tests.integration.i3.test_selective_exchange::test_process_exit_before_checkpoint_recovery_uses_facts[after_core_commit]",
+    "tests.integration.i3.test_selective_exchange::test_receiver_flags_and_zero_admission_limits_are_enforced",
+    "tests.integration.i3.test_selective_exchange::test_receiver_selection_stop_and_access_unchanged",
+    "tests.integration.i3.test_selective_exchange::test_selection_cannot_hide_conflicting_inventory_terminal_for_completeness",
+    "tests.integration.i3.test_selective_exchange::test_shared_oid_does_not_coalesce_repository_membership_reports",
+    "tests.integration.p1.test_generalized_resources::test_matching_schema_poison_stops_before_ordinary_exposure[export-endpoint]",
+    "tests.integration.p1.test_generalized_resources::test_matching_schema_poison_stops_before_ordinary_exposure[export-report]",
+    "tests.integration.p1.test_generalized_resources::test_real_selected_transfer_wire_refuses_before_effects_and_replay[False-False-False]",
+    "tests.integration.p1.test_generalized_resources::test_real_selected_transfer_wire_refuses_before_effects_and_replay[False-False-True]",
+    "tests.integration.p1.test_generalized_resources::test_real_selected_transfer_wire_refuses_before_effects_and_replay[False-True-False]",
+    "tests.integration.p1.test_generalized_resources::test_real_selected_transfer_wire_refuses_before_effects_and_replay[False-True-True]",
+    "tests.integration.p1.test_generalized_resources::test_real_selected_transfer_wire_refuses_before_effects_and_replay[True-False-False]",
+    "tests.integration.p1.test_generalized_resources::test_real_selected_transfer_wire_refuses_before_effects_and_replay[True-False-True]",
+    "tests.integration.p1.test_generalized_resources::test_real_selected_transfer_wire_refuses_before_effects_and_replay[True-True-False]",
+    "tests.integration.p1.test_generalized_resources::test_real_selected_transfer_wire_refuses_before_effects_and_replay[True-True-True]",
+    "tests.integration.p1.test_generalized_resources::test_real_wire_parser_rejects_unrecognized_nested_operations_before_effects",
+    "tests.integration.p1.test_generalized_resources::test_unknown_ordered_wire_and_opaque_transfer_text_remain_supported",
+    "tests.integration.p5.test_exchange::test_i3_relation_export_without_i2_acquisition",
+    "tests.integration.p5_p6_compatibility.test_export_gate::test_export_shared_gate_blocks_actual_nonblocking_writer_lock_attempt"
+  ],
+  "new_regression_nodes": [],
+  "node_details": [
+    {
+      "node_id": "tests.integration.i2.test_provider_intake::test_caller_transaction_batch_failure_rolls_back_partial_domain_and_access_untouched",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i2.test_provider_intake::test_declared_resolved_provider_scope_does_not_supply_its_own_mapping",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i2.test_provider_intake::test_disposition_qualification_keeps_original_provider_and_claims[correct]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i2.test_provider_intake::test_disposition_qualification_keeps_original_provider_and_claims[dispute]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i2.test_provider_intake::test_disposition_qualification_keeps_original_provider_and_claims[withdraw]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i2.test_provider_intake::test_generic_provider_scope_cannot_create_transfer",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i2.test_provider_intake::test_graphql_event_does_not_infer_destination_from_current_issue_repository",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i2.test_provider_intake::test_graphql_transfer_parent_namespace_and_original_type",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i2.test_provider_intake::test_graphql_type_mismatch_cannot_change_resource_kind[issue]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i2.test_provider_intake::test_graphql_type_mismatch_cannot_change_resource_kind[pull_request]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i2.test_provider_intake::test_graphql_type_mismatch_cannot_change_resource_kind[repository]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i2.test_provider_intake::test_invalid_event_input_rolls_back_without_recovery_stop[payload0]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i2.test_provider_intake::test_invalid_event_input_rolls_back_without_recovery_stop[payload1]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i2.test_provider_intake::test_invalid_event_input_rolls_back_without_recovery_stop[payload2]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i2.test_provider_intake::test_invalid_retained_provider_scope_triggers_p7_stop",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i2.test_provider_intake::test_issue_ownership_keeps_incomparable_source_clock_domains",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i2.test_provider_intake::test_latest_unresolved_owner_does_not_fall_back_to_old_mapped_owner",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i2.test_provider_intake::test_mapping_conflict_retains_both_exact_claim_keys",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i2.test_provider_intake::test_mapping_qualification_does_not_rewrite_source_or_coverage",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i2.test_provider_intake::test_missing_null_unresolved_and_late_mapping_are_distinct",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i2.test_provider_intake::test_non_transfer_cannot_promote_repository_fields_or_forged_flag[False]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i2.test_provider_intake::test_non_transfer_cannot_promote_repository_fields_or_forged_flag[True]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i2.test_provider_intake::test_oid_url_name_and_source_membership_are_not_mapping_evidence",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i2.test_provider_intake::test_other_provider_claim_cannot_resolve_reference_or_typed_qualification",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i2.test_provider_intake::test_p7_stop_rejects_provider_intake",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i2.test_provider_intake::test_pr_base_head_have_distinct_core_and_exact_provider_support",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i2.test_provider_intake::test_provider_native_namespaces_do_not_borrow_decimal_mapping",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i2.test_provider_intake::test_qualified_read_keyword_contract_reference_and_production_match",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i2.test_provider_intake::test_reacquired_event_does_not_reissue_provenance_after_mapping_change",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i2.test_provider_intake::test_same_original_event_key_cannot_change_observation_time",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i2.test_provider_intake::test_separate_event_reports_never_pair_endpoints",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i2.test_provider_intake::test_stop_during_claim_admission_rolls_back_real_context_work",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i2.test_provider_intake::test_timeline_parent_override_cannot_forge_observed_issue[False-999-None]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i2.test_provider_intake::test_timeline_parent_override_cannot_forge_observed_issue[True-7-observed_issue5]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i2.test_provider_intake::test_timeline_parent_override_cannot_forge_observed_issue[True-999-None]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i2.test_provider_intake::test_timeline_parent_override_cannot_forge_observed_issue[True-I_actual-None]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i2.test_provider_intake::test_timeline_parent_override_cannot_forge_observed_issue[True-I_actual-observed_issue4]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i2.test_provider_intake::test_timeline_parent_override_cannot_forge_observed_issue[True-I_actual-observed_issue6]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i2.test_provider_intake::test_timeline_parent_override_cannot_forge_observed_issue[True-I_wrong-observed_issue2]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i2.test_provider_intake::test_transfer_preserves_complete_original_endpoint_states[endpoints0-expected0]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i2.test_provider_intake::test_transfer_preserves_complete_original_endpoint_states[endpoints1-expected1]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i2.test_provider_intake::test_transfer_preserves_complete_original_endpoint_states[endpoints2-expected2]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i2.test_provider_intake::test_transfer_preserves_complete_original_endpoint_states[endpoints3-expected3]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i2.test_provider_intake::test_transfer_preserves_complete_original_endpoint_states[endpoints4-expected4]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i2.test_provider_intake::test_transfer_type_and_endpoint_evidence_must_belong_to_same_report[clock]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i2.test_provider_intake::test_transfer_type_and_endpoint_evidence_must_belong_to_same_report[event_resource]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i2.test_provider_intake::test_transfer_type_and_endpoint_evidence_must_belong_to_same_report[members]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i2.test_provider_intake::test_transfer_type_and_endpoint_evidence_must_belong_to_same_report[provenance]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i23.test_provider_exchange::test_collection_coverage_uses_exact_owner_and_admission_order[absent_collection]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i23.test_provider_exchange::test_collection_coverage_uses_exact_owner_and_admission_order[existing_collection]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i23.test_provider_exchange::test_collection_coverage_uses_exact_owner_and_admission_order[genuine_collection]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i23.test_provider_exchange::test_current_roles_namespaces_clocks_and_conflicts_across_seeds",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i23.test_provider_exchange::test_domain_exchange_neither_transports_nor_changes_real_access_grants",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i23.test_provider_exchange::test_existing_receiver_source_pair_can_support_partial_package_coverage",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i23.test_provider_exchange::test_genuine_transfer_event_report_is_preserved_whole[endpoints0-states0]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i23.test_provider_exchange::test_genuine_transfer_event_report_is_preserved_whole[endpoints1-states1]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i23.test_provider_exchange::test_genuine_transfer_event_report_is_preserved_whole[endpoints2-states2]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i23.test_provider_exchange::test_genuine_transfer_event_report_is_preserved_whole[endpoints3-states3]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i23.test_provider_exchange::test_genuine_transfer_event_report_is_preserved_whole[endpoints4-states4]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i23.test_provider_exchange::test_i2_source_coverage_and_native_capture_notes_survive_i3",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i23.test_provider_exchange::test_invalid_i2_provider_scope_rejected_before_binding_and_core_commit[False-bad_role]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i23.test_provider_exchange::test_invalid_i2_provider_scope_rejected_before_binding_and_core_commit[False-wrong_members]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i23.test_provider_exchange::test_invalid_i2_provider_scope_rejected_before_binding_and_core_commit[False-wrong_observation]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i23.test_provider_exchange::test_invalid_i2_provider_scope_rejected_before_binding_and_core_commit[True-bad_role]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i23.test_provider_exchange::test_invalid_i2_provider_scope_rejected_before_binding_and_core_commit[True-wrong_members]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i23.test_provider_exchange::test_invalid_i2_provider_scope_rejected_before_binding_and_core_commit[True-wrong_observation]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i23.test_provider_exchange::test_received_dispositions_need_receiver_evidence_and_preserve_keys[correct]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i23.test_provider_exchange::test_received_dispositions_need_receiver_evidence_and_preserve_keys[dispute]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i23.test_provider_exchange::test_received_dispositions_need_receiver_evidence_and_preserve_keys[withdraw]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i23.test_provider_exchange::test_source_coverage_permission_cut_keeps_independent_i2_facts",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i23.test_provider_exchange::test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[False-provider_kind_empty]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i23.test_provider_exchange::test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[False-provider_kind_integer]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i23.test_provider_exchange::test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[False-reference_bad_oid]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i23.test_provider_exchange::test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[False-reference_empty]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i23.test_provider_exchange::test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[False-reference_empty_role]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i23.test_provider_exchange::test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[False-relation_kind_integer]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i23.test_provider_exchange::test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[True-provider_kind_empty]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i23.test_provider_exchange::test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[True-provider_kind_integer]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i23.test_provider_exchange::test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[True-reference_bad_oid]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i23.test_provider_exchange::test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[True-reference_empty]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i23.test_provider_exchange::test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[True-reference_empty_role]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i23.test_provider_exchange::test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[True-relation_kind_integer]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_advisory_coverage_details_do_not_rebind_semantic_claim[context]",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_advisory_coverage_details_do_not_rebind_semantic_claim[core]",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_bounded_typed_core_graph_and_shared_oid_identity",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_caller_mutation_after_preflight_cannot_change_bound_content[False]",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_caller_mutation_after_preflight_cannot_change_bound_content[True]",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_capture_non_utf8_ref_preserves_native_key",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_capture_pair_conflicting_payload_rejected_before_binding",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_collection_scope_binding_rejected_before_core_commit[False]",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_collection_scope_binding_rejected_before_core_commit[True]",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_complete_source_inventory_and_coverage_stay_whole",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_context_scope_cannot_rebind_provider_or_source_service[collection_service]",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_context_scope_cannot_rebind_provider_or_source_service[collection_source]",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_context_scope_cannot_rebind_provider_or_source_service[inventory_service]",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_contradictory_coverage_proof_is_rejected_before_binding[members_json-[]-collection]",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_contradictory_coverage_proof_is_rejected_before_binding[members_json-[]-source_inventory]",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_contradictory_coverage_proof_is_rejected_before_binding[provenance_json-{\"evidence\":\"different\",\"source\":\"forged\"}-collection]",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_contradictory_coverage_proof_is_rejected_before_binding[provenance_json-{\"evidence\":\"different\",\"source\":\"forged\"}-source_inventory]",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_contradictory_coverage_proof_is_rejected_before_binding[terminal_state-partial-collection]",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_contradictory_coverage_proof_is_rejected_before_binding[terminal_state-partial-source_inventory]",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_core_immutable_unique_payload_preflight[notes_claims-False]",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_core_immutable_unique_payload_preflight[notes_claims-True]",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_core_immutable_unique_payload_preflight[notes_groups-False]",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_core_immutable_unique_payload_preflight[notes_groups-True]",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_core_immutable_unique_payload_preflight[relation_groups-False]",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_core_immutable_unique_payload_preflight[relation_groups-True]",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_core_immutable_unique_payload_preflight[repository_claims-False]",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_core_immutable_unique_payload_preflight[repository_claims-True]",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_core_immutable_unique_payload_preflight[scalar_claims-False]",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_core_immutable_unique_payload_preflight[scalar_claims-True]",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_core_reference_missing_dependency_retains_original_report_clock",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_crash_windows_and_fact_based_retry[after_context_checkpoint-True-True]",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_crash_windows_and_fact_based_retry[after_context_commit-True-True]",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_crash_windows_and_fact_based_retry[after_core_checkpoint-True-False]",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_crash_windows_and_fact_based_retry[after_core_commit-True-False]",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_crash_windows_and_fact_based_retry[before_context_checkpoint-True-True]",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_crash_windows_and_fact_based_retry[before_core_checkpoint-True-False]",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_crash_windows_and_fact_based_retry[before_core_commit-False-False]",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_crash_windows_and_fact_based_retry[during_context-True-False]",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_cross_seed_permission_identity_replay",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_empty_and_omitted_independent_sets",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_empty_oid_and_context_payload_cannot_override_selection",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_existing_relation_time_conflict_rejected_before_independent_core_commit",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_graph_work_byte_unit_limits_are_reported_without_recovery_stop",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_internally_contradictory_original_times_rejected_before_binding[field_candidates]",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_internally_contradictory_original_times_rejected_before_binding[resource_relations]",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_internally_contradictory_original_times_rejected_before_binding[resource_repository_relations]",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_mapping_claim_support_and_dispositions_are_exact",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_modeled_collection_member_cannot_borrow_another_parent[collections]",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_modeled_collection_member_cannot_borrow_another_parent[resource_relations]",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_native_metadata_notes_and_capture_coverage_without_provider_intake",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_operational_loss_requires_new_issuance",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_package_key_binding_before_commits_and_sender_namespace",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_process_exit_before_checkpoint_recovery_uses_facts[after_context_commit]",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_process_exit_before_checkpoint_recovery_uses_facts[after_core_commit]",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_receiver_flags_and_zero_admission_limits_are_enforced",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_receiver_selection_stop_and_access_unchanged",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_selection_cannot_hide_conflicting_inventory_terminal_for_completeness",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_shared_oid_does_not_coalesce_repository_membership_reports",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.i3.test_selective_exchange::test_transfer_reports_never_shrunk_or_mixed",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_STAGE_TRANSFER",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires revi"
+    },
+    {
+      "node_id": "tests.integration.i4.test_query_search_backup::test_current_provider_roles_never_fall_back_to_old_core_target",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i4.test_query_search_backup::test_dispositions_are_reports_and_qualification_is_per_operation[correct]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i4.test_query_search_backup::test_dispositions_are_reports_and_qualification_is_per_operation[dispute]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i4.test_query_search_backup::test_dispositions_are_reports_and_qualification_is_per_operation[withdraw]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i4.test_query_search_backup::test_equal_incomparable_and_unknown_clocks_keep_all_provider_candidates[different-100-False]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i4.test_query_search_backup::test_equal_incomparable_and_unknown_clocks_keep_all_provider_candidates[different-100-True]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i4.test_query_search_backup::test_equal_incomparable_and_unknown_clocks_keep_all_provider_candidates[provider-100-False]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i4.test_query_search_backup::test_equal_incomparable_and_unknown_clocks_keep_all_provider_candidates[provider-100-True]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i4.test_query_search_backup::test_equal_incomparable_and_unknown_clocks_keep_all_provider_candidates[provider-None-False]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i4.test_query_search_backup::test_equal_incomparable_and_unknown_clocks_keep_all_provider_candidates[provider-None-True]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i4.test_query_search_backup::test_forged_backup_with_valid_checksums_fails_semantic_restore[clock]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i4.test_query_search_backup::test_forged_backup_with_valid_checksums_fails_semantic_restore[member]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i4.test_query_search_backup::test_forged_backup_with_valid_checksums_fails_semantic_restore[role]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i4.test_query_search_backup::test_forged_backup_with_valid_checksums_fails_semantic_restore[support]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i4.test_query_search_backup::test_invalid_authoritative_provider_scope_stops_service[backup]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i4.test_query_search_backup::test_invalid_authoritative_provider_scope_stops_service[query]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i4.test_query_search_backup::test_invalid_authoritative_provider_scope_stops_service[rebuild]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i4.test_query_search_backup::test_invalid_authoritative_provider_scope_stops_service[search]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i4.test_query_search_backup::test_paired_restore_preserves_all_keys_dependencies_and_excludes_other_stores",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i4.test_query_search_backup::test_query_search_pagination_snapshot_budget_and_stop",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i4.test_query_search_backup::test_search_rebuild_fallback_and_current_historical_summary[delete]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i4.test_query_search_backup::test_search_rebuild_fallback_and_current_historical_summary[garbage]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i4.test_query_search_backup::test_search_rebuild_fallback_and_current_historical_summary[missing]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i4.test_query_search_backup::test_search_rebuild_fallback_and_current_historical_summary[stale]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i4.test_query_search_backup::test_search_rebuild_fallback_and_current_historical_summary[text]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.i5.test_independent_e2e::test_independent_selection_does_not_turn_dependencies_into_permission[C]",
+      "baseline_status": "ERROR",
+      "current_status": "ERROR",
+      "classification": "INHERITED_STAGE_TRANSFER",
+      "phase": "setup",
+      "refusal_code": "Provider Transfer intake",
+      "reached_assertion": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Tra"
+    },
+    {
+      "node_id": "tests.integration.i5.test_independent_e2e::test_independent_selection_does_not_turn_dependencies_into_permission[OC]",
+      "baseline_status": "ERROR",
+      "current_status": "ERROR",
+      "classification": "INHERITED_STAGE_TRANSFER",
+      "phase": "setup",
+      "refusal_code": "Provider Transfer intake",
+      "reached_assertion": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Tra"
+    },
+    {
+      "node_id": "tests.integration.i5.test_independent_e2e::test_independent_selection_does_not_turn_dependencies_into_permission[O]",
+      "baseline_status": "ERROR",
+      "current_status": "ERROR",
+      "classification": "INHERITED_STAGE_TRANSFER",
+      "phase": "setup",
+      "refusal_code": "Provider Transfer intake",
+      "reached_assertion": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Tra"
+    },
+    {
+      "node_id": "tests.integration.i5.test_independent_e2e::test_independent_selection_does_not_turn_dependencies_into_permission[RC]",
+      "baseline_status": "ERROR",
+      "current_status": "ERROR",
+      "classification": "INHERITED_STAGE_TRANSFER",
+      "phase": "setup",
+      "refusal_code": "Provider Transfer intake",
+      "reached_assertion": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Tra"
+    },
+    {
+      "node_id": "tests.integration.i5.test_independent_e2e::test_independent_selection_does_not_turn_dependencies_into_permission[ROC]",
+      "baseline_status": "ERROR",
+      "current_status": "ERROR",
+      "classification": "INHERITED_STAGE_TRANSFER",
+      "phase": "setup",
+      "refusal_code": "Provider Transfer intake",
+      "reached_assertion": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Tra"
+    },
+    {
+      "node_id": "tests.integration.i5.test_independent_e2e::test_independent_selection_does_not_turn_dependencies_into_permission[RO]",
+      "baseline_status": "ERROR",
+      "current_status": "ERROR",
+      "classification": "INHERITED_STAGE_TRANSFER",
+      "phase": "setup",
+      "refusal_code": "Provider Transfer intake",
+      "reached_assertion": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Tra"
+    },
+    {
+      "node_id": "tests.integration.i5.test_independent_e2e::test_independent_selection_does_not_turn_dependencies_into_permission[R]",
+      "baseline_status": "ERROR",
+      "current_status": "ERROR",
+      "classification": "INHERITED_STAGE_TRANSFER",
+      "phase": "setup",
+      "refusal_code": "Provider Transfer intake",
+      "reached_assertion": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Tra"
+    },
+    {
+      "node_id": "tests.integration.i5.test_independent_e2e::test_independent_selection_does_not_turn_dependencies_into_permission[empty]",
+      "baseline_status": "ERROR",
+      "current_status": "ERROR",
+      "classification": "INHERITED_STAGE_TRANSFER",
+      "phase": "setup",
+      "refusal_code": "Provider Transfer intake",
+      "reached_assertion": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Tra"
+    },
+    {
+      "node_id": "tests.integration.i5.test_independent_e2e::test_mapping_effect_stays_local_across_exchange_search_and_restore[correct]",
+      "baseline_status": "ERROR",
+      "current_status": "ERROR",
+      "classification": "INHERITED_STAGE_TRANSFER",
+      "phase": "setup",
+      "refusal_code": "Provider Transfer intake",
+      "reached_assertion": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Tra"
+    },
+    {
+      "node_id": "tests.integration.i5.test_independent_e2e::test_mapping_effect_stays_local_across_exchange_search_and_restore[dispute]",
+      "baseline_status": "ERROR",
+      "current_status": "ERROR",
+      "classification": "INHERITED_STAGE_TRANSFER",
+      "phase": "setup",
+      "refusal_code": "Provider Transfer intake",
+      "reached_assertion": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Tra"
+    },
+    {
+      "node_id": "tests.integration.i5.test_independent_e2e::test_mapping_effect_stays_local_across_exchange_search_and_restore[withdraw]",
+      "baseline_status": "ERROR",
+      "current_status": "ERROR",
+      "classification": "INHERITED_STAGE_TRANSFER",
+      "phase": "setup",
+      "refusal_code": "Provider Transfer intake",
+      "reached_assertion": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Tra"
+    },
+    {
+      "node_id": "tests.integration.i5.test_independent_e2e::test_omitted_selection_needs_explicit_all_and_empty_overrides_all",
+      "baseline_status": "ERROR",
+      "current_status": "ERROR",
+      "classification": "INHERITED_STAGE_TRANSFER",
+      "phase": "setup",
+      "refusal_code": "Provider Transfer intake",
+      "reached_assertion": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Tra"
+    },
+    {
+      "node_id": "tests.integration.i5.test_independent_e2e::test_received_paired_backup_preserves_complete_rows_keys_provenance_and_oid_refs",
+      "baseline_status": "ERROR",
+      "current_status": "ERROR",
+      "classification": "INHERITED_STAGE_TRANSFER",
+      "phase": "setup",
+      "refusal_code": "Provider Transfer intake",
+      "reached_assertion": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Tra"
+    },
+    {
+      "node_id": "tests.integration.i5.test_independent_e2e::test_received_search_is_disposable_and_rebuild_preserves_authority[garbage]",
+      "baseline_status": "ERROR",
+      "current_status": "ERROR",
+      "classification": "INHERITED_STAGE_TRANSFER",
+      "phase": "setup",
+      "refusal_code": "Provider Transfer intake",
+      "reached_assertion": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Tra"
+    },
+    {
+      "node_id": "tests.integration.i5.test_independent_e2e::test_received_search_is_disposable_and_rebuild_preserves_authority[missing]",
+      "baseline_status": "ERROR",
+      "current_status": "ERROR",
+      "classification": "INHERITED_STAGE_TRANSFER",
+      "phase": "setup",
+      "refusal_code": "Provider Transfer intake",
+      "reached_assertion": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Tra"
+    },
+    {
+      "node_id": "tests.integration.i5.test_independent_e2e::test_received_search_is_disposable_and_rebuild_preserves_authority[row_key]",
+      "baseline_status": "ERROR",
+      "current_status": "ERROR",
+      "classification": "INHERITED_STAGE_TRANSFER",
+      "phase": "setup",
+      "refusal_code": "Provider Transfer intake",
+      "reached_assertion": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Tra"
+    },
+    {
+      "node_id": "tests.integration.i5.test_independent_e2e::test_received_search_is_disposable_and_rebuild_preserves_authority[stale]",
+      "baseline_status": "ERROR",
+      "current_status": "ERROR",
+      "classification": "INHERITED_STAGE_TRANSFER",
+      "phase": "setup",
+      "refusal_code": "Provider Transfer intake",
+      "reached_assertion": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Tra"
+    },
+    {
+      "node_id": "tests.integration.i5.test_independent_e2e::test_received_search_is_disposable_and_rebuild_preserves_authority[text]",
+      "baseline_status": "ERROR",
+      "current_status": "ERROR",
+      "classification": "INHERITED_STAGE_TRANSFER",
+      "phase": "setup",
+      "refusal_code": "Provider Transfer intake",
+      "reached_assertion": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Tra"
+    },
+    {
+      "node_id": "tests.integration.i5.test_independent_e2e::test_selected_source_inventory_cannot_expand_repository_registration",
+      "baseline_status": "ERROR",
+      "current_status": "ERROR",
+      "classification": "INHERITED_STAGE_TRANSFER",
+      "phase": "setup",
+      "refusal_code": "Provider Transfer intake",
+      "reached_assertion": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Tra"
+    },
+    {
+      "node_id": "tests.integration.i5.test_independent_e2e::test_transfer_reports_never_mix_across_observations_or_identifier_namespaces",
+      "baseline_status": "ERROR",
+      "current_status": "ERROR",
+      "classification": "INHERITED_STAGE_TRANSFER",
+      "phase": "setup",
+      "refusal_code": "Provider Transfer intake",
+      "reached_assertion": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Tra"
+    },
+    {
+      "node_id": "tests.integration.p1.test_context_relations::test_counterexample_5_transfer_cases_no_invented_endpoints",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_STAGE_TRANSFER",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "assert report_from.from_relations[0].claim_key == r_from.claim_key"
+    },
+    {
+      "node_id": "tests.integration.p1.test_context_relations::test_partial_transfer_alternatives_remain_selection_truncated",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_STAGE_TRANSFER",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "assert selected is None"
+    },
+    {
+      "node_id": "tests.integration.p1.test_context_relations::test_transfer_event_genuine_type_enforcement_across_typed_paths",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_STAGE_TRANSFER",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires revi"
+    },
+    {
+      "node_id": "tests.integration.p1.test_context_relations::test_transfer_event_reports_generator_selected_repositories_and_invariants",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_STAGE_TRANSFER",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "assert store.admit_transfer_event(rep1) == \"insert\""
+    },
+    {
+      "node_id": "tests.integration.p1.test_context_relations::test_transfer_generic_admission_requires_complete_report[transfer_from_repository-False-False]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_STAGE_TRANSFER",
+      "phase": "call",
+      "refusal_code": "TRANSFER",
+      "reached_assertion": "assert not (catalog / \"p1-recovery-stop.json\").exists()"
+    },
+    {
+      "node_id": "tests.integration.p1.test_context_relations::test_transfer_generic_admission_requires_complete_report[transfer_from_repository-False-True]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_STAGE_TRANSFER",
+      "phase": "call",
+      "refusal_code": "TRANSFER",
+      "reached_assertion": "assert not (catalog / \"p1-recovery-stop.json\").exists()"
+    },
+    {
+      "node_id": "tests.integration.p1.test_context_relations::test_transfer_generic_admission_requires_complete_report[transfer_from_repository-True-False]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_STAGE_TRANSFER",
+      "phase": "call",
+      "refusal_code": "TRANSFER",
+      "reached_assertion": "assert not (catalog / \"p1-recovery-stop.json\").exists()"
+    },
+    {
+      "node_id": "tests.integration.p1.test_context_relations::test_transfer_generic_admission_requires_complete_report[transfer_from_repository-True-True]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_STAGE_TRANSFER",
+      "phase": "call",
+      "refusal_code": "TRANSFER",
+      "reached_assertion": "assert not (catalog / \"p1-recovery-stop.json\").exists()"
+    },
+    {
+      "node_id": "tests.integration.p1.test_context_relations::test_transfer_generic_admission_requires_complete_report[transfer_to_repository-False-False]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_STAGE_TRANSFER",
+      "phase": "call",
+      "refusal_code": "TRANSFER",
+      "reached_assertion": "assert not (catalog / \"p1-recovery-stop.json\").exists()"
+    },
+    {
+      "node_id": "tests.integration.p1.test_context_relations::test_transfer_generic_admission_requires_complete_report[transfer_to_repository-False-True]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_STAGE_TRANSFER",
+      "phase": "call",
+      "refusal_code": "TRANSFER",
+      "reached_assertion": "assert not (catalog / \"p1-recovery-stop.json\").exists()"
+    },
+    {
+      "node_id": "tests.integration.p1.test_context_relations::test_transfer_generic_admission_requires_complete_report[transfer_to_repository-True-False]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_STAGE_TRANSFER",
+      "phase": "call",
+      "refusal_code": "TRANSFER",
+      "reached_assertion": "assert not (catalog / \"p1-recovery-stop.json\").exists()"
+    },
+    {
+      "node_id": "tests.integration.p1.test_context_relations::test_transfer_generic_admission_requires_complete_report[transfer_to_repository-True-True]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_STAGE_TRANSFER",
+      "phase": "call",
+      "refusal_code": "TRANSFER",
+      "reached_assertion": "assert not (catalog / \"p1-recovery-stop.json\").exists()"
+    },
+    {
+      "node_id": "tests.integration.p1.test_context_relations::test_transfer_report_fk_failure_rolls_back_whole_unit",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_STAGE_TRANSFER",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires revi"
+    },
+    {
+      "node_id": "tests.integration.p1.test_context_relations::test_transfer_stored_type_is_never_inferred[absent]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_STAGE_TRANSFER",
+      "phase": "call",
+      "refusal_code": "TRANSFER",
+      "reached_assertion": "sqlite3.IntegrityError: I2_TRANSFER_UNSUPPORTED"
+    },
+    {
+      "node_id": "tests.integration.p1.test_context_relations::test_transfer_stored_type_is_never_inferred[members]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_STAGE_TRANSFER",
+      "phase": "call",
+      "refusal_code": "TRANSFER",
+      "reached_assertion": "sqlite3.IntegrityError: I2_TRANSFER_UNSUPPORTED"
+    },
+    {
+      "node_id": "tests.integration.p1.test_context_relations::test_transfer_stored_type_is_never_inferred[missing_clock]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_STAGE_TRANSFER",
+      "phase": "call",
+      "refusal_code": "TRANSFER",
+      "reached_assertion": "sqlite3.IntegrityError: I2_TRANSFER_UNSUPPORTED"
+    },
+    {
+      "node_id": "tests.integration.p1.test_context_relations::test_transfer_stored_type_is_never_inferred[missing_provider]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_STAGE_TRANSFER",
+      "phase": "call",
+      "refusal_code": "TRANSFER",
+      "reached_assertion": "sqlite3.IntegrityError: I2_TRANSFER_UNSUPPORTED"
+    },
+    {
+      "node_id": "tests.integration.p1.test_context_relations::test_transfer_stored_type_is_never_inferred[missing_type]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_STAGE_TRANSFER",
+      "phase": "call",
+      "refusal_code": "TRANSFER",
+      "reached_assertion": "sqlite3.IntegrityError: I2_TRANSFER_UNSUPPORTED"
+    },
+    {
+      "node_id": "tests.integration.p1.test_context_relations::test_transfer_stored_type_is_never_inferred[provided_roles]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_STAGE_TRANSFER",
+      "phase": "call",
+      "refusal_code": "TRANSFER",
+      "reached_assertion": "sqlite3.IntegrityError: I2_TRANSFER_UNSUPPORTED"
+    },
+    {
+      "node_id": "tests.integration.p1.test_context_relations::test_transfer_stored_type_is_never_inferred[wrong_type]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_STAGE_TRANSFER",
+      "phase": "call",
+      "refusal_code": "TRANSFER",
+      "reached_assertion": "sqlite3.IntegrityError: I2_TRANSFER_UNSUPPORTED"
+    },
+    {
+      "node_id": "tests.integration.p1.test_context_relations::test_transfer_supports_both_endpoints_without_cross_borrowing",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_STAGE_TRANSFER",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "assert store.admit_transfer_event(report) == \"insert\""
+    },
+    {
+      "node_id": "tests.integration.p1.test_generalized_resources::test_matching_schema_poison_stops_before_ordinary_exposure[export-endpoint]",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.p1.test_generalized_resources::test_matching_schema_poison_stops_before_ordinary_exposure[export-report]",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.p1.test_generalized_resources::test_real_nontransfer_provider_native_event_persists_and_reopens[False]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.p1.test_generalized_resources::test_real_nontransfer_provider_native_event_persists_and_reopens[True]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.p1.test_generalized_resources::test_real_selected_transfer_wire_refuses_before_effects_and_replay[False-False-False]",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.p1.test_generalized_resources::test_real_selected_transfer_wire_refuses_before_effects_and_replay[False-False-True]",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.p1.test_generalized_resources::test_real_selected_transfer_wire_refuses_before_effects_and_replay[False-True-False]",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.p1.test_generalized_resources::test_real_selected_transfer_wire_refuses_before_effects_and_replay[False-True-True]",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.p1.test_generalized_resources::test_real_selected_transfer_wire_refuses_before_effects_and_replay[True-False-False]",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.p1.test_generalized_resources::test_real_selected_transfer_wire_refuses_before_effects_and_replay[True-False-True]",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.p1.test_generalized_resources::test_real_selected_transfer_wire_refuses_before_effects_and_replay[True-True-False]",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.p1.test_generalized_resources::test_real_selected_transfer_wire_refuses_before_effects_and_replay[True-True-True]",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.p1.test_generalized_resources::test_real_wire_parser_rejects_unrecognized_nested_operations_before_effects",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.p1.test_generalized_resources::test_selected_real_wire_without_identification_refuses_before_core_effects",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "INVALID_IDENTIFICATION",
+      "reached_assertion": "repo_catalog.domain.exchange.ExchangeError: resources:INVALID_IDENTIFICATION"
+    },
+    {
+      "node_id": "tests.integration.p1.test_generalized_resources::test_unknown_ordered_wire_and_opaque_transfer_text_remain_supported",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.p3.test_production_context::test_production_context_relation_facade_methods",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_STAGE_TRANSFER",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "assert rels == ()"
+    },
+    {
+      "node_id": "tests.integration.p5.test_corrections::test_exchange_partial_commit_outcome_survives",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.p5.test_corrections::test_provider_registration_is_explicit",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "AssertionError: Regex pattern did not match."
+    },
+    {
+      "node_id": "tests.integration.p5.test_corrections::test_repository_unknown_observation_retained_without_fabricated_coordinates",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.p5.test_exchange::test_exchange_evaluates_core_dependencies_against_receiver_core",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.p5.test_exchange::test_exchange_export_import_repeat_reverse_and_multi_hop",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.p5.test_exchange::test_exchange_refuses_intrinsic_spoofing_without_validated_bytes",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.p5.test_exchange::test_exchange_refuses_tampered_payloads_without_store_corruption",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.p5.test_exchange::test_exchange_selective_filters_and_partial_input",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.p5.test_exchange::test_i3_relation_export_without_i2_acquisition",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.p5.test_paired_admission::test_core_first_context_second_and_failure_retry_convergence",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.p5.test_paired_admission::test_late_core_dependency_reconciliation",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.p5.test_provider_acquisition::test_context_file_metadata_never_retains_blob_in_git_core",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.p5.test_provider_acquisition::test_explicit_null_vs_missing_fields_and_clock_competition",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.p5.test_provider_acquisition::test_issue_vs_pull_request_intake_isolation",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.p5.test_provider_acquisition::test_provider_registration_and_source_inventory",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.p5.test_provider_acquisition::test_reviews_threads_comments_and_relations",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.p5_p6_compatibility.test_end_to_end_p5_p6::test_deferred_core_dependency_reconciliation_into_paired_queries[sha1]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.p5_p6_compatibility.test_end_to_end_p5_p6::test_deferred_core_dependency_reconciliation_into_paired_queries[sha256]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.p5_p6_compatibility.test_end_to_end_p5_p6::test_end_to_end_acquisition_into_query_and_search[sha1]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "assert git_rep.status == \"complete\""
+    },
+    {
+      "node_id": "tests.integration.p5_p6_compatibility.test_end_to_end_p5_p6::test_end_to_end_acquisition_into_query_and_search[sha256]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "assert git_rep.status == \"complete\""
+    },
+    {
+      "node_id": "tests.integration.p5_p6_compatibility.test_end_to_end_p5_p6::test_multi_hop_exchange_into_query[sha1]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.p5_p6_compatibility.test_end_to_end_p5_p6::test_multi_hop_exchange_into_query[sha256]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.p5_p6_compatibility.test_end_to_end_p5_p6::test_partial_reordered_repeat_reverse_onward_preserves_unknown_clocks",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.p5_p6_compatibility.test_export_gate::test_export_shared_gate_blocks_actual_nonblocking_writer_lock_attempt",
+      "baseline_status": "FAILURE",
+      "current_status": "PASS",
+      "classification": "RESOLVED",
+      "phase": "passed"
+    },
+    {
+      "node_id": "tests.integration.p5_p6_compatibility.test_p5_independent_counterexamples::test_exchange_export_uses_one_paired_snapshot",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "assert attempted.wait(3)"
+    },
+    {
+      "node_id": "tests.integration.p5_p6_compatibility.test_p5_independent_counterexamples::test_exchange_retains_partial_admission_outcome",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.p5_p6_compatibility.test_provider_exchange_matrix::test_exchange_preserves_non_time_json_real",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.p5_p6_compatibility.test_provider_exchange_matrix::test_provider_late_reordered_repeat_reverse_onward_preserves_candidates[order0]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.p5_p6_compatibility.test_provider_exchange_matrix::test_provider_late_reordered_repeat_reverse_onward_preserves_candidates[order1]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.p5_p6_compatibility.test_provider_exchange_matrix::test_provider_late_reordered_repeat_reverse_onward_preserves_candidates[order2]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.p5_p6_compatibility.test_provider_exchange_matrix::test_provider_late_reordered_repeat_reverse_onward_preserves_candidates[order3]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.p5_p6_compatibility.test_provider_exchange_matrix::test_provider_late_reordered_repeat_reverse_onward_preserves_candidates[order4]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.p5_p6_compatibility.test_provider_exchange_matrix::test_provider_late_reordered_repeat_reverse_onward_preserves_candidates[order5]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED"
+    },
+    {
+      "node_id": "tests.integration.p7.test_adversarial_contract_cases::test_case_23_legitimately_unresolved_context_references_admitted",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_P7_RECOVERY",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "assert restore_receipt.revalidated_clean"
+    },
+    {
+      "node_id": "tests.integration.p7.test_bounded_input::test_context_invalid_or_large_text_does_not_block_later_unit[17]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_P7_RECOVERY",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "assert receipt.rejected_units == receipt.admitted_units == 1"
+    },
+    {
+      "node_id": "tests.integration.p7.test_bounded_input::test_context_invalid_or_large_text_does_not_block_later_unit[\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_P7_RECOVERY",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "assert receipt.rejected_units == receipt.admitted_units == 1"
+    },
+    {
+      "node_id": "tests.integration.p7.test_bounded_input::test_context_invalid_or_large_text_does_not_block_later_unit[\\ud800]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_P7_RECOVERY",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "assert receipt.rejected_units == receipt.admitted_units == 1"
+    },
+    {
+      "node_id": "tests.integration.p7.test_bounded_input::test_context_invalid_or_large_text_does_not_block_later_unit[text3]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_P7_RECOVERY",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "assert receipt.rejected_units == receipt.admitted_units == 1"
+    },
+    {
+      "node_id": "tests.integration.p7.test_bounded_input::test_context_invalid_or_large_text_does_not_block_later_unit[text4]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_P7_RECOVERY",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "assert receipt.rejected_units == receipt.admitted_units == 1"
+    },
+    {
+      "node_id": "tests.integration.p7.test_bounded_input::test_context_invalid_or_large_text_does_not_block_later_unit[xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_P7_RECOVERY",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "assert receipt.rejected_units == receipt.admitted_units == 1"
+    },
+    {
+      "node_id": "tests.integration.p7.test_bounded_input::test_malformed_primitive_shape_is_one_rejection_not_merge_abort[bad0]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_P7_RECOVERY",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "assert receipt.rejected_units == receipt.admitted_units == 1"
+    },
+    {
+      "node_id": "tests.integration.p7.test_bounded_input::test_malformed_primitive_shape_is_one_rejection_not_merge_abort[bad1]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_P7_RECOVERY",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "assert receipt.rejected_units == receipt.admitted_units == 1"
+    },
+    {
+      "node_id": "tests.integration.p7.test_bounded_input::test_malformed_primitive_shape_is_one_rejection_not_merge_abort[bad2]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_P7_RECOVERY",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "assert receipt.rejected_units == receipt.admitted_units == 1"
+    },
+    {
+      "node_id": "tests.integration.p7.test_bounded_input::test_malformed_primitive_shape_is_one_rejection_not_merge_abort[bad3]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_P7_RECOVERY",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "assert receipt.rejected_units == receipt.admitted_units == 1"
+    },
+    {
+      "node_id": "tests.integration.p7.test_bounded_input::test_malformed_primitive_shape_is_one_rejection_not_merge_abort[bad4]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_P7_RECOVERY",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "assert receipt.rejected_units == receipt.admitted_units == 1"
+    },
+    {
+      "node_id": "tests.integration.p7.test_exact_replay::test_empty_context_text_admission_and_replay",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_P7_RECOVERY",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "assert first.admitted_units == 1"
+    },
+    {
+      "node_id": "tests.integration.p7.test_missing_required_authority::test_new_unreferenced_text_still_admits",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_P7_RECOVERY",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "assert receipt.admitted_units == 1"
+    },
+    {
+      "node_id": "tests.packaging.test_p5_distribution::test_p5_installed_acquisition_and_exchange[sha1-sdist-wheel]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "assert \"site-packages\" in str(Path(__import__(\"repo_catalog.application.acquisition\", fromlist=[\"x\"]).__file__))"
+    },
+    {
+      "node_id": "tests.packaging.test_p5_distribution::test_p5_installed_acquisition_and_exchange[sha1-wheel]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "assert \"site-packages\" in str(Path(__import__(\"repo_catalog.application.acquisition\", fromlist=[\"x\"]).__file__))"
+    },
+    {
+      "node_id": "tests.packaging.test_p5_distribution::test_p5_installed_acquisition_and_exchange[sha256-sdist-wheel]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "assert \"site-packages\" in str(Path(__import__(\"repo_catalog.application.acquisition\", fromlist=[\"x\"]).__file__))"
+    },
+    {
+      "node_id": "tests.packaging.test_p5_distribution::test_p5_installed_acquisition_and_exchange[sha256-wheel]",
+      "baseline_status": "FAILURE",
+      "current_status": "FAILURE",
+      "classification": "INHERITED_ADMISSION_PERMISSION_DENIED",
+      "phase": "call",
+      "refusal_code": "PERMISSION_DENIED",
+      "reached_assertion": "assert \"site-packages\" in str(Path(__import__(\"repo_catalog.application.acquisition\", fromlist=[\"x\"]).__file__))"
+    }
+  ],
+  "baseline_path": "docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/source-full-final/ordinary.xml.gz",
+  "baseline_sha256": "1ab1a372d80ac487cc0c363a0da78e691880b9c4e53354d085e33bb1cfce2afd",
+  "current_path": "docs/implementation/evidence/adr0031-i6c-access-verification-repair-20261024/raw/regressions.xml",
+  "current_sha256": "afc3c7a9f94daacc4ef258230a3b7c70f94a9c43f110a1026f033445bdd2791c"
+}

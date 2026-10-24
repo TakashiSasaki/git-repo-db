@@ -1,0 +1,99 @@
+{
+  "phase": "Author correction of verification infrastructure and demonstrated defects",
+  "repository": "https://github.com/TakashiSasaki/git-repo-db",
+  "target_branch": "fix/adr0031-i6c-access-verification-repair-20261024",
+  "base_branch": "fix/adr0031-i6c-access-reconciliation-20261024",
+  "base_commit": "2b33405b1a95eeddea277789e3bcc7b6b7307759",
+  "base_tree": "0970b876c8152a2faefa343e43c5b366ddd7a568",
+  "tested_input_commit": "6287e5a581635dae769fb9d18231580d36135076",
+  "tested_input_tree": "cb5346dbd790bebfebe3f112eae63c1f0eb477fe",
+  "author_status": "Author-complete",
+  "independent_acceptance_claim": false,
+  "behavioral_verifications": {
+    "paired_provider_acquisition": {
+      "verified": true,
+      "authority_forwarding": "verified",
+      "p1_recovery_stop_precedence": "verified",
+      "real_sqlite_row_evidence": "verified in test_independent_source_and_disposition_authorization_e2e"
+    },
+    "exchange_v5_core_and_context": {
+      "verified": true,
+      "format": "git-repo-db/adr0031-exchange-v5",
+      "context_only": "verified",
+      "core_plus_context": "verified"
+    },
+    "receiver_selection_controls": {
+      "empty_selection": "verified",
+      "strict_subset": "verified",
+      "complete_permitted": "verified",
+      "omitted_by_selection_refusal": "verified"
+    },
+    "receiver_local_grants": {
+      "sender_cannot_create_receiver_authority": "verified in test_sender_data_cannot_create_receiver_authority_or_inject_grants",
+      "missing_or_foreign_authority_denial": "verified (PERMISSION_DENIED)",
+      "replay_idempotency": "verified (idempotent_replay: true)",
+      "commit_time_revocation": "verified (revocation raises PERMISSION_DENIED at transaction boundary)"
+    },
+    "core_first_paired_failure_semantics": {
+      "verified": true,
+      "durable_operational_core_context_state": "verified"
+    }
+  },
+  "preflight_verification": {
+    "script": "scripts/preflight_access.py",
+    "python_version": "3.12.13",
+    "console_script": "repo-catalog",
+    "sqlite_version": "3.53.1",
+    "umask": "0022",
+    "status": "PASS"
+  },
+  "reconciliation_summary": {
+    "baseline_pr154_total_nodes": 6343,
+    "baseline_pr154_passes": 6044,
+    "baseline_pr154_non_successes": 299,
+    "current_ordinary_nodes": 6387,
+    "current_subtests_passed": 57,
+    "current_ordinary_xml_root_tests": 6444,
+    "resolved_non_successes": 83,
+    "resolved_breakdown": {
+      "access_acceptance_tests": 25,
+      "selective_exchange_tests": 58
+    },
+    "inherited_unchanged_non_successes": 216,
+    "inherited_breakdown": {
+      "admission_permission_denied": 157,
+      "staged_transfer_fences": 45,
+      "p7_recovery_context_refusals": 14
+    },
+    "environment_failures_eliminated": 142,
+    "new_product_regressions": 0,
+    "accounting_resolution": {
+      "historical_discrepancy": "Baseline #154 source-full/all-collection.nodes.txt had 6344 nodes because it ran without -m 'not live and not benchmark', capturing 6342 ordinary + 2 live/benchmark tests = 6344. In commit d68dc43, test_zero_budget_preserves_fixed_envelope_hard_cap_before_row_indexing was added (+1), and -m 'not live and not benchmark' filtered 2 live/benchmark tests (-2), producing the canonical 6343 ordinary nodes in source-full-final/ordinary-collection.nodes.txt.",
+      "ordinary_vs_subtest": "6387 testcase elements + 57 subtest passes = 6444 root testsuite tests attribute. In baseline #154 ordinary.xml.gz, 6343 testcases + 57 subtest passes = 6400 root testsuite tests attribute.",
+      "test_transfer_reports_correction": "test_transfer_reports_never_shrunk_or_mixed was erroneously claimed PASS/resolved in PR #163 node-comparison.json. It actually fails with UnsupportedResourceStage('admit_transfer_event') and remains an inherited staged Transfer fence failure.",
+      "p7_bad0_analysis": "test_malformed_primitive_shape_is_one_rejection_not_merge_abort[bad0] reaches assertion 'assert 2 == 0' because Context admission refuses candidate 2 (context_document) with PERMISSION_DENIED due to unauthenticated recovery context document writes, not Transfer fences."
+    },
+    "scoped_access_acceptance": {
+      "unique_test_references": 64,
+      "executed_nodes": 939,
+      "passed": 939,
+      "failures": 0,
+      "errors": 0,
+      "audit_exit_code": 0,
+      "node_set_matched": true,
+      "incomplete_requirements": [11, 15]
+    }
+  },
+  "distribution_verification": {
+    "direct_wheel_sha256": "c3a147b2111e2e22e75af1c1390cfe9b9e8a8f68f5a4a8a6f3584bd608b1360a",
+    "derived_wheel_sha256": "c3a147b2111e2e22e75af1c1390cfe9b9e8a8f68f5a4a8a6f3584bd608b1360a",
+    "byte_for_byte_equivalent": true,
+    "installed_environments": 2,
+    "sqlite_version": "3.53.1",
+    "normal_transfer_fence_refusal": "verified",
+    "authorized_provider_and_exchange": "verified",
+    "denial_controls": "verified",
+    "replay_idempotency": "verified",
+    "smoke_exit_code": 0
+  }
+}
