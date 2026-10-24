@@ -45,8 +45,10 @@ class Observer:
         self.queue_lengths = []
         self.extend_calls = []
         self.snapshot_lengths = []
+        self.members_lengths = []
         self.max_queue_len = 0
         self.max_snapshot_len = 0
+        self.max_members_len = 0
 
     def trace(self, frame, event, arg):
         if str(Path(frame.f_code.co_filename).resolve()) == self.target_filename:
@@ -62,6 +64,12 @@ class Observer:
                 self.snapshot_lengths.append(c_len)
                 if c_len > self.max_snapshot_len:
                     self.max_snapshot_len = c_len
+            members = frame.f_locals.get("members")
+            if isinstance(members, list):
+                m_len = len(members)
+                self.members_lengths.append(m_len)
+                if m_len > self.max_members_len:
+                    self.max_members_len = m_len
         return self.trace
 
     def profile(self, frame, event, arg):
@@ -224,8 +232,10 @@ def test_i155_m01_real_store_exhausted_prior_work():
 def test_i155_m01_real_store_selection_work_limit_7():
     """Separate PR #156 counterexample: limit 10000, prior 0, selection.max_work 7.
 
-    Defect behavior: queue extended to 1002 before refusal at 8.
-    Fixed behavior: refuses at 8 without expanding queue (max <= 6).
+    With selection.max_work=7 and root tuple using 1, ResourceRelation popped at 2.
+    ResourceRelation has 6 fields; remaining work is 5 (7 - 2).
+    Pre-reservation detects 6 > 5 before field extraction, charging 1 refusal fee (used_work=3).
+    Queue never expands (max_queue_len=1).
     """
     from repo_catalog.domain import context_admission
 
@@ -234,7 +244,29 @@ def test_i155_m01_real_store_selection_work_limit_7():
 
     assert res["outcome"] == "AdmissionRefused"
     assert res["code"] == "INPUT_LIMIT"
-    assert res["used_work"] == 8
+    assert res["used_work"] == 3
+    assert res["policy_calls"] == 0
+    assert res["rows_before"] == res["rows_after"] == 0
+    assert not res["in_transaction"]
+    assert obs.max_queue_len == 1
+    assert obs.max_members_len == 0
+    assert not any(length >= 1000 for event, length in obs.extend_calls)
+
+
+def test_i155_m01_real_store_selection_work_limit_8():
+    """Counterexample with selection.max_work 8: ResourceRelation fits, but 1000 members tuple does not.
+
+    ResourceRelation (6 fields) fits in remaining 6 work units (8 - 2 = 6).
+    Queue extends to 6 entries. When 1000-member tuple is reached, capacity check refuses at used_work 9.
+    """
+    from repo_catalog.domain import context_admission
+
+    obs = Observer(context_admission.__file__)
+    res = run_store_relation(1000, 10000, 10000, 8, observer=obs)
+
+    assert res["outcome"] == "AdmissionRefused"
+    assert res["code"] == "INPUT_LIMIT"
+    assert res["used_work"] == 9
     assert res["policy_calls"] == 0
     assert res["rows_before"] == res["rows_after"] == 0
     assert not res["in_transaction"]
@@ -900,3 +932,281 @@ def test_user_callback_exception_fails_closed_without_leak():
         service.charge_input(ctx_attr, BrokenAttrDataclass())
     assert exc4.value.code == "INPUT_LIMIT"
     assert ctx_attr.budget.used_work == 2
+
+
+def test_dataclass_selection_lower_than_budget_1000_fields():
+    """Independent reproduction of audit finding:
+    Standard dataclass with 1,000 integer fields, work_limit=10000, selection.max_work=7.
+    Must refuse at used_work=2, queue length 1, members peak 0, attribute accesses 0.
+    """
+    from dataclasses import make_dataclass
+
+    from repo_catalog.domain import context_admission
+
+    Fields1000 = make_dataclass("Fields1000", [(f"f_{i}", int) for i in range(1000)])
+    access_count = 0
+
+    class Instrument1000(Fields1000):
+        def __getattribute__(self, name):
+            nonlocal access_count
+            if name.startswith("f_"):
+                access_count += 1
+            return super().__getattribute__(name)
+
+    service, _ = fixture_service(DependencySet())
+    context = fixture_context(
+        service,
+        selection=AdmissionSelection(all_selected=True, max_work=7),
+        budget=AdmissionBudget(work_limit=10000),
+    )
+    instance = Instrument1000(*range(1000))
+    obs = Observer(context_admission.__file__)
+
+    with pytest.raises(AdmissionRefused) as exc:
+        obs.run(lambda: service.charge_input(context, instance))
+
+    assert exc.value.code == "INPUT_LIMIT"
+    assert context.budget.used_work == 2  # 1 pop + 1 refusal fee
+    assert obs.max_queue_len == 1
+    assert obs.max_members_len == 0
+    assert access_count == 0
+    assert len(obs.extend_calls) == 0
+
+
+def test_dataclass_budget_lower_than_selection():
+    """Budget work_limit lower than selection: work_limit=6, max_work=10000."""
+    from repo_catalog.domain import context_admission
+
+    service, _ = fixture_service(DependencySet())
+    context = fixture_context(
+        service,
+        selection=AdmissionSelection(all_selected=True, max_work=10000),
+        budget=AdmissionBudget(work_limit=6),
+    )
+    instance = SyntheticDataclass(1, "", [], {}, 5, 6)
+    obs = Observer(context_admission.__file__)
+
+    with pytest.raises(AdmissionRefused) as exc:
+        obs.run(lambda: service.charge_input(context, instance))
+
+    assert exc.value.code == "INPUT_LIMIT"
+    assert context.budget.used_work == 2
+    assert obs.max_queue_len == 1
+    assert obs.max_members_len == 0
+    assert len(obs.extend_calls) == 0
+
+
+def test_dataclass_prior_cumulative_work():
+    """Prior cumulative work reduces remaining work before dataclass capacity reservation."""
+    from repo_catalog.domain import context_admission
+
+    service, _ = fixture_service(DependencySet())
+    budget = AdmissionBudget(work_limit=10000)
+    context = fixture_context(
+        service,
+        selection=AdmissionSelection(all_selected=True, max_work=10000),
+        budget=budget,
+    )
+    # Use 9995 units of prior work, leaving 5 units
+    budget.charge(work=9995)
+    assert budget.used_work == 9995
+
+    # SyntheticDataclass has 6 fields. Popping it takes 1 unit (used=9996, rem=4).
+    # 6 declared fields > 4 remaining work units -> refuses with single refusal fee (used=9997).
+    instance = SyntheticDataclass(1, "", [], {}, 5, 6)
+    obs = Observer(context_admission.__file__)
+
+    with pytest.raises(AdmissionRefused) as exc:
+        obs.run(lambda: service.charge_input(context, instance))
+
+    assert exc.value.code == "INPUT_LIMIT"
+    assert budget.used_work == 9997
+    assert obs.max_queue_len == 1
+    assert obs.max_members_len == 0
+
+
+def test_dataclass_existing_pending_siblings():
+    """Pending sibling items count against remaining work capacity before dataclass expansion."""
+    from repo_catalog.domain import context_admission
+
+    service, _ = fixture_service(DependencySet())
+    # Outer list with SyntheticDataclass (6 fields) and 3 integer siblings: [instance, 1, 2, 3]
+    # Total work needed: pop list (1) + pop instance (1) + 6 fields (6) + 3 siblings (3) = 11 units.
+    # Set work_limit=9.
+    # After popping list: pending=[instance, 1, 2, 3] (len 4), used_work=1.
+    # When instance is popped: pending has 3 siblings remaining, used_work=2, rem=7.
+    # Dataclass has 6 fields. len(pending) + count = 3 + 6 = 9 > 7!
+    # Pre-reservation refuses before expanding pending or extracting members.
+    instance = SyntheticDataclass(1, "", [], {}, 5, 6)
+    container = [10, 20, 30, instance]
+
+    context = fixture_context(
+        service,
+        selection=AdmissionSelection(all_selected=True, max_work=9),
+        budget=AdmissionBudget(work_limit=9),
+    )
+    obs = Observer(context_admission.__file__)
+
+    with pytest.raises(AdmissionRefused) as exc:
+        obs.run(lambda: service.charge_input(context, container))
+
+    assert exc.value.code == "INPUT_LIMIT"
+    assert (
+        context.budget.used_work == 3
+    )  # list pop (1) + instance pop (1) + 1 refusal fee
+    assert obs.max_queue_len <= 4  # Never expanded to 3 + 6 = 9
+    assert obs.max_members_len == 0
+
+
+def test_dataclass_exact_boundaries_selection_and_budget():
+    """Exact boundary tests for dataclasses across selection and budget limits."""
+
+    @dataclass
+    class ExactDataclass:
+        f1: int
+        f2: int
+        f3: int
+        f4: int
+        f5: int
+        f6: int
+
+    service, _ = fixture_service(DependencySet())
+    instance = ExactDataclass(1, 2, 3, 4, 5, 6)
+    # Exact cost: 1 pop + 6 fields = 7 units.
+
+    # 1. Exact budget=7, max_work=7 -> succeeds
+    ctx1 = fixture_context(
+        service,
+        selection=AdmissionSelection(all_selected=True, max_work=7),
+        budget=AdmissionBudget(work_limit=7),
+    )
+    service.charge_input(ctx1, instance)
+    assert ctx1.budget.used_work == 7
+
+    # 2. Exact max_work=7, excess budget=100 -> succeeds
+    ctx2 = fixture_context(
+        service,
+        selection=AdmissionSelection(all_selected=True, max_work=7),
+        budget=AdmissionBudget(work_limit=100),
+    )
+    service.charge_input(ctx2, instance)
+    assert ctx2.budget.used_work == 7
+
+    # 3. Exact budget=7, excess max_work=100 -> succeeds
+    ctx3 = fixture_context(
+        service,
+        selection=AdmissionSelection(all_selected=True, max_work=100),
+        budget=AdmissionBudget(work_limit=7),
+    )
+    service.charge_input(ctx3, instance)
+    assert ctx3.budget.used_work == 7
+
+    # 4. One below: max_work=6, budget=100 -> fails at used_work=2
+    ctx4 = fixture_context(
+        service,
+        selection=AdmissionSelection(all_selected=True, max_work=6),
+        budget=AdmissionBudget(work_limit=100),
+    )
+    with pytest.raises(AdmissionRefused) as exc4:
+        service.charge_input(ctx4, instance)
+    assert exc4.value.code == "INPUT_LIMIT"
+    assert ctx4.budget.used_work == 2
+
+    # 5. One below: budget=6, max_work=100 -> fails at used_work=2
+    ctx5 = fixture_context(
+        service,
+        selection=AdmissionSelection(all_selected=True, max_work=100),
+        budget=AdmissionBudget(work_limit=6),
+    )
+    with pytest.raises(AdmissionRefused) as exc5:
+        service.charge_input(ctx5, instance)
+    assert exc5.value.code == "INPUT_LIMIT"
+    assert ctx5.budget.used_work == 2
+
+
+def test_dataclass_zero_and_exhausted_capacity():
+    """Dataclasses under zero capacity, exhausted capacity, and empty dataclass handling."""
+
+    @dataclass
+    class EmptyDataclass:
+        pass
+
+    @dataclass
+    class SingleFieldDataclass:
+        f: int = 1
+
+    service, _ = fixture_service(DependencySet())
+
+    # Zero work limit: refuses immediately on initial pop
+    ctx_zero = fixture_context(
+        service,
+        selection=AdmissionSelection(all_selected=True, max_work=0),
+        budget=AdmissionBudget(work_limit=0),
+    )
+    with pytest.raises(AdmissionRefused) as exc:
+        service.charge_input(ctx_zero, SingleFieldDataclass())
+    assert exc.value.code == "INPUT_LIMIT"
+    assert ctx_zero.budget.used_work == 1
+
+    # Capacity of 1 unit: initial pop succeeds, but 1 field cannot be reserved
+    ctx_one = fixture_context(
+        service,
+        selection=AdmissionSelection(all_selected=True, max_work=1),
+        budget=AdmissionBudget(work_limit=1),
+    )
+    with pytest.raises(AdmissionRefused) as exc:
+        service.charge_input(ctx_one, SingleFieldDataclass())
+    assert exc.value.code == "INPUT_LIMIT"
+    assert ctx_one.budget.used_work == 2
+
+    # Empty dataclass with budget of 1: initial pop succeeds, 0 fields reserved, completes at 1
+    ctx_empty = fixture_context(
+        service,
+        selection=AdmissionSelection(all_selected=True, max_work=1),
+        budget=AdmissionBudget(work_limit=1),
+    )
+    service.charge_input(ctx_empty, EmptyDataclass())
+    assert ctx_empty.budget.used_work == 1
+
+
+def test_dataclass_callback_and_reflection_containment():
+    """Verify separate handling of fields() reflection exceptions and attribute access callbacks."""
+    from unittest.mock import patch
+
+    service, _ = fixture_service(DependencySet())
+
+    # 1. fields() reflection raises an exception -> fails closed with INPUT_LIMIT, single refusal charge
+    import repo_catalog.domain.context_admission as ca_mod
+
+    orig_fields = ca_mod.fields
+
+    def selective_fields(obj):
+        if isinstance(obj, SyntheticDataclass):
+            raise TypeError("reflection error")
+        return orig_fields(obj)
+
+    ctx_refl = fixture_context(service, budget=AdmissionBudget(work_limit=100))
+    with patch(
+        "repo_catalog.domain.context_admission.fields", side_effect=selective_fields
+    ):
+        with pytest.raises(AdmissionRefused) as exc:
+            service.charge_input(ctx_refl, SyntheticDataclass(1, "", [], {}, 5, 6))
+        assert exc.value.code == "INPUT_LIMIT"
+        assert ctx_refl.budget.used_work == 2
+
+    # 2. Attribute access raises AdmissionRefused directly -> does not double-charge
+    @dataclass
+    class AdmissionRefusingDataclass:
+        f1: int = 1
+
+        def __getattribute__(self, name):
+            if name == "f1":
+                raise AdmissionRefused("INPUT_LIMIT")
+            return super().__getattribute__(name)
+
+    ctx_refuse = fixture_context(service, budget=AdmissionBudget(work_limit=100))
+    with pytest.raises(AdmissionRefused) as exc2:
+        service.charge_input(ctx_refuse, AdmissionRefusingDataclass())
+    assert exc2.value.code == "INPUT_LIMIT"
+    # Root pop (1 unit). When __getattribute__ raised AdmissionRefused, it was NOT double-charged
+    assert ctx_refuse.budget.used_work == 1

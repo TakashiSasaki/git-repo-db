@@ -455,18 +455,19 @@ class ContextAdmissionService:
                 try:
                     member_fields = fields(item)
                     count = len(member_fields)
+                except AdmissionRefused:
+                    raise
                 except Exception:
                     charge(work=1)
                     raise AdmissionRefused("INPUT_LIMIT")
-                rem_work = context.budget.work_limit - context.budget.used_work
-                if count > rem_work or len(pending) + count > rem_work:
-                    charge(work=1)
-                    raise AdmissionRefused("INPUT_LIMIT")
+                reserve_children(count)
                 try:
                     members = [
                         (getattr(item, member.name), depth + 1)
                         for member in member_fields
                     ]
+                except AdmissionRefused:
+                    raise
                 except Exception:
                     charge(work=1)
                     raise AdmissionRefused("INPUT_LIMIT")
