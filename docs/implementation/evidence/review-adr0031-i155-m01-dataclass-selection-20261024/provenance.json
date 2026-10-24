@@ -1,0 +1,49 @@
+{
+  "files": [
+    {
+      "path": "tests/unit/test_dataclass_selection_independent_acceptance.py",
+      "bytes": 21834,
+      "sha256": "a1afc7ac2f5b4dc5f091d8d1fb4a0450fe542e0b2a5790caae053e24153a39da"
+    },
+    {
+      "path": "scripts/verify_dataclass_selection_distribution.py",
+      "bytes": 14035,
+      "sha256": "50f5c41a19a748379e4840c7e96de2385e2c53578e4b5c119875fa5c436a3fad"
+    },
+    {
+      "path": "docs/implementation/evidence/review-adr0031-i155-m01-dataclass-selection-20261024/findings.json",
+      "bytes": 11437,
+      "sha256": "20265965f0faf8d5209d9cfabe0cbdf30e082d32be213d8814f4eb5f0bb9c5d1"
+    },
+    {
+      "path": "docs/implementation/evidence/review-adr0031-i155-m01-dataclass-selection-20261024/REPORT.md",
+      "bytes": 11016,
+      "sha256": "8d1d7a61d807640a2ab36f2f35f14f172a5566164daaeccb112ff4bf0b5a1a36"
+    },
+    {
+      "path": "docs/implementation/evidence/review-adr0031-i155-m01-dataclass-selection-20261024/distribution/check-sdist-contract.json",
+      "bytes": 54548,
+      "sha256": "f511d4c51489b348e16e1531c0e72b132f80d8af56259b94ee398095a7d1718e"
+    },
+    {
+      "path": "docs/implementation/evidence/review-adr0031-i155-m01-dataclass-selection-20261024/distribution/wheel-comparison.json",
+      "bytes": 492,
+      "sha256": "48b1e841833515523d88b106eeb7604cc042e7bd68bc8b494a63e46e5c1573c4"
+    },
+    {
+      "path": "docs/implementation/evidence/review-adr0031-i155-m01-dataclass-selection-20261024/distribution/wheel-members.json",
+      "bytes": 37133,
+      "sha256": "d0657f0e90f03ae16054cfd479e9ad7d3c18bec4daddff6eaaddfe522d83a4f9"
+    },
+    {
+      "path": "docs/implementation/evidence/review-adr0031-i155-m01-dataclass-selection-20261024/scanner/cohort-probes.json",
+      "bytes": 1615,
+      "sha256": "f77af343ce4421d22f24c1dae5260672a164a1739f9d7f088159a8f7be730bd1"
+    },
+    {
+      "path": "docs/implementation/evidence/review-adr0031-i155-m01-dataclass-selection-20261024/scanner/executions.json",
+      "bytes": 616,
+      "sha256": "700f9dd14f7e66663ec483acb62f8eaa3cc8e8f837c4f35cd09ab1f1293e22f0"
+    }
+  ]
+}

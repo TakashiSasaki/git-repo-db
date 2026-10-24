@@ -1,0 +1,12 @@
+{
+  "direct_wheel": "repo_catalog-0.2.0-py3-none-any.whl",
+  "direct_wheel_bytes": 791849,
+  "direct_wheel_sha256": "7dbbcfee566998e614cab97d5831c2ac941303b952c0d79183989c7d1d9c75c9",
+  "derived_wheel": "repo_catalog-0.2.0-py3-none-any.whl",
+  "derived_wheel_bytes": 791849,
+  "derived_wheel_sha256": "7dbbcfee566998e614cab97d5831c2ac941303b952c0d79183989c7d1d9c75c9",
+  "equal_full_zip_bytes": true,
+  "member_count_direct": 164,
+  "member_count_derived": 164,
+  "members_identical": true
+}
