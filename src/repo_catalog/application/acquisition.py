@@ -1974,6 +1974,11 @@ class PairedAcquisitionCoordinator:
         request_identity: RequestIdentity | None = None,
     ) -> PairedAcquisitionResult:
         """Execute Core-first, Context-second paired admission via PairCoordinator.admit."""
+        if (self.directory / "p1-recovery-stop.json").exists():
+            from repo_catalog.domain.p1_coordination import CoordinationError
+
+            raise CoordinationError("RECOVERY_REQUIRED", "catalog")
+
         git_report_holder: list[GitAcquisitionReport | None] = [None]
         provider_report_holder: list[ProviderAcquisitionReport | None] = [None]
 
@@ -2018,7 +2023,11 @@ class PairedAcquisitionCoordinator:
                 elif context_fn is not None:
                     provider_report_holder[0] = context_fn(ctx_cap)
 
-                if reconcile_dependencies:
+                if (
+                    reconcile_dependencies
+                    and self.authorization is not None
+                    and self.admission is not None
+                ):
                     _reconcile_context_dependencies_in_tx(
                         ctx_cap, self._core_validator_on_disk()
                     )
@@ -2095,7 +2104,12 @@ class PairedAcquisitionCoordinator:
             if (
                 provider_batch is not None
                 or context_fn is not None
-                or reconcile_dependencies
+                or (
+                    reconcile_dependencies
+                    and git_input is None
+                    and git_source is None
+                    and git_request is None
+                )
             ):
                 if auth is None or adm is None:
                     from repo_catalog.domain.context_admission import (

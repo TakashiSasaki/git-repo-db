@@ -587,6 +587,8 @@ def dependencies(unit):
             values["mapping_claims"].add(item)
         if isinstance(item, MappingDispositionKey):
             values["dispositions"].add(item)
+        elif hasattr(item, "disposition_key"):
+            values["dispositions"].add(item.disposition_key)
         if isinstance(item, EventReportKey):
             # The native I7 is a real dependency, independent of reported Parent.
             pending.append((item.issue_parent, depth + 1))

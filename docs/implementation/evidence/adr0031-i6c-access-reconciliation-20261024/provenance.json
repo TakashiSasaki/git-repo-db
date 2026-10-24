@@ -1,0 +1,48 @@
+{
+  "metadata": {
+    "convention": "HCI-L01",
+    "description": "Raw byte SHA-256 and Git blob OIDs for Access reconciliation evidence artifacts"
+  },
+  "artifacts": {
+    "MATRIX.md": {
+      "size_bytes": 3647,
+      "sha256": "3add69674a471b3a8ac4a97022d35647b9268d9496320e05c3d66987882ebf4c",
+      "git_blob_oid": "a527648debd195da4604e356fd0ebbce5542acb5"
+    },
+    "REPORT.md": {
+      "size_bytes": 11085,
+      "sha256": "78cb5b59aa6beff773107d6b04a59137418d13ddc12a90426b959ca58ceb90e9",
+      "git_blob_oid": "ec8e4addf59233c3455fc81a71852f143c86e2b0"
+    },
+    "distribution.json": {
+      "size_bytes": 2121,
+      "sha256": "e14ee05592c03614722853721b5ae3c83da44c7dec14980a892800a4e7beddd5",
+      "git_blob_oid": "764e8e3c63bf45684095191b51d7b58ec9f35ea7"
+    },
+    "findings.json": {
+      "size_bytes": 4486,
+      "sha256": "fbd57d179c4d34ed7b536b62c04ac4bbe8d864364860927c96d3167f4d4fe03b",
+      "git_blob_oid": "2b47378d005936612d7ed61360974a39ee1da50b"
+    },
+    "node-comparison.json": {
+      "size_bytes": 121826,
+      "sha256": "276c2236345b5491c9e74ec8e194c9cd2de4eb82d78eb55037bd3da478b225f0",
+      "git_blob_oid": "96a1b1faa8b251ec37ef43420c208e9b2ec9911a"
+    },
+    "raw/ordinary.log": {
+      "size_bytes": 2151461,
+      "sha256": "f43c058d9cdcfb573dc1db4e2b46bb2db3416ed52be24a329938d733984ea566",
+      "git_blob_oid": "f98f8ec1197cb8d7addd58f458226006f4fbef29"
+    },
+    "raw/ordinary.selected.txt": {
+      "size_bytes": 2810287,
+      "sha256": "7b9056c4b0537297e68e15769bfaafc8e408c7c6b7d758e0330a157a2485ce9b",
+      "git_blob_oid": "66de414d786a113476252719af5d42c4413ac8c8"
+    },
+    "raw/ordinary.xml": {
+      "size_bytes": 5274179,
+      "sha256": "650633642ec91f0ec9b5e93fe111a9d7779ee1f406eea547119fc43533c29c0f",
+      "git_blob_oid": "53f4da3f6d69b622cba26115a6b33036d7617f07"
+    }
+  }
+}

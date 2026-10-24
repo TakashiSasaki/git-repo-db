@@ -273,7 +273,10 @@ def test_reported_urls_and_historical_core_provenance_survive_exchange(
     assert package.format == "git-repo-db/adr0031-exchange-v5"
     target = catalog(tmp_path / "target")
     ExchangeService(target).import_package(
-        package, new_request=True, permitted_repository_uuidv4s=(REPO,)
+        package,
+        new_request=True,
+        permitted_repository_uuidv4s=(REPO,),
+        grants=registration_grants(key),
     )
     with Context.snapshot(target) as ctx:
         assert ctx.candidates(key, "url") == (observed,)
@@ -322,7 +325,10 @@ def test_context_only_round_trip_and_core_only_paths_need_no_access(tmp_path):
         selection=ExchangeSelectionScope(all_selected=True, include_core=False)
     )
     ExchangeService(right).import_package(
-        package, new_request=True, permitted_repository_uuidv4s=(REPO,)
+        package,
+        new_request=True,
+        permitted_repository_uuidv4s=(REPO,),
+        grants=registration_grants(),
     )
     assert ProductionQueryService(right).list_providers()[0].configuration == {
         "tier": "enterprise"
@@ -402,10 +408,16 @@ def test_repository_claim_direct_values_round_trip_without_scalar_tag_decode(
         selection=ExchangeSelectionScope(all_selected=True, include_context=False)
     )
     ExchangeService(right).import_package(
-        package, new_request=True, permitted_repository_uuidv4s=(REPO,)
+        package,
+        new_request=True,
+        permitted_repository_uuidv4s=(REPO,),
+        grants=registration_grants(),
     )
     ExchangeService(right).import_package(
-        package, new_request=True, permitted_repository_uuidv4s=(REPO,)
+        package,
+        new_request=True,
+        permitted_repository_uuidv4s=(REPO,),
+        grants=registration_grants(),
     )
     with closing(GitCore(right / "core.sqlite3")) as core:
         assert [tuple(row) for row in core.sql("SELECT * FROM repository_claims")] == [

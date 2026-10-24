@@ -207,8 +207,45 @@ with tempfile.TemporaryDirectory() as directory:
     with closing(GitCore(producer / "core.sqlite3")) as core:
         core.admit_repository_claim(RepositoryClaim(repository_id, "endpoint", historical_url, evidence))
     package = ExchangeService(producer).export_package(selection=ExchangeSelectionScope(all_selected=True))
-    assert package.format == EXCHANGE_FORMAT == "git-repo-db/adr0030-exchange-v4"
-    ExchangeService(receiver).import_package(package, new_request=True, permitted_repository_uuidv4s=(repository_id,))
+    assert package.format == EXCHANGE_FORMAT == "git-repo-db/adr0031-exchange-v5"
+    ExchangeService(receiver).import_package(
+        package,
+        new_request=True,
+        permitted_repository_uuidv4s=(repository_id,),
+        grants=DependencySet(
+            provider_registrations=frozenset({service}),
+            repositories=frozenset({repository_id}),
+        ),
+    )
+    # Replay control: second import without new_request=True is idempotent replay
+    replay_result = ExchangeService(receiver).import_package(
+        package,
+        new_request=False,
+        permitted_repository_uuidv4s=(repository_id,),
+        grants=DependencySet(
+            provider_registrations=frozenset({service}),
+            repositories=frozenset({repository_id}),
+        ),
+    )
+    assert replay_result.idempotent_replay is True
+    # Denial control: unauthorized import fails closed with PERMISSION_DENIED
+    denied_receiver = base / "denied"
+    denied_receiver.mkdir()
+    denied_instance = str(uuid4())
+    for role in ("core", "context", "operational"):
+        p1_schema.initialize(denied_receiver / f"{role}.sqlite3", role, repository_id, denied_instance)
+    from repo_catalog.domain.context_admission import AdmissionRefused
+    try:
+        ExchangeService(denied_receiver).import_package(
+            package,
+            new_request=True,
+            permitted_repository_uuidv4s=(),
+            grants=DependencySet(),
+        )
+    except AdmissionRefused as err:
+        assert err.code == "PERMISSION_DENIED"
+    else:
+        raise AssertionError("unauthorized exchange import must fail closed with PERMISSION_DENIED")
     with closing(GitCore(receiver / "core.sqlite3")) as core:
         rows = core.sql("SELECT value FROM repository_claims WHERE field='endpoint'")
         assert json.loads(rows[0][0]) == historical_url
@@ -227,6 +264,7 @@ from repo_catalog.application.acquisition import ProviderAcquisition
 from repo_catalog.adapters.github.production_intake import github_repository_id
 from repo_catalog.domain.acquisition import ProviderIntakeBatch, ProviderRegistration, RepositoryRegistration, ProviderIssueIntake, ProviderTimelineIntake, make_provenance
 from repo_catalog.domain.p1_context import ResourceKey, ResourceRepositoryRelation, FieldClock, canonical
+from repo_catalog.domain.resource_stage import UnsupportedResourceStage
 with tempfile.TemporaryDirectory() as directory:
     destination = Path(directory)
     repository_id, instance, service = str(uuid4()), str(uuid4()), str(uuid4())
@@ -237,16 +275,31 @@ with tempfile.TemporaryDirectory() as directory:
     # Change the key representation while retaining the original evidence text.
     claims = tuple(ResourceRepositoryRelation(ResourceKey(service, "repository", identifier), "represents_repository", FieldClock("installed:mapping", 1), canonical(repository_id), make_provenance("installed", {"explicit_mapping": evidence_identifier}), 1)
                    for identifier, evidence_identifier in ((github_repository_id({"id": 1}, graphql=False), "1"), (node_identifier, node_identifier)))
-    ProviderAcquisition(destination).admit_batch(ProviderIntakeBatch(service,
+    # Normal Transfer fence verification: transferring timeline events raises UnsupportedResourceStage even when authorized
+    issue_key = ResourceKey.from_native(service, "issue", "7")
+    destination_auth, _ = authority.fixture_service(DependencySet(
+        provider_registrations=frozenset({service}),
+        repositories=frozenset({repository_id}),
+        mapping_claims=frozenset({c.claim_key for c in claims}),
+        resources=frozenset({issue_key, *(c.resource for c in claims)}),
+    ))
+    destination_adm = authority.fixture_context(destination_auth)
+    dest_acq = ProviderAcquisition(destination, authorization=destination_auth, admission=destination_adm)
+    try:
+        dest_acq.admit_batch(ProviderIntakeBatch(service,
+            providers=(ProviderRegistration(service),), repositories=(RepositoryRegistration(repository_id),), mapping_claims=claims,
+            timeline_events=(ProviderTimelineIntake("issue", 7, "EV_installed", {"id": "EV_installed", "__typename": "TransferredEvent", "issue": {"databaseId": 7}, "fromRepository": node}, 20, make_provenance("installed", "event"), graphql=True),)))
+    except UnsupportedResourceStage as fence_error:
+        assert "Provider Transfer intake" in str(fence_error)
+    else:
+        raise AssertionError("Transfer intake must be refused by normal Transfer fence")
+    # Authorized Provider intake: admit standard issues and mapping claims
+    dest_acq.admit_batch(ProviderIntakeBatch(service,
         providers=(ProviderRegistration(service),), repositories=(RepositoryRegistration(repository_id),), mapping_claims=claims,
-        issues=(ProviderIssueIntake({"id": 7, "repository": {"id": 1}}, 10, make_provenance("installed", "issue")),),
-        timeline_events=(ProviderTimelineIntake("issue", 7, "EV_installed", {"id": "EV_installed", "__typename": "TransferredEvent", "issue": {"databaseId": 7}, "fromRepository": node}, 20, make_provenance("installed", "event"), graphql=True),)))
+        issues=(ProviderIssueIntake({"id": 7, "repository": {"id": 1}}, 10, make_provenance("installed", "issue")),)))
     with Context.snapshot(destination) as ctx:
-        qualified, = ctx.provider_repository_roles(ResourceKey.from_native(service, "issue", "7"))
+        qualified, = ctx.provider_repository_roles(issue_key)
         assert qualified.supports[0].supporting_claims == (claims[0].claim_key,)
-        report, = ctx.transfer_event_reports()
-        assert report.from_relation.embedded_support.supporting_claims == (claims[1].claim_key,)
-        assert report.to_state == "absent" and report.observed_at_us == 20
     assert not (destination / "access.sqlite3").exists()
     # Installed I2 -> I3, including original Node namespace and a different seed.
     target = destination / "receiver"
@@ -256,11 +309,20 @@ with tempfile.TemporaryDirectory() as directory:
         p1_schema.initialize(target / f"{role}.sqlite3", role, target_seed, target_instance)
     package = ExchangeService(destination).export_package(selection=ExchangeSelectionScope(
         repository_uuidv4s=(repository_id,), object_oids=(),
-        resource_keys=(qualified.resource, report.event_resource), source_uuidv4s=()))
-    ExchangeService(target).import_package(package, new_request=True, permitted_repository_uuidv4s=(repository_id,))
+        resource_keys=(qualified.resource, *(c.resource for c in claims)), source_uuidv4s=()))
+    ExchangeService(target).import_package(
+        package,
+        new_request=True,
+        permitted_repository_uuidv4s=(repository_id,),
+        grants=DependencySet(
+            provider_registrations=frozenset({service}),
+            repositories=frozenset({repository_id}),
+            resources=frozenset({qualified.resource, *(c.resource for c in claims)}),
+            mapping_claims=frozenset({c.claim_key for c in claims}),
+        ),
+    )
     with Context.snapshot(target) as ctx:
         assert ctx.provider_repository_roles(qualified.resource) == (qualified,)
-        assert ctx.transfer_event_reports() == (report,)
     with closing(GitCore(target / "core.sqlite3")) as core:
         assert core.catalog_identity() == (target_seed, target_instance)
         assert {r[0] for r in core.sql("SELECT repository_uuidv4 FROM repositories")} == {target_seed, repository_id}
@@ -271,8 +333,16 @@ with tempfile.TemporaryDirectory() as directory:
     from repo_catalog.domain.production_query import SearchQuery
     from repo_catalog.domain.p1_context import MappingDisposition, MappingOperationEvidence
     disposition = MappingDisposition(claims[0].claim_key, "withdraw", FieldClock("installed:operation", 30), make_provenance("installed", "withdraw"), 30)
-    with Context.transaction(target) as ctx:
-        ctx.admit_mapping_disposition(disposition)
+    target_auth, _ = authority.fixture_service(DependencySet(
+        dispositions=frozenset({disposition.disposition_key}),
+        mapping_claims=frozenset({claims[0].claim_key}),
+        resources=frozenset({claims[0].resource}),
+        repositories=frozenset({repository_id}),
+        provider_registrations=frozenset({service}),
+    ))
+    target_adm = authority.fixture_context(target_auth)
+    with Context.transaction(target, authorization=target_auth) as ctx:
+        ctx.admit_mapping_disposition(disposition, admission=target_adm)
     q = ProductionQueryService(target)
     assert q.get_context_resource(qualified.resource).repository_roles[0].state == "contested_candidate"
     checked = ProductionQueryService(target, mapping_evidence=MappingOperationEvidence(frozenset({disposition.disposition_key})))
@@ -286,7 +356,6 @@ with tempfile.TemporaryDirectory() as directory:
     recovery.restore_backup(backup, restored, target_seed)
     with Context.snapshot(restored) as ctx:
         assert ctx.mapping_dispositions(claims[0].claim_key) == (disposition,)
-        assert ctx.transfer_event_reports() == (report,)
     rq = ProductionQueryService(restored)
     assert rq.get_context_resource(qualified.resource) == q.get_context_resource(qualified.resource)
     assert rq.search(SearchQuery("owning_repository", projection_kinds=("context_text",))).backend == "authority_scan"

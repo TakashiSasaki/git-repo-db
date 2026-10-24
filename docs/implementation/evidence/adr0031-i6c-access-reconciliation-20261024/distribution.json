@@ -1,0 +1,42 @@
+[
+  {
+    "sqlite": "3.53.1",
+    "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+    "module_origin": "/tmp/access-distribution-3y79d71l/wheel/lib/python3.12/site-packages/repo_catalog/__init__.py",
+    "interpreter": "/tmp/access-distribution-3y79d71l/wheel/bin/python",
+    "ddl_sha256": "89bcafeda815150fa4770f5758edf7d2d36d505b76717aa19054f9ad689765da",
+    "context_ddl_sha256": "924cc7557fb3da6211ea070185881f5fcaeff9bf52b6e237a361a238a2ea0c6e",
+    "table_count": 19,
+    "exchange_format": "git-repo-db/adr0031-exchange-v5",
+    "local_git_acquired": true,
+    "access_backup_restored": true,
+    "scope_forked": true,
+    "installed_i2_i3_cross_seed": "passed",
+    "installed_i4_query_search_backup": "passed",
+    "installed_smoke": "passed",
+    "exit_code": 0,
+    "artifact_kind": "wheel",
+    "wheel_sha256": "c3a147b2111e2e22e75af1c1390cfe9b9e8a8f68f5a4a8a6f3584bd608b1360a",
+    "source_sdist_sha256": "6c021cacf9d8a71aad1971c6b94b8d06f0a598603e3f56cadef13e342e140cc1"
+  },
+  {
+    "sqlite": "3.53.1",
+    "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+    "module_origin": "/tmp/access-distribution-3y79d71l/sdist-wheel/lib/python3.12/site-packages/repo_catalog/__init__.py",
+    "interpreter": "/tmp/access-distribution-3y79d71l/sdist-wheel/bin/python",
+    "ddl_sha256": "89bcafeda815150fa4770f5758edf7d2d36d505b76717aa19054f9ad689765da",
+    "context_ddl_sha256": "924cc7557fb3da6211ea070185881f5fcaeff9bf52b6e237a361a238a2ea0c6e",
+    "table_count": 19,
+    "exchange_format": "git-repo-db/adr0031-exchange-v5",
+    "local_git_acquired": true,
+    "access_backup_restored": true,
+    "scope_forked": true,
+    "installed_i2_i3_cross_seed": "passed",
+    "installed_i4_query_search_backup": "passed",
+    "installed_smoke": "passed",
+    "exit_code": 0,
+    "artifact_kind": "sdist-wheel",
+    "wheel_sha256": "c3a147b2111e2e22e75af1c1390cfe9b9e8a8f68f5a4a8a6f3584bd608b1360a",
+    "source_sdist_sha256": "6c021cacf9d8a71aad1971c6b94b8d06f0a598603e3f56cadef13e342e140cc1"
+  }
+]

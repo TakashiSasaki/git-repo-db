@@ -1621,6 +1621,21 @@ class ExchangeService:
                 # Previously performed decode work remains charged and counts
                 # against this same frozen cumulative ceiling, even with no rows.
                 work = _ReceiveWork(work, receive_selection.max_work)
+            active_grants = grants if grants is not None else self.grants
+            auth = authorization if authorization is not None else self.authorization
+            adm = admission if admission is not None else self.admission
+            want_context = package.context is not None
+            if (
+                want_context
+                and auth is None
+                and adm is None
+                and not permitted_repository_uuidv4s
+                and active_grants is None
+            ):
+                from repo_catalog.domain.context_admission import AdmissionRefused
+
+                raise AdmissionRefused("PERMISSION_DENIED")
+
             request_binding = {
                 "selection": receive_selection.to_dict(),
                 "sender": package.sender_catalog_instance_uuidv4,
@@ -1739,6 +1754,8 @@ class ExchangeService:
                     mapping_claims.add(disp.claim_key)
                 if getattr(disp, "replacement_claim_key", None):
                     mapping_claims.add(disp.replacement_claim_key)
+                if hasattr(disp, "disposition_key"):
+                    dispositions.add(disp.disposition_key)
                 resources.update(dep.resources)
                 repositories.update(dep.repositories)
                 provider_registrations.update(dep.provider_registrations)
