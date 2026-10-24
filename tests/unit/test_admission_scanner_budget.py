@@ -812,3 +812,91 @@ def test_post_traversal_mutation_charged_only_once():
         service.charge_input(ctx2, MutatingDict({"a": 1, "b": 2}))
     assert exc2.value.code == "INPUT_LIMIT"
     assert ctx2.budget.used_work == 2
+
+
+def test_dataclass_capacity_and_queue_bounded():
+    """Dataclass capacity reservation enforces budget.work_limit without child queue allocation."""
+    from repo_catalog.domain import context_admission
+
+    service, _ = fixture_service(DependencySet())
+    instance = SyntheticDataclass(1, "", [], {}, 5, 6)
+
+    # SyntheticDataclass has 6 fields: 1 pop + 6 fields = 7 units needed
+    # Under work_limit=6, 1 pop leaves rem_work=5 < 6 declared fields.
+    # Capacity check refuses immediately before extending the pending queue.
+    ctx_short = fixture_context(
+        service,
+        selection=AdmissionSelection(all_selected=True, max_work=100),
+        budget=AdmissionBudget(work_limit=6),
+    )
+    obs = Observer(context_admission.__file__)
+    with pytest.raises(AdmissionRefused) as exc:
+        obs.run(lambda: service.charge_input(ctx_short, instance))
+    assert exc.value.code == "INPUT_LIMIT"
+    assert obs.max_queue_len <= 1
+    assert ctx_short.budget.used_work == 2  # 1 pop + 1 fixed refusal charge
+
+    # Under work_limit=7, exact budget suffices and all 6 fields are admitted cleanly.
+    ctx_exact = fixture_context(
+        service,
+        selection=AdmissionSelection(all_selected=True, max_work=100),
+        budget=AdmissionBudget(work_limit=7),
+    )
+    service.charge_input(ctx_exact, instance)
+    assert ctx_exact.budget.used_work == 7
+
+
+def test_user_callback_exception_fails_closed_without_leak():
+    """Exceptions in custom iter, dict methods, and dataclass access fail closed with INPUT_LIMIT."""
+
+    class BrokenIter(list):
+        def __iter__(self):
+            yield 1
+            raise RuntimeError("iteration error")
+
+    class BrokenValuesDict(dict):
+        def values(self):
+            raise ValueError("values retrieval error")
+
+    class BrokenKeysDict(dict):
+        def keys(self):
+            raise KeyError("keys retrieval error")
+
+    @dataclass
+    class BrokenAttrDataclass:
+        field_a: int = 1
+
+        def __getattribute__(self, name):
+            if name == "field_a":
+                raise RuntimeError("attribute access error")
+            return super().__getattribute__(name)
+
+    service, _ = fixture_service(DependencySet())
+
+    # Broken iterator
+    ctx_iter = fixture_context(service, budget=AdmissionBudget(work_limit=100))
+    with pytest.raises(AdmissionRefused) as exc1:
+        service.charge_input(ctx_iter, BrokenIter([1, 2]))
+    assert exc1.value.code == "INPUT_LIMIT"
+    assert ctx_iter.budget.used_work == 2
+
+    # Broken dict values
+    ctx_vals = fixture_context(service, budget=AdmissionBudget(work_limit=100))
+    with pytest.raises(AdmissionRefused) as exc2:
+        service.charge_input(ctx_vals, BrokenValuesDict({"k": 1}))
+    assert exc2.value.code == "INPUT_LIMIT"
+    assert ctx_vals.budget.used_work == 2
+
+    # Broken dict keys
+    ctx_keys = fixture_context(service, budget=AdmissionBudget(work_limit=100))
+    with pytest.raises(AdmissionRefused) as exc3:
+        service.charge_input(ctx_keys, BrokenKeysDict({"k": 1}))
+    assert exc3.value.code == "INPUT_LIMIT"
+    assert ctx_keys.budget.used_work == 2
+
+    # Broken dataclass attribute access
+    ctx_attr = fixture_context(service, budget=AdmissionBudget(work_limit=100))
+    with pytest.raises(AdmissionRefused) as exc4:
+        service.charge_input(ctx_attr, BrokenAttrDataclass())
+    assert exc4.value.code == "INPUT_LIMIT"
+    assert ctx_attr.budget.used_work == 2

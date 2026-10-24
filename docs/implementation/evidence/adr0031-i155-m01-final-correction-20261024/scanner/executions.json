@@ -1,0 +1,170 @@
+[
+  {
+    "cohort": "source160-unfixed",
+    "script": "store_case.py",
+    "argv": [
+      "/home/ubuntu/venv/bin/python",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-scanner-correction-20261024/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/scanner/store_case.py",
+      "--output",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-scanner-correction-20261024/docs/implementation/evidence/adr0031-i155-m01-final-correction-20261024/scanner/store-source160-unfixed.json"
+    ],
+    "pythonpath": "/tmp/i155-final-dist/source160-unfixed/src:/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-scanner-correction-20261024",
+    "exit_code": 0,
+    "duration_s": 4.784,
+    "output_sha256": "81bd573bdf545c1e76af3fd088997967e4e40ffad91fca4073380b07bca69020"
+  },
+  {
+    "cohort": "source160-unfixed",
+    "script": "study.py",
+    "argv": [
+      "/home/ubuntu/venv/bin/python",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-scanner-correction-20261024/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/scanner/study.py",
+      "--output",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-scanner-correction-20261024/docs/implementation/evidence/adr0031-i155-m01-final-correction-20261024/scanner/study-source160-unfixed.json"
+    ],
+    "pythonpath": "/tmp/i155-final-dist/source160-unfixed/src:/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-scanner-correction-20261024",
+    "exit_code": 0,
+    "duration_s": 13.242,
+    "output_sha256": "6c2b3354668ed81e1f13c41c8ac6e6b8184e075b14042e3003623226145c1a36"
+  },
+  {
+    "cohort": "source160-unfixed",
+    "script": "reproduce_reviewer_finding.py",
+    "argv": [
+      "/home/ubuntu/venv/bin/python",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-scanner-correction-20261024/docs/implementation/evidence/adr0031-i155-m01-final-correction-20261024/scanner/reproduce_reviewer_finding.py",
+      "--output",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-scanner-correction-20261024/docs/implementation/evidence/adr0031-i155-m01-final-correction-20261024/scanner/mutation-source160-unfixed.json"
+    ],
+    "pythonpath": "/tmp/i155-final-dist/source160-unfixed/src:/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-scanner-correction-20261024",
+    "exit_code": 0,
+    "duration_s": 19.998,
+    "output_sha256": "031f96e3c324ee17bfbe128e071ee073427d76f17d1a7c69e194b1f62528cfb3"
+  },
+  {
+    "cohort": "source-fixed",
+    "script": "store_case.py",
+    "argv": [
+      "/home/ubuntu/venv/bin/python",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-scanner-correction-20261024/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/scanner/store_case.py",
+      "--output",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-scanner-correction-20261024/docs/implementation/evidence/adr0031-i155-m01-final-correction-20261024/scanner/store-source-fixed.json"
+    ],
+    "pythonpath": "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-scanner-correction-20261024/src:/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-scanner-correction-20261024",
+    "exit_code": 0,
+    "duration_s": 5.533,
+    "output_sha256": "70257b54fcbaf3ce211ec3ecc7ccdca9a41ce661d949564d847bbdbf07ee259f"
+  },
+  {
+    "cohort": "source-fixed",
+    "script": "study.py",
+    "argv": [
+      "/home/ubuntu/venv/bin/python",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-scanner-correction-20261024/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/scanner/study.py",
+      "--output",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-scanner-correction-20261024/docs/implementation/evidence/adr0031-i155-m01-final-correction-20261024/scanner/study-source-fixed.json"
+    ],
+    "pythonpath": "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-scanner-correction-20261024/src:/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-scanner-correction-20261024",
+    "exit_code": 0,
+    "duration_s": 16.475,
+    "output_sha256": "a072df2815df3fd4bce8337d8c58fbb7b68776cdbd9bc6d6144cc4748aba2d3b"
+  },
+  {
+    "cohort": "source-fixed",
+    "script": "reproduce_reviewer_finding.py",
+    "argv": [
+      "/home/ubuntu/venv/bin/python",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-scanner-correction-20261024/docs/implementation/evidence/adr0031-i155-m01-final-correction-20261024/scanner/reproduce_reviewer_finding.py",
+      "--output",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-scanner-correction-20261024/docs/implementation/evidence/adr0031-i155-m01-final-correction-20261024/scanner/mutation-source-fixed.json"
+    ],
+    "pythonpath": "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-scanner-correction-20261024/src:/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-scanner-correction-20261024",
+    "exit_code": 0,
+    "duration_s": 24.127,
+    "output_sha256": "c063c1c65ddda5939cfc88596efd68a3b6ffaf7cb86371088a4f7b1404471b78"
+  },
+  {
+    "cohort": "direct",
+    "script": "store_case.py",
+    "argv": [
+      "/tmp/i155-final-dist/direct-venv/bin/python",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-scanner-correction-20261024/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/scanner/store_case.py",
+      "--output",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-scanner-correction-20261024/docs/implementation/evidence/adr0031-i155-m01-final-correction-20261024/scanner/store-direct.json"
+    ],
+    "pythonpath": "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-scanner-correction-20261024",
+    "exit_code": 0,
+    "duration_s": 5.388,
+    "output_sha256": "c023fea4fce19c96c4b0b7626b34b977a902a22665e7034e1908d1584a761559"
+  },
+  {
+    "cohort": "direct",
+    "script": "study.py",
+    "argv": [
+      "/tmp/i155-final-dist/direct-venv/bin/python",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-scanner-correction-20261024/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/scanner/study.py",
+      "--output",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-scanner-correction-20261024/docs/implementation/evidence/adr0031-i155-m01-final-correction-20261024/scanner/study-direct.json"
+    ],
+    "pythonpath": "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-scanner-correction-20261024",
+    "exit_code": 0,
+    "duration_s": 15.372,
+    "output_sha256": "6b1d2f21ee3aa4ffb86bf2b76775a8b5ad60ffb635e3acf2300bf4c1772c1dd0"
+  },
+  {
+    "cohort": "direct",
+    "script": "reproduce_reviewer_finding.py",
+    "argv": [
+      "/tmp/i155-final-dist/direct-venv/bin/python",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-scanner-correction-20261024/docs/implementation/evidence/adr0031-i155-m01-final-correction-20261024/scanner/reproduce_reviewer_finding.py",
+      "--output",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-scanner-correction-20261024/docs/implementation/evidence/adr0031-i155-m01-final-correction-20261024/scanner/mutation-direct.json"
+    ],
+    "pythonpath": "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-scanner-correction-20261024",
+    "exit_code": 0,
+    "duration_s": 22.788,
+    "output_sha256": "c063c1c65ddda5939cfc88596efd68a3b6ffaf7cb86371088a4f7b1404471b78"
+  },
+  {
+    "cohort": "derived",
+    "script": "store_case.py",
+    "argv": [
+      "/tmp/i155-final-dist/derived-venv/bin/python",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-scanner-correction-20261024/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/scanner/store_case.py",
+      "--output",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-scanner-correction-20261024/docs/implementation/evidence/adr0031-i155-m01-final-correction-20261024/scanner/store-derived.json"
+    ],
+    "pythonpath": "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-scanner-correction-20261024",
+    "exit_code": 0,
+    "duration_s": 5.361,
+    "output_sha256": "6d946d7d349e316700d816a7ca275e05ee9a5760d144a8bb25e00f718667ff8f"
+  },
+  {
+    "cohort": "derived",
+    "script": "study.py",
+    "argv": [
+      "/tmp/i155-final-dist/derived-venv/bin/python",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-scanner-correction-20261024/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/scanner/study.py",
+      "--output",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-scanner-correction-20261024/docs/implementation/evidence/adr0031-i155-m01-final-correction-20261024/scanner/study-derived.json"
+    ],
+    "pythonpath": "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-scanner-correction-20261024",
+    "exit_code": 0,
+    "duration_s": 15.395,
+    "output_sha256": "7ea0dd6adc05df4ca51315ad56793764a4b6500bca96f369052e0b9252ec6883"
+  },
+  {
+    "cohort": "derived",
+    "script": "reproduce_reviewer_finding.py",
+    "argv": [
+      "/tmp/i155-final-dist/derived-venv/bin/python",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-scanner-correction-20261024/docs/implementation/evidence/adr0031-i155-m01-final-correction-20261024/scanner/reproduce_reviewer_finding.py",
+      "--output",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-scanner-correction-20261024/docs/implementation/evidence/adr0031-i155-m01-final-correction-20261024/scanner/mutation-derived.json"
+    ],
+    "pythonpath": "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-scanner-correction-20261024",
+    "exit_code": 0,
+    "duration_s": 22.699,
+    "output_sha256": "c063c1c65ddda5939cfc88596efd68a3b6ffaf7cb86371088a4f7b1404471b78"
+  }
+]

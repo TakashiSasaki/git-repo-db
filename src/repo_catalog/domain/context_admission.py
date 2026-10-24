@@ -398,14 +398,20 @@ class ContextAdmissionService:
                 charge(work=1)
                 raise AdmissionRefused("INPUT_LIMIT")
 
-            for child in it:
-                if (
-                    len(children) >= declared
-                    or len(pending) + len(children) + 1 > remaining_work()
-                ):
-                    charge(work=1)
-                    raise AdmissionRefused("INPUT_LIMIT")
-                children.append(child)
+            try:
+                for child in it:
+                    if (
+                        len(children) >= declared
+                        or len(pending) + len(children) + 1 > remaining_work()
+                    ):
+                        charge(work=1)
+                        raise AdmissionRefused("INPUT_LIMIT")
+                    children.append(child)
+            except AdmissionRefused:
+                raise
+            except Exception:
+                charge(work=1)
+                raise AdmissionRefused("INPUT_LIMIT")
 
             if len(children) != declared:
                 charge(work=1)
@@ -446,15 +452,25 @@ class ContextAdmissionService:
                         raise AdmissionRefused("INVALID_PROVENANCE") from None
                     charge(work=1, bytes_=len(encoded))
             elif is_dataclass(item) and not isinstance(item, type):
-                member_fields = fields(item)
-                count = len(member_fields)
+                try:
+                    member_fields = fields(item)
+                    count = len(member_fields)
+                except Exception:
+                    charge(work=1)
+                    raise AdmissionRefused("INPUT_LIMIT")
                 rem_work = context.budget.work_limit - context.budget.used_work
                 if count > rem_work or len(pending) + count > rem_work:
                     charge(work=1)
                     raise AdmissionRefused("INPUT_LIMIT")
-                pending.extend(
-                    (getattr(item, member.name), depth + 1) for member in member_fields
-                )
+                try:
+                    members = [
+                        (getattr(item, member.name), depth + 1)
+                        for member in member_fields
+                    ]
+                except Exception:
+                    charge(work=1)
+                    raise AdmissionRefused("INPUT_LIMIT")
+                pending.extend(members)
             elif isinstance(item, (tuple, list, frozenset)):
                 children = snapshot_sequence(item)
                 pending.extend((child, depth + 1) for child in children)
@@ -484,7 +500,9 @@ class ContextAdmissionService:
                             charge(work=1)
                             raise AdmissionRefused("INPUT_LIMIT")
                         children.append(key)
-                except RuntimeError:
+                except AdmissionRefused:
+                    raise
+                except Exception:
                     charge(work=1)
                     raise AdmissionRefused("INPUT_LIMIT")
                 if len(children) != total:

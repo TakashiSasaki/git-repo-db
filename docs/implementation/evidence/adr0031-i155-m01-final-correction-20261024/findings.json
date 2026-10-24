@@ -1,0 +1,121 @@
+{
+  "correction_role": "Author",
+  "independent_verdict": false,
+  "verdict": "INCOMPLETE",
+  "status_summary": "Author final correction resolving unhandled callback exceptions, bounding dataclass member capacity, and providing reproducible acceptance evidence across source, direct wheel, and derived wheel cohorts for subsequent non-Author acceptance.",
+  "base_branch": "fix/adr0031-i155-m01-iterator-followup-20261024",
+  "base_head": "1a508cac857b7d828920f68500128edeae7594f6",
+  "base_tree": "3f595003a66acfbab4837c85690091e0f3513bf6",
+  "tested_input_commit": "c664ee5b62b7ae4d0c950a7c493cf0e6bba84b90",
+  "tested_input_tree": "737f20d5a2b98aad1272b92040731c7e21c1c05e",
+  "findings": [
+    {
+      "id": "I155-M01-FINAL",
+      "severity": "P2",
+      "blocking": false,
+      "title": "Trap user-defined callback exceptions and bound dataclass capacity pre-reservation",
+      "source": "src/repo_catalog/domain/context_admission.py:398-508",
+      "status": "RESOLVED_BY_AUTHOR_CORRECTION",
+      "requirements": [
+        "REQ-FIN-1",
+        "REQ-FIN-2",
+        "REQ-FIN-3",
+        "REQ-FIN-4",
+        "REQ-FIN-5",
+        "REQ-FIN-6",
+        "REQ-FIN-7",
+        "REQ-FIN-8",
+        "REQ-FIN-9",
+        "REQ-FIN-10"
+      ],
+      "resolution_summary": "Protected container iteration, dictionary method invocation (values/keys), and dataclass member reflection/attribute access against arbitrary user callback exceptions. Trapped exceptions fail closed by charging the contractual 1-unit fixed refusal fee and raising AdmissionRefused('INPUT_LIMIT'). Dataclass member capacity is verified against remaining work prior to pending queue extension. Verified bounded internal queue and snapshot sizes without claiming bounded user-space callback execution.",
+      "counterexample_measurements": {
+        "case_1_appending_list": {
+          "unfixed_queue_max": 1,
+          "fixed_queue_max": 1,
+          "unfixed_snapshot_max": 2,
+          "fixed_snapshot_max": 2,
+          "unfixed_used_work": 2,
+          "fixed_used_work": 2,
+          "code": "INPUT_LIMIT"
+        },
+        "case_2_changing_len": {
+          "unfixed_queue_max": 1,
+          "fixed_queue_max": 1,
+          "unfixed_snapshot_max": 2,
+          "fixed_snapshot_max": 2,
+          "unfixed_used_work": 2,
+          "fixed_used_work": 2,
+          "code": "INPUT_LIMIT"
+        },
+        "case_3_same_final_length": {
+          "unfixed_queue_max": 1,
+          "fixed_queue_max": 1,
+          "unfixed_snapshot_max": 2,
+          "fixed_snapshot_max": 2,
+          "unfixed_used_work": 2,
+          "fixed_used_work": 2,
+          "code": "INPUT_LIMIT"
+        },
+        "case_4_deceptive_len": {
+          "unfixed_queue_max": 1,
+          "fixed_queue_max": 1,
+          "unfixed_snapshot_max": 2,
+          "fixed_snapshot_max": 2,
+          "unfixed_used_work": 2,
+          "fixed_used_work": 2,
+          "code": "INPUT_LIMIT"
+        },
+        "case_5_exceeds_during_snapshot": {
+          "unfixed_queue_max": 1,
+          "fixed_queue_max": 1,
+          "unfixed_snapshot_max": 2,
+          "fixed_snapshot_max": 2,
+          "unfixed_used_work": 2,
+          "fixed_used_work": 2,
+          "code": "INPUT_LIMIT"
+        },
+        "case_6_exact_boundaries": {
+          "list_used_work": 6,
+          "tuple_used_work": 6,
+          "outcome": "SUCCESS"
+        },
+        "case_7_dataclass_capacity": {
+          "unfixed_queue_max": 1,
+          "fixed_queue_max": 1,
+          "fixed_used_work": 2,
+          "code": "INPUT_LIMIT"
+        },
+        "case_8_callback_containment": {
+          "broken_iter_unfixed": "UNHANDLED_RuntimeError",
+          "broken_iter_fixed": "INPUT_LIMIT",
+          "broken_values_unfixed": "UNHANDLED_ValueError",
+          "broken_values_fixed": "INPUT_LIMIT",
+          "broken_keys_unfixed": "UNHANDLED_KeyError",
+          "broken_keys_fixed": "INPUT_LIMIT",
+          "broken_attr_unfixed": "UNHANDLED_RuntimeError",
+          "broken_attr_fixed": "INPUT_LIMIT",
+          "fixed_used_work": 2
+        },
+        "case_9_single_charge_mutation": {
+          "list_used_work": 2,
+          "dict_used_work": 2,
+          "code": "INPUT_LIMIT"
+        },
+        "real_store_relation": {
+          "unfixed_queue_max": 6,
+          "fixed_queue_max": 6,
+          "unfixed_snapshot_max": 2,
+          "fixed_snapshot_max": 2,
+          "unfixed_used_work": 9,
+          "fixed_used_work": 9,
+          "outcome": "AdmissionRefused",
+          "code": "INPUT_LIMIT",
+          "db_rows": 0,
+          "transfer_fence": true,
+          "in_transaction": false
+        }
+      }
+    }
+  ]
+}
