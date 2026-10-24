@@ -1,0 +1,24 @@
+{
+  "stage": "Stage 1 (Comparator Acceptance Semantics Correction)",
+  "target_pr": 170,
+  "target_branch": "fix/adr0031-i6c-comparator-correction-20261024",
+  "tested_input_commit": "61efe65e23be038cf97314e970b5b500e290ed0a",
+  "submission_commit": "55de572bdac4b9b90b131d89025b0ed304cd0159",
+  "review_artifacts": [
+    {
+      "path": "docs/implementation/evidence/adr0031-i6c-comparator-correction-20261024/independent/REPORT.md",
+      "bytes": 13209,
+      "sha256": "58f03c2a0fe7c0cdafe97ac27fcde739fa028adf5c9f7222813a2bb5713ebeba"
+    },
+    {
+      "path": "docs/implementation/evidence/adr0031-i6c-comparator-correction-20261024/independent/findings.json",
+      "bytes": 3,
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": "docs/implementation/evidence/adr0031-i6c-comparator-correction-20261024/independent/summary.json",
+      "bytes": 3314,
+      "sha256": "b01e5911bfdff26ecc9d8ba2654ce0b956c3190170cad0d68837b396d0d4d21f"
+    }
+  ]
+}
