@@ -1,0 +1,57 @@
+{
+  "correction_role": "Author",
+  "independent_verdict": false,
+  "verdict": "INCOMPLETE",
+  "status_summary": "Author correction resolving I155-M01 submitted for non-Author independent re-review",
+  "base_branch": "review/adr0031-i6b-sdist-c0-independent-20261024",
+  "base_head": "d8d7138dd4bea6f5274b1b0df79699ff6a2f315e",
+  "reviewed_pr155_head": "fee364c6d61a5feebf08dbdd830a5a57ee2d872b",
+  "reviewed_pr155_tree": "ace7e44cd89194d189a30a0aa6cf513a45b3b87c",
+  "findings": [
+    {
+      "id": "I155-M01",
+      "severity": "Medium",
+      "blocking": false,
+      "title": "Admission scanner work-budget enforcement before child queue allocation",
+      "source": "src/repo_catalog/domain/context_admission.py:358-433",
+      "status": "RESOLVED_BY_AUTHOR_CORRECTION",
+      "requirements": ["R04", "R13", "ADR0023", "ADR0024", "ADR0025"],
+      "resolution_summary": "Enforced remaining cumulative work budget and selection work budget reservation prior to allocating variable child queue entries. Protected container, dict, dataclass, and string chunk traversals with exact remaining budget pre-reservation, charging 1 fixed refusal-accounting unit on refused reservations. Confirmed zero queue explosion (max_queue <= 6) across source, direct installed wheel, and sdist-derived installed wheel cohorts.",
+      "counterexample_measurements": {
+        "case_1_1000_members_rem_8": {
+          "unfixed_queue_max": 1002,
+          "fixed_queue_max": 6,
+          "unfixed_used_work": 10001,
+          "fixed_used_work": 10001,
+          "outcome": "AdmissionRefused",
+          "code": "INPUT_LIMIT"
+        },
+        "case_3_1000_members_selection_7": {
+          "unfixed_queue_max": 1002,
+          "fixed_queue_max": 6,
+          "unfixed_used_work": 8,
+          "fixed_used_work": 8,
+          "outcome": "AdmissionRefused",
+          "code": "INPUT_LIMIT"
+        }
+      }
+    },
+    {
+      "id": "HCI-L01",
+      "severity": "Low",
+      "blocking": false,
+      "title": "Author shared-path SHA256 provenance hashes whitespace-stripped bytes",
+      "status": "OBSERVED_METHODOLOGY_CORRECTED",
+      "resolution_summary": "Preserved historical evidence files unchanged. For all new provenance evidence in this Author correction, SHA-256 digests and Git blob OIDs are strictly calculated over exact complete Git blob bytes without .strip() or text normalization."
+    }
+  ],
+  "retained_baseline": {
+    "ordinary_failures": 279,
+    "ordinary_errors": 20,
+    "rationale": "Inherited 299 ordinary non-successes belong to downstream I6-C/Transfer stage backlog and ADR 0032 native SQLite 3.45.1 environment checks; preserved without regression."
+  },
+  "unexecuted_scope": [
+    "tests/e2e/test_github_sync.py::test_nested_pagination_stress_workload",
+    "tests/live/test_smoke.py::test_selected_repository"
+  ]
+}

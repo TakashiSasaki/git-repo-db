@@ -1,0 +1,114 @@
+[
+  {
+    "cohort": "source155-unfixed",
+    "script": "store_case.py",
+    "argv": [
+      "/home/ubuntu/venv/bin/python",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-admission-scanner/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/scanner/store_case.py",
+      "--output",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-admission-scanner/docs/implementation/evidence/adr0031-i155-m01-author-correction-20261024/scanner/store-source155-unfixed.json"
+    ],
+    "pythonpath": "/tmp/i155-dist/source155-unfixed/src",
+    "exit_code": 0,
+    "duration_s": 5.058,
+    "output_sha256": "361fe53f0e32ec10528810877301dc942941147fd0b2c59812b2f6bd960d733b"
+  },
+  {
+    "cohort": "source155-unfixed",
+    "script": "study.py",
+    "argv": [
+      "/home/ubuntu/venv/bin/python",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-admission-scanner/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/scanner/study.py",
+      "--output",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-admission-scanner/docs/implementation/evidence/adr0031-i155-m01-author-correction-20261024/scanner/study-source155-unfixed.json"
+    ],
+    "pythonpath": "/tmp/i155-dist/source155-unfixed/src",
+    "exit_code": 0,
+    "duration_s": 14.488,
+    "output_sha256": "cdb01bb89caf9ba81cfb5bccca4473a75201d45620bf901039f7a248b62fab69"
+  },
+  {
+    "cohort": "source-fixed",
+    "script": "store_case.py",
+    "argv": [
+      "/home/ubuntu/venv/bin/python",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-admission-scanner/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/scanner/store_case.py",
+      "--output",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-admission-scanner/docs/implementation/evidence/adr0031-i155-m01-author-correction-20261024/scanner/store-source-fixed.json"
+    ],
+    "pythonpath": "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-admission-scanner/src",
+    "exit_code": 0,
+    "duration_s": 5.565,
+    "output_sha256": "055566e7c977a13a01a001bc4834d60608d929092ba3413a908593a0e333686b"
+  },
+  {
+    "cohort": "source-fixed",
+    "script": "study.py",
+    "argv": [
+      "/home/ubuntu/venv/bin/python",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-admission-scanner/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/scanner/study.py",
+      "--output",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-admission-scanner/docs/implementation/evidence/adr0031-i155-m01-author-correction-20261024/scanner/study-source-fixed.json"
+    ],
+    "pythonpath": "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-admission-scanner/src",
+    "exit_code": 0,
+    "duration_s": 16.423,
+    "output_sha256": "d6793cc435f2fc9dc0f39a54c88c5f2abad84c74c613e41eaceaa2277632a95e"
+  },
+  {
+    "cohort": "direct",
+    "script": "store_case.py",
+    "argv": [
+      "/tmp/i155-dist/direct-venv/bin/python",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-admission-scanner/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/scanner/store_case.py",
+      "--output",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-admission-scanner/docs/implementation/evidence/adr0031-i155-m01-author-correction-20261024/scanner/store-direct.json"
+    ],
+    "pythonpath": null,
+    "exit_code": 0,
+    "duration_s": 5.354,
+    "output_sha256": "8aa7347408d3a8e1419718ad8c650c5fcd083e2d0f0aa0a8d574ae2176cfb6d6"
+  },
+  {
+    "cohort": "direct",
+    "script": "study.py",
+    "argv": [
+      "/tmp/i155-dist/direct-venv/bin/python",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-admission-scanner/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/scanner/study.py",
+      "--output",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-admission-scanner/docs/implementation/evidence/adr0031-i155-m01-author-correction-20261024/scanner/study-direct.json"
+    ],
+    "pythonpath": null,
+    "exit_code": 0,
+    "duration_s": 15.316,
+    "output_sha256": "fdc93fc3dceb2ac1a008e549a18fbb4dd974b068bd9164ddba001b7547023525"
+  },
+  {
+    "cohort": "derived",
+    "script": "store_case.py",
+    "argv": [
+      "/tmp/i155-dist/derived-venv/bin/python",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-admission-scanner/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/scanner/store_case.py",
+      "--output",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-admission-scanner/docs/implementation/evidence/adr0031-i155-m01-author-correction-20261024/scanner/store-derived.json"
+    ],
+    "pythonpath": null,
+    "exit_code": 0,
+    "duration_s": 5.334,
+    "output_sha256": "396e5210a654b2bbbe35ed246387d11812f90ee9d069491a9fdcab92e2cbd9e1"
+  },
+  {
+    "cohort": "derived",
+    "script": "study.py",
+    "argv": [
+      "/tmp/i155-dist/derived-venv/bin/python",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-admission-scanner/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/scanner/study.py",
+      "--output",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-admission-scanner/docs/implementation/evidence/adr0031-i155-m01-author-correction-20261024/scanner/study-derived.json"
+    ],
+    "pythonpath": null,
+    "exit_code": 0,
+    "duration_s": 15.347,
+    "output_sha256": "5a02abfbcf796edabe30f433a389c2f83569427395c80d1c84ee7d4423fb0313"
+  }
+]

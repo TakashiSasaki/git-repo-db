@@ -358,32 +358,74 @@ class ContextAdmissionService:
     def charge_input(self, context, unit):
         """Charge bounded actual traversal/UTF-8 input before validation and lookup."""
         context = self.validate_context(context)
+
+        def charge(*, work=0, bytes_=0):
+            context.budget.charge(work=work, bytes_=bytes_)
+            if (
+                context.budget.used_work > context.selection.max_work
+                or context.budget.used_bytes > context.selection.max_bytes
+            ):
+                raise AdmissionRefused("INPUT_LIMIT")
+
+        def remaining_work():
+            return (
+                min(context.budget.work_limit, context.selection.max_work)
+                - context.budget.used_work
+            )
+
+        def reserve_children(count):
+            rem = remaining_work()
+            if count > rem or len(pending) + count > rem:
+                charge(work=1)
+                raise AdmissionRefused("INPUT_LIMIT")
+
         pending = [(unit, 0)]
         while pending:
             item, depth = pending.pop()
-            context.budget.charge(work=1)
+            charge(work=1)
             if depth > context.budget.depth_limit:
                 raise AdmissionRefused("INPUT_LIMIT")
             if type(item) is str:
                 for offset in range(0, len(item), 4096):
+                    rem_work = remaining_work()
+                    rem_bytes = (
+                        min(context.budget.bytes_limit, context.selection.max_bytes)
+                        - context.budget.used_bytes
+                    )
+                    if rem_work <= 0 or rem_bytes <= 0:
+                        charge(work=1)
+                        raise AdmissionRefused("INPUT_LIMIT")
+                    chunk = item[offset : offset + 4096]
                     try:
-                        size = len(item[offset : offset + 4096].encode("utf-8"))
+                        encoded = chunk.encode("utf-8")
                     except UnicodeError:
                         raise AdmissionRefused("INVALID_PROVENANCE") from None
-                    context.budget.charge(work=1, bytes_=size)
+                    charge(work=1, bytes_=len(encoded))
             elif is_dataclass(item):
+                member_fields = fields(item)
+                count = len(member_fields)
+                rem_work = context.budget.work_limit - context.budget.used_work
+                if count > rem_work or len(pending) + count > rem_work:
+                    charge(work=1)
+                    raise AdmissionRefused("INPUT_LIMIT")
                 pending.extend(
-                    (getattr(item, member.name), depth + 1) for member in fields(item)
+                    (getattr(item, member.name), depth + 1) for member in member_fields
                 )
             elif isinstance(item, (tuple, list, frozenset)):
-                if len(item) > context.budget.work_limit:
-                    raise AdmissionRefused("INPUT_LIMIT")
-                pending.extend((child, depth + 1) for child in item)
+                reserve_children(len(item))
+                children = tuple(item)
+                if len(children) != len(item):
+                    reserve_children(len(children))
+                pending.extend((child, depth + 1) for child in children)
             elif type(item) is dict:
-                if len(item) > context.budget.work_limit:
-                    raise AdmissionRefused("INPUT_LIMIT")
-                pending.extend((child, depth + 1) for child in item.values())
-                pending.extend((child, depth + 1) for child in item.keys())
+                reserve_children(2 * len(item))
+                values = tuple(item.values())
+                keys = tuple(item.keys())
+                total = len(values) + len(keys)
+                if total != 2 * len(item):
+                    reserve_children(total)
+                pending.extend((child, depth + 1) for child in values)
+                pending.extend((child, depth + 1) for child in keys)
             if (
                 context.budget.used_work > context.selection.max_work
                 or context.budget.used_bytes > context.selection.max_bytes

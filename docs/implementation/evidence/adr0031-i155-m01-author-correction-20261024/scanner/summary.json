@@ -1,0 +1,714 @@
+{
+  "finding": "I155-M01",
+  "description": "Admission scanner work-budget enforcement before child queue allocation",
+  "cohorts": [
+    "source155-unfixed",
+    "source-fixed",
+    "direct",
+    "derived"
+  ],
+  "store_case_comparison": {
+    "source155-unfixed": [
+      {
+        "case_index": 0,
+        "input_children": 16,
+        "work_limit": 10000,
+        "prior_work": 9992,
+        "remaining_work": 8,
+        "selection_work_limit": 10000,
+        "used_work": 10001,
+        "refusal_code": "INPUT_LIMIT",
+        "max_queue_length": 18,
+        "policy_calls": 0,
+        "rows_after": 0
+      },
+      {
+        "case_index": 1,
+        "input_children": 1000,
+        "work_limit": 10000,
+        "prior_work": 9992,
+        "remaining_work": 8,
+        "selection_work_limit": 10000,
+        "used_work": 10001,
+        "refusal_code": "INPUT_LIMIT",
+        "max_queue_length": 1002,
+        "policy_calls": 0,
+        "rows_after": 0
+      },
+      {
+        "case_index": 2,
+        "input_children": 1000,
+        "work_limit": 10000,
+        "prior_work": 10000,
+        "remaining_work": 0,
+        "selection_work_limit": 10000,
+        "used_work": 10001,
+        "refusal_code": "INPUT_LIMIT",
+        "max_queue_length": 1,
+        "policy_calls": 0,
+        "rows_after": 0
+      },
+      {
+        "case_index": 3,
+        "input_children": 1000,
+        "work_limit": 10000,
+        "prior_work": 0,
+        "remaining_work": 10000,
+        "selection_work_limit": 7,
+        "used_work": 8,
+        "refusal_code": "INPUT_LIMIT",
+        "max_queue_length": 1002,
+        "policy_calls": 0,
+        "rows_after": 0
+      }
+    ],
+    "source-fixed": [
+      {
+        "case_index": 0,
+        "input_children": 16,
+        "work_limit": 10000,
+        "prior_work": 9992,
+        "remaining_work": 8,
+        "selection_work_limit": 10000,
+        "used_work": 10001,
+        "refusal_code": "INPUT_LIMIT",
+        "max_queue_length": 6,
+        "policy_calls": 0,
+        "rows_after": 0
+      },
+      {
+        "case_index": 1,
+        "input_children": 1000,
+        "work_limit": 10000,
+        "prior_work": 9992,
+        "remaining_work": 8,
+        "selection_work_limit": 10000,
+        "used_work": 10001,
+        "refusal_code": "INPUT_LIMIT",
+        "max_queue_length": 6,
+        "policy_calls": 0,
+        "rows_after": 0
+      },
+      {
+        "case_index": 2,
+        "input_children": 1000,
+        "work_limit": 10000,
+        "prior_work": 10000,
+        "remaining_work": 0,
+        "selection_work_limit": 10000,
+        "used_work": 10001,
+        "refusal_code": "INPUT_LIMIT",
+        "max_queue_length": 1,
+        "policy_calls": 0,
+        "rows_after": 0
+      },
+      {
+        "case_index": 3,
+        "input_children": 1000,
+        "work_limit": 10000,
+        "prior_work": 0,
+        "remaining_work": 10000,
+        "selection_work_limit": 7,
+        "used_work": 8,
+        "refusal_code": "INPUT_LIMIT",
+        "max_queue_length": 6,
+        "policy_calls": 0,
+        "rows_after": 0
+      }
+    ],
+    "direct": [
+      {
+        "case_index": 0,
+        "input_children": 16,
+        "work_limit": 10000,
+        "prior_work": 9992,
+        "remaining_work": 8,
+        "selection_work_limit": 10000,
+        "used_work": 10001,
+        "refusal_code": "INPUT_LIMIT",
+        "max_queue_length": 6,
+        "policy_calls": 0,
+        "rows_after": 0
+      },
+      {
+        "case_index": 1,
+        "input_children": 1000,
+        "work_limit": 10000,
+        "prior_work": 9992,
+        "remaining_work": 8,
+        "selection_work_limit": 10000,
+        "used_work": 10001,
+        "refusal_code": "INPUT_LIMIT",
+        "max_queue_length": 6,
+        "policy_calls": 0,
+        "rows_after": 0
+      },
+      {
+        "case_index": 2,
+        "input_children": 1000,
+        "work_limit": 10000,
+        "prior_work": 10000,
+        "remaining_work": 0,
+        "selection_work_limit": 10000,
+        "used_work": 10001,
+        "refusal_code": "INPUT_LIMIT",
+        "max_queue_length": 1,
+        "policy_calls": 0,
+        "rows_after": 0
+      },
+      {
+        "case_index": 3,
+        "input_children": 1000,
+        "work_limit": 10000,
+        "prior_work": 0,
+        "remaining_work": 10000,
+        "selection_work_limit": 7,
+        "used_work": 8,
+        "refusal_code": "INPUT_LIMIT",
+        "max_queue_length": 6,
+        "policy_calls": 0,
+        "rows_after": 0
+      }
+    ],
+    "derived": [
+      {
+        "case_index": 0,
+        "input_children": 16,
+        "work_limit": 10000,
+        "prior_work": 9992,
+        "remaining_work": 8,
+        "selection_work_limit": 10000,
+        "used_work": 10001,
+        "refusal_code": "INPUT_LIMIT",
+        "max_queue_length": 6,
+        "policy_calls": 0,
+        "rows_after": 0
+      },
+      {
+        "case_index": 1,
+        "input_children": 1000,
+        "work_limit": 10000,
+        "prior_work": 9992,
+        "remaining_work": 8,
+        "selection_work_limit": 10000,
+        "used_work": 10001,
+        "refusal_code": "INPUT_LIMIT",
+        "max_queue_length": 6,
+        "policy_calls": 0,
+        "rows_after": 0
+      },
+      {
+        "case_index": 2,
+        "input_children": 1000,
+        "work_limit": 10000,
+        "prior_work": 10000,
+        "remaining_work": 0,
+        "selection_work_limit": 10000,
+        "used_work": 10001,
+        "refusal_code": "INPUT_LIMIT",
+        "max_queue_length": 1,
+        "policy_calls": 0,
+        "rows_after": 0
+      },
+      {
+        "case_index": 3,
+        "input_children": 1000,
+        "work_limit": 10000,
+        "prior_work": 0,
+        "remaining_work": 10000,
+        "selection_work_limit": 7,
+        "used_work": 8,
+        "refusal_code": "INPUT_LIMIT",
+        "max_queue_length": 6,
+        "policy_calls": 0,
+        "rows_after": 0
+      }
+    ]
+  },
+  "study_admission_comparison": {
+    "source155-unfixed": [
+      {
+        "index": 0,
+        "shape": "list",
+        "outcome": "AdmissionRefused",
+        "used_work": 18,
+        "max_queue_length": 16
+      },
+      {
+        "index": 1,
+        "shape": "list",
+        "outcome": "AdmissionRefused",
+        "used_work": 10001,
+        "max_queue_length": 1000
+      },
+      {
+        "index": 2,
+        "shape": "list",
+        "outcome": "AdmissionRefused",
+        "used_work": 10001,
+        "max_queue_length": 1
+      },
+      {
+        "index": 3,
+        "shape": "list",
+        "outcome": "AdmissionRefused",
+        "used_work": 1,
+        "max_queue_length": 1000
+      },
+      {
+        "index": 4,
+        "shape": "list",
+        "outcome": "AdmissionRefused",
+        "used_work": 1,
+        "max_queue_length": 1
+      },
+      {
+        "index": 5,
+        "shape": "dict",
+        "outcome": "AdmissionRefused",
+        "used_work": 18,
+        "max_queue_length": 32
+      },
+      {
+        "index": 6,
+        "shape": "dict",
+        "outcome": "AdmissionRefused",
+        "used_work": 10001,
+        "max_queue_length": 2000
+      },
+      {
+        "index": 7,
+        "shape": "dict",
+        "outcome": "AdmissionRefused",
+        "used_work": 10001,
+        "max_queue_length": 1
+      },
+      {
+        "index": 8,
+        "shape": "dict",
+        "outcome": "AdmissionRefused",
+        "used_work": 1,
+        "max_queue_length": 2000
+      },
+      {
+        "index": 9,
+        "shape": "dict",
+        "outcome": "AdmissionRefused",
+        "used_work": 1,
+        "max_queue_length": 1
+      },
+      {
+        "index": 10,
+        "shape": "typed_resources",
+        "outcome": "AdmissionRefused",
+        "used_work": 18,
+        "max_queue_length": 16
+      },
+      {
+        "index": 11,
+        "shape": "typed_resources",
+        "outcome": "AdmissionRefused",
+        "used_work": 10001,
+        "max_queue_length": 1000
+      },
+      {
+        "index": 12,
+        "shape": "typed_resources",
+        "outcome": "AdmissionRefused",
+        "used_work": 10001,
+        "max_queue_length": 1
+      },
+      {
+        "index": 13,
+        "shape": "typed_resources",
+        "outcome": "AdmissionRefused",
+        "used_work": 1,
+        "max_queue_length": 1000
+      },
+      {
+        "index": 14,
+        "shape": "typed_resources",
+        "outcome": "AdmissionRefused",
+        "used_work": 1,
+        "max_queue_length": 1
+      },
+      {
+        "index": 15,
+        "shape": "cycle",
+        "outcome": "AdmissionRefused",
+        "used_work": 14,
+        "max_queue_length": 1
+      },
+      {
+        "index": 16,
+        "shape": "string",
+        "outcome": "AdmissionRefused",
+        "used_work": 2,
+        "max_queue_length": 1
+      }
+    ],
+    "source-fixed": [
+      {
+        "index": 0,
+        "shape": "list",
+        "outcome": "AdmissionRefused",
+        "used_work": 18,
+        "max_queue_length": 1
+      },
+      {
+        "index": 1,
+        "shape": "list",
+        "outcome": "AdmissionRefused",
+        "used_work": 10001,
+        "max_queue_length": 1
+      },
+      {
+        "index": 2,
+        "shape": "list",
+        "outcome": "AdmissionRefused",
+        "used_work": 10001,
+        "max_queue_length": 1
+      },
+      {
+        "index": 3,
+        "shape": "list",
+        "outcome": "AdmissionRefused",
+        "used_work": 1,
+        "max_queue_length": 1
+      },
+      {
+        "index": 4,
+        "shape": "list",
+        "outcome": "AdmissionRefused",
+        "used_work": 1,
+        "max_queue_length": 1
+      },
+      {
+        "index": 5,
+        "shape": "dict",
+        "outcome": "AdmissionRefused",
+        "used_work": 18,
+        "max_queue_length": 1
+      },
+      {
+        "index": 6,
+        "shape": "dict",
+        "outcome": "AdmissionRefused",
+        "used_work": 10001,
+        "max_queue_length": 1
+      },
+      {
+        "index": 7,
+        "shape": "dict",
+        "outcome": "AdmissionRefused",
+        "used_work": 10001,
+        "max_queue_length": 1
+      },
+      {
+        "index": 8,
+        "shape": "dict",
+        "outcome": "AdmissionRefused",
+        "used_work": 1,
+        "max_queue_length": 1
+      },
+      {
+        "index": 9,
+        "shape": "dict",
+        "outcome": "AdmissionRefused",
+        "used_work": 1,
+        "max_queue_length": 1
+      },
+      {
+        "index": 10,
+        "shape": "typed_resources",
+        "outcome": "AdmissionRefused",
+        "used_work": 18,
+        "max_queue_length": 1
+      },
+      {
+        "index": 11,
+        "shape": "typed_resources",
+        "outcome": "AdmissionRefused",
+        "used_work": 10001,
+        "max_queue_length": 1
+      },
+      {
+        "index": 12,
+        "shape": "typed_resources",
+        "outcome": "AdmissionRefused",
+        "used_work": 10001,
+        "max_queue_length": 1
+      },
+      {
+        "index": 13,
+        "shape": "typed_resources",
+        "outcome": "AdmissionRefused",
+        "used_work": 1,
+        "max_queue_length": 1
+      },
+      {
+        "index": 14,
+        "shape": "typed_resources",
+        "outcome": "AdmissionRefused",
+        "used_work": 1,
+        "max_queue_length": 1
+      },
+      {
+        "index": 15,
+        "shape": "cycle",
+        "outcome": "AdmissionRefused",
+        "used_work": 14,
+        "max_queue_length": 1
+      },
+      {
+        "index": 16,
+        "shape": "string",
+        "outcome": "AdmissionRefused",
+        "used_work": 2,
+        "max_queue_length": 1
+      }
+    ],
+    "direct": [
+      {
+        "index": 0,
+        "shape": "list",
+        "outcome": "AdmissionRefused",
+        "used_work": 18,
+        "max_queue_length": 1
+      },
+      {
+        "index": 1,
+        "shape": "list",
+        "outcome": "AdmissionRefused",
+        "used_work": 10001,
+        "max_queue_length": 1
+      },
+      {
+        "index": 2,
+        "shape": "list",
+        "outcome": "AdmissionRefused",
+        "used_work": 10001,
+        "max_queue_length": 1
+      },
+      {
+        "index": 3,
+        "shape": "list",
+        "outcome": "AdmissionRefused",
+        "used_work": 1,
+        "max_queue_length": 1
+      },
+      {
+        "index": 4,
+        "shape": "list",
+        "outcome": "AdmissionRefused",
+        "used_work": 1,
+        "max_queue_length": 1
+      },
+      {
+        "index": 5,
+        "shape": "dict",
+        "outcome": "AdmissionRefused",
+        "used_work": 18,
+        "max_queue_length": 1
+      },
+      {
+        "index": 6,
+        "shape": "dict",
+        "outcome": "AdmissionRefused",
+        "used_work": 10001,
+        "max_queue_length": 1
+      },
+      {
+        "index": 7,
+        "shape": "dict",
+        "outcome": "AdmissionRefused",
+        "used_work": 10001,
+        "max_queue_length": 1
+      },
+      {
+        "index": 8,
+        "shape": "dict",
+        "outcome": "AdmissionRefused",
+        "used_work": 1,
+        "max_queue_length": 1
+      },
+      {
+        "index": 9,
+        "shape": "dict",
+        "outcome": "AdmissionRefused",
+        "used_work": 1,
+        "max_queue_length": 1
+      },
+      {
+        "index": 10,
+        "shape": "typed_resources",
+        "outcome": "AdmissionRefused",
+        "used_work": 18,
+        "max_queue_length": 1
+      },
+      {
+        "index": 11,
+        "shape": "typed_resources",
+        "outcome": "AdmissionRefused",
+        "used_work": 10001,
+        "max_queue_length": 1
+      },
+      {
+        "index": 12,
+        "shape": "typed_resources",
+        "outcome": "AdmissionRefused",
+        "used_work": 10001,
+        "max_queue_length": 1
+      },
+      {
+        "index": 13,
+        "shape": "typed_resources",
+        "outcome": "AdmissionRefused",
+        "used_work": 1,
+        "max_queue_length": 1
+      },
+      {
+        "index": 14,
+        "shape": "typed_resources",
+        "outcome": "AdmissionRefused",
+        "used_work": 1,
+        "max_queue_length": 1
+      },
+      {
+        "index": 15,
+        "shape": "cycle",
+        "outcome": "AdmissionRefused",
+        "used_work": 14,
+        "max_queue_length": 1
+      },
+      {
+        "index": 16,
+        "shape": "string",
+        "outcome": "AdmissionRefused",
+        "used_work": 2,
+        "max_queue_length": 1
+      }
+    ],
+    "derived": [
+      {
+        "index": 0,
+        "shape": "list",
+        "outcome": "AdmissionRefused",
+        "used_work": 18,
+        "max_queue_length": 1
+      },
+      {
+        "index": 1,
+        "shape": "list",
+        "outcome": "AdmissionRefused",
+        "used_work": 10001,
+        "max_queue_length": 1
+      },
+      {
+        "index": 2,
+        "shape": "list",
+        "outcome": "AdmissionRefused",
+        "used_work": 10001,
+        "max_queue_length": 1
+      },
+      {
+        "index": 3,
+        "shape": "list",
+        "outcome": "AdmissionRefused",
+        "used_work": 1,
+        "max_queue_length": 1
+      },
+      {
+        "index": 4,
+        "shape": "list",
+        "outcome": "AdmissionRefused",
+        "used_work": 1,
+        "max_queue_length": 1
+      },
+      {
+        "index": 5,
+        "shape": "dict",
+        "outcome": "AdmissionRefused",
+        "used_work": 18,
+        "max_queue_length": 1
+      },
+      {
+        "index": 6,
+        "shape": "dict",
+        "outcome": "AdmissionRefused",
+        "used_work": 10001,
+        "max_queue_length": 1
+      },
+      {
+        "index": 7,
+        "shape": "dict",
+        "outcome": "AdmissionRefused",
+        "used_work": 10001,
+        "max_queue_length": 1
+      },
+      {
+        "index": 8,
+        "shape": "dict",
+        "outcome": "AdmissionRefused",
+        "used_work": 1,
+        "max_queue_length": 1
+      },
+      {
+        "index": 9,
+        "shape": "dict",
+        "outcome": "AdmissionRefused",
+        "used_work": 1,
+        "max_queue_length": 1
+      },
+      {
+        "index": 10,
+        "shape": "typed_resources",
+        "outcome": "AdmissionRefused",
+        "used_work": 18,
+        "max_queue_length": 1
+      },
+      {
+        "index": 11,
+        "shape": "typed_resources",
+        "outcome": "AdmissionRefused",
+        "used_work": 10001,
+        "max_queue_length": 1
+      },
+      {
+        "index": 12,
+        "shape": "typed_resources",
+        "outcome": "AdmissionRefused",
+        "used_work": 10001,
+        "max_queue_length": 1
+      },
+      {
+        "index": 13,
+        "shape": "typed_resources",
+        "outcome": "AdmissionRefused",
+        "used_work": 1,
+        "max_queue_length": 1
+      },
+      {
+        "index": 14,
+        "shape": "typed_resources",
+        "outcome": "AdmissionRefused",
+        "used_work": 1,
+        "max_queue_length": 1
+      },
+      {
+        "index": 15,
+        "shape": "cycle",
+        "outcome": "AdmissionRefused",
+        "used_work": 14,
+        "max_queue_length": 1
+      },
+      {
+        "index": 16,
+        "shape": "string",
+        "outcome": "AdmissionRefused",
+        "used_work": 2,
+        "max_queue_length": 1
+      }
+    ]
+  }
+}
