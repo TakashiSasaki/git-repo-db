@@ -9,7 +9,6 @@ from uuid import uuid4
 
 import pytest
 
-from repo_catalog.adapters.sqlite import p1_schema
 from repo_catalog.adapters.sqlite.production_context import Context
 from repo_catalog.application.acquisition import (
     PairedAcquisitionCoordinator,
@@ -56,13 +55,6 @@ from repo_catalog.domain.selective_exchange import (
 from tests.integration.p5.conftest import init_catalog_stores
 from tests.support.context_admission import fixture_service
 from tests.support.i6a import isolated_context_db
-
-
-@pytest.fixture(autouse=True)
-def _patch_sqlite_version(monkeypatch):
-    monkeypatch.setattr(p1_schema.sqlite3, "sqlite_version_info", (3, 51, 3))
-    monkeypatch.setattr(sqlite3, "sqlite_version_info", (3, 51, 3))
-
 
 INSTANCE_1 = "11111111-1111-4111-8111-111111111111"
 INSTANCE_2 = "22222222-2222-4222-8222-222222222222"

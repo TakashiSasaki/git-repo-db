@@ -76,6 +76,17 @@
       "tests/integration/i6/test_i6c_authority_and_exchange.py::test_exchange_import_custom_policy_supported_interface"
     ]
   },
+  "p1_sqlite_safety_guard_bypass": {
+    "status": "REMEDIATED",
+    "codex_review_finding": "discussion_4366521739",
+    "severity": "P1",
+    "observed_condition": "An autouse pytest fixture `_patch_sqlite_version` in `test_i6c_authority_and_exchange.py` monkeypatched `p1_schema.sqlite3.sqlite_version_info` and `sqlite3.sqlite_version_info` to `(3, 51, 3)`, which bypassed the production WAL safety guard and violated ADR 0032.",
+    "root_cause": "Unnecessary fixture monkeypatching `sqlite_version_info` rather than testing with the actual execution environment's SQLite engine.",
+    "remediation": "Removed the `_patch_sqlite_version` fixture and unused `p1_schema` import from `tests/integration/i6/test_i6c_authority_and_exchange.py`. All 40 integration tests now execute against the real runtime SQLite engine (SQLite 3.53.1) without version spoofing, conforming strictly to ADR 0032.",
+    "tests": [
+      "tests/integration/i6/test_i6c_authority_and_exchange.py"
+    ]
+  },
   "boundaries": {
     "v5_exchange_routes_active": true,
     "seven_resource_columns_enforced": true,

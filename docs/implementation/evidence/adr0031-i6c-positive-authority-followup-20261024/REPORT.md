@@ -30,6 +30,10 @@ This Author follow-up directly resolves all three GitHub Codex review findings o
    When a receiver supplied a `ContextAdmissionService` backed by a custom `AuthorizationPolicy` (such as `FixturePolicy`), preflight raised `AttributeError` on internal attributes `_principal` or `_permitted_repositories`.
    *Resolution*: Replaced internal attribute accesses with the public `AuthorizationPolicy.lease()` protocol method, allowing any valid `AuthorizationPolicy` implementation to execute cleanly.
 
+6. **P1 (`discussion_4366521739`) — Remove the Autouse SQLite Safety-Guard Bypass**:
+   An autouse fixture `_patch_sqlite_version` in `tests/integration/i6/test_i6c_authority_and_exchange.py` monkeypatched `p1_schema.sqlite3.sqlite_version_info` and `sqlite3.sqlite_version_info` to `(3, 51, 3)`, which bypassed the production WAL safety guard and violated ADR 0032.
+   *Resolution*: Removed `_patch_sqlite_version` and the unused `p1_schema` import. All 40 integration tests now run and pass against the real runtime SQLite engine (SQLite 3.53.1) without version spoofing or monkeypatching.
+
 ---
 
 ## 2. Technical Remediation Details
@@ -132,6 +136,16 @@ Replaced both tests with full end-to-end integration tests:
    - Asserts `report.admitted_context_resources == 1`.
    - Queries receiver SQLite database: only `rk1` is present; `rk2` is completely absent.
    - Observes `policy.calls`: lease requests observed for `rk1`, never for `rk2`.
+
+---
+
+### 2.4 P1: Remove Autouse SQLite Safety-Guard Bypass
+
+#### Root Cause
+In `tests/integration/i6/test_i6c_authority_and_exchange.py`, an autouse fixture `_patch_sqlite_version` monkeypatched `p1_schema.sqlite3.sqlite_version_info` and `sqlite3.sqlite_version_info` to `(3, 51, 3)` to pass `p1_schema._open` checks. Per ADR 0032 and `AGENTS.md`, tests must run against the execution environment's actual loaded SQLite library without monkeypatching or version spoofing.
+
+#### Fix
+Removed `_patch_sqlite_version` and the unused `p1_schema` import from `tests/integration/i6/test_i6c_authority_and_exchange.py`. All 40 integration tests execute and pass naturally on the environment's runtime engine (SQLite 3.53.1) with full WAL safety and schema verification intact.
 
 ---
 

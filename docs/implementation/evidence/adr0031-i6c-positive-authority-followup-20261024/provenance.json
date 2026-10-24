@@ -4,19 +4,19 @@
   "description": "Cryptographic raw-byte SHA-256 digests and Git blob OIDs for all evidence artifacts in adr0031-i6c-positive-authority-followup-20261024",
   "artifacts": {
     "MATRIX.md": {
-      "byte_count": 8060,
-      "sha256": "494d9c174c0ce88d1b89cb7c27af6f637016b3cbb97bb3c2d85755aff9a32cfe",
-      "git_blob_oid": "7a9223d07f30af4464b628c2536a50bf425b68d7"
+      "byte_count": 8397,
+      "sha256": "cfe39a37541da77fdbc8fa0b7be7fb9b126e724932d5149e8aa4fb88f9b395a4",
+      "git_blob_oid": "bc87496bd3f9b139661eba7132c2a4f071d7d128"
     },
     "REPORT.md": {
-      "byte_count": 11845,
-      "sha256": "7388a9ffa2c20e9126d297d117501fc64c570a00f1333f002810dcd89c463644",
-      "git_blob_oid": "5930f14209c3fa81e0f5db2541ef42b5c5275c2a"
+      "byte_count": 13211,
+      "sha256": "3221e5bd6fb0446e1b2f2c5dfe98240bf8f5ec0747e88d78badd168ba41cdb7e",
+      "git_blob_oid": "65cc1dedde3a12f49ff8e3713df2bb73197a44af"
     },
     "findings.json": {
-      "byte_count": 8428,
-      "sha256": "fc5c9bcdc253a32a16fbdf8abd9e190974bf8503b80bad88eaf69423195484a2",
-      "git_blob_oid": "1dce389d411e01641e88e754dfc5009161145ce2"
+      "byte_count": 9416,
+      "sha256": "267c8f3b90032579b9d426fb7d8767cfa8dc63ed7809ad6dc45166fcf39afb67",
+      "git_blob_oid": "41b49bfc1d0dafdf596c8650589eb532f2b9ea4c"
     },
     "raw/packaging_verification.log": {
       "byte_count": 545,
@@ -39,9 +39,9 @@
       "git_blob_oid": "288fd2822ff50506cde1fb133b807a2a1ddea0d3"
     },
     "raw/test_i6c_authority_and_exchange.log": {
-      "byte_count": 545,
-      "sha256": "fcfc2f07c14861bc84d8e241b38ee67a27eb463762ad8e36a1014c1f008d0949",
-      "git_blob_oid": "f1e05989168adc495391e1b74e9ca08f18603eec"
+      "byte_count": 559,
+      "sha256": "40b6b818361874f706d454c1b263172564c9513972e943473231b77994e5a005",
+      "git_blob_oid": "17773b918f8a28d8ade74712c11484d5db59b305"
     },
     "raw/unit_ci_python_runtime.log": {
       "byte_count": 6863,
