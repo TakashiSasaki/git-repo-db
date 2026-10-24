@@ -1650,7 +1650,7 @@ class ExchangeService:
     def _extract_context_dependencies(
         context_data: dict[str, Any] | None,
     ) -> Any:
-        from repo_catalog.domain.context_admission import DependencySet
+        from repo_catalog.domain.context_admission import DependencySet, dependencies
 
         if not context_data:
             return DependencySet()
@@ -1714,8 +1714,16 @@ class ExchangeService:
                 repositories.add(rrr["repository_uuidv4"])
             try:
                 rel = decode_relation(rrr)
-                if hasattr(rel, "resource_key"):
-                    resources.add(rel.resource_key)
+                dep = dependencies(rel)
+                resources.update(dep.resources)
+                repositories.update(dep.repositories)
+                sources.update(dep.sources)
+                source_repository_pairs.update(dep.source_repository_pairs)
+                mapping_claims.update(dep.mapping_claims)
+                provider_registrations.update(dep.provider_registrations)
+                object_oids.update(dep.object_oids)
+                if rel.relation_kind == "represents_repository":
+                    mapping_claims.add(rel.claim_key)
             except Exception:
                 pass
 
@@ -1724,8 +1732,16 @@ class ExchangeService:
                 repositories.add(rmd["repository_uuidv4"])
             try:
                 disp = decode_disposition(rmd)
-                if hasattr(disp, "key"):
-                    dispositions.add(disp.key)
+                dep = dependencies(disp)
+                dispositions.update(dep.dispositions)
+                mapping_claims.update(dep.mapping_claims)
+                if hasattr(disp, "claim_key"):
+                    mapping_claims.add(disp.claim_key)
+                if getattr(disp, "replacement_claim_key", None):
+                    mapping_claims.add(disp.replacement_claim_key)
+                resources.update(dep.resources)
+                repositories.update(dep.repositories)
+                provider_registrations.update(dep.provider_registrations)
             except Exception:
                 pass
 
@@ -1946,7 +1962,7 @@ class ExchangeService:
             if want_context:
                 admit_selection = replace(selection, include_core=True)
                 if auth is None or adm is None:
-                    if not permitted:
+                    if not permitted and active_grants is None:
                         from repo_catalog.domain.context_admission import (
                             AdmissionRefused,
                         )
@@ -2041,7 +2057,7 @@ class ExchangeService:
             active_grants = grants if grants is not None else self.grants
             admit_selection = replace(selection, include_core=True)
             if auth is None or adm is None:
-                if not permitted:
+                if not permitted and active_grants is None:
                     from repo_catalog.domain.context_admission import (
                         AdmissionRefused,
                     )

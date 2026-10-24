@@ -34,6 +34,10 @@ This Author follow-up directly resolves all three GitHub Codex review findings o
    An autouse fixture `_patch_sqlite_version` in `tests/integration/i6/test_i6c_authority_and_exchange.py` monkeypatched `p1_schema.sqlite3.sqlite_version_info` and `sqlite3.sqlite_version_info` to `(3, 51, 3)`, which bypassed the production WAL safety guard and violated ADR 0032.
    *Resolution*: Removed `_patch_sqlite_version` and the unused `p1_schema` import. All 40 integration tests now run and pass against the real runtime SQLite engine (SQLite 3.53.1) without version spoofing or monkeypatching.
 
+7. **P2 (`discussion_r4366556457`) — Supply Complete Fixture Grants for Mapping-Supported Imports**:
+   For `test_mapping_claim_support_and_dispositions_are_exact`, generated grants omitted mapping claims embedded in relation mapping support provenance because `_extract_context_dependencies` did not populate `mapping_claims` from decoded relations/dispositions.
+   *Resolution*: Populated `mapping_claims` and `dispositions` in `ExchangeService._extract_context_dependencies` using `dependencies(rel)` and `dependencies(disp)`. Updated `receive` and `test_mapping_claim_support_and_dispositions_are_exact` in `tests/integration/i3/test_selective_exchange.py` to supply explicit receiver-owned fixture grants covering mapping support.
+
 ---
 
 ## 2. Technical Remediation Details
@@ -146,6 +150,17 @@ In `tests/integration/i6/test_i6c_authority_and_exchange.py`, an autouse fixture
 
 #### Fix
 Removed `_patch_sqlite_version` and the unused `p1_schema` import from `tests/integration/i6/test_i6c_authority_and_exchange.py`. All 40 integration tests execute and pass naturally on the environment's runtime engine (SQLite 3.53.1) with full WAL safety and schema verification intact.
+
+---
+
+### 2.5 P2: Complete Fixture Grants for Mapping-Supported Imports
+
+#### Root Cause
+In `ExchangeService._extract_context_dependencies`, `mapping_claims` was initialized to an empty set and never populated from decoded relations or dispositions. For `test_mapping_claim_support_and_dispositions_are_exact`, generated grants omitted mapping claims embedded in relation mapping support provenance, causing `dependencies(owning)` to reject the ungranted claim with `PERMISSION_DENIED`.
+
+#### Fix
+1. Populated `mapping_claims` and `dispositions` in `ExchangeService._extract_context_dependencies` using `dependencies(rel)` and `dependencies(disp)`.
+2. Updated `receive` and `test_mapping_claim_support_and_dispositions_are_exact` in `tests/integration/i3/test_selective_exchange.py` to supply explicit receiver-owned fixture grants covering mapping support.
 
 ---
 

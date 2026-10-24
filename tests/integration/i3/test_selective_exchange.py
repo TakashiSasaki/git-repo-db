@@ -93,10 +93,14 @@ def rows(path, store, table):
 
 def receive(path, package, permitted=(), **kwargs):
     grants = kwargs.pop("grants", None)
-    if grants is None and permitted and "authorization" not in kwargs:
+    if grants is None and "authorization" not in kwargs:
         from repo_catalog.domain.context_admission import DependencySet
 
-        context_data = package.context if hasattr(package, "context") else None
+        context_data = (
+            package.get("context")
+            if isinstance(package, dict)
+            else (package.context if hasattr(package, "context") else None)
+        )
         extracted = ExchangeService._extract_context_dependencies(context_data)
         grants = extracted | DependencySet(repositories=set(permitted))
     return ExchangeService(path).import_package(
@@ -451,7 +455,20 @@ def test_mapping_claim_support_and_dispositions_are_exact(tmp_path):
         source_uuidv4s=(),
     )
     package = ExchangeService(a).export_package(selection=selected)
-    receive(b, package, (r1,))
+    rcv_grants = local_grants(
+        issue,
+        r1,
+        r2,
+        resources=(provider_repo,),
+        units=(mapping, owning, withdrawal),
+    )
+    receive(
+        b,
+        package,
+        (r1,),
+        grants=rcv_grants,
+        selection=ExchangeSelectionScope(all_selected=True),
+    )
     assert rows(a, "context", "repository_mapping_dispositions") == rows(
         b, "context", "repository_mapping_dispositions"
     )
@@ -465,7 +482,13 @@ def test_mapping_claim_support_and_dispositions_are_exact(tmp_path):
     package.core["git_objects"].append({"object_format": "sha1", "full_oid": "2" * 40})
     changed = replace(package, package_id=str(uuid4()), digest_sha256=None)
     with pytest.raises(ExchangeError, match="IMMUTABLE_REPLAY_CONFLICT"):
-        receive(b, changed, (r1,))
+        receive(
+            b,
+            changed,
+            (r1,),
+            grants=rcv_grants,
+            selection=ExchangeSelectionScope(all_selected=True),
+        )
     assert rows(b, "core", "git_objects") == before
 
 

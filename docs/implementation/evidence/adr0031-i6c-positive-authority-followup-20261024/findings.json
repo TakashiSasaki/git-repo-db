@@ -87,6 +87,17 @@
       "tests/integration/i6/test_i6c_authority_and_exchange.py"
     ]
   },
+  "p2_mapping_claim_support_grants": {
+    "status": "REMEDIATED",
+    "codex_review_finding": "discussion_r4366556457",
+    "severity": "P2",
+    "observed_condition": "For test_mapping_claim_support_and_dispositions_are_exact, generated grants omitted mapping claims embedded in relation mapping support provenance because _extract_context_dependencies did not populate mapping_claims from decoded relations/dispositions.",
+    "root_cause": "_extract_context_dependencies initialized mapping_claims to an empty set but never populated it from decoded relations and dispositions, and test_selective_exchange.py did not pass explicit receiver grants covering mapping support.",
+    "remediation": "Populated mapping_claims and dispositions in ExchangeService._extract_context_dependencies via dependencies(rel) and dependencies(disp). Updated receive and test_mapping_claim_support_and_dispositions_are_exact in tests/integration/i3/test_selective_exchange.py to supply explicit receiver-owned fixture grants covering mapping support.",
+    "tests": [
+      "tests/integration/i3/test_selective_exchange.py::test_mapping_claim_support_and_dispositions_are_exact"
+    ]
+  },
   "boundaries": {
     "v5_exchange_routes_active": true,
     "seven_resource_columns_enforced": true,
