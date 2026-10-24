@@ -1,0 +1,32 @@
+{
+  "target_pr": 168,
+  "target_branch": "fix/adr0031-i6c-regression-hardening-20261024",
+  "target_head_sha": "3a1f112331c87747249f38af370160adc0de108a",
+  "review_branch": "review/adr0031-i6c-behavioral-verification-20261024",
+  "review_role": "Independent Non-Author Reviewer (Stage 2)",
+  "test_suite": "tests/integration/access/test_i6c_behavioral_verification.py",
+  "verdict": "ACCEPT",
+  "total_obligations": 10,
+  "passed_obligations": 10,
+  "failed_obligations": 0,
+  "unverified_obligations": 0,
+  "test_metrics": {
+    "total_tests": 8,
+    "passed": 8,
+    "failed": 0,
+    "errors": 0,
+    "duration_seconds": 12.04
+  },
+  "status_per_obligation": {
+    "obligation_1": "PASS",
+    "obligation_2": "PASS",
+    "obligation_3": "PASS",
+    "obligation_4": "PASS",
+    "obligation_5": "PASS",
+    "obligation_6": "PASS",
+    "obligation_7": "PASS",
+    "obligation_8": "PASS",
+    "obligation_9": "PASS",
+    "obligation_10": "PASS"
+  }
+}
