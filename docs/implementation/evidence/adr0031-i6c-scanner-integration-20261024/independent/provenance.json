@@ -1,0 +1,31 @@
+{
+  "phase": "adr0031-i6c-scanner-integration-20261024",
+  "independent_review": true,
+  "file_count": 4,
+  "files": [
+    {
+      "path": "MATRIX.md",
+      "size_bytes": 5909,
+      "sha256": "5416a660e767247d57c10d7f8c8539ba81fa3108d6685f705b81db009cc12475",
+      "git_blob_oid": "6c920cf565808a301f62a282597443015dd600dd"
+    },
+    {
+      "path": "REPORT.md",
+      "size_bytes": 14073,
+      "sha256": "25e64cb317da2ebadbddd82c936eb8c8be853efa3960635adaf3518b0714d860",
+      "git_blob_oid": "dda5993b59fbbbbbdea66e6c572f2b543d693095"
+    },
+    {
+      "path": "findings.json",
+      "size_bytes": 3,
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+      "git_blob_oid": "fe51488c7066f6687ef680d6bfaa4f7768ef205c"
+    },
+    {
+      "path": "summary.json",
+      "size_bytes": 5527,
+      "sha256": "a5efd592ec9e7391e090dd58811a5f3b28f198687c2caf347957610770329b4c",
+      "git_blob_oid": "eed4c7b77f9cba7c350e04313784ce91589b64da"
+    }
+  ]
+}
