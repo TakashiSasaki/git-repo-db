@@ -1,0 +1,76 @@
+{
+  "phase": "adr0031-i6c-scanner-integration-followup-20261024",
+  "review_type": "Supplementary Independent Integration Review",
+  "target_pr": 172,
+  "target_branch": "integration/adr0031-i6c-scanner-integration-20261024",
+  "reviewed_tested_input_commit": "a57e456d0e6ff3969feea44ff159401226515418",
+  "reviewed_tested_input_tree": "d301c7285a2957c5a2c094826ee3f85dab628a82",
+  "reviewed_submission_commit": "85c4a5ed43edb7418ece5999b267abf6bec9ea3c",
+  "reviewed_submission_tree": "30be374da5bf77842ea68d22197bd29af3b1c968",
+  "verdict": "SCOPED_ACCEPTANCE_PASS",
+  "blocking_findings_count": 0,
+  "two_stage_separation_verified": true,
+  "ci_verification": {
+    "access_run_id": 40143039690,
+    "access_run_url": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/40143039690",
+    "access_conclusion": "success",
+    "tests_run_id": 40143039694,
+    "tests_conclusion": "success",
+    "pages_run_id": 40143039721,
+    "pages_conclusion": "success"
+  },
+  "regression_reconciliation": {
+    "status": "PASS",
+    "acceptance_verdict": "PASSED",
+    "blocking_violations": 0,
+    "baseline_in_scope_nodes": 1847,
+    "current_nodes": 1847,
+    "resolved_count": 72,
+    "inherited_count": 201,
+    "progressed_barriers_count": 1,
+    "progressed_nodes": [
+      "tests.integration.p1.test_generalized_resources::test_selected_real_wire_without_identification_refuses_before_core_effects"
+    ],
+    "changed_failures": 0,
+    "new_regressions": 0
+  },
+  "suite_results": {
+    "preflight": "PASS",
+    "comparator_unit_tests": {
+      "status": "PASS",
+      "passed": 24,
+      "failed": 0
+    },
+    "i6c_behavioral_verification": {
+      "status": "PASS",
+      "obligations_verified": 10,
+      "passed": 8,
+      "failed": 0
+    },
+    "scanner_budget_defense": {
+      "status": "PASS",
+      "passed": 37,
+      "failed": 0
+    },
+    "packaging_and_sdist_contract": {
+      "status": "PASS",
+      "passed": 131,
+      "failed": 0,
+      "wheel_equivalence": true
+    },
+    "scoped_access_acceptance": {
+      "status": "PASS",
+      "passed": 947,
+      "failed": 0
+    },
+    "schema_and_boundaries": {
+      "status": "PASS",
+      "schema_match": true,
+      "boundary_match": true
+    },
+    "linter_and_formatter": {
+      "ruff_check": "PASS",
+      "ruff_format": "PASS"
+    }
+  }
+}
