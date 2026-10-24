@@ -1,0 +1,111 @@
+{
+  "phase": "adr0031-i6c-scanner-integration-20261024",
+  "repository": "https://github.com/TakashiSasaki/git-repo-db",
+  "base_branch": "fix/adr0031-i6c-regression-hardening-20261024",
+  "base_commit": "55de572bdac4b9b90b131d89025b0ed304cd0159",
+  "tested_input_commit": "363eb6fdb8c12f854676f4273ed040968f701b3a",
+  "tested_input_tree": "3c955abc101b23991da764de3310e6b5a0f99be8",
+  "author_status": "Author-complete",
+  "independent_acceptance_claim": false,
+  "review_verdict": "INCOMPLETE / PENDING_INDEPENDENT_REVIEW",
+  "integrated_lineages": {
+    "i6c": {
+      "base_pr": 170,
+      "base_head": "55de572bdac4b9b90b131d89025b0ed304cd0159",
+      "features": [
+        "ADR 0031 I6-C positive authority forwarding",
+        "Finite grants and LocalAuthorizationPolicy",
+        "Idempotent replay control",
+        "Transfer SQL fences retention",
+        "Strict failure signature comparator",
+        "Offline inventory pytest collection command preservation"
+      ]
+    },
+    "behavioral_verification": {
+      "source_pr": 169,
+      "source_commit": "634d8f63084cee578aa7beafcd27485a6da8e37a",
+      "test_file": "tests/integration/access/test_i6c_behavioral_verification.py",
+      "obligations_covered": 10
+    },
+    "scanner": {
+      "source_pr": 165,
+      "source_commit": "d81951868ac4fc252f8c0f38c22cf2c38d6146d4",
+      "reviewed_in_pr": 167,
+      "features": [
+        "Bounded input traversal with queue capacity pre-reservation",
+        "Dataclass selection work limit defense",
+        "Defensive sequence snapshot and mutation containment",
+        "Dictionary traversal bounds",
+        "Single refusal charge accounting",
+        "ADR 0033 minimal product sdist contract",
+        "Sdist hardening parser and tar stream bounding",
+        "Direct and derived bit-for-bit wheel equivalence"
+      ]
+    }
+  },
+  "verification_results": {
+    "preflight": {
+      "status": "PASS",
+      "python": "3.12.13",
+      "sqlite": "3.53.1",
+      "umask": "0o022"
+    },
+    "comparator_unit_tests": {
+      "status": "PASS",
+      "passed": 23,
+      "failed": 0
+    },
+    "scanner_budget_unit_tests": {
+      "status": "PASS",
+      "passed": 37,
+      "failed": 0
+    },
+    "i6c_behavioral_verification": {
+      "status": "PASS",
+      "passed": 8,
+      "failed": 0
+    },
+    "sdist_packaging_tests": {
+      "status": "PASS",
+      "passed": 131,
+      "failed": 0
+    },
+    "sdist_contract_check": {
+      "status": "PASS",
+      "compressed_bytes": 705705,
+      "compressed_limit": 2097152,
+      "unpacked_bytes": 6064489,
+      "unpacked_limit": 8388608,
+      "tar_stream_bytes": 6195200,
+      "tar_stream_limit": 8922624,
+      "members": 164,
+      "members_limit": 512,
+      "source_inventory_sha256": "2b856a85f8f685f9cae10ce395455649305441c2e1ef2c2c21fbd998f4f67f46"
+    },
+    "scoped_access_acceptance": {
+      "status": "PASS",
+      "passed": 947,
+      "failed": 0,
+      "errors": 0
+    },
+    "full_unit_tests": {
+      "status": "PASS",
+      "passed": 1614,
+      "subtests_passed": 57,
+      "failed": 0,
+      "errors": 0
+    },
+    "distribution_outside_checkout": {
+      "status": "PASS",
+      "direct_wheel_sha256": "ab679e600ceda7f783c4e70e63e6da0c7b5f9072c852e9b053d1e54add4da0de",
+      "derived_wheel_sha256": "ab679e600ceda7f783c4e70e63e6da0c7b5f9072c852e9b053d1e54add4da0de",
+      "wheel_equivalence": true,
+      "installed_smoke": "passed",
+      "exit_code": 0
+    },
+    "linter_and_formatter": {
+      "ruff_check": "PASS",
+      "ruff_format": "PASS"
+    }
+  }
+}
