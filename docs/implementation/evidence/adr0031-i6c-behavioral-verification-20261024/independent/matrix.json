@@ -1,0 +1,204 @@
+{
+  "review_target": {
+    "pr": 168,
+    "branch": "fix/adr0031-i6c-regression-hardening-20261024",
+    "head_sha": "3a1f112331c87747249f38af370160adc0de108a",
+    "review_branch": "review/adr0031-i6c-behavioral-verification-20261024",
+    "suite": "tests/integration/access/test_i6c_behavioral_verification.py"
+  },
+  "obligations": [
+    {
+      "obligation_id": 1,
+      "description": "Use one full sender package and independently configured receiver-local finite grants (DependencySet without ambient sender authority).",
+      "test_node": "tests/integration/access/test_i6c_behavioral_verification.py::test_obligation_1_2_3_single_package_receiver_selections_and_rowsets",
+      "status": "PASS",
+      "reached_assertions": [
+        "full_pkg.format == 'git-repo-db/adr0031-exchange-v5'",
+        "len(full_pkg.context['repositories']) == 2",
+        "len(full_pkg.context['resources']) == 4",
+        "len(full_pkg.context['resource_repository_relations']) == 1",
+        "len(full_pkg.context['resource_relations']) == 1",
+        "len(full_pkg.context['repository_mapping_dispositions']) == 1",
+        "Receiver independently constructs DependencySet without ambient sender authority",
+        "Receiver grants strictly fence admitted units without inheriting sender permissions"
+      ],
+      "sql_tables_verified": [
+        "repository_context",
+        "resources",
+        "resource_repository_relations",
+        "resource_relations",
+        "repository_mapping_dispositions",
+        "sources",
+        "source_repositories"
+      ],
+      "durable_outcomes": "Sender package is exported once with complete multi-entity payload; receiver configures local finite grants without reading or trusting sender authority."
+    },
+    {
+      "obligation_id": 2,
+      "description": "Exercise empty, strict-subset and complete receiver selection on that same package.",
+      "test_node": "tests/integration/access/test_i6c_behavioral_verification.py::test_obligation_1_2_3_single_package_receiver_selections_and_rowsets",
+      "status": "PASS",
+      "reached_assertions": [
+        "Empty receiver selection admits 0 context resources (report_empty.admitted_context_resources == 0)",
+        "Strict-subset receiver selection admits exactly 1 selected context resource (report_subset.admitted_context_resources == 1)",
+        "Complete receiver selection admits all 4 context resources (report_complete.admitted_context_resources == 4)",
+        "Report omissions record omitted entities under partial selections"
+      ],
+      "sql_tables_verified": [
+        "repository_context",
+        "resources",
+        "resource_repository_relations",
+        "resource_relations",
+        "repository_mapping_dispositions"
+      ],
+      "durable_outcomes": "The exact same exported package was imported across 3 independent receiver selections: empty selection yielded 0 rows; subset selection yielded exactly 1 repository and 1 resource; complete selection yielded all 2 repositories and 4 resources."
+    },
+    {
+      "obligation_id": 3,
+      "description": "Verify exact admitted/omitted rowsets and accepted atomic-unit semantics in SQLite tables (repository_context, resource_repository_relations, resource_relations, etc.). Sender-side package narrowing is not receiver-selection coverage.",
+      "test_node": "tests/integration/access/test_i6c_behavioral_verification.py::test_obligation_1_2_3_single_package_receiver_selections_and_rowsets",
+      "status": "PASS",
+      "reached_assertions": [
+        "Empty selection rowset: SELECT count(*) == 0 for repository_context, resources, resource_repository_relations, resource_relations, repository_mapping_dispositions, sources, source_repositories",
+        "Subset selection rowset: repository_context has [repo_a] (repo_b omitted), resources has [res_a1] (res_a2, res_b1, r_repo omitted)",
+        "Subset selection atomic units: resource_relations has 0 rows because rel_a1_a2 depends on unselected res_a2",
+        "Subset selection mapping claims: resource_repository_relations has 0 rows because r_repo was unselected",
+        "Complete selection rowset: repository_context has 2 rows, resources has 4 rows, resource_repository_relations has 1 row, resource_relations has 1 row, repository_mapping_dispositions has 1 row, sources has 1 row, source_repositories has 1 row"
+      ],
+      "sql_tables_verified": [
+        "repository_context",
+        "resources",
+        "resource_repository_relations",
+        "resource_relations",
+        "repository_mapping_dispositions",
+        "sources",
+        "source_repositories"
+      ],
+      "durable_outcomes": "Receiver SQLite persistent state confirms exact rowsets matching selection and grants. Atomic-unit semantics strictly enforced: relations dependent on unselected members are omitted."
+    },
+    {
+      "obligation_id": 4,
+      "description": "Exercise both Context-only (ExchangeService.import_package) and paired Core+Context (PairedAcquisitionCoordinator) import paths.",
+      "test_node": "tests/integration/access/test_i6c_behavioral_verification.py::test_obligation_4_context_only_and_paired_import_paths",
+      "status": "PASS",
+      "reached_assertions": [
+        "report.context_imported is True and report.core_imported is False",
+        "core.sqlite3 does not exist on receiver and was not required",
+        "context.sqlite3 resources contains exactly 1 row for ctx_only_1",
+        "Paired coordinator admit_paired returns res.admission.core_committed is True and context_committed is True",
+        "Paired Core repositories table contains paired_repo",
+        "Paired Context repository_context table contains paired_repo and resources contains paired_1"
+      ],
+      "sql_tables_verified": [
+        "core.sqlite3: repositories",
+        "context.sqlite3: repository_context, resources"
+      ],
+      "durable_outcomes": "Context-only package import succeeds cleanly in store without Core; PairedAcquisitionCoordinator coordinates atomic Core-first and Context-second persistence."
+    },
+    {
+      "obligation_id": 5,
+      "description": "Pass a genuine handle issued by another authorization service into the product route.",
+      "test_node": "tests/integration/access/test_i6c_behavioral_verification.py::test_obligation_5_foreign_authorization_handle_rejected",
+      "status": "PASS",
+      "reached_assertions": [
+        "auth2.validate_context(adm1) raises AdmissionRefused with code == 'PERMISSION_DENIED'",
+        "Context.transaction(catalog, authorization=auth2, admission=adm1) raises AdmissionRefused with code == 'PERMISSION_DENIED'",
+        "ProviderAcquisition(catalog, authorization=auth2, admission=adm1).admit_batch() raises AdmissionRefused with code == 'PERMISSION_DENIED'",
+        "PairedAcquisitionCoordinator(catalog, authorization=auth2, admission=adm1).admit_paired() raises AdmissionRefused with code == 'PERMISSION_DENIED'",
+        "ExchangeService(catalog).import_package(pkg, authorization=auth2, admission=adm1) raises AdmissionRefused with code == 'PERMISSION_DENIED'",
+        "Target SQLite stores have exactly 0 rows written (count == 0)"
+      ],
+      "sql_tables_verified": [
+        "context.sqlite3: repository_context, providers"
+      ],
+      "durable_outcomes": "Handles issued by external ContextAdmissionService instances cannot be replayed across service instances; all product entry points fail closed with PERMISSION_DENIED and 0 writes."
+    },
+    {
+      "obligation_id": 6,
+      "description": "Trigger permission revocation at actual transaction/COMMIT boundaries (not just a standalone lease.check_current() call).",
+      "test_node": "tests/integration/access/test_i6c_behavioral_verification.py::test_obligation_6_permission_revocation_at_commit_boundaries",
+      "status": "PASS",
+      "reached_assertions": [
+        "Context.transaction precommit lease check raises AdmissionRefused with code == 'PERMISSION_DENIED'",
+        "Context.transaction cleanly rolls back on precommit failure (0 rows in repository_context, 0 rows in resources)",
+        "ExchangeService.import_package with cut hook during_context revokes policy, raising AdmissionFailure with cause code == 'PERMISSION_DENIED'",
+        "Receiver Context database has 0 rows in repository_context and 0 rows in resources after failed cut commit"
+      ],
+      "sql_tables_verified": [
+        "context.sqlite3: repository_context, resources"
+      ],
+      "durable_outcomes": "Permission revocation at precommit boundaries triggers immediate rollback before SQLite COMMIT; no uncommitted or revoked mutations persist."
+    },
+    {
+      "obligation_id": 7,
+      "description": "Verify exact replay and cached receipt behavior after revocation (assert fail-closed or receipt invariants).",
+      "test_node": "tests/integration/access/test_i6c_behavioral_verification.py::test_obligation_7_exact_replay_and_cached_receipt_revocation",
+      "status": "PASS",
+      "reached_assertions": [
+        "First import report: rep1.idempotent_replay is False",
+        "Second import report (authorized replay): rep2.idempotent_replay is True",
+        "Third import attempt after policy.grants revocation: raises AdmissionRefused with code == 'PERMISSION_DENIED'",
+        "Receiver state remains valid and uncorrupted after revoked replay refusal"
+      ],
+      "sql_tables_verified": [
+        "context.sqlite3: repository_context, resources"
+      ],
+      "durable_outcomes": "Replay recognizes idempotency when authorized, but policy revocation strictly forbids shortcut bypass: replay attempts without active authority fail closed with PERMISSION_DENIED."
+    },
+    {
+      "obligation_id": 8,
+      "description": "Verify Source, MappingClaim and Disposition permissions independently (assert rejection when each single permission is withheld while others are granted).",
+      "test_node": "tests/integration/access/test_i6c_behavioral_verification.py::test_obligation_8_independent_source_mapping_claim_and_disposition_permissions",
+      "status": "PASS",
+      "reached_assertions": [
+        "Withholding Source: policy.lease raises PERMISSION_DENIED; import_package raises PERMISSION_DENIED; Context.transaction ctx.source raises PERMISSION_DENIED",
+        "Withholding MappingClaim: policy.lease raises PERMISSION_DENIED; import_package raises PERMISSION_DENIED",
+        "Withholding Disposition: policy.lease raises PERMISSION_DENIED; import_package raises PERMISSION_DENIED; Context.transaction ctx.admit_mapping_disposition raises PERMISSION_DENIED",
+        "Zero rows written to target tables under each withheld permission"
+      ],
+      "sql_tables_verified": [
+        "context.sqlite3: sources, resource_repository_relations, repository_mapping_dispositions"
+      ],
+      "durable_outcomes": "Source, MappingClaim, and Disposition permissions are strictly orthogonal: withholding any single permission causes failure closed while all other permissions remain granted."
+    },
+    {
+      "obligation_id": 9,
+      "description": "Execute authorized paired Provider acquisition and supported Core-first failure/recovery bookkeeping. Verify Core commit is durable, Context rolled back, and operational recovery state is tracked. Do not assume cross-store atomic rollback.",
+      "test_node": "tests/integration/access/test_i6c_behavioral_verification.py::test_obligation_9_paired_core_first_failure_and_operational_recovery_state",
+      "status": "PASS",
+      "reached_assertions": [
+        "AdmissionFailure outcome: core_committed is True, context_committed is False",
+        "core.sqlite3 repositories table contains repo_id (Core commit is durable)",
+        "context.sqlite3 repository_context does NOT contain repo_id and resources has 0 rows (Context is rolled back)",
+        "operational.sqlite3 request_continuations contains adr0030-partial record with {'core_committed': True, 'context_committed': False}",
+        "PairedAcquisitionCoordinator.admit_paired with injected Context failure confirms outcome.core_committed is True and context_committed is False",
+        "Cross-store atomic rollback is not assumed"
+      ],
+      "sql_tables_verified": [
+        "core.sqlite3: repositories",
+        "context.sqlite3: repository_context, resources",
+        "operational.sqlite3: request_continuations"
+      ],
+      "durable_outcomes": "Core commits first and remains durable upon downstream Context failure; Context cleanly rolls back; Operational ledger durably persists adr0030-partial recovery record."
+    },
+    {
+      "obligation_id": 10,
+      "description": "Retain both Transfer SQL fences (i2_transfer_stage_fence, i2_transfer_report_stage_fence) and prove ordinary Transfer remains refused with UnsupportedResourceStage.",
+      "test_node": "tests/integration/access/test_i6c_behavioral_verification.py::test_obligation_10_transfer_sql_fences_and_unsupported_resource_stage",
+      "status": "PASS",
+      "reached_assertions": [
+        "sqlite_schema contains active trigger i2_transfer_stage_fence on resource_repository_relations",
+        "sqlite_schema contains active trigger i2_transfer_report_stage_fence on resource_relations",
+        "Both triggers contain 'I2_TRANSFER_UNSUPPORTED' in their SQL definitions",
+        "ProviderAcquisition.admit_batch(transfer_batch) raises UnsupportedResourceStage with 'Provider Transfer intake'",
+        "Direct SQL INSERT into resource_repository_relations aborted with I2_TRANSFER_UNSUPPORTED",
+        "Direct SQL INSERT into resource_relations aborted with I2_TRANSFER_UNSUPPORTED",
+        "0 rows inserted in both tables"
+      ],
+      "sql_tables_verified": [
+        "context.sqlite3: sqlite_schema (triggers), resource_repository_relations, resource_relations"
+      ],
+      "durable_outcomes": "SQL trigger fences are active and functional; application-level Provider acquisition refuses Transfer with UnsupportedResourceStage; direct SQL mutations are aborted by database triggers."
+    }
+  ]
+}
