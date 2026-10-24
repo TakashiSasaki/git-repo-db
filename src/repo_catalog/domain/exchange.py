@@ -817,7 +817,6 @@ def validate_package_envelope(package: ExchangePackage) -> None:
             ) from None
 
     from repo_catalog.domain.exchange_rows import (
-        validate_replay_consistency,
         validate_rows,
     )
 

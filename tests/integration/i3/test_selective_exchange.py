@@ -26,7 +26,6 @@ from repo_catalog.domain.p1_context import (
 from repo_catalog.domain.p1_coordination import AdmissionFailure, RequestIdentity
 from repo_catalog.domain.p1_core import OID
 from repo_catalog.domain.resource_identification import ResourceIdentification as RI
-from repo_catalog.domain.resource_identity import encode_identity
 from tests.integration.p5.conftest import init_catalog_stores
 from tests.support.context_admission import fixture_transaction
 
@@ -465,7 +464,6 @@ def test_empty_oid_and_context_payload_cannot_override_selection(tmp_path):
         empty_context_section,
         empty_core_section,
     )
-
     from repo_catalog.domain.resource_identification import ResourceIdentification
 
     seed = catalog(tmp_path)
@@ -498,8 +496,6 @@ def test_empty_oid_and_context_payload_cannot_override_selection(tmp_path):
 
 def test_malformed_unselected_repository_rejected_before_binding(tmp_path):
     from repo_catalog.domain.exchange import ExchangePackage, empty_core_section
-
-    from repo_catalog.domain.resource_identification import ResourceIdentification
 
     seed = catalog(tmp_path)
     data = empty_core_section()
@@ -802,8 +798,6 @@ def test_missing_repository_unit_does_not_rollback_independent_object(tmp_path):
     from repo_catalog.domain.exchange import ExchangePackage, empty_core_section
     from repo_catalog.domain.p1_core import Provenance
 
-    from repo_catalog.domain.resource_identification import ResourceIdentification
-
     seed = catalog(tmp_path)
     unknown = str(uuid4())
     data = empty_core_section()
@@ -834,8 +828,6 @@ def test_missing_repository_unit_does_not_rollback_independent_object(tmp_path):
 def test_malformed_scalar_tag_cannot_be_reencoded_as_known_claim(tmp_path):
     from repo_catalog.domain.exchange import ExchangePackage, empty_core_section
     from repo_catalog.domain.p1_core import Provenance
-
-    from repo_catalog.domain.resource_identification import ResourceIdentification
 
     seed = catalog(tmp_path)
     data = empty_core_section()
@@ -1497,8 +1489,6 @@ def test_empty_package_cannot_bypass_resolved_zero_work_ceiling(
 ):
     from repo_catalog.domain.exchange import ExchangePackage, empty_core_section
     from repo_catalog.domain.p1_core import CoreFailure
-
-    from repo_catalog.domain.resource_identification import ResourceIdentification
 
     seed = catalog(tmp_path)
     selection = scope(max_work=0)

@@ -695,6 +695,7 @@ class LocalAuthorizationPolicy:
         self,
         grants: DependencySet | None = None,
         permitted_repositories: frozenset[str] | None = None,
+        principal: object = None,
     ):
         self._lock = RLock()
         self._grants = grants
@@ -703,6 +704,7 @@ class LocalAuthorizationPolicy:
             if permitted_repositories is not None
             else None
         )
+        self._principal = principal
         self._denied = DependencySet()
         self._revision = 0
         self.calls = []
@@ -741,6 +743,8 @@ class LocalAuthorizationPolicy:
     def lease(self, principal, operation, dependencies):
         with self._lock:
             self.calls.append((principal, operation, dependencies))
+            if self._principal is not None and principal != self._principal:
+                raise AdmissionRefused("PERMISSION_DENIED")
             if operation not in OPERATIONS or operation == "exchange_export":
                 raise AdmissionRefused("PERMISSION_DENIED")
             if self._permitted_repositories is not None:
@@ -751,6 +755,16 @@ class LocalAuthorizationPolicy:
                         raise AdmissionRefused("PERMISSION_DENIED")
             if self._grants is not None:
                 if not dependencies.issubset(self._grants):
+                    raise AdmissionRefused("PERMISSION_DENIED")
+            else:
+                if self._permitted_repositories is None:
+                    raise AdmissionRefused("PERMISSION_DENIED")
+                if (
+                    dependencies.resources
+                    or dependencies.sources
+                    or dependencies.mapping_claims
+                    or dependencies.dispositions
+                ):
                     raise AdmissionRefused("PERMISSION_DENIED")
             for dimension in _DIMENSIONS:
                 if getattr(dependencies, dimension) & getattr(self._denied, dimension):
@@ -777,23 +791,29 @@ def create_local_admission_service(
     permitted_repositories: frozenset[str] | None = None,
     selection: AdmissionSelection | None = None,
     budget: AdmissionBudget | None = None,
-    principal: object = "local-user",
+    principal: object = "local-authority",
+    credential: object = "local-authority",
 ) -> tuple[ContextAdmissionService, AdmissionContext, LocalAuthorizationPolicy]:
+    if grants is None and permitted_repositories is None:
+        raise AdmissionRefused("PERMISSION_DENIED")
+    if selection is None:
+        raise AdmissionRefused("PERMISSION_DENIED")
     policy = LocalAuthorizationPolicy(
-        grants=grants, permitted_repositories=permitted_repositories
+        grants=grants,
+        permitted_repositories=permitted_repositories,
+        principal=principal,
     )
 
-    def authenticate(credential):
-        if credential != "local-authority":
+    def authenticate(cred):
+        if cred != credential:
             raise AdmissionRefused("PERMISSION_DENIED")
         return principal
 
     service = ContextAdmissionService(policy, authenticate)
     context = service.context(
-        "local-authority",
+        credential,
         operation,
-        selection or AdmissionSelection(all_selected=True),
+        selection,
         budget or AdmissionBudget(),
     )
     return service, context, policy
-
