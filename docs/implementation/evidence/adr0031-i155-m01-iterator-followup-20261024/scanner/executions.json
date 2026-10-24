@@ -1,0 +1,170 @@
+[
+  {
+    "cohort": "source158-unfixed",
+    "script": "store_case.py",
+    "argv": [
+      "/home/ubuntu/venv/bin/python",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-iterator-followup-20261024/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/scanner/store_case.py",
+      "--output",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-iterator-followup-20261024/docs/implementation/evidence/adr0031-i155-m01-iterator-followup-20261024/scanner/store-source158-unfixed.json"
+    ],
+    "pythonpath": "/tmp/i155-followup-dist/source158-unfixed/src:/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-iterator-followup-20261024",
+    "exit_code": 0,
+    "duration_s": 4.768,
+    "output_sha256": "45fb3e2010d4ac8db80bb15ff0378ebb75106787d3c7bf30c48b1fec87b866a3"
+  },
+  {
+    "cohort": "source158-unfixed",
+    "script": "study.py",
+    "argv": [
+      "/home/ubuntu/venv/bin/python",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-iterator-followup-20261024/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/scanner/study.py",
+      "--output",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-iterator-followup-20261024/docs/implementation/evidence/adr0031-i155-m01-iterator-followup-20261024/scanner/study-source158-unfixed.json"
+    ],
+    "pythonpath": "/tmp/i155-followup-dist/source158-unfixed/src:/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-iterator-followup-20261024",
+    "exit_code": 0,
+    "duration_s": 13.302,
+    "output_sha256": "ebdba81691fcccc1731ea8022fc1da124b566f90eb8e8c27db67ac28bccc60f9"
+  },
+  {
+    "cohort": "source158-unfixed",
+    "script": "reproduce_reviewer_finding.py",
+    "argv": [
+      "/home/ubuntu/venv/bin/python",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-iterator-followup-20261024/docs/implementation/evidence/adr0031-i155-m01-iterator-followup-20261024/scanner/reproduce_reviewer_finding.py",
+      "--output",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-iterator-followup-20261024/docs/implementation/evidence/adr0031-i155-m01-iterator-followup-20261024/scanner/mutation-source158-unfixed.json"
+    ],
+    "pythonpath": "/tmp/i155-followup-dist/source158-unfixed/src:/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-iterator-followup-20261024",
+    "exit_code": 0,
+    "duration_s": 21.111,
+    "output_sha256": "0df8b57f0d35803010310f3fde8af72a823d5a373399a07e790104e704f2cd7a"
+  },
+  {
+    "cohort": "source-fixed",
+    "script": "store_case.py",
+    "argv": [
+      "/home/ubuntu/venv/bin/python",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-iterator-followup-20261024/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/scanner/store_case.py",
+      "--output",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-iterator-followup-20261024/docs/implementation/evidence/adr0031-i155-m01-iterator-followup-20261024/scanner/store-source-fixed.json"
+    ],
+    "pythonpath": "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-iterator-followup-20261024/src:/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-iterator-followup-20261024",
+    "exit_code": 0,
+    "duration_s": 5.546,
+    "output_sha256": "874a94d925069e26e6f24e8683752038e1f03ff2ab1a8a3751288790e7753412"
+  },
+  {
+    "cohort": "source-fixed",
+    "script": "study.py",
+    "argv": [
+      "/home/ubuntu/venv/bin/python",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-iterator-followup-20261024/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/scanner/study.py",
+      "--output",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-iterator-followup-20261024/docs/implementation/evidence/adr0031-i155-m01-iterator-followup-20261024/scanner/study-source-fixed.json"
+    ],
+    "pythonpath": "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-iterator-followup-20261024/src:/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-iterator-followup-20261024",
+    "exit_code": 0,
+    "duration_s": 16.509,
+    "output_sha256": "7eba7849361db57038974dc1cec17f1eeb87b85972330460dbbaa2303ce4930e"
+  },
+  {
+    "cohort": "source-fixed",
+    "script": "reproduce_reviewer_finding.py",
+    "argv": [
+      "/home/ubuntu/venv/bin/python",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-iterator-followup-20261024/docs/implementation/evidence/adr0031-i155-m01-iterator-followup-20261024/scanner/reproduce_reviewer_finding.py",
+      "--output",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-iterator-followup-20261024/docs/implementation/evidence/adr0031-i155-m01-iterator-followup-20261024/scanner/mutation-source-fixed.json"
+    ],
+    "pythonpath": "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-iterator-followup-20261024/src:/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-iterator-followup-20261024",
+    "exit_code": 0,
+    "duration_s": 24.38,
+    "output_sha256": "cea80df72b275447d5c7eb470f6c825d0f94b770d2c02d8d61f62e39b3cf10bf"
+  },
+  {
+    "cohort": "direct",
+    "script": "store_case.py",
+    "argv": [
+      "/tmp/i155-followup-dist/direct-venv/bin/python",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-iterator-followup-20261024/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/scanner/store_case.py",
+      "--output",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-iterator-followup-20261024/docs/implementation/evidence/adr0031-i155-m01-iterator-followup-20261024/scanner/store-direct.json"
+    ],
+    "pythonpath": "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-iterator-followup-20261024",
+    "exit_code": 0,
+    "duration_s": 5.354,
+    "output_sha256": "9e0cc368dca1d889c8a0f204d44632a21504eba3ccf9134866fa9e94eb897908"
+  },
+  {
+    "cohort": "direct",
+    "script": "study.py",
+    "argv": [
+      "/tmp/i155-followup-dist/direct-venv/bin/python",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-iterator-followup-20261024/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/scanner/study.py",
+      "--output",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-iterator-followup-20261024/docs/implementation/evidence/adr0031-i155-m01-iterator-followup-20261024/scanner/study-direct.json"
+    ],
+    "pythonpath": "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-iterator-followup-20261024",
+    "exit_code": 0,
+    "duration_s": 15.336,
+    "output_sha256": "9e61e0ff024488909bbf4a7a78eda68cd0b19af81ab86f23ff2e122611f32b80"
+  },
+  {
+    "cohort": "direct",
+    "script": "reproduce_reviewer_finding.py",
+    "argv": [
+      "/tmp/i155-followup-dist/direct-venv/bin/python",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-iterator-followup-20261024/docs/implementation/evidence/adr0031-i155-m01-iterator-followup-20261024/scanner/reproduce_reviewer_finding.py",
+      "--output",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-iterator-followup-20261024/docs/implementation/evidence/adr0031-i155-m01-iterator-followup-20261024/scanner/mutation-direct.json"
+    ],
+    "pythonpath": "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-iterator-followup-20261024",
+    "exit_code": 0,
+    "duration_s": 22.606,
+    "output_sha256": "cea80df72b275447d5c7eb470f6c825d0f94b770d2c02d8d61f62e39b3cf10bf"
+  },
+  {
+    "cohort": "derived",
+    "script": "store_case.py",
+    "argv": [
+      "/tmp/i155-followup-dist/derived-venv/bin/python",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-iterator-followup-20261024/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/scanner/store_case.py",
+      "--output",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-iterator-followup-20261024/docs/implementation/evidence/adr0031-i155-m01-iterator-followup-20261024/scanner/store-derived.json"
+    ],
+    "pythonpath": "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-iterator-followup-20261024",
+    "exit_code": 0,
+    "duration_s": 5.343,
+    "output_sha256": "dcd00813099c3873f6c7de4087b2fb49ba5b365d595bd5fd0af99e260f50d6a9"
+  },
+  {
+    "cohort": "derived",
+    "script": "study.py",
+    "argv": [
+      "/tmp/i155-followup-dist/derived-venv/bin/python",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-iterator-followup-20261024/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/scanner/study.py",
+      "--output",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-iterator-followup-20261024/docs/implementation/evidence/adr0031-i155-m01-iterator-followup-20261024/scanner/study-derived.json"
+    ],
+    "pythonpath": "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-iterator-followup-20261024",
+    "exit_code": 0,
+    "duration_s": 15.285,
+    "output_sha256": "23bb1c4ac5644e694c881989741a8aa0f6632498d7a9557279c1de6234bfae26"
+  },
+  {
+    "cohort": "derived",
+    "script": "reproduce_reviewer_finding.py",
+    "argv": [
+      "/tmp/i155-followup-dist/derived-venv/bin/python",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-iterator-followup-20261024/docs/implementation/evidence/adr0031-i155-m01-iterator-followup-20261024/scanner/reproduce_reviewer_finding.py",
+      "--output",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-iterator-followup-20261024/docs/implementation/evidence/adr0031-i155-m01-iterator-followup-20261024/scanner/mutation-derived.json"
+    ],
+    "pythonpath": "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-iterator-followup-20261024",
+    "exit_code": 0,
+    "duration_s": 22.755,
+    "output_sha256": "cea80df72b275447d5c7eb470f6c825d0f94b770d2c02d8d61f62e39b3cf10bf"
+  }
+]

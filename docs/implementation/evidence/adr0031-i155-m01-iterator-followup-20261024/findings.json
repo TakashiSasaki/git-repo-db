@@ -1,0 +1,113 @@
+{
+  "correction_role": "Author",
+  "independent_verdict": false,
+  "verdict": "INCOMPLETE",
+  "status_summary": "Author follow-up correction resolving GitHub Codex review finding (discussion_r4366012662) and hosted CI failure submitted for non-Author independent re-review",
+  "base_branch": "fix/adr0031-i155-m01-admission-scanner",
+  "base_head": "1888b9c85de399e887b11000b09a01fe2e9936b8",
+  "base_tree": "090c6a678c96ec298ade1ff0a2c7bc14fc463653",
+  "findings": [
+    {
+      "id": "I155-M01-FOLLOWUP",
+      "severity": "P2",
+      "blocking": false,
+      "title": "Bound snapshots and revalidate actual child count during container mutation",
+      "source": "src/repo_catalog/domain/context_admission.py:382-458",
+      "review_reference": "https://github.com/TakashiSasaki/git-repo-db/pull/158#discussion_r4366012662",
+      "status": "RESOLVED_BY_AUTHOR_CORRECTION",
+      "requirements": ["REQ-FOL-1", "REQ-FOL-2", "REQ-FOL-3", "REQ-FOL-4", "REQ-FOL-5", "REQ-FOL-6", "REQ-FOL-7", "REQ-FOL-8"],
+      "resolution_summary": "Replaced unbounded tuple(item) snapshot with bounded iterator traversal in snapshot_sequence(). Enforced strict capacity checks before admitting each yielded child element. When child count reaches declared pre-reserved length or when adding another child breaches remaining work, the scanner immediately terminates traversal, charges 1 fixed refusal-accounting unit, and raises AdmissionRefused('INPUT_LIMIT'). Verified both snapshot and container length invariants after iteration. Extended dictionary scanning to enforce element-by-element capacity bounds during key/value traversal.",
+      "counterexample_measurements": {
+        "case_1_appending_list": {
+          "unfixed_queue_max": 1002,
+          "fixed_queue_max": 1,
+          "unfixed_snapshot_max": 1002,
+          "fixed_snapshot_max": 2,
+          "unfixed_used_work": 4,
+          "fixed_used_work": 2,
+          "outcome": "AdmissionRefused",
+          "code": "INPUT_LIMIT"
+        },
+        "case_2_changing_len": {
+          "unfixed_queue_max": 1,
+          "fixed_queue_max": 1,
+          "unfixed_snapshot_max": 500,
+          "fixed_snapshot_max": 2,
+          "unfixed_used_work": 2,
+          "fixed_used_work": 2,
+          "outcome": "AdmissionRefused",
+          "code": "INPUT_LIMIT"
+        },
+        "case_3_same_final_length": {
+          "unfixed_queue_max": 1002,
+          "fixed_queue_max": 1,
+          "unfixed_snapshot_max": 1002,
+          "fixed_snapshot_max": 2,
+          "unfixed_used_work": 4,
+          "fixed_used_work": 2,
+          "outcome": "AdmissionRefused",
+          "code": "INPUT_LIMIT"
+        },
+        "case_4_deceptive_len": {
+          "unfixed_queue_max": 1000,
+          "fixed_queue_max": 1,
+          "unfixed_snapshot_max": 1000,
+          "fixed_snapshot_max": 2,
+          "unfixed_used_work": 4,
+          "fixed_used_work": 2,
+          "outcome": "AdmissionRefused",
+          "code": "INPUT_LIMIT"
+        },
+        "case_5_exceeds_during_snapshot": {
+          "unfixed_queue_max": 1,
+          "fixed_queue_max": 1,
+          "unfixed_snapshot_max": 1000,
+          "fixed_snapshot_max": 2,
+          "unfixed_used_work": 2,
+          "fixed_used_work": 2,
+          "outcome": "AdmissionRefused",
+          "code": "INPUT_LIMIT"
+        },
+        "case_6_exact_boundaries": {
+          "list_used_work": 6,
+          "tuple_used_work": 6,
+          "outcome": "SUCCESS"
+        },
+        "real_store_relation": {
+          "unfixed_queue_max": 1006,
+          "fixed_queue_max": 6,
+          "unfixed_snapshot_max": 1002,
+          "fixed_snapshot_max": 2,
+          "unfixed_used_work": 26,
+          "fixed_used_work": 9,
+          "outcome": "AdmissionRefused",
+          "code": "INPUT_LIMIT",
+          "db_rows_after": 0,
+          "transfer_fence": true,
+          "in_transaction": false
+        }
+      }
+    },
+    {
+      "id": "CI-RUFF-FAIL",
+      "severity": "P2",
+      "blocking": false,
+      "title": "Hosted Development CI failure on Ruff I001 import ordering and F401 unused json import",
+      "source": "tests/unit/test_admission_scanner_budget.py:11-34",
+      "review_reference": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/40051883585",
+      "status": "RESOLVED_BY_AUTHOR_CORRECTION",
+      "requirements": ["REQ-FOL-9"],
+      "resolution_summary": "Removed unused json import from tests/unit/test_admission_scanner_budget.py, sorted imports according to ruff I001, and formatted with ruff format. Verified ruff check and ruff format --check pass with 0 errors across src, tests, scripts without broad ignore rules."
+    }
+  ],
+  "retained_baseline": {
+    "ordinary_failures": 279,
+    "ordinary_errors": 20,
+    "total_non_successes": 299,
+    "rationale": "Inherited 299 ordinary non-successes belong to downstream I6-C/Transfer stage backlog and ADR 0032 native SQLite 3.45.1 environment checks; preserved without regression."
+  },
+  "unexecuted_scope": [
+    "tests/e2e/test_github_sync.py::test_nested_pagination_stress_workload",
+    "tests/live/test_smoke.py::test_selected_repository"
+  ]
+}
