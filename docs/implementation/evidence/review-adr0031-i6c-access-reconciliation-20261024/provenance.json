@@ -1,0 +1,28 @@
+{
+  "contract": "HCI-L01",
+  "review_target": {
+    "pr": 163,
+    "branch": "fix/adr0031-i6c-access-reconciliation-20261024",
+    "reviewed_head_sha": "2b33405b1a95eeddea277789e3bcc7b6b7307759",
+    "reviewed_tree_sha": "0970b876c8152a2faefa343e43c5b366ddd7a568",
+    "tested_input_commit": "e4967ca7d1d129a726cf03a8d2e6ff31c0e56250",
+    "tested_input_tree": "1108b1ce553eb9d84c8c7869f04725d27dedf5cc"
+  },
+  "review_artifacts": {
+    "tests/integration/i6/test_i6c_independent_acceptance.py": {
+      "sha256": "7918e1226433be2fc59670ea9db44db376c0fb359022b2525767d950d2d6251b",
+      "blob_oid": "138ffb805432626dacdd85296cdb763b564f059a",
+      "bytes": 16554
+    },
+    "docs/implementation/evidence/review-adr0031-i6c-access-reconciliation-20261024/REVIEW_REPORT.md": {
+      "sha256": "f65e18094eb6200bfa56b786f1d6061df6043eae3f5bdd11520f2aab955d81e8",
+      "blob_oid": "16689a4eab8a3486918ade86ab563e7f2209eccc",
+      "bytes": 9689
+    },
+    "docs/implementation/evidence/review-adr0031-i6c-access-reconciliation-20261024/findings.json": {
+      "sha256": "89488e9d3095e07d54e10010e9af25568fa9f537cb651f92f68dd80362fe502b",
+      "blob_oid": "63c025128ef9732f27eb078b29afe840e1586964",
+      "bytes": 3007
+    }
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "phase": "Independent review / re-review",
+  "repository": "https://github.com/TakashiSasaki/git-repo-db",
+  "track": "I6-C",
+  "target_pr_url": "https://github.com/TakashiSasaki/git-repo-db/pull/163",
+  "target_branch": "fix/adr0031-i6c-access-reconciliation-20261024",
+  "target_head_sha": "2b33405b1a95eeddea277789e3bcc7b6b7307759",
+  "target_tree_sha": "0970b876c8152a2faefa343e43c5b366ddd7a568",
+  "author_tested_input_commit": "e4967ca7d1d129a726cf03a8d2e6ff31c0e56250",
+  "author_tested_input_tree": "1108b1ce553eb9d84c8c7869f04725d27dedf5cc",
+  "equivalence_verified": true,
+  "reviewer_role": "Independent Non-Author Reviewer",
+  "review_branch": "review/adr0031-i6c-access-reconciliation-20261024",
+  "decision": "SCOPED_ACCEPTANCE",
+  "status": "PASS",
+  "blocking_issues_count": {
+    "P0": 0,
+    "P1": 0
+  },
+  "obligations": {
+    "receiver_local_finite_grants": {
+      "status": "PASS",
+      "test_node": "tests/integration/i6/test_i6c_independent_acceptance.py::test_independent_receiver_local_finite_grants"
+    },
+    "authorized_paired_provider_and_exchange": {
+      "status": "PASS",
+      "test_node": "tests/integration/i6/test_i6c_independent_acceptance.py::test_independent_receiver_local_finite_grants"
+    },
+    "receiver_selections_empty_subset_full": {
+      "status": "PASS",
+      "test_node": "tests/integration/i6/test_i6c_independent_acceptance.py::test_independent_receiver_selections_empty_subset_full"
+    },
+    "missing_foreign_revoked_authority": {
+      "status": "PASS",
+      "test_node": "tests/integration/i6/test_i6c_independent_acceptance.py::test_independent_missing_foreign_and_revoked_authority"
+    },
+    "core_first_paired_failure_semantics": {
+      "status": "PASS",
+      "test_node": "tests/integration/i6/test_i6c_independent_acceptance.py::test_independent_core_first_paired_failure_semantics"
+    },
+    "outside_checkout_wheel_distribution_probes": {
+      "status": "PASS",
+      "direct_wheel_sha256": "c3a147b2111e2e22e75af1c1390cfe9b9e8a8f68f5a4a8a6f3584bd608b1360a",
+      "derived_wheel_sha256": "c3a147b2111e2e22e75af1c1390cfe9b9e8a8f68f5a4a8a6f3584bd608b1360a",
+      "byte_for_byte_equivalent": true,
+      "installed_environments_verified": 2,
+      "exit_code": 0
+    },
+    "transfer_fence_preservation_native_sqlite": {
+      "status": "PASS",
+      "sqlite_version": "3.53.1",
+      "transfer_sql_fences_active": true,
+      "test_node": "tests/integration/i6/test_i6c_independent_acceptance.py::test_independent_transfer_fence_preservation"
+    },
+    "broad_regression_reconciliation": {
+      "status": "PASS",
+      "baseline_pr154_non_successes": 299,
+      "resolved": 84,
+      "inherited_transfer_fence_failures": 215,
+      "new_regressions": 0
+    },
+    "prompt_inquiries": {
+      "grants_based_fallback_boundary": "SAFE_AS_DESIGNED",
+      "dependency_extraction_preflight_protection": "SAFE_WITH_PREFLIGHT_ENFORCEMENT",
+      "derive_grants_helpers": "TEST_ONLY_HARNESS_CONFIRMED"
+    }
+  },
+  "comments": []
+}
