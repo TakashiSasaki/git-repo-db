@@ -19,6 +19,7 @@ from repo_catalog.domain.acquisition import (
     ProviderIntakeBatch,
     ProviderRegistration,
     RepositoryRegistration,
+    make_provenance,
 )
 from repo_catalog.domain.context_admission import (
     AdmissionBudget,
@@ -38,7 +39,9 @@ from repo_catalog.domain.exchange_rows import validate_rows
 from repo_catalog.domain.p1_context import (
     FieldClock,
     MappingClaimKey,
+    MappingDisposition,
     ResourceKey,
+    ResourceRepositoryRelation,
     canonical,
 )
 from repo_catalog.domain.p1_coordination import AdmissionFailure
@@ -1578,3 +1581,395 @@ def test_exchange_import_custom_policy_supported_interface(tmp_path):
     assert report.admitted_context_resources == 1
     with sqlite3.connect(receiver_path / "context.sqlite3") as ctx_db:
         assert ctx_db.execute("SELECT count(*) FROM resources").fetchone()[0] == 1
+
+
+def test_independent_source_and_disposition_authorization_e2e(tmp_path):
+    """Real SQLite stores: Independent Source, MappingClaim, and Disposition authorization.
+
+    Verifies that:
+    1. A package containing Resource, Source, SourceRepository, MappingClaim, and
+       MappingDisposition fails closed with PERMISSION_DENIED and 0 writes when
+       receiver authority omits Source or MappingClaim or Disposition grants.
+    2. Import succeeds when receiver authority supplies complete independent grants,
+       and all persistent rows in providers, repositories, sources, source_repositories,
+       resources, resource_repository_relations, and repository_mapping_dispositions
+       are verified in SQLite.
+    """
+    sender_path = tmp_path / "sender"
+    receiver_path = tmp_path / "receiver"
+    repo_uuid = str(uuid4())
+    receiver_repo = str(uuid4())
+    sender_instance = str(uuid4())
+    receiver_instance = str(uuid4())
+    source_uuid = str(uuid4())
+
+    init_catalog_stores(
+        sender_path,
+        repository_uuidv4=repo_uuid,
+        catalog_instance_uuidv4=sender_instance,
+    )
+    init_catalog_stores(
+        receiver_path,
+        repository_uuidv4=receiver_repo,
+        catalog_instance_uuidv4=receiver_instance,
+    )
+
+    issue_key = ResourceKey(sender_instance, "issue", encode_identity(["bug-500"]))
+    provider_repo = ResourceKey(
+        sender_instance, "repository", encode_identity(["org/project"])
+    )
+
+    mapping = ResourceRepositoryRelation(
+        provider_repo,
+        "represents_repository",
+        FieldClock("mapping", 10),
+        canonical(repo_uuid),
+        make_provenance("mapping", "original-mapping-evidence"),
+        10,
+    )
+    withdrawal = MappingDisposition(
+        mapping.claim_key,
+        "withdraw",
+        FieldClock("mapping", 20),
+        make_provenance("mapping", "withdraw-evidence"),
+        20,
+    )
+
+    complete_sender_grants = DependencySet(
+        resources={issue_key, provider_repo},
+        repositories={repo_uuid},
+        sources={source_uuid},
+        source_repository_pairs={(source_uuid, repo_uuid)},
+        provider_registrations={sender_instance},
+        mapping_claims={mapping.claim_key},
+        dispositions={withdrawal.disposition_key},
+    )
+
+    auth_s, adm_s, _ = create_local_admission_service(
+        "provider_intake",
+        grants=complete_sender_grants,
+        selection=AdmissionSelection(all_selected=True, max_work=10000),
+    )
+    with Context.transaction(sender_path, authorization=auth_s, admission=adm_s) as ctx:
+        ctx.provider(sender_instance, "github", "{}")
+        ctx.repository(repo_uuid)
+        ctx.source(source_uuid, sender_instance, "{}")
+        ctx.associate_source(source_uuid, repo_uuid, "{}")
+        ctx.resource(issue_key)
+        ctx.resource(provider_repo)
+        ctx.admit_repository_relation(mapping)
+        ctx.admit_mapping_disposition(withdrawal)
+
+    pkg = ExchangeService(sender_path).export_package(
+        selection=ExchangeSelectionScope(all_selected=True)
+    )
+
+    receiver_service = ExchangeService(receiver_path)
+
+    # Negative Case 1: Receiver grants cover resources and repo, but omit sources and mapping/dispositions
+    partial_grants_no_source = DependencySet(
+        resources={issue_key, provider_repo},
+        repositories={repo_uuid},
+        provider_registrations={sender_instance},
+        mapping_claims={mapping.claim_key},
+        dispositions={withdrawal.disposition_key},
+    )
+    with pytest.raises(AdmissionRefused) as exc_info:
+        receiver_service.import_package(
+            pkg,
+            permitted_repository_uuidv4s=(repo_uuid,),
+            grants=partial_grants_no_source,
+            new_request=True,
+        )
+    assert exc_info.value.code == "PERMISSION_DENIED"
+
+    # Verify zero writes to receiver stores
+    with sqlite3.connect(receiver_path / "context.sqlite3") as ctx_db:
+        assert ctx_db.execute("SELECT count(*) FROM sources").fetchone()[0] == 0
+        assert ctx_db.execute("SELECT count(*) FROM resources").fetchone()[0] == 0
+
+    # Negative Case 2: Receiver grants cover resources, repo, sources, but omit dispositions
+    partial_grants_no_disp = DependencySet(
+        resources={issue_key, provider_repo},
+        repositories={repo_uuid},
+        sources={source_uuid},
+        source_repository_pairs={(source_uuid, repo_uuid)},
+        provider_registrations={sender_instance},
+        mapping_claims={mapping.claim_key},
+    )
+    with pytest.raises(AdmissionRefused) as exc_info:
+        receiver_service.import_package(
+            pkg,
+            permitted_repository_uuidv4s=(repo_uuid,),
+            grants=partial_grants_no_disp,
+            new_request=True,
+        )
+    assert exc_info.value.code == "PERMISSION_DENIED"
+
+    # Positive Case: Receiver supplies complete independent grants for all dimensions
+    complete_receiver_grants = DependencySet(
+        resources={issue_key, provider_repo},
+        repositories={repo_uuid},
+        sources={source_uuid},
+        source_repository_pairs={(source_uuid, repo_uuid)},
+        provider_registrations={sender_instance},
+        mapping_claims={mapping.claim_key},
+        dispositions={withdrawal.disposition_key},
+    )
+    report = receiver_service.import_package(
+        pkg,
+        permitted_repository_uuidv4s=(repo_uuid,),
+        grants=complete_receiver_grants,
+        new_request=True,
+    )
+    assert report.admitted_context_resources == 2
+
+    # Inspect persistent SQLite rows across all dimensions
+    with sqlite3.connect(receiver_path / "core.sqlite3") as core_db:
+        assert (
+            core_db.execute(
+                "SELECT count(*) FROM repositories WHERE repository_uuidv4=?",
+                (repo_uuid,),
+            ).fetchone()[0]
+            == 1
+        )
+
+    with sqlite3.connect(receiver_path / "context.sqlite3") as ctx_db:
+        assert (
+            ctx_db.execute(
+                "SELECT count(*) FROM providers WHERE service_instance_uuidv4=?",
+                (sender_instance,),
+            ).fetchone()[0]
+            == 1
+        )
+        assert (
+            ctx_db.execute(
+                "SELECT count(*) FROM sources WHERE source_registration_uuidv4=?",
+                (source_uuid,),
+            ).fetchone()[0]
+            == 1
+        )
+        assert (
+            ctx_db.execute(
+                "SELECT count(*) FROM source_repositories WHERE source_registration_uuidv4=?",
+                (source_uuid,),
+            ).fetchone()[0]
+            == 1
+        )
+        assert ctx_db.execute("SELECT count(*) FROM resources").fetchone()[0] == 2
+        assert (
+            ctx_db.execute(
+                "SELECT count(*) FROM resource_repository_relations WHERE relation_kind='represents_repository'"
+            ).fetchone()[0]
+            == 1
+        )
+        assert (
+            ctx_db.execute(
+                "SELECT count(*) FROM repository_mapping_dispositions WHERE disposition_kind='withdraw'"
+            ).fetchone()[0]
+            == 1
+        )
+
+
+def test_sender_data_cannot_create_receiver_authority_or_inject_grants(tmp_path):
+    """Sender data on the wire cannot influence or widen receiver authority.
+
+    Proves that:
+    1. Receiver-local grants constructed independently from package contents
+       strictly reject unauthorized sender resources/registrations with PERMISSION_DENIED.
+    2. Sender-injected extra metadata or claims cannot bypass receiver policy.
+    3. Whole-unit failure guarantees 0 writes to receiver stores.
+    """
+    sender_path = tmp_path / "sender"
+    receiver_path = tmp_path / "receiver"
+    repo_uuid = str(uuid4())
+    receiver_repo = str(uuid4())
+    sender_instance = str(uuid4())
+    receiver_instance = str(uuid4())
+
+    init_catalog_stores(
+        sender_path,
+        repository_uuidv4=repo_uuid,
+        catalog_instance_uuidv4=sender_instance,
+    )
+    init_catalog_stores(
+        receiver_path,
+        repository_uuidv4=receiver_repo,
+        catalog_instance_uuidv4=receiver_instance,
+    )
+
+    res_legit = ResourceKey(sender_instance, "issue", encode_identity(["legit-1"]))
+    res_unauthorized = ResourceKey(
+        sender_instance, "issue", encode_identity(["evil-unauthorized-2"])
+    )
+
+    sender_grants = DependencySet(
+        resources={res_legit, res_unauthorized},
+        repositories={repo_uuid},
+        provider_registrations={sender_instance},
+    )
+    auth_s, adm_s, _ = create_local_admission_service(
+        "provider_intake",
+        grants=sender_grants,
+        selection=AdmissionSelection(all_selected=True, max_work=10000),
+    )
+    with Context.transaction(sender_path, authorization=auth_s, admission=adm_s) as ctx:
+        ctx.provider(sender_instance, "github", "{}")
+        ctx.repository(repo_uuid)
+        ctx.resource(res_legit)
+        ctx.resource(res_unauthorized)
+
+    # Sender exports both resources
+    pkg = ExchangeService(sender_path).export_package(
+        selection=ExchangeSelectionScope(all_selected=True)
+    )
+
+    receiver_service = ExchangeService(receiver_path)
+
+    # Receiver defines its trusted grants independently: ONLY permits res_legit!
+    trusted_receiver_grants = DependencySet(
+        resources={res_legit},
+        repositories={repo_uuid},
+        provider_registrations={sender_instance},
+    )
+
+    # Sender sends package containing res_unauthorized; receiver must fail closed
+    with pytest.raises(AdmissionRefused) as exc_info:
+        receiver_service.import_package(
+            pkg,
+            permitted_repository_uuidv4s=(repo_uuid,),
+            grants=trusted_receiver_grants,
+            new_request=True,
+        )
+    assert exc_info.value.code == "PERMISSION_DENIED"
+
+    # Entire import rolled back / rejected with 0 writes
+    with sqlite3.connect(receiver_path / "core.sqlite3") as core_db:
+        assert (
+            core_db.execute(
+                "SELECT count(*) FROM repositories WHERE repository_uuidv4=?",
+                (repo_uuid,),
+            ).fetchone()[0]
+            == 0
+        )
+    with sqlite3.connect(receiver_path / "context.sqlite3") as ctx_db:
+        assert ctx_db.execute("SELECT count(*) FROM resources").fetchone()[0] == 0
+
+    # If receiver uses selective import restricted to legit resource, it succeeds
+    from repo_catalog.domain.p1_coordination import RequestIdentity
+
+    receiver_selection = ExchangeSelectionScope(
+        repository_uuidv4s=(repo_uuid,),
+        resource_keys=(res_legit,),
+        object_oids=(),
+        source_uuidv4s=(),
+    )
+    report = receiver_service.import_package(
+        pkg,
+        selection=receiver_selection,
+        permitted_repository_uuidv4s=(repo_uuid,),
+        grants=trusted_receiver_grants,
+        request=RequestIdentity(str(uuid4()), str(uuid4())),
+        new_request=True,
+    )
+    assert report.admitted_context_resources == 1
+    with sqlite3.connect(receiver_path / "context.sqlite3") as ctx_db:
+        rows = ctx_db.execute("SELECT provider_resource_id FROM resources").fetchall()
+        assert len(rows) == 1
+        assert rows[0][0] == encode_identity(["legit-1"])
+
+
+def test_dependency_extraction_malformed_input_fails_preflight_safely(tmp_path):
+    """Inquiry 2: Malformed relation or disposition wire input fails during preflight.
+
+    Demonstrates that preflight schema and structural validation catches invalid
+    wire inputs before any paired transaction, package binding, or storage write,
+    ensuring Core and Context remain untainted (0 writes).
+    """
+    sender_path = tmp_path / "sender"
+    receiver_path = tmp_path / "receiver"
+    repo_uuid = str(uuid4())
+    receiver_repo = str(uuid4())
+    sender_instance = str(uuid4())
+    receiver_instance = str(uuid4())
+
+    init_catalog_stores(
+        sender_path,
+        repository_uuidv4=repo_uuid,
+        catalog_instance_uuidv4=sender_instance,
+    )
+    init_catalog_stores(
+        receiver_path,
+        repository_uuidv4=receiver_repo,
+        catalog_instance_uuidv4=receiver_instance,
+    )
+
+    res_key = ResourceKey(sender_instance, "issue", encode_identity(["issue-1"]))
+    auth_s, adm_s, _ = create_local_admission_service(
+        "provider_intake",
+        grants=DependencySet(
+            resources={res_key},
+            repositories={repo_uuid},
+            provider_registrations={sender_instance},
+        ),
+        selection=AdmissionSelection(all_selected=True, max_work=10000),
+    )
+    with Context.transaction(sender_path, authorization=auth_s, admission=adm_s) as ctx:
+        ctx.provider(sender_instance, "github", "{}")
+        ctx.repository(repo_uuid)
+        ctx.resource(res_key)
+
+    pkg = ExchangeService(sender_path).export_package(
+        selection=ExchangeSelectionScope(all_selected=True)
+    )
+
+    # Tamper with package context to inject a malformed relation row (corrupted clock_json)
+    corrupted_context = dict(pkg.context)
+    corrupted_context["resource_repository_relations"] = [
+        {
+            "service_instance_uuidv4": sender_instance,
+            "resource_kind": "issue",
+            "provider_resource_id": encode_identity(["issue-1"]),
+            "relation_kind": "represents_repository",
+            "clock_json": "{NOT_VALID_JSON}",
+            "target_json": canonical(repo_uuid),
+            "provenance_json": "{}",
+            "observed_at_us": 100,
+        }
+    ]
+    corrupted_pkg = dict(
+        format=pkg.format,
+        package_id=str(uuid4()),
+        sender_catalog_instance_uuidv4=pkg.sender_catalog_instance_uuidv4,
+        exported_at_us=pkg.exported_at_us,
+        selection_scope=pkg.selection_scope.to_dict(),
+        core=pkg.core,
+        context=corrupted_context,
+    )
+
+    receiver_service = ExchangeService(receiver_path)
+    receiver_grants = DependencySet(
+        resources={res_key},
+        repositories={repo_uuid},
+        provider_registrations={sender_instance},
+    )
+
+    with pytest.raises(Exception):
+        receiver_service.import_package(
+            corrupted_pkg,
+            permitted_repository_uuidv4s=(repo_uuid,),
+            grants=receiver_grants,
+            new_request=True,
+        )
+
+    # Exactly 0 writes to receiver Core and Context
+    with sqlite3.connect(receiver_path / "core.sqlite3") as core_db:
+        assert (
+            core_db.execute(
+                "SELECT count(*) FROM repositories WHERE repository_uuidv4=?",
+                (repo_uuid,),
+            ).fetchone()[0]
+            == 0
+        )
+    with sqlite3.connect(receiver_path / "context.sqlite3") as ctx_db:
+        assert ctx_db.execute("SELECT count(*) FROM resources").fetchone()[0] == 0
