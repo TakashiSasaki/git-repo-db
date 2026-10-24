@@ -764,3 +764,51 @@ def test_mutation_defense_real_store_relation_armed_list():
     assert has_transfer_fence(db)
     assert not db.in_transaction
     db.close()
+
+
+def test_post_traversal_mutation_charged_only_once():
+    class MutatingList(list):
+        def __iter__(self):
+            it = super().__iter__()
+            for x in it:
+                yield x
+            self.append(999)
+
+    class MutatingDict(dict):
+        def values(self):
+            return list(super().values())
+
+        def keys(self):
+            ks = list(super().keys())
+            self["mutated"] = 999
+            return ks
+
+    class DummyPolicy:
+        def lease(self, principal, operation, deps):
+            pass
+
+    service = ContextAdmissionService(DummyPolicy(), lambda cred: "user")
+
+    # List mutation charges exactly 2 units (1 root pop + 1 refusal unit)
+    ctx1 = service.context(
+        "cred",
+        "provider_intake",
+        AdmissionSelection(all_selected=True, max_work=100),
+        AdmissionBudget(work_limit=100),
+    )
+    with pytest.raises(AdmissionRefused) as exc1:
+        service.charge_input(ctx1, MutatingList([1, 2]))
+    assert exc1.value.code == "INPUT_LIMIT"
+    assert ctx1.budget.used_work == 2
+
+    # Dict mutation charges exactly 2 units (1 root pop + 1 refusal unit)
+    ctx2 = service.context(
+        "cred",
+        "provider_intake",
+        AdmissionSelection(all_selected=True, max_work=100),
+        AdmissionBudget(work_limit=100),
+    )
+    with pytest.raises(AdmissionRefused) as exc2:
+        service.charge_input(ctx2, MutatingDict({"a": 1, "b": 2}))
+    assert exc2.value.code == "INPUT_LIMIT"
+    assert ctx2.budget.used_work == 2

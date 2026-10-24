@@ -412,10 +412,12 @@ class ContextAdmissionService:
                 raise AdmissionRefused("INPUT_LIMIT")
 
             try:
-                if len(container) != declared:
-                    charge(work=1)
-                    raise AdmissionRefused("INPUT_LIMIT")
+                final_len = len(container)
             except Exception:
+                charge(work=1)
+                raise AdmissionRefused("INPUT_LIMIT")
+
+            if final_len != declared:
                 charge(work=1)
                 raise AdmissionRefused("INPUT_LIMIT")
 
@@ -489,10 +491,12 @@ class ContextAdmissionService:
                     charge(work=1)
                     raise AdmissionRefused("INPUT_LIMIT")
                 try:
-                    if len(item) != declared:
-                        charge(work=1)
-                        raise AdmissionRefused("INPUT_LIMIT")
+                    final_len = len(item)
                 except Exception:
+                    charge(work=1)
+                    raise AdmissionRefused("INPUT_LIMIT")
+
+                if final_len != declared:
                     charge(work=1)
                     raise AdmissionRefused("INPUT_LIMIT")
                 pending.extend((child, depth + 1) for child in children)
