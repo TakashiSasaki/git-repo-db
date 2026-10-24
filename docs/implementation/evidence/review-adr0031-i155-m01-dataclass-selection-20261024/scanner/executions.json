@@ -1,0 +1,20 @@
+[
+  {
+    "cohort": "source",
+    "duration_s": 0.219,
+    "exit_code": 0,
+    "module_path": "/home/ubuntu/github/git-repo-db/review/adr0031-i155-m01-dataclass-selection-20261024/src/repo_catalog/__init__.py"
+  },
+  {
+    "cohort": "direct_wheel",
+    "duration_s": 0.305,
+    "exit_code": 0,
+    "module_path": "/tmp/review-i155-dist-build/venv-direct/lib/python3.12/site-packages/repo_catalog/__init__.py"
+  },
+  {
+    "cohort": "derived_wheel",
+    "duration_s": 0.317,
+    "exit_code": 0,
+    "module_path": "/tmp/review-i155-dist-build/venv-derived/lib/python3.12/site-packages/repo_catalog/__init__.py"
+  }
+]

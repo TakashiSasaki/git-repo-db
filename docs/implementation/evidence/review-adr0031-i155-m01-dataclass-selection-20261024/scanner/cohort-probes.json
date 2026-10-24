@@ -1,0 +1,47 @@
+{
+  "source": {
+    "module_path": "/home/ubuntu/github/git-repo-db/review/adr0031-i155-m01-dataclass-selection-20261024/src/repo_catalog/__init__.py",
+    "case_1000_refusal": "INPUT_LIMIT",
+    "case_1000_used_work": 2,
+    "case_1000_accesses": 0,
+    "case_6_fail_refusal": "INPUT_LIMIT",
+    "case_6_fail_used_work": 2,
+    "case_6_pass_used_work": 7,
+    "store_refusal": "INPUT_LIMIT",
+    "store_used_work": 9,
+    "store_db_rows": 0,
+    "store_in_transaction": false,
+    "store_transfer_fence": true,
+    "sqlite_version": "3.45.1"
+  },
+  "direct_wheel": {
+    "module_path": "/tmp/review-i155-dist-build/venv-direct/lib/python3.12/site-packages/repo_catalog/__init__.py",
+    "case_1000_refusal": "INPUT_LIMIT",
+    "case_1000_used_work": 2,
+    "case_1000_accesses": 0,
+    "case_6_fail_refusal": "INPUT_LIMIT",
+    "case_6_fail_used_work": 2,
+    "case_6_pass_used_work": 7,
+    "store_refusal": "INPUT_LIMIT",
+    "store_used_work": 9,
+    "store_db_rows": 0,
+    "store_in_transaction": false,
+    "store_transfer_fence": true,
+    "sqlite_version": "3.45.1"
+  },
+  "derived_wheel": {
+    "module_path": "/tmp/review-i155-dist-build/venv-derived/lib/python3.12/site-packages/repo_catalog/__init__.py",
+    "case_1000_refusal": "INPUT_LIMIT",
+    "case_1000_used_work": 2,
+    "case_1000_accesses": 0,
+    "case_6_fail_refusal": "INPUT_LIMIT",
+    "case_6_fail_used_work": 2,
+    "case_6_pass_used_work": 7,
+    "store_refusal": "INPUT_LIMIT",
+    "store_used_work": 9,
+    "store_db_rows": 0,
+    "store_in_transaction": false,
+    "store_transfer_fence": true,
+    "sqlite_version": "3.45.1"
+  }
+}

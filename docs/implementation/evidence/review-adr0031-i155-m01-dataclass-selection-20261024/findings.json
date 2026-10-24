@@ -1,0 +1,157 @@
+{
+  "review_metadata": {
+    "repository": "https://github.com/TakashiSasaki/git-repo-db",
+    "target_pr": 165,
+    "target_pr_url": "https://github.com/TakashiSasaki/git-repo-db/pull/165",
+    "target_branch": "fix/adr0031-i155-m01-dataclass-selection-20261024",
+    "frozen_head_sha": "d81951868ac4fc252f8c0f38c22cf2c38d6146d4",
+    "frozen_tree_sha": "f7eabd5623dba6d39183ce88d4d57e5852676e2e",
+    "base_commit_sha": "bebc039ed9772edf0737caf8f5520134907317e0",
+    "author_tested_input_commit_sha": "fbfd7a35b6f11befcf45e41eb52ba019f9dc28d2",
+    "author_tested_input_tree_sha": "08df9ffe3bfb2c98cc9f4196ff082c5c1024283e",
+    "submission_commit_claimed_in_pr_body": "d8195186f913d0859c258d4a9829285038ec10ea",
+    "submission_commit_actual_git_object": "d81951868ac4fc252f8c0f38c22cf2c38d6146d4",
+    "review_role": "Independent Non-Author Reviewer",
+    "environment_sqlite_version": "3.45.1",
+    "review_decision": "SCOPED_ACCEPTANCE",
+    "release_readiness": "BLOCKED_ON_TRANSFER_AND_SQLITE_BASELINE"
+  },
+  "identity_reconciliation": {
+    "finding": "PR #165 body recorded submission SHA 'd8195186f913d0859c258d4a9829285038ec10ea', whereas GitHub returned 'd81951868ac4fc252f8c0f38c22cf2c38d6146d4'",
+    "resolution": "RESOLVED_GENUINE_OBJECT",
+    "details": "Inspection of Git repository objects via git cat-file confirms d81951868ac4fc252f8c0f38c22cf2c38d6146d4 is the genuine, valid Git commit object at refs/heads/fix/adr0031-i155-m01-dataclass-selection-20261024 (and GitHub headRefOid). The claimed string d8195186f913... does not exist as an object. Both tested-input (fbfd7a35) and submission commit (d8195186) share identical executable trees; diff -- src tests scripts pyproject.toml is completely empty (0 bytes)."
+  },
+  "obligations": [
+    {
+      "id": "OBL-1",
+      "title": "Genuine service-issued context scanning a 1,000-field dataclass with work_limit=10000 and selection.max_work=7",
+      "status": "PASS",
+      "evidence": "tests/unit/test_dataclass_selection_independent_acceptance.py::test_genuine_service_issued_context_1000_fields passed. service.context() issued genuine AdmissionContext with principal 'user-for-valid-token'. Refusal code 'INPUT_LIMIT' raised at used_work=2 (1 for root object pop + 1 refusal fee).",
+      "measurements": {
+        "work_limit": 10000,
+        "selection_max_work": 7,
+        "field_count": 1000,
+        "used_work": 2,
+        "refusal_code": "INPUT_LIMIT"
+      }
+    },
+    {
+      "id": "OBL-2",
+      "title": "Refusal before field access, members materialization and pending extension",
+      "status": "PASS",
+      "evidence": "Instrumented observer in test_genuine_service_issued_context_1000_fields confirmed attribute_accesses == 0, max_members_len == 0, max_queue_len == 1, max_snapshot_len == 0. Refusal occurs strictly within reserve_children(1000) prior to list comprehension or queue extend.",
+      "measurements": {
+        "attribute_accesses": 0,
+        "max_members_len": 0,
+        "max_queue_len": 1,
+        "max_snapshot_len": 0
+      }
+    },
+    {
+      "id": "OBL-3",
+      "title": "Permutation matrix of budget vs selection bounds, prior work, siblings, exact boundaries, zero/exhausted capacity, and single refusal fee",
+      "status": "PASS",
+      "evidence": "tests/unit/test_dataclass_selection_independent_acceptance.py tests covering: test_budget_lower_than_selection (budget=6, selection=100 -> used_work=2, INPUT_LIMIT), test_selection_lower_than_budget (selection=6, budget=100 -> used_work=2, INPUT_LIMIT), test_prior_cumulative_work_reduces_dataclass_capacity (prior=14, limit=20 -> used_work=16, INPUT_LIMIT), test_pending_siblings_congestion (pending=4 siblings, count=6, remaining=8 -> len(pending)+count=10 > 8 -> used_work=3, INPUT_LIMIT), test_exact_boundaries (budget=7, selection=7 -> used_work=7 SUCCESS; budget=6 -> used_work=2 FAIL; selection=6 -> used_work=2 FAIL), test_zero_and_exhausted_capacity (work_limit=0 -> used_work=1; work_limit=1 -> used_work=2), test_single_refusal_fee_no_double_charging (used_work=2). All 8 permutation scenarios pass.",
+      "measurements": {
+        "budget_lower_than_selection": "PASS",
+        "selection_lower_than_budget": "PASS",
+        "prior_cumulative_work": "PASS",
+        "pending_siblings_congestion": "PASS",
+        "exact_boundaries": "PASS",
+        "zero_capacity": "PASS",
+        "exhausted_capacity": "PASS",
+        "single_refusal_charge": "PASS"
+      }
+    },
+    {
+      "id": "OBL-4",
+      "title": "fields() reflection allocations and custom attribute callback behavior",
+      "status": "PASS",
+      "evidence": "Verified reflection error containment (test_fields_reflection_exception_containment: trapped with code INPUT_LIMIT, used_work=2), arbitrary attribute getter exception containment (test_attribute_callback_arbitrary_exception_containment: trapped with code INPUT_LIMIT, used_work=2), and direct AdmissionRefused passthrough (test_attribute_callback_admission_refused_passthrough: re-raised with code INPUT_LIMIT, used_work=1 without double charging). Verified distinction between exception containment and bounded arbitrary callback execution: test_bounded_callback_execution_distinction proved arbitrary BombDataclass getters are NEVER executed when count > remaining capacity.",
+      "measurements": {
+        "reflection_exception_code": "INPUT_LIMIT",
+        "reflection_exception_used_work": 2,
+        "arbitrary_getter_exception_code": "INPUT_LIMIT",
+        "arbitrary_getter_exception_used_work": 2,
+        "passthrough_admission_refused_code": "INPUT_LIMIT",
+        "passthrough_admission_refused_used_work": 1,
+        "bomb_getter_executed": false
+      }
+    },
+    {
+      "id": "OBL-5",
+      "title": "Original mutation and real-Store counterexamples, rollback, persistent rows, transaction outcome and lease cleanup",
+      "status": "PASS",
+      "evidence": "tests/unit/test_dataclass_selection_independent_acceptance.py::test_real_store_counterexample_and_rollback and test_real_store_dataclass_relation_selection_limit_7 passed. Mutating container and 1000-member dataclass store relations refused with INPUT_LIMIT. Persistent rows in SQLite: db_rows == 0. in_transaction: False (clean rollback). Temporary lease directory freed (temp_path.exists() == False).",
+      "measurements": {
+        "store_relation_refusal": "INPUT_LIMIT",
+        "persistent_rows_added": 0,
+        "in_transaction": false,
+        "lease_directory_cleaned": true
+      }
+    },
+    {
+      "id": "OBL-6",
+      "title": "Critical probes against source, direct installed wheel and sdist-derived installed wheel in separate outside-checkout environments",
+      "status": "PASS",
+      "evidence": "Executed scripts/verify_dataclass_selection_distribution.py. Direct wheel (SHA-256 7dbbcfee566998e614cab97d5831c2ac941303b952c0d79183989c7d1d9c75c9) and derived wheel (SHA-256 7dbbcfee566998e614cab97d5831c2ac941303b952c0d79183989c7d1d9c75c9) installed in isolated outside-checkout venvs. All 3 cohorts (source, direct_wheel, derived_wheel) produced identical results: case_1000_refusal=INPUT_LIMIT, used_work=2, accesses=0; case_6_fail_refusal=INPUT_LIMIT, used_work=2; case_6_pass_used_work=7; store_refusal=INPUT_LIMIT, store_db_rows=0, store_in_transaction=false, store_transfer_fence=true.",
+      "measurements": {
+        "source_cohort": "PASS",
+        "direct_wheel_cohort": "PASS",
+        "derived_wheel_cohort": "PASS"
+      }
+    },
+    {
+      "id": "OBL-7",
+      "title": "Minimal sdist, product member equivalence and both normal Transfer SQL fences",
+      "status": "PASS",
+      "evidence": "scripts/check_sdist_contract.py on repo_catalog-0.2.0.tar.gz verified: compressed_bytes=703,090 (<= 2,097,152), unpacked_bytes=6,046,753 (<= 8,388,608), member_count=164 (<= 512). Direct and derived wheels are 100% bit-for-bit identical (equal_full_zip_bytes: true, 164 members). has_transfer_fence(db) returned True in both schema setup and post-rollback states.",
+      "measurements": {
+        "sdist_compressed_bytes": 703090,
+        "sdist_unpacked_bytes": 6046753,
+        "sdist_member_count": 164,
+        "equal_full_zip_bytes": true,
+        "transfer_sql_fence_present": true
+      }
+    },
+    {
+      "id": "OBL-8",
+      "title": "Audit the 37-pass focused claim and the 670 PASS / 8 FAIL / 8 ERROR broad claim against raw evidence and actual node identities",
+      "status": "PASS",
+      "evidence": "Independently executed tests/unit/test_admission_scanner_budget.py: 37 passed in 47.10s. Independently executed the 686-node broad regression suite (pytest tests/unit/test_context_*.py tests/unit/test_admission_*.py tests/unit/test_transfer_*.py): exactly 670 passed, 8 failed, 8 errors in 60.35s. Audited every failing node: 8 errors in test_context_coordinator_admission.py and 2 failures in test_context_fixture_authority.py are due to environment SQLite 3.45.1 < required 3.51.3; 6 failures in test_context_fences_i6a.py are due to coordinator/disk catalog capability profile. All 16 non-success nodes are identical to baseline PR #162.",
+      "measurements": {
+        "focused_suite_nodes": 37,
+        "focused_suite_passed": 37,
+        "broad_suite_nodes": 686,
+        "broad_suite_passed": 670,
+        "broad_suite_failed": 8,
+        "broad_suite_errors": 8,
+        "new_regressions": 0
+      }
+    }
+  ],
+  "audit_node_identities": {
+    "coordinator_errors_8": [
+      "tests/unit/test_context_coordinator_admission.py::test_local_authority_survives_callback_until_actual_commit[False]",
+      "tests/unit/test_context_coordinator_admission.py::test_local_authority_survives_callback_until_actual_commit[True]",
+      "tests/unit/test_context_coordinator_admission.py::test_revocation_after_callback_rolls_back_context_before_commit",
+      "tests/unit/test_context_coordinator_admission.py::test_missing_context_binding_does_not_create_authority",
+      "tests/unit/test_context_coordinator_admission.py::test_conflicting_local_binding_cannot_replace_coordinator_invocation",
+      "tests/unit/test_context_coordinator_admission.py::test_deferred_context_commit_failure_rolls_back_real_pending_rows",
+      "tests/unit/test_context_coordinator_admission.py::test_export_invocation_cannot_open_mutation_or_commit_core",
+      "tests/unit/test_context_coordinator_admission.py::test_bound_source_repository_coverage_closes_cursors_and_expires_them"
+    ],
+    "fixture_authority_failures_2": [
+      "tests/unit/test_context_fixture_authority.py::test_facade_fixture_grants_are_finite_and_no_product_default_is_installed",
+      "tests/unit/test_context_fixture_authority.py::test_facade_fixture_refuses_foreign_issued_context_before_foreign_policy"
+    ],
+    "fences_i6a_failures_6": [
+      "tests/unit/test_context_fences_i6a.py::test_t19_normal_reopen_refuses_modified_catalog[missing-report]",
+      "tests/unit/test_context_fences_i6a.py::test_t19_normal_reopen_refuses_modified_catalog[missing-endpoint]",
+      "tests/unit/test_context_fences_i6a.py::test_t19_normal_reopen_refuses_modified_catalog[both-missing]",
+      "tests/unit/test_context_fences_i6a.py::test_t19_normal_reopen_refuses_modified_catalog[altered-report]",
+      "tests/unit/test_context_fences_i6a.py::test_t19_private_isolation_scope_refuses_disk_catalog",
+      "tests/unit/test_context_fences_i6a.py::test_t19_trusted_coordinator_capabilities_keep_their_restricted_profile"
+    ]
+  }
+}
