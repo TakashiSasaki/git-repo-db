@@ -3,8 +3,8 @@
   "repository": "https://github.com/TakashiSasaki/git-repo-db",
   "base_branch": "fix/adr0031-i6c-regression-hardening-20261024",
   "base_commit": "55de572bdac4b9b90b131d89025b0ed304cd0159",
-  "tested_input_commit": "363eb6fdb8c12f854676f4273ed040968f701b3a",
-  "tested_input_tree": "3c955abc101b23991da764de3310e6b5a0f99be8",
+  "tested_input_commit": "a57e456d0e6ff3969feea44ff159401226515418",
+  "tested_input_tree": "d301c7285a2957c5a2c094826ee3f85dab628a82",
   "author_status": "Author-complete",
   "independent_acceptance_claim": false,
   "review_verdict": "INCOMPLETE / PENDING_INDEPENDENT_REVIEW",
@@ -52,8 +52,20 @@
     },
     "comparator_unit_tests": {
       "status": "PASS",
-      "passed": 23,
+      "passed": 24,
       "failed": 0
+    },
+    "regression_comparison": {
+      "status": "PASS",
+      "acceptance_verdict": "PASSED",
+      "blocking_violations": 0,
+      "baseline_in_scope_nodes": 1847,
+      "current_nodes": 1847,
+      "resolved_count": 72,
+      "inherited_count": 201,
+      "progressed_barriers_count": 1,
+      "changed_failures": 0,
+      "new_regressions": 0
     },
     "scanner_budget_unit_tests": {
       "status": "PASS",

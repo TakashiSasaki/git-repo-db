@@ -5,8 +5,8 @@
 **Branch:** `integration/adr0031-i6c-scanner-integration-20261024`  
 **Base Branch:** `fix/adr0031-i6c-regression-hardening-20261024`  
 **Base Commit:** `55de572bdac4b9b90b131d89025b0ed304cd0159` (PR #170 HEAD)  
-**Tested Input Commit:** `363eb6fdb8c12f854676f4273ed040968f701b3a`  
-**Tested Input Tree:** `3c955abc101b23991da764de3310e6b5a0f99be8`  
+**Tested Input Commit:** `a57e456d0e6ff3969feea44ff159401226515418` (supersedes initial tested input `363eb6fdb8c12f854676f4273ed040968f701b3a`)  
+**Tested Input Tree:** `d301c7285a2957c5a2c094826ee3f85dab628a82`  
 **Author Status:** Author-complete  
 **Independent Acceptance Verdict:** INCOMPLETE / PENDING_INDEPENDENT_REVIEW  
 
@@ -58,16 +58,21 @@ All empirical tests across preflight, scanner budgets, packaging contracts, beha
 
 ## 3. Two-Stage Commit Separation Record
 
-1. **Stage 1 (Tested Input)**:
+1. **Stage 1 (Initial Tested Input)**:
    - **Commit SHA**: `363eb6fdb8c12f854676f4273ed040968f701b3a`
    - **Tree SHA**: `3c955abc101b23991da764de3310e6b5a0f99be8`
    - **Message**: `feat(integration): integrate ADR 0031 I6-C exchange, scanner budget defense, and minimal sdist`
-   - **Scope**: All executable product code in `src/`, test suites in `tests/`, tool scripts in `scripts/`, `pyproject.toml`, `.github/workflows/`, and authoritative ADR documentation.
-2. **Stage 2 (Final Submission)**:
+2. **Forward Correction: Comparator Progression Reconciliation**:
+   - Hosted Access CI run 40117737468 flagged 1 changed non-success (`test_selected_real_wire_without_identification_refuses_before_core_effects`) because baseline #154 failed at export authorization (`AdmissionRefused: PERMISSION_DENIED`), whereas current execution with authorized exchange progressed to wire envelope validation (`ExchangeError: resources:INVALID_IDENTIFICATION`).
+   - Hardened `scripts/compare_access_regressions.py` and `tests/unit/test_compare_access_regressions.py` to distinguish `PROGRESS_KNOWN_BARRIER` from unexplained `CHANGED_FAILURE`, eliminating the false blocking violation under `--strict`.
+   - **Superseding Tested Input Commit SHA**: `a57e456d0e6ff3969feea44ff159401226515418`
+   - **Superseding Tested Input Tree SHA**: `d301c7285a2957c5a2c094826ee3f85dab628a82`
+   - **Message**: `fix(comparator): distinguish progression to known barrier from changed failure`
+3. **Stage 2 (Final Submission)**:
    - **Scope**: Strictly `docs/implementation/evidence/adr0031-i6c-scanner-integration-20261024/`
    - **Equivalence Invariant**:
      ```bash
-     git diff 363eb6fdb8c12f854676f4273ed040968f701b3a..HEAD -- src tests scripts pyproject.toml .github
+     git diff a57e456d0e6ff3969feea44ff159401226515418..HEAD -- src tests scripts pyproject.toml .github
      ```
      Must be strictly empty (0 lines).
 
@@ -104,9 +109,21 @@ Outcome: `PASS`
 }
 ```
 
-### 4.2 Strict Regression Comparator Unit Tests
+### 4.2 Strict Regression Comparator Unit Tests & Mechanical Reconciliation
 Command: `pytest tests/unit/test_compare_access_regressions.py -v`
-Outcome: `23 passed in 0.84s` (100% PASS)
+Outcome: `24 passed in 0.88s` (100% PASS)
+
+Command: `python scripts/compare_access_regressions.py --current raw/regressions.xml --baseline ... --expected raw/regression_collected.txt --pytest-exit-code 1 --strict`
+Outcome: `PASSED` (0 blocking violations, 0 new regressions, 0 changed failures, 1 progressed barrier, exit code 0)
+- In-scope baseline nodes: 1,847
+- Current executed nodes: 1,847
+- Resolved nodes: 72
+- Inherited non-successes: 201 (43 Transfer stage fence, 144 Admission permission denied, 14 P7 recovery)
+- Progress to known barrier: 1 (`tests.integration.p1.test_generalized_resources::test_selected_real_wire_without_identification_refuses_before_core_effects`)
+- Changed failures: 0
+- New regressions: 0
+- Missing expected nodes: 0
+- Unexpected nodes: 0
 
 ### 4.3 Admission Scanner Budget Defense Suite
 Command: `pytest tests/unit/test_admission_scanner_budget.py -v`
