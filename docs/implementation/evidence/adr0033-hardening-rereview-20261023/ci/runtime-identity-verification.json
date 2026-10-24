@@ -1,0 +1,28 @@
+{
+  "same_invocation_comparison": true,
+  "verified_fields": [
+    "python",
+    "base_executable",
+    "sqlite_version",
+    "sqlite_source_id",
+    "sqlite_module_sha256",
+    "compile_options",
+    "loader_environment",
+    "sqlite_mappings"
+  ],
+  "paths": [
+    "artifacts/access-registry/i5-distribution/direct-runtime-binding.json",
+    "artifacts/access-registry/i5-distribution/sdist-runtime-binding.json",
+    "artifacts/runtime/dependencies.json",
+    "artifacts/runtime/docs.json",
+    "artifacts/runtime/final.json",
+    "artifacts/runtime/sdist-wheel.json",
+    "artifacts/runtime/selected.json",
+    "artifacts/runtime/wheel.json"
+  ],
+  "python": "3.12.15",
+  "sqlite_version": "3.53.1",
+  "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+  "sqlite_module_sha256": "0a97d28d3635c7dfd143de6d00b09c0cb382249c020b28ee33fb4002db1efb9c",
+  "interpretation": "Receipt snapshots match within their own invocation; this does not require the same SQLite release in another environment."
+}

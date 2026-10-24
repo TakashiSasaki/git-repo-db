@@ -1,0 +1,54 @@
+{
+  "phase": "adr0031-i6c-scanner-integration-20261024",
+  "file_count": 8,
+  "files": [
+    {
+      "path": "MATRIX.md",
+      "size_bytes": 5391,
+      "sha256": "0c39aceb8ed82fb1632b2d5085cc6f9fa2c24c9ac04aa8428b7ddcb373a7b75b",
+      "git_blob_oid": "a4d99573e2158cf61496d27ae4277d6154f41892"
+    },
+    {
+      "path": "REPORT.md",
+      "size_bytes": 10801,
+      "sha256": "5754ac79dbbc4bef112bf35fe36f82dccc5d5110e14177d27c3297315b0c1594",
+      "git_blob_oid": "76feda67eb39c8d337e96e3ece75d461e45e7ea4"
+    },
+    {
+      "path": "distribution.json",
+      "size_bytes": 2121,
+      "sha256": "2224d34221872572d0074433e1ab58b46a800c757a2b7e4f5aa3d617b04ea7ce",
+      "git_blob_oid": "6c91a5d60d411f9799cde0a65f738192214eb92d"
+    },
+    {
+      "path": "findings.json",
+      "size_bytes": 3,
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+      "git_blob_oid": "fe51488c7066f6687ef680d6bfaa4f7768ef205c"
+    },
+    {
+      "path": "raw/preflight.json",
+      "size_bytes": 2592,
+      "sha256": "0080ff5f9e071ce044dfb5436b36cf6a4786cb273b3398ecfeeb3c2c9e708805",
+      "git_blob_oid": "e1430c273ba4bbdd5347d1dbd846c0f7e3f4dd30"
+    },
+    {
+      "path": "raw/runtime.json",
+      "size_bytes": 2583,
+      "sha256": "226b96d255651868291c0320d5c6f431bdf89608cbd8758d2687d72c7e499931",
+      "git_blob_oid": "c67cbde408190db79afd39ccfe4c14efebade050"
+    },
+    {
+      "path": "sdist-contract.json",
+      "size_bytes": 82751,
+      "sha256": "ae87d5edb288b8ebf95d07bfbcef373b983d44030947d2f329126329d3860e7d",
+      "git_blob_oid": "7ba39568389dd5c5d1b346446488ce8bbf6e82a9"
+    },
+    {
+      "path": "summary.json",
+      "size_bytes": 3544,
+      "sha256": "ae496adaab3894f918b922395f3ae67c3d6d25e303386f3fe36189a545fa0835",
+      "git_blob_oid": "168dc845eda85d910fa9278b5f4555dc22afa4e4"
+    }
+  ]
+}

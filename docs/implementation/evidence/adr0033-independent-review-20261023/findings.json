@@ -1,0 +1,127 @@
+{
+  "result": "FAIL",
+  "reviewed_head": "8cd89a3d25c811ee32d117ec32fe76a6022e6d94",
+  "reviewed_tree": "0f42e9d0e498e249bc2cc02f6b96df9ef87106a0",
+  "counts": {
+    "Critical": 0,
+    "High": 0,
+    "Medium": 2,
+    "Low": 2
+  },
+  "findings": [
+    {
+      "id": "AR-001",
+      "severity": "Medium",
+      "title": "Unchecked PAX extension data bypasses the positive archive boundary and bounded parsing",
+      "target": {
+        "file": "scripts/check_sdist_contract.py",
+        "lines": "109-139"
+      },
+      "contract": "ADR 0033 exact allowed source/generated metadata; minimal-sdist-design membership and archive safety before extraction; fail closed for unexpected logs/receipts.",
+      "minimal_counterexample": "Valid eight-file synthetic sdist with a per-file PAX header review.hidden_log holding 10 MiB of repeated A bytes. No product member bytes change.",
+      "observed": "check_sdist and CLI accept. compressed_bytes=10758, unpacked_bytes=166, member_count=8, although gzip.decompress produces 10496000 bytes including a 10485760-byte unknown PAX value.",
+      "expected": "Reject unapproved extension metadata and constrain decompressed header parsing before allocating/reading arbitrary extension payloads.",
+      "root_cause": "tarfile consumes and materializes extended headers before yielding TarInfo; the validator examines only yielded logical members, never pax_headers or a bounded decompressed stream.",
+      "acceptance_conditions": [
+        "Inventory backend-produced PAX metadata and permit only narrowly required keys/values.",
+        "Cap total decompressed input/header bytes during parsing without changing the documented regular-file logical byte metric.",
+        "Reject this counterexample before extraction and preserve failed receipt/nonzero exit; keep valid backend artifacts passing."
+      ],
+      "command": "python docs/implementation/evidence/adr0033-independent-review-20261023/archive/probe_archive.py --output docs/implementation/evidence/adr0033-independent-review-20261023/archive/results.json",
+      "exit_code": 1,
+      "probe_cases": [
+        "unallowlisted-10MiB-pax-data"
+      ],
+      "scope": "The observed regular-file logical-byte total is accurate; the defect is unclassified extension data and unbounded parsing, not a claim that PAX data is a regular file."
+    },
+    {
+      "id": "AR-002",
+      "severity": "Medium",
+      "title": "The gate accepts malformed gzip framing and an unchecked appended archive",
+      "target": {
+        "file": "scripts/check_sdist_contract.py",
+        "lines": "109-151"
+      },
+      "contract": "ADR 0033 exact archive membership, archive safety and fail-closed inspection before extraction; unexpected verification logs must not enter product artifact.",
+      "minimal_counterexample": "Append a second gzip-compressed tar containing docs/hidden-evidence.log (10 MiB) after a valid sdist. Separately zero or remove the original gzip trailer.",
+      "observed": "All variants return status passed. Concatenated archive compressed_bytes=10770 and reported unpacked_bytes=166/member_count=8 while decompressed total is10506240 bytes. Corrupt CRC, missing trailer and malformed second gzip stream are independently rejected by gzip.decompress but accepted by check_sdist.",
+      "expected": "Consume and verify the complete compressed stream/trailer, reject malformed framing and any additional non-padding tar payload/member stream not covered by the inventory.",
+      "root_cause": "tarfile iteration terminates at the first tar end marker. Closing the read archive does not force gzip EOF/trailer verification or inspect trailing streams.",
+      "acceptance_conditions": [
+        "Add bounded full gzip integrity/framing validation.",
+        "Reject non-padding content after the one allowed tar archive, including an appended second archive.",
+        "Preserve finite budgets, nonzero rejection and failed receipt; distinguish harmless defined tar padding from an additional payload."
+      ],
+      "command": "python docs/implementation/evidence/adr0033-independent-review-20261023/archive/probe_archive.py --output docs/implementation/evidence/adr0033-independent-review-20261023/archive/results.json",
+      "exit_code": 1,
+      "probe_cases": [
+        "concatenated-gzip-tar-with-hidden-log",
+        "corrupt-gzip-crc",
+        "missing-gzip-trailer",
+        "malformed-second-gzip-member"
+      ]
+    },
+    {
+      "id": "AR-003",
+      "severity": "Low",
+      "title": "Standalone generated metadata validation accepts invalid version syntax and duplicate identity headers",
+      "target": {
+        "file": "scripts/check_sdist_contract.py",
+        "lines": "145-151"
+      },
+      "contract": "ADR 0033 explicitly checked generated PKG-INFO; complete metadata validation.",
+      "minimal_counterexample": "Replace Metadata-Version: 2.4 with Metadata-Version: garbage, or append a second Name: attacker header after Name: repo-catalog while preserving all frozen source inputs.",
+      "observed": "check_sdist and standalone CLI return status passed/exit0 for both malformed PKG-INFO examples.",
+      "expected": "Reject malformed metadata versions and duplicate singleton identity fields rather than treating nonempty first-match fields as valid generated metadata.",
+      "root_cause": "BytesParser().get returns the first matching header; code checks only truthiness of Metadata-Version and first Name/Version.",
+      "acceptance_conditions": [
+        "Validate supported core metadata version syntax and required singleton header cardinality.",
+        "Retain exact PKG-INFO versus wheel METADATA equality in integrated builds.",
+        "Add standalone-gate regressions for malformed and duplicate fields."
+      ],
+      "command": "python docs/implementation/evidence/adr0033-independent-review-20261023/archive/probe_archive.py --output docs/implementation/evidence/adr0033-independent-review-20261023/archive/results.json",
+      "exit_code": 1,
+      "probe_cases": [
+        "metadata-1",
+        "metadata-2"
+      ],
+      "scope": "Integrated compare_wheels checks exact PKG-INFO/METADATA equality and would reject these altered standalone sdists when paired with a legitimate wheel. No claim that the real generated artifact has malformed metadata."
+    },
+    {
+      "id": "A-CI-01",
+      "severity": "Low",
+      "classification": "advisory evidence-contract distinction",
+      "blocking": false,
+      "title": "README is a required shipped input but not part of acceptance_input_hash",
+      "locations": [
+        {
+          "file": "scripts/ci_plan.py",
+          "line": 461
+        },
+        {
+          "file": "scripts/ci_dependencies.json",
+          "line": 30
+        },
+        {
+          "file": "scripts/check_sdist_contract.py",
+          "line": 28
+        }
+      ],
+      "contract": "ADR 0033 source/artifact input identity; ADR 0001 VAL-02 deliberately excludes prose from the runtime acceptance hash.",
+      "minimal_counterexample": "Commit a README-only change in a disposable repository, compute before/after plans, and compare required-sdist README blob, tree_hash, acceptance_input_hash and preparation.sdist_contract.",
+      "observed": "README blob and tree_hash change, and the sdist gate is selected, while acceptance_input_hash is unchanged.",
+      "expected": "Document explicitly that acceptance_input_hash does not bind every shipped sdist input, or publish a separate sdist_input_hash derived from the complete source inventory alongside the runtime acceptance hash.",
+      "root_cause": "New sdist_inputs select the gate, but are not added to the acceptance_input_hash predicate; README remains classified as pure prose under accepted ADR 0001.",
+      "acceptance_conditions": [
+        "Make the distinct meanings of runtime acceptance input hash and complete sdist source inventory hash explicit in active evidence documentation.",
+        "If a dedicated sdist input hash is added, test that README-only changes alter it without expanding hosted pytest selection.",
+        "Preserve ADR 0001 prose policy and exact commit/tree receipt checks; do not silently redefine accepted ADR text."
+      ],
+      "limitations": "No stale acceptance bypass was demonstrated: verify_local_receipt separately checks exact commit and tree at scripts/ci_execute.py:285-310, while the checked sdist receipt independently source-hashes README. This advisory does not invalidate current receipt binding.",
+      "command": "python docs/implementation/evidence/adr0033-independent-review-20261023/ci/probe_readme_binding.py",
+      "exit_code": 0,
+      "exit_meaning": "The counterexample assertions reproduced the distinction, not a product acceptance pass.",
+      "evidence": "readme-binding-result.json"
+    }
+  ]
+}

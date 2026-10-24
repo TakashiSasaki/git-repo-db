@@ -1,0 +1,36 @@
+{
+  "status": "fulfilled",
+  "value": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Action completed."
+      }
+    ],
+    "structuredContent": {
+      "workflow_runs": [
+        {
+          "id": 39892052621,
+          "name": "tests",
+          "status": "completed",
+          "conclusion": "success",
+          "run_number": 447,
+          "jobs_url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/actions/runs/39892052621/jobs",
+          "logs_url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/actions/runs/39892052621/logs",
+          "workflow_id": 375283099
+        },
+        {
+          "id": 39892052634,
+          "name": "Access registry focused verification",
+          "status": "completed",
+          "conclusion": "failure",
+          "run_number": 52,
+          "jobs_url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/actions/runs/39892052634/jobs",
+          "logs_url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/actions/runs/39892052634/logs",
+          "workflow_id": 387624521
+        }
+      ]
+    },
+    "isError": false
+  }
+}

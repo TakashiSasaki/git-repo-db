@@ -1,0 +1,14 @@
+{
+  ".github/workflows/pages.yml": {
+    "18ba867d1c2f33c7d17939b2722d22a67139363a": "7d58ad4324976fdf7b23e0c1042f38fd5ad8ce7e",
+    "8cd89a3d25c811ee32d117ec32fe76a6022e6d94": "7d58ad4324976fdf7b23e0c1042f38fd5ad8ce7e"
+  },
+  "scripts/build_docs_site.py": {
+    "18ba867d1c2f33c7d17939b2722d22a67139363a": "09a3fadf99dfb8e4ed0dd687e873e149a68b6754",
+    "8cd89a3d25c811ee32d117ec32fe76a6022e6d94": "09a3fadf99dfb8e4ed0dd687e873e149a68b6754"
+  },
+  "mkdocs.yml": {
+    "18ba867d1c2f33c7d17939b2722d22a67139363a": "af1e4027fc3b4c1fec0edc01bf1adfc850c20972",
+    "8cd89a3d25c811ee32d117ec32fe76a6022e6d94": "af1e4027fc3b4c1fec0edc01bf1adfc850c20972"
+  }
+}

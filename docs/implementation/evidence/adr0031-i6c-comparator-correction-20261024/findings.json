@@ -1,0 +1,114 @@
+{
+  "phase": "Author correction of comparator acceptance semantics and strict failure signature verification",
+  "repository": "https://github.com/TakashiSasaki/git-repo-db",
+  "target_pr": "https://github.com/TakashiSasaki/git-repo-db/pull/168",
+  "target_branch": "fix/adr0031-i6c-regression-hardening-20261024",
+  "frozen_base_commit": "3a1f112331c87747249f38af370160adc0de108a",
+  "tested_input_commit": "61efe65e23be038cf97314e970b5b500e290ed0a",
+  "tested_input_tree": "fa4d7d64692eadef79fd9f3423c71df659432df9",
+  "author_status": "Author-complete",
+  "independent_acceptance_claim": false,
+  "review_verdict": "INCOMPLETE / PENDING_INDEPENDENT_REVIEW",
+  "counterexamples_demonstrated": [
+    {
+      "flaw": "Counterexample A: Test name alone accepted unrelated failure as transfer stage fence",
+      "symptom": "In is_transfer_stage_fence, test_transfer_reports_never_shrunk_or_mixed in name accepted unrelated AssertionError as INHERITED_STAGE_TRANSFER",
+      "resolution": "Removed test-name matching from is_transfer_stage_fence; required explicit stage fence markers and compatible exception type (UnsupportedResourceStage or trigger error)"
+    },
+    {
+      "flaw": "Counterexample B: Unknown metadata (None==None) accepted disparate exception types as inherited fallback",
+      "symptom": "In compare_failure_details fallback, None==None matching for refusal_code and reached_assertion accepted ValueError vs TypeError as INHERITED_OTHER",
+      "resolution": "Enforced non-None matching exception types and required concrete refusal_code or reached_assertion signature; rejected None==None fallback"
+    },
+    {
+      "flaw": "Category shortcut in admission refusals accepted refusal code mismatch",
+      "symptom": "is_admission_refusal lumped PERMISSION_DENIED and INVALID_IDENTIFICATION into INHERITED_ADMISSION_PERMISSION_DENIED without checking refusal code equality",
+      "resolution": "Enforced identical non-None refusal code equality; explicitly rejected PERMISSION_DENIED vs INVALID_IDENTIFICATION as CHANGED_FAILURE"
+    },
+    {
+      "flaw": "P7 recovery classname matching accepted divergent assertions under None==None",
+      "symptom": "is_p7_recovery accepted tests with classname containing 'p7' even if reached assertions differed when refusal_code was None",
+      "resolution": "Required matching non-None refusal code or matching non-None reached assertion and compatible exception type"
+    }
+  ],
+  "unit_test_summary": {
+    "test_file": "tests/unit/test_compare_access_regressions.py",
+    "total_tests": 23,
+    "passed": 23,
+    "failed": 0,
+    "errors": 0,
+    "duration_seconds": 0.88
+  },
+  "preflight_audit": {
+    "status": "PASS",
+    "python_version": "3.12.13",
+    "executable": "/home/ubuntu/github/git-repo-db/fix/adr0031-i6c-comparator-correction-20261024/.venv/bin/python",
+    "locked_dependencies_verified": {
+      "httpx": "0.28.1",
+      "pytest": "9.1.1",
+      "ruff": "0.16.10",
+      "pytest-xdist": "3.8.0",
+      "hatchling": "1.32.4",
+      "jsonschema": "4.26.0"
+    },
+    "console_script": {
+      "path": ".venv/bin/repo-catalog",
+      "shebang_verified": true,
+      "module_origin_verified": "src/repo_catalog/__init__.py",
+      "version_verified": "0.2.0"
+    },
+    "sqlite_capabilities": {
+      "version": "3.53.1",
+      "journal_mode": "wal",
+      "strict_tables": true,
+      "fts5_trigram": true
+    },
+    "isolation": {
+      "enforced_umask": "0o022"
+    }
+  },
+  "broad_regression_summary": {
+    "baseline_total_nodes": 6343,
+    "in_scope_baseline_nodes": 1847,
+    "out_of_scope_baseline_nodes": 4496,
+    "expected_nodes": 1847,
+    "executed_nodes": 1847,
+    "passed": 1645,
+    "failed": 182,
+    "errors": 20,
+    "pytest_exit_code": 1,
+    "resolved_non_successes": 72,
+    "inherited_unchanged_non_successes": 201,
+    "inherited_breakdown": {
+      "staged_transfer_fences": 43,
+      "admission_permission_denied": 144,
+      "p7_recovery_admission_refusals": 14,
+      "inherited_other": 0
+    },
+    "changed_failures": 1,
+    "changed_failure_nodes": [
+      "tests.integration.p1.test_generalized_resources::test_selected_real_wire_without_identification_refuses_before_core_effects"
+    ],
+    "changed_failure_reconciliation": "In baseline #154, failed at line 411 with AdmissionRefused: PERMISSION_DENIED (unauthenticated context export barrier). In I6-C, export succeeded and failed at line 415 with ExchangeError: resources:INVALID_IDENTIFICATION (envelope wire identification validation barrier). Under strict refusal code matching (PERMISSION_DENIED != INVALID_IDENTIFICATION), this is a genuine CHANGED_FAILURE. PR #168 previously masked this via category shortcut.",
+    "new_product_regressions": 0,
+    "added_failures": 0,
+    "environment_failures": 0,
+    "missing_nodes": 0,
+    "unexpected_skips": 0,
+    "blocking_violations": [
+      "1 changed non-successes detected"
+    ],
+    "acceptance_verdict": "REJECTED"
+  },
+  "evidence_reuse": {
+    "distribution_evidence_reused": true,
+    "justification": "Product source code (src/) and packaging definitions (pyproject.toml) are byte-for-byte identical to PR #168 and PR #166. Direct and sdist-derived wheels are bit-for-bit identical with SHA-256 c3a147b2111e2e22e75af1c1390cfe9b9e8a8f68f5a4a8a6f3584bd608b1360a."
+  },
+  "open_i6c_non_author_obligations": [
+    "empty receiver selection verification",
+    "same full sender package with receiver-side subset selection",
+    "real COMMIT revocation verification",
+    "foreign service-issued handles refusal",
+    "replay revocation verification"
+  ]
+}

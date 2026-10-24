@@ -446,6 +446,11 @@ def make_plan(context, root=ROOT, runtime_meta=None):
             "selection_digest": digest(lane_files),
         }
     packaging = lanes["packaging"]["disposition"] == "selected"
+    sdist_contract = (
+        is_release
+        or bool(reasons)
+        or any(matches(path, rules.get("sdist_inputs", [])) for path in paths)
+    )
     return {
         "version": 3,
         "mode": mode,
@@ -473,9 +478,12 @@ def make_plan(context, root=ROOT, runtime_meta=None):
         "unexecuted_files": sorted(set(files) - selected),
         "lanes": lanes,
         "preparation": {
+            "sdist_contract": {
+                "disposition": "selected" if sdist_contract else "not_applicable"
+            },
             "dependencies": {
                 "disposition": "selected"
-                if selected or static or smoke
+                if selected or static or smoke or sdist_contract
                 else "not_applicable"
             },
             "wheelhouse": {

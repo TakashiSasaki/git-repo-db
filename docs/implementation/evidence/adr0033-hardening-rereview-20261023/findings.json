@@ -1,0 +1,47 @@
+{
+  "reviewed_head": "59307c40ea65554736e131cedd00f04c9906551b",
+  "reviewed_tree": "5ea93707d62b542c84632515392ac6a35c36cd65",
+  "verdict": "PASS WITH CONDITIONS",
+  "archive_hardening": "PASS",
+  "severity_counts": {
+    "Critical": 0,
+    "High": 0,
+    "Medium": 0,
+    "Low": 0
+  },
+  "original_findings": [
+    {
+      "id": "AR-001",
+      "original_severity": "Medium",
+      "disposition": "addressed",
+      "independent_result": "PASS"
+    },
+    {
+      "id": "AR-002",
+      "original_severity": "Medium",
+      "disposition": "addressed",
+      "independent_result": "PASS"
+    },
+    {
+      "id": "AR-003",
+      "original_severity": "Low",
+      "disposition": "addressed",
+      "independent_result": "PASS"
+    },
+    {
+      "id": "A-CI-01",
+      "original_severity": "Low advisory",
+      "disposition": "addressed",
+      "independent_result": "PASS"
+    }
+  ],
+  "conditions": [
+    "Retain inherited 79 product-stage non-successes and original installed Access refusals; no downstream-assertion success is inferred.",
+    "Keep Draft; full ordinary and dual-environment release acceptance remain unexecuted.",
+    "Any intended combined integration tree needs its own verification and separate integration authority;139/143 are not integrated."
+  ],
+  "new_findings": [],
+  "remaining_owner_policy_decisions": 0,
+  "integration_executed": false,
+  "release_deploy_executed": false
+}

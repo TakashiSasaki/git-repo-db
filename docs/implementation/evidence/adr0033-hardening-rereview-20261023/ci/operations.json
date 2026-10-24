@@ -1,0 +1,95 @@
+{
+  "review_head": "59307c40ea65554736e131cedd00f04c9906551b",
+  "operations": [
+    {
+      "action": "github_fetch_commit_workflow_runs",
+      "commit": "59307c40ea65554736e131cedd00f04c9906551b",
+      "outcome": "success"
+    },
+    {
+      "action": "github_fetch_workflow_run_jobs",
+      "run_ids": [
+        39892052621,
+        39892052634
+      ],
+      "outcome": "success"
+    },
+    {
+      "action": "github_fetch_workflow_job_logs",
+      "job_ids": [
+        120213851456,
+        120213851773,
+        120213851409
+      ],
+      "outcome": "success",
+      "raw_evidence": "raw-log-index.json"
+    },
+    {
+      "command": "python .../ci/audit_receipts.py",
+      "attempts": [
+        {
+          "attempt": 1,
+          "exit_code": 1,
+          "reason": "reviewer needed to normalize hosted absolute input binding path",
+          "stderr": "audit-attempt1.stderr"
+        },
+        {
+          "attempt": 2,
+          "exit_code": 1,
+          "reason": "reviewer aggregate source-inventory hash used compact JSON rather than emitter spacing",
+          "stderr": "audit-attempt2.stderr"
+        },
+        {
+          "attempt": 3,
+          "exit_code": 1,
+          "reason": "reviewer JUnit file attribute identifies definition source for imported replay tests",
+          "stderr": "audit-attempt3.stderr"
+        },
+        {
+          "attempt": 4,
+          "exit_code": 1,
+          "reason": "intermediate parser still used definition file instead of collection classname",
+          "stderr": "audit-attempt4.stderr"
+        },
+        {
+          "attempt": 5,
+          "exit_code": 0,
+          "stdout": "audit.stdout",
+          "stderr": "audit.stderr"
+        }
+      ]
+    },
+    {
+      "command": "python docs/implementation/evidence/adr0033-independent-review-20261023/ci/probe_readme_binding.py > new-ci/readme-binding-result.json",
+      "exit_code": 0,
+      "meaning": "successful reproduction of advisory distinction; not acceptance"
+    },
+    {
+      "command": "python - read-only receipt summary projection",
+      "exit_code": 1,
+      "reason": "reviewer requested absent validation-manifest lanes field; corrected read-only projection later succeeded",
+      "meaning": "no test execution"
+    },
+    {
+      "command": "python docs/implementation/evidence/adr0033-hardening-rereview-20261023/ci/probe_readme_sdist_inventory.py",
+      "attempts": [
+        {
+          "exit_code": 1,
+          "reason": "disposable CI fixture lacks pyproject.toml; source_inventory correctly rejected incomplete fixture"
+        },
+        {
+          "exit_code": 0,
+          "result": "readme-sdist-inventory-result.json",
+          "meaning": "complete minimal fixture added required pyproject; README-only actual source inventory digest changes while runtime hash unchanged"
+        }
+      ]
+    },
+    {
+      "command": "python .../ci/audit_receipts.py using compressed retained log inputs",
+      "exit_code": 0,
+      "stdout": "audit-compressed.stdout",
+      "stderr": "audit-compressed.stderr"
+    }
+  ],
+  "mutations": "Only newly created current review ci/ evidence; no existing files, commits, pushes, GitHub messages, workflows or automation mutations."
+}

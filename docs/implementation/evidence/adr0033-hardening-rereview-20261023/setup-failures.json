@@ -1,0 +1,4 @@
+[
+ {"action":"uv sync --frozen --group dev --group docs --python /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3.12 --no-managed-python","exit_code":2,"reason":"Default /home/agent/.cache/uv is read-only; corrected with UV_CACHE_DIR=/workspace/.uv-cache. No test execution occurred."},
+ {"action":"prepare_evidence.initial.py","exit_code":1,"reason":"Index verifier initially treated payload-index.json as an unexplained archive member. All indexed payload bytes matched. Corrected verifier explicitly handles the archive self-index and preserves failed script."}
+]

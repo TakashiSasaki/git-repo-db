@@ -1,0 +1,97 @@
+{
+  "patterns": [
+    "https?://[^\\s\"<>]*(?:sig=|token=|X-Amz-|X-Goog-)[^\\s\"<>]*",
+    "gh[pousr]_[A-Za-z0-9]{20,}",
+    "github_pat_[A-Za-z0-9_]{20,}",
+    "-----BEGIN [^-]*PRIVATE KEY-----"
+  ],
+  "matches": [
+    {
+      "file": "docs/implementation/evidence/adr0033-independent-review-20261023/ci/access-receipts.zip",
+      "member": "artifacts/access-registry/collected.txt",
+      "pattern": "https?://[^\\s\"<>]*(?:sig=|token=|X-Amz-|X-Goog-)[^\\s\"<>]*"
+    },
+    {
+      "file": "docs/implementation/evidence/adr0033-independent-review-20261023/ci/access-receipts.zip",
+      "member": "artifacts/access-registry/i5/ordinary-collection.log",
+      "pattern": "https?://[^\\s\"<>]*(?:sig=|token=|X-Amz-|X-Goog-)[^\\s\"<>]*"
+    },
+    {
+      "file": "docs/implementation/evidence/adr0033-independent-review-20261023/ci/access-receipts.zip",
+      "member": "artifacts/access-registry/i5/ordinary-collection.nodes.txt",
+      "pattern": "https?://[^\\s\"<>]*(?:sig=|token=|X-Amz-|X-Goog-)[^\\s\"<>]*"
+    },
+    {
+      "file": "docs/implementation/evidence/adr0033-independent-review-20261023/ci/access-receipts.zip",
+      "member": "artifacts/access-registry/i5/regressions.jsonl",
+      "pattern": "https?://[^\\s\"<>]*(?:sig=|token=|X-Amz-|X-Goog-)[^\\s\"<>]*"
+    },
+    {
+      "file": "docs/implementation/evidence/adr0033-independent-review-20261023/ci/access-receipts.zip",
+      "member": "artifacts/access-registry/i5/regressions.selected.txt",
+      "pattern": "https?://[^\\s\"<>]*(?:sig=|token=|X-Amz-|X-Goog-)[^\\s\"<>]*"
+    },
+    {
+      "file": "docs/implementation/evidence/adr0033-independent-review-20261023/ci/access-receipts.zip",
+      "member": "artifacts/access-registry/i5/regressions.xml",
+      "pattern": "https?://[^\\s\"<>]*(?:sig=|token=|X-Amz-|X-Goog-)[^\\s\"<>]*"
+    },
+    {
+      "file": "docs/implementation/evidence/adr0033-independent-review-20261023/ci/access-receipts.zip",
+      "member": "artifacts/access-registry/i5/selected-collection.log",
+      "pattern": "https?://[^\\s\"<>]*(?:sig=|token=|X-Amz-|X-Goog-)[^\\s\"<>]*"
+    },
+    {
+      "file": "docs/implementation/evidence/adr0033-independent-review-20261023/ci/access-receipts.zip",
+      "member": "artifacts/access-registry/i5/selected-collection.nodes.txt",
+      "pattern": "https?://[^\\s\"<>]*(?:sig=|token=|X-Amz-|X-Goog-)[^\\s\"<>]*"
+    },
+    {
+      "file": "docs/implementation/evidence/adr0033-independent-review-20261023/ci/access-receipts.zip",
+      "member": "artifacts/access-registry/offline-inventory/all.log",
+      "pattern": "https?://[^\\s\"<>]*(?:sig=|token=|X-Amz-|X-Goog-)[^\\s\"<>]*"
+    },
+    {
+      "file": "docs/implementation/evidence/adr0033-independent-review-20261023/ci/access-receipts.zip",
+      "member": "artifacts/access-registry/offline-inventory/all.nodes.txt",
+      "pattern": "https?://[^\\s\"<>]*(?:sig=|token=|X-Amz-|X-Goog-)[^\\s\"<>]*"
+    },
+    {
+      "file": "docs/implementation/evidence/adr0033-independent-review-20261023/ci/access-receipts.zip",
+      "member": "artifacts/access-registry/offline-inventory/ci.log",
+      "pattern": "https?://[^\\s\"<>]*(?:sig=|token=|X-Amz-|X-Goog-)[^\\s\"<>]*"
+    },
+    {
+      "file": "docs/implementation/evidence/adr0033-independent-review-20261023/ci/access-receipts.zip",
+      "member": "artifacts/access-registry/offline-inventory/ci.nodes.txt",
+      "pattern": "https?://[^\\s\"<>]*(?:sig=|token=|X-Amz-|X-Goog-)[^\\s\"<>]*"
+    },
+    {
+      "file": "docs/implementation/evidence/adr0033-independent-review-20261023/ci/access-receipts.zip",
+      "member": "artifacts/access-registry/offline-inventory/offline.log",
+      "pattern": "https?://[^\\s\"<>]*(?:sig=|token=|X-Amz-|X-Goog-)[^\\s\"<>]*"
+    },
+    {
+      "file": "docs/implementation/evidence/adr0033-independent-review-20261023/ci/access-receipts.zip",
+      "member": "artifacts/access-registry/offline-inventory/offline.nodes.txt",
+      "pattern": "https?://[^\\s\"<>]*(?:sig=|token=|X-Amz-|X-Goog-)[^\\s\"<>]*"
+    },
+    {
+      "file": "docs/implementation/evidence/adr0033-independent-review-20261023/ci/access-receipts.zip",
+      "member": "artifacts/access-registry/offline-inventory/ordinary.log",
+      "pattern": "https?://[^\\s\"<>]*(?:sig=|token=|X-Amz-|X-Goog-)[^\\s\"<>]*"
+    },
+    {
+      "file": "docs/implementation/evidence/adr0033-independent-review-20261023/ci/access-receipts.zip",
+      "member": "artifacts/access-registry/offline-inventory/ordinary.nodes.txt",
+      "pattern": "https?://[^\\s\"<>]*(?:sig=|token=|X-Amz-|X-Goog-)[^\\s\"<>]*"
+    },
+    {
+      "file": "docs/implementation/evidence/adr0033-independent-review-20261023/ci/access-receipts.zip",
+      "member": "artifacts/access-registry/tests.xml",
+      "pattern": "https?://[^\\s\"<>]*(?:sig=|token=|X-Amz-|X-Goog-)[^\\s\"<>]*"
+    }
+  ],
+  "result": "passed_after_manual_synthetic_fixture_review",
+  "match_disposition": "All URL token matches are literal public tracked test parameters https://host.example/env?token=PRIVATE] and https://host/repo?token=secret], not credentials, actual service addresses or signed artifact links. No token-pattern or private-key-pattern match."
+}

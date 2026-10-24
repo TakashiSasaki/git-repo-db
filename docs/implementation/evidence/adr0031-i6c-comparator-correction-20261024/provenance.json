@@ -1,0 +1,90 @@
+{
+  "phase": "adr0031-i6c-comparator-correction-20261024",
+  "file_count": 14,
+  "files": [
+    {
+      "path": "MATRIX.md",
+      "size_bytes": 4365,
+      "sha256": "2fc9ffc75e3e5c474e71aadd3aebbda291c3d2f23cf7840a76c6f6cacbc7c691",
+      "git_blob_oid": "4de7b18ab2a1443b465bfbbcb0d136ce80b8aaa9"
+    },
+    {
+      "path": "REPORT.md",
+      "size_bytes": 14352,
+      "sha256": "64912f7cd2efccc983b6862ac18bfb3cae496ca5e8e1dd00f04faf8752b59ad9",
+      "git_blob_oid": "37818aaf2489355f1776fdd8c051000bd8a527e5"
+    },
+    {
+      "path": "distribution.json",
+      "size_bytes": 2121,
+      "sha256": "738e132e9eda8fd14b3eeffd2d0cd5edd0a44f2f2f3ca9f115183eab1a53413e",
+      "git_blob_oid": "0b9e17f823b4a1ee383dbd689216d96dcdc7bfd2"
+    },
+    {
+      "path": "failure-comparison.json",
+      "size_bytes": 975485,
+      "sha256": "51a9f32e30a7753ae6d4833da1b8ef41c2d0687987978a0ca5bcbdb1e5e191fc",
+      "git_blob_oid": "19548aa8321a16c80b36755e87a7da85579ac16a"
+    },
+    {
+      "path": "findings.json",
+      "size_bytes": 5589,
+      "sha256": "0ff0225bb92d6ef13a2bb5bcaf261c847d177d238d6745273249b5cc7106aee6",
+      "git_blob_oid": "50f588eee5fb6bd67f86ab3042d13efc3f42aa20"
+    },
+    {
+      "path": "raw/preflight.json",
+      "size_bytes": 2564,
+      "sha256": "8522b853247fbc96612b7f8c7bafa547e3f0c876e2dfdafb7a1899eae0177be9",
+      "git_blob_oid": "59e86ef4f0edad03f44ba5511d6928237fc991b7"
+    },
+    {
+      "path": "raw/pytest_exit_code.txt",
+      "size_bytes": 2,
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "git_blob_oid": "d00491fd7e5bb6fa28c517a0bb32b8b506539d4d"
+    },
+    {
+      "path": "raw/regression_collected.txt",
+      "size_bytes": 768818,
+      "sha256": "474f75c4582a0733eb7e27fbd349b6be58a68a83709f9e8ad8890407afa139f3",
+      "git_blob_oid": "a1efbb95207faef213fc83920576c3fb00cb7b00"
+    },
+    {
+      "path": "raw/regressions.log",
+      "size_bytes": 779604,
+      "sha256": "ce32b6ed2b3f06287cc9eb0e6eda5521fabc13757f9bb857a32072aebc4b470b",
+      "git_blob_oid": "2957c1faba927f1572950988434fdb9d045c2593"
+    },
+    {
+      "path": "raw/regressions.xml",
+      "size_bytes": 1662802,
+      "sha256": "8d9f50bcd0db2c9085c3e6a6da15f551cf58d179a91fafa7b630feb860957d3c",
+      "git_blob_oid": "c51d994a9c5104c8c5ae454d5b270aaa02fa5cf0"
+    },
+    {
+      "path": "raw/runtime.json",
+      "size_bytes": 2569,
+      "sha256": "3a2f2258b8dc18f0e6bbc506e9f229e9dea6e567578379bc7f3f86e834ccb762",
+      "git_blob_oid": "81d8f824bd2d248231f5c941fbc16359a19dafc2"
+    },
+    {
+      "path": "raw/scoped_collected.txt",
+      "size_bytes": 215961,
+      "sha256": "dba4396a7392ba35f97b4921ee7a5b31c2b3cf911a356bd47e1d3a1133d02174",
+      "git_blob_oid": "c7b0f5987122e2ac54c0ef066d931885a031d1a4"
+    },
+    {
+      "path": "raw/scoped_tests.log",
+      "size_bytes": 1195,
+      "sha256": "fa39ebedf7b460360eeec5a0842148ab3bcbe8ecb76d844adc50b136cc0ae722",
+      "git_blob_oid": "280e88566b1d8ccb21b25a389da82f5050569ea7"
+    },
+    {
+      "path": "raw/scoped_tests.xml",
+      "size_bytes": 253974,
+      "sha256": "69137e2a765f61d3899d968c0f5bf04b109fa525afe85c26920df0f4d4d72e91",
+      "git_blob_oid": "7518e7d3445c7f8c73cd6ed2e01f0dfef0e60ac4"
+    }
+  ]
+}

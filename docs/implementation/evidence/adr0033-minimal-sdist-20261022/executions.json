@@ -1,0 +1,74 @@
+{
+  "frozen_source_commit": "03e1192f5228c9a1ca40dcef88271419c6828874",
+  "frozen_source_tree": "b5bdcb3cf5361a339ecdcea496c9ee32d1ab61ce",
+  "focused": {
+    "exit_code": 0,
+    "passed": 272,
+    "failed": 0,
+    "skipped": 0,
+    "binding": "clean frozen source"
+  },
+  "packaging": {
+    "exit_code": 1,
+    "passed": 57,
+    "failed": 4,
+    "skipped": 0,
+    "binding": "iterative working inputs subsequently committed unchanged; not a clean-tree release receipt",
+    "known_failures": "four P5 Identification wire refusals; baseline node/phase/refusal equality checked"
+  },
+  "broad_i5": {
+    "exit_code": 1,
+    "passed": 3058,
+    "failed": 59,
+    "setup_errors": 20,
+    "skipped": 0,
+    "new_non_successes": 0,
+    "resolved_non_successes": 0,
+    "binding": "clean frozen source"
+  },
+  "bounded_source": {
+    "I4_passed": 217,
+    "I5_passed": 29,
+    "exit_codes": [
+      0,
+      0
+    ]
+  },
+  "installed_i5_driver": {
+    "exit_code": 1,
+    "per_artifact": {
+      "I4_passed": 217,
+      "I5_passed": 29,
+      "I2_exit": 0,
+      "I3_exit": 0,
+      "Access_smoke_exit": 1
+    },
+    "reason": "inherited original Access Transfer refusal on both artifacts"
+  },
+  "installed_full_resources_cli": {
+    "exit_code": 0,
+    "per_artifact_product_hashes": 155,
+    "separate_venvs": true,
+    "outside_checkout": true
+  },
+  "docs": {
+    "unit_exit": 0,
+    "passed": 8,
+    "build_exit": 0,
+    "local_build_mode": "--no-mermaid; placeholders; hosted Pages performs actual rendering"
+  },
+  "failure_comparison": {
+    "exit_code": 0,
+    "baseline_commit": "f16e5b1713bde9a2f18263a25397c4b450fd5773",
+    "baseline_evidence_branch_commit": "4cd083b0f7295a2bbaa2597ef483af46e77f5463",
+    "baseline_payload_sha256": "e38171c16b5e58cfa222f281ea87406645ae85876cc05aa9f34f055749a76176",
+    "same_nodes_phase_refusal_paths_functions": true,
+    "frame_line_deltas": 4,
+    "frame_line_delta_scope": "test_p1_distribution.py fixture only; raw deltas retained"
+  },
+  "tooling_attempt_notes": [
+    "An early comparison was invoked before regressions.xml existed and failed with FileNotFoundError; it was rerun after completion and returned 0. This was not a product test or additional product non-success."
+  ],
+  "release_acceptance": false,
+  "independent_non_author_review": false
+}
