@@ -9,8 +9,8 @@
 - **Target Branch**: `fix/adr0031-i6c-access-verification-repair-20261024`
 - **Target Base Commit**: `bb247180e14e024c274bcb49e845441504d9b863` (PR #166 HEAD)
 - **Base PR #163 HEAD**: `2b33405b1a95eeddea277789e3bcc7b6b7307759`
-- **Tested Input Commit**: `12090f79f160875591d19af5f3ebc1a4553a2803`
-- **Tested Input Tree**: `15c394b94fc1cc20bc42adc1b3bfd44b01d4fccc`
+- **Tested Input Commit**: `982868726e55464b835518e0898774d880d23bcc`
+- **Tested Input Tree**: `968b0d8ca7d5dbb389e004ab8051b42faa10d000`
 - **Submission Status**: Author-complete (Draft PR targeting #166; no self-declared independent review acceptance)
 
 This report supersedes `docs/implementation/evidence/adr0031-i6c-access-verification-repair-20261024/REPORT.md`. All historical evidence directories and raw receipts remain preserved as committed. This document records the resolution of concrete comparator defects, collection manifest enforcement, pytest exit code preservation, preflight audits, and empirical verification receipts.
@@ -32,9 +32,11 @@ Audit against actual Git repository objects reveals:
 ### 2.2 Tested Input Separation for this Correction
 | Property | Tested Input Commit / Tree | Final Submission Commit / Tree | Equivalence Proof |
 | :--- | :--- | :--- | :--- |
-| **Commit SHA** | `12090f79f160875591d19af5f3ebc1a4553a2803` | `HEAD` (Evidence commit stacked on top) | Product code, test definitions, scripts, and CI workflows are byte-for-byte identical. |
-| **Tree SHA** | `15c394b94fc1cc20bc42adc1b3bfd44b01d4fccc` | (Evidence-only delta) | `git diff 12090f79...HEAD -- src tests scripts pyproject.toml .github` is empty. |
+| **Commit SHA** | `982868726e55464b835518e0898774d880d23bcc` | `HEAD` (Evidence commit stacked on top) | Product code, test definitions, scripts, and CI workflows are byte-for-byte identical. |
+| **Tree SHA** | `968b0d8ca7d5dbb389e004ab8051b42faa10d000` | (Evidence-only delta) | `git diff 98286872...HEAD -- src tests scripts pyproject.toml .github` is empty. |
 | **Executable Files** | Unchanged | Unchanged | Zero executable modifications were made after test execution. |
+
+Note: Preliminary tested commit `12090f79f160875591d19af5f3ebc1a4553a2803` implemented all comparator and preflight logic. In hosted CI, `scripts/verify_i5_offline.py` asserted that `.github/workflows/access-registry.yml` contained exactly one `uv run --no-sync pytest ` with `--collect-only` to locate `ci_targets()`. Commit `982868726e55464b835518e0898774d880d23bcc` reconciled this by invoking pytest via `python -m pytest` for the broad regression collection, preserving `ci_targets()` without affecting test execution or collection output.
 
 ---
 
