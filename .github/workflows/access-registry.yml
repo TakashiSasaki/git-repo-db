@@ -112,7 +112,7 @@ jobs:
           set -euo pipefail
           umask 022
           mkdir -p artifacts/access-registry/regressions
-          uv run --no-sync pytest -q \
+          uv run --no-sync python -m pytest -q \
             tests/integration/i2 tests/integration/i23 tests/integration/i4 tests/integration/i5 \
             tests/packaging/test_p5_distribution.py tests/integration/p1 tests/integration/p3 \
             tests/integration/p5 tests/integration/i3 tests/integration/p2 tests/integration/p4 \
