@@ -1,0 +1,129 @@
+{
+  "phase": "Author correction of regression reconciliation and CI completeness",
+  "repository": "https://github.com/TakashiSasaki/git-repo-db",
+  "target_pr": "https://github.com/TakashiSasaki/git-repo-db/pull/166",
+  "target_branch": "fix/adr0031-i6c-access-verification-repair-20261024",
+  "frozen_base_commit": "bb247180e14e024c274bcb49e845441504d9b863",
+  "base_pr_163_head": "2b33405b1a95eeddea277789e3bcc7b6b7307759",
+  "tested_input_commit": "12090f79f160875591d19af5f3ebc1a4553a2803",
+  "tested_input_tree": "15c394b94fc1cc20bc42adc1b3bfd44b01d4fccc",
+  "author_status": "Author-complete",
+  "independent_acceptance_claim": false,
+  "review_verdict": "INCOMPLETE / PENDING_INDEPENDENT_REVIEW",
+  "counterexamples_demonstrated": [
+    {
+      "flaw": "Skipped testcase elements treated as PASS",
+      "symptom": "Missing failure or skipped element parsed with status='PASS', causing skipped tests that failed in baseline to be marked RESOLVED",
+      "resolution": "load_junit explicitly recognizes <skipped> as status='SKIP', tracks unexpected skips, and strict mode rejects unexpected skips"
+    },
+    {
+      "flaw": "Duplicate (classname, name) entries silently overwritten",
+      "symptom": "cases[(c, n)] overwrote earlier execution phases or subtests, silently losing failures if followed by a pass",
+      "resolution": "load_junit stores complete record lists per node, computes composite status (ERROR > FAIL > SKIP > PASS), and preserves all record evidence"
+    },
+    {
+      "flaw": "Added failing nodes and environment failures pass --strict",
+      "symptom": "Only new_regressions_count > 0 triggered failure in --strict, allowing ADDED_FAIL and ENVIRONMENT to exit 0",
+      "resolution": "Strict acceptance policy evaluates blocking_violations including added_failures_count and environment_failures_count"
+    },
+    {
+      "flaw": "Missing nodes counted without expected execution set",
+      "symptom": "Removed nodes count was computed against the full 6343 baseline suite, falsely labeling 4496 unexecuted tests deleted",
+      "resolution": "Expected manifest parsed from pytest --collect-only; baseline partitioned into in-scope and out-of-scope; missing in-scope nodes rejected"
+    },
+    {
+      "flaw": "Empty current JUnit XML accepted",
+      "symptom": "An empty XML with 0 testcases resulted in 0 new regressions and exited 0 under --strict",
+      "resolution": "Strict acceptance explicitly requires current_nodes > 0 and 0 missing expected nodes"
+    },
+    {
+      "flaw": "Baseline/current failure pairs called inherited without comparing failure characteristics",
+      "symptom": "Any test failing in both was marked inherited regardless of phase change, exception mismatch, or assertion drift",
+      "resolution": "compare_failure_details verifies phase, refusal code, exception type, and assertion consistency, rejecting changed non-successes"
+    },
+    {
+      "flaw": "Pytest exit code discarded in CI workflow",
+      "symptom": "Broad regression ran with set +e, ignoring interruption (2), internal error (3), usage error (4), and no-tests (5)",
+      "resolution": "Workflow captures pytest_exit, validates against exit codes 2-5, and passes exit code to comparator under documented scoped policy"
+    }
+  ],
+  "preflight_audit": {
+    "locked_dependencies_verified": {
+      "source": "uv.lock",
+      "verifier": "tomllib + importlib.metadata.version",
+      "packages": {
+        "httpx": "0.28.1",
+        "pytest": "9.1.1",
+        "ruff": "0.16.10",
+        "pytest-xdist": "3.8.0",
+        "hatchling": "1.32.4",
+        "jsonschema": "4.26.0"
+      }
+    },
+    "console_script_identity": {
+      "path": ".venv/bin/repo-catalog",
+      "shebang_verified": true,
+      "module_origin_verified": "src/repo_catalog/__init__.py",
+      "version_verified": "0.2.0"
+    },
+    "path_and_umask_propagation": {
+      "github_path_exported": true,
+      "umask_enforced": "0o022"
+    },
+    "sqlite_capabilities": {
+      "version": "3.53.1",
+      "source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+      "strict_tables": true,
+      "json_valid": true,
+      "fts5_trigram": true,
+      "journal_mode": "wal"
+    }
+  },
+  "scoped_acceptance_summary": {
+    "unique_test_references": 64,
+    "executed_nodes": 939,
+    "passed": 939,
+    "failures": 0,
+    "errors": 0,
+    "audit_exit_code": 0,
+    "node_set_matched": true,
+    "incomplete_requirements": [11, 15]
+  },
+  "broad_regression_summary": {
+    "baseline_total_nodes": 6343,
+    "in_scope_baseline_nodes": 1847,
+    "out_of_scope_baseline_nodes": 4496,
+    "expected_nodes": 1847,
+    "executed_nodes": 1847,
+    "passed": 1645,
+    "failed": 182,
+    "errors": 20,
+    "pytest_exit_code": 1,
+    "resolved_non_successes": 72,
+    "inherited_unchanged_non_successes": 202,
+    "inherited_breakdown": {
+      "staged_transfer_fences": 43,
+      "admission_permission_denied": 145,
+      "p7_recovery_admission_refusals": 14,
+      "inherited_other": 0
+    },
+    "new_product_regressions": 0,
+    "added_failures": 0,
+    "environment_failures": 0,
+    "changed_failures": 0,
+    "missing_nodes": 0,
+    "unexpected_skips": 0,
+    "acceptance_verdict": "PASSED"
+  },
+  "evidence_reuse": {
+    "distribution_evidence_reused": true,
+    "justification": "Product source code (src/) and packaging definitions (pyproject.toml) are byte-for-byte identical to PR #166 and PR #163. Direct and sdist-derived wheels are bit-for-bit identical with SHA-256 c3a147b2111e2e22e75af1c1390cfe9b9e8a8f68f5a4a8a6f3584bd608b1360a."
+  },
+  "open_i6c_non_author_obligations": [
+    "empty receiver selection verification",
+    "same full sender package with receiver-side subset selection",
+    "real COMMIT revocation verification",
+    "foreign service-issued handles refusal",
+    "replay revocation verification"
+  ]
+}
