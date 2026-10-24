@@ -611,6 +611,28 @@ def test_admission_matching_permission_denied_accepted():
     assert reason is None
 
 
+def test_admission_refusal_progress_to_wire_identification_barrier_accepted():
+    """Progress from baseline admission refusal (PERMISSION_DENIED) to wire identification barrier is accepted as PROGRESS_KNOWN_BARRIER."""
+    b_info = {
+        "phase": "call",
+        "refusal_code": "PERMISSION_DENIED",
+        "exception_type": "AdmissionRefused",
+        "message": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED",
+        "text": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED",
+    }
+    c_info = {
+        "phase": "call",
+        "refusal_code": "INVALID_IDENTIFICATION",
+        "exception_type": "ExchangeError",
+        "message": "repo_catalog.domain.exchange.ExchangeError: resources:INVALID_IDENTIFICATION",
+        "text": "repo_catalog.domain.exchange.ExchangeError: resources:INVALID_IDENTIFICATION",
+    }
+    cat, unchanged, reason = compare_failure_details(b_info, c_info)
+    assert cat == "PROGRESS_KNOWN_BARRIER"
+    assert unchanged
+    assert "wire identification envelope validation barrier" in (reason or "")
+
+
 def test_p7_recovery_classname_alone_without_matching_signature_rejected():
     """P7 recovery: classname alone without matching signature must be CHANGED_FAILURE."""
     b_info = {

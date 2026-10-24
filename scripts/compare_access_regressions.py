@@ -349,7 +349,25 @@ def compare_failure_details(b_info: dict, c_info: dict) -> tuple[str, bool, str 
             False,
             f"Admission refusal mismatch: baseline code={b_code} vs current code={c_code}",
         )
-    if b_adm != c_adm:
+    if b_adm and not c_adm:
+        c_exc = c_info.get("exception_type")
+        c_code = c_info.get("refusal_code")
+        c_assert = c_info.get("reached_assertion") or ""
+        # Progress from baseline admission barrier (PERMISSION_DENIED) to wire identification envelope validation barrier (INVALID_IDENTIFICATION)
+        if (c_exc == "ExchangeError" or "ExchangeError" in c_assert) and (
+            c_code == "INVALID_IDENTIFICATION" or "INVALID_IDENTIFICATION" in c_assert
+        ):
+            return (
+                "PROGRESS_KNOWN_BARRIER",
+                True,
+                "Progressed from baseline admission barrier (PERMISSION_DENIED) to wire identification envelope validation barrier (INVALID_IDENTIFICATION)",
+            )
+        return (
+            "CHANGED_FAILURE",
+            False,
+            f"Admission refusal category mismatch: baseline adm={b_adm} vs current adm={c_adm}",
+        )
+    if not b_adm and c_adm:
         return (
             "CHANGED_FAILURE",
             False,
@@ -432,6 +450,7 @@ def compare_manifests(
 
     resolved = []
     inherited = []
+    progressed_barriers = []
     new_regressions = []
     added_passes = []
     added_failures = []
@@ -448,6 +467,7 @@ def compare_manifests(
         "INHERITED_ADMISSION_PERMISSION_DENIED": 0,
         "INHERITED_P7_RECOVERY": 0,
         "INHERITED_OTHER": 0,
+        "PROGRESS_KNOWN_BARRIER": 0,
         "ENVIRONMENT_FAILURE": 0,
         "CHANGED_FAILURE": 0,
         "NEW_REGRESSION": 0,
@@ -547,7 +567,23 @@ def compare_manifests(
             )
         elif b_status != "PASS" and c_status != "PASS":
             cat, is_unchanged, reason = compare_failure_details(b_info, c_info)
-            if is_unchanged:
+            if cat == "PROGRESS_KNOWN_BARRIER":
+                progressed_barriers.append(node_id)
+                categorized_counts["PROGRESS_KNOWN_BARRIER"] += 1
+                all_node_details.append(
+                    {
+                        "node_id": node_id,
+                        "baseline_status": b_status,
+                        "current_status": c_status,
+                        "classification": "PROGRESS_KNOWN_BARRIER",
+                        "progress_reason": reason,
+                        "phase": c_info["phase"],
+                        "refusal_code": c_info["refusal_code"],
+                        "reached_assertion": c_info["reached_assertion"],
+                        "records": c_info["records"],
+                    }
+                )
+            elif is_unchanged:
                 inherited.append(node_id)
                 categorized_counts[cat] += 1
                 all_node_details.append(
@@ -622,6 +658,7 @@ def compare_manifests(
                 + len(environment_failures)
                 + len(changed_failures)
                 + len(inherited)
+                + len(progressed_barriers)
                 > 0
             ):
                 pytest_exit_status = "INCONSISTENT"
@@ -706,6 +743,7 @@ def compare_manifests(
         ),
         "resolved_count": len(resolved),
         "inherited_non_successes_count": len(inherited),
+        "progressed_barriers_count": len(progressed_barriers),
         "new_regressions_count": len(new_regressions),
         "added_failures_count": len(added_failures),
         "environment_failures_count": len(environment_failures),
@@ -714,6 +752,7 @@ def compare_manifests(
         "added_passes_count": len(added_passes),
         "categorized_counts": categorized_counts,
         "resolved_nodes": resolved,
+        "progressed_barrier_nodes": progressed_barriers,
         "new_regression_nodes": new_regressions,
         "added_failure_nodes": added_failures,
         "environment_failure_nodes": environment_failures,
@@ -800,6 +839,7 @@ def main():
                 "missing_nodes": summary["missing_nodes_count"],
                 "resolved_count": summary["resolved_count"],
                 "inherited_count": summary["inherited_non_successes_count"],
+                "progressed_barriers_count": summary["progressed_barriers_count"],
                 "new_regressions": summary["new_regressions_count"],
                 "added_failures": summary["added_failures_count"],
                 "environment_failures": summary["environment_failures_count"],
