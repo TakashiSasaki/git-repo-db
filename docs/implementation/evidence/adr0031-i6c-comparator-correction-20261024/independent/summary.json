@@ -1,0 +1,80 @@
+{
+  "contract": "HCI-L01",
+  "review_target": {
+    "pr": 170,
+    "pr_url": "https://github.com/TakashiSasaki/git-repo-db/pull/170",
+    "base_branch": "fix/adr0031-i6c-regression-hardening-20261024",
+    "base_commit": "3a1f112331c87747249f38af370160adc0de108a",
+    "head_branch": "fix/adr0031-i6c-comparator-correction-20261024",
+    "tested_input_commit": "61efe65e23be038cf97314e970b5b500e290ed0a",
+    "tested_input_tree": "fa4d7d64692eadef79fd9f3423c71df659432df9",
+    "submission_commit": "55de572bdac4b9b90b131d89025b0ed304cd0159",
+    "submission_tree": "a588ff898c968582f8fb1d661e1cdec9fa2bee08"
+  },
+  "review_decision": "SCOPED_ACCEPTANCE",
+  "verdict": "SCOPED ACCEPTANCE (PASS)",
+  "whole_adr_acceptance": false,
+  "stage": "Stage 1 (Comparator Acceptance Semantics Correction)",
+  "two_stage_commit_separation": {
+    "verified": true,
+    "executable_diff_empty": true,
+    "diff_paths_checked": "src tests scripts pyproject.toml .github"
+  },
+  "comparator_audit": {
+    "elimination_of_test_name_matching": {
+      "verified": true,
+      "function": "is_transfer_stage_fence",
+      "detail": "Removed test_transfer_reports_never_shrunk_or_mixed name matching; requires explicit error marker and compatible exception"
+    },
+    "elimination_of_unknown_metadata_fallback": {
+      "verified": true,
+      "function": "compare_failure_details (fallback)",
+      "detail": "Eliminated None == None matching; requires non-None matching exception and concrete refusal_code or reached_assertion signature"
+    },
+    "elimination_of_category_shortcut": {
+      "verified": true,
+      "function": "is_admission_refusal / compare_failure_details",
+      "detail": "Requires identical non-None refusal code equality; PERMISSION_DENIED vs INVALID_IDENTIFICATION classified as CHANGED_FAILURE"
+    },
+    "p7_recovery_signature_hardening": {
+      "verified": true,
+      "function": "compare_failure_details (p7)",
+      "detail": "Requires matching non-None refusal code or matching non-None reached assertion and compatible exception type"
+    }
+  },
+  "unit_tests": {
+    "suite": "tests/unit/test_compare_access_regressions.py",
+    "total": 23,
+    "passed": 23,
+    "failed": 0,
+    "errors": 0,
+    "duration_seconds": 0.84
+  },
+  "evidence_comparison_audit": {
+    "baseline_total_nodes": 6343,
+    "in_scope_baseline_nodes": 1847,
+    "out_of_scope_baseline_nodes": 4496,
+    "expected_nodes": 1847,
+    "executed_nodes": 1847,
+    "missing_nodes": 0,
+    "unexpected_nodes": 0,
+    "unexpected_skips": 0,
+    "resolved_non_successes": 72,
+    "inherited_unchanged_non_successes": 201,
+    "inherited_breakdown": {
+      "staged_transfer_fences": 43,
+      "admission_permission_denied": 144,
+      "p7_recovery_context_admission_refusals": 14
+    },
+    "changed_failures": 1,
+    "changed_failure_node": "tests.integration.p1.test_generalized_resources::test_selected_real_wire_without_identification_refuses_before_core_effects",
+    "changed_failure_detected_correctly": true,
+    "strict_acceptance_verdict": "REJECTED",
+    "blocking_violations": [
+      "1 changed non-successes detected"
+    ],
+    "verification_significance": "Confirms hardened comparator properly refuses to falsely accept changed failure signatures under --strict"
+  },
+  "findings_count": 0,
+  "findings": []
+}
