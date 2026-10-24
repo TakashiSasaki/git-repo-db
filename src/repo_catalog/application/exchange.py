@@ -282,9 +282,13 @@ class ExchangeService:
         directory: Path | str,
         *,
         operational: OperationalAcquisitionLedger | Path | str | None = None,
+        authorization: Any = None,
+        admission: Any = None,
     ) -> None:
         self.directory = Path(directory)
         self.operational = operational
+        self.authorization = authorization
+        self.admission = admission
 
     def _has_core(self) -> bool:
         return (self.directory / "core.sqlite3").is_file()
@@ -389,7 +393,11 @@ class ExchangeService:
             self._check_stop()
             scope = selection or ExchangeSelectionScope()
             explicit_scope(scope)
-            if scope.include_context and not self._has_context() and not self._has_core():
+            if (
+                scope.include_context
+                and not self._has_context()
+                and not self._has_core()
+            ):
                 from repo_catalog.domain.context_admission import AdmissionRefused
 
                 raise AdmissionRefused("PERMISSION_DENIED")
@@ -1487,6 +1495,8 @@ class ExchangeService:
         permitted_repository_uuidv4s: tuple[str, ...] = (),
         selection: ExchangeSelectionScope | None = None,
         cut: Callable[[str], None] = lambda point: None,
+        authorization: Any = None,
+        admission: Any = None,
     ) -> ExchangeImportReport:
         """Validate and import an ExchangePackage into Core and/or Context."""
         self._check_stop()
@@ -1628,6 +1638,8 @@ class ExchangeService:
                 permitted=permitted_repository_uuidv4s,
                 selection=receive_selection,
                 cut=cut,
+                authorization=authorization,
+                admission=admission,
             )
 
     def _import_package(
@@ -1640,6 +1652,8 @@ class ExchangeService:
         permitted,
         selection,
         cut,
+        authorization=None,
+        admission=None,
     ) -> ExchangeImportReport:
         self._check_stop()
         package = raw_package
@@ -1766,42 +1780,26 @@ class ExchangeService:
                 cut("after_" + stage + "_checkpoint")
 
         if self._has_core() and self._has_context() and (want_core or want_context):
-            auth = None
-            adm = None
+            auth = authorization if authorization is not None else self.authorization
+            adm = admission if admission is not None else self.admission
             if want_context:
-                from repo_catalog.domain.context_admission import (
-                    create_local_admission_service,
-                )
-
                 admit_selection = replace(selection, include_core=True)
-                if (
-                    selection.resource_keys is not None
-                    and context_data is not None
-                    and "resources" in context_data
-                ):
-                    from repo_catalog.domain.p1_context import ResourceKey
+                if auth is None or adm is None:
+                    if not permitted:
+                        from repo_catalog.domain.context_admission import (
+                            AdmissionRefused,
+                        )
 
-                    admit_selection = replace(
-                        admit_selection,
-                        resource_keys=tuple(
-                            ResourceKey(
-                                *(
-                                    r[name]
-                                    for name in (
-                                        "service_instance_uuidv4",
-                                        "resource_kind",
-                                        "provider_resource_id",
-                                    )
-                                )
-                            )
-                            for r in context_data["resources"]
-                        ),
+                        raise AdmissionRefused("PERMISSION_DENIED")
+                    from repo_catalog.domain.context_admission import (
+                        create_local_admission_service,
                     )
-                auth, adm, _ = create_local_admission_service(
-                    "exchange_import",
-                    permitted_repositories=frozenset(permitted),
-                    selection=admit_selection,
-                )
+
+                    auth, adm, _ = create_local_admission_service(
+                        "exchange_import",
+                        permitted_repositories=frozenset(permitted),
+                        selection=admit_selection,
+                    )
             coordinator = PairCoordinator(self.directory, authorization=auth)
 
             def _core_unit(core_tx: AdmissionTransaction) -> None:
@@ -1870,39 +1868,25 @@ class ExchangeService:
                     db.rollback()
                     raise
         elif want_context and context_data is not None:
-            from repo_catalog.domain.context_admission import (
-                create_local_admission_service,
-            )
-
+            auth = authorization if authorization is not None else self.authorization
+            adm = admission if admission is not None else self.admission
             admit_selection = replace(selection, include_core=True)
-            if (
-                selection.resource_keys is not None
-                and context_data is not None
-                and "resources" in context_data
-            ):
-                from repo_catalog.domain.p1_context import ResourceKey
+            if auth is None or adm is None:
+                if not permitted:
+                    from repo_catalog.domain.context_admission import (
+                        AdmissionRefused,
+                    )
 
-                admit_selection = replace(
-                    admit_selection,
-                    resource_keys=tuple(
-                        ResourceKey(
-                            *(
-                                r[name]
-                                for name in (
-                                    "service_instance_uuidv4",
-                                    "resource_kind",
-                                    "provider_resource_id",
-                                )
-                            )
-                        )
-                        for r in context_data["resources"]
-                    ),
+                    raise AdmissionRefused("PERMISSION_DENIED")
+                from repo_catalog.domain.context_admission import (
+                    create_local_admission_service,
                 )
-            auth, adm, _ = create_local_admission_service(
-                "exchange_import",
-                permitted_repositories=frozenset(permitted),
-                selection=admit_selection,
-            )
+
+                auth, adm, _ = create_local_admission_service(
+                    "exchange_import",
+                    permitted_repositories=frozenset(permitted),
+                    selection=admit_selection,
+                )
             with Context.transaction(
                 self.directory, authorization=auth, admission=adm
             ) as ctx_cap:

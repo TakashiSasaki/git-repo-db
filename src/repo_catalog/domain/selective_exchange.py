@@ -695,8 +695,8 @@ def preflight_i2_resources(resources):
             if kind in {"review", "thread", "comment", "document"}:
                 try:
                     ResourceIdentification.from_wire(item)
-                except Exception:
-                    raise UnsupportedIdentificationStage() from None
+                except (ValueError, TypeError) as error:
+                    raise UnsupportedIdentificationStage() from error
 
 
 def preflight_i2_context(data):
@@ -734,8 +734,10 @@ def validate_context(data):
     for row in data["source_repositories"]:
         uuid4_value(row["source_registration_uuidv4"])
         uuid4_value(row["repository_uuidv4"])
+    from repo_catalog.domain.resource_identification import ResourceIdentification
+
     for row in data["resources"]:
-        resource(row)
+        ResourceIdentification.from_wire(row)
     for row in data["field_candidates"]:
         candidate = FieldCandidate(
             resource(row),
@@ -827,12 +829,10 @@ def validate_context_bindings(data, source_services):
     """Check modeled parent and service assertions without manufacturing facts."""
     from repo_catalog.domain.resource_identification import ResourceIdentification
 
-    identifications = {}
-    for row in data["resources"]:
-        try:
-            identifications[resource(row)] = ResourceIdentification.from_wire(row)
-        except (ValueError, TypeError):
-            pass
+    identifications = {
+        resource(row): ResourceIdentification.from_wire(row)
+        for row in data["resources"]
+    }
     from repo_catalog.domain.context_admission import extract_provenance_sources
 
     for section, rows in data.items():

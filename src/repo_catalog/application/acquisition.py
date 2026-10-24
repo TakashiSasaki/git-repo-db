@@ -1108,6 +1108,11 @@ class ProviderAcquisition:
 
     @contextmanager
     def _open_context(self, override: Context | None = None) -> Iterator[Context]:
+        auth, adm = self.authorization, self.admission
+        if auth is None or adm is None:
+            from repo_catalog.domain.context_admission import AdmissionRefused
+
+            raise AdmissionRefused("PERMISSION_DENIED")
         if override is not None:
             yield override
             return
@@ -1119,12 +1124,6 @@ class ProviderAcquisition:
             from repo_catalog.domain.context_admission import AdmissionRefused
 
             raise AdmissionRefused("PERMISSION_DENIED")
-
-        from repo_catalog.domain.context_admission import create_local_admission_service
-
-        auth, adm = self.authorization, self.admission
-        if auth is None:
-            auth, adm, _ = create_local_admission_service("provider_intake")
         with Context.transaction(path, authorization=auth, admission=adm) as ctx:
             yield ctx
 
@@ -2087,18 +2086,16 @@ class PairedAcquisitionCoordinator:
             auth = self.authorization
             adm = self.admission
             if (
-                auth is None
-                and (
-                    provider_batch is not None
-                    or context_fn is not None
-                    or reconcile_dependencies
-                )
+                provider_batch is not None
+                or context_fn is not None
+                or reconcile_dependencies
             ):
-                from repo_catalog.domain.context_admission import (
-                    create_local_admission_service,
-                )
+                if auth is None or adm is None:
+                    from repo_catalog.domain.context_admission import (
+                        AdmissionRefused,
+                    )
 
-                auth, adm, _ = create_local_admission_service("provider_intake")
+                    raise AdmissionRefused("PERMISSION_DENIED")
 
             coord = (
                 self.coordinator
@@ -2134,12 +2131,12 @@ class PairedAcquisitionCoordinator:
 
         auth = self.authorization
         adm = self.admission
-        if auth is None:
+        if auth is None or adm is None:
             from repo_catalog.domain.context_admission import (
-                create_local_admission_service,
+                AdmissionRefused,
             )
 
-            auth, adm, _ = create_local_admission_service("provider_intake")
+            raise AdmissionRefused("PERMISSION_DENIED")
 
         coord = (
             self.coordinator
