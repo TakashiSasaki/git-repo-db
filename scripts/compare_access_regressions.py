@@ -240,25 +240,46 @@ def is_transfer_stage_fence(info: dict) -> bool:
     text = info.get("text", "")
     msg = info.get("message", "")
     content = msg + "\n" + text
-    return (
+    code = info.get("refusal_code")
+    exc = info.get("exception_type")
+    has_marker = (
         "i2_transfer_stage_fence" in content
         or "i2_transfer_report_stage_fence" in content
         or "UnsupportedResourceStage" in content
         or "I2_TRANSFER_UNSUPPORTED" in content
-        or "test_transfer_reports_never_shrunk_or_mixed" in info.get("name", "")
+        or code in ("I2_TRANSFER_UNSUPPORTED", "TRANSFER_UNSUPPORTED")
     )
+    has_compat_exc = (
+        exc
+        in (
+            "UnsupportedResourceStage",
+            "OperationalError",
+            "IntegrityError",
+            "DatabaseError",
+        )
+        or "UnsupportedResourceStage" in content
+        or "i2_transfer_stage_fence" in content
+    )
+    return bool(has_marker and has_compat_exc)
 
 
 def is_admission_refusal(info: dict) -> bool:
-    code = info.get("refusal_code")
     text = info.get("text", "")
     msg = info.get("message", "")
     content = msg + "\n" + text
-    return (
+    code = info.get("refusal_code")
+    exc = info.get("exception_type")
+    has_adm_code = (
         code in ("PERMISSION_DENIED", "INVALID_IDENTIFICATION")
         or "PERMISSION_DENIED" in content
-        or "INVALID_IDENTIFICATION" in content
+        or "AdmissionRefused" in content
     )
+    compat_exc = (
+        exc in ("AdmissionRefused", "AdmissionFailure", "AssertionError")
+        or "AdmissionRefused" in content
+        or "AdmissionFailure" in content
+    )
+    return bool(has_adm_code and compat_exc)
 
 
 def is_p7_recovery(info: dict) -> bool:
@@ -279,6 +300,7 @@ def compare_failure_details(b_info: dict, c_info: dict) -> tuple[str, bool, str 
             f"Phase mismatch: baseline {b_info.get('phase')} != current {c_info.get('phase')}",
         )
 
+    # 1. Staged Transfer barriers
     b_transfer = is_transfer_stage_fence(b_info)
     c_transfer = is_transfer_stage_fence(c_info)
     if b_transfer and c_transfer:
@@ -290,41 +312,97 @@ def compare_failure_details(b_info: dict, c_info: dict) -> tuple[str, bool, str 
             "Progressed past staged Transfer barrier into different failure",
         )
 
+    # 2. P7 recovery context admission refusals
     b_p7 = is_p7_recovery(b_info)
     c_p7 = is_p7_recovery(c_info)
     if b_p7 and c_p7:
-        if b_info.get("refusal_code") == c_info.get("refusal_code") or b_info.get(
-            "reached_assertion"
-        ) == c_info.get("reached_assertion"):
+        b_code = b_info.get("refusal_code")
+        c_code = c_info.get("refusal_code")
+        b_assert = b_info.get("reached_assertion")
+        c_assert = c_info.get("reached_assertion")
+        b_exc = b_info.get("exception_type")
+        c_exc = c_info.get("exception_type")
+
+        exc_match = b_exc == c_exc and b_exc is not None
+        code_match = b_code == c_code and b_code is not None
+        assert_match = b_assert == c_assert and b_assert is not None
+
+        if exc_match and (code_match or assert_match):
             return "INHERITED_P7_RECOVERY", True, None
         return (
             "CHANGED_FAILURE",
             False,
-            f"P7 recovery assertion/code changed: {b_info.get('reached_assertion')} -> {c_info.get('reached_assertion')}",
+            f"P7 recovery mismatch: code ({b_code} vs {c_code}), assertion ({b_assert} vs {c_assert}), exception ({b_exc} vs {c_exc})",
         )
 
+    # 3. Context admission authorization refusals
     b_adm = is_admission_refusal(b_info)
     c_adm = is_admission_refusal(c_info)
     if b_adm and c_adm:
-        return "INHERITED_ADMISSION_PERMISSION_DENIED", True, None
+        b_code = b_info.get("refusal_code")
+        c_code = c_info.get("refusal_code")
+        # Identical non-None refusal code required; PERMISSION_DENIED vs INVALID_IDENTIFICATION must NOT match
+        if b_code == c_code and b_code is not None:
+            return "INHERITED_ADMISSION_PERMISSION_DENIED", True, None
+        return (
+            "CHANGED_FAILURE",
+            False,
+            f"Admission refusal mismatch: baseline code={b_code} vs current code={c_code}",
+        )
     if b_adm != c_adm:
         return (
             "CHANGED_FAILURE",
             False,
-            f"Admission refusal mismatch: baseline code={b_info.get('refusal_code')} vs current code={c_info.get('refusal_code')}",
+            f"Admission refusal category mismatch: baseline adm={b_adm} vs current adm={c_adm}",
         )
 
-    # General fallback
-    if b_info.get("refusal_code") == c_info.get("refusal_code") and b_info.get(
-        "reached_assertion"
-    ) == c_info.get("reached_assertion"):
-        return "INHERITED_OTHER", True, None
+    # 4. General fallback
+    b_exc = b_info.get("exception_type")
+    c_exc = c_info.get("exception_type")
+    b_code = b_info.get("refusal_code")
+    c_code = c_info.get("refusal_code")
+    b_assert = b_info.get("reached_assertion")
+    c_assert = c_info.get("reached_assertion")
 
-    return (
-        "CHANGED_FAILURE",
-        False,
-        f"Unresolved failure change: exception {b_info.get('exception_type')} -> {c_info.get('exception_type')}",
+    # Both exception types must match and be not None
+    if b_exc is None or c_exc is None or b_exc != c_exc:
+        return (
+            "CHANGED_FAILURE",
+            False,
+            f"Exception type mismatch: baseline {b_exc} != current {c_exc}",
+        )
+
+    # If neither refusal_code nor reached_assertion is known on both sides, do NOT accept as unchanged!
+    has_concrete_sig = (b_code is not None and c_code is not None) or (
+        b_assert is not None and c_assert is not None
     )
+    if not has_concrete_sig:
+        return (
+            "CHANGED_FAILURE",
+            False,
+            "Unknown metadata: missing concrete refusal_code or reached_assertion signature",
+        )
+
+    # If refusal_code is present on either side, it must match
+    if (b_code is not None or c_code is not None) and b_code != c_code:
+        return (
+            "CHANGED_FAILURE",
+            False,
+            f"Refusal code mismatch: baseline {b_code} != current {c_code}",
+        )
+
+    # If reached_assertion is present on either side, it must match (normalizing whitespace)
+    if b_assert is not None or c_assert is not None:
+        norm_b_assert = " ".join(b_assert.split()) if b_assert else None
+        norm_c_assert = " ".join(c_assert.split()) if c_assert else None
+        if norm_b_assert != norm_c_assert:
+            return (
+                "CHANGED_FAILURE",
+                False,
+                f"Reached assertion mismatch: baseline {b_assert} != current {c_assert}",
+            )
+
+    return "INHERITED_OTHER", True, None
 
 
 def compare_manifests(
