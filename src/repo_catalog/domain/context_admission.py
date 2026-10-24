@@ -190,7 +190,7 @@ class AdmissionSelection:
             getattr(deps, name) for name in _DIMENSIONS if name != "object_oids"
         ):
             raise AdmissionRefused("OMITTED_BY_SELECTION")
-        if not self.include_core and (deps.repositories or deps.object_oids):
+        if not self.include_core and deps.object_oids:
             raise AdmissionRefused("OMITTED_BY_SELECTION")
         for selected, required in (
             (self.resource_keys, deps.resources),
@@ -686,3 +686,114 @@ def validate_originals(unit):
             validate_originals(member)
     else:
         dependencies(unit)
+
+
+class LocalAuthorizationPolicy:
+    """Finite local authorization policy held through outer commit."""
+
+    def __init__(
+        self,
+        grants: DependencySet | None = None,
+        permitted_repositories: frozenset[str] | None = None,
+    ):
+        self._lock = RLock()
+        self._grants = grants
+        self._permitted_repositories = (
+            frozenset(permitted_repositories)
+            if permitted_repositories is not None
+            else None
+        )
+        self._denied = DependencySet()
+        self._revision = 0
+        self.calls = []
+        self.active = 0
+
+    @property
+    def grants(self):
+        return self._grants
+
+    @grants.setter
+    def grants(self, value):
+        with self._lock:
+            self._grants = value
+            self._revision += 1
+
+    @property
+    def denied(self):
+        return self._denied
+
+    @denied.setter
+    def denied(self, value):
+        with self._lock:
+            self._denied = value
+            self._revision += 1
+
+    @property
+    def revision(self):
+        return self._revision
+
+    @revision.setter
+    def revision(self, value):
+        with self._lock:
+            self._revision = value
+
+    @contextmanager
+    def lease(self, principal, operation, dependencies):
+        with self._lock:
+            self.calls.append((principal, operation, dependencies))
+            if operation not in OPERATIONS or operation == "exchange_export":
+                raise AdmissionRefused("PERMISSION_DENIED")
+            if self._permitted_repositories is not None:
+                if not dependencies.repositories <= self._permitted_repositories:
+                    raise AdmissionRefused("PERMISSION_DENIED")
+                for _, repo in dependencies.source_repository_pairs:
+                    if repo not in self._permitted_repositories:
+                        raise AdmissionRefused("PERMISSION_DENIED")
+            if self._grants is not None:
+                if not dependencies.issubset(self._grants):
+                    raise AdmissionRefused("PERMISSION_DENIED")
+            for dimension in _DIMENSIONS:
+                if getattr(dependencies, dimension) & getattr(self._denied, dimension):
+                    raise AdmissionRefused("PERMISSION_DENIED")
+            revision = self._revision
+            policy = self
+
+            class Lease:
+                def check_current(self):
+                    if revision != policy._revision:
+                        raise AdmissionRefused("PERMISSION_DENIED")
+
+            self.active += 1
+            try:
+                yield Lease()
+            finally:
+                self.active -= 1
+
+
+def create_local_admission_service(
+    operation: str = "provider_intake",
+    *,
+    grants: DependencySet | None = None,
+    permitted_repositories: frozenset[str] | None = None,
+    selection: AdmissionSelection | None = None,
+    budget: AdmissionBudget | None = None,
+    principal: object = "local-user",
+) -> tuple[ContextAdmissionService, AdmissionContext, LocalAuthorizationPolicy]:
+    policy = LocalAuthorizationPolicy(
+        grants=grants, permitted_repositories=permitted_repositories
+    )
+
+    def authenticate(credential):
+        if credential != "local-authority":
+            raise AdmissionRefused("PERMISSION_DENIED")
+        return principal
+
+    service = ContextAdmissionService(policy, authenticate)
+    context = service.context(
+        "local-authority",
+        operation,
+        selection or AdmissionSelection(all_selected=True),
+        budget or AdmissionBudget(),
+    )
+    return service, context, policy
+

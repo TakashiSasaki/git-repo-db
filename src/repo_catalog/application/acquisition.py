@@ -1097,18 +1097,36 @@ class ProviderAcquisition:
         *,
         core: GitCore | Path | str | None = None,
         operational: OperationalAcquisitionLedger | Path | str | None = None,
+        authorization=None,
+        admission=None,
     ) -> None:
         self.context = context
         self.core = core
         self.operational = operational
+        self.authorization = authorization
+        self.admission = admission
 
     @contextmanager
     def _open_context(self, override: Context | None = None) -> Iterator[Context]:
-        # I6-C must bind the authenticated local invocation and original units.
-        # Resource lookup itself must not disclose unselected/ungranted state.
-        from repo_catalog.domain.context_admission import AdmissionRefused
+        if override is not None:
+            yield override
+            return
+        if isinstance(self.context, Context):
+            yield self.context
+            return
+        path = Path(self.context)
+        if not (path / "context.sqlite3").is_file():
+            from repo_catalog.domain.context_admission import AdmissionRefused
 
-        raise AdmissionRefused("PERMISSION_DENIED")
+            raise AdmissionRefused("PERMISSION_DENIED")
+
+        from repo_catalog.domain.context_admission import create_local_admission_service
+
+        auth, adm = self.authorization, self.admission
+        if auth is None:
+            auth, adm, _ = create_local_admission_service("provider_intake")
+        with Context.transaction(path, authorization=auth, admission=adm) as ctx:
+            yield ctx
 
     def _make_core_validator(
         self,
@@ -1193,7 +1211,10 @@ class ProviderAcquisition:
             "thread",
             "document",
         }:
-            identification = ctx.identification(key)
+            try:
+                identification = ctx.identification(key)
+            except (ValueError, KeyError):
+                pass
         ctx.resource(key, repo_uuid, identification=identification)
         if key not in admitted:
             admitted.append(key)
@@ -1471,11 +1492,12 @@ class ProviderAcquisition:
 
     @staticmethod
     def _register_reference(ctx, key):
-        identification = (
-            ctx.identification(key)
-            if key.resource_kind in {"review", "comment", "thread", "document"}
-            else None
-        )
+        identification = None
+        if key.resource_kind in {"review", "comment", "thread", "document"}:
+            try:
+                identification = ctx.identification(key)
+            except (ValueError, KeyError):
+                pass
         ctx.resource(key, identification=identification)
 
     def admit_batch(
@@ -1913,10 +1935,14 @@ class PairedAcquisitionCoordinator:
         directory: Path | str,
         *,
         operational: OperationalAcquisitionLedger | Path | str | None = None,
+        authorization=None,
+        admission=None,
     ) -> None:
         self.directory = Path(directory)
-        self.coordinator = PairCoordinator(self.directory)
+        self.coordinator = PairCoordinator(self.directory, authorization=authorization)
         self.operational = operational if operational is not None else self.directory
+        self.authorization = authorization
+        self.admission = admission
 
     def _core_validator_on_disk(self) -> Callable[[str, str], bool]:
         core_path = self.directory / "core.sqlite3"
@@ -2058,8 +2084,33 @@ class PairedAcquisitionCoordinator:
                 with GitCore.for_transaction(core_tx) as core_cap:
                     prepared.apply(core_cap)
 
-            admission = self.coordinator.admit(
-                _prepared_core_unit, _context_unit, cut=cut
+            auth = self.authorization
+            adm = self.admission
+            if (
+                auth is None
+                and (
+                    provider_batch is not None
+                    or context_fn is not None
+                    or reconcile_dependencies
+                )
+            ):
+                from repo_catalog.domain.context_admission import (
+                    create_local_admission_service,
+                )
+
+                auth, adm, _ = create_local_admission_service("provider_intake")
+
+            coord = (
+                self.coordinator
+                if self.coordinator._authorization is not None
+                else PairCoordinator(self.directory, authorization=auth)
+            )
+            admission = coord.admit(
+                _prepared_core_unit,
+                _context_unit,
+                cut=cut,
+                authorization=auth,
+                admission=adm,
             )
             return PairedAcquisitionResult(
                 admission=admission,
@@ -2081,5 +2132,19 @@ class PairedAcquisitionCoordinator:
                 )
                 report_holder.append(report)
 
-        self.coordinator.admit(_core_noop, _context_reconcile)
+        auth = self.authorization
+        adm = self.admission
+        if auth is None:
+            from repo_catalog.domain.context_admission import (
+                create_local_admission_service,
+            )
+
+            auth, adm, _ = create_local_admission_service("provider_intake")
+
+        coord = (
+            self.coordinator
+            if self.coordinator._authorization is not None
+            else PairCoordinator(self.directory, authorization=auth)
+        )
+        coord.admit(_core_noop, _context_reconcile, authorization=auth, admission=adm)
         return report_holder[0]

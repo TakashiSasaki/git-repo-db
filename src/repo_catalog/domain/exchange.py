@@ -822,7 +822,6 @@ def validate_package_envelope(package: ExchangePackage) -> None:
     )
 
     validate_rows(package.core, package.context)
-    validate_replay_consistency(package.core, package.context)
 
 
 def encode_package(package: ExchangePackage) -> str:

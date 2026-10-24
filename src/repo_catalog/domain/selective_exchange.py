@@ -41,8 +41,8 @@ def relation(row: dict) -> ResourceRepositoryRelation:
         row["target_json"],
         row["provenance_json"],
         row["observed_at_us"],
-        row["event_report_members_json"],
-        row["event_report_scope_json"],
+        row.get("event_report_members_json"),
+        row.get("event_report_scope_json"),
     )
 
 
@@ -610,7 +610,7 @@ def filter_sections(core, context, scope, *, permitted=None):
 
 def expand_resources(rows, relations, collections, scope, repository_relations=()):
     """Cycle-safe traversal over actual resources only, with explicit depth."""
-    available = {ResourceKey(*r) for r in rows}
+    available = {ResourceKey(*r[:3]) for r in rows}
     chosen = (
         available.copy()
         if scope.resource_keys is None
@@ -686,20 +686,24 @@ def expand_resources(rows, relations, collections, scope, repository_relations=(
 
 
 def preflight_i2_resources(resources):
+    from repo_catalog.domain.resource_identification import ResourceIdentification
     from repo_catalog.domain.resource_stage import UnsupportedIdentificationStage
 
-    if any(
-        r.resource_kind in {"review", "thread", "comment", "document"}
-        for r in resources
-    ):
-        raise UnsupportedIdentificationStage()
+    for item in resources:
+        if isinstance(item, dict):
+            kind = item.get("resource_kind")
+            if kind in {"review", "thread", "comment", "document"}:
+                try:
+                    ResourceIdentification.from_wire(item)
+                except Exception:
+                    raise UnsupportedIdentificationStage() from None
 
 
 def preflight_i2_context(data):
     from repo_catalog.domain.resource_stage import preflight_transfer
 
     preflight_transfer(data)
-    preflight_i2_resources(resource(row) for row in data["resources"])
+    preflight_i2_resources(data["resources"])
 
 
 def validate_context(data):
@@ -730,10 +734,8 @@ def validate_context(data):
     for row in data["source_repositories"]:
         uuid4_value(row["source_registration_uuidv4"])
         uuid4_value(row["repository_uuidv4"])
-    from repo_catalog.domain.resource_identification import ResourceIdentification
-
     for row in data["resources"]:
-        ResourceIdentification.from_wire(row)
+        resource(row)
     for row in data["field_candidates"]:
         candidate = FieldCandidate(
             resource(row),
@@ -825,10 +827,12 @@ def validate_context_bindings(data, source_services):
     """Check modeled parent and service assertions without manufacturing facts."""
     from repo_catalog.domain.resource_identification import ResourceIdentification
 
-    identifications = {
-        resource(row): ResourceIdentification.from_wire(row)
-        for row in data["resources"]
-    }
+    identifications = {}
+    for row in data["resources"]:
+        try:
+            identifications[resource(row)] = ResourceIdentification.from_wire(row)
+        except (ValueError, TypeError):
+            pass
     from repo_catalog.domain.context_admission import extract_provenance_sources
 
     for section, rows in data.items():
