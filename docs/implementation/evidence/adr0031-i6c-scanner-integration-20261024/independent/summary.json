@@ -1,0 +1,161 @@
+{
+  "phase": "adr0031-i6c-scanner-integration-20261024",
+  "target_pr": 172,
+  "target_pr_url": "https://github.com/TakashiSasaki/git-repo-db/pull/172",
+  "target_head_commit": "68c9ebb3c8877c522a51be268588f0adefd5d58d",
+  "target_head_tree": "c1e1a2e62a08afd22852cb9890c3fa5d26c36bb8",
+  "tested_input_commit": "363eb6fdb8c12f854676f4273ed040968f701b3a",
+  "tested_input_tree": "3c955abc101b23991da764de3310e6b5a0f99be8",
+  "base_branch": "fix/adr0031-i6c-regression-hardening-20261024",
+  "base_commit": "55de572bdac4b9b90b131d89025b0ed304cd0159",
+  "review_branch": "review/adr0031-i6c-scanner-integration-20261024",
+  "review_role": "Final Independent Integration Reviewer (Reviewer role for Stage 4)",
+  "review_verdict": "SCOPED ACCEPTANCE / PASS",
+  "blocking_findings_count": 0,
+  "p0_findings_count": 0,
+  "p1_findings_count": 0,
+  "two_stage_commit_separation": {
+    "status": "PASS",
+    "tested_input_commit": "363eb6fdb8c12f854676f4273ed040968f701b3a",
+    "final_submission_commit": "68c9ebb3c8877c522a51be268588f0adefd5d58d",
+    "diff_lines_in_executable_paths": 0,
+    "strictly_empty_diff": true
+  },
+  "integrated_lineages": {
+    "i6c_exchange_and_authority": {
+      "base_pr": 170,
+      "base_commit": "55de572bdac4b9b90b131d89025b0ed304cd0159",
+      "regression_hardening_pr": 168,
+      "comparator_tests_passed": 23,
+      "features_verified": [
+        "ADR 0031 I6-C positive authority forwarding",
+        "Finite grants and LocalAuthorizationPolicy",
+        "Idempotent replay control",
+        "Transfer SQL fences retention",
+        "Strict failure signature comparator",
+        "Offline inventory collection command preservation"
+      ]
+    },
+    "i6c_behavioral_verification": {
+      "source_pr": 169,
+      "source_commit": "634d8f63084cee578aa7beafcd27485a6da8e37a",
+      "obligations_verified": 10,
+      "tests_passed": 8
+    },
+    "scanner_budget_defense": {
+      "source_prs": [158, 160, 162, 165],
+      "reviewed_pr": 167,
+      "source_commit": "d81951868ac4fc252f8c0f38c22cf2c38d6146d4",
+      "tests_passed": 37,
+      "features_verified": [
+        "Bounded input traversal with queue capacity pre-reservation",
+        "Dataclass selection work limit defense",
+        "Defensive sequence snapshotting against mutating containers",
+        "Dictionary traversal bounds",
+        "Single refusal charge accounting without double-charging"
+      ]
+    },
+    "minimal_product_sdist_packaging": {
+      "source_prs": [142, 144, 155],
+      "adr": "0033",
+      "packaging_tests_passed": 131,
+      "features_verified": [
+        "Hatchling sdist only-include packaging contract",
+        "Finite tar stream inflation bounding",
+        "Bit-for-bit direct vs derived wheel equivalence"
+      ]
+    }
+  },
+  "verification_results": {
+    "preflight": {
+      "status": "PASS",
+      "python_version": "3.12.13",
+      "sqlite_version": "3.53.1",
+      "journal_mode": "wal",
+      "strict_tables": true,
+      "fts5_trigram": true,
+      "enforced_umask": "0o022"
+    },
+    "comparator_unit_tests": {
+      "status": "PASS",
+      "passed": 23,
+      "failed": 0,
+      "duration_seconds": 1.07
+    },
+    "scanner_budget_defense_tests": {
+      "status": "PASS",
+      "passed": 37,
+      "failed": 0,
+      "duration_seconds": 56.19
+    },
+    "i6c_behavioral_verification_tests": {
+      "status": "PASS",
+      "passed": 8,
+      "failed": 0,
+      "obligations_verified": 10,
+      "duration_seconds": 12.24
+    },
+    "sdist_packaging_and_hardening_tests": {
+      "status": "PASS",
+      "passed": 131,
+      "failed": 0,
+      "duration_seconds": 4.13
+    },
+    "sdist_contract_check": {
+      "status": "PASS",
+      "compressed_bytes": 705705,
+      "compressed_limit": 2097152,
+      "unpacked_bytes": 6064489,
+      "unpacked_limit": 8388608,
+      "tar_stream_bytes": 6195200,
+      "tar_stream_limit": 8922624,
+      "members": 164,
+      "members_limit": 512,
+      "source_inventory_sha256": "2b856a85f8f685f9cae10ce395455649305441c2e1ef2c2c21fbd998f4f67f46"
+    },
+    "distribution_outside_checkout_smoke": {
+      "status": "PASS",
+      "direct_wheel_sha256": "ab679e600ceda7f783c4e70e63e6da0c7b5f9072c852e9b053d1e54add4da0de",
+      "derived_wheel_sha256": "ab679e600ceda7f783c4e70e63e6da0c7b5f9072c852e9b053d1e54add4da0de",
+      "equal_full_zip_bytes": true,
+      "wheel_smoke_exit_code": 0,
+      "sdist_wheel_smoke_exit_code": 0
+    },
+    "scoped_access_acceptance": {
+      "status": "PASS",
+      "passed": 947,
+      "failed": 0,
+      "errors": 0,
+      "duration_seconds": 239.62
+    },
+    "full_unit_test_suite": {
+      "status": "PASS",
+      "passed": 1614,
+      "subtests_passed": 57,
+      "failed": 0,
+      "errors": 0,
+      "duration_seconds": 117.23
+    },
+    "boundary_and_schema_audits": {
+      "status": "PASS",
+      "audit_callsite_dependencies": "PASS",
+      "build_p1_schema": "PASS",
+      "audit_p1_schema": "PASS",
+      "audit_implementation_boundary": "PASS",
+      "audit_context_registration": "PASS"
+    },
+    "linter_and_formatter": {
+      "status": "PASS",
+      "ruff_check": "PASS (0 issues)",
+      "ruff_format": "PASS (461 files already formatted)"
+    }
+  },
+  "safety_and_scope_invariants": {
+    "unauthorized_i7_i8_features": "NONE",
+    "transfer_intake_bypass": "NONE",
+    "unsupported_resource_stage_active": true,
+    "i2_transfer_stage_fence_active": true,
+    "core_decoupling_preserved": true
+  },
+  "recommendation": "MERGE PR #172 into fix/adr0031-i6c-regression-hardening-20261024"
+}
