@@ -375,9 +375,51 @@ class ContextAdmissionService:
 
         def reserve_children(count):
             rem = remaining_work()
-            if count > rem or len(pending) + count > rem:
+            if count < 0 or count > rem or len(pending) + count > rem:
                 charge(work=1)
                 raise AdmissionRefused("INPUT_LIMIT")
+
+        def snapshot_sequence(container):
+            try:
+                declared = len(container)
+            except Exception:
+                charge(work=1)
+                raise AdmissionRefused("INPUT_LIMIT")
+
+            reserve_children(declared)
+
+            if type(container) is tuple:
+                return container
+
+            children = []
+            try:
+                it = iter(container)
+            except Exception:
+                charge(work=1)
+                raise AdmissionRefused("INPUT_LIMIT")
+
+            for child in it:
+                if (
+                    len(children) >= declared
+                    or len(pending) + len(children) + 1 > remaining_work()
+                ):
+                    charge(work=1)
+                    raise AdmissionRefused("INPUT_LIMIT")
+                children.append(child)
+
+            if len(children) != declared:
+                charge(work=1)
+                raise AdmissionRefused("INPUT_LIMIT")
+
+            try:
+                if len(container) != declared:
+                    charge(work=1)
+                    raise AdmissionRefused("INPUT_LIMIT")
+            except Exception:
+                charge(work=1)
+                raise AdmissionRefused("INPUT_LIMIT")
+
+            return children
 
         pending = [(unit, 0)]
         while pending:
@@ -401,7 +443,7 @@ class ContextAdmissionService:
                     except UnicodeError:
                         raise AdmissionRefused("INVALID_PROVENANCE") from None
                     charge(work=1, bytes_=len(encoded))
-            elif is_dataclass(item):
+            elif is_dataclass(item) and not isinstance(item, type):
                 member_fields = fields(item)
                 count = len(member_fields)
                 rem_work = context.budget.work_limit - context.budget.used_work
@@ -412,20 +454,48 @@ class ContextAdmissionService:
                     (getattr(item, member.name), depth + 1) for member in member_fields
                 )
             elif isinstance(item, (tuple, list, frozenset)):
-                reserve_children(len(item))
-                children = tuple(item)
-                if len(children) != len(item):
-                    reserve_children(len(children))
+                children = snapshot_sequence(item)
                 pending.extend((child, depth + 1) for child in children)
-            elif type(item) is dict:
-                reserve_children(2 * len(item))
-                values = tuple(item.values())
-                keys = tuple(item.keys())
-                total = len(values) + len(keys)
-                if total != 2 * len(item):
-                    reserve_children(total)
-                pending.extend((child, depth + 1) for child in values)
-                pending.extend((child, depth + 1) for child in keys)
+            elif isinstance(item, dict):
+                try:
+                    declared = len(item)
+                except Exception:
+                    charge(work=1)
+                    raise AdmissionRefused("INPUT_LIMIT")
+                total = 2 * declared
+                reserve_children(total)
+                children = []
+                try:
+                    for val in item.values():
+                        if (
+                            len(children) >= declared
+                            or len(pending) + len(children) + 1 > remaining_work()
+                        ):
+                            charge(work=1)
+                            raise AdmissionRefused("INPUT_LIMIT")
+                        children.append(val)
+                    for key in item.keys():
+                        if (
+                            len(children) >= total
+                            or len(pending) + len(children) + 1 > remaining_work()
+                        ):
+                            charge(work=1)
+                            raise AdmissionRefused("INPUT_LIMIT")
+                        children.append(key)
+                except RuntimeError:
+                    charge(work=1)
+                    raise AdmissionRefused("INPUT_LIMIT")
+                if len(children) != total:
+                    charge(work=1)
+                    raise AdmissionRefused("INPUT_LIMIT")
+                try:
+                    if len(item) != declared:
+                        charge(work=1)
+                        raise AdmissionRefused("INPUT_LIMIT")
+                except Exception:
+                    charge(work=1)
+                    raise AdmissionRefused("INPUT_LIMIT")
+                pending.extend((child, depth + 1) for child in children)
             if (
                 context.budget.used_work > context.selection.max_work
                 or context.budget.used_bytes > context.selection.max_bytes

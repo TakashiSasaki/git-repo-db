@@ -1,0 +1,49 @@
+{
+  "case_1_appending_list": {
+    "refusal_code": "INPUT_LIMIT",
+    "max_queue_len": 1002,
+    "max_snapshot_len": 1002,
+    "used_work": 4,
+    "final_input_len": 1002
+  },
+  "case_2_changing_len": {
+    "refusal_code": "INPUT_LIMIT",
+    "max_queue_len": 1,
+    "max_snapshot_len": 500,
+    "used_work": 2,
+    "final_input_len": 502
+  },
+  "case_3_same_final_length": {
+    "refusal_code": "INPUT_LIMIT",
+    "max_queue_len": 1002,
+    "max_snapshot_len": 1002,
+    "used_work": 4,
+    "final_input_len": 1002
+  },
+  "case_4_deceptive_len": {
+    "refusal_code": "INPUT_LIMIT",
+    "max_queue_len": 1000,
+    "max_snapshot_len": 1000,
+    "used_work": 4
+  },
+  "case_5_exceeds_during_snapshot": {
+    "refusal_code": "INPUT_LIMIT",
+    "max_queue_len": 1,
+    "max_snapshot_len": 1000,
+    "used_work": 2
+  },
+  "case_6_exact_boundaries": {
+    "list_used_work": 6,
+    "tuple_used_work": 6
+  },
+  "real_store_relation": {
+    "refusal_code": "INPUT_LIMIT",
+    "max_queue_len": 1006,
+    "max_snapshot_len": 1002,
+    "used_work": 26,
+    "final_gl_len": 1002,
+    "db_rows": 0,
+    "transfer_fence": true,
+    "in_transaction": false
+  }
+}

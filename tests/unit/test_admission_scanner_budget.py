@@ -8,12 +8,12 @@ Verifies:
 - Input mutation defenses, UTF-8 chunk bounds, depth/cycle stops, and precedence.
 """
 
-from dataclasses import dataclass
-import json
-from pathlib import Path
 import sqlite3
 import sys
 import tempfile
+from dataclasses import dataclass
+from pathlib import Path
+
 import pytest
 
 from repo_catalog.adapters.sqlite import p1_schema
@@ -28,7 +28,11 @@ from repo_catalog.domain.context_admission import (
 from repo_catalog.domain.p1_context import ResourceKey, canonical
 from repo_catalog.domain.production_context import ResourceRelation
 from repo_catalog.domain.resource_stage import has_transfer_fence
-from tests.support.context_admission import FixturePolicy, fixture_context, fixture_service
+from tests.support.context_admission import (
+    FixturePolicy,
+    fixture_context,
+    fixture_service,
+)
 
 SERVICE = "11111111-1111-4111-8111-111111111111"
 
@@ -40,7 +44,9 @@ class Observer:
         self.target_filename = str(Path(target_filename).resolve())
         self.queue_lengths = []
         self.extend_calls = []
+        self.snapshot_lengths = []
         self.max_queue_len = 0
+        self.max_snapshot_len = 0
 
     def trace(self, frame, event, arg):
         if str(Path(frame.f_code.co_filename).resolve()) == self.target_filename:
@@ -50,6 +56,12 @@ class Observer:
                 self.queue_lengths.append(length)
                 if length > self.max_queue_len:
                     self.max_queue_len = length
+            children = frame.f_locals.get("children")
+            if isinstance(children, (list, tuple)):
+                c_len = len(children)
+                self.snapshot_lengths.append(c_len)
+                if c_len > self.max_snapshot_len:
+                    self.max_snapshot_len = c_len
         return self.trace
 
     def profile(self, frame, event, arg):
@@ -132,6 +144,7 @@ def run_store_relation(
     outcome = None
     refusal_code = None
     with tempfile.TemporaryDirectory(prefix="scanner-reg-") as directory:
+
         def action():
             with Context.owned_transaction(
                 db, Path(directory), authorization=service, admission=issued
@@ -173,6 +186,7 @@ def test_i155_m01_real_store_counterexample_prevented():
     Fixed behavior: reservation fails before queue growth, queue <= 6, refusal at 10001.
     """
     from repo_catalog.domain import context_admission
+
     obs = Observer(context_admission.__file__)
     res = run_store_relation(1000, 10000, 8, 10000, observer=obs)
 
@@ -196,6 +210,7 @@ def test_i155_m01_real_store_exhausted_prior_work():
     Root queue of 1 entry only; refuses at used_work 10001.
     """
     from repo_catalog.domain import context_admission
+
     obs = Observer(context_admission.__file__)
     res = run_store_relation(1000, 10000, 0, 10000, observer=obs)
 
@@ -213,6 +228,7 @@ def test_i155_m01_real_store_selection_work_limit_7():
     Fixed behavior: refuses at 8 without expanding queue (max <= 6).
     """
     from repo_catalog.domain import context_admission
+
     obs = Observer(context_admission.__file__)
     res = run_store_relation(1000, 10000, 10000, 7, observer=obs)
 
@@ -229,6 +245,7 @@ def test_i155_m01_real_store_selection_work_limit_7():
 def test_i155_m01_zero_work_limit():
     """Zero total work limit must refuse immediately on initial pop."""
     from repo_catalog.domain import context_admission
+
     obs = Observer(context_admission.__file__)
     res = run_store_relation(16, 0, 0, 0, observer=obs)
 
@@ -247,11 +264,29 @@ def test_i155_m01_zero_work_limit():
         (lambda: (1,), 1, 2),
         (lambda: [1, 2], 2, 3),
         (lambda: frozenset({1, 2, 3}), 3, 4),
-        (lambda: {1: 2}, 1, 3),  # dict with int key/val: pop dict (1) + pop val (1) + pop key (1)
-        (lambda: {"a": 1}, 1, 4),  # dict with str key: pop dict (1) + val (1) + key (1) + str chunk (1)
+        (
+            lambda: {1: 2},
+            1,
+            3,
+        ),  # dict with int key/val: pop dict (1) + pop val (1) + pop key (1)
+        (
+            lambda: {"a": 1},
+            1,
+            4,
+        ),  # dict with str key: pop dict (1) + val (1) + key (1) + str chunk (1)
         (lambda: [[1], 2], 2, 4),  # outer (1) + 2 (1) + [1] (1) + 1 (1)
     ],
-    ids=["empty-tuple", "empty-list", "empty-dict", "1-tuple", "2-list", "3-frozenset", "1-int-dict", "1-str-dict", "nested-list"],
+    ids=[
+        "empty-tuple",
+        "empty-list",
+        "empty-dict",
+        "1-tuple",
+        "2-list",
+        "3-frozenset",
+        "1-int-dict",
+        "1-str-dict",
+        "nested-list",
+    ],
 )
 def test_exact_sufficient_budget_vs_one_below(container_fn, item_count, exact_cost):
     """Exact sufficient budget succeeds; one unit below fails without queue growth."""
@@ -281,6 +316,7 @@ def test_exact_sufficient_budget_vs_one_below(container_fn, item_count, exact_co
 def test_large_tuple_list_frozenset_queue_never_constructed_without_budget():
     """Large containers (10,000 items) must not build child queue when budget is 5."""
     from repo_catalog.domain import context_admission
+
     service, _ = fixture_service(DependencySet())
     large_list = list(range(10_000))
     large_tuple = tuple(range(10_000))
@@ -299,6 +335,7 @@ def test_large_tuple_list_frozenset_queue_never_constructed_without_budget():
 def test_dictionary_key_value_expansion_bounded():
     """Large dict (5,000 items, 10,000 children) must not build child queue when budget is 5."""
     from repo_catalog.domain import context_admission
+
     service, _ = fixture_service(DependencySet())
     large_dict = {f"k{i}": i for i in range(5_000)}
 
@@ -381,13 +418,17 @@ def test_nested_depth_and_cyclic_reference_stops():
     with pytest.raises(AdmissionRefused) as exc:
         service.charge_input(ctx_cycle, cycle)
     assert exc.value.code == "INPUT_LIMIT"
-    assert ctx_cycle.budget.used_work == 14  # exactly 13 pops (depth 0..12) + 1 pop (depth 13 > 12)
+    assert (
+        ctx_cycle.budget.used_work == 14
+    )  # exactly 13 pops (depth 0..12) + 1 pop (depth 13 > 12)
 
     # Nesting exceeding depth limit 12
     nested = 0
     for _ in range(14):
         nested = [nested]
-    ctx_depth = fixture_context(service, budget=AdmissionBudget(work_limit=100, depth_limit=12))
+    ctx_depth = fixture_context(
+        service, budget=AdmissionBudget(work_limit=100, depth_limit=12)
+    )
     with pytest.raises(AdmissionRefused) as exc:
         service.charge_input(ctx_depth, nested)
     assert exc.value.code == "INPUT_LIMIT"
@@ -442,7 +483,8 @@ def test_repeated_admission_and_exact_replay(tmp_path):
     dir1 = tmp_path / "dir1"
     dir1.mkdir()
     ctx1 = service.context(
-        "fixture-credential", "provider_intake",
+        "fixture-credential",
+        "provider_intake",
         AdmissionSelection(
             resource_keys=frozenset({owner, *members}),
             repository_uuidv4s=frozenset(),
@@ -451,7 +493,9 @@ def test_repeated_admission_and_exact_replay(tmp_path):
         ),
         AdmissionBudget(work_limit=1000),
     )
-    with Context.owned_transaction(db, dir1, authorization=service, admission=ctx1) as c1:
+    with Context.owned_transaction(
+        db, dir1, authorization=service, admission=ctx1
+    ) as c1:
         res1 = c1.relation(report, admission=ctx1)
     assert res1 == "insert"
     assert policy.active == 0
@@ -460,7 +504,8 @@ def test_repeated_admission_and_exact_replay(tmp_path):
     dir2 = tmp_path / "dir2"
     dir2.mkdir()
     ctx2 = service.context(
-        "fixture-credential", "provider_intake",
+        "fixture-credential",
+        "provider_intake",
         AdmissionSelection(
             resource_keys=frozenset({owner, *members}),
             repository_uuidv4s=frozenset(),
@@ -469,7 +514,9 @@ def test_repeated_admission_and_exact_replay(tmp_path):
         ),
         AdmissionBudget(work_limit=1000),
     )
-    with Context.owned_transaction(db, dir2, authorization=service, admission=ctx2) as c2:
+    with Context.owned_transaction(
+        db, dir2, authorization=service, admission=ctx2
+    ) as c2:
         res2 = c2.relation(report, admission=ctx2)
     assert res2 == "duplicate"
     assert policy.active == 0
@@ -490,7 +537,12 @@ def test_permission_denial_and_selection_omission():
 
     # Invalid credential
     with pytest.raises(AdmissionRefused) as exc:
-        service.context("bad-token", "provider_intake", AdmissionSelection(all_selected=True), AdmissionBudget())
+        service.context(
+            "bad-token",
+            "provider_intake",
+            AdmissionSelection(all_selected=True),
+            AdmissionBudget(),
+        )
     assert exc.value.code == "PERMISSION_DENIED"
 
     # Context tampering: mutating principal
@@ -509,6 +561,7 @@ def test_permission_denial_and_selection_omission():
 
 def test_mutation_defense_iterator_mismatch():
     """Subclass whose iteration yields more items than len() reports cannot bypass reservation."""
+
     class MutatingList(list):
         def __iter__(self):
             # Yields 10 items even though len reports 2
@@ -523,3 +576,191 @@ def test_mutation_defense_iterator_mismatch():
     with pytest.raises(AdmissionRefused) as exc:
         service.charge_input(ctx, tricky)
     assert exc.value.code == "INPUT_LIMIT"
+
+
+def test_mutation_defense_appending_during_iteration_bounded():
+    """List subclass whose __iter__ appends 1000 items cannot expand queue or snapshot (discussion_r4366012662)."""
+    from repo_catalog.domain import context_admission
+
+    class AppendingList(list):
+        def __iter__(self):
+            for i in range(1000):
+                self.append(i)
+            return super().__iter__()
+
+    service, _ = fixture_service(DependencySet())
+    item = AppendingList([1, 2])
+    assert len(item) == 2
+
+    obs = Observer(context_admission.__file__)
+    ctx = fixture_context(
+        service,
+        selection=AdmissionSelection(all_selected=True, max_work=3),
+        budget=AdmissionBudget(work_limit=10000),
+    )
+    with pytest.raises(AdmissionRefused) as exc:
+        obs.run(lambda: service.charge_input(ctx, item))
+    assert exc.value.code == "INPUT_LIMIT"
+    assert obs.max_queue_len <= 1
+    assert obs.max_snapshot_len <= 2
+    assert ctx.budget.used_work == 2
+    assert len(item) == 1002
+
+
+def test_mutation_defense_changing_length_during_iteration_bounded():
+    """Container whose length mutates while yielding elements is bounded during traversal."""
+    from repo_catalog.domain import context_admission
+
+    class ChangingLenList(list):
+        def __iter__(self):
+            for i in range(500):
+                self.append(i)
+                yield i
+
+    service, _ = fixture_service(DependencySet())
+    item = ChangingLenList([1, 2])
+    obs = Observer(context_admission.__file__)
+    ctx = fixture_context(
+        service,
+        selection=AdmissionSelection(all_selected=True, max_work=3),
+        budget=AdmissionBudget(work_limit=10000),
+    )
+    with pytest.raises(AdmissionRefused) as exc:
+        obs.run(lambda: service.charge_input(ctx, item))
+    assert exc.value.code == "INPUT_LIMIT"
+    assert obs.max_queue_len <= 1
+    assert obs.max_snapshot_len <= 2
+    assert ctx.budget.used_work == 2
+
+
+def test_mutation_defense_deceptive_or_dynamic_len_bounded():
+    """Subclass with misleading or dynamically changing __len__ cannot bypass reservation."""
+    from repo_catalog.domain import context_admission
+
+    class DynamicLenList(list):
+        def __init__(self, *args):
+            super().__init__(*args)
+            self.calls = 0
+
+        def __len__(self):
+            self.calls += 1
+            return 2 if self.calls == 1 else 1000
+
+        def __iter__(self):
+            yield from range(1000)
+
+    service, _ = fixture_service(DependencySet())
+    item = DynamicLenList([1, 2])
+    obs = Observer(context_admission.__file__)
+    ctx = fixture_context(
+        service,
+        selection=AdmissionSelection(all_selected=True, max_work=3),
+        budget=AdmissionBudget(work_limit=10000),
+    )
+    with pytest.raises(AdmissionRefused) as exc:
+        obs.run(lambda: service.charge_input(ctx, item))
+    assert exc.value.code == "INPUT_LIMIT"
+    assert obs.max_queue_len <= 1
+    assert obs.max_snapshot_len <= 2
+    assert ctx.budget.used_work == 2
+
+
+def test_mutation_defense_snapshot_bounded_before_queue_extend():
+    """Snapshot generation aborts immediately when child count breaches remaining budget."""
+    from repo_catalog.domain import context_admission
+
+    class OverflowList(list):
+        def __iter__(self):
+            yield from range(1000)
+
+    service, _ = fixture_service(DependencySet())
+    item = OverflowList([1, 2])
+    obs = Observer(context_admission.__file__)
+    ctx = fixture_context(
+        service,
+        selection=AdmissionSelection(all_selected=True, max_work=5),
+        budget=AdmissionBudget(work_limit=10000),
+    )
+    with pytest.raises(AdmissionRefused) as exc:
+        obs.run(lambda: service.charge_input(ctx, item))
+    assert exc.value.code == "INPUT_LIMIT"
+    assert obs.max_queue_len <= 1
+    assert obs.max_snapshot_len <= 2
+    assert ctx.budget.used_work == 2
+
+
+def test_mutation_defense_real_store_relation_armed_list():
+    """Real Context.owned_transaction store relation admission bounds mutating list queues."""
+    from repo_catalog.domain import context_admission
+
+    class ArmedList(list):
+        def __init__(self, *args):
+            super().__init__(*args)
+            self.armed = False
+
+        def __iter__(self):
+            if self.armed:
+                for i in range(1000):
+                    self.append(ResourceKey.from_native(SERVICE, "issue", f"extra_{i}"))
+            return super().__iter__()
+
+    owner = ResourceKey.from_native(SERVICE, "issue", "owner")
+    k0 = ResourceKey.from_native(SERVICE, "issue", "0")
+    k1 = ResourceKey.from_native(SERVICE, "issue", "1")
+    gl = ArmedList([k0, k1])
+
+    report = ResourceRelation(
+        owner,
+        "x-links",
+        gl,
+        canonical({"source": "review", "evidence": "synthetic"}),
+        "{}",
+        1,
+    )
+    assert len(gl) == 2
+    gl.armed = True
+
+    db = sqlite3.connect(":memory:", isolation_level=None)
+    p1_schema.register_functions(db)
+    p1_schema.configure(db)
+    db.executescript(p1_schema.compose("context"))
+    db.execute(
+        "INSERT INTO store_identity VALUES('context',?,?)",
+        (
+            "9ebbe38a-f937-40e6-a99c-701835ebcf10",
+            "aad25448-03eb-4f83-a75e-cb7055fd33be",
+        ),
+    )
+    p1_schema.validate(db, "context")
+
+    policy = FixturePolicy(DependencySet(resources=frozenset({owner, k0, k1})))
+    service = ContextAdmissionService(policy, lambda cred: "fixture-user")
+
+    ctx = service.context(
+        "fixture-credential",
+        "provider_intake",
+        AdmissionSelection(
+            resource_keys=frozenset({owner, k0, k1}),
+            repository_uuidv4s=frozenset(),
+            source_uuidv4s=frozenset(),
+            object_oids=frozenset(),
+            max_work=25,
+        ),
+        AdmissionBudget(work_limit=10000),
+    )
+
+    obs = Observer(context_admission.__file__)
+    with tempfile.TemporaryDirectory() as directory:
+        with pytest.raises(AdmissionRefused) as exc:
+            with Context.owned_transaction(
+                db, Path(directory), authorization=service, admission=ctx
+            ) as c:
+                obs.run(lambda: c.relation(report, admission=ctx))
+        assert exc.value.code == "INPUT_LIMIT"
+
+    assert obs.max_queue_len <= 6
+    assert obs.max_snapshot_len <= 2
+    assert db.execute("select count(*) from resource_relations").fetchone()[0] == 0
+    assert has_transfer_fence(db)
+    assert not db.in_transaction
+    db.close()
