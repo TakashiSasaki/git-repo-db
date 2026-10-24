@@ -89,6 +89,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          umask 022
           mkdir -p artifacts/access-registry
           uv run --no-sync pytest -q \
             tests/unit/test_access*_values.py \
@@ -109,23 +110,38 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          umask 022
           mkdir -p artifacts/access-registry/regressions
-          set +e
+          uv run --no-sync pytest -q \
+            tests/integration/i2 tests/integration/i23 tests/integration/i4 tests/integration/i5 \
+            tests/packaging/test_p5_distribution.py tests/integration/p1 tests/integration/p3 \
+            tests/integration/p5 tests/integration/i3 tests/integration/p2 tests/integration/p4 \
+            tests/integration/p6 tests/integration/p7 tests/integration/p5_p6_compatibility \
+            --collect-only > artifacts/access-registry/regressions/collected.txt
+          pytest_exit=0
           uv run --no-sync pytest -q -n 2 --dist worksteal \
             tests/integration/i2 tests/integration/i23 tests/integration/i4 tests/integration/i5 \
             tests/packaging/test_p5_distribution.py tests/integration/p1 tests/integration/p3 \
             tests/integration/p5 tests/integration/i3 tests/integration/p2 tests/integration/p4 \
             tests/integration/p6 tests/integration/p7 tests/integration/p5_p6_compatibility \
             --junitxml=artifacts/access-registry/regressions/regressions.xml \
-            > artifacts/access-registry/regressions/regressions.log 2>&1
-          set -e
+            > artifacts/access-registry/regressions/regressions.log 2>&1 || pytest_exit=$?
+          echo "Broad regression pytest exit code: $pytest_exit"
+          echo "$pytest_exit" > artifacts/access-registry/regressions/pytest_exit_code.txt
           tail -n 35 artifacts/access-registry/regressions/regressions.log || true
+          if [ "$pytest_exit" -ne 0 ] && [ "$pytest_exit" -ne 1 ]; then
+            echo "pytest broad regression run terminated with unrecoverable exit code $pytest_exit"
+            exit "$pytest_exit"
+          fi
       - name: Reconcile regression manifest against baseline evidence
         if: ${{ !cancelled() }}
         run: |
+          pytest_exit=$(cat artifacts/access-registry/regressions/pytest_exit_code.txt)
           uv run --no-sync python scripts/compare_access_regressions.py \
             --current artifacts/access-registry/regressions/regressions.xml \
             --baseline docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/source-full-final/ordinary.xml.gz \
+            --expected artifacts/access-registry/regressions/collected.txt \
+            --pytest-exit-code "$pytest_exit" \
             --output artifacts/access-registry/failure-comparison.json \
             --strict
       - name: Installed I2 I3 I4 I5 on both distribution artifacts offline

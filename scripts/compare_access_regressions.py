@@ -1,14 +1,28 @@
 """Mechanically compare broad regression execution against baseline #154 manifest.
 
-Classifies every node:
-- RESOLVED: Failed in baseline #154, now passing.
-- INHERITED_STAGE_TRANSFER: Transfer stage fences or unsupported stage refusals.
-- INHERITED_ADMISSION_PERMISSION_DENIED: Context admission authorization refusals.
-- INHERITED_P7_RECOVERY: P7 recovery context admission refusals.
-- ENVIRONMENT: Missing executable or environment configuration.
-- ADDED_PASS: New test nodes added since baseline #154 that pass.
-- PASS: Existing passing test nodes that continue passing.
-- NEW_REGRESSION: Previously passing tests that now fail (STRICTLY FAILS CI).
+Supports:
+1. Explicit representation of PASS, FAIL, ERROR, SKIP, and UNEXECUTED outcomes.
+2. Complete handling of duplicate records, setup/call/teardown phases, and subtests
+   without silently overwriting evidence.
+3. Collection and preservation of exact expected node manifest for scoped runs,
+   verifying collection status, execution completeness, and missing/unexpected nodes.
+4. Scoped baseline subset comparison: partitioning baseline into in-scope and out-of-scope,
+   preserving unexecuted out-of-scope baseline nodes without labeling them removed/deleted.
+5. Strict acceptance policy rejecting:
+   - empty/truncated/incomplete results
+   - unexpected skips
+   - new failing nodes (NEW_REGRESSION)
+   - added failing nodes (ADDED_FAIL)
+   - environment failures (ENVIRONMENT_FAILURE)
+   - unexplained changed failures (CHANGED_FAILURE)
+   - missing expected nodes (MISSING_EXECUTION)
+   - unexpected nodes (UNEXPECTED_NODE)
+6. Fine-grained failure comparison: comparing baseline/current failure phase,
+   refusal code, exception type, and reached assertion to distinguish unchanged
+   inherited barriers from changed failures and regressions.
+7. Verification of pytest exit code: permitting exit 1 only under documented scoped
+   reconciliation, rejecting interruption (2), internal error (3), usage error (4),
+   and no-tests collection (5).
 """
 
 from __future__ import annotations
@@ -28,60 +42,80 @@ DEFAULT_BASELINE = (
 )
 
 
-def load_junit(path: Path) -> dict[tuple[str, str], dict]:
-    is_gz = str(path).endswith(".gz")
-    opener = gzip.open if is_gz else open
-    with opener(path, "rt", encoding="utf-8") as f:
-        tree = ET.parse(f)
-    cases = {}
-    for tc in tree.findall(".//testcase"):
-        c = tc.get("classname", "")
-        n = tc.get("name", "")
-        failure = tc.find("failure")
-        error = tc.find("error")
-        elem = failure if failure is not None else error
-        status = "PASS" if elem is None else elem.tag.upper()
-        msg = elem.get("message", "") if elem is not None else ""
-        text = elem.text or "" if elem is not None else ""
-        phase = (
-            "setup"
-            if elem is not None and elem.tag == "error"
-            else ("call" if elem is not None else "passed")
-        )
-        if "failed on teardown" in msg:
-            phase = "teardown"
-        cases[(c, n)] = {
-            "status": status,
-            "phase": phase,
-            "message": msg,
-            "text": text,
-        }
-    return cases
+def parse_expected_nodes(path: Path) -> list[str]:
+    """Parse expected node IDs from pytest --collect-only output or node manifest.
+
+    Converts pytest node IDs (e.g. tests/integration/i2/test_foo.py::test_bar)
+    to canonical keys: f"{classname}::{name}".
+    """
+    lines = path.read_text(encoding="utf-8").splitlines()
+    nodes = []
+    for raw in lines:
+        line = raw.strip()
+        if not line or line.startswith("#") or " tests collected in " in line:
+            continue
+        if ".py::" in line:
+            file_part, rest = line.split(".py::", 1)
+            c = file_part.replace("/", ".")
+            if "::" in rest and not rest.startswith("Test"):
+                parts = rest.split("::")
+                if parts[0].isidentifier():
+                    c = c + "." + parts[0]
+                    rest = "::".join(parts[1:])
+            n = rest
+            nodes.append(f"{c}::{n}")
+        elif "::" in line:
+            nodes.append(line)
+    return nodes
 
 
-def classify_non_success(
-    key: tuple[str, str], node_data: dict, in_baseline: bool
-) -> tuple[str, str | None, str | None]:
-    c, n = key
-    text = node_data.get("text", "")
-    msg = node_data.get("message", "")
+def extract_meta(
+    elem: ET.Element | None,
+) -> tuple[str | None, str | None, str | None, bool]:
+    """Extract refusal code, assertion, exception type, and whether it's an environment failure."""
+    if elem is None:
+        return None, None, None, False
 
-    # Extract exception/refusal code
+    text = elem.text or ""
+    msg = elem.get("message", "")
+    content = msg + "\n" + text
+
+    # Environment failure detection
+    is_env = False
+    if "repo-catalog" in content and "FileNotFoundError" in content:
+        is_env = True
+    elif "Run scripts/prepare_wheelhouse.py" in content:
+        is_env = True
+    elif (
+        "There was a problem with the editor" in content
+        or "Author identity unknown" in content
+    ):
+        is_env = True
+
+    # Refusal code extraction
     refusal_code = None
     refusal_match = re.search(
-        r"AdmissionRefused\([\"']([^\"']+)[\"']|I2_([A-Z_]+)_UNSUPPORTED|UnsupportedResourceStage\([\"']([^\"']+)[\"']|code\s*=\s*[\"']([^\"']+)[\"']",
-        text or msg,
+        r"""AdmissionRefused\([\"']([^\"']+)[\"']|I2_([A-Z_]+)_UNSUPPORTED|UnsupportedResourceStage\([\"']([^\"']+)[\"']|code\s*=\s*[\"']([^\"']+)[\"']""",
+        content,
     )
     if refusal_match:
         refusal_code = next((g for g in refusal_match.groups() if g is not None), None)
-    elif "PERMISSION_DENIED" in (text or msg):
+    elif "PERMISSION_DENIED" in content:
         refusal_code = "PERMISSION_DENIED"
-    elif "INVALID_IDENTIFICATION" in (text or msg):
+    elif "INVALID_IDENTIFICATION" in content:
         refusal_code = "INVALID_IDENTIFICATION"
-    elif "FileNotFoundError" in (text or msg):
+    elif "FileNotFoundError" in content:
         refusal_code = "FILE_NOT_FOUND"
 
-    # Extract reached assertion where observable
+    # Exception type extraction
+    exc_type = None
+    exc_match = re.search(
+        r"([A-Za-z0-9_.]*(?:Error|Exception|Refused|Failure|Stage))(?::|\()", content
+    )
+    if exc_match:
+        exc_type = exc_match.group(1).split(".")[-1]
+
+    # Reached assertion extraction
     assertion = None
     assert_match = re.search(r"assert\s+[^\n]+", text)
     if assert_match:
@@ -89,62 +123,245 @@ def classify_non_success(
     elif msg:
         assertion = msg.splitlines()[0][:120].strip()
 
-    # Classification
-    if "repo-catalog" in text and "FileNotFoundError" in text:
-        cat = "ENVIRONMENT_MISSING_EXECUTABLE"
-    elif "Run scripts/prepare_wheelhouse.py" in text:
-        cat = "ENVIRONMENT_UNPREPARED_WHEELHOUSE"
-    elif (
-        "There was a problem with the editor" in text
-        or "Author identity unknown" in text
-    ):
-        cat = "ENVIRONMENT_GIT_CONFIG"
-    elif (
-        "i2_transfer_stage_fence" in text
-        or "i2_transfer_report_stage_fence" in text
-        or "i2_transfer_stage_fence" in msg
-    ):
-        cat = "INHERITED_STAGE_TRANSFER"
-    elif (
-        "UnsupportedResourceStage" in text
-        or "I2_TRANSFER_UNSUPPORTED" in text
-        or "UnsupportedResourceStage" in msg
-    ):
-        cat = "INHERITED_STAGE_TRANSFER"
-    elif "test_transfer_reports_never_shrunk_or_mixed" in n:
-        cat = "INHERITED_STAGE_TRANSFER"
-    elif "p7" in c or "Context admission error: PERMISSION_DENIED" in text:
-        cat = "INHERITED_P7_RECOVERY"
-    elif (
-        "PERMISSION_DENIED" in text
-        or "PERMISSION_DENIED" in msg
-        or refusal_code in ("PERMISSION_DENIED", "INVALID_IDENTIFICATION")
-    ):
-        cat = "INHERITED_ADMISSION_PERMISSION_DENIED"
-    elif not in_baseline:
-        cat = "NEW_REGRESSION"
-    else:
-        cat = "INHERITED_OTHER"
+    return refusal_code, assertion, exc_type, is_env
 
-    return cat, refusal_code, assertion
+
+def load_junit(path: Path) -> dict[str, dict]:
+    """Load JUnit XML and extract all testcase records without overwriting.
+
+    Handles duplicate testcase entries, subtests, and setup/call/teardown phases.
+    """
+    is_gz = str(path).endswith(".gz")
+    opener = gzip.open if is_gz else open
+    with opener(path, "rt", encoding="utf-8") as f:
+        tree = ET.parse(f)
+
+    cases: dict[str, dict] = {}
+    for tc in tree.findall(".//testcase"):
+        c = tc.get("classname", "")
+        n = tc.get("name", "")
+        node_id = f"{c}::{n}"
+
+        failure = tc.find("failure")
+        error = tc.find("error")
+        skipped = tc.find("skipped")
+
+        elem = (
+            failure
+            if failure is not None
+            else (error if error is not None else skipped)
+        )
+
+        if elem is None:
+            status = "PASS"
+            phase = "passed"
+        elif skipped is not None:
+            status = "SKIP"
+            phase = "skipped"
+        elif error is not None:
+            status = "ERROR"
+            msg_check = elem.get("message", "") + (elem.text or "")
+            if "failed on teardown" in msg_check:
+                phase = "teardown"
+            elif "failed on setup" in msg_check:
+                phase = "setup"
+            else:
+                phase = "setup"
+        else:
+            status = "FAIL"
+            msg_check = elem.get("message", "") + (elem.text or "")
+            if "failed on teardown" in msg_check:
+                phase = "teardown"
+            else:
+                phase = "call"
+
+        msg = elem.get("message", "") if elem is not None else ""
+        text = elem.text or "" if elem is not None else ""
+        code, assertion, exc_type, is_env = extract_meta(elem)
+
+        record = {
+            "status": status,
+            "phase": phase,
+            "message": msg,
+            "text": text,
+            "refusal_code": code,
+            "reached_assertion": assertion,
+            "exception_type": exc_type,
+            "is_env": is_env,
+        }
+
+        if node_id not in cases:
+            cases[node_id] = {
+                "classname": c,
+                "name": n,
+                "node_id": node_id,
+                "status": status,
+                "phase": phase,
+                "message": msg,
+                "text": text,
+                "refusal_code": code,
+                "reached_assertion": assertion,
+                "exception_type": exc_type,
+                "is_env": is_env,
+                "records": [record],
+                "record_count": 1,
+            }
+        else:
+            cases[node_id]["records"].append(record)
+            cases[node_id]["record_count"] += 1
+            # Composite priority: ERROR > FAIL > SKIP > PASS
+            current_status = cases[node_id]["status"]
+            if status == "ERROR":
+                cases[node_id]["status"] = "ERROR"
+                cases[node_id]["phase"] = phase
+                cases[node_id]["message"] = msg
+                cases[node_id]["text"] = text
+                cases[node_id]["refusal_code"] = code
+                cases[node_id]["reached_assertion"] = assertion
+                cases[node_id]["exception_type"] = exc_type
+                cases[node_id]["is_env"] = is_env
+            elif status == "FAIL" and current_status != "ERROR":
+                cases[node_id]["status"] = "FAIL"
+                cases[node_id]["phase"] = phase
+                cases[node_id]["message"] = msg
+                cases[node_id]["text"] = text
+                cases[node_id]["refusal_code"] = code
+                cases[node_id]["reached_assertion"] = assertion
+                cases[node_id]["exception_type"] = exc_type
+                cases[node_id]["is_env"] = is_env
+            elif status == "SKIP" and current_status == "PASS":
+                cases[node_id]["status"] = "SKIP"
+                cases[node_id]["phase"] = phase
+
+    return cases
+
+
+def is_transfer_stage_fence(info: dict) -> bool:
+    text = info.get("text", "")
+    msg = info.get("message", "")
+    content = msg + "\n" + text
+    return (
+        "i2_transfer_stage_fence" in content
+        or "i2_transfer_report_stage_fence" in content
+        or "UnsupportedResourceStage" in content
+        or "I2_TRANSFER_UNSUPPORTED" in content
+        or "test_transfer_reports_never_shrunk_or_mixed" in info.get("name", "")
+    )
+
+
+def is_admission_refusal(info: dict) -> bool:
+    code = info.get("refusal_code")
+    text = info.get("text", "")
+    msg = info.get("message", "")
+    content = msg + "\n" + text
+    return (
+        code in ("PERMISSION_DENIED", "INVALID_IDENTIFICATION")
+        or "PERMISSION_DENIED" in content
+        or "INVALID_IDENTIFICATION" in content
+    )
+
+
+def is_p7_recovery(info: dict) -> bool:
+    c = info.get("classname", "")
+    text = info.get("text", "")
+    return "p7" in c or "Context admission error: PERMISSION_DENIED" in text
+
+
+def compare_failure_details(b_info: dict, c_info: dict) -> tuple[str, bool, str | None]:
+    """Compare baseline failure vs current failure.
+
+    Returns: (classification, is_unchanged_inherited, change_reason)
+    """
+    if b_info.get("phase") != c_info.get("phase"):
+        return (
+            "CHANGED_FAILURE",
+            False,
+            f"Phase mismatch: baseline {b_info.get('phase')} != current {c_info.get('phase')}",
+        )
+
+    b_transfer = is_transfer_stage_fence(b_info)
+    c_transfer = is_transfer_stage_fence(c_info)
+    if b_transfer and c_transfer:
+        return "INHERITED_STAGE_TRANSFER", True, None
+    if b_transfer and not c_transfer:
+        return (
+            "CHANGED_FAILURE",
+            False,
+            "Progressed past staged Transfer barrier into different failure",
+        )
+
+    b_p7 = is_p7_recovery(b_info)
+    c_p7 = is_p7_recovery(c_info)
+    if b_p7 and c_p7:
+        if b_info.get("refusal_code") == c_info.get("refusal_code") or b_info.get(
+            "reached_assertion"
+        ) == c_info.get("reached_assertion"):
+            return "INHERITED_P7_RECOVERY", True, None
+        return (
+            "CHANGED_FAILURE",
+            False,
+            f"P7 recovery assertion/code changed: {b_info.get('reached_assertion')} -> {c_info.get('reached_assertion')}",
+        )
+
+    b_adm = is_admission_refusal(b_info)
+    c_adm = is_admission_refusal(c_info)
+    if b_adm and c_adm:
+        return "INHERITED_ADMISSION_PERMISSION_DENIED", True, None
+    if b_adm != c_adm:
+        return (
+            "CHANGED_FAILURE",
+            False,
+            f"Admission refusal mismatch: baseline code={b_info.get('refusal_code')} vs current code={c_info.get('refusal_code')}",
+        )
+
+    # General fallback
+    if b_info.get("refusal_code") == c_info.get("refusal_code") and b_info.get(
+        "reached_assertion"
+    ) == c_info.get("reached_assertion"):
+        return "INHERITED_OTHER", True, None
+
+    return (
+        "CHANGED_FAILURE",
+        False,
+        f"Unresolved failure change: exception {b_info.get('exception_type')} -> {c_info.get('exception_type')}",
+    )
 
 
 def compare_manifests(
-    baseline_cases: dict[tuple[str, str], dict],
-    current_cases: dict[tuple[str, str], dict],
+    baseline_cases: dict[str, dict],
+    current_cases: dict[str, dict],
+    expected_nodes: list[str] | None = None,
+    pytest_exit_code: int | None = None,
 ) -> dict:
     baseline_keys = set(baseline_cases.keys())
     current_keys = set(current_cases.keys())
 
-    added_keys = current_keys - baseline_keys
-    removed_keys = baseline_keys - current_keys
-    common_keys = baseline_keys & current_keys
+    # Scoped partition:
+    if expected_nodes is not None:
+        expected_keys = set(expected_nodes)
+        in_scope_baseline_keys = baseline_keys & expected_keys
+        out_of_scope_baseline_keys = baseline_keys - expected_keys
+        missing_keys = expected_keys - current_keys
+        unexpected_keys = current_keys - expected_keys
+        added_keys = current_keys - baseline_keys
+    else:
+        expected_keys = None
+        in_scope_baseline_keys = baseline_keys
+        out_of_scope_baseline_keys = set()
+        missing_keys = in_scope_baseline_keys - current_keys
+        unexpected_keys = set()
+        added_keys = current_keys - baseline_keys
 
     resolved = []
     inherited = []
     new_regressions = []
     added_passes = []
     added_failures = []
+    environment_failures = []
+    changed_failures = []
+    unexpected_skips = []
+    missing_nodes = sorted(missing_keys)
+    unexpected_nodes_list = sorted(unexpected_keys)
     unchanged_passes = []
 
     categorized_counts = {
@@ -152,23 +369,92 @@ def compare_manifests(
         "INHERITED_STAGE_TRANSFER": 0,
         "INHERITED_ADMISSION_PERMISSION_DENIED": 0,
         "INHERITED_P7_RECOVERY": 0,
-        "ENVIRONMENT": 0,
+        "INHERITED_OTHER": 0,
+        "ENVIRONMENT_FAILURE": 0,
+        "CHANGED_FAILURE": 0,
         "NEW_REGRESSION": 0,
         "ADDED_PASS": 0,
         "ADDED_FAIL": 0,
+        "SKIP": 0,
         "PASS": 0,
+        "MISSING_EXECUTION": len(missing_nodes),
+        "UNEXPECTED_NODE": len(unexpected_nodes_list),
+        "OUT_OF_SCOPE_BASELINE": len(out_of_scope_baseline_keys),
     }
 
     all_node_details = []
 
-    for key in sorted(common_keys):
-        b_info = baseline_cases[key]
-        c_info = current_cases[key]
-        b_status = b_info["status"]
+    # Process all executed nodes
+    for node_id in sorted(current_keys):
+        c_info = current_cases[node_id]
         c_status = c_info["status"]
-        node_id = f"{key[0]}::{key[1]}"
+        b_info = baseline_cases.get(node_id)
+        b_status = b_info["status"] if b_info else "ADDED"
 
-        if b_status != "PASS" and c_status == "PASS":
+        # Check for unexpected skip
+        if c_status == "SKIP":
+            unexpected_skips.append(node_id)
+            categorized_counts["SKIP"] += 1
+            all_node_details.append(
+                {
+                    "node_id": node_id,
+                    "baseline_status": b_status,
+                    "current_status": "SKIP",
+                    "classification": "SKIP",
+                    "phase": c_info["phase"],
+                    "records": c_info["records"],
+                }
+            )
+            continue
+
+        # Check for environment failure
+        if c_info["is_env"]:
+            environment_failures.append(node_id)
+            categorized_counts["ENVIRONMENT_FAILURE"] += 1
+            all_node_details.append(
+                {
+                    "node_id": node_id,
+                    "baseline_status": b_status,
+                    "current_status": c_status,
+                    "classification": "ENVIRONMENT_FAILURE",
+                    "phase": c_info["phase"],
+                    "refusal_code": c_info["refusal_code"],
+                    "reached_assertion": c_info["reached_assertion"],
+                    "records": c_info["records"],
+                }
+            )
+            continue
+
+        if b_status == "ADDED":
+            if c_status == "PASS":
+                added_passes.append(node_id)
+                categorized_counts["ADDED_PASS"] += 1
+                all_node_details.append(
+                    {
+                        "node_id": node_id,
+                        "baseline_status": "ADDED",
+                        "current_status": "PASS",
+                        "classification": "ADDED_PASS",
+                        "phase": "passed",
+                        "records": c_info["records"],
+                    }
+                )
+            else:
+                added_failures.append(node_id)
+                categorized_counts["ADDED_FAIL"] += 1
+                all_node_details.append(
+                    {
+                        "node_id": node_id,
+                        "baseline_status": "ADDED",
+                        "current_status": c_status,
+                        "classification": "ADDED_FAIL",
+                        "phase": c_info["phase"],
+                        "refusal_code": c_info["refusal_code"],
+                        "reached_assertion": c_info["reached_assertion"],
+                        "records": c_info["records"],
+                    }
+                )
+        elif b_status != "PASS" and c_status == "PASS":
             resolved.append(node_id)
             categorized_counts["RESOLVED"] += 1
             all_node_details.append(
@@ -178,103 +464,162 @@ def compare_manifests(
                     "current_status": "PASS",
                     "classification": "RESOLVED",
                     "phase": "passed",
+                    "records": c_info["records"],
                 }
             )
         elif b_status != "PASS" and c_status != "PASS":
-            cat, code, assertion = classify_non_success(key, c_info, in_baseline=True)
-            inherited.append(node_id)
-            if cat.startswith("INHERITED_STAGE_TRANSFER"):
-                categorized_counts["INHERITED_STAGE_TRANSFER"] += 1
-            elif cat.startswith("INHERITED_ADMISSION"):
-                categorized_counts["INHERITED_ADMISSION_PERMISSION_DENIED"] += 1
-            elif cat.startswith("INHERITED_P7"):
-                categorized_counts["INHERITED_P7_RECOVERY"] += 1
-            elif cat.startswith("ENVIRONMENT"):
-                categorized_counts["ENVIRONMENT"] += 1
-            else:
-                categorized_counts[cat] = categorized_counts.get(cat, 0) + 1
-
-            all_node_details.append(
-                {
-                    "node_id": node_id,
-                    "baseline_status": b_status,
-                    "current_status": c_status,
-                    "classification": cat,
-                    "phase": c_info["phase"],
-                    "refusal_code": code,
-                    "reached_assertion": assertion,
-                }
-            )
-        elif b_status == "PASS" and c_status != "PASS":
-            cat, code, assertion = classify_non_success(key, c_info, in_baseline=True)
-            if cat.startswith("ENVIRONMENT"):
-                categorized_counts["ENVIRONMENT"] += 1
+            cat, is_unchanged, reason = compare_failure_details(b_info, c_info)
+            if is_unchanged:
+                inherited.append(node_id)
+                categorized_counts[cat] += 1
                 all_node_details.append(
                     {
                         "node_id": node_id,
-                        "baseline_status": "PASS",
+                        "baseline_status": b_status,
                         "current_status": c_status,
                         "classification": cat,
                         "phase": c_info["phase"],
-                        "refusal_code": code,
-                        "reached_assertion": assertion,
+                        "refusal_code": c_info["refusal_code"],
+                        "reached_assertion": c_info["reached_assertion"],
+                        "records": c_info["records"],
                     }
                 )
             else:
-                new_regressions.append(node_id)
-                categorized_counts["NEW_REGRESSION"] += 1
+                changed_failures.append(node_id)
+                categorized_counts["CHANGED_FAILURE"] += 1
                 all_node_details.append(
                     {
                         "node_id": node_id,
-                        "baseline_status": "PASS",
+                        "baseline_status": b_status,
                         "current_status": c_status,
-                        "classification": "NEW_REGRESSION",
+                        "classification": "CHANGED_FAILURE",
+                        "change_reason": reason,
                         "phase": c_info["phase"],
-                        "refusal_code": code,
-                        "reached_assertion": assertion,
+                        "refusal_code": c_info["refusal_code"],
+                        "reached_assertion": c_info["reached_assertion"],
+                        "records": c_info["records"],
                     }
                 )
+        elif b_status == "PASS" and c_status != "PASS":
+            new_regressions.append(node_id)
+            categorized_counts["NEW_REGRESSION"] += 1
+            all_node_details.append(
+                {
+                    "node_id": node_id,
+                    "baseline_status": "PASS",
+                    "current_status": c_status,
+                    "classification": "NEW_REGRESSION",
+                    "phase": c_info["phase"],
+                    "refusal_code": c_info["refusal_code"],
+                    "reached_assertion": c_info["reached_assertion"],
+                    "records": c_info["records"],
+                }
+            )
         else:
             unchanged_passes.append(node_id)
             categorized_counts["PASS"] += 1
 
-    for key in sorted(added_keys):
-        c_info = current_cases[key]
-        c_status = c_info["status"]
-        node_id = f"{key[0]}::{key[1]}"
-        if c_status == "PASS":
-            added_passes.append(node_id)
-            categorized_counts["ADDED_PASS"] += 1
-            all_node_details.append(
-                {
-                    "node_id": node_id,
-                    "baseline_status": "ADDED",
-                    "current_status": "PASS",
-                    "classification": "ADDED_PASS",
-                    "phase": "passed",
-                }
-            )
+    # Record missing expected nodes
+    for node_id in missing_nodes:
+        b_info = baseline_cases.get(node_id)
+        b_status = b_info["status"] if b_info else "UNKNOWN"
+        all_node_details.append(
+            {
+                "node_id": node_id,
+                "baseline_status": b_status,
+                "current_status": "UNEXECUTED",
+                "classification": "MISSING_EXECUTION",
+                "phase": "unexecuted",
+            }
+        )
+
+    # Validate pytest exit code semantics
+    pytest_exit_status = "UNKNOWN"
+    pytest_exit_error = None
+    if pytest_exit_code is not None:
+        if pytest_exit_code == 0:
+            if (
+                len(new_regressions)
+                + len(added_failures)
+                + len(environment_failures)
+                + len(changed_failures)
+                + len(inherited)
+                > 0
+            ):
+                pytest_exit_status = "INCONSISTENT"
+                pytest_exit_error = (
+                    "pytest exit code was 0 but test failures were recorded in receipt"
+                )
+            else:
+                pytest_exit_status = "PASSED"
+        elif pytest_exit_code == 1:
+            pytest_exit_status = "RECONCILED_FAILURES"
+        elif pytest_exit_code == 2:
+            pytest_exit_status = "REJECTED_INTERRUPTED"
+            pytest_exit_error = "pytest was interrupted by user or signal (exit 2)"
+        elif pytest_exit_code == 3:
+            pytest_exit_status = "REJECTED_INTERNAL_ERROR"
+            pytest_exit_error = "pytest experienced an internal error (exit 3)"
+        elif pytest_exit_code == 4:
+            pytest_exit_status = "REJECTED_USAGE_ERROR"
+            pytest_exit_error = "pytest command line usage error (exit 4)"
+        elif pytest_exit_code == 5:
+            pytest_exit_status = "REJECTED_NO_TESTS_COLLECTED"
+            pytest_exit_error = "pytest collected 0 tests (exit 5)"
         else:
-            cat, code, assertion = classify_non_success(key, c_info, in_baseline=False)
-            added_failures.append(node_id)
-            categorized_counts["ADDED_FAIL"] += 1
-            all_node_details.append(
-                {
-                    "node_id": node_id,
-                    "baseline_status": "ADDED",
-                    "current_status": c_status,
-                    "classification": "ADDED_FAIL",
-                    "phase": c_info["phase"],
-                    "refusal_code": code,
-                    "reached_assertion": assertion,
-                }
-            )
+            pytest_exit_status = f"REJECTED_UNEXPECTED_EXIT_{pytest_exit_code}"
+            pytest_exit_error = f"pytest exited with unexpected code {pytest_exit_code}"
+
+    # Strict acceptance evaluation
+    blocking_violations = []
+    if len(current_keys) == 0:
+        blocking_violations.append("Empty current JUnit XML (0 test cases executed)")
+    if len(new_regressions) > 0:
+        blocking_violations.append(
+            f"{len(new_regressions)} new product regressions detected"
+        )
+    if len(added_failures) > 0:
+        blocking_violations.append(
+            f"{len(added_failures)} added failing test nodes detected"
+        )
+    if len(environment_failures) > 0:
+        blocking_violations.append(
+            f"{len(environment_failures)} environment failures detected"
+        )
+    if len(changed_failures) > 0:
+        blocking_violations.append(
+            f"{len(changed_failures)} changed non-successes detected"
+        )
+    if len(missing_nodes) > 0:
+        blocking_violations.append(
+            f"{len(missing_nodes)} expected test nodes missing from execution"
+        )
+    if len(unexpected_nodes_list) > 0:
+        blocking_violations.append(
+            f"{len(unexpected_nodes_list)} unexpected test nodes executed"
+        )
+    if len(unexpected_skips) > 0:
+        blocking_violations.append(
+            f"{len(unexpected_skips)} unexpected skipped test nodes detected"
+        )
+    if pytest_exit_error:
+        blocking_violations.append(f"Pytest exit validation error: {pytest_exit_error}")
+
+    acceptance_verdict = "PASSED" if not blocking_violations else "REJECTED"
 
     summary = {
+        "acceptance_verdict": acceptance_verdict,
+        "blocking_violations": blocking_violations,
+        "pytest_exit_code": pytest_exit_code,
+        "pytest_exit_status": pytest_exit_status,
         "baseline_nodes": len(baseline_keys),
+        "in_scope_baseline_nodes": len(in_scope_baseline_keys),
+        "out_of_scope_baseline_nodes": len(out_of_scope_baseline_keys),
+        "expected_nodes": len(expected_nodes) if expected_nodes is not None else None,
         "current_nodes": len(current_keys),
         "added_nodes_count": len(added_keys),
-        "removed_nodes_count": len(removed_keys),
+        "missing_nodes_count": len(missing_nodes),
+        "unexpected_nodes_count": len(unexpected_nodes_list),
         "baseline_non_successes": sum(
             1 for v in baseline_cases.values() if v["status"] != "PASS"
         ),
@@ -284,10 +629,20 @@ def compare_manifests(
         "resolved_count": len(resolved),
         "inherited_non_successes_count": len(inherited),
         "new_regressions_count": len(new_regressions),
+        "added_failures_count": len(added_failures),
+        "environment_failures_count": len(environment_failures),
+        "changed_failures_count": len(changed_failures),
+        "unexpected_skips_count": len(unexpected_skips),
         "added_passes_count": len(added_passes),
         "categorized_counts": categorized_counts,
         "resolved_nodes": resolved,
         "new_regression_nodes": new_regressions,
+        "added_failure_nodes": added_failures,
+        "environment_failure_nodes": environment_failures,
+        "changed_failure_nodes": changed_failures,
+        "missing_nodes": missing_nodes,
+        "unexpected_nodes": unexpected_nodes_list,
+        "unexpected_skip_nodes": unexpected_skips,
         "node_details": all_node_details,
     }
     return summary
@@ -308,6 +663,18 @@ def main():
         help="Path to baseline JUnit XML (.xml or .xml.gz)",
     )
     parser.add_argument(
+        "--expected",
+        type=Path,
+        default=None,
+        help="Path to expected test node manifest (e.g. pytest --collect-only output)",
+    )
+    parser.add_argument(
+        "--pytest-exit-code",
+        type=int,
+        default=None,
+        help="Recorded pytest process exit code to validate against receipts",
+    )
+    parser.add_argument(
         "--output",
         type=Path,
         required=True,
@@ -316,18 +683,29 @@ def main():
     parser.add_argument(
         "--strict",
         action="store_true",
-        help="Fail if any NEW_REGRESSION is detected",
+        help="Fail if any regression, missing node, env error, or unexpected change occurs",
     )
     args = parser.parse_args()
 
+    expected_nodes = parse_expected_nodes(args.expected) if args.expected else None
     baseline_cases = load_junit(args.baseline)
     current_cases = load_junit(args.current)
 
-    summary = compare_manifests(baseline_cases, current_cases)
+    summary = compare_manifests(
+        baseline_cases=baseline_cases,
+        current_cases=current_cases,
+        expected_nodes=expected_nodes,
+        pytest_exit_code=args.pytest_exit_code,
+    )
     summary["baseline_path"] = str(args.baseline)
     summary["baseline_sha256"] = hashlib.sha256(args.baseline.read_bytes()).hexdigest()
     summary["current_path"] = str(args.current)
     summary["current_sha256"] = hashlib.sha256(args.current.read_bytes()).hexdigest()
+    if args.expected:
+        summary["expected_path"] = str(args.expected)
+        summary["expected_sha256"] = hashlib.sha256(
+            args.expected.read_bytes()
+        ).hexdigest()
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(summary, indent=2) + "\n")
@@ -335,22 +713,31 @@ def main():
     print(
         json.dumps(
             {
+                "acceptance_verdict": summary["acceptance_verdict"],
                 "baseline_nodes": summary["baseline_nodes"],
+                "in_scope_baseline_nodes": summary["in_scope_baseline_nodes"],
+                "out_of_scope_baseline_nodes": summary["out_of_scope_baseline_nodes"],
+                "expected_nodes": summary["expected_nodes"],
                 "current_nodes": summary["current_nodes"],
-                "baseline_non_successes": summary["baseline_non_successes"],
-                "current_non_successes": summary["current_non_successes"],
+                "missing_nodes": summary["missing_nodes_count"],
                 "resolved_count": summary["resolved_count"],
                 "inherited_count": summary["inherited_non_successes_count"],
                 "new_regressions": summary["new_regressions_count"],
+                "added_failures": summary["added_failures_count"],
+                "environment_failures": summary["environment_failures_count"],
+                "changed_failures": summary["changed_failures_count"],
+                "unexpected_skips": summary["unexpected_skips_count"],
                 "categorized": summary["categorized_counts"],
+                "blocking_violations": summary["blocking_violations"],
             },
             indent=2,
         )
     )
 
-    if args.strict and summary["new_regressions_count"] > 0:
+    if args.strict and summary["blocking_violations"]:
+        violations_str = "\n - ".join(summary["blocking_violations"])
         raise SystemExit(
-            f"Comparison failed: {summary['new_regressions_count']} new product regressions detected!"
+            f"Strict comparison failed with {len(summary['blocking_violations'])} blocking violation(s):\n - {violations_str}"
         )
 
 
