@@ -1,0 +1,26 @@
+{
+  "sdist": {
+    "name": "repo_catalog-0.2.0.tar.gz",
+    "bytes": 703090,
+    "sha256": "4af5ef94f3ba48685f60c41a3ad1bfcf2cf1e43b50fe25bea02148b609149ad1",
+    "git_blob_oid": "9af053deaa08a4da81d1bc2e4eca0edcb893a8fc",
+    "tar_stream_bytes": 6184960,
+    "members": 164
+  },
+  "wheel": {
+    "name": "repo_catalog-0.2.0-py3-none-any.whl",
+    "bytes": 791849,
+    "sha256": "7dbbcfee566998e614cab97d5831c2ac941303b952c0d79183989c7d1d9c75c9",
+    "git_blob_oid": "28722a780fb0a5fff238b4540ad63e444bb84ac4",
+    "members": 164,
+    "equal_full_zip_bytes": true
+  },
+  "contract_budgets": {
+    "sdist_max_compressed_bytes": 2097152,
+    "sdist_actual_compressed_bytes": 703090,
+    "sdist_max_members": 512,
+    "sdist_actual_members": 164,
+    "tar_max_unpacked_bytes": 8388608,
+    "tar_actual_unpacked_bytes": 6046753
+  }
+}

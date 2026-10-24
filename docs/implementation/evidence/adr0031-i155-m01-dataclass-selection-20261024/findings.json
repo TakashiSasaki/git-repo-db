@@ -1,0 +1,70 @@
+{
+  "correction_role": "Author",
+  "independent_verdict": false,
+  "verdict": "INCOMPLETE",
+  "status_summary": "Author correction resolving dataclass selection-budget enforcement defect, applying effective remaining budget consistently before attribute access, intermediate materialization, and queue extension across source, direct wheel, and derived wheel cohorts for subsequent non-Author acceptance.",
+  "base_branch": "fix/adr0031-i155-m01-scanner-correction-20261024",
+  "base_head": "bebc039ed9772edf0737caf8f5520134907317e0",
+  "base_tree": "fb25412fccaeb192f34eef563a8d068182c65690",
+  "tested_input_commit": "fbfd7a35b6f11befcf45e41eb52ba019f9dc28d2",
+  "tested_input_tree": "08df9ffe3bfb2c98cc9f4196ff082c5c1024283e",
+  "findings": [
+    {
+      "id": "I155-M01-DATACLASS-SELECTION",
+      "severity": "P1",
+      "blocking": true,
+      "title": "Bound dataclass member capacity against selection max_work before attribute access, materialization, and queue extension",
+      "source": "src/repo_catalog/domain/context_admission.py:454-474",
+      "status": "RESOLVED_BY_AUTHOR_CORRECTION",
+      "requirements": [
+        "REQ-DC-1",
+        "REQ-DC-2",
+        "REQ-DC-3",
+        "REQ-DC-4",
+        "REQ-DC-5",
+        "REQ-DC-6",
+        "REQ-DC-7"
+      ],
+      "resolution_summary": "Replaced rem_work = context.budget.work_limit - context.budget.used_work with unified reserve_children(count) which computes remaining_work() = min(context.budget.work_limit, context.selection.max_work) - context.budget.used_work. Checked capacity and pending siblings before getattr attribute access, local members materialization, and pending queue extension. Trapped reflection and attribute access exceptions fail closed with 1-unit refusal fee without double-charging.",
+      "counterexample_measurements": {
+        "case_7b_dataclass_selection_1000_fields": {
+          "unfixed_queue_max": 1000,
+          "fixed_queue_max": 1,
+          "unfixed_members_max": 1000,
+          "fixed_members_max": 0,
+          "unfixed_used_work": 8,
+          "fixed_used_work": 2,
+          "unfixed_attribute_accesses": 1000,
+          "fixed_attribute_accesses": 0,
+          "code": "INPUT_LIMIT"
+        },
+        "case_7_dataclass_capacity": {
+          "unfixed_queue_max": 1,
+          "fixed_queue_max": 1,
+          "fixed_used_work": 2,
+          "code": "INPUT_LIMIT"
+        },
+        "store_case_3_selected_7": {
+          "unfixed_queue_max": 6,
+          "fixed_queue_max": 1,
+          "unfixed_used_work": 8,
+          "fixed_used_work": 3,
+          "code": "INPUT_LIMIT"
+        },
+        "real_store_relation": {
+          "unfixed_queue_max": 6,
+          "fixed_queue_max": 6,
+          "unfixed_snapshot_max": 2,
+          "fixed_snapshot_max": 2,
+          "unfixed_used_work": 9,
+          "fixed_used_work": 9,
+          "outcome": "AdmissionRefused",
+          "code": "INPUT_LIMIT",
+          "db_rows": 0,
+          "transfer_fence": true,
+          "in_transaction": false
+        }
+      }
+    }
+  ]
+}

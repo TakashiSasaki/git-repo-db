@@ -1,0 +1,198 @@
+{
+  "standard": "HCI-L01-compliant complete byte provenance",
+  "notes": "All SHA-256 hashes are calculated on raw complete bytes without .strip() or text decoding",
+  "files": [
+    {
+      "path": "src/repo_catalog/domain/context_admission.py",
+      "bytes": 31320,
+      "sha256_complete_bytes": "b5ba6c2b927c062a0db4c150bbb60e202d875f468d8c31cb16c2a6044b3db201",
+      "git_blob_oid": "6787b6630e187b1ef9088e00238f50f07852d233",
+      "whitespace_stripped": false,
+      "methodology": "Exact read_bytes() hashed with hashlib.sha256; git hash-object for Git blob OID"
+    },
+    {
+      "path": "tests/unit/test_admission_scanner_budget.py",
+      "bytes": 43240,
+      "sha256_complete_bytes": "dd61dfd071eca820647841c7a1162e0313a192b61cb9fae0942bbd643d863b3f",
+      "git_blob_oid": "3a4bd8943fa757d9730db2ed406221af9fbdab3d",
+      "whitespace_stripped": false,
+      "methodology": "Exact read_bytes() hashed with hashlib.sha256; git hash-object for Git blob OID"
+    },
+    {
+      "path": "docs/implementation/evidence/adr0031-i155-m01-dataclass-selection-20261024/MATRIX.md",
+      "bytes": 5415,
+      "sha256_complete_bytes": "a0a87828221890248754beab964937167db85ab136e18ae3577ae3203e885901",
+      "git_blob_oid": "11fafa854266cf9a5576ed0962993bd9c044ac76",
+      "whitespace_stripped": false,
+      "methodology": "Exact read_bytes() hashed with hashlib.sha256; git hash-object for Git blob OID"
+    },
+    {
+      "path": "docs/implementation/evidence/adr0031-i155-m01-dataclass-selection-20261024/REPORT.md",
+      "bytes": 10079,
+      "sha256_complete_bytes": "8657b80da7ff0f5af826dce4e7927b36c82d6599875478e52e97a6f3ff624d8d",
+      "git_blob_oid": "3c490f1f7dff2d93567e8ff02546177be967eaee",
+      "whitespace_stripped": false,
+      "methodology": "Exact read_bytes() hashed with hashlib.sha256; git hash-object for Git blob OID"
+    },
+    {
+      "path": "docs/implementation/evidence/adr0031-i155-m01-dataclass-selection-20261024/distribution/build-measurements.json",
+      "bytes": 830,
+      "sha256_complete_bytes": "4c054fb92f97b6c106076ef93fc87d3beadb93bd64e9dc678d3cb36f5a5c2000",
+      "git_blob_oid": "214e6caa2ab903714ebeab83980688327a8af825",
+      "whitespace_stripped": false,
+      "methodology": "Exact read_bytes() hashed with hashlib.sha256; git hash-object for Git blob OID"
+    },
+    {
+      "path": "docs/implementation/evidence/adr0031-i155-m01-dataclass-selection-20261024/distribution/check-sdist-contract.json",
+      "bytes": 54548,
+      "sha256_complete_bytes": "f511d4c51489b348e16e1531c0e72b132f80d8af56259b94ee398095a7d1718e",
+      "git_blob_oid": "261e34a8f8b0fad9a21be5952aaae78ddd5cc013",
+      "whitespace_stripped": false,
+      "methodology": "Exact read_bytes() hashed with hashlib.sha256; git hash-object for Git blob OID"
+    },
+    {
+      "path": "docs/implementation/evidence/adr0031-i155-m01-dataclass-selection-20261024/distribution/wheel-members.json",
+      "bytes": 37133,
+      "sha256_complete_bytes": "d0657f0e90f03ae16054cfd479e9ad7d3c18bec4daddff6eaaddfe522d83a4f9",
+      "git_blob_oid": "b2dd7a83089d1596180a1ad83ab998efd10740e2",
+      "whitespace_stripped": false,
+      "methodology": "Exact read_bytes() hashed with hashlib.sha256; git hash-object for Git blob OID"
+    },
+    {
+      "path": "docs/implementation/evidence/adr0031-i155-m01-dataclass-selection-20261024/findings.json",
+      "bytes": 3036,
+      "sha256_complete_bytes": "e0d7fb6084fc2c669539a37b7d397e041b65503c2632af4aacf1f8817152d58d",
+      "git_blob_oid": "48bf2b4d0c1118988aa74c768415e300e1297cd6",
+      "whitespace_stripped": false,
+      "methodology": "Exact read_bytes() hashed with hashlib.sha256; git hash-object for Git blob OID"
+    },
+    {
+      "path": "docs/implementation/evidence/adr0031-i155-m01-dataclass-selection-20261024/run_experiments.py",
+      "bytes": 14785,
+      "sha256_complete_bytes": "12519522809f2b9efc7f8e3982ae812a5b59800ea8bfae348cf0f4f086591246",
+      "git_blob_oid": "a884c9d0710e8f1705bdd34d1bbb8308491e086f",
+      "whitespace_stripped": false,
+      "methodology": "Exact read_bytes() hashed with hashlib.sha256; git hash-object for Git blob OID"
+    },
+    {
+      "path": "docs/implementation/evidence/adr0031-i155-m01-dataclass-selection-20261024/scanner/executions.json",
+      "bytes": 9772,
+      "sha256_complete_bytes": "97ac77a85368820af7f7bdd64447353eb0a631fa3b6d99ed06fafc14ccfed12d",
+      "git_blob_oid": "4209fd454a172e295aed0400fd30f840ee71da54",
+      "whitespace_stripped": false,
+      "methodology": "Exact read_bytes() hashed with hashlib.sha256; git hash-object for Git blob OID"
+    },
+    {
+      "path": "docs/implementation/evidence/adr0031-i155-m01-dataclass-selection-20261024/scanner/mutation-derived.json",
+      "bytes": 1914,
+      "sha256_complete_bytes": "511b2a8de150aa31fbb45e988697454da3f378b20f72cc34c5a8f27bc8317b63",
+      "git_blob_oid": "423900bfbd2ef50c777b15dead58e6d94539c1e1",
+      "whitespace_stripped": false,
+      "methodology": "Exact read_bytes() hashed with hashlib.sha256; git hash-object for Git blob OID"
+    },
+    {
+      "path": "docs/implementation/evidence/adr0031-i155-m01-dataclass-selection-20261024/scanner/mutation-direct.json",
+      "bytes": 1914,
+      "sha256_complete_bytes": "511b2a8de150aa31fbb45e988697454da3f378b20f72cc34c5a8f27bc8317b63",
+      "git_blob_oid": "423900bfbd2ef50c777b15dead58e6d94539c1e1",
+      "whitespace_stripped": false,
+      "methodology": "Exact read_bytes() hashed with hashlib.sha256; git hash-object for Git blob OID"
+    },
+    {
+      "path": "docs/implementation/evidence/adr0031-i155-m01-dataclass-selection-20261024/scanner/mutation-source-fixed.json",
+      "bytes": 1914,
+      "sha256_complete_bytes": "511b2a8de150aa31fbb45e988697454da3f378b20f72cc34c5a8f27bc8317b63",
+      "git_blob_oid": "423900bfbd2ef50c777b15dead58e6d94539c1e1",
+      "whitespace_stripped": false,
+      "methodology": "Exact read_bytes() hashed with hashlib.sha256; git hash-object for Git blob OID"
+    },
+    {
+      "path": "docs/implementation/evidence/adr0031-i155-m01-dataclass-selection-20261024/scanner/mutation-source162-unfixed.json",
+      "bytes": 1923,
+      "sha256_complete_bytes": "1f8b5aac8a7945bd9732c628aab4d1c0e7e00d23c074f6d327fc9fe36706ddf9",
+      "git_blob_oid": "ed0c3a751dc7275acfa1e17c5fc2fcabf92d0c14",
+      "whitespace_stripped": false,
+      "methodology": "Exact read_bytes() hashed with hashlib.sha256; git hash-object for Git blob OID"
+    },
+    {
+      "path": "docs/implementation/evidence/adr0031-i155-m01-dataclass-selection-20261024/scanner/reproduce_reviewer_finding.py",
+      "bytes": 16759,
+      "sha256_complete_bytes": "985cbe6caa7100766450a62c654e554889adb3692195957af6ad41d6e814960f",
+      "git_blob_oid": "c8bcd8f68e2a4cd2e9fcf644ba613ba66a918a62",
+      "whitespace_stripped": false,
+      "methodology": "Exact read_bytes() hashed with hashlib.sha256; git hash-object for Git blob OID"
+    },
+    {
+      "path": "docs/implementation/evidence/adr0031-i155-m01-dataclass-selection-20261024/scanner/store-derived.json",
+      "bytes": 15665,
+      "sha256_complete_bytes": "623aeb2993225a8ff403daa5bfb2487b8d15bc8baa9e7398e5fbd916be26e694",
+      "git_blob_oid": "93fd61eca27e50b818c621a51d6b6bac150c2550",
+      "whitespace_stripped": false,
+      "methodology": "Exact read_bytes() hashed with hashlib.sha256; git hash-object for Git blob OID"
+    },
+    {
+      "path": "docs/implementation/evidence/adr0031-i155-m01-dataclass-selection-20261024/scanner/store-direct.json",
+      "bytes": 15661,
+      "sha256_complete_bytes": "e081165354711905667b8939e68437d07e56604f7fa462953c615e31c2968fb2",
+      "git_blob_oid": "16eb66c4c960e004b0dae262c20fbd253e535c78",
+      "whitespace_stripped": false,
+      "methodology": "Exact read_bytes() hashed with hashlib.sha256; git hash-object for Git blob OID"
+    },
+    {
+      "path": "docs/implementation/evidence/adr0031-i155-m01-dataclass-selection-20261024/scanner/store-source-fixed.json",
+      "bytes": 15741,
+      "sha256_complete_bytes": "1cc68b8a1da1b303f259000ba094f790943b9f01b4e257c99493ffba84c829e6",
+      "git_blob_oid": "5434999ebb22382f61c5fdcf3669dd9bd9055c45",
+      "whitespace_stripped": false,
+      "methodology": "Exact read_bytes() hashed with hashlib.sha256; git hash-object for Git blob OID"
+    },
+    {
+      "path": "docs/implementation/evidence/adr0031-i155-m01-dataclass-selection-20261024/scanner/store-source162-unfixed.json",
+      "bytes": 16384,
+      "sha256_complete_bytes": "fc1ea8d7dbb49722e023963f4f6af2fc494c070f1409ab2a1506e54e3d1106f1",
+      "git_blob_oid": "11a043acbac27c0c10bb9bbdf67074ebb9eb909c",
+      "whitespace_stripped": false,
+      "methodology": "Exact read_bytes() hashed with hashlib.sha256; git hash-object for Git blob OID"
+    },
+    {
+      "path": "docs/implementation/evidence/adr0031-i155-m01-dataclass-selection-20261024/scanner/study-derived.json",
+      "bytes": 166523,
+      "sha256_complete_bytes": "90e9cbfc20e93d406eb337ccf43a30a26de6b29f475ba38f79d904cbd9dca699",
+      "git_blob_oid": "dda4b06a36754ad5c3458a672dd9c7c1b8e5a3e3",
+      "whitespace_stripped": false,
+      "methodology": "Exact read_bytes() hashed with hashlib.sha256; git hash-object for Git blob OID"
+    },
+    {
+      "path": "docs/implementation/evidence/adr0031-i155-m01-dataclass-selection-20261024/scanner/study-direct.json",
+      "bytes": 166519,
+      "sha256_complete_bytes": "32fc6d4104cd1a6b2d79eb317770126d22ad6866d0557a3ff002639d979c459f",
+      "git_blob_oid": "edd37108944136c50f786812606867a7898e20fd",
+      "whitespace_stripped": false,
+      "methodology": "Exact read_bytes() hashed with hashlib.sha256; git hash-object for Git blob OID"
+    },
+    {
+      "path": "docs/implementation/evidence/adr0031-i155-m01-dataclass-selection-20261024/scanner/study-source-fixed.json",
+      "bytes": 166560,
+      "sha256_complete_bytes": "e1fa390af70e40a32d574adac708bd7fc099db680c6a110960f633ef2d68eda4",
+      "git_blob_oid": "8f018c43ad5fde569205b27431cb3e783f2771e9",
+      "whitespace_stripped": false,
+      "methodology": "Exact read_bytes() hashed with hashlib.sha256; git hash-object for Git blob OID"
+    },
+    {
+      "path": "docs/implementation/evidence/adr0031-i155-m01-dataclass-selection-20261024/scanner/study-source162-unfixed.json",
+      "bytes": 166443,
+      "sha256_complete_bytes": "8ae48d4404964bd41b15c3bc75decc97c9a50c051737f1099728f0237357a095",
+      "git_blob_oid": "8aa8141de5f7d11963d2c1be93e6879c808fd2cb",
+      "whitespace_stripped": false,
+      "methodology": "Exact read_bytes() hashed with hashlib.sha256; git hash-object for Git blob OID"
+    },
+    {
+      "path": "docs/implementation/evidence/adr0031-i155-m01-dataclass-selection-20261024/scanner/summary.json",
+      "bytes": 26008,
+      "sha256_complete_bytes": "8354e85ca01bec2d97dc7c7a48dba9ff1c66e4743cbd3f68a273e2c1337ab63c",
+      "git_blob_oid": "552633842c64913d56eab73ded5399884ded500a",
+      "whitespace_stripped": false,
+      "methodology": "Exact read_bytes() hashed with hashlib.sha256; git hash-object for Git blob OID"
+    }
+  ]
+}
