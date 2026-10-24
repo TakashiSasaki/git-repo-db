@@ -1,0 +1,170 @@
+[
+  {
+    "cohort": "source162-unfixed",
+    "script": "store_case.py",
+    "argv": [
+      "/home/ubuntu/venv/bin/python",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-dataclass-selection-20261024/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/scanner/store_case.py",
+      "--output",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-dataclass-selection-20261024/docs/implementation/evidence/adr0031-i155-m01-dataclass-selection-20261024/scanner/store-source162-unfixed.json"
+    ],
+    "pythonpath": "/tmp/i155-dataclass-dist/source162-unfixed/src:/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-dataclass-selection-20261024",
+    "exit_code": 0,
+    "duration_s": 4.828,
+    "output_sha256": "fc1ea8d7dbb49722e023963f4f6af2fc494c070f1409ab2a1506e54e3d1106f1"
+  },
+  {
+    "cohort": "source162-unfixed",
+    "script": "study.py",
+    "argv": [
+      "/home/ubuntu/venv/bin/python",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-dataclass-selection-20261024/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/scanner/study.py",
+      "--output",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-dataclass-selection-20261024/docs/implementation/evidence/adr0031-i155-m01-dataclass-selection-20261024/scanner/study-source162-unfixed.json"
+    ],
+    "pythonpath": "/tmp/i155-dataclass-dist/source162-unfixed/src:/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-dataclass-selection-20261024",
+    "exit_code": 0,
+    "duration_s": 13.35,
+    "output_sha256": "8ae48d4404964bd41b15c3bc75decc97c9a50c051737f1099728f0237357a095"
+  },
+  {
+    "cohort": "source162-unfixed",
+    "script": "reproduce_reviewer_finding.py",
+    "argv": [
+      "/home/ubuntu/venv/bin/python",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-dataclass-selection-20261024/docs/implementation/evidence/adr0031-i155-m01-dataclass-selection-20261024/scanner/reproduce_reviewer_finding.py",
+      "--output",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-dataclass-selection-20261024/docs/implementation/evidence/adr0031-i155-m01-dataclass-selection-20261024/scanner/mutation-source162-unfixed.json"
+    ],
+    "pythonpath": "/tmp/i155-dataclass-dist/source162-unfixed/src:/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-dataclass-selection-20261024",
+    "exit_code": 0,
+    "duration_s": 20.873,
+    "output_sha256": "1f8b5aac8a7945bd9732c628aab4d1c0e7e00d23c074f6d327fc9fe36706ddf9"
+  },
+  {
+    "cohort": "source-fixed",
+    "script": "store_case.py",
+    "argv": [
+      "/home/ubuntu/venv/bin/python",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-dataclass-selection-20261024/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/scanner/store_case.py",
+      "--output",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-dataclass-selection-20261024/docs/implementation/evidence/adr0031-i155-m01-dataclass-selection-20261024/scanner/store-source-fixed.json"
+    ],
+    "pythonpath": "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-dataclass-selection-20261024/src:/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-dataclass-selection-20261024",
+    "exit_code": 0,
+    "duration_s": 5.543,
+    "output_sha256": "1cc68b8a1da1b303f259000ba094f790943b9f01b4e257c99493ffba84c829e6"
+  },
+  {
+    "cohort": "source-fixed",
+    "script": "study.py",
+    "argv": [
+      "/home/ubuntu/venv/bin/python",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-dataclass-selection-20261024/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/scanner/study.py",
+      "--output",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-dataclass-selection-20261024/docs/implementation/evidence/adr0031-i155-m01-dataclass-selection-20261024/scanner/study-source-fixed.json"
+    ],
+    "pythonpath": "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-dataclass-selection-20261024/src:/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-dataclass-selection-20261024",
+    "exit_code": 0,
+    "duration_s": 16.439,
+    "output_sha256": "e1fa390af70e40a32d574adac708bd7fc099db680c6a110960f633ef2d68eda4"
+  },
+  {
+    "cohort": "source-fixed",
+    "script": "reproduce_reviewer_finding.py",
+    "argv": [
+      "/home/ubuntu/venv/bin/python",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-dataclass-selection-20261024/docs/implementation/evidence/adr0031-i155-m01-dataclass-selection-20261024/scanner/reproduce_reviewer_finding.py",
+      "--output",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-dataclass-selection-20261024/docs/implementation/evidence/adr0031-i155-m01-dataclass-selection-20261024/scanner/mutation-source-fixed.json"
+    ],
+    "pythonpath": "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-dataclass-selection-20261024/src:/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-dataclass-selection-20261024",
+    "exit_code": 0,
+    "duration_s": 24.284,
+    "output_sha256": "511b2a8de150aa31fbb45e988697454da3f378b20f72cc34c5a8f27bc8317b63"
+  },
+  {
+    "cohort": "direct",
+    "script": "store_case.py",
+    "argv": [
+      "/tmp/i155-dataclass-dist/direct-venv/bin/python",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-dataclass-selection-20261024/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/scanner/store_case.py",
+      "--output",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-dataclass-selection-20261024/docs/implementation/evidence/adr0031-i155-m01-dataclass-selection-20261024/scanner/store-direct.json"
+    ],
+    "pythonpath": "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-dataclass-selection-20261024",
+    "exit_code": 0,
+    "duration_s": 5.307,
+    "output_sha256": "e081165354711905667b8939e68437d07e56604f7fa462953c615e31c2968fb2"
+  },
+  {
+    "cohort": "direct",
+    "script": "study.py",
+    "argv": [
+      "/tmp/i155-dataclass-dist/direct-venv/bin/python",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-dataclass-selection-20261024/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/scanner/study.py",
+      "--output",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-dataclass-selection-20261024/docs/implementation/evidence/adr0031-i155-m01-dataclass-selection-20261024/scanner/study-direct.json"
+    ],
+    "pythonpath": "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-dataclass-selection-20261024",
+    "exit_code": 0,
+    "duration_s": 15.418,
+    "output_sha256": "32fc6d4104cd1a6b2d79eb317770126d22ad6866d0557a3ff002639d979c459f"
+  },
+  {
+    "cohort": "direct",
+    "script": "reproduce_reviewer_finding.py",
+    "argv": [
+      "/tmp/i155-dataclass-dist/direct-venv/bin/python",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-dataclass-selection-20261024/docs/implementation/evidence/adr0031-i155-m01-dataclass-selection-20261024/scanner/reproduce_reviewer_finding.py",
+      "--output",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-dataclass-selection-20261024/docs/implementation/evidence/adr0031-i155-m01-dataclass-selection-20261024/scanner/mutation-direct.json"
+    ],
+    "pythonpath": "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-dataclass-selection-20261024",
+    "exit_code": 0,
+    "duration_s": 22.887,
+    "output_sha256": "511b2a8de150aa31fbb45e988697454da3f378b20f72cc34c5a8f27bc8317b63"
+  },
+  {
+    "cohort": "derived",
+    "script": "store_case.py",
+    "argv": [
+      "/tmp/i155-dataclass-dist/derived-venv/bin/python",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-dataclass-selection-20261024/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/scanner/store_case.py",
+      "--output",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-dataclass-selection-20261024/docs/implementation/evidence/adr0031-i155-m01-dataclass-selection-20261024/scanner/store-derived.json"
+    ],
+    "pythonpath": "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-dataclass-selection-20261024",
+    "exit_code": 0,
+    "duration_s": 5.319,
+    "output_sha256": "623aeb2993225a8ff403daa5bfb2487b8d15bc8baa9e7398e5fbd916be26e694"
+  },
+  {
+    "cohort": "derived",
+    "script": "study.py",
+    "argv": [
+      "/tmp/i155-dataclass-dist/derived-venv/bin/python",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-dataclass-selection-20261024/docs/implementation/evidence/adr0031-i6b-sdist-c0-independent-20261024/scanner/study.py",
+      "--output",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-dataclass-selection-20261024/docs/implementation/evidence/adr0031-i155-m01-dataclass-selection-20261024/scanner/study-derived.json"
+    ],
+    "pythonpath": "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-dataclass-selection-20261024",
+    "exit_code": 0,
+    "duration_s": 15.37,
+    "output_sha256": "90e9cbfc20e93d406eb337ccf43a30a26de6b29f475ba38f79d904cbd9dca699"
+  },
+  {
+    "cohort": "derived",
+    "script": "reproduce_reviewer_finding.py",
+    "argv": [
+      "/tmp/i155-dataclass-dist/derived-venv/bin/python",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-dataclass-selection-20261024/docs/implementation/evidence/adr0031-i155-m01-dataclass-selection-20261024/scanner/reproduce_reviewer_finding.py",
+      "--output",
+      "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-dataclass-selection-20261024/docs/implementation/evidence/adr0031-i155-m01-dataclass-selection-20261024/scanner/mutation-derived.json"
+    ],
+    "pythonpath": "/home/ubuntu/github/git-repo-db/fix/adr0031-i155-m01-dataclass-selection-20261024",
+    "exit_code": 0,
+    "duration_s": 22.96,
+    "output_sha256": "511b2a8de150aa31fbb45e988697454da3f378b20f72cc34c5a8f27bc8317b63"
+  }
+]

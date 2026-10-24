@@ -1,0 +1,77 @@
+{
+  "case_1_appending_list": {
+    "refusal_code": "INPUT_LIMIT",
+    "max_queue_len": 1,
+    "max_snapshot_len": 2,
+    "used_work": 2,
+    "final_input_len": 1002
+  },
+  "case_2_changing_len": {
+    "refusal_code": "INPUT_LIMIT",
+    "max_queue_len": 1,
+    "max_snapshot_len": 2,
+    "used_work": 2,
+    "final_input_len": 5
+  },
+  "case_3_same_final_length": {
+    "refusal_code": "INPUT_LIMIT",
+    "max_queue_len": 1,
+    "max_snapshot_len": 2,
+    "used_work": 2,
+    "final_input_len": 1002
+  },
+  "case_4_deceptive_len": {
+    "refusal_code": "INPUT_LIMIT",
+    "max_queue_len": 1,
+    "max_snapshot_len": 2,
+    "used_work": 2
+  },
+  "case_5_exceeds_during_snapshot": {
+    "refusal_code": "INPUT_LIMIT",
+    "max_queue_len": 1,
+    "max_snapshot_len": 2,
+    "used_work": 2
+  },
+  "case_6_exact_boundaries": {
+    "list_used_work": 6,
+    "tuple_used_work": 6
+  },
+  "case_7_dataclass_capacity": {
+    "refusal_code": "INPUT_LIMIT",
+    "max_queue_len": 1,
+    "used_work": 2
+  },
+  "case_7b_dataclass_selection_1000_fields": {
+    "refusal_code": "INPUT_LIMIT",
+    "max_queue_len": 1000,
+    "max_members_len": 1000,
+    "used_work": 8,
+    "attribute_accesses": 1000
+  },
+  "case_8_callback_containment": {
+    "broken_iter_code": "INPUT_LIMIT",
+    "broken_iter_used_work": 2,
+    "broken_values_code": "INPUT_LIMIT",
+    "broken_values_used_work": 2,
+    "broken_keys_code": "INPUT_LIMIT",
+    "broken_keys_used_work": 2,
+    "broken_attr_code": "INPUT_LIMIT",
+    "broken_attr_used_work": 2
+  },
+  "case_9_single_charge_mutation": {
+    "list_refusal_code": "INPUT_LIMIT",
+    "list_used_work": 2,
+    "dict_refusal_code": "INPUT_LIMIT",
+    "dict_used_work": 2
+  },
+  "real_store_relation": {
+    "refusal_code": "INPUT_LIMIT",
+    "max_queue_len": 6,
+    "max_snapshot_len": 2,
+    "used_work": 9,
+    "final_gl_len": 1002,
+    "db_rows": 0,
+    "transfer_fence": true,
+    "in_transaction": false
+  }
+}
