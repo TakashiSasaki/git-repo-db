@@ -92,8 +92,23 @@ def rows(path, store, table):
 
 
 def receive(path, package, permitted=(), **kwargs):
+    grants = kwargs.pop("grants", None)
+    if grants is None and "authorization" not in kwargs:
+        from repo_catalog.domain.context_admission import DependencySet
+
+        context_data = (
+            package.get("context")
+            if isinstance(package, dict)
+            else (package.context if hasattr(package, "context") else None)
+        )
+        extracted = ExchangeService._extract_context_dependencies(context_data)
+        grants = extracted | DependencySet(repositories=set(permitted))
     return ExchangeService(path).import_package(
-        package, permitted_repository_uuidv4s=permitted, new_request=True, **kwargs
+        package,
+        permitted_repository_uuidv4s=permitted,
+        new_request=True,
+        grants=grants,
+        **kwargs,
     )
 
 
@@ -440,7 +455,20 @@ def test_mapping_claim_support_and_dispositions_are_exact(tmp_path):
         source_uuidv4s=(),
     )
     package = ExchangeService(a).export_package(selection=selected)
-    receive(b, package, (r1,))
+    rcv_grants = local_grants(
+        issue,
+        r1,
+        r2,
+        resources=(provider_repo,),
+        units=(mapping, owning, withdrawal),
+    )
+    receive(
+        b,
+        package,
+        (r1,),
+        grants=rcv_grants,
+        selection=ExchangeSelectionScope(all_selected=True),
+    )
     assert rows(a, "context", "repository_mapping_dispositions") == rows(
         b, "context", "repository_mapping_dispositions"
     )
@@ -454,7 +482,13 @@ def test_mapping_claim_support_and_dispositions_are_exact(tmp_path):
     package.core["git_objects"].append({"object_format": "sha1", "full_oid": "2" * 40})
     changed = replace(package, package_id=str(uuid4()), digest_sha256=None)
     with pytest.raises(ExchangeError, match="IMMUTABLE_REPLAY_CONFLICT"):
-        receive(b, changed, (r1,))
+        receive(
+            b,
+            changed,
+            (r1,),
+            grants=rcv_grants,
+            selection=ExchangeSelectionScope(all_selected=True),
+        )
     assert rows(b, "core", "git_objects") == before
 
 
@@ -657,14 +691,19 @@ def test_process_exit_before_checkpoint_recovery_uses_facts(tmp_path, point):
     wire.write_text(encode_package(package))
     request = RequestIdentity(str(uuid4()), str(uuid4()))
     code = """
-import os,sys
+import json, os, sys
 from pathlib import Path
 from repo_catalog.application.exchange import ExchangeService
+from repo_catalog.domain.context_admission import DependencySet
 from repo_catalog.domain.p1_coordination import RequestIdentity
 p,wire,repo,origin,request,point=sys.argv[1:]
 def cut(where):
     if where==point: os._exit(77)
-ExchangeService(Path(p)).import_package(Path(wire).read_text(),request=RequestIdentity(origin,request),new_request=True,permitted_repository_uuidv4s=(repo,),cut=cut)
+raw = Path(wire).read_text()
+pkg = json.loads(raw)
+deps = ExchangeService._extract_context_dependencies(pkg.get("context"))
+grants = deps | DependencySet(repositories={repo})
+ExchangeService(Path(p)).import_package(raw,request=RequestIdentity(origin,request),new_request=True,permitted_repository_uuidv4s=(repo,),grants=grants,cut=cut)
 """
     result = subprocess.run(
         [sys.executable, "-c", code, str(b), str(wire), r1, *request.values(), point],

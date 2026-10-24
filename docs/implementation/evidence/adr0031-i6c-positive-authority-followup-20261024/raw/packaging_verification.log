@@ -1,0 +1,12 @@
+[PACKAGING VERIFICATION REPORT]
+Direct wheel: repo_catalog-0.2.0-py3-none-any.whl
+  Bytes: 793473
+  SHA256: 1368b7943966ef63dc6ccb50fca41c2525e65e5c5f85842abc5dd8a00ae29d6d
+Source distribution: repo_catalog-0.2.0.tar.gz
+  Bytes: 183710163
+  SHA256: 5fe8a60d1f5e6ff7d8f70ab232648186a2ac2e5b337802b86d6a7eb8ea1aba8d
+Sdist-derived wheel: repo_catalog-0.2.0-py3-none-any.whl
+  Bytes: 793473
+  SHA256: 1368b7943966ef63dc6ccb50fca41c2525e65e5c5f85842abc5dd8a00ae29d6d
+Byte-for-byte wheel equality: True
+RESULT: PASS (byte-for-byte equality confirmed)

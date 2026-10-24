@@ -284,11 +284,13 @@ class ExchangeService:
         operational: OperationalAcquisitionLedger | Path | str | None = None,
         authorization: Any = None,
         admission: Any = None,
+        grants: Any = None,
     ) -> None:
         self.directory = Path(directory)
         self.operational = operational
         self.authorization = authorization
         self.admission = admission
+        self.grants = grants
 
     def _has_core(self) -> bool:
         return (self.directory / "core.sqlite3").is_file()
@@ -1497,6 +1499,7 @@ class ExchangeService:
         cut: Callable[[str], None] = lambda point: None,
         authorization: Any = None,
         admission: Any = None,
+        grants: Any = None,
     ) -> ExchangeImportReport:
         """Validate and import an ExchangePackage into Core and/or Context."""
         self._check_stop()
@@ -1640,7 +1643,179 @@ class ExchangeService:
                 cut=cut,
                 authorization=authorization,
                 admission=admission,
+                grants=grants,
             )
+
+    @staticmethod
+    def _extract_context_dependencies(
+        context_data: dict[str, Any] | None,
+    ) -> Any:
+        from repo_catalog.domain.context_admission import DependencySet, dependencies
+
+        if not context_data:
+            return DependencySet()
+
+        import json
+
+        from repo_catalog.domain.p1_context import ResourceKey
+        from repo_catalog.domain.p1_core import OID
+        from repo_catalog.domain.selective_exchange import (
+            disposition as decode_disposition,
+        )
+        from repo_catalog.domain.selective_exchange import (
+            relation as decode_relation,
+        )
+
+        resources = set()
+        repositories = set()
+        sources = set()
+        source_repository_pairs = set()
+        provider_registrations = set()
+        dispositions = set()
+        mapping_claims = set()
+        object_oids = set()
+
+        for p in context_data.get("providers", ()):
+            if "service_instance_uuidv4" in p:
+                provider_registrations.add(p["service_instance_uuidv4"])
+
+        for r in context_data.get("repositories", ()):
+            if "repository_uuidv4" in r:
+                repositories.add(r["repository_uuidv4"])
+
+        for s in context_data.get("sources", ()):
+            if "source_registration_uuidv4" in s:
+                sources.add(s["source_registration_uuidv4"])
+            if "service_instance_uuidv4" in s:
+                provider_registrations.add(s["service_instance_uuidv4"])
+
+        for sr in context_data.get("source_repositories", ()):
+            src = sr.get("source_registration_uuidv4")
+            repo = sr.get("repository_uuidv4")
+            if src:
+                sources.add(src)
+            if repo:
+                repositories.add(repo)
+            if src and repo:
+                source_repository_pairs.add((src, repo))
+
+        for res in context_data.get("resources", ()):
+            rk = ResourceKey(
+                res["service_instance_uuidv4"],
+                res["resource_kind"],
+                res["provider_resource_id"],
+            )
+            resources.add(rk)
+            if "service_instance_uuidv4" in res:
+                provider_registrations.add(res["service_instance_uuidv4"])
+
+        for rrr in context_data.get("resource_repository_relations", ()):
+            if "repository_uuidv4" in rrr:
+                repositories.add(rrr["repository_uuidv4"])
+            try:
+                rel = decode_relation(rrr)
+                dep = dependencies(rel)
+                resources.update(dep.resources)
+                repositories.update(dep.repositories)
+                sources.update(dep.sources)
+                source_repository_pairs.update(dep.source_repository_pairs)
+                mapping_claims.update(dep.mapping_claims)
+                provider_registrations.update(dep.provider_registrations)
+                object_oids.update(dep.object_oids)
+                if rel.relation_kind == "represents_repository":
+                    mapping_claims.add(rel.claim_key)
+            except Exception:
+                pass
+
+        for rmd in context_data.get("repository_mapping_dispositions", ()):
+            if "repository_uuidv4" in rmd:
+                repositories.add(rmd["repository_uuidv4"])
+            try:
+                disp = decode_disposition(rmd)
+                dep = dependencies(disp)
+                dispositions.update(dep.dispositions)
+                mapping_claims.update(dep.mapping_claims)
+                if hasattr(disp, "claim_key"):
+                    mapping_claims.add(disp.claim_key)
+                if getattr(disp, "replacement_claim_key", None):
+                    mapping_claims.add(disp.replacement_claim_key)
+                resources.update(dep.resources)
+                repositories.update(dep.repositories)
+                provider_registrations.update(dep.provider_registrations)
+            except Exception:
+                pass
+
+        for rel in context_data.get("resource_relations", ()):
+            if (
+                "service_instance_uuidv4" in rel
+                and "resource_kind" in rel
+                and "provider_resource_id" in rel
+            ):
+                resources.add(
+                    ResourceKey(
+                        rel["service_instance_uuidv4"],
+                        rel["resource_kind"],
+                        rel["provider_resource_id"],
+                    )
+                )
+            members_json = rel.get("members_json")
+            if members_json:
+                try:
+                    for m in json.loads(members_json):
+                        resources.add(ResourceKey(*m))
+                except Exception:
+                    pass
+
+        for ref in context_data.get("core_references", ()):
+            fmt = ref.get("object_format")
+            oid = ref.get("full_oid")
+            if fmt and oid:
+                object_oids.add(OID(fmt, oid))
+
+        return DependencySet(
+            resources=resources,
+            repositories=repositories,
+            sources=sources,
+            source_repository_pairs=source_repository_pairs,
+            mapping_claims=mapping_claims,
+            dispositions=dispositions,
+            provider_registrations=provider_registrations,
+            object_oids=object_oids,
+        )
+
+    @staticmethod
+    def _validate_receiver_authority(
+        auth, adm, context_data: dict[str, Any] | None
+    ) -> None:
+        from repo_catalog.domain.context_admission import (
+            AdmissionRefused,
+            ContextAdmissionService,
+        )
+
+        if auth is None or adm is None:
+            raise AdmissionRefused("PERMISSION_DENIED")
+        if not isinstance(auth, ContextAdmissionService):
+            raise AdmissionRefused("PERMISSION_DENIED")
+        auth.validate_context(adm)
+        policy = getattr(auth, "_policy", None)
+        if policy is None or not callable(getattr(policy, "lease", None)):
+            raise AdmissionRefused("PERMISSION_DENIED")
+
+        package_deps = ExchangeService._extract_context_dependencies(context_data)
+        if hasattr(policy, "grants") and policy.grants is None:
+            if (
+                package_deps.resources
+                or package_deps.sources
+                or package_deps.provider_registrations
+                or package_deps.mapping_claims
+                or package_deps.dispositions
+            ):
+                raise AdmissionRefused("PERMISSION_DENIED")
+
+        with policy.lease(adm.principal, adm.operation, package_deps) as lease:
+            if not callable(getattr(lease, "check_current", None)):
+                raise AdmissionRefused("PERMISSION_DENIED")
+            lease.check_current()
 
     def _import_package(
         self,
@@ -1654,6 +1829,7 @@ class ExchangeService:
         cut,
         authorization=None,
         admission=None,
+        grants=None,
     ) -> ExchangeImportReport:
         self._check_stop()
         package = raw_package
@@ -1782,10 +1958,11 @@ class ExchangeService:
         if self._has_core() and self._has_context() and (want_core or want_context):
             auth = authorization if authorization is not None else self.authorization
             adm = admission if admission is not None else self.admission
+            active_grants = grants if grants is not None else self.grants
             if want_context:
                 admit_selection = replace(selection, include_core=True)
                 if auth is None or adm is None:
-                    if not permitted:
+                    if not permitted and active_grants is None:
                         from repo_catalog.domain.context_admission import (
                             AdmissionRefused,
                         )
@@ -1797,9 +1974,11 @@ class ExchangeService:
 
                     auth, adm, _ = create_local_admission_service(
                         "exchange_import",
+                        grants=active_grants,
                         permitted_repositories=frozenset(permitted),
                         selection=admit_selection,
                     )
+                self._validate_receiver_authority(auth, adm, context_data)
             coordinator = PairCoordinator(self.directory, authorization=auth)
 
             def _core_unit(core_tx: AdmissionTransaction) -> None:
@@ -1811,7 +1990,12 @@ class ExchangeService:
 
             def _context_unit(context_tx: AdmissionTransaction) -> None:
                 if want_context and package.context is not None:
-                    with Context.for_transaction(context_tx, self.directory) as ctx_cap:
+                    with Context.for_transaction(
+                        context_tx,
+                        self.directory,
+                        authorization=auth,
+                        admission=adm,
+                    ) as ctx_cap:
                         ctx_stats.update(
                             self._import_context_accounted(
                                 ctx_cap,
@@ -1870,9 +2054,10 @@ class ExchangeService:
         elif want_context and context_data is not None:
             auth = authorization if authorization is not None else self.authorization
             adm = admission if admission is not None else self.admission
+            active_grants = grants if grants is not None else self.grants
             admit_selection = replace(selection, include_core=True)
             if auth is None or adm is None:
-                if not permitted:
+                if not permitted and active_grants is None:
                     from repo_catalog.domain.context_admission import (
                         AdmissionRefused,
                     )
@@ -1884,9 +2069,11 @@ class ExchangeService:
 
                 auth, adm, _ = create_local_admission_service(
                     "exchange_import",
+                    grants=active_grants,
                     permitted_repositories=frozenset(permitted),
                     selection=admit_selection,
                 )
+            self._validate_receiver_authority(auth, adm, context_data)
             with Context.transaction(
                 self.directory, authorization=auth, admission=adm
             ) as ctx_cap:
