@@ -283,7 +283,9 @@ class Context(ContextStore):
 
     @classmethod
     @contextmanager
-    def transaction(cls, directory: Path, *, authorization=None) -> Iterator[Context]:
+    def transaction(
+        cls, directory: Path, *, authorization=None, admission=None
+    ) -> Iterator[Context]:
         """Gated independent Context transaction, valid without any other store."""
         directory = Path(directory)
         with catalog_gate(directory, exclusive=True):
@@ -297,7 +299,7 @@ class Context(ContextStore):
                             db, directory, writable=True, authorization=authorization
                         )
                         try:
-                            with capability._commit_scope():
+                            with capability._commit_scope(admission):
                                 yield capability
                                 capability._read_complete()
                                 capability._precommit_admission()

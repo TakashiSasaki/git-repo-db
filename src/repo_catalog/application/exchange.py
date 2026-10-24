@@ -389,9 +389,7 @@ class ExchangeService:
             self._check_stop()
             scope = selection or ExchangeSelectionScope()
             explicit_scope(scope)
-            if scope.include_context:
-                # Until I6-C supplies local admission authority, even cached or
-                # empty Context exports must not consult local dependency rows.
+            if scope.include_context and not self._has_context() and not self._has_core():
                 from repo_catalog.domain.context_admission import AdmissionRefused
 
                 raise AdmissionRefused("PERMISSION_DENIED")
@@ -1162,7 +1160,8 @@ class ExchangeService:
 
             # Determine full set of exported resources (including parents/members of selected resources)
             all_resource_rows = ctx.db.execute(
-                "SELECT service_instance_uuidv4, resource_kind, provider_resource_id "
+                "SELECT service_instance_uuidv4, resource_kind, provider_resource_id, "
+                "identifier_namespace_kind, identifier_namespace_id, document_kind, provider_document_id "
                 "FROM resources ORDER BY service_instance_uuidv4, resource_kind, provider_resource_id"
             ).fetchall()
 
@@ -1183,7 +1182,11 @@ class ExchangeService:
                 "AND c.provenance_json=t.provenance_json "
                 "ORDER BY t.observed_at_us, c.service_instance_uuidv4, c.resource_kind, c.provider_resource_id, c.collection_kind"
             ).fetchall()
-            support_columns = "service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,target_json,clock_json,provenance_json,observed_at_us"
+            support_columns = (
+                "service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,"
+                "target_json,clock_json,provenance_json,observed_at_us,"
+                "event_report_members_json,event_report_scope_json"
+            )
             support_rows = [
                 dict(zip(support_columns.split(","), r))
                 for r in ctx.db.execute(
@@ -1196,13 +1199,10 @@ class ExchangeService:
             included_rks, reasons, omissions = expand_resources(
                 all_resource_rows, rel_rows, coll_rows, scope, support_rows
             )
-            from repo_catalog.domain.selective_exchange import preflight_i2_resources
-
-            preflight_i2_resources(included_rks)
             self._selection_details["dependency_reasons"].extend(reasons)
             self._selection_details["omissions"].extend(omissions)
             for row in all_resource_rows:
-                if ResourceKey(*row) in included_rks:
+                if ResourceKey(*row[:3]) in included_rks:
                     section["resources"].append(
                         dict(
                             zip(
@@ -1210,6 +1210,10 @@ class ExchangeService:
                                     "service_instance_uuidv4",
                                     "resource_kind",
                                     "provider_resource_id",
+                                    "identifier_namespace_kind",
+                                    "identifier_namespace_id",
+                                    "document_kind",
+                                    "provider_document_id",
                                 ),
                                 row,
                             )
@@ -1265,7 +1269,7 @@ class ExchangeService:
             for table, columns in (
                 (
                     "resource_repository_relations",
-                    "service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,target_json,clock_json,provenance_json,observed_at_us",
+                    "service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,target_json,clock_json,provenance_json,observed_at_us,event_report_members_json,event_report_scope_json",
                 ),
                 (
                     "repository_mapping_dispositions",
@@ -1599,15 +1603,6 @@ class ExchangeService:
             explicit_scope(package.selection_scope)
             receive_selection = selection or package.selection_scope
             explicit_scope(receive_selection)
-            if (
-                package.context is not None
-                and package.selection_scope.include_context
-                and receive_selection.include_context
-            ):
-                # This check precedes progress/receipt and duplicate shortcuts.
-                from repo_catalog.domain.context_admission import AdmissionRefused
-
-                raise AdmissionRefused("PERMISSION_DENIED")
             if selection is None:
                 # The effective default is learned only after bounded decode.
                 # Previously performed decode work remains charged and counts
@@ -1648,14 +1643,6 @@ class ExchangeService:
     ) -> ExchangeImportReport:
         self._check_stop()
         package = raw_package
-        if (
-            package.context is not None
-            and package.selection_scope.include_context
-            and selection.include_context
-        ):
-            from repo_catalog.domain.context_admission import AdmissionRefused
-
-            raise AdmissionRefused("PERMISSION_DENIED")
         digest = package.digest_sha256
         repo_uuid, instance_uuid = self._store_identity()
 
@@ -1779,7 +1766,43 @@ class ExchangeService:
                 cut("after_" + stage + "_checkpoint")
 
         if self._has_core() and self._has_context() and (want_core or want_context):
-            coordinator = PairCoordinator(self.directory)
+            auth = None
+            adm = None
+            if want_context:
+                from repo_catalog.domain.context_admission import (
+                    create_local_admission_service,
+                )
+
+                admit_selection = replace(selection, include_core=True)
+                if (
+                    selection.resource_keys is not None
+                    and context_data is not None
+                    and "resources" in context_data
+                ):
+                    from repo_catalog.domain.p1_context import ResourceKey
+
+                    admit_selection = replace(
+                        admit_selection,
+                        resource_keys=tuple(
+                            ResourceKey(
+                                *(
+                                    r[name]
+                                    for name in (
+                                        "service_instance_uuidv4",
+                                        "resource_kind",
+                                        "provider_resource_id",
+                                    )
+                                )
+                            )
+                            for r in context_data["resources"]
+                        ),
+                    )
+                auth, adm, _ = create_local_admission_service(
+                    "exchange_import",
+                    permitted_repositories=frozenset(permitted),
+                    selection=admit_selection,
+                )
+            coordinator = PairCoordinator(self.directory, authorization=auth)
 
             def _core_unit(core_tx: AdmissionTransaction) -> None:
                 if want_core and package.core is not None:
@@ -1801,7 +1824,13 @@ class ExchangeService:
                         )
 
             try:
-                coordinator.admit(_core_unit, _context_unit, cut=checkpoint)
+                coordinator.admit(
+                    _core_unit,
+                    _context_unit,
+                    cut=checkpoint,
+                    authorization=auth,
+                    admission=adm,
+                )
             except AdmissionFailure as error:
                 ledger.work_ledger.set_progress_once(
                     request,
@@ -1841,7 +1870,42 @@ class ExchangeService:
                     db.rollback()
                     raise
         elif want_context and context_data is not None:
-            with Context.transaction(self.directory) as ctx_cap:
+            from repo_catalog.domain.context_admission import (
+                create_local_admission_service,
+            )
+
+            admit_selection = replace(selection, include_core=True)
+            if (
+                selection.resource_keys is not None
+                and context_data is not None
+                and "resources" in context_data
+            ):
+                from repo_catalog.domain.p1_context import ResourceKey
+
+                admit_selection = replace(
+                    admit_selection,
+                    resource_keys=tuple(
+                        ResourceKey(
+                            *(
+                                r[name]
+                                for name in (
+                                    "service_instance_uuidv4",
+                                    "resource_kind",
+                                    "provider_resource_id",
+                                )
+                            )
+                        )
+                        for r in context_data["resources"]
+                    ),
+                )
+            auth, adm, _ = create_local_admission_service(
+                "exchange_import",
+                permitted_repositories=frozenset(permitted),
+                selection=admit_selection,
+            )
+            with Context.transaction(
+                self.directory, authorization=auth, admission=adm
+            ) as ctx_cap:
                 ctx_stats.update(
                     self._import_context_accounted(
                         ctx_cap,
@@ -2170,6 +2234,8 @@ class ExchangeService:
                 "clock_json",
                 "provenance_json",
                 "observed_at_us",
+                "event_report_members_json",
+                "event_report_scope_json",
             )
             stored_relations = [
                 decode_relation(dict(zip(columns, row)))
@@ -2318,31 +2384,35 @@ class ExchangeService:
         validate_context_bindings(data, source_services)
         pending = list(data["resources"])
         data["resources"] = []
-        while pending:
-            added = []
-            for row in pending:
-                rk = resource(row)
-                parent = None
-                if rk.resource_kind in ("review", "thread", "document", "comment"):
-                    coordinates = rk.scoped_document_coordinates()
-                    parent = ResourceKey(rk.service_instance_uuidv4, *coordinates[:2])
-                if rk.service_instance_uuidv4 in providers and (
-                    parent is None or parent in resources
-                ):
-                    data["resources"].append(row)
-                    resources.add(rk)
-                    added.append(row)
-            if not added:
-                omissions.extend(
+        for row in pending:
+            rk = resource(row)
+            if rk.service_instance_uuidv4 not in providers:
+                omissions.append(
                     {
                         "section": "resources",
-                        "unit": r,
+                        "unit": row,
                         "reason": "missing_parent_or_provider",
                     }
-                    for r in pending
                 )
-                break
-            pending = [r for r in pending if r not in added]
+                continue
+            if rk.resource_kind in ("review", "thread", "document", "comment"):
+                from repo_catalog.domain.resource_identification import (
+                    ResourceIdentification,
+                )
+
+                try:
+                    ResourceIdentification.from_wire(row)
+                except Exception:
+                    omissions.append(
+                        {
+                            "section": "resources",
+                            "unit": row,
+                            "reason": "missing_required_dependency",
+                        }
+                    )
+                    continue
+            data["resources"].append(row)
+            resources.add(rk)
         keep(
             "source_repositories",
             lambda r: (
@@ -3072,31 +3142,18 @@ class ExchangeService:
                 sr["attributes_json"],
             )
 
-        # Admit resources in parent-first order (top-level before documents/reviews/threads/comments)
-        def _res_sort_key(item: dict[str, Any]) -> tuple[int, str, str, str]:
-            rk_kind = item["resource_kind"]
-            if rk_kind in ("repository", "issue", "pull_request"):
-                rank = 0
-            elif rk_kind in ("review", "thread"):
-                rank = 1
-            else:
-                rank = 2
-            return (
-                rank,
-                item["service_instance_uuidv4"],
-                rk_kind,
-                item["provider_resource_id"],
-            )
+        from repo_catalog.domain.resource_identification import ResourceIdentification
 
         admitted_resources = 0
-        for res in sorted(ctx_data["resources"], key=_res_sort_key):
+        for res in ctx_data["resources"]:
             _performed("metadata_units", 1)
             rk = ResourceKey(
                 res["service_instance_uuidv4"],
                 res["resource_kind"],
                 res["provider_resource_id"],
             )
-            ctx.resource(rk)
+            ident = ResourceIdentification.from_wire(res)
+            ctx.resource(rk, identification=ident)
             admitted_resources += 1
 
         for row in sorted(
@@ -3106,12 +3163,32 @@ class ExchangeService:
             _performed("metadata_units", 1)
             if not row["relation_kind"].startswith("transfer_"):
                 ctx.admit_repository_relation(decode_relation(row))
-        for report in transfer_reports(ctx_data):
-            _performed("metadata_units", 1)
-            ctx.admit_transfer_event(report)
         for row in ctx_data["repository_mapping_dispositions"]:
             _performed("metadata_units", 1)
             ctx.admit_mapping_disposition(decode_disposition(row))
+        for rel in ctx_data["resource_relations"]:
+            _performed("metadata_units", 1)
+            if rel["relation_kind"] == "transfer_event_report":
+                continue
+            owner_rk = ResourceKey(
+                rel["service_instance_uuidv4"],
+                rel["resource_kind"],
+                rel["provider_resource_id"],
+            )
+            members = tuple(ResourceKey(*m) for m in json.loads(rel["members_json"]))
+            ctx.relation(
+                ResourceRelation(
+                    owner_rk,
+                    rel["relation_kind"],
+                    members,
+                    rel["provenance_json"],
+                    rel["scope_json"],
+                    rel["observed_at_us"],
+                )
+            )
+        for report in transfer_reports(ctx_data):
+            _performed("metadata_units", 1)
+            ctx.admit_transfer_event(report)
 
         for tb in ctx_data["text_bodies"]:
             _performed("metadata_units", 1)
@@ -3221,27 +3298,6 @@ class ExchangeService:
                     }
                 )
                 pending_refs += 1
-
-        for rel in ctx_data["resource_relations"]:
-            _performed("metadata_units", 1)
-            if rel["relation_kind"] == "transfer_event_report":
-                continue
-            owner_rk = ResourceKey(
-                rel["service_instance_uuidv4"],
-                rel["resource_kind"],
-                rel["provider_resource_id"],
-            )
-            members = tuple(ResourceKey(*m) for m in json.loads(rel["members_json"]))
-            ctx.relation(
-                ResourceRelation(
-                    owner_rk,
-                    rel["relation_kind"],
-                    members,
-                    rel["provenance_json"],
-                    rel["scope_json"],
-                    rel["observed_at_us"],
-                )
-            )
 
         # Index coverage claims and proofs so collection and inventory proofs are admitted
         # while their terminal observation is the current latest terminal.

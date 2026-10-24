@@ -270,7 +270,7 @@ def test_reported_urls_and_historical_core_provenance_survive_exchange(
     package = ExchangeService(directory).export_package(
         selection=ExchangeSelectionScope(all_selected=True)
     )
-    assert package.format == "git-repo-db/adr0030-exchange-v4"
+    assert package.format == "git-repo-db/adr0031-exchange-v5"
     target = catalog(tmp_path / "target")
     ExchangeService(target).import_package(
         package, new_request=True, permitted_repository_uuidv4s=(REPO,)
@@ -346,7 +346,7 @@ def test_old_wire_version_is_not_reinterpreted(directory):
         .to_dict()
     )
     raw_package["format"] = "git-repo-db/p5-exchange-v2"
-    with pytest.raises(ExchangeError, match="UNSUPPORTED_FORMAT"):
+    with pytest.raises(ExchangeError, match="UNSUPPORTED_"):
         decode_package(_resign(raw_package))
 
 

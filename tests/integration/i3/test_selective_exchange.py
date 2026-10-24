@@ -466,6 +466,8 @@ def test_empty_oid_and_context_payload_cannot_override_selection(tmp_path):
         empty_core_section,
     )
 
+    from repo_catalog.domain.resource_identification import ResourceIdentification
+
     seed = catalog(tmp_path)
     data = empty_core_section()
     data["git_objects"] = [{"object_format": "sha1", "full_oid": "a" * 40}]
@@ -479,11 +481,9 @@ def test_empty_oid_and_context_payload_cannot_override_selection(tmp_path):
         }
     ]
     ctxdata["resources"] = [
-        {
-            "service_instance_uuidv4": service,
-            "resource_kind": "issue",
-            "provider_resource_id": encode_identity("99"),
-        }
+        ResourceIdentification.unscoped(
+            ResourceKey.from_native(service, "issue", "99")
+        ).to_wire()
     ]
     selected = ExchangeSelectionScope(
         repository_uuidv4s=(), object_oids=(), resource_keys=(), source_uuidv4s=()
@@ -498,6 +498,8 @@ def test_empty_oid_and_context_payload_cannot_override_selection(tmp_path):
 
 def test_malformed_unselected_repository_rejected_before_binding(tmp_path):
     from repo_catalog.domain.exchange import ExchangePackage, empty_core_section
+
+    from repo_catalog.domain.resource_identification import ResourceIdentification
 
     seed = catalog(tmp_path)
     data = empty_core_section()
@@ -800,6 +802,8 @@ def test_missing_repository_unit_does_not_rollback_independent_object(tmp_path):
     from repo_catalog.domain.exchange import ExchangePackage, empty_core_section
     from repo_catalog.domain.p1_core import Provenance
 
+    from repo_catalog.domain.resource_identification import ResourceIdentification
+
     seed = catalog(tmp_path)
     unknown = str(uuid4())
     data = empty_core_section()
@@ -830,6 +834,8 @@ def test_missing_repository_unit_does_not_rollback_independent_object(tmp_path):
 def test_malformed_scalar_tag_cannot_be_reencoded_as_known_claim(tmp_path):
     from repo_catalog.domain.exchange import ExchangePackage, empty_core_section
     from repo_catalog.domain.p1_core import Provenance
+
+    from repo_catalog.domain.resource_identification import ResourceIdentification
 
     seed = catalog(tmp_path)
     data = empty_core_section()
@@ -1491,6 +1497,8 @@ def test_empty_package_cannot_bypass_resolved_zero_work_ceiling(
 ):
     from repo_catalog.domain.exchange import ExchangePackage, empty_core_section
     from repo_catalog.domain.p1_core import CoreFailure
+
+    from repo_catalog.domain.resource_identification import ResourceIdentification
 
     seed = catalog(tmp_path)
     selection = scope(max_work=0)

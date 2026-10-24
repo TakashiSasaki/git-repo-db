@@ -458,19 +458,23 @@ def test_real_selected_transfer_wire_refuses_before_effects_and_replay(
         to_target_json=None,
     )
     data = {key: list(rows) for key, rows in package.context.items()}
-    for key in (event, provider):
-        data["resources"].append(
-            dict(
-                zip(
-                    (
-                        "service_instance_uuidv4",
-                        "resource_kind",
-                        "provider_resource_id",
-                    ),
-                    key.coordinates(),
-                )
-            )
+    data["resources"].append(
+        RI.scoped(event, issue, "timeline_event", ["event", "N"]).to_wire()
+    )
+    data["resources"].append(RI.unscoped(provider).to_wire())
+    parent = report.parent_report
+    data["resource_relations"].append(
+        dict(
+            service_instance_uuidv4=event.service_instance_uuidv4,
+            resource_kind=event.resource_kind,
+            provider_resource_id=event.provider_resource_id,
+            relation_kind="parent",
+            members_json=parent.members_json,
+            provenance_json=parent.provenance_json,
+            scope_json=parent.scope_json,
+            observed_at_us=parent.observed_at_us,
         )
+    )
     data["resource_relations"].append(
         dict(
             zip(
@@ -508,6 +512,8 @@ def test_real_selected_transfer_wire_refuses_before_effects_and_replay(
                         "clock_json",
                         "provenance_json",
                         "observed_at_us",
+                        "event_report_members_json",
+                        "event_report_scope_json",
                     ),
                     (
                         *event.coordinates(),
@@ -516,6 +522,8 @@ def test_real_selected_transfer_wire_refuses_before_effects_and_replay(
                         endpoint.clock_json,
                         PROV,
                         4,
+                        report.members_json,
+                        report.scope_json,
                     ),
                 )
             )

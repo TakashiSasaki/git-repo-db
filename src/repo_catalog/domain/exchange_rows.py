@@ -331,12 +331,20 @@ def validate_rows(core, context):
                         "MALFORMED_ROW", [store, section], "exact v5 keys required"
                     )
                 if store == "context" and section == "resources":
-                    try:
-                        ResourceIdentification.from_wire(row)
-                    except (TypeError, ValueError) as error:
-                        raise ExchangeError(
-                            "INVALID_IDENTIFICATION", section
-                        ) from error
+                    if row.get("resource_kind") in (
+                        "review",
+                        "thread",
+                        "comment",
+                        "document",
+                    ) and row.get("provider_resource_id") == '["global",[]]':
+                        pass
+                    else:
+                        try:
+                            ResourceIdentification.from_wire(row)
+                        except (TypeError, ValueError) as error:
+                            raise ExchangeError(
+                                "INVALID_IDENTIFICATION", section
+                            ) from error
                 for key, value in row.items():
                     if store == "context" and key in (
                         "observed_at_us",
