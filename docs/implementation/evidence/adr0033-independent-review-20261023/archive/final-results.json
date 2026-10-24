@@ -1,0 +1,484 @@
+{
+  "reviewed_head": "8cd89a3d25c811ee32d117ec32fe76a6022e6d94",
+  "validator_sha256": "1d4abf2b79f8c64c2189a7a9b5d7e92073597be6ccde9b75531b1b384ca93421",
+  "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+  "executable": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+  "cases": [
+    {
+      "id": "valid-control",
+      "expected": "accepted",
+      "actual": "accepted",
+      "matches_expectation": true,
+      "detail": {
+        "compressed_bytes": 442,
+        "unpacked_bytes": 166,
+        "member_count": 8,
+        "file_count": 8,
+        "product_files": 4
+      }
+    },
+    {
+      "id": "invalid-name-0",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "detail": {
+        "exception": "ValueError",
+        "message": "unsafe member: /outside"
+      }
+    },
+    {
+      "id": "invalid-name-1",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "detail": {
+        "exception": "ValueError",
+        "message": "unsafe member: ../outside"
+      }
+    },
+    {
+      "id": "invalid-name-2",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "detail": {
+        "exception": "ValueError",
+        "message": "unsafe member: repo_catalog-0.2.0/../outside"
+      }
+    },
+    {
+      "id": "invalid-name-3",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "detail": {
+        "exception": "ValueError",
+        "message": "unsafe member: repo_catalog-0.2.0/./README.md"
+      }
+    },
+    {
+      "id": "invalid-name-4",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "detail": {
+        "exception": "ValueError",
+        "message": "unsafe member: repo_catalog-0.2.0/a//b"
+      }
+    },
+    {
+      "id": "invalid-name-5",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "detail": {
+        "exception": "ValueError",
+        "message": "unsafe member: repo_catalog-0.2.0/C:/x"
+      }
+    },
+    {
+      "id": "invalid-name-6",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "detail": {
+        "exception": "ValueError",
+        "message": "unsafe member: repo_catalog-0.2.0/x\\y"
+      }
+    },
+    {
+      "id": "invalid-name-7",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "detail": {
+        "exception": "ValueError",
+        "message": "unexpected distribution root: other-0.2.0/a"
+      }
+    },
+    {
+      "id": "invalid-name-8",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "detail": {
+        "exception": "ValueError",
+        "message": "duplicate member: repo_catalog-0.2.0/README.md"
+      }
+    },
+    {
+      "id": "invalid-name-9",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "detail": {
+        "exception": "ValueError",
+        "message": "unexpected member: docs/log.txt"
+      }
+    },
+    {
+      "id": "invalid-name-10",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "detail": {
+        "exception": "ValueError",
+        "message": "unexpected member: src/repo_catalog/hidden.zip"
+      }
+    },
+    {
+      "id": "invalid-name-11",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "detail": {
+        "exception": "ValueError",
+        "message": "unexpected member: src/repo_catalog/run.exe"
+      }
+    },
+    {
+      "id": "special-b'2'",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "detail": {
+        "exception": "ValueError",
+        "message": "links/special members forbidden: repo_catalog-0.2.0/special"
+      }
+    },
+    {
+      "id": "special-b'1'",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "detail": {
+        "exception": "ValueError",
+        "message": "links/special members forbidden: repo_catalog-0.2.0/special"
+      }
+    },
+    {
+      "id": "special-b'6'",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "detail": {
+        "exception": "ValueError",
+        "message": "links/special members forbidden: repo_catalog-0.2.0/special"
+      }
+    },
+    {
+      "id": "special-b'3'",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "detail": {
+        "exception": "ValueError",
+        "message": "links/special members forbidden: repo_catalog-0.2.0/special"
+      }
+    },
+    {
+      "id": "special-b'4'",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "detail": {
+        "exception": "ValueError",
+        "message": "links/special members forbidden: repo_catalog-0.2.0/special"
+      }
+    },
+    {
+      "id": "missing-src/repo_catalog/schema.sql",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "detail": {
+        "exception": "ValueError",
+        "message": "missing required members: ['src/repo_catalog/schema.sql']"
+      }
+    },
+    {
+      "id": "missing-src/repo_catalog/contract.json",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "detail": {
+        "exception": "ValueError",
+        "message": "missing required members: ['src/repo_catalog/contract.json']"
+      }
+    },
+    {
+      "id": "missing-src/repo_catalog/query.graphql",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "detail": {
+        "exception": "ValueError",
+        "message": "missing required members: ['src/repo_catalog/query.graphql']"
+      }
+    },
+    {
+      "id": "missing-.gitignore",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "detail": {
+        "exception": "ValueError",
+        "message": "missing required members: ['.gitignore']"
+      }
+    },
+    {
+      "id": "missing-PKG-INFO",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "detail": {
+        "exception": "ValueError",
+        "message": "missing required members: ['PKG-INFO']"
+      }
+    },
+    {
+      "id": "changed-product",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "detail": {
+        "exception": "ValueError",
+        "message": "source hash/size mismatch: src/repo_catalog/schema.sql"
+      }
+    },
+    {
+      "id": "metadata-0",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "detail": {
+        "exception": "ValueError",
+        "message": "invalid generated PKG-INFO identity"
+      }
+    },
+    {
+      "id": "metadata-1",
+      "expected": "rejected",
+      "actual": "accepted",
+      "matches_expectation": false,
+      "detail": {
+        "compressed_bytes": 450,
+        "unpacked_bytes": 170,
+        "member_count": 8,
+        "file_count": 8,
+        "product_files": 4
+      }
+    },
+    {
+      "id": "metadata-2",
+      "expected": "rejected",
+      "actual": "accepted",
+      "matches_expectation": false,
+      "detail": {
+        "compressed_bytes": 454,
+        "unpacked_bytes": 181,
+        "member_count": 8,
+        "file_count": 8,
+        "product_files": 4
+      }
+    },
+    {
+      "id": "compressed-boundary-0",
+      "expected": "accepted",
+      "actual": "accepted",
+      "matches_expectation": true,
+      "detail": {
+        "compressed_bytes": 2097152,
+        "unpacked_bytes": 166,
+        "member_count": 8,
+        "file_count": 8,
+        "product_files": 4
+      }
+    },
+    {
+      "id": "compressed-boundary-1",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "detail": {
+        "exception": "ValueError",
+        "message": "compressed sdist budget exceeded"
+      }
+    },
+    {
+      "id": "unpacked-boundary-0",
+      "expected": "accepted",
+      "actual": "accepted",
+      "matches_expectation": true,
+      "detail": {
+        "compressed_bytes": 8632,
+        "unpacked_bytes": 8388608,
+        "member_count": 8,
+        "file_count": 8,
+        "product_files": 4
+      }
+    },
+    {
+      "id": "unpacked-boundary-1",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "detail": {
+        "exception": "ValueError",
+        "message": "unpacked sdist budget exceeded"
+      }
+    },
+    {
+      "id": "member-boundary-0",
+      "expected": "accepted",
+      "actual": "accepted",
+      "matches_expectation": true,
+      "detail": {
+        "compressed_bytes": 3001,
+        "unpacked_bytes": 166,
+        "member_count": 512,
+        "file_count": 512,
+        "product_files": 508
+      }
+    },
+    {
+      "id": "member-boundary-1",
+      "expected": "rejected",
+      "actual": "rejected",
+      "matches_expectation": true,
+      "detail": {
+        "exception": "ValueError",
+        "message": "sdist member budget exceeded"
+      }
+    },
+    {
+      "id": "unallowlisted-10MiB-pax-data",
+      "expected": "rejected",
+      "actual": "accepted",
+      "matches_expectation": false,
+      "detail": {
+        "compressed_bytes": 10758,
+        "unpacked_bytes": 166,
+        "member_count": 8,
+        "file_count": 8,
+        "product_files": 4,
+        "decompressed_tar_bytes": 10496000,
+        "hidden_pax_value_bytes": 10485760
+      }
+    },
+    {
+      "id": "concatenated-gzip-tar-with-hidden-log",
+      "expected": "rejected",
+      "actual": "accepted",
+      "matches_expectation": false,
+      "detail": {
+        "compressed_bytes": 10770,
+        "unpacked_bytes": 166,
+        "member_count": 8,
+        "file_count": 8,
+        "product_files": 4,
+        "decompressed_tar_bytes": 10506240
+      }
+    },
+    {
+      "id": "corrupt-gzip-crc",
+      "expected": "rejected",
+      "actual": "accepted",
+      "matches_expectation": false,
+      "detail": {
+        "compressed_bytes": 442,
+        "unpacked_bytes": 166,
+        "member_count": 8,
+        "file_count": 8,
+        "product_files": 4
+      },
+      "independent_gzip_validation": {
+        "exception": "BadGzipFile",
+        "message": "CRC check failed"
+      }
+    },
+    {
+      "id": "missing-gzip-trailer",
+      "expected": "rejected",
+      "actual": "accepted",
+      "matches_expectation": false,
+      "detail": {
+        "compressed_bytes": 434,
+        "unpacked_bytes": 166,
+        "member_count": 8,
+        "file_count": 8,
+        "product_files": 4
+      },
+      "independent_gzip_validation": {
+        "exception": "EOFError",
+        "message": "Compressed file ended before the end-of-stream marker was reached"
+      }
+    },
+    {
+      "id": "malformed-second-gzip-member",
+      "expected": "rejected",
+      "actual": "accepted",
+      "matches_expectation": false,
+      "detail": {
+        "compressed_bytes": 459,
+        "unpacked_bytes": 166,
+        "member_count": 8,
+        "file_count": 8,
+        "product_files": 4
+      },
+      "independent_gzip_validation": {
+        "exception": "error",
+        "message": "Error -3 while decompressing data: invalid block type"
+      }
+    }
+  ],
+  "cli_unexpected_acceptances": [
+    {
+      "id": "pax-hidden-log",
+      "exit_code": 0,
+      "receipt_status": "passed",
+      "stderr": ""
+    },
+    {
+      "id": "concatenated",
+      "exit_code": 0,
+      "receipt_status": "passed",
+      "stderr": ""
+    },
+    {
+      "id": "metadata1",
+      "exit_code": 0,
+      "receipt_status": "passed",
+      "stderr": ""
+    },
+    {
+      "id": "metadata2",
+      "exit_code": 0,
+      "receipt_status": "passed",
+      "stderr": ""
+    }
+  ],
+  "cli_rejection": {
+    "exit_code": 1,
+    "stderr": "unsafe member: /escaped\n",
+    "receipt": {
+      "error": "unsafe member: /escaped",
+      "status": "failed"
+    },
+    "extraction_performed": false
+  },
+  "summary": {
+    "cases": 38,
+    "expectation_matches": 31,
+    "unexpected_acceptances": [
+      "metadata-1",
+      "metadata-2",
+      "unallowlisted-10MiB-pax-data",
+      "concatenated-gzip-tar-with-hidden-log",
+      "corrupt-gzip-crc",
+      "missing-gzip-trailer",
+      "malformed-second-gzip-member"
+    ]
+  }
+}

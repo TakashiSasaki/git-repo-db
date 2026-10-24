@@ -1355,6 +1355,8 @@ def gate(path, root=ROOT):
         for key in ("disposition", "test_files"):
             if rebuilt["lanes"][name][key] != plan["lanes"][name][key]:
                 raise ValueError("Lane selection was modified")
+    if rebuilt["preparation"] != plan["preparation"]:
+        raise ValueError("Preparation selection was modified")
     if read(output / "reports.json") != reports(root):
         raise ValueError("Missing/changed report validation")
     profiles, selected = {}, []
@@ -1403,6 +1405,7 @@ def gate(path, root=ROOT):
         "smoke": ["fts", "doctor"],
         "dependencies": ["dependency-setup"],
         "wheelhouse": ["wheelhouse"],
+        "sdist_contract": ["sdist_contract"],
     }
     for name, commands in command_names.items():
         item = plan["lanes"].get(name) or plan["preparation"][name]

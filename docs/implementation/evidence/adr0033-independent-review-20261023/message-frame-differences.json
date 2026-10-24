@@ -1,0 +1,114 @@
+[
+  {
+    "node": "tests.packaging.test_p5_distribution::test_p5_installed_acquisition_and_exchange[sha1-sdist-wheel]",
+    "same_message_after_disposable_prefix_normalization": false,
+    "baseline_frames": [
+      {
+        "path": "tests/packaging/test_p5_distribution.py",
+        "line": 220,
+        "function": ""
+      },
+      {
+        "path": "tests/packaging/test_p1_distribution.py",
+        "line": 24,
+        "function": ""
+      }
+    ],
+    "current_frames": [
+      {
+        "path": "tests/packaging/test_p5_distribution.py",
+        "line": 220,
+        "function": ""
+      },
+      {
+        "path": "tests/packaging/test_p1_distribution.py",
+        "line": 26,
+        "function": ""
+      }
+    ]
+  },
+  {
+    "node": "tests.packaging.test_p5_distribution::test_p5_installed_acquisition_and_exchange[sha1-wheel]",
+    "same_message_after_disposable_prefix_normalization": false,
+    "baseline_frames": [
+      {
+        "path": "tests/packaging/test_p5_distribution.py",
+        "line": 220,
+        "function": ""
+      },
+      {
+        "path": "tests/packaging/test_p1_distribution.py",
+        "line": 24,
+        "function": ""
+      }
+    ],
+    "current_frames": [
+      {
+        "path": "tests/packaging/test_p5_distribution.py",
+        "line": 220,
+        "function": ""
+      },
+      {
+        "path": "tests/packaging/test_p1_distribution.py",
+        "line": 26,
+        "function": ""
+      }
+    ]
+  },
+  {
+    "node": "tests.packaging.test_p5_distribution::test_p5_installed_acquisition_and_exchange[sha256-sdist-wheel]",
+    "same_message_after_disposable_prefix_normalization": false,
+    "baseline_frames": [
+      {
+        "path": "tests/packaging/test_p5_distribution.py",
+        "line": 220,
+        "function": ""
+      },
+      {
+        "path": "tests/packaging/test_p1_distribution.py",
+        "line": 24,
+        "function": ""
+      }
+    ],
+    "current_frames": [
+      {
+        "path": "tests/packaging/test_p5_distribution.py",
+        "line": 220,
+        "function": ""
+      },
+      {
+        "path": "tests/packaging/test_p1_distribution.py",
+        "line": 26,
+        "function": ""
+      }
+    ]
+  },
+  {
+    "node": "tests.packaging.test_p5_distribution::test_p5_installed_acquisition_and_exchange[sha256-wheel]",
+    "same_message_after_disposable_prefix_normalization": false,
+    "baseline_frames": [
+      {
+        "path": "tests/packaging/test_p5_distribution.py",
+        "line": 220,
+        "function": ""
+      },
+      {
+        "path": "tests/packaging/test_p1_distribution.py",
+        "line": 24,
+        "function": ""
+      }
+    ],
+    "current_frames": [
+      {
+        "path": "tests/packaging/test_p5_distribution.py",
+        "line": 220,
+        "function": ""
+      },
+      {
+        "path": "tests/packaging/test_p1_distribution.py",
+        "line": 26,
+        "function": ""
+      }
+    ]
+  }
+]

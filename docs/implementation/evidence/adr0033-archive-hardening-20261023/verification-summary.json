@@ -1,0 +1,291 @@
+{
+  "source_head": "aaee34d31d2511cfec95d0bfa41a3a9733ac43e4",
+  "source_tree": "6552c028771f957a6e81c31b9f67b9016bf5b569",
+  "runtime_inputs_unchanged": true,
+  "runtime_input_inventory_sha256": "c0742237299a23851496ed83d87f0f64ba75e41e1b64fa7f0e507861003d73f7",
+  "source_acceptance_input_hash": "508261ad3a6a2a95d55bbe5af95394f6db64fa9a0b2e823316b8853f81d3d1ec",
+  "ordinary_collected": 5888,
+  "executed_unique_ordinary": 3531,
+  "unexecuted_ordinary": 2357,
+  "live_not_run": 1,
+  "benchmark_not_run": 1,
+  "runs": {
+    "packaging": {
+      "outcomes": {
+        "passed": 151,
+        "failed": 4,
+        "error": 0,
+        "skipped": 0,
+        "xfail": 0,
+        "xpass": 0,
+        "executed": 155
+      },
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 461,
+          "failed": 4
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "failed",
+            "exitstatus": 1,
+            "timestamp": 1792723225.404965
+          }
+        ]
+      }
+    },
+    "ci-focused": {
+      "outcomes": {
+        "passed": 253,
+        "failed": 0,
+        "error": 0,
+        "skipped": 0,
+        "xfail": 0,
+        "xpass": 0,
+        "executed": 253
+      },
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 759
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792723608.421974
+          }
+        ]
+      }
+    },
+    "docs-tests": {
+      "outcomes": {
+        "passed": 8,
+        "failed": 0,
+        "error": 0,
+        "skipped": 0,
+        "xfail": 0,
+        "xpass": 0,
+        "executed": 8
+      },
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 24
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792723624.836697
+          }
+        ]
+      }
+    }
+  },
+  "broad": {
+    "ordinary_collected": 5888,
+    "selected": 3137,
+    "unexecuted_ordinary": 2751,
+    "inputs_unchanged": true,
+    "transfer_admission_overlapping_broad": {
+      "command": [
+        "/workspace/git-repo-db/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-o",
+        "addopts=--strict-markers",
+        "-o",
+        "junit_family=xunit1",
+        "@/tmp/sdist-hardening/broad/transfer-admission.selected.txt",
+        "--junitxml=/tmp/sdist-hardening/broad/transfer-admission.xml",
+        "--journal=/tmp/sdist-hardening/broad/transfer-admission.jsonl"
+      ],
+      "cwd": "/workspace/git-repo-db",
+      "started_epoch": 1792723243.06486,
+      "elapsed_seconds": 1.453,
+      "exit_code": 0,
+      "collected": 29,
+      "passed": 29,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 29,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 87
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792723244.439739
+          }
+        ]
+      }
+    },
+    "transfer_sql_overlapping_broad": {
+      "command": [
+        "/workspace/git-repo-db/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-o",
+        "addopts=--strict-markers",
+        "-o",
+        "junit_family=xunit1",
+        "@/tmp/sdist-hardening/broad/transfer-sql.selected.txt",
+        "--junitxml=/tmp/sdist-hardening/broad/transfer-sql.xml",
+        "--journal=/tmp/sdist-hardening/broad/transfer-sql.jsonl"
+      ],
+      "cwd": "/workspace/git-repo-db",
+      "started_epoch": 1792723244.5195618,
+      "elapsed_seconds": 8.787,
+      "exit_code": 0,
+      "collected": 217,
+      "passed": 217,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 217,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 651
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792723253.176404
+          }
+        ]
+      }
+    },
+    "run": {
+      "command": [
+        "/workspace/git-repo-db/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-o",
+        "addopts=--strict-markers",
+        "-o",
+        "junit_family=xunit1",
+        "@/tmp/sdist-hardening/broad/regressions.selected.txt",
+        "--junitxml=/tmp/sdist-hardening/broad/regressions.xml",
+        "--journal=/tmp/sdist-hardening/broad/regressions.jsonl",
+        "-n",
+        "2",
+        "--dist",
+        "worksteal"
+      ],
+      "cwd": "/workspace/git-repo-db",
+      "started_epoch": 1792723253.3149643,
+      "elapsed_seconds": 211.353,
+      "exit_code": 1,
+      "collected": 3137,
+      "passed": 3058,
+      "failed": 59,
+      "error": 20,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 3137,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 9312,
+          "failed": 79
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "failed",
+            "exitstatus": 1,
+            "timestamp": 1792723464.265375
+          }
+        ]
+      }
+    }
+  },
+  "baseline_non_successes": 79,
+  "current_non_successes": 79,
+  "additional_non_successes": 0,
+  "resolved_non_successes": 0,
+  "message_differences": 4,
+  "independent_review_acceptance": "not performed",
+  "full_release_acceptance": false
+}
