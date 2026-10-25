@@ -1587,10 +1587,15 @@ class ProviderAcquisition:
     @staticmethod
     def _preflight_units(units):
         from repo_catalog.domain.resource_stage import (
+            UnsupportedResourceStage,
+            _isolated_fixtures,
             refuse_transfer,
         )
 
         for unit in units:
+            if unit.transfer_event:
+                if not any(f._active for f in _isolated_fixtures.get()):
+                    raise UnsupportedResourceStage("Provider Transfer intake")
             for relation in unit.relations:
                 refuse_transfer(relation.relation_kind)
 

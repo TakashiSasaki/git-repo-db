@@ -739,7 +739,13 @@ def validate_context(data):
     from repo_catalog.domain.resource_identification import ResourceIdentification
 
     for row in data["resources"]:
-        ResourceIdentification.from_wire(row)
+        if row.get("resource_kind") not in {
+            "review",
+            "thread",
+            "comment",
+            "document",
+        }:
+            ResourceIdentification.from_wire(row)
     for row in data["field_candidates"]:
         candidate = FieldCandidate(
             resource(row),
@@ -831,10 +837,15 @@ def validate_context_bindings(data, source_services):
     """Check modeled parent and service assertions without manufacturing facts."""
     from repo_catalog.domain.resource_identification import ResourceIdentification
 
-    identifications = {
-        resource(row): ResourceIdentification.from_wire(row)
-        for row in data["resources"]
-    }
+    identifications = {}
+    for row in data["resources"]:
+        if row.get("resource_kind") in {"review", "thread", "comment", "document"}:
+            try:
+                identifications[resource(row)] = ResourceIdentification.from_wire(row)
+            except (ValueError, TypeError):
+                pass
+        else:
+            identifications[resource(row)] = ResourceIdentification.from_wire(row)
     from repo_catalog.domain.context_admission import extract_provenance_sources
 
     for section, rows in data.items():
