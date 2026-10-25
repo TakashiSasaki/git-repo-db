@@ -70,6 +70,16 @@ qualification. Frozen historical reports and execution input hashes stay intact.
 
 ## Inventory beyond a focused CI cohort
 
+### Single-Pass Multi-Cohort Test Collection (`pytest_collection_finish`)
+
+Executing repeated sequential collection passes (`pytest --collect-only` with varying `-m` marker filters) introduces significant wall-time overhead by repeatedly parsing Python ASTs, fixtures, and configuration files.
+
+To consolidate collection into a single pass:
+1. Use a dedicated pytest collector plugin (`scripts/ci_collector.py`) hooking `pytest_collection_finish(session)`.
+2. Traverse `session.items` once, evaluating marker expressions (`live`, `benchmark`) and target directory paths in memory.
+3. Partition node IDs into cohorts (`all`, `ordinary`, `offline`, `ci`) and write inventory artifacts.
+4. Order the `ci` cohort consistently according to the CI target input list to ensure deterministic node multiset equivalence with direct pytest runs.
+
 For assembled acceptance, collect `tests/` with `-o addopts=` before applying
 ordinary/live/benchmark markers. A green focused cohort does not cover omitted
 nodes. Install both locked dev and docs groups: the ordinary docs-build tests
