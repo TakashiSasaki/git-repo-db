@@ -612,8 +612,10 @@ def test_admission_matching_permission_denied_accepted():
 
 
 def test_admission_refusal_progress_to_wire_identification_barrier_accepted():
-    """Progress from baseline admission refusal (PERMISSION_DENIED) to wire identification barrier is accepted as PROGRESS_KNOWN_BARRIER."""
+    """Progress from baseline admission refusal (PERMISSION_DENIED) to wire identification barrier is accepted as PROGRESS_KNOWN_BARRIER for reviewed node."""
+    target_node = "tests.integration.p1.test_generalized_resources::test_selected_real_wire_without_identification_refuses_before_core_effects"
     b_info = {
+        "node_id": target_node,
         "phase": "call",
         "refusal_code": "PERMISSION_DENIED",
         "exception_type": "AdmissionRefused",
@@ -621,6 +623,7 @@ def test_admission_refusal_progress_to_wire_identification_barrier_accepted():
         "text": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED",
     }
     c_info = {
+        "node_id": target_node,
         "phase": "call",
         "refusal_code": "INVALID_IDENTIFICATION",
         "exception_type": "ExchangeError",
@@ -631,6 +634,82 @@ def test_admission_refusal_progress_to_wire_identification_barrier_accepted():
     assert cat == "PROGRESS_KNOWN_BARRIER"
     assert unchanged
     assert "wire identification envelope validation barrier" in (reason or "")
+
+
+def test_counterexample1_baseline_invalid_identification_rejected():
+    """Counterexample 1: Baseline AdmissionRefused/INVALID_IDENTIFICATION transitioning to ExchangeError/INVALID_IDENTIFICATION must be rejected as CHANGED_FAILURE."""
+    target_node = "tests.integration.p1.test_generalized_resources::test_selected_real_wire_without_identification_refuses_before_core_effects"
+    b_info = {
+        "node_id": target_node,
+        "phase": "call",
+        "refusal_code": "INVALID_IDENTIFICATION",
+        "exception_type": "AdmissionRefused",
+        "message": "repo_catalog.domain.context_admission.AdmissionRefused: INVALID_IDENTIFICATION",
+        "text": "repo_catalog.domain.context_admission.AdmissionRefused: INVALID_IDENTIFICATION",
+    }
+    c_info = {
+        "node_id": target_node,
+        "phase": "call",
+        "refusal_code": "INVALID_IDENTIFICATION",
+        "exception_type": "ExchangeError",
+        "message": "repo_catalog.domain.exchange.ExchangeError: resources:INVALID_IDENTIFICATION",
+        "text": "repo_catalog.domain.exchange.ExchangeError: resources:INVALID_IDENTIFICATION",
+    }
+    cat, unchanged, reason = compare_failure_details(b_info, c_info)
+    assert cat == "CHANGED_FAILURE"
+    assert not unchanged
+    assert "Admission refusal category mismatch" in (reason or "")
+
+
+def test_counterexample2_assertion_error_with_substring_rejected():
+    """Counterexample 2: Baseline AdmissionRefused/PERMISSION_DENIED transitioning to AssertionError whose text contains substring 'ExchangeError INVALID_IDENTIFICATION' must be rejected as CHANGED_FAILURE."""
+    target_node = "tests.integration.p1.test_generalized_resources::test_selected_real_wire_without_identification_refuses_before_core_effects"
+    b_info = {
+        "node_id": target_node,
+        "phase": "call",
+        "refusal_code": "PERMISSION_DENIED",
+        "exception_type": "AdmissionRefused",
+        "message": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED",
+        "text": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED",
+    }
+    c_info = {
+        "node_id": target_node,
+        "phase": "call",
+        "refusal_code": None,
+        "exception_type": "AssertionError",
+        "reached_assertion": 'assert "ExchangeError INVALID_IDENTIFICATION" in str(e)',
+        "message": 'AssertionError: assert "ExchangeError INVALID_IDENTIFICATION" in str(e)',
+        "text": 'AssertionError: assert "ExchangeError INVALID_IDENTIFICATION" in str(e)',
+    }
+    cat, unchanged, reason = compare_failure_details(b_info, c_info)
+    assert cat == "CHANGED_FAILURE"
+    assert not unchanged
+    assert "Admission refusal category mismatch" in (reason or "")
+
+
+def test_progress_known_barrier_unreviewed_node_rejected():
+    """Unreviewed node transitioning from AdmissionRefused/PERMISSION_DENIED to ExchangeError/INVALID_IDENTIFICATION must be rejected as CHANGED_FAILURE."""
+    unreviewed_node = "tests.integration.p1.test_unreviewed::test_other_node"
+    b_info = {
+        "node_id": unreviewed_node,
+        "phase": "call",
+        "refusal_code": "PERMISSION_DENIED",
+        "exception_type": "AdmissionRefused",
+        "message": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED",
+        "text": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED",
+    }
+    c_info = {
+        "node_id": unreviewed_node,
+        "phase": "call",
+        "refusal_code": "INVALID_IDENTIFICATION",
+        "exception_type": "ExchangeError",
+        "message": "repo_catalog.domain.exchange.ExchangeError: resources:INVALID_IDENTIFICATION",
+        "text": "repo_catalog.domain.exchange.ExchangeError: resources:INVALID_IDENTIFICATION",
+    }
+    cat, unchanged, reason = compare_failure_details(b_info, c_info)
+    assert cat == "CHANGED_FAILURE"
+    assert not unchanged
+    assert "Admission refusal category mismatch" in (reason or "")
 
 
 def test_p7_recovery_classname_alone_without_matching_signature_rejected():

@@ -350,12 +350,23 @@ def compare_failure_details(b_info: dict, c_info: dict) -> tuple[str, bool, str 
             f"Admission refusal mismatch: baseline code={b_code} vs current code={c_code}",
         )
     if b_adm and not c_adm:
+        target_node = "tests.integration.p1.test_generalized_resources::test_selected_real_wire_without_identification_refuses_before_core_effects"
+        current_node = c_info.get("node_id") or b_info.get("node_id")
+        b_exc = b_info.get("exception_type")
+        b_code = b_info.get("refusal_code")
         c_exc = c_info.get("exception_type")
         c_code = c_info.get("refusal_code")
-        c_assert = c_info.get("reached_assertion") or ""
-        # Progress from baseline admission barrier (PERMISSION_DENIED) to wire identification envelope validation barrier (INVALID_IDENTIFICATION)
-        if (c_exc == "ExchangeError" or "ExchangeError" in c_assert) and (
-            c_code == "INVALID_IDENTIFICATION" or "INVALID_IDENTIFICATION" in c_assert
+
+        # Constrained strictly to the independently reviewed node and concrete signatures:
+        # Baseline must be AdmissionRefused / PERMISSION_DENIED.
+        # Current must be ExchangeError / INVALID_IDENTIFICATION.
+        # Do not infer exception identity or refusal code from assertion substrings.
+        if (
+            current_node == target_node
+            and b_exc == "AdmissionRefused"
+            and b_code == "PERMISSION_DENIED"
+            and c_exc == "ExchangeError"
+            and c_code == "INVALID_IDENTIFICATION"
         ):
             return (
                 "PROGRESS_KNOWN_BARRIER",

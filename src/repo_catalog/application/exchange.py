@@ -1876,7 +1876,10 @@ class ExchangeService:
             if package.core is not None:
                 self._prevalidate_core_section(package.core, active_work)
                 self._import_core_units(CorePreflight(), package.core, active_work)
-            if package.context is not None:
+            if package.context is not None and want_context:
+                from repo_catalog.domain.selective_exchange import preflight_i2_context
+
+                preflight_i2_context(package.context)
                 self._prevalidate_context_section(package.context)
                 validate_context(package.context)
         cut("after_preflight")
