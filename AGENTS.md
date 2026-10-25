@@ -14,6 +14,13 @@ independent review, wheel/sdist checks and failure reconciliation. If the runtim
 is insufficient, report failure and unexecuted work without bypassing guards.
 Report reason/scope and obtain explicit owner approval before any exception.
 
+**Local environment:** use the verified project environment from
+[docs/local-python.md](docs/local-python.md) for every product validation. Establish it with
+`./scripts/setup-local-python.sh`, run commands through `scripts/local-run.sh <command>` (or
+`.venv/bin/python`), and never use the system Python/SQLite, an unverified `.venv`, or a
+bare `uv run` without that environment. If setup, `local_env.py verify` or preflight fails,
+report the failure; do not bypass it, delete an incompatible `.venv` silently or substitute another runtime.
+
 ## Product and authorization
 
 **Latest shared owner decision: [ADR 0028](docs/adr/0028-classified-times-and-sha256-exchange.md).** SHA-256-only Exchange compares a declared canonical-data digest with receiver recomputation; no HMAC/signature/PKI or sender-authentication claim. Cursor SHA-256 is a checksum with independent content validation. Shared opt-in time/DDL/fingerprint corrections to P1–P4 are authorized by the current task; public Schema 21 stays default. Preserve historical evidence and independent P5/P6 sibling implementation dependencies.

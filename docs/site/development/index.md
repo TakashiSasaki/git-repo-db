@@ -7,22 +7,20 @@
 ## 1. 前提条件と環境構築
 
 ### 必要ツール
-- **Python**: 3.12 以上
-- **uv**: 高速な Python パッケージマネージャー（`astral-sh/uv`）
-- **SQLite**: 3.31 以上（STRICT モードおよび Generated Columns 対応）
+- **Python**: `python3` 3.9 以上（セットアップの起動にのみ使用）。製品用の Python 3.12 は検証済み配布物が提供します
+- **uv**: 高速な Python パッケージマネージャー（`astral-sh/uv`）。セットアップは `uv` を導入しません
+- **SQLite**: 3.51.3 以上（実行環境の Python が実際に読み込むもの。上記配布物に内蔵され、別途導入しません）
 - **Git**: 2.40 以上
 - **Node.js**: 20 以上（ドキュメントサイトの Mermaid ダイアグラムを SVG レンダリングする場合）
 
 ### 仮想環境のセットアップ
-リポジトリのルートで `uv` を使用して依存関係を同期します：
+リポジトリのルートで次の一つのコマンドを実行します。manifest で固定された完全な Python 配布物の検証・導入、`.venv` の作成（既存 `.venv` は検証し、不一致なら破壊せず失敗）、`uv sync --locked --group dev --group docs`、製品 preflight、`artifacts/local-python/receipt.json` の保存まで行い、いずれかが失敗すれば非ゼロで終了します：
 
 ```bash
-# 通常の開発・テスト用依存関係の同期
-uv sync --locked --group dev
-
-# ドキュメントサイト作成・検証を含めた同期
-uv sync --locked --group dev --group docs
+./scripts/setup-local-python.sh
 ```
+
+以降のコマンドは `scripts/local-run.sh <command>` で実行すると、検証済みの Python が常に選ばれます（下記の `uv run --no-sync ...` は `scripts/local-run.sh uv run --no-sync ...` と読み替えてください）。詳細は [docs/local-python.md](https://github.com/TakashiSasaki/git-repo-db/blob/main/docs/local-python.md) を参照してください。
 
 > [!NOTE]
 > ドキュメント用の依存関係（`mkdocs`, `mkdocs-material`）は、本番アプリケーションの依存関係（`[project].dependencies`）とは完全に分離された `[dependency-groups].docs` に定義されています。
