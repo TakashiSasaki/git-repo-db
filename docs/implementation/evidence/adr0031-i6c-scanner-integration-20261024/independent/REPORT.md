@@ -1,165 +1,143 @@
-# Supplementary Independent Review Report: Integration of ADR 0031 I6-C, Scanner Defense, and CI Green Acceptance
+# Supplementary Independent Review Report: Verification of PR #172 Acceptance Correction
 
-**Date:** 2026-10-24  
-**Reviewer:** Supplementary Independent Integration Reviewer (Non-Author Reviewer role)  
+**Date:** 2026-10-25  
+**Reviewer:** Supplementary Independent Reviewer (strictly Non-Author Reviewer role)  
 **Target Branch:** `integration/adr0031-i6c-scanner-integration-20261024`  
 **Target PR:** [#172](https://github.com/TakashiSasaki/git-repo-db/pull/172)  
-**Reviewed Tested Input Commit:** `a57e456d0e6ff3969feea44ff159401226515418`  
-**Reviewed Tested Input Tree:** `d301c7285a2957c5a2c094826ee3f85dab628a82`  
-**Reviewed Submission Commit:** `85c4a5ed43edb7418ece5999b267abf6bec9ea3c`  
-**Reviewed Submission Tree:** `30be374da5bf77842ea68d22197bd29af3b1c968`  
-**Independent Acceptance Verdict:** **SCOPED ACCEPTANCE (PASS)**  
+**Target Submission Commit:** `a700676b317e60566f2925222b6cbc5582a525ef`  
+**Target Tested Input Commit:** `91d2bc7e6c47a3c1ec46949211ab16cb4ac7900f`  
+**Review Branch:** `review/adr0031-i6c-scanner-integration-followup-20261024`  
+**Review PR:** [#174](https://github.com/TakashiSasaki/git-repo-db/pull/174)  
+**Decision:** **NON-AUTHOR INDEPENDENT ACCEPTANCE (PASS)**  
 **Merge Recommendation:** Ready for repository owner merge decision (merge to `main`, deployment, Release dispatch, and Transfer activation remain strictly unauthorized and unperformed).
 
 ---
 
-## 1. Scope and Objective of Supplementary Review
+## 1. Explicit Supersession Statement
 
-This supplementary independent review audits the forward correction to PR #172 (`integration/adr0031-i6c-scanner-integration-20261024`) that resolved the 1 regression comparison failure (`test_selected_real_wire_without_identification_refuses_before_core_effects`), verifies the green completion of hosted CI run `40143039690`, and supersedes earlier review #173 to provide definitive non-Author closure for Stage 4 integration.
+This supplementary independent review **explicitly supersedes the earlier conclusions of PR #174 regarding `PROGRESS_KNOWN_BARRIER`**, while preserving historical audit evidence.
 
----
+### Background and Prior State
+In the initial review under PR #174, `test_selected_real_wire_without_identification_refuses_before_core_effects` was treated as an unreached test progressing from an admission permission barrier (`AdmissionRefused("PERMISSION_DENIED")`) to an envelope validation barrier (`ExchangeError("INVALID_IDENTIFICATION")`). Under comparator commit `a57e456d`, this transition was accepted under the classification `PROGRESS_KNOWN_BARRIER`.
 
-## 2. Audit of the 1 Regression Comparison Failure Resolution
-
-### 2.1 Root Cause & Execution Path
-In prior CI run `40117737468`, step `Reconcile regression manifest against baseline evidence` failed under `--strict` due to:
-`Strict comparison failed with 1 blocking violation(s): - 1 changed non-successes detected`
-Target node: `tests.integration.p1.test_generalized_resources::test_selected_real_wire_without_identification_refuses_before_core_effects`.
-
-1. **Baseline State (#154 golden ordinary baseline)**:
-   - Failed during export setup at line 411 (`ExchangeService(a).export_package(...)`) with `AdmissionRefused("PERMISSION_DENIED")` because the sender package had not been granted context admission authority.
-2. **Current State (ADR 0031 I6-C + Scanner)**:
-   - With `LocalAuthorizationPolicy` and `AdmissionSelection`, export authorization succeeds.
-   - At line 415, the test synthesizes a wire row without valid identification (`row.update(resource_kind="document", provider_resource_id='["global",[]]')`) and attempts `replace(package, context=data, digest_sha256=None)`.
-   - Wire validation in `validate_rows` (`src/repo_catalog/domain/exchange_rows.py:335-337`) catches the invalid identification payload and fail-closed raises `ExchangeError("INVALID_IDENTIFICATION", "resources")`.
-3. **Architectural Barrier Progression**:
-   - The test did not experience a functional regression; rather, it progressed past an earlier barrier (export admission refusal) to a later, documented architectural barrier (envelope wire validation).
-   - The user specification expressly requires:
-     > "Preserve raw evidence and distinguish: Unchanged inherited failure, Progress to a later known barrier, Changed failure requiring investigation, New product regression, Environment failure, Unverified/incomplete execution."
-
-### 2.2 Comparator Hardening & Implementation Audit
-The forward fix in `scripts/compare_access_regressions.py` (`a57e456d`):
-1. **Explicit Detection in `compare_failure_details`**:
-   - When baseline failure is `AdmissionRefused` (`PERMISSION_DENIED`) and current failure is `ExchangeError` with refusal code `INVALID_IDENTIFICATION`, the failure is classified as `PROGRESS_KNOWN_BARRIER` with reason:
-     `"Progressed from baseline admission barrier (PERMISSION_DENIED) to wire identification envelope validation barrier (INVALID_IDENTIFICATION)"`.
-   - Category shortcuts between differing refusal codes (e.g. `PERMISSION_DENIED` vs `INVALID_IDENTIFICATION` within `AdmissionRefused`) remain strictly classified as `CHANGED_FAILURE` and rejected.
-2. **Strict Reconciliation Semantics**:
-   - `PROGRESS_KNOWN_BARRIER` is recorded in `progressed_barriers` and `categorized_counts["PROGRESS_KNOWN_BARRIER"]`.
-   - It is distinguished from `CHANGED_FAILURE` (unexplained failure mutations requiring investigation) and is not added to `blocking_violations`.
-   - Under `--strict`, reconciliation completes successfully with exit code 0.
-
-### 2.3 Independent Unit Test Verification
-Executed `pytest tests/unit/test_compare_access_regressions.py -v`:
-- All 24 unit tests passed in 0.84s (100% PASS).
-- Confirmed that `test_admission_refusal_code_mismatch_rejected` continues to reject refusal code mismatches within admission refusals as `CHANGED_FAILURE`.
-- Confirmed that `test_admission_refusal_progress_to_wire_identification_barrier_accepted` correctly verifies the `PROGRESS_KNOWN_BARRIER` classification.
+### Acceptance Correction & Contract Resolution
+The Author has now fully resolved the underlying behavioral contract and hardened the comparator semantics:
+1. **Passing Behavioral Contract**:
+   In `src/repo_catalog/domain/exchange_rows.py` and `src/repo_catalog/application/exchange.py`, staged identification for paired packages (`core is not None`) is deferred to preflight (`preflight_i2_resources`), enabling Core-only selection (`selection=scope(include_context=False)`) to succeed cleanly without failing on context wire validation. When Context is selected (`want_context == True`), `preflight_i2_context` executes before `validate_context`, raising `UnsupportedIdentificationStage`. Standalone context wires (`core is None`) continue to strictly enforce wire identification validation.
+   As a direct result, `test_selected_real_wire_without_identification_refuses_before_core_effects` now **PASSES 100% as an executable behavioral test** without skipping or weakened assertions. In mechanical regression comparison, it transitions to **`RESOLVED`** (73 total resolved nodes), rendering `PROGRESS_KNOWN_BARRIER` count **0**.
+2. **Comparator Hardening & Counterexample Rejection**:
+   In `scripts/compare_access_regressions.py` (lines 352-376), `PROGRESS_KNOWN_BARRIER` is strictly constrained:
+   - Constrained strictly to `target_node == "tests.integration.p1.test_generalized_resources::test_selected_real_wire_without_identification_refuses_before_core_effects"`.
+   - Requires exact baseline signature: `b_exc == "AdmissionRefused"` and `b_code == "PERMISSION_DENIED"`.
+   - Requires exact current signature: `c_exc == "ExchangeError"` and `c_code == "INVALID_IDENTIFICATION"` (exact equality, NO assertion text substring inference).
+   - Rejection of Counterexample 1 (`test_counterexample1_baseline_invalid_identification_rejected`): Baseline `INVALID_IDENTIFICATION` transitioning to Current `INVALID_IDENTIFICATION` is rejected as `CHANGED_FAILURE`.
+   - Rejection of Counterexample 2 (`test_counterexample2_assertion_error_with_substring_rejected`): Current `AssertionError` with substring match is rejected as `CHANGED_FAILURE`.
+   - Rejection of unreviewed nodes (`test_progress_known_barrier_unreviewed_node_rejected`): Unreviewed nodes are rejected as `CHANGED_FAILURE`.
 
 ---
 
-## 3. Hosted GitHub Actions CI Verification
+## 2. Independent Audit & Verification Receipts
 
-The Reviewer independently inspected the GitHub Actions execution logs for commit `85c4a5ed43edb7418ece5999b267abf6bec9ea3c` on branch `integration/adr0031-i6c-scanner-integration-20261024`:
+### 2.1 Fast Preflight
+- **Command:** `.venv/bin/python scripts/preflight_access.py`
+- **Verdict:** `PASS`
+- **Environment:** Python `3.12.13`, SQLite `3.53.1` (WAL journal mode, STRICT tables, FTS5 trigram), umask `0o022` enforced.
 
-| Workflow | Run ID | Status | Conclusion | URL |
+### 2.2 Hardened Comparator Unit Tests
+- **Command:** `.venv/bin/python -m pytest tests/unit/test_compare_access_regressions.py -v`
+- **Verdict:** `27 passed in 0.92s` (100% PASS)
+- **Key Tests Verified:**
+  - `test_counterexample1_baseline_invalid_identification_rejected`: PASSED
+  - `test_counterexample2_assertion_error_with_substring_rejected`: PASSED
+  - `test_progress_known_barrier_unreviewed_node_rejected`: PASSED
+  - `test_admission_refusal_code_mismatch_rejected`: PASSED
+  - `test_admission_exception_type_mismatch_rejected`: PASSED
+
+### 2.3 Passing Behavioral Contract
+- **Command:** `.venv/bin/python -m pytest tests/integration/p1/test_generalized_resources.py -k test_selected_real_wire_without_identification_refuses_before_core_effects -v`
+- **Verdict:** `1 passed, 69 deselected in 2.32s` (100% PASS)
+- **Verification:** Test executes real SQLite fixtures, asserts `UnsupportedIdentificationStage` before core effects, confirms pristine authorities and empty context resources, and verifies successful independent Core admission on replay with `selection=scope(include_context=False)`.
+- **Command:** `.venv/bin/python -m pytest tests/integration/access/test_i6c_behavioral_verification.py -v`
+- **Verdict:** `8 passed in 12.54s` (100% PASS, all 10 obligations verified against real databases).
+
+### 2.4 Mechanical Regression Reconciliation
+- **Command:**
+  ```bash
+  .venv/bin/python scripts/compare_access_regressions.py \
+    --current docs/implementation/evidence/adr0031-i6c-scanner-integration-20261024/raw/regressions.xml \
+    --baseline docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/source-full-final/ordinary.xml.gz \
+    --expected docs/implementation/evidence/adr0031-i6c-scanner-integration-20261024/raw/regression_collected.txt \
+    --pytest-exit-code 1 \
+    --output /tmp/review-failure-comparison.json \
+    --strict
+  ```
+- **Reconciliation Verdict:** `acceptance_verdict: "PASSED"` (0 blocking violations, exit code 0)
+- **Manifest Metrics:**
+  - Baseline nodes: 6,343 (1,847 in-scope, 4,496 out-of-scope)
+  - Current executed nodes: 1,847 (expected: 1,847, missing: 0, unexpected: 0)
+  - Resolved nodes: 73 (includes `test_selected_real_wire_without_identification_refuses_before_core_effects`)
+  - Inherited non-successes: 201 (43 Transfer stage fence, 144 Admission permission denied, 14 P7 recovery)
+  - Progress to known barrier: 0
+  - Changed failures: 0
+  - New regressions: 0
+  - Added failures: 0
+  - Environment failures: 0
+
+### 2.5 Distribution and Packaging Outside Checkout
+- **Command:** `.venv/bin/python scripts/verify_access_distribution.py`
+- **Verdict:** `PASS` (exit code 0)
+- **Artifacts Verified:**
+  - Direct built wheel SHA-256: `974366bd21726931bba05958c102ec1a9128845fc4728595346d2bf2b727a1f7`
+  - Rebuilt wheel from sdist SHA-256: `974366bd21726931bba05958c102ec1a9128845fc4728595346d2bf2b727a1f7`
+  - Bit-for-bit equivalence: 100% match.
+  - Isolated venv smoke (wheel and sdist-wheel): PASSED.
+
+### 2.6 Hosted GitHub Actions CI Verification
+The Reviewer inspected hosted GitHub Actions runs triggered by submission commit `a700676b317e60566f2925222b6cbc5582a525ef` on PR #172:
+
+| Workflow | Run ID | Status | Conclusion | Duration |
 |:---|:---|:---|:---|:---|
-| **Access registry focused verification** | `40143039690` | completed | **success** | `https://github.com/TakashiSasaki/git-repo-db/actions/runs/40143039690` |
-| **tests** | `40143039694` | completed | **success** | `https://github.com/TakashiSasaki/git-repo-db/actions/runs/40143039694` |
-| **pages** | `40143039721` | completed | **success** | `https://github.com/TakashiSasaki/git-repo-db/actions/runs/40143039721` |
+| **Access registry focused verification** | `40147504587` | completed | **success** | 7m 6s |
+| **tests** | `40147504588` | completed | **success** | 29s |
+| **pages** | `40147504592` | completed | **success** | 1m 9s |
 
-Key milestones in `Access registry focused verification` (run `40143039690`):
+Key steps in Run `40147504587`:
 - Step 7: Verify runtime environment preflight: `success`
 - Step 8: Verify scoped Access acceptance suite: `success` (947 passed)
 - Step 9: Execute broad regression suite and record receipts: `success` (1,847 nodes)
-- Step 10: Reconcile regression manifest against baseline evidence: `success` (0 blocking violations, exit code 0)
+- Step 10: Reconcile regression manifest against baseline evidence: `success` (0 blocking violations)
 - Step 11: Installed I2 I3 I4 I5 on both distribution artifacts offline: `success`
 - Step 12: Inventory offline and unexecuted coverage: `success`
 - Step 13: Verify wheel and sdist-derived wheel outside checkout: `success`
 - Step 14: Check isolated module ownership and baseline evidence: `success`
 - Step 15: Reconcile Access acceptance ledger and exact test nodes: `success`
-- Step 16: Build allowlisted MkDocs sources: `success`
+- Step 16: Build allowlisted MkDocs sources with placeholder diagrams, no deployment: `success`
 - Step 17: Check formatting of the exact committed files: `success`
 
 ---
 
-## 4. Independent Verification of Integrated Linages
+## 3. Two-Stage Commit Separation Audit
 
-### 4.1 Fast Preflight
-Command: `python scripts/preflight_access.py`
-Result: `PASS`
-- Python: `3.12.13`
-- SQLite: `3.53.1` (WAL journal mode, STRICT tables, FTS5 trigram)
-- Umask: `0o022` strictly enforced
+The Reviewer audited the Git object identities for PR #172:
+- **Tested Input Commit**: `91d2bc7e6c47a3c1ec46949211ab16cb4ac7900f`
+- **Tested Input Tree**: `d35ca8d7212bddd9aa6ad1646d43a3fe062d619e`
+- **Submission Commit**: `a700676b317e60566f2925222b6cbc5582a525ef`
+- **Submission Tree**: `3f191b7d3f82cb34220b330ec02882a88dc18042`
 
-### 4.2 Mechanical Regression Reconciliation
-Command:
+Verification command:
 ```bash
-python scripts/compare_access_regressions.py \
-  --current docs/implementation/evidence/adr0031-i6c-scanner-integration-20261024/raw/regressions.xml \
-  --baseline docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/source-full-final/ordinary.xml.gz \
-  --expected docs/implementation/evidence/adr0031-i6c-scanner-integration-20261024/raw/regression_collected.txt \
-  --pytest-exit-code 1 \
-  --strict
+git diff 91d2bc7e6c47a3c1ec46949211ab16cb4ac7900f..a700676b317e60566f2925222b6cbc5582a525ef -- src tests scripts pyproject.toml .github
 ```
-Result: `acceptance_verdict: "PASSED"` (exit code 0)
-- Baseline nodes: 6,343 (1,847 in-scope, 4,496 out-of-scope)
-- Current executed nodes: 1,847
-- Resolved nodes: 72
-- Inherited non-successes: 201 (43 Transfer stage fence, 144 Admission permission denied, 14 P7 recovery)
-- Progress to known barrier: 1
-- Changed failures: 0
-- New regressions: 0
-- Missing nodes: 0
-- Unexpected nodes: 0
-- Blocking violations: 0
-
-### 4.3 Behavioral Verification (10 Obligations)
-Command: `pytest tests/integration/access/test_i6c_behavioral_verification.py -v`
-Result: `8 passed in 12.01s` (100% PASS, 0 failures)
-- All 10 obligations of ADR 0031 I6-C empirically verified against real SQLite databases.
-
-### 4.4 Scanner Budget Defense Suite
-Command: `pytest tests/unit/test_admission_scanner_budget.py -v`
-Result: `37 passed in 56.30s` (100% PASS, 0 failures)
-
-### 4.5 Packaging & Distribution Contract
-- `scripts/check_sdist_contract.py --build --output /tmp/review-sdist-contract.json`: `PASSED`
-  - Compressed bytes: 705,705 (33.6% of budget)
-  - Unpacked bytes: 6,064,489 (72.3% of budget)
-  - Tar stream bytes: 6,195,200 (69.4% of budget)
-  - Member count: 164 (32.0% of budget)
-- `scripts/verify_access_distribution.py`: `PASS` (bit-for-bit wheel equivalence confirmed: `ab679e600ceda7f783c4e70e63e6da0c7b5f9072c852e9b053d1e54add4da0de`).
-
-### 4.6 Boundary, Schema & Lint Audits
-- `scripts/audit_callsite_dependencies.py --check`: `MATCH`
-- `scripts/build_p1_schema.py --check`: `MATCH`
-- `scripts/audit_p1_schema.py --check`: `MATCH`
-- `scripts/audit_implementation_boundary.py --check`: `MATCH`
-- `ruff check src tests scripts`: `All checks passed!`
-- `ruff format --check src tests scripts`: `461 files already formatted`
+Result: Strictly empty (0 lines). The submission commit touches only files under `docs/implementation/evidence/`.
 
 ---
 
-## 5. Two-Stage Commit Separation Verification
+## 4. Final Review Decision
 
-The Reviewer verified the Git object identities for PR #172:
-- **Superseding Tested Input Commit**: `a57e456d0e6ff3969feea44ff159401226515418`
-- **Superseding Tested Input Tree**: `d301c7285a2957c5a2c094826ee3f85dab628a82`
-- **Final Submission Commit**: `85c4a5ed43edb7418ece5999b267abf6bec9ea3c`
-- **Final Submission Tree**: `30be374da5bf77842ea68d22197bd29af3b1c968`
-
-Verified two-stage commit equivalence:
-```bash
-git diff a57e456d0e6ff3969feea44ff159401226515418..85c4a5ed43edb7418ece5999b267abf6bec9ea3c -- src tests scripts pyproject.toml .github
-```
-Result: Strictly empty (0 lines). Commit `85c4a5ed` touches strictly `docs/implementation/evidence/`.
-
----
-
-## 6. Non-Author Review Acceptance Decision
-
-The Supplementary Independent Reviewer issues a **SCOPED ACCEPTANCE (PASS)** decision for PR #172:
-1. The 1 regression comparison failure has been definitively resolved by identifying genuine progression to an envelope validation barrier, accompanied by strict refusal signature testing in the comparator.
-2. Hosted GitHub Actions CI run `40143039690` passed 100% green across all 43 steps.
-3. All integrated lineages (I6-C exchange, scanner budget defense, minimal sdist contract) pass their respective acceptance test suites with zero failures.
-4. Boundaries and safety fences remain active: Transfer operations remain refused with `UnsupportedResourceStage` and SQL trigger fences.
-5. The branch is recommended to the repository owner for merge consideration.
+The Supplementary Independent Reviewer issues **NON-AUTHOR INDEPENDENT ACCEPTANCE (PASS)**:
+1. **Resolution of Contract**: The wire identification behavioral contract is cleanly resolved, with `test_selected_real_wire_without_identification_refuses_before_core_effects` verified passing locally and on hosted CI.
+2. **Comparator Hardening**: Progression semantics in `scripts/compare_access_regressions.py` are strictly bounded to the reviewed test, require exact refusal codes, reject Counterexamples 1 & 2, and reject unreviewed nodes.
+3. **Reconciliation Zero Defect**: 73 resolved, 201 inherited non-successes, 0 progressed barriers, 0 changed failures, 0 new regressions, 0 blocking violations under `--strict`.
+4. **All CI Checks Green**: Hosted runs `40147504587`, `40147504588`, and `40147504592` completed with `success`.
+5. **Two-Stage Commit Invariant**: Strictly observed between `91d2bc7e` and `a700676b`.
+6. **Fences Preserved**: Transfer SQL fences and `UnsupportedResourceStage` remain fully active.
