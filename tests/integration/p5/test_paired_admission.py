@@ -15,11 +15,7 @@ from repo_catalog.adapters.sqlite.acquisition import OperationalAcquisitionLedge
 from repo_catalog.adapters.sqlite.git_core import GitCore
 from repo_catalog.adapters.sqlite.p1_coordination import persist_catalog_stop
 from repo_catalog.adapters.sqlite.production_context import Context
-from repo_catalog.application.acquisition import (
-    GitAcquisition,
-    PairedAcquisitionCoordinator,
-    ProviderAcquisition,
-)
+from repo_catalog.application.acquisition import GitAcquisition
 from repo_catalog.domain.acquisition import (
     GitNativeAcquisitionRequest,
     ProviderIntakeBatch,
@@ -36,6 +32,12 @@ from repo_catalog.domain.p1_coordination import (
     RequestIdentity,
 )
 from tests.integration.p5.conftest import build_sample_git_repo, init_catalog_stores
+from tests.support.context_admission import (
+    AuthorizedPairedAcquisitionCoordinator as PairedAcquisitionCoordinator,
+)
+from tests.support.context_admission import (
+    AuthorizedProviderAcquisition as ProviderAcquisition,
+)
 
 
 def test_core_first_context_second_and_failure_retry_convergence(

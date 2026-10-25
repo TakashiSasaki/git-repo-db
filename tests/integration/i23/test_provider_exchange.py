@@ -10,9 +10,6 @@ import pytest
 from repo_catalog.adapters.github.production_intake import github_repository_id
 from repo_catalog.adapters.sqlite.git_core import GitCore
 from repo_catalog.adapters.sqlite.p1_schema import connect
-from repo_catalog.adapters.sqlite.production_context import Context
-from repo_catalog.application.acquisition import ProviderAcquisition
-from repo_catalog.application.exchange import ExchangeService
 from repo_catalog.domain.acquisition import (
     ProviderIntakeBatch,
     ProviderIssueIntake,
@@ -22,6 +19,11 @@ from repo_catalog.domain.acquisition import (
     RepositoryRegistration,
     SourceRegistration,
     make_provenance,
+)
+from repo_catalog.domain.context_admission import (
+    AdmissionSelection,
+    DependencySet,
+    create_local_admission_service,
 )
 from repo_catalog.domain.exchange import ExchangeSelectionScope, encode_package
 from repo_catalog.domain.p1_context import (
@@ -39,6 +41,18 @@ from repo_catalog.domain.production_context import SourceInventory
 from repo_catalog.domain.resource_identity import encode_identity
 from tests.integration.p5.conftest import init_catalog_stores
 from tests.integration.p5.test_exchange import _setup_source_catalog
+from tests.support.context_admission import (
+    AuthorizedContext as Context,
+)
+from tests.support.context_admission import (
+    AuthorizedExchangeService as ExchangeService,
+)
+from tests.support.context_admission import (
+    AuthorizedProviderAcquisition as ProviderAcquisition,
+)
+from tests.support.context_admission import (
+    _extract_directory_context_grants,
+)
 
 
 def provenance(label):
@@ -689,7 +703,13 @@ def test_collection_coverage_uses_exact_owner_and_admission_order(tmp_path, case
         key, "comments", provenance("collection"), "{}", 80, "complete", ()
     )
     if case != "absent_collection":
-        with Context.transaction(a) as ctx:
+        grants = DependencySet(resources={key}) | _extract_directory_context_grants(a)
+        auth, adm, _ = create_local_admission_service(
+            "provider_intake",
+            grants=grants,
+            selection=AdmissionSelection(all_selected=True),
+        )
+        with Context.transaction(a, authorization=auth, admission=adm) as ctx:
             ctx.collection(collection)
             ctx.scope(coverage_scope)
             ctx.admit_coverage(CoverageClaim(coverage_scope, 80, "partial"))
@@ -722,7 +742,13 @@ def test_collection_coverage_uses_exact_owner_and_admission_order(tmp_path, case
                 ),
             )
         )
-        with Context.transaction(b) as ctx:
+        grants = DependencySet(resources={key}) | _extract_directory_context_grants(b)
+        auth, adm, _ = create_local_admission_service(
+            "provider_intake",
+            grants=grants,
+            selection=AdmissionSelection(all_selected=True),
+        )
+        with Context.transaction(b, authorization=auth, admission=adm) as ctx:
             ctx.collection(collection)
         package.context["collections"] = []
     package = replace(package, digest_sha256=None)
@@ -761,7 +787,13 @@ def test_source_coverage_permission_cut_keeps_independent_i2_facts(tmp_path):
         )
     )
     coverage_scope = CoverageScope.source(source, r2, "commits")
-    with Context.transaction(a) as ctx:
+    grants = DependencySet(sources={source}) | _extract_directory_context_grants(a)
+    auth, adm, _ = create_local_admission_service(
+        "provider_intake",
+        grants=grants,
+        selection=AdmissionSelection(all_selected=True),
+    )
+    with Context.transaction(a, authorization=auth, admission=adm) as ctx:
         ctx.scope(coverage_scope)
         ctx.admit_coverage(CoverageClaim(coverage_scope, 80, "partial"))
     package = ExchangeService(a).export_package(
@@ -809,7 +841,13 @@ def test_existing_receiver_source_pair_can_support_partial_package_coverage(tmp_
         )
     )
     coverage_scope = CoverageScope.source(source, r1, "commits")
-    with Context.transaction(a) as ctx:
+    grants = DependencySet(sources={source}) | _extract_directory_context_grants(a)
+    auth, adm, _ = create_local_admission_service(
+        "provider_intake",
+        grants=grants,
+        selection=AdmissionSelection(all_selected=True),
+    )
+    with Context.transaction(a, authorization=auth, admission=adm) as ctx:
         ctx.scope(coverage_scope)
         ctx.admit_coverage(CoverageClaim(coverage_scope, 80, "partial"))
     package = ExchangeService(a).export_package(

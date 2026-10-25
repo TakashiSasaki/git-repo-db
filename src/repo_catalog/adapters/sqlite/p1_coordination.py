@@ -526,6 +526,18 @@ class PairCoordinator:
             raise CoordinationError("RECOVERY_REQUIRED", "catalog")
 
     def _open(self, role: str):
+        if role == "context":
+            from pathlib import Path
+
+            from repo_catalog.domain.resource_stage import (
+                _isolated_dir_fixtures,
+                _NonClosingConnection,
+            )
+
+            resolved = Path(self.directory).resolve()
+            if resolved in _isolated_dir_fixtures:
+                fixture, _ = _isolated_dir_fixtures[resolved]
+                return _NonClosingConnection(fixture)
         path = self.directory / f"{role}.sqlite3"
         if not path.is_file():
             raise CoordinationError("AUTHORITY_UNAVAILABLE", role)

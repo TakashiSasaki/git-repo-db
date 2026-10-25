@@ -731,7 +731,8 @@ class Context(ContextStore):
         self, resource: ResourceKey, relation_kind: str
     ) -> tuple[ResourceRelation, ...]:
         self._check()
-        refuse_transfer(relation_kind)
+        if has_transfer_fence(self.db):
+            refuse_transfer(relation_kind)
         with self._stored("relation"):
             values = tuple(
                 ResourceRelation(
