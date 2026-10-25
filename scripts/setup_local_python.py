@@ -47,6 +47,39 @@ class SetupFailure(RuntimeError):
     pass
 
 
+class CheckoutLock:
+    """Exclusive advisory lock so concurrent bootstraps in the same checkout serialize."""
+
+    def __init__(self, path: Path, timeout: float = 600.0):
+        self.path = Path(path)
+        self.timeout = timeout
+        self.descriptor: int | None = None
+
+    def __enter__(self):
+        import fcntl
+
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        self.descriptor = os.open(self.path, os.O_RDWR | os.O_CREAT, 0o600)
+        deadline = time.monotonic() + self.timeout
+        while True:
+            try:
+                fcntl.flock(self.descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                return self
+            except BlockingIOError:
+                if time.monotonic() > deadline:
+                    os.close(self.descriptor)
+                    self.descriptor = None
+                    raise TimeoutError(
+                        f"Another bootstrap holds {self.path}; retry when it finishes"
+                    ) from None
+                time.sleep(0.2)
+
+    def __exit__(self, *exc):
+        if self.descriptor is not None:
+            os.close(self.descriptor)
+            self.descriptor = None
+
+
 def run_command(argv, *, environment, cwd, timeout=3600):
     """Run one bootstrap command, capturing output for the receipt."""
     return subprocess.run(
@@ -359,6 +392,12 @@ def main(argv=None):
         action="store_true",
         help="preserve an incompatible .venv under a timestamped name",
     )
+    parser.add_argument(
+        "--lock-timeout",
+        type=float,
+        default=600.0,
+        help="maximum seconds to wait for checkout lock before failing",
+    )
     parser.add_argument("--root", type=Path, default=ROOT, help=argparse.SUPPRESS)
     args = parser.parse_args(argv)
     root = args.root.resolve()
@@ -369,31 +408,40 @@ def main(argv=None):
         "created": datetime.now(timezone.utc).isoformat(),
         "repository_root": str(root),
     }
+    lock = root / RECEIPT_DIRECTORY / ".bootstrap.lock"
     try:
-        bootstrap(root, args, recorder, receipt)
-        receipt["status"] = "passed"
-        recorder.begin("final_verification")
-        write_receipt(root, receipt, recorder)
-        local_env.verify_environment(root, deep=True)
-        recorder.finish()
-        write_receipt(root, receipt, recorder)
-    except (
-        SetupFailure,
-        local_env.EnvironmentRefused,
-        ci_python_runtime.UnsupportedPlatform,
-        RuntimeError,
-        ValueError,
-        OSError,
-        subprocess.SubprocessError,
-        KeyError,
-    ) as error:
-        receipt["status"] = "failed"
-        if recorder.current:
-            recorder.fail(str(error))
-        receipt["failure"] = {"step": recorder.current, "message": str(error)}
-        write_receipt(root, receipt, recorder)
+        with CheckoutLock(lock, timeout=args.lock_timeout):
+            try:
+                bootstrap(root, args, recorder, receipt)
+                receipt["status"] = "passed"
+                recorder.begin("final_verification")
+                write_receipt(root, receipt, recorder)
+                local_env.verify_environment(root, deep=True)
+                recorder.finish()
+                write_receipt(root, receipt, recorder)
+            except (
+                SetupFailure,
+                local_env.EnvironmentRefused,
+                ci_python_runtime.UnsupportedPlatform,
+                RuntimeError,
+                ValueError,
+                OSError,
+                subprocess.SubprocessError,
+                KeyError,
+            ) as error:
+                receipt["status"] = "failed"
+                if recorder.current:
+                    recorder.fail(str(error))
+                receipt["failure"] = {"step": recorder.current, "message": str(error)}
+                write_receipt(root, receipt, recorder)
+                print(
+                    f"Local Python bootstrap FAILED at {recorder.current}: {error}",
+                    file=sys.stderr,
+                )
+                return 1
+    except TimeoutError as error:
         print(
-            f"Local Python bootstrap FAILED at {recorder.current}: {error}",
+            f"Local Python bootstrap FAILED: {error}",
             file=sys.stderr,
         )
         return 1

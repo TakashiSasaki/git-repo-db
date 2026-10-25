@@ -5,6 +5,7 @@ installation or ``.venv``; every command runner, provisioner and interpreter is
 replaced by a temporary-directory fixture.
 """
 
+import io
 import json
 import os
 import subprocess
@@ -158,8 +159,8 @@ class BootstrapCase(unittest.TestCase):
 
     def bootstrap(self, *arguments):
         with (
-            patch("sys.stdout", new=open(os.devnull, "w")),
-            patch("sys.stderr", new=open(os.devnull, "w")),
+            patch("sys.stdout", new_callable=io.StringIO),
+            patch("sys.stderr", new_callable=io.StringIO),
         ):
             return setup.main(["--root", str(self.root), *arguments])
 
@@ -515,7 +516,7 @@ class LauncherExecutionTests(LauncherCase):
         (self.root / "uv.lock").write_text("changed\n")
         with (
             patch.object(local_env, "ROOT", self.root),
-            patch("sys.stderr", new=open(os.devnull, "w")),
+            patch("sys.stderr", new_callable=io.StringIO),
         ):
             self.assertEqual(local_env.main(["verify"]), 3)
 
@@ -537,6 +538,169 @@ class RealProcessTests(unittest.TestCase):
             )
         self.assertEqual(result.returncode, 3)
         self.assertIn("setup-local-python.sh", result.stderr)
+
+
+class GitIgnoreMigratedVenvTests(unittest.TestCase):
+    """Verify that migrated virtual environments do not pollute git status or effective tree."""
+
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.root = Path(self.temporary.name)
+        # Initialize a real disposable git repository
+        self.git("init")
+        self.git("config", "user.name", "Test User")
+        self.git("config", "user.email", "test@example.com")
+        # Copy the actual repository .gitignore into the disposable repo
+        repo_gitignore = (setup.ROOT / ".gitignore").read_text()
+        (self.root / ".gitignore").write_text(repo_gitignore)
+        (self.root / "README.md").write_text("# Test\n")
+        (self.root / "src/repo_catalog").mkdir(parents=True)
+        (self.root / "src/repo_catalog/file.py").write_text("print('hello')\n")
+        self.git("add", "-A")
+        self.git("commit", "-m", "Initial commit")
+
+    def git(self, *args, env=None):
+        return subprocess.run(
+            ["git", "-C", str(self.root), *args],
+            capture_output=True,
+            text=True,
+            check=True,
+            env=env,
+        ).stdout.strip()
+
+    def test_migrated_venv_is_excluded_from_git_status(self):
+        (self.root / ".venv").mkdir()
+        (self.root / ".venv/bin").mkdir()
+        (self.root / ".venv/bin/python").write_text("dummy")
+        migrated = self.root / ".venv.migrated-20261025T120000Z"
+        migrated.mkdir()
+        (migrated / "bin").mkdir()
+        (migrated / "bin/python").write_text("foreign")
+        (migrated / "large_file.bin").write_bytes(b"0" * 10000)
+
+        status = self.git("status", "--porcelain")
+        self.assertEqual(status, "")
+
+    def test_effective_tree_calculation_excludes_migrated_environments(self):
+        migrated = self.root / ".venv.migrated-20261025T120000Z"
+        migrated.mkdir()
+        (migrated / "polluting.bin").write_bytes(b"pollution")
+
+        # Make an ordinary source change
+        (self.root / "src/repo_catalog/file.py").write_text("print('modified')\n")
+        status = self.git("status", "--porcelain")
+        self.assertEqual(status, "M src/repo_catalog/file.py")
+
+        # Run effective-tree calculation logic using private temporary index
+        with tempfile.TemporaryDirectory() as temp_index:
+            environment = {**os.environ, "GIT_INDEX_FILE": f"{temp_index}/index"}
+            self.git("read-tree", "HEAD", env=environment)
+            self.git("add", "-A", env=environment)
+            tree = self.git("write-tree", env=environment)
+
+        staged_files = self.git("ls-tree", "-r", "--name-only", tree).splitlines()
+        self.assertIn("src/repo_catalog/file.py", staged_files)
+        self.assertIn(".gitignore", staged_files)
+        self.assertFalse(any("migrated" in f for f in staged_files))
+        self.assertFalse(any(".venv" in f for f in staged_files))
+
+    def test_ordinary_source_changes_remain_discoverable(self):
+        migrated = self.root / ".venv.migrated-20261025T120000Z"
+        migrated.mkdir()
+        (migrated / "bin").mkdir()
+        (migrated / "bin/python").write_text("foreign")
+
+        # Add a new untracked source file
+        (self.root / "src/repo_catalog/new_feature.py").write_text("x = 1\n")
+        status = self.git("status", "--porcelain")
+        self.assertIn("?? src/repo_catalog/new_feature.py", status)
+        self.assertNotIn(".venv", status)
+
+    def test_git_check_ignore_root_level_scoping(self):
+        # Root-level migrated dir must match
+        res = self.git("check-ignore", "-v", ".venv.migrated-20261025T120000Z/")
+        self.assertIn("/.venv.migrated-*/", res)
+
+        # Nested directory should NOT match the root-level rule
+        nested = self.root / "subdir/.venv.migrated-20261025T120000Z"
+        nested.mkdir(parents=True)
+        res_nested = subprocess.run(
+            [
+                "git",
+                "-C",
+                str(self.root),
+                "check-ignore",
+                "-v",
+                "subdir/.venv.migrated-20261025T120000Z/",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        self.assertNotEqual(res_nested.returncode, 0)
+
+
+class CheckoutConcurrencyTests(BootstrapCase):
+    """Verify that concurrent bootstrap processes in the same checkout serialize cleanly."""
+
+    def test_held_checkout_lock_blocks_and_times_out(self):
+        lock_path = self.root / setup.RECEIPT_DIRECTORY / ".bootstrap.lock"
+        with setup.CheckoutLock(lock_path, timeout=5):
+            # Attempt to bootstrap with small lock timeout
+            result = self.bootstrap("--lock-timeout", "0.2")
+            self.assertEqual(result, 1)
+        # Verify receipt was not published by the timed out call
+        self.assertFalse((self.root / local_env.RECEIPT).exists())
+
+    def test_competing_receipt_writes_prevented(self):
+        # Establish successful receipt first
+        self.assertEqual(self.bootstrap(), 0)
+        self.assertEqual(self.receipt()["status"], "passed")
+
+        lock_path = self.root / setup.RECEIPT_DIRECTORY / ".bootstrap.lock"
+        with setup.CheckoutLock(lock_path, timeout=5):
+            result = self.bootstrap("--lock-timeout", "0.2")
+            self.assertEqual(result, 1)
+
+        # The existing passed receipt must not be modified or overwritten
+        self.assertEqual(self.receipt()["status"], "passed")
+
+    def test_sequential_bootstrap_under_lock_is_idempotent(self):
+        self.assertEqual(self.bootstrap(), 0)
+        self.assertEqual(self.receipt()["virtual_environment"]["action"], "create")
+        self.assertEqual(self.bootstrap(), 0)
+        self.assertEqual(self.receipt()["virtual_environment"]["action"], "reuse")
+
+    def test_independent_checkouts_do_not_block_each_other(self):
+        other_temp = tempfile.TemporaryDirectory()
+        self.addCleanup(other_temp.cleanup)
+        other_project = Project(other_temp.name)
+
+        lock_path_a = self.root / setup.RECEIPT_DIRECTORY / ".bootstrap.lock"
+        with setup.CheckoutLock(lock_path_a, timeout=5):
+            # Bootstrapping another checkout while root_a is locked must succeed
+            with (
+                patch("sys.stdout", new_callable=io.StringIO),
+                patch("sys.stderr", new_callable=io.StringIO),
+                patch.object(setup, "run_command", other_project),
+                patch.object(runtime, "provision", other_project.provision),
+                patch.object(local_env, "venv_view", other_project.venv_view),
+            ):
+                result = setup.main(["--root", str(other_project.root)])
+                self.assertEqual(result, 0)
+            receipt_b = json.loads((other_project.root / local_env.RECEIPT).read_text())
+            self.assertEqual(receipt_b["status"], "passed")
+
+    def test_failed_bootstrap_under_lock_records_failure_and_releases_lock(self):
+        self.project.fail.add("sync")
+        self.assertEqual(self.bootstrap(), 1)
+        self.assertEqual(self.receipt()["status"], "failed")
+        self.assertEqual(self.receipt()["failure"]["step"], "dependency_sync")
+
+        # The lock must have been released, allowing immediate acquisition
+        lock_path = self.root / setup.RECEIPT_DIRECTORY / ".bootstrap.lock"
+        with setup.CheckoutLock(lock_path, timeout=0.1):
+            pass
 
 
 if __name__ == "__main__":

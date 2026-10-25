@@ -31,6 +31,8 @@ jobs:
         run: python -m unittest discover -s tests/unit -p test_sqlite_validation_policy.py
       - name: Test product Python integrity and runtime binding with stdlib only
         run: python -m unittest discover -s tests/unit -p test_ci_python_runtime.py
+      - name: Test local Python setup orchestration and verified launcher with stdlib only
+        run: python -m unittest discover -s tests/unit -p test_local_python_setup.py
   offline:
     runs-on: ubuntu-24.04
     env:

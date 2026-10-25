@@ -1,5 +1,6 @@
 .venv
 .venv/
+/.venv.migrated-*/
 __pycache__/
 *.py[cod]
 .pytest_cache/
