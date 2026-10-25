@@ -19,7 +19,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from scripts import ci_journal, ci_plan, ci_profile  # noqa: E402
+from scripts import ci_journal, ci_plan, ci_profile, resource_scheduler  # noqa: E402
 
 MARKER = "not live and not benchmark"
 
@@ -108,14 +108,12 @@ def positive_workers(value):
 
 
 def selected_workers(name, count, requested=None):
-    if requested is not None:
-        return min(positive_workers(requested), count)
-    if name == "packaging":
-        return min(2, count)
-    return 4 if count >= 20 else 1
+    return resource_scheduler.calculate_worker_budget(
+        workload_count=count, lane_name=name, user_override=requested
+    )
 
 
-def run_selection(path, name, workers=None):
+def run_selection(path, name, workers=None, quiet=True):
     plan, output = read(path), path.parent
     item = plan["lanes"][name]
     if (
@@ -137,6 +135,7 @@ def run_selection(path, name, workers=None):
             journal=journal,
             mode="xdist" if workers > 1 else "sequential",
             workers=workers,
+            quiet=quiet,
             selection={
                 "kind": item.get("selection_kind"),
                 "digest": item.get("selection_digest"),
@@ -148,17 +147,15 @@ def run_selection(path, name, workers=None):
     )
 
 
-def run_current(output, name, workers=None):
+def run_current(output, name, workers=None, quiet=True):
     """Run the current manifest during edits; raw profiles retain dirty-tree status."""
     files = [
         path
         for path in ci_plan.current_acceptance_files()
         if path.startswith("tests/packaging/") == (name == "packaging")
     ]
-    workers = (
-        positive_workers(workers)
-        if workers is not None
-        else (2 if name == "packaging" else 4)
+    workers = resource_scheduler.calculate_worker_budget(
+        workload_count=len(files), lane_name=name, user_override=workers
     )
     xml = output / (name + ".xml")
     journal = output / (name + "-journal.jsonl")
@@ -172,6 +169,7 @@ def run_current(output, name, workers=None):
             journal=journal,
             mode="xdist" if workers > 1 else "sequential",
             workers=workers,
+            quiet=quiet,
         )
     )
 
@@ -1629,6 +1627,11 @@ def main():
         default=ROOT,
         help="Repository root directory",
     )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Stream full pytest output to terminal instead of quiet summary",
+    )
     args = parser.parse_args()
     if args.action == "reports":
         args.plan.parent.mkdir(parents=True, exist_ok=True)
@@ -1636,9 +1639,11 @@ def main():
     elif args.action == "collect":
         collect(args.plan)
     elif args.action == "run":
-        return run_selection(args.plan, args.lane, args.workers)
+        return run_selection(args.plan, args.lane, args.workers, quiet=not args.verbose)
     elif args.action == "current":
-        return run_current(args.plan.parent, args.lane, args.workers)
+        return run_current(
+            args.plan.parent, args.lane, args.workers, quiet=not args.verbose
+        )
     elif args.action == "receipt":
         rec = create_receipt(args.output_dir, dest_path=args.dest, root=args.root)
         print(

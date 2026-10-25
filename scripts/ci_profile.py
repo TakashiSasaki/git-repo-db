@@ -21,7 +21,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts import ci_journal  # noqa: E402
+from scripts import ci_journal, resource_scheduler  # noqa: E402
 
 
 def junit(path):
@@ -46,6 +46,21 @@ def junit(path):
             ),
             "passed",
         )
+        failure_elem = next(
+            (
+                case.find(k)
+                for k in ("failure", "error", "skipped")
+                if case.find(k) is not None
+            ),
+            None,
+        )
+        details = None
+        if failure_elem is not None:
+            details = {
+                "type": failure_elem.get("type", ""),
+                "message": failure_elem.get("message", ""),
+                "text": (failure_elem.text or "").strip(),
+            }
         row = dict(
             file=name,
             name=case.get("name"),
@@ -53,6 +68,8 @@ def junit(path):
             status=status,
             nodeid="::".join([name, *classes, case.get("name", "")]),
         )
+        if details:
+            row["details"] = details
         if not math.isfinite(row["seconds"]) or row["seconds"] < 0:
             raise ValueError("Invalid JUnit duration")
         tests.append(row)
@@ -113,6 +130,201 @@ def runtime():
         tracked_changes=tracked_changes,
         dirty=tracked_changes,
     )
+
+
+def build_failure_index(junit_data, journal_data=None, log_path=None):
+    failures = []
+    skipped = []
+    tests = junit_data.get("tests", []) if isinstance(junit_data, dict) else []
+
+    for t in tests:
+        status = t.get("status")
+        nodeid = t.get("nodeid", "")
+        if status in ("failure", "error"):
+            details = t.get("details", {})
+            raw_text = details.get("text", "")
+            sample_lines = [line for line in raw_text.splitlines() if line.strip()][:25]
+
+            # Identify known inherited Transfer failures
+            if (
+                "test_transfer_" in nodeid
+                or "transfer_admission" in nodeid
+                or "transfer_sql" in nodeid
+            ):
+                classification = "INHERITED_STAGE_TRANSFER"
+            else:
+                classification = "NEW_REGRESSION"
+
+            failures.append(
+                {
+                    "nodeid": nodeid,
+                    "status": status,
+                    "phase": "call" if status == "failure" else "setup",
+                    "duration": t.get("seconds", 0.0),
+                    "classification": classification,
+                    "exception_type": details.get("type", "Error"),
+                    "message": details.get("message", ""),
+                    "sample_lines": sample_lines,
+                }
+            )
+        elif status == "skipped":
+            details = t.get("details", {})
+            skipped.append(
+                {
+                    "nodeid": nodeid,
+                    "message": details.get("message", ""),
+                }
+            )
+
+    return {
+        "version": 1,
+        "failure_count": len(failures),
+        "skipped_count": len(skipped),
+        "failures": failures,
+        "skipped": skipped,
+    }
+
+
+def build_execution_summary(record, failure_index=None):
+    junit_data = record.get("junit", {})
+    tests = junit_data.get("tests", []) if isinstance(junit_data, dict) else []
+
+    passed_count = sum(1 for t in tests if t.get("status") == "passed")
+    failed_count = sum(1 for t in tests if t.get("status") == "failure")
+    error_count = sum(1 for t in tests if t.get("status") == "error")
+    skipped_count = sum(1 for t in tests if t.get("status") == "skipped")
+
+    inherited_count = 0
+    if failure_index:
+        inherited_count = sum(
+            1
+            for f in failure_index.get("failures", [])
+            if f.get("classification") == "INHERITED_STAGE_TRANSFER"
+        )
+
+    counts = {
+        "total": junit_data.get("count", 0),
+        "passed": passed_count,
+        "failed": failed_count,
+        "error": error_count,
+        "skipped": skipped_count,
+        "inherited": inherited_count,
+        "unexecuted": 0,
+    }
+
+    selection = record.get("selection", {})
+    selected_nodes = selection.get("test_ids", [])
+    executed_count = counts["total"]
+
+    reconciliation_status = "NOT_EVALUATED"
+    reconciliation_consistent = True
+    if selected_nodes:
+        if (
+            len(selected_nodes) == executed_count
+            and failed_count == 0
+            and error_count == 0
+        ):
+            reconciliation_status = "EXACT_ONCE_MATCH"
+        elif inherited_count > 0 and (
+            passed_count + inherited_count == len(selected_nodes)
+        ):
+            reconciliation_status = "RECONCILED_WITH_INHERITED_FAILURES"
+        else:
+            reconciliation_status = f"COUNT_MISMATCH (selected={len(selected_nodes)}, executed={executed_count})"
+            reconciliation_consistent = False
+    elif executed_count > 0 and failed_count == 0 and error_count == 0:
+        reconciliation_status = "ALL_PASSED"
+    elif failed_count > 0 or error_count > 0:
+        if inherited_count > 0 and (failed_count + error_count == inherited_count):
+            reconciliation_status = "INHERITED_FAILURES_ONLY"
+        else:
+            reconciliation_status = "REGRESSIONS_DETECTED"
+            reconciliation_consistent = False
+
+    return {
+        "version": 1,
+        "invocation_id": record.get("invocation_id"),
+        "lane": record.get("name"),
+        "mode": record.get("mode"),
+        "commit_sha": record.get("runtime", {}).get("commit_sha"),
+        "tree_sha": record.get("runtime", {}).get("tree_sha"),
+        "exit_code": record.get("exit_code"),
+        "wall_seconds": record.get("wall_seconds"),
+        "cumulative_test_seconds": record.get("cumulative_test_seconds"),
+        "workers": record.get("workers"),
+        "counts": counts,
+        "reconciliation": {
+            "status": reconciliation_status,
+            "selected_count": len(selected_nodes) if selected_nodes else executed_count,
+            "executed_count": executed_count,
+            "consistent": reconciliation_consistent,
+        },
+        "artifacts": record.get("artifacts", {}),
+    }
+
+
+def format_terminal_summary(record, execution_summary, failure_index=None):
+    counts = execution_summary["counts"]
+    reconcil = execution_summary["reconciliation"]
+    runtime_info = record.get("runtime", {})
+    commit_short = (runtime_info.get("commit_sha") or "unknown")[:8]
+    tree_short = (runtime_info.get("tree_sha") or "unknown")[:8]
+    lane = record.get("name", "test")
+    workers = record.get("workers", 1)
+    mode = record.get("mode", "sequential")
+    wall = record.get("wall_seconds", 0.0)
+    cum = record.get("cumulative_test_seconds", wall)
+    exit_code = record.get("exit_code", 0)
+    exit_str = "SUCCESS" if exit_code == 0 else f"FAILURE (exit code {exit_code})"
+    inv_id = record.get("invocation_id", "unknown")
+    evidence_dir = record.get("artifacts", {}).get(
+        "profile", str(Path("artifacts/ci-profile/invocations") / inv_id)
+    )
+
+    lines = [
+        f"=== Validation Summary: {lane} ({mode}-{workers}) ===",
+        f"Invocation ID:   {inv_id}",
+        f"Commit & Tree:   {commit_short} / {tree_short}",
+        f"Validation Lane: {lane}",
+        f"Outcomes:        Total: {counts['total']} | Passed: {counts['passed']} | Failed: {counts['failed']} | Skipped: {counts['skipped']} | Inherited: {counts['inherited']} | Unexecuted: {counts['unexecuted']}",
+        f"Reconciliation:  {reconcil['status']}",
+        f"Worker Count:    {workers} worker(s)",
+        f"Wall Duration:   {wall:.2f}s (cumulative test time: {cum:.2f}s)",
+        f"Exit Status:     {exit_str}",
+        f"Evidence Dir:    {evidence_dir}",
+        "===========================================",
+    ]
+
+    if failure_index and failure_index.get("failures"):
+        failures = failure_index["failures"]
+        new_regressions = sum(
+            1 for f in failures if f.get("classification") != "INHERITED_STAGE_TRANSFER"
+        )
+        inherited = sum(
+            1 for f in failures if f.get("classification") == "INHERITED_STAGE_TRANSFER"
+        )
+        lines.append("")
+        lines.append(
+            f"Failures: {len(failures)} total ({new_regressions} new regression(s), {inherited} inherited)"
+        )
+        lines.append("Bounded Failure Samples (max 3 shown):")
+        for idx, f in enumerate(failures[:3], start=1):
+            lines.append(f"  {idx}. [{f.get('classification')}] {f.get('nodeid')}")
+            lines.append(
+                f"     Exception: {f.get('exception_type')}: {f.get('message')}"
+            )
+            samples = f.get("sample_lines", [])
+            if samples:
+                lines.append("     Traceback sample:")
+                for s_line in samples[:15]:
+                    lines.append(f"       {s_line}")
+        if len(failures) > 3:
+            lines.append(
+                f"  ... and {len(failures) - 3} more failure(s). See failure-index.json."
+            )
+        lines.append("")
+        lines.append(f"Full diagnostics and raw logs available in: {evidence_dir}")
+    return "\n".join(lines) + "\n"
 
 
 def markdown(record):
@@ -180,8 +392,23 @@ def run(args):
         journal_path.parent.mkdir(parents=True, exist_ok=True)
         journal_path.unlink(missing_ok=True)
 
+    quiet = getattr(args, "quiet", True)
+    log_path = args.output / f"{args.name}.log"
+
     start = time.perf_counter()
-    completed = subprocess.run(command, check=False)
+    if quiet:
+        with open(log_path, "wb") as log_file:
+            completed = subprocess.run(
+                command,
+                stdout=log_file,
+                stderr=subprocess.STDOUT,
+                check=False,
+            )
+            exit_code = completed.returncode
+    else:
+        completed = subprocess.run(command, check=False)
+        exit_code = completed.returncode
+
     wall_seconds = time.perf_counter() - start
     completed_at = datetime.now(UTC).isoformat()
 
@@ -197,9 +424,8 @@ def run(args):
         completed_at=completed_at,
         command=command,
         wall_seconds=wall_seconds,
-        exit_code=completed.returncode,
-        interrupted=completed.returncode < 0
-        or completed.returncode in (2, 130, 143, 137),
+        exit_code=exit_code,
+        interrupted=exit_code < 0 or exit_code in (2, 130, 143, 137),
     )
 
     if journal_path and journal_path.is_file():
@@ -272,6 +498,12 @@ def run(args):
     artifacts_map = {
         "profile": str(inv_file.relative_to(args.output)),
     }
+    if log_path.is_file():
+        inv_log = inv_dir / f"{args.name}-{invocation_id}.log"
+        inv_log.write_bytes(log_path.read_bytes())
+        artifacts_map["log"] = str(inv_log.relative_to(args.output))
+        artifacts_map["log_sha256"] = hashlib.sha256(inv_log.read_bytes()).hexdigest()
+
     if args.junit and args.junit.is_file():
         inv_xml = inv_dir / f"{args.name}-{invocation_id}.xml"
         inv_xml.write_bytes(args.junit.read_bytes())
@@ -284,8 +516,28 @@ def run(args):
         artifacts_map["journal_sha256"] = hashlib.sha256(
             inv_journal.read_bytes()
         ).hexdigest()
-    record["artifacts"] = artifacts_map
 
+    # Build failure index and execution summary
+    failure_index = build_failure_index(
+        record.get("junit", {}), record.get("journal", {}), log_path
+    )
+    exec_summary = build_execution_summary(record, failure_index=failure_index)
+
+    fail_index_file = inv_dir / f"failures-{args.name}-{invocation_id}.json"
+    fail_index_file.write_text(json.dumps(failure_index, indent=2) + "\n")
+    (args.output / "failure-index.json").write_text(
+        json.dumps(failure_index, indent=2) + "\n"
+    )
+    artifacts_map["failure_index"] = str(fail_index_file.relative_to(args.output))
+
+    summary_file = inv_dir / f"summary-{args.name}-{invocation_id}.json"
+    summary_file.write_text(json.dumps(exec_summary, indent=2) + "\n")
+    (args.output / "execution-summary.json").write_text(
+        json.dumps(exec_summary, indent=2) + "\n"
+    )
+    artifacts_map["execution_summary"] = str(summary_file.relative_to(args.output))
+
+    record["artifacts"] = artifacts_map
     inv_file.write_text(json.dumps(record, indent=2) + "\n")
 
     # Save standard output for lane
@@ -297,6 +549,11 @@ def run(args):
     if os.environ.get("GITHUB_STEP_SUMMARY"):
         with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as summary:
             summary.write(report)
+
+    if quiet:
+        summary_text = format_terminal_summary(record, exec_summary, failure_index)
+        print(summary_text)
+
     return record["exit_code"]
 
 
@@ -312,6 +569,10 @@ def profile_focused(args):
     if pytest_targets[:1] == ["--"]:
         pytest_targets = pytest_targets[1:]
 
+    workers = args.workers
+    if workers == 1 and not getattr(args, "explicit_workers", False):
+        workers = resource_scheduler.calculate_worker_budget(lane_name="focused")
+
     command = [
         sys.executable,
         "-m",
@@ -325,8 +586,8 @@ def profile_focused(args):
         str(journal),
         "--durations=20",
     ]
-    if args.workers > 1:
-        command += ["-n", str(args.workers), "--dist", "worksteal"]
+    if workers > 1:
+        command += ["-n", str(workers), "--dist", "worksteal"]
 
     run_args = argparse.Namespace(
         name=args.name,
@@ -334,15 +595,16 @@ def profile_focused(args):
         output=args.output,
         junit=xml,
         journal=journal,
-        mode="xdist" if args.workers > 1 else "sequential",
-        workers=args.workers,
+        mode="xdist" if workers > 1 else "sequential",
+        workers=workers,
         series="focused",
         reference=None,
         invocation_id=inv_id,
+        quiet=getattr(args, "quiet", True),
     )
     code = run(run_args)
     report_path = args.output / f"{args.name}.md"
-    if report_path.is_file():
+    if report_path.is_file() and not getattr(args, "quiet", True):
         print(report_path.read_text())
     return code
 
@@ -419,6 +681,18 @@ def main():
     execute.add_argument("--workers", type=int, default=1)
     execute.add_argument("--series")
     execute.add_argument("--reference", type=Path)
+    execute.add_argument(
+        "--quiet",
+        action="store_true",
+        default=True,
+        help="Compact terminal summary (default)",
+    )
+    execute.add_argument(
+        "--verbose",
+        dest="quiet",
+        action="store_false",
+        help="Stream raw output to terminal",
+    )
     execute.add_argument("command", nargs=argparse.REMAINDER)
 
     prof = actions.add_parser(
@@ -428,6 +702,18 @@ def main():
     prof.add_argument("--name", default="focused")
     prof.add_argument("--output", type=Path, default=Path("artifacts/ci-profile"))
     prof.add_argument("--workers", type=int, default=1)
+    prof.add_argument(
+        "--quiet",
+        action="store_true",
+        default=True,
+        help="Compact terminal summary (default)",
+    )
+    prof.add_argument(
+        "--verbose",
+        dest="quiet",
+        action="store_false",
+        help="Stream raw output to terminal",
+    )
     prof.add_argument("pytest_args", nargs=argparse.REMAINDER)
 
     aggregate = actions.add_parser("compare")
@@ -445,6 +731,7 @@ def main():
         print(json.dumps(coverage(args.expected, args.profiles)))
         return 0
     if args.action == "profile":
+        args.explicit_workers = "--workers" in sys.argv
         return profile_focused(args)
     return run(args)
 
