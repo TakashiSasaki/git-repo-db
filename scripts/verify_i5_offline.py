@@ -384,7 +384,9 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--workers", type=int, default=4)
     parser.add_argument("--execute", action="store_true")
-    parser.add_argument("--verbose", action="store_true", help="Print complete JSON outputs")
+    parser.add_argument(
+        "--verbose", action="store_true", help="Print complete JSON outputs"
+    )
     args = parser.parse_args()
     os.environ["PATH"] = (
         str(Path(sys.executable).parent) + os.pathsep + os.environ.get("PATH", "")
@@ -464,7 +466,9 @@ def main():
     if verbose:
         print(json.dumps(summary), flush=True)
     else:
-        all_passed = not changed and all(cohort_succeeded(value) for value in runs.values())
+        all_passed = not changed and all(
+            cohort_succeeded(value) for value in runs.values()
+        )
         outcome = "PASSED" if all_passed else "FAILED"
         print(
             f"[i5-offline] overall: {outcome} ({len(runs)} cohort(s) executed, inputs_unchanged={not changed}); summary: {out / 'summary.json'}",

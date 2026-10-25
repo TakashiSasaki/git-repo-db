@@ -852,7 +852,9 @@ def main():
                     "acceptance_verdict": summary["acceptance_verdict"],
                     "baseline_nodes": summary["baseline_nodes"],
                     "in_scope_baseline_nodes": summary["in_scope_baseline_nodes"],
-                    "out_of_scope_baseline_nodes": summary["out_of_scope_baseline_nodes"],
+                    "out_of_scope_baseline_nodes": summary[
+                        "out_of_scope_baseline_nodes"
+                    ],
                     "expected_nodes": summary["expected_nodes"],
                     "current_nodes": summary["current_nodes"],
                     "missing_nodes": summary["missing_nodes_count"],

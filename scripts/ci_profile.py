@@ -146,7 +146,9 @@ def sha256_path(path: Path) -> str:
 def atomic_write_text(path: Path, content: str) -> None:
     """Write text to a temporary file in the destination directory and replace atomically."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    with tempfile.NamedTemporaryFile("w", dir=path.parent, delete=False, encoding="utf-8") as tf:
+    with tempfile.NamedTemporaryFile(
+        "w", dir=path.parent, delete=False, encoding="utf-8"
+    ) as tf:
         tf.write(content)
         tmp_name = tf.name
     os.replace(tmp_name, path)
@@ -162,9 +164,11 @@ def atomic_copy(src: Path, dst: Path) -> None:
     os.replace(tmp_name, dst)
 
 
-def build_failure_index(junit_data, journal_data=None, log_path=None, reconciliation=None):
+def build_failure_index(
+    junit_data, journal_data=None, log_path=None, reconciliation=None
+):
     """Build structured failure index.
-    
+
     Never classify an inherited failure from a test name alone.
     Uses authoritative reconciliation evidence when available; otherwise labels failures as unclassified.
     """
@@ -242,7 +246,7 @@ def build_failure_index(junit_data, journal_data=None, log_path=None, reconcilia
 
 def build_execution_summary(record, failure_index=None, reconciliation=None):
     """Build compact execution summary.
-    
+
     Verifies exact selected/executed node multisets before reporting exact reconciliation.
     Never produces PASS for missing, duplicate, unexpected, interrupted, or unverified execution.
     """
@@ -261,7 +265,9 @@ def build_execution_summary(record, failure_index=None, reconciliation=None):
 
     if failure_index:
         for f in failure_index.get("failures", []):
-            if f.get("is_inherited") or f.get("classification", "").startswith("INHERITED_"):
+            if f.get("is_inherited") or f.get("classification", "").startswith(
+                "INHERITED_"
+            ):
                 inherited_count += 1
             elif f.get("classification") == "CHANGED_FAILURE":
                 changed_failures_count += 1
@@ -295,7 +301,12 @@ def build_execution_summary(record, failure_index=None, reconciliation=None):
         "unexecuted": len(missing_nodes),
     }
 
-    interrupted = record.get("interrupted", False) or record.get("exit_code") in (2, 130, 143, 137)
+    interrupted = record.get("interrupted", False) or record.get("exit_code") in (
+        2,
+        130,
+        143,
+        137,
+    )
     exit_code = record.get("exit_code", -1)
 
     reconciliation_status = "NOT_EVALUATED"
@@ -322,7 +333,11 @@ def build_execution_summary(record, failure_index=None, reconciliation=None):
             elif (
                 inherited_count > 0
                 and (passed_count + inherited_count == len(selected_nodes))
-                and (new_regressions_count == 0 and changed_failures_count == 0 and unclassified_count == 0)
+                and (
+                    new_regressions_count == 0
+                    and changed_failures_count == 0
+                    and unclassified_count == 0
+                )
             ):
                 reconciliation_status = "RECONCILED_WITH_INHERITED_FAILURES"
                 reconciliation_consistent = True
@@ -387,13 +402,19 @@ def format_terminal_summary(record, execution_summary, failure_index=None):
         "profile", str(Path("artifacts/ci-profile/invocations") / inv_id)
     )
 
-    verdict = "PASSED" if (exit_code == 0 and reconcil.get("consistent", True)) else "FAILED"
+    verdict = (
+        "PASSED" if (exit_code == 0 and reconcil.get("consistent", True)) else "FAILED"
+    )
     command_str = " ".join(record.get("command", []))
-    is_pytest = "pytest" in command_str or counts["total"] > 0 or bool(record.get("selection"))
+    is_pytest = (
+        "pytest" in command_str or counts["total"] > 0 or bool(record.get("selection"))
+    )
 
     lines = []
     if not is_pytest:
-        lines.append(f"[{lane}] {verdict} (exit={exit_code}, wall={wall:.2f}s, commit={commit_short}, tree={tree_short})")
+        lines.append(
+            f"[{lane}] {verdict} (exit={exit_code}, wall={wall:.2f}s, commit={commit_short}, tree={tree_short})"
+        )
         lines.append(f"  evidence: {evidence_dir}")
     else:
         lines.append(
@@ -409,18 +430,33 @@ def format_terminal_summary(record, execution_summary, failure_index=None):
 
     if failure_index and failure_index.get("failures"):
         failures = failure_index["failures"]
-        inherited = sum(1 for f in failures if f.get("is_inherited") or f.get("classification", "").startswith("INHERITED_"))
+        inherited = sum(
+            1
+            for f in failures
+            if f.get("is_inherited")
+            or f.get("classification", "").startswith("INHERITED_")
+        )
         new_or_unclass = len(failures) - inherited
-        lines.append(f"  failures: {len(failures)} total ({new_or_unclass} new/unclassified, {inherited} inherited)")
+        lines.append(
+            f"  failures: {len(failures)} total ({new_or_unclass} new/unclassified, {inherited} inherited)"
+        )
         for idx, f in enumerate(failures[:3], start=1):
-            msg = (f.get("message") or "").splitlines()[0] if f.get("message") else "error"
-            lines.append(f"    {idx}. [{f.get('classification')}] {f.get('nodeid')}: {msg}")
+            msg = (
+                (f.get("message") or "").splitlines()[0]
+                if f.get("message")
+                else "error"
+            )
+            lines.append(
+                f"    {idx}. [{f.get('classification')}] {f.get('nodeid')}: {msg}"
+            )
             samples = f.get("sample_lines", [])
             if samples:
                 for s in samples[:3]:
                     lines.append(f"       {s}")
         if len(failures) > 3:
-            lines.append(f"    ... and {len(failures) - 3} more failure(s). See {evidence_dir}")
+            lines.append(
+                f"    ... and {len(failures) - 3} more failure(s). See {evidence_dir}"
+            )
 
     return "\n".join(lines) + "\n"
 
@@ -486,8 +522,16 @@ def run(args):
     inv_dir.mkdir(parents=True, exist_ok=True)
 
     inv_log = inv_dir / f"{args.name}-{invocation_id}.log"
-    inv_xml = (inv_dir / f"{args.name}-{invocation_id}.xml") if getattr(args, "junit", None) else None
-    inv_journal = (inv_dir / f"{args.name}-{invocation_id}-journal.jsonl") if getattr(args, "journal", None) else None
+    inv_xml = (
+        (inv_dir / f"{args.name}-{invocation_id}.xml")
+        if getattr(args, "junit", None)
+        else None
+    )
+    inv_journal = (
+        (inv_dir / f"{args.name}-{invocation_id}-journal.jsonl")
+        if getattr(args, "journal", None)
+        else None
+    )
 
     junit_arg = getattr(args, "junit", None)
     junit_path = Path(junit_arg) if junit_arg else None
@@ -559,7 +603,9 @@ def run(args):
     exit_code = 0
     if is_pytest and workers > 1:
         lock_file = args.output / ".resource.lock"
-        with resource_scheduler.scoped_host_cpu_reservation(workers, lock_path=lock_file) as granted:
+        with resource_scheduler.scoped_host_cpu_reservation(
+            workers, lock_path=lock_file
+        ) as granted:
             if granted != workers and not getattr(args, "explicit_workers", False):
                 workers = granted
                 if "-n" in command:
@@ -630,7 +676,9 @@ def run(args):
                 record["junit"] = junit(target_xml)
             except (OSError, ValueError, ET.ParseError):
                 if record.get("journal", {}).get("count", 0) > 0:
-                    record["junit"] = ci_journal.journal_to_junit_summary(record["journal"])
+                    record["junit"] = ci_journal.journal_to_junit_summary(
+                        record["journal"]
+                    )
                     record["measurement_recovered_from_journal"] = True
                 else:
                     record["measurement_error"] = "Missing or malformed JUnit"

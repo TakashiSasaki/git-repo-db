@@ -5,7 +5,6 @@ import json
 import sys
 import zipfile
 from argparse import Namespace
-from pathlib import Path
 
 from scripts import ci_profile, ci_query
 
@@ -318,8 +317,11 @@ def test_quiet_execution_streams_log_and_saves_indices(tmp_path):
 
 def test_concurrent_invocations_isolated_paths(tmp_path):
     """Verify that multiple concurrent invocations in the same output dir do not collide."""
+
     def run_worker(idx):
-        script = f"import sys, time\ntime.sleep(0.05)\nprint('worker {idx}')\nsys.exit(0)\n"
+        script = (
+            f"import sys, time\ntime.sleep(0.05)\nprint('worker {idx}')\nsys.exit(0)\n"
+        )
         args = Namespace(
             command=[sys.executable, "-c", script],
             output=tmp_path,
@@ -446,7 +448,10 @@ def test_ci_query_cli(tmp_path, capsys):
     assert "Total matching failures: 3" in captured.out
     assert "[NEW_REGRESSION] tests/unit/test_sample.py::test_boom" in captured.out
     assert "[CHANGED_FAILURE] tests/unit/test_sample.py::test_changed" in captured.out
-    assert "[INHERITED_STAGE_TRANSFER] tests/integration/test_transfer.py::test_transfer_blocked" in captured.out
+    assert (
+        "[INHERITED_STAGE_TRANSFER] tests/integration/test_transfer.py::test_transfer_blocked"
+        in captured.out
+    )
 
     # Test query failures with --new-only: must keep NEW_REGRESSION and CHANGED_FAILURE, excluding only inherited!
     assert ci_query.main(["failures", str(tmp_path), "--new-only"]) == 1
@@ -457,7 +462,12 @@ def test_ci_query_cli(tmp_path, capsys):
     assert "test_transfer_blocked" not in captured.out
 
     # Test query specific failure node exact match
-    assert ci_query.main(["failure", str(tmp_path), "--node", "tests/unit/test_sample.py::test_boom"]) == 0
+    assert (
+        ci_query.main(
+            ["failure", str(tmp_path), "--node", "tests/unit/test_sample.py::test_boom"]
+        )
+        == 0
+    )
     captured = capsys.readouterr()
     assert "AssertionError: boom" in captured.out
 
@@ -475,6 +485,7 @@ def test_ci_query_log_filter_and_receipt_extract(tmp_path):
     zip_bytes = buf.getvalue()
     b64_payload = base64.b64encode(zip_bytes).decode("ascii")
     import hashlib
+
     digest = hashlib.sha256(zip_bytes).hexdigest()
 
     log_content = (

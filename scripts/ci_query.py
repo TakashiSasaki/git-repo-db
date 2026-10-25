@@ -87,7 +87,9 @@ def query_summary(args: argparse.Namespace) -> int:
 
     consistent = summary.get("reconciliation", {}).get("consistent", True)
     exit_code = summary.get("exit_code", -1)
-    return 0 if (exit_code == 0 and consistent) else (1 if exit_code == 0 else exit_code)
+    return (
+        0 if (exit_code == 0 and consistent) else (1 if exit_code == 0 else exit_code)
+    )
 
 
 def query_failures(args: argparse.Namespace) -> int:
@@ -123,12 +125,17 @@ def query_failures(args: argparse.Namespace) -> int:
             if not (
                 f.get("is_inherited")
                 or f.get("classification", "").startswith("INHERITED_")
-                or f.get("classification") in ("STAGE_TRANSFER", "ADMISSION_PERMISSION_DENIED")
+                or f.get("classification")
+                in ("STAGE_TRANSFER", "ADMISSION_PERMISSION_DENIED")
             )
         ]
 
     total_matching = len(failures)
-    limit = args.limit if getattr(args, "limit", None) is not None and args.limit > 0 else None
+    limit = (
+        args.limit
+        if getattr(args, "limit", None) is not None and args.limit > 0
+        else None
+    )
     display_failures = failures[:limit] if limit else failures
 
     if args.json:
@@ -201,7 +208,7 @@ def query_single_failure(args: argparse.Namespace) -> int:
         if samples:
             limit = None if getattr(args, "full", False) else 15
             print("\nTraceback Sample:")
-            for line in (samples if limit is None else samples[:limit]):
+            for line in samples if limit is None else samples[:limit]:
                 print(f"  {line}")
             if limit is not None and len(samples) > limit:
                 print(
@@ -350,7 +357,10 @@ def main(argv: list[str] | None = None) -> int:
         "log_path", type=Path, help="Path to log file containing CI_RECEIPTS"
     )
     ext_p.add_argument(
-        "--dest", type=Path, required=True, help="Destination directory to unpack receipts"
+        "--dest",
+        type=Path,
+        required=True,
+        help="Destination directory to unpack receipts",
     )
 
     args = parser.parse_args(argv)
