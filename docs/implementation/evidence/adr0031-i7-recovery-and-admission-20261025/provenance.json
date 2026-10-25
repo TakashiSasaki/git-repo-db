@@ -1,0 +1,66 @@
+{
+  "directory": "docs/implementation/evidence/adr0031-i7-recovery-and-admission-20261025",
+  "file_count": 13,
+  "files": {
+    "MATRIX.md": {
+      "bytes": 4183,
+      "sha256": "29a8e71f6665c658645c185f9964797c9cedb808cd5a27a8c7ded8010ec03ad3",
+      "git_blob_oid": "55c31bde2591b715022a85c36c7b3e04aa45b493"
+    },
+    "REPORT.md": {
+      "bytes": 9171,
+      "sha256": "695bbf48a8356057815fb334636332f97127642e94b33039c529811eeb368d54",
+      "git_blob_oid": "660e5b5f3ac2b1ce8db7f2e53fa5559a77aba71e"
+    },
+    "distribution.json": {
+      "bytes": 2121,
+      "sha256": "c1ae81b0981b957cb20f73518cd580a3250d64e074c32317ce68668b94526911",
+      "git_blob_oid": "23fc74c4af818109739495dfca0b2553202556d2"
+    },
+    "failure-comparison.json": {
+      "bytes": 494102,
+      "sha256": "2b31603cb151a514a181dc30d7e14edacb6010677303ec423d8736bbc597916d",
+      "git_blob_oid": "a1d2573f225a4b5ecbe8070ab793354690335fc7"
+    },
+    "findings.json": {
+      "bytes": 3,
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+      "git_blob_oid": "fe51488c7066f6687ef680d6bfaa4f7768ef205c"
+    },
+    "sdist-contract.json": {
+      "bytes": 54548,
+      "sha256": "088da8ac260fda57b7d7635018f682632e71f0cfd41c76cc0b4a7c6b635cdeb0",
+      "git_blob_oid": "7be5001c692289df57468b4a77d85a073d1d3098"
+    },
+    "summary.json": {
+      "bytes": 3508,
+      "sha256": "27c1e1148dfba5f7803f95951be143631b5134899c65e65ca45e826cbec12ed2",
+      "git_blob_oid": "27882b609e164c3bda8f5ce09f13c092c87137a1"
+    },
+    "raw/preflight.json": {
+      "bytes": 2600,
+      "sha256": "03b671d9535e81f590512b250e31f921d6c4c9c8495567ef0b26d2d58bb0c47c",
+      "git_blob_oid": "d10f44e045db4cdae231d40197bf4edd3d506249"
+    },
+    "raw/pytest_exit_code.txt": {
+      "bytes": 2,
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "git_blob_oid": "d00491fd7e5bb6fa28c517a0bb32b8b506539d4d"
+    },
+    "raw/regression_collected.txt": {
+      "bytes": 769281,
+      "sha256": "6dc8ca0f809e7f44da6b964b7315e3d2044e8876d3692d686d70a7915a92e8cf",
+      "git_blob_oid": "5db1621540ae9bb9280e39d67495bef1fe3e316e"
+    },
+    "raw/regressions.log": {
+      "bytes": 286797,
+      "sha256": "e013f6ec9da5528c0edaeac43c3cbfd259c4384737f140793ed8f87ddac0fa5d",
+      "git_blob_oid": "2c1598c8d5143bc94c1df087b3d1c9bc4fc16024"
+    },
+    "raw/regressions.xml": {
+      "bytes": 1202537,
+      "sha256": "1b8b3a8c747bd76831854799b5ad2c4cf5a83852e811ff885a8125f222687f55",
+      "git_blob_oid": "552fd63e81ab990cbf1eb5deaf6f82e4fa56b5fe"
+    }
+  }
+}
