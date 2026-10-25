@@ -25,6 +25,15 @@ environment exists. Ubuntu 24.04's SQLite 3.45.1 is below the product floor.
 - Network for the first run only (about 30 MB archive, then locked wheels).
   No elevated privileges are used.
 
+**CPU architecture validation scope:** x86_64 and aarch64 are currently
+available bootstrap platforms, **not declared release targets**. During ordinary
+development, testing one available CPU architecture is sufficient; the presence
+of an x86_64 GitHub Actions runner does not require a separate x86_64 local
+bootstrap run after a successful aarch64 validation. Supported architectures
+for any future release will be selected explicitly at release planning.
+See [testing and release validation](testing.md). Existing SQLite product
+safety requirements apply on every architecture used.
+
 ## First-time setup
 
 ```bash
