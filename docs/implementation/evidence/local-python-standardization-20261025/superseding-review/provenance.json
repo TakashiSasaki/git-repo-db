@@ -1,0 +1,21 @@
+{
+  "directory": "docs/implementation/evidence/local-python-standardization-20261025/superseding-review",
+  "file_count": 3,
+  "files": {
+    "REPORT.md": {
+      "bytes": 15707,
+      "sha256": "299c2feb1e11b06b8259b13f22f034c4dc6aeb8e47a579ead8991029d6d7cfc7",
+      "git_blob_oid": "2845865b715e381196e8893e8938de43ae974849"
+    },
+    "findings.json": {
+      "bytes": 3,
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+      "git_blob_oid": "fe51488c7066f6687ef680d6bfaa4f7768ef205c"
+    },
+    "summary.json": {
+      "bytes": 3435,
+      "sha256": "6e0ba3f5610651ac0fdd633ea3ca8c8efdba543ebfb520ee10accba39279a4c1",
+      "git_blob_oid": "2b9b38d6458a5a15cf8bf6cffd9206405f4e0dc9"
+    }
+  }
+}
