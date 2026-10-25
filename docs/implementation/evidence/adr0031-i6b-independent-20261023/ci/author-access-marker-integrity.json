@@ -1,0 +1,18 @@
+[
+  {
+    "member": "0_registry-runtime.txt",
+    "claimed_bytes": 1948089,
+    "bytes": 1947999,
+    "claimed_sha256": "0847e6e5445d0d3726bda2020b2438a1b7ee2ac85da4931aced08055fc6199ea",
+    "sha256": "ff6a320b05ea26f7b7784a9e126721513919facaa0faac26c00034325b25958e",
+    "valid": false
+  },
+  {
+    "member": "registry-runtime/19_Emit indexed verification receipts to job log.txt",
+    "claimed_bytes": 1948089,
+    "bytes": 1947999,
+    "claimed_sha256": "0847e6e5445d0d3726bda2020b2438a1b7ee2ac85da4931aced08055fc6199ea",
+    "sha256": "e8afd4d1511c5b87f7f5abc2c8ea661b8586b26c586766e447c21c8b6b3a084d",
+    "valid": false
+  }
+]

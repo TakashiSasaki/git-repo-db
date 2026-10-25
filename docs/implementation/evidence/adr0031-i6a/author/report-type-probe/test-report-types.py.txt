@@ -1,0 +1,9 @@
+import unittest
+class TestReports(unittest.TestCase):
+    def test_positive(self):
+        for value in (1,2):
+            with self.subTest(value=value):
+                self.assertGreater(value,0)
+    def test_negative_control(self):
+        with self.subTest(value=0):
+            self.assertGreater(0,1)

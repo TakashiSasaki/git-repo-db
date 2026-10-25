@@ -1,0 +1,51 @@
+"""Compare actual failed-phase traceback frames independently of pytest text style.
+
+Raw JUnit text remains retained separately. #152 full used tb=auto, whereas the
+Author's full run uses tb=long, which omits some displayed function labels.
+"""
+import argparse
+import gzip
+import json
+from pathlib import Path
+import re
+
+def read(path):
+    raw=path.read_bytes()
+    return gzip.decompress(raw) if path.suffix=='.gz' else raw
+
+def failed(directory):
+    result={}
+    for path in directory.glob('gw*.reports.jsonl*'):
+        for line in read(path).splitlines():
+            row=json.loads(line)
+            if row.get('event')!='report' or row.get('outcome')!='failed':continue
+            key=(row['nodeid'],row['phase']);assert key not in result
+            row=dict(row)
+            frames=[]
+            for frame in row.get('frames',[]):
+                match=re.search(r'(tests/.*|src/repo_catalog/.*)',frame['path'])
+                if match:frames.append({**frame,'path':match.group()})
+            row['project_frames']=frames;result[key]=row
+    return result
+
+p=argparse.ArgumentParser(description=__doc__)
+p.add_argument('--old',type=Path,required=True);p.add_argument('--new',type=Path,required=True);p.add_argument('--out',type=Path,required=True)
+a=p.parse_args();a.out.mkdir(parents=True,exist_ok=False)
+old,new=failed(a.old),failed(a.new);rows=[]
+for key in sorted(set(old)|set(new)):
+    x,y=old.get(key,{}),new.get(key,{})
+    oldf=x.get('project_frames',[]);newf=y.get('project_frames',[])
+    rows.append({'nodeid':key[0],'phase':key[1],'old':x,'new':y,
+        'exception_type_changed':x.get('exception_type')!=y.get('exception_type'),
+        'refusal_code_changed':x.get('code')!=y.get('code'),
+        'project_frame_functions_changed':[(r['path'],r['function']) for r in oldf]!=[(r['path'],r['function']) for r in newf],
+        'project_frame_lines_changed':oldf!=newf})
+summary={'old_failed_phases':len(old),'new_failed_phases':len(new),'same_failed_node_phase_set':set(old)==set(new),
+    'exception_type_changes':[r['nodeid'] for r in rows if r['exception_type_changed']],
+    'refusal_code_changes':[r['nodeid'] for r in rows if r['refusal_code_changed']],
+    'project_frame_function_changes':[r['nodeid'] for r in rows if r['project_frame_functions_changed']],
+    'project_frame_line_changes':[r['nodeid'] for r in rows if r['project_frame_lines_changed']],
+    'scope':'Actual pytest worker ExceptionInfo tracebacks, with only project path prefixes normalized. Raw rows and line coordinates retained. Complements JUnit text presentation comparison, never replaces or rewrites it.'}
+(a.out/'nodes.json.gz').write_bytes(gzip.compress((json.dumps(rows,indent=2)+'\n').encode(),mtime=0))
+(a.out/'summary.json').write_text(json.dumps(summary,indent=2)+'\n')
+print(json.dumps(summary,indent=2))

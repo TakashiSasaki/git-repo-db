@@ -1,0 +1,401 @@
+{
+  "scope": "Fresh baseline re-read with frozen compare_i5_failures.index source-only frame projection; installed frames intentionally absent under that historical definition",
+  "same_source_paths_functions": 24,
+  "rows": [
+    {
+      "class": "tests.integration.i2.test_provider_intake",
+      "name": "test_graphql_event_does_not_infer_destination_from_current_issue_repository",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.i2.test_provider_intake",
+      "name": "test_graphql_transfer_parent_namespace_and_original_type",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.i2.test_provider_intake",
+      "name": "test_non_transfer_cannot_promote_repository_fields_or_forged_flag[False]",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.i2.test_provider_intake",
+      "name": "test_non_transfer_cannot_promote_repository_fields_or_forged_flag[True]",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.i2.test_provider_intake",
+      "name": "test_reacquired_event_does_not_reissue_provenance_after_mapping_change",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.i2.test_provider_intake",
+      "name": "test_same_original_event_key_cannot_change_observation_time",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.i2.test_provider_intake",
+      "name": "test_separate_event_reports_never_pair_endpoints",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.i2.test_provider_intake",
+      "name": "test_transfer_preserves_complete_original_endpoint_states[endpoints0-expected0]",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.i2.test_provider_intake",
+      "name": "test_transfer_preserves_complete_original_endpoint_states[endpoints1-expected1]",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.i2.test_provider_intake",
+      "name": "test_transfer_preserves_complete_original_endpoint_states[endpoints2-expected2]",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.i2.test_provider_intake",
+      "name": "test_transfer_preserves_complete_original_endpoint_states[endpoints3-expected3]",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.i2.test_provider_intake",
+      "name": "test_transfer_preserves_complete_original_endpoint_states[endpoints4-expected4]",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.i2.test_provider_intake",
+      "name": "test_transfer_type_and_endpoint_evidence_must_belong_to_same_report[clock]",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.i2.test_provider_intake",
+      "name": "test_transfer_type_and_endpoint_evidence_must_belong_to_same_report[event_resource]",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.i2.test_provider_intake",
+      "name": "test_transfer_type_and_endpoint_evidence_must_belong_to_same_report[members]",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.i2.test_provider_intake",
+      "name": "test_transfer_type_and_endpoint_evidence_must_belong_to_same_report[provenance]",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.i23.test_provider_exchange",
+      "name": "test_genuine_transfer_event_report_is_preserved_whole[endpoints0-states0]",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.i23.test_provider_exchange",
+      "name": "test_genuine_transfer_event_report_is_preserved_whole[endpoints1-states1]",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.i23.test_provider_exchange",
+      "name": "test_genuine_transfer_event_report_is_preserved_whole[endpoints2-states2]",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.i23.test_provider_exchange",
+      "name": "test_genuine_transfer_event_report_is_preserved_whole[endpoints3-states3]",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.i23.test_provider_exchange",
+      "name": "test_genuine_transfer_event_report_is_preserved_whole[endpoints4-states4]",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.i23.test_provider_exchange",
+      "name": "test_i2_source_coverage_and_native_capture_notes_survive_i3",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.i3.test_selective_exchange",
+      "name": "test_contradictory_coverage_proof_is_rejected_before_binding[members_json-[]-collection]",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.i3.test_selective_exchange",
+      "name": "test_contradictory_coverage_proof_is_rejected_before_binding[provenance_json-{\"evidence\":\"different\",\"source\":\"forged\"}-collection]",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.i3.test_selective_exchange",
+      "name": "test_contradictory_coverage_proof_is_rejected_before_binding[terminal_state-partial-collection]",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.i3.test_selective_exchange",
+      "name": "test_modeled_collection_member_cannot_borrow_another_parent[collections]",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.i3.test_selective_exchange",
+      "name": "test_modeled_collection_member_cannot_borrow_another_parent[resource_relations]",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.i3.test_selective_exchange",
+      "name": "test_transfer_reports_never_shrunk_or_mixed",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.i4.test_query_search_backup",
+      "name": "test_paired_restore_preserves_all_keys_dependencies_and_excludes_other_stores",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.i5.test_independent_e2e",
+      "name": "test_independent_selection_does_not_turn_dependencies_into_permission[C]",
+      "same_legacy_source_frames": true
+    },
+    {
+      "class": "tests.integration.i5.test_independent_e2e",
+      "name": "test_independent_selection_does_not_turn_dependencies_into_permission[OC]",
+      "same_legacy_source_frames": true
+    },
+    {
+      "class": "tests.integration.i5.test_independent_e2e",
+      "name": "test_independent_selection_does_not_turn_dependencies_into_permission[O]",
+      "same_legacy_source_frames": true
+    },
+    {
+      "class": "tests.integration.i5.test_independent_e2e",
+      "name": "test_independent_selection_does_not_turn_dependencies_into_permission[RC]",
+      "same_legacy_source_frames": true
+    },
+    {
+      "class": "tests.integration.i5.test_independent_e2e",
+      "name": "test_independent_selection_does_not_turn_dependencies_into_permission[ROC]",
+      "same_legacy_source_frames": true
+    },
+    {
+      "class": "tests.integration.i5.test_independent_e2e",
+      "name": "test_independent_selection_does_not_turn_dependencies_into_permission[RO]",
+      "same_legacy_source_frames": true
+    },
+    {
+      "class": "tests.integration.i5.test_independent_e2e",
+      "name": "test_independent_selection_does_not_turn_dependencies_into_permission[R]",
+      "same_legacy_source_frames": true
+    },
+    {
+      "class": "tests.integration.i5.test_independent_e2e",
+      "name": "test_independent_selection_does_not_turn_dependencies_into_permission[empty]",
+      "same_legacy_source_frames": true
+    },
+    {
+      "class": "tests.integration.i5.test_independent_e2e",
+      "name": "test_mapping_effect_stays_local_across_exchange_search_and_restore[correct]",
+      "same_legacy_source_frames": true
+    },
+    {
+      "class": "tests.integration.i5.test_independent_e2e",
+      "name": "test_mapping_effect_stays_local_across_exchange_search_and_restore[dispute]",
+      "same_legacy_source_frames": true
+    },
+    {
+      "class": "tests.integration.i5.test_independent_e2e",
+      "name": "test_mapping_effect_stays_local_across_exchange_search_and_restore[withdraw]",
+      "same_legacy_source_frames": true
+    },
+    {
+      "class": "tests.integration.i5.test_independent_e2e",
+      "name": "test_omitted_selection_needs_explicit_all_and_empty_overrides_all",
+      "same_legacy_source_frames": true
+    },
+    {
+      "class": "tests.integration.i5.test_independent_e2e",
+      "name": "test_received_paired_backup_preserves_complete_rows_keys_provenance_and_oid_refs",
+      "same_legacy_source_frames": true
+    },
+    {
+      "class": "tests.integration.i5.test_independent_e2e",
+      "name": "test_received_search_is_disposable_and_rebuild_preserves_authority[garbage]",
+      "same_legacy_source_frames": true
+    },
+    {
+      "class": "tests.integration.i5.test_independent_e2e",
+      "name": "test_received_search_is_disposable_and_rebuild_preserves_authority[missing]",
+      "same_legacy_source_frames": true
+    },
+    {
+      "class": "tests.integration.i5.test_independent_e2e",
+      "name": "test_received_search_is_disposable_and_rebuild_preserves_authority[row_key]",
+      "same_legacy_source_frames": true
+    },
+    {
+      "class": "tests.integration.i5.test_independent_e2e",
+      "name": "test_received_search_is_disposable_and_rebuild_preserves_authority[stale]",
+      "same_legacy_source_frames": true
+    },
+    {
+      "class": "tests.integration.i5.test_independent_e2e",
+      "name": "test_received_search_is_disposable_and_rebuild_preserves_authority[text]",
+      "same_legacy_source_frames": true
+    },
+    {
+      "class": "tests.integration.i5.test_independent_e2e",
+      "name": "test_selected_source_inventory_cannot_expand_repository_registration",
+      "same_legacy_source_frames": true
+    },
+    {
+      "class": "tests.integration.i5.test_independent_e2e",
+      "name": "test_transfer_reports_never_mix_across_observations_or_identifier_namespaces",
+      "same_legacy_source_frames": true
+    },
+    {
+      "class": "tests.integration.p1.test_context_relations",
+      "name": "test_counterexample_5_transfer_cases_no_invented_endpoints",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.p1.test_context_relations",
+      "name": "test_partial_transfer_alternatives_remain_selection_truncated",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.p1.test_context_relations",
+      "name": "test_transfer_event_genuine_type_enforcement_across_typed_paths",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.p1.test_context_relations",
+      "name": "test_transfer_event_reports_generator_selected_repositories_and_invariants",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.p1.test_context_relations",
+      "name": "test_transfer_generic_admission_requires_complete_report[transfer_from_repository-False-False]",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.p1.test_context_relations",
+      "name": "test_transfer_generic_admission_requires_complete_report[transfer_from_repository-False-True]",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.p1.test_context_relations",
+      "name": "test_transfer_generic_admission_requires_complete_report[transfer_from_repository-True-False]",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.p1.test_context_relations",
+      "name": "test_transfer_generic_admission_requires_complete_report[transfer_from_repository-True-True]",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.p1.test_context_relations",
+      "name": "test_transfer_generic_admission_requires_complete_report[transfer_to_repository-False-False]",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.p1.test_context_relations",
+      "name": "test_transfer_generic_admission_requires_complete_report[transfer_to_repository-False-True]",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.p1.test_context_relations",
+      "name": "test_transfer_generic_admission_requires_complete_report[transfer_to_repository-True-False]",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.p1.test_context_relations",
+      "name": "test_transfer_generic_admission_requires_complete_report[transfer_to_repository-True-True]",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.p1.test_context_relations",
+      "name": "test_transfer_report_fk_failure_rolls_back_whole_unit",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.p1.test_context_relations",
+      "name": "test_transfer_stored_type_is_never_inferred[absent]",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.p1.test_context_relations",
+      "name": "test_transfer_stored_type_is_never_inferred[members]",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.p1.test_context_relations",
+      "name": "test_transfer_stored_type_is_never_inferred[missing_clock]",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.p1.test_context_relations",
+      "name": "test_transfer_stored_type_is_never_inferred[missing_provider]",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.p1.test_context_relations",
+      "name": "test_transfer_stored_type_is_never_inferred[missing_type]",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.p1.test_context_relations",
+      "name": "test_transfer_stored_type_is_never_inferred[provided_roles]",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.p1.test_context_relations",
+      "name": "test_transfer_stored_type_is_never_inferred[wrong_type]",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.p1.test_context_relations",
+      "name": "test_transfer_supports_both_endpoints_without_cross_borrowing",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.p3.test_production_context",
+      "name": "test_production_context_relation_facade_methods",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.p5.test_exchange",
+      "name": "test_exchange_evaluates_core_dependencies_against_receiver_core",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.p5.test_exchange",
+      "name": "test_exchange_export_import_repeat_reverse_and_multi_hop",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.p5.test_exchange",
+      "name": "test_exchange_refuses_intrinsic_spoofing_without_validated_bytes",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.integration.p5.test_exchange",
+      "name": "test_exchange_refuses_tampered_payloads_without_store_corruption",
+      "same_legacy_source_frames": false
+    },
+    {
+      "class": "tests.packaging.test_p5_distribution",
+      "name": "test_p5_installed_acquisition_and_exchange[sha1-sdist-wheel]",
+      "same_legacy_source_frames": true
+    },
+    {
+      "class": "tests.packaging.test_p5_distribution",
+      "name": "test_p5_installed_acquisition_and_exchange[sha1-wheel]",
+      "same_legacy_source_frames": true
+    },
+    {
+      "class": "tests.packaging.test_p5_distribution",
+      "name": "test_p5_installed_acquisition_and_exchange[sha256-sdist-wheel]",
+      "same_legacy_source_frames": true
+    },
+    {
+      "class": "tests.packaging.test_p5_distribution",
+      "name": "test_p5_installed_acquisition_and_exchange[sha256-wheel]",
+      "same_legacy_source_frames": true
+    }
+  ]
+}

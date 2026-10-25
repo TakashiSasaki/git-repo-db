@@ -1,0 +1,11 @@
+{
+  "contract_blocking_findings": [],
+  "scope": "Independent isolated source/direct/sdist wheel agreement and installed tested lanes",
+  "limitations": [
+    "Original Access smoke child/pytest exit1 PERMISSION_DENIED; tail28 assertions not reached",
+    "120 historical evidence files omitted from sdist; exact original product/build/test/workflow inputs retained",
+    "No full source run in this distribution scope, no live/benchmark opt-in or hosted Release acceptance",
+    "Elapsed times overlap parent full source workload and are not comparative benchmark measurements"
+  ],
+  "remaining_actions": "No product modification attempted. Existing source-retention and unconnected-smoke limitations remain separately reported."
+}

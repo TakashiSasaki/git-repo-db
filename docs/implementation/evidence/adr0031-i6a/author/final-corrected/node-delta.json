@@ -1,0 +1,27 @@
+{
+  "added": [
+    "tests/integration/p1/test_disposition.py::test_i6a_admission_modules_are_explicitly_owned_without_prefix_exclusion",
+    "tests/integration/p1/test_disposition.py::test_public_runtime_guard_detects_every_isolated_stage[from .sqlite.context_admission import AdmissionTransactions]",
+    "tests/integration/p1/test_disposition.py::test_public_runtime_guard_detects_every_isolated_stage[from repo_catalog.adapters.sqlite import context_admission]",
+    "tests/integration/p1/test_disposition.py::test_public_runtime_guard_detects_every_isolated_stage[from repo_catalog.domain import context_admission]",
+    "tests/integration/p1/test_disposition.py::test_public_runtime_guard_detects_every_isolated_stage[from repo_catalog.domain.ports.context_authorization import AuthorizationPolicy]",
+    "tests/unit/test_context_coordinator_admission.py::test_bound_source_repository_coverage_closes_cursors_and_expires_them",
+    "tests/unit/test_context_coordinator_admission.py::test_conflicting_local_binding_cannot_replace_coordinator_invocation",
+    "tests/unit/test_context_coordinator_admission.py::test_deferred_context_commit_failure_rolls_back_real_pending_rows",
+    "tests/unit/test_context_coordinator_admission.py::test_export_invocation_cannot_open_mutation_or_commit_core",
+    "tests/unit/test_context_coordinator_admission.py::test_foreign_context_refuses_before_store_lookup_or_core_callback",
+    "tests/unit/test_context_coordinator_admission.py::test_foreign_policy_service_cannot_supply_coordinator_authority[False]",
+    "tests/unit/test_context_coordinator_admission.py::test_foreign_policy_service_cannot_supply_coordinator_authority[True]",
+    "tests/unit/test_context_coordinator_admission.py::test_local_authority_survives_callback_until_actual_commit[False]",
+    "tests/unit/test_context_coordinator_admission.py::test_local_authority_survives_callback_until_actual_commit[True]",
+    "tests/unit/test_context_coordinator_admission.py::test_missing_context_binding_does_not_create_authority",
+    "tests/unit/test_context_coordinator_admission.py::test_revocation_after_callback_rolls_back_context_before_commit"
+  ],
+  "removed": [],
+  "all_count": 5937,
+  "ordinary_count": 5935,
+  "live_benchmark_unexecuted": [
+    "tests/e2e/test_github_sync.py::test_nested_pagination_stress_workload",
+    "tests/live/test_smoke.py::test_selected_repository"
+  ]
+}

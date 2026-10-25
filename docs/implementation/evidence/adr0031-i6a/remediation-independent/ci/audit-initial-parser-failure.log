@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/workspace/i6a-independent/docs/implementation/evidence/adr0031-i6a/remediation-independent/ci/audit_ci.py", line 139, in <module>
+    main()
+  File "/workspace/i6a-independent/docs/implementation/evidence/adr0031-i6a/remediation-independent/ci/audit_ci.py", line 107, in main
+    result["broad"] = audit_lane(z, pref + "i5/regressions")
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/i6a-independent/docs/implementation/evidence/adr0031-i6a/remediation-independent/ci/audit_ci.py", line 55, in audit_lane
+    assert len(finish) == 1 and finish[0]["status"] == "completed"
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

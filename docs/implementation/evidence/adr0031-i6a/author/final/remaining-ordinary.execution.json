@@ -1,0 +1,55 @@
+{
+  "command": [
+    "/workspace/git-repo-db/.venv/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "-o",
+    "addopts=--strict-markers",
+    "-o",
+    "junit_family=xunit1",
+    "@/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6a/author/final/remaining-ordinary.selected.txt",
+    "--junitxml=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6a/author/final/remaining-ordinary.xml",
+    "--journal=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6a/author/final/remaining-ordinary.jsonl",
+    "-n",
+    "4",
+    "--dist",
+    "worksteal"
+  ],
+  "cwd": "/workspace/git-repo-db",
+  "started_epoch": 1792723664.6190398,
+  "elapsed_seconds": 28.471,
+  "exit_code": 2,
+  "collected": 2782,
+  "passed": 156,
+  "failed": 0,
+  "error": 0,
+  "skipped": 0,
+  "xfail": 0,
+  "xpass": 0,
+  "executed": 156,
+  "reconciliation": {
+    "checks": {
+      "selected_unique": true,
+      "selected_equals_junit": false,
+      "selected_equals_journal_starts": false,
+      "setup_and_teardown_once": false,
+      "no_duplicate_phases": true,
+      "phase_nodes_equal_selected": false,
+      "call_once_after_successful_setup": false,
+      "one_finish": true
+    },
+    "consistent_node_execution": false,
+    "journal_phase_outcomes": {
+      "passed": 464
+    },
+    "finishes": [
+      {
+        "event": "finish",
+        "status": "failed",
+        "exitstatus": 2,
+        "timestamp": 1792723692.567219
+      }
+    ]
+  }
+}

@@ -1,0 +1,265 @@
+{
+  "processes": [
+    {
+      "name": "archive",
+      "command": [
+        "git",
+        "archive",
+        "cc6e611d366230438f2c25e4040156c90cf4897f",
+        "-o",
+        "/workspace/i6a-artifact-work-corrected/frozen-source.tar"
+      ],
+      "cwd": "/workspace/git-repo-db",
+      "exit_code": 0,
+      "elapsed_seconds": 0.507
+    },
+    {
+      "name": "build-direct",
+      "command": [
+        "/workspace/i6a-corrected-venv/bin/python",
+        "-m",
+        "hatchling",
+        "build",
+        "-t",
+        "wheel",
+        "-t",
+        "sdist"
+      ],
+      "cwd": "/workspace/i6a-artifact-source-corrected",
+      "exit_code": 0,
+      "elapsed_seconds": 4.547
+    },
+    {
+      "name": "build-sdist-wheel",
+      "command": [
+        "/workspace/i6a-corrected-venv/bin/python",
+        "-m",
+        "hatchling",
+        "build",
+        "-t",
+        "wheel"
+      ],
+      "cwd": "/workspace/i6a-artifact-work-corrected/from-sdist/repo_catalog-0.2.0",
+      "exit_code": 0,
+      "elapsed_seconds": 0.186
+    },
+    {
+      "name": "direct-venv",
+      "command": [
+        "/workspace/i6a-corrected-venv/bin/python",
+        "-m",
+        "venv",
+        "--without-pip",
+        "/workspace/i6a-artifact-work-corrected/direct-venv"
+      ],
+      "cwd": "/workspace/i6a-artifact-source-corrected",
+      "exit_code": 0,
+      "elapsed_seconds": 0.033
+    },
+    {
+      "name": "direct-install",
+      "command": [
+        "uv",
+        "pip",
+        "install",
+        "--python",
+        "/workspace/i6a-artifact-work-corrected/direct-venv/bin/python",
+        "--offline",
+        "--no-index",
+        "--no-deps",
+        "--require-hashes",
+        "-r",
+        "/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6a/author/distribution-corrected/direct-requirements.txt"
+      ],
+      "cwd": "/workspace/i6a-artifact-work-corrected/outside",
+      "exit_code": 0,
+      "elapsed_seconds": 0.231
+    },
+    {
+      "name": "direct-measure",
+      "command": [
+        "/workspace/i6a-artifact-work-corrected/direct-venv/bin/python",
+        "/workspace/i6a-artifact-work-corrected/outside/measure.py",
+        "/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6a/author/distribution-corrected/direct-runtime.json"
+      ],
+      "cwd": "/workspace/i6a-artifact-work-corrected/outside",
+      "exit_code": 0,
+      "elapsed_seconds": 0.153
+    },
+    {
+      "name": "direct-collect",
+      "command": [
+        "/workspace/i6a-artifact-work-corrected/direct-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--collect-only",
+        "-o",
+        "addopts=",
+        "--rootdir=/workspace/i6a-artifact-work-corrected/outside",
+        "--confcutdir=/workspace/i6a-artifact-work-corrected/outside",
+        "tests/integration/p3/test_transfer_sql.py",
+        "tests/integration/p3/test_transfer_admission.py",
+        "tests/integration/p3/test_parent_reports.py",
+        "tests/unit/test_context_admission.py",
+        "tests/unit/test_transfer_originals.py",
+        "tests/unit/test_context_fences_i6a.py",
+        "tests/unit/test_context_oid_admission_i6a.py",
+        "tests/unit/test_context_admission_bounds_i6a.py",
+        "tests/unit/test_context_coordinator_admission.py",
+        "tests/integration/p1/test_coordination.py",
+        "tests/integration/i6a"
+      ],
+      "cwd": "/workspace/i6a-artifact-work-corrected/outside",
+      "exit_code": 0,
+      "elapsed_seconds": 1.183
+    },
+    {
+      "name": "direct-tests",
+      "command": [
+        "/workspace/i6a-artifact-work-corrected/direct-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-o",
+        "addopts=--strict-markers",
+        "-o",
+        "junit_family=xunit1",
+        "--rootdir=/workspace/i6a-artifact-work-corrected/outside",
+        "--confcutdir=/workspace/i6a-artifact-work-corrected/outside",
+        "tests/integration/p3/test_transfer_sql.py",
+        "tests/integration/p3/test_transfer_admission.py",
+        "tests/integration/p3/test_parent_reports.py",
+        "tests/unit/test_context_admission.py",
+        "tests/unit/test_transfer_originals.py",
+        "tests/unit/test_context_fences_i6a.py",
+        "tests/unit/test_context_oid_admission_i6a.py",
+        "tests/unit/test_context_admission_bounds_i6a.py",
+        "tests/unit/test_context_coordinator_admission.py",
+        "tests/integration/p1/test_coordination.py",
+        "tests/integration/i6a",
+        "--basetemp=/workspace/i6a-dist-direct-basetemp",
+        "--junitxml=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6a/author/distribution-corrected/direct-tests.xml",
+        "--journal=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6a/author/distribution-corrected/direct-tests.jsonl"
+      ],
+      "cwd": "/workspace/i6a-artifact-work-corrected/outside",
+      "exit_code": 0,
+      "elapsed_seconds": 36.779
+    },
+    {
+      "name": "sdist-venv",
+      "command": [
+        "/workspace/i6a-corrected-venv/bin/python",
+        "-m",
+        "venv",
+        "--without-pip",
+        "/workspace/i6a-artifact-work-corrected/sdist-venv"
+      ],
+      "cwd": "/workspace/i6a-artifact-source-corrected",
+      "exit_code": 0,
+      "elapsed_seconds": 0.043
+    },
+    {
+      "name": "sdist-install",
+      "command": [
+        "uv",
+        "pip",
+        "install",
+        "--python",
+        "/workspace/i6a-artifact-work-corrected/sdist-venv/bin/python",
+        "--offline",
+        "--no-index",
+        "--no-deps",
+        "--require-hashes",
+        "-r",
+        "/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6a/author/distribution-corrected/sdist-requirements.txt"
+      ],
+      "cwd": "/workspace/i6a-artifact-work-corrected/outside",
+      "exit_code": 0,
+      "elapsed_seconds": 0.236
+    },
+    {
+      "name": "sdist-measure",
+      "command": [
+        "/workspace/i6a-artifact-work-corrected/sdist-venv/bin/python",
+        "/workspace/i6a-artifact-work-corrected/outside/measure.py",
+        "/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6a/author/distribution-corrected/sdist-runtime.json"
+      ],
+      "cwd": "/workspace/i6a-artifact-work-corrected/outside",
+      "exit_code": 0,
+      "elapsed_seconds": 0.16
+    },
+    {
+      "name": "sdist-collect",
+      "command": [
+        "/workspace/i6a-artifact-work-corrected/sdist-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--collect-only",
+        "-o",
+        "addopts=",
+        "--rootdir=/workspace/i6a-artifact-work-corrected/outside",
+        "--confcutdir=/workspace/i6a-artifact-work-corrected/outside",
+        "tests/integration/p3/test_transfer_sql.py",
+        "tests/integration/p3/test_transfer_admission.py",
+        "tests/integration/p3/test_parent_reports.py",
+        "tests/unit/test_context_admission.py",
+        "tests/unit/test_transfer_originals.py",
+        "tests/unit/test_context_fences_i6a.py",
+        "tests/unit/test_context_oid_admission_i6a.py",
+        "tests/unit/test_context_admission_bounds_i6a.py",
+        "tests/unit/test_context_coordinator_admission.py",
+        "tests/integration/p1/test_coordination.py",
+        "tests/integration/i6a"
+      ],
+      "cwd": "/workspace/i6a-artifact-work-corrected/outside",
+      "exit_code": 0,
+      "elapsed_seconds": 0.92
+    },
+    {
+      "name": "sdist-tests",
+      "command": [
+        "/workspace/i6a-artifact-work-corrected/sdist-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-o",
+        "addopts=--strict-markers",
+        "-o",
+        "junit_family=xunit1",
+        "--rootdir=/workspace/i6a-artifact-work-corrected/outside",
+        "--confcutdir=/workspace/i6a-artifact-work-corrected/outside",
+        "tests/integration/p3/test_transfer_sql.py",
+        "tests/integration/p3/test_transfer_admission.py",
+        "tests/integration/p3/test_parent_reports.py",
+        "tests/unit/test_context_admission.py",
+        "tests/unit/test_transfer_originals.py",
+        "tests/unit/test_context_fences_i6a.py",
+        "tests/unit/test_context_oid_admission_i6a.py",
+        "tests/unit/test_context_admission_bounds_i6a.py",
+        "tests/unit/test_context_coordinator_admission.py",
+        "tests/integration/p1/test_coordination.py",
+        "tests/integration/i6a",
+        "--basetemp=/workspace/i6a-dist-sdist-basetemp",
+        "--junitxml=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6a/author/distribution-corrected/sdist-tests.xml",
+        "--journal=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6a/author/distribution-corrected/sdist-tests.jsonl"
+      ],
+      "cwd": "/workspace/i6a-artifact-work-corrected/outside",
+      "exit_code": 0,
+      "elapsed_seconds": 38.384
+    },
+    {
+      "name": "source-serial-sql-probes",
+      "command": [
+        "/workspace/i6a-corrected-venv/bin/python",
+        "/tmp/i6a_sql_probes.py"
+      ],
+      "cwd": "/workspace/i6a-corrected-source",
+      "exit_code": 0,
+      "elapsed_seconds": 0.762
+    }
+  ],
+  "full_acceptance": false,
+  "author_verification": true
+}

@@ -1,0 +1,84 @@
+{
+  "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+  "sqlite": "3.53.1",
+  "cases": [
+    {
+      "id": "case_both_unreported_is_no_report",
+      "result": "PASS"
+    },
+    {
+      "id": "case_changed_parent_payload_refuses_even_replay",
+      "result": "PASS"
+    },
+    {
+      "id": "case_child_global_scoped_first_no_semantic_parent",
+      "result": "PASS"
+    },
+    {
+      "id": "case_constructor_missing_declaration",
+      "result": "PASS"
+    },
+    {
+      "id": "case_constructor_missing_endpoints",
+      "result": "PASS"
+    },
+    {
+      "id": "case_constructor_missing_parent",
+      "result": "PASS"
+    },
+    {
+      "id": "case_constructor_truncated_two_sided",
+      "result": "PASS"
+    },
+    {
+      "id": "case_decoder_requires_all_original_parent_coordinates",
+      "result": "PASS"
+    },
+    {
+      "id": "case_event_coordinates_cannot_substitute_parent",
+      "result": "PASS"
+    },
+    {
+      "id": "case_missing_exact_parent_is_not_recovered_from_native_id",
+      "result": "PASS"
+    },
+    {
+      "id": "case_missing_parent_time_is_not_null",
+      "result": "PASS"
+    },
+    {
+      "id": "case_multiple_parents_retained_without_winner",
+      "result": "PASS"
+    },
+    {
+      "id": "case_one_sided_and_explicit_null_distinct",
+      "result": "PASS"
+    },
+    {
+      "id": "case_parent_explicit_null_stays_null",
+      "result": "PASS"
+    },
+    {
+      "id": "case_provider_only_unresolved_is_not_null",
+      "result": "PASS"
+    },
+    {
+      "id": "case_replay_cannot_rewrite_two_sided_as_one_sided",
+      "result": "PASS"
+    },
+    {
+      "id": "case_selection_truncated_is_not_one_sided",
+      "result": "PASS"
+    },
+    {
+      "id": "case_stored_rows_cannot_rescue_truncated_delivery",
+      "result": "PASS"
+    },
+    {
+      "id": "case_two_sided_null_and_replay_preserve_originals",
+      "result": "PASS"
+    }
+  ],
+  "passed": 19,
+  "failed": 0
+}

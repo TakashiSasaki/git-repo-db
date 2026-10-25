@@ -1,0 +1,27 @@
+from pathlib import Path
+import json,hashlib,os,shutil,subprocess,time,sys
+WORK=Path('/workspace/rereview-distribution'); OUT=WORK/'evidence';SRC=WORK/'frozen';outside=WORK/'outside'
+sys.path.insert(0,str(SRC));from scripts import verify_i5_offline as evidence
+records=[];results={};inputs=[]
+def sha(p):return hashlib.sha256(Path(p).read_bytes()).hexdigest()
+def write(p,v):Path(p).write_text(json.dumps(v,indent=2,ensure_ascii=False)+'\n')
+def run(name,args,env):
+ start=time.time()
+ with (OUT/(name+'.log')).open('w') as f:p=subprocess.run(list(map(str,args)),cwd=outside,env=env,stdout=f,stderr=subprocess.STDOUT)
+ records.append({'name':name,'argv':list(map(str,args)),'cwd':str(outside),'exit_code':p.returncode,'started_epoch':start,'elapsed_seconds':time.time()-start});write(OUT/'fresh-m01-processes.json',records);print(name,p.returncode,flush=True);return p.returncode
+lanes=[]
+for p in map(Path,sys.argv[1:]):
+ q=outside/'tests/unit'/p.name;shutil.copyfile(p,q);assert p.read_bytes()==q.read_bytes();inputs.append({'original':str(p),'target':str(q),'sha256':sha(q),'bytes':q.stat().st_size});lanes.append((p.stem,[str(q.relative_to(outside))]))
+write(OUT/'fresh-m01-inputs.json',inputs)
+for form in ['direct','derived']:
+ venv=WORK/(form+'-venv');py=venv/'bin/python'
+ for lane,targets in lanes:
+  name=form+'-fresh-'+lane;env=dict(os.environ,PATH=str(venv/'bin')+os.pathsep+os.environ['PATH'],TMPDIR=str(WORK),PYTHONPATH=str(outside/'tests/support/network_guard'),GIT_ALLOW_PROTOCOL='file',I6B_DIST_IMPORTS=str(OUT/(name+'-imports.json')),RR_ADMISSION_OBSERVATIONS=str(OUT/(name+'-observations.json')),UV_CACHE_DIR=str(WORK/'uv-cache'),REPO_CATALOG_WHEELHOUSE=str(WORK/'wheelhouse'))
+  for k in ['GH_TOKEN','GITHUB_TOKEN','PYTHONHOME']:env.pop(k,None)
+  args=[py,'-m','pytest','-q','--tb=long','-c',outside/'pytest.ini','--rootdir='+str(outside),'--confcutdir='+str(outside),'-o','junit_family=xunit1',*targets]
+  assert run(name+'-collect',args+['--collect-only'],env)==0
+  nodes=evidence.nodes(OUT/(name+'-collect.log'));(OUT/(name+'-selected.txt')).write_text('\n'.join(nodes)+'\n');xml=OUT/(name+'.xml');journal=OUT/(name+'.jsonl');code=run(name,args+['--junitxml='+str(xml),'--journal='+str(journal),'--basetemp='+str(WORK/(name+'-tmp'))],env)
+  result={'exit_code':code,'collected':len(nodes),**evidence.outcomes(xml),'reconciliation':evidence.reconciliation(nodes,xml,journal)};write(OUT/(name+'-execution.json'),result);results[name]=result
+  assert run(name+'-measure-after',[py,outside/'measure.py',OUT/(name+'-runtime-after.json')],env)==0
+write(OUT/'fresh-m01-summary.json',{'results':results,'processes':records,'inputs':inputs,'scope':'New independently designed probes replayed unmodified on each separate installation; timings overlap parent full source and are not benchmark claims.'})
+shutil.copyfile(__file__,OUT/'run_fresh-m01.py.txt')

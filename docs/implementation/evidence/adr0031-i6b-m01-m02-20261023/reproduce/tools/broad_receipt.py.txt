@@ -1,0 +1,49 @@
+"""Independent evidence observer; no test/product mutations or outcome overrides."""
+import hashlib,json,os,sqlite3,sys
+from pathlib import Path
+import pytest
+OUT=Path(os.environ['I6B_BROAD_OUT']);ROOT=Path(os.environ['I6B_BROAD_ROOT']);stream=None
+_DUMPS=json.dumps
+_worker=False
+
+def emit(value):
+    stream.write(_DUMPS(value,ensure_ascii=False)+'\n');stream.flush()
+
+def origins():
+    found={}
+    for name,mod in list(sys.modules.items()):
+        path=getattr(mod,'__file__',None)
+        if path and (name=='repo_catalog' or name.startswith('repo_catalog.')):
+            p=Path(path).resolve();assert p.is_relative_to(ROOT/'src'),(name,str(p))
+            found[name]={'path':str(p),'sha256':hashlib.sha256(p.read_bytes()).hexdigest()}
+    return found
+
+def pytest_configure(config):
+    global stream,_worker
+    _worker=hasattr(config,'workerinput')
+    worker=getattr(config,'workerinput',{}).get('workerid','master')
+    stream=(OUT/(worker+'.reports.jsonl')).open('x')
+    with sqlite3.connect(':memory:') as db:
+        runtime={'python':sys.version,'executable':sys.executable,'base_executable':sys._base_executable,'sqlite':db.execute('select sqlite_version(),sqlite_source_id()').fetchone(),'sqlite_module':__import__('_sqlite3').__spec__.origin,'compile_options':db.execute('pragma compile_options').fetchall()}
+    emit({'event':'configure','worker':worker,'runtime':runtime,'inipath':str(config.inipath),'origins':origins()})
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_makereport(item,call):
+    outcome=yield
+    report=outcome.get_result()
+    row={'event':'report','nodeid':item.nodeid,'phase':call.when,'outcome':report.outcome,'report_type':type(report).__module__+'.'+type(report).__name__}
+    if call.excinfo:
+        exc=call.excinfo.value
+        row.update(exception_type=type(exc).__module__+'.'+type(exc).__name__,message=str(exc),code=getattr(exc,'code',None),frames=[{'path':str(x.path),'line':x.lineno+1,'function':x.name} for x in call.excinfo.traceback])
+    emit(row)
+
+def pytest_runtest_logreport(report):
+    if _worker:return
+    context=getattr(report,'context',None)
+    emit({'event':'controller_report','nodeid':report.nodeid,'phase':report.when,'outcome':report.outcome,'duration':round(report.duration,6),'report_type':type(report).__module__+'.'+type(report).__name__,'subtest_context':context._to_json() if context is not None else None})
+
+def pytest_sessionfinish(session,exitstatus):
+    emit({'event':'finish','exit_code':int(exitstatus),'origins':origins()})
+
+def pytest_unconfigure(config):
+    if stream:stream.close()

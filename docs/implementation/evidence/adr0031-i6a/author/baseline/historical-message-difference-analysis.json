@@ -1,0 +1,251 @@
+{
+  "raw_message_difference_count": 4,
+  "all_semantic_assertion_cause_frames_match": true,
+  "differences": [
+    {
+      "node": "tests.packaging.test_p5_distribution::test_p5_installed_acquisition_and_exchange[sha1-sdist-wheel]",
+      "raw_messages_equal": false,
+      "baseline_facts": {
+        "assertions": [
+          "assert 1 == 0"
+        ],
+        "causal_exceptions": [
+          "repo_catalog.domain.resource_stage.UnsupportedIdentificationStage: I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6"
+        ],
+        "installed_product_frames": [
+          [
+            "/repo_catalog/application/exchange.py",
+            "421",
+            "export_package"
+          ],
+          [
+            "/repo_catalog/application/exchange.py",
+            "1195",
+            "_export_context"
+          ],
+          [
+            "/repo_catalog/domain/selective_exchange.py",
+            "664",
+            "preflight_i2_resources"
+          ]
+        ],
+        "script_frames": []
+      },
+      "current_facts": {
+        "assertions": [
+          "assert 1 == 0"
+        ],
+        "causal_exceptions": [
+          "repo_catalog.domain.resource_stage.UnsupportedIdentificationStage: I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6"
+        ],
+        "installed_product_frames": [
+          [
+            "/repo_catalog/application/exchange.py",
+            "421",
+            "export_package"
+          ],
+          [
+            "/repo_catalog/application/exchange.py",
+            "1195",
+            "_export_context"
+          ],
+          [
+            "/repo_catalog/domain/selective_exchange.py",
+            "664",
+            "preflight_i2_resources"
+          ]
+        ],
+        "script_frames": []
+      },
+      "same_assertions": true,
+      "same_causal_exception": true,
+      "same_installed_product_frames": true,
+      "same_script_frames": true,
+      "observed_difference": "pytest temp root/username/run number changes; CompletedProcess args repr clips at a different point because absolute path length differs. Raw messages remain in historical-failure-comparison.json."
+    },
+    {
+      "node": "tests.packaging.test_p5_distribution::test_p5_installed_acquisition_and_exchange[sha1-wheel]",
+      "raw_messages_equal": false,
+      "baseline_facts": {
+        "assertions": [
+          "assert 1 == 0"
+        ],
+        "causal_exceptions": [
+          "repo_catalog.domain.resource_stage.UnsupportedIdentificationStage: I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6"
+        ],
+        "installed_product_frames": [
+          [
+            "/repo_catalog/application/exchange.py",
+            "421",
+            "export_package"
+          ],
+          [
+            "/repo_catalog/application/exchange.py",
+            "1195",
+            "_export_context"
+          ],
+          [
+            "/repo_catalog/domain/selective_exchange.py",
+            "664",
+            "preflight_i2_resources"
+          ]
+        ],
+        "script_frames": []
+      },
+      "current_facts": {
+        "assertions": [
+          "assert 1 == 0"
+        ],
+        "causal_exceptions": [
+          "repo_catalog.domain.resource_stage.UnsupportedIdentificationStage: I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6"
+        ],
+        "installed_product_frames": [
+          [
+            "/repo_catalog/application/exchange.py",
+            "421",
+            "export_package"
+          ],
+          [
+            "/repo_catalog/application/exchange.py",
+            "1195",
+            "_export_context"
+          ],
+          [
+            "/repo_catalog/domain/selective_exchange.py",
+            "664",
+            "preflight_i2_resources"
+          ]
+        ],
+        "script_frames": []
+      },
+      "same_assertions": true,
+      "same_causal_exception": true,
+      "same_installed_product_frames": true,
+      "same_script_frames": true,
+      "observed_difference": "pytest temp root/username/run number changes; CompletedProcess args repr clips at a different point because absolute path length differs. Raw messages remain in historical-failure-comparison.json."
+    },
+    {
+      "node": "tests.packaging.test_p5_distribution::test_p5_installed_acquisition_and_exchange[sha256-sdist-wheel]",
+      "raw_messages_equal": false,
+      "baseline_facts": {
+        "assertions": [
+          "assert 1 == 0"
+        ],
+        "causal_exceptions": [
+          "repo_catalog.domain.resource_stage.UnsupportedIdentificationStage: I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6"
+        ],
+        "installed_product_frames": [
+          [
+            "/repo_catalog/application/exchange.py",
+            "421",
+            "export_package"
+          ],
+          [
+            "/repo_catalog/application/exchange.py",
+            "1195",
+            "_export_context"
+          ],
+          [
+            "/repo_catalog/domain/selective_exchange.py",
+            "664",
+            "preflight_i2_resources"
+          ]
+        ],
+        "script_frames": []
+      },
+      "current_facts": {
+        "assertions": [
+          "assert 1 == 0"
+        ],
+        "causal_exceptions": [
+          "repo_catalog.domain.resource_stage.UnsupportedIdentificationStage: I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6"
+        ],
+        "installed_product_frames": [
+          [
+            "/repo_catalog/application/exchange.py",
+            "421",
+            "export_package"
+          ],
+          [
+            "/repo_catalog/application/exchange.py",
+            "1195",
+            "_export_context"
+          ],
+          [
+            "/repo_catalog/domain/selective_exchange.py",
+            "664",
+            "preflight_i2_resources"
+          ]
+        ],
+        "script_frames": []
+      },
+      "same_assertions": true,
+      "same_causal_exception": true,
+      "same_installed_product_frames": true,
+      "same_script_frames": true,
+      "observed_difference": "pytest temp root/username/run number changes; CompletedProcess args repr clips at a different point because absolute path length differs. Raw messages remain in historical-failure-comparison.json."
+    },
+    {
+      "node": "tests.packaging.test_p5_distribution::test_p5_installed_acquisition_and_exchange[sha256-wheel]",
+      "raw_messages_equal": false,
+      "baseline_facts": {
+        "assertions": [
+          "assert 1 == 0"
+        ],
+        "causal_exceptions": [
+          "repo_catalog.domain.resource_stage.UnsupportedIdentificationStage: I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6"
+        ],
+        "installed_product_frames": [
+          [
+            "/repo_catalog/application/exchange.py",
+            "421",
+            "export_package"
+          ],
+          [
+            "/repo_catalog/application/exchange.py",
+            "1195",
+            "_export_context"
+          ],
+          [
+            "/repo_catalog/domain/selective_exchange.py",
+            "664",
+            "preflight_i2_resources"
+          ]
+        ],
+        "script_frames": []
+      },
+      "current_facts": {
+        "assertions": [
+          "assert 1 == 0"
+        ],
+        "causal_exceptions": [
+          "repo_catalog.domain.resource_stage.UnsupportedIdentificationStage: I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6"
+        ],
+        "installed_product_frames": [
+          [
+            "/repo_catalog/application/exchange.py",
+            "421",
+            "export_package"
+          ],
+          [
+            "/repo_catalog/application/exchange.py",
+            "1195",
+            "_export_context"
+          ],
+          [
+            "/repo_catalog/domain/selective_exchange.py",
+            "664",
+            "preflight_i2_resources"
+          ]
+        ],
+        "script_frames": []
+      },
+      "same_assertions": true,
+      "same_causal_exception": true,
+      "same_installed_product_frames": true,
+      "same_script_frames": true,
+      "observed_difference": "pytest temp root/username/run number changes; CompletedProcess args repr clips at a different point because absolute path length differs. Raw messages remain in historical-failure-comparison.json."
+    }
+  ],
+  "scope": "Supplements exact raw comparison; does not relabel failures as passes or discard any original message."
+}

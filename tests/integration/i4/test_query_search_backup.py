@@ -29,6 +29,7 @@ from repo_catalog.domain.recovery import (
     CorruptionDetectedError,
     RestoreValidationError,
 )
+from repo_catalog.domain.resource_identity import encode_identity
 from tests.integration.i23.test_provider_exchange import claim, producer, provenance
 
 
@@ -39,13 +40,13 @@ def query(text, **kwargs):
 def test_current_provider_roles_never_fall_back_to_old_core_target(tmp_path):
     service, r1, r2, claims = producer(tmp_path)
     q = ProductionQueryService(tmp_path)
-    key = ResourceKey(service, "issue", "7")
+    key = ResourceKey.from_native(service, "issue", "7")
     view = q.get_context_resource(key)
     assert view.repository_uuidv4 is None
     assert view.repository_relations[0].target_repository_uuidv4 == r1
     (current,) = view.repository_roles
     assert current.state == "unresolved_provider_only"
-    assert current.scope.provider_repository_id == "99"
+    assert current.scope.provider_repository_id == encode_identity("99")
     assert current.scope.observed_at_us == 60
     assert current.provenance_json == provenance("new-owner")
     assert not view.matches_repository(r1)
@@ -55,13 +56,13 @@ def test_current_provider_roles_never_fall_back_to_old_core_target(tmp_path):
     assert key not in {
         v.resource for v in q.list_paired_resources(repository_uuidv4=r1).items
     }
-    pr = q.get_context_resource(ResourceKey(service, "pull_request", "9"))
+    pr = q.get_context_resource(ResourceKey.from_native(service, "pull_request", "9"))
     assert {
         v.resource.provider_resource_id
         for v in q.list_context_resources(
             repository_uuidv4=r1, resource_kind="repository"
         ).items
-    } == {"1", "3"}
+    } == {encode_identity("1"), encode_identity("3")}
     assert pr.repository_uuidv4 == r1
     assert pr.matches_repository(r1) and pr.matches_repository(r2)
     assert {r.scope.relation_kind for r in pr.repository_roles} == {
@@ -73,16 +74,18 @@ def test_current_provider_roles_never_fall_back_to_old_core_target(tmp_path):
         claims[1].claim_key,
     }
     assert (
-        q.get_context_resource(ResourceKey(service, "issue", "11"))
+        q.get_context_resource(ResourceKey.from_native(service, "issue", "11"))
         .repository_roles[0]
         .state
         == "explicit_null"
     )
     assert (
-        q.get_context_resource(ResourceKey(service, "issue", "12")).repository_roles
+        q.get_context_resource(
+            ResourceKey.from_native(service, "issue", "12")
+        ).repository_roles
         == ()
     )
-    conflict = q.get_context_resource(ResourceKey(service, "issue", "13"))
+    conflict = q.get_context_resource(ResourceKey.from_native(service, "issue", "13"))
     assert conflict.repository_uuidv4 is None
     assert conflict.repository_roles[0].state == "conflict"
     assert conflict.matches_repository(r1) and conflict.matches_repository(r2)
@@ -104,21 +107,21 @@ def test_equal_incomparable_and_unknown_clocks_keep_all_provider_candidates(
     tmp_path, domain, at_us, same_provenance
 ):
     service, r1, r2, _ = producer(tmp_path)
-    key = ResourceKey(service, "issue", "80")
+    key = ResourceKey.from_native(service, "issue", "80")
     with Context.transaction(tmp_path) as ctx:
         ctx.resource(key)
         for provider_id, clock, label in (
             ("1", FieldClock("provider", 100), "first"),
             ("2", FieldClock(domain, at_us), "second"),
         ):
-            provider = ResourceKey(service, "repository", provider_id)
+            provider = ResourceKey.from_native(service, "repository", provider_id)
             scope = ProviderRepositoryScope(
                 {
                     "owning_repository": ProviderRepositoryRoleScope(
                         "owning_repository",
                         clock,
                         "unresolved_provider_only",
-                        provider_id,
+                        provider.provider_resource_id,
                         observed_at_us=101,
                     )
                 }
@@ -171,7 +174,7 @@ def test_dispositions_are_reports_and_qualification_is_per_operation(tmp_path, k
     plain = ProductionQueryService(tmp_path)
     evidence = MappingOperationEvidence(frozenset({disp.disposition_key}))
     qualified = ProductionQueryService(tmp_path, mapping_evidence=evidence)
-    key = ResourceKey(service, "issue", "10")
+    key = ResourceKey.from_native(service, "issue", "10")
     before = plain.get_context_resource(key)
     after = qualified.get_context_resource(key)
     assert (
@@ -244,7 +247,7 @@ def test_search_rebuild_fallback_and_current_historical_summary(tmp_path, damage
     assert q.search(query("repository")).backend == "verified_projection_scan"
     # No retained historical edge revives current membership.
     assert not q.get_context_resource(
-        ResourceKey(service, "issue", "7")
+        ResourceKey.from_native(service, "issue", "7")
     ).matches_repository(r1)
 
 
@@ -263,10 +266,10 @@ def test_query_search_pagination_snapshot_budget_and_stop(tmp_path):
     assert tuple(items) == full.hits
     first = q.search(query("repository", limit=1))
     with q.open_snapshot() as snap:
-        key = ResourceKey(service, "issue", "10")
+        key = ResourceKey.from_native(service, "issue", "10")
         before = q._context_resource_in_snapshot(snap.context, key)
         with Context.transaction(tmp_path) as ctx:
-            ctx.resource(ResourceKey(service, "issue", "1000"))
+            ctx.resource(ResourceKey.from_native(service, "issue", "1000"))
         assert q._context_resource_in_snapshot(snap.context, key) == before
     with pytest.raises(QueryError) as error:
         q.search(query("repository", cursor=first.next_cursor))
@@ -374,7 +377,7 @@ def test_paired_restore_preserves_all_keys_dependencies_and_excludes_other_store
         assert copy.mapping_dispositions(claims[0].claim_key) == (disp,)
     q = ProductionQueryService(restored)
     assert (
-        q.get_context_resource(ResourceKey(service, "issue", "10"))
+        q.get_context_resource(ResourceKey.from_native(service, "issue", "10"))
         .repository_roles[0]
         .state
         == "conflict"
@@ -445,12 +448,13 @@ def test_forged_backup_with_valid_checksums_fails_semantic_restore(tmp_path, dam
         for name, _ in triggers:
             db.execute('DROP TRIGGER "' + name + '"')
         row = db.execute(
-            "SELECT scope_json,provenance_json FROM resource_relations WHERE relation_kind='provider_repository_roles' AND provider_resource_id='10'"
+            "SELECT scope_json,provenance_json FROM resource_relations WHERE relation_kind='provider_repository_roles' AND provider_resource_id=?",
+            (encode_identity("10"),),
         ).fetchone()
         scope = json.loads(row[0])
         if damage == "member":
             scope["repository_roles"]["owning_repository"]["provider_repository_id"] = (
-                "2"
+                encode_identity("2")
             )
         elif damage == "clock":
             scope["repository_roles"]["owning_repository"]["observed_at_us"] = 999
@@ -465,8 +469,8 @@ def test_forged_backup_with_valid_checksums_fails_semantic_restore(tmp_path, dam
             )
         else:
             db.execute(
-                "UPDATE resource_relations SET scope_json=? WHERE relation_kind='provider_repository_roles' AND provider_resource_id='10'",
-                (canonical(scope),),
+                "UPDATE resource_relations SET scope_json=? WHERE relation_kind='provider_repository_roles' AND provider_resource_id=?",
+                (canonical(scope), encode_identity("10")),
             )
         for _, sql in triggers:
             db.execute(sql)
@@ -481,7 +485,7 @@ def test_forged_backup_with_valid_checksums_fails_semantic_restore(tmp_path, dam
 def test_invalid_authoritative_provider_scope_stops_service(tmp_path, operation):
     source = tmp_path / "source"
     service, _, _, _ = producer(source)
-    key = ResourceKey(service, "issue", "90")
+    key = ResourceKey.from_native(service, "issue", "90")
     with Context.transaction(source) as ctx:
         ctx.resource(key)
         # Raw fault injection passes structural SQL checks but contradicts the
@@ -492,7 +496,7 @@ def test_invalid_authoritative_provider_scope_stops_service(tmp_path, operation)
                     "owning_repository",
                     FieldClock("provider", 10),
                     "unresolved_provider_only",
-                    "2",
+                    encode_identity("2"),
                     observed_at_us=10,
                 )
             }
@@ -502,7 +506,9 @@ def test_invalid_authoritative_provider_scope_stops_service(tmp_path, operation)
             (
                 *key.coordinates(),
                 "provider_repository_roles",
-                canonical([ResourceKey(service, "repository", "1").coordinates()]),
+                canonical(
+                    [ResourceKey.from_native(service, "repository", "1").coordinates()]
+                ),
                 provenance("corrupt-scope"),
                 scope.encoded,
                 10,

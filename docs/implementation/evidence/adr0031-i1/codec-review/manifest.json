@@ -1,0 +1,36 @@
+{
+  "files": {
+    "work/i1a-independent/minimum-author-suite.log": {
+      "bytes": 260,
+      "sha256": "b53ee469ff96c8609b57205aecd29529d59412e45e49cb698e09e3d24fd79904"
+    },
+    "work/i1a-independent/newer-author-suite.xml": {
+      "bytes": 1413023,
+      "sha256": "95adae73b4def733b034d65ea1e02981839212d4647f60cb016005a49facda47"
+    },
+    "work/i1a-independent/minimum.json": {
+      "bytes": 4779,
+      "sha256": "b2b6cb1847f7f0a9ed4efe9eba992899a87519b884ecb9407698707009e43c7d"
+    },
+    "work/i1a-independent/newer.json": {
+      "bytes": 4782,
+      "sha256": "dc5c5a448c8d8d7cb11f486e30a769dc7078ea371eb4dc2c44a05a5c19fabab1"
+    },
+    "work/i1a-independent/newer-author-suite.log": {
+      "bytes": 260,
+      "sha256": "b547bfa3c18d1c6cfef920b61b2d08f9fee94310445b155c2e07cb8558562acf"
+    },
+    "work/i1a-independent/minimum-author-suite.xml": {
+      "bytes": 1413023,
+      "sha256": "c512764b96c72aa9f90f404f5f2a1d924584b3446349fe3b61a2828fa1b16f01"
+    },
+    "work/i1a-independent/counterexamples.py": {
+      "bytes": 7279,
+      "sha256": "0b281bc7216f73d69e1b6361a02bcae57597c8aca958b59feb1279d6e9d8e5e6"
+    },
+    "work/i1a-independent-review.md": {
+      "bytes": 5086,
+      "sha256": "8d06805324fa44823dce663bd48f2f97ccec9c94f6cbaa02fccf59c29da9f7d3"
+    }
+  }
+}

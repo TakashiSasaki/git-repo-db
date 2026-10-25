@@ -1,0 +1,13 @@
+import pathlib,json,gzip,collections,sys
+
+def read(p):return p.read_bytes() if p.exists() else gzip.decompress(pathlib.Path(str(p)+'.gz').read_bytes())
+def reconcile(journal_path,sidecar_path,selected):
+ events=[json.loads(l) for l in read(pathlib.Path(journal_path)).decode().splitlines()];reports=[json.loads(l) for l in read(pathlib.Path(sidecar_path)).decode().splitlines()]
+ key=lambda e:(e['nodeid'],e['phase'],e['outcome'],round(e['duration'],6))
+ raw=collections.Counter(key(e) for e in events if e['event']=='phase');side=collections.Counter(key(e) for e in reports)
+ ordinary=[e for e in reports if e['subtest_context'] is None];subs=[e for e in reports if e['subtest_context'] is not None]
+ phases=collections.Counter((e['nodeid'],e['phase']) for e in ordinary);setup={e['nodeid']:e['outcome'] for e in ordinary if e['phase']=='setup'};starts=collections.Counter(e['nodeid'] for e in events if e['event']=='start');expected=collections.Counter(selected);finishes=[e for e in events if e['event']=='finish']
+ checks={'raw_phase_sidecar_multisets_equal':raw==side,'selected_equals_journal_starts':expected==starts,'main_phase_nodes_equal_selected':{e['nodeid'] for e in ordinary}==set(expected),'main_setup_teardown_once':all(phases[n,p]==1 for n in expected for p in ('setup','teardown')),'main_call_once_after_successful_setup':all(phases[n,'call']==int(setup.get(n)=='passed') for n in expected),'no_duplicate_main_phases':all(v==1 for v in phases.values()),'subtest_types_explicit':all(e['report_type']=='_pytest.subtests.SubtestReport' and e['phase']=='call' for e in subs),'subtests_have_selected_parent':all(e['nodeid'] in expected for e in subs),'one_finish':len(finishes)==1}
+ return {'checks':checks,'consistent_typed_phase_execution':all(checks.values()),'ordinary_phase_outcomes':dict(collections.Counter(e['outcome'] for e in ordinary)),'subtest_count':len(subs),'subtest_outcomes':dict(collections.Counter(e['outcome'] for e in subs)),'all_subtests_passed':all(e['outcome']=='passed' for e in subs),'subtest_contexts':[{'nodeid':e['nodeid'],'outcome':e['outcome'],'context':e['subtest_context']} for e in subs],'finishes':finishes}
+if __name__=='__main__':
+ p=pathlib.Path(sys.argv[1]);name=sys.argv[2];selected=read(p/(name+'.selected.txt')).decode().splitlines();r=reconcile(p/(name+'.jsonl'),p/(name+'.report-types.jsonl'),selected);(p/(name+'.typed-phase-reconciliation.json')).write_text(json.dumps(r,indent=2)+'\n');print(json.dumps({k:v for k,v in r.items() if k!='subtest_contexts'},indent=2))

@@ -1,0 +1,14 @@
+{
+  "modified_sources": {
+    "src/repo_catalog/adapters/sqlite/production_context.py": "7f54b926e81a4c13b3e65d986cf62d3312486ef3692a6c67bf2ff26bbccda267",
+    "src/repo_catalog/application/acquisition.py": "58f736b62b7017b76297ad9fe70fd25529fb26637fb10dc78fe790f7a907d800",
+    "src/repo_catalog/application/exchange.py": "77c5668763967253fce9cf04f89537de97fdfec587667327d524999286a5c00a",
+    "src/repo_catalog/domain/context_admission.py": "9be0c594a13f4b9f0e80bdaf8a98fbec62bcb0f96ca9d646a40ac96964cfb6e8",
+    "src/repo_catalog/domain/exchange.py": "1560bf24cdd61a6cc393db30012c76c2780aa6d3fa71a3c7a20756a78e163f5e",
+    "src/repo_catalog/domain/exchange_rows.py": "d996ba13616305bbc1e0e0c3b607d07a71d3a6e871c4258b89b051d70f18745f",
+    "src/repo_catalog/domain/selective_exchange.py": "ebe9403853a00218c627d3ff3c609db1e2e5ec4634ce06f3ba795a2ff4d5abeb",
+    "tests/integration/access/test_context_boundary.py": "d0dbc842ea4da25cdfe988edc5f21d20e46e26b441555b7789284d0babdc6a5b",
+    "tests/integration/i3/test_selective_exchange.py": "e762134e6262d37088cf6d95357a71089e1893b545e2b039a9551f4e54252a03",
+    "tests/integration/p1/test_generalized_resources.py": "18c6528bfd3de5fa3a65daf35813a530049b1e6b38de98fecb7ce8aca8106ce8"
+  }
+}

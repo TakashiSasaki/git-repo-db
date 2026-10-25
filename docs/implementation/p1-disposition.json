@@ -9719,7 +9719,7 @@
   },
   "target_schemas": {
     "context": {
-      "ddl_sha256": "fa7838f86d9f0ab4b2f26c561ad0721df2d0c7dad45ee97e72ff09cbb89ac434",
+      "ddl_sha256": "924cc7557fb3da6211ea070185881f5fcaeff9bf52b6e237a361a238a2ea0c6e",
       "tables": {
         "collection_terminals": {
           "columns": [
@@ -11121,6 +11121,84 @@
               "name": "observed_at_us",
               "notnull": false,
               "type": "INTEGER"
+            },
+            {
+              "generated": 2,
+              "name": "parent_service",
+              "notnull": false,
+              "type": "TEXT"
+            },
+            {
+              "generated": 2,
+              "name": "parent_kind",
+              "notnull": false,
+              "type": "TEXT"
+            },
+            {
+              "generated": 2,
+              "name": "parent_id",
+              "notnull": false,
+              "type": "TEXT"
+            },
+            {
+              "generated": 2,
+              "name": "source_document_kind",
+              "notnull": false,
+              "type": "TEXT"
+            },
+            {
+              "generated": 2,
+              "name": "report_clock_json",
+              "notnull": false,
+              "type": "TEXT"
+            },
+            {
+              "generated": 2,
+              "name": "event_support_members_json",
+              "notnull": false,
+              "type": "TEXT"
+            },
+            {
+              "generated": 2,
+              "name": "event_support_provenance_json",
+              "notnull": false,
+              "type": "TEXT"
+            },
+            {
+              "generated": 2,
+              "name": "event_support_scope_json",
+              "notnull": false,
+              "type": "TEXT"
+            },
+            {
+              "generated": 2,
+              "name": "event_support_service",
+              "notnull": false,
+              "type": "TEXT"
+            },
+            {
+              "generated": 2,
+              "name": "event_support_kind",
+              "notnull": false,
+              "type": "TEXT"
+            },
+            {
+              "generated": 2,
+              "name": "event_support_id",
+              "notnull": false,
+              "type": "TEXT"
+            },
+            {
+              "generated": 2,
+              "name": "event_support_relation_kind",
+              "notnull": false,
+              "type": "TEXT"
+            },
+            {
+              "generated": 2,
+              "name": "event_document_kind",
+              "notnull": false,
+              "type": "TEXT"
             }
           ],
           "foreign_keys": [
@@ -11129,7 +11207,7 @@
               0,
               "resources",
               "service_instance_uuidv4",
-              null,
+              "service_instance_uuidv4",
               "NO ACTION",
               "NO ACTION",
               "NONE"
@@ -11139,13 +11217,233 @@
               1,
               "resources",
               "resource_kind",
-              null,
+              "resource_kind",
               "NO ACTION",
               "NO ACTION",
               "NONE"
             ],
             [
               0,
+              2,
+              "resources",
+              "provider_resource_id",
+              "provider_resource_id",
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              0,
+              3,
+              "resources",
+              "event_document_kind",
+              "reference_document_kind",
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              0,
+              4,
+              "resources",
+              "event_support_kind",
+              "identifier_namespace_kind",
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              0,
+              5,
+              "resources",
+              "event_support_id",
+              "identifier_namespace_id",
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              1,
+              0,
+              "resource_relations",
+              "service_instance_uuidv4",
+              "service_instance_uuidv4",
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              1,
+              1,
+              "resource_relations",
+              "resource_kind",
+              "resource_kind",
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              1,
+              2,
+              "resource_relations",
+              "provider_resource_id",
+              "provider_resource_id",
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              1,
+              3,
+              "resource_relations",
+              "event_support_relation_kind",
+              "relation_kind",
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              1,
+              4,
+              "resource_relations",
+              "event_support_members_json",
+              "members_json",
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              1,
+              5,
+              "resource_relations",
+              "event_support_provenance_json",
+              "provenance_json",
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              1,
+              6,
+              "resource_relations",
+              "event_support_scope_json",
+              "scope_json",
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              1,
+              7,
+              "resource_relations",
+              "event_document_kind",
+              "source_document_kind",
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              1,
+              8,
+              "resource_relations",
+              "event_support_kind",
+              "parent_kind",
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              2,
+              0,
+              "resources",
+              "service_instance_uuidv4",
+              "service_instance_uuidv4",
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              2,
+              1,
+              "resources",
+              "resource_kind",
+              "resource_kind",
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              2,
+              2,
+              "resources",
+              "provider_resource_id",
+              "provider_resource_id",
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              2,
+              3,
+              "resources",
+              "source_document_kind",
+              "reference_document_kind",
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              3,
+              0,
+              "resources",
+              "parent_service",
+              null,
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              3,
+              1,
+              "resources",
+              "parent_kind",
+              null,
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              3,
+              2,
+              "resources",
+              "parent_id",
+              null,
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              4,
+              0,
+              "resources",
+              "service_instance_uuidv4",
+              null,
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              4,
+              1,
+              "resources",
+              "resource_kind",
+              null,
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              4,
               2,
               "resources",
               "provider_resource_id",
@@ -11164,8 +11462,11 @@
             "provenance_json",
             "scope_json"
           ],
-          "sql": "CREATE TABLE resource_relations(\n service_instance_uuidv4 TEXT NOT NULL,\n resource_kind TEXT NOT NULL,\n provider_resource_id TEXT NOT NULL,\n relation_kind TEXT NOT NULL CHECK(length(relation_kind)>0),\n members_json TEXT NOT NULL CHECK(p1_json(members_json) AND json_type(members_json)='array'),\n provenance_json TEXT NOT NULL CHECK(p1_json(provenance_json) AND json_type(provenance_json)='object' AND COALESCE(json_type(provenance_json,'$.source')='text',0) AND length(json_extract(provenance_json,'$.source'))>0 AND json_type(provenance_json,'$.evidence') IS NOT NULL AND json_type(provenance_json,'$.evidence')!='null'),\n scope_json TEXT NOT NULL CHECK(p1_json(scope_json)),\n observed_at_us INTEGER CHECK(observed_at_us IS NULL OR (typeof(observed_at_us)='integer' AND observed_at_us>0)),\n PRIMARY KEY(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json),\n FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id) REFERENCES resources\n) STRICT, WITHOUT ROWID",
+          "sql": "CREATE TABLE resource_relations(\n service_instance_uuidv4 TEXT NOT NULL,\n resource_kind TEXT NOT NULL,\n provider_resource_id TEXT NOT NULL,\n relation_kind TEXT NOT NULL CHECK(length(relation_kind)>0),\n members_json TEXT NOT NULL CHECK(p1_json(members_json) AND json_type(members_json)='array'),\n provenance_json TEXT NOT NULL CHECK(p1_json(provenance_json) AND json_type(provenance_json)='object' AND COALESCE(json_type(provenance_json,'$.source')='text',0) AND length(json_extract(provenance_json,'$.source'))>0 AND json_type(provenance_json,'$.evidence') IS NOT NULL AND json_type(provenance_json,'$.evidence')!='null'),\n scope_json TEXT NOT NULL CHECK(p1_json(scope_json)),\n observed_at_us INTEGER CHECK(observed_at_us IS NULL OR (typeof(observed_at_us)='integer' AND observed_at_us>0)),\n -- Read-only projections of the original singleton report; never another authority.\n parent_service TEXT COLLATE BINARY GENERATED ALWAYS AS(CASE WHEN relation_kind='parent' THEN json_extract(members_json,'$[0][0]') END) VIRTUAL,\n parent_kind TEXT COLLATE BINARY GENERATED ALWAYS AS(CASE WHEN relation_kind='parent' THEN json_extract(members_json,'$[0][1]') END) VIRTUAL,\n parent_id TEXT COLLATE BINARY GENERATED ALWAYS AS(CASE WHEN relation_kind='parent' THEN json_extract(members_json,'$[0][2]') END) VIRTUAL,\n source_document_kind TEXT COLLATE BINARY GENERATED ALWAYS AS(CASE WHEN relation_kind='parent' THEN coalesce(json_extract(scope_json,'$.document_kind'),'') END) VIRTUAL,\n report_clock_json TEXT COLLATE BINARY GENERATED ALWAYS AS(CASE WHEN relation_kind IN('parent','transfer_event_report') THEN json_extract(scope_json,'$.clock') END) VIRTUAL,\n -- I4: generated only from the original Event support payload.\n event_support_members_json TEXT COLLATE BINARY GENERATED ALWAYS AS(CASE WHEN relation_kind='transfer_event_report' THEN p1_transfer_value_v1(scope_json,'parent_members_json') END) VIRTUAL,\n event_support_provenance_json TEXT COLLATE BINARY GENERATED ALWAYS AS(CASE WHEN relation_kind='transfer_event_report' THEN p1_transfer_value_v1(scope_json,'parent_provenance_json') END) VIRTUAL,\n event_support_scope_json TEXT COLLATE BINARY GENERATED ALWAYS AS(CASE WHEN relation_kind='transfer_event_report' THEN p1_transfer_value_v1(scope_json,'parent_scope_json') END) VIRTUAL,\n event_support_service TEXT COLLATE BINARY GENERATED ALWAYS AS(CASE WHEN relation_kind='transfer_event_report' THEN p1_transfer_value_v1(scope_json,'parent_service') END) VIRTUAL,\n event_support_kind TEXT COLLATE BINARY GENERATED ALWAYS AS(CASE WHEN relation_kind='transfer_event_report' THEN p1_transfer_value_v1(scope_json,'parent_kind') END) VIRTUAL,\n event_support_id TEXT COLLATE BINARY GENERATED ALWAYS AS(CASE WHEN relation_kind='transfer_event_report' THEN p1_transfer_value_v1(scope_json,'parent_id') END) VIRTUAL,\n event_support_relation_kind TEXT COLLATE BINARY GENERATED ALWAYS AS(CASE WHEN relation_kind='transfer_event_report' THEN 'parent' END) VIRTUAL,\n event_document_kind TEXT COLLATE BINARY GENERATED ALWAYS AS(CASE WHEN relation_kind='transfer_event_report' THEN 'timeline_event' END) VIRTUAL,\n CHECK(relation_kind!='transfer_event_report' OR (p1_transfer_event_v1(service_instance_uuidv4,resource_kind,provider_resource_id,members_json,provenance_json,scope_json,observed_at_us)=1\n AND report_clock_json IS NOT NULL AND event_support_members_json IS NOT NULL\n AND event_support_provenance_json IS NOT NULL AND event_support_scope_json IS NOT NULL\n AND event_support_service IS NOT NULL AND event_support_kind IS NOT NULL AND event_support_id IS NOT NULL\n AND event_support_service=service_instance_uuidv4 COLLATE BINARY AND event_support_kind='issue' COLLATE BINARY)),\n CHECK(relation_kind!='parent' OR p1_parent_report_v1(service_instance_uuidv4,resource_kind,provider_resource_id,members_json,provenance_json,scope_json,observed_at_us)=1),\n CHECK(relation_kind!='parent' OR (parent_service IS NOT NULL AND parent_kind IS NOT NULL AND parent_id IS NOT NULL AND source_document_kind IS NOT NULL AND report_clock_json IS NOT NULL)),\n PRIMARY KEY(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json),\n FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id) REFERENCES resources,\n FOREIGN KEY(parent_service,parent_kind,parent_id) REFERENCES resources,\n FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id,source_document_kind)\n REFERENCES resources(service_instance_uuidv4,resource_kind,provider_resource_id,reference_document_kind),\n -- Complete ParentReportKey plus its actual generated subtype/kind.\n FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id,event_support_relation_kind,event_support_members_json,event_support_provenance_json,event_support_scope_json,event_document_kind,event_support_kind)\n REFERENCES resource_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json,source_document_kind,parent_kind),\n -- Additional G3=A binding: the reported Issue must be this E's native Issue.\n FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id,event_document_kind,event_support_kind,event_support_id)\n REFERENCES resources(service_instance_uuidv4,resource_kind,provider_resource_id,reference_document_kind,identifier_namespace_kind,identifier_namespace_id)\n) STRICT, WITHOUT ROWID",
           "triggers": {
+            "i2_transfer_report_stage_fence": "CREATE TRIGGER i2_transfer_report_stage_fence BEFORE INSERT ON resource_relations\nWHEN NEW.relation_kind COLLATE BINARY='transfer_event_report'\nBEGIN SELECT RAISE(ABORT,'I2_TRANSFER_UNSUPPORTED'); END",
+            "i4_event_report_admit": "CREATE TRIGGER i4_event_report_admit BEFORE INSERT ON resource_relations\nWHEN NEW.relation_kind='transfer_event_report' BEGIN\n SELECT CASE WHEN p1_transfer_event_v1(NEW.service_instance_uuidv4,NEW.resource_kind,NEW.provider_resource_id,NEW.members_json,NEW.provenance_json,NEW.scope_json,NEW.observed_at_us)!=1\n THEN RAISE(ABORT,'invalid typed Event report') END;\n SELECT CASE WHEN EXISTS(SELECT 1 FROM resource_relations old\n WHERE old.relation_kind='transfer_event_report'\n AND old.service_instance_uuidv4=NEW.service_instance_uuidv4 AND old.resource_kind=NEW.resource_kind\n AND old.provider_resource_id=NEW.provider_resource_id AND old.report_clock_json=NEW.report_clock_json\n AND old.provenance_json=NEW.provenance_json\n AND (old.members_json IS NOT NEW.members_json OR old.scope_json IS NOT NEW.scope_json\n OR old.observed_at_us IS NOT NEW.observed_at_us))\n THEN RAISE(ABORT,'immutable original Event report rebind') END;\nEND",
+            "parent_report_admit": "CREATE TRIGGER parent_report_admit BEFORE INSERT ON resource_relations\nWHEN NEW.relation_kind='parent' BEGIN\n SELECT CASE WHEN p1_parent_report_v1(NEW.service_instance_uuidv4,NEW.resource_kind,NEW.provider_resource_id,NEW.members_json,NEW.provenance_json,NEW.scope_json,NEW.observed_at_us)!=1\n THEN RAISE(ABORT,'invalid Parent report') END;\n SELECT CASE WHEN EXISTS(SELECT 1 FROM resource_relations r\n WHERE r.service_instance_uuidv4=NEW.service_instance_uuidv4 AND r.resource_kind=NEW.resource_kind\n AND r.provider_resource_id=NEW.provider_resource_id AND r.relation_kind=NEW.relation_kind\n AND r.members_json=NEW.members_json AND r.provenance_json=NEW.provenance_json\n AND r.scope_json=NEW.scope_json AND r.observed_at_us IS NOT NEW.observed_at_us)\n THEN RAISE(ABORT,'Parent report observation rebind') END;\nEND",
             "resource_relations_no_delete": "CREATE TRIGGER resource_relations_no_delete BEFORE DELETE ON resource_relations BEGIN SELECT RAISE(ABORT,'immutable Context evidence'); END",
             "resource_relations_no_update": "CREATE TRIGGER resource_relations_no_update BEFORE UPDATE ON resource_relations BEGIN SELECT RAISE(ABORT,'immutable Context evidence'); END"
           },
@@ -11182,6 +11483,32 @@
               ],
               "origin": "pk",
               "partial": false
+            },
+            {
+              "columns": [
+                "service_instance_uuidv4",
+                "resource_kind",
+                "provider_resource_id",
+                "relation_kind",
+                "members_json",
+                "provenance_json",
+                "scope_json",
+                "source_document_kind",
+                "parent_kind"
+              ],
+              "origin": "c",
+              "partial": false
+            },
+            {
+              "columns": [
+                "service_instance_uuidv4",
+                "resource_kind",
+                "provider_resource_id",
+                "report_clock_json",
+                "provenance_json"
+              ],
+              "origin": "c",
+              "partial": true
             }
           ]
         },
@@ -11254,6 +11581,24 @@
               "type": "INTEGER"
             },
             {
+              "generated": 0,
+              "name": "event_report_members_json",
+              "notnull": false,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "event_report_scope_json",
+              "notnull": false,
+              "type": "TEXT"
+            },
+            {
+              "generated": 2,
+              "name": "event_report_kind",
+              "notnull": false,
+              "type": "TEXT"
+            },
+            {
               "generated": 2,
               "name": "event_document_kind",
               "notnull": false,
@@ -11270,7 +11615,7 @@
             [
               0,
               0,
-              "resources",
+              "resource_relations",
               "service_instance_uuidv4",
               "service_instance_uuidv4",
               "NO ACTION",
@@ -11280,7 +11625,7 @@
             [
               0,
               1,
-              "resources",
+              "resource_relations",
               "resource_kind",
               "resource_kind",
               "NO ACTION",
@@ -11290,7 +11635,7 @@
             [
               0,
               2,
-              "resources",
+              "resource_relations",
               "provider_resource_id",
               "provider_resource_id",
               "NO ACTION",
@@ -11300,9 +11645,9 @@
             [
               0,
               3,
-              "resources",
-              "event_document_kind",
-              "document_kind",
+              "resource_relations",
+              "event_report_kind",
+              "relation_kind",
               "NO ACTION",
               "NO ACTION",
               "NONE"
@@ -11310,9 +11655,29 @@
             [
               0,
               4,
-              "resources",
-              "event_parent_resource_kind",
-              "parent_resource_kind",
+              "resource_relations",
+              "event_report_members_json",
+              "members_json",
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              0,
+              5,
+              "resource_relations",
+              "provenance_json",
+              "provenance_json",
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              0,
+              6,
+              "resource_relations",
+              "event_report_scope_json",
+              "scope_json",
               "NO ACTION",
               "NO ACTION",
               "NONE"
@@ -11348,7 +11713,57 @@
               "NONE"
             ],
             [
+              1,
+              3,
+              "resources",
+              "event_document_kind",
+              "reference_document_kind",
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              1,
+              4,
+              "resources",
+              "event_parent_resource_kind",
+              "identifier_namespace_kind",
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
               2,
+              0,
+              "resources",
+              "service_instance_uuidv4",
+              "service_instance_uuidv4",
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              2,
+              1,
+              "resources",
+              "resource_kind",
+              "resource_kind",
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              2,
+              2,
+              "resources",
+              "provider_resource_id",
+              "provider_resource_id",
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              3,
               0,
               "repository_context",
               "repository_uuidv4",
@@ -11367,8 +11782,10 @@
             "target_json",
             "provenance_json"
           ],
-          "sql": "CREATE TABLE resource_repository_relations(\n service_instance_uuidv4 TEXT NOT NULL,\n resource_kind TEXT NOT NULL,\n provider_resource_id TEXT NOT NULL,\n relation_kind TEXT NOT NULL,\n target_json TEXT NOT NULL CHECK(p1_mapping_target(target_json)=1),\n clock_json TEXT NOT NULL CHECK(p1_mapping_clock(clock_json)=1),\n provenance_json TEXT NOT NULL CHECK(p1_mapping_provenance(provenance_json)=1),\n observed_at_us INTEGER CHECK(observed_at_us IS NULL OR (typeof(observed_at_us)='integer' AND observed_at_us>0)),\n repository_uuidv4 TEXT GENERATED ALWAYS AS(CASE WHEN json_type(target_json)='text' THEN json_extract(target_json,'$') END) VIRTUAL REFERENCES repository_context(repository_uuidv4),\n clock_domain TEXT GENERATED ALWAYS AS(json_extract(clock_json,'$.domain')) VIRTUAL,\n source_clock_us INTEGER GENERATED ALWAYS AS(json_extract(clock_json,'$.at_us')) VIRTUAL,\n event_document_kind TEXT GENERATED ALWAYS AS(CASE WHEN relation_kind IN('transfer_from_repository','transfer_to_repository') THEN 'timeline_event' END) VIRTUAL,\n event_parent_resource_kind TEXT GENERATED ALWAYS AS(CASE WHEN relation_kind IN('transfer_from_repository','transfer_to_repository') THEN 'issue' END) VIRTUAL,\n CHECK(typeof(source_clock_us) IN('integer','null')),\n CHECK((relation_kind='represents_repository' AND resource_kind='repository') OR (relation_kind='owning_repository' AND resource_kind='issue') OR (relation_kind IN('base_repository','head_repository') AND resource_kind='pull_request') OR (relation_kind IN('transfer_from_repository','transfer_to_repository') AND resource_kind='comment')),\n CHECK(relation_kind!='represents_repository' OR json_type(target_json)='text'),\n PRIMARY KEY(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,clock_json,target_json,provenance_json),\n FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id) REFERENCES resources(service_instance_uuidv4,resource_kind,provider_resource_id),\n FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id,event_document_kind,event_parent_resource_kind) REFERENCES resources(service_instance_uuidv4,resource_kind,provider_resource_id,document_kind,parent_resource_kind)\n) STRICT, WITHOUT ROWID",
+          "sql": "CREATE TABLE resource_repository_relations(\n service_instance_uuidv4 TEXT NOT NULL,\n resource_kind TEXT NOT NULL,\n provider_resource_id TEXT NOT NULL,\n relation_kind TEXT NOT NULL,\n target_json TEXT NOT NULL CHECK(p1_mapping_target(target_json)=1),\n clock_json TEXT NOT NULL CHECK(p1_mapping_clock(clock_json)=1),\n provenance_json TEXT NOT NULL CHECK(p1_mapping_provenance(provenance_json)=1),\n observed_at_us INTEGER CHECK(observed_at_us IS NULL OR (typeof(observed_at_us)='integer' AND observed_at_us>0)),\n repository_uuidv4 TEXT GENERATED ALWAYS AS(CASE WHEN json_type(target_json)='text' THEN json_extract(target_json,'$') END) VIRTUAL REFERENCES repository_context(repository_uuidv4),\n clock_domain TEXT GENERATED ALWAYS AS(json_extract(clock_json,'$.domain')) VIRTUAL,\n source_clock_us INTEGER GENERATED ALWAYS AS(json_extract(clock_json,'$.at_us')) VIRTUAL,\n -- Complete original Event report reference; non-Transfer roles keep SQL NULL.\n event_report_members_json TEXT COLLATE BINARY,\n event_report_scope_json TEXT COLLATE BINARY,\n event_report_kind TEXT COLLATE BINARY GENERATED ALWAYS AS(CASE WHEN relation_kind IN('transfer_from_repository','transfer_to_repository') THEN 'transfer_event_report' END) VIRTUAL,\n event_document_kind TEXT GENERATED ALWAYS AS(CASE WHEN relation_kind IN('transfer_from_repository','transfer_to_repository') THEN 'timeline_event' END) VIRTUAL,\n event_parent_resource_kind TEXT GENERATED ALWAYS AS(CASE WHEN relation_kind IN('transfer_from_repository','transfer_to_repository') THEN 'issue' END) VIRTUAL,\n CHECK(CASE WHEN relation_kind IN('transfer_from_repository','transfer_to_repository') THEN\n event_report_members_json IS NOT NULL AND event_report_scope_json IS NOT NULL\n AND p1_transfer_endpoint_v1(relation_kind,target_json,event_report_scope_json,clock_json)=1\n ELSE event_report_members_json IS NULL AND event_report_scope_json IS NULL END),\n CHECK(typeof(source_clock_us) IN('integer','null')),\n CHECK((relation_kind='represents_repository' AND resource_kind='repository') OR (relation_kind='owning_repository' AND resource_kind='issue') OR (relation_kind IN('base_repository','head_repository') AND resource_kind='pull_request') OR (relation_kind IN('transfer_from_repository','transfer_to_repository') AND resource_kind='comment')),\n CHECK(relation_kind!='represents_repository' OR json_type(target_json)='text'),\n PRIMARY KEY(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,clock_json,target_json,provenance_json),\n FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id) REFERENCES resources(service_instance_uuidv4,resource_kind,provider_resource_id),\n FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id,event_document_kind,event_parent_resource_kind) REFERENCES resources(service_instance_uuidv4,resource_kind,provider_resource_id,reference_document_kind,identifier_namespace_kind),\n FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id,event_report_kind,event_report_members_json,provenance_json,event_report_scope_json)\n REFERENCES resource_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json)\n) STRICT, WITHOUT ROWID",
           "triggers": {
+            "i2_transfer_stage_fence": "CREATE TRIGGER i2_transfer_stage_fence BEFORE INSERT ON resource_repository_relations\nWHEN NEW.relation_kind COLLATE BINARY IN('transfer_from_repository','transfer_to_repository')\nBEGIN SELECT RAISE(ABORT,'I2_TRANSFER_UNSUPPORTED'); END",
+            "i4_endpoint_admit": "CREATE TRIGGER i4_endpoint_admit BEFORE INSERT ON resource_repository_relations\nWHEN NEW.relation_kind IN('transfer_from_repository','transfer_to_repository') BEGIN\n SELECT CASE WHEN NEW.event_report_members_json IS NULL OR NEW.event_report_scope_json IS NULL\n OR p1_transfer_endpoint_v1(NEW.relation_kind,NEW.target_json,NEW.event_report_scope_json,NEW.clock_json)!=1\n THEN RAISE(ABORT,'invalid Event endpoint reference') END;\n SELECT CASE WHEN EXISTS(SELECT 1 FROM resource_relations report\n WHERE report.service_instance_uuidv4=NEW.service_instance_uuidv4 AND report.resource_kind=NEW.resource_kind\n AND report.provider_resource_id=NEW.provider_resource_id AND report.relation_kind='transfer_event_report'\n AND report.members_json=NEW.event_report_members_json AND report.scope_json=NEW.event_report_scope_json\n AND report.provenance_json=NEW.provenance_json AND report.observed_at_us IS NOT NEW.observed_at_us)\n THEN RAISE(ABORT,'endpoint original Event time mismatch') END;\n SELECT CASE WHEN EXISTS(SELECT 1 FROM resource_repository_relations old\n WHERE old.service_instance_uuidv4=NEW.service_instance_uuidv4 AND old.resource_kind=NEW.resource_kind\n AND old.provider_resource_id=NEW.provider_resource_id AND old.relation_kind=NEW.relation_kind\n AND old.clock_json=NEW.clock_json AND old.target_json=NEW.target_json AND old.provenance_json=NEW.provenance_json\n AND (old.event_report_members_json IS NOT NEW.event_report_members_json OR old.event_report_scope_json IS NOT NEW.event_report_scope_json))\n THEN RAISE(ABORT,'endpoint original Event payload rebind') END;\nEND",
             "rrr_delete_guard": "CREATE TRIGGER rrr_delete_guard BEFORE DELETE ON resource_repository_relations\nWHEN OLD.relation_kind NOT IN('owning_repository','base_repository','head_repository')\n  OR OLD.source_clock_us IS NULL\n  OR NOT EXISTS(\n   SELECT 1 FROM resource_repository_relations later\n   WHERE later.service_instance_uuidv4=OLD.service_instance_uuidv4\n     AND later.resource_kind=OLD.resource_kind\n     AND later.provider_resource_id=OLD.provider_resource_id\n     AND later.relation_kind=OLD.relation_kind\n     AND later.clock_domain=OLD.clock_domain\n     AND later.source_clock_us>OLD.source_clock_us\n  )\nBEGIN SELECT RAISE(ABORT,'only dominated current candidates may be deleted'); END",
             "rrr_event_report_time": "CREATE TRIGGER rrr_event_report_time BEFORE INSERT ON resource_repository_relations\nWHEN NEW.relation_kind IN('transfer_from_repository','transfer_to_repository')\n AND EXISTS(\n  SELECT 1 FROM resource_repository_relations peer\n  WHERE peer.service_instance_uuidv4=NEW.service_instance_uuidv4\n    AND peer.resource_kind=NEW.resource_kind\n    AND peer.provider_resource_id=NEW.provider_resource_id\n    AND peer.clock_json=NEW.clock_json\n    AND peer.provenance_json=NEW.provenance_json\n    AND peer.relation_kind IN('transfer_from_repository','transfer_to_repository')\n    AND NOT (peer.relation_kind=NEW.relation_kind AND peer.target_json=NEW.target_json)\n    AND peer.observed_at_us IS NOT NEW.observed_at_us\n )\nBEGIN SELECT RAISE(ABORT,'transfer event report observed_at_us mismatch'); END",
             "rrr_no_rebind": "CREATE TRIGGER rrr_no_rebind BEFORE INSERT ON resource_repository_relations\nWHEN EXISTS(\n SELECT 1 FROM resource_repository_relations existing\n WHERE existing.service_instance_uuidv4=NEW.service_instance_uuidv4\n   AND existing.resource_kind=NEW.resource_kind\n   AND existing.provider_resource_id=NEW.provider_resource_id\n   AND existing.relation_kind=NEW.relation_kind\n   AND existing.clock_json=NEW.clock_json\n   AND existing.target_json=NEW.target_json\n   AND existing.provenance_json=NEW.provenance_json\n   AND existing.observed_at_us IS NOT NEW.observed_at_us\n) OR (\n NEW.relation_kind IN('owning_repository','base_repository','head_repository')\n AND NEW.source_clock_us IS NOT NULL\n AND EXISTS(\n  SELECT 1 FROM resource_repository_relations later\n  WHERE later.service_instance_uuidv4=NEW.service_instance_uuidv4\n    AND later.resource_kind=NEW.resource_kind\n    AND later.provider_resource_id=NEW.provider_resource_id\n    AND later.relation_kind=NEW.relation_kind\n    AND later.clock_domain=NEW.clock_domain\n    AND later.source_clock_us>NEW.source_clock_us\n )\n)\nBEGIN\n SELECT CASE\n  WHEN EXISTS(\n   SELECT 1 FROM resource_repository_relations existing\n   WHERE existing.service_instance_uuidv4=NEW.service_instance_uuidv4\n     AND existing.resource_kind=NEW.resource_kind\n     AND existing.provider_resource_id=NEW.provider_resource_id\n     AND existing.relation_kind=NEW.relation_kind\n     AND existing.clock_json=NEW.clock_json\n     AND existing.target_json=NEW.target_json\n     AND existing.provenance_json=NEW.provenance_json\n     AND existing.observed_at_us IS NOT NEW.observed_at_us\n  ) THEN RAISE(ABORT,'resource_repository_relations observed_at_us rebind')\n  ELSE RAISE(ABORT,'stale current repository relation candidate')\n END;\nEND",
@@ -11413,13 +11830,13 @@
             },
             {
               "generated": 0,
-              "name": "parent_resource_kind",
+              "name": "identifier_namespace_kind",
               "notnull": false,
               "type": "TEXT"
             },
             {
               "generated": 0,
-              "name": "parent_provider_resource_id",
+              "name": "identifier_namespace_id",
               "notnull": false,
               "type": "TEXT"
             },
@@ -11434,41 +11851,17 @@
               "name": "provider_document_id",
               "notnull": false,
               "type": "TEXT"
+            },
+            {
+              "generated": 2,
+              "name": "reference_document_kind",
+              "notnull": false,
+              "type": "TEXT"
             }
           ],
           "foreign_keys": [
             [
               0,
-              0,
-              "resources",
-              "service_instance_uuidv4",
-              "service_instance_uuidv4",
-              "NO ACTION",
-              "NO ACTION",
-              "NONE"
-            ],
-            [
-              0,
-              1,
-              "resources",
-              "parent_resource_kind",
-              "resource_kind",
-              "NO ACTION",
-              "NO ACTION",
-              "NONE"
-            ],
-            [
-              0,
-              2,
-              "resources",
-              "parent_provider_resource_id",
-              "provider_resource_id",
-              "NO ACTION",
-              "NO ACTION",
-              "NONE"
-            ],
-            [
-              1,
               0,
               "providers",
               "service_instance_uuidv4",
@@ -11483,8 +11876,9 @@
             "resource_kind",
             "provider_resource_id"
           ],
-          "sql": "CREATE TABLE resources(\n service_instance_uuidv4 TEXT NOT NULL REFERENCES providers,\n resource_kind TEXT NOT NULL CHECK(resource_kind IN('repository','pull_request','issue','review','comment','thread','document','assessment','identity','endpoint','annotation','lfs')),\n provider_resource_id TEXT NOT NULL CHECK(length(provider_resource_id)>0),\n parent_resource_kind TEXT,\n parent_provider_resource_id TEXT,\n document_kind TEXT,\n provider_document_id TEXT,\n CHECK(resource_kind NOT IN('review','document') OR parent_resource_kind='pull_request'),\n CHECK(resource_kind!='thread' OR parent_resource_kind IN('pull_request','review')),\n CHECK(resource_kind!='comment' OR parent_resource_kind IN('pull_request','issue','review','thread')),\n CHECK(CASE WHEN resource_kind IN('review','comment','thread','document') THEN\n parent_resource_kind IS NOT NULL AND parent_provider_resource_id IS NOT NULL AND document_kind IS NOT NULL AND length(document_kind)>0 AND provider_document_id IS NOT NULL AND length(provider_document_id)>0\n AND provider_resource_id=p1_array(parent_resource_kind,parent_provider_resource_id,document_kind,provider_document_id)\n ELSE parent_resource_kind IS NULL AND parent_provider_resource_id IS NULL AND document_kind IS NULL AND provider_document_id IS NULL END),\n FOREIGN KEY(service_instance_uuidv4,parent_resource_kind,parent_provider_resource_id) REFERENCES resources(service_instance_uuidv4,resource_kind,provider_resource_id),\n PRIMARY KEY(service_instance_uuidv4,resource_kind,provider_resource_id)\n) STRICT, WITHOUT ROWID",
+          "sql": "CREATE TABLE resources(\n service_instance_uuidv4 TEXT COLLATE BINARY NOT NULL REFERENCES providers\n   CHECK(p1_uuid4(service_instance_uuidv4)=1),\n resource_kind TEXT COLLATE BINARY NOT NULL CHECK(resource_kind!=''),\n provider_resource_id TEXT COLLATE BINARY NOT NULL\n   CHECK(typeof(provider_resource_id)='text' AND p1_resource_identity_v1(provider_resource_id)=1),\n identifier_namespace_kind TEXT COLLATE BINARY,\n identifier_namespace_id TEXT COLLATE BINARY,\n document_kind TEXT COLLATE BINARY,\n provider_document_id TEXT COLLATE BINARY,\n reference_document_kind TEXT COLLATE BINARY\n   GENERATED ALWAYS AS(coalesce(document_kind,'')) VIRTUAL,\n CHECK(p1_resource_identification_v1(resource_kind,provider_resource_id,\n   identifier_namespace_kind,identifier_namespace_id,document_kind,provider_document_id)=1),\n PRIMARY KEY(service_instance_uuidv4,resource_kind,provider_resource_id)\n) STRICT, WITHOUT ROWID",
           "triggers": {
+            "resources_admit": "CREATE TRIGGER resources_admit BEFORE INSERT ON resources BEGIN\n SELECT CASE WHEN p1_uuid4(NEW.service_instance_uuidv4)!=1\n   OR typeof(NEW.resource_kind)!='text' OR NEW.resource_kind=''\n   OR p1_resource_identification_v1(NEW.resource_kind,NEW.provider_resource_id,\n       NEW.identifier_namespace_kind,NEW.identifier_namespace_id,\n       NEW.document_kind,NEW.provider_document_id)!=1\n   THEN RAISE(ABORT,'invalid Resource identification') END;\n -- Deliberately pre-conflict: IGNORE / DO NOTHING cannot hide a contradiction.\n SELECT CASE WHEN EXISTS(SELECT 1 FROM resources r\n   WHERE r.service_instance_uuidv4=NEW.service_instance_uuidv4\n     AND r.resource_kind=NEW.resource_kind\n     AND r.provider_resource_id=NEW.provider_resource_id\n     AND (r.identifier_namespace_kind IS NOT NEW.identifier_namespace_kind\n       OR r.identifier_namespace_id IS NOT NEW.identifier_namespace_id\n       OR r.document_kind IS NOT NEW.document_kind\n       OR r.provider_document_id IS NOT NEW.provider_document_id))\n   THEN RAISE(ABORT,'Resource identification rebind') END;\nEND",
             "resources_no_delete": "CREATE TRIGGER resources_no_delete BEFORE DELETE ON resources BEGIN SELECT RAISE(ABORT,'immutable Context evidence'); END",
             "resources_no_update": "CREATE TRIGGER resources_no_update BEFORE UPDATE ON resources BEGIN SELECT RAISE(ABORT,'immutable Context evidence'); END"
           },
@@ -11503,8 +11897,30 @@
                 "service_instance_uuidv4",
                 "resource_kind",
                 "provider_resource_id",
-                "document_kind",
-                "parent_resource_kind"
+                "reference_document_kind"
+              ],
+              "origin": "c",
+              "partial": false
+            },
+            {
+              "columns": [
+                "service_instance_uuidv4",
+                "resource_kind",
+                "provider_resource_id",
+                "reference_document_kind",
+                "identifier_namespace_kind"
+              ],
+              "origin": "c",
+              "partial": false
+            },
+            {
+              "columns": [
+                "service_instance_uuidv4",
+                "resource_kind",
+                "provider_resource_id",
+                "reference_document_kind",
+                "identifier_namespace_kind",
+                "identifier_namespace_id"
               ],
               "origin": "c",
               "partial": false

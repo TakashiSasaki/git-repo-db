@@ -1,0 +1,126 @@
+{
+  "docs/implementation/evidence/adr0031-i6a/remediation-20261023/before/ordinary.selected.txt.gz": {
+    "size": 86008,
+    "sha256": "ce0b11f79a22e7b474ab2f2dc10c5c5f2c034ea935d50020996f1cc9807af1dd"
+  },
+  "docs/implementation/evidence/adr0031-i6a/remediation-20261023/before/ordinary.xml.gz": {
+    "size": 200613,
+    "sha256": "2fd3c956190835e1706012faa339e7e0a56be518bc6d11fcce7cfff23305f1f6"
+  },
+  "docs/implementation/evidence/adr0031-i6a/remediation-20261023/before/ordinary.jsonl.gz": {
+    "size": 394512,
+    "sha256": "c689859a97cc2e6a8bf270618b5a4eff17d6318113da245af146b3f236028265"
+  },
+  "docs/implementation/evidence/adr0031-i6a/remediation-20261023/before/ordinary.report-types.jsonl.gz": {
+    "size": 231599,
+    "sha256": "91f690a5892135e2998319b6c1c0b9c90207d7ba1eb67799c72e7bf013ed514b"
+  },
+  "docs/implementation/evidence/adr0031-i6a/remediation-20261023/before/ordinary.execution.json": {
+    "size": 1386,
+    "sha256": "803fe9f6975fa9eb33347d5e2a30f5969bf957ae6ac6e502a1855c0a7bc47e8f"
+  },
+  "docs/implementation/evidence/adr0031-i6a/remediation-20261023/before/binding-before.json.gz": {
+    "size": 22556,
+    "sha256": "814b15ecdf33d42bc2dcbf43990ddd289f9745152455c06a24ed052158f9a1d6"
+  },
+  "docs/implementation/evidence/adr0031-i6a/remediation-20261023/before/binding-after.json.gz": {
+    "size": 22556,
+    "sha256": "814b15ecdf33d42bc2dcbf43990ddd289f9745152455c06a24ed052158f9a1d6"
+  },
+  "docs/implementation/evidence/adr0031-i6a/remediation-20261023/after-final/ordinary.selected.txt.gz": {
+    "size": 86523,
+    "sha256": "2890f1ce416f2f659b998b39b519058e893fcecdc502890eab71c0ff78cbdffa"
+  },
+  "docs/implementation/evidence/adr0031-i6a/remediation-20261023/after-final/ordinary.xml.gz": {
+    "size": 181993,
+    "sha256": "d96714966987b31d285021df0cca1bb923039575b75baeffcd11c07994809e62"
+  },
+  "docs/implementation/evidence/adr0031-i6a/remediation-20261023/after-final/ordinary.jsonl.gz": {
+    "size": 410933,
+    "sha256": "8a84224ca182d858f844ac518eecda91f468cbeda9998b6545c24383e5e01c62"
+  },
+  "docs/implementation/evidence/adr0031-i6a/remediation-20261023/after-final/ordinary.report-types.jsonl.gz": {
+    "size": 242958,
+    "sha256": "b70b8754065cbd16c6f6f572351d13b8230fe4586850e1f43091aadd1f8e969e"
+  },
+  "docs/implementation/evidence/adr0031-i6a/remediation-20261023/after-final/ordinary.execution.json": {
+    "size": 1440,
+    "sha256": "7d8c8c49bf12804b96aaa240d97b0ded15a4fa42784426a5859f8f1e244d9d40"
+  },
+  "docs/implementation/evidence/adr0031-i6a/remediation-20261023/after-final/binding-before.json.gz": {
+    "size": 22930,
+    "sha256": "a0eca1d21ec7f97a233d22f14204d0a8ec57823541bf5ec1c9a1e6c930e0c912"
+  },
+  "docs/implementation/evidence/adr0031-i6a/remediation-20261023/after-final/binding-after.json.gz": {
+    "size": 22930,
+    "sha256": "a0eca1d21ec7f97a233d22f14204d0a8ec57823541bf5ec1c9a1e6c930e0c912"
+  },
+  "docs/implementation/evidence/adr0031-i6a/author/final-v3/inherited-79-node-phase-exception-assertion-map.json.gz": {
+    "size": 5639,
+    "sha256": "d6a619574cd65f6d34c2b684df6136eaa08891dee07d24bc1c49f2ce1a503fc0"
+  },
+  "docs/implementation/evidence/adr0031-i6a/author/baseline/historical-source.json": {
+    "size": 651,
+    "sha256": "2798a4635f363ac7d2b769074fb1fd25876be334fd84799852094214985a4b46"
+  },
+  "docs/implementation/evidence/adr0031-i5/author-evidence.zip": {
+    "size": 3305637,
+    "sha256": "c83f97e6276ad9134adee02f7f73fd0af2df49db32414410a502e049aaf67f9b"
+  },
+  "docs/implementation/evidence/adr0031-i6a/remediation-20261023/classification/before-assertion-diagnostic/assertions/gw0.jsonl.gz": {
+    "size": 3867,
+    "sha256": "aae61f259e245e98e30dcca7c589a3e9ec205f7fd94520e414797411c51c408f"
+  },
+  "docs/implementation/evidence/adr0031-i6a/remediation-20261023/classification/before-assertion-diagnostic/assertions/gw1.jsonl.gz": {
+    "size": 5545,
+    "sha256": "c0e316cc946dab8312c11315856c24c44190811342af8878a58778bb39307129"
+  },
+  "docs/implementation/evidence/adr0031-i6a/remediation-20261023/classification/before-assertion-diagnostic/assertions/gw2.jsonl.gz": {
+    "size": 4336,
+    "sha256": "7548502e929a69edb347bd6126152a37c8e502617af5edf19aa03c1218382b8b"
+  },
+  "docs/implementation/evidence/adr0031-i6a/remediation-20261023/classification/before-assertion-diagnostic/assertions/gw3.jsonl.gz": {
+    "size": 4742,
+    "sha256": "da24ce9508fe9611c13740e96135da25c8a9c55e3eba207acfd50b538102080f"
+  },
+  "docs/implementation/evidence/adr0031-i6a/remediation-20261023/classification/before-assertion-diagnostic/assertions/master.jsonl.gz": {
+    "size": 132,
+    "sha256": "c245b62f53dba0637adc2a6554e54846af841783e4dd44ba0f7e360b4667bf2a"
+  },
+  "docs/implementation/evidence/adr0031-i6a/remediation-20261023/after-final/assertions/gw0.jsonl.gz": {
+    "size": 71935,
+    "sha256": "bfe15b37aea5c12444a5122f6b476774be606e2d5050b3d7bb17fd69eb890f1a"
+  },
+  "docs/implementation/evidence/adr0031-i6a/remediation-20261023/after-final/assertions/gw1.jsonl.gz": {
+    "size": 36134,
+    "sha256": "c0b5f2b5261adeaaad0d096bd548aaaced28e969faf362a0696dd560d53b4446"
+  },
+  "docs/implementation/evidence/adr0031-i6a/remediation-20261023/after-final/assertions/gw2.jsonl.gz": {
+    "size": 41569,
+    "sha256": "f76cc69b681ec17c5ee873ebe3141aff8640166e6d5b81a4058a438ea5e24e65"
+  },
+  "docs/implementation/evidence/adr0031-i6a/remediation-20261023/after-final/assertions/gw3.jsonl.gz": {
+    "size": 105365,
+    "sha256": "e8011cba0cad5c65d9486278aec45f656bc0112b5da41ca752e5e348bc11d4cc"
+  },
+  "docs/implementation/evidence/adr0031-i6a/remediation-20261023/after-final/assertions/master.jsonl.gz": {
+    "size": 130,
+    "sha256": "24d2eb76aa605dcea91ea4bc8f73e762805ab076a8c6b8bc2fa1b0f8cb122900"
+  },
+  "docs/implementation/evidence/adr0031-i6a/remediation-20261023/classification/final-caughtguards/actual-permission-raise-stacks.json": {
+    "size": 8209,
+    "sha256": "ac82278729a0d65f953461b5a533ba2ee6edb5ededac479197cbad55a19f751f"
+  },
+  "docs/implementation/evidence/adr0031-i6a/remediation-20261023/classification/final-recovery-export-guards/actual-permission-raise-stacks.json.gz": {
+    "size": 1561,
+    "sha256": "0ebfbf39dbfc91a734969a7630ea31ac429ddc82325d7e199449332e22cb3876"
+  },
+  "docs/implementation/evidence/adr0031-i6a/remediation-20261023/classification/before-caughtguards/actual-permission-raise-stacks.json": {
+    "size": 8249,
+    "sha256": "3288c3ce509cd2c9593c3cbfda5e5c232ebe8c65b51b243455ab42fd848b888c"
+  },
+  "docs/implementation/evidence/adr0031-i6a/remediation-20261023/classification/final/failure-ledger-reviewed.json.gz": {
+    "size": 202367,
+    "sha256": "8fff58fbedfe3df8d2b37ddab79865cb47ada2a9e63441493a0dabb1d7c7fec1"
+  }
+}

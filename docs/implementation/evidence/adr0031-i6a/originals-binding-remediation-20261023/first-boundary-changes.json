@@ -1,0 +1,318 @@
+{
+  "scope": "Actual743 diagnostic first semantic boundary comparison to #146 clean743. Ignore mere line-number movement but retain exact old/new coordinates and source.",
+  "changed_first_semantic_boundary_count": 16,
+  "changed_classes": {
+    "Transfer-stage": 16
+  },
+  "rows": [
+    {
+      "nodeid": "tests/integration/i3/test_selective_exchange.py::test_transfer_reports_never_shrunk_or_mixed",
+      "classification": "Transfer-stage",
+      "before_first_semantic_boundary": {
+        "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+        "line": 979,
+        "function": "",
+        "enclosing": "admit_transfer_event",
+        "source": "            raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "after_first_semantic_boundary": {
+        "enclosing": "call",
+        "function": "",
+        "line": 168,
+        "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+        "source": "                raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "reason": "The existing ordinary Transfer fence now raises in the admission wrapper after authorization/selection/current originals validation and before dependency lookup, rather than later in the Store. Both Python and SQL fences remain. The category/outcome/phase and actual assertion entry sets stay unchanged."
+    },
+    {
+      "nodeid": "tests/integration/p1/test_context_relations.py::test_counterexample_5_transfer_cases_no_invented_endpoints",
+      "classification": "Transfer-stage",
+      "before_first_semantic_boundary": {
+        "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+        "line": 346,
+        "function": "",
+        "enclosing": "admit_transfer_event",
+        "source": "            raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "after_first_semantic_boundary": {
+        "enclosing": "call",
+        "function": "",
+        "line": 168,
+        "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+        "source": "                raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "reason": "The existing ordinary Transfer fence now raises in the admission wrapper after authorization/selection/current originals validation and before dependency lookup, rather than later in the Store. Both Python and SQL fences remain. The category/outcome/phase and actual assertion entry sets stay unchanged."
+    },
+    {
+      "nodeid": "tests/integration/p1/test_context_relations.py::test_partial_transfer_alternatives_remain_selection_truncated",
+      "classification": "Transfer-stage",
+      "before_first_semantic_boundary": {
+        "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+        "line": 346,
+        "function": "",
+        "enclosing": "admit_transfer_event",
+        "source": "            raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "after_first_semantic_boundary": {
+        "enclosing": "call",
+        "function": "",
+        "line": 168,
+        "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+        "source": "                raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "reason": "The existing ordinary Transfer fence now raises in the admission wrapper after authorization/selection/current originals validation and before dependency lookup, rather than later in the Store. Both Python and SQL fences remain. The category/outcome/phase and actual assertion entry sets stay unchanged."
+    },
+    {
+      "nodeid": "tests/integration/p1/test_context_relations.py::test_transfer_event_genuine_type_enforcement_across_typed_paths",
+      "classification": "Transfer-stage",
+      "before_first_semantic_boundary": {
+        "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+        "line": 346,
+        "function": "",
+        "enclosing": "admit_transfer_event",
+        "source": "            raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "after_first_semantic_boundary": {
+        "enclosing": "call",
+        "function": "",
+        "line": 168,
+        "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+        "source": "                raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "reason": "The existing ordinary Transfer fence now raises in the admission wrapper after authorization/selection/current originals validation and before dependency lookup, rather than later in the Store. Both Python and SQL fences remain. The category/outcome/phase and actual assertion entry sets stay unchanged."
+    },
+    {
+      "nodeid": "tests/integration/p1/test_context_relations.py::test_transfer_event_reports_generator_selected_repositories_and_invariants",
+      "classification": "Transfer-stage",
+      "before_first_semantic_boundary": {
+        "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+        "line": 346,
+        "function": "",
+        "enclosing": "admit_transfer_event",
+        "source": "            raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "after_first_semantic_boundary": {
+        "enclosing": "call",
+        "function": "",
+        "line": 168,
+        "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+        "source": "                raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "reason": "The existing ordinary Transfer fence now raises in the admission wrapper after authorization/selection/current originals validation and before dependency lookup, rather than later in the Store. Both Python and SQL fences remain. The category/outcome/phase and actual assertion entry sets stay unchanged."
+    },
+    {
+      "nodeid": "tests/integration/p1/test_context_relations.py::test_transfer_generic_admission_requires_complete_report[transfer_from_repository-False-False]",
+      "classification": "Transfer-stage",
+      "before_first_semantic_boundary": {
+        "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+        "line": 346,
+        "function": "",
+        "enclosing": "admit_transfer_event",
+        "source": "            raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "after_first_semantic_boundary": {
+        "enclosing": "call",
+        "function": "",
+        "line": 168,
+        "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+        "source": "                raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "reason": "The existing ordinary Transfer fence now raises in the admission wrapper after authorization/selection/current originals validation and before dependency lookup, rather than later in the Store. Both Python and SQL fences remain. The category/outcome/phase and actual assertion entry sets stay unchanged."
+    },
+    {
+      "nodeid": "tests/integration/p1/test_context_relations.py::test_transfer_generic_admission_requires_complete_report[transfer_from_repository-False-True]",
+      "classification": "Transfer-stage",
+      "before_first_semantic_boundary": {
+        "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+        "line": 979,
+        "function": "",
+        "enclosing": "admit_transfer_event",
+        "source": "            raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "after_first_semantic_boundary": {
+        "enclosing": "call",
+        "function": "",
+        "line": 168,
+        "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+        "source": "                raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "reason": "The existing ordinary Transfer fence now raises in the admission wrapper after authorization/selection/current originals validation and before dependency lookup, rather than later in the Store. Both Python and SQL fences remain. The category/outcome/phase and actual assertion entry sets stay unchanged."
+    },
+    {
+      "nodeid": "tests/integration/p1/test_context_relations.py::test_transfer_generic_admission_requires_complete_report[transfer_from_repository-True-False]",
+      "classification": "Transfer-stage",
+      "before_first_semantic_boundary": {
+        "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+        "line": 346,
+        "function": "",
+        "enclosing": "admit_transfer_event",
+        "source": "            raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "after_first_semantic_boundary": {
+        "enclosing": "call",
+        "function": "",
+        "line": 168,
+        "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+        "source": "                raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "reason": "The existing ordinary Transfer fence now raises in the admission wrapper after authorization/selection/current originals validation and before dependency lookup, rather than later in the Store. Both Python and SQL fences remain. The category/outcome/phase and actual assertion entry sets stay unchanged."
+    },
+    {
+      "nodeid": "tests/integration/p1/test_context_relations.py::test_transfer_generic_admission_requires_complete_report[transfer_from_repository-True-True]",
+      "classification": "Transfer-stage",
+      "before_first_semantic_boundary": {
+        "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+        "line": 979,
+        "function": "",
+        "enclosing": "admit_transfer_event",
+        "source": "            raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "after_first_semantic_boundary": {
+        "enclosing": "call",
+        "function": "",
+        "line": 168,
+        "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+        "source": "                raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "reason": "The existing ordinary Transfer fence now raises in the admission wrapper after authorization/selection/current originals validation and before dependency lookup, rather than later in the Store. Both Python and SQL fences remain. The category/outcome/phase and actual assertion entry sets stay unchanged."
+    },
+    {
+      "nodeid": "tests/integration/p1/test_context_relations.py::test_transfer_generic_admission_requires_complete_report[transfer_to_repository-False-False]",
+      "classification": "Transfer-stage",
+      "before_first_semantic_boundary": {
+        "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+        "line": 346,
+        "function": "",
+        "enclosing": "admit_transfer_event",
+        "source": "            raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "after_first_semantic_boundary": {
+        "enclosing": "call",
+        "function": "",
+        "line": 168,
+        "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+        "source": "                raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "reason": "The existing ordinary Transfer fence now raises in the admission wrapper after authorization/selection/current originals validation and before dependency lookup, rather than later in the Store. Both Python and SQL fences remain. The category/outcome/phase and actual assertion entry sets stay unchanged."
+    },
+    {
+      "nodeid": "tests/integration/p1/test_context_relations.py::test_transfer_generic_admission_requires_complete_report[transfer_to_repository-False-True]",
+      "classification": "Transfer-stage",
+      "before_first_semantic_boundary": {
+        "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+        "line": 979,
+        "function": "",
+        "enclosing": "admit_transfer_event",
+        "source": "            raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "after_first_semantic_boundary": {
+        "enclosing": "call",
+        "function": "",
+        "line": 168,
+        "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+        "source": "                raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "reason": "The existing ordinary Transfer fence now raises in the admission wrapper after authorization/selection/current originals validation and before dependency lookup, rather than later in the Store. Both Python and SQL fences remain. The category/outcome/phase and actual assertion entry sets stay unchanged."
+    },
+    {
+      "nodeid": "tests/integration/p1/test_context_relations.py::test_transfer_generic_admission_requires_complete_report[transfer_to_repository-True-False]",
+      "classification": "Transfer-stage",
+      "before_first_semantic_boundary": {
+        "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+        "line": 346,
+        "function": "",
+        "enclosing": "admit_transfer_event",
+        "source": "            raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "after_first_semantic_boundary": {
+        "enclosing": "call",
+        "function": "",
+        "line": 168,
+        "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+        "source": "                raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "reason": "The existing ordinary Transfer fence now raises in the admission wrapper after authorization/selection/current originals validation and before dependency lookup, rather than later in the Store. Both Python and SQL fences remain. The category/outcome/phase and actual assertion entry sets stay unchanged."
+    },
+    {
+      "nodeid": "tests/integration/p1/test_context_relations.py::test_transfer_generic_admission_requires_complete_report[transfer_to_repository-True-True]",
+      "classification": "Transfer-stage",
+      "before_first_semantic_boundary": {
+        "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+        "line": 979,
+        "function": "",
+        "enclosing": "admit_transfer_event",
+        "source": "            raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "after_first_semantic_boundary": {
+        "enclosing": "call",
+        "function": "",
+        "line": 168,
+        "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+        "source": "                raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "reason": "The existing ordinary Transfer fence now raises in the admission wrapper after authorization/selection/current originals validation and before dependency lookup, rather than later in the Store. Both Python and SQL fences remain. The category/outcome/phase and actual assertion entry sets stay unchanged."
+    },
+    {
+      "nodeid": "tests/integration/p1/test_context_relations.py::test_transfer_report_fk_failure_rolls_back_whole_unit",
+      "classification": "Transfer-stage",
+      "before_first_semantic_boundary": {
+        "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+        "line": 346,
+        "function": "",
+        "enclosing": "admit_transfer_event",
+        "source": "            raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "after_first_semantic_boundary": {
+        "enclosing": "call",
+        "function": "",
+        "line": 168,
+        "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+        "source": "                raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "reason": "The existing ordinary Transfer fence now raises in the admission wrapper after authorization/selection/current originals validation and before dependency lookup, rather than later in the Store. Both Python and SQL fences remain. The category/outcome/phase and actual assertion entry sets stay unchanged."
+    },
+    {
+      "nodeid": "tests/integration/p1/test_context_relations.py::test_transfer_supports_both_endpoints_without_cross_borrowing",
+      "classification": "Transfer-stage",
+      "before_first_semantic_boundary": {
+        "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+        "line": 346,
+        "function": "",
+        "enclosing": "admit_transfer_event",
+        "source": "            raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "after_first_semantic_boundary": {
+        "enclosing": "call",
+        "function": "",
+        "line": 168,
+        "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+        "source": "                raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "reason": "The existing ordinary Transfer fence now raises in the admission wrapper after authorization/selection/current originals validation and before dependency lookup, rather than later in the Store. Both Python and SQL fences remain. The category/outcome/phase and actual assertion entry sets stay unchanged."
+    },
+    {
+      "nodeid": "tests/integration/p3/test_production_context.py::test_production_context_relation_facade_methods",
+      "classification": "Transfer-stage",
+      "before_first_semantic_boundary": {
+        "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+        "line": 979,
+        "function": "",
+        "enclosing": "admit_transfer_event",
+        "source": "            raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "after_first_semantic_boundary": {
+        "enclosing": "call",
+        "function": "",
+        "line": 168,
+        "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
+        "source": "                raise UnsupportedResourceStage(\"admit_transfer_event\")"
+      },
+      "reason": "The existing ordinary Transfer fence now raises in the admission wrapper after authorization/selection/current originals validation and before dependency lookup, rather than later in the Store. Both Python and SQL fences remain. The category/outcome/phase and actual assertion entry sets stay unchanged."
+    }
+  ],
+  "predecessor_inputs_sha256": {
+    "/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6a/remediation-independent/failure-audit/clean743.json.gz": "0cf8c0f1c0049ac087b4f8666d6eafd4dced703d9741ca58d51e496b2020bef7",
+    "/workspace/task-a-artifacts/diagnostic-analysis/node-comparison.json.gz": "77a8b80d961c23552e77e3bc6c2b8e2be86c200ab719868575f0f5c4e8e21c09"
+  },
+  "analysis_script_sha256": "cfbaeeb9ae75acb71460c5cc2d77b6f658af74ba23c8e94c1975bafa6f20e2a4"
+}

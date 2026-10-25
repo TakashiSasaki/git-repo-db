@@ -39,6 +39,8 @@ from repo_catalog.domain.p1_context import (
 )
 from repo_catalog.domain.p1_coordination import CoordinationError
 from repo_catalog.domain.production_context import ResourceRelation
+from repo_catalog.domain.resource_identification import ResourceIdentification as RI
+from repo_catalog.domain.resource_identity import encode_identity, parse_identity
 from tests.integration.p5.conftest import init_catalog_stores
 
 
@@ -61,7 +63,7 @@ def provenance(label):
 
 def mapping(service, provider, target, label="mapping", clock=10):
     return ResourceRepositoryRelation(
-        ResourceKey(service, "repository", provider),
+        ResourceKey.from_native(service, "repository", provider),
         "represents_repository",
         FieldClock("original-mapping", clock),
         canonical(target),
@@ -126,7 +128,7 @@ def test_pr_base_head_have_distinct_core_and_exact_provider_support(tmp_path):
             ),
         )
     )
-    key = ResourceKey(s, "pull_request", "9")
+    key = ResourceKey.from_native(s, "pull_request", "9")
     with Context.snapshot(tmp_path) as ctx:
         qualified = {
             q.scope.relation_kind: q for q in ctx.provider_repository_roles(key)
@@ -152,7 +154,9 @@ def test_mapping_conflict_retains_both_exact_claim_keys(tmp_path):
     acq.admit_batch(ProviderIntakeBatch(s, mapping_claims=(a, b)))
     acq.admit_batch(issue_batch(s, {"id": 1}))
     with Context.snapshot(tmp_path) as ctx:
-        (role,) = ctx.provider_repository_roles(ResourceKey(s, "issue", "7"))
+        (role,) = ctx.provider_repository_roles(
+            ResourceKey.from_native(s, "issue", "7")
+        )
         assert role.state == "conflict"
         assert {
             key for support in role.supports for key in support.supporting_claims
@@ -167,7 +171,7 @@ def test_other_provider_claim_cannot_resolve_reference_or_typed_qualification(tm
     acq.admit_batch(ProviderIntakeBatch(s, mapping_claims=(claim,)))
     acq.admit_batch(issue_batch(s, {"id": 1}))
     with Context.snapshot(tmp_path) as ctx:
-        key = ResourceKey(s, "issue", "7")
+        key = ResourceKey.from_native(s, "issue", "7")
         (role,) = ctx.provider_repository_roles(key)
         assert role.state == "unresolved_provider_only" and not role.resolved_candidates
         assert not ctx.repository_relations(key)
@@ -175,7 +179,7 @@ def test_other_provider_claim_cannot_resolve_reference_or_typed_qualification(tm
         QualifiedProviderRepositoryRole(
             key,
             ProviderRepositoryRoleScope.unresolved(
-                "owning_repository", "A", FieldClock("provider", 1), 1
+                "owning_repository", encode_identity("A"), FieldClock("provider", 1), 1
             ),
             provenance("issue"),
             QualifiedMappingEvaluation(
@@ -211,7 +215,7 @@ def test_disposition_qualification_keeps_original_provider_and_claims(tmp_path, 
         )
     )
     with Context.snapshot(tmp_path) as ctx:
-        key = ResourceKey(s, "issue", "7")
+        key = ResourceKey.from_native(s, "issue", "7")
         (ordinary,) = ctx.provider_repository_roles(key)
         assert (
             ordinary.mapping.unconfirmed_dispositions
@@ -244,13 +248,19 @@ def test_missing_null_unresolved_and_late_mapping_are_distinct(tmp_path):
     acq.admit_batch(issue_batch(s, None, identifier=2, label="null"))
     acq.admit_batch(issue_batch(s, {"id": 1}, identifier=3, label="unresolved"))
     with Context.snapshot(tmp_path) as ctx:
-        assert not ctx.provider_repository_roles(ResourceKey(s, "issue", "1"))
-        (null,) = ctx.provider_repository_roles(ResourceKey(s, "issue", "2"))
+        assert not ctx.provider_repository_roles(
+            ResourceKey.from_native(s, "issue", "1")
+        )
+        (null,) = ctx.provider_repository_roles(
+            ResourceKey.from_native(s, "issue", "2")
+        )
         assert (
             null.state == "explicit_null"
             and null.resolved_candidates[0].target_json == "null"
         )
-        (unresolved,) = ctx.provider_repository_roles(ResourceKey(s, "issue", "3"))
+        (unresolved,) = ctx.provider_repository_roles(
+            ResourceKey.from_native(s, "issue", "3")
+        )
         assert (
             unresolved.state == "unresolved_provider_only"
             and not unresolved.resolved_candidates
@@ -259,7 +269,9 @@ def test_missing_null_unresolved_and_late_mapping_are_distinct(tmp_path):
     claim = mapping(s, "1", r1)
     acq.admit_batch(ProviderIntakeBatch(s, mapping_claims=(claim,)))
     with Context.snapshot(tmp_path) as ctx:
-        (resolved,) = ctx.provider_repository_roles(ResourceKey(s, "issue", "3"))
+        (resolved,) = ctx.provider_repository_roles(
+            ResourceKey.from_native(s, "issue", "3")
+        )
         assert resolved.supports[0].supporting_claims == (claim.claim_key,)
     assert snapshot(tmp_path, "resource_relations") == before
 
@@ -286,7 +298,9 @@ def test_provider_native_namespaces_do_not_borrow_decimal_mapping(tmp_path):
         )
     )
     with Context.snapshot(tmp_path) as ctx:
-        (role,) = ctx.provider_repository_roles(ResourceKey(s, "issue", "7"))
+        (role,) = ctx.provider_repository_roles(
+            ResourceKey.from_native(s, "issue", "7")
+        )
         assert role.scope.provider_repository_id == canonical(
             ["github:node_id", "R_opaque_A"]
         )
@@ -327,7 +341,7 @@ def test_transfer_preserves_complete_original_endpoint_states(
     with Context.snapshot(tmp_path) as ctx:
         (report,) = ctx.transfer_event_reports()
         assert (report.from_state, report.to_state) == expected
-        assert report.issue_resource == ResourceKey(s, "issue", "7")
+        assert report.issue_resource == ResourceKey.from_native(s, "issue", "7")
         assert report.observed_at_us == 60
         for relation in (*report.from_relations, *report.to_relations):
             if relation.target_json != "null":
@@ -373,7 +387,7 @@ def test_graphql_transfer_parent_namespace_and_original_type(tmp_path):
         s, {"id": "I_node", "databaseId": 7}, 40, provenance("issue"), graphql=True
     ).primary_resource
     node = {"id": "R_A", "databaseId": 1}
-    claim = mapping(s, github_repository_id(node, graphql=True), r1)
+    claim = mapping(s, parse_identity(github_repository_id(node, graphql=True)), r1)
     intake = ProviderTimelineIntake(
         "issue",
         "I_node",
@@ -397,9 +411,10 @@ def test_graphql_transfer_parent_namespace_and_original_type(tmp_path):
     with Context.snapshot(tmp_path) as ctx:
         (report,) = ctx.transfer_event_reports()
         assert report.issue_resource == parent
-        assert json.loads(report.event_resource.provider_resource_id)[3] == canonical(
-            ["github:node_id", "EV_node"]
-        )
+        assert json.loads(report.event_resource.provider_resource_id)[3] == [
+            "github:node_id",
+            "EV_node",
+        ]
         assert (
             ctx.candidates(report.event_resource, "provider_event_type")[0].value_json
             == '"TransferredEvent"'
@@ -441,7 +456,7 @@ def test_timeline_parent_override_cannot_forge_observed_issue(
             50,
             provenance("contradictory-parent"),
             graphql=graphql,
-            parent_resource=ResourceKey(service, "issue", "7"),
+            parent_resource=ResourceKey.from_native(service, "issue", "7"),
         )
 
 
@@ -508,15 +523,23 @@ def test_separate_event_reports_never_pair_endpoints(tmp_path):
 
 def test_generic_provider_scope_cannot_create_transfer(tmp_path):
     s, _, _ = setup(tmp_path)
-    event = ResourceKey.timeline_event(ResourceKey(s, "issue", "7"), "100")
-    provider = ResourceKey(s, "repository", "1")
+    event = ResourceKey.timeline_event(ResourceKey.from_native(s, "issue", "7"), "100")
+    provider = ResourceKey.from_native(s, "repository", "1")
     with Context.transaction(tmp_path) as ctx:
-        ctx.resource(ResourceKey(s, "issue", "7"))
-        ctx.resource(event)
+        ctx.resource(ResourceKey.from_native(s, "issue", "7"))
+        ctx.resource(
+            event,
+            identification=RI.scoped(
+                event, ResourceKey.from_native(s, "issue", "7"), "timeline_event", "100"
+            ),
+        )
     scope = ProviderRepositoryScope(
         {
             "transfer_from_repository": ProviderRepositoryRoleScope.unresolved(
-                "transfer_from_repository", "1", FieldClock("event", 10), 10
+                "transfer_from_repository",
+                encode_identity("1"),
+                FieldClock("event", 10),
+                10,
             )
         }
     )
@@ -613,7 +636,7 @@ def test_issue_ownership_keeps_incomparable_source_clock_domains(tmp_path):
             replace(unit, relations=(replace(relation, scope_json=scope.encoded),))
         )
     with Context.snapshot(tmp_path) as ctx:
-        key = ResourceKey(s, "issue", "7")
+        key = ResourceKey.from_native(s, "issue", "7")
         roles = ctx.provider_repository_roles(key)
         assert {q.scope.clock.domain for q in roles} == {
             "provider:REST:owner",
@@ -662,7 +685,7 @@ def test_oid_url_name_and_source_membership_are_not_mapping_evidence(tmp_path):
         )
     )
     with Context.snapshot(tmp_path) as ctx:
-        key = ResourceKey(s, "pull_request", "7")
+        key = ResourceKey.from_native(s, "pull_request", "7")
         (role,) = ctx.provider_repository_roles(key)
         assert role.state == "unresolved_provider_only" and not role.resolved_candidates
         assert ctx.core_dependencies(key) and not ctx.repository_relations(key)
@@ -673,11 +696,18 @@ def test_oid_url_name_and_source_membership_are_not_mapping_evidence(tmp_path):
 
 def test_declared_resolved_provider_scope_does_not_supply_its_own_mapping(tmp_path):
     s, r1, _ = setup(tmp_path)
-    issue, provider = ResourceKey(s, "issue", "7"), ResourceKey(s, "repository", "1")
+    issue, provider = (
+        ResourceKey.from_native(s, "issue", "7"),
+        ResourceKey.from_native(s, "repository", "1"),
+    )
     scope = ProviderRepositoryScope(
         {
             "owning_repository": ProviderRepositoryRoleScope.resolved(
-                "owning_repository", "1", r1, FieldClock("provider", 10), 10
+                "owning_repository",
+                encode_identity("1"),
+                r1,
+                FieldClock("provider", 10),
+                10,
             )
         }
     )
@@ -805,9 +835,11 @@ def test_latest_unresolved_owner_does_not_fall_back_to_old_mapped_owner(tmp_path
         issue_batch(s, {"id": 2}, label="newer", updated="2026-10-19T02:00:00Z")
     )
     with Context.snapshot(tmp_path) as ctx:
-        (role,) = ctx.provider_repository_roles(ResourceKey(s, "issue", "7"))
+        (role,) = ctx.provider_repository_roles(
+            ResourceKey.from_native(s, "issue", "7")
+        )
         assert (
-            role.scope.provider_repository_id == "2"
+            role.scope.provider_repository_id == encode_identity("2")
             and role.state == "unresolved_provider_only"
         )
         assert not role.resolved_candidates
@@ -915,7 +947,7 @@ def test_transfer_type_and_endpoint_evidence_must_belong_to_same_report(
         unit = replace(
             unit,
             primary_resource=ResourceKey.timeline_event(
-                ResourceKey(s, "issue", "7"), "101"
+                ResourceKey.from_native(s, "issue", "7"), "101"
             ),
         )
     elif changed == "clock":
@@ -947,7 +979,7 @@ def test_qualified_read_keyword_contract_reference_and_production_match(tmp_path
     acq = ProviderAcquisition(tmp_path)
     acq.admit_batch(ProviderIntakeBatch(s, mapping_claims=(mapping(s, "1", r1),)))
     acq.admit_batch(issue_batch(s, {"id": 1}))
-    key = ResourceKey(s, "issue", "7")
+    key = ResourceKey.from_native(s, "issue", "7")
     with Context.snapshot(tmp_path) as ctx:
         assert ctx.provider_repository_roles(
             resource=key, evidence=None
@@ -972,6 +1004,6 @@ def test_invalid_retained_provider_scope_triggers_p7_stop(tmp_path):
         db.close()
     with pytest.raises(ValueError) as error:
         with Context.snapshot(tmp_path) as ctx:
-            ctx.provider_repository_roles(ResourceKey(s, "issue", "7"))
+            ctx.provider_repository_roles(ResourceKey.from_native(s, "issue", "7"))
     assert getattr(error.value, "code", None) == "AUTHORITATIVE_CORRUPTION"
     assert (tmp_path / "p1-recovery-stop.json").exists()

@@ -1,0 +1,104 @@
+{
+  "scope": "Evidence-plugin counterexamples only; not product-test acceptance",
+  "runs": {
+    "serial-traced": {
+      "receipt": {
+        "sessions": [
+          {
+            "file": "master.jsonl",
+            "source": "/workspace/i6a-assertion-selfcheck",
+            "exitstatus": 1,
+            "sha256": "053ff28b4d183abe1bedb970adc1ffa911797766c922eb99d9a842c70df050ac"
+          }
+        ],
+        "node_count": 3,
+        "start_finish_multisets_equal_unique": true
+      },
+      "observations": {
+        "::test_reached": {
+          "call": {
+            "tests/test_probe.py": [
+              6
+            ]
+          }
+        },
+        "::test_stopped": {
+          "call": {
+            "tests/test_probe.py": [
+              13
+            ]
+          }
+        },
+        "::test_setup_never_entered": {
+          "setup": {
+            "tests/test_probe.py": [
+              20
+            ]
+          }
+        }
+      },
+      "expected_unreached_lines": [
+        8,
+        14,
+        24
+      ],
+      "pytest_outcome": "1 passed / 1 failed / 1 error, exit1"
+    },
+    "parallel": {
+      "receipt": {
+        "sessions": [
+          {
+            "file": "gw0.jsonl",
+            "source": "/workspace/i6a-assertion-selfcheck",
+            "exitstatus": 1,
+            "sha256": "29597cc39a879f71f0ca8307d47010c8281c8adf7b5522e3889e06d201130d9c"
+          },
+          {
+            "file": "gw1.jsonl",
+            "source": "/workspace/i6a-assertion-selfcheck",
+            "exitstatus": 1,
+            "sha256": "7a36b18262991ebcbe0564246d0a85d51e624fe2c6918164d45b9f434ebf1546"
+          },
+          {
+            "file": "master.jsonl",
+            "source": "/workspace/i6a-assertion-selfcheck",
+            "exitstatus": 1,
+            "sha256": "b0b78ee4e2abf221745c6ad494f65e9078014af62c9db828f52110bbb748547e"
+          }
+        ],
+        "node_count": 3,
+        "start_finish_multisets_equal_unique": true
+      },
+      "observations": {
+        "::test_reached": {
+          "call": {
+            "tests/test_probe.py": [
+              6
+            ]
+          }
+        },
+        "::test_setup_never_entered": {
+          "setup": {
+            "tests/test_probe.py": [
+              20
+            ]
+          }
+        },
+        "::test_stopped": {
+          "call": {
+            "tests/test_probe.py": [
+              13
+            ]
+          }
+        }
+      },
+      "expected_unreached_lines": [
+        8,
+        14,
+        24
+      ],
+      "pytest_outcome": "1 passed / 1 failed / 1 error, exit1"
+    }
+  },
+  "untraced_control": "Initial serial command omitted plugin; pytest retained same expected failures; no assertion measurements attributed to that invocation."
+}

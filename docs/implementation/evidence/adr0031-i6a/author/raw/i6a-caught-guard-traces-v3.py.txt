@@ -1,0 +1,12 @@
+import pathlib,os,sys,json
+ROOT=pathlib.Path('/workspace/i6a-v3-source');REPO=pathlib.Path('/workspace/git-repo-db');sys.path.insert(0,str(ROOT));from scripts import verify_i5_offline as e
+out=REPO/'docs/implementation/evidence/adr0031-i6a/author/final-v3/caught-guard-traces';out.mkdir(exist_ok=False)
+os.environ['I6A_TRACE_OUTPUT']=str(out/'actual-permission-raise-stacks.json')
+e.write_json(out/'input-binding-before.json',{'head':e.git('rev-parse','HEAD'),'tree':e.git('rev-parse','HEAD^{tree}'),'inputs':e.input_hashes()});e.write_json(out/'runtime.json',e.runtime_metadata(__import__('sqlite3').connect(':memory:')))
+execute=e.execute
+def traced(out,name,args):return execute(out,name,['-p','i6a_trace_exception',*args,'--basetemp=/workspace/i6a-v3-caught-guard-traces-basetemp'])
+e.execute=traced
+selected=['tests/integration/p5/test_corrections.py::test_provider_registration_is_explicit','tests/integration/p5/test_paired_admission.py::test_core_first_context_second_and_failure_retry_convergence']
+r=e.run_cohort(out,'caught-assertions',selected,0)
+e.write_json(out/'input-binding-after.json',{'head':e.git('rev-parse','HEAD'),'tree':e.git('rev-parse','HEAD^{tree}'),'inputs':e.input_hashes()});e.write_json(out/'scope.json',{'scope':'Intentional diagnostic repeats of two existing failing assertions; external trace hook records suppressed actual AdmissionRefused raise frames without editing tests or production code. Excluded from exactly-once ordinary union.','I6A_TRACE_OUTPUT':os.environ['I6A_TRACE_OUTPUT'],'observed_exit_code':r['exit_code']})
+raise SystemExit(r['exit_code'])

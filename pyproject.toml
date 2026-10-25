@@ -25,6 +25,9 @@ docs = [
     "mkdocs-material>=9.5,<10",
 ]
 
+[tool.hatch.build.targets.sdist]
+only-include = ["src/repo_catalog", "pyproject.toml", "README.md"]
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/repo_catalog"]
 

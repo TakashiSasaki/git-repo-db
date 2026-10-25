@@ -1,0 +1,72 @@
+[
+  {
+    "id": "I5-A1",
+    "severity": "Medium",
+    "title": "Store admission lacks caller permission validation; untrusted caller authorization deferred to I6 Wire",
+    "status": "OPEN_BOUNDARY_CONTRACT",
+    "target": "src/repo_catalog/adapters/sqlite/p1_context.py:333",
+    "description": "admit_transfer_event(report) checks selection_truncated and omitted_roles, but does not accept selected_resources or permitted callbacks like Context.relation(). An untrusted caller can submit a transfer report containing resources or repositories outside their granted scope, and if DB dependencies exist, store admission accepts the report and inserts relations. Furthermore, exact replay returns 'duplicate' without permission re-evaluation.",
+    "counterexample": "test_selection_permission_store_trust_boundary",
+    "remediation": "Document and enforce that ContextStore.admit_transfer_event is strictly a database invariant enforcer, and that caller permissions must be verified at the I6 Generalized Identification Wire / Selective Exchange layer before invoking store admission."
+  },
+  {
+    "id": "I5-B1",
+    "severity": "Medium",
+    "title": "Implicit parent evidence completion synthesizes event clock and causes false dependency failure",
+    "status": "OPEN_BOUNDARY_CONTRACT",
+    "target": "src/repo_catalog/domain/p1_context.py:1805",
+    "description": "TransferEventReport.__post_init__() synthesizes missing parent coordinates when parent_report is None, adopting the event clock and provenance. When the legitimate parent report has an independent clock (e.g. Issue clock vs Event clock), the synthesized scope query fails to locate the parent report in resource_relations, raising a false 'Missing dependency' error despite the parent report's presence in the database.",
+    "counterexample": "test_parent_evidence_differing_clock_dependency_failure",
+    "remediation": "I6 Wire and Acquisition layers must explicitly provide parent_report or exact parent_members_json, parent_provenance_json, and parent_scope_json rather than relying on implicit synthesis from the event report."
+  },
+  {
+    "id": "I5-C1",
+    "severity": "Medium",
+    "title": "Endpoint declaration auto-synthesis (endpoints=None) permits wire truncation to be admitted as 1-sided transfer",
+    "status": "OPEN_BOUNDARY_CONTRACT",
+    "target": "src/repo_catalog/domain/p1_context.py:1850",
+    "description": "When endpoints=None, TransferEventReport auto-generates endpoints from supplied relations. If a 2-sided transfer loses one endpoint prior to object construction (e.g. dropped on the wire) and endpoints=None is passed, the object synthesizes a 1-sided declaration. Store admission's completeness check (declared_endpoints == relation_endpoints) is satisfied, causing the truncated event to be permanently admitted as a legitimate 1-sided transfer.",
+    "counterexample": "test_endpoints_none_auto_synthesis_vulnerability",
+    "remediation": "I6 Wire protocol must carry the provider's original declared endpoints explicitly and pass them as endpoints=... to TransferEventReport, preventing silent truncation."
+  },
+  {
+    "id": "I5-D1",
+    "severity": "Low",
+    "title": "Author atomicity test only verified pre-flight check rather than SQL SAVEPOINT rollback",
+    "status": "VERIFIED_PASS_BY_COUNTEREXAMPLE",
+    "target": "tests/integration/p3/test_transfer_admission.py:630",
+    "description": "test_atomicity_second_endpoint_failure_rolls_back in the Author test suite passed an unregistered repository UUID, failing at the Python pre-flight check before SAVEPOINT p1_transfer_event was issued and before any SQL statement was executed. The Author suite did not verify in-flight SQL rollback.",
+    "counterexample": "test_atomicity_inflight_sql_failure_rolls_back_savepoint",
+    "remediation": "Independent counterexample injected a disposable BEFORE INSERT trigger on resource_repository_relations to abort during the second endpoint insertion after the first endpoint was inserted. Verified that SAVEPOINT p1_transfer_event cleanly rolled back, leaving 0 partial writes. Product code is confirmed correct."
+  },
+  {
+    "id": "I5-F1",
+    "severity": "Low",
+    "title": "Asymmetric fence trigger inspection in has_transfer_fence()",
+    "status": "VERIFIED_MITIGATED_BY_FACADE",
+    "target": "src/repo_catalog/domain/resource_stage.py:61",
+    "description": "has_transfer_fence(db) only queries sqlite_schema for i2_transfer_stage_fence, omitting i2_transfer_report_stage_fence. If only the first trigger was dropped, has_transfer_fence returns False. However, Context._validate_schema() compares full schema against expected_schema('context') and isolated_expected, successfully detecting single-trigger drops with UNSUPPORTED_SCHEMA.",
+    "counterexample": "test_asymmetric_fence_drop_detection",
+    "remediation": "Update has_transfer_fence to inspect both triggers (i2_transfer_stage_fence and i2_transfer_report_stage_fence)."
+  },
+  {
+    "id": "I4-E1",
+    "severity": "Low",
+    "title": "Complete sdist inputs differ between Author execution tree and public tree due to post-execution evidence additions",
+    "status": "OPEN_CARRYOVER",
+    "target": "docs/implementation/evidence/adr0031-i5/REPORT.md:95",
+    "description": "Between Author executed tree 6a494efb510713dbfb3cebf6ef5ff85e703e0d18 and public tree d2d69b3094c8e07e375fc357e979ed8131bf39c5, 6 evidence files (including 3.3MB author-evidence.zip) were added. Built wheels and runtime code are identical, but full sdist inputs differ (77,620,267 bytes vs 80,846,880 bytes).",
+    "counterexample": "sdist-input-scope.json",
+    "remediation": "Qualify Author evidence documentation to distinguish runtime/wheel inputs (identical) from full sdist input scope (contains post-execution evidence)."
+  },
+  {
+    "id": "Task G G-R1",
+    "severity": "Medium",
+    "title": "Context.candidates() global/scoped identity exposure carried forward for ADR 0031 I7",
+    "status": "OPEN_CARRYOVER",
+    "target": "docs/implementation/adr0031-i5-typed-admission.md:59",
+    "description": "Mandatory carryover from Task G regarding candidate identity scoping; deferred to ADR 0031 I7.",
+    "counterexample": "N/A (Task G carryover)",
+    "remediation": "Implement scoping reconciliation in ADR 0031 I7."
+  }
+]

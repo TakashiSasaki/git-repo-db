@@ -1,0 +1,10 @@
+import sys,pathlib,json
+sys.path.insert(0,'/workspace/i6a-baseline')
+from scripts import verify_i5_offline as e
+out=pathlib.Path('/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6a/author/baseline')
+nodes=e.nodes(out/'historical-collection.nodes.txt')
+results={}
+for name, selected,workers in [('i5',[n for n in nodes if n.startswith('tests/integration/p3/test_transfer_admission.py::')],0),('i4',[n for n in nodes if n.startswith('tests/integration/p3/test_transfer_sql.py::')],0),('regressions',nodes,4)]:
+ results[name]=e.run_cohort(out,name,selected,workers)
+e.write_json(out/'input-binding-after.json',{'head':e.git('rev-parse','HEAD'),'tree':e.git('rev-parse','HEAD^{tree}'),'status':e.git('status','--porcelain'),'inputs':e.input_hashes()})
+e.write_json(out/'run-summary.json',results)

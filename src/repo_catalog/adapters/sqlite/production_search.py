@@ -517,6 +517,7 @@ class ProductionSearchAdapter:
         callable, and indexes current string `field_candidates` while excluding explicit
         JSON `"null"`.
         """
+        context._validate_stage()
         documents: dict[str, str] = BoundedDocuments()
         summaries: dict[str, dict[str, object]] = {}
 

@@ -1,0 +1,28 @@
+{
+  "command": [
+    "/workspace/i6b-fix-work/final-fe9e48b/.venv/bin/python",
+    "-m",
+    "pytest",
+    "-p",
+    "tests.conftest",
+    "-c",
+    "/workspace/i6b-fix-work/final-fe9e48b/pyproject.toml",
+    "--rootdir=/workspace/i6b-fix-work/probes",
+    "--confcutdir=/workspace/i6b-fix-work/probes",
+    "-o",
+    "addopts=",
+    "-o",
+    "junit_family=xunit1",
+    "-q",
+    "-s",
+    "--tb=long",
+    "/workspace/i6b-fix-work/probes/test_digest_contract.py",
+    "/workspace/i6b-fix-work/probes/test_planner_work_budget_contract.py",
+    "--collect-only"
+  ],
+  "cwd": "/workspace/i6b-fix-work/final-fe9e48b",
+  "completed": true,
+  "exit_code": 0,
+  "started_epoch": 1792765717.978899,
+  "elapsed_seconds": 5.362499237060547
+}

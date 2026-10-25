@@ -1,0 +1,23 @@
+import sys,os,pathlib,json,gzip,subprocess
+REPO=pathlib.Path('/workspace/git-repo-db');ROOT=pathlib.Path('/workspace/i6a-v3-source');sys.path.insert(0,str(ROOT));from scripts import verify_i5_offline as e
+OUT=REPO/'docs/implementation/evidence/adr0031-i6a/author/final-v3';OUT.mkdir(exist_ok=False)
+def read(p):return p.read_bytes() if p.exists() else gzip.decompress(pathlib.Path(str(p)+'.gz').read_bytes())
+base=REPO/'docs/implementation/evidence/adr0031-i6a/author/baseline';old=REPO/'docs/implementation/evidence/adr0031-i6a/author/final'
+e.write_json(OUT/'runtime-before.json',e.runtime_metadata(__import__('sqlite3').connect(':memory:')));e.require_product_runtime()
+e.write_json(OUT/'input-binding-before.json',{'head':e.git('rev-parse','HEAD'),'tree':e.git('rev-parse','HEAD^{tree}'),'inputs':e.input_hashes(),'tracked_status':e.git('status','--porcelain','--untracked-files=no')})
+allnodes,allreceipt=e.collect(OUT,'all-collection',['tests'])
+ordinary,receipt=e.collect(OUT,'ordinary-collection',['tests'],'not live and not benchmark')
+if receipt['exit_code']:raise SystemExit('collection failed')
+previous=set(read(old/'ordinary-collection.nodes.txt').decode().splitlines());new=sorted(set(ordinary)-previous);missing=sorted(previous-set(ordinary));e.write_json(OUT/'node-delta.json',{'added':new,'removed':missing,'all_count':len(allnodes),'ordinary_count':len(ordinary),'live_benchmark_unexecuted':sorted(set(allnodes)-set(ordinary))})
+if missing:raise SystemExit('source test nodes removed')
+execute=e.execute
+def under_workspace(out,name,args):
+ os.environ['I6A_REPORTS_SIDECAR']=str(out/(name+'.report-types.jsonl'))
+ r=execute(out,name,['-p','i6a_report_types',*args,'--basetemp=/workspace/i6a-v3-'+name+'-basetemp']);r['environment']={'TMPDIR':os.environ.get('TMPDIR')};e.write_json(out/(name+'.execution.json'),r);return r
+e.execute=under_workspace
+historical=read(base/'historical-collection.nodes.txt').decode().splitlines();e.run_cohort(OUT,'regressions',historical,4)
+from scripts.compare_i5_failures import index,compare
+e.write_json(OUT/'historical-failure-comparison.json',compare(index(read(base/'regressions.xml')),index((OUT/'regressions.xml').read_bytes())))
+p=subprocess.run([sys.executable,'/tmp/i6a_artifact_v3.py'],cwd=ROOT);e.write_json(OUT/'artifact-runner-exit.json',{'exit_code':p.returncode})
+remaining=sorted(set(ordinary)-set(historical));e.run_cohort(OUT,'remaining-ordinary',remaining,4)
+e.write_json(OUT/'input-binding-after.json',{'head':e.git('rev-parse','HEAD'),'tree':e.git('rev-parse','HEAD^{tree}'),'inputs':e.input_hashes(),'tracked_status':e.git('status','--porcelain','--untracked-files=no')})

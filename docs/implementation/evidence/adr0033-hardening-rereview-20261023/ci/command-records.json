@@ -1,0 +1,136 @@
+[
+  {
+    "argv": [
+      "git",
+      "rev-parse",
+      "HEAD"
+    ],
+    "cwd": "/workspace/adr0033-review",
+    "exit_code": 0,
+    "stdout_bytes": 41,
+    "stdout_sha256": "10a1beff6b47271e3b8df28287f2c2d477666c20531775f320efdd73093fe0d9",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "rev-parse",
+      "HEAD^{tree}"
+    ],
+    "cwd": "/workspace/adr0033-review",
+    "exit_code": 0,
+    "stdout_bytes": 41,
+    "stdout_sha256": "db5d040c698c46006491e16d760cd532dd4bdcfc806548d4e34d45e4f7a93402",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "gh",
+      "api",
+      "repos/TakashiSasaki/git-repo-db/actions/runs/39892052621"
+    ],
+    "cwd": "/workspace/adr0033-review",
+    "exit_code": 0,
+    "stdout_bytes": 13334,
+    "stdout_sha256": "0424fcbf570799fb8e975814fd9e3d01bcd7624ee152ee330b99c73b5fbd35fb",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "gh",
+      "api",
+      "repos/TakashiSasaki/git-repo-db/actions/runs/39892052634"
+    ],
+    "cwd": "/workspace/adr0033-review",
+    "exit_code": 0,
+    "stdout_bytes": 13374,
+    "stdout_sha256": "5a9e3ec6e63a4d92bf965115b1757ef8cddc047ff76f80d89456f735ae5c38f2",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "gh",
+      "api",
+      "repos/TakashiSasaki/git-repo-db/git/commits/e0c60765bd0d99b8276a8d0528dabfa7f4d6971a"
+    ],
+    "cwd": "/workspace/adr0033-review",
+    "exit_code": 0,
+    "stdout_bytes": 2666,
+    "stdout_sha256": "5e7096e5ba513d4940748c50f35427ef62acf33010037e432312b0a266fbaf6f",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "gh",
+      "api",
+      "repos/TakashiSasaki/git-repo-db/git/commits/59307c40ea65554736e131cedd00f04c9906551b"
+    ],
+    "cwd": "/workspace/adr0033-review",
+    "exit_code": 0,
+    "stdout_bytes": 1184,
+    "stdout_sha256": "560c74e929e80034fff4fbac91a8989fcc85430c4491565fea5de6e4aab54c23",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "show",
+      "ef3ca118d4ab5e52dc2d1c7de384c3557509add2:.github/workflows/pages.yml"
+    ],
+    "cwd": "/workspace/adr0033-review",
+    "exit_code": 0,
+    "stdout_bytes": 4696,
+    "stdout_sha256": "e7682ef7aa0eea7ef6197eb3428b0270e4a01c3b92c6a3237fa44f0d646abb41",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "show",
+      "ef3ca118d4ab5e52dc2d1c7de384c3557509add2:scripts/build_docs_site.py"
+    ],
+    "cwd": "/workspace/adr0033-review",
+    "exit_code": 0,
+    "stdout_bytes": 25546,
+    "stdout_sha256": "08ce9d553ec832981cc5c2b325b11de711965f2590fed07ef03af42e48ff7c52",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "show",
+      "ef3ca118d4ab5e52dc2d1c7de384c3557509add2:scripts/schema_viz.py"
+    ],
+    "cwd": "/workspace/adr0033-review",
+    "exit_code": 0,
+    "stdout_bytes": 120698,
+    "stdout_sha256": "884a37bab6fe10fe51ac7fc3e16c12341988271bd657b9158ac5457e25ffba93",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "show",
+      "ef3ca118d4ab5e52dc2d1c7de384c3557509add2:mkdocs.yml"
+    ],
+    "cwd": "/workspace/adr0033-review",
+    "exit_code": 0,
+    "stdout_bytes": 2692,
+    "stdout_sha256": "3b94979d87ca9d6c9a77c91d74d9abd5bccfc2deaf746b2b466432c9c1c4ec5f",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "git",
+      "diff",
+      "--name-only",
+      "ef3ca118d4ab5e52dc2d1c7de384c3557509add2",
+      "59307c40ea65554736e131cedd00f04c9906551b"
+    ],
+    "cwd": "/workspace/adr0033-review",
+    "exit_code": 0,
+    "stdout_bytes": 779,
+    "stdout_sha256": "7bae5cc3a03cbdfedb0d7c5aa2efeaa54f49153f0007b88597c7db0b889c3d92",
+    "stderr": ""
+  }
+]

@@ -1,0 +1,87 @@
+{
+  "command": "run_index on unchanged published evidence, then separate transport copies only",
+  "results": [
+    {
+      "case": "frozen-before",
+      "selected": 5941,
+      "consistent": true,
+      "checks": {
+        "selected_unique": true,
+        "selected_equals_junit": true,
+        "selected_equals_starts": true,
+        "raw_phase_sidecar_multisets_equal": true,
+        "main_phase_nodes_equal_selected": true,
+        "main_setup_teardown_once": true,
+        "main_call_once_after_successful_setup": true,
+        "no_duplicate_main_phases": true,
+        "subtest_types_explicit": true,
+        "subtests_have_selected_parent": true,
+        "subtest_failure_reflected_in_junit_parent": true,
+        "one_completed_finish": true,
+        "source_bindings_complete_and_unchanged": true
+      },
+      "binding_head": "f5dc409429cdb69955b55e3c27a7ef3c163762fb",
+      "binding_tree": "3ef434120202c6fa4cfaa1152802784a1671d3ed",
+      "binding_input_count": 471,
+      "binding_transport_sha256": {
+        "binding-before.json.gz": "814b15ecdf33d42bc2dcbf43990ddd289f9745152455c06a24ed052158f9a1d6",
+        "binding-after.json.gz": "814b15ecdf33d42bc2dcbf43990ddd289f9745152455c06a24ed052158f9a1d6"
+      }
+    },
+    {
+      "case": "frozen-after-final",
+      "selected": 5974,
+      "consistent": true,
+      "checks": {
+        "selected_unique": true,
+        "selected_equals_junit": true,
+        "selected_equals_starts": true,
+        "raw_phase_sidecar_multisets_equal": true,
+        "main_phase_nodes_equal_selected": true,
+        "main_setup_teardown_once": true,
+        "main_call_once_after_successful_setup": true,
+        "no_duplicate_main_phases": true,
+        "subtest_types_explicit": true,
+        "subtests_have_selected_parent": true,
+        "subtest_failure_reflected_in_junit_parent": true,
+        "one_completed_finish": true,
+        "source_bindings_complete_and_unchanged": true
+      },
+      "binding_head": "93d9927ae801d5402aab0aa0c7c270eeab2809e6",
+      "binding_tree": "0c8a50e7cc23b98c6e7e2d1e6066077cbe8d203a",
+      "binding_input_count": 478,
+      "binding_transport_sha256": {
+        "binding-before.json.gz": "a0eca1d21ec7f97a233d22f14204d0a8ec57823541bf5ec1c9a1e6c930e0c912",
+        "binding-after.json.gz": "a0eca1d21ec7f97a233d22f14204d0a8ec57823541bf5ec1c9a1e6c930e0c912"
+      }
+    },
+    {
+      "case": "tree-mismatch",
+      "accepted": false,
+      "error_type": "ValueError",
+      "consistent": false,
+      "binding_check": false
+    },
+    {
+      "case": "input-hash-mismatch",
+      "accepted": false,
+      "error_type": "ValueError",
+      "consistent": false,
+      "binding_check": false
+    },
+    {
+      "case": "missing-after",
+      "accepted": false,
+      "error_type": "ValueError",
+      "consistent": false,
+      "binding_check": false
+    },
+    {
+      "case": "missing-both",
+      "accepted": false,
+      "error_type": "ValueError",
+      "consistent": false,
+      "binding_check": false
+    }
+  ]
+}

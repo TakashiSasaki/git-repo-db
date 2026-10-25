@@ -1,0 +1,15 @@
+{
+  "initial_driver": {
+    "chunk_id": "285cc2",
+    "exit_code": 1,
+    "stdout": "build-direct 0\n",
+    "exception": "KeyError: repo_catalog-0.2.0/docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/access-registry/collected.txt.gz",
+    "source": "Observed tool result; structured transcription, not a separate rerun"
+  },
+  "continuation_attempt": {
+    "chunk_id": "8e607c",
+    "exit_code": 1,
+    "exception": "NameError: name env is not defined",
+    "source": "Observed tool result; setup-only continuation failed before derived build"
+  }
+}

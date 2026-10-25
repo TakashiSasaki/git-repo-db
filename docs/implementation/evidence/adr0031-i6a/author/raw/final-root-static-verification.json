@@ -1,0 +1,29 @@
+{
+  "source_commit": "770e42d4828238cc0001c96663d078605ac44841",
+  "measured_product_files": 156,
+  "current_product_hash_mismatches": [],
+  "ruff_check": {
+    "command": [
+      "/workspace/i6a-venv/bin/ruff",
+      "check",
+      "src",
+      "tests",
+      "scripts"
+    ],
+    "exit_code": 0,
+    "output": "All checks passed!"
+  },
+  "ruff_format": {
+    "command": [
+      "/workspace/i6a-venv/bin/ruff",
+      "format",
+      "--check",
+      "src",
+      "tests",
+      "scripts"
+    ],
+    "exit_code": 0,
+    "output": "435 files already formatted"
+  },
+  "scope": "Root command receipts; not a rerun or replacement for frozen full execution."
+}

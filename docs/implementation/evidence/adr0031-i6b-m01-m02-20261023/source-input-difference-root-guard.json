@@ -1,0 +1,31 @@
+{
+  "old_head": "8521158f2996f125d2fcaac36ea79ac1296a7cf7",
+  "new_head": "fe9e48bfac750a276b2622da2c50d3d4559de338",
+  "old_input_count": 484,
+  "new_input_count": 486,
+  "changed": [
+    {
+      "path": "src/repo_catalog/domain/context_dependencies.py",
+      "old_sha256": "93d6d7bdbf14cd5c26d13c36a8e2e3bd65ae6f55a208941ada2353af65476fb0",
+      "new_sha256": "a1026f3a1109c8b8f4d7aaec28f33fe3e0a594372da6afafa8835b9dd559801d"
+    },
+    {
+      "path": "src/repo_catalog/domain/exchange.py",
+      "old_sha256": "6709ad532ef5aef65118505d2270960c49a21521c68460da2044b897dae97957",
+      "new_sha256": "46c5d9c5f80a39ff967418d2662274fa8b70134f33050ac00c2e464b4dc10012"
+    },
+    {
+      "path": "tests/unit/test_context_scan_budget.py",
+      "old_sha256": null,
+      "new_sha256": "a653e2b420fbb9fdc042283d2d20c297c786edbea0596721dc0cd5bc2c581534"
+    },
+    {
+      "path": "tests/unit/test_exchange_received_digest.py",
+      "old_sha256": null,
+      "new_sha256": "48c098b7ea08b0ec647b7d5c320500525c8f9a801d1b2791eac614446168d15f"
+    }
+  ],
+  "old_inventory_sha256": "f518686c330fd60a5d5b7837a86b6912a9887fa08ccb90a9030118be454cdce4",
+  "new_inventory_sha256": "0232cb5a82e5ed680487ec6f8d5e83649e0025f79028c25f4487ab4c44726042",
+  "scope": "Unchanged broad helper selects runtime/test/script/workflow/config files; root protected-input manifest separately includes .github/actions."
+}

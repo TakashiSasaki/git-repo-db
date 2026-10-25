@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "task": "Codex Task B \u2014 Remediate I6-C CI Failure, Authorization Boundaries, and Verification Evidence",
+  "base_branch": "impl/adr0031-i6c-provider-selective-exchange",
+  "base_head": "5df40eace63d8487c34a95777f19e05caf55da75",
+  "base_tree": "cc2e42ac6cbed31bd18b12d4e28d496f73f1c8b2",
+  "fix_branch": "fix/adr0031-i6c-authority-ci-20261024",
+  "target_pull_request_base": "impl/adr0031-i6c-provider-selective-exchange",
+  "hashing_standard": "HCI-L01 raw complete-byte SHA-256 without strip() or newline trimming",
+  "evidence_files": {
+    "MATRIX.md": {
+      "bytes": 8934,
+      "sha256": "7c301949533f5953a4d6e18afb2a82646b7b70011b7c1e6a50073f7408922542",
+      "git_blob_oid": "3da01e78cbe20694a4e8f9c85c5f0db958174ebc"
+    },
+    "REPORT.md": {
+      "bytes": 11037,
+      "sha256": "b928e51690e22d70f80fef7fd37126738bb054904df422091a57560408080c0f",
+      "git_blob_oid": "ab43942c38a45d11bcfe261df8ec9ee02185c2eb"
+    },
+    "findings.json": {
+      "bytes": 7254,
+      "sha256": "2b52f8c06e1855014d6cc26c67cd07b2b3508c1cfe982c9cf7887192270bbc69",
+      "git_blob_oid": "a126ab2a5781098ea6a05e8d9a59b000bfdae564"
+    },
+    "raw/packaging_verification.log": {
+      "bytes": 1198,
+      "sha256": "f70307d444618588099ead96e288faa6dd4222bf7d50a67206f1ddc60b2985cd",
+      "git_blob_oid": "2537d8bf4dc1148f8cab0c78c9e44f212b4e25ba"
+    },
+    "raw/ruff_check.log": {
+      "bytes": 19,
+      "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+      "git_blob_oid": "1f5f344d054fae10f39140fb7199c99321d9190a"
+    },
+    "raw/ruff_format.log": {
+      "bytes": 28,
+      "sha256": "b9e37449f6aaa00be770187a1887f067ef465da7e180b55d93bf43a0174ac0b6",
+      "git_blob_oid": "366a5a308febfccd1ecd8462a4c384112a2cddc6"
+    },
+    "raw/sqlite_validation_policy.log": {
+      "bytes": 41,
+      "sha256": "88479b8fcebfcc96a14d673c6cdc6a53f07ec1e57a80c1aacc1cda81b4faa923",
+      "git_blob_oid": "288fd2822ff50506cde1fb133b807a2a1ddea0d3"
+    },
+    "raw/test_i6c_authority_and_exchange.log": {
+      "bytes": 4163,
+      "sha256": "199c2417709ba843aaacbb24093aaad1c3803b030a148be6d27f833f93b071cb",
+      "git_blob_oid": "701f2583e785ff5bb5426e0d6e7f36b46287aad1"
+    },
+    "raw/test_originals_revalidation.log": {
+      "bytes": 15065,
+      "sha256": "af0f7e3dc405068e58152db2febc5bcc8167f437ca0f891f87f90d7d89303c09",
+      "git_blob_oid": "783fc66be0ba724a979ee53c48746ec101450868"
+    },
+    "raw/unit_ci_python_runtime.log": {
+      "bytes": 6863,
+      "sha256": "9791a5c713832daeb5a699321087932b6e3e0b5fc1fc53c43f81cf24f913ae02",
+      "git_blob_oid": "a5bf7581beb929378a8b848f67feff8ae7cb5b7c"
+    },
+    "raw/unit_sqlite_validation_policy.log": {
+      "bytes": 130,
+      "sha256": "1b7a1d5cb8032f25eb69762c2c79b92904b58ded25fa7bcc3d3a25cfaa8d0f77",
+      "git_blob_oid": "50f764425f1d150183a413d73b67a911556bb4e6"
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "old_failed_phases": 299,
+  "new_failed_phases": 299,
+  "same_failed_node_phase_set": true,
+  "exception_type_changes": [],
+  "refusal_code_changes": [],
+  "project_frame_function_changes": [],
+  "project_frame_line_changes": [
+    "tests/integration/i3/test_selective_exchange.py::test_empty_oid_and_context_payload_cannot_override_selection"
+  ],
+  "scope": "Actual pytest worker ExceptionInfo tracebacks, with only project path prefixes normalized. Raw rows and line coordinates retained. Complements JUnit text presentation comparison, never replaces or rewrites it."
+}

@@ -1,0 +1,43 @@
+"""Audit actual installed repo-catalog RECORD and distinguish archive metadata.
+
+Invoke with the artifact venv's Python, raw-record output, JSON output, the
+complete-wheel-member-check JSON and the actual wheel path.
+"""
+from pathlib import Path
+import base64,csv,hashlib,importlib.metadata,io,json,sys,zipfile
+import repo_catalog
+record_output,report_output,expected_path,wheel_path=map(Path,sys.argv[1:])
+prefix=Path(sys.prefix).resolve();root=Path(repo_catalog.__file__).resolve().parent
+assert root.is_relative_to(prefix) and 'site-packages' in root.parts
+expected=json.loads(expected_path.read_text())['source_product_files']
+dist=importlib.metadata.distribution('repo-catalog');names=[str(p) for p in dist.files if str(p).endswith('.dist-info/RECORD')];assert len(names)==1
+record_path=Path(dist.locate_file(names[0])).resolve();assert record_path.is_relative_to(prefix)
+raw=record_path.read_bytes();text=raw.decode('utf-8');assert dist.read_text('RECORD').replace('\r\n','\n')==text.replace('\r\n','\n')
+rows=list(csv.reader(io.StringIO(text)));assert len(rows)==len({r[0] for r in rows})
+with zipfile.ZipFile(wheel_path) as archive:archive_files={n:archive.read(n) for n in archive.namelist() if not n.endswith('/')}
+checked=[];products={};unhashed=[]
+for row in rows:
+ assert len(row)==3;name,digest,size=row;target=Path(dist.locate_file(name)).resolve();assert target.is_relative_to(prefix),name
+ data=target.read_bytes();actual=hashlib.sha256(data).hexdigest()
+ entry={'record_path':name,'resolved_path':str(target),'bytes':len(data),'observed_sha256':actual,'record_digest':digest,'record_size':size,'archive_member_present':name in archive_files}
+ if digest:
+  algorithm,encoded=digest.split('=',1);assert algorithm=='sha256'
+  assert encoded==base64.urlsafe_b64encode(hashlib.sha256(data).digest()).decode().rstrip('=')
+  assert size.isdigit() and int(size)==len(data);entry['record_hash_and_size_verified']=True
+ else:
+  assert not size or size.isdigit() and int(size)==len(data);entry['record_hash_and_size_verified']=False;unhashed.append(entry)
+ if name in archive_files:
+  entry['archive_member_sha256']=hashlib.sha256(archive_files[name]).hexdigest();entry['same_as_archive_member']=data==archive_files[name]
+ if target.is_relative_to(root):
+  relative=target.relative_to(root)
+  entry['generated_product_pyc']=('__pycache__' in relative.parts or relative.suffix=='.pyc')
+  if not entry['generated_product_pyc']:products[str(relative)]=actual
+ checked.append(entry)
+assert products==expected,'actual installed RECORD product roster or bytes differ from frozen source/wheel'
+actual_product={str(p.relative_to(root)):hashlib.sha256(p.read_bytes()).hexdigest() for p in root.rglob('*') if p.is_file() and '__pycache__' not in p.parts and p.suffix!='.pyc'}
+assert actual_product==expected
+listed={Path(dist.locate_file(r[0])).resolve() for r in rows}
+generated=[{'path':str(p.resolve()),'bytes':p.stat().st_size,'sha256':hashlib.sha256(p.read_bytes()).hexdigest(),'recorded_in_RECORD':p.resolve() in listed} for p in sorted(root.rglob('*.pyc')) if p.is_file()]
+record_output.write_bytes(raw)
+result={'distribution':dist.metadata['Name'],'version':dist.version,'prefix':str(prefix),'product_origin':str(root),'actual_installed_RECORD_path':str(record_path),'raw_RECORD_bytes':len(raw),'raw_RECORD_sha256':hashlib.sha256(raw).hexdigest(),'audit_helper_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),'all_paths_resolve_inside_actual_venv':True,'record_entries':len(rows),'hashed_entries':sum(bool(r[1]) for r in rows),'unhashed_entries':unhashed,'all_hashed_entries_digest_and_size_verified':True,'all_actual_product_files_and_RECORD_product_entries_equal_frozen_wheel':True,'product_file_count':len(products),'entries':checked,'installer_added_entries':[e for e in checked if not e['archive_member_present']],'archive_member_bytes_changed_by_installer':[e for e in checked if e['archive_member_present'] and not e['same_as_archive_member']],'generated_product_pyc_files':generated,'scope':'Actual installed RECORD audit. Archive RECORD verification is separate; unhashed/generated files are explicitly measured, not assigned a nonexistent declared hash.'}
+report_output.write_text(json.dumps(result,indent=2)+'\n');print(json.dumps({k:result[k] for k in ['prefix','actual_installed_RECORD_path','record_entries','hashed_entries','raw_RECORD_sha256','product_file_count']}))

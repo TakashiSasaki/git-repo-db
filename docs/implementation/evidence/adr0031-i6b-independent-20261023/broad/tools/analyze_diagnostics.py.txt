@@ -1,0 +1,46 @@
+"""Fresh matched diagnostic versus preserved reference and Author, independent parser."""
+import ast,json,gzip
+from collections import Counter,defaultdict
+from functools import lru_cache
+from pathlib import Path
+import subprocess
+from analyze_runs import ROOT,OUT,parse,emit,compare
+
+def traces(d):
+    assertions=defaultdict(set);exceptions=defaultdict(list)
+    for p in (d/'trace').glob('*.jsonl*'):
+        raw=gzip.decompress(p.read_bytes()) if p.suffix=='.gz' else p.read_bytes()
+        for line in raw.splitlines():
+            r=json.loads(line);n=r.get('nodeid')
+            if not n:continue
+            if r['event']=='assertion_line':assertions[n].add((r.get('phase'),r['path'],r['line'],r['function']))
+            elif r['event'] in ['admission_exception','typed_exception']:exceptions[n].append({k:r[k] for k in ['phase','exception_type','message','code','stack']})
+    return assertions,exceptions
+@lru_cache(None)
+def statement_map(head,path):
+    raw=subprocess.check_output(['git','show',head+':'+path],cwd=ROOT)
+    return {n.lineno:ast.dump(n,include_attributes=False) for n in ast.walk(ast.parse(raw)) if isinstance(n,ast.Assert)}
+def canon(head,entries):
+    result=Counter()
+    for phase,path,line,fun in entries:
+        asttext=statement_map(head,path).get(line)
+        assert asttext is not None,(head,path,line)
+        result[phase,path,fun,asttext]+=1
+    return result
+
+def analyze(old,new,name):
+    a,af,sa=parse(old,'diagnostic','historic');b,bf,sb=parse(new,'diagnostic','fresh')
+    aa,ax=traces(old);ba,bx=traces(new);rows=[]
+    for n in sorted(set(a)|set(b)):
+        ac=canon(sa['head'],aa[n]);bc=canon(sb['head'],ba[n])
+        rows.append({'nodeid':n,'old':a.get(n),'new':b.get(n),'historically_unsuccessful':n in af,'old_assertions':sorted(aa[n]),'new_assertions':sorted(ba[n]),'assertion_AST_entries_equal':ac==bc,'old_canonical_assertions':[[*k,c] for k,c in sorted(ac.items())],'new_canonical_assertions':[[*k,c] for k,c in sorted(bc.items())],'old_exceptions':ax[n],'new_exceptions':bx[n]})
+    summary={'old':sa,'new':sb,'same_common_outcome_phase':all(a[n]==b[n] for n in set(a)&set(b)),'old_only':sorted(set(a)-set(b)),'new_only':sorted(set(b)-set(a)),'changed_assertion_AST_entries':[r['nodeid'] for r in rows if not r['assertion_AST_entries_equal']],'historical_unsuccessful_changed_assertion_AST_entries':[r['nodeid'] for r in rows if r['historically_unsuccessful'] and not r['assertion_AST_entries_equal']],'scope':'Actual assertion statement entry in main worker thread only; not subexpression/thread/child-process coverage.'}
+    emit(OUT/(name+'.nodes.json.gz'),rows);emit(OUT/(name+'.summary.json'),summary);print(json.dumps({k:v for k,v in summary.items() if k not in ['old','new']},indent=2))
+
+if __name__=='__main__':
+    ref=Path('/workspace/i6b-broad-work/reference149/diagnostic743');new=OUT/'diagnostic745'
+    compare(ref,'diagnostic','historic',new,'diagnostic','fresh','diagnostic-vs-149')
+    analyze(ref,new,'assertion-reach-vs-149')
+    author=ROOT/'docs/implementation/evidence/adr0031-i6b-author-20261023/raw/final-source-diagnostic'
+    compare(author,'diagnostic','historic',new,'diagnostic','fresh','diagnostic-vs-author-final')
+    analyze(author,new,'assertion-reach-vs-author-final')

@@ -1,0 +1,7 @@
+commit 61e44291e293f773904a0127606e20c8cb83c95e
+Author:     Takashi Sasaki <takashi316@gmail.com>
+AuthorDate: Fri Oct 23 15:05:07 2026 +0000
+Commit:     Takashi Sasaki <takashi316@gmail.com>
+CommitDate: Fri Oct 23 15:05:07 2026 +0000
+
+    docs(context): preserve M01 M02 Author verification and handoff

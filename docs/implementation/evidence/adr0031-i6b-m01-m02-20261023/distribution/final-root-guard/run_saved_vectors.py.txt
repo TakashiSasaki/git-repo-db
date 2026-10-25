@@ -1,0 +1,11 @@
+from pathlib import Path
+import json,os,subprocess,sys,time
+WORK=Path('/workspace/i6b-fix-distribution-root-guard');OUT=Path('/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/distribution/final-root-guard');records=[]
+for form in ['direct','derived']:
+ venv=WORK/(form+'-venv');args=[str(venv/'bin/python'),str(WORK/'replay_saved_vectors.py'),str(WORK/'frozen/docs/implementation/evidence/adr0031-i6b-independent-20261023/wire/digest-vectors'),str(OUT/(form+'-saved-vector-replay.json'))]
+ env=dict(os.environ,PYTHONPATH=str(WORK/'outside/tests/support/network_guard'),GIT_ALLOW_PROTOCOL='file',PATH=str(venv/'bin')+os.pathsep+os.environ['PATH'])
+ for k in ['GH_TOKEN','GITHUB_TOKEN','PYTHONHOME']:env.pop(k,None)
+ start=time.time()
+ with (OUT/(form+'-saved-vector-replay.log')).open('w') as f:p=subprocess.run(args,cwd=WORK/'outside',env=env,stdout=f,stderr=subprocess.STDOUT)
+ records.append({'argv':args,'cwd':str(WORK/'outside'),'exit_code':p.returncode,'started_epoch':start,'elapsed_seconds':time.time()-start});(OUT/'saved-vector-processes.json').write_text(json.dumps(records,indent=2)+'\n');assert p.returncode==0;print(form,p.returncode)
+(OUT/'run_saved_vectors.py.txt').write_bytes(Path(__file__).read_bytes())

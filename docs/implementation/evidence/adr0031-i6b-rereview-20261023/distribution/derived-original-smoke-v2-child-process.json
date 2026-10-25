@@ -1,0 +1,8 @@
+{
+  "argv": [
+    "/workspace/rereview-distribution/derived-minimal-venv/bin/python",
+    "-I",
+    "/workspace/rereview-distribution/outside/launch_original_smoke.py"
+  ],
+  "exit_code": 1
+}

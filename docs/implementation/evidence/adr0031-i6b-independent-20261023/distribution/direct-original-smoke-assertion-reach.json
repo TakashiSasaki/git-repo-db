@@ -1,0 +1,278 @@
+{
+  "assertions": [
+    {
+      "line": 11,
+      "expression": "module_origin.is_relative_to(Path(sys.prefix).resolve())",
+      "reached": true
+    },
+    {
+      "line": 13,
+      "expression": "importlib.util.find_spec('httpx') is None",
+      "reached": true
+    },
+    {
+      "line": 25,
+      "expression": "store.first_choices(s) == (again,)",
+      "reached": true
+    },
+    {
+      "line": 26,
+      "expression": "store.history(s).registrations == (again, b, a)",
+      "reached": true
+    },
+    {
+      "line": 27,
+      "expression": "not store.locator_enabled(again)",
+      "reached": true
+    },
+    {
+      "line": 48,
+      "expression": "store.current_grant(repo, s) == grant",
+      "reached": true
+    },
+    {
+      "line": 55,
+      "expression": "error.code == 'APPROVAL_REQUIRED'",
+      "reached": true
+    },
+    {
+      "line": 77,
+      "expression": "workflow.dispatch_once(token, lambda fd: os.fstat(fd).st_ino, guard=lambda: None) == repository.stat().st_ino",
+      "reached": true
+    },
+    {
+      "line": 80,
+      "expression": "json.loads(output)['status'] == 'review-only'",
+      "reached": true
+    },
+    {
+      "line": 81,
+      "expression": "not (Path(directory) / 'core.sqlite3').exists()",
+      "reached": true
+    },
+    {
+      "line": 102,
+      "expression": "report.repository_uuidv4 == repo != seed",
+      "reached": true
+    },
+    {
+      "line": 103,
+      "expression": "OID('sha1', commit) in report.retained_objects",
+      "reached": true
+    },
+    {
+      "line": 105,
+      "expression": "core.catalog_identity() == (seed, instance)",
+      "reached": true
+    },
+    {
+      "line": 106,
+      "expression": "core.read_metadata(OID('sha1', commit)) == body",
+      "reached": true
+    },
+    {
+      "line": 115,
+      "expression": "manifest['row_counts']['scope_locators'] == 4",
+      "reached": true
+    },
+    {
+      "line": 116,
+      "expression": "manifest['row_counts']['local_access_grants'] == 0",
+      "reached": true
+    },
+    {
+      "line": 117,
+      "expression": "service.inspect(bundle) == manifest",
+      "reached": true
+    },
+    {
+      "line": 120,
+      "expression": "copy.first_choices(s) == (newest,)",
+      "reached": true
+    },
+    {
+      "line": 121,
+      "expression": "len(copy.history(s).registrations) == 4",
+      "reached": true
+    },
+    {
+      "line": 122,
+      "expression": "not copy.locator_enabled(newest)",
+      "reached": true
+    },
+    {
+      "line": 127,
+      "expression": "error.code == 'APPROVAL_REQUIRED'",
+      "reached": true
+    },
+    {
+      "line": 132,
+      "expression": "len(copy.history(s).registrations) == 4",
+      "reached": true
+    },
+    {
+      "line": 134,
+      "expression": "new_scope != s",
+      "reached": true
+    },
+    {
+      "line": 135,
+      "expression": "copy.history(new_scope).registrations == (ScopeLocatorRegistration(new_scope, 100, 'file:///new-scope'),)",
+      "reached": true
+    },
+    {
+      "line": 136,
+      "expression": "not copy.scope_context(new_scope).enabled",
+      "reached": true
+    },
+    {
+      "line": 155,
+      "expression": "registration_json(role, '{}') == {}",
+      "reached": true
+    },
+    {
+      "line": 188,
+      "expression": "package.format == EXCHANGE_FORMAT == 'git-repo-db/adr0030-exchange-v4'",
+      "reached": false
+    },
+    {
+      "line": 192,
+      "expression": "json.loads(rows[0][0]) == historical_url",
+      "reached": false
+    },
+    {
+      "line": 194,
+      "expression": "ctx.db.execute('SELECT configuration_json FROM providers').fetchone()[0] == '{\"name\":\"Original provider\"}'",
+      "reached": false
+    },
+    {
+      "line": 196,
+      "expression": "len(tables) == 19",
+      "reached": false
+    },
+    {
+      "line": 197,
+      "expression": "'resource_repository_relations' in tables",
+      "reached": false
+    },
+    {
+      "line": 198,
+      "expression": "'repository_mapping_dispositions' in tables",
+      "reached": false
+    },
+    {
+      "line": 200,
+      "expression": "ctx.db.execute('SELECT p1_mapping_target(\\'\"9ebbe38a-f937-40e6-a99c-701835ebcf10\"\\')').fetchone()[0] == 1",
+      "reached": false
+    },
+    {
+      "line": 201,
+      "expression": "ctx.db.execute('SELECT p1_mapping_clock(\\'{\"at_us\":1,\"domain\":\"test\"}\\')').fetchone()[0] == 1",
+      "reached": false
+    },
+    {
+      "line": 202,
+      "expression": "ctx.db.execute('SELECT p1_mapping_provenance(\\'{\"evidence\":\"e\",\"source\":\"s\"}\\')').fetchone()[0] == 1",
+      "reached": false
+    },
+    {
+      "line": 203,
+      "expression": "not (receiver / 'access.sqlite3').exists()",
+      "reached": false
+    },
+    {
+      "line": 224,
+      "expression": "qualified.supports[0].supporting_claims == (claims[0].claim_key,)",
+      "reached": false
+    },
+    {
+      "line": 226,
+      "expression": "report.from_relation.embedded_support.supporting_claims == (claims[1].claim_key,)",
+      "reached": false
+    },
+    {
+      "line": 227,
+      "expression": "report.to_state == 'absent' and report.observed_at_us == 20",
+      "reached": false
+    },
+    {
+      "line": 228,
+      "expression": "not (destination / 'access.sqlite3').exists()",
+      "reached": false
+    },
+    {
+      "line": 240,
+      "expression": "ctx.provider_repository_roles(qualified.resource) == (qualified,)",
+      "reached": false
+    },
+    {
+      "line": 241,
+      "expression": "ctx.transfer_event_reports() == (report,)",
+      "reached": false
+    },
+    {
+      "line": 243,
+      "expression": "core.catalog_identity() == (target_seed, target_instance)",
+      "reached": false
+    },
+    {
+      "line": 244,
+      "expression": "{r[0] for r in core.sql('SELECT repository_uuidv4 FROM repositories')} == {target_seed, repository_id}",
+      "reached": false
+    },
+    {
+      "line": 245,
+      "expression": "not (target / 'access.sqlite3').exists()",
+      "reached": false
+    },
+    {
+      "line": 255,
+      "expression": "q.get_context_resource(qualified.resource).repository_roles[0].state == 'contested_candidate'",
+      "reached": false
+    },
+    {
+      "line": 257,
+      "expression": "checked.get_context_resource(qualified.resource).repository_roles[0].state == 'withdrawn'",
+      "reached": false
+    },
+    {
+      "line": 260,
+      "expression": "found.backend == 'verified_projection_scan' and found.hits",
+      "reached": false
+    },
+    {
+      "line": 266,
+      "expression": "ctx.mapping_dispositions(claims[0].claim_key) == (disposition,)",
+      "reached": false
+    },
+    {
+      "line": 267,
+      "expression": "ctx.transfer_event_reports() == (report,)",
+      "reached": false
+    },
+    {
+      "line": 269,
+      "expression": "rq.get_context_resource(qualified.resource) == q.get_context_resource(qualified.resource)",
+      "reached": false
+    },
+    {
+      "line": 270,
+      "expression": "rq.search(SearchQuery('owning_repository', projection_kinds=('context_text',))).backend == 'authority_scan'",
+      "reached": false
+    },
+    {
+      "line": 272,
+      "expression": "rq.search(SearchQuery('owning_repository', projection_kinds=('context_text',))).backend == 'verified_projection_scan'",
+      "reached": false
+    },
+    {
+      "line": 273,
+      "expression": "not any(((restored / f'{role}.sqlite3').exists() for role in ('operational', 'access')))",
+      "reached": false
+    }
+  ],
+  "exception": "builtins.KeyboardInterrupt",
+  "code": null,
+  "actual_child_exit": -2,
+  "scope": "line-traced original smoke only; no claim of later assertion reach"
+}

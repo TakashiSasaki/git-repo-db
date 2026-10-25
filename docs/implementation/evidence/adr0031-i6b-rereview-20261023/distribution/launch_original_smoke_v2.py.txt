@@ -1,0 +1,16 @@
+from pathlib import Path
+import hashlib,json,os,runpy,sqlite3,sys,traceback,repo_catalog
+smoke=Path(os.environ['I6B_SMOKE']).resolve();trace=[]
+root=Path(repo_catalog.__file__).resolve().parent;assert root.is_relative_to(Path(sys.prefix).resolve())
+runpy.run_path(os.environ['I6B_GUARD'])
+def observer(frame,event,arg):
+ if frame.f_code.co_filename != str(smoke):return None
+ if event=='line':trace.append(frame.f_lineno)
+ return observer
+result={'python':sys.executable,'origin':str(root),'sqlite':sqlite3.connect(':memory:').execute('select sqlite_version(),sqlite_source_id()').fetchone()}
+try:
+ sys.settrace(observer);runpy.run_path(str(smoke),run_name='__main__')
+except BaseException as error:
+ result.update(exception=type(error).__module__+'.'+type(error).__name__,message=str(error),code=getattr(error,'code',None),traceback=traceback.format_exc());raise
+finally:
+ sys.settrace(None);result['executed_smoke_lines']=trace;Path(os.environ['I6B_SMOKE_RESULT']).write_text(json.dumps(result,indent=2,default=str)+'\n')

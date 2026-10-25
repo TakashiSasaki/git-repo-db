@@ -1,0 +1,1294 @@
+{
+  "3.51.3": {
+    "baseline_non_successes": 79,
+    "current_non_successes": 79,
+    "i3_resolved_baseline_non_successes": 0,
+    "additional_non_successes": 0,
+    "same_non_success_nodes_and_phases": true,
+    "counts": {
+      "remaining_I4_I5_Transfer:call": 45,
+      "remaining_I6_wire:call": 14,
+      "remaining_I4_I5_Transfer:setup": 20
+    },
+    "comparison": [
+      {
+        "class": "tests.integration.p1.test_context_relations",
+        "name": "test_transfer_generic_admission_requires_complete_report[transfer_from_repository-True-True]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.p1.test_context_relations",
+        "name": "test_transfer_generic_admission_requires_complete_report[transfer_to_repository-False-False]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.p1.test_context_relations",
+        "name": "test_transfer_generic_admission_requires_complete_report[transfer_to_repository-False-True]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.p1.test_context_relations",
+        "name": "test_transfer_generic_admission_requires_complete_report[transfer_to_repository-True-False]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.p1.test_context_relations",
+        "name": "test_transfer_generic_admission_requires_complete_report[transfer_to_repository-True-True]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.p1.test_context_relations",
+        "name": "test_transfer_stored_type_is_never_inferred[absent]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.p1.test_context_relations",
+        "name": "test_transfer_stored_type_is_never_inferred[missing_type]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.p1.test_context_relations",
+        "name": "test_transfer_stored_type_is_never_inferred[wrong_type]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.p1.test_context_relations",
+        "name": "test_transfer_stored_type_is_never_inferred[provided_roles]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.p1.test_context_relations",
+        "name": "test_transfer_stored_type_is_never_inferred[members]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.p1.test_context_relations",
+        "name": "test_transfer_stored_type_is_never_inferred[missing_provider]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.p1.test_context_relations",
+        "name": "test_transfer_stored_type_is_never_inferred[missing_clock]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.p1.test_context_relations",
+        "name": "test_transfer_report_fk_failure_rolls_back_whole_unit",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.p1.test_context_relations",
+        "name": "test_transfer_supports_both_endpoints_without_cross_borrowing",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.p1.test_context_relations",
+        "name": "test_partial_transfer_alternatives_remain_selection_truncated",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.p1.test_context_relations",
+        "name": "test_counterexample_5_transfer_cases_no_invented_endpoints",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.p1.test_context_relations",
+        "name": "test_transfer_event_genuine_type_enforcement_across_typed_paths",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.p1.test_context_relations",
+        "name": "test_transfer_event_reports_generator_selected_repositories_and_invariants",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.p3.test_production_context",
+        "name": "test_production_context_relation_facade_methods",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.p5.test_exchange",
+        "name": "test_exchange_export_import_repeat_reverse_and_multi_hop",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I6_wire",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.p5.test_exchange",
+        "name": "test_exchange_refuses_intrinsic_spoofing_without_validated_bytes",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I6_wire",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.p5.test_exchange",
+        "name": "test_exchange_refuses_tampered_payloads_without_store_corruption",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I6_wire",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.p5.test_exchange",
+        "name": "test_exchange_evaluates_core_dependencies_against_receiver_core",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I6_wire",
+        "same_phase": true
+      },
+      {
+        "class": "tests.packaging.test_p5_distribution",
+        "name": "test_p5_installed_acquisition_and_exchange[sha1-wheel]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I6_wire",
+        "same_phase": true
+      },
+      {
+        "class": "tests.packaging.test_p5_distribution",
+        "name": "test_p5_installed_acquisition_and_exchange[sha1-sdist-wheel]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I6_wire",
+        "same_phase": true
+      },
+      {
+        "class": "tests.packaging.test_p5_distribution",
+        "name": "test_p5_installed_acquisition_and_exchange[sha256-wheel]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I6_wire",
+        "same_phase": true
+      },
+      {
+        "class": "tests.packaging.test_p5_distribution",
+        "name": "test_p5_installed_acquisition_and_exchange[sha256-sdist-wheel]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I6_wire",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i2.test_provider_intake",
+        "name": "test_transfer_preserves_complete_original_endpoint_states[endpoints0-expected0]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i2.test_provider_intake",
+        "name": "test_transfer_preserves_complete_original_endpoint_states[endpoints1-expected1]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i2.test_provider_intake",
+        "name": "test_transfer_preserves_complete_original_endpoint_states[endpoints2-expected2]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i2.test_provider_intake",
+        "name": "test_transfer_preserves_complete_original_endpoint_states[endpoints3-expected3]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i2.test_provider_intake",
+        "name": "test_transfer_preserves_complete_original_endpoint_states[endpoints4-expected4]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i2.test_provider_intake",
+        "name": "test_non_transfer_cannot_promote_repository_fields_or_forged_flag[False]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i2.test_provider_intake",
+        "name": "test_non_transfer_cannot_promote_repository_fields_or_forged_flag[True]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i2.test_provider_intake",
+        "name": "test_graphql_transfer_parent_namespace_and_original_type",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i2.test_provider_intake",
+        "name": "test_reacquired_event_does_not_reissue_provenance_after_mapping_change",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i2.test_provider_intake",
+        "name": "test_separate_event_reports_never_pair_endpoints",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i2.test_provider_intake",
+        "name": "test_graphql_event_does_not_infer_destination_from_current_issue_repository",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i2.test_provider_intake",
+        "name": "test_same_original_event_key_cannot_change_observation_time",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i2.test_provider_intake",
+        "name": "test_transfer_type_and_endpoint_evidence_must_belong_to_same_report[event_resource]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i2.test_provider_intake",
+        "name": "test_transfer_type_and_endpoint_evidence_must_belong_to_same_report[clock]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i2.test_provider_intake",
+        "name": "test_transfer_type_and_endpoint_evidence_must_belong_to_same_report[provenance]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i2.test_provider_intake",
+        "name": "test_transfer_type_and_endpoint_evidence_must_belong_to_same_report[members]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i3.test_selective_exchange",
+        "name": "test_transfer_reports_never_shrunk_or_mixed",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i23.test_provider_exchange",
+        "name": "test_genuine_transfer_event_report_is_preserved_whole[endpoints0-states0]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i23.test_provider_exchange",
+        "name": "test_genuine_transfer_event_report_is_preserved_whole[endpoints1-states1]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i23.test_provider_exchange",
+        "name": "test_genuine_transfer_event_report_is_preserved_whole[endpoints2-states2]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i23.test_provider_exchange",
+        "name": "test_genuine_transfer_event_report_is_preserved_whole[endpoints3-states3]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i23.test_provider_exchange",
+        "name": "test_genuine_transfer_event_report_is_preserved_whole[endpoints4-states4]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i23.test_provider_exchange",
+        "name": "test_i2_source_coverage_and_native_capture_notes_survive_i3",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I6_wire",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i4.test_query_search_backup",
+        "name": "test_paired_restore_preserves_all_keys_dependencies_and_excludes_other_stores",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i5.test_independent_e2e",
+        "name": "test_independent_selection_does_not_turn_dependencies_into_permission[R]",
+        "baseline_phase": "setup",
+        "current_phase": "setup",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i5.test_independent_e2e",
+        "name": "test_independent_selection_does_not_turn_dependencies_into_permission[O]",
+        "baseline_phase": "setup",
+        "current_phase": "setup",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i5.test_independent_e2e",
+        "name": "test_independent_selection_does_not_turn_dependencies_into_permission[C]",
+        "baseline_phase": "setup",
+        "current_phase": "setup",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i5.test_independent_e2e",
+        "name": "test_independent_selection_does_not_turn_dependencies_into_permission[RO]",
+        "baseline_phase": "setup",
+        "current_phase": "setup",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i5.test_independent_e2e",
+        "name": "test_independent_selection_does_not_turn_dependencies_into_permission[RC]",
+        "baseline_phase": "setup",
+        "current_phase": "setup",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i5.test_independent_e2e",
+        "name": "test_independent_selection_does_not_turn_dependencies_into_permission[OC]",
+        "baseline_phase": "setup",
+        "current_phase": "setup",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i5.test_independent_e2e",
+        "name": "test_independent_selection_does_not_turn_dependencies_into_permission[ROC]",
+        "baseline_phase": "setup",
+        "current_phase": "setup",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i5.test_independent_e2e",
+        "name": "test_independent_selection_does_not_turn_dependencies_into_permission[empty]",
+        "baseline_phase": "setup",
+        "current_phase": "setup",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i5.test_independent_e2e",
+        "name": "test_omitted_selection_needs_explicit_all_and_empty_overrides_all",
+        "baseline_phase": "setup",
+        "current_phase": "setup",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i5.test_independent_e2e",
+        "name": "test_mapping_effect_stays_local_across_exchange_search_and_restore[withdraw]",
+        "baseline_phase": "setup",
+        "current_phase": "setup",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i5.test_independent_e2e",
+        "name": "test_mapping_effect_stays_local_across_exchange_search_and_restore[correct]",
+        "baseline_phase": "setup",
+        "current_phase": "setup",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i5.test_independent_e2e",
+        "name": "test_mapping_effect_stays_local_across_exchange_search_and_restore[dispute]",
+        "baseline_phase": "setup",
+        "current_phase": "setup",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i5.test_independent_e2e",
+        "name": "test_received_search_is_disposable_and_rebuild_preserves_authority[missing]",
+        "baseline_phase": "setup",
+        "current_phase": "setup",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i5.test_independent_e2e",
+        "name": "test_received_search_is_disposable_and_rebuild_preserves_authority[garbage]",
+        "baseline_phase": "setup",
+        "current_phase": "setup",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i5.test_independent_e2e",
+        "name": "test_received_search_is_disposable_and_rebuild_preserves_authority[stale]",
+        "baseline_phase": "setup",
+        "current_phase": "setup",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i5.test_independent_e2e",
+        "name": "test_received_search_is_disposable_and_rebuild_preserves_authority[text]",
+        "baseline_phase": "setup",
+        "current_phase": "setup",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i5.test_independent_e2e",
+        "name": "test_received_search_is_disposable_and_rebuild_preserves_authority[row_key]",
+        "baseline_phase": "setup",
+        "current_phase": "setup",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i5.test_independent_e2e",
+        "name": "test_received_paired_backup_preserves_complete_rows_keys_provenance_and_oid_refs",
+        "baseline_phase": "setup",
+        "current_phase": "setup",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i5.test_independent_e2e",
+        "name": "test_transfer_reports_never_mix_across_observations_or_identifier_namespaces",
+        "baseline_phase": "setup",
+        "current_phase": "setup",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i5.test_independent_e2e",
+        "name": "test_selected_source_inventory_cannot_expand_repository_registration",
+        "baseline_phase": "setup",
+        "current_phase": "setup",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.p1.test_context_relations",
+        "name": "test_transfer_generic_admission_requires_complete_report[transfer_from_repository-False-False]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.p1.test_context_relations",
+        "name": "test_transfer_generic_admission_requires_complete_report[transfer_from_repository-False-True]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.p1.test_context_relations",
+        "name": "test_transfer_generic_admission_requires_complete_report[transfer_from_repository-True-False]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i3.test_selective_exchange",
+        "name": "test_contradictory_coverage_proof_is_rejected_before_binding[members_json-[]-collection]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I6_wire",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i3.test_selective_exchange",
+        "name": "test_contradictory_coverage_proof_is_rejected_before_binding[terminal_state-partial-collection]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I6_wire",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i3.test_selective_exchange",
+        "name": "test_contradictory_coverage_proof_is_rejected_before_binding[provenance_json-{\"evidence\":\"different\",\"source\":\"forged\"}-collection]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I6_wire",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i3.test_selective_exchange",
+        "name": "test_modeled_collection_member_cannot_borrow_another_parent[collections]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I6_wire",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i3.test_selective_exchange",
+        "name": "test_modeled_collection_member_cannot_borrow_another_parent[resource_relations]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I6_wire",
+        "same_phase": true
+      }
+    ]
+  },
+  "3.53.1": {
+    "baseline_non_successes": 79,
+    "current_non_successes": 79,
+    "i3_resolved_baseline_non_successes": 0,
+    "additional_non_successes": 0,
+    "same_non_success_nodes_and_phases": true,
+    "counts": {
+      "remaining_I4_I5_Transfer:call": 45,
+      "remaining_I6_wire:call": 14,
+      "remaining_I4_I5_Transfer:setup": 20
+    },
+    "comparison": [
+      {
+        "class": "tests.integration.p1.test_context_relations",
+        "name": "test_transfer_generic_admission_requires_complete_report[transfer_from_repository-True-True]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.p1.test_context_relations",
+        "name": "test_transfer_generic_admission_requires_complete_report[transfer_to_repository-False-False]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.p1.test_context_relations",
+        "name": "test_transfer_generic_admission_requires_complete_report[transfer_to_repository-False-True]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.p1.test_context_relations",
+        "name": "test_transfer_generic_admission_requires_complete_report[transfer_to_repository-True-False]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.p1.test_context_relations",
+        "name": "test_transfer_generic_admission_requires_complete_report[transfer_to_repository-True-True]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.p1.test_context_relations",
+        "name": "test_transfer_stored_type_is_never_inferred[absent]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.p1.test_context_relations",
+        "name": "test_transfer_stored_type_is_never_inferred[missing_type]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.p1.test_context_relations",
+        "name": "test_transfer_stored_type_is_never_inferred[wrong_type]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.p1.test_context_relations",
+        "name": "test_transfer_stored_type_is_never_inferred[provided_roles]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.p1.test_context_relations",
+        "name": "test_transfer_stored_type_is_never_inferred[members]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.p1.test_context_relations",
+        "name": "test_transfer_stored_type_is_never_inferred[missing_provider]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.p1.test_context_relations",
+        "name": "test_transfer_stored_type_is_never_inferred[missing_clock]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.p1.test_context_relations",
+        "name": "test_transfer_report_fk_failure_rolls_back_whole_unit",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.p1.test_context_relations",
+        "name": "test_transfer_supports_both_endpoints_without_cross_borrowing",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.p1.test_context_relations",
+        "name": "test_partial_transfer_alternatives_remain_selection_truncated",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.p1.test_context_relations",
+        "name": "test_counterexample_5_transfer_cases_no_invented_endpoints",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.p1.test_context_relations",
+        "name": "test_transfer_event_genuine_type_enforcement_across_typed_paths",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.p1.test_context_relations",
+        "name": "test_transfer_event_reports_generator_selected_repositories_and_invariants",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.p3.test_production_context",
+        "name": "test_production_context_relation_facade_methods",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.p5.test_exchange",
+        "name": "test_exchange_export_import_repeat_reverse_and_multi_hop",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I6_wire",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.p5.test_exchange",
+        "name": "test_exchange_refuses_intrinsic_spoofing_without_validated_bytes",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I6_wire",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.p5.test_exchange",
+        "name": "test_exchange_refuses_tampered_payloads_without_store_corruption",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I6_wire",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.p5.test_exchange",
+        "name": "test_exchange_evaluates_core_dependencies_against_receiver_core",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I6_wire",
+        "same_phase": true
+      },
+      {
+        "class": "tests.packaging.test_p5_distribution",
+        "name": "test_p5_installed_acquisition_and_exchange[sha1-wheel]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I6_wire",
+        "same_phase": true
+      },
+      {
+        "class": "tests.packaging.test_p5_distribution",
+        "name": "test_p5_installed_acquisition_and_exchange[sha1-sdist-wheel]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I6_wire",
+        "same_phase": true
+      },
+      {
+        "class": "tests.packaging.test_p5_distribution",
+        "name": "test_p5_installed_acquisition_and_exchange[sha256-wheel]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I6_wire",
+        "same_phase": true
+      },
+      {
+        "class": "tests.packaging.test_p5_distribution",
+        "name": "test_p5_installed_acquisition_and_exchange[sha256-sdist-wheel]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I6_wire",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i2.test_provider_intake",
+        "name": "test_transfer_preserves_complete_original_endpoint_states[endpoints0-expected0]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i2.test_provider_intake",
+        "name": "test_transfer_preserves_complete_original_endpoint_states[endpoints1-expected1]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i2.test_provider_intake",
+        "name": "test_transfer_preserves_complete_original_endpoint_states[endpoints2-expected2]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i2.test_provider_intake",
+        "name": "test_transfer_preserves_complete_original_endpoint_states[endpoints3-expected3]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i2.test_provider_intake",
+        "name": "test_transfer_preserves_complete_original_endpoint_states[endpoints4-expected4]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i2.test_provider_intake",
+        "name": "test_non_transfer_cannot_promote_repository_fields_or_forged_flag[False]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i2.test_provider_intake",
+        "name": "test_non_transfer_cannot_promote_repository_fields_or_forged_flag[True]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i2.test_provider_intake",
+        "name": "test_graphql_transfer_parent_namespace_and_original_type",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i2.test_provider_intake",
+        "name": "test_reacquired_event_does_not_reissue_provenance_after_mapping_change",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i2.test_provider_intake",
+        "name": "test_separate_event_reports_never_pair_endpoints",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i2.test_provider_intake",
+        "name": "test_graphql_event_does_not_infer_destination_from_current_issue_repository",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i2.test_provider_intake",
+        "name": "test_same_original_event_key_cannot_change_observation_time",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i2.test_provider_intake",
+        "name": "test_transfer_type_and_endpoint_evidence_must_belong_to_same_report[event_resource]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i2.test_provider_intake",
+        "name": "test_transfer_type_and_endpoint_evidence_must_belong_to_same_report[clock]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i2.test_provider_intake",
+        "name": "test_transfer_type_and_endpoint_evidence_must_belong_to_same_report[provenance]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i2.test_provider_intake",
+        "name": "test_transfer_type_and_endpoint_evidence_must_belong_to_same_report[members]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i3.test_selective_exchange",
+        "name": "test_transfer_reports_never_shrunk_or_mixed",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i23.test_provider_exchange",
+        "name": "test_genuine_transfer_event_report_is_preserved_whole[endpoints0-states0]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i23.test_provider_exchange",
+        "name": "test_genuine_transfer_event_report_is_preserved_whole[endpoints1-states1]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i23.test_provider_exchange",
+        "name": "test_genuine_transfer_event_report_is_preserved_whole[endpoints2-states2]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i23.test_provider_exchange",
+        "name": "test_genuine_transfer_event_report_is_preserved_whole[endpoints3-states3]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i23.test_provider_exchange",
+        "name": "test_genuine_transfer_event_report_is_preserved_whole[endpoints4-states4]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i23.test_provider_exchange",
+        "name": "test_i2_source_coverage_and_native_capture_notes_survive_i3",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I6_wire",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i4.test_query_search_backup",
+        "name": "test_paired_restore_preserves_all_keys_dependencies_and_excludes_other_stores",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i5.test_independent_e2e",
+        "name": "test_independent_selection_does_not_turn_dependencies_into_permission[R]",
+        "baseline_phase": "setup",
+        "current_phase": "setup",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i5.test_independent_e2e",
+        "name": "test_independent_selection_does_not_turn_dependencies_into_permission[O]",
+        "baseline_phase": "setup",
+        "current_phase": "setup",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i5.test_independent_e2e",
+        "name": "test_independent_selection_does_not_turn_dependencies_into_permission[C]",
+        "baseline_phase": "setup",
+        "current_phase": "setup",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i5.test_independent_e2e",
+        "name": "test_independent_selection_does_not_turn_dependencies_into_permission[RO]",
+        "baseline_phase": "setup",
+        "current_phase": "setup",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i5.test_independent_e2e",
+        "name": "test_independent_selection_does_not_turn_dependencies_into_permission[RC]",
+        "baseline_phase": "setup",
+        "current_phase": "setup",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i5.test_independent_e2e",
+        "name": "test_independent_selection_does_not_turn_dependencies_into_permission[OC]",
+        "baseline_phase": "setup",
+        "current_phase": "setup",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i5.test_independent_e2e",
+        "name": "test_independent_selection_does_not_turn_dependencies_into_permission[ROC]",
+        "baseline_phase": "setup",
+        "current_phase": "setup",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i5.test_independent_e2e",
+        "name": "test_independent_selection_does_not_turn_dependencies_into_permission[empty]",
+        "baseline_phase": "setup",
+        "current_phase": "setup",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i5.test_independent_e2e",
+        "name": "test_omitted_selection_needs_explicit_all_and_empty_overrides_all",
+        "baseline_phase": "setup",
+        "current_phase": "setup",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i5.test_independent_e2e",
+        "name": "test_mapping_effect_stays_local_across_exchange_search_and_restore[withdraw]",
+        "baseline_phase": "setup",
+        "current_phase": "setup",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i5.test_independent_e2e",
+        "name": "test_mapping_effect_stays_local_across_exchange_search_and_restore[correct]",
+        "baseline_phase": "setup",
+        "current_phase": "setup",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i5.test_independent_e2e",
+        "name": "test_mapping_effect_stays_local_across_exchange_search_and_restore[dispute]",
+        "baseline_phase": "setup",
+        "current_phase": "setup",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i5.test_independent_e2e",
+        "name": "test_received_search_is_disposable_and_rebuild_preserves_authority[missing]",
+        "baseline_phase": "setup",
+        "current_phase": "setup",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i5.test_independent_e2e",
+        "name": "test_received_search_is_disposable_and_rebuild_preserves_authority[garbage]",
+        "baseline_phase": "setup",
+        "current_phase": "setup",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i5.test_independent_e2e",
+        "name": "test_received_search_is_disposable_and_rebuild_preserves_authority[stale]",
+        "baseline_phase": "setup",
+        "current_phase": "setup",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i5.test_independent_e2e",
+        "name": "test_received_search_is_disposable_and_rebuild_preserves_authority[text]",
+        "baseline_phase": "setup",
+        "current_phase": "setup",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i5.test_independent_e2e",
+        "name": "test_received_search_is_disposable_and_rebuild_preserves_authority[row_key]",
+        "baseline_phase": "setup",
+        "current_phase": "setup",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i5.test_independent_e2e",
+        "name": "test_received_paired_backup_preserves_complete_rows_keys_provenance_and_oid_refs",
+        "baseline_phase": "setup",
+        "current_phase": "setup",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i5.test_independent_e2e",
+        "name": "test_transfer_reports_never_mix_across_observations_or_identifier_namespaces",
+        "baseline_phase": "setup",
+        "current_phase": "setup",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i5.test_independent_e2e",
+        "name": "test_selected_source_inventory_cannot_expand_repository_registration",
+        "baseline_phase": "setup",
+        "current_phase": "setup",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.p1.test_context_relations",
+        "name": "test_transfer_generic_admission_requires_complete_report[transfer_from_repository-False-False]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.p1.test_context_relations",
+        "name": "test_transfer_generic_admission_requires_complete_report[transfer_from_repository-False-True]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.p1.test_context_relations",
+        "name": "test_transfer_generic_admission_requires_complete_report[transfer_from_repository-True-False]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I4_I5_Transfer",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i3.test_selective_exchange",
+        "name": "test_contradictory_coverage_proof_is_rejected_before_binding[members_json-[]-collection]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I6_wire",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i3.test_selective_exchange",
+        "name": "test_contradictory_coverage_proof_is_rejected_before_binding[terminal_state-partial-collection]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I6_wire",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i3.test_selective_exchange",
+        "name": "test_contradictory_coverage_proof_is_rejected_before_binding[provenance_json-{\"evidence\":\"different\",\"source\":\"forged\"}-collection]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I6_wire",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i3.test_selective_exchange",
+        "name": "test_modeled_collection_member_cannot_borrow_another_parent[collections]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I6_wire",
+        "same_phase": true
+      },
+      {
+        "class": "tests.integration.i3.test_selective_exchange",
+        "name": "test_modeled_collection_member_cannot_borrow_another_parent[resource_relations]",
+        "baseline_phase": "call",
+        "current_phase": "call",
+        "category": "remaining_I6_wire",
+        "same_phase": true
+      }
+    ]
+  }
+}

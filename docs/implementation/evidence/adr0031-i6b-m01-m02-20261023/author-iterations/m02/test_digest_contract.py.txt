@@ -1,0 +1,53 @@
+"""R03 counterexample: raw selection is normalized before checksum verification."""
+import hashlib
+import json
+import os
+from pathlib import Path
+
+import pytest
+
+from repo_catalog.domain.exchange import ExchangeError, ExchangePackage, ExchangeSelectionScope, decode_package
+from repo_catalog.domain.p1_context import ResourceKey
+from repo_catalog.domain.p1_core import OID
+
+S='8bc7720a-0659-4c69-9159-28c9ad44f121'
+R='122617f1-7b75-475d-bc2e-8f30d1cbd8a5'
+P='0bec528e-c1be-46ca-87b9-b0527a159639'
+Q='60b4edcd-0f95-4ba4-a0aa-a2f860906c02'
+
+
+def raw_digest(data):
+    return hashlib.sha256(json.dumps({k:v for k,v in data.items() if k!='digest_sha256'},ensure_ascii=False,sort_keys=True,separators=(',',':'),allow_nan=False).encode()).hexdigest()
+
+
+def original(field):
+    coordinates={
+        'repository_uuidv4s':(R,Q),
+        'source_uuidv4s':(P,Q),
+        'notes_refs':('refs/notes/a','refs/notes/z'),
+        'object_oids':(OID('sha1','1'*40),OID('sha1','2'*40)),
+        'resource_keys':(ResourceKey.from_native(S,'opaque','a'),ResourceKey.from_native(S,'opaque','b')),
+    }
+    return ExchangePackage(P,971,S,R,ExchangeSelectionScope(all_selected=True,**{field:coordinates[field]})).to_dict()
+
+
+@pytest.mark.parametrize('field',['repository_uuidv4s','source_uuidv4s','notes_refs','object_oids','resource_keys'])
+@pytest.mark.parametrize('mutation',['duplicate','permutation'])
+@pytest.mark.parametrize('carrier',['dict','str','bytes'])
+def test_R03_received_dictionary_digest_is_verified_before_any_normalization(field,mutation,carrier):
+    data=original(field)
+    assert data['digest_sha256']==raw_digest(data)
+    assert decode_package(data).digest_sha256==data['digest_sha256']
+    before=json.loads(json.dumps(data))
+    if mutation=='duplicate':data['selection_scope'][field].append(data['selection_scope'][field][0])
+    else:data['selection_scope'][field].reverse()
+    # The raw received canonical JSON changed, while its declaration did not.
+    assert raw_digest(data)!=data['digest_sha256']
+    wire=data if carrier=='dict' else json.dumps(data) if carrier=='str' else json.dumps(data).encode()
+    directory=os.environ.get('DIGEST_VECTORS')
+    if directory:
+        base=Path(directory)/f'{field}-{mutation}-{carrier}'
+        base.parent.mkdir(parents=True,exist_ok=True)
+        base.with_suffix('.json').write_text(json.dumps({'before':before,'received':data,'actual_received_digest':raw_digest(data),'declared_digest':data['digest_sha256']},indent=2)+'\n')
+    with pytest.raises(ExchangeError,match='DIGEST_MISMATCH'):
+        decode_package(wire)

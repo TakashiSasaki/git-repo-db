@@ -1,0 +1,32 @@
+{
+  "receipt_bytes": 1948089,
+  "receipt_sha256": "0847e6e5445d0d3726bda2020b2438a1b7ee2ac85da4931aced08055fc6199ea",
+  "indexed_payloads": 121,
+  "views": [
+    "0_registry-runtime.txt",
+    "registry-runtime/19_Emit indexed verification receipts to job log.txt"
+  ],
+  "changes": [
+    {
+      "operation": "insert",
+      "source_view": "registry-runtime/19_Emit indexed verification receipts to job log.txt",
+      "source_range": [
+        11769,
+        11770
+      ],
+      "into_view": "0_registry-runtime.txt",
+      "position": 11769
+    },
+    {
+      "operation": "delete",
+      "source_view": "0_registry-runtime.txt",
+      "source_range": [
+        12403,
+        12404
+      ],
+      "into_view": "registry-runtime/19_Emit indexed verification receipts to job log.txt",
+      "position": 12404
+    }
+  ],
+  "scope": "Only chunks actually present in one of two downloaded views; original BEGIN/END length and SHA256 and every indexed payload independently match. No missing bytes synthesized; no artifact download claimed."
+}

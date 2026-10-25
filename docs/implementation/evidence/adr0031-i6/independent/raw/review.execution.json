@@ -1,0 +1,68 @@
+{
+  "results": [
+    {
+      "command": [
+        "/tmp/task-b-venv/bin/python",
+        "docs/implementation/evidence/adr0031-i6/independent/review_probes.py"
+      ],
+      "PYTHONPATH": "src",
+      "exit_code": 0,
+      "script_sha256": "eb8018ff404f9156fb8bc6856310164a42845a3075066069435926dc4f9cddc5",
+      "stdout": "review-probes.json",
+      "stderr": "review_probes.py.stderr.txt"
+    },
+    {
+      "command": [
+        "/tmp/task-b-venv/bin/python",
+        "docs/implementation/evidence/adr0031-i6/independent/wire_probe.py"
+      ],
+      "PYTHONPATH": "src",
+      "exit_code": 0,
+      "script_sha256": "b23ca414dad8b8b9f7eab3057966e3f1a69ddc511ffb2c23c13d34cd1a15a887",
+      "stdout": "wire-probes.json",
+      "stderr": "wire_probe.py.stderr.txt"
+    },
+    {
+      "command": [
+        "/tmp/task-b-venv/bin/python",
+        "docs/implementation/evidence/adr0031-i6/independent/sql_probe.py"
+      ],
+      "PYTHONPATH": "src",
+      "exit_code": 0,
+      "script_sha256": "efcfe890a9e7259015eddfccc06fac90cf6a6ddc2669b0ba097d0b4eaaf09a4f",
+      "stdout": "sql-probes.json",
+      "stderr": "sql_probe.py.stderr.txt"
+    },
+    {
+      "command": [
+        "/tmp/task-b-venv/bin/ruff",
+        "check",
+        "/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6/independent"
+      ],
+      "exit_code": 0,
+      "stdout": "All checks passed!\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/tmp/task-b-venv/bin/ruff",
+        "format",
+        "--check",
+        "/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6/independent"
+      ],
+      "exit_code": 0,
+      "stdout": "7 files already formatted\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/tmp/task-b-venv/bin/python",
+        "scripts/check_sqlite_validation_policy.py"
+      ],
+      "exit_code": 0,
+      "stdout": "SQLite validation policy: 0 violation(s)\n",
+      "stderr": ""
+    }
+  ],
+  "scope": "final retained probe sources, evidence lint/format and bounded policy lint"
+}

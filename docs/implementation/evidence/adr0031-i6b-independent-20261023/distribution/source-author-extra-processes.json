@@ -1,0 +1,52 @@
+[
+  {
+    "name": "source-author-extra-collect",
+    "argv": [
+      "/workspace/git-repo-db/.venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "--tb=short",
+      "-p",
+      "tests.conftest",
+      "-c",
+      "/workspace/git-repo-db/pyproject.toml",
+      "--rootdir=/workspace/i6b-source-extra",
+      "--confcutdir=/workspace/i6b-source-extra",
+      "-o",
+      "junit_family=xunit1",
+      "/workspace/i6b-source-extra/test_author_extra.py",
+      "--collect-only"
+    ],
+    "cwd": "/workspace/git-repo-db",
+    "exit_code": 0,
+    "started_epoch": 1792760787.0026,
+    "elapsed_seconds": 0.5512723922729492
+  },
+  {
+    "name": "source-author-extra",
+    "argv": [
+      "/workspace/git-repo-db/.venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "--tb=short",
+      "-p",
+      "tests.conftest",
+      "-c",
+      "/workspace/git-repo-db/pyproject.toml",
+      "--rootdir=/workspace/i6b-source-extra",
+      "--confcutdir=/workspace/i6b-source-extra",
+      "-o",
+      "junit_family=xunit1",
+      "/workspace/i6b-source-extra/test_author_extra.py",
+      "--junitxml=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-independent-20261023/distribution/source-author-extra.xml",
+      "--journal=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-independent-20261023/distribution/source-author-extra.jsonl",
+      "--basetemp=/workspace/i6b-source-extra/pytest-tmp"
+    ],
+    "cwd": "/workspace/git-repo-db",
+    "exit_code": 0,
+    "started_epoch": 1792760787.5749662,
+    "elapsed_seconds": 0.901033878326416
+  }
+]

@@ -1,0 +1,35 @@
+{
+  "sha": "59307c40ea65554736e131cedd00f04c9906551b",
+  "node_id": "C_kwDOU78qEtoAKDU5MzA3YzQwZWE2NTU1NDczNmUxMzFjZWRkMDBmMDRjOTkwNjU1MWI",
+  "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/git/commits/59307c40ea65554736e131cedd00f04c9906551b",
+  "html_url": "https://github.com/TakashiSasaki/git-repo-db/commit/59307c40ea65554736e131cedd00f04c9906551b",
+  "author": {
+    "name": "Takashi Sasaki",
+    "email": "takashi316@gmail.com",
+    "date": "2026-10-23T02:53:34Z"
+  },
+  "committer": {
+    "name": "Takashi Sasaki",
+    "email": "takashi316@gmail.com",
+    "date": "2026-10-23T02:53:34Z"
+  },
+  "tree": {
+    "sha": "5ea93707d62b542c84632515392ac6a35c36cd65",
+    "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/git/trees/5ea93707d62b542c84632515392ac6a35c36cd65"
+  },
+  "message": "docs: retain ADR 0033 hardening Author verification evidence",
+  "parents": [
+    {
+      "sha": "aaee34d31d2511cfec95d0bfa41a3a9733ac43e4",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/git/commits/aaee34d31d2511cfec95d0bfa41a3a9733ac43e4",
+      "html_url": "https://github.com/TakashiSasaki/git-repo-db/commit/aaee34d31d2511cfec95d0bfa41a3a9733ac43e4"
+    }
+  ],
+  "verification": {
+    "verified": false,
+    "reason": "unsigned",
+    "signature": null,
+    "payload": null,
+    "verified_at": null
+  }
+}

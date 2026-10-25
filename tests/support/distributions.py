@@ -6,7 +6,7 @@ import json
 import shutil
 from pathlib import Path
 
-KEYS = {"wheel", "sdist_wheel", "requirements"}
+KEYS = {"wheel", "sdist_wheel", "requirements", "sdist", "sdist_contract"}
 
 
 def build_once(directory, build):

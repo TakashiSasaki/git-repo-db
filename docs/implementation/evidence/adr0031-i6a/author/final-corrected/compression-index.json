@@ -1,0 +1,154 @@
+[
+  {
+    "original_path": "additional-failure-classification.json",
+    "original_bytes": 1035311,
+    "original_sha256": "8a3aba20be773d30a6906ca56d7eea76e0939260ac669c10fe133cea3b9fbcc4",
+    "gzip_path": "additional-failure-classification.json.gz",
+    "gzip_bytes": 47247,
+    "gzip_sha256": "311b366f8147661234295c1dfeac254b21400d6c3a5db0951d27c809b0d3253f"
+  },
+  {
+    "original_path": "all-collection.log",
+    "original_bytes": 2755847,
+    "original_sha256": "cfd1a2a17e41bddf406747a4c09c7bc1f1ce17f1c1905cc295a9f1d1489a35fb",
+    "gzip_path": "all-collection.log.gz",
+    "gzip_bytes": 86001,
+    "gzip_sha256": "0c5869f3846c48aaccc33c93a0c38c6cd2f2d9838230c4b9e64aaeed7ece58fa"
+  },
+  {
+    "original_path": "all-collection.nodes.txt",
+    "original_bytes": 2755816,
+    "original_sha256": "7261412afea25f12ce45273139a52c03b14011eb56ea14d279a3353814d59a57",
+    "gzip_path": "all-collection.nodes.txt.gz",
+    "gzip_bytes": 85976,
+    "gzip_sha256": "9d3024b70df60e04f27c944f279180057cdc64d139ef63e21eb375370bb12305"
+  },
+  {
+    "original_path": "historical-failure-comparison.json",
+    "original_bytes": 661327,
+    "original_sha256": "457dbc5e09aa4c0804030136c887ee42d43ebe5304891bb2a9ff65c9f3218a19",
+    "gzip_path": "historical-failure-comparison.json.gz",
+    "gzip_bytes": 22775,
+    "gzip_sha256": "4621886b187d731dc8c979fcdbe9b1bba40cf99593267da4412350be2e5c386c"
+  },
+  {
+    "original_path": "initial-to-corrected-failures.json",
+    "original_bytes": 1261564,
+    "original_sha256": "b5a777bed34d2497f40d858d170e50d818a81996a4a701baabd05178abcb3240",
+    "gzip_path": "initial-to-corrected-failures.json.gz",
+    "gzip_bytes": 29575,
+    "gzip_sha256": "def6804d02aaa67c6f67fb5091f2deeae43c98c9250f32b00447345cf110e854"
+  },
+  {
+    "original_path": "input-binding-after.json",
+    "original_bytes": 55467,
+    "original_sha256": "847b43ba010dd978819f5cca0634fbb4184c96dba93d35f9547d3e5a288d413d",
+    "gzip_path": "input-binding-after.json.gz",
+    "gzip_bytes": 22506,
+    "gzip_sha256": "727b2581c5df655072012a1f58fb7452057335758b9dc9f44f5571e684d8fd90"
+  },
+  {
+    "original_path": "input-binding-before.json",
+    "original_bytes": 55467,
+    "original_sha256": "847b43ba010dd978819f5cca0634fbb4184c96dba93d35f9547d3e5a288d413d",
+    "gzip_path": "input-binding-before.json.gz",
+    "gzip_bytes": 22506,
+    "gzip_sha256": "727b2581c5df655072012a1f58fb7452057335758b9dc9f44f5571e684d8fd90"
+  },
+  {
+    "original_path": "ordinary-collection.log",
+    "original_bytes": 2755746,
+    "original_sha256": "5a7753756198728c3d33881ceeee272b86038538f16788a4681541d1fe89a842",
+    "gzip_path": "ordinary-collection.log.gz",
+    "gzip_bytes": 85979,
+    "gzip_sha256": "6a1994b11c3c726181f9c7ea8a4a15ed23c8a470c495383dbf43d14c5d622339"
+  },
+  {
+    "original_path": "ordinary-collection.nodes.txt",
+    "original_bytes": 2755695,
+    "original_sha256": "0ad5ae1a0ed3a23d1a1ebefb525e7cd6757939c704ad21d298db38e9d12ff1c0",
+    "gzip_path": "ordinary-collection.nodes.txt.gz",
+    "gzip_bytes": 85938,
+    "gzip_sha256": "cd393bc5a7570364e3cf57f4692dfbfe14d0ca72f686352317494b218309a132"
+  },
+  {
+    "original_path": "regressions.jsonl",
+    "original_bytes": 11478820,
+    "original_sha256": "cf1d4ec48a03fae180862c4fd292e47789bcdfe3d3d4bbefb3842e20026916d9",
+    "gzip_path": "regressions.jsonl.gz",
+    "gzip_bytes": 207706,
+    "gzip_sha256": "7c5d6c6c16cb829dbd459f2a729d1f7a5be774f24c91b3f053659457d5f0bf2c"
+  },
+  {
+    "original_path": "regressions.log",
+    "original_bytes": 2316529,
+    "original_sha256": "4190ae46394bacc933e484642a8c285ca2ed59a5097fe59ec9309279b20cbc23",
+    "gzip_path": "regressions.log.gz",
+    "gzip_bytes": 98249,
+    "gzip_sha256": "6502dab437773351e52d3d5da49194729cc4f42a2450399f217e70adc4824dd1"
+  },
+  {
+    "original_path": "regressions.report-types.jsonl",
+    "original_bytes": 8724293,
+    "original_sha256": "33d4f53401030c2343507a13281fe3dc6147c533a31a750ff6acf7b2984ce499",
+    "gzip_path": "regressions.report-types.jsonl.gz",
+    "gzip_bytes": 123990,
+    "gzip_sha256": "a2bdc345d72d90fea9daee716cd6c3eca108557156f9f3bb2a1f03046762f4a9"
+  },
+  {
+    "original_path": "regressions.selected.txt",
+    "original_bytes": 2366052,
+    "original_sha256": "d278b034670fb1c41d451004c9a7e69723c769c0f620442c0ff7a734c6603155",
+    "gzip_path": "regressions.selected.txt.gz",
+    "gzip_bytes": 45020,
+    "gzip_sha256": "4563898f4ddb505272271bc8d9d49e4a648c051c1f25cb0422b8c4a22f524cd8"
+  },
+  {
+    "original_path": "regressions.xml",
+    "original_bytes": 5028000,
+    "original_sha256": "21e6a6e699441cdadb04cea4a343fc1851a46704752549adf1e21cc2faade8a2",
+    "gzip_path": "regressions.xml.gz",
+    "gzip_bytes": 149836,
+    "gzip_sha256": "d70dcbb814883e2d9aadaa786becc2fc5719327e5831c7043d102c2e6167481f"
+  },
+  {
+    "original_path": "remaining-ordinary.jsonl",
+    "original_bytes": 799576,
+    "original_sha256": "7b08659297f80a26733baaffc92708dbda0a85d694556a0331d72f0aafa7ef9c",
+    "gzip_path": "remaining-ordinary.jsonl.gz",
+    "gzip_bytes": 55121,
+    "gzip_sha256": "163cc62785e124e942d35e2afbbdc2276dedf946164a2fa4a87904043f823426"
+  },
+  {
+    "original_path": "remaining-ordinary.log",
+    "original_bytes": 1226,
+    "original_sha256": "434446e217c75e30c7767c906df2c7a512c12cbdc1ca0b39e36c756d8843af6d",
+    "gzip_path": "remaining-ordinary.log.gz",
+    "gzip_bytes": 251,
+    "gzip_sha256": "b95e13a20a570f1ea6e3424b536167002020a0eb1a9580b2f7e188433bc59414"
+  },
+  {
+    "original_path": "remaining-ordinary.report-types.jsonl",
+    "original_bytes": 635867,
+    "original_sha256": "051d39b24d11c5e75de25a7899c32e79a6fc161c40066e492d3dbb5c2a075193",
+    "gzip_path": "remaining-ordinary.report-types.jsonl.gz",
+    "gzip_bytes": 31182,
+    "gzip_sha256": "71b7c1749926decc5e7dfc9b42cce5a416f7f542ada0c8582e30c0e17df3b16a"
+  },
+  {
+    "original_path": "remaining-ordinary.selected.txt",
+    "original_bytes": 389643,
+    "original_sha256": "c4281ffa4bfdb6e4940772116e6012e7d56eb2e9f5117c40eac8d28843374ea3",
+    "gzip_path": "remaining-ordinary.selected.txt.gz",
+    "gzip_bytes": 40323,
+    "gzip_sha256": "981ae61016c0cc8ff94643effd9f315bfbd965564ad9e26a5a0e379eb2c716a2"
+  },
+  {
+    "original_path": "remaining-ordinary.xml",
+    "original_bytes": 191818,
+    "original_sha256": "686ded63adf6341754df3788cc9c4181621eb2480072cbf6ac546fbb22537319",
+    "gzip_path": "remaining-ordinary.xml.gz",
+    "gzip_bytes": 17019,
+    "gzip_sha256": "e2a750a0e3e2c1b1919686d5c82de7f3cd6762e7c03da30fe0ffcf26d6ee9a9f"
+  }
+]

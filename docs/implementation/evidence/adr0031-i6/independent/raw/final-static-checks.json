@@ -1,0 +1,23 @@
+[
+  {
+    "command": [
+      "/tmp/task-b-venv/bin/ruff",
+      "check",
+      "docs/implementation/evidence/adr0031-i6/independent"
+    ],
+    "exit_code": 0,
+    "stdout": "All checks passed!\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "/tmp/task-b-venv/bin/ruff",
+      "format",
+      "--check",
+      "docs/implementation/evidence/adr0031-i6/independent"
+    ],
+    "exit_code": 0,
+    "stdout": "7 files already formatted\n",
+    "stderr": ""
+  }
+]

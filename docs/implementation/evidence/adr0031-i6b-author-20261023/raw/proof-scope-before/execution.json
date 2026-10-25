@@ -1,0 +1,17 @@
+{
+  "command": [
+    ".venv/bin/python",
+    "-m",
+    "pytest",
+    "tests/unit/test_context_dependencies.py",
+    "-q",
+    "-k",
+    "proof_requires_typed_scope_object or generic_collection_scope_without_proof",
+    "--junitxml=/workspace/i6b-work/proof-scope-before/junit.xml",
+    "--journal=/workspace/i6b-work/proof-scope-before/journal.jsonl"
+  ],
+  "cwd": "/workspace/git-repo-db",
+  "exit_code": 1,
+  "elapsed_seconds": 5.448721408843994,
+  "scope": "controlled typed proof scope regression before narrow guard correction"
+}

@@ -9,6 +9,9 @@ from pathlib import Path
 
 import pytest
 
+from scripts.check_sdist_contract import check_sdist, compare_wheels, save
+from scripts.installed_test_harness import stage_support
+
 ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -41,6 +44,24 @@ def p1_distributions(tmp_path_factory):
         [
             "uv",
             "build",
+            "--sdist",
+            "--python",
+            sys.executable,
+            "--offline",
+            "--no-build-isolation",
+            "--out-dir",
+            work / "dist",
+        ],
+        ROOT,
+        env,
+    )
+    run(
+        [
+            "uv",
+            "build",
+            "--wheel",
+            "--python",
+            sys.executable,
             "--offline",
             "--no-build-isolation",
             "--out-dir",
@@ -50,6 +71,7 @@ def p1_distributions(tmp_path_factory):
         env,
     )
     sdist = next((work / "dist").glob("*.tar.gz"))
+    contract = check_sdist(sdist, ROOT)
     with tarfile.open(sdist) as archive:
         archive.extractall(work / "unpacked", filter="data")
     source = next((work / "unpacked").iterdir())
@@ -57,6 +79,8 @@ def p1_distributions(tmp_path_factory):
         [
             "uv",
             "build",
+            "--python",
+            sys.executable,
             "--wheel",
             "--offline",
             "--no-build-isolation",
@@ -66,6 +90,12 @@ def p1_distributions(tmp_path_factory):
         source,
         env,
     )
+    contract["wheel_equivalence"] = compare_wheels(
+        next((work / "dist").glob("*.whl")),
+        next((work / "sdist-wheel").glob("*.whl")),
+        sdist_metadata=contract["members"]["PKG-INFO"]["sha256"],
+    )
+    save(work / "sdist-contract.json", contract)
     return env, [
         next((work / "dist").glob("*.whl")),
         next((work / "sdist-wheel").glob("*.whl")),
@@ -77,6 +107,7 @@ def test_p1_packaged_ddl_outside_checkout(p1_distributions, tmp_path, variant):
     env, wheels = p1_distributions
     outside = tmp_path / "outside"
     outside.mkdir()
+    stage_support(ROOT, outside)
     venv = tmp_path / "venv"
     run(["uv", "venv", venv, "--python", sys.executable, "--offline"], outside, env)
     python = venv / "bin/python"
@@ -115,3 +146,16 @@ print(json.dumps(s.expected_ddl_manifest(), sort_keys=True))
     from repo_catalog.adapters.sqlite.p1_schema import expected_ddl_manifest
 
     assert actual == expected_ddl_manifest()
+    driver = outside / "verify_i2_distribution.py"
+    driver.write_bytes((ROOT / "scripts/verify_i2_distribution.py").read_bytes())
+    run([python, driver, "--output", outside / "i2-installed.json"], outside, env)
+    receipt = json.loads((outside / "i2-installed.json").read_text())
+    assert all(str(venv) in item["path"] for item in receipt["origins"].values())
+
+    parent_driver = outside / "verify_i3_distribution.py"
+    parent_driver.write_bytes((ROOT / "scripts/verify_i3_distribution.py").read_bytes())
+    run(
+        [python, parent_driver, "--output", outside / "i3-installed.json"], outside, env
+    )
+    parent_receipt = json.loads((outside / "i3-installed.json").read_text())
+    assert all(str(venv) in item["path"] for item in parent_receipt["origins"].values())

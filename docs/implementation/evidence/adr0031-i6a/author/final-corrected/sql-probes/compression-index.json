@@ -1,0 +1,58 @@
+[
+  {
+    "original_path": "input-binding-after.json",
+    "original_bytes": 55467,
+    "original_sha256": "847b43ba010dd978819f5cca0634fbb4184c96dba93d35f9547d3e5a288d413d",
+    "gzip_path": "input-binding-after.json.gz",
+    "gzip_bytes": 22506,
+    "gzip_sha256": "727b2581c5df655072012a1f58fb7452057335758b9dc9f44f5571e684d8fd90"
+  },
+  {
+    "original_path": "input-binding-before.json",
+    "original_bytes": 55467,
+    "original_sha256": "847b43ba010dd978819f5cca0634fbb4184c96dba93d35f9547d3e5a288d413d",
+    "gzip_path": "input-binding-before.json.gz",
+    "gzip_bytes": 22506,
+    "gzip_sha256": "727b2581c5df655072012a1f58fb7452057335758b9dc9f44f5571e684d8fd90"
+  },
+  {
+    "original_path": "serial-sql-probes.jsonl",
+    "original_bytes": 2819,
+    "original_sha256": "8b82abfa8a2000c3b73e6eec377245f92dd634e9b0c5f43dd7fb9e13498de8b7",
+    "gzip_path": "serial-sql-probes.jsonl.gz",
+    "gzip_bytes": 442,
+    "gzip_sha256": "f4a33cd5dfce7e70a3a8ac0e240162a3eb77b8df36cb41b0c7aead786d65a5f5"
+  },
+  {
+    "original_path": "serial-sql-probes.log",
+    "original_bytes": 98,
+    "original_sha256": "f7da7f86cbf89957a3d2994d522437ec98ca4c257402418f86bbcbd223cc7b9e",
+    "gzip_path": "serial-sql-probes.log.gz",
+    "gzip_bytes": 51,
+    "gzip_sha256": "4fbaae1c19941a97451b1c0d81eeb93d5ebf97d0eab0cbcd58cb5c760d491ce0"
+  },
+  {
+    "original_path": "serial-sql-probes.selected.txt",
+    "original_bytes": 319,
+    "original_sha256": "8163a02baa3b5d85ce7aee0b31d0386443c01fbe25f5fcc7cc205e1a56a11f5c",
+    "gzip_path": "serial-sql-probes.selected.txt.gz",
+    "gzip_bytes": 167,
+    "gzip_sha256": "05a5b343386592d27f078d94237a3b3896635fa55fd909c0cdc47ea47b5e441b"
+  },
+  {
+    "original_path": "serial-sql-probes.xml",
+    "original_bytes": 861,
+    "original_sha256": "e8da848b0c2fdbe6cfcfe264a3df43720c75bb595a3c0485f3f98cc494819de7",
+    "gzip_path": "serial-sql-probes.xml.gz",
+    "gzip_bytes": 367,
+    "gzip_sha256": "df8513d6cafb5856b29c3bb0c587e2d7f8248196c72ce64366d1d5dd4ba72ee7"
+  },
+  {
+    "original_path": "sql-admission-probes.json",
+    "original_bytes": 230887,
+    "original_sha256": "bd3fdfb8f7574e180e6db963819421a35294a9bc1f47496cf038934fcf505028",
+    "gzip_path": "sql-admission-probes.json.gz",
+    "gzip_bytes": 5576,
+    "gzip_sha256": "4ca964b819c33755947462377e569b19241eeda83b88425db896ef5115b0c97a"
+  }
+]

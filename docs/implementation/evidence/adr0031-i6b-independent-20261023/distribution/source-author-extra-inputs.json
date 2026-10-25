@@ -1,0 +1,10 @@
+{
+  "source_head": "ef787a5ff8b13f118d6bf5107c7338f43fde56dc",
+  "source_tree": "a3ed2628a98db134bdc65d13da905f5ddf25e972",
+  "attribution": "Unchanged Author external34 independently rerun on source",
+  "test_sha256": "bc77c792f8f4a7dc3ad472d6fa9325a274bdd8895822a328556b260b55663ffd",
+  "author_test_sha256": "bc77c792f8f4a7dc3ad472d6fa9325a274bdd8895822a328556b260b55663ffd",
+  "import_contract_sha256": "1cdbb51039a16eef458ed725e564e185697179c573f4b6eb6301617074ae4c15",
+  "unchanged_source_product_equals_frozen_artifact": true,
+  "driver_sha256": "8581adc15890167192dc8d4bbbfab922b14826633a3d2ebd5a75e8303673ef36"
+}

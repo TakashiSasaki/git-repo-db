@@ -1,0 +1,29 @@
+[
+  {
+    "id": "A-CI-01",
+    "severity": "Low",
+    "classification": "advisory evidence-contract distinction",
+    "blocking": false,
+    "title": "README is a required shipped input but not part of acceptance_input_hash",
+    "locations": [
+      {"file": "scripts/ci_plan.py", "line": 461},
+      {"file": "scripts/ci_dependencies.json", "line": 30},
+      {"file": "scripts/check_sdist_contract.py", "line": 28}
+    ],
+    "contract": "ADR 0033 source/artifact input identity; ADR 0001 VAL-02 deliberately excludes prose from the runtime acceptance hash.",
+    "minimal_counterexample": "Commit a README-only change in a disposable repository, compute before/after plans, and compare required-sdist README blob, tree_hash, acceptance_input_hash and preparation.sdist_contract.",
+    "observed": "README blob and tree_hash change, and the sdist gate is selected, while acceptance_input_hash is unchanged.",
+    "expected": "Document explicitly that acceptance_input_hash does not bind every shipped sdist input, or publish a separate sdist_input_hash derived from the complete source inventory alongside the runtime acceptance hash.",
+    "root_cause": "New sdist_inputs select the gate, but are not added to the acceptance_input_hash predicate; README remains classified as pure prose under accepted ADR 0001.",
+    "acceptance_conditions": [
+      "Make the distinct meanings of runtime acceptance input hash and complete sdist source inventory hash explicit in active evidence documentation.",
+      "If a dedicated sdist input hash is added, test that README-only changes alter it without expanding hosted pytest selection.",
+      "Preserve ADR 0001 prose policy and exact commit/tree receipt checks; do not silently redefine accepted ADR text."
+    ],
+    "limitations": "No stale acceptance bypass was demonstrated: verify_local_receipt separately checks exact commit and tree at scripts/ci_execute.py:285-310, while the checked sdist receipt independently source-hashes README. This advisory does not invalidate current receipt binding.",
+    "command": "python docs/implementation/evidence/adr0033-independent-review-20261023/ci/probe_readme_binding.py",
+    "exit_code": 0,
+    "exit_meaning": "The counterexample assertions reproduced the distinction, not a product acceptance pass.",
+    "evidence": "readme-binding-result.json"
+  }
+]

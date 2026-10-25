@@ -1,0 +1,68 @@
+"""Recover only observed chunks from overlapping GitHub log views; verify original digest."""
+import base64
+import difflib
+import hashlib
+import io
+import json
+import re
+import sys
+import zipfile
+from pathlib import Path
+
+
+def main():
+    src, out = map(Path, sys.argv[1:])
+    views = []
+    pattern = re.compile(r"^\d{4}-\d\d-\d\dT\S+Z CI_RECEIPTS_(BEGIN|DATA|END)_V1 (.*)$")
+    with zipfile.ZipFile(src) as z:
+        for name in z.namelist():
+            events = [m.groups() for line in z.read(name).decode().splitlines() if (m := pattern.fullmatch(line))]
+            if not events:
+                continue
+            assert events[0][0] == "BEGIN" and events[-1][0] == "END"
+            assert all(k == "DATA" for k, v in events[1:-1])
+            claim, size = events[0][1].split()
+            assert events[-1][1] == claim
+            views.append((name, claim, int(size), [v for k, v in events[1:-1]]))
+    assert len(views) == 2
+    assert views[0][1:3] == views[1][1:3]
+    a, b = views[0][3], views[1][3]
+    reconstructed = []
+    changes = []
+    for op, i, j, k, l in difflib.SequenceMatcher(None, a, b, autojunk=False).get_opcodes():
+        if op == "equal":
+            reconstructed.extend(a[i:j])
+        elif op == "insert":
+            reconstructed.extend(b[k:l])
+            changes.append(dict(operation=op, source_view=views[1][0], source_range=[k,l], into_view=views[0][0], position=i))
+        elif op == "delete":
+            reconstructed.extend(a[i:j])
+            changes.append(dict(operation=op, source_view=views[0][0], source_range=[i,j], into_view=views[1][0], position=k))
+        else:
+            raise AssertionError("Conflicting observed chunks; recovery ambiguous")
+    blob = base64.b64decode("".join(reconstructed), validate=True)
+    assert len(blob) == views[0][2]
+    assert hashlib.sha256(blob).hexdigest() == views[0][1]
+    out.mkdir(parents=True, exist_ok=True)
+    with zipfile.ZipFile(io.BytesIO(blob)) as z:
+        names=z.namelist()
+        assert len(names)==len(set(names))
+        assert all(not Path(n).is_absolute() and ".." not in Path(n).parts and "\\" not in n for n in names)
+        files={n:z.read(n) for n in names}
+    index=json.loads(files["receipt-index.json"])
+    assert set(index)==set(files)-{"receipt-index.json"}
+    for name, record in index.items():
+        assert len(files[name])==record["bytes"], name
+        assert hashlib.sha256(files[name]).hexdigest()==record["sha256"],name
+    for name, data in files.items():
+        target=out/name
+        target.parent.mkdir(parents=True,exist_ok=True)
+        target.write_bytes(data)
+    (out/"recovered-receipt.zip").write_bytes(blob)
+    summary=dict(receipt_bytes=len(blob),receipt_sha256=hashlib.sha256(blob).hexdigest(),indexed_payloads=len(index),views=[n for n,*_ in views],changes=changes,scope="Only chunks actually present in one of two downloaded views; original BEGIN/END length and SHA256 and every indexed payload independently match. No missing bytes synthesized; no artifact download claimed.")
+    (out/"recovery-verification.json").write_text(json.dumps(summary,indent=2)+"\n")
+    print(json.dumps(summary,indent=2))
+
+
+if __name__=="__main__":
+    main()

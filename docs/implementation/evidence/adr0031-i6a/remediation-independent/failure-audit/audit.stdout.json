@@ -1,0 +1,188 @@
+{
+  "assertion_archived_before_receipt": {
+    "nodes": 743,
+    "sessions": [
+      {
+        "source": "/workspace/i6a-before",
+        "exitstatus": 1
+      },
+      {
+        "source": "/workspace/i6a-before",
+        "exitstatus": 1
+      },
+      {
+        "source": "/workspace/i6a-before",
+        "exitstatus": 1
+      },
+      {
+        "source": "/workspace/i6a-before",
+        "exitstatus": 1
+      },
+      {
+        "source": "/workspace/i6a-before",
+        "exitstatus": 1
+      }
+    ],
+    "starts_finish_unique_equal": true
+  },
+  "assertion_archived_after_receipt": {
+    "nodes": 5974,
+    "sessions": [
+      {
+        "source": "/workspace/i6a-final",
+        "exitstatus": 1
+      },
+      {
+        "source": "/workspace/i6a-final",
+        "exitstatus": 1
+      },
+      {
+        "source": "/workspace/i6a-final",
+        "exitstatus": 0
+      },
+      {
+        "source": "/workspace/i6a-final",
+        "exitstatus": 1
+      },
+      {
+        "source": "/workspace/i6a-final",
+        "exitstatus": 1
+      }
+    ],
+    "starts_finish_unique_equal": true
+  },
+  "literal_assertion_entry_before743": 17,
+  "literal_assertion_entry_after743": 411,
+  "historical79_final_phase_matches_original": 79,
+  "historical79_final_message_matches_original": 42,
+  "historical79_final_paths_functions_match_original": 27,
+  "before_receipt": {
+    "checks": {
+      "junit_results_match_actual_typed_outcomes": true,
+      "node_ids_exact": true,
+      "starts_exact": true,
+      "raw_and_typed_phases_exact": true,
+      "ordinary_setup_teardown_once": true,
+      "ordinary_call_after_setup_once": true,
+      "ordinary_all_phases_unique": true,
+      "subtests_explicitly_typed": true,
+      "failed_subtests_not_hidden": true,
+      "finish_and_exit": true,
+      "bindings_unchanged": true
+    },
+    "selected": 5941,
+    "counts": {
+      "passed": 5198,
+      "failed": 324,
+      "error": 419
+    },
+    "exit_code": 1,
+    "subtests": {
+      "passed": 57
+    },
+    "binding_head": "f5dc409429cdb69955b55e3c27a7ef3c163762fb",
+    "binding_tree": "3ef434120202c6fa4cfaa1152802784a1671d3ed"
+  },
+  "after_receipt": {
+    "checks": {
+      "junit_results_match_actual_typed_outcomes": true,
+      "node_ids_exact": true,
+      "starts_exact": true,
+      "raw_and_typed_phases_exact": true,
+      "ordinary_setup_teardown_once": true,
+      "ordinary_call_after_setup_once": true,
+      "ordinary_all_phases_unique": true,
+      "subtests_explicitly_typed": true,
+      "failed_subtests_not_hidden": true,
+      "finish_and_exit": true,
+      "bindings_unchanged": true
+    },
+    "selected": 5974,
+    "counts": {
+      "passed": 5675,
+      "failed": 279,
+      "error": 20
+    },
+    "exit_code": 1,
+    "subtests": {
+      "passed": 57
+    },
+    "binding_head": "93d9927ae801d5402aab0aa0c7c270eeab2809e6",
+    "binding_tree": "0c8a50e7cc23b98c6e7e2d1e6066077cbe8d203a"
+  },
+  "removed_nodes": [],
+  "added_nodes": [
+    "tests/integration/p1/test_fixture_authority.py::test_expired_fixture_cannot_issue_another_invocation",
+    "tests/integration/p1/test_fixture_authority.py::test_finite_fixture_never_expands_authority_after_refusal[provider]",
+    "tests/integration/p1/test_fixture_authority.py::test_finite_fixture_never_expands_authority_after_refusal[repository]",
+    "tests/integration/p1/test_fixture_authority.py::test_finite_fixture_never_expands_authority_after_refusal[resource]",
+    "tests/integration/p1/test_fixture_authority.py::test_fixture_never_adopts_caller_transaction",
+    "tests/integration/p1/test_fixture_authority.py::test_fixture_transaction_propagates_revoke_after_insert_and_rolls_back",
+    "tests/unit/test_context_capability_preflight.py::test_active_writable_facade_still_requires_authority_before_lookup[denied]",
+    "tests/unit/test_context_capability_preflight.py::test_active_writable_facade_still_requires_authority_before_lookup[foreign]",
+    "tests/unit/test_context_capability_preflight.py::test_active_writable_facade_still_requires_authority_before_lookup[missing]",
+    "tests/unit/test_context_capability_preflight.py::test_unusable_facade_rejects_without_authority_or_storage[resource-foreign-False-False-CAPABILITY_EXPIRED]",
+    "tests/unit/test_context_capability_preflight.py::test_unusable_facade_rejects_without_authority_or_storage[resource-foreign-False-True-CAPABILITY_EXPIRED]",
+    "tests/unit/test_context_capability_preflight.py::test_unusable_facade_rejects_without_authority_or_storage[resource-foreign-True-False-READ_ONLY]",
+    "tests/unit/test_context_capability_preflight.py::test_unusable_facade_rejects_without_authority_or_storage[resource-issued-False-False-CAPABILITY_EXPIRED]",
+    "tests/unit/test_context_capability_preflight.py::test_unusable_facade_rejects_without_authority_or_storage[resource-issued-False-True-CAPABILITY_EXPIRED]",
+    "tests/unit/test_context_capability_preflight.py::test_unusable_facade_rejects_without_authority_or_storage[resource-issued-True-False-READ_ONLY]",
+    "tests/unit/test_context_capability_preflight.py::test_unusable_facade_rejects_without_authority_or_storage[resource-missing-False-False-CAPABILITY_EXPIRED]",
+    "tests/unit/test_context_capability_preflight.py::test_unusable_facade_rejects_without_authority_or_storage[resource-missing-False-True-CAPABILITY_EXPIRED]",
+    "tests/unit/test_context_capability_preflight.py::test_unusable_facade_rejects_without_authority_or_storage[resource-missing-True-False-READ_ONLY]",
+    "tests/unit/test_context_capability_preflight.py::test_unusable_facade_rejects_without_authority_or_storage[text-foreign-False-False-CAPABILITY_EXPIRED]",
+    "tests/unit/test_context_capability_preflight.py::test_unusable_facade_rejects_without_authority_or_storage[text-foreign-False-True-CAPABILITY_EXPIRED]",
+    "tests/unit/test_context_capability_preflight.py::test_unusable_facade_rejects_without_authority_or_storage[text-foreign-True-False-READ_ONLY]",
+    "tests/unit/test_context_capability_preflight.py::test_unusable_facade_rejects_without_authority_or_storage[text-issued-False-False-CAPABILITY_EXPIRED]",
+    "tests/unit/test_context_capability_preflight.py::test_unusable_facade_rejects_without_authority_or_storage[text-issued-False-True-CAPABILITY_EXPIRED]",
+    "tests/unit/test_context_capability_preflight.py::test_unusable_facade_rejects_without_authority_or_storage[text-issued-True-False-READ_ONLY]",
+    "tests/unit/test_context_capability_preflight.py::test_unusable_facade_rejects_without_authority_or_storage[text-missing-False-False-CAPABILITY_EXPIRED]",
+    "tests/unit/test_context_capability_preflight.py::test_unusable_facade_rejects_without_authority_or_storage[text-missing-False-True-CAPABILITY_EXPIRED]",
+    "tests/unit/test_context_capability_preflight.py::test_unusable_facade_rejects_without_authority_or_storage[text-missing-True-False-READ_ONLY]",
+    "tests/unit/test_context_fixture_authority.py::test_facade_fixture_grants_are_finite_and_no_product_default_is_installed",
+    "tests/unit/test_context_fixture_authority.py::test_facade_fixture_refuses_foreign_issued_context_before_foreign_policy",
+    "tests/unit/test_installed_test_harness.py::test_copied_contracts_collect_with_external_test_support[4-test_transfer_sql.py-217]",
+    "tests/unit/test_installed_test_harness.py::test_copied_contracts_collect_with_external_test_support[5-test_transfer_admission.py-29]",
+    "tests/unit/test_installed_test_harness.py::test_installed_pytest_process_refuses_a_shadow_product",
+    "tests/unit/test_installed_test_harness.py::test_installed_test_support_refuses_a_source_child"
+  ],
+  "new_unsuccessful": [],
+  "all743": {
+    "I6-C": 242,
+    "PASS": 444,
+    "Transfer-stage": 43,
+    "I7-composition": 14
+  },
+  "additional664_before": {
+    "I6-A-Store/Facade": 490,
+    "I6-C": 127,
+    "I6-A-Coordinator": 47
+  },
+  "additional664_transition": {
+    "('I6-A-Store/Facade', 'I6-C')": 88,
+    "('I6-A-Store/Facade', 'PASS')": 388,
+    "('I6-C', 'PASS')": 9,
+    "('I6-C', 'I6-C')": 118,
+    "('I6-A-Coordinator', 'PASS')": 47,
+    "('I6-A-Store/Facade', 'I7-composition')": 14
+  },
+  "additional664": {
+    "I6-C": 206,
+    "PASS": 444,
+    "I7-composition": 14
+  },
+  "historical79": {
+    "I6-C": 36,
+    "Transfer-stage": 43
+  },
+  "historical79_phase_transition": {
+    "('call', 'call')": 38,
+    "('setup', 'setup')": 20,
+    "('setup', 'call')": 21
+  },
+  "historical79_message_equal_before_after": 52,
+  "historical79_path_function_equal_before_after": 51,
+  "author_category_disagreements": [],
+  "assertion_or_raises_or_decorator_changes": 5,
+  "independence": "Separate stdlib parser, exact raw JUnit/journal/report sidecars; no Author classifier imports. Current source-stack classifications derive from actual traceback coordinates plus source text; caught-exception supplement is Author provenance until fresh diagnostic supplied."
+}

@@ -1,0 +1,16 @@
+[
+  {
+    "id": "I6A-IR-L01",
+    "severity": "Low",
+    "status": "OPEN",
+    "target_commit": "08fbb956c2e470e245146b0dbae747ed0690ea40",
+    "target": "scripts/classify_i6a_regressions.py:109-115",
+    "title": "Compressed published source bindings are silently omitted by the failure classifier",
+    "description": "run_index checks existence of the uncompressed .json paths before calling its gzip-aware json_read. Published ordinary run directories contain only .json.gz bindings, so source_binding_before/after become null, the binding equality predicate is omitted, and consistent=true is still returned.",
+    "reproduction": "Load unmodified scripts/classify_i6a_regressions.py via importlib and call run_index for remediation-20261023/before and after-final. binding-loader-counterexample.json records both actual calls: gzip files exist; bindings returned null; source_bindings_complete_and_unchanged absent; consistent=true.",
+    "impact": "The transported evidence is reproducible for nodes/phases but the tool silently ceases to validate source binding, weakening its standalone provenance check. Independent reviewer gzip-resolving comparison finds both bindings complete and unchanged, so this is not evidence of source drift or a product authorization failure.",
+    "remediation": "Resolve .json or .json.gz before the existence test, require both bindings whenever either exists, retain the source binding equality check, and add complete-compressed/missing-one/mismatching-compressed regression controls. Preserve frozen evidence; fix the helper in a separately authorized implementation PR.",
+    "reviewer_mitigation": "audit.py independently resolves compressed paths, hashes them, loads both source bindings and requires unchanged head/tree/inputs/status for each archived ordinary invocation.",
+    "blocking_i6a_safety": false
+  }
+]

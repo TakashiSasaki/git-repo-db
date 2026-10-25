@@ -1,0 +1,33 @@
+{
+  "scope": "Snapshots saved before each invocation; equality observation made during full run, not a separate authenticity attestation.",
+  "helpers": [
+    {
+      "snapshot": "docs/implementation/evidence/adr0031-i6b-independent-20261023/broad/tools/broad_receipt-corrected.py.txt",
+      "execution_path": "/workspace/i6b-broad-tools/broad_receipt.py",
+      "bytes": 2128,
+      "sha256": "a7fb89a3213065e3aa4210b083814f23c1fd8ec442d7248f29accab9fa63538a",
+      "bytes_equal_observed_during_full_invocation": true
+    },
+    {
+      "snapshot": "docs/implementation/evidence/adr0031-i6b-independent-20261023/broad/tools/run_full-v2.py.txt",
+      "execution_path": "/workspace/i6b-broad-tools/run_full.py",
+      "bytes": 2123,
+      "sha256": "877b66519543cb4d1844d5ac60f16cacfdc2ac7c97edb3bf57f564138aab912a",
+      "bytes_equal_observed_during_full_invocation": true
+    },
+    {
+      "snapshot": "docs/implementation/evidence/adr0031-i6b-independent-20261023/broad/tools/statement_trace.py.txt",
+      "execution_path": "/workspace/i6b-broad-tools/statement_trace.py",
+      "bytes": 3023,
+      "sha256": "65c2c5af79502305fb5769831232f219d4026a45dce54e872f3eb79cd579c57d",
+      "bytes_equal_observed_during_full_invocation": true
+    },
+    {
+      "snapshot": "docs/implementation/evidence/adr0031-i6b-independent-20261023/broad/tools/run_diagnostic.py.txt",
+      "execution_path": "/workspace/i6b-broad-tools/run_diagnostic.py",
+      "bytes": 2066,
+      "sha256": "eef193fc696ed624e3768b1b5e497c4ac259ee415f8b9be22d69c2aab6ce0ada",
+      "bytes_equal_observed_during_full_invocation": true
+    }
+  ]
+}

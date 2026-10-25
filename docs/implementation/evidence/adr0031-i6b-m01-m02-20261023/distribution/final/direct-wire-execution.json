@@ -1,0 +1,35 @@
+{
+  "exit_code": 0,
+  "collected": 212,
+  "passed": 212,
+  "failed": 0,
+  "error": 0,
+  "skipped": 0,
+  "xfail": 0,
+  "xpass": 0,
+  "executed": 212,
+  "reconciliation": {
+    "checks": {
+      "selected_unique": true,
+      "selected_equals_junit": true,
+      "selected_equals_journal_starts": true,
+      "setup_and_teardown_once": true,
+      "no_duplicate_phases": true,
+      "phase_nodes_equal_selected": true,
+      "call_once_after_successful_setup": true,
+      "one_finish": true
+    },
+    "consistent_node_execution": true,
+    "journal_phase_outcomes": {
+      "passed": 636
+    },
+    "finishes": [
+      {
+        "event": "finish",
+        "status": "completed",
+        "exitstatus": 0,
+        "timestamp": 1792764659.922601
+      }
+    ]
+  }
+}

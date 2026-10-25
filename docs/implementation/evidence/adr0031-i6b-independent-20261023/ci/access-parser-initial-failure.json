@@ -1,0 +1,6 @@
+{
+  "exit": 1,
+  "error": "AssertionError in exact receipt byte length/SHA256 verification",
+  "scope": "receipt parser, not product test",
+  "diagnosis": "Each actual combined/step view lacked a different 120-character base64 DATA chunk. Neither was accepted alone. Observed complementary chunk union verified original declared bytes, SHA256 and all index payloads."
+}

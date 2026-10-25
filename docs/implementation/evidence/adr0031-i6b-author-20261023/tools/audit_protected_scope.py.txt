@@ -1,0 +1,14 @@
+"""Audit actual protected scope, preserving the narrow fixture exception."""
+from pathlib import Path
+import hashlib,json,subprocess,sys
+ROOT=Path('/workspace/git-repo-db');BASE='ea43a21fca1dbf8fa6dd1c254b28a96d5dd28d00';EXCEPTION='tests/integration/i6a/test_admission.py'
+def git(*args):return subprocess.check_output(['git',*args],cwd=ROOT,text=True).strip()
+head=git('rev-parse','HEAD');changes=git('diff','--name-only',BASE,head).splitlines()
+prefixes=['docs/adr/','src/repo_catalog/adapters/','src/repo_catalog/application/','.github/','tests/integration/','tests/support/','src/repo_catalog/domain/context_admission.py','src/repo_catalog/domain/p1_context.py','src/repo_catalog/domain/parent_report.py','src/repo_catalog/domain/resource_stage.py']
+protected=[p for p in changes if any(p.startswith(s) for s in prefixes)]
+assert protected==[EXCEPTION],protected
+audit=json.loads(Path('/workspace/i6b-work/fixture-migration/migration-audit.json').read_text());assert audit['all_nonfixture_AST_equal'] and audit['assert_AST_equal'] and hashlib.sha256((ROOT/EXCEPTION).read_bytes()).hexdigest()==audit['new_sha256']
+old_evidence=[p for p in changes if p.startswith('docs/implementation/evidence/') and not p.startswith('docs/implementation/evidence/adr0031-i6b-author-20261023/')];assert not old_evidence
+old_tests=set(git('ls-tree','-r','--name-only',BASE,'tests/').splitlines());changed_old_tests=[p for p in changes if p in old_tests];assert changed_old_tests==[EXCEPTION]
+report={'base':BASE,'source_head':head,'source_tree':git('rev-parse','HEAD^{tree}'),'changes':changes,'protected_prefixes':prefixes,'protected_changes':protected,'allowed_fixture_exception':{'path':EXCEPTION,'whole_nonfixture_AST_equal':True,'all_assert_AST_equal':True,'assert_count':audit['assert_count'],'old_sha256':audit['old_sha256'],'new_sha256':audit['new_sha256']},'other_protected_changes':[],'prior_evidence_changes':old_evidence,'changed_existing_test_files':changed_old_tests,'context_ddl_and_both_fences_unchanged':True,'interpretation':'Exact fixture-only exception; no product code, assertion, permission, SQL fence, Accepted ADR, workflow or historical evidence relaxation. Runtime outcomes and byte bindings remain separate receipts.','command':[sys.executable,str(Path(__file__).resolve()),*sys.argv[1:]],'exit_code':0,'helper_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest()}
+Path(sys.argv[1]).write_text(json.dumps(report,indent=2)+'\n');print(json.dumps({k:v for k,v in report.items() if k not in ('changes','protected_prefixes')},indent=2))

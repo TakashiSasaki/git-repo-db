@@ -98,7 +98,9 @@ def build_parser() -> argparse.ArgumentParser:
     _add_common_args(p_cres)
     p_cres.add_argument("--service", required=True)
     p_cres.add_argument("--kind", required=True)
-    p_cres.add_argument("--id", required=True)
+    p_cres.add_argument(
+        "--id", required=True, help="Serialized canonical Resource identity JSON TEXT"
+    )
 
     # context-resources
     p_cress = sub.add_parser(
@@ -118,7 +120,9 @@ def build_parser() -> argparse.ArgumentParser:
     _add_common_args(p_pres)
     p_pres.add_argument("--service", required=True)
     p_pres.add_argument("--kind", required=True)
-    p_pres.add_argument("--id", required=True)
+    p_pres.add_argument(
+        "--id", required=True, help="Serialized canonical Resource identity JSON TEXT"
+    )
     p_pres.add_argument("--include-core-bytes", action="store_true")
 
     # paired-resources

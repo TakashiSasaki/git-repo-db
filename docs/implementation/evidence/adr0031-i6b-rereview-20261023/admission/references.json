@@ -1,0 +1,87 @@
+[
+  {
+    "path": "AGENTS.md",
+    "bytes": 38807,
+    "sha256": "3335f8daab0778168b64d24aa2d5750a438b8e63746031d2a5ea3c1598500e49"
+  },
+  {
+    "path": ".agents/skills/three-store-invariants/SKILL.md",
+    "bytes": 64996,
+    "sha256": "0a218006810dc428e91b5444d1a125f5cfa6edf206807fd975f1614ef4bb1d3b"
+  },
+  {
+    "path": ".agents/skills/efficient-repository-investigation/SKILL.md",
+    "bytes": 5042,
+    "sha256": "2959c03c970d154d873b34d6b7bb0b2188ca2e716b4b0010c627009928904eb2"
+  },
+  {
+    "path": ".agents/skills/ci-final-tree-verification/SKILL.md",
+    "bytes": 33835,
+    "sha256": "bd9aadbd50d9c7c1be12341553685ab039b9019b5ea3050a756ffa470a0c5add"
+  },
+  {
+    "path": ".agents/skills/lessons-to-skills/SKILL.md",
+    "bytes": 5766,
+    "sha256": "4041241c23eefdbdf0f166576681223a440274a4bb123a8e61427dc250406468"
+  },
+  {
+    "path": "docs/adr/0001-validation-lifecycle-architecture.md",
+    "bytes": 27302,
+    "sha256": "ac5503b0b4a8c5438dd337b5a0903072edaf541a1abfa3757abf59501fb0795f"
+  },
+  {
+    "path": "docs/adr/0031-generalized-context-resources.md",
+    "bytes": 14670,
+    "sha256": "330fbf7273f3099170e7ad34ea45abe11727e664e7a7a6f676e81a3ef15b71f6"
+  },
+  {
+    "path": "docs/adr/0032-environment-sqlite-validation.md",
+    "bytes": 4609,
+    "sha256": "44ced7a81ed5aa2f1e68e8c99a8989798d9f06cc0d0e93b65c64e8f436c5c833"
+  },
+  {
+    "path": "docs/implementation/adr0031-i6-wire-admission-exchange.md",
+    "bytes": 33557,
+    "sha256": "9604677f8b80ea43014624281e122827812e2044897c1509344b7913107d55bb"
+  },
+  {
+    "path": "docs/implementation/adr0031-i6-vectors-and-tests.md",
+    "bytes": 21523,
+    "sha256": "a8aafc649a5f50ae4b575963b785a9bcba60ac7a48873498adbc7056ca5072b2"
+  },
+  {
+    "path": "docs/implementation/adr0031-i6-change-map-and-handoff.md",
+    "bytes": 25114,
+    "sha256": "d16da53a7c8154cb9dae61dbaa7b540ef3d9edd44b5cbb7b1580ba9e308cfbce"
+  },
+  {
+    "path": "docs/implementation/evidence/adr0031-i6b-independent-20261023/REPORT.md",
+    "bytes": 20158,
+    "sha256": "499889675bd5b872f0247b102b7b77d3ad8366bea96d99a1a30e229ff2d8640b"
+  },
+  {
+    "path": "docs/implementation/evidence/adr0031-i6b-independent-20261023/findings.json",
+    "bytes": 6197,
+    "sha256": "c5cad05b0aefa88e43f8df6dc52d331b4fc08701935da52c21653263bba55e15"
+  },
+  {
+    "path": "docs/implementation/evidence/adr0031-i6b-independent-20261023/admission/REPORT.md",
+    "bytes": 8245,
+    "sha256": "a6eae76ffa3099b0f98769ce41cefbfa5556e6e9f343103f33f49d5cb32b1583"
+  },
+  {
+    "path": "docs/implementation/evidence/adr0031-i6b-independent-20261023/admission/test_commit_boundary.py.txt",
+    "bytes": 8470,
+    "sha256": "139c253eee306888a34c4feba791feeb972088a040a4818a64be546271c8d4fe"
+  },
+  {
+    "path": "docs/implementation/evidence/adr0031-i6b-independent-20261023/admission/test_reused_authorization.py.txt",
+    "bytes": 13732,
+    "sha256": "e4e81e8163a253ea85a053b6332af0cfbd8dd4b59e4322d9fd8fb19225f7bcc5"
+  },
+  {
+    "path": "docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/REPORT.md",
+    "bytes": 14753,
+    "sha256": "8be064491a61b30d5d600c92830f7a14bd931f61ab65e9c7c6f5c39bcb044294"
+  }
+]

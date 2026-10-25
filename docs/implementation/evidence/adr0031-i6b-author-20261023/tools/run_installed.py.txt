@@ -1,0 +1,638 @@
+"""I6-B Author installed-form execution; adapted from the attributed Task C driver.
+
+This driver is execution evidence, not release acceptance. Execute after the source
+workload completes. Every product/build input comes from the pinned Git archive;
+existing review vectors are copied unchanged into an external harness.
+"""
+
+from __future__ import annotations
+
+import base64
+import collections
+import csv
+import gzip
+import hashlib
+import io
+import json
+import os
+import shutil
+import stat
+import subprocess
+import sys
+import tarfile
+import time
+import traceback
+import zipfile
+from pathlib import Path
+
+ROOT = Path("/workspace/git-repo-db")
+COMMIT = os.environ["I6B_SOURCE_COMMIT"]
+TREE = os.environ["I6B_SOURCE_TREE"]
+OUT = Path(os.environ["I6B_INSTALLED_OUTPUT"])
+WORK = Path(os.environ["I6B_INSTALLED_WORK"])
+SOURCE = WORK / "source"
+WHEELHOUSE = Path("/workspace/i6b-work/wheelhouse")
+os.environ["UV_CACHE_DIR"] = "/workspace/.uv-cache"
+os.environ["REPO_CATALOG_WHEELHOUSE"] = str(WHEELHOUSE)
+sys.path.insert(0, str(ROOT))
+from scripts import installed_test_harness as harness  # noqa: E402
+from scripts import verify_i5_offline as evidence  # noqa: E402
+
+records = []
+failures = []
+EXTENSIONS = (".py", ".sql", ".json", ".graphql")
+REVIEW = Path("docs/implementation/evidence/adr0031-i6a/remediation-independent")
+TARGETS = [
+    "tests/integration/p3/test_transfer_sql.py",
+    "tests/integration/p3/test_transfer_admission.py",
+    "tests/integration/p3/test_parent_reports.py",
+    "tests/unit/test_context_admission.py",
+    "tests/unit/test_transfer_originals.py",
+    "tests/unit/test_context_fences_i6a.py",
+    "tests/unit/test_context_oid_admission_i6a.py",
+    "tests/unit/test_context_admission_bounds_i6a.py",
+    "tests/unit/test_context_coordinator_admission.py",
+    "tests/unit/test_context_refusal_order_i6a.py",
+    "tests/integration/p1/test_coordination.py",
+    "tests/integration/i6a",
+]
+
+
+def sha(path):
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def write(path, data):
+    Path(path).write_text(json.dumps(data, indent=2) + "\n")
+
+
+def run(name, command, cwd=SOURCE, env=None):
+    started = time.time()
+    with (OUT / (name + ".log")).open("w") as stream:
+        result = subprocess.run(
+            list(map(str, command)),
+            cwd=cwd,
+            env=env,
+            stdout=stream,
+            stderr=subprocess.STDOUT,
+        )
+    record = {
+        "name": name,
+        "command": list(map(str, command)),
+        "cwd": str(cwd),
+        "exit_code": result.returncode,
+        "started_epoch": started,
+        "elapsed_seconds": round(time.time() - started, 3),
+        "source_head": COMMIT,
+        "source_tree": TREE,
+        "driver_sha256": sha(__file__),
+    }
+    records.append(record)
+    write(OUT / "processes.json", records)
+    print(json.dumps(record), flush=True)
+    return record
+
+
+def require(record):
+    if record["exit_code"]:
+        raise RuntimeError("unsuccessful process: " + record["name"])
+    return record
+
+
+def product_files(root):
+    return {
+        str(p.relative_to(root)): sha(p)
+        for p in sorted(root.rglob("*"))
+        if p.is_file() and "__pycache__" not in p.parts and p.suffix != ".pyc"
+    }
+
+
+def verify_wheel(artifact):
+    with zipfile.ZipFile(artifact) as archive:
+        names = archive.namelist()
+        assert len(names) == len(set(names)), "duplicate wheel member"
+        files = {n: archive.read(n) for n in names if not n.endswith("/")}
+    assert not any(n.startswith(("tests/", "scripts/")) for n in files)
+    record_name = next(n for n in files if n.endswith(".dist-info/RECORD"))
+    rows = list(csv.reader(io.StringIO(files[record_name].decode())))
+    assert collections.Counter(row[0] for row in rows) == collections.Counter(
+        files.keys()
+    )
+    for name, digest, size in rows:
+        if name == record_name:
+            assert not digest and not size
+        else:
+            expected = (
+                base64.urlsafe_b64encode(hashlib.sha256(files[name]).digest())
+                .decode()
+                .rstrip("=")
+            )
+            assert digest == "sha256=" + expected
+            assert int(size) == len(files[name])
+    return files
+
+
+MEASURE = r"""import hashlib,json,sqlite3,sys,repo_catalog,_sqlite3
+from pathlib import Path
+from repo_catalog.adapters.sqlite import p1_schema
+from repo_catalog.domain.resource_stage import TRANSFER_FENCE_DEFINITIONS
+root=Path(repo_catalog.__file__).resolve().parent
+assert root.is_relative_to(Path(sys.prefix).resolve()),root
+p1_schema._open(':memory:',fresh=True).close()
+db=sqlite3.connect(':memory:')
+p1_schema.register_functions(db);p1_schema.configure(db)
+db.executescript(p1_schema.compose('context'))
+assert p1_schema.schema_rows(db)==p1_schema.expected_schema('context')
+fences=tuple(row for row in p1_schema.schema_rows(db) if row[1] in {r[1] for r in TRANSFER_FENCE_DEFINITIONS})
+assert fences==TRANSFER_FENCE_DEFINITIONS
+assert db.execute('pragma foreign_keys').fetchone()==(1,)
+assert db.execute('pragma recursive_triggers').fetchone()==(1,)
+assert db.execute('pragma integrity_check').fetchall()==[('ok',)]
+assert db.execute('pragma foreign_key_check').fetchall()==[]
+files={str(p.relative_to(root)):hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(root.rglob('*')) if p.is_file() and '__pycache__' not in p.parts and p.suffix!='.pyc'}
+result={'executable':sys.executable,'base_executable':sys._base_executable,'python':sys.version,'sqlite':db.execute('select sqlite_version(),sqlite_source_id()').fetchone(),'sqlite_spec':_sqlite3.__spec__.origin,'compile_options':db.execute('pragma compile_options').fetchall(),'origin':str(root),'prefix':sys.prefix,'installed_files':files,'fingerprint':p1_schema.fingerprint('context'),'schema_matches_expected':True,'fences':fences,'pragmas':{key:db.execute('pragma '+key).fetchall() for key in ('foreign_keys','recursive_triggers','journal_mode','synchronous')},'functions':db.execute('pragma function_list').fetchall(),'integrity_check':db.execute('pragma integrity_check').fetchall(),'foreign_key_check':db.execute('pragma foreign_key_check').fetchall()}
+Path(sys.argv[1]).write_text(json.dumps(result,indent=2)+'\n')
+"""
+
+PYTEST_CHECKS = r"""
+# The reused driver adds current schema/PRAGMA/fence checks to the frozen in-pytest byte
+# and actual loaded-module origin contract; all changes stay in this harness.
+_frozen_verify_imports = verify_imports
+
+def verify_imports(phase, session):
+    _frozen_verify_imports(phase, session)
+    import sqlite3
+    from repo_catalog.adapters.sqlite import p1_schema
+    from repo_catalog.domain.resource_stage import TRANSFER_FENCE_DEFINITIONS
+    p1_schema._open(':memory:',fresh=True).close()
+    db=sqlite3.connect(':memory:')
+    p1_schema.register_functions(db);p1_schema.configure(db)
+    db.executescript(p1_schema.compose('context'))
+    assert p1_schema.schema_rows(db)==p1_schema.expected_schema('context')
+    fences=tuple(row for row in p1_schema.schema_rows(db) if row[1] in {r[1] for r in TRANSFER_FENCE_DEFINITIONS})
+    assert fences==TRANSFER_FENCE_DEFINITIONS
+    assert db.execute('pragma foreign_keys').fetchone()==(1,)
+    assert db.execute('pragma recursive_triggers').fetchone()==(1,)
+    assert db.execute('pragma integrity_check').fetchall()==[('ok',)]
+    assert db.execute('pragma foreign_key_check').fetchall()==[]
+    receipt=Path(os.environ['REPO_CATALOG_IMPORT_RECEIPT'])
+    records=json.loads(receipt.read_text())
+    records[-1]['context_schema_fingerprint']=p1_schema.fingerprint('context')
+    records[-1]['context_schema_exact']=True
+    records[-1]['fences']=fences
+    records[-1]['sqlite']=db.execute('select sqlite_version(),sqlite_source_id()').fetchone()
+    records[-1]['foreign_keys']=1
+    records[-1]['recursive_triggers']=1
+    receipt.write_text(json.dumps(records,indent=2)+'\n')
+    db.close()
+"""
+
+LAUNCH_PROBE = r"""import hashlib,json,runpy,sys
+from pathlib import Path
+import repo_catalog
+probe,result,receipt=map(Path,sys.argv[1:])
+root=Path(repo_catalog.__file__).resolve().parent
+assert root.is_relative_to(Path(sys.prefix).resolve()),root
+expected=json.loads(Path('artifact-files.json').read_text())
+def verify():
+ actual={str(p.relative_to(root)):hashlib.sha256(p.read_bytes()).hexdigest() for p in root.rglob('*') if p.is_file() and p.suffix in ('.py','.sql','.json','.graphql')}
+ assert actual==expected
+ modules={n:str(Path(m.__file__).resolve()) for n,m in sys.modules.items() if (n=='repo_catalog' or n.startswith('repo_catalog.')) and getattr(m,'__file__',None)}
+ assert all(Path(p).is_relative_to(root) for p in modules.values())
+ return modules
+before=verify()
+sys.path.insert(0,str(probe.parent))
+sys.argv=[str(probe),str(result)]
+try:
+ runpy.run_path(str(probe),run_name='__main__')
+finally:
+ receipt.write_text(json.dumps({'origin':str(root),'prefix':sys.prefix,'before_modules':before,'after_modules':verify(),'artifact_files':expected},indent=2)+'\n')
+"""
+
+
+def pytest_lane(tag, label, targets, outside, python, env):
+    label = tag + "-" + label
+    arguments = [
+        python,
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "i6a_report_types",
+        "-o",
+        "addopts=--strict-markers",
+        "-o",
+        "junit_family=xunit1",
+        "-c",
+        outside / "pytest.ini",
+        "--rootdir=" + str(outside),
+        "--confcutdir=" + str(outside),
+        *targets,
+    ]
+    env = dict(env, REPO_CATALOG_IMPORT_RECEIPT=str(OUT / (label + "-imports.json")), I6A_REPORTS_SIDECAR=str(OUT / (label + "-report-types.jsonl")))
+    require(run(label + "-collect", arguments + ["--collect-only"], outside, dict(env, I6A_REPORTS_SIDECAR=str(OUT / (label + "-collection-report-types.jsonl")))))
+    selected = evidence.nodes(OUT / (label + "-collect.log"))
+    (OUT / (label + "-selected.txt")).write_text("".join(n + "\n" for n in selected))
+    if label.endswith("-safety"):
+        historical = [
+            line
+            for line in gzip.open(
+                SOURCE
+                / "docs/implementation/evidence/adr0031-i6a/author/distribution-v3/direct-selected.txt.gz",
+                "rt",
+            )
+            .read()
+            .splitlines()
+            if line.startswith("tests/") and "::" in line
+        ]
+        cohorts = {
+            "i4": [
+                n
+                for n in selected
+                if n.startswith("tests/integration/p3/test_transfer_sql.py::")
+            ],
+            "i5": [
+                n
+                for n in selected
+                if n.startswith("tests/integration/p3/test_transfer_admission.py::")
+            ],
+            "originals_m1": [
+                n
+                for n in selected
+                if n.startswith(
+                    "tests/integration/i6a/test_originals_revalidation.py::"
+                )
+            ],
+        }
+        write(
+            OUT / (label + "-cohort-check.json"),
+            {
+                "historical_count": len(historical),
+                "selected_count": len(selected),
+                "missing_historical": sorted(set(historical) - set(selected)),
+                "additional": sorted(set(selected) - set(historical)),
+                "cohort_counts": {k: len(v) for k, v in cohorts.items()},
+                "cohorts": cohorts,
+            },
+        )
+        baseline = Path('/workspace/i6b-work/baseline-task-c/installed-v3/direct-safety-selected.txt').read_text().splitlines()
+        assert set(baseline) <= set(selected), 'required historical safety nodes omitted'
+        assert set(historical) <= set(selected), 'required earlier safety nodes omitted'
+    elif label.endswith(('-authorization','-task-c')):
+        lane = 'authorization' if label.endswith('-authorization') else 'task-c'
+        baseline = Path('/workspace/i6b-work/baseline-task-c/installed-v3/direct-'+lane+'-selected.txt').read_text().splitlines()
+        assert selected == baseline, 'reused historical probe node identities changed'
+    else:
+        assert selected, 'empty installed wire cohort'
+    junit, journal = OUT / (label + ".xml"), OUT / (label + ".jsonl")
+    record = run(
+        label,
+        arguments
+        + [
+            "--basetemp=" + str(WORK / (label + "-tmp")),
+            "--junitxml=" + str(junit),
+            "--journal=" + str(journal),
+        ],
+        outside,
+        env,
+    )
+    result = {
+        **record,
+        **evidence.outcomes(junit),
+        "reconciliation": evidence.reconciliation(selected, junit, journal),
+    }
+    write(OUT / (label + "-execution.json"), result)
+    assert evidence.cohort_succeeded(result), "installed cohort unsuccessful: " + label
+    return result
+
+
+def main():
+    OUT.mkdir(parents=True, exist_ok=False)
+    WORK.mkdir(parents=True, exist_ok=False)
+    SOURCE.mkdir()
+    assert not OUT.is_relative_to(ROOT) and not WORK.is_relative_to(ROOT)
+    assert evidence.git("rev-parse", COMMIT + "^{tree}") == TREE
+    write(
+        OUT / "execution-binding.json",
+        {
+            "source_head": COMMIT,
+            "source_tree": TREE,
+            "driver_sha256": sha(__file__),
+            "harness_root": str(ROOT),
+            "selected_python": sys.executable,
+            "full_acceptance": False,
+            "independent_review": False,
+        },
+    )
+    wheelhouse, manifest = evidence.verified_wheelhouse(WHEELHOUSE)
+    write(OUT / "wheelhouse-binding.json", manifest)
+    archive = WORK / "frozen-source.tar"
+    require(run("archive", ["git", "archive", COMMIT, "-o", archive], ROOT))
+    with tarfile.open(archive) as tar:
+        tar.extractall(SOURCE, filter="data")
+    entries = []
+    for path in sorted(SOURCE.rglob("*")):
+        if not path.is_file() and not path.is_symlink():
+            continue
+        raw = os.readlink(path).encode() if path.is_symlink() else path.read_bytes()
+        entries.append(
+            {
+                "path": str(path.relative_to(SOURCE)),
+                "bytes": len(raw),
+                "sha256": hashlib.sha256(raw).hexdigest(),
+                "mode": oct(stat.S_IMODE(path.lstat().st_mode)),
+            }
+        )
+    write(
+        OUT / "complete-build-source-manifest.json",
+        {
+            "head": COMMIT,
+            "tree": TREE,
+            "archive_sha256": sha(archive),
+            "files": entries,
+            "scope": "Every committed build-source entry from this Git archive, before build. Later evidence publications are distinct.",
+        },
+    )
+    require(
+        run(
+            "build-direct",
+            [sys.executable, "-m", "hatchling", "build", "-t", "wheel", "-t", "sdist"],
+        )
+    )
+    wheel = next((SOURCE / "dist").glob("*.whl"))
+    sdist = next((SOURCE / "dist").glob("*.tar.gz"))
+    unpack = WORK / "from-sdist"
+    unpack.mkdir()
+    inventory = []
+    with tarfile.open(sdist) as tar:
+        for member in tar.getmembers():
+            if member.isfile():
+                raw = tar.extractfile(member).read()
+                inventory.append(
+                    {
+                        "path": member.name,
+                        "bytes": len(raw),
+                        "sha256": hashlib.sha256(raw).hexdigest(),
+                        "mode": oct(member.mode),
+                    }
+                )
+        tar.extractall(unpack, filter="data")
+    write(OUT / "complete-sdist-member-manifest.json", inventory)
+    derived = next(unpack.iterdir())
+    require(
+        run(
+            "build-sdist-wheel",
+            [sys.executable, "-m", "hatchling", "build", "-t", "wheel"],
+            derived,
+        )
+    )
+    swheel = next((derived / "dist").glob("*.whl"))
+    write(
+        OUT / "build-binding.json",
+        {
+            tag: {"path": str(path), "bytes": path.stat().st_size, "sha256": sha(path)}
+            for tag, path in [
+                ("direct-wheel", wheel),
+                ("sdist", sdist),
+                ("sdist-wheel", swheel),
+            ]
+        },
+    )
+    direct_members, derived_members = verify_wheel(wheel), verify_wheel(swheel)
+    assert direct_members == derived_members
+    expected_all = {
+        name.removeprefix("repo_catalog/"): hashlib.sha256(raw).hexdigest()
+        for name, raw in direct_members.items()
+        if name.startswith("repo_catalog/")
+    }
+    source_product = product_files(SOURCE / "src/repo_catalog")
+    assert expected_all == source_product
+    write(
+        OUT / "complete-wheel-member-check.json",
+        {
+            "direct_equals_derived_all_members": True,
+            "record_verified": True,
+            "source_equals_wheel": True,
+            "source_product_files": source_product,
+            "members": {
+                name: {"bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()}
+                for name, raw in direct_members.items()
+            },
+        },
+    )
+    outside = WORK / "outside"
+    outside.mkdir()
+    shutil.copytree(
+        SOURCE / "tests",
+        outside / "tests",
+        ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
+    )
+    (outside / "scripts").mkdir()
+    (outside / "scripts/__init__.py").write_text("")
+    shutil.copy2(SOURCE / "scripts/ci_journal.py", outside / "scripts/ci_journal.py")
+    harness.stage_support(SOURCE, outside)
+    (outside / "measure.py").write_text(MEASURE)
+    (outside / "run_probe.py").write_text(LAUNCH_PROBE)
+    probes = outside / "probes"
+    probes.mkdir()
+    for name in ("probe_originals.py", "probe_invalid_carrier.py"):
+        shutil.copy2(SOURCE / REVIEW / "originals" / name, probes / name)
+    authorization = outside / "tests/review_authorization"
+    authorization.mkdir()
+    (authorization / "__init__.py").write_text("")
+    shutil.copy2(
+        SOURCE / REVIEW / "authorization/test_independent_authorization.py",
+        authorization / "test_independent_authorization.py",
+    )
+    write(
+        OUT / "copied-review-probes.json",
+        {
+            str(p.relative_to(outside)): sha(p)
+            for p in [
+                *probes.glob("*.py"),
+                authorization / "test_independent_authorization.py",
+            ]
+        },
+    )
+    shutil.copy2("/workspace/i6b-tools/inherited-task-c/i6a_report_types.py", outside / "i6a_report_types.py")
+    shutil.copy2("/workspace/i6b-tools/inherited-task-c/reviewer_policy.py", outside / "reviewer_policy.py")
+    (outside / "tests/review_task_c").mkdir()
+    (outside / "tests/review_task_c/__init__.py").write_text("")
+    shutil.copy2("/workspace/i6b-tools/inherited-task-c/test_task_c_originals.py", outside / "tests/review_task_c/test_task_c_originals.py")
+    saved_vector_root = SOURCE / 'docs/implementation/evidence/adr0031-i6b-author-20261023/vectors'
+    write(OUT / 'saved-vector-inputs.json', {'path':str(saved_vector_root),'files':{str(p.relative_to(saved_vector_root)):sha(p) for p in sorted(saved_vector_root.rglob('*')) if p.is_file()}})
+    extra_test = Path(os.environ['I6B_EXTRA_TEST'])
+    shutil.copy2(extra_test, outside / 'tests/unit/test_i6b_extra.py')
+    write(OUT / 'external-extra-binding.json', {'source_path':str(extra_test),'sha256':sha(extra_test),'staged_path':'tests/unit/test_i6b_extra.py','source_head':COMMIT,'source_tree':TREE,'scope':'Separate Author external cohort, not an ordinary freeze node or independent review.'})
+    write(OUT / "targets.json", TARGETS)
+    results = {}
+    for tag, artifact in [("direct", wheel), ("sdist", swheel)]:
+        try:
+            venv = WORK / (tag + "-venv")
+            require(
+                run(
+                    tag + "-venv", [sys.executable, "-m", "venv", "--without-pip", venv]
+                )
+            )
+            python = venv / "bin/python"
+            requirements = OUT / (tag + "-requirements.txt")
+            requirements.write_text(
+                f"repo-catalog @ {artifact.as_uri()} --hash=sha256:{sha(artifact)}\n"
+                + "".join(
+                    f"{row['name']} @ {(wheelhouse / row['file']).as_uri()} --hash=sha256:{row['sha256']}\n"
+                    for row in manifest["wheels"]
+                )
+            )
+            require(
+                run(
+                    tag + "-install",
+                    [
+                        "uv",
+                        "pip",
+                        "install",
+                        "--python",
+                        python,
+                        "--offline",
+                        "--no-index",
+                        "--no-deps",
+                        "--require-hashes",
+                        "-r",
+                        requirements,
+                    ],
+                    outside,
+                )
+            )
+            env = dict(
+                os.environ,
+                PATH=str(venv / "bin") + os.pathsep + os.environ["PATH"],
+                PYTHONPATH=str(outside / "tests/support/network_guard"),
+                GIT_ALLOW_PROTOCOL="file",
+                I6A_SQL_PROBE_OUTPUT=str(OUT / (tag + "-sql-observations.json")),
+                TASK_C_OBSERVATIONS=str(OUT / (tag + "-task-c-observations")),
+                I6B_EXTRA_VECTOR_DIR=str(OUT / (tag + "-extra-vectors")),
+                I6B_EXTRA_SAVED_VECTOR_DIR=str(saved_vector_root),
+            )
+            for key in (
+                "GH_TOKEN",
+                "GITHUB_TOKEN",
+                "PYTHONHOME",
+                "I6A_REPORTS_SIDECAR",
+                "I6A_ASSERTIONS_SOURCE",
+            ):
+                env.pop(key, None)
+            require(
+                run(
+                    tag + "-measure-before",
+                    [
+                        python,
+                        outside / "measure.py",
+                        OUT / (tag + "-runtime-before.json"),
+                    ],
+                    outside,
+                    env,
+                )
+            )
+            measured = json.loads((OUT / (tag + "-runtime-before.json")).read_text())
+            assert measured["installed_files"] == expected_all
+            expected = {
+                name: digest
+                for name, digest in expected_all.items()
+                if Path(name).suffix in EXTENSIONS
+            }
+            harness.bind_artifact(outside, expected)
+            contract = (
+                (outside / "conftest.py")
+                .read_text()
+                .replace(
+                    '(".py", ".sql", ".json")', '(".py", ".sql", ".json", ".graphql")'
+                )
+            )
+            (outside / "conftest.py").write_text(contract + PYTEST_CHECKS)
+            results[tag] = {
+                "safety": pytest_lane(tag, "safety", TARGETS, outside, python, env)
+            }
+            wire_targets = json.loads(os.environ["I6B_WIRE_TARGETS"])
+            results[tag]["wire"] = pytest_lane(tag, "wire", wire_targets, outside, python, env)
+            results[tag]['extra'] = pytest_lane(tag, 'extra', ['tests/unit/test_i6b_extra.py'], outside, python, env)
+            results[tag]["authorization"] = pytest_lane(
+                tag,
+                "authorization",
+                ["tests/review_authorization/test_independent_authorization.py"],
+                outside,
+                python,
+                env,
+            )
+            results[tag]["task_c"] = pytest_lane(tag, "task-c", ["tests/review_task_c/test_task_c_originals.py"], outside, python, env)
+            shutil.copy2(
+                authorization / "sql-observations.json",
+                OUT / (tag + "-authorization-sql-observations.json"),
+            )
+            for name in ("probe_originals", "probe_invalid_carrier"):
+                require(
+                    run(
+                        tag + "-" + name,
+                        [
+                            python,
+                            outside / "run_probe.py",
+                            probes / (name + ".py"),
+                            OUT / (tag + "-" + name + ".json"),
+                            OUT / (tag + "-" + name + "-imports.json"),
+                        ],
+                        outside,
+                        env,
+                    )
+                )
+            require(
+                run(
+                    tag + "-doctor", [venv / "bin/repo-catalog", "doctor"], outside, env
+                )
+            )
+            require(
+                run(
+                    tag + "-module-help",
+                    [python, "-I", "-m", "repo_catalog", "--help"],
+                    outside,
+                    env,
+                )
+            )
+            require(
+                run(
+                    tag + "-measure-after",
+                    [
+                        python,
+                        outside / "measure.py",
+                        OUT / (tag + "-runtime-after.json"),
+                    ],
+                    outside,
+                    env,
+                )
+            )
+            assert (
+                json.loads((OUT / (tag + "-runtime-after.json")).read_text())[
+                    "installed_files"
+                ]
+                == expected_all
+            )
+            require(run(tag + '-installed-RECORD', [python, '/workspace/i6b-tools/measure_installed_record.py', OUT / (tag + '-installed-RECORD.csv'), OUT / (tag + '-installed-RECORD.json'), OUT / 'complete-wheel-member-check.json', artifact], outside, env))
+        except Exception as error:
+            failures.append(
+                {"form": tag, "exception": type(error).__name__, "message": str(error)}
+            )
+            (OUT / (tag + "-driver-failure.log")).write_text(traceback.format_exc())
+    write(
+        OUT / "summary.json",
+        {
+            "source_head": COMMIT,
+            "source_tree": TREE,
+            "processes": records,
+            "results": results,
+            "failures": failures,
+            "full_acceptance": False,
+            "independent_review": False,
+        },
+    )
+    return int(bool(failures) or any(row["exit_code"] for row in records))
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

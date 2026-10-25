@@ -1,0 +1,107 @@
+{
+  "source_head": "f777d195bd219398a51d2a90553377f61fb39370",
+  "source_tree": "7ccc8685e06253e2102d46369110c7150d34a587",
+  "driver_exit_code": 0,
+  "processes": 27,
+  "all_process_exit_codes_zero": true,
+  "failures": [],
+  "forms": {
+    "direct": {
+      "safety": {
+        "passed": 626,
+        "failed": 0,
+        "error": 0,
+        "skipped": 0,
+        "executed": 626,
+        "exit_code": 0,
+        "exact_selected_junit_journal": true
+      },
+      "authorization": {
+        "passed": 27,
+        "failed": 0,
+        "error": 0,
+        "skipped": 0,
+        "executed": 27,
+        "exit_code": 0,
+        "exact_selected_junit_journal": true
+      },
+      "originals_assertion_probes": {
+        "passed": 19,
+        "failed": 0
+      },
+      "invalid_carrier": {
+        "invalid_original_cases": 4,
+        "invalid_original_refusals": 4,
+        "normal_fence_controls": 2
+      },
+      "installed_product_files": 158,
+      "sqlite": [
+        "3.53.1",
+        "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9"
+      ],
+      "pytest_binding_phases": [
+        "sessionstart",
+        "sessionfinish",
+        "sessionstart",
+        "sessionfinish"
+      ],
+      "all_pytest_bindings_have_exact_schema": true,
+      "cohorts": {
+        "i4": 217,
+        "i5": 29,
+        "originals_m1": 75
+      },
+      "sql_observation_bytes": 785457
+    },
+    "sdist": {
+      "safety": {
+        "passed": 626,
+        "failed": 0,
+        "error": 0,
+        "skipped": 0,
+        "executed": 626,
+        "exit_code": 0,
+        "exact_selected_junit_journal": true
+      },
+      "authorization": {
+        "passed": 27,
+        "failed": 0,
+        "error": 0,
+        "skipped": 0,
+        "executed": 27,
+        "exit_code": 0,
+        "exact_selected_junit_journal": true
+      },
+      "originals_assertion_probes": {
+        "passed": 19,
+        "failed": 0
+      },
+      "invalid_carrier": {
+        "invalid_original_cases": 4,
+        "invalid_original_refusals": 4,
+        "normal_fence_controls": 2
+      },
+      "installed_product_files": 158,
+      "sqlite": [
+        "3.53.1",
+        "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9"
+      ],
+      "pytest_binding_phases": [
+        "sessionstart",
+        "sessionfinish",
+        "sessionstart",
+        "sessionfinish"
+      ],
+      "all_pytest_bindings_have_exact_schema": true,
+      "cohorts": {
+        "i4": 217,
+        "i5": 29,
+        "originals_m1": 75
+      },
+      "sql_observation_bytes": 785457
+    }
+  },
+  "artifact_timing_scope": "Concurrent with the source full suite; elapsed times are invocation measurements, not sequential benchmark results.",
+  "independent_review": false,
+  "full_acceptance": false
+}

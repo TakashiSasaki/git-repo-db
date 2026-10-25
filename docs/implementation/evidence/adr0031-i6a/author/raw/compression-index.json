@@ -1,0 +1,58 @@
+[
+  {
+    "original_path": "failure-classification-author.json",
+    "original_bytes": 1515973,
+    "original_sha256": "47b376fbe1c6d7f70163520be414ef80cf6176c82ea60537caf0ab7c5eb7a77e",
+    "gzip_path": "failure-classification-author.json.gz",
+    "gzip_bytes": 68439,
+    "gzip_sha256": "c3ed367d16ddb8ccb62794fd33b0e0092c69f2f86b0d2c711dccf64cc1a50f03"
+  },
+  {
+    "original_path": "prelaunch-main-ls-tree.txt",
+    "original_bytes": 472588,
+    "original_sha256": "28655d907a07b7aad66b3703420db3ac282d62cea9a91512c125cd677cc3b8c2",
+    "gzip_path": "prelaunch-main-ls-tree.txt.gz",
+    "gzip_bytes": 111873,
+    "gzip_sha256": "08d1d0f88789d777bb1be9dd34d16841b5bbc538fe40dd61b16aa2d2f97f7cb0"
+  },
+  {
+    "original_path": "prelaunch-open-prs.json",
+    "original_bytes": 647574,
+    "original_sha256": "a8faa42b7baff6ec12d255b6a377dfceb3cfb309ecacbc3a610d29aff2ccc693",
+    "gzip_path": "prelaunch-open-prs.json.gz",
+    "gzip_bytes": 65206,
+    "gzip_sha256": "f0cc7a024f404e5514fae25c80f9abb85c774873b15ca32e1660cb6e04305d33"
+  },
+  {
+    "original_path": "prelaunch-pr130-ls-tree.txt",
+    "original_bytes": 497289,
+    "original_sha256": "348557fe891075da4b9a791325334042c7d99f8e2adcd65969c9631620058b3d",
+    "gzip_path": "prelaunch-pr130-ls-tree.txt.gz",
+    "gzip_bytes": 118838,
+    "gzip_sha256": "f4b0a283cf3c9cb12e7df6970737b519f993cdce4d1e1ffd16fbb09914832b6f"
+  },
+  {
+    "original_path": "prelaunch-pr133-ls-tree.txt",
+    "original_bytes": 498709,
+    "original_sha256": "1eaf4c0db7138ef7a3c408306c4526e0657bca3dadf90676425c2722debf7c13",
+    "gzip_path": "prelaunch-pr133-ls-tree.txt.gz",
+    "gzip_bytes": 119343,
+    "gzip_sha256": "2a963805c4c09ffdff2c9b57af832ec20b53682018c2d777ed1a3678cf205184"
+  },
+  {
+    "original_path": "prelaunch-pr134-ls-tree.txt",
+    "original_bytes": 499035,
+    "original_sha256": "396269f65373443b43201068811b7232b1e430a2720db3d57cd0efc1d49469ba",
+    "gzip_path": "prelaunch-pr134-ls-tree.txt.gz",
+    "gzip_bytes": 119457,
+    "gzip_sha256": "2e68316a38b7c38aba6a69234e7c752019c61c4d65289840b49a7f02dc03dc81"
+  },
+  {
+    "original_path": "prelaunch-pr141-ls-tree.txt",
+    "original_bytes": 503967,
+    "original_sha256": "e084ebbb28f6bdfa72855d3fc628b13eb3eee122263e7ddca51c2345d688ed4a",
+    "gzip_path": "prelaunch-pr141-ls-tree.txt.gz",
+    "gzip_bytes": 120662,
+    "gzip_sha256": "3f5a3e1af1bfbbf9526d274e5c48ae5e73eb853fc253255bf3fa288ef7947ab5"
+  }
+]

@@ -1,0 +1,118 @@
+{
+  "scope": "All completed baseline, intermediate, final-v3 and helper-probe compressed receipts. This verifies lossless transport identities, not product acceptance.",
+  "directories": [
+    {
+      "directory": "baseline",
+      "files": 33,
+      "original_bytes": 44061130,
+      "gzip_bytes": 1563692,
+      "discrepancies": [],
+      "unique_transport_paths": true
+    },
+    {
+      "directory": "corrected-focused",
+      "files": 3,
+      "original_bytes": 661592,
+      "gzip_bytes": 41373,
+      "discrepancies": [],
+      "unique_transport_paths": true
+    },
+    {
+      "directory": "distribution",
+      "files": 21,
+      "original_bytes": 3171020,
+      "gzip_bytes": 488071,
+      "discrepancies": [],
+      "unique_transport_paths": true
+    },
+    {
+      "directory": "distribution-corrected",
+      "files": 22,
+      "original_bytes": 3332739,
+      "gzip_bytes": 504492,
+      "discrepancies": [],
+      "unique_transport_paths": true
+    },
+    {
+      "directory": "distribution-v3",
+      "files": 22,
+      "original_bytes": 3351858,
+      "gzip_bytes": 505369,
+      "discrepancies": [],
+      "unique_transport_paths": true
+    },
+    {
+      "directory": "final",
+      "files": 22,
+      "original_bytes": 39066058,
+      "gzip_bytes": 1363737,
+      "discrepancies": [],
+      "unique_transport_paths": true
+    },
+    {
+      "directory": "final-bootstrap-no-docs",
+      "files": 5,
+      "original_bytes": 11070085,
+      "gzip_bytes": 365246,
+      "discrepancies": [],
+      "unique_transport_paths": true
+    },
+    {
+      "directory": "final-corrected",
+      "files": 19,
+      "original_bytes": 46024064,
+      "gzip_bytes": 1257200,
+      "discrepancies": [],
+      "unique_transport_paths": true
+    },
+    {
+      "directory": "final-corrected/sql-probes",
+      "files": 7,
+      "original_bytes": 345918,
+      "gzip_bytes": 51615,
+      "discrepancies": [],
+      "unique_transport_paths": true
+    },
+    {
+      "directory": "final-v3/caught-guard-traces",
+      "files": 6,
+      "original_bytes": 122651,
+      "gzip_bytes": 48711,
+      "discrepancies": [],
+      "unique_transport_paths": true
+    },
+    {
+      "directory": "final-v3",
+      "files": 19,
+      "original_bytes": 49402931,
+      "gzip_bytes": 1492018,
+      "discrepancies": [],
+      "unique_transport_paths": true
+    },
+    {
+      "directory": "final-v3/sql-probes",
+      "files": 7,
+      "original_bytes": 346156,
+      "gzip_bytes": 51737,
+      "discrepancies": [],
+      "unique_transport_paths": true
+    },
+    {
+      "directory": "priority-probes",
+      "files": 5,
+      "original_bytes": 676852,
+      "gzip_bytes": 43208,
+      "discrepancies": [],
+      "unique_transport_paths": true
+    },
+    {
+      "directory": "report-type-probe",
+      "files": 8,
+      "original_bytes": 10793,
+      "gzip_bytes": 2745,
+      "discrepancies": [],
+      "unique_transport_paths": true
+    }
+  ],
+  "all_lossless_unique": true
+}

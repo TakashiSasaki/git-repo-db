@@ -1,0 +1,347 @@
+{
+  "scope": "unchanged actual product DDL controls plus historical-helper differential",
+  "sqlite": "3.51.3",
+  "source_id": "2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618",
+  "baseline_ddl_sha256": "fa7838f86d9f0ab4b2f26c561ad0721df2d0c7dad45ee97e72ff09cbb89ac434",
+  "cases": [
+    {
+      "case": "ordinary-canonical-issue",
+      "parameters": [
+        "aad25448-03eb-4f83-a578-ceec84375b5a",
+        "issue",
+        "\"7\"",
+        null,
+        null,
+        null,
+        null
+      ],
+      "before": [],
+      "outcome": "accepted",
+      "strict_reconstruction": "accepted",
+      "after": [
+        [
+          "aad25448-03eb-4f83-a578-ceec84375b5a",
+          "issue",
+          "\"7\"",
+          null,
+          null,
+          null,
+          null
+        ]
+      ],
+      "trace": [
+        "SELECT * FROM resources ORDER BY 1,2,3",
+        "INSERT INTO resources VALUES('aad25448-03eb-4f83-a578-ceec84375b5a','issue','\"7\"',NULL,NULL,NULL,NULL)",
+        "SELECT * FROM resources ORDER BY 1,2,3"
+      ]
+    },
+    {
+      "case": "raw-noncanonical-issue",
+      "parameters": [
+        "aad25448-03eb-4f83-a578-ceec84375b5a",
+        "issue",
+        "731",
+        null,
+        null,
+        null,
+        null
+      ],
+      "before": [
+        [
+          "aad25448-03eb-4f83-a578-ceec84375b5a",
+          "issue",
+          "\"7\"",
+          null,
+          null,
+          null,
+          null
+        ]
+      ],
+      "outcome": "accepted",
+      "strict_reconstruction": "Expected identity string or array",
+      "after": [
+        [
+          "aad25448-03eb-4f83-a578-ceec84375b5a",
+          "issue",
+          "\"7\"",
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          "aad25448-03eb-4f83-a578-ceec84375b5a",
+          "issue",
+          "731",
+          null,
+          null,
+          null,
+          null
+        ]
+      ],
+      "trace": [
+        "SELECT * FROM resources ORDER BY 1,2,3",
+        "INSERT INTO resources VALUES('aad25448-03eb-4f83-a578-ceec84375b5a','issue','731',NULL,NULL,NULL,NULL)",
+        "SELECT * FROM resources ORDER BY 1,2,3"
+      ]
+    },
+    {
+      "case": "unknown-kind",
+      "parameters": [
+        "aad25448-03eb-4f83-a578-ceec84375b5a",
+        "vendor_widget",
+        "\"V\"",
+        null,
+        null,
+        null,
+        null
+      ],
+      "before": [
+        [
+          "aad25448-03eb-4f83-a578-ceec84375b5a",
+          "issue",
+          "\"7\"",
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          "aad25448-03eb-4f83-a578-ceec84375b5a",
+          "issue",
+          "731",
+          null,
+          null,
+          null,
+          null
+        ]
+      ],
+      "outcome": "refused",
+      "message": "CHECK constraint failed: resource_kind IN('repository','pull_request','issue','review','comment','thread','document','assessment','identity','endpoint','annotation','lfs')",
+      "code": 275,
+      "name": "SQLITE_CONSTRAINT_CHECK",
+      "after": [
+        [
+          "aad25448-03eb-4f83-a578-ceec84375b5a",
+          "issue",
+          "\"7\"",
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          "aad25448-03eb-4f83-a578-ceec84375b5a",
+          "issue",
+          "731",
+          null,
+          null,
+          null,
+          null
+        ]
+      ],
+      "trace": [
+        "SELECT * FROM resources ORDER BY 1,2,3",
+        "INSERT INTO resources VALUES('aad25448-03eb-4f83-a578-ceec84375b5a','vendor_widget','\"V\"',NULL,NULL,NULL,NULL)",
+        "SELECT * FROM resources ORDER BY 1,2,3"
+      ]
+    },
+    {
+      "case": "global-document",
+      "parameters": [
+        "aad25448-03eb-4f83-a578-ceec84375b5a",
+        "document",
+        "\"D\"",
+        null,
+        null,
+        null,
+        "\"D\""
+      ],
+      "before": [
+        [
+          "aad25448-03eb-4f83-a578-ceec84375b5a",
+          "issue",
+          "\"7\"",
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          "aad25448-03eb-4f83-a578-ceec84375b5a",
+          "issue",
+          "731",
+          null,
+          null,
+          null,
+          null
+        ]
+      ],
+      "outcome": "refused",
+      "message": "CHECK constraint failed: CASE WHEN resource_kind IN('review','comment','thread','document') THEN\n parent_resource_kind IS NOT NULL AND parent_provider_resource_id IS NOT NULL AND document_kind IS NOT NULL AND length(document_kind)>0 AND provider_document_id IS NOT NULL AND length(provider_document_id)>0\n AND provider_resource_id=p1_array(parent_resource_kind,parent_provider_resource_id,document_kind,provider_document_id)\n ELSE parent_resource_kind IS NULL AND parent_provider_resource_id IS NULL AND document_kind IS NULL AND provider_document_id IS NULL END",
+      "code": 275,
+      "name": "SQLITE_CONSTRAINT_CHECK",
+      "after": [
+        [
+          "aad25448-03eb-4f83-a578-ceec84375b5a",
+          "issue",
+          "\"7\"",
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          "aad25448-03eb-4f83-a578-ceec84375b5a",
+          "issue",
+          "731",
+          null,
+          null,
+          null,
+          null
+        ]
+      ],
+      "trace": [
+        "SELECT * FROM resources ORDER BY 1,2,3",
+        "INSERT INTO resources VALUES('aad25448-03eb-4f83-a578-ceec84375b5a','document','\"D\"',NULL,NULL,NULL,'\"D\"')",
+        "SELECT * FROM resources ORDER BY 1,2,3"
+      ]
+    },
+    {
+      "case": "child-with-absent-namespace",
+      "parameters": [
+        "aad25448-03eb-4f83-a578-ceec84375b5a",
+        "comment",
+        "[\"issue\",\"\\\"absent\\\"\",\"timeline_event\",\"E\"]",
+        "issue",
+        "\"absent\"",
+        "timeline_event",
+        "E"
+      ],
+      "before": [
+        [
+          "aad25448-03eb-4f83-a578-ceec84375b5a",
+          "issue",
+          "\"7\"",
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          "aad25448-03eb-4f83-a578-ceec84375b5a",
+          "issue",
+          "731",
+          null,
+          null,
+          null,
+          null
+        ]
+      ],
+      "outcome": "refused",
+      "message": "FOREIGN KEY constraint failed",
+      "code": 787,
+      "name": "SQLITE_CONSTRAINT_FOREIGNKEY",
+      "after": [
+        [
+          "aad25448-03eb-4f83-a578-ceec84375b5a",
+          "issue",
+          "\"7\"",
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          "aad25448-03eb-4f83-a578-ceec84375b5a",
+          "issue",
+          "731",
+          null,
+          null,
+          null,
+          null
+        ]
+      ],
+      "trace": [
+        "SELECT * FROM resources ORDER BY 1,2,3",
+        "INSERT INTO resources VALUES('aad25448-03eb-4f83-a578-ceec84375b5a','comment','[\"issue\",\"\\\"absent\\\"\",\"timeline_event\",\"E\"]','issue','\"absent\"','timeline_event','E')",
+        "SELECT * FROM resources ORDER BY 1,2,3"
+      ]
+    },
+    {
+      "case": "native-array-local",
+      "parameters": [
+        "aad25448-03eb-4f83-a578-ceec84375b5a",
+        "comment",
+        "[\"issue\",\"\\\"7\\\"\",\"timeline_event\",[\"github:node_id\",\"EV\"]]",
+        "issue",
+        "\"7\"",
+        "timeline_event",
+        "[\"github:node_id\",\"EV\"]"
+      ],
+      "before": [
+        [
+          "aad25448-03eb-4f83-a578-ceec84375b5a",
+          "issue",
+          "\"7\"",
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          "aad25448-03eb-4f83-a578-ceec84375b5a",
+          "issue",
+          "731",
+          null,
+          null,
+          null,
+          null
+        ]
+      ],
+      "outcome": "refused",
+      "message": "CHECK constraint failed: CASE WHEN resource_kind IN('review','comment','thread','document') THEN\n parent_resource_kind IS NOT NULL AND parent_provider_resource_id IS NOT NULL AND document_kind IS NOT NULL AND length(document_kind)>0 AND provider_document_id IS NOT NULL AND length(provider_document_id)>0\n AND provider_resource_id=p1_array(parent_resource_kind,parent_provider_resource_id,document_kind,provider_document_id)\n ELSE parent_resource_kind IS NULL AND parent_provider_resource_id IS NULL AND document_kind IS NULL AND provider_document_id IS NULL END",
+      "code": 275,
+      "name": "SQLITE_CONSTRAINT_CHECK",
+      "after": [
+        [
+          "aad25448-03eb-4f83-a578-ceec84375b5a",
+          "issue",
+          "\"7\"",
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          "aad25448-03eb-4f83-a578-ceec84375b5a",
+          "issue",
+          "731",
+          null,
+          null,
+          null,
+          null
+        ]
+      ],
+      "trace": [
+        "SELECT * FROM resources ORDER BY 1,2,3",
+        "INSERT INTO resources VALUES('aad25448-03eb-4f83-a578-ceec84375b5a','comment','[\"issue\",\"\\\"7\\\"\",\"timeline_event\",[\"github:node_id\",\"EV\"]]','issue','\"7\"','timeline_event','[\"github:node_id\",\"EV\"]')",
+        "SELECT * FROM resources ORDER BY 1,2,3"
+      ]
+    }
+  ],
+  "helper_differential": [
+    {
+      "case": "33-empty-array-containers",
+      "input": "[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]",
+      "experimental": "accepted",
+      "I1": "refused: Identity exceeds maximum array depth"
+    },
+    {
+      "case": "32-empty-array-containers",
+      "input": "[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]",
+      "experimental": "accepted",
+      "I1": "accepted"
+    }
+  ]
+}

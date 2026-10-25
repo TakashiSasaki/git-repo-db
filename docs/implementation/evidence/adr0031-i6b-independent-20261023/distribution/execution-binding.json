@@ -1,0 +1,12 @@
+{
+  "source_head": "ef787a5ff8b13f118d6bf5107c7338f43fde56dc",
+  "source_tree": "a3ed2628a98db134bdc65d13da905f5ddf25e972",
+  "python": "/workspace/git-repo-db/.venv/bin/python",
+  "python_version": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+  "sqlite": [
+    "3.53.1",
+    "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9"
+  ],
+  "driver_sha256": "4e284be38a51f3babbd7b7ffce9285923b008de72b53aeebbc3f956cc368a243",
+  "scope": "Independent installed distribution verification, not Release acceptance"
+}

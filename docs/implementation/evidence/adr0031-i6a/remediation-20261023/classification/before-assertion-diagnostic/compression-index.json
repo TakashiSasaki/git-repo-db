@@ -1,0 +1,83 @@
+[
+  {
+    "original": "binding-after.json",
+    "bytes": 55579,
+    "sha256": "bf93b94cec8d56996b9bff8bbad7aaafcf9f9b901c485d56f8ac777e34975284",
+    "stored": "binding-after.json.gz",
+    "stored_bytes": 22556,
+    "stored_sha256": "814b15ecdf33d42bc2dcbf43990ddd289f9745152455c06a24ed052158f9a1d6",
+    "gzip": true
+  },
+  {
+    "original": "binding-before.json",
+    "bytes": 55579,
+    "sha256": "bf93b94cec8d56996b9bff8bbad7aaafcf9f9b901c485d56f8ac777e34975284",
+    "stored": "binding-before.json.gz",
+    "stored_bytes": 22556,
+    "stored_sha256": "814b15ecdf33d42bc2dcbf43990ddd289f9745152455c06a24ed052158f9a1d6",
+    "gzip": true
+  },
+  {
+    "original": "diagnostic.execution.json",
+    "bytes": 1462,
+    "sha256": "81c19289bd5d138cbd802b9f7079dcf95537f0c13e836cc5302cbfeb62240df4",
+    "stored": "diagnostic.execution.json",
+    "stored_bytes": 1462,
+    "stored_sha256": "81c19289bd5d138cbd802b9f7079dcf95537f0c13e836cc5302cbfeb62240df4",
+    "gzip": false
+  },
+  {
+    "original": "diagnostic.jsonl",
+    "bytes": 618962,
+    "sha256": "9a0f820bd0454fc905453b0ced49e2d55d2301e344926d075f18593be6abbcc6",
+    "stored": "diagnostic.jsonl.gz",
+    "stored_bytes": 44898,
+    "stored_sha256": "3e891ca7c83609a6d9739fd0b5bd9a614c664f5b116e5f88b58559e30f8f54c6",
+    "gzip": true
+  },
+  {
+    "original": "diagnostic.log",
+    "bytes": 2311127,
+    "sha256": "1970b9d3a8e29e676003a22c4affcd14629562e5f89d1832b3f38542d083f259",
+    "stored": "diagnostic.log.gz",
+    "stored_bytes": 101435,
+    "stored_sha256": "db08068485bbbc86244e4c4fe227114707a04aa00209359268e1dc3617d03a94",
+    "gzip": true
+  },
+  {
+    "original": "diagnostic.report-types.jsonl",
+    "bytes": 469945,
+    "sha256": "c37fe036b16c5e94eb12d70d4ae609bb55fe6fb38d3c97637d3eff84b3a7c3d1",
+    "stored": "diagnostic.report-types.jsonl.gz",
+    "stored_bytes": 25793,
+    "stored_sha256": "94f5edff050b3dd6c6d35a01255dd87eab180c6251dda2530416ec2809d23076",
+    "gzip": true
+  },
+  {
+    "original": "diagnostic.selected.txt",
+    "bytes": 92824,
+    "sha256": "6fccacbf4c576bd36557da3523101620696caea1fc5ef562cb53edf283229db1",
+    "stored": "diagnostic.selected.txt.gz",
+    "stored_bytes": 11327,
+    "stored_sha256": "48487f095ebdf3f74bdd54a86dcbc851ad929e6f75cf05f26fe681dd3bf122f4",
+    "gzip": true
+  },
+  {
+    "original": "diagnostic.xml",
+    "bytes": 2389988,
+    "sha256": "4dda6ddb91866b39c3be383214fac580b1b5216b36ca0a6fe7cc2dbe2426d308",
+    "stored": "diagnostic.xml.gz",
+    "stored_bytes": 120367,
+    "stored_sha256": "96734b988888f841c8ab9bed9dd2b9c863678708ba2af517aa486c4ac41d36ea",
+    "gzip": true
+  },
+  {
+    "original": "scope.json",
+    "bytes": 195,
+    "sha256": "725b5801df7792cec3cc370185a769523f18d0e6d097f4a959145596e8173188",
+    "stored": "scope.json",
+    "stored_bytes": 195,
+    "stored_sha256": "725b5801df7792cec3cc370185a769523f18d0e6d097f4a959145596e8173188",
+    "gzip": false
+  }
+]

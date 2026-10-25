@@ -1,0 +1,15 @@
+"""Separate matched diagnostic: original743 plus both migrated guard parametrizations."""
+import json,os,sys,subprocess,time
+from pathlib import Path
+ROOT=Path('/workspace/git-repo-db');OUT=ROOT/'docs/implementation/evidence/adr0031-i6b-independent-20261023/broad/diagnostic745';OUT.mkdir(parents=True,exist_ok=False)
+sys.path.insert(0,str(ROOT));from scripts import verify_i5_offline as e
+nodes=Path('/workspace/i6b-broad-work/reference149/diagnostic743/diagnostic.selected.txt').read_text().splitlines()
+n='tests/integration/i6a/test_admission.py::test_unconnected_exchange_import_refuses_before_progress_and_cached_success'
+nodes.extend([n+'[initial]',n+'[cached-receipt]']);assert len(nodes)==len(set(nodes))==745
+(OUT/'diagnostic.selected.txt').write_text('\n'.join(nodes)+'\n')
+os.environ.update(PATH=str(Path(sys.executable).parent)+os.pathsep+os.environ['PATH'],PYTHONPATH='/workspace/i6b-broad-tools',TMPDIR='/workspace/i6b-broad-work/tmp',I6B_BROAD_OUT=str(OUT),I6B_BROAD_ROOT=str(ROOT),REPO_CATALOG_WHEELHOUSE='/workspace/i6b-distribution-work/wheelhouse',UV_CACHE_DIR='/workspace/.uv-cache',PYTHONDONTWRITEBYTECODE='1')
+def binding():return {'head':e.git('rev-parse','HEAD'),'tree':e.git('rev-parse','HEAD^{tree}'),'inputs':e.input_hashes(),'tracked_status':e.git('status','--porcelain','--untracked-files=no')}
+e.write_json(OUT/'binding-before.json',binding());e.require_product_runtime();assert not binding()['tracked_status'];e.verified_wheelhouse()
+r=e.execute(OUT,'diagnostic',['-c',str(ROOT/'pyproject.toml'),'-p','broad_receipt','-p','statement_trace','-p','no:cacheprovider','--basetemp=/workspace/i6b-broad-work/diagnostic745-temp','-q','-o','addopts=--strict-markers','-o','junit_family=xunit1','@'+str(OUT/'diagnostic.selected.txt'),'--junitxml='+str(OUT/'diagnostic.xml'),'--journal='+str(OUT/'diagnostic.jsonl'),'-n','4','--dist','worksteal','--tb=long'])
+e.write_json(OUT/'binding-after.json',binding());assert binding()['inputs']==json.loads((OUT/'binding-before.json').read_text())['inputs']
+print(json.dumps(r));sys.exit(r['exit_code'])

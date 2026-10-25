@@ -1,0 +1,20 @@
+import sys,os,json,hashlib,sqlite3,pathlib
+sys.path.insert(0,'/workspace/i6a-baseline')
+from scripts import verify_i5_offline as e
+out=pathlib.Path('/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6a/author/baseline')
+runtime=e.runtime_metadata(sqlite3.connect(':memory:'))
+e.require_product_runtime()
+import repo_catalog
+runtime['product_import_origin']=str(repo_catalog.__file__)
+runtime['base_executable']=sys._base_executable
+runtime['base_executable_sha256']=hashlib.sha256(pathlib.Path(sys._base_executable).read_bytes()).hexdigest()
+runtime['sqlite_spec']=__import__('_sqlite3').__spec__.origin
+runtime['loader_mappings']=[x for x in pathlib.Path('/proc/self/maps').read_text().splitlines() if 'sqlite' in x.lower() or 'python' in x.lower()]
+e.write_json(out/'runtime-before.json',runtime)
+e.write_json(out/'input-binding-before.json',{'head':e.git('rev-parse','HEAD'),'tree':e.git('rev-parse','HEAD^{tree}'),'status':e.git('status','--porcelain'),'inputs':e.input_hashes()})
+allnodes,_=e.collect(out,'all-collection',['tests'])
+ordinary,_=e.collect(out,'ordinary-collection',['tests'],'not live and not benchmark')
+targets=sorted(set(e.ci_targets()+['tests/unit/test_resource_identity.py','tests/unit/test_resource_key_identity.py','tests/unit/test_resource_identification.py','tests/unit/test_github_identity_boundaries.py','tests/integration/p2_p3_compatibility/test_production_pair.py',*[f'tests/packaging/test_p{x}_distribution.py' for x in (1,2,3,4,6,7)]]))
+historical,_=e.collect(out,'historical-collection',targets,'not live and not benchmark')
+e.write_json(out/'collection-summary.json',{'all':len(allnodes),'ordinary':len(ordinary),'historical':len(historical),'live_or_benchmark':sorted(set(allnodes)-set(ordinary))})
+print(json.dumps({'all':len(allnodes),'ordinary':len(ordinary),'historical':len(historical)}))

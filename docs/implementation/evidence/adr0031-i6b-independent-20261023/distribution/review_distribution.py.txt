@@ -1,0 +1,94 @@
+from pathlib import Path
+import ast, base64, collections, csv, hashlib, io, json, os, shutil, sqlite3, subprocess, sys, tarfile, time, zipfile
+ROOT=Path('/workspace/git-repo-db'); WORK=Path('/workspace/i6b-distribution-work'); OUT=ROOT/'docs/implementation/evidence/adr0031-i6b-independent-20261023/distribution'
+HEAD='ef787a5ff8b13f118d6bf5107c7338f43fde56dc'; TREE='a3ed2628a98db134bdc65d13da905f5ddf25e972'; SRC=WORK/'frozen'; WH=WORK/'wheelhouse'
+def sha(p): return hashlib.sha256(Path(p).read_bytes()).hexdigest()
+def write(p,v): Path(p).write_text(json.dumps(v,indent=2,ensure_ascii=False)+'\n')
+records=json.loads((OUT/"processes.json").read_text())
+def run(name,args,cwd=WORK,env=None):
+ start=time.time(); log=OUT/(name+'.log')
+ with log.open('w') as f: p=subprocess.run(list(map(str,args)),cwd=cwd,env=env,stdout=f,stderr=subprocess.STDOUT)
+ r={'name':name,'argv':list(map(str,args)),'cwd':str(cwd),'exit_code':p.returncode,'started_epoch':start,'elapsed_seconds':time.time()-start,'source_head':HEAD,'source_tree':TREE}; records.append(r);write(OUT/'processes.json',records);print(name,p.returncode,flush=True);return p.returncode
+def require(*a,**kw):
+ r=run(*a,**kw); assert r==0,(a[0],r)
+def inventory(root):
+ return {str(p.relative_to(root)):{'sha256':sha(p),'bytes':p.stat().st_size} for p in sorted(root.rglob('*')) if p.is_file() and '__pycache__' not in p.parts and p.suffix!='.pyc'}
+def wheel(path,label):
+ with zipfile.ZipFile(path) as z:
+  names=z.namelist();assert len(names)==len(set(names)); files={n:z.read(n) for n in names if not n.endswith('/')}
+ rec=next(n for n in files if n.endswith('.dist-info/RECORD'));rows=list(csv.reader(io.StringIO(files[rec].decode())))
+ assert collections.Counter(r[0] for r in rows)==collections.Counter(files.keys())
+ for n,h,s in rows:
+  if n==rec:assert h==s==''
+  else:assert h=='sha256='+base64.urlsafe_b64encode(hashlib.sha256(files[n]).digest()).decode().rstrip('=') and s==str(len(files[n]))
+ write(OUT/(label+'-members.json'),{n:{'bytes':len(v),'sha256':hashlib.sha256(v).hexdigest()} for n,v in files.items()})
+ (OUT/(label+'-RECORD.csv')).write_bytes(files[rec]);
+ for n,v in files.items():
+  if n.endswith(('.dist-info/METADATA','.dist-info/WHEEL','.dist-info/entry_points.txt')):(OUT/(label+'-'+n.rsplit('/',1)[-1]+'.txt')).write_bytes(v)
+ return files
+direct=next((SRC/'dist').glob('*.whl'));sdist=next((SRC/'dist').glob('*.tar.gz'));derived_source=next((WORK/'from-sdist').iterdir());derived=next((derived_source/'dist').glob('*.whl'));artifacts=json.loads((OUT/'artifacts.json').read_text())
+a=wheel(direct,'direct');b=wheel(derived,'derived');assert a==b
+product={k.removeprefix('repo_catalog/'):{'sha256':hashlib.sha256(v).hexdigest(),'bytes':len(v)} for k,v in a.items() if k.startswith('repo_catalog/')}
+assert product==inventory(SRC/'src/repo_catalog');write(OUT/'product-equality.json',{'files':len(product),'bytes':sum(v['bytes'] for v in product.values()),'direct_equals_derived_all_members':a==b,'source_product_equals_all_installed_product_members':True,'product':product})
+manifest=json.loads((WH/'manifest.json').read_text());assert manifest['lock_sha256']==sha(SRC/'uv.lock')
+for w in manifest['wheels']:assert sha(WH/w['file'])==w['sha256']
+outside=WORK/'outside';outside.mkdir();shutil.copytree(SRC/'tests',outside/'tests');shutil.copytree(SRC/'scripts',outside/'scripts')
+(outside/'pytest.ini').write_text('[pytest]\naddopts = --strict-markers\npythonpath =\nmarkers =\n    live: live\n    benchmark: benchmark\n')
+write(outside/'product.json',product)
+(outside/'conftest.py').write_text('''from pathlib import Path
+import hashlib,json,os,sys
+import repo_catalog
+
+def pytest_sessionstart(session): check(session,'start')
+def pytest_sessionfinish(session,exitstatus): check(session,'finish')
+def check(session,phase):
+ root=Path(repo_catalog.__file__).resolve().parent
+ assert root.is_relative_to(Path(sys.prefix).resolve())
+ assert session.config.inipath==Path(__file__).parent/'pytest.ini'
+ expected=json.loads((Path(__file__).parent/'product.json').read_text())
+ actual={str(p.relative_to(root)):{'sha256':hashlib.sha256(p.read_bytes()).hexdigest(),'bytes':p.stat().st_size} for p in root.rglob('*') if p.is_file() and '__pycache__' not in p.parts and p.suffix!='.pyc'}
+ assert actual==expected
+ modules={n:str(Path(m.__file__).resolve()) for n,m in sys.modules.items() if (n=='repo_catalog' or n.startswith('repo_catalog.')) and getattr(m,'__file__',None)}
+ assert all(Path(p).is_relative_to(root) for p in modules.values())
+ receipt=Path(os.environ['I6B_DIST_IMPORTS']);records=json.loads(receipt.read_text()) if receipt.exists() else []
+ records.append({'phase':phase,'origin':str(root),'python':sys.executable,'product_modules':modules,'actual_product_files':actual})
+ receipt.write_text(json.dumps(records,indent=2)+'\\n')
+''')
+measure=outside/'measure.py';measure.write_text('''from pathlib import Path
+import base64,csv,hashlib,importlib.metadata,json,os,sqlite3,sys,_sqlite3
+import repo_catalog
+root=Path(repo_catalog.__file__).resolve().parent
+assert root.is_relative_to(Path(sys.prefix).resolve())
+files={str(p.relative_to(root)):{'sha256':hashlib.sha256(p.read_bytes()).hexdigest(),'bytes':p.stat().st_size} for p in root.rglob('*') if p.is_file() and '__pycache__' not in p.parts and p.suffix!='.pyc'}
+dist=importlib.metadata.distribution('repo-catalog'); record=dist.read_text('RECORD');rows=list(csv.reader(record.splitlines()));checks=[]
+for n,h,s in rows:
+ p=Path(dist.locate_file(n)).resolve(); assert p.is_file(),n
+ if h:
+  assert h=='sha256='+base64.urlsafe_b64encode(hashlib.sha256(p.read_bytes()).digest()).decode().rstrip('=') and s==str(p.stat().st_size),n
+ checks.append({'name':n,'absolute_path':str(p),'record_hash':h,'record_bytes':s,'sha256':hashlib.sha256(p.read_bytes()).hexdigest(),'bytes':p.stat().st_size})
+assert len(rows)==len(set(r[0] for r in rows))
+with sqlite3.connect(':memory:') as db:
+ db.execute('pragma foreign_keys=on');db.execute('pragma recursive_triggers=on');capabilities={'identity':db.execute('select sqlite_version(),sqlite_source_id()').fetchone(),'compile_options':db.execute('pragma compile_options').fetchall(),'foreign_keys':db.execute('pragma foreign_keys').fetchone(),'recursive_triggers':db.execute('pragma recursive_triggers').fetchone()}; db.execute('create table strict_probe(x integer) strict');assert db.execute("select json_valid('{}')").fetchone()==(1,)
+result={'executable':sys.executable,'python':sys.version,'prefix':sys.prefix,'sqlite_module':_sqlite3.__spec__.origin,'sqlite':capabilities,'origin':str(root),'files':files,'record':checks,'metadata':dist.read_text('METADATA'),'wheel':dist.read_text('WHEEL')}
+Path(sys.argv[1]).write_text(json.dumps(result,indent=2)+'\\n')
+''')
+SAFETY=['tests/integration/p3/test_transfer_sql.py','tests/integration/p3/test_transfer_admission.py','tests/integration/p3/test_parent_reports.py','tests/unit/test_context_admission.py','tests/unit/test_transfer_originals.py','tests/unit/test_context_fences_i6a.py','tests/unit/test_context_oid_admission_i6a.py','tests/unit/test_context_admission_bounds_i6a.py','tests/unit/test_context_coordinator_admission.py','tests/unit/test_context_refusal_order_i6a.py','tests/integration/p1/test_coordination.py','tests/integration/i6a']
+WIRE=['tests/unit/test_context_wire_v5.py','tests/unit/test_context_dependencies.py']
+write(OUT/'targets.json',{'safety':SAFETY,'wire':WIRE})
+sys.path.insert(0,str(ROOT));from scripts import verify_i5_offline as evidence
+results={}
+for form,artifact in [('direct',direct),('derived',derived)]:
+ venv=WORK/(form+'-venv');require(form+'-venv',[sys.executable,'-m','venv','--without-pip',venv]);py=venv/'bin/python';req=OUT/(form+'-requirements.txt');req.write_text(f'repo-catalog @ {artifact.as_uri()} --hash=sha256:{sha(artifact)}\n'+''.join(f"{w['name']} @ {(WH/w['file']).as_uri()} --hash=sha256:{w['sha256']}\n" for w in manifest['wheels']))
+ env=dict(os.environ,UV_CACHE_DIR='/workspace/.uv-cache',REPO_CATALOG_WHEELHOUSE=str(WH),PATH=str(venv/'bin')+os.pathsep+os.environ['PATH'],TMPDIR=str(WORK),PYTHONPATH=str(outside/'tests/support/network_guard'),GIT_ALLOW_PROTOCOL='file')
+ for k in ['GH_TOKEN','GITHUB_TOKEN','PYTHONHOME']:env.pop(k,None)
+ require(form+'-install',['uv','pip','install','--python',py,'--offline','--no-index','--no-deps','--require-hashes','-r',req],outside,env)
+ require(form+'-measure-before',[py,measure,OUT/(form+'-runtime-before.json')],outside,env);assert json.loads((OUT/(form+'-runtime-before.json')).read_text())['files']==product
+ results[form]={}
+ for lane,targets in [('safety',SAFETY),('wire',WIRE)]:
+  name=form+'-'+lane;le=dict(env,I6B_DIST_IMPORTS=str(OUT/(name+'-imports.json'))); args=[py,'-m','pytest','-q','--tb=short','-c',outside/'pytest.ini','--rootdir='+str(outside),'--confcutdir='+str(outside),'-o','junit_family=xunit1',*targets]
+  require(name+'-collect',args+['--collect-only'],outside,le);nodes=evidence.nodes(OUT/(name+'-collect.log'));(OUT/(name+'-selected.txt')).write_text('\n'.join(nodes)+'\n');xml=OUT/(name+'.xml');journal=OUT/(name+'.jsonl');code=run(name,args+['--junitxml='+str(xml),'--journal='+str(journal),'--basetemp='+str(WORK/(name+'-tmp'))],outside,le)
+  result={'exit_code':code,'collected':len(nodes),**evidence.outcomes(xml),'reconciliation':evidence.reconciliation(nodes,xml,journal)};write(OUT/(name+'-execution.json'),result);results[form][lane]=result
+ require(form+'-doctor',[venv/'bin/repo-catalog','doctor'],outside,env)
+ require(form+'-measure-after',[py,measure,OUT/(form+'-runtime-after.json')],outside,env);assert json.loads((OUT/(form+'-runtime-after.json')).read_text())['files']==product
+write(OUT/'summary.json',{'source_head':HEAD,'source_tree':TREE,'results':results,'artifacts':artifacts,'full_acceptance':False,'independent_review':True,'processes':records})
+shutil.copyfile(__file__,OUT/'review_distribution.py.txt')

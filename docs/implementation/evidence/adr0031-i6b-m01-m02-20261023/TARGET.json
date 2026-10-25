@@ -1,0 +1,247 @@
+{
+  "observed_utc": "2026-10-23",
+  "source": "GitHub connector read-only fetch at task start",
+  "assigned": {
+    "review_head": "8521158f2996f125d2fcaac36ea79ac1296a7cf7",
+    "review_tree": "455ef25606ee555e4154dd2d14929b41aa4ef50f",
+    "parent_head": "ef787a5ff8b13f118d6bf5107c7338f43fde56dc",
+    "parent_tree": "a3ed2628a98db134bdc65d13da905f5ddf25e972"
+  },
+  "actual": {
+    "pr": 152,
+    "state": "open",
+    "draft": true,
+    "head": "8521158f2996f125d2fcaac36ea79ac1296a7cf7",
+    "head_branch": "review/adr0031-i6b-independent-20261023",
+    "base": "ef787a5ff8b13f118d6bf5107c7338f43fde56dc",
+    "base_branch": "impl/adr0031-i6b-generalized-wire"
+  },
+  "duplicate_check": {
+    "open_prs": [
+      {
+        "number": 152,
+        "title": "review(context): independent I6-B wire and planner audit (FAIL)",
+        "head": "review/adr0031-i6b-independent-20261023",
+        "base": "impl/adr0031-i6b-generalized-wire"
+      },
+      {
+        "number": 151,
+        "title": "feat(context): implement I6-B generalized wire v5",
+        "head": "impl/adr0031-i6b-generalized-wire",
+        "base": "review/adr0031-i6a-task-c-20261023"
+      },
+      {
+        "number": 150,
+        "title": "docs: audit fixed I6-A, sdist and C0 parallel stack (Task B)",
+        "head": "audit/parallel-pr-stack-task-b-20261023",
+        "base": "fix/adr0032-host-runtime-20261022"
+      },
+      {
+        "number": 149,
+        "title": "review(context): independently accept I6-A originals and binding fixes (Task C)",
+        "head": "review/adr0031-i6a-task-c-20261023",
+        "base": "fix/adr0031-i6a-originals-binding-20261023"
+      },
+      {
+        "number": 148,
+        "title": "fix(context): reject malformed originals and require audit bindings",
+        "head": "fix/adr0031-i6a-originals-binding-20261023",
+        "base": "review/adr0031-i6a-remediation-independent-20261023"
+      },
+      {
+        "number": 147,
+        "title": "review(ci): independently accept C0-E1 receipt limit (Task B)",
+        "head": "review/c0-e1-independent-20261023",
+        "base": "fix/c0-e1-receipt-limit-20261023"
+      },
+      {
+        "number": 146,
+        "title": "review(context): independently audit I6-A remediation (FAIL)",
+        "head": "review/adr0031-i6a-remediation-independent-20261023",
+        "base": "fix/adr0031-i6a-regressions-20261023"
+      },
+      {
+        "number": 145,
+        "title": "fix(context): remediate I6-A callers and installed test harness",
+        "head": "fix/adr0031-i6a-regressions-20261023",
+        "base": "impl/adr0031-i6a-secure-admission"
+      },
+      {
+        "number": 144,
+        "title": "review: independently reverify ADR 0033 archive hardening",
+        "head": "review/adr0033-hardening-rereview-20261023",
+        "base": "fix/adr0033-sdist-archive-hardening"
+      },
+      {
+        "number": 143,
+        "title": "feat(context): implement ADR 0031 I6-A secure admission",
+        "head": "impl/adr0031-i6a-secure-admission",
+        "base": "review/adr0031-i6-design-independent-20261023"
+      },
+      {
+        "number": 142,
+        "title": "fix(packaging): close ADR 0033 archive validation findings",
+        "head": "fix/adr0033-sdist-archive-hardening",
+        "base": "review/adr0033-sdist-independent-20261023"
+      },
+      {
+        "number": 141,
+        "title": "docs: independent ADR 0031 I6 design review and evidence",
+        "head": "review/adr0031-i6-design-independent-20261023",
+        "base": "docs/adr0031-i6-boundary-contract-20261022"
+      },
+      {
+        "number": 140,
+        "title": "review: independent ADR 0033 sdist audit with two medium findings",
+        "head": "review/adr0033-sdist-independent-20261023",
+        "base": "impl/adr0033-minimal-sdist-20261022"
+      },
+      {
+        "number": 139,
+        "title": "fix(ci): enforce the C0-E1 2 MiB compressed receipt limit",
+        "head": "fix/c0-e1-receipt-limit-20261023",
+        "base": "review/c0-hosted-runtime-audit-20261022"
+      },
+      {
+        "number": 138,
+        "title": "build: enforce minimal sdist contract and lightweight CI gate (ADR 0033)",
+        "head": "impl/adr0033-minimal-sdist-20261022",
+        "base": "docs/adr0033-minimal-sdist-20261022"
+      },
+      {
+        "number": 137,
+        "title": "docs: record sdist review prerequisites; implementation review not started",
+        "head": "docs/sdist-review-readiness-20261022",
+        "base": "docs/adr0033-minimal-sdist-20261022"
+      },
+      {
+        "number": 136,
+        "title": "docs: submit C0 hosted runtime audit and open evidence finding",
+        "head": "review/c0-hosted-runtime-audit-20261022",
+        "base": "fix/adr0032-host-runtime-20261022"
+      },
+      {
+        "number": 135,
+        "title": "docs: adopt minimal product sdist policy (ADR 0033)",
+        "head": "docs/adr0033-minimal-sdist-20261022",
+        "base": "fix/adr0032-host-runtime-20261022"
+      },
+      {
+        "number": 134,
+        "title": "docs: freeze ADR 0031 I6 wire, admission and Exchange boundary contract",
+        "head": "docs/adr0031-i6-boundary-contract-20261022",
+        "base": "fix/adr0032-host-runtime-20261022"
+      },
+      {
+        "number": 133,
+        "title": "ci: establish a product-capable hosted Python under ADR 0032",
+        "head": "fix/adr0032-host-runtime-20261022",
+        "base": "fix/sqlite-runtime-ci-20261022"
+      },
+      {
+        "number": 132,
+        "title": "ci: validate environment SQLite and prevent fixed-engine regressions",
+        "head": "fix/sqlite-runtime-ci-20261022",
+        "base": "docs/sqlite-runtime-policy-20261022"
+      },
+      {
+        "number": 131,
+        "title": "docs: formalize environment SQLite validation policy (ADR 0032)",
+        "head": "docs/sqlite-runtime-policy-20261022",
+        "base": "review/adr0031-i5-independent-20261022"
+      },
+      {
+        "number": 130,
+        "title": "docs(context): independent ADR 0031 I5 review and evidence",
+        "head": "review/adr0031-i5-independent-20261022",
+        "base": "impl/adr0031-i5-typed-admission-20261022"
+      },
+      {
+        "number": 129,
+        "title": "feat(context): typed Transfer Admission and semantic validation (ADR 0031 I5)",
+        "head": "impl/adr0031-i5-typed-admission-20261022",
+        "base": "review/adr0031-i4-independent-20261022"
+      },
+      {
+        "number": 128,
+        "title": "docs(context): independent ADR 0031 I4 review and evidence",
+        "head": "review/adr0031-i4-independent-20261022",
+        "base": "impl/adr0031-i4-transfer-sql-20261022"
+      },
+      {
+        "number": 127,
+        "title": "feat(context): native-I7 Transfer SQL constraints (ADR 0031 I4)",
+        "head": "impl/adr0031-i4-transfer-sql-20261022",
+        "base": "impl/adr0031-i3-parent-reports-20261022"
+      },
+      {
+        "number": 126,
+        "title": "feat(context): typed semantic Parent reports (ADR 0031 I3)",
+        "head": "impl/adr0031-i3-parent-reports-20261022",
+        "base": "review/adr0031-i2-task-g-20261022"
+      },
+      {
+        "number": 125,
+        "title": "docs(context): independent ADR 0031 I2 product review (Task G)",
+        "head": "review/adr0031-i2-task-g-20261022",
+        "base": "impl/adr0031-i2-resources-task-e-20261021"
+      },
+      {
+        "number": 124,
+        "title": "feat(context): staged generalized Resources (ADR 0031 I2, Task E)",
+        "head": "impl/adr0031-i2-resources-task-e-20261021",
+        "base": "review/adr0031-i2-cf1-task-f-20261021"
+      },
+      {
+        "number": 123,
+        "title": "docs(context): independent I2 C-F1 design re-review (Task F)",
+        "head": "review/adr0031-i2-cf1-task-f-20261021",
+        "base": "design/adr0031-i2-transfer-fence-f1-20261021"
+      },
+      {
+        "number": 122,
+        "title": "docs(context): complete I2 staged Transfer fence design (C-F1)",
+        "head": "design/adr0031-i2-transfer-fence-f1-20261021",
+        "base": "review/adr0031-i2-sql-task-d-20261021"
+      },
+      {
+        "number": 121,
+        "title": "docs(context): publish independent ADR 0031 I2 SQL review (Task D)",
+        "head": "review/adr0031-i2-sql-task-d-20261021",
+        "base": "docs/adr0031-i2-preparation-20261021"
+      },
+      {
+        "number": 120,
+        "title": "docs(context): prepare ADR 0031 I2 generalized Resource SQL implementation",
+        "head": "docs/adr0031-i2-preparation-20261021",
+        "base": "validation/adr0031-i1b-fixtures-20261021"
+      },
+      {
+        "number": 119,
+        "title": "docs(identity): publish independent ADR 0031 I1b adversarial review",
+        "head": "docs/adr0031-i1b-independent-review-20261021",
+        "base": "validation/adr0031-i1b-fixtures-20261021"
+      },
+      {
+        "number": 118,
+        "title": "test(identity): ADR 0031 I1b validation closure",
+        "head": "validation/adr0031-i1b-fixtures-20261021",
+        "base": "impl/adr0031-i1b-resource-key"
+      },
+      {
+        "number": 117,
+        "title": "feat(context): canonical ResourceKey boundaries (ADR 0031 I1b)",
+        "head": "impl/adr0031-i1b-resource-key",
+        "base": "main"
+      },
+      {
+        "number": 115,
+        "title": "experiment: validate Context parent relations without new tables",
+        "head": "experiment/context-u3-cprime-20261021",
+        "base": "main"
+      }
+    ],
+    "result": "No other open M01/M02 correction PR; #152 is review evidence only."
+  },
+  "movement": "none"
+}

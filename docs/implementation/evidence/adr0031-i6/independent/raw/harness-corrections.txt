@@ -1,0 +1,6 @@
+Initial reviewer harness failures (not product defects):
+review_probes.py: ParentReportKey fixture omitted mandatory provenance.evidence; failed before admission. Added actual synthetic evidence values E/P, removed unused fixture fragment. Initial exit 1; no successful product result claimed.
+wire probe: nonexistent ResourceKey.scoped_document fixture helper caused AttributeError; replaced with existing document factory.
+SQL probe: fixture INSERT supplied eight values to seven-column resources; corrected named columns.
+All final probes rerun successfully; no product source or assertions changed.
+Evidence verifier first run: output redirected to validation.json while recursively parsing every JSON, so it read its own empty in-progress receipt and raised JSONDecodeError. Excluded that generated output (already excluded from index), then reran. No product test rerun or product defect implied.

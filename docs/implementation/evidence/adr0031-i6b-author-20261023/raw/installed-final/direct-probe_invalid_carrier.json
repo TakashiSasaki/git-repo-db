@@ -1,0 +1,315 @@
+{
+  "invalid_original_cases": 4,
+  "invalid_original_refusals": 4,
+  "normal_fence_controls": 2,
+  "observations": [
+    {
+      "id": "invalid-original-None-initial",
+      "supplied_from_endpoint": null,
+      "stage": "isolated-approved-test-fixture",
+      "replay": false,
+      "expected_code": "INCOMPLETE_ORIGINAL_REPORT",
+      "actual_outcome": "refused",
+      "actual_code": "INCOMPLETE_ORIGINAL_REPORT",
+      "safety_predicate_passed": true,
+      "controls": {
+        "pure_validate_originals": "INCOMPLETE_ORIGINAL_REPORT",
+        "dataclasses_replace": "INCOMPLETE_ORIGINAL_REPORT"
+      },
+      "stored_from_endpoint": null,
+      "stored_report_equals_supplied_original": null,
+      "before_rowsets": [
+        [
+          [
+            "parent",
+            "[[\"aad25448-03eb-4f83-a75e-cb7055fd33be\",\"issue\",\"\\\"review-I\\\"\"]]",
+            "{\"evidence\":[\"P\",21],\"source\":\"review-parent-original\"}",
+            "{\"clock\":{\"at_us\":21,\"domain\":\"review-parent-clock\"},\"document_kind\":\"timeline_event\",\"state\":\"complete\"}",
+            22
+          ]
+        ],
+        []
+      ],
+      "after_rowsets": [
+        [
+          [
+            "parent",
+            "[[\"aad25448-03eb-4f83-a75e-cb7055fd33be\",\"issue\",\"\\\"review-I\\\"\"]]",
+            "{\"evidence\":[\"P\",21],\"source\":\"review-parent-original\"}",
+            "{\"clock\":{\"at_us\":21,\"domain\":\"review-parent-clock\"},\"document_kind\":\"timeline_event\",\"state\":\"complete\"}",
+            22
+          ]
+        ],
+        []
+      ],
+      "transaction_open": false,
+      "sql_trace": [
+        "PRAGMA database_list",
+        "PRAGMA foreign_keys",
+        "PRAGMA recursive_triggers",
+        "PRAGMA ignore_check_constraints",
+        "PRAGMA defer_foreign_keys",
+        "PRAGMA trusted_schema",
+        "PRAGMA function_list",
+        "SELECT type,name,tbl_name,sql FROM sqlite_schema WHERE name NOT LIKE 'sqlite_%' ORDER BY type,name",
+        "BEGIN IMMEDIATE",
+        "SELECT type,name,tbl_name,sql FROM sqlite_schema WHERE name IN('i2_transfer_stage_fence','i2_transfer_report_stage_fence') ORDER BY name",
+        "ROLLBACK"
+      ]
+    },
+    {
+      "id": "invalid-original-None-replay",
+      "supplied_from_endpoint": null,
+      "stage": "isolated-approved-test-fixture",
+      "replay": true,
+      "expected_code": "INCOMPLETE_ORIGINAL_REPORT",
+      "actual_outcome": "refused",
+      "actual_code": "INCOMPLETE_ORIGINAL_REPORT",
+      "safety_predicate_passed": true,
+      "controls": {
+        "pure_validate_originals": "INCOMPLETE_ORIGINAL_REPORT",
+        "dataclasses_replace": "INCOMPLETE_ORIGINAL_REPORT"
+      },
+      "stored_from_endpoint": "explicit_null",
+      "stored_report_equals_supplied_original": false,
+      "before_rowsets": [
+        [
+          [
+            "parent",
+            "[[\"aad25448-03eb-4f83-a75e-cb7055fd33be\",\"issue\",\"\\\"review-I\\\"\"]]",
+            "{\"evidence\":[\"P\",21],\"source\":\"review-parent-original\"}",
+            "{\"clock\":{\"at_us\":21,\"domain\":\"review-parent-clock\"},\"document_kind\":\"timeline_event\",\"state\":\"complete\"}",
+            22
+          ],
+          [
+            "transfer_event_report",
+            "[]",
+            "{\"evidence\":[\"E\",900],\"source\":\"review-event-original\"}",
+            "{\"clock\":{\"at_us\":900,\"domain\":\"review-event-clock\"},\"endpoints\":[[\"transfer_from_repository\",\"null\"],[\"transfer_to_repository\",\"null\"]],\"event_type\":\"transferred\",\"from_provider_repository_id\":null,\"parent_members_json\":\"[[\\\"aad25448-03eb-4f83-a75e-cb7055fd33be\\\",\\\"issue\\\",\\\"\\\\\\\"review-I\\\\\\\"\\\"]]\",\"parent_provenance_json\":\"{\\\"evidence\\\":[\\\"P\\\",21],\\\"source\\\":\\\"review-parent-original\\\"}\",\"parent_scope_json\":\"{\\\"clock\\\":{\\\"at_us\\\":21,\\\"domain\\\":\\\"review-parent-clock\\\"},\\\"document_kind\\\":\\\"timeline_event\\\",\\\"state\\\":\\\"complete\\\"}\",\"provided_roles\":[\"transfer_from_repository\",\"transfer_to_repository\"],\"to_provider_repository_id\":null}",
+            901
+          ]
+        ],
+        [
+          [
+            "transfer_from_repository",
+            "null",
+            "[]",
+            "{\"clock\":{\"at_us\":900,\"domain\":\"review-event-clock\"},\"endpoints\":[[\"transfer_from_repository\",\"null\"],[\"transfer_to_repository\",\"null\"]],\"event_type\":\"transferred\",\"from_provider_repository_id\":null,\"parent_members_json\":\"[[\\\"aad25448-03eb-4f83-a75e-cb7055fd33be\\\",\\\"issue\\\",\\\"\\\\\\\"review-I\\\\\\\"\\\"]]\",\"parent_provenance_json\":\"{\\\"evidence\\\":[\\\"P\\\",21],\\\"source\\\":\\\"review-parent-original\\\"}\",\"parent_scope_json\":\"{\\\"clock\\\":{\\\"at_us\\\":21,\\\"domain\\\":\\\"review-parent-clock\\\"},\\\"document_kind\\\":\\\"timeline_event\\\",\\\"state\\\":\\\"complete\\\"}\",\"provided_roles\":[\"transfer_from_repository\",\"transfer_to_repository\"],\"to_provider_repository_id\":null}"
+          ],
+          [
+            "transfer_to_repository",
+            "null",
+            "[]",
+            "{\"clock\":{\"at_us\":900,\"domain\":\"review-event-clock\"},\"endpoints\":[[\"transfer_from_repository\",\"null\"],[\"transfer_to_repository\",\"null\"]],\"event_type\":\"transferred\",\"from_provider_repository_id\":null,\"parent_members_json\":\"[[\\\"aad25448-03eb-4f83-a75e-cb7055fd33be\\\",\\\"issue\\\",\\\"\\\\\\\"review-I\\\\\\\"\\\"]]\",\"parent_provenance_json\":\"{\\\"evidence\\\":[\\\"P\\\",21],\\\"source\\\":\\\"review-parent-original\\\"}\",\"parent_scope_json\":\"{\\\"clock\\\":{\\\"at_us\\\":21,\\\"domain\\\":\\\"review-parent-clock\\\"},\\\"document_kind\\\":\\\"timeline_event\\\",\\\"state\\\":\\\"complete\\\"}\",\"provided_roles\":[\"transfer_from_repository\",\"transfer_to_repository\"],\"to_provider_repository_id\":null}"
+          ]
+        ]
+      ],
+      "after_rowsets": [
+        [
+          [
+            "parent",
+            "[[\"aad25448-03eb-4f83-a75e-cb7055fd33be\",\"issue\",\"\\\"review-I\\\"\"]]",
+            "{\"evidence\":[\"P\",21],\"source\":\"review-parent-original\"}",
+            "{\"clock\":{\"at_us\":21,\"domain\":\"review-parent-clock\"},\"document_kind\":\"timeline_event\",\"state\":\"complete\"}",
+            22
+          ],
+          [
+            "transfer_event_report",
+            "[]",
+            "{\"evidence\":[\"E\",900],\"source\":\"review-event-original\"}",
+            "{\"clock\":{\"at_us\":900,\"domain\":\"review-event-clock\"},\"endpoints\":[[\"transfer_from_repository\",\"null\"],[\"transfer_to_repository\",\"null\"]],\"event_type\":\"transferred\",\"from_provider_repository_id\":null,\"parent_members_json\":\"[[\\\"aad25448-03eb-4f83-a75e-cb7055fd33be\\\",\\\"issue\\\",\\\"\\\\\\\"review-I\\\\\\\"\\\"]]\",\"parent_provenance_json\":\"{\\\"evidence\\\":[\\\"P\\\",21],\\\"source\\\":\\\"review-parent-original\\\"}\",\"parent_scope_json\":\"{\\\"clock\\\":{\\\"at_us\\\":21,\\\"domain\\\":\\\"review-parent-clock\\\"},\\\"document_kind\\\":\\\"timeline_event\\\",\\\"state\\\":\\\"complete\\\"}\",\"provided_roles\":[\"transfer_from_repository\",\"transfer_to_repository\"],\"to_provider_repository_id\":null}",
+            901
+          ]
+        ],
+        [
+          [
+            "transfer_from_repository",
+            "null",
+            "[]",
+            "{\"clock\":{\"at_us\":900,\"domain\":\"review-event-clock\"},\"endpoints\":[[\"transfer_from_repository\",\"null\"],[\"transfer_to_repository\",\"null\"]],\"event_type\":\"transferred\",\"from_provider_repository_id\":null,\"parent_members_json\":\"[[\\\"aad25448-03eb-4f83-a75e-cb7055fd33be\\\",\\\"issue\\\",\\\"\\\\\\\"review-I\\\\\\\"\\\"]]\",\"parent_provenance_json\":\"{\\\"evidence\\\":[\\\"P\\\",21],\\\"source\\\":\\\"review-parent-original\\\"}\",\"parent_scope_json\":\"{\\\"clock\\\":{\\\"at_us\\\":21,\\\"domain\\\":\\\"review-parent-clock\\\"},\\\"document_kind\\\":\\\"timeline_event\\\",\\\"state\\\":\\\"complete\\\"}\",\"provided_roles\":[\"transfer_from_repository\",\"transfer_to_repository\"],\"to_provider_repository_id\":null}"
+          ],
+          [
+            "transfer_to_repository",
+            "null",
+            "[]",
+            "{\"clock\":{\"at_us\":900,\"domain\":\"review-event-clock\"},\"endpoints\":[[\"transfer_from_repository\",\"null\"],[\"transfer_to_repository\",\"null\"]],\"event_type\":\"transferred\",\"from_provider_repository_id\":null,\"parent_members_json\":\"[[\\\"aad25448-03eb-4f83-a75e-cb7055fd33be\\\",\\\"issue\\\",\\\"\\\\\\\"review-I\\\\\\\"\\\"]]\",\"parent_provenance_json\":\"{\\\"evidence\\\":[\\\"P\\\",21],\\\"source\\\":\\\"review-parent-original\\\"}\",\"parent_scope_json\":\"{\\\"clock\\\":{\\\"at_us\\\":21,\\\"domain\\\":\\\"review-parent-clock\\\"},\\\"document_kind\\\":\\\"timeline_event\\\",\\\"state\\\":\\\"complete\\\"}\",\"provided_roles\":[\"transfer_from_repository\",\"transfer_to_repository\"],\"to_provider_repository_id\":null}"
+          ]
+        ]
+      ],
+      "transaction_open": false,
+      "sql_trace": [
+        "PRAGMA database_list",
+        "PRAGMA foreign_keys",
+        "PRAGMA recursive_triggers",
+        "PRAGMA ignore_check_constraints",
+        "PRAGMA defer_foreign_keys",
+        "PRAGMA trusted_schema",
+        "PRAGMA function_list",
+        "SELECT type,name,tbl_name,sql FROM sqlite_schema WHERE name NOT LIKE 'sqlite_%' ORDER BY type,name",
+        "BEGIN IMMEDIATE",
+        "SELECT type,name,tbl_name,sql FROM sqlite_schema WHERE name IN('i2_transfer_stage_fence','i2_transfer_report_stage_fence') ORDER BY name",
+        "ROLLBACK"
+      ]
+    },
+    {
+      "id": "normal-fence-None",
+      "actual_code": "I2_TRANSFER_UNSUPPORTED",
+      "safety_predicate_passed": true,
+      "rowsets_unchanged": true
+    },
+    {
+      "id": "invalid-original-'invalid-original-state'-initial",
+      "supplied_from_endpoint": "invalid-original-state",
+      "stage": "isolated-approved-test-fixture",
+      "replay": false,
+      "expected_code": "INCOMPLETE_ORIGINAL_REPORT",
+      "actual_outcome": "refused",
+      "actual_code": "INCOMPLETE_ORIGINAL_REPORT",
+      "safety_predicate_passed": true,
+      "controls": {
+        "pure_validate_originals": "INCOMPLETE_ORIGINAL_REPORT",
+        "dataclasses_replace": "INCOMPLETE_ORIGINAL_REPORT"
+      },
+      "stored_from_endpoint": null,
+      "stored_report_equals_supplied_original": null,
+      "before_rowsets": [
+        [
+          [
+            "parent",
+            "[[\"aad25448-03eb-4f83-a75e-cb7055fd33be\",\"issue\",\"\\\"review-I\\\"\"]]",
+            "{\"evidence\":[\"P\",21],\"source\":\"review-parent-original\"}",
+            "{\"clock\":{\"at_us\":21,\"domain\":\"review-parent-clock\"},\"document_kind\":\"timeline_event\",\"state\":\"complete\"}",
+            22
+          ]
+        ],
+        []
+      ],
+      "after_rowsets": [
+        [
+          [
+            "parent",
+            "[[\"aad25448-03eb-4f83-a75e-cb7055fd33be\",\"issue\",\"\\\"review-I\\\"\"]]",
+            "{\"evidence\":[\"P\",21],\"source\":\"review-parent-original\"}",
+            "{\"clock\":{\"at_us\":21,\"domain\":\"review-parent-clock\"},\"document_kind\":\"timeline_event\",\"state\":\"complete\"}",
+            22
+          ]
+        ],
+        []
+      ],
+      "transaction_open": false,
+      "sql_trace": [
+        "PRAGMA database_list",
+        "PRAGMA foreign_keys",
+        "PRAGMA recursive_triggers",
+        "PRAGMA ignore_check_constraints",
+        "PRAGMA defer_foreign_keys",
+        "PRAGMA trusted_schema",
+        "PRAGMA function_list",
+        "SELECT type,name,tbl_name,sql FROM sqlite_schema WHERE name NOT LIKE 'sqlite_%' ORDER BY type,name",
+        "BEGIN IMMEDIATE",
+        "SELECT type,name,tbl_name,sql FROM sqlite_schema WHERE name IN('i2_transfer_stage_fence','i2_transfer_report_stage_fence') ORDER BY name",
+        "ROLLBACK"
+      ]
+    },
+    {
+      "id": "invalid-original-'invalid-original-state'-replay",
+      "supplied_from_endpoint": "invalid-original-state",
+      "stage": "isolated-approved-test-fixture",
+      "replay": true,
+      "expected_code": "INCOMPLETE_ORIGINAL_REPORT",
+      "actual_outcome": "refused",
+      "actual_code": "INCOMPLETE_ORIGINAL_REPORT",
+      "safety_predicate_passed": true,
+      "controls": {
+        "pure_validate_originals": "INCOMPLETE_ORIGINAL_REPORT",
+        "dataclasses_replace": "INCOMPLETE_ORIGINAL_REPORT"
+      },
+      "stored_from_endpoint": "explicit_null",
+      "stored_report_equals_supplied_original": false,
+      "before_rowsets": [
+        [
+          [
+            "parent",
+            "[[\"aad25448-03eb-4f83-a75e-cb7055fd33be\",\"issue\",\"\\\"review-I\\\"\"]]",
+            "{\"evidence\":[\"P\",21],\"source\":\"review-parent-original\"}",
+            "{\"clock\":{\"at_us\":21,\"domain\":\"review-parent-clock\"},\"document_kind\":\"timeline_event\",\"state\":\"complete\"}",
+            22
+          ],
+          [
+            "transfer_event_report",
+            "[]",
+            "{\"evidence\":[\"E\",900],\"source\":\"review-event-original\"}",
+            "{\"clock\":{\"at_us\":900,\"domain\":\"review-event-clock\"},\"endpoints\":[[\"transfer_from_repository\",\"null\"],[\"transfer_to_repository\",\"null\"]],\"event_type\":\"transferred\",\"from_provider_repository_id\":null,\"parent_members_json\":\"[[\\\"aad25448-03eb-4f83-a75e-cb7055fd33be\\\",\\\"issue\\\",\\\"\\\\\\\"review-I\\\\\\\"\\\"]]\",\"parent_provenance_json\":\"{\\\"evidence\\\":[\\\"P\\\",21],\\\"source\\\":\\\"review-parent-original\\\"}\",\"parent_scope_json\":\"{\\\"clock\\\":{\\\"at_us\\\":21,\\\"domain\\\":\\\"review-parent-clock\\\"},\\\"document_kind\\\":\\\"timeline_event\\\",\\\"state\\\":\\\"complete\\\"}\",\"provided_roles\":[\"transfer_from_repository\",\"transfer_to_repository\"],\"to_provider_repository_id\":null}",
+            901
+          ]
+        ],
+        [
+          [
+            "transfer_from_repository",
+            "null",
+            "[]",
+            "{\"clock\":{\"at_us\":900,\"domain\":\"review-event-clock\"},\"endpoints\":[[\"transfer_from_repository\",\"null\"],[\"transfer_to_repository\",\"null\"]],\"event_type\":\"transferred\",\"from_provider_repository_id\":null,\"parent_members_json\":\"[[\\\"aad25448-03eb-4f83-a75e-cb7055fd33be\\\",\\\"issue\\\",\\\"\\\\\\\"review-I\\\\\\\"\\\"]]\",\"parent_provenance_json\":\"{\\\"evidence\\\":[\\\"P\\\",21],\\\"source\\\":\\\"review-parent-original\\\"}\",\"parent_scope_json\":\"{\\\"clock\\\":{\\\"at_us\\\":21,\\\"domain\\\":\\\"review-parent-clock\\\"},\\\"document_kind\\\":\\\"timeline_event\\\",\\\"state\\\":\\\"complete\\\"}\",\"provided_roles\":[\"transfer_from_repository\",\"transfer_to_repository\"],\"to_provider_repository_id\":null}"
+          ],
+          [
+            "transfer_to_repository",
+            "null",
+            "[]",
+            "{\"clock\":{\"at_us\":900,\"domain\":\"review-event-clock\"},\"endpoints\":[[\"transfer_from_repository\",\"null\"],[\"transfer_to_repository\",\"null\"]],\"event_type\":\"transferred\",\"from_provider_repository_id\":null,\"parent_members_json\":\"[[\\\"aad25448-03eb-4f83-a75e-cb7055fd33be\\\",\\\"issue\\\",\\\"\\\\\\\"review-I\\\\\\\"\\\"]]\",\"parent_provenance_json\":\"{\\\"evidence\\\":[\\\"P\\\",21],\\\"source\\\":\\\"review-parent-original\\\"}\",\"parent_scope_json\":\"{\\\"clock\\\":{\\\"at_us\\\":21,\\\"domain\\\":\\\"review-parent-clock\\\"},\\\"document_kind\\\":\\\"timeline_event\\\",\\\"state\\\":\\\"complete\\\"}\",\"provided_roles\":[\"transfer_from_repository\",\"transfer_to_repository\"],\"to_provider_repository_id\":null}"
+          ]
+        ]
+      ],
+      "after_rowsets": [
+        [
+          [
+            "parent",
+            "[[\"aad25448-03eb-4f83-a75e-cb7055fd33be\",\"issue\",\"\\\"review-I\\\"\"]]",
+            "{\"evidence\":[\"P\",21],\"source\":\"review-parent-original\"}",
+            "{\"clock\":{\"at_us\":21,\"domain\":\"review-parent-clock\"},\"document_kind\":\"timeline_event\",\"state\":\"complete\"}",
+            22
+          ],
+          [
+            "transfer_event_report",
+            "[]",
+            "{\"evidence\":[\"E\",900],\"source\":\"review-event-original\"}",
+            "{\"clock\":{\"at_us\":900,\"domain\":\"review-event-clock\"},\"endpoints\":[[\"transfer_from_repository\",\"null\"],[\"transfer_to_repository\",\"null\"]],\"event_type\":\"transferred\",\"from_provider_repository_id\":null,\"parent_members_json\":\"[[\\\"aad25448-03eb-4f83-a75e-cb7055fd33be\\\",\\\"issue\\\",\\\"\\\\\\\"review-I\\\\\\\"\\\"]]\",\"parent_provenance_json\":\"{\\\"evidence\\\":[\\\"P\\\",21],\\\"source\\\":\\\"review-parent-original\\\"}\",\"parent_scope_json\":\"{\\\"clock\\\":{\\\"at_us\\\":21,\\\"domain\\\":\\\"review-parent-clock\\\"},\\\"document_kind\\\":\\\"timeline_event\\\",\\\"state\\\":\\\"complete\\\"}\",\"provided_roles\":[\"transfer_from_repository\",\"transfer_to_repository\"],\"to_provider_repository_id\":null}",
+            901
+          ]
+        ],
+        [
+          [
+            "transfer_from_repository",
+            "null",
+            "[]",
+            "{\"clock\":{\"at_us\":900,\"domain\":\"review-event-clock\"},\"endpoints\":[[\"transfer_from_repository\",\"null\"],[\"transfer_to_repository\",\"null\"]],\"event_type\":\"transferred\",\"from_provider_repository_id\":null,\"parent_members_json\":\"[[\\\"aad25448-03eb-4f83-a75e-cb7055fd33be\\\",\\\"issue\\\",\\\"\\\\\\\"review-I\\\\\\\"\\\"]]\",\"parent_provenance_json\":\"{\\\"evidence\\\":[\\\"P\\\",21],\\\"source\\\":\\\"review-parent-original\\\"}\",\"parent_scope_json\":\"{\\\"clock\\\":{\\\"at_us\\\":21,\\\"domain\\\":\\\"review-parent-clock\\\"},\\\"document_kind\\\":\\\"timeline_event\\\",\\\"state\\\":\\\"complete\\\"}\",\"provided_roles\":[\"transfer_from_repository\",\"transfer_to_repository\"],\"to_provider_repository_id\":null}"
+          ],
+          [
+            "transfer_to_repository",
+            "null",
+            "[]",
+            "{\"clock\":{\"at_us\":900,\"domain\":\"review-event-clock\"},\"endpoints\":[[\"transfer_from_repository\",\"null\"],[\"transfer_to_repository\",\"null\"]],\"event_type\":\"transferred\",\"from_provider_repository_id\":null,\"parent_members_json\":\"[[\\\"aad25448-03eb-4f83-a75e-cb7055fd33be\\\",\\\"issue\\\",\\\"\\\\\\\"review-I\\\\\\\"\\\"]]\",\"parent_provenance_json\":\"{\\\"evidence\\\":[\\\"P\\\",21],\\\"source\\\":\\\"review-parent-original\\\"}\",\"parent_scope_json\":\"{\\\"clock\\\":{\\\"at_us\\\":21,\\\"domain\\\":\\\"review-parent-clock\\\"},\\\"document_kind\\\":\\\"timeline_event\\\",\\\"state\\\":\\\"complete\\\"}\",\"provided_roles\":[\"transfer_from_repository\",\"transfer_to_repository\"],\"to_provider_repository_id\":null}"
+          ]
+        ]
+      ],
+      "transaction_open": false,
+      "sql_trace": [
+        "PRAGMA database_list",
+        "PRAGMA foreign_keys",
+        "PRAGMA recursive_triggers",
+        "PRAGMA ignore_check_constraints",
+        "PRAGMA defer_foreign_keys",
+        "PRAGMA trusted_schema",
+        "PRAGMA function_list",
+        "SELECT type,name,tbl_name,sql FROM sqlite_schema WHERE name NOT LIKE 'sqlite_%' ORDER BY type,name",
+        "BEGIN IMMEDIATE",
+        "SELECT type,name,tbl_name,sql FROM sqlite_schema WHERE name IN('i2_transfer_stage_fence','i2_transfer_report_stage_fence') ORDER BY name",
+        "ROLLBACK"
+      ]
+    },
+    {
+      "id": "normal-fence-'invalid-original-state'",
+      "actual_code": "I2_TRANSFER_UNSUPPORTED",
+      "safety_predicate_passed": true,
+      "rowsets_unchanged": true
+    }
+  ]
+}

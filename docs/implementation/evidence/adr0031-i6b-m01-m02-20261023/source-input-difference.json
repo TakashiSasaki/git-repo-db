@@ -1,0 +1,31 @@
+{
+  "old_head": "8521158f2996f125d2fcaac36ea79ac1296a7cf7",
+  "new_head": "d68dc43bff1eb949b071ebf1652e3d70a5a52ed9",
+  "old_input_count": 484,
+  "new_input_count": 486,
+  "changed": [
+    {
+      "path": "src/repo_catalog/domain/context_dependencies.py",
+      "old_sha256": "93d6d7bdbf14cd5c26d13c36a8e2e3bd65ae6f55a208941ada2353af65476fb0",
+      "new_sha256": "cc35bcbf7aeb4359ac01cf34b50eebbb0a522f1bc3d5a3c609290f83304a0028"
+    },
+    {
+      "path": "src/repo_catalog/domain/exchange.py",
+      "old_sha256": "6709ad532ef5aef65118505d2270960c49a21521c68460da2044b897dae97957",
+      "new_sha256": "46c5d9c5f80a39ff967418d2662274fa8b70134f33050ac00c2e464b4dc10012"
+    },
+    {
+      "path": "tests/unit/test_context_scan_budget.py",
+      "old_sha256": null,
+      "new_sha256": "629f38eb0c54e5e51d2b65eb448974c59fc1a5ab62834fd224a42f1b35c63cde"
+    },
+    {
+      "path": "tests/unit/test_exchange_received_digest.py",
+      "old_sha256": null,
+      "new_sha256": "48c098b7ea08b0ec647b7d5c320500525c8f9a801d1b2791eac614446168d15f"
+    }
+  ],
+  "old_inventory_sha256": "f518686c330fd60a5d5b7837a86b6912a9887fa08ccb90a9030118be454cdce4",
+  "new_inventory_sha256": "47a51892e1f2d7f56d5c6f7c07ff9dcc26ddfb76f34b95eeba8e9392267687db",
+  "scope": "Runtime/test/script/workflow/config inputs using unchanged scripts.verify_i5_offline input selector. Full bindings retain individual file hashes; root separately inventories .github/actions."
+}

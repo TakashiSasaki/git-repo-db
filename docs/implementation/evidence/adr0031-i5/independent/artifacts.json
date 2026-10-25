@@ -1,0 +1,9 @@
+{
+  "archive": "independent-evidence.zip",
+  "bytes": 1757961,
+  "sha256": "a8208c0cdb61ba7df1e59195af2c2e5005c34fbeb96e1f4ff3ff9513f866a0c9",
+  "indexed_payload_entries": 124,
+  "archive_entries_including_index": 124,
+  "report_sha256": "8fce9f19a2621e540dc709378dbc12268580c58bda363344091588b0a0d2db20",
+  "all_payload_hashes_reverified": true
+}

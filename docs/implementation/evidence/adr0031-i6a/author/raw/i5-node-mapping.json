@@ -1,0 +1,168 @@
+{
+  "inherited_count": 29,
+  "preserved_node_ids": 29,
+  "mapping": [
+    {
+      "old_node": "tests/integration/p3/test_transfer_admission.py::test_schema_verification_and_isolation_exactness[composed-sql]",
+      "new_node": "tests/integration/p3/test_transfer_admission.py::test_schema_verification_and_isolation_exactness[composed-sql]",
+      "assertion_purpose": "Packaged schema is exact; only the two expected fences are removed in the structural probe."
+    },
+    {
+      "old_node": "tests/integration/p3/test_transfer_admission.py::test_schema_verification_and_isolation_exactness[product-factory]",
+      "new_node": "tests/integration/p3/test_transfer_admission.py::test_schema_verification_and_isolation_exactness[product-factory]",
+      "assertion_purpose": "Packaged schema is exact; only the two expected fences are removed in the structural probe."
+    },
+    {
+      "old_node": "tests/integration/p3/test_transfer_admission.py::test_normal_fenced_product_refuses_transfer[composed-sql]",
+      "new_node": "tests/integration/p3/test_transfer_admission.py::test_normal_fenced_product_refuses_transfer[composed-sql]",
+      "assertion_purpose": "Both normal composed and actual on-disk product connections refuse Transfer admission/query and direct endpoints."
+    },
+    {
+      "old_node": "tests/integration/p3/test_transfer_admission.py::test_normal_fenced_product_refuses_transfer[product-factory]",
+      "new_node": "tests/integration/p3/test_transfer_admission.py::test_normal_fenced_product_refuses_transfer[product-factory]",
+      "assertion_purpose": "Both normal composed and actual on-disk product connections refuse Transfer admission/query and direct endpoints."
+    },
+    {
+      "old_node": "tests/integration/p3/test_transfer_admission.py::test_admit_transfer_event_2sided_success[composed-sql]",
+      "new_node": "tests/integration/p3/test_transfer_admission.py::test_admit_transfer_event_2sided_success[composed-sql]",
+      "assertion_purpose": "A complete two-sided original report and both full endpoint references are admitted and reconstruct exactly.",
+      "adaptation": "Unfenced positives now use the explicit fresh-memory harness for both preserved IDs; authority is finite and service-issued."
+    },
+    {
+      "old_node": "tests/integration/p3/test_transfer_admission.py::test_admit_transfer_event_2sided_success[product-factory]",
+      "new_node": "tests/integration/p3/test_transfer_admission.py::test_admit_transfer_event_2sided_success[product-factory]",
+      "assertion_purpose": "A complete two-sided original report and both full endpoint references are admitted and reconstruct exactly.",
+      "adaptation": "Unfenced positives now use the explicit fresh-memory harness for both preserved IDs; authority is finite and service-issued."
+    },
+    {
+      "old_node": "tests/integration/p3/test_transfer_admission.py::test_admit_transfer_event_via_production_context",
+      "new_node": "tests/integration/p3/test_transfer_admission.py::test_admit_transfer_event_via_production_context",
+      "assertion_purpose": "The actual production Context facade admits and reconstructs the complete unit through the trusted disposable harness.",
+      "adaptation": "Replaces on-disk fence removal/manual commit with fresh-memory Context.owned_transaction and explicit local authority."
+    },
+    {
+      "old_node": "tests/integration/p3/test_transfer_admission.py::test_g3a_permanent_violation_mismatched_parent_issue[composed-sql]",
+      "new_node": "tests/integration/p3/test_transfer_admission.py::test_g3a_permanent_violation_mismatched_parent_issue[composed-sql]",
+      "assertion_purpose": "Lawful I8 Parent evidence is preserved while permanently refusing its use for a native I7 Event.",
+      "adaptation": "Stable QS10_PARENT_INELIGIBLE refusal replaces historical descriptive ValueError."
+    },
+    {
+      "old_node": "tests/integration/p3/test_transfer_admission.py::test_g3a_permanent_violation_mismatched_parent_issue[product-factory]",
+      "new_node": "tests/integration/p3/test_transfer_admission.py::test_g3a_permanent_violation_mismatched_parent_issue[product-factory]",
+      "assertion_purpose": "Lawful I8 Parent evidence is preserved while permanently refusing its use for a native I7 Event.",
+      "adaptation": "Stable QS10_PARENT_INELIGIBLE refusal replaces historical descriptive ValueError."
+    },
+    {
+      "old_node": "tests/integration/p3/test_transfer_admission.py::test_dependency_missing_resupply_succeeds[composed-sql]",
+      "new_node": "tests/integration/p3/test_transfer_admission.py::test_dependency_missing_resupply_succeeds[composed-sql]",
+      "assertion_purpose": "Each missing original dependency refuses; only explicit original resupply after all arrivals admits.",
+      "adaptation": "Stable MISSING_DEPENDENCY codes replace existence-bearing messages; mapping support is now mandatory."
+    },
+    {
+      "old_node": "tests/integration/p3/test_transfer_admission.py::test_dependency_missing_resupply_succeeds[product-factory]",
+      "new_node": "tests/integration/p3/test_transfer_admission.py::test_dependency_missing_resupply_succeeds[product-factory]",
+      "assertion_purpose": "Each missing original dependency refuses; only explicit original resupply after all arrivals admits.",
+      "adaptation": "Stable MISSING_DEPENDENCY codes replace existence-bearing messages; mapping support is now mandatory."
+    },
+    {
+      "old_node": "tests/integration/p3/test_transfer_admission.py::test_mapping_support_dependency[composed-sql]",
+      "new_node": "tests/integration/p3/test_transfer_admission.py::test_mapping_support_dependency[composed-sql]",
+      "assertion_purpose": "Missing genuine mapping claims refuse; original resupply after support arrival succeeds.",
+      "adaptation": "Both resolved endpoints now carry their own explicit original MappingSupport."
+    },
+    {
+      "old_node": "tests/integration/p3/test_transfer_admission.py::test_mapping_support_dependency[product-factory]",
+      "new_node": "tests/integration/p3/test_transfer_admission.py::test_mapping_support_dependency[product-factory]",
+      "assertion_purpose": "Missing genuine mapping claims refuse; original resupply after support arrival succeeds.",
+      "adaptation": "Both resolved endpoints now carry their own explicit original MappingSupport."
+    },
+    {
+      "old_node": "tests/integration/p3/test_transfer_admission.py::test_provider_event_meaning_and_type[composed-sql]",
+      "new_node": "tests/integration/p3/test_transfer_admission.py::test_provider_event_meaning_and_type[composed-sql]",
+      "assertion_purpose": "Only genuine event_type='transferred' constructs an admission-capable report."
+    },
+    {
+      "old_node": "tests/integration/p3/test_transfer_admission.py::test_provider_event_meaning_and_type[product-factory]",
+      "new_node": "tests/integration/p3/test_transfer_admission.py::test_provider_event_meaning_and_type[product-factory]",
+      "assertion_purpose": "Only genuine event_type='transferred' constructs an admission-capable report."
+    },
+    {
+      "old_node": "tests/integration/p3/test_transfer_admission.py::test_prebind_type_strictness[composed-sql]",
+      "new_node": "tests/integration/p3/test_transfer_admission.py::test_prebind_type_strictness[composed-sql]",
+      "assertion_purpose": "Original observation and clock bool/float/string/negative values fail before SQLite affinity."
+    },
+    {
+      "old_node": "tests/integration/p3/test_transfer_admission.py::test_prebind_type_strictness[product-factory]",
+      "new_node": "tests/integration/p3/test_transfer_admission.py::test_prebind_type_strictness[product-factory]",
+      "assertion_purpose": "Original observation and clock bool/float/string/negative values fail before SQLite affinity."
+    },
+    {
+      "old_node": "tests/integration/p3/test_transfer_admission.py::test_atomicity_second_endpoint_failure_rolls_back[composed-sql]",
+      "new_node": "tests/integration/p3/test_transfer_admission.py::test_atomicity_second_endpoint_failure_rolls_back[composed-sql]",
+      "assertion_purpose": "An unavailable second target refuses without retaining any part of the Transfer unit.",
+      "adaptation": "Original preflight assertion preserved; actual in-flight rollback is additionally tested by test_real_second_endpoint_insert_failure_rolls_back_whole_unit."
+    },
+    {
+      "old_node": "tests/integration/p3/test_transfer_admission.py::test_atomicity_second_endpoint_failure_rolls_back[product-factory]",
+      "new_node": "tests/integration/p3/test_transfer_admission.py::test_atomicity_second_endpoint_failure_rolls_back[product-factory]",
+      "assertion_purpose": "An unavailable second target refuses without retaining any part of the Transfer unit.",
+      "adaptation": "Original preflight assertion preserved; actual in-flight rollback is additionally tested by test_real_second_endpoint_insert_failure_rolls_back_whole_unit."
+    },
+    {
+      "old_node": "tests/integration/p3/test_transfer_admission.py::test_replay_idempotency_and_mutation_rejection[composed-sql]",
+      "new_node": "tests/integration/p3/test_transfer_admission.py::test_replay_idempotency_and_mutation_rejection[composed-sql]",
+      "assertion_purpose": "Exact original replay deduplicates while original time and target mutation fail immutably.",
+      "adaptation": "Target mutation now uses a valid explicit-null declaration, preserving qualification checks before replay comparison."
+    },
+    {
+      "old_node": "tests/integration/p3/test_transfer_admission.py::test_replay_idempotency_and_mutation_rejection[product-factory]",
+      "new_node": "tests/integration/p3/test_transfer_admission.py::test_replay_idempotency_and_mutation_rejection[product-factory]",
+      "assertion_purpose": "Exact original replay deduplicates while original time and target mutation fail immutably.",
+      "adaptation": "Target mutation now uses a valid explicit-null declaration, preserving qualification checks before replay comparison."
+    },
+    {
+      "old_node": "tests/integration/p3/test_transfer_admission.py::test_selection_and_truncation_rejection[composed-sql]",
+      "new_node": "tests/integration/p3/test_transfer_admission.py::test_selection_and_truncation_rejection[composed-sql]",
+      "assertion_purpose": "Selection omission cannot yield an admitted partial report.",
+      "adaptation": "Whole-unit selection returns None; explicit fragment construction refuses OMITTED_BY_SELECTION instead of constructing then rejecting a fragment."
+    },
+    {
+      "old_node": "tests/integration/p3/test_transfer_admission.py::test_selection_and_truncation_rejection[product-factory]",
+      "new_node": "tests/integration/p3/test_transfer_admission.py::test_selection_and_truncation_rejection[product-factory]",
+      "assertion_purpose": "Selection omission cannot yield an admitted partial report.",
+      "adaptation": "Whole-unit selection returns None; explicit fragment construction refuses OMITTED_BY_SELECTION instead of constructing then rejecting a fragment."
+    },
+    {
+      "old_node": "tests/integration/p3/test_transfer_admission.py::test_genuine_1sided_and_explicit_null_admission[composed-sql]",
+      "new_node": "tests/integration/p3/test_transfer_admission.py::test_genuine_1sided_and_explicit_null_admission[composed-sql]",
+      "assertion_purpose": "Genuine original one-sided state admits and reconstructs independently of omission."
+    },
+    {
+      "old_node": "tests/integration/p3/test_transfer_admission.py::test_genuine_1sided_and_explicit_null_admission[product-factory]",
+      "new_node": "tests/integration/p3/test_transfer_admission.py::test_genuine_1sided_and_explicit_null_admission[product-factory]",
+      "assertion_purpose": "Genuine original one-sided state admits and reconstructs independently of omission."
+    },
+    {
+      "old_node": "tests/integration/p3/test_transfer_admission.py::test_explicit_null_admission[composed-sql]",
+      "new_node": "tests/integration/p3/test_transfer_admission.py::test_explicit_null_admission[composed-sql]",
+      "assertion_purpose": "Reported null is preserved as explicit_null with a distinct resolved opposite side."
+    },
+    {
+      "old_node": "tests/integration/p3/test_transfer_admission.py::test_explicit_null_admission[product-factory]",
+      "new_node": "tests/integration/p3/test_transfer_admission.py::test_explicit_null_admission[product-factory]",
+      "assertion_purpose": "Reported null is preserved as explicit_null with a distinct resolved opposite side."
+    },
+    {
+      "old_node": "tests/integration/p3/test_transfer_admission.py::test_transfer_event_reports_filtering_and_no_cross_borrowing[composed-sql]",
+      "new_node": "tests/integration/p3/test_transfer_admission.py::test_transfer_event_reports_filtering_and_no_cross_borrowing[composed-sql]",
+      "assertion_purpose": "Different Event keys remain separate and repository filtering cannot borrow endpoints across reports.",
+      "adaptation": "Incomplete selected reports are wholly withheld; selecting both endpoints returns the exact complete original. Separate actual Provider mappings avoid qualification ambiguity."
+    },
+    {
+      "old_node": "tests/integration/p3/test_transfer_admission.py::test_transfer_event_reports_filtering_and_no_cross_borrowing[product-factory]",
+      "new_node": "tests/integration/p3/test_transfer_admission.py::test_transfer_event_reports_filtering_and_no_cross_borrowing[product-factory]",
+      "assertion_purpose": "Different Event keys remain separate and repository filtering cannot borrow endpoints across reports.",
+      "adaptation": "Incomplete selected reports are wholly withheld; selecting both endpoints returns the exact complete original. Separate actual Provider mappings avoid qualification ambiguity."
+    }
+  ]
+}

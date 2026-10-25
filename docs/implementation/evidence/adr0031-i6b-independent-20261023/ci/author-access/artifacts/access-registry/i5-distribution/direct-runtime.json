@@ -1,0 +1,1025 @@
+{
+  "sqlite": [
+    "3.53.1",
+    "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9"
+  ],
+  "python": "3.12.15 (main, Oct 21 2026, 17:47:06) [Clang 23.1.3 ]",
+  "executable": "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/direct-venv/bin/python",
+  "origin": "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5-distribution/direct-venv/lib/python3.12/site-packages/repo_catalog/__init__.py",
+  "compile_options": [
+    [
+      "ATOMIC_INTRINSICS=1"
+    ],
+    [
+      "COMPILER=clang-23.1.3"
+    ],
+    [
+      "DEFAULT_AUTOVACUUM"
+    ],
+    [
+      "DEFAULT_CACHE_SIZE=-2000"
+    ],
+    [
+      "DEFAULT_FILE_FORMAT=4"
+    ],
+    [
+      "DEFAULT_JOURNAL_SIZE_LIMIT=-1"
+    ],
+    [
+      "DEFAULT_MMAP_SIZE=0"
+    ],
+    [
+      "DEFAULT_PAGE_SIZE=4096"
+    ],
+    [
+      "DEFAULT_PCACHE_INITSZ=20"
+    ],
+    [
+      "DEFAULT_RECURSIVE_TRIGGERS"
+    ],
+    [
+      "DEFAULT_SECTOR_SIZE=4096"
+    ],
+    [
+      "DEFAULT_SYNCHRONOUS=2"
+    ],
+    [
+      "DEFAULT_WAL_AUTOCHECKPOINT=1000"
+    ],
+    [
+      "DEFAULT_WAL_SYNCHRONOUS=2"
+    ],
+    [
+      "DEFAULT_WORKER_THREADS=0"
+    ],
+    [
+      "DIRECT_OVERFLOW_READ"
+    ],
+    [
+      "ENABLE_DBSTAT_VTAB"
+    ],
+    [
+      "ENABLE_FTS3"
+    ],
+    [
+      "ENABLE_FTS3_PARENTHESIS"
+    ],
+    [
+      "ENABLE_FTS4"
+    ],
+    [
+      "ENABLE_FTS5"
+    ],
+    [
+      "ENABLE_GEOPOLY"
+    ],
+    [
+      "ENABLE_MATH_FUNCTIONS"
+    ],
+    [
+      "ENABLE_PERCENTILE"
+    ],
+    [
+      "ENABLE_RTREE"
+    ],
+    [
+      "MALLOC_SOFT_LIMIT=1024"
+    ],
+    [
+      "MAX_ATTACHED=10"
+    ],
+    [
+      "MAX_COLUMN=2000"
+    ],
+    [
+      "MAX_COMPOUND_SELECT=500"
+    ],
+    [
+      "MAX_DEFAULT_PAGE_SIZE=8192"
+    ],
+    [
+      "MAX_EXPR_DEPTH=1000"
+    ],
+    [
+      "MAX_FUNCTION_ARG=1000"
+    ],
+    [
+      "MAX_LENGTH=1000000000"
+    ],
+    [
+      "MAX_LIKE_PATTERN_LENGTH=50000"
+    ],
+    [
+      "MAX_MMAP_SIZE=0x7fff0000"
+    ],
+    [
+      "MAX_PAGE_COUNT=0xfffffffe"
+    ],
+    [
+      "MAX_PAGE_SIZE=65536"
+    ],
+    [
+      "MAX_SQL_LENGTH=1000000000"
+    ],
+    [
+      "MAX_TRIGGER_DEPTH=1000"
+    ],
+    [
+      "MAX_VARIABLE_NUMBER=32766"
+    ],
+    [
+      "MAX_VDBE_OP=250000000"
+    ],
+    [
+      "MAX_WORKER_THREADS=8"
+    ],
+    [
+      "MUTEX_PTHREADS"
+    ],
+    [
+      "SYSTEM_MALLOC"
+    ],
+    [
+      "TEMP_STORE=1"
+    ],
+    [
+      "THREADSAFE=1"
+    ]
+  ],
+  "pragmas": {
+    "foreign_keys": [
+      [
+        1
+      ]
+    ],
+    "recursive_triggers": [
+      [
+        1
+      ]
+    ],
+    "ignore_check_constraints": [
+      [
+        0
+      ]
+    ],
+    "defer_foreign_keys": [
+      [
+        0
+      ]
+    ],
+    "trusted_schema": [
+      [
+        1
+      ]
+    ]
+  },
+  "functions": [
+    [
+      "p1_mapping_target",
+      0,
+      "s",
+      "utf8",
+      1,
+      2048
+    ],
+    [
+      "p1_registration_json",
+      0,
+      "s",
+      "utf8",
+      2,
+      2048
+    ],
+    [
+      "p1_resource_identification_v1",
+      0,
+      "s",
+      "utf8",
+      6,
+      2048
+    ],
+    [
+      "p1_parent_report_v1",
+      0,
+      "s",
+      "utf8",
+      7,
+      2048
+    ],
+    [
+      "p1_mapping_provenance",
+      0,
+      "s",
+      "utf8",
+      1,
+      2048
+    ],
+    [
+      "p1_transfer_event_v1",
+      0,
+      "s",
+      "utf8",
+      7,
+      2048
+    ],
+    [
+      "p1_provenance",
+      0,
+      "s",
+      "utf8",
+      1,
+      2048
+    ],
+    [
+      "p1_git_observation",
+      0,
+      "s",
+      "utf8",
+      7,
+      2048
+    ],
+    [
+      "p1_intrinsic_group",
+      0,
+      "s",
+      "utf8",
+      6,
+      2048
+    ],
+    [
+      "p1_group",
+      0,
+      "s",
+      "utf8",
+      4,
+      2048
+    ],
+    [
+      "p1_coverage_members",
+      0,
+      "s",
+      "utf8",
+      1,
+      2048
+    ],
+    [
+      "p1_ref",
+      0,
+      "s",
+      "utf8",
+      1,
+      2048
+    ],
+    [
+      "p1_array",
+      0,
+      "s",
+      "utf8",
+      -1,
+      2048
+    ],
+    [
+      "p1_json",
+      0,
+      "s",
+      "utf8",
+      1,
+      2048
+    ],
+    [
+      "p1_oid",
+      0,
+      "s",
+      "utf8",
+      2,
+      2048
+    ],
+    [
+      "p1_notes_group",
+      0,
+      "s",
+      "utf8",
+      3,
+      2048
+    ],
+    [
+      "p1_mapping_clock",
+      0,
+      "s",
+      "utf8",
+      1,
+      2048
+    ],
+    [
+      "p1_note_role",
+      0,
+      "s",
+      "utf8",
+      6,
+      2048
+    ],
+    [
+      "p1_native",
+      0,
+      "s",
+      "utf8",
+      6,
+      2048
+    ],
+    [
+      "p1_text_sha256",
+      0,
+      "s",
+      "utf8",
+      1,
+      2048
+    ],
+    [
+      "p1_repository_claim",
+      0,
+      "s",
+      "utf8",
+      4,
+      2048
+    ],
+    [
+      "p1_intrinsic_claim",
+      0,
+      "s",
+      "utf8",
+      4,
+      2048
+    ],
+    [
+      "p1_transfer_endpoint_v1",
+      0,
+      "s",
+      "utf8",
+      4,
+      2048
+    ],
+    [
+      "p1_uuid4",
+      0,
+      "s",
+      "utf8",
+      1,
+      2048
+    ],
+    [
+      "p1_claim",
+      0,
+      "s",
+      "utf8",
+      2,
+      2048
+    ],
+    [
+      "p1_resource_identity_v1",
+      0,
+      "s",
+      "utf8",
+      1,
+      2048
+    ],
+    [
+      "p1_transfer_value_v1",
+      0,
+      "s",
+      "utf8",
+      2,
+      2048
+    ]
+  ],
+  "fingerprint": "924cc7557fb3da6211ea070185881f5fcaeff9bf52b6e237a361a238a2ea0c6e",
+  "schema": [
+    [
+      "index",
+      "event_report_identity_fk",
+      "resource_relations",
+      "CREATE UNIQUE INDEX event_report_identity_fk ON resource_relations(\n service_instance_uuidv4,resource_kind,provider_resource_id,report_clock_json,provenance_json)\n WHERE relation_kind='transfer_event_report'"
+    ],
+    [
+      "index",
+      "parent_report_target",
+      "resource_relations",
+      "CREATE INDEX parent_report_target ON resource_relations(parent_service,parent_kind,parent_id)\n WHERE relation_kind='parent'"
+    ],
+    [
+      "index",
+      "parent_report_typed_fk",
+      "resource_relations",
+      "CREATE UNIQUE INDEX parent_report_typed_fk ON resource_relations(\n service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,\n members_json,provenance_json,scope_json,source_document_kind,parent_kind)"
+    ],
+    [
+      "index",
+      "resources_document_contract_fk",
+      "resources",
+      "CREATE UNIQUE INDEX resources_document_contract_fk ON resources(\n service_instance_uuidv4,resource_kind,provider_resource_id,reference_document_kind)"
+    ],
+    [
+      "index",
+      "resources_native_event_fk",
+      "resources",
+      "CREATE UNIQUE INDEX resources_native_event_fk ON resources(\n service_instance_uuidv4,resource_kind,provider_resource_id,\n reference_document_kind,identifier_namespace_kind,identifier_namespace_id)"
+    ],
+    [
+      "index",
+      "resources_typed_event_fk",
+      "resources",
+      "CREATE UNIQUE INDEX resources_typed_event_fk ON resources(\n service_instance_uuidv4,resource_kind,provider_resource_id,\n reference_document_kind,identifier_namespace_kind)"
+    ],
+    [
+      "index",
+      "rmd_by_provider_target",
+      "repository_mapping_dispositions",
+      "CREATE INDEX rmd_by_provider_target ON repository_mapping_dispositions(\n service_instance_uuidv4,resource_kind,provider_resource_id,claim_target_json,disposition_kind\n)"
+    ],
+    [
+      "index",
+      "rmd_by_replacement",
+      "repository_mapping_dispositions",
+      "CREATE INDEX rmd_by_replacement ON repository_mapping_dispositions(\n service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,replacement_clock_json,replacement_target_json,replacement_provenance_json\n) WHERE replacement_target_json IS NOT NULL"
+    ],
+    [
+      "index",
+      "rrr_by_repository",
+      "resource_repository_relations",
+      "CREATE INDEX rrr_by_repository ON resource_repository_relations(\n repository_uuidv4,relation_kind,service_instance_uuidv4,resource_kind,provider_resource_id\n) WHERE repository_uuidv4 IS NOT NULL"
+    ],
+    [
+      "index",
+      "rrr_current_clock",
+      "resource_repository_relations",
+      "CREATE INDEX rrr_current_clock ON resource_repository_relations(\n service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,clock_domain,source_clock_us DESC\n) WHERE relation_kind IN('owning_repository','base_repository','head_repository') AND source_clock_us IS NOT NULL"
+    ],
+    [
+      "index",
+      "rrr_event_report",
+      "resource_repository_relations",
+      "CREATE INDEX rrr_event_report ON resource_repository_relations(\n service_instance_uuidv4,resource_kind,provider_resource_id,clock_json,provenance_json,relation_kind\n) WHERE relation_kind IN('transfer_from_repository','transfer_to_repository')"
+    ],
+    [
+      "table",
+      "collection_terminals",
+      "collection_terminals",
+      "CREATE TABLE collection_terminals(\n service_instance_uuidv4 TEXT NOT NULL,\n resource_kind TEXT NOT NULL,\n provider_resource_id TEXT NOT NULL,\n collection_kind TEXT NOT NULL,\n provenance_json TEXT NOT NULL,\n observed_at_us INTEGER NOT NULL CHECK(typeof(observed_at_us)='integer' AND observed_at_us>0),\n terminal_state TEXT NOT NULL CHECK(terminal_state IN('complete','partial','unknown')),\n members_json TEXT NOT NULL CHECK(p1_json(members_json) AND json_type(members_json)='array'),\n PRIMARY KEY(service_instance_uuidv4,resource_kind,provider_resource_id,collection_kind,provenance_json,observed_at_us,terminal_state,members_json),\n FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id,collection_kind,provenance_json) REFERENCES collections\n) STRICT, WITHOUT ROWID"
+    ],
+    [
+      "table",
+      "collections",
+      "collections",
+      "CREATE TABLE collections(\n service_instance_uuidv4 TEXT NOT NULL,\n resource_kind TEXT NOT NULL,\n provider_resource_id TEXT NOT NULL,\n collection_kind TEXT NOT NULL CHECK(length(collection_kind)>0),\n provenance_json TEXT NOT NULL CHECK(p1_json(provenance_json) AND json_type(provenance_json)='object' AND COALESCE(json_type(provenance_json,'$.source')='text',0) AND length(json_extract(provenance_json,'$.source'))>0 AND json_type(provenance_json,'$.evidence') IS NOT NULL AND json_type(provenance_json,'$.evidence')!='null'),\n scope_json TEXT NOT NULL CHECK(p1_json(scope_json)),\n PRIMARY KEY(service_instance_uuidv4,resource_kind,provider_resource_id,collection_kind,provenance_json),\n FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id) REFERENCES resources\n) STRICT, WITHOUT ROWID"
+    ],
+    [
+      "table",
+      "core_references",
+      "core_references",
+      "CREATE TABLE core_references(\n service_instance_uuidv4 TEXT NOT NULL,\n resource_kind TEXT NOT NULL,\n provider_resource_id TEXT NOT NULL,\n role TEXT NOT NULL CHECK(length(role)>0),\n object_format TEXT NOT NULL,\n full_oid TEXT NOT NULL CHECK(p1_oid(object_format,full_oid)),\n provenance_json TEXT NOT NULL CHECK(p1_json(provenance_json) AND json_type(provenance_json)='object' AND COALESCE(json_type(provenance_json,'$.source')='text',0) AND length(json_extract(provenance_json,'$.source'))>0 AND json_type(provenance_json,'$.evidence') IS NOT NULL AND json_type(provenance_json,'$.evidence')!='null'),\n PRIMARY KEY(service_instance_uuidv4,resource_kind,provider_resource_id,role,object_format,full_oid,provenance_json),\n FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id) REFERENCES resources\n) STRICT, WITHOUT ROWID"
+    ],
+    [
+      "table",
+      "coverage_claims",
+      "coverage_claims",
+      "CREATE TABLE coverage_claims(\n owner_kind TEXT NOT NULL,\n owner_coordinates_json TEXT NOT NULL,\n observed_at_us INTEGER NOT NULL CHECK(typeof(observed_at_us)='integer' AND observed_at_us>0),\n coverage_state TEXT NOT NULL CHECK(coverage_state IN('complete','partial','unknown','not_applicable')),\n details_json TEXT CHECK(details_json IS NULL OR p1_json(details_json)),\n PRIMARY KEY(owner_kind,owner_coordinates_json,observed_at_us,coverage_state),\n FOREIGN KEY(owner_kind,owner_coordinates_json) REFERENCES coverage_scopes\n) STRICT, WITHOUT ROWID"
+    ],
+    [
+      "table",
+      "coverage_proofs",
+      "coverage_proofs",
+      "CREATE TABLE coverage_proofs(\n owner_kind TEXT NOT NULL,\n owner_coordinates_json TEXT NOT NULL,\n observed_at_us INTEGER NOT NULL CHECK(typeof(observed_at_us)='integer' AND observed_at_us>0),\n coverage_state TEXT NOT NULL,\n service_instance_uuidv4 TEXT NOT NULL,\n resource_kind TEXT NOT NULL,\n provider_resource_id TEXT NOT NULL,\n collection_kind TEXT NOT NULL,\n provenance_json TEXT NOT NULL,\n terminal_observed_at_us INTEGER NOT NULL CHECK(typeof(terminal_observed_at_us)='integer' AND terminal_observed_at_us>0),\n terminal_state TEXT NOT NULL,\n members_json TEXT NOT NULL,\n PRIMARY KEY(owner_kind,owner_coordinates_json,observed_at_us,coverage_state,service_instance_uuidv4,resource_kind,provider_resource_id,collection_kind,provenance_json,terminal_observed_at_us,terminal_state,members_json),\n FOREIGN KEY(owner_kind,owner_coordinates_json,observed_at_us,coverage_state) REFERENCES coverage_claims,\n FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id,collection_kind,provenance_json,terminal_observed_at_us,terminal_state,members_json) REFERENCES collection_terminals,\n CHECK(terminal_observed_at_us<=observed_at_us),\n CHECK(coverage_state!='complete' OR terminal_state='complete')\n) STRICT, WITHOUT ROWID"
+    ],
+    [
+      "table",
+      "coverage_scopes",
+      "coverage_scopes",
+      "CREATE TABLE coverage_scopes(\n owner_kind TEXT NOT NULL CHECK(owner_kind IN('repository','source','source_inventory','resource','collection','field')),\n owner_coordinates_json TEXT NOT NULL CHECK(p1_json(owner_coordinates_json)),\n repository_uuidv4 TEXT REFERENCES repository_context,\n source_registration_uuidv4 TEXT REFERENCES sources,\n source_scope_json TEXT CHECK(source_scope_json IS NULL OR p1_json(source_scope_json)),\n service_instance_uuidv4 TEXT,\n resource_kind TEXT,\n provider_resource_id TEXT,\n collection_kind TEXT,\n collection_provenance_json TEXT,\n field_name TEXT,\n coverage_kind TEXT NOT NULL CHECK(length(coverage_kind)>0),\n PRIMARY KEY(owner_kind,owner_coordinates_json),\n FOREIGN KEY(source_registration_uuidv4,repository_uuidv4) REFERENCES source_repositories,\n FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id) REFERENCES resources,\n FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id,collection_kind,collection_provenance_json) REFERENCES collections,\n CHECK(CASE owner_kind\n WHEN 'repository' THEN source_scope_json IS NULL AND repository_uuidv4 IS NOT NULL AND source_registration_uuidv4 IS NULL AND service_instance_uuidv4 IS NULL AND resource_kind IS NULL AND provider_resource_id IS NULL AND collection_kind IS NULL AND collection_provenance_json IS NULL AND field_name IS NULL AND owner_coordinates_json=p1_array(repository_uuidv4,coverage_kind)\n WHEN 'source' THEN source_scope_json IS NULL AND repository_uuidv4 IS NOT NULL AND source_registration_uuidv4 IS NOT NULL AND service_instance_uuidv4 IS NULL AND resource_kind IS NULL AND provider_resource_id IS NULL AND collection_kind IS NULL AND collection_provenance_json IS NULL AND field_name IS NULL AND owner_coordinates_json=p1_array(source_registration_uuidv4,repository_uuidv4,coverage_kind)\n WHEN 'resource' THEN source_scope_json IS NULL AND repository_uuidv4 IS NULL AND source_registration_uuidv4 IS NULL AND service_instance_uuidv4 IS NOT NULL AND resource_kind IS NOT NULL AND provider_resource_id IS NOT NULL AND collection_kind IS NULL AND collection_provenance_json IS NULL AND field_name IS NULL AND owner_coordinates_json=p1_array(service_instance_uuidv4,resource_kind,provider_resource_id,coverage_kind)\n WHEN 'collection' THEN source_scope_json IS NULL AND repository_uuidv4 IS NULL AND source_registration_uuidv4 IS NULL AND service_instance_uuidv4 IS NOT NULL AND resource_kind IS NOT NULL AND provider_resource_id IS NOT NULL AND collection_kind IS NOT NULL AND collection_provenance_json IS NOT NULL AND field_name IS NULL AND owner_coordinates_json=p1_array(service_instance_uuidv4,resource_kind,provider_resource_id,collection_kind,collection_provenance_json,coverage_kind)\n WHEN 'field' THEN source_scope_json IS NULL AND repository_uuidv4 IS NULL AND source_registration_uuidv4 IS NULL AND service_instance_uuidv4 IS NOT NULL AND resource_kind IS NOT NULL AND provider_resource_id IS NOT NULL AND collection_kind IS NULL AND collection_provenance_json IS NULL AND field_name IS NOT NULL AND length(field_name)>0 AND owner_coordinates_json=p1_array(service_instance_uuidv4,resource_kind,provider_resource_id,field_name,coverage_kind)\n WHEN 'source_inventory' THEN repository_uuidv4 IS NULL AND source_registration_uuidv4 IS NOT NULL AND source_scope_json IS NOT NULL AND service_instance_uuidv4 IS NULL AND resource_kind IS NULL AND provider_resource_id IS NULL AND collection_kind IS NULL AND collection_provenance_json IS NULL AND field_name IS NULL AND owner_coordinates_json=p1_array(source_registration_uuidv4,source_scope_json,coverage_kind)\n ELSE 0 END)\n) STRICT, WITHOUT ROWID"
+    ],
+    [
+      "table",
+      "field_candidates",
+      "field_candidates",
+      "CREATE TABLE field_candidates(\n service_instance_uuidv4 TEXT NOT NULL,\n resource_kind TEXT NOT NULL,\n provider_resource_id TEXT NOT NULL,\n field_name TEXT NOT NULL CHECK(length(field_name)>0),\n value_json TEXT NOT NULL CHECK(p1_json(value_json)),\n clock_json TEXT NOT NULL CHECK(p1_json(clock_json) AND json_type(clock_json)='object'\n   AND COALESCE(json_type(clock_json,'$.domain')='text',0) AND length(json_extract(clock_json,'$.domain'))>0\n   AND COALESCE(json_type(clock_json,'$.at_us') IN('integer','null'),0) AND typeof(json_extract(clock_json,'$.at_us')) IN('integer','null') AND (json_type(clock_json,'$.at_us')='null' OR json_extract(clock_json,'$.at_us')>0) AND json_remove(clock_json,'$.domain','$.at_us')='{}'),\n provenance_json TEXT NOT NULL CHECK(p1_json(provenance_json) AND json_type(provenance_json)='object' AND COALESCE(json_type(provenance_json,'$.source')='text',0) AND length(json_extract(provenance_json,'$.source'))>0 AND json_type(provenance_json,'$.evidence') IS NOT NULL AND json_type(provenance_json,'$.evidence')!='null'),\n observed_at_us INTEGER CHECK(observed_at_us IS NULL OR (typeof(observed_at_us)='integer' AND observed_at_us>0)),\n clock_domain TEXT GENERATED ALWAYS AS(json_extract(clock_json,'$.domain')) VIRTUAL,\n source_clock_us INTEGER GENERATED ALWAYS AS(json_extract(clock_json,'$.at_us')) VIRTUAL,\n text_body_sha256 TEXT GENERATED ALWAYS AS(CASE WHEN field_name='text_body_sha256' THEN json_extract(value_json,'$') END) VIRTUAL REFERENCES text_bodies(sha256),\n CHECK(field_name!='text_body_sha256' OR json_type(value_json)='null' OR (json_type(value_json)='text' AND length(json_extract(value_json,'$'))=64 AND json_extract(value_json,'$') NOT GLOB '*[^0-9a-f]*')),\n CHECK(field_name!='repository_uuidv4'),\n PRIMARY KEY(service_instance_uuidv4,resource_kind,provider_resource_id,field_name,clock_json,value_json,provenance_json),\n FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id) REFERENCES resources\n) STRICT, WITHOUT ROWID"
+    ],
+    [
+      "table",
+      "providers",
+      "providers",
+      "CREATE TABLE providers(\n service_instance_uuidv4 TEXT PRIMARY KEY CHECK(p1_uuid4(service_instance_uuidv4)),\n provider_kind TEXT NOT NULL CHECK(length(provider_kind)>0),\n configuration_json TEXT NOT NULL CHECK(p1_json(configuration_json) AND p1_registration_json('provider',configuration_json))\n) STRICT, WITHOUT ROWID"
+    ],
+    [
+      "table",
+      "repository_context",
+      "repository_context",
+      "CREATE TABLE repository_context(\n repository_uuidv4 TEXT PRIMARY KEY CHECK(p1_uuid4(repository_uuidv4)),\n configuration_json TEXT NOT NULL CHECK(p1_json(configuration_json) AND p1_registration_json('repository',configuration_json))\n) STRICT, WITHOUT ROWID"
+    ],
+    [
+      "table",
+      "repository_mapping_dispositions",
+      "repository_mapping_dispositions",
+      "CREATE TABLE repository_mapping_dispositions(\n service_instance_uuidv4 TEXT NOT NULL,\n resource_kind TEXT NOT NULL CHECK(resource_kind='repository'),\n provider_resource_id TEXT NOT NULL,\n relation_kind TEXT NOT NULL CHECK(relation_kind='represents_repository'),\n claim_clock_json TEXT NOT NULL CHECK(p1_mapping_clock(claim_clock_json)=1),\n claim_target_json TEXT NOT NULL CHECK(p1_mapping_target(claim_target_json)=1 AND json_type(claim_target_json)='text'),\n claim_provenance_json TEXT NOT NULL CHECK(p1_mapping_provenance(claim_provenance_json)=1),\n disposition_kind TEXT NOT NULL CHECK(disposition_kind IN('withdraw','correct','dispute')),\n disposition_clock_json TEXT NOT NULL CHECK(p1_mapping_clock(disposition_clock_json)=1),\n disposition_provenance_json TEXT NOT NULL CHECK(p1_mapping_provenance(disposition_provenance_json)=1),\n observed_at_us INTEGER CHECK(observed_at_us IS NULL OR (typeof(observed_at_us)='integer' AND observed_at_us>0)),\n replacement_clock_json TEXT CHECK(replacement_clock_json IS NULL OR p1_mapping_clock(replacement_clock_json)=1),\n replacement_target_json TEXT CHECK(replacement_target_json IS NULL OR (p1_mapping_target(replacement_target_json)=1 AND json_type(replacement_target_json)='text')),\n replacement_provenance_json TEXT CHECK(replacement_provenance_json IS NULL OR p1_mapping_provenance(replacement_provenance_json)=1),\n CHECK((disposition_kind='correct' AND replacement_clock_json IS NOT NULL AND replacement_target_json IS NOT NULL AND replacement_provenance_json IS NOT NULL) OR (disposition_kind!='correct' AND replacement_clock_json IS NULL AND replacement_target_json IS NULL AND replacement_provenance_json IS NULL)),\n CHECK(disposition_kind!='correct' OR replacement_clock_json!=claim_clock_json OR replacement_target_json!=claim_target_json OR replacement_provenance_json!=claim_provenance_json),\n PRIMARY KEY(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,claim_clock_json,claim_target_json,claim_provenance_json,disposition_kind,disposition_clock_json,disposition_provenance_json),\n FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,claim_clock_json,claim_target_json,claim_provenance_json) REFERENCES resource_repository_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,clock_json,target_json,provenance_json) ON DELETE RESTRICT,\n FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,replacement_clock_json,replacement_target_json,replacement_provenance_json) REFERENCES resource_repository_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,clock_json,target_json,provenance_json) ON DELETE RESTRICT\n) STRICT, WITHOUT ROWID"
+    ],
+    [
+      "table",
+      "resource_relations",
+      "resource_relations",
+      "CREATE TABLE resource_relations(\n service_instance_uuidv4 TEXT NOT NULL,\n resource_kind TEXT NOT NULL,\n provider_resource_id TEXT NOT NULL,\n relation_kind TEXT NOT NULL CHECK(length(relation_kind)>0),\n members_json TEXT NOT NULL CHECK(p1_json(members_json) AND json_type(members_json)='array'),\n provenance_json TEXT NOT NULL CHECK(p1_json(provenance_json) AND json_type(provenance_json)='object' AND COALESCE(json_type(provenance_json,'$.source')='text',0) AND length(json_extract(provenance_json,'$.source'))>0 AND json_type(provenance_json,'$.evidence') IS NOT NULL AND json_type(provenance_json,'$.evidence')!='null'),\n scope_json TEXT NOT NULL CHECK(p1_json(scope_json)),\n observed_at_us INTEGER CHECK(observed_at_us IS NULL OR (typeof(observed_at_us)='integer' AND observed_at_us>0)),\n -- Read-only projections of the original singleton report; never another authority.\n parent_service TEXT COLLATE BINARY GENERATED ALWAYS AS(CASE WHEN relation_kind='parent' THEN json_extract(members_json,'$[0][0]') END) VIRTUAL,\n parent_kind TEXT COLLATE BINARY GENERATED ALWAYS AS(CASE WHEN relation_kind='parent' THEN json_extract(members_json,'$[0][1]') END) VIRTUAL,\n parent_id TEXT COLLATE BINARY GENERATED ALWAYS AS(CASE WHEN relation_kind='parent' THEN json_extract(members_json,'$[0][2]') END) VIRTUAL,\n source_document_kind TEXT COLLATE BINARY GENERATED ALWAYS AS(CASE WHEN relation_kind='parent' THEN coalesce(json_extract(scope_json,'$.document_kind'),'') END) VIRTUAL,\n report_clock_json TEXT COLLATE BINARY GENERATED ALWAYS AS(CASE WHEN relation_kind IN('parent','transfer_event_report') THEN json_extract(scope_json,'$.clock') END) VIRTUAL,\n -- I4: generated only from the original Event support payload.\n event_support_members_json TEXT COLLATE BINARY GENERATED ALWAYS AS(CASE WHEN relation_kind='transfer_event_report' THEN p1_transfer_value_v1(scope_json,'parent_members_json') END) VIRTUAL,\n event_support_provenance_json TEXT COLLATE BINARY GENERATED ALWAYS AS(CASE WHEN relation_kind='transfer_event_report' THEN p1_transfer_value_v1(scope_json,'parent_provenance_json') END) VIRTUAL,\n event_support_scope_json TEXT COLLATE BINARY GENERATED ALWAYS AS(CASE WHEN relation_kind='transfer_event_report' THEN p1_transfer_value_v1(scope_json,'parent_scope_json') END) VIRTUAL,\n event_support_service TEXT COLLATE BINARY GENERATED ALWAYS AS(CASE WHEN relation_kind='transfer_event_report' THEN p1_transfer_value_v1(scope_json,'parent_service') END) VIRTUAL,\n event_support_kind TEXT COLLATE BINARY GENERATED ALWAYS AS(CASE WHEN relation_kind='transfer_event_report' THEN p1_transfer_value_v1(scope_json,'parent_kind') END) VIRTUAL,\n event_support_id TEXT COLLATE BINARY GENERATED ALWAYS AS(CASE WHEN relation_kind='transfer_event_report' THEN p1_transfer_value_v1(scope_json,'parent_id') END) VIRTUAL,\n event_support_relation_kind TEXT COLLATE BINARY GENERATED ALWAYS AS(CASE WHEN relation_kind='transfer_event_report' THEN 'parent' END) VIRTUAL,\n event_document_kind TEXT COLLATE BINARY GENERATED ALWAYS AS(CASE WHEN relation_kind='transfer_event_report' THEN 'timeline_event' END) VIRTUAL,\n CHECK(relation_kind!='transfer_event_report' OR (p1_transfer_event_v1(service_instance_uuidv4,resource_kind,provider_resource_id,members_json,provenance_json,scope_json,observed_at_us)=1\n AND report_clock_json IS NOT NULL AND event_support_members_json IS NOT NULL\n AND event_support_provenance_json IS NOT NULL AND event_support_scope_json IS NOT NULL\n AND event_support_service IS NOT NULL AND event_support_kind IS NOT NULL AND event_support_id IS NOT NULL\n AND event_support_service=service_instance_uuidv4 COLLATE BINARY AND event_support_kind='issue' COLLATE BINARY)),\n CHECK(relation_kind!='parent' OR p1_parent_report_v1(service_instance_uuidv4,resource_kind,provider_resource_id,members_json,provenance_json,scope_json,observed_at_us)=1),\n CHECK(relation_kind!='parent' OR (parent_service IS NOT NULL AND parent_kind IS NOT NULL AND parent_id IS NOT NULL AND source_document_kind IS NOT NULL AND report_clock_json IS NOT NULL)),\n PRIMARY KEY(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json),\n FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id) REFERENCES resources,\n FOREIGN KEY(parent_service,parent_kind,parent_id) REFERENCES resources,\n FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id,source_document_kind)\n REFERENCES resources(service_instance_uuidv4,resource_kind,provider_resource_id,reference_document_kind),\n -- Complete ParentReportKey plus its actual generated subtype/kind.\n FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id,event_support_relation_kind,event_support_members_json,event_support_provenance_json,event_support_scope_json,event_document_kind,event_support_kind)\n REFERENCES resource_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json,source_document_kind,parent_kind),\n -- Additional G3=A binding: the reported Issue must be this E's native Issue.\n FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id,event_document_kind,event_support_kind,event_support_id)\n REFERENCES resources(service_instance_uuidv4,resource_kind,provider_resource_id,reference_document_kind,identifier_namespace_kind,identifier_namespace_id)\n) STRICT, WITHOUT ROWID"
+    ],
+    [
+      "table",
+      "resource_repository_relations",
+      "resource_repository_relations",
+      "CREATE TABLE resource_repository_relations(\n service_instance_uuidv4 TEXT NOT NULL,\n resource_kind TEXT NOT NULL,\n provider_resource_id TEXT NOT NULL,\n relation_kind TEXT NOT NULL,\n target_json TEXT NOT NULL CHECK(p1_mapping_target(target_json)=1),\n clock_json TEXT NOT NULL CHECK(p1_mapping_clock(clock_json)=1),\n provenance_json TEXT NOT NULL CHECK(p1_mapping_provenance(provenance_json)=1),\n observed_at_us INTEGER CHECK(observed_at_us IS NULL OR (typeof(observed_at_us)='integer' AND observed_at_us>0)),\n repository_uuidv4 TEXT GENERATED ALWAYS AS(CASE WHEN json_type(target_json)='text' THEN json_extract(target_json,'$') END) VIRTUAL REFERENCES repository_context(repository_uuidv4),\n clock_domain TEXT GENERATED ALWAYS AS(json_extract(clock_json,'$.domain')) VIRTUAL,\n source_clock_us INTEGER GENERATED ALWAYS AS(json_extract(clock_json,'$.at_us')) VIRTUAL,\n -- Complete original Event report reference; non-Transfer roles keep SQL NULL.\n event_report_members_json TEXT COLLATE BINARY,\n event_report_scope_json TEXT COLLATE BINARY,\n event_report_kind TEXT COLLATE BINARY GENERATED ALWAYS AS(CASE WHEN relation_kind IN('transfer_from_repository','transfer_to_repository') THEN 'transfer_event_report' END) VIRTUAL,\n event_document_kind TEXT GENERATED ALWAYS AS(CASE WHEN relation_kind IN('transfer_from_repository','transfer_to_repository') THEN 'timeline_event' END) VIRTUAL,\n event_parent_resource_kind TEXT GENERATED ALWAYS AS(CASE WHEN relation_kind IN('transfer_from_repository','transfer_to_repository') THEN 'issue' END) VIRTUAL,\n CHECK(CASE WHEN relation_kind IN('transfer_from_repository','transfer_to_repository') THEN\n event_report_members_json IS NOT NULL AND event_report_scope_json IS NOT NULL\n AND p1_transfer_endpoint_v1(relation_kind,target_json,event_report_scope_json,clock_json)=1\n ELSE event_report_members_json IS NULL AND event_report_scope_json IS NULL END),\n CHECK(typeof(source_clock_us) IN('integer','null')),\n CHECK((relation_kind='represents_repository' AND resource_kind='repository') OR (relation_kind='owning_repository' AND resource_kind='issue') OR (relation_kind IN('base_repository','head_repository') AND resource_kind='pull_request') OR (relation_kind IN('transfer_from_repository','transfer_to_repository') AND resource_kind='comment')),\n CHECK(relation_kind!='represents_repository' OR json_type(target_json)='text'),\n PRIMARY KEY(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,clock_json,target_json,provenance_json),\n FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id) REFERENCES resources(service_instance_uuidv4,resource_kind,provider_resource_id),\n FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id,event_document_kind,event_parent_resource_kind) REFERENCES resources(service_instance_uuidv4,resource_kind,provider_resource_id,reference_document_kind,identifier_namespace_kind),\n FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id,event_report_kind,event_report_members_json,provenance_json,event_report_scope_json)\n REFERENCES resource_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json)\n) STRICT, WITHOUT ROWID"
+    ],
+    [
+      "table",
+      "resources",
+      "resources",
+      "CREATE TABLE resources(\n service_instance_uuidv4 TEXT COLLATE BINARY NOT NULL REFERENCES providers\n   CHECK(p1_uuid4(service_instance_uuidv4)=1),\n resource_kind TEXT COLLATE BINARY NOT NULL CHECK(resource_kind!=''),\n provider_resource_id TEXT COLLATE BINARY NOT NULL\n   CHECK(typeof(provider_resource_id)='text' AND p1_resource_identity_v1(provider_resource_id)=1),\n identifier_namespace_kind TEXT COLLATE BINARY,\n identifier_namespace_id TEXT COLLATE BINARY,\n document_kind TEXT COLLATE BINARY,\n provider_document_id TEXT COLLATE BINARY,\n reference_document_kind TEXT COLLATE BINARY\n   GENERATED ALWAYS AS(coalesce(document_kind,'')) VIRTUAL,\n CHECK(p1_resource_identification_v1(resource_kind,provider_resource_id,\n   identifier_namespace_kind,identifier_namespace_id,document_kind,provider_document_id)=1),\n PRIMARY KEY(service_instance_uuidv4,resource_kind,provider_resource_id)\n) STRICT, WITHOUT ROWID"
+    ],
+    [
+      "table",
+      "source_coverage_proofs",
+      "source_coverage_proofs",
+      "CREATE TABLE source_coverage_proofs(\n owner_kind TEXT NOT NULL CHECK(owner_kind='source_inventory'),\n owner_coordinates_json TEXT NOT NULL,\n observed_at_us INTEGER NOT NULL CHECK(typeof(observed_at_us)='integer' AND observed_at_us>0),\n coverage_state TEXT NOT NULL,\n source_registration_uuidv4 TEXT NOT NULL,\n scope_json TEXT NOT NULL,\n inventory_observed_at_us INTEGER NOT NULL CHECK(typeof(inventory_observed_at_us)='integer' AND inventory_observed_at_us>0),\n inventory_state TEXT NOT NULL,\n terminal INTEGER NOT NULL CHECK(terminal=1),\n members_json TEXT NOT NULL,\n provenance_json TEXT NOT NULL,\n PRIMARY KEY(owner_kind,owner_coordinates_json,observed_at_us,coverage_state,source_registration_uuidv4,scope_json,inventory_observed_at_us,inventory_state,terminal,members_json,provenance_json),\n FOREIGN KEY(owner_kind,owner_coordinates_json,observed_at_us,coverage_state) REFERENCES coverage_claims,\n FOREIGN KEY(source_registration_uuidv4,scope_json,inventory_observed_at_us,inventory_state,terminal,members_json,provenance_json) REFERENCES source_inventory_evidence,\n CHECK(inventory_observed_at_us<=observed_at_us),\n CHECK(coverage_state!='complete' OR inventory_state='complete')\n) STRICT, WITHOUT ROWID"
+    ],
+    [
+      "table",
+      "source_inventory_evidence",
+      "source_inventory_evidence",
+      "CREATE TABLE source_inventory_evidence(\n source_registration_uuidv4 TEXT NOT NULL REFERENCES sources,\n scope_json TEXT NOT NULL CHECK(p1_json(scope_json)),\n observed_at_us INTEGER NOT NULL CHECK(typeof(observed_at_us)='integer' AND observed_at_us>0),\n coverage_state TEXT NOT NULL CHECK(coverage_state IN('complete','partial','unknown','not_applicable')),\n terminal INTEGER NOT NULL CHECK(terminal IN(0,1)),\n members_json TEXT NOT NULL CHECK(p1_json(members_json) AND json_type(members_json)='array'),\n provenance_json TEXT NOT NULL CHECK(p1_json(provenance_json) AND json_type(provenance_json)='object' AND COALESCE(json_type(provenance_json,'$.source')='text',0) AND length(json_extract(provenance_json,'$.source'))>0 AND json_type(provenance_json,'$.evidence') IS NOT NULL AND json_type(provenance_json,'$.evidence')!='null'),\n PRIMARY KEY(source_registration_uuidv4,scope_json,observed_at_us,coverage_state,terminal,members_json,provenance_json)\n) STRICT, WITHOUT ROWID"
+    ],
+    [
+      "table",
+      "source_repositories",
+      "source_repositories",
+      "CREATE TABLE source_repositories(\n source_registration_uuidv4 TEXT NOT NULL REFERENCES sources,\n repository_uuidv4 TEXT NOT NULL REFERENCES repository_context,\n attributes_json TEXT NOT NULL CHECK(p1_json(attributes_json) AND p1_registration_json('membership',attributes_json)),\n PRIMARY KEY(source_registration_uuidv4,repository_uuidv4)\n) STRICT, WITHOUT ROWID"
+    ],
+    [
+      "table",
+      "sources",
+      "sources",
+      "CREATE TABLE sources(\n source_registration_uuidv4 TEXT PRIMARY KEY CHECK(p1_uuid4(source_registration_uuidv4)),\n service_instance_uuidv4 TEXT NOT NULL REFERENCES providers,\n configuration_json TEXT NOT NULL CHECK(p1_json(configuration_json) AND p1_registration_json('source',configuration_json))\n) STRICT, WITHOUT ROWID"
+    ],
+    [
+      "table",
+      "store_identity",
+      "store_identity",
+      "CREATE TABLE store_identity(\n    store_role TEXT PRIMARY KEY CHECK(store_role='context'),\n    repository_uuidv4 TEXT NOT NULL CHECK(p1_uuid4(repository_uuidv4)),\n    catalog_instance_uuidv4 TEXT NOT NULL CHECK(p1_uuid4(catalog_instance_uuidv4))\n) STRICT, WITHOUT ROWID"
+    ],
+    [
+      "table",
+      "text_bodies",
+      "text_bodies",
+      "CREATE TABLE text_bodies(\n sha256 TEXT PRIMARY KEY CHECK(length(sha256)=64 AND sha256 NOT GLOB '*[^0-9a-f]*'),\n text_value TEXT NOT NULL CHECK(p1_text_sha256(text_value)=sha256)\n) STRICT, WITHOUT ROWID"
+    ],
+    [
+      "trigger",
+      "collection_terminals_no_delete",
+      "collection_terminals",
+      "CREATE TRIGGER collection_terminals_no_delete BEFORE DELETE ON collection_terminals BEGIN SELECT RAISE(ABORT,'immutable Context evidence'); END"
+    ],
+    [
+      "trigger",
+      "collection_terminals_no_update",
+      "collection_terminals",
+      "CREATE TRIGGER collection_terminals_no_update BEFORE UPDATE ON collection_terminals BEGIN SELECT RAISE(ABORT,'immutable Context evidence'); END"
+    ],
+    [
+      "trigger",
+      "collections_no_delete",
+      "collections",
+      "CREATE TRIGGER collections_no_delete BEFORE DELETE ON collections BEGIN SELECT RAISE(ABORT,'immutable Context evidence'); END"
+    ],
+    [
+      "trigger",
+      "collections_no_update",
+      "collections",
+      "CREATE TRIGGER collections_no_update BEFORE UPDATE ON collections BEGIN SELECT RAISE(ABORT,'immutable Context evidence'); END"
+    ],
+    [
+      "trigger",
+      "core_references_no_delete",
+      "core_references",
+      "CREATE TRIGGER core_references_no_delete BEFORE DELETE ON core_references BEGIN SELECT RAISE(ABORT,'immutable Context evidence'); END"
+    ],
+    [
+      "trigger",
+      "core_references_no_update",
+      "core_references",
+      "CREATE TRIGGER core_references_no_update BEFORE UPDATE ON core_references BEGIN SELECT RAISE(ABORT,'immutable Context evidence'); END"
+    ],
+    [
+      "trigger",
+      "coverage_claim_no_delete",
+      "coverage_claims",
+      "CREATE TRIGGER coverage_claim_no_delete BEFORE DELETE ON coverage_claims BEGIN SELECT RAISE(ABORT,'immutable Coverage claim'); END"
+    ],
+    [
+      "trigger",
+      "coverage_claim_no_replace",
+      "coverage_claims",
+      "CREATE TRIGGER coverage_claim_no_replace BEFORE INSERT ON coverage_claims WHEN EXISTS(\n SELECT 1 FROM coverage_claims WHERE owner_kind=NEW.owner_kind AND owner_coordinates_json=NEW.owner_coordinates_json AND observed_at_us=NEW.observed_at_us AND coverage_state=NEW.coverage_state)\n BEGIN SELECT RAISE(ABORT,'Coverage exact replay must be compared before insert'); END"
+    ],
+    [
+      "trigger",
+      "coverage_claim_no_update",
+      "coverage_claims",
+      "CREATE TRIGGER coverage_claim_no_update BEFORE UPDATE ON coverage_claims BEGIN SELECT RAISE(ABORT,'immutable Coverage claim'); END"
+    ],
+    [
+      "trigger",
+      "coverage_proof_current_terminal",
+      "coverage_proofs",
+      "CREATE TRIGGER coverage_proof_current_terminal BEFORE INSERT ON coverage_proofs\nWHEN NEW.terminal_observed_at_us!=(SELECT MAX(t.observed_at_us) FROM collection_terminals t\n WHERE t.service_instance_uuidv4=NEW.service_instance_uuidv4 AND t.resource_kind=NEW.resource_kind AND t.provider_resource_id=NEW.provider_resource_id AND t.collection_kind=NEW.collection_kind AND t.provenance_json=NEW.provenance_json)\n OR EXISTS(SELECT 1 FROM collection_terminals t WHERE t.service_instance_uuidv4=NEW.service_instance_uuidv4 AND t.resource_kind=NEW.resource_kind AND t.provider_resource_id=NEW.provider_resource_id AND t.collection_kind=NEW.collection_kind AND t.provenance_json=NEW.provenance_json AND t.observed_at_us=NEW.terminal_observed_at_us AND t.terminal_state!='unknown' AND (t.terminal_state!=NEW.terminal_state OR t.members_json!=NEW.members_json))\nBEGIN SELECT RAISE(ABORT,'Coverage proof terminal is superseded or conflicting'); END"
+    ],
+    [
+      "trigger",
+      "coverage_proof_owner",
+      "coverage_proofs",
+      "CREATE TRIGGER coverage_proof_owner BEFORE INSERT ON coverage_proofs WHEN NOT EXISTS(\n SELECT 1 FROM coverage_scopes s JOIN collections c ON\n c.service_instance_uuidv4=NEW.service_instance_uuidv4 AND c.resource_kind=NEW.resource_kind AND c.provider_resource_id=NEW.provider_resource_id AND c.collection_kind=NEW.collection_kind AND c.provenance_json=NEW.provenance_json\n WHERE s.owner_kind=NEW.owner_kind AND s.owner_coordinates_json=NEW.owner_coordinates_json\n AND CASE s.owner_kind\n WHEN 'repository' THEN json_extract(c.scope_json,'$.repository_uuidv4')=s.repository_uuidv4 AND s.coverage_kind=COALESCE(json_extract(c.scope_json,'$.coverage_kind'),NEW.collection_kind)\n WHEN 'source' THEN s.coverage_kind=COALESCE(json_extract(c.scope_json,'$.coverage_kind'),NEW.collection_kind) AND json_extract(c.scope_json,'$.repository_uuidv4')=s.repository_uuidv4 AND json_extract(c.scope_json,'$.source_registration_uuidv4')=s.source_registration_uuidv4 AND EXISTS(SELECT 1 FROM sources src WHERE src.source_registration_uuidv4=s.source_registration_uuidv4 AND src.service_instance_uuidv4=NEW.service_instance_uuidv4)\n WHEN 'resource' THEN s.service_instance_uuidv4=NEW.service_instance_uuidv4 AND s.resource_kind=NEW.resource_kind AND s.provider_resource_id=NEW.provider_resource_id AND s.coverage_kind=COALESCE(json_extract(c.scope_json,'$.coverage_kind'),NEW.collection_kind)\n WHEN 'field' THEN s.coverage_kind=COALESCE(json_extract(c.scope_json,'$.coverage_kind'),NEW.collection_kind) AND s.service_instance_uuidv4=NEW.service_instance_uuidv4 AND s.resource_kind=NEW.resource_kind AND s.provider_resource_id=NEW.provider_resource_id AND json_extract(c.scope_json,'$.field_name')=s.field_name\n WHEN 'collection' THEN s.coverage_kind=COALESCE(json_extract(c.scope_json,'$.coverage_kind'),NEW.collection_kind) AND s.service_instance_uuidv4=NEW.service_instance_uuidv4 AND s.resource_kind=NEW.resource_kind AND s.provider_resource_id=NEW.provider_resource_id AND s.collection_kind=NEW.collection_kind AND s.collection_provenance_json=NEW.provenance_json\n ELSE 0 END)\n BEGIN SELECT RAISE(ABORT,'Coverage proof owner mismatch'); END"
+    ],
+    [
+      "trigger",
+      "coverage_proofs_no_delete",
+      "coverage_proofs",
+      "CREATE TRIGGER coverage_proofs_no_delete BEFORE DELETE ON coverage_proofs BEGIN SELECT RAISE(ABORT,'immutable Context evidence'); END"
+    ],
+    [
+      "trigger",
+      "coverage_proofs_no_update",
+      "coverage_proofs",
+      "CREATE TRIGGER coverage_proofs_no_update BEFORE UPDATE ON coverage_proofs BEGIN SELECT RAISE(ABORT,'immutable Context evidence'); END"
+    ],
+    [
+      "trigger",
+      "coverage_scopes_no_delete",
+      "coverage_scopes",
+      "CREATE TRIGGER coverage_scopes_no_delete BEFORE DELETE ON coverage_scopes BEGIN SELECT RAISE(ABORT,'immutable Context evidence'); END"
+    ],
+    [
+      "trigger",
+      "coverage_scopes_no_update",
+      "coverage_scopes",
+      "CREATE TRIGGER coverage_scopes_no_update BEFORE UPDATE ON coverage_scopes BEGIN SELECT RAISE(ABORT,'immutable Context evidence'); END"
+    ],
+    [
+      "trigger",
+      "i2_transfer_report_stage_fence",
+      "resource_relations",
+      "CREATE TRIGGER i2_transfer_report_stage_fence BEFORE INSERT ON resource_relations\nWHEN NEW.relation_kind COLLATE BINARY='transfer_event_report'\nBEGIN SELECT RAISE(ABORT,'I2_TRANSFER_UNSUPPORTED'); END"
+    ],
+    [
+      "trigger",
+      "i2_transfer_stage_fence",
+      "resource_repository_relations",
+      "CREATE TRIGGER i2_transfer_stage_fence BEFORE INSERT ON resource_repository_relations\nWHEN NEW.relation_kind COLLATE BINARY IN('transfer_from_repository','transfer_to_repository')\nBEGIN SELECT RAISE(ABORT,'I2_TRANSFER_UNSUPPORTED'); END"
+    ],
+    [
+      "trigger",
+      "i4_endpoint_admit",
+      "resource_repository_relations",
+      "CREATE TRIGGER i4_endpoint_admit BEFORE INSERT ON resource_repository_relations\nWHEN NEW.relation_kind IN('transfer_from_repository','transfer_to_repository') BEGIN\n SELECT CASE WHEN NEW.event_report_members_json IS NULL OR NEW.event_report_scope_json IS NULL\n OR p1_transfer_endpoint_v1(NEW.relation_kind,NEW.target_json,NEW.event_report_scope_json,NEW.clock_json)!=1\n THEN RAISE(ABORT,'invalid Event endpoint reference') END;\n SELECT CASE WHEN EXISTS(SELECT 1 FROM resource_relations report\n WHERE report.service_instance_uuidv4=NEW.service_instance_uuidv4 AND report.resource_kind=NEW.resource_kind\n AND report.provider_resource_id=NEW.provider_resource_id AND report.relation_kind='transfer_event_report'\n AND report.members_json=NEW.event_report_members_json AND report.scope_json=NEW.event_report_scope_json\n AND report.provenance_json=NEW.provenance_json AND report.observed_at_us IS NOT NEW.observed_at_us)\n THEN RAISE(ABORT,'endpoint original Event time mismatch') END;\n SELECT CASE WHEN EXISTS(SELECT 1 FROM resource_repository_relations old\n WHERE old.service_instance_uuidv4=NEW.service_instance_uuidv4 AND old.resource_kind=NEW.resource_kind\n AND old.provider_resource_id=NEW.provider_resource_id AND old.relation_kind=NEW.relation_kind\n AND old.clock_json=NEW.clock_json AND old.target_json=NEW.target_json AND old.provenance_json=NEW.provenance_json\n AND (old.event_report_members_json IS NOT NEW.event_report_members_json OR old.event_report_scope_json IS NOT NEW.event_report_scope_json))\n THEN RAISE(ABORT,'endpoint original Event payload rebind') END;\nEND"
+    ],
+    [
+      "trigger",
+      "i4_event_report_admit",
+      "resource_relations",
+      "CREATE TRIGGER i4_event_report_admit BEFORE INSERT ON resource_relations\nWHEN NEW.relation_kind='transfer_event_report' BEGIN\n SELECT CASE WHEN p1_transfer_event_v1(NEW.service_instance_uuidv4,NEW.resource_kind,NEW.provider_resource_id,NEW.members_json,NEW.provenance_json,NEW.scope_json,NEW.observed_at_us)!=1\n THEN RAISE(ABORT,'invalid typed Event report') END;\n SELECT CASE WHEN EXISTS(SELECT 1 FROM resource_relations old\n WHERE old.relation_kind='transfer_event_report'\n AND old.service_instance_uuidv4=NEW.service_instance_uuidv4 AND old.resource_kind=NEW.resource_kind\n AND old.provider_resource_id=NEW.provider_resource_id AND old.report_clock_json=NEW.report_clock_json\n AND old.provenance_json=NEW.provenance_json\n AND (old.members_json IS NOT NEW.members_json OR old.scope_json IS NOT NEW.scope_json\n OR old.observed_at_us IS NOT NEW.observed_at_us))\n THEN RAISE(ABORT,'immutable original Event report rebind') END;\nEND"
+    ],
+    [
+      "trigger",
+      "p1_immutable_store_identity_delete",
+      "store_identity",
+      "CREATE TRIGGER p1_immutable_store_identity_delete BEFORE DELETE ON store_identity BEGIN SELECT RAISE(ABORT,'immutable context fact'); END"
+    ],
+    [
+      "trigger",
+      "p1_immutable_store_identity_update",
+      "store_identity",
+      "CREATE TRIGGER p1_immutable_store_identity_update BEFORE UPDATE ON store_identity BEGIN SELECT RAISE(ABORT,'immutable context fact'); END"
+    ],
+    [
+      "trigger",
+      "parent_report_admit",
+      "resource_relations",
+      "CREATE TRIGGER parent_report_admit BEFORE INSERT ON resource_relations\nWHEN NEW.relation_kind='parent' BEGIN\n SELECT CASE WHEN p1_parent_report_v1(NEW.service_instance_uuidv4,NEW.resource_kind,NEW.provider_resource_id,NEW.members_json,NEW.provenance_json,NEW.scope_json,NEW.observed_at_us)!=1\n THEN RAISE(ABORT,'invalid Parent report') END;\n SELECT CASE WHEN EXISTS(SELECT 1 FROM resource_relations r\n WHERE r.service_instance_uuidv4=NEW.service_instance_uuidv4 AND r.resource_kind=NEW.resource_kind\n AND r.provider_resource_id=NEW.provider_resource_id AND r.relation_kind=NEW.relation_kind\n AND r.members_json=NEW.members_json AND r.provenance_json=NEW.provenance_json\n AND r.scope_json=NEW.scope_json AND r.observed_at_us IS NOT NEW.observed_at_us)\n THEN RAISE(ABORT,'Parent report observation rebind') END;\nEND"
+    ],
+    [
+      "trigger",
+      "provider_identity",
+      "providers",
+      "CREATE TRIGGER provider_identity BEFORE UPDATE ON providers WHEN NEW.service_instance_uuidv4!=OLD.service_instance_uuidv4 OR NEW.provider_kind!=OLD.provider_kind\nBEGIN SELECT RAISE(ABORT,'registered Provider identity'); END"
+    ],
+    [
+      "trigger",
+      "repository_context_identity",
+      "repository_context",
+      "CREATE TRIGGER repository_context_identity BEFORE UPDATE ON repository_context WHEN NEW.repository_uuidv4!=OLD.repository_uuidv4\nBEGIN SELECT RAISE(ABORT,'permanent repository identity'); END"
+    ],
+    [
+      "trigger",
+      "resource_relations_no_delete",
+      "resource_relations",
+      "CREATE TRIGGER resource_relations_no_delete BEFORE DELETE ON resource_relations BEGIN SELECT RAISE(ABORT,'immutable Context evidence'); END"
+    ],
+    [
+      "trigger",
+      "resource_relations_no_update",
+      "resource_relations",
+      "CREATE TRIGGER resource_relations_no_update BEFORE UPDATE ON resource_relations BEGIN SELECT RAISE(ABORT,'immutable Context evidence'); END"
+    ],
+    [
+      "trigger",
+      "resources_admit",
+      "resources",
+      "CREATE TRIGGER resources_admit BEFORE INSERT ON resources BEGIN\n SELECT CASE WHEN p1_uuid4(NEW.service_instance_uuidv4)!=1\n   OR typeof(NEW.resource_kind)!='text' OR NEW.resource_kind=''\n   OR p1_resource_identification_v1(NEW.resource_kind,NEW.provider_resource_id,\n       NEW.identifier_namespace_kind,NEW.identifier_namespace_id,\n       NEW.document_kind,NEW.provider_document_id)!=1\n   THEN RAISE(ABORT,'invalid Resource identification') END;\n -- Deliberately pre-conflict: IGNORE / DO NOTHING cannot hide a contradiction.\n SELECT CASE WHEN EXISTS(SELECT 1 FROM resources r\n   WHERE r.service_instance_uuidv4=NEW.service_instance_uuidv4\n     AND r.resource_kind=NEW.resource_kind\n     AND r.provider_resource_id=NEW.provider_resource_id\n     AND (r.identifier_namespace_kind IS NOT NEW.identifier_namespace_kind\n       OR r.identifier_namespace_id IS NOT NEW.identifier_namespace_id\n       OR r.document_kind IS NOT NEW.document_kind\n       OR r.provider_document_id IS NOT NEW.provider_document_id))\n   THEN RAISE(ABORT,'Resource identification rebind') END;\nEND"
+    ],
+    [
+      "trigger",
+      "resources_no_delete",
+      "resources",
+      "CREATE TRIGGER resources_no_delete BEFORE DELETE ON resources BEGIN SELECT RAISE(ABORT,'immutable Context evidence'); END"
+    ],
+    [
+      "trigger",
+      "resources_no_update",
+      "resources",
+      "CREATE TRIGGER resources_no_update BEFORE UPDATE ON resources BEGIN SELECT RAISE(ABORT,'immutable Context evidence'); END"
+    ],
+    [
+      "trigger",
+      "rmd_no_delete",
+      "repository_mapping_dispositions",
+      "CREATE TRIGGER rmd_no_delete BEFORE DELETE ON repository_mapping_dispositions\nBEGIN SELECT RAISE(ABORT,'immutable mapping disposition'); END"
+    ],
+    [
+      "trigger",
+      "rmd_no_rebind",
+      "repository_mapping_dispositions",
+      "CREATE TRIGGER rmd_no_rebind BEFORE INSERT ON repository_mapping_dispositions\nWHEN EXISTS(\n SELECT 1 FROM repository_mapping_dispositions existing\n WHERE existing.service_instance_uuidv4=NEW.service_instance_uuidv4\n   AND existing.resource_kind=NEW.resource_kind\n   AND existing.provider_resource_id=NEW.provider_resource_id\n   AND existing.relation_kind=NEW.relation_kind\n   AND existing.claim_clock_json=NEW.claim_clock_json\n   AND existing.claim_target_json=NEW.claim_target_json\n   AND existing.claim_provenance_json=NEW.claim_provenance_json\n   AND existing.disposition_kind=NEW.disposition_kind\n   AND existing.disposition_clock_json=NEW.disposition_clock_json\n   AND existing.disposition_provenance_json=NEW.disposition_provenance_json\n   AND (\n    existing.observed_at_us IS NOT NEW.observed_at_us\n    OR existing.replacement_clock_json IS NOT NEW.replacement_clock_json\n    OR existing.replacement_target_json IS NOT NEW.replacement_target_json\n    OR existing.replacement_provenance_json IS NOT NEW.replacement_provenance_json\n   )\n)\nBEGIN SELECT RAISE(ABORT,'repository_mapping_dispositions payload rebind'); END"
+    ],
+    [
+      "trigger",
+      "rmd_no_update",
+      "repository_mapping_dispositions",
+      "CREATE TRIGGER rmd_no_update BEFORE UPDATE ON repository_mapping_dispositions\nBEGIN SELECT RAISE(ABORT,'immutable mapping disposition'); END"
+    ],
+    [
+      "trigger",
+      "rrr_delete_guard",
+      "resource_repository_relations",
+      "CREATE TRIGGER rrr_delete_guard BEFORE DELETE ON resource_repository_relations\nWHEN OLD.relation_kind NOT IN('owning_repository','base_repository','head_repository')\n  OR OLD.source_clock_us IS NULL\n  OR NOT EXISTS(\n   SELECT 1 FROM resource_repository_relations later\n   WHERE later.service_instance_uuidv4=OLD.service_instance_uuidv4\n     AND later.resource_kind=OLD.resource_kind\n     AND later.provider_resource_id=OLD.provider_resource_id\n     AND later.relation_kind=OLD.relation_kind\n     AND later.clock_domain=OLD.clock_domain\n     AND later.source_clock_us>OLD.source_clock_us\n  )\nBEGIN SELECT RAISE(ABORT,'only dominated current candidates may be deleted'); END"
+    ],
+    [
+      "trigger",
+      "rrr_event_report_time",
+      "resource_repository_relations",
+      "CREATE TRIGGER rrr_event_report_time BEFORE INSERT ON resource_repository_relations\nWHEN NEW.relation_kind IN('transfer_from_repository','transfer_to_repository')\n AND EXISTS(\n  SELECT 1 FROM resource_repository_relations peer\n  WHERE peer.service_instance_uuidv4=NEW.service_instance_uuidv4\n    AND peer.resource_kind=NEW.resource_kind\n    AND peer.provider_resource_id=NEW.provider_resource_id\n    AND peer.clock_json=NEW.clock_json\n    AND peer.provenance_json=NEW.provenance_json\n    AND peer.relation_kind IN('transfer_from_repository','transfer_to_repository')\n    AND NOT (peer.relation_kind=NEW.relation_kind AND peer.target_json=NEW.target_json)\n    AND peer.observed_at_us IS NOT NEW.observed_at_us\n )\nBEGIN SELECT RAISE(ABORT,'transfer event report observed_at_us mismatch'); END"
+    ],
+    [
+      "trigger",
+      "rrr_no_rebind",
+      "resource_repository_relations",
+      "CREATE TRIGGER rrr_no_rebind BEFORE INSERT ON resource_repository_relations\nWHEN EXISTS(\n SELECT 1 FROM resource_repository_relations existing\n WHERE existing.service_instance_uuidv4=NEW.service_instance_uuidv4\n   AND existing.resource_kind=NEW.resource_kind\n   AND existing.provider_resource_id=NEW.provider_resource_id\n   AND existing.relation_kind=NEW.relation_kind\n   AND existing.clock_json=NEW.clock_json\n   AND existing.target_json=NEW.target_json\n   AND existing.provenance_json=NEW.provenance_json\n   AND existing.observed_at_us IS NOT NEW.observed_at_us\n) OR (\n NEW.relation_kind IN('owning_repository','base_repository','head_repository')\n AND NEW.source_clock_us IS NOT NULL\n AND EXISTS(\n  SELECT 1 FROM resource_repository_relations later\n  WHERE later.service_instance_uuidv4=NEW.service_instance_uuidv4\n    AND later.resource_kind=NEW.resource_kind\n    AND later.provider_resource_id=NEW.provider_resource_id\n    AND later.relation_kind=NEW.relation_kind\n    AND later.clock_domain=NEW.clock_domain\n    AND later.source_clock_us>NEW.source_clock_us\n )\n)\nBEGIN\n SELECT CASE\n  WHEN EXISTS(\n   SELECT 1 FROM resource_repository_relations existing\n   WHERE existing.service_instance_uuidv4=NEW.service_instance_uuidv4\n     AND existing.resource_kind=NEW.resource_kind\n     AND existing.provider_resource_id=NEW.provider_resource_id\n     AND existing.relation_kind=NEW.relation_kind\n     AND existing.clock_json=NEW.clock_json\n     AND existing.target_json=NEW.target_json\n     AND existing.provenance_json=NEW.provenance_json\n     AND existing.observed_at_us IS NOT NEW.observed_at_us\n  ) THEN RAISE(ABORT,'resource_repository_relations observed_at_us rebind')\n  ELSE RAISE(ABORT,'stale current repository relation candidate')\n END;\nEND"
+    ],
+    [
+      "trigger",
+      "rrr_no_update",
+      "resource_repository_relations",
+      "CREATE TRIGGER rrr_no_update BEFORE UPDATE ON resource_repository_relations\nBEGIN SELECT RAISE(ABORT,'immutable repository relation'); END"
+    ],
+    [
+      "trigger",
+      "rrr_prune_dominated",
+      "resource_repository_relations",
+      "CREATE TRIGGER rrr_prune_dominated AFTER INSERT ON resource_repository_relations\nWHEN NEW.relation_kind IN('owning_repository','base_repository','head_repository')\n  AND NEW.source_clock_us IS NOT NULL\nBEGIN\n DELETE FROM resource_repository_relations\n WHERE service_instance_uuidv4=NEW.service_instance_uuidv4\n   AND resource_kind=NEW.resource_kind\n   AND provider_resource_id=NEW.provider_resource_id\n   AND relation_kind=NEW.relation_kind\n   AND clock_domain=NEW.clock_domain\n   AND source_clock_us IS NOT NULL\n   AND source_clock_us<NEW.source_clock_us;\nEND"
+    ],
+    [
+      "trigger",
+      "source_coverage_current_terminal",
+      "source_coverage_proofs",
+      "CREATE TRIGGER source_coverage_current_terminal BEFORE INSERT ON source_coverage_proofs\nWHEN NEW.inventory_observed_at_us!=(SELECT MAX(i.observed_at_us) FROM source_inventory_evidence i WHERE i.source_registration_uuidv4=NEW.source_registration_uuidv4 AND i.scope_json=NEW.scope_json)\n OR EXISTS(SELECT 1 FROM source_inventory_evidence i WHERE i.source_registration_uuidv4=NEW.source_registration_uuidv4 AND i.scope_json=NEW.scope_json AND i.observed_at_us=NEW.inventory_observed_at_us AND i.coverage_state!='unknown' AND (i.coverage_state!=NEW.inventory_state OR i.members_json!=NEW.members_json OR i.terminal!=NEW.terminal))\nBEGIN SELECT RAISE(ABORT,'Source Coverage terminal is superseded or conflicting'); END"
+    ],
+    [
+      "trigger",
+      "source_coverage_no_delete",
+      "source_coverage_proofs",
+      "CREATE TRIGGER source_coverage_no_delete BEFORE DELETE ON source_coverage_proofs BEGIN SELECT RAISE(ABORT,'immutable Source Coverage proof'); END"
+    ],
+    [
+      "trigger",
+      "source_coverage_no_update",
+      "source_coverage_proofs",
+      "CREATE TRIGGER source_coverage_no_update BEFORE UPDATE ON source_coverage_proofs BEGIN SELECT RAISE(ABORT,'immutable Source Coverage proof'); END"
+    ],
+    [
+      "trigger",
+      "source_coverage_owner",
+      "source_coverage_proofs",
+      "CREATE TRIGGER source_coverage_owner BEFORE INSERT ON source_coverage_proofs WHEN NOT EXISTS(\n SELECT 1 FROM coverage_scopes WHERE owner_kind=NEW.owner_kind AND owner_coordinates_json=NEW.owner_coordinates_json\n AND source_registration_uuidv4=NEW.source_registration_uuidv4 AND source_scope_json=NEW.scope_json AND json_extract(NEW.scope_json,'$.coverage_kind')=coverage_kind)\n BEGIN SELECT RAISE(ABORT,'Source Coverage proof owner mismatch'); END"
+    ],
+    [
+      "trigger",
+      "source_identity",
+      "sources",
+      "CREATE TRIGGER source_identity BEFORE UPDATE ON sources WHEN NEW.source_registration_uuidv4!=OLD.source_registration_uuidv4 OR NEW.service_instance_uuidv4!=OLD.service_instance_uuidv4\nBEGIN SELECT RAISE(ABORT,'registered Source identity'); END"
+    ],
+    [
+      "trigger",
+      "source_inventory_evidence_no_delete",
+      "source_inventory_evidence",
+      "CREATE TRIGGER source_inventory_evidence_no_delete BEFORE DELETE ON source_inventory_evidence BEGIN SELECT RAISE(ABORT,'immutable Context evidence'); END"
+    ],
+    [
+      "trigger",
+      "source_inventory_evidence_no_update",
+      "source_inventory_evidence",
+      "CREATE TRIGGER source_inventory_evidence_no_update BEFORE UPDATE ON source_inventory_evidence BEGIN SELECT RAISE(ABORT,'immutable Context evidence'); END"
+    ],
+    [
+      "trigger",
+      "source_positive_identity",
+      "source_repositories",
+      "CREATE TRIGGER source_positive_identity BEFORE UPDATE ON source_repositories\nWHEN NEW.source_registration_uuidv4!=OLD.source_registration_uuidv4 OR NEW.repository_uuidv4!=OLD.repository_uuidv4\nBEGIN SELECT RAISE(ABORT,'known-positive Source identity is immutable'); END"
+    ],
+    [
+      "trigger",
+      "source_positive_no_delete",
+      "source_repositories",
+      "CREATE TRIGGER source_positive_no_delete BEFORE DELETE ON source_repositories BEGIN\n SELECT RAISE(ABORT,'known-positive Source membership is durable'); END"
+    ],
+    [
+      "trigger",
+      "text_bodies_no_delete",
+      "text_bodies",
+      "CREATE TRIGGER text_bodies_no_delete BEFORE DELETE ON text_bodies BEGIN SELECT RAISE(ABORT,'immutable Context evidence'); END"
+    ],
+    [
+      "trigger",
+      "text_bodies_no_update",
+      "text_bodies",
+      "CREATE TRIGGER text_bodies_no_update BEFORE UPDATE ON text_bodies BEGIN SELECT RAISE(ABORT,'immutable Context evidence'); END"
+    ]
+  ],
+  "installed_files": {
+    "__main__.py": "ee690428669109bc4afce171576c4c3417da09edd37690815793b693fbb54aef",
+    "config.py": "da88a41ab63497f3e018ff790c7247ec4bc53d44240eff387e65bdeaa9b11785",
+    "__init__.py": "ed7f78e4604437506c62e6c61f3c269bb51901665e1d1484e13cf04757e05ca0",
+    "application/maintenance_service.py": "a9ccb5e2b9abd8dc63936289810a0585aafd218408e386eeea258e4e58251884",
+    "application/parser_service.py": "7b8ae7e23d9b8f1add4a520fcad22c6e0d0745d561af2d46aecc5bd1d623518a",
+    "application/exchange_service.py": "978ba1d010a371365400f15090707f6570f01e2580ed5545c4ad7e0b39a22231",
+    "application/parsing_service.py": "11cfc45eae63094e6deff0b46a070320fb120376eb5fc5baa76a38105bee8d45",
+    "application/acquisition.py": "422abc67c138d015c4aaf1dfc08b5a2ca9f994b061f68388e9366d5ed6358461",
+    "application/notes.py": "2f29ee35a10d3cfebfb44935dd4e83a283b07025842d700d34cf66a965f87244",
+    "application/exchange.py": "4442705ded48d0f52669b18c8b9877faa359638eed7b2e8e7a747aad03b48cd7",
+    "application/ports.py": "ff7589d9a2b5ef75cea2b305f3854af67a1c995f42688417b3c392f38e90ff14",
+    "application/catalog_validation.py": "32c29508f3e079fa62512bef0d8d369355cb9438de4fd0fab33dd77697de029f",
+    "application/source_service.py": "5a9c21c7e598b41ab1a5dc7704dfcbbaeaf51fdb36acc08c938a463f3766307e",
+    "application/query_service.py": "80a257854b9146fd5e5f78d3885d71ff2770111e49149f70e21d5c500331a92d",
+    "application/git_query_context.py": "3a79e64a83feb0103b9a3d39e4c57a0770b22f2fdf5305bb340ed3cc10fff8e1",
+    "application/production_query.py": "dc495abb0b2433c5249853c3ffb254043e00244accf306bb3a5b7366be7f63ff",
+    "application/identity_service.py": "07e138bddf9485bc8756b6caa0643a388c2d9e6781113fd8c95b84f71a5efd97",
+    "application/collection_service.py": "87cbdc8b7708f0fc271ad32526f293ad90b5701fb3c40ddfdc2c8980f4a0b384",
+    "application/access_workflow.py": "902ba4575f2db56fcd430bb0fed81733fd0534f2245bd9d8999abc35a7e4fe95",
+    "application/pr_queries.py": "f56a437aa7ca30019e5c486f5edacd22c15a1a573d89e560bdefed41932f7c45",
+    "application/issue_queries.py": "474e375ee88fad1050433be37e665d6802b6b6817ec951cfb016394917f7d295",
+    "application/job_plans.py": "0a1ff18900cc505ed41972701bd530729817eb2a928f60108d81f9f258cd6e6a",
+    "application/contracts.py": "c977b61d03abd239d9049a0c668eedcbf2bd684047c43df2b0710379c2ea5d4b",
+    "application/job_service.py": "9e4770860c4d93ee99e150ee184766fe7a837d0601b32c1ec8e3434c2b80e054",
+    "application/recovery.py": "468e88bbb26d2be79d79b39d1b0db3580a775d00dc5ed01ecaed96bddc972ca2",
+    "application/access_acquisition.py": "38a99e75bcdaaa0ae4a8788aecedd78f06d0be7a988e04bc8d5f458070347751",
+    "application/access_maintenance.py": "0774ac6bef5109c08635116cfc1c53eb5f761724395d789ea8f93b2436533b73",
+    "application/target_queries.py": "ce5e725ea0e05748337defa4fe7759b47d2baa04988d5f612d1e1d0d4bf0c1e0",
+    "application/repository_identity.py": "9225b46edba2f0be92929905c64ad9afb4bfef1f8b6d5721a4840cb3ac036e94",
+    "adapters/recording.py": "0719568ffd72a2954cc617706a9dc7b4cc4bde47d9496a7782dcce9c5d48c48c",
+    "cli/main.py": "acc24904c4b9a4d41800dc888b16eb3ca1a857c118ed75a7301ffdfd8b671d4e",
+    "cli/production_query.py": "ec67e07f3c11eaba76aff2e565418a671e701ea1a8155d86f4027dd77a5adf36",
+    "cli/access_workflow.py": "45a88e89acd3833268eae49eb11c5ecc49c4d3e582546c988f873638d6a1d01c",
+    "cli/presenters.py": "dda3165cfc22e6bb7a6f3ec893645ad100637c05ab0631099c1718518aa8f2be",
+    "cli/access_acquisition.py": "fae54a81bbaf5170d2508090919dfcaef94a3ea9aa8e3cd5899f435b8641991c",
+    "cli/access_maintenance.py": "4dc3e6a2ee5370cf5e6503fa6fe913897f6d3560e6154bf7c0decb87e2762381",
+    "domain/p1_coverage.py": "b5e51a6dcf43162f20fb4a081fd12c68f40f4abc6a9aef0ff6bb41b1172f8531",
+    "domain/production_context.py": "a43cc9f068b4bb77a5f9c2a1f28d975b58c366dc69763d41336e71b5ce618dfe",
+    "domain/resource_stage.py": "b3b4c7a7869f61a0713393d8332a410307f736961041c2cc9a28e0356f4b6258",
+    "domain/payload.py": "e8b830b9ddcebdd61e2739f646e1565cdea34facb9b3513b9756cb06ae6d6208",
+    "domain/acquisition.py": "5b3eba7437505c9ed5053e0d4d427534ef6b9250764953c1ad078c802d9b181d",
+    "domain/notes.py": "92ab0f33eda718ffb730c8831104328577d2531ff4e7c6bfe921bc47371cd0aa",
+    "domain/exchange.py": "6709ad532ef5aef65118505d2270960c49a21521c68460da2044b897dae97957",
+    "domain/git_decoding.py": "f3f6966b47111757f64dbc31281664a71cbf8ee6d0bed3f37183632e28b76623",
+    "domain/context_admission.py": "267e2067bac3966f380dbf09dc5fd52e0c36edeb8c04591797f79241394267a7",
+    "domain/native_acquisition.py": "e0d658c2e36b7590f36f0260a43c5cf2bf02a46c4b0dcac22885f1ec850e3d3b",
+    "domain/resource_identity.py": "a7b68deb5a40956360a7c8ad69bcff1c216020b4eb451e52e0ea61fb5d0c13a3",
+    "domain/git_native.py": "1d3845efb6b116b015fe982986b7c12ed3bbe2df949e5dddac24957e77b68048",
+    "domain/selective_exchange.py": "db9e00b70843358349c73f7fb23a3e2663f423913abb3c8add04788c5043de0b",
+    "domain/parent_report.py": "26e63919d9edb337ebfbb6e2ffa663a764dc589ec51dd46e0279acecfeff9926",
+    "domain/context_registration.py": "e29012935442aa6e9ba05d74956aa5e04c91f03f027758a3b9d399bb7de004cc",
+    "domain/access_registry.py": "cce3062c59ba80c428afcbbb0d96508768fc97eda5f8ae46b7d5d5aab3288e49",
+    "domain/models.py": "0c89c49ff141119a0cf6d4342b774fe159647d9cc35c95122d9a225c4bd5c50b",
+    "domain/production_query.py": "dc4461d89798e0fc4d6f2608b0ae634bf4b476fff78b71cbcac7682dd2b92351",
+    "domain/p1_context.py": "e29ff5fa3972f10d5298b472cfba20b706ae8381ef94026e4ab874128c274e1e",
+    "domain/document.py": "9faa75482007e80ff24da38818cf4089d696944743923ad21881110d25a9d548",
+    "domain/coverage.py": "96eb3bad172f66af5afe335131087bd5c6a7cf6eb6dbb77617c01e851c8f9c81",
+    "domain/access_workflow.py": "5cdf947c7c01008736e8de86d33edbd85d8b711c8348ce0cc16bbee9f8c2a317",
+    "domain/exchange_rows.py": "c3c8f62768426e66374902ccdeea4218f7609516781e5ca9a9bc6a3bf70d231e",
+    "domain/time.py": "f8ee3df9e402a820527d89b5d88c4c85afc4a2d013cd457763cc37746984990a",
+    "domain/pr_scope.py": "fbd4444e5724ef521286a118046615d1d6b498e22bc04f0587328a6b438ac64a",
+    "domain/git_object.py": "e1427aa9a02fea745b5967b60c7ec23f419809b084d979a4d5edfc0d15638cd7",
+    "domain/p1_core.py": "f8f5945d61a65134b53e9615764e423e6ad99d737ba8f23c2ef3467dcdc46c17",
+    "domain/git_intrinsic.py": "6406b5c28dd87ef2382416996d5455bdae34dc8b48dbe113f42a898d03625690",
+    "domain/context_dependencies.py": "93d6d7bdbf14cd5c26d13c36a8e2e3bd65ae6f55a208941ada2353af65476fb0",
+    "domain/recovery.py": "4cf1db77eb4fc39d3251636012492e737460df34b846b1da4011f11477440468",
+    "domain/access_backup.py": "6fa8654f05b96b25ccd5341433a957d05b6f243b3bf56d4b8dc338dc3e06bf0b",
+    "domain/transfer_sql.py": "149ff2fa8ae6bfbf8827429ce443215294fd2d35a662390eef6d286806fc006f",
+    "domain/p1_coordination.py": "c15eba1b6c9e91d38a8adfdf4077007d85bd5318418336b2ff17695fa88e939b",
+    "domain/context_wire.py": "9d9bb824a436322ce8632674a28cb894a7afb8b7a715ac19ff6c93c887bb4416",
+    "domain/resource_identification.py": "3e7c02193be40b16f48c66ebad5c2f1dab8108241eb1e1794d8ed94ce86107d1",
+    "domain/access_connections.py": "3ccb3e5351fd21f72ab26475132a6b1ce1643415366ee11ffa9f9e2af3476718",
+    "domain/current_state.py": "52a69c094eabaa206598d2c5e0a669c7740eaca4a9572bd272263774dce30449",
+    "resources/json_contracts.sql": "fea5fd9f3a6ce6ccb9c9fff4d5a37fe3bf0be19e8cc1e198aef91064dce8149e",
+    "resources/exchange.sql": "c6f815452f508e31ad8b17349f0937ed14c3de5ce80d1370db1655a3f42c4fcf",
+    "resources/cas_integrity.sql": "58fa718c08e7558387602fa7e7266d33e74fbd7bda723b8c88ede4b8a1c97fd1",
+    "resources/search.sql": "1fff79854824aae850184fd4af16a29ee8574769e42a139283b01825520a84b7",
+    "resources/current_resources.sql": "0a7a5fdfe024578ee008cff8b3f409c48a2c9b1d0da242122fd7bb7d16dcbf5f",
+    "resources/current_api.sql": "da05f6af33dd9154c411d9f4267a9498b89d8622cc6a2df9fbaa203a4ed0bae0",
+    "resources/operational.sql": "dafdc014ebf3e54e1695ffb0bb3fd953f1a1c893d5b0b13d812740ee2f288def",
+    "resources/git_domain.sql": "31611b0dfd641694198dde519f58180f4a0b7a257400c57a77e79325cfd99f9c",
+    "resources/catalog3.sql": "ddc8f3039f512246ca417d33145e3afeb58be9212f741925706c936922b6f681",
+    "resources/git_facts.sql": "731be2cf76583d3f6ece84b48bbec58ef5d9480dbd5a7bf9de9d4a07f7a0c132",
+    "resources/identity_relations.sql": "b596bb6b9a20552501ad411bf33053edee9565e6414e2e4fc9870f100e766461",
+    "resources/current_collections.sql": "ac5ec2df8955bc856e0fcd19f6bc04d9caddbe902d6137bf1064b61e1cdf04bc",
+    "adapters/github/collector.py": "1517f6076abb571ed1b85affb2b849388f73b2ce3d2975b5b66f53fbcf7e3c28",
+    "adapters/github/transport.py": "eb07d6577f458dbc05e9c8d1c47d1581daf9555250aac123327f1191fa78fc4c",
+    "adapters/github/persistence.py": "b45a94cb819992523ea8de1bb41c03d8be0d81a30e8bc02deeecee3a98e8ba4d",
+    "adapters/github/current_parser.py": "ac544df570f07499f3088d198a51bc708145c7e54a147a74d058eab17ff614c6",
+    "adapters/github/identity.py": "8e096e14864917e24b4d67d64e3442287331eca7367795b3002e3cff491b6cd6",
+    "adapters/github/production_intake.py": "1ce3103535545eb2a0eea1628cd40249ba5c3f25995ebb0a5aeea3dc8989c3ef",
+    "adapters/sqlite/production_search.py": "d58f19587f48eaa511bd335f47f995e1b79c6bea4605453222e185f5165b4239",
+    "adapters/sqlite/transactions.py": "0fe7bcef262470347c721e64c34ea218a2cfa375725559a11e1ddf6c84959d10",
+    "adapters/sqlite/production_context.py": "fe588177a2fac704795e4bd59310f3a980de269eae67691fe25cd8ceb365f447",
+    "adapters/sqlite/recovery_validation.py": "f7b2462bc1075ec07fb39f3460b6ad87f51851a324240774ea200f968cce3801",
+    "adapters/sqlite/git_core.py": "0b29e6bdffc09a6bd328551709548195e576c5bd062be96dda6fe783ce258207",
+    "adapters/sqlite/target.py": "6d7cbb10afe505950ebed1fdea7a037920be23e3fe10770047d086f1cb7c9cbc",
+    "adapters/sqlite/json_contracts.py": "d7bd8653ef251804ed120570e769b430b08c24a41f09153e5bd8a519892983c7",
+    "adapters/sqlite/acquisition.py": "df989af7cb18f490b625a385b883a01ca5e3baf8625775d5339740b17b95badd",
+    "adapters/sqlite/notes.py": "7fe27c7c731b0150c8cef85ee09039b3c0896a874a885ad8eb5e80dac3c4ba27",
+    "adapters/sqlite/text_bodies.py": "e4fe64962aca309f9b675b60dd4eac25c729873971a748a69b0305dc579682cb",
+    "adapters/sqlite/exchange.py": "336f22bb74502477154be6e147c9843bdb48bc9bd8a50bcb24332572d49c10aa",
+    "adapters/sqlite/context_admission.py": "3de61773f0ae253d5e495e685fbb9cefe63af17a57ad96fd23979bd25a1dca7b",
+    "adapters/sqlite/schema.py": "4167f9f7395dac8277f4129db6470bf1ba67a503d950fcfe7f5625fa654bdb39",
+    "adapters/sqlite/access_schema.py": "4991ddc288f4823e27fdc101e70a22093f3fb3d0e0d31298810ff11cf176e61a",
+    "adapters/sqlite/current_api.py": "37f47903b1881ba5d9e6942b74ac5dc5ebb5b847f50e33b7498fac7c4984cb7c",
+    "adapters/sqlite/index.py": "79352d4937580322b861819fb023b02375f3b2be927d67faa40620e853c91e2a",
+    "adapters/sqlite/recovery_budget.py": "468dbf164994f657ea8c62d64a82cacc6b3f74392d6cfb7b342b0df7d4a6af23",
+    "adapters/sqlite/access_registry.py": "d5dc914d1d402e6d07efd128ae489ba86aeb3a365356a44cfab4ce80950f9820",
+    "adapters/sqlite/identity_relations.py": "a23044e5049ffc4b55f91871d756643c7b427f3a108ea11304b44ec57efe7f80",
+    "adapters/sqlite/p1_context.py": "656ec834ceb33c5ecc1794449989bcccfc94da892316948bd62b6e5e01ea0b48",
+    "adapters/sqlite/p1_schema.py": "e1470fe8a81d1f347caa85ef9600860e48941f1154bbe32438f9864a66ed5f22",
+    "adapters/sqlite/coverage.py": "af0434c7f9934b4284ed2c6880dcf763d5bf7b3e8ebf81297bc0bbd76ae3fbc2",
+    "adapters/sqlite/p1_core.py": "e9f4a2004f00209ddbc4d869bb280fb6c40b807f6f7c338cd7646d7cad893a49",
+    "adapters/sqlite/git_intrinsic.py": "89d3e6a80619157062eafeefdc2b79734329a3defda5bde6ede87aba2111585a",
+    "adapters/sqlite/cas_integrity.py": "b2c1cfd13c907493380df2d113617ad95e7fcfae2525d51c38e28e0514e4232c",
+    "adapters/sqlite/recovery.py": "9f66473ad9ca481409d405459d5fdb4e6884ea1e0dc9583d530b2861d4578a63",
+    "adapters/sqlite/payloads.py": "15e0fff2e2b0c0f10aab6c6bc4c90322c8e06e0afb0a19fe832299b7faf92050",
+    "adapters/sqlite/current_collections.py": "1835c8e68f6ba05c7684498abdb1a79782b5f38e979dc3b5033ac891e8bb39ed",
+    "adapters/sqlite/code_assessments.py": "208992994bb05944c51fc0dbfa577c4d90c1a4162ed7b2540b5e41eb46305cbc",
+    "adapters/sqlite/access_backup.py": "b1df310e6d5a24ec48dd012f370b08c8179e6eee33e66f1304ee0a2ac64d5e08",
+    "adapters/sqlite/store.py": "5bc8a1d42cf3f785f30ec26fdfd456f07b45850e7520906791b70dd9bc64cd17",
+    "adapters/sqlite/p1_coordination.py": "9d658cdb92bf58b468d1014ed24d4adc20d5766213c9810150bc8fbd15eaee62",
+    "adapters/sqlite/current_resources.py": "335af0485fa6eef2fd3d50af48e5b7e42db4c981beda7d9b7aabe7e12b2d602c",
+    "adapters/sqlite/access_connections.py": "9472274b9a5baff8894ef182fc6aaad4a81aecd433026cfb30b3441f3a1f861c",
+    "adapters/git/notes.py": "8497bfa9ab1e99dc64ed8877e0ee49702f4375b70f388b9724d4705c1ee58bf4",
+    "adapters/git/native.py": "d1939fee65cc18565f0afa1424aa8dda27a04f0430da7606eacd5bd8a73f35be",
+    "adapters/git/importer.py": "6d7466c64e6134dfc445c72baf741956b584fc2236dfb9a33870ad981382e268",
+    "adapters/git/runner.py": "e93b756131a65e55162465c82556d72897a7dc5ba5f626fd16dfa3bc7fb40ba6",
+    "adapters/git/access_native.py": "fc38b78a5113b4ede7321995932c8397b4ffa30e589d50892673c0322f106d5f",
+    "adapters/git/parsing.py": "f27e9a07e2572ab961b7494dad3f0d6d3e8a3bf625a972065b58781cd05288fb",
+    "adapters/filesystem/atomic_publish.py": "b1e4b79e93989d8c4dd5e41f0f5fbbeab41ec72cf6c40ad289f2cb95b656cacd",
+    "adapters/filesystem/locks.py": "02b3422aa231df94cb5ca5172dae67d907aeec77804502409235e491e525c6da",
+    "adapters/filesystem/capacity.py": "a33441ecf9160ab5fe281c724f789e68921eb21b4c3a8e222bce4cc0ba41caa4",
+    "adapters/filesystem/access_executor.py": "ee8bc62d087fad23a1a3539263651102f1edac6dc9434c24e0f4f63b27eabf6a",
+    "adapters/filesystem/cache.py": "43b0c13b4cb1a6f4b8299822fd55cc5394f652c9c90344f698697577b282cd18",
+    "adapters/sqlite/p1_ddl/search.sql": "4224950692cf754d787c69a10cfca9b6e6a0f53b770ea947f0a8ef670f415d8d",
+    "adapters/sqlite/p1_ddl/context.sql": "73532070fc99f9e87dd4977fd6859d47b183207921e7b641a9c51e8234a5cab9",
+    "adapters/sqlite/p1_ddl/coverage.sql": "1c830f402ac20ace36928d03b49db2f7aeab9962f14d6ee7aeb086b63081a9ed",
+    "adapters/sqlite/p1_ddl/core.sql": "0b96849f36fbbf314e69b675eedd11c8e751173563870c004d912dab6d3d7323",
+    "adapters/sqlite/p1_ddl/operational.sql": "25c678b1584630c87ac643c81fc4f0fb83c210d0671d485d0a21794e54c84ef1",
+    "adapters/sqlite/p1_ddl/fingerprints.json": "5b1a354949f7abe491a07797fb182603b7b1f95322f161c812e7a8dd9845a4d0",
+    "adapters/sqlite/access_ddl/connections.sql": "e3bb8958706631a9038f48be99b3ad943b886682338d4d65fdb5a2172ac98fb0",
+    "adapters/sqlite/access_ddl/registry.sql": "4d949c13488df0e4792a337b6e864ca372e6c738ba0576b2dff3bccb72a5e7bc",
+    "domain/ports/production_context.py": "8b53857103ba99c772770ec89a9fd88ad82881549f45fa5d62ae1de90c714a39",
+    "domain/ports/acquisition.py": "3a560838a8e55c25fea86a3a91688a83c2ba1b32e251326274c5e9d27ae6dc65",
+    "domain/ports/notes.py": "47fa749685acc16a3f0efa95a55b1e2c764d4393ea7040d400cc5452dd8366cb",
+    "domain/ports/access_registry.py": "a102ac0d89e427b1979854d2bd8242b9eec65c5e924d2555d810531a6a954430",
+    "domain/ports/production_query.py": "5757053da80e7193ee8f3fb86d5c44535cec0b2475dfea49c5d37ba042363109",
+    "domain/ports/p1_context.py": "aed9fabf97ca15a1b19b72425d4eeb06f005b2f32b90204697e3fd632d7feab8",
+    "domain/ports/access_workflow.py": "f4cf66c6912d194fb960026af6c40f797586a9ed6c9c73435f301831cb38a58d",
+    "domain/ports/p1_core.py": "b421552e9188b825993523b4a7a6a44c8b497f29f2fb39b69d40acc9c0684fed",
+    "domain/ports/recovery.py": "a8b69a000d3197c2342e0c5fa50b4b3702bc650fa92e5cbaf87f6c599a8e277f",
+    "domain/ports/access_backup.py": "d027253db345fe10f07be86bb2dd95a9570a7c93be01bbce34632994f0440002",
+    "domain/ports/p1_coordination.py": "48798344f1291ae70cea73a95da3eddf83867fa2d592f4f1e3952081e8d9486e",
+    "domain/ports/context_authorization.py": "073fbd676a55ef86820eec5db60241b9e4545b0be54e2022680d3238e16b2e29",
+    "domain/ports/access_connections.py": "2a17c52281e3eb2a1f624b8f35d731f1fd6a865e158baa3a41026c96801c9a6f",
+    "resources/schemas/cli-v1.schema.json": "c6093eae50b54e27eb032238d0284cc6cca3f49a4e7875498a8241ee2775264e"
+  }
+}

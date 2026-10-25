@@ -1,0 +1,101 @@
+"""Independent stdlib reconciliation and per-node first-failure comparison.
+
+Never imports product classifiers or Author receipt parsers. Reconciles original
+raw #149 lane, one fresh full lane, and separate diagnostics without combining
+outcomes from invocations. Additional journal call reports stay explicit.
+"""
+import ast,gzip,hashlib,json,re,subprocess,sys,xml.etree.ElementTree as ET
+from collections import Counter,defaultdict
+from functools import lru_cache
+from pathlib import Path
+ROOT=Path('/workspace/git-repo-db');OUT=ROOT/'docs/implementation/evidence/adr0031-i6b-independent-20261023/broad'
+def read(p):
+    if not p.exists():p=Path(str(p)+'.gz')
+    raw=p.read_bytes();return gzip.decompress(raw) if p.suffix=='.gz' else raw
+
+def emit(p,v):
+    data=(json.dumps(v,ensure_ascii=False,indent=2)+'\n').encode()
+    if p.suffix=='.gz':data=gzip.compress(data,mtime=0)
+    p.write_bytes(data)
+
+def nodekey(n):
+    prefix,sep,param=n.partition('[');parts=prefix.split('::')
+    return '.'.join([parts[0][:-3].replace('/','.'),*parts[1:-1]]),parts[-1]+sep+param
+
+def parse(d,prefix,kind):
+    nodes=read(d/(prefix+'.selected.txt')).decode().splitlines();keys={nodekey(n):n for n in nodes};assert len(nodes)==len(set(nodes))==len(keys)
+    results={};failures={}
+    for c in ET.fromstring(read(d/(prefix+'.xml'))).iter('testcase'):
+        n=keys[c.get('classname'),c.get('name')];assert n not in results
+        value=('passed',None)
+        for tag,status,phase in [('failure','failed','call'),('error','error','setup'),('skipped','skipped',None)]:
+            e=c.find(tag)
+            if e is None:continue
+            if 'failed on teardown' in e.get('message',''):phase='teardown'
+            value=status,phase;failures[n]={'message':e.get('message',''),'trace':e.text or ''};break
+        results[n]=value
+    assert set(results)==set(nodes)
+    events=[json.loads(x) for x in read(d/(prefix+'.jsonl')).splitlines() if x]
+    assert Counter(x['nodeid'] for x in events if x['event']=='start')==Counter(nodes)
+    if kind=='historic':
+        typed=[json.loads(x) for x in read(d/(prefix+'.report-types.jsonl')).splitlines() if x]
+        main=[x for x in typed if x.get('subtest_context') is None];additional=[x for x in typed if x.get('subtest_context') is not None]
+        assert all(x['report_type']=='_pytest.subtests.SubtestReport' for x in additional)
+        assert Counter((x['nodeid'],x['phase'],x['outcome'],round(x['duration'],6)) for x in typed)==Counter((x['nodeid'],x['phase'],x['outcome'],round(x['duration'],6)) for x in events if x['event']=='phase')
+    else:
+        observed=[json.loads(line) for file in d.glob('gw*.reports.jsonl') for line in file.read_text().splitlines() if line]
+        main=[r for r in observed if r['event']=='report']
+        assert len([r for r in observed if r['event']=='finish'])==4
+        normal=Counter((x['nodeid'],x['phase'],x['outcome']) for x in main)
+        journal=Counter((x['nodeid'],x['phase'],x['outcome']) for x in events if x['event']=='phase')
+        assert not (normal-journal)
+        extra=journal-normal
+        assert all(key[1:] == ('call','passed') for key in extra),extra
+        additional=[{'nodeid':k[0],'phase':k[1],'outcome':k[2]} for k,c in extra.items() for _ in range(c)]
+    phases={(x['nodeid'],x['phase']):x['outcome'] for x in main};assert len(phases)==len(main)
+    for n in nodes:
+        assert (n,'setup') in phases and (n,'teardown') in phases
+        assert ((n,'call') in phases)==(phases[n,'setup']=='passed')
+        failures_here=[p for p in ['setup','call','teardown'] if phases.get((n,p))=='failed']
+        if failures_here:inferred=('failed','call') if failures_here[0]=='call' else ('error',failures_here[0])
+        elif any(x['nodeid']==n and x['outcome']=='failed' for x in additional):inferred=('failed','call')
+        elif any(phases.get((n,p))=='skipped' for p in ['setup','call','teardown']):inferred=('skipped',None)
+        else:inferred=('passed',None)
+        assert results[n]==inferred,(n,results[n],inferred)
+    finishes=[x for x in events if x['event']=='finish'];execution=json.loads(read(d/(prefix+'.execution.json')))
+    assert len(finishes)==1 and finishes[0]['exitstatus']==execution['exit_code'] and execution['exit_code'] in [0,1]
+    before=json.loads(read(d/'binding-before.json'));after=json.loads(read(d/'binding-after.json'))
+    for k in ['head','tree','inputs']:assert before[k]==after[k] and before[k]
+    statuskey='status' if kind=='historic' else 'tracked_status';assert before[statuskey]==after[statuskey]==''
+    summary={'selected':len(nodes),'counts':dict(Counter(r[0] for r in results.values())),'normal_phase_reports':len(main),'additional_journal_call_reports':dict(Counter(x['outcome'] for x in additional)),'exit_code':execution['exit_code'],'head':before['head'],'tree':before['tree'],'input_count':len(before['inputs']),'before_after_inputs_equal':True,'selected_junit_journal_starts_normal_reports_exact':True,'additional_journal_reports':additional,'kind':kind}
+    return results,failures,summary
+
+def signature(f):
+    text=f.get('message','')+'\n'+f.get('trace','')
+    types=sorted(set(re.findall(r'(?:^|[\n ])([\w.]+(?:Error|Refused|Stage|Failure)):',text)))
+    codes=sorted(set(re.findall(r'\b(?:I2_[A-Z_]+|MALFORMED_ROW|PERMISSION_DENIED|OMITTED_BY_SELECTION|INCOMPLETE_[A-Z_]+|MISSING_DEPENDENCY|UNQUALIFIED_MAPPING|QS10_PARENT_INELIGIBLE)\b',text)))
+    frames=[]
+    for path,line,fun in re.findall(r'^([^\n:]+\.py):(\d+):(?: in (\w+))?',f.get('trace',''),re.M):
+        m=re.search(r'(tests/.*|src/repo_catalog/.*)',path)
+        if m:frames.append({'path':m.group(),'line':int(line),'function':fun})
+    primary=f.get('message','').splitlines()[0] if f.get('message') else ''
+    primary_type=re.findall(r'([\w.]+(?:Error|Refused|Stage|Failure)):',primary)
+    primary_codes=re.findall(r'\b(?:I2_[A-Z_]+|MALFORMED_ROW|PERMISSION_DENIED|OMITTED_BY_SELECTION|INCOMPLETE_[A-Z_]+|MISSING_DEPENDENCY|UNQUALIFIED_MAPPING|QS10_PARENT_INELIGIBLE)\b',primary)
+    return {'primary_message':primary,'primary_exception_types':sorted(set(primary_type)),'primary_refusal_codes':sorted(set(primary_codes)),'exception_type_tokens_in_trace':types,'code_tokens_in_trace':codes,'frames':frames}
+
+def compare(oldd,oldprefix,oldkind,newd,newprefix,newkind,name):
+    a,af,sa=parse(oldd,oldprefix,oldkind);b,bf,sb=parse(newd,newprefix,newkind)
+    rows=[]
+    for n in sorted(set(a)|set(b)):
+        x=signature(af.get(n,{}));y=signature(bf.get(n,{}))
+        rows.append({'nodeid':n,'old':a.get(n),'new':b.get(n),'old_failure':x,'new_failure':y,'outcome_phase_changed':a.get(n)!=b.get(n),'exception_types_changed':x['primary_exception_types']!=y['primary_exception_types'],'refusal_codes_changed':x['primary_refusal_codes']!=y['primary_refusal_codes'],'frame_functions_changed':[(f['path'],f['function']) for f in x['frames']]!=[(f['path'],f['function']) for f in y['frames']]})
+    summary={'old':sa,'new':sb,'old_only':sorted(set(a)-set(b)),'new_only':sorted(set(b)-set(a)),'changes':{k:[r['nodeid'] for r in rows if r[k]] for k in ['outcome_phase_changed','exception_types_changed','refusal_codes_changed','frame_functions_changed']},'historical_unsuccessful_nodes':sorted(af),'new_unsuccessful_nodes':sorted(bf),'same_unsuccessful_node_set':set(af)==set(bf),'common_outcome_phase_changes':[r['nodeid'] for r in rows if r['nodeid'] in a and r['nodeid'] in b and r['outcome_phase_changed']],'new_node_outcome_counts':dict(Counter(b[n][0] for n in set(b)-set(a))),'common_failed_signature_changes':[r['nodeid'] for r in rows if r['nodeid'] in af and (r['exception_types_changed'] or r['refusal_codes_changed'] or r['frame_functions_changed'])]}
+    emit(OUT/(name+'.nodes.json.gz'),rows);emit(OUT/(name+'.summary.json'),summary)
+    print(name,json.dumps({'old':sa['counts'],'new':sb['counts'],'changes':{k:len(v) for k,v in summary['changes'].items()},'same_unsuccessful_node_set':summary['same_unsuccessful_node_set']}))
+    return summary
+
+if __name__=='__main__':
+    ref=Path('/workspace/i6b-broad-work/reference149/full');new=OUT/'full-final-v2'
+    compare(ref,'ordinary','historic',new,'ordinary','fresh','full-vs-149')
+    author=ROOT/'docs/implementation/evidence/adr0031-i6b-author-20261023/raw/source-complete'
+    compare(author,'ordinary','historic',new,'ordinary','fresh','full-vs-author-premigration')

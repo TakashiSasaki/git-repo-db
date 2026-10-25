@@ -1,0 +1,22 @@
+{
+  "nodeid": "tests/integration/i3/test_selective_exchange.py::test_empty_oid_and_context_payload_cannot_override_selection",
+  "fixture_resource_assignment_line": 481,
+  "assertions": [
+    {
+      "line": 495,
+      "AST": "Assert(test=UnaryOp(op=Not(), operand=Call(func=Name(id='rows', ctx=Load()), args=[Name(id='tmp_path', ctx=Load()), Constant(value='core'), Constant(value='git_objects')], keywords=[])))",
+      "source": "assert not rows(tmp_path, 'core', 'git_objects')"
+    },
+    {
+      "line": 496,
+      "AST": "Assert(test=UnaryOp(op=Not(), operand=Call(func=Name(id='rows', ctx=Load()), args=[Name(id='tmp_path', ctx=Load()), Constant(value='context'), Constant(value='resources')], keywords=[])))",
+      "source": "assert not rows(tmp_path, 'context', 'resources')"
+    }
+  ],
+  "independent_controls": {
+    "old_three_column": "MALFORMED_ROW during ExchangePackage construction",
+    "canonical_seven_column": "PERMISSION_DENIED at unconnected receive",
+    "result": "2 PASS, exit 0; full Core/resource rowsets unchanged"
+  },
+  "assessment": "The earlier refusal follows v5 strict seven-column envelope validation on the caller-provided malformed carrier. It does not inspect catalog existence, grant authority, retain bytes or weaken selection. The baseline already stopped at unconnected receive before either selection assertion. No selection assertion becomes verified by this change; valid-v5 selective import remains staged I6-C. Do not relax schema or restore a compatibility shim to recover this legacy fixture. Migrate it with a genuine connected I6-C operation when that stage is authorized, retaining both assertions and explicit empty-selection semantics."
+}

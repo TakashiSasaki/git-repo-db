@@ -1,0 +1,20 @@
+{
+  "source_head": "a3185cde585a3dbf4dec7d491ecd20e43c285a19",
+  "status": "nonfinal, intentionally interrupted after parent identified precedence correction",
+  "driver_exit_code": 143,
+  "driver_signal": "SIGTERM",
+  "child_exitstatus_from_journal": 2,
+  "child_status": "KeyboardInterrupt after SIGINT, finish event present",
+  "partial_pytest_output": "455 passed before interruption; never a completed626 lane or acceptance",
+  "unexecuted": [
+    "remainder of direct626",
+    "directwire212",
+    "all derived lanes",
+    "independent normal204+4",
+    "Author34",
+    "saved33",
+    "new54",
+    "original smoke"
+  ],
+  "artifact_status": "Build/inventory observations valid only for a3185cd; not final product acceptance"
+}

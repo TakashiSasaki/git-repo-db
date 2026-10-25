@@ -115,7 +115,9 @@ def test_scope_cannot_use_hash_or_opaque_alias(context):
         )
     with pytest.raises(sqlite3.IntegrityError):
         store.scope(
-            CoverageScope.resource(ResourceKey(SERVICE, "issue", "absent"), "comments")
+            CoverageScope.resource(
+                ResourceKey.from_native(SERVICE, "issue", "absent"), "comments"
+            )
         )
 
 
@@ -199,7 +201,7 @@ def test_proofs_require_exact_claim_terminal_and_same_owner(context):
         proof(db, CoverageClaim(scope, 10, "complete"), terminal)
     store.admit_coverage(CoverageClaim(scope, 10, "complete"))
     proof(db, CoverageClaim(scope, 10, "complete"), terminal)
-    wrong = ResourceKey(SERVICE, "issue", "8")
+    wrong = ResourceKey.from_native(SERVICE, "issue", "8")
     store.resource(wrong, REPO)
     terminal2 = collection(db, key=wrong)
     with pytest.raises(sqlite3.IntegrityError, match="owner mismatch"):

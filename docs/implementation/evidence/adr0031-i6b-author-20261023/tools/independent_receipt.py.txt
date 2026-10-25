@@ -1,0 +1,55 @@
+"""Task C receipt parser reused by I6-B Author: no product classifier imports. This is Author validation, not independent review."""
+from collections import Counter
+from pathlib import Path
+import gzip, hashlib, json, sys, xml.etree.ElementTree as ET
+
+def read(p):
+ p=Path(p)
+ if not p.exists():p=Path(str(p)+'.gz')
+ b=p.read_bytes()
+ return gzip.decompress(b) if p.suffix=='.gz' else b
+
+def key(n):
+ h,s,p=n.partition('[');parts=h.split('::')
+ return ('.'.join([parts[0][:-3].replace('/','.'),*parts[1:-1]]),parts[-1]+s+p)
+
+def audit(d,prefix='ordinary'):
+ d=Path(d);nodes=read(d/(prefix+'.selected.txt')).decode().splitlines(); km={key(n):n for n in nodes}
+ assert len(nodes)==len(set(nodes))==len(km)
+ result={};messages={}
+ for c in ET.fromstring(read(d/(prefix+'.xml'))).iter('testcase'):
+  n=km[(c.get('classname'),c.get('name'))]; assert n not in result
+  r=('passed',None)
+  for tag,out,phase in [('failure','failed','call'),('error','error','setup'),('skipped','skipped',None)]:
+   e=c.find(tag)
+   if e is not None:
+    if 'failed on teardown' in e.get('message',''):phase='teardown'
+    r=out,phase;messages[n]={'message':e.get('message',''),'trace':e.text or ''};break
+  result[n]=r
+ assert set(result)==set(nodes)
+ events=[json.loads(x) for x in read(d/(prefix+'.jsonl')).splitlines() if x]
+ typed=[json.loads(x) for x in read(d/(prefix+'.report-types.jsonl')).splitlines() if x]
+ main=[x for x in typed if x.get('subtest_context') is None];sub=[x for x in typed if x.get('subtest_context') is not None]
+ assert Counter(x['nodeid'] for x in events if x['event']=='start')==Counter(nodes)
+ phasekey=lambda x:(x['nodeid'],x['phase'],x['outcome'],round(x['duration'],6))
+ assert Counter(map(phasekey,typed))==Counter(phasekey(x) for x in events if x['event']=='phase')
+ mp={(x['nodeid'],x['phase']):x['outcome'] for x in main}; assert len(mp)==len(main)
+ for n in nodes:
+  assert (n,'setup') in mp and (n,'teardown') in mp
+  assert ((n,'call') in mp)==(mp[n,'setup']=='passed')
+  failed=[p for p in ['setup','call','teardown'] if mp.get((n,p))=='failed']
+  if failed:r=('failed','call') if failed[0]=='call' else ('error',failed[0])
+  elif any(x['nodeid']==n and x['outcome']=='failed' for x in sub):r=('failed','call')
+  elif any(mp.get((n,p))=='skipped' for p in ['setup','call','teardown']):r=('skipped',None)
+  else:r=('passed',None)
+  assert result[n]==r,(n,result[n],r)
+ assert all(x['report_type']=='_pytest.subtests.SubtestReport' for x in sub)
+ finish=[x for x in events if x['event']=='finish'];execution=json.loads(read(d/(prefix+'.execution.json')))
+ assert len(finish)==1 and finish[0]['exitstatus']==execution['exit_code'] and execution['exit_code'] in [0,1]
+ b=[json.loads(read(d/f'binding-{s}.json')) for s in ['before','after']]
+ assert all(b[0][k]==b[1][k] for k in ['head','tree','inputs','status']) and b[0]['inputs']
+ summary={'selected':len(nodes),'counts':dict(Counter(x[0] for x in result.values())),'subtest_counts':dict(Counter(x['outcome'] for x in sub)),'ordinary_reports':len(main),'all_reports':len(typed),'exit_code':execution['exit_code'],'head':b[0]['head'],'tree':b[0]['tree'],'input_count':len(b[0]['inputs']),'bindings_unchanged':True,'tracked_status':b[0]['status'],'selected_junit_journal_typed_exact':True}
+ return result,messages,summary
+if __name__=='__main__':
+ result,messages,summary=audit(sys.argv[1],sys.argv[2] if len(sys.argv)>2 else 'ordinary')
+ Path(sys.argv[1],'author-receipt.json').write_text(json.dumps(summary,indent=2)+'\n');print(json.dumps(summary))

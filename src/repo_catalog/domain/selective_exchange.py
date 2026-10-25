@@ -1,4 +1,4 @@
-"""ADR 0030 v4 selection and lossless Context report codecs.
+"""Bounded selection and lossless Context report reconstruction.
 
 This module uses only the frozen I1 contract. It does not fetch Provider data or
 assign Repository mappings. Selection never grants Repository permission.
@@ -41,6 +41,8 @@ def relation(row: dict) -> ResourceRepositoryRelation:
         row["target_json"],
         row["provenance_json"],
         row["observed_at_us"],
+        row.get("event_report_members_json"),
+        row.get("event_report_scope_json"),
     )
 
 
@@ -73,6 +75,24 @@ def disposition(row: dict) -> MappingDisposition:
 
 
 def transfer_reports(data: dict) -> list[TransferEventReport]:
+    """Reconstruct only complete originals, never Event-derived Parent evidence."""
+    from repo_catalog.domain.parent_report import ParentObservation, ParentReportKey
+
+    parents = {}
+    for row in data["resource_relations"]:
+        if row["relation_kind"] == "parent":
+            parent = ParentObservation(
+                ParentReportKey(
+                    resource(row),
+                    row["members_json"],
+                    row["provenance_json"],
+                    row["scope_json"],
+                ),
+                row["observed_at_us"],
+            )
+            if parent.report_key in parents and parents[parent.report_key] != parent:
+                raise ExchangeError("IMMUTABLE_REPLAY_CONFLICT", "parent")
+            parents[parent.report_key] = parent
     endpoints = [
         relation(r)
         for r in data["resource_repository_relations"]
@@ -82,9 +102,22 @@ def transfer_reports(data: dict) -> list[TransferEventReport]:
     for row in data["resource_relations"]:
         if row["relation_kind"] != "transfer_event_report":
             continue
+        scope = json.loads(row["scope_json"])
+        parent_fields = (
+            "parent_members_json",
+            "parent_provenance_json",
+            "parent_scope_json",
+        )
+        if type(scope) is not dict or any(
+            type(scope.get(k)) is not str for k in parent_fields
+        ):
+            raise ExchangeError("INCOMPLETE_ORIGINAL_REPORT", "transfer_event_report")
+        parent_key = ParentReportKey(resource(row), *(scope[k] for k in parent_fields))
+        if parent_key not in parents:
+            raise ExchangeError("MISSING_DEPENDENCY", "original_parent_report")
         clock = FieldClock.from_json(
             json.dumps(
-                json.loads(row["scope_json"])["clock"],
+                scope["clock"],
                 sort_keys=True,
                 separators=(",", ":"),
             )
@@ -104,6 +137,7 @@ def transfer_reports(data: dict) -> list[TransferEventReport]:
                 row["scope_json"],
                 row["members_json"],
                 row["observed_at_us"],
+                parent_report=parents[parent_key],
             )
         )
     original_reports = {}
@@ -576,7 +610,7 @@ def filter_sections(core, context, scope, *, permitted=None):
 
 def expand_resources(rows, relations, collections, scope, repository_relations=()):
     """Cycle-safe traversal over actual resources only, with explicit depth."""
-    available = {ResourceKey(*r) for r in rows}
+    available = {ResourceKey(*r[:3]) for r in rows}
     chosen = (
         available.copy()
         if scope.resource_keys is None
@@ -585,12 +619,8 @@ def expand_resources(rows, relations, collections, scope, repository_relations=(
     reasons = []
     omissions = []
     edges = {r: set() for r in available}
-    for r in available:
-        if r.resource_kind in ("review", "thread", "comment", "document"):
-            coords = json.loads(r.provider_resource_id)
-            parent = ResourceKey(r.service_instance_uuidv4, *coords[:2])
-            if parent in available:
-                edges[r].add(parent)
+    # Namespace is identification, never an inferred report/dependency edge.
+    # Identification declarations never add traversal edges.
     for row in relations:
         owner = ResourceKey(*row[:3])
         edges.setdefault(owner, set()).update(
@@ -655,6 +685,27 @@ def expand_resources(rows, relations, collections, scope, repository_relations=(
     return chosen, reasons, omissions
 
 
+def preflight_i2_resources(resources):
+    from repo_catalog.domain.resource_identification import ResourceIdentification
+    from repo_catalog.domain.resource_stage import UnsupportedIdentificationStage
+
+    for item in resources:
+        if isinstance(item, dict):
+            kind = item.get("resource_kind")
+            if kind in {"review", "thread", "comment", "document"}:
+                try:
+                    ResourceIdentification.from_wire(item)
+                except (ValueError, TypeError) as error:
+                    raise UnsupportedIdentificationStage() from error
+
+
+def preflight_i2_context(data):
+    from repo_catalog.domain.resource_stage import preflight_transfer
+
+    preflight_transfer(data)
+    preflight_i2_resources(data["resources"])
+
+
 def validate_context(data):
     from repo_catalog.domain.p1_context import (
         CoverageClaim,
@@ -683,8 +734,10 @@ def validate_context(data):
     for row in data["source_repositories"]:
         uuid4_value(row["source_registration_uuidv4"])
         uuid4_value(row["repository_uuidv4"])
+    from repo_catalog.domain.resource_identification import ResourceIdentification
+
     for row in data["resources"]:
-        resource(row)
+        ResourceIdentification.from_wire(row)
     for row in data["field_candidates"]:
         candidate = FieldCandidate(
             resource(row),
@@ -774,6 +827,36 @@ def validate_context(data):
 
 def validate_context_bindings(data, source_services):
     """Check modeled parent and service assertions without manufacturing facts."""
+    from repo_catalog.domain.resource_identification import ResourceIdentification
+
+    identifications = {
+        resource(row): ResourceIdentification.from_wire(row)
+        for row in data["resources"]
+    }
+    from repo_catalog.domain.context_admission import extract_provenance_sources
+
+    for section, rows in data.items():
+        for row in rows:
+            service = row.get("service_instance_uuidv4")
+            if service is None and "source_registration_uuidv4" in row:
+                service = source_services.get(row["source_registration_uuidv4"])
+            if service is None and "owner_kind" in row:
+                coordinates = json.loads(row["owner_coordinates_json"])
+                if row["owner_kind"] in {"resource", "field", "collection"}:
+                    service = coordinates[0]
+                elif row["owner_kind"] in {"source", "source_inventory"}:
+                    service = source_services.get(coordinates[0])
+            for name, value in row.items():
+                if value is not None and (
+                    name.endswith("provenance_json") or name == "scope_json"
+                ):
+                    for source in extract_provenance_sources(value):
+                        if (
+                            service is not None
+                            and source in source_services
+                            and source_services[source] != service
+                        ):
+                            raise ExchangeError("SOURCE_SERVICE", section)
     child_kinds = {
         "reviews": "review",
         "comments": "comment",
@@ -794,7 +877,11 @@ def validate_context_bindings(data, source_services):
                         member.resource_kind != child_kind
                         or member.service_instance_uuidv4
                         != owner.service_instance_uuidv4
-                        or tuple(json.loads(member.provider_resource_id)[:2])
+                        or member not in identifications
+                        or (
+                            identifications[member].identifier_namespace_kind,
+                            identifications[member].identifier_namespace_id,
+                        )
                         != owner.coordinates()[1:]
                     ):
                         raise ExchangeError("MEMBER_OWNER", section)
@@ -1129,6 +1216,8 @@ def validate_context_proofs(data):
                 row["provenance_json"],
             )
             attributes = json.loads(collection_scopes[slot])
+            if type(attributes) is not dict:
+                raise ExchangeError("INVALID_COVERAGE_PROOF", "collection_scope")
             kind = attributes.get("coverage_kind", row["collection_kind"])
             if owner.base_coverage_kind != kind:
                 raise ExchangeError("INVALID_COVERAGE_PROOF", "coverage_kind")

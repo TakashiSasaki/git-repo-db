@@ -1,0 +1,9 @@
+{
+  "id": "V02-scoped-event-child-first",
+  "bytes": 1435,
+  "sha256": "7d057ff25c0488456534ef955d1f877c88a3721b16d889d5cdbc2795f2909458",
+  "digest_sha256": "3dfd5ecd66080fb3b287bb5da72ba636096d2282869075bbf2733899e70d3f82",
+  "outcome": "accept",
+  "refusal_code": null,
+  "scope": "supplementary Author-team codec verification, not independent review"
+}

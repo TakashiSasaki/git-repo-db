@@ -5,7 +5,7 @@ description: Verify git-repo-db CI status and test execution against the exact f
 
 # Verify the exact accepted tree
 
-Use `docs/change-aware-ci.md`, `docs/testing.md`, and `scripts/ci_dependencies.json` as the live contracts. Distinguish ordinary development validation from explicit release acceptance.
+Use `docs/change-aware-ci.md`, `docs/testing.md`, and `scripts/ci_dependencies.json` as the live contracts. Follow [ADR 0032](../../../docs/adr/0032-environment-sqlite-validation.md) for the environment's Python-loaded SQLite; one version per environment suffices for development and release. Distinguish ordinary development validation from explicit release acceptance.
 
 ## Stacked integration trees and merge authorization fences
 
@@ -78,7 +78,7 @@ packaging tests, and verify its manifest/lock and wheel digests. Dependency
 preparation is distinct from executing Provider acquisition.
 
 Use `scripts/verify_i5_offline.py --output NEW_EMPTY_DIR --execute` with the
-actual SQLite 3.51.3 interpreter for disjoint focused/additional/benchmark
+environment's selected Python and its actual SQLite for disjoint focused/additional/benchmark
 cohorts, quiet raw logs, JUnit/journal reconciliation and input hashes. It is
 an acceptance evidence helper, not a release receipt. It refuses live nodes;
 report those as unexecuted. Its default xdist workers isolate disposable Catalogs;
@@ -108,14 +108,42 @@ and its independently retained execution receipts.
 
 ## Development validation loop (ordinary PRs and stacked iterations)
 
-Before an exact SQLite-minimum run, query the actual loaded version and
-`SELECT sqlite_source_id()` in the intended interpreter. The managed CPython 3.12
-runtime embedded `_sqlite3`: `LD_LIBRARY_PATH` did not replace its SQLite 3.53.1,
-even with a hash-verified 3.51.3 library present. Preserve the failed exact-version
-assertion and distinguish that supported newer-runtime run. Use an available
-dynamic-binding interpreter in its own locked worktree environment, and repeat the
-actual source-ID query before calling the result a minimum-version run. Do not
-alter version strings, lower requirements or disable the network guard.
+### Hosted Python selection and built-in SQLite identity
+
+When hosted Access fails `SQLITE_RUNTIME` before collection, compare the selected
+Python's actual SQLite with the unchanged product guards. `setup-python` 3.12.15
+on Ubuntu 24.04 was observed to load 3.45.1; upgrading Python's version selector
+alone does not establish support. Use the complete checksum-bound prebuilt Python
+selection described in [hosted runtime guidance](../../../docs/ci-python-runtime.md).
+Do not repair an interpreter by obtaining or replacing a SQLite component.
+
+Probe before dependencies, after each dependency preparation and inside each
+actual installed-artifact venv. Record `sys.executable`, resolved
+`sys._base_executable`, actual SQLite/source, compile options and loader mappings.
+For built-in `_sqlite3`, `__file__` is absent: bind its `__spec__.origin` and the
+base Python executable hash instead. JSON receipts normalize tuple/list shapes
+before same-invocation comparisons. These comparisons reject child drift without
+requiring an exact SQLite release across environments. Keep independent installed
+origin/file checks, factory safety guards and offline protections intact.
+
+An inherited test failure must not prevent later artifact lanes or evidence
+audits from running. Retain nonzero outcomes, execute independent later checks
+with `!cancelled()` and report unexecuted scopes explicitly. Keep the independent
+stdlib-only policy job separate from product dependency preparation.
+
+Measure the selected Python executable/version and `SELECT sqlite_version(),
+sqlite_source_id()` before execution. Keep that Python through locked dependency
+preparation, subprocesses and installed venvs. Do not obtain/build/install/swap
+SQLite for tests or require multiple releases or an exact version/source ID.
+Local and hosted SQLite may differ. Preserve product capability/WAL safety checks;
+report an insufficient environment as failed/unexecuted work without version
+spoofing, skip/xfail, guard bypass or a hidden substitute library. Obtain explicit
+owner approval of the reason and scope before a policy exception.
+
+Earlier minimum-runtime setup attempts and failed assertions are historical
+receipts. Preserve them as facts; use the current [testing guide](../../../docs/testing.md)
+for new executions. Runtime identity checks within one invocation still bind its
+receipt, without pinning a release or aligning independent environments.
 
 Review assertion meaning before extending acceptance links. Scope URI grammar
 checks do not prove Repository Locator grammar, and a MAX-only restore check does
@@ -280,6 +308,58 @@ accept substituted node sets. Independent review of the integration-readiness
 driver found that gap; explicit three-way identity checks passed on both stored
 installed P7 executions. Keep these checks even when their counts agree.
 
+## Revalidate complete originals on the actual intake route
+
+A constructor or pure validator test does not establish validation at Store
+intake. Trace its actual callsites, then challenge a previously valid nested
+carrier after construction. Run initial admission and exact replay through both
+the raw Store and facade. Compare full persistent rowsets, dependency reads,
+transaction state and leases on refusal; retain ordinary stage-fence controls.
+Use bounded synthetic typed-input mutations, such as replacing a declared
+endpoint with None or an invalid state, rather than making an arbitrary-Python
+sandbox or Provider-authentication claim.
+
+Reuse the canonical complete-original validator after bounded input accounting
+and current authority/selection, before dependency lookup, serialization, writes
+or duplicate success. Dependency enumeration must not dereference malformed
+convenience properties before that boundary. Never fill an absent original from
+stored rows, translated endpoints or Event coordinates. Keep the original
+clock/provenance/time and full endpoint declaration. Verify with:
+
+```sh
+python -m pytest tests/integration/i6a/test_originals_revalidation.py -q
+```
+
+ORIGINALS-M1 demonstrated constructor/replace refusal alongside actual
+insert/duplicate and explicit-NULL laundering. The corrected source and both
+installed wheel forms refuse those saved counterexamples, while preserving
+normal fences and valid original roundtrips. These are implementation checks;
+non-Author acceptance and release qualification remain separate.
+
+## Require binding provenance after resolving transport
+
+Resolve .json or .json.gz before testing whether a source-binding artifact is
+present. A gzip-aware reader cannot help if an earlier plain-path existence
+predicate skips the reader. Require both complete before/after bindings and
+compare head, tree, input SHA-256 inventory and tracked status. Missing either
+or both is an explicit provenance failure, not evidence of equality. Equal
+missing dictionary values do not prove complete evidence.
+
+```sh
+python -m pytest tests/unit/test_i6a_regression_bindings.py -q
+```
+
+I6A-IR-L01 reproduced consistent=true with null source bindings on the actual
+published compressed evidence. Verify the repaired parser on unchanged archives
+and separately copied compressed mismatch/missing controls. Never rewrite old
+ZIP/JSON evidence to make a new parser pass.
+
+Set UV_CACHE_DIR to a writable external directory in the parent execution
+driver before every uv subprocess, including uv pip install into artifact venvs.
+Setting it only on uv sync leaves later offline installs using a read-only
+home cache. Preserve that setup failure and use a new output directory for the
+corrected execution; compare source and artifact hashes across the retry.
+
 ## Size acceptance storage and inspect fetch scope
 
 Before broad concurrent acceptance runs, inspect `df -h`/`df -i` for the actual
@@ -369,3 +449,147 @@ unexpected adapter ValueError as indeterminate yet misclassify a trusted decoder
 proven stored-data violation. Preserve the cause, use an explicit typed invariant
 boundary and check both confirmed corruption and existing IO/lock/budget/error
 negative controls. Do not classify every ValueError as authoritative corruption.
+
+## Pytest subtest reports are additional measured phases
+
+Pytest 9 unittest `subTest` execution can emit `SubtestReport` call records in
+addition to the ordinary node's `TestReport` setup/call/teardown. I6-A's initial
+ordinary-suite journals contained 57 passing subtest reports with repeated parent
+node IDs. The old strict helper correctly refused its once-per-phase predicate;
+that refusal must not be relabeled as strict phase reconciliation or repaired by
+silently deduplicating records.
+
+Keep the original journal, JUnit, starts and failure results. For a new execution,
+capture each actual report class and subtest context in a separate sidecar hook.
+First compare the complete raw journal phase multiset against every sidecar
+report; then separately require exactly one ordinary setup/call/teardown for each
+selected node and retain every subtest outcome. A failing subtest remains fatal,
+even if the final ordinary call reports success. Node-set equality, ordinary
+phase completeness and subtest acceptance are separate facts.
+
+The [I6-A Author evidence](../../../docs/implementation/evidence/adr0031-i6a/author/README.md)
+retains the original discrepancy and external sidecar/reconciliation helpers.
+Its synthetic serial and xdist probes recorded two passing and one intentionally
+failing subtest, preserved all raw reports and rejected subtest acceptance. This
+procedure changes no product test, skip policy or historical receipt and does
+not turn a failing ordinary suite into acceptance.
+
+## Stage installed test support separately and bind pytest imports
+
+When copied artifact tests import `tests.support`, copy the explicit test package
+root and required support modules into the external harness. A product wheel
+must not acquire a `tests` package to repair a test collection error. Run outside
+the checkout with an explicit minimal pytest configuration: `--confcutdir` alone
+does not prevent pytest from finding an ancestor `pyproject.toml` whose
+`pythonpath = ["src"]` imports the checkout. Keep the offline network guard, but
+never add product source to `PYTHONPATH`.
+
+Check product origins and wheel file hashes inside pytest at session start and
+finish, as well as in the separate runtime probe. Collect first, then reconcile
+the actual selected IDs, JUnit cases and journal starts/phases; a collection error
+or equal passing counts cannot establish execution of the required cohort. Use
+the installed harness helper and its missing-support/shadow-product regression
+controls. Preserve the failed artifact-lane logs separately from corrected runs.
+
+For admission fixture migrations, declare finite identities and permissions at
+fixture composition. Never infer grants from an attempted mutation, expand them
+after refusal, or add an autouse unrestricted issuer. Keep the real product
+transaction owner and commit-held leases. A previous raw `BEGIN`/rollback test
+needs an explicit admission-owned rollback scope, not adoption of an arbitrary
+caller transaction. Verify out-of-grant refusal, unchanged grants and rows,
+revocation after an actual INSERT, rollback, and fixture expiry. File-backed
+admission legitimately creates the catalog writer lock; an exact directory
+assertion should still exclude extra stores while allowing that required lock.
+
+See the [I6-A remediation evidence](../../../docs/implementation/evidence/adr0031-i6a/remediation-20261023/REPORT.md).
+Fixture repair can expose a deeper Provider, Exchange or Recovery failure. Record
+the newly reached production callsite and its stage; reaching it is not acceptance
+of that stage and does not authorize opening its product route.
+
+Split pytest `::` components only before the first parameter `[` when deriving
+JUnit identities: a parameter can itself contain literal `::`. Keep embedded
+installed-child traceback frames as well as pytest's outer frames, and label a
+legacy source-only projection separately when comparing signatures. For actual
+assertion reachability, a counterexample-checked line tracer can distinguish a
+setup stop, an entered assertion and an unentered conditional/downstream line.
+Report statement-line entry only; it does not establish assertion subexpression
+coverage or execution in spawned threads/processes. Diagnostic repetitions stay
+separate from the exactly-once ordinary test aggregate.
+## Inspect actual sdist members after positive selection
+
+Hatchling 1.32.4 still force-includes `.gitignore` and `PKG-INFO` when sdist
+`only-include` lists only package/source metadata. Inspect the built tar, not
+just TOML. Under ADR 0033, the common `scripts/check_sdist_contract.py` checks
+`.gitignore` against its frozen source hash and enumerates generated metadata;
+an unexpected forced file must fail rather than broaden the allowlist silently.
+The evidence and regression cases are in `tests/packaging/test_sdist_contract.py`
+and `docs/implementation/evidence/adr0033-minimal-sdist-20261022/README.md`.
+
+Request a direct source wheel explicitly. A frontend's default combined build
+may itself derive its first wheel from sdist and therefore cannot establish an
+independent direct/derived comparison. Compare complete wheel contents and
+validated RECORD entries, then retain the separate installed-behavior probes.
+This does not authorize removing package data, changing SQLite or treating a
+content-only gate as release acceptance.
+
+When independently challenging archive gates, distinguish logical tar members
+from the complete compressed input. Python `tarfile` consumes PAX extensions
+before yielding a member and stops at the first tar end marker; a successful
+iteration alone does not validate unknown extension payloads, appended archives
+or gzip trailers. Use bounded synthetic PAX values, a second gzip/tar stream,
+and corrupted/truncated trailers as separate negative controls. Independently
+check gzip EOF/integrity, record logical regular-file bytes separately from total
+decompressed/header bytes, and inspect the backend's actual extension keys before
+proposing an allowlist. Never call a raw `gzip.decompress` of an untrusted large
+artifact a production-safe bounded validator. The independent ADR 0033 probes at
+`docs/implementation/evidence/adr0033-independent-review-20261023/archive/`
+reproduce these parser blind spots without extracting files or importing product
+code; their nonzero diagnostic exit reports findings, not an incomplete run.
+
+Validate a finite whole-tar byte budget while inflating, before handing bytes to
+`tarfile`, and inspect fixed-size physical headers before any extension payload
+can be materialized. The hardening checker uses one gzip stream with verified
+CRC/ISIZE/EOF, rejects bytes after the trailer, concatenated streams and nonzero
+tar padding, and records `tar_stream_bytes` and `raw_header_count` separately from regular-file
+bytes and logical members. Its Hatchling 1.32.4 calibration found 159 plain
+headers and no PAX keys, so the current extension allowlist is empty. Do not
+silently permit arbitrary PAX metadata to accommodate future long paths: inspect
+the actual backend output and review bounded keys/values and budgets first.
+Reproduce the positive build and bounded negative controls with:
+
+```sh
+uv run --no-sync python scripts/check_sdist_contract.py --build \
+  --output artifacts/sdist-contract.json
+uv run --no-sync pytest tests/packaging/test_sdist_contract.py \
+  tests/packaging/test_sdist_hardening.py -q
+```
+
+Keep runtime and distribution input fingerprints distinct. README prose is
+excluded from CI's `acceptance_input_hash` but included in the sdist's required
+`source_inventory_sha256`; README changes select a fresh lightweight sdist check
+without forcing full pytest. Matching runtime inputs cannot establish unchanged
+distribution inputs. `tests/unit/test_ci_plan.py` covers that boundary and the
+shared checker/verifier/fixture routes. These checks remain development evidence,
+with independent installed behavior and explicit release qualification separate.
+
+## Preserve line-leading BOMs when recovering strict log receipts
+
+A job-log reader can concatenate chunks with a single U+FEFF at the beginning
+of an interior timestamped line. An anchored digit-only timestamp parser then
+omits an actual DATA record. Preserve the original log and failed length/hash
+result. Permit exactly one optional BOM only before the strict timestamp at line
+start; never strip arbitrary characters, whitespace or BOMs from payloads:
+
+```python
+r'^\ufeff?\d{4}-\d\d-\d\dT\S+ (CI_RECEIPTS_(?:BEGIN|DATA|END)_V1 .+)$'
+```
+
+Keep exactly one BEGIN, ordered DATA and matching END, strict base64, exact
+closed-ZIP byte length/SHA256 and compressed bound, unique members, all index
+lengths/hashes and actual run/feature/checkout/tree binding. Do not infer missing
+chunks or repair payload bytes. The
+[integration evidence](../../../docs/implementation/evidence/adr0031-i6b-sdist-c0-integration-20261024/ci-initial/LESSON.md)
+retains the original missing-record failure and twelve parser controls, including
+rejection of double/payload BOM, missing/duplicated/reordered/corrupt DATA,
+malformed base64, duplicate BEGIN and a tampered inner index with a valid outer
+hash. These controls verify receipt parsing, not product or Release acceptance.

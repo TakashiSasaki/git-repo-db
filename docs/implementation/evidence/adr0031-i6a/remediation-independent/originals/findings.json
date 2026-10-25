@@ -1,0 +1,22 @@
+{
+  "reviewed_commit": "08fbb956c2e470e245146b0dbae747ed0690ea40",
+  "reviewed_tree": "7072f952975a8537f74ced1bbc2a4a31d7aa3690",
+  "findings": [
+    {
+      "id": "ORIGINALS-M1",
+      "severity": "Medium",
+      "status": "open",
+      "title": "Store admission converts invalid nested original endpoint state into explicit NULL",
+      "requirements": ["R09", "R15", "I5-C1"],
+      "introduced_by_remediation": false,
+      "also_present_at": "f5dc409429cdb69955b55e3c27a7ef3c163762fb",
+      "reproduction": "Run probe_invalid_carrier.py. A valid report's nested endpoint declaration is changed with object.__setattr__ to None or an invalid string. Public ContextStore admission returns insert/duplicate; readback has explicit_null. Constructor/replace/validate_originals controls reject the same input.",
+      "actual": {"initial_inserts": 2, "replay_duplicates": 2, "required_refusals": 0, "ordinary_fence_controls_passed": 2},
+      "expected": "INCOMPLETE_ORIGINAL_REPORT on initial/replay before writes or duplicate success, unchanged rowsets",
+      "scope": "Caller-owned typed carrier revalidation in explicit isolated I6-A fixture; ordinary Transfer remains refused; no remote exploit, Provider authenticity or authorization bypass claim",
+      "evidence": ["invalid-carrier-results.json", "probe_invalid_carrier.py", "REPORT.md"],
+      "targets": ["src/repo_catalog/adapters/sqlite/context_admission.py:126", "src/repo_catalog/adapters/sqlite/p1_context.py:340", "src/repo_catalog/domain/p1_context.py:1855", "src/repo_catalog/domain/p1_context.py:1972", "src/repo_catalog/domain/context_admission.py:658"],
+      "correction": "Connect bounded complete-original revalidation to real intake on every initial/replay path before serialization/write/duplicate; retain appropriate authority ordering and both Transfer fences; add invalid nested carrier regressions."
+    }
+  ]
+}

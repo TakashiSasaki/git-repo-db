@@ -581,6 +581,33 @@ finite-work refusal, growing candidate sets and tracked live objects. They do no
 prove full release acceptance, power-loss durability or indexed acceleration.
 ## Revalidate transport and request boundaries with independent counterexamples
 
+### Fence every representation of a staged unsupported operation
+
+When a schema stage temporarily removes a prior typed guarantee, enumerate every
+durable representation: report/header rows, both endpoint roles, generic facades,
+typed intake, and replay. An endpoint-only fence previously allowed a Provider-only
+Transfer report. Use unconditional pre-conflict SQL guards for all representations
+and retain immutable UPDATE guards; test true PK collisions and no-op UPSERTs too.
+
+For real Exchange, validate wire/digest rules first, then fence the receiver's
+selected atomic operations before dependency rewriting, package replay or authority
+effects. A guard during the first sender-selection traversal also blocked a lawful
+independent Core-only receive. Test mixed order, report-only units and primed replay
+through the actual importer, not only a normalized model. Do not interpret arbitrary
+metadata text or case variants as reserved operation names.
+
+Explicit unsupported reads must refuse on empty stores. Distinguish that input
+outcome from impossible rows in an exact trusted schema: the latter must enter the
+existing authoritative-corruption stop before normal query/export/Search exposure.
+Do not catch an unsupported input inside a stored-decoder corruption wrapper.
+Preserve diagnostic injected rows and compare complete pre/post rowsets.
+
+Author regression commands: `pytest tests/integration/p1/test_generalized_resources.py`
+and `python scripts/verify_i2_sql_counterexamples.py REPOSITORY NEW_DIR`.
+The [I2 implementation record](../../../docs/implementation/adr0031-i2-implementation.md)
+states the stage limits. These checks are not independent acceptance or substitutes
+for later typed support, wire integration or release qualification.
+
 P5's [corrected-source review](../../../docs/implementation/evidence/p5-correction/independent/review.md)
 independently reproduced missing declared-digest comparison, free request restart,
 retry UUID changes, broad Coverage promotion, partial-outcome loss and paired
@@ -762,3 +789,145 @@ lack a complete lookup index, reserve finite SQLite VM work before the lookup,
 settle only live measured work, and refuse at the cap without inferring absence.
 Use `tests/integration/p7/test_missing_required_authority.py` to distinguish
 missing required authority, genuinely new content and finite-query refusal.
+
+### Verify constraints behind a retained staged-operation fence
+
+When a stage adds SQL constraints but the product operation must stay refused,
+use the actual packaged product DDL and compare the complete constructed schema
+before touching the disposable test database. Remove only the named fence
+triggers in that disposable database; record their exact definitions and removal
+statements. Keep every other CHECK/FK/index/UDF/pragma identical. Test both raw
+composition and the product factory, plus normal connections with the fences
+present. Never reopen the modified schema through the normal validator or count
+isolated success as product operation availability. Preserve the application
+refusal and impossible-storage recovery controls until their owning later stage.
+
+The I4 tests in `tests/integration/p3/test_transfer_sql.py` exercise this procedure
+for native-I7 SQL. Run `scripts/verify_i4.py` with the environment's Python-loaded SQLite under
+[ADR 0032](../../../docs/adr/0032-environment-sqlite-validation.md) and
+`scripts/verify_i4_distribution.py` outside the source artifact through its fresh
+installed environments. Bind the evidence to an executed commit/tree and retain
+nonzero inherited staging failures. A structurally stored original Event type
+does not establish its Provider meaning; I5 owns semantic Admission. Whole-unit
+completeness and pre-affinity original timestamp types cannot be inferred from
+successful SQL references.
+
+The I5 tests in `tests/integration/p3/test_transfer_admission.py` exercise Typed
+Transfer Admission for native-I7 SQL. Run `scripts/verify_i5.py` with the environment's single Python-loaded SQLite
+under [ADR 0032](../../../docs/adr/0032-environment-sqlite-validation.md) and `scripts/verify_i5_distribution.py` outside the source artifact through its fresh
+installed environments. Both SQL transfer stage fences (`i2_transfer_stage_fence`,
+`i2_transfer_report_stage_fence`) remain present in product DDL; normal production paths
+reject Transfer operations with `I2_TRANSFER_UNSUPPORTED`. I5 enforces semantic Admission,
+pre-affinity original timestamp validation, atomicity via SAVEPOINT, and G3=A permanent
+violation vs dependency missing classification, leaving Identification Wire and Exchange to I6.
+
+
+An older impossible-storage corruption fixture can fail at injection after a new
+constraint is added. Keep its original corrupt values and downstream stop/rowset
+assertions. Bypass additional guards only inside the explicit corruption
+injector, then restore all original DDL and required settings and verify the
+complete product schema before exercising the reader. This is distinct from the
+constraint-verification lane, whose integrity settings must remain enabled.
+The eight retained I2 matching-schema poison nodes demonstrate this distinction;
+a prior 67-failure/20-error run records the additional eight injection failures.
+
+When comparing archived regression failures, select the receipt for the actual
+final reviewed execution, not a filename that merely contains `author`. An
+archive can preserve both superseded failures and a later final run. Retain raw
+messages and frames; compare refusal code/text and source function paths while
+recording line offsets and temporary installation-path differences explicitly.
+The I4 comparison helper targets I3's `final-{version}/regressions.xml`; its
+separate initial 81-fault receipts are not the final 79-fault baseline.
+
+## Service-bound Context admission and commit ownership (ADR 0031 I6-A)
+
+Apply this procedure to the I6-A branch's guarded Context API; it is not a grant
+for ordinary Transfer activation or I6-B/C/I7 integration. Both packaged Transfer
+fences remain authoritative. Caller-provided principals, policies and stored
+replay rows do not establish current local authority.
+
+A dependency scan that handles only direct relation objects misses semantically
+reserved carriers. The I6-A supporting review reproduced an OID-only permission
+bypass through `link_core` primitive arguments, and found the same semantic OID
+inside `FieldCandidate("reported_core_reference:...")`. Enumerate typed scope
+Source coordinates and those reserved field values as well as direct
+`CoreReference`, report members, mappings and Disposition replacements. Test each
+public carrier separately, including exact replay after OID-only revocation;
+assert no callback/dependency lookup and no durable row difference. Do not infer a
+local Source registration from an arbitrary provenance `source` string.
+
+Retain a serialized policy lease until the actual outer COMMIT. A SAVEPOINT
+release is not a commit boundary. Checking revision after COMMIT cannot undo
+writes, so validate all live leases before COMMIT and require the trusted port to
+serialize revocation through lease release. An unconnected caller-owned
+coordinator transaction must fail closed until its commit boundary can retain the
+lease. Test a successful first endpoint INSERT followed by a second-INSERT
+trigger failure; preflight rejection does not exercise that rollback. Also test
+actual deferred COMMIT failure followed by explicit ROLLBACK and unchanged
+preexisting Parent/Event evidence. Charge work already performed after failure.
+
+When expanding current mapping candidates or Source positives, bound and charge
+rows before accumulating or decoding the full set. Prefer exact relevant-pair
+lookups over loading a whole Source roster. Current schema inspection must
+preserve lifecycle stop and SQLite CORRUPT/NOTADB exceptions. Reverify connection
+profiles on raw connections, while respecting the existing coordinator's exact
+restricted capabilities, whose factory already verified its connection before
+installing the authorizer. Do not relax that authorizer to execute PRAGMA.
+
+Verified reproductions and limits:
+
+```sh
+pytest -q tests/unit/test_context_admission.py \
+  tests/unit/test_context_fences_i6a.py \
+  tests/unit/test_context_oid_admission_i6a.py \
+  tests/integration/i6a tests/integration/p3/test_transfer_admission.py \
+  tests/integration/p3/test_transfer_sql.py
+```
+
+These are Author regressions and supporting review probes, not independent
+acceptance. See the new [I6-A evidence](../../../docs/implementation/evidence/adr0031-i6a/author/REPORT.md)
+for exact executed source bindings, outcomes and unconnected routes. Never apply
+these procedures by weakening the product's schema fingerprint, SQL constraints,
+fences or original pre-affinity input validation.
+
+For an explicitly authorized paired Context write, the coordinator is the outer
+commit owner. Bind its local service at construction, require its issued
+invocation on admission, and let only the exact expiring transaction capability
+share the commit-owned lease stack with Store/Facade. Accepting a replacement
+service per call would recreate the foreign allow-all attack. Keep Provider and
+Exchange wiring separately refused until their assigned integration stage.
+Exercise the original cross-store/crash/recovery assertions with finite fixture
+authority; a missing context is not proof those assertions executed. The I6-A
+coordinator cohort preserves all original assertion ASTs and runs under this
+explicit binding. Include cursor close and canonical CoverageClaim paths: a
+re-exported domain type's actual `__module__` can differ from the import module,
+so an explicit type/module allowlist must cover the genuine definition without
+an opaque fallback.
+
+## Reserve preparatory work and verify received checksums before normalization
+
+For a finite planner, give its shared hard-cap scanner the remaining cumulative
+request budget before scanning already decoded input. Reserve character passes,
+embedded JSON/identity parsing and queue growth before their allocation or work;
+a later refusal cannot undo a complete preliminary scan. Keep the wire element
+counter distinct from character-inclusive request work. Document the fixed cost
+of a failed reservation and preserve only completed whole semantic units.
+Exercise zero/small/exhausted-prior budgets on large, already validated but
+unselected input; instrument actual parser calls and lengths. Include exact scan
+and full-plan work, depth/byte boundaries and lawful/caller cycles. Output-only
+counters do not establish a bound on preparatory work.
+
+For transport integrity, hash the bounded received dictionary, excluding only
+the declared digest, before constructing a domain type that normalizes sets.
+Reuse the existing canonical encoder and selection `to_dict()` authority. Reject
+received duplicate or noncanonical set arrays even after their raw checksum has
+been recomputed; never silently repair them. Test stale and freshly recomputed
+digests across dictionary/text/UTF-8 carriers, with canonical positive controls.
+A checksum proves neither Provider authenticity nor current admission authority.
+
+Reproduce the Author correction with
+`pytest tests/unit/test_context_scan_budget.py tests/unit/test_exchange_received_digest.py tests/unit/test_context_dependencies.py`.
+The [M01/M02 evidence](../../../docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/REPORT.md)
+retains the failed frozen review probes and corrected observations. This procedure
+does not activate Provider/Exchange routes, retire Transfer fences or substitute
+for separate non-Author review.

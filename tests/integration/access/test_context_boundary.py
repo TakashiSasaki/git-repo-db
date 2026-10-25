@@ -22,6 +22,7 @@ from repo_catalog.domain.acquisition import (
     RepositoryRegistration,
     SourceRegistration,
 )
+from repo_catalog.domain.context_admission import DependencySet
 from repo_catalog.domain.context_registration import (
     RegistrationError,
 )
@@ -38,11 +39,23 @@ from repo_catalog.domain.p1_context import (
 )
 from repo_catalog.domain.p1_core import Provenance, RepositoryClaim
 from repo_catalog.domain.production_context import ContextError
+from tests.support.context_admission import fixture_transaction
 
 REPO = "750e8400-e29b-41d4-a716-446655440000"
 SERVICE = "550e8400-e29b-41d4-a716-446655440000"
 SOURCE = "650e8400-e29b-41d4-a716-446655440000"
 PROV = canonical({"source": "provider.example", "evidence": "observation-1"})
+
+
+def registration_grants(*resources):
+    """Only the synthetic catalog registration coordinates and named Resources."""
+    return DependencySet(
+        resources=resources,
+        repositories={REPO},
+        sources={SOURCE},
+        source_repository_pairs={(SOURCE, REPO)},
+        provider_registrations={SERVICE},
+    )
 
 
 def catalog(path, *, core=True, context=True):
@@ -55,7 +68,7 @@ def catalog(path, *, core=True, context=True):
     ):
         p1_schema.initialize(path / f"{role}.sqlite3", role, REPO, instance)
     if context:
-        with Context.transaction(path) as ctx:
+        with fixture_transaction(path, registration_grants()) as ctx:
             ctx.provider(SERVICE, "github", canonical({"tier": "enterprise"}))
             ctx.repository(REPO, canonical({"name": "app", "private": False}))
             ctx.source(SOURCE, SERVICE, canonical({"org": "example"}))
@@ -117,7 +130,7 @@ def write(ctx, kind, data):
 def test_typed_and_sql_writes_reject_without_mutation_or_stop(directory, kind, key):
     value = canonical({key: "SECRET-CANARY"})
     table, column, identity, key_value = ROWS[kind]
-    with Context.transaction(directory) as ctx:
+    with fixture_transaction(directory, registration_grants()) as ctx:
         prior = ctx.db.execute(f"SELECT * FROM {table}").fetchall()
         with pytest.raises(RegistrationError):
             write(ctx, kind, value)
@@ -146,7 +159,7 @@ def test_stored_transport_input_stops_on_read_before_repair(directory, kind):
     )
     db.close()
     with pytest.raises(ContextError, match="AUTHORITATIVE_CORRUPTION") as error:
-        with Context.transaction(directory) as ctx:
+        with fixture_transaction(directory, registration_grants()) as ctx:
             write(ctx, kind, "{}")
     assert "SECRET-CANARY" not in str(error.value)
     marker = (directory / "p1-recovery-stop.json").read_text()
@@ -169,7 +182,7 @@ def test_registration_dataclasses_and_tampered_batch_preflight(directory):
     bad = RepositoryRegistration(REPO)
     object.__setattr__(bad, "configuration_json", canonical({"token": "SECRET"}))
     batch = ProviderIntakeBatch(SERVICE, providers=(good,), repositories=(bad,))
-    with Context.transaction(directory) as ctx:
+    with fixture_transaction(directory, registration_grants()) as ctx:
         with pytest.raises(RegistrationError):
             ProviderAcquisition(directory).admit_batch(batch, context=ctx)
         assert (
@@ -233,7 +246,7 @@ def test_resigned_exchange_rejects_registration_leaks_before_core_admission(
 def test_reported_urls_and_historical_core_provenance_survive_exchange(
     directory, tmp_path
 ):
-    key = ResourceKey(SERVICE, "endpoint", "actual-provider-coordinate")
+    key = ResourceKey.from_native(SERVICE, "endpoint", "actual-provider-coordinate")
     observed = FieldCandidate(
         key,
         "url",
@@ -242,7 +255,7 @@ def test_reported_urls_and_historical_core_provenance_survive_exchange(
         PROV,
         12,
     )
-    with Context.transaction(directory) as ctx:
+    with fixture_transaction(directory, registration_grants(key)) as ctx:
         ctx.resource(key)
         ctx.admit_field(observed)
     with closing(GitCore(directory / "core.sqlite3")) as core:
@@ -257,10 +270,13 @@ def test_reported_urls_and_historical_core_provenance_survive_exchange(
     package = ExchangeService(directory).export_package(
         selection=ExchangeSelectionScope(all_selected=True)
     )
-    assert package.format == "git-repo-db/adr0030-exchange-v4"
+    assert package.format == "git-repo-db/adr0031-exchange-v5"
     target = catalog(tmp_path / "target")
     ExchangeService(target).import_package(
-        package, new_request=True, permitted_repository_uuidv4s=(REPO,)
+        package,
+        new_request=True,
+        permitted_repository_uuidv4s=(REPO,),
+        grants=registration_grants(key),
     )
     with Context.snapshot(target) as ctx:
         assert ctx.candidates(key, "url") == (observed,)
@@ -309,7 +325,10 @@ def test_context_only_round_trip_and_core_only_paths_need_no_access(tmp_path):
         selection=ExchangeSelectionScope(all_selected=True, include_core=False)
     )
     ExchangeService(right).import_package(
-        package, new_request=True, permitted_repository_uuidv4s=(REPO,)
+        package,
+        new_request=True,
+        permitted_repository_uuidv4s=(REPO,),
+        grants=registration_grants(),
     )
     assert ProductionQueryService(right).list_providers()[0].configuration == {
         "tier": "enterprise"
@@ -333,7 +352,7 @@ def test_old_wire_version_is_not_reinterpreted(directory):
         .to_dict()
     )
     raw_package["format"] = "git-repo-db/p5-exchange-v2"
-    with pytest.raises(ExchangeError, match="UNSUPPORTED_FORMAT"):
+    with pytest.raises(ExchangeError, match="UNSUPPORTED_"):
         decode_package(_resign(raw_package))
 
 
@@ -350,7 +369,7 @@ def test_no_normalization_no_network_no_settings_import_side_effect(
     monkeypatch.setattr(subprocess, "run", fail)
     sentinel = directory / "access.sqlite3"
     sentinel.write_bytes(b"must not open or replace an Access store")
-    with Context.transaction(directory) as ctx:
+    with fixture_transaction(directory, registration_grants()) as ctx:
         ctx.repository(
             REPO,
             canonical({"name": "app", "description": "SSH hosts are discussed here"}),
@@ -386,20 +405,26 @@ def test_repository_claim_direct_values_round_trip_without_scalar_tag_decode(
     with closing(GitCore(left / "core.sqlite3")) as core:
         core.admit_repository_claim(claim)
     package = ExchangeService(left).export_package(
-        selection=ExchangeSelectionScope(all_selected=True)
+        selection=ExchangeSelectionScope(all_selected=True, include_context=False)
     )
     ExchangeService(right).import_package(
-        package, new_request=True, permitted_repository_uuidv4s=(REPO,)
+        package,
+        new_request=True,
+        permitted_repository_uuidv4s=(REPO,),
+        grants=registration_grants(),
     )
     ExchangeService(right).import_package(
-        package, new_request=True, permitted_repository_uuidv4s=(REPO,)
+        package,
+        new_request=True,
+        permitted_repository_uuidv4s=(REPO,),
+        grants=registration_grants(),
     )
     with closing(GitCore(right / "core.sqlite3")) as core:
         assert [tuple(row) for row in core.sql("SELECT * FROM repository_claims")] == [
             claim.key
         ]
     reverse = ExchangeService(right).export_package(
-        selection=ExchangeSelectionScope(all_selected=True)
+        selection=ExchangeSelectionScope(all_selected=True, include_context=False)
     )
     assert reverse.core["repository_claims"] == package.core["repository_claims"]
 

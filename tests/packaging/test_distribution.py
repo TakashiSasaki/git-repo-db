@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 from repo_catalog.adapters.sqlite.schema import SCHEMA_VERSION
+from scripts.check_sdist_contract import check_sdist, compare_wheels, save
 from tests.support.distributions import build_once
 from tests.support.git_fixture import GitFixture
 from tests.support.github_fixture import GitHubFixture
@@ -60,7 +61,12 @@ def distributions(tmp_path_factory, request):
 
     def prepare(work):
         checked(
-            ["uv", "build", *offline_sources, "--out-dir", work / "dist"],
+            ["uv", "build", "--sdist", *offline_sources, "--out-dir", work / "dist"],
+            cwd=ROOT,
+            env=env,
+        )
+        checked(
+            ["uv", "build", "--wheel", *offline_sources, "--out-dir", work / "dist"],
             cwd=ROOT,
             env=env,
         )
@@ -82,6 +88,7 @@ def distributions(tmp_path_factory, request):
         sdist = next((work / "dist").glob("*.tar.gz"))
         import tarfile
 
+        contract = check_sdist(sdist, ROOT)
         with tarfile.open(sdist) as archive:
             archive.extractall(work / "sdist", filter="data")
         source = next((work / "sdist").iterdir())
@@ -97,7 +104,15 @@ def distributions(tmp_path_factory, request):
             cwd=source,
             env=env,
         )
+        direct = next((work / "dist").glob("*.whl"))
+        derived = next((work / "sdist-wheel").glob("*.whl"))
+        contract["wheel_equivalence"] = compare_wheels(
+            direct, derived, sdist_metadata=contract["members"]["PKG-INFO"]["sha256"]
+        )
+        save(work / "sdist-contract.json", contract)
         return {
+            "sdist": sdist,
+            "sdist_contract": work / "sdist-contract.json",
             "wheel": next((work / "dist").glob("*.whl")),
             "sdist_wheel": next((work / "sdist-wheel").glob("*.whl")),
             "requirements": work / "requirements.txt",

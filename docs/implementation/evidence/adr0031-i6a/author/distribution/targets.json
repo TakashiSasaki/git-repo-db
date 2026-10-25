@@ -1,0 +1,11 @@
+[
+  "tests/integration/p3/test_transfer_sql.py",
+  "tests/integration/p3/test_transfer_admission.py",
+  "tests/integration/p3/test_parent_reports.py",
+  "tests/unit/test_context_admission.py",
+  "tests/unit/test_transfer_originals.py",
+  "tests/unit/test_context_fences_i6a.py",
+  "tests/unit/test_context_oid_admission_i6a.py",
+  "tests/unit/test_context_admission_bounds_i6a.py",
+  "tests/integration/i6a"
+]

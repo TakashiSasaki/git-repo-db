@@ -1,0 +1,35 @@
+{
+  "sha": "dc6e663ea90e55210ed5674cae6c332f66a4ac18",
+  "node_id": "C_kwDOU78qEtoAKGRjNmU2NjNlYTkwZTU1MjEwZWQ1Njc0Y2FlNmMzMzJmNjZhNGFjMTg",
+  "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/git/commits/dc6e663ea90e55210ed5674cae6c332f66a4ac18",
+  "html_url": "https://github.com/TakashiSasaki/git-repo-db/commit/dc6e663ea90e55210ed5674cae6c332f66a4ac18",
+  "author": {
+    "name": "Takashi Sasaki",
+    "email": "takashi316@gmail.com",
+    "date": "2026-10-23T02:07:37Z"
+  },
+  "committer": {
+    "name": "Takashi Sasaki",
+    "email": "takashi316@gmail.com",
+    "date": "2026-10-23T02:07:37Z"
+  },
+  "tree": {
+    "sha": "3d70218ecf98f751eb550e6a328a21f65069066f",
+    "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/git/trees/3d70218ecf98f751eb550e6a328a21f65069066f"
+  },
+  "message": "docs: independently review ADR 0031 I6 design and preserve probes",
+  "parents": [
+    {
+      "sha": "418ee68046fdfd03a0e84cc840e5d52fce176b81",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/git/commits/418ee68046fdfd03a0e84cc840e5d52fce176b81",
+      "html_url": "https://github.com/TakashiSasaki/git-repo-db/commit/418ee68046fdfd03a0e84cc840e5d52fce176b81"
+    }
+  ],
+  "verification": {
+    "verified": false,
+    "reason": "unsigned",
+    "signature": null,
+    "payload": null,
+    "verified_at": null
+  }
+}

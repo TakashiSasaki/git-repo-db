@@ -60,10 +60,14 @@ def test_invalid_core_text_or_udf_check_stops_source(
 def test_binary_notes_and_split_unicode_remain_valid(synthetic_catalog, tmp_path):
     from repo_catalog.adapters.sqlite.acquisition import UnlimitedWorkBudget
     from repo_catalog.adapters.sqlite.git_core import GitCore
-    from repo_catalog.adapters.sqlite.p1_context import ContextStore
     from repo_catalog.adapters.sqlite.p1_schema import connect
     from repo_catalog.domain.p1_core import OID, Capture, NotesProof
-    from tests.integration.p7.conftest import DEFAULT_REPO_UUID, make_native, make_tree
+    from tests.integration.p7.conftest import (
+        DEFAULT_REPO_UUID,
+        admit_context_text,
+        make_native,
+        make_tree,
+    )
 
     core = GitCore(synthetic_catalog / "core.sqlite3")
     target = OID(
@@ -90,8 +94,8 @@ def test_binary_notes_and_split_unicode_remain_valid(synthetic_catalog, tmp_path
         UnlimitedWorkBudget(),
     )
     connection = connect(synthetic_catalog / "context.sqlite3", "context")
-    ContextStore(connection).text("a" * 65535 + "📝" * 4)
-    ContextStore(connection).text("")
+    admit_context_text(connection, "a" * 65535 + "📝" * 4)
+    admit_context_text(connection, "")
     connection.close()
     service = RecoveryService()
     assert service.create_consistent_backup(

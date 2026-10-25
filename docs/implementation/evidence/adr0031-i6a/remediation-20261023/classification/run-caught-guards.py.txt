@@ -1,0 +1,25 @@
+import json
+import os
+from pathlib import Path
+import sys
+
+root, out = map(lambda value: Path(value).resolve(), sys.argv[1:3])
+out.mkdir(exist_ok=False)
+sys.path.insert(0, str(root))
+from scripts import verify_i5_offline as evidence
+
+os.environ['PATH'] = str(Path(sys.executable).parent) + os.pathsep + os.environ['PATH']
+os.environ['TMPDIR'] = '/workspace/i6a-tmp'
+os.environ['PYTHONPATH'] = '/workspace/i6a-tools'
+os.environ['I6A_TRACE_OUTPUT'] = str(out/'actual-permission-raise-stacks.json')
+os.environ['I6A_REPORTS_SIDECAR'] = str(out/'diagnostic.report-types.jsonl')
+evidence.write_json(out/'binding-before.json', {'head': evidence.git('rev-parse','HEAD'), 'tree': evidence.git('rev-parse','HEAD^{tree}'), 'inputs': evidence.input_hashes(), 'status': evidence.git('status','--porcelain','--untracked-files=no')})
+execute = evidence.execute
+def measured(out, name, args):
+    return execute(out, name, ['-p','i6a_report_types','-p','i6a_trace_exception',*args, '--basetemp='+str(out/'basetemp')])
+evidence.execute = measured
+selected = ['tests/integration/p5/test_corrections.py::test_provider_registration_is_explicit','tests/integration/p5/test_paired_admission.py::test_core_first_context_second_and_failure_retry_convergence']
+result = evidence.run_cohort(out,'diagnostic',selected,0)
+evidence.write_json(out/'binding-after.json', {'head': evidence.git('rev-parse','HEAD'), 'tree': evidence.git('rev-parse','HEAD^{tree}'), 'inputs': evidence.input_hashes(), 'status': evidence.git('status','--porcelain','--untracked-files=no')})
+evidence.write_json(out/'scope.json', {'scope':'Intentional repeated diagnostic: two assertions suppress underlying exception frames; trace actual permission raise; excluded from ordinary aggregate','exit_code': result['exit_code']})
+print(json.dumps(result))

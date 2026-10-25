@@ -1,0 +1,29 @@
+{
+  "exit_code": 1,
+  "scope": "Observer isolation from intentional json.dumps/json.loads monkeypatches; source/tests unchanged",
+  "cwd": "/workspace/git-repo-db",
+  "source_head": "ef787a5ff8b13f118d6bf5107c7338f43fde56dc",
+  "source_tree": "a3ed2628a98db134bdc65d13da905f5ddf25e972",
+  "command": [
+    "/workspace/git-repo-db/.venv/bin/python",
+    "-m",
+    "pytest",
+    "-c",
+    "/workspace/git-repo-db/pyproject.toml",
+    "-p",
+    "broad_receipt",
+    "tests/unit/test_resource_identity.py::test_encoder_refuses_node_and_escape_expansion_overruns_before_dumps",
+    "tests/unit/test_resource_identity.py::test_parser_refuses_structural_and_byte_overruns_before_json_decoding",
+    "-q",
+    "--junitxml=docs/implementation/evidence/adr0031-i6b-independent-20261023/broad/observer-regression/result.xml",
+    "--journal=docs/implementation/evidence/adr0031-i6b-independent-20261023/broad/observer-regression/result.jsonl",
+    "--basetemp=/workspace/i6b-broad-work/observer-regression-temp"
+  ],
+  "helper_snapshots": {
+    "broad_receipt-serializer-bound.py.txt": {
+      "path": "docs/implementation/evidence/adr0031-i6b-independent-20261023/broad/tools/broad_receipt-serializer-bound.py.txt",
+      "sha256": "0baa43869b12000ccc1399a3f679a40af163854e0f0c3de10f5c1a3e0d2649b8"
+    }
+  },
+  "receipt_scope": "Command reconstructed from preserved invocation arguments; outcome from captured process exit. Source HEAD/tree still fixed at observation, full input binding in full-final-v3."
+}

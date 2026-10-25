@@ -1,0 +1,806 @@
+{
+  "source_head": "61e44291e293f773904a0127606e20c8cb83c95e",
+  "source_tree": "4aa8ddf49fb52d0b903db0b0bfce00ccea2fae0c",
+  "author_validation": false,
+  "independent_review": true,
+  "release_acceptance": false,
+  "all_results_three_way_node_and_phase_reconciled": true,
+  "results": {
+    "derived-author-extra": {
+      "exit_code": 0,
+      "collected": 34,
+      "passed": 34,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 34,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 102
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792769523.318113
+          }
+        ]
+      }
+    },
+    "derived-counterexamples": {
+      "exit_code": 0,
+      "collected": 33,
+      "passed": 33,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 33,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 99
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792769522.383757
+          }
+        ]
+      }
+    },
+    "derived-fresh-test_fresh_digest_wire": {
+      "exit_code": 0,
+      "collected": 61,
+      "passed": 61,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 61,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 183
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792769556.761941
+          }
+        ]
+      }
+    },
+    "derived-fresh-test_m01_new": {
+      "exit_code": 0,
+      "collected": 38,
+      "passed": 38,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 38,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 114
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792769686.497137
+          }
+        ]
+      }
+    },
+    "derived-fresh-test_retained_admission": {
+      "exit_code": 0,
+      "collected": 13,
+      "passed": 13,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 13,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 39
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792769560.506932
+          }
+        ]
+      }
+    },
+    "derived-independent": {
+      "exit_code": 0,
+      "collected": 204,
+      "passed": 204,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 204,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 612
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792769520.283981
+          }
+        ]
+      }
+    },
+    "derived-new-regressions": {
+      "exit_code": 0,
+      "collected": 56,
+      "passed": 56,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 56,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 168
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792769524.382262
+          }
+        ]
+      }
+    },
+    "derived-original-smoke-v2": {
+      "exit_code": 1,
+      "collected": 1,
+      "passed": 0,
+      "failed": 1,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 1,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 2,
+          "failed": 1
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "failed",
+            "exitstatus": 1,
+            "timestamp": 1792769531.515877
+          }
+        ]
+      }
+    },
+    "derived-resolved-wire": {
+      "exit_code": 0,
+      "collected": 4,
+      "passed": 4,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 4,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 12
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792769520.972746
+          }
+        ]
+      }
+    },
+    "derived-safety": {
+      "exit_code": 0,
+      "collected": 626,
+      "passed": 626,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 626,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 1878
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792769500.385692
+          }
+        ]
+      }
+    },
+    "derived-wire": {
+      "exit_code": 0,
+      "collected": 212,
+      "passed": 212,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 212,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 636
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792769505.584963
+          }
+        ]
+      }
+    },
+    "direct-author-extra": {
+      "exit_code": 0,
+      "collected": 34,
+      "passed": 34,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 34,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 102
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792769516.733174
+          }
+        ]
+      }
+    },
+    "direct-counterexamples": {
+      "exit_code": 0,
+      "collected": 33,
+      "passed": 33,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 33,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 99
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792769515.84548
+          }
+        ]
+      }
+    },
+    "direct-fresh-test_fresh_digest_wire": {
+      "exit_code": 0,
+      "collected": 61,
+      "passed": 61,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 61,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 183
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792769550.851091
+          }
+        ]
+      }
+    },
+    "direct-fresh-test_m01_new": {
+      "exit_code": 0,
+      "collected": 38,
+      "passed": 38,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 38,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 114
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792769684.923611
+          }
+        ]
+      }
+    },
+    "direct-fresh-test_retained_admission": {
+      "exit_code": 0,
+      "collected": 13,
+      "passed": 13,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 13,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 39
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792769554.40363
+          }
+        ]
+      }
+    },
+    "direct-independent": {
+      "exit_code": 0,
+      "collected": 204,
+      "passed": 204,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 204,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 612
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792769513.643295
+          }
+        ]
+      }
+    },
+    "direct-new-regressions": {
+      "exit_code": 0,
+      "collected": 56,
+      "passed": 56,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 56,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 168
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792769517.76209
+          }
+        ]
+      }
+    },
+    "direct-original-smoke-v2": {
+      "exit_code": 1,
+      "collected": 1,
+      "passed": 0,
+      "failed": 1,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 1,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 2,
+          "failed": 1
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "failed",
+            "exitstatus": 1,
+            "timestamp": 1792769527.639142
+          }
+        ]
+      }
+    },
+    "direct-resolved-wire": {
+      "exit_code": 0,
+      "collected": 4,
+      "passed": 4,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 4,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 12
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792769514.516943
+          }
+        ]
+      }
+    },
+    "direct-safety": {
+      "exit_code": 0,
+      "collected": 626,
+      "passed": 626,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 626,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 1878
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792769462.887142
+          }
+        ]
+      }
+    },
+    "direct-wire": {
+      "exit_code": 0,
+      "collected": 212,
+      "passed": 212,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 212,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 636
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792769468.292739
+          }
+        ]
+      }
+    }
+  },
+  "artifacts": {
+    "direct": {
+      "path": "/workspace/rereview-distribution/frozen/dist/repo_catalog-0.2.0-py3-none-any.whl",
+      "sha256": "2452e419e06eea774805fc89358130538c50fdd313fdb0fb9b82b230e99a39d8",
+      "bytes": 791300
+    },
+    "sdist": {
+      "path": "/workspace/rereview-distribution/frozen/dist/repo_catalog-0.2.0.tar.gz",
+      "sha256": "88e2496b9335f475bbcaa6857832ce0d9dabc128b10bbf5aa0b08336039d52dc",
+      "bytes": 165713022
+    },
+    "derived": {
+      "path": "/workspace/rereview-distribution/from-sdist/repo_catalog-0.2.0/dist/repo_catalog-0.2.0-py3-none-any.whl",
+      "sha256": "2452e419e06eea774805fc89358130538c50fdd313fdb0fb9b82b230e99a39d8",
+      "bytes": 791300
+    }
+  },
+  "limitations": [
+    "Original Access smoke child/pytest exit1 PERMISSION_DENIED; tail28 assertions not reached",
+    "120 historical evidence files omitted from sdist; exact original product/build/test/workflow inputs retained",
+    "No full source run in this distribution scope, no live/benchmark opt-in or hosted Release acceptance",
+    "Elapsed times overlap parent full source workload and are not comparative benchmark measurements"
+  ],
+  "harness_attribution": "Fresh independent execution using inspected/adapted Author distribution harness; saved prior independent and Author probe attribution retained; novel independent M01/M02/admission probes are byte-bound separately."
+}

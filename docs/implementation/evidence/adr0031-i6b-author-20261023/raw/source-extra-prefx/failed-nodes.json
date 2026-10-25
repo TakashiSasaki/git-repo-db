@@ -1,0 +1,42 @@
+[
+  {
+    "classname": "tests.unit.test_i6b_extra",
+    "name": "test_extra_T12_whole_collection_alternatives_and_coverage_withheld_together[depth-global]",
+    "message": "assert [{'owner_kind...,\"related\"]'}] == []\n  \n  Left contains one more item: {'owner_kind': 'collection', 'owner_coordinates_json': '[\"11111111-1111-4111-8111-111111111111\",\"document\",\"[\\\\\"global...[],\\\\\"\\\\\\\\u00e9\\\\\"]\",\"related\",\"{\\\\\"evidence\\\\\":\\\\\"collection\\\\\",\\\\\"source\\\\\":\\\\\"extra-author-fixture\\\\\"}\",\"related\"]'}\n  Use -v to get more diff"
+  },
+  {
+    "classname": "tests.unit.test_i6b_extra",
+    "name": "test_extra_T12_whole_collection_alternatives_and_coverage_withheld_together[depth-scoped]",
+    "message": "assert [{'owner_kind...,\"related\"]'}] == []\n  \n  Left contains one more item: {'owner_kind': 'collection', 'owner_coordinates_json': '[\"11111111-1111-4111-8111-111111111111\",\"document\",\"[\\\\\"pull_r...\",\\\\\"\\\\\\\\u00e9\\\\\"]]\",\"related\",\"{\\\\\"evidence\\\\\":\\\\\"collection\\\\\",\\\\\"source\\\\\":\\\\\"extra-author-fixture\\\\\"}\",\"related\"]'}\n  Use -v to get more diff"
+  },
+  {
+    "classname": "tests.unit.test_i6b_extra",
+    "name": "test_extra_T12_whole_collection_alternatives_and_coverage_withheld_together[unit-global]",
+    "message": "assert [{'service_in...elated', ...}] == []\n  \n  Left contains 2 more items, first extra item: {'service_instance_uuidv4': '11111111-1111-4111-8111-111111111111', 'resource_kind': 'document', 'provider_resource_id': '[\"global\",[],\"\\\\u00e9\"]', 'collection_kind': 'related', ...}\n  Use -v to get more diff"
+  },
+  {
+    "classname": "tests.unit.test_i6b_extra",
+    "name": "test_extra_T12_whole_collection_alternatives_and_coverage_withheld_together[unit-scoped]",
+    "message": "assert [{'service_in...elated', ...}] == []\n  \n  Left contains 2 more items, first extra item: {'service_instance_uuidv4': '11111111-1111-4111-8111-111111111111', 'resource_kind': 'document', 'provider_resource_id': '[\"pull_request\",\"[\\\\\"org\\\\\",\\\\\"7\\\\\"]\",\"body\",[\"D\",\"\\\\u00e9\"]]', 'collection_kind': 'related', ...}\n  Use -v to get more diff"
+  },
+  {
+    "classname": "tests.unit.test_i6b_extra",
+    "name": "test_extra_T12_collection_proof_time_scope_mutations_refused[no-time-global]",
+    "message": "assert 'MALFORMED_ROW' in {'INVALID_CONTEXT', 'INVALID_COVERAGE_PROOF'}\n +  where 'MALFORMED_ROW' = ExchangeError(\"['context', 'collections', 'observed_at_us']:MALFORMED_ROW: observation time required\").code\n +    where ExchangeError(\"['context', 'collections', 'observed_at_us']:MALFORMED_ROW: observation time required\") = <ExceptionInfo ExchangeError(\"['context', 'collections', 'observed_at_us']:MALFORMED_ROW: observation time required\") tblen=3>.value"
+  },
+  {
+    "classname": "tests.unit.test_i6b_extra",
+    "name": "test_extra_T12_collection_proof_time_scope_mutations_refused[no-time-scoped]",
+    "message": "assert 'MALFORMED_ROW' in {'INVALID_CONTEXT', 'INVALID_COVERAGE_PROOF'}\n +  where 'MALFORMED_ROW' = ExchangeError(\"['context', 'collections', 'observed_at_us']:MALFORMED_ROW: observation time required\").code\n +    where ExchangeError(\"['context', 'collections', 'observed_at_us']:MALFORMED_ROW: observation time required\") = <ExceptionInfo ExchangeError(\"['context', 'collections', 'observed_at_us']:MALFORMED_ROW: observation time required\") tblen=3>.value"
+  },
+  {
+    "classname": "tests.unit.test_i6b_extra",
+    "name": "test_extra_T12_collection_owned_scope_requires_its_actual_header[global]",
+    "message": "assert [{'owner_kind...,\"related\"]'}] == []\n  \n  Left contains one more item: {'owner_kind': 'collection', 'owner_coordinates_json': '[\"11111111-1111-4111-8111-111111111111\",\"document\",\"[\\\\\"global...[],\\\\\"\\\\\\\\u00e9\\\\\"]\",\"related\",\"{\\\\\"evidence\\\\\":\\\\\"collection\\\\\",\\\\\"source\\\\\":\\\\\"extra-author-fixture\\\\\"}\",\"related\"]'}\n  Use -v to get more diff"
+  },
+  {
+    "classname": "tests.unit.test_i6b_extra",
+    "name": "test_extra_T12_collection_owned_scope_requires_its_actual_header[scoped]",
+    "message": "assert [{'owner_kind...,\"related\"]'}] == []\n  \n  Left contains one more item: {'owner_kind': 'collection', 'owner_coordinates_json': '[\"11111111-1111-4111-8111-111111111111\",\"document\",\"[\\\\\"pull_r...\",\\\\\"\\\\\\\\u00e9\\\\\"]]\",\"related\",\"{\\\\\"evidence\\\\\":\\\\\"collection\\\\\",\\\\\"source\\\\\":\\\\\"extra-author-fixture\\\\\"}\",\"related\"]'}\n  Use -v to get more diff"
+  }
+]

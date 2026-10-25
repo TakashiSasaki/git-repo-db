@@ -1,0 +1,8 @@
+{
+  "scope": "Complete final new Author evidence after lossless text tidying. Earlier199-record snapshot is retained separately. Original command paths remain unchanged; compression indexes map original to stored paths.",
+  "compressed_files": 208,
+  "additional_files_tidied": 9,
+  "all_compressed_and_original_hashes_and_sizes_match": true,
+  "mismatches": [],
+  "index_directories": 15
+}

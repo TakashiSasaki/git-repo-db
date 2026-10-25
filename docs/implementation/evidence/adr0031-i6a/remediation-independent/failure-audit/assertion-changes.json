@@ -1,0 +1,147 @@
+[
+  {
+    "path": "tests/integration/p1/test_context.py",
+    "function": "test_context_only_resource_needs_no_core_or_source_membership",
+    "before": {
+      "asserts": [
+        "Assert(test=Compare(left=Call(func=Name(id='sorted', ctx=Load()), args=[GeneratorExp(elt=Attribute(value=Name(id='p', ctx=Load()), attr='name', ctx=Load()), generators=[comprehension(target=Name(id='p', ctx=Store()), iter=Call(func=Attribute(value=Attribute(value=Name(id='path', ctx=Load()), attr='parent', ctx=Load()), attr='iterdir', ctx=Load()), args=[], keywords=[]), ifs=[], is_async=0)])], keywords=[]), ops=[Eq()], comparators=[List(elts=[Constant(value='context.sqlite3')], ctx=Load())]))",
+        "Assert(test=Compare(left=Subscript(value=Call(func=Attribute(value=Call(func=Attribute(value=Name(id='db', ctx=Load()), attr='execute', ctx=Load()), args=[Constant(value='SELECT count(*) FROM source_repositories')], keywords=[]), attr='fetchone', ctx=Load()), args=[], keywords=[]), slice=Constant(value=0), ctx=Load()), ops=[Eq()], comparators=[Constant(value=0)]))"
+      ],
+      "raises": [],
+      "decorators": []
+    },
+    "after": {
+      "asserts": [
+        "Assert(test=Compare(left=Call(func=Name(id='sorted', ctx=Load()), args=[GeneratorExp(elt=Attribute(value=Name(id='p', ctx=Load()), attr='name', ctx=Load()), generators=[comprehension(target=Name(id='p', ctx=Store()), iter=Call(func=Attribute(value=Attribute(value=Name(id='path', ctx=Load()), attr='parent', ctx=Load()), attr='iterdir', ctx=Load()), args=[], keywords=[]), ifs=[], is_async=0)])], keywords=[]), ops=[Eq()], comparators=[List(elts=[Constant(value='context.sqlite3'), Constant(value='p1-writer.lock')], ctx=Load())]))",
+        "Assert(test=Compare(left=Subscript(value=Call(func=Attribute(value=Call(func=Attribute(value=Name(id='db', ctx=Load()), attr='execute', ctx=Load()), args=[Constant(value='SELECT count(*) FROM source_repositories')], keywords=[]), attr='fetchone', ctx=Load()), args=[], keywords=[]), slice=Constant(value=0), ctx=Load()), ops=[Eq()], comparators=[Constant(value=0)]))"
+      ],
+      "raises": [],
+      "decorators": []
+    }
+  },
+  {
+    "path": "tests/integration/p1/test_context_relations.py",
+    "function": "test_counterexample_14_capabilities_and_p7_stops",
+    "before": {
+      "asserts": [],
+      "raises": [
+        "Call(func=Attribute(value=Name(id='pytest', ctx=Load()), attr='raises', ctx=Load()), args=[Name(id='ContextError', ctx=Load())], keywords=[keyword(arg='match', value=Constant(value='CAPABILITY_EXPIRED'))])",
+        "Call(func=Attribute(value=Name(id='pytest', ctx=Load()), attr='raises', ctx=Load()), args=[Name(id='ContextError', ctx=Load())], keywords=[keyword(arg='match', value=Constant(value='READ_ONLY'))])",
+        "Call(func=Attribute(value=Name(id='pytest', ctx=Load()), attr='raises', ctx=Load()), args=[Name(id='CoordinationError', ctx=Load())], keywords=[keyword(arg='match', value=Constant(value='RECOVERY_REQUIRED'))])"
+      ],
+      "decorators": []
+    },
+    "after": {
+      "asserts": [],
+      "raises": [
+        "Call(func=Attribute(value=Name(id='pytest', ctx=Load()), attr='raises', ctx=Load()), args=[Attribute(value=Name(id='sqlite3', ctx=Load()), attr='OperationalError', ctx=Load())], keywords=[keyword(arg='match', value=Constant(value='readonly'))])",
+        "Call(func=Attribute(value=Name(id='pytest', ctx=Load()), attr='raises', ctx=Load()), args=[Name(id='ContextError', ctx=Load())], keywords=[keyword(arg='match', value=Constant(value='CAPABILITY_EXPIRED'))])",
+        "Call(func=Attribute(value=Name(id='pytest', ctx=Load()), attr='raises', ctx=Load()), args=[Name(id='ContextError', ctx=Load())], keywords=[keyword(arg='match', value=Constant(value='READ_ONLY'))])",
+        "Call(func=Attribute(value=Name(id='pytest', ctx=Load()), attr='raises', ctx=Load()), args=[Name(id='CoordinationError', ctx=Load())], keywords=[keyword(arg='match', value=Constant(value='RECOVERY_REQUIRED'))])"
+      ],
+      "decorators": []
+    }
+  },
+  {
+    "path": "tests/integration/p2_p3_compatibility/test_production_pair.py",
+    "function": "test_original_capture_retry_after_core_success_context_rollback",
+    "before": {
+      "asserts": [
+        "Assert(test=Compare(left=Attribute(value=Attribute(value=Name(id='failed', ctx=Load()), attr='value', ctx=Load()), attr='outcome', ctx=Load()), ops=[Eq()], comparators=[Call(func=Name(id='PairAdmission', ctx=Load()), args=[Constant(value=True), Constant(value=False)], keywords=[])]))",
+        "Assert(test=Compare(left=Call(func=Attribute(value=Name(id='context', ctx=Load()), attr='candidates', ctx=Load()), args=[Name(id='RESOURCE', ctx=Load()), Constant(value='title')], keywords=[]), ops=[Eq()], comparators=[Tuple(elts=[Call(func=Name(id='candidate', ctx=Load()), args=[Constant(value='original')], keywords=[])], ctx=Load())]))",
+        "Assert(test=Compare(left=Call(func=Attribute(value=Name(id='coordinator', ctx=Load()), attr='admit', ctx=Load()), args=[Call(func=Name(id='core_unit', ctx=Load()), args=[Name(id='oid', ctx=Load()), Name(id='capture', ctx=Load())], keywords=[]), Name(id='original_context', ctx=Load())], keywords=[]), ops=[Eq()], comparators=[Call(func=Name(id='PairAdmission', ctx=Load()), args=[Constant(value=True), Constant(value=True)], keywords=[])]))",
+        "Assert(test=Compare(left=Call(func=Name(id='tuple', ctx=Load()), args=[Call(func=Attribute(value=Call(func=Attribute(value=Attribute(value=Name(id='pair', ctx=Load()), attr='core', ctx=Load()), attr='execute', ctx=Load()), args=[Constant(value='SELECT * FROM captures')], keywords=[]), attr='fetchone', ctx=Load()), args=[], keywords=[])], keywords=[]), ops=[Eq()], comparators=[Attribute(value=Name(id='capture', ctx=Load()), attr='key', ctx=Load())]))",
+        "Assert(test=Compare(left=Subscript(value=Call(func=Attribute(value=Call(func=Attribute(value=Attribute(value=Name(id='pair', ctx=Load()), attr='context', ctx=Load()), attr='execute', ctx=Load()), args=[Constant(value='SELECT count(*) FROM core_references')], keywords=[]), attr='fetchone', ctx=Load()), args=[], keywords=[]), slice=Constant(value=0), ctx=Load()), ops=[Eq()], comparators=[Constant(value=1)]))",
+        "Assert(test=Compare(left=Subscript(value=Call(func=Attribute(value=Call(func=Attribute(value=Attribute(value=Name(id='pair', ctx=Load()), attr='context', ctx=Load()), attr='execute', ctx=Load()), args=[Constant(value='SELECT count(*) FROM providers')], keywords=[]), attr='fetchone', ctx=Load()), args=[], keywords=[]), slice=Constant(value=0), ctx=Load()), ops=[Eq()], comparators=[Constant(value=0)]))",
+        "Assert(test=Compare(left=Subscript(value=Call(func=Attribute(value=Call(func=Attribute(value=Attribute(value=Name(id='pair', ctx=Load()), attr='context', ctx=Load()), attr='execute', ctx=Load()), args=[Constant(value='SELECT count(*) FROM resources')], keywords=[]), attr='fetchone', ctx=Load()), args=[], keywords=[]), slice=Constant(value=0), ctx=Load()), ops=[Eq()], comparators=[Constant(value=0)]))",
+        "Assert(test=Compare(left=Subscript(value=Call(func=Attribute(value=Call(func=Attribute(value=Attribute(value=Name(id='pair', ctx=Load()), attr='context', ctx=Load()), attr='execute', ctx=Load()), args=[Constant(value='SELECT count(*) FROM resources')], keywords=[]), attr='fetchone', ctx=Load()), args=[], keywords=[]), slice=Constant(value=0), ctx=Load()), ops=[Eq()], comparators=[Constant(value=1)]))",
+        "Assert(test=Compare(left=Subscript(value=Call(func=Attribute(value=Call(func=Attribute(value=Attribute(value=Name(id='pair', ctx=Load()), attr='core', ctx=Load()), attr='execute', ctx=Load()), args=[Constant(value='SELECT count(*) FROM captures')], keywords=[]), attr='fetchone', ctx=Load()), args=[], keywords=[]), slice=Constant(value=0), ctx=Load()), ops=[Eq()], comparators=[Constant(value=1)]))",
+        "Assert(test=Compare(left=Subscript(value=Call(func=Attribute(value=Call(func=Attribute(value=Attribute(value=Name(id='pair', ctx=Load()), attr='core', ctx=Load()), attr='execute', ctx=Load()), args=[Constant(value='SELECT count(*) FROM git_objects')], keywords=[]), attr='fetchone', ctx=Load()), args=[], keywords=[]), slice=Constant(value=0), ctx=Load()), ops=[Eq()], comparators=[Constant(value=1)]))"
+      ],
+      "raises": [
+        "Call(func=Attribute(value=Name(id='pytest', ctx=Load()), attr='raises', ctx=Load()), args=[Name(id='AdmissionFailure', ctx=Load())], keywords=[])"
+      ],
+      "decorators": [
+        "Call(func=Attribute(value=Attribute(value=Name(id='pytest', ctx=Load()), attr='mark', ctx=Load()), attr='parametrize', ctx=Load()), args=[Constant(value='fmt'), List(elts=[Constant(value='sha1'), Constant(value='sha256')], ctx=Load())], keywords=[])"
+      ]
+    },
+    "after": {
+      "asserts": [
+        "Assert(test=Compare(left=Attribute(value=Attribute(value=Name(id='failed', ctx=Load()), attr='value', ctx=Load()), attr='outcome', ctx=Load()), ops=[Eq()], comparators=[Call(func=Name(id='PairAdmission', ctx=Load()), args=[Constant(value=True), Constant(value=False)], keywords=[])]))",
+        "Assert(test=Compare(left=Call(func=Attribute(value=Name(id='context', ctx=Load()), attr='candidates', ctx=Load()), args=[Name(id='RESOURCE', ctx=Load()), Constant(value='title')], keywords=[]), ops=[Eq()], comparators=[Tuple(elts=[Call(func=Name(id='candidate', ctx=Load()), args=[Constant(value='original')], keywords=[])], ctx=Load())]))",
+        "Assert(test=Compare(left=Call(func=Name(id='admit_pair', ctx=Load()), args=[Name(id='coordinator', ctx=Load()), Call(func=Name(id='core_unit', ctx=Load()), args=[Name(id='oid', ctx=Load()), Name(id='capture', ctx=Load())], keywords=[]), Name(id='original_context', ctx=Load())], keywords=[]), ops=[Eq()], comparators=[Call(func=Name(id='PairAdmission', ctx=Load()), args=[Constant(value=True), Constant(value=True)], keywords=[])]))",
+        "Assert(test=Compare(left=Call(func=Name(id='tuple', ctx=Load()), args=[Call(func=Attribute(value=Call(func=Attribute(value=Attribute(value=Name(id='pair', ctx=Load()), attr='core', ctx=Load()), attr='execute', ctx=Load()), args=[Constant(value='SELECT * FROM captures')], keywords=[]), attr='fetchone', ctx=Load()), args=[], keywords=[])], keywords=[]), ops=[Eq()], comparators=[Attribute(value=Name(id='capture', ctx=Load()), attr='key', ctx=Load())]))",
+        "Assert(test=Compare(left=Subscript(value=Call(func=Attribute(value=Call(func=Attribute(value=Attribute(value=Name(id='pair', ctx=Load()), attr='context', ctx=Load()), attr='execute', ctx=Load()), args=[Constant(value='SELECT count(*) FROM core_references')], keywords=[]), attr='fetchone', ctx=Load()), args=[], keywords=[]), slice=Constant(value=0), ctx=Load()), ops=[Eq()], comparators=[Constant(value=1)]))",
+        "Assert(test=Compare(left=Subscript(value=Call(func=Attribute(value=Call(func=Attribute(value=Attribute(value=Name(id='pair', ctx=Load()), attr='context', ctx=Load()), attr='execute', ctx=Load()), args=[Constant(value='SELECT count(*) FROM providers')], keywords=[]), attr='fetchone', ctx=Load()), args=[], keywords=[]), slice=Constant(value=0), ctx=Load()), ops=[Eq()], comparators=[Constant(value=0)]))",
+        "Assert(test=Compare(left=Subscript(value=Call(func=Attribute(value=Call(func=Attribute(value=Attribute(value=Name(id='pair', ctx=Load()), attr='context', ctx=Load()), attr='execute', ctx=Load()), args=[Constant(value='SELECT count(*) FROM resources')], keywords=[]), attr='fetchone', ctx=Load()), args=[], keywords=[]), slice=Constant(value=0), ctx=Load()), ops=[Eq()], comparators=[Constant(value=0)]))",
+        "Assert(test=Compare(left=Subscript(value=Call(func=Attribute(value=Call(func=Attribute(value=Attribute(value=Name(id='pair', ctx=Load()), attr='context', ctx=Load()), attr='execute', ctx=Load()), args=[Constant(value='SELECT count(*) FROM resources')], keywords=[]), attr='fetchone', ctx=Load()), args=[], keywords=[]), slice=Constant(value=0), ctx=Load()), ops=[Eq()], comparators=[Constant(value=1)]))",
+        "Assert(test=Compare(left=Subscript(value=Call(func=Attribute(value=Call(func=Attribute(value=Attribute(value=Name(id='pair', ctx=Load()), attr='core', ctx=Load()), attr='execute', ctx=Load()), args=[Constant(value='SELECT count(*) FROM captures')], keywords=[]), attr='fetchone', ctx=Load()), args=[], keywords=[]), slice=Constant(value=0), ctx=Load()), ops=[Eq()], comparators=[Constant(value=1)]))",
+        "Assert(test=Compare(left=Subscript(value=Call(func=Attribute(value=Call(func=Attribute(value=Attribute(value=Name(id='pair', ctx=Load()), attr='core', ctx=Load()), attr='execute', ctx=Load()), args=[Constant(value='SELECT count(*) FROM git_objects')], keywords=[]), attr='fetchone', ctx=Load()), args=[], keywords=[]), slice=Constant(value=0), ctx=Load()), ops=[Eq()], comparators=[Constant(value=1)]))"
+      ],
+      "raises": [
+        "Call(func=Attribute(value=Name(id='pytest', ctx=Load()), attr='raises', ctx=Load()), args=[Name(id='AdmissionFailure', ctx=Load())], keywords=[])"
+      ],
+      "decorators": [
+        "Call(func=Attribute(value=Attribute(value=Name(id='pytest', ctx=Load()), attr='mark', ctx=Load()), attr='parametrize', ctx=Load()), args=[Constant(value='fmt'), List(elts=[Constant(value='sha1'), Constant(value='sha256')], ctx=Load())], keywords=[])"
+      ]
+    }
+  },
+  {
+    "path": "tests/integration/p3/test_production_context.py",
+    "function": "test_source_collection_cross_service_rejected_even_empty",
+    "before": {
+      "asserts": [],
+      "raises": [
+        "Call(func=Attribute(value=Name(id='pytest', ctx=Load()), attr='raises', ctx=Load()), args=[Name(id='ContextError', ctx=Load())], keywords=[keyword(arg='match', value=Constant(value='SOURCE_SERVICE'))])"
+      ],
+      "decorators": []
+    },
+    "after": {
+      "asserts": [
+        "Assert(test=Compare(left=Call(func=Attribute(value=Call(func=Attribute(value=Attribute(value=Name(id='store', ctx=Load()), attr='db', ctx=Load()), attr='execute', ctx=Load()), args=[Constant(value='SELECT count(*) FROM collections')], keywords=[]), attr='fetchone', ctx=Load()), args=[], keywords=[]), ops=[Eq()], comparators=[Tuple(elts=[Constant(value=0)], ctx=Load())]))",
+        "Assert(test=UnaryOp(op=Not(), operand=Call(func=Attribute(value=BinOp(left=Attribute(value=Name(id='store', ctx=Load()), attr='directory', ctx=Load()), op=Div(), right=Constant(value='p1-recovery-stop.json')), attr='exists', ctx=Load()), args=[], keywords=[])))"
+      ],
+      "raises": [
+        "Call(func=Attribute(value=Name(id='pytest', ctx=Load()), attr='raises', ctx=Load()), args=[Name(id='AdmissionRefused', ctx=Load())], keywords=[keyword(arg='match', value=Constant(value='^UNQUALIFIED_MAPPING$'))])"
+      ],
+      "decorators": []
+    }
+  },
+  {
+    "path": "tests/unit/test_context_coordinator_admission.py",
+    "function": "test_local_authority_survives_callback_until_actual_commit",
+    "before": {
+      "asserts": [
+        "Assert(test=BoolOp(op=And(), values=[Compare(left=Name(id='checked', ctx=Load()), ops=[Eq()], comparators=[List(elts=[Constant(value='during_context')], ctx=Load())]), Compare(left=Call(func=Name(id='resource_count', ctx=Load()), args=[Name(id='catalog', ctx=Load())], keywords=[]), ops=[Eq()], comparators=[Constant(value=1)])]))",
+        "Assert(test=Compare(left=Attribute(value=Name(id='policy', ctx=Load()), attr='active', ctx=Load()), ops=[Eq()], comparators=[Constant(value=0)]))",
+        "Assert(test=Compare(left=Attribute(value=Name(id='policy', ctx=Load()), attr='active', ctx=Load()), ops=[Gt()], comparators=[Constant(value=0)]))",
+        "Assert(test=Compare(left=Attribute(value=Name(id='policy', ctx=Load()), attr='active', ctx=Load()), ops=[Gt()], comparators=[Constant(value=0)]))",
+        "Assert(test=Compare(left=Call(func=Name(id='len', ctx=Load()), args=[Attribute(value=Name(id='policy', ctx=Load()), attr='calls', ctx=Load())], keywords=[]), ops=[Eq()], comparators=[Name(id='calls_before', ctx=Load())]))",
+        "Assert(test=Compare(left=Name(id='result', ctx=Load()), ops=[Eq()], comparators=[Call(func=Name(id='PairAdmission', ctx=Load()), args=[Constant(value=True), Constant(value=True)], keywords=[])]))"
+      ],
+      "raises": [
+        "Call(func=Attribute(value=Name(id='pytest', ctx=Load()), attr='raises', ctx=Load()), args=[Name(id='AdmissionRefused', ctx=Load())], keywords=[keyword(arg='match', value=Constant(value='^PERMISSION_DENIED$'))])"
+      ],
+      "decorators": [
+        "Call(func=Attribute(value=Attribute(value=Name(id='pytest', ctx=Load()), attr='mark', ctx=Load()), attr='parametrize', ctx=Load()), args=[Constant(value='facade'), List(elts=[Constant(value=False), Constant(value=True)], ctx=Load())], keywords=[])"
+      ]
+    },
+    "after": {
+      "asserts": [
+        "Assert(test=BoolOp(op=And(), values=[Compare(left=Name(id='checked', ctx=Load()), ops=[Eq()], comparators=[List(elts=[Constant(value='during_context')], ctx=Load())]), Compare(left=Call(func=Name(id='resource_count', ctx=Load()), args=[Name(id='catalog', ctx=Load())], keywords=[]), ops=[Eq()], comparators=[Constant(value=1)])]))",
+        "Assert(test=Compare(left=Attribute(value=Attribute(value=Name(id='refused', ctx=Load()), attr='value', ctx=Load()), attr='code', ctx=Load()), ops=[Eq()], comparators=[IfExp(test=Name(id='facade', ctx=Load()), body=Constant(value='CAPABILITY_EXPIRED'), orelse=Constant(value='PERMISSION_DENIED'))]))",
+        "Assert(test=Compare(left=Attribute(value=Name(id='policy', ctx=Load()), attr='active', ctx=Load()), ops=[Eq()], comparators=[Constant(value=0)]))",
+        "Assert(test=Compare(left=Attribute(value=Name(id='policy', ctx=Load()), attr='active', ctx=Load()), ops=[Gt()], comparators=[Constant(value=0)]))",
+        "Assert(test=Compare(left=Attribute(value=Name(id='policy', ctx=Load()), attr='active', ctx=Load()), ops=[Gt()], comparators=[Constant(value=0)]))",
+        "Assert(test=Compare(left=Call(func=Name(id='len', ctx=Load()), args=[Attribute(value=Name(id='policy', ctx=Load()), attr='calls', ctx=Load())], keywords=[]), ops=[Eq()], comparators=[Name(id='calls_before', ctx=Load())]))",
+        "Assert(test=Compare(left=Name(id='result', ctx=Load()), ops=[Eq()], comparators=[Call(func=Name(id='PairAdmission', ctx=Load()), args=[Constant(value=True), Constant(value=True)], keywords=[])]))"
+      ],
+      "raises": [
+        "Call(func=Attribute(value=Name(id='pytest', ctx=Load()), attr='raises', ctx=Load()), args=[IfExp(test=Name(id='facade', ctx=Load()), body=Name(id='ContextError', ctx=Load()), orelse=Name(id='AdmissionRefused', ctx=Load()))], keywords=[])"
+      ],
+      "decorators": [
+        "Call(func=Attribute(value=Attribute(value=Name(id='pytest', ctx=Load()), attr='mark', ctx=Load()), attr='parametrize', ctx=Load()), args=[Constant(value='facade'), List(elts=[Constant(value=False), Constant(value=True)], ctx=Load())], keywords=[])"
+      ]
+    }
+  }
+]

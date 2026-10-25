@@ -1157,6 +1157,9 @@ class SQLiteRecoveryAdapter:
         try:
             register_functions(conn)
             try:
+                from repo_catalog.adapters.sqlite.p1_schema import configure
+
+                configure(conn)
                 p1_schema_validate(conn, store)
             except Exception as e:
                 raise BackupValidationError(
@@ -1176,6 +1179,9 @@ class SQLiteRecoveryAdapter:
             register_functions(conn)
             # Strict P1 schema validation
             try:
+                from repo_catalog.adapters.sqlite.p1_schema import configure
+
+                configure(conn)
                 p1_schema_validate(conn, "core")
             except Exception as e:
                 raise BackupValidationError(f"Core physical schema invalid: {e}") from e
@@ -1374,6 +1380,9 @@ class SQLiteRecoveryAdapter:
             register_functions(conn)
             # Strict P1 schema validation
             try:
+                from repo_catalog.adapters.sqlite.p1_schema import configure
+
+                configure(conn)
                 p1_schema_validate(conn, "context")
             except Exception as e:
                 raise BackupValidationError(

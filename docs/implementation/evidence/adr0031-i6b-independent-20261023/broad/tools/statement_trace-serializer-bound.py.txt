@@ -1,0 +1,75 @@
+"""Independent observer of assertion-statement entry and raised typed refusals.
+
+Only the main Python worker thread is traced. Entry is not subexpression or
+child-process coverage. No values, frames or report outcomes are modified.
+"""
+import ast,json,os,sys
+from pathlib import Path
+import pytest
+ROOT=Path(os.environ['I6B_BROAD_ROOT']).resolve();OUT=Path(os.environ['I6B_BROAD_OUT'])/'trace';stream=None;node=None;phase=None;cache={};seen=set()
+_DUMPS=json.dumps
+def emit(event,**extra):
+    stream.write(_DUMPS(dict(event=event,nodeid=node,phase=phase,**extra))+'\n');stream.flush()
+def file_info(filename):
+    if filename not in cache:
+        p=Path(filename)
+        try:r=p.resolve().relative_to(ROOT).as_posix()
+        except (OSError,ValueError):r=''
+        if r.startswith(('tests/','src/repo_catalog/')) and p.suffix=='.py':
+            cache[filename]=(r,{x.lineno for x in ast.walk(ast.parse(p.read_text())) if isinstance(x,ast.Assert)} if r.startswith('tests/') else set())
+        else:cache[filename]=None
+    return cache[filename]
+def trace(frame,event,arg):
+    info=file_info(frame.f_code.co_filename)
+    if info is None:return None
+    if event=='line' and frame.f_lineno in info[1]:
+        k=(phase,info[0],frame.f_lineno)
+        if k not in seen:
+            seen.add(k);emit('assertion_line',path=info[0],line=frame.f_lineno,function=frame.f_code.co_name)
+    elif event=='exception':
+        cls,exc,_=arg
+        if cls.__name__ in {'AdmissionRefused','UnsupportedResourceStage','ExchangeError'}:
+            stack=[];f=frame
+            while f:
+                i=file_info(f.f_code.co_filename)
+                if i:stack.append(dict(path=i[0],line=f.f_lineno,function=f.f_code.co_name))
+                f=f.f_back
+            emit('typed_exception',exception_type=cls.__module__+'.'+cls.__name__,message=str(exc),code=getattr(exc,'code',None),stack=stack)
+    return trace
+
+def pytest_configure(config):
+    global stream
+    OUT.mkdir(parents=True,exist_ok=True);worker=getattr(config,'workerinput',{}).get('workerid','master')
+    stream=(OUT/(worker+'.jsonl')).open('x');emit('configure',optimization=sys.flags.optimize);assert not sys.flags.optimize
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_protocol(item,nextitem):
+    global node,seen
+    assert sys.gettrace() is None;node=item.nodeid;seen=set();emit('start');sys.settrace(trace)
+    try:yield
+    finally:sys.settrace(None);emit('finish');node=None
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_setup(item):
+    global phase
+    phase='setup'
+    try:yield
+    finally:phase=None
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_call(item):
+    global phase
+    phase='call'
+    try:yield
+    finally:phase=None
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_teardown(item):
+    global phase
+    phase='teardown'
+    try:yield
+    finally:phase=None
+
+def pytest_sessionfinish(session,exitstatus):emit('session_finish',exitstatus=int(exitstatus))
+def pytest_unconfigure(config):
+    if stream:stream.close()

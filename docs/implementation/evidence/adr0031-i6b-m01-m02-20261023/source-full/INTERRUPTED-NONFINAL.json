@@ -1,0 +1,16 @@
+{
+  "status": "interrupted_nonfinal",
+  "source_head": "a3185cde585a3dbf4dec7d491ecd20e43c285a19",
+  "reason": "Unchanged saved normal probe exposed hard top-row-cap refusal-precedence regression. Parent requested SIGINT during early run to revise product, preserve partial evidence and rerun complete final source independently.",
+  "signal": {
+    "target_pid": 2293,
+    "signal": "SIGINT",
+    "kill_command_exit": 0
+  },
+  "pytest_exit": 2,
+  "selected": 6342,
+  "pytest_console_reported_pass": 332,
+  "junit_testcase_count": 336,
+  "counts_not_equivalent": "Four in-flight JUnit cases after interrupt do not establish completed passing tests; no partial count is accepted or combined.",
+  "acceptance": false
+}

@@ -1,0 +1,34 @@
+[
+  {
+    "run_id": 39903868636,
+    "job_id": 120251251247,
+    "name": "offline",
+    "exit_code": 1,
+    "stdout_bytes": 0,
+    "stderr": "GitHub redirected job-log download: Forbidden; signed URL redacted."
+  },
+  {
+    "run_id": 39903868636,
+    "job_id": 120251251521,
+    "name": "sqlite-policy",
+    "exit_code": 1,
+    "stdout_bytes": 0,
+    "stderr": "GitHub redirected job-log download: Forbidden; signed URL redacted."
+  },
+  {
+    "run_id": 39903868666,
+    "job_id": 120251251959,
+    "name": "registry-runtime",
+    "exit_code": 1,
+    "stdout_bytes": 0,
+    "stderr": "GitHub redirected job-log download: Forbidden; signed URL redacted."
+  },
+  {
+    "run_id": 39902230351,
+    "job_id": 120246158269,
+    "name": "registry-runtime",
+    "exit_code": 1,
+    "stdout_bytes": 0,
+    "stderr": "GitHub redirected job-log download: Forbidden; signed URL redacted."
+  }
+]

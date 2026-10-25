@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "/workspace/git-repo-db/.venv/bin/python",
+    "-m",
+    "pytest",
+    "tests/packaging/test_p3_distribution.py",
+    "-q",
+    "--tb=short",
+    "--junitxml",
+    "/workspace/direct-fixtures-packaging/tests.xml",
+    "--journal",
+    "/workspace/direct-fixtures-packaging/journal.jsonl"
+  ],
+  "exit_code": 0,
+  "scope": "overlapping installed P3 smoke; no benchmark comparison"
+}

@@ -1,0 +1,491 @@
+{
+  "all_inputs_match_binding_current_and_frozen_git": true,
+  "all_unsuccessful_classes": {
+    "I6-C": 242,
+    "I7-composition": 14,
+    "Transfer-stage": 43
+  },
+  "analysis_script_sha256": "85dc01414e54326f627e10e23192c6b17034d8ac696f6c69497c51d175ffca7a",
+  "compressed_binding_transport_recheck": true,
+  "current_diagnostic_classification_supplement": {
+    "category": "I7-composition",
+    "node_comparisons": [
+      {
+        "nodeid": "tests/integration/p7/test_bounded_input.py::test_context_invalid_or_large_text_does_not_block_later_unit[17]",
+        "previous_signature": {
+          "assertion_first_line": "AssertionError: assert 2 == 0",
+          "outcome": "failed",
+          "phase": "call",
+          "receipt_reasons": {
+            "'Context admission error: PERMISSION_DENIED'": 2
+          },
+          "trace_coordinates": [
+            [
+              "tests/integration/p7/test_bounded_input.py",
+              219
+            ]
+          ]
+        },
+        "signature": {
+          "assertion_first_line": "AssertionError: assert 2 == 0",
+          "outcome": "failed",
+          "phase": "call",
+          "receipt_reasons": {
+            "'Context admission error: PERMISSION_DENIED'": 2
+          },
+          "trace_coordinates": [
+            [
+              "tests/integration/p7/test_bounded_input.py",
+              219
+            ]
+          ]
+        }
+      },
+      {
+        "nodeid": "tests/integration/p7/test_bounded_input.py::test_context_invalid_or_large_text_does_not_block_later_unit[\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042]",
+        "previous_signature": {
+          "assertion_first_line": "AssertionError: assert 2 == 0",
+          "outcome": "failed",
+          "phase": "call",
+          "receipt_reasons": {
+            "'Context admission error: PERMISSION_DENIED'": 2
+          },
+          "trace_coordinates": [
+            [
+              "tests/integration/p7/test_bounded_input.py",
+              219
+            ]
+          ]
+        },
+        "signature": {
+          "assertion_first_line": "AssertionError: assert 2 == 0",
+          "outcome": "failed",
+          "phase": "call",
+          "receipt_reasons": {
+            "'Context admission error: PERMISSION_DENIED'": 2
+          },
+          "trace_coordinates": [
+            [
+              "tests/integration/p7/test_bounded_input.py",
+              219
+            ]
+          ]
+        }
+      },
+      {
+        "nodeid": "tests/integration/p7/test_bounded_input.py::test_context_invalid_or_large_text_does_not_block_later_unit[\\ud800]",
+        "previous_signature": {
+          "assertion_first_line": "AssertionError: assert 2 == 0",
+          "outcome": "failed",
+          "phase": "call",
+          "receipt_reasons": {
+            "'Context admission error: PERMISSION_DENIED'": 2
+          },
+          "trace_coordinates": [
+            [
+              "tests/integration/p7/test_bounded_input.py",
+              219
+            ]
+          ]
+        },
+        "signature": {
+          "assertion_first_line": "AssertionError: assert 2 == 0",
+          "outcome": "failed",
+          "phase": "call",
+          "receipt_reasons": {
+            "'Context admission error: PERMISSION_DENIED'": 2
+          },
+          "trace_coordinates": [
+            [
+              "tests/integration/p7/test_bounded_input.py",
+              219
+            ]
+          ]
+        }
+      },
+      {
+        "nodeid": "tests/integration/p7/test_bounded_input.py::test_context_invalid_or_large_text_does_not_block_later_unit[text3]",
+        "previous_signature": {
+          "assertion_first_line": "AssertionError: assert 2 == 0",
+          "outcome": "failed",
+          "phase": "call",
+          "receipt_reasons": {
+            "'Context admission error: PERMISSION_DENIED'": 2
+          },
+          "trace_coordinates": [
+            [
+              "tests/integration/p7/test_bounded_input.py",
+              219
+            ]
+          ]
+        },
+        "signature": {
+          "assertion_first_line": "AssertionError: assert 2 == 0",
+          "outcome": "failed",
+          "phase": "call",
+          "receipt_reasons": {
+            "'Context admission error: PERMISSION_DENIED'": 2
+          },
+          "trace_coordinates": [
+            [
+              "tests/integration/p7/test_bounded_input.py",
+              219
+            ]
+          ]
+        }
+      },
+      {
+        "nodeid": "tests/integration/p7/test_bounded_input.py::test_context_invalid_or_large_text_does_not_block_later_unit[text4]",
+        "previous_signature": {
+          "assertion_first_line": "AssertionError: assert 2 == 0",
+          "outcome": "failed",
+          "phase": "call",
+          "receipt_reasons": {
+            "'Context admission error: PERMISSION_DENIED'": 2
+          },
+          "trace_coordinates": [
+            [
+              "tests/integration/p7/test_bounded_input.py",
+              219
+            ]
+          ]
+        },
+        "signature": {
+          "assertion_first_line": "AssertionError: assert 2 == 0",
+          "outcome": "failed",
+          "phase": "call",
+          "receipt_reasons": {
+            "'Context admission error: PERMISSION_DENIED'": 2
+          },
+          "trace_coordinates": [
+            [
+              "tests/integration/p7/test_bounded_input.py",
+              219
+            ]
+          ]
+        }
+      },
+      {
+        "nodeid": "tests/integration/p7/test_bounded_input.py::test_context_invalid_or_large_text_does_not_block_later_unit[xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx]",
+        "previous_signature": {
+          "assertion_first_line": "AssertionError: assert 2 == 0",
+          "outcome": "failed",
+          "phase": "call",
+          "receipt_reasons": {
+            "'Context admission error: PERMISSION_DENIED'": 2
+          },
+          "trace_coordinates": [
+            [
+              "tests/integration/p7/test_bounded_input.py",
+              219
+            ]
+          ]
+        },
+        "signature": {
+          "assertion_first_line": "AssertionError: assert 2 == 0",
+          "outcome": "failed",
+          "phase": "call",
+          "receipt_reasons": {
+            "'Context admission error: PERMISSION_DENIED'": 2
+          },
+          "trace_coordinates": [
+            [
+              "tests/integration/p7/test_bounded_input.py",
+              219
+            ]
+          ]
+        }
+      },
+      {
+        "nodeid": "tests/integration/p7/test_bounded_input.py::test_malformed_primitive_shape_is_one_rejection_not_merge_abort[bad0]",
+        "previous_signature": {
+          "assertion_first_line": "AssertionError: assert 2 == 0",
+          "outcome": "failed",
+          "phase": "call",
+          "receipt_reasons": {
+            "'Context admission error: PERMISSION_DENIED'": 2
+          },
+          "trace_coordinates": [
+            [
+              "tests/integration/p7/test_bounded_input.py",
+              257
+            ]
+          ]
+        },
+        "signature": {
+          "assertion_first_line": "AssertionError: assert 2 == 0",
+          "outcome": "failed",
+          "phase": "call",
+          "receipt_reasons": {
+            "'Context admission error: PERMISSION_DENIED'": 2
+          },
+          "trace_coordinates": [
+            [
+              "tests/integration/p7/test_bounded_input.py",
+              257
+            ]
+          ]
+        }
+      },
+      {
+        "nodeid": "tests/integration/p7/test_bounded_input.py::test_malformed_primitive_shape_is_one_rejection_not_merge_abort[bad1]",
+        "previous_signature": {
+          "assertion_first_line": "AssertionError: assert 2 == 0",
+          "outcome": "failed",
+          "phase": "call",
+          "receipt_reasons": {
+            "'Context admission error: PERMISSION_DENIED'": 2
+          },
+          "trace_coordinates": [
+            [
+              "tests/integration/p7/test_bounded_input.py",
+              257
+            ]
+          ]
+        },
+        "signature": {
+          "assertion_first_line": "AssertionError: assert 2 == 0",
+          "outcome": "failed",
+          "phase": "call",
+          "receipt_reasons": {
+            "'Context admission error: PERMISSION_DENIED'": 2
+          },
+          "trace_coordinates": [
+            [
+              "tests/integration/p7/test_bounded_input.py",
+              257
+            ]
+          ]
+        }
+      },
+      {
+        "nodeid": "tests/integration/p7/test_bounded_input.py::test_malformed_primitive_shape_is_one_rejection_not_merge_abort[bad2]",
+        "previous_signature": {
+          "assertion_first_line": "AssertionError: assert 2 == 0",
+          "outcome": "failed",
+          "phase": "call",
+          "receipt_reasons": {
+            "'Context admission error: PERMISSION_DENIED'": 2
+          },
+          "trace_coordinates": [
+            [
+              "tests/integration/p7/test_bounded_input.py",
+              257
+            ]
+          ]
+        },
+        "signature": {
+          "assertion_first_line": "AssertionError: assert 2 == 0",
+          "outcome": "failed",
+          "phase": "call",
+          "receipt_reasons": {
+            "'Context admission error: PERMISSION_DENIED'": 2
+          },
+          "trace_coordinates": [
+            [
+              "tests/integration/p7/test_bounded_input.py",
+              257
+            ]
+          ]
+        }
+      },
+      {
+        "nodeid": "tests/integration/p7/test_bounded_input.py::test_malformed_primitive_shape_is_one_rejection_not_merge_abort[bad3]",
+        "previous_signature": {
+          "assertion_first_line": "AssertionError: assert 2 == 0",
+          "outcome": "failed",
+          "phase": "call",
+          "receipt_reasons": {
+            "'Context admission error: PERMISSION_DENIED'": 2
+          },
+          "trace_coordinates": [
+            [
+              "tests/integration/p7/test_bounded_input.py",
+              257
+            ]
+          ]
+        },
+        "signature": {
+          "assertion_first_line": "AssertionError: assert 2 == 0",
+          "outcome": "failed",
+          "phase": "call",
+          "receipt_reasons": {
+            "'Context admission error: PERMISSION_DENIED'": 2
+          },
+          "trace_coordinates": [
+            [
+              "tests/integration/p7/test_bounded_input.py",
+              257
+            ]
+          ]
+        }
+      },
+      {
+        "nodeid": "tests/integration/p7/test_bounded_input.py::test_malformed_primitive_shape_is_one_rejection_not_merge_abort[bad4]",
+        "previous_signature": {
+          "assertion_first_line": "AssertionError: assert 2 == 0",
+          "outcome": "failed",
+          "phase": "call",
+          "receipt_reasons": {
+            "'Context admission error: PERMISSION_DENIED'": 2
+          },
+          "trace_coordinates": [
+            [
+              "tests/integration/p7/test_bounded_input.py",
+              257
+            ]
+          ]
+        },
+        "signature": {
+          "assertion_first_line": "AssertionError: assert 2 == 0",
+          "outcome": "failed",
+          "phase": "call",
+          "receipt_reasons": {
+            "'Context admission error: PERMISSION_DENIED'": 2
+          },
+          "trace_coordinates": [
+            [
+              "tests/integration/p7/test_bounded_input.py",
+              257
+            ]
+          ]
+        }
+      },
+      {
+        "nodeid": "tests/integration/p7/test_exact_replay.py::test_empty_context_text_admission_and_replay",
+        "previous_signature": {
+          "assertion_first_line": "AssertionError: assert 0 == 1",
+          "outcome": "failed",
+          "phase": "call",
+          "receipt_reasons": {
+            "'Context admission error: PERMISSION_DENIED'": 1
+          },
+          "trace_coordinates": [
+            [
+              "tests/integration/p7/test_exact_replay.py",
+              236
+            ]
+          ]
+        },
+        "signature": {
+          "assertion_first_line": "AssertionError: assert 0 == 1",
+          "outcome": "failed",
+          "phase": "call",
+          "receipt_reasons": {
+            "'Context admission error: PERMISSION_DENIED'": 1
+          },
+          "trace_coordinates": [
+            [
+              "tests/integration/p7/test_exact_replay.py",
+              236
+            ]
+          ]
+        }
+      },
+      {
+        "nodeid": "tests/integration/p7/test_missing_required_authority.py::test_new_unreferenced_text_still_admits",
+        "previous_signature": {
+          "assertion_first_line": "AssertionError: assert 0 == 1",
+          "outcome": "failed",
+          "phase": "call",
+          "receipt_reasons": {
+            "'Context admission error: PERMISSION_DENIED'": 1
+          },
+          "trace_coordinates": [
+            [
+              "tests/integration/p7/test_missing_required_authority.py",
+              148
+            ]
+          ]
+        },
+        "signature": {
+          "assertion_first_line": "AssertionError: assert 0 == 1",
+          "outcome": "failed",
+          "phase": "call",
+          "receipt_reasons": {
+            "'Context admission error: PERMISSION_DENIED'": 1
+          },
+          "trace_coordinates": [
+            [
+              "tests/integration/p7/test_missing_required_authority.py",
+              148
+            ]
+          ]
+        }
+      }
+    ],
+    "resolved_count": 13,
+    "scope": "Separate diagnostic supplies actual caught-event stacks only. One full-run counts/outcomes remain unchanged. Initial full analysis unresolved13 is preserved.",
+    "script_sha256": "42b5931cf79be352193ff08cdae726096bf7ea25ef2802d52248e95021c07b9b",
+    "signature_comparisons": "Exact full-vs-current-diagnostic outcome/phase, first assertion line, receipt reasons and multiplicities, traceback coordinates; same prior source function trace. Raw complete messages still retained; no arbitrary-path normalization pretends equality."
+  },
+  "inherited299": {
+    "classifications": {
+      "I6-C": 242,
+      "I7-composition": 14,
+      "Transfer-stage": 43
+    },
+    "outcomes": {
+      "error": 20,
+      "failed": 279
+    },
+    "present": 299
+  },
+  "input_count": 480,
+  "new_run": {
+    "checks": {
+      "main_call_once_after_successful_setup": true,
+      "main_phase_nodes_equal_selected": true,
+      "main_setup_teardown_once": true,
+      "no_duplicate_main_phases": true,
+      "one_completed_finish": true,
+      "raw_phase_sidecar_multisets_equal": true,
+      "selected_equals_junit": true,
+      "selected_equals_starts": true,
+      "selected_unique": true,
+      "source_bindings_complete_and_unchanged": true,
+      "subtest_failure_reflected_in_junit_parent": true,
+      "subtest_types_explicit": true,
+      "subtests_have_selected_parent": true
+    },
+    "counts": {
+      "error": 20,
+      "failed": 279,
+      "passed": 5777
+    },
+    "exit_code": 1,
+    "selected": 6076,
+    "subtest_count": 57,
+    "subtest_outcomes": {
+      "passed": 57
+    }
+  },
+  "node_identity": {
+    "added_count": 102,
+    "added_outcomes": {
+      "passed": 102
+    },
+    "removed": []
+  },
+  "pr146_prior_combined_latest_NOT_ONE_RUN": {
+    "error": 20,
+    "failed": 279,
+    "passed": 5675
+  },
+  "pr146_raw_one_invocation": {
+    "error": 42,
+    "failed": 276,
+    "passed": 5656
+  },
+  "scope": "One actual Task A ordinary invocation; no supplemental outcomes combined. Prior #146 one-run and multi-run node projection are distinct comparison baselines. Not independent re-review or release acceptance.",
+  "tested_head": "f777d195bd219398a51d2a90553377f61fb39370",
+  "tested_tree": "7ccc8685e06253e2102d46369110c7150d34a587",
+  "unresolved_nodes": [],
+  "versus_pr146_prior_combined_latest": {
+    "changed_nodes": [],
+    "outcome_phase_differences": 0
+  },
+  "versus_pr146_raw": {
+    "outcome_phase_differences": 23
+  }
+}

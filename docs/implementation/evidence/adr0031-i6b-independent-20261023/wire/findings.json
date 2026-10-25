@@ -1,0 +1,52 @@
+{
+  "reviewed_head": "ef787a5ff8b13f118d6bf5107c7338f43fde56dc",
+  "findings": [
+    {
+      "id": "I6B-IR-M02",
+      "severity": "Medium",
+      "status": "open",
+      "title": "Selection normalization precedes checksum verification and accepts a digest that does not bind the received dictionary",
+      "requirements": [
+        "R03",
+        "T10",
+        "T24"
+      ],
+      "location": "src/repo_catalog/domain/exchange.py:847",
+      "related_locations": [
+        "src/repo_catalog/domain/exchange.py:465",
+        "src/repo_catalog/domain/exchange.py:334",
+        "src/repo_catalog/domain/exchange.py:687"
+      ],
+      "observed": "For all five selection set dimensions, appending a duplicate or permuting two entries changes the canonical received package dictionary hash without changing the declared digest. decode_package accepts all thirty dict/str/bytes variants, reconstructs the normalized original selection and returns the stale digest. Conversely, supplying the actual changed dictionary digest is rejected as DIGEST_MISMATCH in the ten standalone measured probes.",
+      "cause": "decode_package constructs ExchangeSelectionScope before ExchangePackage recomputes the checksum. ExchangeSelectionScope.to_dict sorts and deduplicates set dimensions; _canonical_content hashes package.to_dict rather than the received dictionary.",
+      "impact": "The public v5 codec's checksum does not cover the entire received package dictionary excluding only digest_sha256 as required by R03. This is transport integrity/canonicality failure, not sender authentication or an established admission/authorization bypass.",
+      "attribution": "Independently reproduced in #149 v4 and #151 v5 with actual imports bound to separate archived trees. The mechanism is inherited; its persistence violates the newly frozen v5 R03 contract. No production regression claim is made for #151 relative to #149.",
+      "evidence": [
+        "test_digest_contract.py.txt",
+        "digest-execution.log",
+        "digest-junit.xml",
+        "digest-journal.jsonl",
+        "digest-vectors/",
+        "contract-current.json",
+        "contract-base149.json",
+        "RECEIPTS.json"
+      ],
+      "acceptance_criteria": [
+        "Verify SHA-256 over the actual bounded received dictionary excluding only digest_sha256 before converting selection into a normalizing domain type, or reject noncanonical set arrays before accepting the envelope without silently repairing them.",
+        "Refuse every independently saved stale-digest duplicate/permutation vector across dict/str/bytes carriers, while valid canonical-selection packages continue to roundtrip.",
+        "Exercise the unchanged independent required-refusal probes on source and both newly built installed distributions; preserve exact node/phase/process evidence.",
+        "Retain the distinction between canonical-data integrity, unauthenticated Provider claims and current admission authority; leave both Transfer fences intact."
+      ]
+    }
+  ],
+  "informational_observations": [
+    {
+      "topic": "Core primitive validation remains a downstream semantic boundary",
+      "observation": "Eight malformed Core repository/OID primitive variants are accepted by decode_package both at #149 and #151, but all eight are refused by the actual CorePreflight/typed OID constructor boundary. The pure envelope API is expressly untrusted and no public admission bypass is inferred. This observation is not counted as a new Medium finding.",
+      "evidence": [
+        "contract-current.json",
+        "contract-base149.json"
+      ]
+    }
+  ]
+}

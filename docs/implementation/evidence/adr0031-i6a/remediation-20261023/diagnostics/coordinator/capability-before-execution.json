@@ -1,0 +1,13 @@
+{
+  "argv": [
+    ".venv/bin/python",
+    "-m",
+    "pytest",
+    "tests/unit/test_context_capability_preflight.py",
+    "-q",
+    "--junitxml=/workspace/i6a-coordinator-evidence/capability-before-receipted.xml"
+  ],
+  "exit_code": 1,
+  "wall_seconds": 0.5586256980895996,
+  "scope": "18 intended negative controls reproduce facade preflight regression; three active-authorization controls pass"
+}

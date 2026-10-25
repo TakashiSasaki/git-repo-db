@@ -1,0 +1,17 @@
+{
+  "entries": [
+    {
+      "original": "admission/raw/initial-junit.xml",
+      "transport": "admission/raw/initial-junit.xml.gz",
+      "original_bytes": 7518,
+      "original_sha256": "1998563f0a552ee3edb8cdca37ae38e34bab8d3015ff2edad370a53338a31bb2"
+    },
+    {
+      "original": "admission/raw/initial-test.log",
+      "transport": "admission/raw/initial-test.log.gz",
+      "original_bytes": 6004,
+      "original_sha256": "5495e3f21bd72677ce84e893f9bbacc47ded8588850e99a756ab6607b694cf05"
+    }
+  ],
+  "index_semantics": "ARTIFACTS.json is the original uncompressed payload index; restore these two gzip files to verify it. Raw output whitespace is preserved losslessly."
+}

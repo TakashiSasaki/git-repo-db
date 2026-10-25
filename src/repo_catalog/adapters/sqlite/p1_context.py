@@ -10,7 +10,13 @@ import hashlib
 import json
 import sqlite3
 from collections.abc import Callable, Iterable
+from functools import wraps
 
+from repo_catalog.adapters.sqlite.context_admission import (
+    AdmissionTransactions,
+    admission_checked,
+)
+from repo_catalog.domain.context_admission import AdmissionRefused, dependencies
 from repo_catalog.domain.p1_context import (
     RELATION_KINDS,
     TRANSFER_RELATION_KINDS,
@@ -22,6 +28,7 @@ from repo_catalog.domain.p1_context import (
     FieldClock,
     MappingClaimKey,
     MappingDisposition,
+    MappingDispositionKey,
     MappingOperationEvidence,
     QualifiedMappingEvaluation,
     QualifiedProviderRepositoryRole,
@@ -32,6 +39,8 @@ from repo_catalog.domain.p1_context import (
     ResourceRepositoryRelation,
     SupportStatus,
     TransferEventReport,
+    _is_uuid4_str,
+    _parse_canonical_json,
     canonical,
     evaluate_repository_mapping,
     p1_mapping_clock,
@@ -42,10 +51,36 @@ from repo_catalog.domain.p1_context import (
     validate_relation_resource_kind,
 )
 from repo_catalog.domain.p1_coverage import derive_coverage_state
+from repo_catalog.domain.parent_report import validate_parent_report
+from repo_catalog.domain.resource_identification import (
+    ResourceIdentification,
+    identification_sql,
+    identity_sql,
+    require_identification,
+)
+from repo_catalog.domain.resource_stage import (
+    UnsupportedResourceStage,
+    has_transfer_fence,
+    refuse_transfer,
+    validate_stage_storage,
+)
+from repo_catalog.domain.time import validate_observation_us
 
 
 def register_functions(db: sqlite3.Connection) -> None:
     from repo_catalog.domain.context_registration import registration_json
+    from repo_catalog.domain.parent_report import parent_report_sql
+    from repo_catalog.domain.transfer_sql import endpoint_sql, event_sql, value_sql
+
+    db.create_function("p1_transfer_event_v1", 7, event_sql, deterministic=True)
+    db.create_function("p1_transfer_value_v1", 2, value_sql, deterministic=True)
+    db.create_function("p1_transfer_endpoint_v1", 4, endpoint_sql, deterministic=True)
+    db.create_function("p1_parent_report_v1", 7, parent_report_sql, deterministic=True)
+
+    db.create_function("p1_resource_identity_v1", 1, identity_sql, deterministic=True)
+    db.create_function(
+        "p1_resource_identification_v1", 6, identification_sql, deterministic=True
+    )
 
     def registration(kind, encoded):
         try:
@@ -68,11 +103,36 @@ def register_functions(db: sqlite3.Connection) -> None:
     )
 
 
-class ContextStore:
-    def __init__(self, connection: sqlite3.Connection):
-        self.db = connection
+def _stage_checked(cls):
+    for name, method in tuple(vars(cls).items()):
+        if name.startswith("_") or not callable(method):
+            continue
 
-    def resource(self, key: ResourceKey, repository_uuidv4: str | None = None) -> None:
+        def checked(operation):
+            @wraps(operation)
+            def call(self, *args, **kwargs):
+                validate_stage_storage(self.db)
+                return operation(self, *args, **kwargs)
+
+            return call
+
+        setattr(cls, name, admission_checked(checked(method)))
+    return cls
+
+
+@_stage_checked
+class ContextStore(AdmissionTransactions):
+    def __init__(self, connection: sqlite3.Connection, *, authorization=None):
+        self.db = connection
+        self._init_admission(authorization)
+
+    def resource(
+        self,
+        key: ResourceKey,
+        repository_uuidv4: str | None = None,
+        *,
+        identification: ResourceIdentification | None = None,
+    ) -> None:
         """Admit nominal identity, independently of current repository evidence.
 
         The optional repository is a validated caller registration precondition;
@@ -80,6 +140,7 @@ class ContextStore:
         """
         if not isinstance(key, ResourceKey):
             raise ValueError("ResourceKey required")
+        declaration = require_identification(key, identification)
         if (
             repository_uuidv4 is not None
             and not self.db.execute(
@@ -88,22 +149,22 @@ class ContextStore:
             ).fetchone()
         ):
             raise ValueError("Repository registration absent")
-        prior = self.db.execute(
-            "SELECT 1 FROM resources WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=?",
+        self.db.execute(
+            """INSERT INTO resources(service_instance_uuidv4,resource_kind,provider_resource_id,
+            identifier_namespace_kind,identifier_namespace_id,document_kind,provider_document_id)
+            VALUES(?,?,?,?,?,?,?) ON CONFLICT DO NOTHING""",
+            (*key.coordinates(), *declaration.columns),
+        )
+
+    def identification(self, key: ResourceKey) -> ResourceIdentification:
+        row = self.db.execute(
+            "SELECT identifier_namespace_kind,identifier_namespace_id,document_kind,provider_document_id "
+            "FROM resources WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=?",
             key.coordinates(),
         ).fetchone()
-        if prior:
-            return
-        parent = (None, None, None, None)
-        if key.resource_kind in {"review", "comment", "thread", "document"}:
-            parent = tuple(json.loads(key.provider_resource_id))
-            if len(parent) != 4 or any(
-                not isinstance(value, str) or not value for value in parent
-            ):
-                raise ValueError("Full genuine parent/document coordinates required")
-        self.db.execute(
-            "INSERT INTO resources VALUES(?,?,?,?,?,?,?)", (*key.coordinates(), *parent)
-        )
+        if row is None:
+            raise ValueError("Resource registration absent")
+        return ResourceIdentification.from_storage(key, row)
 
     def admit_repository_relation(
         self,
@@ -120,6 +181,7 @@ class ContextStore:
         """
         if not isinstance(relation, ResourceRepositoryRelation):
             raise ValueError("ResourceRepositoryRelation required")
+        refuse_transfer(relation.relation_kind)
         if relation.relation_kind in TRANSFER_RELATION_KINDS:
             raise ValueError("Transfer endpoints require admit_transfer_event()")
         return self._admit_repository_relation(
@@ -130,6 +192,7 @@ class ContextStore:
         self, relation: ResourceRepositoryRelation, *, require_support: bool = False
     ) -> str:
         """Insert a validated row; Transfer callers must validate the whole report first."""
+        refuse_transfer(relation.relation_kind)
         self.db.execute("SAVEPOINT p1_repository_relation")
         try:
             coords = relation.claim_key.coordinates()
@@ -197,6 +260,7 @@ class ContextStore:
         """Typed admission outcome wrapper distinguishing missing support dependency."""
         if not isinstance(relation, ResourceRepositoryRelation):
             raise ValueError("ResourceRepositoryRelation required")
+        refuse_transfer(relation.relation_kind)
         if relation.relation_kind in TRANSFER_RELATION_KINDS:
             raise ValueError("Transfer endpoints require admit_transfer_event()")
         support = relation.embedded_support
@@ -274,108 +338,330 @@ class ContextStore:
             raise
 
     def admit_transfer_event(self, report: TransferEventReport) -> str:
-        """Admit one complete TransferEventReport unit atomically."""
+        """Admit one complete TransferEventReport unit atomically.
+
+        Enforces I5 semantic, policy, and dependency requirements before writing.
+        """
+        if has_transfer_fence(self.db):
+            raise UnsupportedResourceStage("admit_transfer_event")
+
+        # 1. Strict pre-bind type validation
         if not isinstance(report, TransferEventReport):
             raise ValueError("TransferEventReport required")
-        if report.has_selection_omission:
+        if not isinstance(report.report_key, EventReportKey):
+            raise ValueError("EventReportKey required")
+
+        # Strict checks on observed_at_us (reject bool, float, str, negative, zero)
+        if report.observed_at_us is not None:
+            if (
+                type(report.observed_at_us) is not int
+                or type(report.observed_at_us) is bool
+            ):
+                raise ValueError(
+                    "observed_at_us must be an integer, not bool or other type"
+                )
+            validate_observation_us(report.observed_at_us)
+
+        # Strict checks on clock
+        if not isinstance(report.clock, FieldClock):
+            raise ValueError("FieldClock required")
+        if (
+            type(report.clock.at_us) is not int
+            or type(report.clock.at_us) is bool
+            or report.clock.at_us <= 0
+        ):
+            raise ValueError("clock.at_us must be positive integer")
+        if type(report.clock.domain) is not str or not report.clock.domain:
+            raise ValueError("clock.domain must be nonempty string")
+
+        # 2. Selection and permission
+        if report.selection_truncated:
+            raise ValueError("Selection truncated Transfer reports cannot be admitted")
+        if report.omitted_roles:
+            raise ValueError("Omitted roles Transfer reports cannot be admitted")
+
+        # 3. Provider Event meaning & native contract
+        if report.event_type != "transferred":
             raise ValueError(
-                "Selection-truncated TransferEventReport cannot be admitted as complete"
+                f"Transfer admission requires event_type='transferred', got {report.event_type!r}"
             )
+        event_res = report.event_resource
+        if event_res.resource_kind != "comment":
+            raise ValueError(
+                f"Transfer event resource_kind must be 'comment', got {event_res.resource_kind!r}"
+            )
+
+        # G3=A check: reported parent Issue must match event's native Issue
+        reported_issue = report.parent_issue
+        native_issue = report.issue_resource
+        if reported_issue != native_issue:
+            raise AdmissionRefused("QS10_PARENT_INELIGIBLE")
+
+        # Parent report contract validation
+        validate_parent_report(
+            *event_res.coordinates(),
+            report.parent_members_json,
+            report.parent_provenance_json,
+            report.parent_scope_json,
+            report.parent_report.observed_at_us,
+        )
+
+        # Endpoints completeness check
+        declared_endpoints = set(report.endpoints)
+        relation_endpoints = {
+            (r.relation_kind, r.target_json)
+            for r in (*report.from_relations, *report.to_relations)
+        }
+        if declared_endpoints != relation_endpoints:
+            raise ValueError(
+                "Declared endpoints in scope do not match supplied endpoint relations"
+            )
+
+        # Endpoint relation pre-bind strict type and coordinate checks
+        for r in (*report.from_relations, *report.to_relations):
+            if not isinstance(r, ResourceRepositoryRelation):
+                raise ValueError("Endpoint relation must be ResourceRepositoryRelation")
+            if r.resource != event_res:
+                raise ValueError("Endpoint relation resource must match event_resource")
+            if r.clock != report.clock:
+                raise ValueError("Endpoint relation clock must match event clock")
+            if r.provenance_json != report.provenance_json:
+                raise ValueError(
+                    "Endpoint relation provenance_json must match event provenance_json"
+                )
+            if r.observed_at_us != report.observed_at_us:
+                raise ValueError(
+                    "Endpoint relation observed_at_us must match event observed_at_us"
+                )
+            if (
+                r.event_report_members_json is not None
+                and r.event_report_members_json != report.members_json
+            ):
+                raise ValueError("Endpoint event_report_members_json mismatch")
+            if (
+                r.event_report_scope_json is not None
+                and r.event_report_scope_json != report.scope_json
+            ):
+                raise ValueError("Endpoint event_report_scope_json mismatch")
+
+        # 4. Dependency checks (distinguishing missing dependency from permanent violation)
+        ev_exists = self.db.execute(
+            "SELECT 1 FROM resources WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=?",
+            event_res.coordinates(),
+        ).fetchone()
+        if ev_exists is None:
+            raise AdmissionRefused("MISSING_DEPENDENCY")
+
+        issue_exists = self.db.execute(
+            "SELECT 1 FROM resources WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=?",
+            native_issue.coordinates(),
+        ).fetchone()
+        if issue_exists is None:
+            raise AdmissionRefused("MISSING_DEPENDENCY")
+
+        parent_exists = self.db.execute(
+            """SELECT observed_at_us FROM resource_relations
+            WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=?
+              AND relation_kind='parent' AND members_json=? AND provenance_json=? AND scope_json=?""",
+            (
+                *event_res.coordinates(),
+                report.parent_members_json,
+                report.parent_provenance_json,
+                report.parent_scope_json,
+            ),
+        ).fetchone()
+        if parent_exists is None:
+            raise AdmissionRefused("MISSING_DEPENDENCY")
+
+        if parent_exists[0] != report.parent_report.observed_at_us:
+            raise AdmissionRefused("IMMUTABLE_REPLAY_CONFLICT")
+
+        if report.from_provider_repository is not None:
+            from_repo_exists = self.db.execute(
+                "SELECT 1 FROM resources WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=?",
+                report.from_provider_repository.coordinates(),
+            ).fetchone()
+            if from_repo_exists is None:
+                raise AdmissionRefused("MISSING_DEPENDENCY")
+
+        if report.to_provider_repository is not None:
+            to_repo_exists = self.db.execute(
+                "SELECT 1 FROM resources WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=?",
+                report.to_provider_repository.coordinates(),
+            ).fetchone()
+            if to_repo_exists is None:
+                raise AdmissionRefused("MISSING_DEPENDENCY")
+
+        for r in (*report.from_relations, *report.to_relations):
+            if r.is_resolved_target and r.target_repository_uuidv4 is not None:
+                repo_ctx_exists = self.db.execute(
+                    "SELECT 1 FROM repository_context WHERE repository_uuidv4=?",
+                    (r.target_repository_uuidv4,),
+                ).fetchone()
+                if repo_ctx_exists is None:
+                    raise AdmissionRefused("MISSING_DEPENDENCY")
+            support = r.embedded_support
+            if support is not None:
+                for claim in support.supporting_claims:
+                    claim_exists = self.db.execute(
+                        """SELECT 1 FROM resource_repository_relations
+                        WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=?
+                          AND relation_kind=? AND clock_json=? AND target_json=? AND provenance_json=?""",
+                        claim.coordinates(),
+                    ).fetchone()
+                    if claim_exists is None:
+                        raise AdmissionRefused("MISSING_DEPENDENCY")
+
+        self._validate_transfer_qualification(report)
+
+        # 5. Atomic admission under SAVEPOINT
         self.db.execute("SAVEPOINT p1_transfer_event")
         try:
-            issue_parent = report.issue_resource
-            if not self.db.execute(
-                "SELECT 1 FROM resources WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=?",
-                issue_parent.coordinates(),
-            ).fetchone():
-                raise ValueError(
-                    "Parent issue resource must be admitted before transfer event"
-                )
-            self.resource(report.event_resource, None)
-            members: list[list[str]] = []
-            for prov_repo in (
-                report.from_provider_repository,
-                report.to_provider_repository,
-            ):
-                if prov_repo is not None:
-                    self.resource(prov_repo, None)
-                    coord = list(prov_repo.coordinates())
-                    if coord not in members:
-                        members.append(coord)
-
-            # Check existing endpoint rows for this exact EventReportKey
-            existing_rows = self.db.execute(
-                """SELECT relation_kind,target_json,observed_at_us
-                FROM resource_repository_relations
+            existing_report = self.db.execute(
+                """SELECT members_json, scope_json, observed_at_us FROM resource_relations
                 WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=?
-                  AND clock_json=? AND provenance_json=?
-                  AND relation_kind IN('transfer_from_repository','transfer_to_repository')""",
-                report.report_key.coordinates(),
-            ).fetchall()
-            incoming_endpoints = (*report.from_relations, *report.to_relations)
-            incoming_set = {
-                (rel.relation_kind, rel.target_json) for rel in incoming_endpoints
-            }
-            if existing_rows:
-                for _, _, obs_us in existing_rows:
-                    if obs_us != report.observed_at_us:
-                        raise ValueError(
-                            "Transfer event report observation time changed during replay"
-                        )
-                existing_set = {(row[0], row[1]) for row in existing_rows}
-                if existing_set != incoming_set:
-                    raise ValueError(
-                        "Transfer event report endpoints changed during replay"
-                    )
-
-            scope_payload = report.scope_json
-            members_json = report.members_json
-            existing_scopes = self.db.execute(
-                """SELECT members_json,scope_json,observed_at_us FROM resource_relations
-                WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=?
-                  AND relation_kind='transfer_event_report' AND provenance_json=?""",
+                  AND relation_kind='transfer_event_report'
+                  AND report_clock_json=? AND provenance_json=?""",
                 (
-                    *report.event_resource.coordinates(),
+                    *event_res.coordinates(),
+                    report.clock.encode(),
                     report.provenance_json,
                 ),
-            ).fetchall()
-            matched_scope = False
-            for m_json, s_json, obs_us in existing_scopes:
-                parsed_s = json.loads(s_json)
-                if canonical(parsed_s.get("clock")) == report.clock.encode():
-                    if (
-                        m_json != members_json
-                        or s_json != scope_payload
-                        or obs_us != report.observed_at_us
-                    ):
-                        raise ValueError(
-                            "Transfer event report scope or observation time changed during replay"
-                        )
-                    matched_scope = True
-            if not matched_scope:
-                self.db.execute(
-                    "INSERT INTO resource_relations VALUES(?,?,?,?,?,?,?,?)",
+            ).fetchone()
+
+            if existing_report is not None:
+                if (
+                    existing_report[0] != report.members_json
+                    or existing_report[1] != report.scope_json
+                    or existing_report[2] != report.observed_at_us
+                ):
+                    raise AdmissionRefused("IMMUTABLE_REPLAY_CONFLICT")
+
+                existing_ep_count = self.db.execute(
+                    """SELECT COUNT(*) FROM resource_repository_relations
+                    WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=?
+                      AND clock_json=? AND provenance_json=?
+                      AND relation_kind IN ('transfer_from_repository', 'transfer_to_repository')
+                      AND event_report_members_json=? AND event_report_scope_json=?""",
                     (
-                        *report.event_resource.coordinates(),
-                        "transfer_event_report",
-                        members_json,
+                        *event_res.coordinates(),
+                        report.clock.encode(),
                         report.provenance_json,
-                        scope_payload,
-                        report.observed_at_us,
+                        report.members_json,
+                        report.scope_json,
+                    ),
+                ).fetchone()[0]
+
+                if existing_ep_count == len(report.endpoints):
+                    self.db.execute("RELEASE p1_transfer_event")
+                    return "duplicate"
+                else:
+                    raise ValueError(
+                        "Incomplete endpoints for existing Transfer report"
+                    )
+
+            self.db.execute(
+                """INSERT INTO resource_relations(
+                    service_instance_uuidv4, resource_kind, provider_resource_id,
+                    relation_kind, members_json, provenance_json, scope_json, observed_at_us
+                ) VALUES (?, ?, ?, 'transfer_event_report', ?, ?, ?, ?)""",
+                (
+                    *event_res.coordinates(),
+                    report.members_json,
+                    report.provenance_json,
+                    report.scope_json,
+                    report.observed_at_us,
+                ),
+            )
+
+            for r in (*report.from_relations, *report.to_relations):
+                self.db.execute(
+                    """INSERT INTO resource_repository_relations(
+                        service_instance_uuidv4, resource_kind, provider_resource_id,
+                        relation_kind, target_json, clock_json, provenance_json,
+                        observed_at_us, event_report_members_json, event_report_scope_json
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    (
+                        *event_res.coordinates(),
+                        r.relation_kind,
+                        r.target_json,
+                        r.clock.encode(),
+                        r.provenance_json,
+                        r.observed_at_us,
+                        report.members_json,
+                        report.scope_json,
                     ),
                 )
 
-            outcomes = [
-                self._admit_repository_relation(rel) for rel in incoming_endpoints
-            ]
             self.db.execute("RELEASE p1_transfer_event")
-            if matched_scope and all(o == "duplicate" for o in outcomes):
-                return "duplicate"
             return "insert"
         except BaseException:
             self.db.execute("ROLLBACK TO p1_transfer_event")
             self.db.execute("RELEASE p1_transfer_event")
             raise
+
+    def _validate_transfer_qualification(self, report):
+        for relation in (*report.from_relations, *report.to_relations):
+            if not relation.is_resolved_target:
+                continue
+            support = relation.embedded_support
+            provider = (
+                report.from_provider_repository
+                if relation.relation_kind == "transfer_from_repository"
+                else report.to_provider_repository
+            )
+            if support is None or support.provider_repository != provider:
+                raise AdmissionRefused("UNQUALIFIED_MAPPING")
+            # Discover only keys under an already authorized Resource. New claim
+            # or Disposition keys are checked before their payload is interpreted.
+            rows = self._bounded_admission_rows(
+                "SELECT clock_json,target_json,provenance_json FROM resource_repository_relations "
+                "WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=? "
+                "AND relation_kind='represents_repository'",
+                provider.coordinates(),
+            )
+            claims = tuple(
+                MappingClaimKey(
+                    provider,
+                    clock=FieldClock.from_json(row[0]),
+                    target_json=row[1],
+                    provenance_json=row[2],
+                )
+                for row in rows
+            )
+            required = dependencies(claims)
+            self._authorize_dependencies(required)
+            disposition_rows = self._bounded_admission_rows(
+                "SELECT claim_clock_json,claim_target_json,claim_provenance_json,"
+                "disposition_kind,disposition_clock_json,disposition_provenance_json "
+                "FROM repository_mapping_dispositions WHERE service_instance_uuidv4=? "
+                "AND resource_kind=? AND provider_resource_id=?",
+                provider.coordinates(),
+            )
+            disposition_keys = tuple(
+                MappingDispositionKey(
+                    MappingClaimKey(
+                        provider,
+                        clock=FieldClock.from_json(row[0]),
+                        target_json=row[1],
+                        provenance_json=row[2],
+                    ),
+                    row[3],
+                    FieldClock.from_json(row[4]),
+                    row[5],
+                )
+                for row in disposition_rows
+            )
+            self._authorize_dependencies(dependencies(disposition_keys))
+            dispositions = self.mapping_dispositions(provider)
+            self._authorize_dependencies(dependencies(dispositions))
+            qualified = self._qualify_relation(relation)
+            if (
+                qualified.support_status != "active"
+                or set(qualified.supporting_bindings) != set(support.supporting_claims)
+                or qualified.disposed_supporting_bindings
+            ):
+                raise AdmissionRefused("UNQUALIFIED_MAPPING")
 
     def _raw_relations_from_rows(
         self, rows: Iterable[tuple]
@@ -388,6 +674,8 @@ class ContextStore:
                 target_json=row[5],
                 provenance_json=row[6],
                 observed_at_us=row[7],
+                event_report_members_json=row[8] if len(row) > 8 else None,
+                event_report_scope_json=row[9] if len(row) > 9 else None,
             )
             for row in rows
         )
@@ -622,6 +910,7 @@ class ContextStore:
         *,
         evidence: MappingOperationEvidence | None = None,
     ) -> tuple[ResolvedRepositoryRelation, ...]:
+        refuse_transfer(relation_kind)
         if not isinstance(resource, ResourceKey):
             raise ValueError("ResourceKey required")
         if relation_kind is not None and relation_kind not in RELATION_KINDS:
@@ -645,6 +934,7 @@ class ContextStore:
         *,
         evidence: MappingOperationEvidence | None = None,
     ) -> tuple[ResolvedRepositoryRelation, ...]:
+        refuse_transfer(relation_kind)
         if relation_kind is not None and relation_kind not in RELATION_KINDS:
             raise ValueError(f"Unknown relation_kind: {relation_kind!r}")
         rows = self.db.execute(
@@ -667,6 +957,7 @@ class ContextStore:
         *,
         evidence: MappingOperationEvidence | None = None,
     ) -> tuple[ResolvedRepositoryRelation, ...]:
+        refuse_transfer(relation_kind)
         if relation_kind is not None and relation_kind not in RELATION_KINDS:
             raise ValueError(f"Unknown relation_kind: {relation_kind!r}")
         prov_key = ResourceKey(
@@ -743,132 +1034,119 @@ class ContextStore:
 
         Never cross-pairs endpoints from different EventReportKeys.
         """
-        event_filter: tuple[str, str] | None = None
-        issue_filter: ResourceKey | None = None
         if resource is not None:
             if not isinstance(resource, ResourceKey):
-                raise ValueError("resource must be a ResourceKey or None")
-            if resource.resource_kind == "comment":
-                validate_relation_resource_kind(
-                    "transfer_from_repository",
-                    resource.resource_kind,
-                    resource.provider_resource_id,
-                )
-                event_filter = (
-                    resource.service_instance_uuidv4,
-                    resource.provider_resource_id,
-                )
-            elif resource.resource_kind == "issue":
-                issue_filter = resource
-            else:
-                raise ValueError(
-                    "transfer_event_reports resource filter must be an issue or timeline_event comment ResourceKey"
-                )
+                raise ValueError("resource must be a ResourceKey")
+            validate_relation_resource_kind(
+                "transfer_from_repository",
+                resource.resource_kind,
+                resource.provider_resource_id,
+            )
 
-        selected_set: tuple[str, ...] | None = None
+        if has_transfer_fence(self.db):
+            raise UnsupportedResourceStage("transfer_event_reports")
+
+        if repository_uuidv4 is not None and not _is_uuid4_str(repository_uuidv4):
+            raise ValueError(f"Invalid repository_uuidv4: {repository_uuidv4!r}")
+
+        selected_set: set[str] | None = None
         if selected_repositories is not None:
-            selected_set = tuple(selected_repositories)
+            selected_set = set(selected_repositories)
+            for r_id in selected_set:
+                if not _is_uuid4_str(r_id):
+                    raise ValueError(f"Invalid selected repository_uuidv4: {r_id!r}")
 
-        rows = self.db.execute(
-            """SELECT service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,
-                      clock_json,target_json,provenance_json,observed_at_us
-            FROM resource_repository_relations
-            WHERE relation_kind IN('transfer_from_repository','transfer_to_repository')
-            ORDER BY service_instance_uuidv4,provider_resource_id,clock_json,provenance_json,
-                     relation_kind,target_json"""
-        ).fetchall()
-        raw_rels = self._raw_relations_from_rows(rows)
+        sql = """SELECT service_instance_uuidv4, resource_kind, provider_resource_id,
+                        members_json, provenance_json, scope_json, observed_at_us
+                 FROM resource_relations
+                 WHERE relation_kind='transfer_event_report'"""
+        params: list[object] = []
+        if resource is not None:
+            sql += " AND service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=?"
+            params.extend(resource.coordinates())
+        sql += " ORDER BY service_instance_uuidv4, resource_kind, provider_resource_id, report_clock_json, provenance_json"
 
-        # Group by EventReportKey coordinates: (service, resource_kind, provider_id, clock_json, provenance_json)
-        grouped: dict[
-            tuple[str, str, str, str, str], list[ResourceRepositoryRelation]
-        ] = {}
-        for rel in raw_rels:
-            key_coord = (
-                rel.resource.service_instance_uuidv4,
-                rel.resource.resource_kind,
-                rel.resource.provider_resource_id,
-                rel.clock_json,
-                rel.provenance_json,
-            )
-            grouped.setdefault(key_coord, []).append(rel)
-
-        # Also inspect transfer_event_report scopes in resource_relations (including unresolved-only reports)
-        scope_rows = self.db.execute(
-            """SELECT service_instance_uuidv4,resource_kind,provider_resource_id,
-                      members_json,provenance_json,scope_json,observed_at_us
-            FROM resource_relations
-            WHERE relation_kind='transfer_event_report'
-            ORDER BY service_instance_uuidv4,provider_resource_id,provenance_json,scope_json"""
-        ).fetchall()
-        scope_meta: dict[
-            tuple[str, str, str, str, str], tuple[str, str, int | None]
-        ] = {}
-        for s_row in scope_rows:
-            parsed_scope = json.loads(s_row[5])
-            if not isinstance(parsed_scope, dict) or "clock" not in parsed_scope:
-                raise ValueError("Invalid stored Transfer report scope: missing clock")
-            clock_json = canonical(parsed_scope["clock"])
-            key_coord = (s_row[0], s_row[1], s_row[2], clock_json, s_row[4])
-            metadata = (s_row[5], s_row[3], s_row[6])
-            if key_coord in scope_meta and scope_meta[key_coord] != metadata:
-                raise ValueError(
-                    "Conflicting stored transfer_event_report scope for same EventReportKey"
-                )
-            scope_meta[key_coord] = metadata
-            grouped.setdefault(key_coord, [])
-
+        report_rows = self.db.execute(sql, params).fetchall()
         reports: list[TransferEventReport] = []
-        for key_coord in sorted(grouped.keys()):
-            svc, r_kind, p_id, clk_json, prov_json = key_coord
-            if event_filter is not None and (svc, p_id) != event_filter:
-                continue
-            ev_res = ResourceKey(svc, r_kind, p_id)
-            rep_key = EventReportKey(
-                event_resource=ev_res,
-                clock=FieldClock.from_json(clk_json),
-                provenance_json=prov_json,
+
+        for row in report_rows:
+            ev_key = ResourceKey(row[0], row[1], row[2])
+            members_json = row[3]
+            provenance_json = row[4]
+            scope_json = row[5]
+            observed_at_us = row[6]
+
+            parsed_scope = _parse_canonical_json(scope_json)
+            clock = FieldClock.from_json(canonical(parsed_scope["clock"]))
+            report_key = EventReportKey(
+                event_resource=ev_key,
+                clock=clock,
+                provenance_json=provenance_json,
             )
-            if issue_filter is not None and rep_key.issue_parent != issue_filter:
-                continue
-            rels = grouped[key_coord]
-            if key_coord not in scope_meta:
-                raise ValueError(
-                    "Stored Transfer endpoint requires transfer_event_report scope"
-                )
-            scope_json, members_json, obs_us = scope_meta[key_coord]
+
+            ep_rows = self.db.execute(
+                """SELECT service_instance_uuidv4, resource_kind, provider_resource_id,
+                          relation_kind, clock_json, target_json, provenance_json,
+                          observed_at_us, event_report_members_json, event_report_scope_json
+                   FROM resource_repository_relations
+                   WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=?
+                     AND clock_json=? AND provenance_json=?
+                     AND relation_kind IN ('transfer_from_repository', 'transfer_to_repository')
+                     AND event_report_members_json=? AND event_report_scope_json=?
+                   ORDER BY relation_kind, target_json""",
+                (
+                    *ev_key.coordinates(),
+                    clock.encode(),
+                    provenance_json,
+                    members_json,
+                    scope_json,
+                ),
+            ).fetchall()
+
+            relations = self._raw_relations_from_rows(ep_rows)
+            from repo_catalog.domain.parent_report import (
+                ParentObservation,
+                ParentReportKey,
+            )
+
+            parent_key = ParentReportKey(
+                ev_key,
+                parsed_scope["parent_members_json"],
+                parsed_scope["parent_provenance_json"],
+                parsed_scope["parent_scope_json"],
+            )
+            parent_row = self.db.execute(
+                "SELECT observed_at_us FROM resource_relations WHERE "
+                "service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=? "
+                "AND relation_kind=? AND members_json=? AND provenance_json=? AND scope_json=?",
+                parent_key.coordinates(),
+            ).fetchone()
+            if parent_row is None:
+                raise AdmissionRefused("MISSING_DEPENDENCY")
             report = TransferEventReport.from_stored_scope(
-                rep_key, rels, scope_json, members_json, obs_us
+                parent_report=ParentObservation(parent_key, parent_row[0]),
+                report_key=report_key,
+                relations=relations,
+                scope_json=scope_json,
+                members_json=members_json,
+                observed_at_us=observed_at_us,
             )
-            from_rels, to_rels = report.from_relations, report.to_relations
-            for provider in (
-                report.from_provider_repository,
-                report.to_provider_repository,
-            ):
-                if (
-                    provider is not None
-                    and not self.db.execute(
-                        "SELECT 1 FROM resources WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=?",
-                        provider.coordinates(),
-                    ).fetchone()
-                ):
-                    raise ValueError(
-                        "Stored Transfer Provider endpoint resource is missing"
-                    )
+
             if repository_uuidv4 is not None:
-                all_targets = {
-                    r.target_repository_uuidv4
-                    for r in (*from_rels, *to_rels)
-                    if r.target_repository_uuidv4 is not None
-                }
-                if repository_uuidv4 not in all_targets:
+                has_repo = any(
+                    r.target_repository_uuidv4 == repository_uuidv4 for r in relations
+                )
+                if not has_repo:
                     continue
+
             if selected_set is not None:
                 selected_report = report.select_for_repositories(selected_set)
                 if selected_report is None:
                     continue
-                report = selected_report
-            reports.append(report)
+                reports.append(selected_report)
+            else:
+                reports.append(report)
+
         return tuple(reports)
 
     def text(self, text_value: str) -> str:

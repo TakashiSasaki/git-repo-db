@@ -1,0 +1,12 @@
+{
+  "source_before_fix": "cc6e611d366230438f2c25e4040156c90cf4897f plus new priority tests untracked",
+  "final_source_commit": "770e42d4828238cc0001c96663d078605ac44841",
+  "root_supplied": "Valid pre-fix counterexample2FAIL4PASS. Earlier6FAIL failed during fixture construction due stale endpoint reportrefs; corrected fixture resets fresh references for genuine typed candidates. Final583 focused pass42.00s. Exact pre-run manifests not independently captured; supporting root-provided provenance/end-bind only. Final-v3 clean full run supplies independent execution input binding.",
+  "focused_extra_first_target": "tests/unit/test_context_refusal_order_i6a.py",
+  "focused_base_command": "../corrected-focused/binding.json",
+  "focused_output_paths": [
+    "/workspace/i6a-priority-focused.log",
+    "/workspace/i6a-priority-focused.xml",
+    "/workspace/i6a-priority-focused.jsonl"
+  ]
+}

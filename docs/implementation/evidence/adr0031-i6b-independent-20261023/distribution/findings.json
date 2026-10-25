@@ -1,0 +1,11 @@
+{
+  "scope": "Independent distribution review of ef787a5; product findings reproduced from independent wire/planner review",
+  "packaging_findings": [],
+  "reproduced_product_findings": [
+    {"id":"M01", "severity":"Medium", "contract":"R04", "summary":"Planner parses full embedded input before enforcing max_work", "nodes_per_form":3, "forms":["direct","derived"], "actual":"FAIL", "pytest_exit":1, "observed":{"max_work":[0,1,17],"work_units":26041,"parse_calls":1501,"parsed_characters":314392}},
+    {"id":"M02", "severity":"Medium", "contract":"R03", "summary":"Selection normalization precedes raw received dictionary digest verification", "nodes_per_form":30, "forms":["direct","derived"], "actual":"FAIL", "pytest_exit":1}
+  ],
+  "original_access_smoke":{"forms":["direct","derived"],"actual":"FAIL", "pytest_exit":1,"child_exit":1,"refusal":"PERMISSION_DENIED", "later_assertions":"UNEXECUTED", "trace_harness":"v2; initial interrupted direct attempt retained separately"},
+  "blockers":[],
+  "full_release_acceptance":false
+}

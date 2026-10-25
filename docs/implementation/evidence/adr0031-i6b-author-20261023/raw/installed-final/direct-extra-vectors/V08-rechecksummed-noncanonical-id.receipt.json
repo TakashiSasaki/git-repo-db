@@ -1,0 +1,9 @@
+{
+  "id": "V08-rechecksummed-noncanonical-id",
+  "bytes": 1373,
+  "sha256": "a0c2be95557262cb33c3723e3a5e94c4552e46cba08f72e7ee97269aa47a8854",
+  "digest_sha256": "45a45aae45eb17f53e8aa7b70a7334830f77d0fbed0a5dd0da8a777fe0b169b9",
+  "outcome": "reject",
+  "refusal_code": "INVALID_IDENTIFICATION",
+  "scope": "supplementary Author-team codec verification, not independent review"
+}

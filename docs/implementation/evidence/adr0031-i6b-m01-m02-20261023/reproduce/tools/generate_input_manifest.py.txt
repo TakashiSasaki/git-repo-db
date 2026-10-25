@@ -1,0 +1,21 @@
+from pathlib import Path
+import subprocess,json,hashlib,gzip
+root=Path('/workspace/git-repo-db');out=root/'docs/implementation/evidence/adr0031-i6b-m01-m02-20261023'
+base='8521158f2996f125d2fcaac36ea79ac1296a7cf7';head='fe9e48bfac750a276b2622da2c50d3d4559de338'
+def git(*args):return subprocess.check_output(['git',*args],cwd=root)
+def tree(ref):
+ result={}
+ for line in git('ls-tree','-r',ref).decode().splitlines():
+  mode,kind,rest=line.split(' ',2);blob,path=rest.split('\t',1);result[path]={'mode':mode,'type':kind,'blob':blob}
+ return result
+a,b=tree(base),tree(head);changed=[p for p in b if a.get(p)!=b[p]]
+protected=[p for p in a if p.startswith(('src/','tests/','docs/adr/','docs/implementation/evidence/','.github/')) and p not in changed]
+assert all(a[p]==b[p] for p in protected)
+with gzip.GzipFile(filename=str(out/'protected-inputs.json.gz'),mode='wb',mtime=0) as f:
+ f.write((json.dumps({'base':base,'execution_head':head,'changed':changed,'unchanged_count':len(protected),'unchanged':[{'path':p,**a[p]} for p in protected]},indent=2)+'\n').encode())
+selected=[p for p in b if p.startswith(('src/','tests/','scripts/','.github/')) or p in ('pyproject.toml','uv.lock','.python-version')]
+manifest=[]
+for path in selected:
+ raw=git('show',head+':'+path);manifest.append({'path':path,'bytes':len(raw),'sha256':hashlib.sha256(raw).hexdigest(),**b[path]})
+(out/'INPUTS.json').write_text(json.dumps({'execution_head':head,'tree':git('rev-parse',head+'^{tree}').decode().strip(),'files':manifest},indent=2)+'\n')
+print({'changed':changed,'protected_equal':len(protected),'execution_inputs':len(manifest)})

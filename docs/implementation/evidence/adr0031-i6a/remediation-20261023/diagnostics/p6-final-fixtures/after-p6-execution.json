@@ -1,0 +1,13 @@
+{
+  "argv": [
+    ".venv/bin/python",
+    "-m",
+    "pytest",
+    "tests/integration/p6",
+    "-q",
+    "--junitxml=/workspace/i6a-runs/p6-last-fixtures/after-p6.xml",
+    "--journal=/workspace/i6a-runs/p6-last-fixtures/after-p6.jsonl"
+  ],
+  "exit_code": 0,
+  "wall_seconds": 34.94048547744751
+}

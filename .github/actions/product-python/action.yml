@@ -1,0 +1,11 @@
+name: Select product-capable Python
+description: Select a checksum-bound whole Python distribution and measure its native SQLite
+runs:
+  using: composite
+  steps:
+    - name: Install manifest-selected prebuilt Python
+      shell: bash
+      run: python3 scripts/ci_python_runtime.py install "$RUNNER_TEMP/product-python"
+    - name: Record selected Python and product safety before dependencies
+      shell: bash
+      run: python scripts/ci_python_runtime.py probe artifacts/runtime/selected.json

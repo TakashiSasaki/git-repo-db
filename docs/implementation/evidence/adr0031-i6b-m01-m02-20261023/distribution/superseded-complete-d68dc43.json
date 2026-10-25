@@ -1,0 +1,10 @@
+{
+  "source_head": "d68dc43bff1eb949b071ebf1652e3d70a5a52ed9",
+  "source_tree": "e1c9748b976d5e4266962cffe37ff82c98d1414f",
+  "status": "nonfinal-complete, superseded by root-allocation guard correction",
+  "outputs": "final/",
+  "report": "REPORT-d68dc43.md",
+  "tests": "all measured d68 lanes completed; no claim they ran on later freeze",
+  "reason": "Planner root set(data) allocation before len guard identified after completion; new freeze builds and all requested lanes will run independently",
+  "raw_receipts_unchanged": true
+}

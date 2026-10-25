@@ -15,6 +15,7 @@ from contextlib import ExitStack, closing, contextmanager
 from functools import wraps
 from pathlib import Path
 
+from repo_catalog.adapters.sqlite.context_admission import admission_checked
 from repo_catalog.adapters.sqlite.p1_context import ContextStore
 from repo_catalog.adapters.sqlite.p1_coordination import (
     catalog_completion,
@@ -44,10 +45,11 @@ from repo_catalog.domain.p1_context import (
     TransferEventReport,
     canonical,
     validate_provider_repository_scope,
-    validate_timeline_event_coordinates,
+    validate_relation_resource_kind,
 )
 from repo_catalog.domain.p1_coordination import CoordinationError
 from repo_catalog.domain.p1_core import OID, uuid4_value
+from repo_catalog.domain.parent_report import validate_parent_report
 from repo_catalog.domain.production_context import (
     CollectionObservation,
     ContextError,
@@ -58,6 +60,17 @@ from repo_catalog.domain.production_context import (
     SourceInventory,
     json_value,
     validate_reported_core_reference,
+)
+from repo_catalog.domain.resource_identification import (
+    ResourceIdentification,
+    require_identification,
+)
+from repo_catalog.domain.resource_stage import (
+    UnsupportedResourceStage,
+    has_transfer_fence,
+    is_isolated_transfer_fixture,
+    refuse_transfer,
+    validate_stage_storage,
 )
 
 
@@ -134,13 +147,14 @@ def _complete_operations(cls):
         def completed(operation):
             @wraps(operation)
             def call(self, *args, **kwargs):
+                self._validate_stage()
                 result = operation(self, *args, **kwargs)
                 self._read_complete()
                 return result
 
             return call
 
-        setattr(cls, name, completed(method))
+        setattr(cls, name, admission_checked(completed(method)))
     return cls
 
 
@@ -153,14 +167,17 @@ class Context(ContextStore):
     underlying connections are trusted infrastructure, not a public SQL port.
     """
 
-    def __init__(self, connection, directory: Path, *, writable: bool = False):
+    def __init__(
+        self, connection, directory: Path, *, writable: bool = False, authorization=None
+    ):
         self.directory = Path(directory)
         super().__init__(
             _GuardedConnection(
                 connection,
                 lambda error: self._record_corruption(self.directory, error),
                 self._read_complete,
-            )
+            ),
+            authorization=authorization,
         )
         self._writable = writable
         self._active = True
@@ -169,9 +186,18 @@ class Context(ContextStore):
         if roles != [("context",)]:
             raise ContextError("STORE_ROLE", "context", "Context authority required")
         self._validate_schema()
+        self._validate_stage()
         # Validate registration authority in the pinned transaction, including
         # raw trusted-factory writes. No incoming rejected settings cause a stop.
         self._validate_registrations()
+
+    def _check_mutation_capability(self):
+        # These are local capability facts, independent of caller authority or
+        # catalog contents. Do not inspect storage or the Recovery Stop here.
+        if not self._active:
+            raise ContextError("CAPABILITY_EXPIRED", "context")
+        if not self._writable:
+            raise ContextError("READ_ONLY", "context")
 
     def _check(self, *, write: bool = False):
         if not self._active:
@@ -208,9 +234,24 @@ class Context(ContextStore):
 
     @classmethod
     @contextmanager
-    def for_transaction(cls, db, directory: Path) -> Iterator[Context]:
-        """Bind to P1 AdmissionTransaction; never end its outer transaction."""
-        capability = cls(db, directory, writable=True)
+    def for_transaction(
+        cls, db, directory: Path, *, authorization=None, admission=None
+    ) -> Iterator[Context]:
+        """Inherit an explicit coordinator binding without ending its lease scope."""
+        from repo_catalog.adapters.sqlite.p1_coordination import AdmissionTransaction
+        from repo_catalog.domain.context_admission import AdmissionRefused
+
+        if authorization is not None or admission is not None:
+            if type(db) is not AdmissionTransaction:
+                raise AdmissionRefused("PERMISSION_DENIED")
+            binding = db.context_admission_binding
+            if (
+                binding is None
+                or authorization is not binding.authorization
+                or admission is not binding.admission
+            ):
+                raise AdmissionRefused("PERMISSION_DENIED")
+        capability = cls(db, directory, writable=True, authorization=authorization)
         try:
             yield capability
             capability._read_complete()
@@ -242,7 +283,9 @@ class Context(ContextStore):
 
     @classmethod
     @contextmanager
-    def transaction(cls, directory: Path) -> Iterator[Context]:
+    def transaction(
+        cls, directory: Path, *, authorization=None, admission=None
+    ) -> Iterator[Context]:
         """Gated independent Context transaction, valid without any other store."""
         directory = Path(directory)
         with catalog_gate(directory, exclusive=True):
@@ -252,10 +295,18 @@ class Context(ContextStore):
                 with closing(connect(directory / "context.sqlite3", "context")) as db:
                     db.execute("BEGIN IMMEDIATE")
                     try:
-                        with cls.for_transaction(db, directory) as capability:
-                            yield capability
-                        with catalog_completion(directory):
-                            db.commit()
+                        capability = cls(
+                            db, directory, writable=True, authorization=authorization
+                        )
+                        try:
+                            with capability._commit_scope(admission):
+                                yield capability
+                                capability._read_complete()
+                                capability._precommit_admission()
+                                with catalog_completion(directory):
+                                    db.commit()
+                        finally:
+                            capability._active = False
                     except BaseException as error:
                         cls._record_corruption(directory, error)
                         db.rollback()
@@ -263,6 +314,46 @@ class Context(ContextStore):
             except BaseException as error:
                 cls._record_corruption(directory, error)
                 raise
+
+    @classmethod
+    @contextmanager
+    def owned_transaction(cls, db, directory: Path, *, authorization, admission):
+        """Bind a trusted connection while owning its entire commit boundary.
+
+        Normal packaged schema validation still applies. Isolated test connections
+        require the separate expiring in-memory fixture capability.
+        """
+        from repo_catalog.domain.context_admission import (
+            AdmissionRefused,
+            ContextAdmissionService,
+        )
+
+        if not isinstance(authorization, ContextAdmissionService):
+            raise AdmissionRefused("PERMISSION_DENIED")
+        authorization.validate_context(admission)
+        if db.in_transaction:
+            raise AdmissionRefused("ADMISSION_TRANSACTION_REQUIRED")
+        with catalog_gate(Path(directory), exclusive=True):
+            db.execute("BEGIN IMMEDIATE")
+            capability = None
+            try:
+                capability = cls(
+                    db, directory, writable=True, authorization=authorization
+                )
+                with capability._commit_scope(admission):
+                    yield capability
+                    capability._read_complete()
+                    capability._precommit_admission()
+                    with catalog_completion(Path(directory)):
+                        db.execute("COMMIT")
+            except BaseException as error:
+                cls._record_corruption(Path(directory), error)
+                if db.in_transaction:
+                    db.execute("ROLLBACK")
+                raise
+            finally:
+                if capability is not None:
+                    capability._active = False
 
     @classmethod
     @contextmanager
@@ -328,31 +419,52 @@ class Context(ContextStore):
         try:
             yield
             self._read_complete()
+        except UnsupportedResourceStage:
+            raise
         except (ValueError, TypeError, AttributeError) as error:
             persist_catalog_stop(self.directory, f"Invalid retained {scope}: {error}")
             raise ContextError("AUTHORITATIVE_CORRUPTION", scope) from error
 
     def _validate_schema(self):
-        rows = self.db.execute(
-            "SELECT name, sql FROM sqlite_schema WHERE type='table' AND name IN ('resource_repository_relations', 'repository_mapping_dispositions', 'field_candidates')"
-        ).fetchall()
-        tables = {name: sql for name, sql in rows}
-        if {
-            "resource_repository_relations",
-            "repository_mapping_dispositions",
-            "field_candidates",
-        } - set(tables):
-            raise ContextError(
-                "UNSUPPORTED_SCHEMA",
-                "context",
-                "Context schema predates ADR 0030 relations",
-            )
-        if "repository_uuidv4 TEXT" in (tables.get("field_candidates") or ""):
-            raise ContextError(
-                "UNSUPPORTED_SCHEMA",
-                "context",
-                "Context schema predates ADR 0030 relations",
-            )
+        from repo_catalog.adapters.sqlite.p1_coordination import (
+            AdmissionTransaction,
+            ReadSnapshot,
+        )
+        from repo_catalog.adapters.sqlite.p1_schema import (
+            SchemaError,
+            expected_schema,
+            schema_rows,
+            verify_connection,
+        )
+
+        try:
+            actual_schema = schema_rows(self.db)
+            expected = expected_schema("context")
+            if is_isolated_transfer_fixture(self.db):
+                expected = tuple(
+                    r
+                    for r in expected
+                    if not (
+                        r[0] == "trigger"
+                        and r[1]
+                        in ("i2_transfer_stage_fence", "i2_transfer_report_stage_fence")
+                    )
+                )
+            if actual_schema != expected:
+                raise SchemaError("Context differs from packaged I2 schema")
+            # Coordinator capabilities restrict PRAGMA access after their
+            # underlying connection has passed p1_schema.connect validation.
+            if not isinstance(
+                self.db._connection, (AdmissionTransaction, ReadSnapshot)
+            ):
+                verify_connection(self.db)
+        except (SchemaError, sqlite3.Error) as error:
+            raise ContextError("UNSUPPORTED_SCHEMA", "context", str(error)) from error
+
+    def _validate_stage(self):
+        self._check()
+        with self._stored("I2 staged Resource"):
+            validate_stage_storage(self.db)
 
     def _validate_registrations(self):
         for table, column, kind in (
@@ -454,24 +566,47 @@ class Context(ContextStore):
                 observation.values,
             )
 
-    def resource(self, key: ResourceKey, repository_uuidv4: str | None = None):
+    def resource(
+        self,
+        key: ResourceKey,
+        repository_uuidv4: str | None = None,
+        *,
+        identification: ResourceIdentification | None = None,
+    ):
         self._check(write=True)
-        return super().resource(key, repository_uuidv4)
+        require_identification(key, identification)
+        if self.db.execute(
+            "SELECT 1 FROM resources WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=?",
+            key.coordinates(),
+        ).fetchone():
+            self.identification(key)
+        return super().resource(key, repository_uuidv4, identification=identification)
+
+    def identification(self, key: ResourceKey) -> ResourceIdentification:
+        self._check()
+        self._require_resource(key)
+        with self._stored("Resource identification"):
+            return super().identification(key)
 
     def resources(self, *, kind: str | None = None) -> tuple[ResourceKey, ...]:
         self._check()
-        return tuple(
-            ResourceKey(*row)
-            for row in self.db.execute(
-                "SELECT service_instance_uuidv4,resource_kind,provider_resource_id FROM resources WHERE (? IS NULL OR resource_kind=?) ORDER BY service_instance_uuidv4,resource_kind,provider_resource_id",
-                (kind, kind),
+        with self._stored("Resource identification"):
+            return tuple(
+                ResourceIdentification.from_storage(
+                    ResourceKey(*row[:3]), row[3:]
+                ).resource
+                for row in self.db.execute(
+                    "SELECT service_instance_uuidv4,resource_kind,provider_resource_id,identifier_namespace_kind,identifier_namespace_id,document_kind,provider_document_id FROM resources WHERE (? IS NULL OR resource_kind=?) ORDER BY service_instance_uuidv4,resource_kind,provider_resource_id",
+                    (kind, kind),
+                )
             )
-        )
 
     def observe(self, observation: ResourceObservation) -> tuple[str, ...]:
         """Admit one modeled resource atomically, with per-field original clocks."""
         with self._unit():
-            self.resource(observation.resource)
+            self.resource(
+                observation.resource, identification=observation.identification
+            )
             return tuple(self.admit_field(field) for field in observation.fields)
 
     def inherit_fields(
@@ -480,7 +615,8 @@ class Context(ContextStore):
         """Explicit field-specific inheritance retains original evidence verbatim.
 
         No inheritance of absent fields, synthetic clock, receipt time or copied
-        raw response is introduced. The real resource relation is checked first.
+        raw response is introduced. Check the stored native identification scope;
+        this operation neither derives nor creates a semantic Parent report.
         """
         with self._unit():
             self._require_resource(parent)
@@ -488,8 +624,11 @@ class Context(ContextStore):
             if child.service_instance_uuidv4 != parent.service_instance_uuidv4:
                 raise ContextError("INHERITANCE_OWNER", "field")
             if child.resource_kind in {"review", "comment", "thread", "document"}:
-                coordinates = json.loads(child.provider_resource_id)
-                if tuple(coordinates[:2]) != parent.coordinates()[1:]:
+                declaration = self.identification(child)
+                if (
+                    declaration.identifier_namespace_kind,
+                    declaration.identifier_namespace_id,
+                ) != parent.coordinates()[1:]:
                     raise ContextError("INHERITANCE_OWNER", "field")
             else:
                 raise ContextError("INHERITANCE_OWNER", "field")
@@ -529,12 +668,29 @@ class Context(ContextStore):
             if child_kind is not None and (
                 member.resource_kind != child_kind
                 or member.service_instance_uuidv4 != owner.service_instance_uuidv4
-                or tuple(json.loads(member.provider_resource_id)[:2])
-                != owner.coordinates()[1:]
+                or self.identification(member).columns[:2] != owner.coordinates()[1:]
             ):
                 raise ContextError("MEMBER_OWNER", "relation")
 
-    def relation(self, relation: ResourceRelation) -> str:
+    def _parent_dependencies(self, relation: ResourceRelation):
+        parent, subtype = validate_parent_report(
+            *relation.resource.coordinates(),
+            relation.members_json,
+            relation.provenance_json,
+            relation.scope_json,
+            relation.observed_at_us,
+        )
+        # Identification is checked independently of semantic Parent identity.
+        if self.identification(relation.resource).document_kind != subtype:
+            raise ContextError("PARENT_SOURCE_TYPE", "relation")
+        self.identification(parent)
+
+    def relation(
+        self,
+        relation: ResourceRelation,
+    ) -> str:
+        """Admit one original report through current local admission authority."""
+        refuse_transfer(relation.relation_kind)
         with self._unit():
             if relation.relation_kind == "transfer_event_report":
                 raise ValueError("Transfer reports require admit_transfer_event()")
@@ -546,6 +702,9 @@ class Context(ContextStore):
                     relation.scope_json,
                     relation.observed_at_us,
                 )
+            self._require_resource(relation.resource)
+            if relation.relation_kind == "parent":
+                self._parent_dependencies(relation)
             self._members(relation.resource, relation.relation_kind, relation.members)
             key = (
                 *relation.resource.coordinates(),
@@ -563,7 +722,7 @@ class Context(ContextStore):
                     raise ContextError("EVIDENCE_REBIND", "relation")
                 return "duplicate"
             self.db.execute(
-                "INSERT INTO resource_relations VALUES(?,?,?,?,?,?,?,?)",
+                "INSERT INTO resource_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json,observed_at_us) VALUES(?,?,?,?,?,?,?,?)",
                 (*key, relation.observed_at_us),
             )
             return "insert"
@@ -572,6 +731,7 @@ class Context(ContextStore):
         self, resource: ResourceKey, relation_kind: str
     ) -> tuple[ResourceRelation, ...]:
         self._check()
+        refuse_transfer(relation_kind)
         with self._stored("relation"):
             values = tuple(
                 ResourceRelation(
@@ -588,6 +748,8 @@ class Context(ContextStore):
                 )
             )
             for value in values:
+                if relation_kind == "parent":
+                    self._parent_dependencies(value)
                 self._members(resource, relation_kind, value.members)
             return values
 
@@ -814,6 +976,9 @@ class Context(ContextStore):
             return super().admit_mapping_disposition(disposition)
 
     def admit_transfer_event(self, report: TransferEventReport) -> str:
+        self._check(write=True)
+        if has_transfer_fence(self.db):
+            raise UnsupportedResourceStage("admit_transfer_event")
         with self._unit():
             return super().admit_transfer_event(report)
 
@@ -954,27 +1119,30 @@ class Context(ContextStore):
     ) -> tuple[TransferEventReport, ...]:
         self._check()
         if resource is not None:
-            if not isinstance(resource, ResourceKey) or resource.resource_kind not in (
-                "issue",
-                "comment",
-            ):
-                raise ValueError(
-                    "transfer_event_reports requires an issue or comment resource"
-                )
+            if not isinstance(resource, ResourceKey):
+                raise TypeError("ResourceKey required")
             if resource.resource_kind == "comment":
-                validate_timeline_event_coordinates(resource.provider_resource_id)
+                validate_relation_resource_kind(
+                    "transfer_from_repository",
+                    resource.resource_kind,
+                    resource.provider_resource_id,
+                )
+            else:
+                raise ValueError("transfer event reports only index comment resources")
         if repository_uuidv4 is not None:
             uuid4_value(repository_uuidv4)
-        selected_tuple: tuple[str, ...] | None = None
         if selected_repositories is not None:
-            selected_tuple = tuple(selected_repositories)
-            for repo_id in selected_tuple:
-                uuid4_value(repo_id)
-        with self._stored("transfer_event"):
+            selected_repos = tuple(selected_repositories)
+            for r in selected_repos:
+                uuid4_value(r)
+            selected_repositories = selected_repos
+        if has_transfer_fence(self.db):
+            raise UnsupportedResourceStage("transfer_event_reports")
+        with self._stored("transfer_event_reports"):
             return super().transfer_event_reports(
                 resource,
                 repository_uuidv4=repository_uuidv4,
-                selected_repositories=selected_tuple,
+                selected_repositories=selected_repositories,
             )
 
     def scope(self, scope: CoverageScope):

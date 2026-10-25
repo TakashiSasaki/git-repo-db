@@ -1,0 +1,41 @@
+{
+  "scope": "Completed baseline, first-source and helper-probe compressed receipts before corrected-source execution; no product PASS inference.",
+  "directories": [
+    {
+      "directory": "baseline",
+      "files": 33,
+      "original_bytes": 44061130,
+      "gzip_bytes": 1563692,
+      "discrepancies": []
+    },
+    {
+      "directory": "distribution",
+      "files": 21,
+      "original_bytes": 3171020,
+      "gzip_bytes": 488071,
+      "discrepancies": []
+    },
+    {
+      "directory": "final",
+      "files": 22,
+      "original_bytes": 39066058,
+      "gzip_bytes": 1363737,
+      "discrepancies": []
+    },
+    {
+      "directory": "final-bootstrap-no-docs",
+      "files": 5,
+      "original_bytes": 11070085,
+      "gzip_bytes": 365246,
+      "discrepancies": []
+    },
+    {
+      "directory": "report-type-probe",
+      "files": 8,
+      "original_bytes": 10793,
+      "gzip_bytes": 2745,
+      "discrepancies": []
+    }
+  ],
+  "all_lossless": true
+}

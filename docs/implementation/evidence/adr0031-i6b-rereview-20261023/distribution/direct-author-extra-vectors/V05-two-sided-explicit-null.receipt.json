@@ -1,0 +1,9 @@
+{
+  "id": "V05-two-sided-explicit-null",
+  "bytes": 5534,
+  "sha256": "dd5e516197adc98944407e847b39c38d3df6ace0e534be28947474254de43036",
+  "digest_sha256": "e3d93401d5f7b002b3b15c9ea67835522f83906170a2b56305f9d3cedcbf3b0b",
+  "outcome": "accept",
+  "refusal_code": null,
+  "scope": "supplementary Author-team codec verification, not independent review"
+}

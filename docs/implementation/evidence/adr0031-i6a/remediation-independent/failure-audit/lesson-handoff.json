@@ -1,0 +1,9 @@
+{
+  "skill_used": ".agents/skills/ci-final-tree-verification/SKILL.md",
+  "recommended_update": "Before starting all source and installed artifact subprocesses in a filesystem-restricted environment, export a writable UV_CACHE_DIR under the task workspace and preserve it in the launcher environment; a cache variable used only during dependency setup does not propagate to later exec sessions. Probe a harmless uv command using the same child environment before the full invocation.",
+  "verified_symptom": "The independent299 diagnostic's four P5 artifact cases changed from call failures to setup errors because uv build attempted /home/agent/.cache/uv/CACHEDIR.TAG on a read-only filesystem.",
+  "verified_root_cause": "The diagnostic launcher omitted UV_CACHE_DIR although initial dependency preparation used a workspace cache.",
+  "verified_correction": "Re-execute only the four affected packaging nodes in a new output directory with UV_CACHE_DIR=/workspace/uv-cache; all four reach their original installed-product I6-C call failures, with zero setup errors. Preserve the initial275 FAIL/24 ERROR and corrected4 FAIL as separate invocations.",
+  "limits": "This repairs only cache placement. It neither changes product guards/SQLite nor turns retained product failures into PASS; any other failures need their own evidence.",
+  "scope_decision": "Recommend this skill update in the handoff because this review changes only its new evidence directory; no existing skill or reviewed source is edited."
+}

@@ -1,0 +1,21 @@
+{
+  "initial_environment": "/workspace/git-repo-db/.venv",
+  "initial_collection_exit_code": 2,
+  "reason": "Missing locked docs-group PyYAML; test_build_docs_site import yaml failed before execution. No product result inferred.",
+  "preserved": "../final-bootstrap-no-docs/",
+  "repair_command": [
+    "uv",
+    "sync",
+    "--locked",
+    "--group",
+    "dev",
+    "--group",
+    "docs",
+    "--python",
+    "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3.12",
+    "--no-managed-python"
+  ],
+  "repair_log": "final-docs-setup.log",
+  "repair_exit_code": 0,
+  "runtime": "Same selected Python and built-in SQLite retained; no source or tests edited."
+}

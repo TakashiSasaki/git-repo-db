@@ -1,0 +1,16 @@
+{
+  "selected": 212,
+  "counts": {
+    "passed": 212
+  },
+  "subtest_counts": {},
+  "ordinary_reports": 636,
+  "all_reports": 636,
+  "exit_code": 0,
+  "head": "6c12c0558fe1b1288deeb1b284cd31373b62f964",
+  "tree": "dd5261d90396e59f3296467e09a539b3b701de03",
+  "input_count": 484,
+  "bindings_unchanged": true,
+  "tracked_status": "M .agents/skills/three-store-invariants/references/context-registration-exchange.md\n M docs/implementation/evidence/adr0031-i6b-author-20261023/MATRIX.md\n M src/repo_catalog/domain/context_dependencies.py\n M src/repo_catalog/domain/selective_exchange.py\n M tests/unit/test_context_dependencies.py",
+  "selected_junit_journal_typed_exact": true
+}

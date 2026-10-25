@@ -1,0 +1,47 @@
+{
+  "collected": 28,
+  "unique": 28,
+  "started": 28,
+  "junit": 28,
+  "exact_collected_journal": true,
+  "exact_collected_junit": true,
+  "exact_one_passed_phase_each": true,
+  "finishes": [
+    {
+      "event": "finish",
+      "status": "completed",
+      "exitstatus": 0,
+      "timestamp": 1792760108.940139
+    }
+  ],
+  "nodeids": [
+    "::test_chain_depth_oracle_at_zero_exact_and_longest_setting[0]",
+    "::test_chain_depth_oracle_at_zero_exact_and_longest_setting[1]",
+    "::test_chain_depth_oracle_at_zero_exact_and_longest_setting[2]",
+    "::test_chain_depth_oracle_at_zero_exact_and_longest_setting[7]",
+    "::test_chain_depth_oracle_at_zero_exact_and_longest_setting[8]",
+    "::test_chain_depth_oracle_at_zero_exact_and_longest_setting[31]",
+    "::test_chain_depth_oracle_at_zero_exact_and_longest_setting[32]",
+    "::test_branch_node_boundary_uses_canonical_order_and_no_partial_report[0]",
+    "::test_branch_node_boundary_uses_canonical_order_and_no_partial_report[1]",
+    "::test_branch_node_boundary_uses_canonical_order_and_no_partial_report[2]",
+    "::test_branch_node_boundary_uses_canonical_order_and_no_partial_report[3]",
+    "::test_branch_node_boundary_uses_canonical_order_and_no_partial_report[4]",
+    "::test_three_edge_exact_and_plus_one_hold_entire_fanout[0]",
+    "::test_three_edge_exact_and_plus_one_hold_entire_fanout[1]",
+    "::test_three_edge_exact_and_plus_one_hold_entire_fanout[2]",
+    "::test_three_edge_exact_and_plus_one_hold_entire_fanout[3]",
+    "::test_three_edge_exact_and_plus_one_hold_entire_fanout[4]",
+    "::test_exact_payload_work_unit_bound_and_one_under_over[max_units]",
+    "::test_exact_payload_work_unit_bound_and_one_under_over[max_bytes]",
+    "::test_exact_payload_work_unit_bound_and_one_under_over[max_work]",
+    "::test_work_stop_sampling_never_exposes_incomplete_terminal_group",
+    "::test_cumulative_retry_charges_every_attempt_and_never_resets",
+    "::test_large_strongly_connected_graph_terminates_and_is_input_order_independent",
+    "::test_self_cycle_opaque_name_has_only_explicit_edge_and_empty_selection_is_empty",
+    "::test_missing_member_is_withheld_and_never_truncated_or_staged",
+    "::test_cyclic_caller_container_stops_with_typed_refusal",
+    "::test_hard_element_cap_rejects_before_indexing_hostile_rows",
+    "::test_result_owns_output_and_diagnostics_do_not_copy_original_payload"
+  ]
+}

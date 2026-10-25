@@ -1,0 +1,44 @@
+[
+  {
+    "source": "docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/reproduce/probes/test_author_extra.py.txt",
+    "destination": "test_author_extra.py",
+    "sha256": "bc77c792f8f4a7dc3ad472d6fa9325a274bdd8895822a328556b260b55663ffd",
+    "byte_identical": true
+  },
+  {
+    "source": "docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/reproduce/probes/test_commit_boundary.py.txt",
+    "destination": "test_commit_boundary.py",
+    "sha256": "139c253eee306888a34c4feba791feeb972088a040a4818a64be546271c8d4fe",
+    "byte_identical": true
+  },
+  {
+    "source": "docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/reproduce/probes/test_digest_contract.py.txt",
+    "destination": "test_digest_contract.py",
+    "sha256": "855d5fc32bbff94890ce838a6e8cb27694eeaac218353f4407263ad75537ab74",
+    "byte_identical": true
+  },
+  {
+    "source": "docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/reproduce/probes/test_independent_wire.py.txt",
+    "destination": "test_independent_wire.py",
+    "sha256": "d274adc397b1c8e4b7f52ebcc0fb3cb6dac0515e1c452368bdb78895c8bb2c48",
+    "byte_identical": true
+  },
+  {
+    "source": "docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/reproduce/probes/test_planner_independent.py.txt",
+    "destination": "test_planner_independent.py",
+    "sha256": "e9ffcd3aa273c647788c1477cb28524ea8ab6a1485fda120db52e754696ff59e",
+    "byte_identical": true
+  },
+  {
+    "source": "docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/reproduce/probes/test_planner_work_budget_contract.py.txt",
+    "destination": "test_planner_work_budget_contract.py",
+    "sha256": "dec5aa650b847b18aee223e3ab79fe41faf644b620d12edfa7cf3b83c375555b",
+    "byte_identical": true
+  },
+  {
+    "source": "docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/reproduce/probes/test_resolved_wire.py.txt",
+    "destination": "test_resolved_wire.py",
+    "sha256": "536de7d78526f6d779d8a6e3ec3c0d8b4a02356b1ca122807e963803d94ffa20",
+    "byte_identical": true
+  }
+]

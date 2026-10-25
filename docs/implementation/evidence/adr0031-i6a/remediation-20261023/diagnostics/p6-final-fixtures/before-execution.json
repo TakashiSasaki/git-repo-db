@@ -1,0 +1,14 @@
+{
+  "argv": [
+    ".venv/bin/python",
+    "-m",
+    "pytest",
+    "tests/integration/p6/test_corrections.py::test_literal_unicode_short_special_search_semantics_and_cost_phases",
+    "tests/integration/p6/test_pagination_snapshots.py::test_open_snapshot_isolation_and_stale_cursor_fencing_after_write",
+    "-q",
+    "--junitxml=/workspace/i6a-runs/p6-last-fixtures/before.xml",
+    "--journal=/workspace/i6a-runs/p6-last-fixtures/before.jsonl"
+  ],
+  "exit_code": 1,
+  "wall_seconds": 3.8183209896087646
+}

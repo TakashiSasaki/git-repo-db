@@ -1,0 +1,240 @@
+{
+  "exitstatus": 1,
+  "records": [
+    {
+      "nodeid": "tests/integration/p5/test_corrections.py::test_provider_registration_is_explicit",
+      "raise_frame": {
+        "file": "/workspace/i6a-before/src/repo_catalog/application/acquisition.py",
+        "line": 1111,
+        "function": "_open_context"
+      },
+      "stack": [
+        {
+          "file": "/workspace/i6a-before/src/repo_catalog/application/acquisition.py",
+          "line": 1111,
+          "function": "_open_context"
+        },
+        {
+          "file": "/workspace/i6a-before/src/repo_catalog/application/acquisition.py",
+          "line": 1519,
+          "function": "admit_batch"
+        },
+        {
+          "file": "/workspace/i6a-before/tests/integration/p5/test_corrections.py",
+          "line": 198,
+          "function": "test_provider_registration_is_explicit"
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/integration/p5/test_corrections.py::test_provider_registration_is_explicit",
+      "raise_frame": {
+        "file": "/workspace/i6a-before/src/repo_catalog/application/acquisition.py",
+        "line": 1519,
+        "function": "admit_batch"
+      },
+      "stack": [
+        {
+          "file": "/workspace/i6a-before/src/repo_catalog/application/acquisition.py",
+          "line": 1519,
+          "function": "admit_batch"
+        },
+        {
+          "file": "/workspace/i6a-before/tests/integration/p5/test_corrections.py",
+          "line": 198,
+          "function": "test_provider_registration_is_explicit"
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/integration/p5/test_paired_admission.py::test_core_first_context_second_and_failure_retry_convergence",
+      "raise_frame": {
+        "file": "/workspace/i6a-before/src/repo_catalog/application/acquisition.py",
+        "line": 1111,
+        "function": "_open_context"
+      },
+      "stack": [
+        {
+          "file": "/workspace/i6a-before/src/repo_catalog/application/acquisition.py",
+          "line": 1111,
+          "function": "_open_context"
+        },
+        {
+          "file": "/workspace/i6a-before/src/repo_catalog/application/acquisition.py",
+          "line": 1519,
+          "function": "admit_batch"
+        },
+        {
+          "file": "/workspace/i6a-before/src/repo_catalog/application/acquisition.py",
+          "line": 1983,
+          "function": "_context_unit"
+        },
+        {
+          "file": "/workspace/i6a-before/src/repo_catalog/adapters/sqlite/p1_coordination.py",
+          "line": 659,
+          "function": "_admit"
+        },
+        {
+          "file": "/workspace/i6a-before/src/repo_catalog/adapters/sqlite/p1_coordination.py",
+          "line": 613,
+          "function": "admit"
+        },
+        {
+          "file": "/workspace/i6a-before/src/repo_catalog/application/acquisition.py",
+          "line": 2061,
+          "function": "admit_paired"
+        },
+        {
+          "file": "/workspace/i6a-before/tests/integration/p5/test_paired_admission.py",
+          "line": 97,
+          "function": "test_core_first_context_second_and_failure_retry_convergence"
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/integration/p5/test_paired_admission.py::test_core_first_context_second_and_failure_retry_convergence",
+      "raise_frame": {
+        "file": "/workspace/i6a-before/src/repo_catalog/application/acquisition.py",
+        "line": 1519,
+        "function": "admit_batch"
+      },
+      "stack": [
+        {
+          "file": "/workspace/i6a-before/src/repo_catalog/application/acquisition.py",
+          "line": 1519,
+          "function": "admit_batch"
+        },
+        {
+          "file": "/workspace/i6a-before/src/repo_catalog/application/acquisition.py",
+          "line": 1983,
+          "function": "_context_unit"
+        },
+        {
+          "file": "/workspace/i6a-before/src/repo_catalog/adapters/sqlite/p1_coordination.py",
+          "line": 659,
+          "function": "_admit"
+        },
+        {
+          "file": "/workspace/i6a-before/src/repo_catalog/adapters/sqlite/p1_coordination.py",
+          "line": 613,
+          "function": "admit"
+        },
+        {
+          "file": "/workspace/i6a-before/src/repo_catalog/application/acquisition.py",
+          "line": 2061,
+          "function": "admit_paired"
+        },
+        {
+          "file": "/workspace/i6a-before/tests/integration/p5/test_paired_admission.py",
+          "line": 97,
+          "function": "test_core_first_context_second_and_failure_retry_convergence"
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/integration/p5/test_paired_admission.py::test_core_first_context_second_and_failure_retry_convergence",
+      "raise_frame": {
+        "file": "/workspace/i6a-before/src/repo_catalog/application/acquisition.py",
+        "line": 1983,
+        "function": "_context_unit"
+      },
+      "stack": [
+        {
+          "file": "/workspace/i6a-before/src/repo_catalog/application/acquisition.py",
+          "line": 1983,
+          "function": "_context_unit"
+        },
+        {
+          "file": "/workspace/i6a-before/src/repo_catalog/adapters/sqlite/p1_coordination.py",
+          "line": 659,
+          "function": "_admit"
+        },
+        {
+          "file": "/workspace/i6a-before/src/repo_catalog/adapters/sqlite/p1_coordination.py",
+          "line": 613,
+          "function": "admit"
+        },
+        {
+          "file": "/workspace/i6a-before/src/repo_catalog/application/acquisition.py",
+          "line": 2061,
+          "function": "admit_paired"
+        },
+        {
+          "file": "/workspace/i6a-before/tests/integration/p5/test_paired_admission.py",
+          "line": 97,
+          "function": "test_core_first_context_second_and_failure_retry_convergence"
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/integration/p5/test_paired_admission.py::test_core_first_context_second_and_failure_retry_convergence",
+      "raise_frame": {
+        "file": "/workspace/i6a-before/src/repo_catalog/adapters/sqlite/production_context.py",
+        "line": 248,
+        "function": "for_transaction"
+      },
+      "stack": [
+        {
+          "file": "/workspace/i6a-before/src/repo_catalog/adapters/sqlite/production_context.py",
+          "line": 248,
+          "function": "for_transaction"
+        },
+        {
+          "file": "/workspace/i6a-before/src/repo_catalog/application/acquisition.py",
+          "line": 1976,
+          "function": "_context_unit"
+        },
+        {
+          "file": "/workspace/i6a-before/src/repo_catalog/adapters/sqlite/p1_coordination.py",
+          "line": 659,
+          "function": "_admit"
+        },
+        {
+          "file": "/workspace/i6a-before/src/repo_catalog/adapters/sqlite/p1_coordination.py",
+          "line": 613,
+          "function": "admit"
+        },
+        {
+          "file": "/workspace/i6a-before/src/repo_catalog/application/acquisition.py",
+          "line": 2061,
+          "function": "admit_paired"
+        },
+        {
+          "file": "/workspace/i6a-before/tests/integration/p5/test_paired_admission.py",
+          "line": 97,
+          "function": "test_core_first_context_second_and_failure_retry_convergence"
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/integration/p5/test_paired_admission.py::test_core_first_context_second_and_failure_retry_convergence",
+      "raise_frame": {
+        "file": "/workspace/i6a-before/src/repo_catalog/adapters/sqlite/p1_coordination.py",
+        "line": 659,
+        "function": "_admit"
+      },
+      "stack": [
+        {
+          "file": "/workspace/i6a-before/src/repo_catalog/adapters/sqlite/p1_coordination.py",
+          "line": 659,
+          "function": "_admit"
+        },
+        {
+          "file": "/workspace/i6a-before/src/repo_catalog/adapters/sqlite/p1_coordination.py",
+          "line": 613,
+          "function": "admit"
+        },
+        {
+          "file": "/workspace/i6a-before/src/repo_catalog/application/acquisition.py",
+          "line": 2061,
+          "function": "admit_paired"
+        },
+        {
+          "file": "/workspace/i6a-before/tests/integration/p5/test_paired_admission.py",
+          "line": 97,
+          "function": "test_core_first_context_second_and_failure_retry_convergence"
+        }
+      ]
+    }
+  ]
+}

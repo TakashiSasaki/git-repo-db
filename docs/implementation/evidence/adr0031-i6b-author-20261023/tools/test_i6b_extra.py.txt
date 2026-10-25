@@ -1,0 +1,382 @@
+"""Supplementary I6-B Author-team cases, not an independent review.
+
+Run after the frozen ordinary suite, in source and both installed distributions.
+I6B_EXTRA_SAVED_VECTOR_DIR must point to the frozen nine saved vector files plus
+manifest.json. Optional I6B_EXTRA_VECTOR_DIR records exact observed vector bytes
+and per-vector measurements in a fresh output directory; it is not an input.
+This file never changes production code, activation gates, or SQL fences.
+"""
+
+from __future__ import annotations
+
+import copy
+import hashlib
+import json
+import os
+from pathlib import Path
+
+import pytest
+
+from repo_catalog.domain.context_dependencies import plan_context_dependencies
+from repo_catalog.domain.context_wire import decode_context_v5, encode_context_v5
+from repo_catalog.domain.exchange import (
+    ExchangeError,
+    ExchangeSelectionScope,
+    decode_package,
+    empty_context_section,
+    encode_package,
+)
+from repo_catalog.domain.p1_context import CoverageScope, ResourceKey, canonical
+from repo_catalog.domain.resource_identification import ResourceIdentification as RI
+
+SERVICE = "11111111-1111-4111-8111-111111111111"
+PROVENANCE = canonical({"source": "extra-author-fixture", "evidence": "collection"})
+VECTOR_IDS = (
+    "V01-global-document",
+    "V02-scoped-event-child-first",
+    "V03-original-parent",
+    "V04-one-sided-explicit-null",
+    "V05-two-sided-explicit-null",
+    "V06-provider-only",
+    "V07-resolved-mapping",
+    "V09-ordered-terminals",
+    "V08-rechecksummed-noncanonical-id",
+)
+
+
+def coordinates(key):
+    return dict(
+        zip(
+            ("service_instance_uuidv4", "resource_kind", "provider_resource_id"),
+            key.coordinates(),
+            strict=True,
+        )
+    )
+
+
+def document_graph(contract):
+    """Document owns actual generic children and a cycle, with no Parent row."""
+    namespace = ResourceKey.from_native(SERVICE, "pull_request", ["org", "7"])
+    if contract == "global":
+        owner = ResourceKey.global_document(SERVICE, ["global", [], "é"])
+        declaration = RI.global_document(owner)
+    else:
+        owner = ResourceKey.document(namespace, "document", "body", ["D", "é"])
+        declaration = RI.scoped(owner, namespace, "body", ["D", "é"])
+    child = ResourceKey.from_native(SERVICE, "x-widget", ["child", []])
+    leaf = ResourceKey.from_native(SERVICE, "x-leaf", "leaf")
+    data = empty_context_section()
+    data["providers"] = [
+        {
+            "service_instance_uuidv4": SERVICE,
+            "provider_kind": "extra-author-fixture",
+            "configuration_json": "{}",
+        }
+    ]
+    data["resources"] = [
+        declaration.to_wire(),
+        RI.unscoped(child).to_wire(),
+        RI.unscoped(leaf).to_wire(),
+    ]
+    for node, members in ((owner, [child, leaf]), (child, [owner])):
+        data["resource_relations"].append(
+            {
+                **coordinates(node),
+                "relation_kind": "x-actual-links",
+                "members_json": canonical([member.coordinates() for member in members]),
+                "provenance_json": PROVENANCE,
+                "scope_json": "{}",
+                "observed_at_us": 30,
+            }
+        )
+    return data, owner, child, leaf, namespace
+
+
+def collection_coverage(contract):
+    data, owner, child, leaf, namespace = document_graph(contract)
+    scope = CoverageScope.collection(owner, "related", PROVENANCE, "related")
+    owner_columns = {
+        "owner_kind": scope.owner_kind,
+        "owner_coordinates_json": scope.encoded,
+    }
+    data["coverage_scopes"] = [owner_columns]
+    data["coverage_claims"] = [
+        {
+            **owner_columns,
+            "observed_at_us": 40,
+            "coverage_state": "complete",
+            "details_json": None,
+        }
+    ]
+    for members in ([child, leaf], [leaf, child]):
+        terminal = {
+            **coordinates(owner),
+            "collection_kind": "related",
+            "provenance_json": PROVENANCE,
+            "scope_json": canonical({"coverage_kind": "related"}),
+            "observed_at_us": 40,
+            "terminal_state": "complete",
+            "members_json": canonical([member.coordinates() for member in members]),
+        }
+        data["collections"].append(terminal)
+        data["coverage_proofs"].append(
+            {
+                **owner_columns,
+                **coordinates(owner),
+                "collection_kind": "related",
+                "provenance_json": PROVENANCE,
+                "observed_at_us": 40,
+                "coverage_state": "complete",
+                "proof_kind": "collection",
+                "terminal_observed_at_us": 40,
+                "terminal_state": "complete",
+                "members_json": terminal["members_json"],
+            }
+        )
+    return data, owner, child, leaf, namespace
+
+
+@pytest.mark.parametrize("contract", ["global", "scoped"])
+def test_extra_T02_T11_nonleaf_document_cycle_needs_no_namespace_resource(contract):
+    data, owner, child, leaf, namespace = document_graph(contract)
+    assert decode_context_v5(encode_context_v5(data)) == data
+    plan = plan_context_dependencies(
+        data,
+        ExchangeSelectionScope(all_selected=True, resource_keys=(owner,), max_depth=1),
+    )
+    assert plan.context == data
+    assert plan.selected_resources == frozenset({owner, child, leaf})
+    assert namespace not in plan.selected_resources
+    assert not plan.omissions
+    assert all(
+        row["relation_kind"] == "x-actual-links"
+        for row in plan.context["resource_relations"]
+    )
+    assert plan.context["resource_repository_relations"] == []
+    assert not any(
+        row["provider_resource_id"] == namespace.provider_resource_id
+        for row in data["resources"]
+    )
+
+
+@pytest.mark.parametrize("contract", ["global", "scoped"])
+def test_extra_T12_collection_owned_real_coverage_preserves_competing_orders(contract):
+    data, owner, _, _, namespace = collection_coverage(contract)
+    before = copy.deepcopy(data)
+    assert decode_context_v5(encode_context_v5(data)) == before
+    plan = plan_context_dependencies(
+        data,
+        ExchangeSelectionScope(all_selected=True, resource_keys=(owner,), max_depth=1),
+    )
+    assert plan.context == before == data
+    assert namespace not in plan.selected_resources
+    assert plan.context["coverage_claims"][0]["owner_kind"] == "collection"
+    assert len(plan.context["coverage_claims"][0]) == 5
+    assert len(plan.context["collections"]) == len(plan.context["coverage_proofs"]) == 2
+    assert (
+        plan.context["collections"][0]["members_json"]
+        != plan.context["collections"][1]["members_json"]
+    )
+    assert {row["members_json"] for row in plan.context["coverage_proofs"]} == {
+        row["members_json"] for row in plan.context["collections"]
+    }
+
+
+@pytest.mark.parametrize("contract", ["global", "scoped"])
+@pytest.mark.parametrize("limit", ["depth", "unit"])
+def test_extra_T12_whole_collection_alternatives_and_coverage_withheld_together(
+    contract, limit
+):
+    data, owner, child, leaf, _ = collection_coverage(contract)
+    full = plan_context_dependencies(data, ExchangeSelectionScope(all_selected=True))
+    assert full.context == data
+    if limit == "depth":
+        selection = ExchangeSelectionScope(
+            all_selected=True, resource_keys=(owner,), max_depth=0
+        )
+    else:
+        selection = ExchangeSelectionScope(
+            all_selected=True, max_units=full.emitted_units - 1
+        )
+    limited = plan_context_dependencies(data, selection)
+    # Budgets may retain complete original terminals after withholding a
+    # stronger claim. The reverse implication would require needless omission.
+    assert limited.context["collections"] in ([], data["collections"])
+    if limit == "depth":
+        assert limited.context["collections"] == []
+    if not limited.context["collections"]:
+        # Collection-owned scopes reference the actual immutable header. This
+        # terminal-only wire profile cannot retain that scope without a header.
+        assert limited.context["coverage_scopes"] == []
+        assert limited.context["coverage_claims"] == []
+        assert limited.context["coverage_proofs"] == []
+    if limited.context["coverage_claims"] or limited.context["coverage_proofs"]:
+        assert limited.context["coverage_scopes"] == data["coverage_scopes"]
+        assert limited.context["collections"] == data["collections"]
+    for section in ("coverage_scopes", "coverage_claims", "coverage_proofs"):
+        assert all(row in data[section] for row in limited.context[section])
+    if limited.context["coverage_proofs"]:
+        assert limited.context["coverage_claims"] == data["coverage_claims"]
+    assert owner in limited.selected_resources
+    if limit == "depth":
+        assert child not in limited.selected_resources
+        assert leaf not in limited.selected_resources
+    else:
+        assert limited.selected_resources == frozenset({owner, child, leaf})
+    assert data["coverage_claims"][0]["coverage_state"] == "complete"
+    assert len(data["collections"]) == 2
+    assert limited.omissions
+
+
+@pytest.mark.parametrize("contract", ["global", "scoped"])
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        "terminal-time",
+        "claim-time",
+        "terminal-state",
+        "scope-kind",
+        "owner-kind",
+        "no-time",
+    ],
+)
+def test_extra_T12_collection_proof_time_scope_mutations_refused(contract, mutation):
+    data, _, _, _, _ = collection_coverage(contract)
+    if mutation == "terminal-time":
+        data["coverage_proofs"][0]["terminal_observed_at_us"] = 39
+    elif mutation == "claim-time":
+        data["coverage_proofs"][0]["observed_at_us"] = 39
+    elif mutation == "terminal-state":
+        data["coverage_proofs"][0]["terminal_state"] = "partial"
+    elif mutation == "scope-kind":
+        for row in data["collections"]:
+            row["scope_json"] = canonical({"coverage_kind": "other-kind"})
+    elif mutation == "owner-kind":
+        for section in ("coverage_scopes", "coverage_claims", "coverage_proofs"):
+            for row in data[section]:
+                owner = json.loads(row["owner_coordinates_json"])
+                owner[3] = "other-collection"
+                row["owner_coordinates_json"] = canonical(owner)
+    else:
+        data["collections"][0]["observed_at_us"] = None
+    with pytest.raises(ExchangeError) as error:
+        decode_context_v5(data)
+    expected_code = {
+        "terminal-time": "INVALID_COVERAGE_PROOF",
+        "claim-time": "INVALID_COVERAGE_PROOF",
+        "terminal-state": "INVALID_COVERAGE_PROOF",
+        "scope-kind": "INVALID_COVERAGE_PROOF",
+        "owner-kind": "INVALID_COVERAGE_PROOF",
+        "no-time": "MALFORMED_ROW",
+    }[mutation]
+    assert error.value.code == expected_code
+
+
+@pytest.mark.parametrize("vector_id", VECTOR_IDS)
+def test_extra_V01_V09_saved_wire_bytes_manifest_digest_and_decoder(vector_id):
+    source = Path(os.environ["I6B_EXTRA_SAVED_VECTOR_DIR"])
+    manifest = json.loads((source / "manifest.json").read_text())
+    assert len(manifest["vectors"]) == len(VECTOR_IDS)
+    assert {entry["id"] for entry in manifest["vectors"]} == set(VECTOR_IDS)
+    entry = next(entry for entry in manifest["vectors"] if entry["id"] == vector_id)
+    assert entry["path"] == vector_id + ".wire.json"
+    wire = (source / entry["path"]).read_bytes()
+    assert len(wire) == entry["bytes"]
+    assert hashlib.sha256(wire).hexdigest() == entry["sha256"]
+    data = json.loads(wire)
+    declared_digest = data.pop("digest_sha256")
+    actual_digest = hashlib.sha256(
+        json.dumps(
+            data,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+            allow_nan=False,
+        ).encode("utf-8")
+    ).hexdigest()
+    assert actual_digest == declared_digest == entry["digest_sha256"]
+    if entry["expected"] == "accept":
+        actual_wire = encode_package(decode_package(wire)).encode("utf-8")
+        assert actual_wire == wire
+        expected_code = None
+    else:
+        with pytest.raises(ExchangeError) as error:
+            decode_package(wire)
+        assert error.value.code == entry["expected_code"]
+        expected_code = error.value.code
+        actual_wire = wire
+    output = os.environ.get("I6B_EXTRA_VECTOR_DIR")
+    if output:
+        destination = Path(output)
+        destination.mkdir(parents=True, exist_ok=True)
+        (destination / entry["path"]).write_bytes(actual_wire)
+        (destination / (vector_id + ".receipt.json")).write_text(
+            json.dumps(
+                {
+                    "id": vector_id,
+                    "bytes": len(actual_wire),
+                    "sha256": hashlib.sha256(actual_wire).hexdigest(),
+                    "digest_sha256": actual_digest,
+                    "outcome": entry["expected"],
+                    "refusal_code": expected_code,
+                    "scope": "supplementary Author-team codec verification, not independent review",
+                },
+                indent=2,
+            )
+            + "\n"
+        )
+
+
+@pytest.mark.parametrize("contract", ["global", "scoped"])
+def test_extra_T12_collection_owned_scope_requires_its_actual_header(contract):
+    data, owner, _, _, _ = collection_coverage(contract)
+    data["collections"] = []
+    data["coverage_claims"] = []
+    data["coverage_proofs"] = []
+    plan = plan_context_dependencies(data, ExchangeSelectionScope(all_selected=True))
+    assert plan.context["coverage_scopes"] == []
+    assert owner in plan.selected_resources
+    assert any(omission.reason == "missing_dependency" for omission in plan.omissions)
+
+
+@pytest.mark.parametrize("contract", ["global", "scoped"])
+def test_extra_T12_field_coverage_scope_needs_resource_without_invented_field_row(
+    contract,
+):
+    data, owner, _, _, _ = document_graph(contract)
+    scope = CoverageScope.field(owner, "title", "field_state")
+    data["coverage_scopes"] = [
+        {"owner_kind": scope.owner_kind, "owner_coordinates_json": scope.encoded}
+    ]
+    assert data["field_candidates"] == []
+    assert decode_context_v5(data) == data
+    plan = plan_context_dependencies(data, ExchangeSelectionScope(all_selected=True))
+    assert plan.context == data
+    assert plan.context["field_candidates"] == []
+
+
+def test_extra_T13_source_inventory_scope_needs_source_without_invented_terminal():
+    data = empty_context_section()
+    source = "44444444-4444-4444-8444-444444444444"
+    data["providers"] = [
+        {
+            "service_instance_uuidv4": SERVICE,
+            "provider_kind": "extra-author-fixture",
+            "configuration_json": "{}",
+        }
+    ]
+    data["sources"] = [
+        {
+            "service_instance_uuidv4": SERVICE,
+            "source_registration_uuidv4": source,
+            "configuration_json": "{}",
+        }
+    ]
+    scope = CoverageScope.source_inventory(source, "{}", "repositories")
+    data["coverage_scopes"] = [
+        {"owner_kind": scope.owner_kind, "owner_coordinates_json": scope.encoded}
+    ]
+    assert decode_context_v5(data) == data
+    plan = plan_context_dependencies(data, ExchangeSelectionScope(all_selected=True))
+    assert plan.context == data
+    assert plan.context["source_inventories"] == []

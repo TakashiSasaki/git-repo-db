@@ -1,0 +1,48 @@
+{
+  "reviewed_head": "61e44291e293f773904a0127606e20c8cb83c95e",
+  "reviewed_tree": "4aa8ddf49fb52d0b903db0b0bfce00ccea2fae0c",
+  "scope": "M02 received-dictionary digest and I6-B wire semantic allocation",
+  "new_findings": [],
+  "prior_findings": [
+    {
+      "id": "I6B-IR-M02",
+      "severity": "Medium",
+      "status": "closed_in_reviewed_scope",
+      "requirements": [
+        "R03"
+      ],
+      "tests": [
+        "T10",
+        "T24",
+        "T27"
+      ],
+      "basis": [
+        "Code verifies bounded actual received dictionary SHA-256 before selection conversion.",
+        "Unchanged saved 30 digest probes now refuse DIGEST_MISMATCH in independent source and both independent installed forms.",
+        "Shared selection to_dict exact equality refuses noncanonical arrays rather than repairing them.",
+        "Fresh independent 61-node corpus passes in source and both installed forms, including 24 forbidden-conversion stale mutations and independently rehashed positive/negative controls."
+      ],
+      "source_anchors": [
+        "src/repo_catalog/domain/exchange.py:372",
+        "src/repo_catalog/domain/exchange.py:633",
+        "src/repo_catalog/domain/exchange.py:891"
+      ],
+      "evidence": [
+        "test_fresh_digest_wire.py.txt",
+        "source.reconciliation.json",
+        "source.junit.xml",
+        "source.journal.jsonl",
+        "execution.json",
+        "original-probe-binding.json",
+        "reused/saved33/reconciliation.json",
+        "../distribution/direct-fresh-test_fresh_digest_wire-execution.json",
+        "../distribution/derived-fresh-test_fresh_digest_wire-execution.json"
+      ],
+      "limits": [
+        "Checksum proves neither Provider authenticity nor current admission authority.",
+        "Durable PackageKey replay and normal Provider/Exchange composition remain I6-C; this review starts no such work.",
+        "Overall I6-B verdict/readiness depends on M01 and other independent lanes."
+      ]
+    }
+  ]
+}

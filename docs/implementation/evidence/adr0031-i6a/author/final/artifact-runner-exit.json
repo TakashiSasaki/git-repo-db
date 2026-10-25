@@ -1,0 +1,7 @@
+{
+  "exit_code": 0,
+  "command": [
+    "/workspace/git-repo-db/.venv/bin/python",
+    "/tmp/i6a_artifact_run.py"
+  ]
+}

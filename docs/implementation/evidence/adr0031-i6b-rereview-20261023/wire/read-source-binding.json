@@ -1,0 +1,111 @@
+{
+  "head": "61e44291e293f773904a0127606e20c8cb83c95e",
+  "tree": "4aa8ddf49fb52d0b903db0b0bfce00ccea2fae0c",
+  "files": [
+    {
+      "path": "AGENTS.md",
+      "bytes": 38807,
+      "sha256": "3335f8daab0778168b64d24aa2d5750a438b8e63746031d2a5ea3c1598500e49"
+    },
+    {
+      "path": ".agents/skills/three-store-invariants/SKILL.md",
+      "bytes": 64996,
+      "sha256": "0a218006810dc428e91b5444d1a125f5cfa6edf206807fd975f1614ef4bb1d3b"
+    },
+    {
+      "path": ".agents/skills/efficient-repository-investigation/SKILL.md",
+      "bytes": 5042,
+      "sha256": "2959c03c970d154d873b34d6b7bb0b2188ca2e716b4b0010c627009928904eb2"
+    },
+    {
+      "path": ".agents/skills/ci-final-tree-verification/SKILL.md",
+      "bytes": 33835,
+      "sha256": "bd9aadbd50d9c7c1be12341553685ab039b9019b5ea3050a756ffa470a0c5add"
+    },
+    {
+      "path": "docs/adr/0001-validation-lifecycle-architecture.md",
+      "bytes": 27302,
+      "sha256": "ac5503b0b4a8c5438dd337b5a0903072edaf541a1abfa3757abf59501fb0795f"
+    },
+    {
+      "path": "docs/adr/0031-generalized-context-resources.md",
+      "bytes": 14670,
+      "sha256": "330fbf7273f3099170e7ad34ea45abe11727e664e7a7a6f676e81a3ef15b71f6"
+    },
+    {
+      "path": "docs/adr/0032-environment-sqlite-validation.md",
+      "bytes": 4609,
+      "sha256": "44ced7a81ed5aa2f1e68e8c99a8989798d9f06cc0d0e93b65c64e8f436c5c833"
+    },
+    {
+      "path": "docs/implementation/adr0031-i6-wire-admission-exchange.md",
+      "bytes": 33557,
+      "sha256": "9604677f8b80ea43014624281e122827812e2044897c1509344b7913107d55bb"
+    },
+    {
+      "path": "docs/implementation/adr0031-i6b-generalized-wire.md",
+      "bytes": 3671,
+      "sha256": "061fdb460e71c78048be08f30a971782aa7ea0555b2c1c7394d7a2e0f00dd0f9"
+    },
+    {
+      "path": "docs/implementation/adr0031-i6-vectors-and-tests.md",
+      "bytes": 21523,
+      "sha256": "a8aafc649a5f50ae4b575963b785a9bcba60ac7a48873498adbc7056ca5072b2"
+    },
+    {
+      "path": "docs/implementation/adr0031-i6-change-map-and-handoff.md",
+      "bytes": 25114,
+      "sha256": "d16da53a7c8154cb9dae61dbaa7b540ef3d9edd44b5cbb7b1580ba9e308cfbce"
+    },
+    {
+      "path": "docs/implementation/evidence/adr0031-i6b-independent-20261023/REPORT.md",
+      "bytes": 20158,
+      "sha256": "499889675bd5b872f0247b102b7b77d3ad8366bea96d99a1a30e229ff2d8640b"
+    },
+    {
+      "path": "docs/implementation/evidence/adr0031-i6b-independent-20261023/findings.json",
+      "bytes": 6197,
+      "sha256": "c5cad05b0aefa88e43f8df6dc52d331b4fc08701935da52c21653263bba55e15"
+    },
+    {
+      "path": "docs/implementation/evidence/adr0031-i6b-independent-20261023/MATRIX.md",
+      "bytes": 8711,
+      "sha256": "359beea2794d73ca9da79fbe11dbf12e40a30bf463430b747fbf4cffa16217b1"
+    },
+    {
+      "path": "docs/implementation/evidence/adr0031-i6b-independent-20261023/wire/REPORT.md",
+      "bytes": 9973,
+      "sha256": "6d808c6a34aa7c2291638d5d9f3a5c6d9b6bfcd4cd5557fdfcf014c78a969455"
+    },
+    {
+      "path": "docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/REPORT.md",
+      "bytes": 14753,
+      "sha256": "8be064491a61b30d5d600c92830f7a14bd931f61ab65e9c7c6f5c39bcb044294"
+    },
+    {
+      "path": "src/repo_catalog/domain/exchange.py",
+      "bytes": 36044,
+      "sha256": "46c5d9c5f80a39ff967418d2662274fa8b70134f33050ac00c2e464b4dc10012"
+    },
+    {
+      "path": "src/repo_catalog/domain/exchange_rows.py",
+      "bytes": 24345,
+      "sha256": "c3c8f62768426e66374902ccdeea4218f7609516781e5ca9a9bc6a3bf70d231e"
+    },
+    {
+      "path": "src/repo_catalog/domain/context_wire.py",
+      "bytes": 3375,
+      "sha256": "9d9bb824a436322ce8632674a28cb894a7afb8b7a715ac19ff6c93c887bb4416"
+    },
+    {
+      "path": "src/repo_catalog/domain/resource_identity.py",
+      "bytes": 7560,
+      "sha256": "a7b68deb5a40956360a7c8ad69bcff1c216020b4eb451e52e0ea61fb5d0c13a3"
+    },
+    {
+      "path": "src/repo_catalog/domain/resource_identification.py",
+      "bytes": 7018,
+      "sha256": "3e7c02193be40b16f48c66ebad5c2f1dab8108241eb1e1794d8ed94ce86107d1"
+    }
+  ]
+}

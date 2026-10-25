@@ -1,0 +1,61 @@
+{
+  "command": [
+    "/workspace/git-repo-db/.venv/bin/python",
+    "-m",
+    "pytest",
+    "-p",
+    "broad_receipt",
+    "-p",
+    "no:cacheprovider",
+    "--basetemp=/workspace/i6b-broad-work/full-final-v2-temp",
+    "-q",
+    "-o",
+    "addopts=--strict-markers",
+    "-o",
+    "junit_family=xunit1",
+    "@/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-independent-20261023/broad/full-final-v2/ordinary.selected.txt",
+    "--junitxml=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-independent-20261023/broad/full-final-v2/ordinary.xml",
+    "--journal=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-independent-20261023/broad/full-final-v2/ordinary.jsonl",
+    "-n",
+    "4",
+    "--dist",
+    "worksteal"
+  ],
+  "cwd": "/workspace/git-repo-db",
+  "started_epoch": 1792760034.0512314,
+  "elapsed_seconds": 549.62,
+  "exit_code": 3,
+  "collected": 6288,
+  "passed": 2737,
+  "failed": 52,
+  "error": 1,
+  "skipped": 0,
+  "xfail": 0,
+  "xpass": 0,
+  "executed": 2790,
+  "reconciliation": {
+    "checks": {
+      "selected_unique": true,
+      "selected_equals_junit": false,
+      "selected_equals_journal_starts": false,
+      "setup_and_teardown_once": false,
+      "no_duplicate_phases": true,
+      "phase_nodes_equal_selected": false,
+      "call_once_after_successful_setup": false,
+      "one_finish": true
+    },
+    "consistent_node_execution": false,
+    "journal_phase_outcomes": {
+      "passed": 8307,
+      "failed": 52
+    },
+    "finishes": [
+      {
+        "event": "finish",
+        "status": "failed",
+        "exitstatus": 3,
+        "timestamp": 1792760583.422049
+      }
+    ]
+  }
+}

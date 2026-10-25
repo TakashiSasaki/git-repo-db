@@ -1,0 +1,29 @@
+{
+  "helper_sha256": "3499a38bdf5eb5e198c47806cb2f9875f71a9d11a1eb5bda2357433d466e1f3d",
+  "controls": [
+    {
+      "mode": "package",
+      "exit_code": 0,
+      "stdout": "{\n  \"verified_files\": 5,\n  \"original_bytes\": 127,\n  \"transport_bytes\": 167,\n  \"index_sha256\": \"ad2659a50a9e16d79d6360858d2ece3ccad31a536b3089e6131e7ad6df05afa2\",\n  \"materialized\": false\n}\n",
+      "stderr": ""
+    },
+    {
+      "mode": "verify",
+      "exit_code": 0,
+      "stdout": "{\n  \"verified_files\": 5,\n  \"original_bytes\": 127,\n  \"transport_bytes\": 167,\n  \"index_sha256\": \"ad2659a50a9e16d79d6360858d2ece3ccad31a536b3089e6131e7ad6df05afa2\",\n  \"materialized\": false\n}\n",
+      "stderr": ""
+    },
+    {
+      "mode": "materialize",
+      "exit_code": 0,
+      "stdout": "{\n  \"verified_files\": 5,\n  \"original_bytes\": 127,\n  \"transport_bytes\": 167,\n  \"index_sha256\": \"ad2659a50a9e16d79d6360858d2ece3ccad31a536b3089e6131e7ad6df05afa2\",\n  \"materialized\": true\n}\n",
+      "stderr": ""
+    },
+    {
+      "mode": "tampered-transport-refusal",
+      "exit_code": 1,
+      "stderr": "Traceback (most recent call last):\n  File \"/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-independent-20261023/transport_evidence.py.txt\", line 72, in <module>\n    main()\n  File \"/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-independent-20261023/transport_evidence.py.txt\", line 60, in main\n    assert len(b) == r[\"bytes\"] and sha(b) == r[\"sha256\"], r[\"path\"]\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: log.log.gz\n"
+    }
+  ],
+  "original_bytes_restored_exactly": true
+}

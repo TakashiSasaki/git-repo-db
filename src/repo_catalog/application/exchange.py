@@ -272,14 +272,25 @@ class _ReceiveWork:
 class ExchangeService:
     """Selective verification-aware export and untrusted package import service."""
 
+    def export_transfer_events(self, *args, **kwargs):
+        from repo_catalog.domain.resource_stage import UnsupportedResourceStage
+
+        raise UnsupportedResourceStage("export_transfer_events")
+
     def __init__(
         self,
         directory: Path | str,
         *,
         operational: OperationalAcquisitionLedger | Path | str | None = None,
+        authorization: Any = None,
+        admission: Any = None,
+        grants: Any = None,
     ) -> None:
         self.directory = Path(directory)
         self.operational = operational
+        self.authorization = authorization
+        self.admission = admission
+        self.grants = grants
 
     def _has_core(self) -> bool:
         return (self.directory / "core.sqlite3").is_file()
@@ -384,6 +395,14 @@ class ExchangeService:
             self._check_stop()
             scope = selection or ExchangeSelectionScope()
             explicit_scope(scope)
+            if (
+                scope.include_context
+                and not self._has_context()
+                and not self._has_core()
+            ):
+                from repo_catalog.domain.context_admission import AdmissionRefused
+
+                raise AdmissionRefused("PERMISSION_DENIED")
             self._selection_details = {
                 "dependency_reasons": [],
                 "omissions": [],
@@ -1151,7 +1170,8 @@ class ExchangeService:
 
             # Determine full set of exported resources (including parents/members of selected resources)
             all_resource_rows = ctx.db.execute(
-                "SELECT service_instance_uuidv4, resource_kind, provider_resource_id "
+                "SELECT service_instance_uuidv4, resource_kind, provider_resource_id, "
+                "identifier_namespace_kind, identifier_namespace_id, document_kind, provider_document_id "
                 "FROM resources ORDER BY service_instance_uuidv4, resource_kind, provider_resource_id"
             ).fetchall()
 
@@ -1172,7 +1192,11 @@ class ExchangeService:
                 "AND c.provenance_json=t.provenance_json "
                 "ORDER BY t.observed_at_us, c.service_instance_uuidv4, c.resource_kind, c.provider_resource_id, c.collection_kind"
             ).fetchall()
-            support_columns = "service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,target_json,clock_json,provenance_json,observed_at_us"
+            support_columns = (
+                "service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,"
+                "target_json,clock_json,provenance_json,observed_at_us,"
+                "event_report_members_json,event_report_scope_json"
+            )
             support_rows = [
                 dict(zip(support_columns.split(","), r))
                 for r in ctx.db.execute(
@@ -1188,7 +1212,7 @@ class ExchangeService:
             self._selection_details["dependency_reasons"].extend(reasons)
             self._selection_details["omissions"].extend(omissions)
             for row in all_resource_rows:
-                if ResourceKey(*row) in included_rks:
+                if ResourceKey(*row[:3]) in included_rks:
                     section["resources"].append(
                         dict(
                             zip(
@@ -1196,6 +1220,10 @@ class ExchangeService:
                                     "service_instance_uuidv4",
                                     "resource_kind",
                                     "provider_resource_id",
+                                    "identifier_namespace_kind",
+                                    "identifier_namespace_id",
+                                    "document_kind",
+                                    "provider_document_id",
                                 ),
                                 row,
                             )
@@ -1251,7 +1279,7 @@ class ExchangeService:
             for table, columns in (
                 (
                     "resource_repository_relations",
-                    "service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,target_json,clock_json,provenance_json,observed_at_us",
+                    "service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,target_json,clock_json,provenance_json,observed_at_us,event_report_members_json,event_report_scope_json",
                 ),
                 (
                     "repository_mapping_dispositions",
@@ -1469,6 +1497,9 @@ class ExchangeService:
         permitted_repository_uuidv4s: tuple[str, ...] = (),
         selection: ExchangeSelectionScope | None = None,
         cut: Callable[[str], None] = lambda point: None,
+        authorization: Any = None,
+        admission: Any = None,
+        grants: Any = None,
     ) -> ExchangeImportReport:
         """Validate and import an ExchangePackage into Core and/or Context."""
         self._check_stop()
@@ -1590,6 +1621,21 @@ class ExchangeService:
                 # Previously performed decode work remains charged and counts
                 # against this same frozen cumulative ceiling, even with no rows.
                 work = _ReceiveWork(work, receive_selection.max_work)
+            active_grants = grants if grants is not None else self.grants
+            auth = authorization if authorization is not None else self.authorization
+            adm = admission if admission is not None else self.admission
+            want_context = package.context is not None
+            if (
+                want_context
+                and auth is None
+                and adm is None
+                and not permitted_repository_uuidv4s
+                and active_grants is None
+            ):
+                from repo_catalog.domain.context_admission import AdmissionRefused
+
+                raise AdmissionRefused("PERMISSION_DENIED")
+
             request_binding = {
                 "selection": receive_selection.to_dict(),
                 "sender": package.sender_catalog_instance_uuidv4,
@@ -1610,7 +1656,183 @@ class ExchangeService:
                 permitted=permitted_repository_uuidv4s,
                 selection=receive_selection,
                 cut=cut,
+                authorization=authorization,
+                admission=admission,
+                grants=grants,
             )
+
+    @staticmethod
+    def _extract_context_dependencies(
+        context_data: dict[str, Any] | None,
+    ) -> Any:
+        from repo_catalog.domain.context_admission import DependencySet, dependencies
+
+        if not context_data:
+            return DependencySet()
+
+        import json
+
+        from repo_catalog.domain.p1_context import ResourceKey
+        from repo_catalog.domain.p1_core import OID
+        from repo_catalog.domain.selective_exchange import (
+            disposition as decode_disposition,
+        )
+        from repo_catalog.domain.selective_exchange import (
+            relation as decode_relation,
+        )
+
+        resources = set()
+        repositories = set()
+        sources = set()
+        source_repository_pairs = set()
+        provider_registrations = set()
+        dispositions = set()
+        mapping_claims = set()
+        object_oids = set()
+
+        for p in context_data.get("providers", ()):
+            if "service_instance_uuidv4" in p:
+                provider_registrations.add(p["service_instance_uuidv4"])
+
+        for r in context_data.get("repositories", ()):
+            if "repository_uuidv4" in r:
+                repositories.add(r["repository_uuidv4"])
+
+        for s in context_data.get("sources", ()):
+            if "source_registration_uuidv4" in s:
+                sources.add(s["source_registration_uuidv4"])
+            if "service_instance_uuidv4" in s:
+                provider_registrations.add(s["service_instance_uuidv4"])
+
+        for sr in context_data.get("source_repositories", ()):
+            src = sr.get("source_registration_uuidv4")
+            repo = sr.get("repository_uuidv4")
+            if src:
+                sources.add(src)
+            if repo:
+                repositories.add(repo)
+            if src and repo:
+                source_repository_pairs.add((src, repo))
+
+        for res in context_data.get("resources", ()):
+            rk = ResourceKey(
+                res["service_instance_uuidv4"],
+                res["resource_kind"],
+                res["provider_resource_id"],
+            )
+            resources.add(rk)
+            if "service_instance_uuidv4" in res:
+                provider_registrations.add(res["service_instance_uuidv4"])
+
+        for rrr in context_data.get("resource_repository_relations", ()):
+            if "repository_uuidv4" in rrr:
+                repositories.add(rrr["repository_uuidv4"])
+            try:
+                rel = decode_relation(rrr)
+                dep = dependencies(rel)
+                resources.update(dep.resources)
+                repositories.update(dep.repositories)
+                sources.update(dep.sources)
+                source_repository_pairs.update(dep.source_repository_pairs)
+                mapping_claims.update(dep.mapping_claims)
+                provider_registrations.update(dep.provider_registrations)
+                object_oids.update(dep.object_oids)
+                if rel.relation_kind == "represents_repository":
+                    mapping_claims.add(rel.claim_key)
+            except Exception:
+                pass
+
+        for rmd in context_data.get("repository_mapping_dispositions", ()):
+            if "repository_uuidv4" in rmd:
+                repositories.add(rmd["repository_uuidv4"])
+            try:
+                disp = decode_disposition(rmd)
+                dep = dependencies(disp)
+                dispositions.update(dep.dispositions)
+                mapping_claims.update(dep.mapping_claims)
+                if hasattr(disp, "claim_key"):
+                    mapping_claims.add(disp.claim_key)
+                if getattr(disp, "replacement_claim_key", None):
+                    mapping_claims.add(disp.replacement_claim_key)
+                if hasattr(disp, "disposition_key"):
+                    dispositions.add(disp.disposition_key)
+                resources.update(dep.resources)
+                repositories.update(dep.repositories)
+                provider_registrations.update(dep.provider_registrations)
+            except Exception:
+                pass
+
+        for rel in context_data.get("resource_relations", ()):
+            if (
+                "service_instance_uuidv4" in rel
+                and "resource_kind" in rel
+                and "provider_resource_id" in rel
+            ):
+                resources.add(
+                    ResourceKey(
+                        rel["service_instance_uuidv4"],
+                        rel["resource_kind"],
+                        rel["provider_resource_id"],
+                    )
+                )
+            members_json = rel.get("members_json")
+            if members_json:
+                try:
+                    for m in json.loads(members_json):
+                        resources.add(ResourceKey(*m))
+                except Exception:
+                    pass
+
+        for ref in context_data.get("core_references", ()):
+            fmt = ref.get("object_format")
+            oid = ref.get("full_oid")
+            if fmt and oid:
+                object_oids.add(OID(fmt, oid))
+
+        return DependencySet(
+            resources=resources,
+            repositories=repositories,
+            sources=sources,
+            source_repository_pairs=source_repository_pairs,
+            mapping_claims=mapping_claims,
+            dispositions=dispositions,
+            provider_registrations=provider_registrations,
+            object_oids=object_oids,
+        )
+
+    @staticmethod
+    def _validate_receiver_authority(
+        auth, adm, context_data: dict[str, Any] | None
+    ) -> None:
+        from repo_catalog.domain.context_admission import (
+            AdmissionRefused,
+            ContextAdmissionService,
+        )
+
+        if auth is None or adm is None:
+            raise AdmissionRefused("PERMISSION_DENIED")
+        if not isinstance(auth, ContextAdmissionService):
+            raise AdmissionRefused("PERMISSION_DENIED")
+        auth.validate_context(adm)
+        policy = getattr(auth, "_policy", None)
+        if policy is None or not callable(getattr(policy, "lease", None)):
+            raise AdmissionRefused("PERMISSION_DENIED")
+
+        package_deps = ExchangeService._extract_context_dependencies(context_data)
+        if hasattr(policy, "grants") and policy.grants is None:
+            if (
+                package_deps.resources
+                or package_deps.sources
+                or package_deps.provider_registrations
+                or package_deps.mapping_claims
+                or package_deps.dispositions
+            ):
+                raise AdmissionRefused("PERMISSION_DENIED")
+
+        with policy.lease(adm.principal, adm.operation, package_deps) as lease:
+            if not callable(getattr(lease, "check_current", None)):
+                raise AdmissionRefused("PERMISSION_DENIED")
+            lease.check_current()
 
     def _import_package(
         self,
@@ -1622,6 +1844,9 @@ class ExchangeService:
         permitted,
         selection,
         cut,
+        authorization=None,
+        admission=None,
+        grants=None,
     ) -> ExchangeImportReport:
         self._check_stop()
         package = raw_package
@@ -1651,7 +1876,10 @@ class ExchangeService:
             if package.core is not None:
                 self._prevalidate_core_section(package.core, active_work)
                 self._import_core_units(CorePreflight(), package.core, active_work)
-            if package.context is not None:
+            if package.context is not None and want_context:
+                from repo_catalog.domain.selective_exchange import preflight_i2_context
+
+                preflight_i2_context(package.context)
                 self._prevalidate_context_section(package.context)
                 validate_context(package.context)
         cut("after_preflight")
@@ -1664,6 +1892,12 @@ class ExchangeService:
             omissions.extend(
                 filter_sections(core_data, context_data, selection, permitted=permitted)
             )
+        # Fence the receiver-selected atomic unit before dependency rewriting,
+        # package replay/binding, or either authority's effects.
+        if want_context and context_data is not None:
+            from repo_catalog.domain.selective_exchange import preflight_i2_context
+
+            preflight_i2_context(context_data)
         limited, _ = bound_sections(core_data, context_data, selection)
         omissions.extend(limited)
         omissions.extend(
@@ -1742,7 +1976,30 @@ class ExchangeService:
                 cut("after_" + stage + "_checkpoint")
 
         if self._has_core() and self._has_context() and (want_core or want_context):
-            coordinator = PairCoordinator(self.directory)
+            auth = authorization if authorization is not None else self.authorization
+            adm = admission if admission is not None else self.admission
+            active_grants = grants if grants is not None else self.grants
+            if want_context:
+                admit_selection = replace(selection, include_core=True)
+                if auth is None or adm is None:
+                    if not permitted and active_grants is None:
+                        from repo_catalog.domain.context_admission import (
+                            AdmissionRefused,
+                        )
+
+                        raise AdmissionRefused("PERMISSION_DENIED")
+                    from repo_catalog.domain.context_admission import (
+                        create_local_admission_service,
+                    )
+
+                    auth, adm, _ = create_local_admission_service(
+                        "exchange_import",
+                        grants=active_grants,
+                        permitted_repositories=frozenset(permitted),
+                        selection=admit_selection,
+                    )
+                self._validate_receiver_authority(auth, adm, context_data)
+            coordinator = PairCoordinator(self.directory, authorization=auth)
 
             def _core_unit(core_tx: AdmissionTransaction) -> None:
                 if want_core and package.core is not None:
@@ -1753,7 +2010,12 @@ class ExchangeService:
 
             def _context_unit(context_tx: AdmissionTransaction) -> None:
                 if want_context and package.context is not None:
-                    with Context.for_transaction(context_tx, self.directory) as ctx_cap:
+                    with Context.for_transaction(
+                        context_tx,
+                        self.directory,
+                        authorization=auth,
+                        admission=adm,
+                    ) as ctx_cap:
                         ctx_stats.update(
                             self._import_context_accounted(
                                 ctx_cap,
@@ -1764,7 +2026,13 @@ class ExchangeService:
                         )
 
             try:
-                coordinator.admit(_core_unit, _context_unit, cut=checkpoint)
+                coordinator.admit(
+                    _core_unit,
+                    _context_unit,
+                    cut=checkpoint,
+                    authorization=auth,
+                    admission=adm,
+                )
             except AdmissionFailure as error:
                 ledger.work_ledger.set_progress_once(
                     request,
@@ -1804,7 +2072,31 @@ class ExchangeService:
                     db.rollback()
                     raise
         elif want_context and context_data is not None:
-            with Context.transaction(self.directory) as ctx_cap:
+            auth = authorization if authorization is not None else self.authorization
+            adm = admission if admission is not None else self.admission
+            active_grants = grants if grants is not None else self.grants
+            admit_selection = replace(selection, include_core=True)
+            if auth is None or adm is None:
+                if not permitted and active_grants is None:
+                    from repo_catalog.domain.context_admission import (
+                        AdmissionRefused,
+                    )
+
+                    raise AdmissionRefused("PERMISSION_DENIED")
+                from repo_catalog.domain.context_admission import (
+                    create_local_admission_service,
+                )
+
+                auth, adm, _ = create_local_admission_service(
+                    "exchange_import",
+                    grants=active_grants,
+                    permitted_repositories=frozenset(permitted),
+                    selection=admit_selection,
+                )
+            self._validate_receiver_authority(auth, adm, context_data)
+            with Context.transaction(
+                self.directory, authorization=auth, admission=adm
+            ) as ctx_cap:
                 ctx_stats.update(
                     self._import_context_accounted(
                         ctx_cap,
@@ -2133,6 +2425,8 @@ class ExchangeService:
                 "clock_json",
                 "provenance_json",
                 "observed_at_us",
+                "event_report_members_json",
+                "event_report_scope_json",
             )
             stored_relations = [
                 decode_relation(dict(zip(columns, row)))
@@ -2281,31 +2575,35 @@ class ExchangeService:
         validate_context_bindings(data, source_services)
         pending = list(data["resources"])
         data["resources"] = []
-        while pending:
-            added = []
-            for row in pending:
-                rk = resource(row)
-                parent = None
-                if rk.resource_kind in ("review", "thread", "document", "comment"):
-                    coordinates = json.loads(rk.provider_resource_id)
-                    parent = ResourceKey(rk.service_instance_uuidv4, *coordinates[:2])
-                if rk.service_instance_uuidv4 in providers and (
-                    parent is None or parent in resources
-                ):
-                    data["resources"].append(row)
-                    resources.add(rk)
-                    added.append(row)
-            if not added:
-                omissions.extend(
+        for row in pending:
+            rk = resource(row)
+            if rk.service_instance_uuidv4 not in providers:
+                omissions.append(
                     {
                         "section": "resources",
-                        "unit": r,
+                        "unit": row,
                         "reason": "missing_parent_or_provider",
                     }
-                    for r in pending
                 )
-                break
-            pending = [r for r in pending if r not in added]
+                continue
+            if rk.resource_kind in ("review", "thread", "document", "comment"):
+                from repo_catalog.domain.resource_identification import (
+                    ResourceIdentification,
+                )
+
+                try:
+                    ResourceIdentification.from_wire(row)
+                except Exception:
+                    omissions.append(
+                        {
+                            "section": "resources",
+                            "unit": row,
+                            "reason": "missing_required_dependency",
+                        }
+                    )
+                    continue
+            data["resources"].append(row)
+            resources.add(rk)
         keep(
             "source_repositories",
             lambda r: (
@@ -2981,6 +3279,9 @@ class ExchangeService:
         ctx_data: dict[str, list[dict[str, Any]]],
         validate_core: Callable[[str, str], bool],
     ) -> dict[str, int]:
+        from repo_catalog.domain.selective_exchange import preflight_i2_context
+
+        preflight_i2_context(ctx_data)
         count_sql = "SELECT (SELECT count(*) FROM providers)+(SELECT count(*) FROM repository_context)+(SELECT count(*) FROM sources)+(SELECT count(*) FROM source_repositories)+(SELECT count(*) FROM resources)+(SELECT count(*) FROM resource_repository_relations)+(SELECT count(*) FROM repository_mapping_dispositions)+(SELECT count(*) FROM field_candidates)+(SELECT count(*) FROM resource_relations)+(SELECT count(*) FROM text_bodies)+(SELECT count(*) FROM collections)+(SELECT count(*) FROM collection_terminals)+(SELECT count(*) FROM core_references)+(SELECT count(*) FROM coverage_scopes)+(SELECT count(*) FROM coverage_claims)+(SELECT count(*) FROM coverage_proofs)+(SELECT count(*) FROM source_inventory_evidence)+(SELECT count(*) FROM source_coverage_proofs)"
         before_changes = ctx.db.execute(count_sql).fetchone()[0]
         before_res_count = ctx.db.execute("SELECT COUNT(*) FROM resources").fetchone()[
@@ -3032,31 +3333,18 @@ class ExchangeService:
                 sr["attributes_json"],
             )
 
-        # Admit resources in parent-first order (top-level before documents/reviews/threads/comments)
-        def _res_sort_key(item: dict[str, Any]) -> tuple[int, str, str, str]:
-            rk_kind = item["resource_kind"]
-            if rk_kind in ("repository", "issue", "pull_request"):
-                rank = 0
-            elif rk_kind in ("review", "thread"):
-                rank = 1
-            else:
-                rank = 2
-            return (
-                rank,
-                item["service_instance_uuidv4"],
-                rk_kind,
-                item["provider_resource_id"],
-            )
+        from repo_catalog.domain.resource_identification import ResourceIdentification
 
         admitted_resources = 0
-        for res in sorted(ctx_data["resources"], key=_res_sort_key):
+        for res in ctx_data["resources"]:
             _performed("metadata_units", 1)
             rk = ResourceKey(
                 res["service_instance_uuidv4"],
                 res["resource_kind"],
                 res["provider_resource_id"],
             )
-            ctx.resource(rk)
+            ident = ResourceIdentification.from_wire(res)
+            ctx.resource(rk, identification=ident)
             admitted_resources += 1
 
         for row in sorted(
@@ -3066,12 +3354,32 @@ class ExchangeService:
             _performed("metadata_units", 1)
             if not row["relation_kind"].startswith("transfer_"):
                 ctx.admit_repository_relation(decode_relation(row))
-        for report in transfer_reports(ctx_data):
-            _performed("metadata_units", 1)
-            ctx.admit_transfer_event(report)
         for row in ctx_data["repository_mapping_dispositions"]:
             _performed("metadata_units", 1)
             ctx.admit_mapping_disposition(decode_disposition(row))
+        for rel in ctx_data["resource_relations"]:
+            _performed("metadata_units", 1)
+            if rel["relation_kind"] == "transfer_event_report":
+                continue
+            owner_rk = ResourceKey(
+                rel["service_instance_uuidv4"],
+                rel["resource_kind"],
+                rel["provider_resource_id"],
+            )
+            members = tuple(ResourceKey(*m) for m in json.loads(rel["members_json"]))
+            ctx.relation(
+                ResourceRelation(
+                    owner_rk,
+                    rel["relation_kind"],
+                    members,
+                    rel["provenance_json"],
+                    rel["scope_json"],
+                    rel["observed_at_us"],
+                )
+            )
+        for report in transfer_reports(ctx_data):
+            _performed("metadata_units", 1)
+            ctx.admit_transfer_event(report)
 
         for tb in ctx_data["text_bodies"]:
             _performed("metadata_units", 1)
@@ -3181,27 +3489,6 @@ class ExchangeService:
                     }
                 )
                 pending_refs += 1
-
-        for rel in ctx_data["resource_relations"]:
-            _performed("metadata_units", 1)
-            if rel["relation_kind"] == "transfer_event_report":
-                continue
-            owner_rk = ResourceKey(
-                rel["service_instance_uuidv4"],
-                rel["resource_kind"],
-                rel["provider_resource_id"],
-            )
-            members = tuple(ResourceKey(*m) for m in json.loads(rel["members_json"]))
-            ctx.relation(
-                ResourceRelation(
-                    owner_rk,
-                    rel["relation_kind"],
-                    members,
-                    rel["provenance_json"],
-                    rel["scope_json"],
-                    rel["observed_at_us"],
-                )
-            )
 
         # Index coverage claims and proofs so collection and inventory proofs are admitted
         # while their terminal observation is the current latest terminal.

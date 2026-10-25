@@ -2,16 +2,15 @@
 
 import sqlite3
 from contextlib import contextmanager
-from uuid import uuid4
 
 import pytest
 
 from repo_catalog.adapters.sqlite import p1_schema as schema
-from repo_catalog.adapters.sqlite.p1_context import ContextStore
 from repo_catalog.adapters.sqlite.production_context import Context
 from repo_catalog.adapters.sqlite.recovery_validation import (
     validate_stored_context_relations,
 )
+from repo_catalog.domain.context_admission import DependencySet
 from repo_catalog.domain.p1_context import (
     CoverageScope,
     EventReportKey,
@@ -21,6 +20,7 @@ from repo_catalog.domain.p1_context import (
     MappingDisposition,
     MappingOperationEvidence,
     MappingSupport,
+    ProviderEndpointDeclaration,
     ResourceKey,
     ResourceRepositoryRelation,
     TransferEventReport,
@@ -32,18 +32,109 @@ from repo_catalog.domain.p1_context import (
 from repo_catalog.domain.p1_coordination import CoordinationError
 from repo_catalog.domain.production_context import ContextError
 from repo_catalog.domain.recovery import BackupValidationError
+from repo_catalog.domain.resource_identification import ResourceIdentification as RI
+from tests.integration.context_originals import synthetic_parent
+from tests.support.authorized_context import FixtureContextStore
+from tests.support.context_admission import fixture_transaction
 
 REPO_1 = "9ebbe38a-f937-40e6-a99c-701835ebcf10"
 REPO_2 = "c58b4f17-f58c-4a33-8bc6-eb52c42337d1"
 SERVICE = "aad25448-03eb-4f83-a578-ceec84375b5a"
 SOURCE = "80f5c4f9-6d6b-4691-af3c-00ab02ad9f53"
 
-KEY_ISSUE = ResourceKey(SERVICE, "issue", "7")
-KEY_REPO = ResourceKey(SERVICE, "repository", "octocat/Hello-World")
+KEY_ISSUE = ResourceKey.from_native(SERVICE, "issue", "7")
+KEY_REPO = ResourceKey.from_native(SERVICE, "repository", "octocat/Hello-World")
 KEY_EVENT = ResourceKey.timeline_event(KEY_ISSUE, "event-99")
 
 PROVENANCE_1 = canonical({"source": "provider.example", "evidence": "event-1"})
 PROVENANCE_2 = canonical({"source": "provider.example", "evidence": "event-2"})
+
+
+def relation_grants():
+    namespace = ResourceKey.from_native(SERVICE, "issue", "nonexistent")
+    claim1 = MappingClaimKey.for_repository(
+        KEY_REPO,
+        REPO_1,
+        clock=FieldClock("provider.updated_at", 1),
+        provenance_json=PROVENANCE_1,
+    )
+    claim2 = MappingClaimKey.for_repository(
+        KEY_REPO,
+        REPO_2,
+        clock=FieldClock("provider.updated_at", 2),
+        provenance_json=PROVENANCE_2,
+    )
+    provider_a = ResourceKey.from_native(SERVICE, "repository", "org/repo-a")
+    claim_a = MappingClaimKey.for_repository(
+        provider_a,
+        REPO_1,
+        clock=FieldClock("github:repo", 10),
+        provenance_json=PROVENANCE_1,
+    )
+    transfer_claims = tuple(
+        MappingClaimKey.for_repository(
+            ResourceKey.from_native(SERVICE, "repository", native),
+            repository,
+            clock=FieldClock("mapping", 1),
+            provenance_json=PROVENANCE_1,
+        )
+        for native, repository in (("provider-a", REPO_1), ("provider-b", REPO_2))
+    )
+    dispositions = (
+        MappingDisposition(
+            claim1,
+            "correct",
+            FieldClock("provider.updated_at", 3),
+            PROVENANCE_1,
+            30,
+            replacement_claim_key=claim2,
+        ),
+        MappingDisposition(
+            claim2,
+            "correct",
+            FieldClock("provider.updated_at", 4),
+            PROVENANCE_2,
+            40,
+            replacement_claim_key=claim1,
+        ),
+        MappingDisposition(
+            claim_a,
+            "withdraw",
+            FieldClock("github:audit", 50),
+            canonical({"source": "github", "evidence": "withdraw-a"}),
+            50,
+        ),
+        MappingDisposition(
+            transfer_claims[0], "withdraw", FieldClock("operation", 2), PROVENANCE_2, 2
+        ),
+    )
+    return DependencySet(
+        resources={
+            KEY_ISSUE,
+            KEY_REPO,
+            KEY_EVENT,
+            namespace,
+            ResourceKey.document(namespace, "comment", "review_comment", "c-1"),
+            *(
+                ResourceKey.from_native(SERVICE, "repository", value)
+                for value in ("provider-a", "provider-b", "org/repo-a", "org/repo-b")
+            ),
+            *(
+                ResourceKey.from_native(SERVICE, "issue", value)
+                for value in ("101", "102")
+            ),
+            *(
+                ResourceKey.timeline_event(KEY_ISSUE, value)
+                for value in ("failed-transfer", "timeline-77", "ev-101", "ev-102")
+            ),
+        },
+        repositories={REPO_1, REPO_2, "e969c72a-82b4-4aeb-b217-3b7679c1371b"},
+        sources={SOURCE},
+        source_repository_pairs={(SOURCE, REPO_1), (SOURCE, REPO_2)},
+        provider_registrations={SERVICE},
+        mapping_claims={claim1, claim2, claim_a, *transfer_claims},
+        dispositions={item.disposition_key for item in dispositions},
+    )
 
 
 @pytest.mark.parametrize("production", [False, True])
@@ -62,11 +153,16 @@ def test_transfer_generic_admission_requires_complete_report(
         catalog = tmp_path / "production"
         catalog.mkdir()
         schema.initialize(catalog / "context.sqlite3", "context", REPO_1, SERVICE)
-        with Context.transaction(catalog) as facade:
+        with fixture_transaction(catalog, relation_grants()) as facade:
             facade.provider(SERVICE, "github", "{}")
             facade.repository(REPO_1)
             facade.resource(KEY_ISSUE)
-            facade.resource(KEY_EVENT)
+            facade.resource(
+                KEY_EVENT,
+                identification=RI.scoped(
+                    KEY_EVENT, KEY_ISSUE, "timeline_event", "event-99"
+                ),
+            )
             yield facade
         assert not (catalog / "p1-recovery-stop.json").exists()
 
@@ -82,21 +178,27 @@ def test_transfer_generic_admission_requires_complete_report(
             if result_api
             else selected.admit_repository_relation
         )
-        with pytest.raises(ValueError, match="admit_transfer_event"):
+        with pytest.raises(ValueError, match="I2_TRANSFER_UNSUPPORTED"):
             admit(endpoint)
         assert not selected.db.execute(
             "SELECT 1 FROM resource_repository_relations"
         ).fetchall()
         report = TransferEventReport(
             EventReportKey(KEY_EVENT, endpoint.clock, PROVENANCE_1),
-            1,
+            observed_at_us=1,
             from_relations=(endpoint,) if role == "transfer_from_repository" else (),
             to_relations=(endpoint,) if role == "transfer_to_repository" else (),
+            parent_report=synthetic_parent(KEY_EVENT, KEY_ISSUE),
+            endpoint_declaration=ProviderEndpointDeclaration(
+                KEY_REPO if role == "transfer_from_repository" else "not_reported",
+                KEY_REPO if role == "transfer_to_repository" else "not_reported",
+            ),
+            endpoints=((role, canonical(REPO_1)),),
         )
         assert selected.admit_transfer_event(report) == "insert"
         assert selected.admit_transfer_event(report) == "duplicate"
         # Even exact replay/addition must use the report-level equality check.
-        with pytest.raises(ValueError, match="admit_transfer_event"):
+        with pytest.raises(ValueError, match="I2_TRANSFER_UNSUPPORTED"):
             admit(endpoint)
         assert selected.transfer_event_reports() == (report,)
         validate_stored_context_relations(selected.db)
@@ -122,6 +224,9 @@ def test_transfer_stored_type_is_never_inferred(context_db, scope_state):
         provenance_json=PROVENANCE_1,
         from_target_json=canonical(REPO_1),
         observed_at_us=1,
+        parent_report=synthetic_parent(KEY_EVENT, KEY_ISSUE),
+        endpoint_declaration=ProviderEndpointDeclaration(KEY_REPO, "not_reported"),
+        endpoints=(("transfer_from_repository", canonical(REPO_1)),),
     )
     endpoint = report.from_relations[0]
     # SQL can constrain the Event Resource/FK, but cannot prove Provider event
@@ -149,10 +254,12 @@ def test_transfer_stored_type_is_never_inferred(context_db, scope_state):
             scope.pop("clock")
         members = "[]"
         if scope_state == "members":
-            members = canonical([[SERVICE, "repository", "not-declared"]])
+            members = canonical([[SERVICE, "repository", canonical("not-declared")]])
         if scope_state == "missing_provider":
-            scope["from_provider_repository_id"] = "missing-provider"
-            members = canonical([[SERVICE, "repository", "missing-provider"]])
+            scope["from_provider_repository_id"] = canonical("missing-provider")
+            members = canonical(
+                [[SERVICE, "repository", canonical("missing-provider")]]
+            )
         db.execute(
             "INSERT INTO resource_relations VALUES(?,?,?,?,?,?,?,?)",
             (
@@ -173,12 +280,21 @@ def test_transfer_stored_type_is_never_inferred(context_db, scope_state):
 def test_transfer_report_fk_failure_rolls_back_whole_unit(context_db):
     db, store, _ = context_db
     event = ResourceKey.timeline_event(KEY_ISSUE, "failed-transfer")
+    # Authorize this fixture-owned missing coordinate before admission so the
+    # ordinary stage/FK boundary is reached without minting grants after denial.
+    missing_repository = canonical("e969c72a-82b4-4aeb-b217-3b7679c1371b")
     report = TransferEventReport.from_targets(
         event,
         clock=FieldClock("event", 1),
         provenance_json=PROVENANCE_1,
         from_target_json=canonical(REPO_1),
-        to_target_json=canonical(str(uuid4())),
+        to_target_json=missing_repository,
+        parent_report=synthetic_parent(event, KEY_ISSUE),
+        endpoint_declaration=ProviderEndpointDeclaration(KEY_REPO, KEY_REPO),
+        endpoints=(
+            ("transfer_from_repository", canonical(REPO_1)),
+            ("transfer_to_repository", missing_repository),
+        ),
     )
     before = list(db.iterdump())
     with pytest.raises(sqlite3.IntegrityError):
@@ -188,8 +304,8 @@ def test_transfer_report_fk_failure_rolls_back_whole_unit(context_db):
 
 def test_transfer_supports_both_endpoints_without_cross_borrowing(context_db):
     _, store, _ = context_db
-    provider_a = ResourceKey(SERVICE, "repository", "provider-a")
-    provider_b = ResourceKey(SERVICE, "repository", "provider-b")
+    provider_a = ResourceKey.from_native(SERVICE, "repository", "provider-a")
+    provider_b = ResourceKey.from_native(SERVICE, "repository", "provider-b")
     claims = []
     for provider, target in ((provider_a, REPO_1), (provider_b, REPO_2)):
         store.resource(provider)
@@ -217,8 +333,12 @@ def test_transfer_supports_both_endpoints_without_cross_borrowing(context_db):
         provenance_json=provenance,
         from_target_json=canonical(REPO_1),
         to_target_json=canonical(REPO_2),
-        from_provider_repository=provider_a,
-        to_provider_repository=provider_b,
+        parent_report=synthetic_parent(KEY_EVENT, KEY_ISSUE),
+        endpoint_declaration=ProviderEndpointDeclaration(provider_a, provider_b),
+        endpoints=(
+            ("transfer_from_repository", canonical(REPO_1)),
+            ("transfer_to_repository", canonical(REPO_2)),
+        ),
     )
     assert store.admit_transfer_event(report) == "insert"
     assert store.admit_transfer_event(report) == "duplicate"
@@ -246,21 +366,27 @@ def test_transfer_supports_both_endpoints_without_cross_borrowing(context_db):
 
 
 def test_partial_transfer_alternatives_remain_selection_truncated(context_db):
+    """Retained node: R09 now withholds a partial original instead of admitting a fragment."""
     _, store, _ = context_db
     report = TransferEventReport.from_targets(
         KEY_EVENT,
         clock=FieldClock("event", 1),
         provenance_json=PROVENANCE_1,
         from_target_json=(canonical(REPO_1), canonical(REPO_2)),
+        parent_report=synthetic_parent(KEY_EVENT, KEY_ISSUE),
+        endpoint_declaration=ProviderEndpointDeclaration(KEY_REPO, "not_reported"),
+        endpoints=(
+            ("transfer_from_repository", canonical(REPO_1)),
+            ("transfer_from_repository", canonical(REPO_2)),
+        ),
     )
     selected = report.select_for_repositories([REPO_1])
-    assert selected is not None and len(selected.from_relations) == 1
-    assert selected.omitted_roles == frozenset()
-    assert selected.has_selection_omission
-    selected_again = selected.select_for_repositories([REPO_1, REPO_2])
-    assert selected_again is not None and selected_again.has_selection_omission
-    with pytest.raises(ValueError, match="Selection-truncated"):
-        store.admit_transfer_event(selected_again)
+    assert selected is None
+    # A later broader selection must explicitly resupply the entire original.
+    selected_again = report.select_for_repositories([REPO_1, REPO_2])
+    assert selected_again is report
+    assert len(selected_again.from_relations) == 2
+    assert not selected_again.has_selection_omission
     assert store.admit_transfer_event(report) == "insert"
 
 
@@ -276,11 +402,16 @@ def context_db(tmp_path):
     db.execute("INSERT INTO repository_context VALUES(?,?)", (REPO_1, "{}"))
     db.execute("INSERT INTO repository_context VALUES(?,?)", (REPO_2, "{}"))
     db.execute("INSERT INTO sources VALUES(?,?,?)", (SOURCE, SERVICE, "{}"))
-    store = ContextStore(db)
+    store = FixtureContextStore(db, relation_grants())
     store.resource(KEY_REPO, REPO_1)
     store.resource(KEY_ISSUE, REPO_1)
-    store.resource(KEY_EVENT, REPO_1)
+    store.resource(
+        KEY_EVENT,
+        REPO_1,
+        identification=RI.scoped(KEY_EVENT, KEY_ISSUE, "timeline_event", "event-99"),
+    )
     yield db, store, path
+    store.close()
     db.close()
 
 
@@ -394,36 +525,35 @@ def test_counterexample_3_atomic_rollback_on_failure(context_db):
     )
     store.admit_field(orig)
 
-    db.execute("BEGIN")
-    newer = FieldCandidate(
-        KEY_ISSUE,
-        "title",
-        canonical("newer"),
-        FieldClock("clock_a", 20),
-        PROVENANCE_2,
-        20,
-    )
-    store.admit_field(newer)
-    assert len(store.candidates(KEY_ISSUE, "title")) == 1
-    assert store.candidates(KEY_ISSUE, "title")[0].value_json == '"newer"'
-
-    # Force a failure (e.g. FK violation on invalid target in repository_relations)
-    invalid_repo = "11111111-2222-3333-4444-555555555555"
-    with pytest.raises(sqlite3.IntegrityError):
-        db.execute(
-            "INSERT INTO resource_repository_relations(service_instance_uuidv4, resource_kind, provider_resource_id, relation_kind, clock_json, target_json, provenance_json, observed_at_us) VALUES(?,?,?,?,?,?,?,?)",
-            (
-                KEY_ISSUE.service_instance_uuidv4,
-                KEY_ISSUE.resource_kind,
-                KEY_ISSUE.provider_resource_id,
-                "owning_repository",
-                '{"domain":"test","at_us":1}',
-                f'"{invalid_repo}"',
-                PROVENANCE_1,
-                30,
-            ),
+    with store.transaction(rollback=True):
+        newer = FieldCandidate(
+            KEY_ISSUE,
+            "title",
+            canonical("newer"),
+            FieldClock("clock_a", 20),
+            PROVENANCE_2,
+            20,
         )
-    db.execute("ROLLBACK")
+        store.admit_field(newer)
+        assert len(store.candidates(KEY_ISSUE, "title")) == 1
+        assert store.candidates(KEY_ISSUE, "title")[0].value_json == '"newer"'
+
+        # Force a failure (e.g. FK violation on invalid target in repository_relations)
+        invalid_repo = "11111111-2222-3333-4444-555555555555"
+        with pytest.raises(sqlite3.IntegrityError):
+            db.execute(
+                "INSERT INTO resource_repository_relations(service_instance_uuidv4, resource_kind, provider_resource_id, relation_kind, clock_json, target_json, provenance_json, observed_at_us) VALUES(?,?,?,?,?,?,?,?)",
+                (
+                    KEY_ISSUE.service_instance_uuidv4,
+                    KEY_ISSUE.resource_kind,
+                    KEY_ISSUE.provider_resource_id,
+                    "owning_repository",
+                    '{"domain":"test","at_us":1}',
+                    f'"{invalid_repo}"',
+                    PROVENANCE_1,
+                    30,
+                ),
+            )
 
     # Original candidate state is atomically preserved
     candidates = store.candidates(KEY_ISSUE, "title")
@@ -486,12 +616,22 @@ def test_counterexample_4_invalid_roles_and_targets(context_db):
             ),
         )
 
-    # Wrong parent FK in resources table
+    # Complete native namespace is independent of semantic Parent/existence
     child_key = ResourceKey.document(
-        ResourceKey(SERVICE, "issue", "nonexistent"), "comment", "review_comment", "c-1"
+        ResourceKey.from_native(SERVICE, "issue", "nonexistent"),
+        "comment",
+        "review_comment",
+        "c-1",
     )
-    with pytest.raises(sqlite3.IntegrityError):
-        store.resource(child_key, REPO_1)
+    declaration = RI.scoped(
+        child_key,
+        ResourceKey.from_native(SERVICE, "issue", "nonexistent"),
+        "review_comment",
+        "c-1",
+    )
+    store.resource(child_key, REPO_1, identification=declaration)
+    assert store.identification(child_key) == declaration
+    assert not db.execute("SELECT 1 FROM resource_relations").fetchall()
 
 
 # Counterexample 5: One-sided, null, two-sided, unresolved-endpoint and separate-report Transfer cases: no invented endpoint or cross-report pairing.
@@ -514,11 +654,14 @@ def test_counterexample_5_transfer_cases_no_invented_endpoints(context_db):
         observed_at_us=10,
         from_relations=(r_from,),
         to_relations=(),
-        omitted_roles=frozenset({"transfer_to_repository"}),
+        parent_report=synthetic_parent(ev_key.event_resource, KEY_ISSUE),
+        endpoint_declaration=ProviderEndpointDeclaration(KEY_REPO, "not_reported"),
+        endpoints=(("transfer_from_repository", canonical(REPO_1)),),
     )
-    assert report_from.from_relations == (r_from,)
+    assert report_from.from_relations[0].claim_key == r_from.claim_key
     assert report_from.to_relations == ()
-    assert "transfer_to_repository" in report_from.omitted_roles
+    assert report_from.to_state == "absent"
+    assert report_from.omitted_roles == frozenset()
 
     # Two-sided transfer: both endpoints present
     r_to = ResourceRepositoryRelation(
@@ -535,6 +678,12 @@ def test_counterexample_5_transfer_cases_no_invented_endpoints(context_db):
         observed_at_us=10,
         from_relations=(r_from,),
         to_relations=(r_to,),
+        parent_report=synthetic_parent(ev_key.event_resource, KEY_ISSUE),
+        endpoint_declaration=ProviderEndpointDeclaration(KEY_REPO, KEY_REPO),
+        endpoints=(
+            ("transfer_from_repository", canonical(REPO_1)),
+            ("transfer_to_repository", canonical(REPO_2)),
+        ),
     )
     assert len(report_both.from_relations) == 1
     assert len(report_both.to_relations) == 1
@@ -929,7 +1078,7 @@ def test_counterexample_12_old_repository_uuidv4_field_rejected(context_db):
 def test_counterexample_13_fk_and_trigger_order_consistency(context_db):
     db, store, _ = context_db
     # Target repository must exist in repository_context or be NULL
-    unregistered_repo = str(uuid4())
+    unregistered_repo = "e969c72a-82b4-4aeb-b217-3b7679c1371b"
     claim_unregistered = ResourceRepositoryRelation(
         KEY_ISSUE,
         "owning_repository",
@@ -972,6 +1121,10 @@ def test_counterexample_14_capabilities_and_p7_stops(tmp_path):
                     PROVENANCE_1,
                     10,
                 )
+            )
+        with pytest.raises(sqlite3.OperationalError, match="readonly"):
+            snap.db.execute(
+                "INSERT INTO repository_context VALUES(?,?)", (REPO_1, "{}")
             )
 
     # Expired capability cannot be reused
@@ -1055,8 +1208,8 @@ def test_counterexample_18_mapping_claim_support_isolation_and_no_speculative_bo
 ):
     _, store, _ = context_db
     # 1. Provider Repository A and B both map to Core REPO_1
-    prov_a = ResourceKey(SERVICE, "repository", "org/repo-a")
-    prov_b = ResourceKey(SERVICE, "repository", "org/repo-b")
+    prov_a = ResourceKey.from_native(SERVICE, "repository", "org/repo-a")
+    prov_b = ResourceKey.from_native(SERVICE, "repository", "org/repo-b")
     store.resource(prov_a)
     store.resource(prov_b)
 
@@ -1067,7 +1220,7 @@ def test_counterexample_18_mapping_claim_support_isolation_and_no_speculative_bo
     store.admit_repository_relation(claim_a)
 
     # 2. Issue 1 has an owning_repository relation targeting REPO_1, but NO embedded MappingSupport
-    issue_1 = ResourceKey(SERVICE, "issue", "101")
+    issue_1 = ResourceKey.from_native(SERVICE, "issue", "101")
     store.resource(issue_1)
     issue_1_rel = ResourceRepositoryRelation(
         issue_1,
@@ -1087,7 +1240,7 @@ def test_counterexample_18_mapping_claim_support_isolation_and_no_speculative_bo
     assert not res_1[0].is_core_resolved_active
 
     # Now create Issue 2 with explicit MappingSupport referencing claim_a
-    issue_2 = ResourceKey(SERVICE, "issue", "102")
+    issue_2 = ResourceKey.from_native(SERVICE, "issue", "102")
     store.resource(issue_2)
     ck_a = claim_a.claim_key
     assert isinstance(ck_a, MappingClaimKey)
@@ -1165,6 +1318,11 @@ def test_transfer_event_genuine_type_enforcement_across_typed_paths(context_db):
                 clock=clk,
                 provenance_json=PROVENANCE_1,
                 event_type=bad_event_type,
+                parent_report=synthetic_parent(ev_res, KEY_ISSUE),
+                endpoint_declaration=ProviderEndpointDeclaration(
+                    "explicit_null", "not_reported"
+                ),
+                endpoints=(("transfer_from_repository", "null"),),
             )
 
     # Valid report with event_type='transferred' admits successfully
@@ -1176,6 +1334,12 @@ def test_transfer_event_genuine_type_enforcement_across_typed_paths(context_db):
         from_target_json=canonical(REPO_1),
         to_target_json=canonical(REPO_2),
         event_type="transferred",
+        parent_report=synthetic_parent(ev_res, KEY_ISSUE),
+        endpoint_declaration=ProviderEndpointDeclaration(KEY_REPO, KEY_REPO),
+        endpoints=(
+            ("transfer_from_repository", canonical(REPO_1)),
+            ("transfer_to_repository", canonical(REPO_2)),
+        ),
     )
     outcome = store.admit_transfer_event(valid_report)
     assert outcome == "insert"
@@ -1196,6 +1360,12 @@ def test_transfer_event_reports_generator_selected_repositories_and_invariants(
         observed_at_us=1,
         from_target_json=canonical(REPO_1),
         to_target_json=canonical(REPO_2),
+        parent_report=synthetic_parent(ev1, KEY_ISSUE),
+        endpoint_declaration=ProviderEndpointDeclaration(KEY_REPO, KEY_REPO),
+        endpoints=(
+            ("transfer_from_repository", canonical(REPO_1)),
+            ("transfer_to_repository", canonical(REPO_2)),
+        ),
     )
     rep2 = TransferEventReport.from_targets(
         ev2,
@@ -1204,6 +1374,12 @@ def test_transfer_event_reports_generator_selected_repositories_and_invariants(
         observed_at_us=2,
         from_target_json=canonical(REPO_1),
         to_target_json="null",  # explicit null endpoint preserved
+        parent_report=synthetic_parent(ev2, KEY_ISSUE),
+        endpoint_declaration=ProviderEndpointDeclaration(KEY_REPO, "explicit_null"),
+        endpoints=(
+            ("transfer_from_repository", canonical(REPO_1)),
+            ("transfer_to_repository", "null"),
+        ),
     )
     assert store.admit_transfer_event(rep1) == "insert"
     assert store.admit_transfer_event(rep2) == "insert"
@@ -1213,16 +1389,10 @@ def test_transfer_event_reports_generator_selected_repositories_and_invariants(
         yield REPO_1
 
     selected_reports = store.transfer_event_reports(selected_repositories=_gen())
-    # Both events must be present and filtered with REPO_1
-    assert len(selected_reports) == 2
-    r1 = next(r for r in selected_reports if r.report_key.event_resource == ev1)
+    # A generator is consumed once. An excluded endpoint withholds its whole Event.
+    assert len(selected_reports) == 1
+    assert all(r.report_key.event_resource != ev1 for r in selected_reports)
     r2 = next(r for r in selected_reports if r.report_key.event_resource == ev2)
-
-    # In rep1: REPO_1 is from, REPO_2 is to. REPO_2 is omitted by selection, from is kept.
-    assert len(r1.from_relations) == 1
-    assert len(r1.to_relations) == 0
-    assert "transfer_to_repository" in r1.omitted_roles
-    assert not r1.from_relations[0].is_explicit_null_target
 
     # In rep2: REPO_1 is from, null is to. Explicit null is preserved under selection!
     assert len(r2.from_relations) == 1

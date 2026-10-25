@@ -71,6 +71,11 @@ def junit(path):
 
 
 def runtime():
+    db = sqlite3.connect(":memory:")
+    try:
+        sqlite_source_id = db.execute("SELECT sqlite_source_id()").fetchone()[0]
+    finally:
+        db.close()
     cpu = Path("/sys/fs/cgroup/cpu.max")
     git_sha = (
         os.environ.get("GITHUB_SHA")
@@ -91,6 +96,8 @@ def runtime():
         git_ver = "unknown"
     return dict(
         python=platform.python_version(),
+        executable=sys.executable,
+        sqlite_source_id=sqlite_source_id,
         sqlite=sqlite3.sqlite_version,
         git=git_ver,
         cpu_count=os.cpu_count(),

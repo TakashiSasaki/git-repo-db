@@ -1,0 +1,51 @@
+{
+  "command": [
+    "/workspace/i6a-final/.venv/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "-o",
+    "addopts=--strict-markers",
+    "-o",
+    "junit_family=xunit1",
+    "@/workspace/i6a-runs/focused-final/sql/serial-sql-probes.selected.txt",
+    "--junitxml=/workspace/i6a-runs/focused-final/sql/serial-sql-probes.xml",
+    "--journal=/workspace/i6a-runs/focused-final/sql/serial-sql-probes.jsonl"
+  ],
+  "cwd": "/workspace/i6a-final",
+  "started_epoch": 1792730992.7295613,
+  "elapsed_seconds": 0.857,
+  "exit_code": 0,
+  "collected": 3,
+  "passed": 3,
+  "failed": 0,
+  "error": 0,
+  "skipped": 0,
+  "xfail": 0,
+  "xpass": 0,
+  "executed": 3,
+  "reconciliation": {
+    "checks": {
+      "selected_unique": true,
+      "selected_equals_junit": true,
+      "selected_equals_journal_starts": true,
+      "setup_and_teardown_once": true,
+      "no_duplicate_phases": true,
+      "phase_nodes_equal_selected": true,
+      "call_once_after_successful_setup": true,
+      "one_finish": true
+    },
+    "consistent_node_execution": true,
+    "journal_phase_outcomes": {
+      "passed": 9
+    },
+    "finishes": [
+      {
+        "event": "finish",
+        "status": "completed",
+        "exitstatus": 0,
+        "timestamp": 1792730993.446129
+      }
+    ]
+  }
+}

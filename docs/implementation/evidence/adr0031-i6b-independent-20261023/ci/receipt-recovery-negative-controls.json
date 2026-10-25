@@ -1,0 +1,24 @@
+{
+  "controls": [
+    {
+      "control": "missing-both",
+      "exit_code": 1,
+      "stderr": "Traceback (most recent call last):\n  File \"/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-independent-20261023/recover_access_receipt.py.txt\", line 68, in <module>\n    main()\n  File \"/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-independent-20261023/recover_access_receipt.py.txt\", line 44, in main\n    assert len(blob) == views[0][2]\n           ^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+      "rejected": true
+    },
+    {
+      "control": "conflicting-view",
+      "exit_code": 1,
+      "stderr": "Traceback (most recent call last):\n  File \"/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-independent-20261023/recover_access_receipt.py.txt\", line 68, in <module>\n    main()\n  File \"/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-independent-20261023/recover_access_receipt.py.txt\", line 42, in main\n    raise AssertionError(\"Conflicting observed chunks; recovery ambiguous\")\nAssertionError: Conflicting observed chunks; recovery ambiguous\n",
+      "rejected": true
+    },
+    {
+      "control": "false-original-hash",
+      "exit_code": 1,
+      "stderr": "Traceback (most recent call last):\n  File \"/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-independent-20261023/recover_access_receipt.py.txt\", line 68, in <module>\n    main()\n  File \"/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-independent-20261023/recover_access_receipt.py.txt\", line 45, in main\n    assert hashlib.sha256(blob).hexdigest() == views[0][1]\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+      "rejected": true
+    }
+  ],
+  "helper": "recover_access_receipt.py.txt",
+  "actual_positive": "ci/author-access/recovery-verification.json"
+}

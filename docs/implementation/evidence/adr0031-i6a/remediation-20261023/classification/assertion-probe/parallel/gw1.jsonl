@@ -1,0 +1,5 @@
+{"event": "configure", "worker": "gw1", "source": "/workspace/i6a-assertion-selfcheck", "optimization": 0}
+{"event": "node_start", "worker": "gw1", "nodeid": "::test_stopped"}
+{"event": "assertion_line", "worker": "gw1", "nodeid": "::test_stopped", "phase": "call", "path": "tests/test_probe.py", "line": 13}
+{"event": "node_finish", "worker": "gw1", "nodeid": "::test_stopped"}
+{"event": "session_finish", "worker": "gw1", "exitstatus": 1}

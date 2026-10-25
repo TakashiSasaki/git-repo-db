@@ -1,0 +1,51 @@
+{
+  "base": "f5dc409429cdb69955b55e3c27a7ef3c163762fb",
+  "scope": "Mutable shared branch diagnostic snapshot, not final commit binding",
+  "files": [
+    {
+      "path": "tests/integration/p3/test_production_context.py",
+      "baseline_sha256": "e1596aa132149ba1bee3d4ea53edac9ff7a30b53b02236ac820ec58354d85f74",
+      "current_sha256": "74423c8fd9fa9931344f166bcaf357a26a0e8d7f8c4de7e9815ea1c30d4e9245",
+      "baseline_assertions": 132,
+      "current_assertions": 134,
+      "original_assertion_asts_all_preserved": true,
+      "added_assertion_count": 2,
+      "skip_xfail_markers": false
+    },
+    {
+      "path": "tests/integration/access/test_context_boundary.py",
+      "baseline_sha256": "5a742120f5555c60feb9a90977ad0926a6e1a23b04c28a1465cc99df5a8237dc",
+      "current_sha256": "7fc0ebba3739cf2b49e190dbddeb9f476da291c3644f0be18b9f7a63ab63331a",
+      "baseline_assertions": 28,
+      "current_assertions": 28,
+      "original_assertion_asts_all_preserved": true,
+      "added_assertion_count": 0,
+      "skip_xfail_markers": false
+    },
+    {
+      "path": "tests/integration/i3/test_selective_exchange.py",
+      "baseline_sha256": "f77af61ea80e8dceb1bc76efe614d024ba6e596f5a743e9f5bfc60a1859feb47",
+      "current_sha256": "28acc936982a7cabc022d7675371e7a1a5df0f24e53e2f388a69d6da4d4e9422",
+      "baseline_assertions": 96,
+      "current_assertions": 96,
+      "original_assertion_asts_all_preserved": true,
+      "added_assertion_count": 0,
+      "skip_xfail_markers": false
+    }
+  ],
+  "expected_exception_migrations": [
+    {
+      "node": "tests/integration/p3/test_production_context.py::test_source_collection_cross_service_rejected_even_empty",
+      "old_raises": {
+        "exception": "ContextError",
+        "match": "SOURCE_SERVICE"
+      },
+      "new_raises": {
+        "exception": "AdmissionRefused",
+        "match": "^UNQUALIFIED_MAPPING$"
+      },
+      "reason": "Current Source/service qualification executes at shared admission boundary before old facade diagnostic; preserves exact refusal purpose. Added zero collection rows and no Recovery Stop checks.",
+      "verification": "source-refusal.xml/jsonl/log: 3 passed including this node and two fixture-helper denials, exit0"
+    }
+  ]
+}

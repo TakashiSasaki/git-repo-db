@@ -1,0 +1,191 @@
+[
+  {
+    "original": "installed-probe-driver.log",
+    "bytes": 1039,
+    "sha256": "605e1346f3c9693b8c8bf82f0a58d5c1732ba276662ccafd4819c8e7bbc2f02d",
+    "stored": "installed-probe-driver.log.gz",
+    "stored_bytes": 431,
+    "stored_sha256": "bacda56b5dc1dd13ccdfa73454c8e7e23d76e46f1b359c8b139d9c8af9e76e37",
+    "gzip": true
+  },
+  {
+    "original": "installed-probe-v2-driver.log",
+    "bytes": 1732,
+    "sha256": "3b43906cb26ba570797da42137f936bf7f79c864ddd0e5ea547fae70437d2d37",
+    "stored": "installed-probe-v2-driver.log.gz",
+    "stored_bytes": 318,
+    "stored_sha256": "e86d2e11487f7e3d8a3f84c35ac8bf3df6aee04ba0765cb89c382a3be18b9f4e",
+    "gzip": true
+  },
+  {
+    "original": "installed-v2/installed-probe-result.json",
+    "bytes": 2290,
+    "sha256": "18515a6318148ffb48199b234efe9bd6bca71e0db0b53caae8bd2057d4616bdb",
+    "stored": "installed-v2/installed-probe-result.json",
+    "stored_bytes": 2290,
+    "stored_sha256": "18515a6318148ffb48199b234efe9bd6bca71e0db0b53caae8bd2057d4616bdb",
+    "gzip": false
+  },
+  {
+    "original": "installed-v2/late-source-injection-imports.json",
+    "bytes": 17081,
+    "sha256": "7c5fbd9bbb9df7042b45ed228686e031111f64e9d745f9af7c367b73329787b6",
+    "stored": "installed-v2/late-source-injection-imports.json",
+    "stored_bytes": 17081,
+    "stored_sha256": "7c5fbd9bbb9df7042b45ed228686e031111f64e9d745f9af7c367b73329787b6",
+    "gzip": false
+  },
+  {
+    "original": "installed-v2/late-source-injection.log",
+    "bytes": 4930,
+    "sha256": "3afd638ba92f1220c7e705c193402d96882a882cda4319b874292e436590edb4",
+    "stored": "installed-v2/late-source-injection.log.gz",
+    "stored_bytes": 913,
+    "stored_sha256": "d376624822b1def4414a5c39fb5a11cc3c51af227df92792b98756596c2419af",
+    "gzip": true
+  },
+  {
+    "original": "installed-v2/positive-explicit-config-imports.json",
+    "bytes": 34172,
+    "sha256": "8a58b9098ddb21e0cad23f5cf98685868184630cd5d36e859cceb1cb4a9573c5",
+    "stored": "installed-v2/positive-explicit-config-imports.json.gz",
+    "stored_bytes": 7861,
+    "stored_sha256": "df373b4b083df7a1ff873482a21f5d9912860cf2ebaa1bd7279ec4f420cda6de",
+    "gzip": true
+  },
+  {
+    "original": "installed-v2/positive-explicit-config.log",
+    "bytes": 98,
+    "sha256": "a71df3ef716cabe43ead70bd8311cda3aeadcb986bea501da0ea9262f31c3925",
+    "stored": "installed-v2/positive-explicit-config.log.gz",
+    "stored_bytes": 49,
+    "stored_sha256": "58d1158f4ce4c106914dfc7b7f9aa7057512da68dbc70d14571c848800aa8ca4",
+    "gzip": true
+  },
+  {
+    "original": "installed-v2/wrong-wheel-map.log",
+    "bytes": 2779,
+    "sha256": "f45f7f175d2f8d23056af2cd138a3a41f31c5db4dac380fe90c32c70a2778ce5",
+    "stored": "installed-v2/wrong-wheel-map.log.gz",
+    "stored_bytes": 756,
+    "stored_sha256": "30bd9d52be4694da1034a140f97d500a9d6105183b499869f81de1913d2032fa",
+    "gzip": true
+  },
+  {
+    "original": "installed_probe.py",
+    "bytes": 2632,
+    "sha256": "adf7fa4c0b9017be9faac214a32ad53c2b4d65e761723f38ad5fda9e5c66f9f6",
+    "stored": "installed_probe.py.txt",
+    "stored_bytes": 2632,
+    "stored_sha256": "adf7fa4c0b9017be9faac214a32ad53c2b4d65e761723f38ad5fda9e5c66f9f6",
+    "gzip": false
+  },
+  {
+    "original": "installed_probe_v2.py",
+    "bytes": 2700,
+    "sha256": "3bc18f15cc2fc736f45b09ea6e2d4f3f92e32cc8c219649c1b4d923c0c13fc14",
+    "stored": "installed_probe_v2.py.txt",
+    "stored_bytes": 2700,
+    "stored_sha256": "3bc18f15cc2fc736f45b09ea6e2d4f3f92e32cc8c219649c1b4d923c0c13fc14",
+    "gzip": false
+  },
+  {
+    "original": "late-source-injection-imports.json",
+    "bytes": 34108,
+    "sha256": "89d8c588870eb740c35ee51e4ebda1aa05a7efdfb2c378a2e3d6d568609ba5bb",
+    "stored": "late-source-injection-imports.json.gz",
+    "stored_bytes": 7852,
+    "stored_sha256": "0be194b56c2813b59e2a7f0e76f3b68689d6b86f6074f7728032d10409576a4e",
+    "gzip": true
+  },
+  {
+    "original": "late-source-injection.log",
+    "bytes": 732,
+    "sha256": "928ebba7b6f5f91fd5fd52c285046be98605f314086062a84b1da9b45aa00a26",
+    "stored": "late-source-injection.log.gz",
+    "stored_bytes": 313,
+    "stored_sha256": "3714f5ef641924d99d31f484c339ee5b485e8c900a18ef2a13d15fc208575679",
+    "gzip": true
+  },
+  {
+    "original": "positive-explicit-config-imports.json",
+    "bytes": 34120,
+    "sha256": "dd00df5dd4d250c7f6e5a3b15e1df1626a8a7499f10eb4eb30b3e03c5c695c4a",
+    "stored": "positive-explicit-config-imports.json.gz",
+    "stored_bytes": 7854,
+    "stored_sha256": "5ad9603901adae5bf389d2a1b9c1c24c66f308c1b428f6b37f55690f075f5626",
+    "gzip": true
+  },
+  {
+    "original": "positive-explicit-config.log",
+    "bytes": 98,
+    "sha256": "a71df3ef716cabe43ead70bd8311cda3aeadcb986bea501da0ea9262f31c3925",
+    "stored": "positive-explicit-config.log.gz",
+    "stored_bytes": 49,
+    "stored_sha256": "58d1158f4ce4c106914dfc7b7f9aa7057512da68dbc70d14571c848800aa8ca4",
+    "gzip": true
+  },
+  {
+    "original": "probe-v2.log",
+    "bytes": 408,
+    "sha256": "67f70df184cb4dac28a318814e87477ed0e38b57c9641166b0485d7401189a58",
+    "stored": "probe-v2.log.gz",
+    "stored_bytes": 241,
+    "stored_sha256": "7f043ae80cfe24d6ed685b039ee2a0a6188e4dc9b93ef51f52a0d79841f62e35",
+    "gzip": true
+  },
+  {
+    "original": "probe-v2.py",
+    "bytes": 3629,
+    "sha256": "0928ee70d3250b65664a63d974c11c2df3b3800219c530c0ec96167ad666d9b5",
+    "stored": "probe-v2.py.txt",
+    "stored_bytes": 3629,
+    "stored_sha256": "0928ee70d3250b65664a63d974c11c2df3b3800219c530c0ec96167ad666d9b5",
+    "gzip": false
+  },
+  {
+    "original": "probe-v3.log",
+    "bytes": 48,
+    "sha256": "59f5a77be910e76ec2f7b24d91d1da7a741715afc098b03256bc43b5d31b6c70",
+    "stored": "probe-v3.log.gz",
+    "stored_bytes": 66,
+    "stored_sha256": "a5c5aa10879842be9187c09599e72419e7d1727a7d99c60b6b0e0ef1cce48948",
+    "gzip": true
+  },
+  {
+    "original": "probe-v3.py",
+    "bytes": 3649,
+    "sha256": "0628ff8272650c9d6272bbb8bbda442ba2d7cd3403680ccad170e5555393535d",
+    "stored": "probe-v3.py.txt",
+    "stored_bytes": 3649,
+    "stored_sha256": "0628ff8272650c9d6272bbb8bbda442ba2d7cd3403680ccad170e5555393535d",
+    "gzip": false
+  },
+  {
+    "original": "probe.log",
+    "bytes": 406,
+    "sha256": "972d63a945fa7e2166166bd26019952c1fa8cbcf47febd0de49e76f4c926a8b6",
+    "stored": "probe.log.gz",
+    "stored_bytes": 264,
+    "stored_sha256": "d53f2f8c7e833b87f7833039640dc6eb90d46fb0b34159ddfff51f008da703b6",
+    "gzip": true
+  },
+  {
+    "original": "probe.py",
+    "bytes": 3222,
+    "sha256": "7819883cda976b2e1576cd9ba57ce58cdbbf3ade6797fda07f05a369c34252ce",
+    "stored": "probe.py.txt",
+    "stored_bytes": 3222,
+    "stored_sha256": "7819883cda976b2e1576cd9ba57ce58cdbbf3ade6797fda07f05a369c34252ce",
+    "gzip": false
+  },
+  {
+    "original": "result-v3.json",
+    "bytes": 7805,
+    "sha256": "586e8b5ad8590ae42225b09f0db4ad3f8e602eee1a2d582498c4c07b601fe0fe",
+    "stored": "result-v3.json",
+    "stored_bytes": 7805,
+    "stored_sha256": "586e8b5ad8590ae42225b09f0db4ad3f8e602eee1a2d582498c4c07b601fe0fe",
+    "gzip": false
+  }
+]

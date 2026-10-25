@@ -1,0 +1,137 @@
+{
+  "scope": "Exploratory dirty-tree Author iterations; final frozen source runs supersede these for acceptance. Some early iterations have logs only and lack complete before/after input/command bindings; they remain diagnostic, never frozen-source PASS claims. Actual bootstrap/failure/pass outputs are preserved unchanged.",
+  "files": [
+    {
+      "original_path": "/tmp/wire-planner-final194.log",
+      "file": "wire-planner-final194.log",
+      "sha256": "a560ee889b771ef071d172cf432a7430251e55b3d6f3962a5eddff15ceb79986",
+      "bytes": 260
+    },
+    {
+      "original_path": "/tmp/wire-planner-final192.log",
+      "file": "wire-planner-final192.log",
+      "sha256": "904cb955c9cb21dd07172875b4146737794d5deef02e8a06e82e4fdd910fa563",
+      "bytes": 260
+    },
+    {
+      "original_path": "/tmp/wire-planner-positional.log",
+      "file": "wire-planner-positional.log",
+      "sha256": "49028c0ccb54bd0c7efc1d90423c0d5ce8156e42e75c184db6dbd1413f1b56a0",
+      "bytes": 261
+    },
+    {
+      "original_path": "/tmp/wire-planner-after-aggregate.log",
+      "file": "wire-planner-after-aggregate.log",
+      "sha256": "4c62c1f1836b05e21ad27e06ca25ad7ab97c35bfb4c48920719aa14ed6dcda0f",
+      "bytes": 260
+    },
+    {
+      "original_path": "/tmp/wire-planner-tests.log",
+      "file": "wire-planner-tests.log",
+      "sha256": "5797ebda0bd2d947c5d5531499ed476570c8770ec6e747a444970cc742131410",
+      "bytes": 260
+    },
+    {
+      "original_path": "/tmp/wire-tests-second.log",
+      "file": "wire-tests-second.log",
+      "sha256": "d86bd88d6c32eef56673c125fde9024277caab4a151a0e2b840a15afb549844d",
+      "bytes": 180
+    },
+    {
+      "original_path": "/tmp/wire-tests-first.log",
+      "file": "wire-tests-first.log",
+      "sha256": "fda03065d506f7bf42d02a84933192cd9245273d4b5e67ab7845f7790d5904b4",
+      "bytes": 180
+    },
+    {
+      "original_path": "/tmp/identity-aggregate-first.log",
+      "file": "identity-aggregate-first.log",
+      "sha256": "3eca248200ade0141ce97721959f27edeedd15736a8f30adc0094878f7d6a2c3",
+      "bytes": 1138
+    },
+    {
+      "original_path": "/tmp/evidence-shaped-resource-first.log",
+      "file": "evidence-shaped-resource-first.log",
+      "sha256": "6fb16a4d855bb4fc13768d24b3b22b79acfa40346d67f03622850d0fc64fb879",
+      "bytes": 10374
+    },
+    {
+      "original_path": "/tmp/dependency-final-iteration.log",
+      "file": "dependency-final-iteration.log",
+      "sha256": "52601489cf4a6b0060134e4320566ab8cbf83ccc3539f95639789fc888ff9e94",
+      "bytes": 99
+    },
+    {
+      "original_path": "/tmp/i6b-planner-work-final.xml",
+      "file": "i6b-planner-work-final.xml",
+      "sha256": "d1cd018a20a08a09fadabe864a0b4b5c8c9c1dfe3f8c1b8e7dcfa6e2d2fa933f",
+      "bytes": 7280
+    },
+    {
+      "original_path": "/tmp/i6b-planner-work-v1.xml",
+      "file": "i6b-planner-work-v1.xml",
+      "sha256": "c51db3fe9cf261fc2bd95578de33481343d427e9bb9c6fb8e601cce3507c16f6",
+      "bytes": 7280
+    },
+    {
+      "original_path": "/tmp/i6b-planner-final.xml",
+      "file": "i6b-planner-final.xml",
+      "sha256": "4027ae0a37ab2e252843d863f582d6f363e01cbc4f1dfe3d07f5d235323070b7",
+      "bytes": 6978
+    },
+    {
+      "original_path": "/tmp/i6b-planner-v3.xml",
+      "file": "i6b-planner-v3.xml",
+      "sha256": "4f98b309e1a188239aa0093c5024e24317a596a13d6f3316d6ceb59d10444f00",
+      "bytes": 28833
+    },
+    {
+      "original_path": "/tmp/i6b-planner-v2.xml",
+      "file": "i6b-planner-v2.xml",
+      "sha256": "9136d3ee0a84b5fec19843929ebda6d3ffa2fa63a5859f6b55a0f4e9b13e1f9e",
+      "bytes": 27064
+    },
+    {
+      "original_path": "/tmp/i6b-planner.xml",
+      "file": "i6b-planner.xml",
+      "sha256": "5ab0262ca9358bac8dfea84f39ea8c5dffb8fe12fc192de31d048d57efd140b9",
+      "bytes": 238
+    },
+    {
+      "original_path": "/tmp/i6b-planner-work-final.jsonl",
+      "file": "i6b-planner-work-final.jsonl",
+      "sha256": "209d4bb13043b31fc8b7ca248cd63bb71d70477a8c1752fa7b02deb01ec1f52f",
+      "bytes": 43203
+    },
+    {
+      "original_path": "/tmp/i6b-planner-work-v1.jsonl",
+      "file": "i6b-planner-work-v1.jsonl",
+      "sha256": "73971c4fc151e3d6b6d14eb3d8ed3b42fbdff37beb3b6dbda41896d5b5ec8f15",
+      "bytes": 43213
+    },
+    {
+      "original_path": "/tmp/i6b-planner-final.jsonl",
+      "file": "i6b-planner-final.jsonl",
+      "sha256": "3fab8305c1a9ea1cd802f6658ea889c2f5585796daf78692d255d464e9fb56c2",
+      "bytes": 41349
+    },
+    {
+      "original_path": "/tmp/i6b-planner-v3.jsonl",
+      "file": "i6b-planner-v3.jsonl",
+      "sha256": "97fe4bc243893bbf41bf30dd4cc71b3df50df12cc11f088c98ddaaa270a4d233",
+      "bytes": 165774
+    },
+    {
+      "original_path": "/tmp/i6b-planner-v2.jsonl",
+      "file": "i6b-planner-v2.jsonl",
+      "sha256": "355bdd7d39705e8c5124d4063b452ff88ff0eb2125868ff197a2a262c4e5dea2",
+      "bytes": 163949
+    },
+    {
+      "original_path": "/tmp/i6b-planner.jsonl",
+      "file": "i6b-planner.jsonl",
+      "sha256": "a1853b2225af2184de2bd2529fad775bba6a2ddbc4268709bd522d10cb8388af",
+      "bytes": 82
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "command": [
+    "/workspace/i6a-after/.venv/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "-o",
+    "addopts=--strict-markers",
+    "-o",
+    "junit_family=xunit1",
+    "@/workspace/i6a-runs/focused-after/historical-focused583.selected.txt",
+    "--junitxml=/workspace/i6a-runs/focused-after/historical-focused583.xml",
+    "--journal=/workspace/i6a-runs/focused-after/historical-focused583.jsonl",
+    "-n",
+    "4",
+    "--dist",
+    "worksteal"
+  ],
+  "cwd": "/workspace/i6a-after",
+  "started_epoch": 1792729801.8368042,
+  "elapsed_seconds": 38.779,
+  "exit_code": 0,
+  "collected": 583,
+  "passed": 583,
+  "failed": 0,
+  "error": 0,
+  "skipped": 0,
+  "xfail": 0,
+  "xpass": 0,
+  "executed": 583,
+  "reconciliation": {
+    "checks": {
+      "selected_unique": true,
+      "selected_equals_junit": true,
+      "selected_equals_journal_starts": true,
+      "setup_and_teardown_once": true,
+      "no_duplicate_phases": true,
+      "phase_nodes_equal_selected": true,
+      "call_once_after_successful_setup": true,
+      "one_finish": true
+    },
+    "consistent_node_execution": true,
+    "journal_phase_outcomes": {
+      "passed": 1749
+    },
+    "finishes": [
+      {
+        "event": "finish",
+        "status": "completed",
+        "exitstatus": 0,
+        "timestamp": 1792729840.390565
+      }
+    ]
+  }
+}

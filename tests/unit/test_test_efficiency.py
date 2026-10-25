@@ -16,6 +16,8 @@ def products(root):
         "wheel": root / "direct.whl",
         "sdist_wheel": root / "rebuilt.whl",
         "requirements": root / "requirements.txt",
+        "sdist": root / "source.tar.gz",
+        "sdist_contract": root / "sdist-contract.json",
     }
     for name, path in files.items():
         path.write_bytes(name.encode())
@@ -73,12 +75,16 @@ def test_competing_builders_publish_one_complete_set(tmp_path):
     assert len(calls) == 1
 
 
-@pytest.mark.parametrize("fault", ["corrupt", "missing", "escape", "incomplete"])
+@pytest.mark.parametrize(
+    "fault", ["corrupt", "missing", "escape", "incomplete", "contract"]
+)
 def test_changed_or_invalid_shared_products_are_not_silently_rebuilt(tmp_path, fault):
     files = build_once(tmp_path, products)
     receipt = tmp_path / "ready.json"
     if fault == "corrupt":
         files["wheel"].write_text("changed")
+    elif fault == "contract":
+        files["sdist_contract"].write_text("changed")
     elif fault == "missing":
         files["wheel"].unlink()
     else:

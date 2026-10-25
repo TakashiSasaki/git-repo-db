@@ -1,0 +1,65 @@
+{
+  "observed_at": "2026-10-23 09:17:43 UTC",
+  "pr146": {
+    "url": "https://github.com/TakashiSasaki/git-repo-db/pull/146",
+    "state": "open",
+    "draft": true,
+    "base": "fix/adr0031-i6a-regressions-20261023",
+    "base_sha": "08fbb956c2e470e245146b0dbae747ed0690ea40",
+    "head": "review/adr0031-i6a-remediation-independent-20261023",
+    "head_sha": "274645e7dd451e24f324feb81b1591a64ba2a7ab"
+  },
+  "latest_prs": [
+    {
+      "number": 147,
+      "title": "review(ci): independently accept C0-E1 receipt limit (Task B)",
+      "url": "https://github.com/TakashiSasaki/git-repo-db/pull/147"
+    },
+    {
+      "number": 146,
+      "title": "review(context): independently audit I6-A remediation (FAIL)",
+      "url": "https://github.com/TakashiSasaki/git-repo-db/pull/146"
+    },
+    {
+      "number": 145,
+      "title": "fix(context): remediate I6-A callers and installed test harness",
+      "url": "https://github.com/TakashiSasaki/git-repo-db/pull/145"
+    },
+    {
+      "number": 144,
+      "title": "review: independently reverify ADR 0033 archive hardening",
+      "url": "https://github.com/TakashiSasaki/git-repo-db/pull/144"
+    },
+    {
+      "number": 143,
+      "title": "feat(context): implement ADR 0031 I6-A secure admission",
+      "url": "https://github.com/TakashiSasaki/git-repo-db/pull/143"
+    },
+    {
+      "number": 142,
+      "title": "fix(packaging): close ADR 0033 archive validation findings",
+      "url": "https://github.com/TakashiSasaki/git-repo-db/pull/142"
+    },
+    {
+      "number": 141,
+      "title": "docs: independent ADR 0031 I6 design review and evidence",
+      "url": "https://github.com/TakashiSasaki/git-repo-db/pull/141"
+    },
+    {
+      "number": 140,
+      "title": "review: independent ADR 0033 sdist audit with two medium findings",
+      "url": "https://github.com/TakashiSasaki/git-repo-db/pull/140"
+    },
+    {
+      "number": 139,
+      "title": "fix(ci): enforce the C0-E1 2 MiB compressed receipt limit",
+      "url": "https://github.com/TakashiSasaki/git-repo-db/pull/139"
+    },
+    {
+      "number": 138,
+      "title": "build: enforce minimal sdist contract and lightweight CI gate (ADR 0033)",
+      "url": "https://github.com/TakashiSasaki/git-repo-db/pull/138"
+    }
+  ],
+  "duplicate_finding_fix_found": false
+}

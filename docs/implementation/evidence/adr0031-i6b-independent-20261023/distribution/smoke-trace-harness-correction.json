@@ -1,0 +1,7 @@
+{
+  "symptom": "Initial direct smoke tracer does expensive Path.resolve on every traced Python event, consuming CPU before reaching product refusal. Interrupting this measurement preserves original attempt separately.",
+  "old_launcher_sha256": "3fb555cd1cd3bd2550703a5a939d01e5be61e0ade01384f991adfb34446da137",
+  "new_launcher_sha256": "582f8f8db9d6f23a8bb566b3a283e5822b0241d0055afaeab68039334601fb5b",
+  "correction": "Return None for non-smoke frames; compare exact known filename string; trace original smoke lines only. Original smoke literal, product and assertions unchanged.",
+  "initial_direct_child_interrupt": "SIGINT 12069 requested; actual child/pytest exit+result will be retained"
+}

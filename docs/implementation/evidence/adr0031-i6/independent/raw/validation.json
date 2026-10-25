@@ -1,0 +1,17 @@
+{
+  "passed": true,
+  "checks": {
+    "all_frozen_inputs_unchanged": true,
+    "tracked_diff_only_review_evidence": true,
+    "strict_utf8_balanced_fences_local_links": true,
+    "all_19_requirements": true,
+    "finding_scope_and_verdict": true,
+    "246_nodes_738_phases_exact": true,
+    "five_independent_baseline_scenarios": true,
+    "15_existing_domain_checks": true,
+    "sql_diagnostic_scope": true,
+    "indexed_artifacts_match": true
+  },
+  "invalid_links": [],
+  "scope": "Evidence consistency and frozen input equality; not future I6 or full release acceptance"
+}

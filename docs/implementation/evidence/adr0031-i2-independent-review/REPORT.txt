@@ -1,0 +1,374 @@
+Task D — ADR 0031 I2 SQL設計の独立反例レビュー
+実施日: 2026-10-21 UTC
+最終判定: NOT READY（指定された現在のSQL案／段階導入設計について）
+
+主要結論
+
+Resources本体の三要素キー、canonical Identity、明示的識別メタデータ、
+child-before-Parentの構成について、新しい阻害欠陥は確認しなかった。
+しかし、I2の暫定Transferフェンスには新規のHigh欠陥F1がある。
+resource_repository_relationsのendpointだけを止めても、resource_relationsの
+transfer_event_reportを直接登録できる。endpointを持たないProvider-only報告は
+現存のreference readerでTransferEventReportに復元される。I7 Resourceすら不要だった。
+この設計のままI2段階導入を安全と承認することはできない。
+
+これはAccepted ADRの矛盾ではなく、未対応機能を遮断する暫定実装方針の不足である。
+G3=Aの再選択、I4の先行実装、Parent存在FKの復活、キーへの第四要素の追加は不要。
+一般Parent報告の保存と、未実装Transfer機能の拒否を区別してフェンスを補完すればよい。
+
+1. 対象・独立性・入力の固定
+
+Repository: https://github.com/TakashiSasaki/git-repo-db
+PR #120: https://github.com/TakashiSasaki/git-repo-db/pull/120
+HEAD: 9eaa5111c94204c4adf791cd1565b704728493f1
+tree: d91c73b5caed2601a6b097c69017e0e49e96bc53
+base: 9ea69ba8804a368802457950601a5a4027174c52
+base tree: 8183f346b3613ea1206b2c0ab3e6428f31614cd8
+
+新規ネットワークclone /workspace/task-d-review をdetached HEADに固定した。
+既存 /workspace/git-repo-db やAuthorのDB、venv、ビルド済みSQLiteを使用していない。
+SQLite両版のamalgamationをsqlite.orgから新規取得し、自分で別々の共有ライブラリを
+ビルドした。同じ /usr/bin/python3.13 を各ライブラリに動的リンクして実行した。
+SELECT sqlite_version(),sqlite_source_id()の実測で確認し、定数を変更していない。
+
+PR #120は26ファイル追加のみで、baseからsrc/・製品DDL・fingerprintの変更はない。
+clone時のorigin/mainはcb532242c7aa86c6af5b6232b71c0906ea38f5c5、
+tree 318ad07874ab436206e6a61f231b308a421cfc54。
+対象srcにはmain後のI1b変更があるため、本レビューはmainを代用せず指定HEADを使った。
+製品context.sqlおよびresource_identity.pyはI1a #116
+d92377599a50f192f534836fc12402a5fe87ca83から同一であることもgit diffで確認した。
+
+Task B #119（HEAD cb49836aa855da8503f02370b9a60dddac5d6113、
+tree 9f23c6eaaf9b1bdc4dfdf9da0590213d765ea248）の報告は既知境界の文脈として読んだ。
+Task Bのcohort／配布検証を再発注・再実装・再実行していない。
+本レビューのGlobal再構築プローブはI2の保存形式との接続確認であり、I1bの再審査ではない。
+
+主な入力SHA-256（全3,723 tracked filesはinput-manifest.json）:
+
+docs/adr/0031-generalized-context-resources.md
+  330fbf7273f3099170e7ad34ea45abe11727e664e7a7a6f676e81a3ef15b71f6
+docs/architecture/context-resource-schema.md
+  faea58ff41e0388ee575b60feb377037c5ae84fb98ed1817cdb10738bfbdabeb
+docs/implementation/context-resource-design-handoff.md
+  95f1182917dba94725baac7474d48ef7c6c50b7162f271f3581083deacb4351c
+Task C I2-IMPLEMENTATION-PLAN.md
+  ed40739a0a634623d37a4db44f26a27cc356675e6705ecd6ec7292f7f4e322ed
+Task C resources.sql
+  f93a9cfe18f7c9a46679bdfe144355e853921cc9520e99fd0ad23d2240f5fbe6
+Task C resource_udfs.py
+  b4706cd9ed38a3a829b5072dc3d57f1a440c68c8088576d16041c597f3329425
+Task C compose_proposal.py
+  81650ed59ef7219955338e21c33dc6687f4d3ef12ebade71906829f0ab9dc3c5
+src/repo_catalog/domain/resource_identity.py
+  a7b68deb5a40956360a7c8ad69bcff1c216020b4eb451e52e0ea61fb5d0c13a3
+src/repo_catalog/adapters/sqlite/p1_schema.py
+  ecdf23d58879f39271234b4914560235ce92d3b22e0828b464205feb86d83ba8
+製品p1_ddl/context.sql（生ファイル）
+  458278e3016744d1100b2827b7686414f75cfa4de013e13a7433f8effd37fcea
+製品Context composed DDL
+  fa7838f86d9f0ab4b2f26c561ad0721df2d0c7dad45ee97e72ff09cbb89ac434
+Task C composed DDL（両版の新規実行で一致）
+  c8fd84cf5e535d5f4c585d31a2e0ad0e4c791bb9cd7649f243e0bc1c6bfd223e
+
+Author証拠archive a90d56232809577812339ac8531896fce807eada9c54c92334500e81afd68e04
+の75 members／74 indexed filesも全件hash・size一致を確認した。
+保存済みPASSは今回の実測に加算していない。
+
+2. 実行環境・件数・exit code
+
+SQLite 3.51.3 source ID:
+2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618
+SQLite 3.53.1 source ID:
+2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9
+
+新規取得元:
+https://www.sqlite.org/2026/sqlite-amalgamation-3510300.zip
+  SHA-256 acb1e6f5d832484bf6d32b681e858c38add8b2acdfd42ac5df24b8afb46552b4
+https://www.sqlite.org/2026/sqlite-amalgamation-3530100.zip
+  SHA-256 36ad6e7f38540a3b21a2ac36340833f0a9e426bc1c752751c3ba669466827eae
+
+cc -O2 -fPIC -shared -DSQLITE_THREADSAFE=1 -DSQLITE_ENABLE_FTS5
+   -DSQLITE_ENABLE_COLUMN_METADATA -DSQLITE_ENABLE_RTREE sqlite3.c
+   -o libsqlite3.so.0 -lpthread -ldl -lm
+両ビルドexit 0。コンパイラGCC 14.2.0、Python 3.13.5。
+ソース・ライブラリhash、フルcompile_optionsはruntime-provenance.json／各receiptに保存。
+
+通常プロファイル（両版）:
+foreign_keys=1; recursive_triggers=1; ignore_check_constraints=0;
+defer_foreign_keys=0; trusted_schema=1; encoding=UTF-8;
+synchronous=3 (EXTRA); journal_mode=delete。
+WALクラッシュ／電源断／並行負荷の検証ではない。
+
+最終採用lane（各版で同じ結果）:
+  Task C既存probe新規再実行: 133実行、133成功、0失敗、exit 0。
+    45受理、88期待どおりのSQL拒否。
+  独自プローブ・無変更の候補SQL: 301実行、295成功、6失敗。
+    92期待どおりの受理、203期待どおりの拒否、6件の不正な受理（同一F1の現れ）。
+  使い捨てDBだけの修正案対照: 7実行、7成功、0失敗。
+  独自runner全体: 上記301+7=308、302成功、6失敗、exit 1。
+    修正案の7件を元SQLの成功として扱わない。
+
+独自runnerの12統合・設定観測、transaction/reopen、deferred COMMIT、
+reader反例、schema/index inventoryは上記ケース件数には含めていない。
+最小F1 reproducerも両版でexit 1（不正受理を検出）。重複ケースに加算しない。
+各失敗はSQL実行の例外ではなく、期待した拒否が起きなかったという検証失敗である。
+途中の270件／308件再実行を合算して成功件数を水増ししていない。
+
+初回独自ハーネスは全SQL実行後の証拠JSON出力でbytesを保存できずexit 1だった。
+初期スクリプト／ログを保存し、外部ハーネスのserializerだけ直して新規DBで再実行した。
+製品・候補・codecの入力は変更していない。最終実行にはこの出力障害はない。
+process-receipts.jsonに実argv・cwd・許可した環境上書き・実測exit・ログhashを保存した。
+
+3. 確認した不変条件（試した境界での結果）
+
+A — Identityと識別メタデータ
+
+・resourcesはSTRICT, WITHOUT ROWID。PKはservice/kind/canonical ID TEXTの三要素のみ。
+  四つの識別メタデータもgenerated projectionもPKを増やさない。
+・I1aのparse_identity/encode_identityを実際に呼ぶUDFであり、歴史的cprime parserを
+  差し替えて使っていない。deterministic flag 2048を実測。UDFにDB参照や外部I/Oなし。
+・空文字列、空配列、[""]、[[]]、再帰配列、JSONに見えるnative文字列を区別した。
+  NFC/NFD、case、空白、日本語、補助平面文字、NUL/DEL/改行を試した。
+  非canonical escape、raw非ASCII、孤立／逆順surrogate、禁止型、BLOB、NULL等を拒否。
+・262144 canonical ASCII bytes／4096 value nodes／32 array containersの境界を
+  独自構成して最大値受理・最大値+1拒否。空配列終端と文字列終端の両depthを確認。
+  local単体が上限内でも、scoped outer keyが上限を超える行は拒否する。
+・Document全メタデータ省略を拒否。scoped metadataの16通りのNULLマスクを検査。
+  完全globalはlocal欄=full ID、完全scopedはnamespace/subtype/native-localを再構成。
+・同じ配列形状・同じ三要素キーになるGlobalとScopedの両初回宣言が成立する。
+  両到着順の異なる宣言再送はINSERT/IGNORE/DO NOTHING/REPLACE/UPSERTで拒否。
+  同じmetadataでのDO NOTHINGは正常に重複排除した。
+・native localとserialized localの片側だけを二重encodeした不一致は拒否。
+  両側を整合してnative文字列J(D)を指定すれば別の合法IDになることも確認した。
+  SQLは本来のProvider契約と呼出元の誤操作を識別できないため、typed APIの役割が残る。
+・review/thread/comment/documentの許容namespaceと禁止namespaceを全組合せで確認。
+  予約名の不正なopaque扱い、未知名への既知metadataの付与は拒否。
+  未知kindは同じ名前でもservice別に独立。大文字小文字も別キーであり、
+  名前だけからProvider間同一性を推論しない。Node-ID/数値IDの正規化はadapterの責任。
+
+B — Direct SQL
+
+・Context全実索引のkey slots 141箇所をindex_xinfoで確認し、すべてBINARYだった。
+  3/4/5/6列の参照先UNIQUEに一致するFKの成功例・wrong-coordinate・NULL拒否例を実行。
+  Auxiliary FK表は比較用のみで、製品domain tableとして数えていない。
+・実製品のfield_candidates/resource_relations/collections/core_referencesでも、
+  正常FKと三キー各NULL・不存在referentを試した。resource CoverageのNULL逃げも拒否。
+・四列Document FKのabsence markerは空文字列で、SQL NULLではない。
+  wrong subtype、NULL marker、scopedをglobal markerで引用する試行を拒否。
+  将来I3の引用元にもNOT NULLまたは同等の必須CHECKが必要である。
+・通常UPDATE/DELETE、同一行REPLACE/UPSERT-updateは既存immutable guardsが拒否。
+  不正metadata再送は競合処理前にinvalid Resource identificationで拒否する。
+  複数行INSERTの後半不正行はstatement全体をabortし、前半も残らなかった。
+・statement ABORTは外側transactionのprefixまでは戻さない。明示savepoint rollbackで
+  unitだけを除去し、外側の合法行をCOMMIT/reopenして維持した。
+・意図的defer_foreign_keys=ONの対照ではCOMMITがFK787で失敗しtransactionが残った。
+  明示ROLLBACKで不正行を除去した。これを正常設定の成功には数えない。
+・foreign_keys=OFFは孤児Resourceを受理し、recursive_triggers=OFFは同一REPLACEを受理。
+  trusted_schema=OFFではPython UDFがunsafeとして拒否された。
+  ignore_check_constraints=ONでもResource BEFORE guardは拒否したが、他表CHECKの
+  無効化を安全とは評価しない。これらは非対応接続の対照であり、新規欠陥扱いしない。
+
+C — ParentとTransferの境界
+
+・namespace/ParentのResourceなしで完全な子を登録でき、Parent到着後もreportは0件。
+  resourcesにnamespace存在FKはなく、identifying namespaceはsemantic Parent報告でない。
+・resource_relations以外にParent正本を追加していない。
+  ただし既存readerやinherit_fields/_members/acquisitionを改修せずに使えば、
+  shapeやnamespaceだけを意味的所属と扱う余地が残る。I2で未対応consumerを明示拒否し、
+  I3で意味的Parentを実際の報告に基づける必要がある。SQLだけで製品全体を証明しない。
+・六Repository rolesのCHECKは保持され、四つの非Transfer roleの正常登録は成功。
+  未知kindにroleを付けて型制約を迂回する試行は拒否された。
+・Transferの両endpoint roleは5つの競合verbすべてでstage fenceが拒否した。
+  しかし報告側の別経路にはF1がある。
+・新六列UNIQUEはI4の参照先候補にすぎず、native-I7 support保証を単体では持たない。
+  I8 Parent報告を一般関係として保存することと、I7-native EventへのTransfer support
+  に使うことを混同しない。後者のSQL拒否はI4、Event意味／完全性／whole-unit Admission
+  はI5。本レビューは未実装のI3/I4/I5をPASSとも失敗済み製品とも宣言しない。
+
+4. 新規欠陥 F1（High、段階導入を阻害）
+
+場所:
+  Task C compose_proposal.py:21 — endpoint表だけのi2_transfer_stage_fence
+  製品p1_context.py:799 — endpointなしのtransfer_event_reportもreaderが列挙
+  製品domain/p1_context.py:1723 — Provider-only endpointを持つTransferEventReport
+
+再現SQL: F1-reproduction.sql（実行可能な完全リテラルSQL）。
+実行helper: reproduce_f1.py（候補DDLと全UDF登録後にそのSQLを実行）。
+
+要約形（完全SQLの引数を省略した説明用）:
+  INSERT INTO resources(...)
+    VALUES(S,'comment',J(['issue',J('I7'),'timeline_event','event']),
+           'issue',J('I7'),'timeline_event',J('event'));
+  INSERT INTO resources(...) VALUES(S,'repository',J('unresolved-R'),NULL,NULL,NULL,NULL);
+  INSERT INTO resource_relations VALUES(
+    S,'comment',EventId,'transfer_event_report',Members,Provenance,Scope,17);
+
+Scopeは正規のclock/event_type='transferred'/Provider ID/provided_rolesを持ち、
+Membersも同じProvider ResourceKey。I7 Resource・Parent報告・endpoint行は作らない。
+
+期待: I2がI3–I5未実装機能を全面遮断するなら、最後のINSERTをSQLで拒否し無変更。
+実結果: 両版ともSQLが成功（例外なし）。report行1、I7行0、Parent報告0、endpoint行0。
+既存ContextStore(db).transfer_event_reports()は1件を返し、from_stateは
+unresolved_provider_only。foreign_key_checkは空、integrity_checkもokのまま。
+このreference readerは実製品コードそのものだが、候補DBを手動接続して使ったもの。
+製品facadeのinitialize/openや完全query経路のend-to-end成功は主張しない。
+
+同じ不正受理をINSERT OR IGNORE、ON CONFLICT DO NOTHING、REPLACE、UPSERTでも確認。
+さらにscope='{}'というmalformedな同予約名reportもSQLが受理した。
+以上が6失敗で、6個の独立欠陥ではない。後者はreader側でmissing-clockエラーになり得る
+入力を、I2フェンスが未実装機能として止めないことも示す。
+
+原因: 暫定拒否はresource_repository_relationsの2 roleにのみ設置されている。
+既存設計にはresource_relationsだけで表現できるProvider-only Transfer報告がある。
+一般relationのrow CHECK／Resource FKは、予約名のTransfer仕様やI7報告依存を検査しない。
+API拒否だけの追加ではDirect SQL経路は閉じない。
+
+修正案（実装せず、使い捨てDBのみで対照検証）:
+  CREATE TRIGGER i2_transfer_report_stage_fence
+  BEFORE INSERT ON resource_relations
+  WHEN NEW.relation_kind='transfer_event_report'
+  BEGIN
+    SELECT RAISE(ABORT,'Transfer report requires I3-I5 implementation');
+  END;
+
+既存endpoint fenceと合わせ、typed API、import、未対応readerにも段階状態を一貫させる。
+general Parent/reportを一律停止したりI8を削除したりしてはならない。
+新規フォーマットなので既存Transfer行のgrandfatheringも不要。
+既存resource_relations UPDATE/DELETE immutable guardsは維持する。
+
+この追加triggerで5つの報告INSERT系verbをすべて拒否し、一般vendor relationと
+I8を引用する一般parent relationは受理する7件の対照を両版で確認した。
+これは修正方向の証拠であり、製品への適用・修正済み判定・後段意味検査ではない。
+
+F1は「I8 supportのnative-I7比較をI2が実装していない」という指摘ではない。
+I4責任の比較を後回しにするために選んだ暫定フェンスが、報告経路を覆っていない指摘。
+Accepted ADRを変更する必要はない。
+
+5. 製品DDL／接続／consumerへの適用可能性
+
+product-vs-candidate.diffおよびschema-comparison.jsonに実差分を保存した。
+Contextのphysical schema差分は7オブジェクトのみ:
+  resources、resource_repository_relations、resources_typed_event_fk、
+  新resources_document_contract_fk、新resources_native_event_fk、
+  新resources_admit、新i2_transfer_stage_fence。
+19 Context tablesとCoverage claimの5列は維持される。
+
+次は実測した統合上の失敗／制約であり、Task Cが既に計画している作業を
+別の新規欠陥として水増ししない。
+
+・FK/indexの同時更新:
+  Resources fragmentだけをコピーし既存endpoint五列FKを残す外部対照では、
+  owning_repositoryのINSERTさえforeign key mismatch（SQLITE_ERROR 1）となった。
+  正しいcompose_proposalは参照先をreference_document_kind/identifier_namespace_kindに
+  書き換えており、その版ではFK mismatchはない。UNIQUEの広いsupersetだけでは代用不可。
+
+・UDF登録順序:
+  旧p1_schema.register_functionsだけで候補DDLを作ると
+  no such function: p1_resource_identity_v1（1）。旧登録で再open後integrity_checkも
+  unknown functionで失敗した。新関数をDDL作成／schema準備／CHECK検査より先に登録する。
+  reference_document_kind自体はcoalesceだけのgenerated columnで、新UDFを呼ばない。
+  本件を「generated expression内の新UDFの順序バグ」と誤記しない。
+  新UDFはCHECK／BEFORE INSERTで必須。deterministicはSQLITE_INNOCUOUSとは異なる。
+
+・初期化／再open／fingerprint:
+  initialize/connect/expected_schemaはp1_schema中心の登録に集約される。
+  外部configureだけ追加しても製品経路は更新されない。
+  現行connectで候補DBを開くとcontext physical schema differs from packaged target。
+  DDL、registry、fingerprint、schema manifestを同じ実装単位で更新する必要がある。
+  p1_schema.verify_declaredは全storeのexpected schemaを作るので、Context UDF登録不足を
+  他store初期化へ波及させないこと。SQL fingerprintだけでPython UDF本体の同一性は証明不可。
+
+・バックアップ／recovery:
+  純粋なsqlite backup()はtarget側UDF未登録でもbyte-copyできた。
+  しかしそのtargetのintegrity_checkはunknown function: p1_uuid4()で失敗し、
+  configure後はokになった。copy成功と意味／schema検査成功を分ける必要がある。
+  p1_coordination.py:746のbackup target、recovery.py:1105以降のsource/target、
+  read-only validation接続、expected_schemaを通る検査を監査した。
+  ただし全paired backup/recovery製品フローを実行したとの主張はしない（I7）。
+
+・読み出し:
+  旧SELECT parent_resource_kind,...はno such column（1）。単なる列名置換だけでも不十分。
+  保存済みGlobal-shaped Documentを三キーSELECT→ResourceKeyで再構成すると
+  _document_contract=Noneとなりscoped decoderが成功した。保存したGlobal metadataは
+  正しく残っているため、欠落はreaderがmetadataを選ばないことにある。
+  metadata付きdecoder/APIをI2で実装し、semantic Parent出力をnamespaceで補充しない。
+  acquisitionの階層再構成、_members/field inheritance、wire orderingを再利用する場合も同様。
+
+・Source/Coverageと他store:
+  Source positive-delete拒否、実Resource CoverageのNULL拒否、exact text hashを対照実行。
+  Source/Coverage部分、Core/Operational/Search DDL、Access DDLには本案の差分がない。
+  Searchの現行expected_schemaは旧登録でも成功し、Search表そのものが新UDFを必要とする
+  という証拠はない。通常Search接続はp1_schema.connect経由であり、共通manifest更新と
+  Contextを読むquery/rebuild/fallbackのmetadata整合が影響点になる。
+  五store全機能やSource/Coverage全意味が検証済みという結論にはしない。
+
+6. Task Cの133件から言える範囲／言えない範囲
+
+言える範囲:
+同じ凍結candidate SQL/UDF/codec、正常PRAGMA、使い捨てDBで、133の選んだstatementと
+その期待拒否・rowset不変性が両実ランタイムで再現する。主要Identityとmetadataの
+設計成立性を支える。今回も133/133だったため報告自体の捏造・未再現とは判断しない。
+
+言えない範囲:
+・未試験の予約Transfer報告経路を含め、全Direct SQL操作が安全であること（F1反例）。
+・製品packaged DDL、中央登録、init/reopen、API metadata roundtripの完成。
+・I3 typed Parent reports、I4 native-I7/full-report FK、I5 Event semantics/whole unit。
+・I6 wire/選択/unknown preservation、I7 stored integrity/paired recovery、I8 Search。
+・installed wheel/sdist、Access smoke、全pytest、WAL crashや並行性能、外部真正性。
+
+133件のTransferケースはendpointの1 INSERTであり、Provider-onlyの報告単独INSERTを
+試していない。補助FK表のNOT NULL成功は、未来の製品引用元も同じ制約になる証明ではない。
+FK/integrityがcleanでもF1は成立する。Development CIのgreenや既存package test結果で
+未実装経路の穴を埋めることはできない。
+
+7. 修正・改善の時期と解除条件
+
+I2実装へのhandoffをREADYとする前に必須:
+  F1をdesign/SQL案/実装matrixへ反映する。暫定拒否の対象をendpointだけでなく
+  transfer_event_reportの全登録経路にも拡張するか、I2–I5同時統合案で同等の遮断を示す。
+  SQL、API、reader/importの段階境界を明記し、両実ランタイムで新凍結入力を独立再検証する。
+  現行レビューは修正候補の対照成功だけで自動的にREADYへ変更しない。
+
+I2実装中に処理できるが、I2受入れ前には必須:
+  Task C計画に既にある中央UDF登録、PRAGMA設定と確認、正確なindex/FK同時更新、
+  packaged DDL/fingerprint整合、明示identification valueと七列INSERT、完全metadataの
+  duplicate/read/reopen、known contract dispatch、未対応consumerの事前拒否を実装する。
+  namespaceだけからParent/reportを推論しない。単なるSQLファイルのコピーでは完了しない。
+  実製品とinstalled distributions上で境界を再実行する。Task Bの四つのEvent第一障害を
+  解消した後は後続assertionまで実行し、I3–I5の未完了をI2の成功に読み替えない。
+
+実装中の非阻害改善:
+  接続プロファイルとidentity metadata decodingの共通化、失敗のinput/dependency/schema
+  診断の明確化、UDF/codec source hashを含む証拠生成の自動化。
+  新しいowner policyやnumeric limitを要求する必要はない。
+
+最終判定は指定HEADの現状についてNOT READY。
+Resources主設計を破棄すべき証拠やAccepted ADRを変更すべき真の矛盾は見つからない。
+F1は小さな局所修正で対処可能だが、段階導入の安全保証に関わるため事前解消が必要。
+
+8. 証拠と再実行
+
+このディレクトリの主要ファイル:
+  independent_review.py — 独自SQL／設定／consumerプローブ
+  run_review.py / process-receipts.json — 最終4 laneの実行と測定exit
+  verified-3513/receipt.json / verified-3531/receipt.json — 全SQL、args、trace、
+    前後全表rowset hash、例外code、inventory、runtime、transaction、観測
+  author-rerun/verified-*/receipt.json — Author 133件の新規再実行（自作件数に混ぜない）
+  F1-reproduction.sql / reproduce_f1.py / F1-minimal-*.json — 最小新規反例
+  product-vs-candidate.diff / schema-comparison.json — 実製品DDLとの差分
+  input-manifest.json / final-binding.json — 入力と終了時の無変更確認
+  runtime-provenance.json / archive-verification.json — 独自runtimeと保存archiveの検証
+  artifact-index.json — このレビュー証拠のhash一覧
+
+再実行には新出力先が必要（既存の証拠DBは上書きしない）:
+  LD_LIBRARY_PATH=/workspace/task-d-evidence/runtime/sqlite-amalgamation-3510300 \
+  PYTHONDONTWRITEBYTECODE=1 \
+  PYTHONPATH=/workspace/task-d-review/src:/workspace/task-d-evidence/author-rerun \
+  /usr/bin/python3.13 /workspace/task-d-evidence/independent_review.py \
+  /workspace/task-d-evidence/new-review-3513 3.51.3
+新しい版はlibraryをsqlite-amalgamation-3530100、versionを3.53.1に変更する。
+F1-minimalは同じ環境でreproduce_f1.pyを実行すればよい。
+期待exit 1はF1検出であり、実験環境障害による成功偽装ではない。
+
+GitHubへの書込み、PR作成・変更・コメント・merge、既存branch変更は一切行っていない。
+製品コード・既存テスト・Accepted ADRは変更していない。成果物は独立clone外に保存した。

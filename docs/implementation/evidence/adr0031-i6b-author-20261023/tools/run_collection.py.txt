@@ -1,0 +1,16 @@
+"""Bound final-source collection only; never a runtime execution claim."""
+from pathlib import Path
+from collections import Counter
+import hashlib,json,os,sqlite3,sys
+ROOT=Path(sys.argv[1]).resolve();OUT=Path(sys.argv[2]).resolve();PRE=Path(sys.argv[3]).resolve();OUT.mkdir(parents=True,exist_ok=False)
+sys.path.insert(0,str(ROOT));from scripts import verify_i5_offline as e
+os.environ['PATH']=str(Path(sys.executable).parent)+os.pathsep+os.environ['PATH']
+def binding():return {'head':e.git('rev-parse','HEAD'),'tree':e.git('rev-parse','HEAD^{tree}'),'inputs':e.input_hashes(),'status':e.git('status','--porcelain','--untracked-files=no'),'harness_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest()}
+before=binding();assert not before['status'];e.write_json(OUT/'binding-before.json',before);e.write_json(OUT/'runtime.json',e.runtime_metadata(sqlite3.connect(':memory:')));(OUT/'driver.py.txt').write_bytes(Path(__file__).read_bytes())
+execute=e.execute
+def collection_receipts(out,name,args):return execute(out,name,[*args,'-o','junit_family=xunit1','--junitxml='+str(out/(name+'.xml')),'--journal='+str(out/(name+'.jsonl'))])
+e.execute=collection_receipts
+allnodes,a=e.collect(OUT,'all-collection',['tests']);ordinary,o=e.collect(OUT,'ordinary-collection',['tests'],'not live and not benchmark');assert a['exit_code']==o['exit_code']==0
+old=(PRE/'ordinary.selected.txt').read_text().splitlines();base=(Path('/workspace/i6b-work/baseline-task-c/full/ordinary.selected.txt')).read_text().splitlines();assert Counter(ordinary)==Counter(old);assert set(base)<=set(ordinary)
+summary={'scope':'COLLECTION ONLY. All final-source ordinary runtime tests remain unexecuted by this lane. Zero pytest case starts/phases are expected.','head':before['head'],'tree':before['tree'],'all_collected':len(allnodes),'ordinary_collected':len(ordinary),'ordinary_unique':len(set(ordinary)),'exact_multiset_equal_complete2f':True,'historical6076_node_inventory_retained':True,'additions_to_historical':sorted(set(ordinary)-set(base)),'removed_historical':sorted(set(base)-set(ordinary)),'unexecuted_opt_in':sorted(set(allnodes)-set(ordinary)),'whole_ordinary_executed_here':False,'product_runtime_pytest_executed':0,'full_acceptance':False}
+e.write_json(OUT/'summary.json',summary);e.write_json(OUT/'binding-after.json',binding());assert binding()==before;print(json.dumps({k:v for k,v in summary.items() if k!='additions_to_historical'}))

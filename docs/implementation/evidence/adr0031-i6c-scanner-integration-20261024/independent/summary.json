@@ -1,0 +1,72 @@
+{
+  "phase": "adr0031-i6c-scanner-integration-followup-20261024",
+  "review_type": "Supplementary Independent Integration Review",
+  "target_pr": 172,
+  "target_branch": "integration/adr0031-i6c-scanner-integration-20261024",
+  "target_submission_commit": "a700676b317e60566f2925222b6cbc5582a525ef",
+  "target_submission_tree": "85246784625024ecbed114c36c75aac88d8504f8",
+  "target_tested_input_commit": "91d2bc7e6c47a3c1ec46949211ab16cb4ac7900f",
+  "target_tested_input_tree": "d35ca8d7212bddd9aa6ad1646d43a3fe062d619e",
+  "verdict": "NON_AUTHOR_INDEPENDENT_ACCEPTANCE_PASS",
+  "blocking_findings_count": 0,
+  "two_stage_separation_verified": true,
+  "supersedes_pr_174_prior_conclusions": true,
+  "supersession_details": {
+    "prior_barrier_progression_node": "tests.integration.p1.test_generalized_resources::test_selected_real_wire_without_identification_refuses_before_core_effects",
+    "prior_classification": "PROGRESS_KNOWN_BARRIER",
+    "current_status": "RESOLVED_PASSING",
+    "comparator_hardening": {
+      "counterexample1_rejected": true,
+      "counterexample2_rejected": true,
+      "unreviewed_nodes_rejected": true,
+      "exact_refusal_code_required": true,
+      "substring_inference_prohibited": true
+    }
+  },
+  "ci_verification": {
+    "access_run_id": 40147504587,
+    "access_run_url": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/40147504587",
+    "access_conclusion": "success",
+    "tests_run_id": 40147504588,
+    "tests_conclusion": "success",
+    "pages_run_id": 40147504592,
+    "pages_conclusion": "success"
+  },
+  "regression_reconciliation": {
+    "status": "PASS",
+    "acceptance_verdict": "PASSED",
+    "blocking_violations": 0,
+    "baseline_in_scope_nodes": 1847,
+    "current_nodes": 1847,
+    "resolved_count": 73,
+    "inherited_count": 201,
+    "progressed_barriers_count": 0,
+    "changed_failures": 0,
+    "new_regressions": 0
+  },
+  "suite_results": {
+    "preflight": "PASS",
+    "comparator_unit_tests": {
+      "status": "PASS",
+      "passed": 27,
+      "failed": 0
+    },
+    "i6c_behavioral_verification": {
+      "status": "PASS",
+      "obligations_verified": 10,
+      "passed": 8,
+      "failed": 0
+    },
+    "target_node_passing": {
+      "node": "tests.integration.p1.test_generalized_resources::test_selected_real_wire_without_identification_refuses_before_core_effects",
+      "status": "PASS"
+    },
+    "distribution_outside_checkout": {
+      "status": "PASS",
+      "direct_wheel_sha256": "974366bd21726931bba05958c102ec1a9128845fc4728595346d2bf2b727a1f7",
+      "derived_wheel_sha256": "974366bd21726931bba05958c102ec1a9128845fc4728595346d2bf2b727a1f7",
+      "wheel_equivalence": true,
+      "exit_code": 0
+    }
+  }
+}

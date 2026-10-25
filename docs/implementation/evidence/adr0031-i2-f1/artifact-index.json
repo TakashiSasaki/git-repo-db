@@ -1,0 +1,189 @@
+{
+  "scope": "C-F1 author verification only; no independent review or product implementation",
+  "files": {
+    "final-run.log": {
+      "bytes": 1457,
+      "sha256": "0973bd023690a59d31d40fc01d75c11748b367e40cc20be2e74a525ae7dbb2b3"
+    },
+    "final-run/3513.log": {
+      "bytes": 463,
+      "sha256": "95e48b2557ba74eca043d60f1f194e6495fc0e92a083b8c858fd864ac10ada1d"
+    },
+    "final-run/3531.log": {
+      "bytes": 463,
+      "sha256": "95e48b2557ba74eca043d60f1f194e6495fc0e92a083b8c858fd864ac10ada1d"
+    },
+    "final-run/input-binding.json": {
+      "bytes": 3167,
+      "sha256": "8fc0acb22a1827a293fa2dd89287abfc4b11e42fbd3e8feacb37a8e0931944a9"
+    },
+    "final-run/process-receipts.json": {
+      "bytes": 1743,
+      "sha256": "0dab737ad388598ac67e9d1f87b879c303919a416b3935c71dd36886f5d254b6"
+    },
+    "final-run/sqlite-3513/after.sql": {
+      "bytes": 39427,
+      "sha256": "0d7cb70c6f8acc46df8944120ef70902b9eef80a02d5f7597eafb926bb399669"
+    },
+    "final-run/sqlite-3513/before.sql": {
+      "bytes": 39050,
+      "sha256": "c8fd84cf5e535d5f4c585d31a2e0ad0e4c791bb9cd7649f243e0bc1c6bfd223e"
+    },
+    "final-run/sqlite-3513/fresh-reopen.sqlite3": {
+      "bytes": 163840,
+      "sha256": "363d6cce5493f0b3ceac60ac497f83dbfc53b2c0d729b7a5f411446d6546ba3c"
+    },
+    "final-run/sqlite-3513/receipt.json": {
+      "bytes": 1021115,
+      "sha256": "718028d8074c99bdae758f229ad2e3944dbb2f1f2d5fdfc46e6b8e5d03f205ed"
+    },
+    "final-run/sqlite-3513/summary.json": {
+      "bytes": 6012,
+      "sha256": "b66001248f2c00c81f9c3bef86b95cb4e15230c0d16ba7dea6c4642498d35d85"
+    },
+    "final-run/sqlite-3531/after.sql": {
+      "bytes": 39427,
+      "sha256": "0d7cb70c6f8acc46df8944120ef70902b9eef80a02d5f7597eafb926bb399669"
+    },
+    "final-run/sqlite-3531/before.sql": {
+      "bytes": 39050,
+      "sha256": "c8fd84cf5e535d5f4c585d31a2e0ad0e4c791bb9cd7649f243e0bc1c6bfd223e"
+    },
+    "final-run/sqlite-3531/fresh-reopen.sqlite3": {
+      "bytes": 163840,
+      "sha256": "bb8bf36a61c5ecb127aae91b2d03b24d5cd5ce0ca8a3ced4cf9489aac2bfc699"
+    },
+    "final-run/sqlite-3531/receipt.json": {
+      "bytes": 1021115,
+      "sha256": "f4db85e6ff3bb65c106964cf5b9ac456b3b610c12577398d12ad326129783954"
+    },
+    "final-run/sqlite-3531/summary.json": {
+      "bytes": 6012,
+      "sha256": "daaca43f7609ab3db847d20f03723f847cde74b65fd88966713321d3dd4875d9"
+    },
+    "first-run.log": {
+      "bytes": 1458,
+      "sha256": "de522707fc54217ded346bd0a22085484a6c160b0b8cb40223e9f7d630f36d93"
+    },
+    "first-run/3513.log": {
+      "bytes": 463,
+      "sha256": "679222f652e40f5d1240f60afb2dc3268197b9a43a08da900f1a7167ec072910"
+    },
+    "first-run/3531.log": {
+      "bytes": 463,
+      "sha256": "679222f652e40f5d1240f60afb2dc3268197b9a43a08da900f1a7167ec072910"
+    },
+    "first-run/input-binding.json": {
+      "bytes": 3167,
+      "sha256": "725c33843e47da89ec04c74c754f2aa9495b2851c126fed1d21029b2adbc8c1c"
+    },
+    "first-run/process-receipts.json": {
+      "bytes": 1744,
+      "sha256": "101210d9cd2f16e6b47e44775ea8c91f71e8ede97e211e1cf6646c6b0d1917a7"
+    },
+    "first-run/sqlite-3513/after.sql": {
+      "bytes": 39427,
+      "sha256": "0d7cb70c6f8acc46df8944120ef70902b9eef80a02d5f7597eafb926bb399669"
+    },
+    "first-run/sqlite-3513/before.sql": {
+      "bytes": 39050,
+      "sha256": "c8fd84cf5e535d5f4c585d31a2e0ad0e4c791bb9cd7649f243e0bc1c6bfd223e"
+    },
+    "first-run/sqlite-3513/fresh-reopen.sqlite3": {
+      "bytes": 163840,
+      "sha256": "363d6cce5493f0b3ceac60ac497f83dbfc53b2c0d729b7a5f411446d6546ba3c"
+    },
+    "first-run/sqlite-3513/receipt.json": {
+      "bytes": 998093,
+      "sha256": "c5fad4cd19e21233ce459f2e8c99010bb82cfabbd92997ee1d2de3240d997ac6"
+    },
+    "first-run/sqlite-3513/summary.json": {
+      "bytes": 6012,
+      "sha256": "c8e53a7c131dbd7ef99e1dc7cf9a4c33ab6bcd09056d77d47ba901cf77fb2310"
+    },
+    "first-run/sqlite-3531/after.sql": {
+      "bytes": 39427,
+      "sha256": "0d7cb70c6f8acc46df8944120ef70902b9eef80a02d5f7597eafb926bb399669"
+    },
+    "first-run/sqlite-3531/before.sql": {
+      "bytes": 39050,
+      "sha256": "c8fd84cf5e535d5f4c585d31a2e0ad0e4c791bb9cd7649f243e0bc1c6bfd223e"
+    },
+    "first-run/sqlite-3531/fresh-reopen.sqlite3": {
+      "bytes": 163840,
+      "sha256": "bb8bf36a61c5ecb127aae91b2d03b24d5cd5ce0ca8a3ced4cf9489aac2bfc699"
+    },
+    "first-run/sqlite-3531/receipt.json": {
+      "bytes": 998093,
+      "sha256": "553c87420ff91eef765b7fc6b9baea8e23ec68b81fc1a242a3da3160afbbfcaa"
+    },
+    "first-run/sqlite-3531/summary.json": {
+      "bytes": 6012,
+      "sha256": "4484aa1a90f2fbe9bc2382eb515bf22e3d1fb49c7386831b195e7281f73cb4af"
+    },
+    "initial-attempt.json": {
+      "bytes": 484,
+      "sha256": "e44708e91a28f407e861169227f9d77b770203f0c8039a8393d1564643f73961"
+    },
+    "initial-probe_f1.py": {
+      "bytes": 20707,
+      "sha256": "65b17063dd0ddc2f890760c7cc1c48fa5c5f9637a6ae5c0360cd467daba76272"
+    },
+    "inputs/I2-F1-ADDENDUM.md": {
+      "bytes": 10539,
+      "sha256": "85a2e26e839df2790876b39239865519689feee8c8c6093b25b5a06da14a345d"
+    },
+    "inputs/base-input-manifest.json": {
+      "bytes": 567166,
+      "sha256": "85125fa006e0a9e5b772b74e79eaf034042339f31dc4b287b697eba520f26465"
+    },
+    "inputs/compose_f1.py": {
+      "bytes": 479,
+      "sha256": "a2030e8d3929a3ba832cf62df60919242f648a70e59f3383404f9e26c4d48f80"
+    },
+    "inputs/fence.sql": {
+      "bytes": 376,
+      "sha256": "ce66652aef8bdb39302597b14d7b26fe6601206161215fca59c570a6e9fcb908"
+    },
+    "inputs/prepare_runtime.py": {
+      "bytes": 1653,
+      "sha256": "2be8281ddd5189ebc864dd60add124753f833ceab24d3d0f0de2d83461bc86f2"
+    },
+    "inputs/probe_f1.py": {
+      "bytes": 21332,
+      "sha256": "1adda6047d612c6e04c7a3ff0a4e0eb37d7ab4e45ecc5a10db76e5c693560dff"
+    },
+    "inputs/run_f1.py": {
+      "bytes": 2879,
+      "sha256": "f5bb79ca2ce09326f8887cb548a14aa26472ff7b48543b1209eddbffa2557831"
+    },
+    "inputs/stage_contract.py": {
+      "bytes": 4252,
+      "sha256": "ccfd21ad0a1776d15f11a720f40ba64c45c3594051cc3f771c290d0988037868"
+    },
+    "inputs/task-d-original-minimal.sql": {
+      "bytes": 1626,
+      "sha256": "211a82dd998d8535fc937cc3d13d9d97ef2d3fe622bff596e85fbf695fb45022"
+    },
+    "launch_final.py": {
+      "bytes": 724,
+      "sha256": "1ed63a88c95d71d539bfd995697646fdd4db56fe4e7ca87f4f38e7651b5d3b00"
+    },
+    "launcher-receipt.json": {
+      "bytes": 378,
+      "sha256": "e3c6e06cac633b7bc4f1678409b9e288a42b18af703a53ea56607d4f632da6bf"
+    },
+    "predecessor-inspection.json": {
+      "bytes": 658,
+      "sha256": "793963892169378776aaa841e92bbcfb0f77af417cc10b3ba7998d3c53a7269c"
+    },
+    "runtime-build.log": {
+      "bytes": 233,
+      "sha256": "a15cb6612fefc1356f9be25fb18bcd017f50c038aadd6ac8b2c50602aa468597"
+    },
+    "runtime-provenance.json": {
+      "bytes": 2085,
+      "sha256": "4546ea57649d5ad24abf66aab54dd7bf631367aa331565c9d53fcb10a98080fc"
+    }
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "recorded_at": "2026-10-23T15:32:31.405351+00:00",
+  "note": "Initial shell read commands were sequential; individual process exit files were not captured. Known API errors are preserved honestly; last shell aggregate was zero from wc and is not claimed as command success. Temporary redirect signed URLs are intentionally omitted.",
+  "commands": [
+    {
+      "command": "gh api repos/TakashiSasaki/git-repo-db/actions/jobs/120488205702/logs",
+      "outcome": "denied by redirected storage Forbidden",
+      "exit_code_individually_retained": false,
+      "output_bytes": 0
+    },
+    {
+      "command": "gh api repos/TakashiSasaki/git-repo-db/actions/jobs/120488205327/logs",
+      "outcome": "denied by redirected storage Forbidden",
+      "exit_code_individually_retained": false,
+      "output_bytes": 0
+    },
+    {
+      "command": "gh api repos/TakashiSasaki/git-repo-db/actions/runs/39975300074/logs",
+      "outcome": "HTTP 503",
+      "exit_code_individually_retained": false,
+      "output_bytes": 91
+    },
+    {
+      "command": "gh api repos/TakashiSasaki/git-repo-db/actions/runs/39975300189/logs",
+      "outcome": "run log ZIP retrieved",
+      "exit_code_individually_retained": false,
+      "output_bytes": 4122601
+    },
+    {
+      "command": "GitHub fetch_workflow_job_logs job120488205702 and job120488205327",
+      "outcome": "success through authorized connector",
+      "exit_code": "not a process",
+      "output_files": [
+        "development-connector-job.log",
+        "access-connector-job.log"
+      ]
+    },
+    {
+      "command": "python /workspace/rereview-hosted-ci/verify_independent_ci.py > verify.log 2>&1",
+      "exit_code": 0,
+      "outcome": "verified complete receipts and all index members"
+    }
+  ]
+}

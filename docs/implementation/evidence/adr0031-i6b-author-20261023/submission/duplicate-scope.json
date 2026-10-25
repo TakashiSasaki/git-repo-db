@@ -1,0 +1,19 @@
+{
+  "method": "Complete supported paginated all-state PR roster plus live I6-B search; distinguish implementation from design and fixed-stack Task B audit.",
+  "all_pr_count": 150,
+  "related_candidates": [
+    {
+      "number": 134,
+      "title": "docs: freeze ADR 0031 I6 wire, admission and Exchange boundary contract",
+      "head": "docs/adr0031-i6-boundary-contract-20261022",
+      "base": "fix/adr0032-host-runtime-20261022",
+      "state": "open",
+      "url": "https://github.com/TakashiSasaki/git-repo-db/pull/134"
+    }
+  ],
+  "competing_i6b_implementation": [],
+  "related_task_b_pr": 150,
+  "base_head_unchanged": true,
+  "base_tree_verified": "e7ca7e361b8b766f1976a12fc84d5cc50ac32232",
+  "decoded_response_arrays": 1
+}

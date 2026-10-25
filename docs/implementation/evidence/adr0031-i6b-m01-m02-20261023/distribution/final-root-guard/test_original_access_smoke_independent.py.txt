@@ -1,0 +1,8 @@
+import json,os,subprocess,sys
+from pathlib import Path
+
+def test_original_access_smoke_unchanged():
+ command=[sys.executable,'-I',os.environ['I6B_SMOKE_LAUNCHER']]
+ with Path(os.environ['I6B_SMOKE_LOG']).open('w') as f:p=subprocess.run(command,stdout=f,stderr=subprocess.STDOUT)
+ Path(os.environ['I6B_SMOKE_PROCESS']).write_text(json.dumps({'argv':command,'exit_code':p.returncode},indent=2)+'\n')
+ assert p.returncode==0,'Original Access smoke failed; actual child result and unexecuted tail retained'

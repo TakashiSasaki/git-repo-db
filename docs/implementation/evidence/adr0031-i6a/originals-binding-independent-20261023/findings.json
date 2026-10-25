@@ -1,0 +1,41 @@
+{
+  "reviewed_pr": 148,
+  "reviewed_head": "268025f67841285d105737b5a0d7bd15b1a6f59c",
+  "reviewed_tree": "e5fa0437f19f31fa414d488ec10f483ef68f03fa",
+  "verdict": "scoped PASS",
+  "scope": "ADR0031 I6-A correction independent acceptance; no I6-B/C/I7/I8, ordinary Transfer or Release acceptance",
+  "open_severity_counts": {
+    "Critical": 0,
+    "High": 0,
+    "Medium": 0,
+    "Low": 0
+  },
+  "new_findings": [],
+  "closed_findings": [
+    {
+      "id": "ORIGINALS-M1",
+      "prior_severity": "Medium",
+      "status": "verified_closed",
+      "evidence": "saved probe changes 0/4 refusals to4/4 in source and both installed forms; independent132+4 vectors and full-rowset/SQL/authority/rollback checks pass"
+    },
+    {
+      "id": "I6A-IR-L01",
+      "prior_severity": "Low",
+      "status": "verified_closed",
+      "evidence": "old helper false-consistent reproduced on both actual gzip archives; fixed helper and13 independent controls; all480 Git input hashes match"
+    }
+  ],
+  "i6b_prerequisite_satisfied": true,
+  "i6b_start_decision": "May begin within the existing approved staged plan; implementation not started here. Keep both Transfer fences.",
+  "full_acceptance": false,
+  "remaining_product_unsuccessful_nodes": {
+    "I6-C": 242,
+    "I7-composition": 14,
+    "Transfer-stage": 43
+  },
+  "blockers": {
+    "denied": [],
+    "pending": [],
+    "uncertain": []
+  }
+}

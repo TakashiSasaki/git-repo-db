@@ -1,0 +1,59 @@
+"""Standalone installed-only Task G metadata/recovery counterexample."""
+import sys,json,sqlite3,tempfile,hashlib
+from pathlib import Path
+from uuid import uuid4
+import repo_catalog
+from repo_catalog.adapters.sqlite import p1_schema as schema
+from repo_catalog.adapters.sqlite.production_context import Context
+from repo_catalog.adapters.sqlite.recovery_validation import validate_stored_context_relations,StoredContextInvariantError
+from repo_catalog.domain.p1_context import ResourceKey,FieldCandidate,FieldClock,canonical
+from repo_catalog.domain.production_context import ResourceObservation
+from repo_catalog.domain.resource_identification import ResourceIdentification as RI
+checks=[];results=[]
+S='99999999-9999-4999-8999-999999999999'
+for mode in ('global','scoped'):
+ with tempfile.TemporaryDirectory(prefix='task-g-installed-') as tmp:
+  path=Path(tmp);rep,inst=str(uuid4()),str(uuid4())
+  for role in schema.STORES:schema.initialize(path/(role+'.sqlite3'),role,rep,inst)
+  namespace=ResourceKey.from_native(S,'pull_request',['project',[]])
+  key=ResourceKey.document(namespace,'document','body',['D',[]])
+  declaration=RI.global_document(key) if mode=='global' else RI.scoped(key,namespace,'body',['D',[]])
+  candidate=FieldCandidate(key,'title',canonical('independent needle'),FieldClock('provider',1),canonical({'source':'G','evidence':'original'}),2)
+  with Context.transaction(path) as ctx:
+   ctx.provider(S,'synthetic');ctx.observe(ResourceObservation(key,(candidate,),declaration))
+  with Context.snapshot(path) as ctx:
+   assert ctx.identification(ResourceKey(*key.coordinates()))==declaration
+   assert namespace not in ctx.resources()
+   assert ctx.candidates(key,'title')==(candidate,)
+  checks.append(mode+'-healthy-reopen')
+  db=schema.connect(path/'context.sqlite3','context')
+  triggers=dict(db.execute("SELECT name,sql FROM sqlite_schema WHERE type='trigger' AND tbl_name='resources'"))
+  for name in triggers:db.execute('DROP TRIGGER '+name)
+  db.execute('PRAGMA ignore_check_constraints=1')
+  db.execute('UPDATE resources SET provider_document_id=\'"wrong"\'')
+  db.execute('PRAGMA ignore_check_constraints=0')
+  for sql in triggers.values():db.execute(sql)
+  assert schema.schema_rows(db)==schema.expected_schema('context')
+  try:validate_stored_context_relations(db)
+  except StoredContextInvariantError as exc:validator_error=str(exc)
+  else:raise AssertionError('metadata validator accepted corrupted row')
+  def dump(db):return {r[0]:[tuple(x) for x in db.execute('SELECT * FROM "'+r[0]+'"')] for r in db.execute("SELECT name FROM sqlite_schema WHERE type='table' AND name NOT LIKE 'sqlite_%'")}
+  before=dump(db);db.close()
+  result={'mode':mode,'validator_error':validator_error}
+  try:
+   with Context.snapshot(path) as ctx:observed=ctx.candidates(key,'title')
+   result.update(returned_candidates=[repr(x) for x in observed],ordinary_read_accepted=True)
+  except ValueError as exc:result.update(error=str(exc),ordinary_read_accepted=False)
+  result['stop_after_candidates']=(path/'p1-recovery-stop.json').exists()
+  # Candidate read has not inspected the invalid declaration. A selected Resource read detects it.
+  try:
+   with Context.snapshot(path) as ctx:ctx.identification(key)
+  except ValueError as exc:result['identification_error']=str(exc)
+  result['stop_after_identification']=(path/'p1-recovery-stop.json').exists()
+  db=schema.connect(path/'context.sqlite3','context');result['authority_unchanged']=dump(db)==before;db.close()
+  results.append(result)
+output=dict(origin=repo_catalog.__file__,python=sys.executable,runtime=sqlite3.connect(':memory:').execute('SELECT sqlite_version(),sqlite_source_id()').fetchone(),checks=checks,results=results)
+Path(sys.argv[1]).write_text(json.dumps(output,ensure_ascii=True,indent=2)+'\n')
+assert all(x['stop_after_identification'] and x['authority_unchanged'] for x in results)
+# A failing independent recovery assertion is preserved, not relabeled as a pass.
+sys.exit(1 if any(x['ordinary_read_accepted'] for x in results) else 0)

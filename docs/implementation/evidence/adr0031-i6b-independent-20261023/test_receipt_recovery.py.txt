@@ -1,0 +1,53 @@
+"""Stdlib negative controls for the new observed-chunk recovery helper."""
+import json
+import pathlib
+import re
+import subprocess
+import sys
+import tempfile
+import zipfile
+
+
+root = pathlib.Path(__file__).resolve().parent
+helper = root / "recover_access_receipt.py.txt"
+source = root / "ci/author-access-logs.zip"
+pattern = re.compile(rb"^\d{4}-\d\d-\d\dT\S+Z CI_RECEIPTS_DATA_V1 (.*)$")
+views = {}
+with zipfile.ZipFile(source) as z:
+    for name in z.namelist():
+        lines = z.read(name).splitlines()
+        chunks = [m[1] for line in lines if (m := pattern.fullmatch(line))]
+        if chunks:
+            views[name] = lines
+common = None
+for lines in views.values():
+    chunks = {m[1] for line in lines if (m := pattern.fullmatch(line))}
+    common = chunks if common is None else common & chunks
+chosen = next(iter(sorted(common)))
+results = []
+with tempfile.TemporaryDirectory(prefix="receipt-controls-", dir="/workspace") as work:
+    work = pathlib.Path(work)
+    for mode in ("missing-both", "conflicting-view", "false-original-hash"):
+        fixture = work / (mode + ".zip")
+        with zipfile.ZipFile(fixture, "w", zipfile.ZIP_DEFLATED) as z:
+            for ix, (name, lines) in enumerate(views.items()):
+                modified = []
+                for line in lines:
+                    m = pattern.fullmatch(line)
+                    if mode == "missing-both" and m and m[1] == chosen:
+                        continue
+                    if mode == "conflicting-view" and ix == 0 and m and m[1] == chosen:
+                        replacement = (b"A" if chosen[0] != 65 else b"B") + chosen[1:]
+                        line = line[:-len(chosen)] + replacement
+                    if mode == "false-original-hash" and b"CI_RECEIPTS_BEGIN_V1" in line:
+                        prefix, sha, size = line.rsplit(b" ", 2)
+                        line = prefix + b" " + b"0" * 64 + b" " + size
+                    if mode == "false-original-hash" and b"CI_RECEIPTS_END_V1" in line:
+                        line = line.rsplit(b" ", 1)[0] + b" " + b"0" * 64
+                    modified.append(line)
+                z.writestr(name, b"\n".join(modified) + b"\n")
+        p = subprocess.run([sys.executable, str(helper), str(fixture), str(work / mode)], capture_output=True, text=True)
+        results.append(dict(control=mode, exit_code=p.returncode, stderr=p.stderr, rejected=p.returncode != 0))
+        assert p.returncode != 0, mode
+(root / "ci/receipt-recovery-negative-controls.json").write_text(json.dumps(dict(controls=results, helper="recover_access_receipt.py.txt", actual_positive="ci/author-access/recovery-verification.json"), indent=2) + "\n")
+print(json.dumps(results, indent=2))

@@ -1,0 +1,339 @@
+{
+  "reviewed_head": "268025f67841285d105737b5a0d7bd15b1a6f59c",
+  "reviewed_tree": "e5fa0437f19f31fa414d488ec10f483ef68f03fa",
+  "artifacts": {
+    "direct-wheel": {
+      "path": "/workspace/task-c/installed-work-v3/source/dist/repo_catalog-0.2.0-py3-none-any.whl",
+      "bytes": 778384,
+      "sha256": "b92078f0153c187dd5d06773b75d98e134970694a79a58534b59c4f8503da878"
+    },
+    "sdist": {
+      "path": "/workspace/task-c/installed-work-v3/source/dist/repo_catalog-0.2.0.tar.gz",
+      "bytes": 122823537,
+      "sha256": "b54c8896685e1982a1f2405acfdbc4cd54d7084eea9ad59775a2613fbc063b5f"
+    },
+    "sdist-wheel": {
+      "path": "/workspace/task-c/installed-work-v3/from-sdist/repo_catalog-0.2.0/dist/repo_catalog-0.2.0-py3-none-any.whl",
+      "bytes": 778384,
+      "sha256": "b92078f0153c187dd5d06773b75d98e134970694a79a58534b59c4f8503da878"
+    }
+  },
+  "all_wheel_members_equal": true,
+  "all_record_entries_verified": true,
+  "product_file_count": 158,
+  "forms": {
+    "direct": {
+      "sqlite": [
+        "3.53.1",
+        "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9"
+      ],
+      "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+      "prefix": "/workspace/task-c/installed-work-v3/direct-venv",
+      "origin": "/workspace/task-c/installed-work-v3/direct-venv/lib/python3.12/site-packages/repo_catalog",
+      "fingerprint": "924cc7557fb3da6211ea070185881f5fcaeff9bf52b6e237a361a238a2ea0c6e",
+      "fences": [
+        [
+          "trigger",
+          "i2_transfer_report_stage_fence",
+          "resource_relations",
+          "CREATE TRIGGER i2_transfer_report_stage_fence BEFORE INSERT ON resource_relations\nWHEN NEW.relation_kind COLLATE BINARY='transfer_event_report'\nBEGIN SELECT RAISE(ABORT,'I2_TRANSFER_UNSUPPORTED'); END"
+        ],
+        [
+          "trigger",
+          "i2_transfer_stage_fence",
+          "resource_repository_relations",
+          "CREATE TRIGGER i2_transfer_stage_fence BEFORE INSERT ON resource_repository_relations\nWHEN NEW.relation_kind COLLATE BINARY IN('transfer_from_repository','transfer_to_repository')\nBEGIN SELECT RAISE(ABORT,'I2_TRANSFER_UNSUPPORTED'); END"
+        ]
+      ],
+      "runtime_before_after_equal": true,
+      "lanes": {
+        "safety": {
+          "selected": 626,
+          "passed": 626,
+          "exit": 0,
+          "selected_junit_journal_and_typed_phase_multisets_exact": true,
+          "in_pytest_import_checks": 4,
+          "cohorts": {
+            "i4": 217,
+            "i5": 29,
+            "new_originals": 75
+          }
+        },
+        "authorization": {
+          "selected": 27,
+          "passed": 27,
+          "exit": 0,
+          "selected_junit_journal_and_typed_phase_multisets_exact": true,
+          "in_pytest_import_checks": 4
+        },
+        "task-c": {
+          "selected": 132,
+          "passed": 132,
+          "exit": 0,
+          "selected_junit_journal_and_typed_phase_multisets_exact": true,
+          "in_pytest_import_checks": 4
+        }
+      },
+      "probe_originals": {
+        "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+        "sqlite": "3.53.1",
+        "cases": [
+          {
+            "id": "case_both_unreported_is_no_report",
+            "result": "PASS"
+          },
+          {
+            "id": "case_changed_parent_payload_refuses_even_replay",
+            "result": "PASS"
+          },
+          {
+            "id": "case_child_global_scoped_first_no_semantic_parent",
+            "result": "PASS"
+          },
+          {
+            "id": "case_constructor_missing_declaration",
+            "result": "PASS"
+          },
+          {
+            "id": "case_constructor_missing_endpoints",
+            "result": "PASS"
+          },
+          {
+            "id": "case_constructor_missing_parent",
+            "result": "PASS"
+          },
+          {
+            "id": "case_constructor_truncated_two_sided",
+            "result": "PASS"
+          },
+          {
+            "id": "case_decoder_requires_all_original_parent_coordinates",
+            "result": "PASS"
+          },
+          {
+            "id": "case_event_coordinates_cannot_substitute_parent",
+            "result": "PASS"
+          },
+          {
+            "id": "case_missing_exact_parent_is_not_recovered_from_native_id",
+            "result": "PASS"
+          },
+          {
+            "id": "case_missing_parent_time_is_not_null",
+            "result": "PASS"
+          },
+          {
+            "id": "case_multiple_parents_retained_without_winner",
+            "result": "PASS"
+          },
+          {
+            "id": "case_one_sided_and_explicit_null_distinct",
+            "result": "PASS"
+          },
+          {
+            "id": "case_parent_explicit_null_stays_null",
+            "result": "PASS"
+          },
+          {
+            "id": "case_provider_only_unresolved_is_not_null",
+            "result": "PASS"
+          },
+          {
+            "id": "case_replay_cannot_rewrite_two_sided_as_one_sided",
+            "result": "PASS"
+          },
+          {
+            "id": "case_selection_truncated_is_not_one_sided",
+            "result": "PASS"
+          },
+          {
+            "id": "case_stored_rows_cannot_rescue_truncated_delivery",
+            "result": "PASS"
+          },
+          {
+            "id": "case_two_sided_null_and_replay_preserve_originals",
+            "result": "PASS"
+          }
+        ],
+        "passed": 19,
+        "failed": 0
+      },
+      "probe_invalid_carrier": {
+        "invalid_original_cases": 4,
+        "invalid_original_refusals": 4,
+        "normal_fence_controls": 2
+      }
+    },
+    "sdist": {
+      "sqlite": [
+        "3.53.1",
+        "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9"
+      ],
+      "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+      "prefix": "/workspace/task-c/installed-work-v3/sdist-venv",
+      "origin": "/workspace/task-c/installed-work-v3/sdist-venv/lib/python3.12/site-packages/repo_catalog",
+      "fingerprint": "924cc7557fb3da6211ea070185881f5fcaeff9bf52b6e237a361a238a2ea0c6e",
+      "fences": [
+        [
+          "trigger",
+          "i2_transfer_report_stage_fence",
+          "resource_relations",
+          "CREATE TRIGGER i2_transfer_report_stage_fence BEFORE INSERT ON resource_relations\nWHEN NEW.relation_kind COLLATE BINARY='transfer_event_report'\nBEGIN SELECT RAISE(ABORT,'I2_TRANSFER_UNSUPPORTED'); END"
+        ],
+        [
+          "trigger",
+          "i2_transfer_stage_fence",
+          "resource_repository_relations",
+          "CREATE TRIGGER i2_transfer_stage_fence BEFORE INSERT ON resource_repository_relations\nWHEN NEW.relation_kind COLLATE BINARY IN('transfer_from_repository','transfer_to_repository')\nBEGIN SELECT RAISE(ABORT,'I2_TRANSFER_UNSUPPORTED'); END"
+        ]
+      ],
+      "runtime_before_after_equal": true,
+      "lanes": {
+        "safety": {
+          "selected": 626,
+          "passed": 626,
+          "exit": 0,
+          "selected_junit_journal_and_typed_phase_multisets_exact": true,
+          "in_pytest_import_checks": 4,
+          "cohorts": {
+            "i4": 217,
+            "i5": 29,
+            "new_originals": 75
+          }
+        },
+        "authorization": {
+          "selected": 27,
+          "passed": 27,
+          "exit": 0,
+          "selected_junit_journal_and_typed_phase_multisets_exact": true,
+          "in_pytest_import_checks": 4
+        },
+        "task-c": {
+          "selected": 132,
+          "passed": 132,
+          "exit": 0,
+          "selected_junit_journal_and_typed_phase_multisets_exact": true,
+          "in_pytest_import_checks": 4
+        }
+      },
+      "probe_originals": {
+        "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+        "sqlite": "3.53.1",
+        "cases": [
+          {
+            "id": "case_both_unreported_is_no_report",
+            "result": "PASS"
+          },
+          {
+            "id": "case_changed_parent_payload_refuses_even_replay",
+            "result": "PASS"
+          },
+          {
+            "id": "case_child_global_scoped_first_no_semantic_parent",
+            "result": "PASS"
+          },
+          {
+            "id": "case_constructor_missing_declaration",
+            "result": "PASS"
+          },
+          {
+            "id": "case_constructor_missing_endpoints",
+            "result": "PASS"
+          },
+          {
+            "id": "case_constructor_missing_parent",
+            "result": "PASS"
+          },
+          {
+            "id": "case_constructor_truncated_two_sided",
+            "result": "PASS"
+          },
+          {
+            "id": "case_decoder_requires_all_original_parent_coordinates",
+            "result": "PASS"
+          },
+          {
+            "id": "case_event_coordinates_cannot_substitute_parent",
+            "result": "PASS"
+          },
+          {
+            "id": "case_missing_exact_parent_is_not_recovered_from_native_id",
+            "result": "PASS"
+          },
+          {
+            "id": "case_missing_parent_time_is_not_null",
+            "result": "PASS"
+          },
+          {
+            "id": "case_multiple_parents_retained_without_winner",
+            "result": "PASS"
+          },
+          {
+            "id": "case_one_sided_and_explicit_null_distinct",
+            "result": "PASS"
+          },
+          {
+            "id": "case_parent_explicit_null_stays_null",
+            "result": "PASS"
+          },
+          {
+            "id": "case_provider_only_unresolved_is_not_null",
+            "result": "PASS"
+          },
+          {
+            "id": "case_replay_cannot_rewrite_two_sided_as_one_sided",
+            "result": "PASS"
+          },
+          {
+            "id": "case_selection_truncated_is_not_one_sided",
+            "result": "PASS"
+          },
+          {
+            "id": "case_stored_rows_cannot_rescue_truncated_delivery",
+            "result": "PASS"
+          },
+          {
+            "id": "case_two_sided_null_and_replay_preserve_originals",
+            "result": "PASS"
+          }
+        ],
+        "passed": 19,
+        "failed": 0
+      },
+      "probe_invalid_carrier": {
+        "invalid_original_cases": 4,
+        "invalid_original_refusals": 4,
+        "normal_fence_controls": 2
+      }
+    }
+  },
+  "full_archive_comparison": {
+    "current_source_entries": 5233,
+    "current_sdist_entries": 5234,
+    "author_source_entries": 5218,
+    "author_sdist_entries": 5219,
+    "added_sdist_members": [
+      "repo_catalog-0.2.0/docs/implementation/evidence/adr0031-i6a/originals-binding-remediation-20261023/REPORT.md",
+      "repo_catalog-0.2.0/docs/implementation/evidence/adr0031-i6a/originals-binding-remediation-20261023/REPRODUCTION.md",
+      "repo_catalog-0.2.0/docs/implementation/evidence/adr0031-i6a/originals-binding-remediation-20261023/artifact-index.json",
+      "repo_catalog-0.2.0/docs/implementation/evidence/adr0031-i6a/originals-binding-remediation-20261023/binding-controls.json",
+      "repo_catalog-0.2.0/docs/implementation/evidence/adr0031-i6a/originals-binding-remediation-20261023/check_artifacts.py",
+      "repo_catalog-0.2.0/docs/implementation/evidence/adr0031-i6a/originals-binding-remediation-20261023/diagnostic-summary.json",
+      "repo_catalog-0.2.0/docs/implementation/evidence/adr0031-i6a/originals-binding-remediation-20261023/executions.json",
+      "repo_catalog-0.2.0/docs/implementation/evidence/adr0031-i6a/originals-binding-remediation-20261023/findings.json",
+      "repo_catalog-0.2.0/docs/implementation/evidence/adr0031-i6a/originals-binding-remediation-20261023/first-boundary-changes.json",
+      "repo_catalog-0.2.0/docs/implementation/evidence/adr0031-i6a/originals-binding-remediation-20261023/full-summary.json",
+      "repo_catalog-0.2.0/docs/implementation/evidence/adr0031-i6a/originals-binding-remediation-20261023/installed-summary.json",
+      "repo_catalog-0.2.0/docs/implementation/evidence/adr0031-i6a/originals-binding-remediation-20261023/pre-submission-recheck.json",
+      "repo_catalog-0.2.0/docs/implementation/evidence/adr0031-i6a/originals-binding-remediation-20261023/raw-evidence.zip",
+      "repo_catalog-0.2.0/docs/implementation/evidence/adr0031-i6a/originals-binding-remediation-20261023/raw-index.json",
+      "repo_catalog-0.2.0/docs/implementation/evidence/adr0031-i6a/originals-binding-remediation-20261023/source-input-binding.json"
+    ],
+    "removed_sdist_members": [],
+    "changed_sdist_members": [
+      "repo_catalog-0.2.0/.agents/skills/ci-final-tree-verification/SKILL.md"
+    ],
+    "full_archive_equal": false,
+    "full_archive_difference_is_not_runtime_input_drift": true
+  }
+}

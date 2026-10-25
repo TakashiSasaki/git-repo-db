@@ -1,0 +1,7 @@
+{
+  "action": "gh api repos/TakashiSasaki/git-repo-db/actions/artifacts/12502213922/zip",
+  "exit_code": 1,
+  "result": "artifact blob redirect HTTP Forbidden (403); temporary signed URL omitted",
+  "status": "denied",
+  "bytes_received": 0
+}

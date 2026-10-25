@@ -1,0 +1,4 @@
+{
+  "scope": "Intentional repeated diagnostic: two assertions suppress underlying exception frames; trace actual permission raise; excluded from ordinary aggregate",
+  "exit_code": 1
+}

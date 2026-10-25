@@ -1,0 +1,110 @@
+{
+  "scope": "Parser checks against historical raw bytes, not new product test executions",
+  "historical_reconciliation": {
+    "regressions": {
+      "checks": {
+        "selected_unique": true,
+        "selected_equals_junit": true,
+        "selected_equals_starts": true,
+        "raw_phase_sidecar_multisets_equal": true,
+        "main_phase_nodes_equal_selected": true,
+        "main_setup_teardown_once": true,
+        "main_call_once_after_successful_setup": true,
+        "no_duplicate_main_phases": true,
+        "subtest_types_explicit": true,
+        "subtests_have_selected_parent": true,
+        "subtest_failure_reflected_in_junit_parent": true,
+        "one_completed_finish": true
+      },
+      "consistent": true,
+      "counts": {
+        "passed": 2394,
+        "error": 419,
+        "failed": 324
+      },
+      "selected": 3137,
+      "exit_code": 1,
+      "subtest_count": 0,
+      "subtest_outcomes": {},
+      "finishes": [
+        {
+          "event": "finish",
+          "status": "failed",
+          "exitstatus": 1,
+          "timestamp": 1792725203.074781
+        }
+      ],
+      "source_binding_before": null,
+      "source_binding_after": null,
+      "inputs": {
+        "junit": "b51052c5441e23c0fe59bbeed9aba0e0d2e001f0d870e01210170036145f15fc",
+        "journal": "be85ea8439f9a4f15d11390e1c69ad1c5fd916e3a86381bbe57cdcffe7a3c40d",
+        "sidecar": "399c4bafb216a85c9cec2483827b767245b26ca12c37fe719233e61a6fda1196",
+        "selected": "d278b034670fb1c41d451004c9a7e69723c769c0f620442c0ff7a734c6603155",
+        "execution": "4cfce252dd8211eb91e508b5169e5f1f17d9744fc565fceea5121b53e10dd557"
+      }
+    },
+    "remaining-ordinary": {
+      "checks": {
+        "selected_unique": true,
+        "selected_equals_junit": true,
+        "selected_equals_starts": true,
+        "raw_phase_sidecar_multisets_equal": true,
+        "main_phase_nodes_equal_selected": true,
+        "main_setup_teardown_once": true,
+        "main_call_once_after_successful_setup": true,
+        "no_duplicate_main_phases": true,
+        "subtest_types_explicit": true,
+        "subtests_have_selected_parent": true,
+        "subtest_failure_reflected_in_junit_parent": true,
+        "one_completed_finish": true
+      },
+      "consistent": true,
+      "counts": {
+        "passed": 2804
+      },
+      "selected": 2804,
+      "exit_code": 0,
+      "subtest_count": 57,
+      "subtest_outcomes": {
+        "passed": 57
+      },
+      "finishes": [
+        {
+          "event": "finish",
+          "status": "completed",
+          "exitstatus": 0,
+          "timestamp": 1792725756.707814
+        }
+      ],
+      "source_binding_before": null,
+      "source_binding_after": null,
+      "inputs": {
+        "junit": "1f860aa1de5b5c664919008202d1a601a63fc3464e201a7d05ea9fab64cbe62f",
+        "journal": "d0000a8c9d949a7dcb8481d122718adbc43fa26a5df1959c54f281e2eb2c6b95",
+        "sidecar": "97382a2dfdd0d56fcc75b224715f1963ddab43afb825a92a9c0d546cc9c80c8b",
+        "selected": "4023bd5ecdfc450a31a5c7e5f60be24549866dfd193c5fb8d77295c45da9c9c2",
+        "execution": "5da308ea6cb13d50f603cc28a646e3fe95b7f8449f6d62c77465f7dcd26de42c"
+      }
+    }
+  },
+  "negative_controls": {
+    "duplicate_selected_identity": {
+      "rejected": true,
+      "reason": "duplicate or ambiguous selected identity"
+    },
+    "duplicate_junit_identity": {
+      "rejected": true,
+      "reason": "duplicate JUnit node: tests/integration/p1/test_coordination.py::test_stop_outside_backup_gate_prevents_certificate"
+    },
+    "journal_sidecar_phase_mismatch": {
+      "rejected": true,
+      "reason": "inconsistent run: {\"checks\": {\"selected_unique\": true, \"selected_equals_junit\": true, \"selected_equals_starts\": true, \"raw_phase_sidecar_multisets_equal\": false, \"main_phase_nodes_equal_selected\": true, \"main_setup_teardown_once\": true, \"main_call_once_after_successful_setup\": true, \"no_duplicate_main_phases\": true, \"subtest_types_explicit\": true, \"subtests_have_selected_parent\": true, \"subtest_failure_reflected_in_junit_parent\": true, \"one_completed_finish\": true}, \"consistent\": false, \"counts\": {\"passed\": 2394, \"error\": 419, \"failed\": 324}, \"selected\": 3137, \"exit_code\": 1, \"subtest_count\": 0, \"subtest_outcomes\": {}, \"finishes\": [{\"event\": \"finish\", \"status\": \"failed\", \"exitstatus\": 1, \"timestamp\": 1792725203.074781}], \"source_binding_before\": null, \"source_binding_after\": null, \"inputs\": {\"junit\": \"b51052c5441e23c0fe59bbeed9aba0e0d2e001f0d870e01210170036145f15fc\", \"journal\": \"be85ea8439f9a4f15d11390e1c69ad1c5fd916e3a86381bbe57cdcffe7a3c40d\", \"sidecar\": \"fafcba8ab1e8dde0dd8151e64ac17f7401f86ab8b9348877de3fe0a3ad081eef\", \"selected\": \"d278b034670fb1c41d451004c9a7e69723c769c0f620442c0ff7a734c6603155\", \"execution\": \"4cfce252dd8211eb91e508b5169e5f1f17d9744fc565fceea5121b53e10dd557\"}}"
+    },
+    "failing_subtest_hidden_by_parent_pass": {
+      "rejected": true,
+      "reason": "inconsistent run: {\"checks\": {\"selected_unique\": true, \"selected_equals_junit\": true, \"selected_equals_starts\": true, \"raw_phase_sidecar_multisets_equal\": true, \"main_phase_nodes_equal_selected\": true, \"main_setup_teardown_once\": true, \"main_call_once_after_successful_setup\": true, \"no_duplicate_main_phases\": true, \"subtest_types_explicit\": true, \"subtests_have_selected_parent\": true, \"subtest_failure_reflected_in_junit_parent\": false, \"one_completed_finish\": true}, \"consistent\": false, \"counts\": {\"passed\": 2804}, \"selected\": 2804, \"exit_code\": 0, \"subtest_count\": 57, \"subtest_outcomes\": {\"failed\": 1, \"passed\": 56}, \"finishes\": [{\"event\": \"finish\", \"status\": \"completed\", \"exitstatus\": 0, \"timestamp\": 1792725756.707814}], \"source_binding_before\": null, \"source_binding_after\": null, \"inputs\": {\"junit\": \"1f860aa1de5b5c664919008202d1a601a63fc3464e201a7d05ea9fab64cbe62f\", \"journal\": \"78a45ba414ee7dee96b708cb9137e40ec75c0879e6e2348ff71394b85f8c0f9e\", \"sidecar\": \"b2bafe24854136b12683ee52c34f16648d4240016be7fcc2da8349fac58d70c4\", \"selected\": \"4023bd5ecdfc450a31a5c7e5f60be24549866dfd193c5fb8d77295c45da9c9c2\", \"execution\": \"5da308ea6cb13d50f603cc28a646e3fe95b7f8449f6d62c77465f7dcd26de42c\"}}"
+    }
+  },
+  "literal_double_colon_parameter_retained": true
+}

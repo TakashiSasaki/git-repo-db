@@ -1,0 +1,26 @@
+{
+  "archive": "hosted-log-views.zip",
+  "note": "These convenience log views omit receipt base64 data as originally generated; text bytes including whitespace are preserved inside ZIP. Verified decoded full receipt payloads are separately retained.",
+  "members": {
+    "access-0_registry-runtime-without-receipt-data.log": {
+      "bytes": 116459,
+      "sha256": "633ef8fc142f34bfe4b91c56697106d681e23c361d69399f23da07d82565cc0b"
+    },
+    "initial-tests-offline-without-receipt-data.log": {
+      "bytes": 99904,
+      "sha256": "2d98b0814c163e50c3ecdd5464597cb57a878a885e8a993ac9ec73523c44049d"
+    },
+    "pages-1_build-and-validate-without-receipt-data.log": {
+      "bytes": 47552,
+      "sha256": "c80fb586443b513936027dec1b3076282d9bb110e8df123d3a3b5fe47d0644af"
+    },
+    "tests-0_offline-without-receipt-data.log": {
+      "bytes": 98103,
+      "sha256": "8051125c4a8a476b7e6c695a64da1c44ab5fce51b2811c13decc42bb901338ff"
+    },
+    "tests-1_sqlite-policy-without-receipt-data.log": {
+      "bytes": 37073,
+      "sha256": "e27c8cd2f07867033517bca1c715b879900672ee9f246aecbf2d2ac49d1b729c"
+    }
+  }
+}

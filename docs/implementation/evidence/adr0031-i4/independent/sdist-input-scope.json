@@ -1,0 +1,25 @@
+{
+  "public_sdist": "/workspace/i4-independent/evidence/distributions/source/dist/repo_catalog-0.2.0.tar.gz",
+  "tree_delta_paths": [
+    ".agents/skills/three-store-invariants/SKILL.md",
+    "docs/implementation/evidence/adr0031-i4/README.md",
+    "docs/implementation/evidence/adr0031-i4/REPORT.md",
+    "docs/implementation/evidence/adr0031-i4/artifact-index.json",
+    "docs/implementation/evidence/adr0031-i4/author-evidence.zip",
+    "docs/implementation/evidence/adr0031-i4/failure-classification.json",
+    "docs/implementation/evidence/adr0031-i4/summary.json",
+    "scripts/compare_i4_failures.py"
+  ],
+  "changed_paths_present_in_public_sdist": [
+    ".agents/skills/three-store-invariants/SKILL.md",
+    "docs/implementation/evidence/adr0031-i4/README.md",
+    "docs/implementation/evidence/adr0031-i4/REPORT.md",
+    "docs/implementation/evidence/adr0031-i4/artifact-index.json",
+    "docs/implementation/evidence/adr0031-i4/author-evidence.zip",
+    "docs/implementation/evidence/adr0031-i4/failure-classification.json",
+    "docs/implementation/evidence/adr0031-i4/summary.json",
+    "scripts/compare_i4_failures.py"
+  ],
+  "all_tree_delta_paths_present": true,
+  "full_sdist_input_sets_identical": false
+}

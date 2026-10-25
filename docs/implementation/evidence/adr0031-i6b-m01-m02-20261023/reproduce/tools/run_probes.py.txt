@@ -1,0 +1,64 @@
+"""Separate source-only unchanged saved probe lanes, with exact identity evidence."""
+import argparse
+from collections import Counter
+import hashlib
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import time
+import xml.etree.ElementTree as ET
+
+p=argparse.ArgumentParser(description=__doc__)
+p.add_argument('--root',type=Path,required=True);p.add_argument('--out',type=Path,required=True)
+p.add_argument('--lane',choices=['contracts','independent','author'],required=True)
+a=p.parse_args();ROOT=a.root.resolve();OUT=a.out.resolve();OUT.mkdir(parents=True,exist_ok=False)
+WORK=Path('/workspace/i6b-fix-work');PROBES=WORK/'probes'
+files={'contracts':['test_digest_contract.py','test_planner_work_budget_contract.py'],
+    'independent':['test_independent_wire.py','test_planner_independent.py','test_commit_boundary.py','test_resolved_wire.py'],
+    'author':['test_author_extra.py']}[a.lane]
+expected={'contracts':33,'independent':208,'author':34}[a.lane]
+sys.path.insert(0,str(ROOT));from scripts import verify_i5_offline as e
+env=dict(os.environ,PATH=str(Path(sys.executable).parent)+os.pathsep+os.environ['PATH'],PYTHONPATH=str(WORK/'tools'),
+    TMPDIR=str(WORK/'tmp'),I6B_BROAD_ROOT=str(ROOT),I6B_BROAD_OUT=str(OUT),
+    DIGEST_VECTORS=str(OUT/'digest-vectors'),WIRE_REFUSALS=str(OUT/'wire-refusals.jsonl'),
+    WIRE_IMPORT_ROOT=str(ROOT/'src'),I6B_ADMISSION_OBSERVATIONS=str(OUT/'admission-observations.json'),
+    I6B_EXTRA_SAVED_VECTOR_DIR=str(ROOT/'docs/implementation/evidence/adr0031-i6b-author-20261023/vectors'),
+    I6B_EXTRA_VECTOR_DIR=str(OUT/'author-vectors'),PYTHONDONTWRITEBYTECODE='1')
+for n in ('GH_TOKEN','GITHUB_TOKEN','PYTHONHOME'):env.pop(n,None)
+base=[sys.executable,'-m','pytest','-p','tests.conftest','-c',str(ROOT/'pyproject.toml'),
+    '--rootdir='+str(PROBES),'--confcutdir='+str(PROBES),'-o','addopts=',
+    '-o','junit_family=xunit1','-q','-s','--tb=long',*[str(PROBES/f) for f in files]]
+def write(path,v):path.write_text(json.dumps(v,indent=2,default=str)+'\n')
+def run(name,args):
+    start=time.time()
+    with (OUT/(name+'.log')).open('w') as f:r=subprocess.run(args,cwd=ROOT,env=env,stdout=f,stderr=subprocess.STDOUT)
+    result={'command':args,'cwd':str(ROOT),'completed':True,'exit_code':r.returncode,'started_epoch':start,'elapsed_seconds':time.time()-start}
+    write(OUT/(name+'.execution.json'),result);return result
+def binding():return {'head':e.git('rev-parse','HEAD'),'tree':e.git('rev-parse','HEAD^{tree}'),'inputs':e.input_hashes(),'tracked_status':e.git('status','--porcelain','--untracked-files=no')}
+before=binding();write(OUT/'binding-before.json',before);assert before['tracked_status']==''
+col=run('collect',base+['--collect-only']);assert col['exit_code']==0
+nodes=[line.strip() for line in (OUT/'collect.log').read_text().splitlines() if line.startswith('test_') and '::' in line]
+assert len(nodes)==len(set(nodes))==expected
+(OUT/'selected.txt').write_text('\n'.join(nodes)+'\n')
+result=run('pytest',base+['-p','broad_receipt','--junitxml='+str(OUT/'results.xml'),
+    '--journal='+str(OUT/'journal.jsonl'),'--basetemp='+str(WORK/(OUT.name+'-temp'))])
+result.update(e.outcomes(OUT/'results.xml'))
+journal=[json.loads(line) for line in (OUT/'journal.jsonl').read_text().splitlines()]
+starts=Counter(r['nodeid'] for r in journal if r['event']=='start')
+phases=Counter((r['nodeid'],r['phase']) for r in journal if r['event']=='phase')
+def key(n):
+    prefix,sep,param=n.partition('[');parts=prefix.split('::')
+    return '.'.join([parts[0][:-3].replace('/','.'),*parts[1:-1]]),parts[-1]+sep+param
+junit=Counter((r.get('classname'),r.get('name')) for r in ET.parse(OUT/'results.xml').findall('.//testcase'))
+checks={'selected_equals_journal':Counter(nodes)==starts,
+    'selected_equals_junit':Counter(key(n) for n in nodes)==junit,
+    'exact_ordinary_phases':phases==Counter((n,p) for n in nodes for p in ('setup','call','teardown')),
+    'finish_matches_exit':[r['exitstatus'] for r in journal if r['event']=='finish']==[result['exit_code']]}
+result.update(collected=len(nodes),checks=checks,probe_hashes={f:hashlib.sha256((PROBES/f).read_bytes()).hexdigest() for f in files})
+write(OUT/'execution.json',result)
+after=binding();write(OUT/'binding-after.json',after);assert before==after
+assert all(checks.values())
+print(json.dumps({k:result.get(k) for k in ('exit_code','collected','passed','failed','error','skipped','xfail','xpass','checks')}))
+sys.exit(result['exit_code'])

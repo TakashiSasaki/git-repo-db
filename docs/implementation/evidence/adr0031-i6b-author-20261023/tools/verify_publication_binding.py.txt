@@ -1,0 +1,17 @@
+"""Bind evidence-only publication to actual frozen Author execution inputs."""
+from pathlib import Path
+import hashlib,json,subprocess,sys
+ROOT=Path('/workspace/git-repo-db')
+BINDING=Path('/workspace/i6b-work/final-source-safety/binding-before.json')
+OUT=Path(sys.argv[1])
+def git(*args):return subprocess.check_output(['git',*args],cwd=ROOT,text=True).strip()
+b=json.loads(BINDING.read_text());head=git('rev-parse','HEAD');tree=git('rev-parse','HEAD^{tree}')
+actual={p:hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in b['inputs']}
+assert actual==b['inputs'],'executed input changed'
+changes=git('diff','--name-only',b['head'],head).splitlines()
+allowed='docs/implementation/evidence/adr0031-i6b-author-20261023/'
+assert all(p.startswith(allowed) for p in changes),changes
+assert not git('status','--porcelain'),'publication checkout must be clean'
+report={'source_head':b['head'],'source_tree':b['tree'],'publication_head':head,'publication_tree':tree,'executed_input_count':len(actual),'executed_inputs':actual,'executed_inputs_unchanged':True,'changed_paths':changes,'evidence_only_followup':True,'scope':'Frozen source execution and built artifacts remain bound to source_head/source_tree. Full publication sdist archive was not rebuilt. Hosted final-HEAD validation is separately bound.','full_acceptance':False,'independent_review':False}
+OUT.parent.mkdir(parents=True,exist_ok=True);OUT.write_text(json.dumps(report,indent=2)+'\n')
+print(json.dumps({k:v for k,v in report.items() if k not in ('executed_inputs','changed_paths')},indent=2))

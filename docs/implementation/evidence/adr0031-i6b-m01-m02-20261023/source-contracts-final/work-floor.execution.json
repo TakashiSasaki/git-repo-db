@@ -1,0 +1,15 @@
+{
+  "command": [
+    "/workspace/i6b-fix-work/final-d68dc43/.venv/bin/python",
+    "/workspace/i6b-fix-work/tools/measure_floor.py",
+    "--root",
+    "/workspace/i6b-fix-work/final-d68dc43",
+    "--out",
+    "/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/source-contracts-final/work-floor.json"
+  ],
+  "cwd": "/workspace/i6b-fix-work/final-d68dc43",
+  "started_epoch": 1792764439.5146985,
+  "elapsed_seconds": 3.7426793575286865,
+  "exit_code": 0,
+  "completed": true
+}

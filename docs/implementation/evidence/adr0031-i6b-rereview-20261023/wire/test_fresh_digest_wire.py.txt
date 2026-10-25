@@ -1,0 +1,181 @@
+"""Independent #153 R03 probes; never imports Author or saved test helpers."""
+
+import copy
+import hashlib
+import json
+
+import pytest
+
+from repo_catalog.domain.exchange import (
+    ExchangeError,
+    ExchangePackage,
+    ExchangeSelectionScope,
+    decode_package,
+    encode_package,
+)
+from repo_catalog.domain.p1_context import ResourceKey
+from repo_catalog.domain.p1_core import OID
+
+S = "f45201dc-f2e1-4799-aa77-555555555555"
+R = "0820fe61-971c-45b1-93d2-666666666666"
+P = "8a76e7fc-425d-42d5-9b07-777777777777"
+Q = "da8df334-672f-44a1-b8f2-888888888888"
+
+
+def digest(value):
+    native = {key: val for key, val in value.items() if key != "digest_sha256"}
+    encoded = json.JSONEncoder(
+        ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False
+    ).encode(native).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def fixture():
+    selection = ExchangeSelectionScope(
+        repository_uuidv4s=(R, Q), source_uuidv4s=(S, Q),
+        notes_refs=("refs/notes/e\u0301", "refs/notes/é"),
+        object_oids=(OID("sha1", "b" * 40), OID("sha256", "a" * 64)),
+        resource_keys=(
+            ResourceKey.from_native(S, "opaque", ["é", ["", []]]),
+            ResourceKey.from_native(S, "opaque", ["e\u0301", [[], ""]]),
+        ),
+    )
+    data = ExchangePackage(P, 319, S, R, selection).to_dict()
+    data["selection_report"] = {
+        "digest_sha256": "nested-is-covered", "κ": ["é", "e\u0301", "\u0000", "😀"]
+    }
+    data["digest_sha256"] = digest(data)
+    return data
+
+
+def carry(data, kind):
+    if kind == "dict":
+        return data
+    # Reordered object keys, insignificant spaces and alternate outer escapes
+    # are representations of the same canonical dictionary, not input repair.
+    text = json.dumps(data, ensure_ascii=kind == "ascii", indent=2)
+    return text.encode("utf-8") if kind == "bytes" else text
+
+
+@pytest.mark.parametrize("kind", ("dict", "text", "bytes", "ascii"))
+def test_outer_spellings_do_not_change_received_dictionary(kind):
+    data = fixture()
+    data = {key: data[key] for key in reversed(data)}
+    before = copy.deepcopy(data)
+    decoded = decode_package(carry(data, kind))
+    assert decoded.to_dict() == before == data
+    assert decoded.digest_sha256 == digest(data)
+    assert "refs/notes/e\u0301" in decoded.selection_scope.notes_refs
+    assert "refs/notes/é" in decoded.selection_scope.notes_refs
+    assert encode_package(decoded).encode("utf-8")
+
+
+def alter(data, case):
+    if case == "nested-digest":
+        data["selection_report"]["digest_sha256"] = "different"
+    elif case == "nested-array-order":
+        data["selection_report"]["κ"].reverse()
+    elif case == "nested-null":
+        data["selection_report"]["κ"].append(None)
+    elif case == "package-key":
+        data["package_id"] = Q
+    elif case == "observation":
+        data["exported_at_us"] = 320
+    elif case == "selection-empty-versus-null":
+        data["selection_scope"]["notes_refs"] = []
+    elif case == "selection-resource-coordinate":
+        data["selection_scope"]["resource_keys"] = [
+            [S, "opaque", json.dumps("fresh", separators=(",", ":"))]
+        ]
+    elif case == "section-absent-versus-empty":
+        from repo_catalog.domain.exchange import empty_core_section
+        data["core"] = empty_core_section()
+    else:
+        raise AssertionError(case)
+
+
+@pytest.mark.parametrize("case", (
+    "nested-digest", "nested-array-order", "nested-null", "package-key",
+    "observation", "selection-empty-versus-null", "selection-resource-coordinate",
+    "section-absent-versus-empty",
+))
+@pytest.mark.parametrize("kind", ("dict", "text", "bytes"))
+def test_every_changed_dictionary_requires_digest_before_conversion(case, kind, monkeypatch):
+    data = fixture()
+    alter(data, case)
+    assert digest(data) != data["digest_sha256"]
+    before = copy.deepcopy(data)
+    def forbidden(cls, value):
+        raise AssertionError("selection conversion preceded received digest check")
+    monkeypatch.setattr(ExchangeSelectionScope, "from_dict", classmethod(forbidden))
+    with pytest.raises(ExchangeError) as error:
+        decode_package(carry(data, kind))
+    assert error.value.code == "DIGEST_MISMATCH"
+    assert data == before
+
+
+@pytest.mark.parametrize("case", (
+    "nested-digest", "nested-array-order", "nested-null", "package-key",
+    "observation", "selection-empty-versus-null", "selection-resource-coordinate",
+    "section-absent-versus-empty",
+))
+def test_correct_new_digest_binds_canonical_changes(case):
+    data = fixture()
+    alter(data, case)
+    data["digest_sha256"] = digest(data)
+    before = copy.deepcopy(data)
+    assert decode_package(data).to_dict() == data == before
+
+
+@pytest.mark.parametrize("case", ("two-dimensions", "identity-whitespace", "identity-escape", "oid-uppercase"))
+@pytest.mark.parametrize("kind", ("dict", "text", "bytes"))
+def test_rehashed_noncanonical_values_are_not_repaired(case, kind):
+    data = fixture()
+    scope = data["selection_scope"]
+    if case == "two-dimensions":
+        scope["source_uuidv4s"].reverse()
+        scope["notes_refs"].extend(scope["notes_refs"])
+    elif case == "identity-whitespace":
+        scope["resource_keys"][0][2] = " " + scope["resource_keys"][0][2]
+    elif case == "identity-escape":
+        scope["resource_keys"] = [[S, "opaque", '"\\u0061"']]
+    elif case == "oid-uppercase":
+        scope["object_oids"][0][1] = scope["object_oids"][0][1].upper()
+    data["digest_sha256"] = digest(data)
+    before = copy.deepcopy(data)
+    with pytest.raises(ExchangeError):
+        decode_package(carry(data, kind))
+    assert data == before
+
+
+@pytest.mark.parametrize("field,value", (
+    ("all_selected", 1), ("include_core", 0), ("max_depth", True),
+    ("max_work", 0.0), ("notes_refs", [1]), ("repository_uuidv4s", [True]),
+    ("resource_keys", [[S, "opaque", 1]]),
+))
+def test_rehashed_primitive_coercions_are_not_equal_canonical_values(field, value):
+    data = fixture()
+    data["selection_scope"][field] = value
+    data["digest_sha256"] = digest(data)
+    with pytest.raises(ExchangeError):
+        decode_package(data)
+
+
+@pytest.mark.parametrize("case", ("outer", "selection", "report", "utf8", "bom", "surrogate"))
+def test_duplicate_keys_and_invalid_scalars_cannot_use_valid_digest(case):
+    data = fixture()
+    raw = json.dumps(data, ensure_ascii=False)
+    if case == "outer":
+        raw = raw[:-1] + ', "digest_sha256": ' + json.dumps(data["digest_sha256"]) + '}'
+    elif case == "selection":
+        raw = raw.replace('"all_selected": false', '"all_selected": false, "all_selected": false')
+    elif case == "report":
+        raw = raw.replace('"nested-is-covered"', '"nested-is-covered", "digest_sha256": "nested-is-covered"')
+    elif case == "utf8":
+        raw = raw.encode("utf-8") + b"\xff"
+    elif case == "bom":
+        raw = b"\xef\xbb\xbf" + raw.encode("utf-8")
+    elif case == "surrogate":
+        raw = raw.replace("nested-is-covered", "\\ud800")
+    with pytest.raises(ExchangeError):
+        decode_package(raw)

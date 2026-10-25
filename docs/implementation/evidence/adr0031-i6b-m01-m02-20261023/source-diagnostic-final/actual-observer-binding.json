@@ -1,0 +1,14 @@
+{
+  "used_driver_and_observer_bytes_unchanged": true,
+  "used_tools": {
+    "run_source.py": "3b88db226c94e293d38ac03e348758cd5253f88917f9dba1277a53443df40780",
+    "broad_receipt.py": "d3f39ffa4b8a56c1d7e4561f57921b23c9f00a8e52c7c3cbe00c880e7c44cb5b",
+    "statement_trace.py": "d3cdb3a6f5218e13c92a24b2b8fa0dc209aeb3f374d5b73ed55d82dd958e439e"
+  },
+  "all486_source_inputs_unchanged": true,
+  "broad_directory_inventory_difference": [
+    "measure_digest.py"
+  ],
+  "explanation": "The initial broad observer_hashes field inventories every .py in the external tools directory, including unused drivers. measure_digest.py was added for separate completed before/after measurement while this invocation ran; it is never imported by run_source/broad_receipt/statement_trace or pytest. All actually used driver/observer inputs remained byte-equal.",
+  "not_a_source_change": true
+}

@@ -1,0 +1,55 @@
+{
+  "command": [
+    "/workspace/i6a-baseline-venv/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "-o",
+    "addopts=--strict-markers",
+    "-o",
+    "junit_family=xunit1",
+    "@/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6a/author/baseline/remaining-ordinary.selected.txt",
+    "--junitxml=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6a/author/baseline/remaining-ordinary.xml",
+    "--journal=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6a/author/baseline/remaining-ordinary.jsonl",
+    "-n",
+    "4",
+    "--dist",
+    "worksteal"
+  ],
+  "cwd": "/workspace/i6a-baseline",
+  "started_epoch": 1792723021.834974,
+  "elapsed_seconds": 411.593,
+  "exit_code": 0,
+  "collected": 2605,
+  "passed": 2605,
+  "failed": 0,
+  "error": 0,
+  "skipped": 0,
+  "xfail": 0,
+  "xpass": 0,
+  "executed": 2605,
+  "reconciliation": {
+    "checks": {
+      "selected_unique": true,
+      "selected_equals_junit": true,
+      "selected_equals_journal_starts": true,
+      "setup_and_teardown_once": true,
+      "no_duplicate_phases": false,
+      "phase_nodes_equal_selected": true,
+      "call_once_after_successful_setup": false,
+      "one_finish": true
+    },
+    "consistent_node_execution": false,
+    "journal_phase_outcomes": {
+      "passed": 7872
+    },
+    "finishes": [
+      {
+        "event": "finish",
+        "status": "completed",
+        "exitstatus": 0,
+        "timestamp": 1792723433.270805
+      }
+    ]
+  }
+}

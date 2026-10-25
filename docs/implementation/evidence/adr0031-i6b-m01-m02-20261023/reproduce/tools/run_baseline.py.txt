@@ -1,0 +1,44 @@
+"""Rerun the unchanged review's 33 required-refusal tests on its frozen source."""
+import hashlib
+import json
+import os
+from pathlib import Path
+import sqlite3
+import subprocess
+import sys
+import time
+
+ROOT = Path('/workspace/i6b-fix-work/baseline')
+OUT = Path('/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/source-baseline')
+TOOLS = Path('/workspace/i6b-fix-work/tools')
+PROBES = Path('/workspace/i6b-fix-work/probes')
+sys.path.insert(0, str(ROOT))
+from scripts import verify_i5_offline as evidence
+
+def write(path, value):
+    path.write_text(json.dumps(value, indent=2, default=str) + '\n')
+
+env = dict(os.environ, PATH=str(ROOT/'.venv/bin')+os.pathsep+os.environ['PATH'],
+           PYTHONPATH=str(TOOLS), TMPDIR='/workspace/i6b-fix-work/tmp',
+           I6B_BROAD_ROOT=str(ROOT), I6B_BROAD_OUT=str(OUT),
+           DIGEST_VECTORS=str(OUT/'digest-vectors'), PYTHONDONTWRITEBYTECODE='1')
+for name in ('GH_TOKEN','GITHUB_TOKEN','PYTHONHOME'):
+    env.pop(name, None)
+args = [sys.executable, '-m', 'pytest', '-p', 'tests.conftest',
+        '-p', 'broad_receipt', '-c', str(ROOT/'pyproject.toml'),
+        '-o', 'addopts=', '-o', 'junit_family=xunit1', '-q', '-s', '--tb=long',
+        str(PROBES/'test_digest_contract.py'), str(PROBES/'test_planner_work_budget_contract.py'),
+        '--junitxml='+str(OUT/'results.xml'), '--journal='+str(OUT/'journal.jsonl'),
+        '--basetemp=/workspace/i6b-fix-work/baseline-probes-temp']
+started = time.time()
+with (OUT/'pytest.log').open('w') as log:
+    result = subprocess.run(args, cwd=ROOT, env=env, stdout=log, stderr=subprocess.STDOUT)
+write(OUT/'execution.json', {'command':args,'cwd':str(ROOT),'completed':True,
+      'exit_code':result.returncode,'started_epoch':started,'elapsed_seconds':time.time()-started,
+      'source_head':'8521158f2996f125d2fcaac36ea79ac1296a7cf7',
+      'source_tree':'455ef25606ee555e4154dd2d14929b41aa4ef50f',
+      'inputs':evidence.input_hashes(),
+      'probe_hashes':{p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in PROBES.glob('test_*.py')},
+      'results':evidence.outcomes(OUT/'results.xml')})
+print(json.dumps({'exit':result.returncode,'results':evidence.outcomes(OUT/'results.xml')}))
+sys.exit(result.returncode)

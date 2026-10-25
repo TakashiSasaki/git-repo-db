@@ -1,0 +1,9 @@
+{
+  "initial_environment_difference": "First diagnostic has four read-only UV cache setup errors. Initial strict equal-phase assertion correctly refused; preserved and supplied explicit four-node correction run, with separate raw receipts.",
+  "counter_mapping_correction": "First corrected diagnostic trace audit used Counter(selected_run) where selected_run is a result mapping. Counter(mapping) keeps mapping values instead of counting keys, causing a false strict-check failure. Replaced it with Counter(selected_run.keys()); raw tests/traces unchanged.",
+  "counterexamples": {
+    "mapping_constructor_preserves_mapping_values": true,
+    "keys_constructor_counts_nodes": true,
+    "duplicate_trace_is_rejected": true
+  }
+}

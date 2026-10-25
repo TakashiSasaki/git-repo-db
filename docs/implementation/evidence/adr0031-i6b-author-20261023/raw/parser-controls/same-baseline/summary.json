@@ -1,0 +1,97 @@
+{
+  "baseline": {
+    "selected": 6076,
+    "counts": {
+      "passed": 5777,
+      "failed": 279,
+      "error": 20
+    },
+    "subtest_counts": {
+      "passed": 57
+    },
+    "ordinary_reports": 18208,
+    "all_reports": 18265,
+    "exit_code": 1,
+    "head": "268025f67841285d105737b5a0d7bd15b1a6f59c",
+    "tree": "e5fa0437f19f31fa414d488ec10f483ef68f03fa",
+    "input_count": 480,
+    "bindings_unchanged": true,
+    "tracked_status": "",
+    "selected_junit_journal_typed_exact": true
+  },
+  "current": {
+    "selected": 6076,
+    "counts": {
+      "passed": 5777,
+      "failed": 279,
+      "error": 20
+    },
+    "subtest_counts": {
+      "passed": 57
+    },
+    "ordinary_reports": 18208,
+    "all_reports": 18265,
+    "exit_code": 1,
+    "head": "268025f67841285d105737b5a0d7bd15b1a6f59c",
+    "tree": "e5fa0437f19f31fa414d488ec10f483ef68f03fa",
+    "input_count": 480,
+    "bindings_unchanged": true,
+    "tracked_status": "",
+    "selected_junit_journal_typed_exact": true
+  },
+  "baseline_evidence": "docs/implementation/evidence/adr0031-i6a/originals-binding-independent-20261023/raw-evidence.zip",
+  "method": "Author analysis using attributed Task C stdlib parser; repeated diagnostic never substitutes for full execution.",
+  "new_nodes": [],
+  "removed_nodes": [],
+  "outcome_phase_changes": [],
+  "new_unsuccessful_nodes": [],
+  "resolved_nodes": [],
+  "old_unsuccessful": 299,
+  "current_unsuccessful": 299,
+  "historical_owners_of_current_unsuccessful": {
+    "Transfer-stage": 43,
+    "I6-C": 242,
+    "I7-composition": 14
+  },
+  "diagnostic": {
+    "baseline": {
+      "selected": 743,
+      "counts": {
+        "passed": 444,
+        "failed": 279,
+        "error": 20
+      },
+      "subtest_counts": {},
+      "ordinary_reports": 2209,
+      "all_reports": 2209,
+      "exit_code": 1,
+      "head": "268025f67841285d105737b5a0d7bd15b1a6f59c",
+      "tree": "e5fa0437f19f31fa414d488ec10f483ef68f03fa",
+      "input_count": 480,
+      "bindings_unchanged": true,
+      "tracked_status": "",
+      "selected_junit_journal_typed_exact": true
+    },
+    "current": {
+      "selected": 743,
+      "counts": {
+        "passed": 444,
+        "failed": 279,
+        "error": 20
+      },
+      "subtest_counts": {},
+      "ordinary_reports": 2209,
+      "all_reports": 2209,
+      "exit_code": 1,
+      "head": "268025f67841285d105737b5a0d7bd15b1a6f59c",
+      "tree": "e5fa0437f19f31fa414d488ec10f483ef68f03fa",
+      "input_count": 480,
+      "bindings_unchanged": true,
+      "tracked_status": "",
+      "selected_junit_journal_typed_exact": true
+    },
+    "outcome_phase_changes": [],
+    "assert_entry_changes": [],
+    "current_matches_full": true
+  }
+}

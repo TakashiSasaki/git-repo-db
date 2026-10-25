@@ -1,0 +1,92 @@
+[
+  {
+    "original": "actual-permission-raise-stacks.json",
+    "bytes": 8249,
+    "sha256": "3288c3ce509cd2c9593c3cbfda5e5c232ebe8c65b51b243455ab42fd848b888c",
+    "stored": "actual-permission-raise-stacks.json",
+    "stored_bytes": 8249,
+    "stored_sha256": "3288c3ce509cd2c9593c3cbfda5e5c232ebe8c65b51b243455ab42fd848b888c",
+    "gzip": false
+  },
+  {
+    "original": "binding-after.json",
+    "bytes": 55579,
+    "sha256": "bf93b94cec8d56996b9bff8bbad7aaafcf9f9b901c485d56f8ac777e34975284",
+    "stored": "binding-after.json.gz",
+    "stored_bytes": 22556,
+    "stored_sha256": "814b15ecdf33d42bc2dcbf43990ddd289f9745152455c06a24ed052158f9a1d6",
+    "gzip": true
+  },
+  {
+    "original": "binding-before.json",
+    "bytes": 55579,
+    "sha256": "bf93b94cec8d56996b9bff8bbad7aaafcf9f9b901c485d56f8ac777e34975284",
+    "stored": "binding-before.json.gz",
+    "stored_bytes": 22556,
+    "stored_sha256": "814b15ecdf33d42bc2dcbf43990ddd289f9745152455c06a24ed052158f9a1d6",
+    "gzip": true
+  },
+  {
+    "original": "diagnostic.execution.json",
+    "bytes": 1405,
+    "sha256": "a8484f42fd1453f1a972fd49f2449cd5071e16b0d36c095dfc29b8f36c23db24",
+    "stored": "diagnostic.execution.json",
+    "stored_bytes": 1405,
+    "stored_sha256": "a8484f42fd1453f1a972fd49f2449cd5071e16b0d36c095dfc29b8f36c23db24",
+    "gzip": false
+  },
+  {
+    "original": "diagnostic.jsonl",
+    "bytes": 1810,
+    "sha256": "51f0d1790385bfad94ae97a17587c01b8fff3adebc5048a105cfb9a1c5560bee",
+    "stored": "diagnostic.jsonl.gz",
+    "stored_bytes": 367,
+    "stored_sha256": "223c903e20464b5c44b6b9cc3129b2bed1a4c287d33cddc90f485f6e794001a3",
+    "gzip": true
+  },
+  {
+    "original": "diagnostic.log",
+    "bytes": 4433,
+    "sha256": "8568d06576aae9bfc5135edd0ea944532307876a7d68769d466be3203699ad61",
+    "stored": "diagnostic.log.gz",
+    "stored_bytes": 1465,
+    "stored_sha256": "e81bc486ee70da6bba8dedc1c2efeabb58ba1d1cdaeac5482b901fd91870bb01",
+    "gzip": true
+  },
+  {
+    "original": "diagnostic.report-types.jsonl",
+    "bytes": 1374,
+    "sha256": "395328b354b3eea64b80345de9b184d1cbc551709ec17eae1d44eb45f8c9a614",
+    "stored": "diagnostic.report-types.jsonl.gz",
+    "stored_bytes": 285,
+    "stored_sha256": "ca796ca79284fd6afd140309540cc4bf866872fab6913a03d138239a1d15c559",
+    "gzip": true
+  },
+  {
+    "original": "diagnostic.selected.txt",
+    "bytes": 189,
+    "sha256": "284d9d7f6c583876437ea57618ec45016457bccba09e128bdb87d4d1c6612b39",
+    "stored": "diagnostic.selected.txt.gz",
+    "stored_bytes": 136,
+    "stored_sha256": "defc39b651716693ef08f225a55579b91454f13c59ddebb0631aeb11c8687f9b",
+    "gzip": true
+  },
+  {
+    "original": "diagnostic.xml",
+    "bytes": 5101,
+    "sha256": "e680576a7f0b68224c018214fc8cffe3a37fe6f66b419c5b9bc3588f6336f7a0",
+    "stored": "diagnostic.xml.gz",
+    "stored_bytes": 1644,
+    "stored_sha256": "d9410b2aae66c1a517dde2873e3d5dc5b3cb09f17fb5fbcd4d53cc250fe989d7",
+    "gzip": true
+  },
+  {
+    "original": "scope.json",
+    "bytes": 185,
+    "sha256": "fc47ff225049e754e2690194dc3b2a25f6dabc3fbba75e639fd77d265ed3ed1d",
+    "stored": "scope.json",
+    "stored_bytes": 185,
+    "stored_sha256": "fc47ff225049e754e2690194dc3b2a25f6dabc3fbba75e639fd77d265ed3ed1d",
+    "gzip": false
+  }
+]

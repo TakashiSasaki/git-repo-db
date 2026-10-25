@@ -1,0 +1,171 @@
+{
+  "source": "docs/implementation/evidence/adr0031-i6a/originals-binding-independent-20261023/raw-evidence.zip",
+  "source_sha256": "b1fee9f3be9e2769f97d70a3804f093604732d042eeb1c907bb39a77d02c5730",
+  "files": [
+    {
+      "member": "raw/diagnostic743/binding-after.json",
+      "bytes": 56722,
+      "sha256": "355ff18f811e53c250128ee3c32e9255060d562ee6aa32f33fc3adcb5cb75df4"
+    },
+    {
+      "member": "raw/diagnostic743/binding-before.json",
+      "bytes": 56722,
+      "sha256": "355ff18f811e53c250128ee3c32e9255060d562ee6aa32f33fc3adcb5cb75df4"
+    },
+    {
+      "member": "raw/diagnostic743/diagnostic.execution.json",
+      "bytes": 99361,
+      "sha256": "7e488c5210a64d4cc7724471c3ac6f11673d2d9dd911ccb34b473530d1dbbe63"
+    },
+    {
+      "member": "raw/diagnostic743/diagnostic.jsonl",
+      "bytes": 723157,
+      "sha256": "0ce455d046c0c522a6fbc653bc8fe4b10722d1dd46bb940402825bd0b3dc3060"
+    },
+    {
+      "member": "raw/diagnostic743/diagnostic.report-types.jsonl",
+      "bytes": 575006,
+      "sha256": "1ef7ea660fac993c8176933ca8b9231e4fd01a698063fe7119cd885971fc454b"
+    },
+    {
+      "member": "raw/diagnostic743/diagnostic.selected.txt",
+      "bytes": 92824,
+      "sha256": "1ccc6042fc4bdc67ad9d06b4c47bf17f038fab0987589d4f56eec9d3516d34a9"
+    },
+    {
+      "member": "raw/diagnostic743/diagnostic.xml",
+      "bytes": 1804970,
+      "sha256": "3a43927c0150935b7ab8ef1ffae7f4ad4a49d596044056f7b3a0eb09b3f9391f"
+    },
+    {
+      "member": "raw/diagnostic743/independent-summary.json",
+      "bytes": 418,
+      "sha256": "c38516fbc2b080a1a8052cc2026d8533bbdb665727d97969dda2c986419ff068"
+    },
+    {
+      "member": "raw/diagnostic743/runtime.json",
+      "bytes": 343,
+      "sha256": "f10fc134abe8600526be0cdce378dc31c3148a7a01315ec8f82748dca571cde5"
+    },
+    {
+      "member": "raw/diagnostic743/trace/gw0.jsonl",
+      "bytes": 438264,
+      "sha256": "be20ced176154f2877aa577743b737cbf07d789a746e17a78627758fa5ae28d5"
+    },
+    {
+      "member": "raw/diagnostic743/trace/gw1.jsonl",
+      "bytes": 303142,
+      "sha256": "54ef4a419000ad56022a8e841a7da9aa0bc2dd9ff856abe5875ad2e0ace98693"
+    },
+    {
+      "member": "raw/diagnostic743/trace/gw2.jsonl",
+      "bytes": 651739,
+      "sha256": "89eb8a38cc3f73226bd4fd04967cce856905255433e5c052db353ac8abcf6bac"
+    },
+    {
+      "member": "raw/diagnostic743/trace/gw3.jsonl",
+      "bytes": 663546,
+      "sha256": "bcd4574c126e4c35002f755fcfd873558c15361684618e47c6abb6ba1f1a138b"
+    },
+    {
+      "member": "raw/diagnostic743/trace/master.jsonl",
+      "bytes": 12958,
+      "sha256": "1024c317c9b7dcbddfc4709a2c2a173098c2935897bba02ea9bd4c00595aa7e2"
+    },
+    {
+      "member": "raw/full/all-collection.execution.json",
+      "bytes": 321,
+      "sha256": "daf3b31c4a4b9aa7f87f73adac9095326540a79d4bb8e05216c269954f8e767d"
+    },
+    {
+      "member": "raw/full/all-collection.nodes.txt",
+      "bytes": 2774550,
+      "sha256": "77e2d436608d1cd51dea41f9526dc5b2dd42d3b304e79dc6514415d20b02af10"
+    },
+    {
+      "member": "raw/full/binding-after.json",
+      "bytes": 56638,
+      "sha256": "39a9c19301ae0bd99b0660f53dbaa252b32bb9f4485dc7e203618c5460d6b9f8"
+    },
+    {
+      "member": "raw/full/binding-before.json",
+      "bytes": 56638,
+      "sha256": "39a9c19301ae0bd99b0660f53dbaa252b32bb9f4485dc7e203618c5460d6b9f8"
+    },
+    {
+      "member": "raw/full/ordinary-collection.execution.json",
+      "bytes": 365,
+      "sha256": "fe3fe5fdf509b3851819fc853ca007cfc0b701ab61bde23e4757a9169b5ec444"
+    },
+    {
+      "member": "raw/full/ordinary-collection.nodes.txt",
+      "bytes": 2774429,
+      "sha256": "157da35a093b6b4684a3ec4c32a0e03c42389a4fef5bc5559b391c6215e92d77"
+    },
+    {
+      "member": "raw/full/ordinary.execution.json",
+      "bytes": 1384,
+      "sha256": "2e872467a031f805c073766530082f64a17c5eda17c1fbcdcef370201ce3bc61"
+    },
+    {
+      "member": "raw/full/ordinary.jsonl",
+      "bytes": 14633821,
+      "sha256": "b0255b9127b3c91812b85a832b68b9970bafc7894e2919ab337488eb45b47a35"
+    },
+    {
+      "member": "raw/full/ordinary.report-types.jsonl",
+      "bytes": 11260474,
+      "sha256": "7b0aa21ffba852824874df0699de03b6a0b37df2d81074ca896d0cd96229a4dc"
+    },
+    {
+      "member": "raw/full/ordinary.selected.txt",
+      "bytes": 2774429,
+      "sha256": "157da35a093b6b4684a3ec4c32a0e03c42389a4fef5bc5559b391c6215e92d77"
+    },
+    {
+      "member": "raw/full/ordinary.xml",
+      "bytes": 4543663,
+      "sha256": "f8183dfce66a77d356b55d9fe1d9943983e068b4dec090e9850b3f5f2fff20c6"
+    },
+    {
+      "member": "raw/full/runtime.json",
+      "bytes": 2441,
+      "sha256": "284e6a36ebb4be2173db24d48c6171cc6af6700f9e302e8ddfcbb35b75b7bcdb"
+    },
+    {
+      "member": "raw/full/unexecuted.json",
+      "bytes": 134,
+      "sha256": "7b973387be71f1924c3e6a631e9b7f72c71a80dcaa553dd27b5daf91dbe35ccc"
+    },
+    {
+      "member": "raw/installed-v3/direct-authorization-selected.txt",
+      "bytes": 3232,
+      "sha256": "df39f9aab0b8781045fcb306fbd15d6db8184ad73ba8ccb523149a76536a3a2b"
+    },
+    {
+      "member": "raw/installed-v3/direct-safety-selected.txt",
+      "bytes": 71770,
+      "sha256": "3c987022a6202e9b8ab664bf5c8f51b0b1d3f0961146eed5d560e0dfc711b9d1"
+    },
+    {
+      "member": "raw/installed-v3/direct-task-c-selected.txt",
+      "bytes": 16950,
+      "sha256": "30ecb1e950ada11b4ed7c43efaa17f29fc185089cc0905b48b33502e0c455f52"
+    },
+    {
+      "member": "raw/installed-v3/sdist-authorization-selected.txt",
+      "bytes": 3232,
+      "sha256": "df39f9aab0b8781045fcb306fbd15d6db8184ad73ba8ccb523149a76536a3a2b"
+    },
+    {
+      "member": "raw/installed-v3/sdist-safety-selected.txt",
+      "bytes": 71770,
+      "sha256": "3c987022a6202e9b8ab664bf5c8f51b0b1d3f0961146eed5d560e0dfc711b9d1"
+    },
+    {
+      "member": "raw/installed-v3/sdist-task-c-selected.txt",
+      "bytes": 16950,
+      "sha256": "30ecb1e950ada11b4ed7c43efaa17f29fc185089cc0905b48b33502e0c455f52"
+    }
+  ]
+}

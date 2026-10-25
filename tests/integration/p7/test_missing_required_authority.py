@@ -15,6 +15,7 @@ from repo_catalog.adapters.sqlite.recovery import RecoveryWorkBudget
 from repo_catalog.adapters.sqlite.recovery_validation import (
     verify_existing_context_text,
 )
+from repo_catalog.domain.context_admission import DependencySet
 from repo_catalog.domain.p1_context import (
     FieldCandidate,
     FieldClock,
@@ -28,28 +29,39 @@ from tests.integration.p7.test_context_corruption_stop import (
 )
 from tests.integration.p7.test_context_corruption_stop import _text
 from tests.integration.p7.test_exact_replay import _authority, _candidate, _merge
+from tests.support.context_admission import fixture_context, fixture_service
 
 
 def _context_fields(catalog, fields):
-    with sqlite3.connect(catalog / "context.sqlite3") as db:
-        register_functions(db)
-        db.execute("PRAGMA foreign_keys=ON")
-        service = "99999999-9999-4999-8999-999999999999"
-        db.execute("INSERT INTO providers VALUES(?,?,?)", (service, "github", "{}"))
-        key = ResourceKey(service, "issue", "42")
-        store = ContextStore(db)
-        store.resource(key, None)
-        for field, value in fields:
-            store.admit_field(
-                FieldCandidate(
-                    key,
-                    field,
-                    canonical(value),
-                    FieldClock("provider.updated_at", 1),
-                    canonical({"source": "independent", "evidence": "event42"}),
-                    1,
+    from repo_catalog.adapters.sqlite.p1_schema import connect
+
+    service_id = "99999999-9999-4999-8999-999999999999"
+    key = ResourceKey.from_native(service_id, "issue", "42")
+    authorization, _ = fixture_service(
+        DependencySet(
+            resources={key},
+            provider_registrations={service_id},
+        )
+    )
+    db = connect(catalog / "context.sqlite3", "context")
+    try:
+        db.execute("INSERT INTO providers VALUES(?,?,?)", (service_id, "github", "{}"))
+        store = ContextStore(db, authorization=authorization)
+        with store.admission_transaction(admission=fixture_context(authorization)):
+            store.resource(key, None)
+            for field, value in fields:
+                store.admit_field(
+                    FieldCandidate(
+                        key,
+                        field,
+                        canonical(value),
+                        FieldClock("provider.updated_at", 1),
+                        canonical({"source": "independent", "evidence": "event42"}),
+                        1,
+                    )
                 )
-            )
+    finally:
+        db.close()
 
 
 def _delete(catalog, role, table):

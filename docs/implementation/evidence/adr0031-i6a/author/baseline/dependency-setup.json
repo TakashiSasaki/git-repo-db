@@ -1,0 +1,35 @@
+{
+  "commands": [
+    {
+      "command": [
+        "uv",
+        "sync",
+        "--locked",
+        "--group",
+        "dev",
+        "--group",
+        "docs",
+        "--python",
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3.12",
+        "--no-managed-python"
+      ],
+      "cwd": "/workspace/i6a-baseline",
+      "exit_code": 0,
+      "observed_at": "2026-10-23T02:36:37.510047+00:00"
+    },
+    {
+      "command": [
+        "uv",
+        "pip",
+        "freeze",
+        "--python",
+        "/workspace/i6a-baseline-venv/bin/python"
+      ],
+      "cwd": "/workspace/i6a-baseline",
+      "exit_code": 0,
+      "observed_at": "2026-10-23T02:36:37.518794+00:00"
+    }
+  ],
+  "lock_sha256": "38086f956741ff31865ed75f5a1d48997ab518fbc2a2dac8e0e5277cd6a413c9",
+  "sqlite_not_replaced": true
+}
