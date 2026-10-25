@@ -353,7 +353,29 @@ def run_cohort(out, name, selected, workers):
     else:
         result["execution_evidence_missing"] = True
     write_json(out / f"{name}.execution.json", result)
-    print(json.dumps({name: result}), flush=True)
+    verbose = os.environ.get("CI_VERBOSE") == "1" or "--verbose" in sys.argv
+    if verbose:
+        print(json.dumps({name: result}), flush=True)
+    else:
+        passed_c = result.get("passed", 0)
+        failed_c = result.get("failed", 0)
+        error_c = result.get("error", 0)
+        dur = result.get("duration_seconds", 0.0)
+        reconcil_ok = result.get("reconciliation", {}).get("consistent", True)
+        stat = (
+            "PASSED"
+            if (
+                failed_c == 0
+                and error_c == 0
+                and reconcil_ok
+                and not result.get("interrupted")
+            )
+            else "FAILED"
+        )
+        print(
+            f"[i5-offline] cohort {name}: {stat} ({passed_c} passed, {failed_c} failed, {dur:.2f}s)",
+            flush=True,
+        )
     return result
 
 
@@ -362,6 +384,7 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--workers", type=int, default=4)
     parser.add_argument("--execute", action="store_true")
+    parser.add_argument("--verbose", action="store_true", help="Print complete JSON outputs")
     args = parser.parse_args()
     os.environ["PATH"] = (
         str(Path(sys.executable).parent) + os.pathsep + os.environ.get("PATH", "")
@@ -437,7 +460,16 @@ def main():
         "inputs_unchanged": not changed,
     }
     write_json(out / "summary.json", summary)
-    print(json.dumps(summary), flush=True)
+    verbose = args.verbose or os.environ.get("CI_VERBOSE") == "1"
+    if verbose:
+        print(json.dumps(summary), flush=True)
+    else:
+        all_passed = not changed and all(cohort_succeeded(value) for value in runs.values())
+        outcome = "PASSED" if all_passed else "FAILED"
+        print(
+            f"[i5-offline] overall: {outcome} ({len(runs)} cohort(s) executed, inputs_unchanged={not changed}); summary: {out / 'summary.json'}",
+            flush=True,
+        )
     return int(
         bool(changed) or any(not cohort_succeeded(value) for value in runs.values())
     )

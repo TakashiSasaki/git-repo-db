@@ -31,6 +31,7 @@ import argparse
 import gzip
 import hashlib
 import json
+import os
 import re
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -813,6 +814,11 @@ def main():
         action="store_true",
         help="Fail if any regression, missing node, env error, or unexpected change occurs",
     )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Print full JSON output",
+    )
     args = parser.parse_args()
 
     expected_nodes = parse_expected_nodes(args.expected) if args.expected else None
@@ -838,30 +844,42 @@ def main():
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(summary, indent=2) + "\n")
 
-    print(
-        json.dumps(
-            {
-                "acceptance_verdict": summary["acceptance_verdict"],
-                "baseline_nodes": summary["baseline_nodes"],
-                "in_scope_baseline_nodes": summary["in_scope_baseline_nodes"],
-                "out_of_scope_baseline_nodes": summary["out_of_scope_baseline_nodes"],
-                "expected_nodes": summary["expected_nodes"],
-                "current_nodes": summary["current_nodes"],
-                "missing_nodes": summary["missing_nodes_count"],
-                "resolved_count": summary["resolved_count"],
-                "inherited_count": summary["inherited_non_successes_count"],
-                "progressed_barriers_count": summary["progressed_barriers_count"],
-                "new_regressions": summary["new_regressions_count"],
-                "added_failures": summary["added_failures_count"],
-                "environment_failures": summary["environment_failures_count"],
-                "changed_failures": summary["changed_failures_count"],
-                "unexpected_skips": summary["unexpected_skips_count"],
-                "categorized": summary["categorized_counts"],
-                "blocking_violations": summary["blocking_violations"],
-            },
-            indent=2,
+    verbose = args.verbose or os.environ.get("CI_VERBOSE") == "1"
+    if verbose:
+        print(
+            json.dumps(
+                {
+                    "acceptance_verdict": summary["acceptance_verdict"],
+                    "baseline_nodes": summary["baseline_nodes"],
+                    "in_scope_baseline_nodes": summary["in_scope_baseline_nodes"],
+                    "out_of_scope_baseline_nodes": summary["out_of_scope_baseline_nodes"],
+                    "expected_nodes": summary["expected_nodes"],
+                    "current_nodes": summary["current_nodes"],
+                    "missing_nodes": summary["missing_nodes_count"],
+                    "resolved_count": summary["resolved_count"],
+                    "inherited_count": summary["inherited_non_successes_count"],
+                    "progressed_barriers_count": summary["progressed_barriers_count"],
+                    "new_regressions": summary["new_regressions_count"],
+                    "added_failures": summary["added_failures_count"],
+                    "environment_failures": summary["environment_failures_count"],
+                    "changed_failures": summary["changed_failures_count"],
+                    "unexpected_skips": summary["unexpected_skips_count"],
+                    "categorized": summary["categorized_counts"],
+                    "blocking_violations": summary["blocking_violations"],
+                },
+                indent=2,
+            )
         )
-    )
+    else:
+        print(
+            f"Reconciliation: {summary['acceptance_verdict']} "
+            f"(in_scope={summary['in_scope_baseline_nodes']}, "
+            f"current={summary['current_nodes']}, "
+            f"inherited={summary['inherited_non_successes_count']}, "
+            f"new_regressions={summary['new_regressions_count']}, "
+            f"changed_failures={summary['changed_failures_count']}, "
+            f"unexpected_skips={summary['unexpected_skips_count']})"
+        )
 
     if args.strict and summary["blocking_violations"]:
         violations_str = "\n - ".join(summary["blocking_violations"])

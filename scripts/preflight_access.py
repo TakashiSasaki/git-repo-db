@@ -251,9 +251,17 @@ def run_preflight(output_path: Path | None = None) -> dict:
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, help="Save preflight receipt JSON")
+    parser.add_argument("--verbose", action="store_true", help="Print full JSON output")
     args = parser.parse_args()
     result = run_preflight(args.output)
-    print(json.dumps(result, indent=2))
+    if args.verbose or os.environ.get("CI_VERBOSE") == "1":
+        print(json.dumps(result, indent=2))
+    else:
+        out_ref = f"; receipt: {args.output}" if args.output else ""
+        print(
+            f"Preflight passed: Python {result['python_version']}, "
+            f"SQLite {result['sqlite']['sqlite_version']}, repo-catalog verified{out_ref}"
+        )
 
 
 if __name__ == "__main__":

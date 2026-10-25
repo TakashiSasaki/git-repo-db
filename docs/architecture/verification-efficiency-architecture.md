@@ -24,7 +24,7 @@ The primary objective is to substantially reduce local test execution wall time,
 Standard pytest runs emit thousands of progress dots, full tracebacks, and verbose collection listings. When executed within AI coding sessions or CI environments, raw logs consume 50,000 to 200,000 tokens per test run. Furthermore, in-memory buffering of massive subprocess stdout/stderr strings incurs notable memory spikes and risks truncation.
 
 ### 2.2 Normal Successful Execution Format
-When a validation run completes successfully (all required tests pass and exact reconciliation holds), the terminal output MUST be limited to a compact, single-block summary.
+When a validation run completes successfully (all required tests pass and exact reconciliation holds), the terminal output MUST be limited to a compact summary strictly bounded in size (< 300 bytes for test executions; 1–2 lines for non-test operations such as linting, formatting, or dependency synchronization without printing meaningless "0 passed" test statistics).
 
 ```text
 === Validation Summary: tests (xdist-4) ===
@@ -40,6 +40,12 @@ Evidence Dir:    artifacts/ci-profile/invocations/tests-1729864200-a1b2c3d4/
 ===========================================
 ```
 
+For non-test commands (e.g. `scripts/ci_python_runtime.py`, `scripts/preflight_access.py`, or `scripts/ci_execute.py gate`), runners emit a single concise line by default:
+```text
+ci_python_runtime: SAFE (python: 3.12.15, sqlite: 3.53.1) receipt: artifacts/python-runtime/receipt.json
+```
+Verbose outputs and debug details are preserved behind explicit `--verbose` flags or `CI_VERBOSE=1`.
+
 ### 2.3 Failure Reporting Format
 When failures, errors, unexpected skips, or reconciliation mismatches occur, the terminal reporter prints:
 1. High-level failure classification (`NEW_REGRESSION`, `ADDED_FAIL`, `CHANGED_FAILURE`, `RECONCILIATION_MISMATCH`, `ENVIRONMENT_FAILURE`).
@@ -49,7 +55,12 @@ When failures, errors, unexpected skips, or reconciliation mismatches occur, the
 
 Terminal output NEVER dumps full multi-thousand-line tracebacks for every failing test into stdout.
 
-### 2.4 Complete Raw Evidence Retention
+### 2.4 Programmatic Log Filtering and Receipt Extraction
+CI workflows (such as `access-registry.yml`) emit complete diagnostic receipts encoded as Base64 strings between `CI_RECEIPTS_BEGIN_V1` and `CI_RECEIPTS_END_V1`. Loading these multi-megabyte payloads directly into AI coding agent context wastes tens of thousands of tokens and causes context window exhaustion.
+- The `scripts/ci_query.py filter-log <raw.log> -o <clean.log>` command strips Base64 receipt payload lines while retaining all execution logs and markers.
+- The `scripts/ci_query.py extract-receipt <raw.log> -o <out_dir>` command decodes and unpacks Base64 zip archives directly onto disk, allowing on-demand access to artifact files without expanding them in terminal output.
+
+### 2.5 Complete Raw Evidence Retention
 Quiet presentation governs terminal presentation and coding-agent context consumption ONLY.
 Underlying execution evidence is preserved in full:
 - Child subprocess output MUST be streamed directly to filesystem log files (`<name>.log`) via file descriptors, not buffered in process memory.
@@ -101,17 +112,27 @@ Every runner invocation writes a compact, normalized JSON summary directly into 
 }
 ```
 
-### 3.2 Failure Indexing (`failure-index.json`) and Selective Retrieval
-When tests fail:
-1. The runner parses the generated JUnit and journal events to produce `failure-index.json`.
-2. Each failure entry contains:
-   - `nodeid`: Exact pytest node ID.
-   - `classification`: Classification relative to baseline (`NEW_REGRESSION`, `INHERITED_KNOWN_FAILURE`, `CHANGED_FAILURE`).
-   - `phase`: Failing phase (`setup`, `call`, or `teardown`).
-   - `exception_type`: Exception class name.
-   - `message`: Short exception summary.
-   - `log_byte_offset`: Byte offset range in `<name>.log` where the specific test failure output begins.
-3. An agent CLI tool (`scripts/ci_query.py failure --node <nodeid>` or `--new-only`) allows an AI assistant to fetch ONLY the specific traceback needed to diagnose an issue without reading the entire log file.
+### 3.2 Authoritative Failure Classification and Multiset Reconciliation
+1. **Authoritative Failure Classification:**
+   - Inherited failures (such as the 43 Transfer-stage failures) MUST NEVER be inferred from test names or file-path heuristics (e.g. searching for `"test_transfer_"`).
+   - Before reconciliation against the authoritative baseline comparator (`scripts/compare_access_regressions.py`), all failures default to `UNCLASSIFIED_FAILURE`.
+   - Authoritative comparison classifies failures into:
+     - `STAGE_TRANSFER` (verified inherited known non-successes).
+     - `CHANGED_FAILURE` (failing with a different exception or message than baseline; treated as an active regression).
+     - `NEW_REGRESSION` (failing nodes that were not in baseline failures).
+   - In `scripts/ci_query.py failures --new-only`, only verified inherited failures are excluded; all unclassified, changed, and new failures are reported.
+2. **Exact Multiset Reconciliation:**
+   - `build_execution_summary()` verifies exact node multiset equality: `Counter(selected_nodes) == Counter(executed_nodes)`.
+   - Matching count numbers alone (`len(selected_nodes) == executed_count`) is explicitly rejected as insufficient: if counts match but node multisets diverge, reconciliation reports `NODE_MISMATCH` and fails closed.
+3. **Failure Indexing (`failure-index.json`) and Selective Retrieval:**
+   - Each failure entry contains:
+     - `nodeid`: Exact pytest node ID.
+     - `classification`: Classification relative to baseline (`STAGE_TRANSFER`, `UNCLASSIFIED_FAILURE`, `NEW_REGRESSION`, `CHANGED_FAILURE`).
+     - `phase`: Failing phase (`setup`, `call`, or `teardown`).
+     - `exception_type`: Exception class name.
+     - `message`: Short exception summary.
+     - `log_byte_offset`: Byte offset range in `<name>.log` where the specific test failure output begins.
+   - An agent CLI tool (`scripts/ci_query.py failure --node <nodeid>` or `scripts/ci_query.py failures --new-only --limit N`) allows an AI assistant to fetch ONLY targeted tracebacks without reading entire multi-megabyte log files into context. Query command exit codes strictly distinguish PASS (0), validation failure (1), and missing/corrupted evidence (2).
 
 ---
 

@@ -15,16 +15,30 @@ refines: [0001-validation-lifecycle-architecture.md, 0032-environment-sqlite-val
 
   1. **Quiet execution and machine-readable indexing:** By default, test execution
      runners (`scripts/ci_execute.py`, `scripts/ci_profile.py`, and test harnesses)
-     output a compact, deterministic terminal summary containing invocation ID,
-     commit and effective tree, validation lane, test counts (total, passed, failed,
-     skipped, inherited, unexecuted), reconciliation status, exit code, worker count,
-     wall time, and evidence paths. Complete raw stdout/stderr, JUnit XML, append-only
-     JSONL journals, and exact test-node inventories are preserved in output files
-     via direct file streaming rather than retained in process memory. A structured
-     `execution-summary.json` and selective `failure-index.json` allow AI coding agents
-     and CI tools to inspect execution status and retrieve targeted error diagnostics
-     without reading multi-megabyte raw logs.
-  2. **Adaptive, safe pytest parallelization:** Unify previously divergent worker
+     output a compact, deterministic terminal summary (< 300 bytes for test executions;
+     1–2 lines for non-test operations such as lint or dependency sync without printing
+     meaningless "0 passed" test statistics) containing invocation ID, commit and effective tree,
+     validation lane, test counts (total, passed, failed, skipped, inherited, unexecuted),
+     reconciliation status, exit code, worker count, wall time, and evidence paths. Complete
+     raw stdout/stderr, JUnit XML, append-only JSONL journals, and exact test-node inventories
+     are preserved in output files via direct file streaming rather than retained in process memory.
+     A structured `execution-summary.json` and selective `failure-index.json` allow AI coding agents
+     and CI tools to inspect execution status and retrieve targeted error diagnostics without reading
+     multi-megabyte raw logs. Programmatic log filtering (`ci_query.py filter-log`) and on-demand
+     receipt extraction (`ci_query.py extract-receipt`) prevent massive Base64 CI payloads from
+     entering agent model context.
+  2. **Authoritative failure classification and multiset reconciliation:**
+     Inherited failures (such as the 43 Transfer-stage non-successes) MUST NEVER be inferred
+     from test-name heuristics or substrings. Before reconciliation against the authoritative
+     baseline comparator, all failures are classified as `UNCLASSIFIED_FAILURE`. Reconciliation
+     authoritatively classifies failures into `STAGE_TRANSFER` (inherited), `CHANGED_FAILURE`
+     (same test node but different exception or failure mode, treated as a blocking regression),
+     or `NEW_REGRESSION`. The `ci_query.py failures --new-only` query filters out only verified
+     inherited failures while keeping unclassified, changed, and new failures visible and blocking.
+     Exact reconciliation status (`EXACT_ONCE_MATCH`) requires exact multiset equivalence of
+     selected and executed test nodes (`Counter(selected) == Counter(executed)`). Equality of counts
+     alone MUST NEVER produce an exact reconciliation match.
+  3. **Adaptive, safe pytest parallelization:** Unify previously divergent worker
      selection policies across all validation lanes into a shared, resource-aware
      budgeting model. Calculate worker counts from available logical CPUs, CPU
      affinity masks, cgroup CPU quotas, available memory limits, and selected test-node
@@ -32,25 +46,25 @@ refines: [0001-validation-lifecycle-architecture.md, 0032-environment-sqlite-val
      unrestricted multithreading that violates repository process-global state invariants
      (such as environment variables and SQLite file handles). Deterministic worker bounds
      prevent concurrent lanes from oversubscribing host resources.
-  3. **Shared immutable build outputs:** Reuse and extend the atomic, hash-bound
+  4. **Shared immutable build outputs:** Reuse and extend the atomic, hash-bound
      `build_once` distribution mechanism (`tests/support/distributions.py`) across all
      packaging fixtures and distribution verifiers (`scripts/verify_i5_distribution.py`,
      `tests/packaging/test_p1_distribution.py`, and Access distribution checks).
      Artifacts (direct wheel, sdist, sdist-derived wheel, and locked wheelhouse) are
      built exactly once per unique input tree fingerprint and sealed with SHA-256
      receipts protected by file locking.
-  4. **Strict workspace and concurrent isolation:** Separate all mutable per-variant
+  5. **Strict workspace and concurrent isolation:** Separate all mutable per-variant
      test state. Direct-wheel and sdist-wheel verifications use completely distinct
      installation virtual environments, isolated outside-checkout test harnesses,
      per-variant logs, and separate database destinations. Never share mutable
      databases, HOME directories, virtual environments, or test fixtures.
-  5. **CI task scheduling and consolidated collection:** Consolidate repeated, redundant
+  6. **CI task scheduling and consolidated collection:** Consolidate repeated, redundant
      pytest collection passes (such as the four sequential passes in `verify_i5_offline.py`)
      into a single collection pass with structured marker/cohort evaluation while
      preserving exact test-node multiset reconciliation. Execute independent CI tasks
      (static validation, documentation checking, and artifact preparation) concurrently
      where dependency graphs permit.
-  6. **Safe artifact retention and temporary workspace exclusion:** Restrict CI artifact
+  7. **Safe artifact retention and temporary workspace exclusion:** Restrict CI artifact
      uploads (e.g. `artifacts/access-registry/`) to essential verification evidence
      (raw test logs, JUnit XML, JSONL journals, failure comparisons, runtime identities,
      packaging contracts, hashes, and minimal reproduction archives) using an explicit

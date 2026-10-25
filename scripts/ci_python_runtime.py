@@ -660,7 +660,15 @@ def probe(output, reference=None):
     result = identity()
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(result, indent=2) + "\n")
-    print(json.dumps(result, indent=2), flush=True)
+    verbose = os.environ.get("CI_VERBOSE") == "1" or "--verbose" in sys.argv
+    if verbose:
+        print(json.dumps(result, indent=2), flush=True)
+    else:
+        print(
+            f"Runtime safety check passed (Python {result.get('python')}, "
+            f"SQLite {result.get('sqlite_version')}); receipt: {output}",
+            flush=True,
+        )
     if any(result["loader_environment"].values()):
         raise RuntimeError("Unexpected dynamic loader override")
     selected = os.environ.get("CI_PRODUCT_PYTHON")

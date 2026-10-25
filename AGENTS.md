@@ -121,6 +121,15 @@ For substantial architectural changes, fix owner decisions in a focused ADR/desi
 
 **Development versus release:** run risk-relevant focused local tests, expanding by dependency and correctness risk rather than demanding full suites after every edit/PR. Ordinary development CI uses inexpensive static/lint/format/configuration checks and smoke tests, inspecting local evidence and reporting gaps without automatically duplicating a full locally verified suite. A green development run means selected checks passed, not full runtime acceptance. Only explicit user-invoked release validation requires full independent pytest locally AND hosted CI, isolated wheel/sdist packaging, schema/integrity checks and exact test-node reconciliation. Release validation itself authorizes no release, deployment, tag or merge. Preserve meaningful behavior tests; retire obsolete mechanism assertions only with explicit replacement-node mapping. Report versions, failures, skips, exclusions and unexecuted tests.
 
+**Token-efficient test and CI investigation:** Coding agents MUST minimize text consumed by model context during local test runs and CI triage, while preserving complete evidence on disk:
+1. **Mandatory 5-step investigation sequence:**
+   - *Step 1 (Summary):* Run `scripts/ci_query.py summary <evidence_dir>` or inspect the 1–2 line machine-readable terminal summary. Never ingest multi-megabyte raw logs into context.
+   - *Step 2 (Failure counts):* Inspect failure counts and categories with `scripts/ci_query.py status <evidence_dir>`. Check total, passed, failed, and inherited vs unclassified counts.
+   - *Step 3 (Bounded failure list):* Query only new or changed failures with a strict limit: `scripts/ci_query.py failures <evidence_dir> --new-only --limit 10`. Never query unbounded failure lists.
+   - *Step 4 (Targeted traceback):* Fetch the exact traceback for an individual failing node: `scripts/ci_query.py failure <evidence_dir> --node <nodeid>`.
+   - *Step 5 (Fallback raw log inspection):* Open raw logs (`invocations/*.log`) only when structured summaries and failure indices lack sufficient diagnostic detail. Use `scripts/ci_query.py filter-log <raw.log> -o <clean.log>` to strip large Base64 receipts before viewing. Use `scripts/ci_query.py extract-receipt <raw.log> -o <out_dir>` to unpack Base64 receipts directly on disk without expanding them into terminal text.
+2. **Execution defaults:** Never run bare, unbudgeted pytest in agent sessions. Always use `scripts/ci_profile.py` or pass `--quiet` (`-q`) and worker budgeting (`-n auto` or `--max-workers`) through verified `./scripts/local-run.sh`. Non-test commands must not print "0 passed" test statistics.
+
 Use one controlled workload at a time for comparable timing; concurrent timings are not sequential benchmark evidence. Keep historical reports, update active docs for changed behavior, and submit real dependencies/findings. Named merges require authorization and independent integration-ancestry/effective-tree verification. ADR 0014 does not authorize any implementation, real-catalog extraction or data deletion.
 
 ## Reuse lessons as repository Agent Skills

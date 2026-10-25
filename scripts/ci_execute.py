@@ -1668,7 +1668,20 @@ def main():
         return 0 if res.get("verdict") == "complete_release_passed" else 1
     else:
         res = gate(args.plan, root=args.root)
-        print(json.dumps(res["coverage"]))
+        cov = res["coverage"]
+        compact_cov = {
+            "status": res.get("acceptance_status"),
+            "executed": cov.get("executed", 0),
+            "selected_files": cov.get("selected_files", 0),
+            "required_files_count": len(cov.get("required_files", [])),
+            "acceptance_files_count": len(cov.get("acceptance_files", [])),
+            "unexecuted_files_count": len(cov.get("unexecuted_files", [])),
+            "excluded_files_count": len(cov.get("excluded_files", [])),
+        }
+        if args.verbose or os.environ.get("CI_VERBOSE") == "1":
+            print(json.dumps(res["coverage"]))
+        else:
+            print(json.dumps(compact_cov))
         if (
             res.get("outcome") != "passed"
             or res.get("acceptance_status") == "release_rejected"

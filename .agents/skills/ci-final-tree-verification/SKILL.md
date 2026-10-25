@@ -64,7 +64,15 @@ well as compressed bytes. A review's index hash binds its recorded snapshot;
 adding that review naturally changes a later index, not the frozen test source.
 
 For bounded local inspection, use the
-[efficient repository investigation skill](../efficient-repository-investigation/SKILL.md).
+[efficient repository investigation skill](../efficient-repository-investigation/SKILL.md)
+and follow the mandatory 5-step agent investigation sequence:
+1. `scripts/ci_query.py summary <dir>` for compact metadata and execution summary.
+2. `scripts/ci_query.py status <dir>` for failure counts and categories.
+3. `scripts/ci_query.py failures <dir> --new-only --limit 10` for bounded new/changed failures.
+4. `scripts/ci_query.py failure <dir> --node <nodeid>` for targeted tracebacks.
+5. If raw logs must be inspected, use `scripts/ci_query.py filter-log <raw.log> -o <clean.log>` to strip large Base64 receipts, and `scripts/ci_query.py extract-receipt <raw.log> -o <out_dir>` for on-demand unpacking. Never load multi-megabyte Base64 payload logs into agent context.
+
+Never run bare, unbudgeted pytest in agent sessions; always pass `--quiet` (`-q`) and use `scripts/ci_profile.py` or `./scripts/local-run.sh`.
 Its summary helper validates consistency without claiming source/hosted release
 qualification. Frozen historical reports and execution input hashes stay intact.
 

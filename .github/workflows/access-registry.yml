@@ -108,7 +108,7 @@ jobs:
             tests/integration/access \
             --junitxml=artifacts/access-registry/tests.xml \
             > artifacts/access-registry/tests.log 2>&1
-          tail -n 35 artifacts/access-registry/tests.log
+          tail -n 10 artifacts/access-registry/tests.log
       - name: Execute broad regression suite and record receipts
         if: ${{ !cancelled() }}
         shell: bash
@@ -133,7 +133,7 @@ jobs:
             > artifacts/access-registry/regressions/regressions.log 2>&1 || pytest_exit=$?
           echo "Broad regression pytest exit code: $pytest_exit"
           echo "$pytest_exit" > artifacts/access-registry/regressions/pytest_exit_code.txt
-          tail -n 35 artifacts/access-registry/regressions/regressions.log || true
+          tail -n 10 artifacts/access-registry/regressions/regressions.log || true
           if [ "$pytest_exit" -ne 0 ] && [ "$pytest_exit" -ne 1 ]; then
             echo "pytest broad regression run terminated with unrecoverable exit code $pytest_exit"
             exit "$pytest_exit"
