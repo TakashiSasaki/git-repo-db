@@ -1846,4 +1846,4 @@ tests/integration/p5_p6_compatibility/test_provider_exchange_matrix.py::test_pro
 tests/integration/p5_p6_compatibility/test_provider_exchange_matrix.py::test_provider_late_reordered_repeat_reverse_onward_preserves_candidates[order5]
 tests/integration/p5_p6_compatibility/test_provider_exchange_matrix.py::test_exchange_preserves_non_time_json_real
 
-1847 tests collected in 0.45s
+1847 tests collected in 2.10s

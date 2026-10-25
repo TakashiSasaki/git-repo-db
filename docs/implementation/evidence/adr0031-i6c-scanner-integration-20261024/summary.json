@@ -3,8 +3,8 @@
   "repository": "https://github.com/TakashiSasaki/git-repo-db",
   "base_branch": "fix/adr0031-i6c-regression-hardening-20261024",
   "base_commit": "55de572bdac4b9b90b131d89025b0ed304cd0159",
-  "tested_input_commit": "a57e456d0e6ff3969feea44ff159401226515418",
-  "tested_input_tree": "d301c7285a2957c5a2c094826ee3f85dab628a82",
+  "tested_input_commit": "91d2bc7e6c47a3c1ec46949211ab16cb4ac7900f",
+  "tested_input_tree": "d35ca8d7212bddd9aa6ad1646d43a3fe062d619e",
   "author_status": "Author-complete",
   "independent_acceptance_claim": false,
   "review_verdict": "INCOMPLETE / PENDING_INDEPENDENT_REVIEW",
@@ -52,7 +52,7 @@
     },
     "comparator_unit_tests": {
       "status": "PASS",
-      "passed": 24,
+      "passed": 27,
       "failed": 0
     },
     "regression_comparison": {
@@ -61,9 +61,9 @@
       "blocking_violations": 0,
       "baseline_in_scope_nodes": 1847,
       "current_nodes": 1847,
-      "resolved_count": 72,
+      "resolved_count": 73,
       "inherited_count": 201,
-      "progressed_barriers_count": 1,
+      "progressed_barriers_count": 0,
       "changed_failures": 0,
       "new_regressions": 0
     },
@@ -84,15 +84,15 @@
     },
     "sdist_contract_check": {
       "status": "PASS",
-      "compressed_bytes": 705705,
+      "compressed_bytes": 705854,
       "compressed_limit": 2097152,
-      "unpacked_bytes": 6064489,
+      "unpacked_bytes": 6065129,
       "unpacked_limit": 8388608,
       "tar_stream_bytes": 6195200,
       "tar_stream_limit": 8922624,
       "members": 164,
       "members_limit": 512,
-      "source_inventory_sha256": "2b856a85f8f685f9cae10ce395455649305441c2e1ef2c2c21fbd998f4f67f46"
+      "source_inventory_sha256": "6ed199b900f15247a494f09bc70dcb47f3dc60080cba4e9a9035620541f19f84"
     },
     "scoped_access_acceptance": {
       "status": "PASS",
@@ -109,8 +109,8 @@
     },
     "distribution_outside_checkout": {
       "status": "PASS",
-      "direct_wheel_sha256": "ab679e600ceda7f783c4e70e63e6da0c7b5f9072c852e9b053d1e54add4da0de",
-      "derived_wheel_sha256": "ab679e600ceda7f783c4e70e63e6da0c7b5f9072c852e9b053d1e54add4da0de",
+      "direct_wheel_sha256": "974366bd21726931bba05958c102ec1a9128845fc4728595346d2bf2b727a1f7",
+      "derived_wheel_sha256": "974366bd21726931bba05958c102ec1a9128845fc4728595346d2bf2b727a1f7",
       "wheel_equivalence": true,
       "installed_smoke": "passed",
       "exit_code": 0
