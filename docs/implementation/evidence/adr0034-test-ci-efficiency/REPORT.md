@@ -117,6 +117,7 @@ Verified with `scripts/check_sdist_contract.py --build`:
 
 ## 5. Independent Non-Author Review Verdict
 
+### 5.1 Integration Review Verdict (PR #186)
 An independent review of the entire integration change set was conducted following the strict blocking review standards of `pr-review.md`.
 
 - **Verdict**: **`APPROVE`**
@@ -135,6 +136,25 @@ An independent review of the entire integration change set was conducted followi
 }
 ```
 
+### 5.2 Corrective Hardening Review Verdict (PR #188)
+An independent non-author review of the token-efficient test and CI output hardening follow-up (PR #188) was conducted following the strict blocking review standards of `pr-review.md`.
+
+- **Verdict**: **`APPROVE`**
+- **Analysis Status**: `COMPLETE`
+- **Blocking Findings (P0/P1)**: 0
+- **Summary**: All 18 changed and evidence files across test runners, query utilities, regression comparison, CI workflows, skills, architecture docs, and milestone reports verified. No P0 or P1 blocking issues detected.
+
+```json
+{
+  "schema_version": 1,
+  "analysis_status": "COMPLETE",
+  "summary": "Independent High-Signal Blocking PR Review for PR #188 (https://github.com/TakashiSasaki/git-repo-db/pull/188) on review/token-efficient-ci-hardening-20261025. Head commit fd7919baef4993be8d698f2ba0b78cd16c8950aa (tree b5741536a1f536dca1d351643da4d5eebba3abd8) relative to base c734b233125945d4c7b331d46733518f6add2fca (tree 5343fc22afeaf95355d5f86924170af08f095604). Thoroughly verified all 18 changed and evidence files across test runners, query utilities, regression comparison, CI workflows, skills, architecture docs, and milestone reports. Invariant verification results: 1) Elimination of heuristics in failure classification: ci_profile.py defaults all failures to UNCLASSIFIED_FAILURE prior to baseline comparison and reconciles solely against authoritative node details; 2) Exact multiset reconciliation: Counter(selected) == Counter(executed) strictly enforced, failing closed on equal-count mismatched nodes; 3) Token bloat elimination: test terminal outputs strictly bounded under 300 bytes, non-test commands emit concise 1-line safety verdicts omitting misleading '0 passed' test stats, Base64 CI receipt streaming and receipt extraction tooling (ci_query.py filter-log, extract-receipt) verified; 4) Concurrency safety: unique invocation logging paths and chunked SHA-256 streaming prevent collision and memory bloat; 5) Invariant compliance: ADR 0032 SQLite validation (0 violations), ADR 0033 minimal sdist contract verified (164 members, compressed 708,251 bytes < 2,097,152 budget); 6) Test suite verification: 1,725 unit tests passed in 60s, test_quiet_runner suite passed (13/13). No P0 or P1 blocking issues introduced.",
+  "event": "APPROVE",
+  "limitations": [],
+  "comments": []
+}
+```
+
 ---
 
 ## 6. Milestone Provenance & Commit Topology
@@ -144,5 +164,11 @@ An independent review of the entire integration change set was conducted followi
 - **PR B (#184)**: Commit `962da44d8fc4318219dd46a8a84b0fd25c493eab` (`feat: implement quiet execution runner and resource-aware worker scheduling`)
 - **PR C (#185)**: Commit `c734b233125945d4c7b331d46733518f6add2fca` (`feat: eliminate duplicate distribution builds, isolate workspaces, and optimize CI scheduling`)
 - **Integration Candidate (Draft PR #186)**: Commit `c734b233125945d4c7b331d46733518f6add2fca` (Tree `5343fc22afeaf95355d5f86924170af08f095604`)
-- **Corrective Hardening Candidate**: Branch `impl/token-efficient-ci-hardening-20261025` (resolves failure classification, multiset reconciliation, and token bloat)
-- **Review Branch**: Branch `review/token-efficient-ci-hardening-20261025`
+- **PR D (Corrective Hardening Candidate)**: [PR #188](https://github.com/TakashiSasaki/git-repo-db/pull/188) (`impl/token-efficient-ci-hardening-20261025`)
+  - Commit: `401e4a70e174f27ab3972b8e03642728c4ccb99e`
+  - Tree: `9c808530a31722374137e46861ee6d4e94fbfc53`
+  - Hosted CI Tests: [Run 40215286694](https://github.com/TakashiSasaki/git-repo-db/actions/runs/40215286694) (SUCCESS, 26s)
+  - Hosted CI Access Registry: [Run 40215286679](https://github.com/TakashiSasaki/git-repo-db/actions/runs/40215286679) (SUCCESS, 5m46s, artifact `access-registry-verification`: 218,402,018 bytes)
+- **Review Branch (Hardening Approval)**: [PR #189](https://github.com/TakashiSasaki/git-repo-db/pull/189) (`review/token-efficient-ci-hardening-20261025`)
+  - Commit: `42a1fba61501061b6be3af2b53841eea60d08168`
+  - Hosted CI Tests: [Run 40215303169](https://github.com/TakashiSasaki/git-repo-db/actions/runs/40215303169) (SUCCESS, 28s)
