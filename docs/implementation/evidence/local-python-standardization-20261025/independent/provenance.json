@@ -1,0 +1,21 @@
+{
+  "directory": "docs/implementation/evidence/local-python-standardization-20261025/independent",
+  "file_count": 3,
+  "files": {
+    "REPORT.md": {
+      "bytes": 13852,
+      "sha256": "a194538a401ab85438bcbfb43b5b6416d5592398e48729ce1c8cbd14cc17a5a5",
+      "git_blob_oid": "b78c5e46675a1e917d4d39bfbf3704e50863e95a"
+    },
+    "findings.json": {
+      "bytes": 3,
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+      "git_blob_oid": "fe51488c7066f6687ef680d6bfaa4f7768ef205c"
+    },
+    "summary.json": {
+      "bytes": 2732,
+      "sha256": "b3aaef1da80cd80ceae122ff77f776c8e853305999851e063c0a235a49af05a9",
+      "git_blob_oid": "8f0a65ee47cc61ed667b815b20f58d399b11c46f"
+    }
+  }
+}
