@@ -731,7 +731,8 @@ class Context(ContextStore):
         self, resource: ResourceKey, relation_kind: str
     ) -> tuple[ResourceRelation, ...]:
         self._check()
-        refuse_transfer(relation_kind)
+        if has_transfer_fence(self.db):
+            refuse_transfer(relation_kind)
         with self._stored("relation"):
             values = tuple(
                 ResourceRelation(
@@ -942,11 +943,21 @@ class Context(ContextStore):
                 "field_candidates is not repository relationship authority; use repository_relations"
             )
         with self._stored("field"):
+            if self.db.execute(
+                "SELECT 1 FROM resources WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=?",
+                resource.coordinates(),
+            ).fetchone():
+                self.identification(resource)
             return super().candidates(resource, field_name)
 
     def admit_field(self, candidate: FieldCandidate) -> str:
         self._check(write=True)
         validate_reported_core_reference(candidate)
+        if self.db.execute(
+            "SELECT 1 FROM resources WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=?",
+            candidate.resource.coordinates(),
+        ).fetchone():
+            self.identification(candidate.resource)
         return super().admit_field(candidate)
 
     def admit_repository_relation(

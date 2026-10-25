@@ -238,9 +238,40 @@ def validate_stored_context_relations(connection: sqlite3.Connection) -> None:
                     "Stored Transfer endpoint requires transfer_event_report scope"
                 )
             scope_json, members_json, obs_us = scope_meta[key_coord]
-            report = TransferEventReport.from_stored_scope(
-                rep_key, rels, scope_json, members_json, obs_us
+            parsed_scope = json.loads(scope_json)
+            from repo_catalog.domain.parent_report import (
+                ParentObservation,
+                ParentReportKey,
             )
+
+            parent_key = ParentReportKey(
+                rep_key.event_resource,
+                parsed_scope.get("parent_members_json", ""),
+                parsed_scope.get("parent_provenance_json", ""),
+                parsed_scope.get("parent_scope_json", ""),
+            )
+            parent_row = connection.execute(
+                "SELECT observed_at_us FROM resource_relations WHERE "
+                "service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=? "
+                "AND relation_kind=? AND members_json=? AND provenance_json=? AND scope_json=?",
+                parent_key.coordinates(),
+            ).fetchone()
+            if parent_row is None:
+                raise BackupValidationError(
+                    "Stored Transfer Event Report parent observation is missing"
+                )
+            report = TransferEventReport.from_stored_scope(
+                rep_key,
+                rels,
+                scope_json,
+                members_json,
+                obs_us,
+                parent_report=ParentObservation(parent_key, parent_row[0]),
+            )
+            if report.parent_issue != report.issue_resource:
+                raise BackupValidationError(
+                    "Stored Transfer Event Report has ineligible parent issue (G3=A Q-S10 violation)"
+                )
             for provider in (
                 report.from_provider_repository,
                 report.to_provider_repository,

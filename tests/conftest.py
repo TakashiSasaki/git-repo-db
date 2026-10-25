@@ -54,6 +54,12 @@ def offline_test_environment(monkeypatch, request):
     finally:
         socket.socket.connect, socket.socket.connect_ex, socket.getaddrinfo = original
         os.umask(old_umask)
+        try:
+            from tests.support.context_admission import _cleanup_isolated_fixtures
+
+            _cleanup_isolated_fixtures()
+        except Exception:
+            pass
 
 
 @pytest.fixture

@@ -27,7 +27,6 @@ from repo_catalog.adapters.github.production_intake import (
 )
 from repo_catalog.adapters.sqlite.git_core import GitCore
 from repo_catalog.adapters.sqlite.production_context import Context
-from repo_catalog.application.acquisition import ProviderAcquisition
 from repo_catalog.domain.acquisition import (
     ProviderIntakeBatch,
     ProviderRegistration,
@@ -39,6 +38,9 @@ from repo_catalog.domain.p1_context import ResourceKey, canonical
 from repo_catalog.domain.production_context import SourceInventory
 from repo_catalog.domain.time import parse_iso8601_us
 from tests.integration.p5.conftest import init_catalog_stores
+from tests.support.context_admission import (
+    AuthorizedProviderAcquisition as ProviderAcquisition,
+)
 
 
 def test_provider_registration_and_source_inventory(tmp_path: Path) -> None:

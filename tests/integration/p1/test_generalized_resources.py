@@ -10,12 +10,10 @@ import pytest
 
 from repo_catalog.adapters.github.production_intake import normalize_timeline_event
 from repo_catalog.adapters.sqlite import p1_schema
-from repo_catalog.adapters.sqlite.production_context import Context
 from repo_catalog.adapters.sqlite.recovery_validation import (
     StoredContextInvariantError,
     validate_stored_context_relations,
 )
-from repo_catalog.application.acquisition import ProviderAcquisition
 from repo_catalog.application.exchange import ExchangeService
 from repo_catalog.application.production_query import ProductionQueryService
 from repo_catalog.domain.context_admission import DependencySet
@@ -46,7 +44,15 @@ from tests.integration.i3.test_selective_exchange import (
     scope,
 )
 from tests.support.authorized_context import FixtureContextStore
-from tests.support.context_admission import fixture_transaction
+from tests.support.context_admission import (
+    AuthorizedContext as Context,
+)
+from tests.support.context_admission import (
+    AuthorizedProviderAcquisition as ProviderAcquisition,
+)
+from tests.support.context_admission import (
+    fixture_transaction,
+)
 
 S = "22222222-2222-4222-8222-222222222222"
 PROV = canonical({"source": "i2-product", "evidence": "original"})

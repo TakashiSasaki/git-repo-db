@@ -12,8 +12,6 @@ from repo_catalog.adapters.github.production_intake import (
     normalize_timeline_event,
 )
 from repo_catalog.adapters.sqlite.p1_coordination import persist_catalog_stop
-from repo_catalog.adapters.sqlite.production_context import Context
-from repo_catalog.application.acquisition import ProviderAcquisition
 from repo_catalog.domain.acquisition import (
     AcquisitionError,
     ProviderIntakeBatch,
@@ -24,6 +22,11 @@ from repo_catalog.domain.acquisition import (
     ProviderTimelineIntake,
     RepositoryRegistration,
     make_provenance,
+)
+from repo_catalog.domain.context_admission import (
+    AdmissionSelection,
+    DependencySet,
+    create_local_admission_service,
 )
 from repo_catalog.domain.p1_context import (
     FieldClock,
@@ -41,7 +44,17 @@ from repo_catalog.domain.p1_coordination import CoordinationError
 from repo_catalog.domain.production_context import ResourceRelation
 from repo_catalog.domain.resource_identification import ResourceIdentification as RI
 from repo_catalog.domain.resource_identity import encode_identity, parse_identity
+from repo_catalog.domain.resource_stage import UnsupportedResourceStage
 from tests.integration.p5.conftest import init_catalog_stores
+from tests.support.context_admission import (
+    AuthorizedContext as Context,
+)
+from tests.support.context_admission import (
+    AuthorizedProviderAcquisition as ProviderAcquisition,
+)
+from tests.support.context_admission import (
+    extract_batch_dependencies,
+)
 
 
 def setup(path):
@@ -373,9 +386,11 @@ def test_non_transfer_cannot_promote_repository_fields_or_forged_flag(
     acq = ProviderAcquisition(tmp_path)
     acq.admit_unit(unit)
     with Context.snapshot(tmp_path) as ctx:
-        assert not ctx.transfer_event_reports() and not ctx.repository_relations(
-            unit.primary_resource
-        )
+        try:
+            reports = ctx.transfer_event_reports()
+        except UnsupportedResourceStage:
+            reports = ()
+        assert not reports and not ctx.repository_relations(unit.primary_resource)
     with pytest.raises(AcquisitionError, match="TRANSFER_TYPE_EVIDENCE"):
         acq.admit_unit(replace(unit, transfer_event=True))
     assert not (tmp_path / "p1-recovery-stop.json").exists()
@@ -523,15 +538,19 @@ def test_separate_event_reports_never_pair_endpoints(tmp_path):
 
 def test_generic_provider_scope_cannot_create_transfer(tmp_path):
     s, _, _ = setup(tmp_path)
-    event = ResourceKey.timeline_event(ResourceKey.from_native(s, "issue", "7"), "100")
+    issue = ResourceKey.from_native(s, "issue", "7")
+    event = ResourceKey.timeline_event(issue, "100")
     provider = ResourceKey.from_native(s, "repository", "1")
-    with Context.transaction(tmp_path) as ctx:
-        ctx.resource(ResourceKey.from_native(s, "issue", "7"))
+    auth, adm, _ = create_local_admission_service(
+        "provider_intake",
+        grants=DependencySet(resources={issue, event}, provider_registrations={s}),
+        selection=AdmissionSelection(all_selected=True),
+    )
+    with Context.transaction(tmp_path, authorization=auth, admission=adm) as ctx:
+        ctx.resource(issue)
         ctx.resource(
             event,
-            identification=RI.scoped(
-                event, ResourceKey.from_native(s, "issue", "7"), "timeline_event", "100"
-            ),
+            identification=RI.scoped(event, issue, "timeline_event", "100"),
         )
     scope = ProviderRepositoryScope(
         {
@@ -739,6 +758,7 @@ def test_graphql_event_does_not_infer_destination_from_current_issue_repository(
     payload = {
         "id": "EV",
         "__typename": "TransferredEvent",
+        "createdAt": "2026-10-19T01:00:00Z",
         "fromRepository": {"id": "R_A"},
         "issue": {"databaseId": 7, "repository": {"id": "R_B"}},
     }
@@ -764,7 +784,7 @@ def test_graphql_event_does_not_infer_destination_from_current_issue_repository(
             report.from_state == "unresolved_provider_only"
             and report.to_state == "absent"
         )
-        assert report.clock.at_us is None and report.observed_at_us is None
+        assert report.clock.at_us == 1792371600000000 and report.observed_at_us is None
         assert report.provenance_json == provenance("transfer")
 
 
@@ -792,8 +812,19 @@ def test_stop_during_claim_admission_rolls_back_real_context_work(
 
     s, r1, _ = setup(tmp_path)
     before = snapshot(tmp_path, "resources")
+    batch = ProviderIntakeBatch(
+        s,
+        mapping_claims=(mapping(s, "1", r1),),
+        issues=(ProviderIssueIntake({"id": 7}, 10, provenance("issue")),),
+    )
+    grants = extract_batch_dependencies(batch, directory=tmp_path)
+    auth, adm, _ = create_local_admission_service(
+        "provider_intake",
+        grants=grants,
+        selection=AdmissionSelection(all_selected=True),
+    )
     with pytest.raises((CoordinationError, ValueError)) as failure:
-        with Context.transaction(tmp_path) as ctx:
+        with Context.transaction(tmp_path, authorization=auth, admission=adm) as ctx:
             original = ctx.admit_repository_relation
 
             def admit_and_stop(*args, **kwargs):
@@ -803,12 +834,10 @@ def test_stop_during_claim_admission_rolls_back_real_context_work(
 
             monkeypatch.setattr(ctx, "admit_repository_relation", admit_and_stop)
             ProviderAcquisition(tmp_path).admit_batch(
-                ProviderIntakeBatch(
-                    s,
-                    mapping_claims=(mapping(s, "1", r1),),
-                    issues=(ProviderIssueIntake({"id": 7}, 10, provenance("issue")),),
-                ),
+                batch,
                 context=ctx,
+                authorization=auth,
+                admission=adm,
             )
     assert getattr(failure.value, "code", None) in {
         "RECOVERY_REQUIRED",

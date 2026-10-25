@@ -17,7 +17,13 @@ import uuid
 from collections.abc import Callable, Mapping
 from contextlib import ExitStack
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from repo_catalog.domain.context_admission import (
+        AdmissionContext,
+        ContextAdmissionService,
+    )
 
 from repo_catalog.adapters.sqlite.git_core import GitCore
 from repo_catalog.adapters.sqlite.p1_context import ContextStore
@@ -2419,6 +2425,8 @@ class SQLiteRecoveryAdapter:
         budget: RecoveryBudget | None = None,
         request_id: str | None = None,
         *,
+        authorization: ContextAdmissionService | None = None,
+        admission: AdmissionContext | None = None,
         fault_stage: str | None = None,
     ) -> MergeReceipt:
         fresh_destination_dir = Path(fresh_destination_dir)
@@ -2443,11 +2451,21 @@ class SQLiteRecoveryAdapter:
                 salvage_file,
                 b,
                 request,
+                authorization=authorization,
+                admission=admission,
                 fault_stage=fault_stage,
             )
 
     def _merge_salvage_request(
-        self, fresh_destination_dir, salvage_file, b, request, *, fault_stage=None
+        self,
+        fresh_destination_dir,
+        salvage_file,
+        b,
+        request,
+        *,
+        authorization=None,
+        admission=None,
+        fault_stage=None,
     ):
         work_budget = RecoveryWorkBudget(
             note_bytes=b.max_payload_bytes,
@@ -2480,9 +2498,69 @@ class SQLiteRecoveryAdapter:
         ctx_db = fresh_destination_dir / "context.sqlite3"
         ctx_store = None
         ctx_conn = None
+        ctx_auth = authorization
+        ctx_admission = admission
         if ctx_db.exists():
             ctx_conn = p1_connect(ctx_db, "context")
-            ctx_store = ContextStore(ctx_conn)
+            if ctx_auth is None or ctx_admission is None:
+                repo_row = ctx_conn.execute(
+                    "SELECT repository_uuidv4 FROM store_identity WHERE store_role='context'"
+                ).fetchone()
+                repo_id = repo_row[0] if repo_row else None
+                repos = {repo_id} if repo_id else set()
+                perm_repos = frozenset(repos) if repos else frozenset()
+                from repo_catalog.domain.context_admission import (
+                    AdmissionBudget,
+                    AdmissionSelection,
+                    DependencySet,
+                    create_local_admission_service,
+                )
+
+                ctx_auth, ctx_admission, _ = create_local_admission_service(
+                    operation="salvage_merge",
+                    grants=DependencySet(repositories=repos),
+                    permitted_repositories=perm_repos,
+                    selection=AdmissionSelection(
+                        all_selected=True,
+                        max_work=min(
+                            100_000_000,
+                            max(
+                                10_000_000,
+                                b.max_work_units.get("verification_bytes", 10_000_000),
+                            ),
+                        ),
+                        max_bytes=min(
+                            100_000_000,
+                            max(16 * 1024 * 1024, b.max_payload_bytes * 8),
+                        ),
+                        max_units=min(
+                            100_000_000,
+                            max(10_000, b.max_input_records * 4),
+                        ),
+                    ),
+                    budget=AdmissionBudget(
+                        work_limit=min(
+                            100_000_000,
+                            max(
+                                10_000_000,
+                                b.max_work_units.get("verification_bytes", 10_000_000),
+                            ),
+                        ),
+                        bytes_limit=min(
+                            100_000_000,
+                            max(16 * 1024 * 1024, b.max_payload_bytes * 8),
+                        ),
+                        dependency_limit=min(
+                            100_000_000,
+                            max(100_000, b.max_input_records * 4),
+                        ),
+                    ),
+                    principal="recovery-coordinator",
+                    credential="recovery-coordinator",
+                )
+            else:
+                ctx_auth.validate_context(ctx_admission)
+            ctx_store = ContextStore(ctx_conn, authorization=ctx_auth)
 
         def _save_budget_state():
             request.mark_exhausted(budget_exhausted)
@@ -2949,51 +3027,41 @@ class SQLiteRecoveryAdapter:
                             actual_sha = _hash_recovery_bytes(text_bytes, work_budget)
                             if expected_sha and expected_sha != actual_sha:
                                 raise ValueError("Text body SHA-256 mismatch")
-                            with catalog_gate(fresh_destination_dir, exclusive=True):
+                            with ctx_store.transaction(admission=ctx_admission):
                                 assert_catalog_not_stopped(fresh_destination_dir)
-                                ctx_conn.execute("BEGIN IMMEDIATE")
                                 try:
-                                    try:
-                                        exists = verify_existing_context_text(
-                                            ctx_conn,
-                                            actual_sha,
-                                            text_bytes,
-                                            b.max_payload_bytes,
-                                            work_budget,
-                                        )
-                                    except BackupValidationError as error:
-                                        # Publish the stop while holding the
-                                        # writer cut, before any other ordinary
-                                        # operation can pass the diagnosed row.
-                                        reason = (
-                                            "Confirmed destination Context corruption: "
-                                            + str(error)
-                                        )
-                                        stop_catalog(
-                                            fresh_destination_dir,
-                                            reason,
-                                            details={
-                                                "store": "context",
-                                                "classification": "authoritative_data",
-                                            },
-                                        )
-                                        raise CorruptionDetectedError(reason) from error
-                                    if not exists:
-                                        # ContextStore hashes once; SQLite's
-                                        # SHA-256 CHECK hashes the new row again.
-                                        cost = len(text_bytes) * 2
-                                        work_budget.require("verification_bytes", cost)
-                                        ctx_store.text(text_val)
-                                        work_budget.charge("verification_bytes", cost)
-                                    with catalog_completion(fresh_destination_dir):
-                                        assert_catalog_not_stopped(
-                                            fresh_destination_dir
-                                        )
-                                        ctx_conn.execute("COMMIT")
-                                except BaseException:
-                                    if ctx_conn.in_transaction:
-                                        ctx_conn.execute("ROLLBACK")
-                                    raise
+                                    exists = verify_existing_context_text(
+                                        ctx_conn,
+                                        actual_sha,
+                                        text_bytes,
+                                        b.max_payload_bytes,
+                                        work_budget,
+                                    )
+                                except BackupValidationError as error:
+                                    # Publish the stop while holding the
+                                    # writer cut, before any other ordinary
+                                    # operation can pass the diagnosed row.
+                                    reason = (
+                                        "Confirmed destination Context corruption: "
+                                        + str(error)
+                                    )
+                                    stop_catalog(
+                                        fresh_destination_dir,
+                                        reason,
+                                        details={
+                                            "store": "context",
+                                            "classification": "authoritative_data",
+                                        },
+                                    )
+                                    raise CorruptionDetectedError(reason) from error
+                                if not exists:
+                                    # ContextStore hashes once; SQLite's
+                                    # SHA-256 CHECK hashes the new row again.
+                                    cost = len(text_bytes) * 2
+                                    work_budget.require("verification_bytes", cost)
+                                    ctx_store.text(text_val)
+                                    work_budget.charge("verification_bytes", cost)
+                                assert_catalog_not_stopped(fresh_destination_dir)
                             if exists:
                                 replayed += 1
                             else:

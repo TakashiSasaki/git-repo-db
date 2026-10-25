@@ -844,6 +844,7 @@ class LocalAuthorizationPolicy:
         self._principal = principal
         self._denied = DependencySet()
         self._revision = 0
+        self._revoked = False
         self.calls = []
         self.active = 0
 
@@ -876,10 +877,18 @@ class LocalAuthorizationPolicy:
         with self._lock:
             self._revision = value
 
+    def revoke(self):
+        """Immediately invalidate all active and future leases under this policy."""
+        with self._lock:
+            self._revoked = True
+            self._revision += 1
+
     @contextmanager
     def lease(self, principal, operation, dependencies):
         with self._lock:
             self.calls.append((principal, operation, dependencies))
+            if self._revoked:
+                raise AdmissionRefused("PERMISSION_DENIED")
             if self._principal is not None and principal != self._principal:
                 raise AdmissionRefused("PERMISSION_DENIED")
             if operation not in OPERATIONS or operation == "exchange_export":
@@ -911,7 +920,7 @@ class LocalAuthorizationPolicy:
 
             class Lease:
                 def check_current(self):
-                    if revision != policy._revision:
+                    if policy._revoked or revision != policy._revision:
                         raise AdmissionRefused("PERMISSION_DENIED")
 
             self.active += 1

@@ -1,0 +1,78 @@
+{
+  "phase": "adr0031-i7-recovery-and-admission-20261025",
+  "review_type": "Independent Integration Review",
+  "target_pr": 178,
+  "target_branch": "integration/adr0031-i7-recovery-and-admission-20261025",
+  "target_submission_commit": "a23246dfd27595e1a67780875ae2a3f49f0cb860",
+  "target_submission_tree": "d9e94014bbcb9814c04e0c29951f799950abf1bf",
+  "target_tested_input_commit": "6388c3fb1c04977087fda5699385d951da0de1c7",
+  "target_tested_input_tree": "cdde30be7a4f558b961945efec750275e9802a2e",
+  "integration_base_exact_sha": "b602702822ff20d19e623212a1924bf922f2f90c",
+  "integration_base_tree_sha": "e22b59bcb1b268ff260f5fd7ea36eeca296c96ad",
+  "verdict": "NON_AUTHOR_INDEPENDENT_ACCEPTANCE_PASS",
+  "blocking_findings_count": 0,
+  "two_stage_separation_verified": true,
+  "ci_verification": {
+    "access_run_id": 40175467591,
+    "access_run_url": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/40175467591",
+    "access_conclusion": "success",
+    "tests_run_id": 40175467648,
+    "tests_run_url": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/40175467648",
+    "tests_conclusion": "success"
+  },
+  "regression_reconciliation": {
+    "status": "PASS",
+    "acceptance_verdict": "PASSED",
+    "blocking_violations": 0,
+    "baseline_in_scope_nodes": 1847,
+    "current_nodes": 1851,
+    "resolved_count": 231,
+    "inherited_count": 43,
+    "progressed_barriers_count": 0,
+    "changed_failures": 0,
+    "new_regressions": 0,
+    "added_failures": 0,
+    "inherited_stage_transfer_preserved": 43,
+    "inherited_admission_permission_denied_remaining": 0,
+    "inherited_p7_recovery_remaining": 0
+  },
+  "suite_results": {
+    "p7_integration_tests": {
+      "status": "PASS",
+      "passed": 259,
+      "failed": 0
+    },
+    "i6c_behavioral_verification": {
+      "status": "PASS",
+      "obligations_verified": 10,
+      "passed": 8,
+      "failed": 0
+    },
+    "sdist_contract": {
+      "status": "PASS",
+      "compressed_bytes": 708098,
+      "compressed_limit": 2097152,
+      "unpacked_bytes": 6075825,
+      "unpacked_limit": 8388608,
+      "tar_stream_bytes": 6215680,
+      "tar_stream_limit": 8922624,
+      "members": 164,
+      "members_limit": 512
+    },
+    "distribution_outside_checkout": {
+      "status": "PASS",
+      "direct_wheel_sha256": "94afbfb2524b10923c6573f6d5a3a6d0ce570ae3b4477a67b4d1a8d7f6491210",
+      "derived_wheel_sha256": "94afbfb2524b10923c6573f6d5a3a6d0ce570ae3b4477a67b4d1a8d7f6491210",
+      "wheel_equivalence": true,
+      "table_count": 19,
+      "exchange_format": "git-repo-db/adr0031-exchange-v5",
+      "installed_smoke": "passed",
+      "exit_code": 0
+    },
+    "linter_and_formatter": {
+      "ruff_check": "PASS",
+      "ruff_format": "PASS",
+      "files_checked": 462
+    }
+  }
+}

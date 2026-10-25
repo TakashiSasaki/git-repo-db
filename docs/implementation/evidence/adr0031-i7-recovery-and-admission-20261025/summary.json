@@ -1,0 +1,89 @@
+{
+  "phase": "adr0031-i7-recovery-and-admission-20261025",
+  "repository": "https://github.com/TakashiSasaki/git-repo-db",
+  "base_commit": "b602702822ff20d19e623212a1924bf922f2f90c",
+  "tested_input_commit": "6388c3fb1c04977087fda5699385d951da0de1c7",
+  "tested_input_tree": "cdde30be7a4f558b961945efec750275e9802a2e",
+  "author_status": "Author-complete",
+  "independent_acceptance_claim": false,
+  "review_verdict": "PENDING_INDEPENDENT_REVIEW",
+  "integrated_lineages": {
+    "workstream_b_recovery": {
+      "pr": 176,
+      "branch": "feat/adr0031-i7-recovery-20261025",
+      "head": "66a2a8aa063c27467b64c22c328df251f898daae",
+      "features": [
+        "ADR 0031 I7 recovery admission context issuance and coordinator authority",
+        "P7 context salvage admission correction into fresh destination",
+        "G-R1 stored candidate reconciliation and R17 obligations",
+        "Native-I7 versus reported-I8 Issue support eligibility under G3=A",
+        "Durable cumulative work budgets across continuation and retry",
+        "Paired Core+Context identity and safe activation",
+        "Read-only preservation of suspect source databases"
+      ]
+    },
+    "workstream_a_admission": {
+      "pr": 177,
+      "branch": "fix/adr0031-admission-regression-closure-20261025",
+      "head": "3f5495f8b11a0562ad09f7722965d5acfe377b01",
+      "features": [
+        "Resolution of all 144 inherited admission permission refusals",
+        "Genuine explicitly issued admission contexts and finite grants across test suites",
+        "Alignment with selective exchange receiver selections and role validation",
+        "Preservation of denial tests for unauthorized, foreign, and omitted authority",
+        "Preservation of production Transfer fences in ordinary disk environments",
+        "Installed-wheel and sdist test harness compatibility"
+      ]
+    }
+  },
+  "verification_results": {
+    "preflight": {
+      "status": "PASS",
+      "python": "3.12.13",
+      "sqlite": "3.53.1",
+      "umask": "0o022"
+    },
+    "regression_comparison": {
+      "status": "PASS",
+      "acceptance_verdict": "PASSED",
+      "blocking_violations": 0,
+      "baseline_in_scope_nodes": 1847,
+      "current_nodes": 1851,
+      "resolved_count": 231,
+      "inherited_count": 43,
+      "progressed_barriers_count": 0,
+      "changed_failures": 0,
+      "new_regressions": 0,
+      "added_failures": 0,
+      "inherited_stage_transfer_preserved": 43,
+      "inherited_admission_permission_denied_remaining": 0,
+      "inherited_p7_recovery_remaining": 0
+    },
+    "sdist_contract_check": {
+      "status": "PASS",
+      "compressed_bytes": 710041,
+      "compressed_limit": 2097152,
+      "unpacked_bytes": 6100868,
+      "unpacked_limit": 8388608,
+      "tar_stream_bytes": 6231040,
+      "tar_stream_limit": 8922624,
+      "members": 164,
+      "members_limit": 512,
+      "source_inventory_sha256": "6ed199b900f15247a494f09bc70dcb47f3dc60080cba4e9a9035620541f19f84"
+    },
+    "distribution_outside_checkout": {
+      "status": "PASS",
+      "direct_wheel_sha256": "94afbfb2524b10923c6573f6d5a3a6d0ce570ae3b4477a67b4d1a8d7f6491210",
+      "derived_wheel_sha256": "94afbfb2524b10923c6573f6d5a3a6d0ce570ae3b4477a67b4d1a8d7f6491210",
+      "wheel_equivalence": true,
+      "table_count": 19,
+      "exchange_format": "git-repo-db/adr0031-exchange-v5",
+      "installed_smoke": "passed",
+      "exit_code": 0
+    },
+    "linter_and_formatter": {
+      "ruff_check": "PASS",
+      "ruff_format": "PASS"
+    }
+  }
+}

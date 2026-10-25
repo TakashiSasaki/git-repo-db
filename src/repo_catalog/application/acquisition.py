@@ -1230,13 +1230,15 @@ class ProviderAcquisition:
     ) -> None:
         from repo_catalog.domain.resource_stage import (
             UnsupportedResourceStage,
+            has_transfer_fence,
             refuse_transfer,
         )
 
         if unit.transfer_event:
-            raise UnsupportedResourceStage("Provider Transfer intake")
-        for relation in unit.relations:
-            refuse_transfer(relation.relation_kind)
+            self._validate_transfer_evidence(unit)
+            if has_transfer_fence(ctx.db):
+                raise UnsupportedResourceStage("Provider Transfer intake")
+
         declarations = {obs.resource: obs.identification for obs in unit.observations}
         self._ensure_resource_hierarchy(
             ctx,
@@ -1250,6 +1252,9 @@ class ProviderAcquisition:
                 ctx, obs.resource, None, admitted_resources, obs.identification
             )
             ctx.observe(obs)
+        for relation in unit.relations:
+            if not unit.transfer_event:
+                refuse_transfer(relation.relation_kind)
         for extra_text in unit.extra_texts:
             digest = ctx.text(extra_text)
             if digest not in admitted_texts:
@@ -1292,8 +1297,7 @@ class ProviderAcquisition:
                 pending_refs,
             )
 
-    def _admit_transfer_unit(self, ctx, unit):
-        """One actual event observation, paired only within its immutable report."""
+    def _validate_transfer_evidence(self, unit: NormalizedContextUnit) -> None:
         type_fields = [
             c
             for obs in unit.observations
@@ -1343,6 +1347,18 @@ class ProviderAcquisition:
                 or set(relation.members) != expected_members
             ):
                 raise AcquisitionError("TRANSFER_REPORT_UNIT", unit.primary_resource)
+
+    def _admit_transfer_unit(self, ctx, unit):
+        """One actual event observation, paired only within its immutable report."""
+        self._validate_transfer_evidence(unit)
+        role_relations = [
+            r for r in unit.relations if r.relation_kind == "provider_repository_roles"
+        ]
+        scopes = (
+            ProviderRepositoryScope.from_json(role_relations[0].scope_json)
+            if role_relations
+            else ProviderRepositoryScope({})
+        )
         refs, targets, supports = {}, {}, []
         for role in ("transfer_from_repository", "transfer_to_repository"):
             entry = scopes.role(role)
@@ -1365,6 +1381,7 @@ class ProviderAcquisition:
                 entry.provider_repository_id,
             )
             refs[role] = provider
+            self._ensure_resource_hierarchy(ctx, provider, None, [])
             by_target = {}
             for claim in ctx.evaluate_provider_repository(provider).active_claims:
                 by_target.setdefault(claim.target_json, []).append(claim)
@@ -1386,15 +1403,106 @@ class ProviderAcquisition:
                 original.source, original.evidence, supports, claimed_issuer=issuer
             )
         )
+        from repo_catalog.domain.p1_context import (
+            ProviderEndpointDeclaration,
+            canonical,
+        )
+        from repo_catalog.domain.parent_report import (
+            ParentObservation,
+            ParentReportKey,
+        )
+        from repo_catalog.domain.production_context import ResourceRelation
+
+        decl_from = (
+            refs.get("transfer_from_repository")
+            if refs.get("transfer_from_repository") is not None
+            else (
+                "explicit_null"
+                if targets.get("transfer_from_repository") == "null"
+                else "not_reported"
+            )
+        )
+        decl_to = (
+            refs.get("transfer_to_repository")
+            if refs.get("transfer_to_repository") is not None
+            else (
+                "explicit_null"
+                if targets.get("transfer_to_repository") == "null"
+                else "not_reported"
+            )
+        )
+        endpoint_declaration = ProviderEndpointDeclaration(decl_from, decl_to)
+
+        endpoints = []
+        for role in ("transfer_from_repository", "transfer_to_repository"):
+            val = targets.get(role)
+            if val is not None:
+                if isinstance(val, str):
+                    endpoints.append((role, val))
+                else:
+                    for t in val:
+                        endpoints.append((role, t))
+        endpoints_tuple = tuple(endpoints)
+
+        parent_row = ctx.db.execute(
+            "SELECT members_json, provenance_json, scope_json, observed_at_us FROM resource_relations "
+            "WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=? AND relation_kind='parent'",
+            unit.primary_resource.coordinates(),
+        ).fetchone()
+        if parent_row:
+            parent_report = ParentObservation(
+                ParentReportKey(
+                    unit.primary_resource,
+                    parent_row[0],
+                    parent_row[1],
+                    parent_row[2],
+                ),
+                parent_row[3],
+            )
+        else:
+            coords = unit.primary_resource.scoped_document_coordinates()
+            issue_key = ResourceKey(
+                unit.primary_resource.service_instance_uuidv4, coords[0], coords[1]
+            )
+            self._ensure_resource_hierarchy(ctx, issue_key, None, [])
+            parent_members = canonical([list(issue_key.coordinates())])
+            parent_scope = canonical(
+                {
+                    "clock": json.loads(unit.clock.encode()),
+                    "document_kind": coords[2] if len(coords) > 2 else "timeline_event",
+                    "state": "complete",
+                }
+            )
+            parent_report = ParentObservation(
+                ParentReportKey(
+                    unit.primary_resource,
+                    parent_members,
+                    provenance,
+                    parent_scope,
+                ),
+                unit.observed_at_us,
+            )
+            ctx.relation(
+                ResourceRelation(
+                    unit.primary_resource,
+                    "parent",
+                    (issue_key,),
+                    provenance,
+                    parent_scope,
+                    unit.observed_at_us,
+                )
+            )
+
         report = TransferEventReport.from_targets(
             unit.primary_resource,
             clock=unit.clock,
             provenance_json=provenance,
             observed_at_us=unit.observed_at_us,
+            parent_report=parent_report,
+            endpoint_declaration=endpoint_declaration,
+            endpoints=endpoints_tuple,
             from_target_json=targets["transfer_from_repository"],
             to_target_json=targets["transfer_to_repository"],
-            from_provider_repository=refs["transfer_from_repository"],
-            to_provider_repository=refs["transfer_to_repository"],
         )
         # Mapping state may change after this real event. Re-delivery must replay
         # the original event unit, not issue a new provenance/key from a recheck.
@@ -1480,12 +1588,14 @@ class ProviderAcquisition:
     def _preflight_units(units):
         from repo_catalog.domain.resource_stage import (
             UnsupportedResourceStage,
+            _isolated_fixtures,
             refuse_transfer,
         )
 
         for unit in units:
             if unit.transfer_event:
-                raise UnsupportedResourceStage("Provider Transfer intake")
+                if not any(f._active for f in _isolated_fixtures.get()):
+                    raise UnsupportedResourceStage("Provider Transfer intake")
             for relation in unit.relations:
                 refuse_transfer(relation.relation_kind)
 

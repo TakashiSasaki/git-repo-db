@@ -1,0 +1,26 @@
+{
+  "directory": "docs/implementation/evidence/adr0031-i7-recovery-and-admission-20261025/independent",
+  "file_count": 4,
+  "files": {
+    "MATRIX.md": {
+      "bytes": 5092,
+      "sha256": "675ba4e7e3d570483e3e99b3fa4ef3020e6d70a5c11738383826f9797d264bad",
+      "git_blob_oid": "4b33bc09d35cde0d69afc2797e6016f3fc689d8c"
+    },
+    "REPORT.md": {
+      "bytes": 10281,
+      "sha256": "5be6ce6d032893f4e5eb158cd6c145833e570dc90b1677bacf884267498cc027",
+      "git_blob_oid": "eee2625eed68f19e96d66f9ade0155d35ff97c66"
+    },
+    "findings.json": {
+      "bytes": 3,
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+      "git_blob_oid": "fe51488c7066f6687ef680d6bfaa4f7768ef205c"
+    },
+    "summary.json": {
+      "bytes": 2773,
+      "sha256": "fc437ca1a01158c147529c4d0b3ce71f09e8969e2f4391beb437fc0f76b97eb5",
+      "git_blob_oid": "a9f6390b5965e941366c0d15e712cf7f646996ad"
+    }
+  }
+}
