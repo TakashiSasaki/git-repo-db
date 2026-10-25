@@ -18,10 +18,12 @@ Git構造・参照観測・Blob原文のMD5/SHA-1/SHA-256・対象本文を永�
 ## 開発・導入
 
 ```bash
-uv sync --locked --group dev
-uv run --no-sync repo-catalog --help
-uv run --no-sync repo-catalog --format json doctor
+./scripts/setup-local-python.sh   # 検証済みPython配布物 + .venv + lock依存 + preflight + receipt
+scripts/local-run.sh repo-catalog --help
+scripts/local-run.sh repo-catalog --format json doctor
 ```
+
+手順・診断・offline運用は [docs/local-python.md](docs/local-python.md) が唯一の正本です。システムのPython/SQLiteは製品検証に使いません。
 
 `doctor`は未初期化でもruntime能力を診断し、stateやDBを作成しません。
 PythonへリンクされたSQLiteはSTRICT対応が必要です。FTS5 trigramは任意で、なくても原文scan検索が使えます。
@@ -121,10 +123,10 @@ Git の再解析は取得ID・取得時刻を保持し、objectにデコーダ�
 ## テスト・再現demo
 
 ```bash
-uv run --no-sync python scripts/prepare_wheelhouse.py  # 依存のonline準備
-uv run --no-sync python scripts/ci_execute.py current --lane tests
-uv run --no-sync python scripts/ci_execute.py current --lane packaging
-uv run --no-sync python scripts/demo.py \
+scripts/local-run.sh python scripts/prepare_wheelhouse.py  # 依存のonline準備
+scripts/local-run.sh python scripts/ci_execute.py current --lane tests
+scripts/local-run.sh python scripts/ci_execute.py current --lane packaging
+scripts/local-run.sh python scripts/demo.py \
   --work-dir artifacts/demo-run-001 --scenario offline-recovery
 ```
 

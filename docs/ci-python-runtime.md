@@ -41,6 +41,12 @@ failing; the historical 79 non-successes are compared by node/phase/refusal/fram
 Inventory-only cohorts are explicitly unexecuted, and development CI is not full
 release acceptance.
 
+The same script also installs the distribution locally (`provision`) with the same
+SHA-256 download and a stricter safe extractor, for the [local environment](local-python.md).
+Its manifest additionally pins the aarch64 archive from the same release; the hosted
+x86_64 entry and the action are unchanged. Probes now also reject an `_sqlite3` extension
+or library outside the selected distribution and record per-capability results.
+
 Artifacts retain the full evidence. Access also emits a bounded indexed ZIP of
 runtime/results/JUnit/journals/logs to the normal job log, because artifact blob
 downloads returned HTTP 403 in this environment. Decode only actual timestamped

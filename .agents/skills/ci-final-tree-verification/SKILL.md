@@ -108,6 +108,13 @@ and its independently retained execution receipts.
 
 ## Development validation loop (ordinary PRs and stacked iterations)
 
+### Local verified environment
+
+Locally, run validation through `scripts/local-run.sh` after `./scripts/setup-local-python.sh`
+([guide](../../../docs/local-python.md)); never with the system Python. Quote the receipt's
+`artifacts/local-python/receipt.json` runtime identity and exit statuses as evidence, and report
+a failed or unavailable bootstrap rather than substituting another interpreter.
+
 ### Hosted Python selection and built-in SQLite identity
 
 When hosted Access fails `SQLITE_RUNTIME` before collection, compare the selected

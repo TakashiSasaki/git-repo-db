@@ -6,7 +6,9 @@ Catalog3 Core Schema 21 / Operational Schema 1 / Search Schema 1 の通常動作
 
 製品の必須機能・安全条件は別です。`p1_schema.py` / `access_schema.py` の WAL 修正を根拠とする 3.51.3 以上の条件、`store.py` の WAL 安全性判定（既知の修正版を含む）、STRICT / JSON / FTS、FK、トランザクション、DDL の検証は保持します。環境が必須条件を満たさない場合は失敗と未実行範囲を報告し、別版導入、skip / xfail、ガード回避で成功にしません。特定版での不具合再現などの例外は、理由・対象範囲を報告して実行前に所有者の明示承認を得ます。
 
-依存取得は試験より先に行い、選んだ Python を明示して意図しない切替を防ぎます。
+ローカルでは [docs/local-python.md](local-python.md) の検証済み環境を使います。`./scripts/setup-local-python.sh` が、manifest で固定した完全な Python 配布物（同梱の SQLite を使い、別途の導入・差替えはしません）と `.venv`、ロック済み依存、製品 preflight、`artifacts/local-python/receipt.json` を一括で用意し、以降は `scripts/local-run.sh <command>` で実行します。システムの Python/SQLite は製品検証に使いません。
+
+依存取得は試験より先に行い、選んだ Python を明示して意図しない切替を防ぎます。ホスト CI は下記のとおり同じ配布物を選択します。
 
 ```bash
 uv sync --locked --group dev --python "$(command -v python)"
