@@ -164,5 +164,11 @@ An independent non-author review of the token-efficient test and CI output harde
 - **PR B (#184)**: Commit `962da44d8fc4318219dd46a8a84b0fd25c493eab` (`feat: implement quiet execution runner and resource-aware worker scheduling`)
 - **PR C (#185)**: Commit `c734b233125945d4c7b331d46733518f6add2fca` (`feat: eliminate duplicate distribution builds, isolate workspaces, and optimize CI scheduling`)
 - **Integration Candidate (Draft PR #186)**: Commit `c734b233125945d4c7b331d46733518f6add2fca` (Tree `5343fc22afeaf95355d5f86924170af08f095604`)
-- **Corrective Hardening Candidate**: Branch `impl/token-efficient-ci-hardening-20261025` (resolves failure classification, multiset reconciliation, and token bloat)
-- **Review Branch**: Branch `review/token-efficient-ci-hardening-20261025`
+- **PR D (Corrective Hardening Candidate)**: [PR #188](https://github.com/TakashiSasaki/git-repo-db/pull/188) (`impl/token-efficient-ci-hardening-20261025`)
+  - Commit: `401e4a70e174f27ab3972b8e03642728c4ccb99e`
+  - Tree: `9c808530a31722374137e46861ee6d4e94fbfc53`
+  - Hosted CI Tests: [Run 40215286694](https://github.com/TakashiSasaki/git-repo-db/actions/runs/40215286694) (SUCCESS, 26s)
+  - Hosted CI Access Registry: [Run 40215286679](https://github.com/TakashiSasaki/git-repo-db/actions/runs/40215286679) (SUCCESS, 5m46s, artifact `access-registry-verification`: 218,402,018 bytes)
+- **Review Branch (Hardening Approval)**: [PR #189](https://github.com/TakashiSasaki/git-repo-db/pull/189) (`review/token-efficient-ci-hardening-20261025`)
+  - Commit: `42a1fba61501061b6be3af2b53841eea60d08168`
+  - Hosted CI Tests: [Run 40215303169](https://github.com/TakashiSasaki/git-repo-db/actions/runs/40215303169) (SUCCESS, 28s)
