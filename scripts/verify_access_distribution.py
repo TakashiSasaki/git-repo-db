@@ -7,6 +7,7 @@ this wheel: the isolated Access registry must not need Provider/HTTP dependencie
 
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 import os
@@ -385,6 +386,15 @@ def run(*args: str, cwd: Path, env: dict[str, str]) -> str:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--dist-dir",
+        type=Path,
+        default=None,
+        help="Directory containing pre-built distributions to verify",
+    )
+    args = parser.parse_args()
+
     env = dict(os.environ)
     env.pop("PYTHONPATH", None)
     results = []
@@ -393,55 +403,97 @@ def main() -> None:
         authority = base / "fixture_authority.py"
         shutil.copyfile(ROOT / "tests/support/context_admission.py", authority)
         env["REPO_CATALOG_SMOKE_AUTHORITY"] = str(authority)
-        built = base / "built"
-        built.mkdir()
-        print(
-            run(
-                sys.executable,
-                "-m",
-                "hatchling",
-                "build",
-                "-t",
-                "wheel",
-                "-t",
-                "sdist",
-                "-d",
-                str(built),
-                cwd=ROOT,
-                env=env,
+
+        dist_dir = (
+            args.dist_dir
+            or os.environ.get("REPO_CATALOG_DIST_DIR")
+            or ROOT / "artifacts/access-registry/i5-distribution"
+        )
+        dist_path = Path(dist_dir) if dist_dir else None
+        reusable = False
+        direct, swheel, archive = None, None, None
+
+        if dist_path and dist_path.is_dir():
+            binding_file = dist_path / "build-binding.json"
+            if binding_file.is_file():
+                try:
+                    binding = json.loads(binding_file.read_text())
+                    direct_sha = binding["direct_wheel"]["sha256"]
+                    swheel_sha = binding["sdist_wheel"]["sha256"]
+                    archive_sha = binding["sdist"]["sha256"]
+                    for f in dist_path.iterdir():
+                        if not f.is_file():
+                            continue
+                        f_sha = hashlib.sha256(f.read_bytes()).hexdigest()
+                        if f_sha == direct_sha:
+                            direct = f
+                        if f_sha == swheel_sha:
+                            swheel = f
+                        if f_sha == archive_sha:
+                            archive = f
+                    if direct and swheel and archive:
+                        reusable = True
+                except (json.JSONDecodeError, KeyError):
+                    pass
+
+        if reusable:
+            print(f"Reusing pre-built distributions from {dist_path}")
+            contract_file = dist_path / "sdist-contract.json"
+            if contract_file.is_file():
+                shutil.copyfile(
+                    contract_file,
+                    ROOT / "artifacts/access-registry/sdist-contract.json",
+                )
+        else:
+            built = base / "built"
+            built.mkdir()
+            print(
+                run(
+                    sys.executable,
+                    "-m",
+                    "hatchling",
+                    "build",
+                    "-t",
+                    "wheel",
+                    "-t",
+                    "sdist",
+                    "-d",
+                    str(built),
+                    cwd=ROOT,
+                    env=env,
+                )
             )
-        )
-        direct = next(built.glob("*.whl"))
-        archive = next(built.glob("*.tar.gz"))
-        unpacked = base / "sdist"
-        unpacked.mkdir()
-        contract = check_sdist(archive, ROOT)
-        with tarfile.open(archive) as source:
-            source.extractall(unpacked, filter="data")
-        source_root = next(unpacked.iterdir())
-        rebuilt = base / "rebuilt"
-        rebuilt.mkdir()
-        print(
-            run(
-                sys.executable,
-                "-m",
-                "hatchling",
-                "build",
-                "-t",
-                "wheel",
-                "-d",
-                str(rebuilt),
-                cwd=source_root,
-                env=env,
+            direct = next(built.glob("*.whl"))
+            archive = next(built.glob("*.tar.gz"))
+            unpacked = base / "sdist"
+            unpacked.mkdir()
+            contract = check_sdist(archive, ROOT)
+            with tarfile.open(archive) as source:
+                source.extractall(unpacked, filter="data")
+            source_root = next(unpacked.iterdir())
+            rebuilt = base / "rebuilt"
+            rebuilt.mkdir()
+            print(
+                run(
+                    sys.executable,
+                    "-m",
+                    "hatchling",
+                    "build",
+                    "-t",
+                    "wheel",
+                    "-d",
+                    str(rebuilt),
+                    cwd=source_root,
+                    env=env,
+                )
             )
-        )
-        contract["wheel_equivalence"] = compare_wheels(
-            direct, next(rebuilt.glob("*.whl"))
-        )
-        save(ROOT / "artifacts/access-registry/sdist-contract.json", contract)
+            swheel = next(rebuilt.glob("*.whl"))
+            contract["wheel_equivalence"] = compare_wheels(direct, swheel)
+            save(ROOT / "artifacts/access-registry/sdist-contract.json", contract)
+
         for label, wheel in (
             ("wheel", direct),
-            ("sdist-wheel", next(rebuilt.glob("*.whl"))),
+            ("sdist-wheel", swheel),
         ):
             target = base / label
             venv.EnvBuilder(with_pip=False).create(target)

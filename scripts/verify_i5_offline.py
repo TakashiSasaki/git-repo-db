@@ -164,6 +164,73 @@ def collect(out, name, targets, marker=None):
     return selected, result
 
 
+def collect_single_pass(out, targets_list):
+    """Perform a consolidated single collection pass and partition into exact cohorts."""
+    targets_file = out / "ci-targets.txt"
+    targets_file.write_text("\n".join(targets_list) + "\n")
+    command = [
+        sys.executable,
+        "-m",
+        "pytest",
+        "-q",
+        "--collect-only",
+        "-o",
+        "addopts=",
+        "tests",
+        "-p",
+        "scripts.ci_collector",
+        f"--collector-out={out}",
+        f"--ci-targets-file={targets_file}",
+    ]
+    started = time.time()
+    with (out / "collection.log").open("w") as output:
+        proc = subprocess.run(
+            command, cwd=ROOT, stdout=output, stderr=subprocess.STDOUT, check=False
+        )
+    elapsed = round(time.time() - started, 3)
+    if proc.returncode != 0:
+        raise RuntimeError(
+            f"Pytest single-pass collection failed with exit code {proc.returncode}"
+        )
+
+    cohorts = json.loads((out / "collected-cohorts.json").read_text())
+
+    # Order CI nodes consistently by targets_list
+    ci_raw = cohorts["ci"]
+    ci_ordered = []
+    for t in targets_list:
+        for n in ci_raw:
+            f = n.split("::")[0]
+            if f == t or f.startswith(t.rstrip("/") + "/"):
+                ci_ordered.append(n)
+    cohorts["ci"] = ci_ordered
+
+    inventory = {}
+    for name in ("all", "ordinary", "offline", "ci"):
+        selected = cohorts[name]
+        (out / f"{name}.nodes.txt").write_text("".join(n + "\n" for n in selected))
+        (out / f"{name}.log").write_text("".join(n + "\n" for n in selected))
+        inv_item = {
+            "command": command,
+            "cwd": str(ROOT),
+            "started_epoch": started,
+            "elapsed_seconds": elapsed,
+            "exit_code": proc.returncode,
+            "collected": len(selected),
+            "duplicates": len(selected) - len(set(selected)),
+        }
+        write_json(out / f"{name}.execution.json", inv_item)
+        inventory[name] = inv_item
+
+    return (
+        cohorts["all"],
+        cohorts["ordinary"],
+        cohorts["offline"],
+        cohorts["ci"],
+        inventory,
+    )
+
+
 def input_hashes():
     paths = [
         path
@@ -326,13 +393,8 @@ def main():
     write_json(out / "binding.json", binding)
     before = input_hashes()
     write_json(out / "inputs-before.json", before)
-    inventory = {}
-    all_nodes, inventory["all"] = collect(out, "all", ["tests"])
-    ordinary, inventory["ordinary"] = collect(
-        out, "ordinary", ["tests"], "not live and not benchmark"
-    )
-    offline, inventory["offline"] = collect(out, "offline", ["tests"], "not live")
-    ci, inventory["ci"] = collect(out, "ci", ci_targets(), "not live and not benchmark")
+    targets = ci_targets()
+    all_nodes, ordinary, offline, ci, inventory = collect_single_pass(out, targets)
     if any(value["exit_code"] or value["duplicates"] for value in inventory.values()):
         write_json(out / "summary.json", {"collection": inventory})
         return 2

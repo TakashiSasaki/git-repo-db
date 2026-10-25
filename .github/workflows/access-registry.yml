@@ -100,7 +100,8 @@ jobs:
             tests/unit/test_native_acquisition_values.py \
             tests/integration/access \
             --collect-only > artifacts/access-registry/collected.txt
-          uv run --no-sync pytest -q -n 2 --dist worksteal \
+          workers=$(uv run --no-sync python -c "from scripts import resource_scheduler; print(resource_scheduler.calculate_worker_budget(lane_name='focused'))")
+          uv run --no-sync pytest -q -n "$workers" --dist worksteal \
             tests/unit/test_access*_values.py \
             tests/unit/test_context_registration_values.py \
             tests/unit/test_native_acquisition_values.py \
@@ -122,7 +123,8 @@ jobs:
             tests/integration/p6 tests/integration/p7 tests/integration/p5_p6_compatibility \
             --collect-only > artifacts/access-registry/regressions/collected.txt
           pytest_exit=0
-          uv run --no-sync pytest -q -n 2 --dist worksteal \
+          workers=$(uv run --no-sync python -c "from scripts import resource_scheduler; print(resource_scheduler.calculate_worker_budget(workload_count=1851, lane_name='tests'))")
+          uv run --no-sync pytest -q -n "$workers" --dist worksteal \
             tests/integration/i2 tests/integration/i23 tests/integration/i4 tests/integration/i5 \
             tests/packaging/test_p5_distribution.py tests/integration/p1 tests/integration/p3 \
             tests/integration/p5 tests/integration/i3 tests/integration/p2 tests/integration/p4 \

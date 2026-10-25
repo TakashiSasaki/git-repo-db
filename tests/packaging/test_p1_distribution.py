@@ -4,13 +4,12 @@ import json
 import os
 import subprocess
 import sys
-import tarfile
 from pathlib import Path
 
 import pytest
 
-from scripts.check_sdist_contract import check_sdist, compare_wheels, save
 from scripts.installed_test_harness import stage_support
+from tests.support.distributions import build_once, make_package_distributions
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -30,7 +29,9 @@ def run(args, cwd, env):
 
 @pytest.fixture(scope="module")
 def p1_distributions(tmp_path_factory):
-    work = tmp_path_factory.mktemp("p1-packages")
+    base = tmp_path_factory.getbasetemp()
+    while base.name.startswith("popen-gw"):
+        base = base.parent
     env = dict(os.environ)
     for name in (
         "PYTHONPATH",
@@ -40,66 +41,11 @@ def p1_distributions(tmp_path_factory):
         "GITHUB_TOKEN",
     ):
         env.pop(name, None)
-    run(
-        [
-            "uv",
-            "build",
-            "--sdist",
-            "--python",
-            sys.executable,
-            "--offline",
-            "--no-build-isolation",
-            "--out-dir",
-            work / "dist",
-        ],
-        ROOT,
-        env,
+    products = build_once(
+        base / "package-distributions",
+        lambda w: make_package_distributions(w, ROOT, env),
     )
-    run(
-        [
-            "uv",
-            "build",
-            "--wheel",
-            "--python",
-            sys.executable,
-            "--offline",
-            "--no-build-isolation",
-            "--out-dir",
-            work / "dist",
-        ],
-        ROOT,
-        env,
-    )
-    sdist = next((work / "dist").glob("*.tar.gz"))
-    contract = check_sdist(sdist, ROOT)
-    with tarfile.open(sdist) as archive:
-        archive.extractall(work / "unpacked", filter="data")
-    source = next((work / "unpacked").iterdir())
-    run(
-        [
-            "uv",
-            "build",
-            "--python",
-            sys.executable,
-            "--wheel",
-            "--offline",
-            "--no-build-isolation",
-            "--out-dir",
-            work / "sdist-wheel",
-        ],
-        source,
-        env,
-    )
-    contract["wheel_equivalence"] = compare_wheels(
-        next((work / "dist").glob("*.whl")),
-        next((work / "sdist-wheel").glob("*.whl")),
-        sdist_metadata=contract["members"]["PKG-INFO"]["sha256"],
-    )
-    save(work / "sdist-contract.json", contract)
-    return env, [
-        next((work / "dist").glob("*.whl")),
-        next((work / "sdist-wheel").glob("*.whl")),
-    ]
+    return env, [products["wheel"], products["sdist_wheel"]]
 
 
 @pytest.mark.parametrize("variant", [0, 1], ids=["wheel", "sdist-wheel"])
