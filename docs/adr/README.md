@@ -2,7 +2,7 @@
 
 Read the current scope before implementation. This index describes accepted target decisions, not implemented or verified behavior.
 
-**Accepted ADR governance: [ADR 0011](0011-adr-governance.md) and [the operating policy](policy.md).** Full/Mini-ADR [templates](template.md) and [Mini template](template-mini.md) are repository files; the optional [adr-workflow skill](../../.agents/skills/adr-workflow/SKILL.md) is procedural. The policy's section 9 documents bounded pre-adoption exceptions for existing ADRs 0001–0027. ADR 0003's reviewed migration item was closed by the 2026-10-19 whole-record acceptance of ADR 0029; other items remain scoped follow-up. ADR numbering allocation watermark: **0033** (includes accepted 0032 and 0033; 0011 is not a free gap). Acceptance, merging, implementation and executed verification remain distinct.
+**Accepted ADR governance: [ADR 0011](0011-adr-governance.md) and [the operating policy](policy.md).** Full/Mini-ADR [templates](template.md) and [Mini template](template-mini.md) are repository files; the optional [adr-workflow skill](../../.agents/skills/adr-workflow/SKILL.md) is procedural. The policy's section 9 documents bounded pre-adoption exceptions for existing ADRs 0001–0027. ADR 0003's reviewed migration item was closed by the 2026-10-19 whole-record acceptance of ADR 0029; other items remain scoped follow-up. ADR numbering allocation watermark: **0034** (includes accepted 0032 and 0033, and proposed 0034; 0011 is not a free gap). Acceptance, merging, implementation and executed verification remain distinct.
 
 **Latest accepted Context design: [ADR 0031](0031-generalized-context-resources.md), accepted 2026-10-21.** The owner accepted the complete generalized Resource/Identity/Parent design after the independently reviewed G3=A native-I7 SQL differential. The design was recorded in PR #114 on #113. Reviewed implementation through I6-C, scanner budget defenses and minimal sdist packaging is carried by PR #172 and review #174; the [main integration record](../implementation/evidence/adr0031-main-integration-20261025/README.md) records scoped verification. I7/I8, ordinary Transfer activation and full release qualification remain separate.
 
@@ -77,9 +77,10 @@ exceptions require explicit owner approval.
 
 ## Proposed Records (this review branch only)
 
-None. ADR 0033 was explicitly accepted by the owner on 2026-10-22 UTC
-(2026-10-23 JST); implementation and verification remain separate.
+| ADR | Decision | Date | Current applicability |
+| --- | --- | --- | --- |
+| [0034](0034-repository-test-and-ci-efficiency.md) | Repository-wide test and CI efficiency architecture: quiet runner, token-efficient summaries, adaptive xdist budgeting, build reuse, and clean artifact boundaries | 2026-10-25 | Proposed Level 2 Mini-ADR; refines ADRs 0001, 0032, and 0033. Accompanying [architecture document](../architecture/verification-efficiency-architecture.md). |
 
-**Allocation/adoption:** ADR 0011 was explicitly adopted through [governance PR #52](https://github.com/TakashiSasaki/git-repo-db/pull/52) on 2026-10-15, after the accepted design stack was merged by PR #69. It does not renumber ADRs 0012–0027, retire still-binding historical decisions or authorize bulk migration. **Highest allocated ADR ID: 0033**. Allocation includes publicly proposed as well as accepted records; the previously stale opening 0031 watermark is reconciled here. Future allocations must inspect this watermark, Git history and live remote branches before assigning a new four-digit ID.
+**Allocation/adoption:** ADR 0011 was explicitly adopted through [governance PR #52](https://github.com/TakashiSasaki/git-repo-db/pull/52) on 2026-10-15, after the accepted design stack was merged by PR #69. It does not renumber ADRs 0012–0027, retire still-binding historical decisions or authorize bulk migration. **Highest allocated ADR ID: 0034**. Allocation includes publicly proposed as well as accepted records; the previously stale opening 0031 watermark is reconciled here. Future allocations must inspect this watermark, Git history and live remote branches before assigning a new four-digit ID.
 
 The [transition plan](../architecture/git-core-context-transition-plan.md) describes the redesigned implementation sequence. Old Phase 2 handoffs and accepted records remain evidence of their original decisions, subject to the explicit scoped override in ADR 0014. Neither old wording nor a passing documentation check is authority to implement an excluded file-storage path.
