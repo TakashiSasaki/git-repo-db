@@ -96,6 +96,8 @@ class RecoveryService:
         budget: RecoveryBudget | None = None,
         request_id: str | None = None,
         *,
+        authorization=None,
+        admission=None,
         fault_stage: str | None = None,
     ) -> MergeReceipt:
         """Merge untrusted salvaged candidates into the fresh destination with receiver verification."""
@@ -104,6 +106,8 @@ class RecoveryService:
             Path(salvage_file),
             budget=budget,
             request_id=request_id,
+            authorization=authorization,
+            admission=admission,
             fault_stage=fault_stage,
         )
 
