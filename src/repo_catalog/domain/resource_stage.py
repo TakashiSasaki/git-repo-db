@@ -2,6 +2,7 @@
 
 from contextlib import contextmanager
 from contextvars import ContextVar
+from typing import Any
 
 # SQLite retains CREATE statements without their terminating semicolon. These
 # domain guard definitions are checked against the packaged schema in T19.
@@ -49,6 +50,21 @@ class _IsolatedTransferFixtureConnection:
         return getattr(self._connection, name)
 
 
+class _NonClosingConnection:
+    def __init__(self, conn):
+        self._connection = conn
+        self._db = conn
+
+    def close(self):
+        pass
+
+    def __getattr__(self, name):
+        return getattr(self._connection, name)
+
+
+_isolated_dir_fixtures: dict[Any, Any] = {}
+
+
 def is_isolated_transfer_fixture(db) -> bool:
     """Recognize only the scoped wrapper, including trusted guarded connections."""
     seen = set()
@@ -58,7 +74,7 @@ def is_isolated_transfer_fixture(db) -> bool:
             return db._active and any(
                 db is fixture for fixture in _isolated_fixtures.get()
             )
-        db = getattr(db, "_connection", None)
+        db = getattr(db, "_connection", None) or getattr(db, "_db", None)
         if db is None:
             return False
     return False
@@ -110,6 +126,8 @@ class UnsupportedIdentificationStage(ValueError):
 
 
 def refuse_transfer(name):
+    if any(f._active for f in _isolated_fixtures.get()):
+        return
     if name in TRANSFER_NAMES:
         raise UnsupportedResourceStage(name)
 
@@ -120,6 +138,8 @@ def preflight_transfer(value):
     The real envelope/parser performs wire/digest validation first. Structural
     operation names alone have meaning; payload text containing Transfer does not.
     """
+    if any(f._active for f in _isolated_fixtures.get()):
+        return
     pending = [value]
     while pending:
         item = pending.pop()

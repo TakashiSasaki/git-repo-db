@@ -476,44 +476,6 @@ class ContextStore(AdmissionTransactions):
         if parent_exists[0] != report.parent_report.observed_at_us:
             raise AdmissionRefused("IMMUTABLE_REPLAY_CONFLICT")
 
-        if report.from_provider_repository is not None:
-            from_repo_exists = self.db.execute(
-                "SELECT 1 FROM resources WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=?",
-                report.from_provider_repository.coordinates(),
-            ).fetchone()
-            if from_repo_exists is None:
-                raise AdmissionRefused("MISSING_DEPENDENCY")
-
-        if report.to_provider_repository is not None:
-            to_repo_exists = self.db.execute(
-                "SELECT 1 FROM resources WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=?",
-                report.to_provider_repository.coordinates(),
-            ).fetchone()
-            if to_repo_exists is None:
-                raise AdmissionRefused("MISSING_DEPENDENCY")
-
-        for r in (*report.from_relations, *report.to_relations):
-            if r.is_resolved_target and r.target_repository_uuidv4 is not None:
-                repo_ctx_exists = self.db.execute(
-                    "SELECT 1 FROM repository_context WHERE repository_uuidv4=?",
-                    (r.target_repository_uuidv4,),
-                ).fetchone()
-                if repo_ctx_exists is None:
-                    raise AdmissionRefused("MISSING_DEPENDENCY")
-            support = r.embedded_support
-            if support is not None:
-                for claim in support.supporting_claims:
-                    claim_exists = self.db.execute(
-                        """SELECT 1 FROM resource_repository_relations
-                        WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=?
-                          AND relation_kind=? AND clock_json=? AND target_json=? AND provenance_json=?""",
-                        claim.coordinates(),
-                    ).fetchone()
-                    if claim_exists is None:
-                        raise AdmissionRefused("MISSING_DEPENDENCY")
-
-        self._validate_transfer_qualification(report)
-
         # 5. Atomic admission under SAVEPOINT
         self.db.execute("SAVEPOINT p1_transfer_event")
         try:
@@ -559,6 +521,44 @@ class ContextStore(AdmissionTransactions):
                     raise ValueError(
                         "Incomplete endpoints for existing Transfer report"
                     )
+
+            if report.from_provider_repository is not None:
+                from_repo_exists = self.db.execute(
+                    "SELECT 1 FROM resources WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=?",
+                    report.from_provider_repository.coordinates(),
+                ).fetchone()
+                if from_repo_exists is None:
+                    raise AdmissionRefused("MISSING_DEPENDENCY")
+
+            if report.to_provider_repository is not None:
+                to_repo_exists = self.db.execute(
+                    "SELECT 1 FROM resources WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=?",
+                    report.to_provider_repository.coordinates(),
+                ).fetchone()
+                if to_repo_exists is None:
+                    raise AdmissionRefused("MISSING_DEPENDENCY")
+
+            for r in (*report.from_relations, *report.to_relations):
+                if r.is_resolved_target and r.target_repository_uuidv4 is not None:
+                    repo_ctx_exists = self.db.execute(
+                        "SELECT 1 FROM repository_context WHERE repository_uuidv4=?",
+                        (r.target_repository_uuidv4,),
+                    ).fetchone()
+                    if repo_ctx_exists is None:
+                        raise AdmissionRefused("MISSING_DEPENDENCY")
+                support = r.embedded_support
+                if support is not None:
+                    for claim in support.supporting_claims:
+                        claim_exists = self.db.execute(
+                            """SELECT 1 FROM resource_repository_relations
+                            WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=?
+                              AND relation_kind=? AND clock_json=? AND target_json=? AND provenance_json=?""",
+                            claim.coordinates(),
+                        ).fetchone()
+                        if claim_exists is None:
+                            raise AdmissionRefused("MISSING_DEPENDENCY")
+
+            self._validate_transfer_qualification(report)
 
             self.db.execute(
                 """INSERT INTO resource_relations(

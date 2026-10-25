@@ -25,10 +25,7 @@ from repo_catalog.adapters.github.production_intake import make_document_key
 from repo_catalog.adapters.sqlite.p1_schema import connect, initialize
 from repo_catalog.application.acquisition import (
     GitAcquisition,
-    PairedAcquisitionCoordinator,
-    ProviderAcquisition,
 )
-from repo_catalog.application.exchange import ExchangeService
 from repo_catalog.application.production_query import ProductionQueryService
 from repo_catalog.domain.acquisition import (
     GitNativeAcquisitionRequest,
@@ -48,6 +45,15 @@ from repo_catalog.domain.p1_context import FieldCandidate, FieldClock, ResourceK
 from repo_catalog.domain.p1_core import OID, CoreFailure
 from repo_catalog.domain.production_context import ResourceObservation
 from repo_catalog.domain.production_query import SearchQuery
+from tests.support.context_admission import (
+    AuthorizedExchangeService as ExchangeService,
+)
+from tests.support.context_admission import (
+    AuthorizedPairedAcquisitionCoordinator as PairedAcquisitionCoordinator,
+)
+from tests.support.context_admission import (
+    AuthorizedProviderAcquisition as ProviderAcquisition,
+)
 
 
 def _init_catalog(cat_dir: Path, repo_uuid: str, inst_uuid: str) -> None:

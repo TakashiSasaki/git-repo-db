@@ -22,10 +22,6 @@ import pytest
 from repo_catalog.adapters.git.native import GitNativeSource
 from repo_catalog.adapters.sqlite.git_core import GitCore
 from repo_catalog.adapters.sqlite.production_context import Context
-from repo_catalog.application.acquisition import (
-    PairedAcquisitionCoordinator,
-)
-from repo_catalog.application.exchange import ExchangeService
 from repo_catalog.domain.acquisition import (
     GitNativeAcquisitionRequest,
     NotesAcquisitionSpec,
@@ -51,6 +47,12 @@ from repo_catalog.domain.p1_context import (
 from repo_catalog.domain.p1_coordination import RequestIdentity
 from repo_catalog.domain.p1_core import OID, CoreFailure
 from tests.integration.p5.conftest import build_sample_git_repo, init_catalog_stores
+from tests.support.context_admission import (
+    AuthorizedExchangeService as ExchangeService,
+)
+from tests.support.context_admission import (
+    AuthorizedPairedAcquisitionCoordinator as PairedAcquisitionCoordinator,
+)
 from tests.support.context_admission import fixture_transaction
 
 

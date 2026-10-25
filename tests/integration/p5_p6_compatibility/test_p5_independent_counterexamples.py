@@ -10,7 +10,6 @@ from repo_catalog.adapters.sqlite.acquisition import OperationalAcquisitionLedge
 from repo_catalog.adapters.sqlite.p1_schema import initialize
 from repo_catalog.application.acquisition import (
     GitAcquisition,
-    PairedAcquisitionCoordinator,
 )
 from repo_catalog.domain.acquisition import (
     GitNativeAcquisitionRequest,
@@ -23,6 +22,12 @@ from repo_catalog.domain.exchange import (
 )
 from repo_catalog.domain.p1_coordination import RequestIdentity
 from tests.integration.p5.conftest import build_sample_git_repo, init_catalog_stores
+from tests.support.context_admission import (
+    AuthorizedExchangeService as ExchangeService,
+)
+from tests.support.context_admission import (
+    AuthorizedPairedAcquisitionCoordinator as PairedAcquisitionCoordinator,
+)
 
 
 def test_declared_digest_required():
@@ -158,7 +163,6 @@ def test_missing_request_after_operational_loss_refuses_resume(tmp_path, declare
 
 
 def test_exchange_retains_partial_admission_outcome(tmp_path, monkeypatch):
-    from repo_catalog.application.exchange import ExchangeService
     from repo_catalog.domain.exchange import empty_context_section, empty_core_section
     from repo_catalog.domain.p1_coordination import AdmissionFailure, PairAdmission
 
@@ -190,7 +194,6 @@ def test_exchange_export_uses_one_paired_snapshot(tmp_path, monkeypatch):
     import threading
     from concurrent.futures import ThreadPoolExecutor
 
-    from repo_catalog.application.exchange import ExchangeService
     from repo_catalog.domain.p1_context import ResourceKey
     from repo_catalog.domain.p1_core import OID
 
@@ -249,7 +252,6 @@ def test_exchange_export_uses_one_paired_snapshot(tmp_path, monkeypatch):
 
 def test_exchange_export_refuses_stop_before_return(tmp_path, monkeypatch):
     from repo_catalog.adapters.sqlite.p1_coordination import persist_catalog_stop
-    from repo_catalog.application.exchange import ExchangeService
     from repo_catalog.domain.p1_coordination import CoordinationError
 
     cat = tmp_path / "cat"

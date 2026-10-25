@@ -47,6 +47,7 @@ from pathlib import Path
 from uuid import uuid4
 
 from repo_catalog.adapters.git.native import GitNativeSource
+from repo_catalog.adapters.github.production_intake import make_document_key
 from repo_catalog.adapters.sqlite.git_core import GitCore
 from repo_catalog.adapters.sqlite.p1_coordination import PairCoordinator
 from repo_catalog.adapters.sqlite.p1_schema import initialize, verify_declared
@@ -65,6 +66,11 @@ from repo_catalog.domain.acquisition import (
     ProviderRegistration,
     RepositoryRegistration,
     make_provenance,
+)
+from repo_catalog.domain.context_admission import (
+    AdmissionSelection,
+    DependencySet,
+    create_local_admission_service,
 )
 from repo_catalog.domain.exchange import (
     ExchangePackage,
@@ -132,7 +138,6 @@ assert len(git_report.admitted_objects) >= 1
 
 # 2. Exercise ProviderAcquisition
 service_uuid = str(uuid4())
-prov_acq = ProviderAcquisition(cat_a)
 pr_payload = {
     "id": 2001,
     "number": 43,
@@ -165,9 +170,25 @@ batch = ProviderIntakeBatch(
         ),
     ),
 )
+pr_key = ResourceKey.from_native(service_uuid, "pull_request", "2001")
+title_key = make_document_key(pr_key, "pull_request_document", "pr_title", "2001")
+body_key = make_document_key(pr_key, "pull_request_document", "pr_body", "2001")
+repo_res = ResourceKey.from_native(service_uuid, "repository", "1")
+grants = DependencySet(
+    resources=frozenset({pr_key, repo_res, title_key, body_key}),
+    repositories=frozenset({repo_uuid}),
+    provider_registrations=frozenset({service_uuid}),
+    mapping_claims=frozenset({mapping.claim_key}),
+    object_oids=frozenset({OID("FORMAT", commit1)}),
+)
+auth, adm, _ = create_local_admission_service(
+    "provider_intake",
+    grants=grants,
+    selection=AdmissionSelection(all_selected=True),
+)
+prov_acq = ProviderAcquisition(cat_a, authorization=auth, admission=adm)
 prov_report = prov_acq.admit_batch(batch)
 assert len(prov_report.admitted_resources) >= 1
-pr_key = ResourceKey.from_native(service_uuid, "pull_request", "2001")
 with Context.snapshot(cat_a) as context:
     original_roles = context.provider_repository_roles(pr_key)
     assert {role.scope.relation_kind for role in original_roles} == {
@@ -200,6 +221,7 @@ rep_b = svc_b.import_package(
     request=RequestIdentity(pkg.sender_catalog_instance_uuidv4, pkg.package_id),
     new_request=True,
     permitted_repository_uuidv4s=(repo_uuid,),
+    grants=grants,
 )
 assert rep_b.admitted_core_objects >= 1
 assert rep_b.admitted_context_resources >= 1

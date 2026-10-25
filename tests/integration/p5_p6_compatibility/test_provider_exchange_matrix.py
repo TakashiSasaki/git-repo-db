@@ -4,9 +4,6 @@ from uuid import uuid4
 
 import pytest
 
-from repo_catalog.adapters.sqlite.production_context import Context
-from repo_catalog.application.acquisition import ProviderAcquisition
-from repo_catalog.application.exchange import ExchangeService
 from repo_catalog.domain.acquisition import (
     ProviderIntakeBatch,
     ProviderIssueIntake,
@@ -16,6 +13,15 @@ from repo_catalog.domain.acquisition import (
 from repo_catalog.domain.exchange import ExchangeSelectionScope
 from repo_catalog.domain.p1_context import ResourceKey
 from tests.integration.p5.conftest import init_catalog_stores
+from tests.support.context_admission import (
+    AuthorizedContext as Context,
+)
+from tests.support.context_admission import (
+    AuthorizedExchangeService as ExchangeService,
+)
+from tests.support.context_admission import (
+    AuthorizedProviderAcquisition as ProviderAcquisition,
+)
 
 
 def do_import(service, pkg):

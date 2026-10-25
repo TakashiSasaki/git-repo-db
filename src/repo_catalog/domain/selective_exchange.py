@@ -472,6 +472,8 @@ def filter_sections(core, context, scope, *, permitted=None):
                 for p in (p.from_provider_repository, p.to_provider_repository)
             )
         }
+        denied_resources = {p.event_resource for p in reports if p.report_key in denied}
+        chosen.difference_update(denied_resources)
         for key in (
             "resources",
             "field_candidates",

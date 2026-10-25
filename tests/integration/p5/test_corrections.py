@@ -23,9 +23,7 @@ from repo_catalog.adapters.sqlite.production_context import Context
 from repo_catalog.application.acquisition import (
     GitAcquisition,
     PairedAcquisitionCoordinator,
-    ProviderAcquisition,
 )
-from repo_catalog.application.exchange import ExchangeService
 from repo_catalog.domain.acquisition import (
     GitNativeAcquisitionRequest,
     NotesAcquisitionSpec,
@@ -49,6 +47,12 @@ from repo_catalog.domain.p1_coordination import (
 )
 from repo_catalog.domain.p1_core import CoreCoverageScope, CoreFailure
 from tests.integration.p5.conftest import build_sample_git_repo, init_catalog_stores
+from tests.support.context_admission import (
+    AuthorizedExchangeService as ExchangeService,
+)
+from tests.support.context_admission import (
+    AuthorizedProviderAcquisition as ProviderAcquisition,
+)
 
 
 def package(repo=None):
