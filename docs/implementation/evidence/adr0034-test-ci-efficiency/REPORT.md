@@ -117,6 +117,7 @@ Verified with `scripts/check_sdist_contract.py --build`:
 
 ## 5. Independent Non-Author Review Verdict
 
+### 5.1 Integration Review Verdict (PR #186)
 An independent review of the entire integration change set was conducted following the strict blocking review standards of `pr-review.md`.
 
 - **Verdict**: **`APPROVE`**
@@ -129,6 +130,25 @@ An independent review of the entire integration change set was conducted followi
   "schema_version": 1,
   "analysis_status": "COMPLETE",
   "summary": "Independent review of PR #186 (integration: repository-wide test and CI efficiency optimization, ADR 0034) on branch review/test-ci-efficiency-20261025. Exact head c734b233125945d4c7b331d46733518f6add2fca (tree 5343fc22afeaf95355d5f86924170af08f095604) relative to main 8dd99b80470d5bdde203556b88c778332f9e92fb (tree f3672ddaecba7b9e25ce6a326d7d305b55960e8b). Verified all 19 changed files across test execution, parallel worker scheduling, build caching, single-pass test collection, and workspace isolation. Invariant verification results: 1) Exact test node reconciliation is preserved (single-pass collector partitions exact cohorts matching multi-pass baseline with identical node counts: all=6716, ordinary=6714, offline=6715, ci=947; 1851 broad regression nodes executed, 1808 passed, 43 inherited Transfer-stage non-successes accounted for, 0 new regressions); 2) SQLite validation policy (ADR 0032) verified with 0 violations; 3) Minimal product sdist contract (ADR 0033) verified with 164 members, compressed size 708,251 bytes < 2,097,152 budget; 4) Concurrency safety verified: safe process isolation with pytest-xdist, atomic file locking via fcntl.flock on build_once products, thread-safe process recording, and per-variant isolated scratch workspaces eliminating >800MB of temporary artifact bloat. No P0 or P1 blocking issues detected.",
+  "event": "APPROVE",
+  "limitations": [],
+  "comments": []
+}
+```
+
+### 5.2 Corrective Hardening Review Verdict (PR #188)
+An independent non-author review of the token-efficient test and CI output hardening follow-up (PR #188) was conducted following the strict blocking review standards of `pr-review.md`.
+
+- **Verdict**: **`APPROVE`**
+- **Analysis Status**: `COMPLETE`
+- **Blocking Findings (P0/P1)**: 0
+- **Summary**: All 18 changed and evidence files across test runners, query utilities, regression comparison, CI workflows, skills, architecture docs, and milestone reports verified. No P0 or P1 blocking issues detected.
+
+```json
+{
+  "schema_version": 1,
+  "analysis_status": "COMPLETE",
+  "summary": "Independent High-Signal Blocking PR Review for PR #188 (https://github.com/TakashiSasaki/git-repo-db/pull/188) on review/token-efficient-ci-hardening-20261025. Head commit fd7919baef4993be8d698f2ba0b78cd16c8950aa (tree b5741536a1f536dca1d351643da4d5eebba3abd8) relative to base c734b233125945d4c7b331d46733518f6add2fca (tree 5343fc22afeaf95355d5f86924170af08f095604). Thoroughly verified all 18 changed and evidence files across test runners, query utilities, regression comparison, CI workflows, skills, architecture docs, and milestone reports. Invariant verification results: 1) Elimination of heuristics in failure classification: ci_profile.py defaults all failures to UNCLASSIFIED_FAILURE prior to baseline comparison and reconciles solely against authoritative node details; 2) Exact multiset reconciliation: Counter(selected) == Counter(executed) strictly enforced, failing closed on equal-count mismatched nodes; 3) Token bloat elimination: test terminal outputs strictly bounded under 300 bytes, non-test commands emit concise 1-line safety verdicts omitting misleading '0 passed' test stats, Base64 CI receipt streaming and receipt extraction tooling (ci_query.py filter-log, extract-receipt) verified; 4) Concurrency safety: unique invocation logging paths and chunked SHA-256 streaming prevent collision and memory bloat; 5) Invariant compliance: ADR 0032 SQLite validation (0 violations), ADR 0033 minimal sdist contract verified (164 members, compressed 708,251 bytes < 2,097,152 budget); 6) Test suite verification: 1,725 unit tests passed in 60s, test_quiet_runner suite passed (13/13). No P0 or P1 blocking issues introduced.",
   "event": "APPROVE",
   "limitations": [],
   "comments": []
