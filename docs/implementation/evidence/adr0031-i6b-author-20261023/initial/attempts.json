@@ -1,0 +1,11 @@
+{
+  "scope": "initial environment and read-only GitHub preparation",
+  "attempts": [
+    {"command": "git fetch origin && gh pr view 149 --json number,url,state,isDraft,baseRefName,baseRefOid,headRefName,headRefOid,title", "exit_code": 1, "result": "fetch succeeded; installed gh lacks baseRefOid JSON field; PR read did not execute successfully; retried read-only with supported fields"},
+    {"command": "uv sync --locked --group dev --group docs", "exit_code": 2, "result": "read-only /home/agent/.cache/uv/CACHEDIR.TAG; no test execution; dependency preparation subsequently succeeded with UV_CACHE_DIR=/workspace/.uv-cache"}
+  ],
+  "sqlite_policy": "Only the selected Python environment's loaded SQLite is used. No SQLite acquisition, build, substitution or matrix.",
+  "base_head": "ea43a21fca1dbf8fa6dd1c254b28a96d5dd28d00",
+  "base_tree": "e7ca7e361b8b766f1976a12fc84d5cc50ac32232",
+  "base_branch": "review/adr0031-i6a-task-c-20261023"
+}

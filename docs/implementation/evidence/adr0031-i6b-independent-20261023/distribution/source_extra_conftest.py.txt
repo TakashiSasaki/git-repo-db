@@ -1,0 +1,15 @@
+from pathlib import Path
+import hashlib,json,os,sqlite3,sys
+import repo_catalog
+
+def pytest_sessionstart(session):check(session,'start')
+def pytest_sessionfinish(session,exitstatus):check(session,'finish')
+def check(session,phase):
+ root=Path(repo_catalog.__file__).resolve().parent
+ assert root==Path('/workspace/git-repo-db/src/repo_catalog')
+ assert session.config.inipath==Path('/workspace/git-repo-db/pyproject.toml')
+ actual={str(p.relative_to(root)):{'bytes':p.stat().st_size,'sha256':hashlib.sha256(p.read_bytes()).hexdigest()} for p in root.rglob('*') if p.is_file() and '__pycache__' not in p.parts and p.suffix!='.pyc'}
+ assert actual==json.loads((Path(__file__).parent/'product.json').read_text())
+ modules={n:str(Path(m.__file__).resolve()) for n,m in sys.modules.items() if (n=='repo_catalog' or n.startswith('repo_catalog.')) and getattr(m,'__file__',None)}
+ assert all(Path(p).is_relative_to(root) for p in modules.values())
+ out=Path(os.environ['SOURCE_EXTRA_IMPORTS']);records=json.loads(out.read_text()) if out.exists() else [];records.append({'phase':phase,'origin':str(root),'executable':sys.executable,'python':sys.version,'sqlite':sqlite3.connect(':memory:').execute('select sqlite_version(),sqlite_source_id()').fetchone(),'modules':modules,'source_product':actual});out.write_text(json.dumps(records,indent=2)+'\n')

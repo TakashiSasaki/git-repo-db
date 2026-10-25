@@ -1,0 +1,12 @@
+{
+  "log_sha256": "15c3099171d37de44819a7589265c8cdc219c3e0ffca9c198c52e85a43ece50b",
+  "receipt_sha256": "41b9519a1e3948919e8e6f8c129638be890ad7ef846d214128c945985c5ecc51",
+  "receipt_bytes": 71621,
+  "verified_index_members": 21,
+  "preserved_members": [
+    "plan.json",
+    "receipt-binding.json",
+    "receipt-index.json",
+    "validation-manifest.json"
+  ]
+}

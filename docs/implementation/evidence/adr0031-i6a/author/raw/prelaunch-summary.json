@@ -1,0 +1,52 @@
+{
+  "observed_at": "2026-10-23T02:33:09.368462+00:00",
+  "main": "cb532242c7aa86c6af5b6232b71c0906ea38f5c5",
+  "prs": {
+    "130": {
+      "head": "b4ede5d8a87f3ce7b1f6df8fda5b3051c3865ba2",
+      "tree": "c7d3aabb2063a24bc9057951c80f8cc865c660f8",
+      "base": "impl/adr0031-i5-typed-admission-20261022",
+      "state": "open",
+      "merged": false,
+      "reviews": 0,
+      "comments": 0,
+      "review_comments": 0,
+      "checks": 1
+    },
+    "133": {
+      "head": "f16e5b1713bde9a2f18263a25397c4b450fd5773",
+      "tree": "6bfa580baafa9f6a117b7a0b610c4e65cd031b86",
+      "base": "fix/sqlite-runtime-ci-20261022",
+      "state": "open",
+      "merged": false,
+      "reviews": 0,
+      "comments": 0,
+      "review_comments": 0,
+      "checks": 3
+    },
+    "134": {
+      "head": "418ee68046fdfd03a0e84cc840e5d52fce176b81",
+      "tree": "476d32923c9be5e3b60e4e17c8828e3646611c43",
+      "base": "fix/adr0032-host-runtime-20261022",
+      "state": "open",
+      "merged": false,
+      "reviews": 0,
+      "comments": 0,
+      "review_comments": 0,
+      "checks": 2
+    },
+    "141": {
+      "head": "dc6e663ea90e55210ed5674cae6c332f66a4ac18",
+      "tree": "3d70218ecf98f751eb550e6a328a21f65069066f",
+      "base": "docs/adr0031-i6-boundary-contract-20261022",
+      "state": "open",
+      "merged": false,
+      "reviews": 0,
+      "comments": 0,
+      "review_comments": 0,
+      "checks": 2
+    }
+  },
+  "open_prs": 26,
+  "branches": 76
+}

@@ -1,0 +1,29 @@
+{
+  "context": null,
+  "core": null,
+  "digest_sha256": "0042e96408a918388ab3ae67a51550962b311b7b3a20162b2399618719d592b4",
+  "exported_at_us": 1,
+  "format": "git-repo-db/adr0031-exchange-v5",
+  "package_id": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+  "repository_uuidv4": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "selection_report": {},
+  "selection_scope": {
+    "all_selected": false,
+    "include_context": true,
+    "include_core": true,
+    "include_retained_bytes": true,
+    "max_bytes": 16777216,
+    "max_depth": 8,
+    "max_units": 10000,
+    "max_work": 10000000,
+    "notes_refs": null,
+    "object_oids": null,
+    "repository_uuidv4s": [
+      "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+    ],
+    "resource_keys": null,
+    "source_uuidv4s": null
+  },
+  "sender_catalog_instance_uuidv4": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"
+}

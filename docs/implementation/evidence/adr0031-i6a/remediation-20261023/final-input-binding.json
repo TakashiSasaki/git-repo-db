@@ -1,0 +1,10 @@
+{
+  "tested_head": "93d9927ae801d5402aab0aa0c7c270eeab2809e6",
+  "tested_tree": "0c8a50e7cc23b98c6e7e2d1e6066077cbe8d203a",
+  "source_input_count": 478,
+  "source_inputs_sha256": "7dd07934b58243d691c11012231e2d2564c5ee5cb477f35baf7f2ce9ef6a222d",
+  "tested_clean_before_after": true,
+  "inputs_equal_before_after_and_evidence_worktree": true,
+  "runtime_delta_since_tested_source": [],
+  "scope": "The later publication adds documentation/receipts only. Full archive/sdist members differ; quoted built artifact hashes belong to the explicit tested source freeze, not an unbuilt later evidence archive."
+}

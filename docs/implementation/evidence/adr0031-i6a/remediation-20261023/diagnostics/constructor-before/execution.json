@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "/workspace/git-repo-db/.venv/bin/python",
+    "-m",
+    "pytest",
+    "tests/integration/i3/test_selective_exchange.py::test_transfer_reports_never_shrunk_or_mixed",
+    "-q",
+    "--tb=short",
+    "--junitxml",
+    "/workspace/i6a-constructor-review/tests.xml",
+    "--journal",
+    "/workspace/i6a-constructor-review/journal.jsonl"
+  ],
+  "exit_code": 1,
+  "scope": "constructor responsibility diagnostic"
+}

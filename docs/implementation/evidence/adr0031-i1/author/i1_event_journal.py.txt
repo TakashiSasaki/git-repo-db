@@ -1,0 +1,40 @@
+"""Work-only pytest receipt plugin resilient to tests patching json.dumps.
+
+The existing repository journal resolves json.dumps during each report. Codec
+counterexamples patch that shared function until fixture teardown. Capture the
+real serializer before test execution; do not alter the frozen test/product tree.
+"""
+
+import json
+import os
+import time
+from pathlib import Path
+
+_serialize = json.dumps
+
+
+class EventJournal:
+    def __init__(self, path):
+        self.stream = Path(path).open('x', encoding='utf-8')
+
+    def record(self, event):
+        event['timestamp'] = time.time()
+        self.stream.write(_serialize(event, separators=(',', ':')) + '\n')
+        self.stream.flush()
+
+    def pytest_runtest_logstart(self, nodeid, location):
+        self.record({'event': 'start', 'nodeid': nodeid})
+
+    def pytest_runtest_logreport(self, report):
+        self.record({'event': 'phase', 'nodeid': report.nodeid, 'phase': report.when,
+                     'outcome': report.outcome, 'duration': report.duration})
+
+    def pytest_sessionfinish(self, session, exitstatus):
+        self.record({'event': 'finish', 'exitstatus': int(exitstatus)})
+        self.stream.close()
+
+
+def pytest_configure(config):
+    path = os.environ.get('I1_EVENT_JOURNAL')
+    if path:
+        config.pluginmanager.register(EventJournal(path), name='i1_work_event_journal')

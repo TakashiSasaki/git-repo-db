@@ -1,0 +1,50 @@
+{
+  "command": [
+    "/workspace/i6b-fix-work/final/.venv/bin/python",
+    "-m",
+    "pytest",
+    "-p",
+    "tests.conftest",
+    "-c",
+    "/workspace/i6b-fix-work/final/pyproject.toml",
+    "--rootdir=/workspace/i6b-fix-work/probes",
+    "--confcutdir=/workspace/i6b-fix-work/probes",
+    "-o",
+    "addopts=",
+    "-o",
+    "junit_family=xunit1",
+    "-q",
+    "-s",
+    "--tb=long",
+    "/workspace/i6b-fix-work/probes/test_digest_contract.py",
+    "/workspace/i6b-fix-work/probes/test_planner_work_budget_contract.py",
+    "-p",
+    "broad_receipt",
+    "--junitxml=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/source-contracts/results.xml",
+    "--journal=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/source-contracts/journal.jsonl",
+    "--basetemp=/workspace/i6b-fix-work/contracts-final-temp"
+  ],
+  "cwd": "/workspace/i6b-fix-work/final",
+  "completed": true,
+  "exit_code": 0,
+  "started_epoch": 1792764232.5056748,
+  "elapsed_seconds": 3.1486573219299316,
+  "passed": 33,
+  "failed": 0,
+  "error": 0,
+  "skipped": 0,
+  "xfail": 0,
+  "xpass": 0,
+  "executed": 33,
+  "collected": 33,
+  "checks": {
+    "selected_equals_journal": true,
+    "selected_equals_junit": true,
+    "exact_ordinary_phases": true,
+    "finish_matches_exit": true
+  },
+  "probe_hashes": {
+    "test_digest_contract.py": "855d5fc32bbff94890ce838a6e8cb27694eeaac218353f4407263ad75537ab74",
+    "test_planner_work_budget_contract.py": "dec5aa650b847b18aee223e3ab79fe41faf644b620d12edfa7cf3b83c375555b"
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "scope": "Intentional diagnostic repeats of two existing failing assertions; external trace hook records suppressed actual AdmissionRefused raise frames without editing tests or production code. Excluded from exactly-once ordinary union.",
+  "I6A_TRACE_OUTPUT": "/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6a/author/final-v3/caught-guard-traces/actual-permission-raise-stacks.json",
+  "observed_exit_code": 1
+}

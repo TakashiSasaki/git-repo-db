@@ -1,0 +1,167 @@
+{
+  "historical_coordinator_count": 47,
+  "supporting_resolved_count": 20,
+  "scope": "only owned fixture cohort; parent final ordinary run remains authoritative",
+  "rows": [
+    {
+      "classname": "tests.packaging.test_p6_distribution",
+      "name": "test_p6_installed_query_search_and_cli[sha1-sdist-wheel]",
+      "historical_category": "fixture_migration_paircoordinator_explicit_authority_missing",
+      "before_phase": "call",
+      "rerun": "passed",
+      "receipt": "packaging.xml"
+    },
+    {
+      "classname": "tests.packaging.test_p6_distribution",
+      "name": "test_p6_installed_query_search_and_cli[sha256-wheel]",
+      "historical_category": "fixture_migration_paircoordinator_explicit_authority_missing",
+      "before_phase": "call",
+      "rerun": "passed",
+      "receipt": "packaging.xml"
+    },
+    {
+      "classname": "tests.packaging.test_p6_distribution",
+      "name": "test_p6_installed_query_search_and_cli[sha256-sdist-wheel]",
+      "historical_category": "fixture_migration_paircoordinator_explicit_authority_missing",
+      "before_phase": "call",
+      "rerun": "passed",
+      "receipt": "packaging.xml"
+    },
+    {
+      "classname": "tests.integration.p1.test_derivatives",
+      "name": "test_operational_loss_disables_old_continuation_without_invalidating_authority",
+      "historical_category": "fixture_migration_paircoordinator_explicit_authority_missing",
+      "before_phase": "call",
+      "rerun": "passed",
+      "receipt": "focused.xml"
+    },
+    {
+      "classname": "tests.integration.p1.test_derivatives",
+      "name": "test_search_snapshot_fence_loss_corruption_and_reconstruction",
+      "historical_category": "fixture_migration_paircoordinator_explicit_authority_missing",
+      "before_phase": "call",
+      "rerun": "passed",
+      "receipt": "focused.xml"
+    },
+    {
+      "classname": "tests.integration.p1.test_derivatives",
+      "name": "test_context_search_resolves_actual_text_fk_in_projection_and_fallback",
+      "historical_category": "fixture_migration_paircoordinator_explicit_authority_missing",
+      "before_phase": "call",
+      "rerun": "passed",
+      "receipt": "focused.xml"
+    },
+    {
+      "classname": "tests.integration.p1.test_validation_stop",
+      "name": "test_paired_validation_udf_failure_persists_stop[False-provider]",
+      "historical_category": "fixture_migration_paircoordinator_explicit_authority_missing",
+      "before_phase": "call",
+      "rerun": "passed",
+      "receipt": "focused.xml"
+    },
+    {
+      "classname": "tests.integration.p1.test_validation_stop",
+      "name": "test_paired_validation_udf_failure_persists_stop[False-field]",
+      "historical_category": "fixture_migration_paircoordinator_explicit_authority_missing",
+      "before_phase": "call",
+      "rerun": "passed",
+      "receipt": "focused.xml"
+    },
+    {
+      "classname": "tests.integration.p1.test_validation_stop",
+      "name": "test_paired_validation_udf_failure_persists_stop[True-provider]",
+      "historical_category": "fixture_migration_paircoordinator_explicit_authority_missing",
+      "before_phase": "call",
+      "rerun": "passed",
+      "receipt": "focused.xml"
+    },
+    {
+      "classname": "tests.integration.p1.test_validation_stop",
+      "name": "test_paired_validation_udf_failure_persists_stop[True-field]",
+      "historical_category": "fixture_migration_paircoordinator_explicit_authority_missing",
+      "before_phase": "call",
+      "rerun": "passed",
+      "receipt": "focused.xml"
+    },
+    {
+      "classname": "tests.integration.p2_p3_compatibility.test_production_pair",
+      "name": "test_original_capture_retry_after_core_success_context_rollback[sha1]",
+      "historical_category": "fixture_migration_paircoordinator_explicit_authority_missing",
+      "before_phase": "call",
+      "rerun": "passed",
+      "receipt": "focused.xml"
+    },
+    {
+      "classname": "tests.integration.p2_p3_compatibility.test_production_pair",
+      "name": "test_original_capture_retry_after_core_success_context_rollback[sha256]",
+      "historical_category": "fixture_migration_paircoordinator_explicit_authority_missing",
+      "before_phase": "call",
+      "rerun": "passed",
+      "receipt": "focused.xml"
+    },
+    {
+      "classname": "tests.integration.p2_p3_compatibility.test_production_pair",
+      "name": "test_pair_snapshot_keeps_old_two_authority_state_during_production_write[sha1]",
+      "historical_category": "fixture_migration_paircoordinator_explicit_authority_missing",
+      "before_phase": "call",
+      "rerun": "passed",
+      "receipt": "focused.xml"
+    },
+    {
+      "classname": "tests.integration.p2_p3_compatibility.test_production_pair",
+      "name": "test_pair_snapshot_keeps_old_two_authority_state_during_production_write[sha256]",
+      "historical_category": "fixture_migration_paircoordinator_explicit_authority_missing",
+      "before_phase": "call",
+      "rerun": "passed",
+      "receipt": "focused.xml"
+    },
+    {
+      "classname": "tests.integration.p2_p3_compatibility.test_production_pair",
+      "name": "test_derivative_loss_preserves_production_pair[sha1]",
+      "historical_category": "fixture_migration_paircoordinator_explicit_authority_missing",
+      "before_phase": "call",
+      "rerun": "passed",
+      "receipt": "focused.xml"
+    },
+    {
+      "classname": "tests.integration.p2_p3_compatibility.test_production_pair",
+      "name": "test_derivative_loss_preserves_production_pair[sha256]",
+      "historical_category": "fixture_migration_paircoordinator_explicit_authority_missing",
+      "before_phase": "call",
+      "rerun": "passed",
+      "receipt": "focused.xml"
+    },
+    {
+      "classname": "tests.integration.p2_p3_compatibility.test_production_pair",
+      "name": "test_both_authorities_keep_exact_five_column_coverage_with_own_scope",
+      "historical_category": "fixture_migration_paircoordinator_explicit_authority_missing",
+      "before_phase": "call",
+      "rerun": "passed",
+      "receipt": "focused.xml"
+    },
+    {
+      "classname": "tests.integration.p2_p3_compatibility.test_production_pair",
+      "name": "test_detected_core_byte_corruption_permanently_fences_context_success",
+      "historical_category": "fixture_migration_paircoordinator_explicit_authority_missing",
+      "before_phase": "call",
+      "rerun": "passed",
+      "receipt": "focused.xml"
+    },
+    {
+      "classname": "tests.integration.p2_p3_compatibility.test_production_pair",
+      "name": "test_partial_and_empty_source_inventories_preserve_positive_cross_store_state",
+      "historical_category": "fixture_migration_paircoordinator_explicit_authority_missing",
+      "before_phase": "call",
+      "rerun": "passed",
+      "receipt": "focused.xml"
+    },
+    {
+      "classname": "tests.packaging.test_p6_distribution",
+      "name": "test_p6_installed_query_search_and_cli[sha1-wheel]",
+      "historical_category": "fixture_migration_paircoordinator_explicit_authority_missing",
+      "before_phase": "call",
+      "rerun": "passed",
+      "receipt": "packaging.xml"
+    }
+  ]
+}

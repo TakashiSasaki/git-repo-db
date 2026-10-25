@@ -1,0 +1,24 @@
+{
+  "head": "418ee68046fdfd03a0e84cc840e5d52fce176b81",
+  "tree": "476d32923c9be5e3b60e4e17c8828e3646611c43",
+  "source_binding": "All frozen runtime/test/build inputs matched input-manifest; review evidence additions do not change them",
+  "command": "/tmp/task-b-venv/bin/python -m pytest tests/integration/p3/test_transfer_admission.py tests/integration/p3/test_transfer_sql.py -q -o junit_family=xunit1 --junitxml=docs/implementation/evidence/adr0031-i6/independent/raw/focused.xml --journal=docs/implementation/evidence/adr0031-i6/independent/raw/focused.jsonl",
+  "exit_code": 0,
+  "journal_first_timestamp": 1792720503.965754,
+  "journal_finish_timestamp": 1792720513.990766,
+  "environment": "environment.json",
+  "probe_commands": [
+    {
+      "command": "PYTHONPATH=src /tmp/task-b-venv/bin/python docs/implementation/evidence/adr0031-i6/independent/review_probes.py",
+      "exit_code": 0
+    },
+    {
+      "command": "PYTHONPATH=src /tmp/task-b-venv/bin/python docs/implementation/evidence/adr0031-i6/independent/wire_probe.py",
+      "exit_code": 0
+    },
+    {
+      "command": "PYTHONPATH=src /tmp/task-b-venv/bin/python docs/implementation/evidence/adr0031-i6/independent/sql_probe.py",
+      "exit_code": 0
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "all": 5921,
+  "ordinary": 5919,
+  "historical": 3137,
+  "remaining": 2782,
+  "historical_missing": [],
+  "live_or_benchmark": [
+    "tests/e2e/test_github_sync.py::test_nested_pagination_stress_workload",
+    "tests/live/test_smoke.py::test_selected_repository"
+  ]
+}

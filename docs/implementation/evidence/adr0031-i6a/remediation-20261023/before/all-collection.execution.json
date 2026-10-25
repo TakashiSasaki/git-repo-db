@@ -1,0 +1,18 @@
+{
+  "command": [
+    "/workspace/i6a-before/.venv/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "--collect-only",
+    "-o",
+    "addopts=",
+    "tests"
+  ],
+  "cwd": "/workspace/i6a-before",
+  "started_epoch": 1792729057.5940664,
+  "elapsed_seconds": 8.628,
+  "exit_code": 0,
+  "collected": 5943,
+  "duplicates": 0
+}

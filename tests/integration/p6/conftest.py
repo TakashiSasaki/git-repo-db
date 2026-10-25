@@ -3,18 +3,21 @@
 from __future__ import annotations
 
 import hashlib
+from contextlib import closing
 from pathlib import Path
 from uuid import uuid4
 
 from repo_catalog.adapters.sqlite.git_core import GitCore
 from repo_catalog.adapters.sqlite.p1_coordination import PairCoordinator
-from repo_catalog.adapters.sqlite.p1_schema import initialize
+from repo_catalog.adapters.sqlite.p1_schema import connect, initialize
 from repo_catalog.adapters.sqlite.production_context import Context
+from repo_catalog.domain.context_admission import DependencySet
 from repo_catalog.domain.notes import NotesInventory
 from repo_catalog.domain.p1_context import (
     CoverageScope,
     FieldCandidate,
     FieldClock,
+    MappingClaimKey,
     ProviderRepositoryRoleScope,
     ProviderRepositoryScope,
     ResourceKey,
@@ -45,6 +48,8 @@ from repo_catalog.domain.production_context import (
     ResourceRelation,
     SourceInventory,
 )
+from repo_catalog.domain.resource_identification import ResourceIdentification as RI
+from tests.support.context_admission import fixture_context, fixture_service
 
 REPOSITORY = "e82dde21-3201-49db-9273-2e58c9c9beaf"
 INSTANCE = "f9976943-6d0c-4b14-879e-30b23591fb53"
@@ -68,7 +73,7 @@ class UnlimitedTestBudget:
 
 
 def admit_provider_role(context, resource, role, clock, provenance, observed):
-    provider = ResourceKey(SERVICE, "repository", "1001")
+    provider = ResourceKey.from_native(SERVICE, "repository", "1001")
     context.resource(provider)
     context.admit_repository_relation(
         ResourceRepositoryRelation(
@@ -394,8 +399,8 @@ def populate_rich_catalog(
             cov_claim, (commit_obj.oid, tag_obj.oid), prov_reported
         )
 
-    pr_key = ResourceKey(SERVICE, "pull_request", "42")
-    issue_key = ResourceKey(SERVICE, "issue", "7")
+    pr_key = ResourceKey.from_native(SERVICE, "pull_request", "42")
+    issue_key = ResourceKey.from_native(SERVICE, "issue", "7")
     review_key = ResourceKey.document(pr_key, "review", "pr_review", "rev-1")
     thread_key = ResourceKey.document(pr_key, "thread", "review_thread", "thr-1")
     comment_key = ResourceKey.document(pr_key, "comment", "review_comment", "rc-1")
@@ -536,6 +541,7 @@ def populate_rich_catalog(
                         110,
                     ),
                 ),
+                identification=RI.scoped(review_key, pr_key, "pr_review", "rev-1"),
             )
         )
         context.observe(
@@ -551,6 +557,7 @@ def populate_rich_catalog(
                         115,
                     ),
                 ),
+                identification=RI.scoped(thread_key, pr_key, "review_thread", "thr-1"),
             )
         )
         context.observe(
@@ -566,6 +573,7 @@ def populate_rich_catalog(
                         120,
                     ),
                 ),
+                identification=RI.scoped(comment_key, pr_key, "review_comment", "rc-1"),
             )
         )
         context.admit_text(
@@ -656,6 +664,9 @@ def populate_rich_catalog(
                         95,
                     ),
                 ),
+                identification=RI.scoped(
+                    issue_comment_key, issue_key, "issue_comment", "ic-1"
+                ),
             )
         )
         empty_scope_json = canonical(
@@ -683,8 +694,45 @@ def populate_rich_catalog(
             required_scope_json=empty_scope_json,
         )
 
+    # Trusted fixture composition grants only this declared synthetic catalog.
+    # These grants do not authorize Provider/Exchange routes or recovery intake.
+    provider_key = ResourceKey.from_native(SERVICE, "repository", "1001")
+    authorization, _ = fixture_service(
+        DependencySet(
+            resources={
+                pr_key,
+                issue_key,
+                review_key,
+                thread_key,
+                comment_key,
+                issue_comment_key,
+                provider_key,
+            },
+            repositories={REPOSITORY},
+            sources={SOURCE},
+            source_repository_pairs={(SOURCE, REPOSITORY)},
+            provider_registrations={SERVICE},
+            object_oids={commit_obj.oid, OID(fmt, "f" * width)},
+            mapping_claims={
+                MappingClaimKey.for_repository(
+                    provider_key,
+                    REPOSITORY,
+                    clock=FieldClock("github:pr:updated_at", 100),
+                    provenance_json=ctx_prov_1,
+                ),
+                MappingClaimKey.for_repository(
+                    provider_key,
+                    REPOSITORY,
+                    clock=FieldClock("github:issue:updated_at", 90),
+                    provenance_json=ctx_prov_1,
+                ),
+            },
+        )
+    )
+    admission = fixture_context(authorization)
+
     if include_core and include_context:
-        coordinator = PairCoordinator(directory)
+        coordinator = PairCoordinator(directory, authorization=authorization)
 
         def core_cb(db):
             with GitCore.for_transaction(db) as c:
@@ -694,7 +742,7 @@ def populate_rich_catalog(
             with Context.for_transaction(db, directory) as ctx:
                 admit_context(ctx, core_present=True)
 
-        coordinator.admit(core_cb, ctx_cb)
+        coordinator.admit(core_cb, ctx_cb, admission=admission)
     elif include_core:
         core = GitCore(directory / "core.sqlite3")
         try:
@@ -702,8 +750,14 @@ def populate_rich_catalog(
         finally:
             core.close()
     elif include_context:
-        with Context.transaction(directory) as ctx:
-            admit_context(ctx, core_present=False)
+        with closing(connect(directory / "context.sqlite3", "context")) as db:
+            with Context.owned_transaction(
+                db,
+                directory,
+                authorization=authorization,
+                admission=admission,
+            ) as ctx:
+                admit_context(ctx, core_present=False)
 
     return {
         "absent_oid": OID(fmt, "f" * width),

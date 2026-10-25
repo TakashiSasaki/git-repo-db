@@ -1,0 +1,8 @@
+{
+  "artifact": "i2-preparation-evidence.tar.gz",
+  "members": 75,
+  "bytes": 653411,
+  "sha256": "a90d56232809577812339ac8531896fce807eada9c54c92334500e81afd68e04",
+  "index_sha256": "ac98a655f545f16f35014b91a6f4095ff5d20b5eefbb768e8c6edbc29f29f89f",
+  "plan_sha256": "ed40739a0a634623d37a4db44f26a27cc356675e6705ecd6ec7292f7f4e322ed"
+}

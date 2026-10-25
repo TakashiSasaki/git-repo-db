@@ -1,0 +1,626 @@
+[
+  {
+    "name": "audit/context-provider-agnostic-20261020",
+    "commit": {
+      "sha": "24f593861327328fa00dab0b83f956cec330a0ac",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/24f593861327328fa00dab0b83f956cec330a0ac"
+    },
+    "protected": false
+  },
+  {
+    "name": "codex/p4-notes-design",
+    "commit": {
+      "sha": "96c9bb793d4fd91a6a5d9c25905d91ac0f9935c8",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/96c9bb793d4fd91a6a5d9c25905d91ac0f9935c8"
+    },
+    "protected": false
+  },
+  {
+    "name": "codex/p4-production-notes",
+    "commit": {
+      "sha": "b024ca5103e8658d4ea9717e2cbe534905552610",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/b024ca5103e8658d4ea9717e2cbe534905552610"
+    },
+    "protected": false
+  },
+  {
+    "name": "design/adr0031-i2-transfer-fence-f1-20261021",
+    "commit": {
+      "sha": "2199a882d79c9c707fffcba3a8327ef96a3fc384",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/2199a882d79c9c707fffcba3a8327ef96a3fc384"
+    },
+    "protected": false
+  },
+  {
+    "name": "docs/accept-adr-0029-retire-0003-20261019",
+    "commit": {
+      "sha": "ea3d0dd0bd369f16987d574c5f17529f5399d26b",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/ea3d0dd0bd369f16987d574c5f17529f5399d26b"
+    },
+    "protected": false
+  },
+  {
+    "name": "docs/adr0031-i1b-independent-review-20261021",
+    "commit": {
+      "sha": "cb49836aa855da8503f02370b9a60dddac5d6113",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/cb49836aa855da8503f02370b9a60dddac5d6113"
+    },
+    "protected": false
+  },
+  {
+    "name": "docs/adr0031-i2-preparation-20261021",
+    "commit": {
+      "sha": "9eaa5111c94204c4adf791cd1565b704728493f1",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/9eaa5111c94204c4adf791cd1565b704728493f1"
+    },
+    "protected": false
+  },
+  {
+    "name": "docs/adr0031-i6-boundary-contract-20261022",
+    "commit": {
+      "sha": "418ee68046fdfd03a0e84cc840e5d52fce176b81",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/418ee68046fdfd03a0e84cc840e5d52fce176b81"
+    },
+    "protected": false
+  },
+  {
+    "name": "docs/adr0033-minimal-sdist-20261022",
+    "commit": {
+      "sha": "18ba867d1c2f33c7d17939b2722d22a67139363a",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/18ba867d1c2f33c7d17939b2722d22a67139363a"
+    },
+    "protected": false
+  },
+  {
+    "name": "docs/adr-0029-replacement-readiness-20261019",
+    "commit": {
+      "sha": "bb878eda47cf17268dd821c74343bac64d769ea7",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/bb878eda47cf17268dd821c74343bac64d769ea7"
+    },
+    "protected": false
+  },
+  {
+    "name": "docs/context-relations-selective-exchange-20261018",
+    "commit": {
+      "sha": "bb54d799d1b749a90fa62de89dbd978ef3bc8055",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/bb54d799d1b749a90fa62de89dbd978ef3bc8055"
+    },
+    "protected": false
+  },
+  {
+    "name": "docs/generalized-context-resources-20261020",
+    "commit": {
+      "sha": "a4e3e0fb9c57a53d93f0f9eab93139d4747e4fb8",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/a4e3e0fb9c57a53d93f0f9eab93139d4747e4fb8"
+    },
+    "protected": false
+  },
+  {
+    "name": "docs/independent-access-store-design",
+    "commit": {
+      "sha": "3cde893f7a16fd7d04021e3be3cbc0d22c765c38",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/3cde893f7a16fd7d04021e3be3cbc0d22c765c38"
+    },
+    "protected": false
+  },
+  {
+    "name": "docs/integration-readiness-20261016",
+    "commit": {
+      "sha": "7cbade2928467f3c3ab2350bdc84e275d7057622",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/7cbade2928467f3c3ab2350bdc84e275d7057622"
+    },
+    "protected": false
+  },
+  {
+    "name": "docs/p5-p6-owner-decisions",
+    "commit": {
+      "sha": "7d2e736f6fd4aa5e30417fb99fa72d27f93ea270",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/7d2e736f6fd4aa5e30417fb99fa72d27f93ea270"
+    },
+    "protected": false
+  },
+  {
+    "name": "docs/p5-p6-technical-contract",
+    "commit": {
+      "sha": "2a5862b76ea3a4ca976dc3de5cd6962563560101",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/2a5862b76ea3a4ca976dc3de5cd6962563560101"
+    },
+    "protected": false
+  },
+  {
+    "name": "docs/p7-backup-recovery-technical-design",
+    "commit": {
+      "sha": "c058af3a1be9ba3e9a1b0ba649c789f5bdcd1d75",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/c058af3a1be9ba3e9a1b0ba649c789f5bdcd1d75"
+    },
+    "protected": false
+  },
+  {
+    "name": "docs/sdist-review-readiness-20261022",
+    "commit": {
+      "sha": "7f9c7ad7c418da3b7a638fe20048e13a7701e3d9",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/7f9c7ad7c418da3b7a638fe20048e13a7701e3d9"
+    },
+    "protected": false
+  },
+  {
+    "name": "docs/sqlite-runtime-policy-20261022",
+    "commit": {
+      "sha": "01b427e392243e06eb9be0e3a50bb09ecacd0d5f",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/01b427e392243e06eb9be0e3a50bb09ecacd0d5f"
+    },
+    "protected": false
+  },
+  {
+    "name": "evidence/adr0032-host-runtime-20261022",
+    "commit": {
+      "sha": "4cd083b0f7295a2bbaa2597ef483af46e77f5463",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/4cd083b0f7295a2bbaa2597ef483af46e77f5463"
+    },
+    "protected": false
+  },
+  {
+    "name": "experiment/context-u3-cprime-20261021",
+    "commit": {
+      "sha": "8ab57eb74068f5ba303b5985a335f0f76be4fdd2",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/8ab57eb74068f5ba303b5985a335f0f76be4fdd2"
+    },
+    "protected": false
+  },
+  {
+    "name": "feat/access-a1-registry-foundation",
+    "commit": {
+      "sha": "9d44a58867f32a42d2eee90d81bd9f7f2cc2a456",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/9d44a58867f32a42d2eee90d81bd9f7f2cc2a456"
+    },
+    "protected": false
+  },
+  {
+    "name": "feat/access-a1b-connections-grants",
+    "commit": {
+      "sha": "8852f4c4db3c5466654be38b16f1ef18eada4a1c",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/8852f4c4db3c5466654be38b16f1ef18eada4a1c"
+    },
+    "protected": false
+  },
+  {
+    "name": "feat/access-a2a-local-review-preflight",
+    "commit": {
+      "sha": "16c36f989f39aa9f9d2cf175dffb86e52da5a72d",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/16c36f989f39aa9f9d2cf175dffb86e52da5a72d"
+    },
+    "protected": false
+  },
+  {
+    "name": "feat/access-a3-context-boundary",
+    "commit": {
+      "sha": "c82fe24454926e2213a476f7bdfd7650519b12b6",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/c82fe24454926e2213a476f7bdfd7650519b12b6"
+    },
+    "protected": false
+  },
+  {
+    "name": "feat/access-a4-local-git-acquisition",
+    "commit": {
+      "sha": "2ab6a59dd91c46ebbc9a9d14a0078f2b16235b4f",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/2ab6a59dd91c46ebbc9a9d14a0078f2b16235b4f"
+    },
+    "protected": false
+  },
+  {
+    "name": "feat/access-a5-backup-restore",
+    "commit": {
+      "sha": "444dcecf38f5db3cccdb4716c7c8c6b584543475",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/444dcecf38f5db3cccdb4716c7c8c6b584543475"
+    },
+    "protected": false
+  },
+  {
+    "name": "feat/implementation-boundary-spikes",
+    "commit": {
+      "sha": "eb84be9b2061b026ad82b780cc95e062928f838a",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/eb84be9b2061b026ad82b780cc95e062928f838a"
+    },
+    "protected": false
+  },
+  {
+    "name": "feat/optimize-pages-trigger-paths",
+    "commit": {
+      "sha": "660178ff1a881e4482b7a3cde02b51dc50cf2603",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/660178ff1a881e4482b7a3cde02b51dc50cf2603"
+    },
+    "protected": false
+  },
+  {
+    "name": "feat/p1-four-store-schema-contracts",
+    "commit": {
+      "sha": "67e8be65c3061b494c2c7373e2fd151398435f62",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/67e8be65c3061b494c2c7373e2fd151398435f62"
+    },
+    "protected": false
+  },
+  {
+    "name": "feat/p2-production-git-core",
+    "commit": {
+      "sha": "0963aeca861718b86c8f76708c59aea88eb02ba3",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/0963aeca861718b86c8f76708c59aea88eb02ba3"
+    },
+    "protected": false
+  },
+  {
+    "name": "feat/p3-production-context",
+    "commit": {
+      "sha": "720a6456cf28385e7dd6d941981f025f63415d55",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/720a6456cf28385e7dd6d941981f025f63415d55"
+    },
+    "protected": false
+  },
+  {
+    "name": "feat/p5-production-acquisition-exchange",
+    "commit": {
+      "sha": "48b60231b1ef7075c55ff6f43aca0c68ad95e5a8",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/48b60231b1ef7075c55ff6f43aca0c68ad95e5a8"
+    },
+    "protected": false
+  },
+  {
+    "name": "feat/p6-production-query-search",
+    "commit": {
+      "sha": "76489443687123ef99fb33510c77fd40ce739d28",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/76489443687123ef99fb33510c77fd40ce739d28"
+    },
+    "protected": false
+  },
+  {
+    "name": "feat/p7-production-recovery",
+    "commit": {
+      "sha": "e956cd50b1f25bd95427301cced4741bb68e24f8",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/e956cd50b1f25bd95427301cced4741bb68e24f8"
+    },
+    "protected": false
+  },
+  {
+    "name": "fix/access-a6-independent-review",
+    "commit": {
+      "sha": "1134e200eb4ac9ec45bf3fae3be695e2bb786a8d",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/1134e200eb4ac9ec45bf3fae3be695e2bb786a8d"
+    },
+    "protected": false
+  },
+  {
+    "name": "fix/adr0032-host-runtime-20261022",
+    "commit": {
+      "sha": "f16e5b1713bde9a2f18263a25397c4b450fd5773",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/f16e5b1713bde9a2f18263a25397c4b450fd5773"
+    },
+    "protected": false
+  },
+  {
+    "name": "fix/adr0033-sdist-archive-hardening",
+    "commit": {
+      "sha": "59307c40ea65554736e131cedd00f04c9906551b",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/59307c40ea65554736e131cedd00f04c9906551b"
+    },
+    "protected": false
+  },
+  {
+    "name": "fix/c0-e1-receipt-limit-20261023",
+    "commit": {
+      "sha": "3e2609baa07a9e92c8f2dc4dd1608f311021a1cb",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/3e2609baa07a9e92c8f2dc4dd1608f311021a1cb"
+    },
+    "protected": false
+  },
+  {
+    "name": "fix/core-only-schema-test",
+    "commit": {
+      "sha": "155645c03417905fcb1a6485e916c10aef371318",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/155645c03417905fcb1a6485e916c10aef371318"
+    },
+    "protected": false
+  },
+  {
+    "name": "fix/p1-intrinsic-provenance",
+    "commit": {
+      "sha": "06a4ccd432476af15ee942e8cfcd9fbdf42357c7",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/06a4ccd432476af15ee942e8cfcd9fbdf42357c7"
+    },
+    "protected": false
+  },
+  {
+    "name": "fix/p5-p6-time-contract",
+    "commit": {
+      "sha": "96db618285d5ce7b0d0c276d18f81bdbc50c34c1",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/96db618285d5ce7b0d0c276d18f81bdbc50c34c1"
+    },
+    "protected": false
+  },
+  {
+    "name": "fix/schema21-collection-contract",
+    "commit": {
+      "sha": "7dc31256907aff4412170bc3f3ce3069b2ad89f2",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/7dc31256907aff4412170bc3f3ce3069b2ad89f2"
+    },
+    "protected": false
+  },
+  {
+    "name": "fix/schema21-job-search-runtime",
+    "commit": {
+      "sha": "1700ed37e82a6028cfa40c86b35db7621dd50404",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/1700ed37e82a6028cfa40c86b35db7621dd50404"
+    },
+    "protected": false
+  },
+  {
+    "name": "fix/schema21-job-search-test-contract",
+    "commit": {
+      "sha": "b6e0ba5b67ab9b0a318d1c5bb557698cef244179",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/b6e0ba5b67ab9b0a318d1c5bb557698cef244179"
+    },
+    "protected": false
+  },
+  {
+    "name": "fix/schema21-runtime-contract",
+    "commit": {
+      "sha": "94488cf4e7fa15f747ece7a4e3d57e0bc213966a",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/94488cf4e7fa15f747ece7a4e3d57e0bc213966a"
+    },
+    "protected": false
+  },
+  {
+    "name": "fix/sqlite-runtime-ci-20261022",
+    "commit": {
+      "sha": "a022dd3efb9c8116cf9dc0abc13ab1d5bbc88e37",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/a022dd3efb9c8116cf9dc0abc13ab1d5bbc88e37"
+    },
+    "protected": false
+  },
+  {
+    "name": "impl/adr0031-i1a-identity-codec",
+    "commit": {
+      "sha": "d92377599a50f192f534836fc12402a5fe87ca83",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/d92377599a50f192f534836fc12402a5fe87ca83"
+    },
+    "protected": false
+  },
+  {
+    "name": "impl/adr0031-i1b-resource-key",
+    "commit": {
+      "sha": "32e5d4de67c0d436f7583d04e1cfd349b64b2bbd",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/32e5d4de67c0d436f7583d04e1cfd349b64b2bbd"
+    },
+    "protected": false
+  },
+  {
+    "name": "impl/adr0031-i2-resources-task-e-20261021",
+    "commit": {
+      "sha": "4cb90d35bd9c572239496a24cb0dd62049029235",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/4cb90d35bd9c572239496a24cb0dd62049029235"
+    },
+    "protected": false
+  },
+  {
+    "name": "impl/adr0031-i3-parent-reports-20261022",
+    "commit": {
+      "sha": "614ccaac3512a0df4291653fc83901df211f00f6",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/614ccaac3512a0df4291653fc83901df211f00f6"
+    },
+    "protected": false
+  },
+  {
+    "name": "impl/adr0031-i4-transfer-sql-20261022",
+    "commit": {
+      "sha": "a9d4c3585806622b66d3c41132c2a9f8ab5c6f9e",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/a9d4c3585806622b66d3c41132c2a9f8ab5c6f9e"
+    },
+    "protected": false
+  },
+  {
+    "name": "impl/adr0031-i5-typed-admission-20261022",
+    "commit": {
+      "sha": "99e40c9af91f9ea36dd3d4ba97eccad46f6c6e14",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/99e40c9af91f9ea36dd3d4ba97eccad46f6c6e14"
+    },
+    "protected": false
+  },
+  {
+    "name": "impl/adr0031-i6a-secure-admission",
+    "commit": {
+      "sha": "f5dc409429cdb69955b55e3c27a7ef3c163762fb",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/f5dc409429cdb69955b55e3c27a7ef3c163762fb"
+    },
+    "protected": false
+  },
+  {
+    "name": "impl/adr0033-minimal-sdist-20261022",
+    "commit": {
+      "sha": "8cd89a3d25c811ee32d117ec32fe76a6022e6d94",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/8cd89a3d25c811ee32d117ec32fe76a6022e6d94"
+    },
+    "protected": false
+  },
+  {
+    "name": "impl/adr-0030-i1-context-relations-20261019",
+    "commit": {
+      "sha": "ff9e57478cf761220da5b2216f95f17bf431fb32",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/ff9e57478cf761220da5b2216f95f17bf431fb32"
+    },
+    "protected": false
+  },
+  {
+    "name": "impl/adr-0030-i2-provider-intake-20261019",
+    "commit": {
+      "sha": "9b8a6ad9b761bf23b45eda9f84d639569cee56ef",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/9b8a6ad9b761bf23b45eda9f84d639569cee56ef"
+    },
+    "protected": false
+  },
+  {
+    "name": "impl/adr-0030-i3-selective-exchange-20261019",
+    "commit": {
+      "sha": "5c5b816998f7051703ca400e8cfeab377254c435",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/5c5b816998f7051703ca400e8cfeab377254c435"
+    },
+    "protected": false
+  },
+  {
+    "name": "impl/adr-0030-i4-query-search-backup-20261019",
+    "commit": {
+      "sha": "a54cb218226e3c91c44e979ee0df0543ea459502",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/a54cb218226e3c91c44e979ee0df0543ea459502"
+    },
+    "protected": false
+  },
+  {
+    "name": "impl/adr-0030-i23-integration-20261019",
+    "commit": {
+      "sha": "8519056d5b9484eb0cc4dcf9f693285b4e65518a",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/8519056d5b9484eb0cc4dcf9f693285b4e65518a"
+    },
+    "protected": false
+  },
+  {
+    "name": "main",
+    "commit": {
+      "sha": "cb532242c7aa86c6af5b6232b71c0906ea38f5c5",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/cb532242c7aa86c6af5b6232b71c0906ea38f5c5"
+    },
+    "protected": false
+  },
+  {
+    "name": "review/adr0031-i2-cf1-task-f-20261021",
+    "commit": {
+      "sha": "c1b62d216db2b728a4c8cb1821250335fcafc534",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/c1b62d216db2b728a4c8cb1821250335fcafc534"
+    },
+    "protected": false
+  },
+  {
+    "name": "review/adr0031-i2-sql-task-d-20261021",
+    "commit": {
+      "sha": "03ff484eca32bf6ed76b4b9fd472c99052f7d8b6",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/03ff484eca32bf6ed76b4b9fd472c99052f7d8b6"
+    },
+    "protected": false
+  },
+  {
+    "name": "review/adr0031-i2-task-g-20261022",
+    "commit": {
+      "sha": "a54e4432b0514ba5a5fe8e73ddcdbc492f99b95e",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/a54e4432b0514ba5a5fe8e73ddcdbc492f99b95e"
+    },
+    "protected": false
+  },
+  {
+    "name": "review/adr0031-i4-independent-20261022",
+    "commit": {
+      "sha": "2003a9ee4f25907bcf96a634980b8caffc133c4e",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/2003a9ee4f25907bcf96a634980b8caffc133c4e"
+    },
+    "protected": false
+  },
+  {
+    "name": "review/adr0031-i5-independent-20261022",
+    "commit": {
+      "sha": "b4ede5d8a87f3ce7b1f6df8fda5b3051c3865ba2",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/b4ede5d8a87f3ce7b1f6df8fda5b3051c3865ba2"
+    },
+    "protected": false
+  },
+  {
+    "name": "review/adr0031-i6-design-independent-20261023",
+    "commit": {
+      "sha": "dc6e663ea90e55210ed5674cae6c332f66a4ac18",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/dc6e663ea90e55210ed5674cae6c332f66a4ac18"
+    },
+    "protected": false
+  },
+  {
+    "name": "review/adr0033-sdist-independent-20261023",
+    "commit": {
+      "sha": "ef3ca118d4ab5e52dc2d1c7de384c3557509add2",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/ef3ca118d4ab5e52dc2d1c7de384c3557509add2"
+    },
+    "protected": false
+  },
+  {
+    "name": "review/c0-hosted-runtime-audit-20261022",
+    "commit": {
+      "sha": "8ede5f8f3f525baf90ad8c9b4f3f0729c19a7b82",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/8ede5f8f3f525baf90ad8c9b4f3f0729c19a7b82"
+    },
+    "protected": false
+  },
+  {
+    "name": "test/p2-p3-compatibility-regressions",
+    "commit": {
+      "sha": "4c36259d287d19fa0c97c1308665e5e4d4c482e6",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/4c36259d287d19fa0c97c1308665e5e4d4c482e6"
+    },
+    "protected": false
+  },
+  {
+    "name": "test/p5-p6-corrected-compatibility",
+    "commit": {
+      "sha": "5ed0def5aad692c48aa8c29e85f26af4ec973095",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/5ed0def5aad692c48aa8c29e85f26af4ec973095"
+    },
+    "protected": false
+  },
+  {
+    "name": "validation/access-a6-integration-review",
+    "commit": {
+      "sha": "f4d0d448fca5925bfbe4f8cb8345c3bd0df7de60",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/f4d0d448fca5925bfbe4f8cb8345c3bd0df7de60"
+    },
+    "protected": false
+  },
+  {
+    "name": "validation/adr0031-i1b-fixtures-20261021",
+    "commit": {
+      "sha": "9ea69ba8804a368802457950601a5a4027174c52",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/9ea69ba8804a368802457950601a5a4027174c52"
+    },
+    "protected": false
+  },
+  {
+    "name": "validation/adr-0030-i5-independent-20261019",
+    "commit": {
+      "sha": "c2032339cd51604ad2232ce1474169930f60ef2b",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/c2032339cd51604ad2232ce1474169930f60ef2b"
+    },
+    "protected": false
+  },
+  {
+    "name": "validation/p2-p3-contract-compat",
+    "commit": {
+      "sha": "b1b5f9cf11d9c0dd21302c5e22b881e1fcc39137",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/b1b5f9cf11d9c0dd21302c5e22b881e1fcc39137"
+    },
+    "protected": false
+  },
+  {
+    "name": "validation/p5-p6-combined-integration",
+    "commit": {
+      "sha": "836062a33f4c35cbb345c6880dd4c6f1f4ac9ef4",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/836062a33f4c35cbb345c6880dd4c6f1f4ac9ef4"
+    },
+    "protected": false
+  },
+  {
+    "name": "validation/p5-p6-corrected-assembly",
+    "commit": {
+      "sha": "f67e9298ff7915b4f7b1f0bef0c344f56d2cc064",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/f67e9298ff7915b4f7b1f0bef0c344f56d2cc064"
+    },
+    "protected": false
+  },
+  {
+    "name": "validation/seven-pr-combined-20261016",
+    "commit": {
+      "sha": "75508553b32495d37a555fe120e4d36691063cbb",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/75508553b32495d37a555fe120e4d36691063cbb"
+    },
+    "protected": false
+  }
+]

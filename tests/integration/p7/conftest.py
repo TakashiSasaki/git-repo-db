@@ -13,6 +13,7 @@ from repo_catalog.adapters.sqlite.p1_context import ContextStore
 from repo_catalog.adapters.sqlite.p1_schema import connect as p1_connect
 from repo_catalog.adapters.sqlite.p1_schema import initialize
 from repo_catalog.application.recovery import RecoveryService
+from repo_catalog.domain.context_admission import DependencySet
 from repo_catalog.domain.p1_core import (
     OID,
     Capture,
@@ -20,6 +21,16 @@ from repo_catalog.domain.p1_core import (
     NotesProof,
     native_oid,
 )
+from tests.support.context_admission import fixture_context, fixture_service
+
+
+def admit_context_text(connection, text):
+    """Compose text-only fixture authority and own its actual commit boundary."""
+    service, _ = fixture_service(DependencySet())
+    store = ContextStore(connection, authorization=service)
+    with store.admission_transaction(admission=fixture_context(service)):
+        return store.text(text)
+
 
 DEFAULT_REPO_UUID = "11111111-1111-4111-8111-111111111111"
 DEFAULT_INSTANCE_UUID = "22222222-2222-4222-8222-222222222222"
@@ -160,8 +171,7 @@ def _synthetic_catalog_template(tmp_path_factory):
 
     # Populate Context text body via ContextStore
     ctx_conn = p1_connect(ctx_path, "context")
-    ctx_store = ContextStore(ctx_conn)
-    ctx_store.text("Sample review document content for PR #1")
+    admit_context_text(ctx_conn, "Sample review document content for PR #1")
     ctx_conn.close()
 
     return template_dir

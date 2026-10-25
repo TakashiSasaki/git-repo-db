@@ -1,0 +1,28 @@
+{
+  "started": 237,
+  "unique_started": 237,
+  "junit_cases": 237,
+  "phases": 711,
+  "outcomes": {
+    "passed": 711
+  },
+  "phase_count_by_kind": {
+    "setup": 237,
+    "call": 237,
+    "teardown": 237
+  },
+  "all_nodes_have_one_passed_setup_call_teardown": true,
+  "junit_journal_module_name_multisets_equal": true,
+  "finish": [
+    {
+      "event": "finish",
+      "status": "completed",
+      "exitstatus": 0,
+      "timestamp": 1792760077.63137
+    }
+  ],
+  "exit": 0,
+  "collected": 237,
+  "collection_journal_multisets_equal": true,
+  "collection_unique": 237
+}

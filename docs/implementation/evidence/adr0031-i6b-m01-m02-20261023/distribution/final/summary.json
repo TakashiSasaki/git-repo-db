@@ -1,0 +1,614 @@
+{
+  "source_head": "d68dc43bff1eb949b071ebf1652e3d70a5a52ed9",
+  "source_tree": "e1c9748b976d5e4266962cffe37ff82c98d1414f",
+  "results": {
+    "direct": {
+      "safety": {
+        "exit_code": 0,
+        "collected": 626,
+        "passed": 626,
+        "failed": 0,
+        "error": 0,
+        "skipped": 0,
+        "xfail": 0,
+        "xpass": 0,
+        "executed": 626,
+        "reconciliation": {
+          "checks": {
+            "selected_unique": true,
+            "selected_equals_junit": true,
+            "selected_equals_journal_starts": true,
+            "setup_and_teardown_once": true,
+            "no_duplicate_phases": true,
+            "phase_nodes_equal_selected": true,
+            "call_once_after_successful_setup": true,
+            "one_finish": true
+          },
+          "consistent_node_execution": true,
+          "journal_phase_outcomes": {
+            "passed": 1878
+          },
+          "finishes": [
+            {
+              "event": "finish",
+              "status": "completed",
+              "exitstatus": 0,
+              "timestamp": 1792764635.49768
+            }
+          ]
+        }
+      },
+      "wire": {
+        "exit_code": 0,
+        "collected": 212,
+        "passed": 212,
+        "failed": 0,
+        "error": 0,
+        "skipped": 0,
+        "xfail": 0,
+        "xpass": 0,
+        "executed": 212,
+        "reconciliation": {
+          "checks": {
+            "selected_unique": true,
+            "selected_equals_junit": true,
+            "selected_equals_journal_starts": true,
+            "setup_and_teardown_once": true,
+            "no_duplicate_phases": true,
+            "phase_nodes_equal_selected": true,
+            "call_once_after_successful_setup": true,
+            "one_finish": true
+          },
+          "consistent_node_execution": true,
+          "journal_phase_outcomes": {
+            "passed": 636
+          },
+          "finishes": [
+            {
+              "event": "finish",
+              "status": "completed",
+              "exitstatus": 0,
+              "timestamp": 1792764659.922601
+            }
+          ]
+        }
+      }
+    },
+    "derived": {
+      "safety": {
+        "exit_code": 0,
+        "collected": 626,
+        "passed": 626,
+        "failed": 0,
+        "error": 0,
+        "skipped": 0,
+        "xfail": 0,
+        "xpass": 0,
+        "executed": 626,
+        "reconciliation": {
+          "checks": {
+            "selected_unique": true,
+            "selected_equals_junit": true,
+            "selected_equals_journal_starts": true,
+            "setup_and_teardown_once": true,
+            "no_duplicate_phases": true,
+            "phase_nodes_equal_selected": true,
+            "call_once_after_successful_setup": true,
+            "one_finish": true
+          },
+          "consistent_node_execution": true,
+          "journal_phase_outcomes": {
+            "passed": 1878
+          },
+          "finishes": [
+            {
+              "event": "finish",
+              "status": "completed",
+              "exitstatus": 0,
+              "timestamp": 1792764864.395548
+            }
+          ]
+        }
+      },
+      "wire": {
+        "exit_code": 0,
+        "collected": 212,
+        "passed": 212,
+        "failed": 0,
+        "error": 0,
+        "skipped": 0,
+        "xfail": 0,
+        "xpass": 0,
+        "executed": 212,
+        "reconciliation": {
+          "checks": {
+            "selected_unique": true,
+            "selected_equals_junit": true,
+            "selected_equals_journal_starts": true,
+            "setup_and_teardown_once": true,
+            "no_duplicate_phases": true,
+            "phase_nodes_equal_selected": true,
+            "call_once_after_successful_setup": true,
+            "one_finish": true
+          },
+          "consistent_node_execution": true,
+          "journal_phase_outcomes": {
+            "passed": 636
+          },
+          "finishes": [
+            {
+              "event": "finish",
+              "status": "completed",
+              "exitstatus": 0,
+              "timestamp": 1792764879.580232
+            }
+          ]
+        }
+      }
+    }
+  },
+  "artifacts": {
+    "direct": {
+      "path": "/workspace/i6b-fix-distribution-final/frozen/dist/repo_catalog-0.2.0-py3-none-any.whl",
+      "sha256": "3296d98d10320b348967b6e09f3f74e5253a986bcea549baa2e3e6359945b373",
+      "bytes": 791288
+    },
+    "sdist": {
+      "path": "/workspace/i6b-fix-distribution-final/frozen/dist/repo_catalog-0.2.0.tar.gz",
+      "sha256": "14747b4d34425119c2c0f969e9927234bb4b7ef0edded456fc0dc6cd3f66026b",
+      "bytes": 151931568
+    },
+    "derived": {
+      "path": "/workspace/i6b-fix-distribution-final/from-sdist/repo_catalog-0.2.0/dist/repo_catalog-0.2.0-py3-none-any.whl",
+      "sha256": "3296d98d10320b348967b6e09f3f74e5253a986bcea549baa2e3e6359945b373",
+      "bytes": 791288
+    }
+  },
+  "full_acceptance": false,
+  "independent_review": false,
+  "author_validation": true,
+  "processes": [
+    {
+      "name": "build-direct",
+      "argv": [
+        "/workspace/i6b-fix-work/baseline/.venv/bin/python",
+        "-m",
+        "hatchling",
+        "build",
+        "-t",
+        "wheel",
+        "-t",
+        "sdist"
+      ],
+      "cwd": "/workspace/i6b-fix-distribution-final/frozen",
+      "exit_code": 0,
+      "started_epoch": 1792764400.3545833,
+      "elapsed_seconds": 9.665401458740234,
+      "source_head": "d68dc43bff1eb949b071ebf1652e3d70a5a52ed9",
+      "source_tree": "e1c9748b976d5e4266962cffe37ff82c98d1414f"
+    },
+    {
+      "name": "build-derived",
+      "argv": [
+        "/workspace/i6b-fix-work/baseline/.venv/bin/python",
+        "-m",
+        "hatchling",
+        "build",
+        "-t",
+        "wheel"
+      ],
+      "cwd": "/workspace/i6b-fix-distribution-final/from-sdist/repo_catalog-0.2.0",
+      "exit_code": 0,
+      "started_epoch": 1792764414.452068,
+      "elapsed_seconds": 0.255889892578125,
+      "source_head": "d68dc43bff1eb949b071ebf1652e3d70a5a52ed9",
+      "source_tree": "e1c9748b976d5e4266962cffe37ff82c98d1414f"
+    },
+    {
+      "name": "direct-venv",
+      "argv": [
+        "/workspace/i6b-fix-work/baseline/.venv/bin/python",
+        "-m",
+        "venv",
+        "--without-pip",
+        "/workspace/i6b-fix-distribution-final/direct-venv"
+      ],
+      "cwd": "/workspace/i6b-fix-distribution-final",
+      "exit_code": 0,
+      "started_epoch": 1792764434.1029325,
+      "elapsed_seconds": 0.15066170692443848,
+      "source_head": "d68dc43bff1eb949b071ebf1652e3d70a5a52ed9",
+      "source_tree": "e1c9748b976d5e4266962cffe37ff82c98d1414f"
+    },
+    {
+      "name": "direct-install",
+      "argv": [
+        "uv",
+        "pip",
+        "install",
+        "--python",
+        "/workspace/i6b-fix-distribution-final/direct-venv/bin/python",
+        "--offline",
+        "--no-index",
+        "--no-deps",
+        "--require-hashes",
+        "-r",
+        "/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/distribution/final/direct-requirements.txt"
+      ],
+      "cwd": "/workspace/i6b-fix-distribution-final/outside",
+      "exit_code": 0,
+      "started_epoch": 1792764434.2587428,
+      "elapsed_seconds": 3.6423373222351074,
+      "source_head": "d68dc43bff1eb949b071ebf1652e3d70a5a52ed9",
+      "source_tree": "e1c9748b976d5e4266962cffe37ff82c98d1414f"
+    },
+    {
+      "name": "direct-measure-before",
+      "argv": [
+        "/workspace/i6b-fix-distribution-final/direct-venv/bin/python",
+        "/workspace/i6b-fix-distribution-final/outside/measure.py",
+        "/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/distribution/final/direct-runtime-before.json"
+      ],
+      "cwd": "/workspace/i6b-fix-distribution-final/outside",
+      "exit_code": 0,
+      "started_epoch": 1792764437.901701,
+      "elapsed_seconds": 0.3136167526245117,
+      "source_head": "d68dc43bff1eb949b071ebf1652e3d70a5a52ed9",
+      "source_tree": "e1c9748b976d5e4266962cffe37ff82c98d1414f"
+    },
+    {
+      "name": "direct-safety-collect",
+      "argv": [
+        "/workspace/i6b-fix-distribution-final/direct-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "-c",
+        "/workspace/i6b-fix-distribution-final/outside/pytest.ini",
+        "--rootdir=/workspace/i6b-fix-distribution-final/outside",
+        "--confcutdir=/workspace/i6b-fix-distribution-final/outside",
+        "-o",
+        "junit_family=xunit1",
+        "tests/integration/p3/test_transfer_sql.py",
+        "tests/integration/p3/test_transfer_admission.py",
+        "tests/integration/p3/test_parent_reports.py",
+        "tests/unit/test_context_admission.py",
+        "tests/unit/test_transfer_originals.py",
+        "tests/unit/test_context_fences_i6a.py",
+        "tests/unit/test_context_oid_admission_i6a.py",
+        "tests/unit/test_context_admission_bounds_i6a.py",
+        "tests/unit/test_context_coordinator_admission.py",
+        "tests/unit/test_context_refusal_order_i6a.py",
+        "tests/integration/p1/test_coordination.py",
+        "tests/integration/i6a",
+        "--collect-only"
+      ],
+      "cwd": "/workspace/i6b-fix-distribution-final/outside",
+      "exit_code": 0,
+      "started_epoch": 1792764438.2173991,
+      "elapsed_seconds": 3.5737192630767822,
+      "source_head": "d68dc43bff1eb949b071ebf1652e3d70a5a52ed9",
+      "source_tree": "e1c9748b976d5e4266962cffe37ff82c98d1414f"
+    },
+    {
+      "name": "direct-safety",
+      "argv": [
+        "/workspace/i6b-fix-distribution-final/direct-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "-c",
+        "/workspace/i6b-fix-distribution-final/outside/pytest.ini",
+        "--rootdir=/workspace/i6b-fix-distribution-final/outside",
+        "--confcutdir=/workspace/i6b-fix-distribution-final/outside",
+        "-o",
+        "junit_family=xunit1",
+        "tests/integration/p3/test_transfer_sql.py",
+        "tests/integration/p3/test_transfer_admission.py",
+        "tests/integration/p3/test_parent_reports.py",
+        "tests/unit/test_context_admission.py",
+        "tests/unit/test_transfer_originals.py",
+        "tests/unit/test_context_fences_i6a.py",
+        "tests/unit/test_context_oid_admission_i6a.py",
+        "tests/unit/test_context_admission_bounds_i6a.py",
+        "tests/unit/test_context_coordinator_admission.py",
+        "tests/unit/test_context_refusal_order_i6a.py",
+        "tests/integration/p1/test_coordination.py",
+        "tests/integration/i6a",
+        "--junitxml=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/distribution/final/direct-safety.xml",
+        "--journal=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/distribution/final/direct-safety.jsonl",
+        "--basetemp=/workspace/i6b-fix-distribution-final/direct-safety-tmp"
+      ],
+      "cwd": "/workspace/i6b-fix-distribution-final/outside",
+      "exit_code": 0,
+      "started_epoch": 1792764441.7930508,
+      "elapsed_seconds": 194.30908608436584,
+      "source_head": "d68dc43bff1eb949b071ebf1652e3d70a5a52ed9",
+      "source_tree": "e1c9748b976d5e4266962cffe37ff82c98d1414f"
+    },
+    {
+      "name": "direct-wire-collect",
+      "argv": [
+        "/workspace/i6b-fix-distribution-final/direct-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "-c",
+        "/workspace/i6b-fix-distribution-final/outside/pytest.ini",
+        "--rootdir=/workspace/i6b-fix-distribution-final/outside",
+        "--confcutdir=/workspace/i6b-fix-distribution-final/outside",
+        "-o",
+        "junit_family=xunit1",
+        "tests/unit/test_context_wire_v5.py",
+        "tests/unit/test_context_dependencies.py",
+        "--collect-only"
+      ],
+      "cwd": "/workspace/i6b-fix-distribution-final/outside",
+      "exit_code": 0,
+      "started_epoch": 1792764636.1549098,
+      "elapsed_seconds": 1.7059283256530762,
+      "source_head": "d68dc43bff1eb949b071ebf1652e3d70a5a52ed9",
+      "source_tree": "e1c9748b976d5e4266962cffe37ff82c98d1414f"
+    },
+    {
+      "name": "direct-wire",
+      "argv": [
+        "/workspace/i6b-fix-distribution-final/direct-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "-c",
+        "/workspace/i6b-fix-distribution-final/outside/pytest.ini",
+        "--rootdir=/workspace/i6b-fix-distribution-final/outside",
+        "--confcutdir=/workspace/i6b-fix-distribution-final/outside",
+        "-o",
+        "junit_family=xunit1",
+        "tests/unit/test_context_wire_v5.py",
+        "tests/unit/test_context_dependencies.py",
+        "--junitxml=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/distribution/final/direct-wire.xml",
+        "--journal=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/distribution/final/direct-wire.jsonl",
+        "--basetemp=/workspace/i6b-fix-distribution-final/direct-wire-tmp"
+      ],
+      "cwd": "/workspace/i6b-fix-distribution-final/outside",
+      "exit_code": 0,
+      "started_epoch": 1792764637.861858,
+      "elapsed_seconds": 22.629421949386597,
+      "source_head": "d68dc43bff1eb949b071ebf1652e3d70a5a52ed9",
+      "source_tree": "e1c9748b976d5e4266962cffe37ff82c98d1414f"
+    },
+    {
+      "name": "direct-doctor",
+      "argv": [
+        "/workspace/i6b-fix-distribution-final/direct-venv/bin/repo-catalog",
+        "doctor"
+      ],
+      "cwd": "/workspace/i6b-fix-distribution-final/outside",
+      "exit_code": 0,
+      "started_epoch": 1792764660.5170906,
+      "elapsed_seconds": 0.7073533535003662,
+      "source_head": "d68dc43bff1eb949b071ebf1652e3d70a5a52ed9",
+      "source_tree": "e1c9748b976d5e4266962cffe37ff82c98d1414f"
+    },
+    {
+      "name": "direct-measure-after",
+      "argv": [
+        "/workspace/i6b-fix-distribution-final/direct-venv/bin/python",
+        "/workspace/i6b-fix-distribution-final/outside/measure.py",
+        "/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/distribution/final/direct-runtime-after.json"
+      ],
+      "cwd": "/workspace/i6b-fix-distribution-final/outside",
+      "exit_code": 0,
+      "started_epoch": 1792764661.2249327,
+      "elapsed_seconds": 0.4492504596710205,
+      "source_head": "d68dc43bff1eb949b071ebf1652e3d70a5a52ed9",
+      "source_tree": "e1c9748b976d5e4266962cffe37ff82c98d1414f"
+    },
+    {
+      "name": "derived-venv",
+      "argv": [
+        "/workspace/i6b-fix-work/baseline/.venv/bin/python",
+        "-m",
+        "venv",
+        "--without-pip",
+        "/workspace/i6b-fix-distribution-final/derived-venv"
+      ],
+      "cwd": "/workspace/i6b-fix-distribution-final",
+      "exit_code": 0,
+      "started_epoch": 1792764661.6760848,
+      "elapsed_seconds": 0.47127580642700195,
+      "source_head": "d68dc43bff1eb949b071ebf1652e3d70a5a52ed9",
+      "source_tree": "e1c9748b976d5e4266962cffe37ff82c98d1414f"
+    },
+    {
+      "name": "derived-install",
+      "argv": [
+        "uv",
+        "pip",
+        "install",
+        "--python",
+        "/workspace/i6b-fix-distribution-final/derived-venv/bin/python",
+        "--offline",
+        "--no-index",
+        "--no-deps",
+        "--require-hashes",
+        "-r",
+        "/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/distribution/final/derived-requirements.txt"
+      ],
+      "cwd": "/workspace/i6b-fix-distribution-final/outside",
+      "exit_code": 0,
+      "started_epoch": 1792764662.1551516,
+      "elapsed_seconds": 1.804661512374878,
+      "source_head": "d68dc43bff1eb949b071ebf1652e3d70a5a52ed9",
+      "source_tree": "e1c9748b976d5e4266962cffe37ff82c98d1414f"
+    },
+    {
+      "name": "derived-measure-before",
+      "argv": [
+        "/workspace/i6b-fix-distribution-final/derived-venv/bin/python",
+        "/workspace/i6b-fix-distribution-final/outside/measure.py",
+        "/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/distribution/final/derived-runtime-before.json"
+      ],
+      "cwd": "/workspace/i6b-fix-distribution-final/outside",
+      "exit_code": 0,
+      "started_epoch": 1792764663.960462,
+      "elapsed_seconds": 0.34726691246032715,
+      "source_head": "d68dc43bff1eb949b071ebf1652e3d70a5a52ed9",
+      "source_tree": "e1c9748b976d5e4266962cffe37ff82c98d1414f"
+    },
+    {
+      "name": "derived-safety-collect",
+      "argv": [
+        "/workspace/i6b-fix-distribution-final/derived-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "-c",
+        "/workspace/i6b-fix-distribution-final/outside/pytest.ini",
+        "--rootdir=/workspace/i6b-fix-distribution-final/outside",
+        "--confcutdir=/workspace/i6b-fix-distribution-final/outside",
+        "-o",
+        "junit_family=xunit1",
+        "tests/integration/p3/test_transfer_sql.py",
+        "tests/integration/p3/test_transfer_admission.py",
+        "tests/integration/p3/test_parent_reports.py",
+        "tests/unit/test_context_admission.py",
+        "tests/unit/test_transfer_originals.py",
+        "tests/unit/test_context_fences_i6a.py",
+        "tests/unit/test_context_oid_admission_i6a.py",
+        "tests/unit/test_context_admission_bounds_i6a.py",
+        "tests/unit/test_context_coordinator_admission.py",
+        "tests/unit/test_context_refusal_order_i6a.py",
+        "tests/integration/p1/test_coordination.py",
+        "tests/integration/i6a",
+        "--collect-only"
+      ],
+      "cwd": "/workspace/i6b-fix-distribution-final/outside",
+      "exit_code": 0,
+      "started_epoch": 1792764664.3093247,
+      "elapsed_seconds": 5.159541130065918,
+      "source_head": "d68dc43bff1eb949b071ebf1652e3d70a5a52ed9",
+      "source_tree": "e1c9748b976d5e4266962cffe37ff82c98d1414f"
+    },
+    {
+      "name": "derived-safety",
+      "argv": [
+        "/workspace/i6b-fix-distribution-final/derived-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "-c",
+        "/workspace/i6b-fix-distribution-final/outside/pytest.ini",
+        "--rootdir=/workspace/i6b-fix-distribution-final/outside",
+        "--confcutdir=/workspace/i6b-fix-distribution-final/outside",
+        "-o",
+        "junit_family=xunit1",
+        "tests/integration/p3/test_transfer_sql.py",
+        "tests/integration/p3/test_transfer_admission.py",
+        "tests/integration/p3/test_parent_reports.py",
+        "tests/unit/test_context_admission.py",
+        "tests/unit/test_transfer_originals.py",
+        "tests/unit/test_context_fences_i6a.py",
+        "tests/unit/test_context_oid_admission_i6a.py",
+        "tests/unit/test_context_admission_bounds_i6a.py",
+        "tests/unit/test_context_coordinator_admission.py",
+        "tests/unit/test_context_refusal_order_i6a.py",
+        "tests/integration/p1/test_coordination.py",
+        "tests/integration/i6a",
+        "--junitxml=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/distribution/final/derived-safety.xml",
+        "--journal=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/distribution/final/derived-safety.jsonl",
+        "--basetemp=/workspace/i6b-fix-distribution-final/derived-safety-tmp"
+      ],
+      "cwd": "/workspace/i6b-fix-distribution-final/outside",
+      "exit_code": 0,
+      "started_epoch": 1792764669.4703028,
+      "elapsed_seconds": 195.31515622138977,
+      "source_head": "d68dc43bff1eb949b071ebf1652e3d70a5a52ed9",
+      "source_tree": "e1c9748b976d5e4266962cffe37ff82c98d1414f"
+    },
+    {
+      "name": "derived-wire-collect",
+      "argv": [
+        "/workspace/i6b-fix-distribution-final/derived-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "-c",
+        "/workspace/i6b-fix-distribution-final/outside/pytest.ini",
+        "--rootdir=/workspace/i6b-fix-distribution-final/outside",
+        "--confcutdir=/workspace/i6b-fix-distribution-final/outside",
+        "-o",
+        "junit_family=xunit1",
+        "tests/unit/test_context_wire_v5.py",
+        "tests/unit/test_context_dependencies.py",
+        "--collect-only"
+      ],
+      "cwd": "/workspace/i6b-fix-distribution-final/outside",
+      "exit_code": 0,
+      "started_epoch": 1792764864.8294222,
+      "elapsed_seconds": 0.7181704044342041,
+      "source_head": "d68dc43bff1eb949b071ebf1652e3d70a5a52ed9",
+      "source_tree": "e1c9748b976d5e4266962cffe37ff82c98d1414f"
+    },
+    {
+      "name": "derived-wire",
+      "argv": [
+        "/workspace/i6b-fix-distribution-final/derived-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "-c",
+        "/workspace/i6b-fix-distribution-final/outside/pytest.ini",
+        "--rootdir=/workspace/i6b-fix-distribution-final/outside",
+        "--confcutdir=/workspace/i6b-fix-distribution-final/outside",
+        "-o",
+        "junit_family=xunit1",
+        "tests/unit/test_context_wire_v5.py",
+        "tests/unit/test_context_dependencies.py",
+        "--junitxml=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/distribution/final/derived-wire.xml",
+        "--journal=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/distribution/final/derived-wire.jsonl",
+        "--basetemp=/workspace/i6b-fix-distribution-final/derived-wire-tmp"
+      ],
+      "cwd": "/workspace/i6b-fix-distribution-final/outside",
+      "exit_code": 0,
+      "started_epoch": 1792764865.5489645,
+      "elapsed_seconds": 14.33296012878418,
+      "source_head": "d68dc43bff1eb949b071ebf1652e3d70a5a52ed9",
+      "source_tree": "e1c9748b976d5e4266962cffe37ff82c98d1414f"
+    },
+    {
+      "name": "derived-doctor",
+      "argv": [
+        "/workspace/i6b-fix-distribution-final/derived-venv/bin/repo-catalog",
+        "doctor"
+      ],
+      "cwd": "/workspace/i6b-fix-distribution-final/outside",
+      "exit_code": 0,
+      "started_epoch": 1792764879.8948715,
+      "elapsed_seconds": 0.35070323944091797,
+      "source_head": "d68dc43bff1eb949b071ebf1652e3d70a5a52ed9",
+      "source_tree": "e1c9748b976d5e4266962cffe37ff82c98d1414f"
+    },
+    {
+      "name": "derived-measure-after",
+      "argv": [
+        "/workspace/i6b-fix-distribution-final/derived-venv/bin/python",
+        "/workspace/i6b-fix-distribution-final/outside/measure.py",
+        "/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/distribution/final/derived-runtime-after.json"
+      ],
+      "cwd": "/workspace/i6b-fix-distribution-final/outside",
+      "exit_code": 0,
+      "started_epoch": 1792764880.2466407,
+      "elapsed_seconds": 0.2629687786102295,
+      "source_head": "d68dc43bff1eb949b071ebf1652e3d70a5a52ed9",
+      "source_tree": "e1c9748b976d5e4266962cffe37ff82c98d1414f"
+    }
+  ]
+}

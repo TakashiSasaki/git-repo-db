@@ -1,0 +1,12 @@
+{
+  "scope": "Publication-only checks; original author runtime evidence not rerun",
+  "base_files_verified": 3745,
+  "unchanged_frozen_new_inputs": 8,
+  "new_files_checked": 16,
+  "python_ast_files": 5,
+  "broken_local_links": [],
+  "reports_files_checked": 430,
+  "reports_exit_code": 0,
+  "reports_receipt_sha256": "6e98b2f6fc2f5fc1241837982384ee138ede9729aed2de980a2fce07bb48e147",
+  "independent_review_completed": false
+}

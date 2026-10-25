@@ -1,0 +1,22 @@
+{
+  "AGENTS.md": "de01fde4b7648b3b25afe1f0cac9d99be2caf1b563fd1127c8f38f8568c7e08d",
+  "docs/adr/README.md": "77d7b46374235f2c9ffad9e59feb70454edc2c91603537588a02fa76ae9a8b1d",
+  "docs/adr/0017-domain-keys-without-storage-surrogates.md": "b33a2f482fbf98b394b10f8d30dde2bf79c4067ee82b65c02f5dbe27996c572f",
+  "docs/adr/0028-classified-times-and-sha256-exchange.md": "497882c1661e3800c0b7138288a08a54e7f7efc29dee8e278a41a24f68384bbf",
+  "docs/adr/0029-independent-access-store.md": "d6d6c22cc5a23ab92c785f986150d9a2e8b88ee64bb56614637cdd36b81ec0f1",
+  "docs/adr/0030-context-repository-relations-and-selective-exchange.md": "22ea2c17fa16ce4a9cca95330f8fb21c8bf510a786233189832a2d0bce81b054",
+  "docs/adr/0031-generalized-context-resources.md": "330fbf7273f3099170e7ad34ea45abe11727e664e7a7a6f676e81a3ef15b71f6",
+  "docs/architecture/context-resource-schema.md": "faea58ff41e0388ee575b60feb377037c5ae84fb98ed1817cdb10738bfbdabeb",
+  "docs/implementation/context-resource-design-handoff.md": "95f1182917dba94725baac7474d48ef7c6c50b7162f271f3581083deacb4351c",
+  "docs/implementation/evidence/context-resource-design/cprime-integration.md": "01a2a131c5391666e15999bc44f68894aea95f597ba215ebcb045cdf314b8b35",
+  "docs/implementation/evidence/context-resource-design/g3-a/README.md": "7c3aa6e34e4f300a4847cbc196483f0751e7e33d2efb289d4cc6a075e0f2890b",
+  "docs/implementation/evidence/context-resource-design/g3-a/candidates/cprime.py": "ebc59346481b46cf6dc1d73a984c75d67eaa36af8c360a7f80b5058a3e9acc70",
+  "docs/implementation/evidence/context-resource-design/g3-a/candidates/resources.sql": "33053650860d2818c48fa61bbc38b8f2bd1686dd2dd89921f8ade706471ba2cd",
+  "docs/implementation/evidence/context-resource-design/g3-a/candidates/relations.sql": "9d699853f41900dfde878fdc4fee7f9d0a0ba8d72d4f302d1b4fdecf253c2988",
+  "docs/implementation/evidence/context-resource-design/g3-a/independent-review/final-review.md": "d0d772cafe70de69cb38db0ed352c1f250c5ede28c52f4b14b1f34d7c36a93e3",
+  "docs/implementation/adr0031-i1-canonical-resource-identity.md": "dc06530b02fe65d4f6b5b3358886b35832cf1556822673ec172c4549a043b823",
+  "docs/implementation/evidence/adr0031-i1/codec-review/review.md": "8d06805324fa44823dce663bd48f2f97ccec9c94f6cbaa02fccf59c29da9f7d3",
+  "docs/implementation/evidence/adr0031-i1/integration-review/review.md": "b50e189ca43f4012e912a26daf485e04ebc5255ac75959429f0e3c607e7ce39e",
+  "docs/implementation/adr0031-i1b-validation-closure.md": "10f7c36cdff80df72d43900a4c0e0a6fc6922e101eb8eef9f919e6a0389d572f",
+  "/workspace/independent-task-b-20261021/REPORT.md": "b90d9dcf3da2171b26aab54c30b003731f9d056f2556038cf5b3c915e6a73ed1"
+}

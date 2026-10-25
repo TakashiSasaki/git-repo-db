@@ -1,0 +1,18 @@
+{
+  "command": [
+    "/workspace/i6a-final/.venv/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "--collect-only",
+    "-o",
+    "addopts=",
+    "tests"
+  ],
+  "cwd": "/workspace/i6a-final",
+  "started_epoch": 1792730903.4186273,
+  "elapsed_seconds": 8.487,
+  "exit_code": 0,
+  "collected": 5976,
+  "duplicates": 0
+}

@@ -1,0 +1,44 @@
+"""Author observation of root-key allocation, separate from normal validation."""
+import argparse
+import builtins
+import hashlib
+import json
+from pathlib import Path
+import sqlite3
+import sys
+import tracemalloc
+from unittest.mock import patch
+
+p=argparse.ArgumentParser(description=__doc__)
+p.add_argument('--root',type=Path,required=True);p.add_argument('--out',type=Path,required=True)
+a=p.parse_args();sys.path.insert(0,str(a.root/'src'))
+from repo_catalog.domain import context_dependencies as dependencies
+from repo_catalog.domain.context_wire import decode_context_v5
+from repo_catalog.domain.exchange import ExchangeError,ExchangeSelectionScope,empty_context_section
+
+records=[]
+for case in ('invalid20k','valid-empty-control'):
+    data={f'invalid-key-{n}':[] for n in range(20000)} if case=='invalid20k' else empty_context_section()
+    if case=='valid-empty-control':assert decode_context_v5(data)==data
+    scope=ExchangeSelectionScope(all_selected=True,max_work=0,resource_keys=(),source_uuidv4s=(),repository_uuidv4s=())
+    row={'case':case,'root_keys':len(data),'max_work':0,
+         'input_sha256':hashlib.sha256(json.dumps(data,sort_keys=True,separators=(',',':')).encode()).hexdigest()}
+    with patch.object(dependencies,'set',wraps=builtins.set,create=True) as observed:
+        tracemalloc.start()
+        try:
+            result=dependencies.plan_context_dependencies(data,scope)
+            row.update(outcome='plan',work_units=result.work_units,emitted_units=result.emitted_units,
+                       context=result.context,omission_reasons=[o.reason for o in result.omissions])
+        except ExchangeError as error:
+            row.update(outcome='refused',exception_type=type(error).__name__,code=error.code,message=str(error))
+        finally:
+            current,peak=tracemalloc.get_traced_memory();tracemalloc.stop()
+            row.update(set_call_count=observed.call_count,
+                       set_argument_lengths=[len(c.args[0]) if c.args else 0 for c in observed.call_args_list],
+                       tracemalloc_current_bytes=current,tracemalloc_peak_bytes=peak)
+    records.append(row)
+a.out.write_text(json.dumps({'observations':records,'runtime':{'python':sys.version,'executable':sys.executable,
+    'sqlite':sqlite3.connect(':memory:').execute('select sqlite_version(),sqlite_source_id()').fetchone()},
+    'origin':dependencies.__file__,'source_sha256':hashlib.sha256((a.root/'src/repo_catalog/domain/context_dependencies.py').read_bytes()).hexdigest(),
+    'limits':'One supplementary invalid-root/control observation, not a statistical benchmark. Input construction and scope/patch setup occur before tracemalloc. set wrappers record actual module calls without changing return values.'},indent=2)+'\n')
+print(json.dumps([{k:v for k,v in r.items() if k!='context'} for r in records],indent=2))

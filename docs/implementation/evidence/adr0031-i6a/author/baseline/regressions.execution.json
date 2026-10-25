@@ -1,0 +1,56 @@
+{
+  "command": [
+    "/workspace/i6a-baseline-venv/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "-o",
+    "addopts=--strict-markers",
+    "-o",
+    "junit_family=xunit1",
+    "@/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6a/author/baseline/regressions.selected.txt",
+    "--junitxml=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6a/author/baseline/regressions.xml",
+    "--journal=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6a/author/baseline/regressions.jsonl",
+    "-n",
+    "4",
+    "--dist",
+    "worksteal"
+  ],
+  "cwd": "/workspace/i6a-baseline",
+  "started_epoch": 1792722865.2857227,
+  "elapsed_seconds": 142.17,
+  "exit_code": 1,
+  "collected": 3137,
+  "passed": 3058,
+  "failed": 59,
+  "error": 20,
+  "skipped": 0,
+  "xfail": 0,
+  "xpass": 0,
+  "executed": 3137,
+  "reconciliation": {
+    "checks": {
+      "selected_unique": true,
+      "selected_equals_junit": true,
+      "selected_equals_journal_starts": true,
+      "setup_and_teardown_once": true,
+      "no_duplicate_phases": true,
+      "phase_nodes_equal_selected": true,
+      "call_once_after_successful_setup": true,
+      "one_finish": true
+    },
+    "consistent_node_execution": true,
+    "journal_phase_outcomes": {
+      "passed": 9312,
+      "failed": 79
+    },
+    "finishes": [
+      {
+        "event": "finish",
+        "status": "failed",
+        "exitstatus": 1,
+        "timestamp": 1792723007.171807
+      }
+    ]
+  }
+}

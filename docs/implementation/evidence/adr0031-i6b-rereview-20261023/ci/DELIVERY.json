@@ -1,0 +1,610 @@
+{
+  "transport": [
+    {
+      "original": "access-job.log",
+      "transport": "access-job.log",
+      "original_bytes": 0,
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transport_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "original": "raw-log-transfer-correction.json",
+      "transport": "raw-log-transfer-correction.json",
+      "original_bytes": 1194,
+      "original_sha256": "43a0d771c67c88c61ddca5ae0556d2f7e675e857bca5e9d3a8d451c842a21bd5",
+      "transport_sha256": "43a0d771c67c88c61ddca5ae0556d2f7e675e857bca5e9d3a8d451c842a21bd5"
+    },
+    {
+      "original": "source-hosted-comparison-v1.log",
+      "transport": "source-hosted-comparison-v1.log",
+      "original_bytes": 1539,
+      "original_sha256": "94071a01bd573846ce1daf9b8b6647d9267206449e5bba6721ae7c4caa7c6fb7",
+      "transport_sha256": "94071a01bd573846ce1daf9b8b6647d9267206449e5bba6721ae7c4caa7c6fb7"
+    },
+    {
+      "original": "development-run-logs.zip",
+      "transport": "development-run-logs.zip",
+      "original_bytes": 91,
+      "original_sha256": "2f85832e31ca57711e6107af6b142363351ae516adb71c69afc643fac26be7f6",
+      "transport_sha256": "2f85832e31ca57711e6107af6b142363351ae516adb71c69afc643fac26be7f6"
+    },
+    {
+      "original": "reviews153.json",
+      "transport": "reviews153.json",
+      "original_bytes": 2,
+      "original_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "transport_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "original": "verify.log",
+      "transport": "verify.log",
+      "original_bytes": 3264,
+      "original_sha256": "40d968f29b40ae27702993f440f884f82c17fa7a0fac12c2d3c1dc03bb76897a",
+      "transport_sha256": "40d968f29b40ae27702993f440f884f82c17fa7a0fac12c2d3c1dc03bb76897a"
+    },
+    {
+      "original": "issue-comments153.json",
+      "transport": "issue-comments153.json",
+      "original_bytes": 2,
+      "original_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "transport_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "original": "source-hosted-comparison-v1.json",
+      "transport": "source-hosted-comparison-v1.json",
+      "original_bytes": 5123,
+      "original_sha256": "9df85f30e6214c9eb31e87a1feeb8dc000cf591ad706b3e329b361d42434d7c5",
+      "transport_sha256": "9df85f30e6214c9eb31e87a1feeb8dc000cf591ad706b3e329b361d42434d7c5"
+    },
+    {
+      "original": "development-run.json",
+      "transport": "development-run.json",
+      "original_bytes": 13341,
+      "original_sha256": "59e273ef3697a5dbfd53f42e619ee7e8c33fa4fed078f8ff545c6c1e4c500092",
+      "transport_sha256": "59e273ef3697a5dbfd53f42e619ee7e8c33fa4fed078f8ff545c6c1e4c500092"
+    },
+    {
+      "original": "compare_source_hosted-v1.py.txt",
+      "transport": "compare_source_hosted-v1.py.txt",
+      "original_bytes": 4839,
+      "original_sha256": "4a2889f992555bffa2fd5c92e84a2e5b3aa39a6f26b1559ce4e1831f4c312139",
+      "transport_sha256": "4a2889f992555bffa2fd5c92e84a2e5b3aa39a6f26b1559ce4e1831f4c312139"
+    },
+    {
+      "original": "source-hosted-entries.json.gz",
+      "transport": "source-hosted-entries.json.gz",
+      "original_bytes": 264423,
+      "original_sha256": "d823f4a5b6c5c6e118bfc4e3c582e5b6d7489f822aa9eeb83b4e015a318936b1",
+      "transport_sha256": "d823f4a5b6c5c6e118bfc4e3c582e5b6d7489f822aa9eeb83b4e015a318936b1"
+    },
+    {
+      "original": "original-access-smoke-unexecuted.json",
+      "transport": "original-access-smoke-unexecuted.json",
+      "original_bytes": 760,
+      "original_sha256": "ab770aa4d877dfdcbd5c37dec31e534d767434ecd0e598fe09efb631305de41c",
+      "transport_sha256": "ab770aa4d877dfdcbd5c37dec31e534d767434ecd0e598fe09efb631305de41c"
+    },
+    {
+      "original": "access-run.json",
+      "transport": "access-run.json",
+      "original_bytes": 13381,
+      "original_sha256": "ce7de73094256f39f99fc16514089d99cb6884c6f5ae2422a9eb3351d88bacc8",
+      "transport_sha256": "ce7de73094256f39f99fc16514089d99cb6884c6f5ae2422a9eb3351d88bacc8"
+    },
+    {
+      "original": "verify_independent_ci.py",
+      "transport": "verify_independent_ci.py.txt",
+      "original_bytes": 7913,
+      "original_sha256": "bc90b1df19d9b7fa148204a977b3f340dd5fb0a1a6236eec3f83c5d9507e08fb",
+      "transport_sha256": "bc90b1df19d9b7fa148204a977b3f340dd5fb0a1a6236eec3f83c5d9507e08fb"
+    },
+    {
+      "original": "pr150-to-target-compare.json",
+      "transport": "pr150-to-target-compare.json",
+      "original_bytes": 1435008,
+      "original_sha256": "76588983f9e55b0330da0101ee74faa2bb80ca940d0fd3a50fe822cf5f6fc354",
+      "transport_sha256": "76588983f9e55b0330da0101ee74faa2bb80ca940d0fd3a50fe822cf5f6fc354"
+    },
+    {
+      "original": "pr150-plugin.json",
+      "transport": "pr150-plugin.json",
+      "original_bytes": 5594,
+      "original_sha256": "5bfc1da25dc5bcda9e6f68400f4f57e0603ccd6128d88718dca47f00a12bab00",
+      "transport_sha256": "5bfc1da25dc5bcda9e6f68400f4f57e0603ccd6128d88718dca47f00a12bab00"
+    },
+    {
+      "original": "feature-commit.json",
+      "transport": "feature-commit.json",
+      "original_bytes": 1187,
+      "original_sha256": "787af85bc2b8b7cffe7c9ee4e7c7a64be2672f1dcb276e58d6dfb70d39a16b6d",
+      "transport_sha256": "787af85bc2b8b7cffe7c9ee4e7c7a64be2672f1dcb276e58d6dfb70d39a16b6d"
+    },
+    {
+      "original": "pr144-plugin.json",
+      "transport": "pr144-plugin.json",
+      "original_bytes": 7506,
+      "original_sha256": "ab77b20de4cacb18152e255963cfd4c0cc9af615f703305b1324f551f28c0266",
+      "transport_sha256": "ab77b20de4cacb18152e255963cfd4c0cc9af615f703305b1324f551f28c0266"
+    },
+    {
+      "original": "retrieval-journal.json",
+      "transport": "retrieval-journal.json",
+      "original_bytes": 1757,
+      "original_sha256": "b066cb4d6db1d8b5cc4420e86fda98b0b0dd7baaee29959b3a2bad46f45890cf",
+      "transport_sha256": "b066cb4d6db1d8b5cc4420e86fda98b0b0dd7baaee29959b3a2bad46f45890cf"
+    },
+    {
+      "original": "checkout-commit.json",
+      "transport": "checkout-commit.json",
+      "original_bytes": 2666,
+      "original_sha256": "db234901629286cf4456707ea5b54b3ed8212b790c8ccef997f5446ffa19046a",
+      "transport_sha256": "db234901629286cf4456707ea5b54b3ed8212b790c8ccef997f5446ffa19046a"
+    },
+    {
+      "original": "pr147-plugin.json",
+      "transport": "pr147-plugin.json",
+      "original_bytes": 7686,
+      "original_sha256": "582c2c1a9fd778c65204c2755bd6cdfdf2be3316fc3ab97522bc7829155fd9c6",
+      "transport_sha256": "582c2c1a9fd778c65204c2755bd6cdfdf2be3316fc3ab97522bc7829155fd9c6"
+    },
+    {
+      "original": "development-connector-job-added-newline-v1.log.gz",
+      "transport": "development-connector-job-added-newline-v1.log.gz",
+      "original_bytes": 117077,
+      "original_sha256": "2706b3e172e68944275e166041a2ece85da0522b4b35733048b622d9488939f2",
+      "transport_sha256": "2706b3e172e68944275e166041a2ece85da0522b4b35733048b622d9488939f2"
+    },
+    {
+      "original": "recent-prs.json",
+      "transport": "recent-prs.json",
+      "original_bytes": 2296076,
+      "original_sha256": "0778697b7c17333806e82e9c7cf230befb1c1a777d91b0919c2d3321a0971eb1",
+      "transport_sha256": "0778697b7c17333806e82e9c7cf230befb1c1a777d91b0919c2d3321a0971eb1"
+    },
+    {
+      "original": "INDEX.json",
+      "transport": "INDEX.json",
+      "original_bytes": 31702,
+      "original_sha256": "e0342f1602fe5c2022746598fa4f228c4ddf9bc7bbc3e2f4d7d93bb3f3f3a3d9",
+      "transport_sha256": "e0342f1602fe5c2022746598fa4f228c4ddf9bc7bbc3e2f4d7d93bb3f3f3a3d9"
+    },
+    {
+      "original": "REPORT.md",
+      "transport": "REPORT.md",
+      "original_bytes": 9976,
+      "original_sha256": "a883b374483f355dd183a6a52cb28b0ba7f3632b8c1f0b0eb776fb6726de419d",
+      "transport_sha256": "a883b374483f355dd183a6a52cb28b0ba7f3632b8c1f0b0eb776fb6726de419d"
+    },
+    {
+      "original": "source-hosted-entries-v1.json.gz",
+      "transport": "source-hosted-entries-v1.json.gz",
+      "original_bytes": 263122,
+      "original_sha256": "cac11350701f1522d71fb2170af16feb4bf335763e63aea0a026f8974a117140",
+      "transport_sha256": "cac11350701f1522d71fb2170af16feb4bf335763e63aea0a026f8974a117140"
+    },
+    {
+      "original": "independent-verification.json",
+      "transport": "independent-verification.json",
+      "original_bytes": 5069,
+      "original_sha256": "61b6356d3bc3121342008fc1986e95f93bceb61a5a084c0b776823813b6e5d07",
+      "transport_sha256": "61b6356d3bc3121342008fc1986e95f93bceb61a5a084c0b776823813b6e5d07"
+    },
+    {
+      "original": "development-job.log",
+      "transport": "development-job.log",
+      "original_bytes": 0,
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transport_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "original": "source-hosted-comparison.exit",
+      "transport": "source-hosted-comparison.exit",
+      "original_bytes": 2,
+      "original_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "transport_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "original": "pr153.json",
+      "transport": "pr153.json",
+      "original_bytes": 25335,
+      "original_sha256": "5b85c5441e4314f25a6d8a34a4ddb3f8c7fcd3328cc0ddd2b0471bb6d44a20ec",
+      "transport_sha256": "5b85c5441e4314f25a6d8a34a4ddb3f8c7fcd3328cc0ddd2b0471bb6d44a20ec"
+    },
+    {
+      "original": "development-jobs.json",
+      "transport": "development-jobs.json",
+      "original_bytes": 7162,
+      "original_sha256": "53f2c37d7dc176d30c1d58ba67884b884305e3cc5e708ef2acd04c85d6ab94f8",
+      "transport_sha256": "53f2c37d7dc176d30c1d58ba67884b884305e3cc5e708ef2acd04c85d6ab94f8"
+    },
+    {
+      "original": "access-run-logs.zip",
+      "transport": "access-run-logs.zip",
+      "original_bytes": 4122601,
+      "original_sha256": "f0408bd0b9d7bc4f609eb91c342ef51f1c978dddcbd12f3e5d867dce9cadbd88",
+      "transport_sha256": "f0408bd0b9d7bc4f609eb91c342ef51f1c978dddcbd12f3e5d867dce9cadbd88"
+    },
+    {
+      "original": "compare_source_hosted.py",
+      "transport": "compare_source_hosted.py.txt",
+      "original_bytes": 5075,
+      "original_sha256": "652a1eba4c9c776a883f5e5e20bac9b3530fd108593830ea8578518ec3e0e0a6",
+      "transport_sha256": "652a1eba4c9c776a883f5e5e20bac9b3530fd108593830ea8578518ec3e0e0a6"
+    },
+    {
+      "original": "access-connector-job-added-newline-v1.log.gz",
+      "transport": "access-connector-job-added-newline-v1.log.gz",
+      "original_bytes": 2045722,
+      "original_sha256": "86e7c2c8fd540feb4b200c3b3a63dc28515480298eba17e6da1c682a576a6222",
+      "transport_sha256": "86e7c2c8fd540feb4b200c3b3a63dc28515480298eba17e6da1c682a576a6222"
+    },
+    {
+      "original": "source-hosted-comparison.json",
+      "transport": "source-hosted-comparison.json",
+      "original_bytes": 5203,
+      "original_sha256": "d4f772184c476fbcffa1f10b47301ec54d66ebc76cd00e5e0d57e9416521efde",
+      "transport_sha256": "d4f772184c476fbcffa1f10b47301ec54d66ebc76cd00e5e0d57e9416521efde"
+    },
+    {
+      "original": "sibling-nonintegration.json",
+      "transport": "sibling-nonintegration.json",
+      "original_bytes": 1353,
+      "original_sha256": "5145a41654350f55ca1333858fc0951af38e1073deafc594cffc1a94386e8849",
+      "transport_sha256": "5145a41654350f55ca1333858fc0951af38e1073deafc594cffc1a94386e8849"
+    },
+    {
+      "original": "verify.exit",
+      "transport": "verify.exit",
+      "original_bytes": 2,
+      "original_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "transport_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "original": "development-connector-job.log",
+      "transport": "development-connector-job.log.gz",
+      "original_bytes": 279291,
+      "original_sha256": "45fa2f914c34271dc207f6d74207eaf4e80d6074c294032a3dea710e2ba2e997",
+      "transport_sha256": "4694a4720ea660316cf842c647c032c7deb2ecc999e31e1421b7d84066af915a"
+    },
+    {
+      "original": "access-connector-job.log",
+      "transport": "access-connector-job.log.gz",
+      "original_bytes": 3813319,
+      "original_sha256": "2d6486c578596a423149f3aac3dd2024620bf0c9b943666eb52fbdec6d82428d",
+      "transport_sha256": "aefda35dd54098af587a5a0e5bc357ad552e1c4c9c7d336b607155219148a967"
+    },
+    {
+      "original": "review-comments153.json",
+      "transport": "review-comments153.json",
+      "original_bytes": 2,
+      "original_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "transport_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "original": "pr147-to-target-compare.json",
+      "transport": "pr147-to-target-compare.json",
+      "original_bytes": 1433090,
+      "original_sha256": "76f85c91e482c5155fdbfe0ec1070c624b180cde2ba75a7be1deb4356ea2404f",
+      "transport_sha256": "76f85c91e482c5155fdbfe0ec1070c624b180cde2ba75a7be1deb4356ea2404f"
+    },
+    {
+      "original": "pr144-to-target-compare.json",
+      "transport": "pr144-to-target-compare.json",
+      "original_bytes": 1435014,
+      "original_sha256": "8426314ff5dc63666b469e360f451a6518e4a700dbe1fc36890c6be1bb284522",
+      "transport_sha256": "8426314ff5dc63666b469e360f451a6518e4a700dbe1fc36890c6be1bb284522"
+    },
+    {
+      "original": "source-hosted-comparison.log",
+      "transport": "source-hosted-comparison.log",
+      "original_bytes": 1619,
+      "original_sha256": "a9530941761e788654e26e943cd999d2dd34caef78c8c7211d551722602c4992",
+      "transport_sha256": "a9530941761e788654e26e943cd999d2dd34caef78c8c7211d551722602c4992"
+    },
+    {
+      "original": "source-hosted-comparison-v1.exit",
+      "transport": "source-hosted-comparison-v1.exit",
+      "original_bytes": 2,
+      "original_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "transport_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "original": "access-jobs.json",
+      "transport": "access-jobs.json",
+      "original_bytes": 5364,
+      "original_sha256": "d7327c0c9697c73a845c3e8e20793d20552815c33a007bb14c17ca628703a364",
+      "transport_sha256": "d7327c0c9697c73a845c3e8e20793d20552815c33a007bb14c17ca628703a364"
+    },
+    {
+      "original": "development-verified/format.json",
+      "transport": "development-verified/format.json",
+      "original_bytes": 1263,
+      "original_sha256": "d74805fe1b62fbe89fe94c784a4fb007157db97233e2c917ddea2bfaaabdca6b",
+      "transport_sha256": "d74805fe1b62fbe89fe94c784a4fb007157db97233e2c917ddea2bfaaabdca6b"
+    },
+    {
+      "original": "development-verified/plan.json",
+      "transport": "development-verified/plan.json",
+      "original_bytes": 414829,
+      "original_sha256": "e3831b45b48de5dd33b808fb61fc457f867e079a3199269c546794f347323b2c",
+      "transport_sha256": "e3831b45b48de5dd33b808fb61fc457f867e079a3199269c546794f347323b2c"
+    },
+    {
+      "original": "development-verified/dependency-setup.json",
+      "transport": "development-verified/dependency-setup.json",
+      "original_bytes": 1338,
+      "original_sha256": "269452ce6ac13e8c0ba0fcd5c83e1b9227b3c739e88a330ad30f6cc19fff34d2",
+      "transport_sha256": "269452ce6ac13e8c0ba0fcd5c83e1b9227b3c739e88a330ad30f6cc19fff34d2"
+    },
+    {
+      "original": "development-verified/fts.json",
+      "transport": "development-verified/fts.json",
+      "original_bytes": 1391,
+      "original_sha256": "5ce824786afd6e19761ca6d01e1f7c2fc97663dd6b3f03216a43d1ac38c651d2",
+      "transport_sha256": "5ce824786afd6e19761ca6d01e1f7c2fc97663dd6b3f03216a43d1ac38c651d2"
+    },
+    {
+      "original": "development-verified/report-validation.json",
+      "transport": "development-verified/report-validation.json",
+      "original_bytes": 1256,
+      "original_sha256": "e8b69f6341cc4c75ec641d2625ccdaa0d053eb911f824ca63b7f0922d0a17bc0",
+      "transport_sha256": "e8b69f6341cc4c75ec641d2625ccdaa0d053eb911f824ca63b7f0922d0a17bc0"
+    },
+    {
+      "original": "development-verified/doctor.json",
+      "transport": "development-verified/doctor.json",
+      "original_bytes": 1243,
+      "original_sha256": "284c574cdb90aa7048c188a15c6a0877446b160529970083d22c4cad9a3fec83",
+      "transport_sha256": "284c574cdb90aa7048c188a15c6a0877446b160529970083d22c4cad9a3fec83"
+    },
+    {
+      "original": "development-verified/planning.json",
+      "transport": "development-verified/planning.json",
+      "original_bytes": 1195,
+      "original_sha256": "93afd3e12570c317d26d5e2014864f8be65f2fc46406762b166a57d57d41fc60",
+      "transport_sha256": "93afd3e12570c317d26d5e2014864f8be65f2fc46406762b166a57d57d41fc60"
+    },
+    {
+      "original": "development-verified/format.md",
+      "transport": "development-verified/format.md",
+      "original_bytes": 426,
+      "original_sha256": "33be6d02977cd5a5392fea8416f079b2cff00f66bbe1755d5648f005a3b47dc5",
+      "transport_sha256": "33be6d02977cd5a5392fea8416f079b2cff00f66bbe1755d5648f005a3b47dc5"
+    },
+    {
+      "original": "development-verified/receipt.zip",
+      "transport": "development-verified/receipt.zip",
+      "original_bytes": 91302,
+      "original_sha256": "b9380f4201eed5f20f2b5e05c40e6b5de2e3c194b428e441b3d4ca72a441f15d",
+      "transport_sha256": "b9380f4201eed5f20f2b5e05c40e6b5de2e3c194b428e441b3d4ca72a441f15d"
+    },
+    {
+      "original": "development-verified/planning.md",
+      "transport": "development-verified/planning.md",
+      "original_bytes": 430,
+      "original_sha256": "52308bfc69ae2ee0ea699c758b61d33a78e9d7d3f307aa49a1e2db728dc00145",
+      "transport_sha256": "52308bfc69ae2ee0ea699c758b61d33a78e9d7d3f307aa49a1e2db728dc00145"
+    },
+    {
+      "original": "development-verified/dependency-setup.md",
+      "transport": "development-verified/dependency-setup.md",
+      "original_bytes": 446,
+      "original_sha256": "604ed615c897405915db6fde80c5685f97b48825a788447423b3ba31701cabb3",
+      "transport_sha256": "604ed615c897405915db6fde80c5685f97b48825a788447423b3ba31701cabb3"
+    },
+    {
+      "original": "development-verified/receipt-binding.json",
+      "transport": "development-verified/receipt-binding.json",
+      "original_bytes": 209,
+      "original_sha256": "90aaeee132a0908e9e6cc07c864e624f26acf95e48dbdfbc57f858f3fe6c6f43",
+      "transport_sha256": "90aaeee132a0908e9e6cc07c864e624f26acf95e48dbdfbc57f858f3fe6c6f43"
+    },
+    {
+      "original": "development-verified/doctor.md",
+      "transport": "development-verified/doctor.md",
+      "original_bytes": 426,
+      "original_sha256": "8426d5bb07a95e3d46cfd052a08d4a38e69cb6da476de764fc6c85efc34bfcc7",
+      "transport_sha256": "8426d5bb07a95e3d46cfd052a08d4a38e69cb6da476de764fc6c85efc34bfcc7"
+    },
+    {
+      "original": "development-verified/fts.md",
+      "transport": "development-verified/fts.md",
+      "original_bytes": 420,
+      "original_sha256": "bf9bfb21638f562a94254fa2a07456d0e0ce12593fd9e0756018d555b5d5bd13",
+      "transport_sha256": "bf9bfb21638f562a94254fa2a07456d0e0ce12593fd9e0756018d555b5d5bd13"
+    },
+    {
+      "original": "development-verified/plan.md",
+      "transport": "development-verified/plan.md",
+      "original_bytes": 158873,
+      "original_sha256": "0c9f10d8543679a6ab8905b7eae7d896a10bc0845234fa338ca4c1020ec39b1c",
+      "transport_sha256": "0c9f10d8543679a6ab8905b7eae7d896a10bc0845234fa338ca4c1020ec39b1c"
+    },
+    {
+      "original": "development-verified/schema-map.json",
+      "transport": "development-verified/schema-map.json",
+      "original_bytes": 313962,
+      "original_sha256": "008ec6db20cff68544de76fba204fbc858be3223be459cc7cab7105cf6fbf86c",
+      "transport_sha256": "008ec6db20cff68544de76fba204fbc858be3223be459cc7cab7105cf6fbf86c"
+    },
+    {
+      "original": "development-verified/lint.json",
+      "transport": "development-verified/lint.json",
+      "original_bytes": 1237,
+      "original_sha256": "9a1b9ba4582a6d781ad38879033fb86024d4dd9f0d32d38cfea141d24518ed9b",
+      "transport_sha256": "9a1b9ba4582a6d781ad38879033fb86024d4dd9f0d32d38cfea141d24518ed9b"
+    },
+    {
+      "original": "development-verified/lint.md",
+      "transport": "development-verified/lint.md",
+      "original_bytes": 422,
+      "original_sha256": "60671a31d86b4d2eb53797f85141d9481e1a90fe80ee0632f3c23029c8e5d26a",
+      "transport_sha256": "60671a31d86b4d2eb53797f85141d9481e1a90fe80ee0632f3c23029c8e5d26a"
+    },
+    {
+      "original": "development-verified/report-validation.md",
+      "transport": "development-verified/report-validation.md",
+      "original_bytes": 448,
+      "original_sha256": "7b933315058f93c56b98f8ac1e79d38d5143196057a7496ee13133084be0cf85",
+      "transport_sha256": "7b933315058f93c56b98f8ac1e79d38d5143196057a7496ee13133084be0cf85"
+    },
+    {
+      "original": "development-verified/validation-summary.md",
+      "transport": "development-verified/validation-summary.md",
+      "original_bytes": 515,
+      "original_sha256": "b5081879d9aa932e1d6d0d31f878110e44f58c812001b45fe64644d808d631de",
+      "transport_sha256": "b5081879d9aa932e1d6d0d31f878110e44f58c812001b45fe64644d808d631de"
+    },
+    {
+      "original": "development-verified/reports.json",
+      "transport": "development-verified/reports.json",
+      "original_bytes": 34563,
+      "original_sha256": "f36dd2ebee061c65f05f0c136b2757bd05a91dccb2eb636e0bd4f81bd6a7dfac",
+      "transport_sha256": "f36dd2ebee061c65f05f0c136b2757bd05a91dccb2eb636e0bd4f81bd6a7dfac"
+    },
+    {
+      "original": "development-verified/validation-manifest.json",
+      "transport": "development-verified/validation-manifest.json",
+      "original_bytes": 39123,
+      "original_sha256": "ddd247e17ecd6f040095ddc05e1cb64f721fa392a367b63aeb15f3b8ba250f71",
+      "transport_sha256": "ddd247e17ecd6f040095ddc05e1cb64f721fa392a367b63aeb15f3b8ba250f71"
+    },
+    {
+      "original": "access-verified/receipt.zip",
+      "transport": "access-verified/receipt.zip",
+      "original_bytes": 1953448,
+      "original_sha256": "436c4c647bdf7943e23ef341700c73f412a8d93600bb71cbd1f1ad30d44ce37a",
+      "transport_sha256": "436c4c647bdf7943e23ef341700c73f412a8d93600bb71cbd1f1ad30d44ce37a"
+    },
+    {
+      "original": "access-verified/receipt-binding.json",
+      "transport": "access-verified/receipt-binding.json",
+      "original_bytes": 150,
+      "original_sha256": "f7c24412c9f545b8d698413ff52a57804e935b0559e01d3283c836c409eb9da1",
+      "transport_sha256": "f7c24412c9f545b8d698413ff52a57804e935b0559e01d3283c836c409eb9da1"
+    }
+  ],
+  "omitted_expanded_artifacts": [
+    "access-verified/artifacts/runtime/docs.json",
+    "access-verified/artifacts/runtime/sdist-wheel.json",
+    "access-verified/artifacts/runtime/wheel.json",
+    "access-verified/artifacts/runtime/final.json",
+    "access-verified/artifacts/runtime/selected.json",
+    "access-verified/artifacts/runtime/dependencies.json",
+    "access-verified/artifacts/access-registry/source-revision.json",
+    "access-verified/artifacts/access-registry/tests.xml",
+    "access-verified/artifacts/access-registry/distribution.json",
+    "access-verified/artifacts/access-registry/runtime.txt",
+    "access-verified/artifacts/access-registry/tests.log",
+    "access-verified/artifacts/access-registry/failure-comparison.json",
+    "access-verified/artifacts/access-registry/collected.txt",
+    "access-verified/artifacts/access-registry/mkdocs.txt",
+    "access-verified/artifacts/access-registry/runtime.json",
+    "access-verified/artifacts/access-registry/i5/summary.json",
+    "access-verified/artifacts/access-registry/i5/transfer-sql.jsonl",
+    "access-verified/artifacts/access-registry/i5/regressions.execution.json",
+    "access-verified/artifacts/access-registry/i5/selected-collection.execution.json",
+    "access-verified/artifacts/access-registry/i5/regressions.jsonl",
+    "access-verified/artifacts/access-registry/i5/transfer-admission.log",
+    "access-verified/artifacts/access-registry/i5/transfer-sql.xml",
+    "access-verified/artifacts/access-registry/i5/regressions.selected.txt",
+    "access-verified/artifacts/access-registry/i5/ordinary-not-executed.txt",
+    "access-verified/artifacts/access-registry/i5/ordinary-collection.nodes.txt",
+    "access-verified/artifacts/access-registry/i5/transfer-admission.execution.json",
+    "access-verified/artifacts/access-registry/i5/transfer-sql.log",
+    "access-verified/artifacts/access-registry/i5/transfer-sql.execution.json",
+    "access-verified/artifacts/access-registry/i5/transfer-admission.jsonl",
+    "access-verified/artifacts/access-registry/i5/runtime-before-checks.json",
+    "access-verified/artifacts/access-registry/i5/transfer-admission.selected.txt",
+    "access-verified/artifacts/access-registry/i5/targets.json",
+    "access-verified/artifacts/access-registry/i5/regressions.xml",
+    "access-verified/artifacts/access-registry/i5/ordinary-collection.log",
+    "access-verified/artifacts/access-registry/i5/ordinary-collection.execution.json",
+    "access-verified/artifacts/access-registry/i5/transfer-sql.selected.txt",
+    "access-verified/artifacts/access-registry/i5/regressions.log",
+    "access-verified/artifacts/access-registry/i5/input-binding.json",
+    "access-verified/artifacts/access-registry/i5/selected-collection.log",
+    "access-verified/artifacts/access-registry/i5/transfer-admission.xml",
+    "access-verified/artifacts/access-registry/i5/selected-collection.nodes.txt",
+    "access-verified/artifacts/access-registry/offline-inventory/ci.execution.json",
+    "access-verified/artifacts/access-registry/offline-inventory/summary.json",
+    "access-verified/artifacts/access-registry/offline-inventory/offline.log",
+    "access-verified/artifacts/access-registry/offline-inventory/ci.log",
+    "access-verified/artifacts/access-registry/offline-inventory/ordinary.log",
+    "access-verified/artifacts/access-registry/offline-inventory/selection.json",
+    "access-verified/artifacts/access-registry/offline-inventory/all.nodes.txt",
+    "access-verified/artifacts/access-registry/offline-inventory/inputs-before.json",
+    "access-verified/artifacts/access-registry/offline-inventory/ordinary.execution.json",
+    "access-verified/artifacts/access-registry/offline-inventory/runtime-before-checks.json",
+    "access-verified/artifacts/access-registry/offline-inventory/inputs-after.json",
+    "access-verified/artifacts/access-registry/offline-inventory/offline.execution.json",
+    "access-verified/artifacts/access-registry/offline-inventory/binding.json",
+    "access-verified/artifacts/access-registry/offline-inventory/ci.nodes.txt",
+    "access-verified/artifacts/access-registry/offline-inventory/all.log",
+    "access-verified/artifacts/access-registry/offline-inventory/offline.nodes.txt",
+    "access-verified/artifacts/access-registry/offline-inventory/all.execution.json",
+    "access-verified/artifacts/access-registry/offline-inventory/ordinary.nodes.txt",
+    "access-verified/artifacts/access-registry/i5-distribution/summary.json",
+    "access-verified/artifacts/access-registry/i5-distribution/direct-i2.json",
+    "access-verified/artifacts/access-registry/i5-distribution/sdist-i3.log",
+    "access-verified/artifacts/access-registry/i5-distribution/sdist-i4.log",
+    "access-verified/artifacts/access-registry/i5-distribution/sdist-runtime-binding.log",
+    "access-verified/artifacts/access-registry/i5-distribution/sdist-i3.json",
+    "access-verified/artifacts/access-registry/i5-distribution/test-support-binding.json",
+    "access-verified/artifacts/access-registry/i5-distribution/build-binding.json",
+    "access-verified/artifacts/access-registry/i5-distribution/sdist-requirements.txt",
+    "access-verified/artifacts/access-registry/i5-distribution/direct-access.log",
+    "access-verified/artifacts/access-registry/i5-distribution/sdist-venv.log",
+    "access-verified/artifacts/access-registry/i5-distribution/direct-requirements.txt",
+    "access-verified/artifacts/access-registry/i5-distribution/sdist-i5-selected.txt",
+    "access-verified/artifacts/access-registry/i5-distribution/direct-i5-selected.txt",
+    "access-verified/artifacts/access-registry/i5-distribution/direct-i4-collect.log",
+    "access-verified/artifacts/access-registry/i5-distribution/direct-i3.json",
+    "access-verified/artifacts/access-registry/i5-distribution/processes.json",
+    "access-verified/artifacts/access-registry/i5-distribution/direct-i4.log",
+    "access-verified/artifacts/access-registry/i5-distribution/direct-i4.xml",
+    "access-verified/artifacts/access-registry/i5-distribution/direct-i5.log",
+    "access-verified/artifacts/access-registry/i5-distribution/sdist-measure.log",
+    "access-verified/artifacts/access-registry/i5-distribution/direct-runtime.json",
+    "access-verified/artifacts/access-registry/i5-distribution/sdist-i4-execution.json",
+    "access-verified/artifacts/access-registry/i5-distribution/wheelhouse-binding.json",
+    "access-verified/artifacts/access-registry/i5-distribution/direct-runtime-binding.log",
+    "access-verified/artifacts/access-registry/i5-distribution/direct-i4.jsonl",
+    "access-verified/artifacts/access-registry/i5-distribution/sdist-i4-selected.txt",
+    "access-verified/artifacts/access-registry/i5-distribution/sdist-i5.xml",
+    "access-verified/artifacts/access-registry/i5-distribution/sdist-i4-collect.log",
+    "access-verified/artifacts/access-registry/i5-distribution/build-sdist-wheel.log",
+    "access-verified/artifacts/access-registry/i5-distribution/sdist-i2.log",
+    "access-verified/artifacts/access-registry/i5-distribution/sdist-install.log",
+    "access-verified/artifacts/access-registry/i5-distribution/direct-i5-imports.json",
+    "access-verified/artifacts/access-registry/i5-distribution/direct-i4-imports.json",
+    "access-verified/artifacts/access-registry/i5-distribution/sdist-i5-execution.json",
+    "access-verified/artifacts/access-registry/i5-distribution/runtime-before-checks.json",
+    "access-verified/artifacts/access-registry/i5-distribution/sdist-i5-collect.log",
+    "access-verified/artifacts/access-registry/i5-distribution/sdist-access.log",
+    "access-verified/artifacts/access-registry/i5-distribution/direct-measure.log",
+    "access-verified/artifacts/access-registry/i5-distribution/direct-i5-execution.json",
+    "access-verified/artifacts/access-registry/i5-distribution/sdist-i2.json",
+    "access-verified/artifacts/access-registry/i5-distribution/direct-i4-selected.txt",
+    "access-verified/artifacts/access-registry/i5-distribution/direct-i5.jsonl",
+    "access-verified/artifacts/access-registry/i5-distribution/sdist-runtime.json",
+    "access-verified/artifacts/access-registry/i5-distribution/direct-i5-collect.log",
+    "access-verified/artifacts/access-registry/i5-distribution/direct-install.log",
+    "access-verified/artifacts/access-registry/i5-distribution/direct-runtime-binding.json",
+    "access-verified/artifacts/access-registry/i5-distribution/archive.log",
+    "access-verified/artifacts/access-registry/i5-distribution/sdist-i5-imports.json",
+    "access-verified/artifacts/access-registry/i5-distribution/direct-i5.xml",
+    "access-verified/artifacts/access-registry/i5-distribution/direct-i4-execution.json",
+    "access-verified/artifacts/access-registry/i5-distribution/sdist-i4.jsonl",
+    "access-verified/artifacts/access-registry/i5-distribution/build-direct.log",
+    "access-verified/artifacts/access-registry/i5-distribution/direct-i3.log",
+    "access-verified/artifacts/access-registry/i5-distribution/direct-venv.log",
+    "access-verified/artifacts/access-registry/i5-distribution/sdist-i5.jsonl",
+    "access-verified/artifacts/access-registry/i5-distribution/sdist-i4-imports.json",
+    "access-verified/artifacts/access-registry/i5-distribution/sdist-runtime-binding.json",
+    "access-verified/artifacts/access-registry/i5-distribution/direct-i2.log",
+    "access-verified/artifacts/access-registry/i5-distribution/sdist-i4.xml",
+    "access-verified/artifacts/access-registry/i5-distribution/sdist-i5.log"
+  ],
+  "retention": "All indexed payloads remain inside each verified receipt.zip. Original INDEX describes full external audit."
+}

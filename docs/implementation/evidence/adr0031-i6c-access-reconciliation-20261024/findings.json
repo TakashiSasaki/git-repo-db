@@ -1,0 +1,86 @@
+{
+  "phase": "Author correction and verification",
+  "repository": "https://github.com/TakashiSasaki/git-repo-db",
+  "target_branch": "fix/adr0031-i6c-access-reconciliation-20261024",
+  "base_branch": "fix/adr0031-i6c-positive-authority-followup-20261024",
+  "base_commit": "328dadf4b939bb2d1a3771fb1a9fcbad49fb16c6",
+  "base_tree": "dfa2a72e03ca87a99f5d349a7c01caa31a6e0bf5",
+  "tested_input_commit": "e4967ca7d1d129a726cf03a8d2e6ff31c0e56250",
+  "tested_input_tree": "1108b1ce553eb9d84c8c7869f04725d27dedf5cc",
+  "author_status": "Author-complete",
+  "independent_acceptance_claim": false,
+  "behavioral_verifications": {
+    "paired_provider_acquisition": {
+      "verified": true,
+      "authority_forwarding": "verified",
+      "p1_recovery_stop_precedence": "verified",
+      "real_sqlite_row_evidence": "verified in test_independent_source_and_disposition_authorization_e2e"
+    },
+    "exchange_v5_core_and_context": {
+      "verified": true,
+      "format": "git-repo-db/adr0031-exchange-v5",
+      "context_only": "verified",
+      "core_plus_context": "verified"
+    },
+    "receiver_selection_controls": {
+      "empty_selection": "verified",
+      "strict_subset": "verified",
+      "complete_permitted": "verified",
+      "omitted_by_selection_refusal": "verified"
+    },
+    "receiver_local_grants": {
+      "sender_cannot_create_receiver_authority": "verified in test_sender_data_cannot_create_receiver_authority_or_inject_grants",
+      "missing_or_foreign_authority_denial": "verified (PERMISSION_DENIED)",
+      "replay_idempotency": "verified (idempotent_replay: true)",
+      "commit_time_revocation": "verified (revocation raises PERMISSION_DENIED at transaction boundary)"
+    },
+    "core_first_paired_failure_semantics": {
+      "verified": true,
+      "durable_operational_core_context_state": "verified"
+    }
+  },
+  "prompt_inquiries": {
+    "1_grants_based_fallback_and_caller_trust_boundary": {
+      "verdict": "SAFE_AS_DESIGNED",
+      "finding": "The grants-based local fallback in create_local_admission_service operates solely inside trusted receiver application execution. Untrusted wire packages cannot pass `grants` or invoke the local admission service. When `grants=None`, policy permits only repositories; resources, dispositions, sources, and mapping claims are denied closed with PERMISSION_DENIED."
+    },
+    "2_dependency_extraction_exception_suppression": {
+      "verdict": "SAFE_WITH_PREFLIGHT_ENFORCEMENT",
+      "finding": "In `_extract_context_dependencies`, broad exception suppression does not leak malformed wire data into Context. Preflight validation in `validate_context` (exchange.py:1864) eagerly executes `relation(row)` and `disposition(row)` without exception suppression before any database transaction, ensuring malformed records fail immediately with zero persistent writes. Furthermore, explicit `disposition_key` extraction was added so dispositions are extracted and authorized independently."
+    },
+    "3_helpers_deriving_grants_from_package_contents": {
+      "verdict": "TEST_ONLY_HARNESS_CONFIRMED",
+      "finding": "The helper `receive()` in `tests/integration/i3/test_selective_exchange.py` lines 94-112 derives grants from package contents strictly to adapt legacy ADR 0030 test fixtures without rewriting 65 test cases. No production code path derives receiver grants from untrusted package contents."
+    }
+  },
+  "reconciliation_summary": {
+    "baseline_pr154_total_nodes": 6343,
+    "baseline_pr154_passes": 6045,
+    "baseline_pr154_non_successes": 299,
+    "resolved_access_failures": 25,
+    "resolved_selective_exchange_failures": 59,
+    "total_resolved": 84,
+    "inherited_unchanged_transfer_fence_failures": 215,
+    "new_regressions": 0,
+    "access_acceptance_audit": {
+      "unique_test_references": 64,
+      "executed_nodes": 939,
+      "failures": 0,
+      "errors": 0,
+      "node_set_matched": true,
+      "incomplete_requirements": [11, 15]
+    }
+  },
+  "distribution_verification": {
+    "direct_wheel_sha256": "c3a147b2111e2e22e75af1c1390cfe9b9e8a8f68f5a4a8a6f3584bd608b1360a",
+    "derived_wheel_sha256": "c3a147b2111e2e22e75af1c1390cfe9b9e8a8f68f5a4a8a6f3584bd608b1360a",
+    "byte_for_byte_equivalent": true,
+    "installed_environments": 2,
+    "sqlite_version": "3.53.1",
+    "normal_transfer_fence_refusal": "verified",
+    "authorized_provider_and_exchange": "verified",
+    "denial_controls": "verified",
+    "replay_idempotency": "verified",
+    "smoke_exit_code": 0
+  }
+}

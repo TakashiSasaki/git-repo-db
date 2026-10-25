@@ -1,0 +1,8 @@
+{
+  "tool_chunk_id": "88e494",
+  "exit_code": 1,
+  "action": "Postprocessing only, no product tests repeated",
+  "reason": "Copied summary F=OUT/final read superseded d68 receipts; additionally expected passed journal label where journal contract emits completed for exit0",
+  "outcome": "Stopped on first read/assertion before writing any summary or compressing raw bytes",
+  "correction": "Explicit final-root-guard path and source HEAD/tree assertions; require actual completed/exit0 or failed/exit1 label; preserve all original executions"
+}

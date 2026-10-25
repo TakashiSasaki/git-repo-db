@@ -1,0 +1,51 @@
+{
+  "schema": 1,
+  "purpose": "Main integration identity correction; historical execution evidence is reused only for identical executable inputs.",
+  "main_before": {
+    "commit": "cb532242c7aa86c6af5b6232b71c0906ea38f5c5",
+    "tree": "318ad07874ab436206e6a61f231b308a421cfc54"
+  },
+  "tested_input": {
+    "commit": "91d2bc7e6c47a3c1ec46949211ab16cb4ac7900f",
+    "tree": "d35ca8d7212bddd9aa6ad1646d43a3fe062d619e"
+  },
+  "submitted_source": {
+    "commit": "a700676b317e60566f2925222b6cbc5582a525ef",
+    "tree": "85246784625024ecbed114c36c75aac88d8504f8"
+  },
+  "review_head": {
+    "commit": "3a52cd8dee8f0ac5ac4e8f319e3b54f27a3c55ad",
+    "tree": "884aec6da4f50373e7caac620e9d50c108801c35"
+  },
+  "identity_errata": [
+    {
+      "field": "PR #174 reviewed submission tree",
+      "incorrect": "3f191b7d3f82cb34220b330ec02882a88dc18042",
+      "correct": "85246784625024ecbed114c36c75aac88d8504f8"
+    },
+    {
+      "field": "PR #172 body review HEAD",
+      "incorrect": "3a52cd8d8f07a0da7c679a9596ba37bb31e9c56d",
+      "correct": "3a52cd8dee8f0ac5ac4e8f319e3b54f27a3c55ad"
+    }
+  ],
+  "source_ci": {
+    "access_run": 40147504587,
+    "tests_run": 40147504588,
+    "pages_run": 40147504592
+  },
+  "acceptance_scope": {
+    "resolved": 73,
+    "inherited_non_successes": 201,
+    "progressed_barriers": 0,
+    "changed_failures": 0,
+    "new_regressions": 0
+  },
+  "excluded": [
+    "I7/I8 product activation",
+    "ordinary Transfer activation",
+    "Release dispatch",
+    "deployment",
+    "real catalog operations"
+  ]
+}

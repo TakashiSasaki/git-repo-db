@@ -1,0 +1,37 @@
+from pathlib import Path
+import hashlib,json,os,shutil,subprocess,sys,time
+ROOT=Path('/workspace/git-repo-db');WORK=Path('/workspace/i6b-source-extra');WORK.mkdir(exist_ok=False);OUT=ROOT/'docs/implementation/evidence/adr0031-i6b-independent-20261023/distribution';PY=ROOT/'.venv/bin/python';FROZEN=Path('/workspace/i6b-distribution-work/frozen');records=[]
+def sha(p):return hashlib.sha256(Path(p).read_bytes()).hexdigest()
+def write(p,v):Path(p).write_text(json.dumps(v,indent=2)+'\n')
+def run(name,args,env):
+ start=time.time()
+ with (OUT/(name+'.log')).open('w') as f:p=subprocess.run(list(map(str,args)),cwd=ROOT,env=env,stdout=f,stderr=subprocess.STDOUT)
+ r={'name':name,'argv':list(map(str,args)),'cwd':str(ROOT),'exit_code':p.returncode,'started_epoch':start,'elapsed_seconds':time.time()-start};records.append(r);write(OUT/'source-author-extra-processes.json',records);print(name,p.returncode,flush=True);return p.returncode
+probe=WORK/'test_author_extra.py';source=FROZEN/'docs/implementation/evidence/adr0031-i6b-author-20261023/tools/test_i6b_extra.py.txt';shutil.copy2(source,probe)
+expected=json.loads((OUT/'product-equality.json').read_text())['product'];write(WORK/'product.json',expected)
+conf=WORK/'conftest.py';conf.write_text('''from pathlib import Path
+import hashlib,json,os,sqlite3,sys
+import repo_catalog
+
+def pytest_sessionstart(session):check(session,'start')
+def pytest_sessionfinish(session,exitstatus):check(session,'finish')
+def check(session,phase):
+ root=Path(repo_catalog.__file__).resolve().parent
+ assert root==Path('/workspace/git-repo-db/src/repo_catalog')
+ assert session.config.inipath==Path('/workspace/git-repo-db/pyproject.toml')
+ actual={str(p.relative_to(root)):{'bytes':p.stat().st_size,'sha256':hashlib.sha256(p.read_bytes()).hexdigest()} for p in root.rglob('*') if p.is_file() and '__pycache__' not in p.parts and p.suffix!='.pyc'}
+ assert actual==json.loads((Path(__file__).parent/'product.json').read_text())
+ modules={n:str(Path(m.__file__).resolve()) for n,m in sys.modules.items() if (n=='repo_catalog' or n.startswith('repo_catalog.')) and getattr(m,'__file__',None)}
+ assert all(Path(p).is_relative_to(root) for p in modules.values())
+ out=Path(os.environ['SOURCE_EXTRA_IMPORTS']);records=json.loads(out.read_text()) if out.exists() else [];records.append({'phase':phase,'origin':str(root),'executable':sys.executable,'python':sys.version,'sqlite':sqlite3.connect(':memory:').execute('select sqlite_version(),sqlite_source_id()').fetchone(),'modules':modules,'source_product':actual});out.write_text(json.dumps(records,indent=2)+'\\n')
+''')
+write(OUT/'source-author-extra-inputs.json',{'source_head':'ef787a5ff8b13f118d6bf5107c7338f43fde56dc','source_tree':'a3ed2628a98db134bdc65d13da905f5ddf25e972','attribution':'Unchanged Author external34 independently rerun on source','test_sha256':sha(probe),'author_test_sha256':sha(source),'import_contract_sha256':sha(conf),'unchanged_source_product_equals_frozen_artifact':True,'driver_sha256':sha(__file__)})
+shutil.copy2(conf,OUT/'source_extra_conftest.py.txt');shutil.copy2(__file__,OUT/'run_source_author_extra.py.txt')
+env=dict(os.environ,PATH=str(ROOT/'.venv/bin')+os.pathsep+os.environ['PATH'],TMPDIR=str(WORK),I6B_EXTRA_SAVED_VECTOR_DIR=str(FROZEN/'docs/implementation/evidence/adr0031-i6b-author-20261023/vectors'),I6B_EXTRA_VECTOR_DIR=str(OUT/'source-author-extra-vectors'),SOURCE_EXTRA_IMPORTS=str(OUT/'source-author-extra-imports.json'))
+for k in ['GH_TOKEN','GITHUB_TOKEN','PYTHONHOME']:env.pop(k,None)
+args=[PY,'-m','pytest','-q','--tb=short','-p','tests.conftest','-c',ROOT/'pyproject.toml','--rootdir='+str(WORK),'--confcutdir='+str(WORK),'-o','junit_family=xunit1',probe]
+assert run('source-author-extra-collect',args+['--collect-only'],env)==0
+sys.path.insert(0,str(ROOT));from scripts import verify_i5_offline as evidence
+# External-path collection IDs are rooted at this new dedicated harness.
+nodes=[line.strip() for line in (OUT/'source-author-extra-collect.log').read_text().splitlines() if line.startswith('test_author_extra.py::')];assert len(nodes)==34;(OUT/'source-author-extra-selected.txt').write_text('\n'.join(nodes)+'\n');xml=OUT/'source-author-extra.xml';journal=OUT/'source-author-extra.jsonl';code=run('source-author-extra',args+['--junitxml='+str(xml),'--journal='+str(journal),'--basetemp='+str(WORK/'pytest-tmp')],env)
+result={'exit_code':code,'collected':len(nodes),**evidence.outcomes(xml),'reconciliation':evidence.reconciliation(nodes,xml,journal)};write(OUT/'source-author-extra-execution.json',result)

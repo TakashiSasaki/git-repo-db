@@ -1,0 +1,81 @@
+{
+  "finding": "I6B-IR-M02",
+  "author_validation_only": true,
+  "mechanism": "Shared outer canonical dictionary encoder hashes bounded actual received dictionary before selection conversion; canonical selection from_dict compares to existing to_dict authority and rejects normalization of received arrays.",
+  "new_tests": 40,
+  "unchanged_independent_required_refusal_tests": 30,
+  "focused_final": {
+    "passed": 299,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "exit": 0
+  },
+  "validation_command": ".venv/bin/python -m pytest -q tests/unit/test_exchange_received_digest.py tests/unit/test_context_wire_v5.py tests/unit/test_resource_key_identity.py /workspace/i6b-fix-work/m02/test_digest_contract.py -c /workspace/git-repo-db/pyproject.toml -o junit_family=xunit1 --junitxml=/workspace/i6b-fix-work/m02/focused-v2.junit.xml --journal=/workspace/i6b-fix-work/m02/focused-v2.journal.jsonl",
+  "prior_attempt": {
+    "passed": 296,
+    "failed": 3,
+    "exit": 1,
+    "cause": "New positive Author fixture supplied its typed ResourceKey tuple in noncanonical order and then asserted tuple equality against decoder canonical order. Reordered only new fixture inputs to canonical order; all assertions preserved. Unchanged independent required30 already passed."
+  },
+  "environment_setup_failure": "Initial uv sync default cache failed read-only /home/agent/.cache/uv/CACHEDIR.TAG. Follow-up UV_CACHE_DIR=/workspace/.uv-cache succeeded; no SQLite installed or changed.",
+  "scope": "No current authority, Provider authentication, I6-C route, Transfer enablement or independent acceptance claim.",
+  "files": {
+    "focused-v2.exit": {
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    "focused-v2.journal.jsonl": {
+      "bytes": 285528,
+      "sha256": "d87d7f3f248fac9f19880d97695bcfe3d2a9f383502245774aa0f26e95a35d3c"
+    },
+    "focused-v2.junit.xml": {
+      "bytes": 64355,
+      "sha256": "13cb87466c9790aadb444b7ba80ae040be78de0f4d6d4e3c55dd1db2844c55b7"
+    },
+    "focused-v2.log": {
+      "bytes": 420,
+      "sha256": "e644923646556cd4169bc45653e76c0a74d0860326e913879b8080add4a2f4d4"
+    },
+    "focused.exit": {
+      "bytes": 2,
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    },
+    "focused.journal.jsonl": {
+      "bytes": 285529,
+      "sha256": "615c74acc6c2863cc11b30594f60097c4250a1fef423145c518f79a29a699788"
+    },
+    "focused.junit.xml": {
+      "bytes": 68996,
+      "sha256": "e7d370f80e4404fa01f0f0ac056373e3e2df3677cb2c4f77955244327c2b5ef8"
+    },
+    "focused.log": {
+      "bytes": 4388,
+      "sha256": "061899aa04fc88612a13fe489b7ee5d25ffba453e472d794ab0199d50d51aeb1"
+    },
+    "ruff.exit": {
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    "ruff.log": {
+      "bytes": 19,
+      "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18"
+    },
+    "runtime.json": {
+      "bytes": 317,
+      "sha256": "a8a62fad528b65cac7fdcc7e5cabdc90629c0bfd2143e083c80448a999b2e4e1"
+    },
+    "test_digest_contract.py": {
+      "bytes": 2578,
+      "sha256": "855d5fc32bbff94890ce838a6e8cb27694eeaac218353f4407263ad75537ab74"
+    },
+    "uv-sync.exit": {
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    "uv-sync.log": {
+      "bytes": 1427,
+      "sha256": "30f5aee7754d0647f389bb15afe8d48f6ecdc006a107cca8def51e6550798050"
+    }
+  }
+}

@@ -1,0 +1,38 @@
+import sys,os,pathlib,json,gzip,hashlib,collections,xml.etree.ElementTree as ET,datetime,time,subprocess
+ROOT=pathlib.Path('/workspace/git-repo-db');sys.path.insert(0,str(ROOT))
+from scripts import verify_i5_offline as e
+OUT=ROOT/'docs/implementation/evidence/adr0031-i6a/author/final'
+OUT.mkdir(parents=True,exist_ok=False)
+def read(path):
+ p=pathlib.Path(path)
+ return p.read_bytes() if p.exists() else gzip.decompress(pathlib.Path(str(p)+'.gz').read_bytes())
+def data(path):return json.loads(read(path))
+def nodes(path):return read(path).decode().splitlines()
+e.write_json(OUT/'runtime-before.json',e.runtime_metadata(__import__('sqlite3').connect(':memory:')))
+e.require_product_runtime()
+before={'head':e.git('rev-parse','HEAD'),'tree':e.git('rev-parse','HEAD^{tree}'),'status':e.git('status','--porcelain'),'inputs':e.input_hashes()};e.write_json(OUT/'input-binding-before.json',before)
+allnodes,allreceipt=e.collect(OUT,'all-collection',['tests'])
+ordinary,receipt=e.collect(OUT,'ordinary-collection',['tests'],'not live and not benchmark')
+if allreceipt['exit_code'] or receipt['exit_code']:raise SystemExit('collection failed')
+base=ROOT/'docs/implementation/evidence/adr0031-i6a/author/baseline'
+historical=nodes(base/'historical-collection.nodes.txt')
+missing=sorted(set(historical)-set(ordinary));extra=sorted(set(ordinary)-set(historical))
+e.write_json(OUT/'selection.json',{'all':len(allnodes),'ordinary':len(ordinary),'historical':len(historical),'remaining':len(extra),'historical_missing':missing,'live_or_benchmark':sorted(set(allnodes)-set(ordinary))})
+if missing:raise SystemExit('inherited historical nodes missing; no silent retirement')
+runs={}
+for name,selected in [('regressions',historical),('remaining-ordinary',extra)]:
+ runs[name]=e.run_cohort(OUT,name,selected,4)
+ if name=='regressions':
+  from scripts.compare_i5_failures import index,compare
+  early=compare(index(read(base/'regressions.xml')),index((OUT/'regressions.xml').read_bytes()));e.write_json(OUT/'historical-failure-comparison.json',early)
+  p=subprocess.run([sys.executable,'/tmp/i6a_artifact_run.py'],cwd=ROOT)
+  e.write_json(OUT/'artifact-runner-exit.json',{'exit_code':p.returncode,'command':[sys.executable,'/tmp/i6a_artifact_run.py']})
+after={'head':e.git('rev-parse','HEAD'),'tree':e.git('rev-parse','HEAD^{tree}'),'status':e.git('status','--porcelain'),'inputs':e.input_hashes()};e.write_json(OUT/'input-binding-after.json',after)
+e.write_json(OUT/'runtime-after.json',e.runtime_metadata(__import__('sqlite3').connect(':memory:')))
+from scripts.compare_i5_failures import index,compare
+comparison=compare(index(read(base/'regressions.xml')),index((OUT/'regressions.xml').read_bytes()));e.write_json(OUT/'historical-failure-comparison.json',comparison)
+expected=collections.Counter(ordinary);actual=collections.Counter()
+for name in runs:actual.update(nodes(OUT/(name+'.selected.txt')))
+summary={'source_inputs_unchanged':before['inputs']==after['inputs'],'source_head_before':before['head'],'source_tree_before':before['tree'],'dirty_tested_source':bool(e.git('status','--porcelain','--untracked-files=no')),'ordinary_nodes':len(ordinary),'exact_disjoint_coverage':actual==expected and all(v==1 for v in actual.values()),'runs':runs,'aggregate':{k:sum(r.get(k,0) for r in runs.values()) for k in ('passed','failed','error','skipped','xfail','xpass','executed','elapsed_seconds')},'historical_failure_comparison':{k:v for k,v in comparison.items() if k!='comparison'},'full_acceptance':False}
+e.write_json(OUT/'summary.json',summary)
+print(json.dumps(summary['aggregate']))

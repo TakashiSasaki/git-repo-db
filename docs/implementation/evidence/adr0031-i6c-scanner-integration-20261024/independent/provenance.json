@@ -1,0 +1,26 @@
+{
+  "directory": "docs/implementation/evidence/adr0031-i6c-scanner-integration-20261024/independent",
+  "file_count": 4,
+  "files": {
+    "MATRIX.md": {
+      "bytes": 4161,
+      "sha256": "a14322a1e3ccb059ba924dff2fbb64fb3f1eb8133ab99e3b2f6c27046ed6857c",
+      "git_blob_oid": "9a8a7f4d91da61ca48e46dfd4872f7c75d0502e2"
+    },
+    "REPORT.md": {
+      "bytes": 10255,
+      "sha256": "cbc7dbad14cb1fde690c184eb5302c599b31f513cf59c62d868f7d4646b4046d",
+      "git_blob_oid": "7180b853a2021891ad42f206ea948661a5d6b356"
+    },
+    "findings.json": {
+      "bytes": 3,
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+      "git_blob_oid": "fe51488c7066f6687ef680d6bfaa4f7768ef205c"
+    },
+    "summary.json": {
+      "bytes": 2705,
+      "sha256": "b82c7c450ae4e6a6b629d4d80042f5d75ca8d6a7b4f95b602eec60911841829c",
+      "git_blob_oid": "7b68a7559df2f2238c88a8029b9fb138ee16bdab"
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "started_nodes": [
+    "::test_R04_already_validated_input_does_not_do_full_embedded_scan_after_budget_exhausted[0]",
+    "::test_R04_already_validated_input_does_not_do_full_embedded_scan_after_budget_exhausted[1]",
+    "::test_R04_already_validated_input_does_not_do_full_embedded_scan_after_budget_exhausted[17]"
+  ],
+  "junit_nodes": [
+    "::test_R04_already_validated_input_does_not_do_full_embedded_scan_after_budget_exhausted[0]",
+    "::test_R04_already_validated_input_does_not_do_full_embedded_scan_after_budget_exhausted[1]",
+    "::test_R04_already_validated_input_does_not_do_full_embedded_scan_after_budget_exhausted[17]"
+  ],
+  "exact_junit_journal": true,
+  "exact_phases": true,
+  "call_failures": 3,
+  "finishes": [
+    {
+      "event": "finish",
+      "status": "failed",
+      "exitstatus": 1,
+      "timestamp": 1792760275.53646
+    }
+  ]
+}

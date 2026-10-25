@@ -1,0 +1,216 @@
+{
+  "verified_members": 611,
+  "indices": [
+    {
+      "path": "adversarial-review/compression-index.json",
+      "sha256": "8dcd6cbd797d501a3b62c7f6f20b7fb256e00b54558ac5a3259fe3a773950d36",
+      "members": 21
+    },
+    {
+      "path": "after/assertions/compression-index.json",
+      "sha256": "23b7365e5cf6cc4f5d61f99f78e2262116479b9715d1cba74254ae26eefd6f61",
+      "members": 5
+    },
+    {
+      "path": "after/compression-index.json",
+      "sha256": "ae64475ca8ce97d182d162b588d694669b5b771ab08990ec7f3aebd6c57d37ab",
+      "members": 16
+    },
+    {
+      "path": "after-final/assertions/compression-index.json",
+      "sha256": "13f930cbd0389126a380c9eec21845599ce3a6e036430d83c5261afbb4082252",
+      "members": 5
+    },
+    {
+      "path": "after-final/compression-index.json",
+      "sha256": "f5446167d46c67e5d78eca76191fdf602d294cb5bdc245bcdc598f95f34f7ff1",
+      "members": 16
+    },
+    {
+      "path": "before/compression-index.json",
+      "sha256": "219b23a1f0ff55e713efd7a3ef89df5616f924415c69eeff3c223ef4e00f8efb",
+      "members": 16
+    },
+    {
+      "path": "classification/after-caughtguards/compression-index.json",
+      "sha256": "9f6839f12eb95bc3df89f8b1f6c1c3b1d8d4e92cb6363b9bd54d9f0428c5b28a",
+      "members": 10
+    },
+    {
+      "path": "classification/after-initial/compression-index.json",
+      "sha256": "e9e7c79195d83ec6f572f5003974f0cf72f919c1929d52cd4d2f705b462d6635",
+      "members": 4
+    },
+    {
+      "path": "classification/before-assertion-diagnostic/assertions/compression-index.json",
+      "sha256": "bb1241eb77dbecf42b88d59c9648843522a91ca943d03331b842607946675779",
+      "members": 5
+    },
+    {
+      "path": "classification/before-assertion-diagnostic/compression-index.json",
+      "sha256": "adec668525718684c101e01d9a002ed888801246a539513d09f89e78eaeac61c",
+      "members": 9
+    },
+    {
+      "path": "classification/before-caughtguards/compression-index.json",
+      "sha256": "4d40c13d1682f96c4b0014057348212bd01ef3be7182215865f5bdf4b73b887d",
+      "members": 10
+    },
+    {
+      "path": "classification/final/compression-index.json",
+      "sha256": "33623be9be5ee56bf55a3d35f42688fda328a0fd4570d8f04c9957c76e4bf595",
+      "members": 5
+    },
+    {
+      "path": "classification/final-caughtguards/compression-index.json",
+      "sha256": "d48c843532da79ba295200e0620ffafe854afe6bba1f3c2f195b9633d27b9e2c",
+      "members": 10
+    },
+    {
+      "path": "classification/final-recovery-export-guards/compression-index.json",
+      "sha256": "9e25061d948042b74f59f9469480f46b8e95b22b9cd3dc0f719f750332135bed",
+      "members": 10
+    },
+    {
+      "path": "classification/initial-recovery-export-guards/compression-index.json",
+      "sha256": "784235decd5f2517dccae02afb414f2c8a1af7df6830e64cca1bd8b111028467",
+      "members": 10
+    },
+    {
+      "path": "diagnostics/constructor-after/compression-index.json",
+      "sha256": "376c17d9e531322514ff7f413396b66206c1b15c8b17d66d724fe1690e32ec0a",
+      "members": 6
+    },
+    {
+      "path": "diagnostics/constructor-before/compression-index.json",
+      "sha256": "e2391f07238bc5f9b1e9ef45f19eb77eb0574048dbb1024c7cd6328efb5a8a79",
+      "members": 4
+    },
+    {
+      "path": "diagnostics/coordinator/compression-index.json",
+      "sha256": "f51d19d5b19f68f75a151afca357724bc5b7b7afdec1f023aa0a0591610c822a",
+      "members": 21
+    },
+    {
+      "path": "diagnostics/direct/compression-index.json",
+      "sha256": "bf6b81a1e4875c3600c4d09117b26b3679b489bc689a2a27ef20f834145cc10d",
+      "members": 4
+    },
+    {
+      "path": "diagnostics/direct-packaging/compression-index.json",
+      "sha256": "3a4b64a74fc9356e40c6434f019aeb23ee5b423169aa9cb2cebeb2378ed1dd35",
+      "members": 4
+    },
+    {
+      "path": "diagnostics/facade/compression-index.json",
+      "sha256": "317da7c409556e2c77f17596959541ead727e705fbfa6d7d17b5d57794293bbc",
+      "members": 25
+    },
+    {
+      "path": "diagnostics/p6-final-fixtures/compression-index.json",
+      "sha256": "e4bc366ee35eb10879f6841340c6e680b74b2a7b19e84ff6d02ed01d12d398aa",
+      "members": 10
+    },
+    {
+      "path": "focused-after/compression-index.json",
+      "sha256": "917ff55ffbb75c931574d85587b0ade079c3fe9c64c59eb383273082915c7a69",
+      "members": 7
+    },
+    {
+      "path": "focused-after/sql/compression-index.json",
+      "sha256": "1e51498f96c9e4188f790608429f1be63644660d847cabe296b92f4885c4b75f",
+      "members": 6
+    },
+    {
+      "path": "focused-final/compression-index.json",
+      "sha256": "1e1250667ba5c8e3a6308ee93c4fdb459882216531ac0bae367d0d1e629ec34f",
+      "members": 7
+    },
+    {
+      "path": "focused-final/sql/compression-index.json",
+      "sha256": "8728f8b3f73abbfdd35a64d5dee50e574663d57bb1d05cc3c0b81b4347a75afb",
+      "members": 6
+    },
+    {
+      "path": "hosted-final/access-receipts/compression-index.json",
+      "sha256": "afb05c5457f1666bff5127989f9171eed204960b8dfdf8b0bddec9c263e75724",
+      "members": 13
+    },
+    {
+      "path": "hosted-final/compression-index.json",
+      "sha256": "bacde60bdd6b0aa89f0ccb434f888e5b9451788808bfb8ab7c4e3f4ecbeba80a",
+      "members": 6
+    },
+    {
+      "path": "hosted-final/development-receipts/compression-index.json",
+      "sha256": "2ad45eee4d8bf097d3aa538180101031dcc26ce7fd9daf4f2fdef25078c73ae9",
+      "members": 5
+    },
+    {
+      "path": "hosted-final/installed-obligations/compression-index.json",
+      "sha256": "082847fd609ad3efdc1b7e2c76bd23443cdd8f603c7169dd2b812f0e5fda5138",
+      "members": 29
+    },
+    {
+      "path": "hosted-initial/access-receipts/compression-index.json",
+      "sha256": "86458d9aad4174d680ea7dea8bfd2c762073277d21f72b81d1f4f1675cb83541",
+      "members": 13
+    },
+    {
+      "path": "hosted-initial/compression-index.json",
+      "sha256": "3bdd1a6d414a34486f63bfb8da2f3d7a1cad7ad5a4089a626c12e6d6815b8891",
+      "members": 3
+    },
+    {
+      "path": "hosted-source/compression-index.json",
+      "sha256": "b45f7b7417f7b62371d8c920efb767d978de8ece922310ae521e2d11ef731ecc",
+      "members": 5
+    },
+    {
+      "path": "hosted-source/development-receipts/compression-index.json",
+      "sha256": "6ca2294fc7a6cc8aee51226d7739a7be5058c6a7208698ba3785e885274f7305",
+      "members": 5
+    },
+    {
+      "path": "installed-harness/after/compression-index.json",
+      "sha256": "e93ecce7c6eb9ba6e2ca356b6cebe3e956029862eb821159d2cf0f34f6ccc355",
+      "members": 57
+    },
+    {
+      "path": "installed-harness/before/compression-index.json",
+      "sha256": "b88aa9dd81aaadbd8d68fd9e83e23465fb252b8303530e2b3661804fe775f7f5",
+      "members": 32
+    },
+    {
+      "path": "installed-harness/diagnostic/compression-index.json",
+      "sha256": "fb108e1f890889f4eb5c2f6500860b759812a8b3d4dfed8653c182e76c62aa23",
+      "members": 35
+    },
+    {
+      "path": "installed-harness/final/compression-index.json",
+      "sha256": "362123f396fd8363a43b56744ee68176bc2ee79665a18abe9b547cc5c0bdeb2c",
+      "members": 57
+    },
+    {
+      "path": "installed-harness/source-tests/compression-index.json",
+      "sha256": "ed4510f928c3b380a32995839ac2093c1c208d2c68762f7201499f825d41c57e",
+      "members": 6
+    },
+    {
+      "path": "installed-safety/after/compression-index.json",
+      "sha256": "83e1f4c71b56e7a878da1e13f373464657b9e02b2223b5af035af8c6e27295d2",
+      "members": 40
+    },
+    {
+      "path": "installed-safety/final/compression-index.json",
+      "sha256": "9f98a41aa589b543e43ba9c951806613cc2e694028c53b84994ece276d4cdf03",
+      "members": 40
+    },
+    {
+      "path": "prelaunch/compression-index.json",
+      "sha256": "84c273f53b92de1f4e20913815e285631b1ac20ddad2feda7b0c31f43a40a2dd",
+      "members": 13
+    }
+  ],
+  "scope": "All currently archived original/stored bytes verified, not a new product test execution."
+}

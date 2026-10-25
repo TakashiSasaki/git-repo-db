@@ -1,0 +1,1862 @@
+{
+  "old": {
+    "selected": 6288,
+    "counts": {
+      "passed": 5989,
+      "failed": 279,
+      "error": 20
+    },
+    "normal_phase_reports": 18844,
+    "additional_subtest_reports": [
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_affirmative_wrapped_instructions",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'Run both the minimum and newer SQLite\\\\nruntimes before acceptance.'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_affirmative_wrapped_instructions",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'Build SQLite from source before running tests.'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_affirmative_wrapped_instructions",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'Use the actual SQLite 3.51.3 interpreter.'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_affirmative_wrapped_instructions",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'Require a SQLite version matrix.'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_affirmative_wrapped_instructions",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'Run SQLite 3.51.3 and 3.53.1.'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_affirmative_wrapped_instructions",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'Verify two versions of SQLite.'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_affirmative_wrapped_instructions",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'Require an exact SQLite source ID.'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_distribution_artifacts_and_doc_builds_are_not_version_matrices",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'Build and publish developer documentation for SQLite architectures.'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_distribution_artifacts_and_doc_builds_are_not_version_matrices",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'Use SQLite for both artifacts and record exact collected test cases.'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_distribution_artifacts_and_doc_builds_are_not_version_matrices",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'SQLite のソースビルドや複数版での検証は要求しません。'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_generated_probe_with_comma_imports_and_cli_selector",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "imports": "\"'import hashlib,json,sqlite3,sys'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_generated_probe_with_comma_imports_and_cli_selector",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "imports": "\"'import json,sqlite3'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_library_environment_writes",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'export LD_LIBRARY_PATH=/tmp/sqlite'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_library_environment_writes",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "'\"env[\\'LD_PRELOAD\\'] = \\'/tmp/libsqlite3.so\\'\"'"
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_library_environment_writes",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'dict(os.environ, LD_LIBRARY_PATH=str(library))'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_library_environment_writes",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "'\"env.update({\\'LD_LIBRARY_PATH\\': str(library)})\"'"
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_literal_version_gates",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'import sqlite3\\\\nassert sqlite3.sqlite_version_info == (3, 51, 3)'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_literal_version_gates",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "'\"import sqlite3 as sql\\\\nif sql.sqlite_version != \\'3.51.3\\':\\\\n    raise RuntimeError()\"'"
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_literal_version_gates",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'import sqlite3\\\\nEXPECTED = (3, 51, 3)\\\\nactual = sqlite3.sqlite_version_info\\\\nassert actual == EXPECTED'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_negative_policy_and_historical_observations",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'Do not build SQLite from source for tests.'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_negative_policy_and_historical_observations",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'Never require both SQLite versions.'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_negative_policy_and_historical_observations",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'Run without a SQLite version matrix.'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_negative_policy_and_historical_observations",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'Historical runs used both SQLite releases.'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_negative_policy_and_historical_observations",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'The completed experiment supplies SQLite 3.51.3/3.53.1 evidence.'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_negative_policy_and_historical_observations",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'SQLite のソースビルドは廃止する。'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_original_minimum_sqlite_and_newer_v1_requirement_is_detected",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'Run actual minimum SQLite 3.51.3 and a newer supported runtime.'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_original_minimum_sqlite_and_newer_v1_requirement_is_detected",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'| V1 — supported runtimes | Apply throughout I1–I8; freeze coherent integrated inputs. Run actual minimum SQLite 3.5...controls. Independent execution separates SQL errors from Python validation; no version spoofing or inherited PASS. |'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_test_only_installation_shell_and_python_argv",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'uv pip install pysqlite3-binary'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_test_only_installation_shell_and_python_argv",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'apt-get install libsqlite3-dev'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_test_only_installation_shell_and_python_argv",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'brew install sqlite'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_test_only_installation_shell_and_python_argv",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "'\"subprocess.run([\\'pip\\', \\'install\\', \\'pysqlite3-binary\\'])\"'"
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_unrelated_negative_clause_does_not_hide_positive_requirement",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'Run SQLite 3.51.3 and 3.53.1 without disabling product safety checks.'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_unrelated_negative_clause_does_not_hide_positive_requirement",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'Run both SQLite versions and never spoof version strings.'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_unrelated_negative_clause_does_not_hide_positive_requirement",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'Never spoof version strings and run both SQLite versions.'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_unrelated_negative_clause_does_not_hide_positive_requirement",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'Run both SQLite versions and preserve historical evidence.'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_unrelated_negative_clause_does_not_hide_positive_requirement",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'Run without bypassing safety checks on SQLite 3.51.3 and 3.53.1.'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_version_and_library_selection_options",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "name": "\"'sqlite'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_version_and_library_selection_options",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "name": "\"'sqlite-version'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_version_and_library_selection_options",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "name": "\"'sqlite-source-id'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_version_and_library_selection_options",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "name": "\"'minimum-library'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_version_and_library_selection_options",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "name": "\"'newer-library'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_version_matrix_forms",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "'\"sqlite: [\\'3.51.3\\', \\'3.53.1\\']\"'"
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_version_matrix_forms",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "'\"sqlite-version:\\\\n  - \\'3.51.3\\'\\\\n  - \\'3.53.1\\'\\\\n\"'"
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_version_matrix_forms",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'run: python verify.py ${{ matrix.sqlite }}'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_version_matrix_forms",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "'\"import sqlite3\\\\nfor version in (\\'3.51.3\\', \\'3.53.1\\'):\\\\n    run(version)\"'"
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyScopeAndCliTests::test_active_scopes_include_future_agent_helpers_and_nested_agents",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "path": "\"'.agents/skills/new/scripts/prepare.sh'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyScopeAndCliTests::test_active_scopes_include_future_agent_helpers_and_nested_agents",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "path": "\"'.agents/skills/new/references/run.md'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyScopeAndCliTests::test_active_scopes_include_future_agent_helpers_and_nested_agents",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "path": "\"'docs/phase2/AGENTS.md'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyScopeAndCliTests::test_active_scopes_include_future_agent_helpers_and_nested_agents",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "path": "\"'.github/copilot-instructions.md'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyScopeAndCliTests::test_active_scopes_include_future_agent_helpers_and_nested_agents",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "path": "\"'scripts/new-verification.py'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyScopeAndCliTests::test_evidence_product_and_negative_fixtures_are_outside_scope",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "path": "\"'docs/implementation/evidence/adr0031-i5/independent/REPORT.md'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyScopeAndCliTests::test_evidence_product_and_negative_fixtures_are_outside_scope",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "path": "\"'docs/validation/synthetic/old.md'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyScopeAndCliTests::test_evidence_product_and_negative_fixtures_are_outside_scope",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "path": "\"'docs/implementation/adr0031-i5-typed-admission.md'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyScopeAndCliTests::test_evidence_product_and_negative_fixtures_are_outside_scope",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "path": "\"'tests/fixtures/bad-workflow.yml'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyScopeAndCliTests::test_evidence_product_and_negative_fixtures_are_outside_scope",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "path": "\"'tests/unit/test_sqlite_validation_policy.py'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyScopeAndCliTests::test_evidence_product_and_negative_fixtures_are_outside_scope",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "path": "\"'src/repo_catalog/adapters/sqlite/p1_schema.py'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyScopeAndCliTests::test_evidence_product_and_negative_fixtures_are_outside_scope",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "path": "\"'scripts/check_sqlite_validation_policy.py'\""
+          }
+        }
+      }
+    ],
+    "exit_code": 1,
+    "head": "ef787a5ff8b13f118d6bf5107c7338f43fde56dc",
+    "tree": "a3ed2628a98db134bdc65d13da905f5ddf25e972",
+    "input_count": 484,
+    "input_hashes_unchanged": true,
+    "selected_junit_journal_starts_and_ordinary_phases_exact": true
+  },
+  "new": {
+    "selected": 6343,
+    "counts": {
+      "passed": 6044,
+      "failed": 279,
+      "error": 20
+    },
+    "normal_phase_reports": 19009,
+    "additional_subtest_reports": [
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_affirmative_wrapped_instructions",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'Run both the minimum and newer SQLite\\\\nruntimes before acceptance.'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_affirmative_wrapped_instructions",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'Build SQLite from source before running tests.'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_affirmative_wrapped_instructions",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'Use the actual SQLite 3.51.3 interpreter.'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_affirmative_wrapped_instructions",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'Require a SQLite version matrix.'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_affirmative_wrapped_instructions",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'Run SQLite 3.51.3 and 3.53.1.'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_affirmative_wrapped_instructions",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'Verify two versions of SQLite.'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_affirmative_wrapped_instructions",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'Require an exact SQLite source ID.'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_distribution_artifacts_and_doc_builds_are_not_version_matrices",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'Build and publish developer documentation for SQLite architectures.'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_distribution_artifacts_and_doc_builds_are_not_version_matrices",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'Use SQLite for both artifacts and record exact collected test cases.'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_distribution_artifacts_and_doc_builds_are_not_version_matrices",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'SQLite のソースビルドや複数版での検証は要求しません。'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_generated_probe_with_comma_imports_and_cli_selector",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "imports": "\"'import hashlib,json,sqlite3,sys'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_generated_probe_with_comma_imports_and_cli_selector",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "imports": "\"'import json,sqlite3'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_library_environment_writes",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'export LD_LIBRARY_PATH=/tmp/sqlite'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_library_environment_writes",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "'\"env[\\'LD_PRELOAD\\'] = \\'/tmp/libsqlite3.so\\'\"'"
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_library_environment_writes",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'dict(os.environ, LD_LIBRARY_PATH=str(library))'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_library_environment_writes",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "'\"env.update({\\'LD_LIBRARY_PATH\\': str(library)})\"'"
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_literal_version_gates",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'import sqlite3\\\\nassert sqlite3.sqlite_version_info == (3, 51, 3)'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_literal_version_gates",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "'\"import sqlite3 as sql\\\\nif sql.sqlite_version != \\'3.51.3\\':\\\\n    raise RuntimeError()\"'"
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_literal_version_gates",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'import sqlite3\\\\nEXPECTED = (3, 51, 3)\\\\nactual = sqlite3.sqlite_version_info\\\\nassert actual == EXPECTED'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_negative_policy_and_historical_observations",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'Do not build SQLite from source for tests.'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_negative_policy_and_historical_observations",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'Never require both SQLite versions.'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_negative_policy_and_historical_observations",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'Run without a SQLite version matrix.'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_negative_policy_and_historical_observations",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'Historical runs used both SQLite releases.'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_negative_policy_and_historical_observations",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'The completed experiment supplies SQLite 3.51.3/3.53.1 evidence.'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_negative_policy_and_historical_observations",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'SQLite のソースビルドは廃止する。'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_original_minimum_sqlite_and_newer_v1_requirement_is_detected",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'Run actual minimum SQLite 3.51.3 and a newer supported runtime.'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_original_minimum_sqlite_and_newer_v1_requirement_is_detected",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'| V1 — supported runtimes | Apply throughout I1–I8; freeze coherent integrated inputs. Run actual minimum SQLite 3.5...controls. Independent execution separates SQL errors from Python validation; no version spoofing or inherited PASS. |'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_test_only_installation_shell_and_python_argv",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'uv pip install pysqlite3-binary'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_test_only_installation_shell_and_python_argv",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'apt-get install libsqlite3-dev'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_test_only_installation_shell_and_python_argv",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'brew install sqlite'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_test_only_installation_shell_and_python_argv",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "'\"subprocess.run([\\'pip\\', \\'install\\', \\'pysqlite3-binary\\'])\"'"
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_unrelated_negative_clause_does_not_hide_positive_requirement",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'Run SQLite 3.51.3 and 3.53.1 without disabling product safety checks.'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_unrelated_negative_clause_does_not_hide_positive_requirement",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'Run both SQLite versions and never spoof version strings.'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_unrelated_negative_clause_does_not_hide_positive_requirement",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'Never spoof version strings and run both SQLite versions.'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_unrelated_negative_clause_does_not_hide_positive_requirement",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'Run both SQLite versions and preserve historical evidence.'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_unrelated_negative_clause_does_not_hide_positive_requirement",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'Run without bypassing safety checks on SQLite 3.51.3 and 3.53.1.'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_version_and_library_selection_options",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "name": "\"'sqlite'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_version_and_library_selection_options",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "name": "\"'sqlite-version'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_version_and_library_selection_options",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "name": "\"'sqlite-source-id'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_version_and_library_selection_options",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "name": "\"'minimum-library'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_version_and_library_selection_options",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "name": "\"'newer-library'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_version_matrix_forms",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "'\"sqlite: [\\'3.51.3\\', \\'3.53.1\\']\"'"
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_version_matrix_forms",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "'\"sqlite-version:\\\\n  - \\'3.51.3\\'\\\\n  - \\'3.53.1\\'\\\\n\"'"
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_version_matrix_forms",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "\"'run: python verify.py ${{ matrix.sqlite }}'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyDetectionTests::test_version_matrix_forms",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "source": "'\"import sqlite3\\\\nfor version in (\\'3.51.3\\', \\'3.53.1\\'):\\\\n    run(version)\"'"
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyScopeAndCliTests::test_active_scopes_include_future_agent_helpers_and_nested_agents",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "path": "\"'.agents/skills/new/scripts/prepare.sh'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyScopeAndCliTests::test_active_scopes_include_future_agent_helpers_and_nested_agents",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "path": "\"'.agents/skills/new/references/run.md'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyScopeAndCliTests::test_active_scopes_include_future_agent_helpers_and_nested_agents",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "path": "\"'docs/phase2/AGENTS.md'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyScopeAndCliTests::test_active_scopes_include_future_agent_helpers_and_nested_agents",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "path": "\"'.github/copilot-instructions.md'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyScopeAndCliTests::test_active_scopes_include_future_agent_helpers_and_nested_agents",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "path": "\"'scripts/new-verification.py'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyScopeAndCliTests::test_evidence_product_and_negative_fixtures_are_outside_scope",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "path": "\"'docs/implementation/evidence/adr0031-i5/independent/REPORT.md'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyScopeAndCliTests::test_evidence_product_and_negative_fixtures_are_outside_scope",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "path": "\"'docs/validation/synthetic/old.md'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyScopeAndCliTests::test_evidence_product_and_negative_fixtures_are_outside_scope",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "path": "\"'docs/implementation/adr0031-i5-typed-admission.md'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyScopeAndCliTests::test_evidence_product_and_negative_fixtures_are_outside_scope",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "path": "\"'tests/fixtures/bad-workflow.yml'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyScopeAndCliTests::test_evidence_product_and_negative_fixtures_are_outside_scope",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "path": "\"'tests/unit/test_sqlite_validation_policy.py'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyScopeAndCliTests::test_evidence_product_and_negative_fixtures_are_outside_scope",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "path": "\"'src/repo_catalog/adapters/sqlite/p1_schema.py'\""
+          }
+        }
+      },
+      {
+        "event": "controller_report",
+        "nodeid": "tests/unit/test_sqlite_validation_policy.py::PolicyScopeAndCliTests::test_evidence_product_and_negative_fixtures_are_outside_scope",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0,
+        "report_type": "_pytest.subtests.SubtestReport",
+        "subtest_context": {
+          "msg": null,
+          "kwargs": {
+            "path": "\"'scripts/check_sqlite_validation_policy.py'\""
+          }
+        }
+      }
+    ],
+    "exit_code": 1,
+    "head": "d68dc43bff1eb949b071ebf1652e3d70a5a52ed9",
+    "tree": "e1c9748b976d5e4266962cffe37ff82c98d1414f",
+    "input_count": 486,
+    "input_hashes_unchanged": true,
+    "selected_junit_journal_starts_and_ordinary_phases_exact": true
+  },
+  "old_only": [],
+  "new_only": [
+    "tests/unit/test_context_scan_budget.py::test_embedded_parser_reserves_whole_text_before_first_parse",
+    "tests/unit/test_context_scan_budget.py::test_exhausted_request_does_not_parse_or_escape_input[0-0]",
+    "tests/unit/test_context_scan_budget.py::test_exhausted_request_does_not_parse_or_escape_input[1-0]",
+    "tests/unit/test_context_scan_budget.py::test_exhausted_request_does_not_parse_or_escape_input[17-0]",
+    "tests/unit/test_context_scan_budget.py::test_exhausted_request_does_not_parse_or_escape_input[17-17]",
+    "tests/unit/test_context_scan_budget.py::test_exhausted_request_does_not_parse_or_escape_input[17-23]",
+    "tests/unit/test_context_scan_budget.py::test_scanner_depth_inclusive_boundary_with_work_reservations[31]",
+    "tests/unit/test_context_scan_budget.py::test_scanner_depth_inclusive_boundary_with_work_reservations[32]",
+    "tests/unit/test_context_scan_budget.py::test_scanner_depth_inclusive_boundary_with_work_reservations[33]",
+    "tests/unit/test_context_scan_budget.py::test_scanner_escaped_byte_cap_exact_and_one_short",
+    "tests/unit/test_context_scan_budget.py::test_scanner_exact_work_and_next_operation_are_separate_boundaries",
+    "tests/unit/test_context_scan_budget.py::test_scanner_hard_bounds_still_refuse_with_adequate_work[bytes-INPUT_LIMIT]",
+    "tests/unit/test_context_scan_budget.py::test_scanner_hard_bounds_still_refuse_with_adequate_work[cycle-MALFORMED_JSON]",
+    "tests/unit/test_context_scan_budget.py::test_scanner_hard_bounds_still_refuse_with_adequate_work[depth-INPUT_LIMIT]",
+    "tests/unit/test_context_scan_budget.py::test_zero_budget_preserves_fixed_envelope_hard_cap_before_row_indexing",
+    "tests/unit/test_exchange_received_digest.py::test_changed_canonical_selection_requires_new_matching_digest",
+    "tests/unit/test_exchange_received_digest.py::test_rehashed_noncanonical_selection_is_refused_without_repair[bytes-duplicate-notes_refs]",
+    "tests/unit/test_exchange_received_digest.py::test_rehashed_noncanonical_selection_is_refused_without_repair[bytes-duplicate-object_oids]",
+    "tests/unit/test_exchange_received_digest.py::test_rehashed_noncanonical_selection_is_refused_without_repair[bytes-duplicate-repository_uuidv4s]",
+    "tests/unit/test_exchange_received_digest.py::test_rehashed_noncanonical_selection_is_refused_without_repair[bytes-duplicate-resource_keys]",
+    "tests/unit/test_exchange_received_digest.py::test_rehashed_noncanonical_selection_is_refused_without_repair[bytes-duplicate-source_uuidv4s]",
+    "tests/unit/test_exchange_received_digest.py::test_rehashed_noncanonical_selection_is_refused_without_repair[bytes-permutation-notes_refs]",
+    "tests/unit/test_exchange_received_digest.py::test_rehashed_noncanonical_selection_is_refused_without_repair[bytes-permutation-object_oids]",
+    "tests/unit/test_exchange_received_digest.py::test_rehashed_noncanonical_selection_is_refused_without_repair[bytes-permutation-repository_uuidv4s]",
+    "tests/unit/test_exchange_received_digest.py::test_rehashed_noncanonical_selection_is_refused_without_repair[bytes-permutation-resource_keys]",
+    "tests/unit/test_exchange_received_digest.py::test_rehashed_noncanonical_selection_is_refused_without_repair[bytes-permutation-source_uuidv4s]",
+    "tests/unit/test_exchange_received_digest.py::test_rehashed_noncanonical_selection_is_refused_without_repair[dict-duplicate-notes_refs]",
+    "tests/unit/test_exchange_received_digest.py::test_rehashed_noncanonical_selection_is_refused_without_repair[dict-duplicate-object_oids]",
+    "tests/unit/test_exchange_received_digest.py::test_rehashed_noncanonical_selection_is_refused_without_repair[dict-duplicate-repository_uuidv4s]",
+    "tests/unit/test_exchange_received_digest.py::test_rehashed_noncanonical_selection_is_refused_without_repair[dict-duplicate-resource_keys]",
+    "tests/unit/test_exchange_received_digest.py::test_rehashed_noncanonical_selection_is_refused_without_repair[dict-duplicate-source_uuidv4s]",
+    "tests/unit/test_exchange_received_digest.py::test_rehashed_noncanonical_selection_is_refused_without_repair[dict-permutation-notes_refs]",
+    "tests/unit/test_exchange_received_digest.py::test_rehashed_noncanonical_selection_is_refused_without_repair[dict-permutation-object_oids]",
+    "tests/unit/test_exchange_received_digest.py::test_rehashed_noncanonical_selection_is_refused_without_repair[dict-permutation-repository_uuidv4s]",
+    "tests/unit/test_exchange_received_digest.py::test_rehashed_noncanonical_selection_is_refused_without_repair[dict-permutation-resource_keys]",
+    "tests/unit/test_exchange_received_digest.py::test_rehashed_noncanonical_selection_is_refused_without_repair[dict-permutation-source_uuidv4s]",
+    "tests/unit/test_exchange_received_digest.py::test_rehashed_noncanonical_selection_is_refused_without_repair[str-duplicate-notes_refs]",
+    "tests/unit/test_exchange_received_digest.py::test_rehashed_noncanonical_selection_is_refused_without_repair[str-duplicate-object_oids]",
+    "tests/unit/test_exchange_received_digest.py::test_rehashed_noncanonical_selection_is_refused_without_repair[str-duplicate-repository_uuidv4s]",
+    "tests/unit/test_exchange_received_digest.py::test_rehashed_noncanonical_selection_is_refused_without_repair[str-duplicate-resource_keys]",
+    "tests/unit/test_exchange_received_digest.py::test_rehashed_noncanonical_selection_is_refused_without_repair[str-duplicate-source_uuidv4s]",
+    "tests/unit/test_exchange_received_digest.py::test_rehashed_noncanonical_selection_is_refused_without_repair[str-permutation-notes_refs]",
+    "tests/unit/test_exchange_received_digest.py::test_rehashed_noncanonical_selection_is_refused_without_repair[str-permutation-object_oids]",
+    "tests/unit/test_exchange_received_digest.py::test_rehashed_noncanonical_selection_is_refused_without_repair[str-permutation-repository_uuidv4s]",
+    "tests/unit/test_exchange_received_digest.py::test_rehashed_noncanonical_selection_is_refused_without_repair[str-permutation-resource_keys]",
+    "tests/unit/test_exchange_received_digest.py::test_rehashed_noncanonical_selection_is_refused_without_repair[str-permutation-source_uuidv4s]",
+    "tests/unit/test_exchange_received_digest.py::test_selection_decoder_itself_refuses_duplicate_set_entries[notes_refs]",
+    "tests/unit/test_exchange_received_digest.py::test_selection_decoder_itself_refuses_duplicate_set_entries[object_oids]",
+    "tests/unit/test_exchange_received_digest.py::test_selection_decoder_itself_refuses_duplicate_set_entries[repository_uuidv4s]",
+    "tests/unit/test_exchange_received_digest.py::test_selection_decoder_itself_refuses_duplicate_set_entries[resource_keys]",
+    "tests/unit/test_exchange_received_digest.py::test_selection_decoder_itself_refuses_duplicate_set_entries[source_uuidv4s]",
+    "tests/unit/test_exchange_received_digest.py::test_stale_digest_refuses_before_selection_domain_conversion",
+    "tests/unit/test_exchange_received_digest.py::test_valid_canonical_selection_and_exact_unicode_roundtrip[bytes]",
+    "tests/unit/test_exchange_received_digest.py::test_valid_canonical_selection_and_exact_unicode_roundtrip[dict]",
+    "tests/unit/test_exchange_received_digest.py::test_valid_canonical_selection_and_exact_unicode_roundtrip[str]"
+  ],
+  "same_unsuccessful_node_set": true,
+  "common_outcome_phase_changes": [],
+  "common_failed_signature_changes": [
+    "tests/integration/i2/test_provider_intake.py::test_caller_transaction_batch_failure_rolls_back_partial_domain_and_access_untouched",
+    "tests/integration/i2/test_provider_intake.py::test_declared_resolved_provider_scope_does_not_supply_its_own_mapping",
+    "tests/integration/i2/test_provider_intake.py::test_disposition_qualification_keeps_original_provider_and_claims[correct]",
+    "tests/integration/i2/test_provider_intake.py::test_disposition_qualification_keeps_original_provider_and_claims[dispute]",
+    "tests/integration/i2/test_provider_intake.py::test_disposition_qualification_keeps_original_provider_and_claims[withdraw]",
+    "tests/integration/i2/test_provider_intake.py::test_generic_provider_scope_cannot_create_transfer",
+    "tests/integration/i2/test_provider_intake.py::test_graphql_event_does_not_infer_destination_from_current_issue_repository",
+    "tests/integration/i2/test_provider_intake.py::test_graphql_transfer_parent_namespace_and_original_type",
+    "tests/integration/i2/test_provider_intake.py::test_graphql_type_mismatch_cannot_change_resource_kind[issue]",
+    "tests/integration/i2/test_provider_intake.py::test_graphql_type_mismatch_cannot_change_resource_kind[pull_request]",
+    "tests/integration/i2/test_provider_intake.py::test_graphql_type_mismatch_cannot_change_resource_kind[repository]",
+    "tests/integration/i2/test_provider_intake.py::test_invalid_event_input_rolls_back_without_recovery_stop[payload0]",
+    "tests/integration/i2/test_provider_intake.py::test_invalid_event_input_rolls_back_without_recovery_stop[payload1]",
+    "tests/integration/i2/test_provider_intake.py::test_invalid_event_input_rolls_back_without_recovery_stop[payload2]",
+    "tests/integration/i2/test_provider_intake.py::test_invalid_retained_provider_scope_triggers_p7_stop",
+    "tests/integration/i2/test_provider_intake.py::test_issue_ownership_keeps_incomparable_source_clock_domains",
+    "tests/integration/i2/test_provider_intake.py::test_latest_unresolved_owner_does_not_fall_back_to_old_mapped_owner",
+    "tests/integration/i2/test_provider_intake.py::test_mapping_conflict_retains_both_exact_claim_keys",
+    "tests/integration/i2/test_provider_intake.py::test_mapping_qualification_does_not_rewrite_source_or_coverage",
+    "tests/integration/i2/test_provider_intake.py::test_missing_null_unresolved_and_late_mapping_are_distinct",
+    "tests/integration/i2/test_provider_intake.py::test_non_transfer_cannot_promote_repository_fields_or_forged_flag[False]",
+    "tests/integration/i2/test_provider_intake.py::test_non_transfer_cannot_promote_repository_fields_or_forged_flag[True]",
+    "tests/integration/i2/test_provider_intake.py::test_oid_url_name_and_source_membership_are_not_mapping_evidence",
+    "tests/integration/i2/test_provider_intake.py::test_other_provider_claim_cannot_resolve_reference_or_typed_qualification",
+    "tests/integration/i2/test_provider_intake.py::test_p7_stop_rejects_provider_intake",
+    "tests/integration/i2/test_provider_intake.py::test_pr_base_head_have_distinct_core_and_exact_provider_support",
+    "tests/integration/i2/test_provider_intake.py::test_provider_native_namespaces_do_not_borrow_decimal_mapping",
+    "tests/integration/i2/test_provider_intake.py::test_qualified_read_keyword_contract_reference_and_production_match",
+    "tests/integration/i2/test_provider_intake.py::test_reacquired_event_does_not_reissue_provenance_after_mapping_change",
+    "tests/integration/i2/test_provider_intake.py::test_same_original_event_key_cannot_change_observation_time",
+    "tests/integration/i2/test_provider_intake.py::test_separate_event_reports_never_pair_endpoints",
+    "tests/integration/i2/test_provider_intake.py::test_stop_during_claim_admission_rolls_back_real_context_work",
+    "tests/integration/i2/test_provider_intake.py::test_timeline_parent_override_cannot_forge_observed_issue[False-999-None]",
+    "tests/integration/i2/test_provider_intake.py::test_timeline_parent_override_cannot_forge_observed_issue[True-7-observed_issue5]",
+    "tests/integration/i2/test_provider_intake.py::test_timeline_parent_override_cannot_forge_observed_issue[True-999-None]",
+    "tests/integration/i2/test_provider_intake.py::test_timeline_parent_override_cannot_forge_observed_issue[True-I_actual-None]",
+    "tests/integration/i2/test_provider_intake.py::test_timeline_parent_override_cannot_forge_observed_issue[True-I_actual-observed_issue4]",
+    "tests/integration/i2/test_provider_intake.py::test_timeline_parent_override_cannot_forge_observed_issue[True-I_actual-observed_issue6]",
+    "tests/integration/i2/test_provider_intake.py::test_timeline_parent_override_cannot_forge_observed_issue[True-I_wrong-observed_issue2]",
+    "tests/integration/i2/test_provider_intake.py::test_transfer_preserves_complete_original_endpoint_states[endpoints0-expected0]",
+    "tests/integration/i2/test_provider_intake.py::test_transfer_preserves_complete_original_endpoint_states[endpoints1-expected1]",
+    "tests/integration/i2/test_provider_intake.py::test_transfer_preserves_complete_original_endpoint_states[endpoints2-expected2]",
+    "tests/integration/i2/test_provider_intake.py::test_transfer_preserves_complete_original_endpoint_states[endpoints3-expected3]",
+    "tests/integration/i2/test_provider_intake.py::test_transfer_preserves_complete_original_endpoint_states[endpoints4-expected4]",
+    "tests/integration/i2/test_provider_intake.py::test_transfer_type_and_endpoint_evidence_must_belong_to_same_report[clock]",
+    "tests/integration/i2/test_provider_intake.py::test_transfer_type_and_endpoint_evidence_must_belong_to_same_report[event_resource]",
+    "tests/integration/i2/test_provider_intake.py::test_transfer_type_and_endpoint_evidence_must_belong_to_same_report[members]",
+    "tests/integration/i2/test_provider_intake.py::test_transfer_type_and_endpoint_evidence_must_belong_to_same_report[provenance]",
+    "tests/integration/i23/test_provider_exchange.py::test_collection_coverage_uses_exact_owner_and_admission_order[absent_collection]",
+    "tests/integration/i23/test_provider_exchange.py::test_collection_coverage_uses_exact_owner_and_admission_order[existing_collection]",
+    "tests/integration/i23/test_provider_exchange.py::test_collection_coverage_uses_exact_owner_and_admission_order[genuine_collection]",
+    "tests/integration/i23/test_provider_exchange.py::test_current_roles_namespaces_clocks_and_conflicts_across_seeds",
+    "tests/integration/i23/test_provider_exchange.py::test_domain_exchange_neither_transports_nor_changes_real_access_grants",
+    "tests/integration/i23/test_provider_exchange.py::test_existing_receiver_source_pair_can_support_partial_package_coverage",
+    "tests/integration/i23/test_provider_exchange.py::test_genuine_transfer_event_report_is_preserved_whole[endpoints0-states0]",
+    "tests/integration/i23/test_provider_exchange.py::test_genuine_transfer_event_report_is_preserved_whole[endpoints1-states1]",
+    "tests/integration/i23/test_provider_exchange.py::test_genuine_transfer_event_report_is_preserved_whole[endpoints2-states2]",
+    "tests/integration/i23/test_provider_exchange.py::test_genuine_transfer_event_report_is_preserved_whole[endpoints3-states3]",
+    "tests/integration/i23/test_provider_exchange.py::test_genuine_transfer_event_report_is_preserved_whole[endpoints4-states4]",
+    "tests/integration/i23/test_provider_exchange.py::test_i2_source_coverage_and_native_capture_notes_survive_i3",
+    "tests/integration/i23/test_provider_exchange.py::test_invalid_i2_provider_scope_rejected_before_binding_and_core_commit[False-bad_role]",
+    "tests/integration/i23/test_provider_exchange.py::test_invalid_i2_provider_scope_rejected_before_binding_and_core_commit[False-wrong_members]",
+    "tests/integration/i23/test_provider_exchange.py::test_invalid_i2_provider_scope_rejected_before_binding_and_core_commit[False-wrong_observation]",
+    "tests/integration/i23/test_provider_exchange.py::test_invalid_i2_provider_scope_rejected_before_binding_and_core_commit[True-bad_role]",
+    "tests/integration/i23/test_provider_exchange.py::test_invalid_i2_provider_scope_rejected_before_binding_and_core_commit[True-wrong_members]",
+    "tests/integration/i23/test_provider_exchange.py::test_invalid_i2_provider_scope_rejected_before_binding_and_core_commit[True-wrong_observation]",
+    "tests/integration/i23/test_provider_exchange.py::test_received_dispositions_need_receiver_evidence_and_preserve_keys[correct]",
+    "tests/integration/i23/test_provider_exchange.py::test_received_dispositions_need_receiver_evidence_and_preserve_keys[dispute]",
+    "tests/integration/i23/test_provider_exchange.py::test_received_dispositions_need_receiver_evidence_and_preserve_keys[withdraw]",
+    "tests/integration/i23/test_provider_exchange.py::test_source_coverage_permission_cut_keeps_independent_i2_facts",
+    "tests/integration/i23/test_provider_exchange.py::test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[False-provider_kind_empty]",
+    "tests/integration/i23/test_provider_exchange.py::test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[False-provider_kind_integer]",
+    "tests/integration/i23/test_provider_exchange.py::test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[False-reference_bad_oid]",
+    "tests/integration/i23/test_provider_exchange.py::test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[False-reference_empty]",
+    "tests/integration/i23/test_provider_exchange.py::test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[False-reference_empty_role]",
+    "tests/integration/i23/test_provider_exchange.py::test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[False-relation_kind_integer]",
+    "tests/integration/i23/test_provider_exchange.py::test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[True-provider_kind_empty]",
+    "tests/integration/i23/test_provider_exchange.py::test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[True-provider_kind_integer]",
+    "tests/integration/i23/test_provider_exchange.py::test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[True-reference_bad_oid]",
+    "tests/integration/i23/test_provider_exchange.py::test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[True-reference_empty]",
+    "tests/integration/i23/test_provider_exchange.py::test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[True-reference_empty_role]",
+    "tests/integration/i23/test_provider_exchange.py::test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[True-relation_kind_integer]",
+    "tests/integration/i3/test_selective_exchange.py::test_empty_oid_and_context_payload_cannot_override_selection",
+    "tests/integration/i4/test_query_search_backup.py::test_current_provider_roles_never_fall_back_to_old_core_target",
+    "tests/integration/i4/test_query_search_backup.py::test_dispositions_are_reports_and_qualification_is_per_operation[correct]",
+    "tests/integration/i4/test_query_search_backup.py::test_dispositions_are_reports_and_qualification_is_per_operation[dispute]",
+    "tests/integration/i4/test_query_search_backup.py::test_dispositions_are_reports_and_qualification_is_per_operation[withdraw]",
+    "tests/integration/i4/test_query_search_backup.py::test_equal_incomparable_and_unknown_clocks_keep_all_provider_candidates[different-100-False]",
+    "tests/integration/i4/test_query_search_backup.py::test_equal_incomparable_and_unknown_clocks_keep_all_provider_candidates[different-100-True]",
+    "tests/integration/i4/test_query_search_backup.py::test_equal_incomparable_and_unknown_clocks_keep_all_provider_candidates[provider-100-False]",
+    "tests/integration/i4/test_query_search_backup.py::test_equal_incomparable_and_unknown_clocks_keep_all_provider_candidates[provider-100-True]",
+    "tests/integration/i4/test_query_search_backup.py::test_equal_incomparable_and_unknown_clocks_keep_all_provider_candidates[provider-None-False]",
+    "tests/integration/i4/test_query_search_backup.py::test_equal_incomparable_and_unknown_clocks_keep_all_provider_candidates[provider-None-True]",
+    "tests/integration/i4/test_query_search_backup.py::test_forged_backup_with_valid_checksums_fails_semantic_restore[clock]",
+    "tests/integration/i4/test_query_search_backup.py::test_forged_backup_with_valid_checksums_fails_semantic_restore[member]",
+    "tests/integration/i4/test_query_search_backup.py::test_forged_backup_with_valid_checksums_fails_semantic_restore[role]",
+    "tests/integration/i4/test_query_search_backup.py::test_forged_backup_with_valid_checksums_fails_semantic_restore[support]",
+    "tests/integration/i4/test_query_search_backup.py::test_invalid_authoritative_provider_scope_stops_service[backup]",
+    "tests/integration/i4/test_query_search_backup.py::test_invalid_authoritative_provider_scope_stops_service[query]",
+    "tests/integration/i4/test_query_search_backup.py::test_invalid_authoritative_provider_scope_stops_service[rebuild]",
+    "tests/integration/i4/test_query_search_backup.py::test_invalid_authoritative_provider_scope_stops_service[search]",
+    "tests/integration/i4/test_query_search_backup.py::test_paired_restore_preserves_all_keys_dependencies_and_excludes_other_stores",
+    "tests/integration/i4/test_query_search_backup.py::test_query_search_pagination_snapshot_budget_and_stop",
+    "tests/integration/i4/test_query_search_backup.py::test_search_rebuild_fallback_and_current_historical_summary[delete]",
+    "tests/integration/i4/test_query_search_backup.py::test_search_rebuild_fallback_and_current_historical_summary[garbage]",
+    "tests/integration/i4/test_query_search_backup.py::test_search_rebuild_fallback_and_current_historical_summary[missing]",
+    "tests/integration/i4/test_query_search_backup.py::test_search_rebuild_fallback_and_current_historical_summary[stale]",
+    "tests/integration/i4/test_query_search_backup.py::test_search_rebuild_fallback_and_current_historical_summary[text]",
+    "tests/integration/i5/test_independent_e2e.py::test_independent_selection_does_not_turn_dependencies_into_permission[C]",
+    "tests/integration/i5/test_independent_e2e.py::test_independent_selection_does_not_turn_dependencies_into_permission[OC]",
+    "tests/integration/i5/test_independent_e2e.py::test_independent_selection_does_not_turn_dependencies_into_permission[O]",
+    "tests/integration/i5/test_independent_e2e.py::test_independent_selection_does_not_turn_dependencies_into_permission[RC]",
+    "tests/integration/i5/test_independent_e2e.py::test_independent_selection_does_not_turn_dependencies_into_permission[ROC]",
+    "tests/integration/i5/test_independent_e2e.py::test_independent_selection_does_not_turn_dependencies_into_permission[RO]",
+    "tests/integration/i5/test_independent_e2e.py::test_independent_selection_does_not_turn_dependencies_into_permission[R]",
+    "tests/integration/i5/test_independent_e2e.py::test_independent_selection_does_not_turn_dependencies_into_permission[empty]",
+    "tests/integration/i5/test_independent_e2e.py::test_mapping_effect_stays_local_across_exchange_search_and_restore[correct]",
+    "tests/integration/i5/test_independent_e2e.py::test_mapping_effect_stays_local_across_exchange_search_and_restore[dispute]",
+    "tests/integration/i5/test_independent_e2e.py::test_mapping_effect_stays_local_across_exchange_search_and_restore[withdraw]",
+    "tests/integration/i5/test_independent_e2e.py::test_omitted_selection_needs_explicit_all_and_empty_overrides_all",
+    "tests/integration/i5/test_independent_e2e.py::test_received_paired_backup_preserves_complete_rows_keys_provenance_and_oid_refs",
+    "tests/integration/i5/test_independent_e2e.py::test_received_search_is_disposable_and_rebuild_preserves_authority[garbage]",
+    "tests/integration/i5/test_independent_e2e.py::test_received_search_is_disposable_and_rebuild_preserves_authority[missing]",
+    "tests/integration/i5/test_independent_e2e.py::test_received_search_is_disposable_and_rebuild_preserves_authority[row_key]",
+    "tests/integration/i5/test_independent_e2e.py::test_received_search_is_disposable_and_rebuild_preserves_authority[stale]",
+    "tests/integration/i5/test_independent_e2e.py::test_received_search_is_disposable_and_rebuild_preserves_authority[text]",
+    "tests/integration/i5/test_independent_e2e.py::test_selected_source_inventory_cannot_expand_repository_registration",
+    "tests/integration/i5/test_independent_e2e.py::test_transfer_reports_never_mix_across_observations_or_identifier_namespaces",
+    "tests/integration/p1/test_context_relations.py::test_counterexample_5_transfer_cases_no_invented_endpoints",
+    "tests/integration/p1/test_context_relations.py::test_partial_transfer_alternatives_remain_selection_truncated",
+    "tests/integration/p1/test_context_relations.py::test_transfer_event_genuine_type_enforcement_across_typed_paths",
+    "tests/integration/p1/test_context_relations.py::test_transfer_event_reports_generator_selected_repositories_and_invariants",
+    "tests/integration/p1/test_context_relations.py::test_transfer_generic_admission_requires_complete_report[transfer_from_repository-False-False]",
+    "tests/integration/p1/test_context_relations.py::test_transfer_generic_admission_requires_complete_report[transfer_from_repository-True-False]",
+    "tests/integration/p1/test_context_relations.py::test_transfer_generic_admission_requires_complete_report[transfer_to_repository-False-False]",
+    "tests/integration/p1/test_context_relations.py::test_transfer_generic_admission_requires_complete_report[transfer_to_repository-True-False]",
+    "tests/integration/p1/test_context_relations.py::test_transfer_report_fk_failure_rolls_back_whole_unit",
+    "tests/integration/p1/test_context_relations.py::test_transfer_supports_both_endpoints_without_cross_borrowing",
+    "tests/integration/p1/test_generalized_resources.py::test_real_nontransfer_provider_native_event_persists_and_reopens[False]",
+    "tests/integration/p1/test_generalized_resources.py::test_real_nontransfer_provider_native_event_persists_and_reopens[True]",
+    "tests/integration/p5/test_corrections.py::test_repository_unknown_observation_retained_without_fabricated_coordinates",
+    "tests/integration/p5/test_exchange.py::test_exchange_evaluates_core_dependencies_against_receiver_core",
+    "tests/integration/p5/test_exchange.py::test_exchange_export_import_repeat_reverse_and_multi_hop",
+    "tests/integration/p5/test_exchange.py::test_exchange_refuses_intrinsic_spoofing_without_validated_bytes",
+    "tests/integration/p5/test_exchange.py::test_exchange_refuses_tampered_payloads_without_store_corruption",
+    "tests/integration/p5/test_exchange.py::test_exchange_selective_filters_and_partial_input",
+    "tests/integration/p5/test_paired_admission.py::test_late_core_dependency_reconciliation",
+    "tests/integration/p5/test_provider_acquisition.py::test_context_file_metadata_never_retains_blob_in_git_core",
+    "tests/integration/p5/test_provider_acquisition.py::test_explicit_null_vs_missing_fields_and_clock_competition",
+    "tests/integration/p5/test_provider_acquisition.py::test_issue_vs_pull_request_intake_isolation",
+    "tests/integration/p5/test_provider_acquisition.py::test_provider_registration_and_source_inventory",
+    "tests/integration/p5/test_provider_acquisition.py::test_reviews_threads_comments_and_relations",
+    "tests/integration/p5_p6_compatibility/test_end_to_end_p5_p6.py::test_deferred_core_dependency_reconciliation_into_paired_queries[sha1]",
+    "tests/integration/p5_p6_compatibility/test_end_to_end_p5_p6.py::test_deferred_core_dependency_reconciliation_into_paired_queries[sha256]",
+    "tests/integration/p5_p6_compatibility/test_end_to_end_p5_p6.py::test_end_to_end_acquisition_into_query_and_search[sha1]",
+    "tests/integration/p5_p6_compatibility/test_end_to_end_p5_p6.py::test_end_to_end_acquisition_into_query_and_search[sha256]",
+    "tests/integration/p5_p6_compatibility/test_end_to_end_p5_p6.py::test_partial_reordered_repeat_reverse_onward_preserves_unknown_clocks",
+    "tests/integration/p5_p6_compatibility/test_provider_exchange_matrix.py::test_exchange_preserves_non_time_json_real",
+    "tests/integration/p5_p6_compatibility/test_provider_exchange_matrix.py::test_provider_late_reordered_repeat_reverse_onward_preserves_candidates[order0]",
+    "tests/integration/p5_p6_compatibility/test_provider_exchange_matrix.py::test_provider_late_reordered_repeat_reverse_onward_preserves_candidates[order1]",
+    "tests/integration/p5_p6_compatibility/test_provider_exchange_matrix.py::test_provider_late_reordered_repeat_reverse_onward_preserves_candidates[order2]",
+    "tests/integration/p5_p6_compatibility/test_provider_exchange_matrix.py::test_provider_late_reordered_repeat_reverse_onward_preserves_candidates[order3]",
+    "tests/integration/p5_p6_compatibility/test_provider_exchange_matrix.py::test_provider_late_reordered_repeat_reverse_onward_preserves_candidates[order4]",
+    "tests/integration/p5_p6_compatibility/test_provider_exchange_matrix.py::test_provider_late_reordered_repeat_reverse_onward_preserves_candidates[order5]"
+  ],
+  "new_node_counts": {
+    "passed": 55
+  },
+  "scope": "Separate invocations; assertion statement entry is main worker thread only, not subexpression/thread/child-process coverage."
+}

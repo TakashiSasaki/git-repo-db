@@ -1,0 +1,63 @@
+"""Supplement automated classification using fresh actual exception events.
+
+Retain the automatic category and the actual raw pytest assertion outcome. This
+review changes ownership attribution, not a test result or its traceback.
+"""
+
+from collections import Counter, defaultdict
+import hashlib
+import json
+from pathlib import Path
+import sys
+
+ledger_path, trace_path, output = map(Path, sys.argv[1:4])
+ledger = json.loads(ledger_path.read_text())
+trace = json.loads(trace_path.read_text())
+if trace["exitstatus"] != 1:
+    raise ValueError("Diagnostic failures must remain failed")
+records = defaultdict(list)
+for record in trace["records"]:
+    records[record["nodeid"]].append(record)
+reviewed = []
+for row in ledger["rows"]:
+    evidence = records.get(row["nodeid"])
+    if not evidence:
+        continue
+    if row["after"]["outcome"] == "passed":
+        raise ValueError("Do not apply an older failing diagnostic to a passing node")
+    frames = [frame for record in evidence for frame in record["stack"]]
+    recovery = any(frame["file"].endswith("/adapters/sqlite/recovery.py") and frame["function"] == "_merge_salvage_request" for frame in frames)
+    exchange = any(frame["file"].endswith("/application/exchange.py") and frame["function"] == "export_package" for frame in frames)
+    if recovery:
+        category, stage, expected = "recovery_context_composition_unconnected", "I7", False
+        handoff = "Supply explicit trusted recovery composition at I7; actual valid later Context unit is currently rejected by admission guard; do not grant from salvage input or weaken current guard"
+    elif exchange:
+        category, stage, expected = "unconnected_provider_exchange_guard", "I6-C", True
+        handoff = "I6-C trusted Exchange composition must precede the test's downstream corruption/RecoveryStop assertions; current explicit permission guard remains closed"
+    else:
+        raise ValueError("No reviewed ownership frame: " + row["nodeid"])
+    row["automatic_after_category"] = row["after_category"]
+    row["automatic_after_responsible_stage"] = row["after_responsible_stage"]
+    row["after_category"] = category
+    row["after_responsible_stage"] = stage
+    row["after_expected_stage_refusal"] = expected
+    row["handoff_condition"] = handoff
+    row["supplemental_after_permission_exception_records"] = evidence
+    row["supplemental_after_permission_exception_evidence"] = {
+        "path": str(trace_path),
+        "sha256": hashlib.sha256(trace_path.read_bytes()).hexdigest(),
+        "scope": "Intentional failed diagnostic separate from ordinary execution",
+    }
+    reviewed.append({"nodeid": row["nodeid"], "category": category, "stage": stage})
+if set(records) != {row["nodeid"] for row in reviewed}:
+    raise ValueError("Diagnostic contains unaccounted node")
+ledger["supplemental_guard_review"] = {
+    "trace_sha256": hashlib.sha256(trace_path.read_bytes()).hexdigest(),
+    "reviewed_count": len(reviewed),
+    "stage_counts": dict(Counter(row["stage"] for row in reviewed)),
+    "rows": reviewed,
+}
+ledger["additional_after_categories"] = dict(Counter(row["after_category"] for row in ledger["rows"] if row["additional664"] and row["after_category"]))
+ledger["additional_after_stage_counts"] = dict(Counter(row["after_responsible_stage"] for row in ledger["rows"] if row["additional664"] and row["after_category"]))
+output.write_text(json.dumps(ledger, indent=2) + "\n")
+print(json.dumps({"reviewed": len(reviewed), "additional_after_categories": ledger["additional_after_categories"], "additional_after_stage_counts": ledger["additional_after_stage_counts"]}, indent=2))

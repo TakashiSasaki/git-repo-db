@@ -1,0 +1,39 @@
+{
+  "scope": "Original evidence untouched; controls alter only separately copied compressed metadata. No test or product invocation occurs.",
+  "source": "remediation-20261023/after-final",
+  "results": [
+    {
+      "case": "intact",
+      "author_consistent": true,
+      "author_binding_check_present": false,
+      "author_bindings": [
+        null,
+        null
+      ],
+      "reviewer_accepted": true,
+      "reviewer_rejection": null
+    },
+    {
+      "case": "mismatching-after",
+      "author_consistent": true,
+      "author_binding_check_present": false,
+      "author_bindings": [
+        null,
+        null
+      ],
+      "reviewer_accepted": false,
+      "reviewer_rejection": "AssertionError"
+    },
+    {
+      "case": "missing-after",
+      "author_consistent": true,
+      "author_binding_check_present": false,
+      "author_bindings": [
+        null,
+        null
+      ],
+      "reviewer_accepted": false,
+      "reviewer_rejection": "FileNotFoundError"
+    }
+  ]
+}

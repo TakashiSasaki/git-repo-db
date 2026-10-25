@@ -1,0 +1,300 @@
+{
+  "raw_ordinary": {
+    "checks": {
+      "junit_results_match_actual_typed_outcomes": true,
+      "node_ids_exact": true,
+      "starts_exact": true,
+      "raw_and_typed_phases_exact": true,
+      "ordinary_setup_teardown_once": true,
+      "ordinary_call_after_setup_once": true,
+      "ordinary_all_phases_unique": true,
+      "subtests_explicitly_typed": true,
+      "failed_subtests_not_hidden": true,
+      "finish_and_exit": true,
+      "bindings_unchanged": true
+    },
+    "selected": 5974,
+    "counts": {
+      "passed": 5656,
+      "failed": 276,
+      "error": 42
+    },
+    "exit_code": 1,
+    "subtests": {
+      "passed": 57
+    },
+    "binding_head": "08fbb956c2e470e245146b0dbae747ed0690ea40",
+    "binding_tree": "7072f952975a8537f74ced1bbc2a4a31d7aa3690"
+  },
+  "clean743": {
+    "checks": {
+      "junit_results_match_actual_typed_outcomes": true,
+      "node_ids_exact": true,
+      "starts_exact": true,
+      "raw_and_typed_phases_exact": true,
+      "ordinary_setup_teardown_once": true,
+      "ordinary_call_after_setup_once": true,
+      "ordinary_all_phases_unique": true,
+      "subtests_explicitly_typed": true,
+      "failed_subtests_not_hidden": true,
+      "finish_and_exit": true,
+      "bindings_unchanged": true
+    },
+    "selected": 743,
+    "counts": {
+      "passed": 444,
+      "failed": 279,
+      "error": 20
+    },
+    "exit_code": 1,
+    "subtests": {},
+    "binding_head": "08fbb956c2e470e245146b0dbae747ed0690ea40",
+    "binding_tree": "7072f952975a8537f74ced1bbc2a4a31d7aa3690"
+  },
+  "corrected_cache22": {
+    "checks": {
+      "junit_results_match_actual_typed_outcomes": true,
+      "node_ids_exact": true,
+      "starts_exact": true,
+      "raw_and_typed_phases_exact": true,
+      "ordinary_setup_teardown_once": true,
+      "ordinary_call_after_setup_once": true,
+      "ordinary_all_phases_unique": true,
+      "subtests_explicitly_typed": true,
+      "failed_subtests_not_hidden": true,
+      "finish_and_exit": true,
+      "bindings_unchanged": true
+    },
+    "selected": 22,
+    "counts": {
+      "passed": 18,
+      "failed": 4
+    },
+    "exit_code": 1,
+    "subtests": {},
+    "binding_head": "08fbb956c2e470e245146b0dbae747ed0690ea40",
+    "binding_tree": "7072f952975a8537f74ced1bbc2a4a31d7aa3690"
+  },
+  "serial_timeout_repeat": {
+    "checks": {
+      "junit_results_match_actual_typed_outcomes": true,
+      "node_ids_exact": true,
+      "starts_exact": true,
+      "raw_and_typed_phases_exact": true,
+      "ordinary_setup_teardown_once": true,
+      "ordinary_call_after_setup_once": true,
+      "ordinary_all_phases_unique": true,
+      "subtests_explicitly_typed": true,
+      "failed_subtests_not_hidden": true,
+      "finish_and_exit": true,
+      "bindings_unchanged": true
+    },
+    "selected": 1,
+    "counts": {
+      "passed": 1
+    },
+    "exit_code": 0,
+    "subtests": {},
+    "binding_head": "08fbb956c2e470e245146b0dbae747ed0690ea40",
+    "binding_tree": "7072f952975a8537f74ced1bbc2a4a31d7aa3690"
+  },
+  "raw_uv_cache_error_count": 22,
+  "raw_uv_cache_error_previous_outcomes": {
+    "passed": 18,
+    "failed": 4
+  },
+  "all_provisional_candidates_causally_confirmed_uv_cache": true,
+  "sole_additional_noncache_failure": {
+    "nodeid": "tests/e2e/test_queries.py::test_pr_root_scopes",
+    "raw_failure": "CLI search path returns3/partial/timed_out=true with timeout_seconds30 during overlapped workload.",
+    "serial_result": "PASS with unchanged source/test/30s timeout, no xdist workers; raw FAIL remains. This is an observed timing/environment-sensitive repeat, not proof of its precise resource cause."
+  },
+  "raw_new_unsuccessful_count": 19,
+  "raw_outcome_phase_differences": 23,
+  "latest_unique_node_count": 5974,
+  "latest_nodewise_counts_NOT_ONE_INVOCATION": {
+    "passed": 5675,
+    "failed": 279,
+    "error": 20
+  },
+  "latest_unsuccessful_classes": {
+    "I6-C": 242,
+    "Transfer-stage": 43,
+    "I7-composition": 14
+  },
+  "latest_original743_classes": {
+    "I6-C": 242,
+    "PASS": 444,
+    "Transfer-stage": 43,
+    "I7-composition": 14
+  },
+  "all_original5941_ids_retained": true,
+  "added33_all_latest_pass": true,
+  "all_latest_outcome_phases_match_archived": true,
+  "bindings": {
+    "full": {
+      "head": "08fbb956c2e470e245146b0dbae747ed0690ea40",
+      "tree": "7072f952975a8537f74ced1bbc2a4a31d7aa3690",
+      "input_count": 478,
+      "before_status": "",
+      "after_status": "",
+      "source_root": "/workspace/i6a-independent"
+    },
+    "clean743": {
+      "head": "08fbb956c2e470e245146b0dbae747ed0690ea40",
+      "tree": "7072f952975a8537f74ced1bbc2a4a31d7aa3690",
+      "input_count": 478,
+      "before_status": "",
+      "after_status": "",
+      "source_root": "/workspace/i6a-review-clean"
+    },
+    "cache22": {
+      "head": "08fbb956c2e470e245146b0dbae747ed0690ea40",
+      "tree": "7072f952975a8537f74ced1bbc2a4a31d7aa3690",
+      "input_count": 478,
+      "before_status": "",
+      "after_status": "",
+      "source_root": "/workspace/i6a-review-clean"
+    },
+    "serial1": {
+      "head": "08fbb956c2e470e245146b0dbae747ed0690ea40",
+      "tree": "7072f952975a8537f74ced1bbc2a4a31d7aa3690",
+      "input_count": 478,
+      "before_status": "",
+      "after_status": "",
+      "source_root": "/workspace/i6a-review-clean"
+    }
+  },
+  "source_layout_distinction": "Raw full runs from /workspace/i6a-independent with untracked review evidence, while all478 execution inputs equal public Git blobs and tracked status is clean. clean743/cache22/serial1 run from separate fully pristine /workspace/i6a-review-clean with separate editable runtime and empty full-untracked status; own in-pytest origins/hashes are checked.",
+  "in_pytest_origin_checks": {
+    "clean743": {
+      "workers": 5,
+      "checks": [
+        {
+          "worker": "gw0",
+          "stage": "configure",
+          "module_count": 32
+        },
+        {
+          "worker": "gw0",
+          "stage": "session_finish",
+          "module_count": 62
+        },
+        {
+          "worker": "gw1",
+          "stage": "configure",
+          "module_count": 32
+        },
+        {
+          "worker": "gw1",
+          "stage": "session_finish",
+          "module_count": 61
+        },
+        {
+          "worker": "gw2",
+          "stage": "configure",
+          "module_count": 32
+        },
+        {
+          "worker": "gw2",
+          "stage": "session_finish",
+          "module_count": 62
+        },
+        {
+          "worker": "gw3",
+          "stage": "configure",
+          "module_count": 32
+        },
+        {
+          "worker": "gw3",
+          "stage": "session_finish",
+          "module_count": 62
+        },
+        {
+          "worker": "master",
+          "stage": "configure",
+          "module_count": 32
+        },
+        {
+          "worker": "master",
+          "stage": "session_finish",
+          "module_count": 32
+        }
+      ],
+      "lifecycle_complete": true
+    },
+    "cache22": {
+      "workers": 5,
+      "checks": [
+        {
+          "worker": "gw0",
+          "stage": "configure",
+          "module_count": 1
+        },
+        {
+          "worker": "gw0",
+          "stage": "session_finish",
+          "module_count": 1
+        },
+        {
+          "worker": "gw1",
+          "stage": "configure",
+          "module_count": 1
+        },
+        {
+          "worker": "gw1",
+          "stage": "session_finish",
+          "module_count": 16
+        },
+        {
+          "worker": "gw2",
+          "stage": "configure",
+          "module_count": 1
+        },
+        {
+          "worker": "gw2",
+          "stage": "session_finish",
+          "module_count": 1
+        },
+        {
+          "worker": "gw3",
+          "stage": "configure",
+          "module_count": 1
+        },
+        {
+          "worker": "gw3",
+          "stage": "session_finish",
+          "module_count": 1
+        },
+        {
+          "worker": "master",
+          "stage": "configure",
+          "module_count": 1
+        },
+        {
+          "worker": "master",
+          "stage": "session_finish",
+          "module_count": 1
+        }
+      ],
+      "lifecycle_complete": true
+    },
+    "serial1": {
+      "workers": 1,
+      "checks": [
+        {
+          "worker": "master",
+          "stage": "configure",
+          "module_count": 1
+        },
+        {
+          "worker": "master",
+          "stage": "session_finish",
+          "module_count": 3
+        }
+      ],
+      "lifecycle_complete": true
+    }
+  },
+  "scope": "5974 latest unique node outcomes combine four actual invocations by last protocol teardown timestamp. They are NOT a single successful full invocation or complete release acceptance; failed raw full and all overlapping repetitions remain separately counted."
+}

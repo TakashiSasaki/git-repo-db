@@ -1,0 +1,10 @@
+import pathlib,json,gzip,hashlib
+ROOT=pathlib.Path('/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6a/author');rows=[]
+for index in sorted(ROOT.rglob('compression-index.json')):
+ records=json.loads(index.read_text());row={'directory':str(index.parent.relative_to(ROOT)),'files':len(records),'original_bytes':0,'gzip_bytes':0,'discrepancies':[]};names=[]
+ for entry in records:
+  p=index.parent/entry['gzip_path'];packed=p.read_bytes();raw=gzip.decompress(packed);names.append(entry['gzip_path'])
+  if (len(raw),hashlib.sha256(raw).hexdigest(),len(packed),hashlib.sha256(packed).hexdigest())!=(entry['original_bytes'],entry['original_sha256'],entry['gzip_bytes'],entry['gzip_sha256']):row['discrepancies'].append(entry['gzip_path'])
+  row['original_bytes']+=len(raw);row['gzip_bytes']+=len(packed)
+ row['unique_transport_paths']=len(names)==len(set(names));rows.append(row)
+result={'scope':'All completed baseline, intermediate, final-v3 and helper-probe compressed receipts. This verifies lossless transport identities, not product acceptance.','directories':rows,'all_lossless_unique':all(not r['discrepancies'] and r['unique_transport_paths'] for r in rows)};(ROOT/'compression-verification-final.json').write_text(json.dumps(result,indent=2)+'\n');assert result['all_lossless_unique'];print(json.dumps({'directories':len(rows),'files':sum(r['files'] for r in rows),'raw_bytes':sum(r['original_bytes'] for r in rows),'gzip_bytes':sum(r['gzip_bytes'] for r in rows),'all_lossless_unique':result['all_lossless_unique']}))

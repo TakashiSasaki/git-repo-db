@@ -1,0 +1,14 @@
+import pathlib,sys,json,os
+ROOT=pathlib.Path('/workspace/i6a-v3-source');REPO=pathlib.Path('/workspace/git-repo-db');sys.path.insert(0,str(ROOT));from scripts import verify_i5_offline as e
+out=REPO/'docs/implementation/evidence/adr0031-i6a/author/final-v3/sql-probes';out.mkdir(exist_ok=False)
+os.environ['I6A_SQL_PROBE_OUTPUT']=str(out/'sql-admission-probes.json')
+e.write_json(out/'runtime-before.json',e.runtime_metadata(__import__('sqlite3').connect(':memory:')));e.require_product_runtime()
+e.write_json(out/'input-binding-before.json',{'head':e.git('rev-parse','HEAD'),'tree':e.git('rev-parse','HEAD^{tree}'),'inputs':e.input_hashes(),'tracked_status':e.git('status','--porcelain','--untracked-files=no')})
+execute=e.execute
+def in_workspace(out,name,args):return execute(out,name,args+['--basetemp=/workspace/i6a-v3-sql-probe-basetemp'])
+e.execute=in_workspace
+selected=['tests/integration/i6a/test_admission.py::'+n for n in ('test_real_second_endpoint_insert_failure_rolls_back_whole_unit','test_deferred_actual_outer_commit_failure_explicitly_rolls_back','test_revision_revoked_after_first_insert_rolls_back_and_charges_work')]
+r=e.run_cohort(out,'serial-sql-probes',selected,0)
+e.write_json(out/'input-binding-after.json',{'head':e.git('rev-parse','HEAD'),'tree':e.git('rev-parse','HEAD^{tree}'),'inputs':e.input_hashes(),'tracked_status':e.git('status','--porcelain','--untracked-files=no')})
+e.write_json(out/'scope.json',{'scope':'Three intentional serial repeats for SQL trace JSON only, separate from the exactly-once ordinary cohort union.','I6A_SQL_PROBE_OUTPUT':os.environ['I6A_SQL_PROBE_OUTPUT'],'TMPDIR':os.environ.get('TMPDIR'),'workers':0})
+raise SystemExit(r['exit_code'])

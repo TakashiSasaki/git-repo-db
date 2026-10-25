@@ -1,0 +1,14 @@
+{
+  "format": "lossless-gzip-transport-v1",
+  "reason": "Preserve exact failing new-test log including raw trailing whitespace",
+  "files": [
+    {
+      "original": "author-iterations/m02/focused.log",
+      "transport": "author-iterations/m02/focused.log.gz",
+      "original_bytes": 4388,
+      "original_sha256": "061899aa04fc88612a13fe489b7ee5d25ffba453e472d794ab0199d50d51aeb1",
+      "transport_bytes": 668,
+      "transport_sha256": "08913afd2321abcd26f27bf98fdf5ff86ed9b1530b4cc137d34d84e08fec2353"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "command": [
+    "/workspace/i6b-fix-work/baseline/.venv/bin/python",
+    "/workspace/i6b-fix-work/tools/measure_digest.py",
+    "--root",
+    "/workspace/i6b-fix-work/baseline",
+    "--out",
+    "/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/source-baseline/digest-observations.json"
+  ],
+  "cwd": "/workspace/i6b-fix-work/baseline",
+  "started_epoch": 1792764523.7954743,
+  "elapsed_seconds": 1.0212953090667725,
+  "exit_code": 0,
+  "completed": true
+}

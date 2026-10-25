@@ -1,0 +1,50 @@
+{
+  "checks": {
+    "chosen_assert_entered": true,
+    "unchosen_conditional_absent": true,
+    "failing_assert_entered": true,
+    "post_failure_assert_absent": true,
+    "admission_exception_stack": true
+  },
+  "events": [
+    {
+      "event": "assertion_line",
+      "nodeid": "branch",
+      "phase": "call",
+      "path": "tests/synthetic_trace_control.py",
+      "line": 2,
+      "function": "branch"
+    },
+    {
+      "event": "assertion_line",
+      "nodeid": "failed",
+      "phase": "call",
+      "path": "tests/synthetic_trace_control.py",
+      "line": 7,
+      "function": "failed"
+    },
+    {
+      "event": "assertion_line",
+      "nodeid": "failed",
+      "phase": "call",
+      "path": "tests/synthetic_trace_control.py",
+      "line": 8,
+      "function": "failed"
+    },
+    {
+      "event": "admission_exception",
+      "nodeid": "denied",
+      "phase": "call",
+      "exception_type": "__main__.AdmissionRefused",
+      "message": "denied",
+      "stack": [
+        {
+          "path": "tests/synthetic_trace_control.py",
+          "line": 12,
+          "function": "denied"
+        }
+      ]
+    }
+  ],
+  "limit": "Synthetic tracing predicate controls; actual tests validate path recognition and pytest lifecycle separately."
+}

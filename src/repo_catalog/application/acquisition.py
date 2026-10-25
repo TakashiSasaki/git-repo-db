@@ -1097,20 +1097,34 @@ class ProviderAcquisition:
         *,
         core: GitCore | Path | str | None = None,
         operational: OperationalAcquisitionLedger | Path | str | None = None,
+        authorization=None,
+        admission=None,
     ) -> None:
         self.context = context
         self.core = core
         self.operational = operational
+        self.authorization = authorization
+        self.admission = admission
 
     @contextmanager
     def _open_context(self, override: Context | None = None) -> Iterator[Context]:
-        target = override if override is not None else self.context
-        if isinstance(target, Context):
-            yield target
+        auth, adm = self.authorization, self.admission
+        if auth is None or adm is None:
+            from repo_catalog.domain.context_admission import AdmissionRefused
+
+            raise AdmissionRefused("PERMISSION_DENIED")
+        if override is not None:
+            yield override
             return
-        path = Path(target)
-        directory = path if path.is_dir() else path.parent
-        with Context.transaction(directory) as ctx:
+        if isinstance(self.context, Context):
+            yield self.context
+            return
+        path = Path(self.context)
+        if not (path / "context.sqlite3").is_file():
+            from repo_catalog.domain.context_admission import AdmissionRefused
+
+            raise AdmissionRefused("PERMISSION_DENIED")
+        with Context.transaction(path, authorization=auth, admission=adm) as ctx:
             yield ctx
 
     def _make_core_validator(
@@ -1165,7 +1179,7 @@ class ProviderAcquisition:
         linked_list: list[CoreReference],
         pending_list: list[CoreReference],
     ) -> None:
-        ctx.resource(core_ref.resource)
+        self._register_reference(ctx, core_ref.resource)
         ctx.report_core_reference(core_ref, clock=clock, observed_at_us=observed_at_us)
         if validate_core(core_ref.oid.object_format, core_ref.oid.full_oid):
             ctx.link_core(
@@ -1188,16 +1202,19 @@ class ProviderAcquisition:
         key: ResourceKey,
         repo_uuid: str | None,
         admitted: list[ResourceKey],
+        identification=None,
     ) -> None:
-        if key.resource_kind in {"review", "comment", "thread", "document"}:
-            parent_tuple = json.loads(key.provider_resource_id)
-            if type(parent_tuple) is not list or len(parent_tuple) != 4:
-                raise AcquisitionError("RESOURCE_PARENT", key)
-            parent_key = ResourceKey(
-                key.service_instance_uuidv4, parent_tuple[0], parent_tuple[1]
-            )
-            self._ensure_resource_hierarchy(ctx, parent_key, repo_uuid, admitted)
-        ctx.resource(key, repo_uuid)
+        if identification is None and key.resource_kind in {
+            "review",
+            "comment",
+            "thread",
+            "document",
+        }:
+            try:
+                identification = ctx.identification(key)
+            except (ValueError, KeyError):
+                pass
+        ctx.resource(key, repo_uuid, identification=identification)
         if key not in admitted:
             admitted.append(key)
 
@@ -1211,18 +1228,36 @@ class ProviderAcquisition:
         linked_refs: list[CoreReference],
         pending_refs: list[CoreReference],
     ) -> None:
+        from repo_catalog.domain.resource_stage import (
+            UnsupportedResourceStage,
+            refuse_transfer,
+        )
+
+        if unit.transfer_event:
+            raise UnsupportedResourceStage("Provider Transfer intake")
+        for relation in unit.relations:
+            refuse_transfer(relation.relation_kind)
+        declarations = {obs.resource: obs.identification for obs in unit.observations}
         self._ensure_resource_hierarchy(
-            ctx, unit.primary_resource, None, admitted_resources
+            ctx,
+            unit.primary_resource,
+            None,
+            admitted_resources,
+            declarations.get(unit.primary_resource),
         )
         for obs in unit.observations:
-            self._ensure_resource_hierarchy(ctx, obs.resource, None, admitted_resources)
+            self._ensure_resource_hierarchy(
+                ctx, obs.resource, None, admitted_resources, obs.identification
+            )
             ctx.observe(obs)
         for extra_text in unit.extra_texts:
             digest = ctx.text(extra_text)
             if digest not in admitted_texts:
                 admitted_texts.append(digest)
         for res_key, text_val, clock, prov, obs_us in unit.text_admissions:
-            self._ensure_resource_hierarchy(ctx, res_key, None, admitted_resources)
+            self._ensure_resource_hierarchy(
+                ctx, res_key, None, admitted_resources, declarations.get(res_key)
+            )
             if text_val is not None:
                 digest = ctx.text(text_val)
                 if digest not in admitted_texts:
@@ -1230,7 +1265,9 @@ class ProviderAcquisition:
             ctx.admit_text(res_key, text_val, clock, prov, obs_us)
         for rel in unit.relations:
             for member in rel.members:
-                self._ensure_resource_hierarchy(ctx, member, None, admitted_resources)
+                self._ensure_resource_hierarchy(
+                    ctx, member, None, admitted_resources, declarations.get(member)
+                )
             if rel.relation_kind == "provider_repository_roles" and unit.transfer_event:
                 continue
             ctx.relation(rel)
@@ -1404,6 +1441,7 @@ class ProviderAcquisition:
         core: GitCore | None = None,
     ) -> None:
         """Admit a single NormalizedContextUnit into Context."""
+        self._preflight_units((unit,))
         with self._open_context(context) as ctx, ctx._unit():
             validate_core = self._make_core_validator(ctx, core)
             self._admit_normalized_unit(
@@ -1424,6 +1462,7 @@ class ProviderAcquisition:
         core: GitCore | None = None,
     ) -> None:
         """Admit multiple NormalizedContextUnits into Context."""
+        self._preflight_units(units)
         with self._open_context(context) as ctx, ctx._unit():
             validate_core = self._make_core_validator(ctx, core)
             for unit in units:
@@ -1436,6 +1475,29 @@ class ProviderAcquisition:
                     [],
                     [],
                 )
+
+    @staticmethod
+    def _preflight_units(units):
+        from repo_catalog.domain.resource_stage import (
+            UnsupportedResourceStage,
+            refuse_transfer,
+        )
+
+        for unit in units:
+            if unit.transfer_event:
+                raise UnsupportedResourceStage("Provider Transfer intake")
+            for relation in unit.relations:
+                refuse_transfer(relation.relation_kind)
+
+    @staticmethod
+    def _register_reference(ctx, key):
+        identification = None
+        if key.resource_kind in {"review", "comment", "thread", "document"}:
+            try:
+                identification = ctx.identification(key)
+            except (ValueError, KeyError):
+                pass
+        ctx.resource(key, identification=identification)
 
     def admit_batch(
         self,
@@ -1456,6 +1518,25 @@ class ProviderAcquisition:
                 registration_json(kind, item.configuration_json)
         for item in batch.sources:
             registration_json("membership", item.association_attributes_json)
+        from repo_catalog.domain.resource_stage import refuse_transfer
+
+        timeline_units = tuple(
+            normalize_timeline_event(
+                batch.service_instance_uuidv4,
+                item.parent_kind,
+                item.parent_id,
+                item.event_id,
+                item.payload,
+                item.observed_at_us,
+                item.provenance_json,
+                graphql=item.graphql,
+                parent_resource=item.parent_resource,
+            )
+            for item in batch.timeline_events
+        )
+        self._preflight_units(timeline_units)
+        for relation in (*batch.mapping_claims, *batch.relations):
+            refuse_transfer(relation.relation_kind)
         with self._open_context(context) as ctx, ctx._unit():
             validate_core = self._make_core_validator(ctx, core)
 
@@ -1680,18 +1761,7 @@ class ProviderAcquisition:
                     pending_refs,
                 )
 
-            for tl_in in batch.timeline_events:
-                unit = normalize_timeline_event(
-                    batch.service_instance_uuidv4,
-                    tl_in.parent_kind,
-                    tl_in.parent_id,
-                    tl_in.event_id,
-                    tl_in.payload,
-                    tl_in.observed_at_us,
-                    tl_in.provenance_json,
-                    graphql=tl_in.graphql,
-                    parent_resource=tl_in.parent_resource,
-                )
+            for unit in timeline_units:
                 self._admit_normalized_unit(
                     ctx,
                     unit,
@@ -1751,9 +1821,9 @@ class ProviderAcquisition:
                     admitted_resources.append(obs.resource)
 
             for rel in batch.relations:
-                ctx.resource(rel.resource)
+                self._register_reference(ctx, rel.resource)
                 for member in rel.members:
-                    ctx.resource(member)
+                    self._register_reference(ctx, member)
                 ctx.relation(rel)
 
             for core_ref, clock, obs_us in batch.core_references:
@@ -1768,16 +1838,16 @@ class ProviderAcquisition:
                 )
 
             for coll in batch.collections:
-                ctx.resource(coll.resource)
+                self._register_reference(ctx, coll.resource)
                 for member in coll.members:
-                    ctx.resource(member)
+                    self._register_reference(ctx, member)
                 ctx.collection(coll)
                 admitted_collections += 1
 
             for cov_claim, coll, req_scope in batch.collection_proofs:
-                ctx.resource(coll.resource)
+                self._register_reference(ctx, coll.resource)
                 for member in coll.members:
-                    ctx.resource(member)
+                    self._register_reference(ctx, member)
                 ctx.collection(coll)
                 ctx.prove_collection(cov_claim, coll, required_scope_json=req_scope)
 
@@ -1864,10 +1934,14 @@ class PairedAcquisitionCoordinator:
         directory: Path | str,
         *,
         operational: OperationalAcquisitionLedger | Path | str | None = None,
+        authorization=None,
+        admission=None,
     ) -> None:
         self.directory = Path(directory)
-        self.coordinator = PairCoordinator(self.directory)
+        self.coordinator = PairCoordinator(self.directory, authorization=authorization)
         self.operational = operational if operational is not None else self.directory
+        self.authorization = authorization
+        self.admission = admission
 
     def _core_validator_on_disk(self) -> Callable[[str, str], bool]:
         core_path = self.directory / "core.sqlite3"
@@ -1900,6 +1974,11 @@ class PairedAcquisitionCoordinator:
         request_identity: RequestIdentity | None = None,
     ) -> PairedAcquisitionResult:
         """Execute Core-first, Context-second paired admission via PairCoordinator.admit."""
+        if (self.directory / "p1-recovery-stop.json").exists():
+            from repo_catalog.domain.p1_coordination import CoordinationError
+
+            raise CoordinationError("RECOVERY_REQUIRED", "catalog")
+
         git_report_holder: list[GitAcquisitionReport | None] = [None]
         provider_report_holder: list[ProviderAcquisitionReport | None] = [None]
 
@@ -1924,12 +2003,19 @@ class PairedAcquisitionCoordinator:
                     git_report_holder[0] = core_fn(core_cap)
 
         def _context_unit(context_tx: AdmissionTransaction) -> None:
-            with Context.for_transaction(context_tx, self.directory) as ctx_cap:
+            with Context.for_transaction(
+                context_tx,
+                self.directory,
+                authorization=self.authorization,
+                admission=self.admission,
+            ) as ctx_cap:
                 if provider_batch is not None:
                     prov_acq = ProviderAcquisition(
                         ctx_cap,
                         core=self.directory / "core.sqlite3",
                         operational=self.operational,
+                        authorization=self.authorization,
+                        admission=self.admission,
                     )
                     provider_report_holder[0] = prov_acq.admit_batch(
                         provider_batch, context=ctx_cap
@@ -1937,7 +2023,11 @@ class PairedAcquisitionCoordinator:
                 elif context_fn is not None:
                     provider_report_holder[0] = context_fn(ctx_cap)
 
-                if reconcile_dependencies:
+                if (
+                    reconcile_dependencies
+                    and self.authorization is not None
+                    and self.admission is not None
+                ):
                     _reconcile_context_dependencies_in_tx(
                         ctx_cap, self._core_validator_on_disk()
                     )
@@ -2009,8 +2099,36 @@ class PairedAcquisitionCoordinator:
                 with GitCore.for_transaction(core_tx) as core_cap:
                     prepared.apply(core_cap)
 
-            admission = self.coordinator.admit(
-                _prepared_core_unit, _context_unit, cut=cut
+            auth = self.authorization
+            adm = self.admission
+            if (
+                provider_batch is not None
+                or context_fn is not None
+                or (
+                    reconcile_dependencies
+                    and git_input is None
+                    and git_source is None
+                    and git_request is None
+                )
+            ):
+                if auth is None or adm is None:
+                    from repo_catalog.domain.context_admission import (
+                        AdmissionRefused,
+                    )
+
+                    raise AdmissionRefused("PERMISSION_DENIED")
+
+            coord = (
+                self.coordinator
+                if self.coordinator._authorization is not None
+                else PairCoordinator(self.directory, authorization=auth)
+            )
+            admission = coord.admit(
+                _prepared_core_unit,
+                _context_unit,
+                cut=cut,
+                authorization=auth,
+                admission=adm,
             )
             return PairedAcquisitionResult(
                 admission=admission,
@@ -2026,11 +2144,30 @@ class PairedAcquisitionCoordinator:
             return None
 
         def _context_reconcile(context_tx: AdmissionTransaction) -> None:
-            with Context.for_transaction(context_tx, self.directory) as ctx_cap:
+            with Context.for_transaction(
+                context_tx,
+                self.directory,
+                authorization=self.authorization,
+                admission=self.admission,
+            ) as ctx_cap:
                 report = _reconcile_context_dependencies_in_tx(
                     ctx_cap, self._core_validator_on_disk()
                 )
                 report_holder.append(report)
 
-        self.coordinator.admit(_core_noop, _context_reconcile)
+        auth = self.authorization
+        adm = self.admission
+        if auth is None or adm is None:
+            from repo_catalog.domain.context_admission import (
+                AdmissionRefused,
+            )
+
+            raise AdmissionRefused("PERMISSION_DENIED")
+
+        coord = (
+            self.coordinator
+            if self.coordinator._authorization is not None
+            else PairCoordinator(self.directory, authorization=auth)
+        )
+        coord.admit(_core_noop, _context_reconcile, authorization=auth, admission=adm)
         return report_holder[0]

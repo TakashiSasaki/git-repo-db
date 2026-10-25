@@ -1,0 +1,16 @@
+{
+  "scope": "retained-I6A-at-153",
+  "verdict": "scoped PASS",
+  "critical": 0,
+  "high": 0,
+  "medium": 0,
+  "low": 0,
+  "findings": [],
+  "limitations": [
+    "No I6C/I7/I8 implementation acceptance",
+    "No normal Transfer or Release acceptance",
+    "Initial facade fault-injection schema refusal retained; corrected harness run is distinct"
+  ],
+  "new_behavioral_cases": 12,
+  "new_evidence_writer_cases": 1
+}

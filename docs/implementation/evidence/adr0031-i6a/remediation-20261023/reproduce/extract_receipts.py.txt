@@ -1,0 +1,11 @@
+import pathlib,sys,re,base64,hashlib,io,zipfile,json
+log=pathlib.Path(sys.argv[1]);out=pathlib.Path(sys.argv[2]);out.mkdir(exist_ok=True);t=log.read_text()
+b=re.findall(r'Z CI_RECEIPTS_BEGIN_V1 ([0-9a-f]{64}) (\d+)',t);e=re.findall(r'Z CI_RECEIPTS_END_V1 ([0-9a-f]{64})',t);assert len(b)==len(e)==1
+raw=base64.b64decode(''.join(re.findall(r'Z CI_RECEIPTS_DATA_V1 ([A-Za-z0-9+/=]+)',t)),validate=True);assert len(raw)==int(b[0][1]) and hashlib.sha256(raw).hexdigest()==b[0][0]==e[0]
+z=zipfile.ZipFile(io.BytesIO(raw));idx=json.loads(z.read('receipt-index.json'))
+for n,v in idx.items():
+ body=z.read(n);assert len(body)==v['bytes'] and hashlib.sha256(body).hexdigest()==v['sha256']
+keep=['receipt-index.json','receipt-binding.json']+[n for n in z.namelist() if n.endswith(('validation-manifest.json','plan.json','summary.json','binding.json'))]
+for n in set(keep):
+ (out/n.replace('/','--')).write_bytes(z.read(n))
+rec={'log_sha256':hashlib.sha256(log.read_bytes()).hexdigest(),'receipt_sha256':b[0][0],'receipt_bytes':len(raw),'verified_index_members':len(idx),'preserved_members':sorted(set(keep))};(out/'verification.json').write_text(json.dumps(rec,indent=2)+'\n');print(json.dumps(rec))

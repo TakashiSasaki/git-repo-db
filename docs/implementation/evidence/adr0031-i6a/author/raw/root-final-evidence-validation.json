@@ -1,0 +1,8 @@
+{
+  "compression_records_verified": 208,
+  "compression_mismatches": [],
+  "json_journal_xml_files_parsed": 273,
+  "credential_or_signed_query_matching_files": [],
+  "executable_test_config_diff_exit": 0,
+  "scope": "Final new Author evidence and executable/test/configuration preservation; whole suite not rerun for evidence-only changes."
+}

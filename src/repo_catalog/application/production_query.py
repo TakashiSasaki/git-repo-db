@@ -224,6 +224,11 @@ def _stored_view(method):
 class ProductionQueryService:
     """Authoritative query, pagination, byte-verification, and Search service."""
 
+    def transfer_event_reports(self, *args, **kwargs):
+        from repo_catalog.domain.resource_stage import UnsupportedResourceStage
+
+        raise UnsupportedResourceStage("query Transfer events")
+
     def __init__(
         self,
         directory: Path | str,
@@ -1048,7 +1053,7 @@ class ProductionQueryService:
         validate_core: Callable[[str, str], bool] | None = None,
     ) -> ContextResourceView:
         row = context.db.execute(
-            "SELECT parent_resource_kind,parent_provider_resource_id,document_kind,provider_document_id "
+            "SELECT identifier_namespace_kind,identifier_namespace_id,document_kind,provider_document_id "
             "FROM resources WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=?",
             resource_key.coordinates(),
         ).fetchone()
@@ -1058,15 +1063,19 @@ class ProductionQueryService:
                 resource_key,
                 f"Context resource {resource_key} not found",
             )
-        parent = (
+        identification = context.identification(resource_key)
+        identifier_namespace = (
             self._stored(
-                ResourceKey, resource_key.service_instance_uuidv4, row[0], row[1]
+                ResourceKey,
+                resource_key.service_instance_uuidv4,
+                identification.identifier_namespace_kind,
+                identification.identifier_namespace_id,
             )
-            if row[0] is not None and row[1] is not None
+            if identification.identifier_namespace_kind is not None
             else None
         )
-        document_kind = row[2]
-        provider_document_id = row[3]
+        document_kind = identification.document_kind
+        provider_document_id = identification.provider_document_id
 
         field_names = [
             r[0]
@@ -1164,7 +1173,8 @@ class ProductionQueryService:
             repository_uuidv4=repo_uuid,
             repository_roles=repo_roles,
             repository_relations=repo_relations,
-            parent=parent,
+            identification=identification,
+            identifier_namespace=identifier_namespace,
             document_kind=document_kind,
             provider_document_id=provider_document_id,
             fields=fields,
@@ -1181,8 +1191,15 @@ class ProductionQueryService:
         service_instance_uuidv4: str | None = None,
         resource_kind: str | None = None,
         repository_uuidv4: str | None = None,
+        identifier_namespace: ResourceKey | None = None,
         parent: ResourceKey | None = None,
     ) -> PageResult[ContextResourceView]:
+        if parent is not None:
+            raise QueryError(
+                "I2_PARENT_QUERY_UNSUPPORTED",
+                "parent",
+                "semantic Parent queries require I3",
+            )
         with self.open_snapshot(required_store="context") as snap:
             assert snap.context is not None
             token_str = snap.token.encode()
@@ -1218,7 +1235,10 @@ class ProductionQueryService:
                         repository_uuidv4
                     ):
                         continue
-                    if parent is not None and view.parent != parent:
+                    if (
+                        identifier_namespace is not None
+                        and view.identifier_namespace != identifier_namespace
+                    ):
                         continue
                     yield view
 
@@ -1228,7 +1248,9 @@ class ProductionQueryService:
                 page=page,
                 endpoint_kind="context_resources",
                 filters={
-                    "parent": list(parent.coordinates()) if parent else None,
+                    "identifier_namespace": list(identifier_namespace.coordinates())
+                    if identifier_namespace
+                    else None,
                     "mapping_evidence": self._mapping_filter(),
                     "repository_uuidv4": repository_uuidv4,
                     "resource_kind": resource_kind,

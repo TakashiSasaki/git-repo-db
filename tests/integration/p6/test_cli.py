@@ -9,6 +9,7 @@ from pathlib import Path
 
 from repo_catalog.adapters.sqlite.p1_coordination import persist_catalog_stop
 from repo_catalog.cli.production_query import main
+from repo_catalog.domain.resource_identity import encode_identity
 from tests.integration.p6.conftest import (
     REPOSITORY,
     SERVICE,
@@ -120,12 +121,12 @@ def test_cli_all_subcommands_pagination_and_error_handling(
             "--kind",
             "pull_request",
             "--id",
-            "42",
+            encode_identity("42"),
         ],
         capsys,
     )
     assert code == 0
-    assert cres_data["provider_resource_id"] == "42"
+    assert cres_data["provider_resource_id"] == encode_identity("42")
     assert cres_data["repository_uuidv4"] == REPOSITORY
 
     # 7. context-resources
@@ -155,7 +156,7 @@ def test_cli_all_subcommands_pagination_and_error_handling(
             "--kind",
             "pull_request",
             "--id",
-            "42",
+            encode_identity("42"),
             "--include-core-bytes",
         ],
         capsys,

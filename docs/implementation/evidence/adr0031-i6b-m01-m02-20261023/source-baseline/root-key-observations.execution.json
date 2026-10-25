@@ -1,0 +1,15 @@
+{
+  "command": [
+    "/workspace/i6b-fix-work/baseline/.venv/bin/python",
+    "/workspace/i6b-fix-work/measure_root_keys.py",
+    "--root",
+    "/workspace/i6b-fix-work/baseline",
+    "--out",
+    "/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/source-baseline/root-key-observations.json"
+  ],
+  "cwd": "/workspace/i6b-fix-work/baseline",
+  "started_epoch": 1792765880.993583,
+  "elapsed_seconds": 3.2752718925476074,
+  "exit_code": 0,
+  "completed": true
+}

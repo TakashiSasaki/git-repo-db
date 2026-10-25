@@ -1,0 +1,136 @@
+{
+  "scope": "Review-only publication of completed Task D evidence; no product implementation or reclassification of results",
+  "authorization": "Subsequent owner instruction: レビュー専用のプルリクエストとして提出してください",
+  "reviewed_head": "9eaa5111c94204c4adf791cd1565b704728493f1",
+  "reviewed_tree": "d91c73b5caed2601a6b097c69017e0e49e96bc53",
+  "reviewed_base": "9ea69ba8804a368802457950601a5a4027174c52",
+  "reviewed_base_tree": "8183f346b3613ea1206b2c0ab3e6428f31614cd8",
+  "publication_parent": "9eaa5111c94204c4adf791cd1565b704728493f1",
+  "publication_base_branch": "docs/adr0031-i2-preparation-20261021",
+  "branch": "review/adr0031-i2-sql-task-d-20261021",
+  "original_tracked_files_verified": 3723,
+  "changed_original_inputs": [],
+  "archive": {
+    "path": "task-d-review-evidence.zip",
+    "bytes": 7824546,
+    "sha256": "569df9d613db368cf4b4515d70d54df5c66be5eaa75ed74443f81ba9e30f0280",
+    "indexed_files_verified": 60,
+    "mismatches": []
+  },
+  "preserved_copies": {
+    "docs/implementation/evidence/adr0031-i2-independent-review/REPORT.txt": {
+      "original": "/workspace/task-d-evidence/REPORT.txt",
+      "bytes": 25276,
+      "sha256": "c3c3757bdb87aa7517a2f12dbcf3e9e597ef6a2124c01477ef5176f6537bca6c",
+      "byte_identical": true
+    },
+    "docs/implementation/evidence/adr0031-i2-independent-review/F1-reproduction.sql": {
+      "original": "/workspace/task-d-evidence/F1-reproduction.sql",
+      "bytes": 1626,
+      "sha256": "211a82dd998d8535fc937cc3d13d9d97ef2d3fe622bff596e85fbf695fb45022",
+      "byte_identical": true
+    },
+    "docs/implementation/evidence/adr0031-i2-independent-review/reproduce_f1.py": {
+      "original": "/workspace/task-d-evidence/reproduce_f1.py",
+      "bytes": 1408,
+      "sha256": "ef4e753eb424e5a28ebefb72e41d5f5cb8d2a75bded75e552671d8abc210bf6d",
+      "byte_identical": true
+    },
+    "docs/implementation/evidence/adr0031-i2-independent-review/independent_review.py": {
+      "original": "/workspace/task-d-evidence/independent_review.py",
+      "bytes": 27053,
+      "sha256": "2eebfcfea7c3f9e73d98256b4c1073e84732d312e88cf209dc1a3d899d2697e1",
+      "byte_identical": true
+    },
+    "docs/implementation/evidence/adr0031-i2-independent-review/run_review.py": {
+      "original": "/workspace/task-d-evidence/run_review.py",
+      "bytes": 1486,
+      "sha256": "7b7e44e321050c2e7e5a401b09a5d40544655a1abc3b21a750ba2179698cc1ac",
+      "byte_identical": true
+    },
+    "docs/implementation/evidence/adr0031-i2-independent-review/finalize.py": {
+      "original": "/workspace/task-d-evidence/finalize.py",
+      "bytes": 3114,
+      "sha256": "8a19e63bed0864f82d572ae35605c41a9eb90fa8cfe3cf93942a150d2eb84841",
+      "byte_identical": true
+    },
+    "docs/implementation/evidence/adr0031-i2-independent-review/input-manifest.json": {
+      "original": "/workspace/task-d-evidence/input-manifest.json",
+      "bytes": 565908,
+      "sha256": "0ecdf25f5832db0251847d0188725a44e1faf6043af1124aaefbe14033810885",
+      "byte_identical": true
+    },
+    "docs/implementation/evidence/adr0031-i2-independent-review/final-binding.json": {
+      "original": "/workspace/task-d-evidence/final-binding.json",
+      "bytes": 5043,
+      "sha256": "0b6fccbbd6c00ad5920aeaa0e6b059a834428ef9895f4c2c988ecf57cf7d2306",
+      "byte_identical": true
+    },
+    "docs/implementation/evidence/adr0031-i2-independent-review/runtime-provenance.json": {
+      "original": "/workspace/task-d-evidence/runtime-provenance.json",
+      "bytes": 2779,
+      "sha256": "8dc0e83391a361b3e8cc9f096ba379038ba53efc7b1bd750a177b64059ad5174",
+      "byte_identical": true
+    },
+    "docs/implementation/evidence/adr0031-i2-independent-review/archive-verification.json": {
+      "original": "/workspace/task-d-evidence/archive-verification.json",
+      "bytes": 145,
+      "sha256": "dd60e8c3530c89eb0bd8d2d132b3f658e7853dee593b5bf4564a5295678a0b58",
+      "byte_identical": true
+    },
+    "docs/implementation/evidence/adr0031-i2-independent-review/schema-comparison.json": {
+      "original": "/workspace/task-d-evidence/schema-comparison.json",
+      "bytes": 10791,
+      "sha256": "824e72f6608dcc97564c974314605c3039019736d7a4d16ddad6f6a4ae19edab",
+      "byte_identical": true
+    },
+    "docs/implementation/evidence/adr0031-i2-independent-review/artifact-index.json": {
+      "original": "/workspace/task-d-evidence/artifact-index.json",
+      "bytes": 8999,
+      "sha256": "a27b5e857d5138ebe5fc6724760b473b9efc21cab204c72c0c7097e5bd68c1a2",
+      "byte_identical": true
+    },
+    "docs/implementation/evidence/adr0031-i2-independent-review/bundle-receipt.json": {
+      "original": "/workspace/task-d-evidence/bundle-receipt.json",
+      "bytes": 297,
+      "sha256": "4ac37982f0f9cff2b725a21048ada61f834c433420bf860626195c28ef367ee4",
+      "byte_identical": true
+    },
+    "docs/implementation/evidence/adr0031-i2-independent-review/F1-minimal-3513.json": {
+      "original": "/workspace/task-d-evidence/F1-minimal-3513.json",
+      "bytes": 523,
+      "sha256": "cf728d35649d2f441adda84438ecac82113f2ea69028d8403133c06c71cbced3",
+      "byte_identical": true
+    },
+    "docs/implementation/evidence/adr0031-i2-independent-review/F1-minimal-3531.json": {
+      "original": "/workspace/task-d-evidence/F1-minimal-3531.json",
+      "bytes": 523,
+      "sha256": "453a9a46b62731e2497225186c2a350b32ac222f089235ec1fba4d89d16faf97",
+      "byte_identical": true
+    },
+    "docs/implementation/evidence/adr0031-i2-independent-review/minimum-summary.json": {
+      "original": "/workspace/task-d-evidence/verified-3513/summary.json",
+      "bytes": 8024,
+      "sha256": "31fba61af51664c5e18445ccd776bcc50ec7f0c2458351466a4e9263c49cb37a",
+      "byte_identical": true
+    },
+    "docs/implementation/evidence/adr0031-i2-independent-review/newer-summary.json": {
+      "original": "/workspace/task-d-evidence/verified-3531/summary.json",
+      "bytes": 8024,
+      "sha256": "79309444ff99fe1ab4e061ae93c6224a8fdacf7b9bab2abe5dec4ae6ac467405",
+      "byte_identical": true
+    },
+    "docs/implementation/evidence/adr0031-i2-independent-review/task-d-review-evidence.zip": {
+      "original": "/workspace/task-d-review-evidence.zip",
+      "bytes": 7824546,
+      "sha256": "569df9d613db368cf4b4515d70d54df5c66be5eaa75ed74443f81ba9e30f0280",
+      "byte_identical": true
+    }
+  },
+  "archive_only_artifacts": {
+    "product-vs-candidate.diff": {
+      "original_sha256": "043a0553637940b43e30a6094e8959cba4e7b2535ec3b67a22d31a643f8ecd5c",
+      "reason": "Original diff contains a context-only space line; preserve exact original bytes inside the frozen ZIP rather than change it for publication whitespace checks."
+    }
+  }
+}

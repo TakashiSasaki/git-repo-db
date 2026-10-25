@@ -1,0 +1,56 @@
+"""I6-B Author per-node comparison with the separately attributed #149 evidence."""
+from pathlib import Path
+from collections import Counter,defaultdict
+import gzip,json,re,sys,hashlib
+from independent_receipt import audit
+BASE=Path('/workspace/i6b-work/baseline-task-c')
+FULL=Path(sys.argv[1]); DIAG=Path(sys.argv[2]) if len(sys.argv)>2 else None;OUT=Path(sys.argv[3]) if len(sys.argv)>3 else FULL/'comparison'
+OUT.mkdir(exist_ok=False,parents=True)
+def write(name,obj):
+ p=OUT/name;s=(json.dumps(obj,indent=2,ensure_ascii=True)+'\n').encode()
+ if name.endswith('.gz'):p.write_bytes(gzip.compress(s,mtime=0))
+ else:p.write_bytes(s)
+def ex(m):
+ s=m.get('message','');t=m.get('trace','')
+ names=re.findall(r'(?:^|[\n ])([\w.]+(?:Error|Refused|Stage|Failure)):',s+'\n'+t)
+ codes=re.findall(r'\b(?:I2_[A-Z_]+|MALFORMED_ROW|PERMISSION_DENIED|OMITTED_BY_SELECTION|INCOMPLETE_[A-Z_]+|MISSING_DEPENDENCY|UNQUALIFIED_MAPPING|QS10_PARENT_INELIGIBLE)\b',s+'\n'+t)
+ frames=[]
+ for path,line,fun in re.findall(r'^([^\n:]+\.py):(\d+):(?: in (\w+))?',t,re.M):
+  match=re.search(r'(tests/.*|src/repo_catalog/.*)',path)
+  if match:frames.append({'path':match.group(),'line':int(line),'function':fun})
+ return {'exception_types':sorted(set(names)),'codes':sorted(set(codes)),'frames':frames,'message':s,'trace':t}
+b, bm,bs=audit(BASE/'full');n,nm,ns=audit(FULL)
+ownership=json.loads((BASE/'inherited-ownership.json').read_text())
+rows=[]
+for node in sorted(set(b)|set(n)):
+ old=b.get(node);new=n.get(node)
+ row={'nodeid':node,'old_outcome_phase':old,'new_outcome_phase':new,'outcome_phase_changed':old!=new,'historical_owner':ownership.get(node)}
+ if node in bm:row['old_first_failure']=ex(bm[node])
+ if node in nm:row['new_first_failure']=ex(nm[node])
+ if node in bm or node in nm:
+  a=row.get('old_first_failure',{});c=row.get('new_first_failure',{})
+  row['exception_type_changed']=a.get('exception_types')!=c.get('exception_types')
+  row['code_changed']=a.get('codes')!=c.get('codes')
+  row['frame_function_changed']=[(x['path'],x['function']) for x in a.get('frames',[])]!=[(x['path'],x['function']) for x in c.get('frames',[])]
+ rows.append(row)
+summary={'baseline':bs,'current':ns,'baseline_evidence':'docs/implementation/evidence/adr0031-i6a/originals-binding-independent-20261023/raw-evidence.zip','method':'Author analysis using attributed Task C stdlib parser; repeated diagnostic never substitutes for full execution.','new_nodes':sorted(set(n)-set(b)),'removed_nodes':sorted(set(b)-set(n)),'outcome_phase_changes':[r['nodeid'] for r in rows if r['outcome_phase_changed'] and r['nodeid'] in b and r['nodeid'] in n],'new_unsuccessful_nodes':[k for k in n if n[k][0]!='passed' and (k not in b or b[k][0]=='passed')],'resolved_nodes':[k for k in b if b[k][0]!='passed' and n.get(k,('',))[0]=='passed'],'old_unsuccessful':len(bm),'current_unsuccessful':len(nm),'historical_owners_of_current_unsuccessful':dict(Counter(ownership.get(k,'NEW_OR_UNCLASSIFIED') for k in nm))}
+write('full-node-comparison.json.gz',rows)
+if DIAG:
+ old,_,ods=audit(BASE/'diagnostic743','diagnostic');new,_,nds=audit(DIAG,'diagnostic')
+ def trace(root):
+  asserts=defaultdict(set);raises=defaultdict(list)
+  for p in sorted((root/'trace').glob('*.jsonl')):
+   for line in p.read_text().splitlines():
+    r=json.loads(line);node=r.get('nodeid')
+    if not node:continue
+    if r['event']=='assertion_line':asserts[node].add((r.get('phase'),r['path'],r['line'],r['function']))
+    if r['event']=='admission_exception':raises[node].append({k:r[k] for k in ('phase','exception_type','message','code','stack')})
+  return asserts,raises
+ oa,orr=trace(BASE/'diagnostic743');na,nrr=trace(DIAG)
+ dr=[]
+ for node in sorted(set(old)|set(new)):
+  o=sorted(oa[node]);v=sorted(na[node]);dr.append({'nodeid':node,'old_outcome_phase':old.get(node),'new_outcome_phase':new.get(node),'old_assert_entries':o,'new_assert_entries':v,'assert_entries_changed':o!=v,'old_admission_exceptions':orr[node],'new_admission_exceptions':nrr[node]})
+ write('diagnostic-node-comparison.json.gz',dr)
+ summary['diagnostic']={'baseline':ods,'current':nds,'outcome_phase_changes':[r['nodeid'] for r in dr if r['old_outcome_phase']!=r['new_outcome_phase']],'assert_entry_changes':[r['nodeid'] for r in dr if r['assert_entries_changed']],'current_matches_full':all(new.get(k)==n.get(k) for k in new)}
+write('summary.json',summary)
+print(json.dumps({k:v for k,v in summary.items() if k not in ('new_nodes','removed_nodes')},indent=2))

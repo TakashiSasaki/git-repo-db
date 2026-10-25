@@ -1,0 +1,362 @@
+[
+  {
+    "resources": 0,
+    "input_rows": 1,
+    "input_bytes": 469,
+    "max_work": 0,
+    "prior_work": 0,
+    "charged_work": 41,
+    "additional_work": 41,
+    "parse_calls": 1,
+    "embedded_chars_parsed": 2,
+    "emitted_units": 0,
+    "reasons": [
+      "work_limit"
+    ]
+  },
+  {
+    "resources": 0,
+    "input_rows": 1,
+    "input_bytes": 469,
+    "max_work": 1,
+    "prior_work": 0,
+    "charged_work": 41,
+    "additional_work": 41,
+    "parse_calls": 1,
+    "embedded_chars_parsed": 2,
+    "emitted_units": 0,
+    "reasons": [
+      "work_limit"
+    ]
+  },
+  {
+    "resources": 0,
+    "input_rows": 1,
+    "input_bytes": 469,
+    "max_work": 17,
+    "prior_work": 0,
+    "charged_work": 41,
+    "additional_work": 41,
+    "parse_calls": 1,
+    "embedded_chars_parsed": 2,
+    "emitted_units": 0,
+    "reasons": [
+      "work_limit"
+    ]
+  },
+  {
+    "resources": 0,
+    "input_rows": 1,
+    "input_bytes": 469,
+    "max_work": 17,
+    "prior_work": 17,
+    "charged_work": 58,
+    "additional_work": 41,
+    "parse_calls": 1,
+    "embedded_chars_parsed": 2,
+    "emitted_units": 0,
+    "reasons": [
+      "work_limit"
+    ]
+  },
+  {
+    "resources": 1,
+    "input_rows": 3,
+    "input_bytes": 1613,
+    "max_work": 0,
+    "prior_work": 0,
+    "charged_work": 93,
+    "additional_work": 93,
+    "parse_calls": 4,
+    "embedded_chars_parsed": 629,
+    "emitted_units": 0,
+    "reasons": [
+      "work_limit"
+    ]
+  },
+  {
+    "resources": 1,
+    "input_rows": 3,
+    "input_bytes": 1613,
+    "max_work": 1,
+    "prior_work": 0,
+    "charged_work": 93,
+    "additional_work": 93,
+    "parse_calls": 4,
+    "embedded_chars_parsed": 629,
+    "emitted_units": 0,
+    "reasons": [
+      "work_limit"
+    ]
+  },
+  {
+    "resources": 1,
+    "input_rows": 3,
+    "input_bytes": 1613,
+    "max_work": 17,
+    "prior_work": 0,
+    "charged_work": 93,
+    "additional_work": 93,
+    "parse_calls": 4,
+    "embedded_chars_parsed": 629,
+    "emitted_units": 0,
+    "reasons": [
+      "work_limit"
+    ]
+  },
+  {
+    "resources": 1,
+    "input_rows": 3,
+    "input_bytes": 1613,
+    "max_work": 17,
+    "prior_work": 17,
+    "charged_work": 110,
+    "additional_work": 93,
+    "parse_calls": 4,
+    "embedded_chars_parsed": 629,
+    "emitted_units": 0,
+    "reasons": [
+      "work_limit"
+    ]
+  },
+  {
+    "resources": 5,
+    "input_rows": 11,
+    "input_bytes": 6197,
+    "max_work": 0,
+    "prior_work": 0,
+    "charged_work": 301,
+    "additional_work": 301,
+    "parse_calls": 16,
+    "embedded_chars_parsed": 3137,
+    "emitted_units": 0,
+    "reasons": [
+      "work_limit"
+    ]
+  },
+  {
+    "resources": 5,
+    "input_rows": 11,
+    "input_bytes": 6197,
+    "max_work": 1,
+    "prior_work": 0,
+    "charged_work": 301,
+    "additional_work": 301,
+    "parse_calls": 16,
+    "embedded_chars_parsed": 3137,
+    "emitted_units": 0,
+    "reasons": [
+      "work_limit"
+    ]
+  },
+  {
+    "resources": 5,
+    "input_rows": 11,
+    "input_bytes": 6197,
+    "max_work": 17,
+    "prior_work": 0,
+    "charged_work": 301,
+    "additional_work": 301,
+    "parse_calls": 16,
+    "embedded_chars_parsed": 3137,
+    "emitted_units": 0,
+    "reasons": [
+      "work_limit"
+    ]
+  },
+  {
+    "resources": 5,
+    "input_rows": 11,
+    "input_bytes": 6197,
+    "max_work": 17,
+    "prior_work": 17,
+    "charged_work": 318,
+    "additional_work": 301,
+    "parse_calls": 16,
+    "embedded_chars_parsed": 3137,
+    "emitted_units": 0,
+    "reasons": [
+      "work_limit"
+    ]
+  },
+  {
+    "resources": 50,
+    "input_rows": 101,
+    "input_bytes": 57887,
+    "max_work": 0,
+    "prior_work": 0,
+    "charged_work": 2641,
+    "additional_work": 2641,
+    "parse_calls": 151,
+    "embedded_chars_parsed": 31392,
+    "emitted_units": 0,
+    "reasons": [
+      "work_limit"
+    ]
+  },
+  {
+    "resources": 50,
+    "input_rows": 101,
+    "input_bytes": 57887,
+    "max_work": 1,
+    "prior_work": 0,
+    "charged_work": 2641,
+    "additional_work": 2641,
+    "parse_calls": 151,
+    "embedded_chars_parsed": 31392,
+    "emitted_units": 0,
+    "reasons": [
+      "work_limit"
+    ]
+  },
+  {
+    "resources": 50,
+    "input_rows": 101,
+    "input_bytes": 57887,
+    "max_work": 17,
+    "prior_work": 0,
+    "charged_work": 2641,
+    "additional_work": 2641,
+    "parse_calls": 151,
+    "embedded_chars_parsed": 31392,
+    "emitted_units": 0,
+    "reasons": [
+      "work_limit"
+    ]
+  },
+  {
+    "resources": 50,
+    "input_rows": 101,
+    "input_bytes": 57887,
+    "max_work": 17,
+    "prior_work": 17,
+    "charged_work": 2658,
+    "additional_work": 2641,
+    "parse_calls": 151,
+    "embedded_chars_parsed": 31392,
+    "emitted_units": 0,
+    "reasons": [
+      "work_limit"
+    ]
+  },
+  {
+    "resources": 500,
+    "input_rows": 1001,
+    "input_bytes": 576137,
+    "max_work": 0,
+    "prior_work": 0,
+    "charged_work": 26041,
+    "additional_work": 26041,
+    "parse_calls": 1501,
+    "embedded_chars_parsed": 314392,
+    "emitted_units": 0,
+    "reasons": [
+      "work_limit"
+    ]
+  },
+  {
+    "resources": 500,
+    "input_rows": 1001,
+    "input_bytes": 576137,
+    "max_work": 1,
+    "prior_work": 0,
+    "charged_work": 26041,
+    "additional_work": 26041,
+    "parse_calls": 1501,
+    "embedded_chars_parsed": 314392,
+    "emitted_units": 0,
+    "reasons": [
+      "work_limit"
+    ]
+  },
+  {
+    "resources": 500,
+    "input_rows": 1001,
+    "input_bytes": 576137,
+    "max_work": 17,
+    "prior_work": 0,
+    "charged_work": 26041,
+    "additional_work": 26041,
+    "parse_calls": 1501,
+    "embedded_chars_parsed": 314392,
+    "emitted_units": 0,
+    "reasons": [
+      "work_limit"
+    ]
+  },
+  {
+    "resources": 500,
+    "input_rows": 1001,
+    "input_bytes": 576137,
+    "max_work": 17,
+    "prior_work": 17,
+    "charged_work": 26058,
+    "additional_work": 26041,
+    "parse_calls": 1501,
+    "embedded_chars_parsed": 314392,
+    "emitted_units": 0,
+    "reasons": [
+      "work_limit"
+    ]
+  },
+  {
+    "resources": 1000,
+    "input_rows": 2001,
+    "input_bytes": 1152137,
+    "max_work": 0,
+    "prior_work": 0,
+    "charged_work": 52041,
+    "additional_work": 52041,
+    "parse_calls": 3001,
+    "embedded_chars_parsed": 628892,
+    "emitted_units": 0,
+    "reasons": [
+      "work_limit"
+    ]
+  },
+  {
+    "resources": 1000,
+    "input_rows": 2001,
+    "input_bytes": 1152137,
+    "max_work": 1,
+    "prior_work": 0,
+    "charged_work": 52041,
+    "additional_work": 52041,
+    "parse_calls": 3001,
+    "embedded_chars_parsed": 628892,
+    "emitted_units": 0,
+    "reasons": [
+      "work_limit"
+    ]
+  },
+  {
+    "resources": 1000,
+    "input_rows": 2001,
+    "input_bytes": 1152137,
+    "max_work": 17,
+    "prior_work": 0,
+    "charged_work": 52041,
+    "additional_work": 52041,
+    "parse_calls": 3001,
+    "embedded_chars_parsed": 628892,
+    "emitted_units": 0,
+    "reasons": [
+      "work_limit"
+    ]
+  },
+  {
+    "resources": 1000,
+    "input_rows": 2001,
+    "input_bytes": 1152137,
+    "max_work": 17,
+    "prior_work": 17,
+    "charged_work": 52058,
+    "additional_work": 52041,
+    "parse_calls": 3001,
+    "embedded_chars_parsed": 628892,
+    "emitted_units": 0,
+    "reasons": [
+      "work_limit"
+    ]
+  }
+]

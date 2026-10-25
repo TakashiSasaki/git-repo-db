@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "verdict": "FAIL",
+  "review_status": "AUTHOR_CORRECTION_PENDING_INDEPENDENT_REVIEW",
+  "base_branch": "impl/adr0031-i6c-provider-selective-exchange",
+  "base_commit": "5df40eace63d8487c34a95777f19e05caf55da75",
+  "base_tree": "cc2e42ac6cbed31bd18b12d4e28d496f73f1c8b2",
+  "branch": "fix/adr0031-i6c-authority-ci-20261024",
+  "investigation_a_implicit_authority": {
+    "status": "REMEDIATED",
+    "observed_condition": "PR #157 contained helpers with defaults resembling grants=None, implicit AdmissionSelection(all_selected=True), fixed 'local-user' principal, and entry points manufacturing permissive admission services on missing authority.",
+    "root_cause": "src/repo_catalog/domain/context_admission.py:create_local_admission_service defaulted grants=None, all_selected=True; LocalAuthorizationPolicy allowed all dependency grants when grants was None; ProviderAcquisition._open_context and PairedAcquisitionCoordinator manufactured permissive admission services when auth/admission was omitted.",
+    "remediation": "Enforced fail-closed behavior across ProviderAcquisition and PairedAcquisitionCoordinator when authorization/admission is omitted (raising AdmissionRefused('PERMISSION_DENIED')). Require explicit selection and grants in create_local_admission_service with credential authentication. Enforced principal matching and finite grant subset validation in LocalAuthorizationPolicy.",
+    "tests": [
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_missing_local_authorization_fails_closed",
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_create_local_admission_service_requires_explicit_arguments",
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_local_authorization_policy_enforces_finite_grants",
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_local_authorization_policy_refuses_unauthorized_source_and_mapping",
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_local_authorization_policy_forged_principal_fails_closed",
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_local_authorization_policy_foreign_operation_fails_closed",
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_policy_revocation_during_lease_aborts_transaction",
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_caller_supplied_privileges_ignored_local_policy_controls",
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_cached_receipt_shortcut_fails_closed_on_revocation"
+    ]
+  },
+  "investigation_b_receiver_selection_widening": {
+    "status": "REMEDIATED",
+    "observed_condition": "PR #157 overwrote receiver selection scope with received context_data['resources'] in ExchangeService.import_package, expanding receiver scope to admit unselected sender resources.",
+    "root_cause": "src/repo_catalog/application/exchange.py:1777-1799 and lines 1878-1900 executed admit_selection = replace(admit_selection, resource_keys=tuple(ResourceKey(...) for r in context_data['resources'])).",
+    "remediation": "Removed receiver selection overwrite in ExchangeService.import_package. Enforced strict isolation between receiver selection and sender content; when receiver specifies resource_keys=(), 0 resources are admitted.",
+    "tests": [
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_receiver_empty_selection_admits_zero_resources",
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_receiver_selective_subset_omits_unselected_sender_resources"
+    ]
+  },
+  "investigation_c_wire_identification_bypass": {
+    "status": "REMEDIATED",
+    "observed_condition": "PR #157 introduced special case 'provider_resource_id == [\"global\",[]]' in exchange_rows.py to bypass envelope validation, and swallowed exceptions with pass in selective_exchange.py.",
+    "root_cause": "src/repo_catalog/domain/exchange_rows.py:334-347 skipped ResourceIdentification.from_wire(row) for global empty list; selective_exchange.py:preflight_i2_resources caught Exception converting all errors to UnsupportedIdentificationStage; validate_context_bindings swallowed ValueError/TypeError.",
+    "remediation": "Removed the special bypass in exchange_rows.py; restored unconditional strict ResourceIdentification.from_wire(row) for all context resources; restored strict validate_context_bindings without exception swallowing; restored preflight_i2_resources strict conversion of ValueError/TypeError without broad Exception catching.",
+    "tests": [
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_valid_global_document_identification",
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_valid_scoped_document_and_entities",
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_unknown_kind_with_canonical_nested_identity",
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_known_kind_with_inconsistent_namespace_fails",
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_missing_or_null_required_column_fails",
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_absence_of_bypass_for_global_empty_list",
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_preflight_i2_resources_raises_unsupported_identification_stage",
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_validate_context_bindings_does_not_swallow_exceptions",
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_wrong_native_scope_fails",
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_seven_column_resource_identification_roundtrip",
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_child_first_registration"
+    ]
+  },
+  "ci_remediation_ruff": {
+    "status": "REMEDIATED",
+    "observed_condition": "Development CI run 40048212414 failed with 11 Ruff lint violations (F401 unused imports, I001 import ordering) and 4 files failing formatting check in run 40048212481.",
+    "root_cause": "Unused imports in src/repo_catalog/domain/exchange.py and tests/integration/i3/test_selective_exchange.py; unsorted import blocks; unformatted files in src/.",
+    "remediation": "Removed unused imports, sorted import blocks, and reformatted codebase with ruff format. Both ruff check and ruff format --check now pass with 0 errors.",
+    "verification": "raw/ruff_check.log and raw/ruff_format.log report 0 errors across 452 files."
+  },
+  "distinct_scanner_defect_i155_m01": {
+    "status": "SEPARATE_TRACK",
+    "note": "The I155-M01 Admission scanner work-budget violation is addressed in a separate parallel correction track targeting PR #156. It is not integrated or cherry-picked here, preventing conflict and keeping I6-C remediation isolated."
+  },
+  "boundaries": {
+    "v5_exchange_routes_active": true,
+    "seven_resource_columns_enforced": true,
+    "local_admission_service_bound": true,
+    "receiver_selection_widening_eliminated": true,
+    "identification_bypass_eliminated": true,
+    "transfer_stage_fences_active": true,
+    "ordinary_transfer_enabled": false,
+    "i7_recovery_implemented": false,
+    "i8_query_search_implemented": false
+  }
+}

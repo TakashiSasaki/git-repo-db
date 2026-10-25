@@ -1,0 +1,564 @@
+{
+  "kind": "development-validation-only",
+  "broad_execution_commit": "3594f475731554d3b836f261fce869bc29bff414",
+  "final_code_execution_commit": "cb9dee62077a25560f8ac03cc39c3ca5f97e2cfc",
+  "note": "Those executions differ only in policy checker and its tests. Later evidence publication is not a new execution or a new distribution build.",
+  "runtime": {
+    "python": "3.12.14",
+    "executable": "/workspace/git-repo-db/.venv/bin/python",
+    "sqlite_version": "3.53.1",
+    "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+    "compile_options": [
+      [
+        "ATOMIC_INTRINSICS=1"
+      ],
+      [
+        "COMPILER=clang-22.1.3"
+      ],
+      [
+        "DEFAULT_AUTOVACUUM"
+      ],
+      [
+        "DEFAULT_CACHE_SIZE=-2000"
+      ],
+      [
+        "DEFAULT_FILE_FORMAT=4"
+      ],
+      [
+        "DEFAULT_JOURNAL_SIZE_LIMIT=-1"
+      ],
+      [
+        "DEFAULT_MMAP_SIZE=0"
+      ],
+      [
+        "DEFAULT_PAGE_SIZE=4096"
+      ],
+      [
+        "DEFAULT_PCACHE_INITSZ=20"
+      ],
+      [
+        "DEFAULT_RECURSIVE_TRIGGERS"
+      ],
+      [
+        "DEFAULT_SECTOR_SIZE=4096"
+      ],
+      [
+        "DEFAULT_SYNCHRONOUS=2"
+      ],
+      [
+        "DEFAULT_WAL_AUTOCHECKPOINT=1000"
+      ],
+      [
+        "DEFAULT_WAL_SYNCHRONOUS=2"
+      ],
+      [
+        "DEFAULT_WORKER_THREADS=0"
+      ],
+      [
+        "DIRECT_OVERFLOW_READ"
+      ],
+      [
+        "ENABLE_DBSTAT_VTAB"
+      ],
+      [
+        "ENABLE_FTS3"
+      ],
+      [
+        "ENABLE_FTS3_PARENTHESIS"
+      ],
+      [
+        "ENABLE_FTS4"
+      ],
+      [
+        "ENABLE_FTS5"
+      ],
+      [
+        "ENABLE_GEOPOLY"
+      ],
+      [
+        "ENABLE_MATH_FUNCTIONS"
+      ],
+      [
+        "ENABLE_PERCENTILE"
+      ],
+      [
+        "ENABLE_RTREE"
+      ],
+      [
+        "MALLOC_SOFT_LIMIT=1024"
+      ],
+      [
+        "MAX_ATTACHED=10"
+      ],
+      [
+        "MAX_COLUMN=2000"
+      ],
+      [
+        "MAX_COMPOUND_SELECT=500"
+      ],
+      [
+        "MAX_DEFAULT_PAGE_SIZE=8192"
+      ],
+      [
+        "MAX_EXPR_DEPTH=1000"
+      ],
+      [
+        "MAX_FUNCTION_ARG=1000"
+      ],
+      [
+        "MAX_LENGTH=1000000000"
+      ],
+      [
+        "MAX_LIKE_PATTERN_LENGTH=50000"
+      ],
+      [
+        "MAX_MMAP_SIZE=0x7fff0000"
+      ],
+      [
+        "MAX_PAGE_COUNT=0xfffffffe"
+      ],
+      [
+        "MAX_PAGE_SIZE=65536"
+      ],
+      [
+        "MAX_SQL_LENGTH=1000000000"
+      ],
+      [
+        "MAX_TRIGGER_DEPTH=1000"
+      ],
+      [
+        "MAX_VARIABLE_NUMBER=32766"
+      ],
+      [
+        "MAX_VDBE_OP=250000000"
+      ],
+      [
+        "MAX_WORKER_THREADS=8"
+      ],
+      [
+        "MUTEX_PTHREADS"
+      ],
+      [
+        "SYSTEM_MALLOC"
+      ],
+      [
+        "TEMP_STORE=1"
+      ],
+      [
+        "THREADSAFE=1"
+      ]
+    ],
+    "pragmas": {
+      "foreign_keys": [
+        [
+          0
+        ]
+      ],
+      "recursive_triggers": [
+        [
+          0
+        ]
+      ],
+      "journal_mode": [
+        [
+          "memory"
+        ]
+      ],
+      "synchronous": [
+        [
+          2
+        ]
+      ]
+    }
+  },
+  "focused": {
+    "passed": 285,
+    "subtests_passed": 57,
+    "exit_code": 0
+  },
+  "policy": {
+    "unit_tests": 31,
+    "current_violations": 0,
+    "exit_code": 0
+  },
+  "broad": {
+    "ordinary_collected": 5737,
+    "selected": 3137,
+    "unexecuted_ordinary": 2600,
+    "inputs_unchanged": true
+  },
+  "regressions": {
+    "passed": 3058,
+    "failed": 59,
+    "error": 20,
+    "skipped": 0,
+    "xfail": 0,
+    "xpass": 0,
+    "executed": 3137,
+    "exit_code": 1,
+    "reconciliation": {
+      "checks": {
+        "selected_unique": true,
+        "selected_equals_junit": true,
+        "selected_equals_journal_starts": true,
+        "setup_and_teardown_once": true,
+        "no_duplicate_phases": true,
+        "phase_nodes_equal_selected": true,
+        "call_once_after_successful_setup": true,
+        "one_finish": true
+      },
+      "consistent_node_execution": true,
+      "journal_phase_outcomes": {
+        "passed": 9312,
+        "failed": 79
+      },
+      "finishes": [
+        {
+          "event": "finish",
+          "status": "failed",
+          "exitstatus": 1,
+          "timestamp": 1792678612.210197
+        }
+      ]
+    }
+  },
+  "bounded_i5": {
+    "passed": 29,
+    "failed": 0,
+    "error": 0,
+    "skipped": 0,
+    "exit_code": 0
+  },
+  "bounded_i4": {
+    "passed": 217,
+    "failed": 0,
+    "error": 0,
+    "skipped": 0,
+    "exit_code": 0
+  },
+  "failure_comparison": {
+    "baseline_archive_sha256": "e452d2b86f99fff8f44993204d7e72df925b69b34086a6399d791aeb39c75948",
+    "baseline_entry": "author-3.53.1/regressions.xml",
+    "baseline_non_successes": 79,
+    "current_non_successes": 79,
+    "same_nodes": true,
+    "resolved": 0,
+    "additional": 0
+  },
+  "distribution": {
+    "variants": [
+      "direct",
+      "sdist"
+    ],
+    "each_i5_passed": 29,
+    "each_i4_passed": 217,
+    "each_i2_probe": "passed",
+    "each_i3_probe": "passed",
+    "each_access_smoke": "failed at inherited I2_TRANSFER_UNSUPPORTED",
+    "orchestrator_exit_code": 1,
+    "processes": [
+      {
+        "name": "archive",
+        "argv": [
+          "git",
+          "archive",
+          "cb9dee62077a25560f8ac03cc39c3ca5f97e2cfc",
+          "-o",
+          "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/source.tar"
+        ],
+        "cwd": "/workspace/git-repo-db",
+        "exit_code": 0
+      },
+      {
+        "name": "build-direct",
+        "argv": [
+          "/workspace/git-repo-db/.venv/bin/python",
+          "-m",
+          "hatchling",
+          "build",
+          "-t",
+          "wheel",
+          "-t",
+          "sdist"
+        ],
+        "cwd": "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/source",
+        "exit_code": 0
+      },
+      {
+        "name": "build-sdist-wheel",
+        "argv": [
+          "/workspace/git-repo-db/.venv/bin/python",
+          "-m",
+          "hatchling",
+          "build",
+          "-t",
+          "wheel"
+        ],
+        "cwd": "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/from-sdist/repo_catalog-0.2.0",
+        "exit_code": 0
+      },
+      {
+        "name": "direct-venv",
+        "argv": [
+          "/workspace/git-repo-db/.venv/bin/python",
+          "-m",
+          "venv",
+          "--without-pip",
+          "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/direct-venv"
+        ],
+        "cwd": "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution",
+        "exit_code": 0
+      },
+      {
+        "name": "direct-install",
+        "argv": [
+          "uv",
+          "pip",
+          "install",
+          "--python",
+          "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/direct-venv/bin/python",
+          "--offline",
+          "--no-index",
+          "--find-links",
+          "/workspace/git-repo-db/artifacts/wheelhouse",
+          "--no-deps",
+          "--require-hashes",
+          "-r",
+          "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/direct-requirements.txt"
+        ],
+        "cwd": "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution",
+        "exit_code": 0
+      },
+      {
+        "name": "direct-measure",
+        "argv": [
+          "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/direct-venv/bin/python",
+          "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/outside/measure.py",
+          "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/direct-runtime.json"
+        ],
+        "cwd": "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/outside",
+        "exit_code": 0
+      },
+      {
+        "name": "direct-i5",
+        "argv": [
+          "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/direct-venv/bin/python",
+          "-m",
+          "pytest",
+          "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/outside/test_installed_i5.py",
+          "-q",
+          "--tb=short",
+          "--confcutdir=/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/outside",
+          "--junitxml=/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/direct-i5.xml"
+        ],
+        "cwd": "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/outside",
+        "exit_code": 0
+      },
+      {
+        "name": "direct-i4",
+        "argv": [
+          "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/direct-venv/bin/python",
+          "-m",
+          "pytest",
+          "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/outside/test_installed_i4.py",
+          "-q",
+          "--tb=short",
+          "--confcutdir=/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/outside",
+          "--junitxml=/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/direct-i4.xml"
+        ],
+        "cwd": "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/outside",
+        "exit_code": 0
+      },
+      {
+        "name": "direct-i2",
+        "argv": [
+          "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/direct-venv/bin/python",
+          "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/outside/verify_i2_distribution.py",
+          "--output",
+          "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/direct-i2.json"
+        ],
+        "cwd": "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/outside",
+        "exit_code": 0
+      },
+      {
+        "name": "direct-i3",
+        "argv": [
+          "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/direct-venv/bin/python",
+          "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/outside/verify_i3_distribution.py",
+          "--output",
+          "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/direct-i3.json"
+        ],
+        "cwd": "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/outside",
+        "exit_code": 0
+      },
+      {
+        "name": "direct-access",
+        "argv": [
+          "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/direct-venv/bin/python",
+          "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/outside/original_access_smoke.py"
+        ],
+        "cwd": "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/outside",
+        "exit_code": 1
+      },
+      {
+        "name": "sdist-venv",
+        "argv": [
+          "/workspace/git-repo-db/.venv/bin/python",
+          "-m",
+          "venv",
+          "--without-pip",
+          "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/sdist-venv"
+        ],
+        "cwd": "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution",
+        "exit_code": 0
+      },
+      {
+        "name": "sdist-install",
+        "argv": [
+          "uv",
+          "pip",
+          "install",
+          "--python",
+          "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/sdist-venv/bin/python",
+          "--offline",
+          "--no-index",
+          "--find-links",
+          "/workspace/git-repo-db/artifacts/wheelhouse",
+          "--no-deps",
+          "--require-hashes",
+          "-r",
+          "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/sdist-requirements.txt"
+        ],
+        "cwd": "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution",
+        "exit_code": 0
+      },
+      {
+        "name": "sdist-measure",
+        "argv": [
+          "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/sdist-venv/bin/python",
+          "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/outside/measure.py",
+          "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/sdist-runtime.json"
+        ],
+        "cwd": "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/outside",
+        "exit_code": 0
+      },
+      {
+        "name": "sdist-i5",
+        "argv": [
+          "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/sdist-venv/bin/python",
+          "-m",
+          "pytest",
+          "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/outside/test_installed_i5.py",
+          "-q",
+          "--tb=short",
+          "--confcutdir=/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/outside",
+          "--junitxml=/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/sdist-i5.xml"
+        ],
+        "cwd": "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/outside",
+        "exit_code": 0
+      },
+      {
+        "name": "sdist-i4",
+        "argv": [
+          "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/sdist-venv/bin/python",
+          "-m",
+          "pytest",
+          "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/outside/test_installed_i4.py",
+          "-q",
+          "--tb=short",
+          "--confcutdir=/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/outside",
+          "--junitxml=/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/sdist-i4.xml"
+        ],
+        "cwd": "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/outside",
+        "exit_code": 0
+      },
+      {
+        "name": "sdist-i2",
+        "argv": [
+          "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/sdist-venv/bin/python",
+          "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/outside/verify_i2_distribution.py",
+          "--output",
+          "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/sdist-i2.json"
+        ],
+        "cwd": "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/outside",
+        "exit_code": 0
+      },
+      {
+        "name": "sdist-i3",
+        "argv": [
+          "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/sdist-venv/bin/python",
+          "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/outside/verify_i3_distribution.py",
+          "--output",
+          "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/sdist-i3.json"
+        ],
+        "cwd": "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/outside",
+        "exit_code": 0
+      },
+      {
+        "name": "sdist-access",
+        "argv": [
+          "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/sdist-venv/bin/python",
+          "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/outside/original_access_smoke.py"
+        ],
+        "cwd": "/workspace/git-repo-db/artifacts/sqlite-policy/run-cb9dee6/distribution/outside",
+        "exit_code": 1
+      }
+    ]
+  },
+  "offline_inventory": {
+    "inputs_unchanged": true,
+    "collections": {
+      "all": {
+        "nodes": 5740,
+        "exit_code": 0
+      },
+      "ordinary": {
+        "nodes": 5738,
+        "exit_code": 0
+      },
+      "offline": {
+        "nodes": 5739,
+        "exit_code": 0
+      },
+      "ci": {
+        "nodes": 2775,
+        "exit_code": 0
+      }
+    },
+    "execute_cohorts": false
+  },
+  "unexecuted": {
+    "ordinary_nodes": 2316,
+    "live_nodes": 1,
+    "benchmark_nodes": 1,
+    "full_release_qualification": "not requested or executed"
+  },
+  "known_auxiliary_failure": {
+    "command": "scripts/ci_profile.py profile",
+    "stage": "before pytest collection",
+    "reason": "duplicate --journal registration from explicit plugin plus root conftest",
+    "preserved_failed_profile": true,
+    "equivalent_direct_pytest": "285 passed; wrapper unchanged apart from runtime metadata"
+  },
+  "independent_review": {
+    "commit": "cb9dee62077a25560f8ac03cc39c3ca5f97e2cfc",
+    "result": "PASS",
+    "unresolved_material_findings": 0,
+    "fixed_findings": [
+      "generated comma-import probes",
+      "unrelated negation masking an affirmative command",
+      "Japanese source-build command",
+      "original minimum/newer V1 ordering",
+      "raw diagnostic product safety gate"
+    ],
+    "custom_snippets": 14,
+    "comparison_scenarios": 9,
+    "safety_refusal_paths": 3,
+    "workflow_yaml_and_shell": "passed"
+  },
+  "protected_settings": {
+    "rulesets_observed": [],
+    "required_status_checks_read": "HTTP 403 Resource not accessible by integration",
+    "settings_changed": false
+  }
+}

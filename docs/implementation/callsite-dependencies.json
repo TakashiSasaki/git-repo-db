@@ -3584,6 +3584,37 @@
       ]
     },
     {
+      "path": "src/repo_catalog/domain/resource_identity.py",
+      "sha256": "a7b68deb5a40956360a7c8ad69bcff1c216020b4eb451e52e0ea61fb5d0c13a3",
+      "functions": [
+        {
+          "name": "_validate_native",
+          "line": 29,
+          "end_line": 78
+        },
+        {
+          "name": "encode_identity",
+          "line": 81,
+          "end_line": 89
+        },
+        {
+          "name": "_scan_string",
+          "line": 92,
+          "end_line": 115
+        },
+        {
+          "name": "_prescan",
+          "line": 118,
+          "end_line": 162
+        },
+        {
+          "name": "parse_identity",
+          "line": 165,
+          "end_line": 184
+        }
+      ]
+    },
+    {
       "path": "src/repo_catalog/domain/time.py",
       "sha256": "f8ee3df9e402a820527d89b5d88c4c85afc4a2d013cd457763cc37746984990a",
       "functions": [

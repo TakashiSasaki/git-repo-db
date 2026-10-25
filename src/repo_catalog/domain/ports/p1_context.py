@@ -7,6 +7,7 @@ Standalone Context is durable without Core. Dependent links use coordination.
 from collections.abc import Callable, Iterable
 from typing import Protocol
 
+from repo_catalog.domain.context_admission import AdmissionContext
 from repo_catalog.domain.p1_context import (
     CoverageClaim,
     CoverageProjection,
@@ -23,22 +24,34 @@ from repo_catalog.domain.p1_context import (
     ResourceRepositoryRelation,
     TransferEventReport,
 )
+from repo_catalog.domain.resource_identification import ResourceIdentification
 
 
 class ContextAdmission(Protocol):
-    def text(self, text_value: str) -> str: ...
-    def scope(self, scope: CoverageScope) -> None: ...
+    def text(self, text_value: str, *, admission: AdmissionContext) -> str: ...
+    def scope(self, scope: CoverageScope, *, admission: AdmissionContext) -> None: ...
     def resource(
-        self, key: ResourceKey, repository_uuidv4: str | None = None
+        self,
+        key: ResourceKey,
+        repository_uuidv4: str | None = None,
+        *,
+        identification: ResourceIdentification | None = None,
+        admission: AdmissionContext,
     ) -> None: ...
+    def identification(self, key: ResourceKey) -> ResourceIdentification: ...
     def admit_repository_relation(
         self,
         relation: ResourceRepositoryRelation,
         *,
         require_support: bool = False,
+        admission: AdmissionContext,
     ) -> str: ...
-    def admit_transfer_event(self, report: TransferEventReport) -> str: ...
-    def admit_mapping_disposition(self, disposition: MappingDisposition) -> str: ...
+    def admit_transfer_event(
+        self, report: TransferEventReport, *, admission: AdmissionContext
+    ) -> str: ...
+    def admit_mapping_disposition(
+        self, disposition: MappingDisposition, *, admission: AdmissionContext
+    ) -> str: ...
     def repository_relations(
         self,
         resource: ResourceKey,
@@ -80,11 +93,15 @@ class ContextAdmission(Protocol):
         repository_uuidv4: str | None = None,
         selected_repositories: Iterable[str] | None = None,
     ) -> tuple[TransferEventReport, ...]: ...
-    def admit_field(self, candidate: FieldCandidate) -> str: ...
+    def admit_field(
+        self, candidate: FieldCandidate, *, admission: AdmissionContext
+    ) -> str: ...
     def candidates(
         self, resource: ResourceKey, field_name: str
     ) -> tuple[FieldCandidate, ...]: ...
-    def admit_coverage(self, claim: CoverageClaim) -> str: ...
+    def admit_coverage(
+        self, claim: CoverageClaim, *, admission: AdmissionContext
+    ) -> str: ...
     def coverage(self, scope: CoverageScope) -> CoverageProjection: ...
     def link_core(
         self,
@@ -94,4 +111,6 @@ class ContextAdmission(Protocol):
         full_oid: str,
         provenance_json: str,
         validate: Callable[[str, str], bool],
+        *,
+        admission: AdmissionContext,
     ) -> None: ...

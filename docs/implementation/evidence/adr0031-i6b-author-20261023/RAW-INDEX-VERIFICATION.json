@@ -1,0 +1,18 @@
+{
+  "verified_indexed_files": 1057,
+  "original_bytes": 131392358,
+  "transport_bytes": 19541219,
+  "all_hashes_lengths_and_lossless_gzip_verified": true,
+  "command": [
+    "/workspace/git-repo-db/.venv/bin/python",
+    "/workspace/i6b-tools/check_raw_index.py",
+    "/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-author-20261023"
+  ],
+  "cwd": "/workspace/git-repo-db",
+  "exit_code": 0,
+  "source_head": "a354348b800177608f6a83e2484cb6a784b7190a",
+  "source_tree": "169f0f95449c7bd728261b3d7799f795162c03fd",
+  "raw_index_sha256": "4369e168a709bfe1c514c396234e2b08afc9bc1ff8ea5c96c190b8e17c1db52f",
+  "checker_sha256": "6ab43acf9790ce6d3e18af7510984d54bd689157dceb14cd17929da476fb3747",
+  "scope": "Post-publication lossless transport verification after gzip-only diff transport correction. Before-index and initial verification preserved separately. No product test or Release acceptance claim."
+}

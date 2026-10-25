@@ -1,0 +1,84 @@
+"""I6-B Author installed evidence audit, adapted from attributed Task C checks.
+
+All inventory sizes are measured. Outcome evidence is never replaced by counts.
+"""
+from pathlib import Path
+from collections import Counter
+import base64,csv,gzip,hashlib,io,json,subprocess,sys,tarfile,zipfile,xml.etree.ElementTree as ET
+from independent_receipt import key
+ROOT=Path('/workspace/git-repo-db');OUT=Path(sys.argv[1])
+def load(p):return json.loads(Path(p).read_text())
+def sha(b):return hashlib.sha256(b).hexdigest()
+binding=load(OUT/'execution-binding.json');head=binding['source_head'];tree=binding['source_tree'];b=load(OUT/'build-binding.json');members=[]
+for form in ['direct-wheel','sdist-wheel']:
+ p=Path(b[form]['path']);raw=p.read_bytes();assert sha(raw)==b[form]['sha256'] and len(raw)==b[form]['bytes']
+ z=zipfile.ZipFile(io.BytesIO(raw));names=z.namelist();assert len(names)==len(set(names));files={n:z.read(n) for n in names}
+ record=next(n for n in names if n.endswith('.dist-info/RECORD'))
+ rr=list(csv.reader(io.StringIO(files[record].decode())));assert Counter(x[0] for x in rr)==Counter(names)
+ for n,d,size in rr:
+  if n==record:assert d==size==''
+  else:assert d=='sha256='+base64.urlsafe_b64encode(hashlib.sha256(files[n]).digest()).decode().rstrip('=') and int(size)==len(files[n])
+ members.append(files)
+assert members[0]==members[1]
+product={n.removeprefix('repo_catalog/'):sha(v) for n,v in members[0].items() if n.startswith('repo_catalog/')}
+source=load(OUT/'complete-build-source-manifest.json');source_product={r['path'].removeprefix('src/repo_catalog/'):r['sha256'] for r in source['files'] if r['path'].startswith('src/repo_catalog/')}
+assert product==source_product
+summary={'source_head':head,'source_tree':tree,'independent_review':False,'full_acceptance':False,'artifacts':b,'all_wheel_members_equal':True,'all_RECORD_entries_verified':True,'product_file_count':len(product),'product_bytes':sum(len(v) for n,v in members[0].items() if n.startswith('repo_catalog/')),'forms':{}}
+allnodes={}
+for form in ['direct','sdist']:
+ runtime=[load(OUT/f'{form}-runtime-{which}.json') for which in ['before','after']];assert runtime[0]==runtime[1]
+ rt=runtime[0];assert rt['installed_files']==product and rt['schema_matches_expected']
+ assert rt['foreign_key_check']==[] and rt['integrity_check']==[['ok']]
+ assert Path(rt['origin']).is_relative_to(Path(rt['prefix'])) and 'site-packages' in Path(rt['origin']).parts
+ summary['forms'][form]={'sqlite':rt['sqlite'],'python':rt['python'],'prefix':rt['prefix'],'origin':rt['origin'],'fingerprint':rt['fingerprint'],'fences':rt['fences'],'runtime_before_after_equal':True,'lanes':{}}
+ record=load(OUT/f'{form}-installed-RECORD.json');raw_record=(OUT/f'{form}-installed-RECORD.csv').read_bytes();assert record['prefix']==rt['prefix'] and record['product_origin']==rt['origin'] and sha(raw_record)==record['raw_RECORD_sha256'] and len(raw_record)==record['raw_RECORD_bytes']
+ assert record['all_hashed_entries_digest_and_size_verified'] and record['all_paths_resolve_inside_actual_venv'] and record['all_actual_product_files_and_RECORD_product_entries_equal_frozen_wheel'] and record['product_file_count']==len(product)
+ summary['forms'][form]['actual_installed_RECORD']={key:record[key] for key in ['record_entries','hashed_entries','raw_RECORD_bytes','raw_RECORD_sha256','product_file_count','all_hashed_entries_digest_and_size_verified','unhashed_entries','installer_added_entries','archive_member_bytes_changed_by_installer']}
+ for lane in ['safety','wire','extra','authorization','task-c']:
+  label=form+'-'+lane;nodes=(OUT/(label+'-selected.txt')).read_text().splitlines();km={key(n):n for n in nodes};assert len(nodes)==len(set(nodes))==len(km)
+  junit=[]
+  for case in ET.parse(OUT/(label+'.xml')).iter('testcase'):
+   assert all(case.find(x) is None for x in ['failure','error','skipped'])
+   junit.append(km[case.get('classname'),case.get('name')])
+  events=[json.loads(x) for x in (OUT/(label+'.jsonl')).read_text().splitlines()]
+  typed=[json.loads(x) for x in (OUT/(label+'-report-types.jsonl')).read_text().splitlines()]
+  assert all(x.get('subtest_context') is None and x['outcome']=='passed' for x in typed)
+  assert Counter(nodes)==Counter(junit)==Counter(x['nodeid'] for x in events if x['event']=='start')
+  assert Counter((x['nodeid'],x['phase']) for x in typed)==Counter((n,p) for n in nodes for p in ['setup','call','teardown'])
+  pk=lambda x:(x['nodeid'],x['phase'],x['outcome'],round(x['duration'],6))
+  assert Counter(map(pk,typed))==Counter(pk(x) for x in events if x['event']=='phase')
+  finish=[x for x in events if x['event']=='finish'];assert len(finish)==1 and finish[0]['exitstatus']==0 and load(OUT/(label+'-execution.json'))['exit_code']==0
+  imports=load(OUT/(label+'-imports.json'));assert len(imports)==4
+  for row in imports:
+   assert row['installed_files']==product and row['prefix']==rt['prefix'] and row['origin']==rt['origin']
+   assert row['context_schema_exact'] and row['sqlite']==rt['sqlite'] and row['fences']==rt['fences']
+   assert all(Path(p).is_relative_to(Path(rt['origin'])) for p in row['product_modules'].values())
+  allnodes[form,lane]=nodes
+  summary['forms'][form]['lanes'][lane]={'selected':len(nodes),'passed':len(nodes),'exit_code':0,'selected_junit_journal_typed_exact':True,'in_pytest_import_checks':len(imports)}
+  if lane=='safety':summary['forms'][form]['lanes'][lane]['i4_i5_actual_nodes']={s:[n for n in nodes if n.startswith(p)] for s,p in [('i4','tests/integration/p3/test_transfer_sql.py::'),('i5','tests/integration/p3/test_transfer_admission.py::')]}
+ for probe in ['probe_originals','probe_invalid_carrier']:
+  result=load(OUT/f'{form}-{probe}.json');imports=load(OUT/f'{form}-{probe}-imports.json');assert imports['origin']==rt['origin'] and imports['artifact_files']==product
+  if probe=='probe_originals':assert result['failed']==0 and result['passed']==19
+  else:assert result['invalid_original_refusals']==4 and result['normal_fence_controls']==2
+  summary['forms'][form][probe]={k:v for k,v in result.items() if k not in ('observations','results')}
+for lane in ['safety','wire','extra','authorization','task-c']:assert allnodes['direct',lane]==allnodes['sdist',lane]
+# Verify every actual build-source file against frozen Git without one subprocess/file.
+tracked=subprocess.check_output(['git','ls-tree','-r','--name-only',head],cwd=ROOT,text=True).splitlines();assert set(tracked)=={r['path'] for r in source['files']}
+requests=''.join(head+':'+n+'\n' for n in tracked).encode()
+raw=subprocess.check_output(['git','cat-file','--batch'],input=requests,cwd=ROOT);offset=0;hashes={}
+for name in tracked:
+ end=raw.index(b'\n',offset);header=raw[offset:end].decode().split();size=int(header[-1]);offset=end+1;body=raw[offset:offset+size];offset+=size+1;hashes[name]=sha(body)
+assert hashes=={r['path']:r['sha256'] for r in source['files']}
+work=Path(b['direct-wheel']['path']).parents[2];outside=work/'outside'
+staged_tests={p:sha((outside/p).read_bytes()) for p in hashes if p.startswith('tests/')}
+assert staged_tests=={p:d for p,d in hashes.items() if p.startswith('tests/')},'staged frozen test/support bytes changed'
+support_binding=load(outside/'test-support-binding.json')
+assert all(sha((outside/p).read_bytes())==d for p,d in support_binding.items())
+(OUT/'staged-test-support-binding.json').write_text(json.dumps({'source_head':head,'source_tree':tree,'scope':'Post-execution actual staged frozen tests/support bytes verified against every corresponding immutable build-source input. Generated external probes are separately attributed. Not a retroactive before-execution snapshot.','staged_frozen_inputs':staged_tests,'stage_support_binding':support_binding,'generated_pytest_contract_sha256':sha((outside/'conftest.py').read_bytes()),'generated_artifact_files_sha256':sha((outside/'artifact-files.json').read_bytes())},indent=2)+'\n')
+sdist=load(OUT/'complete-sdist-member-manifest.json');normalized={r['path'].split('/',1)[1]:r['sha256'] for r in sdist}
+assert all(normalized.get(p)==d for p,d in hashes.items()),'sdist did not retain entire measured source'
+summary['build_inventory']={'source_files':len(hashes),'sdist_files':len(sdist),'source_equals_frozen_git':True,'all_source_files_retained_in_sdist':True,'additional_sdist_files':sorted(set(normalized)-set(hashes)),'wire_product_inputs':{p:d for p,d in hashes.items() if p.startswith('src/repo_catalog/domain/') and any(s in p for s in ('wire','dependenc','exchange','identification'))}}
+summary['command']=[sys.executable,str(Path(__file__).resolve()),str(OUT)]
+summary['helper_sha256']=sha(Path(__file__).read_bytes());summary['exit_code']=0
+(OUT/'author-audit-summary.json').write_text(json.dumps(summary,indent=2)+'\n')
+print(json.dumps({'all_checks_passed':True,'product_files':len(product),'build_inventory':summary['build_inventory'],'forms':{f:{l:r['selected'] for l,r in summary['forms'][f]['lanes'].items()} for f in summary['forms']}},indent=2))

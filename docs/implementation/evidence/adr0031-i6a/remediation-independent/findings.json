@@ -1,0 +1,78 @@
+{
+  "reviewed_pr": 145,
+  "reviewed_head": "08fbb956c2e470e245146b0dbae747ed0690ea40",
+  "reviewed_tree": "7072f952975a8537f74ced1bbc2a4a31d7aa3690",
+  "verdict": "FAIL",
+  "severity_counts": {
+    "Critical": 0,
+    "High": 0,
+    "Medium": 1,
+    "Low": 1
+  },
+  "findings": [
+    {
+      "id": "ORIGINALS-M1",
+      "severity": "Medium",
+      "status": "open",
+      "title": "Store admission converts invalid nested original endpoint state into explicit NULL",
+      "requirements": [
+        "R09",
+        "R14",
+        "R15 (pre-bind input only)",
+        "I5-C1"
+      ],
+      "introduced_by_remediation": false,
+      "also_present_at": "f5dc409429cdb69955b55e3c27a7ef3c163762fb",
+      "reproduction": "Run probe_invalid_carrier.py. A valid report's nested endpoint declaration is changed with object.__setattr__ to None or an invalid string. Public ContextStore admission returns insert/duplicate; readback has explicit_null. Constructor/replace/validate_originals controls reject the same input.",
+      "actual": {
+        "initial_inserts": 2,
+        "replay_duplicates": 2,
+        "required_refusals": 0,
+        "ordinary_fence_controls_passed": 2
+      },
+      "expected": "INCOMPLETE_ORIGINAL_REPORT on initial/replay before writes or duplicate success, unchanged rowsets",
+      "scope": "Caller-owned typed carrier revalidation in explicit isolated I6-A fixture; ordinary Transfer remains refused; no remote exploit, Provider authenticity or authorization bypass claim",
+      "evidence": [
+        "originals/invalid-carrier-results.json",
+        "originals/probe_invalid_carrier.py",
+        "originals/REPORT.md"
+      ],
+      "targets": [
+        "src/repo_catalog/adapters/sqlite/context_admission.py:126",
+        "src/repo_catalog/adapters/sqlite/p1_context.py:340",
+        "src/repo_catalog/domain/p1_context.py:1855",
+        "src/repo_catalog/domain/p1_context.py:1972",
+        "src/repo_catalog/domain/context_admission.py:658"
+      ],
+      "correction": "Connect bounded complete-original revalidation to real intake on every initial/replay path before serialization/write/duplicate; retain appropriate authority ordering and both Transfer fences; add invalid nested carrier regressions.",
+      "independent_installed_confirmation": "Root reviewer reexecuted all four safety predicates on both frozen-public-HEAD wheel forms: 0 required refusals, 2 normal fence controls pass per form. See originals/*-root-repeat*.",
+      "blocking_i6a_acceptance": true,
+      "acceptance_rationale": "Mandatory complete-original validation is part of I6-A R09/R14 (R15 pre-bind input only). Frozen carrier constructors alone do not cover public initial/replay intake; malformed original payload is converted to valid stored explicit NULL. Ordinary Transfer is still fenced and no remote exploit is asserted.",
+      "peer_scope_check": "Independent authorization reviewer supports Medium R09/R14 typed-payload validation blocker; explicit object.__setattr__ mutation, constructor rejection and intact ordinary fences retained; no authorization, remote exploit or SQL atomicity claim.",
+      "target_commit": "08fbb956c2e470e245146b0dbae747ed0690ea40",
+      "remediation": "Connect bounded complete-original revalidation to real intake on every initial/replay path before serialization/write/duplicate; retain appropriate authority ordering and both Transfer fences; add invalid nested carrier regressions."
+    },
+    {
+      "id": "I6A-IR-L01",
+      "severity": "Low",
+      "status": "open",
+      "target_commit": "08fbb956c2e470e245146b0dbae747ed0690ea40",
+      "target": "scripts/classify_i6a_regressions.py:107-115",
+      "title": "Compressed published source bindings are silently omitted by the failure classifier",
+      "description": "run_index checks existence of the uncompressed .json paths before calling its gzip-aware json_read. Published ordinary run directories contain only .json.gz bindings, so source_binding_before/after become null, the binding equality predicate is omitted, and consistent=true is still returned.",
+      "reproduction": "Load unmodified scripts/classify_i6a_regressions.py via importlib and call run_index for remediation-20261023/before and after-final. binding-loader-counterexample.json records both actual calls: gzip files exist; bindings returned null; source_bindings_complete_and_unchanged absent; consistent=true.",
+      "impact": "The transported evidence is reproducible for nodes/phases but the tool silently ceases to validate source binding, weakening its standalone provenance check. Independent reviewer gzip-resolving comparison finds both bindings complete and unchanged, so this is not evidence of source drift or a product authorization failure.",
+      "remediation": "Resolve .json or .json.gz before the existence test, require both bindings whenever either exists, retain the source binding equality check, and add complete-compressed/missing-one/mismatching-compressed regression controls. Preserve frozen evidence; fix the helper in a separately authorized implementation PR.",
+      "reviewer_mitigation": "audit.py independently resolves compressed paths, hashes them, loads both source bindings and requires unchanged head/tree/inputs/status for each archived ordinary invocation.",
+      "blocking_i6a_safety": false,
+      "blocking_i6a_acceptance": false,
+      "evidence": [
+        "failure-audit/binding-loader-counterexample.json",
+        "failure-audit/binding-loader-controls.json",
+        "failure-audit/REPORT.md"
+      ]
+    }
+  ],
+  "i6a_finding_inherited_from_143": true,
+  "no_product_fix_in_review": true
+}

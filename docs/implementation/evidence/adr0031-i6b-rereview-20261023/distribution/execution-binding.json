@@ -1,0 +1,15 @@
+{
+  "source_head": "61e44291e293f773904a0127606e20c8cb83c95e",
+  "source_tree": "4aa8ddf49fb52d0b903db0b0bfce00ccea2fae0c",
+  "base": "8521158f2996f125d2fcaac36ea79ac1296a7cf7",
+  "source_archive": {
+    "path": "/workspace/rereview-distribution/source.tar",
+    "sha256": "7b60b0c904a71695e83d044da4b19718e04f9ec3fad07533a1fe6a49f12702d1",
+    "bytes": 324075520
+  },
+  "actual_python": "/workspace/rr-env/bin/python",
+  "no_sqlite_replacement": true,
+  "author_validation": false,
+  "independent_review": true,
+  "harness_attribution": "Fresh independent execution; build and audit procedure adapted from Author final-root-guard/prepare.py.txt, with publication HEAD and outside evidence paths."
+}

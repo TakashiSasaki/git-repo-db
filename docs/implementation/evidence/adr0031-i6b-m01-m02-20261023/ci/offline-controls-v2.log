@@ -1,0 +1,21 @@
+test_actual_historical_receipt_full_positive (__main__.Controls.test_actual_historical_receipt_full_positive) ... ok
+test_actual_parents_reversed (__main__.Controls.test_actual_parents_reversed) ... ok
+test_actual_tree_mismatch (__main__.Controls.test_actual_tree_mismatch) ... ok
+test_conflicting_observed_receipts (__main__.Controls.test_conflicting_observed_receipts) ... ok
+test_duplicate_begin (__main__.Controls.test_duplicate_begin) ... ok
+test_failed_is_not_success (__main__.Controls.test_failed_is_not_success) ... ok
+test_feature_mismatch (__main__.Controls.test_feature_mismatch) ... ok
+test_indexed_payload_tampering (__main__.Controls.test_indexed_payload_tampering) ... ok
+test_missing_begin (__main__.Controls.test_missing_begin) ... ok
+test_missing_end (__main__.Controls.test_missing_end) ... ok
+test_pending_is_not_success (__main__.Controls.test_pending_is_not_success) ... ok
+test_timestamped_actual_views_agree (__main__.Controls.test_timestamped_actual_views_agree) ... ok
+test_unexecuted_shell_echo_is_not_a_receipt (__main__.Controls.test_unexecuted_shell_echo_is_not_a_receipt) ... ok
+test_wrong_attempt (__main__.Controls.test_wrong_attempt) ... ok
+test_wrong_claimed_hash (__main__.Controls.test_wrong_claimed_hash) ... ok
+test_wrong_run_identity (__main__.Controls.test_wrong_run_identity) ... ok
+
+----------------------------------------------------------------------
+Ran 16 tests in 0.251s
+
+OK

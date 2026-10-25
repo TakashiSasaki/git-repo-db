@@ -1,0 +1,66 @@
+[
+  {
+    "original_path": "journal.jsonl",
+    "original_bytes": 2018,
+    "original_sha256": "0fc623fd6eb78c0b6f7aec2754214405cca4282db3af4e6211e4daa247f3d9c0",
+    "gzip_path": "journal.jsonl.gz",
+    "gzip_bytes": 332,
+    "gzip_sha256": "cef487c0400784574fd2b4b19d7252ee295cd2cfacfaad15eb0b6958147ec0e1"
+  },
+  {
+    "original_path": "junit.xml",
+    "original_bytes": 808,
+    "original_sha256": "1fa4ada7b40b4ba95a348eb66ead2c864890c308aac3c93df2ed9032d2853890",
+    "gzip_path": "junit.xml.gz",
+    "gzip_bytes": 404,
+    "gzip_sha256": "f3ba9257a85ef3312d54dbd2fd96cd5f4f20f3ccd8cb9f05d04eeb8d5f26e278"
+  },
+  {
+    "original_path": "pytest.log",
+    "original_bytes": 759,
+    "original_sha256": "06ff985528a5ac036466c29baf34b72a00efd073ef00a01c461d52d7d7f95a55",
+    "gzip_path": "pytest.log.gz",
+    "gzip_bytes": 309,
+    "gzip_sha256": "306e2b154404fc1d6eaf15d3573255698f4d704afef9f2dd9c024de8a650772a"
+  },
+  {
+    "original_path": "reports.jsonl",
+    "original_bytes": 1763,
+    "original_sha256": "254ac5751220eb263b94d3a7f2d0e7003641e1fdec71e60aaab8e14eb011f58c",
+    "gzip_path": "reports.jsonl.gz",
+    "gzip_bytes": 281,
+    "gzip_sha256": "76318345ca019414dd1e831d238b522fb364b6c5190bdb614fc48d23722099c2"
+  },
+  {
+    "original_path": "xdist-journal.jsonl",
+    "original_bytes": 1991,
+    "original_sha256": "be09168eb0d8e1efd40879fea176852bec9203c6566d3435cdd3862f20ed2699",
+    "gzip_path": "xdist-journal.jsonl.gz",
+    "gzip_bytes": 342,
+    "gzip_sha256": "6735cd2518e22e033788febe37c1103b0968fd605b0e5e1c7aa3d935541f0893"
+  },
+  {
+    "original_path": "xdist-junit.xml",
+    "original_bytes": 808,
+    "original_sha256": "c815cd1b2292497e731ed0fee2d7cc9bb782779792902d2798cd7d527977812f",
+    "gzip_path": "xdist-junit.xml.gz",
+    "gzip_bytes": 406,
+    "gzip_sha256": "94f1b00d3a735ab013d97129ed30a213b1906e5e2cf7838fa9570cd47332b035"
+  },
+  {
+    "original_path": "xdist-pytest.log",
+    "original_bytes": 877,
+    "original_sha256": "e8f8cd52070ad1d7e4e294508a8ad89aba82c0460ab9809bfb501d649fe6cfab",
+    "gzip_path": "xdist-pytest.log.gz",
+    "gzip_bytes": 384,
+    "gzip_sha256": "5f9a6ff27eaa51e0d9635bcbeec385b9c557b6ca02590499b919d9978e16ca68"
+  },
+  {
+    "original_path": "xdist-reports.jsonl",
+    "original_bytes": 1769,
+    "original_sha256": "9fa5d40b9918c186ad67425fb1ee9dd4670948f487ad98f7fc0d492d97939c26",
+    "gzip_path": "xdist-reports.jsonl.gz",
+    "gzip_bytes": 287,
+    "gzip_sha256": "c268a358387d075e4b99ca83d5c4aa58e17104467403660f93d2657fa13d5b73"
+  }
+]

@@ -1,0 +1,30 @@
+import json,os,shutil,subprocess,sys
+from pathlib import Path
+sys.path.insert(0,'/workspace/git-repo-db')
+from scripts import installed_test_harness as harness
+root=Path('/workspace/i6a-installed-before')
+out=Path('/workspace/i6a-installed-harness-probe')
+out.mkdir(exist_ok=False)
+outside=out/'outside'
+outside.mkdir()
+source=root/'source'
+harness.stage_support(source,outside)
+for stage,name in ((4,'test_transfer_sql.py'),(5,'test_transfer_admission.py')):
+ shutil.copyfile(source/'tests/integration/p3'/name,outside/f'test_installed_i{stage}.py')
+records=[]
+def run(name,argv,cwd,env):
+ with (out/(name+'.log')).open('w') as log:
+  p=subprocess.run(list(map(str,argv)),cwd=cwd,env=env,stdout=log,stderr=subprocess.STDOUT)
+ records.append({'name':name,'argv':list(map(str,argv)),'cwd':str(cwd),'exit_code':p.returncode})
+ (out/'processes.json').write_text(json.dumps(records,indent=2)+'\n')
+ return p.returncode
+results={}
+for tag in ('direct','sdist'):
+ py=root/(tag+'-venv/bin/python')
+ env=dict(os.environ,PYTHONPATH=str(root/'outside/network_guard'),PATH=str(py.parent)+os.pathsep+os.environ['PATH'])
+ for key in ('GH_TOKEN','GITHUB_TOKEN'):
+  env.pop(key,None)
+ results[tag]={str(stage):harness.execute_tests(run,tag,stage,py,outside,out,env) for stage in (4,5)}
+ run(tag+'-origins',[py,'-c',"import json,sys,repo_catalog,tests.support.context_admission,tests.support.i6a; from pathlib import Path; origin=Path(repo_catalog.__file__).resolve(); assert origin.is_relative_to(Path(sys.prefix).resolve()); print(json.dumps({'product':str(origin),'test_support':tests.support.context_admission.__file__,'isolated_support':tests.support.i6a.__file__,'sys_path':sys.path},indent=2))"],outside,env)
+(out/'summary.json').write_text(json.dumps(results,indent=2)+'\n')
+assert all(all(x.values()) for x in results.values()), results

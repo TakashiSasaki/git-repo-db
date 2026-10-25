@@ -1,0 +1,35 @@
+{
+  "sha": "ef787a5ff8b13f118d6bf5107c7338f43fde56dc",
+  "node_id": "C_kwDOU78qEtoAKGVmNzg3YTVmZjhiMTNmMTE4ZDZiZjUxMDdjNzMzOGY0M2ZkZTU2ZGM",
+  "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/git/commits/ef787a5ff8b13f118d6bf5107c7338f43fde56dc",
+  "html_url": "https://github.com/TakashiSasaki/git-repo-db/commit/ef787a5ff8b13f118d6bf5107c7338f43fde56dc",
+  "author": {
+    "name": "Takashi Sasaki",
+    "email": "takashi316@gmail.com",
+    "date": "2026-10-23T12:38:46Z"
+  },
+  "committer": {
+    "name": "Takashi Sasaki",
+    "email": "takashi316@gmail.com",
+    "date": "2026-10-23T12:38:46Z"
+  },
+  "tree": {
+    "sha": "a3ed2628a98db134bdc65d13da905f5ddf25e972",
+    "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/git/trees/a3ed2628a98db134bdc65d13da905f5ddf25e972"
+  },
+  "message": "docs(context): preserve I6-B Author validation evidence and handoff",
+  "parents": [
+    {
+      "sha": "a354348b800177608f6a83e2484cb6a784b7190a",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/git/commits/a354348b800177608f6a83e2484cb6a784b7190a",
+      "html_url": "https://github.com/TakashiSasaki/git-repo-db/commit/a354348b800177608f6a83e2484cb6a784b7190a"
+    }
+  ],
+  "verification": {
+    "verified": false,
+    "reason": "unsigned",
+    "signature": null,
+    "payload": null,
+    "verified_at": null
+  }
+}

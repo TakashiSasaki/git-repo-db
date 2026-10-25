@@ -1,0 +1,773 @@
+{
+  "scope": "All modified test-file composition callsites; AST inventory plus manual helper/fixture audit, not runtime permission coverage by itself.",
+  "calls": [
+    {
+      "path": "tests/integration/access/test_context_boundary.py",
+      "line": 52,
+      "callee": "DependencySet",
+      "arguments": "DependencySet(resources=resources, repositories={REPO}, sources={SOURCE}, source_repository_pairs={(SOURCE, REPO)}, provider_registrations={SERVICE})"
+    },
+    {
+      "path": "tests/integration/access/test_context_boundary.py",
+      "line": 133,
+      "callee": "fixture_transaction",
+      "arguments": "fixture_transaction(directory, registration_grants())"
+    },
+    {
+      "path": "tests/integration/access/test_context_boundary.py",
+      "line": 185,
+      "callee": "fixture_transaction",
+      "arguments": "fixture_transaction(directory, registration_grants())"
+    },
+    {
+      "path": "tests/integration/access/test_context_boundary.py",
+      "line": 258,
+      "callee": "fixture_transaction",
+      "arguments": "fixture_transaction(directory, registration_grants(key))"
+    },
+    {
+      "path": "tests/integration/access/test_context_boundary.py",
+      "line": 366,
+      "callee": "fixture_transaction",
+      "arguments": "fixture_transaction(directory, registration_grants())"
+    },
+    {
+      "path": "tests/integration/access/test_context_boundary.py",
+      "line": 71,
+      "callee": "fixture_transaction",
+      "arguments": "fixture_transaction(path, registration_grants())"
+    },
+    {
+      "path": "tests/integration/access/test_context_boundary.py",
+      "line": 162,
+      "callee": "fixture_transaction",
+      "arguments": "fixture_transaction(directory, registration_grants())"
+    },
+    {
+      "path": "tests/integration/i3/test_selective_exchange.py",
+      "line": 38,
+      "callee": "DependencySet",
+      "arguments": "DependencySet(repositories={r1, r2}, sources=sources, source_repository_pairs={(source, repo) for source in sources for repo in (r1, r2)}, provider_registrations={issue.service_instance_uuidv4, *providers})"
+    },
+    {
+      "path": "tests/integration/i3/test_selective_exchange.py",
+      "line": 66,
+      "callee": "fixture_transaction",
+      "arguments": "fixture_transaction(path, local_grants(issue, r1, r2))"
+    },
+    {
+      "path": "tests/integration/i3/test_selective_exchange.py",
+      "line": 297,
+      "callee": "fixture_transaction",
+      "arguments": "fixture_transaction(a, local_grants(issue, r1, r2, resources=(event, provider_from, provider_to), units=(*mappings, parent, *reports)))"
+    },
+    {
+      "path": "tests/integration/i3/test_selective_exchange.py",
+      "line": 413,
+      "callee": "fixture_transaction",
+      "arguments": "fixture_transaction(a, local_grants(issue, r1, r2, resources=(provider_repo,), units=(mapping, owning, withdrawal)))"
+    },
+    {
+      "path": "tests/integration/i3/test_selective_exchange.py",
+      "line": 597,
+      "callee": "fixture_transaction",
+      "arguments": "fixture_transaction(a, local_grants(issue, r1, r2, sources=(source,)))"
+    },
+    {
+      "path": "tests/integration/i3/test_selective_exchange.py",
+      "line": 912,
+      "callee": "fixture_transaction",
+      "arguments": "fixture_transaction(a, local_grants(issue, r1, r2, oids=(oid,)))"
+    },
+    {
+      "path": "tests/integration/i3/test_selective_exchange.py",
+      "line": 950,
+      "callee": "fixture_transaction",
+      "arguments": "fixture_transaction(a, local_grants(issue, r1, r2, sources=(source,), resources=(child,)))"
+    },
+    {
+      "path": "tests/integration/i3/test_selective_exchange.py",
+      "line": 1061,
+      "callee": "fixture_transaction",
+      "arguments": "fixture_transaction(a, local_grants(issue, r1, r2, sources=(source,)))"
+    },
+    {
+      "path": "tests/integration/i3/test_selective_exchange.py",
+      "line": 1122,
+      "callee": "fixture_transaction",
+      "arguments": "fixture_transaction(a, local_grants(issue, r1, r2))"
+    },
+    {
+      "path": "tests/integration/i3/test_selective_exchange.py",
+      "line": 1241,
+      "callee": "fixture_transaction",
+      "arguments": "fixture_transaction(a, local_grants(issue, r1, r2))"
+    },
+    {
+      "path": "tests/integration/i3/test_selective_exchange.py",
+      "line": 1283,
+      "callee": "fixture_transaction",
+      "arguments": "fixture_transaction(a, local_grants(issue, r1, r2, resources=(other, child)))"
+    },
+    {
+      "path": "tests/integration/i3/test_selective_exchange.py",
+      "line": 1433,
+      "callee": "fixture_transaction",
+      "arguments": "fixture_transaction(a, local_grants(issue, r1, r2, sources=(source, other_source), providers=(other_service,)))"
+    },
+    {
+      "path": "tests/integration/i3/test_selective_exchange.py",
+      "line": 1404,
+      "callee": "fixture_transaction",
+      "arguments": "fixture_transaction(a, local_grants(issue, r1, r2))"
+    },
+    {
+      "path": "tests/integration/p1/test_context.py",
+      "line": 34,
+      "callee": "DependencySet",
+      "arguments": "DependencySet(resources={KEY, *parents, *(ResourceKey.from_native(SERVICE, 'issue', value) for value in ('detached', 'detached-transfer', 'absent', '8')), *(ResourceKey.document(parent, 'review', 'review', 'same-provider-doc-id') for parent in parents[:2]), ResourceKey.document(parents[2], 'document', 'body', 'real-id'), ResourceKey.document(parents[3], 'document', 'body', 'D1')}, repositories={REPO, 'a1a5dfd6-69a3-4274-bbc7-2e7f6bcd39a4', '86556e5f-ee55-4f4d-87c1-d30c5e14dff9'}, sources={SOURCE}, source_repository_pairs={(SOURCE, REPO)}, provider_registrations={SERVICE}, object_oids={OID('sha1', 'a' * 40)})"
+    },
+    {
+      "path": "tests/integration/p1/test_context.py",
+      "line": 72,
+      "callee": "FixtureContextStore",
+      "arguments": "FixtureContextStore(db, p1_grants())"
+    },
+    {
+      "path": "tests/integration/p1/test_context_relations.py",
+      "line": 111,
+      "callee": "DependencySet",
+      "arguments": "DependencySet(resources={KEY_ISSUE, KEY_REPO, KEY_EVENT, namespace, ResourceKey.document(namespace, 'comment', 'review_comment', 'c-1'), *(ResourceKey.from_native(SERVICE, 'repository', value) for value in ('provider-a', 'provider-b', 'org/repo-a', 'org/repo-b')), *(ResourceKey.from_native(SERVICE, 'issue', value) for value in ('101', '102')), *(ResourceKey.timeline_event(KEY_ISSUE, value) for value in ('failed-transfer', 'timeline-77', 'ev-101', 'ev-102'))}, repositories={REPO_1, REPO_2, 'e969c72a-82b4-4aeb-b217-3b7679c1371b'}, sources={SOURCE}, source_repository_pairs={(SOURCE, REPO_1), (SOURCE, REPO_2)}, provider_registrations={SERVICE}, mapping_claims={claim1, claim2, claim_a, *transfer_claims}, dispositions={item.disposition_key for item in dispositions})"
+    },
+    {
+      "path": "tests/integration/p1/test_context_relations.py",
+      "line": 405,
+      "callee": "FixtureContextStore",
+      "arguments": "FixtureContextStore(db, relation_grants())"
+    },
+    {
+      "path": "tests/integration/p1/test_context_relations.py",
+      "line": 156,
+      "callee": "fixture_transaction",
+      "arguments": "fixture_transaction(catalog, relation_grants())"
+    },
+    {
+      "path": "tests/integration/p1/test_coordination.py",
+      "line": 43,
+      "callee": "fixture_service",
+      "arguments": "fixture_service(DependencySet(resources=frozenset({ISSUE, *extra_resources}), repositories=frozenset({REPOSITORY}), provider_registrations=frozenset({PROVIDER}), object_oids=frozenset({TypedOID('sha1', OID)})))"
+    },
+    {
+      "path": "tests/integration/p1/test_coordination.py",
+      "line": 44,
+      "callee": "DependencySet",
+      "arguments": "DependencySet(resources=frozenset({ISSUE, *extra_resources}), repositories=frozenset({REPOSITORY}), provider_registrations=frozenset({PROVIDER}), object_oids=frozenset({TypedOID('sha1', OID)}))"
+    },
+    {
+      "path": "tests/integration/p1/test_coordination.py",
+      "line": 51,
+      "callee": "fixture_context",
+      "arguments": "fixture_context(service)"
+    },
+    {
+      "path": "tests/integration/p1/test_fixture_authority.py",
+      "line": 25,
+      "callee": "FixtureContextStore",
+      "arguments": "FixtureContextStore(db, DependencySet(resources={KEY, FOREIGN}, provider_registrations={SERVICE}))"
+    },
+    {
+      "path": "tests/integration/p1/test_fixture_authority.py",
+      "line": 27,
+      "callee": "DependencySet",
+      "arguments": "DependencySet(resources={KEY, FOREIGN}, provider_registrations={SERVICE})"
+    },
+    {
+      "path": "tests/integration/p1/test_generalized_resources.py",
+      "line": 92,
+      "callee": "FixtureContextStore",
+      "arguments": "FixtureContextStore(db, DependencySet(resources={key, namespace, child}, provider_registrations={S}))"
+    },
+    {
+      "path": "tests/integration/p1/test_generalized_resources.py",
+      "line": 173,
+      "callee": "FixtureContextStore",
+      "arguments": "FixtureContextStore(db, DependencySet(resources=keys, provider_registrations={S}))"
+    },
+    {
+      "path": "tests/integration/p1/test_generalized_resources.py",
+      "line": 93,
+      "callee": "DependencySet",
+      "arguments": "DependencySet(resources={key, namespace, child}, provider_registrations={S})"
+    },
+    {
+      "path": "tests/integration/p1/test_generalized_resources.py",
+      "line": 174,
+      "callee": "DependencySet",
+      "arguments": "DependencySet(resources=keys, provider_registrations={S})"
+    },
+    {
+      "path": "tests/integration/p1/test_generalized_resources.py",
+      "line": 259,
+      "callee": "fixture_transaction",
+      "arguments": "fixture_transaction(tmp_path, DependencySet(resources={child, opaque}, provider_registrations={S}))"
+    },
+    {
+      "path": "tests/integration/p1/test_generalized_resources.py",
+      "line": 282,
+      "callee": "fixture_transaction",
+      "arguments": "fixture_transaction(tmp_path, DependencySet(provider_registrations={S}))"
+    },
+    {
+      "path": "tests/integration/p1/test_generalized_resources.py",
+      "line": 318,
+      "callee": "fixture_transaction",
+      "arguments": "fixture_transaction(tmp_path, DependencySet(resources={key}, provider_registrations={S}))"
+    },
+    {
+      "path": "tests/integration/p1/test_generalized_resources.py",
+      "line": 581,
+      "callee": "fixture_transaction",
+      "arguments": "fixture_transaction(a, DependencySet(resources={owner, *members}, provider_registrations={S}))"
+    },
+    {
+      "path": "tests/integration/p1/test_generalized_resources.py",
+      "line": 603,
+      "callee": "fixture_transaction",
+      "arguments": "fixture_transaction(tmp_path, DependencySet(resources={key}, provider_registrations={S}))"
+    },
+    {
+      "path": "tests/integration/p1/test_generalized_resources.py",
+      "line": 260,
+      "callee": "DependencySet",
+      "arguments": "DependencySet(resources={child, opaque}, provider_registrations={S})"
+    },
+    {
+      "path": "tests/integration/p1/test_generalized_resources.py",
+      "line": 283,
+      "callee": "DependencySet",
+      "arguments": "DependencySet(provider_registrations={S})"
+    },
+    {
+      "path": "tests/integration/p1/test_generalized_resources.py",
+      "line": 319,
+      "callee": "DependencySet",
+      "arguments": "DependencySet(resources={key}, provider_registrations={S})"
+    },
+    {
+      "path": "tests/integration/p1/test_generalized_resources.py",
+      "line": 582,
+      "callee": "DependencySet",
+      "arguments": "DependencySet(resources={owner, *members}, provider_registrations={S})"
+    },
+    {
+      "path": "tests/integration/p1/test_generalized_resources.py",
+      "line": 604,
+      "callee": "DependencySet",
+      "arguments": "DependencySet(resources={key}, provider_registrations={S})"
+    },
+    {
+      "path": "tests/integration/p1/test_generalized_resources.py",
+      "line": 358,
+      "callee": "fixture_transaction",
+      "arguments": "fixture_transaction(tmp_path, DependencySet(resources={key}, provider_registrations={S}))"
+    },
+    {
+      "path": "tests/integration/p1/test_generalized_resources.py",
+      "line": 359,
+      "callee": "DependencySet",
+      "arguments": "DependencySet(resources={key}, provider_registrations={S})"
+    },
+    {
+      "path": "tests/integration/p2/test_native.py",
+      "line": 577,
+      "callee": "FixtureContextStore",
+      "arguments": "FixtureContextStore(db, DependencySet(repositories={repository}))"
+    },
+    {
+      "path": "tests/integration/p2/test_native.py",
+      "line": 577,
+      "callee": "DependencySet",
+      "arguments": "DependencySet(repositories={repository})"
+    },
+    {
+      "path": "tests/integration/p2_p3_compatibility/test_production_pair.py",
+      "line": 59,
+      "callee": "DependencySet",
+      "arguments": "DependencySet(resources={RESOURCE}, repositories={REPOSITORY}, sources={SOURCE}, source_repository_pairs={(SOURCE, REPOSITORY)}, provider_registrations={SERVICE}, object_oids={*(OID(fmt, letter * width) for fmt, width in (('sha1', 40), ('sha256', 64)) for letter in ('a', 'b')), OID('sha1', native_oid('sha1', 'tree', b''))})"
+    },
+    {
+      "path": "tests/integration/p2_p3_compatibility/test_production_pair.py",
+      "line": 77,
+      "callee": "fixture_service",
+      "arguments": "fixture_service(fixture_grants())"
+    },
+    {
+      "path": "tests/integration/p2_p3_compatibility/test_production_pair.py",
+      "line": 83,
+      "callee": "fixture_transaction",
+      "arguments": "fixture_transaction(directory, fixture_grants())"
+    },
+    {
+      "path": "tests/integration/p2_p3_compatibility/test_production_pair.py",
+      "line": 79,
+      "callee": "fixture_context",
+      "arguments": "fixture_context(service)"
+    },
+    {
+      "path": "tests/integration/p3/test_production_context.py",
+      "line": 677,
+      "callee": "fixture_service",
+      "arguments": "fixture_service(production_grants())"
+    },
+    {
+      "path": "tests/integration/p3/test_production_context.py",
+      "line": 698,
+      "callee": "fixture_service",
+      "arguments": "fixture_service(production_grants())"
+    },
+    {
+      "path": "tests/integration/p3/test_production_context.py",
+      "line": 1091,
+      "callee": "fixture_service",
+      "arguments": "fixture_service(production_grants())"
+    },
+    {
+      "path": "tests/integration/p3/test_production_context.py",
+      "line": 112,
+      "callee": "DependencySet",
+      "arguments": "DependencySet(repositories={OTHER_REPO}, sources={SOURCE}, source_repository_pairs={(SOURCE, REPO), (SOURCE, OTHER_REPO)}, provider_registrations={SERVICE, OTHER_SERVICE}, object_oids={OID('sha1', 'a' * 40), OID('sha1', 'b' * 40), OID('sha256', 'b' * 64)})"
+    },
+    {
+      "path": "tests/integration/p3/test_production_context.py",
+      "line": 325,
+      "callee": "fixture_transaction",
+      "arguments": "fixture_transaction(directory, production_grants())"
+    },
+    {
+      "path": "tests/integration/p3/test_production_context.py",
+      "line": 739,
+      "callee": "fixture_transaction",
+      "arguments": "fixture_transaction(directory, production_grants())"
+    },
+    {
+      "path": "tests/integration/p3/test_production_context.py",
+      "line": 781,
+      "callee": "fixture_transaction",
+      "arguments": "fixture_transaction(directory, production_grants())"
+    },
+    {
+      "path": "tests/integration/p3/test_production_context.py",
+      "line": 824,
+      "callee": "fixture_transaction",
+      "arguments": "fixture_transaction(directory, production_grants())"
+    },
+    {
+      "path": "tests/integration/p3/test_production_context.py",
+      "line": 915,
+      "callee": "fixture_transaction",
+      "arguments": "fixture_transaction(directory, production_grants())"
+    },
+    {
+      "path": "tests/integration/p3/test_production_context.py",
+      "line": 937,
+      "callee": "fixture_transaction",
+      "arguments": "fixture_transaction(directory, production_grants())"
+    },
+    {
+      "path": "tests/integration/p3/test_production_context.py",
+      "line": 958,
+      "callee": "fixture_transaction",
+      "arguments": "fixture_transaction(directory, production_grants())"
+    },
+    {
+      "path": "tests/integration/p3/test_production_context.py",
+      "line": 988,
+      "callee": "fixture_transaction",
+      "arguments": "fixture_transaction(directory, production_grants())"
+    },
+    {
+      "path": "tests/integration/p3/test_production_context.py",
+      "line": 1033,
+      "callee": "fixture_transaction",
+      "arguments": "fixture_transaction(directory, production_grants())"
+    },
+    {
+      "path": "tests/integration/p3/test_production_context.py",
+      "line": 1072,
+      "callee": "fixture_transaction",
+      "arguments": "fixture_transaction(directory, production_grants())"
+    },
+    {
+      "path": "tests/integration/p3/test_production_context.py",
+      "line": 1125,
+      "callee": "fixture_transaction",
+      "arguments": "fixture_transaction(directory, production_grants())"
+    },
+    {
+      "path": "tests/integration/p3/test_production_context.py",
+      "line": 1166,
+      "callee": "fixture_transaction",
+      "arguments": "fixture_transaction(directory, production_grants())"
+    },
+    {
+      "path": "tests/integration/p3/test_production_context.py",
+      "line": 135,
+      "callee": "fixture_transaction",
+      "arguments": "fixture_transaction(directory, production_grants())"
+    },
+    {
+      "path": "tests/integration/p3/test_production_context.py",
+      "line": 353,
+      "callee": "fixture_transaction",
+      "arguments": "fixture_transaction(directory, production_grants())"
+    },
+    {
+      "path": "tests/integration/p3/test_production_context.py",
+      "line": 714,
+      "callee": "fixture_context",
+      "arguments": "fixture_context(authorization)"
+    },
+    {
+      "path": "tests/integration/p3/test_production_context.py",
+      "line": 752,
+      "callee": "fixture_transaction",
+      "arguments": "fixture_transaction(directory, production_grants())"
+    },
+    {
+      "path": "tests/integration/p3/test_production_context.py",
+      "line": 973,
+      "callee": "fixture_transaction",
+      "arguments": "fixture_transaction(directory, production_grants())"
+    },
+    {
+      "path": "tests/integration/p3/test_production_context.py",
+      "line": 1142,
+      "callee": "fixture_transaction",
+      "arguments": "fixture_transaction(directory, production_grants())"
+    },
+    {
+      "path": "tests/integration/p3/test_production_context.py",
+      "line": 688,
+      "callee": "fixture_context",
+      "arguments": "fixture_context(authorization)"
+    },
+    {
+      "path": "tests/integration/p3/test_production_context.py",
+      "line": 1105,
+      "callee": "fixture_context",
+      "arguments": "fixture_context(authorization)"
+    },
+    {
+      "path": "tests/integration/p5/test_exchange.py",
+      "line": 64,
+      "callee": "fixture_transaction",
+      "arguments": "fixture_transaction(tmp_path, DependencySet(resources={resource}, repositories={repo}, provider_registrations={service}))"
+    },
+    {
+      "path": "tests/integration/p5/test_exchange.py",
+      "line": 66,
+      "callee": "DependencySet",
+      "arguments": "DependencySet(resources={resource}, repositories={repo}, provider_registrations={service})"
+    },
+    {
+      "path": "tests/integration/p6/conftest.py",
+      "line": 700,
+      "callee": "fixture_service",
+      "arguments": "fixture_service(DependencySet(resources={pr_key, issue_key, review_key, thread_key, comment_key, issue_comment_key, provider_key}, repositories={REPOSITORY}, sources={SOURCE}, source_repository_pairs={(SOURCE, REPOSITORY)}, provider_registrations={SERVICE}, object_oids={commit_obj.oid, OID(fmt, 'f' * width)}, mapping_claims={MappingClaimKey.for_repository(provider_key, REPOSITORY, clock=FieldClock('github:pr:updated_at', 100), provenance_json=ctx_prov_1), MappingClaimKey.for_repository(provider_key, REPOSITORY, clock=FieldClock('github:issue:updated_at', 90), provenance_json=ctx_prov_1)}))"
+    },
+    {
+      "path": "tests/integration/p6/conftest.py",
+      "line": 732,
+      "callee": "fixture_context",
+      "arguments": "fixture_context(authorization)"
+    },
+    {
+      "path": "tests/integration/p6/conftest.py",
+      "line": 701,
+      "callee": "DependencySet",
+      "arguments": "DependencySet(resources={pr_key, issue_key, review_key, thread_key, comment_key, issue_comment_key, provider_key}, repositories={REPOSITORY}, sources={SOURCE}, source_repository_pairs={(SOURCE, REPOSITORY)}, provider_registrations={SERVICE}, object_oids={commit_obj.oid, OID(fmt, 'f' * width)}, mapping_claims={MappingClaimKey.for_repository(provider_key, REPOSITORY, clock=FieldClock('github:pr:updated_at', 100), provenance_json=ctx_prov_1), MappingClaimKey.for_repository(provider_key, REPOSITORY, clock=FieldClock('github:issue:updated_at', 90), provenance_json=ctx_prov_1)})"
+    },
+    {
+      "path": "tests/integration/p6/test_corrections.py",
+      "line": 166,
+      "callee": "DependencySet",
+      "arguments": "DependencySet(resources={resource}, repositories={REPOSITORY}, provider_registrations={SERVICE})"
+    },
+    {
+      "path": "tests/integration/p6/test_corrections.py",
+      "line": 171,
+      "callee": "fixture_transaction",
+      "arguments": "fixture_transaction(tmp_path, grants)"
+    },
+    {
+      "path": "tests/integration/p6/test_pagination_snapshots.py",
+      "line": 163,
+      "callee": "fixture_service",
+      "arguments": "fixture_service(DependencySet(resources={new_res}, repositories={REPOSITORY}, provider_registrations={SERVICE}, object_oids={new_oid}))"
+    },
+    {
+      "path": "tests/integration/p6/test_pagination_snapshots.py",
+      "line": 164,
+      "callee": "DependencySet",
+      "arguments": "DependencySet(resources={new_res}, repositories={REPOSITORY}, provider_registrations={SERVICE}, object_oids={new_oid})"
+    },
+    {
+      "path": "tests/integration/p6/test_pagination_snapshots.py",
+      "line": 172,
+      "callee": "fixture_context",
+      "arguments": "fixture_context(authorization)"
+    },
+    {
+      "path": "tests/integration/p7/conftest.py",
+      "line": 29,
+      "callee": "fixture_service",
+      "arguments": "fixture_service(DependencySet())"
+    },
+    {
+      "path": "tests/integration/p7/conftest.py",
+      "line": 29,
+      "callee": "DependencySet",
+      "arguments": "DependencySet()"
+    },
+    {
+      "path": "tests/integration/p7/conftest.py",
+      "line": 31,
+      "callee": "fixture_context",
+      "arguments": "fixture_context(service)"
+    },
+    {
+      "path": "tests/integration/p7/test_missing_required_authority.py",
+      "line": 40,
+      "callee": "fixture_service",
+      "arguments": "fixture_service(DependencySet(resources={key}, provider_registrations={service_id}))"
+    },
+    {
+      "path": "tests/integration/p7/test_missing_required_authority.py",
+      "line": 41,
+      "callee": "DependencySet",
+      "arguments": "DependencySet(resources={key}, provider_registrations={service_id})"
+    },
+    {
+      "path": "tests/integration/p7/test_missing_required_authority.py",
+      "line": 50,
+      "callee": "fixture_context",
+      "arguments": "fixture_context(authorization)"
+    },
+    {
+      "path": "tests/integration/p7/test_process_isolation.py",
+      "line": 322,
+      "callee": "fixture_service",
+      "arguments": "fixture_service(DependencySet(resources={key}, repositories={repo_uuid}, provider_registrations={service_id}, object_oids={missing}))"
+    },
+    {
+      "path": "tests/integration/p7/test_process_isolation.py",
+      "line": 323,
+      "callee": "DependencySet",
+      "arguments": "DependencySet(resources={key}, repositories={repo_uuid}, provider_registrations={service_id}, object_oids={missing})"
+    },
+    {
+      "path": "tests/integration/p7/test_process_isolation.py",
+      "line": 331,
+      "callee": "fixture_context",
+      "arguments": "fixture_context(authorization)"
+    },
+    {
+      "path": "tests/support/authorized_context.py",
+      "line": 24,
+      "callee": "fixture_service",
+      "arguments": "fixture_service(grants)"
+    },
+    {
+      "path": "tests/support/authorized_context.py",
+      "line": 40,
+      "callee": "fixture_context",
+      "arguments": "fixture_context(self.service)"
+    },
+    {
+      "path": "tests/support/context_admission.py",
+      "line": 138,
+      "callee": "fixture_service",
+      "arguments": "fixture_service(grants)"
+    },
+    {
+      "path": "tests/support/context_admission.py",
+      "line": 139,
+      "callee": "fixture_context",
+      "arguments": "fixture_context(service)"
+    },
+    {
+      "path": "tests/support/context_admission.py",
+      "line": 21,
+      "callee": "DependencySet",
+      "arguments": "DependencySet()"
+    },
+    {
+      "path": "tests/support/context_admission.py",
+      "line": 141,
+      "callee": "FixtureContext",
+      "arguments": "FixtureContext(context, admission)"
+    },
+    {
+      "path": "tests/unit/test_context_capability_preflight.py",
+      "line": 63,
+      "callee": "fixture_service",
+      "arguments": "fixture_service(DependencySet(resources={RESOURCE}))"
+    },
+    {
+      "path": "tests/unit/test_context_capability_preflight.py",
+      "line": 64,
+      "callee": "fixture_service",
+      "arguments": "fixture_service(DependencySet(resources={RESOURCE}))"
+    },
+    {
+      "path": "tests/unit/test_context_capability_preflight.py",
+      "line": 65,
+      "callee": "fixture_context",
+      "arguments": "fixture_context(service)"
+    },
+    {
+      "path": "tests/unit/test_context_capability_preflight.py",
+      "line": 66,
+      "callee": "fixture_context",
+      "arguments": "fixture_context(foreign)"
+    },
+    {
+      "path": "tests/unit/test_context_capability_preflight.py",
+      "line": 93,
+      "callee": "fixture_service",
+      "arguments": "fixture_service(DependencySet())"
+    },
+    {
+      "path": "tests/unit/test_context_capability_preflight.py",
+      "line": 94,
+      "callee": "fixture_service",
+      "arguments": "fixture_service(DependencySet(resources={RESOURCE}, provider_registrations={PROVIDER}))"
+    },
+    {
+      "path": "tests/unit/test_context_capability_preflight.py",
+      "line": 97,
+      "callee": "fixture_context",
+      "arguments": "fixture_context(service)"
+    },
+    {
+      "path": "tests/unit/test_context_capability_preflight.py",
+      "line": 98,
+      "callee": "fixture_context",
+      "arguments": "fixture_context(foreign)"
+    },
+    {
+      "path": "tests/unit/test_context_capability_preflight.py",
+      "line": 63,
+      "callee": "DependencySet",
+      "arguments": "DependencySet(resources={RESOURCE})"
+    },
+    {
+      "path": "tests/unit/test_context_capability_preflight.py",
+      "line": 64,
+      "callee": "DependencySet",
+      "arguments": "DependencySet(resources={RESOURCE})"
+    },
+    {
+      "path": "tests/unit/test_context_capability_preflight.py",
+      "line": 93,
+      "callee": "DependencySet",
+      "arguments": "DependencySet()"
+    },
+    {
+      "path": "tests/unit/test_context_capability_preflight.py",
+      "line": 95,
+      "callee": "DependencySet",
+      "arguments": "DependencySet(resources={RESOURCE}, provider_registrations={PROVIDER})"
+    },
+    {
+      "path": "tests/unit/test_context_coordinator_admission.py",
+      "line": 43,
+      "callee": "fixture_service",
+      "arguments": "fixture_service(dependencies(KEY) | DependencySet(repositories={REPOSITORY}))"
+    },
+    {
+      "path": "tests/unit/test_context_coordinator_admission.py",
+      "line": 319,
+      "callee": "fixture_service",
+      "arguments": "fixture_service(dependencies(claim))"
+    },
+    {
+      "path": "tests/unit/test_context_coordinator_admission.py",
+      "line": 320,
+      "callee": "fixture_context",
+      "arguments": "fixture_context(service)"
+    },
+    {
+      "path": "tests/unit/test_context_coordinator_admission.py",
+      "line": 46,
+      "callee": "fixture_context",
+      "arguments": "fixture_context(service)"
+    },
+    {
+      "path": "tests/unit/test_context_coordinator_admission.py",
+      "line": 161,
+      "callee": "fixture_context",
+      "arguments": "fixture_context(service)"
+    },
+    {
+      "path": "tests/unit/test_context_coordinator_admission.py",
+      "line": 44,
+      "callee": "DependencySet",
+      "arguments": "DependencySet(repositories={REPOSITORY})"
+    },
+    {
+      "path": "tests/unit/test_context_coordinator_admission.py",
+      "line": 108,
+      "callee": "DependencySet",
+      "arguments": "DependencySet()"
+    },
+    {
+      "path": "tests/unit/test_context_fixture_authority.py",
+      "line": 22,
+      "callee": "DependencySet",
+      "arguments": "DependencySet(provider_registrations={SERVICE})"
+    },
+    {
+      "path": "tests/unit/test_context_fixture_authority.py",
+      "line": 36,
+      "callee": "DependencySet",
+      "arguments": "DependencySet(provider_registrations={SERVICE})"
+    },
+    {
+      "path": "tests/unit/test_context_fixture_authority.py",
+      "line": 37,
+      "callee": "fixture_service",
+      "arguments": "fixture_service(grants)"
+    },
+    {
+      "path": "tests/unit/test_context_fixture_authority.py",
+      "line": 38,
+      "callee": "fixture_context",
+      "arguments": "fixture_context(foreign_service)"
+    },
+    {
+      "path": "tests/unit/test_context_fixture_authority.py",
+      "line": 23,
+      "callee": "fixture_transaction",
+      "arguments": "fixture_transaction(tmp_path, grants)"
+    },
+    {
+      "path": "tests/unit/test_context_fixture_authority.py",
+      "line": 39,
+      "callee": "fixture_transaction",
+      "arguments": "fixture_transaction(tmp_path, grants)"
+    }
+  ],
+  "product_imports_of_tests": [],
+  "manual_conclusions": [
+    "FixtureContextStore creates one local service/policy from constructor-supplied finite grants; write wrapper issues an invocation only under that service and owns product admission_transaction. It does not union a mutation into grants, retry denied mutations or adopt arbitrary caller SQL transactions.",
+    "FixturePolicy._lease_locked enforces fixture-user/provider_intake, dependency subset of finite grants, explicit deny intersection, and revision checks; grant setters remain explicit test controls.",
+    "fixture_context all_selected=True selects from a request; policy grants remain finite independently. No fixture issuer imports into src were found.",
+    "Module-wide grant declarations include synthetic absent/foreign coordinates only to exercise later validators; permission controls independently enforce out-of-grant refusals and expiry. Successful deeper query tests do not establish Provider/Exchange or Recovery composition.",
+    "Nine Access roundtrip variants explicitly select include_context=False on already Core-only catalogs; their Core assertion ASTs remain unchanged and Context routes stay refused."
+  ],
+  "limits": [
+    "Finite declarations are module-scoped synthetic fixture grants, sometimes broader than one individual test mutation, but contain explicit named identities and no runtime-generated permission expansion on refusal.",
+    "Fresh full suite outcomes and actual policy counterexamples are tracked by parent report and authorization agent separately."
+  ]
+}

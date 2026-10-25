@@ -1,0 +1,24 @@
+from pathlib import Path
+import hashlib,json,os,shutil,subprocess,sys,time
+ROOT=Path('/workspace/git-repo-db');WORK=Path('/workspace/i6b-distribution-work');OUT=ROOT/'docs/implementation/evidence/adr0031-i6b-independent-20261023/distribution';outside=WORK/'outside';records=[]
+def sha(p):return hashlib.sha256(Path(p).read_bytes()).hexdigest()
+def write(p,v):Path(p).write_text(json.dumps(v,indent=2,default=str)+'\n')
+def run(name,args,env):
+ start=time.time()
+ with (OUT/(name+'.log')).open('w') as f:p=subprocess.run(list(map(str,args)),cwd=outside,env=env,stdout=f,stderr=subprocess.STDOUT)
+ r={'name':name,'argv':list(map(str,args)),'cwd':str(outside),'exit_code':p.returncode,'started_epoch':start,'elapsed_seconds':time.time()-start};records.append(r);write(OUT/'author-extra-processes.json',records);print(name,p.returncode,flush=True);return p.returncode
+sys.path.insert(0,str(ROOT));from scripts import verify_i5_offline as evidence
+p=SRC=WORK/'frozen/docs/implementation/evidence/adr0031-i6b-author-20261023/tools/test_i6b_extra.py.txt'
+q=outside/'tests/unit/test_i6b_author_extra.py';shutil.copy2(p,q);assert sha(p)==sha(q);targets=[str(q.relative_to(outside))]
+write(OUT/'author-extra-probe-inputs.json',{'source':str(p),'staged':targets[0],'sha256':sha(p),'scope':'Unchanged Author external34 repeated independently, not independent test authorship'})
+results={}
+for form in ['direct','derived']:
+ venv=WORK/(form+'-venv');py=venv/'bin/python';name=form+'-author-extra';env=dict(os.environ,PATH=str(venv/'bin')+os.pathsep+os.environ['PATH'],TMPDIR=str(WORK),PYTHONPATH=str(outside/'tests/support/network_guard'),GIT_ALLOW_PROTOCOL='file',I6B_DIST_IMPORTS=str(OUT/(name+'-imports.json')),UV_CACHE_DIR='/workspace/.uv-cache',I6B_EXTRA_SAVED_VECTOR_DIR=str(WORK/'frozen/docs/implementation/evidence/adr0031-i6b-author-20261023/vectors'),I6B_EXTRA_VECTOR_DIR=str(OUT/(name+'-vectors')))
+ for k in ['GH_TOKEN','GITHUB_TOKEN','PYTHONHOME']:env.pop(k,None)
+ args=[py,'-m','pytest','-q','--tb=long','-c',outside/'pytest.ini','--rootdir='+str(outside),'--confcutdir='+str(outside),'-o','junit_family=xunit1',*targets]
+ assert run(name+'-collect',args+['--collect-only'],env)==0
+ nodes=evidence.nodes(OUT/(name+'-collect.log'));(OUT/(name+'-selected.txt')).write_text('\n'.join(nodes)+'\n');xml=OUT/(name+'.xml');journal=OUT/(name+'.jsonl');code=run(name,args+['--junitxml='+str(xml),'--journal='+str(journal),'--basetemp='+str(WORK/(name+'-tmp'))],env)
+ result={'exit_code':code,'collected':len(nodes),**evidence.outcomes(xml),'reconciliation':evidence.reconciliation(nodes,xml,journal)};write(OUT/(name+'-execution.json'),result);results[form]=result
+ assert run(name+'-measure-after',[py,outside/'measure.py',OUT/(name+'-runtime-after.json')],env)==0
+write(OUT/'author-extra-summary.json',{'results':results,'processes':records,'scope':'Unchanged Author external34 rerun on each installed distribution; attributed authorship retained'})
+shutil.copyfile(__file__,OUT/'run_author_extra.py.txt')

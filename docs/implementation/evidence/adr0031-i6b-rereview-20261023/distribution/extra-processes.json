@@ -1,0 +1,618 @@
+[
+  {
+    "name": "direct-independent-collect",
+    "argv": [
+      "/workspace/rereview-distribution/direct-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-s",
+      "--tb=long",
+      "-c",
+      "/workspace/rereview-distribution/outside/pytest.ini",
+      "--rootdir=/workspace/rereview-distribution/outside",
+      "--confcutdir=/workspace/rereview-distribution/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_independent_wire.py",
+      "tests/unit/test_planner_independent.py",
+      "tests/unit/test_commit_boundary.py",
+      "--collect-only"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769511.0584636,
+    "elapsed_seconds": 0.37883996963500977
+  },
+  {
+    "name": "direct-independent",
+    "argv": [
+      "/workspace/rereview-distribution/direct-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-s",
+      "--tb=long",
+      "-c",
+      "/workspace/rereview-distribution/outside/pytest.ini",
+      "--rootdir=/workspace/rereview-distribution/outside",
+      "--confcutdir=/workspace/rereview-distribution/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_independent_wire.py",
+      "tests/unit/test_planner_independent.py",
+      "tests/unit/test_commit_boundary.py",
+      "--junitxml=/workspace/rereview-distribution/evidence/direct-independent.xml",
+      "--journal=/workspace/rereview-distribution/evidence/direct-independent.jsonl",
+      "--basetemp=/workspace/rereview-distribution/direct-independent-tmp"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769511.4376547,
+    "elapsed_seconds": 2.3226728439331055
+  },
+  {
+    "name": "direct-independent-measure-after",
+    "argv": [
+      "/workspace/rereview-distribution/direct-venv/bin/python",
+      "/workspace/rereview-distribution/outside/measure.py",
+      "/workspace/rereview-distribution/evidence/direct-independent-runtime-after.json"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769513.7693212,
+    "elapsed_seconds": 0.09066057205200195
+  },
+  {
+    "name": "direct-resolved-wire-collect",
+    "argv": [
+      "/workspace/rereview-distribution/direct-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-s",
+      "--tb=long",
+      "-c",
+      "/workspace/rereview-distribution/outside/pytest.ini",
+      "--rootdir=/workspace/rereview-distribution/outside",
+      "--confcutdir=/workspace/rereview-distribution/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_resolved_wire.py",
+      "--collect-only"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769513.8604875,
+    "elapsed_seconds": 0.30127453804016113
+  },
+  {
+    "name": "direct-resolved-wire",
+    "argv": [
+      "/workspace/rereview-distribution/direct-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-s",
+      "--tb=long",
+      "-c",
+      "/workspace/rereview-distribution/outside/pytest.ini",
+      "--rootdir=/workspace/rereview-distribution/outside",
+      "--confcutdir=/workspace/rereview-distribution/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_resolved_wire.py",
+      "--junitxml=/workspace/rereview-distribution/evidence/direct-resolved-wire.xml",
+      "--journal=/workspace/rereview-distribution/evidence/direct-resolved-wire.jsonl",
+      "--basetemp=/workspace/rereview-distribution/direct-resolved-wire-tmp"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769514.1622374,
+    "elapsed_seconds": 0.41376829147338867
+  },
+  {
+    "name": "direct-resolved-wire-measure-after",
+    "argv": [
+      "/workspace/rereview-distribution/direct-venv/bin/python",
+      "/workspace/rereview-distribution/outside/measure.py",
+      "/workspace/rereview-distribution/evidence/direct-resolved-wire-runtime-after.json"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769514.5767946,
+    "elapsed_seconds": 0.08225464820861816
+  },
+  {
+    "name": "direct-counterexamples-collect",
+    "argv": [
+      "/workspace/rereview-distribution/direct-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-s",
+      "--tb=long",
+      "-c",
+      "/workspace/rereview-distribution/outside/pytest.ini",
+      "--rootdir=/workspace/rereview-distribution/outside",
+      "--confcutdir=/workspace/rereview-distribution/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_digest_contract.py",
+      "tests/unit/test_planner_work_budget_contract.py",
+      "--collect-only"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769514.6594932,
+    "elapsed_seconds": 0.33104681968688965
+  },
+  {
+    "name": "direct-counterexamples",
+    "argv": [
+      "/workspace/rereview-distribution/direct-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-s",
+      "--tb=long",
+      "-c",
+      "/workspace/rereview-distribution/outside/pytest.ini",
+      "--rootdir=/workspace/rereview-distribution/outside",
+      "--confcutdir=/workspace/rereview-distribution/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_digest_contract.py",
+      "tests/unit/test_planner_work_budget_contract.py",
+      "--junitxml=/workspace/rereview-distribution/evidence/direct-counterexamples.xml",
+      "--journal=/workspace/rereview-distribution/evidence/direct-counterexamples.jsonl",
+      "--basetemp=/workspace/rereview-distribution/direct-counterexamples-tmp"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769514.9910567,
+    "elapsed_seconds": 0.9177932739257812
+  },
+  {
+    "name": "direct-counterexamples-measure-after",
+    "argv": [
+      "/workspace/rereview-distribution/direct-venv/bin/python",
+      "/workspace/rereview-distribution/outside/measure.py",
+      "/workspace/rereview-distribution/evidence/direct-counterexamples-runtime-after.json"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769515.909883,
+    "elapsed_seconds": 0.06653690338134766
+  },
+  {
+    "name": "direct-author-extra-collect",
+    "argv": [
+      "/workspace/rereview-distribution/direct-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-s",
+      "--tb=long",
+      "-c",
+      "/workspace/rereview-distribution/outside/pytest.ini",
+      "--rootdir=/workspace/rereview-distribution/outside",
+      "--confcutdir=/workspace/rereview-distribution/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_i6b_extra.py",
+      "--collect-only"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769515.9768877,
+    "elapsed_seconds": 0.3340444564819336
+  },
+  {
+    "name": "direct-author-extra",
+    "argv": [
+      "/workspace/rereview-distribution/direct-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-s",
+      "--tb=long",
+      "-c",
+      "/workspace/rereview-distribution/outside/pytest.ini",
+      "--rootdir=/workspace/rereview-distribution/outside",
+      "--confcutdir=/workspace/rereview-distribution/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_i6b_extra.py",
+      "--junitxml=/workspace/rereview-distribution/evidence/direct-author-extra.xml",
+      "--journal=/workspace/rereview-distribution/evidence/direct-author-extra.jsonl",
+      "--basetemp=/workspace/rereview-distribution/direct-author-extra-tmp"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769516.3114183,
+    "elapsed_seconds": 0.4770388603210449
+  },
+  {
+    "name": "direct-author-extra-measure-after",
+    "argv": [
+      "/workspace/rereview-distribution/direct-venv/bin/python",
+      "/workspace/rereview-distribution/outside/measure.py",
+      "/workspace/rereview-distribution/evidence/direct-author-extra-runtime-after.json"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769516.7908168,
+    "elapsed_seconds": 0.06740665435791016
+  },
+  {
+    "name": "direct-new-regressions-collect",
+    "argv": [
+      "/workspace/rereview-distribution/direct-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-s",
+      "--tb=long",
+      "-c",
+      "/workspace/rereview-distribution/outside/pytest.ini",
+      "--rootdir=/workspace/rereview-distribution/outside",
+      "--confcutdir=/workspace/rereview-distribution/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_context_scan_budget.py",
+      "tests/unit/test_exchange_received_digest.py",
+      "--collect-only"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769516.8586478,
+    "elapsed_seconds": 0.308884859085083
+  },
+  {
+    "name": "direct-new-regressions",
+    "argv": [
+      "/workspace/rereview-distribution/direct-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-s",
+      "--tb=long",
+      "-c",
+      "/workspace/rereview-distribution/outside/pytest.ini",
+      "--rootdir=/workspace/rereview-distribution/outside",
+      "--confcutdir=/workspace/rereview-distribution/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_context_scan_budget.py",
+      "tests/unit/test_exchange_received_digest.py",
+      "--junitxml=/workspace/rereview-distribution/evidence/direct-new-regressions.xml",
+      "--journal=/workspace/rereview-distribution/evidence/direct-new-regressions.jsonl",
+      "--basetemp=/workspace/rereview-distribution/direct-new-regressions-tmp"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769517.167971,
+    "elapsed_seconds": 0.6640958786010742
+  },
+  {
+    "name": "direct-new-regressions-measure-after",
+    "argv": [
+      "/workspace/rereview-distribution/direct-venv/bin/python",
+      "/workspace/rereview-distribution/outside/measure.py",
+      "/workspace/rereview-distribution/evidence/direct-new-regressions-runtime-after.json"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769517.833492,
+    "elapsed_seconds": 0.08398175239562988
+  },
+  {
+    "name": "derived-independent-collect",
+    "argv": [
+      "/workspace/rereview-distribution/derived-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-s",
+      "--tb=long",
+      "-c",
+      "/workspace/rereview-distribution/outside/pytest.ini",
+      "--rootdir=/workspace/rereview-distribution/outside",
+      "--confcutdir=/workspace/rereview-distribution/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_independent_wire.py",
+      "tests/unit/test_planner_independent.py",
+      "tests/unit/test_commit_boundary.py",
+      "--collect-only"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769517.917999,
+    "elapsed_seconds": 0.3414628505706787
+  },
+  {
+    "name": "derived-independent",
+    "argv": [
+      "/workspace/rereview-distribution/derived-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-s",
+      "--tb=long",
+      "-c",
+      "/workspace/rereview-distribution/outside/pytest.ini",
+      "--rootdir=/workspace/rereview-distribution/outside",
+      "--confcutdir=/workspace/rereview-distribution/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_independent_wire.py",
+      "tests/unit/test_planner_independent.py",
+      "tests/unit/test_commit_boundary.py",
+      "--junitxml=/workspace/rereview-distribution/evidence/derived-independent.xml",
+      "--journal=/workspace/rereview-distribution/evidence/derived-independent.jsonl",
+      "--basetemp=/workspace/rereview-distribution/derived-independent-tmp"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769518.2599618,
+    "elapsed_seconds": 2.09281587600708
+  },
+  {
+    "name": "derived-independent-measure-after",
+    "argv": [
+      "/workspace/rereview-distribution/derived-venv/bin/python",
+      "/workspace/rereview-distribution/outside/measure.py",
+      "/workspace/rereview-distribution/evidence/derived-independent-runtime-after.json"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769520.3568602,
+    "elapsed_seconds": 0.06924557685852051
+  },
+  {
+    "name": "derived-resolved-wire-collect",
+    "argv": [
+      "/workspace/rereview-distribution/derived-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-s",
+      "--tb=long",
+      "-c",
+      "/workspace/rereview-distribution/outside/pytest.ini",
+      "--rootdir=/workspace/rereview-distribution/outside",
+      "--confcutdir=/workspace/rereview-distribution/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_resolved_wire.py",
+      "--collect-only"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769520.4265985,
+    "elapsed_seconds": 0.24275541305541992
+  },
+  {
+    "name": "derived-resolved-wire",
+    "argv": [
+      "/workspace/rereview-distribution/derived-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-s",
+      "--tb=long",
+      "-c",
+      "/workspace/rereview-distribution/outside/pytest.ini",
+      "--rootdir=/workspace/rereview-distribution/outside",
+      "--confcutdir=/workspace/rereview-distribution/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_resolved_wire.py",
+      "--junitxml=/workspace/rereview-distribution/evidence/derived-resolved-wire.xml",
+      "--journal=/workspace/rereview-distribution/evidence/derived-resolved-wire.jsonl",
+      "--basetemp=/workspace/rereview-distribution/derived-resolved-wire-tmp"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769520.669828,
+    "elapsed_seconds": 0.359025239944458
+  },
+  {
+    "name": "derived-resolved-wire-measure-after",
+    "argv": [
+      "/workspace/rereview-distribution/derived-venv/bin/python",
+      "/workspace/rereview-distribution/outside/measure.py",
+      "/workspace/rereview-distribution/evidence/derived-resolved-wire-runtime-after.json"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769521.0296202,
+    "elapsed_seconds": 0.07951831817626953
+  },
+  {
+    "name": "derived-counterexamples-collect",
+    "argv": [
+      "/workspace/rereview-distribution/derived-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-s",
+      "--tb=long",
+      "-c",
+      "/workspace/rereview-distribution/outside/pytest.ini",
+      "--rootdir=/workspace/rereview-distribution/outside",
+      "--confcutdir=/workspace/rereview-distribution/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_digest_contract.py",
+      "tests/unit/test_planner_work_budget_contract.py",
+      "--collect-only"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769521.1096528,
+    "elapsed_seconds": 0.4064455032348633
+  },
+  {
+    "name": "derived-counterexamples",
+    "argv": [
+      "/workspace/rereview-distribution/derived-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-s",
+      "--tb=long",
+      "-c",
+      "/workspace/rereview-distribution/outside/pytest.ini",
+      "--rootdir=/workspace/rereview-distribution/outside",
+      "--confcutdir=/workspace/rereview-distribution/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_digest_contract.py",
+      "tests/unit/test_planner_work_budget_contract.py",
+      "--junitxml=/workspace/rereview-distribution/evidence/derived-counterexamples.xml",
+      "--journal=/workspace/rereview-distribution/evidence/derived-counterexamples.jsonl",
+      "--basetemp=/workspace/rereview-distribution/derived-counterexamples-tmp"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769521.5180674,
+    "elapsed_seconds": 0.92232346534729
+  },
+  {
+    "name": "derived-counterexamples-measure-after",
+    "argv": [
+      "/workspace/rereview-distribution/derived-venv/bin/python",
+      "/workspace/rereview-distribution/outside/measure.py",
+      "/workspace/rereview-distribution/evidence/derived-counterexamples-runtime-after.json"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769522.4428437,
+    "elapsed_seconds": 0.07307744026184082
+  },
+  {
+    "name": "derived-author-extra-collect",
+    "argv": [
+      "/workspace/rereview-distribution/derived-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-s",
+      "--tb=long",
+      "-c",
+      "/workspace/rereview-distribution/outside/pytest.ini",
+      "--rootdir=/workspace/rereview-distribution/outside",
+      "--confcutdir=/workspace/rereview-distribution/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_i6b_extra.py",
+      "--collect-only"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769522.5164607,
+    "elapsed_seconds": 0.3430941104888916
+  },
+  {
+    "name": "derived-author-extra",
+    "argv": [
+      "/workspace/rereview-distribution/derived-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-s",
+      "--tb=long",
+      "-c",
+      "/workspace/rereview-distribution/outside/pytest.ini",
+      "--rootdir=/workspace/rereview-distribution/outside",
+      "--confcutdir=/workspace/rereview-distribution/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_i6b_extra.py",
+      "--junitxml=/workspace/rereview-distribution/evidence/derived-author-extra.xml",
+      "--journal=/workspace/rereview-distribution/evidence/derived-author-extra.jsonl",
+      "--basetemp=/workspace/rereview-distribution/derived-author-extra-tmp"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769522.860155,
+    "elapsed_seconds": 0.5194406509399414
+  },
+  {
+    "name": "derived-author-extra-measure-after",
+    "argv": [
+      "/workspace/rereview-distribution/derived-venv/bin/python",
+      "/workspace/rereview-distribution/outside/measure.py",
+      "/workspace/rereview-distribution/evidence/derived-author-extra-runtime-after.json"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769523.3807595,
+    "elapsed_seconds": 0.11071038246154785
+  },
+  {
+    "name": "derived-new-regressions-collect",
+    "argv": [
+      "/workspace/rereview-distribution/derived-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-s",
+      "--tb=long",
+      "-c",
+      "/workspace/rereview-distribution/outside/pytest.ini",
+      "--rootdir=/workspace/rereview-distribution/outside",
+      "--confcutdir=/workspace/rereview-distribution/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_context_scan_budget.py",
+      "tests/unit/test_exchange_received_digest.py",
+      "--collect-only"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769523.4920406,
+    "elapsed_seconds": 0.3589792251586914
+  },
+  {
+    "name": "derived-new-regressions",
+    "argv": [
+      "/workspace/rereview-distribution/derived-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-s",
+      "--tb=long",
+      "-c",
+      "/workspace/rereview-distribution/outside/pytest.ini",
+      "--rootdir=/workspace/rereview-distribution/outside",
+      "--confcutdir=/workspace/rereview-distribution/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_context_scan_budget.py",
+      "tests/unit/test_exchange_received_digest.py",
+      "--junitxml=/workspace/rereview-distribution/evidence/derived-new-regressions.xml",
+      "--journal=/workspace/rereview-distribution/evidence/derived-new-regressions.jsonl",
+      "--basetemp=/workspace/rereview-distribution/derived-new-regressions-tmp"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769523.851596,
+    "elapsed_seconds": 0.6175632476806641
+  },
+  {
+    "name": "derived-new-regressions-measure-after",
+    "argv": [
+      "/workspace/rereview-distribution/derived-venv/bin/python",
+      "/workspace/rereview-distribution/outside/measure.py",
+      "/workspace/rereview-distribution/evidence/derived-new-regressions-runtime-after.json"
+    ],
+    "cwd": "/workspace/rereview-distribution/outside",
+    "exit_code": 0,
+    "started_epoch": 1792769524.4708977,
+    "elapsed_seconds": 0.08266329765319824
+  }
+]

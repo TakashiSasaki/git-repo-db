@@ -13,11 +13,11 @@ import pytest
 
 from repo_catalog.adapters.sqlite.git_core import GitCore
 from repo_catalog.adapters.sqlite.p1_coordination import SnapshotReadLimits
-from repo_catalog.adapters.sqlite.production_context import Context
 from repo_catalog.application.production_query import (
     ProductionQueryService,
     _paginate_items,
 )
+from repo_catalog.domain.context_admission import DependencySet
 from repo_catalog.domain.p1_context import (
     FieldCandidate,
     FieldClock,
@@ -41,6 +41,7 @@ from tests.integration.p6.conftest import (
     make_tree,
     populate_rich_catalog,
 )
+from tests.support.context_admission import fixture_transaction
 
 
 def _mutate(path, table, assignment):
@@ -161,8 +162,13 @@ def test_literal_unicode_short_special_search_semantics_and_cost_phases(
     tmp_path, query
 ):
     populate_rich_catalog(tmp_path)
-    resource = ResourceKey(SERVICE, "pull_request", "42")
-    with Context.transaction(tmp_path) as context:
+    resource = ResourceKey.from_native(SERVICE, "pull_request", "42")
+    grants = DependencySet(
+        resources={resource},
+        repositories={REPOSITORY},
+        provider_registrations={SERVICE},
+    )
+    with fixture_transaction(tmp_path, grants) as context:
         context.admit_field(
             FieldCandidate(
                 resource,

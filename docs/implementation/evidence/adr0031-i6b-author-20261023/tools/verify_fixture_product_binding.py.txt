@@ -1,0 +1,16 @@
+"""Bind the narrow test-fixture migration without relabeling a full execution."""
+from pathlib import Path
+import hashlib,json,subprocess,sys
+ROOT=Path('/workspace/git-repo-db');OLD='2f874ce5c31efc1a266bc40e0472e64f82c82860'
+def git(*args):return subprocess.check_output(['git',*args],cwd=ROOT,text=True).strip()
+sys.path.insert(0,str(ROOT))
+from scripts.verify_i5_offline import input_hashes
+old=json.loads(Path('/workspace/i6b-work/source-complete/binding-before.json').read_text())
+current=input_hashes();changed=sorted(p for p in set(old['inputs'])|set(current) if old['inputs'].get(p)!=current.get(p))
+assert changed==['tests/integration/i6a/test_admission.py'],changed
+assert git('diff','--name-only',OLD,'HEAD').splitlines()==changed
+assert not git('status','--porcelain')
+oldtree=git('rev-parse',OLD+':src/repo_catalog');newtree=git('rev-parse','HEAD:src/repo_catalog');assert oldtree==newtree
+report={'complete_ordinary_source_head':OLD,'complete_ordinary_source_tree':old['tree'],'final_source_head':git('rev-parse','HEAD'),'final_source_tree':git('rev-parse','HEAD^{tree}'),'old_product_tree':oldtree,'final_product_tree':newtree,'all_product_bytes_identical':True,'input_count':len(current),'changed_input_paths':changed,'old_inputs':old['inputs'],'final_inputs':current,'full_ordinary_on_final_source_executed':False,'scope':'One complete ordinary execution remains attributed to 2f874ce. The fixture-only final source changes exactly one test input, audited separately by whole-file AST equality except one Resource fixture assignment. Final focused, safety, diagnostic and installed lanes are separate observations; no reconstructed aggregate.', 'command':[sys.executable,str(Path(__file__).resolve()),*sys.argv[1:]],'exit_code':0,'helper_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest()}
+Path(sys.argv[1]).write_text(json.dumps(report,indent=2)+'\n')
+print(json.dumps({k:v for k,v in report.items() if k not in ('old_inputs','final_inputs')},indent=2))

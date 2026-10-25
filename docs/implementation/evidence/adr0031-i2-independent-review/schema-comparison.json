@@ -1,0 +1,85 @@
+{
+  "context_baseline_ddl_sha256": "fa7838f86d9f0ab4b2f26c561ad0721df2d0c7dad45ee97e72ff09cbb89ac434",
+  "context_candidate_ddl_sha256": "c8fd84cf5e535d5f4c585d31a2e0ad0e4c791bb9cd7649f243e0bc1c6bfd223e",
+  "schema_changes": [
+    {
+      "type": "index",
+      "name": "resources_document_contract_fk",
+      "before": null,
+      "after": [
+        "resources",
+        "CREATE UNIQUE INDEX resources_document_contract_fk ON resources(\n service_instance_uuidv4,resource_kind,provider_resource_id,reference_document_kind)"
+      ]
+    },
+    {
+      "type": "index",
+      "name": "resources_native_event_fk",
+      "before": null,
+      "after": [
+        "resources",
+        "CREATE UNIQUE INDEX resources_native_event_fk ON resources(\n service_instance_uuidv4,resource_kind,provider_resource_id,\n reference_document_kind,identifier_namespace_kind,identifier_namespace_id)"
+      ]
+    },
+    {
+      "type": "index",
+      "name": "resources_typed_event_fk",
+      "before": [
+        "resources",
+        "CREATE UNIQUE INDEX resources_typed_event_fk\n ON resources(service_instance_uuidv4,resource_kind,provider_resource_id,document_kind,parent_resource_kind)"
+      ],
+      "after": [
+        "resources",
+        "CREATE UNIQUE INDEX resources_typed_event_fk ON resources(\n service_instance_uuidv4,resource_kind,provider_resource_id,\n reference_document_kind,identifier_namespace_kind)"
+      ]
+    },
+    {
+      "type": "table",
+      "name": "resource_repository_relations",
+      "before": [
+        "resource_repository_relations",
+        "CREATE TABLE resource_repository_relations(\n service_instance_uuidv4 TEXT NOT NULL,\n resource_kind TEXT NOT NULL,\n provider_resource_id TEXT NOT NULL,\n relation_kind TEXT NOT NULL,\n target_json TEXT NOT NULL CHECK(p1_mapping_target(target_json)=1),\n clock_json TEXT NOT NULL CHECK(p1_mapping_clock(clock_json)=1),\n provenance_json TEXT NOT NULL CHECK(p1_mapping_provenance(provenance_json)=1),\n observed_at_us INTEGER CHECK(observed_at_us IS NULL OR (typeof(observed_at_us)='integer' AND observed_at_us>0)),\n repository_uuidv4 TEXT GENERATED ALWAYS AS(CASE WHEN json_type(target_json)='text' THEN json_extract(target_json,'$') END) VIRTUAL REFERENCES repository_context(repository_uuidv4),\n clock_domain TEXT GENERATED ALWAYS AS(json_extract(clock_json,'$.domain')) VIRTUAL,\n source_clock_us INTEGER GENERATED ALWAYS AS(json_extract(clock_json,'$.at_us')) VIRTUAL,\n event_document_kind TEXT GENERATED ALWAYS AS(CASE WHEN relation_kind IN('transfer_from_repository','transfer_to_repository') THEN 'timeline_event' END) VIRTUAL,\n event_parent_resource_kind TEXT GENERATED ALWAYS AS(CASE WHEN relation_kind IN('transfer_from_repository','transfer_to_repository') THEN 'issue' END) VIRTUAL,\n CHECK(typeof(source_clock_us) IN('integer','null')),\n CHECK((relation_kind='represents_repository' AND resource_kind='repository') OR (relation_kind='owning_repository' AND resource_kind='issue') OR (relation_kind IN('base_repository','head_repository') AND resource_kind='pull_request') OR (relation_kind IN('transfer_from_repository','transfer_to_repository') AND resource_kind='comment')),\n CHECK(relation_kind!='represents_repository' OR json_type(target_json)='text'),\n PRIMARY KEY(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,clock_json,target_json,provenance_json),\n FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id) REFERENCES resources(service_instance_uuidv4,resource_kind,provider_resource_id),\n FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id,event_document_kind,event_parent_resource_kind) REFERENCES resources(service_instance_uuidv4,resource_kind,provider_resource_id,document_kind,parent_resource_kind)\n) STRICT, WITHOUT ROWID"
+      ],
+      "after": [
+        "resource_repository_relations",
+        "CREATE TABLE resource_repository_relations(\n service_instance_uuidv4 TEXT NOT NULL,\n resource_kind TEXT NOT NULL,\n provider_resource_id TEXT NOT NULL,\n relation_kind TEXT NOT NULL,\n target_json TEXT NOT NULL CHECK(p1_mapping_target(target_json)=1),\n clock_json TEXT NOT NULL CHECK(p1_mapping_clock(clock_json)=1),\n provenance_json TEXT NOT NULL CHECK(p1_mapping_provenance(provenance_json)=1),\n observed_at_us INTEGER CHECK(observed_at_us IS NULL OR (typeof(observed_at_us)='integer' AND observed_at_us>0)),\n repository_uuidv4 TEXT GENERATED ALWAYS AS(CASE WHEN json_type(target_json)='text' THEN json_extract(target_json,'$') END) VIRTUAL REFERENCES repository_context(repository_uuidv4),\n clock_domain TEXT GENERATED ALWAYS AS(json_extract(clock_json,'$.domain')) VIRTUAL,\n source_clock_us INTEGER GENERATED ALWAYS AS(json_extract(clock_json,'$.at_us')) VIRTUAL,\n event_document_kind TEXT GENERATED ALWAYS AS(CASE WHEN relation_kind IN('transfer_from_repository','transfer_to_repository') THEN 'timeline_event' END) VIRTUAL,\n event_parent_resource_kind TEXT GENERATED ALWAYS AS(CASE WHEN relation_kind IN('transfer_from_repository','transfer_to_repository') THEN 'issue' END) VIRTUAL,\n CHECK(typeof(source_clock_us) IN('integer','null')),\n CHECK((relation_kind='represents_repository' AND resource_kind='repository') OR (relation_kind='owning_repository' AND resource_kind='issue') OR (relation_kind IN('base_repository','head_repository') AND resource_kind='pull_request') OR (relation_kind IN('transfer_from_repository','transfer_to_repository') AND resource_kind='comment')),\n CHECK(relation_kind!='represents_repository' OR json_type(target_json)='text'),\n PRIMARY KEY(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,clock_json,target_json,provenance_json),\n FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id) REFERENCES resources(service_instance_uuidv4,resource_kind,provider_resource_id),\n FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id,event_document_kind,event_parent_resource_kind) REFERENCES resources(service_instance_uuidv4,resource_kind,provider_resource_id,reference_document_kind,identifier_namespace_kind)\n) STRICT, WITHOUT ROWID"
+      ]
+    },
+    {
+      "type": "table",
+      "name": "resources",
+      "before": [
+        "resources",
+        "CREATE TABLE resources(\n service_instance_uuidv4 TEXT NOT NULL REFERENCES providers,\n resource_kind TEXT NOT NULL CHECK(resource_kind IN('repository','pull_request','issue','review','comment','thread','document','assessment','identity','endpoint','annotation','lfs')),\n provider_resource_id TEXT NOT NULL CHECK(length(provider_resource_id)>0),\n parent_resource_kind TEXT,\n parent_provider_resource_id TEXT,\n document_kind TEXT,\n provider_document_id TEXT,\n CHECK(resource_kind NOT IN('review','document') OR parent_resource_kind='pull_request'),\n CHECK(resource_kind!='thread' OR parent_resource_kind IN('pull_request','review')),\n CHECK(resource_kind!='comment' OR parent_resource_kind IN('pull_request','issue','review','thread')),\n CHECK(CASE WHEN resource_kind IN('review','comment','thread','document') THEN\n parent_resource_kind IS NOT NULL AND parent_provider_resource_id IS NOT NULL AND document_kind IS NOT NULL AND length(document_kind)>0 AND provider_document_id IS NOT NULL AND length(provider_document_id)>0\n AND provider_resource_id=p1_array(parent_resource_kind,parent_provider_resource_id,document_kind,provider_document_id)\n ELSE parent_resource_kind IS NULL AND parent_provider_resource_id IS NULL AND document_kind IS NULL AND provider_document_id IS NULL END),\n FOREIGN KEY(service_instance_uuidv4,parent_resource_kind,parent_provider_resource_id) REFERENCES resources(service_instance_uuidv4,resource_kind,provider_resource_id),\n PRIMARY KEY(service_instance_uuidv4,resource_kind,provider_resource_id)\n) STRICT, WITHOUT ROWID"
+      ],
+      "after": [
+        "resources",
+        "CREATE TABLE resources(\n service_instance_uuidv4 TEXT COLLATE BINARY NOT NULL REFERENCES providers\n   CHECK(p1_uuid4(service_instance_uuidv4)=1),\n resource_kind TEXT COLLATE BINARY NOT NULL CHECK(resource_kind!=''),\n provider_resource_id TEXT COLLATE BINARY NOT NULL\n   CHECK(typeof(provider_resource_id)='text' AND p1_resource_identity_v1(provider_resource_id)=1),\n identifier_namespace_kind TEXT COLLATE BINARY,\n identifier_namespace_id TEXT COLLATE BINARY,\n document_kind TEXT COLLATE BINARY,\n provider_document_id TEXT COLLATE BINARY,\n reference_document_kind TEXT COLLATE BINARY\n   GENERATED ALWAYS AS(coalesce(document_kind,'')) VIRTUAL,\n CHECK(p1_resource_identification_v1(resource_kind,provider_resource_id,\n   identifier_namespace_kind,identifier_namespace_id,document_kind,provider_document_id)=1),\n PRIMARY KEY(service_instance_uuidv4,resource_kind,provider_resource_id)\n) STRICT, WITHOUT ROWID"
+      ]
+    },
+    {
+      "type": "trigger",
+      "name": "i2_transfer_stage_fence",
+      "before": null,
+      "after": [
+        "resource_repository_relations",
+        "CREATE TRIGGER i2_transfer_stage_fence BEFORE INSERT ON resource_repository_relations\nWHEN NEW.relation_kind IN('transfer_from_repository','transfer_to_repository')\nBEGIN SELECT RAISE(ABORT,'Transfer requires I3-I5 implementation'); END"
+      ]
+    },
+    {
+      "type": "trigger",
+      "name": "resources_admit",
+      "before": null,
+      "after": [
+        "resources",
+        "CREATE TRIGGER resources_admit BEFORE INSERT ON resources BEGIN\n SELECT CASE WHEN p1_uuid4(NEW.service_instance_uuidv4)!=1\n   OR typeof(NEW.resource_kind)!='text' OR NEW.resource_kind=''\n   OR p1_resource_identification_v1(NEW.resource_kind,NEW.provider_resource_id,\n       NEW.identifier_namespace_kind,NEW.identifier_namespace_id,\n       NEW.document_kind,NEW.provider_document_id)!=1\n   THEN RAISE(ABORT,'invalid Resource identification') END;\n -- Deliberately pre-conflict: IGNORE / DO NOTHING cannot hide a contradiction.\n SELECT CASE WHEN EXISTS(SELECT 1 FROM resources r\n   WHERE r.service_instance_uuidv4=NEW.service_instance_uuidv4\n     AND r.resource_kind=NEW.resource_kind\n     AND r.provider_resource_id=NEW.provider_resource_id\n     AND (r.identifier_namespace_kind IS NOT NEW.identifier_namespace_kind\n       OR r.identifier_namespace_id IS NOT NEW.identifier_namespace_id\n       OR r.document_kind IS NOT NEW.document_kind\n       OR r.provider_document_id IS NOT NEW.provider_document_id))\n   THEN RAISE(ABORT,'Resource identification rebind') END;\nEND"
+      ]
+    }
+  ],
+  "context_tables_before": 19,
+  "context_tables_after": 19,
+  "unchanged_other_store_fingerprints": {
+    "core": "3f9f828ad0aff5fae1039f30a3baa29165dbabe6decc5a4f204e78e674b940fe",
+    "operational": "76598c5a630d4044c5a123587911a62411d55946072ba071109dd7db52f029a5",
+    "search": "a1bce192ebf67bc3846f47a5bc63ba2927a97bddf65eb62706ec2e9f9fc5d303"
+  }
+}

@@ -1,0 +1,4023 @@
+{
+  "baseline_non_successes": 79,
+  "current_non_successes": 79,
+  "same_nodes": true,
+  "resolved": 0,
+  "additional": 0,
+  "additional_nodes": [],
+  "comparison": [
+    {
+      "class": "tests.integration.i2.test_provider_intake",
+      "name": "test_graphql_event_does_not_infer_destination_from_current_issue_repository",
+      "baseline": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/i2/test_provider_intake.py",
+            "line": 745,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/i2/test_provider_intake.py",
+            "line": 745,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.i2.test_provider_intake",
+      "name": "test_graphql_transfer_parent_namespace_and_original_type",
+      "baseline": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/i2/test_provider_intake.py",
+            "line": 408,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/i2/test_provider_intake.py",
+            "line": 408,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.i2.test_provider_intake",
+      "name": "test_non_transfer_cannot_promote_repository_fields_or_forged_flag[False]",
+      "baseline": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: transfer_event_reports requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: transfer_event_reports requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/i2/test_provider_intake.py",
+            "line": 376,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+            "line": 147,
+            "function": "call"
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+            "line": 1022,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: transfer_event_reports requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: transfer_event_reports requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/i2/test_provider_intake.py",
+            "line": 376,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+            "line": 149,
+            "function": "call"
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+            "line": 1060,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.i2.test_provider_intake",
+      "name": "test_non_transfer_cannot_promote_repository_fields_or_forged_flag[True]",
+      "baseline": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: transfer_event_reports requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: transfer_event_reports requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/i2/test_provider_intake.py",
+            "line": 376,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+            "line": 147,
+            "function": "call"
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+            "line": 1022,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: transfer_event_reports requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: transfer_event_reports requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/i2/test_provider_intake.py",
+            "line": 376,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+            "line": 149,
+            "function": "call"
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+            "line": 1060,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.i2.test_provider_intake",
+      "name": "test_reacquired_event_does_not_reissue_provenance_after_mapping_change",
+      "baseline": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/i2/test_provider_intake.py",
+            "line": 469,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/i2/test_provider_intake.py",
+            "line": 469,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.i2.test_provider_intake",
+      "name": "test_same_original_event_key_cannot_change_observation_time",
+      "baseline": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/i2/test_provider_intake.py",
+            "line": 775,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/i2/test_provider_intake.py",
+            "line": 775,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.i2.test_provider_intake",
+      "name": "test_separate_event_reports_never_pair_endpoints",
+      "baseline": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/i2/test_provider_intake.py",
+            "line": 517,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/i2/test_provider_intake.py",
+            "line": 517,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.i2.test_provider_intake",
+      "name": "test_transfer_preserves_complete_original_endpoint_states[endpoints0-expected0]",
+      "baseline": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/i2/test_provider_intake.py",
+            "line": 340,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/i2/test_provider_intake.py",
+            "line": 340,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.i2.test_provider_intake",
+      "name": "test_transfer_preserves_complete_original_endpoint_states[endpoints1-expected1]",
+      "baseline": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/i2/test_provider_intake.py",
+            "line": 340,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/i2/test_provider_intake.py",
+            "line": 340,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.i2.test_provider_intake",
+      "name": "test_transfer_preserves_complete_original_endpoint_states[endpoints2-expected2]",
+      "baseline": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/i2/test_provider_intake.py",
+            "line": 340,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/i2/test_provider_intake.py",
+            "line": 340,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.i2.test_provider_intake",
+      "name": "test_transfer_preserves_complete_original_endpoint_states[endpoints3-expected3]",
+      "baseline": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/i2/test_provider_intake.py",
+            "line": 340,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/i2/test_provider_intake.py",
+            "line": 340,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.i2.test_provider_intake",
+      "name": "test_transfer_preserves_complete_original_endpoint_states[endpoints4-expected4]",
+      "baseline": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/i2/test_provider_intake.py",
+            "line": 340,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/i2/test_provider_intake.py",
+            "line": 340,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.i2.test_provider_intake",
+      "name": "test_transfer_type_and_endpoint_evidence_must_belong_to_same_report[clock]",
+      "baseline": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/i2/test_provider_intake.py",
+            "line": 970,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1427,
+            "function": "admit_unit"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/i2/test_provider_intake.py",
+            "line": 970,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1427,
+            "function": "admit_unit"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.i2.test_provider_intake",
+      "name": "test_transfer_type_and_endpoint_evidence_must_belong_to_same_report[event_resource]",
+      "baseline": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/i2/test_provider_intake.py",
+            "line": 970,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1427,
+            "function": "admit_unit"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/i2/test_provider_intake.py",
+            "line": 970,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1427,
+            "function": "admit_unit"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.i2.test_provider_intake",
+      "name": "test_transfer_type_and_endpoint_evidence_must_belong_to_same_report[members]",
+      "baseline": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/i2/test_provider_intake.py",
+            "line": 970,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1427,
+            "function": "admit_unit"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/i2/test_provider_intake.py",
+            "line": 970,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1427,
+            "function": "admit_unit"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.i2.test_provider_intake",
+      "name": "test_transfer_type_and_endpoint_evidence_must_belong_to_same_report[provenance]",
+      "baseline": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/i2/test_provider_intake.py",
+            "line": 970,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1427,
+            "function": "admit_unit"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/i2/test_provider_intake.py",
+            "line": 970,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1427,
+            "function": "admit_unit"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.i23.test_provider_exchange",
+      "name": "test_genuine_transfer_event_report_is_preserved_whole[endpoints0-states0]",
+      "baseline": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/i23/test_provider_exchange.py",
+            "line": 292,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/i23/test_provider_exchange.py",
+            "line": 292,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.i23.test_provider_exchange",
+      "name": "test_genuine_transfer_event_report_is_preserved_whole[endpoints1-states1]",
+      "baseline": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/i23/test_provider_exchange.py",
+            "line": 292,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/i23/test_provider_exchange.py",
+            "line": 292,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.i23.test_provider_exchange",
+      "name": "test_genuine_transfer_event_report_is_preserved_whole[endpoints2-states2]",
+      "baseline": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/i23/test_provider_exchange.py",
+            "line": 292,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/i23/test_provider_exchange.py",
+            "line": 292,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.i23.test_provider_exchange",
+      "name": "test_genuine_transfer_event_report_is_preserved_whole[endpoints3-states3]",
+      "baseline": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/i23/test_provider_exchange.py",
+            "line": 292,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/i23/test_provider_exchange.py",
+            "line": 292,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.i23.test_provider_exchange",
+      "name": "test_genuine_transfer_event_report_is_preserved_whole[endpoints4-states4]",
+      "baseline": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/i23/test_provider_exchange.py",
+            "line": 292,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/i23/test_provider_exchange.py",
+            "line": 292,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.i23.test_provider_exchange",
+      "name": "test_i2_source_coverage_and_native_capture_notes_survive_i3",
+      "baseline": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedIdentificationStage: I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6",
+        "stage_refusal": "I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6",
+        "frames": [
+          {
+            "path": "tests/integration/i23/test_provider_exchange.py",
+            "line": 376,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/exchange.py",
+            "line": 421,
+            "function": "export_package"
+          },
+          {
+            "path": "src/repo_catalog/application/exchange.py",
+            "line": 1195,
+            "function": "_export_context"
+          },
+          {
+            "path": "src/repo_catalog/domain/selective_exchange.py",
+            "line": 662,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedIdentificationStage: I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6",
+        "stage_refusal": "I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6",
+        "frames": [
+          {
+            "path": "tests/integration/i23/test_provider_exchange.py",
+            "line": 376,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/exchange.py",
+            "line": 421,
+            "function": "export_package"
+          },
+          {
+            "path": "src/repo_catalog/application/exchange.py",
+            "line": 1195,
+            "function": "_export_context"
+          },
+          {
+            "path": "src/repo_catalog/domain/selective_exchange.py",
+            "line": 664,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.i3.test_selective_exchange",
+      "name": "test_contradictory_coverage_proof_is_rejected_before_binding[members_json-[]-collection]",
+      "baseline": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedIdentificationStage: I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6",
+        "stage_refusal": "I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6",
+        "frames": [
+          {
+            "path": "tests/integration/i3/test_selective_exchange.py",
+            "line": 866,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/exchange.py",
+            "line": 421,
+            "function": "export_package"
+          },
+          {
+            "path": "src/repo_catalog/application/exchange.py",
+            "line": 1195,
+            "function": "_export_context"
+          },
+          {
+            "path": "src/repo_catalog/domain/selective_exchange.py",
+            "line": 662,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedIdentificationStage: I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6",
+        "stage_refusal": "I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6",
+        "frames": [
+          {
+            "path": "tests/integration/i3/test_selective_exchange.py",
+            "line": 866,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/exchange.py",
+            "line": 421,
+            "function": "export_package"
+          },
+          {
+            "path": "src/repo_catalog/application/exchange.py",
+            "line": 1195,
+            "function": "_export_context"
+          },
+          {
+            "path": "src/repo_catalog/domain/selective_exchange.py",
+            "line": 664,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.i3.test_selective_exchange",
+      "name": "test_contradictory_coverage_proof_is_rejected_before_binding[provenance_json-{\"evidence\":\"different\",\"source\":\"forged\"}-collection]",
+      "baseline": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedIdentificationStage: I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6",
+        "stage_refusal": "I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6",
+        "frames": [
+          {
+            "path": "tests/integration/i3/test_selective_exchange.py",
+            "line": 866,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/exchange.py",
+            "line": 421,
+            "function": "export_package"
+          },
+          {
+            "path": "src/repo_catalog/application/exchange.py",
+            "line": 1195,
+            "function": "_export_context"
+          },
+          {
+            "path": "src/repo_catalog/domain/selective_exchange.py",
+            "line": 662,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedIdentificationStage: I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6",
+        "stage_refusal": "I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6",
+        "frames": [
+          {
+            "path": "tests/integration/i3/test_selective_exchange.py",
+            "line": 866,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/exchange.py",
+            "line": 421,
+            "function": "export_package"
+          },
+          {
+            "path": "src/repo_catalog/application/exchange.py",
+            "line": 1195,
+            "function": "_export_context"
+          },
+          {
+            "path": "src/repo_catalog/domain/selective_exchange.py",
+            "line": 664,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.i3.test_selective_exchange",
+      "name": "test_contradictory_coverage_proof_is_rejected_before_binding[terminal_state-partial-collection]",
+      "baseline": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedIdentificationStage: I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6",
+        "stage_refusal": "I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6",
+        "frames": [
+          {
+            "path": "tests/integration/i3/test_selective_exchange.py",
+            "line": 866,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/exchange.py",
+            "line": 421,
+            "function": "export_package"
+          },
+          {
+            "path": "src/repo_catalog/application/exchange.py",
+            "line": 1195,
+            "function": "_export_context"
+          },
+          {
+            "path": "src/repo_catalog/domain/selective_exchange.py",
+            "line": 662,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedIdentificationStage: I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6",
+        "stage_refusal": "I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6",
+        "frames": [
+          {
+            "path": "tests/integration/i3/test_selective_exchange.py",
+            "line": 866,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/exchange.py",
+            "line": 421,
+            "function": "export_package"
+          },
+          {
+            "path": "src/repo_catalog/application/exchange.py",
+            "line": 1195,
+            "function": "_export_context"
+          },
+          {
+            "path": "src/repo_catalog/domain/selective_exchange.py",
+            "line": 664,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.i3.test_selective_exchange",
+      "name": "test_modeled_collection_member_cannot_borrow_another_parent[collections]",
+      "baseline": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedIdentificationStage: I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6",
+        "stage_refusal": "I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6",
+        "frames": [
+          {
+            "path": "tests/integration/i3/test_selective_exchange.py",
+            "line": 1178,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/exchange.py",
+            "line": 421,
+            "function": "export_package"
+          },
+          {
+            "path": "src/repo_catalog/application/exchange.py",
+            "line": 1195,
+            "function": "_export_context"
+          },
+          {
+            "path": "src/repo_catalog/domain/selective_exchange.py",
+            "line": 662,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedIdentificationStage: I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6",
+        "stage_refusal": "I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6",
+        "frames": [
+          {
+            "path": "tests/integration/i3/test_selective_exchange.py",
+            "line": 1178,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/exchange.py",
+            "line": 421,
+            "function": "export_package"
+          },
+          {
+            "path": "src/repo_catalog/application/exchange.py",
+            "line": 1195,
+            "function": "_export_context"
+          },
+          {
+            "path": "src/repo_catalog/domain/selective_exchange.py",
+            "line": 664,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.i3.test_selective_exchange",
+      "name": "test_modeled_collection_member_cannot_borrow_another_parent[resource_relations]",
+      "baseline": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedIdentificationStage: I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6",
+        "stage_refusal": "I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6",
+        "frames": [
+          {
+            "path": "tests/integration/i3/test_selective_exchange.py",
+            "line": 1178,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/exchange.py",
+            "line": 421,
+            "function": "export_package"
+          },
+          {
+            "path": "src/repo_catalog/application/exchange.py",
+            "line": 1195,
+            "function": "_export_context"
+          },
+          {
+            "path": "src/repo_catalog/domain/selective_exchange.py",
+            "line": 662,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedIdentificationStage: I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6",
+        "stage_refusal": "I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6",
+        "frames": [
+          {
+            "path": "tests/integration/i3/test_selective_exchange.py",
+            "line": 1178,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/exchange.py",
+            "line": 421,
+            "function": "export_package"
+          },
+          {
+            "path": "src/repo_catalog/application/exchange.py",
+            "line": 1195,
+            "function": "_export_context"
+          },
+          {
+            "path": "src/repo_catalog/domain/selective_exchange.py",
+            "line": 664,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.i3.test_selective_exchange",
+      "name": "test_transfer_reports_never_shrunk_or_mixed",
+      "baseline": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/i3/test_selective_exchange.py",
+            "line": 214,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+            "line": 147,
+            "function": "call"
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+            "line": 885,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/i3/test_selective_exchange.py",
+            "line": 214,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+            "line": 149,
+            "function": "call"
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+            "line": 901,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.i4.test_query_search_backup",
+      "name": "test_paired_restore_preserves_all_keys_dependencies_and_excludes_other_stores",
+      "baseline": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/i4/test_query_search_backup.py",
+            "line": 329,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/i4/test_query_search_backup.py",
+            "line": 329,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.i5.test_independent_e2e",
+      "name": "test_independent_selection_does_not_turn_dependencies_into_permission[C]",
+      "baseline": {
+        "phase": "setup",
+        "message": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "frames": [
+          {
+            "path": "tests/integration/i5/test_independent_e2e.py",
+            "line": 271,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "setup",
+        "message": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "frames": [
+          {
+            "path": "tests/integration/i5/test_independent_e2e.py",
+            "line": 271,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.i5.test_independent_e2e",
+      "name": "test_independent_selection_does_not_turn_dependencies_into_permission[OC]",
+      "baseline": {
+        "phase": "setup",
+        "message": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "frames": [
+          {
+            "path": "tests/integration/i5/test_independent_e2e.py",
+            "line": 271,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "setup",
+        "message": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "frames": [
+          {
+            "path": "tests/integration/i5/test_independent_e2e.py",
+            "line": 271,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.i5.test_independent_e2e",
+      "name": "test_independent_selection_does_not_turn_dependencies_into_permission[O]",
+      "baseline": {
+        "phase": "setup",
+        "message": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "frames": [
+          {
+            "path": "tests/integration/i5/test_independent_e2e.py",
+            "line": 271,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "setup",
+        "message": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "frames": [
+          {
+            "path": "tests/integration/i5/test_independent_e2e.py",
+            "line": 271,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.i5.test_independent_e2e",
+      "name": "test_independent_selection_does_not_turn_dependencies_into_permission[RC]",
+      "baseline": {
+        "phase": "setup",
+        "message": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "frames": [
+          {
+            "path": "tests/integration/i5/test_independent_e2e.py",
+            "line": 271,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "setup",
+        "message": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "frames": [
+          {
+            "path": "tests/integration/i5/test_independent_e2e.py",
+            "line": 271,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.i5.test_independent_e2e",
+      "name": "test_independent_selection_does_not_turn_dependencies_into_permission[ROC]",
+      "baseline": {
+        "phase": "setup",
+        "message": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "frames": [
+          {
+            "path": "tests/integration/i5/test_independent_e2e.py",
+            "line": 271,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "setup",
+        "message": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "frames": [
+          {
+            "path": "tests/integration/i5/test_independent_e2e.py",
+            "line": 271,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.i5.test_independent_e2e",
+      "name": "test_independent_selection_does_not_turn_dependencies_into_permission[RO]",
+      "baseline": {
+        "phase": "setup",
+        "message": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "frames": [
+          {
+            "path": "tests/integration/i5/test_independent_e2e.py",
+            "line": 271,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "setup",
+        "message": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "frames": [
+          {
+            "path": "tests/integration/i5/test_independent_e2e.py",
+            "line": 271,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.i5.test_independent_e2e",
+      "name": "test_independent_selection_does_not_turn_dependencies_into_permission[R]",
+      "baseline": {
+        "phase": "setup",
+        "message": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "frames": [
+          {
+            "path": "tests/integration/i5/test_independent_e2e.py",
+            "line": 271,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "setup",
+        "message": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "frames": [
+          {
+            "path": "tests/integration/i5/test_independent_e2e.py",
+            "line": 271,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.i5.test_independent_e2e",
+      "name": "test_independent_selection_does_not_turn_dependencies_into_permission[empty]",
+      "baseline": {
+        "phase": "setup",
+        "message": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "frames": [
+          {
+            "path": "tests/integration/i5/test_independent_e2e.py",
+            "line": 271,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "setup",
+        "message": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "frames": [
+          {
+            "path": "tests/integration/i5/test_independent_e2e.py",
+            "line": 271,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.i5.test_independent_e2e",
+      "name": "test_mapping_effect_stays_local_across_exchange_search_and_restore[correct]",
+      "baseline": {
+        "phase": "setup",
+        "message": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "frames": [
+          {
+            "path": "tests/integration/i5/test_independent_e2e.py",
+            "line": 271,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "setup",
+        "message": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "frames": [
+          {
+            "path": "tests/integration/i5/test_independent_e2e.py",
+            "line": 271,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.i5.test_independent_e2e",
+      "name": "test_mapping_effect_stays_local_across_exchange_search_and_restore[dispute]",
+      "baseline": {
+        "phase": "setup",
+        "message": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "frames": [
+          {
+            "path": "tests/integration/i5/test_independent_e2e.py",
+            "line": 271,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "setup",
+        "message": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "frames": [
+          {
+            "path": "tests/integration/i5/test_independent_e2e.py",
+            "line": 271,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.i5.test_independent_e2e",
+      "name": "test_mapping_effect_stays_local_across_exchange_search_and_restore[withdraw]",
+      "baseline": {
+        "phase": "setup",
+        "message": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "frames": [
+          {
+            "path": "tests/integration/i5/test_independent_e2e.py",
+            "line": 271,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "setup",
+        "message": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "frames": [
+          {
+            "path": "tests/integration/i5/test_independent_e2e.py",
+            "line": 271,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.i5.test_independent_e2e",
+      "name": "test_omitted_selection_needs_explicit_all_and_empty_overrides_all",
+      "baseline": {
+        "phase": "setup",
+        "message": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "frames": [
+          {
+            "path": "tests/integration/i5/test_independent_e2e.py",
+            "line": 271,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "setup",
+        "message": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "frames": [
+          {
+            "path": "tests/integration/i5/test_independent_e2e.py",
+            "line": 271,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.i5.test_independent_e2e",
+      "name": "test_received_paired_backup_preserves_complete_rows_keys_provenance_and_oid_refs",
+      "baseline": {
+        "phase": "setup",
+        "message": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "frames": [
+          {
+            "path": "tests/integration/i5/test_independent_e2e.py",
+            "line": 271,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "setup",
+        "message": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "frames": [
+          {
+            "path": "tests/integration/i5/test_independent_e2e.py",
+            "line": 271,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.i5.test_independent_e2e",
+      "name": "test_received_search_is_disposable_and_rebuild_preserves_authority[garbage]",
+      "baseline": {
+        "phase": "setup",
+        "message": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "frames": [
+          {
+            "path": "tests/integration/i5/test_independent_e2e.py",
+            "line": 271,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "setup",
+        "message": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "frames": [
+          {
+            "path": "tests/integration/i5/test_independent_e2e.py",
+            "line": 271,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.i5.test_independent_e2e",
+      "name": "test_received_search_is_disposable_and_rebuild_preserves_authority[missing]",
+      "baseline": {
+        "phase": "setup",
+        "message": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "frames": [
+          {
+            "path": "tests/integration/i5/test_independent_e2e.py",
+            "line": 271,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "setup",
+        "message": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "frames": [
+          {
+            "path": "tests/integration/i5/test_independent_e2e.py",
+            "line": 271,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.i5.test_independent_e2e",
+      "name": "test_received_search_is_disposable_and_rebuild_preserves_authority[row_key]",
+      "baseline": {
+        "phase": "setup",
+        "message": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "frames": [
+          {
+            "path": "tests/integration/i5/test_independent_e2e.py",
+            "line": 271,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "setup",
+        "message": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "frames": [
+          {
+            "path": "tests/integration/i5/test_independent_e2e.py",
+            "line": 271,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.i5.test_independent_e2e",
+      "name": "test_received_search_is_disposable_and_rebuild_preserves_authority[stale]",
+      "baseline": {
+        "phase": "setup",
+        "message": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "frames": [
+          {
+            "path": "tests/integration/i5/test_independent_e2e.py",
+            "line": 271,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "setup",
+        "message": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "frames": [
+          {
+            "path": "tests/integration/i5/test_independent_e2e.py",
+            "line": 271,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.i5.test_independent_e2e",
+      "name": "test_received_search_is_disposable_and_rebuild_preserves_authority[text]",
+      "baseline": {
+        "phase": "setup",
+        "message": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "frames": [
+          {
+            "path": "tests/integration/i5/test_independent_e2e.py",
+            "line": 271,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "setup",
+        "message": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "frames": [
+          {
+            "path": "tests/integration/i5/test_independent_e2e.py",
+            "line": 271,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.i5.test_independent_e2e",
+      "name": "test_selected_source_inventory_cannot_expand_repository_registration",
+      "baseline": {
+        "phase": "setup",
+        "message": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "frames": [
+          {
+            "path": "tests/integration/i5/test_independent_e2e.py",
+            "line": 271,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "setup",
+        "message": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "frames": [
+          {
+            "path": "tests/integration/i5/test_independent_e2e.py",
+            "line": 271,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.i5.test_independent_e2e",
+      "name": "test_transfer_reports_never_mix_across_observations_or_identifier_namespaces",
+      "baseline": {
+        "phase": "setup",
+        "message": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "frames": [
+          {
+            "path": "tests/integration/i5/test_independent_e2e.py",
+            "line": 271,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "setup",
+        "message": "failed on setup with \"repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: Provider Transfer intake requires reviewed I3-I5 support\"",
+        "frames": [
+          {
+            "path": "tests/integration/i5/test_independent_e2e.py",
+            "line": 271,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1519,
+            "function": "admit_batch"
+          },
+          {
+            "path": "src/repo_catalog/application/acquisition.py",
+            "line": 1471,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.p1.test_context_relations",
+      "name": "test_counterexample_5_transfer_cases_no_invented_endpoints",
+      "baseline": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/p1/test_context_relations.py",
+            "line": 563,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+            "line": 101,
+            "function": "call"
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+            "line": 327,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/p1/test_context_relations.py",
+            "line": 563,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+            "line": 109,
+            "function": "call"
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+            "line": 339,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.p1.test_context_relations",
+      "name": "test_partial_transfer_alternatives_remain_selection_truncated",
+      "baseline": {
+        "phase": "call",
+        "message": "AssertionError: Regex pattern did not match.\n  Expected regex: 'Selection-truncated'\n  Actual message: 'I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support'",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support'",
+        "frames": [
+          {
+            "path": "tests/integration/p1/test_context_relations.py",
+            "line": 270,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "AssertionError: Regex pattern did not match.\n  Expected regex: 'Selection-truncated'\n  Actual message: 'I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support'",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support'",
+        "frames": [
+          {
+            "path": "tests/integration/p1/test_context_relations.py",
+            "line": 270,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.p1.test_context_relations",
+      "name": "test_transfer_event_genuine_type_enforcement_across_typed_paths",
+      "baseline": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/p1/test_context_relations.py",
+            "line": 1202,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+            "line": 101,
+            "function": "call"
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+            "line": 327,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/p1/test_context_relations.py",
+            "line": 1202,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+            "line": 109,
+            "function": "call"
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+            "line": 339,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.p1.test_context_relations",
+      "name": "test_transfer_event_reports_generator_selected_repositories_and_invariants",
+      "baseline": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/p1/test_context_relations.py",
+            "line": 1230,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+            "line": 101,
+            "function": "call"
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+            "line": 327,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/p1/test_context_relations.py",
+            "line": 1230,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+            "line": 109,
+            "function": "call"
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+            "line": 339,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.p1.test_context_relations",
+      "name": "test_transfer_generic_admission_requires_complete_report[transfer_from_repository-False-False]",
+      "baseline": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/p1/test_context_relations.py",
+            "line": 102,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+            "line": 101,
+            "function": "call"
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+            "line": 327,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/p1/test_context_relations.py",
+            "line": 102,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+            "line": 109,
+            "function": "call"
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+            "line": 339,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.p1.test_context_relations",
+      "name": "test_transfer_generic_admission_requires_complete_report[transfer_from_repository-False-True]",
+      "baseline": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/p1/test_context_relations.py",
+            "line": 102,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+            "line": 147,
+            "function": "call"
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+            "line": 885,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/p1/test_context_relations.py",
+            "line": 102,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+            "line": 149,
+            "function": "call"
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+            "line": 901,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.p1.test_context_relations",
+      "name": "test_transfer_generic_admission_requires_complete_report[transfer_from_repository-True-False]",
+      "baseline": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/p1/test_context_relations.py",
+            "line": 102,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+            "line": 101,
+            "function": "call"
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+            "line": 327,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/p1/test_context_relations.py",
+            "line": 102,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+            "line": 109,
+            "function": "call"
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+            "line": 339,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.p1.test_context_relations",
+      "name": "test_transfer_generic_admission_requires_complete_report[transfer_from_repository-True-True]",
+      "baseline": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/p1/test_context_relations.py",
+            "line": 102,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+            "line": 147,
+            "function": "call"
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+            "line": 885,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/p1/test_context_relations.py",
+            "line": 102,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+            "line": 149,
+            "function": "call"
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+            "line": 901,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.p1.test_context_relations",
+      "name": "test_transfer_generic_admission_requires_complete_report[transfer_to_repository-False-False]",
+      "baseline": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/p1/test_context_relations.py",
+            "line": 102,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+            "line": 101,
+            "function": "call"
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+            "line": 327,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/p1/test_context_relations.py",
+            "line": 102,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+            "line": 109,
+            "function": "call"
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+            "line": 339,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.p1.test_context_relations",
+      "name": "test_transfer_generic_admission_requires_complete_report[transfer_to_repository-False-True]",
+      "baseline": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/p1/test_context_relations.py",
+            "line": 102,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+            "line": 147,
+            "function": "call"
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+            "line": 885,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/p1/test_context_relations.py",
+            "line": 102,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+            "line": 149,
+            "function": "call"
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+            "line": 901,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.p1.test_context_relations",
+      "name": "test_transfer_generic_admission_requires_complete_report[transfer_to_repository-True-False]",
+      "baseline": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/p1/test_context_relations.py",
+            "line": 102,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+            "line": 101,
+            "function": "call"
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+            "line": 327,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/p1/test_context_relations.py",
+            "line": 102,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+            "line": 109,
+            "function": "call"
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+            "line": 339,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.p1.test_context_relations",
+      "name": "test_transfer_generic_admission_requires_complete_report[transfer_to_repository-True-True]",
+      "baseline": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/p1/test_context_relations.py",
+            "line": 102,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+            "line": 147,
+            "function": "call"
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+            "line": 885,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/p1/test_context_relations.py",
+            "line": 102,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+            "line": 149,
+            "function": "call"
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+            "line": 901,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.p1.test_context_relations",
+      "name": "test_transfer_report_fk_failure_rolls_back_whole_unit",
+      "baseline": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/p1/test_context_relations.py",
+            "line": 193,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+            "line": 101,
+            "function": "call"
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+            "line": 327,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/p1/test_context_relations.py",
+            "line": 193,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+            "line": 109,
+            "function": "call"
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+            "line": 339,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.p1.test_context_relations",
+      "name": "test_transfer_stored_type_is_never_inferred[absent]",
+      "baseline": {
+        "phase": "call",
+        "message": "sqlite3.IntegrityError: I2_TRANSFER_UNSUPPORTED",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED",
+        "frames": [
+          {
+            "path": "tests/integration/p1/test_context_relations.py",
+            "line": 135,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "sqlite3.IntegrityError: I2_TRANSFER_UNSUPPORTED",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED",
+        "frames": [
+          {
+            "path": "tests/integration/p1/test_context_relations.py",
+            "line": 135,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.p1.test_context_relations",
+      "name": "test_transfer_stored_type_is_never_inferred[members]",
+      "baseline": {
+        "phase": "call",
+        "message": "sqlite3.IntegrityError: I2_TRANSFER_UNSUPPORTED",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED",
+        "frames": [
+          {
+            "path": "tests/integration/p1/test_context_relations.py",
+            "line": 135,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "sqlite3.IntegrityError: I2_TRANSFER_UNSUPPORTED",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED",
+        "frames": [
+          {
+            "path": "tests/integration/p1/test_context_relations.py",
+            "line": 135,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.p1.test_context_relations",
+      "name": "test_transfer_stored_type_is_never_inferred[missing_clock]",
+      "baseline": {
+        "phase": "call",
+        "message": "sqlite3.IntegrityError: I2_TRANSFER_UNSUPPORTED",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED",
+        "frames": [
+          {
+            "path": "tests/integration/p1/test_context_relations.py",
+            "line": 135,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "sqlite3.IntegrityError: I2_TRANSFER_UNSUPPORTED",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED",
+        "frames": [
+          {
+            "path": "tests/integration/p1/test_context_relations.py",
+            "line": 135,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.p1.test_context_relations",
+      "name": "test_transfer_stored_type_is_never_inferred[missing_provider]",
+      "baseline": {
+        "phase": "call",
+        "message": "sqlite3.IntegrityError: I2_TRANSFER_UNSUPPORTED",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED",
+        "frames": [
+          {
+            "path": "tests/integration/p1/test_context_relations.py",
+            "line": 135,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "sqlite3.IntegrityError: I2_TRANSFER_UNSUPPORTED",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED",
+        "frames": [
+          {
+            "path": "tests/integration/p1/test_context_relations.py",
+            "line": 135,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.p1.test_context_relations",
+      "name": "test_transfer_stored_type_is_never_inferred[missing_type]",
+      "baseline": {
+        "phase": "call",
+        "message": "sqlite3.IntegrityError: I2_TRANSFER_UNSUPPORTED",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED",
+        "frames": [
+          {
+            "path": "tests/integration/p1/test_context_relations.py",
+            "line": 135,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "sqlite3.IntegrityError: I2_TRANSFER_UNSUPPORTED",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED",
+        "frames": [
+          {
+            "path": "tests/integration/p1/test_context_relations.py",
+            "line": 135,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.p1.test_context_relations",
+      "name": "test_transfer_stored_type_is_never_inferred[provided_roles]",
+      "baseline": {
+        "phase": "call",
+        "message": "sqlite3.IntegrityError: I2_TRANSFER_UNSUPPORTED",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED",
+        "frames": [
+          {
+            "path": "tests/integration/p1/test_context_relations.py",
+            "line": 135,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "sqlite3.IntegrityError: I2_TRANSFER_UNSUPPORTED",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED",
+        "frames": [
+          {
+            "path": "tests/integration/p1/test_context_relations.py",
+            "line": 135,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.p1.test_context_relations",
+      "name": "test_transfer_stored_type_is_never_inferred[wrong_type]",
+      "baseline": {
+        "phase": "call",
+        "message": "sqlite3.IntegrityError: I2_TRANSFER_UNSUPPORTED",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED",
+        "frames": [
+          {
+            "path": "tests/integration/p1/test_context_relations.py",
+            "line": 135,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "sqlite3.IntegrityError: I2_TRANSFER_UNSUPPORTED",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED",
+        "frames": [
+          {
+            "path": "tests/integration/p1/test_context_relations.py",
+            "line": 135,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.p1.test_context_relations",
+      "name": "test_transfer_supports_both_endpoints_without_cross_borrowing",
+      "baseline": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/p1/test_context_relations.py",
+            "line": 231,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+            "line": 101,
+            "function": "call"
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+            "line": 327,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/p1/test_context_relations.py",
+            "line": 231,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+            "line": 109,
+            "function": "call"
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+            "line": 339,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.p3.test_production_context",
+      "name": "test_production_context_relation_facade_methods",
+      "baseline": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/p3/test_production_context.py",
+            "line": 1194,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+            "line": 147,
+            "function": "call"
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+            "line": 885,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedResourceStage: I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "stage_refusal": "I2_TRANSFER_UNSUPPORTED: admit_transfer_event requires reviewed I3-I5 support",
+        "frames": [
+          {
+            "path": "tests/integration/p3/test_production_context.py",
+            "line": 1194,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+            "line": 149,
+            "function": "call"
+          },
+          {
+            "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+            "line": 901,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.p5.test_exchange",
+      "name": "test_exchange_evaluates_core_dependencies_against_receiver_core",
+      "baseline": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedIdentificationStage: I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6",
+        "stage_refusal": "I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6",
+        "frames": [
+          {
+            "path": "tests/integration/p5/test_exchange.py",
+            "line": 438,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/exchange.py",
+            "line": 421,
+            "function": "export_package"
+          },
+          {
+            "path": "src/repo_catalog/application/exchange.py",
+            "line": 1195,
+            "function": "_export_context"
+          },
+          {
+            "path": "src/repo_catalog/domain/selective_exchange.py",
+            "line": 662,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedIdentificationStage: I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6",
+        "stage_refusal": "I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6",
+        "frames": [
+          {
+            "path": "tests/integration/p5/test_exchange.py",
+            "line": 438,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/exchange.py",
+            "line": 421,
+            "function": "export_package"
+          },
+          {
+            "path": "src/repo_catalog/application/exchange.py",
+            "line": 1195,
+            "function": "_export_context"
+          },
+          {
+            "path": "src/repo_catalog/domain/selective_exchange.py",
+            "line": 664,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.p5.test_exchange",
+      "name": "test_exchange_export_import_repeat_reverse_and_multi_hop",
+      "baseline": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedIdentificationStage: I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6",
+        "stage_refusal": "I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6",
+        "frames": [
+          {
+            "path": "tests/integration/p5/test_exchange.py",
+            "line": 173,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/exchange.py",
+            "line": 421,
+            "function": "export_package"
+          },
+          {
+            "path": "src/repo_catalog/application/exchange.py",
+            "line": 1195,
+            "function": "_export_context"
+          },
+          {
+            "path": "src/repo_catalog/domain/selective_exchange.py",
+            "line": 662,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedIdentificationStage: I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6",
+        "stage_refusal": "I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6",
+        "frames": [
+          {
+            "path": "tests/integration/p5/test_exchange.py",
+            "line": 173,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/exchange.py",
+            "line": 421,
+            "function": "export_package"
+          },
+          {
+            "path": "src/repo_catalog/application/exchange.py",
+            "line": 1195,
+            "function": "_export_context"
+          },
+          {
+            "path": "src/repo_catalog/domain/selective_exchange.py",
+            "line": 664,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.p5.test_exchange",
+      "name": "test_exchange_refuses_intrinsic_spoofing_without_validated_bytes",
+      "baseline": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedIdentificationStage: I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6",
+        "stage_refusal": "I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6",
+        "frames": [
+          {
+            "path": "tests/integration/p5/test_exchange.py",
+            "line": 301,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/exchange.py",
+            "line": 421,
+            "function": "export_package"
+          },
+          {
+            "path": "src/repo_catalog/application/exchange.py",
+            "line": 1195,
+            "function": "_export_context"
+          },
+          {
+            "path": "src/repo_catalog/domain/selective_exchange.py",
+            "line": 662,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedIdentificationStage: I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6",
+        "stage_refusal": "I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6",
+        "frames": [
+          {
+            "path": "tests/integration/p5/test_exchange.py",
+            "line": 301,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/exchange.py",
+            "line": 421,
+            "function": "export_package"
+          },
+          {
+            "path": "src/repo_catalog/application/exchange.py",
+            "line": 1195,
+            "function": "_export_context"
+          },
+          {
+            "path": "src/repo_catalog/domain/selective_exchange.py",
+            "line": 664,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.integration.p5.test_exchange",
+      "name": "test_exchange_refuses_tampered_payloads_without_store_corruption",
+      "baseline": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedIdentificationStage: I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6",
+        "stage_refusal": "I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6",
+        "frames": [
+          {
+            "path": "tests/integration/p5/test_exchange.py",
+            "line": 347,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/exchange.py",
+            "line": 421,
+            "function": "export_package"
+          },
+          {
+            "path": "src/repo_catalog/application/exchange.py",
+            "line": 1195,
+            "function": "_export_context"
+          },
+          {
+            "path": "src/repo_catalog/domain/selective_exchange.py",
+            "line": 662,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "repo_catalog.domain.resource_stage.UnsupportedIdentificationStage: I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6",
+        "stage_refusal": "I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6",
+        "frames": [
+          {
+            "path": "tests/integration/p5/test_exchange.py",
+            "line": 347,
+            "function": ""
+          },
+          {
+            "path": "src/repo_catalog/application/exchange.py",
+            "line": 421,
+            "function": "export_package"
+          },
+          {
+            "path": "src/repo_catalog/application/exchange.py",
+            "line": 1195,
+            "function": "_export_context"
+          },
+          {
+            "path": "src/repo_catalog/domain/selective_exchange.py",
+            "line": 664,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": true,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.packaging.test_p5_distribution",
+      "name": "test_p5_installed_acquisition_and_exchange[sha1-sdist-wheel]",
+      "baseline": {
+        "phase": "call",
+        "message": "AssertionError: Traceback (most recent call last):\n    File \"<string>\", line 147, in <module>\n      pkg = svc_a.export_package(\n          selection=ExchangeSelectionScope(all_selected=True),\n          exported_at_us=1_700_000_100_000_000,\n      )\n    File \"/tmp/pytest-of-agent/pytest-9/popen-gw3/test_p5_installed_acquisition_1/venv/lib/python3.13/site-packages/repo_catalog/application/exchange.py\", line 421, in export_package\n      context_section = self._export_context(scope)\n    File \"/tmp/pytest-of-agent/pytest-9/popen-gw3/test_p5_installed_acquisition_1/venv/lib/python3.13/site-packages/repo_catalog/application/exchange.py\", line 1195, in _export_context\n      preflight_i2_resources(included_rks)\n      ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^\n    File \"/tmp/pytest-of-agent/pytest-9/popen-gw3/test_p5_installed_acquisition_1/venv/lib/python3.13/site-packages/repo_catalog/domain/selective_exchange.py\", line 662, in preflight_i2_resources\n      raise UnsupportedIdentificationStage()\n  repo_catalog.domain.resource_stage.UnsupportedIdentificationStage: I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6\n  \nassert 1 == 0\n +  where 1 = CompletedProcess(args=['/tmp/pytest-of-agent/pytest-9/popen-gw3/test_p5_installed_acquisition_1/venv/bin/python', '-c'..._stage.UnsupportedIdentificationStage: I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6\\n').returncode",
+        "stage_refusal": "I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6",
+        "frames": [
+          {
+            "path": "tests/packaging/test_p5_distribution.py",
+            "line": 220,
+            "function": ""
+          },
+          {
+            "path": "tests/packaging/test_p1_distribution.py",
+            "line": 24,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "AssertionError: Traceback (most recent call last):\n    File \"<string>\", line 147, in <module>\n    File \"/tmp/pytest-of-runner/pytest-3/popen-gw1/test_p5_installed_acquisition_1/venv/lib/python3.12/site-packages/repo_catalog/application/exchange.py\", line 421, in export_package\n      context_section = self._export_context(scope)\n                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    File \"/tmp/pytest-of-runner/pytest-3/popen-gw1/test_p5_installed_acquisition_1/venv/lib/python3.12/site-packages/repo_catalog/application/exchange.py\", line 1195, in _export_context\n      preflight_i2_resources(included_rks)\n    File \"/tmp/pytest-of-runner/pytest-3/popen-gw1/test_p5_installed_acquisition_1/venv/lib/python3.12/site-packages/repo_catalog/domain/selective_exchange.py\", line 664, in preflight_i2_resources\n      raise UnsupportedIdentificationStage()\n  repo_catalog.domain.resource_stage.UnsupportedIdentificationStage: I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6\n  \nassert 1 == 0\n +  where 1 = CompletedProcess(args=['/tmp/pytest-of-runner/pytest-3/popen-gw1/test_p5_installed_acquisition_1/venv/bin/python', '-c..._stage.UnsupportedIdentificationStage: I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6\\n').returncode",
+        "stage_refusal": "I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6",
+        "frames": [
+          {
+            "path": "tests/packaging/test_p5_distribution.py",
+            "line": 220,
+            "function": ""
+          },
+          {
+            "path": "tests/packaging/test_p1_distribution.py",
+            "line": 26,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": false,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.packaging.test_p5_distribution",
+      "name": "test_p5_installed_acquisition_and_exchange[sha1-wheel]",
+      "baseline": {
+        "phase": "call",
+        "message": "AssertionError: Traceback (most recent call last):\n    File \"<string>\", line 147, in <module>\n      pkg = svc_a.export_package(\n          selection=ExchangeSelectionScope(all_selected=True),\n          exported_at_us=1_700_000_100_000_000,\n      )\n    File \"/tmp/pytest-of-agent/pytest-9/popen-gw3/test_p5_installed_acquisition_0/venv/lib/python3.13/site-packages/repo_catalog/application/exchange.py\", line 421, in export_package\n      context_section = self._export_context(scope)\n    File \"/tmp/pytest-of-agent/pytest-9/popen-gw3/test_p5_installed_acquisition_0/venv/lib/python3.13/site-packages/repo_catalog/application/exchange.py\", line 1195, in _export_context\n      preflight_i2_resources(included_rks)\n      ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^\n    File \"/tmp/pytest-of-agent/pytest-9/popen-gw3/test_p5_installed_acquisition_0/venv/lib/python3.13/site-packages/repo_catalog/domain/selective_exchange.py\", line 662, in preflight_i2_resources\n      raise UnsupportedIdentificationStage()\n  repo_catalog.domain.resource_stage.UnsupportedIdentificationStage: I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6\n  \nassert 1 == 0\n +  where 1 = CompletedProcess(args=['/tmp/pytest-of-agent/pytest-9/popen-gw3/test_p5_installed_acquisition_0/venv/bin/python', '-c'..._stage.UnsupportedIdentificationStage: I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6\\n').returncode",
+        "stage_refusal": "I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6",
+        "frames": [
+          {
+            "path": "tests/packaging/test_p5_distribution.py",
+            "line": 220,
+            "function": ""
+          },
+          {
+            "path": "tests/packaging/test_p1_distribution.py",
+            "line": 24,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "AssertionError: Traceback (most recent call last):\n    File \"<string>\", line 147, in <module>\n    File \"/tmp/pytest-of-runner/pytest-3/popen-gw1/test_p5_installed_acquisition_0/venv/lib/python3.12/site-packages/repo_catalog/application/exchange.py\", line 421, in export_package\n      context_section = self._export_context(scope)\n                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    File \"/tmp/pytest-of-runner/pytest-3/popen-gw1/test_p5_installed_acquisition_0/venv/lib/python3.12/site-packages/repo_catalog/application/exchange.py\", line 1195, in _export_context\n      preflight_i2_resources(included_rks)\n    File \"/tmp/pytest-of-runner/pytest-3/popen-gw1/test_p5_installed_acquisition_0/venv/lib/python3.12/site-packages/repo_catalog/domain/selective_exchange.py\", line 664, in preflight_i2_resources\n      raise UnsupportedIdentificationStage()\n  repo_catalog.domain.resource_stage.UnsupportedIdentificationStage: I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6\n  \nassert 1 == 0\n +  where 1 = CompletedProcess(args=['/tmp/pytest-of-runner/pytest-3/popen-gw1/test_p5_installed_acquisition_0/venv/bin/python', '-c..._stage.UnsupportedIdentificationStage: I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6\\n').returncode",
+        "stage_refusal": "I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6",
+        "frames": [
+          {
+            "path": "tests/packaging/test_p5_distribution.py",
+            "line": 220,
+            "function": ""
+          },
+          {
+            "path": "tests/packaging/test_p1_distribution.py",
+            "line": 26,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": false,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.packaging.test_p5_distribution",
+      "name": "test_p5_installed_acquisition_and_exchange[sha256-sdist-wheel]",
+      "baseline": {
+        "phase": "call",
+        "message": "AssertionError: Traceback (most recent call last):\n    File \"<string>\", line 147, in <module>\n      pkg = svc_a.export_package(\n          selection=ExchangeSelectionScope(all_selected=True),\n          exported_at_us=1_700_000_100_000_000,\n      )\n    File \"/tmp/pytest-of-agent/pytest-9/popen-gw3/test_p5_installed_acquisition_3/venv/lib/python3.13/site-packages/repo_catalog/application/exchange.py\", line 421, in export_package\n      context_section = self._export_context(scope)\n    File \"/tmp/pytest-of-agent/pytest-9/popen-gw3/test_p5_installed_acquisition_3/venv/lib/python3.13/site-packages/repo_catalog/application/exchange.py\", line 1195, in _export_context\n      preflight_i2_resources(included_rks)\n      ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^\n    File \"/tmp/pytest-of-agent/pytest-9/popen-gw3/test_p5_installed_acquisition_3/venv/lib/python3.13/site-packages/repo_catalog/domain/selective_exchange.py\", line 662, in preflight_i2_resources\n      raise UnsupportedIdentificationStage()\n  repo_catalog.domain.resource_stage.UnsupportedIdentificationStage: I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6\n  \nassert 1 == 0\n +  where 1 = CompletedProcess(args=['/tmp/pytest-of-agent/pytest-9/popen-gw3/test_p5_installed_acquisition_3/venv/bin/python', '-c'..._stage.UnsupportedIdentificationStage: I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6\\n').returncode",
+        "stage_refusal": "I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6",
+        "frames": [
+          {
+            "path": "tests/packaging/test_p5_distribution.py",
+            "line": 220,
+            "function": ""
+          },
+          {
+            "path": "tests/packaging/test_p1_distribution.py",
+            "line": 24,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "AssertionError: Traceback (most recent call last):\n    File \"<string>\", line 147, in <module>\n    File \"/tmp/pytest-of-runner/pytest-3/popen-gw1/test_p5_installed_acquisition_3/venv/lib/python3.12/site-packages/repo_catalog/application/exchange.py\", line 421, in export_package\n      context_section = self._export_context(scope)\n                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    File \"/tmp/pytest-of-runner/pytest-3/popen-gw1/test_p5_installed_acquisition_3/venv/lib/python3.12/site-packages/repo_catalog/application/exchange.py\", line 1195, in _export_context\n      preflight_i2_resources(included_rks)\n    File \"/tmp/pytest-of-runner/pytest-3/popen-gw1/test_p5_installed_acquisition_3/venv/lib/python3.12/site-packages/repo_catalog/domain/selective_exchange.py\", line 664, in preflight_i2_resources\n      raise UnsupportedIdentificationStage()\n  repo_catalog.domain.resource_stage.UnsupportedIdentificationStage: I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6\n  \nassert 1 == 0\n +  where 1 = CompletedProcess(args=['/tmp/pytest-of-runner/pytest-3/popen-gw1/test_p5_installed_acquisition_3/venv/bin/python', '-c..._stage.UnsupportedIdentificationStage: I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6\\n').returncode",
+        "stage_refusal": "I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6",
+        "frames": [
+          {
+            "path": "tests/packaging/test_p5_distribution.py",
+            "line": 220,
+            "function": ""
+          },
+          {
+            "path": "tests/packaging/test_p1_distribution.py",
+            "line": 26,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": false,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    },
+    {
+      "class": "tests.packaging.test_p5_distribution",
+      "name": "test_p5_installed_acquisition_and_exchange[sha256-wheel]",
+      "baseline": {
+        "phase": "call",
+        "message": "AssertionError: Traceback (most recent call last):\n    File \"<string>\", line 147, in <module>\n      pkg = svc_a.export_package(\n          selection=ExchangeSelectionScope(all_selected=True),\n          exported_at_us=1_700_000_100_000_000,\n      )\n    File \"/tmp/pytest-of-agent/pytest-9/popen-gw3/test_p5_installed_acquisition_2/venv/lib/python3.13/site-packages/repo_catalog/application/exchange.py\", line 421, in export_package\n      context_section = self._export_context(scope)\n    File \"/tmp/pytest-of-agent/pytest-9/popen-gw3/test_p5_installed_acquisition_2/venv/lib/python3.13/site-packages/repo_catalog/application/exchange.py\", line 1195, in _export_context\n      preflight_i2_resources(included_rks)\n      ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^\n    File \"/tmp/pytest-of-agent/pytest-9/popen-gw3/test_p5_installed_acquisition_2/venv/lib/python3.13/site-packages/repo_catalog/domain/selective_exchange.py\", line 662, in preflight_i2_resources\n      raise UnsupportedIdentificationStage()\n  repo_catalog.domain.resource_stage.UnsupportedIdentificationStage: I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6\n  \nassert 1 == 0\n +  where 1 = CompletedProcess(args=['/tmp/pytest-of-agent/pytest-9/popen-gw3/test_p5_installed_acquisition_2/venv/bin/python', '-c'..._stage.UnsupportedIdentificationStage: I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6\\n').returncode",
+        "stage_refusal": "I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6",
+        "frames": [
+          {
+            "path": "tests/packaging/test_p5_distribution.py",
+            "line": 220,
+            "function": ""
+          },
+          {
+            "path": "tests/packaging/test_p1_distribution.py",
+            "line": 24,
+            "function": ""
+          }
+        ]
+      },
+      "current": {
+        "phase": "call",
+        "message": "AssertionError: Traceback (most recent call last):\n    File \"<string>\", line 147, in <module>\n    File \"/tmp/pytest-of-runner/pytest-3/popen-gw1/test_p5_installed_acquisition_2/venv/lib/python3.12/site-packages/repo_catalog/application/exchange.py\", line 421, in export_package\n      context_section = self._export_context(scope)\n                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    File \"/tmp/pytest-of-runner/pytest-3/popen-gw1/test_p5_installed_acquisition_2/venv/lib/python3.12/site-packages/repo_catalog/application/exchange.py\", line 1195, in _export_context\n      preflight_i2_resources(included_rks)\n    File \"/tmp/pytest-of-runner/pytest-3/popen-gw1/test_p5_installed_acquisition_2/venv/lib/python3.12/site-packages/repo_catalog/domain/selective_exchange.py\", line 664, in preflight_i2_resources\n      raise UnsupportedIdentificationStage()\n  repo_catalog.domain.resource_stage.UnsupportedIdentificationStage: I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6\n  \nassert 1 == 0\n +  where 1 = CompletedProcess(args=['/tmp/pytest-of-runner/pytest-3/popen-gw1/test_p5_installed_acquisition_2/venv/bin/python', '-c..._stage.UnsupportedIdentificationStage: I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6\\n').returncode",
+        "stage_refusal": "I2_IDENTIFICATION_WIRE_UNSUPPORTED: explicit identification wire requires I6",
+        "frames": [
+          {
+            "path": "tests/packaging/test_p5_distribution.py",
+            "line": 220,
+            "function": ""
+          },
+          {
+            "path": "tests/packaging/test_p1_distribution.py",
+            "line": 26,
+            "function": ""
+          }
+        ]
+      },
+      "same_phase": true,
+      "same_message": false,
+      "same_stage_refusal": true,
+      "same_trace_paths_functions": true
+    }
+  ],
+  "baseline_archive": "/home/runner/work/git-repo-db/git-repo-db/docs/implementation/evidence/adr0031-i4/author-evidence.zip",
+  "baseline_archive_sha256": "e452d2b86f99fff8f44993204d7e72df925b69b34086a6399d791aeb39c75948",
+  "baseline_entry": "author-3.51.3/regressions.xml",
+  "current": "/home/runner/work/git-repo-db/git-repo-db/artifacts/access-registry/i5/regressions.xml",
+  "current_sha256": "8d5dab2bd484a6a8ffe04568d0eb684b07ecc561300f08151fb9ad741799e78d"
+}

@@ -1,0 +1,56 @@
+{
+  "path": "tests/integration/i6a/test_admission.py",
+  "function": "test_unconnected_exchange_import_refuses_before_progress_and_cached_success",
+  "all_file_AST_except_one_fixture_assignment_equal": true,
+  "all_file_assertion_AST_equal": true,
+  "target_assertions": 4,
+  "parametrization_equal": true,
+  "nodes": [
+    "tests/integration/i6a/test_admission.py::test_unconnected_exchange_import_refuses_before_progress_and_cached_success[initial]",
+    "tests/integration/i6a/test_admission.py::test_unconnected_exchange_import_refuses_before_progress_and_cached_success[cached-receipt]"
+  ],
+  "versions": {
+    "ea43a21fca1dbf8fa6dd1c254b28a96d5dd28d00": {
+      "sha256": "64e279a78130aef725edb34dbe0cadb5be9d8d1f93ef79bc616a327db7ee5081",
+      "fixture_AST": "Assign(targets=[Subscript(value=Name(id='section', ctx=Load()), slice=Constant(value='resources'), ctx=Store())], value=List(elts=[Call(func=Name(id='dict', ctx=Load()), args=[Call(func=Name(id='zip', ctx=Load()), args=[Tuple(elts=[Constant(value='service_instance_uuidv4'), Constant(value='resource_kind'), Constant(value='provider_resource_id')], ctx=Load()), Call(func=Attribute(value=Name(id='KEY_ISSUE_7', ctx=Load()), attr='coordinates', ctx=Load()), args=[], keywords=[])], keywords=[])], keywords=[])], ctx=Load()))",
+      "fixture_source": "section['resources'] = [dict(zip(('service_instance_uuidv4', 'resource_kind', 'provider_resource_id'), KEY_ISSUE_7.coordinates()))]",
+      "target_assertion_ASTs": [
+        "Assert(test=Compare(left=Attribute(value=Attribute(value=Name(id='error', ctx=Load()), attr='value', ctx=Load()), attr='code', ctx=Load()), ops=[Eq()], comparators=[Constant(value='PERMISSION_DENIED')]))",
+        "Assert(test=Compare(left=Call(func=Attribute(value=Call(func=Attribute(value=Name(id='db', ctx=Load()), attr='execute', ctx=Load()), args=[Constant(value='SELECT count(*) FROM resources')], keywords=[]), attr='fetchone', ctx=Load()), args=[], keywords=[]), ops=[Eq()], comparators=[Tuple(elts=[Constant(value=0)], ctx=Load())]))",
+        "Assert(test=Compare(left=Call(func=Attribute(value=Call(func=Attribute(value=Name(id='db', ctx=Load()), attr='execute', ctx=Load()), args=[Constant(value='SELECT count(*) FROM resource_relations')], keywords=[]), attr='fetchone', ctx=Load()), args=[], keywords=[]), ops=[Eq()], comparators=[Tuple(elts=[Constant(value=0)], ctx=Load())]))",
+        "Assert(test=Compare(left=Call(func=Attribute(value=Name(id='ledger', ctx=Load()), attr='get_exchange_receipt', ctx=Load()), args=[Attribute(value=Name(id='package', ctx=Load()), attr='package_id', ctx=Load()), Attribute(value=Name(id='package', ctx=Load()), attr='digest_sha256', ctx=Load())], keywords=[]), ops=[IsNot()], comparators=[Constant(value=None)]))"
+      ],
+      "decorators": [
+        "pytest.mark.parametrize('cached', [False, True], ids=['initial', 'cached-receipt'])"
+      ]
+    },
+    "2f874ce5c31efc1a266bc40e0472e64f82c82860": {
+      "sha256": "64e279a78130aef725edb34dbe0cadb5be9d8d1f93ef79bc616a327db7ee5081",
+      "fixture_AST": "Assign(targets=[Subscript(value=Name(id='section', ctx=Load()), slice=Constant(value='resources'), ctx=Store())], value=List(elts=[Call(func=Name(id='dict', ctx=Load()), args=[Call(func=Name(id='zip', ctx=Load()), args=[Tuple(elts=[Constant(value='service_instance_uuidv4'), Constant(value='resource_kind'), Constant(value='provider_resource_id')], ctx=Load()), Call(func=Attribute(value=Name(id='KEY_ISSUE_7', ctx=Load()), attr='coordinates', ctx=Load()), args=[], keywords=[])], keywords=[])], keywords=[])], ctx=Load()))",
+      "fixture_source": "section['resources'] = [dict(zip(('service_instance_uuidv4', 'resource_kind', 'provider_resource_id'), KEY_ISSUE_7.coordinates()))]",
+      "target_assertion_ASTs": [
+        "Assert(test=Compare(left=Attribute(value=Attribute(value=Name(id='error', ctx=Load()), attr='value', ctx=Load()), attr='code', ctx=Load()), ops=[Eq()], comparators=[Constant(value='PERMISSION_DENIED')]))",
+        "Assert(test=Compare(left=Call(func=Attribute(value=Call(func=Attribute(value=Name(id='db', ctx=Load()), attr='execute', ctx=Load()), args=[Constant(value='SELECT count(*) FROM resources')], keywords=[]), attr='fetchone', ctx=Load()), args=[], keywords=[]), ops=[Eq()], comparators=[Tuple(elts=[Constant(value=0)], ctx=Load())]))",
+        "Assert(test=Compare(left=Call(func=Attribute(value=Call(func=Attribute(value=Name(id='db', ctx=Load()), attr='execute', ctx=Load()), args=[Constant(value='SELECT count(*) FROM resource_relations')], keywords=[]), attr='fetchone', ctx=Load()), args=[], keywords=[]), ops=[Eq()], comparators=[Tuple(elts=[Constant(value=0)], ctx=Load())]))",
+        "Assert(test=Compare(left=Call(func=Attribute(value=Name(id='ledger', ctx=Load()), attr='get_exchange_receipt', ctx=Load()), args=[Attribute(value=Name(id='package', ctx=Load()), attr='package_id', ctx=Load()), Attribute(value=Name(id='package', ctx=Load()), attr='digest_sha256', ctx=Load())], keywords=[]), ops=[IsNot()], comparators=[Constant(value=None)]))"
+      ],
+      "decorators": [
+        "pytest.mark.parametrize('cached', [False, True], ids=['initial', 'cached-receipt'])"
+      ]
+    },
+    "ef787a5ff8b13f118d6bf5107c7338f43fde56dc": {
+      "sha256": "ace7d61e3b8a7c890d93456410e96d29cb75829d23fa8b50bd182cdf87d83228",
+      "fixture_AST": "Assign(targets=[Subscript(value=Name(id='section', ctx=Load()), slice=Constant(value='resources'), ctx=Store())], value=List(elts=[Call(func=Attribute(value=Call(func=Attribute(value=Name(id='ResourceIdentification', ctx=Load()), attr='unscoped', ctx=Load()), args=[Name(id='KEY_ISSUE_7', ctx=Load())], keywords=[]), attr='to_wire', ctx=Load()), args=[], keywords=[])], ctx=Load()))",
+      "fixture_source": "section['resources'] = [ResourceIdentification.unscoped(KEY_ISSUE_7).to_wire()]",
+      "target_assertion_ASTs": [
+        "Assert(test=Compare(left=Attribute(value=Attribute(value=Name(id='error', ctx=Load()), attr='value', ctx=Load()), attr='code', ctx=Load()), ops=[Eq()], comparators=[Constant(value='PERMISSION_DENIED')]))",
+        "Assert(test=Compare(left=Call(func=Attribute(value=Call(func=Attribute(value=Name(id='db', ctx=Load()), attr='execute', ctx=Load()), args=[Constant(value='SELECT count(*) FROM resources')], keywords=[]), attr='fetchone', ctx=Load()), args=[], keywords=[]), ops=[Eq()], comparators=[Tuple(elts=[Constant(value=0)], ctx=Load())]))",
+        "Assert(test=Compare(left=Call(func=Attribute(value=Call(func=Attribute(value=Name(id='db', ctx=Load()), attr='execute', ctx=Load()), args=[Constant(value='SELECT count(*) FROM resource_relations')], keywords=[]), attr='fetchone', ctx=Load()), args=[], keywords=[]), ops=[Eq()], comparators=[Tuple(elts=[Constant(value=0)], ctx=Load())]))",
+        "Assert(test=Compare(left=Call(func=Attribute(value=Name(id='ledger', ctx=Load()), attr='get_exchange_receipt', ctx=Load()), args=[Attribute(value=Name(id='package', ctx=Load()), attr='package_id', ctx=Load()), Attribute(value=Name(id='package', ctx=Load()), attr='digest_sha256', ctx=Load())], keywords=[]), ops=[IsNot()], comparators=[Constant(value=None)]))"
+      ],
+      "decorators": [
+        "pytest.mark.parametrize('cached', [False, True], ids=['initial', 'cached-receipt'])"
+      ]
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "verdict": "PASS",
+  "implementation_scope": "ADR 0031 I6-C Provider / Selective Exchange",
+  "base_branch": "review/adr0031-i6b-rereview-20261023",
+  "base_commit": "91827360c185cbf813277bf32a6627d894b1b20a",
+  "base_tree": "4db21ecf4267f1f31023fd63ac6de7ebd8d93d3c",
+  "branch": "impl/adr0031-i6c-provider-selective-exchange",
+  "severity_counts": {
+    "Critical": 0,
+    "High": 0,
+    "Medium": 0,
+    "Low": 0
+  },
+  "findings": [],
+  "resolved_findings": [],
+  "provisional_scanner_investigation": {
+    "status": "not_reproduced_as_defect",
+    "analysis": "The scanner records a single fixed refusal accounting unit on exhaustion and raises WorkLimit without queuing entries or executing refused operations. Behavior matches accepted M01 specification."
+  },
+  "boundaries": {
+    "v5_exchange_routes_active": true,
+    "seven_resource_columns_enforced": true,
+    "local_admission_service_bound": true,
+    "transfer_stage_fences_active": true,
+    "ordinary_transfer_enabled": false,
+    "i7_recovery_implemented": false,
+    "i8_query_search_implemented": false
+  }
+}

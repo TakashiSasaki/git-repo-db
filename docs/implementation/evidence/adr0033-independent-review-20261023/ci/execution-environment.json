@@ -1,0 +1,39 @@
+{
+  "captured_at_utc": "2026-10-23T01:58:49.398649+00:00",
+  "reviewed_source_head": "8cd89a3d25c811ee32d117ec32fe76a6022e6d94",
+  "reviewed_source_tree": "0f42e9d0e498e249bc2cc02f6b96df9ef87106a0",
+  "merge_ref": "18f1a890c18a8aee5b4b52238b520d7444c5776f 0f42e9d0e498e249bc2cc02f6b96df9ef87106a0 18ba867d1c2f33c7d17939b2722d22a67139363a 8cd89a3d25c811ee32d117ec32fe76a6022e6d94",
+  "merge_base": "18ba867d1c2f33c7d17939b2722d22a67139363a",
+  "python": "3.12.14",
+  "executable": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+  "sqlite": "3.53.1",
+  "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+  "commands": [
+    {
+      "command": "probe_readme_binding.py",
+      "exit_code": 0
+    },
+    {
+      "command": "inspect_hosted_logs.py",
+      "exit_code": 0
+    },
+    {
+      "command": "gh run view RUN --log (three latest runs)",
+      "exit_code": 0,
+      "scope": "output empty; not evidence of missing execution"
+    },
+    {
+      "command": "gh api .../actions/runs/RUN/logs (four runs including frozen initial tests)",
+      "exit_code": 0
+    },
+    {
+      "command": "verify Author archive/index (stdlib)",
+      "exit_code": 0
+    },
+    {
+      "command": "python -c import pytest",
+      "exit_code": 1,
+      "scope": "bare interpreter has no pytest; no test acceptance claimed"
+    }
+  ]
+}

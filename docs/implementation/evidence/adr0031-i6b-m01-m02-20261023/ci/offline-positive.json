@@ -1,0 +1,57 @@
+{
+  "run_id": 39955068751,
+  "status": "completed",
+  "conclusion": "success",
+  "run_url": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/39955068751",
+  "receipt_bytes": 92059,
+  "receipt_sha256": "7622c0d22dac39585c968ebfd04cc8a7667c64500dcbe3b964d1d005d5255c4e",
+  "indexed_payloads_verified": 21,
+  "feature": "ef787a5ff8b13f118d6bf5107c7338f43fde56dc",
+  "base": "ea43a21fca1dbf8fa6dd1c254b28a96d5dd28d00",
+  "checkout": "54464ad882ee644ff37f0af0a3a8d5af52f9f7ec",
+  "ordered_parents": [
+    "ea43a21fca1dbf8fa6dd1c254b28a96d5dd28d00",
+    "ef787a5ff8b13f118d6bf5107c7338f43fde56dc"
+  ],
+  "effective_tree": "a3ed2628a98db134bdc65d13da905f5ddf25e972",
+  "acceptance_status": "development_checks_passed",
+  "full_acceptance": false,
+  "hosted_product_test_cases": 0,
+  "runtime": {
+    "python": "3.12.15",
+    "executable": "/home/runner/work/_temp/product-python/python/bin/python",
+    "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+    "abi": "cpython-312-x86_64-linux-gnu",
+    "sqlite": "3.53.1",
+    "os": "Linux",
+    "arch": "x86_64",
+    "git": "git version 2.55.0",
+    "uv": "uv 0.12.19 (x86_64-unknown-linux-gnu)",
+    "runner_image": [
+      "ubuntu24",
+      "20261012.334.1"
+    ]
+  },
+  "actual_marker_views": [
+    "author-development-logs.zip:0_offline.txt",
+    "author-development-logs.zip:offline/17_Emit bounded verification receipts to job log.txt"
+  ],
+  "inputs": {
+    "docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-development-logs.zip": {
+      "bytes": 263062,
+      "sha256": "a9c735da0730b6559cfad99caaeb2fea582c7ee11ec84e1dc809a27573aade64"
+    },
+    "docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/ci/historical-run151-development.json": {
+      "bytes": 14867,
+      "sha256": "827149cf9e77e41d8580f59569e38a0c0e577c73e41ec5e6cc3ef768b3085091"
+    },
+    "docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/ci/historical-feature151.json": {
+      "bytes": 1360,
+      "sha256": "7598f7bfc447e53521aa867432f0561a39b2a96b9b8bfa5b493e2d8bfbd8b49b"
+    },
+    "docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/ci/historical-checkout151.json": {
+      "bytes": 2869,
+      "sha256": "7f641abe2d7238f518cefb98080d9bd13f629f1242de79e423d770f9b47856a0"
+    }
+  }
+}

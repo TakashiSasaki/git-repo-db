@@ -1,0 +1,61 @@
+from pathlib import Path
+import hashlib,json,os,shutil,subprocess,sys,tarfile,time
+ROOT=Path('/workspace/git-repo-db'); WORK=Path('/workspace/i6b-fix-distribution'); OUT=ROOT/'docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/distribution'
+HEAD=sys.argv[1]; TREE=subprocess.check_output(['git','rev-parse',HEAD+'^{tree}'],cwd=ROOT,text=True).strip(); SRC=WORK/'frozen'; WH=WORK/'wheelhouse'
+def sha(p):return hashlib.sha256(Path(p).read_bytes()).hexdigest()
+def write(p,v):Path(p).write_text(json.dumps(v,indent=2,ensure_ascii=False)+'\n')
+records=[]
+def run(name,args,cwd=WORK,env=None):
+ start=time.time()
+ with (OUT/(name+'.log')).open('w') as f:p=subprocess.run(list(map(str,args)),cwd=cwd,env=env,stdout=f,stderr=subprocess.STDOUT)
+ r={'name':name,'argv':list(map(str,args)),'cwd':str(cwd),'exit_code':p.returncode,'started_epoch':start,'elapsed_seconds':time.time()-start,'source_head':HEAD,'source_tree':TREE};records.append(r);write(OUT/'processes.json',records);print(name,p.returncode,flush=True);assert p.returncode==0,(name,p.returncode)
+assert len(HEAD)==40
+assert not SRC.exists()
+archive=WORK/'source.tar'
+with archive.open('wb') as f:p=subprocess.run(['git','archive','--format=tar',HEAD],cwd=ROOT,stdout=f,stderr=subprocess.PIPE)
+assert p.returncode==0,p.stderr
+SRC.mkdir()
+with tarfile.open(archive) as t:
+ for m in t.getmembers():assert not Path(m.name).is_absolute() and '..' not in Path(m.name).parts and (m.isfile() or m.isdir()),m.name
+ t.extractall(SRC,filter='data')
+inventory={str(p.relative_to(SRC)):{'sha256':sha(p),'bytes':p.stat().st_size,'mode':oct(p.stat().st_mode & 0o777)} for p in sorted(SRC.rglob('*')) if p.is_file()}
+write(OUT/'full-build-source-inventory.json',inventory)
+git_entries={}
+for record in subprocess.check_output(['git','ls-tree','--full-tree','--long','-r','-z',HEAD],cwd=ROOT).split(b'\0'):
+ if not record:continue
+ metadata,name=record.split(b'\t',1);mode,kind,oid,length=metadata.split();name=name.decode();body=(SRC/name).read_bytes();assert kind==b'blob';assert len(body)==int(length);assert hashlib.sha1(b'blob '+str(len(body)).encode()+b'\0'+body).hexdigest()==oid.decode();git_entries[name]={'mode':mode.decode(),'git_blob':oid.decode(),'bytes':len(body),'sha256':hashlib.sha256(body).hexdigest()}
+assert set(git_entries)==set(inventory)
+write(OUT/'git-tree-and-metadata-audit.json',{'source_head':HEAD,'tree':TREE,'all_git_blobs_equal_archive':True,'files':git_entries})
+
+write(OUT/'execution-binding.json',{'source_head':HEAD,'source_tree':TREE,'base':'8521158f2996f125d2fcaac36ea79ac1296a7cf7','source_archive':{'path':str(archive),'sha256':sha(archive),'bytes':archive.stat().st_size},'actual_python':sys.executable,'no_sqlite_replacement':True,'author_validation':True,'independent_review':False})
+manifest=json.loads(Path('/workspace/i6b-fix-work/wheelhouse/manifest.json').read_text());assert manifest['lock_sha256']==sha(SRC/'uv.lock')
+WH.mkdir()
+for w in manifest['wheels']:
+ original=Path('/workspace/i6b-fix-work/wheelhouse')/w['file'];assert sha(original)==w['sha256'];os.link(original,WH/w['file'])
+write(WH/'manifest.json',manifest);write(OUT/'wheelhouse-manifest.json',manifest)
+env=dict(os.environ,UV_CACHE_DIR='/workspace/.uv-cache',PYTHONPATH='')
+for k in ['GH_TOKEN','GITHUB_TOKEN','PYTHONHOME']:env.pop(k,None)
+run('build-direct',[sys.executable,'-m','hatchling','build','-t','wheel','-t','sdist'],SRC,env)
+sdist=next((SRC/'dist').glob('*.tar.gz'));direct=next((SRC/'dist').glob('*.whl'))
+from_sdist=WORK/'from-sdist';from_sdist.mkdir()
+with tarfile.open(sdist) as t:
+ members=[m for m in t.getmembers() if m.isfile()];prefix=members[0].name.split('/')[0];actual={}
+ for m in t.getmembers():assert not Path(m.name).is_absolute() and '..' not in Path(m.name).parts and (m.isfile() or m.isdir()),m.name
+ for m in members:
+  body=t.extractfile(m).read();actual[m.name]={'sha256':hashlib.sha256(body).hexdigest(),'bytes':len(body),'mode':oct(m.mode)}
+ t.extractall(from_sdist,filter='data')
+write(OUT/'sdist-all-members.json',actual)
+checks={}
+for p,r in inventory.items():
+ match=actual[prefix+'/'+p];assert match['sha256']==r['sha256'] and match['bytes']==r['bytes'],p;checks[p]=True
+extras=sorted(set(actual)-{prefix+'/'+p for p in inventory});assert extras==[prefix+'/PKG-INFO'],extras
+write(OUT/'sdist-source-retention.json',{'source_files':len(inventory),'sdist_files':len(actual),'source_exact_retention':checks,'additional_members':extras})
+derived_source=next(from_sdist.iterdir());run('build-derived',[sys.executable,'-m','hatchling','build','-t','wheel'],derived_source,env)
+derived=next((derived_source/'dist').glob('*.whl'))
+write(OUT/'artifacts.json',{k:{'path':str(p),'sha256':sha(p),'bytes':p.stat().st_size} for k,p in [('direct',direct),('sdist',sdist),('derived',derived)]})
+source=ROOT/'docs/implementation/evidence/adr0031-i6b-independent-20261023/distribution/review_distribution_v2.py.txt'
+s=source.read_text().replace("WORK=Path('/workspace/i6b-distribution-work')","WORK=Path('/workspace/i6b-fix-distribution')").replace("adr0031-i6b-independent-20261023/distribution'","adr0031-i6b-m01-m02-20261023/distribution'").replace("HEAD='ef787a5ff8b13f118d6bf5107c7338f43fde56dc'; TREE='a3ed2628a98db134bdc65d13da905f5ddf25e972'",f"HEAD={HEAD!r}; TREE={TREE!r}").replace("'independent_review':True","'independent_review':False,'author_validation':True")
+(WORK/'install_validate.py').write_text(s)
+shutil.copyfile(__file__,OUT/'prepare.py.txt')
+shutil.copyfile(WORK/'install_validate.py',OUT/'install_validate.py.txt')
+print('BUILD_READY',HEAD,TREE,flush=True)

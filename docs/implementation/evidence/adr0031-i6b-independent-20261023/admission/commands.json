@@ -1,0 +1,7 @@
+{
+  "cwd": "/workspace/git-repo-db",
+  "inherited": "I6A_SQL_PROBE_OUTPUT=<evidence>/inherited-sql-observations.json .venv/bin/python -m pytest tests/unit/test_context_admission.py tests/unit/test_context_coordinator_admission.py tests/unit/test_context_admission_bounds_i6a.py tests/unit/test_context_refusal_order_i6a.py tests/unit/test_context_fences_i6a.py tests/unit/test_context_oid_admission_i6a.py tests/integration/i6a -q -o junit_family=xunit1 --junitxml=<evidence>/inherited.junit.xml --journal=<evidence>/inherited.journal.jsonl",
+  "new_and_reused": "I6B_ADMISSION_OBSERVATIONS=<evidence>/new-observations.json .venv/bin/python -m pytest -c /workspace/git-repo-db/pyproject.toml -p tests.conftest /workspace/admission-independent -q -o junit_family=xunit1 --junitxml=<evidence>/new-and-reused.junit.xml --journal=<evidence>/new-and-reused.journal.jsonl",
+  "collection": "Repeat same targets with --collect-only -q; preserve raw node IDs.",
+  "summarizer": ".venv/bin/python /workspace/admission-independent/summarize.py"
+}

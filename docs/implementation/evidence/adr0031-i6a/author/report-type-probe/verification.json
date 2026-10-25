@@ -1,0 +1,17 @@
+{
+  "process_exit_code": 1,
+  "expected_negative_control_failure": true,
+  "raw_journal_sidecar_phase_multiset_equal": true,
+  "ordinary_report_count": 6,
+  "subtest_report_count": 3,
+  "subtest_outcomes": {
+    "failed": 1,
+    "passed": 2
+  },
+  "report_types": {
+    "_pytest.reports.TestReport": 6,
+    "_pytest.subtests.SubtestReport": 3
+  },
+  "ordinary_phase_max_count": 1,
+  "scope": "External synthetic evidence-helper probe only; not product tests. One deliberate failing subtest confirms no subtest outcome is suppressed."
+}

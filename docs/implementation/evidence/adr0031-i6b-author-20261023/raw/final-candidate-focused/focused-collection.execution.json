@@ -1,0 +1,19 @@
+{
+  "command": [
+    "/workspace/git-repo-db/.venv/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "--collect-only",
+    "-o",
+    "addopts=",
+    "tests/unit/test_context_wire_v5.py",
+    "tests/unit/test_context_dependencies.py"
+  ],
+  "cwd": "/workspace/git-repo-db",
+  "started_epoch": 1792753990.82196,
+  "elapsed_seconds": 1.412,
+  "exit_code": 0,
+  "collected": 212,
+  "duplicates": 0
+}

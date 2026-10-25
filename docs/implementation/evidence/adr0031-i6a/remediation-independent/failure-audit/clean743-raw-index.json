@@ -1,0 +1,86 @@
+{
+  "archive": "clean743-raw.zip",
+  "size": 447686,
+  "sha256": "5e6e890712cd9d660bd2de9646f65270dc826eedbf7fb3951c71d483def76812",
+  "members": {
+    "run/binding-after.json": {
+      "size": 56440,
+      "sha256": "fdc748b8937a9feb72f8771b2a4620a2d4f864c6e97b1a5505283aea23ac1a25"
+    },
+    "run/binding-before.json": {
+      "size": 56440,
+      "sha256": "fdc748b8937a9feb72f8771b2a4620a2d4f864c6e97b1a5505283aea23ac1a25"
+    },
+    "run/diagnostic.execution.json": {
+      "size": 99286,
+      "sha256": "15ee5be10b93816bc79e2842a1fc2337783f385b558804d6dbca6e98453976f3"
+    },
+    "run/diagnostic.jsonl": {
+      "size": 723168,
+      "sha256": "b98b70b55f80f76b69cf8eaf99a28c4ddf078aaf9b9176480e7670af882c86fa"
+    },
+    "run/diagnostic.log": {
+      "size": 1695972,
+      "sha256": "cd34f1ba50d97f5ee8ea6c25c016f4a7cf1396e3d853ba4ebd9a321b81a44673"
+    },
+    "run/diagnostic.report-types.jsonl": {
+      "size": 575037,
+      "sha256": "ccdeef959f7e30fe67a6f7188a3d95ff3e8d93775c239c4348fae62ef36a2d1b"
+    },
+    "run/diagnostic.selected.txt": {
+      "size": 92824,
+      "sha256": "1ccc6042fc4bdc67ad9d06b4c47bf17f038fab0987589d4f56eec9d3516d34a9"
+    },
+    "run/diagnostic.xml": {
+      "size": 1830128,
+      "sha256": "f0ba3f50e4354cc2f2eb392dd6ef9df6a685d59010e84d782b404612044d6f79"
+    },
+    "run/runtime.json": {
+      "size": 354,
+      "sha256": "e03fd8aa701be41002f25a6df70dfc0472d241305f213a1f091bc3f9545fea09"
+    },
+    "run/trace/gw0.jsonl": {
+      "size": 452728,
+      "sha256": "e7aa9dbb96a62e0fc952c02cea8c30c956e885598d6155daaea0dfccfaead907"
+    },
+    "run/trace/gw1.jsonl": {
+      "size": 291715,
+      "sha256": "c0ae1eccebce460053ce89a00ac3771e5e8b2fa3462037e542b294918c4781fb"
+    },
+    "run/trace/gw2.jsonl": {
+      "size": 286043,
+      "sha256": "f318ff64d9f38c4e08f48c42ec3140a776ed29a8eab5f3d4ec394355addbd353"
+    },
+    "run/trace/gw3.jsonl": {
+      "size": 506192,
+      "sha256": "f45cab3d7b64a5dc5dcfe142c37bf403447d925d68f1c4695dcf11fbd6f779e3"
+    },
+    "run/trace/master.jsonl": {
+      "size": 13283,
+      "sha256": "bd5bb49bf6b5552ce074c4b736bedcea5ea714bf0d663dcc298ea205a09d947f"
+    },
+    "launchers/run_diagnostic.py": {
+      "size": 4279,
+      "sha256": "245ed099530d6bcd30e5d87a46643521b58c97c083528090afa08746c34b0382"
+    },
+    "launchers/reviewer_trace.py": {
+      "size": 3883,
+      "sha256": "94a866ebac7ff000660d3afa2ec322aebbd24c7ef58b6094416d151a073a47c8"
+    },
+    "launchers/i6a_report_types.py": {
+      "size": 830,
+      "sha256": "9002be57a9993cdf9a55e6ac608b654ccc403dae63dbb73c24ad6e5cb1ea7dc5"
+    },
+    "launchers/clean743-launch.json": {
+      "size": 1875,
+      "sha256": "4bf7d0ced8927432147ddbdc9cab468c7c640bc82d8c2f21911cb510e0c055c6"
+    },
+    "runtime-preparation.log": {
+      "size": 1404,
+      "sha256": "2bd295e369e3b1c9c4c31daea96aa47fa2de286754f48fd4d51b119b00a5ee6f"
+    }
+  },
+  "excluded": [
+    "basetemp synthetic catalogs/venvs; all actual selected IDs/JUnit/journal/typed reports/traces/source bindings/runtime/command/process exit/log plus exact driver/plugins are retained"
+  ]
+}

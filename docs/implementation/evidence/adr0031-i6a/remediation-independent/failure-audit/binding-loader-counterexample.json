@@ -1,0 +1,26 @@
+{
+  "target": "scripts/classify_i6a_regressions.py:109-115",
+  "execution": "Independent invocation of unmodified run_index on actual published gzip transport inputs",
+  "rows": [
+    {
+      "directory": "before",
+      "compressed_before_exists": true,
+      "compressed_after_exists": true,
+      "source_binding_before": null,
+      "source_binding_after": null,
+      "binding_check_present": false,
+      "consistent_reported": true,
+      "selected": 5941
+    },
+    {
+      "directory": "after-final",
+      "compressed_before_exists": true,
+      "compressed_after_exists": true,
+      "source_binding_before": null,
+      "source_binding_after": null,
+      "binding_check_present": false,
+      "consistent_reported": true,
+      "selected": 5974
+    }
+  ]
+}

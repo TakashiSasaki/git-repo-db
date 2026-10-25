@@ -1,0 +1,629 @@
+{
+  "source_head": "61e44291e293f773904a0127606e20c8cb83c95e",
+  "source_tree": "4aa8ddf49fb52d0b903db0b0bfce00ccea2fae0c",
+  "results": {
+    "direct": {
+      "safety": {
+        "exit_code": 0,
+        "collected": 626,
+        "passed": 626,
+        "failed": 0,
+        "error": 0,
+        "skipped": 0,
+        "xfail": 0,
+        "xpass": 0,
+        "executed": 626,
+        "reconciliation": {
+          "checks": {
+            "selected_unique": true,
+            "selected_equals_junit": true,
+            "selected_equals_journal_starts": true,
+            "setup_and_teardown_once": true,
+            "no_duplicate_phases": true,
+            "phase_nodes_equal_selected": true,
+            "call_once_after_successful_setup": true,
+            "one_finish": true
+          },
+          "consistent_node_execution": true,
+          "journal_phase_outcomes": {
+            "passed": 1878
+          },
+          "finishes": [
+            {
+              "event": "finish",
+              "status": "completed",
+              "exitstatus": 0,
+              "timestamp": 1792769462.887142
+            }
+          ]
+        }
+      },
+      "wire": {
+        "exit_code": 0,
+        "collected": 212,
+        "passed": 212,
+        "failed": 0,
+        "error": 0,
+        "skipped": 0,
+        "xfail": 0,
+        "xpass": 0,
+        "executed": 212,
+        "reconciliation": {
+          "checks": {
+            "selected_unique": true,
+            "selected_equals_junit": true,
+            "selected_equals_journal_starts": true,
+            "setup_and_teardown_once": true,
+            "no_duplicate_phases": true,
+            "phase_nodes_equal_selected": true,
+            "call_once_after_successful_setup": true,
+            "one_finish": true
+          },
+          "consistent_node_execution": true,
+          "journal_phase_outcomes": {
+            "passed": 636
+          },
+          "finishes": [
+            {
+              "event": "finish",
+              "status": "completed",
+              "exitstatus": 0,
+              "timestamp": 1792769468.292739
+            }
+          ]
+        }
+      }
+    },
+    "derived": {
+      "safety": {
+        "exit_code": 0,
+        "collected": 626,
+        "passed": 626,
+        "failed": 0,
+        "error": 0,
+        "skipped": 0,
+        "xfail": 0,
+        "xpass": 0,
+        "executed": 626,
+        "reconciliation": {
+          "checks": {
+            "selected_unique": true,
+            "selected_equals_junit": true,
+            "selected_equals_journal_starts": true,
+            "setup_and_teardown_once": true,
+            "no_duplicate_phases": true,
+            "phase_nodes_equal_selected": true,
+            "call_once_after_successful_setup": true,
+            "one_finish": true
+          },
+          "consistent_node_execution": true,
+          "journal_phase_outcomes": {
+            "passed": 1878
+          },
+          "finishes": [
+            {
+              "event": "finish",
+              "status": "completed",
+              "exitstatus": 0,
+              "timestamp": 1792769500.385692
+            }
+          ]
+        }
+      },
+      "wire": {
+        "exit_code": 0,
+        "collected": 212,
+        "passed": 212,
+        "failed": 0,
+        "error": 0,
+        "skipped": 0,
+        "xfail": 0,
+        "xpass": 0,
+        "executed": 212,
+        "reconciliation": {
+          "checks": {
+            "selected_unique": true,
+            "selected_equals_junit": true,
+            "selected_equals_journal_starts": true,
+            "setup_and_teardown_once": true,
+            "no_duplicate_phases": true,
+            "phase_nodes_equal_selected": true,
+            "call_once_after_successful_setup": true,
+            "one_finish": true
+          },
+          "consistent_node_execution": true,
+          "journal_phase_outcomes": {
+            "passed": 636
+          },
+          "finishes": [
+            {
+              "event": "finish",
+              "status": "completed",
+              "exitstatus": 0,
+              "timestamp": 1792769505.584963
+            }
+          ]
+        }
+      }
+    }
+  },
+  "artifacts": {
+    "direct": {
+      "path": "/workspace/rereview-distribution/frozen/dist/repo_catalog-0.2.0-py3-none-any.whl",
+      "sha256": "2452e419e06eea774805fc89358130538c50fdd313fdb0fb9b82b230e99a39d8",
+      "bytes": 791300
+    },
+    "sdist": {
+      "path": "/workspace/rereview-distribution/frozen/dist/repo_catalog-0.2.0.tar.gz",
+      "sha256": "88e2496b9335f475bbcaa6857832ce0d9dabc128b10bbf5aa0b08336039d52dc",
+      "bytes": 165713022
+    },
+    "derived": {
+      "path": "/workspace/rereview-distribution/from-sdist/repo_catalog-0.2.0/dist/repo_catalog-0.2.0-py3-none-any.whl",
+      "sha256": "2452e419e06eea774805fc89358130538c50fdd313fdb0fb9b82b230e99a39d8",
+      "bytes": 791300
+    }
+  },
+  "full_acceptance": false,
+  "independent_review": true,
+  "author_validation": false,
+  "processes": [
+    {
+      "name": "build-direct",
+      "argv": [
+        "/workspace/rr-env/bin/python",
+        "-m",
+        "hatchling",
+        "build",
+        "-t",
+        "wheel"
+      ],
+      "cwd": "/workspace/rereview-distribution/frozen",
+      "exit_code": 0,
+      "started_epoch": 1792769395.3727403,
+      "elapsed_seconds": 0.18368053436279297,
+      "source_head": "61e44291e293f773904a0127606e20c8cb83c95e",
+      "source_tree": "4aa8ddf49fb52d0b903db0b0bfce00ccea2fae0c"
+    },
+    {
+      "name": "build-sdist",
+      "argv": [
+        "/workspace/rr-env/bin/python",
+        "-m",
+        "hatchling",
+        "build",
+        "-t",
+        "sdist"
+      ],
+      "cwd": "/workspace/rereview-distribution/frozen",
+      "exit_code": 0,
+      "started_epoch": 1792769395.5566304,
+      "elapsed_seconds": 6.20399022102356,
+      "source_head": "61e44291e293f773904a0127606e20c8cb83c95e",
+      "source_tree": "4aa8ddf49fb52d0b903db0b0bfce00ccea2fae0c"
+    },
+    {
+      "name": "build-derived",
+      "argv": [
+        "/workspace/rr-env/bin/python",
+        "-m",
+        "hatchling",
+        "build",
+        "-t",
+        "wheel"
+      ],
+      "cwd": "/workspace/rereview-distribution/from-sdist/repo_catalog-0.2.0",
+      "exit_code": 0,
+      "started_epoch": 1792769404.1833863,
+      "elapsed_seconds": 0.15011262893676758,
+      "source_head": "61e44291e293f773904a0127606e20c8cb83c95e",
+      "source_tree": "4aa8ddf49fb52d0b903db0b0bfce00ccea2fae0c"
+    },
+    {
+      "name": "direct-venv",
+      "argv": [
+        "/workspace/rr-env/bin/python",
+        "-m",
+        "venv",
+        "--without-pip",
+        "/workspace/rereview-distribution/direct-venv"
+      ],
+      "cwd": "/workspace/rereview-distribution",
+      "exit_code": 0,
+      "started_epoch": 1792769428.6884918,
+      "elapsed_seconds": 0.02530956268310547,
+      "source_head": "61e44291e293f773904a0127606e20c8cb83c95e",
+      "source_tree": "4aa8ddf49fb52d0b903db0b0bfce00ccea2fae0c"
+    },
+    {
+      "name": "direct-install",
+      "argv": [
+        "uv",
+        "pip",
+        "install",
+        "--python",
+        "/workspace/rereview-distribution/direct-venv/bin/python",
+        "--offline",
+        "--no-index",
+        "--no-deps",
+        "--require-hashes",
+        "-r",
+        "/workspace/rereview-distribution/evidence/direct-requirements.txt"
+      ],
+      "cwd": "/workspace/rereview-distribution/outside",
+      "exit_code": 0,
+      "started_epoch": 1792769428.7149217,
+      "elapsed_seconds": 0.40406274795532227,
+      "source_head": "61e44291e293f773904a0127606e20c8cb83c95e",
+      "source_tree": "4aa8ddf49fb52d0b903db0b0bfce00ccea2fae0c"
+    },
+    {
+      "name": "direct-measure-before",
+      "argv": [
+        "/workspace/rereview-distribution/direct-venv/bin/python",
+        "/workspace/rereview-distribution/outside/measure.py",
+        "/workspace/rereview-distribution/evidence/direct-runtime-before.json"
+      ],
+      "cwd": "/workspace/rereview-distribution/outside",
+      "exit_code": 0,
+      "started_epoch": 1792769429.1192756,
+      "elapsed_seconds": 0.06436896324157715,
+      "source_head": "61e44291e293f773904a0127606e20c8cb83c95e",
+      "source_tree": "4aa8ddf49fb52d0b903db0b0bfce00ccea2fae0c"
+    },
+    {
+      "name": "direct-safety-collect",
+      "argv": [
+        "/workspace/rereview-distribution/direct-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "-c",
+        "/workspace/rereview-distribution/outside/pytest.ini",
+        "--rootdir=/workspace/rereview-distribution/outside",
+        "--confcutdir=/workspace/rereview-distribution/outside",
+        "-o",
+        "junit_family=xunit1",
+        "tests/integration/p3/test_transfer_sql.py",
+        "tests/integration/p3/test_transfer_admission.py",
+        "tests/integration/p3/test_parent_reports.py",
+        "tests/unit/test_context_admission.py",
+        "tests/unit/test_transfer_originals.py",
+        "tests/unit/test_context_fences_i6a.py",
+        "tests/unit/test_context_oid_admission_i6a.py",
+        "tests/unit/test_context_admission_bounds_i6a.py",
+        "tests/unit/test_context_coordinator_admission.py",
+        "tests/unit/test_context_refusal_order_i6a.py",
+        "tests/integration/p1/test_coordination.py",
+        "tests/integration/i6a",
+        "--collect-only"
+      ],
+      "cwd": "/workspace/rereview-distribution/outside",
+      "exit_code": 0,
+      "started_epoch": 1792769429.1844192,
+      "elapsed_seconds": 0.838801383972168,
+      "source_head": "61e44291e293f773904a0127606e20c8cb83c95e",
+      "source_tree": "4aa8ddf49fb52d0b903db0b0bfce00ccea2fae0c"
+    },
+    {
+      "name": "direct-safety",
+      "argv": [
+        "/workspace/rereview-distribution/direct-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "-c",
+        "/workspace/rereview-distribution/outside/pytest.ini",
+        "--rootdir=/workspace/rereview-distribution/outside",
+        "--confcutdir=/workspace/rereview-distribution/outside",
+        "-o",
+        "junit_family=xunit1",
+        "tests/integration/p3/test_transfer_sql.py",
+        "tests/integration/p3/test_transfer_admission.py",
+        "tests/integration/p3/test_parent_reports.py",
+        "tests/unit/test_context_admission.py",
+        "tests/unit/test_transfer_originals.py",
+        "tests/unit/test_context_fences_i6a.py",
+        "tests/unit/test_context_oid_admission_i6a.py",
+        "tests/unit/test_context_admission_bounds_i6a.py",
+        "tests/unit/test_context_coordinator_admission.py",
+        "tests/unit/test_context_refusal_order_i6a.py",
+        "tests/integration/p1/test_coordination.py",
+        "tests/integration/i6a",
+        "--junitxml=/workspace/rereview-distribution/evidence/direct-safety.xml",
+        "--journal=/workspace/rereview-distribution/evidence/direct-safety.jsonl",
+        "--basetemp=/workspace/rereview-distribution/direct-safety-tmp"
+      ],
+      "cwd": "/workspace/rereview-distribution/outside",
+      "exit_code": 0,
+      "started_epoch": 1792769430.0239785,
+      "elapsed_seconds": 32.961857318878174,
+      "source_head": "61e44291e293f773904a0127606e20c8cb83c95e",
+      "source_tree": "4aa8ddf49fb52d0b903db0b0bfce00ccea2fae0c"
+    },
+    {
+      "name": "direct-wire-collect",
+      "argv": [
+        "/workspace/rereview-distribution/direct-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "-c",
+        "/workspace/rereview-distribution/outside/pytest.ini",
+        "--rootdir=/workspace/rereview-distribution/outside",
+        "--confcutdir=/workspace/rereview-distribution/outside",
+        "-o",
+        "junit_family=xunit1",
+        "tests/unit/test_context_wire_v5.py",
+        "tests/unit/test_context_dependencies.py",
+        "--collect-only"
+      ],
+      "cwd": "/workspace/rereview-distribution/outside",
+      "exit_code": 0,
+      "started_epoch": 1792769463.0134418,
+      "elapsed_seconds": 0.4266946315765381,
+      "source_head": "61e44291e293f773904a0127606e20c8cb83c95e",
+      "source_tree": "4aa8ddf49fb52d0b903db0b0bfce00ccea2fae0c"
+    },
+    {
+      "name": "direct-wire",
+      "argv": [
+        "/workspace/rereview-distribution/direct-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "-c",
+        "/workspace/rereview-distribution/outside/pytest.ini",
+        "--rootdir=/workspace/rereview-distribution/outside",
+        "--confcutdir=/workspace/rereview-distribution/outside",
+        "-o",
+        "junit_family=xunit1",
+        "tests/unit/test_context_wire_v5.py",
+        "tests/unit/test_context_dependencies.py",
+        "--junitxml=/workspace/rereview-distribution/evidence/direct-wire.xml",
+        "--journal=/workspace/rereview-distribution/evidence/direct-wire.jsonl",
+        "--basetemp=/workspace/rereview-distribution/direct-wire-tmp"
+      ],
+      "cwd": "/workspace/rereview-distribution/outside",
+      "exit_code": 0,
+      "started_epoch": 1792769463.4406362,
+      "elapsed_seconds": 4.915961742401123,
+      "source_head": "61e44291e293f773904a0127606e20c8cb83c95e",
+      "source_tree": "4aa8ddf49fb52d0b903db0b0bfce00ccea2fae0c"
+    },
+    {
+      "name": "direct-doctor",
+      "argv": [
+        "/workspace/rereview-distribution/direct-venv/bin/repo-catalog",
+        "doctor"
+      ],
+      "cwd": "/workspace/rereview-distribution/outside",
+      "exit_code": 0,
+      "started_epoch": 1792769468.3599777,
+      "elapsed_seconds": 0.09138298034667969,
+      "source_head": "61e44291e293f773904a0127606e20c8cb83c95e",
+      "source_tree": "4aa8ddf49fb52d0b903db0b0bfce00ccea2fae0c"
+    },
+    {
+      "name": "direct-measure-after",
+      "argv": [
+        "/workspace/rereview-distribution/direct-venv/bin/python",
+        "/workspace/rereview-distribution/outside/measure.py",
+        "/workspace/rereview-distribution/evidence/direct-runtime-after.json"
+      ],
+      "cwd": "/workspace/rereview-distribution/outside",
+      "exit_code": 0,
+      "started_epoch": 1792769468.4516835,
+      "elapsed_seconds": 0.08457136154174805,
+      "source_head": "61e44291e293f773904a0127606e20c8cb83c95e",
+      "source_tree": "4aa8ddf49fb52d0b903db0b0bfce00ccea2fae0c"
+    },
+    {
+      "name": "derived-venv",
+      "argv": [
+        "/workspace/rr-env/bin/python",
+        "-m",
+        "venv",
+        "--without-pip",
+        "/workspace/rereview-distribution/derived-venv"
+      ],
+      "cwd": "/workspace/rereview-distribution",
+      "exit_code": 0,
+      "started_epoch": 1792769468.537495,
+      "elapsed_seconds": 0.027140378952026367,
+      "source_head": "61e44291e293f773904a0127606e20c8cb83c95e",
+      "source_tree": "4aa8ddf49fb52d0b903db0b0bfce00ccea2fae0c"
+    },
+    {
+      "name": "derived-install",
+      "argv": [
+        "uv",
+        "pip",
+        "install",
+        "--python",
+        "/workspace/rereview-distribution/derived-venv/bin/python",
+        "--offline",
+        "--no-index",
+        "--no-deps",
+        "--require-hashes",
+        "-r",
+        "/workspace/rereview-distribution/evidence/derived-requirements.txt"
+      ],
+      "cwd": "/workspace/rereview-distribution/outside",
+      "exit_code": 0,
+      "started_epoch": 1792769468.5667324,
+      "elapsed_seconds": 0.27213621139526367,
+      "source_head": "61e44291e293f773904a0127606e20c8cb83c95e",
+      "source_tree": "4aa8ddf49fb52d0b903db0b0bfce00ccea2fae0c"
+    },
+    {
+      "name": "derived-measure-before",
+      "argv": [
+        "/workspace/rereview-distribution/derived-venv/bin/python",
+        "/workspace/rereview-distribution/outside/measure.py",
+        "/workspace/rereview-distribution/evidence/derived-runtime-before.json"
+      ],
+      "cwd": "/workspace/rereview-distribution/outside",
+      "exit_code": 0,
+      "started_epoch": 1792769468.839227,
+      "elapsed_seconds": 0.06955337524414062,
+      "source_head": "61e44291e293f773904a0127606e20c8cb83c95e",
+      "source_tree": "4aa8ddf49fb52d0b903db0b0bfce00ccea2fae0c"
+    },
+    {
+      "name": "derived-safety-collect",
+      "argv": [
+        "/workspace/rereview-distribution/derived-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "-c",
+        "/workspace/rereview-distribution/outside/pytest.ini",
+        "--rootdir=/workspace/rereview-distribution/outside",
+        "--confcutdir=/workspace/rereview-distribution/outside",
+        "-o",
+        "junit_family=xunit1",
+        "tests/integration/p3/test_transfer_sql.py",
+        "tests/integration/p3/test_transfer_admission.py",
+        "tests/integration/p3/test_parent_reports.py",
+        "tests/unit/test_context_admission.py",
+        "tests/unit/test_transfer_originals.py",
+        "tests/unit/test_context_fences_i6a.py",
+        "tests/unit/test_context_oid_admission_i6a.py",
+        "tests/unit/test_context_admission_bounds_i6a.py",
+        "tests/unit/test_context_coordinator_admission.py",
+        "tests/unit/test_context_refusal_order_i6a.py",
+        "tests/integration/p1/test_coordination.py",
+        "tests/integration/i6a",
+        "--collect-only"
+      ],
+      "cwd": "/workspace/rereview-distribution/outside",
+      "exit_code": 0,
+      "started_epoch": 1792769468.9095163,
+      "elapsed_seconds": 0.781653881072998,
+      "source_head": "61e44291e293f773904a0127606e20c8cb83c95e",
+      "source_tree": "4aa8ddf49fb52d0b903db0b0bfce00ccea2fae0c"
+    },
+    {
+      "name": "derived-safety",
+      "argv": [
+        "/workspace/rereview-distribution/derived-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "-c",
+        "/workspace/rereview-distribution/outside/pytest.ini",
+        "--rootdir=/workspace/rereview-distribution/outside",
+        "--confcutdir=/workspace/rereview-distribution/outside",
+        "-o",
+        "junit_family=xunit1",
+        "tests/integration/p3/test_transfer_sql.py",
+        "tests/integration/p3/test_transfer_admission.py",
+        "tests/integration/p3/test_parent_reports.py",
+        "tests/unit/test_context_admission.py",
+        "tests/unit/test_transfer_originals.py",
+        "tests/unit/test_context_fences_i6a.py",
+        "tests/unit/test_context_oid_admission_i6a.py",
+        "tests/unit/test_context_admission_bounds_i6a.py",
+        "tests/unit/test_context_coordinator_admission.py",
+        "tests/unit/test_context_refusal_order_i6a.py",
+        "tests/integration/p1/test_coordination.py",
+        "tests/integration/i6a",
+        "--junitxml=/workspace/rereview-distribution/evidence/derived-safety.xml",
+        "--journal=/workspace/rereview-distribution/evidence/derived-safety.jsonl",
+        "--basetemp=/workspace/rereview-distribution/derived-safety-tmp"
+      ],
+      "cwd": "/workspace/rereview-distribution/outside",
+      "exit_code": 0,
+      "started_epoch": 1792769469.7010868,
+      "elapsed_seconds": 30.773043155670166,
+      "source_head": "61e44291e293f773904a0127606e20c8cb83c95e",
+      "source_tree": "4aa8ddf49fb52d0b903db0b0bfce00ccea2fae0c"
+    },
+    {
+      "name": "derived-wire-collect",
+      "argv": [
+        "/workspace/rereview-distribution/derived-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "-c",
+        "/workspace/rereview-distribution/outside/pytest.ini",
+        "--rootdir=/workspace/rereview-distribution/outside",
+        "--confcutdir=/workspace/rereview-distribution/outside",
+        "-o",
+        "junit_family=xunit1",
+        "tests/unit/test_context_wire_v5.py",
+        "tests/unit/test_context_dependencies.py",
+        "--collect-only"
+      ],
+      "cwd": "/workspace/rereview-distribution/outside",
+      "exit_code": 0,
+      "started_epoch": 1792769500.483305,
+      "elapsed_seconds": 0.3687784671783447,
+      "source_head": "61e44291e293f773904a0127606e20c8cb83c95e",
+      "source_tree": "4aa8ddf49fb52d0b903db0b0bfce00ccea2fae0c"
+    },
+    {
+      "name": "derived-wire",
+      "argv": [
+        "/workspace/rereview-distribution/derived-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "-c",
+        "/workspace/rereview-distribution/outside/pytest.ini",
+        "--rootdir=/workspace/rereview-distribution/outside",
+        "--confcutdir=/workspace/rereview-distribution/outside",
+        "-o",
+        "junit_family=xunit1",
+        "tests/unit/test_context_wire_v5.py",
+        "tests/unit/test_context_dependencies.py",
+        "--junitxml=/workspace/rereview-distribution/evidence/derived-wire.xml",
+        "--journal=/workspace/rereview-distribution/evidence/derived-wire.jsonl",
+        "--basetemp=/workspace/rereview-distribution/derived-wire-tmp"
+      ],
+      "cwd": "/workspace/rereview-distribution/outside",
+      "exit_code": 0,
+      "started_epoch": 1792769500.8527858,
+      "elapsed_seconds": 4.803404331207275,
+      "source_head": "61e44291e293f773904a0127606e20c8cb83c95e",
+      "source_tree": "4aa8ddf49fb52d0b903db0b0bfce00ccea2fae0c"
+    },
+    {
+      "name": "derived-doctor",
+      "argv": [
+        "/workspace/rereview-distribution/derived-venv/bin/repo-catalog",
+        "doctor"
+      ],
+      "cwd": "/workspace/rereview-distribution/outside",
+      "exit_code": 0,
+      "started_epoch": 1792769505.661533,
+      "elapsed_seconds": 0.09381103515625,
+      "source_head": "61e44291e293f773904a0127606e20c8cb83c95e",
+      "source_tree": "4aa8ddf49fb52d0b903db0b0bfce00ccea2fae0c"
+    },
+    {
+      "name": "derived-measure-after",
+      "argv": [
+        "/workspace/rereview-distribution/derived-venv/bin/python",
+        "/workspace/rereview-distribution/outside/measure.py",
+        "/workspace/rereview-distribution/evidence/derived-runtime-after.json"
+      ],
+      "cwd": "/workspace/rereview-distribution/outside",
+      "exit_code": 0,
+      "started_epoch": 1792769505.7557244,
+      "elapsed_seconds": 0.08006119728088379,
+      "source_head": "61e44291e293f773904a0127606e20c8cb83c95e",
+      "source_tree": "4aa8ddf49fb52d0b903db0b0bfce00ccea2fae0c"
+    }
+  ]
+}

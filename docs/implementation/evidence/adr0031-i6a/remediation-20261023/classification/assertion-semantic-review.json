@@ -1,0 +1,43 @@
+{
+  "scope": "Manual review of six initial-423e743-ledger rows whose test-function assert AST lists differ; list inequality is not silently treated as assertion deletion",
+  "before_source": "f5dc409429cdb69955b55e3c27a7ef3c163762fb",
+  "after_initial_source": "423e34504b2a9686c94f971f37c164449a28fe31",
+  "rows": [
+    {
+      "node": "tests/integration/p1/test_context.py::test_context_only_resource_needs_no_core_or_source_membership",
+      "change": "Exact directory assertion now includes p1-writer.lock alongside context.sqlite3",
+      "preserved_meaning": "No Core, Operational or Search database or Source membership is created; catalog writer gate is required by I6-A file-backed transactions",
+      "weakened_to_pass": false
+    },
+    {
+      "node": "tests/integration/p1/test_context.py::test_attached_issue_explicit_detach_preserves_null_original_source_and_rollback",
+      "change": "Existing explicit-null assertion moved inside explicit authorized rollback transaction; outer later-state assertion remains",
+      "preserved_meaning": "Actual detached state is seen in transaction and original attached target returns after rollback; AST breadth-first order changes through the added context manager",
+      "weakened_to_pass": false
+    },
+    {
+      "node": "tests/integration/p1/test_context_relations.py::test_counterexample_3_atomic_rollback_on_failure",
+      "change": "Existing in-flight field-value assertions and FK-failure injection moved into explicit authorized rollback transaction",
+      "preserved_meaning": "In-flight newer field is visible, actual invalid relation INSERT fails, and original candidates survive rollback; AST breadth-first order changes through added context manager",
+      "weakened_to_pass": false
+    },
+    {
+      "node": "tests/integration/p2_p3_compatibility/test_production_pair.py::test_original_capture_retry_after_core_success_context_rollback[sha1]",
+      "change": "Assertion calls admit_pair wrapper instead of direct coordinator.admit",
+      "preserved_meaning": "Wrapper passes the same Core/Context callbacks and explicit issued admission to the constructor-bound service; original return-value and cross-store assertions remain",
+      "weakened_to_pass": false
+    },
+    {
+      "node": "tests/integration/p2_p3_compatibility/test_production_pair.py::test_original_capture_retry_after_core_success_context_rollback[sha256]",
+      "change": "Same explicit-authority wrapper as sha1 parameter",
+      "preserved_meaning": "Original retry, Core preservation and Context rollback assertions remain for SHA-256",
+      "weakened_to_pass": false
+    },
+    {
+      "node": "tests/integration/p3/test_production_context.py::test_source_collection_cross_service_rejected_even_empty",
+      "change": "Expected later SOURCE_SERVICE diagnostic becomes earlier typed UNQUALIFIED_MAPPING admission refusal; two literal asserts added",
+      "preserved_meaning": "Foreign-service Source remains inadmissible before mutation; added checks require zero collection rows and no false RecoveryStop",
+      "weakened_to_pass": false
+    }
+  ]
+}

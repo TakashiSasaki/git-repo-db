@@ -1,0 +1,43 @@
+{
+  "profile_version": 1,
+  "invocation_id": "dependency-setup-1792767963-3fd64ed0",
+  "name": "dependency-setup",
+  "series": "dependency-setup",
+  "mode": "sequential",
+  "workers": 1,
+  "runtime": {
+    "python": "3.12.15",
+    "executable": "/home/runner/work/_temp/product-python/python/bin/python",
+    "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+    "sqlite": "3.53.1",
+    "git": "git version 2.55.0",
+    "cpu_count": 4,
+    "affinity": 4,
+    "cpu_quota": null,
+    "commit_sha": "99477234735b9f45cbb4d0634bb8372eaf120710",
+    "tree_sha": "4aa8ddf49fb52d0b903db0b0bfce00ccea2fae0c",
+    "run_id": "39975300074",
+    "run_attempt": "1",
+    "feature_sha": "61e44291e293f773904a0127606e20c8cb83c95e",
+    "tracked_changes": false,
+    "dirty": false
+  },
+  "started_at": "2026-10-23T15:06:03.903802+00:00",
+  "completed_at": "2026-10-23T15:06:04.494070+00:00",
+  "command": [
+    "uv",
+    "sync",
+    "--locked",
+    "--group",
+    "dev",
+    "--python",
+    "/home/runner/work/_temp/product-python/python/bin/python3"
+  ],
+  "wall_seconds": 0.5902313250000049,
+  "exit_code": 0,
+  "interrupted": false,
+  "cumulative_test_seconds": 0.5902313250000049,
+  "artifacts": {
+    "profile": "invocations/dependency-setup-dependency-setup-1792767963-3fd64ed0.json"
+  }
+}

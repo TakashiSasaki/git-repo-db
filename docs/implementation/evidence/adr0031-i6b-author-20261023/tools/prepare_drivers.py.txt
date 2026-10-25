@@ -1,0 +1,21 @@
+from pathlib import Path
+root=Path('/workspace/i6b-tools')
+source=(root/'inherited-task-c/run_full.py').read_text()
+source=source.replace('Task A single ordinary invocation; adapted #146 run_full and typed sidecar.', 'I6-B Author ordinary invocation. Adapted from the attributed Task C harness; no inherited outcome is copied.')
+source=source.replace('/workspace/task-c/tmp','/workspace/i6b-work/tmp').replace('/workspace/task-c/tools','/workspace/i6b-tools')
+source=source.replace("e.write_json(out/'binding-before.json',binding()); e.require_product_runtime()", "e.write_json(out/'binding-before.json',binding()); assert not binding()['status']; e.require_product_runtime()")
+(root/'run_full.py').write_text(source)
+for name in ('i6a_report_types.py','independent_receipt.py','reviewer_trace.py'):
+ (root/name).write_bytes((root/'inherited-task-c'/name).read_bytes())
+# Generalize the original driver while retaining its input, wheel, RECORD and installed schema checks.
+source=(root/'inherited-task-c/run_installed.py').read_text()
+source=source.replace('Task C independent installed-form execution; adapted from the Task A/#146 driver.', 'I6-B Author installed-form execution; adapted from the attributed Task C driver.')
+source=source.replace('COMMIT = "268025f67841285d105737b5a0d7bd15b1a6f59c"','COMMIT = os.environ["I6B_SOURCE_COMMIT"]')
+source=source.replace('TREE = "e5fa0437f19f31fa414d488ec10f483ef68f03fa"','TREE = os.environ["I6B_SOURCE_TREE"]')
+source=source.replace('OUT = Path("/workspace/task-c/raw/installed-v3")','OUT = Path(os.environ["I6B_INSTALLED_OUTPUT"])')
+source=source.replace('WORK = Path("/workspace/task-c/installed-work-v3")','WORK = Path(os.environ["I6B_INSTALLED_WORK"])')
+source=source.replace('/workspace/task-c/wheelhouse','/workspace/i6b-work/wheelhouse').replace('/workspace/task-c/cache','/workspace/.uv-cache').replace('/workspace/task-c/tools','/workspace/i6b-tools/inherited-task-c')
+source=source.replace('"independent_review": True','"independent_review": False')
+source=source.replace('    elif label.endswith("-authorization"):\n        assert len(selected) == 27\n    else:\n        assert len(selected) == 132','    elif label.endswith("-authorization"):\n        assert len(selected) == 27\n    elif label.endswith("-task-c"):\n        assert len(selected) == 132\n    else:\n        assert selected, "empty installed wire cohort"')
+source=source.replace('            results[tag]["authorization"] = pytest_lane(', '            wire_targets = json.loads(os.environ["I6B_WIRE_TARGETS"])\n            results[tag]["wire"] = pytest_lane(tag, "wire", wire_targets, outside, python, env)\n            results[tag]["authorization"] = pytest_lane(')
+(root/'run_installed.py').write_text(source)

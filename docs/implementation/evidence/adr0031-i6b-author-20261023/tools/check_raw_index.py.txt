@@ -1,0 +1,12 @@
+"""Verify the lossless published I6-B Author raw evidence index."""
+from pathlib import Path
+import gzip,hashlib,json,sys
+root=Path(sys.argv[1]).resolve();index=json.loads((root/'raw-index.json').read_text());seen=set();original_bytes=transport_bytes=0
+for row in index['files']:
+ rel=Path(row['path']);assert not rel.is_absolute() and '..' not in rel.parts
+ assert str(rel) not in seen;seen.add(str(rel));data=(root/rel).read_bytes()
+ assert len(data)==row['bytes'] and hashlib.sha256(data).hexdigest()==row['sha256'],str(rel)
+ raw=gzip.decompress(data) if row['gzip'] else data
+ assert len(raw)==row['original_bytes'] and hashlib.sha256(raw).hexdigest()==row['original_sha256'],str(rel)
+ original_bytes+=len(raw);transport_bytes+=len(data)
+print(json.dumps({'verified_indexed_files':len(seen),'original_bytes':original_bytes,'transport_bytes':transport_bytes,'all_hashes_lengths_and_lossless_gzip_verified':True}))

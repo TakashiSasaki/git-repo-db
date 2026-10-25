@@ -1,0 +1,64 @@
+[
+  {
+    "name": "sqlite-policy",
+    "command": [
+      "/workspace/git-repo-db/.venv/bin/python",
+      "scripts/check_sqlite_validation_policy.py"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.6996109485626221
+  },
+  {
+    "name": "callsite",
+    "command": [
+      "/workspace/git-repo-db/.venv/bin/python",
+      "scripts/audit_callsite_dependencies.py",
+      "--check"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 1.527761459350586
+  },
+  {
+    "name": "p1-schema",
+    "command": [
+      "/workspace/git-repo-db/.venv/bin/python",
+      "scripts/audit_p1_schema.py",
+      "--check"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.2893562316894531
+  },
+  {
+    "name": "implementation-boundary",
+    "command": [
+      "/workspace/git-repo-db/.venv/bin/python",
+      "scripts/audit_implementation_boundary.py",
+      "--check"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 1.844132900238037
+  },
+  {
+    "name": "ruff-check",
+    "command": [
+      ".venv/bin/ruff",
+      "check",
+      "src",
+      "tests",
+      "scripts"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "ruff-format",
+    "command": [
+      ".venv/bin/ruff",
+      "format",
+      "--check",
+      "src",
+      "tests",
+      "scripts"
+    ],
+    "exit_code": 0
+  }
+]

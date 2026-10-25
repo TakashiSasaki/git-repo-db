@@ -1,0 +1,63 @@
+"""Independent V07 multi-alternative original mapping/endpoint vectors."""
+import copy
+import json
+
+import pytest
+
+from repo_catalog.domain.context_wire import decode_context_v5, encode_context_v5
+from repo_catalog.domain.exchange import ExchangeError, empty_context_section
+from repo_catalog.domain.p1_context import ResourceKey, FieldClock, MappingClaimKey, MappingSupport, canonical, encode_transfer_supported_provenance
+from repo_catalog.domain.resource_identification import ResourceIdentification as RI
+from repo_catalog.domain.selective_exchange import transfer_reports
+
+S='8bc7720a-0659-4c69-9159-28c9ad44f121'
+A='122617f1-7b75-475d-bc2e-8f30d1cbd8a5'
+B='60b4edcd-0f95-4ba4-a0aa-a2f860906c02'
+COLS=('service_instance_uuidv4','resource_kind','provider_resource_id')
+
+
+def fixture():
+    issue=ResourceKey.from_native(S,'issue',['independent',[]])
+    event=ResourceKey.document(issue,'comment','timeline_event',['different','雪'])
+    provider=ResourceKey.from_native(S,'repository',['repo','雪'])
+    def owner(k):return dict(zip(COLS,k.coordinates(),strict=True))
+    data=empty_context_section()
+    data['providers']=[{'service_instance_uuidv4':S,'provider_kind':'independent','configuration_json':'{}'}]
+    data['repositories']=[{'repository_uuidv4':v,'configuration_json':'{}'} for v in [A,B]]
+    data['resources']=[RI.unscoped(issue).to_wire(),RI.scoped(event,issue,'timeline_event',['different','雪']).to_wire(),RI.unscoped(provider).to_wire()]
+    parent={**owner(event),'relation_kind':'parent','members_json':canonical([issue.coordinates()]),'provenance_json':canonical({'source':'independent-parent','evidence':['M',1]}),'scope_json':canonical({'clock':{'at_us':1013,'domain':'provider'},'document_kind':'timeline_event','state':'complete'}),'observed_at_us':1019}
+    claims=[MappingClaimKey(provider,'represents_repository',FieldClock('provider',1021),canonical(target),canonical({'source':'independent-mapping','evidence':['target',target]})) for target in [A,B]]
+    support=[MappingSupport(provider,(claim,)) for claim in claims]
+    provenance=encode_transfer_supported_provenance('independent-event',{'native':'original','sender_verified':True},[('transfer_to_repository',part) for part in support])
+    scope={'clock':{'at_us':1031,'domain':'provider'},'event_type':'transferred','parent_members_json':parent['members_json'],'parent_provenance_json':parent['provenance_json'],'parent_scope_json':parent['scope_json'],'provided_roles':['transfer_to_repository'],'from_provider_repository_id':None,'to_provider_repository_id':provider.provider_resource_id,'endpoints':[['transfer_to_repository',canonical(target)] for target in sorted([A,B])]}
+    report={**owner(event),'relation_kind':'transfer_event_report','members_json':canonical([provider.coordinates()]),'provenance_json':provenance,'scope_json':canonical(scope),'observed_at_us':1033}
+    data['resource_relations']=[report,parent]
+    mappings=[{**owner(provider),'relation_kind':'represents_repository','clock_json':claim.clock_json,'target_json':claim.target_json,'provenance_json':claim.provenance_json,'observed_at_us':1027,'event_report_members_json':None,'event_report_scope_json':None} for claim in reversed(claims)]
+    endpoints=[{**owner(event),'relation_kind':'transfer_to_repository','clock_json':canonical(scope['clock']),'target_json':canonical(target),'provenance_json':provenance,'observed_at_us':1033,'event_report_members_json':report['members_json'],'event_report_scope_json':report['scope_json']} for target in reversed(sorted([A,B]))]
+    data['resource_repository_relations']=[endpoints[0],mappings[0],endpoints[1],mappings[1]]
+    return data
+
+
+def test_T06_V07_multiple_original_mapping_alternatives_and_endpoint_set_survive():
+    data=fixture();out=decode_context_v5(encode_context_v5(data));assert out==data
+    report=transfer_reports(out)[0]
+    assert report.parent_report.observed_at_us==1019 and report.observed_at_us==1033
+    assert len(report.to_relations)==2
+    assert {relation.target_repository_uuidv4 for relation in report.to_relations}=={A,B}
+    assert len({relation.embedded_support.supporting_claims for relation in report.to_relations})==2
+    assert json.loads(report.provenance_json)['evidence']['sender_verified'] is True
+    # This remains attributed evidence. No receiver operation/evaluation object
+    # or live verification column exists in the decoded section.
+    assert out==data
+
+@pytest.mark.parametrize('mutation',['replace_target_with_null','drop_endpoint','change_exact_support_key'])
+def test_T10_V07_resolved_unit_cannot_repair_or_rebind_original_mapping(mutation):
+    data=fixture()
+    if mutation=='replace_target_with_null':data['resource_repository_relations'][0]['target_json']='null'
+    elif mutation=='drop_endpoint':data['resource_repository_relations'].pop(0)
+    else:
+        row=data['resource_repository_relations'][0]
+        value=json.loads(row['provenance_json'])
+        value['evidence']['transfer_mapping_supports'][0]['mapping_support']['supporting_claims'][0]['extra']='unsupported'
+        row['provenance_json']=canonical(value)
+    with pytest.raises(ExchangeError):decode_context_v5(data)

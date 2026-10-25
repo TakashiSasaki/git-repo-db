@@ -1,0 +1,75 @@
+{
+  "base": "ea43a21fca1dbf8fa6dd1c254b28a96d5dd28d00",
+  "source_head": "a354348b800177608f6a83e2484cb6a784b7190a",
+  "source_tree": "169f0f95449c7bd728261b3d7799f795162c03fd",
+  "changes": [
+    ".agents/skills/three-store-invariants/references/context-registration-exchange.md",
+    "docs/implementation/adr0031-i6b-generalized-wire.md",
+    "docs/implementation/evidence/adr0031-i6b-author-20261023/MATRIX.md",
+    "docs/implementation/evidence/adr0031-i6b-author-20261023/README.md",
+    "docs/implementation/evidence/adr0031-i6b-author-20261023/initial/attempts.json",
+    "docs/implementation/evidence/adr0031-i6b-author-20261023/initial/base-commit.json",
+    "docs/implementation/evidence/adr0031-i6b-author-20261023/initial/i6b-design-review-comments.json",
+    "docs/implementation/evidence/adr0031-i6b-author-20261023/initial/i6b-design-review-pr141.json",
+    "docs/implementation/evidence/adr0031-i6b-author-20261023/initial/i6b-design-review-reviews.json",
+    "docs/implementation/evidence/adr0031-i6b-author-20261023/initial/i6b-prs.json",
+    "docs/implementation/evidence/adr0031-i6b-author-20261023/initial/pr149.json",
+    "docs/implementation/evidence/adr0031-i6b-author-20261023/vectors/V01-global-document.wire.json",
+    "docs/implementation/evidence/adr0031-i6b-author-20261023/vectors/V02-scoped-event-child-first.wire.json",
+    "docs/implementation/evidence/adr0031-i6b-author-20261023/vectors/V03-original-parent.wire.json",
+    "docs/implementation/evidence/adr0031-i6b-author-20261023/vectors/V04-one-sided-explicit-null.wire.json",
+    "docs/implementation/evidence/adr0031-i6b-author-20261023/vectors/V05-two-sided-explicit-null.wire.json",
+    "docs/implementation/evidence/adr0031-i6b-author-20261023/vectors/V06-provider-only.wire.json",
+    "docs/implementation/evidence/adr0031-i6b-author-20261023/vectors/V07-resolved-mapping.wire.json",
+    "docs/implementation/evidence/adr0031-i6b-author-20261023/vectors/V08-rechecksummed-noncanonical-id.wire.json",
+    "docs/implementation/evidence/adr0031-i6b-author-20261023/vectors/V09-ordered-terminals.wire.json",
+    "docs/implementation/evidence/adr0031-i6b-author-20261023/vectors/manifest.json",
+    "scripts/audit_callsite_dependencies.py",
+    "src/repo_catalog/domain/context_dependencies.py",
+    "src/repo_catalog/domain/context_wire.py",
+    "src/repo_catalog/domain/exchange.py",
+    "src/repo_catalog/domain/exchange_rows.py",
+    "src/repo_catalog/domain/resource_identification.py",
+    "src/repo_catalog/domain/selective_exchange.py",
+    "tests/integration/i6a/test_admission.py",
+    "tests/unit/test_context_dependencies.py",
+    "tests/unit/test_context_wire_v5.py"
+  ],
+  "protected_prefixes": [
+    "docs/adr/",
+    "src/repo_catalog/adapters/",
+    "src/repo_catalog/application/",
+    ".github/",
+    "tests/integration/",
+    "tests/support/",
+    "src/repo_catalog/domain/context_admission.py",
+    "src/repo_catalog/domain/p1_context.py",
+    "src/repo_catalog/domain/parent_report.py",
+    "src/repo_catalog/domain/resource_stage.py"
+  ],
+  "protected_changes": [
+    "tests/integration/i6a/test_admission.py"
+  ],
+  "allowed_fixture_exception": {
+    "path": "tests/integration/i6a/test_admission.py",
+    "whole_nonfixture_AST_equal": true,
+    "all_assert_AST_equal": true,
+    "assert_count": 4,
+    "old_sha256": "64e279a78130aef725edb34dbe0cadb5be9d8d1f93ef79bc616a327db7ee5081",
+    "new_sha256": "ace7d61e3b8a7c890d93456410e96d29cb75829d23fa8b50bd182cdf87d83228"
+  },
+  "other_protected_changes": [],
+  "prior_evidence_changes": [],
+  "changed_existing_test_files": [
+    "tests/integration/i6a/test_admission.py"
+  ],
+  "context_ddl_and_both_fences_unchanged": true,
+  "interpretation": "Exact fixture-only exception; no product code, assertion, permission, SQL fence, Accepted ADR, workflow or historical evidence relaxation. Runtime outcomes and byte bindings remain separate receipts.",
+  "command": [
+    "/workspace/git-repo-db/.venv/bin/python",
+    "/workspace/i6b-tools/audit_protected_scope.py",
+    "/workspace/i6b-work/fixture-migration/protected-scope-audit-final-source.json"
+  ],
+  "exit_code": 0,
+  "helper_sha256": "7f10169bc7e4483065750d51b485467ea3a5036745026b0b3866c5b74d581b61"
+}

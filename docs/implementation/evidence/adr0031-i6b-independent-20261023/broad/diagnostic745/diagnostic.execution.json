@@ -1,0 +1,33 @@
+{
+  "command": [
+    "/workspace/git-repo-db/.venv/bin/python",
+    "-m",
+    "pytest",
+    "-c",
+    "/workspace/git-repo-db/pyproject.toml",
+    "-p",
+    "broad_receipt",
+    "-p",
+    "statement_trace",
+    "-p",
+    "no:cacheprovider",
+    "--basetemp=/workspace/i6b-broad-work/diagnostic745-temp",
+    "-q",
+    "-o",
+    "addopts=--strict-markers",
+    "-o",
+    "junit_family=xunit1",
+    "@/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-independent-20261023/broad/diagnostic745/diagnostic.selected.txt",
+    "--junitxml=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-independent-20261023/broad/diagnostic745/diagnostic.xml",
+    "--journal=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-independent-20261023/broad/diagnostic745/diagnostic.jsonl",
+    "-n",
+    "4",
+    "--dist",
+    "worksteal",
+    "--tb=long"
+  ],
+  "cwd": "/workspace/git-repo-db",
+  "started_epoch": 1792761980.3257966,
+  "elapsed_seconds": 218.331,
+  "exit_code": 1
+}

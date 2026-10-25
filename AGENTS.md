@@ -2,6 +2,18 @@
 
 This guide applies repository-wide. Task specifications and agent handoffs are written in English; user-facing explanations may be Japanese. Read the [ADR index](docs/adr/README.md), then the relevant accepted decisions and their scoped supersessions. For ADR lifecycle/triage/numbering/retirement, follow the owner-accepted [ADR 0011](docs/adr/0011-adr-governance.md) and single [ADR operating policy](docs/adr/policy.md); the optional [adr-workflow skill](.agents/skills/adr-workflow/SKILL.md) contains procedures, not additional authority. The policy's bounded pre-adoption migration exception preserves still-binding ADR 0001–0027 clauses; no automatic bulk retirement or re-opening of accepted design decisions.
 
+## SQLite validation
+
+Follow [ADR 0032](docs/adr/0032-environment-sqlite-validation.md): use the SQLite
+actually loaded by the execution environment's Python, one version per environment
+for both development and release; local and hosted versions may differ. Never
+download/build/install/swap SQLite just for tests, require a SQLite version matrix,
+or gate startup on an exact version/source ID. Record actual runtime identities.
+Preserve product capability/WAL safety floors, integrity/schema/transaction checks,
+independent review, wheel/sdist checks and failure reconciliation. If the runtime
+is insufficient, report failure and unexecuted work without bypassing guards.
+Report reason/scope and obtain explicit owner approval before any exception.
+
 ## Product and authorization
 
 **Latest shared owner decision: [ADR 0028](docs/adr/0028-classified-times-and-sha256-exchange.md).** SHA-256-only Exchange compares a declared canonical-data digest with receiver recomputation; no HMAC/signature/PKI or sender-authentication claim. Cursor SHA-256 is a checksum with independent content validation. Shared opt-in time/DDL/fingerprint corrections to P1–P4 are authorized by the current task; public Schema 21 stays default. Preserve historical evidence and independent P5/P6 sibling implementation dependencies.

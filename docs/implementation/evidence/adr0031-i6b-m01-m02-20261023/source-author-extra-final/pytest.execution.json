@@ -1,0 +1,31 @@
+{
+  "command": [
+    "/workspace/i6b-fix-work/final-d68dc43/.venv/bin/python",
+    "-m",
+    "pytest",
+    "-p",
+    "tests.conftest",
+    "-c",
+    "/workspace/i6b-fix-work/final-d68dc43/pyproject.toml",
+    "--rootdir=/workspace/i6b-fix-work/probes",
+    "--confcutdir=/workspace/i6b-fix-work/probes",
+    "-o",
+    "addopts=",
+    "-o",
+    "junit_family=xunit1",
+    "-q",
+    "-s",
+    "--tb=long",
+    "/workspace/i6b-fix-work/probes/test_author_extra.py",
+    "-p",
+    "broad_receipt",
+    "--junitxml=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/source-author-extra-final/results.xml",
+    "--journal=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/source-author-extra-final/journal.jsonl",
+    "--basetemp=/workspace/i6b-fix-work/source-author-extra-final-temp"
+  ],
+  "cwd": "/workspace/i6b-fix-work/final-d68dc43",
+  "completed": true,
+  "exit_code": 0,
+  "started_epoch": 1792764424.1848633,
+  "elapsed_seconds": 6.447200298309326
+}

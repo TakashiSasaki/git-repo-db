@@ -1,0 +1,55 @@
+{
+  "reviewed_commit": "2199a882d79c9c707fffcba3a8327ef96a3fc384",
+  "reviewed_tree": "b1595725bce322d04baf0f3b9b340cfdc71552a0",
+  "archive_indexed_members": 43,
+  "files": {
+    "F1-reproduction.sql": {
+      "bytes": 1626,
+      "sha256": "211a82dd998d8535fc937cc3d13d9d97ef2d3fe622bff596e85fbf695fb45022"
+    },
+    "README.md": {
+      "bytes": 3505,
+      "sha256": "aed37d70f9859dad137931b57e95857d23c4fddc8a25b9842f94c9cccd70bbdd"
+    },
+    "REPORT.md": {
+      "bytes": 18871,
+      "sha256": "4af52efa2026e43bde194d441f09db000cb2b23f32bec7c42ee4eaa8f95df802"
+    },
+    "audit_evidence.py": {
+      "bytes": 3467,
+      "sha256": "dc90a4cb93cea7d8e6cbcf2bf71a33c117cb5bcda1a78814555acb39f6bee066"
+    },
+    "build_runtimes.py": {
+      "bytes": 1521,
+      "sha256": "4fb2642b41c53f02c81f743d96ba7d68be7da922210c422bdd3621700b18970b"
+    },
+    "counterexamples.sql": {
+      "bytes": 8181,
+      "sha256": "a51fd13108098c822337bcc2003f4c5cb037412c27b26be21bf2c01de67c5fc6"
+    },
+    "minimum-summary.json": {
+      "bytes": 77323,
+      "sha256": "53f934b32638dc2342b0f480a2d7cccc04afcade0ad7da0c63f3de459154014f"
+    },
+    "newer-summary.json": {
+      "bytes": 77323,
+      "sha256": "8547efc034e3bc6ca404d65d489c00ed1998d661bb24d913df3890e6ec9e3eed"
+    },
+    "publication-validation.json": {
+      "bytes": 24933,
+      "sha256": "33b01b3209f07ac71d6d226ec293bcf5d23f2f8436ccee8fbaf1a132cb271c2e"
+    },
+    "review_sql.py": {
+      "bytes": 21659,
+      "sha256": "5ee24d3a84d6c6a2a255e56075ec7c628b3de212ed8bd2c7fe6769166fb63c92"
+    },
+    "run_review.py": {
+      "bytes": 2255,
+      "sha256": "24f9d924ea393ca9c19a9917062fc6ac8ebe6c502d20676aa0aa0b9a4975e2ec"
+    },
+    "task-f-evidence.zip": {
+      "bytes": 650237,
+      "sha256": "6c31a9dcf440807ec392a7eb414bba42d310a2f27a158cd2a9176ab421d90199"
+    }
+  }
+}

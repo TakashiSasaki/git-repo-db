@@ -1,0 +1,90 @@
+{
+  "main": {
+    "head": "cb532242c7aa86c6af5b6232b71c0906ea38f5c5",
+    "tree": "318ad07874ab436206e6a61f231b308a421cfc54",
+    "parents": [
+      "1ccb7f1902127cde649edcf605bb6d5935427302",
+      "d92377599a50f192f534836fc12402a5fe87ca83"
+    ],
+    "committed_at": "2026-10-21T20:26:19+09:00",
+    "subject": "Merge pull request #116 from impl/adr0031-i1a-identity-codec",
+    "tree_snapshot_sha256": "28655d907a07b7aad66b3703420db3ac282d62cea9a91512c125cd677cc3b8c2"
+  },
+  "pr130": {
+    "head": "b4ede5d8a87f3ce7b1f6df8fda5b3051c3865ba2",
+    "tree": "c7d3aabb2063a24bc9057951c80f8cc865c660f8",
+    "parents": [
+      "99e40c9af91f9ea36dd3d4ba97eccad46f6c6e14"
+    ],
+    "committed_at": "2026-10-22T13:03:42Z",
+    "subject": "docs(context): publish independent ADR 0031 I5 review and evidence",
+    "tree_snapshot_sha256": "348557fe891075da4b9a791325334042c7d99f8e2adcd65969c9631620058b3d"
+  },
+  "pr133": {
+    "head": "f16e5b1713bde9a2f18263a25397c4b450fd5773",
+    "tree": "6bfa580baafa9f6a117b7a0b610c4e65cd031b86",
+    "parents": [
+      "d0b1192b2c51adaa4158551becb8567acb85176c"
+    ],
+    "committed_at": "2026-10-22T14:50:45Z",
+    "subject": "test: isolate source identity drift from bootstrap loader state",
+    "tree_snapshot_sha256": "1eaf4c0db7138ef7a3c408306c4526e0657bca3dadf90676425c2722debf7c13"
+  },
+  "pr134": {
+    "head": "418ee68046fdfd03a0e84cc840e5d52fce176b81",
+    "tree": "476d32923c9be5e3b60e4e17c8828e3646611c43",
+    "parents": [
+      "f16e5b1713bde9a2f18263a25397c4b450fd5773"
+    ],
+    "committed_at": "2026-10-22T22:27:35Z",
+    "subject": "docs: freeze ADR 0031 I6 wire admission and Exchange contract",
+    "tree_snapshot_sha256": "396269f65373443b43201068811b7232b1e430a2720db3d57cd0efc1d49469ba"
+  },
+  "pr141": {
+    "head": "dc6e663ea90e55210ed5674cae6c332f66a4ac18",
+    "tree": "3d70218ecf98f751eb550e6a328a21f65069066f",
+    "parents": [
+      "418ee68046fdfd03a0e84cc840e5d52fce176b81"
+    ],
+    "committed_at": "2026-10-23T02:07:37Z",
+    "subject": "docs: independently review ADR 0031 I6 design and preserve probes",
+    "tree_snapshot_sha256": "e084ebbb28f6bdfa72855d3fc628b13eb3eee122263e7ddca51c2345d688ed4a"
+  },
+  "competing_inventory": {
+    "open_prs": 26,
+    "branches": 76,
+    "matching_prs": [
+      {
+        "number": 141,
+        "title": "docs: independent ADR 0031 I6 design review and evidence",
+        "head": "dc6e663ea90e55210ed5674cae6c332f66a4ac18",
+        "branch": "review/adr0031-i6-design-independent-20261023"
+      },
+      {
+        "number": 134,
+        "title": "docs: freeze ADR 0031 I6 wire, admission and Exchange boundary contract",
+        "head": "418ee68046fdfd03a0e84cc840e5d52fce176b81",
+        "branch": "docs/adr0031-i6-boundary-contract-20261022"
+      }
+    ],
+    "matching_branches": [
+      {
+        "name": "docs/adr0031-i6-boundary-contract-20261022",
+        "commit": {
+          "sha": "418ee68046fdfd03a0e84cc840e5d52fce176b81",
+          "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/418ee68046fdfd03a0e84cc840e5d52fce176b81"
+        },
+        "protected": false
+      },
+      {
+        "name": "review/adr0031-i6-design-independent-20261023",
+        "commit": {
+          "sha": "dc6e663ea90e55210ed5674cae6c332f66a4ac18",
+          "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/commits/dc6e663ea90e55210ed5674cae6c332f66a4ac18"
+        },
+        "protected": false
+      }
+    ],
+    "assessment": "Only I6 boundary design PR134 and independent design review PR141 match; no equivalent implementation candidate identified."
+  }
+}

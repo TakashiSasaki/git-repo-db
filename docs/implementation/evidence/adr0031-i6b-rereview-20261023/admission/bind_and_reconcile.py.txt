@@ -1,0 +1,82 @@
+import collections
+import hashlib
+import importlib
+import json
+from pathlib import Path
+import sqlite3
+import subprocess
+import sys
+import xml.etree.ElementTree as ET
+
+ROOT = Path('/workspace/git-repo-db')
+OUT = Path('/workspace/rereview-admission')
+HEAD = '61e44291e293f773904a0127606e20c8cb83c95e'
+BASE = '8521158f2996f125d2fcaac36ea79ac1296a7cf7'
+paths = [
+'src/repo_catalog/domain/context_admission.py',
+'src/repo_catalog/adapters/sqlite/context_admission.py',
+'src/repo_catalog/domain/resource_stage.py',
+'src/repo_catalog/adapters/sqlite/p1_context.py',
+'src/repo_catalog/adapters/sqlite/production_context.py',
+'src/repo_catalog/adapters/sqlite/p1_coordination.py',
+'src/repo_catalog/application/acquisition.py',
+'src/repo_catalog/application/exchange.py',
+'src/repo_catalog/adapters/sqlite/p1_schema.py',
+'src/repo_catalog/domain/p1_context.py',
+'src/repo_catalog/domain/parent_report.py',
+'tests/support/i6a.py',
+'tests/integration/p3/test_transfer_admission.py',
+'tests/integration/i6a/test_admission.py',
+'tests/unit/test_context_fences_i6a.py',
+]
+rows = []
+for path in paths:
+    current = (ROOT/path).read_bytes()
+    prior = subprocess.check_output(['git','show',f'{BASE}:{path}'],cwd=ROOT)
+    frozen = subprocess.check_output(['git','show',f'{HEAD}:{path}'],cwd=ROOT)
+    rows.append({'path':path,'bytes':len(current),'sha256':hashlib.sha256(current).hexdigest(),
+        'matches_152':current == prior, 'matches_153':current == frozen})
+from repo_catalog.adapters.sqlite import p1_schema
+from repo_catalog.domain.resource_stage import TRANSFER_FENCE_DEFINITIONS, has_transfer_fence
+con=sqlite3.connect(':memory:',isolation_level=None)
+p1_schema.register_functions(con)
+p1_schema.configure(con)
+con.executescript(p1_schema.compose('context'))
+actual=tuple(con.execute("SELECT type,name,tbl_name,sql FROM sqlite_schema WHERE name IN ('i2_transfer_stage_fence','i2_transfer_report_stage_fence') ORDER BY name"))
+modules=['repo_catalog','repo_catalog.adapters.sqlite.context_admission','repo_catalog.adapters.sqlite.p1_context','repo_catalog.adapters.sqlite.production_context','repo_catalog.domain.context_admission']
+runtime={'python':sys.version,'executable':sys.executable,'sqlite':sqlite3.sqlite_version,'sqlite_source_id':con.execute('SELECT sqlite_source_id()').fetchone()[0],
+'compile_options':[r[0] for r in con.execute('PRAGMA compile_options')],
+'pragmas':{n:con.execute(f'PRAGMA {n}').fetchone()[0] for n in ['foreign_keys','recursive_triggers','journal_mode','trusted_schema']},
+'integrity_check':list(con.execute('PRAGMA integrity_check')),'foreign_key_check':list(con.execute('PRAGMA foreign_key_check')),
+'exact_both_fences': actual == TRANSFER_FENCE_DEFINITIONS,'staged':has_transfer_fence(con),
+'imports':{n:str(importlib.import_module(n).__file__) for n in modules}}
+con.close()
+binding={'head':HEAD,'tree':subprocess.check_output(['git','rev-parse',HEAD+'^{tree}'],cwd=ROOT,text=True).strip(),'base':BASE,'inputs':rows,'runtime':runtime,'probe_sha256':hashlib.sha256((OUT/'probes/test_retained_admission.py').read_bytes()).hexdigest()}
+assert all(r['matches_152'] and r['matches_153'] for r in rows)
+assert runtime['exact_both_fences'] and runtime['staged']
+(OUT/'source-binding.json').write_text(json.dumps(binding,indent=2,sort_keys=True)+'\n')
+for name in ['final13','retained-route-fence','retained-sql']:
+    lane=OUT/'raw'/name
+    events=[json.loads(s) for s in (lane/'journal.jsonl').read_text().splitlines()]
+    starts=collections.Counter(e['nodeid'] for e in events if e['event']=='start')
+    phases=collections.Counter((e['nodeid'],e['phase'],e['outcome']) for e in events if e['event']=='phase')
+    junit=ET.parse(lane/'junit.xml')
+    cases=junit.findall('.//testcase')
+    def jkey(node):
+        file,case=node.split('::')
+        return file.removesuffix('.py').replace('/','.'),case
+    jj=collections.Counter((e.get('classname'),e.get('name')) for e in cases)
+    normalized=collections.Counter({jkey(node):n for node,n in starts.items()})
+    finished=[e for e in events if e['event']=='finish']
+    answer={'nodes':list(starts),'count':len(starts),'starts_exactly_once':all(n==1 for n in starts.values()),
+       'junit_matches_journal':jj==normalized,
+       'exactly_one_passed_each_phase':all(phases[(node,phase,'passed')]==1 for node in starts for phase in ['setup','call','teardown']) and len(phases)==3*len(starts),
+       'finish':finished,'process_exit':int((lane/'exit.txt').read_text()),'failures':len(junit.findall('.//failure')),'errors':len(junit.findall('.//error')),'skips':len(junit.findall('.//skipped'))}
+    if name=='final13':
+        selected=collections.Counter(s for s in (lane/'collection.log').read_text().splitlines() if '::' in s)
+        answer['collection_matches_journal']=selected==starts
+    assert answer['starts_exactly_once'] and answer['junit_matches_journal'] and answer['exactly_one_passed_each_phase']
+    assert len(finished)==1 and finished[0]['exitstatus']==0 and answer['process_exit']==0
+    assert answer.get('collection_matches_journal',True)
+    (lane/'reconciliation.json').write_text(json.dumps(answer,indent=2,sort_keys=True)+'\n')
+print(json.dumps({'binding_files':len(rows),'all_unchanged':True,'new_nodes':13,'retained_nodes':13,'runtime':runtime['sqlite']}))

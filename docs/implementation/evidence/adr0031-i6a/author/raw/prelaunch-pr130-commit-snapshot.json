@@ -1,0 +1,10 @@
+{
+  "head": "b4ede5d8a87f3ce7b1f6df8fda5b3051c3865ba2",
+  "tree": "c7d3aabb2063a24bc9057951c80f8cc865c660f8",
+  "parents": [
+    "99e40c9af91f9ea36dd3d4ba97eccad46f6c6e14"
+  ],
+  "committed_at": "2026-10-22T13:03:42Z",
+  "subject": "docs(context): publish independent ADR 0031 I5 review and evidence",
+  "tree_snapshot_sha256": "348557fe891075da4b9a791325334042c7d99f8e2adcd65969c9631620058b3d"
+}

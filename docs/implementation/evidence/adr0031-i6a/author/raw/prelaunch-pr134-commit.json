@@ -1,0 +1,35 @@
+{
+  "sha": "418ee68046fdfd03a0e84cc840e5d52fce176b81",
+  "node_id": "C_kwDOU78qEtoAKDQxOGVlNjgwNDZmZGZkMDNhMGU4NGNjODQwZTVkNTJmY2UxNzZiODE",
+  "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/git/commits/418ee68046fdfd03a0e84cc840e5d52fce176b81",
+  "html_url": "https://github.com/TakashiSasaki/git-repo-db/commit/418ee68046fdfd03a0e84cc840e5d52fce176b81",
+  "author": {
+    "name": "Takashi Sasaki",
+    "email": "takashi316@gmail.com",
+    "date": "2026-10-22T22:27:35Z"
+  },
+  "committer": {
+    "name": "Takashi Sasaki",
+    "email": "takashi316@gmail.com",
+    "date": "2026-10-22T22:27:35Z"
+  },
+  "tree": {
+    "sha": "476d32923c9be5e3b60e4e17c8828e3646611c43",
+    "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/git/trees/476d32923c9be5e3b60e4e17c8828e3646611c43"
+  },
+  "message": "docs: freeze ADR 0031 I6 wire admission and Exchange contract",
+  "parents": [
+    {
+      "sha": "f16e5b1713bde9a2f18263a25397c4b450fd5773",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/git/commits/f16e5b1713bde9a2f18263a25397c4b450fd5773",
+      "html_url": "https://github.com/TakashiSasaki/git-repo-db/commit/f16e5b1713bde9a2f18263a25397c4b450fd5773"
+    }
+  ],
+  "verification": {
+    "verified": false,
+    "reason": "unsigned",
+    "signature": null,
+    "payload": null,
+    "verified_at": null
+  }
+}

@@ -1,0 +1,102 @@
+"""Compare independently completed source run with each retained hosted lane.
+
+Hosted CI has rendered JUnit tracebacks, not ExceptionInfo/assertion sidecars.
+Do not infer hosted assertion reach or actual frame-function equality from text.
+"""
+import collections
+import gzip
+import hashlib
+import json
+from pathlib import Path
+import re
+import xml.etree.ElementTree as ET
+
+ROOT = Path(__file__).parent
+SOURCE = Path('/workspace/rereview-core/source-full')
+
+
+def digest(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def identity(node):
+    before, bracket, after = node.partition('[')
+    pieces = before.split('::')
+    classname = '.'.join([pieces[0].removesuffix('.py').replace('/','.'), *pieces[1:-1]])
+    return classname, pieces[-1] + bracket + after
+
+
+def unsuccessful(path):
+    results = {}
+    for case in ET.parse(path).iter('testcase'):
+        refusal = case.find('failure')
+        refusal = refusal if refusal is not None else case.find('error')
+        if refusal is None:
+            continue
+        key = (case.attrib['classname'],case.attrib['name'])
+        assert key not in results, key
+        message = refusal.attrib.get('message','')
+        phase = 'call' if refusal.tag == 'failure' else ('setup' if message.startswith('failed on setup') else 'unresolved-error-phase')
+        results[key] = {'outcome':refusal.tag, 'phase':phase,'message':message,'traceback':refusal.text or ''}
+    return results
+
+
+def frame_lines(text):
+    # A presentation projection only. Preserve full tracebacks in the entries.
+    out = []
+    for line in text.splitlines():
+        m = re.match(r'(?P<path>(?:tests|src|scripts)/[^:]+\.py):(?P<line>\d+):(?: in (?P<function>.*))?', line)
+        if m:
+            out.append((m['path'],int(m['line']),m['function']))
+    return out
+
+
+def main():
+    src_xml = SOURCE/'ordinary.xml'
+    execution = json.loads((SOURCE/'ordinary.execution.json').read_text())
+    assert execution['exit_code'] == 1, execution
+    src = unsuccessful(src_xml)
+    assert len(src) == 299, len(src)
+    actual = {}
+    for path in SOURCE.glob('gw*.reports.jsonl'):
+        for line in path.read_text().splitlines():
+            data = json.loads(line)
+            if data.get('event') == 'report' and data.get('outcome') == 'failed':
+                key = identity(data['nodeid'])
+                assert key not in actual
+                actual[key] = data
+    assert set(actual) == set(src)
+    assert all(actual[k]['phase'] == src[k]['phase'] for k in src)
+    codes = {x.get('code') for x in actual.values()} - {None}
+    entries = []
+    results = {}
+    for label,rel in [('main','tests.xml'),('i5-broad','i5/regressions.xml')]:
+        path = ROOT/'access-verified/artifacts/access-registry'/rel
+        hosted = unsuccessful(path)
+        added = sorted(set(hosted)-set(src))
+        missing = sorted(set(src)-set(hosted))
+        stats = collections.Counter()
+        for key in sorted(set(hosted)&set(src)):
+            a,b = src[key],hosted[key]
+            source_code = actual[key].get('code')
+            hosted_codes = sorted(c for c in codes if re.search(r'\b'+re.escape(c)+r'\b',b['message']))
+            same = {
+                'phase':a['phase']==b['phase'],
+                'outcome':a['outcome']==b['outcome'],
+                'message_first_line':a['message'].splitlines()[0]==b['message'].splitlines()[0],
+                'message_full':a['message']==b['message'],
+                'source_typed_code_present_hosted':hosted_codes==([source_code] if source_code else []),
+                'traceback_raw':a['traceback']==b['traceback'],
+                'rendered_project_frames':frame_lines(a['traceback'])==frame_lines(b['traceback']),
+            }
+            stats.update(k for k,v in same.items() if v)
+            entries.append({'lane':label,'identity':key,'source':a,'hosted':b,'source_actual_exception':actual[key],'hosted_codes_observed':hosted_codes,'equality':same})
+        results[label] = {'source_unsuccessful':len(src),'hosted_unsuccessful':len(hosted),'new':added,'missing':missing,'equal_counts':dict(stats),'source_junit_sha256':digest(src_xml),'hosted_junit_sha256':digest(path),'source_execution':execution,'limits':'Hosted actual ExceptionInfo and assertion-entry sidecars were not emitted. Raw traceback text and source actual frames are preserved; no equality of hosted actual frames or assertions is inferred from the presentation projection.'}
+    with gzip.GzipFile(filename=str(ROOT/'source-hosted-entries.json.gz'),mode='wb',mtime=0) as f:
+        f.write(json.dumps(entries,indent=2).encode())
+    (ROOT/'source-hosted-comparison.json').write_text(json.dumps(results,indent=2)+'\n')
+    print(json.dumps({k:{a:b for a,b in v.items() if a!='source_execution'} for k,v in results.items()},indent=2))
+
+
+if __name__=='__main__':
+    main()

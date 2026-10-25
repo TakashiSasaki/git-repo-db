@@ -1,0 +1,12 @@
+from pathlib import Path
+import hashlib,json,zipfile
+ROOT=Path('/workspace/git-repo-db');SOURCE=ROOT/'docs/implementation/evidence/adr0031-i6a/originals-binding-independent-20261023/raw-evidence.zip';OUT=Path('/workspace/i6b-broad-work/reference149');OUT.mkdir(exist_ok=False)
+manifest=[]
+with zipfile.ZipFile(SOURCE) as z:
+    for info in z.infolist():
+        if not info.filename.startswith(('raw/full/','raw/diagnostic743/')) or info.is_dir():continue
+        rel=Path(info.filename).relative_to('raw');assert not rel.is_absolute() and '..' not in rel.parts
+        p=OUT/rel;p.parent.mkdir(parents=True,exist_ok=True);data=z.read(info);p.write_bytes(data)
+        manifest.append({'member':info.filename,'bytes':len(data),'sha256':hashlib.sha256(data).hexdigest()})
+(ROOT/'docs/implementation/evidence/adr0031-i6b-independent-20261023/broad/reference149-attribution.json').write_text(json.dumps({'source':str(SOURCE.relative_to(ROOT)),'sha256':hashlib.sha256(SOURCE.read_bytes()).hexdigest(),'entries':manifest},indent=2)+'\n')
+print(len(manifest))

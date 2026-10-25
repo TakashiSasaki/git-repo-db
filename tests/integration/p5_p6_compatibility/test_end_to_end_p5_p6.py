@@ -217,7 +217,7 @@ def test_end_to_end_acquisition_into_query_and_search(tmp_path: Path, fmt: str) 
     assert note_read.body_bytes == "日本語 needle_kw note\n".encode()
 
     # P6 Paired Resource query
-    pr_key = ResourceKey(service_uuid, "pull_request", "501")
+    pr_key = ResourceKey.from_native(service_uuid, "pull_request", "501")
     paired = qs.get_paired_resource(pr_key)
     assert paired.resource.resource_kind == "pull_request"
     assert (
@@ -353,7 +353,7 @@ def test_deferred_core_dependency_reconciliation_into_paired_queries(
 
     # Query with P6 before Core arrives: PR dependency available_in_core is False
     qs = ProductionQueryService(cat_dir)
-    pr_key = ResourceKey(service_uuid, "pull_request", "901")
+    pr_key = ResourceKey.from_native(service_uuid, "pull_request", "901")
     paired_before = qs.get_paired_resource(pr_key)
     assert all(not r.available_in_core for r in paired_before.core_resolutions)
     assert all(r.object_view is None for r in paired_before.core_resolutions)
@@ -506,7 +506,7 @@ def test_partial_reordered_repeat_reverse_onward_preserves_unknown_clocks(
         _init_catalog(catalog, repository, str(uuid4()))
     a, b, c = catalogs
     service = str(uuid4())
-    resource = ResourceKey(service, "issue", "unknown-clock")
+    resource = ResourceKey.from_native(service, "issue", "unknown-clock")
     first = FieldCandidate(
         resource,
         "state",

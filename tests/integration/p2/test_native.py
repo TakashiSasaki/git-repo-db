@@ -563,47 +563,48 @@ def test_large_folded_signature_header_preserves_exact_bytes_with_linear_bufferi
 def test_core_transaction_binding_refuses_context_even_for_shared_coverage_tables(
     tmp_path,
 ):
-    from repo_catalog.adapters.sqlite.p1_context import ContextStore
     from repo_catalog.adapters.sqlite.p1_schema import initialize
+    from repo_catalog.domain.context_admission import DependencySet
     from repo_catalog.domain.p1_context import CoverageScope
     from repo_catalog.domain.p1_core import CoreCoverageScope
     from repo_catalog.domain.p1_coverage import CoverageClaim
+    from tests.support.authorized_context import FixtureContextStore
 
     repository = str(uuid4())
     path = tmp_path / "context.sqlite3"
     initialize(path, "context", repository, str(uuid4()))
     db = connect(path, "context")
-    db.execute("BEGIN IMMEDIATE")
+    store = FixtureContextStore(db, DependencySet(repositories={repository}))
     try:
-        db.execute("INSERT INTO repository_context VALUES(?,?)", (repository, "{}"))
-        ContextStore(db).scope(
-            CoverageScope.repository(repository, "git-object-inventory")
-        )
-        claim = CoverageClaim(
-            CoreCoverageScope("repository", (repository, "git-object-inventory")),
-            1,
-            "unknown",
-        )
-        entered = False
-        with pytest.raises(CoreFailure) as error:
-            with GitCore.for_transaction(db) as unit:
-                entered = True
-                unit.admit_coverage(claim)
-        assert error.value.code == "STORE_ROLE"
-        assert not entered
-        assert db.in_transaction
-        assert db.execute("SELECT count(*) FROM coverage_claims").fetchone()[0] == 0
-        assert not (tmp_path / "p1-recovery-stop.json").exists()
-        # Refusal has not installed an authorizer or consumed the Context tx.
-        ContextStore(db).admit_coverage(
-            CoverageClaim(
-                CoverageScope.repository(repository, "git-object-inventory"),
+        with store.transaction(rollback=True):
+            db.execute("INSERT INTO repository_context VALUES(?,?)", (repository, "{}"))
+            store.scope(CoverageScope.repository(repository, "git-object-inventory"))
+            claim = CoverageClaim(
+                CoreCoverageScope("repository", (repository, "git-object-inventory")),
                 1,
                 "unknown",
             )
-        )
-        assert db.execute("SELECT count(*) FROM coverage_claims").fetchone()[0] == 1
+            entered = False
+            with pytest.raises(CoreFailure) as error:
+                with GitCore.for_transaction(db) as unit:
+                    entered = True
+                    unit.admit_coverage(claim)
+            assert error.value.code == "STORE_ROLE"
+            assert not entered
+            assert db.in_transaction
+            assert db.execute("SELECT count(*) FROM coverage_claims").fetchone()[0] == 0
+            assert not (tmp_path / "p1-recovery-stop.json").exists()
+            # Refusal has not installed an authorizer or consumed the Context tx.
+            store.admit_coverage(
+                CoverageClaim(
+                    CoverageScope.repository(repository, "git-object-inventory"),
+                    1,
+                    "unknown",
+                )
+            )
+            assert db.execute("SELECT count(*) FROM coverage_claims").fetchone()[0] == 1
     finally:
+        store.close()
         db.rollback()
         db.close()
 

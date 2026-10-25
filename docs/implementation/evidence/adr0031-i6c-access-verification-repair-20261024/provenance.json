@@ -1,0 +1,73 @@
+{
+  "metadata": {
+    "convention": "HCI-L01",
+    "description": "Raw byte SHA-256 and Git blob OIDs for Access verification repair evidence artifacts"
+  },
+  "artifacts": {
+    "MATRIX.md": {
+      "size_bytes": 5613,
+      "sha256": "905121d0d5f2ca490cbcb71f1c0bad84016661b533da965e1400f632ca700c0c",
+      "git_blob_oid": "83d8e3b3b4b25ff3821d662067cf1b709bf534e9"
+    },
+    "REPORT.md": {
+      "size_bytes": 11165,
+      "sha256": "18aee05aec8931e0f0f8668dbadaed56844d665233ff86b01344ed8e5d7d820a",
+      "git_blob_oid": "dcdca78151206bc61dc40cdb79e1d480490b030b"
+    },
+    "distribution.json": {
+      "size_bytes": 2121,
+      "sha256": "738e132e9eda8fd14b3eeffd2d0cd5edd0a44f2f2f3ca9f115183eab1a53413e",
+      "git_blob_oid": "0b9e17f823b4a1ee383dbd689216d96dcdc7bfd2"
+    },
+    "findings.json": {
+      "size_bytes": 4930,
+      "sha256": "63b3c43d04c23ed8b5ab3cb2db0a8b5059c7933e39ca2c9dc9d56db9818cae81",
+      "git_blob_oid": "ff4a3c252b3f9923401ed068cca97b8b4a6248c3"
+    },
+    "node-comparison.json": {
+      "size_bytes": 127557,
+      "sha256": "d22f01c7416eded2a1fafc32c4790781b51f9c8e9ffa46a061fdac1634548c4e",
+      "git_blob_oid": "2308fc2ee698bb80b595f82bd64dbbe085b4aad9"
+    },
+    "raw/acceptance.json": {
+      "size_bytes": 540,
+      "sha256": "af06e2569753d887014d78c900d871f6501bcf12e96d01f0594ae9e9e723dcb4",
+      "git_blob_oid": "d49bfe569ab2903bb1094b47b7271a5872a1120c"
+    },
+    "raw/collected.txt": {
+      "size_bytes": 215961,
+      "sha256": "dba4396a7392ba35f97b4921ee7a5b31c2b3cf911a356bd47e1d3a1133d02174",
+      "git_blob_oid": "c7b0f5987122e2ac54c0ef066d931885a031d1a4"
+    },
+    "raw/preflight.json": {
+      "size_bytes": 1824,
+      "sha256": "0361c427146a1092e81796297d3a7e76a7ef79c6211afa64d4098c3c1e261916",
+      "git_blob_oid": "92b72a7079e9da601c7d0b6676228d226ab34670"
+    },
+    "raw/regressions.log": {
+      "size_bytes": 776615,
+      "sha256": "7eca73924ef740935dbc1c8f97596017607e4761dce539af209d742d0c412197",
+      "git_blob_oid": "10a6c5f178ac92d6b30cd2ebc93dd3bfa3d0cae0"
+    },
+    "raw/regressions.xml": {
+      "size_bytes": 1658600,
+      "sha256": "afc3c7a9f94daacc4ef258230a3b7c70f94a9c43f110a1026f033445bdd2791c",
+      "git_blob_oid": "c684076e94eceef7b22e05ad6903c2fc6f82201b"
+    },
+    "raw/runtime.json": {
+      "size_bytes": 2255,
+      "sha256": "2dd256ee00fed25e8fbba2a16d9c626c0b258be542e83e6fa592be3178df0393",
+      "git_blob_oid": "56a03a98707ab0af4e59bf93aabcfd012b200672"
+    },
+    "raw/tests.log": {
+      "size_bytes": 1194,
+      "sha256": "f62e64ba443d563ed543911a6e23a85acf395f8941810df30c277bde07dad0d0",
+      "git_blob_oid": "30d07154480c29a3a19422f1c797cc635335ef52"
+    },
+    "raw/tests.xml": {
+      "size_bytes": 253973,
+      "sha256": "503e0db46fded6dfab6ac9225522ea52340cad52121ef2cf8dff3c9c84ed523e",
+      "git_blob_oid": "a8268c312ceab3b4e027497e0b5b1f90bb7ac45c"
+    }
+  }
+}

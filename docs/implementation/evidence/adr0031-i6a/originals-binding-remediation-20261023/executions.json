@@ -1,0 +1,312 @@
+{
+  "full": {
+    "command": [
+      "/workspace/task-a-runtime/bin/python",
+      "-m",
+      "pytest",
+      "-p",
+      "i6a_report_types",
+      "-q",
+      "-o",
+      "addopts=--strict-markers",
+      "-o",
+      "junit_family=xunit1",
+      "@/workspace/task-a-artifacts/full/ordinary.selected.txt",
+      "--junitxml=/workspace/task-a-artifacts/full/ordinary.xml",
+      "--journal=/workspace/task-a-artifacts/full/ordinary.jsonl",
+      "-n",
+      "4",
+      "--dist",
+      "worksteal",
+      "--basetemp=/workspace/task-a-artifacts/full/basetemp"
+    ],
+    "cwd": "/workspace/git-repo-db",
+    "started_epoch": 1792746034.7810416,
+    "elapsed_seconds": 747.616,
+    "exit_code": 1,
+    "collected": 6076,
+    "passed": 5777,
+    "failed": 279,
+    "error": 20,
+    "skipped": 0,
+    "xfail": 0,
+    "xpass": 0,
+    "executed": 6076,
+    "reconciliation": {
+      "checks": {
+        "selected_unique": true,
+        "selected_equals_junit": true,
+        "selected_equals_journal_starts": true,
+        "setup_and_teardown_once": true,
+        "no_duplicate_phases": false,
+        "phase_nodes_equal_selected": true,
+        "call_once_after_successful_setup": false,
+        "one_finish": true
+      },
+      "consistent_node_execution": false,
+      "journal_phase_outcomes": {
+        "passed": 17966,
+        "failed": 299
+      },
+      "finishes": [
+        {
+          "event": "finish",
+          "status": "failed",
+          "exitstatus": 1,
+          "timestamp": 1792746781.411012
+        }
+      ]
+    }
+  },
+  "source_safety": {
+    "command": [
+      "/workspace/task-a-runtime/bin/python",
+      "-m",
+      "pytest",
+      "-p",
+      "i6a_report_types",
+      "-q",
+      "-o",
+      "addopts=--strict-markers",
+      "-o",
+      "junit_family=xunit1",
+      "@/workspace/task-a-artifacts/source-safety/ordinary.selected.txt",
+      "--junitxml=/workspace/task-a-artifacts/source-safety/ordinary.xml",
+      "--journal=/workspace/task-a-artifacts/source-safety/ordinary.jsonl",
+      "--basetemp=/workspace/task-a-artifacts/source-safety/basetemp"
+    ],
+    "cwd": "/workspace/git-repo-db",
+    "started_epoch": 1792746254.4824517,
+    "elapsed_seconds": 63.192,
+    "exit_code": 0,
+    "collected": 653,
+    "passed": 653,
+    "failed": 0,
+    "error": 0,
+    "skipped": 0,
+    "xfail": 0,
+    "xpass": 0,
+    "executed": 653,
+    "reconciliation": {
+      "checks": {
+        "selected_unique": true,
+        "selected_equals_junit": true,
+        "selected_equals_journal_starts": true,
+        "setup_and_teardown_once": true,
+        "no_duplicate_phases": true,
+        "phase_nodes_equal_selected": true,
+        "call_once_after_successful_setup": true,
+        "one_finish": true
+      },
+      "consistent_node_execution": true,
+      "journal_phase_outcomes": {
+        "passed": 1959
+      },
+      "finishes": [
+        {
+          "event": "finish",
+          "status": "completed",
+          "exitstatus": 0,
+          "timestamp": 1792746317.362021
+        }
+      ]
+    }
+  },
+  "source_authorization": {
+    "name": "pytest",
+    "command": [
+      "/workspace/task-a-runtime/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-c",
+      "/workspace/git-repo-db/pyproject.toml",
+      "--rootdir=/workspace/git-repo-db",
+      "--confcutdir=/workspace/git-repo-db",
+      "-p",
+      "scripts.ci_journal",
+      "/workspace/task-a-artifacts/source-auth/test_independent_authorization.py",
+      "-o",
+      "addopts=",
+      "-o",
+      "junit_family=xunit1",
+      "--junitxml=/workspace/task-a-artifacts/source-auth/junit.xml",
+      "--journal=/workspace/task-a-artifacts/source-auth/journal.jsonl",
+      "--basetemp=/workspace/task-a-artifacts/source-auth/basetemp"
+    ],
+    "cwd": "/workspace/git-repo-db",
+    "exit_code": 0,
+    "started_epoch": 1792746391.2837944,
+    "elapsed_seconds": 4.0640459060668945,
+    "passed": 27,
+    "failed": 0,
+    "error": 0,
+    "skipped": 0,
+    "xfail": 0,
+    "xpass": 0,
+    "executed": 27,
+    "selected": [
+      "::test_context_substitution_before_policy_and_content[constructor]",
+      "::test_context_substitution_before_policy_and_content[copy]",
+      "::test_context_substitution_before_policy_and_content[replace]",
+      "::test_context_substitution_before_policy_and_content[foreign]",
+      "::test_context_substitution_before_policy_and_content[principal-fields]",
+      "::test_context_substitution_before_policy_and_content[selection-fields]",
+      "::test_context_substitution_before_policy_and_content[budget-fields]",
+      "::test_wrong_credential_has_bounded_denial",
+      "::test_no_implicit_authority[service]",
+      "::test_no_implicit_authority[context]",
+      "::test_no_implicit_authority[owned-transaction]",
+      "::test_normal_schema_has_both_exact_fences_and_refuses_transfer",
+      "::test_exact_replay_never_caches_authority[permission-False]",
+      "::test_exact_replay_never_caches_authority[permission-True]",
+      "::test_exact_replay_never_caches_authority[selection-False]",
+      "::test_exact_replay_never_caches_authority[selection-True]",
+      "::test_exact_replay_never_caches_authority[read-operation-False]",
+      "::test_exact_replay_never_caches_authority[read-operation-True]",
+      "::test_revocation_after_success_rechecked_for_same_context",
+      "::test_real_sql_work_rolls_back_entire_transfer[second-insert]",
+      "::test_real_sql_work_rolls_back_entire_transfer[deferred-fk]",
+      "::test_real_sql_work_rolls_back_entire_transfer[revocation]",
+      "::test_real_sql_work_rolls_back_entire_transfer[cancel]",
+      "::test_success_and_duplicate_keep_policy_lease_through_commit",
+      "::test_facade_local_capability_precedes_sql_and_auth[True-False-READ_ONLY]",
+      "::test_facade_local_capability_precedes_sql_and_auth[False-True-CAPABILITY_EXPIRED]",
+      "::test_write_observations"
+    ],
+    "reconciliation": {
+      "checks": {
+        "selected_unique": true,
+        "selected_equals_junit": true,
+        "selected_equals_journal_starts": true,
+        "setup_and_teardown_once": true,
+        "no_duplicate_phases": true,
+        "phase_nodes_equal_selected": true,
+        "call_once_after_successful_setup": true,
+        "one_finish": true
+      },
+      "consistent_node_execution": true,
+      "journal_phase_outcomes": {
+        "passed": 81
+      },
+      "finishes": [
+        {
+          "event": "finish",
+          "status": "completed",
+          "exitstatus": 0,
+          "timestamp": 1792746395.215198
+        }
+      ]
+    },
+    "source_test_sha256": "e4e81e8163a253ea85a053b6332af0cfbd8dd4b59e4322d9fd8fb19225f7bcc5",
+    "source_test_attribution": "Unmodified #146 authorization vectors copied outside checkout; source product uses task-a editable runtime. External root collection exposes fileless ::test_* node IDs; JUnit file attributes retain the staged path."
+  },
+  "installed": {
+    "source_head": "f777d195bd219398a51d2a90553377f61fb39370",
+    "source_tree": "7ccc8685e06253e2102d46369110c7150d34a587",
+    "driver_exit_code": 0,
+    "processes": 27,
+    "all_process_exit_codes_zero": true,
+    "failures": [],
+    "forms": {
+      "direct": {
+        "safety": {
+          "passed": 626,
+          "failed": 0,
+          "error": 0,
+          "skipped": 0,
+          "executed": 626,
+          "exit_code": 0,
+          "exact_selected_junit_journal": true
+        },
+        "authorization": {
+          "passed": 27,
+          "failed": 0,
+          "error": 0,
+          "skipped": 0,
+          "executed": 27,
+          "exit_code": 0,
+          "exact_selected_junit_journal": true
+        },
+        "originals_assertion_probes": {
+          "passed": 19,
+          "failed": 0
+        },
+        "invalid_carrier": {
+          "invalid_original_cases": 4,
+          "invalid_original_refusals": 4,
+          "normal_fence_controls": 2
+        },
+        "installed_product_files": 158,
+        "sqlite": [
+          "3.53.1",
+          "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9"
+        ],
+        "pytest_binding_phases": [
+          "sessionstart",
+          "sessionfinish",
+          "sessionstart",
+          "sessionfinish"
+        ],
+        "all_pytest_bindings_have_exact_schema": true,
+        "cohorts": {
+          "i4": 217,
+          "i5": 29,
+          "originals_m1": 75
+        },
+        "sql_observation_bytes": 785457
+      },
+      "sdist": {
+        "safety": {
+          "passed": 626,
+          "failed": 0,
+          "error": 0,
+          "skipped": 0,
+          "executed": 626,
+          "exit_code": 0,
+          "exact_selected_junit_journal": true
+        },
+        "authorization": {
+          "passed": 27,
+          "failed": 0,
+          "error": 0,
+          "skipped": 0,
+          "executed": 27,
+          "exit_code": 0,
+          "exact_selected_junit_journal": true
+        },
+        "originals_assertion_probes": {
+          "passed": 19,
+          "failed": 0
+        },
+        "invalid_carrier": {
+          "invalid_original_cases": 4,
+          "invalid_original_refusals": 4,
+          "normal_fence_controls": 2
+        },
+        "installed_product_files": 158,
+        "sqlite": [
+          "3.53.1",
+          "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9"
+        ],
+        "pytest_binding_phases": [
+          "sessionstart",
+          "sessionfinish",
+          "sessionstart",
+          "sessionfinish"
+        ],
+        "all_pytest_bindings_have_exact_schema": true,
+        "cohorts": {
+          "i4": 217,
+          "i5": 29,
+          "originals_m1": 75
+        },
+        "sql_observation_bytes": 785457
+      }
+    },
+    "artifact_timing_scope": "Concurrent with the source full suite; elapsed times are invocation measurements, not sequential benchmark results.",
+    "independent_review": false,
+    "full_acceptance": false
+  },
+  "scope": "Overlapping actual invocations, not additive unique coverage or independent acceptance. Full legacy duplicate-subtest flags retained; typed audit in full-summary separately reconciles all protocols. All nonzero earlier setup/iterative invocations preserved in raw evidence."
+}

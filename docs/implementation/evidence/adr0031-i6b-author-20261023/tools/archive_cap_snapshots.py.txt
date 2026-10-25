@@ -1,0 +1,19 @@
+"""Inventory retained cap controls without publishing duplicate source trees."""
+from pathlib import Path
+import datetime,hashlib,json,sys
+r=Path('/workspace/i6b-work/cap-correction');rows=[]
+for d in sorted(r.glob('baseline-source*')):
+ if not d.is_dir():continue
+ files=[]
+ for p in sorted(d.rglob('*')):
+  if not p.is_file() or '__pycache__' in p.parts or '.pytest_cache' in p.parts or p.suffix=='.pyc':continue
+  raw=p.read_bytes();files.append({'path':str(p.relative_to(d)),'bytes':len(raw),'sha256':hashlib.sha256(raw).hexdigest()})
+ row={'snapshot':str(d),'files':files};rows.append(row)
+ p=d/'tests/unit/test_context_wire_v5.py'
+ row['overlaid_test_present']=p.is_file()
+ if p.is_file():
+  raw=p.read_bytes();saved=r/('overlay-wire-test-'+d.name+'.py.txt');saved.write_bytes(raw);row['retained_test_snapshot']=saved.name
+  if d.name=='baseline-source-v2':
+   b=json.loads((r/'actual-pre-fix-v2/binding.json').read_text());assert hashlib.sha256(raw).hexdigest()==b['input_hashes']['tests/unit/test_context_wire_v5.py']
+result={'collected_at_utc':datetime.datetime.now(datetime.UTC).isoformat(),'command':[sys.executable,str(Path(__file__).resolve())],'exit_code':0,'helper_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),'scope':'Post-run archival inventory, not reconstructed before/after bindings. Original bootstrap snapshot has no tests file. Per-attempt bindings remain authoritative. Duplicate source trees omitted; actual v2 overlaid test source is separately preserved and verified against its run binding.','prior_archival_attempt':{'exit_code':1,'reason':'inline inventory incorrectly assumed initial bootstrap snapshot had tests/unit/test_context_wire_v5.py; FileNotFoundError during archival, no product execution or source mutation occurred'},'snapshots':rows}
+(r/'snapshot-inventories.json').write_text(json.dumps(result,indent=2)+'\n');print(json.dumps({x['snapshot']:len(x['files']) for x in rows}))

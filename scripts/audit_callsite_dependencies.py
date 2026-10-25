@@ -44,7 +44,16 @@ ISOLATED_NEXT_STAGE_MODULES = frozenset(
         "domain/git_native.py",
         "adapters/sqlite/production_context.py",
         "domain/production_context.py",
+        "domain/resource_identification.py",
+        "domain/parent_report.py",
+        "domain/transfer_sql.py",
+        "domain/resource_stage.py",
         "domain/context_registration.py",
+        # I6-A is part of the same opt-in target; classify exact modules, never
+        # hide future similarly named public-runtime files by a prefix rule.
+        "domain/context_admission.py",
+        "domain/ports/context_authorization.py",
+        "adapters/sqlite/context_admission.py",
         "domain/ports/production_context.py",
         "domain/notes.py",
         "domain/ports/notes.py",
@@ -55,6 +64,9 @@ ISOLATED_NEXT_STAGE_MODULES = frozenset(
         "domain/exchange.py",
         "domain/selective_exchange.py",
         "domain/exchange_rows.py",
+        # I6-B pure codecs/plans remain in the same explicit opt-in boundary.
+        "domain/context_wire.py",
+        "domain/context_dependencies.py",
         "domain/ports/acquisition.py",
         "application/acquisition.py",
         "application/exchange.py",

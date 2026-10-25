@@ -1,0 +1,189 @@
+{
+  "head": "dc6e663ea90e55210ed5674cae6c332f66a4ac18",
+  "tree": "3d70218ecf98f751eb550e6a328a21f65069066f",
+  "ordinary_collected": 5742,
+  "complete_exactly_once_ordinary_coverage": true,
+  "cohorts_disjoint": true,
+  "source_inputs_unchanged": true,
+  "clean_before_after": true,
+  "aggregate": {
+    "passed": 5663,
+    "failed": 59,
+    "error": 20,
+    "skipped": 0,
+    "xfail": 0,
+    "xpass": 0,
+    "executed": 5742,
+    "elapsed_seconds": 553.763
+  },
+  "runs": {
+    "regressions": {
+      "command": [
+        "/workspace/i6a-baseline-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-o",
+        "addopts=--strict-markers",
+        "-o",
+        "junit_family=xunit1",
+        "@/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6a/author/baseline/regressions.selected.txt",
+        "--junitxml=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6a/author/baseline/regressions.xml",
+        "--journal=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6a/author/baseline/regressions.jsonl",
+        "-n",
+        "4",
+        "--dist",
+        "worksteal"
+      ],
+      "cwd": "/workspace/i6a-baseline",
+      "started_epoch": 1792722865.2857227,
+      "elapsed_seconds": 142.17,
+      "exit_code": 1,
+      "collected": 3137,
+      "passed": 3058,
+      "failed": 59,
+      "error": 20,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 3137,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": true,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": true,
+          "one_finish": true
+        },
+        "consistent_node_execution": true,
+        "journal_phase_outcomes": {
+          "passed": 9312,
+          "failed": 79
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "failed",
+            "exitstatus": 1,
+            "timestamp": 1792723007.171807
+          }
+        ]
+      }
+    },
+    "remaining-ordinary": {
+      "command": [
+        "/workspace/i6a-baseline-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-o",
+        "addopts=--strict-markers",
+        "-o",
+        "junit_family=xunit1",
+        "@/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6a/author/baseline/remaining-ordinary.selected.txt",
+        "--junitxml=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6a/author/baseline/remaining-ordinary.xml",
+        "--journal=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6a/author/baseline/remaining-ordinary.jsonl",
+        "-n",
+        "4",
+        "--dist",
+        "worksteal"
+      ],
+      "cwd": "/workspace/i6a-baseline",
+      "started_epoch": 1792723021.834974,
+      "elapsed_seconds": 411.593,
+      "exit_code": 0,
+      "collected": 2605,
+      "passed": 2605,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 2605,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": false,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": false,
+          "one_finish": true
+        },
+        "consistent_node_execution": false,
+        "journal_phase_outcomes": {
+          "passed": 7872
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "completed",
+            "exitstatus": 0,
+            "timestamp": 1792723433.270805
+          }
+        ]
+      }
+    }
+  },
+  "live_benchmark_unexecuted": [
+    "tests/e2e/test_github_sync.py::test_nested_pagination_stress_workload",
+    "tests/live/test_smoke.py::test_selected_repository"
+  ],
+  "full_acceptance": false,
+  "legacy_phase_reconciliation": {
+    "regressions": {
+      "checks": {
+        "selected_unique": true,
+        "selected_equals_junit": true,
+        "selected_equals_journal_starts": true,
+        "setup_and_teardown_once": true,
+        "no_duplicate_phases": true,
+        "phase_nodes_equal_selected": true,
+        "call_once_after_successful_setup": true,
+        "one_finish": true
+      },
+      "consistent_node_execution": true,
+      "journal_phase_outcomes": {
+        "passed": 9312,
+        "failed": 79
+      },
+      "finishes": [
+        {
+          "event": "finish",
+          "status": "failed",
+          "exitstatus": 1,
+          "timestamp": 1792723007.171807
+        }
+      ]
+    },
+    "remaining-ordinary": {
+      "checks": {
+        "selected_unique": true,
+        "selected_equals_junit": true,
+        "selected_equals_journal_starts": true,
+        "setup_and_teardown_once": true,
+        "no_duplicate_phases": false,
+        "phase_nodes_equal_selected": true,
+        "call_once_after_successful_setup": false,
+        "one_finish": true
+      },
+      "consistent_node_execution": false,
+      "journal_phase_outcomes": {
+        "passed": 7872
+      },
+      "finishes": [
+        {
+          "event": "finish",
+          "status": "completed",
+          "exitstatus": 0,
+          "timestamp": 1792723433.270805
+        }
+      ]
+    }
+  },
+  "limitation": "Existing journal lacks pytest9 subtest type/context. Historical3137 strict phases reconcile; remaining2605 strict helper flags57 repeated passing unittest subTest call reports. Selected/JUnit/journal-start nodes still reconcile exactly; raw phase ambiguity retained, not deduplicated or declared strict PASS."
+}

@@ -1,0 +1,8 @@
+import sys,pathlib,json
+sys.path.insert(0,'/workspace/i6a-baseline')
+from scripts import verify_i5_offline as e
+out=pathlib.Path('/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6a/author/baseline')
+ordinary=e.nodes(out/'ordinary-collection.nodes.txt');historical=e.nodes(out/'historical-collection.nodes.txt');selected=sorted(set(ordinary)-set(historical))
+result=e.run_cohort(out,'remaining-ordinary',selected,4)
+e.write_json(out/'input-binding-after-full.json',{'head':e.git('rev-parse','HEAD'),'tree':e.git('rev-parse','HEAD^{tree}'),'status':e.git('status','--porcelain'),'inputs':e.input_hashes()})
+e.write_json(out/'runtime-after.json',e.runtime_metadata(__import__('sqlite3').connect(':memory:')))

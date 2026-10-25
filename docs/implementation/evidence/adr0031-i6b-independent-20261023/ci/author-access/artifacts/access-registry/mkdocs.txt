@@ -1,0 +1,24 @@
+=================================================================
+ git-repo-db Developer Documentation Site Builder
+=================================================================
+Checking schema visualization freshness...
+✓ Schema visualization freshness confirmed.
+Staging documentation into /home/runner/work/git-repo-db/git-repo-db/.build/docs-source...
+✓ Staging completed successfully.
+Executing MkDocs static build...
+✓ MkDocs build completed successfully.
+Validating publication safety for /home/runner/work/git-repo-db/git-repo-db/site...
+✓ Publication safety check passed (0 sensitive files, all allowlisted).
+Scanning internal links in /home/runner/work/git-repo-db/git-repo-db/site...
+✓ Internal link validation passed (0 broken links).
+=================================================================
+ Build Summary:
+  - Output Directory: /home/runner/work/git-repo-db/git-repo-db/site
+  - Source Commit: 54464ad882ee644ff37f0af0a3a8d5af52f9f7ec
+  - Git Tree: a3ed2628a98db134bdc65d13da905f5ddf25e972
+  - Core Schema: 21 (70 tables)
+  - Operational Schema: 1 (10 tables)
+  - Search Schema: 1 (4 tables)
+  - Mermaid Diagrams Rendered: 10 SVGs
+ Status: BUILD & VALIDATION SUCCESSFUL
+=================================================================

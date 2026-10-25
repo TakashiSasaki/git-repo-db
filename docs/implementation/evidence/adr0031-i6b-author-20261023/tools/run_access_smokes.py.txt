@@ -1,0 +1,65 @@
+"""Execute unchanged original Access smoke in minimal installed environments.
+
+Each smoke is a separate measured pytest node whose failure remains a failure.
+No httpx is installed, preserving the original smoke's dependency premise.
+"""
+from pathlib import Path
+import ast,hashlib,json,os,shutil,subprocess,sys,time,zipfile
+ROOT=Path('/workspace/git-repo-db');INSTALLED=Path(sys.argv[1]);WORK=Path(sys.argv[2]);OUT=Path(sys.argv[3]);ARTWORK=Path(sys.argv[4]);OUT.mkdir(exist_ok=False,parents=True);ARTWORK.mkdir(exist_ok=False,parents=True)
+sys.path.insert(0,str(ROOT));from scripts import verify_i5_offline as e
+source=WORK/'source';outside=WORK/'outside';binding=json.loads((INSTALLED/'execution-binding.json').read_text());build=json.loads((INSTALLED/'build-binding.json').read_text());wheelhouse,manifest=e.verified_wheelhouse('/workspace/i6b-work/wheelhouse');records=[]
+def sha(p):return hashlib.sha256(Path(p).read_bytes()).hexdigest()
+def write(p,x):Path(p).write_text(json.dumps(x,indent=2)+'\n')
+def run(name,cmd,cwd=outside,env=None):
+ t=time.time()
+ with (OUT/(name+'.log')).open('w') as stream:p=subprocess.run(list(map(str,cmd)),cwd=cwd,env=env,stdout=stream,stderr=subprocess.STDOUT)
+ r={'name':name,'command':list(map(str,cmd)),'cwd':str(cwd),'exit_code':p.returncode,'elapsed_seconds':round(time.time()-t,3),'source_head':binding['source_head'],'source_tree':binding['source_tree']};records.append(r);write(OUT/'processes.json',records);return r
+assignments=ast.parse((source/'scripts/verify_access_distribution.py').read_text()).body
+smoke=next(ast.literal_eval(n.value) for n in assignments if isinstance(n,ast.Assign) and any(isinstance(t,ast.Name) and t.id=='SMOKE' for t in n.targets))
+smokefile=outside/'unchanged_original_access_smoke.py';smokefile.write_text(smoke)
+launch=outside/'launch_access_smoke.py';launch.write_text('''from pathlib import Path
+import hashlib,json,os,runpy,sqlite3,sys,traceback,repo_catalog,_sqlite3
+root=Path(repo_catalog.__file__).resolve().parent
+assert root.is_relative_to(Path(sys.prefix).resolve())
+def files():return {str(p.relative_to(root)):hashlib.sha256(p.read_bytes()).hexdigest() for p in root.rglob('*') if p.is_file() and '__pycache__' not in p.parts and p.suffix!='.pyc'}
+r={'python':sys.version,'executable':sys.executable,'prefix':sys.prefix,'origin':str(root),'sqlite':sqlite3.connect(':memory:').execute('select sqlite_version(),sqlite_source_id()').fetchone(),'sqlite_module':_sqlite3.__spec__.origin,'files_before':files()}
+try:runpy.run_path(sys.argv[1],run_name='__main__')
+except BaseException as error:
+ r['exception_type']=type(error).__module__+'.'+type(error).__name__;r['message']=str(error);r['code']=getattr(error,'code',None);r['traceback']=traceback.format_exc();raise
+finally:
+ r['files_after']=files();assert r['files_before']==r['files_after']
+ Path(os.environ['I6B_ACCESS_RESULT']).write_text(json.dumps(r,indent=2)+'\\n')
+''')
+wrapper=outside/'tests/unit/test_original_access_smoke.py';wrapper.write_text('''from pathlib import Path
+import json,os,subprocess,sys,time
+
+def test_unchanged_original_access_smoke():
+ log=Path(os.environ['I6B_ACCESS_CHILD_LOG']);command=[sys.executable,'-I',os.environ['I6B_ACCESS_LAUNCHER'],os.environ['I6B_ACCESS_SMOKE']]
+ with log.open('w') as stream:result=subprocess.run(command,stdout=stream,stderr=subprocess.STDOUT)
+ Path(os.environ['I6B_ACCESS_CHILD_PROCESS']).write_text(json.dumps({'command':command,'exit_code':result.returncode},indent=2)+'\\n')
+ assert result.returncode==0, 'unchanged original Access smoke failed; see actual child process/log/result'
+''')
+write(OUT/'inputs.json',{'source_head':binding['source_head'],'source_tree':binding['source_tree'],'driver_sha256':sha(__file__),'original_script_sha256':sha(source/'scripts/verify_access_distribution.py'),'original_smoke_sha256':sha(smokefile),'fixture_authority_sha256':sha(outside/'tests/support/context_admission.py'),'launcher_sha256':sha(launch),'pytest_wrapper_sha256':sha(wrapper),'original_smoke_unchanged':smokefile.read_text()==smoke})
+(OUT/'driver.py.txt').write_bytes(Path(__file__).read_bytes());(OUT/'original_access_smoke.py.txt').write_text(smoke);(OUT/'pytest_wrapper.py.txt').write_bytes(wrapper.read_bytes());(OUT/'launcher.py.txt').write_bytes(launch.read_bytes())
+for form,artifact_name in [('direct','direct-wheel'),('sdist','sdist-wheel')]:
+ artifact=Path(build[artifact_name]['path']);venv=ARTWORK/(form+'-venv');r=run(form+'-venv',[sys.executable,'-m','venv','--without-pip',venv]);assert r['exit_code']==0
+ py=venv/'bin/python';needed={'pytest','pluggy','packaging','iniconfig','pygments'};deps=[r for r in manifest['wheels'] if r['name'] in needed];assert {r['name'] for r in deps}==needed
+ requirements=OUT/(form+'-requirements.txt');requirements.write_text(f'repo-catalog @ {artifact.as_uri()} --hash=sha256:{sha(artifact)}\n'+''.join(f"{r['name']} @ {(wheelhouse/r['file']).as_uri()} --hash=sha256:{r['sha256']}\n" for r in deps))
+ r=run(form+'-install',['uv','pip','install','--python',py,'--offline','--no-index','--no-deps','--require-hashes','-r',requirements],env=dict(os.environ,UV_CACHE_DIR='/workspace/.uv-cache'));assert r['exit_code']==0
+ sub=OUT/form;sub.mkdir();env=dict(os.environ,PATH=str(venv/'bin')+os.pathsep+os.environ['PATH'],UV_CACHE_DIR='/workspace/.uv-cache',PYTHONPATH=str(outside/'tests/support/network_guard'),GIT_ALLOW_PROTOCOL='file',REPO_CATALOG_SMOKE_AUTHORITY=str(outside/'tests/support/context_admission.py'),I6A_REPORTS_SIDECAR=str(sub/'access.report-types.jsonl'),REPO_CATALOG_IMPORT_RECEIPT=str(sub/'pytest-imports.json'),I6B_ACCESS_RESULT=str(sub/'smoke-result.json'),I6B_ACCESS_CHILD_LOG=str(sub/'child.log'),I6B_ACCESS_CHILD_PROCESS=str(sub/'child-process.json'),I6B_ACCESS_SMOKE=str(smokefile),I6B_ACCESS_LAUNCHER=str(launch),TMPDIR=str(ARTWORK))
+ for k in ('GH_TOKEN','GITHUB_TOKEN','PYTHONHOME'):env.pop(k,None)
+ r=run(form+'-measure',[py,outside/'measure.py',sub/'runtime.json'],env=env);assert r['exit_code']==0
+ measured=json.loads((sub/'runtime.json').read_text());expected=json.loads((INSTALLED/(form+'-runtime-before.json')).read_text())['installed_files'];assert measured['installed_files']==expected
+ def measured_binding(files):return {'head':binding['source_head'],'tree':binding['source_tree'],'status':'','inputs':{**{'product:'+k:v for k,v in files.items()},'smoke':sha(smokefile),'wrapper':sha(wrapper),'launcher':sha(launch),'fixture_authority':sha(outside/'tests/support/context_admission.py'),'artifact':sha(artifact),'driver':sha(__file__)}}
+ before=measured_binding(measured['installed_files']);write(sub/'binding-before.json',before)
+ args=[py,'-m','pytest','-q','-p','i6a_report_types','-o','addopts=--strict-markers','-o','junit_family=xunit1','-c',outside/'pytest.ini','--rootdir='+str(outside),'--confcutdir='+str(outside),'tests/unit/test_original_access_smoke.py']
+ r=run(form+'-collection',args+['--collect-only'],env=dict(env,I6A_REPORTS_SIDECAR=str(sub/'access.collection-report-types.jsonl')));assert r['exit_code']==0
+ nodes=e.nodes(OUT/(form+'-collection.log'));assert nodes;(sub/'access.selected.txt').write_text('\n'.join(nodes)+'\n')
+ r=run(form+'-access',args+['--junitxml='+str(sub/'access.xml'),'--journal='+str(sub/'access.jsonl'),'--basetemp='+str(ARTWORK/(form+'-basetemp'))],env=env)
+ result={**r,**e.outcomes(sub/'access.xml'),'reconciliation':e.reconciliation(nodes,sub/'access.xml',sub/'access.jsonl')};write(sub/'access.execution.json',result)
+ r=run(form+'-measure-after',[py,outside/'measure.py',sub/'runtime-after.json'],env=env);assert r['exit_code']==0
+ after=measured_binding(json.loads((sub/'runtime-after.json').read_text())['installed_files']);write(sub/'binding-after.json',after);assert before==after
+ child=json.loads((sub/'smoke-result.json').read_text());assert child['files_before']==child['files_after']==expected
+ r=run(form+'-installed-RECORD',[py,'/workspace/i6b-tools/measure_installed_record.py',sub/'installed-RECORD.csv',sub/'installed-RECORD.json',INSTALLED/'complete-wheel-member-check.json',artifact],env=env);assert r['exit_code']==0
+write(OUT/'summary.json',{'source_head':binding['source_head'],'source_tree':binding['source_tree'],'processes':records,'scope':'Separate overlapping unchanged original Access smoke. Actual failures remain failures and are excluded from passing installed cohorts.','full_acceptance':False,'independent_review':False})
+sys.exit(int(any(r['exit_code'] for r in records)))

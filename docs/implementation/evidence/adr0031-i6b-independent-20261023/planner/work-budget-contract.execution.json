@@ -1,0 +1,26 @@
+{
+  "command": [
+    "/workspace/git-repo-db/.venv/bin/python",
+    "-m",
+    "pytest",
+    "-p",
+    "tests.conftest",
+    "-c",
+    "pyproject.toml",
+    "-o",
+    "addopts=",
+    "/workspace/i6b-planner-probes/test_planner_work_budget_contract.py",
+    "-q",
+    "--capture=tee-sys",
+    "--junitxml",
+    "/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-independent-20261023/planner/work-budget-contract.junit.xml",
+    "--journal",
+    "/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-independent-20261023/planner/work-budget-contract.journal.jsonl",
+    "-o",
+    "junit_family=xunit1"
+  ],
+  "cwd": "/workspace/git-repo-db",
+  "exit_code": 1,
+  "wall_seconds": 4.439870357513428,
+  "completed": true
+}

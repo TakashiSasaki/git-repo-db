@@ -1,0 +1,15 @@
+{
+  "path": "/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-author-20261023/vectors",
+  "files": {
+    "V01-global-document.wire.json": "b6f939b28a4875d4e52a6eeaad76f7030d02a628a2e6b6e6291ab74ce63b139a",
+    "V02-scoped-event-child-first.wire.json": "7d057ff25c0488456534ef955d1f877c88a3721b16d889d5cdbc2795f2909458",
+    "V03-original-parent.wire.json": "1b07744024e857aba974be6e5ca01d42fb8bd6cffbeb1b22700d55ed7faaddce",
+    "V04-one-sided-explicit-null.wire.json": "0fb2fe2dd672aa131f54c02b0b26cac9523af5759c9fd03f4a424f21e9842d12",
+    "V05-two-sided-explicit-null.wire.json": "dd5e516197adc98944407e847b39c38d3df6ace0e534be28947474254de43036",
+    "V06-provider-only.wire.json": "888b02f865c0be483cb34fdf856ff167634b9b650eb9d08b6933b7cf9a0a780b",
+    "V07-resolved-mapping.wire.json": "ab5f4176b25267a2ae6702e4a6cad7fc699c8f692b4f8dbcf53519e43113bdeb",
+    "V08-rechecksummed-noncanonical-id.wire.json": "a0c2be95557262cb33c3723e3a5e94c4552e46cba08f72e7ee97269aa47a8854",
+    "V09-ordered-terminals.wire.json": "f4fe72c5a7ffd9d5f2db57c301745235e9fc265960cc57bca8852d5e46601001",
+    "manifest.json": "a3f8b13fa71bd7befb1bd77416500b3756e6343473994ca880e8b797391db2e2"
+  }
+}

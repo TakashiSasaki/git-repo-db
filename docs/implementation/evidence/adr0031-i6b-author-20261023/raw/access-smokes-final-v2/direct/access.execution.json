@@ -1,0 +1,60 @@
+{
+  "name": "direct-access",
+  "command": [
+    "/workspace/i6b-work/access-smokes-final-v2-work/direct-venv/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "-p",
+    "i6a_report_types",
+    "-o",
+    "addopts=--strict-markers",
+    "-o",
+    "junit_family=xunit1",
+    "-c",
+    "/workspace/i6b-work/installed-final-work/outside/pytest.ini",
+    "--rootdir=/workspace/i6b-work/installed-final-work/outside",
+    "--confcutdir=/workspace/i6b-work/installed-final-work/outside",
+    "tests/unit/test_original_access_smoke.py",
+    "--junitxml=/workspace/i6b-work/access-smokes-final-v2/direct/access.xml",
+    "--journal=/workspace/i6b-work/access-smokes-final-v2/direct/access.jsonl",
+    "--basetemp=/workspace/i6b-work/access-smokes-final-v2-work/direct-basetemp"
+  ],
+  "cwd": "/workspace/i6b-work/installed-final-work/outside",
+  "exit_code": 1,
+  "elapsed_seconds": 6.081,
+  "source_head": "a354348b800177608f6a83e2484cb6a784b7190a",
+  "source_tree": "169f0f95449c7bd728261b3d7799f795162c03fd",
+  "passed": 0,
+  "failed": 1,
+  "error": 0,
+  "skipped": 0,
+  "xfail": 0,
+  "xpass": 0,
+  "executed": 1,
+  "reconciliation": {
+    "checks": {
+      "selected_unique": true,
+      "selected_equals_junit": true,
+      "selected_equals_journal_starts": true,
+      "setup_and_teardown_once": true,
+      "no_duplicate_phases": true,
+      "phase_nodes_equal_selected": true,
+      "call_once_after_successful_setup": true,
+      "one_finish": true
+    },
+    "consistent_node_execution": true,
+    "journal_phase_outcomes": {
+      "passed": 2,
+      "failed": 1
+    },
+    "finishes": [
+      {
+        "event": "finish",
+        "status": "failed",
+        "exitstatus": 1,
+        "timestamp": 1792758656.305912
+      }
+    ]
+  }
+}

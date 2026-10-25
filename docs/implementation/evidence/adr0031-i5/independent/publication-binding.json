@@ -1,0 +1,49 @@
+{
+  "reviewed_and_executed_head": "99e40c9af91f9ea36dd3d4ba97eccad46f6c6e14",
+  "reviewed_and_executed_tree": "d2d69b3094c8e07e375fc357e979ed8131bf39c5",
+  "publication_base_head": "99e40c9af91f9ea36dd3d4ba97eccad46f6c6e14",
+  "publication_scope": "new independent-review evidence files only; existing files unchanged",
+  "files_copied_byte_for_byte": {
+    "REPORT.md": {
+      "bytes": 16472,
+      "sha256": "8fce9f19a2621e540dc709378dbc12268580c58bda363344091588b0a0d2db20"
+    },
+    "artifact-index.json": {
+      "bytes": 20845,
+      "sha256": "ab116a322af9b07a9a328bfaf42e4dd450f9a6f28c38a26b01d9079aa441c52c"
+    },
+    "artifacts.json": {
+      "bytes": 348,
+      "sha256": "1b208cd7f389d5b1baa3736d4cad7578b8da47622ad06324e47c112d3e6d78a6"
+    },
+    "blob-comparison.json": {
+      "bytes": 948,
+      "sha256": "0c9822e375b10b098811d8a312b82e18560eeac458c28aa1e1fcb2bcb82e9b58"
+    },
+    "failure-classification.json": {
+      "bytes": 328137,
+      "sha256": "6f40a58cd09c6b1ca8ea7fac0d2423e028daad21e42a623e901cade98b9a055e"
+    },
+    "findings.json": {
+      "bytes": 6300,
+      "sha256": "1d4a25e5af3798adb02e48203bc9b09a2c68fec2eed950f754481c64bc7ee6be"
+    },
+    "independent-evidence.zip": {
+      "bytes": 1757961,
+      "sha256": "a8208c0cdb61ba7df1e59195af2c2e5005c34fbeb96e1f4ff3ff9513f866a0c9"
+    },
+    "sdist-input-scope.json": {
+      "bytes": 1243,
+      "sha256": "08bf0b99984504058e807a5fcc346124ba9aa7dd4447cd6082aa2e2c2491b48c"
+    },
+    "summary.json": {
+      "bytes": 4901,
+      "sha256": "309e8f7c32d09e75bf8c442d84650ba5f5915556b5117a2927665b2886072db3"
+    }
+  },
+  "archive_payload_entries": 124,
+  "archive_entries_including_index": 124,
+  "archive_all_entry_hashes_reverified": true,
+  "new_runtime_execution_for_publication": false,
+  "publication_sha_tree_binding": "Recorded in the new PR body after committing; not embedded recursively in its own tree."
+}

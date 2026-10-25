@@ -1,0 +1,38 @@
+from pathlib import Path
+import collections,gzip,hashlib,json,xml.etree.ElementTree as ET
+ROOT=Path('/workspace/git-repo-db');OUT=ROOT/'docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/distribution';F=OUT/'final'
+def read(name):return json.loads((F/name).read_text())
+def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
+r={}
+for p in sorted(F.glob('*-execution.json')):
+ d=json.loads(p.read_text());r[p.stem.removesuffix('-execution')]=d
+write=lambda p,d:p.write_text(json.dumps(d,indent=2,ensure_ascii=False)+'\n')
+checks={}
+for form in ['direct','derived']:
+ for lane,count in [('safety',626),('wire',212),('independent',204),('resolved-wire',4),('author-extra',34),('counterexamples',33),('new-regressions',56),('original-smoke-v2',1)]:
+  key=form+'-'+lane;d=r[key];assert d['collected']==count,(key,d)
+  assert d['exit_code']==(1 if lane=='original-smoke-v2' else 0),(key,d)
+  assert d['reconciliation']['consistent_node_execution'] and all(d['reconciliation']['checks'].values()),(key,d)
+  assert d['error']==d['skipped']==d['xfail']==d['xpass']==0,(key,d)
+  assert d['passed']==(0 if lane=='original-smoke-v2' else count),(key,d)
+  assert d['failed']==(1 if lane=='original-smoke-v2' else 0),(key,d)
+  assert d['reconciliation']['finishes'][0]['exitstatus']==d['exit_code'],(key,d)
+  assert d['reconciliation']['finishes'][0]['status']==('failed' if lane=='original-smoke-v2' else 'passed'),(key,d)
+  checks[key]=d
+# Explicitly retain separate overlapping lanes and verify the same actual IDs.
+common={}
+for lane in ['safety','wire','independent','resolved-wire','author-extra','counterexamples','new-regressions','original-smoke-v2']:
+ a=(F/('direct-'+lane+'-selected.txt')).read_text().splitlines();b=(F/('derived-'+lane+'-selected.txt')).read_text().splitlines();assert a==b and len(a)==len(set(a));common[lane]={'nodes':len(a),'direct_equals_derived_exact_selected_ids':True,'duplicate_free':True}
+# Metadata verification is an extra independent read after all invocations.
+metadata={}
+for form in ['direct','derived']:
+ d=read(form+'-runtime-after.json');before=read(form+'-runtime-before.json');assert d['files']==before['files']==read('product-equality.json')['product'];metadata[form]={'python':d['python'],'executable':d['executable'],'origin':d['origin'],'sqlite':d['sqlite'],'installed_record_rows':len(d['record']),'product_files':len(d['files'])}
+ artifacts=read('artifacts.json')
+ write(F/'verification-summary.json',{'author_validation':True,'independent_review':False,'release_acceptance':False,'source_head':'fe9e48bfac750a276b2622da2c50d3d4559de338','source_tree':'8ef254ff060f44f02370a695743c7a581e7b9b5c','results':checks,'matching_selected_ids':common,'metadata':metadata,'artifacts':artifacts,'source_retention':{k:v for k,v in read('sdist-source-retention.json').items() if k not in ['retained_source_checks','product_input_files']}})
+# Save every compressed raw original length and hash; no historical input touched.
+compressed=[]
+for p in sorted(F.rglob('*')):
+ if not p.is_file() or p.suffix not in ['.log','.xml','.jsonl']:continue
+ raw=p.read_bytes();q=p.with_name(p.name+'.gz');q.write_bytes(gzip.compress(raw,compresslevel=9,mtime=0));assert gzip.decompress(q.read_bytes())==raw;compressed.append({'path':str(q.relative_to(F)),'uncompressed_bytes':len(raw),'uncompressed_sha256':hashlib.sha256(raw).hexdigest(),'compressed_bytes':q.stat().st_size,'compressed_sha256':sha(q)});p.unlink()
+write(F/'raw-compression-index.json',compressed)
+print(json.dumps({'lanes':{k:{n:v[n] for n in ['exit_code','collected','passed','failed','error','skipped'] if n in v} for k,v in r.items()},'product_files':len(read('product-equality.json')['product']),'artifact_hashes':artifacts,'raw_bytes':sum(x['uncompressed_bytes'] for x in compressed),'gzip_bytes':sum(x['compressed_bytes'] for x in compressed)},indent=2))

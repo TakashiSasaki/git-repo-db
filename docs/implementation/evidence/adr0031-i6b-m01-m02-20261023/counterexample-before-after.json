@@ -1,0 +1,740 @@
+{
+  "saved_stale_digest_vectors": {
+    "same_names_bytes_hashes": true,
+    "count": 30,
+    "sha256": {
+      "repository_uuidv4s-permutation-str.json": "b03f547cf2c008ea6eec1058c4028b820226c932b7a553d4d1aaea5825de8477",
+      "notes_refs-permutation-bytes.json": "6d8c2c34d7f6a23f479999427354cdd9408a9408e5bd6f8e63edaa36aa71b9bd",
+      "resource_keys-duplicate-str.json": "c8c691f6cf615f2e39085cbf5671a5fc759fc81aca70558a1092df758bc68357",
+      "source_uuidv4s-permutation-bytes.json": "0f97fc4fbd96bc6a86bdbf644c1c7cf0743776910cc7594b3310e7081075044c",
+      "notes_refs-duplicate-bytes.json": "830d2346edb00af219ca534b486ce229ce319c487ee4b89fa7f828f420eb6e5b",
+      "repository_uuidv4s-duplicate-bytes.json": "7cd09eeb54491be84cd95569eaf6c0734ea0bbd089a6eb16d4a7482e0fbf40e7",
+      "object_oids-duplicate-str.json": "a038a3c8dc207320ff64cea6361f55a8195c72f5cee7f3defd0032a8810ab444",
+      "object_oids-permutation-bytes.json": "15f992ba8c12a13e500e2f2065a67ac0528d0741973251dc19039850df909bf3",
+      "source_uuidv4s-duplicate-dict.json": "14d4e8c939e1474c7753a06520d1e49e1f17daa6fa2ba6d07001e516b2e9e9e4",
+      "notes_refs-permutation-str.json": "6d8c2c34d7f6a23f479999427354cdd9408a9408e5bd6f8e63edaa36aa71b9bd",
+      "source_uuidv4s-permutation-str.json": "0f97fc4fbd96bc6a86bdbf644c1c7cf0743776910cc7594b3310e7081075044c",
+      "notes_refs-duplicate-str.json": "830d2346edb00af219ca534b486ce229ce319c487ee4b89fa7f828f420eb6e5b",
+      "source_uuidv4s-duplicate-str.json": "14d4e8c939e1474c7753a06520d1e49e1f17daa6fa2ba6d07001e516b2e9e9e4",
+      "object_oids-permutation-dict.json": "15f992ba8c12a13e500e2f2065a67ac0528d0741973251dc19039850df909bf3",
+      "source_uuidv4s-duplicate-bytes.json": "14d4e8c939e1474c7753a06520d1e49e1f17daa6fa2ba6d07001e516b2e9e9e4",
+      "object_oids-duplicate-dict.json": "a038a3c8dc207320ff64cea6361f55a8195c72f5cee7f3defd0032a8810ab444",
+      "repository_uuidv4s-permutation-bytes.json": "b03f547cf2c008ea6eec1058c4028b820226c932b7a553d4d1aaea5825de8477",
+      "object_oids-permutation-str.json": "15f992ba8c12a13e500e2f2065a67ac0528d0741973251dc19039850df909bf3",
+      "source_uuidv4s-permutation-dict.json": "0f97fc4fbd96bc6a86bdbf644c1c7cf0743776910cc7594b3310e7081075044c",
+      "repository_uuidv4s-permutation-dict.json": "b03f547cf2c008ea6eec1058c4028b820226c932b7a553d4d1aaea5825de8477",
+      "repository_uuidv4s-duplicate-dict.json": "7cd09eeb54491be84cd95569eaf6c0734ea0bbd089a6eb16d4a7482e0fbf40e7",
+      "resource_keys-duplicate-dict.json": "c8c691f6cf615f2e39085cbf5671a5fc759fc81aca70558a1092df758bc68357",
+      "resource_keys-permutation-str.json": "4c30d45962e83b1fdecd2fd569cfa8a336be3260c579cade0fa9ee8091092a73",
+      "resource_keys-permutation-dict.json": "4c30d45962e83b1fdecd2fd569cfa8a336be3260c579cade0fa9ee8091092a73",
+      "notes_refs-duplicate-dict.json": "830d2346edb00af219ca534b486ce229ce319c487ee4b89fa7f828f420eb6e5b",
+      "notes_refs-permutation-dict.json": "6d8c2c34d7f6a23f479999427354cdd9408a9408e5bd6f8e63edaa36aa71b9bd",
+      "resource_keys-permutation-bytes.json": "4c30d45962e83b1fdecd2fd569cfa8a336be3260c579cade0fa9ee8091092a73",
+      "object_oids-duplicate-bytes.json": "a038a3c8dc207320ff64cea6361f55a8195c72f5cee7f3defd0032a8810ab444",
+      "resource_keys-duplicate-bytes.json": "c8c691f6cf615f2e39085cbf5671a5fc759fc81aca70558a1092df758bc68357",
+      "repository_uuidv4s-duplicate-str.json": "7cd09eeb54491be84cd95569eaf6c0734ea0bbd089a6eb16d4a7482e0fbf40e7"
+    }
+  },
+  "work_scaling": {
+    "same24_input_coordinates": true,
+    "observations": [
+      {
+        "input": {
+          "resources": 0,
+          "input_rows": 1,
+          "input_bytes": 469,
+          "max_work": 0,
+          "prior_work": 0
+        },
+        "before": {
+          "charged_work": 41,
+          "additional_work": 41,
+          "parse_calls": 1,
+          "embedded_chars_parsed": 2,
+          "emitted_units": 0,
+          "reasons": [
+            "work_limit"
+          ]
+        },
+        "after": {
+          "charged_work": 1,
+          "additional_work": 1,
+          "parse_calls": 0,
+          "embedded_chars_parsed": 0,
+          "emitted_units": 0,
+          "reasons": [
+            "work_limit"
+          ]
+        }
+      },
+      {
+        "input": {
+          "resources": 0,
+          "input_rows": 1,
+          "input_bytes": 469,
+          "max_work": 1,
+          "prior_work": 0
+        },
+        "before": {
+          "charged_work": 41,
+          "additional_work": 41,
+          "parse_calls": 1,
+          "embedded_chars_parsed": 2,
+          "emitted_units": 0,
+          "reasons": [
+            "work_limit"
+          ]
+        },
+        "after": {
+          "charged_work": 2,
+          "additional_work": 2,
+          "parse_calls": 0,
+          "embedded_chars_parsed": 0,
+          "emitted_units": 0,
+          "reasons": [
+            "work_limit"
+          ]
+        }
+      },
+      {
+        "input": {
+          "resources": 0,
+          "input_rows": 1,
+          "input_bytes": 469,
+          "max_work": 17,
+          "prior_work": 0
+        },
+        "before": {
+          "charged_work": 41,
+          "additional_work": 41,
+          "parse_calls": 1,
+          "embedded_chars_parsed": 2,
+          "emitted_units": 0,
+          "reasons": [
+            "work_limit"
+          ]
+        },
+        "after": {
+          "charged_work": 18,
+          "additional_work": 18,
+          "parse_calls": 0,
+          "embedded_chars_parsed": 0,
+          "emitted_units": 0,
+          "reasons": [
+            "work_limit"
+          ]
+        }
+      },
+      {
+        "input": {
+          "resources": 0,
+          "input_rows": 1,
+          "input_bytes": 469,
+          "max_work": 17,
+          "prior_work": 17
+        },
+        "before": {
+          "charged_work": 58,
+          "additional_work": 41,
+          "parse_calls": 1,
+          "embedded_chars_parsed": 2,
+          "emitted_units": 0,
+          "reasons": [
+            "work_limit"
+          ]
+        },
+        "after": {
+          "charged_work": 18,
+          "additional_work": 1,
+          "parse_calls": 0,
+          "embedded_chars_parsed": 0,
+          "emitted_units": 0,
+          "reasons": [
+            "work_limit"
+          ]
+        }
+      },
+      {
+        "input": {
+          "resources": 1,
+          "input_rows": 3,
+          "input_bytes": 1613,
+          "max_work": 0,
+          "prior_work": 0
+        },
+        "before": {
+          "charged_work": 93,
+          "additional_work": 93,
+          "parse_calls": 4,
+          "embedded_chars_parsed": 629,
+          "emitted_units": 0,
+          "reasons": [
+            "work_limit"
+          ]
+        },
+        "after": {
+          "charged_work": 1,
+          "additional_work": 1,
+          "parse_calls": 0,
+          "embedded_chars_parsed": 0,
+          "emitted_units": 0,
+          "reasons": [
+            "work_limit"
+          ]
+        }
+      },
+      {
+        "input": {
+          "resources": 1,
+          "input_rows": 3,
+          "input_bytes": 1613,
+          "max_work": 1,
+          "prior_work": 0
+        },
+        "before": {
+          "charged_work": 93,
+          "additional_work": 93,
+          "parse_calls": 4,
+          "embedded_chars_parsed": 629,
+          "emitted_units": 0,
+          "reasons": [
+            "work_limit"
+          ]
+        },
+        "after": {
+          "charged_work": 2,
+          "additional_work": 2,
+          "parse_calls": 0,
+          "embedded_chars_parsed": 0,
+          "emitted_units": 0,
+          "reasons": [
+            "work_limit"
+          ]
+        }
+      },
+      {
+        "input": {
+          "resources": 1,
+          "input_rows": 3,
+          "input_bytes": 1613,
+          "max_work": 17,
+          "prior_work": 0
+        },
+        "before": {
+          "charged_work": 93,
+          "additional_work": 93,
+          "parse_calls": 4,
+          "embedded_chars_parsed": 629,
+          "emitted_units": 0,
+          "reasons": [
+            "work_limit"
+          ]
+        },
+        "after": {
+          "charged_work": 18,
+          "additional_work": 18,
+          "parse_calls": 0,
+          "embedded_chars_parsed": 0,
+          "emitted_units": 0,
+          "reasons": [
+            "work_limit"
+          ]
+        }
+      },
+      {
+        "input": {
+          "resources": 1,
+          "input_rows": 3,
+          "input_bytes": 1613,
+          "max_work": 17,
+          "prior_work": 17
+        },
+        "before": {
+          "charged_work": 110,
+          "additional_work": 93,
+          "parse_calls": 4,
+          "embedded_chars_parsed": 629,
+          "emitted_units": 0,
+          "reasons": [
+            "work_limit"
+          ]
+        },
+        "after": {
+          "charged_work": 18,
+          "additional_work": 1,
+          "parse_calls": 0,
+          "embedded_chars_parsed": 0,
+          "emitted_units": 0,
+          "reasons": [
+            "work_limit"
+          ]
+        }
+      },
+      {
+        "input": {
+          "resources": 5,
+          "input_rows": 11,
+          "input_bytes": 6197,
+          "max_work": 0,
+          "prior_work": 0
+        },
+        "before": {
+          "charged_work": 301,
+          "additional_work": 301,
+          "parse_calls": 16,
+          "embedded_chars_parsed": 3137,
+          "emitted_units": 0,
+          "reasons": [
+            "work_limit"
+          ]
+        },
+        "after": {
+          "charged_work": 1,
+          "additional_work": 1,
+          "parse_calls": 0,
+          "embedded_chars_parsed": 0,
+          "emitted_units": 0,
+          "reasons": [
+            "work_limit"
+          ]
+        }
+      },
+      {
+        "input": {
+          "resources": 5,
+          "input_rows": 11,
+          "input_bytes": 6197,
+          "max_work": 1,
+          "prior_work": 0
+        },
+        "before": {
+          "charged_work": 301,
+          "additional_work": 301,
+          "parse_calls": 16,
+          "embedded_chars_parsed": 3137,
+          "emitted_units": 0,
+          "reasons": [
+            "work_limit"
+          ]
+        },
+        "after": {
+          "charged_work": 2,
+          "additional_work": 2,
+          "parse_calls": 0,
+          "embedded_chars_parsed": 0,
+          "emitted_units": 0,
+          "reasons": [
+            "work_limit"
+          ]
+        }
+      },
+      {
+        "input": {
+          "resources": 5,
+          "input_rows": 11,
+          "input_bytes": 6197,
+          "max_work": 17,
+          "prior_work": 0
+        },
+        "before": {
+          "charged_work": 301,
+          "additional_work": 301,
+          "parse_calls": 16,
+          "embedded_chars_parsed": 3137,
+          "emitted_units": 0,
+          "reasons": [
+            "work_limit"
+          ]
+        },
+        "after": {
+          "charged_work": 18,
+          "additional_work": 18,
+          "parse_calls": 0,
+          "embedded_chars_parsed": 0,
+          "emitted_units": 0,
+          "reasons": [
+            "work_limit"
+          ]
+        }
+      },
+      {
+        "input": {
+          "resources": 5,
+          "input_rows": 11,
+          "input_bytes": 6197,
+          "max_work": 17,
+          "prior_work": 17
+        },
+        "before": {
+          "charged_work": 318,
+          "additional_work": 301,
+          "parse_calls": 16,
+          "embedded_chars_parsed": 3137,
+          "emitted_units": 0,
+          "reasons": [
+            "work_limit"
+          ]
+        },
+        "after": {
+          "charged_work": 18,
+          "additional_work": 1,
+          "parse_calls": 0,
+          "embedded_chars_parsed": 0,
+          "emitted_units": 0,
+          "reasons": [
+            "work_limit"
+          ]
+        }
+      },
+      {
+        "input": {
+          "resources": 50,
+          "input_rows": 101,
+          "input_bytes": 57887,
+          "max_work": 0,
+          "prior_work": 0
+        },
+        "before": {
+          "charged_work": 2641,
+          "additional_work": 2641,
+          "parse_calls": 151,
+          "embedded_chars_parsed": 31392,
+          "emitted_units": 0,
+          "reasons": [
+            "work_limit"
+          ]
+        },
+        "after": {
+          "charged_work": 1,
+          "additional_work": 1,
+          "parse_calls": 0,
+          "embedded_chars_parsed": 0,
+          "emitted_units": 0,
+          "reasons": [
+            "work_limit"
+          ]
+        }
+      },
+      {
+        "input": {
+          "resources": 50,
+          "input_rows": 101,
+          "input_bytes": 57887,
+          "max_work": 1,
+          "prior_work": 0
+        },
+        "before": {
+          "charged_work": 2641,
+          "additional_work": 2641,
+          "parse_calls": 151,
+          "embedded_chars_parsed": 31392,
+          "emitted_units": 0,
+          "reasons": [
+            "work_limit"
+          ]
+        },
+        "after": {
+          "charged_work": 2,
+          "additional_work": 2,
+          "parse_calls": 0,
+          "embedded_chars_parsed": 0,
+          "emitted_units": 0,
+          "reasons": [
+            "work_limit"
+          ]
+        }
+      },
+      {
+        "input": {
+          "resources": 50,
+          "input_rows": 101,
+          "input_bytes": 57887,
+          "max_work": 17,
+          "prior_work": 0
+        },
+        "before": {
+          "charged_work": 2641,
+          "additional_work": 2641,
+          "parse_calls": 151,
+          "embedded_chars_parsed": 31392,
+          "emitted_units": 0,
+          "reasons": [
+            "work_limit"
+          ]
+        },
+        "after": {
+          "charged_work": 18,
+          "additional_work": 18,
+          "parse_calls": 0,
+          "embedded_chars_parsed": 0,
+          "emitted_units": 0,
+          "reasons": [
+            "work_limit"
+          ]
+        }
+      },
+      {
+        "input": {
+          "resources": 50,
+          "input_rows": 101,
+          "input_bytes": 57887,
+          "max_work": 17,
+          "prior_work": 17
+        },
+        "before": {
+          "charged_work": 2658,
+          "additional_work": 2641,
+          "parse_calls": 151,
+          "embedded_chars_parsed": 31392,
+          "emitted_units": 0,
+          "reasons": [
+            "work_limit"
+          ]
+        },
+        "after": {
+          "charged_work": 18,
+          "additional_work": 1,
+          "parse_calls": 0,
+          "embedded_chars_parsed": 0,
+          "emitted_units": 0,
+          "reasons": [
+            "work_limit"
+          ]
+        }
+      },
+      {
+        "input": {
+          "resources": 500,
+          "input_rows": 1001,
+          "input_bytes": 576137,
+          "max_work": 0,
+          "prior_work": 0
+        },
+        "before": {
+          "charged_work": 26041,
+          "additional_work": 26041,
+          "parse_calls": 1501,
+          "embedded_chars_parsed": 314392,
+          "emitted_units": 0,
+          "reasons": [
+            "work_limit"
+          ]
+        },
+        "after": {
+          "charged_work": 1,
+          "additional_work": 1,
+          "parse_calls": 0,
+          "embedded_chars_parsed": 0,
+          "emitted_units": 0,
+          "reasons": [
+            "work_limit"
+          ]
+        }
+      },
+      {
+        "input": {
+          "resources": 500,
+          "input_rows": 1001,
+          "input_bytes": 576137,
+          "max_work": 1,
+          "prior_work": 0
+        },
+        "before": {
+          "charged_work": 26041,
+          "additional_work": 26041,
+          "parse_calls": 1501,
+          "embedded_chars_parsed": 314392,
+          "emitted_units": 0,
+          "reasons": [
+            "work_limit"
+          ]
+        },
+        "after": {
+          "charged_work": 2,
+          "additional_work": 2,
+          "parse_calls": 0,
+          "embedded_chars_parsed": 0,
+          "emitted_units": 0,
+          "reasons": [
+            "work_limit"
+          ]
+        }
+      },
+      {
+        "input": {
+          "resources": 500,
+          "input_rows": 1001,
+          "input_bytes": 576137,
+          "max_work": 17,
+          "prior_work": 0
+        },
+        "before": {
+          "charged_work": 26041,
+          "additional_work": 26041,
+          "parse_calls": 1501,
+          "embedded_chars_parsed": 314392,
+          "emitted_units": 0,
+          "reasons": [
+            "work_limit"
+          ]
+        },
+        "after": {
+          "charged_work": 18,
+          "additional_work": 18,
+          "parse_calls": 0,
+          "embedded_chars_parsed": 0,
+          "emitted_units": 0,
+          "reasons": [
+            "work_limit"
+          ]
+        }
+      },
+      {
+        "input": {
+          "resources": 500,
+          "input_rows": 1001,
+          "input_bytes": 576137,
+          "max_work": 17,
+          "prior_work": 17
+        },
+        "before": {
+          "charged_work": 26058,
+          "additional_work": 26041,
+          "parse_calls": 1501,
+          "embedded_chars_parsed": 314392,
+          "emitted_units": 0,
+          "reasons": [
+            "work_limit"
+          ]
+        },
+        "after": {
+          "charged_work": 18,
+          "additional_work": 1,
+          "parse_calls": 0,
+          "embedded_chars_parsed": 0,
+          "emitted_units": 0,
+          "reasons": [
+            "work_limit"
+          ]
+        }
+      },
+      {
+        "input": {
+          "resources": 1000,
+          "input_rows": 2001,
+          "input_bytes": 1152137,
+          "max_work": 0,
+          "prior_work": 0
+        },
+        "before": {
+          "charged_work": 52041,
+          "additional_work": 52041,
+          "parse_calls": 3001,
+          "embedded_chars_parsed": 628892,
+          "emitted_units": 0,
+          "reasons": [
+            "work_limit"
+          ]
+        },
+        "after": {
+          "charged_work": 1,
+          "additional_work": 1,
+          "parse_calls": 0,
+          "embedded_chars_parsed": 0,
+          "emitted_units": 0,
+          "reasons": [
+            "work_limit"
+          ]
+        }
+      },
+      {
+        "input": {
+          "resources": 1000,
+          "input_rows": 2001,
+          "input_bytes": 1152137,
+          "max_work": 1,
+          "prior_work": 0
+        },
+        "before": {
+          "charged_work": 52041,
+          "additional_work": 52041,
+          "parse_calls": 3001,
+          "embedded_chars_parsed": 628892,
+          "emitted_units": 0,
+          "reasons": [
+            "work_limit"
+          ]
+        },
+        "after": {
+          "charged_work": 2,
+          "additional_work": 2,
+          "parse_calls": 0,
+          "embedded_chars_parsed": 0,
+          "emitted_units": 0,
+          "reasons": [
+            "work_limit"
+          ]
+        }
+      },
+      {
+        "input": {
+          "resources": 1000,
+          "input_rows": 2001,
+          "input_bytes": 1152137,
+          "max_work": 17,
+          "prior_work": 0
+        },
+        "before": {
+          "charged_work": 52041,
+          "additional_work": 52041,
+          "parse_calls": 3001,
+          "embedded_chars_parsed": 628892,
+          "emitted_units": 0,
+          "reasons": [
+            "work_limit"
+          ]
+        },
+        "after": {
+          "charged_work": 18,
+          "additional_work": 18,
+          "parse_calls": 0,
+          "embedded_chars_parsed": 0,
+          "emitted_units": 0,
+          "reasons": [
+            "work_limit"
+          ]
+        }
+      },
+      {
+        "input": {
+          "resources": 1000,
+          "input_rows": 2001,
+          "input_bytes": 1152137,
+          "max_work": 17,
+          "prior_work": 17
+        },
+        "before": {
+          "charged_work": 52058,
+          "additional_work": 52041,
+          "parse_calls": 3001,
+          "embedded_chars_parsed": 628892,
+          "emitted_units": 0,
+          "reasons": [
+            "work_limit"
+          ]
+        },
+        "after": {
+          "charged_work": 18,
+          "additional_work": 1,
+          "parse_calls": 0,
+          "embedded_chars_parsed": 0,
+          "emitted_units": 0,
+          "reasons": [
+            "work_limit"
+          ]
+        }
+      }
+    ]
+  },
+  "scope": "Author-observed before/after on byte-identical saved probes. Exact required assertions remain unchanged; full-suite invocations are separate."
+}

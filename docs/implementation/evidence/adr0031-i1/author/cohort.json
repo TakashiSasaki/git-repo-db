@@ -1,0 +1,14 @@
+{
+  "cohort": [
+    "tests/unit/test_resource_identity.py",
+    "tests/unit/test_resource_key_identity.py",
+    "tests/unit/test_github_identity_boundaries.py",
+    "tests/integration/p1/test_resource_identity_sql.py",
+    "tests/integration/p1/test_context.py",
+    "tests/integration/p1/test_context_relations.py",
+    "tests/integration/p1/test_coverage.py",
+    "tests/integration/i2/test_provider_intake.py",
+    "tests/integration/i3/test_selective_exchange.py"
+  ],
+  "scope": "I1b scoped development validation; not release or complete I2 product acceptance"
+}

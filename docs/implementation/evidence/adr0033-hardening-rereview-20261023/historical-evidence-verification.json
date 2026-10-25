@@ -1,0 +1,16 @@
+[
+  {
+    "evidence": "adr0033-independent-review-20261023",
+    "archive_sha256": "60f64cef22fb911897eccdd93c4226a29cf8e8b6a2a74abdce8dfe5e6e62c661",
+    "payloads_verified": 171,
+    "all_match": true,
+    "index_sha256": "3693274d9c13110d45f23a6384a581591b8434af1bab7e8f1e3114b3381aabd2"
+  },
+  {
+    "evidence": "adr0033-archive-hardening-20261023",
+    "archive_sha256": "610e484a214d7904dd318909bc57d2a8619423b1aca26a353711169349d6f2c2",
+    "payloads_verified": 196,
+    "all_match": true,
+    "index_sha256": "76efbf370666f53768470f69b90b44ab65287d3977e37fe78f6197811f7c6fbc"
+  }
+]

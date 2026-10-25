@@ -1,0 +1,22 @@
+from pathlib import Path
+import json
+out=Path(__file__).resolve().parent
+checks={}
+for p in sorted(out.glob('*runtime*.json')):
+    d=json.loads(p.read_text())
+    if 'record' not in d:
+        continue
+    form=p.name.split('-',1)[0]
+    wheel=json.loads((out/(form+'-members.json')).read_text())
+    installed={r['name']:r for r in d['record']}
+    checked=[]
+    for name,member in wheel.items():
+        if name.endswith('.dist-info/RECORD'):
+            continue
+        row=installed[name]
+        assert row['sha256']==member['sha256'] and row['bytes']==member['bytes'],(p.name,name)
+        checked.append(name)
+    assert d['metadata']==(out/(form+'-METADATA.txt')).read_text()
+    assert d['wheel']==(out/(form+'-WHEEL.txt')).read_text()
+    checks[p.name]={'archive_members_equal_installed_except_record':len(checked),'archive_record_validated_separately':True,'installed_record_rows_validated':len(installed),'installed_metadata_equals_archive':True,'generated_installed_rows':sorted(set(installed)-set(wheel))}
+(out/'all-member-installed-agreement.json').write_text(json.dumps(checks,indent=2)+'\n')

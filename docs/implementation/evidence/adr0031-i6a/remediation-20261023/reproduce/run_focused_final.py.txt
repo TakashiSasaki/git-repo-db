@@ -1,0 +1,13 @@
+import pathlib,sys,os,json,gzip,sqlite3
+root=pathlib.Path('/workspace/i6a-final');sys.path.insert(0,str(root));from scripts import verify_i5_offline as e
+out=pathlib.Path('/workspace/i6a-runs/focused-final');out.mkdir(exist_ok=False)
+os.environ['PATH']=str(pathlib.Path(sys.executable).parent)+os.pathsep+os.environ['PATH']
+os.environ['TMPDIR']='/workspace/i6a-tmp'
+e.write_json(out/'binding.json',{'head':e.git('rev-parse','HEAD'),'tree':e.git('rev-parse','HEAD^{tree}'),'inputs':e.input_hashes(),'status':e.git('status','--porcelain','--untracked-files=no')})
+e.write_json(out/'runtime.json',e.runtime_metadata(sqlite3.connect(':memory:')));e.require_product_runtime()
+p=root/'docs/implementation/evidence/adr0031-i6a/author/priority-probes/focused583.jsonl.gz';ev=[json.loads(x) for x in gzip.decompress(p.read_bytes()).splitlines()];nodes=[x['nodeid'] for x in ev if x['event']=='start'];assert len(nodes)==len(set(nodes))==583
+r=e.run_cohort(out,'historical-focused583',nodes,4)
+sql=out/'sql';sql.mkdir();os.environ['I6A_SQL_PROBE_OUTPUT']=str(sql/'sql-admission-probes.json')
+nodes=['tests/integration/i6a/test_admission.py::'+n for n in ('test_real_second_endpoint_insert_failure_rolls_back_whole_unit','test_deferred_actual_outer_commit_failure_explicitly_rolls_back','test_revision_revoked_after_first_insert_rolls_back_and_charges_work')]
+r2=e.run_cohort(sql,'serial-sql-probes',nodes,0)
+raise SystemExit(int(not e.cohort_succeeded(r) or not e.cohort_succeeded(r2)))

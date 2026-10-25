@@ -1,0 +1,35 @@
+from pathlib import Path
+import hashlib,json,os,shutil,subprocess,sys,tarfile,time
+ROOT=Path('/workspace/git-repo-db'); WORK=Path('/workspace/i6b-fix-distribution'); OUT=ROOT/'docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/distribution'
+HEAD=sys.argv[1]; TREE=subprocess.check_output(['git','rev-parse',HEAD+'^{tree}'],cwd=ROOT,text=True).strip(); SRC=WORK/'frozen'; WH=WORK/'wheelhouse'
+def sha(p):return hashlib.sha256(Path(p).read_bytes()).hexdigest()
+def write(p,v):Path(p).write_text(json.dumps(v,indent=2,ensure_ascii=False)+'\n')
+records=json.loads((OUT/'processes.json').read_text())
+def run(name,args,cwd=WORK,env=None):
+ start=time.time()
+ with (OUT/(name+'.log')).open('w') as f:p=subprocess.run(list(map(str,args)),cwd=cwd,env=env,stdout=f,stderr=subprocess.STDOUT)
+ r={'name':name,'argv':list(map(str,args)),'cwd':str(cwd),'exit_code':p.returncode,'started_epoch':start,'elapsed_seconds':time.time()-start,'source_head':HEAD,'source_tree':TREE};records.append(r);write(OUT/'processes.json',records);print(name,p.returncode,flush=True);assert p.returncode==0,(name,p.returncode)
+
+inventory=json.loads((OUT/'full-build-source-inventory.json').read_text());actual=json.loads((OUT/'sdist-all-members.json').read_text());prefix=next(iter(actual)).split('/')[0]
+missing=sorted(p for p in inventory if prefix+'/'+p not in actual)
+retained={}
+for p,r in inventory.items():
+ if p in missing:continue
+ match=actual[prefix+'/'+p];assert match['sha256']==r['sha256'] and match['bytes']==r['bytes'],p;retained[p]=True
+assert all(p.startswith('docs/implementation/evidence/adr0031-i6b-independent-20261023/ci/author-access/artifacts/') for p in missing)
+extras=sorted(set(actual)-{prefix+'/'+p for p in inventory});assert extras==[prefix+'/PKG-INFO']
+baseline='8521158f2996f125d2fcaac36ea79ac1296a7cf7'
+for p in missing+['.gitignore']:
+ body=subprocess.check_output(['git','show',baseline+':'+p],cwd=ROOT);assert hashlib.sha256(body).hexdigest()==inventory[p]['sha256']
+write(OUT/'sdist-source-retention.json',{'source_files':len(inventory),'sdist_files':len(actual),'retained_exact_source_files':len(retained),'retained_source_checks':retained,'omitted_source_files':missing,'additional_members':extras,'all_product_inputs_retained':all(p in retained for p in inventory if p.startswith(('src/','tests/','scripts/','.github/')) or p in ['pyproject.toml','uv.lock','.python-version']),'limitation':'Existing .gitignore artifacts/ excludes 120 historical reviewer evidence files added by #152. These and .gitignore byte-equal #152; no packaging change is made. Initial stronger exhaustive assertion exit1 is preserved.'})
+write(OUT/'initial-audit-attempt.json',{'argv':[sys.executable,str(WORK/'prepare.py'),HEAD],'exit_code':1,'completed':'Git archive + Git blob audit + direct wheel/sdist build + all sdist member inventory/extraction','failure':'Exhaustive all-source retention assumption: KeyError on historical author-access/artifacts/access-registry/collected.txt.gz','actual_missing_source_files':missing,'status':'failed measurement assumption, no product test executed','continuation':'Explicit omissions retained; all retained bytes checked, all product/test/script inputs retained; derived build and installed verification continue.'})
+sdist=next((SRC/'dist').glob('*.tar.gz'));direct=next((SRC/'dist').glob('*.whl'));from_sdist=WORK/'from-sdist'
+derived_source=next(from_sdist.iterdir());run('build-derived',[sys.executable,'-m','hatchling','build','-t','wheel'],derived_source,env)
+derived=next((derived_source/'dist').glob('*.whl'))
+write(OUT/'artifacts.json',{k:{'path':str(p),'sha256':sha(p),'bytes':p.stat().st_size} for k,p in [('direct',direct),('sdist',sdist),('derived',derived)]})
+source=ROOT/'docs/implementation/evidence/adr0031-i6b-independent-20261023/distribution/review_distribution_v2.py.txt'
+s=source.read_text().replace("WORK=Path('/workspace/i6b-distribution-work')","WORK=Path('/workspace/i6b-fix-distribution')").replace("adr0031-i6b-independent-20261023/distribution'","adr0031-i6b-m01-m02-20261023/distribution'").replace("HEAD='ef787a5ff8b13f118d6bf5107c7338f43fde56dc'; TREE='a3ed2628a98db134bdc65d13da905f5ddf25e972'",f"HEAD={HEAD!r}; TREE={TREE!r}").replace("'independent_review':True","'independent_review':False,'author_validation':True")
+(WORK/'install_validate.py').write_text(s)
+shutil.copyfile(__file__,OUT/'prepare.py.txt')
+shutil.copyfile(WORK/'install_validate.py',OUT/'install_validate.py.txt')
+print('BUILD_READY',HEAD,TREE,flush=True)

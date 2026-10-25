@@ -6,6 +6,7 @@ import pytest
 
 from repo_catalog.adapters.sqlite.p1_context import ContextStore
 from repo_catalog.adapters.sqlite.p1_schema import compose, register_functions
+from repo_catalog.domain.context_admission import DependencySet
 from repo_catalog.domain.p1_context import (
     FieldCandidate,
     FieldClock,
@@ -13,12 +14,48 @@ from repo_catalog.domain.p1_context import (
     ResourceRepositoryRelation,
     canonical,
 )
+from repo_catalog.domain.p1_core import OID
+from repo_catalog.domain.resource_identification import ResourceIdentification as RI
+from tests.support.authorized_context import FixtureContextStore
 
 REPO = "9ebbe38a-f937-40e6-a99c-701835ebcf10"
 SERVICE = "aad25448-03eb-4f83-a578-ceec84375b5a"
 SOURCE = "80f5c4f9-6d6b-4691-af3c-00ab02ad9f53"
-KEY = ResourceKey(SERVICE, "issue", "7")
+KEY = ResourceKey.from_native(SERVICE, "issue", "7")
 PROVENANCE = canonical({"source": "provider.example", "evidence": "event-7"})
+
+
+def p1_grants():
+    """Finite identities used by this fixture and its imported Coverage tests."""
+    parents = tuple(
+        ResourceKey.from_native(SERVICE, "pull_request", value)
+        for value in ("10", "11", "absent", "global-shape-test")
+    )
+    return DependencySet(
+        resources={
+            KEY,
+            *parents,
+            *(
+                ResourceKey.from_native(SERVICE, "issue", value)
+                for value in ("detached", "detached-transfer", "absent", "8")
+            ),
+            *(
+                ResourceKey.document(parent, "review", "review", "same-provider-doc-id")
+                for parent in parents[:2]
+            ),
+            ResourceKey.document(parents[2], "document", "body", "real-id"),
+            ResourceKey.document(parents[3], "document", "body", "D1"),
+        },
+        repositories={
+            REPO,
+            "a1a5dfd6-69a3-4274-bbc7-2e7f6bcd39a4",
+            "86556e5f-ee55-4f4d-87c1-d30c5e14dff9",
+        },
+        sources={SOURCE},
+        source_repository_pairs={(SOURCE, REPO)},
+        provider_registrations={SERVICE},
+        object_oids={OID("sha1", "a" * 40)},
+    )
 
 
 @pytest.fixture
@@ -32,9 +69,10 @@ def context(tmp_path):
     db.execute("INSERT INTO providers VALUES(?,?,?)", (SERVICE, "github", "{}"))
     db.execute("INSERT INTO repository_context VALUES(?,?)", (REPO, "{}"))
     db.execute("INSERT INTO sources VALUES(?,?,?)", (SOURCE, SERVICE, "{}"))
-    store = ContextStore(db)
+    store = FixtureContextStore(db, p1_grants())
     store.resource(KEY, REPO)
     yield db, store, path
+    store.close()
     db.close()
 
 
@@ -109,9 +147,8 @@ def test_generated_source_clock_is_real_sqlite_value(context):
 
 def test_context_independent_transaction_rollback_and_restart(context):
     db, store, path = context
-    db.execute("BEGIN IMMEDIATE")
-    store.admit_field(candidate("discarded"))
-    db.rollback()
+    with store.transaction(rollback=True):
+        store.admit_field(candidate("discarded"))
     other = sqlite3.connect(path)
     register_functions(other)
     try:
@@ -124,10 +161,15 @@ def test_context_independent_transaction_rollback_and_restart(context):
 
 def test_context_only_resource_needs_no_core_or_source_membership(context):
     db, store, path = context
-    detached = ResourceKey(SERVICE, "issue", "detached")
+    detached = ResourceKey.from_native(SERVICE, "issue", "detached")
     store.resource(detached, None)
     assert db.execute("SELECT count(*) FROM source_repositories").fetchone()[0] == 0
-    assert sorted(p.name for p in path.parent.iterdir()) == ["context.sqlite3"]
+    # File-backed I6-A writes acquire the catalog gate; no Core/Operational
+    # store or Source membership is created by detached Context registration.
+    assert sorted(p.name for p in path.parent.iterdir()) == [
+        "context.sqlite3",
+        "p1-writer.lock",
+    ]
 
 
 def test_portable_core_reference_validated_and_no_sender_promotion(context):
@@ -179,14 +221,17 @@ def test_source_empty_inventory_is_durable_without_any_membership(context):
 
 def test_children_have_real_parent_and_document_kind_coordinates(context):
     db, store, _ = context
-    first = ResourceKey(SERVICE, "pull_request", "10")
-    second = ResourceKey(SERVICE, "pull_request", "11")
+    first = ResourceKey.from_native(SERVICE, "pull_request", "10")
+    second = ResourceKey.from_native(SERVICE, "pull_request", "11")
     for parent in (first, second):
         store.resource(parent, REPO)
+        key = ResourceKey.document(parent, "review", "review", "same-provider-doc-id")
         store.resource(
-            ResourceKey.document(parent, "review", "review", "same-provider-doc-id"),
+            key,
             REPO,
+            identification=RI.scoped(key, parent, "review", "same-provider-doc-id"),
         )
+
     assert (
         db.execute(
             "SELECT count(*) FROM resources WHERE resource_kind='review'"
@@ -199,23 +244,48 @@ def test_children_have_real_parent_and_document_kind_coordinates(context):
             (
                 SERVICE,
                 "review",
-                "same-provider-doc-id",
+                canonical("same-provider-doc-id"),
                 "pull_request",
-                "10",
+                first.provider_resource_id,
                 "review",
                 "same-provider-doc-id",
             ),
         )
-    with pytest.raises(sqlite3.IntegrityError):
-        store.resource(
-            ResourceKey.document(
-                ResourceKey(SERVICE, "pull_request", "absent"),
-                "document",
-                "body",
-                "real-id",
-            ),
-            REPO,
-        )
+    absent = ResourceKey.from_native(SERVICE, "pull_request", "absent")
+    child = ResourceKey.document(absent, "document", "body", "real-id")
+    declaration = RI.scoped(child, absent, "body", "real-id")
+    store.resource(child, REPO, identification=declaration)
+    assert store.identification(child) == declaration
+    assert not db.execute(
+        "SELECT 1 FROM resources WHERE resource_kind='pull_request' AND provider_resource_id=?",
+        (absent.provider_resource_id,),
+    ).fetchall()
+    assert not db.execute("SELECT 1 FROM resource_relations").fetchall()
+
+
+@pytest.mark.parametrize("already_stored", [False, True])
+def test_global_document_cannot_be_reinterpreted_as_scoped_on_insert_or_replay(
+    context, already_stored
+):
+    import json
+
+    db, store, _ = context
+    parent = ResourceKey.from_native(SERVICE, "pull_request", "global-shape-test")
+    store.resource(parent)
+    scoped = ResourceKey.document(parent, "document", "body", "D1")
+    if already_stored:
+        store.resource(scoped, identification=RI.scoped(scoped, parent, "body", "D1"))
+    before = db.execute("SELECT * FROM resources").fetchall()
+    native = json.loads(scoped.provider_resource_id)
+    for global_key in (
+        ResourceKey.global_document(SERVICE, native),
+        ResourceKey.from_native(SERVICE, "document", native),
+    ):
+        assert global_key == scoped
+        with pytest.raises(ValueError, match="explicit ResourceIdentification"):
+            store.resource(global_key)
+        assert db.execute("SELECT * FROM resources").fetchall() == before
+    store.resource(scoped, identification=RI.scoped(scoped, parent, "body", "D1"))
 
 
 def test_text_exact_utf8_content_addressing(context):
@@ -251,7 +321,7 @@ def test_detached_issue_attachment_transfer_preserves_identity_and_original_prov
     context,
 ):
     db, store, _ = context
-    key = ResourceKey(SERVICE, "issue", "detached-transfer")
+    key = ResourceKey.from_native(SERVICE, "issue", "detached-transfer")
     store.resource(key, None)
     second = "a1a5dfd6-69a3-4274-bbc7-2e7f6bcd39a4"
     db.execute("INSERT INTO repository_context VALUES(?,?)", (second, "{}"))
@@ -367,7 +437,6 @@ def test_attached_issue_explicit_detach_preserves_null_original_source_and_rollb
     )
     store.admit_repository_relation(claim1)
     detached = canonical({"source": "provider.example", "evidence": "detached-20"})
-    db.execute("BEGIN")
     claim2 = ResourceRepositoryRelation(
         KEY,
         "owning_repository",
@@ -376,9 +445,9 @@ def test_attached_issue_explicit_detach_preserves_null_original_source_and_rollb
         detached,
         20,
     )
-    store.admit_repository_relation(claim2)
-    assert store.repository_relations(KEY)[0].is_explicit_null_target is True
-    db.rollback()
+    with store.transaction(rollback=True):
+        store.admit_repository_relation(claim2)
+        assert store.repository_relations(KEY)[0].is_explicit_null_target is True
     assert store.repository_relations(KEY)[0].target_repository_uuidv4 == REPO
     store.admit_repository_relation(claim2)
     current = store.repository_relations(KEY)
@@ -390,7 +459,12 @@ def test_attached_issue_explicit_detach_preserves_null_original_source_and_rollb
         ).fetchone()[0]
         is None
     )
-    assert store.repository_relations(ResourceKey(SERVICE, "issue", "unobserved")) == ()
+    assert (
+        store.repository_relations(
+            ResourceKey.from_native(SERVICE, "issue", "unobserved")
+        )
+        == ()
+    )
     with pytest.raises(
         ValueError,
         match="field_name='repository_uuidv4' is retired; use repository_relations",

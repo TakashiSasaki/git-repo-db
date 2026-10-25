@@ -1,0 +1,25 @@
+[wheel]
+dist/repo_catalog-0.2.0-py3-none-any.whl
+
+[sdist]
+dist/repo_catalog-0.2.0.tar.gz
+dist/repo_catalog-0.2.0-py3-none-any.whl
+Processing ./fix/adr0031-i6c-authority-ci-20261024/dist/repo_catalog-0.2.0-py3-none-any.whl
+Installing collected packages: repo-catalog
+Successfully installed repo-catalog-0.2.0
+=== 1. Direct Build ===
+Direct wheel: repo_catalog-0.2.0-py3-none-any.whl (792373 bytes, sha256=260dea2cf9581f0fe718a2252c1e639b75150f555ef0162df898d4d84d6b9eb5)
+Sdist:        repo_catalog-0.2.0.tar.gz (183690640 bytes, sha256=65997f572cbd45409a7410dfe4e86a9c4c17cdbda758825853a64c223f478bcb)
+
+=== 2. Direct Wheel RECORD Verification ===
+All RECORD entries verified successfully!
+
+=== 3. Derived Wheel from Unpacked Sdist (No Git on PATH) ===
+Unpacked sdist directory: repo_catalog-0.2.0
+Derived wheel: repo_catalog-0.2.0-py3-none-any.whl (792373 bytes, sha256=260dea2cf9581f0fe718a2252c1e639b75150f555ef0162df898d4d84d6b9eb5)
+Reproducible wheel byte-for-byte MATCH!
+
+=== 4. Isolated Venv Installation and Import Test ===
+Imported successfully from: /tmp/tmppbm_t6t1/test_venv/lib/python3.12/site-packages/repo_catalog/__init__.py
+
+Packaging and distribution verification COMPLETE: SUCCESS

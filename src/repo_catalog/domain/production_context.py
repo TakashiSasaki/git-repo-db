@@ -163,6 +163,11 @@ from repo_catalog.domain.p1_context import (
     validate_timeline_event_coordinates as validate_timeline_event_coordinates,
 )
 from repo_catalog.domain.p1_core import OID
+from repo_catalog.domain.parent_report import ParentReportKey, validate_parent_report
+from repo_catalog.domain.resource_identification import (
+    ResourceIdentification,
+    require_identification,
+)
 from repo_catalog.domain.time import (
     validate_observation_us,
     validate_required_observation_us,
@@ -195,8 +200,10 @@ def json_value(encoded: str, *, provenance: bool = False) -> object:
 class ResourceObservation:
     resource: ResourceKey
     fields: tuple[FieldCandidate, ...] = ()
+    identification: ResourceIdentification | None = None
 
     def __post_init__(self):
+        require_identification(self.resource, self.identification)
         if any(field.resource != self.resource for field in self.fields):
             raise ContextError("FIELD_OWNER", "resource")
 
@@ -214,6 +221,18 @@ class ResourceRelation:
         if not self.relation_kind:
             raise ContextError("MISSING_KIND", "relation")
         validate_observation_us(self.observed_at_us)
+        if self.relation_kind == "parent":
+            if len(self.members) != 1:
+                raise ValueError("Parent report requires exactly one member")
+            # Bound untrusted JSON before the general relation decoder allocates.
+            validate_parent_report(
+                *self.resource.coordinates(),
+                self.members_json,
+                self.provenance_json,
+                self.scope_json,
+                self.observed_at_us,
+            )
+            return
         json_value(self.provenance_json, provenance=True)
         json_value(self.scope_json)
         if len(set(self.members)) != len(self.members):
@@ -222,6 +241,14 @@ class ResourceRelation:
     @property
     def members_json(self) -> str:
         return canonical([member.coordinates() for member in self.members])
+
+    @property
+    def parent_report_key(self) -> ParentReportKey:
+        if self.relation_kind != "parent":
+            raise ValueError("Not a Parent report")
+        return ParentReportKey(
+            self.resource, self.members_json, self.provenance_json, self.scope_json
+        )
 
 
 @dataclass(frozen=True)

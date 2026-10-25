@@ -1,0 +1,13 @@
+{
+  "projection": "Recursive address-valued email fields and commit author/committer name fields replaced with [REDACTED_PERSONAL_EMAIL] / [REDACTED_PERSONAL_NAME] in six fresh GitHub API metadata snapshots. These are redacted projections, not byte-identical raw API payloads. Public GitHub logins/account identifiers retained; SHAs, tree, parents, statuses and all other fields unchanged. In three tested-commit snapshots, verification.signature and verification.payload are omitted because raw Git commit payloads embed personal author/committer data; these fields are not used for SHA/tree/parent checks.",
+  "files": [
+    "39902230351-run.json",
+    "39902230351-tested-commit.json",
+    "39903868636-run.json",
+    "39903868636-tested-commit.json",
+    "39903868666-run.json",
+    "39903868666-tested-commit.json"
+  ],
+  "hosted_receipt_zip_modified": false,
+  "author_evidence_modified": false
+}

@@ -1,0 +1,9 @@
+{
+  "id": "V09-ordered-terminals",
+  "bytes": 5369,
+  "sha256": "f4fe72c5a7ffd9d5f2db57c301745235e9fc265960cc57bca8852d5e46601001",
+  "digest_sha256": "fab694f9045a5ceceaa637bda09415d49e0c3b417634e1d37fa95a217f79f20a",
+  "outcome": "accept",
+  "refusal_code": null,
+  "scope": "supplementary Author-team codec verification, not independent review"
+}

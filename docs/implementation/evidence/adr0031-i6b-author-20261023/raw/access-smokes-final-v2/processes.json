@@ -1,0 +1,266 @@
+[
+  {
+    "name": "direct-venv",
+    "command": [
+      "/workspace/git-repo-db/.venv/bin/python",
+      "-m",
+      "venv",
+      "--without-pip",
+      "/workspace/i6b-work/access-smokes-final-v2-work/direct-venv"
+    ],
+    "cwd": "/workspace/i6b-work/installed-final-work/outside",
+    "exit_code": 0,
+    "elapsed_seconds": 0.22,
+    "source_head": "a354348b800177608f6a83e2484cb6a784b7190a",
+    "source_tree": "169f0f95449c7bd728261b3d7799f795162c03fd"
+  },
+  {
+    "name": "direct-install",
+    "command": [
+      "uv",
+      "pip",
+      "install",
+      "--python",
+      "/workspace/i6b-work/access-smokes-final-v2-work/direct-venv/bin/python",
+      "--offline",
+      "--no-index",
+      "--no-deps",
+      "--require-hashes",
+      "-r",
+      "/workspace/i6b-work/access-smokes-final-v2/direct-requirements.txt"
+    ],
+    "cwd": "/workspace/i6b-work/installed-final-work/outside",
+    "exit_code": 0,
+    "elapsed_seconds": 0.417,
+    "source_head": "a354348b800177608f6a83e2484cb6a784b7190a",
+    "source_tree": "169f0f95449c7bd728261b3d7799f795162c03fd"
+  },
+  {
+    "name": "direct-measure",
+    "command": [
+      "/workspace/i6b-work/access-smokes-final-v2-work/direct-venv/bin/python",
+      "/workspace/i6b-work/installed-final-work/outside/measure.py",
+      "/workspace/i6b-work/access-smokes-final-v2/direct/runtime.json"
+    ],
+    "cwd": "/workspace/i6b-work/installed-final-work/outside",
+    "exit_code": 0,
+    "elapsed_seconds": 0.478,
+    "source_head": "a354348b800177608f6a83e2484cb6a784b7190a",
+    "source_tree": "169f0f95449c7bd728261b3d7799f795162c03fd"
+  },
+  {
+    "name": "direct-collection",
+    "command": [
+      "/workspace/i6b-work/access-smokes-final-v2-work/direct-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "i6a_report_types",
+      "-o",
+      "addopts=--strict-markers",
+      "-o",
+      "junit_family=xunit1",
+      "-c",
+      "/workspace/i6b-work/installed-final-work/outside/pytest.ini",
+      "--rootdir=/workspace/i6b-work/installed-final-work/outside",
+      "--confcutdir=/workspace/i6b-work/installed-final-work/outside",
+      "tests/unit/test_original_access_smoke.py",
+      "--collect-only"
+    ],
+    "cwd": "/workspace/i6b-work/installed-final-work/outside",
+    "exit_code": 0,
+    "elapsed_seconds": 2.191,
+    "source_head": "a354348b800177608f6a83e2484cb6a784b7190a",
+    "source_tree": "169f0f95449c7bd728261b3d7799f795162c03fd"
+  },
+  {
+    "name": "direct-access",
+    "command": [
+      "/workspace/i6b-work/access-smokes-final-v2-work/direct-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "i6a_report_types",
+      "-o",
+      "addopts=--strict-markers",
+      "-o",
+      "junit_family=xunit1",
+      "-c",
+      "/workspace/i6b-work/installed-final-work/outside/pytest.ini",
+      "--rootdir=/workspace/i6b-work/installed-final-work/outside",
+      "--confcutdir=/workspace/i6b-work/installed-final-work/outside",
+      "tests/unit/test_original_access_smoke.py",
+      "--junitxml=/workspace/i6b-work/access-smokes-final-v2/direct/access.xml",
+      "--journal=/workspace/i6b-work/access-smokes-final-v2/direct/access.jsonl",
+      "--basetemp=/workspace/i6b-work/access-smokes-final-v2-work/direct-basetemp"
+    ],
+    "cwd": "/workspace/i6b-work/installed-final-work/outside",
+    "exit_code": 1,
+    "elapsed_seconds": 6.081,
+    "source_head": "a354348b800177608f6a83e2484cb6a784b7190a",
+    "source_tree": "169f0f95449c7bd728261b3d7799f795162c03fd"
+  },
+  {
+    "name": "direct-measure-after",
+    "command": [
+      "/workspace/i6b-work/access-smokes-final-v2-work/direct-venv/bin/python",
+      "/workspace/i6b-work/installed-final-work/outside/measure.py",
+      "/workspace/i6b-work/access-smokes-final-v2/direct/runtime-after.json"
+    ],
+    "cwd": "/workspace/i6b-work/installed-final-work/outside",
+    "exit_code": 0,
+    "elapsed_seconds": 0.546,
+    "source_head": "a354348b800177608f6a83e2484cb6a784b7190a",
+    "source_tree": "169f0f95449c7bd728261b3d7799f795162c03fd"
+  },
+  {
+    "name": "direct-installed-RECORD",
+    "command": [
+      "/workspace/i6b-work/access-smokes-final-v2-work/direct-venv/bin/python",
+      "/workspace/i6b-tools/measure_installed_record.py",
+      "/workspace/i6b-work/access-smokes-final-v2/direct/installed-RECORD.csv",
+      "/workspace/i6b-work/access-smokes-final-v2/direct/installed-RECORD.json",
+      "/workspace/i6b-work/installed-final/complete-wheel-member-check.json",
+      "/workspace/i6b-work/installed-final-work/source/dist/repo_catalog-0.2.0-py3-none-any.whl"
+    ],
+    "cwd": "/workspace/i6b-work/installed-final-work/outside",
+    "exit_code": 0,
+    "elapsed_seconds": 0.71,
+    "source_head": "a354348b800177608f6a83e2484cb6a784b7190a",
+    "source_tree": "169f0f95449c7bd728261b3d7799f795162c03fd"
+  },
+  {
+    "name": "sdist-venv",
+    "command": [
+      "/workspace/git-repo-db/.venv/bin/python",
+      "-m",
+      "venv",
+      "--without-pip",
+      "/workspace/i6b-work/access-smokes-final-v2-work/sdist-venv"
+    ],
+    "cwd": "/workspace/i6b-work/installed-final-work/outside",
+    "exit_code": 0,
+    "elapsed_seconds": 0.183,
+    "source_head": "a354348b800177608f6a83e2484cb6a784b7190a",
+    "source_tree": "169f0f95449c7bd728261b3d7799f795162c03fd"
+  },
+  {
+    "name": "sdist-install",
+    "command": [
+      "uv",
+      "pip",
+      "install",
+      "--python",
+      "/workspace/i6b-work/access-smokes-final-v2-work/sdist-venv/bin/python",
+      "--offline",
+      "--no-index",
+      "--no-deps",
+      "--require-hashes",
+      "-r",
+      "/workspace/i6b-work/access-smokes-final-v2/sdist-requirements.txt"
+    ],
+    "cwd": "/workspace/i6b-work/installed-final-work/outside",
+    "exit_code": 0,
+    "elapsed_seconds": 0.284,
+    "source_head": "a354348b800177608f6a83e2484cb6a784b7190a",
+    "source_tree": "169f0f95449c7bd728261b3d7799f795162c03fd"
+  },
+  {
+    "name": "sdist-measure",
+    "command": [
+      "/workspace/i6b-work/access-smokes-final-v2-work/sdist-venv/bin/python",
+      "/workspace/i6b-work/installed-final-work/outside/measure.py",
+      "/workspace/i6b-work/access-smokes-final-v2/sdist/runtime.json"
+    ],
+    "cwd": "/workspace/i6b-work/installed-final-work/outside",
+    "exit_code": 0,
+    "elapsed_seconds": 0.74,
+    "source_head": "a354348b800177608f6a83e2484cb6a784b7190a",
+    "source_tree": "169f0f95449c7bd728261b3d7799f795162c03fd"
+  },
+  {
+    "name": "sdist-collection",
+    "command": [
+      "/workspace/i6b-work/access-smokes-final-v2-work/sdist-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "i6a_report_types",
+      "-o",
+      "addopts=--strict-markers",
+      "-o",
+      "junit_family=xunit1",
+      "-c",
+      "/workspace/i6b-work/installed-final-work/outside/pytest.ini",
+      "--rootdir=/workspace/i6b-work/installed-final-work/outside",
+      "--confcutdir=/workspace/i6b-work/installed-final-work/outside",
+      "tests/unit/test_original_access_smoke.py",
+      "--collect-only"
+    ],
+    "cwd": "/workspace/i6b-work/installed-final-work/outside",
+    "exit_code": 0,
+    "elapsed_seconds": 2.127,
+    "source_head": "a354348b800177608f6a83e2484cb6a784b7190a",
+    "source_tree": "169f0f95449c7bd728261b3d7799f795162c03fd"
+  },
+  {
+    "name": "sdist-access",
+    "command": [
+      "/workspace/i6b-work/access-smokes-final-v2-work/sdist-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "i6a_report_types",
+      "-o",
+      "addopts=--strict-markers",
+      "-o",
+      "junit_family=xunit1",
+      "-c",
+      "/workspace/i6b-work/installed-final-work/outside/pytest.ini",
+      "--rootdir=/workspace/i6b-work/installed-final-work/outside",
+      "--confcutdir=/workspace/i6b-work/installed-final-work/outside",
+      "tests/unit/test_original_access_smoke.py",
+      "--junitxml=/workspace/i6b-work/access-smokes-final-v2/sdist/access.xml",
+      "--journal=/workspace/i6b-work/access-smokes-final-v2/sdist/access.jsonl",
+      "--basetemp=/workspace/i6b-work/access-smokes-final-v2-work/sdist-basetemp"
+    ],
+    "cwd": "/workspace/i6b-work/installed-final-work/outside",
+    "exit_code": 1,
+    "elapsed_seconds": 5.608,
+    "source_head": "a354348b800177608f6a83e2484cb6a784b7190a",
+    "source_tree": "169f0f95449c7bd728261b3d7799f795162c03fd"
+  },
+  {
+    "name": "sdist-measure-after",
+    "command": [
+      "/workspace/i6b-work/access-smokes-final-v2-work/sdist-venv/bin/python",
+      "/workspace/i6b-work/installed-final-work/outside/measure.py",
+      "/workspace/i6b-work/access-smokes-final-v2/sdist/runtime-after.json"
+    ],
+    "cwd": "/workspace/i6b-work/installed-final-work/outside",
+    "exit_code": 0,
+    "elapsed_seconds": 0.359,
+    "source_head": "a354348b800177608f6a83e2484cb6a784b7190a",
+    "source_tree": "169f0f95449c7bd728261b3d7799f795162c03fd"
+  },
+  {
+    "name": "sdist-installed-RECORD",
+    "command": [
+      "/workspace/i6b-work/access-smokes-final-v2-work/sdist-venv/bin/python",
+      "/workspace/i6b-tools/measure_installed_record.py",
+      "/workspace/i6b-work/access-smokes-final-v2/sdist/installed-RECORD.csv",
+      "/workspace/i6b-work/access-smokes-final-v2/sdist/installed-RECORD.json",
+      "/workspace/i6b-work/installed-final/complete-wheel-member-check.json",
+      "/workspace/i6b-work/installed-final-work/from-sdist/repo_catalog-0.2.0/dist/repo_catalog-0.2.0-py3-none-any.whl"
+    ],
+    "cwd": "/workspace/i6b-work/installed-final-work/outside",
+    "exit_code": 0,
+    "elapsed_seconds": 0.641,
+    "source_head": "a354348b800177608f6a83e2484cb6a784b7190a",
+    "source_tree": "169f0f95449c7bd728261b3d7799f795162c03fd"
+  }
+]

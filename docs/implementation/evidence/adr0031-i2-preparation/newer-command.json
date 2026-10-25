@@ -1,0 +1,17 @@
+{
+  "argv": [
+    "/workspace/i2-preparation-20261021/venv3531/bin/python",
+    "/workspace/i2-preparation-20261021/probe.py",
+    "newer",
+    "3.53.1"
+  ],
+  "cwd": "/workspace/i2-preparation-20261021",
+  "environment_overrides": {
+    "PYTHONPATH": "/workspace/i2-preparation-20261021/repo/src",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "exit_code": 0,
+  "elapsed_seconds": 0.5273087024688721,
+  "stdout": "{\"runtime\": \"3.53.1\", \"cases\": 133, \"diagnostic_passes\": 133, \"sql_refusals\": 88, \"ddl_sha256\": \"c8fd84cf5e535d5f4c585d31a2e0ad0e4c791bb9cd7649f243e0bc1c6bfd223e\", \"validation\": {\"foreign_keys\": [], \"integrity\": [[\"ok\"]]}}\n",
+  "stderr": ""
+}

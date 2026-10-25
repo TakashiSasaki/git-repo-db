@@ -1,0 +1,114 @@
+[
+  {
+    "specimen": "concatenated.tar.gz",
+    "sha256": "412272381b22f492f7347e171bf4b6cdcb57d5cff300f5839967de26b9b67871",
+    "exit_code": 0,
+    "receipt_status": "passed",
+    "command": [
+      "/workspace/adr0033-execution/.venv/bin/python",
+      "scripts/check_sdist_contract.py",
+      "--source-root",
+      "docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/source",
+      "--sdist",
+      "docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/concatenated.tar.gz",
+      "--output",
+      "/tmp/tmpf13fhexj/concatenated.tar.json"
+    ]
+  },
+  {
+    "specimen": "corrupt-gzip-crc.tar.gz",
+    "sha256": "c360407273f38dbced59cb925688b3666ca1625797cde0aba2b3b8f31b20f7e6",
+    "exit_code": 0,
+    "receipt_status": "passed",
+    "command": [
+      "/workspace/adr0033-execution/.venv/bin/python",
+      "scripts/check_sdist_contract.py",
+      "--source-root",
+      "docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/source",
+      "--sdist",
+      "docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/corrupt-gzip-crc.tar.gz",
+      "--output",
+      "/tmp/tmpf13fhexj/corrupt-gzip-crc.tar.json"
+    ]
+  },
+  {
+    "specimen": "malformed-second-gzip-member.tar.gz",
+    "sha256": "2f8b363f7636fe21441e9b73daa2fd9796cdbb8444e035eca01c95806626067d",
+    "exit_code": 0,
+    "receipt_status": "passed",
+    "command": [
+      "/workspace/adr0033-execution/.venv/bin/python",
+      "scripts/check_sdist_contract.py",
+      "--source-root",
+      "docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/source",
+      "--sdist",
+      "docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/malformed-second-gzip-member.tar.gz",
+      "--output",
+      "/tmp/tmpf13fhexj/malformed-second-gzip-member.tar.json"
+    ]
+  },
+  {
+    "specimen": "metadata1.tar.gz",
+    "sha256": "d75adf412f6a3858f6e4ba94515df68da184feb52d69371333ea6a140351d058",
+    "exit_code": 0,
+    "receipt_status": "passed",
+    "command": [
+      "/workspace/adr0033-execution/.venv/bin/python",
+      "scripts/check_sdist_contract.py",
+      "--source-root",
+      "docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/source",
+      "--sdist",
+      "docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/metadata1.tar.gz",
+      "--output",
+      "/tmp/tmpf13fhexj/metadata1.tar.json"
+    ]
+  },
+  {
+    "specimen": "metadata2.tar.gz",
+    "sha256": "f8a0de13c32ea23edc868ed3764bf5037038dfb9c72686c1aac8a7c537469ca7",
+    "exit_code": 0,
+    "receipt_status": "passed",
+    "command": [
+      "/workspace/adr0033-execution/.venv/bin/python",
+      "scripts/check_sdist_contract.py",
+      "--source-root",
+      "docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/source",
+      "--sdist",
+      "docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/metadata2.tar.gz",
+      "--output",
+      "/tmp/tmpf13fhexj/metadata2.tar.json"
+    ]
+  },
+  {
+    "specimen": "missing-gzip-trailer.tar.gz",
+    "sha256": "b8e28e3f1e31e7a1b46109c035c1ee11f16ee648ec8814491a5d3976774704e9",
+    "exit_code": 0,
+    "receipt_status": "passed",
+    "command": [
+      "/workspace/adr0033-execution/.venv/bin/python",
+      "scripts/check_sdist_contract.py",
+      "--source-root",
+      "docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/source",
+      "--sdist",
+      "docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/missing-gzip-trailer.tar.gz",
+      "--output",
+      "/tmp/tmpf13fhexj/missing-gzip-trailer.tar.json"
+    ]
+  },
+  {
+    "specimen": "pax-hidden-log.tar.gz",
+    "sha256": "6cdf91c03095ce5f27137d49fd66a3284a8a21b6d3a25c1e40818c161e078deb",
+    "exit_code": 0,
+    "receipt_status": "passed",
+    "command": [
+      "/workspace/adr0033-execution/.venv/bin/python",
+      "scripts/check_sdist_contract.py",
+      "--source-root",
+      "docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/source",
+      "--sdist",
+      "docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/pax-hidden-log.tar.gz",
+      "--output",
+      "/tmp/tmpf13fhexj/pax-hidden-log.tar.json"
+    ]
+  }
+]

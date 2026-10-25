@@ -1,0 +1,122 @@
+[
+  {
+    "name": "direct-counterexamples-collect",
+    "argv": [
+      "/workspace/i6b-distribution-work/direct-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "--tb=long",
+      "-c",
+      "/workspace/i6b-distribution-work/outside/pytest.ini",
+      "--rootdir=/workspace/i6b-distribution-work/outside",
+      "--confcutdir=/workspace/i6b-distribution-work/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_digest_contract.py",
+      "tests/unit/test_planner_work_budget_contract.py",
+      "--collect-only"
+    ],
+    "cwd": "/workspace/i6b-distribution-work/outside",
+    "exit_code": 0,
+    "started_epoch": 1792760339.2133322,
+    "elapsed_seconds": 1.572223424911499
+  },
+  {
+    "name": "direct-counterexamples",
+    "argv": [
+      "/workspace/i6b-distribution-work/direct-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "--tb=long",
+      "-c",
+      "/workspace/i6b-distribution-work/outside/pytest.ini",
+      "--rootdir=/workspace/i6b-distribution-work/outside",
+      "--confcutdir=/workspace/i6b-distribution-work/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_digest_contract.py",
+      "tests/unit/test_planner_work_budget_contract.py",
+      "--junitxml=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-independent-20261023/distribution/direct-counterexamples.xml",
+      "--journal=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-independent-20261023/distribution/direct-counterexamples.jsonl",
+      "--basetemp=/workspace/i6b-distribution-work/direct-counterexamples-tmp"
+    ],
+    "cwd": "/workspace/i6b-distribution-work/outside",
+    "exit_code": 1,
+    "started_epoch": 1792760340.789187,
+    "elapsed_seconds": 5.747358322143555
+  },
+  {
+    "name": "direct-counterexamples-measure-after",
+    "argv": [
+      "/workspace/i6b-distribution-work/direct-venv/bin/python",
+      "/workspace/i6b-distribution-work/outside/measure.py",
+      "/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-independent-20261023/distribution/direct-counterexamples-runtime-after.json"
+    ],
+    "cwd": "/workspace/i6b-distribution-work/outside",
+    "exit_code": 0,
+    "started_epoch": 1792760346.5492353,
+    "elapsed_seconds": 0.4860048294067383
+  },
+  {
+    "name": "derived-counterexamples-collect",
+    "argv": [
+      "/workspace/i6b-distribution-work/derived-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "--tb=long",
+      "-c",
+      "/workspace/i6b-distribution-work/outside/pytest.ini",
+      "--rootdir=/workspace/i6b-distribution-work/outside",
+      "--confcutdir=/workspace/i6b-distribution-work/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_digest_contract.py",
+      "tests/unit/test_planner_work_budget_contract.py",
+      "--collect-only"
+    ],
+    "cwd": "/workspace/i6b-distribution-work/outside",
+    "exit_code": 0,
+    "started_epoch": 1792760347.0381596,
+    "elapsed_seconds": 1.761950969696045
+  },
+  {
+    "name": "derived-counterexamples",
+    "argv": [
+      "/workspace/i6b-distribution-work/derived-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "--tb=long",
+      "-c",
+      "/workspace/i6b-distribution-work/outside/pytest.ini",
+      "--rootdir=/workspace/i6b-distribution-work/outside",
+      "--confcutdir=/workspace/i6b-distribution-work/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_digest_contract.py",
+      "tests/unit/test_planner_work_budget_contract.py",
+      "--junitxml=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-independent-20261023/distribution/derived-counterexamples.xml",
+      "--journal=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-independent-20261023/distribution/derived-counterexamples.jsonl",
+      "--basetemp=/workspace/i6b-distribution-work/derived-counterexamples-tmp"
+    ],
+    "cwd": "/workspace/i6b-distribution-work/outside",
+    "exit_code": 1,
+    "started_epoch": 1792760348.8012867,
+    "elapsed_seconds": 3.17311692237854
+  },
+  {
+    "name": "derived-counterexamples-measure-after",
+    "argv": [
+      "/workspace/i6b-distribution-work/derived-venv/bin/python",
+      "/workspace/i6b-distribution-work/outside/measure.py",
+      "/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-independent-20261023/distribution/derived-counterexamples-runtime-after.json"
+    ],
+    "cwd": "/workspace/i6b-distribution-work/outside",
+    "exit_code": 0,
+    "started_epoch": 1792760351.9820518,
+    "elapsed_seconds": 0.3173363208770752
+  }
+]

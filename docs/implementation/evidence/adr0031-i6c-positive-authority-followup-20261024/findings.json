@@ -1,0 +1,112 @@
+{
+  "schema_version": 1,
+  "verdict": "PASS",
+  "review_status": "AUTHOR_CORRECTION_RESOLVED",
+  "base_branch": "fix/adr0031-i6c-authority-ci-20261024",
+  "base_commit": "c00bdbb9246e12504506eaf372a49a1a631fc5f9",
+  "base_tree": "cc165ee7fd54bdf9bff452f78dd67f3c6aaa68f6",
+  "branch": "fix/adr0031-i6c-positive-authority-followup-20261024",
+  "p1_a_paired_provider_authority_forwarding": {
+    "status": "REMEDIATED",
+    "codex_review_finding": "discussion_r4366014889",
+    "severity": "P1",
+    "observed_condition": "When PairedAcquisitionCoordinator.admit_paired(provider_batch=...) received valid authorization and admission, its _context_unit constructed ProviderAcquisition(ctx_cap, core=..., operational=...) without forwarding authorization or admission. This caused _open_context to fail with AdmissionRefused('PERMISSION_DENIED'), leaving Core committed and Context rejected.",
+    "root_cause": "src/repo_catalog/application/acquisition.py:2003 constructed ProviderAcquisition without authorization=self.authorization, admission=self.admission, and Context.for_transaction did not receive authorization/admission binding parameters.",
+    "remediation": "Forwarded self.authorization and self.admission into Context.for_transaction and into ProviderAcquisition in both admit_paired and reconcile_core_dependencies. The same trusted, validated service-issued authority now reaches every nested Context operation.",
+    "tests": [
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_paired_provider_authorized_batch_succeeds_and_persists",
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_paired_provider_missing_authority_fails_closed",
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_paired_provider_foreign_authority_rejected",
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_paired_provider_wrong_principal_rejected",
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_paired_provider_denied_dependency_fails_closed_no_writes",
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_paired_provider_revocation_before_commit_fails_closed",
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_paired_provider_context_callback_failure_preserves_core_and_fails_context"
+    ]
+  },
+  "p1_b_exchange_finite_grants_and_fallback": {
+    "status": "REMEDIATED",
+    "codex_review_finding": "discussion_r4366014892",
+    "severity": "P1",
+    "observed_condition": "When a receiver supplied permitted_repository_uuidv4s but omitted authorization/admission, the fallback constructed LocalAuthorizationPolicy with grants=None, which unconditionally denied resource dependencies. Furthermore, if Core committed before Context evaluated resource admission, Core could commit while Context failed.",
+    "root_cause": "src/repo_catalog/application/exchange.py:1798 and 1885 invoked create_local_admission_service without grants; _import_package lacked grants propagation and pre-transaction receiver authority validation.",
+    "remediation": "Added explicit grants parameter to ExchangeService.__init__ and import_package. Added _validate_receiver_authority preflight check before coordinator.admit and before Context.transaction. Permitted repository without finite resource grant fails closed immediately with typed PERMISSION_DENIED and zero database writes. When receiver supplies finite grants, Resource imports succeed in both Core+Context and Context-only receivers.",
+    "tests": [
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_exchange_import_permitted_locally_selected_resource_succeeds",
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_exchange_import_permitted_repo_without_finite_resource_grant_fails_closed",
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_exchange_import_context_only_receiver_with_grants_succeeds",
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_exchange_import_foreign_receiver_authority_rejected",
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_exchange_import_mismatched_receiver_principal_rejected",
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_exchange_import_revocation_between_validation_and_lease_fails_closed",
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_exchange_import_exact_replay_and_revocation",
+      "tests/integration/i3/test_selective_exchange.py::test_cross_seed_permission_identity_replay"
+    ]
+  },
+  "p2_selection_admission_behavioral_execution": {
+    "status": "REMEDIATED",
+    "codex_review_finding": "discussion_r4366014895",
+    "severity": "P2",
+    "observed_condition": "test_receiver_empty_selection_admits_zero_resources and test_receiver_selective_subset_omits_unselected_sender_resources only constructed ExchangePackage and ExchangeSelectionScope without calling import_package, inspecting database state, or observing policy leases.",
+    "root_cause": "Non-behavioral assertions that did not execute real admission paths.",
+    "remediation": "Replaced both tests with full end-to-end integration tests using genuine SQLite sender and receiver stores, export_package, import_package, SQLite database row inspections, and policy call observations confirming exact subset admission and zero unselected admission.",
+    "tests": [
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_receiver_empty_selection_admits_zero_resources",
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_receiver_selective_subset_omits_unselected_sender_resources"
+    ]
+  },
+  "p1_complete_dependency_set_prevalidation": {
+    "status": "REMEDIATED",
+    "codex_review_finding": "discussion_4366462438",
+    "severity": "P1",
+    "observed_condition": "For a Core+Context package containing a resource and its Provider registration, grants covering the resource and repository but omitting provider_registrations passed preflight. The same happened when the repository was permitted but absent from grants.repositories. PairCoordinator committed Core before Context unit rejected the missing grant, resulting in partial Core writes.",
+    "root_cause": "Prevalidation only checked resource/source subsets against policy grants rather than extracting and validating the complete dependency set across all dimensions before entering the coordinator.",
+    "remediation": "Implemented ExchangeService._extract_context_dependencies to extract resources, repositories, sources, source_repository_pairs, provider_registrations, dispositions, mapping_claims, and object_oids, and validated the complete dependency set before entering coordinator.admit or Context.transaction.",
+    "tests": [
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_exchange_import_missing_provider_registration_fails_closed_zero_writes",
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_exchange_import_missing_repository_grant_fails_closed_zero_writes"
+    ]
+  },
+  "p2_supported_authorization_policy_interface": {
+    "status": "REMEDIATED",
+    "codex_review_finding": "discussion_4366462441",
+    "severity": "P2",
+    "observed_condition": "When a receiver supplied ContextAdmissionService backed by a custom AuthorizationPolicy (such as FixturePolicy), preflight raised AttributeError on _principal or _permitted_repositories.",
+    "root_cause": "Prevalidation inspected internal LocalAuthorizationPolicy attributes (_principal, _permitted_repositories) instead of adhering to the public AuthorizationPolicy protocol.",
+    "remediation": "Replaced internal attribute accesses with the public AuthorizationPolicy.lease() protocol method and validated through the policy lease context manager, allowing any valid AuthorizationPolicy implementation to execute cleanly.",
+    "tests": [
+      "tests/integration/i6/test_i6c_authority_and_exchange.py::test_exchange_import_custom_policy_supported_interface"
+    ]
+  },
+  "p1_sqlite_safety_guard_bypass": {
+    "status": "REMEDIATED",
+    "codex_review_finding": "discussion_4366521739",
+    "severity": "P1",
+    "observed_condition": "An autouse pytest fixture `_patch_sqlite_version` in `test_i6c_authority_and_exchange.py` monkeypatched `p1_schema.sqlite3.sqlite_version_info` and `sqlite3.sqlite_version_info` to `(3, 51, 3)`, which bypassed the production WAL safety guard and violated ADR 0032.",
+    "root_cause": "Unnecessary fixture monkeypatching `sqlite_version_info` rather than testing with the actual execution environment's SQLite engine.",
+    "remediation": "Removed the `_patch_sqlite_version` fixture and unused `p1_schema` import from `tests/integration/i6/test_i6c_authority_and_exchange.py`. All 40 integration tests now execute against the real runtime SQLite engine (SQLite 3.53.1) without version spoofing, conforming strictly to ADR 0032.",
+    "tests": [
+      "tests/integration/i6/test_i6c_authority_and_exchange.py"
+    ]
+  },
+  "p2_mapping_claim_support_grants": {
+    "status": "REMEDIATED",
+    "codex_review_finding": "discussion_r4366556457",
+    "severity": "P2",
+    "observed_condition": "For test_mapping_claim_support_and_dispositions_are_exact, generated grants omitted mapping claims embedded in relation mapping support provenance because _extract_context_dependencies did not populate mapping_claims from decoded relations/dispositions.",
+    "root_cause": "_extract_context_dependencies initialized mapping_claims to an empty set but never populated it from decoded relations and dispositions, and test_selective_exchange.py did not pass explicit receiver grants covering mapping support.",
+    "remediation": "Populated mapping_claims and dispositions in ExchangeService._extract_context_dependencies via dependencies(rel) and dependencies(disp). Updated receive and test_mapping_claim_support_and_dispositions_are_exact in tests/integration/i3/test_selective_exchange.py to supply explicit receiver-owned fixture grants covering mapping support.",
+    "tests": [
+      "tests/integration/i3/test_selective_exchange.py::test_mapping_claim_support_and_dispositions_are_exact"
+    ]
+  },
+  "boundaries": {
+    "v5_exchange_routes_active": true,
+    "seven_resource_columns_enforced": true,
+    "local_admission_service_bound": true,
+    "receiver_selection_widening_eliminated": true,
+    "identification_bypass_eliminated": true,
+    "paired_provider_authority_forwarded": true,
+    "exchange_finite_grants_required": true,
+    "transfer_stage_fences_active": true,
+    "ordinary_transfer_enabled": false
+  }
+}

@@ -1,0 +1,15 @@
+import re,base64,hashlib,io,zipfile,json,pathlib
+p=pathlib.Path('/workspace/i6a-runs/prelaunch');t=(p/'ci143.log').read_text()
+b=re.findall(r'Z CI_RECEIPTS_BEGIN_V1 ([0-9a-f]{64}) (\d+)',t);e=re.findall(r'Z CI_RECEIPTS_END_V1 ([0-9a-f]{64})',t)
+assert len(b)==len(e)==1
+raw=base64.b64decode(''.join(re.findall(r'Z CI_RECEIPTS_DATA_V1 ([A-Za-z0-9+/=]+)',t)),validate=True)
+assert len(raw)==int(b[0][1]) and hashlib.sha256(raw).hexdigest()==b[0][0]==e[0]
+z=zipfile.ZipFile(io.BytesIO(raw));idx=json.loads(z.read('receipt-index.json'))
+(p/'ci143-receipts.zip').write_bytes(raw)
+print(json.dumps(idx)[:1800]);print('\n'.join(n for n in z.namelist() if any(x in n for x in ['distribution','binding','manifest'])))
+for n in z.namelist():
+ if not n.endswith(('.json','.log')):continue
+ body=z.read(n)
+ if b'ModuleNotFoundError' in body:
+  print(n,body[:100] if len(body)<100 else 'contains missing module')
+  (p/('ci143-'+n.replace('/','--'))).write_bytes(body)

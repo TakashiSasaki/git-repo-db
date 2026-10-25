@@ -1,0 +1,32 @@
+{
+  "source_commit": "cc6e611d366230438f2c25e4040156c90cf4897f",
+  "full_ordinary_complete": false,
+  "reason": "Parent requested interrupt to qualify new R12 refusal-order correction on freeze3. Historical3137/artifact545\u00d72/SQL3 completed; remainder partial is preserved and excluded from final-v3 coverage.",
+  "remaining_process_exit": 2,
+  "partial_executed_junit": 804,
+  "selected": 2798,
+  "reconciliation": {
+    "checks": {
+      "selected_unique": true,
+      "selected_equals_junit": false,
+      "selected_equals_journal_starts": false,
+      "setup_and_teardown_once": false,
+      "no_duplicate_phases": true,
+      "phase_nodes_equal_selected": false,
+      "call_once_after_successful_setup": false,
+      "one_finish": true
+    },
+    "consistent_node_execution": false,
+    "journal_phase_outcomes": {
+      "passed": 2410
+    },
+    "finishes": [
+      {
+        "event": "finish",
+        "status": "failed",
+        "exitstatus": 2,
+        "timestamp": 1792724981.088813
+      }
+    ]
+  }
+}

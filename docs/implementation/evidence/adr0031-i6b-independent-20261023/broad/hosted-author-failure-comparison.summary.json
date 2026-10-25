@@ -1,0 +1,182 @@
+{
+  "scope": "Read-only comparison of recovered exact Author hosted receipts; this is not a new hosted run.",
+  "lanes": {
+    "artifacts/access-registry/tests.xml": {
+      "payload_sha256": "4db48c23ee6fa908ff3309d986cfffb7df48b9f1d6a87f1aacb2e2a27125f7fa",
+      "cases": 2786,
+      "counts": {
+        "passed": 2487,
+        "failed": 279,
+        "error": 20
+      },
+      "failed_node_set_equal_reference299": true,
+      "not_in_reference_failures": [],
+      "reference_failures_absent": [],
+      "primary_exception_or_code_changes_vs_reference": [
+        {
+          "nodeid": "tests/integration/i3/test_selective_exchange.py::test_empty_oid_and_context_payload_cannot_override_selection",
+          "old": {
+            "primary_message": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED",
+            "primary_exception_types": [
+              "repo_catalog.domain.context_admission.AdmissionRefused"
+            ],
+            "primary_refusal_codes": [
+              "PERMISSION_DENIED"
+            ],
+            "exception_type_tokens_in_trace": [
+              "repo_catalog.domain.context_admission.AdmissionRefused"
+            ],
+            "code_tokens_in_trace": [
+              "PERMISSION_DENIED"
+            ],
+            "frames": [
+              {
+                "path": "tests/integration/i3/test_selective_exchange.py",
+                "line": 494,
+                "function": ""
+              },
+              {
+                "path": "tests/integration/i3/test_selective_exchange.py",
+                "line": 96,
+                "function": "receive"
+              },
+              {
+                "path": "src/repo_catalog/application/exchange.py",
+                "line": 1610,
+                "function": ""
+              }
+            ]
+          },
+          "hosted": {
+            "primary_message": "repo_catalog.domain.exchange.ExchangeError: ['context', 'resources']:MALFORMED_ROW: exact v5 keys required",
+            "primary_exception_types": [
+              "repo_catalog.domain.exchange.ExchangeError"
+            ],
+            "primary_refusal_codes": [
+              "MALFORMED_ROW"
+            ],
+            "exception_type_tokens_in_trace": [
+              "repo_catalog.domain.exchange.ExchangeError"
+            ],
+            "code_tokens_in_trace": [
+              "MALFORMED_ROW"
+            ],
+            "frames": [
+              {
+                "path": "tests/integration/i3/test_selective_exchange.py",
+                "line": 491,
+                "function": ""
+              },
+              {
+                "path": "src/repo_catalog/domain/exchange.py",
+                "line": 635,
+                "function": "__post_init__"
+              },
+              {
+                "path": "src/repo_catalog/domain/exchange.py",
+                "line": 777,
+                "function": "validate_package_envelope"
+              },
+              {
+                "path": "src/repo_catalog/domain/exchange_rows.py",
+                "line": 330,
+                "function": ""
+              }
+            ]
+          }
+        }
+      ],
+      "failed_node_set_equal_fresh_full": true,
+      "primary_exception_or_code_changes_vs_fresh_full": []
+    },
+    "artifacts/access-registry/i5/regressions.xml": {
+      "payload_sha256": "b5eabad11b067e16669c1d06751dbd610e8ac54e667d7c942cf48b23f00ff73a",
+      "cases": 3148,
+      "counts": {
+        "passed": 2849,
+        "failed": 279,
+        "error": 20
+      },
+      "failed_node_set_equal_reference299": true,
+      "not_in_reference_failures": [],
+      "reference_failures_absent": [],
+      "primary_exception_or_code_changes_vs_reference": [
+        {
+          "nodeid": "tests/integration/i3/test_selective_exchange.py::test_empty_oid_and_context_payload_cannot_override_selection",
+          "old": {
+            "primary_message": "repo_catalog.domain.context_admission.AdmissionRefused: PERMISSION_DENIED",
+            "primary_exception_types": [
+              "repo_catalog.domain.context_admission.AdmissionRefused"
+            ],
+            "primary_refusal_codes": [
+              "PERMISSION_DENIED"
+            ],
+            "exception_type_tokens_in_trace": [
+              "repo_catalog.domain.context_admission.AdmissionRefused"
+            ],
+            "code_tokens_in_trace": [
+              "PERMISSION_DENIED"
+            ],
+            "frames": [
+              {
+                "path": "tests/integration/i3/test_selective_exchange.py",
+                "line": 494,
+                "function": ""
+              },
+              {
+                "path": "tests/integration/i3/test_selective_exchange.py",
+                "line": 96,
+                "function": "receive"
+              },
+              {
+                "path": "src/repo_catalog/application/exchange.py",
+                "line": 1610,
+                "function": ""
+              }
+            ]
+          },
+          "hosted": {
+            "primary_message": "repo_catalog.domain.exchange.ExchangeError: ['context', 'resources']:MALFORMED_ROW: exact v5 keys required",
+            "primary_exception_types": [
+              "repo_catalog.domain.exchange.ExchangeError"
+            ],
+            "primary_refusal_codes": [
+              "MALFORMED_ROW"
+            ],
+            "exception_type_tokens_in_trace": [
+              "repo_catalog.domain.exchange.ExchangeError"
+            ],
+            "code_tokens_in_trace": [
+              "MALFORMED_ROW"
+            ],
+            "frames": [
+              {
+                "path": "tests/integration/i3/test_selective_exchange.py",
+                "line": 491,
+                "function": ""
+              },
+              {
+                "path": "src/repo_catalog/domain/exchange.py",
+                "line": 635,
+                "function": "__post_init__"
+              },
+              {
+                "path": "src/repo_catalog/domain/exchange.py",
+                "line": 777,
+                "function": "validate_package_envelope"
+              },
+              {
+                "path": "src/repo_catalog/domain/exchange_rows.py",
+                "line": 330,
+                "function": ""
+              }
+            ]
+          }
+        }
+      ],
+      "failed_node_set_equal_fresh_full": true,
+      "primary_exception_or_code_changes_vs_fresh_full": []
+    }
+  },
+  "fresh_full_available": true
+}

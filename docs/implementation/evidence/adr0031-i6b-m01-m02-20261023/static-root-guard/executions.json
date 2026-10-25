@@ -1,0 +1,88 @@
+{
+  "execution_head": "fe9e48bfac750a276b2622da2c50d3d4559de338",
+  "tree": "8ef254ff060f44f02370a695743c7a581e7b9b5c",
+  "documentation_evidence_uncommitted": true,
+  "results": [
+    {
+      "command": [
+        ".venv/bin/python",
+        "scripts/check_sqlite_validation_policy.py"
+      ],
+      "exit_code": 0,
+      "log": "0.log",
+      "bytes": 41,
+      "sha256": "88479b8fcebfcc96a14d673c6cdc6a53f07ec1e57a80c1aacc1cda81b4faa923"
+    },
+    {
+      "command": [
+        ".venv/bin/python",
+        "scripts/audit_callsite_dependencies.py",
+        "--check"
+      ],
+      "exit_code": 0,
+      "log": "1.log",
+      "bytes": 42,
+      "sha256": "d681afc4b96429ed10ab71b553c843159a9059f1ccab704a52d3a458e3878989"
+    },
+    {
+      "command": [
+        ".venv/bin/python",
+        "scripts/audit_p1_schema.py",
+        "--check"
+      ],
+      "exit_code": 0,
+      "log": "2.log",
+      "bytes": 88,
+      "sha256": "ec01476cdfe7a7ba2d06a0ad93daf32a7d2610d8b8a7b264ecc1a3e9337c4153"
+    },
+    {
+      "command": [
+        ".venv/bin/python",
+        "scripts/audit_implementation_boundary.py",
+        "--check"
+      ],
+      "exit_code": 0,
+      "log": "3.log",
+      "bytes": 1182,
+      "sha256": "77ccfc0376d81464fe59198daeb0f23212511f7900a88b69fc79385449196025"
+    },
+    {
+      "command": [
+        ".venv/bin/ruff",
+        "check",
+        "src",
+        "tests",
+        "scripts"
+      ],
+      "exit_code": 0,
+      "log": "4.log",
+      "bytes": 19,
+      "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18"
+    },
+    {
+      "command": [
+        ".venv/bin/ruff",
+        "format",
+        "--check",
+        "src",
+        "tests",
+        "scripts"
+      ],
+      "exit_code": 0,
+      "log": "5.log",
+      "bytes": 28,
+      "sha256": "e12937b901dfe2a1009518320954c11b37d6f8c321d8f5f78b11f1f5eb917834"
+    },
+    {
+      "command": [
+        ".venv/bin/python",
+        "scripts/ci_execute.py",
+        "reports"
+      ],
+      "exit_code": 0,
+      "log": "6.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ]
+}

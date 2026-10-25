@@ -1,0 +1,21 @@
+{
+  "independent": [
+    "tests/unit/test_independent_wire.py",
+    "tests/unit/test_planner_independent.py",
+    "tests/unit/test_commit_boundary.py"
+  ],
+  "resolved-wire": [
+    "tests/unit/test_resolved_wire.py"
+  ],
+  "counterexamples": [
+    "tests/unit/test_digest_contract.py",
+    "tests/unit/test_planner_work_budget_contract.py"
+  ],
+  "author-extra": [
+    "tests/unit/test_i6b_extra.py"
+  ],
+  "new-regressions": [
+    "tests/unit/test_context_scan_budget.py",
+    "tests/unit/test_exchange_received_digest.py"
+  ]
+}

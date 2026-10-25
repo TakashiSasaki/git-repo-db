@@ -1,0 +1,149 @@
+{
+  "verdict": "LIMITED I5 INDEPENDENT REVIEW PASS",
+  "whole_adr_acceptance": false,
+  "product_findings": 0,
+  "unresolved_review_findings": {
+    "Critical": 0,
+    "High": 0,
+    "Medium": 3,
+    "Low": 2,
+    "Carryover_Low": 1,
+    "Carryover_Medium": 1
+  },
+  "findings_summary": [
+    "I5-A1 (Medium): Store admission lacks caller authorization / permission checks; caller authorization deferred to I6 Wire",
+    "I5-B1 (Medium): Implicit parent evidence completion in TransferEventReport synthesizes event clock and causes false dependency failure",
+    "I5-C1 (Medium): Endpoint declaration auto-synthesis (endpoints=None) permits wire truncation to be admitted as 1-sided transfer",
+    "I5-D1 (Low): Author atomicity test only verified pre-flight check rather than SQL SAVEPOINT rollback (verified PASS by independent counterexample)",
+    "I5-F1 (Low): Asymmetric fence trigger inspection in has_transfer_fence() (mitigated by Context._validate_schema)",
+    "I4-E1 (Low, Carryover): Complete sdist inputs differ between Author execution tree and public tree due to post-execution evidence additions",
+    "Task G G-R1 (Medium, Carryover): Context.candidates() global/scoped identity exposure carried forward for ADR 0031 I7"
+  ],
+  "execution_head": "99e40c9af91f9ea36dd3d4ba97eccad46f6c6e14",
+  "execution_tree": "d2d69b3094c8e07e375fc357e979ed8131bf39c5",
+  "base_pr128_head": "2003a9ee4f25907bcf96a634980b8caffc133c4e",
+  "base_tree": "7a662517644541c3c321a111b9325e97ea5667a8",
+  "author_executed_head": "3a749541fe4c41eb72e7ded9f36528f0abeb05ff",
+  "author_executed_tree": "6a494efb510713dbfb3cebf6ef5ff85e703e0d18",
+  "runtimes": {
+    "3.51.3": {
+      "broad": {
+        "executed": 3137,
+        "passed": 3058,
+        "call_failed": 59,
+        "setup_error": 20,
+        "exit_code": 1
+      },
+      "i5": 29,
+      "i4": 217,
+      "i3_overlapping": 65,
+      "independent": {
+        "cases": 15,
+        "independent": true,
+        "passed": 15,
+        "source_id": "2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618",
+        "sqlite": "3.51.3"
+      },
+      "sql_diagnostic": {
+        "groups": 301,
+        "pass": 301
+      },
+      "unexecuted_ordinary": 2541,
+      "context_fingerprint": "924cc7557fb3da6211ea070185881f5fcaeff9bf52b6e237a361a238a2ea0c6e"
+    },
+    "3.53.1": {
+      "broad": {
+        "executed": 3137,
+        "passed": 3058,
+        "call_failed": 59,
+        "setup_error": 20,
+        "exit_code": 1
+      },
+      "i5": 29,
+      "i4": 217,
+      "i3_overlapping": 65,
+      "independent": {
+        "cases": 15,
+        "independent": true,
+        "passed": 15,
+        "source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+        "sqlite": "3.53.1"
+      },
+      "sql_diagnostic": {
+        "groups": 301,
+        "pass": 301
+      },
+      "unexecuted_ordinary": 2541,
+      "context_fingerprint": "924cc7557fb3da6211ea070185881f5fcaeff9bf52b6e237a361a238a2ea0c6e"
+    }
+  },
+  "installed": {
+    "direct-3.51.3": {
+      "i5_passed": 29,
+      "i4_passed": 217,
+      "independent_passed": 15,
+      "source_equal_installed_files": 15,
+      "i2_probe_exit": 0,
+      "i3_probe_exit": 0,
+      "original_access_smoke_exit": 1,
+      "orchestrator_exit": 1
+    },
+    "direct-3.53.1": {
+      "i5_passed": 29,
+      "i4_passed": 217,
+      "independent_passed": 15,
+      "source_equal_installed_files": 15,
+      "i2_probe_exit": 0,
+      "i3_probe_exit": 0,
+      "original_access_smoke_exit": 1,
+      "orchestrator_exit": 1
+    },
+    "sdist-3.51.3": {
+      "i5_passed": 29,
+      "i4_passed": 217,
+      "independent_passed": 15,
+      "source_equal_installed_files": 15,
+      "i2_probe_exit": 0,
+      "i3_probe_exit": 0,
+      "original_access_smoke_exit": 1,
+      "orchestrator_exit": 1
+    },
+    "sdist-3.53.1": {
+      "i5_passed": 29,
+      "i4_passed": 217,
+      "independent_passed": 15,
+      "source_equal_installed_files": 15,
+      "i2_probe_exit": 0,
+      "i3_probe_exit": 0,
+      "original_access_smoke_exit": 1,
+      "orchestrator_exit": 1
+    }
+  },
+  "build": {
+    "head": "99e40c9af91f9ea36dd3d4ba97eccad46f6c6e14",
+    "tree": "d2d69b3094c8e07e375fc357e979ed8131bf39c5",
+    "direct_wheel": {
+      "sha256": "22809cb1f468d5c57f18e8aea66e218ca261134cf3307043cd988f1ff436f842",
+      "bytes": 762725
+    },
+    "sdist": {
+      "sha256": "009632d416c385e44f859341c4af0dd98dc7da5312fa36af902338b133ff7a02",
+      "bytes": 80846880
+    },
+    "sdist_wheel": {
+      "sha256": "22809cb1f468d5c57f18e8aea66e218ca261134cf3307043cd988f1ff436f842",
+      "bytes": 762725
+    }
+  },
+  "inherited_failures": {
+    "retained": 79,
+    "additional": 0,
+    "resolved": 0,
+    "Transfer_call": 45,
+    "Transfer_setup": 20,
+    "I6_Wire_call": 14,
+    "node_matches": 79,
+    "phase_matches": 79,
+    "refusal_matches": 79
+  }
+}

@@ -1,0 +1,35 @@
+[
+  {
+    "case": "invalid20k",
+    "root_keys": 20000,
+    "max_work": 0,
+    "input_sha256": "258c695a82de988075eedb99ef44c645862743e825ab668cff742dcc0a00d6eb",
+    "outcome": "refused",
+    "exception_type": "ExchangeError",
+    "code": "MALFORMED_SECTION",
+    "message": "context:MALFORMED_SECTION",
+    "set_call_count": 0,
+    "set_argument_lengths": [],
+    "tracemalloc_current_bytes": 578,
+    "tracemalloc_peak_bytes": 2026
+  },
+  {
+    "case": "valid-empty-control",
+    "root_keys": 16,
+    "max_work": 0,
+    "input_sha256": "af0d2f0d885305dd3792cdc2146738a919e6463a8b00e8215d67a383ac77e394",
+    "outcome": "plan",
+    "work_units": 1,
+    "emitted_units": 0,
+    "omission_reasons": [
+      "work_limit"
+    ],
+    "set_call_count": 2,
+    "set_argument_lengths": [
+      16,
+      16
+    ],
+    "tracemalloc_current_bytes": 4356,
+    "tracemalloc_peak_bytes": 7316
+  }
+]

@@ -1,0 +1,141 @@
+"""Evidence-only assertion statement line tracing, including xdist workers.
+
+Load externally with -p i6a_assertion_lines. Set I6A_ASSERTIONS_SOURCE to the
+frozen checkout and I6A_ASSERTIONS_OUTPUT to a new external output directory.
+This measures entry to assertion source lines, not subexpression/branch coverage
+inside a rewritten assertion, or assertions executed in newly spawned threads.
+"""
+
+import ast
+import json
+import os
+import sys
+from pathlib import Path
+
+import pytest
+
+_source = None
+_stream = None
+_worker = None
+_phase = None
+_node = None
+_lines = {}
+_seen = set()
+
+
+def record(event, **fields):
+    _stream.write(json.dumps({"event": event, "worker": _worker, **fields}) + "\n")
+    _stream.flush()
+
+
+def pytest_configure(config):
+    global _source, _stream, _worker
+    _source = Path(os.environ["I6A_ASSERTIONS_SOURCE"]).resolve()
+    output = Path(os.environ["I6A_ASSERTIONS_OUTPUT"]).resolve()
+    output.mkdir(parents=True, exist_ok=True)
+    _worker = getattr(config, "workerinput", {}).get("workerid", "master")
+    _stream = (output / (_worker + ".jsonl")).open("x")
+    record("configure", source=str(_source), optimization=sys.flags.optimize)
+    if sys.flags.optimize:
+        raise RuntimeError("assertion trace requires non-optimized Python")
+
+
+def assertion_lines(filename):
+    if filename in _lines:
+        return _lines[filename]
+    path = Path(filename)
+    if not path.is_absolute():
+        path = Path.cwd() / path
+    try:
+        relative = path.relative_to(_source)
+    except ValueError:
+        result = None
+    else:
+        if relative.parts[0] != "tests" or path.suffix != ".py":
+            result = None
+        else:
+            tree = ast.parse(path.read_text())
+            result = (
+                relative.as_posix(),
+                {
+                    item.lineno
+                    for item in ast.walk(tree)
+                    if isinstance(item, ast.Assert)
+                },
+            )
+    _lines[filename] = result
+    return result
+
+
+def trace(frame, event, arg):
+    evidence = assertion_lines(frame.f_code.co_filename)
+    if evidence is None or not evidence[1]:
+        return None
+    if event == "line" and frame.f_lineno in evidence[1]:
+        key = (_phase, evidence[0], frame.f_lineno)
+        if key not in _seen:
+            _seen.add(key)
+            record(
+                "assertion_line",
+                nodeid=_node,
+                phase=_phase,
+                path=evidence[0],
+                line=frame.f_lineno,
+            )
+    return trace
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_protocol(item, nextitem):
+    global _node, _seen
+    previous = sys.gettrace()
+    if previous is not None:
+        raise RuntimeError("assertion probe refuses to replace an active trace hook")
+    _node, _seen = item.nodeid, set()
+    record("node_start", nodeid=item.nodeid)
+    sys.settrace(trace)
+    try:
+        yield
+    finally:
+        sys.settrace(previous)
+        record("node_finish", nodeid=item.nodeid)
+        _node = None
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_setup(item):
+    global _phase
+    _phase = "setup"
+    try:
+        yield
+    finally:
+        _phase = None
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_call(item):
+    global _phase
+    _phase = "call"
+    try:
+        yield
+    finally:
+        _phase = None
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_teardown(item, nextitem):
+    global _phase
+    _phase = "teardown"
+    try:
+        yield
+    finally:
+        _phase = None
+
+
+def pytest_sessionfinish(session, exitstatus):
+    record("session_finish", exitstatus=int(exitstatus))
+
+
+def pytest_unconfigure(config):
+    if _stream is not None:
+        _stream.close()

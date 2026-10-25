@@ -1,0 +1,30 @@
+{
+  "command": [
+    "/workspace/i6b-fix-work/final-fe9e48b/.venv/bin/python",
+    "-m",
+    "pytest",
+    "-p",
+    "tests.conftest",
+    "-c",
+    "/workspace/i6b-fix-work/final-fe9e48b/pyproject.toml",
+    "--rootdir=/workspace/i6b-fix-work/probes",
+    "--confcutdir=/workspace/i6b-fix-work/probes",
+    "-o",
+    "addopts=",
+    "-o",
+    "junit_family=xunit1",
+    "-q",
+    "-s",
+    "--tb=long",
+    "/workspace/i6b-fix-work/probes/test_independent_wire.py",
+    "/workspace/i6b-fix-work/probes/test_planner_independent.py",
+    "/workspace/i6b-fix-work/probes/test_commit_boundary.py",
+    "/workspace/i6b-fix-work/probes/test_resolved_wire.py",
+    "--collect-only"
+  ],
+  "cwd": "/workspace/i6b-fix-work/final-fe9e48b",
+  "completed": true,
+  "exit_code": 0,
+  "started_epoch": 1792765718.116992,
+  "elapsed_seconds": 6.4670188426971436
+}

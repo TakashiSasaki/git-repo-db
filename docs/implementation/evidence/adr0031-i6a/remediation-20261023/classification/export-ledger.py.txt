@@ -1,0 +1,41 @@
+"""Export the detailed JSON ledger to a compact, lossless-field CSV view."""
+
+import csv
+import gzip
+import json
+from pathlib import Path
+import sys
+
+source, output = map(Path, sys.argv[1:3])
+raw = source.read_bytes()
+ledger = json.loads(gzip.decompress(raw) if source.suffix == ".gz" else raw)
+fields = ["nodeid", "historical79", "additional664", "before_phase", "after_phase", "exception_141", "exception_before", "exception_after", "first_semantic_failure_location", "responsible_stage_before", "responsible_stage_after", "caller_carrier", "category_before", "category_after", "expected_stage_refusal_before", "candidate_repair_files", "after_outcome", "assertion_asts_preserved", "assertion_statement_lines_observed_before", "assertion_statement_lines_observed_after", "handoff_condition"]
+with output.open("w", newline="") as stream:
+    writer = csv.DictWriter(stream, fieldnames=fields)
+    writer.writeheader()
+    for row in ledger["rows"]:
+        before, after = row["before"], row.get("after") or {}
+        writer.writerow({
+            "nodeid": row["nodeid"],
+            "historical79": row["historical79"],
+            "additional664": row["additional664"],
+            "before_phase": before.get("phase"),
+            "after_phase": after.get("phase"),
+            "exception_141": row["exception_141"],
+            "exception_before": row["exception_before"],
+            "exception_after": after.get("exception"),
+            "first_semantic_failure_location": json.dumps(row["first_semantic_failure_location"], ensure_ascii=True),
+            "responsible_stage_before": row["responsible_stage_before"],
+            "responsible_stage_after": row["after_responsible_stage"],
+            "caller_carrier": row["caller_carrier"],
+            "category_before": row["category_before"],
+            "category_after": row["after_category"],
+            "expected_stage_refusal_before": row["expected_stage_refusal"],
+            "candidate_repair_files": json.dumps(row["candidate_repair_files"]),
+            "after_outcome": after.get("outcome", "not_run"),
+            "assertion_asts_preserved": row["test_function_assertion_asts_preserved"],
+            "assertion_statement_lines_observed_before": json.dumps(row["before_reachability"].get("actual_assertion_line_observations_by_phase"), ensure_ascii=True),
+            "assertion_statement_lines_observed_after": json.dumps((row.get("after_reachability") or {}).get("actual_assertion_line_observations_by_phase"), ensure_ascii=True),
+            "handoff_condition": row["handoff_condition"],
+        })
+print(json.dumps({"rows": len(ledger["rows"]), "additional664": sum(row["additional664"] for row in ledger["rows"]), "output": str(output)}))

@@ -1,0 +1,1926 @@
+{
+  "reviewed_head": "08fbb956c2e470e245146b0dbae747ed0690ea40",
+  "reviewed_tree": "7072f952975a8537f74ced1bbc2a4a31d7aa3690",
+  "runtime": {
+    "python": "3.12.14",
+    "executable": "/workspace/review-runtime/bin/python",
+    "sqlite_version": "3.53.1",
+    "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+    "compile_options": [
+      [
+        "ATOMIC_INTRINSICS=1"
+      ],
+      [
+        "COMPILER=clang-22.1.3"
+      ],
+      [
+        "DEFAULT_AUTOVACUUM"
+      ],
+      [
+        "DEFAULT_CACHE_SIZE=-2000"
+      ],
+      [
+        "DEFAULT_FILE_FORMAT=4"
+      ],
+      [
+        "DEFAULT_JOURNAL_SIZE_LIMIT=-1"
+      ],
+      [
+        "DEFAULT_MMAP_SIZE=0"
+      ],
+      [
+        "DEFAULT_PAGE_SIZE=4096"
+      ],
+      [
+        "DEFAULT_PCACHE_INITSZ=20"
+      ],
+      [
+        "DEFAULT_RECURSIVE_TRIGGERS"
+      ],
+      [
+        "DEFAULT_SECTOR_SIZE=4096"
+      ],
+      [
+        "DEFAULT_SYNCHRONOUS=2"
+      ],
+      [
+        "DEFAULT_WAL_AUTOCHECKPOINT=1000"
+      ],
+      [
+        "DEFAULT_WAL_SYNCHRONOUS=2"
+      ],
+      [
+        "DEFAULT_WORKER_THREADS=0"
+      ],
+      [
+        "DIRECT_OVERFLOW_READ"
+      ],
+      [
+        "ENABLE_DBSTAT_VTAB"
+      ],
+      [
+        "ENABLE_FTS3"
+      ],
+      [
+        "ENABLE_FTS3_PARENTHESIS"
+      ],
+      [
+        "ENABLE_FTS4"
+      ],
+      [
+        "ENABLE_FTS5"
+      ],
+      [
+        "ENABLE_GEOPOLY"
+      ],
+      [
+        "ENABLE_MATH_FUNCTIONS"
+      ],
+      [
+        "ENABLE_PERCENTILE"
+      ],
+      [
+        "ENABLE_RTREE"
+      ],
+      [
+        "MALLOC_SOFT_LIMIT=1024"
+      ],
+      [
+        "MAX_ATTACHED=10"
+      ],
+      [
+        "MAX_COLUMN=2000"
+      ],
+      [
+        "MAX_COMPOUND_SELECT=500"
+      ],
+      [
+        "MAX_DEFAULT_PAGE_SIZE=8192"
+      ],
+      [
+        "MAX_EXPR_DEPTH=1000"
+      ],
+      [
+        "MAX_FUNCTION_ARG=1000"
+      ],
+      [
+        "MAX_LENGTH=1000000000"
+      ],
+      [
+        "MAX_LIKE_PATTERN_LENGTH=50000"
+      ],
+      [
+        "MAX_MMAP_SIZE=0x7fff0000"
+      ],
+      [
+        "MAX_PAGE_COUNT=0xfffffffe"
+      ],
+      [
+        "MAX_PAGE_SIZE=65536"
+      ],
+      [
+        "MAX_SQL_LENGTH=1000000000"
+      ],
+      [
+        "MAX_TRIGGER_DEPTH=1000"
+      ],
+      [
+        "MAX_VARIABLE_NUMBER=32766"
+      ],
+      [
+        "MAX_VDBE_OP=250000000"
+      ],
+      [
+        "MAX_WORKER_THREADS=8"
+      ],
+      [
+        "MUTEX_PTHREADS"
+      ],
+      [
+        "SYSTEM_MALLOC"
+      ],
+      [
+        "TEMP_STORE=1"
+      ],
+      [
+        "THREADSAFE=1"
+      ]
+    ],
+    "pragmas": {
+      "foreign_keys": [
+        [
+          0
+        ]
+      ],
+      "recursive_triggers": [
+        [
+          0
+        ]
+      ],
+      "journal_mode": [
+        [
+          "memory"
+        ]
+      ],
+      "synchronous": [
+        [
+          2
+        ]
+      ]
+    }
+  },
+  "environment": {
+    "UV_CACHE_DIR": "/workspace/uv-cache",
+    "TMPDIR": "/workspace/review-tmp",
+    "exception": "Initial full invocation omitted UV_CACHE_DIR: 22 actual setup errors retained; corrected22 executed separately."
+  },
+  "ordinary_invocations": [
+    {
+      "command": [
+        "/workspace/review-runtime/bin/python",
+        "-m",
+        "pytest",
+        "-p",
+        "i6a_report_types",
+        "-q",
+        "-o",
+        "addopts=--strict-markers",
+        "-o",
+        "junit_family=xunit1",
+        "@/workspace/review-source-run/ordinary.selected.txt",
+        "--junitxml=/workspace/review-source-run/ordinary.xml",
+        "--journal=/workspace/review-source-run/ordinary.jsonl",
+        "-n",
+        "4",
+        "--dist",
+        "worksteal",
+        "--basetemp=/workspace/review-source-run/basetemp"
+      ],
+      "cwd": "/workspace/i6a-independent",
+      "started_epoch": 1792733053.8879347,
+      "elapsed_seconds": 2795.371,
+      "exit_code": 1,
+      "collected": 5974,
+      "passed": 5656,
+      "failed": 276,
+      "error": 42,
+      "skipped": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "executed": 5974,
+      "reconciliation": {
+        "checks": {
+          "selected_unique": true,
+          "selected_equals_junit": true,
+          "selected_equals_journal_starts": true,
+          "setup_and_teardown_once": true,
+          "no_duplicate_phases": false,
+          "phase_nodes_equal_selected": true,
+          "call_once_after_successful_setup": false,
+          "one_finish": true
+        },
+        "consistent_node_execution": false,
+        "journal_phase_outcomes": {
+          "passed": 17619,
+          "failed": 318
+        },
+        "finishes": [
+          {
+            "event": "finish",
+            "status": "failed",
+            "exitstatus": 1,
+            "timestamp": 1792735844.243136
+          }
+        ]
+      },
+      "lane": "ordinary-full",
+      "original_receipt_path": "/workspace/review-source-run/ordinary.execution.json"
+    },
+    {
+      "command": [
+        "/workspace/review-clean-runtime/bin/python",
+        "-m",
+        "pytest",
+        "tests/integration/p2/test_native.py::test_core_transaction_binding_refuses_context_even_for_shared_coverage_tables",
+        "tests/integration/p2_p3_compatibility/test_production_pair.py::test_original_capture_retry_after_core_success_context_rollback[sha1]",
+        "tests/integration/p2_p3_compatibility/test_production_pair.py::test_original_capture_retry_after_core_success_context_rollback[sha256]",
+        "tests/integration/p2_p3_compatibility/test_production_pair.py::test_pair_snapshot_keeps_old_two_authority_state_during_production_write[sha1]",
+        "tests/integration/p2_p3_compatibility/test_production_pair.py::test_pair_snapshot_keeps_old_two_authority_state_during_production_write[sha256]",
+        "tests/integration/p2_p3_compatibility/test_production_pair.py::test_derivative_loss_preserves_production_pair[sha1]",
+        "tests/integration/p2_p3_compatibility/test_production_pair.py::test_derivative_loss_preserves_production_pair[sha256]",
+        "tests/integration/p2_p3_compatibility/test_production_pair.py::test_both_authorities_keep_exact_five_column_coverage_with_own_scope",
+        "tests/integration/p2_p3_compatibility/test_production_pair.py::test_core_only_and_context_only_are_independently_durable",
+        "tests/integration/p2_p3_compatibility/test_production_pair.py::test_detected_core_byte_corruption_permanently_fences_context_success",
+        "tests/integration/p2_p3_compatibility/test_production_pair.py::test_durable_unavailable_context_reference_keeps_pair_sound[sha1]",
+        "tests/integration/p2_p3_compatibility/test_production_pair.py::test_durable_unavailable_context_reference_keeps_pair_sound[sha256]",
+        "tests/integration/p2_p3_compatibility/test_production_pair.py::test_forbidden_git_blob_retention_does_not_poison_legitimate_context_text[sha1]",
+        "tests/integration/p2_p3_compatibility/test_production_pair.py::test_forbidden_git_blob_retention_does_not_poison_legitimate_context_text[sha256]",
+        "tests/integration/p2_p3_compatibility/test_production_pair.py::test_partial_and_empty_source_inventories_preserve_positive_cross_store_state",
+        "tests/integration/p3/test_production_context.py::test_generic_resource_relation_cannot_register_transfer_scope",
+        "tests/integration/p3/test_production_context.py::test_context_admission_protocol_keyword_calls",
+        "tests/integration/p3/test_production_context.py::test_p1_contract_on_actual_production_adapter[test_missing_differs_from_explicit_null]",
+        "tests/integration/p3/test_production_context.py::test_p1_contract_on_actual_production_adapter[test_current_candidates_preserve_equal_and_incomparable]",
+        "tests/integration/p3/test_production_context.py::test_p1_contract_on_actual_production_adapter[test_exact_original_replay_does_not_rewrite_provenance]",
+        "tests/integration/p3/test_production_context.py::test_p1_contract_on_actual_production_adapter[test_generated_source_clock_is_real_sqlite_value]",
+        "tests/integration/p3/test_production_context.py::test_p1_contract_on_actual_production_adapter[test_portable_core_reference_validated_and_no_sender_promotion]",
+        "tests/integration/p3/test_production_context.py::test_p1_contract_on_actual_production_adapter[test_source_membership_cannot_be_removed_or_rebound]",
+        "tests/integration/p3/test_production_context.py::test_p1_contract_on_actual_production_adapter[test_source_empty_inventory_is_durable_without_any_membership]",
+        "tests/integration/p3/test_production_context.py::test_p1_contract_on_actual_production_adapter[test_children_have_real_parent_and_document_kind_coordinates]",
+        "tests/integration/p3/test_production_context.py::test_p1_contract_on_actual_production_adapter[test_text_exact_utf8_content_addressing]",
+        "tests/integration/p3/test_production_context.py::test_p1_contract_on_actual_production_adapter[test_detached_issue_attachment_transfer_preserves_identity_and_original_provenance]",
+        "tests/integration/p3/test_production_context.py::test_p1_contract_on_actual_production_adapter[test_missing_provenance_rejected_at_intended_source_evidence_boundary]",
+        "tests/integration/p3/test_production_context.py::test_p1_contract_on_actual_production_adapter[test_permanent_context_registered_identities_cannot_be_rebound]",
+        "tests/integration/p3/test_production_context.py::test_p1_contract_on_actual_production_adapter[test_raw_sql_source_clock_json_overflow_is_rejected_at_actual_type]",
+        "tests/integration/p3/test_production_context.py::test_p1_contract_on_actual_production_adapter[test_exact_text_reference_fk_differs_from_attributed_digest_metadata]",
+        "tests/integration/p3/test_production_context.py::test_p1_contract_on_actual_production_adapter[test_exact_text_reference_explicit_null_is_distinct_from_missing]",
+        "tests/integration/p3/test_production_context.py::test_provider_source_registration_and_configuration",
+        "tests/integration/p3/test_production_context.py::test_coreless_durable_context_and_derivative_loss",
+        "tests/integration/p3/test_production_context.py::test_observe_failure_rolls_back_new_identity_and_all_fields",
+        "tests/integration/p3/test_production_context.py::test_outer_transaction_rolls_back_resource_fields_and_text",
+        "tests/integration/p3/test_production_context.py::test_current_fields_scale_not_full_edit_history",
+        "tests/integration/p3/test_production_context.py::test_field_specific_inheritance_preserves_original_alternatives",
+        "tests/integration/p3/test_production_context.py::test_document_child_ownership_and_relationship_roundtrip",
+        "tests/integration/p3/test_production_context.py::test_text_exact_null_and_failed_reference_unit",
+        "tests/integration/p3/test_production_context.py::test_source_inventory_positive_preservation_reverse_replay",
+        "tests/integration/p3/test_production_context.py::test_source_inventory_empty_foreign_service_rejected",
+        "tests/integration/p3/test_production_context.py::test_inventory_atomic_rollback_unknown_repository",
+        "tests/integration/p3/test_production_context.py::test_coverage_five_physical_columns_and_advisory_identity",
+        "tests/integration/p3/test_production_context.py::test_collection_known_empty_requires_genuine_terminal_proof",
+        "tests/integration/p3/test_production_context.py::test_latest_partial_and_same_time_terminal_conflict_do_not_borrow_complete",
+        "tests/integration/p3/test_production_context.py::test_p1_review_scope_mismatch_not_complete_in_production[kind]",
+        "tests/integration/p3/test_production_context.py::test_p1_review_scope_mismatch_not_complete_in_production[resource]",
+        "tests/integration/p3/test_production_context.py::test_p1_review_scope_mismatch_not_complete_in_production[field]",
+        "tests/integration/p3/test_production_context.py::test_p1_review_scope_mismatch_not_complete_in_production[source]",
+        "tests/integration/p3/test_production_context.py::test_exact_head_base_nested_scope_cannot_move[head]",
+        "tests/integration/p3/test_production_context.py::test_exact_head_base_nested_scope_cannot_move[base]",
+        "tests/integration/p3/test_production_context.py::test_exact_head_base_nested_scope_cannot_move[child]",
+        "tests/integration/p3/test_production_context.py::test_source_collection_cross_service_rejected_even_empty",
+        "tests/integration/p3/test_production_context.py::test_unavailable_portable_core_reference_durable_and_honest[sha1-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa]",
+        "tests/integration/p3/test_production_context.py::test_unavailable_portable_core_reference_durable_and_honest[sha256-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb]",
+        "tests/integration/p3/test_production_context.py::test_paired_read_context_projection_no_savepoint_escape",
+        "tests/integration/p3/test_production_context.py::test_retained_context_text_corruption_stops_before_unwind[read]",
+        "tests/integration/p3/test_production_context.py::test_retained_context_text_corruption_stops_before_unwind[replay]",
+        "tests/integration/p3/test_production_context.py::test_all_inherited_methods_obey_stop[text]",
+        "tests/integration/p3/test_production_context.py::test_all_inherited_methods_obey_stop[field]",
+        "tests/integration/p3/test_production_context.py::test_all_inherited_methods_obey_stop[coverage]",
+        "tests/integration/p3/test_production_context.py::test_all_inherited_methods_obey_stop[resource]",
+        "tests/integration/p3/test_production_context.py::test_all_inherited_methods_obey_stop[candidates]",
+        "tests/integration/p3/test_production_context.py::test_all_inherited_methods_obey_stop[link]",
+        "tests/integration/p3/test_production_context.py::test_capability_expired_and_outer_transaction_required",
+        "tests/integration/p3/test_production_context.py::test_invalid_input_does_not_catalog_stop",
+        "tests/integration/p3/test_production_context.py::test_forged_unpersisted_head_scope_cannot_create_proof",
+        "tests/integration/p3/test_production_context.py::test_missing_attributed_reference_does_not_poison_sound_pair",
+        "tests/integration/p3/test_production_context.py::test_foreign_parent_child_cannot_be_collection_members[relation]",
+        "tests/integration/p3/test_production_context.py::test_foreign_parent_child_cannot_be_collection_members[collection]",
+        "tests/integration/p3/test_production_context.py::test_invalid_stored_field_is_corruption_not_bad_incoming_data",
+        "tests/integration/p3/test_production_context.py::test_reserved_reference_field_requires_typed_identity",
+        "tests/integration/p3/test_production_context.py::test_invalid_utf8_retained_text_stops_on_selected_bytes",
+        "tests/integration/p3/test_production_context.py::test_explicit_null_detach_rollback_and_restart",
+        "tests/integration/p3/test_production_context.py::test_same_time_source_terminal_conflicts_preserved",
+        "tests/integration/p3/test_production_context.py::test_stop_detected_during_last_sqlite_read_cannot_return_success[candidates]",
+        "tests/integration/p3/test_production_context.py::test_stop_detected_during_last_sqlite_read_cannot_return_success[coverage]",
+        "tests/integration/p3/test_production_context.py::test_stop_detected_during_last_sqlite_read_cannot_return_success[text]",
+        "tests/integration/p3/test_production_context.py::test_invalid_utf8_stored_field_stops_before_caller_can_swallow",
+        "tests/integration/p3/test_production_context.py::test_known_retained_text_loss_stops_without_silent_repair[read]",
+        "tests/integration/p3/test_production_context.py::test_known_retained_text_loss_stops_without_silent_repair[replay]",
+        "tests/integration/p3/test_production_context.py::test_unknown_text_digest_is_unavailable_without_false_corruption",
+        "tests/integration/p3/test_production_context.py::test_production_context_relation_facade_methods",
+        "tests/integration/p5/test_corrections.py::test_repository_unknown_observation_retained_without_fabricated_coordinates",
+        "tests/integration/p5/test_corrections.py::test_provider_registration_is_explicit",
+        "tests/integration/p5/test_corrections.py::test_exchange_partial_commit_outcome_survives",
+        "tests/integration/p5/test_exchange.py::test_i3_relation_export_without_i2_acquisition",
+        "tests/integration/p5/test_exchange.py::test_exchange_export_import_repeat_reverse_and_multi_hop",
+        "tests/integration/p5/test_exchange.py::test_exchange_selective_filters_and_partial_input",
+        "tests/integration/p5/test_exchange.py::test_exchange_refuses_intrinsic_spoofing_without_validated_bytes",
+        "tests/integration/p5/test_exchange.py::test_exchange_refuses_tampered_payloads_without_store_corruption",
+        "tests/integration/p5/test_exchange.py::test_exchange_evaluates_core_dependencies_against_receiver_core",
+        "tests/integration/p5/test_paired_admission.py::test_core_first_context_second_and_failure_retry_convergence",
+        "tests/integration/p5/test_paired_admission.py::test_late_core_dependency_reconciliation",
+        "tests/integration/p5/test_provider_acquisition.py::test_provider_registration_and_source_inventory",
+        "tests/integration/p5/test_provider_acquisition.py::test_issue_vs_pull_request_intake_isolation",
+        "tests/integration/p5/test_provider_acquisition.py::test_reviews_threads_comments_and_relations",
+        "tests/integration/p5/test_provider_acquisition.py::test_explicit_null_vs_missing_fields_and_clock_competition",
+        "tests/integration/p5/test_provider_acquisition.py::test_context_file_metadata_never_retains_blob_in_git_core",
+        "tests/integration/p5_p6_compatibility/test_end_to_end_p5_p6.py::test_end_to_end_acquisition_into_query_and_search[sha1]",
+        "tests/integration/p5_p6_compatibility/test_end_to_end_p5_p6.py::test_end_to_end_acquisition_into_query_and_search[sha256]",
+        "tests/integration/p5_p6_compatibility/test_end_to_end_p5_p6.py::test_multi_hop_exchange_into_query[sha1]",
+        "tests/integration/p5_p6_compatibility/test_end_to_end_p5_p6.py::test_multi_hop_exchange_into_query[sha256]",
+        "tests/integration/p5_p6_compatibility/test_end_to_end_p5_p6.py::test_deferred_core_dependency_reconciliation_into_paired_queries[sha1]",
+        "tests/integration/p5_p6_compatibility/test_end_to_end_p5_p6.py::test_deferred_core_dependency_reconciliation_into_paired_queries[sha256]",
+        "tests/integration/p5_p6_compatibility/test_end_to_end_p5_p6.py::test_partial_reordered_repeat_reverse_onward_preserves_unknown_clocks",
+        "tests/integration/p5_p6_compatibility/test_export_gate.py::test_export_shared_gate_blocks_actual_nonblocking_writer_lock_attempt",
+        "tests/integration/p5_p6_compatibility/test_p5_independent_counterexamples.py::test_exchange_retains_partial_admission_outcome",
+        "tests/integration/p5_p6_compatibility/test_p5_independent_counterexamples.py::test_exchange_export_uses_one_paired_snapshot",
+        "tests/integration/p5_p6_compatibility/test_provider_exchange_matrix.py::test_provider_late_reordered_repeat_reverse_onward_preserves_candidates[order0]",
+        "tests/integration/p5_p6_compatibility/test_provider_exchange_matrix.py::test_provider_late_reordered_repeat_reverse_onward_preserves_candidates[order1]",
+        "tests/integration/p5_p6_compatibility/test_provider_exchange_matrix.py::test_provider_late_reordered_repeat_reverse_onward_preserves_candidates[order2]",
+        "tests/integration/p5_p6_compatibility/test_provider_exchange_matrix.py::test_provider_late_reordered_repeat_reverse_onward_preserves_candidates[order3]",
+        "tests/integration/p5_p6_compatibility/test_provider_exchange_matrix.py::test_provider_late_reordered_repeat_reverse_onward_preserves_candidates[order4]",
+        "tests/integration/p5_p6_compatibility/test_provider_exchange_matrix.py::test_provider_late_reordered_repeat_reverse_onward_preserves_candidates[order5]",
+        "tests/integration/p5_p6_compatibility/test_provider_exchange_matrix.py::test_exchange_preserves_non_time_json_real",
+        "tests/integration/p6/test_cli.py::test_cli_all_subcommands_pagination_and_error_handling",
+        "tests/integration/p6/test_corrections.py::test_metadata_queries_do_not_hydrate_or_rehash_all_retained_bodies",
+        "tests/integration/p6/test_corrections.py::test_core_and_context_snapshot_capabilities_expire",
+        "tests/integration/p6/test_corrections.py::test_snapshot_budget_refusal_preserves_ordinary_reads[paired]",
+        "tests/integration/p6/test_corrections.py::test_snapshot_budget_refusal_preserves_ordinary_reads[core_only]",
+        "tests/integration/p6/test_corrections.py::test_snapshot_budget_refusal_preserves_ordinary_reads[context_only]",
+        "tests/integration/p6/test_corrections.py::test_literal_unicode_short_special_search_semantics_and_cost_phases[\\u65e5\\u672c\\u8a9e]",
+        "tests/integration/p6/test_corrections.py::test_literal_unicode_short_special_search_semantics_and_cost_phases[\\U0001f600]",
+        "tests/integration/p6/test_corrections.py::test_literal_unicode_short_special_search_semantics_and_cost_phases[a]",
+        "tests/integration/p6/test_corrections.py::test_literal_unicode_short_special_search_semantics_and_cost_phases[*]",
+        "tests/integration/p6/test_corrections.py::test_literal_unicode_short_special_search_semantics_and_cost_phases[\"]",
+        "tests/integration/p6/test_corrections.py::test_literal_unicode_short_special_search_semantics_and_cost_phases[\\\\]",
+        "tests/integration/p6/test_corrections.py::test_literal_unicode_short_special_search_semantics_and_cost_phases[\\x00]",
+        "tests/integration/p6/test_corrections.py::test_literal_unicode_short_special_search_semantics_and_cost_phases[caf\\xe9]",
+        "tests/integration/p6/test_corrections.py::test_literal_unicode_short_special_search_semantics_and_cost_phases[p6]",
+        "tests/integration/p6/test_corrections.py::test_literal_unicode_short_special_search_semantics_and_cost_phases[P6]",
+        "tests/integration/p6/test_corrections.py::test_oversize_derivative_row_falls_back_before_text_construction",
+        "tests/integration/p6/test_corrections.py::test_derivative_deep_json_falls_back_without_catalog_stop",
+        "tests/integration/p6/test_pagination_snapshots.py::test_deterministic_pagination_across_all_endpoints",
+        "tests/integration/p6/test_pagination_snapshots.py::test_open_snapshot_isolation_and_stale_cursor_fencing_after_write",
+        "tests/integration/p6/test_pagination_snapshots.py::test_malformed_tampered_and_cross_endpoint_cursors_fail_closed",
+        "tests/integration/p6/test_queries.py::test_context_only_queries_resources_fields_relations_inventories_and_coverage",
+        "tests/integration/p6/test_queries.py::test_paired_cross_store_resolution_present_vs_absent_core_oids[sha1]",
+        "tests/integration/p6/test_queries.py::test_paired_cross_store_resolution_present_vs_absent_core_oids[sha256]",
+        "tests/integration/p6/test_queries.py::test_verification_aware_byte_reads_detect_corruption_and_fence_catalog",
+        "tests/integration/p6/test_search_fallback.py::test_search_projection_and_five_fallback_scenarios_never_stop_catalog[sha1]",
+        "tests/integration/p6/test_search_fallback.py::test_search_projection_and_five_fallback_scenarios_never_stop_catalog[sha256]",
+        "tests/integration/p7/test_adversarial_contract_cases.py::test_case_01_real_commit_survives_backup_and_restore",
+        "tests/integration/p7/test_adversarial_contract_cases.py::test_case_02_retained_byte_modified_without_digest_update_detected",
+        "tests/integration/p7/test_adversarial_contract_cases.py::test_case_03_forged_backup_with_recalculated_manifest_sha_rejected",
+        "tests/integration/p7/test_adversarial_contract_cases.py::test_case_04_verified_notes_body_survives_recovery",
+        "tests/integration/p7/test_adversarial_contract_cases.py::test_case_05_notes_blob_lacking_role_evidence_rejected",
+        "tests/integration/p7/test_adversarial_contract_cases.py::test_case_06_context_text_survives_with_verified_sha256",
+        "tests/integration/p7/test_adversarial_contract_cases.py::test_case_07_valid_salvage_causes_observable_new_rows",
+        "tests/integration/p7/test_adversarial_contract_cases.py::test_case_08_rejected_candidates_cause_no_mutation",
+        "tests/integration/p7/test_adversarial_contract_cases.py::test_case_09_original_capture_and_provenance_survive_replay",
+        "tests/integration/p7/test_adversarial_contract_cases.py::test_case_10_read_only_salvage_preserves_db_and_wal",
+        "tests/integration/p7/test_adversarial_contract_cases.py::test_case_11_writer_cannot_cross_declared_backup_cut",
+        "tests/integration/p7/test_adversarial_contract_cases.py::test_case_12_concurrent_destination_creation_no_overwrite",
+        "tests/integration/p7/test_adversarial_contract_cases.py::test_case_13_symlink_and_path_traversal_rejection",
+        "tests/integration/p7/test_adversarial_contract_cases.py::test_case_14_interrupted_activation_no_publication",
+        "tests/integration/p7/test_adversarial_contract_cases.py::test_case_15_stop_survives_process_restart_and_operational_loss",
+        "tests/integration/p7/test_adversarial_contract_cases.py::test_case_16_p5_p6_reject_stopped_catalog",
+        "tests/integration/p7/test_adversarial_contract_cases.py::test_case_18_wrong_ddl_with_valid_file_hashes_rejected",
+        "tests/integration/p7/test_adversarial_contract_cases.py::test_case_19_inconsistent_store_identities_rejected",
+        "tests/integration/p7/test_adversarial_contract_cases.py::test_case_20_wrong_native_oid_rejected",
+        "tests/integration/p7/test_adversarial_contract_cases.py::test_case_21_invalid_context_text_digest_rejected",
+        "tests/integration/p7/test_adversarial_contract_cases.py::test_case_22_inconsistent_core_context_pairing_rejected",
+        "tests/integration/p7/test_adversarial_contract_cases.py::test_case_23_legitimately_unresolved_context_references_admitted",
+        "tests/integration/p7/test_adversarial_contract_cases.py::test_case_24_confirmed_source_corruption_stops_catalog_and_raises",
+        "tests/integration/p7/test_adversarial_contract_cases.py::test_case_25_staging_copy_defect_raises_validation_error_without_stopping_sound_source",
+        "tests/integration/p7/test_adversarial_contract_cases.py::test_case_26_completion_fence_aborts_backup_publication_if_stopped",
+        "tests/integration/p7/test_adversarial_contract_cases.py::test_case_27_conflicting_immutable_capture_rebinding_rejected",
+        "tests/integration/p7/test_adversarial_contract_cases.py::test_case_28_missing_capture_binding_records_qualified_observation",
+        "tests/integration/p7/test_adversarial_contract_cases.py::test_case_29_cumulative_request_budget_persists_across_retries",
+        "tests/integration/p7/test_adversarial_contract_cases.py::test_case_30_restore_validation_rejects_mismatches_hardlinks_and_extraneous_files",
+        "tests/integration/p7/test_bounded_input.py::test_rejected_records_consume_work_and_limit_reports_unknown_suffix",
+        "tests/integration/p7/test_bounded_input.py::test_invalid_utf8_is_rejected_without_losing_following_candidate",
+        "tests/integration/p7/test_bounded_input.py::test_oversized_jsonl_is_incomplete_without_admission",
+        "tests/integration/p7/test_bounded_input.py::test_salvage_output_cannot_replace_source_evidence",
+        "tests/integration/p7/test_bounded_input.py::test_context_invalid_or_large_text_does_not_block_later_unit[xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx]",
+        "tests/integration/p7/test_bounded_input.py::test_context_invalid_or_large_text_does_not_block_later_unit[\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042\\u3042]",
+        "tests/integration/p7/test_bounded_input.py::test_context_invalid_or_large_text_does_not_block_later_unit[17]",
+        "tests/integration/p7/test_bounded_input.py::test_context_invalid_or_large_text_does_not_block_later_unit[text3]",
+        "tests/integration/p7/test_bounded_input.py::test_context_invalid_or_large_text_does_not_block_later_unit[text4]",
+        "tests/integration/p7/test_bounded_input.py::test_context_invalid_or_large_text_does_not_block_later_unit[\\ud800]",
+        "tests/integration/p7/test_bounded_input.py::test_malformed_primitive_shape_is_one_rejection_not_merge_abort[bad0]",
+        "tests/integration/p7/test_bounded_input.py::test_malformed_primitive_shape_is_one_rejection_not_merge_abort[bad1]",
+        "tests/integration/p7/test_bounded_input.py::test_malformed_primitive_shape_is_one_rejection_not_merge_abort[bad2]",
+        "tests/integration/p7/test_bounded_input.py::test_malformed_primitive_shape_is_one_rejection_not_merge_abort[bad3]",
+        "tests/integration/p7/test_bounded_input.py::test_malformed_primitive_shape_is_one_rejection_not_merge_abort[bad4]",
+        "tests/integration/p7/test_bounded_input.py::test_none_provenance_remains_a_qualified_observation",
+        "tests/integration/p7/test_bounded_input.py::test_fifo_input_fails_in_separate_process_without_hanging[merge]",
+        "tests/integration/p7/test_bounded_input.py::test_fifo_input_fails_in_separate_process_without_hanging[copy]",
+        "tests/integration/p7/test_bounded_input.py::test_one_refused_candidate_does_not_invent_another_at_eof[False]",
+        "tests/integration/p7/test_bounded_input.py::test_one_refused_candidate_does_not_invent_another_at_eof[True]",
+        "tests/integration/p7/test_bounded_input.py::test_record_limit_at_exact_eof_does_not_invent_omission[False]",
+        "tests/integration/p7/test_bounded_input.py::test_record_limit_at_exact_eof_does_not_invent_omission[True]",
+        "tests/integration/p7/test_bounded_input.py::test_record_limit_counts_known_prefetched_suffix_only",
+        "tests/integration/p7/test_bounded_input.py::test_byte_limit_at_exact_eof_does_not_invent_unread_candidate",
+        "tests/integration/p7/test_bounded_input.py::test_already_exhausted_retry_counts_known_nonempty_input",
+        "tests/integration/p7/test_consistent_backup.py::test_core_only_backup_and_restore",
+        "tests/integration/p7/test_consistent_backup.py::test_missing_ordinary_file_bodies_is_not_corruption",
+        "tests/integration/p7/test_context_corruption_stop.py::test_existing_retained_text_damage_stops_destination_without_mutation[damaged retained text]",
+        "tests/integration/p7/test_context_corruption_stop.py::test_existing_retained_text_damage_stops_destination_without_mutation[\\x80invalid UTF-8]",
+        "tests/integration/p7/test_context_corruption_stop.py::test_invalid_incoming_digest_does_not_stop_healthy_destination",
+        "tests/integration/p7/test_context_corruption_stop.py::test_existing_text_refusal_precedes_byte_materialization[individual_size]",
+        "tests/integration/p7/test_context_corruption_stop.py::test_existing_text_refusal_precedes_byte_materialization[verification_budget]",
+        "tests/integration/p7/test_context_corruption_stop.py::test_existing_replay_verification_cost_is_durably_accounted",
+        "tests/integration/p7/test_corruption_stop.py::test_persistent_stop_on_corruption",
+        "tests/integration/p7/test_corruption_stop.py::test_operational_loss_does_not_falsely_stop_catalog",
+        "tests/integration/p7/test_exact_replay.py::test_exact_evidence_replays[retained_metadata]",
+        "tests/integration/p7/test_exact_replay.py::test_exact_evidence_replays[retained_notes]",
+        "tests/integration/p7/test_exact_replay.py::test_exact_evidence_replays[captures]",
+        "tests/integration/p7/test_exact_replay.py::test_exact_evidence_replays[git_objects]",
+        "tests/integration/p7/test_exact_replay.py::test_exact_evidence_replays[repositories]",
+        "tests/integration/p7/test_exact_replay.py::test_metadata_digest_match_does_not_bypass_native_identity[native_type-blob]",
+        "tests/integration/p7/test_exact_replay.py::test_metadata_digest_match_does_not_bypass_native_identity[size-999]",
+        "tests/integration/p7/test_exact_replay.py::test_metadata_digest_match_does_not_bypass_native_identity[body_base64-Y2hhbmdlZCByZXRhaW5lZCBieXRlcw==]",
+        "tests/integration/p7/test_exact_replay.py::test_metadata_digest_match_does_not_bypass_native_identity[physical_copy_uuidv4-invalid-copy]",
+        "tests/integration/p7/test_exact_replay.py::test_note_replay_requires_all_capture_role_and_byte_evidence[repository_uuidv4-99999999-9999-4999-8999-999999999999]",
+        "tests/integration/p7/test_exact_replay.py::test_note_replay_requires_all_capture_role_and_byte_evidence[capture_origin_uuidv4-99999999-9999-4999-8999-999999999999]",
+        "tests/integration/p7/test_exact_replay.py::test_note_replay_requires_all_capture_role_and_byte_evidence[capture_uuidv4-99999999-9999-4999-8999-999999999999]",
+        "tests/integration/p7/test_exact_replay.py::test_note_replay_requires_all_capture_role_and_byte_evidence[source-another-original-source]",
+        "tests/integration/p7/test_exact_replay.py::test_note_replay_requires_all_capture_role_and_byte_evidence[ref-refs/notes/another]",
+        "tests/integration/p7/test_exact_replay.py::test_note_replay_requires_all_capture_role_and_byte_evidence[root-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa]",
+        "tests/integration/p7/test_exact_replay.py::test_note_replay_requires_all_capture_role_and_byte_evidence[target-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb]",
+        "tests/integration/p7/test_exact_replay.py::test_note_replay_requires_all_capture_role_and_byte_evidence[path-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb]",
+        "tests/integration/p7/test_exact_replay.py::test_note_replay_requires_all_capture_role_and_byte_evidence[proof_bundle-[]]",
+        "tests/integration/p7/test_exact_replay.py::test_note_replay_requires_all_capture_role_and_byte_evidence[native_type-tree]",
+        "tests/integration/p7/test_exact_replay.py::test_note_replay_requires_all_capture_role_and_byte_evidence[size-999]",
+        "tests/integration/p7/test_exact_replay.py::test_note_replay_requires_all_capture_role_and_byte_evidence[body_base64-Y2hhbmdlZCByZXRhaW5lZCBieXRlcw==]",
+        "tests/integration/p7/test_exact_replay.py::test_note_replay_requires_all_capture_role_and_byte_evidence[digest_sha256-0000000000000000000000000000000000000000000000000000000000000000]",
+        "tests/integration/p7/test_exact_replay.py::test_capture_replay_cannot_rebind_repository",
+        "tests/integration/p7/test_exact_replay.py::test_new_physical_copy_is_admission_not_replay[retained_metadata]",
+        "tests/integration/p7/test_exact_replay.py::test_new_physical_copy_is_admission_not_replay[retained_notes]",
+        "tests/integration/p7/test_exact_replay.py::test_missing_physical_identity_is_only_observation[retained_metadata]",
+        "tests/integration/p7/test_exact_replay.py::test_missing_physical_identity_is_only_observation[retained_notes]",
+        "tests/integration/p7/test_exact_replay.py::test_invalid_new_note_does_not_leave_capture_or_objects",
+        "tests/integration/p7/test_exact_replay.py::test_disagreeing_capture_coordinates_rejected",
+        "tests/integration/p7/test_exact_replay.py::test_original_repository_is_not_replaced_by_destination_identity",
+        "tests/integration/p7/test_exact_replay.py::test_empty_metadata_body_is_admissible",
+        "tests/integration/p7/test_exact_replay.py::test_empty_context_text_admission_and_replay",
+        "tests/integration/p7/test_exact_replay.py::test_context_resources_are_explicit_observations_not_false_replays",
+        "tests/integration/p7/test_exact_replay.py::test_notes_extraction_preserves_original_repository_binding",
+        "tests/integration/p7/test_filesystem_hardening.py::test_restore_rejects_symlink_components[manifest.json]",
+        "tests/integration/p7/test_filesystem_hardening.py::test_restore_rejects_symlink_components[manifest.json.sha256]",
+        "tests/integration/p7/test_filesystem_hardening.py::test_restore_rejects_symlink_components[stores]",
+        "tests/integration/p7/test_filesystem_hardening.py::test_malformed_manifest_fails_closed[data0]",
+        "tests/integration/p7/test_filesystem_hardening.py::test_malformed_manifest_fails_closed[None]",
+        "tests/integration/p7/test_filesystem_hardening.py::test_malformed_manifest_fails_closed[data2]",
+        "tests/integration/p7/test_filesystem_hardening.py::test_malformed_manifest_fails_closed[data3]",
+        "tests/integration/p7/test_filesystem_hardening.py::test_oversized_manifest_is_rejected_before_json",
+        "tests/integration/p7/test_filesystem_hardening.py::test_normal_backup_sidecars_and_extras_rejected[core.sqlite3-wal]",
+        "tests/integration/p7/test_filesystem_hardening.py::test_normal_backup_sidecars_and_extras_rejected[core.sqlite3-shm]",
+        "tests/integration/p7/test_filesystem_hardening.py::test_normal_backup_sidecars_and_extras_rejected[extra-dir]",
+        "tests/integration/p7/test_filesystem_hardening.py::test_copied_bytes_not_prior_hash_control_restore",
+        "tests/integration/p7/test_filesystem_hardening.py::test_pinned_source_survives_parent_symlink_swap",
+        "tests/integration/p7/test_filesystem_hardening.py::test_sync_failure_never_returns_restore_success",
+        "tests/integration/p7/test_filesystem_hardening.py::test_rename_failure_never_publishes",
+        "tests/integration/p7/test_filesystem_hardening.py::test_hard_kill_during_copy_preserves_evidence",
+        "tests/integration/p7/test_filesystem_hardening.py::test_activation_refuses_stopped_catalog",
+        "tests/integration/p7/test_filesystem_hardening.py::test_activation_alias_is_rejected",
+        "tests/integration/p7/test_filesystem_hardening.py::test_restore_destination_parent_swap_cannot_redirect_files",
+        "tests/integration/p7/test_filesystem_hardening.py::test_activation_holds_writer_cut_through_publication",
+        "tests/integration/p7/test_filesystem_hardening.py::test_activation_discards_derivative_sidecars",
+        "tests/integration/p7/test_filesystem_hardening.py::test_backup_directory_enumeration_is_bounded",
+        "tests/integration/p7/test_filesystem_hardening.py::test_activation_catalog_path_swap_is_not_acknowledged[before_publication-False]",
+        "tests/integration/p7/test_filesystem_hardening.py::test_activation_catalog_path_swap_is_not_acknowledged[before_publication-True]",
+        "tests/integration/p7/test_filesystem_hardening.py::test_activation_catalog_path_swap_is_not_acknowledged[after_publication-False]",
+        "tests/integration/p7/test_filesystem_hardening.py::test_activation_catalog_path_swap_is_not_acknowledged[after_publication-True]",
+        "tests/integration/p7/test_filesystem_hardening.py::test_activation_locator_parent_swap_is_not_acknowledged[False]",
+        "tests/integration/p7/test_filesystem_hardening.py::test_activation_locator_parent_swap_is_not_acknowledged[True]",
+        "tests/integration/p7/test_fresh_restore_merge.py::test_fresh_restore_and_merge",
+        "tests/integration/p7/test_fresh_restore_merge.py::test_merge_rejects_unproven_note_body",
+        "tests/integration/p7/test_missing_required_authority.py::test_missing_required_context_body_stops_instead_of_reinsertion",
+        "tests/integration/p7/test_missing_required_authority.py::test_missing_referenced_metadata_copy_stops_instead_of_reinsertion",
+        "tests/integration/p7/test_missing_required_authority.py::test_absence_check_stops_at_finite_vm_work_without_claiming_healthy",
+        "tests/integration/p7/test_missing_required_authority.py::test_new_unreferenced_text_still_admits",
+        "tests/integration/p7/test_process_isolation.py::test_actual_p1_wal_candidates_and_process_writer_cut[False]",
+        "tests/integration/p7/test_process_isolation.py::test_actual_p1_wal_candidates_and_process_writer_cut[True]",
+        "tests/integration/p7/test_process_isolation.py::test_sigkill_during_forensic_copy_preserves_source_and_retry",
+        "tests/integration/p7/test_process_isolation.py::test_stop_fences_actual_p5_acquisition_and_p6_query_search",
+        "tests/integration/p7/test_process_isolation.py::test_actual_unresolved_context_reference_survives_restore_and_salvage",
+        "tests/integration/p7/test_read_only_salvage.py::test_salvage_extracts_typed_candidates",
+        "tests/integration/p7/test_read_only_salvage.py::test_salvage_preserves_independent_candidates_across_faults",
+        "tests/integration/p7/test_safe_activation.py::test_safe_activation_reconstructs_operational_and_search",
+        "tests/integration/p7/test_safe_activation.py::test_activation_fault_stages_prevent_publication[before_validation-Injected failure before validation]",
+        "tests/integration/p7/test_safe_activation.py::test_activation_fault_stages_prevent_publication[between_core_and_context-Injected failure between core and context]",
+        "tests/integration/p7/test_safe_activation.py::test_activation_fault_stages_prevent_publication[after_operational_init-Injected failure after operational initialization]",
+        "tests/integration/p7/test_safe_activation.py::test_activation_fault_stages_prevent_publication[during_locator_replacement-Injected failure during locator replacement]",
+        "tests/integration/p7/test_safe_activation.py::test_activation_replaces_existing_symlink_atomically",
+        "tests/integration/p7/test_source_diagnosis.py::test_indeterminate_source_does_not_invent_corruption[error0]",
+        "tests/integration/p7/test_source_diagnosis.py::test_indeterminate_source_does_not_invent_corruption[error1]",
+        "tests/integration/p7/test_source_diagnosis.py::test_indeterminate_source_does_not_invent_corruption[error2]",
+        "tests/integration/p7/test_source_diagnosis.py::test_indeterminate_source_does_not_invent_corruption[error3]",
+        "tests/integration/p7/test_source_diagnosis.py::test_indeterminate_source_does_not_invent_corruption[error4]",
+        "tests/integration/p7/test_source_diagnosis.py::test_real_not_a_database_stops_source",
+        "tests/integration/p7/test_source_diagnosis.py::test_confirmed_schema_damage_stops_source",
+        "tests/integration/p7/test_source_diagnosis.py::test_already_stopped_is_not_rediagnosed",
+        "tests/integration/p7/test_source_diagnosis.py::test_context_snapshot_failure_revalidates_context",
+        "tests/integration/p7/test_source_diagnosis.py::test_separate_process_stop_before_publication",
+        "tests/integration/p7/test_source_diagnosis.py::test_valid_empty_context_text_is_not_corruption",
+        "tests/integration/p7/test_source_diagnosis.py::test_intrinsic_projection_damage_is_not_certified",
+        "tests/integration/p7/test_source_diagnosis.py::test_invalid_persisted_utf8_is_confirmed_damage",
+        "tests/integration/p7/test_source_diagnosis.py::test_source_pair_mismatch_stops_after_reconfirmation",
+        "tests/integration/p7/test_source_diagnosis.py::test_staging_pair_mismatch_does_not_stop_healthy_source",
+        "tests/integration/p7/test_source_diagnosis.py::test_separate_sqlite_lock_has_finite_backup_wait",
+        "tests/integration/p7/test_stored_constraints.py::test_invalid_core_text_or_udf_check_stops_source[captures-ref-CAST(x'ff' AS TEXT)]",
+        "tests/integration/p7/test_stored_constraints.py::test_invalid_core_text_or_udf_check_stops_source[captures-ref-'not-a-valid-ref']",
+        "tests/integration/p7/test_stored_constraints.py::test_invalid_core_text_or_udf_check_stops_source[scalar_claims-provenance-CAST(x'ff' AS TEXT)]",
+        "tests/integration/p7/test_stored_constraints.py::test_invalid_core_text_or_udf_check_stops_source[scalar_claims-value-'false']",
+        "tests/integration/p7/test_stored_constraints.py::test_invalid_core_text_or_udf_check_stops_source[scalar_claims-value-'{']",
+        "tests/integration/p7/test_stored_constraints.py::test_binary_notes_and_split_unicode_remain_valid",
+        "tests/integration/p7/test_stored_copy_corruption_stop.py::test_invalid_existing_physical_copy_stops_without_repair[retained_metadata-size-999]",
+        "tests/integration/p7/test_stored_copy_corruption_stop.py::test_invalid_existing_physical_copy_stops_without_repair[retained_metadata-native_type-blob]",
+        "tests/integration/p7/test_stored_copy_corruption_stop.py::test_invalid_existing_physical_copy_stops_without_repair[retained_metadata-body-damaged native bytes]",
+        "tests/integration/p7/test_stored_copy_corruption_stop.py::test_invalid_existing_physical_copy_stops_without_repair[retained_notes-size-999]",
+        "tests/integration/p7/test_stored_copy_corruption_stop.py::test_invalid_existing_physical_copy_stops_without_repair[retained_notes-body-damaged Notes bytes]",
+        "tests/integration/p7/test_stored_copy_corruption_stop.py::test_invalid_existing_physical_copy_stops_without_repair[retained_notes-proof_bundle-[]]",
+        "tests/integration/p7/test_stored_copy_corruption_stop.py::test_invalid_existing_physical_copy_stops_without_repair[retained_notes-path-ffffffffffffffffffffffffffffffffffffffff]",
+        "tests/integration/p7/test_stored_copy_corruption_stop.py::test_invalid_existing_physical_copy_stops_without_repair[retained_notes-root-ffffffffffffffffffffffffffffffffffffffff]",
+        "tests/integration/p7/test_stored_copy_corruption_stop.py::test_existing_copy_resource_refusal_never_claims_corruption[payload-retained_metadata]",
+        "tests/integration/p7/test_stored_copy_corruption_stop.py::test_existing_copy_resource_refusal_never_claims_corruption[payload-retained_notes]",
+        "tests/integration/p7/test_stored_copy_corruption_stop.py::test_existing_copy_resource_refusal_never_claims_corruption[verification-retained_metadata]",
+        "tests/integration/p7/test_stored_copy_corruption_stop.py::test_existing_copy_resource_refusal_never_claims_corruption[verification-retained_notes]",
+        "tests/integration/p7/test_work_dimensions.py::test_nominal_metadata_cannot_bypass_single_unit_ceiling[False-git_objects]",
+        "tests/integration/p7/test_work_dimensions.py::test_nominal_metadata_cannot_bypass_single_unit_ceiling[False-repositories]",
+        "tests/integration/p7/test_work_dimensions.py::test_nominal_metadata_cannot_bypass_single_unit_ceiling[False-captures]",
+        "tests/integration/p7/test_work_dimensions.py::test_nominal_metadata_cannot_bypass_single_unit_ceiling[True-git_objects]",
+        "tests/integration/p7/test_work_dimensions.py::test_nominal_metadata_cannot_bypass_single_unit_ceiling[True-repositories]",
+        "tests/integration/p7/test_work_dimensions.py::test_nominal_metadata_cannot_bypass_single_unit_ceiling[True-captures]",
+        "tests/integration/p7/test_work_dimensions.py::test_digest_rejection_still_meters_decoded_input[1]",
+        "tests/integration/p7/test_work_dimensions.py::test_digest_rejection_still_meters_decoded_input[1000]",
+        "tests/integration/p7/test_work_dimensions.py::test_rejected_nominal_candidate_still_consumes_metadata_work",
+        "tests/packaging/test_p1_distribution.py::test_p1_packaged_ddl_outside_checkout[wheel]",
+        "tests/packaging/test_p1_distribution.py::test_p1_packaged_ddl_outside_checkout[sdist-wheel]",
+        "tests/packaging/test_p3_distribution.py::test_installed_production_context[wheel]",
+        "tests/packaging/test_p3_distribution.py::test_installed_production_context[sdist-wheel]",
+        "tests/packaging/test_p5_distribution.py::test_p5_installed_acquisition_and_exchange[sha1-wheel]",
+        "tests/packaging/test_p5_distribution.py::test_p5_installed_acquisition_and_exchange[sha1-sdist-wheel]",
+        "tests/packaging/test_p5_distribution.py::test_p5_installed_acquisition_and_exchange[sha256-wheel]",
+        "tests/packaging/test_p5_distribution.py::test_p5_installed_acquisition_and_exchange[sha256-sdist-wheel]",
+        "tests/packaging/test_p6_distribution.py::test_p6_installed_query_search_and_cli[sha1-wheel]",
+        "tests/packaging/test_p6_distribution.py::test_p6_installed_query_search_and_cli[sha1-sdist-wheel]",
+        "tests/packaging/test_p6_distribution.py::test_p6_installed_query_search_and_cli[sha256-wheel]",
+        "tests/packaging/test_p6_distribution.py::test_p6_installed_query_search_and_cli[sha256-sdist-wheel]",
+        "tests/integration/i3/test_selective_exchange.py::test_core_reference_missing_dependency_retains_original_report_clock",
+        "tests/integration/i3/test_selective_exchange.py::test_contradictory_coverage_proof_is_rejected_before_binding[members_json-[]-source_inventory]",
+        "tests/integration/i3/test_selective_exchange.py::test_contradictory_coverage_proof_is_rejected_before_binding[members_json-[]-collection]",
+        "tests/integration/i3/test_selective_exchange.py::test_contradictory_coverage_proof_is_rejected_before_binding[terminal_state-partial-source_inventory]",
+        "tests/integration/i3/test_selective_exchange.py::test_contradictory_coverage_proof_is_rejected_before_binding[terminal_state-partial-collection]",
+        "tests/integration/i3/test_selective_exchange.py::test_contradictory_coverage_proof_is_rejected_before_binding[provenance_json-{\"evidence\":\"different\",\"source\":\"forged\"}-source_inventory]",
+        "tests/integration/i3/test_selective_exchange.py::test_contradictory_coverage_proof_is_rejected_before_binding[provenance_json-{\"evidence\":\"different\",\"source\":\"forged\"}-collection]",
+        "tests/integration/i3/test_selective_exchange.py::test_caller_mutation_after_preflight_cannot_change_bound_content[False]",
+        "tests/integration/i3/test_selective_exchange.py::test_caller_mutation_after_preflight_cannot_change_bound_content[True]",
+        "tests/integration/i3/test_selective_exchange.py::test_selection_cannot_hide_conflicting_inventory_terminal_for_completeness",
+        "tests/integration/i3/test_selective_exchange.py::test_capture_non_utf8_ref_preserves_native_key",
+        "tests/integration/i3/test_selective_exchange.py::test_internally_contradictory_original_times_rejected_before_binding[resource_repository_relations]",
+        "tests/integration/i3/test_selective_exchange.py::test_internally_contradictory_original_times_rejected_before_binding[field_candidates]",
+        "tests/integration/i3/test_selective_exchange.py::test_internally_contradictory_original_times_rejected_before_binding[resource_relations]",
+        "tests/integration/i3/test_selective_exchange.py::test_existing_relation_time_conflict_rejected_before_independent_core_commit",
+        "tests/integration/i3/test_selective_exchange.py::test_capture_pair_conflicting_payload_rejected_before_binding",
+        "tests/integration/i3/test_selective_exchange.py::test_shared_oid_does_not_coalesce_repository_membership_reports",
+        "tests/integration/i3/test_selective_exchange.py::test_collection_scope_binding_rejected_before_core_commit[False]",
+        "tests/integration/i3/test_selective_exchange.py::test_collection_scope_binding_rejected_before_core_commit[True]",
+        "tests/integration/i3/test_selective_exchange.py::test_modeled_collection_member_cannot_borrow_another_parent[collections]",
+        "tests/integration/i3/test_selective_exchange.py::test_modeled_collection_member_cannot_borrow_another_parent[resource_relations]",
+        "tests/integration/i3/test_selective_exchange.py::test_core_immutable_unique_payload_preflight[repository_claims-False]",
+        "tests/integration/i3/test_selective_exchange.py::test_core_immutable_unique_payload_preflight[repository_claims-True]",
+        "tests/integration/i3/test_selective_exchange.py::test_core_immutable_unique_payload_preflight[scalar_claims-False]",
+        "tests/integration/i3/test_selective_exchange.py::test_core_immutable_unique_payload_preflight[scalar_claims-True]",
+        "tests/integration/i3/test_selective_exchange.py::test_core_immutable_unique_payload_preflight[relation_groups-False]",
+        "tests/integration/i3/test_selective_exchange.py::test_core_immutable_unique_payload_preflight[relation_groups-True]",
+        "tests/integration/i3/test_selective_exchange.py::test_core_immutable_unique_payload_preflight[notes_claims-False]",
+        "tests/integration/i3/test_selective_exchange.py::test_core_immutable_unique_payload_preflight[notes_claims-True]",
+        "tests/integration/access/test_context_boundary.py::test_typed_and_sql_writes_reject_without_mutation_or_stop[api_url-provider]",
+        "tests/integration/i3/test_selective_exchange.py::test_core_immutable_unique_payload_preflight[notes_groups-False]",
+        "tests/integration/access/test_context_boundary.py::test_typed_and_sql_writes_reject_without_mutation_or_stop[api_url-repository]",
+        "tests/integration/i3/test_selective_exchange.py::test_core_immutable_unique_payload_preflight[notes_groups-True]",
+        "tests/integration/access/test_context_boundary.py::test_typed_and_sql_writes_reject_without_mutation_or_stop[api_url-source]",
+        "tests/integration/i3/test_selective_exchange.py::test_advisory_coverage_details_do_not_rebind_semantic_claim[core]",
+        "tests/integration/access/test_context_boundary.py::test_typed_and_sql_writes_reject_without_mutation_or_stop[api_url-membership]",
+        "tests/integration/access/test_context_boundary.py::test_typed_and_sql_writes_reject_without_mutation_or_stop[credential_ref-provider]",
+        "tests/integration/i3/test_selective_exchange.py::test_advisory_coverage_details_do_not_rebind_semantic_claim[context]",
+        "tests/integration/access/test_context_boundary.py::test_typed_and_sql_writes_reject_without_mutation_or_stop[credential_ref-repository]",
+        "tests/integration/i3/test_selective_exchange.py::test_context_scope_cannot_rebind_provider_or_source_service[collection_service]",
+        "tests/integration/access/test_context_boundary.py::test_typed_and_sql_writes_reject_without_mutation_or_stop[credential_ref-source]",
+        "tests/integration/access/test_context_boundary.py::test_typed_and_sql_writes_reject_without_mutation_or_stop[credential_ref-membership]",
+        "tests/integration/i3/test_selective_exchange.py::test_context_scope_cannot_rebind_provider_or_source_service[collection_source]",
+        "tests/integration/access/test_context_boundary.py::test_typed_and_sql_writes_reject_without_mutation_or_stop[scope_uuidv4-provider]",
+        "tests/integration/i3/test_selective_exchange.py::test_context_scope_cannot_rebind_provider_or_source_service[inventory_service]",
+        "tests/integration/access/test_context_boundary.py::test_typed_and_sql_writes_reject_without_mutation_or_stop[scope_uuidv4-repository]",
+        "tests/integration/access/test_context_boundary.py::test_typed_and_sql_writes_reject_without_mutation_or_stop[scope_uuidv4-source]",
+        "tests/integration/access/test_context_boundary.py::test_typed_and_sql_writes_reject_without_mutation_or_stop[scope_uuidv4-membership]",
+        "tests/integration/access/test_context_boundary.py::test_typed_and_sql_writes_reject_without_mutation_or_stop[token-provider]",
+        "tests/integration/access/test_context_boundary.py::test_typed_and_sql_writes_reject_without_mutation_or_stop[token-repository]",
+        "tests/integration/i4/test_query_search_backup.py::test_current_provider_roles_never_fall_back_to_old_core_target",
+        "tests/integration/access/test_context_boundary.py::test_typed_and_sql_writes_reject_without_mutation_or_stop[token-source]",
+        "tests/integration/access/test_context_boundary.py::test_typed_and_sql_writes_reject_without_mutation_or_stop[token-membership]",
+        "tests/integration/i4/test_query_search_backup.py::test_equal_incomparable_and_unknown_clocks_keep_all_provider_candidates[provider-100-False]",
+        "tests/integration/access/test_context_boundary.py::test_typed_and_sql_writes_reject_without_mutation_or_stop[poll_interval_s-provider]",
+        "tests/integration/i4/test_query_search_backup.py::test_equal_incomparable_and_unknown_clocks_keep_all_provider_candidates[provider-100-True]",
+        "tests/integration/access/test_context_boundary.py::test_typed_and_sql_writes_reject_without_mutation_or_stop[poll_interval_s-repository]",
+        "tests/integration/i4/test_query_search_backup.py::test_equal_incomparable_and_unknown_clocks_keep_all_provider_candidates[different-100-False]",
+        "tests/integration/access/test_context_boundary.py::test_typed_and_sql_writes_reject_without_mutation_or_stop[poll_interval_s-source]",
+        "tests/integration/i4/test_query_search_backup.py::test_equal_incomparable_and_unknown_clocks_keep_all_provider_candidates[different-100-True]",
+        "tests/integration/access/test_context_boundary.py::test_typed_and_sql_writes_reject_without_mutation_or_stop[poll_interval_s-membership]",
+        "tests/integration/access/test_context_boundary.py::test_typed_and_sql_writes_reject_without_mutation_or_stop[metadata-provider]",
+        "tests/integration/i4/test_query_search_backup.py::test_equal_incomparable_and_unknown_clocks_keep_all_provider_candidates[provider-None-False]",
+        "tests/integration/access/test_context_boundary.py::test_typed_and_sql_writes_reject_without_mutation_or_stop[metadata-repository]",
+        "tests/integration/i4/test_query_search_backup.py::test_equal_incomparable_and_unknown_clocks_keep_all_provider_candidates[provider-None-True]",
+        "tests/integration/access/test_context_boundary.py::test_typed_and_sql_writes_reject_without_mutation_or_stop[metadata-source]",
+        "tests/integration/access/test_context_boundary.py::test_typed_and_sql_writes_reject_without_mutation_or_stop[metadata-membership]",
+        "tests/integration/i4/test_query_search_backup.py::test_dispositions_are_reports_and_qualification_is_per_operation[withdraw]",
+        "tests/integration/access/test_context_boundary.py::test_stored_transport_input_stops_on_read_before_repair[provider]",
+        "tests/integration/i4/test_query_search_backup.py::test_dispositions_are_reports_and_qualification_is_per_operation[correct]",
+        "tests/integration/access/test_context_boundary.py::test_stored_transport_input_stops_on_read_before_repair[repository]",
+        "tests/integration/access/test_context_boundary.py::test_stored_transport_input_stops_on_read_before_repair[source]",
+        "tests/integration/i4/test_query_search_backup.py::test_dispositions_are_reports_and_qualification_is_per_operation[dispute]",
+        "tests/integration/access/test_context_boundary.py::test_stored_transport_input_stops_on_read_before_repair[membership]",
+        "tests/integration/i4/test_query_search_backup.py::test_search_rebuild_fallback_and_current_historical_summary[missing]",
+        "tests/integration/access/test_context_boundary.py::test_registration_dataclasses_and_tampered_batch_preflight",
+        "tests/integration/i4/test_query_search_backup.py::test_search_rebuild_fallback_and_current_historical_summary[stale]",
+        "tests/integration/access/test_context_boundary.py::test_resigned_exchange_rejects_registration_leaks_before_core_admission[True-inside-json-providers]",
+        "tests/integration/i4/test_query_search_backup.py::test_search_rebuild_fallback_and_current_historical_summary[text]",
+        "tests/integration/access/test_context_boundary.py::test_resigned_exchange_rejects_registration_leaks_before_core_admission[True-inside-json-repositories]",
+        "tests/integration/access/test_context_boundary.py::test_resigned_exchange_rejects_registration_leaks_before_core_admission[True-inside-json-sources]",
+        "tests/integration/i4/test_query_search_backup.py::test_search_rebuild_fallback_and_current_historical_summary[delete]",
+        "tests/integration/access/test_context_boundary.py::test_resigned_exchange_rejects_registration_leaks_before_core_admission[True-inside-json-source_repositories]",
+        "tests/integration/i4/test_query_search_backup.py::test_search_rebuild_fallback_and_current_historical_summary[garbage]",
+        "tests/integration/access/test_context_boundary.py::test_resigned_exchange_rejects_registration_leaks_before_core_admission[True-extra-envelope-providers]",
+        "tests/integration/i4/test_query_search_backup.py::test_query_search_pagination_snapshot_budget_and_stop",
+        "tests/integration/access/test_context_boundary.py::test_resigned_exchange_rejects_registration_leaks_before_core_admission[True-extra-envelope-repositories]",
+        "tests/integration/i4/test_query_search_backup.py::test_paired_restore_preserves_all_keys_dependencies_and_excludes_other_stores",
+        "tests/integration/access/test_context_boundary.py::test_resigned_exchange_rejects_registration_leaks_before_core_admission[True-extra-envelope-sources]",
+        "tests/integration/access/test_context_boundary.py::test_resigned_exchange_rejects_registration_leaks_before_core_admission[True-extra-envelope-source_repositories]",
+        "tests/integration/i4/test_query_search_backup.py::test_paired_restore_coverage_source_text_and_git_only_boundary",
+        "tests/integration/access/test_context_boundary.py::test_resigned_exchange_rejects_registration_leaks_before_core_admission[False-inside-json-providers]",
+        "tests/integration/access/test_context_boundary.py::test_resigned_exchange_rejects_registration_leaks_before_core_admission[False-inside-json-repositories]",
+        "tests/integration/i4/test_query_search_backup.py::test_forged_backup_with_valid_checksums_fails_semantic_restore[member]",
+        "tests/integration/access/test_context_boundary.py::test_resigned_exchange_rejects_registration_leaks_before_core_admission[False-inside-json-sources]",
+        "tests/integration/i4/test_query_search_backup.py::test_forged_backup_with_valid_checksums_fails_semantic_restore[clock]",
+        "tests/integration/access/test_context_boundary.py::test_resigned_exchange_rejects_registration_leaks_before_core_admission[False-inside-json-source_repositories]",
+        "tests/integration/i4/test_query_search_backup.py::test_forged_backup_with_valid_checksums_fails_semantic_restore[role]",
+        "tests/integration/access/test_context_boundary.py::test_resigned_exchange_rejects_registration_leaks_before_core_admission[False-extra-envelope-providers]",
+        "tests/integration/i4/test_query_search_backup.py::test_forged_backup_with_valid_checksums_fails_semantic_restore[support]",
+        "tests/integration/access/test_context_boundary.py::test_resigned_exchange_rejects_registration_leaks_before_core_admission[False-extra-envelope-repositories]",
+        "tests/integration/i4/test_query_search_backup.py::test_invalid_authoritative_provider_scope_stops_service[query]",
+        "tests/integration/access/test_context_boundary.py::test_resigned_exchange_rejects_registration_leaks_before_core_admission[False-extra-envelope-sources]",
+        "tests/integration/access/test_context_boundary.py::test_resigned_exchange_rejects_registration_leaks_before_core_admission[False-extra-envelope-source_repositories]",
+        "tests/integration/i4/test_query_search_backup.py::test_invalid_authoritative_provider_scope_stops_service[search]",
+        "tests/integration/access/test_context_boundary.py::test_reported_urls_and_historical_core_provenance_survive_exchange",
+        "tests/integration/access/test_context_boundary.py::test_read_outputs_recheck_instead_of_sanitizing_invalid_registration[export]",
+        "tests/integration/i4/test_query_search_backup.py::test_invalid_authoritative_provider_scope_stops_service[rebuild]",
+        "tests/integration/access/test_context_boundary.py::test_read_outputs_recheck_instead_of_sanitizing_invalid_registration[providers]",
+        "tests/integration/access/test_context_boundary.py::test_read_outputs_recheck_instead_of_sanitizing_invalid_registration[sources]",
+        "tests/integration/access/test_context_boundary.py::test_context_only_round_trip_and_core_only_paths_need_no_access",
+        "tests/integration/i4/test_query_search_backup.py::test_invalid_authoritative_provider_scope_stops_service[backup]",
+        "tests/integration/access/test_context_boundary.py::test_old_wire_version_is_not_reinterpreted",
+        "tests/integration/access/test_context_boundary.py::test_no_normalization_no_network_no_settings_import_side_effect",
+        "tests/integration/access/test_context_boundary.py::test_repository_claim_direct_values_round_trip_without_scalar_tag_decode[name-a]",
+        "tests/integration/access/test_context_boundary.py::test_repository_claim_direct_values_round_trip_without_scalar_tag_decode[name-]",
+        "tests/integration/access/test_context_boundary.py::test_repository_claim_direct_values_round_trip_without_scalar_tag_decode[git_path-/srv/\\u65e5\\u672c\\u8a9e/repo]",
+        "tests/integration/access/test_context_boundary.py::test_repository_claim_direct_values_round_trip_without_scalar_tag_decode[endpoint-https://historical.example/repo]",
+        "tests/integration/access/test_context_boundary.py::test_repository_claim_direct_values_round_trip_without_scalar_tag_decode[object_format-sha256]",
+        "tests/integration/access/test_context_boundary.py::test_repository_claim_direct_values_round_trip_without_scalar_tag_decode[observation_us-None]",
+        "tests/integration/i5/test_independent_e2e.py::test_independent_selection_does_not_turn_dependencies_into_permission[R]",
+        "tests/integration/access/test_context_boundary.py::test_repository_claim_direct_values_round_trip_without_scalar_tag_decode[observation_us-17]",
+        "tests/integration/i5/test_independent_e2e.py::test_independent_selection_does_not_turn_dependencies_into_permission[O]",
+        "tests/integration/i5/test_independent_e2e.py::test_independent_selection_does_not_turn_dependencies_into_permission[C]",
+        "tests/integration/i5/test_independent_e2e.py::test_independent_selection_does_not_turn_dependencies_into_permission[RO]",
+        "tests/integration/i5/test_independent_e2e.py::test_independent_selection_does_not_turn_dependencies_into_permission[RC]",
+        "tests/integration/access/test_context_boundary.py::test_repository_claim_direct_values_round_trip_without_scalar_tag_decode[identity_assertion-750e8400-e29b-41d4-a716-446655440000]",
+        "tests/integration/i5/test_independent_e2e.py::test_independent_selection_does_not_turn_dependencies_into_permission[OC]",
+        "tests/integration/i5/test_independent_e2e.py::test_independent_selection_does_not_turn_dependencies_into_permission[ROC]",
+        "tests/integration/i5/test_independent_e2e.py::test_independent_selection_does_not_turn_dependencies_into_permission[empty]",
+        "tests/integration/i5/test_independent_e2e.py::test_omitted_selection_needs_explicit_all_and_empty_overrides_all",
+        "tests/integration/i5/test_independent_e2e.py::test_mapping_effect_stays_local_across_exchange_search_and_restore[withdraw]",
+        "tests/integration/access/test_context_boundary.py::test_repository_claim_direct_values_round_trip_without_scalar_tag_decode[identity_cancellation-750e8400-e29b-41d4-a716-446655440000]",
+        "tests/integration/i5/test_independent_e2e.py::test_mapping_effect_stays_local_across_exchange_search_and_restore[correct]",
+        "tests/integration/i5/test_independent_e2e.py::test_mapping_effect_stays_local_across_exchange_search_and_restore[dispute]",
+        "tests/integration/i5/test_independent_e2e.py::test_received_search_is_disposable_and_rebuild_preserves_authority[missing]",
+        "tests/integration/i5/test_independent_e2e.py::test_received_search_is_disposable_and_rebuild_preserves_authority[garbage]",
+        "tests/integration/i5/test_independent_e2e.py::test_received_search_is_disposable_and_rebuild_preserves_authority[stale]",
+        "tests/integration/i5/test_independent_e2e.py::test_received_search_is_disposable_and_rebuild_preserves_authority[text]",
+        "tests/integration/i5/test_independent_e2e.py::test_received_search_is_disposable_and_rebuild_preserves_authority[row_key]",
+        "tests/integration/i5/test_independent_e2e.py::test_received_paired_backup_preserves_complete_rows_keys_provenance_and_oid_refs",
+        "tests/integration/i5/test_independent_e2e.py::test_transfer_reports_never_mix_across_observations_or_identifier_namespaces",
+        "tests/integration/i5/test_independent_e2e.py::test_selected_source_inventory_cannot_expand_repository_registration",
+        "tests/integration/p1/test_context.py::test_missing_differs_from_explicit_null",
+        "tests/integration/p1/test_context.py::test_current_candidates_preserve_equal_and_incomparable",
+        "tests/integration/p1/test_context.py::test_exact_original_replay_does_not_rewrite_provenance",
+        "tests/integration/p1/test_context.py::test_generated_source_clock_is_real_sqlite_value",
+        "tests/integration/p1/test_context.py::test_context_independent_transaction_rollback_and_restart",
+        "tests/integration/p1/test_context.py::test_context_only_resource_needs_no_core_or_source_membership",
+        "tests/integration/p1/test_context.py::test_portable_core_reference_validated_and_no_sender_promotion",
+        "tests/integration/p1/test_context.py::test_source_membership_cannot_be_removed_or_rebound",
+        "tests/integration/p1/test_context.py::test_source_empty_inventory_is_durable_without_any_membership",
+        "tests/integration/p1/test_context.py::test_children_have_real_parent_and_document_kind_coordinates",
+        "tests/integration/p1/test_context.py::test_global_document_cannot_be_reinterpreted_as_scoped_on_insert_or_replay[False]",
+        "tests/integration/p1/test_context.py::test_global_document_cannot_be_reinterpreted_as_scoped_on_insert_or_replay[True]",
+        "tests/integration/p1/test_context.py::test_text_exact_utf8_content_addressing",
+        "tests/integration/p1/test_context.py::test_epoch_int64_boundaries[1]",
+        "tests/integration/p1/test_context.py::test_epoch_int64_boundaries[9223372036854775807]",
+        "tests/integration/p1/test_context.py::test_detached_issue_attachment_transfer_preserves_identity_and_original_provenance",
+        "tests/integration/p1/test_context.py::test_missing_provenance_rejected_at_intended_source_evidence_boundary",
+        "tests/integration/p1/test_context.py::test_permanent_context_registered_identities_cannot_be_rebound",
+        "tests/integration/p1/test_context.py::test_raw_sql_source_clock_json_overflow_is_rejected_at_actual_type",
+        "tests/integration/p1/test_context.py::test_attached_issue_explicit_detach_preserves_null_original_source_and_rollback",
+        "tests/integration/p1/test_context.py::test_exact_text_reference_fk_differs_from_attributed_digest_metadata",
+        "tests/integration/p1/test_context.py::test_exact_text_reference_explicit_null_is_distinct_from_missing",
+        "tests/integration/p1/test_context_relations.py::test_transfer_generic_admission_requires_complete_report[transfer_from_repository-False-False]",
+        "tests/integration/p1/test_context_relations.py::test_transfer_generic_admission_requires_complete_report[transfer_from_repository-False-True]",
+        "tests/integration/p1/test_context_relations.py::test_transfer_generic_admission_requires_complete_report[transfer_from_repository-True-False]",
+        "tests/integration/p1/test_context_relations.py::test_transfer_generic_admission_requires_complete_report[transfer_from_repository-True-True]",
+        "tests/integration/p1/test_context_relations.py::test_transfer_generic_admission_requires_complete_report[transfer_to_repository-False-False]",
+        "tests/integration/p1/test_context_relations.py::test_transfer_generic_admission_requires_complete_report[transfer_to_repository-False-True]",
+        "tests/integration/p1/test_context_relations.py::test_transfer_generic_admission_requires_complete_report[transfer_to_repository-True-False]",
+        "tests/integration/p1/test_context_relations.py::test_transfer_generic_admission_requires_complete_report[transfer_to_repository-True-True]",
+        "tests/integration/p1/test_context_relations.py::test_transfer_stored_type_is_never_inferred[absent]",
+        "tests/integration/p1/test_context_relations.py::test_transfer_stored_type_is_never_inferred[missing_type]",
+        "tests/integration/p1/test_context_relations.py::test_transfer_stored_type_is_never_inferred[wrong_type]",
+        "tests/integration/p1/test_context_relations.py::test_transfer_stored_type_is_never_inferred[provided_roles]",
+        "tests/integration/p1/test_context_relations.py::test_transfer_stored_type_is_never_inferred[members]",
+        "tests/integration/p1/test_context_relations.py::test_transfer_stored_type_is_never_inferred[missing_provider]",
+        "tests/integration/p1/test_context_relations.py::test_transfer_stored_type_is_never_inferred[missing_clock]",
+        "tests/integration/p1/test_context_relations.py::test_transfer_report_fk_failure_rolls_back_whole_unit",
+        "tests/integration/p1/test_context_relations.py::test_transfer_supports_both_endpoints_without_cross_borrowing",
+        "tests/integration/p1/test_context_relations.py::test_partial_transfer_alternatives_remain_selection_truncated",
+        "tests/integration/p1/test_context_relations.py::test_counterexample_1_conflicting_immutable_mappings_survive",
+        "tests/integration/p1/test_context_relations.py::test_counterexample_2_current_candidates_clock_pruning",
+        "tests/integration/p1/test_context_relations.py::test_counterexample_3_atomic_rollback_on_failure",
+        "tests/integration/p1/test_context_relations.py::test_counterexample_4_invalid_roles_and_targets",
+        "tests/integration/p1/test_context_relations.py::test_counterexample_5_transfer_cases_no_invented_endpoints",
+        "tests/integration/p1/test_context_relations.py::test_counterexample_6_exact_claim_key_changed_observation_time_rejected",
+        "tests/integration/p1/test_context_relations.py::test_counterexample_7_exact_disposition_key_changed_observation_time_rejected",
+        "tests/integration/p1/test_context_relations.py::test_counterexample_8_disposition_replacement_checks_and_cycles",
+        "tests/integration/p1/test_context_relations.py::test_counterexample_10_mapping_support_preserves_evidence",
+        "tests/integration/p1/test_context_relations.py::test_counterexample_11_role_scoped_coverage_no_upgrade",
+        "tests/integration/p1/test_context_relations.py::test_counterexample_12_old_repository_uuidv4_field_rejected",
+        "tests/integration/p1/test_context_relations.py::test_counterexample_13_fk_and_trigger_order_consistency",
+        "tests/integration/p1/test_context_relations.py::test_counterexample_14_capabilities_and_p7_stops",
+        "tests/integration/p1/test_context_relations.py::test_counterexample_15_enduring_stored_invariant_validation",
+        "tests/integration/p1/test_context_relations.py::test_counterexample_18_mapping_claim_support_isolation_and_no_speculative_borrowing",
+        "tests/integration/p1/test_context_relations.py::test_transfer_event_genuine_type_enforcement_across_typed_paths",
+        "tests/integration/p1/test_context_relations.py::test_transfer_event_reports_generator_selected_repositories_and_invariants",
+        "tests/integration/p1/test_coverage.py::test_exactly_five_actual_columns_direct_pk_and_fk",
+        "tests/integration/p1/test_coverage.py::test_real_owner_coordinates_round_trip_and_local_fk[<lambda>0]",
+        "tests/integration/p1/test_coverage.py::test_real_owner_coordinates_round_trip_and_local_fk[<lambda>1]",
+        "tests/integration/p1/test_coverage.py::test_real_owner_coordinates_round_trip_and_local_fk[<lambda>2]",
+        "tests/integration/p1/test_coverage.py::test_real_owner_coordinates_round_trip_and_local_fk[<lambda>3]",
+        "tests/integration/p1/test_coverage.py::test_real_owner_coordinates_round_trip_and_local_fk[<lambda>4]",
+        "tests/integration/p1/test_coverage.py::test_real_owner_coordinates_round_trip_and_local_fk[<lambda>5]",
+        "tests/integration/p1/test_coverage.py::test_scope_cannot_use_hash_or_opaque_alias",
+        "tests/integration/p1/test_coverage.py::test_unicode_full_owner_coordinates_are_lossless",
+        "tests/integration/p1/test_coverage.py::test_repeated_identical_and_advisory_only_replays",
+        "tests/integration/p1/test_coverage.py::test_latest_unknown_never_falls_back_to_older_complete",
+        "tests/integration/p1/test_coverage.py::test_same_time_conflicting_states_preserved",
+        "tests/integration/p1/test_coverage.py::test_known_empty_requires_actual_terminal_not_absence",
+        "tests/integration/p1/test_coverage.py::test_proofs_require_exact_claim_terminal_and_same_owner",
+        "tests/integration/p1/test_coverage.py::test_partial_terminal_cannot_prove_complete",
+        "tests/integration/p1/test_coverage.py::test_scope_kind_does_not_merge_distinct_nested_head_base",
+        "tests/integration/p1/test_coverage.py::test_source_known_positive_survives_unknown_and_disposable_loss",
+        "tests/integration/p1/test_coverage.py::test_source_inventory_scope_needs_no_fabricated_resource_or_membership",
+        "tests/integration/p1/test_coverage.py::test_known_empty_source_inventory_has_exact_source_proof",
+        "tests/integration/p1/test_coverage.py::test_coverage_projection_pins_one_local_snapshot",
+        "tests/integration/p1/test_coverage.py::test_every_collection_proof_matches_actual_coverage_kind[repository]",
+        "tests/integration/p1/test_coverage.py::test_every_collection_proof_matches_actual_coverage_kind[source]",
+        "tests/integration/p1/test_coverage.py::test_every_collection_proof_matches_actual_coverage_kind[resource]",
+        "tests/integration/p1/test_coverage.py::test_every_collection_proof_matches_actual_coverage_kind[field]",
+        "tests/integration/p1/test_coverage.py::test_every_collection_proof_matches_actual_coverage_kind[collection]",
+        "tests/integration/p1/test_coverage.py::test_proof_read_rechecks_latest_terminal_candidates[19-partial-[\"not-empty\"]-unknown]",
+        "tests/integration/p1/test_coverage.py::test_proof_read_rechecks_latest_terminal_candidates[19-unknown-[]-unknown]",
+        "tests/integration/p1/test_coverage.py::test_proof_read_rechecks_latest_terminal_candidates[19-complete-[\"not-empty\"]-unknown]",
+        "tests/integration/p1/test_coverage.py::test_proof_read_rechecks_latest_terminal_candidates[10-partial-[\"not-empty\"]-conflict]",
+        "tests/integration/p1/test_coverage.py::test_proof_read_rechecks_latest_terminal_candidates[10-complete-[\"not-empty\"]-conflict]",
+        "tests/integration/p1/test_coverage.py::test_proof_read_rechecks_latest_terminal_candidates[10-unknown-[]-complete]",
+        "tests/integration/p1/test_coverage.py::test_proof_read_rechecks_latest_terminal_candidates[25-partial-[]-unknown]",
+        "tests/integration/access/test_review_corrections.py::test_nonseed_external_metadata_preserves_pairing_and_replay[False-sha1]",
+        "tests/integration/p1/test_coverage.py::test_proof_insert_rejects_superseded_or_conflicting_terminal[19-partial-[\"not-empty\"]]",
+        "tests/integration/p1/test_coverage.py::test_proof_insert_rejects_superseded_or_conflicting_terminal[10-partial-[]]",
+        "tests/integration/p1/test_coverage.py::test_proof_insert_rejects_superseded_or_conflicting_terminal[10-complete-[\"other\"]]",
+        "tests/integration/access/test_review_corrections.py::test_nonseed_external_metadata_preserves_pairing_and_replay[False-sha256]",
+        "tests/integration/p1/test_coverage.py::test_source_proof_rechecks_latest_inventory_with_original_scope",
+        "tests/integration/p1/test_coverage.py::test_source_inventory_proof_cannot_change_actual_kind",
+        "tests/integration/p1/test_coverage.py::test_new_genuine_current_proof_supersedes_old_proof_without_mutation",
+        "tests/integration/access/test_review_corrections.py::test_nonseed_external_metadata_preserves_pairing_and_replay[True-sha1]",
+        "tests/integration/p1/test_coverage.py::test_explicit_scope_kind_cannot_be_overridden_by_collection_name",
+        "tests/integration/p1/test_derivatives.py::test_operational_loss_disables_old_continuation_without_invalidating_authority",
+        "tests/integration/access/test_review_corrections.py::test_nonseed_external_metadata_preserves_pairing_and_replay[True-sha256]",
+        "tests/integration/p1/test_derivatives.py::test_search_snapshot_fence_loss_corruption_and_reconstruction",
+        "tests/integration/p1/test_derivatives.py::test_context_search_resolves_actual_text_fk_in_projection_and_fallback",
+        "tests/integration/p1/test_generalized_resources.py::test_global_and_child_first_roundtrip[]",
+        "tests/integration/p1/test_generalized_resources.py::test_global_and_child_first_roundtrip[native1]",
+        "tests/integration/p1/test_generalized_resources.py::test_global_and_child_first_roundtrip[native2]",
+        "tests/integration/p1/test_generalized_resources.py::test_global_and_child_first_roundtrip[native3]",
+        "tests/integration/p1/test_generalized_resources.py::test_global_and_child_first_roundtrip[native4]",
+        "tests/integration/p1/test_generalized_resources.py::test_global_and_child_first_roundtrip[\\xe9\\x00\\U0001f600]",
+        "tests/integration/p1/test_generalized_resources.py::test_unknown_binary_names_and_full_fk",
+        "tests/integration/p1/test_generalized_resources.py::test_production_reopen_query_and_opaque_reports",
+        "tests/integration/p1/test_generalized_resources.py::test_real_nontransfer_provider_native_event_persists_and_reopens[False]",
+        "tests/integration/p1/test_generalized_resources.py::test_real_nontransfer_provider_native_event_persists_and_reopens[True]",
+        "tests/integration/p1/test_generalized_resources.py::test_supported_observation_late_sql_failure_rolls_back_whole_unit",
+        "tests/integration/p1/test_generalized_resources.py::test_real_commit_refusal_rolls_back_supported_resource",
+        "tests/integration/p1/test_generalized_resources.py::test_selected_real_wire_without_identification_refuses_before_core_effects",
+        "tests/integration/p1/test_generalized_resources.py::test_real_selected_transfer_wire_refuses_before_effects_and_replay[False-False-False]",
+        "tests/integration/p1/test_generalized_resources.py::test_real_selected_transfer_wire_refuses_before_effects_and_replay[False-False-True]",
+        "tests/integration/p1/test_generalized_resources.py::test_real_selected_transfer_wire_refuses_before_effects_and_replay[False-True-False]",
+        "tests/integration/p1/test_generalized_resources.py::test_real_selected_transfer_wire_refuses_before_effects_and_replay[False-True-True]",
+        "tests/integration/p1/test_generalized_resources.py::test_real_selected_transfer_wire_refuses_before_effects_and_replay[True-False-False]",
+        "tests/integration/p1/test_generalized_resources.py::test_real_selected_transfer_wire_refuses_before_effects_and_replay[True-False-True]",
+        "tests/integration/p1/test_generalized_resources.py::test_real_selected_transfer_wire_refuses_before_effects_and_replay[True-True-False]",
+        "tests/integration/p1/test_generalized_resources.py::test_real_selected_transfer_wire_refuses_before_effects_and_replay[True-True-True]",
+        "tests/integration/p1/test_generalized_resources.py::test_real_wire_parser_rejects_unrecognized_nested_operations_before_effects",
+        "tests/integration/p1/test_generalized_resources.py::test_unknown_ordered_wire_and_opaque_transfer_text_remain_supported",
+        "tests/integration/p1/test_generalized_resources.py::test_matching_schema_poison_stops_before_ordinary_exposure[context-report]",
+        "tests/integration/p1/test_generalized_resources.py::test_matching_schema_poison_stops_before_ordinary_exposure[context-endpoint]",
+        "tests/integration/p1/test_generalized_resources.py::test_matching_schema_poison_stops_before_ordinary_exposure[query-report]",
+        "tests/integration/p1/test_generalized_resources.py::test_matching_schema_poison_stops_before_ordinary_exposure[query-endpoint]",
+        "tests/integration/p1/test_generalized_resources.py::test_matching_schema_poison_stops_before_ordinary_exposure[export-report]",
+        "tests/integration/p1/test_generalized_resources.py::test_matching_schema_poison_stops_before_ordinary_exposure[export-endpoint]",
+        "tests/integration/p1/test_generalized_resources.py::test_matching_schema_poison_stops_before_ordinary_exposure[search-report]",
+        "tests/integration/p1/test_generalized_resources.py::test_matching_schema_poison_stops_before_ordinary_exposure[search-endpoint]",
+        "tests/integration/p1/test_time_policy.py::test_nullable_provider_and_observation_round_trip[None]",
+        "tests/integration/p1/test_time_policy.py::test_nullable_provider_and_observation_round_trip[1]",
+        "tests/integration/p1/test_time_policy.py::test_nullable_provider_and_observation_round_trip[9223372036854775807]",
+        "tests/integration/p1/test_time_policy.py::test_unknown_clock_never_orders_or_overwrites_candidates",
+        "tests/integration/p1/test_time_policy.py::test_json_clock_preserves_original_type_and_rejects_invalid_values[-9223372036854775808]",
+        "tests/integration/p1/test_time_policy.py::test_json_clock_preserves_original_type_and_rejects_invalid_values[-1]",
+        "tests/integration/p1/test_time_policy.py::test_json_clock_preserves_original_type_and_rejects_invalid_values[0]",
+        "tests/integration/p1/test_time_policy.py::test_json_clock_preserves_original_type_and_rejects_invalid_values[True]",
+        "tests/integration/p1/test_time_policy.py::test_json_clock_preserves_original_type_and_rejects_invalid_values[1.0]",
+        "tests/integration/p1/test_time_policy.py::test_json_clock_preserves_original_type_and_rejects_invalid_values[1]",
+        "tests/integration/p1/test_time_policy.py::test_json_clock_preserves_original_type_and_rejects_invalid_values[9223372036854775808]",
+        "tests/integration/p1/test_time_policy.py::test_sql_stored_observation_range_is_enforced[-1]",
+        "tests/integration/p1/test_time_policy.py::test_sql_stored_observation_range_is_enforced[0]",
+        "tests/integration/p1/test_validation_stop.py::test_paired_validation_udf_failure_persists_stop[False-provider]",
+        "tests/integration/p1/test_validation_stop.py::test_paired_validation_udf_failure_persists_stop[False-field]",
+        "tests/integration/p1/test_validation_stop.py::test_paired_validation_udf_failure_persists_stop[True-provider]",
+        "tests/integration/p1/test_validation_stop.py::test_paired_validation_udf_failure_persists_stop[True-field]",
+        "tests/integration/i2/test_provider_intake.py::test_pr_base_head_have_distinct_core_and_exact_provider_support",
+        "tests/integration/i2/test_provider_intake.py::test_mapping_conflict_retains_both_exact_claim_keys",
+        "tests/integration/i2/test_provider_intake.py::test_other_provider_claim_cannot_resolve_reference_or_typed_qualification",
+        "tests/integration/i2/test_provider_intake.py::test_disposition_qualification_keeps_original_provider_and_claims[withdraw]",
+        "tests/integration/i2/test_provider_intake.py::test_disposition_qualification_keeps_original_provider_and_claims[dispute]",
+        "tests/integration/i2/test_provider_intake.py::test_disposition_qualification_keeps_original_provider_and_claims[correct]",
+        "tests/integration/i2/test_provider_intake.py::test_missing_null_unresolved_and_late_mapping_are_distinct",
+        "tests/integration/i2/test_provider_intake.py::test_provider_native_namespaces_do_not_borrow_decimal_mapping",
+        "tests/integration/i2/test_provider_intake.py::test_transfer_preserves_complete_original_endpoint_states[endpoints0-expected0]",
+        "tests/integration/i2/test_provider_intake.py::test_transfer_preserves_complete_original_endpoint_states[endpoints1-expected1]",
+        "tests/integration/i2/test_provider_intake.py::test_transfer_preserves_complete_original_endpoint_states[endpoints2-expected2]",
+        "tests/integration/i2/test_provider_intake.py::test_transfer_preserves_complete_original_endpoint_states[endpoints3-expected3]",
+        "tests/integration/i2/test_provider_intake.py::test_transfer_preserves_complete_original_endpoint_states[endpoints4-expected4]",
+        "tests/integration/i2/test_provider_intake.py::test_non_transfer_cannot_promote_repository_fields_or_forged_flag[False]",
+        "tests/integration/i2/test_provider_intake.py::test_non_transfer_cannot_promote_repository_fields_or_forged_flag[True]",
+        "tests/integration/i2/test_provider_intake.py::test_graphql_transfer_parent_namespace_and_original_type",
+        "tests/integration/i2/test_provider_intake.py::test_timeline_parent_override_cannot_forge_observed_issue[False-999-None]",
+        "tests/integration/i2/test_provider_intake.py::test_timeline_parent_override_cannot_forge_observed_issue[True-999-None]",
+        "tests/integration/i2/test_provider_intake.py::test_timeline_parent_override_cannot_forge_observed_issue[True-I_wrong-observed_issue2]",
+        "tests/integration/i2/test_provider_intake.py::test_timeline_parent_override_cannot_forge_observed_issue[True-I_actual-None]",
+        "tests/integration/i2/test_provider_intake.py::test_timeline_parent_override_cannot_forge_observed_issue[True-I_actual-observed_issue4]",
+        "tests/integration/i2/test_provider_intake.py::test_timeline_parent_override_cannot_forge_observed_issue[True-7-observed_issue5]",
+        "tests/integration/i2/test_provider_intake.py::test_timeline_parent_override_cannot_forge_observed_issue[True-I_actual-observed_issue6]",
+        "tests/integration/i2/test_provider_intake.py::test_reacquired_event_does_not_reissue_provenance_after_mapping_change",
+        "tests/integration/i2/test_provider_intake.py::test_separate_event_reports_never_pair_endpoints",
+        "tests/integration/i2/test_provider_intake.py::test_generic_provider_scope_cannot_create_transfer",
+        "tests/integration/i2/test_provider_intake.py::test_invalid_event_input_rolls_back_without_recovery_stop[payload0]",
+        "tests/integration/i2/test_provider_intake.py::test_invalid_event_input_rolls_back_without_recovery_stop[payload1]",
+        "tests/integration/i2/test_provider_intake.py::test_invalid_event_input_rolls_back_without_recovery_stop[payload2]",
+        "tests/integration/i2/test_provider_intake.py::test_caller_transaction_batch_failure_rolls_back_partial_domain_and_access_untouched",
+        "tests/integration/i2/test_provider_intake.py::test_p7_stop_rejects_provider_intake",
+        "tests/integration/i2/test_provider_intake.py::test_issue_ownership_keeps_incomparable_source_clock_domains",
+        "tests/integration/i2/test_provider_intake.py::test_oid_url_name_and_source_membership_are_not_mapping_evidence",
+        "tests/integration/i2/test_provider_intake.py::test_declared_resolved_provider_scope_does_not_supply_its_own_mapping",
+        "tests/integration/i2/test_provider_intake.py::test_graphql_event_does_not_infer_destination_from_current_issue_repository",
+        "tests/integration/i2/test_provider_intake.py::test_same_original_event_key_cannot_change_observation_time",
+        "tests/integration/i2/test_provider_intake.py::test_stop_during_claim_admission_rolls_back_real_context_work",
+        "tests/integration/i2/test_provider_intake.py::test_latest_unresolved_owner_does_not_fall_back_to_old_mapped_owner",
+        "tests/integration/i2/test_provider_intake.py::test_graphql_type_mismatch_cannot_change_resource_kind[issue]",
+        "tests/integration/i2/test_provider_intake.py::test_graphql_type_mismatch_cannot_change_resource_kind[pull_request]",
+        "tests/integration/i2/test_provider_intake.py::test_graphql_type_mismatch_cannot_change_resource_kind[repository]",
+        "tests/integration/i2/test_provider_intake.py::test_mapping_qualification_does_not_rewrite_source_or_coverage",
+        "tests/integration/i2/test_provider_intake.py::test_transfer_type_and_endpoint_evidence_must_belong_to_same_report[event_resource]",
+        "tests/integration/i2/test_provider_intake.py::test_transfer_type_and_endpoint_evidence_must_belong_to_same_report[clock]",
+        "tests/integration/i2/test_provider_intake.py::test_transfer_type_and_endpoint_evidence_must_belong_to_same_report[provenance]",
+        "tests/integration/i2/test_provider_intake.py::test_transfer_type_and_endpoint_evidence_must_belong_to_same_report[members]",
+        "tests/integration/i2/test_provider_intake.py::test_qualified_read_keyword_contract_reference_and_production_match",
+        "tests/integration/i2/test_provider_intake.py::test_invalid_retained_provider_scope_triggers_p7_stop",
+        "tests/integration/i23/test_provider_exchange.py::test_current_roles_namespaces_clocks_and_conflicts_across_seeds",
+        "tests/integration/i23/test_provider_exchange.py::test_received_dispositions_need_receiver_evidence_and_preserve_keys[withdraw]",
+        "tests/integration/i23/test_provider_exchange.py::test_received_dispositions_need_receiver_evidence_and_preserve_keys[correct]",
+        "tests/integration/i23/test_provider_exchange.py::test_received_dispositions_need_receiver_evidence_and_preserve_keys[dispute]",
+        "tests/integration/i23/test_provider_exchange.py::test_genuine_transfer_event_report_is_preserved_whole[endpoints0-states0]",
+        "tests/integration/i23/test_provider_exchange.py::test_genuine_transfer_event_report_is_preserved_whole[endpoints1-states1]",
+        "tests/integration/i23/test_provider_exchange.py::test_genuine_transfer_event_report_is_preserved_whole[endpoints2-states2]",
+        "tests/integration/i23/test_provider_exchange.py::test_genuine_transfer_event_report_is_preserved_whole[endpoints3-states3]",
+        "tests/integration/i23/test_provider_exchange.py::test_genuine_transfer_event_report_is_preserved_whole[endpoints4-states4]",
+        "tests/integration/i23/test_provider_exchange.py::test_i2_source_coverage_and_native_capture_notes_survive_i3",
+        "tests/integration/i23/test_provider_exchange.py::test_domain_exchange_neither_transports_nor_changes_real_access_grants",
+        "tests/integration/i23/test_provider_exchange.py::test_invalid_i2_provider_scope_rejected_before_binding_and_core_commit[False-bad_role]",
+        "tests/integration/i23/test_provider_exchange.py::test_invalid_i2_provider_scope_rejected_before_binding_and_core_commit[False-wrong_observation]",
+        "tests/integration/i23/test_provider_exchange.py::test_invalid_i2_provider_scope_rejected_before_binding_and_core_commit[False-wrong_members]",
+        "tests/integration/i23/test_provider_exchange.py::test_invalid_i2_provider_scope_rejected_before_binding_and_core_commit[True-bad_role]",
+        "tests/integration/i23/test_provider_exchange.py::test_invalid_i2_provider_scope_rejected_before_binding_and_core_commit[True-wrong_observation]",
+        "tests/integration/i23/test_provider_exchange.py::test_invalid_i2_provider_scope_rejected_before_binding_and_core_commit[True-wrong_members]",
+        "tests/integration/i23/test_provider_exchange.py::test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[False-reference_empty]",
+        "tests/integration/i23/test_provider_exchange.py::test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[False-reference_bad_oid]",
+        "tests/integration/i23/test_provider_exchange.py::test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[False-reference_empty_role]",
+        "tests/integration/i23/test_provider_exchange.py::test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[False-provider_kind_empty]",
+        "tests/integration/i23/test_provider_exchange.py::test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[False-provider_kind_integer]",
+        "tests/integration/i23/test_provider_exchange.py::test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[False-relation_kind_integer]",
+        "tests/integration/i23/test_provider_exchange.py::test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[True-reference_empty]",
+        "tests/integration/i23/test_provider_exchange.py::test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[True-reference_bad_oid]",
+        "tests/integration/i23/test_provider_exchange.py::test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[True-reference_empty_role]",
+        "tests/integration/i23/test_provider_exchange.py::test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[True-provider_kind_empty]",
+        "tests/integration/i23/test_provider_exchange.py::test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[True-provider_kind_integer]",
+        "tests/integration/i23/test_provider_exchange.py::test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight[True-relation_kind_integer]",
+        "tests/integration/i23/test_provider_exchange.py::test_collection_coverage_uses_exact_owner_and_admission_order[genuine_collection]",
+        "tests/integration/i23/test_provider_exchange.py::test_collection_coverage_uses_exact_owner_and_admission_order[absent_collection]",
+        "tests/integration/i23/test_provider_exchange.py::test_collection_coverage_uses_exact_owner_and_admission_order[existing_collection]",
+        "tests/integration/i23/test_provider_exchange.py::test_source_coverage_permission_cut_keeps_independent_i2_facts",
+        "tests/integration/i23/test_provider_exchange.py::test_existing_receiver_source_pair_can_support_partial_package_coverage",
+        "tests/integration/i3/test_selective_exchange.py::test_cross_seed_permission_identity_replay",
+        "tests/integration/i3/test_selective_exchange.py::test_empty_and_omitted_independent_sets",
+        "tests/integration/i3/test_selective_exchange.py::test_package_key_binding_before_commits_and_sender_namespace",
+        "tests/integration/i3/test_selective_exchange.py::test_crash_windows_and_fact_based_retry[before_core_commit-False-False]",
+        "tests/integration/i3/test_selective_exchange.py::test_crash_windows_and_fact_based_retry[after_core_commit-True-False]",
+        "tests/integration/i3/test_selective_exchange.py::test_crash_windows_and_fact_based_retry[before_core_checkpoint-True-False]",
+        "tests/integration/i3/test_selective_exchange.py::test_crash_windows_and_fact_based_retry[after_core_checkpoint-True-False]",
+        "tests/integration/i3/test_selective_exchange.py::test_crash_windows_and_fact_based_retry[during_context-True-False]",
+        "tests/integration/i3/test_selective_exchange.py::test_crash_windows_and_fact_based_retry[after_context_commit-True-True]",
+        "tests/integration/i3/test_selective_exchange.py::test_crash_windows_and_fact_based_retry[before_context_checkpoint-True-True]",
+        "tests/integration/i3/test_selective_exchange.py::test_crash_windows_and_fact_based_retry[after_context_checkpoint-True-True]",
+        "tests/integration/i3/test_selective_exchange.py::test_operational_loss_requires_new_issuance",
+        "tests/integration/i3/test_selective_exchange.py::test_transfer_reports_never_shrunk_or_mixed",
+        "tests/integration/i3/test_selective_exchange.py::test_mapping_claim_support_and_dispositions_are_exact",
+        "tests/integration/i3/test_selective_exchange.py::test_empty_oid_and_context_payload_cannot_override_selection",
+        "tests/integration/i3/test_selective_exchange.py::test_bounded_typed_core_graph_and_shared_oid_identity",
+        "tests/integration/i3/test_selective_exchange.py::test_graph_work_byte_unit_limits_are_reported_without_recovery_stop",
+        "tests/integration/i3/test_selective_exchange.py::test_complete_source_inventory_and_coverage_stay_whole",
+        "tests/integration/i3/test_selective_exchange.py::test_process_exit_before_checkpoint_recovery_uses_facts[after_core_commit]",
+        "tests/integration/i3/test_selective_exchange.py::test_process_exit_before_checkpoint_recovery_uses_facts[after_context_commit]",
+        "tests/integration/i3/test_selective_exchange.py::test_native_metadata_notes_and_capture_coverage_without_provider_intake",
+        "tests/integration/i3/test_selective_exchange.py::test_receiver_selection_stop_and_access_unchanged",
+        "tests/integration/i3/test_selective_exchange.py::test_receiver_flags_and_zero_admission_limits_are_enforced",
+        "-q",
+        "-o",
+        "addopts=",
+        "-n",
+        "4",
+        "--tb=long",
+        "-p",
+        "i6a_report_types",
+        "-p",
+        "reviewer_trace",
+        "-p",
+        "no:cacheprovider",
+        "--junitxml=/workspace/review-clean743/diagnostic.xml",
+        "--journal=/workspace/review-clean743/diagnostic.jsonl",
+        "--basetemp=/workspace/review-clean743/basetemp",
+        "-o",
+        "junit_family=xunit1"
+      ],
+      "cwd": "/workspace/i6a-review-clean",
+      "exit_code": 1,
+      "elapsed_seconds": 619.6937742233276,
+      "scope": "Repeated failed-node diagnostic overlaps full ordinary run; concurrent runtime is not timing benchmark evidence",
+      "lane": "pristine-original743",
+      "original_receipt_path": "/workspace/review-clean743/diagnostic.execution.json"
+    },
+    {
+      "command": [
+        "/workspace/review-clean-runtime/bin/python",
+        "-m",
+        "pytest",
+        "tests/packaging/test_p1_distribution.py::test_p1_packaged_ddl_outside_checkout[sdist-wheel]",
+        "tests/packaging/test_p1_distribution.py::test_p1_packaged_ddl_outside_checkout[wheel]",
+        "tests/packaging/test_p2_distribution.py::test_p2_installed_native_git_round_trip[sha1-sdist-wheel]",
+        "tests/packaging/test_p2_distribution.py::test_p2_installed_native_git_round_trip[sha1-wheel]",
+        "tests/packaging/test_p2_distribution.py::test_p2_installed_native_git_round_trip[sha256-sdist-wheel]",
+        "tests/packaging/test_p2_distribution.py::test_p2_installed_native_git_round_trip[sha256-wheel]",
+        "tests/packaging/test_p3_distribution.py::test_installed_production_context[sdist-wheel]",
+        "tests/packaging/test_p3_distribution.py::test_installed_production_context[wheel]",
+        "tests/packaging/test_p4_distribution.py::test_p4_installed_notes[sha1-sdist-wheel]",
+        "tests/packaging/test_p4_distribution.py::test_p4_installed_notes[sha1-wheel]",
+        "tests/packaging/test_p4_distribution.py::test_p4_installed_notes[sha256-sdist-wheel]",
+        "tests/packaging/test_p4_distribution.py::test_p4_installed_notes[sha256-wheel]",
+        "tests/packaging/test_p5_distribution.py::test_p5_installed_acquisition_and_exchange[sha1-sdist-wheel]",
+        "tests/packaging/test_p5_distribution.py::test_p5_installed_acquisition_and_exchange[sha1-wheel]",
+        "tests/packaging/test_p5_distribution.py::test_p5_installed_acquisition_and_exchange[sha256-sdist-wheel]",
+        "tests/packaging/test_p5_distribution.py::test_p5_installed_acquisition_and_exchange[sha256-wheel]",
+        "tests/packaging/test_p6_distribution.py::test_p6_installed_query_search_and_cli[sha1-sdist-wheel]",
+        "tests/packaging/test_p6_distribution.py::test_p6_installed_query_search_and_cli[sha1-wheel]",
+        "tests/packaging/test_p6_distribution.py::test_p6_installed_query_search_and_cli[sha256-sdist-wheel]",
+        "tests/packaging/test_p6_distribution.py::test_p6_installed_query_search_and_cli[sha256-wheel]",
+        "tests/packaging/test_p7_distribution.py::test_p7_installed_recovery_distribution[sdist-wheel]",
+        "tests/packaging/test_p7_distribution.py::test_p7_installed_recovery_distribution[wheel]",
+        "-q",
+        "-o",
+        "addopts=",
+        "-n",
+        "4",
+        "--tb=long",
+        "-p",
+        "i6a_report_types",
+        "-p",
+        "reviewer_trace",
+        "-p",
+        "no:cacheprovider",
+        "--junitxml=/workspace/review-full-cache-corrected/diagnostic.xml",
+        "--journal=/workspace/review-full-cache-corrected/diagnostic.jsonl",
+        "--basetemp=/workspace/review-full-cache-corrected/basetemp",
+        "-o",
+        "junit_family=xunit1"
+      ],
+      "cwd": "/workspace/i6a-review-clean",
+      "exit_code": 1,
+      "elapsed_seconds": 220.38856196403503,
+      "scope": "Repeated failed-node diagnostic overlaps full ordinary run; concurrent runtime is not timing benchmark evidence",
+      "lane": "corrected-cache22",
+      "original_receipt_path": "/workspace/review-full-cache-corrected/diagnostic.execution.json"
+    },
+    {
+      "command": [
+        "/workspace/review-clean-runtime/bin/python",
+        "-m",
+        "pytest",
+        "tests/e2e/test_queries.py::test_pr_root_scopes",
+        "-q",
+        "-o",
+        "addopts=",
+        "--tb=long",
+        "-p",
+        "i6a_report_types",
+        "-p",
+        "reviewer_trace",
+        "-p",
+        "no:cacheprovider",
+        "--junitxml=/workspace/review-serial-timeout/diagnostic.xml",
+        "--journal=/workspace/review-serial-timeout/diagnostic.jsonl",
+        "--basetemp=/workspace/review-serial-timeout/basetemp",
+        "-o",
+        "junit_family=xunit1"
+      ],
+      "cwd": "/workspace/i6a-review-clean",
+      "exit_code": 0,
+      "elapsed_seconds": 41.002480030059814,
+      "scope": "Repeated failed-node diagnostic overlaps full ordinary run; concurrent runtime is not timing benchmark evidence",
+      "lane": "serial-timeout1",
+      "original_receipt_path": "/workspace/review-serial-timeout/diagnostic.execution.json"
+    }
+  ],
+  "typed_reconciliation": {
+    "raw_ordinary": {
+      "checks": {
+        "junit_results_match_actual_typed_outcomes": true,
+        "node_ids_exact": true,
+        "starts_exact": true,
+        "raw_and_typed_phases_exact": true,
+        "ordinary_setup_teardown_once": true,
+        "ordinary_call_after_setup_once": true,
+        "ordinary_all_phases_unique": true,
+        "subtests_explicitly_typed": true,
+        "failed_subtests_not_hidden": true,
+        "finish_and_exit": true,
+        "bindings_unchanged": true
+      },
+      "selected": 5974,
+      "counts": {
+        "passed": 5656,
+        "failed": 276,
+        "error": 42
+      },
+      "exit_code": 1,
+      "subtests": {
+        "passed": 57
+      },
+      "binding_head": "08fbb956c2e470e245146b0dbae747ed0690ea40",
+      "binding_tree": "7072f952975a8537f74ced1bbc2a4a31d7aa3690"
+    },
+    "clean743": {
+      "checks": {
+        "junit_results_match_actual_typed_outcomes": true,
+        "node_ids_exact": true,
+        "starts_exact": true,
+        "raw_and_typed_phases_exact": true,
+        "ordinary_setup_teardown_once": true,
+        "ordinary_call_after_setup_once": true,
+        "ordinary_all_phases_unique": true,
+        "subtests_explicitly_typed": true,
+        "failed_subtests_not_hidden": true,
+        "finish_and_exit": true,
+        "bindings_unchanged": true
+      },
+      "selected": 743,
+      "counts": {
+        "passed": 444,
+        "failed": 279,
+        "error": 20
+      },
+      "exit_code": 1,
+      "subtests": {},
+      "binding_head": "08fbb956c2e470e245146b0dbae747ed0690ea40",
+      "binding_tree": "7072f952975a8537f74ced1bbc2a4a31d7aa3690"
+    },
+    "corrected_cache22": {
+      "checks": {
+        "junit_results_match_actual_typed_outcomes": true,
+        "node_ids_exact": true,
+        "starts_exact": true,
+        "raw_and_typed_phases_exact": true,
+        "ordinary_setup_teardown_once": true,
+        "ordinary_call_after_setup_once": true,
+        "ordinary_all_phases_unique": true,
+        "subtests_explicitly_typed": true,
+        "failed_subtests_not_hidden": true,
+        "finish_and_exit": true,
+        "bindings_unchanged": true
+      },
+      "selected": 22,
+      "counts": {
+        "passed": 18,
+        "failed": 4
+      },
+      "exit_code": 1,
+      "subtests": {},
+      "binding_head": "08fbb956c2e470e245146b0dbae747ed0690ea40",
+      "binding_tree": "7072f952975a8537f74ced1bbc2a4a31d7aa3690"
+    },
+    "serial_timeout_repeat": {
+      "checks": {
+        "junit_results_match_actual_typed_outcomes": true,
+        "node_ids_exact": true,
+        "starts_exact": true,
+        "raw_and_typed_phases_exact": true,
+        "ordinary_setup_teardown_once": true,
+        "ordinary_call_after_setup_once": true,
+        "ordinary_all_phases_unique": true,
+        "subtests_explicitly_typed": true,
+        "failed_subtests_not_hidden": true,
+        "finish_and_exit": true,
+        "bindings_unchanged": true
+      },
+      "selected": 1,
+      "counts": {
+        "passed": 1
+      },
+      "exit_code": 0,
+      "subtests": {},
+      "binding_head": "08fbb956c2e470e245146b0dbae747ed0690ea40",
+      "binding_tree": "7072f952975a8537f74ced1bbc2a4a31d7aa3690"
+    },
+    "raw_uv_cache_error_count": 22,
+    "raw_uv_cache_error_previous_outcomes": {
+      "passed": 18,
+      "failed": 4
+    },
+    "all_provisional_candidates_causally_confirmed_uv_cache": true,
+    "sole_additional_noncache_failure": {
+      "nodeid": "tests/e2e/test_queries.py::test_pr_root_scopes",
+      "raw_failure": "CLI search path returns3/partial/timed_out=true with timeout_seconds30 during overlapped workload.",
+      "serial_result": "PASS with unchanged source/test/30s timeout, no xdist workers; raw FAIL remains. This is an observed timing/environment-sensitive repeat, not proof of its precise resource cause."
+    },
+    "raw_new_unsuccessful_count": 19,
+    "raw_outcome_phase_differences": 23,
+    "latest_unique_node_count": 5974,
+    "latest_nodewise_counts_NOT_ONE_INVOCATION": {
+      "passed": 5675,
+      "failed": 279,
+      "error": 20
+    },
+    "latest_unsuccessful_classes": {
+      "I6-C": 242,
+      "Transfer-stage": 43,
+      "I7-composition": 14
+    },
+    "latest_original743_classes": {
+      "I6-C": 242,
+      "PASS": 444,
+      "Transfer-stage": 43,
+      "I7-composition": 14
+    },
+    "all_original5941_ids_retained": true,
+    "added33_all_latest_pass": true,
+    "all_latest_outcome_phases_match_archived": true,
+    "bindings": {
+      "full": {
+        "head": "08fbb956c2e470e245146b0dbae747ed0690ea40",
+        "tree": "7072f952975a8537f74ced1bbc2a4a31d7aa3690",
+        "input_count": 478,
+        "before_status": "",
+        "after_status": "",
+        "source_root": "/workspace/i6a-independent"
+      },
+      "clean743": {
+        "head": "08fbb956c2e470e245146b0dbae747ed0690ea40",
+        "tree": "7072f952975a8537f74ced1bbc2a4a31d7aa3690",
+        "input_count": 478,
+        "before_status": "",
+        "after_status": "",
+        "source_root": "/workspace/i6a-review-clean"
+      },
+      "cache22": {
+        "head": "08fbb956c2e470e245146b0dbae747ed0690ea40",
+        "tree": "7072f952975a8537f74ced1bbc2a4a31d7aa3690",
+        "input_count": 478,
+        "before_status": "",
+        "after_status": "",
+        "source_root": "/workspace/i6a-review-clean"
+      },
+      "serial1": {
+        "head": "08fbb956c2e470e245146b0dbae747ed0690ea40",
+        "tree": "7072f952975a8537f74ced1bbc2a4a31d7aa3690",
+        "input_count": 478,
+        "before_status": "",
+        "after_status": "",
+        "source_root": "/workspace/i6a-review-clean"
+      }
+    },
+    "source_layout_distinction": "Raw full runs from /workspace/i6a-independent with untracked review evidence, while all478 execution inputs equal public Git blobs and tracked status is clean. clean743/cache22/serial1 run from separate fully pristine /workspace/i6a-review-clean with separate editable runtime and empty full-untracked status; own in-pytest origins/hashes are checked.",
+    "in_pytest_origin_checks": {
+      "clean743": {
+        "workers": 5,
+        "checks": [
+          {
+            "worker": "gw0",
+            "stage": "configure",
+            "module_count": 32
+          },
+          {
+            "worker": "gw0",
+            "stage": "session_finish",
+            "module_count": 62
+          },
+          {
+            "worker": "gw1",
+            "stage": "configure",
+            "module_count": 32
+          },
+          {
+            "worker": "gw1",
+            "stage": "session_finish",
+            "module_count": 61
+          },
+          {
+            "worker": "gw2",
+            "stage": "configure",
+            "module_count": 32
+          },
+          {
+            "worker": "gw2",
+            "stage": "session_finish",
+            "module_count": 62
+          },
+          {
+            "worker": "gw3",
+            "stage": "configure",
+            "module_count": 32
+          },
+          {
+            "worker": "gw3",
+            "stage": "session_finish",
+            "module_count": 62
+          },
+          {
+            "worker": "master",
+            "stage": "configure",
+            "module_count": 32
+          },
+          {
+            "worker": "master",
+            "stage": "session_finish",
+            "module_count": 32
+          }
+        ],
+        "lifecycle_complete": true
+      },
+      "cache22": {
+        "workers": 5,
+        "checks": [
+          {
+            "worker": "gw0",
+            "stage": "configure",
+            "module_count": 1
+          },
+          {
+            "worker": "gw0",
+            "stage": "session_finish",
+            "module_count": 1
+          },
+          {
+            "worker": "gw1",
+            "stage": "configure",
+            "module_count": 1
+          },
+          {
+            "worker": "gw1",
+            "stage": "session_finish",
+            "module_count": 16
+          },
+          {
+            "worker": "gw2",
+            "stage": "configure",
+            "module_count": 1
+          },
+          {
+            "worker": "gw2",
+            "stage": "session_finish",
+            "module_count": 1
+          },
+          {
+            "worker": "gw3",
+            "stage": "configure",
+            "module_count": 1
+          },
+          {
+            "worker": "gw3",
+            "stage": "session_finish",
+            "module_count": 1
+          },
+          {
+            "worker": "master",
+            "stage": "configure",
+            "module_count": 1
+          },
+          {
+            "worker": "master",
+            "stage": "session_finish",
+            "module_count": 1
+          }
+        ],
+        "lifecycle_complete": true
+      },
+      "serial1": {
+        "workers": 1,
+        "checks": [
+          {
+            "worker": "master",
+            "stage": "configure",
+            "module_count": 1
+          },
+          {
+            "worker": "master",
+            "stage": "session_finish",
+            "module_count": 3
+          }
+        ],
+        "lifecycle_complete": true
+      }
+    },
+    "scope": "5974 latest unique node outcomes combine four actual invocations by last protocol teardown timestamp. They are NOT a single successful full invocation or complete release acceptance; failed raw full and all overlapping repetitions remain separately counted."
+  },
+  "legacy_reconciliation_note": "Raw ordinary.execution.json legacy no_duplicate_phases remains false due to 57 typed passing subtests; independent typed parser verifies ordinary phases and preserves subtests separately.",
+  "installed_builds_and_tests": {
+    "processes": [
+      {
+        "name": "archive",
+        "command": [
+          "git",
+          "archive",
+          "08fbb956c2e470e245146b0dbae747ed0690ea40",
+          "-o",
+          "/workspace/review-installed-safety-work/frozen-source.tar"
+        ],
+        "cwd": "/workspace/i6a-independent",
+        "exit_code": 0,
+        "elapsed_seconds": 2.501
+      },
+      {
+        "name": "build-direct",
+        "command": [
+          "/workspace/review-runtime/bin/python",
+          "-m",
+          "hatchling",
+          "build",
+          "-t",
+          "wheel",
+          "-t",
+          "sdist"
+        ],
+        "cwd": "/workspace/review-installed-safety-source",
+        "exit_code": 0,
+        "elapsed_seconds": 19.984
+      },
+      {
+        "name": "build-sdist-wheel",
+        "command": [
+          "/workspace/review-runtime/bin/python",
+          "-m",
+          "hatchling",
+          "build",
+          "-t",
+          "wheel"
+        ],
+        "cwd": "/workspace/review-installed-safety-work/from-sdist/repo_catalog-0.2.0",
+        "exit_code": 0,
+        "elapsed_seconds": 0.398
+      },
+      {
+        "name": "direct-venv",
+        "command": [
+          "/workspace/review-runtime/bin/python",
+          "-m",
+          "venv",
+          "--without-pip",
+          "/workspace/review-installed-safety-work/direct-venv"
+        ],
+        "cwd": "/workspace/review-installed-safety-source",
+        "exit_code": 0,
+        "elapsed_seconds": 0.087
+      },
+      {
+        "name": "direct-install",
+        "command": [
+          "uv",
+          "pip",
+          "install",
+          "--python",
+          "/workspace/review-installed-safety-work/direct-venv/bin/python",
+          "--offline",
+          "--no-index",
+          "--no-deps",
+          "--require-hashes",
+          "-r",
+          "/workspace/review-installed-safety/direct-requirements.txt"
+        ],
+        "cwd": "/workspace/review-installed-safety-work/outside",
+        "exit_code": 0,
+        "elapsed_seconds": 4.06
+      },
+      {
+        "name": "direct-measure",
+        "command": [
+          "/workspace/review-installed-safety-work/direct-venv/bin/python",
+          "/workspace/review-installed-safety-work/outside/measure.py",
+          "/workspace/review-installed-safety/direct-runtime.json"
+        ],
+        "cwd": "/workspace/review-installed-safety-work/outside",
+        "exit_code": 0,
+        "elapsed_seconds": 0.698
+      },
+      {
+        "name": "direct-collect",
+        "command": [
+          "/workspace/review-installed-safety-work/direct-venv/bin/python",
+          "-m",
+          "pytest",
+          "-q",
+          "--collect-only",
+          "-o",
+          "addopts=",
+          "-c",
+          "/workspace/review-installed-safety-work/outside/pytest.ini",
+          "--rootdir=/workspace/review-installed-safety-work/outside",
+          "--confcutdir=/workspace/review-installed-safety-work/outside",
+          "tests/integration/p3/test_transfer_sql.py",
+          "tests/integration/p3/test_transfer_admission.py",
+          "tests/integration/p3/test_parent_reports.py",
+          "tests/unit/test_context_admission.py",
+          "tests/unit/test_transfer_originals.py",
+          "tests/unit/test_context_fences_i6a.py",
+          "tests/unit/test_context_oid_admission_i6a.py",
+          "tests/unit/test_context_admission_bounds_i6a.py",
+          "tests/unit/test_context_coordinator_admission.py",
+          "tests/unit/test_context_refusal_order_i6a.py",
+          "tests/integration/p1/test_coordination.py",
+          "tests/integration/i6a"
+        ],
+        "cwd": "/workspace/review-installed-safety-work/outside",
+        "exit_code": 0,
+        "elapsed_seconds": 5.443
+      },
+      {
+        "name": "direct-tests",
+        "command": [
+          "/workspace/review-installed-safety-work/direct-venv/bin/python",
+          "-m",
+          "pytest",
+          "-q",
+          "-o",
+          "addopts=--strict-markers",
+          "-o",
+          "junit_family=xunit1",
+          "-c",
+          "/workspace/review-installed-safety-work/outside/pytest.ini",
+          "--rootdir=/workspace/review-installed-safety-work/outside",
+          "--confcutdir=/workspace/review-installed-safety-work/outside",
+          "tests/integration/p3/test_transfer_sql.py",
+          "tests/integration/p3/test_transfer_admission.py",
+          "tests/integration/p3/test_parent_reports.py",
+          "tests/unit/test_context_admission.py",
+          "tests/unit/test_transfer_originals.py",
+          "tests/unit/test_context_fences_i6a.py",
+          "tests/unit/test_context_oid_admission_i6a.py",
+          "tests/unit/test_context_admission_bounds_i6a.py",
+          "tests/unit/test_context_coordinator_admission.py",
+          "tests/unit/test_context_refusal_order_i6a.py",
+          "tests/integration/p1/test_coordination.py",
+          "tests/integration/i6a",
+          "--basetemp=/workspace/review-installed-safety-work/direct-basetemp",
+          "--junitxml=/workspace/review-installed-safety/direct-tests.xml",
+          "--journal=/workspace/review-installed-safety/direct-tests.jsonl"
+        ],
+        "cwd": "/workspace/review-installed-safety-work/outside",
+        "exit_code": 0,
+        "elapsed_seconds": 165.587
+      },
+      {
+        "name": "sdist-venv",
+        "command": [
+          "/workspace/review-runtime/bin/python",
+          "-m",
+          "venv",
+          "--without-pip",
+          "/workspace/review-installed-safety-work/sdist-venv"
+        ],
+        "cwd": "/workspace/review-installed-safety-source",
+        "exit_code": 0,
+        "elapsed_seconds": 0.1
+      },
+      {
+        "name": "sdist-install",
+        "command": [
+          "uv",
+          "pip",
+          "install",
+          "--python",
+          "/workspace/review-installed-safety-work/sdist-venv/bin/python",
+          "--offline",
+          "--no-index",
+          "--no-deps",
+          "--require-hashes",
+          "-r",
+          "/workspace/review-installed-safety/sdist-requirements.txt"
+        ],
+        "cwd": "/workspace/review-installed-safety-work/outside",
+        "exit_code": 0,
+        "elapsed_seconds": 1.803
+      },
+      {
+        "name": "sdist-measure",
+        "command": [
+          "/workspace/review-installed-safety-work/sdist-venv/bin/python",
+          "/workspace/review-installed-safety-work/outside/measure.py",
+          "/workspace/review-installed-safety/sdist-runtime.json"
+        ],
+        "cwd": "/workspace/review-installed-safety-work/outside",
+        "exit_code": 0,
+        "elapsed_seconds": 2.108
+      },
+      {
+        "name": "sdist-collect",
+        "command": [
+          "/workspace/review-installed-safety-work/sdist-venv/bin/python",
+          "-m",
+          "pytest",
+          "-q",
+          "--collect-only",
+          "-o",
+          "addopts=",
+          "-c",
+          "/workspace/review-installed-safety-work/outside/pytest.ini",
+          "--rootdir=/workspace/review-installed-safety-work/outside",
+          "--confcutdir=/workspace/review-installed-safety-work/outside",
+          "tests/integration/p3/test_transfer_sql.py",
+          "tests/integration/p3/test_transfer_admission.py",
+          "tests/integration/p3/test_parent_reports.py",
+          "tests/unit/test_context_admission.py",
+          "tests/unit/test_transfer_originals.py",
+          "tests/unit/test_context_fences_i6a.py",
+          "tests/unit/test_context_oid_admission_i6a.py",
+          "tests/unit/test_context_admission_bounds_i6a.py",
+          "tests/unit/test_context_coordinator_admission.py",
+          "tests/unit/test_context_refusal_order_i6a.py",
+          "tests/integration/p1/test_coordination.py",
+          "tests/integration/i6a"
+        ],
+        "cwd": "/workspace/review-installed-safety-work/outside",
+        "exit_code": 0,
+        "elapsed_seconds": 7.585
+      },
+      {
+        "name": "sdist-tests",
+        "command": [
+          "/workspace/review-installed-safety-work/sdist-venv/bin/python",
+          "-m",
+          "pytest",
+          "-q",
+          "-o",
+          "addopts=--strict-markers",
+          "-o",
+          "junit_family=xunit1",
+          "-c",
+          "/workspace/review-installed-safety-work/outside/pytest.ini",
+          "--rootdir=/workspace/review-installed-safety-work/outside",
+          "--confcutdir=/workspace/review-installed-safety-work/outside",
+          "tests/integration/p3/test_transfer_sql.py",
+          "tests/integration/p3/test_transfer_admission.py",
+          "tests/integration/p3/test_parent_reports.py",
+          "tests/unit/test_context_admission.py",
+          "tests/unit/test_transfer_originals.py",
+          "tests/unit/test_context_fences_i6a.py",
+          "tests/unit/test_context_oid_admission_i6a.py",
+          "tests/unit/test_context_admission_bounds_i6a.py",
+          "tests/unit/test_context_coordinator_admission.py",
+          "tests/unit/test_context_refusal_order_i6a.py",
+          "tests/integration/p1/test_coordination.py",
+          "tests/integration/i6a",
+          "--basetemp=/workspace/review-installed-safety-work/sdist-basetemp",
+          "--junitxml=/workspace/review-installed-safety/sdist-tests.xml",
+          "--journal=/workspace/review-installed-safety/sdist-tests.jsonl"
+        ],
+        "cwd": "/workspace/review-installed-safety-work/outside",
+        "exit_code": 0,
+        "elapsed_seconds": 326.78
+      }
+    ],
+    "full_acceptance": false,
+    "independent_reexecution": true
+  },
+  "installed_existing_cohort": {
+    "direct": {
+      "passed": 551,
+      "exit_code": 0
+    },
+    "sdist": {
+      "passed": 551,
+      "exit_code": 0
+    },
+    "I4_each": 217,
+    "I5_each": 29
+  },
+  "authorization": {
+    "command": "python -m pytest docs/implementation/evidence/adr0031-i6a/remediation-independent/authorization/test_independent_authorization.py -q -o addopts= -p scripts.ci_journal --junitxml=authorization/junit-final.xml --journal=authorization/journal-final.jsonl",
+    "exit_code": 0,
+    "passed": 27,
+    "failed": 0,
+    "error": 0,
+    "skipped": 0,
+    "starts": 27,
+    "phases": 81,
+    "junit_cases": 27,
+    "finish": {
+      "event": "finish",
+      "status": "completed",
+      "exitstatus": 0,
+      "timestamp": 1792733123.153805
+    },
+    "source_head": "08fbb956c2e470e245146b0dbae747ed0690ea40",
+    "source_tree": "7072f952975a8537f74ced1bbc2a4a31d7aa3690",
+    "scope": "source independent counterexamples; not installed-distribution evidence",
+    "prior_run": {
+      "passed": 23,
+      "exit_code": 0,
+      "raw": "pytest.log"
+    },
+    "installed_lanes": [
+      {
+        "lane": "direct",
+        "passed": 27,
+        "failed": 0,
+        "error": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "junit": "direct-junit.xml",
+        "journal": "direct-journal.jsonl",
+        "imports": "direct-imports.json",
+        "sql_observations": "direct-sql-observations.json",
+        "command": "REPO_CATALOG_IMPORT_RECEIPT=/workspace/i6a-independent/docs/implementation/evidence/adr0031-i6a/remediation-independent/authorization/direct-imports.json PYTHONPATH=/workspace/review-installed-safety-work/outside TMPDIR=/workspace/review-tmp /workspace/review-installed-safety-work/direct-venv/bin/python -m pytest -c pytest.ini --rootdir=. --confcutdir=. -p installed_journal test_independent_authorization.py -q -o addopts= --junitxml=/workspace/i6a-independent/docs/implementation/evidence/adr0031-i6a/remediation-independent/authorization/direct-junit.xml --journal=/workspace/i6a-independent/docs/implementation/evidence/adr0031-i6a/remediation-independent/authorization/direct-journal.jsonl",
+        "cwd": "/workspace/review-installed-safety-work/outside"
+      },
+      {
+        "lane": "sdist",
+        "passed": 27,
+        "failed": 0,
+        "error": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "junit": "sdist-junit.xml",
+        "journal": "sdist-journal.jsonl",
+        "imports": "sdist-imports.json",
+        "sql_observations": "sdist-sql-observations.json",
+        "command": "REPO_CATALOG_IMPORT_RECEIPT=/workspace/i6a-independent/docs/implementation/evidence/adr0031-i6a/remediation-independent/authorization/sdist-imports.json PYTHONPATH=/workspace/review-installed-safety-work/outside TMPDIR=/workspace/review-tmp /workspace/review-installed-safety-work/sdist-venv/bin/python -m pytest -c pytest.ini --rootdir=. --confcutdir=. -p installed_journal test_independent_authorization.py -q -o addopts= --junitxml=/workspace/i6a-independent/docs/implementation/evidence/adr0031-i6a/remediation-independent/authorization/sdist-junit.xml --journal=/workspace/i6a-independent/docs/implementation/evidence/adr0031-i6a/remediation-independent/authorization/sdist-journal.jsonl",
+        "cwd": "/workspace/review-installed-safety-work/outside"
+      }
+    ],
+    "counterexample_module_sha256": "e4e81e8163a253ea85a053b6332af0cfbd8dd4b59e4322d9fd8fb19225f7bcc5",
+    "external_copy_byte_identical": true,
+    "setup_failures": [
+      {
+        "action": "copy source independent test into outside harness",
+        "result": "cp exit 1 before tests, wrong relative source path from outside cwd",
+        "correction": "absolute source path; external copy byte equality verified",
+        "tests_executed": 0
+      }
+    ]
+  },
+  "originals": {
+    "source_commit": "08fbb956c2e470e245146b0dbae747ed0690ea40",
+    "source_tree": "7072f952975a8537f74ced1bbc2a4a31d7aa3690",
+    "python": "3.12.14",
+    "sqlite": "3.53.1",
+    "runtime": "/workspace/review-runtime/bin/python",
+    "cwd": "/workspace/i6a-independent",
+    "environment": {
+      "PYTHONPATH": "src:.",
+      "TMPDIR": "/workspace/review-tmp"
+    },
+    "executions": [
+      {
+        "script": "probe_originals.py",
+        "output": "results-initial.json",
+        "exit_code": 1,
+        "passed": 18,
+        "failed": 1,
+        "classification": "Reviewer setup: Issue-scoped Document rejected; corrected to accepted PR namespace"
+      },
+      {
+        "script": "probe_originals.py",
+        "output": "results-final.json",
+        "exit_code": 0,
+        "passed": 19,
+        "failed": 0,
+        "classification": "Independent assertion probes, not pytest nodes"
+      },
+      {
+        "script": "probe_invalid_carrier.py",
+        "output": "invalid-carrier-results.json",
+        "exit_code": 1,
+        "invalid_original_safety_predicates_passed": 0,
+        "invalid_original_safety_predicates_failed": 4,
+        "normal_fence_controls_passed": 2,
+        "classification": "Open Medium R09 finding; expected command failure while defect remains"
+      }
+    ],
+    "subsequent_script_formatting": "ruff formatting/import sorting and nonfunctional I-to-ISSUE identifier rename; final successful and defect runs repeated after lint cleanup with the same outcomes; ruff check and format --check both exit 0",
+    "prohibited_actions_performed": false,
+    "blocked_actions": []
+  },
+  "originals_installed_root_repeats": [
+    {
+      "artifact": "direct",
+      "command": [
+        "/workspace/review-installed-safety-work/direct-venv/bin/python",
+        "-c",
+        "import pathlib,sys,repo_catalog,runpy; assert pathlib.Path(repo_catalog.__file__).resolve().is_relative_to(pathlib.Path(sys.prefix).resolve()); sys.argv=['probe_invalid_carrier.py',sys.argv[1]]; runpy.run_path('probe_invalid_carrier.py',run_name='__main__')",
+        "/workspace/i6a-independent/docs/implementation/evidence/adr0031-i6a/remediation-independent/originals/direct-invalid-carrier-root-repeat.json"
+      ],
+      "cwd": "/workspace/review-installed-safety-work/outside",
+      "exit_code": 1,
+      "finding_reproduced": true
+    },
+    {
+      "artifact": "sdist",
+      "command": [
+        "/workspace/review-installed-safety-work/sdist-venv/bin/python",
+        "-c",
+        "import pathlib,sys,repo_catalog,runpy; assert pathlib.Path(repo_catalog.__file__).resolve().is_relative_to(pathlib.Path(sys.prefix).resolve()); sys.argv=['probe_invalid_carrier.py',sys.argv[1]]; runpy.run_path('probe_invalid_carrier.py',run_name='__main__')",
+        "/workspace/i6a-independent/docs/implementation/evidence/adr0031-i6a/remediation-independent/originals/sdist-invalid-carrier-root-repeat.json"
+      ],
+      "cwd": "/workspace/review-installed-safety-work/outside",
+      "exit_code": 1,
+      "finding_reproduced": true
+    }
+  ],
+  "installed_smokes": [
+    {
+      "artifact": "direct",
+      "stage": "minimal-install",
+      "command": [
+        "uv",
+        "pip",
+        "install",
+        "--python",
+        "/workspace/review-installed-safety-work/direct-minimal-smoke-venv/bin/python",
+        "--offline",
+        "--no-index",
+        "--no-deps",
+        "/workspace/review-installed-safety-source/dist/repo_catalog-0.2.0-py3-none-any.whl"
+      ],
+      "exit_code": 0
+    },
+    {
+      "artifact": "direct",
+      "stage": "i2",
+      "command": [
+        "/workspace/review-installed-safety-work/direct-minimal-smoke-venv/bin/python",
+        "/workspace/review-installed-safety-work/outside/verify_i2_distribution.py",
+        "--output",
+        "/workspace/review-installed-smokes-v2/direct-i2.json"
+      ],
+      "cwd": "/workspace/review-installed-safety-work/outside",
+      "exit_code": 0
+    },
+    {
+      "artifact": "direct",
+      "stage": "i3",
+      "command": [
+        "/workspace/review-installed-safety-work/direct-minimal-smoke-venv/bin/python",
+        "/workspace/review-installed-safety-work/outside/verify_i3_distribution.py",
+        "--output",
+        "/workspace/review-installed-smokes-v2/direct-i3.json"
+      ],
+      "cwd": "/workspace/review-installed-safety-work/outside",
+      "exit_code": 0
+    },
+    {
+      "artifact": "direct",
+      "stage": "access",
+      "command": [
+        "/workspace/review-installed-safety-work/direct-minimal-smoke-venv/bin/python",
+        "/workspace/review-installed-safety-work/outside/original_access_smoke.py"
+      ],
+      "cwd": "/workspace/review-installed-safety-work/outside",
+      "exit_code": 1
+    },
+    {
+      "artifact": "sdist",
+      "stage": "minimal-install",
+      "command": [
+        "uv",
+        "pip",
+        "install",
+        "--python",
+        "/workspace/review-installed-safety-work/sdist-minimal-smoke-venv/bin/python",
+        "--offline",
+        "--no-index",
+        "--no-deps",
+        "/workspace/review-installed-safety-work/from-sdist/repo_catalog-0.2.0/dist/repo_catalog-0.2.0-py3-none-any.whl"
+      ],
+      "exit_code": 0
+    },
+    {
+      "artifact": "sdist",
+      "stage": "i2",
+      "command": [
+        "/workspace/review-installed-safety-work/sdist-minimal-smoke-venv/bin/python",
+        "/workspace/review-installed-safety-work/outside/verify_i2_distribution.py",
+        "--output",
+        "/workspace/review-installed-smokes-v2/sdist-i2.json"
+      ],
+      "cwd": "/workspace/review-installed-safety-work/outside",
+      "exit_code": 0
+    },
+    {
+      "artifact": "sdist",
+      "stage": "i3",
+      "command": [
+        "/workspace/review-installed-safety-work/sdist-minimal-smoke-venv/bin/python",
+        "/workspace/review-installed-safety-work/outside/verify_i3_distribution.py",
+        "--output",
+        "/workspace/review-installed-smokes-v2/sdist-i3.json"
+      ],
+      "cwd": "/workspace/review-installed-safety-work/outside",
+      "exit_code": 0
+    },
+    {
+      "artifact": "sdist",
+      "stage": "access",
+      "command": [
+        "/workspace/review-installed-safety-work/sdist-minimal-smoke-venv/bin/python",
+        "/workspace/review-installed-safety-work/outside/original_access_smoke.py"
+      ],
+      "cwd": "/workspace/review-installed-safety-work/outside",
+      "exit_code": 1
+    }
+  ],
+  "other_receipts": {
+    "installed_all158_files_RECORD_and_CLI": "raw-local-evidence.zip:installed-completeness/result.json",
+    "installed_harness_2_positive_4_expected_negative": "raw-local-evidence.zip:harness-probes/result.json",
+    "initial_failed_smoke_setup": "raw-local-evidence.zip:smokes-initial/",
+    "source_full_raw": "raw-local-evidence.zip:source-run/",
+    "pristine743_and_corrected22_serial1_raw": "failure-audit/REPORT.md",
+    "hosted_CI": "ci/audit-results.json"
+  },
+  "unexecuted": [
+    "tests/e2e/test_github_sync.py::test_nested_pagination_stress_workload",
+    "tests/live/test_smoke.py::test_selected_repository"
+  ],
+  "source_wrapper_exit_vs_product_exit": "The historical root Python wrapper completed with exit 0 while its actual pytest subprocess exit was 1; subprocess receipts are authoritative. Expected negative probe wrappers also do not turn product refusals into ordinary PASS nodes.",
+  "aggregate_limit": "Latest 5974 unique node outcomes 5675P/279F/20E combine four actual invocations by finish timestamp; NOT one successful full invocation or release acceptance. Focused, source, installed and diagnostic repetitions overlap and are never summed.",
+  "verdict": "FAIL",
+  "release_acceptance": false,
+  "blocked_actions_remaining": []
+}

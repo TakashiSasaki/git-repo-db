@@ -1,0 +1,9 @@
+{"event":"start","nodeid":"tests/integration/i6a/test_admission.py::test_real_second_endpoint_insert_failure_rolls_back_whole_unit","worker_id":"master","timestamp":1792769597.924383}
+{"event":"phase","nodeid":"tests/integration/i6a/test_admission.py::test_real_second_endpoint_insert_failure_rolls_back_whole_unit","phase":"setup","outcome":"passed","duration":0.029897,"worker_id":"master","timestamp":1792769597.960421}
+{"event":"phase","nodeid":"tests/integration/i6a/test_admission.py::test_real_second_endpoint_insert_failure_rolls_back_whole_unit","phase":"call","outcome":"passed","duration":0.063441,"worker_id":"master","timestamp":1792769598.03214}
+{"event":"phase","nodeid":"tests/integration/i6a/test_admission.py::test_real_second_endpoint_insert_failure_rolls_back_whole_unit","phase":"teardown","outcome":"passed","duration":0.000536,"worker_id":"master","timestamp":1792769598.033355}
+{"event":"start","nodeid":"tests/integration/i6a/test_admission.py::test_deferred_actual_outer_commit_failure_explicitly_rolls_back","worker_id":"master","timestamp":1792769598.033764}
+{"event":"phase","nodeid":"tests/integration/i6a/test_admission.py::test_deferred_actual_outer_commit_failure_explicitly_rolls_back","phase":"setup","outcome":"passed","duration":0.023272,"worker_id":"master","timestamp":1792769598.057339}
+{"event":"phase","nodeid":"tests/integration/i6a/test_admission.py::test_deferred_actual_outer_commit_failure_explicitly_rolls_back","phase":"call","outcome":"passed","duration":0.06416,"worker_id":"master","timestamp":1792769598.121957}
+{"event":"phase","nodeid":"tests/integration/i6a/test_admission.py::test_deferred_actual_outer_commit_failure_explicitly_rolls_back","phase":"teardown","outcome":"passed","duration":0.00044,"worker_id":"master","timestamp":1792769598.123879}
+{"event":"finish","status":"completed","exitstatus":0,"timestamp":1792769598.124722}

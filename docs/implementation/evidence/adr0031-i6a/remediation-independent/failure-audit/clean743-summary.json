@@ -1,0 +1,205 @@
+{
+  "source_head": "08fbb956c2e470e245146b0dbae747ed0690ea40",
+  "source_tree": "7072f952975a8537f74ced1bbc2a4a31d7aa3690",
+  "source_root": "/workspace/i6a-review-clean",
+  "source_status_before_after": [
+    "",
+    ""
+  ],
+  "exact_public_input_count": 478,
+  "source_bindings_equal_public_git_blobs": true,
+  "runtime": {
+    "executable": "/workspace/review-clean-runtime/bin/python",
+    "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+    "sqlite_version": "3.53.1",
+    "sqlite_source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+    "product_origin": "/workspace/i6a-review-clean/src/repo_catalog/__init__.py"
+  },
+  "receipt": {
+    "checks": {
+      "junit_results_match_actual_typed_outcomes": true,
+      "node_ids_exact": true,
+      "starts_exact": true,
+      "raw_and_typed_phases_exact": true,
+      "ordinary_setup_teardown_once": true,
+      "ordinary_call_after_setup_once": true,
+      "ordinary_all_phases_unique": true,
+      "subtests_explicitly_typed": true,
+      "failed_subtests_not_hidden": true,
+      "finish_and_exit": true,
+      "bindings_unchanged": true
+    },
+    "selected": 743,
+    "counts": {
+      "passed": 444,
+      "failed": 279,
+      "error": 20
+    },
+    "exit_code": 1,
+    "subtests": {},
+    "binding_head": "08fbb956c2e470e245146b0dbae747ed0690ea40",
+    "binding_tree": "7072f952975a8537f74ced1bbc2a4a31d7aa3690"
+  },
+  "trace_starts_finishes_exact": true,
+  "sessions": [
+    {
+      "file": "gw0.jsonl",
+      "configured": {
+        "event": "configure",
+        "nodeid": null,
+        "phase": null,
+        "worker": "gw0",
+        "source": "/workspace/i6a-review-clean",
+        "optimization": 0
+      },
+      "ended": {
+        "event": "session_finish",
+        "nodeid": null,
+        "phase": null,
+        "exitstatus": 1
+      }
+    },
+    {
+      "file": "gw1.jsonl",
+      "configured": {
+        "event": "configure",
+        "nodeid": null,
+        "phase": null,
+        "worker": "gw1",
+        "source": "/workspace/i6a-review-clean",
+        "optimization": 0
+      },
+      "ended": {
+        "event": "session_finish",
+        "nodeid": null,
+        "phase": null,
+        "exitstatus": 1
+      }
+    },
+    {
+      "file": "gw2.jsonl",
+      "configured": {
+        "event": "configure",
+        "nodeid": null,
+        "phase": null,
+        "worker": "gw2",
+        "source": "/workspace/i6a-review-clean",
+        "optimization": 0
+      },
+      "ended": {
+        "event": "session_finish",
+        "nodeid": null,
+        "phase": null,
+        "exitstatus": 1
+      }
+    },
+    {
+      "file": "gw3.jsonl",
+      "configured": {
+        "event": "configure",
+        "nodeid": null,
+        "phase": null,
+        "worker": "gw3",
+        "source": "/workspace/i6a-review-clean",
+        "optimization": 0
+      },
+      "ended": {
+        "event": "session_finish",
+        "nodeid": null,
+        "phase": null,
+        "exitstatus": 1
+      }
+    },
+    {
+      "file": "master.jsonl",
+      "configured": {
+        "event": "configure",
+        "nodeid": null,
+        "phase": null,
+        "worker": "master",
+        "source": "/workspace/i6a-review-clean",
+        "optimization": 0
+      },
+      "ended": {
+        "event": "session_finish",
+        "nodeid": null,
+        "phase": null,
+        "exitstatus": 1
+      }
+    }
+  ],
+  "in_pytest_origin_checks": [
+    {
+      "worker": "gw0",
+      "stage": "configure",
+      "module_count": 32
+    },
+    {
+      "worker": "gw0",
+      "stage": "session_finish",
+      "module_count": 62
+    },
+    {
+      "worker": "gw1",
+      "stage": "configure",
+      "module_count": 32
+    },
+    {
+      "worker": "gw1",
+      "stage": "session_finish",
+      "module_count": 61
+    },
+    {
+      "worker": "gw2",
+      "stage": "configure",
+      "module_count": 32
+    },
+    {
+      "worker": "gw2",
+      "stage": "session_finish",
+      "module_count": 62
+    },
+    {
+      "worker": "gw3",
+      "stage": "configure",
+      "module_count": 32
+    },
+    {
+      "worker": "gw3",
+      "stage": "session_finish",
+      "module_count": 62
+    },
+    {
+      "worker": "master",
+      "stage": "configure",
+      "module_count": 32
+    },
+    {
+      "worker": "master",
+      "stage": "session_finish",
+      "module_count": 32
+    }
+  ],
+  "all743": {
+    "I6-C": 242,
+    "PASS": 444,
+    "Transfer-stage": 43,
+    "I7-composition": 14
+  },
+  "additional664": {
+    "I6-C": 206,
+    "PASS": 444,
+    "I7-composition": 14
+  },
+  "original79": {
+    "I6-C": 36,
+    "Transfer-stage": 43
+  },
+  "all_original743_outcome_phases_match_archived": true,
+  "outcome_phase_differences": [],
+  "literal_assertion_entered_nodes": 411,
+  "literal_assertion_entered_resolved444_nodes": 375,
+  "literal_assertion_entry_set_matches_archived_count": 743,
+  "all_local_test_functions_identified": true,
+  "scope": "One new reviewer743 invocation from a separate pristine frozen checkout and separately editable-bound venv; it overlaps ordinary/root/299 diagnostics and is not added to their aggregate or presented as complete product release acceptance."
+}

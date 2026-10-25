@@ -1,0 +1,118 @@
+[
+  {
+    "name": "direct-resolved-wire-collect",
+    "argv": [
+      "/workspace/i6b-distribution-work/direct-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "--tb=long",
+      "-c",
+      "/workspace/i6b-distribution-work/outside/pytest.ini",
+      "--rootdir=/workspace/i6b-distribution-work/outside",
+      "--confcutdir=/workspace/i6b-distribution-work/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_resolved_wire.py",
+      "--collect-only"
+    ],
+    "cwd": "/workspace/i6b-distribution-work/outside",
+    "exit_code": 0,
+    "started_epoch": 1792760752.7662554,
+    "elapsed_seconds": 0.7951736450195312
+  },
+  {
+    "name": "direct-resolved-wire",
+    "argv": [
+      "/workspace/i6b-distribution-work/direct-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "--tb=long",
+      "-c",
+      "/workspace/i6b-distribution-work/outside/pytest.ini",
+      "--rootdir=/workspace/i6b-distribution-work/outside",
+      "--confcutdir=/workspace/i6b-distribution-work/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_resolved_wire.py",
+      "--junitxml=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-independent-20261023/distribution/direct-resolved-wire.xml",
+      "--journal=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-independent-20261023/distribution/direct-resolved-wire.jsonl",
+      "--basetemp=/workspace/i6b-distribution-work/direct-resolved-wire-tmp"
+    ],
+    "cwd": "/workspace/i6b-distribution-work/outside",
+    "exit_code": 0,
+    "started_epoch": 1792760753.5654268,
+    "elapsed_seconds": 0.8520843982696533
+  },
+  {
+    "name": "direct-resolved-wire-measure-after",
+    "argv": [
+      "/workspace/i6b-distribution-work/direct-venv/bin/python",
+      "/workspace/i6b-distribution-work/outside/measure.py",
+      "/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-independent-20261023/distribution/direct-resolved-wire-runtime-after.json"
+    ],
+    "cwd": "/workspace/i6b-distribution-work/outside",
+    "exit_code": 0,
+    "started_epoch": 1792760754.4204006,
+    "elapsed_seconds": 0.20992088317871094
+  },
+  {
+    "name": "derived-resolved-wire-collect",
+    "argv": [
+      "/workspace/i6b-distribution-work/derived-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "--tb=long",
+      "-c",
+      "/workspace/i6b-distribution-work/outside/pytest.ini",
+      "--rootdir=/workspace/i6b-distribution-work/outside",
+      "--confcutdir=/workspace/i6b-distribution-work/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_resolved_wire.py",
+      "--collect-only"
+    ],
+    "cwd": "/workspace/i6b-distribution-work/outside",
+    "exit_code": 0,
+    "started_epoch": 1792760754.630833,
+    "elapsed_seconds": 0.8800182342529297
+  },
+  {
+    "name": "derived-resolved-wire",
+    "argv": [
+      "/workspace/i6b-distribution-work/derived-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "--tb=long",
+      "-c",
+      "/workspace/i6b-distribution-work/outside/pytest.ini",
+      "--rootdir=/workspace/i6b-distribution-work/outside",
+      "--confcutdir=/workspace/i6b-distribution-work/outside",
+      "-o",
+      "junit_family=xunit1",
+      "tests/unit/test_resolved_wire.py",
+      "--junitxml=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-independent-20261023/distribution/derived-resolved-wire.xml",
+      "--journal=/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-independent-20261023/distribution/derived-resolved-wire.jsonl",
+      "--basetemp=/workspace/i6b-distribution-work/derived-resolved-wire-tmp"
+    ],
+    "cwd": "/workspace/i6b-distribution-work/outside",
+    "exit_code": 0,
+    "started_epoch": 1792760755.5117683,
+    "elapsed_seconds": 1.4652798175811768
+  },
+  {
+    "name": "derived-resolved-wire-measure-after",
+    "argv": [
+      "/workspace/i6b-distribution-work/derived-venv/bin/python",
+      "/workspace/i6b-distribution-work/outside/measure.py",
+      "/workspace/git-repo-db/docs/implementation/evidence/adr0031-i6b-independent-20261023/distribution/derived-resolved-wire-runtime-after.json"
+    ],
+    "cwd": "/workspace/i6b-distribution-work/outside",
+    "exit_code": 0,
+    "started_epoch": 1792760756.9794443,
+    "elapsed_seconds": 0.23653197288513184
+  }
+]

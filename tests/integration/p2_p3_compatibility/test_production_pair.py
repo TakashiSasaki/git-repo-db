@@ -16,6 +16,7 @@ from repo_catalog.adapters.sqlite.git_core import GitCore
 from repo_catalog.adapters.sqlite.p1_coordination import PairCoordinator, validate_pair
 from repo_catalog.adapters.sqlite.p1_schema import connect, initialize
 from repo_catalog.adapters.sqlite.production_context import Context
+from repo_catalog.domain.context_admission import DependencySet
 from repo_catalog.domain.p1_context import (
     CoverageScope,
     FieldCandidate,
@@ -33,6 +34,11 @@ from repo_catalog.domain.p1_core import (
     native_oid,
 )
 from repo_catalog.domain.p1_coverage import CoverageClaim
+from tests.support.context_admission import (
+    fixture_context,
+    fixture_service,
+    fixture_transaction,
+)
 
 REPOSITORY = "e82dde21-3201-49db-9273-2e58c9c9beaf"
 INSTANCE = "f9976943-6d0c-4b14-879e-30b23591fb53"
@@ -40,8 +46,41 @@ SERVICE = "73b05ca2-eceb-460f-8909-84d015e81fc3"
 SOURCE = "25695d63-2e0c-4a53-b2fd-0faf166fe2d5"
 ORIGIN = "1c02424b-aa1d-4440-aea1-3fdcd37a0810"
 CAPTURE = "3f51c7c0-ff7e-4612-9fd8-f70c1242e151"
-RESOURCE = ResourceKey(SERVICE, "issue", "provider-global-71")
+RESOURCE = ResourceKey.from_native(SERVICE, "issue", "provider-global-71")
 PROVENANCE = canonical({"source": "provider.example", "evidence": "original-event-71"})
+
+
+def fixture_grants():
+    """Finite identities owned by this synthetic compatibility catalog.
+
+    Only nominal a/b OIDs in both formats and the empty-tree representation used
+    by the byte-corruption test can be linked by Context here.
+    """
+    return DependencySet(
+        resources={RESOURCE},
+        repositories={REPOSITORY},
+        sources={SOURCE},
+        source_repository_pairs={(SOURCE, REPOSITORY)},
+        provider_registrations={SERVICE},
+        object_oids={
+            *(
+                OID(fmt, letter * width)
+                for fmt, width in (("sha1", 40), ("sha256", 64))
+                for letter in ("a", "b")
+            ),
+            OID("sha1", native_oid("sha1", "tree", b"")),
+        },
+    )
+
+
+def admit_pair(coordinator, core, context):
+    service, _ = fixture_service(fixture_grants())
+    owner = PairCoordinator(coordinator.directory, authorization=service)
+    return owner.admit(core, context, admission=fixture_context(service))
+
+
+def context_transaction(directory):
+    return fixture_transaction(directory, fixture_grants())
 
 
 class Budget:
@@ -117,7 +156,7 @@ def test_original_capture_retry_after_core_success_context_rollback(tmp_path, fm
         raise ValueError("injected failure after genuine Context work")
 
     with pytest.raises(AdmissionFailure) as failed:
-        coordinator.admit(core_unit(oid, capture), fail_context)
+        admit_pair(coordinator, core_unit(oid, capture), fail_context)
     assert failed.value.outcome == PairAdmission(True, False)
     with coordinator.snapshots() as pair:
         assert (
@@ -126,8 +165,8 @@ def test_original_capture_retry_after_core_success_context_rollback(tmp_path, fm
         assert pair.context.execute("SELECT count(*) FROM resources").fetchone()[0] == 0
         assert pair.context.execute("SELECT count(*) FROM providers").fetchone()[0] == 0
     for _ in range(2):
-        assert coordinator.admit(
-            core_unit(oid, capture), original_context
+        assert admit_pair(
+            coordinator, core_unit(oid, capture), original_context
         ) == PairAdmission(True, True)
     with coordinator.snapshots() as pair:
         assert pair.core.execute("SELECT count(*) FROM captures").fetchone()[0] == 1
@@ -152,11 +191,11 @@ def test_pair_snapshot_keeps_old_two_authority_state_during_production_write(
         nominal(fmt),
         nominal(fmt, "b"),
     )
-    coordinator.admit(core_unit(first), context_unit(directory, first))
+    admit_pair(coordinator, core_unit(first), context_unit(directory, first))
     with coordinator.snapshots() as pair:
         initial_token = pair.token
-        coordinator.admit(
-            core_unit(second), context_unit(directory, second, "newer", 20)
+        admit_pair(
+            coordinator, core_unit(second), context_unit(directory, second, "newer", 20)
         )
         assert pair.core.execute("SELECT count(*) FROM git_objects").fetchone()[0] == 1
         with Context.for_snapshot(pair.context, directory) as context:
@@ -174,7 +213,7 @@ def test_derivative_loss_preserves_production_pair(tmp_path, fmt):
     directory = tmp_path / "catalog"
     build(directory)
     coordinator, oid = PairCoordinator(directory), nominal(fmt)
-    coordinator.admit(core_unit(oid), context_unit(directory, oid))
+    admit_pair(coordinator, core_unit(oid), context_unit(directory, oid))
     with coordinator.snapshots() as pair:
         original_token = pair.token
     for role in ("operational", "search"):
@@ -212,7 +251,7 @@ def test_both_authorities_keep_exact_five_column_coverage_with_own_scope(tmp_pat
             )
 
     coordinator = PairCoordinator(directory)
-    coordinator.admit(apply, apply_context)
+    admit_pair(coordinator, apply, apply_context)
     with coordinator.snapshots() as pair:
         for role in ("core", "context"):
             with closing(connect(directory / f"{role}.sqlite3", role)) as db:
@@ -241,11 +280,11 @@ def test_core_only_and_context_only_are_independently_durable(tmp_path):
         core.admit_object(oid)
     finally:
         core.close()
-    with Context.transaction(context_directory) as context:
+    with context_transaction(context_directory) as context:
         context.provider(SERVICE, "github", "{}")
         context.resource(RESOURCE, None)
         context.admit_field(candidate("durable without Git"))
-    with Context.transaction(context_directory) as context:
+    with context_transaction(context_directory) as context:
         assert context.candidates(RESOURCE, "title") == (
             candidate("durable without Git"),
         )
@@ -274,8 +313,10 @@ def test_detected_core_byte_corruption_permanently_fences_context_success(tmp_pa
         core.admit_metadata(native, str(uuid4()), Budget())
     finally:
         core.close()
-    PairCoordinator(directory).admit(
-        core_unit(native.oid), context_unit(directory, native.oid)
+    admit_pair(
+        PairCoordinator(directory),
+        core_unit(native.oid),
+        context_unit(directory, native.oid),
     )
     # Deliberately corrupt an already admitted representation with final schema
     # restored. This emulates damage outside the supported application boundary.
@@ -302,12 +343,14 @@ def test_detected_core_byte_corruption_permanently_fences_context_success(tmp_pa
     for role in ("operational", "search"):
         (directory / f"{role}.sqlite3").unlink()
     with pytest.raises(Exception) as blocked:
-        with Context.transaction(directory) as context:
+        with context_transaction(directory) as context:
             context.admit_field(candidate("must never commit", 30))
     assert getattr(blocked.value, "code", "") in {"RECOVERY_REQUIRED", "RECOVERY_STOP"}
     with pytest.raises(Exception) as blocked:
-        PairCoordinator(directory).admit(
-            core_unit(native.oid), context_unit(directory, native.oid)
+        admit_pair(
+            PairCoordinator(directory),
+            core_unit(native.oid),
+            context_unit(directory, native.oid),
         )
     assert getattr(blocked.value, "code", "") in {"RECOVERY_REQUIRED", "RECOVERY_STOP"}
     assert marker.read_bytes() == original_marker
@@ -321,7 +364,7 @@ def test_durable_unavailable_context_reference_keeps_pair_sound(tmp_path, fmt):
     build(directory)
     oid = nominal(fmt)
     reference = CoreReference(RESOURCE, "base", oid, PROVENANCE)
-    with Context.transaction(directory) as context:
+    with context_transaction(directory) as context:
         context.provider(SERVICE, "github", "{}")
         context.resource(RESOURCE, None)
         context.report_core_reference(
@@ -347,7 +390,7 @@ def test_durable_unavailable_context_reference_keeps_pair_sound(tmp_path, fmt):
         assert core.scalar(oid, "type").canonical is None
     finally:
         core.close()
-    with Context.transaction(directory) as context:
+    with context_transaction(directory) as context:
         context.link_core(
             RESOURCE,
             "base",
@@ -395,7 +438,7 @@ def test_forbidden_git_blob_retention_does_not_poison_legitimate_context_text(
     finally:
         core.close()
     assert not (directory / "p1-recovery-stop.json").exists()
-    with Context.transaction(directory) as context:
+    with context_transaction(directory) as context:
         # Same octets can be genuine Provider text; its domain, identity and
         # purpose remain Context, and do not license Git blob retention.
         digest = context.text(body.decode())
@@ -420,8 +463,8 @@ def test_partial_and_empty_source_inventories_preserve_positive_cross_store_stat
     build(directory)
     oid = nominal()
     coordinator = PairCoordinator(directory)
-    coordinator.admit(core_unit(oid), context_unit(directory, oid))
-    with Context.transaction(directory) as context:
+    admit_pair(coordinator, core_unit(oid), context_unit(directory, oid))
+    with context_transaction(directory) as context:
         context.associate_source(SOURCE, REPOSITORY)
         context.inventory(
             SourceInventory(
@@ -481,7 +524,7 @@ def test_coordinated_raw_admission_cannot_retain_malformed_native_representation
         )
 
     with pytest.raises(AdmissionFailure) as rejected:
-        PairCoordinator(directory).admit(malformed, lambda tx: None)
+        admit_pair(PairCoordinator(directory), malformed, lambda tx: None)
     assert rejected.value.outcome == PairAdmission(False, False)
     assert not (directory / "p1-recovery-stop.json").exists()
     with PairCoordinator(directory).snapshots() as pair:

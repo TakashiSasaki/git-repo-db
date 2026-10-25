@@ -2,8 +2,8 @@
   "format": "repo-catalog/p1-isolated-1",
   "stores": {
     "context": {
-      "ddl_sha256": "fa7838f86d9f0ab4b2f26c561ad0721df2d0c7dad45ee97e72ff09cbb89ac434",
-      "sqlite_schema_sha256": "0a98df73ce1f9f81d8e76a64eb2b36a18b262cb0ff742ed9a088977f105e1134",
+      "ddl_sha256": "924cc7557fb3da6211ea070185881f5fcaeff9bf52b6e237a361a238a2ea0c6e",
+      "sqlite_schema_sha256": "dab60aff6d844f17b1cbec988346bd86083567bb69c18dcd78bec3fd48863804",
       "tables": [
         "collection_terminals",
         "collections",

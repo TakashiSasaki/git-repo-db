@@ -1,0 +1,10 @@
+{
+  "head": "f16e5b1713bde9a2f18263a25397c4b450fd5773",
+  "tree": "6bfa580baafa9f6a117b7a0b610c4e65cd031b86",
+  "parents": [
+    "d0b1192b2c51adaa4158551becb8567acb85176c"
+  ],
+  "committed_at": "2026-10-22T14:50:45Z",
+  "subject": "test: isolate source identity drift from bootstrap loader state",
+  "tree_snapshot_sha256": "1eaf4c0db7138ef7a3c408306c4526e0657bca3dadf90676425c2722debf7c13"
+}

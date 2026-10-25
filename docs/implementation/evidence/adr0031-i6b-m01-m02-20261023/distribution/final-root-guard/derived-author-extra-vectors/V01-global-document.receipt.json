@@ -1,0 +1,9 @@
+{
+  "id": "V01-global-document",
+  "bytes": 1371,
+  "sha256": "b6f939b28a4875d4e52a6eeaad76f7030d02a628a2e6b6e6291ab74ce63b139a",
+  "digest_sha256": "586a09e4ce7d0fce8cedaa37ac056c375b892748b1a7ec1e196cdbb59adc6399",
+  "outcome": "accept",
+  "refusal_code": null,
+  "scope": "supplementary Author-team codec verification, not independent review"
+}

@@ -1,0 +1,287 @@
+{
+  "source_directory": "/workspace/i6a-installed-harness-probe",
+  "files": [
+    {
+      "original_name": "access-corrected-smoke.py.txt",
+      "original_bytes": 19189,
+      "original_sha256": "6be64ed25cfa2460c7856927cc352d2d1eb55387fcc3f4e0beae7abc91839c3f",
+      "gzip_name": "access-corrected-smoke.py.txt.gz",
+      "gzip_bytes": 5459,
+      "gzip_sha256": "d50bbaef48253f7eff045559178ef99488033ff518e8a337bfb9962b5fae243e"
+    },
+    {
+      "original_name": "direct-access-corrected-process.json",
+      "original_bytes": 20136,
+      "original_sha256": "8bfbc517bd8d1d03bcc10896f40ce45bcdc048af519877e4c22cb2b769a44d9f",
+      "gzip_name": "direct-access-corrected-process.json.gz",
+      "gzip_bytes": 5641,
+      "gzip_sha256": "f73c1e9840b1d5e15f08e1184d62d148310735f43ecddcc0b7866096de7bf554"
+    },
+    {
+      "original_name": "direct-access-corrected.log",
+      "original_bytes": 346,
+      "original_sha256": "3b00c1a266bb0aa08155aec651c32b26400b6efc30686d8072deb20500e9fdbc",
+      "gzip_name": "direct-access-corrected.log.gz",
+      "gzip_bytes": 256,
+      "gzip_sha256": "0f28d6a22476e467ed23aa94685f0151111e2ada52faf88d45f6d4f6817ffe93"
+    },
+    {
+      "original_name": "direct-i2-corrected.json",
+      "original_bytes": 11561,
+      "original_sha256": "f6cf9ba67a6b189295cbb8e624d20a74fdaa4bac7f118ad939e935cb7bff14f2",
+      "gzip_name": "direct-i2-corrected.json.gz",
+      "gzip_bytes": 2616,
+      "gzip_sha256": "565ad1ced6a50ea113ddcae4383acd42409095ed3ce9ffef7e16954e23eadb94"
+    },
+    {
+      "original_name": "direct-i3-corrected.json",
+      "original_bytes": 12753,
+      "original_sha256": "c11c90fb262f96bc62dc5898ea298663df05f402f10015d52297ef3f6b8332b7",
+      "gzip_name": "direct-i3-corrected.json.gz",
+      "gzip_bytes": 1643,
+      "gzip_sha256": "7e3e32a19ba5aa414dff1aa253d78c528364a591e80bc2c676cdd313d1b084c7"
+    },
+    {
+      "original_name": "direct-i4-collect.log",
+      "original_bytes": 18907,
+      "original_sha256": "ffd6faed1480d7e99050f7d5cc3d6bccbbe1c7bc70289b4e0d266f255da48480",
+      "gzip_name": "direct-i4-collect.log.gz",
+      "gzip_bytes": 1438,
+      "gzip_sha256": "b899bbef32ea7d85bdbfdc9d1ef38025523ef57c1d1e164155486b7f935ee61d"
+    },
+    {
+      "original_name": "direct-i4-execution.json",
+      "original_bytes": 852,
+      "original_sha256": "870e44161a6b39cbec5a779b4b810df01412440dab19c58a899128c219b7d3c0",
+      "gzip_name": "direct-i4-execution.json.gz",
+      "gzip_bytes": 365,
+      "gzip_sha256": "c129a96035b91b0ffb5407eda989c1d5bf8668de9df1fef127420f3780b419ad"
+    },
+    {
+      "original_name": "direct-i4-selected.txt",
+      "original_bytes": 18877,
+      "original_sha256": "1ca8fbb689787c2c8099711cbad553b27b47d1e9d68aee6a0f23a5ca1afeaddf",
+      "gzip_name": "direct-i4-selected.txt.gz",
+      "gzip_bytes": 1409,
+      "gzip_sha256": "0e2e158edbcde69717878874a0f3da8d4673422096d5bcab01ed610542898be3"
+    },
+    {
+      "original_name": "direct-i4.jsonl",
+      "original_bytes": 181100,
+      "original_sha256": "645b961d81362f95b9af917fab948c5ac54df91d52e1e7d3c4ea2bea34d14421",
+      "gzip_name": "direct-i4.jsonl.gz",
+      "gzip_bytes": 10712,
+      "gzip_sha256": "7f23e3bdf4dc3b9ee45ff27a2207189f62a72b9966b532397de8f4b84515c883"
+    },
+    {
+      "original_name": "direct-i4.log",
+      "original_bytes": 341,
+      "original_sha256": "191897645a21355af25bf1401d052473743dad44612c12aa8a609a44e6a13393",
+      "gzip_name": "direct-i4.log.gz",
+      "gzip_bytes": 74,
+      "gzip_sha256": "e895539a48e7c0541e797b2719926c9f184730f429a4dfc9eacb40c7cfc049a5"
+    },
+    {
+      "original_name": "direct-i4.xml",
+      "original_bytes": 36271,
+      "original_sha256": "25d3572cedd40f6a3f82b6c4ccc7f31be376cd6304f05e941552c4b5488ef9e1",
+      "gzip_name": "direct-i4.xml.gz",
+      "gzip_bytes": 2162,
+      "gzip_sha256": "400b54aecc107539596c5974557f5cb9d4eb04be4c89974050c22c94561f4dc5"
+    },
+    {
+      "original_name": "direct-i5-collect.log",
+      "original_bytes": 2354,
+      "original_sha256": "63381770dab3109665ab9f73c9d209b1eed2e0f920119928eafc1d9033060994",
+      "gzip_name": "direct-i5-collect.log.gz",
+      "gzip_bytes": 460,
+      "gzip_sha256": "bf8cc93c6795ee64b7cb699bf625c1b6533da6deb4c0ab4f9b77209827a62b9c"
+    },
+    {
+      "original_name": "direct-i5-execution.json",
+      "original_bytes": 847,
+      "original_sha256": "169cabf6e1c14fa917a89d0be9bafda9d2775139457893cf3f3ece32ef65b0ae",
+      "gzip_name": "direct-i5-execution.json.gz",
+      "gzip_bytes": 363,
+      "gzip_sha256": "991851982ba776d52dfc395c76d453d0dc82dedbbe90e1e10bdfc1db8f21a77c"
+    },
+    {
+      "original_name": "direct-i5-selected.txt",
+      "original_bytes": 2325,
+      "original_sha256": "ee9cc1323885673800a6ebae22932f054e3d86b3f28946fe0e9d0d01911b82fd",
+      "gzip_name": "direct-i5-selected.txt.gz",
+      "gzip_bytes": 437,
+      "gzip_sha256": "8edf7d5cb6e500a6c73ac5d3ff2362a48e94d1f8928b2d702e7f46caec20064e"
+    },
+    {
+      "original_name": "direct-i5.jsonl",
+      "original_bytes": 23490,
+      "original_sha256": "8a672b305268127700fc4ed085bf67394e1c5cd1937f9a17ade7f3677ccbf9b5",
+      "gzip_name": "direct-i5.jsonl.gz",
+      "gzip_bytes": 1908,
+      "gzip_sha256": "ce278b675da29f2243a84bce117752d19b939bbb8bc3cc0a8cd91ed0fa2eb14b"
+    },
+    {
+      "original_name": "direct-i5.log",
+      "original_bytes": 99,
+      "original_sha256": "3258170410e022f6b153dece7635f1723c043c1da5fb1bb1dc025ae210f90fd3",
+      "gzip_name": "direct-i5.log.gz",
+      "gzip_bytes": 52,
+      "gzip_sha256": "2baedb48aceae96b25339483ce34afdba70aaf12d161ebf51b268a3495e5258d"
+    },
+    {
+      "original_name": "direct-i5.xml",
+      "original_bytes": 4865,
+      "original_sha256": "62364017a7cf8dc61a726957f02aaa9751252b45988d7791f610d3506ab3d635",
+      "gzip_name": "direct-i5.xml.gz",
+      "gzip_bytes": 779,
+      "gzip_sha256": "265cffae570991c00b0d0694deeaeb0c5485de1cd29d7041cae109dc5f6d8ba0"
+    },
+    {
+      "original_name": "direct-origins.log",
+      "original_bytes": 749,
+      "original_sha256": "20f3c6e969029b78dc6ab98ba9929700ec4d994c05664cc4776c76404a2d6808",
+      "gzip_name": "direct-origins.log.gz",
+      "gzip_bytes": 276,
+      "gzip_sha256": "b2dd06d143cf4957e9fce81927c407767ea69d7ba49bdef46af24a0cbae3d861"
+    },
+    {
+      "original_name": "i2-iteration1.log",
+      "original_bytes": 608,
+      "original_sha256": "1cffb1fda262a0d3d3868dac17900bb1b96e6a354db98ca5dedb135dbe316caa",
+      "gzip_name": "i2-iteration1.log.gz",
+      "gzip_bytes": 325,
+      "gzip_sha256": "f8bd33be69a14cf75f5f633b3033f5318f1505ace0da49503d257fe43325f56a"
+    },
+    {
+      "original_name": "i2-iteration2.log",
+      "original_bytes": 35,
+      "original_sha256": "2de59917efeceb16ae8e55b9a829d720047cd49e0cd3b1f130bcab3e4d543e9e",
+      "gzip_name": "i2-iteration2.log.gz",
+      "gzip_bytes": 53,
+      "gzip_sha256": "5731e76475e5f7331a521bb55818e0c3d513b6a2817e90f6a70771c7a58c392a"
+    },
+    {
+      "original_name": "processes.json",
+      "original_bytes": 5097,
+      "original_sha256": "5e6b7180e19051e02e9430e8beabfc22d3449f23b526a1aa2d7d2c2fe500515f",
+      "gzip_name": "processes.json.gz",
+      "gzip_bytes": 566,
+      "gzip_sha256": "8787dade994613e36909acb1a0c8f925cf17ee0d993241d2cc2b5c75d1b25ff0"
+    },
+    {
+      "original_name": "sdist-i4-collect.log",
+      "original_bytes": 18907,
+      "original_sha256": "ffd6faed1480d7e99050f7d5cc3d6bccbbe1c7bc70289b4e0d266f255da48480",
+      "gzip_name": "sdist-i4-collect.log.gz",
+      "gzip_bytes": 1438,
+      "gzip_sha256": "b899bbef32ea7d85bdbfdc9d1ef38025523ef57c1d1e164155486b7f935ee61d"
+    },
+    {
+      "original_name": "sdist-i4-execution.json",
+      "original_bytes": 852,
+      "original_sha256": "adb6ef25176119d380f5a3f14b4044e4da885a831387a15cb7794ef385fe4d72",
+      "gzip_name": "sdist-i4-execution.json.gz",
+      "gzip_bytes": 366,
+      "gzip_sha256": "dbf63946de4b6e46f29b3e58be795d5e6e20bade6fbf6aeb326e2914f8b982e5"
+    },
+    {
+      "original_name": "sdist-i4-selected.txt",
+      "original_bytes": 18877,
+      "original_sha256": "1ca8fbb689787c2c8099711cbad553b27b47d1e9d68aee6a0f23a5ca1afeaddf",
+      "gzip_name": "sdist-i4-selected.txt.gz",
+      "gzip_bytes": 1409,
+      "gzip_sha256": "0e2e158edbcde69717878874a0f3da8d4673422096d5bcab01ed610542898be3"
+    },
+    {
+      "original_name": "sdist-i4.jsonl",
+      "original_bytes": 181121,
+      "original_sha256": "53a99e99f8f98d2267c6f9d7e64eb70f5dcee1a66f16c1e0a93c59903b9961ad",
+      "gzip_name": "sdist-i4.jsonl.gz",
+      "gzip_bytes": 10615,
+      "gzip_sha256": "7b3661449d4220e687ad645a3b8652a73df77488d39d63fdfe3bb7b51185907b"
+    },
+    {
+      "original_name": "sdist-i4.log",
+      "original_bytes": 341,
+      "original_sha256": "7645327f0ac97ae6721e5514ff161a9bbc11f69777ef35cc23ccf2b5ec20383a",
+      "gzip_name": "sdist-i4.log.gz",
+      "gzip_bytes": 74,
+      "gzip_sha256": "04002954750464e84ba23a62fe95ca79da12a4f753eb97996daa661c05037602"
+    },
+    {
+      "original_name": "sdist-i4.xml",
+      "original_bytes": 36271,
+      "original_sha256": "c13f3f9714d4d3bdda9b242bddda48f668b9e25e2197e3cac844db584631869e",
+      "gzip_name": "sdist-i4.xml.gz",
+      "gzip_bytes": 2155,
+      "gzip_sha256": "3ebb76c00cf051c45da889d0eae8b0db6258302bbf80fe689d80c520a89ef59d"
+    },
+    {
+      "original_name": "sdist-i5-collect.log",
+      "original_bytes": 2354,
+      "original_sha256": "55b96ef72a99584569fd37bb5cf00691dc5ab1edc6dfb532fc2c80d3fb58af4e",
+      "gzip_name": "sdist-i5-collect.log.gz",
+      "gzip_bytes": 461,
+      "gzip_sha256": "832540493f83bb7572eb2048672367475dfd26d3916a3de8de6932b04c177aaa"
+    },
+    {
+      "original_name": "sdist-i5-execution.json",
+      "original_bytes": 847,
+      "original_sha256": "29bf2a5d30a9a19179ebd75129cc9558895f3765af7b0b8f19f0513499a09972",
+      "gzip_name": "sdist-i5-execution.json.gz",
+      "gzip_bytes": 363,
+      "gzip_sha256": "b140004b01f48dda7e7fd41e5d813a8d5026f2d19efde297d910cb2b6ead4e01"
+    },
+    {
+      "original_name": "sdist-i5-selected.txt",
+      "original_bytes": 2325,
+      "original_sha256": "ee9cc1323885673800a6ebae22932f054e3d86b3f28946fe0e9d0d01911b82fd",
+      "gzip_name": "sdist-i5-selected.txt.gz",
+      "gzip_bytes": 437,
+      "gzip_sha256": "8edf7d5cb6e500a6c73ac5d3ff2362a48e94d1f8928b2d702e7f46caec20064e"
+    },
+    {
+      "original_name": "sdist-i5.jsonl",
+      "original_bytes": 23476,
+      "original_sha256": "fc5042e1dc4d8897e13a468514ec80f70ff58a908ad27d927d2f430424e6da44",
+      "gzip_name": "sdist-i5.jsonl.gz",
+      "gzip_bytes": 1895,
+      "gzip_sha256": "e3760b4e1f82725ff517c68db34a615086b5f6e8d6a0336c7eb42b55404ae0ec"
+    },
+    {
+      "original_name": "sdist-i5.log",
+      "original_bytes": 99,
+      "original_sha256": "b6e769f9a873c607890f9b93f67487cd78da30fd5b3917801b396243d9216989",
+      "gzip_name": "sdist-i5.log.gz",
+      "gzip_bytes": 52,
+      "gzip_sha256": "35349b2f5645f30af0e09c2f9d90ff729a98b641e7c4218695d621a2354b9c77"
+    },
+    {
+      "original_name": "sdist-i5.xml",
+      "original_bytes": 4865,
+      "original_sha256": "8f89813e5413695511044de3d7911a2301bcec6c110325f00748a2e7a0bef13d",
+      "gzip_name": "sdist-i5.xml.gz",
+      "gzip_bytes": 786,
+      "gzip_sha256": "774e0d197a1775cef1d10f14aef006ae015d7d8105f1bb57d06274e81d4442e9"
+    },
+    {
+      "original_name": "sdist-origins.log",
+      "original_bytes": 747,
+      "original_sha256": "ebccb8740bd9eb89b4873e6d995d94e4621938c34157dc13e249269d32be808f",
+      "gzip_name": "sdist-origins.log.gz",
+      "gzip_bytes": 275,
+      "gzip_sha256": "3652bb46bdd2c4edca33e934f572331568a26d692141ac224c49ecee268fa894"
+    },
+    {
+      "original_name": "summary.json",
+      "original_bytes": 98,
+      "original_sha256": "918c8d5bea4f1d5f357375767b6fe8ad997cdb29f632338f6f3166f951218f7f",
+      "gzip_name": "summary.json.gz",
+      "gzip_bytes": 65,
+      "gzip_sha256": "8f897a11d2d6dfadaa42f2f44019044d2ea5c22a519e3ba1707f3fb551008a2e"
+    }
+  ],
+  "product_source_commit": "f5dc409429cdb69955b55e3c27a7ef3c163762fb",
+  "harness_source": "Uncommitted intermediate diagnostic harness; not the frozen final harness. Definitive acceptance evidence is under ../after."
+}

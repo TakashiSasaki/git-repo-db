@@ -1,0 +1,78 @@
+{
+  "scope": "Author-generated synthetic exact wire bytes, not independent review or route acceptance",
+  "vectors": [
+    {
+      "id": "V01-global-document",
+      "path": "V01-global-document.wire.json",
+      "bytes": 1371,
+      "sha256": "b6f939b28a4875d4e52a6eeaad76f7030d02a628a2e6b6e6291ab74ce63b139a",
+      "expected": "accept",
+      "digest_sha256": "586a09e4ce7d0fce8cedaa37ac056c375b892748b1a7ec1e196cdbb59adc6399"
+    },
+    {
+      "id": "V02-scoped-event-child-first",
+      "path": "V02-scoped-event-child-first.wire.json",
+      "bytes": 1435,
+      "sha256": "7d057ff25c0488456534ef955d1f877c88a3721b16d889d5cdbc2795f2909458",
+      "expected": "accept",
+      "digest_sha256": "3dfd5ecd66080fb3b287bb5da72ba636096d2282869075bbf2733899e70d3f82"
+    },
+    {
+      "id": "V03-original-parent",
+      "path": "V03-original-parent.wire.json",
+      "bytes": 2171,
+      "sha256": "1b07744024e857aba974be6e5ca01d42fb8bd6cffbeb1b22700d55ed7faaddce",
+      "expected": "accept",
+      "digest_sha256": "f8ed2052db8db403b0ede2550b851f9620b8db51920974fa19a934e847f8256b"
+    },
+    {
+      "id": "V04-one-sided-explicit-null",
+      "path": "V04-one-sided-explicit-null.wire.json",
+      "bytes": 4239,
+      "sha256": "0fb2fe2dd672aa131f54c02b0b26cac9523af5759c9fd03f4a424f21e9842d12",
+      "expected": "accept",
+      "digest_sha256": "dedf24917436c308359cd46abcd12395c16c28b791732b75f2c0f023728c2e13"
+    },
+    {
+      "id": "V05-two-sided-explicit-null",
+      "path": "V05-two-sided-explicit-null.wire.json",
+      "bytes": 5534,
+      "sha256": "dd5e516197adc98944407e847b39c38d3df6ace0e534be28947474254de43036",
+      "expected": "accept",
+      "digest_sha256": "e3d93401d5f7b002b3b15c9ea67835522f83906170a2b56305f9d3cedcbf3b0b"
+    },
+    {
+      "id": "V06-provider-only",
+      "path": "V06-provider-only.wire.json",
+      "bytes": 3437,
+      "sha256": "888b02f865c0be483cb34fdf856ff167634b9b650eb9d08b6933b7cf9a0a780b",
+      "expected": "accept",
+      "digest_sha256": "b5e1a44ebb6c4516ea555d18997b6e0d1048c79e699e8e6d2038797bbf367ec0"
+    },
+    {
+      "id": "V07-resolved-mapping",
+      "path": "V07-resolved-mapping.wire.json",
+      "bytes": 6616,
+      "sha256": "ab5f4176b25267a2ae6702e4a6cad7fc699c8f692b4f8dbcf53519e43113bdeb",
+      "expected": "accept",
+      "digest_sha256": "5b500e38909678101452fac5ec3e17fd489b4aaf58adda19c23dfea8a53eefb7"
+    },
+    {
+      "id": "V09-ordered-terminals",
+      "path": "V09-ordered-terminals.wire.json",
+      "bytes": 5369,
+      "sha256": "f4fe72c5a7ffd9d5f2db57c301745235e9fc265960cc57bca8852d5e46601001",
+      "expected": "accept",
+      "digest_sha256": "fab694f9045a5ceceaa637bda09415d49e0c3b417634e1d37fa95a217f79f20a"
+    },
+    {
+      "id": "V08-rechecksummed-noncanonical-id",
+      "path": "V08-rechecksummed-noncanonical-id.wire.json",
+      "bytes": 1373,
+      "sha256": "a0c2be95557262cb33c3723e3a5e94c4552e46cba08f72e7ee97269aa47a8854",
+      "expected": "reject",
+      "expected_code": "INVALID_IDENTIFICATION",
+      "digest_sha256": "45a45aae45eb17f53e8aa7b70a7334830f77d0fbed0a5dd0da8a777fe0b169b9"
+    }
+  ]
+}

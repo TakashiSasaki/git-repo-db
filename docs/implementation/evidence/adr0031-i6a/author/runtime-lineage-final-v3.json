@@ -1,0 +1,28 @@
+{
+  "source": {
+    "base_executable_sha256": "fa67443527ed9647f760d807e2a38f26340757123e643c4639cf273ed15d5ea7",
+    "sqlite": [
+      "3.53.1",
+      "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9"
+    ],
+    "origin": "/workspace/i6a-v3-source/src/repo_catalog/__init__.py"
+  },
+  "installed": {
+    "direct": {
+      "same_sqlite_before_after": true,
+      "same_product_files_before_after": true,
+      "same_selected_base_executable_hash": true,
+      "actual_base_executable_sha256": "fa67443527ed9647f760d807e2a38f26340757123e643c4639cf273ed15d5ea7",
+      "sqlite_extension_origin": "built-in",
+      "product_origin": "/workspace/i6a-artifact-work-v3/direct-venv/lib/python3.12/site-packages/repo_catalog/__init__.py"
+    },
+    "sdist": {
+      "same_sqlite_before_after": true,
+      "same_product_files_before_after": true,
+      "same_selected_base_executable_hash": true,
+      "actual_base_executable_sha256": "fa67443527ed9647f760d807e2a38f26340757123e643c4639cf273ed15d5ea7",
+      "sqlite_extension_origin": "built-in",
+      "product_origin": "/workspace/i6a-artifact-work-v3/sdist-venv/lib/python3.12/site-packages/repo_catalog/__init__.py"
+    }
+  }
+}

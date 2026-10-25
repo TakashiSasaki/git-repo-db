@@ -1,0 +1,61 @@
+import collections
+import hashlib
+import json
+from pathlib import Path
+import sqlite3
+import subprocess
+import sys
+import xml.etree.ElementTree as ET
+
+ROOT=Path('/workspace/git-repo-db')
+OUT=ROOT/'docs/implementation/evidence/adr0031-i6b-independent-20261023/admission'
+paths=[
+ 'src/repo_catalog/domain/context_admission.py',
+ 'src/repo_catalog/adapters/sqlite/context_admission.py',
+ 'src/repo_catalog/domain/resource_stage.py',
+ 'src/repo_catalog/adapters/sqlite/p1_context.py',
+ 'src/repo_catalog/adapters/sqlite/production_context.py',
+ 'src/repo_catalog/adapters/sqlite/p1_coordination.py',
+ 'src/repo_catalog/application/acquisition.py',
+ 'src/repo_catalog/application/exchange.py',
+ 'tests/unit/test_context_admission.py',
+ 'tests/unit/test_context_coordinator_admission.py',
+ 'tests/unit/test_context_admission_bounds_i6a.py',
+ 'tests/unit/test_context_refusal_order_i6a.py',
+ 'tests/unit/test_context_fences_i6a.py',
+ 'tests/unit/test_context_oid_admission_i6a.py',
+ 'tests/integration/i6a/test_admission.py',
+ 'tests/integration/i6a/test_originals_revalidation.py',
+ 'tests/integration/p3/test_transfer_admission.py',
+ 'tests/support/context_admission.py',
+ 'tests/support/i6a.py',
+ 'tests/conftest.py',
+ 'scripts/ci_journal.py',
+ 'pyproject.toml', 'uv.lock',
+]
+sha=lambda b:hashlib.sha256(b).hexdigest()
+head='ef787a5ff8b13f118d6bf5107c7338f43fde56dc'
+base='ea43a21fca1dbf8fa6dd1c254b28a96d5dd28d00'
+rows=[]
+for path in paths:
+ b=(ROOT/path).read_bytes()
+ frozen=subprocess.check_output(['git','show',f'{head}:{path}'],cwd=ROOT)
+ previous=subprocess.check_output(['git','show',f'{base}:{path}'],cwd=ROOT)
+ rows.append({'path':path,'bytes':len(b),'sha256':sha(b),'matches_frozen_head':b==frozen,'matches_149':b==previous})
+for path in ['test_commit_boundary.py','test_reused_authorization.py']:
+ b=(Path('/workspace/admission-independent')/path).read_bytes()
+ rows.append({'path':str(Path('/workspace/admission-independent')/path),'bytes':len(b),'sha256':sha(b),'matches_saved_py_txt':b==(OUT/f'{path}.txt').read_bytes()})
+from repo_catalog.adapters.sqlite import p1_schema
+from repo_catalog.domain.resource_stage import TRANSFER_FENCE_DEFINITIONS
+import repo_catalog, repo_catalog.domain.context_admission as admission
+import repo_catalog.adapters.sqlite.p1_context as store
+import _sqlite3
+with sqlite3.connect(':memory:') as db:
+ p1_schema.register_functions(db)
+ p1_schema.configure(db)
+ db.executescript(p1_schema.compose('context'))
+ p1_schema.verify_connection(db)
+ actual=tuple(r for r in p1_schema.schema_rows(db) if r[1] in {x[1] for x in TRANSFER_FENCE_DEFINITIONS})
+ environment={'python':sys.version,'executable':sys.executable,'base_executable':sys._base_executable,'sqlite':sqlite3.sqlite_version,'sqlite_source_id':db.execute('select sqlite_source_id()').fetchone()[0],'sqlite3_module':sqlite3.__file__,'sqlite3_extension':getattr(_sqlite3, '__file__', '<built-in>'),'compile_options':[r[0] for r in db.execute('pragma compile_options')],'pragmas':{n:db.execute(f'pragma {n}').fetchone()[0] for n in ['foreign_keys','recursive_triggers','trusted_schema','journal_mode']},'integrity_check':[list(r) for r in db.execute('pragma integrity_check')],'foreign_key_check':[list(r) for r in db.execute('pragma foreign_key_check')],'exact_both_fences':actual==TRANSFER_FENCE_DEFINITIONS,'imports':{m.__name__:m.__file__ for m in [repo_catalog,admission,store]}}
+(OUT/'source-binding.json').write_text(json.dumps({'reviewed_head':head,'base149':base,'inputs':rows,'environment':environment},indent=2,sort_keys=True)+'\n')
+print('inputs',len(rows),'all frozen',all(x.get('matches_frozen_head',True) for x in rows),'all saved',all(x.get('matches_saved_py_txt',True) for x in rows))

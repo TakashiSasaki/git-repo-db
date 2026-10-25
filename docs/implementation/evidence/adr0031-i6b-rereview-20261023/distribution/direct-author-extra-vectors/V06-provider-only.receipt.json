@@ -1,0 +1,9 @@
+{
+  "id": "V06-provider-only",
+  "bytes": 3437,
+  "sha256": "888b02f865c0be483cb34fdf856ff167634b9b650eb9d08b6933b7cf9a0a780b",
+  "digest_sha256": "b5e1a44ebb6c4516ea555d18997b6e0d1048c79e699e8e6d2038797bbf367ec0",
+  "outcome": "accept",
+  "refusal_code": null,
+  "scope": "supplementary Author-team codec verification, not independent review"
+}

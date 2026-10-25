@@ -1,0 +1,11 @@
+from pathlib import Path
+import zipfile,json,hashlib
+root=Path('/workspace/git-repo-db');out=Path('/workspace/i6b-work/baseline-task-c');out.mkdir(exist_ok=False)
+archive=root/'docs/implementation/evidence/adr0031-i6a/originals-binding-independent-20261023/raw-evidence.zip'
+rows=[]
+with zipfile.ZipFile(archive) as z:
+ for n in z.namelist():
+  if n.startswith(('raw/full/','raw/diagnostic743/')) and not n.endswith('.log'):
+   rel=Path(n).relative_to('raw');p=out/rel;p.parent.mkdir(exist_ok=True,parents=True);data=z.read(n);p.write_bytes(data)
+   rows.append({'member':n,'bytes':len(data),'sha256':hashlib.sha256(data).hexdigest()})
+(out/'attribution.json').write_text(json.dumps({'source':str(archive.relative_to(root)),'source_sha256':hashlib.sha256(archive.read_bytes()).hexdigest(),'files':rows},indent=2)+'\n')

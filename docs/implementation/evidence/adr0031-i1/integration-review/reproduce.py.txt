@@ -1,0 +1,312 @@
+"""Non-author I1b counterexamples against a frozen checkout; disposable SQL only."""
+
+import base64
+import dataclasses
+import hashlib
+import json
+import pathlib
+import sqlite3
+import subprocess
+import sys
+import tempfile
+
+report_path = pathlib.Path(sys.argv[1])
+expected_version = sys.argv[2]
+source = pathlib.Path(sys.argv[3]).resolve()
+sys.path.insert(0, str(source / "src"))
+
+from repo_catalog.adapters.github.production_intake import (  # noqa: E402
+    github_repository_id,
+    github_resource_id,
+    github_timeline_input_id,
+    normalize_pull_request,
+    normalize_timeline_event,
+)
+from repo_catalog.adapters.sqlite.p1_context import ContextStore  # noqa: E402
+from repo_catalog.adapters.sqlite.p1_schema import compose, register_functions  # noqa: E402
+from repo_catalog.domain.acquisition import make_provenance  # noqa: E402
+from repo_catalog.domain.exchange import ExchangeError, ExchangeSelectionScope  # noqa: E402
+from repo_catalog.domain.p1_context import (  # noqa: E402
+    CoverageScope,
+    EventReportKey,
+    FieldClock,
+    MappingClaimKey,
+    MappingSupport,
+    ProviderRepositoryRoleScope,
+    ResourceKey,
+    validate_timeline_event_coordinates,
+)
+from repo_catalog.domain.production_query import (  # noqa: E402
+    PaginationCursor,
+    QueryError,
+    SnapshotFenceToken,
+    canonical_json,
+)
+from repo_catalog.domain.resource_identity import encode_identity, parse_identity  # noqa: E402
+
+S = "11111111-1111-4111-8111-111111111111"
+R = "22222222-2222-4222-8222-222222222222"
+C = "33333333-3333-4333-8333-333333333333"
+PROV = make_provenance("synthetic://non-author-review", {"report": "one"})
+CLOCK = FieldClock("provider:update", 1)
+cases = []
+
+
+def case(name, function):
+    entry = {"case": name}
+    cases.append(entry)
+    try:
+        entry["observed"] = function()
+        entry["outcome"] = "passed"
+    except Exception as error:
+        entry.update(outcome="failed", error=type(error).__name__, message=str(error))
+
+
+def refuses(function, error_type=ValueError, contains=None):
+    try:
+        function()
+    except error_type as error:
+        if contains is not None:
+            assert contains in str(error), str(error)
+        return {"error": type(error).__name__, "message": str(error)}
+    raise AssertionError("Expected refusal did not occur")
+
+
+def distinct_native():
+    values = ["731", ["731"], ["node", "731"], ["decimal", "731"], '["node","731"]']
+    keys = [ResourceKey.from_native(S, "issue", value) for value in values]
+    assert len(set(keys)) == len(values)
+    for key in keys:
+        assert ResourceKey(*key.coordinates()) == key
+    return [key.provider_resource_id for key in keys]
+
+
+case("native-scalar-composite-and-json-looking-string-distinct", distinct_native)
+for bad in (None, True, 17, 1.5, {}, ("tuple",)):
+    case(
+        "forbidden-native-nested-" + type(bad).__name__,
+        lambda bad=bad: refuses(lambda: ResourceKey.from_native(S, "issue", ["a", [bad]]), TypeError),
+    )
+for raw in ("731", ' "731"', '"\\u0037\\u0033\\u0031"', '["731"]\n'):
+    case("serialized-reject-" + repr(raw), lambda raw=raw: refuses(lambda: ResourceKey(S, "issue", raw)))
+
+pr = ResourceKey.from_native(S, "pull_request", ["project", "PR1"])
+review = ResourceKey.document(pr, "review", "review_summary", "R1")
+
+
+def namespace_text():
+    coords = review.scoped_document_coordinates()
+    assert coords == ("pull_request", pr.provider_resource_id, "review_summary", "R1")
+    assert type(coords[1]) is str and parse_identity(coords[1]) == ["project", "PR1"]
+    return coords
+
+
+case("scoped-namespace-is-exact-canonical-text", namespace_text)
+case(
+    "decoded-nested-namespace-refused",
+    lambda: refuses(lambda: ResourceKey.from_native(S, "review", ["pull_request", ["project", "PR1"], "review_summary", "R1"])),
+)
+case(
+    "noncanonical-inner-namespace-text-refused",
+    lambda: refuses(lambda: ResourceKey.from_native(S, "review", ["pull_request", ' ["project","PR1"]', "review_summary", "R1"])),
+)
+
+
+def event_coordinates():
+    issue = ResourceKey.from_native(S, "issue", ["project", "I7"])
+    native = ["github:node_id", "E1"]
+    event = ResourceKey.timeline_event(issue, native)
+    assert validate_timeline_event_coordinates(event.provider_resource_id) == (issue.provider_resource_id, native)
+    assert EventReportKey(event, CLOCK, PROV).issue_parent == issue
+    return event.coordinates()
+
+
+case("timeline-native-node-array-and-exact-issue-reconstruction", event_coordinates)
+
+
+def factory_contract():
+    p = ResourceKey.from_native(S, "pull_request", "PR1")
+    scoped = ResourceKey.document(p, "document", "body", "D1")
+    native = ["pull_request", p.provider_resource_id, "body", "D1"]
+    explicit = ResourceKey.global_document(S, native)
+    generic = ResourceKey.from_native(S, "document", native)
+    assert explicit == generic == scoped
+    assert hash(explicit) == hash(scoped)
+    assert dataclasses.asdict(explicit) == dataclasses.asdict(scoped)
+    assert list(dataclasses.asdict(explicit)) == ["service_instance_uuidv4", "resource_kind", "provider_resource_id"]
+    return [refuses(key.scoped_document_coordinates, contains="global") for key in (explicit, generic)]
+
+
+case("factory-intent-guard-does-not-add-an-identity-coordinate", factory_contract)
+
+provider = ResourceKey.from_native(S, "repository", ["github:node_id", "R1"])
+claim = MappingClaimKey.for_repository(provider, R, clock=CLOCK, provenance_json=PROV)
+
+
+def supports():
+    value = MappingSupport(provider, (claim,))
+    encoded = value.to_dict()
+    assert MappingSupport.from_dict(json.loads(json.dumps(encoded))) == value
+    assert encoded["provider_repository_id"] == provider.provider_resource_id
+    assert encoded["supporting_claims"][0]["provider_resource_id"] == provider.provider_resource_id
+    return encoded
+
+
+case("nested-mapping-support-exact-text-roundtrip", supports)
+
+
+def wrong_support():
+    encoded = MappingSupport(provider, (claim,)).to_dict()
+    encoded["provider_repository_id"] = "731"
+    encoded["supporting_claims"][0]["provider_resource_id"] = "731"
+    return refuses(lambda: MappingSupport.from_dict(encoded))
+
+
+case("nested-mapping-support-raw-id-refused", wrong_support)
+case(
+    "provider-role-scope-canonical-text",
+    lambda: ProviderRepositoryRoleScope.unresolved("owning_repository", provider.provider_resource_id, CLOCK, 1).to_dict(),
+)
+case(
+    "provider-role-scope-raw-id-refused",
+    lambda: refuses(lambda: ProviderRepositoryRoleScope.unresolved("owning_repository", "731", CLOCK, 1)),
+)
+for kind, suffix in (("resource", ("complete",)), ("field", ("title", "complete")), ("collection", ("comments", "{}", "complete"))):
+    def coverage(kind=kind, suffix=suffix):
+        correct = CoverageScope(kind, (*provider.coordinates(), *suffix))
+        assert json.loads(correct.encoded)[:3] == list(provider.coordinates())
+        return refuses(lambda: CoverageScope(kind, (S, "repository", "731", *suffix)))
+
+    case("coverage-typed-owner-" + kind, coverage)
+
+
+def exchange_selection():
+    scope = ExchangeSelectionScope(resource_keys=(provider, review))
+    value = json.loads(json.dumps(scope.to_dict(), ensure_ascii=False))
+    assert ExchangeSelectionScope.from_dict(value).resource_keys == scope.resource_keys
+    value["resource_keys"][0][2] = "731"
+    return refuses(lambda: ExchangeSelectionScope.from_dict(value), ExchangeError, "INVALID_SELECTION")
+
+
+case("exchange-nested-resource-triple-exact-text-and-refusal", exchange_selection)
+
+token = SnapshotFenceToken("context_only", R, C, context_sha256="a" * 64).encode()
+for endpoint in ("context_resources", "paired_resources"):
+    def cursor_positive(endpoint=endpoint):
+        value = PaginationCursor(endpoint, "b" * 64, token, provider.coordinates())
+        assert PaginationCursor.decode(value.encode(), expected_endpoint=endpoint, expected_filter_digest="b" * 64, current_snapshot_token=token) == value
+        return value.last_key
+
+    case("cursor-positive-" + endpoint, cursor_positive)
+    for identity in ("731", '"\\u0037\\u0033\\u0031"'):
+        def forged_cursor(endpoint=endpoint, identity=identity):
+            payload = {"endpoint_kind": endpoint, "filter_digest": "b" * 64, "last_key": [S, "repository", identity], "snapshot_token": token, "v": 1}
+            digest = hashlib.sha256(("p6-cursor-v1:" + canonical_json(payload)).encode()).hexdigest()
+            text = canonical_json({"checksum_sha256": digest, "payload": payload})
+            raw = base64.urlsafe_b64encode(text.encode()).decode()
+            return refuses(lambda: PaginationCursor.decode(raw, expected_endpoint=endpoint, expected_filter_digest="b" * 64, current_snapshot_token=token), QueryError, "INVALID_CURSOR")
+
+        case("forged-valid-checksum-cursor-" + endpoint + "-" + repr(identity), forged_cursor)
+
+
+def github_namespaces():
+    decimal = github_resource_id({"id": 731}, graphql=False)
+    node = github_resource_id({"id": "731"}, graphql=True)
+    assert parse_identity(decimal) == "731"
+    assert parse_identity(node) == ["github:node_id", "731"]
+    assert decimal != node
+    assert github_timeline_input_id(731, graphql=True) == decimal
+    assert github_timeline_input_id("731", graphql=True) == node
+    assert github_repository_id({"id": "731", "databaseId": 731}, graphql=True) == node
+    return {"decimal": decimal, "node": node}
+
+
+case("github-database-and-node-namespaces-never-double-encoded", github_namespaces)
+
+
+def github_scoped_nodes():
+    unit = normalize_pull_request(S, {"id": "PR_node", "body": "body"}, 1, PROV, graphql=True)
+    docs = [obs.resource for obs in unit.observations if obs.resource != unit.primary_resource]
+    assert len(docs) == 1
+    coords = docs[0].scoped_document_coordinates()
+    assert coords[1] == '["github:node_id","PR_node"]'
+    assert coords[3] == ["github:node_id", "PR_node"]
+    event = normalize_timeline_event(S, "issue", "I_node", "E_node", {"id": "E_node"}, 1, PROV, graphql=True)
+    assert event.primary_resource.scoped_document_coordinates()[3] == ["github:node_id", "E_node"]
+    return {"document": docs[0].coordinates(), "event": event.primary_resource.coordinates()}
+
+
+case("github-scoped-node-local-is-array-and-namespace-is-text", github_scoped_nodes)
+
+with tempfile.TemporaryDirectory(prefix="i1b-review-") as temporary:
+    db = sqlite3.connect(pathlib.Path(temporary) / "context.sqlite3", isolation_level=None)
+    register_functions(db)
+    db.execute("PRAGMA foreign_keys=ON")
+    db.execute("PRAGMA recursive_triggers=ON")
+    db.executescript(compose("context"))
+    db.execute("INSERT INTO providers VALUES(?,?,?)", (S, "synthetic", "{}"))
+    store = ContextStore(db)
+    p = ResourceKey.from_native(S, "pull_request", "PR1")
+    store.resource(p)
+    scoped = ResourceKey.document(p, "document", "body", "D1")
+    global_key = ResourceKey.global_document(S, ["pull_request", p.provider_resource_id, "body", "D1"])
+
+    def global_insert():
+        result = refuses(lambda: store.resource(global_key), contains="global")
+        assert db.execute("SELECT count(*) FROM resources WHERE resource_kind='document'").fetchone() == (0,)
+        return result
+
+    case("packaged-context-shaped-global-before-insert-refused", global_insert)
+
+    def scoped_insert():
+        store.resource(scoped)
+        assert db.execute("SELECT parent_resource_kind,parent_provider_resource_id,document_kind,provider_document_id FROM resources WHERE resource_kind='document'").fetchall() == [("pull_request", p.provider_resource_id, "body", "D1")]
+        assert db.execute("SELECT count(*) FROM resource_relations").fetchone() == (0,)
+        return {"metadata": scoped.scoped_document_coordinates(), "semantic_parent_reports": 0}
+
+    case("packaged-context-scoped-insert-preserves-pr-coordinates-no-parent-report", scoped_insert)
+    case("packaged-context-shaped-global-existing-key-replay-refused", lambda: refuses(lambda: store.resource(global_key), contains="global"))
+    case("packaged-context-native-composite-local-deferred-I2", lambda: refuses(lambda: store.resource(ResourceKey.document(p, "document", "body", ["node", "D2"])), contains="I2"))
+    db.execute("CREATE TABLE exact_refs(service TEXT COLLATE BINARY,kind TEXT COLLATE BINARY,identity TEXT COLLATE BINARY,FOREIGN KEY(service,kind,identity) REFERENCES resources(service_instance_uuidv4,resource_kind,provider_resource_id))")
+
+    def binary_keys():
+        natives = ["A", "a", "\u00e9", "e\u0301", "731", ["731"], "", []]
+        keys = [ResourceKey.from_native(S, "issue", native) for native in natives]
+        for key in keys:
+            store.resource(key)
+            db.execute("INSERT INTO exact_refs VALUES(?,?,?)", key.coordinates())
+        assert db.execute("SELECT count(*) FROM resources WHERE resource_kind='issue'").fetchone() == (len(keys),)
+        assert db.execute("SELECT count(*) FROM exact_refs").fetchone() == (len(keys),)
+        assert db.execute("PRAGMA foreign_key_check").fetchall() == []
+        return [key.provider_resource_id for key in keys]
+
+    case("actual-sqlite-binary-key-distinction-and-exact-compound-fks", binary_keys)
+    for bad_coordinates in ((S, "repository", '"731"'), (R, "issue", '"731"'), (S, "issue", '"\\u0037\\u0033\\u0031"')):
+        case("actual-sqlite-compound-fk-refuses-" + repr(bad_coordinates), lambda bad_coordinates=bad_coordinates: refuses(lambda: db.execute("INSERT INTO exact_refs VALUES(?,?,?)", bad_coordinates), sqlite3.IntegrityError, "FOREIGN KEY"))
+    runtime = {
+        "sqlite_version": db.execute("SELECT sqlite_version()").fetchone()[0],
+        "sqlite_source_id": db.execute("SELECT sqlite_source_id()").fetchone()[0],
+        "pragmas": {name: db.execute("PRAGMA " + name).fetchall() for name in ("foreign_keys", "recursive_triggers", "encoding", "journal_mode", "synchronous", "trusted_schema", "temp_store")},
+        "compile_options": db.execute("PRAGMA compile_options").fetchall(),
+        "foreign_key_check": db.execute("PRAGMA foreign_key_check").fetchall(),
+        "integrity_check": db.execute("PRAGMA integrity_check").fetchall(),
+    }
+    db.close()
+
+case("genuine-runtime-version-matches-required-selection", lambda: runtime["sqlite_version"] == expected_version or (_ for _ in ()).throw(AssertionError(runtime)))
+result = {
+    "scope": "Non-author independently authored I1b counterexamples; disposable packaged Context and SQLite BINARY/FK checks, not generalized product acceptance",
+    "commit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=source, text=True).strip(),
+    "tree": subprocess.check_output(["git", "rev-parse", "HEAD^{tree}"], cwd=source, text=True).strip(),
+    "runtime": runtime,
+    "cases": cases,
+    "counts": {"executed": len(cases), "passed": sum(case["outcome"] == "passed" for case in cases), "failed": sum(case["outcome"] == "failed" for case in cases), "skipped": 0},
+    "script_sha256": hashlib.sha256(pathlib.Path(__file__).read_bytes()).hexdigest(),
+}
+report_path.parent.mkdir(parents=True, exist_ok=True)
+report_path.write_text(json.dumps(result, indent=2, ensure_ascii=True) + "\n")
+print(json.dumps({"runtime": runtime["sqlite_version"], "commit": result["commit"], "counts": result["counts"]}))
+for case in cases:
+    if case["outcome"] != "passed":
+        print(json.dumps(case))
+sys.exit(1 if result["counts"]["failed"] else 0)

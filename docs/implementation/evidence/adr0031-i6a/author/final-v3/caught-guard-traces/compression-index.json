@@ -1,0 +1,50 @@
+[
+  {
+    "original_path": "caught-assertions.jsonl",
+    "original_bytes": 1810,
+    "original_sha256": "81bc195992d10ffa4e3f7d0855efa5e3064e39df2759da57018411bcc007e982",
+    "gzip_path": "caught-assertions.jsonl.gz",
+    "gzip_bytes": 363,
+    "gzip_sha256": "dfcef0ca0bf9f6b0fceb0c926694830ab7512bde200e01cad428868a0c34b289"
+  },
+  {
+    "original_path": "caught-assertions.log",
+    "original_bytes": 4429,
+    "original_sha256": "828e4123f12b504bcb8075cff46f7b629eaed97f65c99a0d001943284568d0a4",
+    "gzip_path": "caught-assertions.log.gz",
+    "gzip_bytes": 1467,
+    "gzip_sha256": "5974ca5e57f0338ec8cac7b758ffa83045e5f1f2481e2cae12ccf65b2f0a733a"
+  },
+  {
+    "original_path": "caught-assertions.selected.txt",
+    "original_bytes": 189,
+    "original_sha256": "284d9d7f6c583876437ea57618ec45016457bccba09e128bdb87d4d1c6612b39",
+    "gzip_path": "caught-assertions.selected.txt.gz",
+    "gzip_bytes": 136,
+    "gzip_sha256": "7e848aabb69625c86e844aca7f989f042ad5bf69ae610c99224ac20c54f69c21"
+  },
+  {
+    "original_path": "caught-assertions.xml",
+    "original_bytes": 5097,
+    "original_sha256": "1d75c9f4b754898cd2004fa1ba66629a671470eeb74a6534fb02e6ffb42ff43e",
+    "gzip_path": "caught-assertions.xml.gz",
+    "gzip_bytes": 1645,
+    "gzip_sha256": "d7cfd7a9bc83a4f0aa9367af69bd363ea0cb58397f51ba10498b96c48138ea50"
+  },
+  {
+    "original_path": "input-binding-after.json",
+    "original_bytes": 55563,
+    "original_sha256": "7b222052208a67a1c227aacb64a3d2187b95d19dcac3c74efaccb7ae0efa5ef6",
+    "gzip_path": "input-binding-after.json.gz",
+    "gzip_bytes": 22550,
+    "gzip_sha256": "482fda940f842b3b3385907afae8e972cb50c8d8c01980f702e18b48628540d0"
+  },
+  {
+    "original_path": "input-binding-before.json",
+    "original_bytes": 55563,
+    "original_sha256": "7b222052208a67a1c227aacb64a3d2187b95d19dcac3c74efaccb7ae0efa5ef6",
+    "gzip_path": "input-binding-before.json.gz",
+    "gzip_bytes": 22550,
+    "gzip_sha256": "482fda940f842b3b3385907afae8e972cb50c8d8c01980f702e18b48628540d0"
+  }
+]

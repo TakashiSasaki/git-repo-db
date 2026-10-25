@@ -76,3 +76,16 @@ Verified examples, tool versions and output byte counts are in
 [the local tooling receipt](references/verified-tooling.json). Byte reduction is
 not a measured percentage of model tokens, cost or runtime speed. Optional tools
 may need reinstalling in a new cloud environment; the skill remains in Git.
+
+## Compare traceback semantics separately from pytest presentation
+
+Keep the raw JUnit/terminal comparison when changing observer output or pytest
+traceback style. A saved short frame rendered with "in function" can become a
+blank label under a long traceback; that does not establish a changed executed
+function. Compare the actual worker ExceptionInfo frames (project path,
+function, exception and typed refusal) from recorded sidecars. Retain physical
+line-coordinate changes and the original text differences separately. Verify
+node/phase identity first, and do not infer that an absent sidecar proves equality.
+The [I6-B correction evidence](../../../docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/REPORT.md)
+records this distinction and its comparator; assertion statement entry remains
+separate from subexpression, other-thread and child-process coverage.

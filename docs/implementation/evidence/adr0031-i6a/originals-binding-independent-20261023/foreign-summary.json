@@ -1,0 +1,23 @@
+{
+  "source": {
+    "passed": 4,
+    "exact_nodes_and_phases": true,
+    "zero_foreign_allow_all_policy_calls": true,
+    "unchanged_full_rowsets": true,
+    "installed_in_pytest_import_checks": 0
+  },
+  "direct": {
+    "passed": 4,
+    "exact_nodes_and_phases": true,
+    "zero_foreign_allow_all_policy_calls": true,
+    "unchanged_full_rowsets": true,
+    "installed_in_pytest_import_checks": 4
+  },
+  "sdist": {
+    "passed": 4,
+    "exact_nodes_and_phases": true,
+    "zero_foreign_allow_all_policy_calls": true,
+    "unchanged_full_rowsets": true,
+    "installed_in_pytest_import_checks": 4
+  }
+}

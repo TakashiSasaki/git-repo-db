@@ -1,0 +1,61 @@
+{
+  "command": [
+    "/workspace/git-repo-db/.venv/bin/python",
+    "-m",
+    "pytest",
+    "-p",
+    "i6a_report_types",
+    "-p",
+    "i6b_source_binding",
+    "-q",
+    "-o",
+    "addopts=--strict-markers",
+    "-o",
+    "junit_family=xunit1",
+    "@/workspace/i6b-work/source-final/ordinary.selected.txt",
+    "--junitxml=/workspace/i6b-work/source-final/ordinary.xml",
+    "--journal=/workspace/i6b-work/source-final/ordinary.jsonl",
+    "-n",
+    "4",
+    "--dist",
+    "worksteal",
+    "--basetemp=/workspace/i6b-work/source-final/basetemp"
+  ],
+  "cwd": "/workspace/git-repo-db",
+  "started_epoch": 1792753278.6414363,
+  "elapsed_seconds": 368.23,
+  "exit_code": 2,
+  "collected": 6274,
+  "passed": 856,
+  "failed": 1,
+  "error": 0,
+  "skipped": 0,
+  "xfail": 0,
+  "xpass": 0,
+  "executed": 857,
+  "reconciliation": {
+    "checks": {
+      "selected_unique": true,
+      "selected_equals_junit": false,
+      "selected_equals_journal_starts": false,
+      "setup_and_teardown_once": false,
+      "no_duplicate_phases": true,
+      "phase_nodes_equal_selected": false,
+      "call_once_after_successful_setup": false,
+      "one_finish": true
+    },
+    "consistent_node_execution": false,
+    "journal_phase_outcomes": {
+      "passed": 2566,
+      "failed": 1
+    },
+    "finishes": [
+      {
+        "event": "finish",
+        "status": "failed",
+        "exitstatus": 2,
+        "timestamp": 1792753646.406022
+      }
+    ]
+  }
+}

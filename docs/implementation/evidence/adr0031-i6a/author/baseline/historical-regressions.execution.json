@@ -1,0 +1,56 @@
+{
+  "command": [
+    "/home/ubuntu/github/git-repo-db/impl/adr0031-i5-typed-admission-20261022/.venv/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "-o",
+    "addopts=--strict-markers",
+    "-o",
+    "junit_family=xunit1",
+    "@/home/ubuntu/github/git-repo-db/impl/adr0031-i5-typed-admission-20261022/docs/implementation/evidence/adr0031-i5/author-3.53.1/regressions.selected.txt",
+    "--junitxml=/home/ubuntu/github/git-repo-db/impl/adr0031-i5-typed-admission-20261022/docs/implementation/evidence/adr0031-i5/author-3.53.1/regressions.xml",
+    "--journal=/home/ubuntu/github/git-repo-db/impl/adr0031-i5-typed-admission-20261022/docs/implementation/evidence/adr0031-i5/author-3.53.1/regressions.jsonl",
+    "-n",
+    "4",
+    "--dist",
+    "worksteal"
+  ],
+  "cwd": "/home/ubuntu/github/git-repo-db/impl/adr0031-i5-typed-admission-20261022",
+  "started_epoch": 1792664248.322973,
+  "elapsed_seconds": 465.449,
+  "exit_code": 1,
+  "collected": 3137,
+  "passed": 3058,
+  "failed": 59,
+  "error": 20,
+  "skipped": 0,
+  "xfail": 0,
+  "xpass": 0,
+  "executed": 3137,
+  "reconciliation": {
+    "checks": {
+      "selected_unique": true,
+      "selected_equals_junit": true,
+      "selected_equals_journal_starts": true,
+      "setup_and_teardown_once": true,
+      "no_duplicate_phases": true,
+      "phase_nodes_equal_selected": true,
+      "call_once_after_successful_setup": true,
+      "one_finish": true
+    },
+    "consistent_node_execution": true,
+    "journal_phase_outcomes": {
+      "passed": 9312,
+      "failed": 79
+    },
+    "finishes": [
+      {
+        "event": "finish",
+        "status": "failed",
+        "exitstatus": 1,
+        "timestamp": 1792664711.393929
+      }
+    ]
+  }
+}

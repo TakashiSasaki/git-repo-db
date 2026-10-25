@@ -1,0 +1,7 @@
+{
+  "old_sha256": "058d090f364d7f79b49774f80a99f43d788f7110ec204fbe238182fee0dd1e38",
+  "new_sha256": "00773bb83b13c1bf0984c137bca83a1c3d09c994811e6536abb25040bd7e258d",
+  "reason": "Generic comparison omitted MALFORMED_ROW from code extraction; raw traces and separate semantic extractor already retained the actual code. Add exact code without changing product/runtime outcomes.",
+  "old_source_snapshot": "compare-runs-before-code-extension.py.txt",
+  "product_tests_rerun": false
+}

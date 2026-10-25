@@ -1,0 +1,53 @@
+{
+  "tested_source_head": "30888b6558f25d1a26092e020217d635b9c9a718",
+  "tested_source_tree": "be0e680b6de36e87394e0d524fe7f0990e6223c2",
+  "files": {
+    "src/repo_catalog/adapters/sqlite/context_admission.py": {
+      "bytes": 13314,
+      "sha256": "4bc28ffd8b5a242056ced2d149126364c12083dc0a0b25063efbf5ba000d227a"
+    },
+    "src/repo_catalog/adapters/sqlite/p1_ddl/context.sql": {
+      "bytes": 47098,
+      "sha256": "73532070fc99f9e87dd4977fd6859d47b183207921e7b641a9c51e8234a5cab9"
+    },
+    "src/repo_catalog/adapters/sqlite/p1_ddl/core.sql": {
+      "bytes": 14238,
+      "sha256": "0b96849f36fbbf314e69b675eedd11c8e751173563870c004d912dab6d3d7323"
+    },
+    "src/repo_catalog/adapters/sqlite/p1_ddl/coverage.sql": {
+      "bytes": 1261,
+      "sha256": "1c830f402ac20ace36928d03b49db2f7aeab9962f14d6ee7aeb086b63081a9ed"
+    },
+    "src/repo_catalog/adapters/sqlite/p1_ddl/fingerprints.json": {
+      "bytes": 2329,
+      "sha256": "5b1a354949f7abe491a07797fb182603b7b1f95322f161c812e7a8dd9845a4d0"
+    },
+    "src/repo_catalog/adapters/sqlite/p1_ddl/operational.sql": {
+      "bytes": 6526,
+      "sha256": "25c678b1584630c87ac643c81fc4f0fb83c210d0671d485d0a21794e54c84ef1"
+    },
+    "src/repo_catalog/adapters/sqlite/p1_ddl/search.sql": {
+      "bytes": 795,
+      "sha256": "4224950692cf754d787c69a10cfca9b6e6a0f53b770ea947f0a8ef670f415d8d"
+    },
+    "src/repo_catalog/adapters/sqlite/p1_schema.py": {
+      "bytes": 8957,
+      "sha256": "e1470fe8a81d1f347caa85ef9600860e48941f1154bbe32438f9864a66ed5f22"
+    },
+    "src/repo_catalog/domain/context_admission.py": {
+      "bytes": 25863,
+      "sha256": "ed7963a58e79933a904e40a5412497433b1a6b573329b9a61ba5185b757b9240"
+    },
+    "src/repo_catalog/domain/ports/context_authorization.py": {
+      "bytes": 912,
+      "sha256": "073fbd676a55ef86820eec5db60241b9e4545b0be54e2022680d3238e16b2e29"
+    }
+  },
+  "unchanged_scopes_from_base": {
+    "docs/adr": true,
+    "src/repo_catalog/adapters/sqlite/p1_ddl": true,
+    "src/repo_catalog/adapters/sqlite/p1_schema.py": true,
+    "docs/implementation/evidence/adr0031-i5": true,
+    "docs/implementation/evidence/adr0031-i6": true
+  }
+}

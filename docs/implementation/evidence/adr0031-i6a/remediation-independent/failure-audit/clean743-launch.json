@@ -1,0 +1,31 @@
+{
+  "actual_shell_invocation": "REVIEW_SOURCE_ROOT=/workspace/i6a-review-clean REVIEW_DIAGNOSTIC_COHORT=743 /workspace/review-clean-runtime/bin/python /workspace/i6a-independent/docs/implementation/evidence/adr0031-i6a/remediation-independent/failure-audit/run_diagnostic.py /workspace/review-clean743",
+  "cwd": "/workspace/i6a-review-clean",
+  "reproduction_wrapper": "run_clean743.py sets the same two environment values and executes run_diagnostic.py; wrapper was added after execution for convenience.",
+  "source_runtime_preparation": "UV_CACHE_DIR=/workspace/uv-cache UV_PROJECT_ENVIRONMENT=/workspace/review-clean-runtime UV_PYTHON_DOWNLOADS=never uv sync --frozen --group dev --group docs --python /workspace/review-runtime/bin/python",
+  "driver_and_plugins": {
+    "run_diagnostic.py": {
+      "size": 4279,
+      "sha256": "245ed099530d6bcd30e5d87a46643521b58c97c083528090afa08746c34b0382"
+    },
+    "reviewer_trace.py": {
+      "size": 3883,
+      "sha256": "94a866ebac7ff000660d3afa2ec322aebbd24c7ef58b6094416d151a073a47c8"
+    },
+    "i6a_report_types.py": {
+      "size": 830,
+      "sha256": "9002be57a9993cdf9a55e6ac608b654ccc403dae63dbb73c24ad6e5cb1ea7dc5"
+    }
+  },
+  "explicit_child_environment": {
+    "PATH_prefix": "/workspace/review-clean-runtime/bin",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PYTHONPATH": "/workspace/i6a-independent/docs/implementation/evidence/adr0031-i6a/remediation-independent/failure-audit",
+    "UV_CACHE_DIR": "/workspace/uv-cache",
+    "REPO_CATALOG_WHEELHOUSE": "/workspace/review-wheelhouse",
+    "TMPDIR": "/workspace/review-failure-tmp",
+    "REVIEW_TRACE_SOURCE": "/workspace/i6a-review-clean",
+    "REVIEW_TRACE_OUTPUT": "/workspace/review-clean743/trace"
+  },
+  "sensitive_environment": "Inherited credentials are not recorded. Artifact fixtures strip GitHub credential variables from their child environments."
+}

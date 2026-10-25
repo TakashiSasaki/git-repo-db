@@ -1,0 +1,13 @@
+{
+  "observed_utc": "2026-10-23T05:40:02.866957+00:00",
+  "repository": "TakashiSasaki/git-repo-db",
+  "reviewed_pr": 145,
+  "reviewed_head": "08fbb956c2e470e245146b0dbae747ed0690ea40",
+  "reviewed_tree": "7072f952975a8537f74ced1bbc2a4a31d7aa3690",
+  "existing_same_base_reviews_at_initial_check": [],
+  "latest_pr_at_initial_check": 145,
+  "independent_checkout": "/workspace/i6a-independent",
+  "checkout_initial_tracked_clean": true,
+  "checkout_initial_head": "08fbb956c2e470e245146b0dbae747ed0690ea40",
+  "non_author_scope": "Fresh Codex thread and independent subsidiary reviews; no implementation authored here. Same repository owner GitHub account is used solely for authorized evidence publication. Synthetic infrastructure/test constructors are attributed where reused."
+}

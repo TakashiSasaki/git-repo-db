@@ -1,0 +1,95 @@
+{
+  "checked_at_utc": "2026-10-23T12:36:28.887733+00:00",
+  "actual_pr149_head": "ea43a21fca1dbf8fa6dd1c254b28a96d5dd28d00",
+  "actual_pr149_tree": "e7ca7e361b8b766f1976a12fc84d5cc50ac32232",
+  "actual_new_pr_base_branch": "review/adr0031-i6a-task-c-20261023",
+  "actual_main": "cb532242c7aa86c6af5b6232b71c0906ea38f5c5",
+  "base_and_main_unchanged": true,
+  "complete_all_state_pr_roster_count": 150,
+  "competing_i6b_implementation": [],
+  "related_task_b_pr": "https://github.com/TakashiSasaki/git-repo-db/pull/150",
+  "new_branch_absent_remotely_before_push": true,
+  "files": [
+    {
+      "path": "all-pr-pages.json.gz",
+      "bytes": 382774,
+      "sha256": "99447220cf021558b9c40bf7e5c89930f42b7cda217205d49d877698d9d1b357",
+      "original_bytes": 3912411,
+      "original_sha256": "a23947417db15966766a7aa06e67a623a20e288197f202105a53e61a8d7bd737",
+      "gzip": true
+    },
+    {
+      "path": "all-pr-pages.json-stream.gz",
+      "bytes": 371998,
+      "sha256": "5157831138538b5b895900d6014c762581250469616c6a932b931fdffd820778",
+      "original_bytes": 3330860,
+      "original_sha256": "cd3e15118b7b38961287154c5fde86b614fa04828f0555579a025a377934cefd",
+      "gzip": true
+    },
+    {
+      "path": "all-pr-pages.slurp-empty.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "original_bytes": 0,
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gzip": false
+    },
+    {
+      "path": "cli-compatibility-attempt.json",
+      "bytes": 507,
+      "sha256": "91897aefad04e0714dde27b313f71bc92960923891013e946139b7f2133d0221",
+      "original_bytes": 507,
+      "original_sha256": "91897aefad04e0714dde27b313f71bc92960923891013e946139b7f2133d0221",
+      "gzip": false
+    },
+    {
+      "path": "duplicate-scope.json",
+      "bytes": 736,
+      "sha256": "ca6f67058863d98697ecba74fdb9c9ffefa6a760ce01cbbbdee7d7279e4136b8",
+      "original_bytes": 736,
+      "original_sha256": "ca6f67058863d98697ecba74fdb9c9ffefa6a760ce01cbbbdee7d7279e4136b8",
+      "gzip": false
+    },
+    {
+      "path": "i6b-search.json",
+      "bytes": 8690,
+      "sha256": "d8bf2328ceee72df01693cb4eae32dccc6d47a7a374c08b2b7d3b1062a55ff00",
+      "original_bytes": 8690,
+      "original_sha256": "d8bf2328ceee72df01693cb4eae32dccc6d47a7a374c08b2b7d3b1062a55ff00",
+      "gzip": false
+    },
+    {
+      "path": "main.json",
+      "bytes": 5631,
+      "sha256": "b258db3e99f26ffdede8e9f3ed9e8dd030d64e9da8ca31beb6e2e7a90c62136d",
+      "original_bytes": 5631,
+      "original_sha256": "b258db3e99f26ffdede8e9f3ed9e8dd030d64e9da8ca31beb6e2e7a90c62136d",
+      "gzip": false
+    },
+    {
+      "path": "pr149-head-commit.json",
+      "bytes": 1194,
+      "sha256": "bb2299b2935a710db75d2fc162c6c4cd91d47a8d284a8328e688035a552354fb",
+      "original_bytes": 1194,
+      "original_sha256": "bb2299b2935a710db75d2fc162c6c4cd91d47a8d284a8328e688035a552354fb",
+      "gzip": false
+    },
+    {
+      "path": "pr149.json",
+      "bytes": 25039,
+      "sha256": "baf916aef1ee4370e52dc01dc444454f5645724a71dc5f03be7546b75236e1e6",
+      "original_bytes": 25039,
+      "original_sha256": "baf916aef1ee4370e52dc01dc444454f5645724a71dc5f03be7546b75236e1e6",
+      "gzip": false
+    },
+    {
+      "path": "remote-heads.txt",
+      "bytes": 144,
+      "sha256": "fc833ae40617f6a9e201ee7425fc6fa54f3f595a702af4ad4afae49c3cad571f",
+      "original_bytes": 144,
+      "original_sha256": "fc833ae40617f6a9e201ee7425fc6fa54f3f595a702af4ad4afae49c3cad571f",
+      "gzip": false
+    }
+  ],
+  "scope": "Read-only live GitHub/base/tree/duplicate pre-submission check. Final publication branch/PR/CI are verified separately after commit/push."
+}

@@ -1,0 +1,148 @@
+{
+  "at_utc": "2026-10-21T16:27:41.866632+00:00",
+  "verdict": "NOT READY",
+  "head": "9eaa5111c94204c4adf791cd1565b704728493f1",
+  "tree": "d91c73b5caed2601a6b097c69017e0e49e96bc53",
+  "tracked_inputs_rechecked": 3723,
+  "changed_tracked_inputs": [],
+  "tracked_status": "",
+  "candidate_copies_byte_identical": {
+    "probe.py": true,
+    "compose_proposal.py": true,
+    "resource_udfs.py": true,
+    "resources.sql": true,
+    "baseline_controls.py": true,
+    "transaction_controls.py": true
+  },
+  "lanes": [
+    {
+      "runtime": "3.51.3",
+      "source_id": "2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618",
+      "candidate_independent": {
+        "executed": 301,
+        "passed": 295,
+        "failed": 6
+      },
+      "disposable_mitigation": {
+        "executed": 7,
+        "passed": 7
+      },
+      "author_case_reexecution": {
+        "executed": 133,
+        "passed": 133
+      },
+      "nonbinary_index_key_slots": [],
+      "resource_function_flags": {
+        "p1_resource_identification_v1": 2048,
+        "p1_resource_identity_v1": 2048
+      },
+      "candidate_index_key_slots": 141
+    },
+    {
+      "runtime": "3.53.1",
+      "source_id": "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9",
+      "candidate_independent": {
+        "executed": 301,
+        "passed": 295,
+        "failed": 6
+      },
+      "disposable_mitigation": {
+        "executed": 7,
+        "passed": 7
+      },
+      "author_case_reexecution": {
+        "executed": 133,
+        "passed": 133
+      },
+      "nonbinary_index_key_slots": [],
+      "resource_function_flags": {
+        "p1_resource_identification_v1": 2048,
+        "p1_resource_identity_v1": 2048
+      },
+      "candidate_index_key_slots": 141
+    }
+  ],
+  "process_receipts": [
+    {
+      "lane": "candidate-author-3513",
+      "argv": [
+        "/usr/bin/python3.13",
+        "/workspace/task-d-evidence/author-rerun/probe.py",
+        "verified-3513",
+        "3.51.3"
+      ],
+      "cwd": "/workspace/task-d-evidence",
+      "environment_overrides": {
+        "LD_LIBRARY_PATH": "/workspace/task-d-evidence/runtime/sqlite-amalgamation-3510300",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "/workspace/task-d-review/src:/workspace/task-d-evidence/author-rerun"
+      },
+      "started_at": "2026-10-21T16:21:07.168646+00:00",
+      "seconds": 0.8059480199999598,
+      "exit_code": 0,
+      "output": "candidate-author-3513.log",
+      "output_sha256": "ef414876d36d764834d44bc002becd7977feae815fbf80cdc97750973b14da00"
+    },
+    {
+      "lane": "independent-3513",
+      "argv": [
+        "/usr/bin/python3.13",
+        "/workspace/task-d-evidence/independent_review.py",
+        "/workspace/task-d-evidence/verified-3513",
+        "3.51.3"
+      ],
+      "cwd": "/workspace/task-d-evidence",
+      "environment_overrides": {
+        "LD_LIBRARY_PATH": "/workspace/task-d-evidence/runtime/sqlite-amalgamation-3510300",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "/workspace/task-d-review/src:/workspace/task-d-evidence/author-rerun"
+      },
+      "started_at": "2026-10-21T16:21:07.975102+00:00",
+      "seconds": 1.4694221019999532,
+      "exit_code": 1,
+      "output": "independent-3513.log",
+      "output_sha256": "d9ea93e46e7dc0db8924a1d3971770bdbf2af512c04ed624e309738ef2ec00b4"
+    },
+    {
+      "lane": "candidate-author-3531",
+      "argv": [
+        "/usr/bin/python3.13",
+        "/workspace/task-d-evidence/author-rerun/probe.py",
+        "verified-3531",
+        "3.53.1"
+      ],
+      "cwd": "/workspace/task-d-evidence",
+      "environment_overrides": {
+        "LD_LIBRARY_PATH": "/workspace/task-d-evidence/runtime/sqlite-amalgamation-3530100",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "/workspace/task-d-review/src:/workspace/task-d-evidence/author-rerun"
+      },
+      "started_at": "2026-10-21T16:21:09.444852+00:00",
+      "seconds": 0.8387716600000203,
+      "exit_code": 0,
+      "output": "candidate-author-3531.log",
+      "output_sha256": "e60429c034219ef783b85852cce9c39545109012f9c3eb8c9d5138efd2ad2e99"
+    },
+    {
+      "lane": "independent-3531",
+      "argv": [
+        "/usr/bin/python3.13",
+        "/workspace/task-d-evidence/independent_review.py",
+        "/workspace/task-d-evidence/verified-3531",
+        "3.53.1"
+      ],
+      "cwd": "/workspace/task-d-evidence",
+      "environment_overrides": {
+        "LD_LIBRARY_PATH": "/workspace/task-d-evidence/runtime/sqlite-amalgamation-3530100",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "/workspace/task-d-review/src:/workspace/task-d-evidence/author-rerun"
+      },
+      "started_at": "2026-10-21T16:21:10.283923+00:00",
+      "seconds": 2.143541925999898,
+      "exit_code": 1,
+      "output": "independent-3531.log",
+      "output_sha256": "d9ea93e46e7dc0db8924a1d3971770bdbf2af512c04ed624e309738ef2ec00b4"
+    }
+  ],
+  "review_script_sha256": "2eebfcfea7c3f9e73d98256b4c1073e84732d312e88cf209dc1a3d899d2697e1"
+}
