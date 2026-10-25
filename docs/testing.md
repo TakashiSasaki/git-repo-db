@@ -17,6 +17,14 @@ uv run --no-sync python -c 'import platform, sqlite3, sys; c=sqlite3.connect(":m
 uv --version
 ```
 
+### CPUアーキテクチャ別の検証範囲
+
+通常の開発・開発PR・開発用CI・独立開発レビューでは、実際に利用可能な **1つのCPUアーキテクチャ** で必要な検証を行えば十分です。x86_64とaarch64の両方を使う追試、CPUアーキテクチャ別マトリクス、あるいはaarch64で検証済みのローカルbootstrapをx86_64でも再実行することは、開発受入の条件にしません。既存のGitHub Actionsがx86_64上で動作しても、それはx86_64の製品リリースを決定したことを意味しません。
+
+**リリース対象となるCPUアーキテクチャは現時点では未決定です。** 明示的なリリース計画で対象を選択した後、その対象に必要なアーキテクチャ固有のリリース検証を行います。選択していないアーキテクチャについてリリース検証を要求しません。選択した対象の検証が不足する場合は、未検証の範囲をリリース受入上の不足として報告し、成功扱いにしません。ADR 0001に基づく独立したローカル・ホストのリリース検証とexact-tree証跡は維持しますが、両環境のCPUアーキテクチャ一致は要求しません。
+
+この方針は **CPUアーキテクチャごとの検証義務** に限ります。受入済みのソフトウェア設計ADR、SQLite/WALの安全条件、データ整合性・認可・既存テストの合否条件を緩和するものではありません。
+
 編集中は変更した機能の試験を実行します。ADR 0001（Development and Release Validation Lifecycle Architecture）に基づき、開発時の検証（Development Validation）とリリース受入（Release Acceptance）を明確に分離します。開発時の pull request や通常編集では、局所的な対象試験（focused tests）および軽量な静的検査（Ruff check/format、構成検証、schema audit、CLI doctor smoke）を実行し、編集ごとに全試験（full-suite）の網羅実行を要求しません。リリース検証を完了する際のみ、クリーンな作業ツリーで完全な受入試験を実施し、ローカル release receipt を生成・照合します。
 
 ```bash

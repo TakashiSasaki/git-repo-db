@@ -21,6 +21,26 @@ Report reason/scope and obtain explicit owner approval before any exception.
 bare `uv run` without that environment. If setup, `local_env.py verify` or preflight fails,
 report the failure; do not bypass it, delete an incompatible `.venv` silently or substitute another runtime.
 
+## CPU architecture validation scope
+
+During ordinary development (including feature PRs, local tests, development CI,
+and independent development reviews), verification on **one available CPU
+architecture** is sufficient. Do not require x86_64/aarch64 parity, a
+cross-architecture test matrix, or an x86_64 local-bootstrap end-to-end run as a
+development acceptance gate when another available architecture has passed.
+Existing hosted CI runners may use x86_64; that fact does not designate x86_64
+as a supported release target.
+
+**Release targets are undecided.** At explicit release planning, the owner selects
+the CPU architectures to support. Require architecture-specific release
+validation only for those selected targets and report any unverified target as
+an outstanding release gap; do not silently imply support. Preserve ADR 0001's
+independent local **and** hosted release-acceptance requirements and exact-tree
+evidence, without imposing identical CPU architectures across environments.
+This policy changes hardware-platform validation scope only: accepted software
+architecture decisions, SQLite/WAL safety floors, authorization, data integrity,
+and other product safeguards remain binding.
+
 ## Product and authorization
 
 **Latest shared owner decision: [ADR 0028](docs/adr/0028-classified-times-and-sha256-exchange.md).** SHA-256-only Exchange compares a declared canonical-data digest with receiver recomputation; no HMAC/signature/PKI or sender-authentication claim. Cursor SHA-256 is a checksum with independent content validation. Shared opt-in time/DDL/fingerprint corrections to P1–P4 are authorized by the current task; public Schema 21 stays default. Preserve historical evidence and independent P5/P6 sibling implementation dependencies.

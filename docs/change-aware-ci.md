@@ -4,6 +4,8 @@ CI は [現在の policy](../scripts/ci_dependencies.json) と有効な Git tree
 
 SQLite 環境は [ADR 0032](adr/0032-environment-sqlite-validation.md) に従います。開発・リリースとも各環境の Python が実際に使う単一版で十分です。テスト用 SQLite の取得・構築・追加導入・差替えや版マトリクスは行いません。Python の選択を依存準備・子プロセスで保持し、実測 Python / SQLite / source ID を記録します。製品の機能・WAL 安全条件を満たさない環境は失敗と報告し、条件を緩和しません。例外は理由・範囲の報告と事前の所有者明示承認が必要です。
 
+通常の開発用CIと独立開発レビューでは、利用可能な1つのCPUアーキテクチャでの検証を受け入れ、x86_64/aarch64の追試やアーキテクチャ別マトリクスを必須にしません。既存のx86_64ホストCIの実行は、そのアーキテクチャのリリースサポート宣言ではありません。リリース対象アーキテクチャは未決定であり、明示的なリリース計画で選んだ対象に限ってアーキテクチャ固有の検証を課します。選択対象の未検証は受入不足として報告します。ADR 0001が要求するローカルとホストの独立したrelease acceptanceと、SQLite等の製品安全条件は変更しません。
+
 PR の初回・再開などは merge-base から実際に試験する merge tree への差分を使います。`synchronize` は event の直前 head (`before`) から実際の merge tree への差分を使い、今回変わった入力を選びます。`before` が無効・欠落・取得不能、または現在の feature の祖先でなければ全体へ広げます。現在の base 由来の code が直前 head に含まれなければ、その差分も全体を選びます。main push は `before` から試験 tree への差分です。rename の両側と削除も NUL 区切りで読み、path を shell code として実行しません。
 
 - `tests/unit`、`tests/integration`、`tests/e2e`、`tests/packaging` 以下で、pytest の標準命名に合うすべての `test_*.py` / `*_test.py` を現在の acceptance として発見します。新規追加・rename に個別 allowlist 更新は不要です。`tests/live` は明示的な opt-in のままです。
