@@ -546,3 +546,126 @@ def test_real_backend_control_changes_force_sdist_gate(
         )
         == first
     )
+
+
+@pytest.mark.parametrize(
+    "case,refused",
+    [
+        ("single", True),
+        ("earlier-appears", True),
+        ("later-appears", True),
+        ("later-masked", False),
+        ("empty-stops", False),
+        ("explicit-masks", False),
+        ("system-disabled", False),
+        ("user-home", True),
+        ("user-xdg", True),
+    ],
+)
+def test_real_uv_configuration_discovery_warm_cache(
+    source, tmp_path_factory, case, refused
+):
+    """Actual uv decides precedence/rejection; cached artifacts cannot hide it."""
+    from tests.support.distributions import (
+        build_once,
+        make_package_distributions,
+        package_build_environment,
+        package_build_inputs,
+    )
+
+    for filename in ("pyproject.toml", "uv.lock"):
+        shutil.copyfile(ROOT / filename, source / filename)
+    context = source.parent / "context"
+    first, second, user = context / "first", context / "second", context / "user"
+    env = package_build_environment()
+    env.update(
+        HOME=str(context / "home"),
+        XDG_CONFIG_HOME=str(user),
+        XDG_CONFIG_DIRS=str(first),
+    )
+    for flag in ("UV_CONFIG_FILE", "UV_NO_CONFIG", "UV_NO_SYSTEM_CONFIG"):
+        env.pop(flag, None)
+    target = first / "uv/uv.toml"
+
+    def write(path, content):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content)
+
+    if case in {"earlier-appears", "later-appears", "later-masked", "empty-stops"}:
+        env["XDG_CONFIG_DIRS"] = f"{first}:{second}"
+    if case == "earlier-appears":
+        write(second / "uv/uv.toml", "offline = true\n")
+    if case == "later-appears":
+        target = second / "uv/uv.toml"
+    if case == "later-masked":
+        write(first / "uv/uv.toml", "offline = true\n")
+        target = second / "uv/uv.toml"
+    if case == "empty-stops":
+        env["XDG_CONFIG_DIRS"] = f"{first}::{second}"
+        target = second / "uv/uv.toml"
+    if case == "explicit-masks":
+        config = context / "explicit.toml"
+        write(config, "offline = true\n")
+        env["UV_CONFIG_FILE"] = str(config)
+    if case == "system-disabled":
+        env["UV_NO_SYSTEM_CONFIG"] = "1"
+    if case == "user-home":
+        env.pop("XDG_CONFIG_HOME")
+        target = context / "home/.config/uv/uv.toml"
+    if case == "user-xdg":
+        target = user / "uv/uv.toml"
+    wheelhouse = ROOT / "artifacts/wheelhouse"
+    assert (wheelhouse / "manifest.json").is_file()
+    base = tmp_path_factory.getbasetemp()
+    while base.name.startswith("popen-gw"):
+        base = base.parent
+    cache = base / "uv-config-real-builds"
+    calls = []
+
+    def inputs():
+        return package_build_inputs(source, env, wheelhouse)
+
+    def build(work):
+        calls.append("build")
+        return make_package_distributions(work, source, env, wheelhouse)
+
+    initial = inputs()
+    first_products = build_once(cache, build, inputs=inputs)
+    assert (
+        build_once(
+            cache, lambda _: pytest.fail("equal inputs must reuse"), inputs=inputs
+        )
+        == first_products
+    )
+    write(target, "not valid TOML\n")
+    calls.clear()
+    if refused:
+        with pytest.raises(RuntimeError):
+            build_once(cache, build, inputs=inputs)
+        assert calls == ["build"]
+        assert inputs() != initial
+    else:
+        result = build_once(cache, build, inputs=inputs)
+        assert result["wheel"].is_file()
+        if case == "empty-stops":
+            assert inputs() == initial
+            assert calls == []
+            # Prove uv really ignores the candidate, independently of cache reuse.
+            make_package_distributions(
+                tmp_path_factory.mktemp("fresh-uv-discovery"), source, env, wheelhouse
+            )
+        else:
+            assert calls == [
+                "build"
+            ]  # conservative snapshot includes masked candidates
+    write(target, "still invalid TOML\n")
+    if case != "empty-stops":
+        assert inputs() != initial
+    target.unlink()
+    assert inputs() == initial
+    assert (
+        build_once(
+            cache, lambda _: pytest.fail("original inputs should reuse"), inputs=inputs
+        )
+        == first_products
+    )

@@ -7,7 +7,11 @@ from pathlib import Path
 
 import pytest
 
-from tests.support.distributions import build_once, package_build_inputs
+from tests.support.distributions import (
+    build_cache_key,
+    build_once,
+    package_build_inputs,
+)
 
 ROOT = Path(__file__).resolve().parents[2]
 SPECIMEN = (
@@ -97,7 +101,7 @@ def test_missing_or_invalid_evidence_cannot_authorize_reuse(tmp_path, fault):
         return fingerprint
 
     files = build_once(tmp_path, products, inputs=inputs)
-    receipt = tmp_path / fingerprint / "ready.json"
+    receipt = tmp_path / build_cache_key(tmp_path, fingerprint) / "ready.json"
     if fault == "absent-receipt":
         receipt.unlink()
     elif fault == "corrupt-receipt":
@@ -145,7 +149,9 @@ def test_xdist_workers_share_only_sealed_artifacts(tmp_path_factory, worker):
 
     files = build_once(cache, build, inputs=lambda: "d" * 64)
     assert (cache / "build-count").read_text().splitlines() == ["build"]
-    data = json.loads((cache / ("d" * 64) / "ready.json").read_text())
+    data = json.loads(
+        (cache / build_cache_key(cache, "d" * 64) / "ready.json").read_text()
+    )
     for key, path in files.items():
         assert (
             data["files"][key]["sha256"]
@@ -236,3 +242,26 @@ def test_unknown_root_control_files_and_links_fail_closed(source, tmp_path):
     control.symlink_to(tmp_path / "missing-control")
     with pytest.raises(ValueError, match="Linked backend"):
         backend_control_inputs(source, {})
+
+
+def test_xdg_system_config_addition_is_not_hidden_by_a_warm_cache(source, tmp_path):
+    system = tmp_path / "system"
+    system.mkdir()
+    env = {"XDG_CONFIG_DIRS": str(system)}
+
+    def inputs():
+        return package_build_inputs(source, env)
+
+    cache = tmp_path / "cache"
+    before = inputs()
+    build_once(cache, products, inputs=inputs)
+    config = system / "uv/uv.toml"
+    config.parent.mkdir()
+    config.write_text("not valid TOML\n")
+
+    def reject(_):
+        raise ValueError("fresh uv rejected system config")
+
+    with pytest.raises(ValueError, match="fresh uv rejected"):
+        build_once(cache, reject, inputs=inputs)
+    assert inputs() != before

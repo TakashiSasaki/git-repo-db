@@ -132,6 +132,50 @@ def make_package_distributions(work, root=None, env=None, wheelhouse=None, runne
     }
 
 
+def uv_configuration_files(env):
+    """Conservative Linux uv 0.12.19 discovery inputs, in search order.
+
+    See uv-dirs::system_config_file / locate_system_config_xdg and etcetera
+    0.11's XDG strategy. Snapshot absent candidates too: an earlier config may
+    appear without an environment change. We also bind lower-priority candidates
+    conservatively; parsing/priority and rejection remain uv's responsibility.
+    No configuration contents or values are emitted by this helper.
+    """
+    if not sys.platform.startswith("linux"):
+        raise ValueError("Build configuration discovery is verified on Linux only")
+    home = Path(env.get("HOME") or str(Path.home()))
+    if not home.is_absolute():
+        raise ValueError("Relative HOME cannot bind all build subprocess contexts")
+    config_home = Path(env.get("XDG_CONFIG_HOME") or home / ".config")
+    # etcetera ignores nonabsolute XDG_CONFIG_HOME and falls back to HOME.
+    if not config_home.is_absolute():
+        config_home = home / ".config"
+    result = {"user": config_home / "uv/uv.toml"}
+    directories = env.get("XDG_CONFIG_DIRS") or "/etc/xdg"
+    for index, directory in enumerate(directories.split(":")):
+        # The pinned uv implementation stops at the first empty component.
+        if not directory:
+            break
+        path = Path(directory)
+        if not path.is_absolute():
+            # uv allows these, but source and sdist builds have different cwd.
+            # Refuse reuse rather than guess another subprocess's input path.
+            raise ValueError("Relative XDG_CONFIG_DIRS cannot bind all build contexts")
+        result[f"system-xdg/{index}"] = path / "uv/uv.toml"
+    result["system-fallback"] = Path("/etc/uv/uv.toml")
+    if env.get("UV_CONFIG_FILE"):
+        explicit = Path(env["UV_CONFIG_FILE"])
+        if not explicit.is_absolute():
+            raise ValueError("Relative UV_CONFIG_FILE cannot bind all build contexts")
+        result["explicit"] = explicit
+    # These redirect uv's project/cwd and require a different multi-cwd recipe.
+    if env.get("UV_PROJECT") or env.get("UV_WORKING_DIR"):
+        raise ValueError(
+            "Redirected uv project/cwd needs an explicit build input contract"
+        )
+    return result
+
+
 def backend_control_inputs(root, env):
     """Conservatively bind backend auto-inclusions and discovered configuration.
 
@@ -171,16 +215,8 @@ def backend_control_inputs(root, env):
     for level, directory in enumerate(root.parents):
         for name in ("uv.toml", "pyproject.toml", "hatch.toml", ".python-version"):
             record(f"ancestor/{level}/{name}", directory / name)
-    home = Path(env.get("HOME", str(Path.home())))
-    configs = [
-        Path("/etc/uv/uv.toml"),
-        Path(env.get("XDG_CONFIG_HOME", str(home / ".config"))) / "uv/uv.toml",
-    ]
-    if env.get("UV_CONFIG_FILE"):
-        explicit = Path(env["UV_CONFIG_FILE"])
-        configs.append(explicit if explicit.is_absolute() else root / explicit)
-    for index, path in enumerate(configs):
-        record(f"uv-config/{index}", path)
+    for label, path in uv_configuration_files(env).items():
+        record("uv-config/" + label, path)
     return result
 
 
@@ -254,21 +290,100 @@ def package_build_inputs(root, env, wheelhouse=None, runner=None):
     return hashlib.sha256(json.dumps(contract, sort_keys=True).encode()).hexdigest()
 
 
+def build_context_inputs(directory):
+    """Bind configuration inherited by generated sdist/build working directories.
+
+    Generated children are controlled by the checked builder and source archive;
+    this captures their otherwise ambient cache-directory/ancestor settings.
+    """
+    result = {}
+    root = Path(directory).resolve()
+    for level, parent in enumerate((root, *root.parents)):
+        for name in (
+            "uv.toml",
+            "pyproject.toml",
+            "hatch.toml",
+            ".python-version",
+            ".gitignore",
+            ".hgignore",
+        ):
+            path = parent / name
+            if path.is_symlink() or (path.exists() and not path.is_file()):
+                raise ValueError(
+                    "Unsupported linked/non-file build-context configuration"
+                )
+            result[f"{level}/{name}"] = (
+                hashlib.sha256(path.read_bytes()).hexdigest()
+                if path.is_file()
+                else None
+            )
+        for boundary in (".git", ".hg"):
+            result[f"{level}/{boundary}-boundary"] = (parent / boundary).exists()
+    return result
+
+
+def prepared_build_context_inputs(root):
+    """Seal config in generated children as well as the key-specific ancestry."""
+    root = Path(root)
+    result = {"ancestors": build_context_inputs(root), "generated": {}}
+    names = {
+        "uv.toml",
+        "pyproject.toml",
+        "hatch.toml",
+        "hatch_build.py",
+        ".python-version",
+        ".gitignore",
+        ".hgignore",
+        ".git",
+        ".hg",
+    }
+    for path in sorted(root.rglob("*")):
+        if path.name not in names:
+            continue
+        if path.is_symlink():
+            raise ValueError("Linked generated build configuration")
+        key = path.relative_to(root).as_posix()
+        if path.name in {".git", ".hg"}:
+            result["generated"][key] = "boundary"
+        elif not path.is_file():
+            raise ValueError("Non-file generated build configuration")
+        else:
+            result["generated"][key] = hashlib.sha256(path.read_bytes()).hexdigest()
+    return result
+
+
+def build_cache_key(directory, source_fingerprint):
+    return hashlib.sha256(
+        json.dumps(
+            {
+                "source": source_fingerprint,
+                "build_context": build_context_inputs(directory),
+            },
+            sort_keys=True,
+        ).encode()
+    ).hexdigest()
+
+
 def build_once(directory, build, *, inputs):
-    fingerprint = inputs()
+    source_fingerprint = inputs()
     if (
-        not isinstance(fingerprint, str)
-        or len(fingerprint) != 64
-        or any(char not in "0123456789abcdef" for char in fingerprint)
+        not isinstance(source_fingerprint, str)
+        or len(source_fingerprint) != 64
+        or any(char not in "0123456789abcdef" for char in source_fingerprint)
     ):
         raise ValueError("Missing/invalid package build input fingerprint")
-    directory = Path(directory) / fingerprint
+    cache_directory = Path(directory)
+    fingerprint = build_cache_key(cache_directory, source_fingerprint)
+    directory = cache_directory / fingerprint
     directory.mkdir(parents=True, exist_ok=True)
     root = directory / "build"
     receipt = directory / "ready.json"
     with (directory / "build.lock").open("a+b") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
-        if inputs() != fingerprint:
+        if (
+            inputs() != source_fingerprint
+            or build_cache_key(cache_directory, source_fingerprint) != fingerprint
+        ):
             raise ValueError("Package build inputs changed before build")
         if not receipt.exists():
             # No receipt authorizes no reuse. Discard only this cache key's
@@ -276,6 +391,7 @@ def build_once(directory, build, *, inputs):
             if root.exists():
                 shutil.rmtree(root)
             root.mkdir()
+            ambient_context = build_context_inputs(root)
             products = build(root)
             if set(products) != KEYS:
                 raise ValueError("Missing package build products")
@@ -287,12 +403,21 @@ def build_once(directory, build, *, inputs):
                     "path": str(relative),
                     "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
                 }
-            if inputs() != fingerprint:
+            if (
+                inputs() != source_fingerprint
+                or build_cache_key(cache_directory, source_fingerprint) != fingerprint
+                or build_context_inputs(root) != ambient_context
+            ):
                 raise ValueError("Package build inputs changed during build")
             temporary = receipt.with_suffix(".tmp")
             with temporary.open("w") as stream:
                 json.dump(
-                    {"schema": 1, "inputs": fingerprint, "files": files},
+                    {
+                        "schema": 2,
+                        "inputs": fingerprint,
+                        "files": files,
+                        "build_context": prepared_build_context_inputs(root),
+                    },
                     stream,
                     sort_keys=True,
                 )
@@ -307,12 +432,14 @@ def build_once(directory, build, *, inputs):
                 os.close(descriptor)
         data = json.loads(receipt.read_text())
         if (
-            set(data) != {"schema", "inputs", "files"}
-            or data["schema"] != 1
+            set(data) != {"schema", "inputs", "files", "build_context"}
+            or data["schema"] != 2
             or data["inputs"] != fingerprint
             or set(data["files"]) != KEYS
         ):
             raise ValueError("Invalid package build receipt")
+        if prepared_build_context_inputs(root) != data["build_context"]:
+            raise ValueError("Prepared build configuration changed after publication")
         products = {}
         for key, item in data["files"].items():
             path = root / item["path"]
@@ -321,6 +448,10 @@ def build_once(directory, build, *, inputs):
             if hashlib.sha256(path.read_bytes()).hexdigest() != item["sha256"]:
                 raise ValueError("Package build product changed after publication")
             products[key] = path
-        if inputs() != fingerprint:
+        if (
+            inputs() != source_fingerprint
+            or build_cache_key(cache_directory, source_fingerprint) != fingerprint
+            or prepared_build_context_inputs(root) != data["build_context"]
+        ):
             raise ValueError("Package build inputs changed during verification")
         return products

@@ -7,6 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 import pytest
 
 from tests.support import git_fixture
+from tests.support.distributions import build_cache_key
 from tests.support.distributions import build_once as keyed_build_once
 from tests.support.github_fixture import GitHubFixture
 
@@ -39,7 +40,9 @@ def test_shared_build_recovers_failed_prefix_and_reuses_only_complete_products(
 
     with pytest.raises(RuntimeError, match="build failed"):
         build_once(tmp_path, fail)
-    assert not (tmp_path / FINGERPRINT / "ready.json").exists()
+    assert not (
+        tmp_path / build_cache_key(tmp_path, FINGERPRINT) / "ready.json"
+    ).exists()
 
     def retry(root):
         assert not (root / "partial.whl").exists()
@@ -52,7 +55,11 @@ def test_shared_build_recovers_failed_prefix_and_reuses_only_complete_products(
 
     assert build_once(tmp_path, forbidden) == first
     assert set(
-        json.loads((tmp_path / FINGERPRINT / "ready.json").read_text())["files"]
+        json.loads(
+            (
+                tmp_path / build_cache_key(tmp_path, FINGERPRINT) / "ready.json"
+            ).read_text()
+        )["files"]
     ) == set(first)
 
 
@@ -88,7 +95,7 @@ def test_competing_builders_publish_one_complete_set(tmp_path):
 )
 def test_changed_or_invalid_shared_products_are_not_silently_rebuilt(tmp_path, fault):
     files = build_once(tmp_path, products)
-    receipt = tmp_path / FINGERPRINT / "ready.json"
+    receipt = tmp_path / build_cache_key(tmp_path, FINGERPRINT) / "ready.json"
     if fault == "corrupt":
         files["wheel"].write_text("changed")
     elif fault == "contract":

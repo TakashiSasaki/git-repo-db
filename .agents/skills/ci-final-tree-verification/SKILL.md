@@ -661,3 +661,21 @@ Keep real-backend warm-cache challenges for `.hgignore`, `hatch.toml`,
 checked builder and expose its refusal, rather than return old normal artifacts.
 The R192-01 correction retains failing old-identity controls and green repaired
 runs separately. Existing hostile archive gates remain unchanged in strength.
+
+R192-02 found a second blind spot: supported `XDG_CONFIG_DIRS` could introduce a
+system uv config without changing environment values. Establish the pinned tool's
+actual discovery contract from upstream source, not familiar default paths.
+For Linux uv 0.12.19, inspect `uv-dirs` system/user discovery, `uv-settings` and
+its etcetera 0.11 XDG strategy. Test ordered/multiple XDG directories, defaults,
+empty components, absent-to-present files, mutations, user HOME/XDG settings,
+explicit override and intentionally masked configs with the actual uv executable.
+Keep private config values out of evidence: bind hashes only. Do not claim another
+platform from Linux execution. Relative external settings and project/cwd redirects
+need an explicit multi-cwd contract; refuse ambiguous reuse rather than guess.
+
+Account for **every build cwd**. Source config is not enough for a wheel rebuilt
+from an extracted sdist. Bind cache/build ancestry in the key and seal generated
+working-tree configuration in the receipt; check it before returning artifacts.
+Adding/changing config beneath a sealed build must refuse reuse. Keep old unit
+and actual-backend red controls separate from corrected green runs. A passing
+CI on the old source does not clear an independent FAIL.
