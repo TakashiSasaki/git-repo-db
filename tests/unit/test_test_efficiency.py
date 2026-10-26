@@ -7,8 +7,15 @@ from concurrent.futures import ThreadPoolExecutor
 import pytest
 
 from tests.support import git_fixture
-from tests.support.distributions import build_once
+from tests.support.distributions import build_cache_key
+from tests.support.distributions import build_once as keyed_build_once
 from tests.support.github_fixture import GitHubFixture
+
+FINGERPRINT = "a" * 64
+
+
+def build_once(directory, build):
+    return keyed_build_once(directory, build, inputs=lambda: FINGERPRINT)
 
 
 def products(root):
@@ -33,7 +40,9 @@ def test_shared_build_recovers_failed_prefix_and_reuses_only_complete_products(
 
     with pytest.raises(RuntimeError, match="build failed"):
         build_once(tmp_path, fail)
-    assert not (tmp_path / "ready.json").exists()
+    assert not (
+        tmp_path / build_cache_key(tmp_path, FINGERPRINT) / "ready.json"
+    ).exists()
 
     def retry(root):
         assert not (root / "partial.whl").exists()
@@ -45,7 +54,13 @@ def test_shared_build_recovers_failed_prefix_and_reuses_only_complete_products(
         raise AssertionError("already built in this invocation")
 
     assert build_once(tmp_path, forbidden) == first
-    assert set(json.loads((tmp_path / "ready.json").read_text())) == set(first)
+    assert set(
+        json.loads(
+            (
+                tmp_path / build_cache_key(tmp_path, FINGERPRINT) / "ready.json"
+            ).read_text()
+        )["files"]
+    ) == set(first)
 
 
 def test_competing_builders_publish_one_complete_set(tmp_path):
@@ -80,7 +95,7 @@ def test_competing_builders_publish_one_complete_set(tmp_path):
 )
 def test_changed_or_invalid_shared_products_are_not_silently_rebuilt(tmp_path, fault):
     files = build_once(tmp_path, products)
-    receipt = tmp_path / "ready.json"
+    receipt = tmp_path / build_cache_key(tmp_path, FINGERPRINT) / "ready.json"
     if fault == "corrupt":
         files["wheel"].write_text("changed")
     elif fault == "contract":
@@ -90,9 +105,9 @@ def test_changed_or_invalid_shared_products_are_not_silently_rebuilt(tmp_path, f
     else:
         data = json.loads(receipt.read_text())
         if fault == "escape":
-            data["wheel"]["path"] = "../outside.whl"
+            data["files"]["wheel"]["path"] = "../outside.whl"
         else:
-            del data["sdist_wheel"]
+            del data["files"]["sdist_wheel"]
         receipt.write_text(json.dumps(data))
     with pytest.raises((ValueError, FileNotFoundError)):
         build_once(tmp_path, lambda _: pytest.fail("must not rebuild a sealed set"))

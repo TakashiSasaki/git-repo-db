@@ -608,3 +608,74 @@ retains the original missing-record failure and twelve parser controls, includin
 rejection of double/payload BOM, missing/duplicated/reordered/corrupt DATA,
 malformed base64, duplicate BEGIN and a tampered inner index with a valid outer
 hash. These controls verify receipt parsing, not product or Release acceptance.
+
+## Shared package builds must bind the input content
+
+A sealed artifact digest proves the cached output bytes, not that a caller asked
+for those inputs. PR #191 found that the normal P1 fixture could prime a shared
+cache, then a poisoned-sdist test with a different ROOT/runner would reuse the
+normal wheels and never execute its rejection gate. Keep that REQUEST_CHANGES
+record as historical evidence.
+
+Use `package_build_inputs` with `build_once(..., inputs=...)`: bind actual working
+source bytes (including untracked product files), packaging configuration/lock,
+checker/builder and runner contracts, selected Python/uv, wheelhouse bytes and
+build environment. A directory name or HEAD alone cannot detect edits at the
+same path. Keep normal fixtures on the same sanitized builder/environment
+contract so identical inputs still reuse one sealed build. Worker/test display
+variables are excluded; meaningful build settings remain part of the digest.
+
+Check input identity before building, before atomic receipt publication and
+before returning artifacts. Preserve per-key interprocess locking and exact
+artifact hashes. Missing receipts permit only a fresh complete checked build;
+malformed/mismatched receipts or missing/changed sealed products fail closed.
+Do not infer success from a leftover build directory.
+
+Exercise both normal-to-hostile and hostile-to-normal order, same-path edits,
+distinct input trees, corrupt/missing evidence, mid-build mutation and xdist
+workers. Focused commands (through the verified project environment):
+
+```sh
+scripts/local-run.sh pytest -q tests/packaging/test_p1_distribution.py \
+  tests/packaging/test_sdist_hardening.py tests/packaging/test_distribution.py \
+  tests/unit/test_build_input_identity.py tests/unit/test_test_efficiency.py
+scripts/local-run.sh pytest -q -n 2 tests/unit/test_build_input_identity.py
+```
+
+Use a writable `UV_CACHE_DIR` in restricted environments. A read-only uv cache
+setup failure is not an archive-gate result. These checks do not retire either
+Transfer SQL fence or convert the 43 known Transfer non-successes into passes.
+
+The first PR #192 repair still missed Hatchling's automatic root/control inputs:
+R192-01 demonstrated that adding `.hgignore` left the key unchanged although a
+fresh sdist was rejected. Product source inventory alone is not backend input
+inventory. Inspect the selected backend's automatic inclusion/config discovery
+(`sdist.get_default_build_data`, VCS exclusion lookup and metadata config), and
+uv's config discovery. Bind root regular files conservatively, inherited VCS
+controls with their actual search boundaries, ancestor configuration and selected
+user/system/explicit uv configuration contents. Record absence as well as content;
+do not patch only the one reported filename. Reject linked/unreadable controls.
+
+Keep real-backend warm-cache challenges for `.hgignore`, `hatch.toml`,
+`hatch_build.py` and invalid `uv.toml`: adding an input must execute the fresh
+checked builder and expose its refusal, rather than return old normal artifacts.
+The R192-01 correction retains failing old-identity controls and green repaired
+runs separately. Existing hostile archive gates remain unchanged in strength.
+
+R192-02 found a second blind spot: supported `XDG_CONFIG_DIRS` could introduce a
+system uv config without changing environment values. Establish the pinned tool's
+actual discovery contract from upstream source, not familiar default paths.
+For Linux uv 0.12.19, inspect `uv-dirs` system/user discovery, `uv-settings` and
+its etcetera 0.11 XDG strategy. Test ordered/multiple XDG directories, defaults,
+empty components, absent-to-present files, mutations, user HOME/XDG settings,
+explicit override and intentionally masked configs with the actual uv executable.
+Keep private config values out of evidence: bind hashes only. Do not claim another
+platform from Linux execution. Relative external settings and project/cwd redirects
+need an explicit multi-cwd contract; refuse ambiguous reuse rather than guess.
+
+Account for **every build cwd**. Source config is not enough for a wheel rebuilt
+from an extracted sdist. Bind cache/build ancestry in the key and seal generated
+working-tree configuration in the receipt; check it before returning artifacts.
+Adding/changing config beneath a sealed build must refuse reuse. Keep old unit
+and actual-backend red controls separate from corrected green runs. A passing
+CI on the old source does not clear an independent FAIL.

@@ -1,0 +1,28 @@
+{
+  ".hgignore": {
+    "fingerprint_changed": true,
+    "cached": {
+      "returned": false,
+      "error": "ValueError: unexpected member: .hgignore"
+    },
+    "fresh": {
+      "returned": false,
+      "error": "ValueError: unexpected member: .hgignore"
+    },
+    "restored_identity": true,
+    "restored_reuse": true
+  },
+  "system-uv-config": {
+    "fingerprint_changed": false,
+    "cached": {
+      "returned": true,
+      "reused_original": true
+    },
+    "fresh": {
+      "returned": false,
+      "error": "RuntimeError: Command failed (2): ['uv', 'build', '--sdist', '--offline', '--no-index', '--find-links', '<review-worktree>/artifacts/wheelhouse', '--out-dir', PosixPath('<review-scratch>')]\n\nerror: Failed to parse: `<review-scratch>`\n  cause: TOML parse error at line 1, column 6\n           |\n         1 | this is not valid TOML\n           |      ^\n         key with no value, expected `=`\n"
+    },
+    "restored_identity": true,
+    "restored_reuse": true
+  }
+}

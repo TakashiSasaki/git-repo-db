@@ -427,3 +427,245 @@ def test_distribution_gate_refuses_before_extract_rebuild_or_install(
     assert len(commands) == 2  # only the explicit source sdist/direct-wheel builds
     assert not extractions
     assert not any("install" in command for command in commands)
+
+
+@pytest.mark.parametrize("order", [("normal", "hostile"), ("hostile", "normal")])
+def test_shared_cache_never_launders_hostile_sdist(
+    source, tmp_path_factory, monkeypatch, order
+):
+    """Prime the same invocation cache in both orders without real builds."""
+    from tests.packaging import test_p1_distribution as distribution
+    from tests.support.distributions import (
+        build_once,
+        package_build_environment,
+        package_build_inputs,
+    )
+
+    base = tmp_path_factory.getbasetemp()
+    while base.name.startswith("popen-gw"):
+        base = base.parent
+    env = package_build_environment()
+    normal_root, normal_runner = distribution.ROOT, distribution.run
+    calls = []
+
+    def normal_build(root):
+        calls.append("normal")
+        result = {}
+        for name in ("wheel", "sdist_wheel", "sdist", "sdist_contract", "requirements"):
+            path = root / name
+            path.write_text("normal " + name)
+            result[name] = path
+        return result
+
+    def hostile_build(args, cwd, env):
+        calls.append("hostile")
+        out = Path(args[args.index("--out-dir") + 1])
+        out.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(SPECIMENS / "concatenated.tar.gz", out / "attack.tar.gz")
+        return ""
+
+    def no_extract(*args, **kwargs):
+        pytest.fail("hostile sdist must be refused before extraction")
+
+    monkeypatch.setattr(tarfile.TarFile, "extractall", no_extract)
+    for mode in (*order, "normal"):
+        if mode == "normal":
+            files = build_once(
+                base / "package-distributions",
+                normal_build,
+                inputs=lambda: package_build_inputs(
+                    normal_root, env, runner=normal_runner
+                ),
+            )
+            assert files["wheel"].is_file()
+        else:
+            monkeypatch.setattr(distribution, "ROOT", source)
+            monkeypatch.setattr(distribution, "run", hostile_build)
+            with pytest.raises(ValueError):
+                distribution.p1_distributions.__wrapped__(tmp_path_factory)
+    # Parametrized invocations may reuse the same sealed normal key. The
+    # hostile builder must always run twice and cannot publish a success receipt.
+    assert calls.count("hostile") == 2
+    assert calls.count("normal") <= 1
+
+
+@pytest.mark.parametrize(
+    "name,content,error",
+    [
+        (".hgignore", "syntax: glob\nsrc/repo_catalog/__init__.py\n", ValueError),
+        ("hatch.toml", "[build]\nignore-vcs = true\n", ValueError),
+        ("hatch_build.py", "# default backend control\n", ValueError),
+        ("uv.toml", "this is not valid TOML\n", RuntimeError),
+    ],
+)
+def test_real_backend_control_changes_force_sdist_gate(
+    source, tmp_path_factory, name, content, error
+):
+    """A warm legitimate cache cannot suppress actual backend/control refusals."""
+    from tests.support.distributions import (
+        build_once,
+        make_package_distributions,
+        package_build_environment,
+        package_build_inputs,
+    )
+
+    for filename in ("pyproject.toml", "uv.lock"):
+        shutil.copyfile(ROOT / filename, source / filename)
+    env = package_build_environment()
+    wheelhouse = ROOT / "artifacts/wheelhouse"
+    assert (wheelhouse / "manifest.json").is_file(), (
+        "prepare locked wheelhouse before packaging tests"
+    )
+    base = tmp_path_factory.getbasetemp()
+    while base.name.startswith("popen-gw"):
+        base = base.parent
+    cache = base / "backend-control-real-builds"
+    calls = []
+
+    def inputs():
+        return package_build_inputs(source, env, wheelhouse)
+
+    def build(work):
+        calls.append("build")
+        return make_package_distributions(work, source, env, wheelhouse)
+
+    initial = inputs()
+    first = build_once(cache, build, inputs=inputs)
+    assert first["sdist"].is_file()
+    (source / name).write_text(content)
+    calls.clear()
+    with pytest.raises(error):
+        build_once(cache, build, inputs=inputs)
+    assert calls == ["build"]
+    assert inputs() != initial
+    (source / name).unlink()
+    assert inputs() == initial
+    assert (
+        build_once(
+            cache, lambda _: pytest.fail("original content should reuse"), inputs=inputs
+        )
+        == first
+    )
+
+
+@pytest.mark.parametrize(
+    "case,refused",
+    [
+        ("single", True),
+        ("earlier-appears", True),
+        ("later-appears", True),
+        ("later-masked", False),
+        ("empty-stops", False),
+        ("explicit-masks", False),
+        ("system-disabled", False),
+        ("user-home", True),
+        ("user-xdg", True),
+    ],
+)
+def test_real_uv_configuration_discovery_warm_cache(
+    source, tmp_path_factory, case, refused
+):
+    """Actual uv decides precedence/rejection; cached artifacts cannot hide it."""
+    from tests.support.distributions import (
+        build_once,
+        make_package_distributions,
+        package_build_environment,
+        package_build_inputs,
+    )
+
+    for filename in ("pyproject.toml", "uv.lock"):
+        shutil.copyfile(ROOT / filename, source / filename)
+    context = source.parent / "context"
+    first, second, user = context / "first", context / "second", context / "user"
+    env = package_build_environment()
+    env.update(
+        HOME=str(context / "home"),
+        XDG_CONFIG_HOME=str(user),
+        XDG_CONFIG_DIRS=str(first),
+    )
+    for flag in ("UV_CONFIG_FILE", "UV_NO_CONFIG", "UV_NO_SYSTEM_CONFIG"):
+        env.pop(flag, None)
+    target = first / "uv/uv.toml"
+
+    def write(path, content):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content)
+
+    if case in {"earlier-appears", "later-appears", "later-masked", "empty-stops"}:
+        env["XDG_CONFIG_DIRS"] = f"{first}:{second}"
+    if case == "earlier-appears":
+        write(second / "uv/uv.toml", "offline = true\n")
+    if case == "later-appears":
+        target = second / "uv/uv.toml"
+    if case == "later-masked":
+        write(first / "uv/uv.toml", "offline = true\n")
+        target = second / "uv/uv.toml"
+    if case == "empty-stops":
+        env["XDG_CONFIG_DIRS"] = f"{first}::{second}"
+        target = second / "uv/uv.toml"
+    if case == "explicit-masks":
+        config = context / "explicit.toml"
+        write(config, "offline = true\n")
+        env["UV_CONFIG_FILE"] = str(config)
+    if case == "system-disabled":
+        env["UV_NO_SYSTEM_CONFIG"] = "1"
+    if case == "user-home":
+        env.pop("XDG_CONFIG_HOME")
+        target = context / "home/.config/uv/uv.toml"
+    if case == "user-xdg":
+        target = user / "uv/uv.toml"
+    wheelhouse = ROOT / "artifacts/wheelhouse"
+    assert (wheelhouse / "manifest.json").is_file()
+    base = tmp_path_factory.getbasetemp()
+    while base.name.startswith("popen-gw"):
+        base = base.parent
+    cache = base / "uv-config-real-builds"
+    calls = []
+
+    def inputs():
+        return package_build_inputs(source, env, wheelhouse)
+
+    def build(work):
+        calls.append("build")
+        return make_package_distributions(work, source, env, wheelhouse)
+
+    initial = inputs()
+    first_products = build_once(cache, build, inputs=inputs)
+    assert (
+        build_once(
+            cache, lambda _: pytest.fail("equal inputs must reuse"), inputs=inputs
+        )
+        == first_products
+    )
+    write(target, "not valid TOML\n")
+    calls.clear()
+    if refused:
+        with pytest.raises(RuntimeError):
+            build_once(cache, build, inputs=inputs)
+        assert calls == ["build"]
+        assert inputs() != initial
+    else:
+        result = build_once(cache, build, inputs=inputs)
+        assert result["wheel"].is_file()
+        if case == "empty-stops":
+            assert inputs() == initial
+            assert calls == []
+            # Prove uv really ignores the candidate, independently of cache reuse.
+            make_package_distributions(
+                tmp_path_factory.mktemp("fresh-uv-discovery"), source, env, wheelhouse
+            )
+        else:
+            assert calls == [
+                "build"
+            ]  # conservative snapshot includes masked candidates
+    write(target, "still invalid TOML\n")
+    if case != "empty-stops":
+        assert inputs() != initial
+    target.unlink()
+    assert inputs() == initial
+    assert (
+        build_once(
+            cache, lambda _: pytest.fail("original inputs should reuse"), inputs=inputs
+        )
+        == first_products
+    )

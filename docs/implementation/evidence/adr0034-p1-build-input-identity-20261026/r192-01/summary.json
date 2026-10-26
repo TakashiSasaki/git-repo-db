@@ -1,0 +1,93 @@
+{
+  "schema": 1,
+  "finding": "R192-01/P1",
+  "independent_verdict_at_old_head": "FAIL",
+  "old_head": "4dd03f4520ed30d468222623027be513f53b7417",
+  "code_commit": "3a234d57a206be6b2fe07ffe267f8da2a9cd5a63",
+  "code_tree": "70f4acce2b79f4dc3b53c2cd0617cb09578ad351",
+  "independent_review": "PENDING_RE_REVIEW",
+  "base_pr186": "049cc13b129223239cf987590a70c1394e035524",
+  "tested_inputs_sha256": {
+    ".agents/skills/ci-final-tree-verification/SKILL.md": "5d57535b4173112191ec745d2ef0782b8d62c67186f14e4e7a7a090850eb31cc",
+    "tests/packaging/test_sdist_hardening.py": "0af094527fee2fbd87e510d7ddc40826926d9a31a679ff3c16fe4231aa75ec17",
+    "tests/support/distributions.py": "dcdb579f44f29c09be3f75e62b405d1dc228f0540820e5ddb0f8b1c66c7ff9bd",
+    "tests/unit/test_build_input_identity.py": "d34b32a68e0c6cbd498e74afe4d401198450e78570c36eebd9a0a80414455861"
+  },
+  "test_binding": "Final tests ran on the recorded working bytes immediately before code commit; evidence follow-up changes no executable input.",
+  "red_controls": {
+    "unit": {
+      "failed": 4,
+      "seconds": 1.94,
+      "scope": "new tests, old identity implementation before correction"
+    },
+    "real_backend": {
+      "failed": 4,
+      "seconds": 3.67,
+      "scope": "new real-backend regression tests with old PR192 package_build_inputs loaded from git-show output and patched in-memory; current checked builder; no source rollback. All four failures were DID NOT RAISE."
+    }
+  },
+  "green": {
+    "focused": {
+      "passed": 140,
+      "seconds": 66.11,
+      "exit_code": 0
+    },
+    "parallel": {
+      "passed": 28,
+      "workers": 2,
+      "seconds": 8.54,
+      "exit_code": 0
+    },
+    "lint": "passed",
+    "format": "473 files already formatted",
+    "diff_check": "passed"
+  },
+  "runtime": {
+    "python": "3.12.15 (main, Oct 21 2026, 17:47:06) [Clang 23.1.3 ]",
+    "executable": "/workspace/git-repo-db/.venv/bin/python",
+    "sqlite": [
+      "3.53.1",
+      "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9"
+    ]
+  },
+  "raw_evidence": {
+    "red-unit.log": {
+      "sha256": "9b90669503a2b03f39d5d0a4fbd3a150ff19318bbe574d957009fe5afa940700",
+      "bytes": 6743
+    },
+    "red-real-old-identity.log": {
+      "sha256": "195d64f7a0a7a0178174611da83ff71c9491cae3c2472407414bf83c6ce8c298",
+      "bytes": 10692
+    },
+    "focused.log": {
+      "sha256": "3f9d1136ce0fa69f1908d5ad9fa704987fffcea88e7b4c367caf08b00fc2d897",
+      "bytes": 191
+    },
+    "parallel.log": {
+      "sha256": "506abf1af90a789cc1edf45bfadeea549d6a721afd7fefe2353a6dd009bf52b4",
+      "bytes": 142
+    },
+    "focused.xml": {
+      "sha256": "c281ac3838f71d5c8ee8c6b012f8100a49aa9dee4bcdc30c53ddeed26c938e2f",
+      "bytes": 22303
+    },
+    "parallel.xml": {
+      "sha256": "308346bd970e346bfb732ed05992efea69a8a5c02eed3fc4146bbacdfa332579",
+      "bytes": 4508
+    },
+    "old-head-access-filtered.log": {
+      "sha256": "4624bfe0d06b20a5d0f637316d9b1d58699877551311929d44386cd21ac85d79",
+      "bytes": 4019803
+    },
+    "old-head-failure-comparison.json": {
+      "sha256": "55b5ce1b3e48011836248b80825316d394a81a03483f2c04f8a5a91694643c65",
+      "bytes": 493953
+    }
+  },
+  "limitations": [
+    "No general discovery guarantee for arbitrary future build-hook code; current declared Hatchling recipe and observed control discovery are bound.",
+    "No I8, product source, Transfer fence or comparator changes.",
+    "Old exact-head CI success is not approval of the old source; R192-01 remains historical FAIL.",
+    "New exact-head CI and independent re-review are separate pending gates."
+  ]
+}
