@@ -1,0 +1,576 @@
+{
+  "baseline_sha": "e868805bfc1dc564ec2ce07f88e02fea04fe34e4",
+  "baseline_tree": "1a94f483b6a465ffc4a1e11fa8f3139b001b6b3d",
+  "classification_note": "Conservative exact-file retention inventory; mixed roles are not relocation permission.",
+  "files": [
+    {
+      "path": ".github/workflows/access-registry.yml",
+      "sha256": "ad9cdd38fdb6b9831bd3d88d19257861524eb28d0f6c7089e3cd08e94281140c",
+      "role": "mixed-boundary-control",
+      "proposed_action": "targeted edit only under implementation PR"
+    },
+    {
+      "path": ".github/workflows/pages.yml",
+      "sha256": "e7682ef7aa0eea7ef6197eb3428b0270e4a01c3b92c6a3237fa44f0d646abb41",
+      "role": "mixed-boundary-control",
+      "proposed_action": "targeted edit only under implementation PR"
+    },
+    {
+      "path": "docs/implementation/access-a3-routing.json",
+      "sha256": "7bb543b0e83cc3f652e8aab536c6a9540def54641583c10b7a9558e70f10bdc6",
+      "role": "product-verification-or-historical-source",
+      "proposed_action": "retain; classify consumers before any future change"
+    },
+    {
+      "path": "docs/implementation/access-a6-acceptance.json",
+      "sha256": "0e1acd9ba45afbaef5b9052684489a21ca912b7b7bf4a8dab1202f05a1b0860c",
+      "role": "product-verification-or-historical-source",
+      "proposed_action": "retain; classify consumers before any future change"
+    },
+    {
+      "path": "docs/implementation/p1-disposition.json",
+      "sha256": "a2641f0aa39f9c94d4de4d9c940ba18303badd48f2e69ced2d4106de9c14bcdd",
+      "role": "product-verification-or-historical-source",
+      "proposed_action": "retain; classify consumers before any future change"
+    },
+    {
+      "path": "docs/implementation/schema-inventory.json",
+      "sha256": "45f07730fa83cb85320157429d571b73cdef2df5f685506bb9175450ed7672c1",
+      "role": "product-verification-or-historical-source",
+      "proposed_action": "retain; classify consumers before any future change"
+    },
+    {
+      "path": "docs/implementation/table-disposition.json",
+      "sha256": "bb0dd80815f5ceb87b9c78b9e419f6bee18d18f4dcfcaf87c8230b2b61b34c1a",
+      "role": "product-verification-or-historical-source",
+      "proposed_action": "retain; classify consumers before any future change"
+    },
+    {
+      "path": "docs/phase2/field-contract.json",
+      "sha256": "d925fa2d9c180901eb42e605cece742964aa7f4a1fd2dfd11e00d5d778407506",
+      "role": "product-verification-or-historical-source",
+      "proposed_action": "retain; classify consumers before any future change"
+    },
+    {
+      "path": "docs/phase2/publication-free-schema-map.json",
+      "sha256": "008ec6db20cff68544de76fba204fbc858be3223be459cc7cab7105cf6fbf86c",
+      "role": "product-verification-or-historical-source",
+      "proposed_action": "retain; classify consumers before any future change"
+    },
+    {
+      "path": "docs/phase2/publication-free-test-disposition.json",
+      "sha256": "4f58fc8ce321d22a019f1d488e06c27d1b34849e6cba9dccc6a33f22f43e2980",
+      "role": "product-verification-or-historical-source",
+      "proposed_action": "retain; classify consumers before any future change"
+    },
+    {
+      "path": "docs/schema/README.md",
+      "sha256": "4218cb9121c463b558cb4c554b9cd49ff609c93ad5a61072f173782e7b2a5595",
+      "role": "derived-schema-with-potential-product-consumers",
+      "proposed_action": "retain until consumer mapping"
+    },
+    {
+      "path": "docs/schema/dbml/combined.dbml",
+      "sha256": "e6681c9812a4145782e00bf1d8ffe07302243cede0dbc5b31ac1b9f2f0930842",
+      "role": "derived-schema-with-potential-product-consumers",
+      "proposed_action": "retain until consumer mapping"
+    },
+    {
+      "path": "docs/schema/dbml/core.dbml",
+      "sha256": "b39fb3cdd729d4988d00518d0be547eb41855612bba557f2559ae96440c54ae6",
+      "role": "derived-schema-with-potential-product-consumers",
+      "proposed_action": "retain until consumer mapping"
+    },
+    {
+      "path": "docs/schema/dbml/operational.dbml",
+      "sha256": "40180b7a5b8d821cd157353a4ed2805e4be5aa1c6420fc5ba109e6f686dc739c",
+      "role": "derived-schema-with-potential-product-consumers",
+      "proposed_action": "retain until consumer mapping"
+    },
+    {
+      "path": "docs/schema/dbml/search.dbml",
+      "sha256": "d4e7c10b831292357ac69fdc6e4db676720c3242f37135ad79fd2bc3d2943db5",
+      "role": "derived-schema-with-potential-product-consumers",
+      "proposed_action": "retain until consumer mapping"
+    },
+    {
+      "path": "docs/schema/index.html",
+      "sha256": "74da937985c856e78cdb25da82847485180aaa0c96b8021b0f86a9decb427848",
+      "role": "derived-schema-with-potential-product-consumers",
+      "proposed_action": "retain until consumer mapping"
+    },
+    {
+      "path": "docs/schema/mermaid/core-cas.md",
+      "sha256": "45117dc7058c89307d168666cc696ce6632c6f221e40ae668e7985b4f69ad380",
+      "role": "derived-schema-with-potential-product-consumers",
+      "proposed_action": "retain until consumer mapping"
+    },
+    {
+      "path": "docs/schema/mermaid/core-coverage.md",
+      "sha256": "c0c2f596ec24a1e46866ea10c838dd1a2779638c4a6ff6e90d005ed12d0f8592",
+      "role": "derived-schema-with-potential-product-consumers",
+      "proposed_action": "retain until consumer mapping"
+    },
+    {
+      "path": "docs/schema/mermaid/core-current-state.md",
+      "sha256": "7807c5fe57155805ef06ee1c31b7e2509b6eb258f1643a2610149810c04d2aa2",
+      "role": "derived-schema-with-potential-product-consumers",
+      "proposed_action": "retain until consumer mapping"
+    },
+    {
+      "path": "docs/schema/mermaid/core-exchange.md",
+      "sha256": "92b7e166abc81c5227b7456879fc386ec3285f0aebe87404f12b35a92b1e933f",
+      "role": "derived-schema-with-potential-product-consumers",
+      "proposed_action": "retain until consumer mapping"
+    },
+    {
+      "path": "docs/schema/mermaid/core-git.md",
+      "sha256": "7409cd732ab21a0199339645ba032d6b4c87f563b01c1e981a2d5ef4613a287b",
+      "role": "derived-schema-with-potential-product-consumers",
+      "proposed_action": "retain until consumer mapping"
+    },
+    {
+      "path": "docs/schema/mermaid/core-identity.md",
+      "sha256": "05362466fb328f8949bd35ee6cca827dd2b67f79a4be8df7e7d9dc49b97b9f92",
+      "role": "derived-schema-with-potential-product-consumers",
+      "proposed_action": "retain until consumer mapping"
+    },
+    {
+      "path": "docs/schema/mermaid/core-overview.md",
+      "sha256": "cd8c270b976c8f85472263fa0e4f6c5e933b92068309686733e69621bc1e8e2d",
+      "role": "derived-schema-with-potential-product-consumers",
+      "proposed_action": "retain until consumer mapping"
+    },
+    {
+      "path": "docs/schema/mermaid/operational.md",
+      "sha256": "7866d99faba0db8000535684ed9f4351cade91736a5b4c20ba14cbab556a60e1",
+      "role": "derived-schema-with-potential-product-consumers",
+      "proposed_action": "retain until consumer mapping"
+    },
+    {
+      "path": "docs/schema/mermaid/overview.md",
+      "sha256": "3646cf56c44b9438416bff0b486df29d872aa1a9df8c69b30ba7131d35503a86",
+      "role": "derived-schema-with-potential-product-consumers",
+      "proposed_action": "retain until consumer mapping"
+    },
+    {
+      "path": "docs/schema/mermaid/search.md",
+      "sha256": "7628995112748d24f3ee3066f633fd05ddcd3cb1a9e9e6f33acc0566ec67fcbe",
+      "role": "derived-schema-with-potential-product-consumers",
+      "proposed_action": "retain until consumer mapping"
+    },
+    {
+      "path": "docs/site/adr/index.md",
+      "sha256": "2c3bd360070a65851e940f5dc256c3fd12038e666881b1123ef75f5672b0452e",
+      "role": "derived-human-documentation",
+      "proposed_action": "candidate move after SEP1/SEP2"
+    },
+    {
+      "path": "docs/site/architecture/index.md",
+      "sha256": "5f0277c83f0f5fd0bf29f46ad3b674d633480eddf6197c91f0b2d250646e8665",
+      "role": "derived-human-documentation",
+      "proposed_action": "candidate move after SEP1/SEP2"
+    },
+    {
+      "path": "docs/site/architecture/three-store-boundary.md",
+      "sha256": "b89f0056492314cd58f631bbf3f155d779e70c63c09f4cf85037c7f0b13a7259",
+      "role": "derived-human-documentation",
+      "proposed_action": "candidate move after SEP1/SEP2"
+    },
+    {
+      "path": "docs/site/assets/images/icons/favicon-16.png",
+      "sha256": "e40721f9892ad5648ccd8c97b8baa56b79081ee87059d0e290a10734ed419a4b",
+      "role": "derived-human-documentation",
+      "proposed_action": "candidate move after SEP1/SEP2"
+    },
+    {
+      "path": "docs/site/assets/images/icons/favicon-32.png",
+      "sha256": "649381a9d899affd091cd90d6bb2d6b8aece4773ebb1b7779410bb45962ee8c1",
+      "role": "derived-human-documentation",
+      "proposed_action": "candidate move after SEP1/SEP2"
+    },
+    {
+      "path": "docs/site/assets/images/icons/icon-180.png",
+      "sha256": "dd83a9bdfd757b781986f27f235f2cad0f43b4e05dca6287c4b79e601ad6f0de",
+      "role": "derived-human-documentation",
+      "proposed_action": "candidate move after SEP1/SEP2"
+    },
+    {
+      "path": "docs/site/assets/images/icons/icon-192.png",
+      "sha256": "72dd48448d6151f7e4b86cdb53d32374ff2d3276ae496b2c72f9cde047769e07",
+      "role": "derived-human-documentation",
+      "proposed_action": "candidate move after SEP1/SEP2"
+    },
+    {
+      "path": "docs/site/assets/images/icons/icon-512.png",
+      "sha256": "fedc0b311025bcf163d5f56fbea71adf160866ad1d3656ce094b7c29dd53ea76",
+      "role": "derived-human-documentation",
+      "proposed_action": "candidate move after SEP1/SEP2"
+    },
+    {
+      "path": "docs/site/assets/images/icons/icon-maskable-192.png",
+      "sha256": "933950211a2df86bf0a8465eb4007c954da509ee09337f561e400ef8043bb4d8",
+      "role": "derived-human-documentation",
+      "proposed_action": "candidate move after SEP1/SEP2"
+    },
+    {
+      "path": "docs/site/assets/images/icons/icon-maskable-512.png",
+      "sha256": "812c4c3ec53f5a39683e5ec19756a9a9fbee44a503297164db0efa9a31f67c42",
+      "role": "derived-human-documentation",
+      "proposed_action": "candidate move after SEP1/SEP2"
+    },
+    {
+      "path": "docs/site/assets/images/icons/icon-maskable.svg",
+      "sha256": "26e3a007cf99b3ba68beffa81d0729b85e629a20d33faa542ad0f93f6dc46b51",
+      "role": "derived-human-documentation",
+      "proposed_action": "candidate move after SEP1/SEP2"
+    },
+    {
+      "path": "docs/site/assets/images/icons/icon.svg",
+      "sha256": "4a0b83ffa5ddcbb05d60721b65aa759acbf2afde245ef22216c294f682becf5c",
+      "role": "derived-human-documentation",
+      "proposed_action": "candidate move after SEP1/SEP2"
+    },
+    {
+      "path": "docs/site/development/index.md",
+      "sha256": "0e43adef8aefe2a5a29b6c2fb4acea7197814f1a489583e0146dd7e9fc21ee83",
+      "role": "derived-human-documentation",
+      "proposed_action": "candidate move after SEP1/SEP2"
+    },
+    {
+      "path": "docs/site/index.md",
+      "sha256": "2a4518f0a312c02963d2ce201297adeb5833d98ce306aa627bf4e7280a2260c5",
+      "role": "derived-human-documentation",
+      "proposed_action": "candidate move after SEP1/SEP2"
+    },
+    {
+      "path": "docs/site/manifest.json",
+      "sha256": "0b326df49f7640cb84d8f3c585629c4eef3511dd4f8a74cb1a1ab623aa453983",
+      "role": "derived-human-documentation",
+      "proposed_action": "candidate move after SEP1/SEP2"
+    },
+    {
+      "path": "docs/site/manifest.webmanifest",
+      "sha256": "0b326df49f7640cb84d8f3c585629c4eef3511dd4f8a74cb1a1ab623aa453983",
+      "role": "derived-human-documentation",
+      "proposed_action": "candidate move after SEP1/SEP2"
+    },
+    {
+      "path": "docs/site/pwa.js",
+      "sha256": "3880ccd79068e48c6ce45eb40723cb085a169d909872fbff11c72014aff60905",
+      "role": "derived-human-documentation",
+      "proposed_action": "candidate move after SEP1/SEP2"
+    },
+    {
+      "path": "docs/site/schema/dbml/index.md",
+      "sha256": "76d8c816c6423ee9f59f832c73ac1b267dbc4dd8367aaa120d9a793f1c711f41",
+      "role": "derived-human-documentation",
+      "proposed_action": "candidate move after SEP1/SEP2"
+    },
+    {
+      "path": "docs/site/schema/mermaid/index.md",
+      "sha256": "c1b2f50e477245cace1f6f17fd990d56624b9caeb9ec8764cfae43ab6c3afde4",
+      "role": "derived-human-documentation",
+      "proposed_action": "candidate move after SEP1/SEP2"
+    },
+    {
+      "path": "docs/site/sw.js",
+      "sha256": "a98ce55be1fa4fc89499f39a66fced0399b8d4bba2abf5ba5bb252d0e865b9bc",
+      "role": "derived-human-documentation",
+      "proposed_action": "candidate move after SEP1/SEP2"
+    },
+    {
+      "path": "overrides/main.html",
+      "sha256": "29d6d43efd06528a1972096826f81526d6953d0a9f13647bc813bc617c685f6b",
+      "role": "derived-human-documentation",
+      "proposed_action": "candidate move after SEP1/SEP2"
+    },
+    {
+      "path": "pyproject.toml",
+      "sha256": "f6dd4ac7b273ee80ed7cd588637557cb62bf510d8eced722456206b48eb94c01",
+      "role": "mixed-boundary-control",
+      "proposed_action": "targeted edit only under implementation PR"
+    },
+    {
+      "path": "scripts/audit_implementation_boundary.py",
+      "sha256": "9fb8748b023d07d3361b51b0b3c33ba8913342f393473dbf4c72baaa7276652a",
+      "role": "mixed-boundary-control",
+      "proposed_action": "targeted edit only under implementation PR"
+    },
+    {
+      "path": "scripts/build_docs_site.py",
+      "sha256": "08ce9d553ec832981cc5c2b325b11de711965f2590fed07ef03af42e48ff7c52",
+      "role": "mixed-boundary-control",
+      "proposed_action": "targeted edit only under implementation PR"
+    },
+    {
+      "path": "scripts/ci_dependencies.json",
+      "sha256": "02b0716248a18657f19fc974ba5de2d1780d74b784bfc2d9c0228abcd37cec67",
+      "role": "mixed-boundary-control",
+      "proposed_action": "targeted edit only under implementation PR"
+    },
+    {
+      "path": "scripts/ci_plan.py",
+      "sha256": "c1efd21d5f2ee01a88d3e47c288aa581b68b56cbdf41e9ad43277c8ae3841bce",
+      "role": "mixed-boundary-control",
+      "proposed_action": "targeted edit only under implementation PR"
+    },
+    {
+      "path": "scripts/schema_viz.py",
+      "sha256": "884a37bab6fe10fe51ac7fc3e16c12341988271bd657b9158ac5457e25ffba93",
+      "role": "mixed-boundary-control",
+      "proposed_action": "targeted edit only under implementation PR"
+    },
+    {
+      "path": "scripts/setup_local_python.py",
+      "sha256": "619328bd2fadc7bbcf2abb8b99fe9f35ebaf496c3ba1c7610232f105145146b3",
+      "role": "mixed-boundary-control",
+      "proposed_action": "targeted edit only under implementation PR"
+    },
+    {
+      "path": "tests/unit/test_build_docs_site.py",
+      "sha256": "e20f1108dc78091dfb6059275dbfc16e60d67f44624115b8160d7fc28a1eb6c8",
+      "role": "mixed-boundary-control",
+      "proposed_action": "targeted edit only under implementation PR"
+    },
+    {
+      "path": "tests/unit/test_schema_viz.py",
+      "sha256": "a78cbe7803eb95b3a4b11bfb34a39bcc311a1be2c5793fe643e938074a6d5894",
+      "role": "mixed-boundary-control",
+      "proposed_action": "targeted edit only under implementation PR"
+    },
+    {
+      "path": "uv.lock",
+      "sha256": "38086f956741ff31865ed75f5a1d48997ab518fbc2a2dac8e0e5277cd6a413c9",
+      "role": "mixed-boundary-control",
+      "proposed_action": "targeted edit only under implementation PR"
+    }
+  ],
+  "test_nodes": [
+    {
+      "old_node": "tests/unit/test_schema_viz.py::test_1_introspection_success",
+      "proposed_nodes": [
+        "tests/unit/test_schema_inventory.py::test_1_introspection_success"
+      ],
+      "status": "proposed; assertions must be partitioned without loss"
+    },
+    {
+      "old_node": "tests/unit/test_schema_viz.py::test_2_table_inventories_match",
+      "proposed_nodes": [
+        "tests/unit/test_schema_inventory.py::test_2_table_inventories_match"
+      ],
+      "status": "proposed; assertions must be partitioned without loss"
+    },
+    {
+      "old_node": "tests/unit/test_schema_viz.py::test_3_product_tables_distinguished",
+      "proposed_nodes": [
+        "tests/unit/test_schema_inventory.py::test_3_product_tables_distinguished"
+      ],
+      "status": "proposed; assertions must be partitioned without loss"
+    },
+    {
+      "old_node": "tests/unit/test_schema_viz.py::test_4_no_physical_fk_omitted_or_duplicated",
+      "proposed_nodes": [
+        "tests/unit/test_schema_inventory.py::test_4_no_physical_fk_omitted_or_duplicated"
+      ],
+      "status": "proposed; assertions must be partitioned without loss"
+    },
+    {
+      "old_node": "tests/unit/test_schema_viz.py::test_5_composite_foreign_keys_grouped",
+      "proposed_nodes": [
+        "tests/unit/test_schema_inventory.py::test_5_composite_foreign_keys_grouped"
+      ],
+      "status": "proposed; assertions must be partitioned without loss"
+    },
+    {
+      "old_node": "tests/unit/test_schema_viz.py::test_6_physical_fk_endpoints_exist_in_own_store",
+      "proposed_nodes": [
+        "tests/unit/test_schema_inventory.py::test_6_physical_fk_endpoints_exist_in_own_store"
+      ],
+      "status": "proposed; assertions must be partitioned without loss"
+    },
+    {
+      "old_node": "tests/unit/test_schema_viz.py::test_7_no_cross_store_logical_declared_as_physical_fk",
+      "proposed_nodes": [
+        "tests/unit/test_schema_inventory.py::test_7_no_cross_store_logical_declared_as_physical_fk"
+      ],
+      "status": "proposed; assertions must be partitioned without loss"
+    },
+    {
+      "old_node": "tests/unit/test_schema_viz.py::test_8_all_output_formats_generated",
+      "proposed_nodes": [
+        "documentation/tests/test_schema_viz.py::test_8_all_output_formats_generated"
+      ],
+      "status": "proposed; assertions must be partitioned without loss"
+    },
+    {
+      "old_node": "tests/unit/test_schema_viz.py::test_9_deterministic_generation",
+      "proposed_nodes": [
+        "documentation/tests/test_schema_viz.py::test_9_deterministic_generation"
+      ],
+      "status": "proposed; assertions must be partitioned without loss"
+    },
+    {
+      "old_node": "tests/unit/test_schema_viz.py::test_10_check_mode_success_and_failure_on_mutation",
+      "proposed_nodes": [
+        "documentation/tests/test_schema_viz.py::test_10_check_mode_success_and_failure_on_mutation"
+      ],
+      "status": "proposed; assertions must be partitioned without loss"
+    },
+    {
+      "old_node": "tests/unit/test_schema_viz.py::test_11_no_persistent_sqlite_files_created",
+      "proposed_nodes": [
+        "tests/unit/test_schema_inventory.py::test_11_no_persistent_sqlite_files_created",
+        "documentation/tests/test_schema_viz.py::test_11_no_persistent_sqlite_files_created"
+      ],
+      "status": "proposed; assertions must be partitioned without loss"
+    },
+    {
+      "old_node": "tests/unit/test_schema_viz.py::test_12_html_viewer_smoke",
+      "proposed_nodes": [
+        "documentation/tests/test_schema_viz.py::test_12_html_viewer_smoke"
+      ],
+      "status": "proposed; assertions must be partitioned without loss"
+    },
+    {
+      "old_node": "tests/unit/test_schema_viz.py::test_13_mermaid_syntax_smoke",
+      "proposed_nodes": [
+        "documentation/tests/test_schema_viz.py::test_13_mermaid_syntax_smoke"
+      ],
+      "status": "proposed; assertions must be partitioned without loss"
+    },
+    {
+      "old_node": "tests/unit/test_schema_viz.py::test_14_dbml_syntax_smoke",
+      "proposed_nodes": [
+        "documentation/tests/test_schema_viz.py::test_14_dbml_syntax_smoke"
+      ],
+      "status": "proposed; assertions must be partitioned without loss"
+    },
+    {
+      "old_node": "tests/unit/test_schema_viz.py::test_15_generated_column_classifications",
+      "proposed_nodes": [
+        "tests/unit/test_schema_inventory.py::test_15_generated_column_classifications"
+      ],
+      "status": "proposed; assertions must be partitioned without loss"
+    },
+    {
+      "old_node": "tests/unit/test_schema_viz.py::test_16_single_column_unique_and_dbml_fidelity",
+      "proposed_nodes": [
+        "tests/unit/test_schema_inventory.py::test_16_single_column_unique_and_dbml_fidelity",
+        "documentation/tests/test_schema_viz.py::test_16_single_column_unique_and_dbml_fidelity"
+      ],
+      "status": "proposed; assertions must be partitioned without loss"
+    },
+    {
+      "old_node": "tests/unit/test_schema_viz.py::test_17_partial_unique_indexes_not_unconditional",
+      "proposed_nodes": [
+        "tests/unit/test_schema_inventory.py::test_17_partial_unique_indexes_not_unconditional",
+        "documentation/tests/test_schema_viz.py::test_17_partial_unique_indexes_not_unconditional"
+      ],
+      "status": "proposed; assertions must be partitioned without loss"
+    },
+    {
+      "old_node": "tests/unit/test_schema_viz.py::test_18_mermaid_relationship_cardinality_and_pk_formatting",
+      "proposed_nodes": [
+        "documentation/tests/test_schema_viz.py::test_18_mermaid_relationship_cardinality_and_pk_formatting"
+      ],
+      "status": "proposed; assertions must be partitioned without loss"
+    },
+    {
+      "old_node": "tests/unit/test_schema_viz.py::test_19_cross_store_logical_dependencies_and_derivation_semantics",
+      "proposed_nodes": [
+        "tests/unit/test_schema_inventory.py::test_19_cross_store_logical_dependencies_and_derivation_semantics",
+        "documentation/tests/test_schema_viz.py::test_19_cross_store_logical_dependencies_and_derivation_semantics"
+      ],
+      "status": "proposed; assertions must be partitioned without loss"
+    },
+    {
+      "old_node": "tests/unit/test_schema_viz.py::test_20_functional_groups_and_tablegroups_consistency",
+      "proposed_nodes": [
+        "tests/unit/test_schema_inventory.py::test_20_functional_groups_and_tablegroups_consistency",
+        "documentation/tests/test_schema_viz.py::test_20_functional_groups_and_tablegroups_consistency"
+      ],
+      "status": "proposed; assertions must be partitioned without loss"
+    },
+    {
+      "old_node": "tests/unit/test_build_docs_site.py::test_schema_freshness",
+      "proposed_nodes": [
+        "documentation/tests/test_build_docs_site.py::test_schema_freshness"
+      ],
+      "status": "proposed; assertions must be partitioned without loss"
+    },
+    {
+      "old_node": "tests/unit/test_build_docs_site.py::test_git_metadata",
+      "proposed_nodes": [
+        "documentation/tests/test_build_docs_site.py::test_git_metadata"
+      ],
+      "status": "proposed; assertions must be partitioned without loss"
+    },
+    {
+      "old_node": "tests/unit/test_build_docs_site.py::test_staging_allowlist_and_transformation",
+      "proposed_nodes": [
+        "documentation/tests/test_build_docs_site.py::test_staging_allowlist_and_transformation"
+      ],
+      "status": "proposed; assertions must be partitioned without loss"
+    },
+    {
+      "old_node": "tests/unit/test_build_docs_site.py::test_publication_safety_validator",
+      "proposed_nodes": [
+        "documentation/tests/test_build_docs_site.py::test_publication_safety_validator"
+      ],
+      "status": "proposed; assertions must be partitioned without loss"
+    },
+    {
+      "old_node": "tests/unit/test_build_docs_site.py::test_internal_links_validator",
+      "proposed_nodes": [
+        "documentation/tests/test_build_docs_site.py::test_internal_links_validator"
+      ],
+      "status": "proposed; assertions must be partitioned without loss"
+    },
+    {
+      "old_node": "tests/unit/test_build_docs_site.py::test_critical_endpoints_validator",
+      "proposed_nodes": [
+        "documentation/tests/test_build_docs_site.py::test_critical_endpoints_validator"
+      ],
+      "status": "proposed; assertions must be partitioned without loss"
+    },
+    {
+      "old_node": "tests/unit/test_build_docs_site.py::test_pages_trigger_paths_decision_matrix",
+      "proposed_nodes": [
+        "documentation/tests/test_build_docs_site.py::test_pages_trigger_paths_decision_matrix"
+      ],
+      "status": "proposed; assertions must be partitioned without loss"
+    },
+    {
+      "old_node": "tests/unit/test_build_docs_site.py::test_pages_trigger_covers_executed_schema_dependencies",
+      "proposed_nodes": [
+        "documentation/tests/test_build_docs_site.py::test_pages_trigger_covers_executed_schema_dependencies"
+      ],
+      "status": "proposed; assertions must be partitioned without loss"
+    }
+  ],
+  "baseline_collection_count": 28,
+  "executed_tests": false,
+  "retained_scopes": [
+    {
+      "path": "docs/adr/",
+      "action": "retain all tracked contents; no movement or rewrite in this plan"
+    },
+    {
+      "path": "docs/architecture/",
+      "action": "retain all tracked contents; no movement or rewrite in this plan"
+    },
+    {
+      "path": "docs/implementation/",
+      "action": "retain all tracked contents; no movement or rewrite in this plan"
+    },
+    {
+      "path": "docs/phase2/",
+      "action": "retain all tracked contents; no movement or rewrite in this plan"
+    },
+    {
+      "path": "docs/schema-hardening/",
+      "action": "retain all tracked contents; no movement or rewrite in this plan"
+    }
+  ]
+}
