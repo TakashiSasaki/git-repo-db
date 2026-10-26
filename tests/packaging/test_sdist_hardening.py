@@ -487,3 +487,62 @@ def test_shared_cache_never_launders_hostile_sdist(
     # hostile builder must always run twice and cannot publish a success receipt.
     assert calls.count("hostile") == 2
     assert calls.count("normal") <= 1
+
+
+@pytest.mark.parametrize(
+    "name,content,error",
+    [
+        (".hgignore", "syntax: glob\nsrc/repo_catalog/__init__.py\n", ValueError),
+        ("hatch.toml", "[build]\nignore-vcs = true\n", ValueError),
+        ("hatch_build.py", "# default backend control\n", ValueError),
+        ("uv.toml", "this is not valid TOML\n", RuntimeError),
+    ],
+)
+def test_real_backend_control_changes_force_sdist_gate(
+    source, tmp_path_factory, name, content, error
+):
+    """A warm legitimate cache cannot suppress actual backend/control refusals."""
+    from tests.support.distributions import (
+        build_once,
+        make_package_distributions,
+        package_build_environment,
+        package_build_inputs,
+    )
+
+    for filename in ("pyproject.toml", "uv.lock"):
+        shutil.copyfile(ROOT / filename, source / filename)
+    env = package_build_environment()
+    wheelhouse = ROOT / "artifacts/wheelhouse"
+    assert (wheelhouse / "manifest.json").is_file(), (
+        "prepare locked wheelhouse before packaging tests"
+    )
+    base = tmp_path_factory.getbasetemp()
+    while base.name.startswith("popen-gw"):
+        base = base.parent
+    cache = base / "backend-control-real-builds"
+    calls = []
+
+    def inputs():
+        return package_build_inputs(source, env, wheelhouse)
+
+    def build(work):
+        calls.append("build")
+        return make_package_distributions(work, source, env, wheelhouse)
+
+    initial = inputs()
+    first = build_once(cache, build, inputs=inputs)
+    assert first["sdist"].is_file()
+    (source / name).write_text(content)
+    calls.clear()
+    with pytest.raises(error):
+        build_once(cache, build, inputs=inputs)
+    assert calls == ["build"]
+    assert inputs() != initial
+    (source / name).unlink()
+    assert inputs() == initial
+    assert (
+        build_once(
+            cache, lambda _: pytest.fail("original content should reuse"), inputs=inputs
+        )
+        == first
+    )

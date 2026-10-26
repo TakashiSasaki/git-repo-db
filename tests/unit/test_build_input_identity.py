@@ -151,3 +151,88 @@ def test_xdist_workers_share_only_sealed_artifacts(tmp_path_factory, worker):
             data["files"][key]["sha256"]
             == hashlib.sha256(path.read_bytes()).hexdigest()
         )
+
+
+@pytest.mark.parametrize(
+    "name,content",
+    [
+        (".hgignore", "syntax: glob\nsrc/repo_catalog/__init__.py\n"),
+        ("hatch.toml", "[build]\nignore-vcs = true\n"),
+        ("hatch_build.py", "# backend default build script\n"),
+        ("uv.toml", "offline = true\n"),
+    ],
+)
+def test_backend_controls_cannot_hide_behind_previous_success(
+    source, tmp_path, name, content
+):
+    def inputs():
+        return package_build_inputs(source, {})
+
+    cache = tmp_path / "cache"
+    before = inputs()
+    build_once(cache, products, inputs=inputs)
+    control = source / name
+    control.write_text(content)
+    calls = []
+
+    def rejecting_build(_):
+        calls.append("fresh backend validation")
+        raise ValueError("new backend input rejected")
+
+    with pytest.raises(ValueError, match="new backend input rejected"):
+        build_once(cache, rejecting_build, inputs=inputs)
+    assert calls == ["fresh backend validation"]
+    assert inputs() != before
+    changed = inputs()
+    control.write_text(content + "\n# changed at same path\n")
+    assert inputs() != changed
+    control.unlink()
+    assert inputs() == before
+    assert build_once(
+        cache,
+        lambda _: pytest.fail("unchanged original inputs should reuse"),
+        inputs=inputs,
+    )
+
+
+def test_inherited_controls_and_explicit_uv_configuration_are_content_inputs(
+    source, tmp_path
+):
+    from tests.support.distributions import backend_control_inputs
+
+    initial = backend_control_inputs(source, {})
+    inherited = source.parent / ".hgignore"
+    inherited.write_text("syntax: glob\n*.py\n")
+    inherited_key = backend_control_inputs(source, {})
+    assert inherited_key != initial
+    inherited.write_text("syntax: glob\n*.sql\n")
+    assert backend_control_inputs(source, {}) != inherited_key
+    (source / ".hg").mkdir()
+    assert backend_control_inputs(source, {}) == initial
+
+    config = tmp_path / "external-uv.toml"
+    env = {"UV_CONFIG_FILE": str(config), "XDG_CONFIG_HOME": str(tmp_path / "user")}
+    absent = backend_control_inputs(source, env)
+    config.write_text("offline = true\n")
+    present = backend_control_inputs(source, env)
+    assert present != absent
+    config.write_text("offline = false\n")
+    assert backend_control_inputs(source, env) != present
+    user_config = tmp_path / "user/uv/uv.toml"
+    user_config.parent.mkdir(parents=True)
+    before = backend_control_inputs(source, env)
+    user_config.write_text("offline = true\n")
+    assert backend_control_inputs(source, env) != before
+
+
+def test_unknown_root_control_files_and_links_fail_closed(source, tmp_path):
+    from tests.support.distributions import backend_control_inputs
+
+    before = backend_control_inputs(source, {})
+    control = source / ".future-backend-control"
+    control.write_text("a control not in a filename allowlist")
+    assert backend_control_inputs(source, {}) != before
+    control.unlink()
+    control.symlink_to(tmp_path / "missing-control")
+    with pytest.raises(ValueError, match="Linked backend"):
+        backend_control_inputs(source, {})

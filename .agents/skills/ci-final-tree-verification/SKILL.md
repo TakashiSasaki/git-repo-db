@@ -645,3 +645,19 @@ scripts/local-run.sh pytest -q -n 2 tests/unit/test_build_input_identity.py
 Use a writable `UV_CACHE_DIR` in restricted environments. A read-only uv cache
 setup failure is not an archive-gate result. These checks do not retire either
 Transfer SQL fence or convert the 43 known Transfer non-successes into passes.
+
+The first PR #192 repair still missed Hatchling's automatic root/control inputs:
+R192-01 demonstrated that adding `.hgignore` left the key unchanged although a
+fresh sdist was rejected. Product source inventory alone is not backend input
+inventory. Inspect the selected backend's automatic inclusion/config discovery
+(`sdist.get_default_build_data`, VCS exclusion lookup and metadata config), and
+uv's config discovery. Bind root regular files conservatively, inherited VCS
+controls with their actual search boundaries, ancestor configuration and selected
+user/system/explicit uv configuration contents. Record absence as well as content;
+do not patch only the one reported filename. Reject linked/unreadable controls.
+
+Keep real-backend warm-cache challenges for `.hgignore`, `hatch.toml`,
+`hatch_build.py` and invalid `uv.toml`: adding an input must execute the fresh
+checked builder and expose its refusal, rather than return old normal artifacts.
+The R192-01 correction retains failing old-identity controls and green repaired
+runs separately. Existing hostile archive gates remain unchanged in strength.

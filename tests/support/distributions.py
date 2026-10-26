@@ -132,6 +132,58 @@ def make_package_distributions(work, root=None, env=None, wheelhouse=None, runne
     }
 
 
+def backend_control_inputs(root, env):
+    """Conservatively bind backend auto-inclusions and discovered configuration.
+
+    Hatchling auto-includes root controls such as hatch.toml, hatch_build.py and
+    VCS ignores independently of our product inventory. Hash every root file,
+    not a guessed filename allowlist. Also bind inherited VCS exclusions and
+    uv's ancestor/user/system or explicitly selected configuration contents.
+    Non-file VCS markers matter only as search boundaries, not as Git identity.
+    """
+    root = Path(root).resolve()
+    result = {}
+
+    def record(key, path):
+        if path.is_symlink():
+            raise ValueError("Linked backend control input: " + str(path))
+        if path.exists() and not path.is_file():
+            raise ValueError("Non-file backend control input: " + str(path))
+        result[key] = (
+            hashlib.sha256(path.read_bytes()).hexdigest() if path.is_file() else None
+        )
+
+    for path in sorted(root.iterdir()):
+        if path.name in {".git", ".hg"}:
+            continue
+        if path.is_symlink() and not path.is_dir():
+            raise ValueError("Linked backend root input")
+        if path.is_file():
+            record("root/" + path.name, path)
+    for name, boundary in ((".gitignore", ".git"), (".hgignore", ".hg")):
+        for level, directory in enumerate((root, *root.parents)):
+            candidate = directory / name
+            if candidate.is_file() or candidate.is_symlink():
+                record(f"vcs/{name}/{level}", candidate)
+                break
+            if (directory / boundary).exists():
+                break
+    for level, directory in enumerate(root.parents):
+        for name in ("uv.toml", "pyproject.toml", "hatch.toml", ".python-version"):
+            record(f"ancestor/{level}/{name}", directory / name)
+    home = Path(env.get("HOME", str(Path.home())))
+    configs = [
+        Path("/etc/uv/uv.toml"),
+        Path(env.get("XDG_CONFIG_HOME", str(home / ".config"))) / "uv/uv.toml",
+    ]
+    if env.get("UV_CONFIG_FILE"):
+        explicit = Path(env["UV_CONFIG_FILE"])
+        configs.append(explicit if explicit.is_absolute() else root / explicit)
+    for index, path in enumerate(configs):
+        record(f"uv-config/{index}", path)
+    return result
+
+
 def package_build_inputs(root, env, wheelhouse=None, runner=None):
     """Bind reuse to bytes, build contract, runtime and effective build settings.
 
@@ -176,6 +228,7 @@ def package_build_inputs(root, env, wheelhouse=None, runner=None):
     contract = {
         "schema": 1,
         "source": inventory,
+        "backend_controls": backend_control_inputs(root, env),
         "wheelhouse": wheels,
         "builder": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         "sdist_checker": hashlib.sha256(
