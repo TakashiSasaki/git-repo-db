@@ -478,13 +478,24 @@ def test_ci_query_cli(tmp_path, capsys):
 
 
 def test_ci_query_log_filter_and_receipt_extract(tmp_path):
-    # Create synthetic zip archive
+    import hashlib
+
+    # Create synthetic zip archive with verified receipt-index.json
     buf = io.BytesIO()
+    file_data = b'{"ok": true}\n'
+    idx_data = json.dumps(
+        {
+            "test-receipt.json": {
+                "bytes": len(file_data),
+                "sha256": hashlib.sha256(file_data).hexdigest(),
+            }
+        }
+    ).encode("utf-8")
     with zipfile.ZipFile(buf, "w") as zf:
-        zf.writestr("test-receipt.json", b'{"ok": true}\n')
+        zf.writestr("test-receipt.json", file_data)
+        zf.writestr("receipt-index.json", idx_data)
     zip_bytes = buf.getvalue()
     b64_payload = base64.b64encode(zip_bytes).decode("ascii")
-    import hashlib
 
     digest = hashlib.sha256(zip_bytes).hexdigest()
 

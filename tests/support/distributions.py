@@ -15,7 +15,7 @@ from scripts.check_sdist_contract import check_sdist, compare_wheels, save
 KEYS = {"wheel", "sdist_wheel", "requirements", "sdist", "sdist_contract"}
 
 
-def make_package_distributions(work, root=None, env=None, wheelhouse=None):
+def make_package_distributions(work, root=None, env=None, wheelhouse=None, runner=None):
     """Build wheel, sdist, requirements and sdist-wheel into work directory."""
     if root is None:
         root = Path(__file__).resolve().parents[2]
@@ -46,6 +46,8 @@ def make_package_distributions(work, root=None, env=None, wheelhouse=None):
         offline_sources = ["--offline"]
 
     def checked(args, cwd):
+        if runner is not None:
+            return runner(args, cwd, env)
         res = subprocess.run(
             list(map(str, args)),
             cwd=cwd,
@@ -67,6 +69,8 @@ def make_package_distributions(work, root=None, env=None, wheelhouse=None):
         ["uv", "build", "--wheel", *offline_sources, "--out-dir", work / "dist"],
         cwd=root,
     )
+    sdist = next((work / "dist").glob("*.tar.gz"))
+    contract = check_sdist(sdist, root)
     checked(
         [
             "uv",
@@ -81,8 +85,6 @@ def make_package_distributions(work, root=None, env=None, wheelhouse=None):
         ],
         cwd=root,
     )
-    sdist = next((work / "dist").glob("*.tar.gz"))
-    contract = check_sdist(sdist, root)
     with tarfile.open(sdist) as archive:
         archive.extractall(work / "sdist", filter="data")
     source = next((work / "sdist").iterdir())

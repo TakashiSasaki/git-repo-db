@@ -151,7 +151,7 @@ The repository contains process-global test state (such as environment variable 
 
 ### 4.2 Host-Wide Concurrency Budgeting
 To prevent multiple parallel lanes or concurrent agent processes from independently spawning full sets of workers and thrashing host memory/CPU:
-- A lightweight advisory lock (`artifacts/ci-profile/.resource.lock`) or cooperative slot allocator coordinates active workers across concurrent test lanes.
+- A lightweight host-wide advisory lock (`/tmp/git-repo-db-<uid>-resource.lock`, configurable via `CI_RESOURCE_LOCK` or `--resource-lock`) coordinates active workers across concurrent test lanes and independent worktrees on the same host.
 - If concurrent validation jobs are active, each lane scales down to avoid aggregate core oversubscription.
 
 ### 4.3 Scheduler Mode

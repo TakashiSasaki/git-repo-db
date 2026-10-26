@@ -22,6 +22,18 @@ sys.path.insert(0, str(ROOT))
 from scripts import ci_journal, ci_plan, ci_profile, resource_scheduler  # noqa: E402
 
 MARKER = "not live and not benchmark"
+MAX_COMPRESSED_RECEIPT_BYTES = 2 * 1024 * 1024  # 2 MiB (ADR 0001 VAL-07)
+MAX_UNCOMPRESSED_RECEIPT_BYTES = 50 * 1024 * 1024  # 50 MiB safety limit
+
+RECEIPT_BEGIN_PATTERN = re.compile(
+    r"^\ufeff?(?:\d{4}-\d\d-\d\dT\S+ )?CI_RECEIPTS_BEGIN_V1\s+([0-9a-f]{64})\s+(\d+)\s*$"
+)
+RECEIPT_DATA_PATTERN = re.compile(
+    r"^\ufeff?(?:\d{4}-\d\d-\d\dT\S+ )?CI_RECEIPTS_DATA_V1\s+([A-Za-z0-9+/=]+)\s*$"
+)
+RECEIPT_END_PATTERN = re.compile(
+    r"^\ufeff?(?:\d{4}-\d\d-\d\dT\S+ )?CI_RECEIPTS_END_V1\s+([0-9a-f]{64})\s*$"
+)
 
 
 def read(path):
@@ -735,45 +747,216 @@ def create_receipt(output_dir, dest_path=None, root=ROOT):
     return receipt
 
 
-def parse_log_receipt_bundle(log_text):
-    """Extract and verify bounded receipt zip archive from GitHub Actions job log."""
+def _iter_log_lines(log_source):
+    """Yield lines from a string, a file path, or an open line stream."""
+    if isinstance(log_source, Path) or (
+        isinstance(log_source, str)
+        and "\n" not in log_source
+        and os.path.exists(log_source)
+    ):
+        with open(log_source, "r", encoding="utf-8", errors="replace") as f:
+            for line in f:
+                yield line
+    elif isinstance(log_source, str):
+        for line in log_source.splitlines():
+            yield line
+    else:
+        for line in log_source:
+            yield line
+
+
+def parse_log_receipt_bundle(log_source, target_digest=None, validate_members=True):
+    """Extract and verify bounded receipt zip archive from log stream.
+
+    Supports both raw and timestamp-prefixed log records.
+    Enforces strict protocol markers (BEGIN, DATA, END), size budgets, SHA-256 integrity,
+    zip-slip path containment, member non-duplication, and receipt-index verification.
+    """
+    bundles = []
     in_bundle = False
-    digest = None
-    expected_len = None
-    lines = []
-    for line in log_text.splitlines():
-        if not in_bundle:
-            m = re.search(
-                r"(?:^|[\t ])CI_RECEIPTS_BEGIN_V1\s+([0-9a-f]{64})\s+(\d+)", line
-            )
-            if m and "print(" not in line:
-                in_bundle = True
-                digest = m.group(1)
-                expected_len = int(m.group(2))
-                lines = []
-        else:
-            m_end = re.search(r"(?:^|[\t ])CI_RECEIPTS_END_V1\s+([0-9a-f]{64})", line)
-            if m_end and "print(" not in line:
-                if m_end.group(1) != digest:
-                    raise ValueError("CI_RECEIPTS_END_V1 digest mismatch with BEGIN")
-                in_bundle = False
-                break
-            m_data = re.search(r"CI_RECEIPTS_DATA_V1\s+([A-Za-z0-9+/=]+)", line)
-            if m_data:
-                lines.append(m_data.group(1).strip())
-    if not digest or not lines:
+    curr_digest = None
+    curr_len = None
+    curr_chunks = []
+
+    for line in _iter_log_lines(log_source):
+        m_b = RECEIPT_BEGIN_PATTERN.match(line)
+        if m_b:
+            if in_bundle:
+                raise ValueError(
+                    "Nested CI_RECEIPTS_BEGIN_V1 encountered before matching END"
+                )
+            in_bundle = True
+            curr_digest = m_b.group(1)
+            curr_len = int(m_b.group(2))
+            curr_chunks = []
+            continue
+
+        m_d = RECEIPT_DATA_PATTERN.match(line)
+        if m_d:
+            if in_bundle:
+                curr_chunks.append(m_d.group(1))
+            continue
+
+        m_e = RECEIPT_END_PATTERN.match(line)
+        if m_e:
+            if not in_bundle:
+                raise ValueError(
+                    "CI_RECEIPTS_END_V1 encountered without matching BEGIN"
+                )
+            end_digest = m_e.group(1)
+            if end_digest != curr_digest:
+                raise ValueError(
+                    f"CI_RECEIPTS_END_V1 digest mismatch with BEGIN: {curr_digest} vs {end_digest}"
+                )
+            bundles.append((curr_digest, curr_len, curr_chunks))
+            in_bundle = False
+            continue
+
+    if in_bundle:
+        raise ValueError(
+            "Interrupted CI receipt output: matching CI_RECEIPTS_END_V1 marker not found"
+        )
+
+    if not bundles:
         return None
-    raw = base64.b64decode("".join(lines))
+
+    if len(bundles) > 1:
+        if target_digest:
+            matching = [b for b in bundles if b[0] == target_digest]
+            if not matching:
+                raise ValueError(
+                    f"No candidate bundle matching target digest {target_digest}"
+                )
+            if len(matching) > 1:
+                raise ValueError(
+                    f"Multiple ambiguous candidate bundles matching target digest {target_digest}"
+                )
+            chosen = matching[0]
+        else:
+            raise ValueError(
+                f"Multiple ambiguous CI_RECEIPTS bundles ({len(bundles)}) found; explicit selection required"
+            )
+    else:
+        chosen = bundles[0]
+
+    digest, expected_len, chunks = chosen
+    if expected_len > MAX_COMPRESSED_RECEIPT_BYTES:
+        raise ValueError(
+            f"Receipt bundle compressed size ({expected_len} bytes) exceeds {MAX_COMPRESSED_RECEIPT_BYTES} budget"
+        )
+    if not chunks:
+        raise ValueError("Receipt bundle contains no data records")
+
+    try:
+        raw = base64.b64decode("".join(chunks), validate=True)
+    except Exception as err:
+        raise ValueError(f"Invalid Base64 payload in receipt: {err}")
+
     if len(raw) != expected_len:
         raise ValueError(
             f"Receipt bundle length mismatch: expected {expected_len}, got {len(raw)}"
         )
-    if hashlib.sha256(raw).hexdigest() != digest:
-        raise ValueError("Receipt bundle sha256 digest mismatch")
+    actual_digest = hashlib.sha256(raw).hexdigest()
+    if actual_digest != digest:
+        raise ValueError(
+            f"Receipt bundle SHA-256 mismatch: expected {digest}, got {actual_digest}"
+        )
+
+    if not zipfile.is_zipfile(io.BytesIO(raw)):
+        raise ValueError("Decoded receipt payload is not a valid zip archive")
+
     files = {}
     with zipfile.ZipFile(io.BytesIO(raw)) as zf:
-        for name in zf.namelist():
+        names = zf.namelist()
+        if len(names) != len(set(names)):
+            raise ValueError("Duplicate members in receipt archive")
+
+        total_uncompressed = sum(info.file_size for info in zf.infolist())
+        if total_uncompressed > MAX_UNCOMPRESSED_RECEIPT_BYTES:
+            raise ValueError(
+                f"Uncompressed receipt size ({total_uncompressed} bytes) exceeds safety limit"
+            )
+
+        for name in names:
+            if name.startswith("/") or name.startswith("\\"):
+                raise ValueError(f"Absolute path in zip member: {name}")
+            p = Path(name)
+            if ".." in p.parts:
+                raise ValueError(f"Path traversal in zip member: {name}")
+
+        if validate_members:
+            if "receipt-index.json" not in names:
+                raise ValueError("Receipt archive missing receipt-index.json")
+            try:
+                index_data = json.loads(zf.read("receipt-index.json").decode("utf-8"))
+            except Exception as err:
+                raise ValueError(f"Malformed receipt-index.json: {err}")
+
+            indexed_members = set(index_data.keys())
+            archive_members = set(names)
+            missing = indexed_members - archive_members
+            if missing:
+                raise ValueError(
+                    f"Receipt archive missing indexed member(s): {sorted(missing)}"
+                )
+            unexpected = archive_members - indexed_members - {"receipt-index.json"}
+            if unexpected:
+                raise ValueError(
+                    f"Unexpected unindexed member(s) in receipt archive: {sorted(unexpected)}"
+                )
+
+            for m_name, meta in index_data.items():
+                m_data = zf.read(m_name)
+                if len(m_data) != meta.get("bytes"):
+                    raise ValueError(
+                        f"Member '{m_name}' size mismatch: expected {meta.get('bytes')}, got {len(m_data)}"
+                    )
+                actual_sha = hashlib.sha256(m_data).hexdigest()
+                if actual_sha != meta.get("sha256"):
+                    raise ValueError(
+                        f"Member '{m_name}' SHA-256 mismatch: expected {meta.get('sha256')}, got {actual_sha}"
+                    )
+
+        for name in names:
             files[name] = zf.read(name)
+
+    return files
+
+
+def extract_receipt_archive(
+    log_source, dest_path, target_digest=None, validate_members=True
+):
+    """Securely extract validated receipt archive to destination directory.
+
+    Publishes extracted evidence only after all validations succeed.
+    Never leaves a partially extracted or corrupted destination on failure.
+    """
+    dest = Path(dest_path)
+    temp_parent = dest.parent if dest.parent.is_dir() else None
+    with tempfile.TemporaryDirectory(dir=temp_parent) as tmp_dir:
+        tmp_dest = Path(tmp_dir) / "staging"
+        tmp_dest.mkdir(parents=True, exist_ok=True)
+
+        files = parse_log_receipt_bundle(
+            log_source,
+            target_digest=target_digest,
+            validate_members=validate_members,
+        )
+        if files is None:
+            raise ValueError("No CI receipt data found in log")
+
+        for name, data in files.items():
+            target_file = tmp_dest / name
+            target_file.parent.mkdir(parents=True, exist_ok=True)
+            target_file.write_bytes(data)
+
+        # All files validated and written cleanly; publish to dest
+        dest.mkdir(parents=True, exist_ok=True)
+        for name, data in files.items():
+            final_file = dest / name
+            final_file.parent.mkdir(parents=True, exist_ok=True)
+            final_file.write_bytes(data)
+
     return files
 
 
