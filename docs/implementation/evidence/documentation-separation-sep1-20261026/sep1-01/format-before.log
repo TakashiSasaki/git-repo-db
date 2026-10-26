@@ -1,0 +1,49 @@
+unformatted: File would be reformatted
+   --> /workspace/git-repo-db-sep1/scripts/schema_inventory.py:745:1
+    |
+744 |     return errors
+    -
+    -
+    |
+
+unformatted: File would be reformatted
+  --> /workspace/git-repo-db-sep1/tests/unit/test_schema_inventory.py:25:15
+   |
+24 | def test_product_audit_without_renderer_or_documentation_imports():
+   -     script = r'''
+25 +     script = r"""
+26 | import importlib.abc
+--------------------------------------------------------------------------------
+39 | assert not any(name in sys.modules for name in ("schema_viz", "scripts.schema_viz", "mkdocs", "material", "yaml"))
+   - '''
+40 + """
+41 |     result = subprocess.run(
+--------------------------------------------------------------------------------
+53 |         schema_inventory.introspect_store(
+   -             "fixture", "Fixture", "unused.sqlite3", "fixture", 1,
+54 +             "fixture",
+55 +             "Fixture",
+56 +             "unused.sqlite3",
+57 +             "fixture",
+58 +             1,
+59 |             hashlib.sha256(b"different DDL").digest(),
+   -             "CREATE TABLE item(id INTEGER PRIMARY KEY) STRICT;", {},
+60 +             "CREATE TABLE item(id INTEGER PRIMARY KEY) STRICT;",
+61 +             {},
+62 |         )
+--------------------------------------------------------------------------------
+76 |     result = schema_inventory.introspect_store(
+   -         "fixture", "Fixture", "unused.sqlite3", "fixture", 1,
+   -         hashlib.sha256(ddl.encode()).digest(), ddl, {},
+77 +         "fixture",
+78 +         "Fixture",
+79 +         "unused.sqlite3",
+80 +         "fixture",
+81 +         1,
+82 +         hashlib.sha256(ddl.encode()).digest(),
+83 +         ddl,
+84 +         {},
+85 |     )
+   |
+
+2 files would be reformatted

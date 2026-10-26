@@ -22,7 +22,7 @@ def test_renderer_compatibility_exports_neutral_inventory():
 
 
 def test_product_audit_without_renderer_or_documentation_imports():
-    script = r'''
+    script = r"""
 import importlib.abc
 import sys
 from pathlib import Path
@@ -37,7 +37,7 @@ from scripts.audit_implementation_boundary import build
 inventory, report = build()
 assert inventory and report
 assert not any(name in sys.modules for name in ("schema_viz", "scripts.schema_viz", "mkdocs", "material", "yaml"))
-'''
+"""
     result = subprocess.run(
         [sys.executable, "-I", "-c", script, str(ROOT)],
         cwd=ROOT,
@@ -51,9 +51,14 @@ assert not any(name in sys.modules for name in ("schema_viz", "scripts.schema_vi
 def test_neutral_inventory_rejects_changed_ddl_fingerprint():
     with pytest.raises(ValueError, match="DDL hash mismatch"):
         schema_inventory.introspect_store(
-            "fixture", "Fixture", "unused.sqlite3", "fixture", 1,
+            "fixture",
+            "Fixture",
+            "unused.sqlite3",
+            "fixture",
+            1,
             hashlib.sha256(b"different DDL").digest(),
-            "CREATE TABLE item(id INTEGER PRIMARY KEY) STRICT;", {},
+            "CREATE TABLE item(id INTEGER PRIMARY KEY) STRICT;",
+            {},
         )
 
 
@@ -69,8 +74,14 @@ def test_neutral_inventory_preserves_composite_generated_and_partial_metadata():
     CREATE UNIQUE INDEX child_partial ON child(a) WHERE b > 0;
     """
     result = schema_inventory.introspect_store(
-        "fixture", "Fixture", "unused.sqlite3", "fixture", 1,
-        hashlib.sha256(ddl.encode()).digest(), ddl, {},
+        "fixture",
+        "Fixture",
+        "unused.sqlite3",
+        "fixture",
+        1,
+        hashlib.sha256(ddl.encode()).digest(),
+        ddl,
+        {},
     )
     child = result["tables"]["child"]
     assert len(child["foreign_keys"]) == 1

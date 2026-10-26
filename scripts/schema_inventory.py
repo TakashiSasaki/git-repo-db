@@ -742,5 +742,3 @@ def validate_functional_groups_consistency() -> list[str]:
     except Exception as exc:
         errors.append(f"Could not verify audit_publication_free consistency: {exc}")
     return errors
-
-
