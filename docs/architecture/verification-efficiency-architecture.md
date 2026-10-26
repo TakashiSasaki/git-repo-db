@@ -1,11 +1,22 @@
 # Verification Efficiency, Resource Scheduling, and Evidence Architecture
 
-**Status:** Proposed Architecture Specification (Stacked on ADR 0034)  
-**Date:** 2026-10-25  
-**Baseline:** `main` HEAD `8dd99b80470d5bdde203556b88c778332f9e92fb`, Tree `f3672ddaecba7b9e25ce6a326d7d305b55960e8b`  
-**Refines:** ADR 0001 (Validation Lifecycle), ADR 0032 (Environment SQLite), ADR 0033 (Minimal Sdist), ADR 0034 (Efficiency Architecture)  
+**Status:** Owner-adopted design under ADR 0034 on 2026-10-26; final integration verification remains separate
+
+**Date:** 2026-10-25
+
+**Baseline:** `main` HEAD `8dd99b80470d5bdde203556b88c778332f9e92fb`, Tree `f3672ddaecba7b9e25ce6a326d7d305b55960e8b`
+
+**Refines:** ADR 0001 (Validation Lifecycle), ADR 0032 (Environment SQLite), ADR 0033 (Minimal Sdist), ADR 0034 (Efficiency Architecture)
 
 ---
+
+The [owner acceptance record](../implementation/adr0034-adoption-20261026.md)
+fixes the existing design and repaired build-input identity contract. Item 4's
+input fingerprint covers actual content/configuration in source and extracted
+sdist build contexts, not only a directory or commit. The current reviewed
+Linux recipe refuses unsupported ambiguous contexts; broader platform support
+and product changes are not implied. Historical profiles and failed reviews
+keep their original results.
 
 ## 1. Executive Summary & Design Principles
 
@@ -203,15 +214,15 @@ flowchart TD
     B --> C2["Schema & Doctor Audit<br/>(repo-catalog doctor)"]
     B --> C3["Single Test Collection & Plan<br/>(exact node inventory)"]
     B --> C4["Immutable Distribution Build<br/>(build_once: direct wheel + sdist + sdist wheel)"]
-    
+
     C3 --> D1["Source Test Execution<br/>(pytest-xdist, adaptive workers)"]
     C4 --> D2["Isolated Direct-Wheel Validation<br/>(isolated harness A)"]
     C4 --> D3["Isolated Sdist-Wheel Validation<br/>(isolated harness B)"]
-    
+
     D1 --> E["Reconciliation & Evidence Gate<br/>(exact-once matching, failure indexing)"]
     D2 --> E
     D3 --> E
-    
+
     E --> F["Safe Evidence Archive & Summary<br/>(allowlisted receipts, bounded fallback)"]
 ```
 

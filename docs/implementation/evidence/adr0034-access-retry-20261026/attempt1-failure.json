@@ -1,0 +1,34 @@
+{
+  "run_id": 40282065961,
+  "attempt": 1,
+  "feature_head": "55759a2ac02512a17f4ed637c49caccf34ff4763",
+  "tree": "7a28c0626a5b9ca0da613d224b4f939051f24d3d",
+  "conclusion": "failure",
+  "cause": "HTTPS wheel preparation TLS unexpected EOF; specific wheel URL was not logged",
+  "missing": [
+    "wheelhouse manifest",
+    "scoped Access suite execution/tests.xml",
+    "complete I2-I5 installed acceptance",
+    "Access acceptance audit"
+  ],
+  "verified_receipt_members": 39,
+  "binding": {
+    "head": "c1394bb494a678fce1da41d86ea6149afb87a4ba",
+    "run_attempt": "1",
+    "run_id": "40282065961",
+    "tree": "7a28c0626a5b9ca0da613d224b4f939051f24d3d"
+  },
+  "broad_regression": {
+    "acceptance_verdict": "PASSED",
+    "current_nodes": 1851,
+    "expected_nodes": 1851,
+    "inherited_non_successes_count": 43,
+    "new_regressions_count": 0,
+    "changed_failures_count": 0,
+    "missing_nodes_count": 0,
+    "unexpected_nodes_count": 0,
+    "unexpected_skips_count": 0
+  },
+  "raw_log_sha256": "e1ff006cd6dfd9deb4a2fffcea618d59ec6aa612590c33970ea114e4cabe0c4f",
+  "action": "One same-source failed-job rerun requested and confirmed as attempt 2; no TLS/route/timeout/source changes"
+}

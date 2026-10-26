@@ -1,6 +1,6 @@
 ---
-status: proposed
-date: 2026-10-25
+status: accepted
+date: 2026-10-26
 replaces: []
 refines: [0001-validation-lifecycle-architecture.md, 0032-environment-sqlite-validation.md, 0033-minimal-product-sdist.md]
 ---
@@ -53,6 +53,13 @@ refines: [0001-validation-lifecycle-architecture.md, 0032-environment-sqlite-val
      Artifacts (direct wheel, sdist, sdist-derived wheel, and locked wheelhouse) are
      built exactly once per unique input tree fingerprint and sealed with SHA-256
      receipts protected by file locking.
+     Input identity means actual source/build-input content, including backend
+     controls and applicable configuration discovery in source and extracted-sdist
+     working contexts; a path or HEAD alone is insufficient. Recheck inputs before
+     publication and reuse, verify exact artifact hashes, and refuse missing or
+     inconsistent evidence rather than returning old artifacts. The reviewed
+     Linux uv 0.12.19 recipe fails closed for unsupported ambiguous contexts;
+     this does not declare other platforms supported or change product policy.
   5. **Strict workspace and concurrent isolation:** Separate all mutable per-variant
      test state. Direct-wheel and sdist-wheel verifications use completely distinct
      installation virtual environments, isolated outside-checkout test harnesses,
@@ -109,3 +116,21 @@ refines: [0001-validation-lifecycle-architecture.md, 0032-environment-sqlite-val
   [docs/architecture/verification-efficiency-architecture.md](../architecture/verification-efficiency-architecture.md).
   Allocation on 2026-10-25 UTC checked remote heads, reachable ADR history, and the
   prior 0033 watermark. Stacked on `main` HEAD `8dd99b80470d5bdde203556b88c778332f9e92fb`.
+
+## Owner acceptance and scope
+
+The owner explicitly approved all four proposed stages on **2026-10-26 UTC**:
+repair over PR #186, independent repair review, final integration/CI/review, and
+ADR 0034 adoption followed by a gated main merge. The exact approval, scope and
+source references are retained in the [adoption record](../implementation/adr0034-adoption-20261026.md).
+This accepts the existing Level 2 design plus the repaired content/configuration
+identity realization of item 4; it changes no product-domain decision or release
+authorization. Proposal/allocation began on 2026-10-25; the date above is actual
+acceptance, not the earlier proposal date.
+
+Repair [PR #192](https://github.com/TakashiSasaki/git-repo-db/pull/192) has a scoped
+independent PASS at its fixed source; [PR #193](https://github.com/TakashiSasaki/git-repo-db/pull/193)
+retains that review and historical FAILs. Those records are not final integration
+approval. Both Transfer SQL fences and the 43 known non-successes remain; no I8,
+Transfer activation, SQLite substitution, deployment or release follows. Final
+main merge remains conditional on the final-tree CI and independent review gates.

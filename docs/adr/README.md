@@ -2,7 +2,9 @@
 
 Read the current scope before implementation. This index describes accepted target decisions, not implemented or verified behavior.
 
-**Accepted ADR governance: [ADR 0011](0011-adr-governance.md) and [the operating policy](policy.md).** Full/Mini-ADR [templates](template.md) and [Mini template](template-mini.md) are repository files; the optional [adr-workflow skill](../../.agents/skills/adr-workflow/SKILL.md) is procedural. The policy's section 9 documents bounded pre-adoption exceptions for existing ADRs 0001–0027. ADR 0003's reviewed migration item was closed by the 2026-10-19 whole-record acceptance of ADR 0029; other items remain scoped follow-up. ADR numbering allocation watermark: **0034** (includes accepted 0032 and 0033, and proposed 0034; 0011 is not a free gap). Acceptance, merging, implementation and executed verification remain distinct.
+**Accepted ADR governance: [ADR 0011](0011-adr-governance.md) and [the operating policy](policy.md).** Full/Mini-ADR [templates](template.md) and [Mini template](template-mini.md) are repository files; the optional [adr-workflow skill](../../.agents/skills/adr-workflow/SKILL.md) is procedural. The policy's section 9 documents bounded pre-adoption exceptions for existing ADRs 0001–0027. ADR 0003's reviewed migration item was closed by the 2026-10-19 whole-record acceptance of ADR 0029; other items remain scoped follow-up. ADR numbering allocation watermark: **0034** (includes accepted 0032, 0033, and 0034; 0011 is not a free gap). Acceptance, merging, implementation and executed verification remain distinct.
+
+**Latest accepted validation workflow: [ADR 0034](0034-repository-test-and-ci-efficiency.md), accepted 2026-10-26.** Quiet evidence, resource-aware execution and immutable build reuse preserve exact failure/node reconciliation. Input content and configuration across source/sdist build contexts must bind reuse. [Adoption provenance](../implementation/adr0034-adoption-20261026.md); implementation, final-tree review and release acceptance remain distinct.
 
 **Latest accepted Context design: [ADR 0031](0031-generalized-context-resources.md), accepted 2026-10-21.** The owner accepted the complete generalized Resource/Identity/Parent design after the independently reviewed G3=A native-I7 SQL differential. The design was recorded in PR #114 on #113. Reviewed implementation through I6-C, scanner budget defenses and minimal sdist packaging is carried by PR #172 and review #174; the [main integration record](../implementation/evidence/adr0031-main-integration-20261025/README.md) records scoped verification. I7/I8, ordinary Transfer activation and full release qualification remain separate.
 
@@ -74,12 +76,11 @@ exceptions require explicit owner approval.
 | [0033](0033-minimal-product-sdist.md) | Minimal product sdist with member/size checks and direct/sdist-wheel equivalence | 2026-10-22 | Owner-accepted Level 2 Mini-ADR; preserve Git documents/evidence, all package data, ADRs 0001/0032 and checkout-based docs. Implementation/verification are separate; no merge/release/deployment. |
 | [Transport-independent Core](../transport-independent-core-adr.md) | Domain persistence and provenance independent of transport replay | 2026-10-10 | Preserved in unsuperseded scope |
 | [No Independent Publication](../phase2/no-independent-publication-adr.md) | Publication-free domain authority | 2026-10-10 | Preserved; no new generic notes/retention seal |
+| [0034](0034-repository-test-and-ci-efficiency.md) | Repository-wide validation efficiency, exact reconciliation, content-bound build reuse and isolated artifacts | 2026-10-26 | Owner-accepted Level 2 Mini-ADR; preserves ADRs 0001/0032/0033 and both Transfer fences. [Approval and bounded integration scope](../implementation/adr0034-adoption-20261026.md); final CI/review are separate gates. |
 
-## Proposed Records (this review branch only)
+## Proposed Records
 
-| ADR | Decision | Date | Current applicability |
-| --- | --- | --- | --- |
-| [0034](0034-repository-test-and-ci-efficiency.md) | Repository-wide test and CI efficiency architecture: quiet runner, token-efficient summaries, adaptive xdist budgeting, build reuse, and clean artifact boundaries | 2026-10-25 | Proposed Level 2 Mini-ADR; refines ADRs 0001, 0032, and 0033. Accompanying [architecture document](../architecture/verification-efficiency-architecture.md). |
+None. ADR 0034 was explicitly accepted by the owner on 2026-10-26 UTC.
 
 **Allocation/adoption:** ADR 0011 was explicitly adopted through [governance PR #52](https://github.com/TakashiSasaki/git-repo-db/pull/52) on 2026-10-15, after the accepted design stack was merged by PR #69. It does not renumber ADRs 0012–0027, retire still-binding historical decisions or authorize bulk migration. **Highest allocated ADR ID: 0034**. Allocation includes publicly proposed as well as accepted records; the previously stale opening 0031 watermark is reconciled here. Future allocations must inspect this watermark, Git history and live remote branches before assigning a new four-digit ID.
 
