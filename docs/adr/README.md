@@ -80,9 +80,11 @@ exceptions require explicit owner approval.
 
 ## Proposed Records
 
-None. ADR 0034 was explicitly accepted by the owner on 2026-10-26 UTC.
+| Record | Status and scope |
+| --- | --- |
+| [0035](0035-independent-documentation-workspace.md) | Proposed documentation separation; not adopted. ADR0034 remains accepted. |
 
-**Allocation/adoption:** ADR 0011 was explicitly adopted through [governance PR #52](https://github.com/TakashiSasaki/git-repo-db/pull/52) on 2026-10-15, after the accepted design stack was merged by PR #69. It does not renumber ADRs 0012–0027, retire still-binding historical decisions or authorize bulk migration. **Highest allocated ADR ID: 0034**. Allocation includes publicly proposed as well as accepted records; the previously stale opening 0031 watermark is reconciled here. Future allocations must inspect this watermark, Git history and live remote branches before assigning a new four-digit ID.
+**Allocation/adoption:** ADR 0011 was explicitly adopted through [governance PR #52](https://github.com/TakashiSasaki/git-repo-db/pull/52) on 2026-10-15, after the accepted design stack was merged by PR #69. It does not renumber ADRs 0012–0027, retire still-binding historical decisions or authorize bulk migration. **Highest allocated ADR ID: 0035**. Allocation includes publicly proposed as well as accepted records; both allocation statements include proposed0035. Future allocations must inspect this watermark, Git history and live remote branches before assigning a new four-digit ID.
 
 The [transition plan](../architecture/git-core-context-transition-plan.md) describes the redesigned implementation sequence. Old Phase 2 handoffs and accepted records remain evidence of their original decisions, subject to the explicit scoped override in ADR 0014. Neither old wording nor a passing documentation check is authority to implement an excluded file-storage path.
 

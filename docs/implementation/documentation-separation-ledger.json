@@ -16,6 +16,15 @@
       "proposed_action": "targeted edit only under implementation PR"
     },
     {
+      "path": ".github/workflows/tests.yml",
+      "sha256": "c6f037866491e3da620e807ad86492b6755764ef7f204142091260c47a5daa92",
+      "role": "mixed-boundary-control",
+      "proposed_action": "Preserve product obligations and schema-map checks; separate docs scope explicitly; no product-only full release claim",
+      "producer": "Development/product check and receipt orchestration",
+      "consumers": "scripts/ci_plan.py; scripts/ci_execute.py; schema-map machine comparison; downstream validation receipts",
+      "cutover_action": "Preserve product obligations and schema-map checks; separate docs scope explicitly; no product-only full release claim"
+    },
+    {
       "path": "docs/implementation/access-a3-routing.json",
       "sha256": "7bb543b0e83cc3f652e8aab536c6a9540def54641583c10b7a9558e70f10bdc6",
       "role": "product-verification-or-historical-source",
@@ -280,6 +289,15 @@
       "proposed_action": "candidate move after SEP1/SEP2"
     },
     {
+      "path": "mkdocs.yml",
+      "sha256": "3b94979d87ca9d6c9a77c91d74d9abd5bccfc2deaf746b2b466432c9c1c4ec5f",
+      "role": "mixed-boundary-control",
+      "proposed_action": "Move configuration responsibility to documentation/ only at SEP3; update explicit consumers; do not exclude real root inputs from backend identity",
+      "producer": "Maintained human site configuration at repository root",
+      "consumers": "scripts/build_docs_site.py; existing Pages; CI shared_inputs; ADR0034 root-file fingerprint",
+      "cutover_action": "Move configuration responsibility to documentation/ only at SEP3; update explicit consumers; do not exclude real root inputs from backend identity"
+    },
+    {
       "path": "overrides/main.html",
       "sha256": "29d6d43efd06528a1972096826f81526d6953d0a9f13647bc813bc617c685f6b",
       "role": "derived-human-documentation",
@@ -304,10 +322,28 @@
       "proposed_action": "targeted edit only under implementation PR"
     },
     {
+      "path": "scripts/check_sqlite_validation_policy.py",
+      "sha256": "2a0dde168e29a68b0bbb58fcaeb2c4e8aeaa68a940e4edcaef2e97cbaa83eae3",
+      "role": "mixed-boundary-control",
+      "proposed_action": "Retain product guard; update moved live-page scan target and fail-closed input coverage with regression",
+      "producer": "Defines live SQLite policy scan scope and findings",
+      "consumers": "Product/static policy validation; docs/site/development/index.md is explicit LIVE_DOCS input",
+      "cutover_action": "Retain product guard; update moved live-page scan target and fail-closed input coverage with regression"
+    },
+    {
       "path": "scripts/ci_dependencies.json",
       "sha256": "02b0716248a18657f19fc974ba5de2d1780d74b784bfc2d9c0228abcd37cec67",
       "role": "mixed-boundary-control",
       "proposed_action": "targeted edit only under implementation PR"
+    },
+    {
+      "path": "scripts/ci_execute.py",
+      "sha256": "05a632f5804bcb50044429cdd6e4aa322739919506846f6560df642881a80a14",
+      "role": "mixed-boundary-control",
+      "proposed_action": "Design explicit independent local/hosted product+docs aggregate; missing documentation evidence must never set full_acceptance true; preserve receipt integrity",
+      "producer": "Selected-node execution and validation manifests, including full_acceptance",
+      "consumers": "tests.yml; local/hosted release evidence/provider artifact and acceptance verification",
+      "cutover_action": "Design explicit independent local/hosted product+docs aggregate; missing documentation evidence must never set full_acceptance true; preserve receipt integrity"
     },
     {
       "path": "scripts/ci_plan.py",
@@ -326,6 +362,15 @@
       "sha256": "619328bd2fadc7bbcf2abb8b99fe9f35ebaf496c3ba1c7610232f105145146b3",
       "role": "mixed-boundary-control",
       "proposed_action": "targeted edit only under implementation PR"
+    },
+    {
+      "path": "scripts/verify_i5_offline.py",
+      "sha256": "2b0347ece3224459e15681f9d12f074e627d44f55321c85378ed647923cdef01",
+      "role": "mixed-boundary-control",
+      "proposed_action": "Explicitly split product/docs dependency and node scopes with exact replacement accounting; retain policy/runtime/wheelhouse guards; I5 evidence remains distinct from release approval",
+      "producer": "Broad offline collection/cohorts and strict node/outcome evidence",
+      "consumers": "Access broad acceptance and historical43 reconciliation; currently dev+docs required for ordinary docs tests",
+      "cutover_action": "Explicitly split product/docs dependency and node scopes with exact replacement accounting; retain policy/runtime/wheelhouse guards; I5 evidence remains distinct from release approval"
     },
     {
       "path": "tests/unit/test_build_docs_site.py",
@@ -572,5 +617,28 @@
       "path": "docs/schema-hardening/",
       "action": "retain all tracked contents; no movement or rewrite in this plan"
     }
+  ],
+  "proposed_release_contract": {
+    "ordinary_product": "independent of documentation rendering",
+    "complete_release": "conjunction of independently executed local/hosted product and documentation obligations",
+    "missing_docs": "product-only result allowed; full_acceptance must remain false",
+    "identities": [
+      "documentation_source_sha/tree",
+      "selected_product_source_sha/tree",
+      "complete_neutral_IR_sha256"
+    ],
+    "coverage": "exact old/new node replacement and assertion coverage; strict43 inherited non-successes unchanged",
+    "adoption": "proposed; explicit owner adoption required before SEP3"
+  },
+  "planned_boundary_release_tests": [
+    "relocated-live-SQLite-policy-input remains scanned; forbidden instructions rejected; missing live input fails",
+    "broken docs/missing packages do not block product gates",
+    "real SQL/contract/fingerprint faults still rejected",
+    "exact replacement-node multiset and assertion coverage; broad43 strict reconciliation",
+    "missing/failed/skipped local or hosted docs => no full_acceptance",
+    "mismatched selected source/IR/artifact evidence => no complete acceptance",
+    "separate docs/product source identities with verified selected-source provenance",
+    "docs-only no unnecessary rebuild; real root/backend/machine/unknown input invalidation retained",
+    "HTML truncated copy cannot mutate or replace complete neutral inventory"
   ]
 }
