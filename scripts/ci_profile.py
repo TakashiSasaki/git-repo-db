@@ -651,6 +651,7 @@ def run(args):
         command=command,
         wall_seconds=wall_seconds,
         exit_code=exit_code,
+        child_exit_code=exit_code,
         interrupted=exit_code < 0 or exit_code in (2, 130, 143, 137),
     )
 
@@ -781,6 +782,34 @@ def run(args):
         reconciliation=reconciliation,
     )
 
+    # Derive the effective exit status before persisting any result.
+    # A successful child must not override missing or inconsistent evidence.
+    child_exit_code = record["child_exit_code"]
+    if record.get("measurement_error"):
+        verification_exit_code = 2
+        verification_status = record["measurement_error"]
+    elif not exec_summary["reconciliation"]["consistent"]:
+        verification_exit_code = 1
+        verification_status = exec_summary["reconciliation"]["status"]
+    else:
+        verification_exit_code = 0
+        verification_status = exec_summary["reconciliation"]["status"]
+    effective_exit_code = (
+        child_exit_code or record["exit_code"] or verification_exit_code
+    )
+    record.update(
+        child_exit_code=child_exit_code,
+        verification_exit_code=verification_exit_code,
+        verification_status=verification_status,
+        verified=effective_exit_code == 0,
+        exit_code=effective_exit_code,
+    )
+    exec_summary.update(
+        exit_code=effective_exit_code,
+        child_exit_code=child_exit_code,
+        verification_exit_code=verification_exit_code,
+    )
+
     # Persist immutable invocation files in inv_dir
     fail_index_file.write_text(json.dumps(failure_index, indent=2) + "\n")
     summary_file.write_text(json.dumps(exec_summary, indent=2) + "\n")
@@ -824,36 +853,11 @@ def run(args):
         with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as summary:
             summary.write(report)
 
-    # Derived verification status and exit code
-    child_exit = record.get("child_exit_code", record.get("exit_code", 0))
-    record["child_exit_code"] = child_exit
-
-    verification_exit_code = 0
-    if not exec_summary.get("reconciliation", {}).get("consistent", True):
-        verification_exit_code = 1
-        record["verified"] = False
-        record["verification_status"] = exec_summary.get("reconciliation", {}).get(
-            "status", "INCONSISTENT"
-        )
-    elif record.get("measurement_error"):
-        verification_exit_code = 2
-        record["verified"] = False
-        record["verification_status"] = record["measurement_error"]
-    else:
-        record["verified"] = child_exit == 0
-        record["verification_status"] = exec_summary.get("reconciliation", {}).get(
-            "status", "OK"
-        )
-
-    record["verification_exit_code"] = verification_exit_code
-
     if quiet:
         summary_text = format_terminal_summary(record, exec_summary, failure_index)
         print(summary_text, end="")
 
-    if child_exit != 0:
-        return child_exit
-    return verification_exit_code
+    return effective_exit_code
 
 
 def profile_focused(args):
