@@ -1,0 +1,6 @@
+{
+  "source_identity_unchanged": true,
+  "real_builder_calls": 1,
+  "result": "RuntimeError: Command failed (2): ['uv', 'build', '--offline', '--no-index', '--find-links', '<review-worktree>/artifacts/wheelhouse', '--wheel', '--out-dir', PosixPath('<review-scratch>')]\n\nerror: Failed to parse: `<review-scratch>`\n  cause: TOML parse error at line 1, column 5\n           |\n         1 | not valid TOML\n           |     ^\n         key with no value, expected `=`\n",
+  "original_reused_after_removal": true
+}

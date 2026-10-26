@@ -1,0 +1,5 @@
+{
+  "fingerprint_equal": true,
+  "cached_artifacts_reused": true,
+  "fresh_build": "ValueError: unexpected member: .hgignore"
+}

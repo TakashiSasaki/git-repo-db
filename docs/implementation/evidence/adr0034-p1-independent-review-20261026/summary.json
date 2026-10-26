@@ -1,0 +1,113 @@
+{
+  "repair_verdict": "PASS",
+  "integration_gate": "BLOCKED: exact-head Access CI failed dependency preparation",
+  "commit": "55759a2ac02512a17f4ed637c49caccf34ff4763",
+  "tree": "7a28c0626a5b9ca0da613d224b4f939051f24d3d",
+  "base": "049cc13b129223239cf987590a70c1394e035524",
+  "closed_findings": [
+    "R192-01",
+    "R192-02"
+  ],
+  "new_code_findings": [],
+  "independent_tests": {
+    "focused_xdist_passed": 169,
+    "packaging_xdist_passed": 4,
+    "exit_codes": [
+      0,
+      0
+    ],
+    "workers": 2,
+    "shared_normal_build_receipts": 1,
+    "retained_counterexamples": "Both .hgignore and XDG system config now invalidate, refuse warm/fresh builds, restore reuse after removal",
+    "real_sdist_context": "Cache-local invalid uv.toml invokes real builder and fails in extracted-sdist wheel build; original reuse restored after removal"
+  },
+  "privacy_and_portability": "Configuration/env contents remain digest-only in receipts; Linux uv0.12.19 scope explicit, ambiguous contexts reject; identical supported inputs retain shared reuse",
+  "ci": {
+    "40282065987": "success at fixed HEAD",
+    "40282065961": {
+      "status": "completed",
+      "conclusion": "failure",
+      "cause": "urllib URLError SSL UNEXPECTED_EOF_WHILE_READING during prepare_wheelhouse.py; manifest absent downstream; Access preflight/scoped acceptance skipped",
+      "merge_commit": "c1394bb494a678fce1da41d86ea6149afb87a4ba",
+      "merge_parents": [
+        "049cc13b129223239cf987590a70c1394e035524",
+        "55759a2ac02512a17f4ed637c49caccf34ff4763"
+      ],
+      "effective_tree": "7a28c0626a5b9ca0da613d224b4f939051f24d3d",
+      "indexed_members_verified": 38,
+      "independent_strict_comparator": {
+        "exit_code": 0,
+        "nodes": 1851,
+        "inherited_non_successes": 43,
+        "new_regressions": 0,
+        "changed_failures": 0,
+        "missing": 0,
+        "unexpected": 0,
+        "unexpected_skips": 0,
+        "pytest_exit": 1
+      }
+    }
+  },
+  "evidence_notes": [
+    "Raw CI preserved; only verified job and step tab columns removed for strict receipt extraction",
+    "Reviewer initial context probe assumed identical cross-process cache identity and failed before exercise; retained separately, corrected same-process real-build probe passed",
+    "Author input hashes matched and compressed JUnit counts checked",
+    "No author edits, product/fence/comparator changes, publication or merge; final integration review separate"
+  ],
+  "publication_scope": "Sanitized independent review evidence only; no source changes or final integration approval. Same-source CI retry is not assessed here.",
+  "history": [
+    {
+      "finding": "R192-01",
+      "severity": "P1",
+      "verdict": "FAIL",
+      "head": "4dd03f4520ed30d468222623027be513f53b7417",
+      "tree": "519c7cbf95382893023fdfea64a5d628f09e04aa",
+      "reproduction": ".hgignore addition did not invalidate; warm cache returned artifacts, fresh build refused",
+      "closed_at": "aa639262deb8c1243741bb2643de2e345d19bf78"
+    },
+    {
+      "finding": "R192-02",
+      "severity": "P1",
+      "verdict": "FAIL",
+      "head": "aa639262deb8c1243741bb2643de2e345d19bf78",
+      "tree": "4beaf56d86453f1902afe35e9a4e006b316fd392",
+      "reproduction": "XDG_CONFIG_DIRS system configuration addition did not invalidate; warm cache returned artifacts, fresh build refused",
+      "closed_at": "55759a2ac02512a17f4ed637c49caccf34ff4763"
+    }
+  ],
+  "historical_review_probes": {
+    "initial_sdist_context_probe": "Reviewer assumed cross-process identical cache identity; assertion failed before the intended exercise. Corrected probe primes and exercises within one process; real sdist-stage refusal and restored reuse passed.",
+    "initial_runtime_setup": "First earlier-review bootstrap failed on read-only uv cache; preserved locally. Workspace-cache retry passed; no SQLite substitution."
+  },
+  "raw_source_hashes": {
+    "review-summary.json": "d489c2b74396ea494106aa5b9060ed8f1cc034880a1bb4d2a56e80f825ad278f",
+    "review192c-access-filtered.log.gz": "81d4c9dea6207b5fc7a3b328966ed454d5d26a9e0ced9df908e20abde295db19",
+    "review192c-access-normalized.log.gz": "02cb5ae9d89cd63b15b729bf49db5305c81f7a66f08b726898823264536ebacb",
+    "review192c-access-raw.log.gz": "d7d314315707d10193e8eb7a9e6d65dfbdc2a79dd5e8bbb95fc6b1420609ba9f",
+    "review192c-adversarial.log": "e716730b9453e3f69db1a8191873d1da2097822f91d256d279af1f7a23bee09d",
+    "review192c-context-initial-assumption.log": "13da9b4f02c688546718935ee11cf68853b464414bf763e26d264d34e59798ea",
+    "review192c-context2.log": "abb45bafa82cec5ff7d1a4d0ee6f07c60e7af3744e4aa1e74e454655f6bf95bc",
+    "review192c-focused.log": "eb35c921178c4e3f624cf6c4c368c449f1c356c38a8e9eadf521c1da4719422c",
+    "review192c-focused.xml": "d617bf13e1c7d598886a151ce3e1a13d20bb792614f0a0c5fdcd0f04d98f8705",
+    "review192c-independent-reconciliation.json": "7a82682105f5cbe80377931b4b88402fb0dc935fc894bb36768baca3ec393b96",
+    "review192c-independent-reconciliation.log": "b63947f1e2ec80f7f0606638f6de1fe965f177db9c0eec31dfe27ed46d20f5dd",
+    "review192c-packaging.log": "3befa4161452efb2dd3ab852bb0ea0378a9dee9ec5272c351e0dfd1a2d0e25da",
+    "review192c-packaging.xml": "ef76e7e38766f0330a18eb519f80f402194a2eb2c63a361f4a59e8469afddcf4",
+    "review192c_adversarial.py": "c6ba37067435c21d06295b81928186957da6b9f31ebf509baf1d2513c55d6b9d",
+    "review192c_context.py": "5fa22abfe8c0369092792b05aeb4e8872f38b87618d1eed5711ee4bd41b7c77a",
+    "review192c_context2.py": "634be8fa8b3f6e5756d65f8f1dfe1b71dbe619ca7d105e68d8184af36aadd7ac",
+    "runtime-setup-receipt.json": "a0f9c1a01db71c379e20313a5dc613a412de048f0d8e818dd5df4574a211bc2f",
+    "r192-01-results": "d1c586359afa0c672520653b731805d8e48453d0de7b6e9bed17a18f3b01f9ef",
+    "r192-02-results": "f3d55180869d97832204bc4509bf513d0205383ce40e37ebebc47f586d681311"
+  },
+  "tested_inputs_sha256": {
+    "tests/support/distributions.py": "f713474fc8680dece928f1840790f19a96370c40a80a15779ae58a9668ac8582",
+    "tests/packaging/test_p1_distribution.py": "50abf2b28f29a637b0515a2334d99bbc923b2a0c1e4e7fe26f6a9d322df0700b",
+    "tests/packaging/test_distribution.py": "34780b0130c2044707ec35cb86574f7f514b466987b72fcce3855e0301959d59",
+    "tests/packaging/test_sdist_hardening.py": "fa313b853fec2037397b3f9f4098f9ed1d8782dc282d3815a5a684c8b8d18eaa",
+    "tests/unit/test_build_input_identity.py": "7c1e12b40bbe9fb853974fa4297e82479c2b87663ce0bf1be768b7f834f0e230",
+    "tests/unit/test_uv_build_configuration.py": "134dcc669e0bf75bf194a3a8a208c23472495ec37a7bef321144e8efee9ce74d",
+    "tests/unit/test_test_efficiency.py": "ec3402feae73ca654d98fa93e4d97ed9768e9c0364e5ed8173304c42986e2fc7",
+    ".agents/skills/ci-final-tree-verification/SKILL.md": "14d8c44e7b7d7a31ce6cd32f1603c08af7371431b89fda29ba0acce389a495b5"
+  }
+}
