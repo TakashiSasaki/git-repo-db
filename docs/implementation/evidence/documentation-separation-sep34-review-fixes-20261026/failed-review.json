@@ -1,0 +1,19 @@
+{
+  "reviewed_head": "38dbef322b34769322f51f93b16d5729a6c37777",
+  "reviewed_tree": "e6664c3dbbcb99313078f7ac5d37b52d9570e0be",
+  "independent_verdict": "scoped FAIL",
+  "source": "parent-delegated independent findings; original reviewer executor files not assumed available",
+  "findings": [
+    {
+      "id": "SEP34-01",
+      "priority": "P1",
+      "finding": "Unchecked documentation-inputs.json destination followed a symlink and overwrote disposable outside product-state sentinel before freshness checking."
+    },
+    {
+      "id": "SEP34-02",
+      "priority": "P2",
+      "finding": "Executed audit_publication_free.py omitted from producer and repeated verifier input inventory; uncommitted helper changed exported IR under old pin."
+    }
+  ],
+  "author_status": "corrections implemented; independent re-review pending; old CI success is not approval"
+}

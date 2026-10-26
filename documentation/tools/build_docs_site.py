@@ -28,6 +28,7 @@ from urllib.parse import unquote, urlparse
 ROOT = Path(__file__).resolve().parents[2]
 DOCS_ROOT = ROOT / "documentation"
 sys.path.insert(0, str(DOCS_ROOT))
+sys.path.insert(0, str(ROOT))
 
 DOCS_SITE_DIR = DOCS_ROOT / "content"
 DOCS_SCHEMA_DIR = DOCS_ROOT / "schema"
@@ -768,8 +769,11 @@ def main() -> int:
     # Resolve/validate all actual destinations before any cleanup, stage or build.
     cfg = validated_config(MKDOCS_CONFIG_FILE, args.staging_dir, args.output_dir)
     args.staging_dir, args.output_dir = Path(cfg["docs_dir"]), Path(cfg["site_dir"])
+    from scripts.verification_outputs import private_path, write_private_json
+
     from tools.provenance import input_record
 
+    metadata_path = private_path(ROOT, IR_PATH.parent / "documentation-inputs.json")
     record = input_record(
         ROOT,
         args.documentation_source,
@@ -777,9 +781,7 @@ def main() -> int:
         IR_PATH.with_name("producer.json"),
         IR_PATH,
     )
-    (IR_PATH.parent / "documentation-inputs.json").write_text(
-        json.dumps(record, indent=2) + "\n"
-    )
+    write_private_json(ROOT, metadata_path, record)
 
     print("=================================================================")
     print(" git-repo-db Developer Documentation Site Builder")

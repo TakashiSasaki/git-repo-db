@@ -91,20 +91,20 @@ def checked_receipt(path, context, product, ir_hash, root):
         or not producer.get("input_sha256")
     ):
         raise DocumentationGap("Missing matching producer input evidence")
-    expected_inputs = {
-        name
-        for name in git(root, "ls-tree", "-r", "--name-only", product["commit"])
-        .decode()
-        .splitlines()
-        if name.startswith("src/")
-        or name in {"scripts/schema_inventory.py", "pyproject.toml", "uv.lock"}
-    }
-    if set(producer["input_sha256"]) != expected_inputs or not {
-        "scripts/schema_inventory.py",
-        "pyproject.toml",
-        "uv.lock",
-    }.issubset(expected_inputs):
+    from scripts.schema_inventory import producer_input_names
+
+    expected_inputs = set(producer_input_names(root, product["commit"]))
+    if set(producer["input_sha256"]) != expected_inputs:
         raise DocumentationGap("Complete producer input inventory missing or changed")
+    executed = producer.get("executed_python_inputs")
+    if (
+        not isinstance(executed, list)
+        or not executed
+        or len(executed) != len(set(executed))
+        or not set(executed).issubset(expected_inputs)
+        or "scripts/audit_publication_free.py" not in executed
+    ):
+        raise DocumentationGap("Executed producer closure missing or changed")
     for name, digest in producer["input_sha256"].items():
         if (
             not isinstance(name, str)

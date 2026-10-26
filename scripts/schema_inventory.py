@@ -744,46 +744,110 @@ def validate_functional_groups_consistency() -> list[str]:
     return errors
 
 
+PRODUCER_CONTROLS = frozenset(
+    {
+        "scripts/schema_inventory.py",
+        "scripts/audit_publication_free.py",
+        "scripts/verification_outputs.py",
+        "pyproject.toml",
+        "uv.lock",
+    }
+)
+
+
+def producer_input_names(root: Path, source: str) -> list[str]:
+    """Conservative committed product/control closure, shared with reconciliation."""
+    import subprocess
+
+    names = (
+        subprocess.check_output(
+            ["git", "-C", str(root), "ls-tree", "-rz", "--name-only", source]
+        )
+        .decode()
+        .split("\0")
+    )
+    selected = {
+        p
+        for p in names
+        if p.startswith("src/")
+        or p.startswith("scripts/")
+        and p.endswith(".py")
+        or p in PRODUCER_CONTROLS
+    }
+    if not PRODUCER_CONTROLS.issubset(selected):
+        raise ValueError("Required producer control inputs missing")
+    return sorted(selected)
+
+
+def verify_producer_bytes(root: Path, source: str, inputs: list[str]) -> dict[str, str]:
+    import subprocess
+
+    result = {}
+    for name in inputs:
+        path = root / name
+        if any(p.is_symlink() for p in (path, *path.parents)):
+            raise ValueError("Linked producer input refused: " + name)
+        committed = subprocess.check_output(
+            ["git", "-C", str(root), "show", source + ":" + name]
+        )
+        if path.read_bytes() != committed:
+            raise ValueError("Producer input differs from selected source: " + name)
+        result[name] = hashlib.sha256(committed).hexdigest()
+    return result
+
+
+def executed_producer_inputs(root: Path, inputs: list[str]) -> list[str]:
+    """Unknown repository-local executable inputs fail before publication."""
+    executed = set()
+    root = root.resolve()
+    for name, module in tuple(sys.modules.items()):
+        filename = getattr(module, "__file__", None)
+        if not filename:
+            continue
+        path = Path(filename).resolve()
+        if path.is_relative_to(root) and not path.is_relative_to(root / ".venv"):
+            relative = path.relative_to(root).as_posix()
+            if relative not in inputs:
+                raise ValueError(
+                    "Executed producer input outside bound inventory: " + relative
+                )
+            executed.add(relative)
+        elif name == "repo_catalog" or name.startswith(("repo_catalog.", "scripts.")):
+            raise ValueError(
+                "Producer module loaded outside selected checkout: " + name
+            )
+    return sorted(executed)
+
+
 def export_inventory(output: Path, source: str) -> dict[str, Any]:
     """Export complete IR from this exact committed producer checkout."""
     import json
+    import os
     import platform
     import subprocess
 
     def git(*args: str) -> bytes:
         return subprocess.check_output(["git", "-C", str(ROOT), *args])
 
-    destination = output.absolute()
-    allowed = ROOT / "documentation" / ".build" / "inputs"
-    if any(p.is_symlink() for p in (destination, *destination.parents)):
-        raise ValueError("Linked producer output refused")
-    if (
-        destination.resolve() != allowed.resolve()
-        and allowed.resolve() not in destination.resolve().parents
-    ):
+    from scripts.verification_outputs import (
+        private_path,
+        write_private,
+        write_private_json,
+    )
+
+    output = Path(os.path.abspath(output))
+    allowed = ROOT / "documentation/.build/inputs"
+    if output != allowed and allowed not in output.parents:
         raise ValueError("Producer output must remain in documentation/.build/inputs")
-    if any(
-        (destination / name).is_symlink()
-        for name in ("inventory.json", "producer.json")
-    ):
-        raise ValueError("Linked producer output file refused")
-    output = destination
+    # Preflight both sinks before reading/executing inputs or publishing either.
+    inventory_path = private_path(ROOT, output / "inventory.json")
+    manifest_path = private_path(ROOT, output / "producer.json")
     if not re.fullmatch(r"[0-9a-f]{40}", source):
         raise ValueError("Explicit full product source SHA required")
     if git("rev-parse", "HEAD").decode().strip() != source:
         raise ValueError("Producer must execute the selected product checkout")
-    inputs = [
-        p
-        for p in git("ls-files", "-z").decode().split("\0")
-        if p.startswith("src/")
-        or p in {"scripts/schema_inventory.py", "pyproject.toml", "uv.lock"}
-    ]
-    hashes = {}
-    for path in inputs:
-        committed = git("show", source + ":" + path)
-        if (ROOT / path).read_bytes() != committed:
-            raise ValueError("Producer input differs from selected source: " + path)
-        hashes[path] = hashlib.sha256(committed).hexdigest()
+    inputs = producer_input_names(ROOT, source)
+    hashes = verify_producer_bytes(ROOT, source, inputs)
     inventory = introspect_all()
     errors = (
         validate_logical_dependencies(inventory)
@@ -791,6 +855,10 @@ def export_inventory(output: Path, source: str) -> dict[str, Any]:
     )
     if errors:
         raise ValueError("Invalid neutral inventory: " + "; ".join(errors))
+    executed = executed_producer_inputs(ROOT, inputs)
+    # Control imports and validators can mutate files; recheck after execution.
+    if verify_producer_bytes(ROOT, source, inputs) != hashes:
+        raise ValueError("Producer inputs changed during execution")
     raw = (json.dumps(inventory, separators=(",", ":")) + "\n").encode()
     manifest = {
         "schema_version": 1,
@@ -800,14 +868,14 @@ def export_inventory(output: Path, source: str) -> dict[str, Any]:
         },
         "ir_sha256": hashlib.sha256(raw).hexdigest(),
         "input_sha256": hashes,
+        "executed_python_inputs": executed,
         "runtime": {
             "python": platform.python_version(),
             "sqlite": sqlite3.sqlite_version,
         },
     }
-    output.mkdir(parents=True, exist_ok=True)
-    (output / "inventory.json").write_bytes(raw)
-    (output / "producer.json").write_text(json.dumps(manifest, indent=2) + "\n")
+    write_private(ROOT, inventory_path, raw)
+    write_private_json(ROOT, manifest_path, manifest)
     return manifest
 
 

@@ -22,7 +22,13 @@ def evidence(tmp_path):
     source = root / "src/repo_catalog/source.sql"
     source.parent.mkdir(parents=True)
     source.write_text("synthetic SQL")
-    for name in ("scripts/schema_inventory.py", "pyproject.toml", "uv.lock"):
+    for name in (
+        "scripts/schema_inventory.py",
+        "scripts/audit_publication_free.py",
+        "scripts/verification_outputs.py",
+        "pyproject.toml",
+        "uv.lock",
+    ):
         path = root / name
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("synthetic committed producer input")
@@ -31,6 +37,8 @@ def evidence(tmp_path):
         for name in (
             "src/repo_catalog/source.sql",
             "scripts/schema_inventory.py",
+            "scripts/audit_publication_free.py",
+            "scripts/verification_outputs.py",
             "pyproject.toml",
             "uv.lock",
         )
@@ -59,6 +67,11 @@ def evidence(tmp_path):
             "product_source": product,
             "ir_sha256": sha(ir),
             "input_sha256": input_hashes,
+            "executed_python_inputs": [
+                "scripts/schema_inventory.py",
+                "scripts/audit_publication_free.py",
+                "scripts/verification_outputs.py",
+            ],
         }
     ).encode()
     receipts = []
@@ -175,6 +188,7 @@ def test_independent_matching_documentation_obligations_can_complete_conjunction
         "changed-command",
         "failed-command",
         "missing-producer-input",
+        "missing-executed-control",
     ],
 )
 def test_missing_failed_changed_or_preview_evidence_cannot_complete_release(
@@ -202,10 +216,13 @@ def test_missing_failed_changed_or_preview_evidence_cannot_complete_release(
             (path.parent / "tests.xml").write_text("altered evidence")
         elif change == "changed-command":
             value["commands"][2][4] = "documentation/tests/one.py"
-        elif change == "missing-producer-input":
+        elif change in {"missing-producer-input", "missing-executed-control"}:
             producer_path = path.parent / "producer.json"
             producer = json.loads(producer_path.read_text())
-            producer["input_sha256"].pop("uv.lock")
+            if change == "missing-producer-input":
+                producer["input_sha256"].pop("scripts/audit_publication_free.py")
+            else:
+                producer.pop("executed_python_inputs")
             producer_path.write_text(json.dumps(producer))
             value["artifact_sha256"]["producer.json"] = sha(producer_path.read_bytes())
             value["inputs"]["producer_manifest_sha256"] = sha(

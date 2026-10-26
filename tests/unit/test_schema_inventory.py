@@ -98,3 +98,16 @@ def test_inventory_export_refuses_unsafe_output_before_writing(tmp_path):
     with pytest.raises(ValueError, match="output must remain"):
         schema_inventory.export_inventory(target, "0" * 40)
     assert marker.read_text() == "unchanged sentinel"
+
+
+def test_inventory_export_cannot_overwrite_verification_attempt_inputs(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setattr(schema_inventory, "ROOT", tmp_path)
+    output = tmp_path / "documentation/.build/verification/attempt-retained"
+    output.mkdir(parents=True)
+    marker = output / "inventory.json"
+    marker.write_text("retained evidence")
+    with pytest.raises(ValueError, match="output must remain"):
+        schema_inventory.export_inventory(output, "0" * 40)
+    assert marker.read_text() == "retained evidence"

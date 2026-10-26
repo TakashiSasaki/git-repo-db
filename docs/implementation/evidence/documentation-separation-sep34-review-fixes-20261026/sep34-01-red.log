@@ -1,0 +1,220 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+____ test_builder_refuses_unsafe_private_manifest_before_any_write[symlink] ____
+
+tmp_path = PosixPath('/tmp/pytest-of-agent/pytest-56/test_builder_refuses_unsafe_pr0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fdd78719f10>
+attack = 'symlink'
+
+    @pytest.mark.parametrize("attack", ["symlink", "hardlink", "catalog"])
+    def test_builder_refuses_unsafe_private_manifest_before_any_write(
+        tmp_path, monkeypatch, attack
+    ):
+        root = tmp_path / "repository"
+        docs = root / "documentation"
+        docs.mkdir(parents=True)
+        (root / ".gitignore").write_text("documentation/.build/\ndocumentation/site/\n")
+        config = docs / "mkdocs.yml"
+        config.write_text(
+            "site_name: fixture\ndocs_dir: .build/staging/site\nsite_dir: site\n"
+        )
+        product = root / "schema.sql"
+        product.write_text("synthetic committed schema")
+    
+        def git(*args):
+            return subprocess.check_output(["git", "-C", str(root), *args]).decode().strip()
+    
+        git("init", "-q")
+        git("config", "user.name", "Synthetic output fixture")
+        git("config", "user.email", "fixture@example.invalid")
+        git("add", ".")
+        git("commit", "-qm", "pinned synthetic inputs")
+        source = git("rev-parse", "HEAD")
+        tree = git("rev-parse", "HEAD^{tree}")
+        inputs = docs / ".build/inputs"
+        inputs.mkdir(parents=True)
+        ir = inputs / "inventory.json"
+        ir.write_text('{"complete":"synthetic IR"}')
+        producer = inputs / "producer.json"
+        producer.write_text(
+            json.dumps(
+                {
+                    "schema_version": 1,
+                    "product_source": {"commit": source, "tree": tree},
+                    "ir_sha256": hashlib.sha256(ir.read_bytes()).hexdigest(),
+                    "input_sha256": {
+                        "schema.sql": hashlib.sha256(product.read_bytes()).hexdigest()
+                    },
+                }
+            )
+        )
+        assert (
+            input_record(root, source, source, producer, ir)["selected_product_source"][
+                "commit"
+            ]
+            == source
+        )
+        outside = tmp_path / "product-state"
+        outside.write_text("unchanged sentinel")
+        target = inputs / "documentation-inputs.json"
+        if attack == "symlink":
+            target.symlink_to(outside)
+        elif attack == "hardlink":
+            __import__("os").link(outside, target)
+        else:
+            target.write_bytes(b"SQLite format 3\x00" + b"synthetic catalog")
+        before = target.read_bytes()
+        for name, value in {
+            "ROOT": root,
+            "DOCS_ROOT": docs,
+            "MKDOCS_CONFIG_FILE": config,
+            "IR_PATH": ir,
+        }.items():
+            monkeypatch.setattr(builder, name, value)
+        args = SimpleNamespace(
+            staging_dir=docs / ".build/staging/site",
+            output_dir=docs / "site",
+            product_source=source,
+            documentation_source=source,
+            clean=True,
+            no_mermaid=True,
+            serve=False,
+        )
+        monkeypatch.setattr(builder, "parse_args", lambda: args)
+        monkeypatch.setattr(
+            builder,
+            "check_schema_freshness",
+            lambda: pytest.fail(
+                "freshness must not run before private destination refusal"
+            ),
+        )
+        try:
+            with pytest.raises(ValueError):
+>               builder.main()
+
+documentation/tests/test_private_metadata.py:98: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+documentation/tools/build_docs_site.py:789: in main
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+>       lambda: pytest.fail(
+            "freshness must not run before private destination refusal"
+        ),
+    )
+E   Failed: freshness must not run before private destination refusal
+
+documentation/tests/test_private_metadata.py:92: Failed
+
+During handling of the above exception, another exception occurred:
+
+tmp_path = PosixPath('/tmp/pytest-of-agent/pytest-56/test_builder_refuses_unsafe_pr0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fdd78719f10>
+attack = 'symlink'
+
+    @pytest.mark.parametrize("attack", ["symlink", "hardlink", "catalog"])
+    def test_builder_refuses_unsafe_private_manifest_before_any_write(
+        tmp_path, monkeypatch, attack
+    ):
+        root = tmp_path / "repository"
+        docs = root / "documentation"
+        docs.mkdir(parents=True)
+        (root / ".gitignore").write_text("documentation/.build/\ndocumentation/site/\n")
+        config = docs / "mkdocs.yml"
+        config.write_text(
+            "site_name: fixture\ndocs_dir: .build/staging/site\nsite_dir: site\n"
+        )
+        product = root / "schema.sql"
+        product.write_text("synthetic committed schema")
+    
+        def git(*args):
+            return subprocess.check_output(["git", "-C", str(root), *args]).decode().strip()
+    
+        git("init", "-q")
+        git("config", "user.name", "Synthetic output fixture")
+        git("config", "user.email", "fixture@example.invalid")
+        git("add", ".")
+        git("commit", "-qm", "pinned synthetic inputs")
+        source = git("rev-parse", "HEAD")
+        tree = git("rev-parse", "HEAD^{tree}")
+        inputs = docs / ".build/inputs"
+        inputs.mkdir(parents=True)
+        ir = inputs / "inventory.json"
+        ir.write_text('{"complete":"synthetic IR"}')
+        producer = inputs / "producer.json"
+        producer.write_text(
+            json.dumps(
+                {
+                    "schema_version": 1,
+                    "product_source": {"commit": source, "tree": tree},
+                    "ir_sha256": hashlib.sha256(ir.read_bytes()).hexdigest(),
+                    "input_sha256": {
+                        "schema.sql": hashlib.sha256(product.read_bytes()).hexdigest()
+                    },
+                }
+            )
+        )
+        assert (
+            input_record(root, source, source, producer, ir)["selected_product_source"][
+                "commit"
+            ]
+            == source
+        )
+        outside = tmp_path / "product-state"
+        outside.write_text("unchanged sentinel")
+        target = inputs / "documentation-inputs.json"
+        if attack == "symlink":
+            target.symlink_to(outside)
+        elif attack == "hardlink":
+            __import__("os").link(outside, target)
+        else:
+            target.write_bytes(b"SQLite format 3\x00" + b"synthetic catalog")
+        before = target.read_bytes()
+        for name, value in {
+            "ROOT": root,
+            "DOCS_ROOT": docs,
+            "MKDOCS_CONFIG_FILE": config,
+            "IR_PATH": ir,
+        }.items():
+            monkeypatch.setattr(builder, name, value)
+        args = SimpleNamespace(
+            staging_dir=docs / ".build/staging/site",
+            output_dir=docs / "site",
+            product_source=source,
+            documentation_source=source,
+            clean=True,
+            no_mermaid=True,
+            serve=False,
+        )
+        monkeypatch.setattr(builder, "parse_args", lambda: args)
+        monkeypatch.setattr(
+            builder,
+            "check_schema_freshness",
+            lambda: pytest.fail(
+                "freshness must not run before private destination refusal"
+            ),
+        )
+        try:
+            with pytest.raises(ValueError):
+                builder.main()
+        finally:
+>           assert outside.read_text() == "unchanged sentinel"
+E           assert '{\n  "schema...99"\n  }\n}\n' == 'unchanged sentinel'
+E             
+E             - unchanged sentinel
+E             + {
+E             +   "schema_version": 1,
+E             +   "scope": "documentation-input-consistency-only",
+E             +   "documentation_source": {
+E             +     "commit": "5221c2353d726a2c4b47122992736dc6ce502201",...
+E             
+E             ...Full output truncated (12 lines hidden), use '-vv' to show
+
+documentation/tests/test_private_metadata.py:100: AssertionError
+----------------------------- Captured stdout call -----------------------------
+=================================================================
+ git-repo-db Developer Documentation Site Builder
+=================================================================
+=========================== short test summary info ============================
+FAILED documentation/tests/test_private_metadata.py::test_builder_refuses_unsafe_private_manifest_before_any_write[symlink]
+1 failed in 0.09s

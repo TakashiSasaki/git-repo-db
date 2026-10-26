@@ -4,18 +4,16 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-import json
 import os
-import shutil
 import subprocess
 import sys
-import tempfile
 import xml.etree.ElementTree as ET
 from collections import Counter
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "documentation"))
+sys.path.insert(0, str(ROOT))
 from tools.build_docs_site import verify_documentation_checkout  # noqa: E402
 from tools.provenance import input_record  # noqa: E402
 
@@ -39,15 +37,24 @@ def main() -> int:
         inputs / "producer.json",
         inputs / "inventory.json",
     )
-    base = ROOT / "documentation/.build/verification"
-    output = base
-    if any(p.is_symlink() for p in (output, *output.parents)):
-        raise ValueError("Linked evidence directory refused")
-    output.mkdir(parents=True, exist_ok=True)
-    output = Path(tempfile.mkdtemp(prefix="attempt-", dir=base))
-    receipt = output / "documentation-receipt.json"
-    # Invalidate a previous success before any new command; do not leave stale evidence.
-    receipt.unlink(missing_ok=True)
+    from scripts.verification_outputs import (
+        private_attempt,
+        private_log,
+        private_path,
+        write_private,
+        write_private_json,
+    )
+
+    output = private_attempt(ROOT)
+    receipt = private_path(ROOT, output / "documentation-receipt.json")
+    # Every child/copy destination is preflighted before commands can write.
+    for name in (
+        "tests.xml",
+        "inventory.json",
+        "producer.json",
+        *[f"command-{i}.log" for i in range(6)],
+    ):
+        private_path(ROOT, output / name)
     commands = [
         [
             sys.executable,
@@ -94,7 +101,7 @@ def main() -> int:
         ]
     )
     for i, command in enumerate(commands):
-        with (output / f"command-{i}.log").open("w") as stream:
+        with private_log(ROOT, output / f"command-{i}.log") as stream:
             result = subprocess.run(
                 command, cwd=ROOT, stdout=stream, stderr=subprocess.STDOUT
             )
@@ -130,7 +137,7 @@ def main() -> int:
     ):
         raise ValueError("Documentation collection/execution reconciliation failed")
     for name in ("inventory.json", "producer.json"):
-        shutil.copyfile(inputs / name, output / name)
+        write_private(ROOT, output / name, (inputs / name).read_bytes())
     paths = [
         "tests.xml",
         "inventory.json",
@@ -163,7 +170,7 @@ def main() -> int:
         "documentation_lock_sha256": digest(ROOT / "documentation/uv.lock"),
         "full_acceptance": False,
     }
-    receipt.write_text(json.dumps(result, indent=2) + "\n")
+    write_private_json(ROOT, receipt, result)
     print(
         f"Documentation {result['build_mode']}: {len(nodes)} nodes, exact collection/JUnit; not complete product+docs release acceptance"
     )
