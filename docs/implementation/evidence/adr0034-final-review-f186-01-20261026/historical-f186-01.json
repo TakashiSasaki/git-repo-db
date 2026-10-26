@@ -1,0 +1,25 @@
+{
+  "finding": "F186-01",
+  "severity": "P2",
+  "verdict": "FAIL / HOLD_MAIN_MERGE",
+  "target_commit": "af32cf593060beecb1689e4b37d27473bfb9edaf",
+  "target_tree": "4a55d1e9e000a40633e3c987db5d6b1147ca4537",
+  "source": "Independent final review handed off by parent on 2026-10-26 UTC",
+  "counterexample": {
+    "total_gib": 16,
+    "available_gib": 1,
+    "cpus": 8,
+    "nodes": 200,
+    "memory_per_worker_mib": 350,
+    "expected_workers": 2,
+    "observed_old_workers": 8
+  },
+  "cause": "MemTotal precedes MemAvailable in normal /proc/meminfo ordering; parser returned before reaching available memory",
+  "old_ci": {
+    "development": 40285286116,
+    "access": 40285286113,
+    "conclusions": "success; valid for old source only"
+  },
+  "other_review_checks": "ancestry/adoption and old-tree CI reconciliation were coherent; these do not approve new source",
+  "resolution_status": "author-corrected; independent final re-review pending"
+}

@@ -1,0 +1,30 @@
+{
+  "head": "4dd03f4520ed30d468222623027be513f53b7417",
+  "tree": "519c7cbf95382893023fdfea64a5d628f09e04aa",
+  "run": 40277819487,
+  "conclusion": "success",
+  "binding": {
+    "head": "ee46ee79550f99638c4477d8ac3c49d11b8373d7",
+    "run_attempt": "1",
+    "run_id": "40277819487",
+    "tree": "519c7cbf95382893023fdfea64a5d628f09e04aa"
+  },
+  "verified_receipt_members": 106,
+  "regression": {
+    "acceptance_verdict": "PASSED",
+    "current_nodes": 1851,
+    "expected_nodes": 1851,
+    "pytest_exit_code": 1,
+    "pytest_exit_status": "RECONCILED_FAILURES",
+    "inherited_non_successes_count": 43,
+    "new_regressions_count": 0,
+    "changed_failures_count": 0,
+    "unexpected_skips_count": 0,
+    "missing_nodes_count": 0,
+    "unexpected_nodes_count": 0,
+    "blocking_violations": []
+  },
+  "independent_review": "FAIL: R192-01/P1; passing CI does not clear missing backend-input identity",
+  "log_sha256": "4624bfe0d06b20a5d0f637316d9b1d58699877551311929d44386cd21ac85d79",
+  "retrieval": "gh run view --log; selected receipt step by its exact job/step tab columns; preserved timestamp and payload; existing extractor verified all 106 indexed members. Raw job-log redirect to Azure Blob returned Forbidden; no bypass attempted."
+}

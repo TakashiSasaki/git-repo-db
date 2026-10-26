@@ -1,0 +1,89 @@
+{
+  "run_id": 40282065961,
+  "attempt": 2,
+  "conclusion": "success",
+  "job_id": 121440185145,
+  "feature_head": "55759a2ac02512a17f4ed637c49caccf34ff4763",
+  "effective_tree": "7a28c0626a5b9ca0da613d224b4f939051f24d3d",
+  "actual_tested_merge": "c1394bb494a678fce1da41d86ea6149afb87a4ba",
+  "actual_merge_parents": [
+    "049cc13b129223239cf987590a70c1394e035524",
+    "55759a2ac02512a17f4ed637c49caccf34ff4763"
+  ],
+  "source_tree_equality_verified_against_github_commit_api": true,
+  "verified_receipt_members": 106,
+  "scoped": {
+    "selected": 947,
+    "executed": 947,
+    "exact_multiset_match": true,
+    "outcomes": {
+      "passed": 947
+    }
+  },
+  "broad": {
+    "selected": 1851,
+    "executed": 1851,
+    "exact_multiset_match": true,
+    "outcomes": {
+      "passed": 1808,
+      "failure": 23,
+      "error": 20
+    }
+  },
+  "strict_reconciliation": {
+    "acceptance_verdict": "PASSED",
+    "inherited_non_successes_count": 43,
+    "new_regressions_count": 0,
+    "changed_failures_count": 0,
+    "missing_nodes_count": 0,
+    "unexpected_nodes_count": 0,
+    "unexpected_skips_count": 0,
+    "pytest_exit_code": 1,
+    "pytest_exit_status": "RECONCILED_FAILURES"
+  },
+  "installed_i2_i3_i4_i5_processes": {
+    "count": 29,
+    "all_exit_zero": true,
+    "full_acceptance": false
+  },
+  "distributions": [
+    {
+      "artifact_kind": "wheel",
+      "installed_smoke": "passed",
+      "exit_code": 0,
+      "wheel_sha256": "94afbfb2524b10923c6573f6d5a3a6d0ce570ae3b4477a67b4d1a8d7f6491210",
+      "source_sdist_sha256": "f855fe9f902adbdf08d95766a8533705056317fd85e2724e97648670fb5f4833"
+    },
+    {
+      "artifact_kind": "sdist-wheel",
+      "installed_smoke": "passed",
+      "exit_code": 0,
+      "wheel_sha256": "94afbfb2524b10923c6573f6d5a3a6d0ce570ae3b4477a67b4d1a8d7f6491210",
+      "source_sdist_sha256": "f855fe9f902adbdf08d95766a8533705056317fd85e2724e97648670fb5f4833"
+    }
+  ],
+  "sdist": {
+    "status": "passed",
+    "member_count": 164,
+    "compressed_bytes": 708251,
+    "wheel_equivalence_status": "passed"
+  },
+  "access_acceptance": {
+    "executed_nodes": 947,
+    "node_set_matched": true,
+    "requirement_counts": {
+      "covered": 24,
+      "deferred": 1,
+      "partial": 1
+    },
+    "meaning": "reference/evidence consistency only; not independent or release acceptance"
+  },
+  "offline_inventory_only": {
+    "inputs_unchanged": true,
+    "execution_count": "see raw receipt"
+  },
+  "all_job_steps_success": true,
+  "raw_log_sha256": "ba7cfb81689d7532a7da53e98af470d7e6da2a99b6becfca4720792c502cf7c4",
+  "receipt_index_sha256": "1a011bde5c4840d0870b17090361ded519912745385c1b3c8f398851b6d8a8a0",
+  "scope": "Successful scoped Access CI; not full release acceptance. Attempt 1 TLS failure preserved separately. No source, TLS, route or timeout change."
+}

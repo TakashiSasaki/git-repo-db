@@ -51,6 +51,32 @@ syntax and call shapes. An AST match does not analyze embedded SQL, resolve
 dynamic imports/aliases or replace the authoritative boundary/callsite audits.
 Validate a query against known positive code before interpreting zero matches.
 
+## Mandatory 5-step agent investigation sequence
+
+When investigating local test executions or CI failures, AI coding agents MUST follow this sequence to maintain token efficiency and prevent context exhaustion:
+
+1. **PR/run metadata and compact summary:**
+   Check the execution summary with `scripts/ci_query.py summary <evidence_dir>` or the runner's 1–2 line terminal output. Never download or ingest full multi-megabyte console logs into context.
+2. **Failure counts and categories:**
+   Inspect `scripts/ci_query.py status <evidence_dir>` to check total, passed, failed, and inherited vs unclassified counts.
+3. **Bounded list of new/changed failures:**
+   Query only new or changed failures with an explicit limit:
+   ```sh
+   scripts/ci_query.py failures <evidence_dir> --new-only --limit 10
+   ```
+   Never query unbounded failure lists.
+4. **Exact single-failure traceback inspection:**
+   Inspect the specific failing node:
+   ```sh
+   scripts/ci_query.py failure <evidence_dir> --node <nodeid>
+   ```
+   This retrieves only the bounded traceback for the target test without reading full logs.
+5. **Open raw logs only if indexed evidence is insufficient:**
+   If underlying raw logs must be opened:
+   - Use `scripts/ci_query.py filter-log <raw.log> -o <clean.log>` to strip large Base64 receipts before viewing.
+   - Use `scripts/ci_query.py extract-receipt <raw.log> -o <out_dir>` to unpack Base64 zip receipts directly to disk.
+   - Never run bare unbudgeted pytest in agent sessions; always pass `--quiet` (`-q`) and use `scripts/ci_profile.py` or `./scripts/local-run.sh`.
+
 ## Summarize actual pytest evidence
 
 The stdlib helper accepts ordinary or gzip files and returns bounded JSON:

@@ -1,0 +1,16 @@
+{
+  "feature_head": "55759a2ac02512a17f4ed637c49caccf34ff4763",
+  "tree": "7a28c0626a5b9ca0da613d224b4f939051f24d3d",
+  "run_id": 40282065961,
+  "attempt1": {
+    "status": "failure",
+    "indexed_payload_members": 38,
+    "extracted_files_including_index": 39
+  },
+  "attempt2": {
+    "status": "success",
+    "indexed_payload_members": 105,
+    "extracted_files_including_index": 106
+  },
+  "note": "Some author checkpoints called the extracted-file count indexed members. The payload/index distinction above is exact; original reports and raw receipts remain unchanged. Reviewer historical failure record is not rewritten."
+}

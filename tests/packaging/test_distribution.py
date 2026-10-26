@@ -8,8 +8,12 @@ from pathlib import Path
 import pytest
 
 from repo_catalog.adapters.sqlite.schema import SCHEMA_VERSION
-from scripts.check_sdist_contract import check_sdist, compare_wheels, save
-from tests.support.distributions import build_once
+from tests.support.distributions import (
+    build_once,
+    make_package_distributions,
+    package_build_environment,
+    package_build_inputs,
+)
 from tests.support.git_fixture import GitFixture
 from tests.support.github_fixture import GitHubFixture
 
@@ -38,18 +42,7 @@ def distributions(tmp_path_factory, request):
     base = tmp_path_factory.getbasetemp()
     if hasattr(request.config, "workerinput"):
         base = base.parent
-    env = {
-        **os.environ,
-        "UV_PYTHON": sys.executable,
-        "UV_CACHE_DIR": os.environ.get("UV_CACHE_DIR", "/workspace/.cache/uv"),
-    }
-    # The installed CLI and its guarded worker must resolve the distribution,
-    # even when the outer test runner uses a checkout PYTHONPATH.
-    env.pop("PYTHONPATH", None)
-    env.pop("PYTHONHOME", None)
-    env.pop("REPO_CATALOG_TEST_BOOTSTRAP", None)
-    env.pop("GH_TOKEN", None)
-    env.pop("GITHUB_TOKEN", None)
+    env = package_build_environment()
     wheelhouse = Path(
         os.environ.get("REPO_CATALOG_WHEELHOUSE", ROOT / "artifacts/wheelhouse")
     ).resolve()
@@ -57,68 +50,11 @@ def distributions(tmp_path_factory, request):
         "Run scripts/prepare_wheelhouse.py before offline tests"
     )
     env["REPO_CATALOG_WHEELHOUSE"] = str(wheelhouse)
-    offline_sources = ["--offline", "--no-index", "--find-links", str(wheelhouse)]
-
-    def prepare(work):
-        checked(
-            ["uv", "build", "--sdist", *offline_sources, "--out-dir", work / "dist"],
-            cwd=ROOT,
-            env=env,
-        )
-        checked(
-            ["uv", "build", "--wheel", *offline_sources, "--out-dir", work / "dist"],
-            cwd=ROOT,
-            env=env,
-        )
-        checked(
-            [
-                "uv",
-                "export",
-                "--locked",
-                "--no-dev",
-                "--no-emit-project",
-                "--format",
-                "requirements-txt",
-                "--output-file",
-                work / "requirements.txt",
-            ],
-            cwd=ROOT,
-            env=env,
-        )
-        sdist = next((work / "dist").glob("*.tar.gz"))
-        import tarfile
-
-        contract = check_sdist(sdist, ROOT)
-        with tarfile.open(sdist) as archive:
-            archive.extractall(work / "sdist", filter="data")
-        source = next((work / "sdist").iterdir())
-        checked(
-            [
-                "uv",
-                "build",
-                *offline_sources,
-                "--wheel",
-                "--out-dir",
-                work / "sdist-wheel",
-            ],
-            cwd=source,
-            env=env,
-        )
-        direct = next((work / "dist").glob("*.whl"))
-        derived = next((work / "sdist-wheel").glob("*.whl"))
-        contract["wheel_equivalence"] = compare_wheels(
-            direct, derived, sdist_metadata=contract["members"]["PKG-INFO"]["sha256"]
-        )
-        save(work / "sdist-contract.json", contract)
-        return {
-            "sdist": sdist,
-            "sdist_contract": work / "sdist-contract.json",
-            "wheel": next((work / "dist").glob("*.whl")),
-            "sdist_wheel": next((work / "sdist-wheel").glob("*.whl")),
-            "requirements": work / "requirements.txt",
-        }
-
-    products = build_once(base / "package-distributions", prepare)
+    products = build_once(
+        base / "package-distributions",
+        lambda w: make_package_distributions(w, ROOT, env, wheelhouse),
+        inputs=lambda: package_build_inputs(ROOT, env, wheelhouse),
+    )
     return (
         products["requirements"].parent,
         env,

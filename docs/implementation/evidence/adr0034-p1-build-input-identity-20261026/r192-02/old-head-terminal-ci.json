@@ -1,0 +1,35 @@
+{
+  "head": "aa639262deb8c1243741bb2643de2e345d19bf78",
+  "tree": "4beaf56d86453f1902afe35e9a4e006b316fd392",
+  "development": {
+    "run": 40279533110,
+    "conclusion": "success"
+  },
+  "access": {
+    "run": 40279533104,
+    "conclusion": "success",
+    "verified_receipt_members": 106,
+    "binding": {
+      "head": "9a831a8cc03e60cce18b5a22c16322bd0e047920",
+      "run_attempt": "1",
+      "run_id": "40279533104",
+      "tree": "4beaf56d86453f1902afe35e9a4e006b316fd392"
+    },
+    "reconciliation": {
+      "acceptance_verdict": "PASSED",
+      "current_nodes": 1851,
+      "expected_nodes": 1851,
+      "pytest_exit_code": 1,
+      "pytest_exit_status": "RECONCILED_FAILURES",
+      "inherited_non_successes_count": 43,
+      "new_regressions_count": 0,
+      "changed_failures_count": 0,
+      "unexpected_skips_count": 0,
+      "missing_nodes_count": 0,
+      "unexpected_nodes_count": 0,
+      "blocking_violations": []
+    },
+    "receipt_index_sha256": "ca75eb09c1bb94d8ca2ff277e44622b3934ea63757e1b934c9f2d7365f8ccb51"
+  },
+  "review": "R192-01 CLOSED; R192-02/P1 scoped FAIL. CI success does not clear FAIL."
+}

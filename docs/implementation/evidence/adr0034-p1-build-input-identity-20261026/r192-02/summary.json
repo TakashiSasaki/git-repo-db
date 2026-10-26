@@ -1,0 +1,189 @@
+{
+  "schema": 1,
+  "finding": "R192-02/P1",
+  "old_head": "aa639262deb8c1243741bb2643de2e345d19bf78",
+  "old_review": "R192-01 CLOSED; scoped FAIL R192-02",
+  "code_commit": "104c77666005f83b056455a5532bda5a1eecee85",
+  "code_tree": "8e67ff8221b43a879fff9d4eec76ca7e2369a99f",
+  "base_pr186": "049cc13b129223239cf987590a70c1394e035524",
+  "independent_re_review": "PENDING",
+  "tested_inputs_sha256": {
+    ".agents/skills/ci-final-tree-verification/SKILL.md": "14d8c44e7b7d7a31ce6cd32f1603c08af7371431b89fda29ba0acce389a495b5",
+    "tests/packaging/test_sdist_hardening.py": "fa313b853fec2037397b3f9f4098f9ed1d8782dc282d3815a5a684c8b8d18eaa",
+    "tests/support/distributions.py": "f713474fc8680dece928f1840790f19a96370c40a80a15779ae58a9668ac8582",
+    "tests/unit/test_build_input_identity.py": "7c1e12b40bbe9fb853974fa4297e82479c2b87663ce0bf1be768b7f834f0e230",
+    "tests/unit/test_test_efficiency.py": "ec3402feae73ca654d98fa93e4d97ed9768e9c0364e5ed8173304c42986e2fc7",
+    "tests/unit/test_uv_build_configuration.py": "134dcc669e0bf75bf194a3a8a208c23472495ec37a7bef321144e8efee9ce74d"
+  },
+  "test_binding": "Final working bytes immediately before code commit; evidence-only follow-up is not a rerun.",
+  "results": {
+    "red_unit": {
+      "failed": 1,
+      "scope": "old implementation before edit"
+    },
+    "red_real_backend": {
+      "failed": 3,
+      "seconds": 6.64,
+      "scope": "new actual-backend tests using old aa639262 package_build_inputs loaded from Git blob and patched in memory; all DID NOT RAISE; not a full old-tree run"
+    },
+    "final_focused": {
+      "passed": 173,
+      "seconds": 96.39,
+      "exit_code": 0
+    },
+    "final_parallel": {
+      "passed": 61,
+      "workers": 2,
+      "seconds": 24.02,
+      "exit_code": 0
+    },
+    "lint": "passed",
+    "format": "474 files already formatted",
+    "diff_check": "passed"
+  },
+  "runtime": {
+    "python": "3.12.15 (main, Oct 21 2026, 17:47:06) [Clang 23.1.3 ]",
+    "executable": "/workspace/git-repo-db/.venv/bin/python",
+    "sqlite": [
+      "3.53.1",
+      "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9"
+    ]
+  },
+  "primary_evidence": {
+    "uv_version": "0.12.19",
+    "uv_tag_commit": "bea138450f0e620a4ce5765b0e38cff7b9f0799f",
+    "files_sha256": {
+      "uv-0.12.19-dirs.rs": "435f31b5b0a9c206b205177ce6c4784f9e56bc1a3c50a615efc7b7f500f2ea34",
+      "uv-settings-lib.rs": "75e5bac9c90446ab1f5c36c2db9772279653a5ac5148b44f6ca381ba18572422",
+      "uv-0.12.19-main.rs": "00eadc33d70ddb647e1a236d22617c3ad027d9d001f5341ded8250622ff9bf69",
+      "uv-0.12.19-Cargo.lock": "f7c745d23b637e3458f50fdad8a7f193348fbc11043e687bf4034fb2b391b59e",
+      "etcetera-0.11.0.crate": "de48cc4d1c1d97a20fd819def54b890cadde72ed3ad0c614822a0a433361be96"
+    },
+    "etcetera_crate_checksum_matches_uv_Cargo_lock": true,
+    "private_home_config_copied": false
+  },
+  "raw_evidence": {
+    "red-unit.log": {
+      "sha256": "7f0f25963a0e1e1df0d71a330ee5d322f4ac641e893a0b285e76aa6e713130df",
+      "bytes": 1479
+    },
+    "red-real-old-identity.log": {
+      "sha256": "4f009d9e050a3a0d649394f289ec24912468eff42be6e73d4e3955cac57539e4",
+      "bytes": 12947
+    },
+    "focused.log": {
+      "sha256": "b92a35f00b8aa3149cb73f74367003f7003cc6cdf2bdff72ad08fa92febda4e5",
+      "bytes": 271
+    },
+    "parallel.log": {
+      "sha256": "e2297fa06d45ce3fba1661871b2ec72f7f37503408c2f0f80c97fe0c86a52a1e",
+      "bytes": 143
+    },
+    "focused.xml": {
+      "sha256": "af5232b75f8d64c08ec39ca080c2b8ea34cbd81681b5809d971e28a0db464ed9",
+      "bytes": 27254
+    },
+    "parallel.xml": {
+      "sha256": "4e887a500c5028e48370535c87e9862f7348e4d5f76858a265769f4a9e048f31",
+      "bytes": 9460
+    }
+  },
+  "actual_normal_package_receipt": {
+    "build_context": {
+      "ancestors": {
+        "0/.git-boundary": false,
+        "0/.gitignore": null,
+        "0/.hg-boundary": false,
+        "0/.hgignore": null,
+        "0/.python-version": null,
+        "0/hatch.toml": null,
+        "0/pyproject.toml": null,
+        "0/uv.toml": null,
+        "1/.git-boundary": false,
+        "1/.gitignore": null,
+        "1/.hg-boundary": false,
+        "1/.hgignore": null,
+        "1/.python-version": null,
+        "1/hatch.toml": null,
+        "1/pyproject.toml": null,
+        "1/uv.toml": null,
+        "2/.git-boundary": false,
+        "2/.gitignore": null,
+        "2/.hg-boundary": false,
+        "2/.hgignore": null,
+        "2/.python-version": null,
+        "2/hatch.toml": null,
+        "2/pyproject.toml": null,
+        "2/uv.toml": null,
+        "3/.git-boundary": false,
+        "3/.gitignore": null,
+        "3/.hg-boundary": false,
+        "3/.hgignore": null,
+        "3/.python-version": null,
+        "3/hatch.toml": null,
+        "3/pyproject.toml": null,
+        "3/uv.toml": null,
+        "4/.git-boundary": false,
+        "4/.gitignore": null,
+        "4/.hg-boundary": false,
+        "4/.hgignore": null,
+        "4/.python-version": null,
+        "4/hatch.toml": null,
+        "4/pyproject.toml": null,
+        "4/uv.toml": null,
+        "5/.git-boundary": true,
+        "5/.gitignore": null,
+        "5/.hg-boundary": false,
+        "5/.hgignore": null,
+        "5/.python-version": null,
+        "5/hatch.toml": null,
+        "5/pyproject.toml": null,
+        "5/uv.toml": null,
+        "6/.git-boundary": false,
+        "6/.gitignore": null,
+        "6/.hg-boundary": false,
+        "6/.hgignore": null,
+        "6/.python-version": null,
+        "6/hatch.toml": null,
+        "6/pyproject.toml": null,
+        "6/uv.toml": null
+      },
+      "generated": {
+        "dist/.gitignore": "684888c0ebb17f374298b65ee2807526c066094c701bcc7ebbe1c1095f494fc1",
+        "sdist-wheel/.gitignore": "684888c0ebb17f374298b65ee2807526c066094c701bcc7ebbe1c1095f494fc1",
+        "sdist/repo_catalog-0.2.0/.gitignore": "240851c3d4d454414e534de2a3a54bc5e6a89aa241498de94f52ce9c3d8ac929",
+        "sdist/repo_catalog-0.2.0/pyproject.toml": "f6dd4ac7b273ee80ed7cd588637557cb62bf510d8eced722456206b48eb94c01"
+      }
+    },
+    "files": {
+      "requirements": {
+        "path": "requirements.txt",
+        "sha256": "27896c7e9913fdcbcdd44a499c40219c833c17d296d32e82a87bd8c38ab066f6"
+      },
+      "sdist": {
+        "path": "dist/repo_catalog-0.2.0.tar.gz",
+        "sha256": "f855fe9f902adbdf08d95766a8533705056317fd85e2724e97648670fb5f4833"
+      },
+      "sdist_contract": {
+        "path": "sdist-contract.json",
+        "sha256": "420917479bb353e6bb5de4e5f68ebda8546a1dcef2bc81b0b06ad8a20dd8d727"
+      },
+      "sdist_wheel": {
+        "path": "sdist-wheel/repo_catalog-0.2.0-py3-none-any.whl",
+        "sha256": "94afbfb2524b10923c6573f6d5a3a6d0ce570ae3b4477a67b4d1a8d7f6491210"
+      },
+      "wheel": {
+        "path": "dist/repo_catalog-0.2.0-py3-none-any.whl",
+        "sha256": "94afbfb2524b10923c6573f6d5a3a6d0ce570ae3b4477a67b4d1a8d7f6491210"
+      }
+    },
+    "inputs": "a0a5258a5e644b324789f1fe525a7d9875f21ebb3c55698817bc4023a323bbe8",
+    "schema": 2
+  },
+  "limitations": [
+    "Linux/uv 0.12.19 configuration contract verified; no Windows/macOS claim.",
+    "Relative external uv settings, relative HOME and uv project/cwd redirects fail closed instead of guessing multiple subprocess contexts.",
+    "Snapshot conservatively hashes masked config candidates; unchanged inputs reuse, unused config changes can rebuild.",
+    "No product, Transfer fence, comparator or ADR status change. New CI and independent re-review remain separate gates."
+  ]
+}

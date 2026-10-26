@@ -1,0 +1,19 @@
+{
+  "R192-01": {
+    "cached_refused": true,
+    "fresh_refused": true,
+    "identity_changed": true,
+    "removal_restores_reuse": true
+  },
+  "R192-02": {
+    "cached_refused": true,
+    "fresh_refused": true,
+    "identity_changed": true,
+    "removal_restores_reuse": true
+  },
+  "sdist-context": {
+    "cached_refused": true,
+    "removal_restores_reuse": true,
+    "source_identity_unchanged": true
+  }
+}

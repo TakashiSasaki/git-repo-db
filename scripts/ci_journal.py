@@ -344,6 +344,10 @@ class JournalPlugin:
 
 
 def pytest_addoption(parser):
+    for grp in getattr(parser, "_groups", []):
+        for opt in getattr(grp, "options", []):
+            if "--journal" in opt.names():
+                return
     group = parser.getgroup("journaling", "CI test execution event journaling")
     group.addoption(
         "--journal",
@@ -358,5 +362,6 @@ def pytest_configure(config):
         "CI_EVENT_JOURNAL"
     )
     if path and not hasattr(config, "workerinput"):
-        plugin = JournalPlugin(path)
-        config.pluginmanager.register(plugin, name="ci_event_journal")
+        if not config.pluginmanager.has_plugin("ci_event_journal"):
+            plugin = JournalPlugin(path)
+            config.pluginmanager.register(plugin, name="ci_event_journal")

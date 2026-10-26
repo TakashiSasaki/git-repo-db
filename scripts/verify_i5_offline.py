@@ -164,6 +164,73 @@ def collect(out, name, targets, marker=None):
     return selected, result
 
 
+def collect_single_pass(out, targets_list):
+    """Perform a consolidated single collection pass and partition into exact cohorts."""
+    targets_file = out / "ci-targets.txt"
+    targets_file.write_text("\n".join(targets_list) + "\n")
+    command = [
+        sys.executable,
+        "-m",
+        "pytest",
+        "-q",
+        "--collect-only",
+        "-o",
+        "addopts=",
+        "tests",
+        "-p",
+        "scripts.ci_collector",
+        f"--collector-out={out}",
+        f"--ci-targets-file={targets_file}",
+    ]
+    started = time.time()
+    with (out / "collection.log").open("w") as output:
+        proc = subprocess.run(
+            command, cwd=ROOT, stdout=output, stderr=subprocess.STDOUT, check=False
+        )
+    elapsed = round(time.time() - started, 3)
+    if proc.returncode != 0:
+        raise RuntimeError(
+            f"Pytest single-pass collection failed with exit code {proc.returncode}"
+        )
+
+    cohorts = json.loads((out / "collected-cohorts.json").read_text())
+
+    # Order CI nodes consistently by targets_list
+    ci_raw = cohorts["ci"]
+    ci_ordered = []
+    for t in targets_list:
+        for n in ci_raw:
+            f = n.split("::")[0]
+            if f == t or f.startswith(t.rstrip("/") + "/"):
+                ci_ordered.append(n)
+    cohorts["ci"] = ci_ordered
+
+    inventory = {}
+    for name in ("all", "ordinary", "offline", "ci"):
+        selected = cohorts[name]
+        (out / f"{name}.nodes.txt").write_text("".join(n + "\n" for n in selected))
+        (out / f"{name}.log").write_text("".join(n + "\n" for n in selected))
+        inv_item = {
+            "command": command,
+            "cwd": str(ROOT),
+            "started_epoch": started,
+            "elapsed_seconds": elapsed,
+            "exit_code": proc.returncode,
+            "collected": len(selected),
+            "duplicates": len(selected) - len(set(selected)),
+        }
+        write_json(out / f"{name}.execution.json", inv_item)
+        inventory[name] = inv_item
+
+    return (
+        cohorts["all"],
+        cohorts["ordinary"],
+        cohorts["offline"],
+        cohorts["ci"],
+        inventory,
+    )
+
+
 def input_hashes():
     paths = [
         path
@@ -286,7 +353,29 @@ def run_cohort(out, name, selected, workers):
     else:
         result["execution_evidence_missing"] = True
     write_json(out / f"{name}.execution.json", result)
-    print(json.dumps({name: result}), flush=True)
+    verbose = os.environ.get("CI_VERBOSE") == "1" or "--verbose" in sys.argv
+    if verbose:
+        print(json.dumps({name: result}), flush=True)
+    else:
+        passed_c = result.get("passed", 0)
+        failed_c = result.get("failed", 0)
+        error_c = result.get("error", 0)
+        dur = result.get("duration_seconds", 0.0)
+        reconcil_ok = result.get("reconciliation", {}).get("consistent", True)
+        stat = (
+            "PASSED"
+            if (
+                failed_c == 0
+                and error_c == 0
+                and reconcil_ok
+                and not result.get("interrupted")
+            )
+            else "FAILED"
+        )
+        print(
+            f"[i5-offline] cohort {name}: {stat} ({passed_c} passed, {failed_c} failed, {dur:.2f}s)",
+            flush=True,
+        )
     return result
 
 
@@ -295,6 +384,9 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--workers", type=int, default=4)
     parser.add_argument("--execute", action="store_true")
+    parser.add_argument(
+        "--verbose", action="store_true", help="Print complete JSON outputs"
+    )
     args = parser.parse_args()
     os.environ["PATH"] = (
         str(Path(sys.executable).parent) + os.pathsep + os.environ.get("PATH", "")
@@ -326,13 +418,8 @@ def main():
     write_json(out / "binding.json", binding)
     before = input_hashes()
     write_json(out / "inputs-before.json", before)
-    inventory = {}
-    all_nodes, inventory["all"] = collect(out, "all", ["tests"])
-    ordinary, inventory["ordinary"] = collect(
-        out, "ordinary", ["tests"], "not live and not benchmark"
-    )
-    offline, inventory["offline"] = collect(out, "offline", ["tests"], "not live")
-    ci, inventory["ci"] = collect(out, "ci", ci_targets(), "not live and not benchmark")
+    targets = ci_targets()
+    all_nodes, ordinary, offline, ci, inventory = collect_single_pass(out, targets)
     if any(value["exit_code"] or value["duplicates"] for value in inventory.values()):
         write_json(out / "summary.json", {"collection": inventory})
         return 2
@@ -375,7 +462,18 @@ def main():
         "inputs_unchanged": not changed,
     }
     write_json(out / "summary.json", summary)
-    print(json.dumps(summary), flush=True)
+    verbose = args.verbose or os.environ.get("CI_VERBOSE") == "1"
+    if verbose:
+        print(json.dumps(summary), flush=True)
+    else:
+        all_passed = not changed and all(
+            cohort_succeeded(value) for value in runs.values()
+        )
+        outcome = "PASSED" if all_passed else "FAILED"
+        print(
+            f"[i5-offline] overall: {outcome} ({len(runs)} cohort(s) executed, inputs_unchanged={not changed}); summary: {out / 'summary.json'}",
+            flush=True,
+        )
     return int(
         bool(changed) or any(not cohort_succeeded(value) for value in runs.values())
     )
