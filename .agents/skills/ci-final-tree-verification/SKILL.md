@@ -608,3 +608,40 @@ retains the original missing-record failure and twelve parser controls, includin
 rejection of double/payload BOM, missing/duplicated/reordered/corrupt DATA,
 malformed base64, duplicate BEGIN and a tampered inner index with a valid outer
 hash. These controls verify receipt parsing, not product or Release acceptance.
+
+## Shared package builds must bind the input content
+
+A sealed artifact digest proves the cached output bytes, not that a caller asked
+for those inputs. PR #191 found that the normal P1 fixture could prime a shared
+cache, then a poisoned-sdist test with a different ROOT/runner would reuse the
+normal wheels and never execute its rejection gate. Keep that REQUEST_CHANGES
+record as historical evidence.
+
+Use `package_build_inputs` with `build_once(..., inputs=...)`: bind actual working
+source bytes (including untracked product files), packaging configuration/lock,
+checker/builder and runner contracts, selected Python/uv, wheelhouse bytes and
+build environment. A directory name or HEAD alone cannot detect edits at the
+same path. Keep normal fixtures on the same sanitized builder/environment
+contract so identical inputs still reuse one sealed build. Worker/test display
+variables are excluded; meaningful build settings remain part of the digest.
+
+Check input identity before building, before atomic receipt publication and
+before returning artifacts. Preserve per-key interprocess locking and exact
+artifact hashes. Missing receipts permit only a fresh complete checked build;
+malformed/mismatched receipts or missing/changed sealed products fail closed.
+Do not infer success from a leftover build directory.
+
+Exercise both normal-to-hostile and hostile-to-normal order, same-path edits,
+distinct input trees, corrupt/missing evidence, mid-build mutation and xdist
+workers. Focused commands (through the verified project environment):
+
+```sh
+scripts/local-run.sh pytest -q tests/packaging/test_p1_distribution.py \
+  tests/packaging/test_sdist_hardening.py tests/packaging/test_distribution.py \
+  tests/unit/test_build_input_identity.py tests/unit/test_test_efficiency.py
+scripts/local-run.sh pytest -q -n 2 tests/unit/test_build_input_identity.py
+```
+
+Use a writable `UV_CACHE_DIR` in restricted environments. A read-only uv cache
+setup failure is not an archive-gate result. These checks do not retire either
+Transfer SQL fence or convert the 43 known Transfer non-successes into passes.

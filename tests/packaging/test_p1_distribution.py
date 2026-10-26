@@ -1,30 +1,23 @@
 """Focused installed target-resource checks, not full released-runtime acceptance."""
 
 import json
-import os
-import subprocess
 import sys
 from pathlib import Path
 
 import pytest
 
 from scripts.installed_test_harness import stage_support
-from tests.support.distributions import build_once, make_package_distributions
+from tests.support.distributions import (
+    build_once,
+    make_package_distributions,
+    package_build_environment,
+    package_build_inputs,
+)
+from tests.support.distributions import (
+    package_build_runner as run,
+)
 
 ROOT = Path(__file__).resolve().parents[2]
-
-
-def run(args, cwd, env):
-    result = subprocess.run(
-        list(map(str, args)),
-        cwd=cwd,
-        env=env,
-        text=True,
-        capture_output=True,
-        timeout=120,
-    )
-    assert result.returncode == 0, result.stdout + result.stderr
-    return result.stdout
 
 
 @pytest.fixture(scope="module")
@@ -32,18 +25,11 @@ def p1_distributions(tmp_path_factory):
     base = tmp_path_factory.getbasetemp()
     while base.name.startswith("popen-gw"):
         base = base.parent
-    env = dict(os.environ)
-    for name in (
-        "PYTHONPATH",
-        "PYTHONHOME",
-        "REPO_CATALOG_TEST_BOOTSTRAP",
-        "GH_TOKEN",
-        "GITHUB_TOKEN",
-    ):
-        env.pop(name, None)
+    env = package_build_environment()
     products = build_once(
         base / "package-distributions",
         lambda w: make_package_distributions(w, ROOT, env, runner=run),
+        inputs=lambda: package_build_inputs(ROOT, env, runner=run),
     )
     return env, [products["wheel"], products["sdist_wheel"]]
 

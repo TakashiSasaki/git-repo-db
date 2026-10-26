@@ -8,7 +8,12 @@ from pathlib import Path
 import pytest
 
 from repo_catalog.adapters.sqlite.schema import SCHEMA_VERSION
-from tests.support.distributions import build_once, make_package_distributions
+from tests.support.distributions import (
+    build_once,
+    make_package_distributions,
+    package_build_environment,
+    package_build_inputs,
+)
 from tests.support.git_fixture import GitFixture
 from tests.support.github_fixture import GitHubFixture
 
@@ -37,18 +42,7 @@ def distributions(tmp_path_factory, request):
     base = tmp_path_factory.getbasetemp()
     if hasattr(request.config, "workerinput"):
         base = base.parent
-    env = {
-        **os.environ,
-        "UV_PYTHON": sys.executable,
-        "UV_CACHE_DIR": os.environ.get("UV_CACHE_DIR", "/workspace/.cache/uv"),
-    }
-    # The installed CLI and its guarded worker must resolve the distribution,
-    # even when the outer test runner uses a checkout PYTHONPATH.
-    env.pop("PYTHONPATH", None)
-    env.pop("PYTHONHOME", None)
-    env.pop("REPO_CATALOG_TEST_BOOTSTRAP", None)
-    env.pop("GH_TOKEN", None)
-    env.pop("GITHUB_TOKEN", None)
+    env = package_build_environment()
     wheelhouse = Path(
         os.environ.get("REPO_CATALOG_WHEELHOUSE", ROOT / "artifacts/wheelhouse")
     ).resolve()
@@ -59,6 +53,7 @@ def distributions(tmp_path_factory, request):
     products = build_once(
         base / "package-distributions",
         lambda w: make_package_distributions(w, ROOT, env, wheelhouse),
+        inputs=lambda: package_build_inputs(ROOT, env, wheelhouse),
     )
     return (
         products["requirements"].parent,

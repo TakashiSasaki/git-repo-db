@@ -427,3 +427,63 @@ def test_distribution_gate_refuses_before_extract_rebuild_or_install(
     assert len(commands) == 2  # only the explicit source sdist/direct-wheel builds
     assert not extractions
     assert not any("install" in command for command in commands)
+
+
+@pytest.mark.parametrize("order", [("normal", "hostile"), ("hostile", "normal")])
+def test_shared_cache_never_launders_hostile_sdist(
+    source, tmp_path_factory, monkeypatch, order
+):
+    """Prime the same invocation cache in both orders without real builds."""
+    from tests.packaging import test_p1_distribution as distribution
+    from tests.support.distributions import (
+        build_once,
+        package_build_environment,
+        package_build_inputs,
+    )
+
+    base = tmp_path_factory.getbasetemp()
+    while base.name.startswith("popen-gw"):
+        base = base.parent
+    env = package_build_environment()
+    normal_root, normal_runner = distribution.ROOT, distribution.run
+    calls = []
+
+    def normal_build(root):
+        calls.append("normal")
+        result = {}
+        for name in ("wheel", "sdist_wheel", "sdist", "sdist_contract", "requirements"):
+            path = root / name
+            path.write_text("normal " + name)
+            result[name] = path
+        return result
+
+    def hostile_build(args, cwd, env):
+        calls.append("hostile")
+        out = Path(args[args.index("--out-dir") + 1])
+        out.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(SPECIMENS / "concatenated.tar.gz", out / "attack.tar.gz")
+        return ""
+
+    def no_extract(*args, **kwargs):
+        pytest.fail("hostile sdist must be refused before extraction")
+
+    monkeypatch.setattr(tarfile.TarFile, "extractall", no_extract)
+    for mode in (*order, "normal"):
+        if mode == "normal":
+            files = build_once(
+                base / "package-distributions",
+                normal_build,
+                inputs=lambda: package_build_inputs(
+                    normal_root, env, runner=normal_runner
+                ),
+            )
+            assert files["wheel"].is_file()
+        else:
+            monkeypatch.setattr(distribution, "ROOT", source)
+            monkeypatch.setattr(distribution, "run", hostile_build)
+            with pytest.raises(ValueError):
+                distribution.p1_distributions.__wrapped__(tmp_path_factory)
+    # Parametrized invocations may reuse the same sealed normal key. The
+    # hostile builder must always run twice and cannot publish a success receipt.
+    assert calls.count("hostile") == 2
+    assert calls.count("normal") <= 1
