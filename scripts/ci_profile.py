@@ -651,6 +651,7 @@ def run(args):
         command=command,
         wall_seconds=wall_seconds,
         exit_code=exit_code,
+        child_exit_code=exit_code,
         interrupted=exit_code < 0 or exit_code in (2, 130, 143, 137),
     )
 
@@ -783,7 +784,7 @@ def run(args):
 
     # Derive the effective exit status before persisting any result.
     # A successful child must not override missing or inconsistent evidence.
-    child_exit_code = record["exit_code"]
+    child_exit_code = record["child_exit_code"]
     if record.get("measurement_error"):
         verification_exit_code = 2
         verification_status = record["measurement_error"]
@@ -793,7 +794,9 @@ def run(args):
     else:
         verification_exit_code = 0
         verification_status = exec_summary["reconciliation"]["status"]
-    effective_exit_code = child_exit_code or verification_exit_code
+    effective_exit_code = (
+        child_exit_code or record["exit_code"] or verification_exit_code
+    )
     record.update(
         child_exit_code=child_exit_code,
         verification_exit_code=verification_exit_code,

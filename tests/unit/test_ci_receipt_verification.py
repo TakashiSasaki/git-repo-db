@@ -331,9 +331,12 @@ def test_extract_receipt_single_bundle_requested_digest_must_match(tmp_path):
     logfile = tmp_path / "job.log"
     logfile.write_text(_format_log(raw, digest, length), encoding="utf-8")
     dest = tmp_path / "receipt"
-    assert ci_query.main(
-        ["extract-receipt", str(logfile), "-o", str(dest), "--digest", "f" * 64]
-    ) == 2
+    assert (
+        ci_query.main(
+            ["extract-receipt", str(logfile), "-o", str(dest), "--digest", "f" * 64]
+        )
+        == 2
+    )
     assert not dest.exists()
 
 
@@ -363,9 +366,7 @@ def test_extract_receipt_refuses_existing_evidence_without_modification(tmp_path
 
 def test_extract_receipt_failed_atomic_rename_leaves_destination_empty(tmp_path):
     """A failed final publication must not expose partial receipt contents."""
-    raw, digest, length = _create_signed_bundle(
-        {"a.txt": b"first", "b.txt": b"second"}
-    )
+    raw, digest, length = _create_signed_bundle({"a.txt": b"first", "b.txt": b"second"})
     logfile = tmp_path / "job.log"
     logfile.write_text(_format_log(raw, digest, length), encoding="utf-8")
     dest = tmp_path / "receipt"
