@@ -290,6 +290,8 @@ def build_execution_summary(record, failure_index=None, reconciliation=None):
     missing_nodes = sorted(selected_set - executed_set)
     unexpected_nodes = sorted(executed_set - selected_set)
     duplicate_executed = [nid for nid, cnt in executed_counter.items() if cnt > 1]
+    duplicate_selected = [nid for nid, cnt in selected_counter.items() if cnt > 1]
+    duplicate_nodes = sorted(set(duplicate_executed) | set(duplicate_selected))
 
     counts = {
         "total": len(executed_nodes),
@@ -316,7 +318,7 @@ def build_execution_summary(record, failure_index=None, reconciliation=None):
         reconciliation_status = "INTERRUPTED_EXECUTION"
         reconciliation_consistent = False
     elif selected_nodes:
-        if selected_counter == executed_counter:
+        if selected_counter == executed_counter and not duplicate_nodes:
             if failed_count == 0 and error_count == 0 and exit_code == 0:
                 reconciliation_status = "EXACT_ONCE_MATCH"
                 reconciliation_consistent = True
@@ -331,6 +333,12 @@ def build_execution_summary(record, failure_index=None, reconciliation=None):
                 reconciliation_status = "RECONCILED_WITH_INHERITED_FAILURES"
                 reconciliation_consistent = True
             elif (
+                reconciliation is not None
+                and reconciliation.get("acceptance_verdict") != "PASSED"
+            ):
+                reconciliation_status = f"RECONCILIATION_REJECTED ({reconciliation.get('acceptance_verdict', 'REJECTED')})"
+                reconciliation_consistent = False
+            elif (
                 inherited_count > 0
                 and (passed_count + inherited_count == len(selected_nodes))
                 and (
@@ -338,6 +346,8 @@ def build_execution_summary(record, failure_index=None, reconciliation=None):
                     and changed_failures_count == 0
                     and unclassified_count == 0
                 )
+                and reconciliation is not None
+                and reconciliation.get("acceptance_verdict") == "PASSED"
             ):
                 reconciliation_status = "RECONCILED_WITH_INHERITED_FAILURES"
                 reconciliation_consistent = True
@@ -348,7 +358,7 @@ def build_execution_summary(record, failure_index=None, reconciliation=None):
             reconciliation_status = (
                 f"NODE_MISMATCH (missing={len(missing_nodes)}, "
                 f"unexpected={len(unexpected_nodes)}, "
-                f"duplicates={len(duplicate_executed)})"
+                f"duplicates={len(duplicate_nodes)})"
             )
             reconciliation_consistent = False
     elif executed_nodes and failed_count == 0 and error_count == 0 and exit_code == 0:
@@ -369,6 +379,12 @@ def build_execution_summary(record, failure_index=None, reconciliation=None):
         "commit_sha": record.get("runtime", {}).get("commit_sha"),
         "tree_sha": record.get("runtime", {}).get("tree_sha"),
         "exit_code": exit_code,
+        "child_exit_code": record.get("child_exit_code", exit_code),
+        "verification_exit_code": (
+            0
+            if reconciliation_consistent
+            else (1 if not record.get("measurement_error") else 2)
+        ),
         "wall_seconds": record.get("wall_seconds"),
         "cumulative_test_seconds": record.get("cumulative_test_seconds"),
         "workers": record.get("workers"),
@@ -379,7 +395,10 @@ def build_execution_summary(record, failure_index=None, reconciliation=None):
             "executed_count": len(executed_nodes),
             "missing_count": len(missing_nodes),
             "unexpected_count": len(unexpected_nodes),
-            "duplicate_count": len(duplicate_executed),
+            "duplicate_count": len(duplicate_nodes),
+            "missing_nodes": missing_nodes,
+            "unexpected_nodes": unexpected_nodes,
+            "duplicate_nodes": duplicate_nodes,
             "consistent": reconciliation_consistent,
         },
         "artifacts": record.get("artifacts", {}),
@@ -602,7 +621,7 @@ def run(args):
 
     exit_code = 0
     if is_pytest and workers > 1:
-        lock_file = args.output / ".resource.lock"
+        lock_file = getattr(args, "resource_lock", None)
         with resource_scheduler.scoped_host_cpu_reservation(
             workers, lock_path=lock_file
         ) as granted:
@@ -791,25 +810,55 @@ def run(args):
     if inv_journal and inv_journal.is_file():
         atomic_copy(inv_journal, args.output / f"{args.name}-journal.jsonl")
 
+    if junit_path and inv_xml and inv_xml.is_file() and junit_path != inv_xml:
+        atomic_copy(inv_xml, junit_path)
+    if (
+        journal_path
+        and inv_journal
+        and inv_journal.is_file()
+        and journal_path != inv_journal
+    ):
+        atomic_copy(inv_journal, journal_path)
+
     if os.environ.get("GITHUB_STEP_SUMMARY"):
         with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as summary:
             summary.write(report)
+
+    # Derived verification status and exit code
+    child_exit = record.get("child_exit_code", record.get("exit_code", 0))
+    record["child_exit_code"] = child_exit
+
+    verification_exit_code = 0
+    if not exec_summary.get("reconciliation", {}).get("consistent", True):
+        verification_exit_code = 1
+        record["verified"] = False
+        record["verification_status"] = exec_summary.get("reconciliation", {}).get(
+            "status", "INCONSISTENT"
+        )
+    elif record.get("measurement_error"):
+        verification_exit_code = 2
+        record["verified"] = False
+        record["verification_status"] = record["measurement_error"]
+    else:
+        record["verified"] = child_exit == 0
+        record["verification_status"] = exec_summary.get("reconciliation", {}).get(
+            "status", "OK"
+        )
+
+    record["verification_exit_code"] = verification_exit_code
 
     if quiet:
         summary_text = format_terminal_summary(record, exec_summary, failure_index)
         print(summary_text, end="")
 
-    return record["exit_code"]
+    if child_exit != 0:
+        return child_exit
+    return verification_exit_code
 
 
 def profile_focused(args):
     """Run focused pytest selection with automatic isolated output, preserving JUnit and journal."""
     args.output.mkdir(parents=True, exist_ok=True)
-    inv_id = f"focused-{int(time.time())}-{uuid.uuid4().hex[:6]}"
-    inv_dir = args.output / "invocations" / inv_id
-    inv_dir.mkdir(parents=True, exist_ok=True)
-    xml = inv_dir / "junit.xml"
-    journal = inv_dir / "journal.jsonl"
     pytest_targets = args.pytest_args
     if pytest_targets[:1] == ["--"]:
         pytest_targets = pytest_targets[1:]
@@ -817,6 +866,9 @@ def profile_focused(args):
     workers = args.workers
     if workers == 1 and not getattr(args, "explicit_workers", False):
         workers = resource_scheduler.calculate_worker_budget(lane_name="focused")
+
+    xml = args.output / f"{args.name}.xml"
+    journal = args.output / f"{args.name}-journal.jsonl"
 
     command = [
         sys.executable,
@@ -844,7 +896,6 @@ def profile_focused(args):
         workers=workers,
         series="focused",
         reference=None,
-        invocation_id=inv_id,
         quiet=getattr(args, "quiet", True),
     )
     code = run(run_args)

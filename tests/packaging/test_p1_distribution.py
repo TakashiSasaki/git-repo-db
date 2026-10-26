@@ -43,7 +43,7 @@ def p1_distributions(tmp_path_factory):
         env.pop(name, None)
     products = build_once(
         base / "package-distributions",
-        lambda w: make_package_distributions(w, ROOT, env),
+        lambda w: make_package_distributions(w, ROOT, env, runner=run),
     )
     return env, [products["wheel"], products["sdist_wheel"]]
 

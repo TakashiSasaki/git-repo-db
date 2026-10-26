@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import contextlib
+import errno
 import fcntl
 import json
 import math
 import os
+import tempfile
 from pathlib import Path
 
 # Conservative memory estimate per worker process (in megabytes)
@@ -162,7 +164,13 @@ def scoped_host_cpu_reservation(
     available host CPUs, scales down the granted worker count.
     """
     if lock_path is None:
-        lock_path = Path("artifacts/ci-profile/.resource.lock")
+        env_lock = os.environ.get("CI_RESOURCE_LOCK")
+        if env_lock:
+            lock_path = Path(env_lock)
+        else:
+            lock_path = (
+                Path(tempfile.gettempdir()) / f"git-repo-db-{os.getuid()}-resource.lock"
+            )
     lock_path.parent.mkdir(parents=True, exist_ok=True)
 
     max_cpus = available_cpu_count()
@@ -187,7 +195,10 @@ def scoped_host_cpu_reservation(
                     pid = int(pid_str)
                     os.kill(pid, 0)
                     active[pid_str] = count
-                except (OSError, ValueError):
+                except OSError as err:
+                    if err.errno == errno.EPERM:
+                        active[pid_str] = count
+                except ValueError:
                     pass
 
             total_used = sum(active.values())

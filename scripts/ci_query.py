@@ -3,13 +3,19 @@
 from __future__ import annotations
 
 import argparse
-import base64
-import hashlib
-import io
 import json
+import re
 import sys
-import zipfile
 from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+try:
+    from scripts.ci_execute import extract_receipt_archive
+except ImportError:
+    from ci_execute import extract_receipt_archive
 
 
 def load_execution_summary(directory: Path) -> dict | None:
@@ -234,72 +240,70 @@ def query_status(args: argparse.Namespace) -> int:
 
 def filter_log(args: argparse.Namespace) -> int:
     """Filter out base64 CI receipt lines from log stream or file."""
-    if args.log_path and str(args.log_path) != "-":
-        with open(args.log_path, "r", encoding="utf-8", errors="replace") as f:
-            lines = f.readlines()
+    if getattr(args, "log_path", None) and str(args.log_path) != "-":
+        log_path = Path(args.log_path)
+        if not log_path.is_file():
+            print(f"Error: Log file not found: {log_path}", file=sys.stderr)
+            return 2
+        in_stream = open(log_path, "r", encoding="utf-8", errors="replace")
+        close_in = True
     else:
-        lines = sys.stdin.readlines()
+        in_stream = sys.stdin
+        close_in = False
 
-    for line in lines:
-        if line.startswith("CI_RECEIPTS_DATA_V1 "):
-            continue
-        sys.stdout.write(line)
+    out_path = getattr(args, "output", None)
+    if out_path and str(out_path) != "-":
+        out_file = Path(out_path)
+        out_file.parent.mkdir(parents=True, exist_ok=True)
+        out_stream = open(out_file, "w", encoding="utf-8")
+        close_out = True
+    else:
+        out_stream = sys.stdout
+        close_out = False
+
+    pattern_data = re.compile(
+        r"^\ufeff?(?:\d{4}-\d\d-\d\dT\S+ )?CI_RECEIPTS_DATA_V1\s+[A-Za-z0-9+/=]+"
+    )
+
+    try:
+        for line in in_stream:
+            if pattern_data.match(line):
+                continue
+            out_stream.write(line)
+    finally:
+        if close_in:
+            in_stream.close()
+        if close_out:
+            out_stream.close()
     return 0
 
 
 def extract_receipt(args: argparse.Namespace) -> int:
     """Extract and decode base64 CI receipt archive into destination directory."""
-    if args.log_path and str(args.log_path) != "-":
-        with open(args.log_path, "r", encoding="utf-8", errors="replace") as f:
-            lines = f.readlines()
-    else:
-        lines = sys.stdin.readlines()
-
-    chunks = []
-    in_receipt = False
-    expected_digest = None
-
-    for line in lines:
-        line_s = line.strip()
-        if line_s.startswith("CI_RECEIPTS_BEGIN_V1 "):
-            parts = line_s.split()
-            if len(parts) >= 2:
-                expected_digest = parts[1]
-            in_receipt = True
-            chunks = []
-        elif line_s.startswith("CI_RECEIPTS_END_V1 "):
-            in_receipt = False
-            break
-        elif in_receipt and line_s.startswith("CI_RECEIPTS_DATA_V1 "):
-            chunks.append(line_s[len("CI_RECEIPTS_DATA_V1 ") :])
-
-    if not chunks:
-        print("Error: No CI receipt data found in log", file=sys.stderr)
+    if not args.dest:
+        print("Error: Destination directory is required (-o / --dest)", file=sys.stderr)
         return 2
 
-    raw_b64 = "".join(chunks)
-    try:
-        body = base64.b64decode(raw_b64, validate=True)
-    except Exception as e:
-        print(f"Error decoding base64 receipt: {e}", file=sys.stderr)
-        return 2
-
-    if expected_digest:
-        actual_digest = hashlib.sha256(body).hexdigest()
-        if actual_digest != expected_digest:
-            print(
-                f"Error: Digest mismatch: expected {expected_digest}, got {actual_digest}",
-                file=sys.stderr,
-            )
+    log_path = getattr(args, "log_path", None)
+    if log_path and str(log_path) != "-":
+        log_file = Path(log_path)
+        if not log_file.is_file():
+            print(f"Error: Log file not found: {log_file}", file=sys.stderr)
             return 2
+        source = log_file
+    else:
+        source = sys.stdin
 
-    args.dest.mkdir(parents=True, exist_ok=True)
-    with zipfile.ZipFile(io.BytesIO(body), "r") as zf:
-        zf.extractall(args.dest)
-        extracted = zf.namelist()
+    target_digest = getattr(args, "digest", None)
+    try:
+        files = extract_receipt_archive(source, args.dest, target_digest=target_digest)
+    except Exception as err:
+        print(f"Error extracting receipt: {err}", file=sys.stderr)
+        return 2
 
+    digest_info = f" (digest: {target_digest})" if target_digest else ""
     print(
-        f"Successfully extracted {len(extracted)} receipt file(s) to {args.dest} (digest: {expected_digest})"
+        f"Successfully extracted {len(files)} receipt file(s) to {args.dest}{digest_info}"
     )
     return 0
 
@@ -349,18 +353,36 @@ def main(argv: list[str] | None = None) -> int:
     filt_p.add_argument(
         "log_path", type=Path, nargs="?", help="Path to log file (or stdin if omitted)"
     )
+    filt_p.add_argument(
+        "-o",
+        "--output",
+        type=Path,
+        help="Destination file to write filtered log (stdout if omitted)",
+    )
 
     ext_p = sub.add_parser(
         "extract-receipt", help="Extract and decode base64 CI receipts into a directory"
     )
     ext_p.add_argument(
-        "log_path", type=Path, help="Path to log file containing CI_RECEIPTS"
+        "log_path",
+        type=Path,
+        nargs="?",
+        help="Path to log file containing CI_RECEIPTS (or stdin if omitted)",
     )
     ext_p.add_argument(
+        "-o",
+        "--output",
         "--dest",
+        dest="dest",
         type=Path,
         required=True,
         help="Destination directory to unpack receipts",
+    )
+    ext_p.add_argument(
+        "--digest",
+        type=str,
+        default=None,
+        help="Explicit SHA-256 digest to select when multiple candidate bundles are present",
     )
 
     args = parser.parse_args(argv)
@@ -377,10 +399,6 @@ def main(argv: list[str] | None = None) -> int:
     if args.action == "extract-receipt":
         return extract_receipt(args)
     return 1
-
-
-if __name__ == "__main__":
-    sys.exit(main())
 
 
 if __name__ == "__main__":
