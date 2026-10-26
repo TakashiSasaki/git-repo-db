@@ -16,40 +16,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
-# Ensure src/ is importable
 ROOT = Path(__file__).resolve().parents[1]
-if str(ROOT / "src") not in sys.path:
-    sys.path.insert(0, str(ROOT / "src"))
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
 
-from scripts.schema_inventory import (  # noqa: E402
-    CORE_GROUPS as CORE_GROUPS,
-)
-from scripts.schema_inventory import (  # noqa: E402
-    GROUP_METADATA as GROUP_METADATA,
-)
-from scripts.schema_inventory import (  # noqa: E402
-    LOGICAL_DEPENDENCIES as LOGICAL_DEPENDENCIES,
-)
-from scripts.schema_inventory import (  # noqa: E402
-    OPERATIONAL_GROUPS as OPERATIONAL_GROUPS,
-)
-from scripts.schema_inventory import (  # noqa: E402
-    SEARCH_GROUPS as SEARCH_GROUPS,
-)
-from scripts.schema_inventory import (  # noqa: E402
-    introspect_all as introspect_all,
-)
-from scripts.schema_inventory import (  # noqa: E402
-    introspect_store as introspect_store,
-)
-from scripts.schema_inventory import (  # noqa: E402
-    validate_functional_groups_consistency as validate_functional_groups_consistency,
-)
-from scripts.schema_inventory import (  # noqa: E402
-    validate_logical_dependencies as validate_logical_dependencies,
-)
 
 # ==============================================================================
 # Mermaid ER Diagram Generator
@@ -164,6 +132,7 @@ def generate_mermaid(ir: dict[str, Any]) -> dict[str, str]:
     """Generate Markdown files containing fenced mermaid ER diagrams."""
     outputs: dict[str, str] = {}
     core = ir["stores"]["core"]
+    GROUP_METADATA = ir["group_metadata"]
     op = ir["stores"]["operational"]
     search = ir["stores"]["search"]
 
@@ -2377,6 +2346,10 @@ def write_artifacts(artifacts: dict[str, str], output_dir: Path) -> list[str]:
 
     for rel_path, content in sorted(artifacts.items()):
         dest = output_dir / rel_path
+        if output_dir.resolve() not in dest.resolve().parents or any(
+            p.is_symlink() for p in (dest, *dest.parents)
+        ):
+            raise ValueError("Artifact path escapes output or traverses a link")
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_text(content, encoding="utf-8", newline="\n")
         written.append(rel_path)
@@ -2390,14 +2363,7 @@ def check_artifacts(
     """Verify that committed files match generated artifacts byte-for-byte without mutating disk."""
     mismatches: list[str] = []
 
-    # Semantic consistency checks
-    ir = introspect_all()
-    dep_errors = validate_logical_dependencies(ir)
-    mismatches.extend(dep_errors)
-
-    group_errors = validate_functional_groups_consistency()
-    mismatches.extend(group_errors)
-
+    # Complete IR semantics are verified by the neutral product producer.
     for rel_path, expected_content in sorted(artifacts.items()):
         target = output_dir / rel_path
         if not target.exists():
@@ -2431,7 +2397,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--output-dir",
         type=Path,
-        default=ROOT / "docs" / "schema",
+        default=ROOT / "schema",
         help="Output directory for generated files (default: docs/schema)",
     )
     parser.add_argument(
@@ -2440,10 +2406,16 @@ def main(argv: list[str] | None = None) -> int:
         help="Validate that existing artifacts match fresh generation without mutating disk",
     )
 
+    parser.add_argument(
+        "--ir",
+        type=Path,
+        required=True,
+        help="Pinned complete neutral IR exported by product Python",
+    )
     args = parser.parse_args(argv)
 
     print("Introspecting Three-Store schemas in memory...")
-    ir = introspect_all()
+    ir = json.loads(args.ir.read_bytes())
     print(
         f"Introspection successful: Core ({ir['summary']['core_tables']} tables, {ir['summary']['core_fks']} FKs), "
         f"Operational ({ir['summary']['operational_tables']} tables, {ir['summary']['operational_fks']} FKs), "
@@ -2463,6 +2435,10 @@ def main(argv: list[str] | None = None) -> int:
         print("PASS: All schema visualization artifacts are up-to-date and consistent.")
         return 0
 
+    if args.output_dir.resolve() != (ROOT / "schema").resolve():
+        from tools.build_docs_site import validate_destination
+
+        args.output_dir = validate_destination(args.output_dir, "output")
     print(f"Writing {len(artifacts)} artifacts to {args.output_dir}...")
     written = write_artifacts(artifacts, args.output_dir)
     for p in written:

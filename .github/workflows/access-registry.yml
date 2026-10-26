@@ -82,7 +82,7 @@ jobs:
           version: '0.12.19'
       - name: Install locked development dependencies
         run: |
-          uv sync --locked --group dev --group docs --python "$CI_PRODUCT_PYTHON"
+          uv sync --locked --group dev --python "$CI_PRODUCT_PYTHON"
           uv run --no-sync python scripts/ci_python_runtime.py probe artifacts/runtime/dependencies.json --reference artifacts/runtime/selected.json
       - name: Prepare locked wheels before offline installed acceptance
         run: uv run --no-sync python scripts/prepare_wheelhouse.py
@@ -173,15 +173,6 @@ jobs:
             --junit artifacts/access-registry/tests.xml \
             --collection artifacts/access-registry/collected.txt \
             --output artifacts/access-registry/acceptance.json
-      - name: Build allowlisted MkDocs sources with placeholder diagrams, no deployment
-        if: ${{ !cancelled() }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          uv sync --locked --group dev --group docs --python "$CI_PRODUCT_PYTHON"
-          uv run --no-sync python scripts/ci_python_runtime.py probe artifacts/runtime/docs.json --reference artifacts/runtime/selected.json
-          uv run --no-sync python scripts/build_docs_site.py --no-mermaid \
-            2>&1 | tee artifacts/access-registry/mkdocs.txt
       - name: Check formatting of the exact committed files
         if: always()
         shell: bash

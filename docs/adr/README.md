@@ -2,7 +2,7 @@
 
 Read the current scope before implementation. This index describes accepted target decisions, not implemented or verified behavior.
 
-**Accepted ADR governance: [ADR 0011](0011-adr-governance.md) and [the operating policy](policy.md).** Full/Mini-ADR [templates](template.md) and [Mini template](template-mini.md) are repository files; the optional [adr-workflow skill](../../.agents/skills/adr-workflow/SKILL.md) is procedural. The policy's section 9 documents bounded pre-adoption exceptions for existing ADRs 0001–0027. ADR 0003's reviewed migration item was closed by the 2026-10-19 whole-record acceptance of ADR 0029; other items remain scoped follow-up. ADR numbering allocation watermark: **0035** (includes proposed 0035 and accepted 0032, 0033, and 0034; 0011 is not a free gap). Acceptance, merging, implementation and executed verification remain distinct.
+**Accepted ADR governance: [ADR 0011](0011-adr-governance.md) and [the operating policy](policy.md).** Full/Mini-ADR [templates](template.md) and [Mini template](template-mini.md) are repository files; the optional [adr-workflow skill](../../.agents/skills/adr-workflow/SKILL.md) is procedural. The policy's section 9 documents bounded pre-adoption exceptions for existing ADRs 0001–0027. ADR 0003's reviewed migration item was closed by the 2026-10-19 whole-record acceptance of ADR 0029; other items remain scoped follow-up. ADR numbering allocation watermark: **0035** (includes accepted 0032–0035; 0011 is not a free gap). Acceptance, merging, implementation and executed verification remain distinct.
 
 **Latest accepted validation workflow: [ADR 0034](0034-repository-test-and-ci-efficiency.md), accepted 2026-10-26.** Quiet evidence, resource-aware execution and immutable build reuse preserve exact failure/node reconciliation. Input content and configuration across source/sdist build contexts must bind reuse. [Adoption provenance](../implementation/adr0034-adoption-20261026.md); implementation, final-tree review and release acceptance remain distinct.
 
@@ -80,14 +80,12 @@ exceptions require explicit owner approval.
 
 ## Proposed Records
 
-| Record | Status and scope |
-| --- | --- |
-| [0035](0035-independent-documentation-workspace.md) | Proposed documentation separation; not adopted. ADR0034 remains accepted. |
+None. ADR0035 was explicitly accepted on2026-10-26; implementation and executed verification remain separate.
 
-**Allocation/adoption:** ADR 0011 was explicitly adopted through [governance PR #52](https://github.com/TakashiSasaki/git-repo-db/pull/52) on 2026-10-15, after the accepted design stack was merged by PR #69. It does not renumber ADRs 0012–0027, retire still-binding historical decisions or authorize bulk migration. **Highest allocated ADR ID: 0035**. Allocation includes publicly proposed as well as accepted records; both allocation statements include proposed0035. Future allocations must inspect this watermark, Git history and live remote branches before assigning a new four-digit ID.
+**Allocation/adoption:** ADR 0011 was explicitly adopted through [governance PR #52](https://github.com/TakashiSasaki/git-repo-db/pull/52) on 2026-10-15, after the accepted design stack was merged by PR #69. It does not renumber ADRs 0012–0027, retire still-binding historical decisions or authorize bulk migration. **Highest allocated ADR ID: 0035**. Allocation includes publicly proposed as well as accepted records; both allocation statements include0035. Future allocations must inspect this watermark, Git history and live remote branches before assigning a new four-digit ID.
 
 The [transition plan](../architecture/git-core-context-transition-plan.md) describes the redesigned implementation sequence. Old Phase 2 handoffs and accepted records remain evidence of their original decisions, subject to the explicit scoped override in ADR 0014. Neither old wording nor a passing documentation check is authority to implement an excluded file-storage path.
 
-## Proposed documentation boundary
+## Accepted documentation boundary
 
-[ADR 0035](0035-independent-documentation-workspace.md) is proposed, not adopted. Implementation permission does not change accepted release acceptance.
+[ADR0035](0035-independent-documentation-workspace.md) was adopted2026-10-26. Ordinary product gates are independent of rendering; complete release acceptance requires independent local/hosted product and documentation evidence. [Provenance](../implementation/adr0035-adoption-20261026.md).

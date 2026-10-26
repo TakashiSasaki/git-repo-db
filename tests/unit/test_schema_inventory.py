@@ -9,16 +9,9 @@ from pathlib import Path
 
 import pytest
 
-from scripts import schema_inventory, schema_viz
+from scripts import schema_inventory
 
 ROOT = Path(__file__).resolve().parents[2]
-
-
-def test_renderer_compatibility_exports_neutral_inventory():
-    assert schema_viz.introspect_all is schema_inventory.introspect_all
-    assert schema_viz.introspect_store is schema_inventory.introspect_store
-    assert schema_viz.CORE_GROUPS is schema_inventory.CORE_GROUPS
-    assert schema_viz.LOGICAL_DEPENDENCIES is schema_inventory.LOGICAL_DEPENDENCIES
 
 
 def test_product_audit_without_renderer_or_documentation_imports():
@@ -95,3 +88,13 @@ def test_neutral_inventory_preserves_composite_generated_and_partial_metadata():
     assert child["indexes"][0]["partial"]
     assert child["indexes"][0]["predicate"] == "b > 0"
     assert result["ddl_sha256"] == hashlib.sha256(ddl.encode()).hexdigest()
+
+
+def test_inventory_export_refuses_unsafe_output_before_writing(tmp_path):
+    target = tmp_path / "authoritative"
+    target.mkdir()
+    marker = target / "inventory.json"
+    marker.write_text("unchanged sentinel")
+    with pytest.raises(ValueError, match="output must remain"):
+        schema_inventory.export_inventory(target, "0" * 40)
+    assert marker.read_text() == "unchanged sentinel"

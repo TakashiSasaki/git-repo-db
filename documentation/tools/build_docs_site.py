@@ -25,15 +25,17 @@ from pathlib import Path
 from typing import Dict, List
 from urllib.parse import unquote, urlparse
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
+ROOT = Path(__file__).resolve().parents[2]
+DOCS_ROOT = ROOT / "documentation"
+sys.path.insert(0, str(DOCS_ROOT))
 
-DOCS_SITE_DIR = ROOT / "docs" / "site"
-DOCS_SCHEMA_DIR = ROOT / "docs" / "schema"
+DOCS_SITE_DIR = DOCS_ROOT / "content"
+DOCS_SCHEMA_DIR = DOCS_ROOT / "schema"
 DOCS_ADR_DIR = ROOT / "docs" / "adr"
-DEFAULT_STAGING_DIR = ROOT / ".build" / "docs-source"
-DEFAULT_OUTPUT_DIR = ROOT / "site"
-MKDOCS_CONFIG_FILE = ROOT / "mkdocs.yml"
+DEFAULT_STAGING_DIR = DOCS_ROOT / ".build" / "staging" / "site"
+DEFAULT_OUTPUT_DIR = DOCS_ROOT / "site"
+MKDOCS_CONFIG_FILE = DOCS_ROOT / "mkdocs.yml"
+IR_PATH = DOCS_ROOT / ".build" / "inputs" / "inventory.json"
 
 # Allowlisted extensions in built static distribution
 PUBLIC_ALLOWLIST_EXTENSIONS = {
@@ -107,30 +109,137 @@ def run_cmd(
 
 
 def check_schema_freshness() -> None:
-    """Verify that committed schema visualization artifacts match authoritative DDL."""
-    print("Checking schema visualization freshness...")
-    res = subprocess.run(
-        [sys.executable, str(ROOT / "scripts" / "schema_viz.py"), "--check"],
-        cwd=str(ROOT),
+    """Compare committed presentation outputs with the pinned complete IR."""
+    from tools.schema_viz import check_artifacts, generate_all_artifacts
+
+    ir = json.loads(IR_PATH.read_bytes())
+    clean, mismatches = check_artifacts(generate_all_artifacts(ir), DOCS_SCHEMA_DIR)
+    if not clean:
+        raise RuntimeError(
+            "Schema visualization freshness failed: " + "; ".join(mismatches)
+        )
+
+
+def verify_documentation_checkout(source: str) -> None:
+    if get_git_metadata()["commit_sha"] != source:
+        raise ValueError("Documentation checkout does not match pinned source")
+    result = subprocess.run(
+        [
+            "git",
+            "status",
+            "--porcelain",
+            "--untracked-files=all",
+            "--",
+            "documentation",
+            "docs/adr/0001-validation-lifecycle-architecture.md",
+            "docs/adr/0002-three-store-boundary-architecture.md",
+        ],
+        cwd=ROOT,
         capture_output=True,
         text=True,
+        check=True,
     )
-    if res.returncode != 0:
-        raise RuntimeError(
-            f"Schema visualization freshness check FAILED:\n{res.stdout}\n{res.stderr}\n"
-            "Run 'uv run --no-sync python scripts/schema_viz.py --format all' to regenerate."
+    if result.stdout:
+        raise ValueError("Documentation inputs differ from pinned committed source")
+
+
+def validate_destination(path: Path, kind: str) -> Path:
+    """Allow only dedicated documentation output roots; refuse all symlink hops."""
+    path = Path(os.path.abspath(path))
+    roots = [DOCS_ROOT / ".build" / kind]
+    if kind == "output":
+        roots.append(DOCS_ROOT / "site")
+    for component in (path, *path.parents):
+        if component.is_symlink():
+            raise ValueError("Symlink destination refused")
+    actual = path.resolve()
+    allowed = any(
+        actual == root.resolve()
+        and root.name == "site"
+        or root.resolve() in actual.parents
+        for root in roots
+    )
+    if not allowed:
+        raise ValueError(
+            "Destination outside dedicated documentation " + kind + " roots"
         )
-    print("✓ Schema visualization freshness confirmed.")
+    protected_names = {
+        ".git",
+        ".venv",
+        "pyvenv.cfg",
+        "evidence",
+        "cache",
+        ".cache",
+        ".uv-cache",
+        "catalogs",
+        "artifacts",
+    }
+    if any(
+        part in protected_names
+        for part in actual.relative_to(DOCS_ROOT.resolve()).parts
+    ):
+        raise ValueError("Protected destination name")
+    if actual.exists():
+        for member in actual.rglob("*"):
+            if (
+                member.is_symlink()
+                or member.name
+                in {
+                    ".git",
+                    ".venv",
+                    "pyvenv.cfg",
+                    "evidence",
+                    "uv.lock",
+                    "cache",
+                    ".cache",
+                    ".uv-cache",
+                    "__pycache__",
+                    "catalogs",
+                    "artifacts",
+                }
+                or member.suffix.lower() in {".db", ".sqlite", ".sqlite3"}
+            ):
+                raise ValueError("Protected content in destination")
+            if member.is_file():
+                with member.open("rb") as stream:
+                    if stream.read(16) == b"SQLite format 3\x00":
+                        raise ValueError("Catalog content in destination")
+    return actual
+
+
+def validated_config(
+    config_path: Path, staging_dir: Path | None = None, output_dir: Path | None = None
+):
+    import yaml
+
+    cfg = yaml.safe_load(config_path.read_text())
+    if not isinstance(cfg, dict):
+        raise ValueError("MkDocs config must be a mapping")
+    for key in ("docs_dir", "site_dir"):
+        if key not in cfg:
+            raise ValueError("Explicit MkDocs destinations required")
+        cfg[key] = str(config_path.parent / cfg[key])
+    # Reject hostile configured destinations even if caller also supplies overrides.
+    validate_destination(Path(cfg["docs_dir"]), "staging")
+    validate_destination(Path(cfg["site_dir"]), "output")
+    cfg["docs_dir"] = str(
+        validate_destination(staging_dir or Path(cfg["docs_dir"]), "staging")
+    )
+    cfg["site_dir"] = str(
+        validate_destination(output_dir or Path(cfg["site_dir"]), "output")
+    )
+    a, b = Path(cfg["docs_dir"]), Path(cfg["site_dir"])
+    if a == b or a in b.parents or b in a.parents:
+        raise ValueError("Overlapping staging and output refused")
+    return cfg
 
 
 def get_git_metadata() -> Dict[str, str]:
     """Retrieve Git commit and tree revision deterministically."""
-    commit_sha = os.environ.get("GITHUB_SHA")
-    if not commit_sha:
-        try:
-            commit_sha = run_cmd(["git", "rev-parse", "HEAD"])
-        except Exception:
-            commit_sha = "unknown"
+    try:
+        commit_sha = run_cmd(["git", "rev-parse", "HEAD"])
+    except Exception:
+        commit_sha = "unknown"
 
     try:
         tree_sha = run_cmd(["git", "rev-parse", "HEAD^{tree}"])
@@ -219,6 +328,15 @@ def render_mermaid_to_svg(
 
 def stage_documentation(staging_dir: Path, skip_mermaid_render: bool = False) -> None:
     """Stage explicitly allowlisted documentation into the staging directory."""
+    for source in (
+        DOCS_SITE_DIR,
+        DOCS_SCHEMA_DIR,
+        DOCS_ROOT / "overrides",
+        DOCS_ADR_DIR,
+    ):
+        if source.is_symlink() or any(p.is_symlink() for p in source.rglob("*")):
+            raise ValueError("Symlink documentation source refused")
+    staging_dir = validate_destination(staging_dir, "staging")
     print(f"Staging documentation into {staging_dir}...")
     if staging_dir.exists():
         shutil.rmtree(staging_dir)
@@ -432,13 +550,25 @@ def stage_documentation(staging_dir: Path, skip_mermaid_render: bool = False) ->
     print("✓ Staging completed successfully.")
 
 
-def run_mkdocs_build(config_path: Path, strict: bool = True) -> None:
+def run_mkdocs_build(
+    config_path: Path,
+    strict: bool = True,
+    *,
+    staging_dir: Path | None = None,
+    output_dir: Path | None = None,
+) -> None:
     """Execute MkDocs static build."""
     print("Executing MkDocs static build...")
     from mkdocs.commands.build import build
+
+    destinations = validated_config(config_path, staging_dir, output_dir)
     from mkdocs.config import load_config
 
-    cfg = load_config(str(config_path))
+    cfg = load_config(
+        str(config_path),
+        docs_dir=destinations["docs_dir"],
+        site_dir=destinations["site_dir"],
+    )
     if strict:
         cfg["strict"] = True
     build(cfg)
@@ -627,11 +757,29 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Clean staging and output directories before build",
     )
+    parser.add_argument("--product-source", required=True)
+    parser.add_argument("--documentation-source", required=True)
     return parser.parse_args()
 
 
 def main() -> int:
     args = parse_args()
+    verify_documentation_checkout(args.documentation_source)
+    # Resolve/validate all actual destinations before any cleanup, stage or build.
+    cfg = validated_config(MKDOCS_CONFIG_FILE, args.staging_dir, args.output_dir)
+    args.staging_dir, args.output_dir = Path(cfg["docs_dir"]), Path(cfg["site_dir"])
+    from tools.provenance import input_record
+
+    record = input_record(
+        ROOT,
+        args.documentation_source,
+        args.product_source,
+        IR_PATH.with_name("producer.json"),
+        IR_PATH,
+    )
+    (IR_PATH.parent / "documentation-inputs.json").write_text(
+        json.dumps(record, indent=2) + "\n"
+    )
 
     print("=================================================================")
     print(" git-repo-db Developer Documentation Site Builder")
@@ -653,12 +801,22 @@ def main() -> int:
     # 4. Handle --serve mode
     if args.serve:
         print("Starting MkDocs live development server on http://127.0.0.1:8000/ ...")
-        cmd = [sys.executable, "-m", "mkdocs", "serve", "-f", str(MKDOCS_CONFIG_FILE)]
-        subprocess.run(cmd, cwd=str(ROOT))
+        from mkdocs.commands.serve import serve
+
+        serve(
+            config_file=str(MKDOCS_CONFIG_FILE),
+            docs_dir=str(args.staging_dir),
+            site_dir=str(args.output_dir),
+        )
         return 0
 
     # 5. Build static site
-    run_mkdocs_build(MKDOCS_CONFIG_FILE, strict=True)
+    run_mkdocs_build(
+        MKDOCS_CONFIG_FILE,
+        strict=True,
+        staging_dir=args.staging_dir,
+        output_dir=args.output_dir,
+    )
 
     # 6. Validate critical endpoints
     missing_endpoints = validate_critical_endpoints(args.output_dir)

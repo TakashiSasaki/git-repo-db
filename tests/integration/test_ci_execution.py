@@ -27,8 +27,10 @@ def acceptance(tmp_path):
 def test_full_current_acceptance_reports_exact_execution(acceptance):
     root, output = acceptance
     result = ci_execute.gate(output / "plan.json", root)
-    assert result["full_acceptance"]
-    assert result["acceptance_status"] == "hosted_release_passed"
+    assert result["product_full_acceptance"]
+    assert not result["full_acceptance"]
+    assert result["documentation_status"] == "not_verified"
+    assert result["acceptance_status"] == "hosted_product_release_passed"
     assert result["coverage"]["executed"] == 3
     assert not result["coverage"]["unexecuted_files"]
     assert json.loads((output / "validation-manifest.json").read_bytes()) == result
@@ -121,7 +123,7 @@ def test_prose_followup_reports_unexecuted_files_without_claiming_full_acceptanc
     "lane,count,requested,workers",
     [
         ("tests", 4, None, 1),
-        ("tests", 24, None, 4),
+        ("tests", 24, None, 2),
         ("packaging", 1, None, 1),
         ("packaging", 2, None, 2),
         ("tests", 24, 2, 2),
@@ -133,6 +135,12 @@ def test_prose_followup_reports_unexecuted_files_without_claiming_full_acceptanc
 def test_selection_parallelism_keeps_small_defaults_and_bounds_overrides(
     acceptance, monkeypatch, lane, count, requested, workers
 ):
+    # This orchestration fixture checks selection defaults, not host resource
+    # availability; scheduler resource caps have independent controls.
+    monkeypatch.setattr(ci_execute.resource_scheduler, "available_cpu_count", lambda: 8)
+    monkeypatch.setattr(
+        ci_execute.resource_scheduler, "available_memory_mb", lambda: 8192
+    )
     _, output = acceptance
     path = output / "plan.json"
     plan = json.loads(path.read_bytes())
@@ -421,8 +429,10 @@ def test_complete_release_reconciliation_with_valid_local_receipt(acceptance):
     receipt = make_valid_receipt(plan, output=output, root=root)
     (output / "local-receipt.json").write_text(json.dumps(receipt))
     result = ci_execute.gate(output / "plan.json", root)
-    assert result["full_acceptance"]
-    assert result["acceptance_status"] == "complete_release_passed"
+    assert result["product_full_acceptance"]
+    assert not result["full_acceptance"]
+    assert result["documentation_status"] == "not_verified"
+    assert result["acceptance_status"] == "product_release_passed"
     assert result["evidence_status"] == "local_evidence_verified"
 
 
@@ -647,7 +657,7 @@ def test_create_receipt_and_reconcile_release_workflow(acceptance):
     assert receipt["acceptance_input_hash"] == plan["acceptance_input_hash"]
 
     gate_res = ci_execute.gate(output / "plan.json", root)
-    assert gate_res["acceptance_status"] == "complete_release_passed"
+    assert gate_res["acceptance_status"] == "product_release_passed"
     assert gate_res["evidence_status"] == "local_evidence_verified"
 
     manifest_path = output / "validation-manifest.json"
@@ -660,8 +670,8 @@ def test_create_receipt_and_reconcile_release_workflow(acceptance):
         root=root,
         run_verifier=lambda rid, b, h: (True, None),
     )
-    assert reconciled["verdict"] == "complete_release_passed"
-    assert reconciled["acceptance_status"] == "complete_release_passed"
+    assert reconciled["verdict"] == "product_release_passed"
+    assert reconciled["acceptance_status"] == "product_release_passed"
 
     # Unverified hosted run without gh verification yields validation_gap_reported
     unverified = ci_execute.reconcile_release(local_rec_path, manifest_path, root=root)
@@ -1036,8 +1046,8 @@ def test_adversarial_15_valid_complete_local_and_hosted_evidence_yields_positive
         root=root,
         run_verifier=lambda rid, b, h: (True, None),
     )
-    assert reconciled["verdict"] == "complete_release_passed"
-    assert reconciled["acceptance_status"] == "complete_release_passed"
+    assert reconciled["verdict"] == "product_release_passed"
+    assert reconciled["acceptance_status"] == "product_release_passed"
     assert reconciled["acceptance_input_hash"] == plan["acceptance_input_hash"]
 
 
@@ -1646,8 +1656,8 @@ def test_adversarial_29_genuine_provider_backed_release_artifact_passes(acceptan
         root=root,
         gh_runner=mock_gh_runner(run_view_data=view_data, download_files=prov_bundle),
     )
-    assert res["verdict"] == "complete_release_passed"
-    assert res["acceptance_status"] == "complete_release_passed"
+    assert res["verdict"] == "product_release_passed"
+    assert res["acceptance_status"] == "product_release_passed"
 
 
 def test_adversarial_30_job_log_receipt_bundle_fallback_and_extraction(acceptance):
@@ -1716,8 +1726,8 @@ def test_adversarial_30_job_log_receipt_bundle_fallback_and_extraction(acceptanc
             run_view_data=view_data, download_files=None, log_text=synthetic_log
         ),
     )
-    assert res["verdict"] == "complete_release_passed"
-    assert res["acceptance_status"] == "complete_release_passed"
+    assert res["verdict"] == "product_release_passed"
+    assert res["acceptance_status"] == "product_release_passed"
 
 
 def test_cli_exit_status_development_gate_zero(tmp_path):

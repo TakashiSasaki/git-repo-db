@@ -742,3 +742,100 @@ def validate_functional_groups_consistency() -> list[str]:
     except Exception as exc:
         errors.append(f"Could not verify audit_publication_free consistency: {exc}")
     return errors
+
+
+def export_inventory(output: Path, source: str) -> dict[str, Any]:
+    """Export complete IR from this exact committed producer checkout."""
+    import json
+    import platform
+    import subprocess
+
+    def git(*args: str) -> bytes:
+        return subprocess.check_output(["git", "-C", str(ROOT), *args])
+
+    destination = output.absolute()
+    allowed = ROOT / "documentation" / ".build" / "inputs"
+    if any(p.is_symlink() for p in (destination, *destination.parents)):
+        raise ValueError("Linked producer output refused")
+    if (
+        destination.resolve() != allowed.resolve()
+        and allowed.resolve() not in destination.resolve().parents
+    ):
+        raise ValueError("Producer output must remain in documentation/.build/inputs")
+    if any(
+        (destination / name).is_symlink()
+        for name in ("inventory.json", "producer.json")
+    ):
+        raise ValueError("Linked producer output file refused")
+    output = destination
+    if not re.fullmatch(r"[0-9a-f]{40}", source):
+        raise ValueError("Explicit full product source SHA required")
+    if git("rev-parse", "HEAD").decode().strip() != source:
+        raise ValueError("Producer must execute the selected product checkout")
+    inputs = [
+        p
+        for p in git("ls-files", "-z").decode().split("\0")
+        if p.startswith("src/")
+        or p in {"scripts/schema_inventory.py", "pyproject.toml", "uv.lock"}
+    ]
+    hashes = {}
+    for path in inputs:
+        committed = git("show", source + ":" + path)
+        if (ROOT / path).read_bytes() != committed:
+            raise ValueError("Producer input differs from selected source: " + path)
+        hashes[path] = hashlib.sha256(committed).hexdigest()
+    inventory = introspect_all()
+    errors = (
+        validate_logical_dependencies(inventory)
+        + validate_functional_groups_consistency()
+    )
+    if errors:
+        raise ValueError("Invalid neutral inventory: " + "; ".join(errors))
+    raw = (json.dumps(inventory, separators=(",", ":")) + "\n").encode()
+    manifest = {
+        "schema_version": 1,
+        "product_source": {
+            "commit": source,
+            "tree": git("rev-parse", source + "^{tree}").decode().strip(),
+        },
+        "ir_sha256": hashlib.sha256(raw).hexdigest(),
+        "input_sha256": hashes,
+        "runtime": {
+            "python": platform.python_version(),
+            "sqlite": sqlite3.sqlite_version,
+        },
+    }
+    output.mkdir(parents=True, exist_ok=True)
+    (output / "inventory.json").write_bytes(raw)
+    (output / "producer.json").write_text(json.dumps(manifest, indent=2) + "\n")
+    return manifest
+
+
+def main() -> int:
+    import argparse
+
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--check", action="store_true")
+    parser.add_argument("--output", type=Path)
+    parser.add_argument("--source")
+    args = parser.parse_args()
+    if args.check:
+        ir = introspect_all()
+        errors = (
+            validate_logical_dependencies(ir) + validate_functional_groups_consistency()
+        )
+        if errors:
+            parser.exit(1, "\n".join(errors) + "\n")
+        print(
+            "Neutral inventory: complete implemented three-store SQL/fingerprints verified"
+        )
+    elif args.output and args.source:
+        manifest = export_inventory(args.output, args.source)
+        print("Neutral IR exported: " + manifest["ir_sha256"])
+    else:
+        parser.error("choose --check or --output with explicit --source")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

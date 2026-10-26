@@ -7,7 +7,7 @@ description: Stage, build, and publish developer documentation sites for multi-s
 
 This procedure grants no publication permission. Follow the explicit current
 task and the existing approved staging allowlist in
-[`scripts/build_docs_site.py`](../../../scripts/build_docs_site.py). New accepted
+[`documentation/tools/build_docs_site.py`](../../../documentation/tools/build_docs_site.py). New accepted
 ADRs, implementation reports, executable spikes or skill updates do not become
 public automatically. Do not broaden that allowlist or change Pages settings
 while merely reconciling accepted architecture or documenting experiments.
@@ -31,12 +31,12 @@ Directly pointing MkDocs `docs_dir` to the repository `docs/` or building the re
 ## 2. Standalone HTML Viewer & Index Collision Avoidance
 
 ### Symptom
-A documentation directory contains both `docs/schema/README.md` and `docs/schema/index.html`. MkDocs transforms `README.md` into `index.html`, causing a filename collision that either overwrites the standalone workbench or breaks the directory index.
+A documentation directory contains both `documentation/schema/README.md` and `documentation/schema/index.html`. MkDocs transforms `README.md` into `index.html`, causing a filename collision that either overwrites the standalone workbench or breaks the directory index.
 
 ### Rule & Invariant
 - **Partition URLs during staging**:
-  - Stage `docs/schema/README.md` as `schema/index.md` (serving the schema overview at `/schema/`).
-  - Stage `docs/schema/index.html` as `schema/viewer/index.html` (serving the standalone viewer at `/schema/viewer/`).
+  - Stage `documentation/schema/README.md` as `schema/index.md` (serving the schema overview at `/schema/`).
+  - Stage `documentation/schema/index.html` as `schema/viewer/index.html` (serving the standalone viewer at `/schema/viewer/`).
 - Preserve the standalone viewer's self-contained HTML/CSS/JS without wrapping it in MkDocs theme templates.
 - Update internal navigation links in `schema/index.md` to reference `viewer/index.html`.
 

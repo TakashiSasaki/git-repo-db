@@ -1,0 +1,244 @@
+{
+  "baseline": "e868805bfc1dc564ec2ce07f88e02fea04fe34e4",
+  "old_nodes": 28,
+  "current_replacement_nodes": 41,
+  "mapping": [
+    {
+      "old_node": "tests/unit/test_schema_viz.py::test_1_introspection_success",
+      "current_nodes": [
+        "documentation/tests/test_schema_viz.py::test_1_introspection_success",
+        "tests/unit/test_schema_inventory_structure.py::test_1_introspection_success"
+      ],
+      "assertion_mapping": "All historical assertions retained in documentation node; independent mechanical counterparts also retained in product scope"
+    },
+    {
+      "old_node": "tests/unit/test_schema_viz.py::test_2_table_inventories_match",
+      "current_nodes": [
+        "documentation/tests/test_schema_viz.py::test_2_table_inventories_match",
+        "tests/unit/test_schema_inventory_structure.py::test_2_table_inventories_match"
+      ],
+      "assertion_mapping": "All historical assertions retained in documentation node; independent mechanical counterparts also retained in product scope"
+    },
+    {
+      "old_node": "tests/unit/test_schema_viz.py::test_3_product_tables_distinguished",
+      "current_nodes": [
+        "documentation/tests/test_schema_viz.py::test_3_product_tables_distinguished",
+        "tests/unit/test_schema_inventory_structure.py::test_3_product_tables_distinguished"
+      ],
+      "assertion_mapping": "All historical assertions retained in documentation node; independent mechanical counterparts also retained in product scope"
+    },
+    {
+      "old_node": "tests/unit/test_schema_viz.py::test_4_no_physical_fk_omitted_or_duplicated",
+      "current_nodes": [
+        "documentation/tests/test_schema_viz.py::test_4_no_physical_fk_omitted_or_duplicated",
+        "tests/unit/test_schema_inventory_structure.py::test_4_no_physical_fk_omitted_or_duplicated"
+      ],
+      "assertion_mapping": "All historical assertions retained in documentation node; independent mechanical counterparts also retained in product scope"
+    },
+    {
+      "old_node": "tests/unit/test_schema_viz.py::test_5_composite_foreign_keys_grouped",
+      "current_nodes": [
+        "documentation/tests/test_schema_viz.py::test_5_composite_foreign_keys_grouped",
+        "tests/unit/test_schema_inventory_structure.py::test_5_composite_foreign_keys_grouped"
+      ],
+      "assertion_mapping": "All historical assertions retained in documentation node; independent mechanical counterparts also retained in product scope"
+    },
+    {
+      "old_node": "tests/unit/test_schema_viz.py::test_6_physical_fk_endpoints_exist_in_own_store",
+      "current_nodes": [
+        "documentation/tests/test_schema_viz.py::test_6_physical_fk_endpoints_exist_in_own_store",
+        "tests/unit/test_schema_inventory_structure.py::test_6_physical_fk_endpoints_exist_in_own_store"
+      ],
+      "assertion_mapping": "All historical assertions retained in documentation node; independent mechanical counterparts also retained in product scope"
+    },
+    {
+      "old_node": "tests/unit/test_schema_viz.py::test_7_no_cross_store_logical_declared_as_physical_fk",
+      "current_nodes": [
+        "documentation/tests/test_schema_viz.py::test_7_no_cross_store_logical_declared_as_physical_fk",
+        "tests/unit/test_schema_inventory_structure.py::test_7_no_cross_store_logical_declared_as_physical_fk"
+      ],
+      "assertion_mapping": "All historical assertions retained in documentation node; independent mechanical counterparts also retained in product scope"
+    },
+    {
+      "old_node": "tests/unit/test_schema_viz.py::test_8_all_output_formats_generated",
+      "current_nodes": [
+        "documentation/tests/test_schema_viz.py::test_8_all_output_formats_generated"
+      ],
+      "assertion_mapping": "All historical assertions retained in documentation node; independent mechanical counterparts also retained in product scope"
+    },
+    {
+      "old_node": "tests/unit/test_schema_viz.py::test_9_deterministic_generation",
+      "current_nodes": [
+        "documentation/tests/test_schema_viz.py::test_9_deterministic_generation"
+      ],
+      "assertion_mapping": "All historical assertions retained in documentation node; independent mechanical counterparts also retained in product scope"
+    },
+    {
+      "old_node": "tests/unit/test_schema_viz.py::test_10_check_mode_success_and_failure_on_mutation",
+      "current_nodes": [
+        "documentation/tests/test_schema_viz.py::test_10_check_mode_success_and_failure_on_mutation"
+      ],
+      "assertion_mapping": "All historical assertions retained in documentation node; independent mechanical counterparts also retained in product scope"
+    },
+    {
+      "old_node": "tests/unit/test_schema_viz.py::test_11_no_persistent_sqlite_files_created",
+      "current_nodes": [
+        "documentation/tests/test_schema_viz.py::test_11_no_persistent_sqlite_files_created",
+        "tests/unit/test_schema_inventory_structure.py::test_11_no_persistent_sqlite_files_created"
+      ],
+      "assertion_mapping": "All historical assertions retained in documentation node; independent mechanical counterparts also retained in product scope"
+    },
+    {
+      "old_node": "tests/unit/test_schema_viz.py::test_12_html_viewer_smoke",
+      "current_nodes": [
+        "documentation/tests/test_schema_viz.py::test_12_html_viewer_smoke"
+      ],
+      "assertion_mapping": "All historical assertions retained in documentation node; independent mechanical counterparts also retained in product scope"
+    },
+    {
+      "old_node": "tests/unit/test_schema_viz.py::test_13_mermaid_syntax_smoke",
+      "current_nodes": [
+        "documentation/tests/test_schema_viz.py::test_13_mermaid_syntax_smoke"
+      ],
+      "assertion_mapping": "All historical assertions retained in documentation node; independent mechanical counterparts also retained in product scope"
+    },
+    {
+      "old_node": "tests/unit/test_schema_viz.py::test_14_dbml_syntax_smoke",
+      "current_nodes": [
+        "documentation/tests/test_schema_viz.py::test_14_dbml_syntax_smoke"
+      ],
+      "assertion_mapping": "All historical assertions retained in documentation node; independent mechanical counterparts also retained in product scope"
+    },
+    {
+      "old_node": "tests/unit/test_schema_viz.py::test_15_generated_column_classifications",
+      "current_nodes": [
+        "documentation/tests/test_schema_viz.py::test_15_generated_column_classifications",
+        "tests/unit/test_schema_inventory_structure.py::test_15_generated_column_classifications"
+      ],
+      "assertion_mapping": "All historical assertions retained in documentation node; independent mechanical counterparts also retained in product scope"
+    },
+    {
+      "old_node": "tests/unit/test_schema_viz.py::test_16_single_column_unique_and_dbml_fidelity",
+      "current_nodes": [
+        "documentation/tests/test_schema_viz.py::test_16_single_column_unique_and_dbml_fidelity",
+        "tests/unit/test_schema_inventory_structure.py::test_16_single_column_unique_and_dbml_fidelity"
+      ],
+      "assertion_mapping": "All historical assertions retained in documentation node; independent mechanical counterparts also retained in product scope"
+    },
+    {
+      "old_node": "tests/unit/test_schema_viz.py::test_17_partial_unique_indexes_not_unconditional",
+      "current_nodes": [
+        "documentation/tests/test_schema_viz.py::test_17_partial_unique_indexes_not_unconditional",
+        "tests/unit/test_schema_inventory_structure.py::test_17_partial_unique_indexes_not_unconditional"
+      ],
+      "assertion_mapping": "All historical assertions retained in documentation node; independent mechanical counterparts also retained in product scope"
+    },
+    {
+      "old_node": "tests/unit/test_schema_viz.py::test_18_mermaid_relationship_cardinality_and_pk_formatting",
+      "current_nodes": [
+        "documentation/tests/test_schema_viz.py::test_18_mermaid_relationship_cardinality_and_pk_formatting"
+      ],
+      "assertion_mapping": "All historical assertions retained in documentation node; independent mechanical counterparts also retained in product scope"
+    },
+    {
+      "old_node": "tests/unit/test_schema_viz.py::test_19_cross_store_logical_dependencies_and_derivation_semantics",
+      "current_nodes": [
+        "documentation/tests/test_schema_viz.py::test_19_cross_store_logical_dependencies_and_derivation_semantics",
+        "tests/unit/test_schema_inventory_structure.py::test_19_cross_store_logical_dependencies_and_derivation_semantics"
+      ],
+      "assertion_mapping": "All historical assertions retained in documentation node; independent mechanical counterparts also retained in product scope"
+    },
+    {
+      "old_node": "tests/unit/test_schema_viz.py::test_20_functional_groups_and_tablegroups_consistency",
+      "current_nodes": [
+        "documentation/tests/test_schema_viz.py::test_20_functional_groups_and_tablegroups_consistency",
+        "tests/unit/test_schema_inventory_structure.py::test_20_functional_groups_and_tablegroups_consistency"
+      ],
+      "assertion_mapping": "All historical assertions retained in documentation node; independent mechanical counterparts also retained in product scope"
+    },
+    {
+      "old_node": "tests/unit/test_build_docs_site.py::test_schema_freshness",
+      "current_nodes": [
+        "documentation/tests/test_build_docs_site.py::test_schema_freshness"
+      ],
+      "assertion_mapping": "Original site-builder obligations retained; moved paths and pinned-IR freshness/trigger controls updated"
+    },
+    {
+      "old_node": "tests/unit/test_build_docs_site.py::test_git_metadata",
+      "current_nodes": [
+        "documentation/tests/test_build_docs_site.py::test_git_metadata"
+      ],
+      "assertion_mapping": "Original site-builder obligations retained; moved paths and pinned-IR freshness/trigger controls updated"
+    },
+    {
+      "old_node": "tests/unit/test_build_docs_site.py::test_staging_allowlist_and_transformation",
+      "current_nodes": [
+        "documentation/tests/test_build_docs_site.py::test_staging_allowlist_and_transformation"
+      ],
+      "assertion_mapping": "Original site-builder obligations retained; moved paths and pinned-IR freshness/trigger controls updated"
+    },
+    {
+      "old_node": "tests/unit/test_build_docs_site.py::test_publication_safety_validator",
+      "current_nodes": [
+        "documentation/tests/test_build_docs_site.py::test_publication_safety_validator"
+      ],
+      "assertion_mapping": "Original site-builder obligations retained; moved paths and pinned-IR freshness/trigger controls updated"
+    },
+    {
+      "old_node": "tests/unit/test_build_docs_site.py::test_internal_links_validator",
+      "current_nodes": [
+        "documentation/tests/test_build_docs_site.py::test_internal_links_validator"
+      ],
+      "assertion_mapping": "Original site-builder obligations retained; moved paths and pinned-IR freshness/trigger controls updated"
+    },
+    {
+      "old_node": "tests/unit/test_build_docs_site.py::test_critical_endpoints_validator",
+      "current_nodes": [
+        "documentation/tests/test_build_docs_site.py::test_critical_endpoints_validator"
+      ],
+      "assertion_mapping": "Original site-builder obligations retained; moved paths and pinned-IR freshness/trigger controls updated"
+    },
+    {
+      "old_node": "tests/unit/test_build_docs_site.py::test_pages_trigger_paths_decision_matrix",
+      "current_nodes": [
+        "documentation/tests/test_build_docs_site.py::test_pages_trigger_paths_decision_matrix"
+      ],
+      "assertion_mapping": "Original site-builder obligations retained; moved paths and pinned-IR freshness/trigger controls updated"
+    },
+    {
+      "old_node": "tests/unit/test_build_docs_site.py::test_pages_trigger_covers_executed_schema_dependencies",
+      "current_nodes": [
+        "documentation/tests/test_build_docs_site.py::test_pages_trigger_covers_executed_schema_dependencies"
+      ],
+      "assertion_mapping": "Original site-builder obligations retained; moved paths and pinned-IR freshness/trigger controls updated"
+    }
+  ],
+  "schema_assertion_AST_equivalence": {
+    "test_1_introspection_success": 6,
+    "test_2_table_inventories_match": 7,
+    "test_3_product_tables_distinguished": 2,
+    "test_4_no_physical_fk_omitted_or_duplicated": 4,
+    "test_5_composite_foreign_keys_grouped": 8,
+    "test_6_physical_fk_endpoints_exist_in_own_store": 1,
+    "test_7_no_cross_store_logical_declared_as_physical_fk": 3,
+    "test_8_all_output_formats_generated": 17,
+    "test_9_deterministic_generation": 2,
+    "test_10_check_mode_success_and_failure_on_mutation": 6,
+    "test_11_no_persistent_sqlite_files_created": 1,
+    "test_12_html_viewer_smoke": 6,
+    "test_13_mermaid_syntax_smoke": 5,
+    "test_14_dbml_syntax_smoke": 4,
+    "test_15_generated_column_classifications": 17,
+    "test_16_single_column_unique_and_dbml_fidelity": 10,
+    "test_17_partial_unique_indexes_not_unconditional": 15,
+    "test_18_mermaid_relationship_cardinality_and_pk_formatting": 6,
+    "test_19_cross_store_logical_dependencies_and_derivation_semantics": 13,
+    "test_20_functional_groups_and_tablegroups_consistency": 12
+  },
+  "why_more_than_proposed33": "All20 historical mixed schema tests remain complete in documentation;13 additional neutral structural counterparts keep product safety independent. No original assertion is discarded.",
+  "additional_replacement": {
+    "old": "tests/integration/test_ci_execution.py::test_selection_parallelism_keeps_small_defaults_and_bounds_overrides[tests-24-None-4]",
+    "new": "tests/integration/test_ci_execution.py::test_selection_parallelism_keeps_small_defaults_and_bounds_overrides[tests-24-None-2]",
+    "reason": "Original-main focused repro fails; accepted scheduler caps moderate workload at2. Production scheduler unchanged."
+  }
+}

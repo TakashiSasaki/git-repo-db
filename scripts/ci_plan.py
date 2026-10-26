@@ -375,6 +375,8 @@ def make_plan(context, root=ROOT, runtime_meta=None):
     schema_or_contract_changed = False
 
     for path in paths:
+        if matches(path, rules.get("documentation_inputs", [])):
+            continue
         if matches(path, rules["shared_inputs"] + rules["executable_inputs"]):
             scope_reasons.append("Shared/executable input: " + path)
             code_or_config_changed = True
@@ -462,9 +464,16 @@ def make_plan(context, root=ROOT, runtime_meta=None):
             {
                 path: entry
                 for path, entry in entries.items()
-                if path in files
-                or matches(path, rules["shared_inputs"] + rules["executable_inputs"])
-                or not matches(path, rules["prose"] + rules.get("report_inputs", []))
+                if not matches(path, rules.get("documentation_inputs", []))
+                and (
+                    path in files
+                    or matches(
+                        path, rules["shared_inputs"] + rules["executable_inputs"]
+                    )
+                    or not matches(
+                        path, rules["prose"] + rules.get("report_inputs", [])
+                    )
+                )
             }
         ),
         "comparison_sha": comparison,

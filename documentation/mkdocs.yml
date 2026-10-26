@@ -4,7 +4,7 @@ repo_url: https://github.com/TakashiSasaki/git-repo-db
 repo_name: TakashiSasaki/git-repo-db
 site_description: Persistent, offline-queryable Git and GitHub pull request catalog in SQLite
 
-docs_dir: .build/docs-source
+docs_dir: .build/staging/site
 site_dir: site
 
 theme:

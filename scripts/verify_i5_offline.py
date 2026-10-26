@@ -1,8 +1,8 @@
 """Audit all pytest nodes and execute disjoint offline cohorts with bounded output.
 
 This is an I5 evidence helper, not a release receipt or an approval. Install the
-locked dev AND docs groups before use. The docs group supplies PyYAML needed by
-ordinary documentation tests. Before --execute, run scripts/prepare_wheelhouse.py
+locked dev group before use. This is product-only evidence: relocated documentation
+obligations run independently and remain necessary for complete release acceptance. Before --execute, run scripts/prepare_wheelhouse.py
 (online dependency preparation only); execution stays network-guarded. Use the
 environment Python and its SQLite library; record the actual runtime without
 installing or replacing SQLite or requiring a particular release.

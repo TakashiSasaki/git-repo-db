@@ -1,10 +1,9 @@
-# Independent documentation workspace — SEP2 preparation
+# Independent documentation workspace — SEP3 cutover
 
 This additive project prepares isolated dependencies, output paths and mechanical
-input-provenance checks. Existing rendering, source files, tests and CI remain in
-place. ADR0035 is proposed; no adoption, cutover, publication or deployment occurs.
+input-provenance checks. Rendering, human sources and documentation tests now live here; product structural tests and canonical design/evidence remain outside. ADR0035 was adopted2026-10-26; publication/deployment remain separately authorized.
 The existing explicit staging/publication allowlist and rendering conventions in
-`scripts/build_docs_site.py` remain the only implementation; no duplicate MkDocs
+`documentation/tools/build_docs_site.py` remain the only implementation; no duplicate MkDocs
 configuration, renderer or editable ADR source is introduced here.
 
 From this directory, use the same available Python selected for this environment:
@@ -51,3 +50,15 @@ execution proof, and a manifest's input map is not proof of input completeness.
 SEP3/SEP4 must supply and adversarially verify the full producer input contract
 and local/hosted execution evidence before any complete-release claim. There is
 no full_acceptance success field in these preparation records.
+
+## Selected product producer and rendering
+
+In a clean, committed selected product checkout, use its verified product environment:
+
+```sh
+scripts/local-run.sh python scripts/schema_inventory.py --source FULL_PRODUCT_SHA --output documentation/.build/inputs
+uv run --project documentation --no-sync python documentation/tools/schema_viz.py --ir documentation/.build/inputs/inventory.json --check
+uv run --project documentation --no-sync python documentation/tools/build_docs_site.py --product-source FULL_PRODUCT_SHA --documentation-source FULL_DOC_SHA --no-mermaid
+```
+
+Choose both full SHAs once; do not chase latest HEAD. A different selected product checkout may export its manifest/IR for the documentation checkout to consume. Product CI does not render documentation. Existing Pages owns documentation checks/preview and the unchanged publication allowlist. Complete release aggregation remains unavailable until independently verified local/hosted documentation execution evidence is supplied; product receipts explicitly report `full_acceptance=false` and missing documentation. This is a release gap, never product failure or complete acceptance.

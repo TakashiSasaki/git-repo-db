@@ -21,17 +21,20 @@ import re
 import tempfile
 from pathlib import Path
 
-from scripts.schema_viz import (
+from scripts.schema_inventory import (
     CORE_GROUPS,
     LOGICAL_DEPENDENCIES,
     OPERATIONAL_GROUPS,
     SEARCH_GROUPS,
-    check_artifacts,
-    generate_all_artifacts,
     introspect_all,
     introspect_store,
     validate_functional_groups_consistency,
     validate_logical_dependencies,
+)
+
+from tools.schema_viz import (
+    check_artifacts,
+    generate_all_artifacts,
     write_artifacts,
 )
 
@@ -451,7 +454,7 @@ def test_16_single_column_unique_and_dbml_fidelity():
         syn_ddl,
         {"synthetic_group": ["syn_constraints"]},
     )
-    from scripts.schema_viz import _render_dbml_table
+    from tools.schema_viz import _render_dbml_table
 
     rendered_dbml = _render_dbml_table(syn_store["tables"]["syn_constraints"])
     assert "identifier text [not null, unique]" in rendered_dbml
@@ -525,7 +528,7 @@ def test_17_partial_unique_indexes_not_unconditional():
         syn_ddl,
         {"synthetic_group": ["syn_idx_variety"]},
     )
-    from scripts.schema_viz import _render_dbml_table
+    from tools.schema_viz import _render_dbml_table
 
     syn_table = syn_store["tables"]["syn_idx_variety"]
     syn_dbml = _render_dbml_table(syn_table)
