@@ -18,7 +18,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 from audit_callsite_dependencies import is_baseline_source  # noqa: E402
-from schema_viz import introspect_all  # noqa: E402
+from schema_inventory import introspect_all  # noqa: E402
 
 OUTPUT = ROOT / "docs/implementation"
 

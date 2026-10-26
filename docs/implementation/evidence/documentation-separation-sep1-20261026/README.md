@@ -1,0 +1,7 @@
+# SEP1 neutral extraction evidence
+
+Stacked on frozen SEP0 PR194; ADR0035 remains proposed. Only declaration relocation and product audit import separation are implemented. The renderer re-exports compatibility names; all 28 old schema/site tests stay in their original files. Pages receives the extracted transitive input in both existing path lists, preserving dependency coverage; no job/environment/collection cutover.
+
+`summary.json` binds source hashes and actual verified runtime. `output-hashes.json` is identical before/after for IR, all16 rendered artifacts and both audit outputs. Moved declarations have identical ASTs. `focused.xml` records32 passes (28existing+4new). Blocking renderer/MkDocs/material/yaml imports reproduces failure against original main and succeeds after extraction. Ruff and diff whitespace checks passed. No broad suite or release acceptance claimed;43 inherited Transfer non-successes and both SQL fences unchanged.
+
+Conservative release proposal: ordinary product development receipts describe product scope only; documentation checks follow independently. A complete release receipt must separately identify product and documentation checks, pinned source/tree and input hashes, and account for the union of every historical test obligation including split tests. Missing documentation evidence remains an explicit release gap; a product-only pass cannot imply complete release acceptance. Final labels and ADR adoption await the design gate. No main merge, deployment or settings authorized.
