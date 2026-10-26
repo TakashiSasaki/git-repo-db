@@ -325,6 +325,56 @@ def test_extract_receipt_multiple_ambiguous_bundles(tmp_path):
     assert not (dest_target / "bundle1.txt").exists()
 
 
+def test_extract_receipt_single_bundle_requested_digest_must_match(tmp_path):
+    """An explicit SHA-256 selector applies even to one valid receipt."""
+    raw, digest, length = _create_signed_bundle({"a.txt": b"payload"})
+    logfile = tmp_path / "job.log"
+    logfile.write_text(_format_log(raw, digest, length), encoding="utf-8")
+    dest = tmp_path / "receipt"
+    assert ci_query.main(
+        ["extract-receipt", str(logfile), "-o", str(dest), "--digest", "f" * 64]
+    ) == 2
+    assert not dest.exists()
+
+
+def test_extract_receipt_supports_existing_empty_directory(tmp_path):
+    """Preserve the existing CLI contract for an empty destination directory."""
+    raw, digest, length = _create_signed_bundle({"a.txt": b"payload"})
+    logfile = tmp_path / "job.log"
+    logfile.write_text(_format_log(raw, digest, length), encoding="utf-8")
+    dest = tmp_path / "receipt"
+    dest.mkdir()
+    assert ci_query.main(["extract-receipt", str(logfile), "-o", str(dest)]) == 0
+    assert (dest / "a.txt").read_bytes() == b"payload"
+
+
+def test_extract_receipt_refuses_existing_evidence_without_modification(tmp_path):
+    """Do not combine independently verified and untrusted prior evidence."""
+    raw, digest, length = _create_signed_bundle({"a.txt": b"payload"})
+    logfile = tmp_path / "job.log"
+    logfile.write_text(_format_log(raw, digest, length), encoding="utf-8")
+    dest = tmp_path / "receipt"
+    dest.mkdir()
+    (dest / "existing.txt").write_text("keep")
+    assert ci_query.main(["extract-receipt", str(logfile), "-o", str(dest)]) == 2
+    assert sorted(p.name for p in dest.iterdir()) == ["existing.txt"]
+    assert (dest / "existing.txt").read_text() == "keep"
+
+
+def test_extract_receipt_failed_atomic_rename_leaves_destination_empty(tmp_path):
+    """A failed final publication must not expose partial receipt contents."""
+    raw, digest, length = _create_signed_bundle(
+        {"a.txt": b"first", "b.txt": b"second"}
+    )
+    logfile = tmp_path / "job.log"
+    logfile.write_text(_format_log(raw, digest, length), encoding="utf-8")
+    dest = tmp_path / "receipt"
+    dest.mkdir()
+    with patch.object(ci_execute.os, "replace", side_effect=OSError("rename failed")):
+        assert ci_query.main(["extract-receipt", str(logfile), "-o", str(dest)]) == 2
+    assert list(dest.iterdir()) == []
+
+
 # =========================================================================
 # Work Package C: Fail-Closed Execution Status & Duplicate Node Handling
 # =========================================================================
@@ -413,6 +463,13 @@ def test_ci_profile_run_returns_nonzero_on_reconciliation_mismatch(tmp_path):
     assert "NODE_MISMATCH" in summary["reconciliation"]["status"]
     assert summary["child_exit_code"] == 0
     assert summary["verification_exit_code"] == 1
+    assert summary["exit_code"] == 1
+    profile = json.loads((tmp_path / "test_lane.json").read_text())
+    assert profile["exit_code"] == 1
+    assert profile["child_exit_code"] == 0
+    assert profile["verification_exit_code"] == 1
+    assert profile["verified"] is False
+    assert ci_query.main(["status", str(tmp_path)]) == 1
 
 
 def test_ci_profile_run_returns_nonzero_on_missing_junit(tmp_path):
@@ -433,6 +490,11 @@ def test_ci_profile_run_returns_nonzero_on_missing_junit(tmp_path):
 
     exit_code = ci_profile.run(args)
     assert exit_code == 2
+    profile = json.loads((tmp_path / "test_lane.json").read_text())
+    summary = json.loads((tmp_path / "execution-summary.json").read_text())
+    assert profile["exit_code"] == summary["exit_code"] == 2
+    assert profile["child_exit_code"] == summary["child_exit_code"] == 0
+    assert profile["verification_exit_code"] == 2
 
 
 # =========================================================================

@@ -840,6 +840,10 @@ def parse_log_receipt_bundle(log_source, target_digest=None, validate_members=Tr
         chosen = bundles[0]
 
     digest, expected_len, chunks = chosen
+    if target_digest is not None and digest != target_digest:
+        raise ValueError(
+            f"Selected receipt digest {digest} does not match requested {target_digest}"
+        )
     if expected_len > MAX_COMPRESSED_RECEIPT_BYTES:
         raise ValueError(
             f"Receipt bundle compressed size ({expected_len} bytes) exceeds {MAX_COMPRESSED_RECEIPT_BYTES} budget"
@@ -932,10 +936,20 @@ def extract_receipt_archive(
     Never leaves a partially extracted or corrupted destination on failure.
     """
     dest = Path(dest_path)
-    temp_parent = dest.parent if dest.parent.is_dir() else None
-    with tempfile.TemporaryDirectory(dir=temp_parent) as tmp_dir:
-        tmp_dest = Path(tmp_dir) / "staging"
-        tmp_dest.mkdir(parents=True, exist_ok=True)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+
+    def require_empty_destination():
+        # Never merge evidence from different runs or follow a destination symlink.
+        if dest.is_symlink():
+            raise ValueError(f"Receipt destination is a symlink: {dest}")
+        if dest.exists() and (not dest.is_dir() or any(dest.iterdir())):
+            raise ValueError(f"Receipt destination is not an empty directory: {dest}")
+
+    require_empty_destination()
+    # Stage on the same filesystem so the final directory rename is atomic.
+    with tempfile.TemporaryDirectory(dir=dest.parent) as tmp_dir:
+        staged = Path(tmp_dir) / "staging"
+        staged.mkdir(mode=0o700)
 
         files = parse_log_receipt_bundle(
             log_source,
@@ -946,16 +960,13 @@ def extract_receipt_archive(
             raise ValueError("No CI receipt data found in log")
 
         for name, data in files.items():
-            target_file = tmp_dest / name
+            target_file = staged / name
             target_file.parent.mkdir(parents=True, exist_ok=True)
             target_file.write_bytes(data)
 
-        # All files validated and written cleanly; publish to dest
-        dest.mkdir(parents=True, exist_ok=True)
-        for name, data in files.items():
-            final_file = dest / name
-            final_file.parent.mkdir(parents=True, exist_ok=True)
-            final_file.write_bytes(data)
+        # Publish only after all validated files have been written successfully.
+        require_empty_destination()
+        os.replace(staged, dest)
 
     return files
 
