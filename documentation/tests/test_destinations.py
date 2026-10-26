@@ -160,3 +160,30 @@ def test_renderer_api_refuses_authoritative_output_and_traversal(layout, monkeyp
     with pytest.raises(ValueError):
         schema_viz.write_artifacts({"../../../../escaped.md": "escape"}, output)
     assert not (root / "escaped.md").exists()
+
+
+@pytest.mark.parametrize(
+    "control", ["scripts/verification_outputs.py", "src/shared_control.py"]
+)
+def test_documentation_source_pin_covers_shared_executed_controls(layout, control):
+    import subprocess
+
+    root, docs = layout
+
+    def git(*args):
+        return subprocess.check_output(["git", "-C", str(root), *args]).decode().strip()
+
+    git("init", "-q")
+    git("config", "user.name", "Synthetic control fixture")
+    git("config", "user.email", "fixture@example.invalid")
+    target = root / control
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text("# selected control\n")
+    git("add", ".")
+    git("commit", "-qm", "selected complete tree")
+    source = git("rev-parse", "HEAD")
+    builder.verify_documentation_checkout(source)
+    target.write_text("# working control drift\n")
+    with pytest.raises(ValueError, match="differ from pinned"):
+        builder.verify_documentation_checkout(source)
+    assert target.read_text() == "# working control drift\n"

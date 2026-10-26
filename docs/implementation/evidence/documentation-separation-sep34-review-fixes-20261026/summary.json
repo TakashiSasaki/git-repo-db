@@ -4,26 +4,28 @@
   "author_checks": {
     "focused_product_passed": 394,
     "subtests_passed": 69,
-    "documentation_passed": 75,
+    "documentation_passed": 77,
     "ruff_lint_format": true,
     "SQLite_policy_all_scopes": "zero violations",
     "SEP34-01_red_before_green_after": true,
     "SEP34-02_real_old_pin_changed_IR_reproduced": true
   },
   "input_contract": "Single shared producer_input_names: committed src/**, scripts/**/*.py and mandatory root/producer controls. Executed repository Python closure must be a subset; working bytes checked before and after validation. Reconciler uses the same contract; absent helper/hash/closure evidence fails.",
-  "private_output_contract": "Shared stdlib no-follow dirfd writer, atomic publication, regular-file/alias/catalog checks; producer restricted to inputs namespace, verification creates unique private attempts. Builder preflights metadata before writing/freshness. No raw home config or secrets retained.",
+  "private_output_contract": "Shared stdlib no-follow dirfd writer, atomic publication, regular-file/alias/catalog checks; producer restricted to inputs namespace, verification creates unique private attempts. Builder preflights metadata before writing/freshness. No raw home config or secrets retained. Documentation checkout must match its entire clean pinned tree, including shared script controls; Pages follows scripts/**.",
   "preserved": "All src/contracts/phase2/machine inputs, both Transfer SQL fences, ADR0033 packaging, ADR0034 build identity helper unchanged. Original41 replacements and20 schema assertion ASTs remain unchanged.",
   "source_sha256": {
     "scripts/verification_outputs.py": "f752f895f335834594deaeb66b8646e2556be34acfd873ed3a94c81038664458",
     "scripts/schema_inventory.py": "8f69d853ec8ec5d69c55c77cb8a1ac008e10facc87da5a2c19d47022460e9a8b",
     "scripts/documentation_receipts.py": "58bbd6fae452e45c312917d035254cfd5775f3089306f837ee15ee66e0e4167e",
-    "documentation/tools/build_docs_site.py": "06096d482c6dbc82088bfacd4b307953c6757b84ee75403b11ba9bcb151673c0",
+    "documentation/tools/build_docs_site.py": "e7fb1e837905c89a16a2b5a52eb48bba1d8ef09547c7e4a8df166dde9e742d2a",
     "documentation/tools/verify_documentation.py": "8f8d83e2c78e9966d77457c1ecf2f80a97340fef48197c190490d41bb7114f82",
     "tests/unit/test_schema_inventory.py": "4515910626ecd140207822fa03bbdd1dacf0a53c1eaa004dbd4880aad40315ee",
     "tests/unit/test_documentation_receipts.py": "dd65c3f3ad880f9b956b7e9d409d3e074214d6e1ffc1e339a4aa1b3b8947cdb4",
     "tests/unit/test_verification_outputs.py": "cbbd37bcb9fde7a4469391228889ddbe71d59ca61b8617b13c14c63579204123",
     "tests/unit/test_producer_control_closure.py": "538c98e8aeb102198e88a51ae8eb0a43c9bd4f1e128ec0b9a8fe13ce13565c00",
-    "documentation/tests/test_private_metadata.py": "8ec32b0f11893a336ae46989fd4173336e6ef27d802e165112fdf53874984033"
+    "documentation/tests/test_private_metadata.py": "8ec32b0f11893a336ae46989fd4173336e6ef27d802e165112fdf53874984033",
+    "documentation/tests/test_destinations.py": "ac288dc1ef9073bfb0d32839edf36263437689e03cb5318cf6881d927706244f",
+    ".github/workflows/pages.yml": "6fd147f4ca4e6d8df0efff6451042e29730122bf7aebeae6a6f0ceb61952c509"
   },
   "limits": [
     "Independent re-review pending",

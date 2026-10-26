@@ -6,8 +6,7 @@ on:
       - 'documentation/**'
       - 'docs/adr/0001-validation-lifecycle-architecture.md'
       - 'docs/adr/0002-three-store-boundary-architecture.md'
-      - 'scripts/schema_inventory.py'
-      - 'scripts/audit_publication_free.py'
+      - 'scripts/**'
       - 'src/**'
       # Transitive Python inputs executed by schema_viz.py --check.
       - 'src/repo_catalog/__init__.py'
@@ -29,8 +28,7 @@ on:
       - 'documentation/**'
       - 'docs/adr/0001-validation-lifecycle-architecture.md'
       - 'docs/adr/0002-three-store-boundary-architecture.md'
-      - 'scripts/schema_inventory.py'
-      - 'scripts/audit_publication_free.py'
+      - 'scripts/**'
       - 'src/**'
       # Transitive Python inputs executed by schema_viz.py --check.
       - 'src/repo_catalog/__init__.py'
