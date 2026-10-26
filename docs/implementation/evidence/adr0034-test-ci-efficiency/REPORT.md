@@ -172,3 +172,51 @@ An independent non-author review of the token-efficient test and CI output harde
 - **Review Branch (Hardening Approval)**: [PR #189](https://github.com/TakashiSasaki/git-repo-db/pull/189) (`review/token-efficient-ci-hardening-20261025`)
   - Commit: `42a1fba61501061b6be3af2b53841eea60d08168`
   - Hosted CI Tests: [Run 40215303169](https://github.com/TakashiSasaki/git-repo-db/actions/runs/40215303169) (SUCCESS, 28s)
+- **PR E (Receipt Atomicity & Result Integrity)**: [PR #190](https://github.com/TakashiSasaki/git-repo-db/pull/190) (`fix/adr0034-receipt-atomicity-and-runner-status-20261026`)
+  - Commit: `33000ab40ea42b2832dc887dea10efcd4c3efe29`
+  - Merged into integration PR #186: Commit `049cc13b129223239cf987590a70c1394e035524` (Tree `4aaeb468ec21fb40aae00776e75c4032e47052e8`)
+  - Hosted CI Tests: [Run 40255401649](https://github.com/TakashiSasaki/git-repo-db/actions/runs/40255401649) (SUCCESS)
+  - Hosted CI Access Registry: [Run 40255401648](https://github.com/TakashiSasaki/git-repo-db/actions/runs/40255401648) (SUCCESS)
+- **Review Branch (Final Integration Review)**: `review/adr0034-final-integration-20261026`
+
+---
+
+### 5.3 Final Integration Review Verdict (PR #186 & PR #190 Integration)
+An independent non-author review of the final integrated ADR 0034 candidate (PR #186 HEAD `049cc13b129223239cf987590a70c1394e035524`, tree `4aaeb468ec21fb40aae00776e75c4032e47052e8`) relative to `main` (`8dd99b80470d5bdde203556b88c778332f9e92fb`, tree `f3672ddaecba7b9e25ce6a326d7d305b55960e8b`) was conducted following `pr-review.md`.
+
+- **Verdict**: **`REQUEST_CHANGES`**
+- **Analysis Status**: `COMPLETE`
+- **Blocking Findings (P0/P1)**: 1 (P1)
+- **Finding Title**: Shared packaging build cache bypasses sdist attack refusal verification
+- **Summary**: Receipt verification, digest checking, atomic zip extraction, fail-closed exit codes, multiset node reconciliation, and scheduler concurrency all pass cleanly. However, `tests/packaging/test_p1_distribution.py` hardcodes the session-global `base / "package-distributions"` cache directory without binding to the input tree fingerprint or `ROOT`. When `test_p1_distribution.py` runs before `test_sdist_hardening.py` in the same session, `build_once` reuses the real checkout's pre-built legitimate wheel rather than executing the build against the specimen tree, causing `test_distribution_gate_refuses_before_extract_rebuild_or_install` to fail with `Failed: DID NOT RAISE ValueError` and breaking packaging test suite execution.
+
+```json
+{
+  "schema_version": 1,
+  "analysis_status": "COMPLETE",
+  "summary": "Independent non-author High-Signal Blocking PR Review of final ADR 0034 integration PR #186 (commit 049cc13b129223239cf987590a70c1394e035524, tree 4aaeb468ec21fb40aae00776e75c4032e47052e8) relative to base main (commit 8dd99b80470d5bdde203556b88c778332f9e92fb, tree f3672ddaecba7b9e25ce6a326d7d305b55960e8b). Verified CI receipt parsing, digest matching, atomic zip publication, fail-closed runner exit codes, multiset node reconciliation, inherited failure classification, scheduler concurrency, and ADR compliance. Identified 1 blocking P1 issue in tests/packaging/test_p1_distribution.py where shared build_once caching reuses pre-built artifacts without input tree binding, bypassing critical sdist attack refusal verification in test_sdist_hardening.py.",
+  "event": "REQUEST_CHANGES",
+  "limitations": [],
+  "comments": [
+    {
+      "severity": "P1",
+      "title": "Shared packaging build cache bypasses sdist attack refusal verification",
+      "confidence": 0.99,
+      "path": "tests/packaging/test_p1_distribution.py",
+      "line": 45,
+      "side": "RIGHT",
+      "failure_scenario": "When tests/packaging/test_p1_distribution.py executes in the same test session before tests/packaging/test_sdist_hardening.py, the shared base / 'package-distributions' directory and ready.json receipt are already populated from the real repository build. When test_sdist_hardening.py::test_distribution_gate_refuses_before_extract_rebuild_or_install subsequently invokes p1_distributions.__wrapped__(tmp_path_factory) with monkeypatched ROOT (source specimen) and runner (fake_build), build_once reuses the existing cached legitimate build instead of executing the build with the attack specimen. Consequently, check_sdist is never invoked on the malicious sdist, no ValueError is raised, and test_distribution_gate_refuses_before_extract_rebuild_or_install fails with 'Failed: DID NOT RAISE ValueError', causing the packaging test suite to exit with code 1 and bypassing critical security gate verification.",
+      "evidence": "In tests/packaging/test_p1_distribution.py line 45, build_once is called with base / 'package-distributions' without binding to ROOT or input tree fingerprint. On main, p1_distributions used tmp_path_factory.mktemp('p1-packages'), creating an isolated directory for every invocation. Running `pytest tests/packaging/test_p1_distribution.py tests/packaging/test_sdist_hardening.py` succeeds on main (96 passed) but fails on HEAD (1 failed, 95 passed) with 'Failed: DID NOT RAISE ValueError'. This directly contradicts ADR 0034 requirement that shared artifacts are built 'exactly once per unique input tree fingerprint'.",
+      "recommended_fix": "In tests/packaging/test_p1_distribution.py, bind the build_once directory path to the resolved ROOT path or input tree fingerprint (e.g. `base / f'package-distributions-{hashlib.sha256(str(ROOT.resolve()).encode()).hexdigest()[:12]}'` or use an isolated temporary directory when ROOT is overridden), ensuring that alternative or specimen source trees execute an independent build rather than reusing the real checkout's cached build.",
+      "rule_references": [
+        {
+          "path": "docs/adr/0034-repository-test-and-ci-efficiency.md",
+          "section": "Decision & Context (Item 4: Shared immutable build outputs)",
+          "requirement": "Artifacts (direct wheel, sdist, sdist-derived wheel, and locked wheelhouse) are built exactly once per unique input tree fingerprint and sealed with SHA-256 receipts protected by file locking.",
+          "conflict": "tests/packaging/test_p1_distribution.py hardcodes base / 'package-distributions' without binding to the input tree fingerprint or ROOT, causing builds to be reused across different source trees and bypassing attack specimen rejection in test_sdist_hardening.py."
+        }
+      ]
+    }
+  ]
+}
+```
