@@ -164,11 +164,13 @@ An independent non-author review of the token-efficient test and CI output harde
 - **PR B (#184)**: Commit `962da44d8fc4318219dd46a8a84b0fd25c493eab` (`feat: implement quiet execution runner and resource-aware worker scheduling`)
 - **PR C (#185)**: Commit `c734b233125945d4c7b331d46733518f6add2fca` (`feat: eliminate duplicate distribution builds, isolate workspaces, and optimize CI scheduling`)
 - **Integration Candidate (Draft PR #186)**: Commit `d064ddba14821a3255a55831a208427f30db16f2` (Tree `384d37f9fa73c75834f54617aca33535837ec06f`)
+  - Hosted CI Tests: [Run 40249202882](https://github.com/TakashiSasaki/git-repo-db/actions/runs/40249202882) (SUCCESS, 35s)
+  - Hosted CI Access Registry: [Run 40249202873](https://github.com/TakashiSasaki/git-repo-db/actions/runs/40249202873) (SUCCESS, 5m37s)
 - **PR D (Corrective Hardening Candidate)**: [PR #188](https://github.com/TakashiSasaki/git-repo-db/pull/188) (`impl/token-efficient-ci-hardening-20261025`)
   - Commit: `d064ddba14821a3255a55831a208427f30db16f2`
   - Tree: `384d37f9fa73c75834f54617aca33535837ec06f`
-  - Hosted CI Tests: [Run 40215286694](https://github.com/TakashiSasaki/git-repo-db/actions/runs/40215286694) (SUCCESS, 26s)
-  - Hosted CI Access Registry: [Run 40215888079](https://github.com/TakashiSasaki/git-repo-db/actions/runs/40215888079) (SUCCESS, 5m47s, artifact `access-registry-verification`: 218,401,988 bytes)
+  - Hosted CI Tests: [Run 40249168821](https://github.com/TakashiSasaki/git-repo-db/actions/runs/40249168821) (SUCCESS, 34s)
+  - Hosted CI Access Registry: [Run 40249168787](https://github.com/TakashiSasaki/git-repo-db/actions/runs/40249168787) (SUCCESS, 5m36s, artifact `access-registry-verification`: 218,401,988 bytes)
 - **Review Branch (Hardening Approval)**: [PR #189](https://github.com/TakashiSasaki/git-repo-db/pull/189) (`review/token-efficient-ci-hardening-20261025`)
   - Reviews PR #188 commit `d064ddba14821a3255a55831a208427f30db16f2` (Tree `384d37f9fa73c75834f54617aca33535837ec06f`)
-  - Hosted CI Tests: [Run 40215303169](https://github.com/TakashiSasaki/git-repo-db/actions/runs/40215303169) (SUCCESS, 28s)
+  - Hosted CI Tests: [Run 40249444123](https://github.com/TakashiSasaki/git-repo-db/actions/runs/40249444123) (SUCCESS, 25s)
