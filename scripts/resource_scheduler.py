@@ -75,15 +75,30 @@ def available_memory_mb() -> float:
     meminfo = Path("/proc/meminfo")
     if meminfo.is_file():
         try:
+            total_mb = None
             for line in meminfo.read_text(encoding="utf-8").splitlines():
-                if line.startswith("MemAvailable:"):
-                    kb = float(line.split()[1])
+                key, separator, raw = line.partition(":")
+                if not separator or key not in {"MemAvailable", "MemTotal"}:
+                    continue
+                fields = raw.split()
+                if len(fields) != 2 or fields[1] != "kB":
+                    continue
+                try:
+                    kb = float(fields[0])
+                except ValueError:
+                    continue
+                if not math.isfinite(kb) or kb < 0:
+                    continue
+                if key == "MemAvailable":
+                    # Zero is valid pressure: retain it so the worker floor is 1.
                     return kb / 1024.0
-                if line.startswith("MemTotal:"):
-                    # Fallback to total if MemAvailable is somehow absent
-                    kb = float(line.split()[1])
-                    return kb / 1024.0
-        except (OSError, ValueError, IndexError):
+                if kb > 0:
+                    total_mb = kb / 1024.0
+            # /proc normally lists MemTotal first. Only use it after looking
+            # through the entire file for a valid MemAvailable record.
+            if total_mb is not None:
+                return total_mb
+        except OSError:
             pass
 
     # POSIX sysconf fallback

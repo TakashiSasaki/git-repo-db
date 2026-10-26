@@ -679,3 +679,13 @@ working-tree configuration in the receipt; check it before returning artifacts.
 Adding/changing config beneath a sealed build must refuse reuse. Keep old unit
 and actual-backend red controls separate from corrected green runs. A passing
 CI on the old source does not clear an independent FAIL.
+
+F186-01 found that scheduler tests mocking `available_memory_mb` missed the actual
+/proc parser: normal MemTotal-first ordering returned total RAM before reaching
+MemAvailable. Exercise the real parser with synthetic meminfo in both orders and
+assert the resulting worker budget (16 GiB total, 1 GiB available, 8 CPUs and
+350 MiB/worker must yield 2). Use a total-memory fallback only after searching
+for valid availability. Keep zero availability as pressure, reject malformed or
+nonfinite values per record, and retain CPU/affinity/cgroup caps. Missing fields,
+malformed earlier records and low-memory cases belong in the focused regression
+cohort; a high-level memory mock alone cannot establish parsing correctness.
