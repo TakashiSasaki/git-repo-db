@@ -1,0 +1,23 @@
+{
+  "ir_sha256": "e74b27af3f99bc3439fd802080b3b502b5ca18b4c16408f981a181abcce130f2",
+  "artifact_sha256": {
+    "mermaid/overview.md": "3646cf56c44b9438416bff0b486df29d872aa1a9df8c69b30ba7131d35503a86",
+    "mermaid/core-overview.md": "cd8c270b976c8f85472263fa0e4f6c5e933b92068309686733e69621bc1e8e2d",
+    "mermaid/core-identity.md": "05362466fb328f8949bd35ee6cca827dd2b67f79a4be8df7e7d9dc49b97b9f92",
+    "mermaid/core-current-state.md": "7807c5fe57155805ef06ee1c31b7e2509b6eb258f1643a2610149810c04d2aa2",
+    "mermaid/core-coverage.md": "c0c2f596ec24a1e46866ea10c838dd1a2779638c4a6ff6e90d005ed12d0f8592",
+    "mermaid/core-git.md": "7409cd732ab21a0199339645ba032d6b4c87f563b01c1e981a2d5ef4613a287b",
+    "mermaid/core-cas.md": "45117dc7058c89307d168666cc696ce6632c6f221e40ae668e7985b4f69ad380",
+    "mermaid/core-exchange.md": "92b7e166abc81c5227b7456879fc386ec3285f0aebe87404f12b35a92b1e933f",
+    "mermaid/operational.md": "7866d99faba0db8000535684ed9f4351cade91736a5b4c20ba14cbab556a60e1",
+    "mermaid/search.md": "7628995112748d24f3ee3066f633fd05ddcd3cb1a9e9e6f33acc0566ec67fcbe",
+    "dbml/core.dbml": "b39fb3cdd729d4988d00518d0be547eb41855612bba557f2559ae96440c54ae6",
+    "dbml/operational.dbml": "40180b7a5b8d821cd157353a4ed2805e4be5aa1c6420fc5ba109e6f686dc739c",
+    "dbml/search.dbml": "d4e7c10b831292357ac69fdc6e4db676720c3242f37135ad79fd2bc3d2943db5",
+    "dbml/combined.dbml": "e6681c9812a4145782e00bf1d8ffe07302243cede0dbc5b31ac1b9f2f0930842",
+    "index.html": "74da937985c856e78cdb25da82847485180aaa0c96b8021b0f86a9decb427848",
+    "README.md": "4218cb9121c463b558cb4c554b9cd49ff609c93ad5a61072f173782e7b2a5595"
+  },
+  "audit_sha256": "f4f6c841ac2d2be31dc0f3c06342a828c979be98e713fa50c609fb99b51a72cd",
+  "audit_report_sha256": "5462d6e4bf203ec4d5869c84a14f0bf27ec4e3fdcc43c12ae71103682e1ea139"
+}
