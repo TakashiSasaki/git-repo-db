@@ -1,0 +1,63 @@
+{
+  "stack_base": "125d4af9b0c860fac7d0623a70ef8018603bbe97",
+  "main_base": "e868805bfc1dc564ec2ce07f88e02fea04fe34e4",
+  "scope": "Additive documentation project only; no relocation, product/CI/test-collection cutover, release acceptance or publication",
+  "runtime": {
+    "python": "3.12.15 (main, Oct 21 2026, 17:47:06) [Clang 23.1.3 ]",
+    "sqlite": "3.53.1",
+    "sqlite_extension": "built-in",
+    "environment": "documentation/.venv",
+    "base_prefix": "/workspace/.cache/git-repo-db-python/6d7521138fd33afddc1ccd08abb007d9a2829e38117c2576f9efdc0ec73ce772/python"
+  },
+  "lock": {
+    "packages": 35,
+    "contains_product_package": false,
+    "root_workspace": false,
+    "locked_offline_check": true,
+    "mkdocs": "1.6.1",
+    "mkdocs_material": "9.7.7",
+    "ruff": "0.16.10"
+  },
+  "validation": {
+    "focused_passed": 23,
+    "failed": 0,
+    "skipped": 0,
+    "ruff_lint": true,
+    "ruff_format": true,
+    "unchanged_product_boundary_paths": [
+      "pyproject.toml",
+      "uv.lock",
+      "scripts/schema_viz.py",
+      "scripts/schema_inventory.py",
+      "scripts/check_sqlite_validation_policy.py",
+      "scripts/ci_plan.py",
+      "scripts/ci_execute.py",
+      "scripts/verify_i5_offline.py",
+      ".github/workflows/tests.yml",
+      ".github/workflows/pages.yml",
+      "tests/support/distributions.py"
+    ],
+    "root_sdist_only_include": [
+      "src/repo_catalog",
+      "pyproject.toml",
+      "README.md"
+    ],
+    "sdist_scope": "configuration inspected; no distribution build run"
+  },
+  "source_sha256": {
+    "documentation/.gitignore": "e731ae45fc3bf57aed26d05adb7255fe35b0a422961431d41514ca8708f2c5f9",
+    "documentation/AGENTS.md": "e00b6ed58c409a2ad9079a444617ef5762bf82f6481dc2e9c66f085657a5690f",
+    "documentation/README.md": "d70644c0b766251a30c3a06cf32305f507aedc00ba5ee811301ca658bc581265",
+    "documentation/pyproject.toml": "7b9ebc25dd4b9b940f8e559f420441d087d5ddabf772b49cfda64b584993f056",
+    "documentation/tests/test_provenance.py": "77bc43c4c9c765dabae22d15ec15e9c828f486825d425f1bdb135014c03ff7e7",
+    "documentation/tools/__init__.py": "b1fa186e2b14cc946af2f3aef478a82545f64dbdc8c3fb4b4af0eed2cfd936d5",
+    "documentation/tools/provenance.py": "dd4e150124f3ce1e87b08627a35fc49260e53ff7a84ded3bf5b22b31c733d215",
+    "documentation/uv.lock": "d89ce3979d49f3e2659e6f48b6d9468448774b200d733759f970c812455813d3"
+  },
+  "limits": [
+    "Provenance consistency is not trusted execution or producer input completeness",
+    "No rendering/build/cutover workflow enabled",
+    "No broad product suite or full acceptance claimed;43 inherited Transfer non-successes unchanged",
+    "ADR0035 proposed; owner adoption required before SEP3"
+  ]
+}
