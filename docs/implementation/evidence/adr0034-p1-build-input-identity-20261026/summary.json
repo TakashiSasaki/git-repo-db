@@ -1,0 +1,105 @@
+{
+  "schema": 1,
+  "review_status": "PENDING_NON_AUTHOR_REVIEW",
+  "base_commit": "049cc13b129223239cf987590a70c1394e035524",
+  "base_tree": "4aaeb468ec21fb40aae00776e75c4032e47052e8",
+  "repair_commit": "a183ca07076f7ae9dcf51f82b7946439490a1f19",
+  "repair_tree": "ebe257ea5b2edee57747c597cbd736c79bd3bba0",
+  "tested_inputs_sha256": {
+    ".agents/skills/ci-final-tree-verification/SKILL.md": "aef79efabaa461b55de5c582ed9a076c89c9372cfebcc0b525d40f183270af53",
+    "tests/packaging/test_distribution.py": "34780b0130c2044707ec35cb86574f7f514b466987b72fcce3855e0301959d59",
+    "tests/packaging/test_p1_distribution.py": "50abf2b28f29a637b0515a2334d99bbc923b2a0c1e4e7fe26f6a9d322df0700b",
+    "tests/packaging/test_sdist_hardening.py": "c508eec3dbac999dbab134f0dc73a2d24698e05ddc496dd8a7d559f8892878c7",
+    "tests/support/distributions.py": "06204b5934abfbd0e51ff72b4aff77acd2b502d9860c1b7b7ecaa20559cab7eb",
+    "tests/unit/test_build_input_identity.py": "2fc90f33b8520cf15fc439eec024cd352cb84e4386533b039c2ef22078f336a7",
+    "tests/unit/test_test_efficiency.py": "75aeda6993e8740b65fad5e70954ffb436754fbb3a1480bbc95c745723a939f4"
+  },
+  "test_binding": "Final focused/xdist runs executed on these working bytes immediately before the code commit; no executable changes between runs and commit. Later evidence-only commit is not a test rerun.",
+  "runtime": {
+    "python": "3.12.15 (main, Oct 21 2026, 17:47:06) [Clang 23.1.3 ]",
+    "executable": "/workspace/git-repo-db/.venv/bin/python",
+    "sqlite": [
+      "3.53.1",
+      "2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9"
+    ]
+  },
+  "results": {
+    "focused": {
+      "passed": 130,
+      "exit_code": 0,
+      "seconds": 56.33
+    },
+    "xdist": {
+      "passed": 16,
+      "workers": 2,
+      "exit_code": 0,
+      "seconds": 2.2
+    },
+    "ruff_check": "passed",
+    "ruff_format": "473 files already formatted",
+    "diff_check": "passed"
+  },
+  "prior_failures": [
+    {
+      "scope": "bootstrap default install root",
+      "result": "read-only /home/agent/.local/share/git-repo-db",
+      "resolution": "supported --home /workspace/.cache/git-repo-db-python; complete verified Python distribution, no SQLite replacement"
+    },
+    {
+      "scope": "first real packaging run",
+      "result": "128 passed / 2 setup errors: read-only /home/agent/.cache/uv",
+      "resolution": "UV_CACHE_DIR=/workspace/.cache/uv; later successful runs kept separate"
+    }
+  ],
+  "raw_evidence": {
+    "focused.xml": {
+      "sha256": "85dab63c2ae57c2798dea54fc5f090688afd5badf7b6a39cf91d9ea190b68773",
+      "bytes": 20537
+    },
+    "xdist.xml": {
+      "sha256": "93e364fe7b006cea24c0e06857c1c11d6aeb43c196c96e8a3a9a89a5d4aa6070",
+      "bytes": 2470
+    },
+    "focused.log": {
+      "sha256": "0f600e82254e58306bf1f658a991d0448b60146728a89a96106e7f42585a3864",
+      "bytes": 181
+    },
+    "xdist.log": {
+      "sha256": "ba71907796f87694506d27cdcf6e463b05223ce877888a2895fca98e8c0b70ab",
+      "bytes": 142
+    }
+  },
+  "actual_package_build_receipt": {
+    "files": {
+      "requirements": {
+        "path": "requirements.txt",
+        "sha256": "2d168e11e709ea3fd08c871abeda868f89932bb6b51f3b54c49bf11aab54329c"
+      },
+      "sdist": {
+        "path": "dist/repo_catalog-0.2.0.tar.gz",
+        "sha256": "f855fe9f902adbdf08d95766a8533705056317fd85e2724e97648670fb5f4833"
+      },
+      "sdist_contract": {
+        "path": "sdist-contract.json",
+        "sha256": "420917479bb353e6bb5de4e5f68ebda8546a1dcef2bc81b0b06ad8a20dd8d727"
+      },
+      "sdist_wheel": {
+        "path": "sdist-wheel/repo_catalog-0.2.0-py3-none-any.whl",
+        "sha256": "94afbfb2524b10923c6573f6d5a3a6d0ce570ae3b4477a67b4d1a8d7f6491210"
+      },
+      "wheel": {
+        "path": "dist/repo_catalog-0.2.0-py3-none-any.whl",
+        "sha256": "94afbfb2524b10923c6573f6d5a3a6d0ce570ae3b4477a67b4d1a8d7f6491210"
+      }
+    },
+    "inputs": "20b2df6e22d3c12a36a79fe251dcfbfc4b2046fae510a67027e46f3438ea4cc3",
+    "schema": 1
+  },
+  "scope": {
+    "product_source_changed": false,
+    "transfer_fences_changed": false,
+    "inherited_43_reclassified": false,
+    "broad_regression_suite_rerun": false,
+    "release_acceptance_claim": false
+  }
+}
