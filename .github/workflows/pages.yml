@@ -91,16 +91,20 @@ jobs:
       - name: Verify schema visualization freshness
         run: uv run --no-sync --project documentation python documentation/tools/schema_viz.py --ir documentation/.build/inputs/inventory.json --check
 
-      - name: Build documentation site
+      - name: Execute independent documentation obligations and retain receipt
+        env:
+          CI_FEATURE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           source_sha=$(git rev-parse HEAD)
-          uv run --no-sync --project documentation python documentation/tools/build_docs_site.py --product-source "$source_sha" --documentation-source "$source_sha"
+          uv run --no-sync --project documentation python documentation/tools/verify_documentation.py --product-source "$source_sha" --documentation-source "$source_sha"
 
-      - name: Run isolated documentation tests and formatting
-        run: |
-          uv run --no-sync --project documentation python -m pytest documentation/tests -q
-          uv run --no-sync --project documentation ruff check documentation/tools documentation/tests
-          uv run --no-sync --project documentation ruff format --check documentation/tools documentation/tests
+      - name: Retain private documentation verification evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: documentation-verification-${{ github.run_id }}-${{ github.run_attempt }}
+          path: documentation/.build/verification/
+          retention-days: 7
 
       - name: Retain preview artifact for review
         uses: actions/upload-artifact@v7
