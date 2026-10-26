@@ -96,14 +96,18 @@ def main() -> int:
                 file=sys.stderr,
             )
             return result.returncode
+
+    def canonical(node):
+        return "documentation/" + node if node.startswith("tests/") else node
+
     nodes = [
-        x.strip()
+        canonical(x.strip())
         for x in (output / "command-1.log").read_text().splitlines()
-        if x.startswith("documentation/tests/") and "::" in x
+        if x.startswith(("documentation/tests/", "tests/")) and "::" in x
     ]
     cases = ET.parse(output / "tests.xml").findall(".//testcase")
     executed = [
-        c.attrib["classname"].replace(".", "/") + ".py::" + c.attrib["name"]
+        canonical(c.attrib["classname"].replace(".", "/") + ".py::" + c.attrib["name"])
         for c in cases
     ]
     if (
@@ -133,6 +137,7 @@ def main() -> int:
     result = {
         "schema_version": 1,
         "scope": "documentation",
+        "pytest_root": "documentation",
         "status": "passed",
         "build_mode": "preview" if args.preview else "complete",
         "execution_context": "hosted" if hosted else "local",

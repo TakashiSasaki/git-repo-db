@@ -38,6 +38,7 @@ def checked_receipt(path, context, product, ir_hash, root):
     if (
         type(value.get("schema_version")) is not int
         or value.get("schema_version") != 1
+        or value.get("pytest_root") != "documentation"
         or value.get("full_acceptance") is not False
         or value.get("scope") != "documentation"
         or value.get("status") != "passed"
@@ -102,14 +103,18 @@ def checked_receipt(path, context, product, ir_hash, root):
             raise DocumentationGap("Producer committed input mismatch")
     nodes = value.get("test_ids", [])
     cases = ET.parse(path.parent / "tests.xml").findall(".//testcase")
+
+    def canonical(node):
+        return "documentation/" + node if node.startswith("tests/") else node
+
     actual = [
-        c.attrib["classname"].replace(".", "/") + ".py::" + c.attrib["name"]
+        canonical(c.attrib["classname"].replace(".", "/") + ".py::" + c.attrib["name"])
         for c in cases
     ]
     collected = [
-        x.strip()
+        canonical(x.strip())
         for x in (path.parent / "command-1.log").read_text().splitlines()
-        if x.startswith("documentation/tests/") and "::" in x
+        if x.startswith(("documentation/tests/", "tests/")) and "::" in x
     ]
     if (
         not nodes

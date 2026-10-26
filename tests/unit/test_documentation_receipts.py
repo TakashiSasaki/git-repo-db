@@ -99,6 +99,7 @@ def evidence(tmp_path):
         value = {
             "schema_version": 1,
             "scope": "documentation",
+            "pytest_root": "documentation",
             "full_acceptance": False,
             "status": "passed",
             "build_mode": "complete",
@@ -189,3 +190,21 @@ def test_unavailable_or_rejected_hosted_provider_is_a_gap(evidence):
         raise DocumentationGap("provider access denied")
 
     assert verify(evidence, denied)["status"] == "not_verified"
+
+
+def test_nested_pytest_native_ids_are_canonically_mapped_without_dropping_nodes(
+    evidence,
+):
+    _, paths, _, _ = evidence
+    for path in paths:
+        value = json.loads(path.read_text())
+        xml = path.parent / "tests.xml"
+        xml.write_text(xml.read_text().replace("documentation.tests.", "tests."))
+        collection = path.parent / "command-1.log"
+        collection.write_text(
+            collection.read_text().replace("documentation/tests/", "tests/")
+        )
+        for name in ("tests.xml", "command-1.log"):
+            value["artifact_sha256"][name] = sha((path.parent / name).read_bytes())
+        path.write_text(json.dumps(value))
+    assert verify(evidence)["status"] == "verified"
