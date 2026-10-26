@@ -1816,3 +1816,51 @@ def test_cli_exit_status_reconcile_release(acceptance):
     assert proc_rej.returncode == 1
     res_rej = json.loads(proc_rej.stdout)
     assert res_rej["verdict"] in ("release_rejected", "validation_gap_reported")
+
+
+@pytest.mark.parametrize("documentation_status", ["verified", "not_verified"])
+def test_complete_release_requires_documentation_conjunction_after_product_proofs(
+    acceptance, monkeypatch, documentation_status
+):
+    from scripts import documentation_receipts, schema_inventory
+
+    root, output = acceptance
+    plan = json.loads((output / "plan.json").read_bytes())
+    ci_execute.create_receipt(output, root=root)
+    ci_execute.gate(output / "plan.json", root)
+    actual_git = ci_plan.git
+
+    def selected_checkout(repository, *args):
+        if args == ("rev-parse", "HEAD"):
+            return plan["context"]["tested_sha"].encode() + b"\n"
+        return actual_git(repository, *args)
+
+    # Synthetic product proof fixture; validate only the conjunction connection.
+    # Real documentation tamper/provider controls are tested independently.
+    monkeypatch.setattr(ci_plan, "git", selected_checkout)
+    monkeypatch.setattr(schema_inventory, "introspect_all", lambda: {"synthetic": "IR"})
+    seen = []
+
+    def documentation_proof(*args, **kwargs):
+        seen.append(args)
+        return {"status": documentation_status}
+
+    monkeypatch.setattr(
+        documentation_receipts, "complete_documentation", documentation_proof
+    )
+    result = ci_execute.reconcile_release(
+        output / "local-receipt.json",
+        output / "validation-manifest.json",
+        root=root,
+        run_verifier=lambda *args: (True, None),
+        documentation_local="synthetic-local",
+        documentation_hosted="synthetic-hosted",
+    )
+    assert len(seen) == 1
+    assert seen[0][2]["commit"] == plan["context"]["tested_sha"]
+    assert result["full_acceptance"] == (documentation_status == "verified")
+    assert result["verdict"] == (
+        "complete_release_passed"
+        if documentation_status == "verified"
+        else "product_release_passed"
+    )

@@ -240,5 +240,12 @@
     "old": "tests/integration/test_ci_execution.py::test_selection_parallelism_keeps_small_defaults_and_bounds_overrides[tests-24-None-4]",
     "new": "tests/integration/test_ci_execution.py::test_selection_parallelism_keeps_small_defaults_and_bounds_overrides[tests-24-None-2]",
     "reason": "Original-main focused repro fails; accepted scheduler caps moderate workload at2. Production scheduler unchanged."
+  },
+  "native_documentation_pytest_root": "documentation",
+  "node_normalization": "Native tests/... IDs under documentation pytest root are canonically prefixed documentation/; raw collection and JUnit retained and exactly reconciled.",
+  "sep1_transition_replacement": {
+    "old_node": "tests/unit/test_schema_inventory.py::test_renderer_compatibility_exports_neutral_inventory",
+    "new_node": "documentation/tests/test_schema_viz.py::test_renderer_consumes_pinned_ir_without_product_or_documentation_imports",
+    "reason": "Temporary SEP1 re-exports were compatibility for extraction only. Renderer now moves out of product; its replacement proves pure pinned-IR consumption with product/rendering dependency imports blocked. No production/public API compatibility was promised."
   }
 }

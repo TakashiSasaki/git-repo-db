@@ -235,7 +235,7 @@ def test_10_check_mode_success_and_failure_on_mutation():
     ir = introspect_all()
     artifacts = generate_all_artifacts(ir, "all")
 
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with tempfile.TemporaryDirectory(dir=render_output_parent()) as tmpdir:
         tmp_path = Path(tmpdir)
         write_artifacts(artifacts, tmp_path)
 
@@ -260,7 +260,7 @@ def test_10_check_mode_success_and_failure_on_mutation():
 
 def test_11_no_persistent_sqlite_files_created():
     """Introspection and generation does not create persistent SQLite files."""
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with tempfile.TemporaryDirectory(dir=render_output_parent()) as tmpdir:
         tmp_path = Path(tmpdir)
         ir = introspect_all()
         artifacts = generate_all_artifacts(ir, "all")
@@ -709,3 +709,38 @@ def test_20_functional_groups_and_tablegroups_consistency():
     ]
     for t_name in ir["stores"]["search"]["tables"]:
         assert f"  {t_name}" in search_group_block
+
+
+def render_output_parent():
+    from tools.schema_viz import ROOT
+
+    path = ROOT / ".build/output"
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def test_renderer_consumes_pinned_ir_without_product_or_documentation_imports():
+    import subprocess
+    import sys
+
+    root = Path(__file__).resolve().parents[1]
+    script = r"""
+import importlib.abc, json, pathlib, sys
+root=pathlib.Path(sys.argv[1])
+sys.path.insert(0,str(root))
+class RefuseProduct(importlib.abc.MetaPathFinder):
+    def find_spec(self,fullname,path=None,target=None):
+        if fullname.startswith(('repo_catalog','scripts')) or fullname.split('.')[0] in {'mkdocs','material','yaml'}:
+            raise ImportError('renderer dependency forbidden: '+fullname)
+sys.meta_path.insert(0,RefuseProduct())
+from tools.schema_viz import generate_all_artifacts
+ir=json.loads((root/'.build/inputs/inventory.json').read_bytes())
+assert len(generate_all_artifacts(ir)) == 16
+"""
+    result = subprocess.run(
+        [sys.executable, "-I", "-c", script, str(root)],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert result.returncode == 0, result.stderr

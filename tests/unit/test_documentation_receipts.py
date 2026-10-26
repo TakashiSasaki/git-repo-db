@@ -19,8 +19,22 @@ def evidence(tmp_path):
     git("init", "-q")
     git("config", "user.name", "Synthetic release fixture")
     git("config", "user.email", "fixture@example.invalid")
-    source = root / "source.sql"
+    source = root / "src/repo_catalog/source.sql"
+    source.parent.mkdir(parents=True)
     source.write_text("synthetic SQL")
+    for name in ("scripts/schema_inventory.py", "pyproject.toml", "uv.lock"):
+        path = root / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("synthetic committed producer input")
+    input_hashes = {
+        name: sha((root / name).read_bytes())
+        for name in (
+            "src/repo_catalog/source.sql",
+            "scripts/schema_inventory.py",
+            "pyproject.toml",
+            "uv.lock",
+        )
+    }
     mapping = root / "docs/implementation/documentation-separation-node-map.json"
     mapping.parent.mkdir(parents=True)
     node = "documentation/tests/test_example.py::test_example"
@@ -44,7 +58,7 @@ def evidence(tmp_path):
             "schema_version": 1,
             "product_source": product,
             "ir_sha256": sha(ir),
-            "input_sha256": {"source.sql": sha(source.read_bytes())},
+            "input_sha256": input_hashes,
         }
     ).encode()
     receipts = []
@@ -56,7 +70,7 @@ def evidence(tmp_path):
         (directory / "tests.xml").write_text(
             '<testsuite><testcase classname="documentation.tests.test_example" name="test_example"/></testsuite>'
         )
-        for i in range(5):
+        for i in range(6):
             (directory / f"command-{i}.log").write_text(
                 node + "\n" if i == 1 else "synthetic success\n"
             )
@@ -96,6 +110,14 @@ def evidence(tmp_path):
                 "documentation/tests",
             ],
         ]
+        commands.append(
+            [
+                "python",
+                "scripts/check_sqlite_validation_policy.py",
+                "--scope",
+                "documentation",
+            ]
+        )
         value = {
             "schema_version": 1,
             "scope": "documentation",
@@ -109,12 +131,12 @@ def evidence(tmp_path):
                 "documentation_source": doc,
                 "neutral_ir_sha256": sha(ir),
                 "producer_manifest_sha256": sha(producer),
-                "producer_input_sha256": {"source.sql": sha(source.read_bytes())},
+                "producer_input_sha256": input_hashes,
             },
             "documentation_lock_sha256": sha(lock.read_bytes()),
             "test_ids": [node],
             "commands": commands,
-            "command_exit_codes": [0] * 5,
+            "command_exit_codes": [0] * 6,
             "artifact_sha256": {
                 p.name: sha(p.read_bytes()) for p in directory.iterdir()
             },
@@ -152,6 +174,7 @@ def test_independent_matching_documentation_obligations_can_complete_conjunction
         "changed-artifact",
         "changed-command",
         "failed-command",
+        "missing-producer-input",
     ],
 )
 def test_missing_failed_changed_or_preview_evidence_cannot_complete_release(
@@ -179,6 +202,16 @@ def test_missing_failed_changed_or_preview_evidence_cannot_complete_release(
             (path.parent / "tests.xml").write_text("altered evidence")
         elif change == "changed-command":
             value["commands"][2][4] = "documentation/tests/one.py"
+        elif change == "missing-producer-input":
+            producer_path = path.parent / "producer.json"
+            producer = json.loads(producer_path.read_text())
+            producer["input_sha256"].pop("uv.lock")
+            producer_path.write_text(json.dumps(producer))
+            value["artifact_sha256"]["producer.json"] = sha(producer_path.read_bytes())
+            value["inputs"]["producer_manifest_sha256"] = sha(
+                producer_path.read_bytes()
+            )
+            value["inputs"]["producer_input_sha256"] = producer["input_sha256"]
         else:
             value["command_exit_codes"][0] = 1
         path.write_text(json.dumps(value))

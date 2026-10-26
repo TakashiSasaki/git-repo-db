@@ -144,3 +144,19 @@ def test_documentation_pin_rejects_dirty_inputs_and_ignores_event_sha(
     with pytest.raises(ValueError, match="differ from pinned"):
         builder.verify_documentation_checkout(source)
     assert content.read_text() == "uncommitted edit"
+
+
+def test_renderer_api_refuses_authoritative_output_and_traversal(layout, monkeypatch):
+    from tools import schema_viz
+
+    root, docs = layout
+    monkeypatch.setattr(schema_viz, "ROOT", docs)
+    marker = root / "docs/adr/README.md"
+    marker.write_text("unchanged synthetic authority")
+    with pytest.raises(ValueError):
+        schema_viz.write_artifacts({"README.md": "overwrite"}, marker.parent)
+    assert marker.read_text() == "unchanged synthetic authority"
+    output = docs / ".build/output/preview"
+    with pytest.raises(ValueError):
+        schema_viz.write_artifacts({"../../../../escaped.md": "escape"}, output)
+    assert not (root / "escaped.md").exists()

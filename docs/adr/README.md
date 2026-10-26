@@ -4,7 +4,7 @@ Read the current scope before implementation. This index describes accepted targ
 
 **Accepted ADR governance: [ADR 0011](0011-adr-governance.md) and [the operating policy](policy.md).** Full/Mini-ADR [templates](template.md) and [Mini template](template-mini.md) are repository files; the optional [adr-workflow skill](../../.agents/skills/adr-workflow/SKILL.md) is procedural. The policy's section 9 documents bounded pre-adoption exceptions for existing ADRs 0001–0027. ADR 0003's reviewed migration item was closed by the 2026-10-19 whole-record acceptance of ADR 0029; other items remain scoped follow-up. ADR numbering allocation watermark: **0035** (includes accepted 0032–0035; 0011 is not a free gap). Acceptance, merging, implementation and executed verification remain distinct.
 
-**Latest accepted validation workflow: [ADR 0034](0034-repository-test-and-ci-efficiency.md), accepted 2026-10-26.** Quiet evidence, resource-aware execution and immutable build reuse preserve exact failure/node reconciliation. Input content and configuration across source/sdist build contexts must bind reuse. [Adoption provenance](../implementation/adr0034-adoption-20261026.md); implementation, final-tree review and release acceptance remain distinct.
+**Latest accepted validation efficiency workflow: [ADR 0034](0034-repository-test-and-ci-efficiency.md), accepted 2026-10-26.** Quiet evidence, resource-aware execution and immutable build reuse preserve exact failure/node reconciliation. Input content and configuration across source/sdist build contexts must bind reuse. [Adoption provenance](../implementation/adr0034-adoption-20261026.md); implementation, final-tree review and release acceptance remain distinct.
 
 **Latest accepted Context design: [ADR 0031](0031-generalized-context-resources.md), accepted 2026-10-21.** The owner accepted the complete generalized Resource/Identity/Parent design after the independently reviewed G3=A native-I7 SQL differential. The design was recorded in PR #114 on #113. Reviewed implementation through I6-C, scanner budget defenses and minimal sdist packaging is carried by PR #172 and review #174; the [main integration record](../implementation/evidence/adr0031-main-integration-20261025/README.md) records scoped verification. I7/I8, ordinary Transfer activation and full release qualification remain separate.
 
@@ -77,6 +77,8 @@ exceptions require explicit owner approval.
 | [Transport-independent Core](../transport-independent-core-adr.md) | Domain persistence and provenance independent of transport replay | 2026-10-10 | Preserved in unsuperseded scope |
 | [No Independent Publication](../phase2/no-independent-publication-adr.md) | Publication-free domain authority | 2026-10-10 | Preserved; no new generic notes/retention seal |
 | [0034](0034-repository-test-and-ci-efficiency.md) | Repository-wide validation efficiency, exact reconciliation, content-bound build reuse and isolated artifacts | 2026-10-26 | Owner-accepted Level 2 Mini-ADR; preserves ADRs 0001/0032/0033 and both Transfer fences. [Approval and bounded integration scope](../implementation/adr0034-adoption-20261026.md); final CI/review are separate gates. |
+
+| [0035](0035-independent-documentation-workspace.md) | Independent documentation workspace and product-only versus complete release acceptance | 2026-10-26 | Owner-adopted Level2; preserves independent local/hosted product and documentation obligations, ADR0033/0034 and both Transfer fences. [Adoption provenance](../implementation/adr0035-adoption-20261026.md). |
 
 ## Proposed Records
 

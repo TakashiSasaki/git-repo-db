@@ -70,3 +70,21 @@ def test_product_configuration_has_no_docs_dependencies():
     assert "docs" not in project["dependency-groups"]
     assert not any("mkdocs" in x.lower() for x in project["project"]["dependencies"])
     assert "documentation" not in json.dumps(project.get("tool", {}).get("uv", {}))
+
+
+def test_documentation_policy_obligations_remain_independent_of_product_scope(tmp_path):
+    path = "documentation/content/development/index.md"
+    write(tmp_path, path, "```sh\nuv pip install pysqlite3\n```\n")
+    paths = [path, ".github/workflows/pages.yml", "scripts/unknown.py"]
+    assert sqlite_policy.scan(
+        tmp_path, sqlite_policy.scope_paths(paths, "documentation")
+    )
+    assert not sqlite_policy.scan(tmp_path, sqlite_policy.scope_paths(paths, "product"))
+    assert "scripts/unknown.py" in sqlite_policy.scope_paths(paths, "product")
+    (tmp_path / path).unlink()
+    assert (
+        sqlite_policy.scan(tmp_path, sqlite_policy.scope_paths(paths, "documentation"))[
+            0
+        ].rule
+        == "missing-live-policy-input"
+    )

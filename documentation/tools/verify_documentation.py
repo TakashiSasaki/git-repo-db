@@ -85,6 +85,14 @@ def main() -> int:
             "documentation/tests",
         ],
     ]
+    commands.append(
+        [
+            sys.executable,
+            "scripts/check_sqlite_validation_policy.py",
+            "--scope",
+            "documentation",
+        ]
+    )
     for i, command in enumerate(commands):
         with (output / f"command-{i}.log").open("w") as stream:
             result = subprocess.run(

@@ -66,7 +66,7 @@ def checked_receipt(path, context, product, ir_hash, root):
         "tests.xml",
         "inventory.json",
         "producer.json",
-        *{f"command-{i}.log" for i in range(5)},
+        *{f"command-{i}.log" for i in range(6)},
     }
     if set(artifacts) != required:
         raise DocumentationGap("Documentation execution artifact set mismatch")
@@ -91,6 +91,20 @@ def checked_receipt(path, context, product, ir_hash, root):
         or not producer.get("input_sha256")
     ):
         raise DocumentationGap("Missing matching producer input evidence")
+    expected_inputs = {
+        name
+        for name in git(root, "ls-tree", "-r", "--name-only", product["commit"])
+        .decode()
+        .splitlines()
+        if name.startswith("src/")
+        or name in {"scripts/schema_inventory.py", "pyproject.toml", "uv.lock"}
+    }
+    if set(producer["input_sha256"]) != expected_inputs or not {
+        "scripts/schema_inventory.py",
+        "pyproject.toml",
+        "uv.lock",
+    }.issubset(expected_inputs):
+        raise DocumentationGap("Complete producer input inventory missing or changed")
     for name, digest in producer["input_sha256"].items():
         if (
             not isinstance(name, str)
@@ -146,9 +160,9 @@ def checked_receipt(path, context, product, ir_hash, root):
         raise DocumentationGap("Historical documentation obligations missing")
     commands = value.get("commands", [])
     if (
-        len(commands) != 5
+        len(commands) != 6
         or any(not isinstance(c, list) or not c for c in commands)
-        or value.get("command_exit_codes") != [0] * 5
+        or value.get("command_exit_codes") != [0] * 6
     ):
         raise DocumentationGap("Incomplete documentation execution commands")
     expected = [
@@ -170,8 +184,9 @@ def checked_receipt(path, context, product, ir_hash, root):
             "documentation/tools",
             "documentation/tests",
         ],
+        ["scripts/check_sqlite_validation_policy.py", "--scope", "documentation"],
     ]
-    for i in (0, 1, 3, 4):
+    for i in (0, 1, 3, 4, 5):
         if commands[i][1:] != expected[i]:
             raise DocumentationGap("Documentation execution scope changed")
     if (

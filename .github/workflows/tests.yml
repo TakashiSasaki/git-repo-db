@@ -26,7 +26,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Check current SQLite validation policy
-        run: python scripts/check_sqlite_validation_policy.py
+        run: python scripts/check_sqlite_validation_policy.py --scope product
       - name: Test policy detector against prohibited and permitted configurations
         run: python -m unittest discover -s tests/unit -p test_sqlite_validation_policy.py
       - name: Test product Python integrity and runtime binding with stdlib only

@@ -1,4 +1,4 @@
-"""Neutral inventory boundary controls; existing schema/rendering tests stay put."""
+"""Neutral inventory boundary controls; product checks never import rendering."""
 
 from __future__ import annotations
 

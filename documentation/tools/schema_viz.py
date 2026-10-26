@@ -2341,6 +2341,20 @@ def generate_all_artifacts(
 
 def write_artifacts(artifacts: dict[str, str], output_dir: Path) -> list[str]:
     """Write generated artifacts deterministically to disk."""
+    if any(p.is_symlink() for p in (output_dir, *output_dir.parents)):
+        raise ValueError("Linked artifact output refused")
+    if output_dir.resolve() != (ROOT / "schema").resolve():
+        from tools.build_docs_site import validate_destination
+
+        output_dir = validate_destination(output_dir, "output")
+    elif output_dir.exists():
+        for member in output_dir.rglob("*"):
+            if member.is_symlink():
+                raise ValueError("Linked generated source refused")
+            if member.is_file():
+                with member.open("rb") as stream:
+                    if stream.read(16) == b"SQLite format 3\x00":
+                        raise ValueError("Catalog in generated source refused")
     output_dir.mkdir(parents=True, exist_ok=True)
     written: list[str] = []
 
