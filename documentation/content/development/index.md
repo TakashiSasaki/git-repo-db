@@ -113,11 +113,11 @@ env -u UV_PROJECT_ENVIRONMENT uv run --project documentation --no-sync python do
 ## 4. CI パイプラインと自動デプロイ
 
 ### 開発モード (Development Mode)
-Pull Request の作成時やブランチプッシュ時、GitHub Actions の `.github/workflows/tests.yml` は**軽量な静的検査とスモーク検査**のみを実行します。
-また、`.github/workflows/pages.yml` はドキュメントサイトのビルドとリンク検証のみを行い、**公開デプロイは一切行いません**。
+GitHub Actions の `.github/workflows/tests.yml` は変更内容とモードから検査を選択し、条件に応じてテストや配布物の検査も実行します。実際に実行・省略された項目は各 run の結果と証跡で確認してください。Access などの scoped workflow も別にあります。
+`.github/workflows/pages.yml` は文書のビルドと検証を行います。PR ではデプロイを省略し、main の対象 push では既存 Pages ワークフローが公開します。
 
 ### リリース受入モード (Release Acceptance Mode)
-完全な 2,254 件のテストスイート実行、ホイールパッケージの完全性検証、およびローカル・ホスト間の厳密な照合は、手動の `workflow_dispatch`（`mode: release`）でのみ実行されます。
+明示的なリリース受入では、実際に収集されたテストと配布物の検証をローカル・ホストで照合し、独立した製品・文書の証跡を揃えます。テスト件数は固定値から推測せず、対象 revision の収集と実行結果で確認します。
 
 ### GitHub Pages への自動デプロイ
 1. PR に対するレビューとローカル検証が完了。
