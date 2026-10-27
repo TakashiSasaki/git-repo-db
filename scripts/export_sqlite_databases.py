@@ -91,8 +91,12 @@ def _publish_exclusive(fd: int, source: str, destination: str) -> None:
 def export_databases(output_dir: Path) -> dict[str, Path]:
     """Publish six empty schema specimens only into a new, absent directory.
 
-    Existing destinations, links and state/source locations are refused. The
-    parents are created safely. Linux/glibc atomic no-replace support is required.
+    Existing destinations, symlink ancestors and specified protected paths are
+    refused. The immediate parent is checked for SQLite files and sidecars;
+    this does not establish that every ancestor is free of catalog state. The
+    checkout's own ancestors are exempt from checkout/environment markers.
+    Parents are created without following symlinks. Linux/glibc atomic
+    no-replace support is required.
     """
     if sys.platform != "linux" or not hasattr(ctypes.CDLL(None), "renameat2"):
         raise RuntimeError(
