@@ -4,7 +4,7 @@
 
 本ドキュメントでは、実装済み通常ランタイムの基盤（**Core Schema 21 / Operational Schema 1 / Search Schema 1**）と各コンポーネントの責務を解説します。採択された目標設計と、実装・起動時の動作は別々に確認します。
 
-[ADR 0029](../adr/0029-independent-access-store.md) の採択設計には Core、Context、Access、Operational、Search の５つの責務境界があります。[P1 ファクトリー](https://github.com/TakashiSasaki/git-repo-db/blob/main/src/repo_catalog/adapters/sqlite/p1_schema.py) の４項目はその部分集合で、Access は[別の opt-in ファクトリー](https://github.com/TakashiSasaki/git-repo-db/blob/main/src/repo_catalog/adapters/sqlite/access_schema.py)です。
+[ADR 0029](https://github.com/TakashiSasaki/git-repo-db/blob/main/docs/adr/0029-independent-access-store.md) の採択設計には Core、Context、Access、Operational、Search の５つの責務境界があります。[P1 ファクトリー](https://github.com/TakashiSasaki/git-repo-db/blob/main/src/repo_catalog/adapters/sqlite/p1_schema.py) の４項目はその部分集合で、Access は[別の opt-in ファクトリー](https://github.com/TakashiSasaki/git-repo-db/blob/main/src/repo_catalog/adapters/sqlite/access_schema.py)です。
 
 通常の `init` は [初期化処理](https://github.com/TakashiSasaki/git-repo-db/blob/main/src/repo_catalog/application/maintenance_service.py) で１つの Core カタログを作成します。[Store の実装](https://github.com/TakashiSasaki/git-repo-db/blob/main/src/repo_catalog/adapters/sqlite/store.py)では Operational は必要時に開かれ、Search の作成は明示的です。これらはこの起動経路の説明であり、既存の利用者データベースの数や全構成の上限を示すものではありません。
 
