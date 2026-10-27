@@ -13,7 +13,7 @@ neutral IR digest separate. Pin explicit commits, not moving latest HEAD.
 
 Canonical ADRs/contracts/machine evidence stay at their original paths. Never
 create an editable second ADR source. Future build staging may copy only the
-existing explicit publication allowlist from scripts/build_docs_site.py; schema
+existing explicit publication allowlist from documentation/tools/build_docs_site.py; schema
 viewer URL partitioning and dual SVG paths stay unchanged. No new public content,
 workflow, deployment or settings are authorized by preparation. Private build
 inputs/provenance belong under .build/, not in published site outputs.

@@ -2,6 +2,15 @@
 
 Read the current scope before implementation. This index describes accepted target decisions, not implemented or verified behavior.
 
+## Find the right starting point
+
+- **Store responsibilities and Access:** [ADR 0029](0029-independent-access-store.md) and [Access design](../architecture/access-store-design.md).
+- **Context and Exchange:** [ADR 0030](0030-context-repository-relations-and-selective-exchange.md) and [ADR 0031](0031-generalized-context-resources.md).
+- **Validation and distributions:** [ADR 0001](0001-validation-lifecycle-architecture.md), [ADR 0032](0032-environment-sqlite-validation.md), [ADR 0033](0033-minimal-product-sdist.md), and [ADR 0034](0034-repository-test-and-ci-efficiency.md).
+- **Documentation boundary:** [ADR 0035](0035-independent-documentation-workspace.md) and the [documentation workspace](../../documentation/README.md).
+
+Accepted design, implementation and executed verification are distinct. Follow scoped supersessions and the actual startup path when reporting current behavior.
+
 **Accepted ADR governance: [ADR 0011](0011-adr-governance.md) and [the operating policy](policy.md).** Full/Mini-ADR [templates](template.md) and [Mini template](template-mini.md) are repository files; the optional [adr-workflow skill](../../.agents/skills/adr-workflow/SKILL.md) is procedural. The policy's section 9 documents bounded pre-adoption exceptions for existing ADRs 0001–0027. ADR 0003's reviewed migration item was closed by the 2026-10-19 whole-record acceptance of ADR 0029; other items remain scoped follow-up. ADR numbering allocation watermark: **0035** (includes accepted 0032–0035; 0011 is not a free gap). Acceptance, merging, implementation and executed verification remain distinct.
 
 **Latest accepted validation efficiency workflow: [ADR 0034](0034-repository-test-and-ci-efficiency.md), accepted 2026-10-26.** Quiet evidence, resource-aware execution and immutable build reuse preserve exact failure/node reconciliation. Input content and configuration across source/sdist build contexts must bind reuse. [Adoption provenance](../implementation/adr0034-adoption-20261026.md); implementation, final-tree review and release acceptance remain distinct.

@@ -2,6 +2,13 @@
 
 This guide applies repository-wide. Task specifications and agent handoffs are written in English; user-facing explanations may be Japanese. Read the [ADR index](docs/adr/README.md), then the relevant accepted decisions and their scoped supersessions. For ADR lifecycle/triage/numbering/retirement, follow the owner-accepted [ADR 0011](docs/adr/0011-adr-governance.md) and single [ADR operating policy](docs/adr/policy.md); the optional [adr-workflow skill](.agents/skills/adr-workflow/SKILL.md) contains procedures, not additional authority. The policy's bounded pre-adoption migration exception preserves still-binding ADR 0001–0027 clauses; no automatic bulk retirement or re-opening of accepted design decisions.
 
+## Architecture orientation
+
+- [Accepted design](docs/adr/0029-independent-access-store.md) defines five responsibility stores: Core, Context, Access, Operational and Search. This is a target boundary, not a count of databases opened by every startup.
+- The normal catalog path uses the implemented Core Schema 21, Operational 1 and Search 1; see [schema factories](src/repo_catalog/adapters/sqlite/schema.py) and [catalog initialization](src/repo_catalog/adapters/sqlite/store.py). P1 is opt-in: its [four-store factory subset](src/repo_catalog/adapters/sqlite/p1_schema.py) and separate [Access factory](src/repo_catalog/adapters/sqlite/access_schema.py) do not by themselves describe normal startup.
+- Reports must state what is counted (responsibility stores, factory entries, schemas, files or open connections), the source SHA, startup path and unverified scope. Do not equate these units.
+- Use the [task-oriented ADR index](docs/adr/README.md) and [documentation workspace](documentation/README.md). Authoritative contracts and machine inputs must track product changes; derived human documentation follows product work and does not block routine product checks ([ADR 0035](docs/adr/0035-independent-documentation-workspace.md)).
+
 ## SQLite validation
 
 Follow [ADR 0032](docs/adr/0032-environment-sqlite-validation.md): use the SQLite
