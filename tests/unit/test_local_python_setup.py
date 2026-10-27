@@ -206,8 +206,6 @@ class SuccessfulBootstrapTests(BootstrapCase):
                 "--locked",
                 "--group",
                 "dev",
-                "--group",
-                "docs",
                 "--python",
                 str(self.project.selected),
             ],

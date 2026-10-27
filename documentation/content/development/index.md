@@ -14,7 +14,7 @@
 - **Node.js**: 20 以上（ドキュメントサイトの Mermaid ダイアグラムを SVG レンダリングする場合）
 
 ### 仮想環境のセットアップ
-リポジトリのルートで次の一つのコマンドを実行します。manifest で固定された完全な Python 配布物の検証・導入、`.venv` の作成（既存 `.venv` は検証し、不一致なら破壊せず失敗）、`uv sync --locked --group dev --group docs`、製品 preflight、`artifacts/local-python/receipt.json` の保存まで行い、いずれかが失敗すれば非ゼロで終了します：
+リポジトリのルートで次の一つのコマンドを実行します。manifest で固定された完全な Python 配布物の検証・導入、`.venv` の作成（既存 `.venv` は検証し、不一致なら破壊せず失敗）、`uv sync --locked --group dev`、製品 preflight、`artifacts/local-python/receipt.json` の保存まで行い、いずれかが失敗すれば非ゼロで終了します：
 
 ```bash
 ./scripts/setup-local-python.sh
@@ -23,7 +23,7 @@
 以降のコマンドは `scripts/local-run.sh <command>` で実行すると、検証済みの Python が常に選ばれます（下記の `uv run --no-sync ...` は `scripts/local-run.sh uv run --no-sync ...` と読み替えてください）。詳細は [docs/local-python.md](https://github.com/TakashiSasaki/git-repo-db/blob/main/docs/local-python.md) を参照してください。
 
 > [!NOTE]
-> ドキュメント用の依存関係（`mkdocs`, `mkdocs-material`）は、本番アプリケーションの依存関係（`[project].dependencies`）とは完全に分離された `[dependency-groups].docs` に定義されています。
+> ドキュメント用の依存関係（`mkdocs`, `mkdocs-material`）は、本番アプリケーションの依存関係（`[project].dependencies`）とは完全に分離された `documentation/pyproject.toml` に定義されています。
 
 ---
 
@@ -47,13 +47,13 @@ uv run --no-sync ruff format src tests scripts
 SQLite の DDL 定義と生成された可視化成果物（HTML, Mermaid, DBML）が一致しているかを検証します：
 
 ```bash
-uv run --no-sync python scripts/schema_viz.py --check
+uv run --project documentation --no-sync python documentation/tools/schema_viz.py --ir documentation/.build/inputs/inventory.json --check
 ```
 
 不整合が検出された場合、以下のコマンドで可視化成果物を明示的に再生成します：
 
 ```bash
-uv run --no-sync python scripts/schema_viz.py --format all
+uv run --no-sync python documentation/tools/schema_viz.py --format all
 ```
 
 ### 焦点を絞ったテストの実行
@@ -71,15 +71,15 @@ uv run --no-sync pytest tests/unit/test_ci_plan.py
 
 ## 3. ドキュメントサイトのビルドとプレビュー
 
-開発者ドキュメントサイト（本サイト）は、MkDocs Material と専用のステージングスクリプト `scripts/build_docs_site.py` によってビルドされます。
+開発者ドキュメントサイト（本サイト）は、MkDocs Material と専用のステージングスクリプト `documentation/tools/build_docs_site.py` によってビルドされます。
 
 ### ローカルでのサイトビルド
 ```bash
-uv run --no-sync python scripts/build_docs_site.py
+uv run --project documentation --no-sync python documentation/tools/build_docs_site.py --product-source FULL_PRODUCT_SHA --documentation-source FULL_DOC_SHA
 ```
 
 このコマンドは内部で以下を順次実行します：
-1. `scripts/schema_viz.py --check` によるスキーマ鮮度の検証
+1. `documentation/tools/schema_viz.py --check` によるスキーマ鮮度の検証
 2. 一時ステージングディレクトリへの公開許可ドキュメントの配置
 3. 10 種類の Mermaid ER 図のブラウザ互換 SVG へのレンダリング
 4. スタンドアロンスキーマビューアーおよび DBML ファイルの配置
@@ -88,14 +88,14 @@ uv run --no-sync python scripts/build_docs_site.py
 
 ### ローカルでのリアルタイムプレビュー
 ```bash
-uv run --no-sync python scripts/build_docs_site.py --serve
+uv run --project documentation --no-sync python documentation/tools/build_docs_site.py --product-source FULL_PRODUCT_SHA --documentation-source FULL_DOC_SHA --serve
 ```
 
 ローカルサーバーが起動し、`http://127.0.0.1:8000/` でホットリロード付きのプレビューが可能です。
 
 ### 検証専用コマンド (非公開チェック)
 ```bash
-uv run --no-sync python scripts/build_docs_site.py --check
+uv run --project documentation --no-sync python documentation/tools/build_docs_site.py --product-source FULL_PRODUCT_SHA --documentation-source FULL_DOC_SHA --check
 ```
 
 ---

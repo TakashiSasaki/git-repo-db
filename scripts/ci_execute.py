@@ -1177,7 +1177,7 @@ def verify_hosted_provider(
 
         prov_manifest = read(tmp_path / "validation-manifest.json")
         if prov_manifest.get("validation_mode") != "release" or not prov_manifest.get(
-            "full_acceptance"
+            "product_full_acceptance", prov_manifest.get("full_acceptance")
         ):
             return (
                 False,
@@ -1227,6 +1227,9 @@ def reconcile_release(
     root=ROOT,
     run_verifier=None,
     gh_runner=None,
+    documentation_local=None,
+    documentation_hosted=None,
+    documentation_provider=None,
 ):
     """Reconcile independent local release receipt and hosted validation manifest."""
     local_receipt_path = Path(local_receipt_path)
@@ -1268,7 +1271,9 @@ def reconcile_release(
             "acceptance_status": "release_rejected",
         }
 
-    if hosted.get("validation_mode") != "release" or not hosted.get("full_acceptance"):
+    if hosted.get("validation_mode") != "release" or not hosted.get(
+        "product_full_acceptance", hosted.get("full_acceptance")
+    ):
         return {
             "verdict": "release_rejected",
             "reason": "Hosted manifest is not a completed release validation",
@@ -1509,13 +1514,52 @@ def reconcile_release(
             "reason": reason,
             "acceptance_status": "release_rejected",
         }
-    return {
-        "verdict": "complete_release_passed",
-        "reason": "Both independent local and hosted release validation obligations satisfied",
-        "acceptance_status": "complete_release_passed",
+    result = {
+        "verdict": "product_release_passed",
+        "full_acceptance": False,
+        "documentation_status": "not_verified",
+        "reason": "Independent local and hosted product obligations satisfied; documentation remains unverified",
+        "acceptance_status": "product_release_passed",
         "acceptance_input_hash": acceptance_input_hash,
         "tested_sha": plan_context.get("tested_sha"),
     }
+
+    if documentation_local or documentation_hosted:
+        from scripts.documentation_receipts import complete_documentation
+        from scripts.schema_inventory import introspect_all
+
+        try:
+            if (
+                ci_plan.git(root, "rev-parse", "HEAD").decode().strip()
+                != plan_context["tested_sha"]
+            ):
+                raise ValueError(
+                    "Select the exact product checkout before documentation reconciliation"
+                )
+            ir_bytes = (
+                json.dumps(introspect_all(), separators=(",", ":")) + "\n"
+            ).encode()
+            docs = complete_documentation(
+                documentation_local,
+                documentation_hosted,
+                {"commit": plan_context["tested_sha"], "tree": expected_tree},
+                hashlib.sha256(ir_bytes).hexdigest(),
+                root,
+                plan_context.get("repository"),
+                provider_check=documentation_provider,
+            )
+        except (OSError, ValueError, KeyError, subprocess.SubprocessError) as exc:
+            docs = {"status": "not_verified", "reason": str(exc)}
+        result["documentation_evidence"] = docs
+        result["documentation_status"] = docs["status"]
+        if docs["status"] == "verified":
+            result.update(
+                verdict="complete_release_passed",
+                acceptance_status="complete_release_passed",
+                full_acceptance=True,
+                reason="Independent local/hosted product and documentation obligations verified",
+            )
+    return result
 
 
 def gate(path, root=ROOT):
@@ -1700,14 +1744,14 @@ def gate(path, root=ROOT):
                 "Release mode requires full acceptance plan with all lanes selected"
             )
         if evidence_status == "local_evidence_verified":
-            acceptance_status = "complete_release_passed"
+            acceptance_status = "product_release_passed"
         elif evidence_status == "local_evidence_failed":
             acceptance_status = "release_rejected"
         else:
-            acceptance_status = "hosted_release_passed"
+            acceptance_status = "hosted_product_release_passed"
         status_label = (
-            "Complete release acceptance passed (local and hosted validated)."
-            if acceptance_status == "complete_release_passed"
+            "Product release checks passed (local and hosted); documentation obligations remain unverified."
+            if acceptance_status == "product_release_passed"
             else (
                 f"Release validation rejected: local evidence failed verification ({failed_receipts[0][1] if failed_receipts else 'unknown'})."
                 if acceptance_status == "release_rejected"
@@ -1738,7 +1782,9 @@ def gate(path, root=ROOT):
         "runtime": plan["runtime"],
         "tree_sha": tree_sha,
         "validation_mode": mode,
-        "full_acceptance": plan["full"],
+        "product_full_acceptance": plan["full"],
+        "full_acceptance": False,
+        "documentation_status": "not_verified",
         "acceptance_status": acceptance_status,
         "evidence_status": evidence_status,
         "acceptance_input_hash": plan["acceptance_input_hash"],
@@ -1780,6 +1826,8 @@ def main():
             "reconcile-release",
         ),
     )
+    parser.add_argument("--documentation-local", type=Path)
+    parser.add_argument("--documentation-hosted", type=Path)
     parser.add_argument(
         "--plan", type=Path, default=Path("artifacts/ci-profile/plan.json")
     )
@@ -1856,10 +1904,21 @@ def main():
                 "reconcile-release requires --local-receipt and --hosted-manifest"
             )
         res = reconcile_release(
-            args.local_receipt, args.hosted_manifest, root=args.root
+            args.local_receipt,
+            args.hosted_manifest,
+            root=args.root,
+            documentation_local=args.documentation_local,
+            documentation_hosted=args.documentation_hosted,
         )
         print(json.dumps(res, indent=2))
-        return 0 if res.get("verdict") == "complete_release_passed" else 1
+        if args.documentation_local or args.documentation_hosted:
+            return 0 if res.get("verdict") == "complete_release_passed" else 1
+        return (
+            0
+            if res.get("verdict")
+            in {"product_release_passed", "complete_release_passed"}
+            else 1
+        )
     else:
         res = gate(args.plan, root=args.root)
         cov = res["coverage"]

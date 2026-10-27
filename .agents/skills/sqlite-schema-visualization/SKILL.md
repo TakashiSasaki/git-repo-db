@@ -128,12 +128,12 @@ Diagrams represent cross-store references (e.g. `operational_identity.catalog_db
 ### Verification Commands
 ```bash
 # Verify that generated outputs match authoritative DDL without writing to disk:
-uv run --no-sync python scripts/schema_viz.py --check
+uv run --project documentation --no-sync python documentation/tools/schema_viz.py --ir documentation/.build/inputs/inventory.json --check
 
 # Regenerate all visual representations:
-uv run --no-sync python scripts/schema_viz.py --format all
+uv run --project documentation --no-sync python documentation/tools/schema_viz.py --ir documentation/.build/inputs/inventory.json --format all
 
 # Run focused structural tests:
-uv run --no-sync pytest tests/unit/test_schema_viz.py
+uv run --project documentation --no-sync pytest documentation/tests/test_schema_viz.py
 ```
 Outputs must be byte-for-byte reproducible with deterministic sorting, UTF-8 encoding, and no runtime timestamps.

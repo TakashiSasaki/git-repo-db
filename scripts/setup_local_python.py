@@ -312,8 +312,6 @@ def bootstrap(root, args, recorder, receipt):
         "--locked",
         "--group",
         "dev",
-        "--group",
-        "docs",
         "--python",
         selected,
     ]

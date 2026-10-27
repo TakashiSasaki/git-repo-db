@@ -19,10 +19,7 @@
     ".python-version",
     ".github/**",
     "scripts/**",
-    ".gitignore",
-    "mkdocs.yml",
-    "overrides/**",
-    "docs/site/**"
+    ".gitignore"
   ],
   "executable_inputs": [],
   "prose": [
@@ -32,7 +29,7 @@
     "docs/*.md",
     ".agents/skills/**/*.md"
   ],
-  "notes": "All test_*.py and *_test.py files below the four ordinary test directories are current acceptance inputs. Live tests remain explicit opt-in outside those directories. Historical phase exports, SQLite minimum bindings, test counts and old node IDs are not acceptance gates. In Development mode, hosted CI executes lightweight static and smoke checks, while full pytest execution is primary locally. In Release mode, complete dual local and hosted execution is required. Named historical schema-hardening snapshots, validation evidence, and receipts are report inputs.",
+  "notes": "All test_*.py and *_test.py files below the four ordinary test directories are current acceptance inputs. Live tests remain explicit opt-in outside those directories. Historical phase exports, SQLite minimum bindings, test counts and old node IDs are not acceptance gates. In Development mode, hosted CI executes lightweight static and smoke checks, while full pytest execution is primary locally. In Release mode, complete dual local and hosted execution is required. Named historical schema-hardening snapshots, validation evidence, and receipts are report inputs. ADR0035: ordinary acceptance is product-scoped; documentation tests run independently. Product-only evidence never establishes complete local/hosted product+documentation release acceptance. Unknown documentation paths remain conservative.",
   "report_inputs": [
     "docs/ci-performance-baseline.json",
     "docs/ci-performance-results.json",
@@ -75,5 +72,19 @@
     "tests/support/distributions.py",
     ".github/workflows/tests.yml",
     ".github/workflows/access-registry.yml"
+  ],
+  "documentation_inputs": [
+    "documentation/content/**",
+    "documentation/schema/**",
+    "documentation/overrides/**",
+    "documentation/tools/**",
+    "documentation/tests/**",
+    "documentation/pyproject.toml",
+    "documentation/uv.lock",
+    "documentation/mkdocs.yml",
+    "documentation/README.md",
+    "documentation/AGENTS.md",
+    "documentation/.gitignore",
+    ".github/workflows/pages.yml"
   ]
 }

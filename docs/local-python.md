@@ -43,7 +43,7 @@ safety requirements apply on every architecture used.
 It inspects the host and tools, resolves or installs the verified distribution,
 checks its Python/SQLite identity and the real product guards **before** any
 dependency, creates or verifies `.venv` on that interpreter, runs
-`uv sync --locked --group dev --group docs` with `UV_PYTHON` and
+`uv sync --locked --group dev` with `UV_PYTHON` and
 `UV_PYTHON_DOWNLOADS=never`, confirms `uv.lock` and `pyproject.toml` are unchanged,
 re-probes the runtime against the pre-dependency identity, runs
 `scripts/preflight_access.py` and writes `artifacts/local-python/receipt.json`.
@@ -133,3 +133,5 @@ SQLite versions may differ.
 | `<python home>/<sha256>/` | read-only verified distribution | only if no process uses it |
 | `<python home>/.staging-*`, `.lock-*` | private staging, lock files | stale staging is removed automatically |
 | `~/.cache/uv` | `uv` wheel cache | yes (needs network next time) |
+
+Documentation uses its independent `documentation/.venv` and lock; product setup does not install rendering dependencies. See [workspace guide](../documentation/README.md).

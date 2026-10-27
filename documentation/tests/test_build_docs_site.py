@@ -11,7 +11,7 @@ from pathlib import Path
 
 import yaml
 
-from scripts.build_docs_site import (
+from tools.build_docs_site import (
     DOCS_SCHEMA_DIR,
     MERMAID_DIAGRAM_SLUGS,
     check_schema_freshness,
@@ -39,7 +39,7 @@ def test_git_metadata():
 
 def test_staging_allowlist_and_transformation():
     """Staging includes only allowlisted content and resolves required transformations."""
-    with tempfile.TemporaryDirectory() as td:
+    with tempfile.TemporaryDirectory(dir=staging_parent()) as td:
         staging_dir = Path(td)
         stage_documentation(staging_dir, skip_mermaid_render=True)
 
@@ -133,7 +133,7 @@ def test_staging_allowlist_and_transformation():
 
 def test_publication_safety_validator():
     """Publication safety validator permits allowed files and rejects dangerous/sensitive files."""
-    with tempfile.TemporaryDirectory() as td:
+    with tempfile.TemporaryDirectory(dir=staging_parent()) as td:
         out_dir = Path(td)
         # Create valid assets
         (out_dir / "index.html").write_text("<html></html>", encoding="utf-8")
@@ -168,7 +168,7 @@ def test_publication_safety_validator():
 
 def test_internal_links_validator():
     """Internal links validator correctly flags broken link targets."""
-    with tempfile.TemporaryDirectory() as td:
+    with tempfile.TemporaryDirectory(dir=staging_parent()) as td:
         site_dir = Path(td)
         (site_dir / "index.html").write_text(
             '<a href="missing.html">Link</a>', encoding="utf-8"
@@ -185,7 +185,7 @@ def test_internal_links_validator():
 
 def test_critical_endpoints_validator():
     """Missing critical endpoint produces actionable violation."""
-    with tempfile.TemporaryDirectory() as td:
+    with tempfile.TemporaryDirectory(dir=staging_parent()) as td:
         empty_dir = Path(td)
         missing = validate_critical_endpoints(empty_dir)
         assert len(missing) > 0
@@ -250,8 +250,12 @@ def test_pages_trigger_paths_decision_matrix():
 
     matrix_cases = [
         # (changed_files, expected_pages_build, description)
-        (["docs/site/index.md"], True, "Published site homepage"),
-        (["docs/schema/mermaid/overview.md"], True, "Published schema Mermaid diagram"),
+        (["documentation/content/index.md"], True, "Published site homepage"),
+        (
+            ["documentation/schema/mermaid/overview.md"],
+            True,
+            "Published schema Mermaid diagram",
+        ),
         (
             ["docs/adr/0001-validation-lifecycle-architecture.md"],
             True,
@@ -262,9 +266,9 @@ def test_pages_trigger_paths_decision_matrix():
             True,
             "Published ADR 0002",
         ),
-        (["overrides/main.html"], True, "MkDocs theme override"),
-        (["mkdocs.yml"], True, "MkDocs config"),
-        (["scripts/build_docs_site.py"], True, "Docs build script"),
+        (["documentation/overrides/main.html"], True, "MkDocs theme override"),
+        (["documentation/mkdocs.yml"], True, "MkDocs config"),
+        (["documentation/tools/build_docs_site.py"], True, "Docs build script"),
         (
             ["src/repo_catalog/resources/catalog3.sql"],
             True,
@@ -287,7 +291,7 @@ def test_pages_trigger_paths_decision_matrix():
         ),
         (
             [
-                "docs/site/index.md",
+                "documentation/content/index.md",
                 "docs/implementation/evidence/example.json",
             ],
             True,
@@ -295,13 +299,13 @@ def test_pages_trigger_paths_decision_matrix():
         ),
         (
             ["src/repo_catalog/adapters/sqlite/p1_ddl/core.sql"],
-            False,
-            "Opt-in P1-P7 target schema DDL not yet visualized on site",
+            True,
+            "Selected producer source includes opt-in P1-P7 target schema DDL not yet visualized on site",
         ),
         (
             ["src/repo_catalog/adapters/sqlite/p1_schema.py"],
-            False,
-            "Opt-in P1-P7 target schema code not yet visualized on site",
+            True,
+            "Selected producer source includes opt-in P1-P7 target schema code not yet visualized on site",
         ),
     ]
 
@@ -319,9 +323,9 @@ def test_pages_trigger_covers_executed_schema_dependencies():
 import json, runpy, sys
 from pathlib import Path
 root = Path.cwd()
-sys.argv = ['scripts/schema_viz.py', '--check']
+sys.argv = ['scripts/schema_inventory.py', '--check']
 try:
-    runpy.run_path('scripts/schema_viz.py', run_name='__main__')
+    runpy.run_path('scripts/schema_inventory.py', run_name='__main__')
 except SystemExit as error:
     assert error.code in (None, 0)
 loaded = sorted({
@@ -350,3 +354,11 @@ print('DEPENDENCIES=' + json.dumps(loaded))
             if not _eval_github_workflow_trigger(triggers[event]["paths"], [path])
         ]
         assert not missing, f"{event} misses executed schema dependencies: {missing}"
+
+
+def staging_parent():
+    from tools.build_docs_site import DOCS_ROOT
+
+    parent = DOCS_ROOT / ".build" / "staging"
+    parent.mkdir(parents=True, exist_ok=True)
+    return parent

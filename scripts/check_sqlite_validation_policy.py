@@ -26,7 +26,7 @@ LIVE_DOCS = frozenset(
         "docs/change-aware-ci.md",
         "docs/ci-performance.md",
         "docs/test-suite-efficiency.md",
-        "docs/site/development/index.md",
+        "documentation/content/development/index.md",
         "docs/architecture/git-core-context-transition-plan.md",
         "docs/implementation/context-resource-design-handoff.md",
         "docs/implementation/context-exchange-design-handoff.md",
@@ -50,11 +50,21 @@ def in_scope(path: str) -> bool:
     parts = Path(path).parts
     if path == SELF or "evidence" in parts or "fixtures" in parts:
         return False
-    if path in LIVE_DOCS or Path(path).name == "AGENTS.md":
+    if (
+        path in LIVE_DOCS
+        or path == "documentation/pyproject.toml"
+        or Path(path).name == "AGENTS.md"
+    ):
         return True
     return (
         path.startswith(
-            ("scripts/", ".agents/", ".github/workflows/", ".github/actions/")
+            (
+                "scripts/",
+                "documentation/tools/",
+                ".agents/",
+                ".github/workflows/",
+                ".github/actions/",
+            )
         )
         or path.startswith(".github/")
         and path.endswith(".md")
@@ -317,24 +327,48 @@ def inspect(path: str, text: str) -> list[Finding]:
 
 
 def scan(root: Path, paths: list[str]) -> list[Finding]:
+    missing = [
+        Finding(path, 0, "missing-live-policy-input")
+        for path in set(paths)
+        if path in LIVE_DOCS and not (root / path).is_file()
+    ]
     return sorted(
-        finding
-        for path in sorted(set(paths))
-        if in_scope(path) and (root / path).is_file()
-        for finding in inspect(path, (root / path).read_text(encoding="utf-8"))
+        missing
+        + [
+            finding
+            for path in sorted(set(paths))
+            if in_scope(path) and (root / path).is_file()
+            for finding in inspect(path, (root / path).read_text(encoding="utf-8"))
+        ]
     )
+
+
+def scope_paths(paths: list[str], scope: str) -> list[str]:
+    def documentation(path):
+        return (
+            path.startswith("documentation/") or path == ".github/workflows/pages.yml"
+        )
+
+    return [
+        path
+        for path in paths
+        if scope == "all" or documentation(path) == (scope == "documentation")
+    ]
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=ROOT)
+    parser.add_argument(
+        "--scope", choices=("product", "documentation", "all"), default="product"
+    )
     args = parser.parse_args()
     paths = (
         subprocess.check_output(["git", "-C", str(args.root), "ls-files", "-z"])
         .decode()
         .split("\0")
     )
-    findings = scan(args.root, paths)
+    findings = scan(args.root, scope_paths(paths, args.scope))
     for finding in findings:
         print(f"{finding.path}:{finding.line}: {finding.rule} (ADR 0032)")
     print(f"SQLite validation policy: {len(findings)} violation(s)")

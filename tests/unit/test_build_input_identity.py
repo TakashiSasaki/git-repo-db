@@ -265,3 +265,37 @@ def test_xdg_system_config_addition_is_not_hidden_by_a_warm_cache(source, tmp_pa
     with pytest.raises(ValueError, match="fresh uv rejected"):
         build_once(cache, reject, inputs=inputs)
     assert inputs() != before
+
+
+def test_documentation_bytes_reuse_product_cache_but_root_edits_invalidate(
+    source, tmp_path
+):
+    env = {"SOURCE_DATE_EPOCH": "1"}
+
+    def inputs():
+        return package_build_inputs(source, env)
+
+    cache = tmp_path / "cache"
+    first = build_once(cache, products, inputs=inputs)
+    identity = inputs()
+    docs = source / "documentation"
+    docs.mkdir()
+    config = docs / "mkdocs.yml"
+    config.write_text("broken: [documentation-only")
+    assert inputs() == identity
+    assert (
+        build_once(cache, lambda _: pytest.fail("docs-only rebuild"), inputs=inputs)
+        == first
+    )
+    config.write_text("another broken documentation configuration")
+    assert inputs() == identity
+    assert (
+        build_once(cache, lambda _: pytest.fail("docs-only rebuild"), inputs=inputs)
+        == first
+    )
+    root_config = source / "pyproject.toml"
+    root_config.write_text(
+        root_config.read_text() + "\n# real root build input changed\n"
+    )
+    assert inputs() != identity
+    assert build_once(cache, products, inputs=inputs) != first
