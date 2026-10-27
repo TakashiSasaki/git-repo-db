@@ -251,6 +251,29 @@ def get_git_metadata() -> Dict[str, str]:
     }
 
 
+def format_timestamp(value) -> str:
+    """Show JST and retain the exact UTC instant in machine-readable HTML."""
+    from datetime import timedelta, timezone
+
+    utc = value.astimezone(timezone.utc).isoformat(timespec="seconds")
+    jst = value.astimezone(timezone(timedelta(hours=9))).isoformat(timespec="seconds")
+    return f'<time datetime="{utc}">{jst} (JST)</time>'
+
+
+def commit_timestamp(commit: str) -> str:
+    """Use Git committer time, never build time, for the selected commit."""
+    from datetime import datetime
+
+    if not re.fullmatch(r"[0-9a-f]{40}", commit):
+        raise ValueError("Explicit commit required for timestamp")
+    value = datetime.fromisoformat(
+        run_cmd(["git", "show", "-s", "--format=%cI", commit])
+    )
+    if value.tzinfo is None:
+        raise ValueError("Commit timestamp lacks timezone")
+    return format_timestamp(value)
+
+
 def find_mermaid_cli() -> List[str]:
     """Locate Mermaid CLI runner (mmdc, bunx, or npx)."""
     # Check if mmdc is in PATH
@@ -355,6 +378,13 @@ def stage_documentation(
             or not re.fullmatch(r"[0-9a-f]{64}", digest)
         ):
             raise ValueError("Missing or malformed selected product provenance")
+    documentation_time = commit_timestamp(meta["commit_sha"])
+    product_time = (
+        commit_timestamp(product["commit"]) if provenance is not None else None
+    )
+    from datetime import datetime, timezone
+
+    build_time = format_timestamp(datetime.now(timezone.utc))
     staging_dir = validate_destination(staging_dir, "staging")
     print(f"Staging documentation into {staging_dir}...")
     if staging_dir.exists():
@@ -385,6 +415,9 @@ def stage_documentation(
         f"### ビルド・リビジョン情報 (Build Metadata)\n"
         f"- **Documentation Commit**: [`{meta['commit_sha']}`](https://github.com/TakashiSasaki/git-repo-db/commit/{meta['commit_sha']})\n"
         f"- **Documentation Tree**: `{meta['tree_sha']}`\n"
+        f"- **Documentation commit time (committer)**: {documentation_time}\n"
+        f"- **Design source**: このドキュメントのコミットの [ADR 原本](https://github.com/TakashiSasaki/git-repo-db/tree/{meta['commit_sha']}/docs/adr) と [アーキテクチャ解説](https://github.com/TakashiSasaki/git-repo-db/tree/{meta['commit_sha']}/documentation/content/architecture)（同一リビジョン）\n"
+        f"- **Build time**: {build_time}（公開時刻ではありません）\n"
     )
     if provenance is None:
         metadata_banner += "- **Selected Product / IR**: 未検証（staging 単体）\n"
@@ -393,8 +426,10 @@ def stage_documentation(
         metadata_banner += (
             f"- **Selected Product Commit**: [`{product['commit']}`](https://github.com/TakashiSasaki/git-repo-db/commit/{product['commit']})\n"
             f"- **Selected Product Tree**: `{product['tree']}`\n"
+            f"- **Selected Product commit time (committer)**: {product_time}\n"
             f"- **Neutral IR SHA-256**: `{provenance['neutral_ir_sha256']}`\n"
         )
+    metadata_banner += "\n選択した Product はスキーマ IR の入力です。手書きの説明すべてがそのコードと意味的に検証済みであることを示すものではありません。\n"
     (staging_dir / "index.md").write_text(
         homepage_content + metadata_banner, encoding="utf-8"
     )
