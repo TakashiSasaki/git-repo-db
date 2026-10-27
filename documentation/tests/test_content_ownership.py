@@ -111,3 +111,13 @@ def test_unresolved_metadata_is_not_accepted(monkeypatch):
     monkeypatch.setattr(inventory_content, "_manifest", lambda: data)
     with pytest.raises(ValueError, match="Unresolved inventory entry"):
         inventory_content.inventory()
+
+
+def test_adr_status_evidence_must_match_source(monkeypatch):
+    data = inventory_content._manifest()
+    data["records"]["docs/adr/0001-validation-lifecycle-architecture.md"][
+        "status_in_source"
+    ] = "not declared in YAML; inspect the record"
+    monkeypatch.setattr(inventory_content, "_manifest", lambda: data)
+    with pytest.raises(ValueError, match="ADR status evidence mismatch"):
+        inventory_content.inventory()

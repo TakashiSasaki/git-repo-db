@@ -8,6 +8,7 @@ Frozen historical collections are checked against their original Git objects.
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 from pathlib import Path
 
@@ -132,6 +133,18 @@ def inventory() -> list[dict]:
             for key in required
         ):
             raise ValueError(f"Unresolved inventory entry: {path}")
+        if re.fullmatch(r"docs/adr/\d{4}-[^/]+\.md", path):
+            text = (ROOT / path).read_text(encoding="utf-8")
+            match = re.search(r"^status:\s*(.+)$", text, re.MULTILINE)
+            if match is None:
+                match = re.search(
+                    r"^-\s*\*\*Status:\*\*\s*(.+)$", text, re.MULTILINE | re.IGNORECASE
+                )
+            if (
+                match is None
+                or record.get("status_in_source") != match.group(1).strip()
+            ):
+                raise ValueError(f"ADR status evidence mismatch: {path}")
         result.append({"path": path, **record})
     return result
 
