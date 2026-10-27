@@ -24,9 +24,10 @@ release obligations remain in force.
 
 Documentation verification also requires Node.js (the hosted workflow uses Node
 22). Its pytest suite runs the six PWA icon safety tests through Node's test
-runner; a missing Node executable or a failed test fails verification. Run them
-directly with `node --test documentation/tests/test_generate_pwa_icons.mjs`.
-The optional generator is `node documentation/tools/generate_pwa_icons.js`; it
+runner; a missing Node executable or a failed test fails verification. From the
+`documentation/` directory, run them directly with
+`node --test tests/test_generate_pwa_icons.mjs`.
+From that same directory, the optional generator is `node tools/generate_pwa_icons.js`; it
 requires Puppeteer and a compatible browser in the local environment. Those are
 not needed for the stubbed safety tests and are not product dependencies.
 
