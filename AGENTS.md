@@ -2,6 +2,19 @@
 
 This guide applies repository-wide. Task specifications and agent handoffs are written in English; user-facing explanations may be Japanese. Read the [ADR index](docs/adr/README.md), then the relevant accepted decisions and their scoped supersessions. For ADR lifecycle/triage/numbering/retirement, follow the owner-accepted [ADR 0011](docs/adr/0011-adr-governance.md) and single [ADR operating policy](docs/adr/policy.md); the optional [adr-workflow skill](.agents/skills/adr-workflow/SKILL.md) contains procedures, not additional authority. The policy's bounded pre-adoption migration exception preserves still-binding ADR 0001–0027 clauses; no automatic bulk retirement or re-opening of accepted design decisions.
 
+## Current development phase
+
+This is currently a single-user development project. Prefer simple solutions over
+backward compatibility: old helper interfaces and workflows may change incompatibly
+when useful; document the changes. Zero-downtime documentation publication and
+simultaneous availability of every generated icon are not requirements. Revisit
+these preferences if the project's users or deployment needs change.
+
+Preserve source and user-data integrity, unrelated work, historical evidence and
+meaningful verification. ADR 0035's product/documentation separation and accepted
+architecture and retirement decisions remain binding. These preferences do not
+authorize destructive operations, security-setting changes, merges or deployments.
+
 ## Architecture orientation
 
 - [Accepted design](docs/adr/0029-independent-access-store.md) defines five responsibility stores: Core, Context, Access, Operational and Search. This is a target boundary, not a count of databases opened by every startup.

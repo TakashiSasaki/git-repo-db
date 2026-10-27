@@ -1,6 +1,7 @@
 # Isolated documentation workspace
 
-Root AGENTS.md and accepted ADRs remain authoritative. ADR0035 was adopted2026-10-26. This project is not a root uv workspace member. Use its
+[Root AGENTS.md](../AGENTS.md) and accepted ADRs remain authoritative, including
+the current development-phase guidance. ADR0035 was adopted2026-10-26. This project is not a root uv workspace member. Use its
 own pyproject.toml, uv.lock and .venv for documentation-only work; never change the
 product environment, test selection or checks as a shortcut for documentation.
 Use the environment's loaded SQLite; never replace/build/spoof SQLite.
