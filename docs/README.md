@@ -24,7 +24,9 @@ producer, consumers, and publication intent. Static consumer references are a
 bounded literal scan; dynamic references and ambiguous names are not proven
 absent. New nested files require explicit entries. The two frozen evidence
 collections are enumerated from their pinned Git trees, including paths, file
-modes and blobs; changes or additions fail the inventory check. See each record
+modes and blobs; changes or additions fail the inventory check. The checker
+refuses assume-unchanged and skip-worktree flags on frozen entries so that Git
+cannot conceal modified evidence; it does not change those flags. See each record
 and the ADR index for scoped supersessions, rather than treating an inventory
 category as new authority.
 

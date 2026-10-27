@@ -24,11 +24,26 @@ def test_inventory_has_exact_roles_and_rejects_unreviewed_paths():
         "docs/implementation/p1-schema-contracts.md": "active-scoped-contract",
         "docs/phase2/decision-register-before-no-publication.md": "superseded-decision-or-proposal-snapshot",
         "docs/phase2/field-contract.json": "machine-input-with-scoped-provenance",
+        "docs/implementation/access-a6-acceptance.json": "authored-live-acceptance-ledger",
+        "docs/implementation/callsite-dependencies.json": "generated-callsite-audit-index",
+        "docs/implementation/table-disposition.md": "generated-schema-disposition-report",
         "documentation/schema/README.md": "generated-presentation",
         "documentation/current-runtime-reference.md": "derived-milestone-guide",
     }.items():
         assert classify(path)["status"] == status
     assert "schema_viz.py" in classify("documentation/schema/README.md")["producer"]
+    assert (
+        "audit_access_acceptance.py"
+        in classify("docs/implementation/access-a6-acceptance.json")["consumers"]
+    )
+    assert (
+        "audit_callsite_dependencies.py"
+        in classify("docs/implementation/callsite-dependencies.json")["producer"]
+    )
+    assert (
+        "audit_implementation_boundary.py"
+        in classify("docs/implementation/table-disposition.md")["producer"]
+    )
     assert not (ROOT / "docs/current-runtime-reference.md").exists()
     for path in (
         "docs/implementation/unreviewed-current-contract.md",
@@ -161,9 +176,7 @@ def test_frozen_baseline_cannot_be_replaced(tmp_path, monkeypatch):
         inventory_content.inventory()
 
 
-def test_ignored_untracked_addition_to_frozen_evidence_is_refused(
-    tmp_path, monkeypatch
-):
+def _temporary_frozen_repo(tmp_path, monkeypatch):
     repo = tmp_path / "repo"
     repo.mkdir()
     subprocess.run(["git", "init", "-q"], cwd=repo, check=True)
@@ -204,8 +217,33 @@ def test_ignored_untracked_addition_to_frozen_evidence_is_refused(
     monkeypatch.setattr(inventory_content, "MANIFEST", manifest)
     monkeypatch.setattr(inventory_content, "FROZEN_BASELINE", baseline)
     monkeypatch.setattr(inventory_content, "FROZEN_TREES", trees)
+    return repo, paths
+
+
+def test_ignored_untracked_addition_to_frozen_evidence_is_refused(
+    tmp_path, monkeypatch
+):
+    repo, paths = _temporary_frozen_repo(tmp_path, monkeypatch)
     exclude = repo / ".git/info/exclude"
     exclude.write_text("hidden.secret\n")
     (repo / paths[0] / "hidden.secret").write_text("not tracked\n")
     with pytest.raises(ValueError, match="Untracked frozen evidence"):
         inventory_content.inventory()
+
+
+@pytest.mark.parametrize("flag", ["--assume-unchanged", "--skip-worktree"])
+def test_hidden_flags_on_modified_frozen_evidence_are_refused(
+    tmp_path, monkeypatch, flag
+):
+    repo, paths = _temporary_frozen_repo(tmp_path, monkeypatch)
+    target = f"{paths[0]}/original.txt"
+    subprocess.run(["git", "update-index", flag, "--", target], cwd=repo, check=True)
+    (repo / target).write_text("modified\n")
+    with pytest.raises(ValueError, match="Hidden index flag on frozen evidence"):
+        inventory_content.inventory()
+    # The checker must not clear either user-controlled flag or alter the bytes.
+    tagged = subprocess.check_output(
+        ["git", "ls-files", "-v", "--", target], cwd=repo, text=True
+    )
+    assert not tagged.startswith("H ")
+    assert (repo / target).read_text() == "modified\n"

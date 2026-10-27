@@ -112,6 +112,14 @@ def inventory() -> list[dict]:
             f"stale inventory paths: {sorted(expected - tracked)[:5]}"
         )
     for directory in data["frozen"]:
+        # Git diff can hide worktree changes when index entries have the
+        # assume-unchanged or skip-worktree bits. Refuse such flags without
+        # changing the caller's index before comparing bytes and modes.
+        for entry in _git("ls-files", "-v", "-z", "--", directory).split(b"\0"):
+            if entry and not entry.startswith(b"H "):
+                raise ValueError(
+                    f"Hidden index flag on frozen evidence: {entry[2:].decode()}"
+                )
         # Compare both index and worktree against the baseline, including file
         # modes and bytes. Untracked additions are also refused.
         for index_only in (True, False):
