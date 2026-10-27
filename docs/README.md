@@ -28,6 +28,20 @@ modes and blobs; changes or additions fail the inventory check. See each record
 and the ADR index for scoped supersessions, rather than treating an inventory
 category as new authority.
 
+For each explicit entry, `status` describes the assessed scope of the file;
+`owner` is its intended location; `source` names the record itself and
+`baseline_git_object` identifies its original mode and blob when present at the
+pinned product revision. `authority` describes how the record relates to accepted
+decisions, while `producer`, `consumers`, and `publication` identify the
+creation path, known uses, and existing staging intent. `source_heading`, cited
+ADRs and status evidence are aids to review, not new authorities.
+
+For numbered ADR files the inventory additionally stores the literal
+`status_in_source`. The checker compares it to either the YAML `status:` field
+or the bold Markdown status line and fails if neither form matches. This is a
+text consistency check, not a semantic decision or proof of implementation;
+consult the ADR index and scoped supersessions for that interpretation.
+
 Generated schema presentation files, including `documentation/schema/README.md`,
 come from `documentation/tools/schema_viz.py` and selected-product neutral IR.
 Regenerate them through the documented workflow; do not hand-edit the outputs.

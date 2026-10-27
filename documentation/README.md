@@ -6,7 +6,19 @@ The existing explicit staging/publication allowlist and rendering conventions in
 `documentation/tools/build_docs_site.py` remain the only implementation; no duplicate MkDocs
 configuration, renderer or editable ADR source is introduced here.
 
-From this directory, use the same available Python selected for this environment:
+For the documented product-to-documentation workflow, first establish the
+verified product interpreter from the repository root, then create the separate
+documentation environment using that interpreter:
+
+```sh
+./scripts/setup-local-python.sh
+env -u UV_PROJECT_ENVIRONMENT uv sync --locked --project documentation --python .venv/bin/python
+```
+
+This creates `documentation/.venv` separately; it does not install rendering
+dependencies into the product environment. For documentation-only work without
+product validation, the independently selected environment Python may instead
+be supplied explicitly. From the `documentation/` directory:
 
 ```sh
 uv sync --locked --python /path/to/environment/python
@@ -73,7 +85,7 @@ uv run --project documentation --no-sync python documentation/tools/schema_viz.p
 uv run --project documentation --no-sync python documentation/tools/build_docs_site.py --product-source FULL_PRODUCT_SHA --documentation-source FULL_DOC_SHA --no-mermaid
 ```
 
-Choose both full SHAs once; do not chase latest HEAD. A different selected product checkout may export its manifest/IR for the documentation checkout to consume. Product CI does not render documentation. Existing Pages owns documentation checks/preview and the unchanged publication allowlist. Product receipts explicitly report `full_acceptance=false` and missing documentation. `verify_documentation.py` executes all documentation obligations and retains private receipts in unique attempt directories; `--preview` receipts cannot establish complete release acceptance. An explicit `scripts/ci_execute.py reconcile-release --documentation-local RECEIPT --documentation-hosted RECEIPT` additionally verifies independent local/hosted documentation receipts, exact node replacements and product/IR provenance, and binds hosted bytes to the successful Pages provider artifact before complete release acceptance is possible. This is a release gap, never product failure or complete acceptance.
+Choose both full SHAs once; do not chase latest HEAD. A different selected product checkout may export its manifest/IR for the documentation checkout to consume. Product CI does not render documentation. Existing Pages owns documentation checks/preview and the unchanged publication allowlist. Product receipts explicitly report `full_acceptance=false` and missing documentation. `verify_documentation.py` executes all documentation obligations and retains private receipts in unique attempt directories; `--preview` receipts cannot establish complete release acceptance. After producing the pinned IR, the repository-root preview command is `documentation/.venv/bin/python documentation/tools/verify_documentation.py --product-source FULL_PRODUCT_SHA --documentation-source FULL_DOC_SHA --preview`. An explicit `scripts/ci_execute.py reconcile-release --documentation-local RECEIPT --documentation-hosted RECEIPT` additionally verifies independent local/hosted documentation receipts, exact node replacements and product/IR provenance, and binds hosted bytes to the successful Pages provider artifact before complete release acceptance is possible. This is a release gap, never product failure or complete acceptance.
 
 ## Content ownership and directory inventory
 
