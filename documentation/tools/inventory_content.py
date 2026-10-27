@@ -122,7 +122,7 @@ def inventory() -> list[dict]:
             diff = subprocess.run(command, cwd=ROOT)
             if diff.returncode != 0:
                 raise ValueError(f"Frozen evidence changed: {directory}")
-        if _git("ls-files", "--others", "--exclude-standard", "-z", "--", directory):
+        if _git("ls-files", "--others", "-z", "--", directory):
             raise ValueError(f"Untracked frozen evidence: {directory}")
     required = {
         "status",

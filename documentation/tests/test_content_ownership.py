@@ -1,5 +1,6 @@
 """Protect explicit documentation classification, frozen evidence and guide links."""
 
+import json
 import os
 import re
 import subprocess
@@ -154,9 +155,57 @@ def test_frozen_baseline_cannot_be_replaced(tmp_path, monkeypatch):
     data = inventory_content._manifest()
     data["frozen"]["docs/phase2/reviews/"] = "0" * 40
     manifest = tmp_path / "inventory.json"
-    import json
-
     manifest.write_text(json.dumps(data))
     monkeypatch.setattr(inventory_content, "MANIFEST", manifest)
     with pytest.raises(ValueError, match="Frozen evidence baseline mismatch"):
+        inventory_content.inventory()
+
+
+def test_ignored_untracked_addition_to_frozen_evidence_is_refused(
+    tmp_path, monkeypatch
+):
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    subprocess.run(["git", "init", "-q"], cwd=repo, check=True)
+    paths = ["docs/implementation/evidence", "docs/phase2/reviews"]
+    for directory in paths:
+        target = repo / directory
+        target.mkdir(parents=True)
+        (target / "original.txt").write_text("preserved\n")
+    subprocess.run(["git", "add", "docs"], cwd=repo, check=True)
+    subprocess.run(
+        [
+            "git",
+            "-c",
+            "user.name=Test",
+            "-c",
+            "user.email=test@example.invalid",
+            "commit",
+            "-qm",
+            "baseline",
+        ],
+        cwd=repo,
+        check=True,
+    )
+    baseline = subprocess.check_output(
+        ["git", "rev-parse", "HEAD"], cwd=repo, text=True
+    ).strip()
+    trees = {
+        f"{directory}/": subprocess.check_output(
+            ["git", "rev-parse", f"HEAD:{directory}"], cwd=repo, text=True
+        ).strip()
+        for directory in paths
+    }
+    manifest = tmp_path / "inventory.json"
+    manifest.write_text(
+        json.dumps({"baseline": baseline, "frozen": trees, "records": {}})
+    )
+    monkeypatch.setattr(inventory_content, "ROOT", repo)
+    monkeypatch.setattr(inventory_content, "MANIFEST", manifest)
+    monkeypatch.setattr(inventory_content, "FROZEN_BASELINE", baseline)
+    monkeypatch.setattr(inventory_content, "FROZEN_TREES", trees)
+    exclude = repo / ".git/info/exclude"
+    exclude.write_text("hidden.secret\n")
+    (repo / paths[0] / "hidden.secret").write_text("not tracked\n")
+    with pytest.raises(ValueError, match="Untracked frozen evidence"):
         inventory_content.inventory()
