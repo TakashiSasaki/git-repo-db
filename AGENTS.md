@@ -15,6 +15,8 @@ meaningful verification. ADR 0035's product/documentation separation and accepte
 architecture and retirement decisions remain binding. These preferences do not
 authorize destructive operations, security-setting changes, merges or deployments.
 
+For documentation content refresh, see [documentation/AGENTS.md](documentation/AGENTS.md#content-structure-and-refresh).
+
 ## Architecture orientation
 
 - [Accepted design](docs/adr/0029-independent-access-store.md) defines five responsibility stores: Core, Context, Access, Operational and Search. This is a target boundary, not a count of databases opened by every startup.

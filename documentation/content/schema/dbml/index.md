@@ -299,5 +299,5 @@ npx azimutt@latest gateway --allow-origin "https://azimutt.app"
 DBML の鮮度を検証します。事前に選択した製品ソースから完全な IR を生成してください。手順は [documentation/README.md](https://github.com/TakashiSasaki/git-repo-db/blob/main/documentation/README.md) を参照してください：
 
 ```bash
-uv run --project documentation --no-sync python documentation/tools/schema_viz.py --ir documentation/.build/inputs/inventory.json --check
+env -u UV_PROJECT_ENVIRONMENT uv run --project documentation --no-sync python documentation/tools/schema_viz.py --ir documentation/.build/inputs/inventory.json --check
 ```
