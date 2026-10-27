@@ -8,6 +8,7 @@ from urllib.parse import unquote, urlsplit
 
 import pytest
 
+from tools import inventory_content
 from tools.inventory_content import ROOT, classify, inventory
 
 
@@ -100,3 +101,13 @@ def test_alternate_index_additions_are_not_silently_classified(tmp_path, candida
     )
     assert result.returncode != 0
     assert "Unclassified tracked paths" in result.stderr
+
+
+def test_unresolved_metadata_is_not_accepted(monkeypatch):
+    data = inventory_content._manifest()
+    data["records"]["docs/implementation/p1-schema-contracts.md"]["status"] = (
+        "needs_assessment"
+    )
+    monkeypatch.setattr(inventory_content, "_manifest", lambda: data)
+    with pytest.raises(ValueError, match="Unresolved inventory entry"):
+        inventory_content.inventory()

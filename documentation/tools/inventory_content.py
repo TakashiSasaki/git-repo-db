@@ -127,6 +127,11 @@ def inventory() -> list[dict]:
         record = explicit.get(path) or frozen[path]
         if not required <= record.keys() or any(not record[key] for key in required):
             raise ValueError(f"Incomplete inventory entry: {path}")
+        if record["status"] == "needs_assessment" or any(
+            str(record[key]).lower().strip() in {"not assessed", "unknown", "todo"}
+            for key in required
+        ):
+            raise ValueError(f"Unresolved inventory entry: {path}")
         result.append({"path": path, **record})
     return result
 

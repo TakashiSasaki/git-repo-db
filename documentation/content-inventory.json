@@ -430,7 +430,7 @@
         "documentation/tools/build_docs_site.py"
       ],
       "consumer_scan": "Literal unique-filename references in docs, documentation, src, scripts, tests and workflows; excludes frozen collections and files over 1 MiB. Dynamic uses and ambiguous basenames are not proven absent.",
-      "status_in_source": "not declared in YAML; inspect the record"
+      "status_in_source": "Accepted target design; implementation contract for CI and test infrastructure."
     },
     "docs/adr/0002-three-store-boundary-architecture.md": {
       "status": "adr-source-or-governance",
@@ -471,7 +471,7 @@
         "documentation/tools/build_docs_site.py"
       ],
       "consumer_scan": "Literal unique-filename references in docs, documentation, src, scripts, tests and workflows; excludes frozen collections and files over 1 MiB. Dynamic uses and ambiguous basenames are not proven absent.",
-      "status_in_source": "not declared in YAML; inspect the record"
+      "status_in_source": "Accepted and implemented historical Three-Store baseline; **partially superseded for the current target** by [ADR 0029](https://github.com/TakashiSasaki/git-repo-db/blob/af6b5ecca3c9ece3200db85da4c99d35bdbf5cbb/docs/adr/0029-independent-access-store.md), which replaced historical ADR 0003 on 2026-10-19."
     },
     "docs/adr/0004-metadata-only-git-core.md": {
       "status": "adr-source-or-governance",
@@ -509,7 +509,7 @@
         "docs/integration/design-stack-main-review-2026-10-15.md"
       ],
       "consumer_scan": "Literal unique-filename references in docs, documentation, src, scripts, tests and workflows; excludes frozen collections and files over 1 MiB. Dynamic uses and ambiguous basenames are not proven absent.",
-      "status_in_source": "not declared in YAML; inspect the record"
+      "status_in_source": "Accepted owner requirement; detailed storage design and implementation pending."
     },
     "docs/adr/0005-common-oid-identity-with-attributed-metadata.md": {
       "status": "adr-source-or-governance",
@@ -548,7 +548,7 @@
         "docs/integration/design-stack-main-review-2026-10-15.md"
       ],
       "consumer_scan": "Literal unique-filename references in docs, documentation, src, scripts, tests and workflows; excludes frozen collections and files over 1 MiB. Dynamic uses and ambiguous basenames are not proven absent.",
-      "status_in_source": "not declared in YAML; inspect the record"
+      "status_in_source": "Accepted owner design decision; DDL and implementation pending."
     },
     "docs/adr/0006-field-claims-and-observation-scoped-relations.md": {
       "status": "adr-source-or-governance",
@@ -589,7 +589,7 @@
         "docs/integration/design-stack-main-review-2026-10-15.md"
       ],
       "consumer_scan": "Literal unique-filename references in docs, documentation, src, scripts, tests and workflows; excludes frozen collections and files over 1 MiB. Dynamic uses and ambiguous basenames are not proven absent.",
-      "status_in_source": "not declared in YAML; inspect the record"
+      "status_in_source": "Accepted owner design decision; concrete DDL and implementation pending."
     },
     "docs/adr/0007-verification-aware-git-metadata-reads.md": {
       "status": "adr-source-or-governance",
@@ -627,7 +627,7 @@
         "docs/integration/design-stack-main-review-2026-10-15.md"
       ],
       "consumer_scan": "Literal unique-filename references in docs, documentation, src, scripts, tests and workflows; excludes frozen collections and files over 1 MiB. Dynamic uses and ambiguous basenames are not proven absent.",
-      "status_in_source": "not declared in YAML; inspect the record"
+      "status_in_source": "Accepted owner design decision; implementation and concrete storage schema pending."
     },
     "docs/adr/0008-domain-split-git-verification-ownership.md": {
       "status": "adr-source-or-governance",
@@ -668,7 +668,7 @@
         "docs/integration/design-stack-main-review-2026-10-15.md"
       ],
       "consumer_scan": "Literal unique-filename references in docs, documentation, src, scripts, tests and workflows; excludes frozen collections and files over 1 MiB. Dynamic uses and ambiguous basenames are not proven absent.",
-      "status_in_source": "not declared in YAML; inspect the record"
+      "status_in_source": "Accepted owner design decision; evidence representation and implementation pending."
     },
     "docs/adr/0009-bounded-byte-admission-and-physical-health.md": {
       "status": "adr-source-or-governance",
@@ -707,7 +707,7 @@
         "docs/integration/design-stack-main-review-2026-10-15.md"
       ],
       "consumer_scan": "Literal unique-filename references in docs, documentation, src, scripts, tests and workflows; excludes frozen collections and files over 1 MiB. Dynamic uses and ambiguous basenames are not proven absent.",
-      "status_in_source": "not declared in YAML; inspect the record"
+      "status_in_source": "Accepted owner design decision; concrete DDL and runtime implementation pending."
     },
     "docs/adr/0010-operation-scoped-cas-physical-integrity.md": {
       "status": "adr-source-or-governance",
@@ -745,7 +745,7 @@
         "docs/integration/design-stack-main-review-2026-10-15.md"
       ],
       "consumer_scan": "Literal unique-filename references in docs, documentation, src, scripts, tests and workflows; excludes frozen collections and files over 1 MiB. Dynamic uses and ambiguous basenames are not proven absent.",
-      "status_in_source": "not declared in YAML; inspect the record"
+      "status_in_source": "Accepted owner design decision; concrete DDL, reader/locking protocol and implementation pending."
     },
     "docs/adr/0011-adr-governance.md": {
       "status": "adr-source-or-governance",
@@ -816,7 +816,7 @@
         "docs/integration/design-stack-main-review-2026-10-15.md"
       ],
       "consumer_scan": "Literal unique-filename references in docs, documentation, src, scripts, tests and workflows; excludes frozen collections and files over 1 MiB. Dynamic uses and ambiguous basenames are not proven absent.",
-      "status_in_source": "not declared in YAML; inspect the record"
+      "status_in_source": "Accepted physical-copy identity/evidence design; post-corruption operation superseded by ADR 0026 / GCTX-M10. Detailed DDL and implementation pending."
     },
     "docs/adr/0013-deterministic-cas-instance-eligibility.md": {
       "status": "adr-source-or-governance",
@@ -854,7 +854,7 @@
         "docs/integration/design-stack-main-review-2026-10-15.md"
       ],
       "consumer_scan": "Literal unique-filename references in docs, documentation, src, scripts, tests and workflows; excludes frozen collections and files over 1 MiB. Dynamic uses and ambiguous basenames are not proven absent.",
-      "status_in_source": "not declared in YAML; inspect the record"
+      "status_in_source": "Accepted candidate-selection design in sound operation; post-corruption continuation superseded by ADR 0026 / GCTX-M10. Exact DDL and implementation pending."
     },
     "docs/adr/0014-history-and-notes-catalog-without-file-archive.md": {
       "status": "adr-source-or-governance",
