@@ -47,9 +47,11 @@ The scaffold rejects missing/malformed evidence, path traversal, symlink inputs,
 changed input/IR hashes and mismatched selected product identity. It checks
 consistency only: a self-consistent fabricated IR/manifest is not an independent
 execution proof, and a manifest's input map is not proof of input completeness.
-SEP3/SEP4 must supply and adversarially verify the full producer input contract
-and local/hosted execution evidence before any complete-release claim. There is
-no full_acceptance success field in these preparation records.
+The implemented producer and release verifier share a conservative input inventory,
+record the executed Python closure, and check source bytes before and after
+validation. Independent local and hosted documentation evidence and product
+validation remain required before any complete-release claim. A consistency
+record alone never establishes full acceptance.
 
 ## Selected product producer and rendering
 
