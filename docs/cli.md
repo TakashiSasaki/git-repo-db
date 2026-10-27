@@ -1,5 +1,11 @@
 # CLI契約 — Schema 20
 
+> **Current navigation:** This document is a dated historical snapshot; its
+> present-tense statements describe that snapshot. For the implemented Schema 21
+> runtime and the distinction from opt-in and accepted target design, see
+> [Current runtime reference](current-runtime-reference.md). Original body and
+> historical evidence remain unchanged.
+
 現在の構造と検証状況は[Publication非依存の実装記録](phase2/publication-free-implementation.md)を参照してください。
 
 共通指定は`--state-dir PATH --format table|json --timeout-seconds N`をsubcommandより前へ置きます。

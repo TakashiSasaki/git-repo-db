@@ -118,7 +118,7 @@ repo-catalog --state-dir /path/to/new-state db restore --input catalog-backup.sq
 
 Git の再解析は取得ID・取得時刻を保持し、objectにデコーダー候補と実際のmodule/versionを結び付けます。候補が異なる値を持つ場合は競合として示し、`--decoder-key`で実在する候補を明示できます。API原本のcore保存・再解析・replayは廃止済みです。`inspect-message`は任意の外部記録の診断読取りです。部分受理GraphQLは必要なthread・child・code対象だけを正規化し、原本を残しません。Exchangeは一つのrepositoryと実際の依存・本文・範囲証拠を交換し、`--git-acquisition`／`--collection`で選べます。Source全体のinventory、ローカル隔離・運用設定・通信archiveは含みません。
 
-破損した物理 bytes は永続診断と隔離で扱い、明示修復だけが隔離を解除します。修復には実在するGit object payload参照と全対応objectのformat/OID/type/sizeに一致するreplacementが必要で、共有digestの整合性も検証します。API原本の登録・修復は廃止済みですが、全物理bytesの検証・隔離・backup/restoreは維持します。バックアップは隔離済み bytes と診断も保持し、manifest に active 物理隔離件数 `quarantined_payload_count` を保存します。復元は件数照合と全bytes検証を行い、正の一致件数も許容します。復元先は未作成のパスを指定し、失敗した stage は保存します。実装・判断対応・検証結果は [統合 handoff](docs/model-integration-handoff.md)、[独立監査](docs/model-integration-audit.md)、[判断対応表](docs/model-integration-status.md) を参照してください。LFSはGit pointer bytes、添付は本文と埋込みURLまで保存し、本体取得やURLの自動巡回は行いません。
+破損した物理 bytes は永続診断と隔離で扱い、明示修復だけが隔離を解除します。修復には実在するGit object payload参照と全対応objectのformat/OID/type/sizeに一致するreplacementが必要で、共有digestの整合性も検証します。API原本の登録・修復は廃止済みですが、全物理bytesの検証・隔離・backup/restoreは維持します。バックアップは隔離済み bytes と診断も保持し、manifest に active 物理隔離件数 `quarantined_payload_count` を保存します。復元は件数照合と全bytes検証を行い、正の一致件数も許容します。復元先は未作成のパスを指定し、失敗した stage は保存します。実装・判断対応・検証結果は [統合 handoff](docs/model-integration-handoff.md)、[独立監査](docs/model-integration-audit.md)、[旧判断対応表（Schema 18時点）](docs/model-integration-status.md) を参照してください。LFSはGit pointer bytes、添付は本文と埋込みURLまで保存し、本体取得やURLの自動巡回は行いません。
 
 ## テスト・再現demo
 
@@ -134,6 +134,6 @@ scripts/local-run.sh python scripts/demo.py \
 実アカウントを不要にし、親pytestと子Pythonプロセスの外部通信を遮断します。Gitはfile transportに限定します。
 demoは新規/空directoryにfixtureを生成し、収集、更新、clone実回収、offline照会、再索引、backup/別state復元を検証します。
 
-詳細は[CLI仕様](docs/cli.md)、[アーキテクチャ](docs/architecture.md)、[データモデル](docs/data-model.md)、[列の用途と保持量](docs/current-state-schema-liveness.md)、[Phase 1実装とinventory](docs/phase1-api-original-retirement-implementation.md)、[運用](docs/operations.md)、[テスト](docs/testing.md)、[実装状況](docs/implementation-status.md)を参照してください。
+実装済みの通常ランタイムと opt-in 境界は[現行ランタイム案内](docs/current-runtime-reference.md)を参照してください。[CLI の Schema 20 記録](docs/cli.md)、[旧データモデル](docs/data-model.md)、[実装状況の監査記録](docs/implementation-status.md)は日付・対象 revision を持つ履歴です。その他、[アーキテクチャ](docs/architecture.md)、[列の用途と保持量](docs/current-state-schema-liveness.md)、[Phase 1実装とinventory](docs/phase1-api-original-retirement-implementation.md)、[運用](docs/operations.md)、[テスト](docs/testing.md)も参照してください。
 
 Phase 2は最新状態と必要な証拠を保持し、独立したPublicationを置かない設計が採択されています。[Schema 20の実装](docs/phase2/publication-free-implementation.md)は、PR・文書・スレッド・Sourceを直接所有者に結び付け、取得範囲の完全性とGit/CASの整合性を別々に検証します。独立レビューと最終検証の状況は実装記録を参照してください。
