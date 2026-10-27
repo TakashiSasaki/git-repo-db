@@ -59,6 +59,13 @@ def test_emitted_commands_generate_and_check_pinned_inventory():
             args = [
                 part.replace("$FULL_PRODUCT_SHA", sha) for part in shlex.split(line)
             ]
+            # Hosted Pages selects the product runtime and syncs the root uv
+            # environment; unlike local bootstrap, it has no local-run receipt.
+            if (
+                args[0] == "scripts/local-run.sh"
+                and os.environ.get("GITHUB_ACTIONS") == "true"
+            ):
+                args = ["uv", "run", "--no-sync", "python", *args[2:]]
             args = [
                 str(input_dir)
                 if part == "documentation/.build/inputs"
