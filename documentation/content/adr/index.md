@@ -1,17 +1,17 @@
 # Architecture Decision Records (ADRs)
 
-本ディレクトリには、`git-repo-db` の重要なアーキテクチャおよびインフラ方針を決定した **Architecture Decision Records (ADR)** が格納されています。
+この公開ページは ADR 0001・0002 の限定された概要です。すべての採択済み決定を一覧するものではありません。現行の状態、適用範囲と後続決定は[リポジトリの ADR 正本索引](https://github.com/TakashiSasaki/git-repo-db/blob/main/docs/adr/README.md)を参照してください。
 
 各 ADR は、課題の背景、検討された選択肢、および最終的に採択された設計方針を記録した**公式かつ権威ある設計合意**です。
 
 ---
 
-## 採択済み設計決定 (Accepted Records)
+## 公開されている基盤記録の概要
 
 | ADR | タイトル | 決定日 | ステータス | 概要 |
 |---|---|---|---|---|
 | [**ADR 0001**](0001-validation-lifecycle-architecture.md) | Development and Release Validation Lifecycle Architecture | 2026-10-12 | Accepted target design | 開発時の軽量ローカル検証（Development Validation）と、明示的なリリース受入（Release Acceptance）の分離。CI 実行時間最適化と証跡契約の策定。 |
-| [**ADR 0002**](0002-three-store-boundary-architecture.md) | Three-Store Boundary Architecture (PF-P01–PF-P17) | 2026-10-12 | Accepted target design | 3ストア（Core, Operational, Search）への物理分離、障害復旧モデル、バックアップ境界の策定。結合決定 PF-P01〜PF-P17。 |
+| [**ADR 0002**](0002-three-store-boundary-architecture.md) | Three-Store Boundary Architecture (PF-P01–PF-P17) | 2026-10-12 | 歴史的基盤・一部置換 | 配置とフルバックアップは採択済み [ADR 0029](https://github.com/TakashiSasaki/git-repo-db/blob/main/docs/adr/0029-independent-access-store.md) による後続決定を参照。その他の未置換条項は維持。 |
 
 ---
 

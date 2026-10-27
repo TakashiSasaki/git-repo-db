@@ -1,5 +1,13 @@
 # Access store: locator/configuration separation and implementation contract proposal
 
+> **Current navigation:** The audit and proposal below describe their dated S0/S1
+> checkpoints, not the present implementation status. ADR 0029 was accepted; the
+> separate opt-in Access implementation is in [access_schema.py](../../src/repo_catalog/adapters/sqlite/access_schema.py)
+> and [AccessConnections](../../src/repo_catalog/adapters/sqlite/access_connections.py).
+> The [A6 review](../implementation/access-a6-independent-review.md) records its
+> actual scoped evidence and remaining gates. Ordinary catalog initialization is
+> separate. The historical checkpoint in section 10 remains historical.
+
 **Status: complete ADR 0003 replacement by ADR 0029 approved on 2026-10-19;
 physical/schema/adapter contracts remain engineering proposals; no runtime change.**
 Read [accepted ADR 0029](../adr/0029-independent-access-store.md) for confirmed
