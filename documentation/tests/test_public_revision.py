@@ -31,7 +31,9 @@ def test_compatible_older_product_and_public_metadata(tmp_path):
         record["documentation_source"]["commit"]
         != record["selected_product_source"]["commit"]
     )
-    with tempfile.TemporaryDirectory(dir=builder.DOCS_ROOT / ".build/staging") as temp:
+    staging_parent = builder.DOCS_ROOT / ".build/staging"
+    staging_parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(dir=staging_parent) as temp:
         destination = Path(temp)
         builder.stage_documentation(
             destination, skip_mermaid_render=True, provenance=record
