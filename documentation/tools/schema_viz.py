@@ -26,10 +26,10 @@ FULL_PRODUCT_SHA="FULL_PRODUCT_COMMIT_SHA"
 scripts/local-run.sh python scripts/schema_inventory.py --source "$FULL_PRODUCT_SHA" --output documentation/.build/inputs
 
 # Generate all formats (or use mermaid, dbml, or html):
-uv run --project documentation --no-sync python documentation/tools/schema_viz.py --ir documentation/.build/inputs/inventory.json --format all
+env -u UV_PROJECT_ENVIRONMENT uv run --project documentation --no-sync python documentation/tools/schema_viz.py --ir documentation/.build/inputs/inventory.json --format all
 
 # Check committed visualization files without writing:
-uv run --project documentation --no-sync python documentation/tools/schema_viz.py --ir documentation/.build/inputs/inventory.json --check"""
+env -u UV_PROJECT_ENVIRONMENT uv run --project documentation --no-sync python documentation/tools/schema_viz.py --ir documentation/.build/inputs/inventory.json --check"""
 
 
 # ==============================================================================
@@ -2297,8 +2297,8 @@ The product producer inspects the selected committed checkout and writes a pinne
    - **Recommended:** **DBML Exports** (`documentation/schema/dbml/core.dbml` / `combined.dbml`).
    - *Rationale:* Easily imported into dbdiagram.io or dbdocs.io for collaborative layout adjustments, team sharing, or PDF exports.
 4. **For Automated CI and Continuous Documentation:**
-   - **Recommended:** `uv run --project documentation --no-sync python documentation/tools/schema_viz.py --ir documentation/.build/inputs/inventory.json --check` in repository checks.
-   - *Rationale:* Guarantees that any future DDL change immediately updates or invalidates stale documentation.
+   - **Recommended:** `env -u UV_PROJECT_ENVIRONMENT uv run --project documentation --no-sync python documentation/tools/schema_viz.py --ir documentation/.build/inputs/inventory.json --check` in repository checks.
+   - *Rationale:* After rerunning the producer for the selected product commit, this documentation-only check detects presentation artifacts that differ from the refreshed IR. A previously pinned IR alone cannot detect later DDL changes or update artifacts.
 """
     return {"README.md": content.strip() + "\n"}
 

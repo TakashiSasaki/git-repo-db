@@ -20,10 +20,16 @@
 ./scripts/setup-local-python.sh
 ```
 
-以降のコマンドは `scripts/local-run.sh <command>` で実行すると、検証済みの Python が常に選ばれます（下記の `uv run --no-sync ...` は `scripts/local-run.sh uv run --no-sync ...` と読み替えてください）。詳細は [docs/local-python.md](https://github.com/TakashiSasaki/git-repo-db/blob/main/docs/local-python.md) を参照してください。
+製品用の `uv run --no-sync ...` は `scripts/local-run.sh uv run --no-sync ...` として実行します。`scripts/local-run.sh` は製品環境を固定するため、下記の `--project documentation` コマンドには付けません。詳細は [docs/local-python.md](https://github.com/TakashiSasaki/git-repo-db/blob/main/docs/local-python.md) を参照してください。
 
 > [!NOTE]
 > ドキュメント用の依存関係（`mkdocs`, `mkdocs-material`）は、本番アプリケーションの依存関係（`[project].dependencies`）とは完全に分離された `documentation/pyproject.toml` に定義されています。
+
+文書の作業前に、検証済み製品 Python を使って独立した文書環境を初期化します。文書コマンドは、製品環境への固定が残る場合にも影響されないよう `UV_PROJECT_ENVIRONMENT` を除いて実行します：
+
+```bash
+env -u UV_PROJECT_ENVIRONMENT uv sync --locked --project documentation --python .venv/bin/python
+```
 
 ---
 
@@ -34,13 +40,13 @@
 ### 静的解析とコードフォーマット
 ```bash
 # Ruff による構文・リンターチェック
-uv run --no-sync ruff check src tests scripts
+scripts/local-run.sh uv run --no-sync ruff check src tests scripts
 
 # フォーマットの検査
-uv run --no-sync ruff format --check src tests scripts
+scripts/local-run.sh uv run --no-sync ruff format --check src tests scripts
 
 # フォーマットの自動適用
-uv run --no-sync ruff format src tests scripts
+scripts/local-run.sh uv run --no-sync ruff format src tests scripts
 ```
 
 ### スキーマ整合性検証 (Schema Freshness Check)
@@ -49,13 +55,13 @@ uv run --no-sync ruff format src tests scripts
 ```bash
 FULL_PRODUCT_SHA="FULL_PRODUCT_COMMIT_SHA"
 scripts/local-run.sh python scripts/schema_inventory.py --source "$FULL_PRODUCT_SHA" --output documentation/.build/inputs
-uv run --project documentation --no-sync python documentation/tools/schema_viz.py --ir documentation/.build/inputs/inventory.json --check
+env -u UV_PROJECT_ENVIRONMENT uv run --project documentation --no-sync python documentation/tools/schema_viz.py --ir documentation/.build/inputs/inventory.json --check
 ```
 
 不整合が検出された場合、以下のコマンドで可視化成果物を明示的に再生成します：
 
 ```bash
-uv run --project documentation --no-sync python documentation/tools/schema_viz.py --ir documentation/.build/inputs/inventory.json --format all
+env -u UV_PROJECT_ENVIRONMENT uv run --project documentation --no-sync python documentation/tools/schema_viz.py --ir documentation/.build/inputs/inventory.json --format all
 ```
 
 ### 焦点を絞ったテストの実行
@@ -63,10 +69,10 @@ uv run --project documentation --no-sync python documentation/tools/schema_viz.p
 
 ```bash
 # スキーマ可視化ワークベンチのテスト
-uv run --project documentation --no-sync pytest documentation/tests/test_schema_viz.py
+env -u UV_PROJECT_ENVIRONMENT uv run --project documentation --no-sync pytest documentation/tests/test_schema_viz.py
 
 # CI プランニングロジックのテスト
-uv run --no-sync pytest tests/unit/test_ci_plan.py
+scripts/local-run.sh uv run --no-sync pytest tests/unit/test_ci_plan.py
 ```
 
 ---
@@ -76,8 +82,10 @@ uv run --no-sync pytest tests/unit/test_ci_plan.py
 開発者ドキュメントサイト（本サイト）は、MkDocs Material と専用のステージングスクリプト `documentation/tools/build_docs_site.py` によってビルドされます。
 
 ### ローカルでのサイトビルド
+製品と文書のそれぞれの完全なコミット SHA を選びます。文書 SHA は文書チェックアウトの HEAD に一致させます。
 ```bash
-uv run --project documentation --no-sync python documentation/tools/build_docs_site.py --product-source FULL_PRODUCT_SHA --documentation-source FULL_DOC_SHA
+FULL_DOC_SHA="FULL_DOCUMENTATION_COMMIT_SHA"
+env -u UV_PROJECT_ENVIRONMENT uv run --project documentation --no-sync python documentation/tools/build_docs_site.py --product-source "$FULL_PRODUCT_SHA" --documentation-source "$FULL_DOC_SHA"
 ```
 
 このコマンドは内部で以下を順次実行します：
@@ -90,14 +98,14 @@ uv run --project documentation --no-sync python documentation/tools/build_docs_s
 
 ### ローカルでのリアルタイムプレビュー
 ```bash
-uv run --project documentation --no-sync python documentation/tools/build_docs_site.py --product-source FULL_PRODUCT_SHA --documentation-source FULL_DOC_SHA --serve
+env -u UV_PROJECT_ENVIRONMENT uv run --project documentation --no-sync python documentation/tools/build_docs_site.py --product-source "$FULL_PRODUCT_SHA" --documentation-source "$FULL_DOC_SHA" --serve
 ```
 
 ローカルサーバーが起動し、`http://127.0.0.1:8000/` でホットリロード付きのプレビューが可能です。
 
 ### 検証専用コマンド (非公開チェック)
 ```bash
-uv run --project documentation --no-sync python documentation/tools/build_docs_site.py --product-source FULL_PRODUCT_SHA --documentation-source FULL_DOC_SHA --check
+env -u UV_PROJECT_ENVIRONMENT uv run --project documentation --no-sync python documentation/tools/build_docs_site.py --product-source "$FULL_PRODUCT_SHA" --documentation-source "$FULL_DOC_SHA" --check
 ```
 
 ---
