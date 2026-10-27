@@ -14,6 +14,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import gzip
 import json
 import os
 import re
@@ -21,9 +22,10 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Dict, List
-from urllib.parse import unquote, urlparse
+from urllib.parse import unquote, urljoin, urlparse
 
 ROOT = Path(__file__).resolve().parents[2]
 DOCS_ROOT = ROOT / "documentation"
@@ -622,7 +624,29 @@ def run_mkdocs_build(
             if icon_file.is_file():
                 shutil.copy2(icon_file, icons_dst / icon_file.name)
 
+    include_standalone_viewer_in_sitemap(site_dir, cfg["site_url"])
     print("✓ MkDocs build completed successfully.")
+
+
+def include_standalone_viewer_in_sitemap(site_dir: Path, site_url: str) -> None:
+    """Add the explicitly published HTML viewer, which MkDocs does not index."""
+    sitemap = site_dir / "sitemap.xml"
+    if not (site_dir / "schema/viewer/index.html").is_file():
+        raise ValueError("Standalone schema viewer missing from site")
+    namespace = "http://www.sitemaps.org/schemas/sitemap/0.9"
+    ET.register_namespace("", namespace)
+    tree = ET.parse(sitemap)
+    root = tree.getroot()
+    location = urljoin(site_url, "schema/viewer/")
+    locations = {
+        node.text for node in root.findall(f"{{{namespace}}}url/{{{namespace}}}loc")
+    }
+    if location not in locations:
+        entry = ET.SubElement(root, f"{{{namespace}}}url")
+        ET.SubElement(entry, f"{{{namespace}}}loc").text = location
+    xml = ET.tostring(root, encoding="utf-8", xml_declaration=True)
+    sitemap.write_bytes(xml)
+    (site_dir / "sitemap.xml.gz").write_bytes(gzip.compress(xml, mtime=0))
 
 
 def validate_publication_safety(output_dir: Path) -> List[str]:
