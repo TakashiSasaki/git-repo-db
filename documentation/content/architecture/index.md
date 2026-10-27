@@ -65,6 +65,8 @@ cli  -->  application  -->  domain / ports  <--  adapters (sqlite, git, http)
 > **歴史的ドキュメントに関する注意事項**:
 > リポジトリ内に残存する過去の記録（`docs/architecture.md` や `docs/data-model.md`）には、旧来の単一モノリシック設計（Schema 20 / 69〜71テーブル）に関する記述が含まれています。これらはリポジトリに保持された設計変遷の検証証跡（Historical Evidence）であり、**現在の動作仕様ではありません**。
 
+履歴の正本: [旧 CLI](https://github.com/TakashiSasaki/git-repo-db/blob/5d28bb33bf62d7b0eff7e6547a4fda84c1815a9d/docs/cli.md)、[旧データモデル](https://github.com/TakashiSasaki/git-repo-db/blob/5d28bb33bf62d7b0eff7e6547a4fda84c1815a9d/docs/data-model.md)、[実装監査](https://github.com/TakashiSasaki/git-repo-db/blob/5d28bb33bf62d7b0eff7e6547a4fda84c1815a9d/docs/implementation-status.md)。現行ランタイム案内はリポジトリ内の `documentation/current-runtime-reference.md` にあり、このサイトへのコピーは公開対象に含めていません。サイトの文書 revision はトップページ末尾で確認できます。
+
 現行アーキテクチャ（Core Schema 21 + Operational Schema 1 + Search Schema 1 = 計 84 テーブル）における主要な変革：
 
 1. **Publication 機構の完全撤廃 (NO_INDEPENDENT_PUBLICATION)**:

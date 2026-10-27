@@ -1,6 +1,6 @@
 """Inventory tracked documentation by one role and owning location.
 
-Run from any directory: python documentation/tools/inventory_content.py > inventory.json
+Run from the repository root: documentation/.venv/bin/python documentation/tools/inventory_content.py > inventory.json
 The index includes staged paths; historical bytes are never read or changed.
 """
 

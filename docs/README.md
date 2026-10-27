@@ -34,6 +34,6 @@ snapshots, and their placement does not create new authority. `historical-eviden
 identifies the large `implementation/evidence/` and `phase2/reviews/` collections;
 preserve their bytes and links. Operator/validation guides remain in `docs/`
 because existing entry points and policy consumers refer to them. The single
-historical-link pointer is intentional: old dated document headers refer to it,
+historical-link pointer is intentional: the navigation blockquotes in `cli.md`, `data-model.md`, `implementation-status.md`, and `model-integration-status.md` refer to it,
 so retaining it avoids rewriting those evidence documents. This is navigation,
 not a second editable guide.

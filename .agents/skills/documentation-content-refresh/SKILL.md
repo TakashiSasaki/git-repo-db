@@ -40,9 +40,8 @@ require every product change to wait for a documentation build.
 
 ## Directory reconciliation
 
-Before moving a guide, run `documentation/.venv/bin/python
- documentation/tools/inventory_content.py` (without the line break) to enumerate
-tracked roles. Map every changed path's imports, generated inputs, tests,
+Before moving a guide, run `documentation/.venv/bin/python documentation/tools/inventory_content.py`
+from the repository root to enumerate tracked roles. Map every changed path's imports, generated inputs, tests,
 workflow filters and links. Keep canonical contracts, machine-consumed inputs and
 historical evidence in their existing locations unless a separately reviewed
 contract authorizes change. Retain a minimal navigation pointer only when needed

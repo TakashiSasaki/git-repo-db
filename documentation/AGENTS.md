@@ -35,7 +35,9 @@ contracts, validation and boundaries; reviewers need dated evidence and exact
 revisions. The published homepage and architecture pages are entry points, not
 canonical replacements for source code or accepted ADRs. The repository's
 `documentation/current-runtime-reference.md` navigates current CLI/data-model/status
-and explicitly points to the older Schema 20 and audit snapshots. Preserve their
+and explicitly points to the older Schema 20 and audit snapshots. This maintained
+guide is repository-only; it is not staged as a site page under the current
+publication allowlist. Preserve their
 original historical bodies and receipts; add navigation outside the evidence.
 
 Every refresh distinguishes (1) actual normal runtime and activation, (2)

@@ -1,7 +1,7 @@
 # Independent documentation workspace — SEP3 cutover
 
 This project provides isolated dependencies, output paths and mechanical
-input-provenance checks. Rendering, human sources and documentation tests now live here; product structural tests and canonical design/evidence remain outside. ADR0035 was adopted2026-10-26; publication/deployment remain separately authorized.
+input-provenance checks. Rendering, human sources and documentation tests now live here; product structural tests and canonical design/evidence remain outside. ADR 0035 was adopted 2026-10-26; publication/deployment remain separately authorized.
 The existing explicit staging/publication allowlist and rendering conventions in
 `documentation/tools/build_docs_site.py` remain the only implementation; no duplicate MkDocs
 configuration, renderer or editable ADR source is introduced here.
@@ -26,7 +26,7 @@ Documentation verification also requires Node.js (the hosted workflow uses Node
 22). Its pytest suite runs the six PWA icon safety tests through Node's test
 runner; a missing Node executable or a failed test fails verification. From the
 `documentation/` directory, run them directly with
-`node --test tests/test_generate_pwa_icons.mjs`.
+`node --test tests/test_generate_pwa_icons.mjs` for a separate direct run; it is already included in the full documentation pytest suite.
 From that same directory, the optional generator is `node tools/generate_pwa_icons.js`; it
 requires Puppeteer and a compatible browser in the local environment. Those are
 not needed for the stubbed safety tests and are not product dependencies.
