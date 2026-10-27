@@ -74,3 +74,19 @@ uv run --project documentation --no-sync python documentation/tools/build_docs_s
 ```
 
 Choose both full SHAs once; do not chase latest HEAD. A different selected product checkout may export its manifest/IR for the documentation checkout to consume. Product CI does not render documentation. Existing Pages owns documentation checks/preview and the unchanged publication allowlist. Product receipts explicitly report `full_acceptance=false` and missing documentation. `verify_documentation.py` executes all documentation obligations and retains private receipts in unique attempt directories; `--preview` receipts cannot establish complete release acceptance. An explicit `scripts/ci_execute.py reconcile-release --documentation-local RECEIPT --documentation-hosted RECEIPT` additionally verifies independent local/hosted documentation receipts, exact node replacements and product/IR provenance, and binds hosted bytes to the successful Pages provider artifact before complete release acceptance is possible. This is a release gap, never product failure or complete acceptance.
+
+## Content ownership and directory inventory
+
+Use [agent instructions](AGENTS.md#content-structure-and-refresh) and the
+[canonical records map](../docs/README.md) before editing or moving material.
+`docs/` retains ADRs, contracts, machine inputs and historical evidence;
+`documentation/` owns derived human guides, site sources, generated schema
+presentations, isolated build tools and tests. Source/IR provenance is distinct
+from handwritten content review. Untracked `.build/`, `.venv/` and `site/`
+are private/generated outputs, not new authority or a publication allowlist.
+
+Run `documentation/.venv/bin/python documentation/tools/inventory_content.py`
+to list each tracked file in these directories and relevant root controls with
+one role and owning location. It fails on unrecognized root paths or top-level
+sections. Classification identifies storage ownership; accepted decisions and
+individual record context still determine authority and historical scope.

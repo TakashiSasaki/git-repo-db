@@ -37,3 +37,16 @@ counts or default activation. Inspect the actual initialization and lazy-open
 paths and the separate Access CLI; verify with the documentation runtime reference
 tests when the verified product environment is available. ADR 0035 does not
 require every product change to wait for a documentation build.
+
+## Directory reconciliation
+
+Before moving a guide, run `documentation/.venv/bin/python
+ documentation/tools/inventory_content.py` (without the line break) to enumerate
+tracked roles. Map every changed path's imports, generated inputs, tests,
+workflow filters and links. Keep canonical contracts, machine-consumed inputs and
+historical evidence in their existing locations unless a separately reviewed
+contract authorizes change. Retain a minimal navigation pointer only when needed
+to keep protected historical links intact. Update the explicit inventory when
+adding a new root path or top-level directory, and run the ownership/link tests;
+never classify an unknown location by guessing. Review the final file inventory
+and any exception rather than assuming a directory name establishes authority.

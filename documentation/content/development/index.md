@@ -1,6 +1,6 @@
 # 開発・テストおよびコントリビューションガイド
 
-製品の説明は [現行ランタイム参照](https://github.com/TakashiSasaki/git-repo-db/blob/5d28bb33bf62d7b0eff7e6547a4fda84c1815a9d/docs/current-runtime-reference.md) にまとめ、旧 CLI・データモデル・監査への履歴リンクもそこからたどれます。手順や根拠は対象 commit を確認してください。
+製品の説明は [アーキテクチャ概要](../architecture/) にまとめ、旧 CLI・データモデル・監査の位置づけも示します。手順や根拠は対象 commit を確認してください。
 
 本ドキュメントでは、`git-repo-db` のローカル開発環境のセットアップ、テスト実行手順、品質検証、およびドキュメントサイトの管理方法について解説します。
 

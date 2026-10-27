@@ -18,7 +18,7 @@
 | 通常ランタイム | `repo-catalog init` は Core を初期化。Operational は必要時、Search は明示的に作成。３スキーマは必須３ファイルを意味しない | [実行経路](architecture/) |
 | 実装済み opt-in | P1 の４ファクトリーと独立 Access CLI は通常 `init` とは別 | [選択機能と根拠](architecture/) |
 | 採択済み目標 | Core / Context / Access / Operational / Search の５責務。採択は全機能の既定起動を意味しない | [ADR 0029 正本](https://github.com/TakashiSasaki/git-repo-db/blob/5d28bb33bf62d7b0eff7e6547a4fda84c1815a9d/docs/adr/0029-independent-access-store.md) |
-| 履歴・証跡 | 古い CLI、データモデル、監査や検証結果は対象 revision に限定 | [現行参照と履歴への案内](https://github.com/TakashiSasaki/git-repo-db/blob/5d28bb33bf62d7b0eff7e6547a4fda84c1815a9d/docs/current-runtime-reference.md) |
+| 履歴・証跡 | 古い CLI、データモデル、監査や検証結果は対象 revision に限定 | [履歴文書の概要](architecture/#3-過去の-schema-20-と現行アーキテクチャの相違点) |
 
 ## データベーススキーマ可視化ワークベンチ
 

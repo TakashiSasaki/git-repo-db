@@ -27,7 +27,6 @@ def test_published_milestone_source_links_and_categories():
         "docs/adr/0029-independent-access-store.md",
         "src/repo_catalog/adapters/sqlite/p1_schema.py",
         "src/repo_catalog/cli/access_workflow.py",
-        "docs/current-runtime-reference.md",
     } <= paths
     for path in paths:
         subprocess.run(

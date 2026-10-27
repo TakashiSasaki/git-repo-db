@@ -34,7 +34,7 @@ Audience: operators need current CLI and data behavior; contributors need source
 contracts, validation and boundaries; reviewers need dated evidence and exact
 revisions. The published homepage and architecture pages are entry points, not
 canonical replacements for source code or accepted ADRs. The repository's
-`docs/current-runtime-reference.md` navigates current CLI/data-model/status
+`documentation/current-runtime-reference.md` navigates current CLI/data-model/status
 and explicitly points to the older Schema 20 and audit snapshots. Preserve their
 original historical bodies and receipts; add navigation outside the evidence.
 
@@ -54,3 +54,10 @@ independent documentation workspace, then obtain independent review. Documentati
 may lag product without blocking it; a known false statement is a correction,
 not a demand for synchronous publication. A build's product/IR provenance does
 not establish semantic verification of all handwritten text.
+
+The inventory tool enumerates each tracked file in `docs/`, `documentation/`,
+relevant repository entry points and repository skills. Consult
+[docs/README.md](../docs/README.md) for role meanings and explicit placement
+exceptions. New documentation-root paths and top-level sections must be classified
+before completion; the ownership test refuses unknown locations. Preserve the
+historical link pointer unless its protected inbound links have been handled.

@@ -134,6 +134,6 @@ scripts/local-run.sh python scripts/demo.py \
 実アカウントを不要にし、親pytestと子Pythonプロセスの外部通信を遮断します。Gitはfile transportに限定します。
 demoは新規/空directoryにfixtureを生成し、収集、更新、clone実回収、offline照会、再索引、backup/別state復元を検証します。
 
-実装済みの通常ランタイムと opt-in 境界は[現行ランタイム案内](docs/current-runtime-reference.md)を参照してください。[CLI の Schema 20 記録](docs/cli.md)、[旧データモデル](docs/data-model.md)、[実装状況の監査記録](docs/implementation-status.md)は日付・対象 revision を持つ履歴です。その他、[アーキテクチャ](docs/architecture.md)、[列の用途と保持量](docs/current-state-schema-liveness.md)、[Phase 1実装とinventory](docs/phase1-api-original-retirement-implementation.md)、[運用](docs/operations.md)、[テスト](docs/testing.md)も参照してください。
+実装済みの通常ランタイムと opt-in 境界は[現行ランタイム案内](documentation/current-runtime-reference.md)を参照してください。[CLI の Schema 20 記録](docs/cli.md)、[旧データモデル](docs/data-model.md)、[実装状況の監査記録](docs/implementation-status.md)は日付・対象 revision を持つ履歴です。その他、[アーキテクチャ](docs/architecture.md)、[列の用途と保持量](docs/current-state-schema-liveness.md)、[Phase 1実装とinventory](docs/phase1-api-original-retirement-implementation.md)、[運用](docs/operations.md)、[テスト](docs/testing.md)も参照してください。
 
 Phase 2は最新状態と必要な証拠を保持し、独立したPublicationを置かない設計が採択されています。[Schema 20の実装](docs/phase2/publication-free-implementation.md)は、PR・文書・スレッド・Sourceを直接所有者に結び付け、取得範囲の完全性とGit/CASの整合性を別々に検証します。独立レビューと最終検証の状況は実装記録を参照してください。
