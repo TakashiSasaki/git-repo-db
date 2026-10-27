@@ -21,8 +21,8 @@ product validation, the independently selected environment Python may instead
 be supplied explicitly. From the `documentation/` directory:
 
 ```sh
-uv sync --locked --python /path/to/environment/python
-.venv/bin/python -m pytest -q
+env -u UV_PROJECT_ENVIRONMENT uv sync --locked --python /path/to/environment/python
+.venv/bin/python -m pytest -q  # Includes ownership, site, provenance, and PWA checks.
 .venv/bin/ruff check tools tests
 .venv/bin/ruff format --check tools tests
 ```
