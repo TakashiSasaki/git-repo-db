@@ -148,3 +148,15 @@ def test_frozen_index_blob_and_mode_changes_are_refused(tmp_path, change):
     )
     assert result.returncode != 0
     assert "Frozen evidence changed" in result.stderr
+
+
+def test_frozen_baseline_cannot_be_replaced(tmp_path, monkeypatch):
+    data = inventory_content._manifest()
+    data["frozen"]["docs/phase2/reviews/"] = "0" * 40
+    manifest = tmp_path / "inventory.json"
+    import json
+
+    manifest.write_text(json.dumps(data))
+    monkeypatch.setattr(inventory_content, "MANIFEST", manifest)
+    with pytest.raises(ValueError, match="Frozen evidence baseline mismatch"):
+        inventory_content.inventory()

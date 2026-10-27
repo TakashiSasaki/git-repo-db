@@ -46,7 +46,7 @@ not needed for the stubbed safety tests and are not product dependencies.
 ## Provenance scaffold
 
 `tools/provenance.py` accepts an externally produced complete neutral IR and a
-producer manifest. The manifest must contain schema_version1, exact selected
+producer manifest. The manifest must contain schema_version 1, exact selected
 product commit/tree, IR SHA256 and a nonempty map of repository-relative input
 paths to SHA256 hashes. Documentation source commit/tree are separate explicit
 arguments. It verifies committed Git blob hashes, selected tree and IR digest,

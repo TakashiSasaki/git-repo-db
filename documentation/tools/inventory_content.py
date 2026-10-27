@@ -14,6 +14,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 MANIFEST = ROOT / "documentation/content-inventory.json"
+FROZEN_BASELINE = "5d28bb33bf62d7b0eff7e6547a4fda84c1815a9d"
+FROZEN_TREES = {
+    "docs/implementation/evidence/": "5900b3783d59104ef86765c5d44847d788b468fa",
+    "docs/phase2/reviews/": "0ec5f25e7cd48b7f4dcccec69dc55154b6b030eb",
+}
 
 
 def _git(*args: str) -> bytes:
@@ -26,6 +31,8 @@ def _manifest() -> dict:
         data.get("frozen"), dict
     ):
         raise ValueError("Malformed ownership inventory")
+    if data.get("baseline") != FROZEN_BASELINE or data["frozen"] != FROZEN_TREES:
+        raise ValueError("Frozen evidence baseline mismatch")
     return data
 
 
