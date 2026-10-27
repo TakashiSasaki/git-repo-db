@@ -5,7 +5,7 @@
     <strong>git-repo-db</strong> は、Git リポジトリおよび GitHub の Pull Request / Issue / Code データをローカルの SQLite データベースへ構造化・永続化し、オフライン環境で高速に横断検索・関係解析を可能にするデータベースエンジンおよび CLI ツールです。
   </p>
   <p style="color: var(--md-default-fg-color--light);">
-    本サイトは、公式 SQLite DDL から生成された 3 つの物理ストア（Core / Operational / Search、計 84 テーブル）のスキーマ可視化、設計決定（ADR）、およびアーキテクチャ仕様を探索するためのポータルです。
+    本サイトの図は、選択した製品 revision の IR を可視化します。このページに示す Core / Operational / Search の計 84 テーブルは Schema 21 の実装基盤についての表記です。採択済み設計には５つの責務境界があり、この図の３スキーマは通常の初期化で作成されるファイル数や全構成の上限を意味しません。詳細は<a href="architecture/">アーキテクチャ概要</a>を参照してください。
   </p>
 </div>
 
@@ -87,7 +87,7 @@
 
 ## Three-Store Boundary アーキテクチャ
 
-`git-repo-db` は、**[ADR 0002](adr/0002-three-store-boundary-architecture/)**（結合決定 PF-P01〜PF-P17）に基づき、単一の肥大化した SQLite データベースから以下の **3つの物理データベースファイル** へ完全に分離されています。
+以下は **[ADR 0002](adr/0002-three-store-boundary-architecture/)** に由来する実装済み Schema 21 基盤の３スキーマの図です。採択済み目標設計と通常の起動経路は[アーキテクチャ概要](architecture/)を参照してください。
 
 ```mermaid
 graph TD
