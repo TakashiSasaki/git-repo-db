@@ -1,5 +1,14 @@
 # Three-Store Boundary アーキテクチャ詳解
 
+> **対象範囲:** このページは通常ランタイムの Core Schema 21、Operational
+> Schema 1、Search Schema 1 を説明する基盤資料です。３種類のスキーマがある
+> ことは、通常の `init` が３ファイルを作成するという意味ではありません。
+> 起動時の振る舞いは[アーキテクチャ概要](index.md)を参照してください。
+> 採択済みの５責務境界とバックアップ配置の後続決定は
+> [ADR 0029 の正本](https://github.com/TakashiSasaki/git-repo-db/blob/main/docs/adr/0029-independent-access-store.md)
+> にあり、以下の Core-only バックアップ説明を全構成の規則として扱いません。
+> [ADR 0002](../adr/0002-three-store-boundary-architecture.md) の未置換の条項も維持されます。
+
 `git-repo-db` のストレージ設計の中核を成すのが、**Three-Store Boundary（3ストア物理分離）** です。
 
 本アーキテクチャは、リポジトリオーナーの合意決定（結合決定 **PF-P01〜PF-P17**）および [ADR 0002](../adr/0002-three-store-boundary-architecture.md) によって策定されました。
@@ -25,7 +34,7 @@
 - **スキーマバージョン**: Schema 21
 - **プロダクトテーブル数**: 70 テーブル
 - **物理外部キー制約数**: 121 制約
-- **バックアップ対象**: **はい**（唯一の正規バックアップ対象）
+- **バックアップ対象**: **はい**（この Schema 21 基盤の Core-only バックアップ）
 - **責務**:
   - すべての信頼できるドメイン事実（Domain Facts）、観測事実、エンティティ関係の保持。
   - Git DAG 構造（commits, trees, blobs, tags）および CAS ペイロード（生バイト列）。
@@ -88,7 +97,7 @@ SQLite の物理外部キー制約（`REFERENCES`）は、**同一の SQLite フ
 | **Search DB 欠落** | 検索リクエストは直ちに **Core データの直接スキャンにフォールバック**（PF-P15）。エラーで異常終了しない。 | 管理者が明示的に `index rebuild` を実行して再生成。 |
 | **Search DB 破損 / 不整合** | インデックス経由の検索が失敗した場合、直ちに Core 直接スキャンにフォールバックし、診断メッセージ（`stale_or_corrupt_index`）を出力。 | 管理者が明示的に `index rebuild` を実行。 |
 | **書き込み中断（クラッシュ）** | Core へのコミットは単一トランザクションで原子的。直後の Operational への記録更新がクラッシュで失われても、Core のドメイン事実は確定。 | 次回実行時に未完了ジョブとして安全に再取得。状態の捏造は行わない。 |
-| **バックアップとリストア** | バックアップは `catalog.sqlite3` のみを含む（PF-P08）。 | リストア時は Core を配置し、Operational DB は初回起動時に空で自動生成。Search DB は必要に応じて `index rebuild` で再構築。 |
+| **バックアップとリストア** | この Schema 21 基盤の Core-only バックアップは `catalog.sqlite3` を含む。採択済み目標設計の配置・フルバックアップは ADR 0029 を参照。 | この基盤では Core を配置し、Operational DB は必要時に生成。Search DB は必要に応じて `index rebuild` で再構築。 |
 
 ---
 
@@ -101,7 +110,7 @@ SQLite の物理外部キー制約（`REFERENCES`）は、**同一の SQLite フ
 - **PF-P05**: 本タスクではドメインテキストの自動 GC は実装しない（追記型を維持）。
 - **PF-P06**: 運用状態をコア DB から物理分離（Core と Operational の分離）。
 - **PF-P07**: コアと運用の間で分散 2 相コミットを行わない（Core の原子性を優先）。
-- **PF-P08**: 通常のバックアップはコア DB のみを含む。
+- **PF-P08**: この基盤の Core-only バックアップを説明します。配置とフルバックアップの後続決定は ADR 0029 を参照してください。
 - **PF-P09**: HTTP キャッシュはトランスポート層のアダプターに属し、Core に持ち込まない。
 - **PF-P10**: ドメイン属性は具体的な必要性に基づいてのみ型と来歴を明示して追加する。
 - **PF-P11**: 各コア Catalog は専用の Operational DB を 1:1 で所有し、共有しない。
