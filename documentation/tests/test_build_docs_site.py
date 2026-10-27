@@ -129,6 +129,19 @@ def test_staging_allowlist_and_transformation():
             assert "mermaid-svg-container" in slug_text
             assert f"{slug}.svg" in slug_text
             assert "Mermaid 構文ソースコードを表示" in slug_text
+            commit = get_git_metadata()["commit_sha"]
+            expected = f"https://github.com/TakashiSasaki/git-repo-db/blob/{commit}/documentation/schema/mermaid/{slug}.md"
+            assert expected in slug_text
+            subprocess.run(
+                [
+                    "git",
+                    "cat-file",
+                    "-e",
+                    f"{commit}:documentation/schema/mermaid/{slug}.md",
+                ],
+                check=True,
+                capture_output=True,
+            )
 
 
 def test_publication_safety_validator():

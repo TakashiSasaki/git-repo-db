@@ -323,7 +323,9 @@ def render_mermaid_to_svg(
             temp_mmd.unlink()
 
 
-def stage_documentation(staging_dir: Path, skip_mermaid_render: bool = False) -> None:
+def stage_documentation(
+    staging_dir: Path, skip_mermaid_render: bool = False, provenance: dict | None = None
+) -> None:
     """Stage explicitly allowlisted documentation into the staging directory."""
     for source in (
         DOCS_SITE_DIR,
@@ -333,13 +335,31 @@ def stage_documentation(staging_dir: Path, skip_mermaid_render: bool = False) ->
     ):
         if source.is_symlink() or any(p.is_symlink() for p in source.rglob("*")):
             raise ValueError("Symlink documentation source refused")
+    meta = get_git_metadata()
+    if provenance is not None:
+        product = provenance.get("selected_product_source")
+        digest = provenance.get("neutral_ir_sha256")
+        if provenance.get("documentation_source") != {
+            "commit": meta["commit_sha"],
+            "tree": meta["tree_sha"],
+        }:
+            raise ValueError("Documentation provenance does not match checkout")
+        if (
+            not isinstance(product, dict)
+            or any(
+                not isinstance(product.get(key), str)
+                or not re.fullmatch(r"[0-9a-f]{40}", product[key])
+                for key in ("commit", "tree")
+            )
+            or not isinstance(digest, str)
+            or not re.fullmatch(r"[0-9a-f]{64}", digest)
+        ):
+            raise ValueError("Missing or malformed selected product provenance")
     staging_dir = validate_destination(staging_dir, "staging")
     print(f"Staging documentation into {staging_dir}...")
     if staging_dir.exists():
         shutil.rmtree(staging_dir)
     staging_dir.mkdir(parents=True, exist_ok=True)
-
-    meta = get_git_metadata()
 
     # 0. PWA Assets (Manifests, Service Worker, Client Script, Icons)
     for pwa_file in ["manifest.webmanifest", "manifest.json", "sw.js", "pwa.js"]:
@@ -363,10 +383,18 @@ def stage_documentation(staging_dir: Path, skip_mermaid_render: bool = False) ->
     metadata_banner = (
         f"\n\n---\n\n"
         f"### ビルド・リビジョン情報 (Build Metadata)\n"
-        f"- **Source Commit**: [`{meta['short_commit']}`](https://github.com/TakashiSasaki/git-repo-db/commit/{meta['commit_sha']})\n"
-        f"- **Git Tree**: `{meta['short_tree']}`\n"
-        f"- **Authoritative Schemas**: Core Schema 21 / Operational Schema 1 / Search Schema 1\n"
+        f"- **Documentation Commit**: [`{meta['commit_sha']}`](https://github.com/TakashiSasaki/git-repo-db/commit/{meta['commit_sha']})\n"
+        f"- **Documentation Tree**: `{meta['tree_sha']}`\n"
     )
+    if provenance is None:
+        metadata_banner += "- **Selected Product / IR**: 未検証（staging 単体）\n"
+    else:
+        product = provenance["selected_product_source"]
+        metadata_banner += (
+            f"- **Selected Product Commit**: [`{product['commit']}`](https://github.com/TakashiSasaki/git-repo-db/commit/{product['commit']})\n"
+            f"- **Selected Product Tree**: `{product['tree']}`\n"
+            f"- **Neutral IR SHA-256**: `{provenance['neutral_ir_sha256']}`\n"
+        )
     (staging_dir / "index.md").write_text(
         homepage_content + metadata_banner, encoding="utf-8"
     )
@@ -533,7 +561,7 @@ def stage_documentation(staging_dir: Path, skip_mermaid_render: bool = False) ->
 
 <div class="diagram-actions" style="display: flex; gap: 0.75rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
   <a href="{svg_filename}" target="_blank" class="md-button md-button--primary">🔍 フルサイズSVGを開く</a>
-  <a href="https://github.com/TakashiSasaki/git-repo-db/blob/main/docs/schema/mermaid/{slug}.md" target="_blank" class="md-button">🐙 GitHubでソースを表示</a>
+  <a href="https://github.com/TakashiSasaki/git-repo-db/blob/{meta["commit_sha"]}/documentation/schema/mermaid/{slug}.md" target="_blank" class="md-button">🐙 GitHubでソースを表示</a>
 </div>
 
 ??? info "Mermaid 構文ソースコードを表示"
@@ -799,7 +827,9 @@ def main() -> int:
             shutil.rmtree(args.output_dir)
 
     # 3. Stage Documentation
-    stage_documentation(args.staging_dir, skip_mermaid_render=args.no_mermaid)
+    stage_documentation(
+        args.staging_dir, skip_mermaid_render=args.no_mermaid, provenance=record
+    )
 
     # 4. Handle --serve mode
     if args.serve:
