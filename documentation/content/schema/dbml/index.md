@@ -5,7 +5,7 @@
 公式リポジトリの SQLite DDL を正本（Single Source of Truth）とし、**dbdiagram.io**、**dbdocs.io**、**Eraser.io**、および VS Code などの外部ツールで容易に可視化・共有・分析できるように最適化されています。
 
 > [!NOTE]
-> DBML ファイルはリポジトリの正式な DDL（SQLite）から `scripts/schema_viz.py` によって決定論的（Deterministic）に自動生成されています。
+> DBML ファイルはリポジトリの正式な DDL（SQLite）から `documentation/tools/schema_viz.py` によって決定論的（Deterministic）に自動生成されています。
 
 ---
 
@@ -86,20 +86,20 @@
 
 3. **スキーマの構文検証**:
    ```bash
-   dbdocs validate docs/schema/dbml/core.dbml
-   dbdocs validate docs/schema/dbml/operational.dbml
+   dbdocs validate documentation/schema/dbml/core.dbml
+   dbdocs validate documentation/schema/dbml/operational.dbml
    ```
 
 4. **Web ポータルのビルド＆公開**:
    ```bash
    # Core Store を公開
-   dbdocs build docs/schema/dbml/core.dbml --project git-repo-db-core
+   dbdocs build documentation/schema/dbml/core.dbml --project git-repo-db-core
 
    # Operational Store を公開
-   dbdocs build docs/schema/dbml/operational.dbml --project git-repo-db-operational
+   dbdocs build documentation/schema/dbml/operational.dbml --project git-repo-db-operational
 
    # Search Store を公開
-   dbdocs build docs/schema/dbml/search.dbml --project git-repo-db-search
+   dbdocs build documentation/schema/dbml/search.dbml --project git-repo-db-search
    ```
    実行が完了すると、`https://dbdocs.io/<username>/git-repo-db-core` のような公開 URL が発行されます。パスワード保護（`dbdocs password --set <password>`）も設定可能です。
 
@@ -285,15 +285,15 @@ npx azimutt@latest gateway --allow-origin "https://azimutt.app"
 外部クラウドサービスを使用せず、完全ローカルで DBML を閲覧・編集することも可能です：
 
 1. VS Code の拡張機能マーケットプレイスで **`vscode-dbml`** または **`DBML ERD`** をインストール。
-2. `docs/schema/dbml/*.dbml` ファイルを開く。
+2. `documentation/schema/dbml/*.dbml` ファイルを開く。
 3. エディタ右上の「プレビュー」ボタンをクリックすると、ローカルで ER 図が表示されます。
 
 ---
 
 ## スキーマ整合性検証
 
-DBML ファイルが現在の Python DDL と完全一致しているかは、リポジトリのテストスイートおよび CI により常時検証されています：
+DBML の鮮度を検証します。事前に選択した製品ソースから完全な IR を生成してください。手順は [documentation/README.md](../../../README.md) を参照してください：
 
 ```bash
-uv run --no-sync python scripts/schema_viz.py --check
+uv run --project documentation --no-sync python documentation/tools/schema_viz.py --ir documentation/.build/inputs/inventory.json --check
 ```

@@ -15,6 +15,8 @@ from importlib.resources import files
 from pathlib import Path
 from uuid import UUID
 
+# P1 factory subset, not an inventory of every responsibility or runtime store.
+# Access has a separate opt-in factory: adapters/sqlite/access_schema.py.
 STORES = ("core", "context", "operational", "search")
 MIN_SQLITE = (3, 51, 3)  # Includes the verified WAL-reset fix, STRICT and JSON.
 FORMAT = "repo-catalog/p1-isolated-1"
