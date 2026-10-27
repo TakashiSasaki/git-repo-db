@@ -6,6 +6,8 @@
 
 [ADR 0029](https://github.com/TakashiSasaki/git-repo-db/blob/main/docs/adr/0029-independent-access-store.md) の採択設計には Core、Context、Access、Operational、Search の５つの責務境界があります。[P1 ファクトリー](https://github.com/TakashiSasaki/git-repo-db/blob/main/src/repo_catalog/adapters/sqlite/p1_schema.py) の４項目はその部分集合で、Access は[別の opt-in ファクトリー](https://github.com/TakashiSasaki/git-repo-db/blob/main/src/repo_catalog/adapters/sqlite/access_schema.py)です。
 
+通常のカタログ `init` とは別に、[Access ワークフロー](https://github.com/TakashiSasaki/git-repo-db/blob/main/src/repo_catalog/cli/access_workflow.py)と[取得用](https://github.com/TakashiSasaki/git-repo-db/blob/main/src/repo_catalog/cli/access_acquisition.py)の opt-in CLI モジュールがあります。
+
 通常の `init` は [初期化処理](https://github.com/TakashiSasaki/git-repo-db/blob/main/src/repo_catalog/application/maintenance_service.py) で１つの Core カタログを作成します。[Store の実装](https://github.com/TakashiSasaki/git-repo-db/blob/main/src/repo_catalog/adapters/sqlite/store.py)では Operational は必要時に開かれ、Search の作成は明示的です。これらはこの起動経路の説明であり、既存の利用者データベースの数や全構成の上限を示すものではありません。
 
 ---
