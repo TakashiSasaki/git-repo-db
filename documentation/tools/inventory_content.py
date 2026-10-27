@@ -69,7 +69,7 @@ def classify(path: str) -> tuple[str, str]:
     """Exactly one storage role; authority is established by contents/ADRs."""
     parts = path.split("/")
     if path in ROOT_CONTROL:
-        return "repository-entry-or-control", path
+        return "repository-control-file", path
     if path.startswith(".agents/skills/"):
         return "agent-procedure", ".agents/skills/"
     if path.startswith("docs/"):
@@ -77,22 +77,22 @@ def classify(path: str) -> tuple[str, str]:
             return "directory-instructions", "docs/"
         if len(parts) == 2:
             if parts[1] in ROOT_GUIDES:
-                return "protected-operator-or-contract-guide", "docs/"
+                return "protected-product-guidance", "docs/"
             if parts[1] in ROOT_POINTERS:
                 return "historical-link-pointer", "docs/"
             if parts[1] in ROOT_RECORDS:
                 if path.endswith((".json", ".sql", ".json.gz")):
-                    return "machine-record-or-input", "docs/"
+                    return "machine-structured-artifact", "docs/"
                 return "retained-engineering-record", "docs/"
             raise ValueError(f"Unclassified docs root: {path}")
         section = parts[1]
         if section == "adr":
             return "canonical-adr-and-governance", "docs/adr/"
         if section == "architecture":
-            return "canonical-design-or-contract", "docs/architecture/"
+            return "canonical-architecture-source", "docs/architecture/"
         if section in {"validation", "integration", "schema-hardening"}:
             if section == "schema-hardening" and path.endswith((".json", ".sql")):
-                return "machine-record-or-input", f"docs/{section}/"
+                return "machine-structured-artifact", f"docs/{section}/"
             return "retained-engineering-record", f"docs/{section}/"
         if section in {"implementation", "phase2"}:
             if (section == "implementation" and parts[2] == "evidence") or (
@@ -102,7 +102,7 @@ def classify(path: str) -> tuple[str, str]:
             if parts[-1] == "AGENTS.md":
                 return "directory-instructions", f"docs/{section}/"
             if path.endswith((".json", ".sql", ".json.gz")):
-                return "machine-record-or-input", f"docs/{section}/"
+                return "machine-structured-artifact", f"docs/{section}/"
             return "retained-engineering-record", f"docs/{section}/"
         raise ValueError(f"Unclassified docs directory: {path}")
     if path.startswith("documentation/"):

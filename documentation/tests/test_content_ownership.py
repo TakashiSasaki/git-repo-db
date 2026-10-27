@@ -19,7 +19,7 @@ def test_inventory_has_one_owner_for_every_tracked_file():
         "documentation/current-runtime-reference.md": "derived-current-guide",
         "documentation/tests/test_content_ownership.py": "documentation-test",
         "documentation/tools/inventory_content.py": "documentation-tool",
-        "docs/phase2/field-contract.json": "machine-record-or-input",
+        "docs/phase2/field-contract.json": "machine-structured-artifact",
     }.items():
         assert next(item for item in items if item["path"] == path)["role"] == role
     with pytest.raises(ValueError, match="Unclassified"):

@@ -24,8 +24,8 @@ the defined scope and refuses unclassified root paths or new top-level sections.
 The inventory does not reinterpret old findings as current acceptance.
 
 The inventory's `canonical-adr-and-governance` and
-`canonical-design-or-contract` roles identify locations whose actual binding
-scope is resolved through the ADR index. `machine-record-or-input` covers
+`canonical-architecture-source` roles identify locations whose actual binding
+scope is resolved through the ADR index. `machine-structured-artifact` covers
 tracked structured inputs and inventories outside immutable evidence directories;
 check consumers before editing them. `retained-engineering-record` covers
 plans, design/contract handoffs, dated reports and other engineering records;
