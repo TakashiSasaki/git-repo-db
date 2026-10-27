@@ -432,12 +432,17 @@ def stage_documentation(staging_dir: Path, skip_mermaid_render: bool = False) ->
     # only substrings inside code spans would leave inert Markdown link text.
     schema_index_content = (
         schema_readme_raw.replace(
-            "`docs/schema/mermaid/overview.md`", "[Mermaid 全体俯瞰](mermaid/overview/)"
+            "`documentation/schema/mermaid/overview.md`",
+            "[Mermaid 全体俯瞰](mermaid/overview/)",
         )
-        .replace("`docs/schema/dbml/core.dbml`", "[core.dbml](dbml/core.dbml)")
-        .replace("`docs/schema/index.html`", "[インタラクティブビューアー](viewer/)")
-        .replace("`docs/schema/dbml/`", "[DBML エクスポートガイド](dbml/)")
-        .replace("`docs/schema/mermaid/`", "[Mermaid ダイアグラム一覧](mermaid/)")
+        .replace("`documentation/schema/dbml/core.dbml`", "[core.dbml](dbml/core.dbml)")
+        .replace(
+            "`documentation/schema/index.html`", "[インタラクティブビューアー](viewer/)"
+        )
+        .replace("`documentation/schema/dbml/`", "[DBML エクスポートガイド](dbml/)")
+        .replace(
+            "`documentation/schema/mermaid/`", "[Mermaid ダイアグラム一覧](mermaid/)"
+        )
     )
     (schema_staging / "index.md").write_text(schema_index_content, encoding="utf-8")
 
