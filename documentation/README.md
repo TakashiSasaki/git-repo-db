@@ -47,9 +47,10 @@ The scaffold rejects missing/malformed evidence, path traversal, symlink inputs,
 changed input/IR hashes and mismatched selected product identity. It checks
 consistency only: a self-consistent fabricated IR/manifest is not an independent
 execution proof, and a manifest's input map is not proof of input completeness.
-The implemented producer and release verifier share a conservative input inventory,
-record the executed Python closure, and check source bytes before and after
-validation. Independent local and hosted documentation evidence and product
+The producer records the executed Python closure and checks working bytes before
+and after execution against a conservative input inventory. The release verifier
+validates the recorded evidence against committed inputs, artifacts and provider
+evidence; it does not rerun the producer. Independent local and hosted documentation evidence and product
 validation remain required before any complete-release claim. A consistency
 record alone never establishes full acceptance.
 

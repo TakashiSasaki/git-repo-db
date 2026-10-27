@@ -20,7 +20,9 @@ inputs/provenance belong under .build/, not in published site outputs.
 
 Product-scoped success is distinct from complete local/hosted release acceptance.
 The provenance consumer checks consistency, not trusted execution or permission
-to publish. The producer and release verifier check their conservative input
-inventory and executed control closure. Preview rendering cannot establish full
+to publish. The producer records its executed control closure and checks working
+bytes before and after execution. The release verifier validates recorded evidence
+against committed inputs, artifacts and provider evidence; it does not rerun the
+producer. Preview rendering cannot establish full
 release acceptance; complete acceptance requires the independent product and
 documentation evidence described in README.md.
