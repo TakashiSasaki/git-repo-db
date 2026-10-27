@@ -201,3 +201,14 @@ def test_external_checkout_ancestor_refused_before_mkdir(tmp_path):
         export_databases(checkout / "new" / "output")
     assert not (checkout / "new").exists()
     assert (checkout / ".git").read_bytes() == b"gitdir: sentinel"
+
+
+def test_default_build_path_under_trusted_checkout_ancestor(tmp_path, monkeypatch):
+    checkout = tmp_path / "checkout"
+    checkout.mkdir()
+    (tmp_path / ".git").mkdir()
+    (checkout / ".git").write_bytes(b"gitdir: sentinel")
+    monkeypatch.setattr(exporter, "ROOT", checkout)
+    outputs = export_databases(checkout / ".build" / "databases")
+    assert len(outputs) == 6
+    assert (checkout / ".git").read_bytes() == b"gitdir: sentinel"

@@ -40,6 +40,7 @@ def _open_directory(path: Path) -> int:
             # Refuse external checkouts/environments before creating descendants.
             if current not in {
                 ROOT,
+                *ROOT.parents,
                 Path(path.anchor),
                 Path(tempfile.gettempdir()),
             } and {".git", "pyvenv.cfg", ".venv"} & set(os.listdir(fd)):
