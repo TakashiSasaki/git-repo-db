@@ -81,8 +81,8 @@ In a clean, committed selected product checkout, use its verified product enviro
 
 ```sh
 scripts/local-run.sh python scripts/schema_inventory.py --source FULL_PRODUCT_SHA --output documentation/.build/inputs
-uv run --project documentation --no-sync python documentation/tools/schema_viz.py --ir documentation/.build/inputs/inventory.json --check
-uv run --project documentation --no-sync python documentation/tools/build_docs_site.py --product-source FULL_PRODUCT_SHA --documentation-source FULL_DOC_SHA --no-mermaid
+env -u UV_PROJECT_ENVIRONMENT uv run --project documentation --no-sync python documentation/tools/schema_viz.py --ir documentation/.build/inputs/inventory.json --check
+env -u UV_PROJECT_ENVIRONMENT uv run --project documentation --no-sync python documentation/tools/build_docs_site.py --product-source FULL_PRODUCT_SHA --documentation-source FULL_DOC_SHA --no-mermaid
 ```
 
 Choose both full SHAs once; do not chase latest HEAD. A different selected product checkout may export its manifest/IR for the documentation checkout to consume. Product CI does not render documentation. Existing Pages owns documentation checks/preview and the unchanged publication allowlist. Product receipts explicitly report `full_acceptance=false` and missing documentation. `verify_documentation.py` executes all documentation obligations and retains private receipts in unique attempt directories; `--preview` receipts cannot establish complete release acceptance. After producing the pinned IR, the repository-root preview command is `documentation/.venv/bin/python documentation/tools/verify_documentation.py --product-source FULL_PRODUCT_SHA --documentation-source FULL_DOC_SHA --preview`. An explicit `scripts/ci_execute.py reconcile-release --documentation-local RECEIPT --documentation-hosted RECEIPT` additionally verifies independent local/hosted documentation receipts, exact node replacements and product/IR provenance, and binds hosted bytes to the successful Pages provider artifact before complete release acceptance is possible. This is a release gap, never product failure or complete acceptance.

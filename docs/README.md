@@ -28,6 +28,19 @@ modes and blobs; changes or additions fail the inventory check. See each record
 and the ADR index for scoped supersessions, rather than treating an inventory
 category as new authority.
 
+The checked-in `static_consumer_references` are a snapshot, not a live scan
+performed by the inventory checker. To reproduce the literal search for a file
+whose basename is unique within the inventory, substitute its basename below:
+
+```sh
+rg -l -F --max-filesize 1M --glob '!docs/implementation/evidence/**' --glob '!docs/phase2/reviews/**' --glob '!documentation/content-inventory.json' --glob '!*.lock' -- 'BASENAME' docs documentation src scripts tests .github
+```
+
+Exclude the file itself when recording inbound references. If a basename is
+shared, inspect full and relative paths manually; neither this scan nor an empty
+result establishes that dynamic consumers are absent. Update the recorded
+snapshot after evaluating the results.
+
 For each explicit entry, `status` describes the assessed scope of the file;
 `owner` is its intended location; `source` names the record itself and
 `baseline_git_object` identifies its original mode and blob when present at the
