@@ -1,4 +1,8 @@
-"""Independent, opt-in Access registry format; never imported by P1 or the CLI.
+"""Independent, opt-in Access registry format.
+
+The P1 factory and ordinary catalog CLI initialization do not use this module.
+Standalone opt-in Access workflow and acquisition CLI modules import it through
+AccessConnections.
 
 Factory connections are trusted infrastructure. Public callers use AccessRegistry.
 Only owned POSIX regular files in owned non-writable-by-others directories are

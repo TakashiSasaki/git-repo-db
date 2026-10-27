@@ -5,6 +5,12 @@ on PR #70, parent `eb84be9b2061b026ad82b780cc95e062928f838a`. Its DDL and refere
 adapters are not imported by the normal CLI initializer. Catalog3 Schema 21
 continues to be the public runtime until P8. P1 does not migrate a catalog.
 
+The four stores managed by the P1 factory (Core, Context, Operational and
+Search) are a subset of the five responsibility boundaries in accepted
+[ADR 0029](../adr/0029-independent-access-store.md). Access is independent and
+has its own [opt-in factory](../../src/repo_catalog/adapters/sqlite/access_schema.py);
+it is not an entry in the P1 factory's `STORES` tuple.
+
 ## Access A3 registration-boundary refinement
 
 The opt-in Context registration columns retain domain-only metadata under
