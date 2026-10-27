@@ -87,6 +87,8 @@ are private/generated outputs, not new authority or a publication allowlist.
 
 Run `documentation/.venv/bin/python documentation/tools/inventory_content.py`
 to list each tracked file in these directories and relevant root controls with
-one role and owning location. It fails on unrecognized root paths or top-level
-sections. Classification identifies storage ownership; accepted decisions and
-individual record context still determine authority and historical scope.
+one role and owning location. It fails on any unregistered tracked path, including nested files, and checks
+the two frozen evidence trees against pinned paths, modes and blobs. The checked-in
+file-level inventory records status, authority, provenance, consumers and
+publication intent; its bounded static reference scan does not prove the absence
+of dynamic consumers. Accepted decisions and each record still determine scope.

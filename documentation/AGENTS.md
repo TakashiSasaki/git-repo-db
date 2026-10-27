@@ -60,6 +60,5 @@ not establish semantic verification of all handwritten text.
 The inventory tool enumerates each tracked file in `docs/`, `documentation/`,
 relevant repository entry points and repository skills. Consult
 [docs/README.md](../docs/README.md) for role meanings and explicit placement
-exceptions. New documentation-root paths and top-level sections must be classified
-before completion; the ownership test refuses unknown locations. Preserve the
-historical link pointer unless its protected inbound links have been handled.
+exceptions. Every new nested or root path must have an explicit file-level
+classification before completion; the ownership test refuses unknown paths.

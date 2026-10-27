@@ -3,7 +3,7 @@
 > **Current navigation:** This document is a dated historical snapshot; its
 > present-tense statements describe that snapshot. For the implemented Schema 21
 > runtime and the distinction from opt-in and accepted target design, see
-> [Current runtime reference](current-runtime-reference.md). Original body and
+> [Current runtime reference](../documentation/current-runtime-reference.md). Original body and
 > historical evidence remain unchanged.
 
 The [composed packaged DDL](../src/repo_catalog/adapters/sqlite/schema.py) is authoritative. The [schema map](phase2/publication-free-schema-map.json) records all current columns/PKs/FKs/views/triggers/indexes and the preserved Schema 19 delta. The [implementation handoff](phase2/publication-free-implementation.md) explains keys, consumers, lifetimes and pending acceptance. Historical inventory reports are earlier checkpoints, not active format contracts.

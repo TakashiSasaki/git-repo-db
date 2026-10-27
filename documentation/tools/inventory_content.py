@@ -1,7 +1,8 @@
-"""Inventory tracked documentation by one role and owning location.
+"""Inspect the explicit file-level documentation ownership inventory.
 
-Run from the repository root: documentation/.venv/bin/python documentation/tools/inventory_content.py > inventory.json
-The index includes staged paths; historical bytes are never read or changed.
+Run from the repository root with the isolated documentation environment:
+    documentation/.venv/bin/python documentation/tools/inventory_content.py
+Frozen historical collections are checked against their original Git objects.
 """
 
 from __future__ import annotations
@@ -11,150 +12,122 @@ import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-
-# Explicit root-level exceptions have dependencies outside the documentation
-# renderer or are preserved historical navigation. Never silently relocate them.
-ROOT_GUIDES = {
-    "application-json-contracts.md",
-    "change-aware-ci.md",
-    "ci-python-runtime.md",
-    "latest-state-transport.md",
-    "local-python.md",
-    "operations.md",
-    "repository-identity.md",
-    "testing.md",
-}
-ROOT_POINTERS = {"current-runtime-reference.md"}
-ROOT_RECORDS = {
-    "architecture.md",
-    "ci-performance-baseline.json",
-    "ci-performance-results.json",
-    "ci-performance.md",
-    "ci-selection-results.json",
-    "cli.md",
-    "current-state-boundaries-inventory.json",
-    "current-state-boundaries.md",
-    "current-state-schema-closure.md",
-    "current-state-schema-inventory.json",
-    "current-state-schema-inventory.md",
-    "current-state-schema-liveness.md",
-    "data-model.md",
-    "developer-site.md",
-    "implementation-status.md",
-    "latest-state-table-inventory.json",
-    "latest-state-table-inventory.md",
-    "latest-state-transport-implementation.md",
-    "model-contract-completion.md",
-    "model-integration-audit.md",
-    "model-integration-handoff.md",
-    "model-integration-status.md",
-    "multi-provider-design-analysis.md",
-    "phase1-api-original-retirement-implementation.md",
-    "phase1-api-original-retirement-inventory.json",
-    "phase1-api-original-retirement.md",
-    "test-suite-efficiency.md",
-    "transport-independent-core-adr.md",
-    "transport-independent-core-implementation.md",
-}
-ROOT_CONTROL = {
-    "AGENTS.md",
-    "README.md",
-    "scripts/schema_inventory.py",
-    "scripts/verification_outputs.py",
-    "scripts/check_sqlite_validation_policy.py",
-}
+MANIFEST = ROOT / "documentation/content-inventory.json"
 
 
-def classify(path: str) -> tuple[str, str]:
-    """Exactly one storage role; authority is established by contents/ADRs."""
-    parts = path.split("/")
-    if path in ROOT_CONTROL:
-        return "repository-control-file", path
-    if path.startswith(".agents/skills/"):
-        return "agent-procedure", ".agents/skills/"
-    if path.startswith("docs/"):
-        if len(parts) == 2 and parts[1] == "README.md":
-            return "directory-instructions", "docs/"
-        if len(parts) == 2:
-            if parts[1] in ROOT_GUIDES:
-                return "protected-product-guidance", "docs/"
-            if parts[1] in ROOT_POINTERS:
-                return "historical-link-pointer", "docs/"
-            if parts[1] in ROOT_RECORDS:
-                if path.endswith((".json", ".sql", ".json.gz")):
-                    return "machine-structured-artifact", "docs/"
-                return "retained-engineering-record", "docs/"
-            raise ValueError(f"Unclassified docs root: {path}")
-        section = parts[1]
-        if section == "adr":
-            return "canonical-adr-and-governance", "docs/adr/"
-        if section == "architecture":
-            return "canonical-architecture-source", "docs/architecture/"
-        if section in {"validation", "integration", "schema-hardening"}:
-            if section == "schema-hardening" and path.endswith((".json", ".sql")):
-                return "machine-structured-artifact", f"docs/{section}/"
-            return "retained-engineering-record", f"docs/{section}/"
-        if section in {"implementation", "phase2"}:
-            if (section == "implementation" and parts[2] == "evidence") or (
-                section == "phase2" and parts[2] == "reviews"
-            ):
-                return "historical-evidence", f"docs/{section}/{parts[2]}/"
-            if parts[-1] == "AGENTS.md":
-                return "directory-instructions", f"docs/{section}/"
-            if path.endswith((".json", ".sql", ".json.gz")):
-                return "machine-structured-artifact", f"docs/{section}/"
-            return "retained-engineering-record", f"docs/{section}/"
-        raise ValueError(f"Unclassified docs directory: {path}")
-    if path.startswith("documentation/"):
-        if len(parts) == 2:
-            if parts[1] == "current-runtime-reference.md":
-                return "derived-current-guide", "documentation/"
-            if parts[1] in {"AGENTS.md", "README.md"}:
-                return "directory-instructions", "documentation/"
-            if parts[1] in {".gitignore", "mkdocs.yml", "pyproject.toml", "uv.lock"}:
-                return "documentation-build-config", "documentation/"
-            raise ValueError(f"Unclassified documentation root: {path}")
-        section = parts[1]
-        if section == "content":
-            if path.endswith(".md"):
-                return "published-prose-source", "documentation/content/"
-            return "published-site-asset", "documentation/content/"
-        if section == "schema":
-            if parts[-1] == "README.md":
-                return "derived-current-guide", "documentation/schema/"
-            return "generated-schema-presentation", "documentation/schema/"
-        if section == "overrides":
-            return "documentation-template", "documentation/overrides/"
-        if section == "tools":
-            return "documentation-tool", "documentation/tools/"
-        if section == "tests":
-            return "documentation-test", "documentation/tests/"
-        raise ValueError(f"Unclassified documentation directory: {path}")
-    raise ValueError(f"Unclassified scope: {path}")
+def _git(*args: str) -> bytes:
+    return subprocess.check_output(["git", *args], cwd=ROOT)
 
 
-def inventory() -> list[dict[str, str]]:
-    paths = (
-        subprocess.check_output(
-            [
-                "git",
+def _manifest() -> dict:
+    data = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    if not isinstance(data.get("records"), dict) or not isinstance(
+        data.get("frozen"), dict
+    ):
+        raise ValueError("Malformed ownership inventory")
+    return data
+
+
+def _frozen(data: dict) -> dict[str, dict[str, str]]:
+    """Enumerate only exact baseline blob paths and modes; reject added files."""
+    entries = {}
+    baseline = data["baseline"]
+    for directory, expected_tree in data["frozen"].items():
+        name = directory.rstrip("/")
+        if _git("rev-parse", f"{baseline}:{name}").decode().strip() != expected_tree:
+            raise ValueError(f"Frozen tree identity mismatch: {directory}")
+        raw = _git("ls-tree", "-rz", baseline, "--", name)
+        for item in raw.split(b"\0"):
+            if not item:
+                continue
+            metadata, path = item.split(b"\t", 1)
+            mode, kind, blob = metadata.decode().split()
+            if kind != "blob":
+                raise ValueError(f"Unexpected frozen entry type: {path!r}")
+            filename = path.decode()
+            entries[filename] = {
+                "status": "frozen-historical-evidence",
+                "owner": directory,
+                "authority": "Historical evidence only; read the referenced record for its exact scope.",
+                "source": f"{baseline}:{filename}",
+                "producer": "Original recorded review or validation run; retain its bytes.",
+                "consumers": "Historical evidence and associated review records.",
+                "publication": "not staged",
+                "mode": mode,
+                "blob": blob,
+            }
+    return entries
+
+
+def classify(path: str) -> dict:
+    data = _manifest()
+    records = data["records"]
+    if path in records:
+        return records[path]
+    frozen = _frozen(data)
+    if path in frozen:
+        return frozen[path]
+    raise ValueError(f"Unclassified path: {path}")
+
+
+def inventory() -> list[dict]:
+    data = _manifest()
+    explicit = data["records"]
+    frozen = _frozen(data)
+    overlap = set(explicit) & set(frozen)
+    if overlap:
+        raise ValueError(f"Duplicate inventory entries: {sorted(overlap)[:3]}")
+    tracked = set(
+        filter(
+            None,
+            _git(
                 "ls-files",
                 "-z",
                 "--",
                 "docs",
                 "documentation",
                 ".agents/skills",
-                *sorted(ROOT_CONTROL),
-            ],
-            cwd=ROOT,
+                "AGENTS.md",
+                "README.md",
+                "scripts/schema_inventory.py",
+                "scripts/verification_outputs.py",
+                "scripts/check_sqlite_validation_policy.py",
+            )
+            .decode()
+            .split("\0"),
         )
-        .decode()
-        .split("\0")
     )
+    expected = set(explicit) | set(frozen)
+    if tracked != expected:
+        raise ValueError(
+            f"Unclassified tracked paths: {sorted(tracked - expected)[:5]}; "
+            f"stale inventory paths: {sorted(expected - tracked)[:5]}"
+        )
+    for directory in data["frozen"]:
+        # Compare both index and worktree against the baseline, including file
+        # modes and bytes. Untracked additions are also refused.
+        diff = subprocess.run(
+            ["git", "diff", "--quiet", data["baseline"], "--", directory], cwd=ROOT
+        )
+        if diff.returncode != 0:
+            raise ValueError(f"Frozen evidence changed: {directory}")
+        if _git("ls-files", "--others", "--exclude-standard", "-z", "--", directory):
+            raise ValueError(f"Untracked frozen evidence: {directory}")
+    required = {
+        "status",
+        "owner",
+        "authority",
+        "source",
+        "producer",
+        "consumers",
+        "publication",
+    }
     result = []
-    for path in filter(None, paths):
-        role, owner = classify(path)
-        result.append({"path": path, "role": role, "owner": owner})
+    for path in sorted(expected):
+        record = explicit.get(path) or frozen[path]
+        if not required <= record.keys() or any(not record[key] for key in required):
+            raise ValueError(f"Incomplete inventory entry: {path}")
+        result.append({"path": path, **record})
     return result
 
 

@@ -6,9 +6,9 @@ accepted decision and governance sources, design/technical contracts under
 inputs, and historical evidence in place. Status and authority are determined
 by each record and its accepted supersessions, not by its directory or age.
 Do not edit dated receipts, archived reports, or their bytes to make them appear
-current. Existing `current-runtime-reference.md` is a navigation pointer retained
-for historical links; the maintained derived guide lives in
-[documentation/](../documentation/current-runtime-reference.md).
+current. The maintained [current runtime guide](../documentation/current-runtime-reference.md)
+lives in the documentation workspace. Navigation banners in historical guides
+link directly to it; their original historical bodies remain unchanged.
 
 Some current operational and validation guides remain here because they are
 normative inputs or referenced by product/tooling and accepted contracts. Check
@@ -17,23 +17,20 @@ site sources belong in the separate [documentation workspace](../documentation/R
 its [agent instructions](../documentation/AGENTS.md) define publication and
 refresh boundaries. A source move does not authorize making it public.
 
-For a file-by-file inventory and role definitions, run
-`documentation/.venv/bin/python documentation/tools/inventory_content.py` from
-the repository root. It emits one role and owning location per tracked path in
-the defined scope and refuses unclassified root paths or new top-level sections.
-The inventory does not reinterpret old findings as current acceptance.
+For the file-by-file inventory, run `documentation/.venv/bin/python documentation/tools/inventory_content.py`
+from the repository root. The reviewed `documentation/content-inventory.json` records each
+non-frozen tracked path individually, including status, source and authority,
+producer, consumers, and publication intent. Static consumer references are a
+bounded literal scan; dynamic references and ambiguous names are not proven
+absent. New nested files require explicit entries. The two frozen evidence
+collections are enumerated from their pinned Git trees, including paths, file
+modes and blobs; changes or additions fail the inventory check. See each record
+and the ADR index for scoped supersessions, rather than treating an inventory
+category as new authority.
 
-The inventory's `canonical-adr-and-governance` and
-`canonical-architecture-source` roles identify locations whose actual binding
-scope is resolved through the ADR index. `machine-structured-artifact` covers
-tracked structured inputs and inventories outside immutable evidence directories;
-check consumers before editing them. `retained-engineering-record` covers
-plans, design/contract handoffs, dated reports and other engineering records;
-individual records identify whether they are active contracts or historical
-snapshots, and their placement does not create new authority. `historical-evidence`
-identifies the large `implementation/evidence/` and `phase2/reviews/` collections;
-preserve their bytes and links. Operator/validation guides remain in `docs/`
-because existing entry points and policy consumers refer to them. The single
-historical-link pointer is intentional: the navigation blockquotes in `cli.md`, `data-model.md`, `implementation-status.md`, and `model-integration-status.md` refer to it,
-so retaining it avoids rewriting those evidence documents. This is navigation,
-not a second editable guide.
+Generated schema presentation files, including `documentation/schema/README.md`,
+come from `documentation/tools/schema_viz.py` and selected-product neutral IR.
+Regenerate them through the documented workflow; do not hand-edit the outputs.
+Operator and validation guides that are contracts or tool inputs retain their
+existing location. Historical navigation banners point directly to the current
+runtime guide; their original bodies remain byte-identical.

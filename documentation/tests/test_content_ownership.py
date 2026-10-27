@@ -1,6 +1,9 @@
-"""Protect the documentation ownership inventory and current-guide links."""
+"""Protect explicit documentation classification, frozen evidence and guide links."""
 
+import os
 import re
+import subprocess
+import sys
 from urllib.parse import unquote, urlsplit
 
 import pytest
@@ -8,24 +11,52 @@ import pytest
 from tools.inventory_content import ROOT, classify, inventory
 
 
-def test_inventory_has_one_owner_for_every_tracked_file():
+def test_inventory_has_exact_roles_and_rejects_unreviewed_paths():
     items = inventory()
     paths = [item["path"] for item in items]
     assert len(paths) == len(set(paths))
-    assert all(item["role"] and item["owner"] for item in items)
-    for path, role in {
-        "docs/adr/0035-independent-documentation-workspace.md": "canonical-adr-and-governance",
-        "docs/current-runtime-reference.md": "historical-link-pointer",
-        "documentation/current-runtime-reference.md": "derived-current-guide",
-        "documentation/tests/test_content_ownership.py": "documentation-test",
-        "documentation/tools/inventory_content.py": "documentation-tool",
-        "docs/phase2/field-contract.json": "machine-structured-artifact",
+    assert all(item["status"] and item["owner"] for item in items)
+    for path, status in {
+        "docs/transport-independent-core-adr.md": "accepted-decision",
+        "docs/phase2/no-independent-publication-adr.md": "accepted-decision",
+        "docs/implementation/p1-schema-contracts.md": "active-scoped-contract",
+        "docs/phase2/decision-register-before-no-publication.md": "superseded-decision-or-proposal-snapshot",
+        "docs/phase2/field-contract.json": "machine-input-with-scoped-provenance",
+        "documentation/schema/README.md": "generated-presentation",
+        "documentation/current-runtime-reference.md": "derived-milestone-guide",
     }.items():
-        assert next(item for item in items if item["path"] == path)["role"] == role
-    with pytest.raises(ValueError, match="Unclassified"):
-        classify("docs/not-reviewed-new-root.md")
-    with pytest.raises(ValueError, match="Unclassified"):
-        classify("documentation/new-section/example.md")
+        assert classify(path)["status"] == status
+    assert "schema_viz.py" in classify("documentation/schema/README.md")["producer"]
+    assert not (ROOT / "docs/current-runtime-reference.md").exists()
+    for path in (
+        "docs/implementation/unreviewed-current-contract.md",
+        "docs/phase2/unknown-decision.md",
+        "documentation/content/unpublished-prose.md",
+        "documentation/content/private.env",
+        "documentation/schema/handwritten-policy.md",
+        "docs/implementation/evidence/unreviewed.json",
+    ):
+        with pytest.raises(ValueError, match="Unclassified"):
+            classify(path)
+
+
+def test_historical_body_unchanged_and_navigation_retargeted():
+    baseline = "5d28bb33bf62d7b0eff7e6547a4fda84c1815a9d"
+    for path in (
+        "docs/cli.md",
+        "docs/data-model.md",
+        "docs/implementation-status.md",
+        "docs/model-integration-status.md",
+    ):
+        original = subprocess.check_output(
+            ["git", "show", f"{baseline}:{path}"], cwd=ROOT
+        )
+        expected = original.replace(
+            b"](current-runtime-reference.md)",
+            b"](../documentation/current-runtime-reference.md)",
+            1,
+        )
+        assert (ROOT / path).read_bytes() == expected
 
 
 def test_current_guide_local_links_resolve():
@@ -35,9 +66,37 @@ def test_current_guide_local_links_resolve():
         parsed = urlsplit(target)
         if parsed.scheme or not parsed.path:
             continue
-        path = (guide.parent / unquote(parsed.path)).resolve()
-        assert path.exists(), f"{target} does not resolve"
-    assert (
-        "../documentation/current-runtime-reference.md"
-        in (ROOT / "docs/current-runtime-reference.md").read_text()
+        assert (guide.parent / unquote(parsed.path)).resolve().exists(), target
+
+
+@pytest.mark.parametrize(
+    "candidate",
+    [
+        "docs/implementation/unreviewed-current-contract.md",
+        "documentation/content/unpublished-prose.md",
+        "documentation/content/private.env",
+        "documentation/schema/handwritten-policy.md",
+        "docs/implementation/evidence/unreviewed.json",
+    ],
+)
+def test_alternate_index_additions_are_not_silently_classified(tmp_path, candidate):
+    env = dict(os.environ, GIT_INDEX_FILE=str(tmp_path / "index"))
+    subprocess.run(["git", "read-tree", "HEAD"], cwd=ROOT, env=env, check=True)
+    blob = subprocess.check_output(
+        ["git", "rev-parse", "HEAD:README.md"], cwd=ROOT, text=True
+    ).strip()
+    subprocess.run(
+        ["git", "update-index", "--add", "--cacheinfo", f"100644,{blob},{candidate}"],
+        cwd=ROOT,
+        env=env,
+        check=True,
     )
+    result = subprocess.run(
+        [sys.executable, "documentation/tools/inventory_content.py"],
+        cwd=ROOT,
+        env=env,
+        text=True,
+        capture_output=True,
+    )
+    assert result.returncode != 0
+    assert "Unclassified tracked paths" in result.stderr

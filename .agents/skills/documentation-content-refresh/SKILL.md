@@ -44,8 +44,7 @@ Before moving a guide, run `documentation/.venv/bin/python documentation/tools/i
 from the repository root to enumerate tracked roles. Map every changed path's imports, generated inputs, tests,
 workflow filters and links. Keep canonical contracts, machine-consumed inputs and
 historical evidence in their existing locations unless a separately reviewed
-contract authorizes change. Retain a minimal navigation pointer only when needed
-to keep protected historical links intact. Update the explicit inventory when
-adding a new root path or top-level directory, and run the ownership/link tests;
+contract authorizes change. Preserve historical body bytes when updating navigation banners. Update the explicit inventory when
+adding any new file, and run the ownership/link tests;
 never classify an unknown location by guessing. Review the final file inventory
 and any exception rather than assuming a directory name establishes authority.

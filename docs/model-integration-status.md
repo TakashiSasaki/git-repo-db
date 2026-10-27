@@ -2,7 +2,7 @@
 
 > **Current navigation:** This is a dated Schema 18-era integration record; its
 > present-tense statements describe that snapshot. See the [current runtime
-> reference](current-runtime-reference.md) for implemented Schema 21 and opt-in
+> reference](../documentation/current-runtime-reference.md) for implemented Schema 21 and opt-in
 > boundaries. Historical evidence remains unchanged.
 
 Baseline: PR #10 (`1c69a868f65b9637a7b8cf00d2c68a4ba05b2faa`).
