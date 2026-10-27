@@ -36,7 +36,7 @@ The visualizations are derived from the production composed DDL functions in `sr
 The workbench implements three distinct visualization approaches:
 
 ### Approach A: Mermaid ER Diagrams
-- **Location:** `docs/schema/mermaid/`
+- **Location:** `documentation/schema/mermaid/`
 - **Formats:** GitHub-native Markdown documents with fenced ````mermaid` blocks.
 - **Organization:**
   - [overview.md](mermaid/overview.md) — High-level Three-Store Boundary architecture overview.
@@ -51,7 +51,7 @@ The workbench implements three distinct visualization approaches:
   - [search.md](mermaid/search.md) — Search projections, generations, and FTS5 virtual tables (4 tables).
 
 ### Approach B: DBML Exports
-- **Location:** `docs/schema/dbml/`
+- **Location:** `documentation/schema/dbml/`
 - **Formats:** `.dbml` files compatible with [dbdiagram.io](https://dbdiagram.io/) and [dbdocs.io](https://dbdocs.io/).
 - **Files:**
   - `core.dbml` — Complete DBML schema for all 70 Core tables.
@@ -60,7 +60,7 @@ The workbench implements three distinct visualization approaches:
   - `combined.dbml` — Conceptual combined export representing all three stores with documented logical dependencies.
 
 ### Approach C: Standalone Interactive HTML Viewer
-- **Location:** `docs/schema/index.html`
+- **Location:** `documentation/schema/index.html`
 - **Format:** Single self-contained HTML file with embedded CSS and vanilla JavaScript.
 - **Features:**
   - Instant store switching (Core / Operational / Search).
@@ -75,26 +75,21 @@ The workbench implements three distinct visualization approaches:
 
 ## 3. Unified Generation and Consistency Commands
 
-The CLI tool `scripts/schema_viz.py` provides deterministic generation and validation:
+The CLI tool `documentation/tools/schema_viz.py` provides deterministic generation and validation:
 
 ```bash
-# Generate Mermaid ER diagrams:
-uv run --no-sync python scripts/schema_viz.py --format mermaid
+# Select a full product commit SHA; producer checkout must match it:
+FULL_PRODUCT_SHA="FULL_PRODUCT_COMMIT_SHA"
+scripts/local-run.sh python scripts/schema_inventory.py --source "$FULL_PRODUCT_SHA" --output documentation/.build/inputs
 
-# Generate DBML exports:
-uv run --no-sync python scripts/schema_viz.py --format dbml
+# Generate all formats (or use mermaid, dbml, or html):
+uv run --project documentation --no-sync python documentation/tools/schema_viz.py --ir documentation/.build/inputs/inventory.json --format all
 
-# Generate standalone interactive HTML viewer:
-uv run --no-sync python scripts/schema_viz.py --format html
-
-# Generate all visualization artifacts:
-uv run --no-sync python scripts/schema_viz.py --format all
-
-# Run non-mutating freshness validation check (fails nonzero if stale):
-uv run --no-sync python scripts/schema_viz.py --check
+# Check committed visualization files without writing:
+uv run --project documentation --no-sync python documentation/tools/schema_viz.py --ir documentation/.build/inputs/inventory.json --check
 ```
 
-The `--check` mode executes in-memory schema introspection, generates expected outputs in memory, compares them byte-for-byte with committed files in `docs/schema/`, and exits with code 0 if up to date, or code 1 with specific diff diagnostics if stale.
+The product producer inspects the selected committed checkout and writes a pinned neutral IR and producer evidence. The renderer reads that IR; `--check` generates expected outputs in memory and compares them byte-for-byte with `documentation/schema/`. It exits nonzero on a mismatch. The renderer does not independently verify producer provenance.
 
 ---
 
@@ -121,14 +116,14 @@ The `--check` mode executes in-memory schema introspection, generates expected o
 ## 5. Practical Workflow Recommendations
 
 1. **For Quick Architecture Reviews on GitHub:**
-   - **Recommended:** **Mermaid ER Diagrams** (`docs/schema/mermaid/overview.md` and module diagrams).
+   - **Recommended:** **Mermaid ER Diagrams** (`documentation/schema/mermaid/overview.md` and module diagrams).
    - *Rationale:* Renders directly within GitHub web interface, PR reviews, and mobile GitHub app without opening external tools.
 2. **For Local Interactive Exploration and Query Development:**
-   - **Recommended:** **Standalone Interactive HTML Viewer** (`docs/schema/index.html`).
+   - **Recommended:** **Standalone Interactive HTML Viewer** (`documentation/schema/index.html`).
    - *Rationale:* Provides instantaneous table search, column filtering, clickable incoming/outgoing relationship navigation, trigger review, and neighborhood graphing with zero configuration.
 3. **For Third-Party Visual Design, Team Presentations, or External Tools:**
-   - **Recommended:** **DBML Exports** (`docs/schema/dbml/core.dbml` / `combined.dbml`).
+   - **Recommended:** **DBML Exports** (`documentation/schema/dbml/core.dbml` / `combined.dbml`).
    - *Rationale:* Easily imported into dbdiagram.io or dbdocs.io for collaborative layout adjustments, team sharing, or PDF exports.
 4. **For Automated CI and Continuous Documentation:**
-   - **Recommended:** `python scripts/schema_viz.py --check` in repository checks.
+   - **Recommended:** `uv run --project documentation --no-sync python documentation/tools/schema_viz.py --ir documentation/.build/inputs/inventory.json --check` in repository checks.
    - *Rationale:* Guarantees that any future DDL change immediately updates or invalidates stale documentation.

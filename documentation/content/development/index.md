@@ -44,16 +44,18 @@ uv run --no-sync ruff format src tests scripts
 ```
 
 ### スキーマ整合性検証 (Schema Freshness Check)
-SQLite の DDL 定義と生成された可視化成果物（HTML, Mermaid, DBML）が一致しているかを検証します：
+選択した製品コミットから検証済み製品環境で IR を作成し、文書環境で可視化成果物（HTML, Mermaid, DBML）を検証します。`FULL_PRODUCT_SHA` は現在の製品チェックアウトに一致する完全なコミット SHA を指定します：
 
 ```bash
+FULL_PRODUCT_SHA="FULL_PRODUCT_COMMIT_SHA"
+scripts/local-run.sh python scripts/schema_inventory.py --source "$FULL_PRODUCT_SHA" --output documentation/.build/inputs
 uv run --project documentation --no-sync python documentation/tools/schema_viz.py --ir documentation/.build/inputs/inventory.json --check
 ```
 
 不整合が検出された場合、以下のコマンドで可視化成果物を明示的に再生成します：
 
 ```bash
-uv run --no-sync python documentation/tools/schema_viz.py --format all
+uv run --project documentation --no-sync python documentation/tools/schema_viz.py --ir documentation/.build/inputs/inventory.json --format all
 ```
 
 ### 焦点を絞ったテストの実行
@@ -61,7 +63,7 @@ uv run --no-sync python documentation/tools/schema_viz.py --format all
 
 ```bash
 # スキーマ可視化ワークベンチのテスト
-uv run --no-sync pytest tests/unit/test_schema_viz.py
+uv run --project documentation --no-sync pytest documentation/tests/test_schema_viz.py
 
 # CI プランニングロジックのテスト
 uv run --no-sync pytest tests/unit/test_ci_plan.py
