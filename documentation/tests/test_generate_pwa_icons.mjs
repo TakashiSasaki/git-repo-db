@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync, readdirSync, symlinkSync, linkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { generateIcons } from "../../scripts/generate_pwa_icons.js";
+import { generateIcons } from "../tools/generate_pwa_icons.js";
 
 test("generates seven files at the documentation destination", async () => {
   const root = mkdtempSync(join(tmpdir(), "icons-"));

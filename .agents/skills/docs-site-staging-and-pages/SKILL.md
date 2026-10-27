@@ -121,7 +121,7 @@ Writing `site/` without a leading slash in `.gitignore` causes Git to ignore any
 2. **Icons Specification**:
    - Vector master: SVG icon (`icon.svg`) and maskable SVG (`icon-maskable.svg` with 80% safe zone).
    - High-resolution PNGs: 192x192, 512x512, 180x180 (Apple touch icon), 32x32, 16x16.
-   - Generated reproducibly via `scripts/generate_pwa_icons.js` using Puppeteer.
+   - Generated reproducibly via `documentation/tools/generate_pwa_icons.js` using Puppeteer.
 3. **Template & Viewer Injection**:
    - Inject `<link rel="manifest">`, `<link rel="apple-touch-icon">`, and `<meta name="theme-color">` via `overrides/main.html` for MkDocs pages.
    - Inject identical head tags during staging for the standalone schema viewer at `/schema/viewer/index.html`.

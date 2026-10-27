@@ -12,7 +12,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { randomBytes } from "node:crypto";
 
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const targets = [
   ["icon.svg", "icon-512.png", 512], ["icon.svg", "icon-192.png", 192],
   ["icon.svg", "icon-180.png", 180], ["icon.svg", "favicon-32.png", 32],
