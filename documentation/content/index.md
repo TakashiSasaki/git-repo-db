@@ -9,6 +9,17 @@
   </p>
 </div>
 
+## このサイトの読み方
+
+以下は 2026-10-27 時点の製品コミット [`5d28bb33`](https://github.com/TakashiSasaki/git-repo-db/tree/5d28bb33bf62d7b0eff7e6547a4fda84c1815a9d) に基づく案内です。サイトのビルド時に選択した製品・文書の revision はページ末尾に別々に表示されます。文書は製品に同期して更新されるとは限らず、選択製品の IR が検証されても手書き説明すべての正しさを保証しません。
+
+| 区分 | この時点の範囲 | 読み始める場所 |
+|---|---|---|
+| 通常ランタイム | `repo-catalog init` は Core を初期化。Operational は必要時、Search は明示的に作成。３スキーマは必須３ファイルを意味しない | [実行経路](architecture/) |
+| 実装済み opt-in | P1 の４ファクトリーと独立 Access CLI は通常 `init` とは別 | [選択機能と根拠](architecture/) |
+| 採択済み目標 | Core / Context / Access / Operational / Search の５責務。採択は全機能の既定起動を意味しない | [ADR 0029 正本](https://github.com/TakashiSasaki/git-repo-db/blob/5d28bb33bf62d7b0eff7e6547a4fda84c1815a9d/docs/adr/0029-independent-access-store.md) |
+| 履歴・証跡 | 古い CLI、データモデル、監査や検証結果は対象 revision に限定 | [現行参照と履歴への案内](https://github.com/TakashiSasaki/git-repo-db/blob/5d28bb33bf62d7b0eff7e6547a4fda84c1815a9d/docs/current-runtime-reference.md) |
+
 ## データベーススキーマ可視化ワークベンチ
 
 リポジトリの真実（authoritative SQLite DDL）から直接生成された、4つの異なる切り口によるスキーマ可視化ツール群です。目的や用途に合わせて直接アクセスできます。
@@ -78,7 +89,7 @@
 | **Core Store** | **現行状態プロジェクション** | Pull Request, Issue, Review, Comment 最新状態 | [表示](schema/mermaid/core-current-state/) |
 | **Core Store** | **カバレッジ・取得証跡** | 観測時刻に基づく 5 列のカバレッジ保証と取得事実 | [表示](schema/mermaid/core-coverage/) |
 | **Core Store** | **Git ドメイン・コミット DAG** | Commit, Tree, Blob, Tag, Ref の物理構造 | [表示](schema/mermaid/core-git/) |
-| **Core Store** | **CAS・完全性・保持義務** | Content-Addressed Storage, 真正性検証, 隔離領域 | [表示](schema/mermaid/core-cas/) |
+| **Core Store** | **CAS・完全性・保持義務** | Content-Addressed Storage, 整合性検証, 既存スキーマの隔離領域 | [表示](schema/mermaid/core-cas/) |
 | **Core Store** | **Exchange ステージング** | リモートカタログ間連携, インポート一時領域 | [表示](schema/mermaid/core-exchange/) |
 | **Operational Store** | **実行ジョブ・進捗** | 非同期ジョブ実行, 試行回数, キャッシュリース | [表示](schema/mermaid/operational/) |
 | **Search Store** | **検索プロジェクション・FTS5** | 全文検索仮想テーブル, 再構築可能な転置索引 | [表示](schema/mermaid/search/) |
@@ -141,6 +152,6 @@ graph TD
 - 🛠️ [**開発・テスト・検証ガイド**](development/)  
   Python 3.12 / uv による環境構築、単体テスト、スキーマ可視化の検証コマンド、ドキュメントサイトのビルド方法。
 - 📱 **PWA & オフライン対応**  
-  本ドキュメントサイトは PWA に対応しており、デスクトップ（Chrome / Edge）やモバイル（iOS / Android）にインストールして完全オフラインで閲覧できます。
+  マニフェストとサービスワーカーを提供しています。インストール可否はブラウザーと環境に依存し、すべてのページがオフラインで利用できる保証はありません。
 - 🐙 [**GitHub リポジトリ (TakashiSasaki/git-repo-db)**](https://github.com/TakashiSasaki/git-repo-db)  
   ソースコード、Issue、Pull Request の最新状態。

@@ -1,7 +1,7 @@
 # Current runtime reference: Schema 21 and opt-in boundaries
 
 This guide describes the implemented checkout at product baseline
-`f0e3022dd8f6dc7b3793e47522dced3ec8be3e8a`; source code is authoritative if a
+`5d28bb33bf62d7b0eff7e6547a4fda84c1815a9d` (tree `7641496147e6d051dca414d9244ed566ce546b5c`); source code is authoritative if a
 later checkout changes. It is separate from the accepted target in
 [ADR 0029](adr/0029-independent-access-store.md), which defines five responsibility
 boundaries: Core, Context, Access, Operational and Search. Acceptance of that
@@ -49,3 +49,35 @@ older descriptions and are not instructions for current Schema 21. The
 execution receipts retain their original revisions and hashes. Use the
 [ADR index](adr/README.md) for accepted scope and supersessions; use current
 source and exact-revision test evidence for present behavior.
+
+## CLI and data model navigation at this milestone
+
+The normal CLI exposes source registration, discovery, synchronization, queries,
+maintenance and explicit index rebuild through its [parser and dispatcher](../src/repo_catalog/cli/main.py).
+The [README initialization example](../README.md#初期化と収集) supplies an empty
+state directory and the three required settings. See `repo-catalog init --help`
+for arguments at the selected checkout; do not use a historical Schema 20 CLI
+contract as a current command reference. The separate Access modules have their
+own help and explicit approval/selection steps; they are not subcommands activated
+by ordinary `init`.
+
+For the normal data model start with the composed [SQLite schema factory](../src/repo_catalog/adapters/sqlite/schema.py),
+[Store implementation](../src/repo_catalog/adapters/sqlite/store.py), and the
+[public schema overview](../documentation/schema/README.md). The visualization
+covers Core/Operational/Search, not all opt-in schemas or the entire accepted
+architecture. The product source revision used for schema IR is not evidence that
+every manually written explanation has been checked against that revision.
+
+## Status and limits
+
+Implementation is not release acceptance. The opt-in P1 and Access surfaces do not
+activate P8 or establish that the five-responsibility target is complete. Accepted
+corruption recovery ([ADR 0026](adr/0026-stop-salvage-restore-merge-after-corruption.md))
+and file-content retention ([ADR 0014](adr/0014-history-and-notes-catalog-without-file-archive.md))
+are target decisions; avoid presenting the historical quarantine lifecycle or
+ordinary file-body archive as the new target. The [decision index](adr/README.md)
+and [transition plan](architecture/git-core-context-transition-plan.md) distinguish
+accepted scope, remaining work and evidence. Existing Transfer-stage non-successes
+and other historic receipts remain scoped to their original runs; this guide does
+not reclassify or erase them. See the [validation efficiency architecture](architecture/verification-efficiency-architecture.md)
+for the recorded 43 Transfer-stage non-successes and classification requirements.

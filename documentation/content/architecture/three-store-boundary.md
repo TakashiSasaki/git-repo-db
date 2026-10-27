@@ -5,7 +5,7 @@
 > ことは、通常の `init` が３ファイルを作成するという意味ではありません。
 > 起動時の振る舞いは[アーキテクチャ概要](index.md)を参照してください。
 > 採択済みの５責務境界とバックアップ配置の後続決定は
-> [ADR 0029 の正本](https://github.com/TakashiSasaki/git-repo-db/blob/main/docs/adr/0029-independent-access-store.md)
+> [ADR 0029 の正本](https://github.com/TakashiSasaki/git-repo-db/blob/5d28bb33bf62d7b0eff7e6547a4fda84c1815a9d/docs/adr/0029-independent-access-store.md)
 > にあり、以下の Core-only バックアップ説明を全構成の規則として扱いません。
 > [ADR 0002](../adr/0002-three-store-boundary-architecture.md) の未置換の条項も維持されます。
 
@@ -93,7 +93,7 @@ SQLite の物理外部キー制約（`REFERENCES`）は、**同一の SQLite フ
 | 障害シナリオ | 動作・影響 | 復旧・回復手順 |
 |---|---|---|
 | **Operational DB 欠落** | 運用操作実行時に、現在の Core `db_instance_id` にバインドされた新しい Operational DB を自動生成（PF-P12）。Core の読み取り操作は影響を受けずに継続動作。 | 自動回復（追加操作不要）。 |
-| **Operational DB 破損** | フェイルクローズ（`DATABASE_CORRUPT` または `WRONG_CATALOG_OWNER`）。ファイルを暗黙的に削除・上書きしない。 | 管理者が破損ファイルを手動削除またはリネーム後、再実行で新規生成。 |
+| **Operational DB 破損** | フェイルクローズ（`DATABASE_CORRUPT` または `WRONG_CATALOG_OWNER`）。ファイルを暗黙的に削除・上書きしない。 | 暗黙の削除・上書きを行わず、対象と状況を調査する。採択済みの保持データ破損時の復旧目標は [ADR 0026](https://github.com/TakashiSasaki/git-repo-db/blob/5d28bb33bf62d7b0eff7e6547a4fda84c1815a9d/docs/adr/0026-stop-salvage-restore-merge-after-corruption.md) を参照。 |
 | **Search DB 欠落** | 検索リクエストは直ちに **Core データの直接スキャンにフォールバック**（PF-P15）。エラーで異常終了しない。 | 管理者が明示的に `index rebuild` を実行して再生成。 |
 | **Search DB 破損 / 不整合** | インデックス経由の検索が失敗した場合、直ちに Core 直接スキャンにフォールバックし、診断メッセージ（`stale_or_corrupt_index`）を出力。 | 管理者が明示的に `index rebuild` を実行。 |
 | **書き込み中断（クラッシュ）** | Core へのコミットは単一トランザクションで原子的。直後の Operational への記録更新がクラッシュで失われても、Core のドメイン事実は確定。 | 次回実行時に未完了ジョブとして安全に再取得。状態の捏造は行わない。 |
