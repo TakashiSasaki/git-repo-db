@@ -107,11 +107,14 @@ def inventory() -> list[dict]:
     for directory in data["frozen"]:
         # Compare both index and worktree against the baseline, including file
         # modes and bytes. Untracked additions are also refused.
-        diff = subprocess.run(
-            ["git", "diff", "--quiet", data["baseline"], "--", directory], cwd=ROOT
-        )
-        if diff.returncode != 0:
-            raise ValueError(f"Frozen evidence changed: {directory}")
+        for index_only in (True, False):
+            command = ["git", "diff", "--quiet"]
+            if index_only:
+                command.append("--cached")
+            command.extend([data["baseline"], "--", directory])
+            diff = subprocess.run(command, cwd=ROOT)
+            if diff.returncode != 0:
+                raise ValueError(f"Frozen evidence changed: {directory}")
         if _git("ls-files", "--others", "--exclude-standard", "-z", "--", directory):
             raise ValueError(f"Untracked frozen evidence: {directory}")
     required = {

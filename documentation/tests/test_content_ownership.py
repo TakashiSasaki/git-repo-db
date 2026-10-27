@@ -121,3 +121,30 @@ def test_adr_status_evidence_must_match_source(monkeypatch):
     monkeypatch.setattr(inventory_content, "_manifest", lambda: data)
     with pytest.raises(ValueError, match="ADR status evidence mismatch"):
         inventory_content.inventory()
+
+
+@pytest.mark.parametrize("change", ["blob", "mode"])
+def test_frozen_index_blob_and_mode_changes_are_refused(tmp_path, change):
+    env = dict(os.environ, GIT_INDEX_FILE=str(tmp_path / "index"))
+    subprocess.run(["git", "read-tree", "HEAD"], cwd=ROOT, env=env, check=True)
+    path = "docs/implementation/evidence/access-a6-independent-20261018/baseline-index.json"
+    reference = "HEAD:README.md" if change == "blob" else f"HEAD:{path}"
+    blob = subprocess.check_output(
+        ["git", "rev-parse", reference], cwd=ROOT, text=True
+    ).strip()
+    mode = "100644" if change == "blob" else "100755"
+    subprocess.run(
+        ["git", "update-index", "--cacheinfo", f"{mode},{blob},{path}"],
+        cwd=ROOT,
+        env=env,
+        check=True,
+    )
+    result = subprocess.run(
+        [sys.executable, "documentation/tools/inventory_content.py"],
+        cwd=ROOT,
+        env=env,
+        text=True,
+        capture_output=True,
+    )
+    assert result.returncode != 0
+    assert "Frozen evidence changed" in result.stderr
