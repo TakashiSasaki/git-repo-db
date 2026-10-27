@@ -171,8 +171,10 @@ index_membership.search_document_id > search_documents.search_document_id
 SchemaSpy は実際のデータベースファイル（JDBC 接続）を必要とするため、リポジトリ付属のエクスポートツールで 3 つの SQLite ファイルを生成します：
 
 ```bash
-uv run --no-sync python scripts/export_sqlite_databases.py
+scripts/local-run.sh python scripts/export_sqlite_databases.py
 ```
+安全対策として、出力先は存在しないディレクトリを指定します（既存の空ディレクトリも拒否します）。親はリンクをたどらずに作成します。再生成は別の新規出力先を指定してください。既存データベースや SQL ファイルは削除・上書きしません。Linux/glibc のローカル実行環境で、6 ファイルを検証してから一括公開します。他 OS は未検証で、安全な公開が利用できなければ失敗します。
+
 これにより、`.build/databases/` に以下の空の正本データベースが生成されます：
 - `catalog.sqlite3` (Core Store Schema 21 / 70 テーブル)
 - `operational.sqlite3` (Operational Store Schema 1 / 10 テーブル)
@@ -246,7 +248,7 @@ docker run --rm \
 
 1. **正本 SQL DDL の出力**:
    ```bash
-   uv run --no-sync python scripts/export_sqlite_databases.py
+   scripts/local-run.sh python scripts/export_sqlite_databases.py
    ```
    `.build/databases/` に `catalog.sql`（Core 70テーブル）、`operational.sql`、`search.sql` が出力されます。
 2. ブラウザで [**Azimutt Web** (https://azimutt.app/new)](https://azimutt.app/new) を開きます（アカウント不要で利用可能）。
@@ -265,7 +267,7 @@ Azimutt 公式の CLI Gateway を使用すると、ブラウザ上の Azimutt �
 
 ```bash
 # 1. データベースファイルをエクスポート
-uv run --no-sync python scripts/export_sqlite_databases.py
+scripts/local-run.sh python scripts/export_sqlite_databases.py
 
 # 2. Azimutt ゲートウェイを起動（npm または bun）
 npx azimutt@latest gateway --allow-origin "https://azimutt.app"
