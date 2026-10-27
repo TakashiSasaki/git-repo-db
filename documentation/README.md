@@ -1,6 +1,6 @@
 # Independent documentation workspace — SEP3 cutover
 
-This additive project prepares isolated dependencies, output paths and mechanical
+This project provides isolated dependencies, output paths and mechanical
 input-provenance checks. Rendering, human sources and documentation tests now live here; product structural tests and canonical design/evidence remain outside. ADR0035 was adopted2026-10-26; publication/deployment remain separately authorized.
 The existing explicit staging/publication allowlist and rendering conventions in
 `documentation/tools/build_docs_site.py` remain the only implementation; no duplicate MkDocs
@@ -16,11 +16,11 @@ uv sync --locked --python /path/to/environment/python
 ```
 
 The nested uv project is not a root workspace member. Its environment is `.venv/`,
-inputs/staging/provenance belong under `.build/`, and future rendered output is
+inputs/staging/provenance belong under `.build/`, and rendered output is
 `site/`. These paths are documentation-local and ignored; no shared output is
 removed or overwritten. The lock pins documentation dependencies independently;
-MkDocs/Material versions initially match the existing root lock. Nothing here
-removes current product dependencies or release obligations.
+Documentation-only dependencies are separate from the product environment;
+release obligations remain in force.
 
 ## Provenance scaffold
 
@@ -36,7 +36,7 @@ metadata, never a public staging source. Example:
 .venv/bin/python tools/provenance.py \
   --repository .. --documentation-source FULL_DOC_COMMIT_SHA \
   --product-source FULL_PRODUCT_COMMIT_SHA \
-  --producer-manifest .build/producer.json --ir .build/inventory.json \
+  --producer-manifest .build/inputs/producer.json --ir .build/inputs/inventory.json \
   > .build/input-provenance.json
 ```
 
@@ -47,9 +47,12 @@ The scaffold rejects missing/malformed evidence, path traversal, symlink inputs,
 changed input/IR hashes and mismatched selected product identity. It checks
 consistency only: a self-consistent fabricated IR/manifest is not an independent
 execution proof, and a manifest's input map is not proof of input completeness.
-SEP3/SEP4 must supply and adversarially verify the full producer input contract
-and local/hosted execution evidence before any complete-release claim. There is
-no full_acceptance success field in these preparation records.
+The producer records the executed Python closure and checks working bytes before
+and after execution against a conservative input inventory. The release verifier
+validates the recorded evidence against committed inputs, artifacts and provider
+evidence; it does not rerun the producer. Independent local and hosted documentation evidence and product
+validation remain required before any complete-release claim. A consistency
+record alone never establishes full acceptance.
 
 ## Selected product producer and rendering
 
