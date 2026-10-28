@@ -505,15 +505,14 @@ class PairCoordinator:
         metadata_only: bool = False,
         authorization=None,
     ):
-        from repo_catalog.domain.context_admission import (
-            AdmissionRefused,
-            ContextAdmissionService,
-        )
+        if authorization is not None:
+            from repo_catalog.domain.context_admission import (
+                AdmissionRefused,
+                ContextAdmissionService,
+            )
 
-        if authorization is not None and not isinstance(
-            authorization, ContextAdmissionService
-        ):
-            raise AdmissionRefused("PERMISSION_DENIED")
+            if not isinstance(authorization, ContextAdmissionService):
+                raise AdmissionRefused("PERMISSION_DENIED")
         self._authorization = authorization
         self.directory = Path(directory)
         self.read_limits = read_limits

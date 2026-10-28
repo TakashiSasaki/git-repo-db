@@ -13,10 +13,8 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from repo_catalog.application.production_query import ProductionQueryService
-from repo_catalog.domain.p1_context import ResourceKey
 from repo_catalog.domain.p1_coordination import CoordinationError
 from repo_catalog.domain.p1_core import OID, CoreFailure
-from repo_catalog.domain.production_context import ContextError
 from repo_catalog.domain.production_query import (
     SEARCH_PROJECTION_KINDS,
     PageRequest,
@@ -233,6 +231,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "total_count": page.total_count,
             }
         elif cmd == "context-resource":
+            from repo_catalog.domain.p1_context import ResourceKey
+
             rkey = ResourceKey(args.service, args.kind, args.id)
             view = service.get_context_resource(rkey, include_text=True)
             payload = view.to_dict()
@@ -251,6 +251,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "total_count": page.total_count,
             }
         elif cmd == "paired-resource":
+            from repo_catalog.domain.p1_context import ResourceKey
+
             rkey = ResourceKey(args.service, args.kind, args.id)
             view = service.get_paired_resource(
                 rkey,
@@ -296,7 +298,13 @@ def main(argv: Sequence[str] | None = None) -> int:
 
         sys.stdout.write(canonical_json(payload) + "\n")
         return 0
-    except (QueryError, CoreFailure, ContextError, CoordinationError) as error:
+    except Exception as error:
+        context_module = sys.modules.get("repo_catalog.domain.production_context")
+        context_error = getattr(context_module, "ContextError", ())
+        if not isinstance(error, (QueryError, CoreFailure, CoordinationError)) and not (
+            context_error and isinstance(error, context_error)
+        ):
+            raise
         err_payload = {
             "code": getattr(error, "code", "ERROR"),
             "error_type": type(error).__name__,

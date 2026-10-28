@@ -28,7 +28,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass, replace
 from functools import wraps
 from pathlib import Path
-from typing import Literal, TypeVar
+from typing import TYPE_CHECKING, Literal, TypeVar
 
 from repo_catalog.adapters.sqlite.git_core import GitCore
 from repo_catalog.adapters.sqlite.p1_coordination import (
@@ -37,13 +37,6 @@ from repo_catalog.adapters.sqlite.p1_coordination import (
     SnapshotReadLimits,
     catalog_completion,
     persist_catalog_stop,
-)
-from repo_catalog.adapters.sqlite.production_context import Context
-from repo_catalog.adapters.sqlite.production_search import ProductionSearchAdapter
-from repo_catalog.domain.p1_context import (
-    CoverageScope,
-    MappingOperationEvidence,
-    ResourceKey,
 )
 from repo_catalog.domain.p1_coordination import CoordinationError
 from repo_catalog.domain.p1_core import (
@@ -56,12 +49,6 @@ from repo_catalog.domain.p1_core import (
     RepositoryClaim,
     ScalarField,
     encode,
-)
-from repo_catalog.domain.production_context import (
-    CollectionObservation,
-    ContextError,
-    ResourceRelation,
-    SourceInventory,
 )
 from repo_catalog.domain.production_query import (
     SEARCH_PROJECTION_KINDS,
@@ -89,6 +76,17 @@ from repo_catalog.domain.production_query import (
     SourceView,
     filter_digest,
 )
+
+if TYPE_CHECKING:
+    from repo_catalog.adapters.sqlite.production_context import Context
+    from repo_catalog.domain.p1_context import (
+        CoverageScope,
+        MappingOperationEvidence,
+        ResourceKey,
+    )
+    from repo_catalog.domain.production_context import (
+        ResourceRelation,
+    )
 
 T = TypeVar("T")
 
@@ -237,10 +235,11 @@ class ProductionQueryService:
         read_limits: SnapshotReadLimits = SnapshotReadLimits(),
         mapping_evidence: MappingOperationEvidence | None = None,
     ):
-        if mapping_evidence is not None and not isinstance(
-            mapping_evidence, MappingOperationEvidence
-        ):
-            raise ValueError("MappingOperationEvidence required")
+        if mapping_evidence is not None:
+            from repo_catalog.domain.p1_context import MappingOperationEvidence
+
+            if not isinstance(mapping_evidence, MappingOperationEvidence):
+                raise ValueError("MappingOperationEvidence required")
         self.mapping_evidence = mapping_evidence
         self.directory = Path(directory)
         if not isinstance(read_limits, SnapshotReadLimits):
@@ -252,9 +251,25 @@ class ProductionQueryService:
         if mode not in ("auto", "core_only", "context_only", "paired"):
             raise QueryError("INVALID_MODE", "query", str(mode))
         self._requested_mode = mode
-        self.search_adapter = ProductionSearchAdapter(self.directory)
+        self._search_adapter = None
+
+    @property
+    def search_adapter(self):
+        if self._search_adapter is None:
+            from repo_catalog.adapters.sqlite.production_search import (
+                ProductionSearchAdapter,
+            )
+
+            self._search_adapter = ProductionSearchAdapter(self.directory)
+        return self._search_adapter
+
+    @search_adapter.setter
+    def search_adapter(self, adapter):
+        self._search_adapter = adapter
 
     def _mapping_filter(self) -> dict[str, object]:
+        from repo_catalog.domain.p1_context import MappingOperationEvidence
+
         evidence = self.mapping_evidence or MappingOperationEvidence()
         return {
             "confirmed": sorted(
@@ -367,6 +382,8 @@ class ProductionQueryService:
             )
 
         if mode == "paired":
+            from repo_catalog.adapters.sqlite.production_context import Context
+
             coordinator = PairCoordinator(
                 self.directory, read_limits=self.read_limits, metadata_only=True
             )
@@ -417,6 +434,8 @@ class ProductionQueryService:
                 with catalog_completion(self.directory):
                     self._check_stop()
         else:
+            from repo_catalog.adapters.sqlite.production_context import Context
+
             with Context.snapshot(
                 self.directory, read_limits=self.read_limits
             ) as context:
@@ -973,6 +992,8 @@ class ProductionQueryService:
     def list_source_views(
         self, service_instance_uuidv4: str | None = None
     ) -> tuple[SourceView, ...]:
+        from repo_catalog.domain.production_context import SourceInventory
+
         with self.open_snapshot(required_store="context") as snap:
             assert snap.context is not None
             rows = snap.context.db.execute(
@@ -1052,6 +1073,9 @@ class ProductionQueryService:
         include_text: bool = True,
         validate_core: Callable[[str, str], bool] | None = None,
     ) -> ContextResourceView:
+        from repo_catalog.domain.p1_context import ResourceKey
+        from repo_catalog.domain.production_context import CollectionObservation
+
         row = context.db.execute(
             "SELECT identifier_namespace_kind,identifier_namespace_id,document_kind,provider_document_id "
             "FROM resources WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=?",
@@ -1273,6 +1297,8 @@ class ProductionQueryService:
             )
 
     def read_context_text(self, text_sha256: str) -> ByteReadResult:
+        from repo_catalog.domain.production_context import ContextError
+
         with self.open_snapshot(required_store="context") as snap:
             assert snap.context is not None
             try:
@@ -1439,6 +1465,10 @@ class ProductionQueryService:
 
     @_stored_view
     def _extract_documents(self, snapshot, kind):
+        from repo_catalog.adapters.sqlite.production_search import (
+            ProductionSearchAdapter,
+        )
+
         if kind == "git_metadata":
             return ProductionSearchAdapter.extract_git_metadata_documents(snapshot.core)
         if kind == "notes":
