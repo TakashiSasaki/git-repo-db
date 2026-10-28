@@ -71,6 +71,8 @@ from repo_catalog.adapters.sqlite.acquisition import OperationalAcquisitionLedge
 from repo_catalog.domain.exchange import ExchangeSelectionScope, ExchangeError, encode_package, decode_package
 from repo_catalog.domain.p1_coordination import CoordinationError, RequestIdentity
 source, target, no_ledger, repo, target_id = sys.argv[1:]
+default_scope = ExchangeSelectionScope(all_selected=True, include_context=False)
+assert ExchangeService(source).export_package(selection=default_scope).context is None
 scope = ExchangeSelectionScope(all_selected=True, include_context=False, resource_keys=())
 package = ExchangeService(source).export_package(selection=scope)
 assert package.context is None and package.core["repository_claims"]
