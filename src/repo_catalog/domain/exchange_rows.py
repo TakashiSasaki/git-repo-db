@@ -314,8 +314,10 @@ ROW_KEYS = {
 def validate_rows(core, context):
     # Local import keeps envelope validation independent of application services.
     from repo_catalog.domain.exchange import ExchangeError, _parse_json
-    from repo_catalog.domain.p1_context import CoverageScope, ResourceKey
-    from repo_catalog.domain.resource_identification import ResourceIdentification
+
+    if context is not None:
+        from repo_catalog.domain.p1_context import CoverageScope, ResourceKey
+        from repo_catalog.domain.resource_identification import ResourceIdentification
     from repo_catalog.domain.time import (
         validate_observation_us,
         validate_required_observation_us,

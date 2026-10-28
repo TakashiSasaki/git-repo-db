@@ -14,16 +14,13 @@ import json
 import math
 from contextvars import ContextVar
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from repo_catalog.domain.context_registration import (
-    RegistrationError,
-    validate_exchange_registrations,
-)
-from repo_catalog.domain.p1_context import ResourceKey
 from repo_catalog.domain.p1_core import OID, CoreFailure, uuid4_value
-from repo_catalog.domain.resource_identity import parse_identity
 from repo_catalog.domain.time import validate_observation_us
+
+if TYPE_CHECKING:
+    from repo_catalog.domain.p1_context import ResourceKey
 
 FORMAT = "git-repo-db/adr0031-exchange-v5"
 MAX_PACKAGE_BYTES = 32 * 1024 * 1024
@@ -259,6 +256,8 @@ def _embedded_identity_values(value, role, *, spend=None):
     """Expose decoded typed keys to aggregate caps without inspecting evidence shape."""
 
     def identity(text, depth, kind=None):
+        from repo_catalog.domain.resource_identity import parse_identity
+
         try:
             if spend is not None:
                 spend(1 + len(text))
@@ -485,7 +484,6 @@ class ExchangeSelectionScope:
         for values, kind in (
             (self.repository_uuidv4s, str),
             (self.object_oids, OID),
-            (self.resource_keys, ResourceKey),
             (self.notes_refs, str),
             (self.source_uuidv4s, str),
         ):
@@ -496,6 +494,18 @@ class ExchangeSelectionScope:
                 raise ExchangeError(
                     "INVALID_SELECTION", "selection_scope", "typed tuple required"
                 )
+        if self.resource_keys is not None:
+            if not isinstance(self.resource_keys, tuple):
+                raise ExchangeError(
+                    "INVALID_SELECTION", "selection_scope", "typed tuple required"
+                )
+            if self.resource_keys:
+                from repo_catalog.domain.p1_context import ResourceKey
+
+                if any(type(value) is not ResourceKey for value in self.resource_keys):
+                    raise ExchangeError(
+                        "INVALID_SELECTION", "selection_scope", "typed tuple required"
+                    )
         for value in (*(self.source_uuidv4s or ()), *(self.repository_uuidv4s or ())):
             uuid4_value(value)
 
@@ -593,6 +603,9 @@ class ExchangeSelectionScope:
         raw_refs = data.get("notes_refs")
         raw_rks = data.get("resource_keys")
         raw_srcs = data.get("source_uuidv4s")
+        if raw_rks:
+            from repo_catalog.domain.p1_context import ResourceKey
+
         try:
             oids = (
                 None
@@ -807,6 +820,11 @@ def validate_package_envelope(package: ExchangePackage) -> None:
                     key,
                     "context section entry must be a list of dicts",
                 )
+
+        from repo_catalog.domain.context_registration import (
+            RegistrationError,
+            validate_exchange_registrations,
+        )
 
         try:
             validate_exchange_registrations(package.context)
