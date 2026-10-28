@@ -118,3 +118,25 @@ else:
 """,
         catalog,
     )
+
+
+def test_explicit_core_ignores_coexisting_identity_while_auto_requires_pair(tmp_path):
+    from uuid import uuid4
+
+    from repo_catalog.adapters.sqlite.p1_schema import initialize
+    from repo_catalog.domain.p1_coordination import CoordinationError
+
+    catalog = tmp_path / "catalog"
+    populate_rich_catalog(catalog, include_context=False)
+    initialize(catalog / "context.sqlite3", "context", REPOSITORY, str(uuid4()))
+    run_guarded(
+        """
+from repo_catalog.application.production_query import ProductionQueryService
+service = ProductionQueryService(sys.argv[1], mode="core_only")
+assert service.get_repository_view().repository_uuidv4 == sys.argv[2]
+""",
+        catalog,
+        REPOSITORY,
+    )
+    with pytest.raises(CoordinationError, match="PAIR_IDENTITY"):
+        ProductionQueryService(catalog).snapshot_token()
