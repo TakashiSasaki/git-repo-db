@@ -20,14 +20,8 @@ import base64
 import hashlib
 import json
 from dataclasses import asdict, dataclass
-from typing import Any, Generic, Literal, TypeVar
+from typing import TYPE_CHECKING, Any, Generic, Literal, TypeVar
 
-from repo_catalog.domain.p1_context import (
-    FieldCandidate,
-    QualifiedProviderRepositoryRole,
-    ResolvedRepositoryRelation,
-    ResourceKey,
-)
 from repo_catalog.domain.p1_coordination import SnapshotToken
 from repo_catalog.domain.p1_core import (
     OID,
@@ -42,14 +36,22 @@ from repo_catalog.domain.p1_core import (
     uuid4_value,
 )
 from repo_catalog.domain.p1_coverage import CoverageClaim, CoverageOwner
-from repo_catalog.domain.production_context import (
-    CollectionObservation,
-    CoreDependency,
-    CoreReference,
-    ResourceRelation,
-    SourceInventory,
-)
-from repo_catalog.domain.resource_identification import ResourceIdentification
+
+if TYPE_CHECKING:
+    from repo_catalog.domain.p1_context import (
+        FieldCandidate,
+        QualifiedProviderRepositoryRole,
+        ResolvedRepositoryRelation,
+        ResourceKey,
+    )
+    from repo_catalog.domain.production_context import (
+        CollectionObservation,
+        CoreDependency,
+        CoreReference,
+        ResourceRelation,
+        SourceInventory,
+    )
+    from repo_catalog.domain.resource_identification import ResourceIdentification
 
 T = TypeVar("T")
 
@@ -396,6 +398,8 @@ def _validate_cursor_key(endpoint: str, key: tuple[Any, ...]) -> None:
         if endpoint == "git_objects":
             OID(*key)
         elif endpoint in ("context_resources", "paired_resources"):
+            from repo_catalog.domain.p1_context import ResourceKey
+
             ResourceKey(*key)
         elif endpoint == "notes_captures":
             uuid4_value(key[1])
