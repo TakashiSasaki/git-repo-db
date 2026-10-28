@@ -433,3 +433,19 @@ def test_current_p1_routes_are_explicitly_overridden_and_schema_guarded():
     from scripts.audit_context_registration import check
 
     assert check()[0] == 25
+
+
+def test_core_only_export_still_stops_for_invalid_coexisting_context(directory):
+    db = raw(directory / "context.sqlite3")
+    db.execute("PRAGMA ignore_check_constraints=ON")
+    db.execute(
+        "UPDATE providers SET configuration_json=?",
+        (canonical({"api_url": "https://private.example"}),),
+    )
+    db.close()
+    scope = ExchangeSelectionScope(all_selected=True, include_context=False)
+    with pytest.raises(ContextError, match="AUTHORITATIVE_CORRUPTION"):
+        ExchangeService(directory).export_package(selection=scope)
+    assert (directory / "p1-recovery-stop.json").exists()
+    with pytest.raises(Exception, match="RECOVERY_REQUIRED"):
+        ExchangeService(directory).export_package(selection=scope)

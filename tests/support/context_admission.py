@@ -1044,9 +1044,7 @@ class AuthorizedExchangeService(ExchangeService):
     def export_package(self, *args, **kwargs):
         from unittest.mock import patch
 
-        import repo_catalog.application.exchange as ex_mod
-
-        with patch.object(ex_mod.Context, "snapshot", AuthorizedContext.snapshot):
+        with patch.object(Context, "snapshot", AuthorizedContext.snapshot):
             return super().export_package(*args, **kwargs)
 
     def import_package(
@@ -1107,11 +1105,9 @@ class AuthorizedExchangeService(ExchangeService):
         )
         from unittest.mock import patch
 
-        import repo_catalog.application.exchange as ex_mod
-
         with (
-            patch.object(ex_mod.Context, "snapshot", AuthorizedContext.snapshot),
-            patch.object(ex_mod.Context, "transaction", AuthorizedContext.transaction),
+            patch.object(Context, "snapshot", AuthorizedContext.snapshot),
+            patch.object(Context, "transaction", AuthorizedContext.transaction),
         ):
             return super().import_package(
                 raw_package,

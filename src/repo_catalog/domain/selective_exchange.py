@@ -7,20 +7,22 @@ assign Repository mappings. Selection never grants Repository permission.
 from __future__ import annotations
 
 import json
+from typing import TYPE_CHECKING
 
 from repo_catalog.domain.exchange import ExchangeError, ExchangeSelectionScope
-from repo_catalog.domain.p1_context import (
-    EventReportKey,
-    FieldClock,
-    MappingClaimKey,
-    MappingDisposition,
-    ResourceKey,
-    ResourceRepositoryRelation,
-    TransferEventReport,
-)
+
+if TYPE_CHECKING:
+    from repo_catalog.domain.p1_context import (
+        MappingDisposition,
+        ResourceKey,
+        ResourceRepositoryRelation,
+        TransferEventReport,
+    )
 
 
 def resource(row: dict) -> ResourceKey:
+    from repo_catalog.domain.p1_context import ResourceKey
+
     return ResourceKey(
         *(
             row[k]
@@ -34,6 +36,8 @@ def resource(row: dict) -> ResourceKey:
 
 
 def relation(row: dict) -> ResourceRepositoryRelation:
+    from repo_catalog.domain.p1_context import FieldClock, ResourceRepositoryRelation
+
     return ResourceRepositoryRelation(
         resource(row),
         row["relation_kind"],
@@ -47,6 +51,12 @@ def relation(row: dict) -> ResourceRepositoryRelation:
 
 
 def disposition(row: dict) -> MappingDisposition:
+    from repo_catalog.domain.p1_context import (
+        FieldClock,
+        MappingClaimKey,
+        MappingDisposition,
+    )
+
     if row["relation_kind"] != "represents_repository":
         raise ExchangeError("INVALID_DISPOSITION", "relation_kind")
     if row["replacement_clock_json"] is None and (
@@ -76,6 +86,11 @@ def disposition(row: dict) -> MappingDisposition:
 
 def transfer_reports(data: dict) -> list[TransferEventReport]:
     """Reconstruct only complete originals, never Event-derived Parent evidence."""
+    from repo_catalog.domain.p1_context import (
+        EventReportKey,
+        FieldClock,
+        TransferEventReport,
+    )
     from repo_catalog.domain.parent_report import ParentObservation, ParentReportKey
 
     parents = {}
@@ -413,6 +428,12 @@ def filter_sections(core, context, scope, *, permitted=None):
             core, "coverage_scopes", core_scope_selected, "coverage_owner_not_selected"
         )
     if context is not None:
+        from repo_catalog.domain.p1_context import (
+            EventReportKey,
+            FieldClock,
+            ResourceKey,
+        )
+
         original_terminals = [
             ("source_inventory", r) for r in context["source_inventories"]
         ] + [("collection", r) for r in context["collections"]]
@@ -611,6 +632,8 @@ def filter_sections(core, context, scope, *, permitted=None):
 
 
 def expand_resources(rows, relations, collections, scope, repository_relations=()):
+    from repo_catalog.domain.p1_context import ResourceKey
+
     """Cycle-safe traversal over actual resources only, with explicit depth."""
     available = {ResourceKey(*r[:3]) for r in rows}
     chosen = (
@@ -713,6 +736,8 @@ def validate_context(data):
         CoverageClaim,
         CoverageScope,
         FieldCandidate,
+        FieldClock,
+        ResourceKey,
         validate_provider_repository_scope,
     )
     from repo_catalog.domain.p1_core import OID, uuid4_value
@@ -835,6 +860,7 @@ def validate_context(data):
 
 def validate_context_bindings(data, source_services):
     """Check modeled parent and service assertions without manufacturing facts."""
+    from repo_catalog.domain.p1_context import ResourceKey
     from repo_catalog.domain.resource_identification import ResourceIdentification
 
     identifications = {}

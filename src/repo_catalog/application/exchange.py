@@ -21,7 +21,7 @@ from collections.abc import Callable
 from contextlib import closing, contextmanager
 from dataclasses import replace
 from pathlib import Path
-from typing import Any, Iterator
+from typing import TYPE_CHECKING, Any, Iterator
 from uuid import uuid4
 
 from repo_catalog.adapters.sqlite.acquisition import OperationalAcquisitionLedger
@@ -34,7 +34,6 @@ from repo_catalog.adapters.sqlite.p1_coordination import (
     catalog_gate,
 )
 from repo_catalog.adapters.sqlite.p1_schema import connect
-from repo_catalog.adapters.sqlite.production_context import Context
 from repo_catalog.domain.exchange import (
     ExchangeError,
     ExchangeImportReport,
@@ -46,18 +45,6 @@ from repo_catalog.domain.exchange import (
 )
 from repo_catalog.domain.git_native import DECODER, DECODER_VERSION, parse_metadata
 from repo_catalog.domain.notes import NotesInventory, verify_inventory
-from repo_catalog.domain.p1_context import (
-    CoverageClaim as ContextCoverageClaim,
-)
-from repo_catalog.domain.p1_context import (
-    CoverageScope as ContextCoverageScope,
-)
-from repo_catalog.domain.p1_context import (
-    FieldCandidate,
-    FieldClock,
-    ResourceKey,
-    canonical,
-)
 from repo_catalog.domain.p1_coordination import (
     AdmissionFailure,
     CoordinationError,
@@ -87,11 +74,6 @@ from repo_catalog.domain.p1_core import (
 )
 from repo_catalog.domain.p1_coverage import CoverageClaim
 from repo_catalog.domain.ports.p1_core import WorkBudget
-from repo_catalog.domain.production_context import (
-    CollectionObservation,
-    ResourceRelation,
-    SourceInventory,
-)
 from repo_catalog.domain.selective_exchange import (
     CorePreflight,
     bound_sections,
@@ -110,6 +92,9 @@ from repo_catalog.domain.selective_exchange import (
 from repo_catalog.domain.selective_exchange import (
     relation as decode_relation,
 )
+
+if TYPE_CHECKING:
+    from repo_catalog.adapters.sqlite.production_context import Context
 
 
 def _recomputed_intrinsic_keys(
@@ -328,6 +313,8 @@ class ExchangeService:
             finally:
                 core.close()
             if self._has_context():
+                from repo_catalog.adapters.sqlite.production_context import Context
+
                 with Context.snapshot(
                     self.directory,
                     read_limits=SnapshotReadLimits(),
@@ -339,6 +326,8 @@ class ExchangeService:
                         raise CoordinationError("PAIR_IDENTITY", "core+context")
             return repo_id, inst_id
         if self._has_context():
+            from repo_catalog.adapters.sqlite.production_context import Context
+
             with Context.snapshot(
                 self.directory,
                 read_limits=SnapshotReadLimits(),
@@ -1075,6 +1064,10 @@ class ExchangeService:
         self,
         scope: ExchangeSelectionScope,
     ) -> dict[str, list[dict[str, Any]]]:
+        from repo_catalog.adapters.sqlite.production_context import Context
+        from repo_catalog.domain.p1_context import CoverageScope as ContextCoverageScope
+        from repo_catalog.domain.p1_context import ResourceKey
+
         section = empty_context_section()
         selected_rks = None if scope.resource_keys is None else set(scope.resource_keys)
         selected_sources = (
@@ -2013,6 +2006,8 @@ class ExchangeService:
 
             def _context_unit(context_tx: AdmissionTransaction) -> None:
                 if want_context and package.context is not None:
+                    from repo_catalog.adapters.sqlite.production_context import Context
+
                     with Context.for_transaction(
                         context_tx,
                         self.directory,
@@ -2075,6 +2070,8 @@ class ExchangeService:
                     db.rollback()
                     raise
         elif want_context and context_data is not None:
+            from repo_catalog.adapters.sqlite.production_context import Context
+
             auth = authorization if authorization is not None else self.authorization
             adm = admission if admission is not None else self.admission
             active_grants = grants if grants is not None else self.grants
@@ -2345,6 +2342,8 @@ class ExchangeService:
 
     def _context_dependencies(self, data):
         """Classify missing dependencies without registering synthetic parents."""
+        from repo_catalog.adapters.sqlite.production_context import Context
+        from repo_catalog.domain.p1_context import FieldClock, ResourceKey, canonical
         from repo_catalog.domain.selective_exchange import resource
 
         omissions = []
@@ -3282,6 +3281,18 @@ class ExchangeService:
         ctx_data: dict[str, list[dict[str, Any]]],
         validate_core: Callable[[str, str], bool],
     ) -> dict[str, int]:
+        from repo_catalog.domain.p1_context import CoverageClaim as ContextCoverageClaim
+        from repo_catalog.domain.p1_context import CoverageScope as ContextCoverageScope
+        from repo_catalog.domain.p1_context import (
+            FieldCandidate,
+            FieldClock,
+            ResourceKey,
+        )
+        from repo_catalog.domain.production_context import (
+            CollectionObservation,
+            ResourceRelation,
+            SourceInventory,
+        )
         from repo_catalog.domain.selective_exchange import preflight_i2_context
 
         preflight_i2_context(ctx_data)
