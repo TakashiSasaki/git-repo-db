@@ -19,11 +19,43 @@ def test_compatible_older_product_and_public_metadata(tmp_path):
         ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True
     ).strip()
     assert docs != PRODUCT_BASE
-    inputs = ROOT / "documentation/.build/inputs"
-    manifest = json.loads((inputs / "producer.json").read_text())
-    manifest["product_source"] = source_identity(ROOT, PRODUCT_BASE)
-    synthetic = tmp_path / "producer.json"
-    synthetic.write_text(json.dumps(manifest))
+    # Run the producer from the selected historical checkout; relabeling a
+    # current manifest would retain hashes for the wrong producer inputs.
+    checkout = tmp_path / "historical-product"
+    subprocess.run(
+        [
+            "git",
+            "clone",
+            "--quiet",
+            "--shared",
+            "--no-checkout",
+            str(ROOT),
+            str(checkout),
+        ],
+        check=True,
+    )
+    subprocess.run(
+        ["git", "checkout", "--quiet", "--detach", PRODUCT_BASE],
+        cwd=checkout,
+        check=True,
+    )
+    inputs = checkout / "documentation/.build/inputs"
+    subprocess.run(
+        [
+            str(ROOT / ".venv/bin/python"),
+            "scripts/schema_inventory.py",
+            "--source",
+            PRODUCT_BASE,
+            "--output",
+            str(inputs),
+        ],
+        cwd=checkout,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    synthetic = inputs / "producer.json"
+    manifest = json.loads(synthetic.read_text())
     record = input_record(
         ROOT, docs, PRODUCT_BASE, synthetic, inputs / "inventory.json"
     )
@@ -61,6 +93,13 @@ def test_compatible_older_product_and_public_metadata(tmp_path):
                 destination, skip_mermaid_render=True, provenance=invalid
             )
         assert sentinel.read_text() == "preserve"
+    input_name = next(iter(manifest["input_sha256"]))
+    original_hash = manifest["input_sha256"][input_name]
+    manifest["input_sha256"][input_name] = "0" * 64
+    synthetic.write_text(json.dumps(manifest))
+    with pytest.raises(EvidenceError, match="Producer input hash does not match"):
+        input_record(ROOT, docs, PRODUCT_BASE, synthetic, inputs / "inventory.json")
+    manifest["input_sha256"][input_name] = original_hash
     manifest["ir_sha256"] = "0" * 64
     synthetic.write_text(json.dumps(manifest))
     with pytest.raises(EvidenceError):
