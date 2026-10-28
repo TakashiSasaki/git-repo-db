@@ -67,22 +67,26 @@ def _json(value: object) -> bool:
         return False
 
 
-def register_functions(db: sqlite3.Connection) -> None:
-    """All deterministic functions required to construct or validate target DDL."""
+def register_functions(db: sqlite3.Connection, store: str | None = None) -> None:
+    """Register a store's functions; None retains the all-store helper profile."""
+    if store is not None and store not in STORES:
+        raise SchemaError(f"unknown store: {store}")
     db.create_function("p1_uuid4", 1, uuid4, deterministic=True)
     db.create_function("p1_oid", 2, oid, deterministic=True)
     db.create_function("p1_json", 1, _json, deterministic=True)
     db.create_function(
         "p1_array", -1, lambda *values: canonical(values), deterministic=True
     )
-    from repo_catalog.domain.p1_core import register_functions as register_core
+    if store in (None, "core"):
+        from repo_catalog.domain.p1_core import register_functions as register_core
 
-    register_core(db)
-    from repo_catalog.adapters.sqlite.p1_context import (
-        register_functions as register_context,
-    )
+        register_core(db)
+    if store in (None, "context"):
+        from repo_catalog.adapters.sqlite.p1_context import (
+            register_functions as register_context,
+        )
 
-    register_context(db)
+        register_context(db)
 
 
 def _resource(name: str) -> str:
@@ -130,27 +134,48 @@ def schema_rows(db: sqlite3.Connection) -> tuple[tuple, ...]:
     )
 
 
-def configure(db: sqlite3.Connection) -> None:
+def configure(db: sqlite3.Connection, store: str | None = None) -> None:
     """Configure before BEGIN; Python schema UDFs require this trusted profile."""
     for name, value in REQUIRED_PRAGMAS.items():
         db.execute(f"PRAGMA {name}={value}")
     db.execute("PRAGMA synchronous=EXTRA")
-    verify_connection(db)
+    verify_connection(db, store)
 
 
-def verify_connection(db: sqlite3.Connection) -> None:
+def verify_connection(db: sqlite3.Connection, store: str | None = None) -> None:
     for name, value in REQUIRED_PRAGMAS.items():
         if db.execute(f"PRAGMA {name}").fetchone()[0] != value:
             raise SchemaError(f"unsupported SQLite configuration: {name}")
+    if store is not None and store not in STORES:
+        raise SchemaError(f"unknown store: {store}")
+    required = [("p1_uuid4", 1), ("p1_oid", 2), ("p1_json", 1), ("p1_array", -1)]
+    if store == "core":
+        required += [
+            ("p1_ref", 1),
+            ("p1_coverage_members", 1),
+            ("p1_claim", 2),
+            ("p1_group", 4),
+            ("p1_native", 6),
+            ("p1_note_role", 6),
+            ("p1_notes_group", 3),
+            ("p4_notes_inventory", 5),
+            ("p1_intrinsic_claim", 4),
+            ("p1_intrinsic_group", 6),
+            ("p1_provenance", 1),
+            ("p1_git_observation", 7),
+            ("p1_repository_claim", 4),
+        ]
+    if store in (None, "context"):
+        required += [
+            ("p1_resource_identity_v1", 1),
+            ("p1_resource_identification_v1", 6),
+            ("p1_parent_report_v1", 7),
+            ("p1_transfer_event_v1", 7),
+            ("p1_transfer_value_v1", 2),
+            ("p1_transfer_endpoint_v1", 4),
+        ]
     functions = {(r[0], r[4]): r[5] for r in db.execute("PRAGMA function_list")}
-    for name, arity in (
-        ("p1_resource_identity_v1", 1),
-        ("p1_resource_identification_v1", 6),
-        ("p1_parent_report_v1", 7),
-        ("p1_transfer_event_v1", 7),
-        ("p1_transfer_value_v1", 2),
-        ("p1_transfer_endpoint_v1", 4),
-    ):
+    for name, arity in required:
         if not functions.get((name, arity), 0) & 2048:
             raise SchemaError(
                 f"required deterministic SQLite function unavailable: {name}"
@@ -160,8 +185,8 @@ def verify_connection(db: sqlite3.Connection) -> None:
 def expected_schema(store: str) -> tuple[tuple, ...]:
     db = sqlite3.connect(":memory:")
     try:
-        register_functions(db)
-        configure(db)
+        register_functions(db, store)
+        configure(db, store)
         db.executescript(compose(store))
         return schema_rows(db)
     finally:
@@ -184,14 +209,35 @@ def expected_ddl_manifest() -> dict:
     }
 
 
-def verify_declared() -> None:
-    if json.loads(_resource("fingerprints.json")) != expected_ddl_manifest():
+def verify_declared(store: str | None = None) -> None:
+    declared = json.loads(_resource("fingerprints.json"))
+    if store is None:
+        valid = declared == expected_ddl_manifest()
+    else:
+        if store not in STORES:
+            raise SchemaError(f"unknown store: {store}")
+        rows = expected_schema(store)
+        expected = {
+            "ddl_sha256": fingerprint(store),
+            "sqlite_schema_sha256": hashlib.sha256(
+                canonical(rows).encode()
+            ).hexdigest(),
+            "tables": [r[1] for r in rows if r[0] == "table"],
+        }
+        valid = (
+            declared.get("format") == FORMAT
+            and set(declared.get("stores", {})) == set(STORES)
+            and declared["stores"].get(store) == expected
+        )
+    if not valid:
         raise SchemaError(
             "declared P1 schema fingerprints differ from composed resources"
         )
 
 
-def _open(path: Path | str, *, fresh: bool = False) -> sqlite3.Connection:
+def _open(
+    path: Path | str, store: str | None = None, *, fresh: bool = False
+) -> sqlite3.Connection:
     if sqlite3.sqlite_version_info < MIN_SQLITE:
         raise SchemaError("P1 requires SQLite >= 3.51.3 with safe WAL, STRICT and JSON")
     path = Path(path)
@@ -200,8 +246,8 @@ def _open(path: Path | str, *, fresh: bool = False) -> sqlite3.Connection:
     db = sqlite3.connect(path, isolation_level=None, cached_statements=0)
     try:
         db.row_factory = sqlite3.Row
-        register_functions(db)
-        configure(db)
+        register_functions(db, store)
+        configure(db, store)
         if db.execute("SELECT json_array(1),json_valid('[]')").fetchone()[1] != 1:
             raise SchemaError("SQLite JSON required")
         return db
@@ -214,7 +260,7 @@ def initialize(
     path: Path | str, store: str, repository_uuidv4: str, catalog_instance_uuidv4: str
 ) -> None:
     """Build one fresh store only; no migration, implicit Context or runtime switch."""
-    verify_declared()
+    verify_declared(store)
     if not uuid4(repository_uuidv4) or not uuid4(catalog_instance_uuidv4):
         raise SchemaError(
             "canonical UUIDv4 repository and catalog-instance identities required"
@@ -223,7 +269,7 @@ def initialize(
     path = Path(path)
     with path.open("xb"):
         pass
-    db = _open(path, fresh=True)
+    db = _open(path, store, fresh=True)
     try:
         if db.execute("PRAGMA journal_mode=WAL").fetchone()[0] != "wal":
             raise SchemaError("WAL unavailable")
@@ -248,7 +294,7 @@ def initialize(
 def validate(db: sqlite3.Connection, store: str) -> None:
     if schema_rows(db) != expected_schema(store):
         raise SchemaError(f"{store} physical schema differs from packaged target")
-    verify_connection(db)
+    verify_connection(db, store)
     rows = db.execute("SELECT * FROM store_identity").fetchall()
     if len(rows) != 1 or rows[0][0] != store:
         raise SchemaError("store identity missing or wrong role")
@@ -258,9 +304,9 @@ def validate(db: sqlite3.Connection, store: str) -> None:
 
 def connect(path: Path | str, store: str) -> sqlite3.Connection:
     """Trusted adapter connection; validate before changing persistent settings."""
-    db = _open(path)
+    db = _open(path, store)
     try:
-        verify_declared()
+        verify_declared(store)
         validate(db, store)
         return db
     except BaseException:
