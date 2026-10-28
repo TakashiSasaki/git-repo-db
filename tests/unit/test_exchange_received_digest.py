@@ -130,3 +130,28 @@ def test_selection_decoder_itself_refuses_duplicate_set_entries(field):
     with pytest.raises(ExchangeError) as error:
         ExchangeSelectionScope.from_dict(data)
     assert error.value.code == "INVALID_SELECTION"
+
+
+def test_falsey_tuple_subclass_resource_keys_are_validated():
+    class FalseTuple(tuple):
+        def __bool__(self):
+            return False
+
+    with pytest.raises(ExchangeError) as error:
+        ExchangeSelectionScope(
+            all_selected=True,
+            include_context=False,
+            resource_keys=FalseTuple(("not-a-resource-key",)),
+        )
+    assert error.value.code == "INVALID_SELECTION"
+
+    key = ResourceKey.from_native(SERVICE, "opaque", "value")
+    scope = ExchangeSelectionScope(
+        all_selected=True, include_context=False, resource_keys=FalseTuple((key,))
+    )
+    assert scope.to_dict()["resource_keys"] == [list(key.coordinates())]
+    assert (
+        ExchangeSelectionScope(resource_keys=FalseTuple()).to_dict()["resource_keys"]
+        == []
+    )
+    assert ExchangeSelectionScope(resource_keys=None).to_dict()["resource_keys"] is None

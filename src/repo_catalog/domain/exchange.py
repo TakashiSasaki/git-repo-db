@@ -499,10 +499,10 @@ class ExchangeSelectionScope:
                 raise ExchangeError(
                     "INVALID_SELECTION", "selection_scope", "typed tuple required"
                 )
-            if self.resource_keys:
+            for value in self.resource_keys:
                 from repo_catalog.domain.p1_context import ResourceKey
 
-                if any(type(value) is not ResourceKey for value in self.resource_keys):
+                if type(value) is not ResourceKey:
                     raise ExchangeError(
                         "INVALID_SELECTION", "selection_scope", "typed tuple required"
                     )

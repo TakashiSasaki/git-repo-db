@@ -73,6 +73,7 @@ from repo_catalog.domain.context_admission import (
     create_local_admission_service,
 )
 from repo_catalog.domain.exchange import (
+    ExchangeError,
     ExchangePackage,
     ExchangeSelectionScope,
     decode_package,
@@ -90,6 +91,21 @@ from repo_catalog.domain.p1_core import OID
 assert "site-packages" in str(Path(__import__("repo_catalog.application.acquisition", fromlist=["x"]).__file__))
 assert "site-packages" in str(Path(__import__("repo_catalog.application.exchange", fromlist=["x"]).__file__))
 verify_declared()
+
+class FalseTuple(tuple):
+    def __bool__(self):
+        return False
+
+try:
+    ExchangeSelectionScope(all_selected=True, include_context=False, resource_keys=FalseTuple(("invalid",)))
+except ExchangeError as error:
+    assert error.code == "INVALID_SELECTION"
+else:
+    raise AssertionError("falsey nonempty selection was accepted")
+key = ResourceKey.from_native(str(uuid4()), "opaque", "valid")
+assert ExchangeSelectionScope(resource_keys=FalseTuple((key,))).to_dict()["resource_keys"] == [list(key.coordinates())]
+assert ExchangeSelectionScope(resource_keys=FalseTuple()).to_dict()["resource_keys"] == []
+assert ExchangeSelectionScope(resource_keys=None).to_dict()["resource_keys"] is None
 
 repo_uuid = str(uuid4())
 cat_a = Path("catalog_a")

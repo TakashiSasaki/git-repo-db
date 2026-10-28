@@ -71,6 +71,10 @@ from repo_catalog.adapters.sqlite.acquisition import OperationalAcquisitionLedge
 from repo_catalog.domain.exchange import ExchangeSelectionScope, ExchangeError, encode_package, decode_package
 from repo_catalog.domain.p1_coordination import CoordinationError, RequestIdentity
 source, target, no_ledger, repo, target_id = sys.argv[1:]
+class FalseTuple(tuple):
+    def __bool__(self):
+        return False
+assert ExchangeSelectionScope(include_context=False, resource_keys=FalseTuple()).resource_keys == ()
 default_scope = ExchangeSelectionScope(all_selected=True, include_context=False)
 assert ExchangeService(source).export_package(selection=default_scope).context is None
 scope = ExchangeSelectionScope(all_selected=True, include_context=False, resource_keys=())
