@@ -36,7 +36,7 @@ def test_author_records_environment_before_preserving_capability_refusal(
     module = importlib.import_module(f"scripts.verify_i{stage}")
     from repo_catalog.adapters.sqlite import p1_schema
 
-    def refuse(_):
+    def refuse(_, *args):
         raise RuntimeError("required capability absent")
 
     monkeypatch.setattr(p1_schema, "configure", refuse)
@@ -313,8 +313,8 @@ def test_raw_diagnostics_keep_product_json_capability_refusal(monkeypatch):
             self.closed = True
 
     probe = MissingJSON()
-    monkeypatch.setattr(p1_schema, "register_functions", lambda _: None)
-    monkeypatch.setattr(p1_schema, "configure", lambda _: None)
+    monkeypatch.setattr(p1_schema, "register_functions", lambda _, *args: None)
+    monkeypatch.setattr(p1_schema, "configure", lambda _, *args: None)
     monkeypatch.setattr(p1_schema.sqlite3, "connect", lambda *args, **kw: probe)
     with pytest.raises(sqlite3.OperationalError, match="no such function"):
         evidence.require_product_runtime()
