@@ -4070,6 +4070,15 @@
       ],
       "consumer_scan": "Literal unique-filename references in docs, documentation, src, scripts, tests and workflows; excludes frozen collections and files over 1 MiB. Dynamic uses and ambiguous basenames are not proven absent."
     },
+    "docs/implementation/core-independence-contract-matrix.md": {
+      "status": "implementation-handoff",
+      "owner": "docs/implementation/",
+      "authority": "Source and test map only; accepted decisions and current code remain authoritative.",
+      "source": "docs/implementation/core-independence-contract-matrix.md",
+      "producer": "Focused source and regression audit.",
+      "consumers": "Reviewers assessing opt-in Core independence boundaries.",
+      "publication": "not staged"
+    },
     "docs/implementation/p1-disposition.json": {
       "status": "machine-input-with-scoped-provenance",
       "owner": "docs/implementation/",

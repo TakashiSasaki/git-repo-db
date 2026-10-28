@@ -173,3 +173,66 @@ db.close()
         target,
         repo,
     )
+
+
+def test_core_only_receive_rejects_mismatched_coexisting_context_before_admission(
+    tmp_path,
+):
+    from repo_catalog.domain.p1_coordination import CoordinationError
+
+    repo, source_id, target_id = (str(uuid4()) for _ in range(3))
+    source, target = tmp_path / "source", tmp_path / "target"
+    catalog(source, repo, source_id)
+    catalog(target, repo, target_id, operational=True)
+    initialize(target / "context.sqlite3", "context", repo, str(uuid4()))
+    with closing(GitCore(source / "core.sqlite3")) as core:
+        core.admit_repository_claim(
+            RepositoryClaim(
+                repo, "name", "must-not-arrive", Provenance("s", "o", "c", "d", "1")
+            )
+        )
+    package = ExchangeService(source).export_package(
+        selection=ExchangeSelectionScope(all_selected=True, include_context=False)
+    )
+    with pytest.raises(CoordinationError, match="PAIR_IDENTITY"):
+        ExchangeService(target).import_package(
+            package, new_request=True, permitted_repository_uuidv4s=(repo,)
+        )
+    with closing(GitCore(target / "core.sqlite3")) as core:
+        assert not core.sql("SELECT * FROM repository_claims")
+
+
+def test_core_receive_rechecks_pair_after_preflight_before_core_admission(tmp_path):
+    import os
+
+    from repo_catalog.domain.p1_coordination import CoordinationError
+
+    repo, source_id, target_id = (str(uuid4()) for _ in range(3))
+    source, target = tmp_path / "source", tmp_path / "target"
+    catalog(source, repo, source_id)
+    catalog(target, repo, target_id, operational=True, context=True)
+    replacement = tmp_path / "replacement.sqlite3"
+    initialize(replacement, "context", repo, str(uuid4()))
+    with closing(GitCore(source / "core.sqlite3")) as core:
+        core.admit_repository_claim(
+            RepositoryClaim(
+                repo, "name", "not-admitted", Provenance("s", "o", "c", "d", "1")
+            )
+        )
+    package = ExchangeService(source).export_package(
+        selection=ExchangeSelectionScope(all_selected=True, include_context=False)
+    )
+
+    def swap_after_preflight(point):
+        if point == "after_preflight":
+            os.replace(replacement, target / "context.sqlite3")
+
+    with pytest.raises(CoordinationError, match="PAIR_IDENTITY"):
+        ExchangeService(target).import_package(
+            package,
+            new_request=True,
+            permitted_repository_uuidv4s=(repo,),
+            cut=swap_after_preflight,
+        )
+    with closing(GitCore(target / "core.sqlite3")) as core:
+        assert not core.sql("SELECT * FROM repository_claims")

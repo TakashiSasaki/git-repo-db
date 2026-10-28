@@ -78,3 +78,54 @@ def test_core_validation_rejects_nondeterministic_constraint_function(tmp_path):
             p1_schema.validate(db, "core")
     finally:
         db.close()
+
+
+def test_selected_manifest_checks_full_store_inventory_but_not_other_content(
+    monkeypatch,
+):
+    import json
+
+    original = p1_schema._resource
+    declared = json.loads(original("fingerprints.json"))
+
+    def use_manifest():
+        monkeypatch.setattr(
+            p1_schema,
+            "_resource",
+            lambda name: (
+                json.dumps(declared) if name == "fingerprints.json" else original(name)
+            ),
+        )
+
+    declared["stores"]["context"]["ddl_sha256"] = "0" * 64
+    use_manifest()
+    p1_schema.verify_declared("core")
+    with pytest.raises(p1_schema.SchemaError, match="fingerprints"):
+        p1_schema.verify_declared()
+
+    declared["stores"]["core"]["ddl_sha256"] = "0" * 64
+    with pytest.raises(p1_schema.SchemaError, match="fingerprints"):
+        p1_schema.verify_declared("core")
+
+
+@pytest.mark.parametrize("mutation", ["missing", "extra", "format"])
+def test_selected_manifest_rejects_wrong_inventory_or_format(monkeypatch, mutation):
+    import json
+
+    original = p1_schema._resource
+    declared = json.loads(original("fingerprints.json"))
+    if mutation == "missing":
+        del declared["stores"]["context"]
+    elif mutation == "extra":
+        declared["stores"]["unknown"] = {}
+    else:
+        declared["format"] = "wrong"
+    monkeypatch.setattr(
+        p1_schema,
+        "_resource",
+        lambda name: (
+            json.dumps(declared) if name == "fingerprints.json" else original(name)
+        ),
+    )
+    with pytest.raises(p1_schema.SchemaError, match="fingerprints"):
+        p1_schema.verify_declared("core")
