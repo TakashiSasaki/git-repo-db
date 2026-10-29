@@ -6,7 +6,7 @@ refines: []
 ---
 # ADR-NNNN: Ref observations, immutable result claims, and shared Notes interpretation
 
-This is a review draft, not an accepted ADR, an allocated number, an implementation, or test evidence. The owner's listed decisions are already accepted; proposed status covers this complete successor document and its coherence, not their reversal. Proposed retirements are in the clause map, not yet effective. Baseline: `ab0786cfa29e7be129c7b17517a469ec1cf8b215`, remote main checked 2026-10-29. Scope: opt-in five-responsibility Core and its integration; no ordinary Schema 21 switch. Level 3 Full ADR is appropriate: this changes authority, durable identity, evidence, interchange and backup.
+This is the pre-allocation review snapshot. The proposed successor is now [ADR 0036](../../adr/0036-ref-observations-and-shared-notes-mappings.md); neither document is accepted implementation or test evidence. The owner's listed decisions are already accepted; proposed status covers this complete successor document and its coherence, not their reversal. Proposed retirements are in the clause map, not yet effective. Baseline: `ab0786cfa29e7be129c7b17517a469ec1cf8b215`, remote main checked 2026-10-29. Scope: opt-in five-responsibility Core and its integration; no ordinary Schema 21 switch. Level 3 Full ADR is appropriate: this changes authority, durable identity, evidence, interchange and backup.
 
 Rule labels: **A** owner-accepted; **I** inherited accepted contract; **P** engineering proposal for review; **U** unresolved policy. A P is not an existing owner decision. A U must be resolved or supported scope explicitly bounded before the relevant admission path is implemented.
 

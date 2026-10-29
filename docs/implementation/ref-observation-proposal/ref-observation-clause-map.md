@@ -31,7 +31,7 @@ Baseline `ab0786cfa29e7be129c7b17517a469ec1cf8b215`; 2026-10-29 remote main agre
 
 ## Retirement checkpoint
 
-Propose whole-record substantive replacements of 0018, 0019, 0020, 0021 and 0027: each contains an operative old v4/v4 key or unconditional same-K changed-root rejection. Retain 0016: §4 already permits a typed conflict, while its owner/ref/source identity and distinct observation norms remain; synchronize its delegated old-key references upon acceptance. Keep 0022 and 0028: their independent retention and time/checksum norms remain intact. Do not remove or mark any old record retired before review and owner acceptance; update replacement metadata, index, AGENTS and active contracts together only after acceptance. No ADR number is reserved.
+Propose whole-record substantive replacements of 0018, 0019, 0020, 0021 and 0027: each contains an operative old v4/v4 key or unconditional same-K changed-root rejection. Retain 0016: §4 already permits a typed conflict, while its owner/ref/source identity and distinct observation norms remain; synchronize its delegated old-key references upon acceptance. Keep 0022 and 0028: their independent retention and time/checksum norms remain intact. Do not remove or mark any old record retired before review and owner acceptance; update replacement metadata, index, AGENTS and active contracts together only after acceptance. The proposed successor is [ADR 0036](../../adr/0036-ref-observations-and-shared-notes-mappings.md); this allocation does not constitute acceptance.
 
 ## Whole-record successor inventory for additional proposed replacements
 

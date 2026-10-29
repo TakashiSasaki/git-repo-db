@@ -91,9 +91,11 @@ exceptions require explicit owner approval.
 
 ## Proposed Records
 
-None. ADR0035 was explicitly accepted on2026-10-26; implementation and executed verification remain separate.
+| ADR | Decision | Status |
+| --- | --- | --- |
+| [0036](0036-ref-observations-and-shared-notes-mappings.md) | Ref observations, immutable result claims, and shared Notes interpretation | Proposed; complete successor acceptance, retirement and implementation remain separate |
 
-**Allocation/adoption:** ADR 0011 was explicitly adopted through [governance PR #52](https://github.com/TakashiSasaki/git-repo-db/pull/52) on 2026-10-15, after the accepted design stack was merged by PR #69. It does not renumber ADRs 0012–0027, retire still-binding historical decisions or authorize bulk migration. **Highest allocated ADR ID: 0035** (includes accepted 0032–0035; 0011 is not a free gap). Allocation includes publicly proposed as well as accepted records. Future allocations must inspect this watermark, Git history and live remote branches before assigning a new four-digit ID.
+**Allocation/adoption:** ADR 0011 was explicitly adopted through [governance PR #52](https://github.com/TakashiSasaki/git-repo-db/pull/52) on 2026-10-15, after the accepted design stack was merged by PR #69. It does not renumber ADRs 0012–0027, retire still-binding historical decisions or authorize bulk migration. **Highest allocated ADR ID: 0036** (includes proposed 0036 and accepted 0032–0035; 0011 is not a free gap). Allocation includes publicly proposed as well as accepted records. Future allocations must inspect this watermark, Git history and live remote branches before assigning a new four-digit ID.
 
 The [transition plan](../architecture/git-core-context-transition-plan.md) describes the redesigned implementation sequence. Old Phase 2 handoffs and accepted records remain evidence of their original decisions, subject to the explicit scoped override in ADR 0014. Neither old wording nor a passing documentation check is authority to implement an excluded file-storage path.
 
