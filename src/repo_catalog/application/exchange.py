@@ -425,7 +425,13 @@ class ExchangeService:
                         raise
                     core_section = empty_core_section()
                     self._selection_details["omissions"].append(
-                        {"section": "core", "reason": "work_limit"}
+                        {
+                            "section": "core",
+                            "reason": "work_limit"
+                            if error.scope == "ref-exchange"
+                            and "cumulative export work" in str(error)
+                            else "resource_limit",
+                        }
                     )
 
             context_section: dict[str, list[dict[str, Any]]] | None = None

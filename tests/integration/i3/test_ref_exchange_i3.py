@@ -399,16 +399,17 @@ def test_explicit_member_selection_preserves_whole_original_event(
         assert core.ref_enumeration(*event.event.identity, app.work) == event
 
 
-def test_tiny_export_work_limit_never_claims_complete_output(acquisition, tmp_path):
+@pytest.mark.parametrize("limits", [{"max_work": 10}, {"max_bytes": 1}])
+def test_tiny_export_limits_never_claim_complete_output(acquisition, tmp_path, limits):
     app, _path, _fmt, repository, origin, core_path, *_ = acquisition
     p4_fixtures.fixture_note(acquisition)
     event = discover(app, repository, origin, str(uuid4())).enumerations[0]
     selection = ExchangeSelectionScope(
         all_selected=True,
         include_context=False,
-        max_work=10,
         object_oids=(),
         ref_observation_keys=(event.links[0].observation.ref_observation_key,),
+        **limits,
     )
     try:
         package = ExchangeService(tmp_path, operational=tmp_path).export_package(
@@ -419,7 +420,7 @@ def test_tiny_export_work_limit_never_claims_complete_output(acquisition, tmp_pa
     else:
         assert not package.core["ref_enumeration_observations"]
         assert any(
-            item["reason"] == "work_limit"
+            item["reason"] in ("work_limit", "resource_limit", "byte_limit")
             for item in package.selection_report["omissions"]
         )
     assert not (core_path.parent / "p1-recovery-stop.json").exists()

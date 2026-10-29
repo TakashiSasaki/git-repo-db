@@ -315,8 +315,10 @@ def ref_export_work(scope, counters):
     inner = UnlimitedWorkBudget(
         note_bytes=max(1, scope.max_bytes),
         work_limits={
-            "input_bytes": max(1, 4 * scope.max_bytes),
-            "verification_bytes": max(1, 16 * scope.max_bytes),
+            # max_bytes bounds emitted output; it must not prohibit the
+            # finite accounting work needed to identify and omit a larger
+            # complete unit. The underlying NotesLimits supplies independent
+            # finite input/verification ceilings.
             "metadata_units": max(1, scope.max_work),
             "proof_steps": max(1, scope.max_work),
         },
