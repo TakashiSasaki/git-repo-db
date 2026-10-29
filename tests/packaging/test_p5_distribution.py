@@ -146,11 +146,41 @@ git_req = GitNativeAcquisitionRequest(
     observed_at_us=1_700_000_000_000_000,
     select_oids=(OID("FORMAT", commit1),),
     retain_bytes=True,
+    include_refs=False,
 )
 git_acq = GitAcquisition(cat_a, operational=cat_a)
 git_report = git_acq.acquire_from_native(git_source, git_req, new_request=True)
 assert git_report.status == "complete"
 assert len(git_report.admitted_objects) >= 1
+
+# Exercise the I2 acquisition and the pre-I3 export fence in a separate
+# disposable Core, keeping the legacy object/Context roundtrip below intact.
+cat_i2 = Path("catalog_i2")
+cat_i2.mkdir()
+instance_i2 = str(uuid4())
+for role in ("core", "operational"):
+    initialize(cat_i2 / f"{role}.sqlite3", role, repo_uuid, instance_i2)
+request_i2 = GitNativeAcquisitionRequest(
+    repository_uuidv4=repo_uuid,
+    capture_origin_uuidv4=str(uuid4()),
+    capture_uuidv4=str(uuid4()),
+    source_attribution="installed-i2",
+    observed_at_us=1_700_000_000_000_000,
+    include_refs=True,
+    nominated_ref_names=(b"refs/heads/not-present",),
+    retain_bytes=False,
+)
+observed_i2 = GitAcquisition(cat_i2, operational=cat_i2).acquire_from_native(
+    git_source, request_i2, new_request=True
+)
+assert any(link.claim.presence_state == "present" for event in observed_i2.ref_enumerations for link in event.links)
+assert any(link.claim.presence_state == "absent" for event in observed_i2.ref_enumerations for link in event.links)
+try:
+    ExchangeService(cat_i2).export_package(selection=ExchangeSelectionScope(all_selected=True, include_context=False))
+except ExchangeError as error:
+    assert error.code == "UNSUPPORTED_REF_OBSERVATION_EXPORT"
+else:
+    raise AssertionError("pre-I3 ref export was not refused")
 
 # 2. Exercise ProviderAcquisition
 service_uuid = str(uuid4())

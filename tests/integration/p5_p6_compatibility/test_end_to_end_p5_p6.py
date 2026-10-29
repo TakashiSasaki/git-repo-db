@@ -280,6 +280,7 @@ def test_multi_hop_exchange_into_query(tmp_path: Path, fmt: str) -> None:
             observed_at_us=1_700_000_000_000_000,
             select_oids=(OID(fmt, oids["commit1"]),),
             retain_bytes=True,
+            include_refs=False,
         ),
         new_request=True,
     )

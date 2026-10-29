@@ -723,6 +723,7 @@ def test_native_metadata_notes_and_capture_coverage_without_provider_intake(tmp_
         GitNativeAcquisitionRequest,
         NotesAcquisitionSpec,
     )
+    from repo_catalog.domain.p1_core import Capture
     from tests.integration.p5.conftest import build_sample_git_repo
 
     a, b = tmp_path / "a", tmp_path / "b"
@@ -739,8 +740,18 @@ def test_native_metadata_notes_and_capture_coverage_without_provider_intake(tmp_
         observed_at_us=50,
         select_oids=(oids["commit1"], oids["commit2"], oids["tree"], oids["tag"]),
         retain_bytes=True,
+        include_refs=False,
         notes=NotesAcquisitionSpec(
-            discover_notes=True,
+            explicit_captures=(
+                Capture(
+                    origin,
+                    capture,
+                    r1,
+                    "original-git",
+                    "refs/notes/commits",
+                    oids["notes_commit"],
+                ),
+            ),
             acquire_inventories=True,
             target_oids=(oids["commit2"],),
             retain_note_bodies=True,
