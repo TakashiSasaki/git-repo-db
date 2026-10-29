@@ -1143,7 +1143,9 @@ _orig_context_transaction = Context.transaction
 class AuthorizedContext(Context):
     @classmethod
     @contextmanager
-    def snapshot(cls, directory, *, read_limits=None):
+    def snapshot(
+        cls, directory, *, read_limits=None, validation_work=None, _identity_sink=None
+    ):
         from pathlib import Path
 
         resolved = Path(directory).resolve()
@@ -1154,13 +1156,24 @@ class AuthorizedContext(Context):
                 fixture.execute("BEGIN")
                 needs_rollback = True
             try:
-                with Context.for_snapshot(fixture, resolved) as ctx:
+                if _identity_sink is not None:
+                    _identity_sink(
+                        fixture.execute("SELECT * FROM store_identity").fetchall()
+                    )
+                with Context.for_snapshot(
+                    fixture, resolved, validation_work=validation_work
+                ) as ctx:
                     yield ctx
             finally:
                 if needs_rollback and fixture.in_transaction:
                     fixture.rollback()
             return
-        with _orig_context_snapshot(resolved, read_limits=read_limits) as ctx:
+        with _orig_context_snapshot(
+            resolved,
+            read_limits=read_limits,
+            validation_work=validation_work,
+            _identity_sink=_identity_sink,
+        ) as ctx:
             yield ctx
 
     @classmethod
