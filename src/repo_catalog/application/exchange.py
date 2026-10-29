@@ -233,6 +233,13 @@ class _ContextCallbackFailure(Exception):
         self.original = original
 
 
+class _IdentityBudgetRefusal(Exception):
+    """The pair identity is known, but Context validation exceeded the budget."""
+
+    def __init__(self, identity):
+        self.identity = identity
+
+
 class _ContextCallbackWork:
     """Do not let Context's storage fault guard classify caller work errors."""
 
@@ -339,41 +346,72 @@ class ExchangeService:
             )
         return SnapshotReadLimits()
 
-    def _store_identity(self) -> tuple[str, str]:
+    def _store_identity(self, *, validation_work=None) -> tuple[str, str]:
         self._check_stop()
+        core_identity = None
         if self._has_core():
             core = GitCore(self.directory / "core.sqlite3")
             try:
-                repo_id, inst_id = core.catalog_identity()
+                core_identity = core.catalog_identity()
             finally:
                 core.close()
-            if self._has_context():
-                from repo_catalog.adapters.sqlite.production_context import Context
-
-                with Context.snapshot(
-                    self.directory,
-                    read_limits=SnapshotReadLimits(),
-                ) as ctx:
-                    row = ctx.db.execute(
-                        "SELECT repository_uuidv4, catalog_instance_uuidv4 FROM store_identity"
-                    ).fetchone()
-                    if row != (repo_id, inst_id):
-                        raise CoordinationError("PAIR_IDENTITY", "core+context")
-            return repo_id, inst_id
+        if not self._has_context():
+            if core_identity is not None:
+                return core_identity
+            raise CoordinationError("AUTHORITY_UNAVAILABLE", "catalog")
         if self._has_context():
             from repo_catalog.adapters.sqlite.production_context import Context
 
-            with Context.snapshot(
-                self.directory,
-                read_limits=SnapshotReadLimits(),
-            ) as ctx:
-                row = ctx.db.execute(
-                    "SELECT repository_uuidv4, catalog_instance_uuidv4 FROM store_identity"
-                ).fetchone()
-                if row is None:
+            identity = []
+
+            def checked_identity(rows):
+                if len(rows) != 1 or rows[0][0] != "context":
                     raise CoordinationError("STORE_IDENTITY", "context")
-                return str(row[0]), str(row[1])
-        raise CoordinationError("AUTHORITY_UNAVAILABLE", "catalog")
+                pair = (uuid4_value(rows[0][1]), uuid4_value(rows[0][2]))
+                if core_identity is not None and pair != core_identity:
+                    raise CoordinationError("PAIR_IDENTITY", "core+context")
+                identity.append(pair)
+
+            limits = (
+                SnapshotReadLimits(
+                    max_sql_vm_steps=min(
+                        5_000_000, max(1, self._export_scope.max_work)
+                    ),
+                    max_total_rows=min(10_000, max(1, self._export_scope.max_work)),
+                    on_steps=self._export_steps,
+                )
+                if validation_work is not None
+                else SnapshotReadLimits()
+            )
+            try:
+                with Context.snapshot(
+                    self.directory,
+                    read_limits=limits,
+                    validation_work=validation_work,
+                    _identity_sink=checked_identity,
+                ):
+                    pass
+            except _ContextCallbackFailure as error:
+                if (
+                    identity
+                    and isinstance(error.original, (CoreFailure, CoordinationError))
+                    and error.original.code in ("BUDGET", "QUERY_BUDGET")
+                ):
+                    raise _IdentityBudgetRefusal(identity[0]) from error.original
+                raise error.original from None
+            except (CoordinationError, sqlite3.OperationalError) as error:
+                if (
+                    validation_work is not None
+                    and identity
+                    and (
+                        getattr(error, "code", None) == "QUERY_BUDGET"
+                        or getattr(error, "sqlite_errorcode", None)
+                        == sqlite3.SQLITE_INTERRUPT
+                    )
+                ):
+                    raise _IdentityBudgetRefusal(identity[0]) from error
+                raise
+            return core_identity or identity[0]
 
     @contextmanager
     def _open_operational(
@@ -437,7 +475,44 @@ class ExchangeService:
 
             self._export_work = ref_export_work(scope, self._selection_details)
             pkg_id = package_id or str(uuid4())
-            repo_uuid, sender_instance = self._store_identity()
+            try:
+                repo_uuid, sender_instance = self._store_identity(
+                    validation_work=_ContextCallbackWork(self._export_work)
+                )
+            except _IdentityBudgetRefusal as error:
+                # The physical pair is checked, but no data is emitted when
+                # the coexisting Context could not be validated within budget.
+                repo_uuid, sender_instance = error.identity
+                self._selection_details["omissions"].append(
+                    {"section": "context", "reason": "resource_limit"}
+                )
+                self._selection_details.update(
+                    emitted_units=0,
+                    emitted_payload_bytes=0,
+                    effective={
+                        "sources": [],
+                        "providers": [],
+                        "repositories": [],
+                        "objects": [],
+                        "resources": [],
+                    },
+                )
+                with catalog_completion(self.directory):
+                    self._check_stop()
+                    return ExchangePackage(
+                        package_id=pkg_id,
+                        exported_at_us=exported_at_us,
+                        sender_catalog_instance_uuidv4=sender_instance,
+                        repository_uuidv4=repo_uuid,
+                        selection_scope=scope,
+                        selection_report=self._selection_details,
+                        core=empty_core_section()
+                        if scope.include_core and self._has_core()
+                        else None,
+                        context=empty_context_section()
+                        if scope.include_context and self._has_context()
+                        else None,
+                    )
 
             core_section: dict[str, list[dict[str, Any]]] | None = None
             if scope.include_core and self._has_core():
@@ -1485,6 +1560,7 @@ class ExchangeService:
                 max_total_rows=max(1, scope.max_work),
                 on_steps=self._export_steps,
             ),
+            validation_work=self._export_work,
         ) as ctx:
 
             def validate_stored_context_row(name, row):

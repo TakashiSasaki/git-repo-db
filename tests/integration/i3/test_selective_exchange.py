@@ -1586,6 +1586,30 @@ def test_context_row_validation_does_not_reclassify_work_callback_errors(
     assert not (root / "p1-recovery-stop.json").exists()
 
 
+def test_context_only_registration_budget_refusal_emits_no_rows(tmp_path, monkeypatch):
+    from repo_catalog.adapters.sqlite.acquisition import UnlimitedWorkBudget
+    from repo_catalog.application import ref_exchange
+    from repo_catalog.domain.context_admission import DependencySet
+
+    repository, instance = str(uuid4()), str(uuid4())
+    initialize(tmp_path / "context.sqlite3", "context", repository, instance)
+    with fixture_transaction(tmp_path, DependencySet(repositories={repository})) as ctx:
+        ctx.repository(repository, canonical({"description": "x" * 32000}))
+    budget = UnlimitedWorkBudget(work_limits={"input_bytes": 1024})
+    monkeypatch.setattr(ref_exchange, "ref_export_work", lambda scope, counters: budget)
+    package = ExchangeService(tmp_path).export_package(
+        selection=ExchangeSelectionScope(all_selected=True, include_core=False)
+    )
+    assert package.repository_uuidv4 == repository
+    assert package.sender_catalog_instance_uuidv4 == instance
+    assert package.core is None and not any(package.context.values())
+    assert any(
+        item["reason"] == "resource_limit"
+        for item in package.selection_report["omissions"]
+    )
+    assert not (tmp_path / "p1-recovery-stop.json").exists()
+
+
 @pytest.mark.parametrize("damage", ["invalid_utf8", "noncanonical_json"])
 def test_context_export_checks_source_inventory_metadata(tmp_path, damage):
     from repo_catalog.domain.production_context import ContextError, SourceInventory

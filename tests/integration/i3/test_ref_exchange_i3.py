@@ -153,6 +153,118 @@ def test_ref_export_typed_read_keeps_budget_and_noncorruption_errors(
     app.core.ensure_available()
 
 
+@pytest.mark.parametrize("small", [False, True])
+def test_coexisting_context_registration_validation_is_cumulative_and_bounded(
+    acquisition, tmp_path, monkeypatch, small
+):
+    from repo_catalog.adapters.sqlite import production_context
+    from repo_catalog.adapters.sqlite.acquisition import UnlimitedWorkBudget
+    from repo_catalog.adapters.sqlite.p1_schema import initialize
+    from repo_catalog.application import ref_exchange
+    from repo_catalog.domain.context_admission import DependencySet
+    from repo_catalog.domain.p1_context import canonical
+    from tests.support.context_admission import fixture_transaction
+
+    app, _, _, repository, _, core_path, _ = acquisition
+    _, instance = app.core.catalog_identity()
+    initialize(tmp_path / "context.sqlite3", "context", repository, instance)
+    with fixture_transaction(tmp_path, DependencySet(repositories={repository})) as ctx:
+        ctx.repository(repository, canonical({"description": "x" * 32000}))
+
+    budget = UnlimitedWorkBudget(work_limits={"input_bytes": 1024} if small else None)
+    observed = []
+    original = production_context.registration_json
+
+    def measured(kind, encoded):
+        if len(encoded) > 30000:
+            observed.append((len(encoded), budget.usage["input_bytes"]))
+        return original(kind, encoded)
+
+    monkeypatch.setattr(production_context, "registration_json", measured)
+    monkeypatch.setattr(ref_exchange, "ref_export_work", lambda scope, counters: budget)
+    selection = ExchangeSelectionScope(all_selected=True, include_context=False)
+    package = ExchangeService(tmp_path, operational=tmp_path).export_package(
+        selection=selection
+    )
+    if small:
+        assert not observed  # The oversized value was not fetched or parsed.
+        assert not any(package.core.values())
+        assert any(
+            item["reason"] == "resource_limit"
+            for item in package.selection_report["omissions"]
+        )
+    else:
+        assert observed and all(accounted >= size for size, accounted in observed)
+        assert package.core["repositories"]
+    assert not (core_path.parent / "p1-recovery-stop.json").exists()
+
+
+def test_registration_budget_does_not_mask_pair_identity_mismatch(
+    acquisition, tmp_path, monkeypatch
+):
+    from repo_catalog.adapters.sqlite.acquisition import UnlimitedWorkBudget
+    from repo_catalog.adapters.sqlite.p1_schema import initialize
+    from repo_catalog.application import ref_exchange
+    from repo_catalog.domain.p1_coordination import CoordinationError
+
+    app, _, _, repository, _, core_path, _ = acquisition
+    _, instance = app.core.catalog_identity()
+    other_instance = str(uuid4())
+    assert other_instance != instance
+    initialize(tmp_path / "context.sqlite3", "context", repository, other_instance)
+    budget = UnlimitedWorkBudget(work_limits={"input_bytes": 1})
+    monkeypatch.setattr(ref_exchange, "ref_export_work", lambda scope, counters: budget)
+    with pytest.raises(CoordinationError) as mismatch:
+        ExchangeService(tmp_path, operational=tmp_path).export_package(
+            selection=ExchangeSelectionScope(all_selected=True, include_context=False)
+        )
+    assert mismatch.value.code == "PAIR_IDENTITY"
+    assert not (core_path.parent / "p1-recovery-stop.json").exists()
+
+
+@pytest.mark.parametrize("failure", ["sqlite", "context"])
+def test_registration_work_callback_error_does_not_stop_catalog(
+    acquisition, tmp_path, monkeypatch, failure
+):
+    from repo_catalog.adapters.sqlite.acquisition import UnlimitedWorkBudget
+    from repo_catalog.adapters.sqlite.p1_schema import initialize
+    from repo_catalog.application import ref_exchange
+    from repo_catalog.domain.context_admission import DependencySet
+    from repo_catalog.domain.p1_context import canonical
+    from repo_catalog.domain.production_context import ContextError
+    from tests.support.context_admission import fixture_transaction
+
+    app, _, _, repository, _, core_path, _ = acquisition
+    _, instance = app.core.catalog_identity()
+    initialize(tmp_path / "context.sqlite3", "context", repository, instance)
+    with fixture_transaction(tmp_path, DependencySet(repositories={repository})) as ctx:
+        ctx.repository(repository, canonical({"description": "x" * 128}))
+
+    class FailingWork(UnlimitedWorkBudget):
+        def require(self, unit, amount=1):
+            if unit == "input_bytes" and amount > 100:
+                if failure == "context":
+                    raise ContextError("AUTHORITATIVE_CORRUPTION", "callback")
+                raise sqlite3.OperationalError(
+                    "Could not decode to UTF-8 column from registration callback"
+                )
+            return super().require(unit, amount)
+
+    monkeypatch.setattr(
+        ref_exchange, "ref_export_work", lambda scope, counters: FailingWork()
+    )
+    expected = sqlite3.OperationalError if failure == "sqlite" else ContextError
+    with pytest.raises(expected) as error:
+        ExchangeService(tmp_path, operational=tmp_path).export_package(
+            selection=ExchangeSelectionScope(all_selected=True, include_context=False)
+        )
+    if failure == "context":
+        assert error.value.code == "AUTHORITATIVE_CORRUPTION"
+    else:
+        assert "from registration callback" in str(error.value)
+    assert not (core_path.parent / "p1-recovery-stop.json").exists()
+
+
 @pytest.mark.parametrize("damage", ["invalid_utf8", "noncanonical_json"])
 @pytest.mark.parametrize("family", ["repository_claims", "relation_groups"])
 def test_export_fixed_core_metadata_corruption_stops_catalog(

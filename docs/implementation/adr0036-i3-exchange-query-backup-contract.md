@@ -51,6 +51,9 @@ failures are not reclassified as corruption.
 Context metadata is likewise read under finite reservations and checked before
 graph expansion and export; historical Coverage claims and proofs remain bound
 to their original stored evidence.
+Validation of a coexisting Context, including registrations, uses the same
+export work budget. If it cannot complete within that budget, Exchange emits no
+Core or Context rows and reports an omission after checking the physical pair.
 
 ## Query and Coverage
 

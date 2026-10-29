@@ -349,7 +349,13 @@ class Context(ContextStore):
     """
 
     def __init__(
-        self, connection, directory: Path, *, writable: bool = False, authorization=None
+        self,
+        connection,
+        directory: Path,
+        *,
+        writable: bool = False,
+        authorization=None,
+        validation_work=None,
     ):
         self.directory = Path(directory)
         super().__init__(
@@ -370,7 +376,7 @@ class Context(ContextStore):
         self._validate_stage()
         # Validate registration authority in the pinned transaction, including
         # raw trusted-factory writes. No incoming rejected settings cause a stop.
-        self._validate_registrations()
+        self._validate_registrations(validation_work)
 
     def _check_mutation_capability(self):
         # These are local capability facts, independent of caller authority or
@@ -444,7 +450,9 @@ class Context(ContextStore):
 
     @classmethod
     @contextmanager
-    def for_snapshot(cls, db, directory: Path) -> Iterator[Context]:
+    def for_snapshot(
+        cls, db, directory: Path, *, validation_work=None
+    ) -> Iterator[Context]:
         from repo_catalog.adapters.sqlite.p1_coordination import ReadSnapshot
 
         if (
@@ -452,7 +460,7 @@ class Context(ContextStore):
             and Path(directory).resolve() != db.catalog_directory
         ):
             raise ContextError("SNAPSHOT_OWNER", "context", "foreign catalog directory")
-        capability = cls(db, directory)
+        capability = cls(db, directory, validation_work=validation_work)
         try:
             yield capability
             capability._read_complete()
@@ -538,7 +546,14 @@ class Context(ContextStore):
 
     @classmethod
     @contextmanager
-    def snapshot(cls, directory: Path, *, read_limits=None) -> Iterator[Context]:
+    def snapshot(
+        cls,
+        directory: Path,
+        *,
+        read_limits=None,
+        validation_work=None,
+        _identity_sink=None,
+    ) -> Iterator[Context]:
         """Pin Context alone; no claimed Core pairing or derivative dependency."""
         directory = Path(directory)
         with ExitStack() as stack:
@@ -551,7 +566,9 @@ class Context(ContextStore):
                     )
                     db.execute("PRAGMA query_only=ON")
                     db.execute("BEGIN")
-                    db.execute("SELECT * FROM store_identity").fetchall()
+                    identity = db.execute("SELECT * FROM store_identity").fetchall()
+                    if _identity_sink is not None:
+                        _identity_sink(identity)
                     from repo_catalog.adapters.sqlite.p1_coordination import (
                         apply_snapshot_read_limits,
                     )
@@ -561,7 +578,9 @@ class Context(ContextStore):
                     cls._record_corruption(directory, error)
                     raise
             try:
-                with cls.for_snapshot(db, directory) as capability:
+                with cls.for_snapshot(
+                    db, directory, validation_work=validation_work
+                ) as capability:
                     yield capability
             finally:
                 db.rollback()
@@ -647,16 +666,40 @@ class Context(ContextStore):
         with self._stored("I2 staged Resource"):
             validate_stage_storage(self.db)
 
-    def _validate_registrations(self):
-        for table, column, kind in (
-            ("providers", "configuration_json", "provider"),
-            ("repository_context", "configuration_json", "repository"),
-            ("sources", "configuration_json", "source"),
-            ("source_repositories", "attributes_json", "membership"),
+    def _validate_registrations(self, work=None):
+        for table, column, kind, selector in (
+            ("providers", "configuration_json", "provider", "providers"),
+            ("repository_context", "configuration_json", "repository", "repositories"),
+            ("sources", "configuration_json", "source", "sources"),
+            (
+                "source_repositories",
+                "attributes_json",
+                "membership",
+                "source_repositories",
+            ),
         ):
-            with self._stored("registration"):
-                for row in self.db.execute(f"SELECT {column} FROM {table}"):
-                    registration_json(kind, row[0])
+            if work is None:
+                with self._stored("registration"):
+                    for row in self.db.execute(f"SELECT {column} FROM {table}"):
+                        registration_json(kind, row[0])
+                continue
+            for row in self._exchange_metadata_rows(selector, work):
+                encoded = row[-1]
+                with self._stored("registration"):
+                    if type(encoded) is not str:
+                        raise ValueError("invalid stored registration type")
+                work.require("input_bytes", 13 * len(encoded) + 2)
+                try:
+                    with self._stored("registration"):
+                        registration_json(kind, encoded)
+                except BaseException:
+                    abandon = getattr(work, "abandon", None)
+                    if abandon is None:
+                        work.charge("input_bytes", 13 * len(encoded) + 2)
+                    else:
+                        abandon("input_bytes")
+                    raise
+                work.charge("input_bytes", 2 * len(encoded))
 
     def registration_metadata(self, kind: str, encoded: str) -> dict:
         """Read a persisted registration value, never sanitize a stored violation."""
