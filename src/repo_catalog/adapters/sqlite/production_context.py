@@ -73,6 +73,56 @@ from repo_catalog.domain.resource_stage import (
     validate_stage_storage,
 )
 
+_EXPORT_COVERAGE_ROWS = {
+    "scopes": (
+        "SELECT owner_kind,owner_coordinates_json FROM coverage_scopes ORDER BY owner_kind,owner_coordinates_json",
+        ("owner_kind", "owner_coordinates_json"),
+    ),
+    "claims": (
+        "SELECT owner_kind,owner_coordinates_json,observed_at_us,coverage_state,details_json FROM coverage_claims ORDER BY owner_kind,owner_coordinates_json,observed_at_us,coverage_state",
+        (
+            "owner_kind",
+            "owner_coordinates_json",
+            "observed_at_us",
+            "coverage_state",
+            "details_json",
+        ),
+    ),
+    "proofs": (
+        "SELECT owner_kind,owner_coordinates_json,observed_at_us,coverage_state,service_instance_uuidv4,resource_kind,provider_resource_id,collection_kind,provenance_json,terminal_observed_at_us,terminal_state,members_json FROM coverage_proofs ORDER BY owner_kind,owner_coordinates_json,observed_at_us,coverage_state,service_instance_uuidv4,resource_kind,provider_resource_id,collection_kind,provenance_json,terminal_observed_at_us,terminal_state,members_json",
+        (
+            "owner_kind",
+            "owner_coordinates_json",
+            "observed_at_us",
+            "coverage_state",
+            "service_instance_uuidv4",
+            "resource_kind",
+            "provider_resource_id",
+            "collection_kind",
+            "provenance_json",
+            "terminal_observed_at_us",
+            "terminal_state",
+            "members_json",
+        ),
+    ),
+    "source_proofs": (
+        "SELECT owner_kind,owner_coordinates_json,observed_at_us,coverage_state,source_registration_uuidv4,scope_json,inventory_observed_at_us,inventory_state,terminal,members_json,provenance_json FROM source_coverage_proofs ORDER BY owner_kind,owner_coordinates_json,observed_at_us,coverage_state,source_registration_uuidv4,scope_json,inventory_observed_at_us,inventory_state,terminal,members_json,provenance_json",
+        (
+            "owner_kind",
+            "owner_coordinates_json",
+            "observed_at_us",
+            "coverage_state",
+            "source_registration_uuidv4",
+            "scope_json",
+            "inventory_observed_at_us",
+            "inventory_state",
+            "terminal",
+            "members_json",
+            "provenance_json",
+        ),
+    ),
+}
+
 
 class _GuardedCursor:
     """Observe deferred SQLite read faults before the application can catch them."""
@@ -1163,6 +1213,73 @@ class Context(ContextStore):
     def admit_coverage(self, claim: CoverageClaim) -> str:
         self._check(write=True)
         return super().admit_coverage(claim)
+
+    def _exchange_coverage_rows(self, selector, work):
+        """Fetch fixed Context Coverage metadata after per-row reservations."""
+        self._check()
+        spec = _EXPORT_COVERAGE_ROWS.get(selector) if type(selector) is str else None
+        if spec is None:
+            raise ContextError(
+                "QUERY_BUDGET", "exchange-coverage", "fixed selector required"
+            )
+        query, columns = spec
+        projection = ",".join('octet_length("' + column + '")' for column in columns)
+
+        def fixed_read(operation):
+            try:
+                return operation()
+            except sqlite3.OperationalError as error:
+                if str(error).startswith("Could not decode to UTF-8 column"):
+                    # The guarded connection has already published the stop.
+                    raise ContextError(
+                        "AUTHORITATIVE_CORRUPTION", "exchange-coverage"
+                    ) from error
+                raise
+
+        measured = fixed_read(
+            lambda: self.db.execute("SELECT " + projection + " FROM (" + query + ")")
+        )
+        values = fixed_read(lambda: self.db.execute(query))
+        result = []
+        while True:
+            work.require("metadata_units", 1)
+            try:
+                lengths = fixed_read(measured.fetchone)
+            except BaseException:
+                abandon = getattr(work, "abandon", None)
+                if abandon is None:
+                    work.charge("metadata_units", 1)
+                else:
+                    abandon("metadata_units")
+                raise
+            work.charge("metadata_units", int(lengths is not None))
+            if lengths is None:
+                break
+            if len(result) >= 1_000_000:
+                raise CoordinationError("QUERY_BUDGET", "exchange-coverage")
+            if any(
+                value is not None and (type(value) is not int or value < 0)
+                for value in lengths
+            ):
+                with self._stored("exchange Coverage lengths"):
+                    raise ValueError("invalid stored metadata length")
+            size = sum(value or 0 for value in lengths)
+            work.require("input_bytes", size)
+            try:
+                row = fixed_read(values.fetchone)
+            except BaseException:
+                abandon = getattr(work, "abandon", None)
+                if abandon is None:
+                    work.charge("input_bytes", size)
+                else:
+                    abandon("input_bytes")
+                raise
+            work.charge("input_bytes", size if row is not None else 0)
+            if row is None:
+                with self._stored("exchange Coverage rows"):
+                    raise ValueError("metadata changed in snapshot")
+            result.append(row)
+        return result
 
     def coverage(self, scope: CoverageScope) -> CoverageProjection:
         self._check()

@@ -453,6 +453,13 @@ class ExchangeService:
                     self._selection_details["omissions"].append(
                         {"section": "context", "reason": "work_limit"}
                     )
+                except CoreFailure as error:
+                    if error.code not in ("BUDGET", "QUERY_BUDGET"):
+                        raise
+                    context_section = empty_context_section()
+                    self._selection_details["omissions"].append(
+                        {"section": "context", "reason": "resource_limit"}
+                    )
 
             with account_verification(self._export_work):
                 self._selection_details["omissions"].extend(
@@ -1413,6 +1420,8 @@ class ExchangeService:
         from repo_catalog.adapters.sqlite.production_context import Context
         from repo_catalog.domain.p1_context import CoverageScope as ContextCoverageScope
         from repo_catalog.domain.p1_context import ResourceKey
+        from repo_catalog.domain.production_context import json_value
+        from repo_catalog.domain.time import validate_required_observation_us
 
         section = empty_context_section()
         selected_rks = None if scope.resource_keys is None else set(scope.resource_keys)
@@ -1735,11 +1744,24 @@ class ExchangeService:
                 )
 
             exported_ctx_scopes: set[tuple[str, str]] = set()
-            for row in ctx.db.execute(
-                "SELECT owner_kind, owner_coordinates_json FROM coverage_scopes "
-                "ORDER BY owner_kind, owner_coordinates_json"
-            ):
-                coords = json.loads(row[1])
+            ctx_scopes_by_key = {}
+            for row in ctx._exchange_coverage_rows("scopes", self._export_work):
+                if type(row[1]) is not str:
+                    with ctx._stored("exchange Coverage scope"):
+                        raise ValueError("invalid stored coordinates type")
+                self._export_work.require("input_bytes", 13 * len(row[1]) + 2)
+                try:
+                    with ctx._stored("exchange Coverage scope"):
+                        coords = json.loads(row[1])
+                        if type(coords) is not list:
+                            raise ValueError("Coverage coordinates must be a list")
+                        c_scope = ContextCoverageScope(row[0], tuple(coords))
+                        if c_scope.encoded != row[1]:
+                            raise ValueError("noncanonical Coverage scope")
+                except BaseException:
+                    self._export_work.abandon("input_bytes")
+                    raise
+                self._export_work.charge("input_bytes", 2 * len(row[1]))
                 if row[0] == "source" and selected_sources is not None:
                     if coords[0] not in selected_sources:
                         continue
@@ -1747,9 +1769,9 @@ class ExchangeService:
                     rk = ResourceKey(coords[0], coords[1], coords[2])
                     if rk not in included_rks:
                         continue
-                c_scope = ContextCoverageScope(row[0], coords)
                 ctx.coverage(c_scope)
                 exported_ctx_scopes.add((row[0], row[1]))
+                ctx_scopes_by_key[(row[0], row[1])] = c_scope
                 section["coverage_scopes"].append(
                     {
                         "owner_kind": row[0],
@@ -1757,12 +1779,31 @@ class ExchangeService:
                     }
                 )
 
-            for row in ctx.db.execute(
-                "SELECT owner_kind, owner_coordinates_json, observed_at_us, coverage_state, details_json "
-                "FROM coverage_claims ORDER BY observed_at_us, owner_kind, owner_coordinates_json, coverage_state"
-            ):
+            for row in ctx._exchange_coverage_rows("claims", self._export_work):
                 if (row[0], row[1]) not in exported_ctx_scopes:
                     continue
+                if row[4] is not None and type(row[4]) is not str:
+                    with ctx._stored("exchange Coverage claim"):
+                        raise ValueError("invalid stored details type")
+                details_size = len(row[4]) if row[4] is not None else 0
+                self._export_work.require("input_bytes", 13 * details_size + 2)
+                try:
+                    with ctx._stored("exchange Coverage claim"):
+                        try:
+                            CoverageClaim(
+                                ctx_scopes_by_key[(row[0], row[1])],
+                                row[2],
+                                row[3],
+                                row[4],
+                            )
+                        except RecursionError as error:
+                            raise ValueError(
+                                "invalid Coverage claim nesting"
+                            ) from error
+                except BaseException:
+                    self._export_work.abandon("input_bytes")
+                    raise
+                self._export_work.charge("input_bytes", 2 * details_size)
                 section["coverage_claims"].append(
                     {
                         "owner_kind": row[0],
@@ -1773,14 +1814,114 @@ class ExchangeService:
                     }
                 )
 
-            for row in ctx.db.execute(
-                "SELECT owner_kind, owner_coordinates_json, observed_at_us, coverage_state, "
-                "service_instance_uuidv4, resource_kind, provider_resource_id, collection_kind, "
-                "provenance_json, terminal_observed_at_us, terminal_state, members_json "
-                "FROM coverage_proofs ORDER BY observed_at_us, owner_kind, owner_coordinates_json"
-            ):
+            ctx_claim_keys = {
+                (
+                    row["owner_kind"],
+                    row["owner_coordinates_json"],
+                    row["observed_at_us"],
+                    row["coverage_state"],
+                )
+                for row in section["coverage_claims"]
+            }
+
+            def checked_context_proof(row, *, source):
+                c_scope = ctx_scopes_by_key[(row[0], row[1])]
+                json_indexes = (5, 9, 10) if source else (8, 11)
+                with ctx._stored("exchange Coverage proof"):
+                    if tuple(row[:4]) not in ctx_claim_keys:
+                        raise ValueError("missing Coverage proof claim")
+                    if any(type(row[index]) is not str for index in json_indexes):
+                        raise ValueError("invalid Coverage proof JSON type")
+                input_size = sum(len(row[index]) for index in json_indexes)
+                self._export_work.require("input_bytes", 13 * input_size + 2)
+                try:
+                    with ctx._stored("exchange Coverage proof"):
+                        try:
+                            CoverageClaim(c_scope, row[2], row[3])
+                            if source:
+                                uuid4_value(row[4])
+                                original_scope = json_value(row[5])
+                                validate_required_observation_us(row[6])
+                                members = json_value(row[9])
+                                json_value(row[10], provenance=True)
+                                if (
+                                    c_scope.owner_kind != "source_inventory"
+                                    or c_scope.coordinates[:2] != (row[4], row[5])
+                                    or type(original_scope) is not dict
+                                    or original_scope.get("coverage_kind")
+                                    != c_scope.coordinates[-1]
+                                    or row[6] > row[2]
+                                    or row[7]
+                                    not in (
+                                        "complete",
+                                        "partial",
+                                        "unknown",
+                                        "not_applicable",
+                                    )
+                                    or row[8] != 1
+                                    or (row[3] == "complete" and row[7] != "complete")
+                                ):
+                                    raise ValueError("invalid Source Coverage proof")
+                            else:
+                                ResourceKey(row[4], row[5], row[6])
+                                if type(row[7]) is not str or not row[7]:
+                                    raise ValueError("invalid collection kind")
+                                json_value(row[8], provenance=True)
+                                validate_required_observation_us(row[9])
+                                members = json_value(row[11])
+                                if (
+                                    row[9] > row[2]
+                                    or row[10] not in ("complete", "partial", "unknown")
+                                    or (row[3] == "complete" and row[10] != "complete")
+                                ):
+                                    raise ValueError(
+                                        "invalid collection Coverage proof"
+                                    )
+                            if type(members) is not list:
+                                raise ValueError("invalid Coverage proof members")
+                        except RecursionError as error:
+                            raise ValueError(
+                                "invalid Coverage proof nesting"
+                            ) from error
+                except BaseException:
+                    self._export_work.abandon("input_bytes")
+                    raise
+                self._export_work.charge("input_bytes", 2 * input_size)
+                self._export_work.require("metadata_units", len(members) + 1)
+                try:
+                    with ctx._stored("exchange Coverage proof"):
+                        if source:
+                            for member in members:
+                                uuid4_value(member)
+                            if (
+                                len(set(members)) != len(members)
+                                or sorted(members) != members
+                            ):
+                                raise ValueError("invalid Source Coverage members")
+                        else:
+                            for member in members:
+                                ResourceKey(*member)
+                        if source:
+                            evidence = ctx.db.execute(
+                                "SELECT 1 FROM source_inventory_evidence WHERE source_registration_uuidv4=? AND scope_json=? AND observed_at_us=? AND coverage_state=? AND terminal=? AND members_json=? AND provenance_json=?",
+                                tuple(row[4:11]),
+                            ).fetchone()
+                        else:
+                            evidence = ctx.db.execute(
+                                "SELECT 1 FROM collection_terminals WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=? AND collection_kind=? AND provenance_json=? AND observed_at_us=? AND terminal_state=? AND members_json=?",
+                                tuple(row[4:12]),
+                            ).fetchone()
+                        if not evidence:
+                            raise ValueError("missing Coverage proof evidence")
+                except BaseException:
+                    self._export_work.abandon("metadata_units")
+                    raise
+                self._export_work.charge("metadata_units", len(members) + 1)
+
+            for row in ctx._exchange_coverage_rows("proofs", self._export_work):
                 if (row[0], row[1]) not in exported_ctx_scopes:
                     continue
+                checked_context_proof(row, source=False)
                 section["coverage_proofs"].append(
                     {
                         "proof_kind": "collection",
@@ -1799,14 +1940,10 @@ class ExchangeService:
                     }
                 )
 
-            for row in ctx.db.execute(
-                "SELECT owner_kind, owner_coordinates_json, observed_at_us, coverage_state, "
-                "source_registration_uuidv4, scope_json, inventory_observed_at_us, "
-                "inventory_state, terminal, members_json, provenance_json "
-                "FROM source_coverage_proofs ORDER BY observed_at_us, owner_kind, owner_coordinates_json"
-            ):
+            for row in ctx._exchange_coverage_rows("source_proofs", self._export_work):
                 if (row[0], row[1]) not in exported_ctx_scopes:
                     continue
+                checked_context_proof(row, source=True)
                 section["coverage_proofs"].append(
                     {
                         "proof_kind": "source_inventory",

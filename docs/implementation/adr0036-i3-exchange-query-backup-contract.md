@@ -48,6 +48,8 @@ Each emitted retained note or structural metadata copy is checked by its own
 physical identity.
 Stored text decode failures stop the catalog; unrelated SQL or work-callback
 failures are not reclassified as corruption.
+Context Coverage scopes, historical claims and proofs are likewise read under
+finite reservations and checked against their stored evidence before export.
 
 ## Query and Coverage
 
