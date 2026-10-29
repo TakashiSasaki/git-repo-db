@@ -1,12 +1,17 @@
 ---
-status: proposed
-date: null
-replaces: []
+status: accepted
+date: 2026-10-29
+replaces:
+  - 0018-notes-capture-uuidv4-composite-identity.md
+  - 0019-monotonic-notes-capture-fact-admission.md
+  - 0020-immutable-competing-notes-member-claims.md
+  - 0021-direct-semantic-notes-claim-group-keys.md
+  - 0027-unauthenticated-external-capture-origin-reports.md
 refines: []
 ---
 # ADR 0036: Ref observations, immutable result claims, and shared Notes interpretation
 
-This is a review draft, not an accepted ADR, an implementation, or test evidence. The owner's listed decisions are already accepted; proposed status covers this complete successor document and its coherence, not their reversal. Proposed retirements are in the clause map, not yet effective. Baseline: `ab0786cfa29e7be129c7b17517a469ec1cf8b215`, remote main checked 2026-10-29. Scope: opt-in five-responsibility Core and its integration; no ordinary Schema 21 switch. Level 3 Full ADR is appropriate: this changes authority, durable identity, evidence, interchange and backup.
+The owner explicitly adopted the complete successor on 2026-10-29. Acceptance records the target design and does not itself establish implementation or test evidence. The replaced records are retired in this acceptance change; their exact text remains in Git history. Baseline: `ab0786cfa29e7be129c7b17517a469ec1cf8b215`, remote main checked 2026-10-29. Scope: opt-in five-responsibility Core and its integration; no ordinary Schema 21 switch. Level 3 Full ADR is appropriate: this changes authority, durable identity, evidence, interchange and backup.
 
 Rule labels: **A** owner-accepted; **I** inherited accepted contract; **P** engineering proposal for review; **U** unresolved policy. A P is not an existing owner decision. A U must be resolved or supported scope explicitly bounded before the relevant admission path is implemented.
 
@@ -72,13 +77,77 @@ Current opt-in `captures` has the UUIDv4 pair plus mandatory root and `note_role
 
 Root-based deduplication loses the fact of two observations; root-owned mutable observations conflate unknown-to-known supplement with rewriting evidence. Individual immutable identity + immutable report claims preserves both. Shared interpretation content saves redundant structure without reassigning provenance or proof. The cost is longer semantic keys, explicit evidence coordinates and link validation, richer selective Exchange and durable retry design. Known-target conflict policy is owner-selected option B; comparable present/confirmed-absent claims under the same K and subject also remain as explicit conflict.
 
-This draft proposes substantive whole-record replacement of ADRs 0018, 0019, 0020, 0021 and 0027: the old UUIDv4 observation key and unconditional rejection of a different known root under the same observation conflict with the accepted UUIDv7 identity and option B. The clause map identifies the changed rules and surviving successors, including the independent trust, salvage and verification norms of 0027. ADR 0016 permits a typed conflict and its occurrence/attribution rules survive; its delegated identity terminology and active references require synchronization. These are prospective replacements only, pending independent review and explicit acceptance of the complete successor; do not retire any record now. The map enumerates successors and unresolved review work; proposed metadata intentionally leaves `replaces`/`refines` empty pending finalized reviewed lifecycle. No historical execution record is rewritten.
+This ADR makes a substantive whole-record replacement of ADRs 0018, 0019, 0020, 0021 and 0027: the old UUIDv4 observation key and unconditional rejection of a different known root under the same observation conflict with the accepted UUIDv7 identity and option B. The clause map identifies the changed rules and surviving successors, including the independent trust, salvage and verification norms of 0027. ADR 0016 permits a typed conflict and its occurrence/attribution rules survive; its delegated identity terminology and active references require synchronization. The successor map below identifies preserved and changed clauses; the detailed reviewed map remains available as supporting documentation. No historical execution record is rewritten.
+
+## Successor clause map
+
+## Whole-record successor inventory
+
+All references below point to companion ADR D1–D6 and Constraints or to the companion acceptance scenarios. The mapping was independently reviewed before acceptance; historical alternatives and superseded quarantine counts are not revived. Original texts are fixed at baseline.
+
+| Original | Changed or preserved binding clause and successor |
+| --- | --- |
+| 0019 §1.1–3 | Preserve genuinely compatible typed claims, true source and exact replay; INSERT-only/no mutation/ledger/surrogate: D1/D2/D4/D6. |
+| 0019 §1.4, §3 identity collision, §7 | **Change** blanket root identity rejection: D2 retains distinct attributed R/S with conflict; immutable subject/origin and same-coordinate rebind still reject; Notes member conflict D4. |
+| 0019 §1.5 and §2 | Preserve separately evidenced completeness, partial/empty/order/provenance, atomically visible immutable groups, no inferred union, no verification promotion: D4/D5 and A21/A22. |
+| 0019 §3 key, provenance, winner, body and crash | Change v4 observation to v7; D1/D2/D4/D5/D6 retain actual origin, no route-derived evidence, no arbitrary winner, receiver proof, consistent snapshots and atomic failure. |
+| 0019 §4 message example | D4 and A02/A21/A22 preserve G1/G2/replay/competing member and separate completeness; reread gets new K D1. |
+| 0019 §5 all inherited invariants | D1–D6/Constraints plus surviving 0014–17 and 0022–26: typed OID, no file archive, discovery, metadata-only, physical evidence/outputs and backups; old quarantine/count superseded by 0026. |
+| 0019 §6 cases 1–18 | A01–A04, A06–A08, A12–A13, A17–A19, A21–A24, A26–A28 and D1–D6 preserve order-independent replay, atomic groups, empty vs unknown, different namespace, no surrogate, body/trust, concurrent insertion and no completeness winner. Case 6 changes only distinct-coordinate root reports as D2 B; forged subject/coordinate still rejected. |
+| 0019 §§7–8 | D2/D4 inherit accepted 0020/0021 member decisions; D5/D6 inherit 0022–26; historical alternatives and old authorization remain history, B03/grammar remain scoped work. |
+| 0020 §1 MUST 1–5 | Preserve actual source/ref/root/slot/value/scope, separate immutable atomic competing member reports, derived conflict and checked field/group-only projection, exact replay; D2/D4/D5. |
+| 0020 §1 MUST NOT and §3 different root | **Change** unconditional distinct-report root rejection to D2 B; retain invalid origin/repository/ref/source subject and immutable coordinate rejection, no sender trust D1/D2. |
+| 0020 §§2–4 | Preserve metadata-only, common OID, coherent groups, exact local verification, direct semantic keys, separate ref/capture scopes, true provenance, uncertain comparability and no conflict state owner: D1/D2/D4/D5/D6. |
+| 0020 §5 cases 1–15 | A02/A04/A06–A08/A13/A17–A19/A21–A23/A25–A27 and D4/D5 retain reverse order, atomicity, alternatives, local proof, no file archive, no fabricated completion, collision/crash; case 8 changes distinct root only under D2 B. |
+| 0020 §§6–7 | Historical key alternatives/authorization remain history; D4 preserves accepted 0021 semantic equality and 0022–26 independent authorities. |
+| 0021 §§1–2, including §2.1 | Preserve full semantic key: typed actual slot, value, genuine provenance, exact bytes, unknown/null distinctions, whole scope/membership/order, atomic visibility and no digest/surrogate. Original observation-scoped Claims/Groups reference exact result; shareable Mapping content is separate: D2/D4 and implementation interfaces. |
+| 0021 §3 comparison table | **Change** changed-known-root row to D2 B for distinct coordinates; preserve reject subject/coordinate rebinding, replay, equal value/different evidence, member conflict, incomparable unknown slots, checked-specific evidence: D1/D2/D4/D5. |
+| 0021 §4 inherited matrix | D1–D6 and surviving ADRs preserve typed OID, discovery, group ordering, no file archive, physical-copy/actual-output checks, Coverage, Context/Operational, pairing and 0026 recovery. |
+| 0021 §5 cases 1–16 | A01–A08/A13–A15/A17–A22/A24–A28 plus D2/D4 preserve semantic equality, conflicts, group atomicity, raw paths/order, unknown/null/empty, collision full comparison, Core-only backup and proof. Case 4 changes only independently attributed known-root alternatives; subject/coordinate misuse still fails. |
+| 0021 §§6–7 | Preserve 0022 receiver-local role/bytes, direct tree and partial sufficient proof, no target-body requirement, 0023–25 budgets; historical alternatives and authorization are not current decisions: D5/D6. |
+| 0027 §1 | Preserve external attribution as unauthenticated, no mandatory PKI/signatures/issuer registry, no Context/API originals, preserve signature-bearing acquired bytes without authenticity claims, local producer issuance and original provenance: D1/D2/D6. |
+| 0027 §2 | **Change** v4 observation to v7 and unconditional different-root rejection to D2 B; preserve exact replay, full claim/group identity, no receipt salt/fake evidence, insufficient subject or reused coordinate refusal, no authentication claim: D1/D2/D4/D6. |
+| 0027 §3 | Preserve scope matrix: report/replay establish neither issuer nor remote fact, checked commit/tree/tag only intrinsic fields, role proof only checked mapping/body, backup digest not authenticity; metadata-only, no durable unproven staging, no winner or complete union: D4–D6. |
+| 0027 §4 | Preserve typed untrusted salvage, uncertainty, no execution of recovered schema or imported flags, unsigned valid candidate allowed, reject altered identity, distinguish bad input from actual corruption, 0026 fresh restore: D6. |
+| 0027 §5 | Preserve product scope, keys as revised, GCTX-M01–M09, 0022–26, Source/Coverage/Context/backup/INSERT-only and no Publication: D1–D6 and Constraints. |
+| 0027 §6 | Preserve engineering boundaries for grammar, encoding, issuance, fences, backup/recovery and deferred GC/authenticity; no assumption that zero blockers is approval. Comparable present/confirmed-absent conflict is owner-selected for the same K and immutable subject: D2 and Consequences. |
+| 0027 §7 cases 1–8 | A02/A04–A08/A13/A17/A19/A25/A26 and D1/D2/D5/D6 preserve unsigned reports, exact replay, identity misuse, checked role/body, signature bytes, qualified salvage, bad input vs corruption; case 3 changes only independently attributed known roots. |
+
+## ADR 0018 detailed successor audit
+
+Pinned [full original ADR 0018](https://github.com/TakashiSasaki/git-repo-db/blob/ab0786cfa29e7be129c7b17517a469ec1cf8b215/docs/adr/0018-notes-capture-uuidv4-composite-identity.md). D references are exact sections of the draft. This is author analysis, not independent approval; owner acceptance and exact final wording are still required.
+
+| Original location | Disposition and successor |
+| --- | --- |
+| §1 first two bullets | Stable independent origin and one ID per actual occurrence D1; observation UUIDv4 is deliberately replaced by v7. |
+| §1 direct pair/FKs; no surrogate, validation and no generic event | D1/D4 and Constraints: complete pair for references to an occurrence, typed actual semantic identity, v4/v7 validation, no fabricated event/publication. Shared mapping content itself is not observation-owned; original claims/groups are. |
+| §1 conceptual SQL | Historical non-normative illustration; D1/D2 and implementation-boundaries propose conceptual interfaces without mandating physical tables. |
+| §2 local issuance, Exchange and source without native IDs | D1/D2/D6 preserve issuer, original provenance, repeated/partial delivery and Git-only adapter. |
+| §2 origin distinct from repository/Source; clone/fork/collision; no time identity | D1 and A06/A13, with exact reassignment engineering scope. Collision or false attribution never overwrites. |
+| §3 identity/replay bullets | D1/D2/D5: new occurrence vs delivery, preserve subject, evidence and no file-body authorization; same-coordinate root rebinding prohibited. Different-coordinate R/S are retained with conflict under owner-selected B. |
+| §3 later decisions and deferred B03/grammar | D2/D4/D5/D6 and Constraints inherit 0019–0028; B03 exact completeness and grammar remain scoped unresolved engineering; no required issuer registry (D1). |
+| §4 six cross-catalog examples | D1/D2; A01/A02/A04/A05/A06. Original different-root case is split: immutable coordinate rebinding rejected; independently attributed contradictory known roots retained under B. Independent origin is not merged (D1). |
+| §5 GCTX-S01, B01-R01, B01-R02, KEY-P01 | D1/D3/D5 and Constraints; all visible Notes refs and nominated extras remain required by retained 0015. |
+| §5 GCTX-M01–M05 | D1/D2/D4/D6, source attribution independent of Context; retained ADRs 0004–0008 and 0029. |
+| §5 GCTX-M06–M09 | D5/D6 and D1 physical-copy paragraph; retained ADRs 0009/0010/0012/0013 with 0026 override. |
+| §5 old CAS-41/GCTX-M10 quarantine and count | Historical overridden text, do not carry obsolete count/quarantine policy; D6 inherits accepted 0026 stop/fresh restore. Metadata absence is not corruption (D1). |
+| §5 other invariants and scoped UUID rule | D1/D6, Constraints; source known-positive, Coverage, backups, no global UUID surrogate or renaming. Retained 0029 and 0001. |
+| §6 examples 1–5 | D1 and scenarios A01/A02/A06; independent issuers D1; exact reference pair and v4/v7 validation. |
+| §6 examples 6–8 | D1/D2/D5, A04/A05/A06/A17; no root rebinding; separately attributed known root contradiction is retained and exposed as conflict under B, and local Git-only issuer requires no Context/Provider. |
+| §6 examples 9–12 | D1/D6 and A12/A13/A26 and D1; lossless metadata backup, lost Operational, clocks, cloned issuer/collision. |
+| §6 examples 13–16 | D4–D6, A18/A21/A22/A25/A28; immutable partial groups, no target file archive, verified note physical evidence, fixed budgets and current 0026 recovery. |
+| §7 later adopted A / historical options B,C | D2/D4 monotonic facts, atomic groups, separately attributed Notes alternatives and full keys; D5/D6 accepted role, budget and recovery. Historical alternatives not owner questions. |
+| §8 old design-only permission, historical references | Preserve as Git history, do not transplant old scope/permission assertions as current authorization; the successor is accepted while future tests remain unexecuted. |
+
+**Audit limitations:** 0018 §6 is indexed example-by-example above; the successor uses the retained current ADRs for independent rules rather than reproducing every physical-health detail. Independent review of this acceptance change must recheck the cross-references and exact candidate text. The successor inventories for 0019–0021 and 0027 are reviewed at the accepted design revision and subject to independent review of this documentation change. The owner selected B for separately attributable incompatible known targets. The owner also selected explicit conflict for comparable present/confirmed-absent claims under the same K and immutable subject.
 
 ## Consequences
 
-D0 must review full successor coverage and the selected conflict semantics; then I1 defines types, admission, DDL, constraints and Coverage; I2 implements actual reads, enumeration, pinning and proof; I3 integrates Exchange, Query and backup; independent validation must inspect the actual stack head. Physical layout, indexes, encoding, transactions and tests are engineering proposals. Existing catalog compatibility, migration, deployment, merge and release are not implied. Examples in companion file are requirements, not executed tests. The repository's exact current implementation and validation status remain separate from this proposal.
+After independent review of the accepted documentation change, I1 defines types, admission, DDL, constraints and Coverage; I2 implements actual reads, enumeration, pinning and proof; I3 integrates Exchange, Query and backup; independent validation must inspect the actual stack head. Physical layout, indexes, encoding, transactions and tests are engineering proposals. Existing catalog compatibility, migration, deployment, merge and release are not implied. Examples in companion file are requirements, not executed tests. The repository's exact current implementation and validation status remain separate from this proposal.
 
 ## References
+
+- Owner adoption: 2026-10-29, explicit decision to switch the canonical design; independent design review at PR #214 commit `bbbeef08a19e12b5f9480bbcd2bf63bf25a471b0`.
 
 - [ADR index](https://github.com/TakashiSasaki/git-repo-db/blob/ab0786cfa29e7be129c7b17517a469ec1cf8b215/docs/adr/README.md), [policy](https://github.com/TakashiSasaki/git-repo-db/blob/ab0786cfa29e7be129c7b17517a469ec1cf8b215/docs/adr/policy.md), [template](https://github.com/TakashiSasaki/git-repo-db/blob/ab0786cfa29e7be129c7b17517a469ec1cf8b215/docs/adr/template.md), [0018](https://github.com/TakashiSasaki/git-repo-db/blob/ab0786cfa29e7be129c7b17517a469ec1cf8b215/docs/adr/0018-notes-capture-uuidv4-composite-identity.md), [0021](https://github.com/TakashiSasaki/git-repo-db/blob/ab0786cfa29e7be129c7b17517a469ec1cf8b215/docs/adr/0021-direct-semantic-notes-claim-group-keys.md), [0022](https://github.com/TakashiSasaki/git-repo-db/blob/ab0786cfa29e7be129c7b17517a469ec1cf8b215/docs/adr/0022-receiver-verified-notes-role-admission.md), [0029](https://github.com/TakashiSasaki/git-repo-db/blob/ab0786cfa29e7be129c7b17517a469ec1cf8b215/docs/adr/0029-independent-access-store.md).
 - [Core DDL](https://github.com/TakashiSasaki/git-repo-db/blob/ab0786cfa29e7be129c7b17517a469ec1cf8b215/src/repo_catalog/adapters/sqlite/p1_ddl/core.sql), [Notes acquisition](https://github.com/TakashiSasaki/git-repo-db/blob/ab0786cfa29e7be129c7b17517a469ec1cf8b215/src/repo_catalog/application/notes.py), [Notes adapter](https://github.com/TakashiSasaki/git-repo-db/blob/ab0786cfa29e7be129c7b17517a469ec1cf8b215/src/repo_catalog/adapters/git/notes.py), [independence matrix](https://github.com/TakashiSasaki/git-repo-db/blob/ab0786cfa29e7be129c7b17517a469ec1cf8b215/docs/implementation/core-independence-contract-matrix.md).

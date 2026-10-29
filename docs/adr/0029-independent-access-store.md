@@ -9,6 +9,8 @@ refines:
 
 # ADR 0029: Independent Access store for locators and connection configurations
 
+**Current identity and evidence contract:** [ADR 0036](0036-ref-observations-and-shared-notes-mappings.md) replaces ADRs 0018–0021 and 0027. Their historical UUIDv4 capture-pair and blanket same-key root-rejection wording below is not current authority. Original observation-scoped reports and groups remain distinct; exact replay, receiver verification, no-PKI attribution, finite budgets and corruption recovery remain binding.
+
 ## Decision
 
 **Whole-record replacement accepted on 2026-10-19; physical/adapter implementation contracts remain separately reviewable.**
@@ -436,7 +438,7 @@ coding. The settled architectural direction is not reopened by those details.
 - [ADR 0029 acceptance/retirement closure](../implementation/adr-0029-accepted-retirement-20261019.md) (2026-10-19).
 - [ADR governance](policy.md), [key policy](0017-domain-keys-without-storage-surrogates.md),
   [recovery](0026-stop-salvage-restore-merge-after-corruption.md),
-  [origin trust](0027-unauthenticated-external-capture-origin-reports.md),
+  [origin trust](https://github.com/TakashiSasaki/git-repo-db/blob/ab0786cfa29e7be129c7b17517a469ec1cf8b215/docs/adr/0027-unauthenticated-external-capture-origin-reports.md),
   [classified times and SHA-256](0028-classified-times-and-sha256-exchange.md).
 - [Git URL syntax](https://git-scm.com/docs/git-clone#_git_urls),
   [Git configuration](https://git-scm.com/docs/git-config),

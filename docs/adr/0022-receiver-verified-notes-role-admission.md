@@ -5,15 +5,16 @@ replaces: []
 refines:
   - 0014-history-and-notes-catalog-without-file-archive.md
   - 0015-automatic-git-notes-ref-discovery.md
-  - 0021-direct-semantic-notes-claim-group-keys.md
   - 0009-bounded-byte-admission-and-physical-health.md
 ---
 
 # ADR 0022: Require receiver-verified structural notes-role evidence before retaining note bodies
 
+**Current identity and evidence contract:** [ADR 0036](0036-ref-observations-and-shared-notes-mappings.md) replaces ADRs 0018–0021 and 0027. Their historical UUIDv4 capture-pair and blanket same-key root-rejection wording below is not current authority. Original observation-scoped reports and groups remain distinct; exact replay, receiver verification, no-PKI attribution, finite budgets and corruption recovery remain binding.
+
 **Current post-corruption override:** [ADR 0026 / GCTX-M10](0026-stop-salvage-restore-merge-after-corruption.md) requires stopping ordinary catalog operation, preserving the suspect source read-only, serializing salvage candidates, restoring a verified backup into a fresh destination and merging only revalidated admissible data. Prior post-fault metadata service, same-DB failover, known-corrupt normal backup/restore and references to M10 as pending are historical in that scope. Ordinary sound-catalog rules and unrelated open work remain. No implementation or merge is authorized.
 
-**Subsequent accepted refinement:** [ADR 0023 / B02-R02 A](0023-configurable-finite-notes-resource-budgets.md) fixes finite configurable individual raw-note, aggregate-work and proof-traversal budgets, honest limit stops and explicit finite-increase retry. The resource comparison below is historical; B02-R03 actual-work accounting is fixed by ADR 0024; B02-R04 cumulative request scope is fixed by ADR 0025; counter/default/resume choices are engineering work. Exact notes grammar and B03 encoding remain engineering work; GCTX-M10 recovery is fixed by ADR 0026. [ADR 0027 / Option A](0027-unauthenticated-external-capture-origin-reports.md) fixes unauthenticated external-origin reports without PKI/signatures.
+**Subsequent accepted refinement:** [ADR 0023 / B02-R02 A](0023-configurable-finite-notes-resource-budgets.md) fixes finite configurable individual raw-note, aggregate-work and proof-traversal budgets, honest limit stops and explicit finite-increase retry. The resource comparison below is historical; B02-R03 actual-work accounting is fixed by ADR 0024; B02-R04 cumulative request scope is fixed by ADR 0025; counter/default/resume choices are engineering work. Exact notes grammar and B03 encoding remain engineering work; GCTX-M10 recovery is fixed by ADR 0026. [ADR 0027 / Option A](https://github.com/TakashiSasaki/git-repo-db/blob/ab0786cfa29e7be129c7b17517a469ec1cf8b215/docs/adr/0027-unauthenticated-external-capture-origin-reports.md) fixes unauthenticated external-origin reports without PKI/signatures.
 
 - **Decision ID:** B02-R01, the first B02 body-admissibility choice; **owner selected Option A**, accepted 2026-10-15. This does not settle all B02 questions.
 - **Direct base:** [PR #62 / ADR 0021](https://github.com/TakashiSasaki/git-repo-db/pull/62), verified HEAD `51093022b50d773b0620fb5bec9b0a7b4a7e1544`, branch `codex/adr-0021-semantic-notes-claim-keys`. Documentation-only direct successor; implementation and merge remain forbidden.
@@ -57,7 +58,7 @@ An API/Exchange source may report K, `refs/notes/review`, C1→N1 and supply a c
 
 The accepted role linkage, exact representation/physical association and required checked intrinsic structure must form a consistent, bounded immutable admission unit under M06. Existing checked dependencies may be referenced; do not expose a role-authorized body while its necessary evidence links are missing, or require all metadata reports for the Capture to be admitted in one generic batch.
 
-Use ADR 0021's **direct semantic composite references** to the actual Capture UUIDv4 pair, typed association slot/value and genuine provenance. Receiver-local checks are separate scoped immutable evidence, not a `verified` update to the source report, new storage-only `role_proof_id`, mutable allow flag, generic Publication or per-success-attempt ledger. Concrete evidence keys/DDL remain follow-up work under KEY-P01.
+Use ADR 0036 direct semantic references to the exact immutable RefObservationClaim, typed root, actual association slot/value and genuine provenance. Receiver-local checks remain separate scoped immutable evidence, not a `verified` update, storage-only proof ID, mutable allow flag, generic Publication or per-success ledger.
 
 Exchange preserves the actual Capture/ref/root/target/note and provenance. A receiver must establish its own pertinent structural and body checks before new local body admission; sending historical proof can provide inputs, never imported local authority. Metadata-only Exchange works without bodies, Context or fake payloads. Git-only and paired full backups preserve the respective authoritative role/admission evidence and retained bodies; no new cross-store pairing protocol is selected.
 
@@ -81,7 +82,7 @@ Later ref deletion/rewrite, source distrust, a different resource limit or a com
 | --- | --- |
 | ADR 0014 / GCTX-S01 | Refines its notes exception with mandatory receiver-checked structural role evidence; ordinary file bodies remain excluded |
 | ADR 0015 / B01-R01 | All observable notes refs plus explicit additional refs remain discoverable; ref selection never grants body permission |
-| ADR 0016/0018 / B01-R02/R03 | Original immutable Capture with actual two-UUIDv4 key and source qualifications, repeated genuine observations distinct; no capture-per-retry |
+| ADR 0016/0036 | Genuine observations remain separate; replay retains the original UUIDv4-origin/UUIDv7-observation key |
 | ADR 0017 / KEY-P01 | Actual semantic composite PK/FK, no extra body-role/claim/proof surrogate |
 | ADR 0019/0020 / B01-R04/R05 | Monotonic compatible facts and separately atomic competing reports remain; no overwrite, group union or report-based byte permission |
 | ADR 0021 / B01-R06 A | Full semantic assertion/group keys, exact replay and genuine provenance preserved; identity does not itself prove role |

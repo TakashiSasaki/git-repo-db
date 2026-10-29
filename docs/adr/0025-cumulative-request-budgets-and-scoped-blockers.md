@@ -49,7 +49,7 @@ This correction does not claim notes/wire/DDL, cross-store consistency or Contex
 | Decision | Preserved constraint |
 | --- | --- |
 | ADR 0014/0015 | No ordinary file-body archive or hidden pending/cache storage; observable notes-ref discovery is not role proof or complete enumeration |
-| ADR 0016/0018 | Actual two-UUIDv4 Capture identity denotes the genuine observation; request/retry boundaries do not mint observations |
+| ADR 0016/0036 | Genuine observations remain separate; replay retains the original UUIDv4-origin/UUIDv7-observation key |
 | ADR 0017 / KEY-P01 | Direct domain composite PK/FK; no authoritative storage-only request, claim or group surrogate |
 | ADR 0019–0021 | Compatible immutable additions, provenance-bound exact replay, attributed alternatives and atomic whole groups are independent of work attempts |
 | ADR 0022 / B02-R01 | Receiver-local relevant notes structure and exact body checks precede new durable body retention; no source/sender flag replaces them |

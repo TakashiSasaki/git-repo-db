@@ -3,10 +3,11 @@ status: accepted
 date: 2026-10-16
 replaces: []
 refines:
-  - 0027-unauthenticated-external-capture-origin-reports.md
 ---
 
 # ADR 0028: Classified epoch times and SHA-256-only Exchange integrity
+
+**Current identity and evidence contract:** [ADR 0036](0036-ref-observations-and-shared-notes-mappings.md) replaces ADRs 0018–0021 and 0027. Their historical UUIDv4 capture-pair and blanket same-key root-rejection wording below is not current authority. Original observation-scoped reports and groups remain distinct; exact replay, receiver verification, no-PKI attribution, finite budgets and corruption recovery remain binding.
 
 ## Decision
 
@@ -65,7 +66,7 @@ MAC; validate its content independently, including a maliciously recomputed chec
 - Do not make all time columns nullable or force the generic signed validator
   positive: both would destroy valid domain meanings.
 - Do not replace direct semantic composite keys with storage surrogates, create
-  independent Publication, rewrite Capture's two actual UUIDv4 values or change
+  independent Publication, rewrite an observation’s original issuer and occurrence identifiers or change
   permanent repository identity. Git Core stays INSERT-only; Context stays an
   independent authority; Operational/Search stay reconstructible derivatives.
 - Do not resume ordinary operations after authoritative corruption using another
@@ -106,7 +107,7 @@ acceptance requirements, not claims that those executions have occurred.
 
 - [ADR index](README.md), [governance](policy.md), [ADR 0001](0001-validation-lifecycle-architecture.md)
 - [Accepted five-store boundary and INSERT-only Git Core](0029-independent-access-store.md) (historical ADR 0003 was retired on 2026-10-19)
-- [Unauthenticated origin reports](0027-unauthenticated-external-capture-origin-reports.md)
+- [Unauthenticated origin reports](https://github.com/TakashiSasaki/git-repo-db/blob/ab0786cfa29e7be129c7b17517a469ec1cf8b215/docs/adr/0027-unauthenticated-external-capture-origin-reports.md)
 - [P5/P6 technical contract](../implementation/p5-p6-technical-contract.md)
 - Owner's current task, sections 3–10 and 12 (approval source, reproduced above
   so this decision is usable without access to the conversation).
