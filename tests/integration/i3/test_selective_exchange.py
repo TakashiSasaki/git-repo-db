@@ -1542,11 +1542,162 @@ def test_context_coverage_export_does_not_reclassify_work_callback_errors(tmp_pa
 
     with Context.snapshot(root) as ctx:
         with pytest.raises(sqlite3.OperationalError, match="from callback"):
-            ctx._exchange_coverage_rows("claims", FailingWork())
+            ctx._exchange_metadata_rows("claims", FailingWork())
         with pytest.raises(CoreFailure) as limited:
-            ctx._exchange_coverage_rows("claims", SmallWork())
+            ctx._exchange_metadata_rows("claims", SmallWork())
         assert limited.value.code == "BUDGET"
     assert not (root / "p1-recovery-stop.json").exists()
+
+
+@pytest.mark.parametrize("failure", ["sqlite", "context"])
+def test_context_row_validation_does_not_reclassify_work_callback_errors(
+    tmp_path, monkeypatch, failure
+):
+    import sqlite3
+
+    from repo_catalog.adapters.sqlite.acquisition import UnlimitedWorkBudget
+    from repo_catalog.application import ref_exchange
+    from repo_catalog.domain.production_context import ContextError
+
+    root = tmp_path / "a"
+    fixture(root)
+
+    class FailingWork(UnlimitedWorkBudget):
+        def require(self, unit, amount=1):
+            if unit == "metadata_units" and amount > 1:
+                if failure == "context":
+                    raise ContextError("AUTHORITATIVE_CORRUPTION", "callback")
+                raise sqlite3.OperationalError(
+                    "Could not decode to UTF-8 column from validation callback"
+                )
+            return super().require(unit, amount)
+
+    monkeypatch.setattr(
+        ref_exchange, "ref_export_work", lambda scope, counters: FailingWork()
+    )
+    selection = ExchangeSelectionScope(all_selected=True, include_core=False)
+    expected = sqlite3.OperationalError if failure == "sqlite" else ContextError
+    with pytest.raises(expected) as error:
+        ExchangeService(root).export_package(selection=selection)
+    if failure == "context":
+        assert error.value.code == "AUTHORITATIVE_CORRUPTION"
+    else:
+        assert "from validation callback" in str(error.value)
+    assert not (root / "p1-recovery-stop.json").exists()
+
+
+@pytest.mark.parametrize("damage", ["invalid_utf8", "noncanonical_json"])
+def test_context_export_checks_source_inventory_metadata(tmp_path, damage):
+    from repo_catalog.domain.production_context import ContextError, SourceInventory
+
+    root = tmp_path / "a"
+    repo, other, issue, _ = fixture(root)
+    source = str(uuid4())
+    with fixture_transaction(
+        root, local_grants(issue, repo, other, sources=(source,))
+    ) as ctx:
+        ctx.source(source, issue.service_instance_uuidv4, "{}")
+        ctx.inventory(
+            SourceInventory(
+                source,
+                canonical({"coverage_kind": "repositories"}),
+                80,
+                "complete",
+                True,
+                (repo,),
+                make_provenance("provider", "evidence"),
+            )
+        )
+    service = ExchangeService(root)
+    assert service.export_package(selection=scope()).context["source_inventories"]
+
+    db = connect(root / "context.sqlite3", "context")
+    try:
+        triggers = db.execute(
+            "SELECT name,sql FROM sqlite_schema WHERE type='trigger' AND tbl_name='source_inventory_evidence' AND upper(sql) LIKE '%BEFORE UPDATE%'"
+        ).fetchall()
+        assert triggers
+        for name, _ in triggers:
+            db.execute('DROP TRIGGER "' + name + '"')
+        db.execute("PRAGMA ignore_check_constraints=ON")
+        if damage == "invalid_utf8":
+            db.execute(
+                "UPDATE source_inventory_evidence SET members_json=CAST(x'80' AS TEXT)"
+            )
+        else:
+            db.execute("UPDATE source_inventory_evidence SET members_json='[ ]'")
+        db.execute("PRAGMA ignore_check_constraints=OFF")
+        for _, trigger in triggers:
+            db.execute(trigger)
+    finally:
+        db.close()
+
+    with pytest.raises(ContextError) as corruption:
+        service.export_package(selection=scope())
+    assert corruption.value.code == "AUTHORITATIVE_CORRUPTION"
+    assert (root / "p1-recovery-stop.json").exists()
+
+
+@pytest.mark.parametrize("family", ["resource_relations", "collection_terminals"])
+@pytest.mark.parametrize("damage", ["invalid_utf8", "noncanonical_json"])
+def test_context_export_checks_graph_metadata_before_expansion(
+    tmp_path, family, damage
+):
+    from repo_catalog.domain.production_context import (
+        CollectionObservation,
+        ContextError,
+        ResourceRelation,
+    )
+
+    root = tmp_path / "a"
+    repo, other, issue, _ = fixture(root)
+    child = ResourceKey.document(issue, "comment", "comment", "99")
+    provenance = make_provenance("provider", "original")
+    with fixture_transaction(
+        root, local_grants(issue, repo, other, resources=(child,))
+    ) as ctx:
+        ctx.resource(child, identification=RI.scoped(child, issue, "comment", "99"))
+        if family == "resource_relations":
+            ctx.relation(
+                ResourceRelation(issue, "related", (child,), provenance, "{}", 80)
+            )
+            section = "resource_relations"
+        else:
+            ctx.collection(
+                CollectionObservation(
+                    issue, "comments", provenance, "{}", 80, "complete", (child,)
+                )
+            )
+            section = "collections"
+    service = ExchangeService(root)
+    assert service.export_package(selection=scope()).context[section]
+
+    db = connect(root / "context.sqlite3", "context")
+    try:
+        db.execute("PRAGMA foreign_keys=OFF")
+        triggers = db.execute(
+            "SELECT name,sql FROM sqlite_schema WHERE type='trigger' AND tbl_name=? AND upper(sql) LIKE '%BEFORE UPDATE%'",
+            (family,),
+        ).fetchall()
+        assert triggers
+        for name, _ in triggers:
+            db.execute('DROP TRIGGER "' + name + '"')
+        db.execute("PRAGMA ignore_check_constraints=ON")
+        if damage == "invalid_utf8":
+            db.execute("UPDATE " + family + " SET members_json=CAST(x'80' AS TEXT)")
+        else:
+            db.execute("UPDATE " + family + " SET members_json='[ ]'")
+        db.execute("PRAGMA ignore_check_constraints=OFF")
+        for _, trigger in triggers:
+            db.execute(trigger)
+        db.execute("PRAGMA foreign_keys=ON")
+    finally:
+        db.close()
+
+    with pytest.raises(ContextError) as corruption:
+        service.export_package(selection=scope())
+    assert corruption.value.code == "AUTHORITATIVE_CORRUPTION"
+    assert (root / "p1-recovery-stop.json").exists()
 
 
 @pytest.mark.parametrize("kind", ["collection", "source"])

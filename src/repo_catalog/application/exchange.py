@@ -226,6 +226,38 @@ def _checked_registration(ctx: Context, kind: str, encoded: str) -> str:
     return encoded
 
 
+class _ContextCallbackFailure(Exception):
+    """Carry a work-callback failure across the Context storage boundary."""
+
+    def __init__(self, original):
+        self.original = original
+
+
+class _ContextCallbackWork:
+    """Do not let Context's storage fault guard classify caller work errors."""
+
+    def __init__(self, work):
+        self._work = work
+
+    def __getattr__(self, name):
+        return getattr(self._work, name)
+
+    def _call(self, method, *args):
+        try:
+            return getattr(self._work, method)(*args)
+        except BaseException as error:
+            raise _ContextCallbackFailure(error) from error
+
+    def require(self, unit, amount=1):
+        return self._call("require", unit, amount)
+
+    def charge(self, unit, amount):
+        return self._call("charge", unit, amount)
+
+    def abandon(self, unit):
+        return self._call("abandon", unit)
+
+
 class _ReceiveWork:
     """Receiver-owned cumulative processing ceiling over the durable request."""
 
@@ -441,7 +473,15 @@ class ExchangeService:
             context_section: dict[str, list[dict[str, Any]]] | None = None
             if scope.include_context and self._has_context():
                 try:
-                    context_section = self._export_context(scope)
+                    original_work = self._export_work
+                    self._export_work = _ContextCallbackWork(original_work)
+                    try:
+                        try:
+                            context_section = self._export_context(scope)
+                        except _ContextCallbackFailure as error:
+                            raise error.original from None
+                    finally:
+                        self._export_work = original_work
                 except (sqlite3.OperationalError, CoordinationError) as error:
                     if (
                         getattr(error, "sqlite_errorcode", None)
@@ -1418,9 +1458,16 @@ class ExchangeService:
         scope: ExchangeSelectionScope,
     ) -> dict[str, list[dict[str, Any]]]:
         from repo_catalog.adapters.sqlite.production_context import Context
+        from repo_catalog.domain.exchange import _bounded_json
+        from repo_catalog.domain.exchange_rows import validate_rows
         from repo_catalog.domain.p1_context import CoverageScope as ContextCoverageScope
         from repo_catalog.domain.p1_context import ResourceKey
-        from repo_catalog.domain.production_context import json_value
+        from repo_catalog.domain.production_context import (
+            CollectionObservation,
+            ResourceRelation,
+            SourceInventory,
+            json_value,
+        )
         from repo_catalog.domain.time import validate_required_observation_us
 
         section = empty_context_section()
@@ -1439,10 +1486,60 @@ class ExchangeService:
                 on_steps=self._export_steps,
             ),
         ) as ctx:
-            for row in ctx.db.execute(
-                "SELECT service_instance_uuidv4, provider_kind, configuration_json "
-                "FROM providers ORDER BY service_instance_uuidv4"
-            ):
+
+            def validate_stored_context_row(name, row):
+                """Validate only a row reconstructed from this pinned store."""
+                size = sum(len(value) for value in row.values() if type(value) is str)
+                self._export_work.require("input_bytes", 13 * size + 2)
+                callback_error = None
+
+                def spend(amount):
+                    nonlocal callback_error
+                    try:
+                        self._export_work.require("metadata_units", amount)
+                        self._export_work.charge("metadata_units", amount)
+                    except BaseException as error:
+                        callback_error = error
+                        raise
+
+                try:
+                    try:
+                        _bounded_json(row, root="row:" + name, spend=spend)
+                    except BaseException as error:
+                        if callback_error is not None:
+                            raise callback_error
+                        if (
+                            isinstance(error, ExchangeError)
+                            and error.code == "INPUT_LIMIT"
+                        ):
+                            raise CoreFailure(
+                                "QUERY_BUDGET", name, "finite Context row limit"
+                            ) from error
+                        if isinstance(error, (ValueError, TypeError, RecursionError)):
+                            with ctx._stored("exchange Context row"):
+                                raise ValueError(
+                                    "invalid stored Context JSON"
+                                ) from error
+                        raise
+                    self._export_work.require("metadata_units", size + len(row))
+                    try:
+                        with ctx._stored("exchange Context row"):
+                            try:
+                                validate_rows(None, {name: [row]})
+                            except RecursionError as error:
+                                raise ValueError(
+                                    "invalid stored Context nesting"
+                                ) from error
+                    except BaseException:
+                        self._export_work.abandon("metadata_units")
+                        raise
+                    self._export_work.charge("metadata_units", size + len(row))
+                except BaseException:
+                    self._export_work.abandon("input_bytes")
+                    raise
+                self._export_work.charge("input_bytes", 4 * size)
+
+            for row in ctx._exchange_metadata_rows("providers", self._export_work):
                 section["providers"].append(
                     {
                         "service_instance_uuidv4": row[0],
@@ -1453,9 +1550,7 @@ class ExchangeService:
                     }
                 )
 
-            for row in ctx.db.execute(
-                "SELECT repository_uuidv4, configuration_json FROM repository_context ORDER BY repository_uuidv4"
-            ):
+            for row in ctx._exchange_metadata_rows("repositories", self._export_work):
                 section["repositories"].append(
                     {
                         "repository_uuidv4": row[0],
@@ -1465,10 +1560,7 @@ class ExchangeService:
                     }
                 )
 
-            for row in ctx.db.execute(
-                "SELECT source_registration_uuidv4, service_instance_uuidv4, configuration_json "
-                "FROM sources ORDER BY source_registration_uuidv4"
-            ):
+            for row in ctx._exchange_metadata_rows("sources", self._export_work):
                 if selected_sources is not None and row[0] not in selected_sources:
                     continue
                 section["sources"].append(
@@ -1481,9 +1573,8 @@ class ExchangeService:
                     }
                 )
 
-            for row in ctx.db.execute(
-                "SELECT source_registration_uuidv4, repository_uuidv4, attributes_json "
-                "FROM source_repositories ORDER BY source_registration_uuidv4, repository_uuidv4"
+            for row in ctx._exchange_metadata_rows(
+                "source_repositories", self._export_work
             ):
                 if selected_sources is not None and row[0] not in selected_sources:
                     continue
@@ -1497,49 +1588,62 @@ class ExchangeService:
                     }
                 )
 
-            for row in ctx.db.execute(
-                "SELECT source_registration_uuidv4, scope_json, observed_at_us, coverage_state, "
-                "terminal, members_json, provenance_json "
-                "FROM source_inventory_evidence ORDER BY observed_at_us, source_registration_uuidv4, scope_json"
+            for row in ctx._exchange_metadata_rows(
+                "source_inventories", self._export_work
             ):
                 if selected_sources is not None and row[0] not in selected_sources:
                     continue
-                section["source_inventories"].append(
-                    {
-                        "source_registration_uuidv4": row[0],
-                        "scope_json": row[1],
-                        "observed_at_us": row[2],
-                        "coverage_state": row[3],
-                        "terminal": bool(row[4]),
-                        "members_json": row[5],
-                        "provenance_json": row[6],
-                    }
-                )
+                with ctx._stored("source inventory"):
+                    if type(row[4]) is not int or row[4] not in (0, 1):
+                        raise ValueError("invalid stored inventory terminal")
+                record = {
+                    "source_registration_uuidv4": row[0],
+                    "scope_json": row[1],
+                    "observed_at_us": row[2],
+                    "coverage_state": row[3],
+                    "terminal": bool(row[4]),
+                    "members_json": row[5],
+                    "provenance_json": row[6],
+                }
+                validate_stored_context_row("source_inventories", record)
+                input_size = sum(len(row[index]) for index in (1, 5, 6))
+                self._export_work.require("input_bytes", 13 * input_size + 2)
+                try:
+                    with ctx._stored("source inventory"):
+                        members = json.loads(row[5])
+                        if type(members) is not list:
+                            raise ValueError("invalid stored inventory members")
+                    self._export_work.require("metadata_units", len(members))
+                    try:
+                        with ctx._stored("source inventory"):
+                            inventory = SourceInventory(
+                                row[0],
+                                row[1],
+                                row[2],
+                                row[3],
+                                bool(row[4]),
+                                tuple(members),
+                                row[6],
+                            )
+                            if inventory.values != tuple(row):
+                                raise ValueError("noncanonical source inventory")
+                    except BaseException:
+                        self._export_work.abandon("metadata_units")
+                        raise
+                    self._export_work.charge("metadata_units", len(members))
+                except BaseException:
+                    self._export_work.abandon("input_bytes")
+                    raise
+                self._export_work.charge("input_bytes", 2 * input_size)
+                section["source_inventories"].append(record)
 
             # Determine full set of exported resources (including parents/members of selected resources)
-            all_resource_rows = ctx.db.execute(
-                "SELECT service_instance_uuidv4, resource_kind, provider_resource_id, "
-                "identifier_namespace_kind, identifier_namespace_id, document_kind, provider_document_id "
-                "FROM resources ORDER BY service_instance_uuidv4, resource_kind, provider_resource_id"
-            ).fetchall()
+            all_resource_rows = ctx._exchange_metadata_rows(
+                "resources", self._export_work
+            )
 
-            rel_rows = ctx.db.execute(
-                "SELECT service_instance_uuidv4, resource_kind, provider_resource_id, "
-                "relation_kind, members_json, provenance_json, scope_json, observed_at_us "
-                "FROM resource_relations ORDER BY observed_at_us, service_instance_uuidv4, resource_kind, provider_resource_id, relation_kind"
-            ).fetchall()
-            coll_rows = ctx.db.execute(
-                "SELECT c.service_instance_uuidv4, c.resource_kind, c.provider_resource_id, "
-                "c.collection_kind, c.provenance_json, c.scope_json, "
-                "t.observed_at_us, t.terminal_state, t.members_json "
-                "FROM collections c JOIN collection_terminals t "
-                "ON c.service_instance_uuidv4=t.service_instance_uuidv4 "
-                "AND c.resource_kind=t.resource_kind "
-                "AND c.provider_resource_id=t.provider_resource_id "
-                "AND c.collection_kind=t.collection_kind "
-                "AND c.provenance_json=t.provenance_json "
-                "ORDER BY t.observed_at_us, c.service_instance_uuidv4, c.resource_kind, c.provider_resource_id, c.collection_kind"
-            ).fetchall()
+            rel_rows = ctx._exchange_metadata_rows("relations", self._export_work)
+            coll_rows = ctx._exchange_metadata_rows("collections", self._export_work)
             support_columns = (
                 "service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,"
                 "target_json,clock_json,provenance_json,observed_at_us,"
@@ -1547,13 +1651,109 @@ class ExchangeService:
             )
             support_rows = [
                 dict(zip(support_columns.split(","), r))
-                for r in ctx.db.execute(
-                    "SELECT "
-                    + support_columns
-                    + " FROM resource_repository_relations ORDER BY "
-                    + support_columns
+                for r in ctx._exchange_metadata_rows(
+                    "repository_relations", self._export_work
                 )
             ]
+            resource_columns = (
+                "service_instance_uuidv4",
+                "resource_kind",
+                "provider_resource_id",
+                "identifier_namespace_kind",
+                "identifier_namespace_id",
+                "document_kind",
+                "provider_document_id",
+            )
+            relation_columns = (
+                "service_instance_uuidv4",
+                "resource_kind",
+                "provider_resource_id",
+                "relation_kind",
+                "members_json",
+                "provenance_json",
+                "scope_json",
+                "observed_at_us",
+            )
+            collection_columns = (
+                "service_instance_uuidv4",
+                "resource_kind",
+                "provider_resource_id",
+                "collection_kind",
+                "provenance_json",
+                "scope_json",
+                "observed_at_us",
+                "terminal_state",
+                "members_json",
+            )
+
+            def validate_stored_context_graph(name, record):
+                validate_stored_context_row(name, record)
+                inputs = ("members_json", "provenance_json", "scope_json")
+                size = sum(len(record[key]) for key in inputs)
+                self._export_work.require("input_bytes", 13 * size + 2)
+                try:
+                    with ctx._stored("exchange Context graph"):
+                        try:
+                            members = json.loads(record["members_json"])
+                        except RecursionError as error:
+                            raise ValueError(
+                                "invalid Context member nesting"
+                            ) from error
+                        if type(members) is not list:
+                            raise ValueError("invalid Context members")
+                    self._export_work.require("metadata_units", len(members))
+                    try:
+                        with ctx._stored("exchange Context graph"):
+                            owner = ResourceKey(
+                                record["service_instance_uuidv4"],
+                                record["resource_kind"],
+                                record["provider_resource_id"],
+                            )
+                            keys = tuple(ResourceKey(*member) for member in members)
+                            if name == "resource_relations":
+                                observed = ResourceRelation(
+                                    owner,
+                                    record["relation_kind"],
+                                    keys,
+                                    record["provenance_json"],
+                                    record["scope_json"],
+                                    record["observed_at_us"],
+                                )
+                            else:
+                                observed = CollectionObservation(
+                                    owner,
+                                    record["collection_kind"],
+                                    record["provenance_json"],
+                                    record["scope_json"],
+                                    record["observed_at_us"],
+                                    record["terminal_state"],
+                                    keys,
+                                )
+                            if observed.members_json != record["members_json"]:
+                                raise ValueError("noncanonical Context members")
+                    except BaseException:
+                        self._export_work.abandon("metadata_units")
+                        raise
+                    self._export_work.charge("metadata_units", len(members))
+                except BaseException:
+                    self._export_work.abandon("input_bytes")
+                    raise
+                self._export_work.charge("input_bytes", 2 * size)
+
+            for raw in all_resource_rows:
+                validate_stored_context_row(
+                    "resources", dict(zip(resource_columns, raw, strict=True))
+                )
+            for raw in rel_rows:
+                validate_stored_context_graph(
+                    "resource_relations", dict(zip(relation_columns, raw, strict=True))
+                )
+            for raw in coll_rows:
+                validate_stored_context_graph(
+                    "collections", dict(zip(collection_columns, raw, strict=True))
+                )
+            for raw in support_rows:
+                validate_stored_context_row("resource_repository_relations", raw)
             included_rks, reasons, omissions = expand_resources(
                 all_resource_rows, rel_rows, coll_rows, scope, support_rows
             )
@@ -1624,19 +1824,19 @@ class ExchangeService:
                     if key == "resource_relations":
                         ctx.relations(owner, row[3])
                     section[key].append(dict(zip(columns, row)))
-            for table, columns in (
+            for table, selector, columns in (
                 (
                     "resource_repository_relations",
+                    "repository_relations",
                     "service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,target_json,clock_json,provenance_json,observed_at_us,event_report_members_json,event_report_scope_json",
                 ),
                 (
                     "repository_mapping_dispositions",
+                    "mapping_dispositions",
                     "service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,claim_clock_json,claim_target_json,claim_provenance_json,disposition_kind,disposition_clock_json,disposition_provenance_json,observed_at_us,replacement_clock_json,replacement_target_json,replacement_provenance_json",
                 ),
             ):
-                for row in ctx.db.execute(
-                    "SELECT " + columns + " FROM " + table + " ORDER BY " + columns
-                ):
+                for row in ctx._exchange_metadata_rows(selector, self._export_work):
                     if ResourceKey(*row[:3]) in included_rks:
                         section[table].append(dict(zip(columns.split(","), row)))
             # If graph limits withheld a Transfer scope, its endpoint rows must
@@ -1671,12 +1871,7 @@ class ExchangeService:
             ]
 
             referenced_text_digests: set[str] = set()
-            fc_rows = ctx.db.execute(
-                "SELECT service_instance_uuidv4, resource_kind, provider_resource_id, "
-                "field_name, value_json, clock_domain, source_clock_us, provenance_json, observed_at_us "
-                "FROM field_candidates "
-                "ORDER BY observed_at_us, service_instance_uuidv4, resource_kind, provider_resource_id, field_name"
-            ).fetchall()
+            fc_rows = ctx._exchange_metadata_rows("field_candidates", self._export_work)
             for row in fc_rows:
                 rk = ResourceKey(row[0], row[1], row[2])
                 if rk not in included_rks:
@@ -1702,9 +1897,7 @@ class ExchangeService:
                     }
                 )
 
-            tb_rows = ctx.db.execute(
-                "SELECT sha256 FROM text_bodies ORDER BY sha256"
-            ).fetchall()
+            tb_rows = ctx._exchange_metadata_rows("text_bodies", self._export_work)
             for (sha256_hex,) in tb_rows:
                 # Always verify every stored text body on export
                 text_val = ctx.read_text(sha256_hex)
@@ -1720,12 +1913,7 @@ class ExchangeService:
                     }
                 )
 
-            cr_rows = ctx.db.execute(
-                "SELECT service_instance_uuidv4, resource_kind, provider_resource_id, "
-                "role, object_format, full_oid, provenance_json "
-                "FROM core_references "
-                "ORDER BY service_instance_uuidv4, resource_kind, provider_resource_id, role, object_format, full_oid"
-            ).fetchall()
+            cr_rows = ctx._exchange_metadata_rows("core_references", self._export_work)
             for row in cr_rows:
                 rk = ResourceKey(row[0], row[1], row[2])
                 if rk not in included_rks:
@@ -1745,7 +1933,7 @@ class ExchangeService:
 
             exported_ctx_scopes: set[tuple[str, str]] = set()
             ctx_scopes_by_key = {}
-            for row in ctx._exchange_coverage_rows("scopes", self._export_work):
+            for row in ctx._exchange_metadata_rows("scopes", self._export_work):
                 if type(row[1]) is not str:
                     with ctx._stored("exchange Coverage scope"):
                         raise ValueError("invalid stored coordinates type")
@@ -1779,7 +1967,7 @@ class ExchangeService:
                     }
                 )
 
-            for row in ctx._exchange_coverage_rows("claims", self._export_work):
+            for row in ctx._exchange_metadata_rows("claims", self._export_work):
                 if (row[0], row[1]) not in exported_ctx_scopes:
                     continue
                 if row[4] is not None and type(row[4]) is not str:
@@ -1918,7 +2106,7 @@ class ExchangeService:
                     raise
                 self._export_work.charge("metadata_units", len(members) + 1)
 
-            for row in ctx._exchange_coverage_rows("proofs", self._export_work):
+            for row in ctx._exchange_metadata_rows("proofs", self._export_work):
                 if (row[0], row[1]) not in exported_ctx_scopes:
                     continue
                 checked_context_proof(row, source=False)
@@ -1940,7 +2128,7 @@ class ExchangeService:
                     }
                 )
 
-            for row in ctx._exchange_coverage_rows("source_proofs", self._export_work):
+            for row in ctx._exchange_metadata_rows("source_proofs", self._export_work):
                 if (row[0], row[1]) not in exported_ctx_scopes:
                     continue
                 checked_context_proof(row, source=True)
@@ -1961,6 +2149,9 @@ class ExchangeService:
                     }
                 )
 
+            for name, records in section.items():
+                for record in records:
+                    validate_stored_context_row(name, record)
         return section
 
     def import_package(

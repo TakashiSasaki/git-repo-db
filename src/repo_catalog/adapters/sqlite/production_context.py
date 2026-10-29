@@ -73,7 +73,138 @@ from repo_catalog.domain.resource_stage import (
     validate_stage_storage,
 )
 
-_EXPORT_COVERAGE_ROWS = {
+_EXPORT_CONTEXT_ROWS = {
+    "providers": (
+        "SELECT service_instance_uuidv4,provider_kind,configuration_json FROM providers ORDER BY service_instance_uuidv4",
+        ("service_instance_uuidv4", "provider_kind", "configuration_json"),
+    ),
+    "repositories": (
+        "SELECT repository_uuidv4,configuration_json FROM repository_context ORDER BY repository_uuidv4",
+        ("repository_uuidv4", "configuration_json"),
+    ),
+    "sources": (
+        "SELECT source_registration_uuidv4,service_instance_uuidv4,configuration_json FROM sources ORDER BY source_registration_uuidv4",
+        ("source_registration_uuidv4", "service_instance_uuidv4", "configuration_json"),
+    ),
+    "source_repositories": (
+        "SELECT source_registration_uuidv4,repository_uuidv4,attributes_json FROM source_repositories ORDER BY source_registration_uuidv4,repository_uuidv4",
+        ("source_registration_uuidv4", "repository_uuidv4", "attributes_json"),
+    ),
+    "source_inventories": (
+        "SELECT source_registration_uuidv4,scope_json,observed_at_us,coverage_state,terminal,members_json,provenance_json FROM source_inventory_evidence ORDER BY source_registration_uuidv4,scope_json,observed_at_us,coverage_state,terminal,members_json,provenance_json",
+        (
+            "source_registration_uuidv4",
+            "scope_json",
+            "observed_at_us",
+            "coverage_state",
+            "terminal",
+            "members_json",
+            "provenance_json",
+        ),
+    ),
+    "resources": (
+        "SELECT service_instance_uuidv4,resource_kind,provider_resource_id,identifier_namespace_kind,identifier_namespace_id,document_kind,provider_document_id FROM resources ORDER BY service_instance_uuidv4,resource_kind,provider_resource_id",
+        (
+            "service_instance_uuidv4",
+            "resource_kind",
+            "provider_resource_id",
+            "identifier_namespace_kind",
+            "identifier_namespace_id",
+            "document_kind",
+            "provider_document_id",
+        ),
+    ),
+    "relations": (
+        "SELECT service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json,observed_at_us FROM resource_relations ORDER BY service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json",
+        (
+            "service_instance_uuidv4",
+            "resource_kind",
+            "provider_resource_id",
+            "relation_kind",
+            "members_json",
+            "provenance_json",
+            "scope_json",
+            "observed_at_us",
+        ),
+    ),
+    "collections": (
+        "SELECT c.service_instance_uuidv4,c.resource_kind,c.provider_resource_id,c.collection_kind,c.provenance_json,c.scope_json,t.observed_at_us,t.terminal_state,t.members_json FROM collections c JOIN collection_terminals t ON c.service_instance_uuidv4=t.service_instance_uuidv4 AND c.resource_kind=t.resource_kind AND c.provider_resource_id=t.provider_resource_id AND c.collection_kind=t.collection_kind AND c.provenance_json=t.provenance_json ORDER BY c.service_instance_uuidv4,c.resource_kind,c.provider_resource_id,c.collection_kind,c.provenance_json,t.observed_at_us,t.terminal_state,t.members_json",
+        (
+            "service_instance_uuidv4",
+            "resource_kind",
+            "provider_resource_id",
+            "collection_kind",
+            "provenance_json",
+            "scope_json",
+            "observed_at_us",
+            "terminal_state",
+            "members_json",
+        ),
+    ),
+    "repository_relations": (
+        "SELECT service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,target_json,clock_json,provenance_json,observed_at_us,event_report_members_json,event_report_scope_json FROM resource_repository_relations ORDER BY service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,clock_json,target_json,provenance_json",
+        (
+            "service_instance_uuidv4",
+            "resource_kind",
+            "provider_resource_id",
+            "relation_kind",
+            "target_json",
+            "clock_json",
+            "provenance_json",
+            "observed_at_us",
+            "event_report_members_json",
+            "event_report_scope_json",
+        ),
+    ),
+    "mapping_dispositions": (
+        "SELECT service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,claim_clock_json,claim_target_json,claim_provenance_json,disposition_kind,disposition_clock_json,disposition_provenance_json,observed_at_us,replacement_clock_json,replacement_target_json,replacement_provenance_json FROM repository_mapping_dispositions ORDER BY service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,claim_clock_json,claim_target_json,claim_provenance_json,disposition_kind,disposition_clock_json,disposition_provenance_json",
+        (
+            "service_instance_uuidv4",
+            "resource_kind",
+            "provider_resource_id",
+            "relation_kind",
+            "claim_clock_json",
+            "claim_target_json",
+            "claim_provenance_json",
+            "disposition_kind",
+            "disposition_clock_json",
+            "disposition_provenance_json",
+            "observed_at_us",
+            "replacement_clock_json",
+            "replacement_target_json",
+            "replacement_provenance_json",
+        ),
+    ),
+    "field_candidates": (
+        "SELECT service_instance_uuidv4,resource_kind,provider_resource_id,field_name,value_json,clock_domain,source_clock_us,provenance_json,observed_at_us FROM field_candidates ORDER BY service_instance_uuidv4,resource_kind,provider_resource_id,field_name,clock_json,value_json,provenance_json",
+        (
+            "service_instance_uuidv4",
+            "resource_kind",
+            "provider_resource_id",
+            "field_name",
+            "value_json",
+            "clock_domain",
+            "source_clock_us",
+            "provenance_json",
+            "observed_at_us",
+        ),
+    ),
+    "text_bodies": (
+        "SELECT sha256 FROM text_bodies ORDER BY sha256",
+        ("sha256",),
+    ),
+    "core_references": (
+        "SELECT service_instance_uuidv4,resource_kind,provider_resource_id,role,object_format,full_oid,provenance_json FROM core_references ORDER BY service_instance_uuidv4,resource_kind,provider_resource_id,role,object_format,full_oid,provenance_json",
+        (
+            "service_instance_uuidv4",
+            "resource_kind",
+            "provider_resource_id",
+            "role",
+            "object_format",
+            "full_oid",
+            "provenance_json",
+        ),
+    ),
     "scopes": (
         "SELECT owner_kind,owner_coordinates_json FROM coverage_scopes ORDER BY owner_kind,owner_coordinates_json",
         ("owner_kind", "owner_coordinates_json"),
@@ -1214,13 +1345,13 @@ class Context(ContextStore):
         self._check(write=True)
         return super().admit_coverage(claim)
 
-    def _exchange_coverage_rows(self, selector, work):
-        """Fetch fixed Context Coverage metadata after per-row reservations."""
+    def _exchange_metadata_rows(self, selector, work):
+        """Fetch fixed Context metadata after per-row reservations."""
         self._check()
-        spec = _EXPORT_COVERAGE_ROWS.get(selector) if type(selector) is str else None
+        spec = _EXPORT_CONTEXT_ROWS.get(selector) if type(selector) is str else None
         if spec is None:
             raise ContextError(
-                "QUERY_BUDGET", "exchange-coverage", "fixed selector required"
+                "QUERY_BUDGET", "exchange-metadata", "fixed selector required"
             )
         query, columns = spec
         projection = ",".join('octet_length("' + column + '")' for column in columns)
@@ -1232,7 +1363,7 @@ class Context(ContextStore):
                 if str(error).startswith("Could not decode to UTF-8 column"):
                     # The guarded connection has already published the stop.
                     raise ContextError(
-                        "AUTHORITATIVE_CORRUPTION", "exchange-coverage"
+                        "AUTHORITATIVE_CORRUPTION", "exchange-metadata"
                     ) from error
                 raise
 
@@ -1256,12 +1387,12 @@ class Context(ContextStore):
             if lengths is None:
                 break
             if len(result) >= 1_000_000:
-                raise CoordinationError("QUERY_BUDGET", "exchange-coverage")
+                raise CoordinationError("QUERY_BUDGET", "exchange-metadata")
             if any(
                 value is not None and (type(value) is not int or value < 0)
                 for value in lengths
             ):
-                with self._stored("exchange Coverage lengths"):
+                with self._stored("exchange metadata lengths"):
                     raise ValueError("invalid stored metadata length")
             size = sum(value or 0 for value in lengths)
             work.require("input_bytes", size)
@@ -1276,7 +1407,7 @@ class Context(ContextStore):
                 raise
             work.charge("input_bytes", size if row is not None else 0)
             if row is None:
-                with self._stored("exchange Coverage rows"):
+                with self._stored("exchange metadata rows"):
                     raise ValueError("metadata changed in snapshot")
             result.append(row)
         return result
