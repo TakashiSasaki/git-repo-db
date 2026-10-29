@@ -32,7 +32,6 @@ Fixed baseline `ab0786cfa29e7be129c7b17517a469ec1cf8b215`; these are specificati
 | A26 | Git-only metadata backup vs paired backup and onward restore | Correctly label scope, preserve new observations/claims/evidence and exact retained body where eligible, independently validate pairing/format/checksums; Access scope remains separate (D6). |
 | A27 | Reuse K with changed immutable subject visibility; separately submit genuine additional evidence with the same subject; observe a different scope | Reject the changed K subject; append genuinely distinct evidence without rebinding; issue a separate K for an actual observation with a different scope. Evidence with incomparable scopes is not forced into a conflict or winner (D1/D2/D4). |
 | A28 | Work budget expires during enumeration/proof, or retry rereads same source | Preserve admitted immutable units only; no truncation/false completion/hidden payload; charge actual performed work cumulatively, explicit finite limit increase needed for continuation (D6). |
-
 | A29 | Separately attributable comparable present and confirmed-absent reports under the same K and immutable subject | Retain both immutable claims and expose conflict; never silently choose a winner or rebind evidence; exact replay remains idempotent (D2/D3). |
 | A30 | Acquisition fails, subject scope differs, or a later actual ref read occurs | A failure does not assert absence; reject changed subject under K and issue a new K for an actual new observation (D1–D3). |
 
