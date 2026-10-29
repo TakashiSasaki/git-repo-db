@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import replace
 
 from repo_catalog.adapters.sqlite.acquisition import UnlimitedWorkBudget
+from repo_catalog.domain.p1_coordination import NotesLimits
 from repo_catalog.domain.p1_core import CoreFailure, Provenance, _performed, encode
 from repo_catalog.domain.ref_exchange import (
     claim_from_wire,
@@ -233,7 +234,7 @@ class _ExportWork:
 
 def ref_export_work(scope, counters):
     inner = UnlimitedWorkBudget(
-        note_bytes=max(1, scope.max_bytes),
+        note_bytes=max(NotesLimits().note_bytes, scope.max_bytes),
         work_limits={
             # max_bytes bounds emitted output; it must not prohibit the
             # finite accounting work needed to identify and omit a larger

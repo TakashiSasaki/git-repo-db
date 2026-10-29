@@ -70,6 +70,9 @@ from repo_catalog.domain.p1_core import (
     account_verification,
     encode,
     intrinsic_members,
+    uuid4_value,
+    valid_coverage_members,
+    valid_group,
     valid_note_role,
 )
 from repo_catalog.domain.p1_coverage import CoverageClaim
@@ -407,8 +410,9 @@ class ExchangeService:
             core_section: dict[str, list[dict[str, Any]]] | None = None
             if scope.include_core and self._has_core():
                 try:
-                    core_scope = self._expand_core_selection(scope)
-                    core_section = self._export_core(core_scope, sender_instance)
+                    with account_verification(self._export_work):
+                        core_scope = self._expand_core_selection(scope)
+                        core_section = self._export_core(core_scope, sender_instance)
                 except (sqlite3.OperationalError, CoordinationError) as error:
                     if (
                         getattr(error, "sqlite_errorcode", None)
@@ -532,12 +536,45 @@ class ExchangeService:
             for depth in range(scope.max_depth):
                 added = set()
                 for owner in sorted(frontier, key=lambda oid: oid.key):
-                    for row in core.sql(
-                        "SELECT membership FROM relation_groups WHERE object_format=? AND full_oid=? ORDER BY relation,scope,status,membership,provenance",
-                        owner.key,
+                    for row in core.exchange_metadata_rows(
+                        "relation_membership", owner.key, self._export_work
                     ):
-                        for member in json.loads(row[0]):
-                            target = OID(member[1], member[2])
+
+                        def stored_members(value):
+                            parsed = json.loads(value[3])
+                            if type(parsed) is not list:
+                                raise ValueError("invalid relation members")
+                            self._export_work.require("metadata_units", len(parsed))
+                            try:
+                                if not value[1] or not valid_group(
+                                    owner.object_format, value[0], value[2], value[3]
+                                ):
+                                    raise ValueError("invalid relation group")
+                                provenance = Provenance(*json.loads(value[4]))
+                                if provenance.encoded != value[4]:
+                                    raise ValueError("noncanonical relation provenance")
+                                targets = [
+                                    OID(member[1], member[2]) for member in parsed
+                                ]
+                            except BaseException:
+                                self._export_work.abandon("metadata_units")
+                                raise
+                            self._export_work.charge("metadata_units", len(parsed))
+                            return targets
+
+                        if type(row[3]) is not str or type(row[4]) is not str:
+                            core._integrity_stop(
+                                (owner, "invalid relation metadata type")
+                            )
+                        size = len(row[3]) + len(row[4])
+                        self._export_work.require("input_bytes", 13 * size + 2)
+                        try:
+                            targets = core._stored(owner, stored_members, row)
+                        except BaseException:
+                            self._export_work.abandon("input_bytes")
+                            raise
+                        self._export_work.charge("input_bytes", 2 * size)
+                        for target in targets:
                             if target in chosen:
                                 continue
                             if len(chosen) >= scope.max_units:
@@ -612,15 +649,35 @@ class ExchangeService:
                         self._selection_details["omissions"],
                     )
 
-                for row in core.sql(
-                    "SELECT repository_uuidv4 FROM repositories ORDER BY repository_uuidv4"
-                ):
+                for row in core.exchange_metadata_rows("repositories", (), ref_work):
+                    core._stored("repository", uuid4_value, row[0])
                     section["repositories"].append({"repository_uuidv4": row[0]})
 
-                for row in core.sql(
-                    "SELECT repository_uuidv4, field, value, provenance FROM repository_claims "
-                    "ORDER BY repository_uuidv4, field, value, provenance"
+                for row in core.exchange_metadata_rows(
+                    "repository_claims", (), ref_work
                 ):
+
+                    def stored_repository_claim(value):
+                        claim = RepositoryClaim(
+                            value[0],
+                            value[1],
+                            json.loads(value[2]),
+                            Provenance(*json.loads(value[3])),
+                        )
+                        if claim.key != tuple(value):
+                            raise ValueError("noncanonical repository claim")
+                        return claim
+
+                    if type(row[2]) is not str or type(row[3]) is not str:
+                        core._integrity_stop(("repository claim", "invalid JSON type"))
+                    size = len(row[2]) + len(row[3])
+                    ref_work.require("input_bytes", 13 * size + 2)
+                    try:
+                        core._stored("repository claim", stored_repository_claim, row)
+                    except BaseException:
+                        ref_work.abandon("input_bytes")
+                        raise
+                    ref_work.charge("input_bytes", 2 * size)
                     section["repository_claims"].append(
                         {
                             "repository_uuidv4": row[0],
@@ -631,11 +688,12 @@ class ExchangeService:
                     )
 
                 # Verify all retained_metadata rows via core.read_metadata(oid)
-                meta_rows = core.sql(
-                    "SELECT object_format, full_oid, physical_copy_uuidv4, native_type, size, digest_sha256 "
-                    "FROM retained_metadata ORDER BY object_format, full_oid, physical_copy_uuidv4"
+                meta_rows = core.exchange_metadata_rows(
+                    "retained_metadata", (), ref_work
                 )
                 for row in meta_rows:
+                    if type(row[4]) is not int or row[4] < 0:
+                        core._integrity_stop(("retained metadata", "invalid size"))
                     if row[4] > scope.max_bytes:
                         self._selection_details["omissions"].append(
                             {
@@ -645,11 +703,24 @@ class ExchangeService:
                             }
                         )
                         continue
-                    oid = OID(row[0], row[1])
+                    oid = core._stored("retained metadata", OID, row[0], row[1])
                     if selected_oids is not None and oid not in selected_oids:
                         continue
-                    # Always call read_metadata to verify byte/hash/grammar integrity before export
-                    body = core.read_metadata(oid)
+                    copy = core._stored("retained metadata", uuid4_value, row[2])
+                    actual = core.read_metadata_copy(oid, copy, ref_work)
+                    if tuple(
+                        actual[name]
+                        for name in (
+                            "object_format",
+                            "full_oid",
+                            "physical_copy_uuidv4",
+                            "native_type",
+                            "size",
+                            "digest_sha256",
+                        )
+                    ) != tuple(row):
+                        core._integrity_stop((oid, copy, "changed metadata copy"))
+                    body = actual["body"]
                     referenced_oids.add(oid)
                     if scope.include_retained_bytes:
                         section["retained_metadata"].append(
@@ -664,15 +735,9 @@ class ExchangeService:
                             }
                         )
 
-                claim_rows = core.sql(
-                    "SELECT c.object_format, c.full_oid, c.field, c.value, c.provenance, "
-                    "EXISTS(SELECT 1 FROM intrinsic_claims i WHERE i.object_format=c.object_format "
-                    "AND i.full_oid=c.full_oid AND i.field=c.field AND i.value=c.value "
-                    "AND i.provenance=c.provenance) AS checked "
-                    "FROM scalar_claims c ORDER BY c.object_format, c.full_oid, c.field, c.value, c.provenance"
-                )
+                claim_rows = core.exchange_metadata_rows("scalar_claims", (), ref_work)
                 for row in claim_rows:
-                    oid = OID(row[0], row[1])
+                    oid = core._stored("scalar claim", OID, row[0], row[1])
                     if selected_oids is not None and oid not in selected_oids:
                         continue
                     # Run typed scalar projection check on this field
@@ -711,15 +776,11 @@ class ExchangeService:
                             }
                         )
 
-                group_rows = core.sql(
-                    "SELECT g.object_format, g.full_oid, g.relation, g.scope, g.status, g.membership, g.provenance, "
-                    "EXISTS(SELECT 1 FROM intrinsic_groups i WHERE i.object_format=g.object_format "
-                    "AND i.full_oid=g.full_oid AND i.relation=g.relation AND i.scope=g.scope "
-                    "AND i.status=g.status AND i.membership=g.membership AND i.provenance=g.provenance) AS checked "
-                    "FROM relation_groups g ORDER BY g.object_format, g.full_oid, g.relation, g.scope, g.status, g.membership, g.provenance"
+                group_rows = core.exchange_metadata_rows(
+                    "relation_groups", (), ref_work
                 )
                 for row in group_rows:
-                    oid = OID(row[0], row[1])
+                    oid = core._stored("relation group", OID, row[0], row[1])
                     if selected_oids is not None and oid not in selected_oids:
                         continue
                     core.relations(oid, row[2], row[3])
@@ -763,10 +824,52 @@ class ExchangeService:
                             }
                         )
 
-                for row in core.sql(
-                    "SELECT capture_origin_uuidv4, capture_uuidv4, repository_uuidv4, kind, scope, value, provenance "
-                    "FROM git_observations ORDER BY capture_origin_uuidv4, capture_uuidv4"
+                for row in core.exchange_metadata_rows(
+                    "git_observations", (), ref_work
                 ):
+
+                    def stored_git_observation(value):
+                        observation_scope = json.loads(value[4])
+                        observed_value = json.loads(value[5])
+                        if (
+                            type(observation_scope) is not list
+                            or type(observed_value) is not dict
+                        ):
+                            raise ValueError("invalid Git observation JSON")
+                        units = sum(
+                            len(observed_value[name])
+                            for name in ("roots", "refs", "entries")
+                            if type(observed_value.get(name)) is list
+                        )
+                        ref_work.require("metadata_units", units)
+                        try:
+                            observation = GitObservation(
+                                value[0],
+                                value[1],
+                                value[2],
+                                value[3],
+                                tuple(observation_scope),
+                                observed_value,
+                                Provenance(*json.loads(value[6])),
+                            )
+                            if observation.key != tuple(value):
+                                raise ValueError("noncanonical Git observation")
+                        except BaseException:
+                            ref_work.abandon("metadata_units")
+                            raise
+                        ref_work.charge("metadata_units", units)
+                        return observation
+
+                    if any(type(row[index]) is not str for index in (4, 5, 6)):
+                        core._integrity_stop(("Git observation", "invalid JSON type"))
+                    size = sum(len(row[index]) for index in (4, 5, 6))
+                    ref_work.require("input_bytes", 13 * size + 2)
+                    try:
+                        core._stored("Git observation", stored_git_observation, row)
+                    except BaseException:
+                        ref_work.abandon("input_bytes")
+                        raise
+                    ref_work.charge("input_bytes", 2 * size)
                     section["git_observations"].append(
                         {
                             "capture_origin_uuidv4": row[0],
@@ -779,29 +882,44 @@ class ExchangeService:
                         }
                     )
 
-                capture_rows = core.sql(
-                    "SELECT capture_origin_uuidv4, capture_uuidv4, repository_uuidv4, source, ref, object_format, root "
-                    "FROM captures ORDER BY capture_origin_uuidv4, capture_uuidv4"
-                )
+                capture_rows = core.exchange_metadata_rows("captures", (), ref_work)
                 exported_captures: list[Capture] = []
                 exported_capture_pairs: set[tuple[str, str]] = set()
+                captures_by_pair = {}
                 for row in capture_rows:
-                    if (
-                        selected_oids is not None
-                        and OID(row[5], row[6]) not in selected_oids
-                    ):
+
+                    def stored_capture(value):
+                        capture = Capture(
+                            value[0],
+                            value[1],
+                            value[2],
+                            value[3],
+                            _decode_capture_ref(value[4]),
+                            OID(value[5], value[6]),
+                        )
+                        if capture.key != tuple(value):
+                            raise ValueError("noncanonical stored Capture")
+                        return capture
+
+                    if type(row[4]) is not str:
+                        core._integrity_stop(("Capture", "invalid ref type"))
+                    ref_work.require("input_bytes", 13 * len(row[4]) + 2)
+                    try:
+                        cap = core._stored("Capture", stored_capture, row)
+                    except BaseException:
+                        ref_work.abandon("input_bytes")
+                        raise
+                    ref_work.charge("input_bytes", 2 * len(row[4]))
+                    if selected_oids is not None and cap.root not in selected_oids:
                         continue
-                    decoded_ref = _decode_capture_ref(row[4])
                     if (
                         selected_notes_refs is not None
-                        and decoded_ref not in selected_notes_refs
+                        and cap.ref not in selected_notes_refs
                     ):
                         continue
-                    cap = Capture(
-                        row[0], row[1], row[2], row[3], decoded_ref, OID(row[5], row[6])
-                    )
                     exported_captures.append(cap)
                     exported_capture_pairs.add(cap.pair)
+                    captures_by_pair[cap.pair] = cap
                     referenced_oids.add(cap.root)
                     section["captures"].append(
                         {
@@ -815,16 +933,34 @@ class ExchangeService:
                         }
                     )
 
-                for row in core.sql(
-                    "SELECT capture_origin_uuidv4, capture_uuidv4, object_format, target, note, provenance "
-                    "FROM notes_claims ORDER BY capture_origin_uuidv4, capture_uuidv4, object_format, target, note, provenance"
-                ):
+                for row in core.exchange_metadata_rows("notes_claims", (), ref_work):
                     if (row[0], row[1]) not in exported_capture_pairs:
                         continue
-                    target_oid = OID(row[2], row[3])
+                    target_oid = core._stored("notes claim", OID, row[2], row[3])
                     if selected_oids is not None and target_oid not in selected_oids:
                         continue
-                    note_oid = OID(row[2], row[4])
+                    note_oid = core._stored("notes claim", OID, row[2], row[4])
+                    if type(row[5]) is not str:
+                        core._integrity_stop(("notes claim", "invalid provenance type"))
+
+                    def stored_notes_claim(value):
+                        claim = NotesClaim(
+                            captures_by_pair[(value[0], value[1])],
+                            target_oid,
+                            note_oid,
+                            Provenance(*json.loads(value[5])),
+                        )
+                        if claim.key != tuple(value):
+                            raise ValueError("noncanonical stored notes claim")
+                        return claim
+
+                    ref_work.require("input_bytes", 13 * len(row[5]) + 2)
+                    try:
+                        core._stored("notes claim", stored_notes_claim, row)
+                    except BaseException:
+                        ref_work.abandon("input_bytes")
+                        raise
+                    ref_work.charge("input_bytes", 2 * len(row[5]))
                     referenced_oids.add(target_oid)
                     referenced_oids.add(note_oid)
                     section["notes_claims"].append(
@@ -896,99 +1032,105 @@ class ExchangeService:
 
                     # 2. Verify notes_groups and note_roles via core.notes_projection
                     core.notes_projection(cap, cap.root)
-                    role_targets = core.sql(
-                        "SELECT DISTINCT object_format, target FROM note_roles "
-                        "WHERE capture_origin_uuidv4=? AND capture_uuidv4=?",
-                        cap.pair,
+                    role_targets = core.exchange_metadata_rows(
+                        "note_role_targets", cap.pair, ref_work
                     )
                     for rt in role_targets:
-                        t_oid = OID(rt[0], rt[1])
+                        t_oid = core._stored(cap.pair, OID, rt[0], rt[1])
                         if selected_oids is not None and t_oid not in selected_oids:
                             continue
                         core.notes_projection(cap, t_oid)
 
-                    prev_checked = getattr(core, "_checked_byte_read", False)
-                    core._checked_byte_read = True
-                    try:
-                        ng_rows = core.sql(
-                            "SELECT scope, status, membership, provenance FROM notes_groups "
-                            "WHERE capture_origin_uuidv4=? AND capture_uuidv4=? AND object_format=? "
-                            "ORDER BY scope, status, membership, provenance",
-                            (*cap.pair, cap.root.object_format),
-                        )
-                        for ng in ng_rows:
-                            if not ng[0] or not _notes_group(
-                                cap.root.object_format, ng[1], ng[2]
-                            ):
-                                core._integrity_stop(
-                                    (cap.pair, "invalid-stored-notes-group")
-                                )
-                            prov = core._provenance_value(cap.pair, ng[3])
-                            if prov.qualification != "reported":
-                                continue
-                            for m in json.loads(ng[2]):
-                                referenced_oids.add(OID(cap.root.object_format, m[0]))
-                                referenced_oids.add(OID(cap.root.object_format, m[1]))
-                            section["notes_groups"].append(
-                                {
-                                    "capture_origin_uuidv4": cap.capture_origin_uuidv4,
-                                    "capture_uuidv4": cap.capture_uuidv4,
-                                    "object_format": cap.root.object_format,
-                                    "scope": ng[0],
-                                    "status": ng[1],
-                                    "membership_json": ng[2],
-                                    "provenance_json": ng[3],
-                                    "authority": "reported",
-                                }
+                    ng_rows = core._legacy_exchange_metadata_rows(
+                        "notes_groups", (*cap.pair, cap.root.object_format), ref_work
+                    )
+                    for ng in ng_rows:
+                        if not ng[0] or not _notes_group(
+                            cap.root.object_format, ng[1], ng[2]
+                        ):
+                            core._integrity_stop(
+                                (cap.pair, "invalid-stored-notes-group")
                             )
-
-                        nr_rows = core.sql(
-                            "SELECT object_format, root, target, note, path, proof_bundle FROM note_roles "
-                            "WHERE capture_origin_uuidv4=? AND capture_uuidv4=? "
-                            "ORDER BY object_format, root, target, note, path, proof_bundle",
-                            cap.pair,
+                        prov = core._provenance_value(cap.pair, ng[3])
+                        if prov.qualification != "reported":
+                            continue
+                        for m in json.loads(ng[2]):
+                            referenced_oids.add(OID(cap.root.object_format, m[0]))
+                            referenced_oids.add(OID(cap.root.object_format, m[1]))
+                        section["notes_groups"].append(
+                            {
+                                "capture_origin_uuidv4": cap.capture_origin_uuidv4,
+                                "capture_uuidv4": cap.capture_uuidv4,
+                                "object_format": cap.root.object_format,
+                                "scope": ng[0],
+                                "status": ng[1],
+                                "membership_json": ng[2],
+                                "provenance_json": ng[3],
+                                "authority": "reported",
+                            }
                         )
-                        for nr in nr_rows:
-                            t_oid = OID(nr[0], nr[2])
-                            n_oid = OID(nr[0], nr[3])
-                            if selected_oids is not None and t_oid not in selected_oids:
-                                continue
-                            if not valid_note_role(
-                                nr[0], nr[1], nr[2], nr[3], nr[4], nr[5]
-                            ):
-                                core._integrity_stop((cap.pair, t_oid, "notes-role"))
-                            referenced_oids.add(t_oid)
-                            referenced_oids.add(n_oid)
-                            section["note_roles"].append(
-                                {
-                                    "capture_origin_uuidv4": cap.capture_origin_uuidv4,
-                                    "capture_uuidv4": cap.capture_uuidv4,
-                                    "object_format": nr[0],
-                                    "root": nr[1],
-                                    "target": nr[2],
-                                    "note": nr[3],
-                                    "path": nr[4],
-                                    "proof_bundle_json": nr[5],
-                                }
-                            )
 
-                        rn_rows = core.sql(
-                            "SELECT object_format, full_oid, physical_copy_uuidv4, size, digest_sha256, "
-                            "root, target, path, proof_bundle FROM retained_notes "
-                            "WHERE capture_origin_uuidv4=? AND capture_uuidv4=? "
-                            "ORDER BY object_format, full_oid, physical_copy_uuidv4",
-                            cap.pair,
-                        )
-                    finally:
-                        core._checked_byte_read = prev_checked
-
-                    for rn in rn_rows:
-                        t_oid = OID(rn[0], rn[6])
-                        n_oid = OID(rn[0], rn[1])
+                    nr_rows = core._legacy_exchange_metadata_rows(
+                        "note_roles", cap.pair, ref_work
+                    )
+                    for nr in nr_rows:
+                        t_oid = core._stored(cap.pair, OID, nr[0], nr[2])
+                        n_oid = core._stored(cap.pair, OID, nr[0], nr[3])
                         if selected_oids is not None and t_oid not in selected_oids:
                             continue
-                        # Always call core.read_note to verify role proof + note blob integrity
-                        note_bytes = core.read_note(cap, t_oid, n_oid)
+                        if not valid_note_role(
+                            nr[0], nr[1], nr[2], nr[3], nr[4], nr[5]
+                        ):
+                            core._integrity_stop((cap.pair, t_oid, "notes-role"))
+                        referenced_oids.add(t_oid)
+                        referenced_oids.add(n_oid)
+                        section["note_roles"].append(
+                            {
+                                "capture_origin_uuidv4": cap.capture_origin_uuidv4,
+                                "capture_uuidv4": cap.capture_uuidv4,
+                                "object_format": nr[0],
+                                "root": nr[1],
+                                "target": nr[2],
+                                "note": nr[3],
+                                "path": nr[4],
+                                "proof_bundle_json": nr[5],
+                            }
+                        )
+
+                    rn_rows = core._legacy_exchange_metadata_rows(
+                        "retained_notes", cap.pair, ref_work
+                    )
+
+                    for rn in rn_rows:
+                        t_oid = core._stored(cap.pair, OID, rn[0], rn[6])
+                        n_oid = core._stored(cap.pair, OID, rn[0], rn[1])
+                        copy = core._stored(cap.pair, uuid4_value, rn[2])
+                        if selected_oids is not None and t_oid not in selected_oids:
+                            continue
+                        # Verify the specific physical copy being emitted, not
+                        # another retained copy of the same content OID.
+                        actual = core.read_legacy_note_copy(n_oid, copy, ref_work)
+                        if (
+                            actual["capture_origin_uuidv4"],
+                            actual["capture_uuidv4"],
+                        ) != cap.pair or tuple(
+                            actual[name]
+                            for name in (
+                                "object_format",
+                                "full_oid",
+                                "physical_copy_uuidv4",
+                                "size",
+                                "digest_sha256",
+                                "root",
+                                "target",
+                                "path",
+                                "proof_bundle",
+                            )
+                        ) != tuple(rn):
+                            core._integrity_stop(
+                                (cap.pair, n_oid, "changed legacy note copy")
+                            )
+                        note_bytes = actual["body"]
                         referenced_oids.add(t_oid)
                         referenced_oids.add(n_oid)
                         if scope.include_retained_bytes:
@@ -1009,18 +1151,56 @@ class ExchangeService:
                                 }
                             )
 
-                cov_scope_rows = core.sql(
-                    "SELECT owner_kind, owner_coordinates_json, repository_uuidv4, "
-                    "capture_origin_uuidv4, capture_uuidv4, object_format, full_oid, field, coverage_kind "
-                    "FROM coverage_scopes ORDER BY owner_kind, owner_coordinates_json"
+                cov_scope_rows = core.exchange_metadata_rows(
+                    "coverage_scopes", (), ref_work
                 )
                 exported_cov_scopes: set[tuple[str, str]] = set()
                 exported_ref_keys = {
                     (r["observation_origin_uuidv4"], r["ref_observation_uuidv7"])
                     for r in section["ref_observations"]
                 }
+                scopes_by_key = {}
+
+                def stored_scope(row):
+                    coordinates = json.loads(row[1])
+                    if type(coordinates) is not list:
+                        raise ValueError("Coverage coordinates must be a list")
+                    stored = CoreCoverageScope(row[0], tuple(coordinates))
+                    if stored.encoded != row[1] or stored.coordinates[-1] != row[8]:
+                        raise ValueError("noncanonical Coverage scope")
+                    values = [None] * 8
+                    positions = {
+                        "repository": (0,),
+                        "capture": (1, 2),
+                        "ref_observation": (6, 7),
+                        "object": (3, 4),
+                        "field": (3, 4, 5),
+                    }
+                    for position, value in zip(
+                        positions[stored.owner_kind],
+                        stored.coordinates[:-1],
+                        strict=True,
+                    ):
+                        values[position] = value
+                    if tuple(values) != (*row[2:8], *row[9:11]):
+                        raise ValueError("Coverage scope columns disagree")
+                    return stored
+
                 for row in cov_scope_rows:
                     owner_kind = row[0]
+                    # Validate the actual stored identity, including its
+                    # denormalized coordinates, before selection uses it.
+                    if type(row[1]) is not str:
+                        core._integrity_stop(
+                            ("coverage scope", "invalid coordinates type")
+                        )
+                    ref_work.require("input_bytes", 13 * len(row[1]) + 2)
+                    try:
+                        c_scope = core._stored("coverage scope", stored_scope, row)
+                    except BaseException:
+                        ref_work.abandon("input_bytes")
+                        raise
+                    ref_work.charge("input_bytes", 2 * len(row[1]))
                     if (
                         owner_kind == "capture"
                         and (row[3], row[4]) not in exported_capture_pairs
@@ -1029,15 +1209,14 @@ class ExchangeService:
                     if owner_kind in ("object", "field") and selected_oids is not None:
                         if OID(row[5], row[6]) not in selected_oids:
                             continue
-                    coords = tuple(json.loads(row[1]))
                     if (
                         owner_kind == "ref_observation"
-                        and coords[:2] not in exported_ref_keys
+                        and c_scope.coordinates[:2] not in exported_ref_keys
                     ):
                         continue
-                    c_scope = CoreCoverageScope(owner_kind, coords)
                     core.coverage(c_scope, ref_work)
                     exported_cov_scopes.add((row[0], row[1]))
+                    scopes_by_key[(row[0], row[1])] = c_scope
                     section["coverage_scopes"].append(
                         {
                             "owner_kind": row[0],
@@ -1045,12 +1224,28 @@ class ExchangeService:
                         }
                     )
 
-                for row in core.sql(
-                    "SELECT owner_kind, owner_coordinates_json, observed_at_us, coverage_state, details_json "
-                    "FROM coverage_claims ORDER BY observed_at_us, owner_kind, owner_coordinates_json, coverage_state"
-                ):
+                for row in core.exchange_metadata_rows("coverage_claims", (), ref_work):
                     if (row[0], row[1]) not in exported_cov_scopes:
                         continue
+                    # Latest-state projection does not validate older claims.
+                    # Preserve and validate every exported historical claim.
+                    if row[4] is not None and type(row[4]) is not str:
+                        core._integrity_stop(("coverage claim", "invalid details type"))
+                    details_size = len(row[4]) if row[4] is not None else 0
+                    ref_work.require("input_bytes", 13 * details_size + 2)
+                    try:
+                        core._stored(
+                            "coverage claim",
+                            CoverageClaim,
+                            scopes_by_key[(row[0], row[1])],
+                            row[2],
+                            row[3],
+                            row[4],
+                        )
+                    except BaseException:
+                        ref_work.abandon("input_bytes")
+                        raise
+                    ref_work.charge("input_bytes", 2 * details_size)
                     section["coverage_claims"].append(
                         {
                             "owner_kind": row[0],
@@ -1124,14 +1319,65 @@ class ExchangeService:
                             }
                         )
 
-                for row in core.sql(
-                    "SELECT owner_kind, owner_coordinates_json, observed_at_us, coverage_state, members_json, provenance "
-                    "FROM core_coverage_proofs ORDER BY observed_at_us, owner_kind, owner_coordinates_json"
-                ):
+                exported_cov_claims = {
+                    (
+                        row["owner_kind"],
+                        row["owner_coordinates_json"],
+                        row["observed_at_us"],
+                        row["coverage_state"],
+                    )
+                    for row in section["coverage_claims"]
+                }
+                for row in core.exchange_metadata_rows("coverage_proofs", (), ref_work):
                     if (row[0], row[1]) not in exported_cov_scopes:
                         continue
-                    members = [OID(m[0], m[1]) for m in json.loads(row[4])]
+                    c_scope = scopes_by_key[(row[0], row[1])]
+                    if tuple(row[:4]) not in exported_cov_claims:
+                        core._integrity_stop((c_scope, "missing Coverage proof claim"))
+                    if c_scope.owner_kind == "ref_observation":
+                        core._integrity_stop(
+                            (c_scope, "unsupported generic ref Coverage proof")
+                        )
+                    if type(row[4]) is not str or type(row[5]) is not str:
+                        core._integrity_stop((c_scope, "invalid Coverage proof type"))
+
+                    def stored_proof(value):
+                        CoverageClaim(c_scope, value[2], value[3])
+                        parsed = json.loads(value[4])
+                        if type(parsed) is not list:
+                            raise ValueError("invalid Coverage proof members")
+                        ref_work.require("metadata_units", len(parsed))
+                        try:
+                            if not valid_coverage_members(value[4]):
+                                raise ValueError("invalid Coverage proof members")
+                            provenance = Provenance(*json.loads(value[5]))
+                            if provenance.encoded != value[5]:
+                                raise ValueError(
+                                    "noncanonical Coverage proof provenance"
+                                )
+                            members = [OID(*m) for m in parsed]
+                        except BaseException:
+                            ref_work.abandon("metadata_units")
+                            raise
+                        ref_work.charge("metadata_units", len(parsed))
+                        return members
+
+                    input_size = len(row[4]) + len(row[5])
+                    ref_work.require("input_bytes", 13 * input_size + 2)
+                    try:
+                        members = core._stored(c_scope, stored_proof, row)
+                    except BaseException:
+                        ref_work.abandon("input_bytes")
+                        raise
+                    ref_work.charge("input_bytes", 2 * input_size)
                     for m in members:
+                        if not core.sql(
+                            "SELECT 1 FROM git_objects WHERE object_format=? AND full_oid=?",
+                            m.key,
+                        ):
+                            core._integrity_stop(
+                                (c_scope, "missing Coverage proof member", m.key)
+                            )
                         referenced_oids.add(m)
                     section["coverage_proofs"].append(
                         {
@@ -1144,10 +1390,8 @@ class ExchangeService:
                         }
                     )
 
-                for row in core.sql(
-                    "SELECT object_format, full_oid FROM git_objects ORDER BY object_format, full_oid"
-                ):
-                    oid = OID(row[0], row[1])
+                for row in core.exchange_metadata_rows("git_objects", (), ref_work):
+                    oid = core._stored("git object", OID, row[0], row[1])
                     if (
                         selected_oids is not None
                         and oid not in selected_oids

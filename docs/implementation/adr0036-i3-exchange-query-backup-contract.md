@@ -42,6 +42,13 @@ request. Limits and incomplete selection are not catalog corruption. Core-only
 receive still requires Operational accounting; omitting Context from the wire
 does not bypass validation of a coexisting Context store.
 
+Core Exchange uses fixed selectors to measure and charge metadata before
+materialization, including historical Coverage Claims and legacy Notes evidence.
+Each emitted retained note or structural metadata copy is checked by its own
+physical identity.
+Stored text decode failures stop the catalog; unrelated SQL or work-callback
+failures are not reclassified as corruption.
+
 ## Query and Coverage
 
 The production Query service exposes typed observation, enumeration, mapping

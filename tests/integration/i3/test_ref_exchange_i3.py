@@ -18,7 +18,14 @@ from repo_catalog.domain.exchange import (
     decode_package,
     encode_package,
 )
-from repo_catalog.domain.p1_core import OID, CoreCoverageScope, CoreFailure, Provenance
+from repo_catalog.domain.p1_core import (
+    OID,
+    CoreCoverageScope,
+    CoreFailure,
+    Provenance,
+    RelationGroup,
+    RepositoryClaim,
+)
 from repo_catalog.domain.p1_coverage import CoverageClaim
 from repo_catalog.domain.ref_observation import (
     RefAbsenceEvidence,
@@ -121,8 +128,257 @@ def test_ref_export_typed_read_keeps_budget_and_noncorruption_errors(
         app.core.ref_exchange_rows(
             "groups", claim.identity, FailingWork(), maximum=10, max_bytes=10000
         )
+    with pytest.raises(sqlite3.OperationalError, match="from callback"):
+        app.core.exchange_metadata_rows("repositories", (), FailingWork())
+
+    fetched = []
+    original_next = app.core._next_export_metadata_row
+
+    def counted_next(cursor):
+        fetched.append(1)
+        return original_next(cursor)
+
+    class SmallInputBudget(Budget):
+        def require(self, unit, amount=1):
+            super().require(unit, amount)
+            if unit == "input_bytes" and amount > 1:
+                raise CoreFailure("BUDGET", unit, "small test budget")
+
+    monkeypatch.setattr(app.core, "_next_export_metadata_row", counted_next)
+    with pytest.raises(CoreFailure) as small:
+        app.core.exchange_metadata_rows("repositories", (), SmallInputBudget())
+    assert small.value.code == "BUDGET"
+    assert len(fetched) == 1  # Only lengths were fetched; no row values.
     assert not (core_path.parent / "p1-recovery-stop.json").exists()
     app.core.ensure_available()
+
+
+@pytest.mark.parametrize("damage", ["invalid_utf8", "noncanonical_json"])
+@pytest.mark.parametrize("family", ["repository_claims", "relation_groups"])
+def test_export_fixed_core_metadata_corruption_stops_catalog(
+    acquisition, tmp_path, family, damage
+):
+    app, _, _, repository, origin, core_path, _ = acquisition
+    capture, _, _ = p4_fixtures.fixture_note(acquisition)
+    discover(app, repository, origin, str(uuid4()))
+    provenance = Provenance("source", "observation", "coordinate", "decoder", "1")
+    if family == "repository_claims":
+        app.core.admit_repository_claim(
+            RepositoryClaim(repository, "name", "repo", provenance)
+        )
+        column = "value"
+    else:
+        app.core.admit_group(
+            RelationGroup(
+                capture.root, "tree_entries", "reported", "known_empty", (), provenance
+            )
+        )
+        column = "membership"
+    selection = ExchangeSelectionScope(
+        all_selected=True,
+        include_context=False,
+        include_retained_bytes=False,
+        object_oids=(capture.root,),
+    )
+    service = ExchangeService(tmp_path, operational=tmp_path)
+    assert service.export_package(selection=selection).core[family]
+
+    db = connect(core_path, "core")
+    try:
+        triggers = db.execute(
+            "SELECT name,sql FROM sqlite_schema WHERE type='trigger' AND tbl_name=? "
+            "AND upper(sql) LIKE '%BEFORE UPDATE%'",
+            (family,),
+        ).fetchall()
+        assert triggers
+        for name, _ in triggers:
+            db.execute('DROP TRIGGER "' + name + '"')
+        db.execute("PRAGMA ignore_check_constraints=ON")
+        if damage == "invalid_utf8":
+            db.execute("UPDATE " + family + " SET " + column + "=CAST(x'80' AS TEXT)")
+        else:
+            value = ' "repo"' if family == "repository_claims" else "[ ]"
+            db.execute("UPDATE " + family + " SET " + column + "=?", (value,))
+        db.execute("PRAGMA ignore_check_constraints=OFF")
+        for _, trigger in triggers:
+            db.execute(trigger)
+        db.commit()
+    finally:
+        db.close()
+
+    with pytest.raises(CoreFailure) as corruption:
+        service.export_package(selection=selection)
+    assert corruption.value.code == "AUTHORITATIVE_CORRUPTION"
+    assert (core_path.parent / "p1-recovery-stop.json").exists()
+    with pytest.raises(CoreFailure) as stopped:
+        app.core.ensure_available()
+    assert stopped.value.code == "RECOVERY_STOP"
+
+
+@pytest.mark.parametrize(
+    "family,column",
+    [
+        ("notes_groups", "scope"),
+        ("note_roles", "path"),
+        ("retained_notes", "digest_sha256"),
+    ],
+)
+def test_export_legacy_notes_metadata_utf8_corruption_stops_catalog(
+    acquisition, tmp_path, family, column
+):
+    app, _, _, _, _, core_path, _ = acquisition
+    capture, target, _ = p4_fixtures.fixture_note(acquisition)
+    app.acquire_note(capture, target)
+    app.inventory(capture)
+    service = ExchangeService(tmp_path, operational=tmp_path)
+    selection = ExchangeSelectionScope(all_selected=True, include_context=False)
+    exported_family = "notes_inventories" if family == "notes_groups" else family
+    assert service.export_package(selection=selection).core[exported_family]
+
+    db = connect(core_path, "core")
+    try:
+        db.execute("PRAGMA foreign_keys=OFF")
+        triggers = db.execute(
+            "SELECT name,sql FROM sqlite_schema WHERE type='trigger' AND tbl_name=? "
+            "AND upper(sql) LIKE '%BEFORE UPDATE%'",
+            (family,),
+        ).fetchall()
+        assert triggers
+        for name, _ in triggers:
+            db.execute('DROP TRIGGER "' + name + '"')
+        db.execute("PRAGMA ignore_check_constraints=ON")
+        db.execute("UPDATE " + family + " SET " + column + "=CAST(x'80' AS TEXT)")
+        db.execute("PRAGMA ignore_check_constraints=OFF")
+        for _, trigger in triggers:
+            db.execute(trigger)
+        db.commit()
+        db.execute("PRAGMA foreign_keys=ON")
+    finally:
+        db.close()
+
+    with pytest.raises(CoreFailure) as corruption:
+        service.export_package(selection=selection)
+    assert corruption.value.code == "AUTHORITATIVE_CORRUPTION"
+    assert (core_path.parent / "p1-recovery-stop.json").exists()
+    with pytest.raises(CoreFailure) as stopped:
+        app.core.ensure_available()
+    assert stopped.value.code == "RECOVERY_STOP"
+
+
+def test_legacy_export_budget_callback_cannot_read_proofs(acquisition):
+    app, _, _, _, _, core_path, _ = acquisition
+    capture, target, note = p4_fixtures.fixture_note(acquisition)
+    app.acquire_note(capture, target)
+    rejected = []
+
+    class ReentryBudget(Budget):
+        def require(self, unit, amount=1):
+            if not rejected:
+                with pytest.raises(sqlite3.DatabaseError):
+                    app.core.sql("SELECT proof_bundle FROM note_roles")
+                rejected.append(True)
+            super().require(unit, amount)
+
+    rows = app.core._legacy_exchange_metadata_rows(
+        "note_roles", capture.pair, ReentryBudget()
+    )
+    assert rows and rejected
+    copy = app.core.sql("SELECT physical_copy_uuidv4 FROM retained_notes")[0][0]
+    rejected.clear()
+    exact = app.core.read_legacy_note_copy(note, copy, ReentryBudget())
+    assert exact["full_oid"] == note.full_oid and rejected
+    assert not (core_path.parent / "p1-recovery-stop.json").exists()
+
+
+def test_export_verifies_each_legacy_note_copy(acquisition, tmp_path):
+    app, _, _, _, _, core_path, _ = acquisition
+    capture, target, note = p4_fixtures.fixture_note(acquisition)
+    first, second = sorted((str(uuid4()), str(uuid4())))
+    app.acquire_note(capture, target, physical_copy_uuidv4=first)
+    app.acquire_note(capture, target, physical_copy_uuidv4=second)
+    service = ExchangeService(tmp_path, operational=tmp_path)
+    selection = ExchangeSelectionScope(all_selected=True, include_context=False)
+    assert len(service.export_package(selection=selection).core["retained_notes"]) == 2
+
+    db = connect(core_path, "core")
+    try:
+        trigger = db.execute(
+            "SELECT sql FROM sqlite_schema WHERE name='p1_immutable_retained_notes_update'"
+        ).fetchone()[0]
+        db.execute("DROP TRIGGER p1_immutable_retained_notes_update")
+        db.execute("PRAGMA ignore_check_constraints=ON")
+        db.execute(
+            "UPDATE retained_notes SET body=zeroblob(size) WHERE object_format=? AND full_oid=? AND physical_copy_uuidv4=?",
+            (*note.key, second),
+        )
+        db.execute("PRAGMA ignore_check_constraints=OFF")
+        db.execute(trigger)
+        db.commit()
+    finally:
+        db.close()
+
+    with pytest.raises(CoreFailure) as corruption:
+        service.export_package(selection=selection)
+    assert corruption.value.code == "AUTHORITATIVE_CORRUPTION"
+    assert (core_path.parent / "p1-recovery-stop.json").exists()
+    with pytest.raises(CoreFailure) as stopped:
+        app.core.ensure_available()
+    assert stopped.value.code == "RECOVERY_STOP"
+
+
+def test_export_verifies_each_retained_metadata_copy(acquisition, tmp_path):
+    app, path, fmt, _, _, core_path, _ = acquisition
+    capture, _, _ = p4_fixtures.fixture_note(acquisition)
+    body = p4_fixtures.git(path, "cat-file", "tree", capture.root.full_oid)
+    native = p1_fixtures.native("tree", body, fmt)
+    assert native.oid == capture.root
+    first, second = sorted((str(uuid4()), str(uuid4())))
+    app.core.admit_metadata(native, first, app.work)
+    app.core.admit_metadata(native, second, app.work)
+    rejected = []
+
+    class ReentryBudget(Budget):
+        def require(self, unit, amount=1):
+            if not rejected:
+                with pytest.raises(sqlite3.DatabaseError):
+                    app.core.sql("SELECT body FROM retained_metadata")
+                rejected.append(True)
+            super().require(unit, amount)
+
+    assert (
+        app.core.read_metadata_copy(native.oid, first, ReentryBudget())["body"] == body
+    )
+    assert rejected
+    service = ExchangeService(tmp_path, operational=tmp_path)
+    selection = ExchangeSelectionScope(all_selected=True, include_context=False)
+    assert (
+        len(service.export_package(selection=selection).core["retained_metadata"]) == 2
+    )
+
+    db = connect(core_path, "core")
+    try:
+        trigger = db.execute(
+            "SELECT sql FROM sqlite_schema WHERE name='p1_immutable_retained_metadata_update'"
+        ).fetchone()[0]
+        db.execute("DROP TRIGGER p1_immutable_retained_metadata_update")
+        db.execute("PRAGMA ignore_check_constraints=ON")
+        db.execute(
+            "UPDATE retained_metadata SET body=zeroblob(size) WHERE object_format=? AND full_oid=? AND physical_copy_uuidv4=?",
+            (*native.oid.key, second),
+        )
+        db.execute("PRAGMA ignore_check_constraints=OFF")
+        db.execute(trigger)
+        db.commit()
+    finally:
+        db.close()
+
+    with pytest.raises(CoreFailure) as corruption:
+        service.export_package(selection=selection)
+    assert corruption.value.code == "AUTHORITATIVE_CORRUPTION"
+    assert (core_path.parent / "p1-recovery-stop.json").exists()
+    with pytest.raises(CoreFailure) as stopped:
+        app.core.ensure_available()
+    assert stopped.value.code == "RECOVERY_STOP"
 
 
 def test_unsupported_ref_coverage_claim_roundtrips_as_unknown(acquisition, tmp_path):
@@ -175,6 +431,66 @@ def test_unsupported_ref_coverage_claim_roundtrips_as_unknown(acquisition, tmp_p
     onward = receiver.export_package(selection=selection)
     assert onward.core["coverage_claims"] == package.core["coverage_claims"]
     assert not onward.core["ref_coverage_proofs"]
+
+
+@pytest.mark.parametrize("damage", ["invalid_utf8", "noncanonical_json"])
+def test_export_checks_every_historical_ref_coverage_claim(
+    acquisition, tmp_path, damage
+):
+    app, _, _, repository, origin, core_path, _ = acquisition
+    p4_fixtures.fixture_note(acquisition)
+    claim = (
+        discover(app, repository, origin, str(uuid4())).enumerations[0].links[0].claim
+    )
+    scope = CoreCoverageScope(
+        "ref_observation", (*claim.ref_observation_key.key, "ref-enumeration")
+    )
+    app.core.admit_coverage_scope(scope)
+    app.core.admit_coverage(CoverageClaim(scope, 20, "complete", "{}"))
+    app.core.admit_coverage(CoverageClaim(scope, 21, "partial", "{}"))
+    assert app.core.coverage(scope, app.work).state == "partial"
+    selection = ExchangeSelectionScope(
+        all_selected=True,
+        include_context=False,
+        include_retained_bytes=False,
+        object_oids=(),
+        ref_observation_keys=(claim.ref_observation_key,),
+    )
+    service = ExchangeService(tmp_path, operational=tmp_path)
+    exported = service.export_package(selection=selection)
+    assert [r["observed_at_us"] for r in exported.core["coverage_claims"]] == [20, 21]
+
+    db = connect(core_path, "core")
+    try:
+        names = ("p1_immutable_coverage_claims_update", "coverage_claim_no_update")
+        triggers = [
+            db.execute(
+                "SELECT sql FROM sqlite_schema WHERE name=?", (name,)
+            ).fetchone()[0]
+            for name in names
+        ]
+        for name in names:
+            db.execute("DROP TRIGGER " + name)
+        db.execute("PRAGMA ignore_check_constraints=ON")
+        db.execute(
+            "UPDATE coverage_claims SET details_json="
+            + ("CAST(x'80' AS TEXT)" if damage == "invalid_utf8" else "'[1, 2]'")
+            + " WHERE observed_at_us=20"
+        )
+        db.execute("PRAGMA ignore_check_constraints=OFF")
+        for trigger in triggers:
+            db.execute(trigger)
+        db.commit()
+    finally:
+        db.close()
+
+    with pytest.raises(CoreFailure) as corruption:
+        service.export_package(selection=selection)
+    assert corruption.value.code == "AUTHORITATIVE_CORRUPTION"
+    assert (core_path.parent / "p1-recovery-stop.json").exists()
+    with pytest.raises(CoreFailure) as stopped:
+        app.core.ensure_available()
+    assert stopped.value.code == "RECOVERY_STOP"
 
 
 def test_rootless_ref_and_original_enumeration_roundtrip(acquisition, tmp_path):
