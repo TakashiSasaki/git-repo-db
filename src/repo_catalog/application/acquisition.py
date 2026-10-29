@@ -150,11 +150,12 @@ class _PreparedCore:
         from repo_catalog.domain.ref_observation import RefObservationProjection
 
         for name, args, _ in reversed(self.operations):
+            _charge(work, "metadata_units", 1)
             if name == "admit_ref_enumeration":
                 links = args[1]
                 for link in links:
+                    _charge(work, "metadata_units", 1)
                     if link.observation.ref_observation_key == key:
-                        _charge(work, "metadata_units", 1)
                         return RefObservationProjection(
                             link.observation, (link.claim,), False
                         )

@@ -18,13 +18,23 @@ changed event, membership, subject or Claim is rejected. A repeated physical
 scan uses a new event and new item IDs, even if all OIDs are unchanged.
 
 The original request result and issuance are pinned in Operational before Core
-admission. After a pin, retry and concurrent redelivery use the pinned event and
+admission. Before reading Git, a bounded set of catalog-local advisory lock
+stripes serializes read-and-pin for the same request and normalized slot.
+An overlapping operation on that stripe receives `ACQUISITION_BUSY` and
+may retry; it does not perform a second read and discard its result. The guard
+holds no database transaction over Git I/O and releases on process exit or
+exception. After a pin, retry and concurrent redelivery use the pinned event and
 results, with actual processing charged again. If execution ends before a pin,
 the next scan is a new occurrence; Operational loss makes old continuation
 unavailable, without invalidating Core facts or resetting a continuing budget.
 Operational stores only bounded metadata, not Git object or note bodies. Event
 and progress reads reserve variable-width metadata and dependent rows before
 materializing them. Exact per-request work remains cumulative through retries.
+Replaying an existing event first revalidates its stored event, links and
+dependencies under the writer cut within finite configurable bounds. Confirmed
+stored damage stops the catalog; a changed incoming event or exhausted budget
+alone is an ordinary refusal. Prepared Core lookups charge each operation and
+link examined.
 
 The ordinary Git adapter records direct, symbolic, resolved and peeled values
 only where `for-each-ref` actually provides them, preserving raw ref bytes. Its

@@ -974,12 +974,19 @@ This says nothing about an unqueried remote. Test a dangling symbolic ref, a
 missing name, and a failing lookup separately.
 
 When an operation performs two scans, give each actual scan and its items new
-occurrence identities. Pin the entire bounded result before Core admission;
+occurrence identities. Serialize read-and-pin before the source read across
+cooperating processes; a nonblocking busy response must perform no second scan
+and can be retried. Use stable, finite lock stripes keyed by the full request
+and normalized slot; the hash is coordination only, never an identity or
+authority. Never unlink a live stripe. Pin the entire bounded result before Core admission;
 after a crash or concurrent redelivery, replay the winning pin rather than
 reading Git again under its old identity. A lost pin permits a new read and new
-identity, not rebinding. Preserve the event's immutable item count and check it
-on typed reads and replay so a missing stored link stops the catalog. Reserve
-progress and dependency metadata before fetching it and charge repeated work.
+identity, not rebinding. Before comparing an existing event with a replay,
+validate the stored event and its immutable item count and links under the
+writer cut; invalid stored scope or a missing link stops the catalog, while a
+valid changed input remains a refusal. Reserve
+progress and dependency metadata before fetching it and charge repeated work,
+including every prepared operation and link actually scanned.
 A checked note path remains bound to the exact Claim and root; a shared Mapping
 or an earlier Capture never supplies body authority by itself. Exercise these
 boundaries with `scripts/local-run.sh pytest -q -n 2 tests/integration/p4/test_ref_observation_i2.py`.

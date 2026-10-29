@@ -154,68 +154,69 @@ class NotesAcquisition:
             sorted(set(nominated)),
         ]
         max_pinned = min(self.source.discovery_bytes * 8 + 1_048_576, 128 * 1024 * 1024)
-        saved = self.progress.load_bounded(scope, max_pinned)
-        if saved is None:
-            inventory = self.source.discover(self.work, nominated)
-            scans = getattr(inventory, "scans", ())
-            if (
-                not isinstance(scans, tuple)
-                or len(scans) > 2
-                or inventory.terminal
-                and len(scans) != 2
-            ):
-                raise CoreFailure(
-                    "NOTES_SCOPE", scope, "original scan boundaries required"
-                )
-            count = len(inventory.refs) + sum(len(scan.refs) for scan in scans)
-            self.work.require("metadata_units", count)
-            self.work.charge("metadata_units", count)
-            estimate = (
-                4096
-                + len(encode_metered(self.work, binding, max_pinned))
-                + sum(2 * len(name) + 256 for name, _ in inventory.refs)
-            )
-            estimate += sum(
-                2 * len(name) + 256 for scan in scans for name, _ in scan.refs
-            )
-            if estimate > max_pinned:
-                raise CoreFailure("BUDGET", scope, "finite pinned discovery limit")
-            self.work.require("input_bytes", estimate)
-            try:
-                candidate = {
-                    "binding": binding,
-                    "refs": [
-                        [name.hex(), *oid.key, str(uuid4())]
-                        for name, oid in inventory.refs
-                    ],
-                    "status": inventory.status,
-                    "terminal": inventory.terminal,
-                    "failure_code": inventory.failure_code,
-                    "detail": inventory.detail,
-                    "scans": [
-                        [
-                            scan.state,
-                            [[name.hex(), *oid.key] for name, oid in scan.refs],
-                        ]
-                        for scan in scans
-                    ],
-                }
-                serialized = encode(candidate)
-                if len(serialized) > estimate:
+        with self.progress.scan_guard(scope):
+            saved = self.progress.load_bounded(scope, max_pinned)
+            if saved is None:
+                inventory = self.source.discover(self.work, nominated)
+                scans = getattr(inventory, "scans", ())
+                if (
+                    not isinstance(scans, tuple)
+                    or len(scans) > 2
+                    or inventory.terminal
+                    and len(scans) != 2
+                ):
                     raise CoreFailure(
-                        "BUDGET", scope, "discovery encoding exceeded reservation"
+                        "NOTES_SCOPE", scope, "original scan boundaries required"
                     )
-            except BaseException:
-                abandon = getattr(self.work, "abandon", None)
-                if abandon:
-                    abandon("input_bytes")
-                else:
-                    self.work.charge("input_bytes", estimate)
-                raise
-            self.work.charge("input_bytes", len(serialized))
-            saved = self.progress.save_once_bounded(
-                scope, candidate, max_pinned, encoded=serialized
-            )
+                count = len(inventory.refs) + sum(len(scan.refs) for scan in scans)
+                self.work.require("metadata_units", count)
+                self.work.charge("metadata_units", count)
+                estimate = (
+                    4096
+                    + len(encode_metered(self.work, binding, max_pinned))
+                    + sum(2 * len(name) + 256 for name, _ in inventory.refs)
+                )
+                estimate += sum(
+                    2 * len(name) + 256 for scan in scans for name, _ in scan.refs
+                )
+                if estimate > max_pinned:
+                    raise CoreFailure("BUDGET", scope, "finite pinned discovery limit")
+                self.work.require("input_bytes", estimate)
+                try:
+                    candidate = {
+                        "binding": binding,
+                        "refs": [
+                            [name.hex(), *oid.key, str(uuid4())]
+                            for name, oid in inventory.refs
+                        ],
+                        "status": inventory.status,
+                        "terminal": inventory.terminal,
+                        "failure_code": inventory.failure_code,
+                        "detail": inventory.detail,
+                        "scans": [
+                            [
+                                scan.state,
+                                [[name.hex(), *oid.key] for name, oid in scan.refs],
+                            ]
+                            for scan in scans
+                        ],
+                    }
+                    serialized = encode(candidate)
+                    if len(serialized) > estimate:
+                        raise CoreFailure(
+                            "BUDGET", scope, "discovery encoding exceeded reservation"
+                        )
+                except BaseException:
+                    abandon = getattr(self.work, "abandon", None)
+                    if abandon:
+                        abandon("input_bytes")
+                    else:
+                        self.work.charge("input_bytes", estimate)
+                    raise
+                self.work.charge("input_bytes", len(serialized))
+                saved = self.progress.save_once_bounded(
+                    scope, candidate, max_pinned, encoded=serialized
+                )
         if saved["binding"] != binding:
             raise CoreFailure(
                 "INCOMPATIBLE_REPLAY", scope, "discovery identity cannot be rebound"
@@ -400,45 +401,46 @@ class NotesAcquisition:
         )
         slot = encode_metered(self.work, ["p4-ref-inventory", *identity])
         max_bytes = 64 * 1024 * 1024
-        saved = self.progress.load_bounded(slot, max_bytes)
-        if saved is None:
-            status, members, _, failure = ref_mapping_inventory(
-                claim,
-                lambda oid: self.source.metadata(oid, self.work),
-                self.work,
-            )
-            self.work.require("metadata_units", len(members))
-            self.work.charge("metadata_units", len(members))
-            estimate = 4096 + sum(
-                2 * sum(len(part) for part in member) + 64 for member in members
-            )
-            if estimate > max_bytes:
-                raise CoreFailure("BUDGET", slot, "finite inventory metadata limit")
-            self.work.require("input_bytes", estimate)
-            try:
-                candidate = {
-                    "verification_uuidv7": new_uuid7(),
-                    "status": status,
-                    "members": members,
-                    "failure_code": None if failure is None else failure.code,
-                    "detail": "" if failure is None else str(failure),
-                }
-                serialized = encode(candidate)
-                if len(serialized) > estimate:
-                    raise CoreFailure(
-                        "BUDGET", slot, "inventory encoding exceeded reservation"
-                    )
-            except BaseException:
-                abandon = getattr(self.work, "abandon", None)
-                if abandon:
-                    abandon("input_bytes")
-                else:
-                    self.work.charge("input_bytes", estimate)
-                raise
-            self.work.charge("input_bytes", len(serialized))
-            saved = self.progress.save_once_bounded(
-                slot, candidate, max_bytes, encoded=serialized
-            )
+        with self.progress.scan_guard(slot):
+            saved = self.progress.load_bounded(slot, max_bytes)
+            if saved is None:
+                status, members, _, failure = ref_mapping_inventory(
+                    claim,
+                    lambda oid: self.source.metadata(oid, self.work),
+                    self.work,
+                )
+                self.work.require("metadata_units", len(members))
+                self.work.charge("metadata_units", len(members))
+                estimate = 4096 + sum(
+                    2 * sum(len(part) for part in member) + 64 for member in members
+                )
+                if estimate > max_bytes:
+                    raise CoreFailure("BUDGET", slot, "finite inventory metadata limit")
+                self.work.require("input_bytes", estimate)
+                try:
+                    candidate = {
+                        "verification_uuidv7": new_uuid7(),
+                        "status": status,
+                        "members": members,
+                        "failure_code": None if failure is None else failure.code,
+                        "detail": "" if failure is None else str(failure),
+                    }
+                    serialized = encode(candidate)
+                    if len(serialized) > estimate:
+                        raise CoreFailure(
+                            "BUDGET", slot, "inventory encoding exceeded reservation"
+                        )
+                except BaseException:
+                    abandon = getattr(self.work, "abandon", None)
+                    if abandon:
+                        abandon("input_bytes")
+                    else:
+                        self.work.charge("input_bytes", estimate)
+                    raise
+                self.work.charge("input_bytes", len(serialized))
+                saved = self.progress.save_once_bounded(
+                    slot, candidate, max_bytes, encoded=serialized
+                )
         provenance = Provenance(
             self.source_attribution,
             saved["verification_uuidv7"],

@@ -164,87 +164,92 @@ def pin_scan(
     redelivery, never an instruction to repeat Git I/O with its old identity.
     """
     max_pinned = min(byte_limit * 4 + 1_048_576, 128 * 1024 * 1024)
-    saved = progress.load_bounded(slot, max_pinned)
-    if saved is None:
-        result = scan()
-        if not isinstance(result, RefScan) or len(result.refs) > ref_limit + len(
-            nominated
-        ):
-            raise CoreFailure("BUDGET", slot, "bounded scan result required")
-        names = set()
-        for ref in result.refs:
-            _charge(work, "metadata_units", 1)
-            if not isinstance(ref, EnumeratedRef):
-                raise CoreFailure("ENUMERATION", slot, "typed scan item required")
-            if (
-                ref.name in names
-                or not (
-                    ref.name in nominated
-                    or any(ref.name.startswith(prefix) for prefix in prefixes)
-                )
-                or ref.absent
-                and (result.state != "complete" or ref.name not in nominated)
+    with progress.scan_guard(slot):
+        saved = progress.load_bounded(slot, max_pinned)
+        if saved is None:
+            result = scan()
+            if not isinstance(result, RefScan) or len(result.refs) > ref_limit + len(
+                nominated
             ):
-                raise CoreFailure(
-                    "ENUMERATION", slot, "scan result outside original scope"
-                )
-            names.add(ref.name)
-        # Reserve serialization work prior to creating hex strings or JSON.
-        _charge(work, "metadata_units", len(result.refs))
-        size = (
-            4096
-            + len(encode_metered(work, binding, max_pinned))
-            + sum(
-                2 * len(r.name)
-                + (0 if r.symbolic_target is None else 2 * len(r.symbolic_target))
-                + 512
-                for r in result.refs
-            )
-        )
-        if size > max_pinned or size >= 2**63:
-            raise CoreFailure("BUDGET", slot, "finite pinned scan size")
-        _charge(work, "metadata_units", 1 + len(result.refs))
-        work.require("input_bytes", size)
-        try:
-            event_id = new_uuid7()
-            completion = (
-                None
-                if result.completion is None
-                else encode([origin, event_id, result.completion])
-            )
-            candidate = {
-                "binding": binding,
-                "event": event_id,
-                "state": result.state,
-                "completion": completion,
-                "refs": [
-                    [
-                        r.name.hex(),
-                        None if r.target is None else list(r.target.key),
-                        None if r.symbolic_target is None else r.symbolic_target.hex(),
-                        None if r.peeled is None else list(r.peeled.key),
-                        r.absent,
-                        new_uuid7(),
-                        r.form_known,
-                        r.absence_method,
-                    ]
+                raise CoreFailure("BUDGET", slot, "bounded scan result required")
+            names = set()
+            for ref in result.refs:
+                _charge(work, "metadata_units", 1)
+                if not isinstance(ref, EnumeratedRef):
+                    raise CoreFailure("ENUMERATION", slot, "typed scan item required")
+                if (
+                    ref.name in names
+                    or not (
+                        ref.name in nominated
+                        or any(ref.name.startswith(prefix) for prefix in prefixes)
+                    )
+                    or ref.absent
+                    and (result.state != "complete" or ref.name not in nominated)
+                ):
+                    raise CoreFailure(
+                        "ENUMERATION", slot, "scan result outside original scope"
+                    )
+                names.add(ref.name)
+            # Reserve serialization work prior to creating hex strings or JSON.
+            _charge(work, "metadata_units", len(result.refs))
+            size = (
+                4096
+                + len(encode_metered(work, binding, max_pinned))
+                + sum(
+                    2 * len(r.name)
+                    + (0 if r.symbolic_target is None else 2 * len(r.symbolic_target))
+                    + 512
                     for r in result.refs
-                ],
-            }
-            serialized = encode(candidate)
-            if len(serialized) > size:
-                raise CoreFailure("BUDGET", slot, "scan encoding exceeded reservation")
-        except BaseException:
-            abandon = getattr(work, "abandon", None)
-            if abandon:
-                abandon("input_bytes")
-            else:
-                work.charge("input_bytes", size)
-            raise
-        work.charge("input_bytes", len(serialized))
-        saved = progress.save_once_bounded(
-            slot, candidate, max_pinned, encoded=serialized
-        )
+                )
+            )
+            if size > max_pinned or size >= 2**63:
+                raise CoreFailure("BUDGET", slot, "finite pinned scan size")
+            _charge(work, "metadata_units", 1 + len(result.refs))
+            work.require("input_bytes", size)
+            try:
+                event_id = new_uuid7()
+                completion = (
+                    None
+                    if result.completion is None
+                    else encode([origin, event_id, result.completion])
+                )
+                candidate = {
+                    "binding": binding,
+                    "event": event_id,
+                    "state": result.state,
+                    "completion": completion,
+                    "refs": [
+                        [
+                            r.name.hex(),
+                            None if r.target is None else list(r.target.key),
+                            None
+                            if r.symbolic_target is None
+                            else r.symbolic_target.hex(),
+                            None if r.peeled is None else list(r.peeled.key),
+                            r.absent,
+                            new_uuid7(),
+                            r.form_known,
+                            r.absence_method,
+                        ]
+                        for r in result.refs
+                    ],
+                }
+                serialized = encode(candidate)
+                if len(serialized) > size:
+                    raise CoreFailure(
+                        "BUDGET", slot, "scan encoding exceeded reservation"
+                    )
+            except BaseException:
+                abandon = getattr(work, "abandon", None)
+                if abandon:
+                    abandon("input_bytes")
+                else:
+                    work.charge("input_bytes", size)
+                raise
+            work.charge("input_bytes", len(serialized))
+            saved = progress.save_once_bounded(
+                slot, candidate, max_pinned, encoded=serialized
+            )
     if saved.get("binding") != binding:
         raise CoreFailure("INCOMPATIBLE_REPLAY", slot, "scan slot cannot be rebound")
     event = RefEnumerationObservation(
