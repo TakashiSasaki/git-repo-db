@@ -1413,6 +1413,40 @@ def test_bounded_proof_size_matches_canonical_bundle(core, count):
     assert work.counts["input_bytes"] == len(evidence.bundle)
 
 
+def test_proof_meter_rejects_long_invalid_type_before_character_walk(core, monkeypatch):
+    c, _, repository = core
+    proof, _ = old_mapping(repository)
+    claim = RefObservationClaim(
+        subject(repository).ref_observation_key,
+        provenance("ref"),
+        "present",
+        root_oid=proof.capture.root,
+    )
+    mapping = NotesMapping(
+        proof.capture.root,
+        "git-notes",
+        "1",
+        "tree",
+        proof.target,
+        proof.note,
+        proof.path,
+    )
+    bad = replace(proof.structures[0], native_type="tree" + "x" * 65_536)
+    evidence = NotesMappingEvidence(
+        claim, mapping, "single-path", received("e"), (bad,)
+    )
+    original = c._json_string_bytes
+
+    def checked(value):
+        assert len(value) < 1000
+        return original(value)
+
+    monkeypatch.setattr(c, "_json_string_bytes", checked)
+    with pytest.raises(CoreFailure) as error:
+        c._meter_proof_bundle(Budget(), evidence, 512)
+    assert error.value.code == "NOTES_ROLE"
+
+
 def test_budget_exhaustion_inside_stored_decoder_is_not_corruption(core):
     c, path, repository = core
     proof, note = old_mapping(repository)

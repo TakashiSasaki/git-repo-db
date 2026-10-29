@@ -639,6 +639,8 @@ class Core:
             if (
                 not isinstance(structure.oid, OID)
                 or not isinstance(structure.native_type, str)
+                or len(structure.native_type) > 6
+                or structure.native_type not in ("commit", "tree", "tag", "blob")
                 or type(structure.body) is not bytes
             ):
                 raise CoreFailure(
