@@ -1032,6 +1032,21 @@ def test_ref_note_valid_replay_and_unrelated_integrity_error_roll_back(core):
     assert len(c.sql("SELECT 1 FROM ref_retained_notes")) == 1
     assert not (path.parent / "p1-recovery-stop.json").exists()
 
+    class IncomingOnly(Budget):
+        def require(self, unit, amount=1):
+            if unit == "input_bytes" and self.counts.get(unit, 0) + amount > len(
+                note.body
+            ) + sum(len(item.body) for item in proof.structures):
+                raise CoreFailure("BUDGET", unit, "no existing-copy comparison budget")
+            super().require(unit, amount)
+
+    incoming_only = IncomingOnly()
+    with pytest.raises(CoreFailure) as limited_comparison:
+        c.admit_ref_note(evidence, note, str(uuid4()), incoming_only)
+    assert limited_comparison.value.code == "BUDGET"
+    assert len(c.sql("SELECT 1 FROM ref_retained_notes")) == 1
+    assert not (path.parent / "p1-recovery-stop.json").exists()
+
     other_evidence = replace(evidence, provenance=received("second"))
     with pytest.raises(CoreFailure) as incompatible:
         c.admit_ref_note(other_evidence, note, copy, Budget())
@@ -1129,12 +1144,12 @@ def test_conflicting_other_copy_diagnosis_respects_budget_and_rolls_back(core):
         db.close()
     replacement = str(uuid4())
     with pytest.raises(CoreFailure) as limited:
-        c.admit_ref_note(evidence, note, replacement, Budget(), max_conflict_copies=1)
+        c.admit_ref_note(evidence, note, replacement, Budget(), max_existing_copies=1)
     assert limited.value.code == "BUDGET"
     assert len(c.sql("SELECT 1 FROM ref_retained_notes")) == 3
     assert not (path.parent / "p1-recovery-stop.json").exists()
     with pytest.raises(CoreFailure) as detected:
-        c.admit_ref_note(evidence, note, replacement, Budget(), max_conflict_copies=3)
+        c.admit_ref_note(evidence, note, replacement, Budget(), max_existing_copies=3)
     assert detected.value.code == "AUTHORITATIVE_CORRUPTION"
     assert (path.parent / "p1-recovery-stop.json").exists()
 

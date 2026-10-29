@@ -909,7 +909,7 @@ class Core:
         native: NativeObject,
         work: WorkBudget,
         max_proof_bytes: int,
-        max_conflict_copies: int,
+        max_existing_copies: int,
     ) -> None:
         """Check only an observed representation conflict, inside the writer cut.
 
@@ -917,7 +917,7 @@ class Core:
         catalog damage. Each inspected copy is bounded and charged separately.
         """
         previous = ""
-        for inspected in range(max_conflict_copies + 1):
+        for inspected in range(max_existing_copies + 1):
             self._charge(work, "metadata_units", 1)
             candidate = self._ref_note_one(
                 "SELECT physical_copy_uuidv4 FROM ref_retained_notes WHERE object_format=? AND full_oid=? AND physical_copy_uuidv4>? ORDER BY physical_copy_uuidv4 LIMIT 1",
@@ -925,7 +925,7 @@ class Core:
             )
             if candidate is None:
                 return
-            if inspected == max_conflict_copies:
+            if inspected == max_existing_copies:
                 raise CoreFailure("BUDGET", native.oid, "note conflict copy limit")
             copy = self._stored(native.oid, uuid4_value, candidate[0])
             row = self._fetch_ref_note_copy(native.oid, copy, work, max_proof_bytes)
@@ -935,6 +935,45 @@ class Core:
             if body != native.body:
                 return  # A checked collision remains an ordinary refusal.
             previous = copy
+
+    def _note_comparison_cost(
+        self, native: NativeObject, work: WorkBudget, max_copies: int
+    ) -> int:
+        """Preflight the body comparisons performed by the INSERT triggers.
+
+        The query returns only bounded metadata; octet_length on the columns
+        does not materialize their bodies. Failed scans keep their reservation.
+        """
+        work.require("metadata_units", max_copies + 1)
+        try:
+            rows = self._db.execute(
+                "SELECT octet_length(body),size FROM ref_retained_notes WHERE object_format=? AND full_oid=? "
+                "UNION ALL SELECT octet_length(body),size FROM retained_notes WHERE object_format=? AND full_oid=? LIMIT ?",
+                (*native.oid.key, *native.oid.key, max_copies + 1),
+            ).fetchall()
+        except BaseException as error:
+            abandon = getattr(work, "abandon", None)
+            if abandon is not None:
+                abandon("metadata_units")
+            else:
+                work.charge("metadata_units", max_copies + 1)
+            if _sqlite_authority_failure(error):
+                self._integrity_stop((native.oid, "note-comparison-scan"))
+            raise
+        work.charge("metadata_units", len(rows))
+        for length, declared in rows:
+            if (
+                type(length) is not int
+                or type(declared) is not int
+                or length != declared
+            ):
+                self._integrity_stop((native.oid, "stored-note-size"))
+        if len(rows) > max_copies:
+            raise CoreFailure("BUDGET", native.oid, "note comparison copy limit")
+        total = sum(row[0] for row in rows)
+        if total >= 2**63:
+            raise CoreFailure("BUDGET", native.oid, "note comparison bytes limit")
+        return total
 
     @_completed_read
     @_decoded_read
@@ -1241,7 +1280,7 @@ class Core:
         *,
         before_commit: Callable[[], None] | None = None,
         max_proof_bytes: int = 64 * 1024 * 1024,
-        max_conflict_copies: int = 1_000,
+        max_existing_copies: int = 1_000,
     ) -> None:
         """Admit a body only with locally checked claim-specific role evidence."""
         if not isinstance(evidence, NotesMappingEvidence) or not isinstance(
@@ -1266,8 +1305,8 @@ class Core:
         if (
             type(max_proof_bytes) is not int
             or not 0 < max_proof_bytes < 2**63
-            or type(max_conflict_copies) is not int
-            or not 0 < max_conflict_copies < 2**63 - 1
+            or type(max_existing_copies) is not int
+            or not 0 < max_existing_copies < 2**63 - 1
         ):
             raise CoreFailure(
                 "BUDGET", native.oid, "positive finite proof and copy limits required"
@@ -1287,27 +1326,51 @@ class Core:
                 existing = self._fetch_ref_note_copy(
                     native.oid, physical_copy_uuidv4, work, max_proof_bytes
                 )
+                values = (
+                    *native.oid.key,
+                    physical_copy_uuidv4,
+                    native.body,
+                    native.declared_size,
+                    native.digest_sha256,
+                    *evidence.key,
+                )
                 if existing is not None:
                     self._validate_stored_ref_note(existing, work)
+                    if tuple(existing) != values:
+                        raise CoreFailure(
+                            "INCOMPATIBLE_REPLAY",
+                            native.oid,
+                            "inconsistent immutable note copy",
+                        )
+                    if before_commit is not None:
+                        before_commit()
+                    return
                 self._notes_mapping_evidence(evidence)
+                comparison_bytes = self._note_comparison_cost(
+                    native, work, max_existing_copies
+                )
+                if comparison_bytes:
+                    work.require("input_bytes", comparison_bytes)
                 try:
-                    self._insert(
-                        "ref_retained_notes",
-                        (
-                            *native.oid.key,
-                            physical_copy_uuidv4,
-                            native.body,
-                            native.declared_size,
-                            native.digest_sha256,
-                            *evidence.key,
-                        ),
-                    )
-                except sqlite3.IntegrityError as error:
-                    if str(error) == "conflicting exact note representation":
+                    self._insert("ref_retained_notes", values)
+                except BaseException as error:
+                    if comparison_bytes:
+                        abandon = getattr(work, "abandon", None)
+                        if abandon is not None:
+                            abandon("input_bytes")
+                        else:
+                            work.charge("input_bytes", comparison_bytes)
+                    if (
+                        isinstance(error, sqlite3.IntegrityError)
+                        and str(error) == "conflicting exact note representation"
+                    ):
                         self._diagnose_ref_note_conflict(
-                            native, work, max_proof_bytes, max_conflict_copies
+                            native, work, max_proof_bytes, max_existing_copies
                         )
                     raise
+                else:
+                    if comparison_bytes:
+                        work.charge("input_bytes", comparison_bytes)
                 if before_commit is not None:
                     before_commit()
 

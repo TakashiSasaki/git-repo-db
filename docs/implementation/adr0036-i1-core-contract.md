@@ -62,7 +62,9 @@ Budget exhaustion is not corruption and cannot return an unverified body.
 An admission replay checks any existing same-key copy's bytes, digest, original
 claim and role evidence under the writer cut before insertion. A discovered
 conflicting copy is diagnosed under the same cut with a finite configurable
-copy/proof bound. A proven invalid stored unit stops the catalog; an unrelated
+copy/proof bound. A new-copy insertion first bounds existing-copy comparisons
+and reserves their byte cost before the SQL representation guards run; an
+exact replay avoids that insertion. A proven invalid stored unit stops the catalog; an unrelated
 constraint error, incompatible replay or exhausted diagnostic budget does not
 itself establish corruption. No failure repairs or overwrites the old copy.
 

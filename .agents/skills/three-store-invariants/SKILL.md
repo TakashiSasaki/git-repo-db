@@ -941,6 +941,9 @@ error alone does not prove corruption; explicitly diagnose the stored unit and
 persist the catalog stop only for a confirmed authoritative invariant failure.
 If the conflicting representation is another copy, bound and charge the
 diagnostic scan and preserve an ordinary refusal for a checked valid collision.
+Account for comparisons performed by SQL INSERT triggers too: reserve the
+bounded existing-copy byte cost before they run, retaining the reservation if
+an interruption makes actual comparison work uncertain.
 
 Select one eligible copy by an indexed semantic scope before loading body bytes.
 Measure its body/proof lengths, enforce finite limits, and reserve cumulative
