@@ -10,10 +10,9 @@ known/unknown tags. Scope/connection settings are not ordinary domain Exchange.
 
 ## Status and dependency boundary
 
-This is the current contract for the opt-in target, incorporating owner-accepted
-[ADR 0028](../adr/0028-classified-times-and-sha256-exchange.md). Acceptance of that
-decision does not mean these PRs are approved or merged. Public Schema 21 remains
-the default. P7 recovery and P8 public runtime activation remain separate.
+This describes the existing P5/P6 opt-in implementation contract, including
+[ADR 0028](../adr/0028-classified-times-and-sha256-exchange.md). The adopted
+target for ref-observation identity and evidence is [ADR 0036](../adr/0036-ref-observations-and-shared-notes-mappings.md), which takes precedence over the older Capture identity below. Adoption does not mean this implementation has changed or that PRs are merged. Public Schema 21 remains the default; P7 recovery and P8 public runtime activation remain separate.
 
 The historical stack is `main → #77 → #78 → #79`. The correction stack adds the
 owner-decision design branch `docs/p5-p6-owner-decisions` and one common branch
@@ -34,8 +33,8 @@ historical; the v2 and scoped shared corrections below replace them.
 
 Git Core is INSERT-only; Context is an independently durable authority.
 Operational and Search are reconstructible derivatives. Permanent repository
-UUIDv4, actual two-UUIDv4 Capture pairs, semantic composite PK/FK, positive Source
-associations and five-column Coverage semantics remain unchanged. A package ID,
+UUIDv4, the existing implementation’s two-UUIDv4 Capture pairs, semantic composite PK/FK, positive Source
+associations and five-column Coverage semantics remain unchanged in this implementation. For the adopted target, ADR 0036 instead specifies the origin UUIDv4 / ref-observation UUIDv7 pair and immutable result Claims. A package ID,
 local catalog instance, request ID, index generation or checksum is not a new
 authoritative Publication or domain row surrogate.
 

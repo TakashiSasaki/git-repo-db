@@ -2,7 +2,7 @@
 status: accepted
 date: 2026-10-16
 replaces: []
-refines:
+refines: []
 ---
 
 # ADR 0028: Classified epoch times and SHA-256-only Exchange integrity

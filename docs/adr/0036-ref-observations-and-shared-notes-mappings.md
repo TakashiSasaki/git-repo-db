@@ -115,7 +115,7 @@ All references below point to companion ADR D1–D6 and Constraints or to the co
 
 ## ADR 0018 detailed successor audit
 
-Pinned [full original ADR 0018](https://github.com/TakashiSasaki/git-repo-db/blob/ab0786cfa29e7be129c7b17517a469ec1cf8b215/docs/adr/0018-notes-capture-uuidv4-composite-identity.md). D references are exact sections of the draft. This is author analysis, not independent approval; owner acceptance and exact final wording are still required.
+Pinned [full original ADR 0018](https://github.com/TakashiSasaki/git-repo-db/blob/ab0786cfa29e7be129c7b17517a469ec1cf8b215/docs/adr/0018-notes-capture-uuidv4-composite-identity.md). D references are exact sections of this accepted ADR. The owner adopted the complete design on 2026-10-29; independent review of this documentation change remains separate.
 
 | Original location | Disposition and successor |
 | --- | --- |
