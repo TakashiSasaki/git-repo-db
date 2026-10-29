@@ -12,7 +12,12 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Literal
 
-from repo_catalog.application.notes import Discovery, NoteAcquisition
+from repo_catalog.application.notes import (
+    Discovery,
+    NoteAcquisition,
+    RefNoteAcquisition,
+    RefNotesInventory,
+)
 from repo_catalog.domain.context_registration import registration_json
 from repo_catalog.domain.notes import NotesInventory
 from repo_catalog.domain.p1_context import (
@@ -49,6 +54,7 @@ from repo_catalog.domain.production_context import (
     SourceInventory,
     json_value,
 )
+from repo_catalog.domain.ref_observation import RefEnumerationResult
 from repo_catalog.domain.time import (
     validate_observation_us,
     validate_required_observation_us,
@@ -134,6 +140,7 @@ class GitNativeAcquisitionRequest:
     retain_oids: frozenset[OID] | None = None
     include_refs: bool = True
     ref_prefixes: tuple[str, ...] = ()
+    nominated_ref_names: tuple[bytes, ...] = ()
     traverse_structural_targets: bool = True
     nominal_missing_oids: tuple[OID, ...] = ()
     repository_claims: tuple[RepositoryClaim, ...] = ()
@@ -170,9 +177,12 @@ class GitAcquisitionReport:
     metadata_only_objects: tuple[OID, ...]
     nominal_missing_objects: tuple[OID, ...]
     ref_observations: tuple[GitObservation, ...]
+    ref_enumerations: tuple[RefEnumerationResult, ...] = ()
     notes_discoveries: tuple[Discovery, ...] = ()
     notes_inventories: tuple[NotesInventory, ...] = ()
     note_acquisitions: tuple[NoteAcquisition, ...] = ()
+    ref_note_acquisitions: tuple[RefNoteAcquisition, ...] = ()
+    ref_notes_inventories: tuple[RefNotesInventory, ...] = ()
     coverage_claims: tuple[CoverageClaim, ...] = ()
     failure_code: str | None = None
     failure_detail: str = ""

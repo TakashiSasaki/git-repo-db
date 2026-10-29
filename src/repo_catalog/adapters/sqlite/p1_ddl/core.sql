@@ -256,6 +256,34 @@ WHEN NEW.presence_state='absent' AND NOT EXISTS(
  AND json_extract(NEW.absence_evidence,'$[1]')=o.visibility_scope
  AND json_extract(NEW.absence_evidence,'$[2]')=lower(hex(o.ref_name_bytes)))
 BEGIN SELECT RAISE(ABORT,'absence evidence must match observed source, visibility and ref'); END;
+CREATE TABLE ref_enumeration_observations (
+ observation_origin_uuidv4 TEXT NOT NULL CHECK(p1_uuid4(observation_origin_uuidv4)),
+ enumeration_uuidv7 TEXT NOT NULL CHECK(p1_uuid7(enumeration_uuidv7)),
+ repository_uuidv4 TEXT NOT NULL CHECK(p1_uuid4(repository_uuidv4)),
+ source_attribution TEXT NOT NULL CHECK(length(source_attribution)>0),
+ visibility_scope TEXT NOT NULL CHECK(length(visibility_scope)>0),
+ enumeration_scope_json TEXT NOT NULL CHECK(p1_json(enumeration_scope_json)),
+ enumeration_state TEXT NOT NULL CHECK(enumeration_state IN ('complete','partial','unknown')),
+ completion_coordinate TEXT,
+ observed_at_us INTEGER CHECK(observed_at_us IS NULL OR (typeof(observed_at_us)='integer' AND observed_at_us>0)),
+ byte_limit INTEGER NOT NULL CHECK(byte_limit>0),
+ ref_limit INTEGER NOT NULL CHECK(ref_limit>0),
+ link_count INTEGER NOT NULL CHECK(link_count>=0),
+ CHECK((enumeration_state='complete' AND completion_coordinate IS NOT NULL AND length(completion_coordinate)>0)
+    OR (enumeration_state IN ('partial','unknown') AND completion_coordinate IS NULL)),
+ PRIMARY KEY(observation_origin_uuidv4,enumeration_uuidv7),
+ FOREIGN KEY(repository_uuidv4) REFERENCES repositories
+) STRICT, WITHOUT ROWID;
+CREATE TABLE ref_enumeration_links (
+ enumeration_origin_uuidv4 TEXT NOT NULL, enumeration_uuidv7 TEXT NOT NULL,
+ observation_origin_uuidv4 TEXT NOT NULL, ref_observation_uuidv7 TEXT NOT NULL,
+ claim_provenance TEXT NOT NULL, derivation TEXT NOT NULL CHECK(derivation IN ('item','absence')),
+ position INTEGER NOT NULL CHECK(position>=0),
+ PRIMARY KEY(enumeration_origin_uuidv4,enumeration_uuidv7,observation_origin_uuidv4,ref_observation_uuidv7,claim_provenance),
+ UNIQUE(enumeration_origin_uuidv4,enumeration_uuidv7,position),
+ FOREIGN KEY(enumeration_origin_uuidv4,enumeration_uuidv7) REFERENCES ref_enumeration_observations,
+ FOREIGN KEY(observation_origin_uuidv4,ref_observation_uuidv7,claim_provenance) REFERENCES ref_observation_claims
+) STRICT, WITHOUT ROWID;
 CREATE TABLE notes_mappings (
  object_format TEXT NOT NULL, root_oid TEXT NOT NULL,
  interpretation_kind TEXT NOT NULL CHECK(length(interpretation_kind)>0),

@@ -60,6 +60,9 @@ from repo_catalog.domain.ref_observation import (
     NotesMappingGroup,
     NotesMappingProjection,
     RefAbsenceEvidence,
+    RefEnumerationLink,
+    RefEnumerationObservation,
+    RefEnumerationResult,
     RefObservation,
     RefObservationClaim,
     RefObservationKey,
@@ -70,6 +73,20 @@ from repo_catalog.domain.ref_observation import (
 # Fixed trusted selectors and all variable-width columns that a typed read
 # materializes. Never accept table, column or predicate names from callers.
 _BOUNDED_STORED_ROWS = {
+    "ref_enumeration_observations": (
+        "observation_origin_uuidv4=? AND enumeration_uuidv7=?",
+        (
+            "observation_origin_uuidv4",
+            "enumeration_uuidv7",
+            "repository_uuidv4",
+            "source_attribution",
+            "visibility_scope",
+            "enumeration_scope_json",
+            "enumeration_state",
+            "completion_coordinate",
+        ),
+        False,
+    ),
     "ref_observations": (
         "observation_origin_uuidv4=? AND ref_observation_uuidv7=?",
         (
@@ -787,6 +804,360 @@ class Core:
                     self._object(oid)
             self._insert("ref_observation_claims", claim.key)
 
+    def admit_ref_enumeration(self, event, links, work: WorkBudget) -> None:
+        """Atomically admit one original scan and its exact item/absence links."""
+        if not isinstance(event, RefEnumerationObservation) or not isinstance(
+            links, tuple
+        ):
+            raise CoreFailure(
+                "ENUMERATION", "event", "typed event and link tuple required"
+            )
+        if len(links) != event.link_count:
+            raise CoreFailure("ENUMERATION", event.identity, "event link count differs")
+        if len(links) > event.ref_limit + len(event.nominated):
+            raise CoreFailure("BUDGET", event.identity, "finite event link limit")
+        self._charge(work, "metadata_units", len(event.prefixes) + len(event.nominated))
+        seen = set()
+        for link in links:
+            self._charge(work, "metadata_units", 1)
+            if not isinstance(link, RefEnumerationLink) or link.event != event:
+                raise CoreFailure(
+                    "ENUMERATION", event.identity, "link belongs to another event"
+                )
+            name = link.observation.ref_name_bytes
+            if name in seen or link.position != len(seen):
+                raise CoreFailure(
+                    "ENUMERATION", event.identity, "duplicate name in one scan"
+                )
+            seen.add(name)
+            self._meter_input_metadata(
+                work,
+                (
+                    name,
+                    link.observation.source_attribution,
+                    link.observation.visibility_scope,
+                    *self._claim_input_values(link.claim),
+                ),
+                event.byte_limit,
+            )
+            self._meter_provenance_encoding(
+                work, link.claim.provenance, event.byte_limit
+            )
+            if link.claim.absence_evidence is not None:
+                self._meter_absence_encoding(
+                    work, link.claim.absence_evidence, event.byte_limit
+                )
+        self._meter_input_metadata(
+            work,
+            (
+                event.source_attribution,
+                event.visibility_scope,
+                event.completion_coordinate,
+                *event.prefixes,
+                *event.nominated,
+            ),
+            event.byte_limit,
+        )
+        # Scope encoding is hex and thus can be bounded exactly before allocating.
+        scope_size = 7 + sum(
+            2 * len(v) + 2 for v in (*event.prefixes, *event.nominated)
+        )
+        scope_size += max(0, len(event.prefixes) - 1) + max(0, len(event.nominated) - 1)
+        if scope_size > event.byte_limit:
+            raise CoreFailure("BUDGET", event.identity, "finite event scope limit")
+        self._charge(work, "input_bytes", scope_size)
+        scope_json = event.scope_json
+        with self._transaction():
+            self._charge(work, "metadata_units", 1)
+            existing = self._db.execute(
+                "SELECT 1 FROM ref_enumeration_observations WHERE observation_origin_uuidv4=? AND enumeration_uuidv7=?",
+                event.identity,
+            ).fetchone()
+            self._insert(
+                "ref_enumeration_observations",
+                (
+                    *event.identity,
+                    event.repository_uuidv4,
+                    event.source_attribution,
+                    event.visibility_scope,
+                    scope_json,
+                    event.enumeration_state,
+                    event.completion_coordinate,
+                    event.observed_at_us,
+                    event.byte_limit,
+                    event.ref_limit,
+                    event.link_count,
+                ),
+            )
+            if existing:
+                work.require("metadata_units", event.link_count + 1)
+                try:
+                    count = self._db.execute(
+                        "SELECT count(*) FROM (SELECT 1 FROM ref_enumeration_links WHERE enumeration_origin_uuidv4=? AND enumeration_uuidv7=? LIMIT ?)",
+                        (*event.identity, event.link_count + 1),
+                    ).fetchone()[0]
+                except BaseException:
+                    abandon = getattr(work, "abandon", None)
+                    if abandon:
+                        abandon("metadata_units")
+                    else:
+                        work.charge("metadata_units", event.link_count + 1)
+                    raise
+                work.charge("metadata_units", count)
+                if count != len(links):
+                    self._integrity_stop((event.identity, "enumeration-link-count"))
+            for link in links:
+                observation, claim = link.observation, link.claim
+                self._charge(work, "metadata_units", 1)
+                if self._db.execute(
+                    "SELECT 1 FROM ref_observations WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=?",
+                    observation.ref_observation_key.key,
+                ).fetchone():
+                    self._validate_ref_subject_dependency(
+                        observation.ref_observation_key, work=work
+                    )
+                self._insert("ref_observations", observation.key)
+                self._charge(work, "metadata_units", 1)
+                if self._db.execute(
+                    "SELECT 1 FROM ref_observation_claims WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND provenance=?",
+                    claim.identity,
+                ).fetchone():
+                    self._require_ref_claim(claim, work=work)
+                for oid in (
+                    claim.direct_target_oid,
+                    claim.resolved_target_oid,
+                    claim.peeled_target_oid,
+                    claim.root_oid,
+                ):
+                    if oid is not None:
+                        self._object(oid)
+                self._meter_provenance_encoding(
+                    work, claim.provenance, event.byte_limit
+                )
+                if claim.absence_evidence is not None:
+                    self._meter_absence_encoding(
+                        work, claim.absence_evidence, event.byte_limit
+                    )
+                self._insert("ref_observation_claims", claim.key)
+                self._meter_provenance_encoding(
+                    work, claim.provenance, event.byte_limit
+                )
+                key = link.key
+                self._charge(work, "metadata_units", 1)
+                if (
+                    existing
+                    and not self._db.execute(
+                        "SELECT 1 FROM ref_enumeration_links WHERE enumeration_origin_uuidv4=? AND enumeration_uuidv7=? AND observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND claim_provenance=? AND derivation=? AND position=?",
+                        key,
+                    ).fetchone()
+                ):
+                    raise CoreFailure(
+                        "INCOMPATIBLE_REPLAY",
+                        event.identity,
+                        "enumeration item changed",
+                    )
+                self._insert("ref_enumeration_links", key)
+
+    @_completed_read
+    @_decoded_read
+    def ref_enumeration(
+        self,
+        origin,
+        event_id,
+        work: WorkBudget,
+        *,
+        max_links=10_000,
+        max_bytes=64 * 1024 * 1024,
+    ):
+        """Read one event and its actual links under a bounded snapshot."""
+        uuid4_value(origin)
+        from repo_catalog.domain.ref_observation import uuid7_value
+
+        uuid7_value(event_id)
+        if (
+            type(max_links) is not int
+            or not 0 < max_links < 2**63 - 1
+            or type(max_bytes) is not int
+            or not 0 < max_bytes < 2**63
+        ):
+            raise CoreFailure(
+                "QUERY_BUDGET", (origin, event_id), "finite positive limits required"
+            )
+        self._available()
+        with self._snapshot():
+            row = self._bounded_stored_row(
+                "ref_enumeration_observations",
+                (origin, event_id),
+                work,
+                max_bytes,
+                metadata_limit_code="QUERY_BUDGET",
+            )
+            if row is None:
+                self._charge(work, "metadata_units", 1)
+                if self._ref_note_one(
+                    "SELECT 1 FROM ref_enumeration_links WHERE enumeration_origin_uuidv4=? AND enumeration_uuidv7=? LIMIT 1",
+                    (origin, event_id),
+                ):
+                    self._integrity_stop(
+                        ((origin, event_id), "missing-enumeration-event")
+                    )
+                raise CoreFailure(
+                    "ENUMERATION_UNAVAILABLE", (origin, event_id), "event unavailable"
+                )
+
+            def decode_event(value):
+                scope = json.loads(value["enumeration_scope_json"])
+                if (
+                    not isinstance(scope, list)
+                    or len(scope) != 2
+                    or not all(isinstance(group, list) for group in scope)
+                ):
+                    raise ValueError("invalid enumeration scope")
+                if sum(map(len, scope)) > max_links:
+                    raise CoreFailure(
+                        "QUERY_BUDGET",
+                        (origin, event_id),
+                        "finite enumeration scope limit",
+                    )
+                self._charge(work, "metadata_units", sum(map(len, scope)))
+                prefixes, nominated = (
+                    tuple(bytes.fromhex(item) for item in group) for group in scope
+                )
+                event = RefEnumerationObservation(
+                    value["observation_origin_uuidv4"],
+                    value["enumeration_uuidv7"],
+                    value["repository_uuidv4"],
+                    value["source_attribution"],
+                    value["visibility_scope"],
+                    prefixes,
+                    nominated,
+                    value["enumeration_state"],
+                    value["completion_coordinate"],
+                    value["observed_at_us"],
+                    value["byte_limit"],
+                    value["ref_limit"],
+                    value["link_count"],
+                )
+                self._charge(work, "input_bytes", len(value["enumeration_scope_json"]))
+                if event.key != tuple(value):
+                    raise ValueError("noncanonical enumeration event")
+                return event
+
+            event = self._stored((origin, event_id), decode_event, row)
+            if event.link_count > max_links:
+                raise CoreFailure(
+                    "QUERY_BUDGET", event.identity, "finite enumeration links limit"
+                )
+            self._charge(work, "metadata_units", 1)
+            if not self._ref_note_one(
+                "SELECT 1 FROM repositories WHERE repository_uuidv4=?",
+                (event.repository_uuidv4,),
+            ):
+                self._integrity_stop((event.identity, "missing-enumeration-repository"))
+            columns = (
+                "enumeration_origin_uuidv4",
+                "enumeration_uuidv7",
+                "observation_origin_uuidv4",
+                "ref_observation_uuidv7",
+                "claim_provenance",
+                "derivation",
+            )
+            size_expr = "+".join(
+                f"coalesce(octet_length({column}),0)" for column in columns
+            )
+            work.require("metadata_units", max_links + 1)
+            try:
+                sizes = self.sql(
+                    f"SELECT {size_expr} FROM ref_enumeration_links WHERE enumeration_origin_uuidv4=? AND enumeration_uuidv7=? LIMIT ?",
+                    (origin, event_id, max_links + 1),
+                )
+            except BaseException:
+                abandon = getattr(work, "abandon", None)
+                if abandon:
+                    abandon("metadata_units")
+                else:
+                    work.charge("metadata_units", max_links + 1)
+                raise
+            work.charge("metadata_units", len(sizes))
+            total = sum(r[0] for r in sizes)
+            if len(sizes) > max_links or total > max_bytes:
+                raise CoreFailure(
+                    "QUERY_BUDGET", event.identity, "finite enumeration links limit"
+                )
+            self._charge(work, "input_bytes", total)
+            rows = self.sql(
+                "SELECT * FROM ref_enumeration_links WHERE enumeration_origin_uuidv4=? AND enumeration_uuidv7=? ORDER BY position",
+                event.identity,
+            )
+            if len(rows) != event.link_count:
+                self._integrity_stop((event.identity, "enumeration-link-count"))
+            links, names = [], set()
+            for item in rows:
+                key = self._stored(
+                    event.identity,
+                    RefObservationKey,
+                    item["observation_origin_uuidv4"],
+                    item["ref_observation_uuidv7"],
+                )
+                subject_row = self._bounded_stored_row(
+                    "ref_observations",
+                    key.key,
+                    work,
+                    max_bytes,
+                    metadata_limit_code="QUERY_BUDGET",
+                )
+                claim_row = self._bounded_stored_row(
+                    "ref_observation_claims",
+                    (*key.key, item["claim_provenance"]),
+                    work,
+                    max_bytes,
+                    metadata_limit_code="QUERY_BUDGET",
+                )
+                if subject_row is None or claim_row is None:
+                    self._integrity_stop(
+                        (event.identity, "missing-enumeration-link-dependency")
+                    )
+                subject = self._stored(
+                    event.identity,
+                    RefObservation,
+                    key,
+                    subject_row["repository_uuidv4"],
+                    subject_row["ref_name_bytes"],
+                    subject_row["source_attribution"],
+                    subject_row["visibility_scope"],
+                    subject_row["observed_at_us"],
+                )
+                claim = self._stored(
+                    event.identity,
+                    lambda v: self._decode_ref_claim(
+                        v,
+                        work=work,
+                        max_metadata_bytes=max_bytes,
+                        metadata_limit_code="QUERY_BUDGET",
+                    ),
+                    claim_row,
+                )
+                self._require_ref_claim(
+                    claim,
+                    work=work,
+                    max_metadata_bytes=max_bytes,
+                    metadata_limit_code="QUERY_BUDGET",
+                )
+                link = self._stored(
+                    event.identity,
+                    RefEnumerationLink,
+                    event,
+                    subject,
+                    claim,
+                    item["derivation"],
+                    item["position"],
+                )
+                if subject.ref_name_bytes in names or link.position != len(links):
+                    self._integrity_stop((event.identity, "duplicate-enumeration-name"))
+                names.add(subject.ref_name_bytes)
+                links.append(link)
+            return RefEnumerationResult(event, tuple(links))
+
     def _validate_ref_subject_dependency(
         self,
         key: RefObservationKey,
@@ -1124,17 +1495,52 @@ class Core:
             self._notes_mapping(claim.mapping)
             self._insert("notes_mapping_claims", claim.key)
 
-    def admit_notes_mapping_group(self, group: NotesMappingGroup) -> None:
+    def admit_notes_mapping_group(
+        self, group: NotesMappingGroup, work: WorkBudget | None = None
+    ) -> None:
         if not isinstance(group, NotesMappingGroup):
             raise CoreFailure("NOTES_GROUP", group, "typed mapping group required")
+        if work is not None:
+            if len(group.members) > 100_000:
+                raise CoreFailure("BUDGET", "notes-group", "finite membership count")
+            limit = 64 * 1024 * 1024
+            values = (
+                group.interpretation_kind,
+                group.interpretation_version,
+                group.interpretation_scope,
+                group.group_scope,
+                group.status,
+                *group.provenance.key,
+                *(value for member in group.members for value in member),
+            )
+            self._meter_input_metadata(work, values, limit)
+            size = 2 + max(0, len(group.members) - 1)
+            for member in group.members:
+                self._charge(work, "metadata_units", 1)
+                size += 4 + sum(
+                    4 if value is None else self._json_string_bytes(value)
+                    for value in member
+                )
+            if size > limit:
+                raise CoreFailure(
+                    "BUDGET", "notes-group", "finite membership encoding limit"
+                )
+            self._charge(work, "input_bytes", 2 * size)
+            for _ in range(2):
+                self._meter_provenance_encoding(work, group.provenance, limit)
+                self._meter_provenance_encoding(work, group.ref_claim.provenance, limit)
         with self._transaction():
-            self._require_ref_claim(group.ref_claim)
+            self._require_ref_claim(group.ref_claim, work=work)
+            if work is not None:
+                self._charge(work, "metadata_units", 1)
             existing = self._db.execute(
                 "SELECT 1 FROM notes_mapping_groups WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND ref_claim_provenance=? AND object_format=? AND root_oid=? AND interpretation_kind=? AND interpretation_version=? AND interpretation_scope=? AND group_scope=? AND status=? AND membership=? AND provenance=?",
                 group.key,
             ).fetchone()
             for target, note, _path in group.members:
                 for value in (target, note):
+                    if work is not None:
+                        self._charge(work, "metadata_units", 1)
                     oid = OID(group.ref_claim.root_oid.object_format, value)
                     if (
                         existing

@@ -104,6 +104,21 @@ class InMemoryNotesProgress:
             self._store[scope] = json.loads(encode(value))
         return self._store[scope]
 
+    def load_bounded(self, scope: str, max_bytes: int):
+        value = self._store.get(scope)
+        if value is not None and len(encode(value)) > max_bytes:
+            raise CoreFailure("BUDGET", scope, "finite pinned metadata limit")
+        return value
+
+    def save_once_bounded(
+        self, scope: str, value: dict[str, Any], max_bytes: int, *, encoded
+    ):
+        if len(encoded) > max_bytes:
+            raise CoreFailure("BUDGET", scope, "finite pinned metadata limit")
+        if scope not in self._store:
+            self._store[scope] = json.loads(encoded)
+        return self._store[scope]
+
 
 def _canonical_scope_json(scope_key: object) -> str:
     if isinstance(scope_key, str):

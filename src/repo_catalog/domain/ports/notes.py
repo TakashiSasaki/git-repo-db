@@ -11,6 +11,8 @@ from repo_catalog.domain.ports.p1_core import WorkBudget
 class NotesSource(Protocol):
     object_format: str
     scope: str
+    discovery_bytes: int
+    discovery_refs: int
 
     def metadata(self, oid: OID, work: WorkBudget) -> NativeObject: ...
     def note_body(self, proof: NotesProof, work: WorkBudget) -> NativeObject: ...
@@ -33,6 +35,10 @@ class NotesProgress(Protocol):
 
     def load(self, scope: str) -> dict | None: ...
     def save_once(self, scope: str, value: dict) -> dict: ...
+    def load_bounded(self, scope: str, max_bytes: int) -> dict | None: ...
+    def save_once_bounded(
+        self, scope: str, value: dict, max_bytes: int, *, encoded: str
+    ) -> dict: ...
 
 
 def request_scope(

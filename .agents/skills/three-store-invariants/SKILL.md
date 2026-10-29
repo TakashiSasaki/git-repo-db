@@ -962,3 +962,25 @@ Exercise the synthetic regression with
 `scripts/local-run.sh pytest -q -n 2 tests/integration/p1/test_ref_observation_i1.py`.
 This is an opt-in Core boundary; it does not implement I2/I3 or establish release
 acceptance.
+
+## Ref scans, named absence and retry identity
+
+A completed `for-each-ref` command can omit a dangling symbolic ref. Label that
+listing's actual resolvable visibility and do not derive a named absence from
+its missing members. Check an explicitly nominated name with `show-ref --exists`
+after validating the Git ref spelling; exit 2 establishes local absence, exit 0
+can represent presence with unknown target, and other outcomes remain failures.
+This says nothing about an unqueried remote. Test a dangling symbolic ref, a
+missing name, and a failing lookup separately.
+
+When an operation performs two scans, give each actual scan and its items new
+occurrence identities. Pin the entire bounded result before Core admission;
+after a crash or concurrent redelivery, replay the winning pin rather than
+reading Git again under its old identity. A lost pin permits a new read and new
+identity, not rebinding. Preserve the event's immutable item count and check it
+on typed reads and replay so a missing stored link stops the catalog. Reserve
+progress and dependency metadata before fetching it and charge repeated work.
+A checked note path remains bound to the exact Claim and root; a shared Mapping
+or an earlier Capture never supplies body authority by itself. Exercise these
+boundaries with `scripts/local-run.sh pytest -q -n 2 tests/integration/p4/test_ref_observation_i2.py`.
+The pre-I3 Exchange/backup fences also cover an empty event with no item rows.

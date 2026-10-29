@@ -1,6 +1,7 @@
 """P4 Operational continuation metadata; never stages incoming body bytes."""
 
 from repo_catalog.domain.p1_coordination import CoordinationError
+from repo_catalog.domain.p1_core import CoreFailure
 from repo_catalog.domain.ports.notes import request_scope
 
 
@@ -45,3 +46,38 @@ class NotesProgress:
     def save_once(self, scope, value):
         self._check()
         return self.work.ledger.set_progress_once(self.work.request, scope, value)
+
+    def load_bounded(self, scope, max_bytes):
+        self._check()
+        size = self.work.ledger.progress_length(self.work.request, scope)
+        if size is None:
+            return None
+        if size > max_bytes:
+            raise CoreFailure("BUDGET", scope, "finite pinned metadata limit")
+        self.work.require("input_bytes", size)
+        try:
+            value, actual = self.work.ledger.get_progress_bounded(
+                self.work.request, scope, size
+            )
+        except BaseException:
+            self.work.abandon("input_bytes")
+            raise
+        self.work.charge("input_bytes", actual)
+        return value
+
+    def save_once_bounded(self, scope, value, max_bytes, *, encoded):
+        self._check()
+        prior = self.work.ledger.progress_length(self.work.request, scope)
+        upper = max(len(encoded), prior or 0)
+        if upper > max_bytes:
+            raise CoreFailure("BUDGET", scope, "finite pinned metadata limit")
+        self.work.require("input_bytes", upper)
+        try:
+            result, actual = self.work.ledger.set_progress_once_bounded(
+                self.work.request, scope, encoded, upper
+            )
+        except BaseException:
+            self.work.abandon("input_bytes")
+            raise
+        self.work.charge("input_bytes", actual)
+        return result
