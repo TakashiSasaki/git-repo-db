@@ -54,17 +54,23 @@ and charges text before materializing it. Callers can set smaller limits to fit
 their remaining durable work budget.
 
 `read_ref_note` requires a `WorkBudget`. It uses the role lookup index to pick
-one eligible physical copy, checks finite body and proof limits, and reserves
-their input cost before fetching either. It then charges the actual selected
-bytes and locally repeated proof/body verification; retries consume work again.
+one eligible physical copy, checks finite body, proof and metadata limits, and
+reserves all variable-width columns before fetching a row. Dependent Claim and
+observation rows are separately bounded and charged on every actual fetch.
+Caller metadata and encoded provenance, paths and proof bundles are bounded
+before their corresponding materialization. Local proof/body verification and
+retries consume work again.
 Budget exhaustion is not corruption and cannot return an unverified body.
 
 An admission replay checks any existing same-key copy's bytes, digest, original
-claim and role evidence under the writer cut before insertion. A discovered
-conflicting copy is diagnosed under the same cut with a finite configurable
-copy/proof bound. A new-copy insertion first bounds existing-copy comparisons
-and reserves their byte cost before the SQL representation guards run; an
-exact replay avoids that insertion. A proven invalid stored unit stops the catalog; an unrelated
+claim and role evidence under the writer cut before insertion. It compares the
+full supplied Claim with its immutable original even for an exact-copy replay.
+A discovered conflicting copy is diagnosed across both new and transitional
+legacy note tables under the same cut with finite copy, proof and metadata
+bounds. Legacy evidence can diagnose its own stored copy but does not authorize
+a new Claim. A new-copy insertion first bounds existing-copy comparisons and
+reserves their byte cost before the SQL representation guards run; an exact
+replay avoids that insertion. A proven invalid stored unit stops the catalog; an unrelated
 constraint error, incompatible replay or exhausted diagnostic budget does not
 itself establish corruption. No failure repairs or overwrites the old copy.
 

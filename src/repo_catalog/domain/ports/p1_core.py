@@ -61,7 +61,12 @@ class CoreAdmission(Protocol):
     def admit_notes_mapping_claim(self, claim: NotesMappingClaim) -> None: ...
     def admit_notes_mapping_group(self, group: NotesMappingGroup) -> None: ...
     def admit_notes_mapping_evidence(
-        self, evidence: NotesMappingEvidence, work: WorkBudget
+        self,
+        evidence: NotesMappingEvidence,
+        work: WorkBudget,
+        *,
+        max_metadata_bytes: int = 64 * 1024 * 1024,
+        max_proof_bytes: int = 64 * 1024 * 1024,
     ) -> None: ...
     def admit_ref_note(
         self,
@@ -71,6 +76,7 @@ class CoreAdmission(Protocol):
         work: WorkBudget,
         *,
         max_proof_bytes: int = 64 * 1024 * 1024,
+        max_metadata_bytes: int = 64 * 1024 * 1024,
         max_existing_copies: int = 1_000,
     ) -> None: ...
     def admit_coverage_scope(self, scope: CoreCoverageScope) -> None: ...
@@ -125,6 +131,7 @@ class CoreRead(Protocol):
         work: WorkBudget,
         *,
         max_proof_bytes: int = 64 * 1024 * 1024,
+        max_metadata_bytes: int = 64 * 1024 * 1024,
     ) -> bytes: ...
     def notes_projection(self, capture: Capture, target: OID) -> NotesProjection: ...
     def coverage(self, scope: CoreCoverageScope) -> CoverageProjection: ...

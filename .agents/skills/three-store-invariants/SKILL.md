@@ -940,14 +940,18 @@ the writer cut before treating the input as an incompatible replay. A constraint
 error alone does not prove corruption; explicitly diagnose the stored unit and
 persist the catalog stop only for a confirmed authoritative invariant failure.
 If the conflicting representation is another copy, bound and charge the
-diagnostic scan and preserve an ordinary refusal for a checked valid collision.
+diagnostic scan across every table actually compared, including transitional
+legacy copies, and preserve an ordinary refusal for a checked valid collision.
 Account for comparisons performed by SQL INSERT triggers too: reserve the
 bounded existing-copy byte cost before they run, retaining the reservation if
 an interruption makes actual comparison work uncertain.
 
 Select one eligible copy by an indexed semantic scope before loading body bytes.
-Measure its body/proof lengths, enforce finite limits, and reserve cumulative
-input work before fetching. Charge actual repeated proof and body verification;
+Measure all variable-width columns, enforce finite limits, and reserve cumulative
+input work before fetching each row, including dependent claim and subject rows.
+Bound caller metadata and its encoded form before serialization; copied identity
+coordinates do not substitute for comparing the complete immutable claim.
+Charge actual repeated proof and body verification;
 an exhausted budget must not be converted to a corruption stop. Include a
 same-length damaged body, missing role, valid replay, unrelated constraint
 failure, interrupted reservation and several large copies as separate controls.

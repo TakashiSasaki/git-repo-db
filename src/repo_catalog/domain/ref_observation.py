@@ -7,6 +7,7 @@ Receiver evidence is checked by the admission boundary against its exact root.
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Literal
 from uuid import UUID
@@ -166,7 +167,12 @@ class RefAbsenceEvidence:
         )
 
     @classmethod
-    def decode(cls, value: str) -> RefAbsenceEvidence:
+    def decode(
+        cls,
+        value: str,
+        *,
+        before_compare: Callable[[RefAbsenceEvidence], None] | None = None,
+    ) -> RefAbsenceEvidence:
         try:
             data = json.loads(value)
             if not isinstance(data, list) or len(data) != 7:
@@ -174,9 +180,15 @@ class RefAbsenceEvidence:
             ref = bytes.fromhex(data[2])
             prefix = None if data[5] is None else bytes.fromhex(data[5])
             result = cls(data[0], data[1], ref, data[3], data[4], prefix, data[6])
+            if before_compare is not None:
+                before_compare(result)
             if result.encoded != value:
                 raise ValueError("noncanonical absence evidence")
             return result
+        except CoreFailure as exc:
+            if exc.code in ("BUDGET", "QUERY_BUDGET"):
+                raise
+            raise CoreFailure("ABSENCE", value, "invalid absence evidence") from exc
         except (ValueError, TypeError, IndexError, RecursionError) as exc:
             raise CoreFailure("ABSENCE", value, "invalid absence evidence") from exc
 
