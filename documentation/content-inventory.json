@@ -11165,6 +11165,15 @@
       "consumers": "Reviewers and I3 implementation handoffs.",
       "publication": "not staged"
     },
+    "docs/implementation/adr0036-i3-exchange-query-backup-contract.md": {
+      "status": "active-scoped-contract",
+      "owner": "docs/implementation/",
+      "authority": "I3 opt-in Exchange, Query and backup scope and limitations; ADR 0036 controls target policy.",
+      "source": "docs/implementation/adr0036-i3-exchange-query-backup-contract.md",
+      "producer": "I3 implementation and verification.",
+      "consumers": "Reviewers and integration handoffs.",
+      "publication": "not staged"
+    },
     "docs/implementation/adr0036-i1-core-contract.md": {
       "status": "active-scoped-contract",
       "owner": "docs/implementation/",

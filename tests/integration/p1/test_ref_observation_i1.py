@@ -463,12 +463,13 @@ def test_note_transaction_rolls_back_all_new_units_on_failure(core):
         c.read_ref_note(altered, content, Budget())
 
 
-def test_valid_recovery_guards_and_export_refusal(core):
+def test_valid_recovery_guards_and_rootless_absence_export(core):
     from repo_catalog.adapters.sqlite.recovery_validation import (
         validate_stored_admission_guards,
     )
     from repo_catalog.application.exchange import ExchangeService
-    from repo_catalog.domain.exchange import ExchangeError, ExchangeSelectionScope
+    from repo_catalog.domain.exchange import ExchangeSelectionScope
+    from repo_catalog.domain.ref_exchange import claim_from_wire, observation_from_wire
 
     c, path, repository = core
     obs = subject(repository)
@@ -476,24 +477,33 @@ def test_valid_recovery_guards_and_export_refusal(core):
     absence = RefAbsenceEvidence(
         "source", "scope", obs.ref_name_bytes, "lookup", "completed"
     )
-    c.admit_ref_observation_claim(
-        RefObservationClaim(
-            obs.ref_observation_key,
-            provenance("absence"),
-            "absent",
-            absence_evidence=absence,
-        )
+    claim = RefObservationClaim(
+        obs.ref_observation_key,
+        provenance("absence"),
+        "absent",
+        absence_evidence=absence,
     )
+    c.admit_ref_observation_claim(claim)
     db = connect(path, "core")
     try:
         validate_stored_admission_guards(db, "core")
     finally:
         db.close()
-    with pytest.raises(ExchangeError) as error:
-        ExchangeService(path.parent).export_package(
-            selection=ExchangeSelectionScope(all_selected=True, include_context=False)
+    package = ExchangeService(path.parent).export_package(
+        selection=ExchangeSelectionScope(
+            all_selected=True,
+            include_context=False,
+            include_retained_bytes=False,
+            ref_observation_keys=(obs.ref_observation_key,),
         )
-    assert error.value.code == "UNSUPPORTED_REF_OBSERVATION_EXPORT"
+    )
+    assert [observation_from_wire(row) for row in package.core["ref_observations"]] == [
+        obs
+    ]
+    assert [claim_from_wire(row) for row in package.core["ref_observation_claims"]] == [
+        claim
+    ]
+    assert not package.core["git_objects"]
 
 
 def test_projection_preserves_reports_groups_and_verified_scope(core):
@@ -663,22 +673,32 @@ def test_audit_records_full_expression_index_sql():
     assert "<expression:2>" in expressions[0]["columns"]
 
 
-def test_backup_refuses_incomplete_manifest_without_stopping_healthy_core(core):
-    from repo_catalog.adapters.sqlite.recovery import (
-        RefObservationBackupUnsupported,
-        SQLiteRecoveryAdapter,
-    )
+def test_backup_restores_rootless_observation_without_stopping_healthy_core(core):
+    from repo_catalog.adapters.sqlite.recovery import SQLiteRecoveryAdapter
     from repo_catalog.domain.recovery import BackupScope
 
     c, path, repository = core
     obs = subject(repository)
     c.admit_ref_observation(obs)
     destination = path.parent.parent / (path.parent.name + "-backup")
-    with pytest.raises(RefObservationBackupUnsupported, match="I3"):
-        SQLiteRecoveryAdapter().create_consistent_backup(
-            path.parent, destination, BackupScope.GIT_ONLY
+    adapter = SQLiteRecoveryAdapter()
+    receipt = adapter.create_consistent_backup(
+        path.parent, destination, BackupScope.GIT_ONLY
+    )
+    assert (
+        receipt.verified_clean
+        and receipt.manifest.retained_byte_summary.notes_body_count == 0
+    )
+    restored = path.parent.parent / (path.parent.name + "-restored")
+    assert adapter.restore_backup(destination, restored, repository).revalidated_clean
+    copy = Core(restored / "core.sqlite3")
+    try:
+        assert (
+            copy.ref_observation(obs.ref_observation_key, Budget()).ref_observation
+            == obs
         )
-    assert not destination.exists()
+    finally:
+        copy.close()
     assert not (path.parent / "p1-recovery-stop.json").exists()
     assert c.ref_observation(obs.ref_observation_key, Budget()).ref_observation == obs
 

@@ -16,6 +16,7 @@ import time
 import uuid
 from collections.abc import Callable, Mapping
 from contextlib import ExitStack
+from dataclasses import replace
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -56,10 +57,14 @@ from repo_catalog.adapters.sqlite.p1_schema import (
 )
 from repo_catalog.adapters.sqlite.recovery_budget import recovery_request
 from repo_catalog.adapters.sqlite.recovery_validation import (
+    RefValidationBudgetError,
     StoredContextInvariantError,
+    StoredRefInvariantError,
     bounded_domain_exists,
+    charge_ref_integrity_inputs,
     validate_stored_admission_guards,
     validate_stored_checks,
+    validate_stored_ref_authority,
     validate_stored_text_encoding,
     verify_existing_context_text,
 )
@@ -98,11 +103,6 @@ from repo_catalog.domain.recovery import (
     StoreManifest,
 )
 
-
-class RefObservationBackupUnsupported(BackupValidationError):
-    """The I3 backup manifest does not yet certify ref-observation data."""
-
-
 _REF_OBSERVATION_TABLES = frozenset(
     {
         "ref_observations",
@@ -113,6 +113,7 @@ _REF_OBSERVATION_TABLES = frozenset(
         "notes_mapping_claims",
         "notes_mapping_groups",
         "notes_mapping_evidence",
+        "ref_coverage_proofs",
         "ref_retained_notes",
     }
 )
@@ -742,7 +743,9 @@ def _confirmed_integrity_failure(error: Exception) -> str | None:
     current: BaseException | None = error
     while current is not None and current not in chain:
         chain.append(current)
-        if isinstance(current, StoredContextInvariantError):
+        if isinstance(current, RefValidationBudgetError):
+            return None
+        if isinstance(current, (StoredContextInvariantError, StoredRefInvariantError)):
             # Trusted stored relation decoders have already classified their
             # ValueError/TypeError cause as a deterministic data invariant.
             break
@@ -831,6 +834,24 @@ def stop_catalog(catalog_dir: Path, reason: str, details: dict | None = None) ->
 class SQLiteRecoveryAdapter:
     """Production P7 backup, salvage, restore, and activation adapter under ADR 0026."""
 
+    def __init__(self, *, validation_budget: RecoveryBudget | None = None):
+        if validation_budget is not None and not isinstance(
+            validation_budget, RecoveryBudget
+        ):
+            raise ValueError("RecoveryBudget required")
+        budget = validation_budget or RecoveryBudget()
+        self.validation_budget = replace(
+            budget, max_work_units=dict(budget.max_work_units)
+        )
+
+    def _ref_validation_work(self):
+        from repo_catalog.adapters.sqlite.acquisition import UnlimitedWorkBudget
+
+        return UnlimitedWorkBudget(
+            note_bytes=self.validation_budget.max_payload_bytes,
+            work_limits=dict(self.validation_budget.max_work_units),
+        )
+
     def create_consistent_backup(
         self,
         catalog_dir: Path,
@@ -899,15 +920,19 @@ class SQLiteRecoveryAdapter:
                 )
                 raise BackupValidationError(str(e)) from e
 
-            # Deep Domain and Retained-Byte Validation outside writer lock
+            # Deep Domain and Retained-Byte Validation outside writer lock.
+            # Source diagnosis, if needed, uses the same cumulative allowance.
+            validation_work = self._ref_validation_work()
             try:
-                core_summary = self._validate_and_summarize_core(staged_core)
-            except RefObservationBackupUnsupported:
-                # Unsupported I1 integration is not evidence of corruption.
+                core_summary = self._validate_and_summarize_core(
+                    staged_core, work=validation_work
+                )
+            except RefValidationBudgetError:
+                # A finite limit is not evidence of catalog corruption.
                 raise
             except (BackupValidationError, sqlite3.Error) as e:
                 self._diagnose_and_stop_if_source_corrupt(
-                    catalog_dir, core_db_path, "core", e
+                    catalog_dir, core_db_path, "core", e, work=validation_work
                 )
                 raise BackupValidationError(str(e)) from e
 
@@ -1069,6 +1094,8 @@ class SQLiteRecoveryAdapter:
         source_db_path: Path,
         store_role: str,
         staging_error: Exception,
+        *,
+        work=None,
     ) -> None:
         """Distinguish confirmed authoritative source corruption from staging-only copy defects.
 
@@ -1091,7 +1118,7 @@ class SQLiteRecoveryAdapter:
                     )
                     if store_role == "core":
                         self._validate_and_summarize_core(
-                            evidence / source_db_path.name
+                            evidence / source_db_path.name, work=work
                         )
                     elif store_role == "context":
                         self._validate_and_summarize_context(
@@ -1202,8 +1229,30 @@ class SQLiteRecoveryAdapter:
         finally:
             conn.close()
 
-    def _validate_and_summarize_core(self, core_db: Path) -> RetainedByteSummary:
+    def _validate_and_summarize_core(
+        self, core_db: Path, *, work=None
+    ) -> RetainedByteSummary:
         conn = sqlite3.connect(f"file:{core_db.resolve()}?mode=ro", uri=True)
+        if work is None:
+            work = self._ref_validation_work()
+        vm_remaining = getattr(
+            work,
+            "_ref_backup_vm_remaining",
+            self.validation_budget.max_work_units.get(
+                "metadata_units", NotesLimits.work_limits()["metadata_units"]
+            )
+            * 100,
+        )
+        vm_exhausted = False
+
+        def progress():
+            nonlocal vm_remaining, vm_exhausted
+            vm_remaining -= 100
+            work._ref_backup_vm_remaining = vm_remaining
+            vm_exhausted = vm_remaining < 0
+            return int(vm_exhausted)
+
+        conn.set_progress_handler(progress, 100)
         try:
             register_functions(conn)
             # Strict P1 schema validation
@@ -1219,15 +1268,21 @@ class SQLiteRecoveryAdapter:
                     "Core physical schema rows differ from packaged expectation"
                 )
 
-            validate_stored_text_encoding(conn, "core")
-            validate_stored_checks(conn, "core", retained_bytes=False)
+            ref_notes, ref_bytes = validate_stored_ref_authority(
+                conn, work, self.validation_budget
+            )
+            validate_stored_text_encoding(conn, "core", work=work)
+            with account_verification(work):
+                validate_stored_checks(conn, "core", retained_bytes=False, work=work)
 
             # PRAGMA integrity_check
-            result = conn.execute("PRAGMA integrity_check").fetchall()
-            if not result or result[0][0] != "ok":
-                raise BackupValidationError(
-                    f"Core database integrity check failed: {result}"
-                )
+            charge_ref_integrity_inputs(conn, work)
+            with account_verification(work):
+                result = conn.execute("PRAGMA integrity_check").fetchall()
+                if not result or result[0][0] != "ok":
+                    raise BackupValidationError(
+                        f"Core database integrity check failed: {result}"
+                    )
             fk_result = conn.execute("PRAGMA foreign_key_check").fetchall()
             if fk_result:
                 raise BackupValidationError(
@@ -1246,11 +1301,11 @@ class SQLiteRecoveryAdapter:
                     "Core repository or catalog instance UUID is not valid UUIDv4"
                 )
 
-            total_bytes = 0
+            total_bytes = ref_bytes
             commits = 0
             trees = 0
             tags = 0
-            notes = 0
+            notes = ref_notes
 
             # 1. Inspect retained_metadata: commits, trees, tags
             cursor = conn.execute(
@@ -1388,16 +1443,9 @@ class SQLiteRecoveryAdapter:
                 notes += 1
                 total_bytes += len(body)
 
-            validate_stored_checks(conn, "core", retained_bytes=True)
-            validate_stored_admission_guards(conn, "core")
-
-            # The existing manifest's retained-body accounting does not include
-            # the I1 ref-observation family. Never certify an incomplete backup.
-            for table in _REF_OBSERVATION_TABLES:
-                if conn.execute(f'SELECT 1 FROM "{table}" LIMIT 1').fetchone():
-                    raise RefObservationBackupUnsupported(
-                        "RefObservation backup/restore requires the I3 manifest integration"
-                    )
+            with account_verification(work):
+                validate_stored_checks(conn, "core", retained_bytes=True, work=work)
+                validate_stored_admission_guards(conn, "core", work=work)
 
             return RetainedByteSummary(
                 commit_count=commits,
@@ -1406,7 +1454,13 @@ class SQLiteRecoveryAdapter:
                 notes_body_count=notes,
                 total_retained_bytes=total_bytes,
             )
+        except CoreFailure as e:
+            if e.code in ("BUDGET", "QUERY_BUDGET"):
+                raise RefValidationBudgetError(str(e)) from e
+            raise
         except sqlite3.Error as e:
+            if vm_exhausted:
+                raise RefValidationBudgetError("finite backup SQLite work limit") from e
             raise BackupValidationError(f"Core database error: {e}") from e
         finally:
             conn.close()
@@ -1744,7 +1798,7 @@ class SQLiteRecoveryAdapter:
                             continue
 
                         if store_name == "core" and table in _REF_OBSERVATION_TABLES:
-                            # Until I3 supplies typed recovery, explicitly report
+                            # Until typed salvage is available, explicitly report
                             # the unsupported candidate and never stage its body
                             # or structural proof as generic Git metadata.
                             cand_record = {
@@ -1757,7 +1811,7 @@ class SQLiteRecoveryAdapter:
                                 "payload": {},
                                 "provenance": None,
                                 "extraction_status": ExtractionStatus.PARTIAL.value,
-                                "error": "RefObservation salvage requires I3 typed recovery integration",
+                                "error": "RefObservation salvage requires typed recovery integration",
                             }
                             line = json.dumps(cand_record) + "\n"
                             line_bytes = len(line.encode("utf-8"))

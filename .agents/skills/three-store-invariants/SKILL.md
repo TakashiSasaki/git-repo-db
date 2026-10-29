@@ -990,4 +990,37 @@ including every prepared operation and link actually scanned.
 A checked note path remains bound to the exact Claim and root; a shared Mapping
 or an earlier Capture never supplies body authority by itself. Exercise these
 boundaries with `scripts/local-run.sh pytest -q -n 2 tests/integration/p4/test_ref_observation_i2.py`.
-The pre-I3 Exchange/backup fences also cover an empty event with no item rows.
+At the I2 boundary the pre-I3 Exchange/backup fences also covered an empty
+event with no item rows; this is historical stage behavior, not an I3 rule.
+
+## Ref Observation Exchange, typed Coverage and recovery
+
+When integrating the ADR 0036 family, test a selected rootless absence and an
+object-only selection separately: an object cannot imply an unrelated rootless
+observation. Preserve an enumeration's entire original membership or report
+its omission; do not turn a partial selection into a complete original event.
+Recompute note role proof and exact body on the receiving catalog, preserve the
+original evidence coordinate and record any new receiver check separately.
+Exercise repeat, reverse and onward delivery with the original physical copy
+UUID; local verification must not rebind that copy or recursively inflate its
+provenance on each transfer.
+
+For `notes-mapping-inventory` Coverage, a complete reported Group is not a
+receiver proof. Rewalk the ordered commit/tree closure for the exact Claim and
+root, then compare the whole verified result with that one Group. Two partial
+Groups, a single checked path, an unrelated root or a sender flag cannot prove
+completion. Reserve the stored claim, scope, details, member and proof bytes
+before fetching them. Separate a low finite limit from confirmed stored damage;
+only the latter persists the catalog stop. Test complete and known-empty trees,
+missing/extra/out-of-order structure, tampered stored authority, independent
+receiver checks and unchanged latest/stale/conflict behavior.
+
+Generic SQL must not expose `ref_retained_notes` bodies/proofs,
+`notes_mapping_evidence` proof bundles or `ref_coverage_proofs` structures.
+Test the typed checked readers and malicious WorkBudget callback reentry as
+distinct controls. Backup/restore must revalidate every authoritative member
+and physical copy, including when another good copy exists; a forged input is
+a refusal, while confirmed source corruption stops that catalog. Keep typed
+salvage's unsupported families explicitly partial until their own receiving
+validation exists. These tests do not establish release acceptance or activate
+the normal Schema 21 runtime.

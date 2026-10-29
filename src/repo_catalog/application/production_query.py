@@ -84,8 +84,17 @@ if TYPE_CHECKING:
         MappingOperationEvidence,
         ResourceKey,
     )
+    from repo_catalog.domain.ports.p1_core import WorkBudget
     from repo_catalog.domain.production_context import (
         ResourceRelation,
+    )
+    from repo_catalog.domain.ref_observation import (
+        NotesMapping,
+        NotesMappingProjection,
+        RefEnumerationResult,
+        RefObservationClaim,
+        RefObservationKey,
+        RefObservationProjection,
     )
 
 T = TypeVar("T")
@@ -484,6 +493,112 @@ class ProductionQueryService:
     # ------------------------------------------------------------------
     # Git Core Authoritative Queries
     # ------------------------------------------------------------------
+
+    def get_ref_observation(
+        self,
+        key: RefObservationKey,
+        work: WorkBudget,
+        *,
+        max_claims: int = 10_000,
+        max_bytes: int = 64 * 1024 * 1024,
+    ) -> RefObservationProjection:
+        """Return the immutable subject, its original claims and derived conflict."""
+        with self.open_snapshot(required_store="core") as snap:
+            assert snap.core is not None
+            return snap.core.ref_observation(
+                key, work, max_claims=max_claims, max_bytes=max_bytes
+            )
+
+    def get_ref_enumeration(
+        self,
+        origin_uuidv4: str,
+        enumeration_uuidv7: str,
+        work: WorkBudget,
+        *,
+        max_links: int = 200_000,
+        max_bytes: int = 64 * 1024 * 1024,
+    ) -> RefEnumerationResult | None:
+        """Return one original scan and its exact bounded membership."""
+        with self.open_snapshot(required_store="core") as snap:
+            assert snap.core is not None
+            return snap.core.ref_enumeration(
+                origin_uuidv4,
+                enumeration_uuidv7,
+                work,
+                max_links=max_links,
+                max_bytes=max_bytes,
+            )
+
+    def get_notes_mapping(
+        self,
+        claim: RefObservationClaim,
+        target: OID,
+        interpretation_kind: str,
+        interpretation_version: str,
+        interpretation_scope: str,
+        work: WorkBudget,
+        *,
+        max_units: int = 10_000,
+        max_bytes: int = 64 * 1024 * 1024,
+    ) -> NotesMappingProjection:
+        """Keep reports and checked evidence attached to their exact Claim."""
+        with self.open_snapshot(required_store="core") as snap:
+            assert snap.core is not None
+            return snap.core.notes_mapping_projection(
+                claim,
+                target,
+                interpretation_kind,
+                interpretation_version,
+                interpretation_scope,
+                work,
+                max_units=max_units,
+                max_bytes=max_bytes,
+            )
+
+    def read_ref_note_bytes(
+        self,
+        claim: RefObservationClaim,
+        mapping: NotesMapping,
+        work: WorkBudget,
+        *,
+        max_proof_bytes: int = 64 * 1024 * 1024,
+        max_metadata_bytes: int = 64 * 1024 * 1024,
+    ) -> ByteReadResult:
+        """Return only locally revalidated bytes for this Claim and mapping."""
+        with self.open_snapshot(required_store="core") as snap:
+            assert snap.core is not None
+            try:
+                body = snap.core.read_ref_note(
+                    claim,
+                    mapping,
+                    work,
+                    max_proof_bytes=max_proof_bytes,
+                    max_metadata_bytes=max_metadata_bytes,
+                )
+            except CoreFailure as error:
+                if error.code == "NOTES_ROLE_UNAVAILABLE":
+                    return ByteReadResult(available=False, verified=False)
+                raise
+            # This digest is computed for the returned view, in addition to the
+            # typed reader's body verification, so the actual hash is charged.
+            work.require("verification_bytes", len(body))
+            try:
+                digest = hashlib.sha256(body).hexdigest()
+            except BaseException:
+                abandon = getattr(work, "abandon", None)
+                if abandon is not None:
+                    abandon("verification_bytes")
+                else:
+                    work.charge("verification_bytes", len(body))
+                raise
+            work.charge("verification_bytes", len(body))
+            return ByteReadResult(
+                available=True,
+                verified=True,
+                body_bytes=body,
+                declared_size=len(body),
+                digest_sha256=digest,
+            )
 
     def get_repository_view(self) -> GitRepositoryView:
         with self.open_snapshot(required_store="core") as snap:
@@ -957,10 +1072,26 @@ class ProductionQueryService:
             digest_sha256=digest,
         )
 
-    def get_core_coverage(self, scope: CoreCoverageScope) -> CoverageView:
+    def get_core_coverage(
+        self,
+        scope: CoreCoverageScope,
+        *,
+        work: WorkBudget | None = None,
+        max_proofs: int = 1_000,
+        max_bytes: int = 64 * 1024 * 1024,
+        max_structures: int = 100_000,
+        max_claims: int = 10_000,
+    ) -> CoverageView:
         with self.open_snapshot(required_store="core") as snap:
             assert snap.core is not None
-            proj = snap.core.coverage(scope)
+            proj = snap.core.coverage(
+                scope,
+                work=work,
+                max_proofs=max_proofs,
+                max_bytes=max_bytes,
+                max_structures=max_structures,
+                max_claims=max_claims,
+            )
             return CoverageView(
                 scope=scope,
                 state=proj.state,

@@ -7,6 +7,7 @@ from typing import Protocol
 
 from repo_catalog.domain.p1_context import CoverageScope, ResourceKey
 from repo_catalog.domain.p1_core import OID, Capture, CoreCoverageScope
+from repo_catalog.domain.ports.p1_core import WorkBudget
 from repo_catalog.domain.production_query import (
     ByteReadResult,
     CatalogReadMode,
@@ -26,6 +27,14 @@ from repo_catalog.domain.production_query import (
     SearchResponse,
     SnapshotFenceToken,
     SourceView,
+)
+from repo_catalog.domain.ref_observation import (
+    NotesMapping,
+    NotesMappingProjection,
+    RefEnumerationResult,
+    RefObservationClaim,
+    RefObservationKey,
+    RefObservationProjection,
 )
 
 
@@ -56,6 +65,48 @@ class ProductionQueryPort(Protocol):
     def snapshot_token(self) -> SnapshotFenceToken: ...
 
     def get_repository_view(self) -> GitRepositoryView: ...
+
+    def get_ref_observation(
+        self,
+        key: RefObservationKey,
+        work: WorkBudget,
+        *,
+        max_claims: int = 10_000,
+        max_bytes: int = 64 * 1024 * 1024,
+    ) -> RefObservationProjection: ...
+
+    def get_ref_enumeration(
+        self,
+        origin_uuidv4: str,
+        enumeration_uuidv7: str,
+        work: WorkBudget,
+        *,
+        max_links: int = 200_000,
+        max_bytes: int = 64 * 1024 * 1024,
+    ) -> RefEnumerationResult | None: ...
+
+    def get_notes_mapping(
+        self,
+        claim: RefObservationClaim,
+        target: OID,
+        interpretation_kind: str,
+        interpretation_version: str,
+        interpretation_scope: str,
+        work: WorkBudget,
+        *,
+        max_units: int = 10_000,
+        max_bytes: int = 64 * 1024 * 1024,
+    ) -> NotesMappingProjection: ...
+
+    def read_ref_note_bytes(
+        self,
+        claim: RefObservationClaim,
+        mapping: NotesMapping,
+        work: WorkBudget,
+        *,
+        max_proof_bytes: int = 64 * 1024 * 1024,
+        max_metadata_bytes: int = 64 * 1024 * 1024,
+    ) -> ByteReadResult: ...
 
     def get_git_object(
         self,
@@ -106,7 +157,16 @@ class ProductionQueryPort(Protocol):
         self, capture: Capture, target: OID, note_oid: OID
     ) -> ByteReadResult: ...
 
-    def get_core_coverage(self, scope: CoreCoverageScope) -> CoverageView: ...
+    def get_core_coverage(
+        self,
+        scope: CoreCoverageScope,
+        *,
+        work: WorkBudget | None = None,
+        max_proofs: int = 1_000,
+        max_bytes: int = 64 * 1024 * 1024,
+        max_structures: int = 100_000,
+        max_claims: int = 10_000,
+    ) -> CoverageView: ...
 
     def list_providers(self) -> tuple[ProviderView, ...]: ...
 

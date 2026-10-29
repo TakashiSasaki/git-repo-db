@@ -5,6 +5,8 @@ runtime is unchanged. The direct parent is I1. I3 Exchange, Query and typed
 backup/restore integration remain separate, and neither real-catalog migration
 nor release acceptance follows from this implementation.
 
+For the subsequent integration, see [the I3 contract](adr0036-i3-exchange-query-backup-contract.md).
+
 ## Original reads and replay
 
 A local `for-each-ref` execution is one enumeration occurrence. Each completed

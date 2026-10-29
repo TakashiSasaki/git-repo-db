@@ -25,6 +25,7 @@ def test_inventory_has_exact_roles_and_rejects_unreviewed_paths():
         "docs/adr/0036-ref-observations-and-shared-notes-mappings.md": "adr-source-or-governance",
         "docs/implementation/adr0036-i1-core-contract.md": "active-scoped-contract",
         "docs/implementation/adr0036-i2-acquisition-contract.md": "active-scoped-contract",
+        "docs/implementation/adr0036-i3-exchange-query-backup-contract.md": "active-scoped-contract",
         "docs/implementation/ref-observation-proposal/ref-observation-full-adr-draft.md": "design-review-snapshot",
         "docs/phase2/decision-register-before-no-publication.md": "superseded-decision-or-proposal-snapshot",
         "docs/phase2/field-contract.json": "machine-input-with-scoped-provenance",

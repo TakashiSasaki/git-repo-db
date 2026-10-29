@@ -1,4 +1,4 @@
-"""Exact v5 row envelopes. No legacy row aliases or opaque extra fields."""
+"""Exact v6 row envelopes. No legacy row aliases or opaque extra fields."""
 
 import json
 
@@ -310,6 +310,128 @@ ROW_KEYS = {
     },
 }
 
+for _section, _fields in {
+    "ref_observations": (
+        "observation_origin_uuidv4",
+        "ref_observation_uuidv7",
+        "repository_uuidv4",
+        "ref_name_hex",
+        "source_attribution",
+        "visibility_scope",
+        "observed_at_us",
+    ),
+    "ref_observation_claims": (
+        "observation_origin_uuidv4",
+        "ref_observation_uuidv7",
+        "provenance_json",
+        "presence_state",
+        "ref_form",
+        "direct_target_oid",
+        "symbolic_target_hex",
+        "resolved_target_oid",
+        "peeled_target_oid",
+        "root_oid",
+        "absence_evidence_json",
+    ),
+    "ref_enumeration_observations": (
+        "observation_origin_uuidv4",
+        "enumeration_uuidv7",
+        "repository_uuidv4",
+        "source_attribution",
+        "visibility_scope",
+        "enumeration_scope_json",
+        "enumeration_state",
+        "completion_coordinate",
+        "observed_at_us",
+        "byte_limit",
+        "ref_limit",
+        "link_count",
+    ),
+    "ref_enumeration_links": (
+        "enumeration_origin_uuidv4",
+        "enumeration_uuidv7",
+        "observation_origin_uuidv4",
+        "ref_observation_uuidv7",
+        "claim_provenance_json",
+        "derivation",
+        "position",
+    ),
+    "notes_mapping_claims": (
+        "observation_origin_uuidv4",
+        "ref_observation_uuidv7",
+        "ref_claim_provenance_json",
+        "object_format",
+        "root_oid",
+        "interpretation_kind",
+        "interpretation_version",
+        "interpretation_scope",
+        "annotated_object_oid",
+        "note_oid",
+        "mapping_path_json",
+        "provenance_json",
+    ),
+    "notes_mapping_groups": (
+        "observation_origin_uuidv4",
+        "ref_observation_uuidv7",
+        "ref_claim_provenance_json",
+        "object_format",
+        "root_oid",
+        "interpretation_kind",
+        "interpretation_version",
+        "interpretation_scope",
+        "group_scope",
+        "status",
+        "membership_json",
+        "provenance_json",
+    ),
+    "notes_mapping_evidence": (
+        "observation_origin_uuidv4",
+        "ref_observation_uuidv7",
+        "ref_claim_provenance_json",
+        "object_format",
+        "root_oid",
+        "interpretation_kind",
+        "interpretation_version",
+        "interpretation_scope",
+        "annotated_object_oid",
+        "note_oid",
+        "mapping_path_json",
+        "verification_scope",
+        "evidence_provenance_json",
+        "proof_bundle_json",
+    ),
+    "ref_retained_notes": (
+        "observation_origin_uuidv4",
+        "ref_observation_uuidv7",
+        "ref_claim_provenance_json",
+        "object_format",
+        "root_oid",
+        "interpretation_kind",
+        "interpretation_version",
+        "interpretation_scope",
+        "annotated_object_oid",
+        "note_oid",
+        "mapping_path_json",
+        "verification_scope",
+        "evidence_provenance_json",
+        "proof_bundle_json",
+        "physical_copy_uuidv4",
+        "body_hex",
+        "size",
+        "digest_sha256",
+    ),
+    "ref_coverage_proofs": (
+        "owner_kind",
+        "owner_coordinates_json",
+        "observed_at_us",
+        "coverage_state",
+        "group_json",
+        "verification_provenance_json",
+        "structures_json",
+    ),
+}.items():
+    ROW_KEYS["core"][_section] = (tuple(sorted(_fields)),)
+
 
 def validate_rows(core, context):
     # Local import keeps envelope validation independent of application services.
@@ -330,7 +452,7 @@ def validate_rows(core, context):
             for row in rows:
                 if tuple(sorted(row)) not in ROW_KEYS[store][section]:
                     raise ExchangeError(
-                        "MALFORMED_ROW", [store, section], "exact v5 keys required"
+                        "MALFORMED_ROW", [store, section], "exact v6 keys required"
                     )
                 if store == "context" and section == "resources":
                     if core is not None and row.get("resource_kind") in (
@@ -483,6 +605,28 @@ def validate_rows(core, context):
                         )
                 if store == "core" and section == "captures":
                     decode_native_ref(row["ref"])
+                if store == "core" and section in (
+                    "ref_observations",
+                    "ref_observation_claims",
+                    "ref_enumeration_observations",
+                ):
+                    from repo_catalog.domain.ref_exchange import (
+                        claim_from_wire,
+                        enumeration_from_wire,
+                        observation_from_wire,
+                    )
+
+                    decoder = {
+                        "ref_observations": observation_from_wire,
+                        "ref_observation_claims": claim_from_wire,
+                        "ref_enumeration_observations": enumeration_from_wire,
+                    }[section]
+                    try:
+                        decoder(row)
+                    except (TypeError, ValueError, KeyError) as error:
+                        raise ExchangeError(
+                            "MALFORMED_ROW", [store, section]
+                        ) from error
                 if "authority" in row and row["authority"] not in (
                     "reported",
                     "intrinsic",
@@ -547,6 +691,24 @@ def decode_native_ref(value):
 IDENTITY_KEYS = {
     "core": {
         "captures": ("capture_origin_uuidv4", "capture_uuidv4"),
+        "ref_observations": ("observation_origin_uuidv4", "ref_observation_uuidv7"),
+        "ref_observation_claims": (
+            "observation_origin_uuidv4",
+            "ref_observation_uuidv7",
+            "provenance_json",
+        ),
+        "ref_enumeration_observations": (
+            "observation_origin_uuidv4",
+            "enumeration_uuidv7",
+        ),
+        "ref_enumeration_links": (
+            "enumeration_origin_uuidv4",
+            "enumeration_uuidv7",
+            "observation_origin_uuidv4",
+            "ref_observation_uuidv7",
+            "claim_provenance_json",
+        ),
+        "ref_retained_notes": ("object_format", "note_oid", "physical_copy_uuidv4"),
         "git_observations": (
             "capture_origin_uuidv4",
             "capture_uuidv4",

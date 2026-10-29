@@ -34,6 +34,44 @@ from repo_catalog.domain.p1_core import (
     encode,
     uuid4_value,
 )
+from repo_catalog.domain.ref_observation import NotesMappingEvidenceRecord
+
+
+class _CheckedReadLimits:
+    def __init__(self, budget):
+        self.budget = budget
+
+    @property
+    def note_bytes(self):
+        return self.budget._invoke(lambda: self.budget.work.limits.note_bytes)
+
+
+class _CheckedReadBudget:
+    """Do not lend a typed-read capability to caller-supplied callbacks."""
+
+    def __init__(self, core, work):
+        self.core, self.work = core, work
+        self.limits = _CheckedReadLimits(self)
+
+    def _invoke(self, operation):
+        prior = getattr(self.core, "_checked_byte_read", False)
+        self.core._checked_byte_read = False
+        try:
+            return operation()
+        finally:
+            self.core._checked_byte_read = prior
+
+    def require(self, unit, amount=1):
+        return self._invoke(lambda: self.work.require(unit, amount))
+
+    def charge(self, unit, amount):
+        return self._invoke(lambda: self.work.charge(unit, amount))
+
+    def __getattr__(self, name):
+        if name != "abandon":
+            raise AttributeError(name)
+        self._invoke(lambda: getattr(self.work, name))
+        return lambda unit: self._invoke(lambda: self.work.abandon(unit))
 
 
 class GitCore(Core):
@@ -168,6 +206,17 @@ class GitCore(Core):
         protected = (
             column == "body" and table in ("retained_metadata", "retained_notes")
         ) or (column == "proof_bundle" and table in ("note_roles", "retained_notes"))
+        # Ref-observation roles have the same retained-byte boundary as the
+        # legacy Capture roles. Generic metadata SQL cannot emit their bodies or
+        # structural proofs without the claim-scoped typed validation below.
+        protected = (
+            protected
+            or (table == "ref_retained_notes" and column in ("body", "proof_bundle"))
+            or (table == "notes_mapping_evidence" and column == "proof_bundle")
+        )
+        protected = protected or (
+            table == "ref_coverage_proofs" and column == "structures_json"
+        )
         # P4 receiver inventory provenance contains exact structural evidence.
         # It must follow the same checked output boundary as proof_bundle.
         protected = protected or (table == "notes_groups" and column == "provenance")
@@ -178,6 +227,123 @@ class GitCore(Core):
         ):
             return sqlite3.SQLITE_DENY
         return super()._authorize(action, table, column, database, trigger)
+
+    def notes_mapping_projection(
+        self,
+        ref_claim,
+        annotated_object_oid,
+        interpretation_kind,
+        interpretation_version,
+        interpretation_scope,
+        work,
+        *,
+        max_units=10_000,
+        max_bytes=64 * 1024 * 1024,
+    ):
+        guarded_work = _CheckedReadBudget(self, work)
+        prior = getattr(self, "_checked_byte_read", False)
+        self._checked_byte_read = True
+        try:
+            return super().notes_mapping_projection(
+                ref_claim,
+                annotated_object_oid,
+                interpretation_kind,
+                interpretation_version,
+                interpretation_scope,
+                guarded_work,
+                max_units=max_units,
+                max_bytes=max_bytes,
+            )
+        finally:
+            self._checked_byte_read = prior
+
+    def read_ref_note(
+        self,
+        claim,
+        mapping,
+        work,
+        *,
+        max_proof_bytes=64 * 1024 * 1024,
+        max_metadata_bytes=64 * 1024 * 1024,
+    ):
+        guarded_work = _CheckedReadBudget(self, work)
+        prior = getattr(self, "_checked_byte_read", False)
+        self._checked_byte_read = True
+        try:
+            return super().read_ref_note(
+                claim,
+                mapping,
+                guarded_work,
+                max_proof_bytes=max_proof_bytes,
+                max_metadata_bytes=max_metadata_bytes,
+            )
+        finally:
+            self._checked_byte_read = prior
+
+    @_completed_read
+    @_decoded_read
+    def read_ref_note_copy(
+        self,
+        oid: OID,
+        physical_copy_uuidv4: str,
+        work,
+        *,
+        max_metadata_bytes: int = 64 * 1024 * 1024,
+        max_proof_bytes: int = 64 * 1024 * 1024,
+    ):
+        """Return one exact physical copy and its locally rechecked role.
+
+        The copy identifier is caller-supplied and never substitutes for the
+        immutable Claim or mapping. All variable-width input is reserved before
+        fetching; role and body verification are charged to the same budget.
+        """
+        if not isinstance(oid, OID):
+            raise CoreFailure("IDENTITY", oid, "typed note OID required")
+        uuid4_value(physical_copy_uuidv4)
+        self._available()
+        work = _CheckedReadBudget(self, work)
+        prior = getattr(self, "_checked_byte_read", False)
+        self._checked_byte_read = True
+        try:
+            with self._snapshot():
+                row = self._fetch_ref_note_copy(
+                    oid, physical_copy_uuidv4, work, max_proof_bytes, max_metadata_bytes
+                )
+                if row is None:
+                    raise CoreFailure(
+                        "NOTES_ROLE_UNAVAILABLE", oid, "physical note copy not found"
+                    )
+                claim, mapping, body = self._validate_stored_ref_note(
+                    row, work, max_metadata_bytes, max_proof_bytes
+                )
+                evidence = self._stored(
+                    claim.identity,
+                    NotesMappingEvidenceRecord,
+                    mapping,
+                    row["verification_scope"],
+                    self._provenance_value(
+                        claim.identity,
+                        row["role_provenance"],
+                        work=work,
+                        max_metadata_bytes=max_metadata_bytes,
+                    ),
+                    row["proof_bundle"],
+                )
+                native = NativeObject(
+                    oid, "blob", body, row["size"], row["digest_sha256"]
+                )
+                return claim, evidence, native
+        finally:
+            self._checked_byte_read = prior
+
+    def _read_ref_coverage_proofs(self, claim, work, **kwargs):
+        guarded_work = _CheckedReadBudget(self, work)
+        prior = getattr(self, "_checked_byte_read", False)
+        self._checked_byte_read = True
+        try:
+            return super()._read_ref_coverage_proofs(claim, guarded_work, **kwargs)
+        finally:
+            self._checked_byte_read = prior
 
     def _metadata(self, native: NativeObject, copy: str) -> None:
         try:

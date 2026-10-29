@@ -26,6 +26,7 @@ from repo_catalog.domain.p1_core import (
     ScalarField,
 )
 from repo_catalog.domain.p1_coverage import CoverageClaim, CoverageProjection
+from repo_catalog.domain.ref_coverage import RefNotesInventoryCoverageProof
 from repo_catalog.domain.ref_observation import (
     NotesMapping,
     NotesMappingClaim,
@@ -95,6 +96,14 @@ class CoreAdmission(Protocol):
     def admit_coverage_proof(
         self, claim: CoverageClaim, members: tuple[OID, ...], provenance
     ) -> None: ...
+    def admit_ref_coverage_proof(
+        self,
+        proof: RefNotesInventoryCoverageProof,
+        work: WorkBudget,
+        *,
+        max_structures: int = 100_000,
+        max_bytes: int = 64 * 1024 * 1024,
+    ) -> None: ...
     def admit_object(self, oid: OID) -> None: ...
     def admit_claim(self, claim: ScalarClaim) -> None: ...
     def admit_group(self, group: RelationGroup) -> None: ...
@@ -154,7 +163,25 @@ class CoreRead(Protocol):
         max_metadata_bytes: int = 64 * 1024 * 1024,
     ) -> bytes: ...
     def notes_projection(self, capture: Capture, target: OID) -> NotesProjection: ...
-    def coverage(self, scope: CoreCoverageScope) -> CoverageProjection: ...
+    def coverage(
+        self,
+        scope: CoreCoverageScope,
+        work: WorkBudget | None = None,
+        *,
+        max_proofs: int = 1_000,
+        max_bytes: int = 64 * 1024 * 1024,
+        max_structures: int = 100_000,
+        max_claims: int = 10_000,
+    ) -> CoverageProjection: ...
+    def ref_coverage_proofs(
+        self,
+        claim: CoverageClaim,
+        work: WorkBudget,
+        *,
+        max_proofs: int = 1_000,
+        max_bytes: int = 64 * 1024 * 1024,
+        max_structures: int = 100_000,
+    ) -> tuple[RefNotesInventoryCoverageProof, ...]: ...
     def scalar(self, oid: OID, field: ScalarField) -> Projection: ...
     def relations(
         self, oid: OID, relation: str, scope: str | None = None

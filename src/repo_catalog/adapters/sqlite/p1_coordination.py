@@ -454,6 +454,12 @@ class AdmissionTransaction:
         self._check_active()
         return self._db.in_transaction
 
+    @property
+    def total_changes(self):
+        """Read-only connection-local count for committed-unit replay reporting."""
+        self._check_active()
+        return self._db.total_changes
+
     def set_authorizer(self, callback):
         self._check_active()
 

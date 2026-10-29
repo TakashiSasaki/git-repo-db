@@ -8,6 +8,7 @@ its exact review/validation evidence.
 
 For the subsequent acquisition implementation and remaining I3/coverage
 limits, see [the I2 acquisition contract](adr0036-i2-acquisition-contract.md).
+For the later candidate integration, see [the I3 contract](adr0036-i3-exchange-query-backup-contract.md).
 
 ## Observation, result and original report
 
