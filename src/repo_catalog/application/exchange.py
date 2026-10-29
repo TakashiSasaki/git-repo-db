@@ -1062,7 +1062,10 @@ class ExchangeService:
                     )
 
                 from repo_catalog.application.ref_observations import encode_metered
-                from repo_catalog.domain.ref_coverage import serialize_structures
+                from repo_catalog.domain.ref_coverage import (
+                    REF_NOTES_INVENTORY,
+                    serialize_structures,
+                )
                 from repo_catalog.domain.ref_exchange import mapping_group_to_wire
 
                 for row in section["coverage_claims"]:
@@ -1075,6 +1078,10 @@ class ExchangeService:
                         row["owner_kind"],
                         tuple(json.loads(row["owner_coordinates_json"])),
                     )
+                    if c_scope.coordinates[-1] != REF_NOTES_INVENTORY:
+                        # Preserve unsupported Claims as metadata. A verifier
+                        # for another kind must not be invented or borrowed.
+                        continue
                     c_claim = CoverageClaim(
                         c_scope, row["observed_at_us"], row["coverage_state"]
                     )

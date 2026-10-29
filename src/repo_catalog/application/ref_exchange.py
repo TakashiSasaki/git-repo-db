@@ -25,39 +25,6 @@ from repo_catalog.domain.ref_exchange import (
 from repo_catalog.domain.ref_observation import RefObservationKey
 
 
-def _rows(core, query, parameters, work, maximum, max_bytes, columns):
-    """Reserve fixed-query row counts and every variable value before fetch."""
-    work.require("metadata_units", maximum + 1)
-    try:
-        lengths = core.sql(
-            "SELECT "
-            + ",".join("octet_length(" + c + ")" for c in columns)
-            + " FROM ("
-            + query
-            + ") LIMIT ?",
-            (*parameters, maximum + 1),
-        )
-    except BaseException:
-        work.abandon("metadata_units")
-        raise
-    work.charge("metadata_units", len(lengths))
-    size = sum(value or 0 for row in lengths for value in row)
-    if len(lengths) > maximum or size > max_bytes:
-        raise CoreFailure("QUERY_BUDGET", "ref-exchange", "finite metadata limit")
-    work.require("input_bytes", size)
-    try:
-        rows = core.sql(
-            "SELECT * FROM (" + query + ") LIMIT ?", (*parameters, maximum + 1)
-        )
-    except BaseException:
-        work.abandon("input_bytes")
-        raise
-    work.charge("input_bytes", size)
-    if len(rows) != len(lengths):
-        core._integrity_stop(("ref-exchange", "metadata changed in snapshot"))
-    return rows
-
-
 def _export_ref_notes(core, section, claim, work, scope):
     """Export reported groups and locally checked claim-specific proofs."""
     if claim.root_oid is None:
@@ -81,13 +48,8 @@ def _export_ref_notes(core, section, claim, work, scope):
         "membership",
         "provenance",
     )
-    group_query = (
-        "SELECT " + ",".join(group_columns) + " FROM notes_mapping_groups "
-        "WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND ref_claim_provenance=? "
-        "ORDER BY object_format,root_oid,interpretation_kind,interpretation_version,interpretation_scope,group_scope,provenance"
-    )
-    for values in _rows(
-        core, group_query, identity, work, maximum, max_bytes, group_columns
+    for values in core.ref_exchange_rows(
+        "groups", identity, work, maximum=maximum, max_bytes=max_bytes
     ):
         row = dict(zip(group_columns, values, strict=True))
         wire = {
@@ -124,13 +86,8 @@ def _export_ref_notes(core, section, claim, work, scope):
         "mapping_path_json",
         "provenance",
     )
-    mapping_query = (
-        "SELECT " + ",".join(mapping_columns) + " FROM notes_mapping_claims "
-        "WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND ref_claim_provenance=? "
-        "ORDER BY object_format,root_oid,interpretation_kind,interpretation_version,interpretation_scope,annotated_object_oid,provenance"
-    )
-    for values in _rows(
-        core, mapping_query, identity, work, maximum, max_bytes, mapping_columns
+    for values in core.ref_exchange_rows(
+        "mappings", identity, work, maximum=maximum, max_bytes=max_bytes
     ):
         row = dict(zip(mapping_columns, values, strict=True))
         wire = {
@@ -159,15 +116,8 @@ def _export_ref_notes(core, section, claim, work, scope):
         "interpretation_scope",
         "annotated_object_oid",
     )
-    evidence_query = (
-        "SELECT DISTINCT "
-        + ",".join(evidence_columns)
-        + " FROM notes_mapping_evidence "
-        "WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND ref_claim_provenance=? "
-        "ORDER BY " + ",".join(evidence_columns)
-    )
-    for values in _rows(
-        core, evidence_query, identity, work, maximum, max_bytes, evidence_columns
+    for values in core.ref_exchange_rows(
+        "evidence", identity, work, maximum=maximum, max_bytes=max_bytes
     ):
         row = dict(zip(evidence_columns, values, strict=True))
         from repo_catalog.domain.p1_core import OID
@@ -200,14 +150,8 @@ def _export_ref_notes(core, section, claim, work, scope):
             )
 
     if scope.include_retained_bytes:
-        copy_columns = ("object_format", "full_oid", "physical_copy_uuidv4")
-        copy_query = (
-            "SELECT " + ",".join(copy_columns) + " FROM ref_retained_notes "
-            "WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND ref_claim_provenance=? "
-            "ORDER BY object_format,full_oid,physical_copy_uuidv4"
-        )
-        for fmt, full_oid, copy in _rows(
-            core, copy_query, identity, work, maximum, max_bytes, copy_columns
+        for fmt, full_oid, copy in core.ref_exchange_rows(
+            "copies", identity, work, maximum=maximum, max_bytes=max_bytes
         ):
             from repo_catalog.domain.p1_core import OID
 
@@ -242,34 +186,10 @@ def _export_ref_notes(core, section, claim, work, scope):
     return oids
 
 
-def _pairs(core, query, parameters, work, maximum):
-    """Read bounded UUID pairs only after checking lengths and reserving work."""
-    work.require("metadata_units", maximum + 1)
-    try:
-        lengths = core.sql(
-            "SELECT octet_length(a),octet_length(b) FROM (" + query + ") LIMIT ?",
-            (*parameters, maximum + 1),
-        )
-    except BaseException:
-        work.abandon("metadata_units")
-        raise
-    work.charge("metadata_units", len(lengths))
-    if len(lengths) > maximum:
-        raise CoreFailure("QUERY_BUDGET", "ref-exchange", "finite identity limit")
-    if any(tuple(row) != (36, 36) for row in lengths):
-        core._integrity_stop(("ref-exchange", "invalid stored identity length"))
-    work.require("input_bytes", 72 * len(lengths))
-    try:
-        rows = core.sql(
-            "SELECT a,b FROM (" + query + ") LIMIT ?", (*parameters, maximum + 1)
-        )
-    except BaseException:
-        work.abandon("input_bytes")
-        raise
-    work.charge("input_bytes", 72 * len(rows))
-    if len(rows) != len(lengths):
-        core._integrity_stop(("ref-exchange", "identity set changed in snapshot"))
-    return [tuple(row) for row in rows]
+def _pairs(core, selector, parameters, work, maximum):
+    return core.ref_exchange_rows(
+        selector, parameters, work, maximum=maximum, max_bytes=72 * maximum
+    )
 
 
 class _ExportWork:
@@ -343,7 +263,7 @@ def export_ref_units(core, section, scope, work, omissions):
         if scope.object_oids is None and scope.ref_observation_keys is None:
             pairs = _pairs(
                 core,
-                "SELECT observation_origin_uuidv4 AS a,ref_observation_uuidv7 AS b FROM ref_observations ORDER BY a,b",
+                "observations",
                 (),
                 work,
                 maximum,
@@ -353,7 +273,7 @@ def export_ref_units(core, section, scope, work, omissions):
                 pending_events.update(
                     _pairs(
                         core,
-                        "SELECT observation_origin_uuidv4 AS a,enumeration_uuidv7 AS b FROM ref_enumeration_observations ORDER BY a,b",
+                        "enumerations",
                         (),
                         work,
                         maximum,
@@ -363,7 +283,7 @@ def export_ref_units(core, section, scope, work, omissions):
             for oid in scope.object_oids:
                 pairs = _pairs(
                     core,
-                    "SELECT DISTINCT observation_origin_uuidv4 AS a,ref_observation_uuidv7 AS b FROM ref_observation_claims WHERE root_format=? AND root_oid=? ORDER BY a,b",
+                    "root_claims",
                     oid.key,
                     work,
                     maximum,
@@ -451,7 +371,7 @@ def export_ref_units(core, section, scope, work, omissions):
                 pending_events.update(
                     _pairs(
                         core,
-                        "SELECT enumeration_origin_uuidv4 AS a,enumeration_uuidv7 AS b FROM ref_enumeration_links WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? ORDER BY a,b",
+                        "links",
                         key.key,
                         work,
                         maximum,

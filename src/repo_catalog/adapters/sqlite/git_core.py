@@ -36,6 +36,103 @@ from repo_catalog.domain.p1_core import (
 )
 from repo_catalog.domain.ref_observation import NotesMappingEvidenceRecord
 
+# The exchange reader accepts only these fixed projections. In particular, it
+# cannot be used as a typed-read capability for caller-provided SQL or to read
+# retained proof/body columns.
+_REF_EXCHANGE_ROWS = {
+    "groups": (
+        "notes_mapping_groups",
+        (
+            "object_format",
+            "root_oid",
+            "interpretation_kind",
+            "interpretation_version",
+            "interpretation_scope",
+            "group_scope",
+            "status",
+            "membership",
+            "provenance",
+        ),
+        "WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND ref_claim_provenance=? ORDER BY object_format,root_oid,interpretation_kind,interpretation_version,interpretation_scope,group_scope,provenance",
+        3,
+        False,
+        False,
+    ),
+    "mappings": (
+        "notes_mapping_claims",
+        (
+            "object_format",
+            "root_oid",
+            "interpretation_kind",
+            "interpretation_version",
+            "interpretation_scope",
+            "annotated_object_oid",
+            "note_oid",
+            "mapping_path_json",
+            "provenance",
+        ),
+        "WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND ref_claim_provenance=? ORDER BY object_format,root_oid,interpretation_kind,interpretation_version,interpretation_scope,annotated_object_oid,provenance",
+        3,
+        False,
+        False,
+    ),
+    "evidence": (
+        "notes_mapping_evidence",
+        (
+            "object_format",
+            "root_oid",
+            "interpretation_kind",
+            "interpretation_version",
+            "interpretation_scope",
+            "annotated_object_oid",
+        ),
+        "WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND ref_claim_provenance=? ORDER BY object_format,root_oid,interpretation_kind,interpretation_version,interpretation_scope,annotated_object_oid",
+        3,
+        True,
+        False,
+    ),
+    "copies": (
+        "ref_retained_notes",
+        ("object_format", "full_oid", "physical_copy_uuidv4"),
+        "WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND ref_claim_provenance=? ORDER BY object_format,full_oid,physical_copy_uuidv4",
+        3,
+        False,
+        False,
+    ),
+    "observations": (
+        "ref_observations",
+        ("observation_origin_uuidv4", "ref_observation_uuidv7"),
+        "ORDER BY observation_origin_uuidv4,ref_observation_uuidv7",
+        0,
+        False,
+        True,
+    ),
+    "enumerations": (
+        "ref_enumeration_observations",
+        ("observation_origin_uuidv4", "enumeration_uuidv7"),
+        "ORDER BY observation_origin_uuidv4,enumeration_uuidv7",
+        0,
+        False,
+        True,
+    ),
+    "root_claims": (
+        "ref_observation_claims",
+        ("observation_origin_uuidv4", "ref_observation_uuidv7"),
+        "WHERE root_format=? AND root_oid=? ORDER BY observation_origin_uuidv4,ref_observation_uuidv7",
+        2,
+        True,
+        True,
+    ),
+    "links": (
+        "ref_enumeration_links",
+        ("enumeration_origin_uuidv4", "enumeration_uuidv7"),
+        "WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? ORDER BY enumeration_origin_uuidv4,enumeration_uuidv7",
+        2,
+        False,
+        True,
+    ),
+}
+
 
 class _CheckedReadLimits:
     def __init__(self, budget):
@@ -131,6 +228,105 @@ class GitCore(Core):
     def ensure_available(self) -> None:
         """Fence opt-in acquisition before any source I/O or request work."""
         self._available()
+
+    @_decoded_read
+    def _ref_exchange_fixed_rows(self, selector, parameters, limit, *, lengths):
+        """Fetch one fixed authoritative projection, with no caller callbacks."""
+        table, columns, tail, _arity, distinct, _pairs = _REF_EXCHANGE_ROWS[selector]
+        query = (
+            "SELECT "
+            + ("DISTINCT " if distinct else "")
+            + ",".join(columns)
+            + " FROM "
+            + table
+            + " "
+            + tail
+        )
+        projection = (
+            ",".join("octet_length(" + column + ")" for column in columns)
+            if lengths
+            else "*"
+        )
+        return self.sql(
+            "SELECT " + projection + " FROM (" + query + ") LIMIT ?",
+            (*parameters, limit),
+        )
+
+    @_completed_read
+    def ref_exchange_rows(self, selector, parameters, work, *, maximum, max_bytes):
+        """Bound and read selected authoritative metadata for ref Exchange.
+
+        The UTF-8 diagnosis covers only the fixed SQL fetch, not caller-supplied
+        work callbacks or generic SQL. Every variable value is measured and
+        reserved before materialization under the same snapshot.
+        """
+        spec = _REF_EXCHANGE_ROWS.get(selector) if type(selector) is str else None
+        if (
+            spec is None
+            or type(parameters) is not tuple
+            or len(parameters) != spec[3]
+            or any(type(value) is not str for value in parameters)
+            or type(maximum) is not int
+            or not 0 < maximum < 2**63 - 1
+            or type(max_bytes) is not int
+            or not 0 < max_bytes < 2**63
+        ):
+            raise CoreFailure(
+                "QUERY_BUDGET", "ref-exchange", "fixed bounded selector required"
+            )
+        with self._snapshot():
+            work.require("metadata_units", maximum + 1)
+            try:
+                lengths = self._ref_exchange_fixed_rows(
+                    selector, parameters, maximum + 1, lengths=True
+                )
+            except BaseException:
+                abandon = getattr(work, "abandon", None)
+                if abandon is None:
+                    work.charge("metadata_units", maximum + 1)
+                else:
+                    abandon("metadata_units")
+                raise
+            work.charge("metadata_units", len(lengths))
+            if len(lengths) > maximum:
+                raise CoreFailure(
+                    "QUERY_BUDGET", "ref-exchange", "finite metadata limit"
+                )
+            if any(
+                value is not None and (type(value) is not int or value < 0)
+                for row in lengths
+                for value in row
+            ):
+                self._integrity_stop((selector, "invalid stored metadata length"))
+            if spec[5] and any(tuple(row) != (36, 36) for row in lengths):
+                self._integrity_stop((selector, "invalid stored identity length"))
+            size = sum(value or 0 for row in lengths for value in row)
+            if size > max_bytes:
+                raise CoreFailure(
+                    "QUERY_BUDGET", "ref-exchange", "finite metadata limit"
+                )
+            work.require("input_bytes", size)
+            try:
+                rows = self._ref_exchange_fixed_rows(
+                    selector, parameters, maximum + 1, lengths=False
+                )
+            except BaseException:
+                abandon = getattr(work, "abandon", None)
+                if abandon is None:
+                    work.charge("input_bytes", size)
+                else:
+                    abandon("input_bytes")
+                raise
+            work.charge("input_bytes", size)
+            if len(rows) != len(lengths):
+                self._integrity_stop((selector, "metadata changed in snapshot"))
+            if spec[5]:
+                from repo_catalog.domain.ref_observation import RefObservationKey
+
+                return [
+                    self._stored(selector, RefObservationKey, *row).key for row in rows
+                ]
+            return rows
 
     @_completed_read
     @_decoded_read

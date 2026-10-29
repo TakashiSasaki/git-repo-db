@@ -59,7 +59,9 @@ the entire ordered supported commit/tree traversal and compares the resulting
 whole group. Separate partial groups, a single-path proof or a sender flag do
 not establish inventory completeness. Other ref Coverage kinds without a
 supported typed proof remain unknown; a source enumeration report alone is not
-receiver-authenticated completeness.
+receiver-authenticated completeness. Exchange preserves their original Claim
+metadata without fabricating an inventory proof, and the receiver retains the
+unknown derived state.
 
 ## Backup, restore and recovery
 

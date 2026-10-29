@@ -2,6 +2,7 @@
 
 import copy
 import json
+import sqlite3
 from contextlib import closing
 from dataclasses import replace
 from uuid import uuid4
@@ -9,6 +10,7 @@ from uuid import uuid4
 import pytest
 
 from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.p1_schema import connect
 from repo_catalog.application.exchange import ExchangeService
 from repo_catalog.domain.exchange import (
     ExchangeError,
@@ -16,7 +18,7 @@ from repo_catalog.domain.exchange import (
     decode_package,
     encode_package,
 )
-from repo_catalog.domain.p1_core import OID, CoreFailure, Provenance
+from repo_catalog.domain.p1_core import OID, CoreCoverageScope, CoreFailure, Provenance
 from repo_catalog.domain.p1_coverage import CoverageClaim
 from repo_catalog.domain.ref_observation import (
     RefAbsenceEvidence,
@@ -34,6 +36,145 @@ from tests.integration.p5.conftest import init_catalog_stores
 
 acquisition = p4_fixtures.acquisition
 p1_core_fixture = p1_fixtures.core
+
+
+def test_export_stored_group_utf8_corruption_stops_catalog(acquisition, tmp_path):
+    app, _, _, repository, origin, core_path, _ = acquisition
+    p4_fixtures.fixture_note(acquisition)
+    claim = (
+        discover(app, repository, origin, str(uuid4())).enumerations[0].links[0].claim
+    )
+    app.inventory_ref(claim)
+    selection = ExchangeSelectionScope(
+        all_selected=True,
+        include_context=False,
+        include_retained_bytes=False,
+        object_oids=(),
+        ref_observation_keys=(claim.ref_observation_key,),
+    )
+    service = ExchangeService(tmp_path, operational=tmp_path)
+    assert service.export_package(selection=selection).core["notes_mapping_groups"]
+
+    db = connect(core_path, "core")
+    try:
+        trigger = db.execute(
+            "SELECT sql FROM sqlite_schema WHERE name='p1_immutable_notes_mapping_groups_update'"
+        ).fetchone()[0]
+        db.execute("DROP TRIGGER p1_immutable_notes_mapping_groups_update")
+        db.execute("UPDATE notes_mapping_groups SET group_scope=CAST(x'80' AS TEXT)")
+        db.execute(trigger)
+        db.commit()
+    finally:
+        db.close()
+
+    with pytest.raises(CoreFailure) as corruption:
+        service.export_package(selection=selection)
+    assert corruption.value.code == "AUTHORITATIVE_CORRUPTION"
+    assert (core_path.parent / "p1-recovery-stop.json").exists()
+    with pytest.raises(CoreFailure) as stopped:
+        app.core.ensure_available()
+    assert stopped.value.code == "RECOVERY_STOP"
+
+
+def test_ref_export_typed_read_keeps_budget_and_noncorruption_errors(
+    acquisition, monkeypatch
+):
+    app, _, _, repository, origin, core_path, _ = acquisition
+    p4_fixtures.fixture_note(acquisition)
+    claim = (
+        discover(app, repository, origin, str(uuid4())).enumerations[0].links[0].claim
+    )
+    app.inventory_ref(claim)
+    calls = []
+    original_read = app.core._ref_exchange_fixed_rows
+
+    def counted_read(*args, **kwargs):
+        calls.append(kwargs["lengths"])
+        return original_read(*args, **kwargs)
+
+    monkeypatch.setattr(app.core, "_ref_exchange_fixed_rows", counted_read)
+    with pytest.raises(CoreFailure) as limited:
+        app.core.ref_exchange_rows(
+            "groups", claim.identity, Budget(), maximum=10, max_bytes=1
+        )
+    assert limited.value.code == "QUERY_BUDGET"
+    assert calls == [True]  # No variable-width values were fetched.
+    calls.clear()
+    budget = Budget()
+    rows = app.core.ref_exchange_rows(
+        "groups", claim.identity, budget, maximum=10, max_bytes=10000
+    )
+    assert rows and calls == [True, False]
+    assert budget.counts["metadata_units"] == len(rows)
+    assert budget.counts["input_bytes"] == sum(
+        len(value.encode("utf-8")) for row in rows for value in row
+    )
+
+    with pytest.raises(sqlite3.OperationalError):
+        app.core.sql("SELECT missing_column FROM notes_mapping_groups")
+
+    class FailingWork:
+        def require(self, unit, amount=1):
+            raise sqlite3.OperationalError("Could not decode to UTF-8 from callback")
+
+    with pytest.raises(sqlite3.OperationalError, match="from callback"):
+        app.core.ref_exchange_rows(
+            "groups", claim.identity, FailingWork(), maximum=10, max_bytes=10000
+        )
+    assert not (core_path.parent / "p1-recovery-stop.json").exists()
+    app.core.ensure_available()
+
+
+def test_unsupported_ref_coverage_claim_roundtrips_as_unknown(acquisition, tmp_path):
+    app, _, _, repository, origin, _, _ = acquisition
+    p4_fixtures.fixture_note(acquisition)
+    claim = (
+        discover(app, repository, origin, str(uuid4())).enumerations[0].links[0].claim
+    )
+    scope = CoreCoverageScope(
+        "ref_observation", (*claim.ref_observation_key.key, "ref-enumeration")
+    )
+    original = CoverageClaim(scope, 20, "complete", '{"origin":"source"}')
+    app.core.admit_coverage_scope(scope)
+    app.core.admit_coverage(original)
+    assert app.core.coverage(scope, app.work).state == "unknown"
+    selection = ExchangeSelectionScope(
+        all_selected=True,
+        include_context=False,
+        include_retained_bytes=False,
+        object_oids=(),
+        ref_observation_keys=(claim.ref_observation_key,),
+    )
+    source = ExchangeService(tmp_path, operational=tmp_path)
+    package = decode_package(encode_package(source.export_package(selection=selection)))
+    assert any(
+        (
+            row["owner_kind"],
+            row["owner_coordinates_json"],
+            row["observed_at_us"],
+            row["coverage_state"],
+            row["details_json"],
+        )
+        == (scope.owner_kind, scope.encoded, 20, "complete", original.details_json)
+        for row in package.core["coverage_claims"]
+    )
+    assert not package.core["ref_coverage_proofs"]
+
+    destination = tmp_path / "receiver"
+    init_catalog_stores(
+        destination, repository_uuidv4=repository, stores=("core", "operational")
+    )
+    receiver = ExchangeService(destination, operational=destination)
+    receiver.import_package(
+        package, new_request=True, permitted_repository_uuidv4s=(repository,)
+    )
+    with closing(GitCore(destination / "core.sqlite3")) as core:
+        coverage = core.coverage(scope, Budget())
+        assert coverage.state == "unknown"
+        assert coverage.claims == (original,)
+    onward = receiver.export_package(selection=selection)
+    assert onward.core["coverage_claims"] == package.core["coverage_claims"]
+    assert not onward.core["ref_coverage_proofs"]
 
 
 def test_rootless_ref_and_original_enumeration_roundtrip(acquisition, tmp_path):
