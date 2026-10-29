@@ -310,6 +310,10 @@ _EXCHANGE_LEGACY_ROWS = {
 }
 
 
+class _InvalidStoredMetadataCopy(Exception):
+    """Carry a stored-value validation failure past verification accounting."""
+
+
 class _CheckedReadLimits:
     def __init__(self, budget):
         self.budget = budget
@@ -974,32 +978,42 @@ class GitCore(Core):
                 )
                 if missing:
                     self._integrity_stop((oid, "lost-retained-metadata-copy"))
+                invalid_copy = _InvalidStoredMetadataCopy()
                 try:
                     with account_verification(work):
-                        if row["native_type"] not in (
-                            "commit",
-                            "tree",
-                            "tag",
-                        ) or not valid_native(
-                            *oid.key,
-                            row["native_type"],
-                            row["body"],
-                            row["size"],
-                            row["digest_sha256"],
-                        ):
-                            raise CoreFailure(
-                                "STORED_METADATA", oid, "invalid structural copy"
+                        try:
+                            if row["native_type"] not in (
+                                "commit",
+                                "tree",
+                                "tag",
+                            ) or not valid_native(
+                                *oid.key,
+                                row["native_type"],
+                                row["body"],
+                                row["size"],
+                                row["digest_sha256"],
+                            ):
+                                raise invalid_copy
+                            parse_metadata(
+                                oid.object_format, row["native_type"], row["body"]
                             )
-                        parse_metadata(
-                            oid.object_format, row["native_type"], row["body"]
-                        )
-                except CoreFailure as error:
-                    if error.code in ("STORED_METADATA", "NATIVE_SYNTAX"):
-                        self._integrity_stop(
-                            (oid, physical_copy_uuidv4, "invalid structural copy")
-                        )
-                    raise
-                except (ValueError, TypeError, RecursionError, OverflowError):
+                        except CoreFailure as error:
+                            if error.code not in ("STORED_METADATA", "NATIVE_SYNTAX"):
+                                raise
+                            raise invalid_copy from error
+                        except (
+                            ValueError,
+                            TypeError,
+                            RecursionError,
+                            OverflowError,
+                        ) as error:
+                            raise invalid_copy from error
+                except _InvalidStoredMetadataCopy as error:
+                    # account_verification restores the caller's original work
+                    # error first, even when a validator catches ValueError.
+                    # Only our own signal is authoritative stored corruption.
+                    if error is not invalid_copy:
+                        raise
                     self._integrity_stop(
                         (oid, physical_copy_uuidv4, "invalid structural copy")
                     )

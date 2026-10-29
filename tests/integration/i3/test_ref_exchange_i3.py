@@ -1,6 +1,7 @@
 """Portable ref observations use actual ref identities and dependencies."""
 
 import copy
+import hashlib
 import json
 import sqlite3
 from contextlib import closing
@@ -9,7 +10,7 @@ from uuid import uuid4
 
 import pytest
 
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_core import GitCore, _InvalidStoredMetadataCopy
 from repo_catalog.adapters.sqlite.p1_schema import connect
 from repo_catalog.application.exchange import ExchangeService
 from repo_catalog.domain.exchange import (
@@ -486,6 +487,155 @@ def test_export_verifies_each_retained_metadata_copy(acquisition, tmp_path):
 
     with pytest.raises(CoreFailure) as corruption:
         service.export_package(selection=selection)
+    assert corruption.value.code == "AUTHORITATIVE_CORRUPTION"
+    assert (core_path.parent / "p1-recovery-stop.json").exists()
+    with pytest.raises(CoreFailure) as stopped:
+        app.core.ensure_available()
+    assert stopped.value.code == "RECOVERY_STOP"
+
+
+@pytest.mark.parametrize(
+    ("phase", "method", "failure"),
+    [
+        ("hash", "require", ValueError("verification callback")),
+        ("hash", "charge", TypeError("verification callback")),
+        (
+            "hash",
+            "require",
+            CoreFailure("STORED_METADATA", "callback", "callback failure"),
+        ),
+        (
+            "parse",
+            "charge",
+            CoreFailure("NATIVE_SYNTAX", "callback", "callback failure"),
+        ),
+        ("parse", "require", OverflowError("parser callback")),
+        ("parse", "charge", RecursionError("parser callback")),
+        ("hash", "charge", sqlite3.OperationalError("callback only")),
+        ("hash", "charge", _InvalidStoredMetadataCopy("callback only")),
+    ],
+)
+def test_metadata_copy_callback_failure_does_not_stop_catalog(
+    acquisition, phase, method, failure
+):
+    app, path, fmt, _, _, core_path, _ = acquisition
+    capture, _, _ = p4_fixtures.fixture_note(acquisition)
+    body = p4_fixtures.git(path, "cat-file", "tree", capture.root.full_oid)
+    assert body
+    native = p1_fixtures.native("tree", body, fmt)
+    copy_id = str(uuid4())
+    app.core.admit_metadata(native, copy_id, app.work)
+    assert app.core.read_metadata_copy(native.oid, copy_id, Budget())["body"] == body
+
+    class FailingBudget(Budget):
+        def maybe_fail(self, current_method, unit):
+            in_phase = (
+                unit == "verification_bytes"
+                if phase == "hash"
+                else (
+                    unit == "metadata_units"
+                    and self.counts.get("verification_bytes", 0) >= 2 * len(body)
+                )
+            )
+            if current_method == method and in_phase:
+                raise failure
+
+        def require(self, unit, amount=1):
+            self.maybe_fail("require", unit)
+            super().require(unit, amount)
+
+        def charge(self, unit, amount):
+            self.maybe_fail("charge", unit)
+            super().charge(unit, amount)
+
+    with pytest.raises(type(failure)) as caught:
+        app.core.read_metadata_copy(native.oid, copy_id, FailingBudget())
+    assert caught.value is failure
+    assert not (core_path.parent / "p1-recovery-stop.json").exists()
+    app.core.ensure_available()
+    assert app.core.read_metadata_copy(native.oid, copy_id, Budget())["body"] == body
+
+
+@pytest.mark.parametrize("damage", ["type", "body", "digest", "oid"])
+def test_metadata_copy_rejects_corrupt_stored_values(acquisition, damage):
+    app, path, fmt, _, _, core_path, _ = acquisition
+    capture, _, _ = p4_fixtures.fixture_note(acquisition)
+    body = p4_fixtures.git(path, "cat-file", "tree", capture.root.full_oid)
+    assert body
+    native = p1_fixtures.native("tree", body, fmt)
+    copy_id = str(uuid4())
+    app.core.admit_metadata(native, copy_id, app.work)
+    assert app.core.read_metadata_copy(native.oid, copy_id, Budget())["body"] == body
+
+    changed_body = bytes((body[0] ^ 1,)) + body[1:]
+    replacements = {
+        "type": ("native_type", "blob"),
+        "body": ("body", changed_body),
+        "digest": ("digest_sha256", "0" * 64),
+        "oid": ("body", changed_body),
+    }
+    column, value = replacements[damage]
+    db = connect(core_path, "core")
+    try:
+        trigger = db.execute(
+            "SELECT sql FROM sqlite_schema WHERE name='p1_immutable_retained_metadata_update'"
+        ).fetchone()[0]
+        db.execute("DROP TRIGGER p1_immutable_retained_metadata_update")
+        db.execute("PRAGMA ignore_check_constraints=ON")
+        db.execute(
+            f"UPDATE retained_metadata SET {column}=? "
+            "WHERE object_format=? AND full_oid=? AND physical_copy_uuidv4=?",
+            (value, *native.oid.key, copy_id),
+        )
+        if damage == "oid":
+            db.execute(
+                "UPDATE retained_metadata SET digest_sha256=? "
+                "WHERE object_format=? AND full_oid=? AND physical_copy_uuidv4=?",
+                (hashlib.sha256(changed_body).hexdigest(), *native.oid.key, copy_id),
+            )
+        db.execute("PRAGMA ignore_check_constraints=OFF")
+        db.execute(trigger)
+        db.commit()
+    finally:
+        db.close()
+
+    with pytest.raises(CoreFailure) as corruption:
+        app.core.read_metadata_copy(native.oid, copy_id, Budget())
+    assert corruption.value.code == "AUTHORITATIVE_CORRUPTION"
+    assert (core_path.parent / "p1-recovery-stop.json").exists()
+    with pytest.raises(CoreFailure) as stopped:
+        app.core.ensure_available()
+    assert stopped.value.code == "RECOVERY_STOP"
+
+
+def test_metadata_copy_rejects_invalid_native_grammar(acquisition):
+    app, _, fmt, _, _, core_path, _ = acquisition
+    # The digest and object ID are correct, so the checked Git grammar itself
+    # must diagnose this injected invalid tree rather than a hash mismatch.
+    native = p1_fixtures.native("tree", b"not a tree entry", fmt)
+    copy_id = str(uuid4())
+    app.core.admit_object(native.oid)
+    db = connect(core_path, "core")
+    try:
+        db.execute("PRAGMA ignore_check_constraints=ON")
+        db.execute(
+            "INSERT INTO retained_metadata VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (
+                *native.oid.key,
+                copy_id,
+                native.native_type,
+                native.body,
+                native.declared_size,
+                native.digest_sha256,
+            ),
+        )
+        db.execute("PRAGMA ignore_check_constraints=OFF")
+        db.commit()
+    finally:
+        db.close()
+
+    with pytest.raises(CoreFailure) as corruption:
+        app.core.read_metadata_copy(native.oid, copy_id, Budget())
     assert corruption.value.code == "AUTHORITATIVE_CORRUPTION"
     assert (core_path.parent / "p1-recovery-stop.json").exists()
     with pytest.raises(CoreFailure) as stopped:
