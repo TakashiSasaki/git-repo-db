@@ -53,6 +53,19 @@ before work, rejects an over-limit result rather than returning a partial one,
 and charges text before materializing it. Callers can set smaller limits to fit
 their remaining durable work budget.
 
+`read_ref_note` requires a `WorkBudget`. It uses the role lookup index to pick
+one eligible physical copy, checks finite body and proof limits, and reserves
+their input cost before fetching either. It then charges the actual selected
+bytes and locally repeated proof/body verification; retries consume work again.
+Budget exhaustion is not corruption and cannot return an unverified body.
+
+An admission replay checks any existing same-key copy's bytes, digest, original
+claim and role evidence under the writer cut before insertion. A discovered
+conflicting copy is diagnosed under the same cut with a finite configurable
+copy/proof bound. A proven invalid stored unit stops the catalog; an unrelated
+constraint error, incompatible replay or exhausted diagnostic budget does not
+itself establish corruption. No failure repairs or overwrites the old copy.
+
 ## Coverage and transitional fences
 
 Coverage retains its five claim columns and existing latest/stale/conflict

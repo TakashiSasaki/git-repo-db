@@ -69,6 +69,9 @@ class CoreAdmission(Protocol):
         native: NativeObject,
         physical_copy_uuidv4: str,
         work: WorkBudget,
+        *,
+        max_proof_bytes: int = 64 * 1024 * 1024,
+        max_conflict_copies: int = 1_000,
     ) -> None: ...
     def admit_coverage_scope(self, scope: CoreCoverageScope) -> None: ...
     def admit_coverage(self, claim: CoverageClaim) -> str: ...
@@ -116,7 +119,12 @@ class CoreRead(Protocol):
         max_bytes: int = 64 * 1024 * 1024,
     ) -> NotesMappingProjection: ...
     def read_ref_note(
-        self, claim: RefObservationClaim, mapping: NotesMapping
+        self,
+        claim: RefObservationClaim,
+        mapping: NotesMapping,
+        work: WorkBudget,
+        *,
+        max_proof_bytes: int = 64 * 1024 * 1024,
     ) -> bytes: ...
     def notes_projection(self, capture: Capture, target: OID) -> NotesProjection: ...
     def coverage(self, scope: CoreCoverageScope) -> CoverageProjection: ...

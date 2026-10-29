@@ -748,6 +748,194 @@ class Core:
             ):
                 self._integrity_stop((scope, "missing-mapping-object", oid.key))
 
+    def _ref_note_one(self, statement: str, parameters: tuple):
+        """Execute a fixed one-row internal query in the current snapshot/cut."""
+        try:
+            return self._db.execute(statement, parameters).fetchone()
+        except sqlite3.DatabaseError as error:
+            if _sqlite_authority_failure(error) or (
+                isinstance(error, sqlite3.OperationalError)
+                and str(error).startswith("Could not decode to UTF-8")
+            ):
+                self._integrity_stop(("ref-note-read", str(error)))
+            raise
+
+    def _fetch_ref_note_copy(
+        self, oid: OID, copy: str, work: WorkBudget, max_proof_bytes: int
+    ):
+        """Reserve the actual selected copy's bytes before materializing them."""
+        self._charge(work, "metadata_units", 1)
+        # SQLite's octet_length(column) reads the stored byte length from
+        # metadata; casting a TEXT value to BLOB here would load its contents
+        # before the input reservation. P1 already requires SQLite >= 3.51.3.
+        lengths = self._ref_note_one(
+            "SELECT octet_length(body) AS body_bytes,octet_length(proof_bundle) AS proof_bytes,size "
+            "FROM ref_retained_notes WHERE object_format=? AND full_oid=? AND physical_copy_uuidv4=?",
+            (*oid.key, copy),
+        )
+        if lengths is None:
+            return None
+        body_bytes, proof_bytes, declared_size = tuple(lengths)
+        if (
+            type(body_bytes) is not int
+            or type(proof_bytes) is not int
+            or type(declared_size) is not int
+            or body_bytes != declared_size
+        ):
+            self._integrity_stop((oid, copy, "stored-note-size"))
+        if (
+            type(work.limits.note_bytes) is not int
+            or not 0 < work.limits.note_bytes < 2**63
+            or type(max_proof_bytes) is not int
+            or not 0 < max_proof_bytes < 2**63
+            or body_bytes > work.limits.note_bytes
+            or proof_bytes > max_proof_bytes
+            or body_bytes + proof_bytes >= 2**63
+        ):
+            raise CoreFailure("BUDGET", (oid, copy), "finite note or proof limit")
+        reserved = body_bytes + proof_bytes
+        work.require("input_bytes", reserved)
+        try:
+            row = self._ref_note_one(
+                "SELECT * FROM ref_retained_notes WHERE object_format=? AND full_oid=? AND physical_copy_uuidv4=?",
+                (*oid.key, copy),
+            )
+        except BaseException:
+            abandon = getattr(work, "abandon", None)
+            if abandon is not None:
+                abandon("input_bytes")
+            else:
+                work.charge("input_bytes", reserved)
+            raise
+        work.charge("input_bytes", reserved if row is not None else 0)
+        if row is None:
+            self._integrity_stop((oid, copy, "disappeared-note-copy"))
+        return row
+
+    def _validate_stored_ref_note(self, row, work: WorkBudget):
+        """Validate stored claim, root, mapping, role and body, not caller data."""
+        scope = (row["object_format"], row["full_oid"], row["physical_copy_uuidv4"])
+        self._stored(scope, uuid4_value, row["physical_copy_uuidv4"])
+        identity = (
+            row["observation_origin_uuidv4"],
+            row["ref_observation_uuidv7"],
+            row["ref_claim_provenance"],
+        )
+        self._charge(work, "metadata_units", 1)
+        stored_claim = self._ref_note_one(
+            "SELECT * FROM ref_observation_claims WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND provenance=?",
+            identity,
+        )
+        if stored_claim is None:
+            self._integrity_stop((scope, "missing-note-claim"))
+        claim = self._stored(scope, self._decode_ref_claim, stored_claim)
+        try:
+            self._require_ref_claim(claim)
+        except sqlite3.OperationalError as error:
+            if str(error).startswith("Could not decode to UTF-8"):
+                self._integrity_stop((scope, "stored-claim-or-subject-utf8"))
+            raise
+        mapping = self._stored(scope, self._decode_mapping, row)
+        if (
+            row["role_format"] != row["object_format"]
+            or row["full_oid"] != row["note_oid"]
+            or claim.root_oid != mapping.root_oid
+        ):
+            self._integrity_stop((scope, "note-claim-root"))
+        self._charge(work, "metadata_units", 1)
+        if not self._ref_note_one(
+            "SELECT 1 FROM notes_mappings WHERE object_format=? AND root_oid=? AND interpretation_kind=? AND interpretation_version=? AND interpretation_scope=? AND annotated_object_oid=? AND note_oid=? AND mapping_path_json=?",
+            mapping.key,
+        ):
+            self._integrity_stop((scope, "missing-notes-mapping"))
+        for oid in (mapping.root_oid, mapping.annotated_object_oid, mapping.note_oid):
+            self._charge(work, "metadata_units", 1)
+            if not self._ref_note_one(
+                "SELECT 1 FROM git_objects WHERE object_format=? AND full_oid=?",
+                oid.key,
+            ):
+                self._integrity_stop((scope, "missing-mapping-object", oid.key))
+        evidence_values = (
+            *identity,
+            *mapping.key,
+            row["verification_scope"],
+            row["role_provenance"],
+            row["proof_bundle"],
+        )
+        self._charge(work, "metadata_units", 1)
+        if not self._ref_note_one(
+            "SELECT 1 FROM notes_mapping_evidence WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND ref_claim_provenance=? AND object_format=? AND root_oid=? AND interpretation_kind=? AND interpretation_version=? AND interpretation_scope=? AND annotated_object_oid=? AND note_oid=? AND mapping_path_json=? AND verification_scope=? AND provenance=? AND proof_bundle=?",
+            evidence_values,
+        ):
+            self._integrity_stop((scope, "missing-notes-role-evidence"))
+        role = self._stored(
+            scope,
+            NotesMappingEvidenceRecord,
+            mapping,
+            row["verification_scope"],
+            self._provenance_value(scope, row["role_provenance"]),
+            row["proof_bundle"],
+        )
+        try:
+            with account_verification(work):
+                try:
+                    valid = valid_note_role(
+                        *mapping.root_oid.key,
+                        mapping.annotated_object_oid.full_oid,
+                        mapping.note_oid.full_oid,
+                        mapping.mapping_path,
+                        role.proof_bundle,
+                    ) and valid_native(
+                        *mapping.note_oid.key,
+                        "blob",
+                        row["body"],
+                        row["size"],
+                        row["digest_sha256"],
+                    )
+                except (ValueError, TypeError, RecursionError, OverflowError):
+                    valid = False
+                if not valid:
+                    raise CoreFailure(
+                        "STORED_NOTES_EVIDENCE", scope, "invalid stored proof or body"
+                    )
+        except CoreFailure as error:
+            if error.code == "STORED_NOTES_EVIDENCE":
+                self._integrity_stop((scope, "invalid-note-proof-or-body"))
+            raise
+        return claim, mapping, row["body"]
+
+    def _diagnose_ref_note_conflict(
+        self,
+        native: NativeObject,
+        work: WorkBudget,
+        max_proof_bytes: int,
+        max_conflict_copies: int,
+    ) -> None:
+        """Check only an observed representation conflict, inside the writer cut.
+
+        A valid colliding representation is an incompatible input, not proof of
+        catalog damage. Each inspected copy is bounded and charged separately.
+        """
+        previous = ""
+        for inspected in range(max_conflict_copies + 1):
+            self._charge(work, "metadata_units", 1)
+            candidate = self._ref_note_one(
+                "SELECT physical_copy_uuidv4 FROM ref_retained_notes WHERE object_format=? AND full_oid=? AND physical_copy_uuidv4>? ORDER BY physical_copy_uuidv4 LIMIT 1",
+                (*native.oid.key, previous),
+            )
+            if candidate is None:
+                return
+            if inspected == max_conflict_copies:
+                raise CoreFailure("BUDGET", native.oid, "note conflict copy limit")
+            copy = self._stored(native.oid, uuid4_value, candidate[0])
+            row = self._fetch_ref_note_copy(native.oid, copy, work, max_proof_bytes)
+            if row is None:
+                self._integrity_stop((native.oid, copy, "missing-conflict-copy"))
+            _, _, body = self._validate_stored_ref_note(row, work)
+            if body != native.body:
+                return  # A checked collision remains an ordinary refusal.
+            previous = copy
+
     @_completed_read
     @_decoded_read
     def notes_mapping_projection(
@@ -1052,6 +1240,8 @@ class Core:
         work: WorkBudget,
         *,
         before_commit: Callable[[], None] | None = None,
+        max_proof_bytes: int = 64 * 1024 * 1024,
+        max_conflict_copies: int = 1_000,
     ) -> None:
         """Admit a body only with locally checked claim-specific role evidence."""
         if not isinstance(evidence, NotesMappingEvidence) or not isinstance(
@@ -1073,6 +1263,15 @@ class Core:
             raise CoreFailure(
                 "NOTES_BODY", native.oid, "exact mapped note blob required"
             )
+        if (
+            type(max_proof_bytes) is not int
+            or not 0 < max_proof_bytes < 2**63
+            or type(max_conflict_copies) is not int
+            or not 0 < max_conflict_copies < 2**63 - 1
+        ):
+            raise CoreFailure(
+                "BUDGET", native.oid, "positive finite proof and copy limits required"
+            )
         with account_verification(work):
             for structure in evidence.structures:
                 self._charge(work, "proof_steps", 1)
@@ -1083,24 +1282,45 @@ class Core:
             native.validate()
             self._charge(work, "metadata_units", 1)
             with self._transaction():
-                self._notes_mapping_evidence(evidence)
-                self._insert(
-                    "ref_retained_notes",
-                    (
-                        *native.oid.key,
-                        physical_copy_uuidv4,
-                        native.body,
-                        native.declared_size,
-                        native.digest_sha256,
-                        *evidence.key,
-                    ),
+                # This is inside the writer cut, before any replay insertion can
+                # trip a representation trigger or conceal damaged authority.
+                existing = self._fetch_ref_note_copy(
+                    native.oid, physical_copy_uuidv4, work, max_proof_bytes
                 )
+                if existing is not None:
+                    self._validate_stored_ref_note(existing, work)
+                self._notes_mapping_evidence(evidence)
+                try:
+                    self._insert(
+                        "ref_retained_notes",
+                        (
+                            *native.oid.key,
+                            physical_copy_uuidv4,
+                            native.body,
+                            native.declared_size,
+                            native.digest_sha256,
+                            *evidence.key,
+                        ),
+                    )
+                except sqlite3.IntegrityError as error:
+                    if str(error) == "conflicting exact note representation":
+                        self._diagnose_ref_note_conflict(
+                            native, work, max_proof_bytes, max_conflict_copies
+                        )
+                    raise
                 if before_commit is not None:
                     before_commit()
 
     @_completed_read
     @_decoded_read
-    def read_ref_note(self, claim: RefObservationClaim, mapping: NotesMapping) -> bytes:
+    def read_ref_note(
+        self,
+        claim: RefObservationClaim,
+        mapping: NotesMapping,
+        work: WorkBudget,
+        *,
+        max_proof_bytes: int = 64 * 1024 * 1024,
+    ) -> bytes:
         if (
             not isinstance(claim, RefObservationClaim)
             or not isinstance(mapping, NotesMapping)
@@ -1109,70 +1329,35 @@ class Core:
             raise CoreFailure(
                 "NOTES_ROLE", claim, "exact claimed root and mapping required"
             )
+        if type(max_proof_bytes) is not int or not 0 < max_proof_bytes < 2**63:
+            raise CoreFailure(
+                "BUDGET", claim.identity, "positive finite proof limit required"
+            )
         with self._snapshot():
             self._require_ref_claim(claim)
-            rows = self.sql(
-                "SELECT * FROM ref_retained_notes WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND ref_claim_provenance=? AND role_format=? AND root_oid=? AND interpretation_kind=? AND interpretation_version=? AND interpretation_scope=? AND annotated_object_oid=? AND note_oid=? AND mapping_path_json=? ORDER BY physical_copy_uuidv4",
+            self._charge(work, "metadata_units", 1)
+            selected = self._ref_note_one(
+                "SELECT physical_copy_uuidv4 FROM ref_retained_notes INDEXED BY ref_retained_notes_role_lookup WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND ref_claim_provenance=? AND role_format=? AND root_oid=? AND interpretation_kind=? AND interpretation_version=? AND interpretation_scope=? AND annotated_object_oid=? AND note_oid=? AND mapping_path_json=? ORDER BY physical_copy_uuidv4 LIMIT 1",
                 (*claim.identity, *mapping.key),
             )
-            if not rows:
+            if selected is None:
                 raise CoreFailure(
                     "NOTES_ROLE_UNAVAILABLE",
                     claim.identity,
                     "no claim-specific receiver-proven note body",
                 )
-            row = rows[0]
-            self._assert_stored_mapping(mapping, claim.identity)
-            evidence_values = (
-                row["observation_origin_uuidv4"],
-                row["ref_observation_uuidv7"],
-                row["ref_claim_provenance"],
-                row["role_format"],
-                row["root_oid"],
-                row["interpretation_kind"],
-                row["interpretation_version"],
-                row["interpretation_scope"],
-                row["annotated_object_oid"],
-                row["note_oid"],
-                row["mapping_path_json"],
-                row["verification_scope"],
-                row["role_provenance"],
-                row["proof_bundle"],
+            copy = self._stored(claim.identity, uuid4_value, selected[0])
+            row = self._fetch_ref_note_copy(
+                mapping.note_oid, copy, work, max_proof_bytes
             )
-            if not self.sql(
-                "SELECT 1 FROM notes_mapping_evidence WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND ref_claim_provenance=? AND object_format=? AND root_oid=? AND interpretation_kind=? AND interpretation_version=? AND interpretation_scope=? AND annotated_object_oid=? AND note_oid=? AND mapping_path_json=? AND verification_scope=? AND provenance=? AND proof_bundle=?",
-                evidence_values,
-            ):
-                self._integrity_stop((claim.identity, "missing-notes-role-evidence"))
-            role = self._stored(
-                claim.identity,
-                NotesMappingEvidenceRecord,
-                mapping,
-                row["verification_scope"],
-                self._provenance_value(claim.identity, row["role_provenance"]),
-                row["proof_bundle"],
+            if row is None:
+                self._integrity_stop((claim.identity, "missing-selected-note"))
+            stored_claim, stored_mapping, body = self._validate_stored_ref_note(
+                row, work
             )
-            if (
-                mapping.mapping_path is None
-                or not valid_note_role(
-                    *mapping.root_oid.key,
-                    mapping.annotated_object_oid.full_oid,
-                    mapping.note_oid.full_oid,
-                    mapping.mapping_path,
-                    role.proof_bundle,
-                )
-                or not valid_native(
-                    *mapping.note_oid.key,
-                    "blob",
-                    row["body"],
-                    row["size"],
-                    row["digest_sha256"],
-                )
-            ):
-                self._integrity_stop(
-                    (claim.identity, mapping.note_oid, row["physical_copy_uuidv4"])
-                )
-            return row["body"]
+            if stored_claim != claim or stored_mapping != mapping:
+                self._integrity_stop((claim.identity, "selected-note-scope"))
+            return body
 
     def _capture(self, capture: Capture) -> None:
         self._object(capture.root)

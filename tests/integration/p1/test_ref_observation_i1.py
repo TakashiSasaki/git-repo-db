@@ -166,7 +166,7 @@ def test_ref_projection_charges_repeated_reads_to_real_request(core, tmp_path):
         attempt = str(uuid4())
         ledger.attempt(request, attempt)
         budget = NotesWorkBudget(ledger, request, attempt, NotesLimits())
-        proof, _ = old_mapping(repository)
+        proof, note = old_mapping(repository)
         rooted = RefObservationClaim(
             obs.ref_observation_key,
             provenance("proof-root"),
@@ -195,6 +195,55 @@ def test_ref_projection_charges_repeated_reads_to_real_request(core, tmp_path):
         after = ledger.usage(request)
         assert after["input_bytes"] > before["input_bytes"]
         assert after["proof_steps"] > before["proof_steps"]
+        copy = str(uuid4())
+        c.admit_ref_note(evidence, note, copy, budget)
+        before_read = ledger.usage(request)
+        assert c.read_ref_note(rooted, mapping, budget) == note.body
+        once = ledger.usage(request)
+        assert c.read_ref_note(rooted, mapping, budget) == note.body
+        twice = ledger.usage(request)
+        assert twice["input_bytes"] > once["input_bytes"] > before_read["input_bytes"]
+        assert (
+            twice["verification_bytes"]
+            > once["verification_bytes"]
+            > before_read["verification_bytes"]
+        )
+        assert twice["proof_steps"] > once["proof_steps"] > before_read["proof_steps"]
+
+        def fail_before_commit():
+            raise RuntimeError("abort body admission")
+
+        before_rollback = ledger.usage(request)
+        with pytest.raises(RuntimeError, match="abort body admission"):
+            c.admit_ref_note(
+                evidence, note, str(uuid4()), budget, before_commit=fail_before_commit
+            )
+        after_rollback = ledger.usage(request)
+        assert after_rollback["input_bytes"] > before_rollback["input_bytes"]
+        assert (
+            after_rollback["verification_bytes"] > before_rollback["verification_bytes"]
+        )
+        assert len(c.sql("SELECT 1 FROM ref_retained_notes")) == 1
+        original_lookup = c._ref_note_one
+
+        def interrupted_fetch(statement, parameters):
+            if statement.startswith("SELECT * FROM ref_retained_notes"):
+                raise OSError("interrupted selected-copy fetch")
+            return original_lookup(statement, parameters)
+
+        c._ref_note_one = interrupted_fetch
+        try:
+            before_interruption = ledger.usage(request)
+            with pytest.raises(OSError, match="interrupted selected-copy fetch"):
+                c.read_ref_note(rooted, mapping, budget)
+            after_interruption = ledger.usage(request)
+            assert (
+                after_interruption["input_bytes"] > before_interruption["input_bytes"]
+            )
+            assert "input_bytes" not in budget.pending
+        finally:
+            c._ref_note_one = original_lookup
+        assert c.read_ref_note(rooted, mapping, budget) == note.body
         c.ref_observation(obs.ref_observation_key, budget, max_claims=4)
         first = ledger.usage(request)
         c.ref_observation(obs.ref_observation_key, budget, max_claims=4)
@@ -253,9 +302,9 @@ def test_shared_mapping_claims_and_receiver_proofs_are_claim_specific(core):
     c.admit_notes_mapping_evidence(ev2, Budget())
     assert len(c.sql("SELECT * FROM notes_mapping_evidence")) == 2
     c.admit_ref_note(ev1, note, str(uuid4()), Budget())
-    assert c.read_ref_note(claims[0], content) == note.body
+    assert c.read_ref_note(claims[0], content, Budget()) == note.body
     with pytest.raises(CoreFailure, match="claim-specific"):
-        c.read_ref_note(claims[1], content)
+        c.read_ref_note(claims[1], content, Budget())
     root_b = OID("sha1", "b" * 40)
     other = RefObservationClaim(
         first.ref_observation_key, provenance("other-root"), "present", root_oid=root_b
@@ -408,10 +457,10 @@ def test_note_transaction_rolls_back_all_new_units_on_failure(core):
     assert not c.sql("SELECT * FROM notes_mapping_evidence")
     assert not c.sql("SELECT * FROM ref_retained_notes")
     c.admit_ref_note(evidence, note, str(uuid4()), Budget())
-    assert c.read_ref_note(claim, content) == note.body
+    assert c.read_ref_note(claim, content, Budget()) == note.body
     altered = replace(claim, ref_form="direct", direct_target_oid=proof.capture.root)
     with pytest.raises(CoreFailure, match="cannot be rebound"):
-        c.read_ref_note(altered, content)
+        c.read_ref_note(altered, content, Budget())
 
 
 def test_valid_recovery_guards_and_export_refusal(core):
@@ -740,7 +789,7 @@ def test_structural_proof_cannot_claim_unchecked_decoder_or_full_inventory(core)
         db.close()
     assert not c.sql("SELECT * FROM ref_retained_notes")
     c.admit_ref_note(evidence, note, str(uuid4()), Budget())
-    assert c.read_ref_note(claim, mapping) == note.body
+    assert c.read_ref_note(claim, mapping, Budget()) == note.body
 
 
 def test_replay_does_not_repair_missing_nominal_root(core):
@@ -843,6 +892,384 @@ def test_missing_role_evidence_stops_body_read(core):
     finally:
         db.close()
     with pytest.raises(CoreFailure) as error:
-        c.read_ref_note(claim, mapping)
+        c.read_ref_note(claim, mapping, Budget())
     assert error.value.code == "AUTHORITATIVE_CORRUPTION"
     assert (path.parent / "p1-recovery-stop.json").exists()
+
+
+@pytest.mark.parametrize(
+    ("corruption", "same_copy"),
+    [
+        ("body", True),
+        ("body", False),
+        ("digest", True),
+        ("invalid-utf8", True),
+        ("missing-role", True),
+        ("malformed-proof", True),
+    ],
+)
+def test_replaying_corrupted_stored_copy_stops_catalog(core, corruption, same_copy):
+    c, path, repository = core
+    proof, note = old_mapping(repository, b"original note body")
+    obs = subject(repository)
+    c.admit_ref_observation(obs)
+    claim = RefObservationClaim(
+        obs.ref_observation_key,
+        provenance("ref"),
+        "present",
+        root_oid=proof.capture.root,
+    )
+    c.admit_ref_observation_claim(claim)
+    mapping = NotesMapping(
+        proof.capture.root,
+        "git-notes",
+        "1",
+        "tree",
+        proof.target,
+        proof.note,
+        proof.path,
+    )
+    evidence = NotesMappingEvidence(
+        claim, mapping, "single-path", received("e"), proof.structures
+    )
+    copy = str(uuid4())
+    c.admit_ref_note(evidence, note, copy, Budget())
+    db = connect(path, "core")
+    try:
+        if corruption == "malformed-proof":
+            triggers = [
+                db.execute(
+                    "SELECT sql FROM sqlite_schema WHERE name=?", (name,)
+                ).fetchone()[0]
+                for name in (
+                    "p1_immutable_ref_retained_notes_update",
+                    "p1_immutable_notes_mapping_evidence_update",
+                )
+            ]
+            db.execute("PRAGMA foreign_keys=OFF")
+            db.execute("PRAGMA ignore_check_constraints=ON")
+            db.execute("DROP TRIGGER p1_immutable_ref_retained_notes_update")
+            db.execute("DROP TRIGGER p1_immutable_notes_mapping_evidence_update")
+            malformed = "[" * 2_000 + "]" * 2_000
+            db.execute("UPDATE ref_retained_notes SET proof_bundle=?", (malformed,))
+            db.execute("UPDATE notes_mapping_evidence SET proof_bundle=?", (malformed,))
+            for trigger in triggers:
+                db.execute(trigger)
+            db.execute("PRAGMA ignore_check_constraints=OFF")
+            db.execute("PRAGMA foreign_keys=ON")
+        elif corruption == "missing-role":
+            trigger = db.execute(
+                "SELECT sql FROM sqlite_schema WHERE name='p1_immutable_notes_mapping_evidence_delete'"
+            ).fetchone()[0]
+            db.execute("PRAGMA foreign_keys=OFF")
+            db.execute("DROP TRIGGER p1_immutable_notes_mapping_evidence_delete")
+            db.execute("DELETE FROM notes_mapping_evidence")
+            db.execute(trigger)
+            db.execute("PRAGMA foreign_keys=ON")
+        else:
+            trigger = db.execute(
+                "SELECT sql FROM sqlite_schema WHERE name='p1_immutable_ref_retained_notes_update'"
+            ).fetchone()[0]
+            db.execute("DROP TRIGGER p1_immutable_ref_retained_notes_update")
+            db.execute("PRAGMA ignore_check_constraints=ON")
+            if corruption == "body":
+                db.execute(
+                    "UPDATE ref_retained_notes SET body=?", (b"X" + note.body[1:],)
+                )
+            elif corruption == "invalid-utf8":
+                db.execute(
+                    "UPDATE ref_retained_notes SET digest_sha256=CAST(X'80' AS TEXT)"
+                )
+            else:
+                db.execute("UPDATE ref_retained_notes SET digest_sha256=?", ("0" * 64,))
+            db.execute(trigger)
+            db.execute("PRAGMA ignore_check_constraints=OFF")
+    finally:
+        db.close()
+    with pytest.raises(CoreFailure) as error:
+        c.admit_ref_note(evidence, note, copy if same_copy else str(uuid4()), Budget())
+    assert error.value.code == "AUTHORITATIVE_CORRUPTION"
+    assert (path.parent / "p1-recovery-stop.json").exists()
+    with pytest.raises(CoreFailure) as stopped:
+        c.ref_observation(obs.ref_observation_key, Budget())
+    assert stopped.value.code == "RECOVERY_STOP"
+
+
+def test_ref_note_valid_replay_and_unrelated_integrity_error_roll_back(core):
+    c, path, repository = core
+    proof, note = old_mapping(repository)
+    obs = subject(repository)
+    c.admit_ref_observation(obs)
+    claim = RefObservationClaim(
+        obs.ref_observation_key,
+        provenance("ref"),
+        "present",
+        root_oid=proof.capture.root,
+    )
+    c.admit_ref_observation_claim(claim)
+    mapping = NotesMapping(
+        proof.capture.root,
+        "git-notes",
+        "1",
+        "tree",
+        proof.target,
+        proof.note,
+        proof.path,
+    )
+    evidence = NotesMappingEvidence(
+        claim, mapping, "single-path", received("first"), proof.structures
+    )
+    copy = str(uuid4())
+    c.admit_ref_note(evidence, note, copy, Budget())
+    replay = Budget()
+    c.admit_ref_note(evidence, note, copy, replay)
+    assert len(c.sql("SELECT 1 FROM ref_retained_notes")) == 1
+    assert replay.counts["input_bytes"] >= len(note.body) * 2
+    assert replay.counts["proof_steps"] > 0
+    with pytest.raises(CoreFailure) as limited:
+        c.admit_ref_note(evidence, note, copy, Budget(), max_proof_bytes=1)
+    assert limited.value.code == "BUDGET"
+    assert len(c.sql("SELECT 1 FROM ref_retained_notes")) == 1
+    assert not (path.parent / "p1-recovery-stop.json").exists()
+
+    other_evidence = replace(evidence, provenance=received("second"))
+    with pytest.raises(CoreFailure) as incompatible:
+        c.admit_ref_note(other_evidence, note, copy, Budget())
+    assert incompatible.value.code == "INCOMPATIBLE_REPLAY"
+    assert len(c.sql("SELECT 1 FROM notes_mapping_evidence")) == 1
+
+    def unrelated_failure():
+        raise sqlite3.IntegrityError("unrelated synthetic constraint")
+
+    with pytest.raises(sqlite3.IntegrityError, match="unrelated synthetic"):
+        c.admit_ref_note(
+            evidence, note, str(uuid4()), Budget(), before_commit=unrelated_failure
+        )
+    assert len(c.sql("SELECT 1 FROM ref_retained_notes")) == 1
+    assert not (path.parent / "p1-recovery-stop.json").exists()
+    assert c.read_ref_note(claim, mapping, Budget()) == note.body
+
+
+def test_legacy_copy_identity_conflict_is_not_misclassified_as_corruption(core):
+    c, path, repository = core
+    proof, note = old_mapping(repository)
+    copy = str(uuid4())
+    c.admit_note(proof, note, copy, Budget())
+    obs = subject(repository)
+    c.admit_ref_observation(obs)
+    claim = RefObservationClaim(
+        obs.ref_observation_key,
+        provenance("ref"),
+        "present",
+        root_oid=proof.capture.root,
+    )
+    c.admit_ref_observation_claim(claim)
+    mapping = NotesMapping(
+        proof.capture.root,
+        "git-notes",
+        "1",
+        "tree",
+        proof.target,
+        proof.note,
+        proof.path,
+    )
+    evidence = NotesMappingEvidence(
+        claim, mapping, "single-path", received("e"), proof.structures
+    )
+    with pytest.raises(
+        sqlite3.IntegrityError, match="conflicting exact note representation"
+    ):
+        c.admit_ref_note(evidence, note, copy, Budget())
+    assert not c.sql("SELECT 1 FROM ref_retained_notes")
+    assert not (path.parent / "p1-recovery-stop.json").exists()
+    assert c.read_note(proof.capture, proof.target, proof.note) == note.body
+
+
+def test_conflicting_other_copy_diagnosis_respects_budget_and_rolls_back(core):
+    c, path, repository = core
+    proof, note = old_mapping(repository, b"original note")
+    obs = subject(repository)
+    c.admit_ref_observation(obs)
+    claim = RefObservationClaim(
+        obs.ref_observation_key,
+        provenance("ref"),
+        "present",
+        root_oid=proof.capture.root,
+    )
+    c.admit_ref_observation_claim(claim)
+    mapping = NotesMapping(
+        proof.capture.root,
+        "git-notes",
+        "1",
+        "tree",
+        proof.target,
+        proof.note,
+        proof.path,
+    )
+    evidence = NotesMappingEvidence(
+        claim, mapping, "single-path", received("e"), proof.structures
+    )
+    copies = sorted(str(uuid4()) for _ in range(3))
+    for copy in copies:
+        c.admit_ref_note(evidence, note, copy, Budget())
+    db = connect(path, "core")
+    try:
+        trigger = db.execute(
+            "SELECT sql FROM sqlite_schema WHERE name='p1_immutable_ref_retained_notes_update'"
+        ).fetchone()[0]
+        db.execute("DROP TRIGGER p1_immutable_ref_retained_notes_update")
+        db.execute("PRAGMA ignore_check_constraints=ON")
+        db.execute(
+            "UPDATE ref_retained_notes SET body=? WHERE physical_copy_uuidv4=?",
+            (b"X" + note.body[1:], copies[-1]),
+        )
+        db.execute(trigger)
+        db.execute("PRAGMA ignore_check_constraints=OFF")
+    finally:
+        db.close()
+    replacement = str(uuid4())
+    with pytest.raises(CoreFailure) as limited:
+        c.admit_ref_note(evidence, note, replacement, Budget(), max_conflict_copies=1)
+    assert limited.value.code == "BUDGET"
+    assert len(c.sql("SELECT 1 FROM ref_retained_notes")) == 3
+    assert not (path.parent / "p1-recovery-stop.json").exists()
+    with pytest.raises(CoreFailure) as detected:
+        c.admit_ref_note(evidence, note, replacement, Budget(), max_conflict_copies=3)
+    assert detected.value.code == "AUTHORITATIVE_CORRUPTION"
+    assert (path.parent / "p1-recovery-stop.json").exists()
+
+
+def test_ref_note_read_fetches_only_one_copy_and_charges_actual_work(core):
+    c, _, repository = core
+    proof, note = old_mapping(repository, b"x" * (256 * 1024))
+    obs = subject(repository)
+    c.admit_ref_observation(obs)
+    claim = RefObservationClaim(
+        obs.ref_observation_key,
+        provenance("ref"),
+        "present",
+        root_oid=proof.capture.root,
+    )
+    c.admit_ref_observation_claim(claim)
+    mapping = NotesMapping(
+        proof.capture.root,
+        "git-notes",
+        "1",
+        "tree",
+        proof.target,
+        proof.note,
+        proof.path,
+    )
+    evidence = NotesMappingEvidence(
+        claim, mapping, "single-path", received("e"), proof.structures
+    )
+    for _ in range(4):
+        c.admit_ref_note(evidence, note, str(uuid4()), Budget())
+    fetched = []
+    original_factory = c._db.row_factory
+
+    def track_body(cursor, values):
+        names = [column[0] for column in cursor.description]
+        if "body" in names:
+            body = values[names.index("body")]
+            if isinstance(body, bytes):
+                fetched.append(len(body))
+        return sqlite3.Row(cursor, values)
+
+    c._db.row_factory = track_body
+    try:
+        budget = Budget()
+        assert c.read_ref_note(claim, mapping, budget) == note.body
+        assert fetched == [len(note.body)]
+        assert budget.counts["input_bytes"] >= len(note.body)
+        assert budget.counts["verification_bytes"] >= len(note.body)
+        assert budget.counts["proof_steps"] > 0
+    finally:
+        c._db.row_factory = original_factory
+
+
+def test_ref_note_read_limits_reserve_before_body_and_do_not_stop_catalog(core):
+    c, path, repository = core
+    proof, note = old_mapping(repository, b"bounded body")
+    obs = subject(repository)
+    c.admit_ref_observation(obs)
+    claim = RefObservationClaim(
+        obs.ref_observation_key,
+        provenance("ref"),
+        "present",
+        root_oid=proof.capture.root,
+    )
+    c.admit_ref_observation_claim(claim)
+    mapping = NotesMapping(
+        proof.capture.root,
+        "git-notes",
+        "1",
+        "tree",
+        proof.target,
+        proof.note,
+        proof.path,
+    )
+    evidence = NotesMappingEvidence(
+        claim, mapping, "single-path", received("e"), proof.structures
+    )
+    c.admit_ref_note(evidence, note, str(uuid4()), Budget())
+    fetched = []
+    original_factory = c._db.row_factory
+
+    def track_body(cursor, values):
+        names = [column[0] for column in cursor.description]
+        if "body" in names:
+            fetched.append(values[names.index("body")])
+        return sqlite3.Row(cursor, values)
+
+    class NoInput(Budget):
+        def require(self, unit, amount=1):
+            if unit == "input_bytes":
+                raise CoreFailure("BUDGET", unit, "no body reservation")
+            super().require(unit, amount)
+
+    class NoVerification(Budget):
+        def require(self, unit, amount=1):
+            if unit == "verification_bytes":
+                raise CoreFailure("BUDGET", unit, "no verification reservation")
+            super().require(unit, amount)
+
+    class NoProofSteps(Budget):
+        def require(self, unit, amount=1):
+            if unit == "proof_steps":
+                raise CoreFailure("BUDGET", unit, "no structural verification")
+            super().require(unit, amount)
+
+    class SmallLimit:
+        note_bytes = len(note.body) - 1
+
+    c._db.row_factory = track_body
+    try:
+        small = Budget()
+        small.limits = SmallLimit()
+        for budget, options in (
+            (NoInput(), {}),
+            (small, {}),
+            (Budget(), {"max_proof_bytes": 1}),
+        ):
+            with pytest.raises(CoreFailure) as exceeded:
+                c.read_ref_note(claim, mapping, budget, **options)
+            assert exceeded.value.code == "BUDGET"
+            assert not fetched
+        denied = NoVerification()
+        with pytest.raises(CoreFailure) as exceeded:
+            c.read_ref_note(claim, mapping, denied)
+        assert exceeded.value.code == "BUDGET"
+        assert denied.counts["input_bytes"] >= len(note.body)
+        assert len(fetched) == 1
+        fetched.clear()
+        denied = NoProofSteps()
+        with pytest.raises(CoreFailure) as exceeded:
+            c.read_ref_note(claim, mapping, denied)
+        assert exceeded.value.code == "BUDGET"
+        assert denied.counts["input_bytes"] >= len(note.body)
+        assert len(fetched) == 1
+    finally:
+        c._db.row_factory = original_factory
+    assert not (path.parent / "p1-recovery-stop.json").exists()
+    assert c.read_ref_note(claim, mapping, Budget()) == note.body

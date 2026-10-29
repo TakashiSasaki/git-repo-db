@@ -325,6 +325,12 @@ CREATE TABLE ref_retained_notes (
  PRIMARY KEY(object_format,full_oid,physical_copy_uuidv4),
  FOREIGN KEY(observation_origin_uuidv4,ref_observation_uuidv7,ref_claim_provenance,role_format,root_oid,interpretation_kind,interpretation_version,interpretation_scope,annotated_object_oid,note_oid,mapping_path_json,verification_scope,role_provenance,proof_bundle) REFERENCES notes_mapping_evidence
 ) STRICT, WITHOUT ROWID;
+-- A scoped read can choose one physical copy without scanning or fetching the
+-- bodies of copies attached to other observations or proofs.
+CREATE INDEX ref_retained_notes_role_lookup ON ref_retained_notes(
+ observation_origin_uuidv4,ref_observation_uuidv7,ref_claim_provenance,
+ role_format,root_oid,interpretation_kind,interpretation_version,interpretation_scope,
+ annotated_object_oid,note_oid,mapping_path_json,physical_copy_uuidv4);
 CREATE TRIGGER ref_notes_same_representation BEFORE INSERT ON ref_retained_notes
 WHEN EXISTS(SELECT 1 FROM ref_retained_notes WHERE object_format=NEW.object_format AND full_oid=NEW.full_oid AND body<>NEW.body)
  OR EXISTS(SELECT 1 FROM retained_notes WHERE object_format=NEW.object_format AND full_oid=NEW.full_oid AND (body<>NEW.body OR physical_copy_uuidv4=NEW.physical_copy_uuidv4))

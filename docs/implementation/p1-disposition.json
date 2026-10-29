@@ -12481,7 +12481,7 @@
       }
     },
     "core": {
-      "ddl_sha256": "9c4745bbb5f96b319d76fe8f1a322c6cd4530a04d7c4f8db258e4588b0259d05",
+      "ddl_sha256": "637317ca7216e8ee601014054eba85ab254e6d295ca3b380f6e9395197e0b777",
       "tables": {
         "captures": {
           "columns": [
