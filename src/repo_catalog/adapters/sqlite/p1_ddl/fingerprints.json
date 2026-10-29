@@ -27,8 +27,8 @@
       ]
     },
     "core": {
-      "ddl_sha256": "3f9f828ad0aff5fae1039f30a3baa29165dbabe6decc5a4f204e78e674b940fe",
-      "sqlite_schema_sha256": "26ab7ecac41a715221b69c702f71766d2207285fcef25c225128d8e1d7d9c337",
+      "ddl_sha256": "9c4745bbb5f96b319d76fe8f1a322c6cd4530a04d7c4f8db258e4588b0259d05",
+      "sqlite_schema_sha256": "2be6ffdcde43056f357e56b30319bf70439595f5b9fbb2c13d754b8029058424",
       "tables": [
         "captures",
         "core_coverage_proofs",
@@ -41,6 +41,13 @@
         "note_roles",
         "notes_claims",
         "notes_groups",
+        "notes_mapping_claims",
+        "notes_mapping_evidence",
+        "notes_mapping_groups",
+        "notes_mappings",
+        "ref_observation_claims",
+        "ref_observations",
+        "ref_retained_notes",
         "relation_groups",
         "repositories",
         "repository_claims",

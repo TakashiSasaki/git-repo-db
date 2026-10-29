@@ -26,6 +26,17 @@ from repo_catalog.domain.p1_core import (
     ScalarField,
 )
 from repo_catalog.domain.p1_coverage import CoverageClaim, CoverageProjection
+from repo_catalog.domain.ref_observation import (
+    NotesMapping,
+    NotesMappingClaim,
+    NotesMappingEvidence,
+    NotesMappingGroup,
+    NotesMappingProjection,
+    RefObservation,
+    RefObservationClaim,
+    RefObservationKey,
+    RefObservationProjection,
+)
 
 
 class NoteLimits(Protocol):
@@ -45,6 +56,20 @@ class CoreAdmission(Protocol):
     def admit_repository(self, repository_uuidv4: str) -> None: ...
     def admit_repository_claim(self, claim: RepositoryClaim) -> None: ...
     def admit_observation(self, observation: GitObservation) -> None: ...
+    def admit_ref_observation(self, observation: RefObservation) -> None: ...
+    def admit_ref_observation_claim(self, claim: RefObservationClaim) -> None: ...
+    def admit_notes_mapping_claim(self, claim: NotesMappingClaim) -> None: ...
+    def admit_notes_mapping_group(self, group: NotesMappingGroup) -> None: ...
+    def admit_notes_mapping_evidence(
+        self, evidence: NotesMappingEvidence, work: WorkBudget
+    ) -> None: ...
+    def admit_ref_note(
+        self,
+        evidence: NotesMappingEvidence,
+        native: NativeObject,
+        physical_copy_uuidv4: str,
+        work: WorkBudget,
+    ) -> None: ...
     def admit_coverage_scope(self, scope: CoreCoverageScope) -> None: ...
     def admit_coverage(self, claim: CoverageClaim) -> str: ...
     def admit_coverage_proof(
@@ -70,6 +95,29 @@ class CoreAdmission(Protocol):
 
 
 class CoreRead(Protocol):
+    def ref_observation(
+        self,
+        key: RefObservationKey,
+        work: WorkBudget,
+        *,
+        max_claims: int = 10_000,
+        max_bytes: int = 64 * 1024 * 1024,
+    ) -> RefObservationProjection: ...
+    def notes_mapping_projection(
+        self,
+        ref_claim: RefObservationClaim,
+        annotated_object_oid: OID,
+        interpretation_kind: str,
+        interpretation_version: str,
+        interpretation_scope: str,
+        work: WorkBudget,
+        *,
+        max_units: int = 10_000,
+        max_bytes: int = 64 * 1024 * 1024,
+    ) -> NotesMappingProjection: ...
+    def read_ref_note(
+        self, claim: RefObservationClaim, mapping: NotesMapping
+    ) -> bytes: ...
     def notes_projection(self, capture: Capture, target: OID) -> NotesProjection: ...
     def coverage(self, scope: CoreCoverageScope) -> CoverageProjection: ...
     def scalar(self, oid: OID, field: ScalarField) -> Projection: ...

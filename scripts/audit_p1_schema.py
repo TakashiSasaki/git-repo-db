@@ -41,18 +41,25 @@ def introspect() -> dict[str, Any]:
                 indexes = []
                 for index in connection.execute(f'PRAGMA index_list("{name}")'):
                     if index[2]:
-                        indexes.append(
-                            {
-                                "columns": [
-                                    row[2]
-                                    for row in connection.execute(
-                                        f'PRAGMA index_info("{index[1]}")'
-                                    )
-                                ],
-                                "origin": index[3],
-                                "partial": bool(index[4]),
-                            }
+                        parts = list(
+                            connection.execute(f'PRAGMA index_info("{index[1]}")')
                         )
+                        entry = {
+                            "columns": [
+                                row[2]
+                                if row[2] is not None
+                                else f"<expression:{row[0]}>"
+                                for row in parts
+                            ],
+                            "origin": index[3],
+                            "partial": bool(index[4]),
+                        }
+                        if any(row[2] is None for row in parts):
+                            entry["expression_sql"] = connection.execute(
+                                "SELECT sql FROM sqlite_schema WHERE type='index' AND name=?",
+                                (index[1],),
+                            ).fetchone()[0]
+                        indexes.append(entry)
                 tables[name] = {
                     "columns": [
                         {

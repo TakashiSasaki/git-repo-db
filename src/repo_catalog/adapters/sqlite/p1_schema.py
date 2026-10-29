@@ -79,7 +79,38 @@ def register_functions(db: sqlite3.Connection, store: str | None = None) -> None
     )
     if store in (None, "core"):
         from repo_catalog.domain.p1_core import register_functions as register_core
+        from repo_catalog.domain.ref_observation import valid_ref_absence
 
+        def uuid7(value):
+            try:
+                parsed = UUID(value)
+                return (
+                    isinstance(value, str)
+                    and str(parsed) == value
+                    and parsed.version == 7
+                )
+            except (ValueError, TypeError, AttributeError):
+                return False
+
+        def mapping_path(value):
+            try:
+                decoded = json.loads(value)
+                return canonical(decoded) == value and (
+                    decoded is None or isinstance(decoded, str) and bool(decoded)
+                )
+            except (ValueError, TypeError, RecursionError):
+                return False
+
+        def result_formats(*values):
+            known = [value for value in values if value is not None]
+            return len(set(known)) <= 1
+
+        db.create_function("p1_uuid7", 1, uuid7, deterministic=True)
+        db.create_function("p1_ref_absence", 1, valid_ref_absence, deterministic=True)
+        db.create_function("p1_mapping_path", 1, mapping_path, deterministic=True)
+        db.create_function(
+            "p1_ref_result_formats", 4, result_formats, deterministic=True
+        )
         register_core(db)
     if store in (None, "context"):
         from repo_catalog.adapters.sqlite.p1_context import (
@@ -151,6 +182,10 @@ def verify_connection(db: sqlite3.Connection, store: str | None = None) -> None:
     required = [("p1_uuid4", 1), ("p1_oid", 2), ("p1_json", 1), ("p1_array", -1)]
     if store == "core":
         required += [
+            ("p1_uuid7", 1),
+            ("p1_ref_absence", 1),
+            ("p1_mapping_path", 1),
+            ("p1_ref_result_formats", 4),
             ("p1_ref", 1),
             ("p1_coverage_members", 1),
             ("p1_claim", 2),

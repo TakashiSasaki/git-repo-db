@@ -580,6 +580,14 @@ class ExchangeService:
         try:
             self._bound_export_connection(core._db)
             core.ensure_available()
+            # I1 introduces new authority before I3 extends Exchange. Refuse an
+            # apparently successful incomplete Core export in that interim.
+            if core.sql("SELECT 1 FROM ref_observations LIMIT 1"):
+                raise ExchangeError(
+                    "UNSUPPORTED_REF_OBSERVATION_EXPORT",
+                    "core",
+                    "ref-observation Exchange is not available in the I1 format",
+                )
             referenced_oids: set[OID] = set()
 
             for row in core.sql(
