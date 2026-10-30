@@ -47,7 +47,8 @@ def test_invalid_core_text_or_udf_check_stops_source(
     assert schema_rows(connection) == expected_schema("core")
     connection.close()
     with pytest.raises(
-        CorruptionDetectedError, match="invalid UTF-8|CHECK constraint failed|authoritative integrity failure"
+        CorruptionDetectedError,
+        match="invalid UTF-8|CHECK constraint failed|authoritative integrity failure",
     ):
         RecoveryService().create_consistent_backup(
             synthetic_catalog, tmp_path / "backup"
