@@ -16,7 +16,7 @@
 
 ## Decision and implemented boundary
 
-The current [transition contract](../../adr0036-legacy-consumers-contract.md)
+The current [transition contract](../adr0036-legacy-consumers-contract.md)
 records the disposition of all six proposed stages. Existing observation,
 enumeration, Claim-aware Query, inventory proof and typed-salvage APIs already
 exist. A standalone D0 and fixed six-PR stack are unnecessary. Explicit
@@ -119,7 +119,48 @@ normal-format activation and release qualification remain separate scope.
 
 Skills used: cloud-environment runtime, efficient repository investigation,
 three-store invariants (target/baseline distinction), CI final-tree verification
-and lessons-to-skills assessment. No reusable novel procedure was established
-that warrants a skill edit. Model identifier and effort are not exposed by the
+and lessons-to-skills assessment. The efficient-investigation skill records the
+verified frozen-evidence placement lesson below. Model identifier and effort are not exposed by the
 execution evidence, so no specific values are asserted. No independent review
 or APPROVED status is claimed by the implementation author.
+
+## Evidence-placement correction after the initial CI
+
+Initial candidate `f25fb4e600b1abd051c3d4da29f220ebe7ac6869` passed
+[product CI](https://github.com/TakashiSasaki/git-repo-db/actions/runs/41060535402)
+and [Access-registry CI](https://github.com/TakashiSasaki/git-repo-db/actions/runs/41060535476).
+The former executed static/smoke, schema guards and minimal sdist checks; its
+full test/installed-artifact steps were skipped by the common development plan.
+The latter executed preflight, ownership/format checks; broad/installed suites
+were likewise skipped. These green jobs are scoped development evidence.
+
+[Initial pages preview](https://github.com/TakashiSasaki/git-repo-db/actions/runs/41060535526)
+passed schema visualization freshness, then failed five documentation ownership
+cases (100 others passed). The three newly added evidence files were unclassified
+and inside `docs/implementation/evidence/`, a historically frozen tree. This
+was an author evidence-placement error. Move only those new files to
+`docs/implementation/adr0036-inputs-evidence-20261030/` and register their exact
+paths in `documentation/content-inventory.json`; leave the frozen tree and its
+guards intact. This also corrects the report's relative contract link. No
+derived diagram or site content refresh is required.
+
+The failed job's complete log and downloaded 9,217-byte documentation artifact
+remain at `artifacts/adr0036-pages-job.log` and
+`artifacts/pr226-documentation-verification.zip`; the remote artifact is
+`documentation-verification-41060535526-1` (ID `12977914324`, seven-day retention).
+The original local product archive remains byte-identical after relocation.
+Product source/tests, scripts, dependencies and schemas remain unchanged from
+the clean tested implementation commit; no product cohort is rerun solely for
+this correction. Common acceptance-input hashes differ because the added
+evidence JSON/archive are conservatively included; they are not presented as
+equal or as complete release evidence. Final HEAD/tree and final CI status are
+reported separately at handoff.
+
+The first local ownership launch failed before test execution because it used
+uv's read-only default cache. Retrying with the setup cache ran 16 cases: 14
+passed and two frozen-index negative controls failed because their temporary
+index reads `HEAD`, while the relocation/manifest were still staged. That uv
+launch also inherited the root environment selector. Preserve those receipts
+under `artifacts/adr0036-docs-ownership`; freeze the correction and run the
+ownership cohort with the explicit isolated documentation Python. Do not
+classify the earlier local invocation as isolated-documentation acceptance.

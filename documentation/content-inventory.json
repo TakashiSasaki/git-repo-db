@@ -11236,6 +11236,33 @@
       "producer": "Pre-adoption design preparation and review.",
       "consumers": "ADR 0036 reviewers and stage handoffs.",
       "publication": "not staged"
+    },
+    "docs/implementation/adr0036-inputs-evidence-20261030/REPORT.md": {
+      "status": "scoped-execution-evidence",
+      "owner": "docs/implementation/adr0036-inputs-evidence-20261030/",
+      "authority": "Dated author development evidence; no independent approval or release acceptance.",
+      "source": "docs/implementation/adr0036-inputs-evidence-20261030/REPORT.md",
+      "producer": "ADR 0036 input implementation and fixed-tree local validation.",
+      "consumers": "PR 226 independent review and acquisition/Query/Search handoffs.",
+      "publication": "not staged"
+    },
+    "docs/implementation/adr0036-inputs-evidence-20261030/archive-index.json": {
+      "status": "scoped-execution-evidence",
+      "owner": "docs/implementation/adr0036-inputs-evidence-20261030/",
+      "authority": "Dated author development evidence; no independent approval or release acceptance.",
+      "source": "docs/implementation/adr0036-inputs-evidence-20261030/archive-index.json",
+      "producer": "ADR 0036 input implementation and fixed-tree local validation.",
+      "consumers": "PR 226 independent review and acquisition/Query/Search handoffs.",
+      "publication": "not staged"
+    },
+    "docs/implementation/adr0036-inputs-evidence-20261030/local-profile.tar.gz": {
+      "status": "scoped-execution-evidence",
+      "owner": "docs/implementation/adr0036-inputs-evidence-20261030/",
+      "authority": "Dated author development evidence; no independent approval or release acceptance.",
+      "source": "docs/implementation/adr0036-inputs-evidence-20261030/local-profile.tar.gz",
+      "producer": "ADR 0036 input implementation and fixed-tree local validation.",
+      "consumers": "PR 226 independent review and acquisition/Query/Search handoffs.",
+      "publication": "not staged"
     }
   }
 }
