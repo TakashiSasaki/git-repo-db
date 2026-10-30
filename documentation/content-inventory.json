@@ -11281,6 +11281,24 @@
       "producer": "PR 226 scoped remediation and clean-tree development profile.",
       "consumers": "PR 226 independent re-review and parent handoff.",
       "publication": "not staged"
+    },
+    "docs/implementation/adr0036-inputs-evidence-20261030/QUERY-PROJECTION.md": {
+      "status": "scoped-execution-evidence",
+      "owner": "docs/implementation/adr0036-inputs-evidence-20261030/",
+      "authority": "Scoped author Query projection evidence; independent review and release qualification remain separate.",
+      "source": "docs/implementation/adr0036-inputs-evidence-20261030/QUERY-PROJECTION.md",
+      "producer": "PR 226 dependent Query/CLI projection implementation.",
+      "consumers": "Independent reviewer and parent task handoff.",
+      "publication": "not staged"
+    },
+    "docs/implementation/adr0036-inputs-evidence-20261030/query-projection-profile.tar.gz": {
+      "status": "scoped-execution-evidence",
+      "owner": "docs/implementation/adr0036-inputs-evidence-20261030/",
+      "authority": "Scoped author Query projection evidence; independent review and release qualification remain separate.",
+      "source": "docs/implementation/adr0036-inputs-evidence-20261030/query-projection-profile.tar.gz",
+      "producer": "PR 226 dependent Query/CLI projection implementation.",
+      "consumers": "Independent reviewer and parent task handoff.",
+      "publication": "not staged"
     }
   }
 }
