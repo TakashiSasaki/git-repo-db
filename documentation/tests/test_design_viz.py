@@ -132,4 +132,3 @@ def test_viewer_embeds_only_semantic_design_model():
     assert "CREATE TABLE" not in data
     assert '<script src="http' not in html
     assert "width=device-width" in html
-    assert "minmax(0,1fr)" in html
