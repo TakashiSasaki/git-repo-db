@@ -122,6 +122,17 @@ or a resource limit alone does not. `auto` and `core_only`, coexisting Context,
 Exchange v6, backup, typed salvage and the cross-family comparison guards retain
 their existing contracts.
 
+Reported-Group admission uses the same protected callback boundary as receiver
+proof admission, including its metadata preflight and its writer transaction.
+Callbacks cannot insert unrelated facts, control the Core transaction, reenter
+Core APIs or read protected proof columns. Callback failures roll back the
+current atomic unit and retain the original exception; a corruption-shaped
+caller exception does not diagnose the catalog. This applies to independent and
+coordinator-owned Core capabilities. The optional no-budget path has no caller
+work callback. These controls, finite-budget refusal, retry and genuine stored
+subject corruption are covered by
+[`test_ref_group_callbacks.py`](../../tests/integration/p4/test_ref_group_callbacks.py).
+
 ## Review examples for this candidate
 
 - A direct tree and a commit/fanout root produce a complete reported Group and

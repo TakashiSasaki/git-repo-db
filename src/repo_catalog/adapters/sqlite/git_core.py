@@ -942,6 +942,13 @@ class GitCore(Core):
             guarded.charge("metadata_units", len(results))
             return tuple(results)
 
+    def admit_notes_mapping_group(self, group, work=None):
+        """Keep reported-Group callbacks outside the admission capability."""
+        if work is None:
+            return super().admit_notes_mapping_group(group)
+        with _protected_work(self, work) as guarded:
+            return super().admit_notes_mapping_group(group, guarded)
+
     def admit_ref_coverage_proof(self, proof, work, **kwargs):
         """Keep untrusted work callbacks outside the writer capability."""
         with _protected_work(self, work) as guarded:

@@ -1046,6 +1046,19 @@ stop a healthy catalog. Carry callback-origin exceptions opaquely across both
 boundaries and restore the same exception object only after the snapshot exits.
 At writer callbacks, withdraw admission and checked-byte capabilities and deny
 Core reentry; an exception shaped like SQLite corruption is still caller input.
+Audit the complete producer path, including reported-Group admission before
+receiver proof admission. Guarding only the proof writer leaves the Group's
+metadata and per-member budget callbacks inside a writer transaction. A callback
+can then insert unrelated facts through the same connection, or its SQLite-shaped
+failure can falsely stop the catalog. Test both `require` and `charge`, before
+and during the writer cut, with independent and transaction-bound capabilities.
+Check denied INSERT, transaction control, API reentry and protected proof reads;
+then interrupt after the first inserted object and require rollback, identical
+exception, a usable healthy catalog and successful retry. Keep a genuinely
+damaged stored-subject case as a positive stop control. Run
+`scripts/local-run.sh pytest -q -n 2 tests/integration/p4/test_ref_group_callbacks.py`.
+This tests application callback isolation on the supplied Core capability;
+it does not sandbox arbitrary Python or revoke separately held connections.
 Test those controls alongside real damaged stored metadata and proof. Inventory
 verification pins must also bind their original Group and actual request identity:
 a pin copied from another request must refuse continuation, while a fresh read
