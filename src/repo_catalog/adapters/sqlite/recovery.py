@@ -106,6 +106,8 @@ class RefObservationBackupUnsupported(BackupValidationError):
 _REF_OBSERVATION_TABLES = frozenset(
     {
         "ref_observations",
+        "ref_enumeration_observations",
+        "ref_enumeration_links",
         "ref_observation_claims",
         "notes_mappings",
         "notes_mapping_claims",

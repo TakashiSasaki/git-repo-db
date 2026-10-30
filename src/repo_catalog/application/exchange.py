@@ -582,7 +582,9 @@ class ExchangeService:
             core.ensure_available()
             # I1 introduces new authority before I3 extends Exchange. Refuse an
             # apparently successful incomplete Core export in that interim.
-            if core.sql("SELECT 1 FROM ref_observations LIMIT 1"):
+            if core.sql("SELECT 1 FROM ref_observations LIMIT 1") or core.sql(
+                "SELECT 1 FROM ref_enumeration_observations LIMIT 1"
+            ):
                 raise ExchangeError(
                     "UNSUPPORTED_REF_OBSERVATION_EXPORT",
                     "core",

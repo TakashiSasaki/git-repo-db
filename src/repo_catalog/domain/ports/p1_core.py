@@ -58,8 +58,19 @@ class CoreAdmission(Protocol):
     def admit_observation(self, observation: GitObservation) -> None: ...
     def admit_ref_observation(self, observation: RefObservation) -> None: ...
     def admit_ref_observation_claim(self, claim: RefObservationClaim) -> None: ...
+    def admit_ref_enumeration(
+        self,
+        event,
+        links: tuple,
+        work: WorkBudget,
+        *,
+        max_replay_links: int = 200_000,
+        max_replay_bytes: int = 64 * 1024 * 1024,
+    ) -> None: ...
     def admit_notes_mapping_claim(self, claim: NotesMappingClaim) -> None: ...
-    def admit_notes_mapping_group(self, group: NotesMappingGroup) -> None: ...
+    def admit_notes_mapping_group(
+        self, group: NotesMappingGroup, work: WorkBudget | None = None
+    ) -> None: ...
     def admit_notes_mapping_evidence(
         self,
         evidence: NotesMappingEvidence,
@@ -104,6 +115,15 @@ class CoreAdmission(Protocol):
 
 
 class CoreRead(Protocol):
+    def ref_enumeration(
+        self,
+        origin,
+        event_id,
+        work: WorkBudget,
+        *,
+        max_links: int = 10_000,
+        max_bytes: int = 64 * 1024 * 1024,
+    ): ...
     def ref_observation(
         self,
         key: RefObservationKey,

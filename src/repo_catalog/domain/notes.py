@@ -32,6 +32,29 @@ def _charge(work: WorkBudget, unit: str, amount: int = 1) -> None:
     work.charge(unit, amount)
 
 
+def account_proof_bundle(
+    structures: tuple[NativeObject, ...], work: WorkBudget
+) -> None:
+    """Charge canonical proof materialization before allocating encoded bodies."""
+    size = 2 + max(0, len(structures) - 1)
+    for structure in structures:
+        _charge(work, "proof_steps")
+        if structure.native_type not in ("commit", "tree"):
+            raise CoreFailure("NOTES_ROLE", "proof", "structural type required")
+        size += (
+            4
+            + len(structure.oid.full_oid)
+            + 2
+            + len(structure.native_type)
+            + 2
+            + 2 * len(structure.body)
+            + 2
+        )
+    if size > 64 * 1024 * 1024:
+        raise CoreFailure("BUDGET", "proof", "finite encoded proof limit")
+    _charge(work, "input_bytes", size)
+
+
 def _structure(oid: OID, read: MetadataReader, work: WorkBudget):
     # Charge the attempted operation before calling a potentially failing source.
     # Input bytes are separately metered by the actual source reader.
@@ -57,16 +80,18 @@ def _entries(parsed, work):
     return result
 
 
-def mapping_proof(
-    capture: Capture, target: OID, read_metadata: MetadataReader, work: WorkBudget
-) -> NotesProof:
+def _mapping_path(
+    root: OID,
+    owner: object,
+    target: OID,
+    read_metadata: MetadataReader,
+    work: WorkBudget,
+):
     """Acquire exactly the relevant mapping path; unsupported paths fail closed."""
-    if target.object_format != capture.root.object_format:
-        raise CoreFailure(
-            "NOTES_ROLE", (capture.pair, target), "target format mismatch"
-        )
+    if target.object_format != root.object_format:
+        raise CoreFailure("NOTES_ROLE", (owner, target), "target format mismatch")
     structures, path = [], []
-    current, suffix = capture.root, target.full_oid
+    current, suffix = root, target.full_oid
     with account_verification(work):
         while True:
             native, parsed = _structure(current, read_metadata, work)
@@ -87,19 +112,15 @@ def mapping_proof(
                 if mode != "100644" or (len(suffix) > 2 and directory in entries):
                     raise CoreFailure(
                         "NOTES_ROLE",
-                        (capture.pair, target),
+                        (owner, target),
                         "ambiguous or non-note leaf",
                     )
                 path.append(suffix)
-                proof = NotesProof(
-                    capture,
-                    target,
+                return (
                     OID(current.object_format, note),
                     "/".join(path),
                     tuple(structures),
                 )
-                proof.validate()
-                return proof
             if (
                 len(suffix) <= 2
                 or directory not in entries
@@ -107,7 +128,7 @@ def mapping_proof(
             ):
                 raise CoreFailure(
                     "NOTES_ROLE",
-                    (capture.pair, target),
+                    (owner, target),
                     "target has no supported Notes mapping",
                 )
             path.append(suffix[:2])
@@ -115,6 +136,46 @@ def mapping_proof(
                 suffix[2:],
                 OID(current.object_format, entries[directory][1]),
             )
+
+
+def mapping_proof(
+    capture: Capture, target: OID, read_metadata: MetadataReader, work: WorkBudget
+) -> NotesProof:
+    note, path, structures = _mapping_path(
+        capture.root, capture.pair, target, read_metadata, work
+    )
+    result = NotesProof(capture, target, note, path, structures)
+    account_proof_bundle(structures, work)
+    with account_verification(work):
+        result.validate()
+    return result
+
+
+def mapping_evidence(
+    ref_claim, target: OID, read_metadata: MetadataReader, work: WorkBudget, provenance
+):
+    """Acquire the relevant path without inventing a legacy Capture."""
+    from repo_catalog.domain.ref_observation import (
+        NotesMapping,
+        NotesMappingEvidence,
+        RefObservationClaim,
+    )
+
+    if not isinstance(ref_claim, RefObservationClaim) or ref_claim.root_oid is None:
+        raise CoreFailure("NOTES_ROLE", ref_claim, "claim with exact root required")
+    note, path, structures = _mapping_path(
+        ref_claim.root_oid, ref_claim.identity, target, read_metadata, work
+    )
+    mapping = NotesMapping(
+        ref_claim.root_oid, "git-notes", "1", "native-notes-tree", target, note, path
+    )
+    evidence = NotesMappingEvidence(
+        ref_claim, mapping, "single-path", provenance, structures
+    )
+    account_proof_bundle(structures, work)
+    with account_verification(work):
+        evidence.validate()
+    return evidence
 
 
 @dataclass(frozen=True)
@@ -133,9 +194,9 @@ class NotesInventory:
     failure: CoreFailure | None = None
 
 
-def mapping_inventory(
-    capture: Capture, read_metadata: MetadataReader, work: WorkBudget
-) -> NotesInventory:
+def _mapping_inventory(
+    root: OID, owner: object, read_metadata: MetadataReader, work: WorkBudget
+):
     """Deterministic depth-first native-order inventory with positive terminal.
 
     The first refusal stops traversal. Already checked mappings remain partial.
@@ -146,18 +207,18 @@ def mapping_inventory(
     structures: list[NativeObject] = []
     members: list[tuple[str, str, str]] = []
     targets: set[str] = set()
-    fmt = capture.root.object_format
-    width = len(capture.root.full_oid)
+    fmt = root.object_format
+    width = len(root.full_oid)
 
     def read(oid):
         native, parsed = _structure(oid, read_metadata, work)
         structures.append(native)
         return native, parsed
 
-    def walk(oid, prefix, path, chain, root=False):
+    def walk(oid, prefix, path, chain, is_root=False):
         native, parsed = read(oid)
         chain = (*chain, native)
-        if root and native.native_type == "commit":
+        if is_root and native.native_type == "commit":
             walk(OID(fmt, parsed.relations["commit_tree"][0][2]), prefix, path, chain)
             return
         if native.native_type != "tree":
@@ -169,11 +230,11 @@ def mapping_inventory(
                 name = raw_name.decode("ascii")
             except UnicodeError as error:
                 raise CoreFailure(
-                    "NOTES_INVENTORY", (capture.pair, path), "non-hex Notes entry"
+                    "NOTES_INVENTORY", (owner, path), "non-hex Notes entry"
                 ) from error
             if re.fullmatch("[0-9a-f]+", name) is None:
                 raise CoreFailure(
-                    "NOTES_INVENTORY", (capture.pair, path), "non-hex Notes entry"
+                    "NOTES_INVENTORY", (owner, path), "non-hex Notes entry"
                 )
             if mode == "40000" and len(name) == 2 and len(prefix) + 2 < width:
                 walk(OID(fmt, linked), prefix + name, (*path, name), chain)
@@ -182,30 +243,36 @@ def mapping_inventory(
                 if target in targets:
                     raise CoreFailure(
                         "NOTES_INVENTORY",
-                        (capture.pair, target),
+                        (owner, target),
                         "duplicate target mapping",
                     )
-                proof = NotesProof(
-                    capture,
-                    OID(fmt, target),
-                    OID(fmt, linked),
-                    "/".join((*path, name)),
-                    chain,
+                from repo_catalog.domain.p1_core import encode, valid_note_role
+
+                note_path = "/".join((*path, name))
+                account_proof_bundle(chain, work)
+                bundle = encode(
+                    [
+                        [item.oid.full_oid, item.native_type, item.body.hex()]
+                        for item in chain
+                    ]
                 )
-                proof.validate()
+                if not valid_note_role(*root.key, target, linked, note_path, bundle):
+                    raise CoreFailure(
+                        "NOTES_ROLE", (owner, target), "invalid inventory member proof"
+                    )
                 targets.add(target)
-                members.append((target, linked, proof.path))
+                members.append((target, linked, note_path))
             else:
                 raise CoreFailure(
                     "NOTES_INVENTORY",
-                    (capture.pair, path),
+                    (owner, path),
                     "unsupported Notes entry mode/name/fanout",
                 )
 
     failure = None
     try:
         with account_verification(work):
-            walk(capture.root, "", (), (), root=True)
+            walk(root, "", (), (), is_root=True)
     except CoreFailure as error:
         failure = error
     status: Status = (
@@ -213,7 +280,24 @@ def mapping_inventory(
         if failure is not None
         else ("complete" if members else "known_empty")
     )
-    return NotesInventory(capture, status, tuple(members), tuple(structures), failure)
+    return status, tuple(members), tuple(structures), failure
+
+
+def mapping_inventory(
+    capture: Capture, read_metadata: MetadataReader, work: WorkBudget
+) -> NotesInventory:
+    status, members, structures, failure = _mapping_inventory(
+        capture.root, capture.pair, read_metadata, work
+    )
+    return NotesInventory(capture, status, members, structures, failure)
+
+
+def ref_mapping_inventory(claim, read_metadata: MetadataReader, work: WorkBudget):
+    from repo_catalog.domain.ref_observation import RefObservationClaim
+
+    if not isinstance(claim, RefObservationClaim) or claim.root_oid is None:
+        raise CoreFailure("NOTES_ROLE", claim, "exact present-root claim required")
+    return _mapping_inventory(claim.root_oid, claim.identity, read_metadata, work)
 
 
 def verify_inventory(inventory: NotesInventory, work: WorkBudget) -> NotesInventory:

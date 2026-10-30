@@ -45,7 +45,7 @@ from repo_catalog.domain.p1_context import (
     canonical,
 )
 from repo_catalog.domain.p1_coordination import RequestIdentity
-from repo_catalog.domain.p1_core import OID, CoreFailure
+from repo_catalog.domain.p1_core import OID, Capture, CoreFailure
 from tests.integration.p5.conftest import build_sample_git_repo, init_catalog_stores
 from tests.support.context_admission import (
     AuthorizedExchangeService as ExchangeService,
@@ -102,16 +102,28 @@ def _setup_source_catalog(
     oids = build_sample_git_repo(repo_dir, fmt)  # type: ignore[arg-type]
 
     git_source = GitNativeSource(repo_dir)
+    origin = str(uuid4())
+    capture = Capture(
+        origin,
+        str(uuid4()),
+        repo_uuid,
+        "src-cat-git",
+        "refs/notes/commits",
+        oids["notes_commit"],
+    )
     git_req = GitNativeAcquisitionRequest(
         repository_uuidv4=repo_uuid,
-        capture_origin_uuidv4=str(uuid4()),
+        capture_origin_uuidv4=origin,
         capture_uuidv4=str(uuid4()),
         source_attribution="src-cat-git",
         observed_at_us=1_700_000_100_000_000,
         select_oids=(oids["commit1"], oids["commit2"], oids["tree"], oids["tag"]),
         retain_bytes=True,
+        # I2 ref observations require I3 Exchange. These tests exercise the
+        # unaffected object, legacy Notes and Context roundtrip.
+        include_refs=False,
         notes=NotesAcquisitionSpec(
-            discover_notes=True,
+            explicit_captures=(capture,),
             acquire_inventories=True,
             target_oids=(oids["commit2"],),
             retain_note_bodies=True,
@@ -185,6 +197,7 @@ def test_exchange_export_import_repeat_reverse_and_multi_hop(tmp_path: Path) -> 
     )
     assert pkg_a.core is not None
     assert pkg_a.context is not None
+    assert pkg_a.core["captures"] and pkg_a.core["retained_notes"]
 
     # Encode to canonical JSON wire format and decode
     wire_bytes = encode_package(pkg_a)
@@ -204,6 +217,7 @@ def test_exchange_export_import_repeat_reverse_and_multi_hop(tmp_path: Path) -> 
     )
     assert rep_b1.admitted_core_objects >= 3
     assert rep_b1.admitted_retained_metadata >= 3
+    assert rep_b1.admitted_retained_notes >= 1
     assert rep_b1.admitted_context_resources >= 1
 
     # Verify B now has objects and context

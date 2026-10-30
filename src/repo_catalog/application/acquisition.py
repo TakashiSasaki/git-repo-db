@@ -10,6 +10,7 @@ Implements:
 from __future__ import annotations
 
 import json
+import os
 from collections.abc import Callable, Sequence
 from contextlib import ExitStack, closing, contextmanager
 from pathlib import Path
@@ -41,7 +42,14 @@ from repo_catalog.adapters.sqlite.p1_coordination import (
 )
 from repo_catalog.adapters.sqlite.p1_schema import connect
 from repo_catalog.adapters.sqlite.production_context import Context
-from repo_catalog.application.notes import Discovery, NoteAcquisition, NotesAcquisition
+from repo_catalog.application.notes import (
+    Discovery,
+    NoteAcquisition,
+    NotesAcquisition,
+    RefNoteAcquisition,
+    RefNotesInventory,
+)
+from repo_catalog.application.ref_observations import EnumeratedRef, RefScan, pin_scan
 from repo_catalog.domain.acquisition import (
     AcquisitionError,
     DependencyReconciliationReport,
@@ -106,6 +114,12 @@ class _PreparedCore:
             "admit_claim",
             "admit_group",
             "admit_observation",
+            "admit_ref_enumeration",
+            "admit_ref_observation",
+            "admit_ref_observation_claim",
+            "admit_notes_mapping_evidence",
+            "admit_notes_mapping_group",
+            "admit_ref_note",
             "admit_metadata",
             "admit_capture",
             "admit_notes_claim",
@@ -131,6 +145,21 @@ class _PreparedCore:
 
     def metadata_capture_binding(self, pair):
         return _capture_binding(self.core, pair)
+
+    def ref_observation(self, key, work):
+        from repo_catalog.domain.ref_observation import RefObservationProjection
+
+        for name, args, _ in reversed(self.operations):
+            _charge(work, "metadata_units", 1)
+            if name == "admit_ref_enumeration":
+                links = args[1]
+                for link in links:
+                    _charge(work, "metadata_units", 1)
+                    if link.observation.ref_observation_key == key:
+                        return RefObservationProjection(
+                            link.observation, (link.claim,), False
+                        )
+        return self.core.ref_observation(key, work)
 
     def __getattr__(self, name):
         if name not in self._methods:
@@ -408,11 +437,15 @@ class GitAcquisition:
         tuple[Discovery, ...],
         tuple[NotesInventory, ...],
         tuple[NoteAcquisition, ...],
+        tuple[RefNoteAcquisition, ...],
+        tuple[RefNotesInventory, ...],
         list[OID],
     ]:
         discoveries: list[Discovery] = []
         inventories: list[NotesInventory] = []
         note_acquisitions: list[NoteAcquisition] = []
+        ref_note_acquisitions: list[RefNoteAcquisition] = []
+        ref_notes_inventories: list[RefNotesInventory] = []
         extra_oids: list[OID] = []
 
         active_captures: list[Capture] = list(spec.explicit_captures)
@@ -471,6 +504,23 @@ class GitAcquisition:
                     if cap not in active_captures:
                         active_captures.append(cap)
                     extra_oids.append(cap.root)
+                for enumeration in disc.enumerations:
+                    for link in enumeration.links:
+                        if link.claim.root_oid is None:
+                            continue
+                        if spec.acquire_inventories:
+                            ref_notes_inventories.append(
+                                notes_app.inventory_ref(link.claim)
+                            )
+                        for target_oid in spec.target_oids:
+                            result = notes_app.acquire_ref_note(
+                                link.claim,
+                                target_oid,
+                                retain_body=spec.retain_note_bodies,
+                            )
+                            ref_note_acquisitions.append(result)
+                            if result.note is not None:
+                                extra_oids.append(result.note)
 
             if spec.acquire_inventories:
                 for cap in active_captures:
@@ -497,6 +547,8 @@ class GitAcquisition:
             tuple(discoveries),
             tuple(inventories),
             tuple(note_acquisitions),
+            tuple(ref_note_acquisitions),
+            tuple(ref_notes_inventories),
             extra_oids,
         )
 
@@ -567,7 +619,11 @@ class GitAcquisition:
                     if request.retain_oids is None
                     else sorted([list(oid.key) for oid in request.retain_oids]),
                 ],
-                "refs": [request.include_refs, list(request.ref_prefixes)],
+                "refs": [
+                    request.include_refs,
+                    list(request.ref_prefixes),
+                    [name.hex() for name in request.nominated_ref_names],
+                ],
                 "traverse_structural_targets": request.traverse_structural_targets,
                 "notes": repr(request.notes),
             }
@@ -586,22 +642,87 @@ class GitAcquisition:
             metadata_only_order: list[OID] = []
             nominal_missing_order: list[OID] = []
             ref_observations: list[GitObservation] = []
+            ref_enumerations = []
+            failure_code: str | None = None
+            failure_detail: str = ""
 
             def _record_admitted(oid: OID) -> None:
                 if oid not in admitted_order:
                     admitted_order.append(oid)
 
             if request.include_refs:
-                _charge(active_work, "metadata_units", 1)
-                all_refs = source.refs(active_work)
-                selected_refs = []
-                for ref_bytes, target_oid, kind, peeled_oid in all_refs:
-                    ref_name = ref_bytes.decode("utf-8", "surrogateescape")
-                    if request.ref_prefixes and not any(
-                        ref_name.startswith(prefix) for prefix in request.ref_prefixes
-                    ):
-                        continue
-                    selected_refs.append((ref_name, target_oid, kind, peeled_oid))
+                configured = tuple(os.fsencode(p) for p in request.ref_prefixes)
+                if any(
+                    not (p.startswith(b"refs/") or b"refs/".startswith(p))
+                    for p in configured
+                ):
+                    raise CoreFailure(
+                        "REF", configured, "ref prefix must cover a full refs namespace"
+                    )
+                prefixes = tuple(
+                    sorted(
+                        set(
+                            p if p.startswith(b"refs/") else b"refs/"
+                            for p in configured
+                        )
+                    )
+                ) or (b"refs/",)
+                ref_source = GitNotesSource(source)
+                slot = encode(
+                    [
+                        "p5-ref-enumeration",
+                        request.capture_origin_uuidv4,
+                        request.capture_uuidv4,
+                    ]
+                )
+                binding = [
+                    request.repository_uuidv4,
+                    request.source_attribution,
+                    ref_source.scope,
+                    [p.hex() for p in prefixes],
+                    request.observed_at_us,
+                ]
+
+                def scan_refs():
+                    refs = source.ref_records(active_work)
+                    selected = tuple(
+                        EnumeratedRef(r.name, r.target, r.symbolic_target, r.peeled)
+                        for r in refs
+                        if any(r.name.startswith(p) for p in prefixes)
+                    )
+                    return RefScan(selected, "complete", "git-for-each-ref:exit-0")
+
+                enumeration = pin_scan(
+                    core_cap,
+                    active_progress,
+                    active_work,
+                    slot=slot,
+                    binding=binding,
+                    origin=request.capture_origin_uuidv4,
+                    repository=request.repository_uuidv4,
+                    source=request.source_attribution,
+                    visibility=encode(
+                        [ref_source.scope, "git-for-each-ref:resolvable"]
+                    ),
+                    prefixes=prefixes,
+                    nominated=(),
+                    observed_at_us=request.observed_at_us,
+                    byte_limit=ref_source.discovery_bytes,
+                    ref_limit=ref_source.discovery_refs,
+                    scan=scan_refs,
+                )
+                ref_enumerations.append(enumeration)
+                selected_refs = [
+                    (
+                        link.observation.ref_name_bytes.decode(
+                            "utf-8", "surrogateescape"
+                        ),
+                        link.claim.root_oid,
+                        "",
+                        link.claim.peeled_target_oid,
+                    )
+                    for link in enumeration.links
+                ]
 
                 _charge(active_work, "metadata_units", 1 + len(selected_refs))
                 for _ref_name, target_oid, _kind, peeled_oid in selected_refs:
@@ -648,8 +769,60 @@ class GitAcquisition:
                 core_cap.admit_observation(ref_obs)
                 ref_observations.append(ref_obs)
 
-            failure_code: str | None = None
-            failure_detail: str = ""
+            if request.nominated_ref_names:
+                named_source = GitNotesSource(source)
+                for name in sorted(set(request.nominated_ref_names)):
+                    slot = encode(
+                        [
+                            "p5-ref-lookup",
+                            request.capture_origin_uuidv4,
+                            request.capture_uuidv4,
+                            name.hex(),
+                        ]
+                    )
+
+                    def lookup(name=name):
+                        present = source.lookup_ref_presence(name, active_work)
+                        return RefScan(
+                            (
+                                EnumeratedRef(
+                                    name,
+                                    None,
+                                    absent=not present,
+                                    form_known=False,
+                                    absence_method="lookup",
+                                ),
+                            ),
+                            "complete",
+                            "git-show-ref-exists:" + ("0" if present else "2"),
+                        )
+
+                    try:
+                        result = pin_scan(
+                            core_cap,
+                            active_progress,
+                            active_work,
+                            slot=slot,
+                            binding=[semantic_intent, named_source.scope, name.hex()],
+                            origin=request.capture_origin_uuidv4,
+                            repository=request.repository_uuidv4,
+                            source=request.source_attribution,
+                            visibility=encode(
+                                [named_source.scope, "git-show-ref-exists"]
+                            ),
+                            prefixes=(),
+                            nominated=(name,),
+                            observed_at_us=request.observed_at_us,
+                            byte_limit=named_source.discovery_bytes,
+                            ref_limit=named_source.discovery_refs,
+                            scan=lookup,
+                        )
+                        ref_enumerations.append(result)
+                    except CoreFailure as error:
+                        if error.code in ("AUTHORITATIVE_CORRUPTION", "RECOVERY_STOP"):
+                            raise
+                        failure_code, failure_detail = error.code, str(error)
+                        break
 
             for missing_oid in request.nominal_missing_oids:
                 if missing_oid.object_format != source.object_format:
@@ -776,12 +949,16 @@ class GitAcquisition:
             notes_discoveries: tuple[Discovery, ...] = ()
             notes_inventories: tuple[NotesInventory, ...] = ()
             note_acquisitions: tuple[NoteAcquisition, ...] = ()
+            ref_note_acquisitions: tuple[RefNoteAcquisition, ...] = ()
+            ref_notes_inventories: tuple[RefNotesInventory, ...] = ()
             if request.notes is not None:
                 notes_src = GitNotesSource(source)
                 (
                     notes_discoveries,
                     notes_inventories,
                     note_acquisitions,
+                    ref_note_acquisitions,
+                    ref_notes_inventories,
                     notes_oids,
                 ) = self._run_notes_spec(
                     core_cap,
@@ -796,7 +973,11 @@ class GitAcquisition:
                 )
                 for n_oid in notes_oids:
                     _record_admitted(n_oid)
-                for na in note_acquisitions:
+                for na in (
+                    *note_acquisitions,
+                    *ref_note_acquisitions,
+                    *ref_notes_inventories,
+                ):
                     if na.failure_code is not None and failure_code is None:
                         failure_code = na.failure_code
                         failure_detail = na.detail
@@ -818,12 +999,17 @@ class GitAcquisition:
                 cov_state = "partial" if admitted_order else "unknown"
 
             for discovery in notes_discoveries:
-                if discovery.observation.value["enumeration_state"] in (
+                if discovery.failure_code is not None or discovery.observation.value[
+                    "enumeration_state"
+                ] in (
                     "partial",
                     "unknown",
                 ):
                     status = "partial" if admitted_order else "unknown"
-                    failure_code = failure_code or "NOTES_INCOMPLETE"
+                    failure_code = (
+                        failure_code or discovery.failure_code or "NOTES_INCOMPLETE"
+                    )
+                    failure_detail = failure_detail or discovery.detail
             for inventory in notes_inventories:
                 if inventory.status in ("partial", "unknown"):
                     status = "partial" if admitted_order else "unknown"
@@ -873,9 +1059,12 @@ class GitAcquisition:
                 metadata_only_objects=metadata_only_final,
                 nominal_missing_objects=tuple(nominal_missing_order),
                 ref_observations=tuple(ref_observations),
+                ref_enumerations=tuple(ref_enumerations),
                 notes_discoveries=notes_discoveries,
                 notes_inventories=notes_inventories,
                 note_acquisitions=note_acquisitions,
+                ref_note_acquisitions=ref_note_acquisitions,
+                ref_notes_inventories=ref_notes_inventories,
                 coverage_claims=(cov_claim,),
                 failure_code=failure_code,
                 failure_detail=failure_detail,
@@ -1024,11 +1213,15 @@ class GitAcquisition:
             notes_discoveries: tuple[Discovery, ...] = ()
             notes_inventories: tuple[NotesInventory, ...] = ()
             note_acquisitions: tuple[NoteAcquisition, ...] = ()
+            ref_note_acquisitions: tuple[RefNoteAcquisition, ...] = ()
+            ref_notes_inventories: tuple[RefNotesInventory, ...] = ()
             if unit.notes is not None:
                 (
                     notes_discoveries,
                     notes_inventories,
                     note_acquisitions,
+                    ref_note_acquisitions,
+                    ref_notes_inventories,
                     notes_oids,
                 ) = self._run_notes_spec(
                     core_cap,
@@ -1069,6 +1262,23 @@ class GitAcquisition:
                 oid for oid in metadata_only_order if oid not in retained_order
             )
             status = "complete" if admitted_order else "known_empty"
+            note_failure = next(
+                (
+                    item
+                    for item in (
+                        *note_acquisitions,
+                        *ref_note_acquisitions,
+                        *ref_notes_inventories,
+                    )
+                    if item.failure_code
+                ),
+                None,
+            )
+            discovery_failure = next(
+                (item for item in notes_discoveries if item.failure_code), None
+            )
+            if note_failure or discovery_failure:
+                status = "partial" if admitted_order else "unknown"
 
             return GitAcquisitionReport(
                 repository_uuidv4=unit.repository_uuidv4,
@@ -1084,7 +1294,15 @@ class GitAcquisition:
                 notes_discoveries=notes_discoveries,
                 notes_inventories=notes_inventories,
                 note_acquisitions=note_acquisitions,
+                ref_note_acquisitions=ref_note_acquisitions,
+                ref_notes_inventories=ref_notes_inventories,
                 coverage_claims=tuple(admitted_cov_claims),
+                failure_code=(note_failure or discovery_failure).failure_code
+                if note_failure or discovery_failure
+                else None,
+                failure_detail=(note_failure or discovery_failure).detail
+                if note_failure or discovery_failure
+                else "",
             )
 
 

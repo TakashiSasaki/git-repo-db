@@ -291,9 +291,9 @@ def test_budget_stop_after_first_mapping_preserves_partial_prefix(case):
     )
     cap, source = capture(case, root), GitNativeSource(path)
     full = mapping_inventory(cap, source.metadata, Budget())
-    # Inventory charges one attempted structural read, and one role check per
-    # member. The second mapping's role check is refused after one proved member.
-    partial = mapping_inventory(cap, source.metadata, FiniteBudget("proof_steps", 2))
+    # The structural read, proof-bundle sizing and role check all consume work.
+    # The second member is refused after the first complete mapping.
+    partial = mapping_inventory(cap, source.metadata, FiniteBudget("proof_steps", 3))
     assert full.status == "complete"
     assert partial.status == "partial" and len(partial.members) == 1
     assert partial.failure.code == "BUDGET"

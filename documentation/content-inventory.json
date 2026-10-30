@@ -11156,6 +11156,15 @@
       "source_heading": "# ADR 0036: Ref observations, immutable result claims, and shared Notes interpretation",
       "status_in_source": "accepted"
     },
+    "docs/implementation/adr0036-i2-acquisition-contract.md": {
+      "status": "active-scoped-contract",
+      "owner": "docs/implementation/",
+      "authority": "I2 opt-in acquisition scope and limitations; ADR 0036 controls target policy.",
+      "source": "docs/implementation/adr0036-i2-acquisition-contract.md",
+      "producer": "I2 implementation and verification.",
+      "consumers": "Reviewers and I3 implementation handoffs.",
+      "publication": "not staged"
+    },
     "docs/implementation/adr0036-i1-core-contract.md": {
       "status": "active-scoped-contract",
       "owner": "docs/implementation/",

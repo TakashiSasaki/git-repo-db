@@ -59,6 +59,7 @@ ISOLATED_NEXT_STAGE_MODULES = frozenset(
         "domain/notes.py",
         "domain/ports/notes.py",
         "application/notes.py",
+        "application/ref_observations.py",
         "adapters/git/notes.py",
         "adapters/sqlite/notes.py",
         "domain/acquisition.py",

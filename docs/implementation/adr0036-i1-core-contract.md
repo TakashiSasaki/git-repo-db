@@ -6,6 +6,9 @@ catalog conversion, or claim I2 acquisition/enumeration or I3 Exchange/backup
 integration. The actual acceptance and integration status follow the PR and
 its exact review/validation evidence.
 
+For the subsequent acquisition implementation and remaining I3/coverage
+limits, see [the I2 acquisition contract](adr0036-i2-acquisition-contract.md).
+
 ## Observation, result and original report
 
 `RefObservationKey` is directly the canonical `(observation_origin_uuidv4,

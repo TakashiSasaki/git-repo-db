@@ -123,6 +123,15 @@ def test_git_acquisition_metadata_only_and_retained_modes(
     assert len(report_hybrid.note_acquisitions) == 1
     assert report_hybrid.note_acquisitions[0].role_verified is True
     assert report_hybrid.note_acquisitions[0].body_retained is True
+    assert len(report_hybrid.ref_note_acquisitions) == 2
+    assert all(
+        item.role_verified and item.body_retained
+        for item in report_hybrid.ref_note_acquisitions
+    )
+    assert len(report_hybrid.ref_notes_inventories) == 2
+    assert all(
+        item.group.status == "complete" for item in report_hybrid.ref_notes_inventories
+    )
 
     core_hybrid = GitCore(cat_hybrid / "core.sqlite3")
     try:
@@ -254,3 +263,154 @@ def test_git_metadata_input_competing_claims_and_operational_rebuild(
         assert len(proj.alternatives) == 2
     finally:
         core.close()
+
+
+def test_native_ref_reads_pin_exact_result_and_preserve_symbolic_and_peeled(
+    tmp_path, git_format
+):
+    from dataclasses import replace
+
+    from tests.integration.p5.conftest import git
+
+    repo_path = tmp_path / "repo-i2"
+    oids = build_sample_git_repo(repo_path, git_format)
+    git(repo_path, "symbolic-ref", "refs/heads/alias", "refs/heads/main")
+    catalog = tmp_path / "catalog-i2"
+    repository, _ = init_catalog_stores(catalog, stores=("core", "operational"))
+    request = GitNativeAcquisitionRequest(
+        repository_uuidv4=repository,
+        capture_origin_uuidv4=str(uuid4()),
+        capture_uuidv4=str(uuid4()),
+        source_attribution="local-i2",
+        observed_at_us=1_700_000_500_000_000,
+        select_oids=(),
+        retain_bytes=False,
+        include_refs=True,
+    )
+    source = GitNativeSource(repo_path)
+    app = GitAcquisition(catalog, operational=catalog)
+    first = app.acquire_from_native(source, request, new_request=True)
+    event = first.ref_enumerations[0]
+    by_name = {link.observation.ref_name_bytes: link.claim for link in event.links}
+    symbolic = by_name[b"refs/heads/alias"]
+    assert symbolic.ref_form == "symbolic"
+    assert symbolic.symbolic_target_ref_name == b"refs/heads/main"
+    assert symbolic.resolved_target_oid == oids["commit2"]
+    assert symbolic.direct_target_oid is None
+    assert by_name[b"refs/tags/v1.0.0"].peeled_target_oid == oids["commit2"]
+    git(repo_path, "update-ref", "refs/heads/main", oids["commit1"].full_oid)
+    replay = app.acquire_from_native(source, request)
+    assert replay.ref_enumerations == first.ref_enumerations
+    fresh_request = replace(request, capture_uuidv4=str(uuid4()))
+    fresh = app.acquire_from_native(source, fresh_request, new_request=True)
+    newer = {
+        link.observation.ref_name_bytes: link.claim
+        for link in fresh.ref_enumerations[0].links
+    }
+    assert newer[b"refs/heads/main"].root_oid == oids["commit1"]
+    assert (
+        newer[b"refs/heads/main"].ref_observation_key
+        != by_name[b"refs/heads/main"].ref_observation_key
+    )
+
+
+def test_nominated_ref_lookup_confirms_only_named_local_absence(tmp_path, git_format):
+    repo_path = tmp_path / "repo-named"
+    build_sample_git_repo(repo_path, git_format)
+    catalog = tmp_path / "catalog-named"
+    repository, _ = init_catalog_stores(catalog, stores=("core", "operational"))
+    request = GitNativeAcquisitionRequest(
+        repository_uuidv4=repository,
+        capture_origin_uuidv4=str(uuid4()),
+        capture_uuidv4=str(uuid4()),
+        source_attribution="local-named",
+        observed_at_us=1_700_000_500_000_000,
+        include_refs=False,
+        nominated_ref_names=(b"refs/heads/missing",),
+        retain_bytes=False,
+    )
+    report = GitAcquisition(catalog, operational=catalog).acquire_from_native(
+        GitNativeSource(repo_path), request, new_request=True
+    )
+    assert len(report.ref_enumerations) == 1
+    result = report.ref_enumerations[0]
+    assert result.links[0].claim.presence_state == "absent"
+    assert result.links[0].claim.absence_evidence.method == "lookup"
+    assert result.event.nominated == (b"refs/heads/missing",)
+    assert not result.event.prefixes
+
+
+def test_invalid_nominated_name_does_not_become_absence(tmp_path, git_format):
+    repo_path = tmp_path / "repo-invalid-ref"
+    build_sample_git_repo(repo_path, git_format)
+    catalog = tmp_path / "catalog-invalid-ref"
+    repository, _ = init_catalog_stores(catalog, stores=("core", "operational"))
+    request = GitNativeAcquisitionRequest(
+        repository,
+        str(uuid4()),
+        str(uuid4()),
+        "local-invalid-ref",
+        1_700_000_500_000_000,
+        include_refs=False,
+        nominated_ref_names=(b"refs/heads/bad name",),
+        retain_bytes=False,
+    )
+    report = GitAcquisition(catalog, operational=catalog).acquire_from_native(
+        GitNativeSource(repo_path), request, new_request=True
+    )
+    assert report.failure_code == "REF"
+    assert not report.ref_enumerations
+
+
+def test_native_ref_lossless_non_utf8_and_failed_lookup_no_absence(
+    tmp_path, git_format, monkeypatch
+):
+    import subprocess
+
+    repo_path = tmp_path / "repo-lossless"
+    oids = build_sample_git_repo(repo_path, git_format)
+    raw_name = b"refs/heads/branch-\xff"
+    subprocess.run(
+        [
+            b"git",
+            b"-C",
+            bytes(repo_path),
+            b"update-ref",
+            raw_name,
+            oids["commit1"].full_oid.encode(),
+        ],
+        check=True,
+        capture_output=True,
+    )
+    catalog = tmp_path / "catalog-lossless"
+    repository, _ = init_catalog_stores(catalog, stores=("core", "operational"))
+    source = GitNativeSource(repo_path)
+    request = GitNativeAcquisitionRequest(
+        repository,
+        str(uuid4()),
+        str(uuid4()),
+        "local",
+        1_700_000_500_000_000,
+        select_oids=(),
+        retain_bytes=False,
+        nominated_ref_names=(b"refs/heads/missing",),
+    )
+
+    def fail(*_):
+        raise CoreFailure("GIT_INPUT", "lookup", "injected failure")
+
+    monkeypatch.setattr(source, "lookup_ref_presence", fail)
+    report = GitAcquisition(catalog, operational=catalog).acquire_from_native(
+        source, request, new_request=True
+    )
+    assert report.failure_code == "GIT_INPUT"
+    assert any(
+        link.observation.ref_name_bytes == raw_name
+        for event in report.ref_enumerations
+        for link in event.links
+    )
+    assert all(
+        link.claim.presence_state != "absent"
+        for event in report.ref_enumerations
+        for link in event.links
+    )

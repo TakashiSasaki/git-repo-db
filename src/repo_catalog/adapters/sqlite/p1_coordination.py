@@ -1338,6 +1338,59 @@ class WorkLedger:
             ).fetchone()
             return None if row is None else json.loads(row[0])
 
+    def progress_length(self, request, scope):
+        scope = self._progress_scope(scope)
+        with self._checked(request):
+            row = self.db.execute(
+                "SELECT octet_length(cursor_json) FROM request_continuations WHERE request_origin_uuidv4=? AND request_uuidv4=? AND continuation_scope_json=?",
+                (*request.values(), scope),
+            ).fetchone()
+            return None if row is None else row[0]
+
+    def get_progress_bounded(self, request, scope, limit):
+        scope = self._progress_scope(scope)
+        with self._checked(request):
+            row = self.db.execute(
+                "SELECT cursor_json,octet_length(cursor_json) FROM request_continuations WHERE request_origin_uuidv4=? AND request_uuidv4=? AND continuation_scope_json=? AND octet_length(cursor_json)<=?",
+                (*request.values(), scope, limit),
+            ).fetchone()
+            if row is None:
+                raise CoordinationError(
+                    "CONTINUATION_UNAVAILABLE",
+                    "request",
+                    "progress changed or exceeds reserved bytes",
+                )
+            return json.loads(row[0]), row[1]
+
+    def set_progress_once_bounded(self, request, scope, encoded, limit):
+        """Never materialize a concurrent winner larger than the reservation."""
+        scope = self._progress_scope(scope)
+        with self._checked(request, write=True) as checkpoint:
+            row = self.db.execute(
+                "SELECT octet_length(cursor_json) FROM request_continuations WHERE request_origin_uuidv4=? AND request_uuidv4=? AND continuation_scope_json=?",
+                (*request.values(), scope),
+            ).fetchone()
+            if row is not None:
+                if row[0] > limit:
+                    raise CoordinationError(
+                        "CONTINUATION_UNAVAILABLE",
+                        "request",
+                        "concurrent progress exceeds reserved bytes",
+                    )
+                value = self.db.execute(
+                    "SELECT cursor_json FROM request_continuations WHERE request_origin_uuidv4=? AND request_uuidv4=? AND continuation_scope_json=? AND octet_length(cursor_json)<=?",
+                    (*request.values(), scope, limit),
+                ).fetchone()
+                return json.loads(value[0]), row[0]
+            if len(encoded) > limit:
+                raise CoordinationError(
+                    "CONTINUATION_UNAVAILABLE",
+                    "request",
+                    "progress exceeds reserved bytes",
+                )
+            self._put_continuation(request, checkpoint, scope, encoded)
+            return json.loads(encoded), len(encoded)
+
     def bind_exchange_package(self, request, sender, package_id, digest):
         """Bind a PackageKey globally in this Operational generation.
 

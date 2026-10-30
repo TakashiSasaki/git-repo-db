@@ -15,6 +15,7 @@ from dataclasses import dataclass
 
 from repo_catalog.adapters.git.native import GitNativeSource
 from repo_catalog.domain.git_native import parse_metadata
+from repo_catalog.domain.notes import account_proof_bundle
 from repo_catalog.domain.p1_core import (
     OID,
     CoreFailure,
@@ -32,6 +33,12 @@ def _prepay(work, unit, count=1):
 
 
 @dataclass(frozen=True)
+class RefScanSnapshot:
+    refs: tuple[tuple[bytes, OID], ...]
+    state: str
+
+
+@dataclass(frozen=True)
 class RefInventory:
     refs: tuple[tuple[bytes, OID], ...]
     nominated: tuple[bytes, ...]
@@ -39,6 +46,7 @@ class RefInventory:
     terminal: bool
     failure_code: str | None = None
     detail: str = ""
+    scans: tuple[RefScanSnapshot, ...] = ()
 
 
 class GitNotesSource:
@@ -182,15 +190,27 @@ class GitNotesSource:
             oid, ("commit", "tree", "tag"), self.source.metadata_bytes, work
         )
 
+    def lookup_ref_presence(self, name: bytes, work: WorkBudget) -> bool:
+        return self.source.lookup_ref_presence(name, work)
+
     def note_body(self, proof: NotesProof, work: WorkBudget) -> NativeObject:
         """Read only the exact blob whose relevant structure the receiver checks."""
+        from repo_catalog.domain.ref_observation import NotesMappingEvidence
+
+        account_proof_bundle(proof.structures, work)
         with account_verification(work):
             proof.validate()
-        if proof.capture.root.object_format != self.object_format:
-            raise CoreFailure(
-                "NATIVE_FORMAT", proof.capture.pair, "proof storage format mismatch"
+        if isinstance(proof, NotesMappingEvidence):
+            root, note, scope = (
+                proof.mapping.root_oid,
+                proof.mapping.note_oid,
+                proof.ref_claim.identity,
             )
-        return self._native(proof.note, ("blob",), work.limits.note_bytes, work)
+        else:
+            root, note, scope = proof.capture.root, proof.note, proof.capture.pair
+        if root.object_format != self.object_format:
+            raise CoreFailure("NATIVE_FORMAT", scope, "proof storage format mismatch")
+        return self._native(note, ("blob",), work.limits.note_bytes, work)
 
     def _scan(self, nominated, work, observed):
         pending = bytearray()
@@ -267,30 +287,40 @@ class GitNotesSource:
                     "NOTES_SCOPE", name, "exact valid full nominated ref required"
                 )
         first, second = {}, {}
+        scans = []
         try:
             self._scan(names, work, first)
+            scans.append(RefScanSnapshot(tuple(first.items()), "complete"))
             self._scan(names, work, second)
+            scans.append(RefScanSnapshot(tuple(second.items()), "complete"))
+            _prepay(work, "metadata_units", len(first) + len(second))
             if first != second:
                 return RefInventory(
-                    tuple(sorted(first.items())),
+                    scans[0].refs,
                     names,
                     "partial" if first else "unknown",
                     False,
                     "REF_CHANGED",
                     "local enumerations differ",
+                    tuple(scans),
                 )
             return RefInventory(
-                tuple(sorted(first.items())),
+                scans[0].refs,
                 names,
                 "complete" if first else "known_empty",
                 True,
+                scans=tuple(scans),
             )
         except CoreFailure as error:
+            current = first if not scans else second
+            if current and len(scans) < 2:
+                scans.append(RefScanSnapshot(tuple(current.items()), "partial"))
             return RefInventory(
-                tuple(sorted(first.items())),
+                tuple(first.items()),
                 names,
                 "partial" if first else "unknown",
                 False,
                 error.code,
                 str(error),
+                tuple(scans),
             )

@@ -78,6 +78,7 @@ def native_request_intent(request: GitNativeAcquisitionRequest) -> dict:
         request.select_oids,
         request.nominal_missing_oids,
         request.ref_prefixes,
+        request.nominated_ref_names,
         request.repository_claims,
         request.extra_scalar_claims,
         request.extra_relation_groups,
@@ -103,6 +104,14 @@ def native_request_intent(request: GitNativeAcquisitionRequest) -> dict:
     for identity in request.physical_copy_uuidv4s.values():
         uuid4_value(identity)
     _text_tuple(request.ref_prefixes)
+    if any(
+        type(value) is not bytes
+        or not value.startswith(b"refs/")
+        or b"\0" in value
+        or len(value) > 4096
+        for value in request.nominated_ref_names
+    ):
+        raise CoreFailure("REQUEST", "native", "bounded exact ref bytes required")
     repo = request.repository_uuidv4
     for claim in request.repository_claims:
         _typed(claim, RepositoryClaim)
@@ -194,6 +203,7 @@ def native_request_intent(request: GitNativeAcquisitionRequest) -> dict:
         else sorted(list(oid.key) for oid in request.retain_oids),
         "include_refs": request.include_refs,
         "ref_prefixes": list(request.ref_prefixes),
+        "nominated_ref_names": [name.hex() for name in request.nominated_ref_names],
         "traverse_structural_targets": request.traverse_structural_targets,
         "nominal_missing": [list(oid.key) for oid in request.nominal_missing_oids],
         "repository_claims": [list(claim.key) for claim in request.repository_claims],

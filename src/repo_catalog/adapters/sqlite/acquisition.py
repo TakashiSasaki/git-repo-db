@@ -9,10 +9,13 @@ Deleting and recreating `operational.sqlite3` invalidates old in-flight continua
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import sqlite3
+import threading
 import time
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
@@ -81,6 +84,25 @@ class InMemoryNotesProgress:
 
     def __init__(self) -> None:
         self._store: dict[str, dict[str, Any]] = {}
+        self._scan_locks: dict[str, threading.Lock] = {}
+        self._scan_locks_guard = threading.Lock()
+
+    @contextmanager
+    def scan_guard(self, scope):
+        normalized = encode(json.loads(scope))
+        stripe = hashlib.sha256(normalized.encode("ascii")).hexdigest()[:4]
+        with self._scan_locks_guard:
+            lock = self._scan_locks.setdefault(stripe, threading.Lock())
+        if not lock.acquire(blocking=False):
+            raise CoreFailure(
+                "ACQUISITION_BUSY",
+                scope,
+                "another scan owns the acquisition guard; retry",
+            )
+        try:
+            yield
+        finally:
+            lock.release()
 
     def bind(
         self,
@@ -102,6 +124,21 @@ class InMemoryNotesProgress:
     def save_once(self, scope: str, value: dict[str, Any]) -> dict[str, Any]:
         if scope not in self._store:
             self._store[scope] = json.loads(encode(value))
+        return self._store[scope]
+
+    def load_bounded(self, scope: str, max_bytes: int):
+        value = self._store.get(scope)
+        if value is not None and len(encode(value)) > max_bytes:
+            raise CoreFailure("BUDGET", scope, "finite pinned metadata limit")
+        return value
+
+    def save_once_bounded(
+        self, scope: str, value: dict[str, Any], max_bytes: int, *, encoded
+    ):
+        if len(encoded) > max_bytes:
+            raise CoreFailure("BUDGET", scope, "finite pinned metadata limit")
+        if scope not in self._store:
+            self._store[scope] = json.loads(encoded)
         return self._store[scope]
 
 

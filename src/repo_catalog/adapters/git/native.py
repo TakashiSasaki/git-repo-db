@@ -13,10 +13,20 @@ import os
 import selectors
 import subprocess
 import time
+from dataclasses import dataclass
 from pathlib import Path
 
 from repo_catalog.domain.git_native import parse_metadata
 from repo_catalog.domain.p1_core import OID, CoreFailure, NativeObject
+
+
+@dataclass(frozen=True)
+class NativeRef:
+    name: bytes
+    target: OID
+    object_type: str
+    peeled: OID | None
+    symbolic_target: bytes | None
 
 
 class GitNativeSource:
@@ -170,7 +180,7 @@ class GitNativeSource:
         parse_metadata(oid.object_format, kind, body)
         return native
 
-    def refs(self, work=None) -> tuple[tuple[bytes, OID, str, OID | None], ...]:
+    def ref_records(self, work=None) -> tuple[NativeRef, ...]:
         """Finite local enumeration, prepaid before reads and record parsing."""
         from repo_catalog.adapters.git.notes import GitNotesSource
         from repo_catalog.adapters.sqlite.acquisition import UnlimitedWorkBudget
@@ -180,7 +190,7 @@ class GitNativeSource:
         raw = source._output(
             (
                 "for-each-ref",
-                "--format=%(refname)%00%(objectname)%00%(objecttype)%00%(*objectname)",
+                "--format=%(refname)%00%(objectname)%00%(objecttype)%00%(*objectname)%00%(symref)",
             ),
             source.discovery_bytes,
             active,
@@ -192,15 +202,66 @@ class GitNativeSource:
             if len(result) >= source.discovery_refs:
                 raise CoreFailure("BUDGET", "refs", "finite ref count")
             pieces = line.split(b"\0")
-            if len(pieces) != 4:
+            if len(pieces) != 5:
                 raise CoreFailure("GIT_INPUT", "refs", "malformed ref record")
-            name, target, kind, peeled = pieces
+            name, target, kind, peeled, symbolic = pieces
             result.append(
-                (
+                NativeRef(
                     name,
                     OID(self.object_format, target.decode("ascii")),
                     kind.decode("ascii"),
                     OID(self.object_format, peeled.decode("ascii")) if peeled else None,
+                    symbolic or None,
                 )
             )
         return tuple(result)
+
+    def refs(self, work=None) -> tuple[tuple[bytes, OID, str, OID | None], ...]:
+        return tuple(
+            (r.name, r.target, r.object_type, r.peeled) for r in self.ref_records(work)
+        )
+
+    def lookup_ref_presence(self, name: bytes, work) -> bool:
+        """Named local lookup distinguishes missing refs from errors, without resolving."""
+        if (
+            not isinstance(name, bytes)
+            or not name.startswith(b"refs/")
+            or b"\0" in name
+        ):
+            raise CoreFailure("REF", name, "exact full ref required")
+        work.require("metadata_units", 1)
+        work.charge("metadata_units", 1)
+        work.require("input_bytes", len(name))
+        work.charge("input_bytes", len(name))
+        try:
+            valid = subprocess.run(
+                self._command("check-ref-format", os.fsdecode(name)),
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                env=self._environment(),
+                **self._process_options(),
+                timeout=30,
+            )
+            if valid.returncode != 0:
+                raise CoreFailure("REF", name, "invalid exact Git ref name")
+            work.require("metadata_units", 1)
+            work.charge("metadata_units", 1)
+            work.require("input_bytes", len(name))
+            work.charge("input_bytes", len(name))
+            result = subprocess.run(
+                self._command("show-ref", "--exists", os.fsdecode(name)),
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                env=self._environment(),
+                **self._process_options(),
+                timeout=30,
+            )
+        except (OSError, subprocess.TimeoutExpired) as error:
+            raise CoreFailure("GIT_INPUT", name, "named ref lookup failed") from error
+        if result.returncode == 0:
+            return True
+        if result.returncode == 2:
+            return False
+        raise CoreFailure("GIT_INPUT", name, "named ref lookup did not complete")

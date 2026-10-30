@@ -313,3 +313,40 @@ def test_immediate_stop_propagation(tmp_path: Path) -> None:
     with pytest.raises(CoordinationError) as exc_info:
         coord.admit_paired()
     assert exc_info.value.code == "RECOVERY_REQUIRED"
+
+
+def test_paired_preparation_carries_claim_specific_notes_to_core(tmp_path):
+    from repo_catalog.domain.acquisition import NotesAcquisitionSpec
+
+    repo_dir = tmp_path / "repo-ref-i2"
+    oids = build_sample_git_repo(repo_dir, "sha1")
+    catalog = tmp_path / "paired-ref-i2"
+    repository, _ = init_catalog_stores(
+        catalog, stores=("core", "context", "operational")
+    )
+    request = GitNativeAcquisitionRequest(
+        repository,
+        str(uuid4()),
+        str(uuid4()),
+        "paired-ref-i2",
+        1_700_000_100_000_000,
+        notes=NotesAcquisitionSpec(
+            discover_notes=True,
+            acquire_inventories=True,
+            target_oids=(oids["commit2"],),
+            retain_note_bodies=True,
+        ),
+    )
+    outcome = PairedAcquisitionCoordinator(catalog).admit_paired(
+        new_request=True, git_source=GitNativeSource(repo_dir), git_request=request
+    )
+    assert outcome.git_report.ref_note_acquisitions
+    assert all(
+        result.body_retained for result in outcome.git_report.ref_note_acquisitions
+    )
+    core = GitCore(catalog / "core.sqlite3")
+    try:
+        assert core.sql("SELECT 1 FROM ref_retained_notes")
+        assert core.sql("SELECT 1 FROM notes_mapping_groups")
+    finally:
+        core.close()

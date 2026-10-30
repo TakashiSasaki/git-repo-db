@@ -9604,6 +9604,22 @@
       "retention": "Only exact commit/tree/tag and receiver-role-proven note blobs. Ordinary repository-file body/text and opaque raw-provider replicas are forbidden.",
       "semantic_key": "Direct full semantic tuple: object_format, root_oid, interpretation_kind, interpretation_version, interpretation_scope, annotated_object_oid, note_oid, mapping_path_json. Coordinates and whole values are actual domain values, not storage-only IDs or hash-only authority."
     },
+    "core.ref_enumeration_links": {
+      "cross_store": "No cross-database SQLite FK. Context portable typed OIDs require explicit Core-first dependency validation under cooperating gate; paired reads pin both snapshots. Core never depends on Context. Disposable stores never establish authoritative validity.",
+      "domain": "Actual item or specific confirmed-absence derivation from an enumeration to its original ref Claim",
+      "durability": "authoritative",
+      "mutation": "INSERT-only; immutable UPDATE/DELETE triggers; supported Core boundary denies replacement and unsafe SQL",
+      "retention": "Only exact commit/tree/tag and receiver-role-proven note blobs. Ordinary repository-file body/text and opaque raw-provider replicas are forbidden.",
+      "semantic_key": "Full event pair, ref observation pair and original claim provenance"
+    },
+    "core.ref_enumeration_observations": {
+      "cross_store": "No cross-database SQLite FK. Context portable typed OIDs require explicit Core-first dependency validation under cooperating gate; paired reads pin both snapshots. Core never depends on Context. Disposable stores never establish authoritative validity.",
+      "domain": "One original bounded source/visibility-qualified ref enumeration event",
+      "durability": "authoritative",
+      "mutation": "INSERT-only; immutable UPDATE/DELETE triggers; supported Core boundary denies replacement and unsafe SQL",
+      "retention": "Only exact commit/tree/tag and receiver-role-proven note blobs. Ordinary repository-file body/text and opaque raw-provider replicas are forbidden.",
+      "semantic_key": "Direct event origin UUIDv4 and enumeration occurrence UUIDv7"
+    },
     "core.ref_observation_claims": {
       "cross_store": "No cross-database SQLite FK. Context portable typed OIDs require explicit Core-first dependency validation under cooperating gate; paired reads pin both snapshots. Core never depends on Context. Disposable stores never establish authoritative validity.",
       "domain": "Independently attributed immutable presence, absence or target result under an exact observation",
@@ -12481,7 +12497,7 @@
       }
     },
     "core": {
-      "ddl_sha256": "637317ca7216e8ee601014054eba85ab254e6d295ca3b380f6e9395197e0b777",
+      "ddl_sha256": "e257bf0dc6eb0eb54efabc443ec5372c30c71768a6dfc008b6870f93dfbe8fac",
       "tables": {
         "captures": {
           "columns": [
@@ -14738,6 +14754,245 @@
                 "annotated_object_oid",
                 "note_oid",
                 "mapping_path_json"
+              ],
+              "origin": "pk",
+              "partial": false
+            }
+          ]
+        },
+        "ref_enumeration_links": {
+          "columns": [
+            {
+              "generated": 0,
+              "name": "enumeration_origin_uuidv4",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "enumeration_uuidv7",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "observation_origin_uuidv4",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "ref_observation_uuidv7",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "claim_provenance",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "derivation",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "position",
+              "notnull": true,
+              "type": "INTEGER"
+            }
+          ],
+          "foreign_keys": [
+            [
+              0,
+              0,
+              "ref_observation_claims",
+              "observation_origin_uuidv4",
+              null,
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              0,
+              1,
+              "ref_observation_claims",
+              "ref_observation_uuidv7",
+              null,
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              0,
+              2,
+              "ref_observation_claims",
+              "claim_provenance",
+              null,
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              1,
+              0,
+              "ref_enumeration_observations",
+              "enumeration_origin_uuidv4",
+              null,
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              1,
+              1,
+              "ref_enumeration_observations",
+              "enumeration_uuidv7",
+              null,
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ]
+          ],
+          "primary_key": [
+            "enumeration_origin_uuidv4",
+            "enumeration_uuidv7",
+            "observation_origin_uuidv4",
+            "ref_observation_uuidv7",
+            "claim_provenance"
+          ],
+          "sql": "CREATE TABLE ref_enumeration_links (\n enumeration_origin_uuidv4 TEXT NOT NULL, enumeration_uuidv7 TEXT NOT NULL,\n observation_origin_uuidv4 TEXT NOT NULL, ref_observation_uuidv7 TEXT NOT NULL,\n claim_provenance TEXT NOT NULL, derivation TEXT NOT NULL CHECK(derivation IN ('item','absence')),\n position INTEGER NOT NULL CHECK(position>=0),\n PRIMARY KEY(enumeration_origin_uuidv4,enumeration_uuidv7,observation_origin_uuidv4,ref_observation_uuidv7,claim_provenance),\n UNIQUE(enumeration_origin_uuidv4,enumeration_uuidv7,position),\n FOREIGN KEY(enumeration_origin_uuidv4,enumeration_uuidv7) REFERENCES ref_enumeration_observations,\n FOREIGN KEY(observation_origin_uuidv4,ref_observation_uuidv7,claim_provenance) REFERENCES ref_observation_claims\n) STRICT, WITHOUT ROWID",
+          "triggers": {
+            "p1_immutable_ref_enumeration_links_delete": "CREATE TRIGGER p1_immutable_ref_enumeration_links_delete BEFORE DELETE ON ref_enumeration_links BEGIN SELECT RAISE(ABORT,'immutable core fact'); END",
+            "p1_immutable_ref_enumeration_links_update": "CREATE TRIGGER p1_immutable_ref_enumeration_links_update BEFORE UPDATE ON ref_enumeration_links BEGIN SELECT RAISE(ABORT,'immutable core fact'); END"
+          },
+          "unique": [
+            {
+              "columns": [
+                "enumeration_origin_uuidv4",
+                "enumeration_uuidv7",
+                "observation_origin_uuidv4",
+                "ref_observation_uuidv7",
+                "claim_provenance"
+              ],
+              "origin": "pk",
+              "partial": false
+            },
+            {
+              "columns": [
+                "enumeration_origin_uuidv4",
+                "enumeration_uuidv7",
+                "position"
+              ],
+              "origin": "u",
+              "partial": false
+            }
+          ]
+        },
+        "ref_enumeration_observations": {
+          "columns": [
+            {
+              "generated": 0,
+              "name": "observation_origin_uuidv4",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "enumeration_uuidv7",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "repository_uuidv4",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "source_attribution",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "visibility_scope",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "enumeration_scope_json",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "enumeration_state",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "completion_coordinate",
+              "notnull": false,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "observed_at_us",
+              "notnull": false,
+              "type": "INTEGER"
+            },
+            {
+              "generated": 0,
+              "name": "byte_limit",
+              "notnull": true,
+              "type": "INTEGER"
+            },
+            {
+              "generated": 0,
+              "name": "ref_limit",
+              "notnull": true,
+              "type": "INTEGER"
+            },
+            {
+              "generated": 0,
+              "name": "link_count",
+              "notnull": true,
+              "type": "INTEGER"
+            }
+          ],
+          "foreign_keys": [
+            [
+              0,
+              0,
+              "repositories",
+              "repository_uuidv4",
+              null,
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ]
+          ],
+          "primary_key": [
+            "observation_origin_uuidv4",
+            "enumeration_uuidv7"
+          ],
+          "sql": "CREATE TABLE ref_enumeration_observations (\n observation_origin_uuidv4 TEXT NOT NULL CHECK(p1_uuid4(observation_origin_uuidv4)),\n enumeration_uuidv7 TEXT NOT NULL CHECK(p1_uuid7(enumeration_uuidv7)),\n repository_uuidv4 TEXT NOT NULL CHECK(p1_uuid4(repository_uuidv4)),\n source_attribution TEXT NOT NULL CHECK(length(source_attribution)>0),\n visibility_scope TEXT NOT NULL CHECK(length(visibility_scope)>0),\n enumeration_scope_json TEXT NOT NULL CHECK(p1_json(enumeration_scope_json)),\n enumeration_state TEXT NOT NULL CHECK(enumeration_state IN ('complete','partial','unknown')),\n completion_coordinate TEXT,\n observed_at_us INTEGER CHECK(observed_at_us IS NULL OR (typeof(observed_at_us)='integer' AND observed_at_us>0)),\n byte_limit INTEGER NOT NULL CHECK(byte_limit>0),\n ref_limit INTEGER NOT NULL CHECK(ref_limit>0),\n link_count INTEGER NOT NULL CHECK(link_count>=0),\n CHECK((enumeration_state='complete' AND completion_coordinate IS NOT NULL AND length(completion_coordinate)>0)\n    OR (enumeration_state IN ('partial','unknown') AND completion_coordinate IS NULL)),\n PRIMARY KEY(observation_origin_uuidv4,enumeration_uuidv7),\n FOREIGN KEY(repository_uuidv4) REFERENCES repositories\n) STRICT, WITHOUT ROWID",
+          "triggers": {
+            "p1_immutable_ref_enumeration_observations_delete": "CREATE TRIGGER p1_immutable_ref_enumeration_observations_delete BEFORE DELETE ON ref_enumeration_observations BEGIN SELECT RAISE(ABORT,'immutable core fact'); END",
+            "p1_immutable_ref_enumeration_observations_update": "CREATE TRIGGER p1_immutable_ref_enumeration_observations_update BEFORE UPDATE ON ref_enumeration_observations BEGIN SELECT RAISE(ABORT,'immutable core fact'); END"
+          },
+          "unique": [
+            {
+              "columns": [
+                "observation_origin_uuidv4",
+                "enumeration_uuidv7"
               ],
               "origin": "pk",
               "partial": false

@@ -147,8 +147,15 @@ def main(argv: list[str] | None = None) -> int:
                     "nominal_missing_objects": [
                         list(oid.key) for oid in report.nominal_missing_objects
                     ],
-                    "retained_notes_count": sum(
-                        item.body_retained for item in report.note_acquisitions
+                    "retained_notes_count": len(
+                        {
+                            item.note
+                            for item in (
+                                *report.note_acquisitions,
+                                *report.ref_note_acquisitions,
+                            )
+                            if item.body_retained and item.note is not None
+                        }
                     ),
                     "failure_code": report.failure_code,
                 },

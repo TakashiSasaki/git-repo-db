@@ -7,6 +7,8 @@ Receiver evidence is checked by the admission boundary against its exact root.
 from __future__ import annotations
 
 import json
+import secrets
+import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Literal
@@ -32,6 +34,22 @@ def uuid7_value(value: str) -> str:
     except (ValueError, TypeError, AttributeError) as exc:
         raise CoreFailure("IDENTITY", value, "canonical UUIDv7 required") from exc
     return value
+
+
+def new_uuid7() -> str:
+    """Issue a fresh occurrence identifier; its clock is never observation time."""
+    milliseconds = time.time_ns() // 1_000_000
+    if not 0 <= milliseconds < 2**48:
+        raise CoreFailure("IDENTITY", "uuidv7", "system clock outside UUIDv7 range")
+    random = secrets.randbits(74)
+    value = (
+        (milliseconds << 80)
+        | (7 << 76)
+        | ((random >> 62) << 64)
+        | (2 << 62)
+        | (random & ((1 << 62) - 1))
+    )
+    return str(UUID(int=value))
 
 
 def _ref(value: bytes) -> bool:
@@ -100,6 +118,151 @@ class RefObservation:
             self.visibility_scope,
             self.observed_at_us,
         )
+
+
+@dataclass(frozen=True)
+class RefEnumerationObservation:
+    """One original local enumeration, never a multi-scan operation."""
+
+    observation_origin_uuidv4: str
+    enumeration_uuidv7: str
+    repository_uuidv4: str
+    source_attribution: str
+    visibility_scope: str
+    prefixes: tuple[bytes, ...]
+    nominated: tuple[bytes, ...]
+    enumeration_state: Literal["complete", "partial", "unknown"]
+    completion_coordinate: str | None
+    observed_at_us: int | None
+    byte_limit: int
+    ref_limit: int
+    link_count: int
+
+    def __post_init__(self):
+        uuid4_value(self.observation_origin_uuidv4)
+        uuid7_value(self.enumeration_uuidv7)
+        uuid4_value(self.repository_uuidv4)
+        if (
+            not _text(self.source_attribution)
+            or not _text(self.visibility_scope)
+            or type(self.prefixes) is not tuple
+            or type(self.nominated) is not tuple
+            or any(not _ref(value) for value in (*self.prefixes, *self.nominated))
+            or tuple(sorted(set(self.prefixes))) != self.prefixes
+            or tuple(sorted(set(self.nominated))) != self.nominated
+            or not self.prefixes
+            and not self.nominated
+            or any(
+                type(value) is not int or not 0 < value < 2**63
+                for value in (self.byte_limit, self.ref_limit)
+            )
+            or len(self.prefixes) + len(self.nominated) > 2 * self.ref_limit
+            or self.enumeration_state not in ("complete", "partial", "unknown")
+            or self.enumeration_state == "complete"
+            and not _text(self.completion_coordinate)
+            or self.enumeration_state != "complete"
+            and self.completion_coordinate is not None
+            or self.observed_at_us is not None
+            and (
+                type(self.observed_at_us) is not int
+                or not 0 < self.observed_at_us < 2**63
+            )
+            or type(self.link_count) is not int
+            or not 0 <= self.link_count <= self.ref_limit + len(self.nominated)
+        ):
+            raise CoreFailure("ENUMERATION", self, "invalid event, scope or completion")
+
+    @property
+    def identity(self):
+        return self.observation_origin_uuidv4, self.enumeration_uuidv7
+
+    @property
+    def scope_json(self):
+        return encode(
+            [[v.hex() for v in self.prefixes], [v.hex() for v in self.nominated]]
+        )
+
+    @property
+    def key(self):
+        return (
+            *self.identity,
+            self.repository_uuidv4,
+            self.source_attribution,
+            self.visibility_scope,
+            self.scope_json,
+            self.enumeration_state,
+            self.completion_coordinate,
+            self.observed_at_us,
+            self.byte_limit,
+            self.ref_limit,
+            self.link_count,
+        )
+
+    def covers(self, name: bytes) -> bool:
+        return name in self.nominated or any(
+            name.startswith(prefix) for prefix in self.prefixes
+        )
+
+
+@dataclass(frozen=True)
+class RefEnumerationLink:
+    """A concrete item or nominated absence derived from exactly one scan."""
+
+    event: RefEnumerationObservation
+    observation: RefObservation
+    claim: RefObservationClaim
+    derivation: Literal["item", "absence"]
+    position: int
+
+    def __post_init__(self):
+        e, o, c = self.event, self.observation, self.claim
+        if (
+            not isinstance(e, RefEnumerationObservation)
+            or not isinstance(o, RefObservation)
+            or not isinstance(c, RefObservationClaim)
+            or o.ref_observation_key != c.ref_observation_key
+            or (o.repository_uuidv4, o.source_attribution, o.visibility_scope)
+            != (e.repository_uuidv4, e.source_attribution, e.visibility_scope)
+            or not e.covers(o.ref_name_bytes)
+            or self.derivation not in ("item", "absence")
+            or type(self.position) is not int
+            or not 0 <= self.position < 2**63
+            or (self.derivation == "item" and c.presence_state != "present")
+            or (
+                self.derivation == "absence"
+                and (
+                    c.presence_state != "absent"
+                    or e.enumeration_state != "complete"
+                    or o.ref_name_bytes not in e.nominated
+                    or c.absence_evidence is None
+                    or c.absence_evidence.method not in ("lookup", "enumeration")
+                    or c.absence_evidence.ref_name_bytes != o.ref_name_bytes
+                    or c.absence_evidence.source_attribution != o.source_attribution
+                    or c.absence_evidence.visibility_scope != o.visibility_scope
+                    or c.absence_evidence.completion_coordinate
+                    != e.completion_coordinate
+                )
+            )
+        ):
+            raise CoreFailure(
+                "ENUMERATION", "link", "inconsistent event and item/absence"
+            )
+
+    @property
+    def key(self):
+        return (
+            *self.event.identity,
+            *self.observation.ref_observation_key.key,
+            self.claim.provenance.encoded,
+            self.derivation,
+            self.position,
+        )
+
+
+@dataclass(frozen=True)
+class RefEnumerationResult:
+    event: RefEnumerationObservation
+    links: tuple[RefEnumerationLink, ...]
 
 
 @dataclass(frozen=True)
