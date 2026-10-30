@@ -187,8 +187,6 @@ _COLUMNS = {
         "owner_kind",
         "owner_coordinates_json",
         "repository_uuidv4",
-        "capture_origin_uuidv4",
-        "capture_uuidv4",
         "observation_origin_uuidv4",
         "ref_observation_uuidv7",
         "object_format",
@@ -1094,8 +1092,6 @@ def _scan_ref_units(conn: sqlite3.Connection, work, *, max_records, max_row_byte
                     row[column] is not None
                     for column in (
                         "repository_uuidv4",
-                        "capture_origin_uuidv4",
-                        "capture_uuidv4",
                         "object_format",
                         "full_oid",
                         "field",

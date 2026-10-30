@@ -84,13 +84,10 @@ from repo_catalog.domain.git_native import parse_metadata
 from repo_catalog.domain.p1_coordination import CoordinationError
 from repo_catalog.domain.p1_core import (
     OID,
-    Capture,
     CoreFailure,
     NativeObject,
-    NotesProof,
     account_verification,
     native_oid,
-    valid_note_role,
 )
 from repo_catalog.domain.recovery import (
     ActivationError,
@@ -139,20 +136,6 @@ _FORENSIC_VM_UNITS = ("legacy_source_vm_steps", "ref_source_vm_steps")
 
 AT_FDCWD = -100
 RENAME_NOREPLACE = 1
-
-
-def _decode_native_ref(raw_ref: str | None) -> str | None:
-    if not raw_ref:
-        return raw_ref
-    if raw_ref.startswith("refs/"):
-        return raw_ref
-    try:
-        parsed = json.loads(raw_ref)
-        if isinstance(parsed, list) and len(parsed) == 2 and parsed[0] == "native-ref":
-            return bytes.fromhex(parsed[1]).decode("utf-8", "surrogateescape")
-    except Exception:
-        pass
-    return raw_ref
 
 
 def _open_directory_nofollow(path: Path, *, create: bool = False) -> int:
@@ -613,137 +596,6 @@ def _encode_salvage_base64(raw: bytes, work) -> str:
     return value
 
 
-def _checked_legacy_note_source(conn, row, work, max_records, max_bytes):
-    """Validate an old Capture role and actual copy before staging its bytes."""
-    from repo_catalog.adapters.sqlite.ref_salvage import _rows
-
-    capture_columns = (
-        "capture_origin_uuidv4",
-        "capture_uuidv4",
-        "repository_uuidv4",
-        "source",
-        "ref",
-        "object_format",
-        "root",
-    )
-    role_columns = (
-        "capture_origin_uuidv4",
-        "capture_uuidv4",
-        "object_format",
-        "root",
-        "target",
-        "note",
-        "path",
-        "proof_bundle",
-    )
-
-    def find_one(table, columns, expected):
-        work.require("metadata_units", 1)
-        try:
-            descriptor = conn.execute(f"PRAGMA table_list('{table}')").fetchone()
-        except BaseException:
-            work.abandon("metadata_units")
-            raise
-        work.charge("metadata_units", 1)
-        if not descriptor or descriptor[:3] != (b"main", table.encode(), b"table"):
-            raise ValueError("ordinary original dependency table unavailable")
-        found = None
-        remaining = work._max["input_records"] - work.usage["input_records"]
-        if remaining <= 0:
-            raise CoreFailure("BUDGET", table, "finite legacy dependency scan")
-        for value, error in _rows(
-            conn,
-            table,
-            work,
-            maximum=min(max_records, remaining),
-            max_row_bytes=max_bytes,
-            columns=columns,
-        ):
-            if error:
-                continue
-            work.require("metadata_units", 1)
-            work.charge("metadata_units", 1)
-            compared = sum(
-                len(item)
-                for item in (*expected.values(), *value.values())
-                if isinstance(item, (str, bytes))
-            )
-            work.require("input_bytes", compared)
-            matches = all(value[key] == wanted for key, wanted in expected.items())
-            work.charge("input_bytes", compared)
-            if matches:
-                if found is not None:
-                    raise ValueError("duplicate original dependency")
-                found = value
-        if found is None:
-            raise ValueError("original Capture or Notes role unavailable")
-        return found
-
-    old_factory = conn.text_factory
-    conn.text_factory = bytes
-    try:
-        cap = find_one(
-            "captures",
-            capture_columns,
-            {
-                "capture_origin_uuidv4": row["capture_origin_uuidv4"],
-                "capture_uuidv4": row["capture_uuidv4"],
-            },
-        )
-        find_one(
-            "note_roles",
-            role_columns,
-            {
-                "capture_origin_uuidv4": row["capture_origin_uuidv4"],
-                "capture_uuidv4": row["capture_uuidv4"],
-                "object_format": row["object_format"],
-                "root": row["root"],
-                "target": row["target"],
-                "note": row["full_oid"],
-                "path": row["path"],
-                "proof_bundle": row["proof_bundle"],
-            },
-        )
-    finally:
-        conn.text_factory = old_factory
-    if not uuid4(row["physical_copy_uuidv4"]):
-        raise ValueError("original physical copy identity is invalid")
-    capture = Capture(
-        cap["capture_origin_uuidv4"],
-        cap["capture_uuidv4"],
-        cap["repository_uuidv4"],
-        cap["source"],
-        _decode_native_ref(cap["ref"]),
-        OID(cap["object_format"], cap["root"]),
-    )
-    if capture.root != OID(row["object_format"], row["root"]):
-        raise ValueError("original Capture root differs")
-    bundle = row["proof_bundle"]
-    if type(bundle) is not str or len(bundle) > max_bytes:
-        raise ValueError("bounded original proof required")
-    work.require("input_bytes", 4 * len(bundle))
-    work.charge("input_bytes", 4 * len(bundle))
-    _bounded_json_loads(bundle, RecoveryBudget(max_payload_bytes=max_bytes))
-    with account_verification(work):
-        NativeObject(
-            OID(row["object_format"], row["full_oid"]),
-            "blob",
-            row["body"],
-            row["size"],
-            row["digest_sha256"],
-        ).validate()
-        if not valid_note_role(
-            row["object_format"],
-            row["root"],
-            row["target"],
-            row["full_oid"],
-            row["path"],
-            bundle,
-        ):
-            raise ValueError("original Notes proof does not verify")
-    return capture
-
-
 def _hash_recovery_bytes(body: bytes, work) -> str:
     work.require("verification_bytes", len(body))
     digest = hashlib.sha256(body).hexdigest()
@@ -820,55 +672,6 @@ def _decode_bounded_base64(value: Any, max_bytes: int, work=None) -> bytes:
     if len(result) > max_bytes:
         raise ValueError("Decoded payload exceeds finite byte limit")
     return result
-
-
-def _decode_proof_bundle(
-    value: Any, budget: RecoveryBudget, object_format: str, work=None
-):
-    if not isinstance(value, str):
-        raise ValueError("Notes proof must be text")
-    if len(value) > budget.max_payload_bytes * 2:
-        raise _InputLimit("Notes proof exceeds finite payload limit")
-    bundle = _bounded_json_loads(value, budget)
-    if not isinstance(bundle, list):
-        raise ValueError("Notes proof must be a list")
-    if len(bundle) > budget.max_work_units.get("proof_steps", 100_000):
-        raise _InputLimit("Notes proof exceeds finite proof-step limit")
-    structures = []
-    total_bytes = 0
-    for entry in bundle:
-        if (
-            not isinstance(entry, list)
-            or len(entry) != 3
-            or not all(isinstance(v, str) for v in entry)
-        ):
-            raise ValueError("Malformed notes proof object")
-        total_bytes += (len(entry[2]) + 1) // 2
-        if total_bytes > budget.max_payload_bytes:
-            raise _InputLimit("Notes proof native bytes exceed finite payload limit")
-        upper = (len(entry[2]) + 1) // 2
-        if work is not None:
-            work.require("input_bytes", upper)
-        try:
-            body = bytes.fromhex(entry[2])
-        except Exception:
-            if work is not None:
-                work.charge("input_bytes", upper)
-            raise
-        if work is not None:
-            work.charge("input_bytes", len(body))
-        structures.append(
-            NativeObject(
-                oid=OID(object_format, entry[0]),
-                native_type=entry[1],
-                body=body,
-                declared_size=len(body),
-                digest_sha256=_hash_recovery_bytes(body, work)
-                if work is not None
-                else hashlib.sha256(body).hexdigest(),
-            )
-        )
-    return tuple(structures)
 
 
 def _bounded_jsonl_records(
@@ -1374,7 +1177,7 @@ class SQLiteRecoveryAdapter:
             overall_sha256 = overall_hasher.hexdigest()
 
             manifest = BackupManifest(
-                manifest_version=1,
+                manifest_version=2,
                 backup_id=backup_id,
                 created_at_us=created_at_us,
                 repository_uuidv4=repo_uuid,
@@ -1726,86 +1529,6 @@ class SQLiteRecoveryAdapter:
                     trees += 1
                 elif ntype == "tag":
                     tags += 1
-
-            # 2. Inspect retained_notes: verified notes blob bodies and role proofs
-            cursor = conn.execute(
-                "SELECT object_format, full_oid, physical_copy_uuidv4, body, size, digest_sha256, capture_origin_uuidv4, capture_uuidv4, root, target, path, proof_bundle FROM retained_notes"
-            )
-            while row := cursor.fetchone():
-                (
-                    obj_fmt,
-                    full_oid,
-                    copy_uuid,
-                    body,
-                    size,
-                    digest_sha,
-                    cap_origin,
-                    cap_id,
-                    root,
-                    target,
-                    path,
-                    proof_bundle,
-                ) = row
-                if not uuid4(str(copy_uuid)):
-                    raise BackupValidationError(
-                        f"Invalid physical copy UUIDv4 in retained_notes for {full_oid}"
-                    )
-                if not uuid4(str(cap_origin)) or not uuid4(str(cap_id)):
-                    raise BackupValidationError(
-                        f"Invalid capture UUIDv4 pair in retained_notes for {full_oid}"
-                    )
-                if (
-                    not oid(obj_fmt, full_oid)
-                    or not oid(obj_fmt, root)
-                    or not oid(obj_fmt, target)
-                ):
-                    raise BackupValidationError(
-                        f"Invalid OID in retained_notes for {full_oid}"
-                    )
-                if len(body) != size:
-                    raise BackupValidationError(
-                        f"Size mismatch in retained_notes for {full_oid}: expected {size}, got {len(body)}"
-                    )
-                actual_digest = hashlib.sha256(body).hexdigest()
-                if actual_digest != digest_sha:
-                    raise BackupValidationError(
-                        f"SHA-256 digest mismatch in retained_notes for {full_oid}: expected {digest_sha}, got {actual_digest}"
-                    )
-                expected_oid = native_oid(obj_fmt, "blob", body)
-                if expected_oid != full_oid:
-                    raise BackupValidationError(
-                        f"Native OID calculation mismatch in retained_notes for {full_oid}: expected {expected_oid}"
-                    )
-
-                # Full structural role verification under ADR 0022
-                if not valid_note_role(
-                    obj_fmt, root, target, full_oid, path, proof_bundle
-                ):
-                    raise BackupValidationError(
-                        f"Retained note {full_oid} failed structural role receiver verification (ADR 0022)"
-                    )
-
-                # Verify corresponding note_roles entry exists
-                role_check = conn.execute(
-                    "SELECT 1 FROM note_roles WHERE capture_origin_uuidv4=? AND capture_uuidv4=? AND object_format=? AND root=? AND target=? AND note=? AND path=? AND proof_bundle=?",
-                    (
-                        cap_origin,
-                        cap_id,
-                        obj_fmt,
-                        root,
-                        target,
-                        full_oid,
-                        path,
-                        proof_bundle,
-                    ),
-                ).fetchone()
-                if not role_check:
-                    raise BackupValidationError(
-                        f"Retained note {full_oid} lacks valid corresponding role proof in note_roles"
-                    )
-
-                notes += 1
-                total_bytes += len(body)
 
             with account_verification(work):
                 validate_stored_checks(conn, "core", retained_bytes=True, work=work)
@@ -2582,116 +2305,6 @@ class SQLiteRecoveryAdapter:
                                 payload["body_base64"] = _encode_salvage_base64(
                                     raw_body, work
                                 )
-                        elif store_name == "core" and table == "retained_notes":
-                            c_type = CandidateType.NOTES_MAPPING
-                            c_id = f"{row_dict.get('object_format')}:{row_dict.get('full_oid')}:{row_dict.get('physical_copy_uuidv4')}"
-                            cap_origin = (
-                                str(row_dict.get("capture_origin_uuidv4"))
-                                if row_dict.get("capture_origin_uuidv4")
-                                else None
-                            )
-                            cap_id = (
-                                str(row_dict.get("capture_uuidv4"))
-                                if row_dict.get("capture_uuidv4")
-                                else None
-                            )
-                            raw_body = row_dict.get("body")
-                            body_len = (
-                                row_dict.get("size")
-                                if row_dict.get("size") is not None
-                                else (
-                                    len(raw_body) if isinstance(raw_body, bytes) else 0
-                                )
-                            )
-                            if raw_body is None and body_len > max_payload_bytes:
-                                cand_record = {
-                                    "candidate_id": c_id,
-                                    "candidate_type": c_type.value,
-                                    "capture_origin_uuidv4": cap_origin,
-                                    "capture_uuidv4": cap_id,
-                                    "extraction_provenance": extraction_prov,
-                                    "payload": {
-                                        "object_format": row_dict.get("object_format"),
-                                        "full_oid": row_dict.get("full_oid"),
-                                        "size": row_dict.get("size"),
-                                    },
-                                    "extraction_status": ExtractionStatus.PARTIAL.value,
-                                    "error": f"Notes body size {body_len} exceeds limit {max_payload_bytes}",
-                                }
-                                line = _encode_salvage_line(
-                                    cand_record,
-                                    work,
-                                    max_payload_bytes * 8 + 8192,
-                                    max_json_depth,
-                                )
-                                out_f.write(line)
-                                written_records += 1
-                                written_bytes += len(line.encode("utf-8"))
-                                partial += 1
-                                continue
-
-                            payload = {
-                                "object_format": row_dict.get("object_format"),
-                                "full_oid": row_dict.get("full_oid"),
-                                "physical_copy_uuidv4": row_dict.get(
-                                    "physical_copy_uuidv4"
-                                ),
-                                "native_type": "blob",
-                                "size": row_dict.get("size"),
-                                "digest_sha256": row_dict.get("digest_sha256"),
-                                "capture_origin_uuidv4": cap_origin,
-                                "capture_uuidv4": cap_id,
-                                "root": row_dict.get("root"),
-                                "target": row_dict.get("target"),
-                                "path": row_dict.get("path"),
-                            }
-                            try:
-                                capture = _checked_legacy_note_source(
-                                    conn,
-                                    row_dict,
-                                    work,
-                                    max_records,
-                                    max_payload_bytes,
-                                )
-                            except CoreFailure as error:
-                                if error.code in ("BUDGET", "QUERY_BUDGET"):
-                                    raise
-                                withheld_reason = (
-                                    "Unverified original Notes body omitted"
-                                )
-                            except (
-                                ValueError,
-                                TypeError,
-                                KeyError,
-                                AttributeError,
-                                sqlite3.DatabaseError,
-                                RecursionError,
-                            ):
-                                withheld_reason = (
-                                    "Unverified original Notes body omitted"
-                                )
-                            if withheld_reason is None:
-                                payload.update(
-                                    repository_uuidv4=capture.repository_uuidv4,
-                                    source=capture.source,
-                                    ref=capture.ref,
-                                    proof_bundle=row_dict["proof_bundle"],
-                                    body_base64=_encode_salvage_base64(raw_body, work),
-                                )
-                        elif store_name == "core" and table == "captures":
-                            c_type = CandidateType.GIT_METADATA
-                            c_id = f"{row_dict.get('capture_origin_uuidv4')}:{row_dict.get('capture_uuidv4')}"
-                            cap_origin = (
-                                str(row_dict.get("capture_origin_uuidv4"))
-                                if row_dict.get("capture_origin_uuidv4")
-                                else None
-                            )
-                            cap_id = (
-                                str(row_dict.get("capture_uuidv4"))
-                                if row_dict.get("capture_uuidv4")
-                                else None
-                            )
-                            payload = dict(row_dict)
                         elif store_name == "context" and table == "text_bodies":
                             c_type = CandidateType.CONTEXT_DOCUMENT
                             c_id = str(row_dict.get("sha256"))
@@ -2869,7 +2482,7 @@ class SQLiteRecoveryAdapter:
 
             if (
                 type(manifest_data.get("manifest_version")) is not int
-                or manifest_data.get("manifest_version") != 1
+                or manifest_data.get("manifest_version") != 2
             ):
                 raise RestoreValidationError(
                     f"Unsupported manifest version: {manifest_data.get('manifest_version')}"
@@ -3121,43 +2734,38 @@ class SQLiteRecoveryAdapter:
         writer cut. Only positive stored native/role failures publish a stop;
         resource refusals and environmental read failures do not prove damage.
         """
+        if table != "retained_metadata":
+            raise ValueError("metadata copy reader requires retained_metadata")
         with catalog_gate(directory, exclusive=True):
             assert_catalog_not_stopped(directory)
             conn = p1_connect(directory / "core.sqlite3", "core")
             try:
                 conn.execute("BEGIN")
                 work.require("metadata_units", 1)
-                if table == "retained_metadata":
-                    size_row = conn.execute(
-                        "SELECT length(body) FROM retained_metadata WHERE object_format=? AND full_oid=? AND physical_copy_uuidv4=?",
-                        key,
-                    ).fetchone()
-                else:
-                    size_row = conn.execute(
-                        "SELECT length(body),length(CAST(proof_bundle AS BLOB)),length(CAST(path AS BLOB)) FROM retained_notes WHERE object_format=? AND full_oid=? AND physical_copy_uuidv4=?",
-                        key,
-                    ).fetchone()
+                size_row = conn.execute(
+                    "SELECT length(body) FROM retained_metadata WHERE object_format=? AND full_oid=? AND physical_copy_uuidv4=?",
+                    key,
+                ).fetchone()
                 work.charge("metadata_units", 1)
                 if size_row is None:
-                    if table == "retained_metadata":
-                        for dependency in ("intrinsic_claims", "intrinsic_groups"):
-                            if bounded_domain_exists(
-                                conn,
-                                f"SELECT 1 FROM {dependency} WHERE object_format=? AND full_oid=? AND physical_copy_uuidv4=? LIMIT 1",
-                                key,
-                                work,
-                                "required_retained_metadata",
-                            ):
-                                reason = "Confirmed destination Core corruption: required retained metadata copy is missing"
-                                stop_catalog(
-                                    directory,
-                                    reason,
-                                    details={
-                                        "store": "core",
-                                        "classification": "authoritative_data",
-                                    },
-                                )
-                                raise CorruptionDetectedError(reason)
+                    for dependency in ("intrinsic_claims", "intrinsic_groups"):
+                        if bounded_domain_exists(
+                            conn,
+                            f"SELECT 1 FROM {dependency} WHERE object_format=? AND full_oid=? AND physical_copy_uuidv4=? LIMIT 1",
+                            key,
+                            work,
+                            "required_retained_metadata",
+                        ):
+                            reason = "Confirmed destination Core corruption: required retained metadata copy is missing"
+                            stop_catalog(
+                                directory,
+                                reason,
+                                details={
+                                    "store": "core",
+                                    "classification": "authoritative_data",
+                                },
+                            )
+                            raise CorruptionDetectedError(reason)
                     return False
                 if any(
                     size > budget.max_payload_bytes * (2 if index == 1 else 1)
@@ -3169,29 +2777,11 @@ class SQLiteRecoveryAdapter:
                         "existing retained copy exceeds finite payload limit",
                     )
                 work.require("input_bytes", sum(size_row))
-                if table == "retained_metadata":
-                    row = conn.execute(
-                        "SELECT CASE WHEN length(native_type)<=6 THEN native_type END,body,size,CASE WHEN length(digest_sha256)=64 THEN digest_sha256 END FROM retained_metadata WHERE object_format=? AND full_oid=? AND physical_copy_uuidv4=?",
-                        key,
-                    ).fetchone()
-                    native_type, body, size, digest = row
-                else:
-                    row = conn.execute(
-                        "SELECT body,size,CASE WHEN length(digest_sha256)=64 THEN digest_sha256 END,CASE WHEN length(capture_origin_uuidv4)=36 THEN capture_origin_uuidv4 END,CASE WHEN length(capture_uuidv4)=36 THEN capture_uuidv4 END,CASE WHEN length(root)<=64 THEN root END,CASE WHEN length(target)<=64 THEN target END,path,proof_bundle FROM retained_notes WHERE object_format=? AND full_oid=? AND physical_copy_uuidv4=?",
-                        key,
-                    ).fetchone()
-                    (
-                        body,
-                        size,
-                        digest,
-                        origin,
-                        capture_id,
-                        root,
-                        target,
-                        path,
-                        bundle,
-                    ) = row
-                    native_type = "blob"
+                row = conn.execute(
+                    "SELECT CASE WHEN length(native_type)<=6 THEN native_type END,body,size,CASE WHEN length(digest_sha256)=64 THEN digest_sha256 END FROM retained_metadata WHERE object_format=? AND full_oid=? AND physical_copy_uuidv4=?",
+                    key,
+                ).fetchone()
+                native_type, body, size, digest = row
                 work.charge("input_bytes", sum(size_row))
                 try:
                     native = NativeObject(
@@ -3199,64 +2789,7 @@ class SQLiteRecoveryAdapter:
                     )
                     with account_verification(work):
                         native.validate()
-                        if table == "retained_metadata":
-                            parse_metadata(key[0], native_type, body)
-                        else:
-                            cap_sizes = conn.execute(
-                                "SELECT length(CAST(source AS BLOB)),length(CAST(ref AS BLOB)) FROM captures WHERE capture_origin_uuidv4=? AND capture_uuidv4=?",
-                                (origin, capture_id),
-                            ).fetchone()
-                            if cap_sizes is None:
-                                raise ValueError("stored Notes Capture binding missing")
-                            if any(
-                                size > budget.max_payload_bytes for size in cap_sizes
-                            ):
-                                raise CoreFailure(
-                                    "BUDGET",
-                                    key,
-                                    "existing Capture binding exceeds finite payload limit",
-                                )
-                            work.require("input_bytes", sum(cap_sizes))
-                            cap_row = conn.execute(
-                                "SELECT CASE WHEN length(repository_uuidv4)=36 THEN repository_uuidv4 END,source,ref,CASE WHEN length(object_format)<=6 THEN object_format END,CASE WHEN length(root)<=64 THEN root END FROM captures WHERE capture_origin_uuidv4=? AND capture_uuidv4=?",
-                                (origin, capture_id),
-                            ).fetchone()
-                            work.charge("input_bytes", sum(cap_sizes))
-                            cap = Capture(
-                                origin,
-                                capture_id,
-                                cap_row[0],
-                                cap_row[1],
-                                _decode_native_ref(cap_row[2]),
-                                OID(cap_row[3], cap_row[4]),
-                            )
-                            if cap.root != OID(key[0], root):
-                                raise ValueError("stored Notes Capture root mismatch")
-                            structures = _decode_proof_bundle(
-                                bundle, budget, key[0], work
-                            )
-                            NotesProof(
-                                cap, OID(key[0], target), native.oid, path, structures
-                            ).validate()
-                            work.require("metadata_units", 1)
-                            role = conn.execute(
-                                "SELECT 1 FROM note_roles WHERE capture_origin_uuidv4=? AND capture_uuidv4=? AND object_format=? AND root=? AND target=? AND note=? AND path=? AND proof_bundle=?",
-                                (
-                                    origin,
-                                    capture_id,
-                                    key[0],
-                                    root,
-                                    target,
-                                    key[1],
-                                    path,
-                                    bundle,
-                                ),
-                            ).fetchone()
-                            work.charge("metadata_units", 1)
-                            if role is None:
-                                raise ValueError(
-                                    "stored retained Notes role evidence missing"
-                                )
+                        parse_metadata(key[0], native_type, body)
                 except _InputLimit as error:
                     raise CoreFailure("BUDGET", key, str(error)) from error
                 except CoreFailure as error:
@@ -3901,168 +3434,7 @@ class SQLiteRecoveryAdapter:
                             )
                             continue
 
-                    # 4. Admitting Retained Notes with Role Proof
-                    elif c_type in (CandidateType.NOTES_MAPPING.value, "retained_note"):
-                        b64_body = payload.get("body_base64")
-                        proof_bundle_str = payload.get("proof_bundle")
-                        if not isinstance(b64_body, str) or not proof_bundle_str:
-                            rejected += 1
-                            rejections.append(
-                                {
-                                    "candidate_id": cand_id,
-                                    "reason": "Missing required notes role proof or body",
-                                }
-                            )
-                            continue
-
-                        try:
-                            body_bytes = _decode_bounded_base64(
-                                b64_body, b.max_payload_bytes, work_budget
-                            )
-                            obj_fmt = payload.get("object_format", "sha1")
-                            structures = _decode_proof_bundle(
-                                proof_bundle_str, b, obj_fmt, work_budget
-                            )
-                            cap_orig_id = payload.get(
-                                "capture_origin_uuidv4"
-                            ) or record.get("capture_origin_uuidv4")
-                            cap_val_id = payload.get("capture_uuidv4") or record.get(
-                                "capture_uuidv4"
-                            )
-                            if not cap_orig_id or not cap_val_id:
-                                rejected += 1
-                                rejections.append(
-                                    {
-                                        "candidate_id": cand_id,
-                                        "reason": "Missing capture UUIDv4 pair in notes candidate",
-                                    }
-                                )
-                                continue
-
-                            # Original domain provenance is independent of the
-                            # forensic extraction coordinates. Never substitute
-                            # this destination's repository for the issuer's.
-                            existing_cap = core.sql(
-                                "SELECT repository_uuidv4, source, ref, object_format, root FROM captures WHERE capture_origin_uuidv4=? AND capture_uuidv4=?",
-                                (cap_orig_id, cap_val_id),
-                            )
-                            original = existing_cap[0] if existing_cap else (None,) * 5
-                            repo_uuid = payload.get("repository_uuidv4", original[0])
-                            orig_source = payload.get("source", original[1])
-                            orig_ref = _decode_native_ref(
-                                payload.get("ref", original[2])
-                            )
-                            if not repo_uuid or not orig_source or not orig_ref:
-                                observation += 1
-                                rejections.append(
-                                    {
-                                        "candidate_id": cand_id,
-                                        "reason": "Cannot establish original Capture binding; withheld from authoritative admission as qualified observation",
-                                    }
-                                )
-                                continue
-                            cap = Capture(
-                                cap_orig_id,
-                                cap_val_id,
-                                repo_uuid,
-                                orig_source,
-                                orig_ref,
-                                OID(obj_fmt, payload["root"]),
-                            )
-                            if existing_cap and (
-                                original[0],
-                                original[1],
-                                _decode_native_ref(original[2]),
-                                original[3],
-                                original[4],
-                            ) != (
-                                repo_uuid,
-                                orig_source,
-                                orig_ref,
-                                obj_fmt,
-                                payload["root"],
-                            ):
-                                raise ValueError(
-                                    "Conflicting immutable Capture binding"
-                                )
-                            proof = NotesProof(
-                                capture=cap,
-                                target=OID(obj_fmt, payload["target"]),
-                                note=OID(obj_fmt, payload["full_oid"]),
-                                path=payload["path"],
-                                structures=structures,
-                            )
-                            copy_uuid = payload.get("physical_copy_uuidv4")
-
-                            # Missing physical identity cannot be repaired by
-                            # matching another copy's bytes or inventing a copy.
-                            if not copy_uuid:
-                                observation += 1
-                                rejections.append(
-                                    {
-                                        "candidate_id": cand_id,
-                                        "reason": "Missing original physical copy UUID; withheld from authoritative admission",
-                                    }
-                                )
-                                continue
-                            exists = core.sql(
-                                "SELECT 1 FROM retained_notes WHERE object_format=? AND full_oid=? AND physical_copy_uuidv4=?",
-                                (obj_fmt, payload["full_oid"], copy_uuid),
-                            )
-                            native_note = NativeObject(
-                                oid=OID(obj_fmt, payload["full_oid"]),
-                                native_type=payload.get("native_type", "blob"),
-                                body=body_bytes,
-                                declared_size=payload.get("size", len(body_bytes)),
-                                digest_sha256=payload.get("digest_sha256")
-                                or _hash_recovery_bytes(body_bytes, work_budget),
-                            )
-                            # Production admission checks role + exact bytes,
-                            # then inserts Capture/role/body in one transaction.
-                            exists = self._verify_existing_retained_copy(
-                                fresh_destination_dir,
-                                "retained_notes",
-                                (obj_fmt, payload["full_oid"], copy_uuid),
-                                b,
-                                work_budget,
-                            )
-                            core.admit_note(proof, native_note, copy_uuid, work_budget)
-                            if exists:
-                                replayed += 1
-                            else:
-                                admitted += 1
-                        except (CorruptionDetectedError, CatalogStoppedError):
-                            raise
-                        except CoreFailure as cf:
-                            if cf.code == "BUDGET":
-                                budget_exhausted = True
-                                unprocessed += 1
-                                rejections.append(
-                                    {
-                                        "candidate_id": cand_id,
-                                        "reason": f"Work budget exhausted: {cf}",
-                                    }
-                                )
-                            else:
-                                rejected += 1
-                                rejections.append(
-                                    {
-                                        "candidate_id": cand_id,
-                                        "reason": f"Notes admission error: {cf}",
-                                    }
-                                )
-                            continue
-                        except Exception as e:
-                            rejected += 1
-                            rejections.append(
-                                {
-                                    "candidate_id": cand_id,
-                                    "reason": f"Notes admission error: {e}",
-                                }
-                            )
-                            continue
-
-                    # 5. Admitting Context Text Bodies
+                    # 4. Context text is exclusive with an admitted metadata body.
                     elif c_type in (
                         CandidateType.CONTEXT_DOCUMENT.value,
                         "context_text",
@@ -4161,7 +3533,7 @@ class SQLiteRecoveryAdapter:
                             }
                         )
 
-                    # 6. Admitting Git Metadata Objects (repositories, git_objects, captures)
+                    # 6. Admitting Git Metadata Objects (repositories, git_objects)
                     elif c_type == CandidateType.GIT_METADATA.value:
                         prov_tbl = (record.get("extraction_provenance") or {}).get(
                             "table"
@@ -4197,50 +3569,8 @@ class SQLiteRecoveryAdapter:
                                         replayed += 1
                                     else:
                                         admitted += 1
-                                elif prov_tbl == "captures":
-                                    cap_orig = payload.get("capture_origin_uuidv4")
-                                    cap_id = payload.get("capture_uuidv4")
-                                    repo_id = payload.get("repository_uuidv4")
-                                    src = payload.get("source")
-                                    rf = payload.get("ref")
-                                    rf = _decode_native_ref(payload.get("ref"))
-                                    obj_f = payload.get("object_format", "sha1")
-                                    rt = payload.get("root")
-                                    if not (
-                                        cap_orig
-                                        and cap_id
-                                        and repo_id
-                                        and src
-                                        and rf
-                                        and rt
-                                    ):
-                                        rejected += 1
-                                        rejections.append(
-                                            {
-                                                "candidate_id": cand_id,
-                                                "reason": "Missing required field in captures candidate",
-                                            }
-                                        )
-                                        continue
-                                    cap = Capture(
-                                        cap_orig,
-                                        cap_id,
-                                        repo_id,
-                                        src,
-                                        rf,
-                                        OID(obj_f, rt),
-                                    )
-                                    existing_cap = core.sql(
-                                        "SELECT 1 FROM captures WHERE capture_origin_uuidv4=? AND capture_uuidv4=?",
-                                        (cap_orig, cap_id),
-                                    )
-                                    core.admit_capture(cap)
-                                    if existing_cap:
-                                        replayed += 1
-                                    else:
-                                        admitted += 1
                                 else:
-                                    # Candidate is accepted as a qualified recovery observation without authoritative mutation
+                                    # Unsupported generic rows remain qualified observations.
                                     observation += 1
                             finally:
                                 work_budget.charge("metadata_units", 1)

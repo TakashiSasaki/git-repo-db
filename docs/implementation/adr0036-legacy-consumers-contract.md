@@ -411,3 +411,96 @@ methods/parameter, and the existing optional Search/rebuild work handle. An impo
 and annotation-resolution smoke regression preserves the public contract. No
 private DTO alias or retired report field is restored. The original independent
 FAIL remains historical evidence; no independent re-review is claimed here.
+
+
+## Final coordinated physical cut (stacked on PR 229)
+
+This unit supersedes the deferred physical-family boundary above. PRs 226–229
+remain fixed. The five old opt-in physical tables (`captures`, `notes_claims`,
+`notes_groups`, `note_roles`, `retained_notes`), their immutable/admission guards,
+Capture-owned Coverage columns/owner, Core methods/ports/domain values, private
+legacy producer/Query DTOs/readers, and legacy Exchange/backup/salvage admission
+are removed together. `notes_inventories` was an additional wire section, not a
+sixth table. The retired families are not renamed into the new tables and no
+actual catalog is migrated. The machine disposition contract and introspected
+physical schema are synchronized. Ordinary Schema 21 and unrelated observation,
+provider recording and discovery UUIDv4 meanings remain unchanged.
+
+The opt-in factory format is `repo-catalog/p1-isolated-2`; its Core factory now
+has 23 tables. Its other factory stores' physical DDL/fingerprints are unchanged
+(Context 19, Operational 8, Search 3). These are factory table counts, not a count
+of responsibility stores or open files. Core fingerprint is derived from the
+packaged DDL. Exchange accepts only `git-repo-db/adr0036-exchange-v7` with the exact
+current section/row envelopes; v6 and the six old sections are rejected. New
+backup manifests use version 2 and restore refuses version 1; actual manifest
+hashes, packaged schema fingerprints, identities/pairing and retained data are
+still revalidated. Unknown salvage types remain qualified/deferred/rejected;
+they cannot restore an old Notes family or confer body authority. No unreleased
+old-format compatibility or migration is promised.
+
+Shared `_notes_group`, `valid_note_role`, native Notes traversal and verification
+accounting remain in use by Ref Mapping/Group/evidence and copy validation.
+Same-family exact-body/copy collision checks, bounded comparison accounting,
+callback exception boundaries and unsupported Ref Coverage behavior remain.
+`legacy_source_vm_steps` is the retained generic metadata/Context extraction
+budget, not a surviving Capture Notes path. Ref subjects, Claims, alternatives,
+Group-only/partial reports, Mapping content, receiver evidence and each physical
+copy retain their separate original identities and qualifications.
+
+The ADR 0026 sequence is preserved: corruption stops ordinary service/backup;
+source DB/WAL bytes are preserved while typed salvage emits untrusted candidates;
+a checked healthy backup restores into a fresh destination; candidate merge
+rechecks dependencies, original identity, structural proof and actual bytes;
+final validation precedes activation. The new composite E2E
+[`test_physical_cut_e2e.py`](../../tests/integration/p7/test_physical_cut_e2e.py)
+combines real acquisition, two same-root Claims/Group-only reports, one eligible
+Claim's body, Query/CLI/Search, explicit Git-only Exchange, Core-only/paired
+backup/restore, damaged-copy stop, byte-preserving salvage, post-backup subject
+merge and activation. Git-only transport does not claim Context interchange.
+Existing paired Context and metadata-only regressions remain independent.
+
+Retired mechanism tests and their typed-behavior replacements are indexed in
+[`adr0036_retired_test_map.json`](../../tests/support/adr0036_retired_test_map.json).
+The map preserves original node IDs; old binary/empty-note behavior is exercised
+by a new direct Ref role test and real installed wheel/sdist-wheel scenario.
+Unrelated metadata/Context/recovery tests stay active. Cross-family copy tests
+are superseded by exact same-family replay/conflict/corruption tests; there is
+only one Notes-copy family now. No absent-name assertion alone establishes
+acceptance. The implementation report distinguishes exploratory failures,
+fixed-source tests, packaging execution and CI selection/skips from full release
+acceptance. No live recovery, merge or deployment is authorized by this contract.
+
+## R230 salvage classification and preservation-test correction
+
+Independent review of `ffeea444677b8d8bd8ae4615349bfe6769fbac1a` was
+scoped FAIL: 12/16 succeeded in 11.75s, with four post-backup metadata recovery
+failures (sha1/sha256 × Core-only/paired). Source DB/WAL preservation and the
+independent real COMMIT-denial probes succeeded. Those failures remain historical
+evidence; they are not replaced by an author PASS declaration.
+
+R230-01 (P1) changes the Context test following `retained_metadata` to `elif`:
+retained commit/tree/tag, Context document and generic candidates now have
+mutually exclusive classification. Valid native bytes/copy identity are not
+reclassified as generic untyped BLOBs. The corresponding merge dispatch is also
+exclusive: a successfully admitted retained body cannot fall into unknown-type
+rejection, and an admitted/replayed nominal row is not counted again as an
+unadmitted generic observation. The new post-backup regression checks all
+three native types, exact original copy IDs, a damaged sibling withheld without
+staging its body, nominal metadata-only rows, Context text, fresh restore/merge
+and byte-for-byte source DB/WAL preservation in both formats and topologies.
+
+R230-02 (P2) replaces the old keyword-based retired-test matches with explicit
+behavioral invariants and appropriate negative/preservation tests. In particular,
+real SQLite COMMIT denial and SIGKILL immediately after the new Ref body INSERT
+have dedicated acquisition regressions: rollback, independently admitted prefix,
+existing checked copy preservation, original copy/Claim identity and cumulative
+retry work are asserted. A Group INSERT failure separately proves rollback of
+new nominal objects while retaining an original Group. Narrow-path, unsupported
+mode/ambiguous path and bad incoming-body regressions keep the corresponding
+refusal/preservation behavior executable. Current typed Group/Claim/proof and
+retired-interface differences are stated in the mapping; this is not a claim
+that every old parameter matrix was rerun. The first map's target-existence
+check did not establish behavioral equivalence. All 78 entries were reviewed;
+the implementation report lists the small executed scope and remaining gaps.
+No schema/wire change, legacy alias, runtime permission change or new recovery
+policy is part of these corrections.

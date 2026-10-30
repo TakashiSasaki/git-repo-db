@@ -150,7 +150,9 @@ def test_git_acquisition_metadata_only_and_retained_modes(
             .mapping
         )
         assert core_hybrid.read_ref_note(claim, mapping, work) == b"Reviewed-by: CI\n"
-        assert not core_hybrid.sql("SELECT 1 FROM captures")
+        assert not core_hybrid.sql(
+            "SELECT 1 FROM sqlite_schema WHERE type='table' AND name='captures'"
+        )
 
     finally:
         core_hybrid.close()

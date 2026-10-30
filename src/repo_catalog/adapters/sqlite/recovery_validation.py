@@ -91,13 +91,10 @@ def charge_ref_integrity_inputs(connection, work):
         _charge_validation_lengths(connection, table, columns, work)
 
 
-def _charge_note_comparisons(connection, work, *, include_old):
+def _charge_note_comparisons(connection, work):
     """Bound exact-body comparisons made by trusted cross-family guards."""
     cursor = connection.execute(
-        "SELECT sum(is_ref),sum(ref_bytes),sum(1-is_ref),sum(old_bytes) FROM ("
-        "SELECT object_format,full_oid,1 AS is_ref,octet_length(body) AS ref_bytes,0 AS old_bytes FROM ref_retained_notes "
-        "UNION ALL SELECT object_format,full_oid,0,0,octet_length(body) FROM retained_notes"
-        ") GROUP BY object_format,full_oid"
+        "SELECT count(*),sum(octet_length(body)) FROM ref_retained_notes GROUP BY object_format,full_oid"
     )
     while True:
         work.require("metadata_units", 1)
@@ -109,9 +106,8 @@ def _charge_note_comparisons(connection, work, *, include_old):
         work.charge("metadata_units", 0 if row is None else 1)
         if row is None:
             break
-        ref_count, ref_bytes, old_count, old_bytes = row
-        cross = ref_count * old_bytes + old_count * ref_bytes
-        amount = cross if include_old else cross + 2 * ref_count * ref_bytes
+        ref_count, ref_bytes = row
+        amount = 2 * ref_count * ref_bytes
         work.require("input_bytes", amount)
         work.charge("input_bytes", amount)
 
@@ -370,18 +366,12 @@ def validate_stored_ref_authority(connection, work, budget):
 _PERSISTENT_GUARDS = {
     "core": {
         "relation_targets",
-        "notes_group_targets",
         "notes_mapping_group_targets",
         "ref_absence_subject",
         "ref_notes_same_representation",
-        "old_notes_same_representation",
-        "notes_inventory_guard",
         "metadata_same_representation",
         "intrinsic_claim_guard",
         "intrinsic_group_guard",
-        "notes_same_representation",
-        "notes_claim_format",
-        "notes_group_format",
         "core_coverage_members",
         "ref_coverage_proof_requires_typed_evidence",
     },
@@ -674,29 +664,15 @@ def validate_stored_admission_guards(
             raise RuntimeError(f"Unsupported packaged recovery guard: {name}")
         table, predicate = match.groups()
         predicate = re.sub(r"\bNEW\.(\w+)", r'"recovery_candidate"."\1"', predicate)
-        if (
-            work is not None
-            and role == "core"
-            and (
-                table in _REF_AUTHORITY_TABLES
-                or name == "old_notes_same_representation"
-            )
-        ):
+        if work is not None and role == "core" and table in _REF_AUTHORITY_TABLES:
             columns = [
                 row[1]
                 for row in connection.execute(f'PRAGMA table_xinfo("{table}")')
                 if row[2].upper() in ("TEXT", "BLOB") and not row[6]
             ]
             _charge_validation_lengths(connection, table, columns, work)
-            if name in (
-                "ref_notes_same_representation",
-                "old_notes_same_representation",
-            ):
-                _charge_note_comparisons(
-                    connection,
-                    work,
-                    include_old=name == "old_notes_same_representation",
-                )
+            if name == "ref_notes_same_representation":
+                _charge_note_comparisons(connection, work)
         if connection.execute(
             f'SELECT 1 FROM "{table}" AS recovery_candidate WHERE {predicate} LIMIT 1'
         ).fetchone():
@@ -788,7 +764,6 @@ def validate_stored_checks(
     # SQLite CHECK accepts NULL: WHERE NOT(expression) preserves that meaning.
     body_tables = {
         "retained_metadata",
-        "retained_notes",
         "ref_retained_notes",
         "text_bodies",
     }

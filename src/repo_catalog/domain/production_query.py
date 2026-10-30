@@ -25,10 +25,8 @@ from typing import TYPE_CHECKING, Any, Generic, Literal, TypeVar
 from repo_catalog.domain.p1_coordination import SnapshotToken
 from repo_catalog.domain.p1_core import (
     OID,
-    Capture,
     CoreCoverageScope,
     GitObservation,
-    NotesAlternative,
     Projection,
     Provenance,
     RepositoryClaim,
@@ -617,117 +615,6 @@ class GitObservationView:
             "repository_uuidv4": self.observation.repository_uuidv4,
             "scope": list(self.observation.scope),
             "value": self.observation.value,
-        }
-
-
-@dataclass(frozen=True)
-class _LegacyNotesTargetView:
-    """Authoritative Notes target projection and byte retention state."""
-
-    capture: Capture
-    target: OID
-    canonical: OID | None
-    alternatives: tuple[NotesAlternative, ...]
-    reported_conflict: bool
-    checked_scope: str | None
-    role_verified: bool
-    note_retained: bool
-    note_bytes: ByteReadResult | None = None
-
-    def to_dict(self) -> dict[str, object]:
-        return {
-            "alternatives": [
-                {
-                    "capture_pair": list(alt.capture_pair),
-                    "checked": alt.checked,
-                    "kind": alt.kind,
-                    "membership": [list(m) for m in alt.membership],
-                    "note": list(alt.note.key) if alt.note is not None else None,
-                    "path": alt.path,
-                    "provenance": (
-                        list(alt.provenance.key) if alt.provenance is not None else None
-                    ),
-                    "scope": alt.scope,
-                    "status": alt.status,
-                    "target": list(alt.target.key),
-                }
-                for alt in self.alternatives
-            ],
-            "canonical": (
-                list(self.canonical.key) if self.canonical is not None else None
-            ),
-            "capture": {
-                "capture_origin_uuidv4": self.capture.capture_origin_uuidv4,
-                "capture_uuidv4": self.capture.capture_uuidv4,
-                "ref": self.capture.ref,
-                "repository_uuidv4": self.capture.repository_uuidv4,
-                "root": list(self.capture.root.key),
-                "source": self.capture.source,
-            },
-            "checked_scope": self.checked_scope,
-            "note_bytes": (
-                self.note_bytes.to_dict() if self.note_bytes is not None else None
-            ),
-            "note_retained": self.note_retained,
-            "reported_conflict": self.reported_conflict,
-            "role_verified": self.role_verified,
-            "target": list(self.target.key),
-        }
-
-
-@dataclass(frozen=True)
-class _LegacyNotesInventoryView:
-    """Authoritative Notes inventory view."""
-
-    capture: Capture
-    scope: str
-    status: str
-    members: tuple[tuple[str, str, str | None], ...]
-    provenance: Provenance
-    receiver_verified: bool
-    diagnostic: tuple[str, str] | None = None
-
-    def to_dict(self) -> dict[str, object]:
-        return {
-            "capture_origin_uuidv4": self.capture.capture_origin_uuidv4,
-            "capture_uuidv4": self.capture.capture_uuidv4,
-            "diagnostic": list(self.diagnostic)
-            if self.diagnostic is not None
-            else None,
-            "members": [list(m) for m in self.members],
-            "provenance": list(self.provenance.key),
-            "receiver_verified": self.receiver_verified,
-            "scope": self.scope,
-            "status": self.status,
-        }
-
-
-@dataclass(frozen=True)
-class _LegacyNotesCaptureView:
-    """Authoritative Notes capture summary with targets and inventories."""
-
-    capture: Capture
-    targets: tuple[OID, ...]
-    inventories: tuple[_LegacyNotesInventoryView, ...]
-
-    @property
-    def semantic_key(self) -> tuple[str, str, str]:
-        return (
-            self.capture.ref,
-            self.capture.capture_origin_uuidv4,
-            self.capture.capture_uuidv4,
-        )
-
-    def to_dict(self) -> dict[str, object]:
-        return {
-            "capture_origin_uuidv4": self.capture.capture_origin_uuidv4,
-            "capture_uuidv4": self.capture.capture_uuidv4,
-            "inventories": [inv.to_dict() for inv in self.inventories],
-            "ref": self.capture.ref,
-            "repository_uuidv4": self.capture.repository_uuidv4,
-            "root": list(self.capture.root.key),
-            "source": self.capture.source,
-            "targets": [list(t.key) for t in self.targets],
         }
 
 

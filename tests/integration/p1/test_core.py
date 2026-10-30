@@ -13,7 +13,6 @@ from repo_catalog.adapters.sqlite.p1_core import Core
 from repo_catalog.adapters.sqlite.p1_schema import connect, initialize
 from repo_catalog.domain.p1_core import (
     OID,
-    Capture,
     CoreFailure,
     GitObservation,
     NativeObject,
@@ -292,24 +291,32 @@ def test_bad_epoch_microseconds_rejected(core, value):
         RepositoryClaim(repository, "observation_us", value, provenance())
 
 
-def test_multiple_repositories_share_nominal_object_with_distinct_capture(core):
+def test_multiple_repositories_share_nominal_object_with_distinct_ref_observations(
+    core,
+):
     c, _, first = core
     second = str(uuid4())
     c.admit_repository(second)
     origin = str(uuid4())
+    from repo_catalog.domain.ref_observation import (
+        RefObservation,
+        RefObservationClaim,
+        RefObservationKey,
+        new_uuid7,
+    )
+
     for repository in (first, second):
-        c.admit_capture(
-            Capture(
-                origin,
-                str(uuid4()),
-                repository,
-                "local-git",
-                "refs/notes/commits",
-                oid(),
+        key = RefObservationKey(origin, new_uuid7())
+        c.admit_ref_observation(
+            RefObservation(
+                key, repository, b"refs/notes/commits", "local-git", "visible"
             )
         )
+        c.admit_ref_observation_claim(
+            RefObservationClaim(key, provenance(), "present", root_oid=oid())
+        )
     assert len(c.sql("SELECT * FROM git_objects")) == 1
-    assert len(c.sql("SELECT * FROM captures")) == 2
+    assert len(c.sql("SELECT * FROM ref_observations")) == 2
     assert len(c.sql("SELECT * FROM repositories")) == 2
 
 

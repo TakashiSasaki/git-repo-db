@@ -24,6 +24,7 @@ from repo_catalog.adapters.sqlite.git_core import GitCore
 from repo_catalog.adapters.sqlite.production_context import Context
 from repo_catalog.domain.acquisition import (
     GitNativeAcquisitionRequest,
+    NotesAcquisitionSpec,
     ProviderIntakeBatch,
     ProviderPullRequestIntake,
     ProviderRegistration,
@@ -44,7 +45,7 @@ from repo_catalog.domain.p1_context import (
     canonical,
 )
 from repo_catalog.domain.p1_coordination import RequestIdentity
-from repo_catalog.domain.p1_core import OID, Capture, CoreFailure
+from repo_catalog.domain.p1_core import OID, CoreFailure
 from tests.integration.p5.conftest import build_sample_git_repo, init_catalog_stores
 from tests.support.context_admission import (
     AuthorizedExchangeService as ExchangeService,
@@ -102,14 +103,6 @@ def _setup_source_catalog(
 
     git_source = GitNativeSource(repo_dir)
     origin = str(uuid4())
-    capture = Capture(
-        origin,
-        str(uuid4()),
-        repo_uuid,
-        "src-cat-git",
-        "refs/notes/commits",
-        oids["notes_commit"],
-    )
     git_req = GitNativeAcquisitionRequest(
         repository_uuidv4=repo_uuid,
         capture_origin_uuidv4=origin,
@@ -118,9 +111,12 @@ def _setup_source_catalog(
         observed_at_us=1_700_000_100_000_000,
         select_oids=(oids["commit1"], oids["commit2"], oids["tree"], oids["tag"]),
         retain_bytes=True,
-        # I2 ref observations require I3 Exchange. These tests exercise the
-        # unaffected object, legacy Notes and Context roundtrip.
         include_refs=False,
+        notes=NotesAcquisitionSpec(
+            discover_notes=True,
+            acquire_inventories=True,
+            target_oids=(oids["commit2"],),
+        ),
     )
 
     service_uuid = str(uuid4())
@@ -172,29 +168,6 @@ def _setup_source_catalog(
         git_request=git_req,
         provider_batch=batch,
     )
-    # The legacy physical Exchange contract remains until its coordinated cut.
-    # Seed that fixture explicitly; the public acquisition above produces no
-    # Capture/Notes rows and has no legacy input carrier.
-    from contextlib import closing
-
-    from repo_catalog.adapters.git.notes import GitNotesSource
-    from repo_catalog.adapters.sqlite.acquisition import (
-        InMemoryNotesProgress,
-        UnlimitedWorkBudget,
-    )
-    from repo_catalog.application.notes import NotesAcquisition
-
-    with closing(GitCore(cat_dir / "core.sqlite3")) as core:
-        legacy = NotesAcquisition(
-            core,
-            GitNotesSource(git_source),
-            UnlimitedWorkBudget(),
-            InMemoryNotesProgress(),
-            source_attribution="src-cat-git",
-            repository_uuidv4=repo_uuid,
-        )
-        legacy._legacy_acquire_note(capture, oids["commit2"])
-        legacy._legacy_inventory(capture)
     return oids
 
 
@@ -213,7 +186,7 @@ def test_exchange_export_import_repeat_reverse_and_multi_hop(tmp_path: Path) -> 
     )
     assert pkg_a.core is not None
     assert pkg_a.context is not None
-    assert pkg_a.core["captures"] and pkg_a.core["retained_notes"]
+    assert pkg_a.core["ref_observations"] and pkg_a.core["ref_retained_notes"]
 
     # Encode to canonical JSON wire format and decode
     wire_bytes = encode_package(pkg_a)

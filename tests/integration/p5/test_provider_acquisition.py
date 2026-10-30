@@ -432,6 +432,6 @@ def test_context_file_metadata_never_retains_blob_in_git_core(tmp_path: Path) ->
             ][0]
             == 0
         )
-        assert core.sql("SELECT COUNT(*) FROM retained_notes")[0][0] == 0
+        assert core.sql("SELECT COUNT(*) FROM ref_retained_notes")[0][0] == 0
     finally:
         core.close()

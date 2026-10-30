@@ -2293,50 +2293,6 @@ def test_unknown_binary_is_not_staged_by_generic_extraction(acquisition, tmp_pat
     assert result.partial
 
 
-@pytest.mark.parametrize("damage", [False, True])
-def test_legacy_note_bytes_are_staged_only_with_valid_original_proof(
-    synthetic_catalog, tmp_path, damage
-):
-    db = connect(synthetic_catalog / "core.sqlite3", "core")
-    try:
-        body = db.execute("SELECT body FROM retained_notes").fetchone()[0]
-        if damage:
-            db.execute("PRAGMA foreign_keys=OFF")
-            triggers = db.execute(
-                "SELECT name,sql FROM sqlite_schema WHERE type='trigger' "
-                "AND tbl_name='retained_notes' AND sql LIKE '%UPDATE%'"
-            ).fetchall()
-            for name, _ in triggers:
-                db.execute('DROP TRIGGER "' + name.replace('"', '""') + '"')
-            db.execute("PRAGMA ignore_check_constraints=ON")
-            db.execute("UPDATE retained_notes SET proof_bundle='[]'")
-            db.execute("PRAGMA ignore_check_constraints=OFF")
-            for _, sql in triggers:
-                db.execute(sql)
-            db.commit()
-    finally:
-        db.close()
-    stop_catalog(synthetic_catalog, "synthetic legacy note evidence")
-    output = tmp_path / "legacy-candidate.jsonl"
-    receipt = SQLiteRecoveryAdapter().extract_salvage(synthetic_catalog, output)
-    records = [json.loads(line) for line in output.read_text().splitlines()]
-    note = next(
-        value
-        for value in records
-        if value["extraction_provenance"].get("table") == "retained_notes"
-    )
-    encoded = base64.b64encode(body).decode("ascii")
-    if damage:
-        assert receipt.partial
-        assert note["extraction_status"] == "partial"
-        assert "body_base64" not in note["payload"]
-        assert encoded not in output.read_text()
-    else:
-        assert note["extraction_status"] == "clean"
-        assert note["payload"]["body_base64"] == encoded
-        assert note["payload"]["proof_bundle"]
-
-
 def test_ordinary_blob_cannot_be_staged_as_structural_metadata(
     synthetic_catalog, tmp_path
 ):

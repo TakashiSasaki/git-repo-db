@@ -312,21 +312,6 @@ def _open_core(target: GitCore | Path | str) -> Iterator[GitCore]:
         core.close()
 
 
-def _validate_metadata_coverage(core, unit, work):
-    scopes = (
-        *unit.coverage_scopes,
-        *(claim.scope for claim in unit.coverage_claims),
-        *(proof[0].scope for proof in unit.coverage_proofs),
-    )
-    for scope in scopes:
-        if scope.owner_kind == "capture":
-            raise CoreFailure(
-                "RETIRED_NOTES_INPUT",
-                "metadata",
-                "Capture-owned acquisition Coverage is retired",
-            )
-
-
 @contextmanager
 def _open_operational(
     target: OperationalAcquisitionLedger | Path | str | None,
@@ -643,7 +628,7 @@ class GitAcquisition:
     ) -> GitAcquisitionReport:
         """Acquire one explicitly selected repository; the catalog seed is not it.
 
-        Validate all repository-owned claims/captures before any admission. Physical
+        Validate all repository-owned claims/observations before any admission. Physical
         Core/Operational identity pairing remains anchored to store_identity.
         """
         preflight_intent = native_request_intent(without_ref_inputs(request))
@@ -1206,7 +1191,6 @@ class GitAcquisition:
                 else [notes_source.scope, notes_source.object_format]
             )
             _charge(active_work, "metadata_units", 1)
-            _validate_metadata_coverage(core_cap, unit, active_work)
             intent_scope = encode(
                 ["p5-metadata-intent", unit.capture_origin_uuidv4, unit.capture_uuidv4]
             )

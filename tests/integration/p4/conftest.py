@@ -13,7 +13,7 @@ from repo_catalog.adapters.sqlite.p1_coordination import NotesWorkBudget, WorkLe
 from repo_catalog.adapters.sqlite.p1_schema import connect, initialize
 from repo_catalog.application.notes import NotesAcquisition
 from repo_catalog.domain.p1_coordination import NotesLimits, RequestIdentity
-from repo_catalog.domain.p1_core import OID, Capture
+from repo_catalog.domain.p1_core import OID
 from repo_catalog.domain.ports.notes import request_scope
 
 
@@ -94,7 +94,7 @@ def fixture_note(acquisition, body=b"\0\xffbinary\r\n", *, fanout=0, commit=Fals
             + b"\nauthor A <a@invalid> 1 +0000\ncommitter A <a@invalid> 1 +0000\n\nnotes\n",
         )
     git(path, "update-ref", "refs/notes/nested/review", root.full_oid)
-    capture = Capture(
-        origin, str(uuid4()), repository, "local-test", "refs/notes/nested/review", root
-    )
-    return capture, target, note
+    from types import SimpleNamespace
+
+    captured_root = SimpleNamespace(root=root, ref="refs/notes/nested/review")
+    return captured_root, target, note

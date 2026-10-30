@@ -74,8 +74,8 @@ def test_deterministic_pagination_across_all_endpoints(tmp_path: Path) -> None:
     assert len(paged_obs) == all_obs.total_count
 
     # 3. Notes captures pagination
-    all_caps = service._legacy_list_notes_captures(PageRequest(limit=100))
-    paged_caps, _ = _collect_all_pages(service._legacy_list_notes_captures, limit=1)
+    all_caps = service.list_ref_observations(PageRequest(limit=100))
+    paged_caps, _ = _collect_all_pages(service.list_ref_observations, limit=1)
     assert [c.semantic_key for c in paged_caps] == [
         c.semantic_key for c in all_caps.items
     ]

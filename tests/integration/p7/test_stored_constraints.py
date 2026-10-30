@@ -1,7 +1,6 @@
 """Trusted revalidation must not inherit readonly SQLite CHECK omissions."""
 
 import sqlite3
-import uuid
 
 import pytest
 
@@ -15,8 +14,8 @@ from repo_catalog.domain.recovery import CorruptionDetectedError
 @pytest.mark.parametrize(
     "table,column,value",
     [
-        ("captures", "ref", "CAST(x'ff' AS TEXT)"),
-        ("captures", "ref", "'not-a-valid-ref'"),
+        ("ref_observations", "source_attribution", "CAST(x'ff' AS TEXT)"),
+        ("ref_observations", "visibility_scope", "''"),
         ("scalar_claims", "provenance", "CAST(x'ff' AS TEXT)"),
         ("scalar_claims", "value", "'false'"),
         ("scalar_claims", "value", "'{'"),
@@ -48,7 +47,8 @@ def test_invalid_core_text_or_udf_check_stops_source(
     assert schema_rows(connection) == expected_schema("core")
     connection.close()
     with pytest.raises(
-        CorruptionDetectedError, match="invalid UTF-8|CHECK constraint failed"
+        CorruptionDetectedError,
+        match="invalid UTF-8|CHECK constraint failed|authoritative integrity failure",
     ):
         RecoveryService().create_consistent_backup(
             synthetic_catalog, tmp_path / "backup"
@@ -61,7 +61,7 @@ def test_binary_notes_and_split_unicode_remain_valid(synthetic_catalog, tmp_path
     from repo_catalog.adapters.sqlite.acquisition import UnlimitedWorkBudget
     from repo_catalog.adapters.sqlite.git_core import GitCore
     from repo_catalog.adapters.sqlite.p1_schema import connect
-    from repo_catalog.domain.p1_core import OID, Capture, NotesProof
+    from repo_catalog.domain.p1_core import OID
     from tests.integration.p7.conftest import (
         DEFAULT_REPO_UUID,
         admit_context_text,
@@ -78,20 +78,10 @@ def test_binary_notes_and_split_unicode_remain_valid(synthetic_catalog, tmp_path
     )
     note = make_native("sha1", "blob", b"\xff\x00\xfe")
     tree = make_tree("sha1", [(b"100644", target.full_oid.encode(), note.oid.full_oid)])
-    capture = Capture(
-        str(uuid.uuid4()),
-        str(uuid.uuid4()),
-        DEFAULT_REPO_UUID,
-        "binary-source",
-        "refs/notes/binary",
-        tree.oid,
-    )
-    core.admit_capture(capture)
-    core.admit_note(
-        NotesProof(capture, target, note.oid, target.full_oid, (tree,)),
-        note,
-        str(uuid.uuid4()),
-        UnlimitedWorkBudget(),
+    from tests.support.ref_notes import admit_fixture_note
+
+    admit_fixture_note(
+        core, DEFAULT_REPO_UUID, tree, target, note, UnlimitedWorkBudget()
     )
     connection = connect(synthetic_catalog / "context.sqlite3", "context")
     admit_context_text(connection, "a" * 65535 + "📝" * 4)

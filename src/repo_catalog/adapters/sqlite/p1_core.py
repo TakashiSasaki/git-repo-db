@@ -18,16 +18,10 @@ from pathlib import Path
 
 from repo_catalog.domain.p1_core import (
     OID,
-    Capture,
     CoreCoverageScope,
     CoreFailure,
     GitObservation,
     NativeObject,
-    NotesAlternative,
-    NotesClaim,
-    NotesGroup,
-    NotesProjection,
-    NotesProof,
     Projection,
     Provenance,
     RelationGroup,
@@ -149,34 +143,6 @@ _BOUNDED_STORED_ROWS = {
             "role_provenance",
         ),
         True,
-    ),
-    "retained_notes": (
-        "object_format=? AND full_oid=? AND physical_copy_uuidv4=?",
-        (
-            "object_format",
-            "full_oid",
-            "physical_copy_uuidv4",
-            "digest_sha256",
-            "capture_origin_uuidv4",
-            "capture_uuidv4",
-            "root",
-            "target",
-            "path",
-        ),
-        True,
-    ),
-    "captures": (
-        "capture_origin_uuidv4=? AND capture_uuidv4=?",
-        (
-            "capture_origin_uuidv4",
-            "capture_uuidv4",
-            "repository_uuidv4",
-            "source",
-            "ref",
-            "object_format",
-            "root",
-        ),
-        False,
     ),
 }
 
@@ -1961,108 +1927,6 @@ class Core:
             raise
         return claim, mapping, row["body"]
 
-    def _validate_stored_legacy_note(
-        self, row, work: WorkBudget, max_metadata_bytes: int, max_proof_bytes: int
-    ):
-        """Diagnose old-format authority without using it for a new role."""
-        scope = (row["object_format"], row["full_oid"], row["physical_copy_uuidv4"])
-        self._stored(scope, uuid4_value, row["physical_copy_uuidv4"])
-        pair = (row["capture_origin_uuidv4"], row["capture_uuidv4"])
-        capture_row = self._bounded_stored_row(
-            "captures", pair, work, max_metadata_bytes
-        )
-        if capture_row is None:
-            self._integrity_stop((scope, "missing-legacy-capture"))
-
-        def decode_capture(value):
-            tag, raw_hex = json.loads(value["ref"])
-            if tag != "native-ref":
-                raise ValueError("invalid stored ref tag")
-            raw = bytes.fromhex(raw_hex)
-            ref = raw.decode("utf-8", "surrogateescape")
-            capture = Capture(
-                value["capture_origin_uuidv4"],
-                value["capture_uuidv4"],
-                value["repository_uuidv4"],
-                value["source"],
-                ref,
-                OID(value["object_format"], value["root"]),
-            )
-            encoded_size = 3 + self._json_string_bytes("native-ref") + 2 + 2 * len(raw)
-            if encoded_size > max_metadata_bytes:
-                raise CoreFailure("BUDGET", scope, "finite legacy ref metadata limit")
-            self._charge(work, "input_bytes", encoded_size)
-            if capture.key != tuple(value):
-                raise ValueError("noncanonical stored capture")
-            return capture
-
-        capture = self._stored(scope, decode_capture, capture_row)
-        root = self._stored(scope, OID, row["object_format"], row["root"])
-        target = self._stored(scope, OID, row["object_format"], row["target"])
-        note = self._stored(scope, OID, row["object_format"], row["full_oid"])
-        if capture.root != root:
-            self._integrity_stop((scope, "legacy-capture-root"))
-        self._charge(work, "metadata_units", 1)
-        if not self._ref_note_one(
-            "SELECT 1 FROM repositories WHERE repository_uuidv4=?",
-            (capture.repository_uuidv4,),
-        ):
-            self._integrity_stop((scope, "missing-legacy-repository"))
-        for oid in (root, target, note):
-            self._charge(work, "metadata_units", 1)
-            if not self._ref_note_one(
-                "SELECT 1 FROM git_objects WHERE object_format=? AND full_oid=?",
-                oid.key,
-            ):
-                self._integrity_stop((scope, "missing-legacy-object", oid.key))
-        self._meter_input_metadata(
-            work,
-            (*pair, *root.key, target.full_oid, note.full_oid, row["path"]),
-            max_metadata_bytes,
-        )
-        self._meter_input_metadata(work, (row["proof_bundle"],), max_proof_bytes)
-        self._charge(work, "metadata_units", 1)
-        if not self._ref_note_one(
-            "SELECT 1 FROM note_roles WHERE capture_origin_uuidv4=? AND capture_uuidv4=? AND object_format=? AND root=? AND target=? AND note=? AND path=? AND proof_bundle=?",
-            (
-                *pair,
-                *root.key,
-                target.full_oid,
-                note.full_oid,
-                row["path"],
-                row["proof_bundle"],
-            ),
-        ):
-            self._integrity_stop((scope, "missing-legacy-role"))
-        self._meter_input_metadata(work, (row["proof_bundle"],), max_proof_bytes)
-        try:
-            with account_verification(work):
-                try:
-                    valid = valid_note_role(
-                        *root.key,
-                        target.full_oid,
-                        note.full_oid,
-                        row["path"],
-                        row["proof_bundle"],
-                    ) and valid_native(
-                        *note.key,
-                        "blob",
-                        row["body"],
-                        row["size"],
-                        row["digest_sha256"],
-                    )
-                except (ValueError, TypeError, RecursionError, OverflowError):
-                    valid = False
-                if not valid:
-                    raise CoreFailure(
-                        "STORED_NOTES_EVIDENCE", scope, "invalid legacy proof or body"
-                    )
-        except CoreFailure as error:
-            if error.code == "STORED_NOTES_EVIDENCE":
-                self._integrity_stop((scope, "invalid-legacy-proof-or-body"))
-            raise
-        return row["body"]
-
     def _diagnose_ref_note_conflict(
         self,
         native: NativeObject,
@@ -2077,7 +1941,7 @@ class Core:
         catalog damage. Each inspected copy is bounded and charged separately.
         """
         inspected = 0
-        for table in ("ref_retained_notes", "retained_notes"):
+        for table in ("ref_retained_notes",):
             previous = ""
             while True:
                 tail = (
@@ -2100,14 +1964,9 @@ class Core:
                 )
                 if row is None:
                     self._integrity_stop((native.oid, copy, "missing-conflict-copy"))
-                if table == "ref_retained_notes":
-                    self._validate_stored_ref_note(
-                        row, work, max_metadata_bytes, max_proof_bytes
-                    )
-                else:
-                    self._validate_stored_legacy_note(
-                        row, work, max_metadata_bytes, max_proof_bytes
-                    )
+                self._validate_stored_ref_note(
+                    row, work, max_metadata_bytes, max_proof_bytes
+                )
                 # Continue through both tables even after a valid collision:
                 # another compared copy may independently be damaged.
                 previous = copy
@@ -2124,9 +1983,8 @@ class Core:
         work.require("metadata_units", max_copies + 1)
         try:
             rows = self._db.execute(
-                "SELECT octet_length(body),size FROM ref_retained_notes WHERE object_format=? AND full_oid=? "
-                "UNION ALL SELECT octet_length(body),size FROM retained_notes WHERE object_format=? AND full_oid=? LIMIT ?",
-                (*native.oid.key, *native.oid.key, max_copies + 1),
+                "SELECT octet_length(body),size FROM ref_retained_notes WHERE object_format=? AND full_oid=? LIMIT ?",
+                (*native.oid.key, max_copies + 1),
             ).fetchall()
         except BaseException as error:
             abandon = getattr(work, "abandon", None)
@@ -2750,31 +2608,6 @@ class Core:
                 self._integrity_stop((claim.identity, "selected-note-scope"))
             return body
 
-    def _capture(self, capture: Capture) -> None:
-        self._object(capture.root)
-        self._insert("captures", capture.key)
-
-    def admit_capture(self, capture: Capture) -> None:
-        with self._transaction():
-            self._capture(capture)
-
-    def admit_notes_claim(self, claim: NotesClaim) -> None:
-        self._reported(claim.provenance)
-        with self._transaction():
-            self._capture(claim.capture)
-            self._object(claim.target)
-            self._object(claim.note)
-            self._insert("notes_claims", claim.key)
-
-    def admit_notes_group(self, group: NotesGroup) -> None:
-        self._reported(group.provenance)
-        with self._transaction():
-            self._capture(group.capture)
-            for target, note, _path in group.members:
-                self._object(OID(group.capture.root.object_format, target))
-                self._object(OID(group.capture.root.object_format, note))
-            self._insert("notes_groups", group.key)
-
     @staticmethod
     def _charge(work: WorkBudget, unit: str, amount: int) -> None:
         work.require(unit, amount)
@@ -2855,76 +2688,6 @@ class Core:
             self._charge(work, "metadata_units", 1)
             with self._transaction():
                 self._metadata(native, physical_copy_uuidv4)
-
-    def admit_notes_role(self, proof: NotesProof, work: WorkBudget) -> None:
-        """Check one relevant structural mapping without acquiring note bytes."""
-        self._available()
-        with account_verification(work):
-            for structure in proof.structures:
-                self._charge(work, "input_bytes", len(structure.body))
-            proof.validate()
-            self._charge(work, "metadata_units", 1)
-            with self._transaction():
-                self._capture(proof.capture)
-                self._object(proof.target)
-                self._object(proof.note)
-                self._insert("note_roles", proof.key)
-
-    def admit_note(
-        self,
-        proof: NotesProof,
-        native: NativeObject,
-        physical_copy_uuidv4: str,
-        work: WorkBudget,
-        *,
-        before_commit: Callable[[], None] | None = None,
-    ) -> None:
-        self._available()
-        uuid4_value(physical_copy_uuidv4)
-        if (
-            type(work.limits.note_bytes) is not int
-            or not 0 < work.limits.note_bytes < 2**63
-        ):
-            raise CoreFailure(
-                "BUDGET", "note_bytes", "positive finite note limit required"
-            )
-        if len(native.body) > work.limits.note_bytes:
-            raise CoreFailure("BUDGET", native.oid, "individual note size limit")
-        if native.oid != proof.note or native.native_type != "blob":
-            raise CoreFailure(
-                "NOTES_BODY", proof.note, "note body must have exact blob identity"
-            )
-        with account_verification(work):
-            for structure in proof.structures:
-                self._charge(work, "proof_steps", 1)
-                self._charge(work, "input_bytes", len(structure.body))
-                structure.validate()
-            proof.validate()
-            self._charge(work, "input_bytes", len(native.body))
-            native.validate()
-            self._charge(work, "metadata_units", 1)
-            with self._transaction():
-                self._capture(proof.capture)
-                self._object(proof.target)
-                self._object(proof.note)
-                self._insert("note_roles", proof.key)
-                self._insert(
-                    "retained_notes",
-                    (
-                        *native.oid.key,
-                        physical_copy_uuidv4,
-                        native.body,
-                        native.declared_size,
-                        native.digest_sha256,
-                        *proof.capture.pair,
-                        proof.capture.root.full_oid,
-                        proof.target.full_oid,
-                        proof.path,
-                        proof.bundle,
-                    ),
-                )
-                if before_commit is not None:
-                    before_commit()
 
     @_completed_read
     @_decoded_read
@@ -3062,8 +2825,6 @@ class Core:
     def admit_coverage_scope(self, scope: CoreCoverageScope) -> None:
         values = dict(
             repository_uuidv4=None,
-            capture_origin_uuidv4=None,
-            capture_uuidv4=None,
             observation_origin_uuidv4=None,
             ref_observation_uuidv7=None,
             object_format=None,
@@ -3072,7 +2833,6 @@ class Core:
         )
         names = {
             "repository": ("repository_uuidv4",),
-            "capture": ("capture_origin_uuidv4", "capture_uuidv4"),
             "ref_observation": ("observation_origin_uuidv4", "ref_observation_uuidv7"),
             "object": ("object_format", "full_oid"),
             "field": ("object_format", "full_oid", "field"),
@@ -3741,174 +3501,6 @@ class Core:
             self._integrity_stop((oid, row["physical_copy_uuidv4"], "native-syntax"))
         return row["body"]
 
-    @_completed_read
-    @_decoded_read
-    def notes_projection(self, capture: Capture, target: OID) -> NotesProjection:
-        """Metadata-only alternatives and precisely relevant checked mapping.
-
-        Proven roles prefer only Capture+target association, never provenance,
-        ref freshness, completeness of groups, target bytes or body availability.
-        All genuine reports/groups remain available and conflicts stay explicit.
-        """
-        if target.object_format != capture.root.object_format:
-            raise CoreFailure(
-                "NOTES_SCOPE", (capture.pair, target), "Capture object-format mismatch"
-            )
-        with self._snapshot():
-            bindings = self.sql(
-                "SELECT * FROM captures WHERE capture_origin_uuidv4=? AND capture_uuidv4=?",
-                capture.pair,
-            )
-            if bindings and tuple(bindings[0]) != capture.key:
-                raise CoreFailure(
-                    "INCOMPATIBLE_REPLAY",
-                    capture.pair,
-                    "immutable Capture binding conflict",
-                )
-            alternatives = []
-            positive = set()
-            claims = self.sql(
-                "SELECT note,provenance FROM notes_claims WHERE capture_origin_uuidv4=? AND capture_uuidv4=? AND object_format=? AND target=?",
-                (*capture.pair, target.object_format, target.full_oid),
-            )
-            for row in claims:
-                note = self._stored(
-                    (capture.pair, target), OID, target.object_format, row[0]
-                )
-                positive.add(note)
-                alternatives.append(
-                    NotesAlternative(
-                        "claim",
-                        capture.pair,
-                        target,
-                        note,
-                        None,
-                        None,
-                        (),
-                        self._provenance_value((capture.pair, target), row[1]),
-                        None,
-                        False,
-                    )
-                )
-            absent_closed = False
-            groups = self.sql(
-                "SELECT scope,status,membership,provenance FROM notes_groups WHERE capture_origin_uuidv4=? AND capture_uuidv4=? AND object_format=?",
-                (*capture.pair, target.object_format),
-            )
-            for row in groups:
-                if not row[0] or not _notes_group(target.object_format, row[1], row[2]):
-                    self._integrity_stop(
-                        (capture.pair, target, "invalid-stored-notes-group")
-                    )
-                members = tuple(tuple(m) for m in json.loads(row[2]))
-                relevant = [m for m in members if m[0] == target.full_oid]
-                # Groups preserve their asserted scope; complete/empty excludes
-                # unlisted targets only when explicitly scoped to all mappings.
-                applicable = row[0] == "all-notes-mappings" or row[0] == encode(
-                    ["target", target.full_oid]
-                )
-                if not relevant and not applicable:
-                    continue
-                for member in relevant:
-                    positive.add(OID(target.object_format, member[1]))
-                absent_closed |= (
-                    applicable
-                    and row[1] in ("complete", "known_empty")
-                    and not relevant
-                )
-                alternatives.append(
-                    NotesAlternative(
-                        "group",
-                        capture.pair,
-                        target,
-                        OID(target.object_format, relevant[0][1]) if relevant else None,
-                        row[0],
-                        row[1],
-                        members,
-                        self._provenance_value((capture.pair, target), row[3]),
-                        relevant[0][2] if relevant else None,
-                        False,
-                    )
-                )
-            checked = set()
-            roles = self.sql(
-                "SELECT root,note,path,proof_bundle FROM note_roles WHERE capture_origin_uuidv4=? AND capture_uuidv4=? AND object_format=? AND target=?",
-                (*capture.pair, target.object_format, target.full_oid),
-            )
-            for row in roles:
-                if not valid_note_role(
-                    target.object_format,
-                    row[0],
-                    target.full_oid,
-                    row[1],
-                    row[2],
-                    row[3],
-                ):
-                    self._integrity_stop((capture.pair, target, "notes-role"))
-                note = OID(target.object_format, row[1])
-                checked.add(note)
-                alternatives.append(
-                    NotesAlternative(
-                        "receiver_role",
-                        capture.pair,
-                        target,
-                        note,
-                        "relevant-root-to-target-mapping",
-                        None,
-                        (),
-                        None,
-                        row[2],
-                        True,
-                    )
-                )
-            return NotesProjection(
-                capture,
-                target,
-                next(iter(checked)) if len(checked) == 1 else None,
-                tuple(alternatives),
-                len(positive | checked) > 1
-                or (absent_closed and bool(positive | checked)),
-                "relevant-root-to-target-mapping" if checked else None,
-            )
-
-    @_completed_read
-    @_decoded_read
-    def read_note(self, capture: Capture, target: OID, note: OID) -> bytes:
-        with self._snapshot():
-            bindings = self.sql(
-                "SELECT * FROM captures WHERE capture_origin_uuidv4=? AND capture_uuidv4=?",
-                capture.pair,
-            )
-            if bindings and tuple(bindings[0]) != capture.key:
-                raise CoreFailure(
-                    "INCOMPATIBLE_REPLAY",
-                    capture.pair,
-                    "immutable Capture binding conflict",
-                )
-            rows = self.sql(
-                "SELECT n.*,r.root AS requested_root,r.path AS requested_path,r.proof_bundle AS requested_proof FROM retained_notes n JOIN note_roles r ON r.object_format=n.object_format AND r.note=n.full_oid WHERE r.capture_origin_uuidv4=? AND r.capture_uuidv4=? AND r.object_format=? AND r.target=? AND r.note=? ORDER BY n.physical_copy_uuidv4",
-                (*capture.pair, target.object_format, target.full_oid, note.full_oid),
-            )
-            if not rows:
-                raise CoreFailure(
-                    "NOTES_ROLE_UNAVAILABLE",
-                    (capture.pair, target, note),
-                    "no receiver-proven note role/body for requested scope",
-                )
-            row = rows[0]
-            if not valid_note_role(
-                target.object_format,
-                row["requested_root"],
-                target.full_oid,
-                note.full_oid,
-                row["requested_path"],
-                row["requested_proof"],
-            ) or not valid_native(
-                *note.key, "blob", row["body"], row["size"], row["digest_sha256"]
-            ):
-                self._integrity_stop((note, row["physical_copy_uuidv4"]))
-            return row["body"]
-
 
 def validate_embedded_references(db) -> None:
     """Revalidate semantic embedded FKs for backup/read certification.
@@ -3918,7 +3510,6 @@ def validate_embedded_references(db) -> None:
     alongside ordinary composite FKs, including after untrusted restoration.
     """
     from repo_catalog.domain.p1_core import (
-        _notes_group,
         valid_coverage_members,
         valid_group,
     )
@@ -3944,7 +3535,6 @@ def validate_embedded_references(db) -> None:
                 "invalid embedded relation reference",
             )
     for fmt, status, membership in db.execute(
-        "SELECT object_format,status,membership FROM notes_groups UNION ALL "
         "SELECT object_format,status,membership FROM notes_mapping_groups"
     ):
         if not _notes_group(fmt, status, membership) or any(
@@ -3953,7 +3543,7 @@ def validate_embedded_references(db) -> None:
         ):
             raise CoreFailure(
                 "AUTHORITATIVE_CORRUPTION",
-                "notes_groups",
+                "notes_mapping_groups",
                 "invalid embedded notes reference",
             )
     for evidence, source, visibility, ref_name in db.execute(

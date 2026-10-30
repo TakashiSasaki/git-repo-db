@@ -55,7 +55,9 @@ def test_reported_notes_visible_without_capture(acquisition, paired, capsys):
     assert encoded["observation"]["ref_observation"]["ref_name_bytes"] == {
         "bytes_hex": value.observation.ref_name_bytes.hex()
     }
-    assert not app.core.sql("SELECT 1 FROM captures")
+    assert not app.core.sql(
+        "SELECT 1 FROM sqlite_schema WHERE type='table' AND name='captures'"
+    )
     assert main(["ref-observations", "--catalog", str(path.parent)]) == 0
     assert json.loads(capsys.readouterr().out)["items"][0] == ref_projection_json(
         result.observation

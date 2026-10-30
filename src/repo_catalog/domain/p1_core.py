@@ -259,67 +259,6 @@ class RelationGroup:
 
 
 @dataclass(frozen=True)
-class Capture:
-    capture_origin_uuidv4: str
-    capture_uuidv4: str
-    repository_uuidv4: str
-    source: str
-    ref: str
-    root: OID
-
-    def __post_init__(self) -> None:
-        for value in self.pair + (self.repository_uuidv4,):
-            uuid4_value(value)
-        if not self.source or not self.ref.startswith("refs/") or "\x00" in self.ref:
-            raise CoreFailure(
-                "CAPTURE", self.pair, "genuine source and full nominated ref required"
-            )
-
-    @property
-    def pair(self) -> tuple[str, str]:
-        return self.capture_origin_uuidv4, self.capture_uuidv4
-
-    @property
-    def key(self) -> tuple[str, ...]:
-        return (
-            *self.pair,
-            self.repository_uuidv4,
-            self.source,
-            encode(["native-ref", self.ref.encode("utf-8", "surrogateescape").hex()]),
-            *self.root.key,
-        )
-
-
-@dataclass(frozen=True)
-class NotesClaim:
-    capture: Capture
-    target: OID
-    note: OID
-    provenance: Provenance
-
-    def __post_init__(self) -> None:
-        if (
-            self.target.object_format != self.capture.root.object_format
-            or self.note.object_format != self.target.object_format
-        ):
-            raise CoreFailure(
-                "NOTES",
-                self.capture.pair,
-                "notes mapping must share native object format",
-            )
-
-    @property
-    def key(self) -> tuple[str, ...]:
-        return (
-            *self.capture.pair,
-            self.target.object_format,
-            self.target.full_oid,
-            self.note.full_oid,
-            self.provenance.encoded,
-        )
-
-
-@dataclass(frozen=True)
 class NativeObject:
     oid: OID
     native_type: Literal["commit", "tree", "tag", "blob"]
@@ -339,57 +278,6 @@ class NativeObject:
                 "NATIVE_INTEGRITY",
                 self.oid,
                 "exact native OID/type/size/digest mismatch",
-            )
-
-
-@dataclass(frozen=True)
-class NotesProof:
-    capture: Capture
-    target: OID
-    note: OID
-    path: str
-    structures: tuple[NativeObject, ...]
-
-    @property
-    def bundle(self) -> str:
-        return encode(
-            [[s.oid.full_oid, s.native_type, s.body.hex()] for s in self.structures]
-        )
-
-    @property
-    def key(self) -> tuple[str, ...]:
-        return (
-            *self.capture.pair,
-            self.capture.root.object_format,
-            self.capture.root.full_oid,
-            self.target.full_oid,
-            self.note.full_oid,
-            self.path,
-            self.bundle,
-        )
-
-    def validate(self) -> None:
-        for item in self.structures:
-            item.validate()
-        if (
-            self.target.object_format != self.capture.root.object_format
-            or self.note.object_format != self.target.object_format
-            or any(
-                s.oid.object_format != self.target.object_format
-                for s in self.structures
-            )
-            or not valid_note_role(
-                *self.capture.root.key,
-                self.target.full_oid,
-                self.note.full_oid,
-                self.path,
-                self.bundle,
-            )
-        ):
-            raise CoreFailure(
-                "NOTES_ROLE",
-                (self.capture.pair, self.target),
-                "receiver-proven relevant notes mapping required",
             )
 
 
@@ -595,21 +483,6 @@ def register_functions(connection: sqlite3.Connection) -> None:
         except (ValueError, TypeError, IndexError):
             return False
 
-    def native_ref(value):
-        try:
-            tag, encoded = json.loads(value)
-            raw = bytes.fromhex(encoded)
-            return (
-                tag == "native-ref"
-                and raw.hex() == encoded
-                and raw.startswith(b"refs/")
-                and b"\0" not in raw
-                and encode([tag, encoded]) == value
-            )
-        except (ValueError, TypeError):
-            return False
-
-    connection.create_function("p1_ref", 1, native_ref, deterministic=True)
     connection.create_function(
         "p1_coverage_members", 1, valid_coverage_members, deterministic=True
     )
@@ -633,34 +506,6 @@ def register_functions(connection: sqlite3.Connection) -> None:
     connection.create_function("p1_note_role", 6, valid_note_role, deterministic=True)
     connection.create_function("p1_notes_group", 3, _notes_group, deterministic=True)
 
-    def notes_inventory(capture_key, scope, status, membership, provenance):
-        from repo_catalog.domain.notes import decode_inventory_group
-
-        state = _work_scope.get()
-        try:
-            decode_inventory_group(
-                capture_key,
-                scope,
-                status,
-                membership,
-                provenance,
-                None if state is None else state["work"],
-            )
-            return True
-        except CoreFailure as error:
-            # The nested grammar's accounting scope may have caught a budget
-            # refusal to return honest partial inventory. Preserve that actual
-            # refusal at the outer Core transaction rather than laundering it
-            # into a generic SQLite constraint error.
-            if error.code == "BUDGET" and state is not None:
-                state["error"] = error
-            return False
-        except (ValueError, TypeError, KeyError, IndexError, AttributeError):
-            return False
-
-    connection.create_function(
-        "p4_notes_inventory", 5, notes_inventory, deterministic=True
-    )
     connection.create_function(
         "p1_intrinsic_claim", 4, _intrinsic_claim, deterministic=True
     )
@@ -778,34 +623,6 @@ def _notes_group(fmt: str, status: str, membership: str) -> bool:
         return len(set(targets)) == len(targets)
     except (ValueError, TypeError):
         return False
-
-
-@dataclass(frozen=True)
-class NotesGroup:
-    capture: Capture
-    scope: str
-    status: Literal["unknown", "partial", "known_empty", "complete"]
-    members: tuple[tuple[str, str, str | None], ...]
-    provenance: Provenance
-
-    def __post_init__(self) -> None:
-        if not self.scope or not _notes_group(
-            self.capture.root.object_format, self.status, encode(self.members)
-        ):
-            raise CoreFailure(
-                "NOTES_GROUP", self.capture.pair, "invalid whole immutable notes group"
-            )
-
-    @property
-    def key(self) -> tuple[str, ...]:
-        return (
-            *self.capture.pair,
-            self.capture.root.object_format,
-            self.scope,
-            self.status,
-            encode(self.members),
-            self.provenance.encoded,
-        )
 
 
 @dataclass(frozen=True)
@@ -1160,13 +977,12 @@ class GitObservation:
 
 @dataclass(frozen=True)
 class CoreCoverageScope:
-    owner_kind: Literal["repository", "capture", "ref_observation", "object", "field"]
+    owner_kind: Literal["repository", "ref_observation", "object", "field"]
     coordinates: tuple[str, ...]
 
     def __post_init__(self) -> None:
         widths = {
             "repository": 2,
-            "capture": 3,
             "ref_observation": 3,
             "object": 3,
             "field": 4,
@@ -1181,9 +997,6 @@ class CoreCoverageScope:
             )
         if self.owner_kind == "repository":
             uuid4_value(self.coordinates[0])
-        elif self.owner_kind == "capture":
-            for value in self.coordinates[:2]:
-                uuid4_value(value)
         elif self.owner_kind == "ref_observation":
             from repo_catalog.domain.ref_observation import RefObservationKey
 
@@ -1194,27 +1007,3 @@ class CoreCoverageScope:
     @property
     def encoded(self) -> str:
         return encode(self.coordinates)
-
-
-@dataclass(frozen=True)
-class NotesAlternative:
-    kind: Literal["claim", "group", "receiver_role"]
-    capture_pair: tuple[str, str]
-    target: OID
-    note: OID | None
-    scope: str | None
-    status: str | None
-    membership: tuple[tuple[str, str, str | None], ...]
-    provenance: Provenance | None
-    path: str | None
-    checked: bool
-
-
-@dataclass(frozen=True)
-class NotesProjection:
-    capture: Capture
-    target: OID
-    canonical: OID | None
-    alternatives: tuple[NotesAlternative, ...]
-    reported_conflict: bool
-    checked_scope: str | None

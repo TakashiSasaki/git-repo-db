@@ -54,7 +54,9 @@ def test_group_only_reports_keys_body_and_fallback(acquisition, paired):
     assert all(
         not hit.authoritative_summary["note_retained"] for hit in report_only.hits
     )
-    assert not app.core.sql("SELECT 1 FROM captures")
+    assert not app.core.sql(
+        "SELECT 1 FROM sqlite_schema WHERE type='table' AND name='captures'"
+    )
     assert not app.core.sql("SELECT 1 FROM notes_mappings")
     # Acquire only the first Claim's body using the existing root-bound reader.
     first = replace(

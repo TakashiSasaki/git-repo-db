@@ -176,7 +176,7 @@ def test_nonseed_repository_acquires_actual_metadata(setup):
     assert all(
         r[3] in ("commit", "tree", "tag") for r in rows(setup, "retained_metadata")
     )
-    assert rows(setup, "retained_notes") == []
+    assert rows(setup, "ref_retained_notes") == []
     assert usage(setup) > 0
     assert not (setup["cat"] / "context.sqlite3").exists()
 
@@ -207,8 +207,8 @@ def test_nonseed_notes_reuse_original_capture_and_budget(setup):
         == second.notes_discoveries[0].enumerations
     )
     assert first.ref_note_acquisitions[0].body_retained
-    assert not rows(setup, "captures")
-    assert not rows(setup, "retained_notes")
+    assert not any(r[1] == "captures" for r in rows(setup, "sqlite_schema"))
+    assert not any(r[1] == "retained_notes" for r in rows(setup, "sqlite_schema"))
     assert len(rows(setup, "ref_retained_notes")) == 2
 
 
@@ -415,7 +415,8 @@ def test_ordinary_blob_body_is_never_retained(setup):
             new_request=True,
         )
     assert (
-        rows(setup, "retained_metadata") == [] and rows(setup, "retained_notes") == []
+        rows(setup, "retained_metadata") == []
+        and rows(setup, "ref_retained_notes") == []
     )
 
 
@@ -682,7 +683,9 @@ def test_cli_interactive_acquires_actual_git(setup, monkeypatch, capsys, notes):
     assert rows(setup, "retained_metadata")
     assert result["retained_notes_count"] == int(notes)
     assert len(rows(setup, "ref_retained_notes")) == (2 if notes else 0)
-    assert not rows(setup, "captures") and not rows(setup, "retained_notes")
+    assert not any(
+        r[1] == "captures" for r in rows(setup, "sqlite_schema")
+    ) and not any(r[1] == "retained_notes" for r in rows(setup, "sqlite_schema"))
     assert not (setup["cat"] / "p1-recovery-stop.json").exists()
 
 
@@ -701,7 +704,7 @@ def test_nonseed_paired_native_notes_preserves_catalog_pairing(setup):
     )
     assert result.admission.core_committed and result.admission.context_committed
     assert result.git_report.repository_uuidv4 == setup["target"]
-    assert not rows(setup, "captures")
+    assert not any(r[1] == "captures" for r in rows(setup, "sqlite_schema"))
     assert rows(setup, "ref_observations")
     assert all(
         link.observation.repository_uuidv4 == setup["target"]

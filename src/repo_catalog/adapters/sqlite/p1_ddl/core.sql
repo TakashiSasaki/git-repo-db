@@ -53,54 +53,6 @@ WHEN EXISTS(SELECT 1 FROM json_each(NEW.membership) j WHERE NOT EXISTS(
  SELECT 1 FROM git_objects o WHERE o.object_format=json_extract(j.value,'$[1]')
  AND o.full_oid=json_extract(j.value,'$[2]')))
 BEGIN SELECT RAISE(ABORT,'missing nominal relation target'); END;
-CREATE TABLE captures (
- capture_origin_uuidv4 TEXT NOT NULL CHECK(p1_uuid4(capture_origin_uuidv4)),
- capture_uuidv4 TEXT NOT NULL CHECK(p1_uuid4(capture_uuidv4)),
- repository_uuidv4 TEXT NOT NULL CHECK(p1_uuid4(repository_uuidv4)),
- source TEXT NOT NULL CHECK(length(source)>0),
- ref TEXT NOT NULL CHECK(p1_ref(ref)),
- object_format TEXT NOT NULL, root TEXT NOT NULL,
- PRIMARY KEY(capture_origin_uuidv4,capture_uuidv4),
- UNIQUE(capture_origin_uuidv4,capture_uuidv4,object_format,root),
- FOREIGN KEY(repository_uuidv4) REFERENCES repositories,
- FOREIGN KEY(object_format,root) REFERENCES git_objects
-) STRICT, WITHOUT ROWID;
-CREATE TABLE notes_claims (
- capture_origin_uuidv4 TEXT NOT NULL, capture_uuidv4 TEXT NOT NULL,
- object_format TEXT NOT NULL, target TEXT NOT NULL, note TEXT NOT NULL,
- provenance TEXT NOT NULL CHECK(p1_provenance(provenance)),
- PRIMARY KEY(capture_origin_uuidv4,capture_uuidv4,object_format,target,note,provenance),
- UNIQUE(capture_origin_uuidv4,capture_uuidv4,object_format,target,provenance),
- FOREIGN KEY(capture_origin_uuidv4,capture_uuidv4) REFERENCES captures,
- FOREIGN KEY(object_format,target) REFERENCES git_objects,
- FOREIGN KEY(object_format,note) REFERENCES git_objects
-) STRICT, WITHOUT ROWID;
-CREATE TABLE notes_groups (
- capture_origin_uuidv4 TEXT NOT NULL, capture_uuidv4 TEXT NOT NULL,
- object_format TEXT NOT NULL, scope TEXT NOT NULL CHECK(length(scope)>0),
- status TEXT NOT NULL, membership TEXT NOT NULL,
- provenance TEXT NOT NULL CHECK(p1_provenance(provenance)),
- CHECK(p1_notes_group(object_format,status,membership)),
- PRIMARY KEY(capture_origin_uuidv4,capture_uuidv4,object_format,scope,status,membership,provenance),
- UNIQUE(capture_origin_uuidv4,capture_uuidv4,object_format,scope,provenance),
- FOREIGN KEY(capture_origin_uuidv4,capture_uuidv4) REFERENCES captures
-) STRICT, WITHOUT ROWID;
-CREATE TRIGGER notes_group_targets BEFORE INSERT ON notes_groups
-WHEN EXISTS(SELECT 1 FROM json_each(NEW.membership) j WHERE NOT EXISTS(
- SELECT 1 FROM git_objects WHERE object_format=NEW.object_format AND full_oid=json_extract(j.value,'$[0]'))
- OR NOT EXISTS(SELECT 1 FROM git_objects WHERE object_format=NEW.object_format AND full_oid=json_extract(j.value,'$[1]')))
-BEGIN SELECT RAISE(ABORT,'missing nominal notes group target'); END;
--- Qualified receiver evidence must carry checked native structure even through
--- the supported coordinator callback SQL boundary. This grants no source/ref
--- authenticity: the function proves only this exact Capture/root inventory.
-CREATE TRIGGER notes_inventory_guard BEFORE INSERT ON notes_groups
-WHEN json_extract(NEW.provenance,'$[5]')='receiver_intrinsic' AND NOT EXISTS(
- SELECT 1 FROM captures c WHERE c.capture_origin_uuidv4=NEW.capture_origin_uuidv4
- AND c.capture_uuidv4=NEW.capture_uuidv4 AND c.object_format=NEW.object_format
- AND p4_notes_inventory(p1_array(c.capture_origin_uuidv4,c.capture_uuidv4,
- c.repository_uuidv4,c.source,c.ref,c.object_format,c.root),
- NEW.scope,NEW.status,NEW.membership,NEW.provenance))
-BEGIN SELECT RAISE(ABORT,'receiver Notes inventory requires checked structural evidence'); END;
 CREATE TABLE retained_metadata (
  object_format TEXT NOT NULL, full_oid TEXT NOT NULL,
  physical_copy_uuidv4 TEXT NOT NULL CHECK(p1_uuid4(physical_copy_uuidv4)),
@@ -140,57 +92,23 @@ WHEN json_extract(NEW.provenance,'$[5]') IS NOT 'receiver_intrinsic'
  OR NOT EXISTS(SELECT 1 FROM retained_metadata r WHERE r.object_format=NEW.object_format AND r.full_oid=NEW.full_oid
  AND r.physical_copy_uuidv4=NEW.physical_copy_uuidv4 AND p1_intrinsic_group(NEW.object_format,NEW.relation,NEW.status,NEW.membership,r.native_type,r.body))
 BEGIN SELECT RAISE(ABORT,'relation outside checked intrinsic scope'); END;
-CREATE TABLE note_roles (
- capture_origin_uuidv4 TEXT NOT NULL, capture_uuidv4 TEXT NOT NULL,
- object_format TEXT NOT NULL, root TEXT NOT NULL, target TEXT NOT NULL, note TEXT NOT NULL,
- path TEXT NOT NULL, proof_bundle TEXT NOT NULL,
- CHECK(p1_note_role(object_format,root,target,note,path,proof_bundle)),
- PRIMARY KEY(capture_origin_uuidv4,capture_uuidv4,object_format,root,target,note,path,proof_bundle),
- FOREIGN KEY(capture_origin_uuidv4,capture_uuidv4,object_format,root) REFERENCES captures(capture_origin_uuidv4,capture_uuidv4,object_format,root),
- FOREIGN KEY(object_format,target) REFERENCES git_objects,
- FOREIGN KEY(object_format,note) REFERENCES git_objects
-) STRICT, WITHOUT ROWID;
-CREATE TABLE retained_notes (
- object_format TEXT NOT NULL, full_oid TEXT NOT NULL,
- physical_copy_uuidv4 TEXT NOT NULL CHECK(p1_uuid4(physical_copy_uuidv4)),
- body BLOB NOT NULL, size INTEGER NOT NULL, digest_sha256 TEXT NOT NULL,
- capture_origin_uuidv4 TEXT NOT NULL, capture_uuidv4 TEXT NOT NULL,
- root TEXT NOT NULL, target TEXT NOT NULL, path TEXT NOT NULL, proof_bundle TEXT NOT NULL,
- CHECK(p1_native(object_format,full_oid,'blob',body,size,digest_sha256)),
- PRIMARY KEY(object_format,full_oid,physical_copy_uuidv4),
- FOREIGN KEY(capture_origin_uuidv4,capture_uuidv4,object_format,root,target,full_oid,path,proof_bundle)
- REFERENCES note_roles(capture_origin_uuidv4,capture_uuidv4,object_format,root,target,note,path,proof_bundle)
-) STRICT, WITHOUT ROWID;
-CREATE TRIGGER notes_same_representation BEFORE INSERT ON retained_notes
-WHEN EXISTS(SELECT 1 FROM retained_notes WHERE object_format=NEW.object_format
- AND full_oid=NEW.full_oid AND body<>NEW.body)
-BEGIN SELECT RAISE(ABORT,'conflicting exact note representation'); END;
 CREATE TABLE coverage_scopes (
- owner_kind TEXT NOT NULL CHECK(owner_kind IN ('repository','capture','ref_observation','object','field')),
+ owner_kind TEXT NOT NULL CHECK(owner_kind IN ('repository','ref_observation','object','field')),
  owner_coordinates_json TEXT NOT NULL CHECK(p1_json(owner_coordinates_json)),
  repository_uuidv4 TEXT,
- capture_origin_uuidv4 TEXT, capture_uuidv4 TEXT,
  observation_origin_uuidv4 TEXT, ref_observation_uuidv7 TEXT,
  object_format TEXT, full_oid TEXT, field TEXT,
  coverage_kind TEXT NOT NULL CHECK(length(coverage_kind)>0),
  CHECK(
- (owner_kind='repository' AND observation_origin_uuidv4 IS NULL AND ref_observation_uuidv7 IS NULL AND repository_uuidv4 IS NOT NULL AND p1_uuid4(repository_uuidv4) AND capture_origin_uuidv4 IS NULL AND capture_uuidv4 IS NULL AND object_format IS NULL AND full_oid IS NULL AND field IS NULL AND owner_coordinates_json=p1_array(repository_uuidv4,coverage_kind)) OR
- (owner_kind='capture' AND observation_origin_uuidv4 IS NULL AND ref_observation_uuidv7 IS NULL AND repository_uuidv4 IS NULL AND capture_origin_uuidv4 IS NOT NULL AND capture_uuidv4 IS NOT NULL AND object_format IS NULL AND full_oid IS NULL AND field IS NULL AND owner_coordinates_json=p1_array(capture_origin_uuidv4,capture_uuidv4,coverage_kind)) OR
- (owner_kind='ref_observation' AND repository_uuidv4 IS NULL AND capture_origin_uuidv4 IS NULL AND capture_uuidv4 IS NULL AND observation_origin_uuidv4 IS NOT NULL AND ref_observation_uuidv7 IS NOT NULL AND object_format IS NULL AND full_oid IS NULL AND field IS NULL AND owner_coordinates_json=p1_array(observation_origin_uuidv4,ref_observation_uuidv7,coverage_kind)) OR
- (owner_kind='object' AND observation_origin_uuidv4 IS NULL AND ref_observation_uuidv7 IS NULL AND repository_uuidv4 IS NULL AND capture_origin_uuidv4 IS NULL AND capture_uuidv4 IS NULL AND object_format IS NOT NULL AND full_oid IS NOT NULL AND field IS NULL AND owner_coordinates_json=p1_array(object_format,full_oid,coverage_kind)) OR
- (owner_kind='field' AND observation_origin_uuidv4 IS NULL AND ref_observation_uuidv7 IS NULL AND repository_uuidv4 IS NULL AND capture_origin_uuidv4 IS NULL AND capture_uuidv4 IS NULL AND object_format IS NOT NULL AND full_oid IS NOT NULL AND field IS NOT NULL AND length(field)>0 AND owner_coordinates_json=p1_array(object_format,full_oid,field,coverage_kind))),
+ (owner_kind='repository' AND observation_origin_uuidv4 IS NULL AND ref_observation_uuidv7 IS NULL AND repository_uuidv4 IS NOT NULL AND p1_uuid4(repository_uuidv4) AND object_format IS NULL AND full_oid IS NULL AND field IS NULL AND owner_coordinates_json=p1_array(repository_uuidv4,coverage_kind)) OR
+ (owner_kind='ref_observation' AND repository_uuidv4 IS NULL AND observation_origin_uuidv4 IS NOT NULL AND ref_observation_uuidv7 IS NOT NULL AND object_format IS NULL AND full_oid IS NULL AND field IS NULL AND owner_coordinates_json=p1_array(observation_origin_uuidv4,ref_observation_uuidv7,coverage_kind)) OR
+ (owner_kind='object' AND observation_origin_uuidv4 IS NULL AND ref_observation_uuidv7 IS NULL AND repository_uuidv4 IS NULL AND object_format IS NOT NULL AND full_oid IS NOT NULL AND field IS NULL AND owner_coordinates_json=p1_array(object_format,full_oid,coverage_kind)) OR
+ (owner_kind='field' AND observation_origin_uuidv4 IS NULL AND ref_observation_uuidv7 IS NULL AND repository_uuidv4 IS NULL AND object_format IS NOT NULL AND full_oid IS NOT NULL AND field IS NOT NULL AND length(field)>0 AND owner_coordinates_json=p1_array(object_format,full_oid,field,coverage_kind))),
  PRIMARY KEY(owner_kind,owner_coordinates_json),
- FOREIGN KEY(capture_origin_uuidv4,capture_uuidv4) REFERENCES captures,
  FOREIGN KEY(observation_origin_uuidv4,ref_observation_uuidv7) REFERENCES ref_observations,
  FOREIGN KEY(repository_uuidv4) REFERENCES repositories,
  FOREIGN KEY(object_format,full_oid) REFERENCES git_objects
 ) STRICT, WITHOUT ROWID;
-CREATE TRIGGER notes_claim_format BEFORE INSERT ON notes_claims
-WHEN NOT EXISTS(SELECT 1 FROM captures WHERE capture_origin_uuidv4=NEW.capture_origin_uuidv4 AND capture_uuidv4=NEW.capture_uuidv4 AND object_format=NEW.object_format)
-BEGIN SELECT RAISE(ABORT,'Capture object-format mismatch'); END;
-CREATE TRIGGER notes_group_format BEFORE INSERT ON notes_groups
-WHEN NOT EXISTS(SELECT 1 FROM captures WHERE capture_origin_uuidv4=NEW.capture_origin_uuidv4 AND capture_uuidv4=NEW.capture_uuidv4 AND object_format=NEW.object_format)
-BEGIN SELECT RAISE(ABORT,'Capture object-format mismatch'); END;
 CREATE TABLE core_coverage_proofs (
  owner_kind TEXT NOT NULL, owner_coordinates_json TEXT NOT NULL,
  observed_at_us INTEGER NOT NULL CHECK(typeof(observed_at_us)='integer' AND observed_at_us>0), coverage_state TEXT NOT NULL,
@@ -390,10 +308,6 @@ CREATE INDEX ref_retained_notes_role_lookup ON ref_retained_notes(
  annotated_object_oid,note_oid,mapping_path_json,physical_copy_uuidv4);
 CREATE TRIGGER ref_notes_same_representation BEFORE INSERT ON ref_retained_notes
 WHEN EXISTS(SELECT 1 FROM ref_retained_notes WHERE object_format=NEW.object_format AND full_oid=NEW.full_oid AND body<>NEW.body)
- OR EXISTS(SELECT 1 FROM retained_notes WHERE object_format=NEW.object_format AND full_oid=NEW.full_oid AND (body<>NEW.body OR physical_copy_uuidv4=NEW.physical_copy_uuidv4))
-BEGIN SELECT RAISE(ABORT,'conflicting exact note representation'); END;
-CREATE TRIGGER old_notes_same_representation BEFORE INSERT ON retained_notes
-WHEN EXISTS(SELECT 1 FROM ref_retained_notes WHERE object_format=NEW.object_format AND full_oid=NEW.full_oid AND (body<>NEW.body OR physical_copy_uuidv4=NEW.physical_copy_uuidv4))
 BEGIN SELECT RAISE(ABORT,'conflicting exact note representation'); END;
 
 -- A decoder label cannot turn a reused original evidence coordinate into an

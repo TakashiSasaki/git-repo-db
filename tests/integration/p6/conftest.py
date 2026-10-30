@@ -12,7 +12,6 @@ from repo_catalog.adapters.sqlite.p1_coordination import PairCoordinator
 from repo_catalog.adapters.sqlite.p1_schema import connect, initialize
 from repo_catalog.adapters.sqlite.production_context import Context
 from repo_catalog.domain.context_admission import DependencySet
-from repo_catalog.domain.notes import NotesInventory
 from repo_catalog.domain.p1_context import (
     CoverageScope,
     FieldCandidate,
@@ -26,13 +25,9 @@ from repo_catalog.domain.p1_context import (
 )
 from repo_catalog.domain.p1_core import (
     OID,
-    Capture,
     CoreCoverageScope,
     GitObservation,
     NativeObject,
-    NotesClaim,
-    NotesGroup,
-    NotesProof,
     Provenance,
     RelationGroup,
     RelationMember,
@@ -258,29 +253,7 @@ def populate_rich_catalog(
             )
         ],
     )
-    capture = Capture(
-        ORIGIN,
-        CAPTURE_ID,
-        REPOSITORY,
-        "local-notes",
-        "refs/notes/commits",
-        notes_tree.oid,
-    )
-    notes_proof = NotesProof(
-        capture=capture,
-        target=commit_obj.oid,
-        note=note_blob.oid,
-        path=commit_obj.oid.full_oid,
-        structures=(notes_tree,),
-    )
-    notes_inv = NotesInventory(
-        capture=capture,
-        status="complete",
-        members=(
-            (commit_obj.oid.full_oid, note_blob.oid.full_oid, commit_obj.oid.full_oid),
-        ),
-        structures=(notes_tree,),
-    )
+    ref_fixture = {}
 
     def admit_core(core: GitCore) -> None:
         core.admit_repository(REPOSITORY)
@@ -364,30 +337,7 @@ def populate_rich_catalog(
             )
         )
 
-        # Notes admission
-        core.admit_note(notes_proof, note_blob, str(uuid4()), budget)
-        core.admit_notes_inventory(notes_inv, budget)
-        # Competing reported notes claim on commit_obj
         alt_note_oid = OID(fmt, "9" * width)
-        core.admit_notes_claim(
-            NotesClaim(capture, commit_obj.oid, alt_note_oid, prov_alt)
-        )
-        core.admit_notes_group(
-            NotesGroup(
-                capture,
-                "reported-subset",
-                "partial",
-                (
-                    (
-                        commit_obj.oid.full_oid,
-                        note_blob.oid.full_oid,
-                        commit_obj.oid.full_oid,
-                    ),
-                ),
-                prov_reported,
-            )
-        )
-
         # Independent modern fixture facts: public Query/Search never infer a
         # RefObservation or receiver proof from the legacy rows above.
         from repo_catalog.domain.ref_observation import (
@@ -435,6 +385,7 @@ def populate_rich_catalog(
             (notes_tree,),
         )
         core.admit_ref_note(evidence, note_blob, str(uuid4()), budget)
+        ref_fixture.update(claim=claim, mapping=mapping)
         core.admit_notes_mapping_claim(
             NotesMappingClaim(
                 claim,
@@ -458,7 +409,13 @@ def populate_rich_catalog(
                 "native-notes-tree",
                 "reported-subset",
                 "partial",
-                notes_inv.members,
+                (
+                    (
+                        commit_obj.oid.full_oid,
+                        note_blob.oid.full_oid,
+                        commit_obj.oid.full_oid,
+                    ),
+                ),
                 prov_reported,
             ),
             budget,
@@ -837,9 +794,9 @@ def populate_rich_catalog(
 
     return {
         "absent_oid": OID(fmt, "f" * width),
-        "capture": capture,
         "comment_key": comment_key,
         "commit_obj": commit_obj,
+        "ref_fixture": ref_fixture,
         "ctx_prov_1": ctx_prov_1,
         "ctx_prov_2": ctx_prov_2,
         "issue_comment_key": issue_comment_key,

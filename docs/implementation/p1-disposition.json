@@ -292,7 +292,7 @@
       "target_tables": [
         {
           "store": "core",
-          "table": "retained_notes"
+          "table": "ref_retained_notes"
         }
       ]
     },
@@ -4118,9 +4118,9 @@
                 "digest_sha256",
                 "proof_bundle"
               ],
-              "encoding": "Blob bytes only after receiver-proven captured-root/tree/target/note role and exact native checks. No ordinary-file bodies or staging.",
+              "encoding": "Exact native Note bytes only after independently supported RefObservation/Claim identity and receiver-checked root/Mapping proof. Old body flags or Capture UUIDs supply no authority or v7 identity; no automatic catalog migration.",
               "store": "core",
-              "table": "retained_notes"
+              "table": "ref_retained_notes"
             }
           ]
         },
@@ -4149,9 +4149,9 @@
                 "digest_sha256",
                 "proof_bundle"
               ],
-              "encoding": "Blob bytes only after receiver-proven captured-root/tree/target/note role and exact native checks. No ordinary-file bodies or staging.",
+              "encoding": "Exact native Note bytes only after independently supported RefObservation/Claim identity and receiver-checked root/Mapping proof. Old body flags or Capture UUIDs supply no authority or v7 identity; no automatic catalog migration.",
               "store": "core",
-              "table": "retained_notes"
+              "table": "ref_retained_notes"
             }
           ]
         }
@@ -4166,7 +4166,7 @@
         },
         {
           "store": "core",
-          "table": "retained_notes"
+          "table": "ref_retained_notes"
         }
       ]
     },
@@ -5557,9 +5557,9 @@
                 "digest_sha256",
                 "proof_bundle"
               ],
-              "encoding": "Blob bytes only after receiver-proven captured-root/tree/target/note role and exact native checks. No ordinary-file bodies or staging.",
+              "encoding": "Exact native Note bytes only after independently supported RefObservation/Claim identity and receiver-checked root/Mapping proof. Old body flags or Capture UUIDs supply no authority or v7 identity; no automatic catalog migration.",
               "store": "core",
-              "table": "retained_notes"
+              "table": "ref_retained_notes"
             }
           ]
         },
@@ -5588,9 +5588,9 @@
                 "digest_sha256",
                 "proof_bundle"
               ],
-              "encoding": "Blob bytes only after receiver-proven captured-root/tree/target/note role and exact native checks. No ordinary-file bodies or staging.",
+              "encoding": "Exact native Note bytes only after independently supported RefObservation/Claim identity and receiver-checked root/Mapping proof. Old body flags or Capture UUIDs supply no authority or v7 identity; no automatic catalog migration.",
               "store": "core",
-              "table": "retained_notes"
+              "table": "ref_retained_notes"
             }
           ]
         }
@@ -5605,7 +5605,7 @@
         },
         {
           "store": "core",
-          "table": "retained_notes"
+          "table": "ref_retained_notes"
         }
       ]
     },
@@ -8653,9 +8653,9 @@
                 "digest_sha256",
                 "proof_bundle"
               ],
-              "encoding": "Blob bytes only after receiver-proven captured-root/tree/target/note role and exact native checks. No ordinary-file bodies or staging.",
+              "encoding": "Exact native Note bytes only after independently supported RefObservation/Claim identity and receiver-checked root/Mapping proof. Old body flags or Capture UUIDs supply no authority or v7 identity; no automatic catalog migration.",
               "store": "core",
-              "table": "retained_notes"
+              "table": "ref_retained_notes"
             }
           ]
         },
@@ -8684,9 +8684,9 @@
                 "digest_sha256",
                 "proof_bundle"
               ],
-              "encoding": "Blob bytes only after receiver-proven captured-root/tree/target/note role and exact native checks. No ordinary-file bodies or staging.",
+              "encoding": "Exact native Note bytes only after independently supported RefObservation/Claim identity and receiver-checked root/Mapping proof. Old body flags or Capture UUIDs supply no authority or v7 identity; no automatic catalog migration.",
               "store": "core",
-              "table": "retained_notes"
+              "table": "ref_retained_notes"
             }
           ]
         },
@@ -8715,9 +8715,9 @@
                 "digest_sha256",
                 "proof_bundle"
               ],
-              "encoding": "Blob bytes only after receiver-proven captured-root/tree/target/note role and exact native checks. No ordinary-file bodies or staging.",
+              "encoding": "Exact native Note bytes only after independently supported RefObservation/Claim identity and receiver-checked root/Mapping proof. Old body flags or Capture UUIDs supply no authority or v7 identity; no automatic catalog migration.",
               "store": "core",
-              "table": "retained_notes"
+              "table": "ref_retained_notes"
             }
           ]
         }
@@ -8732,7 +8732,7 @@
         },
         {
           "store": "core",
-          "table": "retained_notes"
+          "table": "ref_retained_notes"
         }
       ]
     },
@@ -9484,14 +9484,6 @@
       "retention": "Provider text and allowlisted Context evidence/configuration only; no ordinary Git-file body archive.",
       "semantic_key": "Direct full semantic tuple: sha256. Whole JSON values are canonical lossless actual coordinates/membership, never hashes or generated row aliases. Real occurrence UUIDs identify captures, requests, attempts, or physical copies only."
     },
-    "core.captures": {
-      "cross_store": "No cross-database SQLite FK. Context portable typed OIDs require explicit Core-first dependency validation under cooperating gate; paired reads pin both snapshots. Core never depends on Context. Disposable stores never establish authoritative validity.",
-      "domain": "Immutable actual origin UUIDv4 + capture UUIDv4 notes ref/root binding (legacy I1 stack compatibility; not authority for new ref-observation evidence)",
-      "durability": "authoritative",
-      "mutation": "INSERT-only; immutable UPDATE/DELETE triggers; supported Core boundary denies replacement and unsafe SQL",
-      "retention": "Only exact commit/tree/tag and receiver-role-proven note blobs. Ordinary repository-file body/text and opaque raw-provider replicas are forbidden.",
-      "semantic_key": "Direct full semantic tuple: capture_origin_uuidv4, capture_uuidv4. Whole JSON values are canonical lossless actual coordinates/membership, never hashes or generated row aliases. Real occurrence UUIDs identify captures, requests, attempts, or physical copies only."
-    },
     "core.core_coverage_proofs": {
       "cross_store": "No cross-database SQLite FK. Context portable typed OIDs require explicit Core-first dependency validation under cooperating gate; paired reads pin both snapshots. Core never depends on Context. Disposable stores never establish authoritative validity.",
       "domain": "Full direct Git-owned Coverage claim FK with asserted enumeration members and original terminal provenance; ADR 0028 required observation/proof coordinates remain nonnull positive int64",
@@ -9510,7 +9502,7 @@
     },
     "core.coverage_scopes": {
       "cross_store": "No cross-database SQLite FK. Context portable typed OIDs require explicit Core-first dependency validation under cooperating gate; paired reads pin both snapshots. Core never depends on Context. Disposable stores never establish authoritative validity.",
-      "domain": "Full typed semantic owner coordinates, including ref_observation UUID pair, with CHECK-equal lossless tuple; legacy capture scope remains during stack transition",
+      "domain": "Full typed repository, ref_observation UUIDv4/UUIDv7 pair, object or field owner coordinates with CHECK-equal lossless tuple. Capture-owned Coverage is not part of this format.",
       "durability": "authoritative",
       "mutation": "INSERT-only; immutable UPDATE/DELETE triggers; supported Core boundary denies replacement and unsafe SQL",
       "retention": "Only exact commit/tree/tag and receiver-role-proven note blobs. Ordinary repository-file body/text and opaque raw-provider replicas are forbidden.",
@@ -9547,30 +9539,6 @@
       "mutation": "INSERT-only; immutable UPDATE/DELETE triggers; supported Core boundary denies replacement and unsafe SQL",
       "retention": "Only exact commit/tree/tag and receiver-role-proven note blobs. Ordinary repository-file body/text and opaque raw-provider replicas are forbidden.",
       "semantic_key": "Direct full semantic tuple: object_format, full_oid, relation, scope, status, membership, provenance, physical_copy_uuidv4. Whole JSON values are canonical lossless actual coordinates/membership, never hashes or generated row aliases. Real occurrence UUIDs identify captures, requests, attempts, or physical copies only."
-    },
-    "core.note_roles": {
-      "cross_store": "No cross-database SQLite FK. Context portable typed OIDs require explicit Core-first dependency validation under cooperating gate; paired reads pin both snapshots. Core never depends on Context. Disposable stores never establish authoritative validity.",
-      "domain": "Receiver-checked relevant captured-root/tree/target/note structural proof",
-      "durability": "authoritative",
-      "mutation": "INSERT-only; immutable UPDATE/DELETE triggers; supported Core boundary denies replacement and unsafe SQL",
-      "retention": "Only exact commit/tree/tag and receiver-role-proven note blobs. Ordinary repository-file body/text and opaque raw-provider replicas are forbidden.",
-      "semantic_key": "Direct full semantic tuple: capture_origin_uuidv4, capture_uuidv4, object_format, root, target, note, path, proof_bundle. Whole JSON values are canonical lossless actual coordinates/membership, never hashes or generated row aliases. Real occurrence UUIDs identify captures, requests, attempts, or physical copies only."
-    },
-    "core.notes_claims": {
-      "cross_store": "No cross-database SQLite FK. Context portable typed OIDs require explicit Core-first dependency validation under cooperating gate; paired reads pin both snapshots. Core never depends on Context. Disposable stores never establish authoritative validity.",
-      "domain": "Attributed target-to-note mapping report under original Capture",
-      "durability": "authoritative",
-      "mutation": "INSERT-only; immutable UPDATE/DELETE triggers; supported Core boundary denies replacement and unsafe SQL",
-      "retention": "Only exact commit/tree/tag and receiver-role-proven note blobs. Ordinary repository-file body/text and opaque raw-provider replicas are forbidden.",
-      "semantic_key": "Direct full semantic tuple: capture_origin_uuidv4, capture_uuidv4, object_format, target, note, provenance. Whole JSON values are canonical lossless actual coordinates/membership, never hashes or generated row aliases. Real occurrence UUIDs identify captures, requests, attempts, or physical copies only."
-    },
-    "core.notes_groups": {
-      "cross_store": "No cross-database SQLite FK. Context portable typed OIDs require explicit Core-first dependency validation under cooperating gate; paired reads pin both snapshots. Core never depends on Context. Disposable stores never establish authoritative validity.",
-      "domain": "Whole immutable typed notes membership and actual scope",
-      "durability": "authoritative",
-      "mutation": "INSERT-only; immutable UPDATE/DELETE triggers; supported Core boundary denies replacement and unsafe SQL",
-      "retention": "Only exact commit/tree/tag and receiver-role-proven note blobs. Ordinary repository-file body/text and opaque raw-provider replicas are forbidden.",
-      "semantic_key": "Direct full semantic tuple: capture_origin_uuidv4, capture_uuidv4, object_format, scope, status, membership, provenance. Whole JSON values are canonical lossless actual coordinates/membership, never hashes or generated row aliases. Real occurrence UUIDs identify captures, requests, attempts, or physical copies only."
     },
     "core.notes_mapping_claims": {
       "cross_store": "No cross-database SQLite FK. Context portable typed OIDs require explicit Core-first dependency validation under cooperating gate; paired reads pin both snapshots. Core never depends on Context. Disposable stores never establish authoritative validity.",
@@ -9679,14 +9647,6 @@
     "core.retained_metadata": {
       "cross_store": "No cross-database SQLite FK. Context portable typed OIDs require explicit Core-first dependency validation under cooperating gate; paired reads pin both snapshots. Core never depends on Context. Disposable stores never establish authoritative validity.",
       "domain": "Checked native commit/tree/tag representation at a real physical copy occurrence",
-      "durability": "authoritative",
-      "mutation": "INSERT-only; immutable UPDATE/DELETE triggers; supported Core boundary denies replacement and unsafe SQL",
-      "retention": "Only exact commit/tree/tag and receiver-role-proven note blobs. Ordinary repository-file body/text and opaque raw-provider replicas are forbidden.",
-      "semantic_key": "Direct full semantic tuple: object_format, full_oid, physical_copy_uuidv4. Whole JSON values are canonical lossless actual coordinates/membership, never hashes or generated row aliases. Real occurrence UUIDs identify captures, requests, attempts, or physical copies only."
-    },
-    "core.retained_notes": {
-      "cross_store": "No cross-database SQLite FK. Context portable typed OIDs require explicit Core-first dependency validation under cooperating gate; paired reads pin both snapshots. Core never depends on Context. Disposable stores never establish authoritative validity.",
-      "domain": "Exact native blob retained only under proven notes role, at real copy occurrence",
       "durability": "authoritative",
       "mutation": "INSERT-only; immutable UPDATE/DELETE triggers; supported Core boundary denies replacement and unsafe SQL",
       "retention": "Only exact commit/tree/tag and receiver-role-proven note blobs. Ordinary repository-file body/text and opaque raw-provider replicas are forbidden.",
@@ -12505,115 +12465,8 @@
       }
     },
     "core": {
-      "ddl_sha256": "bd937c2dbe3d308c4d4e7167f02b85d4c4613392d1bf8ebe2ce8403678e981ca",
+      "ddl_sha256": "753f97a2126f18311d6029483dffb9846fd2442db9908eba5a1c1aff98e4f8fc",
       "tables": {
-        "captures": {
-          "columns": [
-            {
-              "generated": 0,
-              "name": "capture_origin_uuidv4",
-              "notnull": true,
-              "type": "TEXT"
-            },
-            {
-              "generated": 0,
-              "name": "capture_uuidv4",
-              "notnull": true,
-              "type": "TEXT"
-            },
-            {
-              "generated": 0,
-              "name": "repository_uuidv4",
-              "notnull": true,
-              "type": "TEXT"
-            },
-            {
-              "generated": 0,
-              "name": "source",
-              "notnull": true,
-              "type": "TEXT"
-            },
-            {
-              "generated": 0,
-              "name": "ref",
-              "notnull": true,
-              "type": "TEXT"
-            },
-            {
-              "generated": 0,
-              "name": "object_format",
-              "notnull": true,
-              "type": "TEXT"
-            },
-            {
-              "generated": 0,
-              "name": "root",
-              "notnull": true,
-              "type": "TEXT"
-            }
-          ],
-          "foreign_keys": [
-            [
-              0,
-              0,
-              "git_objects",
-              "object_format",
-              null,
-              "NO ACTION",
-              "NO ACTION",
-              "NONE"
-            ],
-            [
-              0,
-              1,
-              "git_objects",
-              "root",
-              null,
-              "NO ACTION",
-              "NO ACTION",
-              "NONE"
-            ],
-            [
-              1,
-              0,
-              "repositories",
-              "repository_uuidv4",
-              null,
-              "NO ACTION",
-              "NO ACTION",
-              "NONE"
-            ]
-          ],
-          "primary_key": [
-            "capture_origin_uuidv4",
-            "capture_uuidv4"
-          ],
-          "sql": "CREATE TABLE captures (\n capture_origin_uuidv4 TEXT NOT NULL CHECK(p1_uuid4(capture_origin_uuidv4)),\n capture_uuidv4 TEXT NOT NULL CHECK(p1_uuid4(capture_uuidv4)),\n repository_uuidv4 TEXT NOT NULL CHECK(p1_uuid4(repository_uuidv4)),\n source TEXT NOT NULL CHECK(length(source)>0),\n ref TEXT NOT NULL CHECK(p1_ref(ref)),\n object_format TEXT NOT NULL, root TEXT NOT NULL,\n PRIMARY KEY(capture_origin_uuidv4,capture_uuidv4),\n UNIQUE(capture_origin_uuidv4,capture_uuidv4,object_format,root),\n FOREIGN KEY(repository_uuidv4) REFERENCES repositories,\n FOREIGN KEY(object_format,root) REFERENCES git_objects\n) STRICT, WITHOUT ROWID",
-          "triggers": {
-            "p1_immutable_captures_delete": "CREATE TRIGGER p1_immutable_captures_delete BEFORE DELETE ON captures BEGIN SELECT RAISE(ABORT,'immutable core fact'); END",
-            "p1_immutable_captures_update": "CREATE TRIGGER p1_immutable_captures_update BEFORE UPDATE ON captures BEGIN SELECT RAISE(ABORT,'immutable core fact'); END"
-          },
-          "unique": [
-            {
-              "columns": [
-                "capture_origin_uuidv4",
-                "capture_uuidv4"
-              ],
-              "origin": "pk",
-              "partial": false
-            },
-            {
-              "columns": [
-                "capture_origin_uuidv4",
-                "capture_uuidv4",
-                "object_format",
-                "root"
-              ],
-              "origin": "u",
-              "partial": false
-            }
-          ]
-        },
         "core_coverage_proofs": {
           "columns": [
             {
@@ -12829,18 +12682,6 @@
             },
             {
               "generated": 0,
-              "name": "capture_origin_uuidv4",
-              "notnull": false,
-              "type": "TEXT"
-            },
-            {
-              "generated": 0,
-              "name": "capture_uuidv4",
-              "notnull": false,
-              "type": "TEXT"
-            },
-            {
-              "generated": 0,
               "name": "observation_origin_uuidv4",
               "notnull": false,
               "type": "TEXT"
@@ -12926,33 +12767,13 @@
               "NO ACTION",
               "NO ACTION",
               "NONE"
-            ],
-            [
-              3,
-              0,
-              "captures",
-              "capture_origin_uuidv4",
-              null,
-              "NO ACTION",
-              "NO ACTION",
-              "NONE"
-            ],
-            [
-              3,
-              1,
-              "captures",
-              "capture_uuidv4",
-              null,
-              "NO ACTION",
-              "NO ACTION",
-              "NONE"
             ]
           ],
           "primary_key": [
             "owner_kind",
             "owner_coordinates_json"
           ],
-          "sql": "CREATE TABLE coverage_scopes (\n owner_kind TEXT NOT NULL CHECK(owner_kind IN ('repository','capture','ref_observation','object','field')),\n owner_coordinates_json TEXT NOT NULL CHECK(p1_json(owner_coordinates_json)),\n repository_uuidv4 TEXT,\n capture_origin_uuidv4 TEXT, capture_uuidv4 TEXT,\n observation_origin_uuidv4 TEXT, ref_observation_uuidv7 TEXT,\n object_format TEXT, full_oid TEXT, field TEXT,\n coverage_kind TEXT NOT NULL CHECK(length(coverage_kind)>0),\n CHECK(\n (owner_kind='repository' AND observation_origin_uuidv4 IS NULL AND ref_observation_uuidv7 IS NULL AND repository_uuidv4 IS NOT NULL AND p1_uuid4(repository_uuidv4) AND capture_origin_uuidv4 IS NULL AND capture_uuidv4 IS NULL AND object_format IS NULL AND full_oid IS NULL AND field IS NULL AND owner_coordinates_json=p1_array(repository_uuidv4,coverage_kind)) OR\n (owner_kind='capture' AND observation_origin_uuidv4 IS NULL AND ref_observation_uuidv7 IS NULL AND repository_uuidv4 IS NULL AND capture_origin_uuidv4 IS NOT NULL AND capture_uuidv4 IS NOT NULL AND object_format IS NULL AND full_oid IS NULL AND field IS NULL AND owner_coordinates_json=p1_array(capture_origin_uuidv4,capture_uuidv4,coverage_kind)) OR\n (owner_kind='ref_observation' AND repository_uuidv4 IS NULL AND capture_origin_uuidv4 IS NULL AND capture_uuidv4 IS NULL AND observation_origin_uuidv4 IS NOT NULL AND ref_observation_uuidv7 IS NOT NULL AND object_format IS NULL AND full_oid IS NULL AND field IS NULL AND owner_coordinates_json=p1_array(observation_origin_uuidv4,ref_observation_uuidv7,coverage_kind)) OR\n (owner_kind='object' AND observation_origin_uuidv4 IS NULL AND ref_observation_uuidv7 IS NULL AND repository_uuidv4 IS NULL AND capture_origin_uuidv4 IS NULL AND capture_uuidv4 IS NULL AND object_format IS NOT NULL AND full_oid IS NOT NULL AND field IS NULL AND owner_coordinates_json=p1_array(object_format,full_oid,coverage_kind)) OR\n (owner_kind='field' AND observation_origin_uuidv4 IS NULL AND ref_observation_uuidv7 IS NULL AND repository_uuidv4 IS NULL AND capture_origin_uuidv4 IS NULL AND capture_uuidv4 IS NULL AND object_format IS NOT NULL AND full_oid IS NOT NULL AND field IS NOT NULL AND length(field)>0 AND owner_coordinates_json=p1_array(object_format,full_oid,field,coverage_kind))),\n PRIMARY KEY(owner_kind,owner_coordinates_json),\n FOREIGN KEY(capture_origin_uuidv4,capture_uuidv4) REFERENCES captures,\n FOREIGN KEY(observation_origin_uuidv4,ref_observation_uuidv7) REFERENCES ref_observations,\n FOREIGN KEY(repository_uuidv4) REFERENCES repositories,\n FOREIGN KEY(object_format,full_oid) REFERENCES git_objects\n) STRICT, WITHOUT ROWID",
+          "sql": "CREATE TABLE coverage_scopes (\n owner_kind TEXT NOT NULL CHECK(owner_kind IN ('repository','ref_observation','object','field')),\n owner_coordinates_json TEXT NOT NULL CHECK(p1_json(owner_coordinates_json)),\n repository_uuidv4 TEXT,\n observation_origin_uuidv4 TEXT, ref_observation_uuidv7 TEXT,\n object_format TEXT, full_oid TEXT, field TEXT,\n coverage_kind TEXT NOT NULL CHECK(length(coverage_kind)>0),\n CHECK(\n (owner_kind='repository' AND observation_origin_uuidv4 IS NULL AND ref_observation_uuidv7 IS NULL AND repository_uuidv4 IS NOT NULL AND p1_uuid4(repository_uuidv4) AND object_format IS NULL AND full_oid IS NULL AND field IS NULL AND owner_coordinates_json=p1_array(repository_uuidv4,coverage_kind)) OR\n (owner_kind='ref_observation' AND repository_uuidv4 IS NULL AND observation_origin_uuidv4 IS NOT NULL AND ref_observation_uuidv7 IS NOT NULL AND object_format IS NULL AND full_oid IS NULL AND field IS NULL AND owner_coordinates_json=p1_array(observation_origin_uuidv4,ref_observation_uuidv7,coverage_kind)) OR\n (owner_kind='object' AND observation_origin_uuidv4 IS NULL AND ref_observation_uuidv7 IS NULL AND repository_uuidv4 IS NULL AND object_format IS NOT NULL AND full_oid IS NOT NULL AND field IS NULL AND owner_coordinates_json=p1_array(object_format,full_oid,coverage_kind)) OR\n (owner_kind='field' AND observation_origin_uuidv4 IS NULL AND ref_observation_uuidv7 IS NULL AND repository_uuidv4 IS NULL AND object_format IS NOT NULL AND full_oid IS NOT NULL AND field IS NOT NULL AND length(field)>0 AND owner_coordinates_json=p1_array(object_format,full_oid,field,coverage_kind))),\n PRIMARY KEY(owner_kind,owner_coordinates_json),\n FOREIGN KEY(observation_origin_uuidv4,ref_observation_uuidv7) REFERENCES ref_observations,\n FOREIGN KEY(repository_uuidv4) REFERENCES repositories,\n FOREIGN KEY(object_format,full_oid) REFERENCES git_objects\n) STRICT, WITHOUT ROWID",
           "triggers": {
             "p1_immutable_coverage_scopes_delete": "CREATE TRIGGER p1_immutable_coverage_scopes_delete BEFORE DELETE ON coverage_scopes BEGIN SELECT RAISE(ABORT,'immutable core fact'); END",
             "p1_immutable_coverage_scopes_update": "CREATE TRIGGER p1_immutable_coverage_scopes_update BEFORE UPDATE ON coverage_scopes BEGIN SELECT RAISE(ABORT,'immutable core fact'); END"
@@ -13433,423 +13254,6 @@
                 "membership",
                 "provenance",
                 "physical_copy_uuidv4"
-              ],
-              "origin": "pk",
-              "partial": false
-            }
-          ]
-        },
-        "note_roles": {
-          "columns": [
-            {
-              "generated": 0,
-              "name": "capture_origin_uuidv4",
-              "notnull": true,
-              "type": "TEXT"
-            },
-            {
-              "generated": 0,
-              "name": "capture_uuidv4",
-              "notnull": true,
-              "type": "TEXT"
-            },
-            {
-              "generated": 0,
-              "name": "object_format",
-              "notnull": true,
-              "type": "TEXT"
-            },
-            {
-              "generated": 0,
-              "name": "root",
-              "notnull": true,
-              "type": "TEXT"
-            },
-            {
-              "generated": 0,
-              "name": "target",
-              "notnull": true,
-              "type": "TEXT"
-            },
-            {
-              "generated": 0,
-              "name": "note",
-              "notnull": true,
-              "type": "TEXT"
-            },
-            {
-              "generated": 0,
-              "name": "path",
-              "notnull": true,
-              "type": "TEXT"
-            },
-            {
-              "generated": 0,
-              "name": "proof_bundle",
-              "notnull": true,
-              "type": "TEXT"
-            }
-          ],
-          "foreign_keys": [
-            [
-              0,
-              0,
-              "git_objects",
-              "object_format",
-              null,
-              "NO ACTION",
-              "NO ACTION",
-              "NONE"
-            ],
-            [
-              0,
-              1,
-              "git_objects",
-              "note",
-              null,
-              "NO ACTION",
-              "NO ACTION",
-              "NONE"
-            ],
-            [
-              1,
-              0,
-              "git_objects",
-              "object_format",
-              null,
-              "NO ACTION",
-              "NO ACTION",
-              "NONE"
-            ],
-            [
-              1,
-              1,
-              "git_objects",
-              "target",
-              null,
-              "NO ACTION",
-              "NO ACTION",
-              "NONE"
-            ],
-            [
-              2,
-              0,
-              "captures",
-              "capture_origin_uuidv4",
-              "capture_origin_uuidv4",
-              "NO ACTION",
-              "NO ACTION",
-              "NONE"
-            ],
-            [
-              2,
-              1,
-              "captures",
-              "capture_uuidv4",
-              "capture_uuidv4",
-              "NO ACTION",
-              "NO ACTION",
-              "NONE"
-            ],
-            [
-              2,
-              2,
-              "captures",
-              "object_format",
-              "object_format",
-              "NO ACTION",
-              "NO ACTION",
-              "NONE"
-            ],
-            [
-              2,
-              3,
-              "captures",
-              "root",
-              "root",
-              "NO ACTION",
-              "NO ACTION",
-              "NONE"
-            ]
-          ],
-          "primary_key": [
-            "capture_origin_uuidv4",
-            "capture_uuidv4",
-            "object_format",
-            "root",
-            "target",
-            "note",
-            "path",
-            "proof_bundle"
-          ],
-          "sql": "CREATE TABLE note_roles (\n capture_origin_uuidv4 TEXT NOT NULL, capture_uuidv4 TEXT NOT NULL,\n object_format TEXT NOT NULL, root TEXT NOT NULL, target TEXT NOT NULL, note TEXT NOT NULL,\n path TEXT NOT NULL, proof_bundle TEXT NOT NULL,\n CHECK(p1_note_role(object_format,root,target,note,path,proof_bundle)),\n PRIMARY KEY(capture_origin_uuidv4,capture_uuidv4,object_format,root,target,note,path,proof_bundle),\n FOREIGN KEY(capture_origin_uuidv4,capture_uuidv4,object_format,root) REFERENCES captures(capture_origin_uuidv4,capture_uuidv4,object_format,root),\n FOREIGN KEY(object_format,target) REFERENCES git_objects,\n FOREIGN KEY(object_format,note) REFERENCES git_objects\n) STRICT, WITHOUT ROWID",
-          "triggers": {
-            "p1_immutable_note_roles_delete": "CREATE TRIGGER p1_immutable_note_roles_delete BEFORE DELETE ON note_roles BEGIN SELECT RAISE(ABORT,'immutable core fact'); END",
-            "p1_immutable_note_roles_update": "CREATE TRIGGER p1_immutable_note_roles_update BEFORE UPDATE ON note_roles BEGIN SELECT RAISE(ABORT,'immutable core fact'); END"
-          },
-          "unique": [
-            {
-              "columns": [
-                "capture_origin_uuidv4",
-                "capture_uuidv4",
-                "object_format",
-                "root",
-                "target",
-                "note",
-                "path",
-                "proof_bundle"
-              ],
-              "origin": "pk",
-              "partial": false
-            }
-          ]
-        },
-        "notes_claims": {
-          "columns": [
-            {
-              "generated": 0,
-              "name": "capture_origin_uuidv4",
-              "notnull": true,
-              "type": "TEXT"
-            },
-            {
-              "generated": 0,
-              "name": "capture_uuidv4",
-              "notnull": true,
-              "type": "TEXT"
-            },
-            {
-              "generated": 0,
-              "name": "object_format",
-              "notnull": true,
-              "type": "TEXT"
-            },
-            {
-              "generated": 0,
-              "name": "target",
-              "notnull": true,
-              "type": "TEXT"
-            },
-            {
-              "generated": 0,
-              "name": "note",
-              "notnull": true,
-              "type": "TEXT"
-            },
-            {
-              "generated": 0,
-              "name": "provenance",
-              "notnull": true,
-              "type": "TEXT"
-            }
-          ],
-          "foreign_keys": [
-            [
-              0,
-              0,
-              "git_objects",
-              "object_format",
-              null,
-              "NO ACTION",
-              "NO ACTION",
-              "NONE"
-            ],
-            [
-              0,
-              1,
-              "git_objects",
-              "note",
-              null,
-              "NO ACTION",
-              "NO ACTION",
-              "NONE"
-            ],
-            [
-              1,
-              0,
-              "git_objects",
-              "object_format",
-              null,
-              "NO ACTION",
-              "NO ACTION",
-              "NONE"
-            ],
-            [
-              1,
-              1,
-              "git_objects",
-              "target",
-              null,
-              "NO ACTION",
-              "NO ACTION",
-              "NONE"
-            ],
-            [
-              2,
-              0,
-              "captures",
-              "capture_origin_uuidv4",
-              null,
-              "NO ACTION",
-              "NO ACTION",
-              "NONE"
-            ],
-            [
-              2,
-              1,
-              "captures",
-              "capture_uuidv4",
-              null,
-              "NO ACTION",
-              "NO ACTION",
-              "NONE"
-            ]
-          ],
-          "primary_key": [
-            "capture_origin_uuidv4",
-            "capture_uuidv4",
-            "object_format",
-            "target",
-            "note",
-            "provenance"
-          ],
-          "sql": "CREATE TABLE notes_claims (\n capture_origin_uuidv4 TEXT NOT NULL, capture_uuidv4 TEXT NOT NULL,\n object_format TEXT NOT NULL, target TEXT NOT NULL, note TEXT NOT NULL,\n provenance TEXT NOT NULL CHECK(p1_provenance(provenance)),\n PRIMARY KEY(capture_origin_uuidv4,capture_uuidv4,object_format,target,note,provenance),\n UNIQUE(capture_origin_uuidv4,capture_uuidv4,object_format,target,provenance),\n FOREIGN KEY(capture_origin_uuidv4,capture_uuidv4) REFERENCES captures,\n FOREIGN KEY(object_format,target) REFERENCES git_objects,\n FOREIGN KEY(object_format,note) REFERENCES git_objects\n) STRICT, WITHOUT ROWID",
-          "triggers": {
-            "notes_claim_format": "CREATE TRIGGER notes_claim_format BEFORE INSERT ON notes_claims\nWHEN NOT EXISTS(SELECT 1 FROM captures WHERE capture_origin_uuidv4=NEW.capture_origin_uuidv4 AND capture_uuidv4=NEW.capture_uuidv4 AND object_format=NEW.object_format)\nBEGIN SELECT RAISE(ABORT,'Capture object-format mismatch'); END",
-            "p1_immutable_notes_claims_delete": "CREATE TRIGGER p1_immutable_notes_claims_delete BEFORE DELETE ON notes_claims BEGIN SELECT RAISE(ABORT,'immutable core fact'); END",
-            "p1_immutable_notes_claims_update": "CREATE TRIGGER p1_immutable_notes_claims_update BEFORE UPDATE ON notes_claims BEGIN SELECT RAISE(ABORT,'immutable core fact'); END"
-          },
-          "unique": [
-            {
-              "columns": [
-                "capture_origin_uuidv4",
-                "capture_uuidv4",
-                "object_format",
-                "target",
-                "note",
-                "provenance"
-              ],
-              "origin": "pk",
-              "partial": false
-            },
-            {
-              "columns": [
-                "capture_origin_uuidv4",
-                "capture_uuidv4",
-                "object_format",
-                "target",
-                "provenance"
-              ],
-              "origin": "u",
-              "partial": false
-            }
-          ]
-        },
-        "notes_groups": {
-          "columns": [
-            {
-              "generated": 0,
-              "name": "capture_origin_uuidv4",
-              "notnull": true,
-              "type": "TEXT"
-            },
-            {
-              "generated": 0,
-              "name": "capture_uuidv4",
-              "notnull": true,
-              "type": "TEXT"
-            },
-            {
-              "generated": 0,
-              "name": "object_format",
-              "notnull": true,
-              "type": "TEXT"
-            },
-            {
-              "generated": 0,
-              "name": "scope",
-              "notnull": true,
-              "type": "TEXT"
-            },
-            {
-              "generated": 0,
-              "name": "status",
-              "notnull": true,
-              "type": "TEXT"
-            },
-            {
-              "generated": 0,
-              "name": "membership",
-              "notnull": true,
-              "type": "TEXT"
-            },
-            {
-              "generated": 0,
-              "name": "provenance",
-              "notnull": true,
-              "type": "TEXT"
-            }
-          ],
-          "foreign_keys": [
-            [
-              0,
-              0,
-              "captures",
-              "capture_origin_uuidv4",
-              null,
-              "NO ACTION",
-              "NO ACTION",
-              "NONE"
-            ],
-            [
-              0,
-              1,
-              "captures",
-              "capture_uuidv4",
-              null,
-              "NO ACTION",
-              "NO ACTION",
-              "NONE"
-            ]
-          ],
-          "primary_key": [
-            "capture_origin_uuidv4",
-            "capture_uuidv4",
-            "object_format",
-            "scope",
-            "status",
-            "membership",
-            "provenance"
-          ],
-          "sql": "CREATE TABLE notes_groups (\n capture_origin_uuidv4 TEXT NOT NULL, capture_uuidv4 TEXT NOT NULL,\n object_format TEXT NOT NULL, scope TEXT NOT NULL CHECK(length(scope)>0),\n status TEXT NOT NULL, membership TEXT NOT NULL,\n provenance TEXT NOT NULL CHECK(p1_provenance(provenance)),\n CHECK(p1_notes_group(object_format,status,membership)),\n PRIMARY KEY(capture_origin_uuidv4,capture_uuidv4,object_format,scope,status,membership,provenance),\n UNIQUE(capture_origin_uuidv4,capture_uuidv4,object_format,scope,provenance),\n FOREIGN KEY(capture_origin_uuidv4,capture_uuidv4) REFERENCES captures\n) STRICT, WITHOUT ROWID",
-          "triggers": {
-            "notes_group_format": "CREATE TRIGGER notes_group_format BEFORE INSERT ON notes_groups\nWHEN NOT EXISTS(SELECT 1 FROM captures WHERE capture_origin_uuidv4=NEW.capture_origin_uuidv4 AND capture_uuidv4=NEW.capture_uuidv4 AND object_format=NEW.object_format)\nBEGIN SELECT RAISE(ABORT,'Capture object-format mismatch'); END",
-            "notes_group_targets": "CREATE TRIGGER notes_group_targets BEFORE INSERT ON notes_groups\nWHEN EXISTS(SELECT 1 FROM json_each(NEW.membership) j WHERE NOT EXISTS(\n SELECT 1 FROM git_objects WHERE object_format=NEW.object_format AND full_oid=json_extract(j.value,'$[0]'))\n OR NOT EXISTS(SELECT 1 FROM git_objects WHERE object_format=NEW.object_format AND full_oid=json_extract(j.value,'$[1]')))\nBEGIN SELECT RAISE(ABORT,'missing nominal notes group target'); END",
-            "notes_inventory_guard": "CREATE TRIGGER notes_inventory_guard BEFORE INSERT ON notes_groups\nWHEN json_extract(NEW.provenance,'$[5]')='receiver_intrinsic' AND NOT EXISTS(\n SELECT 1 FROM captures c WHERE c.capture_origin_uuidv4=NEW.capture_origin_uuidv4\n AND c.capture_uuidv4=NEW.capture_uuidv4 AND c.object_format=NEW.object_format\n AND p4_notes_inventory(p1_array(c.capture_origin_uuidv4,c.capture_uuidv4,\n c.repository_uuidv4,c.source,c.ref,c.object_format,c.root),\n NEW.scope,NEW.status,NEW.membership,NEW.provenance))\nBEGIN SELECT RAISE(ABORT,'receiver Notes inventory requires checked structural evidence'); END",
-            "p1_immutable_notes_groups_delete": "CREATE TRIGGER p1_immutable_notes_groups_delete BEFORE DELETE ON notes_groups BEGIN SELECT RAISE(ABORT,'immutable core fact'); END",
-            "p1_immutable_notes_groups_update": "CREATE TRIGGER p1_immutable_notes_groups_update BEFORE UPDATE ON notes_groups BEGIN SELECT RAISE(ABORT,'immutable core fact'); END"
-          },
-          "unique": [
-            {
-              "columns": [
-                "capture_origin_uuidv4",
-                "capture_uuidv4",
-                "object_format",
-                "scope",
-                "provenance"
-              ],
-              "origin": "u",
-              "partial": false
-            },
-            {
-              "columns": [
-                "capture_origin_uuidv4",
-                "capture_uuidv4",
-                "object_format",
-                "scope",
-                "status",
-                "membership",
-                "provenance"
               ],
               "origin": "pk",
               "partial": false
@@ -15935,7 +15339,7 @@
           "triggers": {
             "p1_immutable_ref_retained_notes_delete": "CREATE TRIGGER p1_immutable_ref_retained_notes_delete BEFORE DELETE ON ref_retained_notes BEGIN SELECT RAISE(ABORT,'immutable core fact'); END",
             "p1_immutable_ref_retained_notes_update": "CREATE TRIGGER p1_immutable_ref_retained_notes_update BEFORE UPDATE ON ref_retained_notes BEGIN SELECT RAISE(ABORT,'immutable core fact'); END",
-            "ref_notes_same_representation": "CREATE TRIGGER ref_notes_same_representation BEFORE INSERT ON ref_retained_notes\nWHEN EXISTS(SELECT 1 FROM ref_retained_notes WHERE object_format=NEW.object_format AND full_oid=NEW.full_oid AND body<>NEW.body)\n OR EXISTS(SELECT 1 FROM retained_notes WHERE object_format=NEW.object_format AND full_oid=NEW.full_oid AND (body<>NEW.body OR physical_copy_uuidv4=NEW.physical_copy_uuidv4))\nBEGIN SELECT RAISE(ABORT,'conflicting exact note representation'); END"
+            "ref_notes_same_representation": "CREATE TRIGGER ref_notes_same_representation BEFORE INSERT ON ref_retained_notes\nWHEN EXISTS(SELECT 1 FROM ref_retained_notes WHERE object_format=NEW.object_format AND full_oid=NEW.full_oid AND body<>NEW.body)\nBEGIN SELECT RAISE(ABORT,'conflicting exact note representation'); END"
           },
           "unique": [
             {
@@ -16235,187 +15639,6 @@
             "metadata_same_representation": "CREATE TRIGGER metadata_same_representation BEFORE INSERT ON retained_metadata\nWHEN EXISTS(SELECT 1 FROM retained_metadata WHERE object_format=NEW.object_format\n AND full_oid=NEW.full_oid AND (native_type<>NEW.native_type OR body<>NEW.body))\nBEGIN SELECT RAISE(ABORT,'conflicting exact metadata representation'); END",
             "p1_immutable_retained_metadata_delete": "CREATE TRIGGER p1_immutable_retained_metadata_delete BEFORE DELETE ON retained_metadata BEGIN SELECT RAISE(ABORT,'immutable core fact'); END",
             "p1_immutable_retained_metadata_update": "CREATE TRIGGER p1_immutable_retained_metadata_update BEFORE UPDATE ON retained_metadata BEGIN SELECT RAISE(ABORT,'immutable core fact'); END"
-          },
-          "unique": [
-            {
-              "columns": [
-                "object_format",
-                "full_oid",
-                "physical_copy_uuidv4"
-              ],
-              "origin": "pk",
-              "partial": false
-            }
-          ]
-        },
-        "retained_notes": {
-          "columns": [
-            {
-              "generated": 0,
-              "name": "object_format",
-              "notnull": true,
-              "type": "TEXT"
-            },
-            {
-              "generated": 0,
-              "name": "full_oid",
-              "notnull": true,
-              "type": "TEXT"
-            },
-            {
-              "generated": 0,
-              "name": "physical_copy_uuidv4",
-              "notnull": true,
-              "type": "TEXT"
-            },
-            {
-              "generated": 0,
-              "name": "body",
-              "notnull": true,
-              "type": "BLOB"
-            },
-            {
-              "generated": 0,
-              "name": "size",
-              "notnull": true,
-              "type": "INTEGER"
-            },
-            {
-              "generated": 0,
-              "name": "digest_sha256",
-              "notnull": true,
-              "type": "TEXT"
-            },
-            {
-              "generated": 0,
-              "name": "capture_origin_uuidv4",
-              "notnull": true,
-              "type": "TEXT"
-            },
-            {
-              "generated": 0,
-              "name": "capture_uuidv4",
-              "notnull": true,
-              "type": "TEXT"
-            },
-            {
-              "generated": 0,
-              "name": "root",
-              "notnull": true,
-              "type": "TEXT"
-            },
-            {
-              "generated": 0,
-              "name": "target",
-              "notnull": true,
-              "type": "TEXT"
-            },
-            {
-              "generated": 0,
-              "name": "path",
-              "notnull": true,
-              "type": "TEXT"
-            },
-            {
-              "generated": 0,
-              "name": "proof_bundle",
-              "notnull": true,
-              "type": "TEXT"
-            }
-          ],
-          "foreign_keys": [
-            [
-              0,
-              0,
-              "note_roles",
-              "capture_origin_uuidv4",
-              "capture_origin_uuidv4",
-              "NO ACTION",
-              "NO ACTION",
-              "NONE"
-            ],
-            [
-              0,
-              1,
-              "note_roles",
-              "capture_uuidv4",
-              "capture_uuidv4",
-              "NO ACTION",
-              "NO ACTION",
-              "NONE"
-            ],
-            [
-              0,
-              2,
-              "note_roles",
-              "object_format",
-              "object_format",
-              "NO ACTION",
-              "NO ACTION",
-              "NONE"
-            ],
-            [
-              0,
-              3,
-              "note_roles",
-              "root",
-              "root",
-              "NO ACTION",
-              "NO ACTION",
-              "NONE"
-            ],
-            [
-              0,
-              4,
-              "note_roles",
-              "target",
-              "target",
-              "NO ACTION",
-              "NO ACTION",
-              "NONE"
-            ],
-            [
-              0,
-              5,
-              "note_roles",
-              "full_oid",
-              "note",
-              "NO ACTION",
-              "NO ACTION",
-              "NONE"
-            ],
-            [
-              0,
-              6,
-              "note_roles",
-              "path",
-              "path",
-              "NO ACTION",
-              "NO ACTION",
-              "NONE"
-            ],
-            [
-              0,
-              7,
-              "note_roles",
-              "proof_bundle",
-              "proof_bundle",
-              "NO ACTION",
-              "NO ACTION",
-              "NONE"
-            ]
-          ],
-          "primary_key": [
-            "object_format",
-            "full_oid",
-            "physical_copy_uuidv4"
-          ],
-          "sql": "CREATE TABLE retained_notes (\n object_format TEXT NOT NULL, full_oid TEXT NOT NULL,\n physical_copy_uuidv4 TEXT NOT NULL CHECK(p1_uuid4(physical_copy_uuidv4)),\n body BLOB NOT NULL, size INTEGER NOT NULL, digest_sha256 TEXT NOT NULL,\n capture_origin_uuidv4 TEXT NOT NULL, capture_uuidv4 TEXT NOT NULL,\n root TEXT NOT NULL, target TEXT NOT NULL, path TEXT NOT NULL, proof_bundle TEXT NOT NULL,\n CHECK(p1_native(object_format,full_oid,'blob',body,size,digest_sha256)),\n PRIMARY KEY(object_format,full_oid,physical_copy_uuidv4),\n FOREIGN KEY(capture_origin_uuidv4,capture_uuidv4,object_format,root,target,full_oid,path,proof_bundle)\n REFERENCES note_roles(capture_origin_uuidv4,capture_uuidv4,object_format,root,target,note,path,proof_bundle)\n) STRICT, WITHOUT ROWID",
-          "triggers": {
-            "notes_same_representation": "CREATE TRIGGER notes_same_representation BEFORE INSERT ON retained_notes\nWHEN EXISTS(SELECT 1 FROM retained_notes WHERE object_format=NEW.object_format\n AND full_oid=NEW.full_oid AND body<>NEW.body)\nBEGIN SELECT RAISE(ABORT,'conflicting exact note representation'); END",
-            "old_notes_same_representation": "CREATE TRIGGER old_notes_same_representation BEFORE INSERT ON retained_notes\nWHEN EXISTS(SELECT 1 FROM ref_retained_notes WHERE object_format=NEW.object_format AND full_oid=NEW.full_oid AND (body<>NEW.body OR physical_copy_uuidv4=NEW.physical_copy_uuidv4))\nBEGIN SELECT RAISE(ABORT,'conflicting exact note representation'); END",
-            "p1_immutable_retained_notes_delete": "CREATE TRIGGER p1_immutable_retained_notes_delete BEFORE DELETE ON retained_notes BEGIN SELECT RAISE(ABORT,'immutable core fact'); END",
-            "p1_immutable_retained_notes_update": "CREATE TRIGGER p1_immutable_retained_notes_update BEFORE UPDATE ON retained_notes BEGIN SELECT RAISE(ABORT,'immutable core fact'); END"
           },
           "unique": [
             {

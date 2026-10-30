@@ -1,0 +1,504 @@
+[
+  {
+    "retired_node": "tests/integration/p4/test_acquisition.py::test_exact_role_body_inventory_and_replay",
+    "replacement_node": "tests/integration/p1/test_notes.py::test_new_role_exact_binary_body_and_git_hash",
+    "reason": "Binary/empty native bytes remain exact under checked role; retries keep original claims and cumulative work.",
+    "additional_replacement_nodes": [
+      "tests/integration/p5/test_ref_inventory_wiring.py::test_inventory_wiring_keeps_original_claims_and_receiver_checks"
+    ]
+  },
+  {
+    "retired_node": "tests/integration/p4/test_acquisition.py::test_discovery_full_scope_original_pair_and_historical_refs",
+    "replacement_node": "tests/integration/p4/test_ref_observation_i2.py::test_two_real_scans_have_distinct_keys_and_replay_exactly",
+    "reason": "Separate genuine reads retain separate immutable keys and historical replay."
+  },
+  {
+    "retired_node": "tests/integration/p4/test_acquisition.py::test_ref_movement_new_observation_does_not_modify_old_capture",
+    "replacement_node": "tests/integration/p4/test_ref_observation_i2.py::test_two_changed_scans_are_separate_events_not_atomic_snapshot",
+    "reason": "Changed roots belong to separate original observations, never rewritten history."
+  },
+  {
+    "retired_node": "tests/integration/p4/test_acquisition.py::test_missing_targets_unrelated_subtrees_and_file_role",
+    "replacement_node": "tests/integration/p4/test_ref_note_atomicity.py::test_ref_narrow_path_and_body_refusal_preserve_role_reports",
+    "reason": "A narrow mapping does not fetch unrelated missing subtrees; failed body validation preserves admissible role metadata."
+  },
+  {
+    "retired_node": "tests/integration/p4/test_acquisition.py::test_valid_reports_survive_wrong_association_and_body_refusal",
+    "replacement_node": "tests/integration/p4/test_ref_note_atomicity.py::test_ref_narrow_path_and_body_refusal_preserve_role_reports",
+    "reason": "Failed native body validation withholds bytes while preserving independently admitted role/Group reports.",
+    "additional_replacement_nodes": [
+      "tests/integration/p1/test_ref_observation_i1.py::test_unproven_bodies_and_unrelated_claims_cannot_gain_authority"
+    ]
+  },
+  {
+    "retired_node": "tests/integration/p4/test_acquisition.py::test_source_wrong_type_and_wrong_proof_never_reads_arbitrary_blob",
+    "replacement_node": "tests/integration/p4/test_ref_note_atomicity.py::test_ref_unsupported_or_ambiguous_native_path_never_grants_body",
+    "reason": "Unsupported/ambiguous relevant native paths never authorize a body.",
+    "additional_replacement_nodes": [
+      "tests/integration/p1/test_ref_observation_i1.py::test_unproven_bodies_and_unrelated_claims_cannot_gain_authority"
+    ]
+  },
+  {
+    "retired_node": "tests/integration/p4/test_acquisition.py::test_discovery_detects_change_and_truncated_enumeration",
+    "replacement_node": "tests/integration/p4/test_ref_observation_i2.py::test_named_absence_is_qualified_and_failed_enumeration_never_infers_absence",
+    "reason": "Incomplete enumeration cannot fabricate complete scope or negative membership.",
+    "additional_replacement_nodes": [
+      "tests/integration/p4/test_ref_observation_i2.py::test_two_changed_scans_are_separate_events_not_atomic_snapshot"
+    ]
+  },
+  {
+    "retired_node": "tests/integration/p4/test_acquisition.py::test_body_atomic_rollback_and_existing_stop",
+    "replacement_node": "tests/integration/p4/test_ref_note_atomicity.py::test_ref_body_real_commit_denial_rolls_back_and_retry_keeps_work",
+    "reason": "Actual COMMIT rejection rolls back the body unit, retains independent role facts, and charges retry work.",
+    "additional_replacement_nodes": [
+      "tests/integration/p1/test_ref_observation_i1.py::test_note_transaction_rolls_back_all_new_units_on_failure",
+      "tests/integration/p5/test_ref_inventory_wiring.py::test_completion_without_inventory_also_observes_stop"
+    ]
+  },
+  {
+    "retired_node": "tests/integration/p4/test_acquisition.py::test_corruption_stops_persistently_without_copy_failover",
+    "replacement_node": "tests/integration/i3/test_ref_query_backup.py::test_corrupt_selected_ref_copy_stops_even_when_another_copy_is_sound",
+    "reason": "Detected damage stops the catalog; a healthy sibling does not permit same-catalog failover."
+  },
+  {
+    "retired_node": "tests/integration/p4/test_acquisition.py::test_actual_git_notes_command_and_no_lazy_network",
+    "replacement_node": "tests/integration/p4/test_ref_observation_i2.py::test_note_body_requires_claim_specific_proof_for_commit_root",
+    "reason": "A real Git commit-root note still requires exact-Claim receiver evidence.",
+    "additional_replacement_nodes": [
+      "tests/integration/access/test_git_acquisition.py::test_promised_missing_metadata_is_not_lazy_fetched"
+    ]
+  },
+  {
+    "retired_node": "tests/integration/p4/test_acquisition.py::test_source_incoming_loose_object_corruption_is_refusal_without_stop",
+    "replacement_node": "tests/integration/p4/test_ref_note_atomicity.py::test_ref_narrow_path_and_body_refusal_preserve_role_reports",
+    "reason": "Bad supplied native bytes are refused without misclassifying a healthy catalog as stored corruption."
+  },
+  {
+    "retired_node": "tests/integration/p4/test_acquisition.py::test_lost_progress_cannot_mint_new_capture_on_retry",
+    "replacement_node": "tests/integration/access/test_git_acquisition.py::test_operational_loss_cannot_reset_request_budget",
+    "reason": "Operational loss cannot reset an original request or manufacture a continuation.",
+    "additional_replacement_nodes": [
+      "tests/integration/p4/test_ref_observation_i2.py::test_ack_loss_replays_pinned_event_after_commit"
+    ]
+  },
+  {
+    "retired_node": "tests/integration/p4/test_acquisition.py::test_request_must_bind_actual_catalog_and_source",
+    "replacement_node": "tests/integration/access/test_git_acquisition.py::test_plain_p5_native_scope_cannot_replay_under_another_repository",
+    "reason": "Repository/source/request scope cannot be rebound on retry.",
+    "additional_replacement_nodes": [
+      "tests/integration/access/test_git_acquisition.py::test_physical_source_replacement_cannot_resume"
+    ]
+  },
+  {
+    "retired_node": "tests/integration/p4/test_acquisition.py::test_local_reader_preserves_external_capture_attribution",
+    "replacement_node": "tests/integration/p5/test_ref_notes_inputs.py::test_explicit_claims_use_real_root_specific_checks",
+    "reason": "External original subject/Claim attribution is preserved; local checks are distinct evidence."
+  },
+  {
+    "retired_node": "tests/integration/p4/test_acquisition.py::test_real_sqlite_core_commit_denial_rolls_back_body_unit",
+    "replacement_node": "tests/integration/p4/test_ref_note_atomicity.py::test_ref_body_real_commit_denial_rolls_back_and_retry_keeps_work",
+    "reason": "Actual SQLITE_TRANSACTION COMMIT denial after body INSERT leaves no body row or open transaction; retry retains work and copy identity."
+  },
+  {
+    "retired_node": "tests/integration/p4/test_acquisition.py::test_sigkill_after_body_insert_preserves_atomicity_and_original_copy",
+    "replacement_node": "tests/integration/p4/test_ref_note_atomicity.py::test_ref_body_sigkill_preserves_original_copy_and_uncommitted_retry",
+    "reason": "Actual SIGKILL after body INSERT rolls back the attempted copy, preserves an existing checked copy, and charges same-request retry."
+  },
+  {
+    "retired_node": "tests/integration/p4/test_inventory.py::test_proof_and_terminal_inventory_real_native_git",
+    "replacement_node": "tests/integration/p1/test_ref_coverage_i3.py::test_commit_and_fanout_inventory_requires_complete_ordered_closure",
+    "reason": "Terminal inventory requires exact ordered native closure, including commit and fanout structures.",
+    "additional_replacement_nodes": [
+      "tests/integration/p1/test_ref_coverage_i3.py::test_complete_inventory_requires_and_rechecks_exact_structures"
+    ]
+  },
+  {
+    "retired_node": "tests/integration/p4/test_inventory.py::test_known_empty_requires_checked_empty_tree_and_capture_scope",
+    "replacement_node": "tests/integration/p1/test_ref_coverage_i3.py::test_complete_inventory_requires_and_rechecks_exact_structures",
+    "reason": "Known-empty requires checked empty structure and exact Claim/scope; an empty sender report grants no proof."
+  },
+  {
+    "retired_node": "tests/integration/p4/test_inventory.py::test_narrow_mapping_does_not_require_unrelated_subtree_inventory_does",
+    "replacement_node": "tests/integration/p4/test_ref_note_atomicity.py::test_ref_narrow_path_and_body_refusal_preserve_role_reports",
+    "reason": "Relevant mapping remains readable while incomplete/unsupported full inventory remains partial."
+  },
+  {
+    "retired_node": "tests/integration/p4/test_inventory.py::test_unsupported_inventory_grammar_never_terminal",
+    "replacement_node": "tests/integration/p4/test_ref_note_atomicity.py::test_ref_unsupported_or_ambiguous_native_path_never_grants_body",
+    "reason": "Unsupported mode or ambiguous flat/fanout entries refuse role and terminal inventory.",
+    "additional_replacement_nodes": [
+      "tests/integration/p1/test_ref_coverage_i3.py::test_inventory_must_match_whole_checked_group_not_sender_status"
+    ]
+  },
+  {
+    "retired_node": "tests/integration/p4/test_inventory.py::test_body_reader_not_used_and_wrong_callback_oid_rejected",
+    "replacement_node": "tests/integration/p4/test_ref_note_atomicity.py::test_ref_narrow_path_and_body_refusal_preserve_role_reports",
+    "reason": "Role-only traversal does not fetch body; wrong actual bytes never become retained content."
+  },
+  {
+    "retired_node": "tests/integration/p4/test_inventory.py::test_reports_remain_original_and_receiver_group_is_distinct",
+    "replacement_node": "tests/integration/p4/test_ref_inventory_transition.py::test_shared_root_does_not_share_claim_verification",
+    "reason": "Identical shared mapping content does not share Group/Claim receiver authority.",
+    "additional_replacement_nodes": [
+      "tests/integration/p5/test_ref_notes_inputs.py::test_original_reports_never_become_receiver_proof"
+    ]
+  },
+  {
+    "retired_node": "tests/integration/p4/test_inventory.py::test_native_corruption_in_receiver_inventory_persistently_stops",
+    "replacement_node": "tests/integration/p1/test_ref_coverage_i3.py::test_stored_structural_corruption_causes_persistent_stop",
+    "reason": "Damaged stored proof structure causes persistent stop on replay/read."
+  },
+  {
+    "retired_node": "tests/integration/p4/test_inventory.py::test_inventory_atomic_rollback_on_core_insert_failure",
+    "replacement_node": "tests/integration/p4/test_ref_note_atomicity.py::test_ref_group_insert_failure_rolls_back_new_objects_and_keeps_original",
+    "reason": "Actual exception after Group INSERT rolls back its new nominal objects and Group; original independent Group survives; retry costs work."
+  },
+  {
+    "retired_node": "tests/integration/p4/test_inventory.py::test_actual_failed_attempt_is_prepaid_and_never_terminal",
+    "replacement_node": "tests/integration/p1/test_ref_coverage_i3.py::test_proof_steps_are_cumulative_on_failed_retries",
+    "reason": "Actual failed verification work stays charged and cannot create a terminal proof."
+  },
+  {
+    "retired_node": "tests/integration/p4/test_inventory.py::test_budget_stop_after_first_mapping_preserves_partial_prefix",
+    "replacement_node": "tests/integration/p5/test_ref_inventory_wiring.py::test_paired_post_commit_failure_preserves_verified_prefix",
+    "reason": "Already committed independent verified units survive a later failure; unfinished scope is not completed.",
+    "additional_replacement_nodes": [
+      "tests/integration/p4/test_ref_inventory_transition.py::test_group_limits_refuse_without_stopping_healthy_catalog"
+    ]
+  },
+  {
+    "retired_node": "tests/integration/p4/test_inventory.py::test_real_git_notes_generated_commit_is_supported",
+    "replacement_node": "tests/integration/p4/test_ref_observation_i2.py::test_note_body_requires_claim_specific_proof_for_commit_root",
+    "reason": "Actual native commit-root Notes keep checked body permission; inventory closure is separately proved.",
+    "additional_replacement_nodes": [
+      "tests/integration/p1/test_ref_coverage_i3.py::test_commit_and_fanout_inventory_requires_complete_ordered_closure"
+    ]
+  },
+  {
+    "retired_node": "tests/integration/p4/test_inventory.py::test_structural_integrity_and_syntax_refusals_do_not_retain_incoming_bytes",
+    "replacement_node": "tests/integration/p4/test_ref_note_atomicity.py::test_ref_unsupported_or_ambiguous_native_path_never_grants_body",
+    "reason": "Wrong relevant structure/mode cannot grant body retention; no incoming invalid unit is durably staged.",
+    "additional_replacement_nodes": [
+      "tests/integration/p1/test_ref_observation_i1.py::test_unproven_bodies_and_unrelated_claims_cannot_gain_authority"
+    ]
+  },
+  {
+    "retired_node": "tests/integration/p4/test_inventory.py::test_ambiguous_flat_and_fanout_mapping_rejected",
+    "replacement_node": "tests/integration/p4/test_ref_note_atomicity.py::test_ref_unsupported_or_ambiguous_native_path_never_grants_body",
+    "reason": "Ambiguous flat and fanout membership cannot select an arbitrary note."
+  },
+  {
+    "retired_node": "tests/integration/p4/test_inventory.py::test_persisted_inventory_invalid_utf8_publishes_stop",
+    "replacement_node": "tests/integration/p4/test_ref_inventory_transition.py::test_damaged_inventory_metadata_stops_catalog",
+    "reason": "Invalid stored UTF-8 Group metadata stops all subsequent ordinary reads."
+  },
+  {
+    "retired_node": "tests/integration/p4/test_inventory.py::test_persisted_inventory_deep_json_publishes_stop",
+    "replacement_node": "tests/integration/p4/test_ref_inventory_transition.py::test_inventory_query_detects_damaged_stored_receiver_proof",
+    "reason": "Malformed stored structured verification is diagnosed and fences the catalog."
+  },
+  {
+    "retired_node": "tests/integration/p4/test_inventory_callback.py::test_raw_callback_receiver_words_do_not_replace_structural_proof",
+    "replacement_node": "tests/integration/p1/test_ref_coverage_i3.py::test_inventory_must_match_whole_checked_group_not_sender_status",
+    "reason": "Receiver words/status cannot replace actual whole-Group native verification."
+  },
+  {
+    "retired_node": "tests/integration/p4/test_inventory_callback.py::test_raw_callback_actual_native_terminal_proof_and_report_alternatives",
+    "replacement_node": "tests/integration/p1/test_ref_coverage_i3.py::test_complete_inventory_requires_and_rechecks_exact_structures",
+    "reason": "Actual typed whole-Group proof is required independently of reported alternatives.",
+    "additional_replacement_nodes": [
+      "tests/integration/p4/test_ref_inventory_transition.py::test_competing_claims_keep_separate_groups_and_no_winner"
+    ]
+  },
+  {
+    "retired_node": "tests/integration/p4/test_inventory_callback.py::test_raw_callback_checks_actual_fk_capture_scope_and_structural_bytes",
+    "replacement_node": "tests/integration/p1/test_ref_coverage_i3.py::test_inventory_must_match_whole_checked_group_not_sender_status",
+    "reason": "Proof must bind supported exact Claim/root/Group and native structures; missing dependencies cannot confer authority.",
+    "additional_replacement_nodes": [
+      "tests/integration/p4/test_ref_inventory_transition.py::test_progress_cannot_rebind_another_requests_verification"
+    ]
+  },
+  {
+    "retired_node": "tests/integration/p4/test_inventory_callback.py::test_receiver_sql_rechecks_respect_actual_work_budget",
+    "replacement_node": "tests/integration/p1/test_ref_coverage_i3.py::test_proof_steps_are_cumulative_on_failed_retries",
+    "reason": "Receiver rechecking and failed retries consume actual cumulative proof work.",
+    "additional_replacement_nodes": [
+      "tests/integration/p4/test_ref_inventory_transition.py::test_proof_writer_budget_failure_rolls_back_without_false_completion"
+    ]
+  },
+  {
+    "retired_node": "tests/integration/p1/test_notes.py::test_direct_tree_binary_empty_unknown_targets_and_native_git_hash",
+    "replacement_node": "tests/integration/p1/test_notes.py::test_new_role_exact_binary_body_and_git_hash",
+    "reason": "Exact binary/empty native Note identity remains checked for both formats and unacquired targets."
+  },
+  {
+    "retired_node": "tests/integration/p1/test_notes.py::test_notes_commit_root_and_fanout_relevant_only",
+    "replacement_node": "tests/integration/p1/test_ref_coverage_i3.py::test_commit_and_fanout_inventory_requires_complete_ordered_closure",
+    "reason": "Commit/fanout structural closure is checked in order.",
+    "additional_replacement_nodes": [
+      "tests/integration/p4/test_ref_note_atomicity.py::test_ref_narrow_path_and_body_refusal_preserve_role_reports"
+    ]
+  },
+  {
+    "retired_node": "tests/integration/p1/test_notes.py::test_same_capture_reports_alternatives_groups_and_replay",
+    "replacement_node": "tests/integration/p1/test_ref_observation_i1.py::test_shared_mapping_claims_and_receiver_proofs_are_claim_specific",
+    "reason": "Reports, alternatives and genuine results are immutable and per-Claim.",
+    "additional_replacement_nodes": [
+      "tests/integration/p1/test_ref_observation_i1.py::test_groups_atomic_replay_and_no_partial_group_union"
+    ]
+  },
+  {
+    "retired_node": "tests/integration/p1/test_notes.py::test_same_blob_file_role_and_multiple_namespaces",
+    "replacement_node": "tests/integration/p1/test_ref_observation_i1.py::test_unproven_bodies_and_unrelated_claims_cannot_gain_authority",
+    "reason": "Sharing a nominal blob or mapping never lends a different Claim note-body permission.",
+    "additional_replacement_nodes": [
+      "tests/integration/p4/test_ref_inventory_transition.py::test_shared_root_does_not_share_claim_verification"
+    ]
+  },
+  {
+    "retired_node": "tests/integration/p1/test_notes.py::test_false_relevant_mode_or_name_rejects_body",
+    "replacement_node": "tests/integration/p4/test_ref_note_atomicity.py::test_ref_unsupported_or_ambiguous_native_path_never_grants_body",
+    "reason": "False relevant mode/ambiguous name refuses role and body."
+  },
+  {
+    "retired_node": "tests/integration/p1/test_notes.py::test_sender_claim_hash_prefix_and_ref_do_not_authorize_retention",
+    "replacement_node": "tests/integration/p1/test_ref_observation_i1.py::test_unproven_bodies_and_unrelated_claims_cannot_gain_authority",
+    "reason": "Sender reports/ref names/nominal hashes are not receiver structural role proof."
+  },
+  {
+    "retired_node": "tests/integration/p1/test_notes.py::test_invalid_body_exact_checks_without_irrelevant_lexical_failure",
+    "replacement_node": "tests/integration/p4/test_ref_note_atomicity.py::test_ref_narrow_path_and_body_refusal_preserve_role_reports",
+    "reason": "Actual body OID/type/size/digest failure refuses retention while healthy stored role remains.",
+    "additional_replacement_nodes": [
+      "tests/integration/i3/test_ref_query_backup.py::test_corrupt_selected_ref_copy_stops_even_when_another_copy_is_sound"
+    ]
+  },
+  {
+    "retired_node": "tests/integration/p1/test_notes.py::test_capture_binding_immutable_no_new_retry_identity",
+    "replacement_node": "tests/integration/p1/test_ref_observation_i1.py::test_observation_identity_claim_replay_conflicts_and_absence",
+    "reason": "Same observation subject cannot be rebound; multiple legitimate result Claims remain separate."
+  },
+  {
+    "retired_node": "tests/integration/p1/test_notes.py::test_atomic_note_admission_work_survives_rollback_and_budget_stop",
+    "replacement_node": "tests/integration/p4/test_ref_note_atomicity.py::test_ref_body_real_commit_denial_rolls_back_and_retry_keeps_work",
+    "reason": "Rollback does not refund actual work or retain uncommitted body.",
+    "additional_replacement_nodes": [
+      "tests/integration/p1/test_ref_coverage_i3.py::test_budget_refusal_preserves_unfinished_proof_without_corruption"
+    ]
+  },
+  {
+    "retired_node": "tests/integration/p1/test_notes.py::test_recovery_stop_on_retained_corruption_never_sibling_failover",
+    "replacement_node": "tests/integration/i3/test_ref_query_backup.py::test_corrupt_selected_ref_copy_stops_even_when_another_copy_is_sound",
+    "reason": "A stored corruption stop cannot be cleared by selecting a sibling copy."
+  },
+  {
+    "retired_node": "tests/integration/p1/test_notes.py::test_semantic_proof_bundle_contains_entire_native_bytes_not_hash_alias",
+    "replacement_node": "tests/integration/p1/test_ref_observation_i1.py::test_structural_proof_cannot_claim_unchecked_decoder_or_full_inventory",
+    "reason": "Proof retains/rechecks actual native structure bytes under supported scope.",
+    "additional_replacement_nodes": [
+      "tests/integration/p1/test_ref_coverage_i3.py::test_inventory_must_match_whole_checked_group_not_sender_status"
+    ]
+  },
+  {
+    "retired_node": "tests/integration/p1/test_notes.py::test_raw_non_utf8_ref_is_losslessly_encoded_without_alias",
+    "replacement_node": "tests/integration/p5/test_ref_inventory_wiring.py::test_inventory_wiring_preserves_exact_source_scope",
+    "reason": "Raw non-UTF8 ref bytes retain identity, without a lossy text alias."
+  },
+  {
+    "retired_node": "tests/integration/p1/test_notes.py::test_metadata_only_notes_projection_preserves_reports_groups_and_local_role",
+    "replacement_node": "tests/integration/p1/test_ref_observation_i1.py::test_projection_preserves_reports_groups_and_verified_scope",
+    "reason": "Metadata/Group reports and local role evidence remain distinct in projection.",
+    "additional_replacement_nodes": [
+      "tests/integration/p5/test_ref_notes_inputs.py::test_original_reports_never_become_receiver_proof"
+    ]
+  },
+  {
+    "retired_node": "tests/integration/p1/test_notes.py::test_notes_projection_closed_scope_does_not_borrow_other_scope_absence",
+    "replacement_node": "tests/integration/p4/test_ref_inventory_transition.py::test_shared_root_does_not_share_claim_verification",
+    "reason": "Unknown/unverified scope cannot borrow complete evidence from another Claim sharing root content."
+  },
+  {
+    "retired_node": "tests/integration/p1/test_notes.py::test_metadata_only_notes_role_obeys_zero_proof_step_budget",
+    "replacement_node": "tests/integration/p1/test_ref_coverage_i3.py::test_budget_refusal_preserves_unfinished_proof_without_corruption",
+    "reason": "Finite proof limits cannot produce receiver authority or claim catalog corruption."
+  },
+  {
+    "retired_node": "tests/integration/access/test_review_corrections.py::test_metadata_capture_coverage_resolves_the_actual_capture_owner",
+    "replacement_node": "tests/unit/test_ref_physical_format.py::test_capture_coverage_owner_is_no_longer_an_admissible_input",
+    "reason": "Retired Capture Coverage rejects as unsupported; current Ref Coverage requires exact native evidence.",
+    "additional_replacement_nodes": [
+      "tests/integration/p1/test_ref_coverage_i3.py::test_complete_inventory_requires_and_rechecks_exact_structures"
+    ]
+  },
+  {
+    "retired_node": "tests/integration/access/test_review_corrections.py::test_legacy_physical_capture_binding_remains_immutable",
+    "replacement_node": "tests/integration/p1/test_ref_observation_i1.py::test_observation_identity_claim_replay_conflicts_and_absence",
+    "reason": "Original subject identity is immutable; conflicting result Claims do not rewrite it."
+  },
+  {
+    "retired_node": "tests/integration/access/test_review_corrections.py::test_legacy_physical_capture_corruption_stops_diagnostic_query",
+    "replacement_node": "tests/integration/p4/test_ref_inventory_transition.py::test_damaged_inventory_metadata_stops_catalog",
+    "reason": "Damaged retained new-family diagnostics still trigger catalog stop.",
+    "additional_replacement_nodes": [
+      "tests/integration/p1/test_ref_observation_i1.py::test_orphan_claim_stops_observation_read"
+    ]
+  },
+  {
+    "retired_node": "tests/integration/i3/test_ref_exchange_i3.py::test_export_legacy_notes_metadata_utf8_corruption_stops_catalog",
+    "replacement_node": "tests/integration/i3/test_ref_exchange_i3.py::test_export_stored_group_utf8_corruption_stops_catalog",
+    "reason": "Invalid stored Group UTF-8 is detected by checked export and stops service."
+  },
+  {
+    "retired_node": "tests/integration/i3/test_ref_exchange_i3.py::test_legacy_export_budget_callback_cannot_read_proofs",
+    "replacement_node": "tests/integration/i3/test_ref_query_backup.py::test_budget_callback_cannot_borrow_checked_byte_capability",
+    "reason": "Caller budget callbacks cannot borrow typed body/proof read capability.",
+    "additional_replacement_nodes": [
+      "tests/integration/i3/test_ref_exchange_i3.py::test_ref_export_typed_read_keeps_budget_and_noncorruption_errors"
+    ]
+  },
+  {
+    "retired_node": "tests/integration/i3/test_ref_exchange_i3.py::test_export_verifies_each_legacy_note_copy",
+    "replacement_node": "tests/integration/i3/test_ref_query_backup.py::test_each_ref_note_copy_is_checked_individually",
+    "reason": "Every selected actual physical copy has its own Claim/proof/body revalidation.",
+    "additional_replacement_nodes": [
+      "tests/integration/i3/test_ref_query_backup.py::test_corrupt_selected_ref_copy_stops_even_when_another_copy_is_sound"
+    ]
+  },
+  {
+    "retired_node": "tests/integration/i3/test_selective_exchange.py::test_native_metadata_notes_and_capture_coverage_without_provider_intake",
+    "replacement_node": "tests/integration/p5/test_ref_inventory_wiring.py::test_inventory_wiring_keeps_original_claims_and_receiver_checks",
+    "reason": "Native and metadata-only acquisition keep original Claims and root-specific receiver verification; Capture Coverage is rejected.",
+    "additional_replacement_nodes": [
+      "tests/unit/test_ref_physical_format.py::test_capture_coverage_owner_is_no_longer_an_admissible_input"
+    ]
+  },
+  {
+    "retired_node": "tests/integration/i3/test_selective_exchange.py::test_capture_non_utf8_ref_preserves_native_key",
+    "replacement_node": "tests/integration/i3/test_ref_exchange_i3.py::test_lossless_symbolic_direct_resolved_and_peeled_metadata",
+    "reason": "Lossless original ref identity and typed result fields survive interchange.",
+    "additional_replacement_nodes": [
+      "tests/integration/p5/test_ref_inventory_wiring.py::test_inventory_wiring_preserves_exact_source_scope"
+    ]
+  },
+  {
+    "retired_node": "tests/integration/i3/test_selective_exchange.py::test_capture_pair_conflicting_payload_rejected_before_binding",
+    "replacement_node": "tests/integration/p1/test_ref_observation_i1.py::test_observation_identity_claim_replay_conflicts_and_absence",
+    "reason": "Incompatible same-subject replay refuses without rewriting previously admitted values.",
+    "additional_replacement_nodes": [
+      "tests/integration/i3/test_ref_exchange_i3.py::test_distinct_conflicts_survive_and_evidence_rebinding_is_refused"
+    ]
+  },
+  {
+    "retired_node": "tests/integration/p1/test_ref_observation_i1.py::test_legacy_copy_identity_conflict_is_not_misclassified_as_corruption",
+    "replacement_node": "tests/integration/p1/test_ref_observation_i1.py::test_exact_copy_replay_rejects_changed_immutable_claim_fields",
+    "reason": "Exact physical-copy replay cannot rebind immutable Claim evidence. Cross-family UUID collisions no longer exist."
+  },
+  {
+    "retired_node": "tests/integration/p1/test_ref_observation_i1.py::test_corrupt_legacy_note_conflict_stops_new_note_admission",
+    "replacement_node": "tests/integration/p1/test_ref_observation_i1.py::test_replaying_corrupted_stored_copy_stops_catalog",
+    "reason": "Corrupt existing same-family copy stops admission/read; old-to-new family collision surface is retired."
+  },
+  {
+    "retired_node": "tests/integration/p2/test_native.py::test_receiver_notes_role_checks_full_native_commit_and_metadata_without_body",
+    "replacement_node": "tests/integration/p4/test_ref_observation_i2.py::test_note_body_requires_claim_specific_proof_for_commit_root",
+    "reason": "Commit-root role uses actual native structure and exact Claim before body.",
+    "additional_replacement_nodes": [
+      "tests/integration/p1/test_ref_observation_i1.py::test_projection_preserves_reports_groups_and_verified_scope"
+    ]
+  },
+  {
+    "retired_node": "tests/integration/p2/test_native.py::test_typed_utf8_corruption_persists_stop_before_snapshot_rollback",
+    "replacement_node": "tests/integration/p4/test_ref_inventory_transition.py::test_damaged_inventory_metadata_stops_catalog",
+    "reason": "Stored typed decode failure publishes persistent stop before ordinary reads continue."
+  },
+  {
+    "retired_node": "tests/integration/p5/test_legacy_retirement_e2e.py::test_legacy_only_rows_do_not_invent_new_claims_or_search_authority",
+    "replacement_node": "tests/unit/test_ref_physical_format.py::test_retired_sections_rejected_with_recomputed_digest",
+    "reason": "No active old family can supply invented Ref authority; retired wire is rejected despite checksum recomputation.",
+    "additional_replacement_nodes": [
+      "tests/integration/p7/test_ref_typed_salvage.py::test_standalone_mapping_never_creates_evidence_or_body"
+    ]
+  },
+  {
+    "retired_node": "tests/integration/p7/test_ref_typed_salvage.py::test_legacy_note_bytes_are_staged_only_with_valid_original_proof",
+    "replacement_node": "tests/integration/p7/test_ref_typed_salvage.py::test_missing_claim_never_stages_an_unproven_note",
+    "reason": "Missing/wrong original claim or role prevents staging unproven Note bytes."
+  },
+  {
+    "retired_node": "tests/integration/p7/test_exact_replay.py::test_notes_extraction_preserves_original_repository_binding",
+    "replacement_node": "tests/integration/p7/test_ref_typed_salvage.py::test_scanner_keeps_original_observations_and_whole_events",
+    "reason": "Salvage retains actual subjects/Claims/events without replacing original attribution."
+  },
+  {
+    "retired_node": "tests/integration/p7/test_exact_replay.py::test_original_repository_is_not_replaced_by_destination_identity",
+    "replacement_node": "tests/integration/p5/test_ref_notes_inputs.py::test_explicit_claims_use_real_root_specific_checks",
+    "reason": "Receiving catalog seed cannot replace a supplied original repository/Claim coordinate.",
+    "additional_replacement_nodes": [
+      "tests/integration/p7/test_ref_typed_salvage.py::test_notes_dependencies_resolve_without_rebinding_original_evidence"
+    ]
+  },
+  {
+    "retired_node": "tests/integration/p7/test_exact_replay.py::test_disagreeing_capture_coordinates_rejected",
+    "replacement_node": "tests/integration/p7/test_ref_typed_salvage.py::test_notes_copy_requires_rechecked_original_claim_and_proof",
+    "reason": "Exact original coordinates and proof must agree on re-admission."
+  },
+  {
+    "retired_node": "tests/integration/p7/test_exact_replay.py::test_invalid_new_note_does_not_leave_capture_or_objects",
+    "replacement_node": "tests/integration/p7/test_ref_typed_salvage.py::test_invalid_candidate_rolls_back_and_actual_target_damage_stops",
+    "reason": "Invalid new candidate leaves no partial authoritative unit; target damage is a separate stop."
+  },
+  {
+    "retired_node": "tests/integration/p7/test_exact_replay.py::test_capture_replay_cannot_rebind_repository",
+    "replacement_node": "tests/integration/p1/test_ref_observation_i1.py::test_observation_identity_claim_replay_conflicts_and_absence",
+    "reason": "Subject replay cannot rebind original repository identity."
+  },
+  {
+    "retired_node": "tests/integration/p7/test_exact_replay.py::test_note_replay_requires_all_capture_role_and_byte_evidence",
+    "replacement_node": "tests/integration/p7/test_ref_typed_salvage.py::test_notes_copy_requires_rechecked_original_claim_and_proof",
+    "reason": "Actual recovered copy requires original Claim, checked structure and body, including exact replay.",
+    "additional_replacement_nodes": [
+      "tests/integration/p7/test_ref_typed_salvage.py::test_receiver_replays_shuffled_original_units"
+    ]
+  },
+  {
+    "retired_node": "tests/integration/p7/test_work_dimensions.py::test_proof_hex_exact_decoded_allowance_is_available",
+    "replacement_node": "tests/integration/p1/test_ref_observation_i1.py::test_bounded_proof_size_matches_canonical_bundle",
+    "reason": "Exact proof encoding sizes are measured under finite limits.",
+    "additional_replacement_nodes": [
+      "tests/integration/p1/test_ref_observation_i1.py::test_note_read_charges_repeated_dependencies_and_exact_finite_budget"
+    ]
+  },
+  {
+    "retired_node": "tests/integration/p7/test_work_dimensions.py::test_invalid_proof_hex_retains_decode_expenditure",
+    "replacement_node": "tests/integration/p7/test_ref_typed_salvage.py::test_candidate_decode_limit_stops_before_admission_and_survives_retry",
+    "reason": "Invalid/unprocessed decoding work persists across retries without domain admission."
+  },
+  {
+    "retired_node": "tests/integration/p7/test_work_dimensions.py::test_proof_hex_budget_refusal_precedes_decoder",
+    "replacement_node": "tests/integration/p1/test_ref_observation_i1.py::test_proof_meter_rejects_long_invalid_type_before_character_walk",
+    "reason": "Proof input reservation precedes variable parsing/encoding; malformed type fails within bounds.",
+    "additional_replacement_nodes": [
+      "tests/integration/p1/test_ref_observation_i1.py::test_budget_exhaustion_inside_stored_decoder_is_not_corruption"
+    ]
+  },
+  {
+    "retired_node": "tests/integration/p7/test_adversarial_contract_cases.py::test_case_28_missing_capture_binding_records_qualified_observation",
+    "replacement_node": "tests/integration/p7/test_ref_typed_salvage.py::test_missing_event_dependency_resolves_from_baseline_or_later_input",
+    "reason": "Absent original identity dependencies remain deferred; no fabricated original authority is admitted."
+  },
+  {
+    "retired_node": "tests/integration/p7/test_adversarial_contract_cases.py::test_case_27_conflicting_immutable_capture_rebinding_rejected",
+    "replacement_node": "tests/integration/p7/test_ref_typed_salvage.py::test_pending_note_cannot_rebind_existing_claim_to_another_root",
+    "reason": "A deferred unit cannot rebind the exact stored original Claim/root when later dependencies arrive."
+  },
+  {
+    "retired_node": "tests/integration/p7/test_adversarial_contract_cases.py::test_case_09_original_capture_and_provenance_survive_replay",
+    "replacement_node": "tests/integration/p7/test_ref_typed_salvage.py::test_receiver_replays_shuffled_original_units",
+    "reason": "Original subject and Claim provenance survive shuffled/repeated typed delivery."
+  },
+  {
+    "retired_node": "tests/integration/p7/test_adversarial_contract_cases.py::test_case_05_notes_blob_lacking_role_evidence_rejected",
+    "replacement_node": "tests/integration/p7/test_ref_typed_salvage.py::test_missing_claim_never_stages_an_unproven_note",
+    "reason": "Missing/forged original role structure prevents staging unproven Note body."
+  }
+]

@@ -47,7 +47,9 @@ def test_new_only_acquisition_query_cli_search_replay(
         "note_roles",
         "retained_notes",
     ):
-        assert not app.core.sql(f"SELECT 1 FROM {table}")
+        assert not app.core.sql(
+            "SELECT 1 FROM sqlite_schema WHERE type='table' AND name=?", (table,)
+        )
     assert app.core.sql("SELECT 1 FROM ref_retained_notes")
     assert not app.core.sql(
         "SELECT 1 FROM retained_metadata WHERE full_oid=?", (target.full_oid,)
@@ -107,18 +109,3 @@ def test_retired_cli_command_is_rejected():
     with pytest.raises(SystemExit) as error:
         main(["notes", "--catalog", "/unused"])
     assert error.value.code == 2
-
-
-def test_legacy_only_rows_do_not_invent_new_claims_or_search_authority(acquisition):
-    app, _, _, _, _, path, _ = acquisition
-    capture, target, note = fixtures.fixture_note(acquisition, body=b"legacyonlyneedle")
-    assert app._legacy_acquire_note(capture, target).body_retained
-    service = ProductionQueryService(path.parent)
-    assert not service.get_git_object(target).ref_notes_targets
-    query = SearchQuery(query_text="legacyonlyneedle", projection_kinds=("notes",))
-    assert service.search(query).total_count == 0
-    service.rebuild_search(("notes",))
-    assert service.search(query).total_count == 0
-    assert not app.core.sql("SELECT 1 FROM ref_observations")
-    # Retired projections never mutate or delete the retained old family.
-    assert app.core.read_note(capture, target, note) == b"legacyonlyneedle"

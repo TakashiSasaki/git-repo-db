@@ -132,32 +132,27 @@ def test_core_only_queries_objects_claims_relations_notes_and_coverage(
     assert obs_page.total_count == 1
     assert obs_page.items[0].observation.value["ref"] == "refs/heads/main"
 
-    # Notes captures, target projection, byte read, and inventory
-    capture = fixtures["capture"]
-    notes_page = service._legacy_list_notes_captures(notes_ref="refs/notes/commits")
-    assert notes_page.total_count == 1
-    cap_view = notes_page.items[0]
-    assert cap_view.capture == capture
-    assert commit_obj.oid in cap_view.targets
+    from repo_catalog.adapters.sqlite.acquisition import UnlimitedWorkBudget
 
-    note_target = service._legacy_get_notes_target(
-        capture, commit_obj.oid, include_bytes=True
+    claim, content = (
+        fixtures["ref_fixture"]["claim"],
+        fixtures["ref_fixture"]["mapping"],
     )
-    assert note_target.canonical == fixtures["note_blob"].oid
-    assert note_target.role_verified is True
-    assert note_target.note_retained is True
-    assert note_target.reported_conflict is True
-    assert note_target.note_bytes is not None
-    assert note_target.note_bytes.available is True
-    assert note_target.note_bytes.body_bytes == fixtures["note_body_bytes"]
-
-    inventories = service._legacy_list_notes_inventories(capture)
-    assert any(
-        inv.receiver_verified and inv.status == "complete" for inv in inventories
+    view = service.get_notes_mapping(
+        claim,
+        commit_obj.oid,
+        "git-notes",
+        "1",
+        "native-notes-tree",
+        UnlimitedWorkBudget(),
     )
-    assert any(
-        not inv.receiver_verified and inv.status == "partial" for inv in inventories
+    assert view.canonical_note_oid == fixtures["note_blob"].oid
+    assert view.reported_conflict
+    assert (
+        service.read_ref_note_bytes(claim, content, UnlimitedWorkBudget()).body_bytes
+        == fixtures["note_body_bytes"]
     )
+    assert any(group.status == "partial" for group in view.groups)
 
     # Core Coverage
     cov_scope = CoreCoverageScope("repository", (REPOSITORY, "refs"))
@@ -350,29 +345,29 @@ def test_verification_aware_byte_reads_detect_corruption_and_fence_catalog(
         cat_note, fmt="sha1", include_core=True, include_context=False
     )
     service_note = ProductionQueryService(cat_note)
-    capture = fix_note["capture"]
-    note_oid = fix_note["note_blob"].oid
+    from repo_catalog.adapters.sqlite.acquisition import UnlimitedWorkBudget
 
-    valid_note = service_note._legacy_read_note_bytes(
-        capture, fix_note["commit_obj"].oid, note_oid
+    claim, content = (
+        fix_note["ref_fixture"]["claim"],
+        fix_note["ref_fixture"]["mapping"],
     )
+
+    valid_note = service_note.read_ref_note_bytes(claim, content, UnlimitedWorkBudget())
     assert valid_note.available is True and valid_note.verified is True
 
     with closing(connect(cat_note / "core.sqlite3", "core")) as db:
         trigger = db.execute(
-            "SELECT sql FROM sqlite_schema WHERE name='p1_immutable_retained_notes_update'"
+            "SELECT sql FROM sqlite_schema WHERE name='p1_immutable_ref_retained_notes_update'"
         ).fetchone()[0]
         db.execute("PRAGMA ignore_check_constraints=ON")
         db.execute("BEGIN IMMEDIATE")
-        db.execute("DROP TRIGGER p1_immutable_retained_notes_update")
-        db.execute("UPDATE retained_notes SET body=x'001122'")
+        db.execute("DROP TRIGGER p1_immutable_ref_retained_notes_update")
+        db.execute("UPDATE ref_retained_notes SET body=x'001122'")
         db.execute(trigger)
         db.commit()
 
     with pytest.raises(CoreFailure) as note_exc:
-        service_note._legacy_read_note_bytes(
-            capture, fix_note["commit_obj"].oid, note_oid
-        )
+        service_note.read_ref_note_bytes(claim, content, UnlimitedWorkBudget())
     assert note_exc.value.code == "AUTHORITATIVE_CORRUPTION"
     assert (cat_note / "p1-recovery-stop.json").exists()
 

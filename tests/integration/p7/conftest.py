@@ -14,13 +14,7 @@ from repo_catalog.adapters.sqlite.p1_schema import connect as p1_connect
 from repo_catalog.adapters.sqlite.p1_schema import initialize
 from repo_catalog.application.recovery import RecoveryService
 from repo_catalog.domain.context_admission import DependencySet
-from repo_catalog.domain.p1_core import (
-    OID,
-    Capture,
-    NativeObject,
-    NotesProof,
-    native_oid,
-)
+from repo_catalog.domain.p1_core import OID, NativeObject, native_oid
 from tests.support.context_admission import fixture_context, fixture_service
 
 
@@ -148,25 +142,49 @@ def _synthetic_catalog_template(tmp_path_factory):
         [(b"100644", commit.oid.full_oid.encode("ascii"), note_blob.oid.full_oid)],
     )
     cap_origin = "66666666-6666-4666-8666-666666666666"
-    cap_id = "77777777-7777-4777-8777-777777777777"
-    capture = Capture(
-        cap_origin,
-        cap_id,
-        DEFAULT_REPO_UUID,
-        "local-notes",
-        "refs/notes/commits",
+    from repo_catalog.domain.p1_core import Provenance
+    from repo_catalog.domain.ref_observation import (
+        NotesMapping,
+        NotesMappingEvidence,
+        RefObservation,
+        RefObservationClaim,
+        RefObservationKey,
+        new_uuid7,
+    )
+
+    key = RefObservationKey(cap_origin, new_uuid7())
+    core.admit_ref_observation(
+        RefObservation(
+            key, DEFAULT_REPO_UUID, b"refs/notes/commits", "local-notes", "visible"
+        )
+    )
+    claim = RefObservationClaim(
+        key,
+        Provenance("source", "read", "claim", "fixture", "1"),
+        "present",
+        root_oid=notes_tree.oid,
+    )
+    core.admit_ref_observation_claim(claim)
+    mapping = NotesMapping(
         notes_tree.oid,
+        "git-notes",
+        "1",
+        "native-notes-tree",
+        commit.oid,
+        note_blob.oid,
+        commit.oid.full_oid,
     )
-    notes_proof = NotesProof(
-        capture=capture,
-        target=commit.oid,
-        note=note_blob.oid,
-        path=commit.oid.full_oid,
-        structures=(notes_tree,),
+    evidence = NotesMappingEvidence(
+        claim,
+        mapping,
+        "single-path",
+        Provenance(
+            "local-notes", "receiver", "path", "native-notes", "1", "receiver_intrinsic"
+        ),
+        (notes_tree,),
     )
-    core.admit_capture(capture)
-    core.admit_note(
-        notes_proof, note_blob, "88888888-8888-4888-8888-888888888888", budget
+    core.admit_ref_note(
+        evidence, note_blob, "88888888-8888-4888-8888-888888888888", budget
     )
 
     # Populate Context text body via ContextStore
