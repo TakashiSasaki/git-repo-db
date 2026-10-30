@@ -131,6 +131,7 @@ def test_isolated_target_exclusion_does_not_hide_production_runtime_imports():
         "from repo_catalog.application.exchange import ExchangeService",
         "from repo_catalog.application.production_query import ProductionQueryService",
         "from repo_catalog.cli import production_query",
+        "from repo_catalog.adapters.sqlite import ref_salvage",
     ],
 )
 def test_public_runtime_guard_detects_every_isolated_stage(source):
@@ -163,3 +164,18 @@ def test_i6a_admission_modules_are_explicitly_owned_without_prefix_exclusion():
         assert "src/repo_catalog/" + path in baseline.ISOLATED_TARGET_MODULES
         future = ROOT / ("src/repo_catalog/" + path.replace(".py", "_future.py"))
         assert baseline.is_baseline_source(future)
+
+
+def test_ref_salvage_is_explicitly_opt_in_without_prefix_exclusion():
+    spec = importlib.util.spec_from_file_location(
+        "callsite_audit", ROOT / "scripts/audit_callsite_dependencies.py"
+    )
+    baseline = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(baseline)
+    assert (
+        "src/repo_catalog/adapters/sqlite/ref_salvage.py"
+        in baseline.ISOLATED_TARGET_MODULES
+    )
+    assert baseline.is_baseline_source(
+        ROOT / "src/repo_catalog/adapters/sqlite/ref_salvage_future.py"
+    )
