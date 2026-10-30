@@ -721,7 +721,6 @@ def test_native_metadata_notes_and_capture_coverage_without_provider_intake(tmp_
     from repo_catalog.application.acquisition import GitAcquisition
     from repo_catalog.domain.acquisition import (
         GitNativeAcquisitionRequest,
-        NotesAcquisitionSpec,
     )
     from repo_catalog.domain.p1_core import Capture
     from tests.integration.p5.conftest import build_sample_git_repo
@@ -741,30 +740,42 @@ def test_native_metadata_notes_and_capture_coverage_without_provider_intake(tmp_
         select_oids=(oids["commit1"], oids["commit2"], oids["tree"], oids["tag"]),
         retain_bytes=True,
         include_refs=False,
-        notes=NotesAcquisitionSpec(
-            explicit_captures=(
-                Capture(
-                    origin,
-                    capture,
-                    r1,
-                    "original-git",
-                    "refs/notes/commits",
-                    oids["notes_commit"],
-                ),
-            ),
-            acquire_inventories=True,
-            target_oids=(oids["commit2"],),
-            retain_note_bodies=True,
-        ),
     )
     GitAcquisition(a, operational=a).acquire_from_native(
         GitNativeSource(native), request, new_request=True
     )
     from contextlib import closing
 
+    # Deferred physical-family Exchange fixture, deliberately outside the
+    # public producer which no longer accepts Capture input.
+    from repo_catalog.adapters.git.notes import GitNotesSource
+    from repo_catalog.adapters.sqlite.acquisition import (
+        InMemoryNotesProgress,
+        UnlimitedWorkBudget,
+    )
+    from repo_catalog.application.notes import NotesAcquisition
     from repo_catalog.domain.p1_core import CoreCoverageScope
     from repo_catalog.domain.p1_coverage import CoverageClaim
 
+    with closing(GitCore(a / "core.sqlite3")) as core:
+        legacy = NotesAcquisition(
+            core,
+            GitNotesSource(GitNativeSource(native)),
+            UnlimitedWorkBudget(),
+            InMemoryNotesProgress(),
+            source_attribution="original-git",
+            repository_uuidv4=r1,
+        )
+        old = Capture(
+            origin,
+            capture,
+            r1,
+            "original-git",
+            "refs/notes/commits",
+            oids["notes_commit"],
+        )
+        legacy._legacy_acquire_note(old, oids["commit2"])
+        legacy._legacy_inventory(old)
     pair = tuple(rows(a, "core", "captures")[0][:2])
     cap_scope = CoreCoverageScope("capture", (*pair, "notes_inventory"))
     with closing(GitCore(a / "core.sqlite3")) as core:

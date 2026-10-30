@@ -24,7 +24,7 @@ from repo_catalog.domain.p1_context import (
     ResourceKey,
     canonical,
 )
-from repo_catalog.domain.p1_core import OID, Capture, CoreFailure, NotesProof
+from repo_catalog.domain.p1_core import OID, CoreFailure
 from repo_catalog.domain.production_query import (
     PageRequest,
     QueryError,
@@ -200,16 +200,46 @@ def test_binary_notes_rebuild_and_scan_equivalence(tmp_path):
     blob = make_native("sha1", "blob", b"hello\xff\x00world")
     target = OID("sha1", "1" * 40)
     tree = make_tree("sha1", [(b"100644", target.full_oid.encode(), blob.oid.full_oid)])
-    capture = Capture(
-        ORIGIN, str(uuid4()), REPOSITORY, "source", "refs/notes/binary", tree.oid
+    from repo_catalog.domain.p1_core import Provenance
+    from repo_catalog.domain.ref_observation import (
+        NotesMapping,
+        NotesMappingEvidence,
+        RefObservation,
+        RefObservationClaim,
+        RefObservationKey,
+        new_uuid7,
+    )
+
+    key = RefObservationKey(ORIGIN, new_uuid7())
+    subject = RefObservation(key, REPOSITORY, b"refs/notes/binary", "source", "visible")
+    claim = RefObservationClaim(
+        key,
+        Provenance("source", "read", "claim", "test", "1"),
+        "present",
+        root_oid=tree.oid,
+    )
+    mapping = NotesMapping(
+        tree.oid,
+        "git-notes",
+        "1",
+        "native-notes-tree",
+        target,
+        blob.oid,
+        target.full_oid,
+    )
+    evidence = NotesMappingEvidence(
+        claim,
+        mapping,
+        "single-path",
+        Provenance(
+            "source", "receiver", "path", "native-notes", "1", "receiver_intrinsic"
+        ),
+        (tree,),
     )
     with closing(GitCore(tmp_path / "core.sqlite3")) as core:
-        core.admit_note(
-            NotesProof(capture, target, blob.oid, target.full_oid, (tree,)),
-            blob,
-            str(uuid4()),
-            UnlimitedTestBudget(),
-        )
+        core.admit_ref_observation(subject)
+        core.admit_ref_observation_claim(claim)
+        core.admit_ref_note(evidence, blob, str(uuid4()), UnlimitedTestBudget())
     service = ProductionQueryService(tmp_path)
     before = service.search(
         SearchQuery(query_text="\\xff", projection_kinds=("notes",))

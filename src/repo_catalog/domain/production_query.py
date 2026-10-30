@@ -550,7 +550,6 @@ class GitObjectView:
     relations: dict[str, Projection]
     metadata_retained: bool
     retained_bytes: ByteReadResult | None = None
-    notes_targets: tuple[NotesTargetView, ...] = ()
     ref_notes_targets: tuple[RefNotesTargetView, ...] = ()
 
     @property
@@ -566,7 +565,6 @@ class GitObjectView:
             "full_oid": self.oid.full_oid,
             "metadata_retained": self.metadata_retained,
             "native_type": self.native_type,
-            "notes_targets": [n.to_dict() for n in self.notes_targets],
             "ref_notes_targets": [n.to_dict() for n in self.ref_notes_targets],
             "object_format": self.oid.object_format,
             "relations": {
@@ -623,7 +621,7 @@ class GitObservationView:
 
 
 @dataclass(frozen=True)
-class NotesTargetView:
+class _LegacyNotesTargetView:
     """Authoritative Notes target projection and byte retention state."""
 
     capture: Capture
@@ -678,7 +676,7 @@ class NotesTargetView:
 
 
 @dataclass(frozen=True)
-class NotesInventoryView:
+class _LegacyNotesInventoryView:
     """Authoritative Notes inventory view."""
 
     capture: Capture
@@ -705,12 +703,12 @@ class NotesInventoryView:
 
 
 @dataclass(frozen=True)
-class NotesCaptureView:
+class _LegacyNotesCaptureView:
     """Authoritative Notes capture summary with targets and inventories."""
 
     capture: Capture
     targets: tuple[OID, ...]
-    inventories: tuple[NotesInventoryView, ...]
+    inventories: tuple[_LegacyNotesInventoryView, ...]
 
     @property
     def semantic_key(self) -> tuple[str, str, str]:
@@ -949,14 +947,12 @@ class PairedCoreResolution:
     available_in_core: bool
     core_required: bool
     object_view: GitObjectView | None = None
-    notes_targets: tuple[NotesTargetView, ...] = ()
     ref_notes_targets: tuple[RefNotesTargetView, ...] = ()
 
     def to_dict(self) -> dict[str, object]:
         return {
             "available_in_core": self.available_in_core,
             "core_required": self.core_required,
-            "notes_targets": [n.to_dict() for n in self.notes_targets],
             "ref_notes_targets": [n.to_dict() for n in self.ref_notes_targets],
             "object_view": (
                 self.object_view.to_dict() if self.object_view is not None else None

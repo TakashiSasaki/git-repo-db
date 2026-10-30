@@ -1,7 +1,7 @@
 """Opt-in production Notes acquisition. Public Schema 21 runtime is unchanged.
 
 A discovery UUID pair denotes one original observation. Its first result and
-Capture allocation are durably pinned in Operational before Core admission;
+Original scan results are durably pinned in Operational before Core admission;
 retry replays those exact metadata values. A new scan needs a new observation.
 No body bytes enter progress storage. Core facts remain usable if it is lost.
 """
@@ -54,6 +54,16 @@ from repo_catalog.domain.ref_observation import (
 @dataclass(frozen=True)
 class Discovery:
     observation: GitObservation
+    failure_code: str | None
+    detail: str
+    enumerations: tuple = ()
+
+
+@dataclass(frozen=True)
+class _LegacyDiscovery:
+    """Internal deferred-family diagnostic result; not normal acquisition."""
+
+    observation: GitObservation
     captures: tuple[Capture, ...]
     failure_code: str | None
     detail: str
@@ -61,7 +71,7 @@ class Discovery:
 
 
 @dataclass(frozen=True)
-class NoteAcquisition:
+class _LegacyNoteAcquisition:
     capture: Capture
     target: OID
     note: OID | None
@@ -182,12 +192,36 @@ class NotesAcquisition:
 
     def discover(
         self,
+        repository_uuidv4,
+        source_attribution,
+        origin_uuidv4,
+        observation_uuidv4,
+        observed_at_us,
+        nominated=(),
+    ):
+        return self._discover(
+            repository_uuidv4,
+            source_attribution,
+            origin_uuidv4,
+            observation_uuidv4,
+            observed_at_us,
+            nominated,
+        )
+
+    def _legacy_discover(self, *args, **kwargs):
+        """Deferred physical-family diagnostics only; normal discovery never calls this."""
+        return self._discover(*args, **kwargs, _legacy=True)
+
+    def _discover(
+        self,
         repository_uuidv4: str,
         source_attribution: str,
         origin_uuidv4: str,
         observation_uuidv4: str,
         observed_at_us: int,
         nominated: tuple[str, ...] = (),
+        *,
+        _legacy=False,
     ) -> Discovery:
         actual_repository = self._ready()
         if (
@@ -243,7 +277,7 @@ class NotesAcquisition:
                     candidate = {
                         "binding": binding,
                         "refs": [
-                            [name.hex(), *oid.key, str(uuid4())]
+                            [name.hex(), *oid.key] + ([str(uuid4())] if _legacy else [])
                             for name, oid in inventory.refs
                         ],
                         "status": inventory.status,
@@ -284,16 +318,12 @@ class NotesAcquisition:
                 scope,
                 "original scan boundaries were not pinned",
             )
-        captures = tuple(
-            Capture(
-                origin_uuidv4,
-                capture_id,
-                repository_uuidv4,
-                source_attribution,
-                bytes.fromhex(name).decode("utf-8", "surrogateescape"),
-                OID(fmt, oid),
+        refs = tuple(
+            (
+                bytes.fromhex(row[0]).decode("utf-8", "surrogateescape"),
+                OID(row[1], row[2]),
             )
-            for name, fmt, oid, capture_id in saved["refs"]
+            for row in saved["refs"]
         )
         provenance = Provenance(
             source_attribution,
@@ -309,21 +339,34 @@ class NotesAcquisition:
             "snapshot",
             ("local-notes-refs", source_attribution, tuple(binding[3])),
             {
-                "roots": [list(c.root.key) for c in captures],
+                "roots": [list(oid.key) for _, oid in refs],
                 "predecessor": None,
                 "observed_at_us": observed_at_us,
                 "source": source_attribution,
-                "refs": [{"ref": c.ref, "target": list(c.root.key)} for c in captures],
+                "refs": [{"ref": name, "target": list(oid.key)} for name, oid in refs],
                 "enumeration_state": saved["status"],
                 "terminal_observation": saved["terminal"],
             },
             provenance,
         )
-        self.work.require("metadata_units", 1 + len(captures))
-        self.work.charge("metadata_units", 1 + len(captures))
+        self.work.require("metadata_units", 1 + len(refs))
+        self.work.charge("metadata_units", 1 + len(refs))
         self.core.admit_observation(observation)
-        for capture in captures:
-            self.core.admit_capture(capture)
+        captures = ()
+        if _legacy:
+            captures = tuple(
+                Capture(
+                    origin_uuidv4,
+                    row[3],
+                    repository_uuidv4,
+                    source_attribution,
+                    name,
+                    oid,
+                )
+                for row, (name, oid) in zip(saved["refs"], refs)
+            )
+            for capture in captures:
+                self.core.admit_capture(capture)
         enumerations = []
         names = tuple(
             sorted(set(n.encode("utf-8", "surrogateescape") for n in nominated))
@@ -420,11 +463,13 @@ class NotesAcquisition:
                 except CoreFailure as error:
                     failure_code, detail = error.code, str(error)
                     break
-        return Discovery(
-            observation, captures, failure_code, detail, tuple(enumerations)
-        )
+        if _legacy:
+            return _LegacyDiscovery(
+                observation, captures, failure_code, detail, tuple(enumerations)
+            )
+        return Discovery(observation, failure_code, detail, tuple(enumerations))
 
-    def inventory(self, capture):
+    def _legacy_inventory(self, capture):
         actual_repository = self._ready()
         if capture.repository_uuidv4 != actual_repository:
             raise CoreFailure(
@@ -742,7 +787,7 @@ class NotesAcquisition:
                 )
             return RefNotesInventoryVerification(group, coverage, provenance, True)
 
-    def acquire_note(
+    def _legacy_acquire_note(
         self, capture, target, *, retain_body=True, physical_copy_uuidv4=None
     ):
         actual_repository = self._ready()
@@ -759,13 +804,15 @@ class NotesAcquisition:
                 self.work,
             )
         except CoreFailure as error:
-            return NoteAcquisition(
+            return _LegacyNoteAcquisition(
                 capture, target, None, None, False, False, error.code, str(error)
             )
         # Independently admissible role metadata survives body input refusal.
         self.core.admit_notes_role(proof, self.work)
         if not retain_body:
-            return NoteAcquisition(capture, target, proof.note, None, True, False)
+            return _LegacyNoteAcquisition(
+                capture, target, proof.note, None, True, False
+            )
         try:
             native = self.source.note_body(proof, self.work)
             if physical_copy_uuidv4 is None:
@@ -785,11 +832,11 @@ class NotesAcquisition:
                     )
                 physical_copy_uuidv4 = saved["physical_copy_uuidv4"]
             self.core.admit_note(proof, native, physical_copy_uuidv4, self.work)
-            return NoteAcquisition(
+            return _LegacyNoteAcquisition(
                 capture, target, proof.note, physical_copy_uuidv4, True, True
             )
         except CoreFailure as error:
-            return NoteAcquisition(
+            return _LegacyNoteAcquisition(
                 capture, target, proof.note, None, True, False, error.code, str(error)
             )
 

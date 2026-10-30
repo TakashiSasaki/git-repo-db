@@ -37,8 +37,6 @@ from repo_catalog.domain.p1_core import (
     CoreCoverageScope,
     CoreFailure,
     GitObservation,
-    NotesClaim,
-    NotesGroup,
     Provenance,
     RepositoryClaim,
 )
@@ -345,38 +343,53 @@ def test_foreign_metadata_repository_is_rejected_before_any_admission(
     elif kind == "observation":
         unit = replace(unit, observations=metadata_unit(foreign).observations)
     elif kind.startswith("notes"):
-        capture = Capture(
-            str(uuid4()),
-            str(uuid4()),
-            foreign,
-            "source",
-            "refs/notes/x",
-            unit.nominal_objects[0],
+        from repo_catalog.domain.acquisition import RefNotesInput
+        from repo_catalog.domain.ref_observation import (
+            NotesMapping,
+            NotesMappingClaim,
+            NotesMappingGroup,
+            RefObservation,
+            RefObservationClaim,
+            RefObservationKey,
+            new_uuid7,
         )
-        spec = NotesAcquisitionSpec(explicit_captures=(capture,))
+
+        key = RefObservationKey(str(uuid4()), new_uuid7())
+        subject = RefObservation(key, foreign, b"refs/notes/x", "source", "visible")
+        prov = unit.repository_claims[0].provenance
+        root = unit.nominal_objects[0]
+        ref_claim = RefObservationClaim(key, prov, "present", root_oid=root)
+        value = RefNotesInput(subject, (ref_claim,))
         if kind == "notes_claim":
-            spec = NotesAcquisitionSpec(
-                external_claims=(
-                    NotesClaim(
-                        capture,
-                        unit.nominal_objects[0],
-                        unit.nominal_objects[0],
-                        unit.repository_claims[0].provenance,
+            value = replace(
+                value,
+                mapping_claims=(
+                    NotesMappingClaim(
+                        ref_claim,
+                        NotesMapping(
+                            root, "git-notes", "1", "tree", root, root, root.full_oid
+                        ),
+                        prov,
                     ),
-                )
+                ),
             )
         elif kind == "notes_group":
-            spec = NotesAcquisitionSpec(
-                external_groups=(
-                    NotesGroup(
-                        capture,
+            value = replace(
+                value,
+                mapping_groups=(
+                    NotesMappingGroup(
+                        ref_claim,
+                        "git-notes",
+                        "1",
+                        "tree",
                         "all",
                         "known_empty",
                         (),
-                        unit.repository_claims[0].provenance,
+                        prov,
                     ),
-                )
+                ),
             )
+        spec = NotesAcquisitionSpec(ref_inputs=(value,))
         unit = replace(unit, notes=spec)
     elif kind == "scope":
         unit = replace(unit, coverage_scopes=(scope,))
@@ -435,14 +448,11 @@ def test_metadata_capture_coverage_resolves_the_actual_capture_owner(
             unit, new_request=True
         )
 
-    if owner == "selected":
+    # Capture Coverage is a retired public input, including a selected owner.
+    with pytest.raises(CoreFailure) as error:
         acquire()
-        assert authoritative_rows(cat)["captures"] == before["captures"]
-    else:
-        with pytest.raises(CoreFailure) as error:
-            acquire()
-        assert error.value.code == "REPOSITORY_SCOPE"
-        assert authoritative_rows(cat) == before
+    assert error.value.code == "RETIRED_NOTES_INPUT"
+    assert authoritative_rows(cat) == before
 
 
 def test_metadata_nonseed_keeps_physical_operational_pairing(tmp_path):
@@ -576,14 +586,36 @@ def test_external_metadata_live_notes_keeps_source_capture_and_budget(
     later = expenditure()
     assert all(later[kind] >= amount for kind, amount in spent.items())
     assert later["metadata_units"] > spent["metadata_units"]
-    assert repeated.notes_discoveries[0].captures == first.notes_discoveries[0].captures
-    assert first.note_acquisitions[0].body_retained
-    capture = first.notes_discoveries[0].captures[0]
-    assert capture.repository_uuidv4 == target
+    assert (
+        repeated.notes_discoveries[0].enumerations
+        == first.notes_discoveries[0].enumerations
+    )
+    assert first.ref_note_acquisitions[0].body_retained
+    claim = first.notes_discoveries[0].enumerations[0].links[0].claim
+    assert (
+        first.notes_discoveries[0]
+        .enumerations[0]
+        .links[0]
+        .observation.repository_uuidv4
+        == target
+    )
     with closing(GitCore(cat / "core.sqlite3")) as core:
         assert core.catalog_identity() == (seed, instance)
         assert (
-            core.read_note(capture, objects["commit2"], objects["note_blob"])
+            core.read_ref_note(
+                claim,
+                core.notes_mapping_projection(
+                    claim,
+                    objects["commit2"],
+                    "git-notes",
+                    "1",
+                    "native-notes-tree",
+                    UnlimitedWorkBudget(),
+                )
+                .evidence[0]
+                .mapping,
+                UnlimitedWorkBudget(),
+            )
             == b"Reviewed-by: CI\n"
         )
     assert authoritative_rows(cat) == before
@@ -621,9 +653,7 @@ def test_external_metadata_cannot_switch_notes_source_with_explicit_progress(
 
 @pytest.mark.parametrize("paired", [False, True])
 @pytest.mark.parametrize("field", ["repository", "source", "ref", "root"])
-def test_metadata_preflights_existing_capture_binding_without_coverage(
-    tmp_path, paired, field
-):
+def test_legacy_physical_capture_binding_remains_immutable(tmp_path, paired, field):
     cat = tmp_path / "catalog"
     target, _ = init_catalog_stores(cat)
     unit = metadata_unit(target)
@@ -645,20 +675,12 @@ def test_metadata_preflights_existing_capture_binding_without_coverage(
         "root": {"root": OID("sha1", "2" * 40)},
     }
     candidate = replace(capture, **changes[field])
-    unit = replace(unit, notes=NotesAcquisitionSpec(explicit_captures=(candidate,)))
+    # Deferred physical family still enforces immutable replay directly.
     before = authoritative_rows(cat)
-    with pytest.raises(CoreFailure) as error:
-        if paired:
-            PairedAcquisitionCoordinator(cat).admit_paired(
-                git_input=unit, new_request=True
-            )
-        else:
-            GitAcquisition(cat, operational=cat).acquire_metadata_only(
-                unit, new_request=True
-            )
-    assert error.value.code == (
-        "REPOSITORY_SCOPE" if field == "repository" else "INCOMPATIBLE_REPLAY"
-    )
+    with closing(GitCore(cat / "core.sqlite3")) as core:
+        with pytest.raises(CoreFailure) as error:
+            core.admit_capture(candidate)
+    assert error.value.code == "INCOMPATIBLE_REPLAY"
     assert authoritative_rows(cat) == before
 
 
@@ -666,7 +688,7 @@ def test_metadata_preflights_existing_capture_binding_without_coverage(
 @pytest.mark.parametrize(
     "damage", ["source", "utf8", "ref", "oid", "repository_parent", "root_parent"]
 )
-def test_stored_capture_corruption_stops_before_any_metadata_admission(
+def test_legacy_physical_capture_corruption_stops_diagnostic_query(
     tmp_path, paired, damage
 ):
     cat = tmp_path / "catalog"
@@ -715,16 +737,11 @@ def test_stored_capture_corruption_stops_before_any_metadata_admission(
     # domain data/FKs are damaged; rejection cannot rely on schema drift.
     path = cat / "core.sqlite3"
     before = hashlib.sha256(path.read_bytes()).hexdigest()
-    unit = replace(unit, notes=NotesAcquisitionSpec(explicit_captures=(capture,)))
-    with pytest.raises(CoreFailure) as error:
-        if paired:
-            PairedAcquisitionCoordinator(cat).admit_paired(
-                git_input=unit, new_request=True
-            )
-        else:
-            GitAcquisition(cat, operational=cat).acquire_metadata_only(
-                unit, new_request=True
-            )
-    assert error.value.code == "AUTHORITATIVE_CORRUPTION"
+    # Diagnostic reader retains corruption fencing until the physical cut.
+    from repo_catalog.application.production_query import ProductionQueryService
+
+    with pytest.raises((CoreFailure, CoordinationError)) as error:
+        ProductionQueryService(cat)._legacy_list_notes_captures()
+    assert error.value.code in {"AUTHORITATIVE_CORRUPTION", "CORRUPTION", "FOREIGN_KEY"}
     assert (cat / "p1-recovery-stop.json").exists()
     assert hashlib.sha256(path.read_bytes()).hexdigest() == before

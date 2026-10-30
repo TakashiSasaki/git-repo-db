@@ -8,7 +8,10 @@ remain authoritative. The fixed baseline for this transition is main
 `1b28a48b51a2da35beec20444458791b42d5f2a6`). This is an engineering contract,
 not a new owner decision, public Schema 21 change, migration or release.
 
-## Current remaining-work assessment and input boundary
+## Baseline remaining-work assessment and input boundary
+
+This is the original assessment. Completed stacked units and the current
+retirement boundary are recorded below; this table is not a new execution plan.
 
 Rechecked against main `2ff4aab59dcdbada264d9a6a978c07b6ac4ad0d2` in the
 cloud `git-repo-db` project. The dated six-PR proposal is an assessment input,
@@ -344,3 +347,50 @@ remain authoritative. Large scopes may honestly refuse with a resource limit;
 no truncation is presented as complete. Search remains disposable. Old API,
 physical family, schema/wire retirement and normal Schema 21 activation are not
 part of this unit.
+
+
+## Producer and public API retirement unit (stacked on PR 228)
+
+PRs 226–228 supply the adopted original-report input, Claim-specific Query/CLI
+and Search boundaries. The next unit disables legacy production in normal
+native, metadata-only, Core-only, paired and Access acquisition. Discovery keeps
+the unrelated GitObservation/discovery UUIDv4 snapshot and the actual Ref
+enumerations, with their original IDs on replay. It allocates no Capture UUIDs
+and admits no legacy Capture/Notes rows. Inventory and body acquisition use the
+existing exact-Claim reader and receiver checks, with the same request budget.
+
+`NotesAcquisitionSpec.explicit_captures`, `external_claims`, `external_groups`,
+Capture-owned acquisition Coverage, legacy report fields `notes_inventories` /
+`note_acquisitions`, discovery `captures`, generic/paired `notes_targets`,
+`get_git_object(note_captures=...)`, the Capture Query methods and CLI `notes`
+command are retired public interfaces. Use `ref_inputs`, `ref_*` report fields,
+`ref_notes_targets`, existing RefObservation/Mapping/inventory/body Query APIs
+and CLI `ref-observations`. Normal Search extraction now uses only the checked
+new model. Its dead legacy extractor is removed. Old physical rows are neither
+converted into new Claims nor made searchable by inventing receiver evidence.
+Existing cached legacy Notes documents fail authority comparison and fall back
+to the new authoritative extraction before a rebuild replaces that derivative.
+
+The deferred physical family still has private `_legacy_*` diagnostic acquisition
+and Query methods and private diagnostic DTOs. They keep old-family preservation
+and integrity behavior executable while Core DDL, Core family APIs, Exchange,
+backup/recovery/salvage, and cross-family copy-collision guards await one coordinated
+cut. No schema/wire, live catalog migration, ordinary Schema 21, shared grammar,
+general GitObservation or unrelated discovery UUID is removed here. These private
+methods are not public compatibility aliases and no normal producer calls them.
+
+Behavior mapping for retired mechanisms:
+
+| Previous mechanism assertion | Replacement / retained safety check |
+| --- | --- |
+| Dual legacy/new acquisition report and Capture discovery | `p5/test_legacy_retirement_e2e.py::test_new_only_acquisition_query_cli_search_replay`: no old rows, verified inventories/body, original-ID replay with cumulative work, native/metadata × Core/paired × both formats/layouts; existing `p5/test_git_acquisition.py` keeps metadata-only and ordinary-body exclusion checks using the Ref outputs. |
+| Legacy public carriers and Query/CLI names | `test_retired_public_carriers_are_rejected`, `test_retired_public_query_and_producer_names`, `test_retired_cli_command_is_rejected`; foreign supplied subjects/Claims/Groups still reject before admission in Access regressions. Their input preflight is charged. |
+| Capture-owned metadata Coverage acceptance | `access/test_review_corrections.py::test_metadata_capture_coverage_resolves_the_actual_capture_owner` rejects every retired input, preserving all existing rows and a healthy catalog. |
+| Capture binding immutability / damaged old-family reads | Explicit private-family tests `test_legacy_physical_capture_binding_remains_immutable` and `test_legacy_physical_capture_corruption_stops_diagnostic_query`; both preserve original rows and corruption stop. Original P4 role/inventory tests remain private diagnostic tests without weaker body/proof assertions. |
+| Paired legacy Notes projection / CLI listing / binary Search | P6 `test_queries.py`, `test_cli.py`, `test_corrections.py::test_binary_notes_rebuild_and_scan_equivalence` use independently admitted typed Ref evidence. P6 fixture legacy facts remain only for diagnostic/physical support tests. |
+| Legacy Exchange fixture built via public acquisition | P5/I3 fixture setup uses explicit private diagnostics after new-only native acquisition. Original roundtrip, forged-root refusal and preservation assertions remain, pending the coordinated Exchange cut. |
+
+The modified installed-distribution and P5/P6 compatibility scenarios use the
+new reader rather than a public Capture API. They are not claimed executed
+unless listed in the implementation report. No test is deleted or skipped to
+retire a mechanism.

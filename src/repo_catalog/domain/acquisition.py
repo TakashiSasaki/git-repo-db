@@ -14,13 +14,11 @@ from typing import Literal
 
 from repo_catalog.application.notes import (
     Discovery,
-    NoteAcquisition,
     RefNoteAcquisition,
     RefNotesInventory,
     RefNotesInventoryVerification,
 )
 from repo_catalog.domain.context_registration import registration_json
-from repo_catalog.domain.notes import NotesInventory
 from repo_catalog.domain.p1_context import (
     CoverageClaim as ContextCoverageClaim,
 )
@@ -34,12 +32,9 @@ from repo_catalog.domain.p1_context import (
 from repo_catalog.domain.p1_coordination import PairAdmission
 from repo_catalog.domain.p1_core import (
     OID,
-    Capture,
     CoreCoverageScope,
     GitObservation,
     NativeObject,
-    NotesClaim,
-    NotesGroup,
     Provenance,
     RelationGroup,
     RepositoryClaim,
@@ -127,9 +122,6 @@ class NotesAcquisitionSpec:
     acquire_inventories: bool = False
     target_oids: tuple[OID, ...] = ()
     retain_note_bodies: bool = True
-    explicit_captures: tuple[Capture, ...] = ()
-    external_claims: tuple[NotesClaim, ...] = ()
-    external_groups: tuple[NotesGroup, ...] = ()
     ref_inputs: tuple[RefNotesInput, ...] = ()
 
 
@@ -226,8 +218,6 @@ class GitAcquisitionReport:
     ref_observations: tuple[GitObservation, ...]
     ref_enumerations: tuple[RefEnumerationResult, ...] = ()
     notes_discoveries: tuple[Discovery, ...] = ()
-    notes_inventories: tuple[NotesInventory, ...] = ()
-    note_acquisitions: tuple[NoteAcquisition, ...] = ()
     ref_note_acquisitions: tuple[RefNoteAcquisition, ...] = ()
     ref_notes_inventories: tuple[RefNotesInventory, ...] = ()
     coverage_claims: tuple[CoverageClaim, ...] = ()

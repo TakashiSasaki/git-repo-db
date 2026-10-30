@@ -173,11 +173,14 @@ def test_end_to_end_acquisition_into_query_and_search(tmp_path: Path, fmt: str) 
     git_acq = GitAcquisition(cat_dir, operational=cat_dir)
     git_rep = git_acq.acquire_from_native(git_src, git_req, new_request=True)
     assert git_rep.status == "complete"
-    assert len(git_rep.note_acquisitions) == 1
-    note_result = git_rep.note_acquisitions[0]
+    assert len(git_rep.ref_note_acquisitions) == 2
+    note_result = git_rep.ref_note_acquisitions[0]
     assert note_result.role_verified and note_result.body_retained
     replay = git_acq.acquire_from_native(git_src, git_req)
-    assert replay.notes_discoveries[0].captures == git_rep.notes_discoveries[0].captures
+    assert (
+        replay.notes_discoveries[0].enumerations
+        == git_rep.notes_discoveries[0].enumerations
+    )
 
     # 2. P5 Provider intake
     service_uuid = str(uuid4())
@@ -216,10 +219,14 @@ def test_end_to_end_acquisition_into_query_and_search(tmp_path: Path, fmt: str) 
     assert obj1.metadata_retained is True
     exact = qs.read_metadata_bytes(OID(fmt, oids["commit1"]))
     assert b"-1 +0000" in exact.body_bytes and b" 0 +0000" in exact.body_bytes
-    capture = git_rep.notes_discoveries[0].captures[0]
-    note_read = qs.read_note_bytes(
-        capture, OID(fmt, oids["commit1"]), OID(fmt, oids["note"])
+    from repo_catalog.adapters.sqlite.acquisition import UnlimitedWorkBudget
+
+    claim = git_rep.ref_note_acquisitions[0].claim
+    work = UnlimitedWorkBudget()
+    projection = qs.get_notes_mapping(
+        claim, OID(fmt, oids["commit1"]), "git-notes", "1", "native-notes-tree", work
     )
+    note_read = qs.read_ref_note_bytes(claim, projection.evidence[0].mapping, work)
     assert note_read.body_bytes == "日本語 needle_kw note\n".encode()
 
     # P6 Paired Resource query

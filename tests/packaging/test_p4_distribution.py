@@ -70,12 +70,12 @@ work=NotesWorkBudget(ledger,request,attempt,NotesLimits())
 app=NotesAcquisition(core,source,work,NotesProgress(work),source_attribution="installed-local")
 found=app.discover(repo,"installed-local",origin,str(uuid4()),123)
 assert found.observation.value["enumeration_state"]=="complete"
-capture=found.captures[0]
-result=app.acquire_note(capture,OID("FORMAT",target))
-assert result.body_retained
-assert core.read_note(capture,OID("FORMAT",target),OID("FORMAT",note))==body
-assert app.inventory(capture).status=="complete"
 ref_claim=found.enumerations[0].links[0].claim
+result=app.acquire_ref_note(ref_claim,OID("FORMAT",target))
+assert result.body_retained
+projection=core.notes_mapping_projection(ref_claim,OID("FORMAT",target),"git-notes","1","native-notes-tree",work)
+assert core.read_ref_note(ref_claim,projection.evidence[0].mapping,work)==body
+assert not core.sql("SELECT 1 FROM captures")
 reported=app.inventory_ref(ref_claim).group
 assert app.verify_ref_inventory(reported).verified
 view=ProductionQueryService(Path("."),mode="core_only").list_ref_notes_inventories(ref_claim,work)

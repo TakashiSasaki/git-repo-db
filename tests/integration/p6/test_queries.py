@@ -1,3 +1,4 @@
+# Legacy-only assertions below cover deferred physical diagnostics, not public API compatibility.
 """Integration tests for P6 Git-only, Context-only, Paired queries, and verification-aware byte reads."""
 
 from __future__ import annotations
@@ -133,13 +134,15 @@ def test_core_only_queries_objects_claims_relations_notes_and_coverage(
 
     # Notes captures, target projection, byte read, and inventory
     capture = fixtures["capture"]
-    notes_page = service.list_notes_captures(notes_ref="refs/notes/commits")
+    notes_page = service._legacy_list_notes_captures(notes_ref="refs/notes/commits")
     assert notes_page.total_count == 1
     cap_view = notes_page.items[0]
     assert cap_view.capture == capture
     assert commit_obj.oid in cap_view.targets
 
-    note_target = service.get_notes_target(capture, commit_obj.oid, include_bytes=True)
+    note_target = service._legacy_get_notes_target(
+        capture, commit_obj.oid, include_bytes=True
+    )
     assert note_target.canonical == fixtures["note_blob"].oid
     assert note_target.role_verified is True
     assert note_target.note_retained is True
@@ -148,7 +151,7 @@ def test_core_only_queries_objects_claims_relations_notes_and_coverage(
     assert note_target.note_bytes.available is True
     assert note_target.note_bytes.body_bytes == fixtures["note_body_bytes"]
 
-    inventories = service.list_notes_inventories(capture)
+    inventories = service._legacy_list_notes_inventories(capture)
     assert any(
         inv.receiver_verified and inv.status == "complete" for inv in inventories
     )
@@ -289,15 +292,18 @@ def test_paired_cross_store_resolution_present_vs_absent_core_oids(
     assert head_res.object_view.native_type == "commit"
     assert head_res.object_view.retained_bytes is not None
     assert head_res.object_view.retained_bytes.body_bytes == fixtures["commit_obj"].body
-    assert len(head_res.notes_targets) == 1
-    assert head_res.notes_targets[0].canonical == fixtures["note_blob"].oid
+    assert len(head_res.ref_notes_targets) == 1
+    assert (
+        head_res.ref_notes_targets[0].mapping.canonical_note_oid
+        == fixtures["note_blob"].oid
+    )
 
     # 'base' points to absent_oid which is NOT in Core (reported only)
     base_res = by_role["base"]
     assert base_res.available_in_core is False
     assert base_res.core_required is False
     assert base_res.object_view is None
-    assert base_res.notes_targets == ()
+    assert base_res.ref_notes_targets == ()
 
 
 def test_verification_aware_byte_reads_detect_corruption_and_fence_catalog(
@@ -347,7 +353,7 @@ def test_verification_aware_byte_reads_detect_corruption_and_fence_catalog(
     capture = fix_note["capture"]
     note_oid = fix_note["note_blob"].oid
 
-    valid_note = service_note.read_note_bytes(
+    valid_note = service_note._legacy_read_note_bytes(
         capture, fix_note["commit_obj"].oid, note_oid
     )
     assert valid_note.available is True and valid_note.verified is True
@@ -364,7 +370,9 @@ def test_verification_aware_byte_reads_detect_corruption_and_fence_catalog(
         db.commit()
 
     with pytest.raises(CoreFailure) as note_exc:
-        service_note.read_note_bytes(capture, fix_note["commit_obj"].oid, note_oid)
+        service_note._legacy_read_note_bytes(
+            capture, fix_note["commit_obj"].oid, note_oid
+        )
     assert note_exc.value.code == "AUTHORITATIVE_CORRUPTION"
     assert (cat_note / "p1-recovery-stop.json").exists()
 

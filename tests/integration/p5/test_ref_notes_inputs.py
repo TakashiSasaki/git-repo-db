@@ -246,7 +246,9 @@ def test_original_reports_never_become_receiver_proof(acquisition, paired, metad
         )
     assert unavailable.value.code == "NOTES_ROLE_UNAVAILABLE"
     assert not app.core.sql("SELECT 1 FROM captures")
-    assert not first.notes_inventories and not first.note_acquisitions
+    assert not hasattr(first, "notes_inventories") and not hasattr(
+        first, "note_acquisitions"
+    )
     assert set((value.claims[0].root_oid, target, note)) <= set(first.admitted_objects)
     before = budget_spent(acquisition, request)
     again = run_request(

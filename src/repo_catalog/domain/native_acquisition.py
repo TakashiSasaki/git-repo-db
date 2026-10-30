@@ -17,13 +17,10 @@ from repo_catalog.domain.acquisition import (
 )
 from repo_catalog.domain.p1_core import (
     OID,
-    Capture,
     CoreCoverageScope,
     CoreFailure,
     GitObservation,
     NativeObject,
-    NotesClaim,
-    NotesGroup,
     Provenance,
     RelationGroup,
     RepositoryClaim,
@@ -52,11 +49,6 @@ def _typed(value, expected):
 
 def _oid(value):
     _typed(value, OID)
-
-
-def _capture(value):
-    _typed(value, Capture)
-    _oid(value.root)
 
 
 def _text_tuple(values):
@@ -335,9 +327,6 @@ def _native_request_intent(request: GitNativeAcquisitionRequest) -> dict:
         if notes.discovery_observation_uuidv4 is not None:
             uuid4_value(notes.discovery_observation_uuidv4)
         for values in (
-            notes.explicit_captures,
-            notes.external_claims,
-            notes.external_groups,
             notes.target_oids,
             notes.nominated_refs,
             notes.ref_inputs,
@@ -347,25 +336,6 @@ def _native_request_intent(request: GitNativeAcquisitionRequest) -> dict:
         _text_tuple(notes.nominated_refs)
         for oid in notes.target_oids:
             _oid(oid)
-        for capture in notes.explicit_captures:
-            _capture(capture)
-        for claim in notes.external_claims:
-            _typed(claim, NotesClaim)
-            _capture(claim.capture)
-            _oid(claim.target)
-            _oid(claim.note)
-            _typed(claim.provenance, Provenance)
-        for group in notes.external_groups:
-            _typed(group, NotesGroup)
-            _capture(group.capture)
-            _typed(group.provenance, Provenance)
-        captures = (
-            *notes.explicit_captures,
-            *(item.capture for item in notes.external_claims),
-            *(item.capture for item in notes.external_groups),
-        )
-        if any(item.repository_uuidv4 != repo for item in captures):
-            raise CoreFailure("REPOSITORY_SCOPE", repo, "foreign Notes capture")
         notes_value = {
             "discover": notes.discover_notes,
             "nominated_refs": list(notes.nominated_refs),
@@ -373,15 +343,6 @@ def _native_request_intent(request: GitNativeAcquisitionRequest) -> dict:
             "inventories": notes.acquire_inventories,
             "targets": [list(oid.key) for oid in notes.target_oids],
             "retain_bodies": notes.retain_note_bodies,
-            "captures": [list(capture.key) for capture in notes.explicit_captures],
-            "claims": [
-                [list(item.capture.key), list(item.key)]
-                for item in notes.external_claims
-            ],
-            "groups": [
-                [list(item.capture.key), list(item.key)]
-                for item in notes.external_groups
-            ],
             "ref_inputs": [
                 _ref_notes_input_intent(item, repo) for item in notes.ref_inputs
             ],

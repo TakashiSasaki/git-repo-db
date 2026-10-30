@@ -90,12 +90,6 @@ def build_parser() -> argparse.ArgumentParser:
     _add_common_args(p_refobs)
     _add_page_args(p_refobs)
 
-    # notes
-    p_notes = sub.add_parser("notes", help="List Notes captures with pagination")
-    _add_common_args(p_notes)
-    p_notes.add_argument("--notes-ref", default=None)
-    _add_page_args(p_notes)
-
     # context-resource
     p_cres = sub.add_parser(
         "context-resource", help="Query a single Context resource by ResourceKey"
@@ -225,18 +219,6 @@ def main(argv: Sequence[str] | None = None) -> int:
                 _page_from_args(args),
                 observation_kind=args.kind,
                 ref_prefix=args.ref_prefix,
-            )
-            payload = {
-                "has_more": page.has_more,
-                "items": [item.to_dict() for item in page.items],
-                "next_cursor": page.next_cursor,
-                "snapshot_token": page.snapshot_token,
-                "total_count": page.total_count,
-            }
-        elif cmd == "notes":
-            page = service.list_notes_captures(
-                _page_from_args(args),
-                notes_ref=args.notes_ref,
             )
             payload = {
                 "has_more": page.has_more,
