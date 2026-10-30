@@ -11281,6 +11281,42 @@
       "producer": "PR 226 scoped remediation and clean-tree development profile.",
       "consumers": "PR 226 independent re-review and parent handoff.",
       "publication": "not staged"
+    },
+    "docs/implementation/adr0036-inputs-evidence-20261030/QUERY-PROJECTION.md": {
+      "status": "scoped-execution-evidence",
+      "owner": "docs/implementation/adr0036-inputs-evidence-20261030/",
+      "authority": "Scoped author Query projection evidence; independent review and release qualification remain separate.",
+      "source": "docs/implementation/adr0036-inputs-evidence-20261030/QUERY-PROJECTION.md",
+      "producer": "PR 226 dependent Query/CLI projection implementation.",
+      "consumers": "Independent reviewer and parent task handoff.",
+      "publication": "not staged"
+    },
+    "docs/implementation/adr0036-inputs-evidence-20261030/query-projection-profile.tar.gz": {
+      "status": "scoped-execution-evidence",
+      "owner": "docs/implementation/adr0036-inputs-evidence-20261030/",
+      "authority": "Scoped author Query projection evidence; independent review and release qualification remain separate.",
+      "source": "docs/implementation/adr0036-inputs-evidence-20261030/query-projection-profile.tar.gz",
+      "producer": "PR 226 dependent Query/CLI projection implementation.",
+      "consumers": "Independent reviewer and parent task handoff.",
+      "publication": "not staged"
+    },
+    "docs/implementation/adr0036-inputs-evidence-20261030/R227-FIXES.md": {
+      "status": "scoped-execution-evidence",
+      "owner": "docs/implementation/adr0036-inputs-evidence-20261030/",
+      "authority": "Scoped R227-01/02 author remediation evidence; original independent FAIL and re-review remain distinct.",
+      "source": "docs/implementation/adr0036-inputs-evidence-20261030/R227-FIXES.md",
+      "producer": "PR 227 minimal repair and selective regression.",
+      "consumers": "Independent re-review and parent handoff.",
+      "publication": "not staged"
+    },
+    "docs/implementation/adr0036-inputs-evidence-20261030/r227-repair-profile.tar.gz": {
+      "status": "scoped-execution-evidence",
+      "owner": "docs/implementation/adr0036-inputs-evidence-20261030/",
+      "authority": "Scoped R227-01/02 author remediation evidence; original independent FAIL and re-review remain distinct.",
+      "source": "docs/implementation/adr0036-inputs-evidence-20261030/r227-repair-profile.tar.gz",
+      "producer": "PR 227 minimal repair and selective regression.",
+      "consumers": "Independent re-review and parent handoff.",
+      "publication": "not staged"
     }
   }
 }

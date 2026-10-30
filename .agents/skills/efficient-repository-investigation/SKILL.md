@@ -191,3 +191,11 @@ does not stop a healthy catalog. Trace native, metadata, paired and Access paths
 a value-only helper's hard bound alone does not establish request accounting.
 PR #226 findings R226-01/R226-02 and the scoped regression nodes document this
 procedure; do not reinterpret the author's green run as independent approval.
+
+For new Query methods accepting caller work, reuse `_QueryWorkBoundary` inside
+snapshot reads and unwrap only outside every Core/paired/application classifier.
+A caller's JSONDecodeError must not become a persisted catalog-corruption stop.
+Pair callback identity/no-stop tests with genuine stored-corruption stop tests.
+When discovering Notes associations, test Group-only reports: a whole Group can
+be valid without any standalone Mapping row. Discover bounded headers and let
+the checked exact-Claim reader validate members before attributing a target.

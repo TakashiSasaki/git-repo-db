@@ -19,7 +19,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, fields, is_dataclass
 from typing import TYPE_CHECKING, Any, Generic, Literal, TypeVar
 
 from repo_catalog.domain.p1_coordination import SnapshotToken
@@ -50,6 +50,10 @@ if TYPE_CHECKING:
         CoreReference,
         ResourceRelation,
         SourceInventory,
+    )
+    from repo_catalog.domain.ref_observation import (
+        NotesMappingProjection,
+        RefObservationProjection,
     )
     from repo_catalog.domain.resource_identification import ResourceIdentification
 
@@ -381,6 +385,7 @@ def _validate_cursor_key(endpoint: str, key: tuple[Any, ...]) -> None:
     """
     widths = {
         "git_objects": 2,
+        "ref_observations": 2,
         "git_observations": 5,
         "notes_captures": 3,
         "context_resources": 3,
@@ -397,6 +402,10 @@ def _validate_cursor_key(endpoint: str, key: tuple[Any, ...]) -> None:
             raise ValueError("invalid key shape or type")
         if endpoint == "git_objects":
             OID(*key)
+        elif endpoint == "ref_observations":
+            from repo_catalog.domain.ref_observation import RefObservationKey
+
+            RefObservationKey(*key)
         elif endpoint in ("context_resources", "paired_resources"):
             from repo_catalog.domain.p1_context import ResourceKey
 
@@ -510,6 +519,28 @@ class GitRepositoryView:
         }
 
 
+def ref_projection_json(value):
+    """Lossless JSON for checked ref values; bytes never pass through UTF-8."""
+    if isinstance(value, bytes):
+        return {"bytes_hex": value.hex()}
+    if is_dataclass(value):
+        return {
+            f.name: ref_projection_json(getattr(value, f.name)) for f in fields(value)
+        }
+    if isinstance(value, (tuple, list)):
+        return [ref_projection_json(v) for v in value]
+    return value
+
+
+@dataclass(frozen=True)
+class RefNotesTargetView:
+    observation: RefObservationProjection
+    mapping: NotesMappingProjection
+
+    def to_dict(self):
+        return ref_projection_json(self)
+
+
 @dataclass(frozen=True)
 class GitObjectView:
     """Authoritative Git Core object view with scalar/relation projections and byte status."""
@@ -520,6 +551,7 @@ class GitObjectView:
     metadata_retained: bool
     retained_bytes: ByteReadResult | None = None
     notes_targets: tuple[NotesTargetView, ...] = ()
+    ref_notes_targets: tuple[RefNotesTargetView, ...] = ()
 
     @property
     def native_type(self) -> str | None:
@@ -535,6 +567,7 @@ class GitObjectView:
             "metadata_retained": self.metadata_retained,
             "native_type": self.native_type,
             "notes_targets": [n.to_dict() for n in self.notes_targets],
+            "ref_notes_targets": [n.to_dict() for n in self.ref_notes_targets],
             "object_format": self.oid.object_format,
             "relations": {
                 rel: {
@@ -917,12 +950,14 @@ class PairedCoreResolution:
     core_required: bool
     object_view: GitObjectView | None = None
     notes_targets: tuple[NotesTargetView, ...] = ()
+    ref_notes_targets: tuple[RefNotesTargetView, ...] = ()
 
     def to_dict(self) -> dict[str, object]:
         return {
             "available_in_core": self.available_in_core,
             "core_required": self.core_required,
             "notes_targets": [n.to_dict() for n in self.notes_targets],
+            "ref_notes_targets": [n.to_dict() for n in self.ref_notes_targets],
             "object_view": (
                 self.object_view.to_dict() if self.object_view is not None else None
             ),

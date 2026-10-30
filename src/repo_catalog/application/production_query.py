@@ -30,6 +30,7 @@ from functools import wraps
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal, TypeVar
 
+from repo_catalog.adapters.sqlite.acquisition import UnlimitedWorkBudget
 from repo_catalog.adapters.sqlite.git_core import GitCore
 from repo_catalog.adapters.sqlite.p1_coordination import (
     PairCoordinator,
@@ -69,6 +70,7 @@ from repo_catalog.domain.production_query import (
     PairedResourceView,
     ProviderView,
     QueryError,
+    RefNotesTargetView,
     SearchHit,
     SearchQuery,
     SearchResponse,
@@ -76,6 +78,7 @@ from repo_catalog.domain.production_query import (
     SourceView,
     filter_digest,
 )
+from repo_catalog.domain.ref_observation import RefObservationKey
 
 if TYPE_CHECKING:
     from repo_catalog.adapters.sqlite.production_context import Context
@@ -697,6 +700,94 @@ class ProductionQueryService:
             claims={k: tuple(v) for k, v in claims_by_field.items()},
         )
 
+    def list_ref_observations(self, page: PageRequest = PageRequest(), *, work=None):
+        """Page original subjects with every Claim, including rootless results."""
+        work = work if work is not None else UnlimitedWorkBudget()
+        guarded = _QueryWorkBoundary(work)
+        try:
+            with self.open_snapshot(required_store="core") as snap:
+                core = snap.core
+                assert core is not None
+                rows = core.sql(
+                    "SELECT observation_origin_uuidv4,ref_observation_uuidv7 FROM ref_observations ORDER BY observation_origin_uuidv4,ref_observation_uuidv7 LIMIT 10001"
+                )
+                if len(rows) > 10000:
+                    raise QueryError(
+                        "QUERY_BUDGET",
+                        "ref-observations",
+                        "finite observation scope exceeded",
+                    )
+                return _paginate_items(
+                    (
+                        core.ref_observation(
+                            self._stored(RefObservationKey, *row), guarded
+                        )
+                        for row in rows
+                    ),
+                    key_fn=lambda v: v.ref_observation.ref_observation_key.key,
+                    page=page,
+                    endpoint_kind="ref_observations",
+                    filters={},
+                    snapshot_token=snap.token.encode(),
+                )
+        except _QueryWorkError as error:
+            raise error.original from None
+
+    def _ref_notes_targets_in_snapshot(self, core, oid, work=None):
+        work = work if work is not None else UnlimitedWorkBudget()
+        # Group-only reports do not create standalone Mapping rows. Discover
+        # bounded headers first, then let the checked exact-Claim reader validate
+        # memberships before deciding whether this target is actually related.
+        candidates = (
+            "WITH candidates AS ("
+            "SELECT c.observation_origin_uuidv4,c.ref_observation_uuidv7,m.interpretation_kind,m.interpretation_version,m.interpretation_scope "
+            "FROM ref_observation_claims c JOIN notes_mappings m ON m.object_format=c.root_format AND m.root_oid=c.root_oid "
+            "WHERE m.object_format=? AND m.annotated_object_oid=? "
+            "UNION SELECT observation_origin_uuidv4,ref_observation_uuidv7,interpretation_kind,interpretation_version,interpretation_scope "
+            "FROM notes_mapping_groups WHERE object_format=? "
+            "ORDER BY 1,2,3,4,5 LIMIT 10001) "
+        )
+        parameters = (*oid.key, oid.object_format)
+        count, size = core.sql(
+            candidates
+            + "SELECT count(*),coalesce(sum(octet_length(observation_origin_uuidv4)+octet_length(ref_observation_uuidv7)+octet_length(interpretation_kind)+octet_length(interpretation_version)+octet_length(interpretation_scope)),0) FROM candidates",
+            parameters,
+        )[0]
+        if count > 10000 or size > 64 * 1024 * 1024:
+            raise QueryError(
+                "QUERY_BUDGET", "ref-notes-targets", "finite association scope exceeded"
+            )
+        work.require("metadata_units", count)
+        work.charge("metadata_units", count)
+        work.require("input_bytes", size)
+        work.charge("input_bytes", size)
+        rows = core.sql(
+            candidates + "SELECT * FROM candidates ORDER BY 1,2,3,4,5", parameters
+        )
+        views = []
+        for row in rows:
+            observation = core.ref_observation(
+                self._stored(RefObservationKey, row[0], row[1]), work
+            )
+            for claim in observation.claims:
+                if (
+                    claim.root_oid is None
+                    or claim.root_oid.object_format != oid.object_format
+                ):
+                    continue
+                projection = core.notes_mapping_projection(claim, oid, *row[2:], work)
+                if (
+                    projection.claims
+                    or projection.evidence
+                    or any(
+                        target == oid.full_oid
+                        for group in projection.groups
+                        for target, _, _ in group.members
+                    )
+                ):
+                    views.append(RefNotesTargetView(observation, projection))
+        return tuple(views)
+
     def get_git_object(
         self,
         oid: OID,
@@ -720,6 +811,7 @@ class ProductionQueryService:
         *,
         include_bytes: bool = False,
         note_captures: Sequence[Capture] = (),
+        ref_work=None,
     ) -> GitObjectView:
         exists = core.sql(
             "SELECT 1 FROM git_objects WHERE object_format=? AND full_oid=?",
@@ -787,6 +879,7 @@ class ProductionQueryService:
             metadata_retained=metadata_retained,
             retained_bytes=retained_bytes,
             notes_targets=tuple(notes_views),
+            ref_notes_targets=self._ref_notes_targets_in_snapshot(core, oid, ref_work),
         )
 
     def list_git_objects(
@@ -806,10 +899,14 @@ class ProductionQueryService:
                 (object_format, object_format),
             )
 
+            ref_work = UnlimitedWorkBudget()
+
             def views():
                 for row in rows:
                     oid = self._stored(OID, row[0], row[1])
-                    view = self._git_object_in_snapshot(snap.core, oid)
+                    view = self._git_object_in_snapshot(
+                        snap.core, oid, ref_work=ref_work
+                    )
                     if native_type is not None and view.native_type != native_type:
                         continue
                     yield view
@@ -1565,7 +1662,10 @@ class ProductionQueryService:
         *,
         include_text: bool = True,
         include_core_bytes: bool = False,
+        ref_work=None,
     ) -> PairedResourceView:
+        ref_work = ref_work if ref_work is not None else UnlimitedWorkBudget()
+
         def check_in_core(fmt: str, full_oid: str) -> bool:
             return bool(
                 core.sql(
@@ -1593,6 +1693,7 @@ class ProductionQueryService:
                     oid,
                     include_bytes=include_core_bytes,
                     note_captures=all_captures,
+                    ref_work=ref_work,
                 )
                 notes_targets = obj_view.notes_targets
             resolutions.append(
@@ -1602,6 +1703,9 @@ class ProductionQueryService:
                     core_required=dep.required,
                     object_view=obj_view,
                     notes_targets=notes_targets,
+                    ref_notes_targets=obj_view.ref_notes_targets
+                    if obj_view is not None
+                    else (),
                 )
             )
 
@@ -1623,6 +1727,8 @@ class ProductionQueryService:
             token_str = snap.token.encode()
             keys = snap.context.resources(kind=resource_kind)
 
+            ref_work = UnlimitedWorkBudget()
+
             def views():
                 for key in keys:
                     paired_view = self._paired_resource_in_snapshot(
@@ -1631,6 +1737,7 @@ class ProductionQueryService:
                         token_str,
                         key,
                         include_text=False,
+                        ref_work=ref_work,
                     )
                     if (
                         repository_uuidv4 is not None
@@ -1658,7 +1765,11 @@ class ProductionQueryService:
                 selected,
                 items=tuple(
                     self._paired_resource_in_snapshot(
-                        snap.core, snap.context, token_str, view.resource
+                        snap.core,
+                        snap.context,
+                        token_str,
+                        view.resource,
+                        ref_work=ref_work,
                     )
                     for view in selected.items
                 ),
