@@ -1944,6 +1944,14 @@ class ProductionQueryService:
                             ],
                             1024 * 1024,
                         )
+                        # Leave room for the JSON/checksum/base64 cursor envelope.
+                        # Keep the full semantic key; never replace it by a hash.
+                        if len(doc_key) > 16384:
+                            raise QueryError(
+                                "QUERY_BUDGET",
+                                "ref-notes-search",
+                                "finite cursor key limit",
+                            )
                         copy_bytes = 2 * (
                             len(subject.ref_name_bytes)
                             + len(claim.symbolic_target_ref_name or b"")
