@@ -1039,6 +1039,26 @@ Use a valid replay, denied reentrant body read, real damaged target and forged
 incoming proof as separate controls, for example:
 `scripts/local-run.sh pytest -q -n 2 tests/integration/p7/test_ref_typed_salvage.py`.
 
+For Claim-aware inventory queries, protecting the inner typed reader alone is
+insufficient: if it unwraps a caller's `JSONDecodeError` before returning through
+`ProductionQueryService.open_snapshot`, the outer stored-data classifier can
+stop a healthy catalog. Carry callback-origin exceptions opaquely across both
+boundaries and restore the same exception object only after the snapshot exits.
+At writer callbacks, withdraw admission and checked-byte capabilities and deny
+Core reentry; an exception shaped like SQLite corruption is still caller input.
+Test those controls alongside real damaged stored metadata and proof. Inventory
+verification pins must also bind their original Group and actual request identity:
+a pin copied from another request must refuse continuation, while a fresh read
+after a lost pin creates a distinct verification. Exercise these boundaries with
+`scripts/local-run.sh python -m pytest -q -n 2 tests/integration/p4/test_ref_inventory_transition.py`.
+Reserve each character walk before computing JSON-escaped lengths for provenance,
+mapping paths and absence evidence; charging the eventual encoding after the
+walk is too late when a small cumulative budget is already exhausted. Include a
+long-string counterexample and verify that ordinary budget refusal does not stop
+the catalog.
+These checks do not replace the preserved salvage, Exchange, Query and recovery
+regressions, and do not establish release acceptance.
+
 Recovery extraction must copy the stopped files without opening the original
 with SQLite, and reserve reads before unbuffered I/O; a buffered short read can
 otherwise prefetch beyond its reservation. Test source bytes across a killed

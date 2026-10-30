@@ -351,6 +351,68 @@ class _CheckedReadBudget:
         return lambda unit: self._invoke(lambda: self.work.abandon(unit))
 
 
+class _WorkCallbackError(Exception):
+    """Keep a caller exception outside stored-data and SQLite classifiers."""
+
+    def __init__(self, original):
+        super().__init__()
+        self.original = original
+
+
+class _ProtectedWorkLimits:
+    def __init__(self, budget):
+        self.budget = budget
+
+    @property
+    def note_bytes(self):
+        return self.budget._invoke(lambda: self.budget.work.limits.note_bytes)
+
+
+class _ProtectedWorkBudget:
+    """Do not lend writer/checked-byte capabilities to a work callback."""
+
+    def __init__(self, core, work):
+        self.core, self.work = core, work
+        self.limits = _ProtectedWorkLimits(self)
+
+    def _invoke(self, operation):
+        core = self.core
+        admitting = core._admitting
+        checked = getattr(core, "_checked_byte_read", False)
+        depth = getattr(core, "_work_callback_depth", 0)
+        core._admitting = core._checked_byte_read = False
+        core._work_callback_depth = depth + 1
+        try:
+            return operation()
+        except Exception as error:
+            raise _WorkCallbackError(error) from error
+        finally:
+            core._work_callback_depth = depth
+            core._admitting, core._checked_byte_read = admitting, checked
+
+    def require(self, unit, amount=1):
+        return self._invoke(lambda: self.work.require(unit, amount))
+
+    def charge(self, unit, amount):
+        return self._invoke(lambda: self.work.charge(unit, amount))
+
+    def __getattr__(self, name):
+        if name != "abandon":
+            raise AttributeError(name)
+        method = self._invoke(lambda: getattr(self.work, name, None))
+        if method is None:
+            raise AttributeError(name)
+        return lambda unit: self._invoke(lambda: method(unit))
+
+
+@contextmanager
+def _protected_work(core, work):
+    try:
+        yield _ProtectedWorkBudget(core, work)
+    except _WorkCallbackError as error:
+        raise error.original from None
+
+
 class GitCore(Core):
     """Durable production CoreAdmission/CoreRead with scoped typed failures.
 
@@ -630,6 +692,235 @@ class GitCore(Core):
                     self._stored(selector, RefObservationKey, *row).key for row in rows
                 ]
             return rows
+
+    @_completed_read
+    def ref_notes_inventory_projection(
+        self,
+        claim,
+        work,
+        *,
+        max_groups=10_000,
+        max_members=100_000,
+        max_bytes=64 * 1024 * 1024,
+        max_proofs=1_000,
+        max_structures=100_000,
+    ):
+        """Read original Groups and current receiver proof for one exact Claim."""
+        from repo_catalog.domain.p1_core import CoreCoverageScope
+        from repo_catalog.domain.ref_coverage import REF_NOTES_INVENTORY
+        from repo_catalog.domain.ref_observation import (
+            NotesMappingGroup,
+            RefNotesInventoryGroupProjection,
+            RefNotesInventoryProjection,
+            RefObservationClaim,
+            account_notes_group_comparison,
+        )
+
+        if not isinstance(claim, RefObservationClaim) or any(
+            type(value) is not int or not 0 < value < 2**63 - 1
+            for value in (
+                max_groups,
+                max_members,
+                max_bytes,
+                max_proofs,
+                max_structures,
+            )
+        ):
+            raise CoreFailure(
+                "QUERY_BUDGET", "ref-inventory", "typed finite scope required"
+            )
+        with _protected_work(self, work) as guarded, self._snapshot():
+            self._require_ref_claim(
+                claim,
+                work=guarded,
+                max_metadata_bytes=max_bytes,
+                metadata_limit_code="QUERY_BUDGET",
+            )
+            observed = self.ref_observation(
+                claim.ref_observation_key, guarded, max_bytes=max_bytes
+            )
+            rows = (
+                self.ref_exchange_rows(
+                    "groups",
+                    claim.identity,
+                    guarded,
+                    maximum=max_groups,
+                    max_bytes=max_bytes,
+                )
+                if claim.root_oid is not None
+                else ()
+            )
+            groups = []
+            for row in rows:
+                (
+                    fmt,
+                    root,
+                    kind,
+                    version,
+                    interpretation,
+                    scope,
+                    status,
+                    raw,
+                    provenance,
+                ) = row
+                if (
+                    (fmt, root) != claim.root_oid.key
+                    or type(raw) is not str
+                    or type(provenance) is not str
+                ):
+                    self._integrity_stop(
+                        (claim.identity, "invalid-stored-group-coordinates")
+                    )
+
+                # Count JSON containers/separators before materialization, with
+                # bounded traversal even for malformed or adversarial groups.
+                guarded.require("input_bytes", len(raw))
+                tokens = 0
+                scanned = 0
+                quoted = escaped = False
+                try:
+                    for char in raw:
+                        scanned += 1
+                        if quoted:
+                            if escaped:
+                                escaped = False
+                            elif char == "\\":
+                                escaped = True
+                            elif char == '"':
+                                quoted = False
+                        elif char == '"':
+                            quoted = True
+                        elif char in "[{,":
+                            tokens += 1
+                            if tokens > 4 * max_members + 4:
+                                raise CoreFailure(
+                                    "QUERY_BUDGET",
+                                    claim.identity,
+                                    "finite group member limit",
+                                )
+                finally:
+                    guarded.charge("input_bytes", scanned)
+                # Membership is traversed repeatedly to construct and check
+                # the whole group and its canonical encoding.
+                metadata_reservation = tokens + 4 * min(max_members, tokens)
+                guarded.require("metadata_units", metadata_reservation)
+                # Noncanonical stored Unicode can expand to twelve ASCII
+                # escape characters per code point when re-encoded as JSON.
+                raw_upper = len(raw) if raw.isascii() else 12 * len(raw)
+                provenance_upper = (
+                    len(provenance) if provenance.isascii() else 12 * len(provenance)
+                )
+                parse_bytes = 5 * raw_upper + 2 * provenance_upper
+                try:
+                    guarded.require("input_bytes", parse_bytes)
+                except BaseException:
+                    abandon = getattr(guarded, "abandon", None)
+                    if abandon is not None:
+                        abandon("metadata_units")
+                    else:
+                        guarded.charge("metadata_units", metadata_reservation)
+                    raise
+                metadata_work = metadata_reservation
+                try:
+                    members = self._stored(claim.identity, json.loads, raw)
+                    if type(members) is not list:
+                        self._integrity_stop(
+                            (claim.identity, "invalid-stored-group-members")
+                        )
+                    if len(members) > max_members:
+                        raise CoreFailure(
+                            "QUERY_BUDGET", claim.identity, "finite group member limit"
+                        )
+                    metadata_work = min(metadata_reservation, tokens + 4 * len(members))
+
+                    def decode_group():
+                        group = NotesMappingGroup(
+                            claim,
+                            kind,
+                            version,
+                            interpretation,
+                            scope,
+                            status,
+                            tuple(tuple(member) for member in members),
+                            Provenance(*json.loads(provenance)),
+                        )
+                        if (
+                            encode(group.members) != raw
+                            or group.provenance.encoded != provenance
+                        ):
+                            raise ValueError("noncanonical stored group")
+                        return group
+
+                    group = self._stored(claim.identity, decode_group)
+                finally:
+                    guarded.charge("metadata_units", metadata_work)
+                    guarded.charge("input_bytes", parse_bytes)
+                for target, note, _ in group.members:
+                    for oid in (target, note):
+                        guarded.require("metadata_units", 1)
+                        guarded.charge("metadata_units", 1)
+                        if not self.sql(
+                            "SELECT 1 FROM git_objects WHERE object_format=? AND full_oid=?",
+                            (fmt, oid),
+                        ):
+                            self._integrity_stop(
+                                (claim.identity, "missing-stored-group-object", oid)
+                            )
+                groups.append(group)
+
+            scope = CoreCoverageScope(
+                "ref_observation", (*claim.ref_observation_key.key, REF_NOTES_INVENTORY)
+            )
+            coverage = self.coverage(
+                scope,
+                guarded,
+                max_proofs=max_proofs,
+                max_bytes=max_bytes,
+                max_structures=max_structures,
+            )
+            verified = []
+            for coverage_claim in coverage.claims:
+                if coverage_claim.state == "complete":
+                    for proof in self.ref_coverage_proofs(
+                        coverage_claim,
+                        guarded,
+                        max_proofs=max_proofs,
+                        max_bytes=max_bytes,
+                        max_structures=max_structures,
+                    ):
+                        guarded.require("metadata_units", 1)
+                        guarded.charge("metadata_units", 1)
+                        verified.append(proof)
+            projected = []
+            for group in groups:
+                matches = []
+                for proof in verified:
+                    account_notes_group_comparison(group, proof.group, guarded)
+                    if proof.group == group:
+                        matches.append(proof.verification_provenance)
+                projected.append(
+                    RefNotesInventoryGroupProjection(group, tuple(matches))
+                )
+            return RefNotesInventoryProjection(
+                claim, observed.ref_observation, tuple(projected), coverage
+            )
+
+    def admit_ref_coverage_proof(self, proof, work, **kwargs):
+        """Keep untrusted work callbacks outside the writer capability."""
+        with _protected_work(self, work) as guarded:
+            return super().admit_ref_coverage_proof(proof, guarded, **kwargs)
+
+    def ref_coverage_proofs(self, claim, work, **kwargs):
+        """Preserve callback exceptions through the checked proof reader."""
+        with _protected_work(self, work) as guarded:
+            return super().ref_coverage_proofs(claim, guarded, **kwargs)
+
+    def coverage(self, scope, work=None, **kwargs):
+        """Keep caller work errors outside stored Coverage classifiers."""
+        if work is None:
+            return super().coverage(scope, None, **kwargs)
+        with _protected_work(self, work) as guarded:
+            return super().coverage(scope, guarded, **kwargs)
 
     @_completed_read
     @_decoded_read

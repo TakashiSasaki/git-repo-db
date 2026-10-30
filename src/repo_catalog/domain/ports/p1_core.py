@@ -33,6 +33,7 @@ from repo_catalog.domain.ref_observation import (
     NotesMappingEvidence,
     NotesMappingGroup,
     NotesMappingProjection,
+    RefNotesInventoryProjection,
     RefObservation,
     RefObservationClaim,
     RefObservationKey,
@@ -153,6 +154,17 @@ class CoreRead(Protocol):
         max_units: int = 10_000,
         max_bytes: int = 64 * 1024 * 1024,
     ) -> NotesMappingProjection: ...
+    def ref_notes_inventory_projection(
+        self,
+        claim: RefObservationClaim,
+        work: WorkBudget,
+        *,
+        max_groups: int = 10_000,
+        max_members: int = 100_000,
+        max_bytes: int = 64 * 1024 * 1024,
+        max_proofs: int = 1_000,
+        max_structures: int = 100_000,
+    ) -> RefNotesInventoryProjection: ...
     def read_ref_note(
         self,
         claim: RefObservationClaim,

@@ -8,6 +8,7 @@ No body bytes enter progress storage. Core facts remain usable if it is lost.
 
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass, replace
 from uuid import uuid4
 
@@ -26,16 +27,25 @@ from repo_catalog.domain.notes import (
 from repo_catalog.domain.p1_core import (
     OID,
     Capture,
+    CoreCoverageScope,
     CoreFailure,
     GitObservation,
     Provenance,
     encode,
     uuid4_value,
 )
+from repo_catalog.domain.p1_coverage import CoverageClaim
 from repo_catalog.domain.ports.notes import NotesProgress, NotesSource
+from repo_catalog.domain.ref_coverage import (
+    REF_NOTES_INVENTORY,
+    RefNotesInventoryCoverageProof,
+)
 from repo_catalog.domain.ref_observation import (
     NotesMappingGroup,
     RefObservationClaim,
+    account_notes_group_comparison,
+    account_notes_members_comparison,
+    account_provenance_comparison,
     new_uuid7,
     uuid7_value,
 )
@@ -77,6 +87,16 @@ class RefNoteAcquisition:
 @dataclass(frozen=True)
 class RefNotesInventory:
     group: NotesMappingGroup
+    failure_code: str | None = None
+    detail: str = ""
+
+
+@dataclass(frozen=True)
+class RefNotesInventoryVerification:
+    group: NotesMappingGroup
+    coverage_claim: CoverageClaim | None
+    verification_provenance: Provenance | None
+    verified: bool
     failure_code: str | None = None
     detail: str = ""
 
@@ -496,6 +516,181 @@ class NotesAcquisition:
         )
         self.core.admit_notes_mapping_group(group, self.work)
         return RefNotesInventory(group, saved["failure_code"], saved["detail"])
+
+    def verify_ref_inventory(
+        self, group: NotesMappingGroup
+    ) -> RefNotesInventoryVerification:
+        """Rewalk one reported group and retain separate receiver Coverage proof.
+
+        Progress pins only the admitted proof coordinate, never structural bytes.
+        A lost pin permits a fresh verification with a fresh coordinate.
+        """
+        repository = self._ready()
+        if not isinstance(group, NotesMappingGroup):
+            raise CoreFailure("NOTES_INVENTORY", group, "typed group required")
+        claim = group.ref_claim
+        projected = self.core.ref_notes_inventory_projection(claim, self.work)
+        if projected.ref_observation.repository_uuidv4 != repository:
+            raise CoreFailure(
+                "NOTES_SCOPE", claim.identity, "exact repository and Claim required"
+            )
+        if (
+            group.interpretation_kind,
+            group.interpretation_version,
+            group.interpretation_scope,
+            group.group_scope,
+        ) != ("git-notes", "1", "native-notes-tree", "all-notes-mappings"):
+            raise CoreFailure(
+                "NOTES_INVENTORY", claim.identity, "supported whole inventory required"
+            )
+        group_found = False
+        for view in projected.groups:
+            account_notes_group_comparison(view.group, group, self.work)
+            if view.group == group:
+                group_found = True
+                break
+        if not group_found:
+            raise CoreFailure(
+                "MISSING_DEPENDENCY", claim.identity, "original Group required"
+            )
+        if group.status not in ("complete", "known_empty"):
+            return RefNotesInventoryVerification(
+                group,
+                None,
+                None,
+                False,
+                "NOTES_INVENTORY",
+                "nonterminal Group cannot prove completeness",
+            )
+        request_identity = self.progress.request_identity()
+        if (
+            type(request_identity) is not tuple
+            or len(request_identity) != 2
+            or any(
+                type(value) is not str or len(value) != 36 for value in request_identity
+            )
+        ):
+            raise CoreFailure(
+                "CONTINUATION_UNAVAILABLE",
+                "notes-inventory",
+                "request identity unavailable",
+            )
+        self.work.require("input_bytes", 72)
+        self.work.charge("input_bytes", 72)
+        for value in request_identity:
+            uuid4_value(value)
+        identity = (
+            *request_identity,
+            *claim.ref_observation_key.key,
+            encode_metered(self.work, claim.provenance.key),
+            *claim.root_oid.key,
+            group.interpretation_kind,
+            group.interpretation_version,
+            group.interpretation_scope,
+            group.group_scope,
+            *group.provenance.key,
+        )
+        slot = encode_metered(self.work, ["p4-ref-inventory-check", *identity])
+        scope = CoreCoverageScope(
+            "ref_observation", (*claim.ref_observation_key.key, REF_NOTES_INVENTORY)
+        )
+
+        def local_provenance(verification_id):
+            return Provenance(
+                "local-receiver",
+                verification_id,
+                encode_metered(self.work, [*identity, "whole-inventory"]),
+                "git-native-notes-inventory",
+                "1",
+                "receiver_intrinsic",
+            )
+
+        with self.progress.scan_guard(slot):
+            saved = self.progress.load_bounded(slot, 4096)
+            if saved is not None:
+                try:
+                    if type(saved) is not dict or set(saved) != {
+                        "verification_uuidv7",
+                        "observed_at_us",
+                    }:
+                        raise ValueError("invalid pin shape")
+                    verification_id = uuid7_value(saved["verification_uuidv7"])
+                    coverage = CoverageClaim(scope, saved["observed_at_us"], "complete")
+                except (ValueError, KeyError, TypeError) as error:
+                    raise CoreFailure(
+                        "CONTINUATION_UNAVAILABLE", slot, "invalid pinned verification"
+                    ) from error
+                provenance = local_provenance(verification_id)
+                proofs = self.core.ref_coverage_proofs(coverage, self.work)
+                matches = []
+                for proof in proofs:
+                    account_notes_group_comparison(proof.group, group, self.work)
+                    if proof.group != group:
+                        continue
+                    account_provenance_comparison(
+                        proof.verification_provenance, provenance, self.work
+                    )
+                    if proof.verification_provenance == provenance:
+                        matches.append(proof)
+                if len(matches) != 1:
+                    raise CoreFailure(
+                        "CONTINUATION_UNAVAILABLE",
+                        slot,
+                        "pinned receiver proof unavailable",
+                    )
+                return RefNotesInventoryVerification(group, coverage, provenance, True)
+
+            status, members, structures, failure = ref_mapping_inventory(
+                claim, lambda oid: self.source.metadata(oid, self.work), self.work
+            )
+            if failure is not None:
+                if failure.code in ("AUTHORITATIVE_CORRUPTION", "RECOVERY_STOP"):
+                    raise failure
+                return RefNotesInventoryVerification(
+                    group, None, None, False, failure.code, str(failure)
+                )
+            account_notes_members_comparison(members, group.members, self.work)
+            if status != group.status or members != group.members:
+                return RefNotesInventoryVerification(
+                    group,
+                    None,
+                    None,
+                    False,
+                    "NOTES_INVENTORY_MISMATCH",
+                    "receiver traversal differs from the original whole Group",
+                )
+            verification_id = new_uuid7()
+            coverage = CoverageClaim(scope, time.time_ns() // 1000, "complete")
+            provenance = local_provenance(verification_id)
+            proof = RefNotesInventoryCoverageProof(
+                coverage, group, provenance, structures
+            )
+            self.core.admit_coverage_scope(scope)
+            if self.core.admit_coverage(coverage) == "stale":
+                return RefNotesInventoryVerification(
+                    group,
+                    coverage,
+                    provenance,
+                    False,
+                    "STALE_COVERAGE",
+                    "newer Coverage already exists",
+                )
+            self.core.admit_ref_coverage_proof(proof, self.work)
+            candidate = {
+                "verification_uuidv7": verification_id,
+                "observed_at_us": coverage.observed_at_us,
+            }
+            pinned = self.progress.save_once_bounded(
+                slot,
+                candidate,
+                4096,
+                encoded=encode_metered(self.work, candidate, 4096),
+            )
+            if pinned != candidate:
+                raise CoreFailure(
+                    "INCOMPATIBLE_REPLAY", slot, "verification pin changed"
+                )
+            return RefNotesInventoryVerification(group, coverage, provenance, True)
 
     def acquire_note(
         self, capture, target, *, retain_body=True, physical_copy_uuidv4=None
