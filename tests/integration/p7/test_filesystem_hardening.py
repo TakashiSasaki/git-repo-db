@@ -296,7 +296,9 @@ def _enter_writer(catalog, attempted, acquired):
         acquired.set()
 
 
-def test_activation_holds_writer_cut_through_publication(synthetic_catalog, tmp_path):
+def test_activation_holds_writer_cut_through_publication(backup, tmp_path, repo_uuid):
+    synthetic_catalog = tmp_path / "fresh-restored"
+    RecoveryService().restore_backup(backup, synthetic_catalog, repo_uuid)
     ctx = multiprocessing.get_context("fork")
     entered, release, attempted, acquired = [ctx.Event() for _ in range(4)]
     activation = ctx.Process(
@@ -355,9 +357,10 @@ def test_backup_directory_enumeration_is_bounded(
 @pytest.mark.parametrize("previous", [False, True])
 @pytest.mark.parametrize("stage", ["before_publication", "after_publication"])
 def test_activation_catalog_path_swap_is_not_acknowledged(
-    synthetic_catalog, tmp_path, monkeypatch, previous, stage
+    backup, tmp_path, repo_uuid, monkeypatch, previous, stage
 ):
-    catalog = synthetic_catalog
+    catalog = tmp_path / "fresh-restored"
+    RecoveryService().restore_backup(backup, catalog, repo_uuid)
     locator = tmp_path / "active"
     old = tmp_path / "old-active"
     old.mkdir()
@@ -405,8 +408,10 @@ def test_activation_catalog_path_swap_is_not_acknowledged(
 
 @pytest.mark.parametrize("previous", [False, True])
 def test_activation_locator_parent_swap_is_not_acknowledged(
-    synthetic_catalog, tmp_path, monkeypatch, previous
+    backup, tmp_path, repo_uuid, monkeypatch, previous
 ):
+    synthetic_catalog = tmp_path / "fresh-restored"
+    RecoveryService().restore_backup(backup, synthetic_catalog, repo_uuid)
     parent = tmp_path / "locators"
     parent.mkdir()
     locator = parent / "active"

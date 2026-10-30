@@ -45,6 +45,7 @@ class SalvagePort(Protocol):
         max_records: int | None = None,
         max_bytes: int | None = None,
         budget: RecoveryBudget | None = None,
+        request_id: str | None = None,
     ) -> SalvageReceipt: ...
 
 

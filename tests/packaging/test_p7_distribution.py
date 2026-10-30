@@ -47,7 +47,9 @@ from repo_catalog.domain.recovery import BackupScope
 from repo_catalog.adapters.sqlite.p1_schema import initialize
 from repo_catalog.adapters.sqlite.git_core import GitCore
 from repo_catalog.adapters.sqlite.acquisition import UnlimitedWorkBudget
-from repo_catalog.domain.p1_core import OID, NativeObject, native_oid
+from repo_catalog.application.production_query import ProductionQueryService
+from repo_catalog.domain.p1_core import OID, NativeObject, Provenance, native_oid
+from repo_catalog.domain.ref_observation import RefObservation, RefObservationClaim, RefObservationKey, new_uuid7
 
 assert "site-packages" in str(Path(__import__("repo_catalog.application.recovery", fromlist=["x"]).__file__))
 
@@ -94,14 +96,28 @@ b_receipt = service.create_consistent_backup(catalog_dir, backup_dir, scope=Back
 assert b_receipt.verified_clean
 assert b_receipt.manifest.retained_byte_summary.commit_count == 1
 
-# 4. Restore backup into fresh destination
+# 4. Salvage a later rootless observation using the installed implementation.
+key = RefObservationKey(str(uuid4()), new_uuid7())
+subject = RefObservation(key, repo_uuid, b"refs/notes/\xff", "source", "scope", 1)
+claim = RefObservationClaim(key, Provenance("source", "scan", "item", "git", "1"), "present")
+core.admit_ref_observation(subject)
+core.admit_ref_observation_claim(claim)
+core.close()
+service.stop_suspect_catalog(catalog_dir, "synthetic installed salvage")
+salvage = Path("dist-salvage.jsonl")
+assert service.extract_salvage(catalog_dir, salvage, request_id="installed").candidate_count
+
+# 5. Restore backup into fresh destination and validate/admit the candidate.
 restored_dir = Path("dist_restored")
 r_receipt = service.restore_backup(backup_dir, restored_dir, repo_uuid)
 assert r_receipt.revalidated_clean
 assert "core" in r_receipt.revalidated_stores
 assert (restored_dir / "core.sqlite3").exists()
+assert service.merge_salvage(restored_dir, salvage).admitted_units >= 1
+work = UnlimitedWorkBudget()
+assert ProductionQueryService(restored_dir).get_ref_observation(key, work).claims == (claim,)
 
-# 5. Safe activation
+# 6. Safe activation
 active_loc = Path("dist_active")
 a_receipt = service.activate_catalog(restored_dir, active_loc)
 assert a_receipt.clean_operational

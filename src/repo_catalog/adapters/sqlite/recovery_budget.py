@@ -65,13 +65,17 @@ def _read(path: Path) -> dict:
         # Nonblocking open lets a malformed FIFO/device fail validation instead
         # of hanging before the regular-file check.
         fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
-        with os.fdopen(fd, "rb") as handle:
-            info = os.fstat(handle.fileno())
+        try:
+            info = os.fstat(fd)
             if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
                 raise ValueError("regular private state file required")
-            raw = handle.read(_MAX_STATE_BYTES + 1)
-        if len(raw) > _MAX_STATE_BYTES:
-            raise ValueError("oversized state")
+            if info.st_size > _MAX_STATE_BYTES:
+                raise ValueError("oversized state")
+            raw = os.read(fd, info.st_size + 1)
+            if len(raw) != info.st_size:
+                raise ValueError("recovery state changed while reading")
+        finally:
+            os.close(fd)
         result = json.loads(
             raw, object_pairs_hook=_unique_object, parse_constant=_invalid_constant
         )

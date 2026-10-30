@@ -68,6 +68,7 @@ class RecoveryService:
         max_records: int | None = None,
         max_bytes: int | None = None,
         budget: RecoveryBudget | None = None,
+        request_id: str | None = None,
     ) -> SalvageReceipt:
         """Perform read-only, bounded, untrusted salvage extraction from a suspect catalog."""
         return self.adapter.extract_salvage(
@@ -76,6 +77,7 @@ class RecoveryService:
             max_records=max_records,
             max_bytes=max_bytes,
             budget=budget,
+            request_id=request_id,
         )
 
     def restore_backup(

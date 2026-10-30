@@ -703,7 +703,7 @@ def test_backup_restores_rootless_observation_without_stopping_healthy_core(core
     assert c.ref_observation(obs.ref_observation_key, Budget()).ref_observation == obs
 
 
-def test_unsupported_salvage_is_partial_and_never_stages_new_note_bodies(core):
+def test_typed_salvage_stages_only_a_checked_claim_bound_note_body(core):
     import io
     import json
 
@@ -738,11 +738,10 @@ def test_unsupported_salvage_is_partial_and_never_stages_new_note_bodies(core):
         Budget(),
     )
     output = io.StringIO()
-    _, _, errors, _, partial, _, _ = SQLiteRecoveryAdapter()._salvage_store_stream(
+    _, _, errors, _, _, _, _ = SQLiteRecoveryAdapter()._salvage_store_stream(
         path, "core", output, 1000, 10_000_000, 1_000_000, 0, 0
     )
     assert not errors
-    assert partial >= 1
     rows = [json.loads(line) for line in output.getvalue().splitlines()]
     new_rows = [
         row
@@ -757,10 +756,11 @@ def test_unsupported_salvage_is_partial_and_never_stages_new_note_bodies(core):
         }
     ]
     assert len(new_rows) >= 5
-    assert all(
-        row["extraction_status"] == "partial" and row["payload"] == {}
-        for row in new_rows
-    )
+    assert all(row["extraction_status"] == "clean" for row in new_rows)
+    body = next(row for row in new_rows if row["candidate_type"] == "ref_note")
+    assert body["payload"]["unit"]["body_hex"] == note.body.hex()
+    assert body["payload"]["claim"]["root_oid"] == list(claim.root_oid.key)
+    assert body["payload"]["unit"]["proof_bundle_json"]
     assert "private-note-body" not in output.getvalue()
 
 

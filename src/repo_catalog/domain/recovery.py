@@ -18,6 +18,16 @@ class CandidateType(str, enum.Enum):
     NOTES_MAPPING = "notes_mapping"
     CONTEXT_RESOURCE = "context_resource"
     CONTEXT_DOCUMENT = "context_document"
+    REF_SUBJECT = "ref_subject"
+    REF_CLAIM = "ref_claim"
+    REF_ENUMERATION = "ref_enumeration"
+    REF_MAPPING_CONTENT = "ref_mapping_content"
+    REF_MAPPING = "ref_mapping"
+    REF_GROUP = "ref_group"
+    REF_EVIDENCE = "ref_evidence"
+    REF_NOTE = "ref_note"
+    REF_COVERAGE = "ref_coverage"
+    REF_COVERAGE_PROOF = "ref_coverage_proof"
 
 
 class ExtractionStatus(str, enum.Enum):

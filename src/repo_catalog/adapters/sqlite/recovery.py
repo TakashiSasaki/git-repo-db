@@ -43,6 +43,7 @@ from repo_catalog.adapters.sqlite.p1_schema import (
     schema_rows,
     uuid4,
 )
+from repo_catalog.adapters.sqlite.p1_schema import _resource as _p1_resource
 from repo_catalog.adapters.sqlite.p1_schema import (
     connect as p1_connect,
 )
@@ -55,7 +56,18 @@ from repo_catalog.adapters.sqlite.p1_schema import (
 from repo_catalog.adapters.sqlite.p1_schema import (
     validate as p1_schema_validate,
 )
-from repo_catalog.adapters.sqlite.recovery_budget import recovery_request
+from repo_catalog.adapters.sqlite.recovery_budget import (
+    _invalid_constant,
+    _unique_object,
+    canonical_request_id,
+    recovery_request,
+)
+from repo_catalog.adapters.sqlite.recovery_budget import (
+    _read as _read_recovery_state,
+)
+from repo_catalog.adapters.sqlite.recovery_budget import (
+    _write as _write_recovery_state,
+)
 from repo_catalog.adapters.sqlite.recovery_validation import (
     RefValidationBudgetError,
     StoredContextInvariantError,
@@ -117,6 +129,12 @@ _REF_OBSERVATION_TABLES = frozenset(
         "ref_retained_notes",
     }
 )
+
+# Independent ceilings allow the two simultaneously open forensic readers to
+# reserve their SQLite VM work without sharing a pending reservation. The
+# reservation is durable before stepping SQLite and settled on clean return.
+_FORENSIC_VM_LIMIT = 10_000_000
+_FORENSIC_VM_UNITS = ("legacy_source_vm_steps", "ref_source_vm_steps")
 
 
 AT_FDCWD = -100
@@ -216,6 +234,113 @@ def _read_bounded_fd(fd: int, limit: int) -> bytes:
     if len(value) > limit:
         raise RestoreValidationError("Manifest input exceeds finite byte limit")
     return value
+
+
+def _read_restored_baseline(
+    directory: Path, *, directory_fd: int | None = None, work=None
+) -> dict:
+    """Read the bounded receipt published with a validated fresh restore."""
+    directory_fd = (
+        _open_directory_nofollow(directory)
+        if directory_fd is None
+        else os.dup(directory_fd)
+    )
+    try:
+        fd = _open_regular_at(directory_fd, "p1-restored-baseline.json")
+        try:
+            expected_size = os.fstat(fd).st_size
+            if expected_size > 4096:
+                raise RecoveryError("Restored baseline receipt exceeds finite limit")
+            if work is not None:
+                work.require("input_bytes", expected_size + 1)
+            try:
+                # A racing writer may grow the receipt after fstat. Never read
+                # more than the amount reserved for this particular read.
+                os.lseek(fd, 0, os.SEEK_SET)
+                raw = os.read(fd, expected_size + 1)
+                if len(raw) != expected_size:
+                    raise RecoveryError(
+                        "Restored baseline receipt changed while reading"
+                    )
+            except BaseException:
+                if work is not None:
+                    work.abandon("input_bytes")
+                raise
+            if work is not None:
+                work.charge("input_bytes", len(raw))
+        finally:
+            os.close(fd)
+    finally:
+        os.close(directory_fd)
+    try:
+        value = json.loads(
+            raw, object_pairs_hook=_unique_object, parse_constant=_invalid_constant
+        )
+        if (
+            type(value) is not dict
+            or set(value)
+            != {
+                "version",
+                "backup_id",
+                "scope",
+                "repository_uuidv4",
+                "catalog_instance_uuidv4",
+                "manifest_sha256",
+            }
+            or type(value["version"]) is not int
+            or value["version"] != 1
+            or value["scope"]
+            not in (BackupScope.GIT_ONLY.value, BackupScope.PAIRED.value)
+            or not uuid4(value["backup_id"])
+            or not uuid4(value["repository_uuidv4"])
+            or not uuid4(value["catalog_instance_uuidv4"])
+            or type(value["manifest_sha256"]) is not str
+            or len(value["manifest_sha256"]) != 64
+            or any(c not in "0123456789abcdef" for c in value["manifest_sha256"])
+        ):
+            raise ValueError("invalid restored baseline receipt")
+        return value
+    except (ValueError, TypeError, KeyError, UnicodeDecodeError) as error:
+        raise RecoveryError("Invalid restored baseline receipt") from error
+
+
+def _context_identity_for_salvage(conn, core, work):
+    """Read only fixed-size Context identity fields before using that store."""
+    work.require("identity_read_rows", 2)
+    try:
+        work.require("identity_read_bytes", 144)
+    except BaseException:
+        work.abandon("identity_read_rows")
+        raise
+    try:
+        rows = conn.execute(
+            "SELECT store_role='context', "
+            "CASE WHEN typeof(repository_uuidv4)='text' "
+            "AND octet_length(repository_uuidv4)=36 "
+            "THEN CAST(repository_uuidv4 AS BLOB) END, "
+            "CASE WHEN typeof(catalog_instance_uuidv4)='text' "
+            "AND octet_length(catalog_instance_uuidv4)=36 "
+            "THEN CAST(catalog_instance_uuidv4 AS BLOB) END "
+            "FROM store_identity LIMIT 2"
+        ).fetchall()
+    except BaseException:
+        work.abandon("identity_read_rows")
+        work.abandon("identity_read_bytes")
+        raise
+    work.charge("identity_read_rows", len(rows))
+    work.charge(
+        "identity_read_bytes",
+        sum(len(value) for row in rows for value in row[1:] if value is not None),
+    )
+    try:
+        if len(rows) != 1 or rows[0][0] != 1:
+            raise ValueError("one Context identity is required")
+        identity = tuple(value.decode("ascii") for value in rows[0][1:])
+        if not all(uuid4(value) for value in identity):
+            raise ValueError("canonical Context identity is required")
+        return identity
+    except (ValueError, TypeError, AttributeError, UnicodeDecodeError) as error:
+        core._integrity_stop(("Context identity", str(error)))
 
 
 def _copy_verified_fd(fd: int, target: Path, size: int, digest: str) -> None:
@@ -413,6 +538,212 @@ def _bounded_utf8(value: Any, max_bytes: int, work=None) -> bytes:
     return result
 
 
+def _encode_salvage_line(record: dict, work, maximum: int, max_depth: int = 16) -> str:
+    """Reserve traversal and JSON expansion before serializing a candidate."""
+    bound = 2
+    stack = [(record, 1)]
+    scheduled = 1
+    while stack:
+        work.require("metadata_units", 1)
+        value, depth = stack.pop()
+        work.charge("metadata_units", 1)
+        if depth > max_depth:
+            raise CoreFailure("BUDGET", "salvage", "finite candidate nesting limit")
+        bound += 8
+        if isinstance(value, dict):
+            scheduled += 2 * len(value)
+            if scheduled > 8000:
+                raise CoreFailure("BUDGET", "salvage", "finite candidate element limit")
+            work.require("metadata_units", 2 * len(value))
+            work.charge("metadata_units", 2 * len(value))
+            stack.extend((key, depth + 1) for key in value)
+            stack.extend((child, depth + 1) for child in value.values())
+        elif isinstance(value, (list, tuple)):
+            scheduled += len(value)
+            if scheduled > 8000:
+                raise CoreFailure("BUDGET", "salvage", "finite candidate element limit")
+            work.require("metadata_units", len(value))
+            work.charge("metadata_units", len(value))
+            stack.extend((child, depth + 1) for child in value)
+        elif isinstance(value, str):
+            work.require("input_bytes", len(value))
+            try:
+                size = sum(
+                    12
+                    if ord(char) > 0xFFFF
+                    else 6
+                    if ord(char) > 0x7F or ord(char) < 0x20
+                    else 2
+                    if char in ('"', "\\")
+                    else 1
+                    for char in value
+                )
+            except BaseException:
+                work.abandon("input_bytes")
+                raise
+            work.charge("input_bytes", len(value))
+            bound += size + 2
+        elif value is None or type(value) in (bool, int, float):
+            bound += 32
+        else:
+            raise ValueError("unsupported salvage candidate value")
+        if bound > maximum:
+            raise CoreFailure("BUDGET", "salvage", "finite candidate output limit")
+    work.require("input_bytes", bound)
+    try:
+        line = json.dumps(record, ensure_ascii=True, allow_nan=False) + "\n"
+        if len(line) > bound:
+            raise ValueError("salvage JSON reservation underestimated")
+    except BaseException:
+        work.abandon("input_bytes")
+        raise
+    work.charge("input_bytes", len(line))
+    return line
+
+
+def _encode_salvage_base64(raw: bytes, work) -> str:
+    size = 4 * ((len(raw) + 2) // 3)
+    work.require("input_bytes", size)
+    try:
+        value = base64.b64encode(raw).decode("ascii")
+    except BaseException:
+        work.abandon("input_bytes")
+        raise
+    work.charge("input_bytes", len(value))
+    return value
+
+
+def _checked_legacy_note_source(conn, row, work, max_records, max_bytes):
+    """Validate an old Capture role and actual copy before staging its bytes."""
+    from repo_catalog.adapters.sqlite.ref_salvage import _rows
+
+    capture_columns = (
+        "capture_origin_uuidv4",
+        "capture_uuidv4",
+        "repository_uuidv4",
+        "source",
+        "ref",
+        "object_format",
+        "root",
+    )
+    role_columns = (
+        "capture_origin_uuidv4",
+        "capture_uuidv4",
+        "object_format",
+        "root",
+        "target",
+        "note",
+        "path",
+        "proof_bundle",
+    )
+
+    def find_one(table, columns, expected):
+        work.require("metadata_units", 1)
+        try:
+            descriptor = conn.execute(f"PRAGMA table_list('{table}')").fetchone()
+        except BaseException:
+            work.abandon("metadata_units")
+            raise
+        work.charge("metadata_units", 1)
+        if not descriptor or descriptor[:3] != (b"main", table.encode(), b"table"):
+            raise ValueError("ordinary original dependency table unavailable")
+        found = None
+        remaining = work._max["input_records"] - work.usage["input_records"]
+        if remaining <= 0:
+            raise CoreFailure("BUDGET", table, "finite legacy dependency scan")
+        for value, error in _rows(
+            conn,
+            table,
+            work,
+            maximum=min(max_records, remaining),
+            max_row_bytes=max_bytes,
+            columns=columns,
+        ):
+            if error:
+                continue
+            work.require("metadata_units", 1)
+            work.charge("metadata_units", 1)
+            compared = sum(
+                len(item)
+                for item in (*expected.values(), *value.values())
+                if isinstance(item, (str, bytes))
+            )
+            work.require("input_bytes", compared)
+            matches = all(value[key] == wanted for key, wanted in expected.items())
+            work.charge("input_bytes", compared)
+            if matches:
+                if found is not None:
+                    raise ValueError("duplicate original dependency")
+                found = value
+        if found is None:
+            raise ValueError("original Capture or Notes role unavailable")
+        return found
+
+    old_factory = conn.text_factory
+    conn.text_factory = bytes
+    try:
+        cap = find_one(
+            "captures",
+            capture_columns,
+            {
+                "capture_origin_uuidv4": row["capture_origin_uuidv4"],
+                "capture_uuidv4": row["capture_uuidv4"],
+            },
+        )
+        find_one(
+            "note_roles",
+            role_columns,
+            {
+                "capture_origin_uuidv4": row["capture_origin_uuidv4"],
+                "capture_uuidv4": row["capture_uuidv4"],
+                "object_format": row["object_format"],
+                "root": row["root"],
+                "target": row["target"],
+                "note": row["full_oid"],
+                "path": row["path"],
+                "proof_bundle": row["proof_bundle"],
+            },
+        )
+    finally:
+        conn.text_factory = old_factory
+    if not uuid4(row["physical_copy_uuidv4"]):
+        raise ValueError("original physical copy identity is invalid")
+    capture = Capture(
+        cap["capture_origin_uuidv4"],
+        cap["capture_uuidv4"],
+        cap["repository_uuidv4"],
+        cap["source"],
+        _decode_native_ref(cap["ref"]),
+        OID(cap["object_format"], cap["root"]),
+    )
+    if capture.root != OID(row["object_format"], row["root"]):
+        raise ValueError("original Capture root differs")
+    bundle = row["proof_bundle"]
+    if type(bundle) is not str or len(bundle) > max_bytes:
+        raise ValueError("bounded original proof required")
+    work.require("input_bytes", 4 * len(bundle))
+    work.charge("input_bytes", 4 * len(bundle))
+    _bounded_json_loads(bundle, RecoveryBudget(max_payload_bytes=max_bytes))
+    with account_verification(work):
+        NativeObject(
+            OID(row["object_format"], row["full_oid"]),
+            "blob",
+            row["body"],
+            row["size"],
+            row["digest_sha256"],
+        ).validate()
+        if not valid_note_role(
+            row["object_format"],
+            row["root"],
+            row["target"],
+            row["full_oid"],
+            row["path"],
+            bundle,
+        ):
+            raise ValueError("original Notes proof does not verify")
+    return capture
+
+
 def _hash_recovery_bytes(body: bytes, work) -> str:
     work.require("verification_bytes", len(body))
     digest = hashlib.sha256(body).hexdigest()
@@ -606,28 +937,34 @@ def _open_salvage_input(path: Path):
     try:
         if not stat.S_ISREG(os.fstat(fd).st_mode):
             raise RecoveryError("Salvage input must be a regular file")
-        return os.fdopen(fd, "rb")
+        # Unbuffered input keeps every kernel read within the amount reserved
+        # by the bounded JSONL reader, including the last short read.
+        return os.fdopen(fd, "rb", buffering=0)
     except BaseException:
         os.close(fd)
         raise
 
 
-def _copy_forensic_files(catalog_dir: Path, forensic_dir: Path, max_bytes: int) -> None:
+def _copy_forensic_files(
+    catalog_dir: Path, forensic_dir: Path, max_bytes: int, work=None
+) -> None:
     """Bound actual streamed bytes, not only a racy preflight stat estimate."""
     copied = 0
     for name in ("core.sqlite3", "context.sqlite3"):
         for suffix in ("", "-wal", "-shm", "-journal"):
             source = catalog_dir / (name + suffix)
-            if not source.exists():
-                continue
             if source.is_symlink():
                 raise SalvageError(f"Refusing symlink source evidence: {source.name}")
+            if not source.exists():
+                continue
             flags = (
                 os.O_RDONLY
                 | getattr(os, "O_NOFOLLOW", 0)
                 | getattr(os, "O_NONBLOCK", 0)
             )
-            with os.fdopen(os.open(source, flags), "rb") as src:
+            # BufferedReader may prefetch beyond the reserved byte count on a
+            # short read (notably the one-byte growth probe).
+            with os.fdopen(os.open(source, flags), "rb", buffering=0) as src:
                 before = os.fstat(src.fileno())
                 if not stat.S_ISREG(before.st_mode):
                     raise SalvageError("Source evidence must be a regular file")
@@ -636,7 +973,17 @@ def _copy_forensic_files(catalog_dir: Path, forensic_dir: Path, max_bytes: int) 
                 with (forensic_dir / source.name).open("xb") as dest:
                     remaining_file = before.st_size
                     while remaining_file:
-                        block = src.read(min(65536, remaining_file, max_bytes - copied))
+                        amount = min(65536, remaining_file, max_bytes - copied)
+                        if work is not None:
+                            work.require("input_scan_bytes", amount)
+                        try:
+                            block = src.read(amount)
+                        except BaseException:
+                            if work is not None:
+                                work.abandon("input_scan_bytes")
+                            raise
+                        if work is not None:
+                            work.charge("input_scan_bytes", len(block))
                         if not block:
                             raise SalvageError(
                                 "Source evidence shrank during forensic copy"
@@ -645,7 +992,17 @@ def _copy_forensic_files(catalog_dir: Path, forensic_dir: Path, max_bytes: int) 
                         copied += len(block)
                         remaining_file -= len(block)
                     # One bounded probe detects growth without copying the suffix.
-                    if src.read(1):
+                    if work is not None:
+                        work.require("input_scan_bytes", 1)
+                    try:
+                        growth = src.read(1)
+                    except BaseException:
+                        if work is not None:
+                            work.abandon("input_scan_bytes")
+                        raise
+                    if work is not None:
+                        work.charge("input_scan_bytes", len(growth))
+                    if growth:
                         raise SalvageError("Source evidence grew during forensic copy")
                 after = os.fstat(src.fileno())
                 current = source.stat(follow_symlinks=False)
@@ -675,6 +1032,13 @@ class RecoveryWorkBudget:
     ) -> None:
         self.limits = NotesLimits(note_bytes=note_bytes)
         self._max = dict(NotesLimits.work_limits())
+        self._max.update(
+            {
+                unit: _FORENSIC_VM_LIMIT
+                for unit in _FORENSIC_VM_UNITS
+                if initial_usage is None or reserve is None or unit in initial_usage
+            }
+        )
         if work_limits is not None:
             self._max.update(work_limits)
         self.usage: dict[str, int] = dict.fromkeys(self._max, 0)
@@ -1540,6 +1904,130 @@ class SQLiteRecoveryAdapter:
         max_records: int | None = None,
         max_bytes: int | None = None,
         budget: RecoveryBudget | None = None,
+        request_id: str | None = None,
+    ) -> SalvageReceipt:
+        catalog_dir, output_file = (
+            Path(catalog_dir).absolute(),
+            Path(output_file).absolute(),
+        )
+        if output_file.resolve().is_relative_to(catalog_dir.resolve()):
+            raise SalvageError(
+                "Salvage output must be outside preserved source catalog"
+            )
+        if output_file.exists() or output_file.is_symlink():
+            raise SalvageError("Salvage output already exists; no-overwrite required")
+        b = budget or RecoveryBudget()
+        for name, value in (("max_records", max_records), ("max_bytes", max_bytes)):
+            if value is not None and (type(value) is not int or value <= 0):
+                raise ValueError(f"{name} must be a positive integer")
+        b = replace(
+            b,
+            max_input_records=min(
+                max_records or b.max_input_records, b.max_input_records
+            ),
+            max_input_bytes=min(max_bytes or b.max_input_bytes, b.max_input_bytes),
+        )
+        output_fd = _open_directory_nofollow(output_file.parent, create=True)
+        try:
+            source_fd = _open_directory_nofollow(catalog_dir)
+        except BaseException:
+            os.close(output_fd)
+            raise
+        try:
+            source_stat, output_stat = os.fstat(source_fd), os.fstat(output_fd)
+            if (source_stat.st_dev, source_stat.st_ino) == (
+                output_stat.st_dev,
+                output_stat.st_ino,
+            ):
+                raise SalvageError(
+                    "Salvage output must be outside preserved source catalog"
+                )
+            source = Path(f"/proc/self/fd/{source_fd}")
+            output_dir = Path(f"/proc/self/fd/{output_fd}")
+            output = output_dir / output_file.name
+            token = (
+                canonical_request_id(request_id)
+                if request_id is not None
+                else str(output_file)
+            )
+            request_key = (
+                "extract-" + hashlib.sha256(token.encode("utf-8")).hexdigest()[:40]
+            )
+            limits = dict(NotesLimits.work_limits())
+            limits.update(dict.fromkeys(_FORENSIC_VM_UNITS, _FORENSIC_VM_LIMIT))
+            limits.update(b.max_work_units)
+            limits.setdefault("json_decode_bytes", b.max_input_bytes * 3)
+            limits.setdefault(
+                "pending_candidate_bytes",
+                min(b.max_input_bytes, b.max_payload_bytes * 8 + 8192),
+            )
+            limits.setdefault("identity_read_rows", b.max_input_records * 2)
+            limits.setdefault("identity_read_bytes", b.max_input_records * 144)
+            limits.update(
+                input_scan_bytes=b.max_input_bytes, input_records=b.max_input_records
+            )
+            # Bind the durable request ledger to the stopped source, not the
+            # chosen output directory: moving a continuation's output must not
+            # silently reset its accumulated budget. These sidecars do not
+            # modify the preserved database, WAL, SHM, or rollback journal.
+            with recovery_request(source, request_key, b, limits) as request:
+                binding_path = request.path.with_suffix(".source.json")
+                binding = {
+                    "version": 1,
+                    "source": str(catalog_dir),
+                    "device": source_stat.st_dev,
+                    "inode": source_stat.st_ino,
+                }
+                if binding_path.exists() or binding_path.is_symlink():
+                    if _read_recovery_state(binding_path) != binding:
+                        raise SalvageError("Recovery request source binding changed")
+                elif any(request.usage.values()):
+                    raise SalvageError("Recovery request source binding missing")
+                else:
+                    _write_recovery_state(binding_path, binding)
+                work = RecoveryWorkBudget(
+                    note_bytes=b.max_payload_bytes,
+                    work_limits=limits,
+                    initial_usage=request.usage,
+                    reserve=request.reserve,
+                    settle=request.settle,
+                )
+                try:
+                    result = self._extract_salvage_request(
+                        source, output, budget=b, work=work, output_parent_fd=output_fd
+                    )
+                    try:
+                        _assert_directory_identity(
+                            catalog_dir, source_fd, label="Salvage source"
+                        )
+                        _assert_directory_identity(
+                            output_file.parent, output_fd, label="Salvage output parent"
+                        )
+                    except ActivationError as error:
+                        raise SalvageError(
+                            "Salvage publication location is uncertain"
+                        ) from error
+                    return replace(
+                        result,
+                        catalog_path=str(catalog_dir),
+                        output_file=str(output_file),
+                    )
+                finally:
+                    request.mark_exhausted(work.is_exhausted())
+        finally:
+            os.close(source_fd)
+            os.close(output_fd)
+
+    def _extract_salvage_request(
+        self,
+        catalog_dir: Path,
+        output_file: Path,
+        max_records: int | None = None,
+        max_bytes: int | None = None,
+        budget: RecoveryBudget | None = None,
+        *,
+        work,
+        output_parent_fd: int,
     ) -> SalvageReceipt:
         catalog_dir = Path(catalog_dir)
         output_file = Path(output_file)
@@ -1579,12 +2067,12 @@ class SQLiteRecoveryAdapter:
         ):
             with tempfile.TemporaryDirectory() as forensic_tmp:
                 forensic_dir = Path(forensic_tmp)
-                _copy_forensic_files(catalog_dir, forensic_dir, limit_bytes)
+                _copy_forensic_files(catalog_dir, forensic_dir, limit_bytes, work)
 
                 temp_out = (
                     output_file.parent / f"{output_file.name}.tmp.{uuid.uuid4().hex}"
                 )
-                with temp_out.open("w", encoding="utf-8") as out_f:
+                with temp_out.open("x", encoding="utf-8") as out_f:
                     core_db = forensic_dir / "core.sqlite3"
                     if core_db.exists():
                         (
@@ -1602,8 +2090,10 @@ class SQLiteRecoveryAdapter:
                             max_records=limit_records,
                             max_bytes=limit_bytes,
                             max_payload_bytes=max_payload_bytes,
+                            max_json_depth=b.max_json_depth,
                             records_offset=total_records,
                             bytes_offset=total_bytes,
+                            work=work,
                         )
                         total_records += c_cnt
                         total_bytes += c_bytes
@@ -1640,8 +2130,10 @@ class SQLiteRecoveryAdapter:
                                 max_records=limit_records,
                                 max_bytes=limit_bytes,
                                 max_payload_bytes=max_payload_bytes,
+                                max_json_depth=b.max_json_depth,
                                 records_offset=total_records,
                                 bytes_offset=total_bytes,
+                                work=work,
                             )
                             total_records += cx_cnt
                             total_bytes += cx_bytes
@@ -1653,8 +2145,20 @@ class SQLiteRecoveryAdapter:
                                 is_partial = True
 
                 _fsync_file(temp_out)
-                os.replace(temp_out, output_file)
-                _fsync_dir(output_file.parent)
+                try:
+                    os.link(
+                        temp_out.name,
+                        output_file.name,
+                        src_dir_fd=output_parent_fd,
+                        dst_dir_fd=output_parent_fd,
+                        follow_symlinks=False,
+                    )
+                    os.unlink(temp_out.name, dir_fd=output_parent_fd)
+                    os.fsync(output_parent_fd)
+                except OSError as error:
+                    raise SalvageError(
+                        f"Salvage publication failed or durability uncertain: {error}"
+                    ) from error
 
         if partial > 0 or corrupt > 0 or len(unreadable) > 0:
             is_partial = True
@@ -1680,7 +2184,13 @@ class SQLiteRecoveryAdapter:
         max_payload_bytes: int,
         records_offset: int,
         bytes_offset: int,
+        work=None,
+        max_json_depth: int = 16,
     ) -> tuple[int, int, list[str], int, int, int, bool]:
+        from repo_catalog.adapters.sqlite.ref_salvage import _validate_source_shape
+
+        if work is None:
+            work = RecoveryWorkBudget(work_limits={"input_records": max_records})
         unreadable: list[str] = []
         clean = 0
         partial = 0
@@ -1690,29 +2200,110 @@ class SQLiteRecoveryAdapter:
         stopped_due_to_limits = False
 
         conn = None
+        vm_reserved = False
+        vm_steps = [0]
+        vm_allowance = 0
         try:
             try:
                 conn = sqlite3.connect(f"file:{db_path.resolve()}?mode=ro", uri=True)
                 register_functions(conn)
+                remaining = work._max["input_bytes"] - work.usage["input_bytes"]
                 conn.setlimit(
-                    sqlite3.SQLITE_LIMIT_LENGTH, max(65536, max_payload_bytes * 4)
+                    sqlite3.SQLITE_LIMIT_LENGTH,
+                    max(65536, min(max_payload_bytes * 4, max(65536, remaining))),
                 )
                 conn.setlimit(sqlite3.SQLITE_LIMIT_COLUMN, 512)
                 conn.setlimit(sqlite3.SQLITE_LIMIT_SQL_LENGTH, 256 * 1024)
-                vm_work = [0]
+
+                def authorizer(action, _arg1, arg2, _database, origin):
+                    # Context's legitimate schema contains generated columns
+                    # using application functions that Python cannot mark
+                    # SQLITE_INNOCUOUS. Inspect their descriptors but never
+                    # invoke those expressions, views, triggers or UDFs.
+                    if origin is not None:
+                        return sqlite3.SQLITE_DENY
+                    if action == sqlite3.SQLITE_FUNCTION and arg2 not in (
+                        "typeof",
+                        "octet_length",
+                        "like",
+                    ):
+                        return sqlite3.SQLITE_DENY
+                    return sqlite3.SQLITE_OK
+
+                conn.set_authorizer(authorizer)
+                unit = "legacy_source_vm_steps"
+                vm_allowance = work._max[unit] - work.usage[unit]
+                if vm_allowance <= 0:
+                    raise CoreFailure("BUDGET", unit, "finite SQLite VM budget")
+                work.require(unit, vm_allowance)
+                vm_reserved = True
 
                 def progress():
-                    vm_work[0] += 1000
-                    return int(vm_work[0] > max(10000, max_bytes * 4))
+                    vm_steps[0] += 1
+                    return int(vm_steps[0] > vm_allowance)
 
-                conn.set_progress_handler(progress, 1000)
-                tables = [
-                    r[0]
-                    for r in conn.execute(
-                        "SELECT name FROM sqlite_schema WHERE type='table' AND name NOT LIKE 'sqlite_%' LIMIT ?",
-                        (max_records + 1,),
+                conn.set_progress_handler(progress, 1)
+                conn.execute("PRAGMA query_only=ON")
+                if store_name == "core":
+                    conn.execute("PRAGMA trusted_schema=OFF")
+                # Names come from the packaged P1 manifest, never from the
+                # recovered schema. Arbitrary tables have no typed retention
+                # purpose and must not become a generic body archive.
+                known_tables = frozenset(
+                    json.loads(_p1_resource("fingerprints.json"))["stores"][store_name][
+                        "tables"
+                    ]
+                )
+                remaining_bytes = work._max["input_bytes"] - work.usage["input_bytes"]
+                remaining_units = (
+                    work._max["metadata_units"] - work.usage["metadata_units"]
+                )
+                listing_limit = min(
+                    max_records + 1, remaining_bytes // 288, remaining_units
+                )
+                if listing_limit <= 0:
+                    raise CoreFailure(
+                        "BUDGET", "sqlite_schema", "finite table listing budget"
+                    )
+                work.require("metadata_units", listing_limit)
+                try:
+                    work.require("input_bytes", listing_limit * 288)
+                except BaseException:
+                    work.abandon("metadata_units")
+                    raise
+                try:
+                    listed = conn.execute(
+                        "SELECT CASE WHEN octet_length(name)<=256 THEN name END, type "
+                        "FROM pragma_table_list WHERE schema='main' AND name NOT LIKE 'sqlite_%' LIMIT ?",
+                        (listing_limit,),
                     ).fetchall()
-                ]
+                except BaseException:
+                    work.abandon("metadata_units")
+                    work.abandon("input_bytes")
+                    raise
+                work.charge("metadata_units", len(listed))
+                work.charge(
+                    "input_bytes",
+                    sum(
+                        len((name or "").encode("utf-8")) + len(kind.encode("utf-8"))
+                        for name, kind in listed
+                    ),
+                )
+                tables = []
+                for name, kind in listed:
+                    if name is None or kind not in ("table", "view"):
+                        unreadable.append(
+                            f"{store_name}:unsupported or oversized source table"
+                        )
+                    elif kind == "table":
+                        if name in known_tables:
+                            tables.append(name)
+                        else:
+                            unreadable.append(
+                                f"{store_name}:{name} (unrecognized source table omitted)"
+                            )
+                if len(listed) == listing_limit:
+                    stopped_due_to_limits = True
             except Exception as e:
                 unreadable.append(
                     f"{store_name}:sqlite_schema (enumeration incomplete: {e})"
@@ -1722,12 +2313,65 @@ class SQLiteRecoveryAdapter:
                     and getattr(e, "sqlite_errorcode", None)
                     in (sqlite3.SQLITE_CORRUPT, sqlite3.SQLITE_NOTADB)
                 )
-                return 0, 0, unreadable, 0, 0, confirmed, False
+                limited = (
+                    isinstance(e, CoreFailure) and e.code in ("BUDGET", "QUERY_BUDGET")
+                ) or getattr(e, "sqlite_errorcode", None) == sqlite3.SQLITE_INTERRUPT
+                return 0, 0, unreadable, 0, 0, confirmed, limited
 
             if len(tables) > max_records:
                 tables = tables[:max_records]
                 stopped_due_to_limits = True
+
+            if store_name == "core" and any(
+                t in _REF_OBSERVATION_TABLES for t in tables
+            ):
+                from repo_catalog.adapters.sqlite.ref_salvage import scan_ref_units
+
+                ref_conn = sqlite3.connect(
+                    f"file:{db_path.resolve()}?mode=ro", uri=True
+                )
+                try:
+                    ref_scan = scan_ref_units(
+                        ref_conn,
+                        work,
+                        max_records=max_records - records_offset - written_records,
+                        max_row_bytes=max_payload_bytes,
+                    )
+                finally:
+                    ref_conn.close()
+                unreadable.extend(ref_scan.omissions)
+                if ref_scan.exhausted:
+                    stopped_due_to_limits = True
+                for candidate in ref_scan.candidates:
+                    if records_offset + written_records >= max_records:
+                        stopped_due_to_limits = True
+                        break
+                    try:
+                        line = _encode_salvage_line(
+                            candidate,
+                            work,
+                            max_payload_bytes * 8 + 8192,
+                            max_json_depth,
+                        )
+                    except CoreFailure as error:
+                        if error.code != "BUDGET":
+                            raise
+                        stopped_due_to_limits = True
+                        unreadable.append(
+                            "core:RefObservation candidate output exceeds finite budget"
+                        )
+                        break
+                    if bytes_offset + written_bytes + len(line) > max_bytes:
+                        stopped_due_to_limits = True
+                        break
+                    out_f.write(line)
+                    written_records += 1
+                    written_bytes += len(line)
+                    clean += 1
+
             for table in tables:
+                if store_name == "core" and table in _REF_OBSERVATION_TABLES:
+                    continue
                 if (records_offset + written_records) >= max_records:
                     stopped_due_to_limits = True
                     break
@@ -1737,40 +2381,81 @@ class SQLiteRecoveryAdapter:
 
                 try:
                     quoted_table = '"' + table.replace('"', '""') + '"'
-                    columns = [
-                        r[1]
-                        for r in conn.execute(
-                            f"PRAGMA table_info({quoted_table})"
-                        ).fetchall()
-                    ]
-                    if not columns or len(columns) > 512:
-                        raise ValueError("Unsupported or excessive source column count")
+                    # table_info omits generated columns; xinfo inspects every
+                    # descriptor before any recovered expression is projected.
+                    columns = _validate_source_shape(
+                        conn, table, work, allow_generated=store_name == "context"
+                    )
                     quoted_columns = ['"' + c.replace('"', '""') + '"' for c in columns]
-                    # The predicate executes inside SQLite, before Python receives
-                    # any cell. A huge row becomes one explicit partial candidate.
                     row_size = " + ".join(
-                        f"coalesce(length(CAST({c} AS BLOB)), 0)"
+                        f"CASE WHEN typeof({c}) IN ('text','blob') THEN octet_length({c}) "
+                        f"WHEN {c} IS NULL THEN 0 ELSE 8 END"
                         for c in quoted_columns
                     )
                     projection = ", ".join(
-                        f"CASE WHEN ({row_size}) > {max_payload_bytes} THEN NULL ELSE {c} END AS {c}"
+                        f"CASE WHEN ({row_size}) > ? THEN NULL ELSE {c} END AS {c}"
                         for c in quoted_columns
                     )
-                    cursor = conn.execute(
-                        f"SELECT {projection}, ({row_size}) AS __recovery_row_bytes FROM {quoted_table}"
-                    )
-                    columns = [d[0] for d in cursor.description]
-
-                    while row := cursor.fetchone():
+                    query = f"SELECT {projection}, ({row_size}) FROM {quoted_table} NOT INDEXED LIMIT 1 OFFSET ?"
+                    offset = 0
+                    while True:
                         if (records_offset + written_records) >= max_records:
                             stopped_due_to_limits = True
                             break
                         if (bytes_offset + written_bytes) >= max_bytes:
                             stopped_due_to_limits = True
                             break
-
-                        row_dict = dict(zip(columns, row))
-                        row_bytes = row_dict.pop("__recovery_row_bytes")
+                        available = work._max["input_bytes"] - work.usage["input_bytes"]
+                        allowance = min(max_payload_bytes, available)
+                        if allowance <= 0:
+                            raise CoreFailure(
+                                "BUDGET", table, "finite salvage row budget"
+                            )
+                        scan_cost = offset + 1 + len(columns) * len(columns)
+                        work.require("metadata_units", scan_cost)
+                        try:
+                            work.require("input_bytes", allowance)
+                        except BaseException:
+                            work.abandon("metadata_units")
+                            raise
+                        try:
+                            work.require("input_records", 1)
+                        except BaseException:
+                            work.abandon("metadata_units")
+                            work.abandon("input_bytes")
+                            raise
+                        try:
+                            row = conn.execute(
+                                query, (allowance,) * len(columns) + (offset,)
+                            ).fetchone()
+                        except BaseException:
+                            work.abandon("metadata_units")
+                            work.abandon("input_bytes")
+                            work.abandon("input_records")
+                            raise
+                        work.charge("metadata_units", scan_cost)
+                        work.charge("input_records", int(row is not None))
+                        if row is None:
+                            work.charge("input_bytes", 0)
+                            break
+                        offset += 1
+                        row_bytes = row[-1]
+                        if type(row_bytes) is not int or row_bytes < 0:
+                            work.abandon("input_bytes")
+                            raise ValueError("Invalid stored row size")
+                        work.charge(
+                            "input_bytes", row_bytes if row_bytes <= allowance else 0
+                        )
+                        if row_bytes > conn.getlimit(sqlite3.SQLITE_LIMIT_LENGTH):
+                            unreadable.append(
+                                f"{store_name}:{table} (source row too big for finite SQLite limit)"
+                            )
+                            break
+                        if row_bytes > allowance and allowance < max_payload_bytes:
+                            raise CoreFailure(
+                                "BUDGET", table, "finite salvage input budget"
+                            )
+                        row_dict = dict(zip(columns, row[:-1], strict=True))
                         if row_bytes > max_payload_bytes:
                             cand_record = {
                                 "candidate_id": f"{store_name}:{table}:{written_records}",
@@ -1786,34 +2471,12 @@ class SQLiteRecoveryAdapter:
                                 "extraction_status": ExtractionStatus.PARTIAL.value,
                                 "error": f"Source row size {row_bytes} exceeds finite payload limit {max_payload_bytes}",
                             }
-                            line = json.dumps(cand_record) + "\n"
-                            line_bytes = len(line.encode("utf-8"))
-                            if bytes_offset + written_bytes + line_bytes > max_bytes:
-                                stopped_due_to_limits = True
-                                break
-                            out_f.write(line)
-                            written_records += 1
-                            written_bytes += line_bytes
-                            partial += 1
-                            continue
-
-                        if store_name == "core" and table in _REF_OBSERVATION_TABLES:
-                            # Until typed salvage is available, explicitly report
-                            # the unsupported candidate and never stage its body
-                            # or structural proof as generic Git metadata.
-                            cand_record = {
-                                "candidate_id": f"{store_name}:{table}:{written_records}",
-                                "candidate_type": CandidateType.GIT_METADATA.value,
-                                "extraction_provenance": {
-                                    "store": store_name,
-                                    "table": table,
-                                },
-                                "payload": {},
-                                "provenance": None,
-                                "extraction_status": ExtractionStatus.PARTIAL.value,
-                                "error": "RefObservation salvage requires typed recovery integration",
-                            }
-                            line = json.dumps(cand_record) + "\n"
+                            line = _encode_salvage_line(
+                                cand_record,
+                                work,
+                                max_payload_bytes * 8 + 8192,
+                                max_json_depth,
+                            )
                             line_bytes = len(line.encode("utf-8"))
                             if bytes_offset + written_bytes + line_bytes > max_bytes:
                                 stopped_due_to_limits = True
@@ -1831,6 +2494,7 @@ class SQLiteRecoveryAdapter:
                         cap_origin = None
                         cap_id = None
                         orig_provenance = None
+                        withheld_reason = None
                         extraction_prov = {"store": store_name, "table": table}
 
                         if store_name == "core" and table == "retained_metadata":
@@ -1859,7 +2523,12 @@ class SQLiteRecoveryAdapter:
                                     "extraction_status": ExtractionStatus.PARTIAL.value,
                                     "error": f"Payload size {body_len} exceeds limit {max_payload_bytes}",
                                 }
-                                line = json.dumps(cand_record) + "\n"
+                                line = _encode_salvage_line(
+                                    cand_record,
+                                    work,
+                                    max_payload_bytes * 8 + 8192,
+                                    max_json_depth,
+                                )
                                 out_f.write(line)
                                 written_records += 1
                                 written_bytes += len(line.encode("utf-8"))
@@ -1875,12 +2544,44 @@ class SQLiteRecoveryAdapter:
                                 "native_type": row_dict.get("native_type"),
                                 "size": row_dict.get("size"),
                                 "digest_sha256": row_dict.get("digest_sha256"),
-                                "body_base64": base64.b64encode(raw_body).decode(
-                                    "ascii"
-                                )
-                                if isinstance(raw_body, bytes)
-                                else None,
                             }
+                            try:
+                                if row_dict.get("native_type") not in (
+                                    "commit",
+                                    "tree",
+                                    "tag",
+                                ) or not uuid4(row_dict.get("physical_copy_uuidv4")):
+                                    raise ValueError("unsupported native type or copy")
+                                with account_verification(work):
+                                    NativeObject(
+                                        OID(
+                                            row_dict["object_format"],
+                                            row_dict["full_oid"],
+                                        ),
+                                        row_dict["native_type"],
+                                        raw_body,
+                                        row_dict["size"],
+                                        row_dict["digest_sha256"],
+                                    ).validate()
+                                    parse_metadata(
+                                        row_dict["object_format"],
+                                        row_dict["native_type"],
+                                        raw_body,
+                                    )
+                            except CoreFailure as error:
+                                if error.code in ("BUDGET", "QUERY_BUDGET"):
+                                    raise
+                                withheld_reason = (
+                                    "Unverified structural metadata body omitted"
+                                )
+                            except (ValueError, TypeError, KeyError, AttributeError):
+                                withheld_reason = (
+                                    "Unverified structural metadata body omitted"
+                                )
+                            if withheld_reason is None:
+                                payload["body_base64"] = _encode_salvage_base64(
+                                    raw_body, work
+                                )
                         elif store_name == "core" and table == "retained_notes":
                             c_type = CandidateType.NOTES_MAPPING
                             c_id = f"{row_dict.get('object_format')}:{row_dict.get('full_oid')}:{row_dict.get('physical_copy_uuidv4')}"
@@ -1917,7 +2618,12 @@ class SQLiteRecoveryAdapter:
                                     "extraction_status": ExtractionStatus.PARTIAL.value,
                                     "error": f"Notes body size {body_len} exceeds limit {max_payload_bytes}",
                                 }
-                                line = json.dumps(cand_record) + "\n"
+                                line = _encode_salvage_line(
+                                    cand_record,
+                                    work,
+                                    max_payload_bytes * 8 + 8192,
+                                    max_json_depth,
+                                )
                                 out_f.write(line)
                                 written_records += 1
                                 written_bytes += len(line.encode("utf-8"))
@@ -1938,31 +2644,40 @@ class SQLiteRecoveryAdapter:
                                 "root": row_dict.get("root"),
                                 "target": row_dict.get("target"),
                                 "path": row_dict.get("path"),
-                                "proof_bundle": row_dict.get("proof_bundle"),
-                                "body_base64": base64.b64encode(raw_body).decode(
-                                    "ascii"
-                                )
-                                if isinstance(raw_body, bytes)
-                                else None,
                             }
-                            # Preserve original Capture source and nominated ref if present in captures table
                             try:
-                                cap_row = conn.execute(
-                                    "SELECT repository_uuidv4, source, ref FROM captures WHERE capture_origin_uuidv4=? AND capture_uuidv4=? AND object_format=? AND root=? AND length(CAST(repository_uuidv4 AS BLOB)) + length(CAST(source AS BLOB)) + length(CAST(ref AS BLOB)) <= ?",
-                                    (
-                                        cap_origin,
-                                        cap_id,
-                                        row_dict.get("object_format"),
-                                        row_dict.get("root"),
-                                        max_payload_bytes,
-                                    ),
-                                ).fetchone()
-                                if cap_row:
-                                    payload["repository_uuidv4"] = cap_row[0]
-                                    payload["source"] = cap_row[1]
-                                    payload["ref"] = _decode_native_ref(cap_row[2])
-                            except Exception:
-                                pass
+                                capture = _checked_legacy_note_source(
+                                    conn,
+                                    row_dict,
+                                    work,
+                                    max_records,
+                                    max_payload_bytes,
+                                )
+                            except CoreFailure as error:
+                                if error.code in ("BUDGET", "QUERY_BUDGET"):
+                                    raise
+                                withheld_reason = (
+                                    "Unverified original Notes body omitted"
+                                )
+                            except (
+                                ValueError,
+                                TypeError,
+                                KeyError,
+                                AttributeError,
+                                sqlite3.DatabaseError,
+                                RecursionError,
+                            ):
+                                withheld_reason = (
+                                    "Unverified original Notes body omitted"
+                                )
+                            if withheld_reason is None:
+                                payload.update(
+                                    repository_uuidv4=capture.repository_uuidv4,
+                                    source=capture.source,
+                                    ref=capture.ref,
+                                    proof_bundle=row_dict["proof_bundle"],
+                                    body_base64=_encode_salvage_base64(raw_body, work),
+                                )
                         elif store_name == "core" and table == "captures":
                             c_type = CandidateType.GIT_METADATA
                             c_id = f"{row_dict.get('capture_origin_uuidv4')}:{row_dict.get('capture_uuidv4')}"
@@ -2015,16 +2730,14 @@ class SQLiteRecoveryAdapter:
                                     orig_provenance = {
                                         "raw": str(row_dict["provenance_json"])
                                     }
-                            elif "provenance" in row_dict and row_dict.get(
-                                "provenance"
-                            ):
+                            elif isinstance(row_dict.get("provenance"), str):
                                 orig_provenance = {"value": row_dict["provenance"]}
 
                             for k, v in row_dict.items():
                                 if isinstance(v, bytes):
-                                    payload[f"{k}_base64"] = base64.b64encode(v).decode(
-                                        "ascii"
-                                    )
+                                    # Unknown binary columns have no typed role
+                                    # or proof. Do not stage them as bodies.
+                                    withheld_reason = "Untyped binary fields omitted"
                                 else:
                                     payload[k] = v
 
@@ -2036,11 +2749,20 @@ class SQLiteRecoveryAdapter:
                             "extraction_provenance": extraction_prov,
                             "provenance": orig_provenance,
                             "payload": payload,
-                            "extraction_status": ExtractionStatus.CLEAN.value,
-                            "error": None,
+                            "extraction_status": (
+                                ExtractionStatus.PARTIAL.value
+                                if withheld_reason is not None
+                                else ExtractionStatus.CLEAN.value
+                            ),
+                            "error": (withheld_reason),
                         }
 
-                        line = json.dumps(cand_record) + "\n"
+                        line = _encode_salvage_line(
+                            cand_record,
+                            work,
+                            max_payload_bytes * 8 + 8192,
+                            max_json_depth,
+                        )
                         line_bytes = len(line.encode("utf-8"))
 
                         if (bytes_offset + written_bytes + line_bytes) > max_bytes:
@@ -2050,7 +2772,21 @@ class SQLiteRecoveryAdapter:
                         out_f.write(line)
                         written_records += 1
                         written_bytes += line_bytes
-                        clean += 1
+                        if withheld_reason is not None:
+                            partial += 1
+                            unreadable.append(
+                                f"{store_name}:{table} ({withheld_reason})"
+                            )
+                        else:
+                            clean += 1
+                except CoreFailure as error:
+                    if error.code in ("BUDGET", "QUERY_BUDGET"):
+                        unreadable.append(
+                            f"{store_name}:{table} (finite salvage work budget)"
+                        )
+                        stopped_due_to_limits = True
+                        break
+                    raise
                 except Exception as e:
                     unreadable.append(
                         f"{store_name}:{table} (enumeration incomplete: {e})"
@@ -2059,9 +2795,15 @@ class SQLiteRecoveryAdapter:
                         e, "sqlite_errorcode", None
                     ) in (sqlite3.SQLITE_CORRUPT, sqlite3.SQLITE_NOTADB):
                         corrupt += 1
+                    if getattr(e, "sqlite_errorcode", None) == sqlite3.SQLITE_INTERRUPT:
+                        stopped_due_to_limits = True
+                        break
         finally:
             if conn:
+                conn.set_progress_handler(None, 0)
                 conn.close()
+            if vm_reserved:
+                work.charge("legacy_source_vm_steps", min(vm_steps[0], vm_allowance))
 
         return (
             written_records,
@@ -2320,6 +3062,23 @@ class SQLiteRecoveryAdapter:
                         f"total_bytes={total_retained})"
                     )
 
+                baseline = {
+                    "version": 1,
+                    "backup_id": manifest_data["backup_id"],
+                    "scope": scope.value,
+                    "repository_uuidv4": core_repo_uuid,
+                    "catalog_instance_uuidv4": core_inst_uuid,
+                    "manifest_sha256": hashlib.sha256(manifest_bytes).hexdigest(),
+                }
+                with (staging_dir / "p1-restored-baseline.json").open("xb") as receipt:
+                    receipt.write(
+                        (
+                            json.dumps(baseline, sort_keys=True, separators=(",", ":"))
+                            + "\n"
+                        ).encode("utf-8")
+                    )
+                    receipt.flush()
+                    os.fsync(receipt.fileno())
                 _fsync_dir(staging_dir)
 
                 # Atomic publication with no-overwrite primitive
@@ -2541,7 +3300,7 @@ class SQLiteRecoveryAdapter:
         admission: AdmissionContext | None = None,
         fault_stage: str | None = None,
     ) -> MergeReceipt:
-        fresh_destination_dir = Path(fresh_destination_dir)
+        fresh_destination_dir = Path(fresh_destination_dir).absolute()
         salvage_file = Path(salvage_file)
 
         if not fresh_destination_dir.exists():
@@ -2554,19 +3313,49 @@ class SQLiteRecoveryAdapter:
         b = budget or RecoveryBudget()
         limits = dict(NotesLimits.work_limits())
         limits.update(b.max_work_units)
+        limits.setdefault("json_decode_bytes", b.max_input_bytes * 3)
+        limits.setdefault(
+            "pending_candidate_bytes",
+            min(b.max_input_bytes, b.max_payload_bytes * 8 + 8192),
+        )
+        limits.setdefault("identity_read_rows", b.max_input_records * 2)
+        limits.setdefault("identity_read_bytes", b.max_input_records * 144)
         limits.update(
             input_scan_bytes=b.max_input_bytes, input_records=b.max_input_records
         )
-        with recovery_request(fresh_destination_dir, request_id, b, limits) as request:
-            return self._merge_salvage_request(
-                fresh_destination_dir,
-                salvage_file,
-                b,
-                request,
-                authorization=authorization,
-                admission=admission,
-                fault_stage=fault_stage,
+        directory_fd = _open_directory_nofollow(fresh_destination_dir)
+        try:
+            for name in ("core.sqlite3", "context.sqlite3"):
+                try:
+                    info = os.stat(name, dir_fd=directory_fd, follow_symlinks=False)
+                except FileNotFoundError:
+                    if name == "core.sqlite3":
+                        raise RecoveryError(
+                            "Fresh destination is missing Core"
+                        ) from None
+                    continue
+                if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
+                    raise RecoveryError(
+                        "Fresh authority file must be regular without aliases"
+                    )
+            pinned = Path(f"/proc/self/fd/{directory_fd}")
+            with recovery_request(pinned, request_id, b, limits) as request:
+                result = self._merge_salvage_request(
+                    pinned,
+                    salvage_file,
+                    b,
+                    request,
+                    directory_fd=directory_fd,
+                    authorization=authorization,
+                    admission=admission,
+                    fault_stage=fault_stage,
+                )
+            _assert_directory_identity(
+                fresh_destination_dir, directory_fd, label="Recovery destination"
             )
+            return replace(result, destination_path=str(fresh_destination_dir))
+        finally:
+            os.close(directory_fd)
 
     def _merge_salvage_request(
         self,
@@ -2575,6 +3364,7 @@ class SQLiteRecoveryAdapter:
         b,
         request,
         *,
+        directory_fd,
         authorization=None,
         admission=None,
         fault_stage=None,
@@ -2582,6 +3372,12 @@ class SQLiteRecoveryAdapter:
         work_budget = RecoveryWorkBudget(
             note_bytes=b.max_payload_bytes,
             work_limits={
+                "json_decode_bytes": b.max_input_bytes * 3,
+                "pending_candidate_bytes": min(
+                    b.max_input_bytes, b.max_payload_bytes * 8 + 8192
+                ),
+                "identity_read_rows": b.max_input_records * 2,
+                "identity_read_bytes": b.max_input_records * 144,
                 **b.max_work_units,
                 "input_scan_bytes": b.max_input_bytes,
                 "input_records": b.max_input_records,
@@ -2601,6 +3397,8 @@ class SQLiteRecoveryAdapter:
         unprocessed = 0
         rejections: list[dict] = []
         budget_exhausted = budget_already_exhausted or work_budget.is_exhausted()
+        ref_baseline_checked = False
+        pending_candidates = []
 
         # Connect to fresh core via GitCore production admission interface
         core_db = fresh_destination_dir / "core.sqlite3"
@@ -2610,15 +3408,21 @@ class SQLiteRecoveryAdapter:
         ctx_db = fresh_destination_dir / "context.sqlite3"
         ctx_store = None
         ctx_conn = None
+        ctx_identity = None
         ctx_auth = authorization
         ctx_admission = admission
-        if ctx_db.exists():
+        if ctx_db.exists() and not budget_already_exhausted:
             ctx_conn = p1_connect(ctx_db, "context")
+            try:
+                ctx_identity = _context_identity_for_salvage(
+                    ctx_conn, core, work_budget
+                )
+            except BaseException:
+                ctx_conn.close()
+                core.close()
+                raise
             if ctx_auth is None or ctx_admission is None:
-                repo_row = ctx_conn.execute(
-                    "SELECT repository_uuidv4 FROM store_identity WHERE store_role='context'"
-                ).fetchone()
-                repo_id = repo_row[0] if repo_row else None
+                repo_id = ctx_identity[0]
                 repos = {repo_id} if repo_id else set()
                 perm_repos = frozenset(repos) if repos else frozenset()
                 from repo_catalog.domain.context_admission import (
@@ -2677,6 +3481,23 @@ class SQLiteRecoveryAdapter:
         def _save_budget_state():
             request.mark_exhausted(budget_exhausted)
 
+        def _defer_candidate(candidate_id, kind, raw):
+            nonlocal budget_exhausted, unprocessed
+            try:
+                work_budget.require("pending_candidate_bytes", len(raw))
+                work_budget.charge("pending_candidate_bytes", len(raw))
+            except CoreFailure as error:
+                budget_exhausted = True
+                unprocessed += 1
+                rejections.append(
+                    {
+                        "candidate_id": candidate_id,
+                        "reason": f"Work budget exhausted: {error}",
+                    }
+                )
+                return
+            pending_candidates.append((candidate_id, kind, raw))
+
         try:
 
             def reserve_input(unit, amount):
@@ -2717,6 +3538,15 @@ class SQLiteRecoveryAdapter:
                         rejections.append({"reason": f"Input incomplete: {e}"})
                         break
                     processed += 1
+                    decode_work = 3 * len(line)
+                    try:
+                        work_budget.require("json_decode_bytes", decode_work)
+                    except CoreFailure as error:
+                        settle_input("input_records", 1)
+                        budget_exhausted = True
+                        unprocessed += 1
+                        rejections.append({"reason": f"Input incomplete: {error}"})
+                        break
                     try:
                         record = _bounded_json_loads(line, b)
                         if not isinstance(record, dict) or not isinstance(
@@ -2736,6 +3566,7 @@ class SQLiteRecoveryAdapter:
                         )
                         continue
                     finally:
+                        work_budget.charge("json_decode_bytes", decode_work)
                         settle_input("input_records", 1)
 
                     c_type = record.get("candidate_type")
@@ -2805,6 +3636,122 @@ class SQLiteRecoveryAdapter:
                     if fault_stage == "after_partial_work" and processed >= 1:
                         _save_budget_state()
                         raise RecoveryError("Injected failure after partial work")
+
+                    # Ref units contain their original dependencies and are
+                    # rechecked at the destination, independently of line order.
+                    if c_type in (
+                        "ref_subject",
+                        "ref_claim",
+                        "ref_enumeration",
+                        "ref_mapping_content",
+                        "ref_mapping",
+                        "ref_group",
+                        "ref_evidence",
+                        "ref_note",
+                        "ref_coverage",
+                        "ref_coverage_proof",
+                    ):
+                        from repo_catalog.adapters.sqlite.ref_salvage import (
+                            admit_ref_unit_atomic,
+                        )
+
+                        try:
+                            if not ref_baseline_checked:
+                                try:
+                                    baseline = _read_restored_baseline(
+                                        fresh_destination_dir,
+                                        directory_fd=directory_fd,
+                                        work=work_budget,
+                                    )
+                                except (
+                                    OSError,
+                                    RecoveryError,
+                                    RestoreValidationError,
+                                ) as error:
+                                    raise RecoveryError(
+                                        "Ref salvage requires a validated fresh backup restore"
+                                    ) from error
+                                work_budget.require("metadata_units", 2)
+                                work_budget.charge("metadata_units", 2)
+                                work_budget.require("input_bytes", 72)
+                                try:
+                                    repo, instance = core.catalog_identity()
+                                except BaseException:
+                                    work_budget.abandon("input_bytes")
+                                    raise
+                                work_budget.charge("input_bytes", 72)
+                                if (repo, instance) != (
+                                    baseline["repository_uuidv4"],
+                                    baseline["catalog_instance_uuidv4"],
+                                ):
+                                    raise RecoveryError(
+                                        "Restored baseline identity differs from destination"
+                                    )
+                                if (
+                                    baseline["scope"] == BackupScope.PAIRED.value
+                                ) != ctx_db.exists():
+                                    raise RecoveryError(
+                                        "Restored baseline scope differs from destination"
+                                    )
+                                if ctx_identity is not None and ctx_identity != (
+                                    repo,
+                                    instance,
+                                ):
+                                    core._integrity_stop(
+                                        "Core and Context identities differ"
+                                    )
+                                ref_baseline_checked = True
+                            was_replay = admit_ref_unit_atomic(
+                                fresh_destination_dir, c_type, payload, work_budget
+                            )
+                            if was_replay is None:
+                                _defer_candidate(cand_id, c_type, line)
+                            elif was_replay:
+                                replayed += 1
+                            else:
+                                admitted += 1
+                        except CoreFailure as error:
+                            if error.code in (
+                                "AUTHORITATIVE_CORRUPTION",
+                                "RECOVERY_STOP",
+                            ):
+                                raise
+                            if error.code in ("BUDGET", "QUERY_BUDGET"):
+                                budget_exhausted = True
+                                unprocessed += 1
+                                rejections.append(
+                                    {
+                                        "candidate_id": cand_id,
+                                        "reason": f"Work budget exhausted: {error}",
+                                    }
+                                )
+                            elif error.code in (
+                                "MISSING_DEPENDENCY",
+                                "OBSERVATION_UNAVAILABLE",
+                            ):
+                                _defer_candidate(cand_id, c_type, line)
+                            else:
+                                rejected += 1
+                                rejections.append(
+                                    {
+                                        "candidate_id": cand_id,
+                                        "reason": f"Ref admission error: {error}",
+                                    }
+                                )
+                        except (
+                            ValueError,
+                            TypeError,
+                            KeyError,
+                            sqlite3.IntegrityError,
+                        ) as error:
+                            rejected += 1
+                            rejections.append(
+                                {
+                                    "candidate_id": cand_id,
+                                    "reason": f"Invalid ref candidate: {error}",
+                                }
+                            )
+                        continue
 
                     # 3. Admitting Retained Metadata Bodies (commits, trees, tags)
                     if c_type in (
@@ -3335,10 +4282,93 @@ class SQLiteRecoveryAdapter:
                                 "reason": f"Unknown candidate type: {c_type}",
                             }
                         )
+            # Each successful candidate leaves the queue permanently. Retry
+            # until a whole pass makes no progress; every reparse and admission
+            # is charged to the same durable request budget.
+            pending = pending_candidates
+            while pending:
+                remaining = []
+                progressed = False
+                for candidate_id, kind, raw in pending:
+                    if budget_exhausted:
+                        remaining.append((candidate_id, kind, raw))
+                        continue
+                    decode_work = 3 * len(raw)
+                    try:
+                        work_budget.require("json_decode_bytes", decode_work)
+                        try:
+                            delayed = _bounded_json_loads(raw, b)
+                        finally:
+                            work_budget.charge("json_decode_bytes", decode_work)
+                        was_replay = admit_ref_unit_atomic(
+                            fresh_destination_dir, kind, delayed["payload"], work_budget
+                        )
+                        if was_replay is None:
+                            remaining.append((candidate_id, kind, raw))
+                        else:
+                            progressed = True
+                            if was_replay:
+                                replayed += 1
+                            else:
+                                admitted += 1
+                    except CoreFailure as error:
+                        if error.code in ("AUTHORITATIVE_CORRUPTION", "RECOVERY_STOP"):
+                            raise
+                        if error.code in ("BUDGET", "QUERY_BUDGET"):
+                            budget_exhausted = True
+                            unprocessed += 1
+                            rejections.append(
+                                {
+                                    "candidate_id": candidate_id,
+                                    "reason": f"Work budget exhausted: {error}",
+                                }
+                            )
+                        elif error.code in (
+                            "MISSING_DEPENDENCY",
+                            "OBSERVATION_UNAVAILABLE",
+                        ):
+                            remaining.append((candidate_id, kind, raw))
+                        else:
+                            rejected += 1
+                            rejections.append(
+                                {
+                                    "candidate_id": candidate_id,
+                                    "reason": f"Ref admission error: {error}",
+                                }
+                            )
+                    except (
+                        ValueError,
+                        TypeError,
+                        KeyError,
+                        sqlite3.IntegrityError,
+                    ) as error:
+                        rejected += 1
+                        rejections.append(
+                            {
+                                "candidate_id": candidate_id,
+                                "reason": f"Invalid ref candidate: {error}",
+                            }
+                        )
+                if budget_exhausted or not progressed:
+                    deferred += len(remaining)
+                    reason = (
+                        "Dependency retry not attempted after budget exhaustion"
+                        if budget_exhausted
+                        else "Original dependency remains unavailable"
+                    )
+                    rejections.extend(
+                        {"candidate_id": candidate_id, "reason": reason}
+                        for candidate_id, _, _ in remaining
+                    )
+                    break
+                pending = remaining
         finally:
-            _save_budget_state()
-            if ctx_conn:
-                ctx_conn.close()
+            try:
+                _save_budget_state()
+            finally:
+                if ctx_conn:
+                    ctx_conn.close()
+                core.close()
 
         return MergeReceipt(
             destination_path=str(fresh_destination_dir),
@@ -3391,6 +4421,15 @@ class SQLiteRecoveryAdapter:
             if not core_db.exists():
                 raise ActivationError("Fresh catalog is missing core.sqlite3")
 
+            try:
+                baseline = _read_restored_baseline(
+                    advertised_catalog_dir, directory_fd=directory_fd
+                )
+            except (OSError, RecoveryError, RestoreValidationError) as error:
+                raise ActivationError(
+                    "A validated fresh backup restore is required"
+                ) from error
+
             for database in (core_db, fresh_catalog_dir / "context.sqlite3"):
                 if database.is_symlink() or (
                     database.exists() and database.stat().st_nlink != 1
@@ -3398,21 +4437,65 @@ class SQLiteRecoveryAdapter:
                     raise ActivationError(
                         "Authoritative file symlink/hardlink forbidden"
                     )
-            # Validate core
-            self._validate_and_summarize_core(core_db)
-            repo_uuid, inst_uuid = self._extract_identities(core_db, "core")
+            # Validation failures cannot publish a locator. Only confirmed
+            # stored corruption persists the target stop, not a work limit or
+            # an environmental failure.
+            try:
+                self._validate_and_summarize_core(core_db)
+                repo_uuid, inst_uuid = self._extract_identities(core_db, "core")
+            except (BackupValidationError, SchemaError, sqlite3.DatabaseError) as error:
+                classification = _confirmed_integrity_failure(error)
+                if classification:
+                    stop_catalog(
+                        fresh_catalog_dir,
+                        str(error),
+                        details={"store": "core", "classification": classification},
+                    )
+                raise ActivationError("Fresh Core validation failed") from error
+            if (repo_uuid, inst_uuid) != (
+                baseline["repository_uuidv4"],
+                baseline["catalog_instance_uuidv4"],
+            ):
+                raise ActivationError("Restored baseline identity differs from catalog")
 
             if fault_stage == "between_core_and_context":
                 raise ActivationError("Injected failure between core and context")
 
             # Validate context if present
             ctx_db = fresh_catalog_dir / "context.sqlite3"
+            if (baseline["scope"] == BackupScope.PAIRED.value) != ctx_db.exists():
+                raise ActivationError("Restored baseline scope differs from catalog")
             if ctx_db.exists():
-                self._validate_and_summarize_context(ctx_db)
-                ctx_repo_uuid, ctx_inst_uuid = self._extract_identities(
-                    ctx_db, "context"
-                )
+                try:
+                    self._validate_and_summarize_context(ctx_db)
+                    ctx_repo_uuid, ctx_inst_uuid = self._extract_identities(
+                        ctx_db, "context"
+                    )
+                except (
+                    BackupValidationError,
+                    SchemaError,
+                    sqlite3.DatabaseError,
+                ) as error:
+                    classification = _confirmed_integrity_failure(error)
+                    if classification:
+                        stop_catalog(
+                            fresh_catalog_dir,
+                            str(error),
+                            details={
+                                "store": "context",
+                                "classification": classification,
+                            },
+                        )
+                    raise ActivationError("Fresh Context validation failed") from error
                 if repo_uuid != ctx_repo_uuid or inst_uuid != ctx_inst_uuid:
+                    stop_catalog(
+                        fresh_catalog_dir,
+                        "Core and Context identities differ",
+                        details={
+                            "store": "core+context",
+                            "classification": "authoritative_data",
+                        },
+                    )
                     raise ActivationError(
                         f"Catalog activation identity mismatch: Core ({repo_uuid}, {inst_uuid}) vs Context ({ctx_repo_uuid}, {ctx_inst_uuid})"
                     )
@@ -3571,7 +4654,7 @@ class SQLiteRecoveryAdapter:
 
             return ActivationReceipt(
                 activated_catalog_path=activated_catalog_path,
-                source_backup_id="restored",
+                source_backup_id=baseline["backup_id"],
                 reconstructed_stores=["operational", "search"],
                 timestamp_us=int(time.time() * 1_000_000),
                 clean_operational=True,

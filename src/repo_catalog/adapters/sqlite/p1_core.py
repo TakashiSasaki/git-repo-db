@@ -1549,6 +1549,18 @@ class Core:
             self._object(oid)
         self._insert("notes_mappings", mapping.key)
 
+    def admit_notes_mapping(self, mapping: NotesMapping, work: WorkBudget) -> None:
+        """Admit shareable mapping content without inventing a report or proof."""
+        if not isinstance(mapping, NotesMapping):
+            raise CoreFailure("NOTES_MAPPING", mapping, "typed mapping required")
+        self._meter_input_metadata(
+            work, self._mapping_input_values(mapping), 64 * 1024 * 1024
+        )
+        self._meter_mapping_path_encoding(work, mapping.mapping_path, 64 * 1024 * 1024)
+        self._charge(work, "metadata_units", 4)
+        with self._transaction():
+            self._notes_mapping(mapping)
+
     def admit_notes_mapping_claim(self, claim: NotesMappingClaim) -> None:
         if not isinstance(claim, NotesMappingClaim):
             raise CoreFailure("NOTES_MAPPING", claim, "typed mapping claim required")
