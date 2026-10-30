@@ -1,7 +1,7 @@
 # Current runtime reference: Schema 21 and opt-in boundaries
 
 This guide describes the implemented checkout at product baseline
-`5d28bb33bf62d7b0eff7e6547a4fda84c1815a9d` (tree `7641496147e6d051dca414d9244ed566ce546b5c`); source code is authoritative if a
+`c38989a0c8c9e003f4e0d92790803a0f7ecf3490` (tree `511f5ccba627a58936a9e12197c77bcdaca834af`); source code is authoritative if a
 later checkout changes. It is separate from the accepted target in
 [ADR 0029](../docs/adr/0029-independent-access-store.md), which defines five responsibility
 boundaries: Core, Context, Access, Operational and Search. Acceptance of that
@@ -40,6 +40,13 @@ use that adapter; ordinary catalog `init` does not activate them. See the scoped
 and outstanding limits; implementation does not by itself establish release
 acceptance or activate P8.
 
+At this baseline, the opt-in path has migrated to [ADR 0036's RefObservation,
+immutable Claims, shared Notes Mapping and separate receiver evidence](../docs/adr/0036-ref-observations-and-shared-notes-mappings.md).
+The [coordinated physical/wire/recovery cut](../docs/implementation/adr0036-legacy-consumers-contract.md#final-coordinated-physical-cut-stacked-on-pr-229)
+retired the old Notes families after the input, Query and Search transition.
+This opt-in migration does not switch ordinary Schema 21 or activate P8; its DDL
+does not turn every proposed physical detail into an accepted final design.
+
 ## Historical documents
 
 [CLI Schema 20](../docs/cli.md) and [data model Schema 20](../docs/data-model.md) preserve their
@@ -63,9 +70,13 @@ by ordinary `init`.
 
 For the normal data model start with the composed [SQLite schema factory](../src/repo_catalog/adapters/sqlite/schema.py),
 [Store implementation](../src/repo_catalog/adapters/sqlite/store.py), and the
-[public schema overview](schema/README.md). The visualization
-covers Core/Operational/Search, not all opt-in schemas or the entire accepted
-architecture. The product source revision used for schema IR is not evidence that
+[public schema overview](schema/README.md). The normal implementation
+[schema viewer](https://git-repo-db.moukaeritai.work/schema/viewer/) covers
+Core/Operational/Search, not all opt-in schemas or the entire accepted architecture.
+The separately published [five-store design viewer](https://git-repo-db.moukaeritai.work/design/)
+explores the accepted responsibility/semantic model with cited decisions and
+accepted/inherited/proposed/unknown labels; it is independent of the normal schema IR.
+The product source revision used for schema IR is not evidence that
 every manually written explanation has been checked against that revision.
 
 ## Status and limits

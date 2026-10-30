@@ -1600,7 +1600,7 @@
       "source": "docs/adr/README.md",
       "producer": "Owner decision or ADR governance source; see the file and Git history.",
       "consumers": "ADR index, dependent design records, reviewers.",
-      "publication": "staged only for ADR 0001 and 0002; others remain repository sources",
+      "publication": "accepted-record rows feed the public ADR index; other canonical index sections remain repository sources",
       "source_heading": "# Architecture Decision Records (ADRs)",
       "cited_adrs": [
         "0001",
@@ -1627,7 +1627,8 @@
         "0032",
         "0033",
         "0034",
-        "0035"
+        "0035",
+        "0036"
       ],
       "baseline_git_object": {
         "mode": "100644",
@@ -10018,7 +10019,8 @@
       "cited_adrs": [
         "0014",
         "0026",
-        "0029"
+        "0029",
+        "0036"
       ],
       "baseline_git_object": null,
       "static_consumer_references": [
