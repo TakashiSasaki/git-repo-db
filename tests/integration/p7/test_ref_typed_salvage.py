@@ -42,6 +42,7 @@ from repo_catalog.domain.recovery import (
     RecoveryError,
 )
 from repo_catalog.domain.ref_coverage import RefNotesInventoryCoverageProof
+from repo_catalog.domain.ref_exchange import observation_from_wire
 from repo_catalog.domain.ref_observation import (
     NotesMapping,
     NotesMappingGroup,
@@ -772,6 +773,163 @@ def test_notes_copy_requires_rechecked_original_claim_and_proof(acquisition, tmp
         core.close()
 
 
+@pytest.mark.parametrize("missing", ["claim", "mapping", "evidence"])
+def test_notes_dependencies_resolve_without_rebinding_original_evidence(
+    acquisition, tmp_path, missing
+):
+    app, _, _, repository, origin, core_path, _ = acquisition
+    _, target, _ = p4_fixtures.fixture_note(acquisition)
+    event = discover(app, repository, origin, str(uuid4())).enumerations[0]
+    claim = event.links[0].claim
+    app.inventory_ref(claim)
+    app.acquire_ref_note(claim, target)
+    source = sqlite3.connect(f"file:{core_path}?mode=ro", uri=True)
+    try:
+        original = scan_ref_units(
+            source, RecoveryWorkBudget(), max_records=500, max_row_bytes=1024 * 1024
+        )
+    finally:
+        source.close()
+    claim_candidate = next(
+        item
+        for item in original.candidates
+        if item["candidate_type"] == "ref_claim"
+        and item["payload"]["claim"]["ref_observation_uuidv7"]
+        == claim.ref_observation_key.ref_observation_uuidv7
+    )
+    outside = tmp_path.parent / (tmp_path.name + "-notes-dependencies")
+    outside.mkdir()
+    adapter = SQLiteRecoveryAdapter()
+    backups = {}
+    for seeded in (False, True):
+        baseline = outside / f"baseline-{seeded}"
+        baseline.mkdir()
+        initialize(baseline / "core.sqlite3", "core", repository, str(uuid4()))
+        core = GitCore(baseline / "core.sqlite3")
+        try:
+            core.admit_repository(repository)
+            if seeded:
+                core.admit_ref_observation(event.links[0].observation)
+                core.admit_ref_observation_claim(claim)
+        finally:
+            core.close()
+        backups[seeded] = outside / f"backup-{seeded}"
+        adapter.create_consistent_backup(
+            baseline, backups[seeded], BackupScope.GIT_ONLY
+        )
+    table = {
+        "claim": "ref_observation_claims",
+        "mapping": "notes_mappings",
+        "evidence": "notes_mapping_evidence",
+    }[missing]
+    db = connect(core_path, "core")
+    try:
+        db.execute("PRAGMA foreign_keys=OFF")
+        name = f"p1_immutable_{table}_delete"
+        trigger = db.execute(
+            "SELECT sql FROM sqlite_schema WHERE name=?", (name,)
+        ).fetchone()[0]
+        db.execute(f"DROP TRIGGER {name}")
+        db.execute(f"DELETE FROM {table}")
+        db.execute(trigger)
+        db.commit()
+    finally:
+        db.close()
+    source = sqlite3.connect(f"file:{core_path}?mode=ro", uri=True)
+    try:
+        damaged = scan_ref_units(
+            source, RecoveryWorkBudget(), max_records=500, max_row_bytes=1024 * 1024
+        )
+    finally:
+        source.close()
+    note = next(
+        item
+        for item in damaged.candidates
+        if item["candidate_type"] == "ref_note"
+        and item["payload"]["unit"]["ref_observation_uuidv7"]
+        == claim.ref_observation_key.ref_observation_uuidv7
+    )
+    assert damaged.omissions
+    if missing == "claim":
+        assert note["payload"]["claim"] is None
+    cases = [("baseline", True, [note])]
+    if missing == "claim":
+        cases += [
+            ("later", False, [note, claim_candidate]),
+            ("unavailable", False, [note]),
+        ]
+    for label, seeded, inputs in cases:
+        destination = outside / f"restored-{label}"
+        adapter.restore_backup(backups[seeded], destination, repository)
+        input_file = outside / f"{label}.jsonl"
+        input_file.write_text("".join(json.dumps(item) + "\n" for item in inputs))
+        result = adapter.merge_salvage(destination, input_file)
+        receiver = GitCore(destination / "core.sqlite3")
+        try:
+            work = RecoveryWorkBudget()
+            if label == "unavailable":
+                assert result.deferred_units == 1 and not receiver.sql(
+                    "SELECT 1 FROM ref_retained_notes"
+                )
+            else:
+                assert result.deferred_units == result.rejected_units == 0
+                projection = receiver.notes_mapping_projection(
+                    claim, target, "git-notes", "1", "native-notes-tree", work
+                )
+                assert (
+                    receiver.read_ref_note(claim, projection.evidence[0].mapping, work)
+                    == b"\0\xffbinary\r\n"
+                )
+        finally:
+            receiver.close()
+        assert not (destination / "p1-recovery-stop.json").exists()
+
+
+def test_pending_note_cannot_rebind_existing_claim_to_another_root(
+    acquisition, tmp_path
+):
+    app, _, fmt, repository, origin, core_path, _ = acquisition
+    _, target, _ = p4_fixtures.fixture_note(acquisition)
+    event = discover(app, repository, origin, str(uuid4())).enumerations[0]
+    claim = event.links[0].claim
+    app.acquire_ref_note(claim, target)
+    source = sqlite3.connect(f"file:{core_path}?mode=ro", uri=True)
+    try:
+        scan = scan_ref_units(
+            source, RecoveryWorkBudget(), max_records=500, max_row_bytes=1024 * 1024
+        )
+    finally:
+        source.close()
+    note = copy.deepcopy(
+        next(c for c in scan.candidates if c["candidate_type"] == "ref_note")
+    )
+    note["payload"]["claim"] = None
+    destination = tmp_path / "other-root"
+    destination.mkdir()
+    initialize(destination / "core.sqlite3", "core", repository, str(uuid4()))
+    other = replace(claim, root_oid=OID(fmt, "f" * (40 if fmt == "sha1" else 64)))
+    core = GitCore(destination / "core.sqlite3")
+    try:
+        core.admit_repository(repository)
+        core.admit_ref_observation(event.links[0].observation)
+        core.admit_ref_observation_claim(other)
+    finally:
+        core.close()
+    with pytest.raises((CoreFailure, ValueError)):
+        admit_ref_unit_atomic(
+            destination, "ref_note", note["payload"], RecoveryWorkBudget()
+        )
+    core = GitCore(destination / "core.sqlite3")
+    try:
+        assert core.ref_observation(
+            claim.ref_observation_key, RecoveryWorkBudget()
+        ).claims == (other,)
+        assert not core.sql("SELECT 1 FROM ref_retained_notes")
+    finally:
+        core.close()
+    assert not (destination / "p1-recovery-stop.json").exists()
+
+
 @pytest.mark.parametrize("damage", ["body", "proof"])
 def test_damaged_note_copy_is_omitted_without_losing_valid_sibling(acquisition, damage):
     app, _, _, repository, origin, core_path, _ = acquisition
@@ -1182,6 +1340,119 @@ def test_partial_groups_are_not_unioned_into_complete_coverage(
         receiver.close()
 
 
+@pytest.mark.parametrize("fmt", ["sha1", "sha256"])
+@pytest.mark.parametrize("missing", ["subject", "claim", "group", "coverage_claim"])
+def test_inventory_dependencies_resolve_from_baseline_or_later_input(
+    p1_core_fixture, tmp_path, fmt, missing
+):
+    core, path, repository = p1_core_fixture
+    proof = proof_fixture(p1_core_fixture, fmt=fmt)
+    core.admit_ref_coverage_proof(proof, Budget())
+    source = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+    try:
+        before = scan_ref_units(
+            source, RecoveryWorkBudget(), max_records=500, max_row_bytes=1024 * 1024
+        )
+    finally:
+        source.close()
+    original_claim = next(
+        c for c in before.candidates if c["candidate_type"] == "ref_claim"
+    )
+    original_coverage = next(
+        c for c in before.candidates if c["candidate_type"] == "ref_coverage"
+    )
+    outside = tmp_path.parent / (tmp_path.name + "-inventory-dependencies")
+    outside.mkdir()
+    adapter = SQLiteRecoveryAdapter()
+    backups = {}
+    for seeded in (False, True):
+        baseline = outside / f"baseline-{seeded}"
+        baseline.mkdir()
+        initialize(baseline / "core.sqlite3", "core", repository, str(uuid4()))
+        destination_core = GitCore(baseline / "core.sqlite3")
+        try:
+            destination_core.admit_repository(repository)
+            if seeded:
+                subject = proof.group.ref_claim.ref_observation_key
+                source_subject = core.ref_observation(subject, Budget()).ref_observation
+                destination_core.admit_ref_observation(source_subject)
+                destination_core.admit_ref_observation_claim(proof.group.ref_claim)
+                destination_core.admit_coverage_scope(proof.coverage_claim.scope)
+                destination_core.admit_coverage(proof.coverage_claim)
+        finally:
+            destination_core.close()
+        backups[seeded] = outside / f"backup-{seeded}"
+        adapter.create_consistent_backup(
+            baseline, backups[seeded], BackupScope.GIT_ONLY
+        )
+    table = {
+        "subject": "ref_observations",
+        "claim": "ref_observation_claims",
+        "group": "notes_mapping_groups",
+        "coverage_claim": "coverage_claims",
+    }[missing]
+    db = connect(path, "core")
+    try:
+        db.execute("PRAGMA foreign_keys=OFF")
+        triggers = db.execute(
+            "SELECT name,sql FROM sqlite_schema WHERE type='trigger' AND tbl_name=? "
+            "AND sql LIKE '%DELETE%'",
+            (table,),
+        ).fetchall()
+        for name, _ in triggers:
+            db.execute('DROP TRIGGER "' + name.replace('"', '""') + '"')
+        db.execute(f"DELETE FROM {table}")
+        for _, sql in triggers:
+            db.execute(sql)
+        db.commit()
+    finally:
+        db.close()
+    source = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+    try:
+        damaged = scan_ref_units(
+            source, RecoveryWorkBudget(), max_records=500, max_row_bytes=1024 * 1024
+        )
+    finally:
+        source.close()
+    assert damaged.omissions
+    candidate = next(
+        c for c in damaged.candidates if c["candidate_type"] == "ref_coverage_proof"
+    )
+    for label, seeded, inputs in (
+        ("baseline", True, [candidate]),
+        ("later", False, [candidate, original_claim, original_coverage]),
+    ):
+        destination = outside / f"restored-{label}"
+        adapter.restore_backup(backups[seeded], destination, repository)
+        input_file = outside / f"{label}.jsonl"
+        input_file.write_text("".join(json.dumps(item) + "\n" for item in inputs))
+        result = adapter.merge_salvage(destination, input_file)
+        assert result.deferred_units == result.rejected_units == 0, result.rejections
+        receiver = GitCore(destination / "core.sqlite3")
+        try:
+            projection = receiver.coverage(
+                proof.coverage_claim.scope, RecoveryWorkBudget()
+            )
+            assert projection.state == "complete" and not projection.known_empty
+        finally:
+            receiver.close()
+        assert not (destination / "p1-recovery-stop.json").exists()
+    if missing == "coverage_claim":
+        destination = outside / "restored-missing-coverage"
+        adapter.restore_backup(backups[False], destination, repository)
+        input_file = outside / "missing-coverage.jsonl"
+        input_file.write_text(json.dumps(candidate) + "\n")
+        result = adapter.merge_salvage(destination, input_file)
+        assert result.deferred_units == 1 and result.admitted_units == 0
+        receiver = GitCore(destination / "core.sqlite3")
+        try:
+            assert not receiver.sql("SELECT 1 FROM ref_observations")
+            assert not receiver.sql("SELECT 1 FROM ref_observation_claims")
+            assert not receiver.sql("SELECT 1 FROM notes_mapping_groups")
+        finally:
+            receiver.close()
+
+
 def test_older_salvaged_complete_cannot_replace_newer_partial(
     p1_core_fixture, tmp_path
 ):
@@ -1226,6 +1497,41 @@ def test_older_salvaged_complete_cannot_replace_newer_partial(
                     is None
                 )
         assert receiver.coverage(proof.coverage_claim.scope, work).state == "partial"
+    finally:
+        receiver.close()
+
+    atomic_destination = tmp_path / "newer-atomic"
+    atomic_destination.mkdir()
+    initialize(atomic_destination / "core.sqlite3", "core", repository, str(uuid4()))
+    receiver = GitCore(atomic_destination / "core.sqlite3")
+    try:
+        receiver.admit_repository(repository)
+        receiver.admit_ref_observation(
+            observation_from_wire(subject["payload"]["observation"])
+        )
+        receiver.admit_coverage_scope(proof.coverage_claim.scope)
+        receiver.admit_coverage(
+            CoverageClaim(proof.coverage_claim.scope, 30, "partial")
+        )
+    finally:
+        receiver.close()
+    assert (
+        admit_ref_unit_atomic(
+            atomic_destination,
+            "ref_coverage_proof",
+            coverage_proof["payload"],
+            RecoveryWorkBudget(),
+        )
+        is None
+    )
+    receiver = GitCore(atomic_destination / "core.sqlite3")
+    try:
+        assert not receiver.sql("SELECT 1 FROM notes_mapping_groups")
+        assert not receiver.sql("SELECT 1 FROM ref_observation_claims")
+        assert (
+            receiver.coverage(proof.coverage_claim.scope, RecoveryWorkBudget()).state
+            == "partial"
+        )
     finally:
         receiver.close()
 

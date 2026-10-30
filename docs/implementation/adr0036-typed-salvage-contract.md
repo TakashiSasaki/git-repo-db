@@ -64,6 +64,16 @@ If a link itself is missing, duplicated or malformed, no whole-event candidate
 is asserted. None of these cases constructs a missing member or chooses among
 conflicting Claims.
 
+Notes and supported inventory candidates may also retain their original full
+Mapping, Group, evidence and Claim coordinates when a referenced source row is
+unreadable. The exact copied native structure and any physical Notes body are
+checked before output; the receiver still resolves the precise original Claim,
+checks its root and revalidates the entire applicable proof. A proof row can
+supply its complete original Group coordinates, but cannot combine partial
+Groups or supply a missing Coverage Claim's advisory details. The receiver may
+resolve that Claim from the baseline or input. If any required coordinate is
+still missing, all writes for that candidate roll back and it stays deferred.
+
 ## Bounded work and dispositions
 
 Reserve variable-length fields, proof structures and bodies before Python
@@ -115,8 +125,8 @@ Exercise SHA-1 and SHA-256 without claiming untested platforms or live catalogs.
 | Subject and result Claims | Typed metadata-only extraction and atomic admission with original IDs, bytes and provenance; distinct Claims stay distinct | `test_empty_event_and_rootless_claims_survive_without_context`, `test_lossless_ref_and_competing_claims_survive_shuffled_replay` |
 | Enumeration | Whole event with all original ordered links, including empty events; resolve missing link dependencies from the baseline or later input, otherwise defer; independent Claims may survive an omitted event | `test_missing_event_dependency_resolves_from_baseline_or_later_input`, `test_missing_event_link_does_not_discard_independent_claim`, `test_existing_whole_event_rejects_reordered_membership` |
 | Mapping content, Claims and Groups | Content may stand alone; Claims and each whole reported Group retain their own scope, order and provenance | `test_standalone_mapping_never_creates_evidence_or_body`, `test_partial_groups_are_not_unioned_into_complete_coverage` |
-| Notes evidence and physical copies | Locally recheck exact Claim/root/path/physical bytes; preserve original evidence and add distinct receiver evidence | `test_notes_copy_requires_rechecked_original_claim_and_proof`, `test_damaged_note_copy_is_omitted_without_losing_valid_sibling`, `test_invalid_candidate_rolls_back_and_actual_target_damage_stops` |
-| Coverage | Preserve supported Claim history; verify whole Notes inventory only. Unsupported completeness Claims remain exchangeable metadata with unknown derived completeness | `test_inventory_coverage_rechecks_original_whole_group`, `test_whole_inventory_rejects_changed_group_membership`, `test_older_salvaged_complete_cannot_replace_newer_partial` |
+| Notes evidence and physical copies | Locally recheck exact Claim/root/path/physical bytes, including missing dependencies; preserve original evidence and add distinct receiver evidence | `test_notes_dependencies_resolve_without_rebinding_original_evidence`, `test_pending_note_cannot_rebind_existing_claim_to_another_root`, `test_damaged_note_copy_is_omitted_without_losing_valid_sibling`, `test_invalid_candidate_rolls_back_and_actual_target_damage_stops` |
+| Coverage | Preserve supported Claim history; verify whole Notes inventory only, including resolved dependencies. Unsupported completeness Claims remain exchangeable metadata with unknown derived completeness | `test_inventory_dependencies_resolve_from_baseline_or_later_input`, `test_whole_inventory_rejects_changed_group_membership`, `test_older_salvaged_complete_cannot_replace_newer_partial` |
 | Fresh baseline, coexistence and activation | Restore revalidated Git-only or paired backup, check the scope and identities, merge, then validate and activate | `test_full_fresh_restore_salvage_and_activation`, `test_ref_merge_checks_paired_context_identity`, `test_missing_verified_baseline_cannot_merge_or_activate`, `test_corrupt_fresh_target_is_stopped_and_not_activated` |
 | Bounds and preservation | Source copy, bounded typed candidates, durable cumulative requests and no callback borrowing | `test_extract_crash_retains_reservation_and_preserves_source`, `test_parallel_extractions_share_one_cumulative_budget`, `test_candidate_decode_limit_stops_before_admission_and_survives_retry`, `test_receiver_work_callback_cannot_borrow_body_access` |
 | Untyped and legacy data | Omit unrecognized source tables, ordinary blob bodies and untyped binary fields. Preserve legacy Capture/Notes recovery only when the exact source role and bytes revalidate; do not use it as a different ref Claim's evidence | `test_unknown_binary_is_not_staged_by_generic_extraction`, `test_legacy_note_bytes_are_staged_only_with_valid_original_proof`, `test_ordinary_blob_cannot_be_staged_as_structural_metadata` |

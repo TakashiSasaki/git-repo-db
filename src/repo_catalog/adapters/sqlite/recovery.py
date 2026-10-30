@@ -3674,16 +3674,7 @@ class SQLiteRecoveryAdapter:
                                 fresh_destination_dir, c_type, payload, work_budget
                             )
                             if was_replay is None:
-                                if c_type in ("ref_claim", "ref_enumeration"):
-                                    _defer_candidate(cand_id, c_type, line)
-                                else:
-                                    deferred += 1
-                                    rejections.append(
-                                        {
-                                            "candidate_id": cand_id,
-                                            "reason": "Original Coverage Claim is stale or its required destination dependency is unavailable",
-                                        }
-                                    )
+                                _defer_candidate(cand_id, c_type, line)
                             elif was_replay:
                                 replayed += 1
                             else:

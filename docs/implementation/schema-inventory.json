@@ -8075,7 +8075,7 @@
             {
               "excerpt": "\"coverage_claims\": (",
               "excerpt_truncated": false,
-              "line": 192,
+              "line": 198,
               "operation_hint": "registry_or_reference",
               "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
               "scope": "<module>"
@@ -8083,7 +8083,7 @@
             {
               "excerpt": "for claim_row in tables.get(\"coverage_claims\", []):",
               "excerpt_truncated": false,
-              "line": 886,
+              "line": 999,
               "operation_hint": "registry_or_reference",
               "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
               "scope": "_scan_ref_units"
@@ -8091,7 +8091,7 @@
             {
               "excerpt": "\"coverage_claims\",",
               "excerpt_truncated": false,
-              "line": 928,
+              "line": 1041,
               "operation_hint": "registry_or_reference",
               "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
               "scope": "_scan_ref_units"
@@ -8099,7 +8099,7 @@
             {
               "excerpt": "omissions.append(\"core:coverage_claims: finite salvage budget\")",
               "excerpt_truncated": false,
-              "line": 934,
+              "line": 1047,
               "operation_hint": "registry_or_reference",
               "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
               "scope": "_scan_ref_units"
@@ -8107,7 +8107,7 @@
             {
               "excerpt": "omissions.append(f\"core:coverage_claims: invalid candidate ({error})\")",
               "excerpt_truncated": false,
-              "line": 937,
+              "line": 1050,
               "operation_hint": "registry_or_reference",
               "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
               "scope": "_scan_ref_units"
@@ -8115,7 +8115,7 @@
             {
               "excerpt": "omissions.append(f\"core:coverage_claims: invalid candidate ({error})\")",
               "excerpt_truncated": false,
-              "line": 939,
+              "line": 1052,
               "operation_hint": "registry_or_reference",
               "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
               "scope": "_scan_ref_units"
@@ -8123,15 +8123,23 @@
             {
               "excerpt": "x.startswith((\"core:coverage_claims:\", \"core:coverage_scopes:\"))",
               "excerpt_truncated": false,
-              "line": 942,
+              "line": 1055,
               "operation_hint": "registry_or_reference",
               "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
               "scope": "_scan_ref_units"
             },
             {
+              "excerpt": ") in core.exchange_metadata_rows(\"coverage_claims\", (), work):",
+              "excerpt_truncated": false,
+              "line": 1488,
+              "operation_hint": "registry_or_reference",
+              "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
+              "scope": "admit_ref_unit"
+            },
+            {
               "excerpt": "\"SELECT 1 FROM coverage_claims WHERE owner_kind=? AND owner_coordinates_json=? AND observed_at_us=? AND coverage_state=?\",",
               "excerpt_truncated": false,
-              "line": 1291,
+              "line": 1536,
               "operation_hint": "read",
               "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
               "scope": "admit_ref_unit"
@@ -8139,7 +8147,7 @@
             {
               "excerpt": "\"coverage_claims\", (), work",
               "excerpt_truncated": false,
-              "line": 1529,
+              "line": 1779,
               "operation_hint": "registry_or_reference",
               "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
               "scope": "_admit_coverage_history"
@@ -8436,7 +8444,7 @@
             {
               "excerpt": "\"coverage_scopes\": (",
               "excerpt_truncated": false,
-              "line": 179,
+              "line": 185,
               "operation_hint": "registry_or_reference",
               "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
               "scope": "<module>"
@@ -8444,7 +8452,7 @@
             {
               "excerpt": "for row in tables.get(\"coverage_scopes\", []):",
               "excerpt_truncated": false,
-              "line": 861,
+              "line": 970,
               "operation_hint": "registry_or_reference",
               "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
               "scope": "_scan_ref_units"
@@ -8452,7 +8460,7 @@
             {
               "excerpt": "x.startswith((\"core:coverage_claims:\", \"core:coverage_scopes:\"))",
               "excerpt_truncated": false,
-              "line": 942,
+              "line": 1055,
               "operation_hint": "registry_or_reference",
               "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
               "scope": "_scan_ref_units"
@@ -8460,7 +8468,7 @@
             {
               "excerpt": "\"SELECT 1 FROM coverage_scopes WHERE owner_kind=? AND owner_coordinates_json=?\",",
               "excerpt_truncated": false,
-              "line": 1172,
+              "line": 1394,
               "operation_hint": "read",
               "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
               "scope": "admit_ref_unit"
@@ -17871,7 +17879,7 @@
             {
               "excerpt": "\"ref_observations\": (",
               "excerpt_truncated": false,
-              "line": 54,
+              "line": 60,
               "operation_hint": "registry_or_reference",
               "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
               "scope": "<module>"
@@ -17879,7 +17887,7 @@
             {
               "excerpt": "for row in tables.get(\"ref_observations\", []):",
               "excerpt_truncated": false,
-              "line": 523,
+              "line": 605,
               "operation_hint": "registry_or_reference",
               "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
               "scope": "_scan_ref_units"
@@ -17887,7 +17895,7 @@
             {
               "excerpt": "\"ref_observations\",",
               "excerpt_truncated": false,
-              "line": 539,
+              "line": 621,
               "operation_hint": "registry_or_reference",
               "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
               "scope": "_scan_ref_units"
@@ -17895,7 +17903,7 @@
             {
               "excerpt": "omissions.append(\"core:ref_observations: finite salvage budget\")",
               "excerpt_truncated": false,
-              "line": 545,
+              "line": 627,
               "operation_hint": "registry_or_reference",
               "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
               "scope": "_scan_ref_units"
@@ -17903,7 +17911,7 @@
             {
               "excerpt": "omissions.append(f\"core:ref_observations: invalid candidate ({error})\")",
               "excerpt_truncated": false,
-              "line": 548,
+              "line": 630,
               "operation_hint": "registry_or_reference",
               "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
               "scope": "_scan_ref_units"
@@ -17911,7 +17919,7 @@
             {
               "excerpt": "omissions.append(f\"core:ref_observations: invalid candidate ({error})\")",
               "excerpt_truncated": false,
-              "line": 550,
+              "line": 632,
               "operation_hint": "registry_or_reference",
               "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
               "scope": "_scan_ref_units"
@@ -17919,7 +17927,7 @@
             {
               "excerpt": "\"ref_observations\": [observation],",
               "excerpt_truncated": false,
-              "line": 585,
+              "line": 667,
               "operation_hint": "registry_or_reference",
               "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
               "scope": "_scan_ref_units"
@@ -17927,7 +17935,15 @@
             {
               "excerpt": "\"ref_observations\": list(obs_rows.values()),",
               "excerpt_truncated": false,
-              "line": 666,
+              "line": 748,
+              "operation_hint": "registry_or_reference",
+              "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
+              "scope": "_scan_ref_units"
+            },
+            {
+              "excerpt": "\"core:ref_observations: Coverage owner subject requires receiver baseline/input\"",
+              "excerpt_truncated": false,
+              "line": 980,
               "operation_hint": "registry_or_reference",
               "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
               "scope": "_scan_ref_units"
@@ -17935,7 +17951,7 @@
             {
               "excerpt": "for row in section[\"ref_observations\"]:",
               "excerpt_truncated": false,
-              "line": 1059,
+              "line": 1212,
               "operation_hint": "registry_or_reference",
               "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
               "scope": "_complete_enumeration_section"
@@ -17943,7 +17959,7 @@
             {
               "excerpt": "completed[\"ref_observations\"] = list(section[\"ref_observations\"])",
               "excerpt_truncated": false,
-              "line": 1074,
+              "line": 1227,
               "operation_hint": "registry_or_reference",
               "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
               "scope": "_complete_enumeration_section"
@@ -17951,7 +17967,7 @@
             {
               "excerpt": "completed[\"ref_observations\"].append(observation_to_wire(subject))",
               "excerpt_truncated": false,
-              "line": 1104,
+              "line": 1257,
               "operation_hint": "registry_or_reference",
               "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
               "scope": "_complete_enumeration_section"
@@ -17959,7 +17975,7 @@
             {
               "excerpt": "\"SELECT 1 FROM ref_observations WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=?\",",
               "excerpt_truncated": false,
-              "line": 1190,
+              "line": 1412,
               "operation_hint": "read",
               "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
               "scope": "admit_ref_unit"
@@ -17967,7 +17983,7 @@
             {
               "excerpt": "\"ref_observations\": [payload[\"observation\"]],",
               "excerpt_truncated": false,
-              "line": 1236,
+              "line": 1448,
               "operation_hint": "registry_or_reference",
               "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
               "scope": "admit_ref_unit"
@@ -17975,7 +17991,7 @@
             {
               "excerpt": "\"ref_observations\",",
               "excerpt_truncated": false,
-              "line": 1424,
+              "line": 1669,
               "operation_hint": "registry_or_reference",
               "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
               "scope": "admit_ref_unit"
@@ -18609,7 +18625,7 @@
             {
               "excerpt": "\"repositories\": (\"repository_uuidv4\",),",
               "excerpt_truncated": false,
-              "line": 53,
+              "line": 59,
               "operation_hint": "registry_or_reference",
               "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
               "scope": "<module>"
@@ -18617,7 +18633,7 @@
             {
               "excerpt": "repositories = {row[\"repository_uuidv4\"] for row in tables[\"repositories\"]}",
               "excerpt_truncated": false,
-              "line": 521,
+              "line": 603,
               "operation_hint": "registry_or_reference",
               "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
               "scope": "_scan_ref_units"
@@ -18625,7 +18641,7 @@
             {
               "excerpt": "\"repository_present\": value.repository_uuidv4 in repositories,",
               "excerpt_truncated": false,
-              "line": 537,
+              "line": 619,
               "operation_hint": "registry_or_reference",
               "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
               "scope": "_scan_ref_units"
@@ -18633,7 +18649,7 @@
             {
               "excerpt": "in repositories,",
               "excerpt_truncated": false,
-              "line": 600,
+              "line": 682,
               "operation_hint": "registry_or_reference",
               "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
               "scope": "_scan_ref_units"
@@ -18641,31 +18657,31 @@
             {
               "excerpt": "in repositories,",
               "excerpt_truncated": false,
-              "line": 704,
+              "line": 786,
               "operation_hint": "registry_or_reference",
               "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
               "scope": "_scan_ref_units"
             },
             {
-              "excerpt": "in repositories,",
+              "excerpt": "and observation[\"repository_uuidv4\"] in repositories,",
               "excerpt_truncated": false,
-              "line": 844,
+              "line": 953,
               "operation_hint": "registry_or_reference",
               "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
               "scope": "_scan_ref_units"
             },
             {
-              "excerpt": "in repositories,",
+              "excerpt": "and observation[\"repository_uuidv4\"] in repositories,",
               "excerpt_truncated": false,
-              "line": 924,
+              "line": 1037,
               "operation_hint": "registry_or_reference",
               "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
               "scope": "_scan_ref_units"
             },
             {
-              "excerpt": "in repositories,",
+              "excerpt": "and observation[\"repository_uuidv4\"] in repositories,",
               "excerpt_truncated": false,
-              "line": 1026,
+              "line": 1179,
               "operation_hint": "registry_or_reference",
               "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
               "scope": "_scan_ref_units"
@@ -18673,7 +18689,7 @@
             {
               "excerpt": "\"SELECT 1 FROM repositories WHERE repository_uuidv4=?\", (repository,)",
               "excerpt_truncated": false,
-              "line": 1127,
+              "line": 1280,
               "operation_hint": "read",
               "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
               "scope": "_repository_dependency"

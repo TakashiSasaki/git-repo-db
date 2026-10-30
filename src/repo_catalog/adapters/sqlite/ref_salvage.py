@@ -20,11 +20,17 @@ from repo_catalog.adapters.sqlite.p1_coordination import (
 from repo_catalog.adapters.sqlite.p1_schema import connect
 from repo_catalog.application.ref_exchange import decode_ref_units
 from repo_catalog.application.ref_observations import encode_metered
+from repo_catalog.domain.git_native import parse_metadata
 from repo_catalog.domain.p1_core import (
+    OID,
     CoreCoverageScope,
     CoreFailure,
+    NativeObject,
     Provenance,
+    _notes_group,
     account_verification,
+    uuid4_value,
+    valid_note_role,
 )
 from repo_catalog.domain.p1_coverage import CoverageClaim
 from repo_catalog.domain.ref_coverage import (
@@ -459,6 +465,82 @@ def _notes_wire(row, *, evidence=False, retained=False):
     return result
 
 
+def _precheck_unresolved_notes(row, wire, kind, work):
+    """Check copied Notes content without inventing a missing result Claim."""
+    RefObservationKey(wire["observation_origin_uuidv4"], wire["ref_observation_uuidv7"])
+    _provenance(wire["ref_claim_provenance_json"])
+    if kind == "group":
+        OID(wire["object_format"], wire["root_oid"])
+        if (
+            not all(
+                type(wire[name]) is str and wire[name]
+                for name in (
+                    "interpretation_kind",
+                    "interpretation_version",
+                    "interpretation_scope",
+                    "group_scope",
+                )
+            )
+            or _provenance(wire["provenance_json"]).qualification != "reported"
+        ):
+            raise ValueError("original group scope and report required")
+        raw = wire["membership_json"]
+        if type(raw) is not str:
+            raise ValueError("original whole group required")
+        _charge(work, "input_bytes", 3 * len(raw))
+        if not _notes_group(wire["object_format"], wire["status"], raw):
+            raise ValueError("invalid original whole group")
+        return
+    mapping = mapping_from_wire(wire)
+    if kind == "mapping":
+        if _provenance(wire["provenance_json"]).qualification != "reported":
+            raise ValueError("original Mapping report required")
+        return
+    evidence_provenance = _provenance(wire["evidence_provenance_json"])
+    if (
+        mapping.interpretation_kind != "git-notes"
+        or mapping.interpretation_version != "1"
+        or mapping.mapping_path is None
+        or wire["verification_scope"] != "single-path"
+        or evidence_provenance.qualification != "receiver_intrinsic"
+        or evidence_provenance.decoder != "native-notes"
+        or evidence_provenance.decoder_version != "1"
+    ):
+        raise ValueError("supported original Notes role required")
+    proof = wire["proof_bundle_json"]
+    if type(proof) is not str:
+        raise ValueError("original structural proof required")
+    _charge(work, "input_bytes", 4 * len(proof))
+    if not valid_note_role(
+        *mapping.root_oid.key,
+        mapping.annotated_object_oid.full_oid,
+        mapping.note_oid.full_oid,
+        mapping.mapping_path,
+        proof,
+    ):
+        raise ValueError("original Notes structural proof failed")
+    if kind == "note":
+        if (
+            row["object_format"] != row["role_format"]
+            or row["full_oid"] != row["note_oid"]
+        ):
+            raise ValueError("physical copy role identity differs")
+        body = row["body"]
+        if type(body) is not bytes:
+            raise ValueError("exact stored note bytes required")
+        uuid4_value(row["physical_copy_uuidv4"])
+        NativeObject(
+            mapping.note_oid, "blob", body, row["size"], row["digest_sha256"]
+        ).validate()
+        _charge(work, "input_bytes", 2 * len(body))
+        wire.update(
+            physical_copy_uuidv4=row["physical_copy_uuidv4"],
+            body_hex=body.hex(),
+            size=row["size"],
+            digest_sha256=row["digest_sha256"],
+        )
+
+
 def scan_ref_units(conn: sqlite3.Connection, work, *, max_records, max_row_bytes):
     """Pin one coherent read-only source snapshot for typed extraction."""
     if conn.in_transaction:
@@ -764,9 +846,9 @@ def _scan_ref_units(conn: sqlite3.Connection, work, *, max_records, max_row_byte
                         row["ref_observation_uuidv7"],
                     )
                     identity = (*key, row["ref_claim_provenance"])
-                    observation = observations[key]
-                    claim_wire = claims[identity]
-                    claim = claim_from_wire(claim_wire)
+                    observation = observations.get(key)
+                    claim_wire = claims.get(identity)
+                    claim = None if claim_wire is None else claim_from_wire(claim_wire)
                     wire = _notes_wire(
                         row,
                         evidence=kind in ("evidence", "note"),
@@ -777,8 +859,33 @@ def _scan_ref_units(conn: sqlite3.Connection, work, *, max_records, max_row_byte
                             wire[key] for key in _COLUMNS["notes_mappings"]
                         )
                         if mapping_key not in mappings:
-                            raise ValueError("original shared mapping missing")
-                    if kind == "mapping":
+                            omissions.append(
+                                f"core:{table}: original shared Mapping row missing; exact coordinates retained"
+                            )
+                    if observation is None or claim is None:
+                        omissions.append(
+                            f"core:{table}: original Claim or subject requires receiver baseline/input"
+                        )
+                    if claim is None:
+                        _precheck_unresolved_notes(row, wire, kind, work)
+                        if kind == "group":
+                            groups[_wire_key(wire, work)] = wire
+                        elif kind == "evidence":
+                            checked_evidence.add(_wire_key(wire, work))
+                        elif kind == "note":
+                            evidence_wire = dict(wire)
+                            for field in (
+                                "physical_copy_uuidv4",
+                                "body_hex",
+                                "size",
+                                "digest_sha256",
+                            ):
+                                evidence_wire.pop(field)
+                            if _wire_key(evidence_wire, work) not in checked_evidence:
+                                omissions.append(
+                                    f"core:{table}: exact original evidence row missing; copy retains its checked proof"
+                                )
+                    elif kind == "mapping":
                         mapping_claim_from_wire(wire, claim)
                     elif kind == "group":
                         mapping_group_from_wire(wire, claim)
@@ -791,7 +898,9 @@ def _scan_ref_units(conn: sqlite3.Connection, work, *, max_records, max_row_byte
                             checked_evidence.add(evidence_key)
                         else:
                             if evidence_key not in checked_evidence:
-                                raise ValueError("exact original evidence row missing")
+                                omissions.append(
+                                    f"core:{table}: exact original evidence row missing; copy retains its checked proof"
+                                )
                             if (
                                 row["object_format"] != row["role_format"]
                                 or row["full_oid"] != row["note_oid"]
@@ -840,8 +949,8 @@ def _scan_ref_units(conn: sqlite3.Connection, work, *, max_records, max_row_byte
                             {
                                 "observation": observation,
                                 "claim": claim_wire,
-                                "repository_present": observation["repository_uuidv4"]
-                                in repositories,
+                                "repository_present": observation is not None
+                                and observation["repository_uuidv4"] in repositories,
                                 "unit": wire,
                             },
                             table,
@@ -865,7 +974,11 @@ def _scan_ref_units(conn: sqlite3.Connection, work, *, max_records, max_row_byte
             with account_verification(work):
                 _charge(work, "metadata_units", 1)
                 key = (row["observation_origin_uuidv4"], row["ref_observation_uuidv7"])
-                observation = observations[key]
+                observation = observations.get(key)
+                if observation is None:
+                    omissions.append(
+                        "core:ref_observations: Coverage owner subject requires receiver baseline/input"
+                    )
                 scope = CoreCoverageScope(
                     "ref_observation", (*key, row["coverage_kind"])
                 )
@@ -920,8 +1033,8 @@ def _scan_ref_units(conn: sqlite3.Connection, work, *, max_records, max_row_byte
                             key + (scope.coordinates[-1], *target),
                             {
                                 "observation": observation,
-                                "repository_present": observation["repository_uuidv4"]
-                                in repositories,
+                                "repository_present": observation is not None
+                                and observation["repository_uuidv4"] in repositories,
                                 "scope_json": scope_json,
                                 "history": prefix,
                             },
@@ -952,8 +1065,15 @@ def _scan_ref_units(conn: sqlite3.Connection, work, *, max_records, max_row_byte
                         row["ref_observation_uuidv7"],
                     )
                     identity = (*key, row["ref_claim_provenance"])
-                    observation, claim_wire = observations[key], claims[identity]
-                    claim = claim_from_wire(claim_wire)
+                    observation, claim_wire = (
+                        observations.get(key),
+                        claims.get(identity),
+                    )
+                    claim = None if claim_wire is None else claim_from_wire(claim_wire)
+                    if observation is None or claim is None:
+                        omissions.append(
+                            "core:ref_coverage_proofs: original Claim or subject requires receiver baseline/input"
+                        )
                     scope = CoreCoverageScope(
                         "ref_observation",
                         tuple(json.loads(row["owner_coordinates_json"])),
@@ -964,15 +1084,21 @@ def _scan_ref_units(conn: sqlite3.Connection, work, *, max_records, max_row_byte
                         or scope_json != row["owner_coordinates_json"]
                     ):
                         raise ValueError("invalid original Coverage proof owner")
-                    history = coverage_histories[scope_json]
+                    if scope.coordinates[-1] != "notes-mapping-inventory":
+                        raise ValueError("unsupported Coverage proof kind")
+                    history = coverage_histories.get(scope_json, [])
                     matched = [
                         item
                         for item in history
                         if item["observed_at_us"] == row["observed_at_us"]
                         and item["state"] == row["coverage_state"]
                     ]
-                    if len(matched) != 1:
-                        raise ValueError("original Coverage Claim missing")
+                    if len(matched) > 1:
+                        raise ValueError("ambiguous original Coverage Claim")
+                    if not matched:
+                        omissions.append(
+                            "core:ref_coverage_proofs: original Coverage Claim requires receiver baseline/input"
+                        )
                     group_wire = {
                         "observation_origin_uuidv4": key[0],
                         "ref_observation_uuidv7": key[1],
@@ -988,29 +1114,56 @@ def _scan_ref_units(conn: sqlite3.Connection, work, *, max_records, max_row_byte
                         "provenance_json": row["group_provenance"],
                     }
                     if _wire_key(group_wire, work) not in groups:
-                        raise ValueError("original whole Group missing")
-                    group = mapping_group_from_wire(group_wire, claim)
-                    coverage = CoverageClaim(
-                        scope,
-                        row["observed_at_us"],
-                        row["coverage_state"],
-                        matched[0]["details_json"],
-                    )
+                        omissions.append(
+                            "core:ref_coverage_proofs: original whole Group row missing; exact coordinates retained"
+                        )
+                    if claim is None:
+                        _precheck_unresolved_notes(row, group_wire, "group", work)
+                        group = None
+                    else:
+                        group = mapping_group_from_wire(group_wire, claim)
                     structures = deserialize_structures(
                         row["structures_json"],
                         work,
                         max_structures=max_records,
                         max_bytes=max_row_bytes,
                     )
-                    proof = RefNotesInventoryCoverageProof(
-                        coverage,
-                        group,
-                        _provenance(row["verification_provenance"]),
-                        structures,
-                    )
-                    verify_ref_notes_inventory(
-                        proof, work, max_structures=max_records, max_bytes=max_row_bytes
-                    )
+                    verification = _provenance(row["verification_provenance"])
+                    if (
+                        verification.qualification != "receiver_intrinsic"
+                        or verification.decoder != "git-native-notes-inventory"
+                        or verification.decoder_version != "1"
+                        or row["coverage_state"] != "complete"
+                    ):
+                        raise ValueError(
+                            "supported original inventory verification required"
+                        )
+                    for native in structures:
+                        _charge(work, "metadata_units", 1)
+                        if native.native_type not in ("commit", "tree"):
+                            raise ValueError(
+                                "inventory proof contains nonstructural body"
+                            )
+                        native.validate()
+                        parse_metadata(
+                            native.oid.object_format, native.native_type, native.body
+                        )
+                    if claim is not None and matched:
+                        coverage = CoverageClaim(
+                            scope,
+                            row["observed_at_us"],
+                            row["coverage_state"],
+                            matched[0]["details_json"],
+                        )
+                        proof = RefNotesInventoryCoverageProof(
+                            coverage, group, verification, structures
+                        )
+                        verify_ref_notes_inventory(
+                            proof,
+                            work,
+                            max_structures=max_records,
+                            max_bytes=max_row_bytes,
+                        )
                 candidates.append(
                     _record(
                         "coverage_proof",
@@ -1022,8 +1175,8 @@ def _scan_ref_units(conn: sqlite3.Connection, work, *, max_records, max_row_byte
                         {
                             "observation": observation,
                             "claim": claim_wire,
-                            "repository_present": observation["repository_uuidv4"]
-                            in repositories,
+                            "repository_present": observation is not None
+                            and observation["repository_uuidv4"] in repositories,
                             "scope_json": scope_json,
                             "history": history,
                             "group": group_wire,
@@ -1131,6 +1284,57 @@ def _repository_dependency(core, repository, supplied, work):
         )
 
 
+def _complete_claim_payload(core, payload, kind, work):
+    """Resolve a missing original subject/Claim without synthesizing either."""
+    if payload["observation"] is not None and payload["claim"] is not None:
+        return payload
+    wire = payload.get("group") if kind == "ref_coverage_proof" else payload.get("unit")
+    if payload["claim"] is not None:
+        supplied = claim_from_wire(payload["claim"])
+        key = supplied.ref_observation_key
+    elif type(wire) is dict:
+        supplied = None
+        key = RefObservationKey(
+            wire["observation_origin_uuidv4"], wire["ref_observation_uuidv7"]
+        )
+    else:
+        raise ValueError("original Claim coordinates required")
+    try:
+        projection = core.ref_observation(key, work)
+    except CoreFailure as error:
+        if error.code == "OBSERVATION_UNAVAILABLE":
+            return None
+        raise
+    subject = projection.ref_observation
+    if payload["observation"] is not None:
+        if observation_from_wire(payload["observation"]) != subject:
+            raise CoreFailure(
+                "INCOMPATIBLE_REPLAY", key, "subject differs from baseline"
+            )
+    else:
+        _charge(work, "input_bytes", 2 * len(subject.ref_name_bytes))
+    if supplied is None:
+        coordinate = wire["ref_claim_provenance_json"]
+        for candidate in projection.claims:
+            _charge(work, "metadata_units", 1)
+            if encode_metered(work, candidate.provenance.key) == coordinate:
+                supplied = candidate
+                break
+        if supplied is None:
+            return None
+        if supplied.symbolic_target_ref_name is not None:
+            _charge(work, "input_bytes", 2 * len(supplied.symbolic_target_ref_name))
+    return dict(
+        payload,
+        observation=payload["observation"]
+        if payload["observation"] is not None
+        else observation_to_wire(subject),
+        claim=payload["claim"]
+        if payload["claim"] is not None
+        else claim_to_wire(supplied),
+    )
+
+
 def admit_ref_unit(core, kind, payload, work):
     """Admit one redecoded subject, result or complete original event.
 
@@ -1160,6 +1364,24 @@ def admit_ref_unit(core, kind, payload, work):
             "history",
         }:
             raise ValueError("exact Coverage candidate shape required")
+        if payload["observation"] is None:
+            raw_scope = payload["scope_json"]
+            if type(raw_scope) is not str:
+                raise ValueError("canonical Coverage scope required")
+            _charge(work, "input_bytes", 2 * len(raw_scope))
+            coordinates = json.loads(raw_scope)
+            if type(coordinates) is not list or len(coordinates) != 3:
+                raise ValueError("typed Coverage scope required")
+            key = RefObservationKey(*coordinates[:2])
+            try:
+                projection = core.ref_observation(key, work)
+            except CoreFailure as error:
+                if error.code == "OBSERVATION_UNAVAILABLE":
+                    return None
+                raise
+            subject = projection.ref_observation
+            _charge(work, "input_bytes", 2 * len(subject.ref_name_bytes))
+            payload = dict(payload, observation=observation_to_wire(subject))
         observation = observation_from_wire(payload["observation"])
         scope, history = _coverage_history(payload, observation, work)
         _repository_dependency(
@@ -1219,19 +1441,9 @@ def admit_ref_unit(core, kind, payload, work):
             expected.add("unit")
         if set(payload) != expected:
             raise ValueError("exact claim candidate shape required")
-        if kind == "ref_claim" and payload["observation"] is None:
-            unresolved_claim = claim_from_wire(payload["claim"])
-            try:
-                original = core.ref_observation(
-                    unresolved_claim.ref_observation_key, work
-                )
-            except CoreFailure as error:
-                if error.code == "OBSERVATION_UNAVAILABLE":
-                    return None
-                raise
-            subject = original.ref_observation
-            _charge(work, "input_bytes", 2 * len(subject.ref_name_bytes))
-            payload = dict(payload, observation=observation_to_wire(subject))
+        payload = _complete_claim_payload(core, payload, kind, work)
+        if payload is None:
+            return None
         section = {
             "ref_observations": [payload["observation"]],
             "ref_observation_claims": [payload["claim"]],
@@ -1265,8 +1477,41 @@ def admit_ref_unit(core, kind, payload, work):
                 if (x.observed_at_us, x.state)
                 == (payload["observed_at_us"], payload["state"])
             ]
+            if not matching:
+                scope_json = encode_metered(work, scope.coordinates)
+                for (
+                    owner,
+                    coords,
+                    observed,
+                    state,
+                    details,
+                ) in core.exchange_metadata_rows("coverage_claims", (), work):
+                    _charge(work, "metadata_units", 1)
+                    if (owner, coords, observed, state) != (
+                        scope.owner_kind,
+                        scope_json,
+                        payload["observed_at_us"],
+                        payload["state"],
+                    ):
+                        continue
+                    try:
+                        matching.append(CoverageClaim(scope, observed, state, details))
+                    except (
+                        ValueError,
+                        TypeError,
+                        RecursionError,
+                        OverflowError,
+                    ) as error:
+                        core._integrity_stop(
+                            (scope, "invalid stored Coverage Claim", str(error))
+                        )
+                if not matching:
+                    return None
+                history = sorted(
+                    (*history, matching[0]), key=lambda x: (x.observed_at_us, x.state)
+                )
             if len(matching) != 1:
-                raise ValueError("exact original Coverage Claim required")
+                core._integrity_stop((scope, "duplicate stored Coverage Claim"))
             group = mapping_group_from_wire(payload["group"], claim)
             structures = deserialize_structures(
                 payload["structures_json"],
@@ -1470,6 +1715,11 @@ def admit_ref_unit_atomic(directory: Path, kind, payload, work):
                     guarded = _WorkCallbackBoundary(work, capability)
                     with account_verification(guarded):
                         result = admit_ref_unit(capability, kind, payload, guarded)
+                if result is None:
+                    # A missing dependency or stale terminal is not a partial
+                    # admission: all writes of this individual unit roll back.
+                    db.rollback()
+                    return None
                 with catalog_completion(directory):
                     if (directory / "p1-recovery-stop.json").exists():
                         raise CoreFailure("RECOVERY_STOP", "catalog", "catalog stopped")
@@ -1523,7 +1773,7 @@ def _coverage_history(payload, observation, work):
 
 def _admit_coverage_history(core, scope, history, work):
     """Recognize checked historical replay before the current stale fence."""
-    existing = set()
+    existing = {}
     scope_json = encode_metered(work, scope.coordinates)
     for owner, coords, observed, state, details in core.exchange_metadata_rows(
         "coverage_claims", (), work
@@ -1535,13 +1785,21 @@ def _admit_coverage_history(core, scope, history, work):
             value = CoverageClaim(scope, observed, state, details)
         except (ValueError, TypeError, RecursionError, OverflowError) as error:
             core._integrity_stop((scope, "invalid stored Coverage Claim", str(error)))
-        existing.add((value.observed_at_us, value.state))
+        key = (value.observed_at_us, value.state)
+        if key in existing:
+            core._integrity_stop((scope, "duplicate stored Coverage Claim"))
+        existing[key] = value
     results = []
     for value in history:
         _charge(work, "metadata_units", 1)
         key = (value.observed_at_us, value.state)
-        result = "duplicate" if key in existing else core.admit_coverage(value)
-        if result in ("insert", "duplicate"):
-            existing.add(key)
+        if key in existing:
+            # Advisory details are not part of Coverage identity; preserve the
+            # existing value exactly as the production admission contract does.
+            result = "duplicate"
+        else:
+            result = core.admit_coverage(value)
+        if result == "insert":
+            existing[key] = value
         results.append(result)
     return results
