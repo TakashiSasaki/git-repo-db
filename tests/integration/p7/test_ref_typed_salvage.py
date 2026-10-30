@@ -2,6 +2,7 @@
 
 import base64
 import copy
+import io
 import json
 import multiprocessing
 import os
@@ -63,7 +64,16 @@ p1_core_fixture = p1_fixtures.core
 
 
 def _extract_process(source, output, start, result, crash):
-    if crash:
+    if crash == "vm":
+        original = RecoveryWorkBudget.require
+
+        def reserve_and_kill(self, unit, amount):
+            original(self, unit, amount)
+            if unit == "ref_source_vm_steps":
+                os.kill(os.getpid(), signal.SIGKILL)
+
+        RecoveryWorkBudget.require = reserve_and_kill
+    elif crash:
         original = RecoveryWorkBudget.charge
 
         def charge_and_kill(self, unit, amount):
@@ -236,6 +246,8 @@ def test_candidate_decode_limit_stops_before_admission_and_survives_retry(
     assert first.unprocessed_units == 1 and not first.input_complete
     state = destination / "p1-recovery-request-decode-limit.json"
     before = json.loads(state.read_text())["cumulative_usage"]
+    assert "ref_source_vm_steps" not in before
+    assert "legacy_source_vm_steps" not in before
     retry = adapter.merge_salvage(destination, candidate_file, budget, "decode-limit")
     after = json.loads(state.read_text())["cumulative_usage"]
     assert retry.admitted_units == 0 and not retry.input_complete
@@ -337,6 +349,262 @@ def test_scanner_keeps_original_observations_and_whole_events(acquisition):
     assert any(c["payload"]["claim"]["presence_state"] == "absent" for c in claims)
     assert work.usage["input_bytes"] > 0
     assert work.usage["metadata_units"] > 0
+
+
+def test_generated_source_columns_are_never_evaluated_and_other_rows_survive(tmp_path):
+    suspect = tmp_path / "suspect"
+    suspect.mkdir()
+    path = suspect / "core.sqlite3"
+    repository, origin, observation_id = str(uuid4()), str(uuid4()), new_uuid7()
+    with sqlite3.connect(path) as db:
+        db.execute(
+            "CREATE TABLE repositories(seed INTEGER, repository_uuidv4 TEXT "
+            "GENERATED ALWAYS AS (hex(zeroblob(8388608))) VIRTUAL)"
+        )
+        db.execute("INSERT INTO repositories(seed) VALUES(1)")
+        db.execute(
+            "CREATE TABLE ref_observations(observation_origin_uuidv4 TEXT, "
+            "ref_observation_uuidv7 TEXT, repository_uuidv4 TEXT, ref_name_bytes BLOB, "
+            "source_attribution TEXT, visibility_scope TEXT, observed_at_us INTEGER)"
+        )
+        db.execute(
+            "INSERT INTO ref_observations VALUES(?,?,?,?,?,?,?)",
+            (
+                origin,
+                observation_id,
+                repository,
+                b"refs/notes/safe",
+                "source",
+                "scope",
+                1,
+            ),
+        )
+    before = path.read_bytes()
+
+    class ObservedConnection(sqlite3.Connection):
+        limits_at_scan = []
+
+        def execute(self, statement, *args, **kwargs):
+            if statement.startswith("PRAGMA table_list"):
+                self.limits_at_scan.append(
+                    (
+                        self.getlimit(sqlite3.SQLITE_LIMIT_LENGTH),
+                        self.getlimit(sqlite3.SQLITE_LIMIT_COLUMN),
+                    )
+                )
+            return super().execute(statement, *args, **kwargs)
+
+    conn = sqlite3.connect(f"file:{path}?mode=ro", uri=True, factory=ObservedConnection)
+    calls = []
+
+    def authorizer(action, arg1, arg2, _db, _trigger):
+        if action == sqlite3.SQLITE_FUNCTION and arg2 in ("zeroblob", "hex"):
+            calls.append(arg2)
+        return sqlite3.SQLITE_OK
+
+    conn.set_authorizer(authorizer)
+    try:
+        work = RecoveryWorkBudget(work_limits={"input_bytes": 100_000})
+        previous_length = conn.getlimit(sqlite3.SQLITE_LIMIT_LENGTH)
+        scan = scan_ref_units(conn, work, max_records=200, max_row_bytes=1024)
+        assert conn.limits_at_scan and all(
+            length == 65536 and columns == 512
+            for length, columns in conn.limits_at_scan
+        )
+        assert conn.getlimit(sqlite3.SQLITE_LIMIT_LENGTH) == previous_length
+        assert work.usage["ref_source_vm_steps"] > 0
+    finally:
+        conn.close()
+    assert not calls
+    assert any(
+        "repositories" in item and "generated" in item for item in scan.omissions
+    )
+    assert any(c["candidate_type"] == "ref_subject" for c in scan.candidates)
+    stop_catalog(suspect, "synthetic generated-column corruption")
+    output = tmp_path / "safe.jsonl"
+    receipt = SQLiteRecoveryAdapter().extract_salvage(
+        suspect,
+        output,
+        budget=RecoveryBudget(
+            max_payload_bytes=1024,
+            max_input_bytes=65536,
+            max_input_records=200,
+            max_work_units={"input_bytes": 100_000},
+        ),
+    )
+    assert receipt.partial
+    assert any(
+        "repositories" in item and "generated" in item
+        for item in receipt.unreadable_scope
+    )
+    assert any(
+        json.loads(line)["candidate_type"] == "ref_subject"
+        for line in output.read_text().splitlines()
+    )
+    assert path.read_bytes() == before
+
+
+@pytest.mark.parametrize("kind", ["VIRTUAL", "STORED"])
+def test_unselected_generated_column_is_rejected_before_projection(tmp_path, kind):
+    path = tmp_path / "generated.sqlite3"
+    with sqlite3.connect(path) as db:
+        db.execute(
+            "CREATE TABLE repositories(repository_uuidv4 TEXT, "
+            f"derived TEXT GENERATED ALWAYS AS (upper('x')) {kind})"
+        )
+        db.execute(
+            "INSERT INTO repositories(repository_uuidv4) VALUES(?)", (str(uuid4()),)
+        )
+    conn = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+    calls = []
+
+    def authorizer(action, _arg1, arg2, _db, _trigger):
+        if action == sqlite3.SQLITE_FUNCTION and arg2 == "upper":
+            calls.append(arg2)
+        return sqlite3.SQLITE_OK
+
+    conn.set_authorizer(authorizer)
+    try:
+        scan = scan_ref_units(
+            conn, RecoveryWorkBudget(), max_records=100, max_row_bytes=1024
+        )
+    finally:
+        conn.close()
+    assert not calls
+    assert any(
+        "repositories" in item and "generated" in item for item in scan.omissions
+    )
+
+
+def test_source_vm_budget_is_finite_and_not_reset_on_continuation(tmp_path):
+    path = tmp_path / "source.sqlite3"
+    with sqlite3.connect(path) as db:
+        db.execute("CREATE TABLE repositories(repository_uuidv4 TEXT)")
+        db.execute("INSERT INTO repositories VALUES(?)", (str(uuid4()),))
+    conn = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+    try:
+        work = RecoveryWorkBudget(work_limits={"ref_source_vm_steps": 100})
+        first = scan_ref_units(conn, work, max_records=100, max_row_bytes=1024)
+        charged = work.usage["ref_source_vm_steps"]
+        assert first.exhausted and charged == 100
+        second = scan_ref_units(conn, work, max_records=100, max_row_bytes=1024)
+        assert second.exhausted and not second.candidates
+        assert work.usage["ref_source_vm_steps"] == charged
+    finally:
+        conn.close()
+
+
+def test_oversized_stored_value_is_omitted_without_executing_schema(tmp_path):
+    path = tmp_path / "large-stored.sqlite3"
+    with sqlite3.connect(path) as db:
+        db.execute("CREATE TABLE repositories(repository_uuidv4 TEXT)")
+        db.execute("INSERT INTO repositories VALUES(?)", ("x" * 8192,))
+    conn = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+    try:
+        scan = scan_ref_units(
+            conn, RecoveryWorkBudget(), max_records=100, max_row_bytes=1024
+        )
+    finally:
+        conn.close()
+    assert any(
+        "repositories" in item and "row exceeds" in item for item in scan.omissions
+    )
+    assert not any(
+        "repositories" in item and "generated" in item for item in scan.omissions
+    )
+
+
+def test_context_generated_columns_are_not_selected_or_executed(tmp_path):
+    path = tmp_path / "context.sqlite3"
+    with sqlite3.connect(path) as db:
+        db.execute(
+            "CREATE TABLE text_bodies(sha256 TEXT, text_value TEXT, "
+            "derived TEXT GENERATED ALWAYS AS (hex(zeroblob(8388608))) VIRTUAL)"
+        )
+        db.execute(
+            "INSERT INTO text_bodies(sha256,text_value) VALUES(?,?)", ("a" * 64, "safe")
+        )
+    output = io.StringIO()
+    counts = SQLiteRecoveryAdapter()._salvage_store_stream(
+        path,
+        "context",
+        output,
+        100,
+        100_000,
+        1024,
+        0,
+        0,
+        RecoveryWorkBudget(work_limits={"input_records": 100}),
+    )
+    assert counts[0] == counts[3] == 1 and not counts[2] and not counts[-1]
+    row = json.loads(output.getvalue())
+    assert row["payload"]["text_value"] == "safe"
+
+
+def test_extract_vm_expenditure_survives_a_continuing_request(acquisition, tmp_path):
+    app, _, _, repository, origin, core_path, _ = acquisition
+    p4_fixtures.fixture_note(acquisition)
+    discover(app, repository, origin, str(uuid4()))
+    stop_catalog(core_path.parent, "synthetic bounded source scan")
+    budget = RecoveryBudget(max_work_units={"ref_source_vm_steps": 100})
+    adapter = SQLiteRecoveryAdapter()
+    outside = tmp_path.parent / (tmp_path.name + "-vm-output")
+    outside.mkdir()
+    first = adapter.extract_salvage(
+        core_path.parent,
+        outside / "vm-first.jsonl",
+        budget=budget,
+        request_id="vm-continuation",
+    )
+    before = _extract_state(core_path.parent)
+    assert first.partial and before["ref_source_vm_steps"] == 100
+    second = adapter.extract_salvage(
+        core_path.parent,
+        outside / "vm-second.jsonl",
+        budget=budget,
+        request_id="vm-continuation",
+    )
+    after = _extract_state(core_path.parent)
+    assert second.partial and after["ref_source_vm_steps"] == 100
+    assert all(after[key] >= value for key, value in before.items())
+
+
+def test_crashed_vm_reservation_is_not_refunded_on_resume(acquisition, tmp_path):
+    app, _, _, repository, origin, core_path, _ = acquisition
+    p4_fixtures.fixture_note(acquisition)
+    discover(app, repository, origin, str(uuid4()))
+    stop_catalog(core_path.parent, "synthetic interrupted source scan")
+    before = {
+        path.name: path.read_bytes()
+        for path in core_path.parent.glob("core.sqlite3*")
+        if path.is_file()
+    }
+    outside = tmp_path.parent / (tmp_path.name + "-vm-crash")
+    outside.mkdir()
+    ctx = multiprocessing.get_context("spawn")
+    child = ctx.Process(
+        target=_extract_process,
+        args=(core_path.parent, outside / "crashed.jsonl", None, None, "vm"),
+    )
+    child.start()
+    child.join(40)
+    if child.is_alive():
+        child.terminate()
+        child.join(5)
+        pytest.fail("VM reservation crash probe did not finish")
+    assert child.exitcode == -signal.SIGKILL
+    reserved = _extract_state(core_path.parent)["ref_source_vm_steps"]
+    assert reserved == RecoveryWorkBudget()._max["ref_source_vm_steps"]
+    resumed = SQLiteRecoveryAdapter().extract_salvage(
+        core_path.parent, outside / "resumed.jsonl", request_id="shared-extraction"
+    )
+    assert resumed.partial
+    assert _extract_state(core_path.parent)["ref_source_vm_steps"] == reserved
+    assert {
+        path.name: path.read_bytes()
+        for path in core_path.parent.glob("core.sqlite3*")
+        if path.is_file()
+    } == before
 
 
 def test_empty_event_and_rootless_claims_survive_without_context(acquisition, tmp_path):
@@ -659,6 +927,122 @@ def test_missing_event_dependency_resolves_from_baseline_or_later_input(
             ).claims == (link.claim,)
         finally:
             receiver.close()
+
+
+@pytest.mark.parametrize("reverse", [False, True])
+def test_transitive_pending_dependencies_are_order_independent(
+    acquisition, tmp_path, reverse
+):
+    app, _, _, repository, origin, core_path, _ = acquisition
+    p4_fixtures.fixture_note(acquisition)
+    event = discover(app, repository, origin, str(uuid4())).enumerations[0]
+    key = event.links[0].claim.ref_observation_key
+    source = sqlite3.connect(f"file:{core_path}?mode=ro", uri=True)
+    try:
+        scan = scan_ref_units(
+            source, RecoveryWorkBudget(), max_records=500, max_row_bytes=1024 * 1024
+        )
+    finally:
+        source.close()
+    pending_event = copy.deepcopy(
+        next(
+            c
+            for c in scan.candidates
+            if c["candidate_type"] == "ref_enumeration"
+            and c["payload"]["section"]["ref_enumeration_observations"][0][
+                "enumeration_uuidv7"
+            ]
+            == event.event.enumeration_uuidv7
+        )
+    )
+    pending_event["payload"]["section"]["ref_observations"] = []
+    pending_event["payload"]["section"]["ref_observation_claims"] = []
+    pending_claim = copy.deepcopy(
+        next(
+            c
+            for c in scan.candidates
+            if c["candidate_type"] == "ref_claim"
+            and c["payload"]["claim"]["ref_observation_uuidv7"]
+            == key.ref_observation_uuidv7
+        )
+    )
+    pending_claim["payload"]["observation"] = None
+    subject = next(
+        c
+        for c in scan.candidates
+        if c["candidate_type"] == "ref_subject"
+        and c["payload"]["observation"]["ref_observation_uuidv7"]
+        == key.ref_observation_uuidv7
+    )
+    outside = tmp_path.parent / (tmp_path.name + "-transitive")
+    outside.mkdir()
+    baseline = outside / "baseline"
+    baseline.mkdir()
+    initialize(baseline / "core.sqlite3", "core", repository, str(uuid4()))
+    baseline_core = GitCore(baseline / "core.sqlite3")
+    try:
+        baseline_core.admit_repository(repository)
+    finally:
+        baseline_core.close()
+    adapter = SQLiteRecoveryAdapter()
+    backup = outside / "backup"
+    adapter.create_consistent_backup(baseline, backup, BackupScope.GIT_ONLY)
+    destination = outside / "fresh"
+    adapter.restore_backup(backup, destination, repository)
+    items = [pending_event, pending_claim, subject]
+    if reverse:
+        items.reverse()
+    lines = [json.dumps(item) + "\n" for item in items]
+    source_file = outside / "candidates.jsonl"
+    source_file.write_text("".join(lines))
+    receipt = adapter.merge_salvage(destination, source_file, request_id="chain")
+    assert receipt.admitted_units == 3 and receipt.deferred_units == 0, (
+        receipt.rejections
+    )
+    receiver = GitCore(destination / "core.sqlite3")
+    try:
+        assert (
+            receiver.ref_enumeration(*event.event.identity, RecoveryWorkBudget())
+            == event
+        )
+    finally:
+        receiver.close()
+    assert not (destination / "p1-recovery-stop.json").exists()
+    if not reverse:
+        # The first dependency retry consumes the remainder; a continuing
+        # request may not forget that work or manufacture an event.
+        bounded_destination = outside / "fresh-bounded"
+        adapter.restore_backup(backup, bounded_destination, repository)
+        decode_limit = 3 * (
+            sum(len(line.encode()) for line in lines) + len(lines[0].encode())
+        )
+        budget = RecoveryBudget(max_work_units={"json_decode_bytes": decode_limit})
+        limited = adapter.merge_salvage(
+            bounded_destination, source_file, budget=budget, request_id="bounded-chain"
+        )
+        assert not limited.input_complete and limited.unprocessed_units > 0
+        state_path = bounded_destination / "p1-recovery-request-bounded-chain.json"
+        before_retry = json.loads(state_path.read_text())["cumulative_usage"]
+        assert before_retry["json_decode_bytes"] == decode_limit
+        adapter.merge_salvage(
+            bounded_destination, source_file, budget=budget, request_id="bounded-chain"
+        )
+        assert json.loads(state_path.read_text())["cumulative_usage"] == before_retry
+        bounded_core = GitCore(bounded_destination / "core.sqlite3")
+        try:
+            assert not bounded_core.sql("SELECT 1 FROM ref_enumeration_observations")
+        finally:
+            bounded_core.close()
+        assert not (bounded_destination / "p1-recovery-stop.json").exists()
+
+        missing_destination = outside / "fresh-missing"
+        adapter.restore_backup(backup, missing_destination, repository)
+        missing_file = outside / "missing-subject.jsonl"
+        missing_file.write_text("".join(lines[:2]))
+        missing = adapter.merge_salvage(missing_destination, missing_file)
+        assert missing.deferred_units == 2 and missing.input_complete
+        assert missing.admitted_units == missing.unprocessed_units == 0
+        assert not (missing_destination / "p1-recovery-stop.json").exists()
 
 
 def test_lossless_ref_and_competing_claims_survive_shuffled_replay(

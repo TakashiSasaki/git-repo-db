@@ -130,6 +130,12 @@ _REF_OBSERVATION_TABLES = frozenset(
     }
 )
 
+# Independent ceilings allow the two simultaneously open forensic readers to
+# reserve their SQLite VM work without sharing a pending reservation. The
+# reservation is durable before stepping SQLite and settled on clean return.
+_FORENSIC_VM_LIMIT = 10_000_000
+_FORENSIC_VM_UNITS = ("legacy_source_vm_steps", "ref_source_vm_steps")
+
 
 AT_FDCWD = -100
 RENAME_NOREPLACE = 1
@@ -1026,6 +1032,13 @@ class RecoveryWorkBudget:
     ) -> None:
         self.limits = NotesLimits(note_bytes=note_bytes)
         self._max = dict(NotesLimits.work_limits())
+        self._max.update(
+            {
+                unit: _FORENSIC_VM_LIMIT
+                for unit in _FORENSIC_VM_UNITS
+                if initial_usage is None or reserve is None or unit in initial_usage
+            }
+        )
         if work_limits is not None:
             self._max.update(work_limits)
         self.usage: dict[str, int] = dict.fromkeys(self._max, 0)
@@ -1941,6 +1954,7 @@ class SQLiteRecoveryAdapter:
                 "extract-" + hashlib.sha256(token.encode("utf-8")).hexdigest()[:40]
             )
             limits = dict(NotesLimits.work_limits())
+            limits.update(dict.fromkeys(_FORENSIC_VM_UNITS, _FORENSIC_VM_LIMIT))
             limits.update(b.max_work_units)
             limits.setdefault("json_decode_bytes", b.max_input_bytes * 3)
             limits.setdefault(
@@ -2173,6 +2187,8 @@ class SQLiteRecoveryAdapter:
         work=None,
         max_json_depth: int = 16,
     ) -> tuple[int, int, list[str], int, int, int, bool]:
+        from repo_catalog.adapters.sqlite.ref_salvage import _validate_source_shape
+
         if work is None:
             work = RecoveryWorkBudget(work_limits={"input_records": max_records})
         unreadable: list[str] = []
@@ -2184,23 +2200,52 @@ class SQLiteRecoveryAdapter:
         stopped_due_to_limits = False
 
         conn = None
+        vm_reserved = False
+        vm_steps = [0]
+        vm_allowance = 0
         try:
             try:
                 conn = sqlite3.connect(f"file:{db_path.resolve()}?mode=ro", uri=True)
                 register_functions(conn)
-                conn.execute("PRAGMA query_only=ON")
+                remaining = work._max["input_bytes"] - work.usage["input_bytes"]
                 conn.setlimit(
-                    sqlite3.SQLITE_LIMIT_LENGTH, max(65536, max_payload_bytes * 4)
+                    sqlite3.SQLITE_LIMIT_LENGTH,
+                    max(65536, min(max_payload_bytes * 4, max(65536, remaining))),
                 )
                 conn.setlimit(sqlite3.SQLITE_LIMIT_COLUMN, 512)
                 conn.setlimit(sqlite3.SQLITE_LIMIT_SQL_LENGTH, 256 * 1024)
-                vm_work = [0]
+
+                def authorizer(action, _arg1, arg2, _database, origin):
+                    # Context's legitimate schema contains generated columns
+                    # using application functions that Python cannot mark
+                    # SQLITE_INNOCUOUS. Inspect their descriptors but never
+                    # invoke those expressions, views, triggers or UDFs.
+                    if origin is not None:
+                        return sqlite3.SQLITE_DENY
+                    if action == sqlite3.SQLITE_FUNCTION and arg2 not in (
+                        "typeof",
+                        "octet_length",
+                        "like",
+                    ):
+                        return sqlite3.SQLITE_DENY
+                    return sqlite3.SQLITE_OK
+
+                conn.set_authorizer(authorizer)
+                unit = "legacy_source_vm_steps"
+                vm_allowance = work._max[unit] - work.usage[unit]
+                if vm_allowance <= 0:
+                    raise CoreFailure("BUDGET", unit, "finite SQLite VM budget")
+                work.require(unit, vm_allowance)
+                vm_reserved = True
 
                 def progress():
-                    vm_work[0] += 1000
-                    return int(vm_work[0] > max(10000, max_bytes * 4))
+                    vm_steps[0] += 1
+                    return int(vm_steps[0] > vm_allowance)
 
-                conn.set_progress_handler(progress, 1000)
+                conn.set_progress_handler(progress, 1)
+                conn.execute("PRAGMA query_only=ON")
+                if store_name == "core":
+                    conn.execute("PRAGMA trusted_schema=OFF")
                 # Names come from the packaged P1 manifest, never from the
                 # recovered schema. Arbitrary tables have no typed retention
                 # purpose and must not become a generic body archive.
@@ -2268,7 +2313,10 @@ class SQLiteRecoveryAdapter:
                     and getattr(e, "sqlite_errorcode", None)
                     in (sqlite3.SQLITE_CORRUPT, sqlite3.SQLITE_NOTADB)
                 )
-                return 0, 0, unreadable, 0, 0, confirmed, False
+                limited = (
+                    isinstance(e, CoreFailure) and e.code in ("BUDGET", "QUERY_BUDGET")
+                ) or getattr(e, "sqlite_errorcode", None) == sqlite3.SQLITE_INTERRUPT
+                return 0, 0, unreadable, 0, 0, confirmed, limited
 
             if len(tables) > max_records:
                 tables = tables[:max_records]
@@ -2333,34 +2381,11 @@ class SQLiteRecoveryAdapter:
 
                 try:
                     quoted_table = '"' + table.replace('"', '""') + '"'
-                    work.require("metadata_units", 513)
-                    try:
-                        work.require("input_bytes", 513 * 256)
-                    except BaseException:
-                        work.abandon("metadata_units")
-                        raise
-                    try:
-                        descriptors = conn.execute(
-                            "SELECT CASE WHEN octet_length(name)<=256 THEN name END "
-                            "FROM pragma_table_info(?) LIMIT 513",
-                            (table,),
-                        ).fetchall()
-                    except BaseException:
-                        work.abandon("metadata_units")
-                        work.abandon("input_bytes")
-                        raise
-                    work.charge("metadata_units", len(descriptors))
-                    work.charge(
-                        "input_bytes",
-                        sum(len((r[0] or "").encode("utf-8")) for r in descriptors),
+                    # table_info omits generated columns; xinfo inspects every
+                    # descriptor before any recovered expression is projected.
+                    columns = _validate_source_shape(
+                        conn, table, work, allow_generated=store_name == "context"
                     )
-                    columns = [r[0] for r in descriptors]
-                    if (
-                        not columns
-                        or len(columns) > 512
-                        or any(c is None for c in columns)
-                    ):
-                        raise ValueError("Unsupported or excessive source column count")
                     quoted_columns = ['"' + c.replace('"', '""') + '"' for c in columns]
                     row_size = " + ".join(
                         f"CASE WHEN typeof({c}) IN ('text','blob') THEN octet_length({c}) "
@@ -2371,7 +2396,7 @@ class SQLiteRecoveryAdapter:
                         f"CASE WHEN ({row_size}) > ? THEN NULL ELSE {c} END AS {c}"
                         for c in quoted_columns
                     )
-                    query = f"SELECT {projection}, ({row_size}) FROM {quoted_table} LIMIT 1 OFFSET ?"
+                    query = f"SELECT {projection}, ({row_size}) FROM {quoted_table} NOT INDEXED LIMIT 1 OFFSET ?"
                     offset = 0
                     while True:
                         if (records_offset + written_records) >= max_records:
@@ -2770,9 +2795,15 @@ class SQLiteRecoveryAdapter:
                         e, "sqlite_errorcode", None
                     ) in (sqlite3.SQLITE_CORRUPT, sqlite3.SQLITE_NOTADB):
                         corrupt += 1
+                    if getattr(e, "sqlite_errorcode", None) == sqlite3.SQLITE_INTERRUPT:
+                        stopped_due_to_limits = True
+                        break
         finally:
             if conn:
+                conn.set_progress_handler(None, 0)
                 conn.close()
+            if vm_reserved:
+                work.charge("legacy_source_vm_steps", min(vm_steps[0], vm_allowance))
 
         return (
             written_records,
@@ -4251,84 +4282,86 @@ class SQLiteRecoveryAdapter:
                                 "reason": f"Unknown candidate type: {c_type}",
                             }
                         )
-            # One bounded pass after all input units were considered makes
-            # independently supplied dependencies insensitive to line order.
-            for candidate_id, kind, raw in pending_candidates:
-                if budget_exhausted:
-                    deferred += 1
-                    rejections.append(
-                        {
-                            "candidate_id": candidate_id,
-                            "reason": "Dependency retry not attempted after budget exhaustion",
-                        }
-                    )
-                    continue
-                decode_work = 3 * len(raw)
-                try:
-                    work_budget.require("json_decode_bytes", decode_work)
+            # Each successful candidate leaves the queue permanently. Retry
+            # until a whole pass makes no progress; every reparse and admission
+            # is charged to the same durable request budget.
+            pending = pending_candidates
+            while pending:
+                remaining = []
+                progressed = False
+                for candidate_id, kind, raw in pending:
+                    if budget_exhausted:
+                        remaining.append((candidate_id, kind, raw))
+                        continue
+                    decode_work = 3 * len(raw)
                     try:
-                        delayed = _bounded_json_loads(raw, b)
-                    finally:
-                        work_budget.charge("json_decode_bytes", decode_work)
-                    was_replay = admit_ref_unit_atomic(
-                        fresh_destination_dir, kind, delayed["payload"], work_budget
-                    )
-                    if was_replay is None:
-                        deferred += 1
-                        rejections.append(
-                            {
-                                "candidate_id": candidate_id,
-                                "reason": "Original dependency remains unavailable",
-                            }
+                        work_budget.require("json_decode_bytes", decode_work)
+                        try:
+                            delayed = _bounded_json_loads(raw, b)
+                        finally:
+                            work_budget.charge("json_decode_bytes", decode_work)
+                        was_replay = admit_ref_unit_atomic(
+                            fresh_destination_dir, kind, delayed["payload"], work_budget
                         )
-                    elif was_replay:
-                        replayed += 1
-                    else:
-                        admitted += 1
-                except CoreFailure as error:
-                    if error.code in ("AUTHORITATIVE_CORRUPTION", "RECOVERY_STOP"):
-                        raise
-                    if error.code in ("BUDGET", "QUERY_BUDGET"):
-                        budget_exhausted = True
-                        unprocessed += 1
-                        rejections.append(
-                            {
-                                "candidate_id": candidate_id,
-                                "reason": f"Work budget exhausted: {error}",
-                            }
-                        )
-                    elif error.code in (
-                        "MISSING_DEPENDENCY",
-                        "OBSERVATION_UNAVAILABLE",
-                    ):
-                        deferred += 1
-                        rejections.append(
-                            {
-                                "candidate_id": candidate_id,
-                                "reason": f"Dependency unavailable: {error}",
-                            }
-                        )
-                    else:
+                        if was_replay is None:
+                            remaining.append((candidate_id, kind, raw))
+                        else:
+                            progressed = True
+                            if was_replay:
+                                replayed += 1
+                            else:
+                                admitted += 1
+                    except CoreFailure as error:
+                        if error.code in ("AUTHORITATIVE_CORRUPTION", "RECOVERY_STOP"):
+                            raise
+                        if error.code in ("BUDGET", "QUERY_BUDGET"):
+                            budget_exhausted = True
+                            unprocessed += 1
+                            rejections.append(
+                                {
+                                    "candidate_id": candidate_id,
+                                    "reason": f"Work budget exhausted: {error}",
+                                }
+                            )
+                        elif error.code in (
+                            "MISSING_DEPENDENCY",
+                            "OBSERVATION_UNAVAILABLE",
+                        ):
+                            remaining.append((candidate_id, kind, raw))
+                        else:
+                            rejected += 1
+                            rejections.append(
+                                {
+                                    "candidate_id": candidate_id,
+                                    "reason": f"Ref admission error: {error}",
+                                }
+                            )
+                    except (
+                        ValueError,
+                        TypeError,
+                        KeyError,
+                        sqlite3.IntegrityError,
+                    ) as error:
                         rejected += 1
                         rejections.append(
                             {
                                 "candidate_id": candidate_id,
-                                "reason": f"Ref admission error: {error}",
+                                "reason": f"Invalid ref candidate: {error}",
                             }
                         )
-                except (
-                    ValueError,
-                    TypeError,
-                    KeyError,
-                    sqlite3.IntegrityError,
-                ) as error:
-                    rejected += 1
-                    rejections.append(
-                        {
-                            "candidate_id": candidate_id,
-                            "reason": f"Invalid ref candidate: {error}",
-                        }
+                if budget_exhausted or not progressed:
+                    deferred += len(remaining)
+                    reason = (
+                        "Dependency retry not attempted after budget exhaustion"
+                        if budget_exhausted
+                        else "Original dependency remains unavailable"
                     )
+                    rejections.extend(
+                        {"candidate_id": candidate_id, "reason": reason}
+                        for candidate_id, _, _ in remaining
+                    )
+                    break
+                pending = remaining
         finally:
             try:
                 _save_budget_state()

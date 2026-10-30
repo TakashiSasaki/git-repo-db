@@ -294,6 +294,74 @@ def _wire_key(wire, work):
     return tuple(wire.values())
 
 
+class _UnsafeSourceShape(ValueError):
+    """A suspect table cannot be evaluated as plain stored columns."""
+
+
+def _validate_source_shape(conn, table, work, *, required=(), allow_generated=False):
+    """Inspect every column descriptor without selecting any recovered value."""
+    remaining_bytes = work._max["input_bytes"] - work.usage["input_bytes"]
+    remaining_units = work._max["metadata_units"] - work.usage["metadata_units"]
+    limit = min(513, remaining_units, remaining_bytes // 264)
+    if limit <= 0:
+        raise CoreFailure("BUDGET", table, "finite source schema inspection limit")
+    work.require("metadata_units", limit)
+    try:
+        work.require("input_bytes", limit * 264)
+    except BaseException:
+        work.abandon("metadata_units")
+        raise
+    try:
+        rows = conn.execute(
+            "SELECT CASE WHEN octet_length(name)<=256 THEN name END,hidden "
+            "FROM pragma_table_xinfo(?) LIMIT ?",
+            (table, limit),
+        ).fetchall()
+    except BaseException:
+        work.abandon("metadata_units")
+        work.abandon("input_bytes")
+        raise
+    work.charge("metadata_units", len(rows))
+    work.charge(
+        "input_bytes",
+        sum(
+            (
+                len(name)
+                if isinstance(name, bytes)
+                else len(name.encode("utf-8"))
+                if isinstance(name, str)
+                else 0
+            )
+            + 8
+            for name, _ in rows
+        ),
+    )
+    if len(rows) == limit:
+        if limit < 513:
+            raise CoreFailure("BUDGET", table, "incomplete source schema inspection")
+        raise _UnsafeSourceShape("excessive source column count")
+    if not rows or any(
+        not isinstance(name, (bytes, str)) or type(hidden) is not int
+        for name, hidden in rows
+    ):
+        raise _UnsafeSourceShape("missing or invalid source column descriptors")
+    if any(hidden not in (0, 2, 3) for _, hidden in rows) or (
+        not allow_generated and any(hidden != 0 for _, hidden in rows)
+    ):
+        raise _UnsafeSourceShape("generated or hidden source columns are forbidden")
+    try:
+        names = [
+            name.decode("utf-8") if isinstance(name, bytes) else name
+            for name, hidden in rows
+            if hidden == 0
+        ]
+    except UnicodeDecodeError as error:
+        raise _UnsafeSourceShape("invalid source column name") from error
+    if not names or not set(required).issubset(names):
+        raise _UnsafeSourceShape("required stored source column is missing")
+    return names
+
+
 def _rows(conn, table, work, *, maximum, max_row_bytes, columns=None):
     """Fetch one bounded row per statement, reserving before SQLite steps it.
 
@@ -302,6 +370,7 @@ def _rows(conn, table, work, *, maximum, max_row_bytes, columns=None):
     UTF-8 is diagnosed per row so unrelated rows remain available.
     """
     columns = _COLUMNS[table] if columns is None else columns
+    _validate_source_shape(conn, table, work, required=columns)
     sizes = " + ".join(
         f"CASE WHEN typeof({c}) IN ('text','blob') THEN octet_length({c}) "
         f"WHEN {c} IS NULL THEN 0 ELSE 8 END"
@@ -309,7 +378,7 @@ def _rows(conn, table, work, *, maximum, max_row_bytes, columns=None):
     )
     types = ",".join(f"typeof({c})" for c in columns)
     projected = ",".join(f"CASE WHEN ({sizes})<=? THEN {c} END" for c in columns)
-    query = f"SELECT ({sizes}),{types},{projected} FROM {table} LIMIT 1 OFFSET ?"
+    query = f"SELECT ({sizes}),{types},{projected} FROM {table} NOT INDEXED LIMIT 1 OFFSET ?"
     offset = 0
     while offset < maximum:
         remaining = work._max["input_bytes"] - work.usage["input_bytes"]
@@ -546,18 +615,50 @@ def scan_ref_units(conn: sqlite3.Connection, work, *, max_records, max_row_bytes
     """Pin one coherent read-only source snapshot for typed extraction."""
     if conn.in_transaction:
         raise ValueError("dedicated forensic reader connection required")
+    unit = "ref_source_vm_steps"
+    available = work._max[unit] - work.usage[unit]
+    if available <= 0:
+        return RefSalvageScan([], ["core:typed-scan: finite SQLite VM budget"], True)
+    work.require(unit, available)
+    steps = [0]
+
+    def progress():
+        steps[0] += 1
+        return int(steps[0] > available)
+
     previous_factory = conn.text_factory
-    conn.execute("PRAGMA query_only=ON")
-    conn.execute("PRAGMA trusted_schema=OFF")
-    conn.text_factory = bytes
-    conn.execute("BEGIN")
+    previous_limits = []
     try:
+        remaining = work._max["input_bytes"] - work.usage["input_bytes"]
+        length_limit = max(65536, min(max_row_bytes * 4, max(65536, remaining)))
+        for category, ceiling in (
+            (sqlite3.SQLITE_LIMIT_LENGTH, length_limit),
+            (sqlite3.SQLITE_LIMIT_COLUMN, 512),
+            (sqlite3.SQLITE_LIMIT_SQL_LENGTH, 256 * 1024),
+        ):
+            previous_limits.append((category, conn.setlimit(category, ceiling)))
+        conn.set_progress_handler(progress, 1)
+        conn.execute("PRAGMA query_only=ON")
+        conn.execute("PRAGMA trusted_schema=OFF")
+        conn.text_factory = bytes
+        conn.execute("BEGIN")
         return _scan_ref_units(
             conn, work, max_records=max_records, max_row_bytes=max_row_bytes
         )
+    except sqlite3.DatabaseError as error:
+        if getattr(error, "sqlite_errorcode", None) == sqlite3.SQLITE_INTERRUPT:
+            return RefSalvageScan(
+                [], ["core:typed-scan: finite SQLite VM budget"], True
+            )
+        raise
     finally:
-        conn.rollback()
+        conn.set_progress_handler(None, 0)
+        if conn.in_transaction:
+            conn.rollback()
         conn.text_factory = previous_factory
+        for category, ceiling in previous_limits:
+            conn.setlimit(category, ceiling)
+        work.charge(unit, min(steps[0], available))
 
 
 def _scan_ref_units(conn: sqlite3.Connection, work, *, max_records, max_row_bytes):
@@ -598,8 +699,13 @@ def _scan_ref_units(conn: sqlite3.Connection, work, *, max_records, max_row_byte
             omissions.append(f"core:{table}: finite salvage budget")
             exhausted = True
             break
+        except _UnsafeSourceShape as error:
+            omissions.append(f"core:{table}: {error}")
         except sqlite3.DatabaseError as error:
             omissions.append(f"core:{table}: unreadable ({error})")
+            if getattr(error, "sqlite_errorcode", None) == sqlite3.SQLITE_INTERRUPT:
+                exhausted = True
+                break
 
     repositories = {row["repository_uuidv4"] for row in tables["repositories"]}
     observations, claims, candidates = {}, {}, []

@@ -56,8 +56,9 @@ When the original link rows are all present but their subject or result Claim
 is unreadable, extraction may retain the complete link coordinates as an
 untrusted pending event, while reporting the missing source dependency. The
 receiver resolves only the same immutable subject and original Claim coordinate
-from its validated baseline or another input unit. One bounded retry pass after
-the input stream handles later dependencies; an unresolved event is deferred.
+from its validated baseline or another input unit. A bounded fixed-point retry
+after the input stream resolves transitive later dependencies; a pass without
+progress defers the remainder, and each retry consumes the same durable budget.
 An independently readable Claim whose subject is missing can likewise wait for
 that exact subject; the receiver checks their original scope before admission.
 If a link itself is missing, duplicated or malformed, no whole-event candidate
@@ -94,6 +95,17 @@ supply the same explicit request ID. Output candidates have a finite nesting
 and element limit; a whole event or Group that exceeds it is omitted and the
 receipt is partial rather than silently shrinking the unit. Decoder traversal
 has its own cumulative byte-work budget in addition to the read-byte budget.
+Forensic readers inspect column descriptors before projecting source values;
+typed Core tables with generated or hidden columns are omitted. Existing
+Context tables may contain auxiliary generated columns: those are excluded
+from the projection, with direct table scans and an authorizer that disallows
+views, triggers and unapproved functions. Each forensic connection has finite
+SQLite size and VM limits, and its VM reservation is
+persisted before execution and settled to measured work after a clean return.
+The independent reader allowances are cumulative across an extraction request.
+Draft extraction ledgers created before these VM dimensions cannot silently
+resume with fresh allowances: mismatched accounting fails closed. Existing
+merge-request ledgers do not acquire these extraction-only dimensions.
 
 The restored-baseline receipt is a local workflow record written only after
 backup validation and fresh restore. It does not authenticate an issuer, sign a
@@ -123,12 +135,12 @@ Exercise SHA-1 and SHA-256 without claiming untested platforms or live catalogs.
 | Unit or boundary | Current supported treatment | Regression examples |
 | --- | --- | --- |
 | Subject and result Claims | Typed metadata-only extraction and atomic admission with original IDs, bytes and provenance; distinct Claims stay distinct | `test_empty_event_and_rootless_claims_survive_without_context`, `test_lossless_ref_and_competing_claims_survive_shuffled_replay` |
-| Enumeration | Whole event with all original ordered links, including empty events; resolve missing link dependencies from the baseline or later input, otherwise defer; independent Claims may survive an omitted event | `test_missing_event_dependency_resolves_from_baseline_or_later_input`, `test_missing_event_link_does_not_discard_independent_claim`, `test_existing_whole_event_rejects_reordered_membership` |
+| Enumeration | Whole event with all original ordered links, including empty events; resolve missing link dependencies from the baseline or later input, otherwise defer; independent Claims may survive an omitted event | `test_transitive_pending_dependencies_are_order_independent`, `test_missing_event_dependency_resolves_from_baseline_or_later_input`, `test_missing_event_link_does_not_discard_independent_claim`, `test_existing_whole_event_rejects_reordered_membership` |
 | Mapping content, Claims and Groups | Content may stand alone; Claims and each whole reported Group retain their own scope, order and provenance | `test_standalone_mapping_never_creates_evidence_or_body`, `test_partial_groups_are_not_unioned_into_complete_coverage` |
 | Notes evidence and physical copies | Locally recheck exact Claim/root/path/physical bytes, including missing dependencies; preserve original evidence and add distinct receiver evidence | `test_notes_dependencies_resolve_without_rebinding_original_evidence`, `test_pending_note_cannot_rebind_existing_claim_to_another_root`, `test_damaged_note_copy_is_omitted_without_losing_valid_sibling`, `test_invalid_candidate_rolls_back_and_actual_target_damage_stops` |
 | Coverage | Preserve supported Claim history; verify whole Notes inventory only, including resolved dependencies. Unsupported completeness Claims remain exchangeable metadata with unknown derived completeness | `test_inventory_dependencies_resolve_from_baseline_or_later_input`, `test_whole_inventory_rejects_changed_group_membership`, `test_older_salvaged_complete_cannot_replace_newer_partial` |
 | Fresh baseline, coexistence and activation | Restore revalidated Git-only or paired backup, check the scope and identities, merge, then validate and activate | `test_full_fresh_restore_salvage_and_activation`, `test_ref_merge_checks_paired_context_identity`, `test_missing_verified_baseline_cannot_merge_or_activate`, `test_corrupt_fresh_target_is_stopped_and_not_activated` |
-| Bounds and preservation | Source copy, bounded typed candidates, durable cumulative requests and no callback borrowing | `test_extract_crash_retains_reservation_and_preserves_source`, `test_parallel_extractions_share_one_cumulative_budget`, `test_candidate_decode_limit_stops_before_admission_and_survives_retry`, `test_receiver_work_callback_cannot_borrow_body_access` |
+| Bounds and preservation | Source copy, bounded typed candidates, generated-column exclusion, durable cumulative requests and no callback borrowing | `test_generated_source_columns_are_never_evaluated_and_other_rows_survive`, `test_context_generated_columns_are_not_selected_or_executed`, `test_extract_vm_expenditure_survives_a_continuing_request`, `test_crashed_vm_reservation_is_not_refunded_on_resume`, `test_extract_crash_retains_reservation_and_preserves_source`, `test_parallel_extractions_share_one_cumulative_budget`, `test_candidate_decode_limit_stops_before_admission_and_survives_retry`, `test_receiver_work_callback_cannot_borrow_body_access` |
 | Untyped and legacy data | Omit unrecognized source tables, ordinary blob bodies and untyped binary fields. Preserve legacy Capture/Notes recovery only when the exact source role and bytes revalidate; do not use it as a different ref Claim's evidence | `test_unknown_binary_is_not_staged_by_generic_extraction`, `test_legacy_note_bytes_are_staged_only_with_valid_original_proof`, `test_ordinary_blob_cannot_be_staged_as_structural_metadata` |
 
 These named examples are in `tests/integration/p7/test_ref_typed_salvage.py`;
