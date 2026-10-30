@@ -150,10 +150,7 @@ def main(argv: list[str] | None = None) -> int:
                     "retained_notes_count": len(
                         {
                             item.note
-                            for item in (
-                                *report.note_acquisitions,
-                                *report.ref_note_acquisitions,
-                            )
+                            for item in report.ref_note_acquisitions
                             if item.body_retained and item.note is not None
                         }
                     ),

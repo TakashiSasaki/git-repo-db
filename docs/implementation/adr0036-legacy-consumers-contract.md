@@ -394,3 +394,20 @@ The modified installed-distribution and P5/P6 compatibility scenarios use the
 new reader rather than a public Capture API. They are not claimed executed
 unless listed in the implementation report. No test is deleted or skipped to
 retire a mechanism.
+
+
+## R229 public caller and port correction
+
+Independent review of `5270e011eb590b451d387d132973dad6c8dfc76e`
+reported scoped FAIL (14/16 passing in 10.34s, plus a separate port import failure).
+R229-01 (P1) was a retained Access CLI consumer of removed
+`report.note_acquisitions`, causing an AttributeError after successful acquisition.
+The CLI now counts unique retained note OIDs solely from `ref_note_acquisitions`.
+Its interactive real-Git regression covers both Notes-enabled and Notes-disabled
+requests in sha1/sha256, including successful JSON/exit status and no old rows.
+R229-02 (P2) was stale DTO imports and Capture methods in `ProductionQueryPort`.
+The port now declares the current Ref pagination and exact-Claim APIs, no Capture
+methods/parameter, and the existing optional Search/rebuild work handle. An import
+and annotation-resolution smoke regression preserves the public contract. No
+private DTO alias or retired report field is restored. The original independent
+FAIL remains historical evidence; no independent re-review is claimed here.

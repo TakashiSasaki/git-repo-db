@@ -6,7 +6,7 @@ from collections.abc import Sequence
 from typing import Protocol
 
 from repo_catalog.domain.p1_context import CoverageScope, ResourceKey
-from repo_catalog.domain.p1_core import OID, Capture, CoreCoverageScope
+from repo_catalog.domain.p1_core import OID, CoreCoverageScope
 from repo_catalog.domain.ports.p1_core import WorkBudget
 from repo_catalog.domain.production_query import (
     ByteReadResult,
@@ -16,9 +16,6 @@ from repo_catalog.domain.production_query import (
     GitObjectView,
     GitObservationView,
     GitRepositoryView,
-    NotesCaptureView,
-    NotesInventoryView,
-    NotesTargetView,
     PageRequest,
     PageResult,
     PairedResourceView,
@@ -76,6 +73,13 @@ class ProductionQueryPort(Protocol):
         max_bytes: int = 64 * 1024 * 1024,
     ) -> RefObservationProjection: ...
 
+    def list_ref_observations(
+        self,
+        page: PageRequest = PageRequest(),
+        *,
+        work: WorkBudget | None = None,
+    ) -> PageResult[RefObservationProjection]: ...
+
     def get_ref_enumeration(
         self,
         origin_uuidv4: str,
@@ -126,7 +130,6 @@ class ProductionQueryPort(Protocol):
         oid: OID,
         *,
         include_bytes: bool = False,
-        note_captures: Sequence[Capture] = (),
     ) -> GitObjectView: ...
 
     def list_git_objects(
@@ -145,30 +148,7 @@ class ProductionQueryPort(Protocol):
         ref_prefix: str | None = None,
     ) -> PageResult[GitObservationView]: ...
 
-    def list_notes_captures(
-        self,
-        page: PageRequest = PageRequest(),
-        *,
-        notes_ref: str | None = None,
-    ) -> PageResult[NotesCaptureView]: ...
-
-    def get_notes_target(
-        self,
-        capture: Capture,
-        target: OID,
-        *,
-        include_bytes: bool = False,
-    ) -> NotesTargetView: ...
-
-    def list_notes_inventories(
-        self, capture: Capture
-    ) -> tuple[NotesInventoryView, ...]: ...
-
     def read_metadata_bytes(self, oid: OID) -> ByteReadResult: ...
-
-    def read_note_bytes(
-        self, capture: Capture, target: OID, note_oid: OID
-    ) -> ByteReadResult: ...
 
     def get_core_coverage(
         self,
@@ -227,6 +207,10 @@ class ProductionQueryPort(Protocol):
     def rebuild_search(
         self,
         projection_kinds: Sequence[str] = ("git_metadata", "notes", "context_text"),
+        *,
+        work: WorkBudget | None = None,
     ) -> dict[str, int]: ...
 
-    def search(self, query: SearchQuery) -> SearchResponse: ...
+    def search(
+        self, query: SearchQuery, *, work: WorkBudget | None = None
+    ) -> SearchResponse: ...

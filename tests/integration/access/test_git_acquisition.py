@@ -654,7 +654,8 @@ def test_cli_noninteractive_cannot_acquire(setup):
     assert usage(setup) == 0 and rows(setup, "git_objects") == []
 
 
-def test_cli_interactive_acquires_actual_git(setup, monkeypatch, capsys):
+@pytest.mark.parametrize("notes", [False, True], ids=["without-notes", "with-notes"])
+def test_cli_interactive_acquires_actual_git(setup, monkeypatch, capsys, notes):
     from repo_catalog.cli import access_acquisition as cli
 
     class Input(io.StringIO):
@@ -671,11 +672,18 @@ def test_cli_interactive_acquires_actual_git(setup, monkeypatch, capsys):
         Input("acquire-local-git " + setup["scope"] + " " + setup["target"] + "\n"),
     )
     monkeypatch.setattr(sys, "stderr", Error())
-    assert cli.main(cli_args(setup)) == 0
+    args = cli_args(setup)
+    if notes:
+        args.extend(["--notes", "--note-target", setup["objects"]["commit2"].full_oid])
+    assert cli.main(args) == 0
     result = json.loads(capsys.readouterr().out)
     assert result["git_acquired"] is True
     assert result["repository_uuidv4"] == setup["target"]
     assert rows(setup, "retained_metadata")
+    assert result["retained_notes_count"] == int(notes)
+    assert len(rows(setup, "ref_retained_notes")) == (2 if notes else 0)
+    assert not rows(setup, "captures") and not rows(setup, "retained_notes")
+    assert not (setup["cat"] / "p1-recovery-stop.json").exists()
 
 
 def test_nonseed_paired_native_notes_preserves_catalog_pairing(setup):
